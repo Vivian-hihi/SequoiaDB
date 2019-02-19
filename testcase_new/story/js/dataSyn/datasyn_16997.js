@@ -10,7 +10,7 @@
 **************************************/
 var csName = COMMCSNAME ;
 var clName = COMMCLNAME + "_IndexAndDataSyn_16997";
-DataSyncTestCase.prototype.execTest = function()
+/*DataSyncTestCase.prototype.execTest = function()
 {   
    this.dbcl.createIndex("idxfull",{'inta':"text",'str':"text"},true) 
    this.dbcl.createIndex("idxa",{'inta':1,'str':1},true);  
@@ -30,8 +30,8 @@ DataSyncTestCase.prototype.execTest = function()
    //this.checkResult( sortCond, expRecs, "16997");
    checkConsistency(this.csName, this.clName);        
    checkInspectResult(this.csName, this.clName);
-}
-main();
+}*/
+//main();
 
 function updateDatas( dbcl, expRecs)
 {   
