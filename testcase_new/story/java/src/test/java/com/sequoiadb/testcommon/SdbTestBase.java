@@ -85,7 +85,7 @@ public class SdbTestBase {
         }
     }
 
-    public static void restartAllDataGroup() {
+    public static void restartAllDataGroup(Sequoiadb sdb) {
         final String GROUPID = "GroupID" ;
         final int COORDGROUPID = 2 ;
         final String GT = "$gt" ;
@@ -94,12 +94,12 @@ public class SdbTestBase {
         BasicBSONObject subCond = new BasicBSONObject() ;
         subCond.put( GT, COORDGROUPID ) ;
         cond.put( GROUPID, subCond ) ;
-        DBCursor cursor = sequoiadb.getList( Sequoiadb.SDB_LIST_GROUPS, cond,
+        DBCursor cursor = sdb.getList( Sequoiadb.SDB_LIST_GROUPS, cond,
                 null, null ) ;
         while ( cursor.hasNext() ) {
             BasicBSONObject doc = ( BasicBSONObject ) cursor.getNext() ;
-            sequoiadb.getReplicaGroup( doc.getInt( GROUPID ) ).stop() ;
-            sequoiadb.getReplicaGroup( doc.getInt( GROUPID ) ).start() ;
+            sdb.getReplicaGroup( doc.getInt( GROUPID ) ).stop() ;
+            sdb.getReplicaGroup( doc.getInt( GROUPID ) ).start() ;
             
             isGroupNormal( doc ) ;
         }
@@ -187,12 +187,13 @@ public class SdbTestBase {
         
         BasicBSONObject options = new BasicBSONObject() ;
         options.put( ROLE, DATA ) ;
-
+        
+        Sequoiadb sdb = null ;
         try {
-            sequoiadb = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ;
-            sequoiadb.updateConfig( configs, options ) ;
+            sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ;
+            sdb.updateConfig( configs, options ) ;
         } catch ( BaseException e ) {
-            if ( CommLib.isStandAlone( sequoiadb ) 
+            if ( CommLib.isStandAlone( sdb ) 
                  &&  e.getErrorCode() != SDBError.SDB_RTN_CONF_NOT_TAKE_EFFECT
                  .getErrorCode() ){
                 e.printStackTrace() ;
@@ -203,13 +204,13 @@ public class SdbTestBase {
                 throw e ;
             }
             
-            if ( CommLib.isStandAlone( sequoiadb )){
-                restartStandAlone(sequoiadb.getHost()) ;
+            if ( CommLib.isStandAlone( sdb )){
+                restartStandAlone(sdb.getHost()) ;
             }else{
-                restartAllDataGroup() ;
+                restartAllDataGroup(sdb) ;
             }
         }finally{
-            sequoiadb.close() ;
+            sdb.close() ;
         }
     }
 
@@ -356,5 +357,4 @@ public class SdbTestBase {
     public static String getWorkDir() {
         return workDir ;
     }
-
 }
