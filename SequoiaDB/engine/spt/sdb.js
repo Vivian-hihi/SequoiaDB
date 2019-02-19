@@ -54,7 +54,7 @@ const SDB_LIST_SEQUENCES           = 15 ;
 
 const SDB_INSERT_CONTONDUP         = 1 ;
 const SDB_INSERT_RETURN_ID         = 2 ; // only available when inserting only one document
-const SDB_INSERT_REPLACEONDUP      = 8 ;
+const SDB_INSERT_REPLACEONDUP      = 4 ;
 
 const SDB_TRACE_FLW                = 0 ;
 const SDB_TRACE_FMT                = 1 ;
