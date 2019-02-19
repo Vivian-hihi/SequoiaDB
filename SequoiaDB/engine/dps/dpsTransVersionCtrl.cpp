@@ -323,6 +323,7 @@ namespace engine
       //input check
       SDB_ASSERT( keyNode.isValid(), "key is invalid");
       SDB_ASSERT( value.isValid() , "value is invalid");
+      SDB_ASSERT( ( NULL != keyNode.getOrdering() ), "ordering is NULL");
 
 //      TREE_NODE_PAIR myPair(keyNode, value);
       std::pair< INDEX_BINARY_TREE::iterator, bool > ret;
@@ -333,8 +334,10 @@ namespace engine
          lockX();
       }
 
+
       //ret = _tree->insert(myPair);
       ret = _tree->insert( TREE_NODE_PAIR(keyNode, value) );
+
       if( !lockHeld )
       {
          unlockX();
@@ -398,9 +401,9 @@ namespace engine
          PD_LOG( PDERROR, "preIdxTree:removed %d nodes", numDeleted );
          printTree();
       }
-#endif
 
       SDB_ASSERT( ( 1 == numDeleted ), "deleted other than one keys" ); 
+#endif
       PD_TRACE_EXITRC( SDB_PREIDXTREE_REMOVE, numDeleted );
       return numDeleted;
    }
@@ -408,7 +411,7 @@ namespace engine
    INT32 preIdxTree::remove( const BSONObj * keyData, const dmsRecordID & rid )
    {
       preIdxTreeNodeKey keyNode( keyData, rid, getOrdering() );
-#if 0   
+#ifdef  _DEBUG    
       // can be used for debug purpose
       PD_LOG( PDDEBUG, "preIdxTree:removing keyData(%s), rid=(%d, %d)",
               keyData->toString().c_str(),
@@ -502,7 +505,7 @@ namespace engine
    //   SDB_IXM_EOC: end of index search
    //   Any error coming from the function
    // Dependency: 
-   //   Caller must hold tree latch in S
+   //   Caller must hold tree latch in S/X
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_KEYLOCATE, "preIdxTree::keyLocate" )
    INT32 preIdxTree::keyLocate
    ( INDEX_BINARY_TREE::iterator &iter, const BSONObj &prevKey,
@@ -609,9 +612,13 @@ namespace engine
                   goto done;
                }
 */      
+               // we can use the max dummy rid, but there is no way to get 
+               // a max bson. Let's simply start with last element. Trick is
+               // use reverse iterator (rbegin)'s next and convert to 
+               // forward_iterator   
                // FIXME: we need to use a better starting point by taking the 
                // matchEle into consideration
-               iter = (_tree->end())--;
+               iter = (++(_tree->rbegin())).base();
                first = FALSE;
             }
             else
