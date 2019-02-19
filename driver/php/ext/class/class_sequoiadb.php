@@ -288,11 +288,18 @@ class SequoiaDB
    public function install( array|string $options = null ){}
 
    /**
-    * Get the error object(only return by engine) of the last operation. The error object will not be clean up automatically until the next error object cover it.
+    * Get the error object of the previous operation. The error object is not automatically cleared until the next operation.
     *
     * @return Returns the result of the last error message
     *
-    * @retval array array( 'errno' => 0, 'description' => '', 'detail' => '', ... )
+    * @retval array error infomation
+    *
+    * If there has an error, it contains the follow fields: 
+    *    @code
+    *    errno:       the error number
+    *    description: the description of the errno
+    *    detail:      the error detail
+    *    @endcode
     *
     * Example:
     * @code
