@@ -52,7 +52,7 @@ public class SdbTestBase {
 
     @Parameters( { "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN",
             "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR" } )
-    @BeforeSuite( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true, alwaysRun = true)
+    @BeforeSuite(alwaysRun = true)
     public static void initSuite( String HOSTNAME, String SVCNAME,
             String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
             String RSRVNODEDIR, String WORKDIR ) {
@@ -330,7 +330,7 @@ public class SdbTestBase {
         }
     }
 
-    @AfterSuite( groups = { "ru", "rc", "rcwaitlock" }, inheritGroups = true )
+    @AfterSuite( alwaysRun = true )
     public static void finiSuite() {
         count.getAndIncrement() ;
         try {
