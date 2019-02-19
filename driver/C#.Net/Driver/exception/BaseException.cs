@@ -150,8 +150,18 @@ namespace SequoiaDB
 
         /** \property ErrorObject
          *  \brief Get the error object. When database try to tell the user what error happen in engine,
-         *         it will  merge all the error information, and return it by an BSONObject. When no detail,
-         *         error object is null.
+         *         it will  merge all the error information, and return it by an bson.
+         *  \return The error object got from engine or null for no error object got from engine.
+         *          If there has an error, it contains the follow fields:
+         *          <ul>
+         *              <li>errno:       the error number.</li>
+         *              <li>description: the description of the errno.</li>
+         *              <li>detail:      the error detail.</li>
+         *          </ul>
+         *          Actually, the follow extended fields may return from the database depend on the operations:
+         *          <ul>
+         *              <li>ErrNodes:    More detailed error message.</li>
+         *          </ul>
          */
         public BsonDocument ErrorObject
         {
