@@ -56,6 +56,7 @@ public class SdbTestBase {
     public static void initSuite( String HOSTNAME, String SVCNAME,
             String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
             String RSRVNODEDIR, String WORKDIR ) {
+        System.out.println("initSuite.....") ;
         hostName = HOSTNAME ;
         serviceName = SVCNAME ;
         csName = COMMCSNAME ;
