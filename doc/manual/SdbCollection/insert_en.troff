@@ -40,12 +40,24 @@ Can be the follow value:
 .IP \[bu] 2
 0, default value.
 .IP \[bu] 2
-SDB_INSERT_RETURN_ID, only available when inserting a single record, means
-return the value of "_id" field of the record.
+SDB_INSERT_RETURN_ID, means return the value of "_id" field of the record.
 .IP \[bu] 2
-SDB_INSERT_CONTONDUP, only available when bulk inserting records.
-This flag represent whether insert continue(no errors were reported) when
+SDB_INSERT_CONTONDUP, means continue inserting (no errors were reported) when
 hitting index key duplicate error.
+.IP \[bu] 2
+SDB_INSERT_REPLACEONDUP, means replace the exist value to the inserting value
+when hitting index key duplicate error, and continue the left records (no errors
+were reported).
+.RE
+.RS
+.PP
+\f[B]Note:\f[]
+.PP
+when inserting a single record, the available flag
+is：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP
+.PP
+when inserting multiple records, the available flag
+is：SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP
 .RE
 .IP \[bu] 2
 \f[C]options\f[] ( \f[I]Object\f[]， \f[I]Optional\f[] )
@@ -59,6 +71,10 @@ hitting index key duplicate error.
 .IP \[bu] 2
 ReturnOID(Bool): represent whether insert return the "_id" field of the record
 for user.
+.IP \[bu] 2
+ReplaceOnDup(Bool): represent whether replace the exist value to the inserting
+value when hitting index key duplicate error, and continue the left records (no
+errors were reported).
 .PP
 Format: { ContOnDup: true, ReturnOID: false }
 .RE

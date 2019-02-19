@@ -31,9 +31,15 @@ When the provided record does not have an "_id" field, the database will add one
 	Insert flag, use to control the behavior of inserting. Can be the follow value:
 
 	* 0, default value.
-	* SDB_INSERT_RETURN_ID, only available when inserting a single record, means return the value of "_id" field of the record.
-	* SDB_INSERT_CONTONDUP, only available when 
-bulk inserting records. This flag represent whether insert continue(no errors were reported) when hitting index key duplicate error.
+	* SDB_INSERT_RETURN_ID, means return the value of "_id" field of the record.
+	* SDB_INSERT_CONTONDUP, means continue inserting (no errors were reported) when hitting index key duplicate error.
+    * SDB_INSERT_REPLACEONDUP, means replace the exist value to the inserting value when hitting index key duplicate error, and continue the left records (no errors were reported).
+
+> **Note:**
+>
+> when inserting a single record, the available flag is：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP
+>
+> when inserting multiple records, the available flag is：SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP
 
 * `options` ( *Object*， *Optional* )
 
@@ -41,6 +47,7 @@ bulk inserting records. This flag represent whether insert continue(no errors we
 
 	* ContOnDup(Bool): represent whether insert continue(no errors were reported) when hitting index key duplicate error. 
 	* ReturnOID(Bool): represent whether insert return the "_id" field of the record for user.
+    * ReplaceOnDup(Bool): represent whether replace the exist value to the inserting value when hitting index key duplicate error, and continue the left records (no errors were reported).
 
 	Format: { ContOnDup: true, ReturnOID: false }
 
