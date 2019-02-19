@@ -47,6 +47,7 @@
 #include "dmsExtDataHandler.hpp"
 
 #include "ossMemPool.hpp"
+#include "utilInsertResult.hpp"
 
 using namespace bson ;
 
@@ -746,8 +747,8 @@ namespace engine
          void              setNothrow( BOOLEAN nothrow ) ;
          BOOLEAN           isNothrow() const ;
          // if the rid was set to special one, we won't have _rw setup
-         BOOLEAN           hasNoExt() 
-         { 
+         BOOLEAN           hasNoExt()
+         {
             return (_rid.isIDXRid() );
          }
 
@@ -961,7 +962,8 @@ namespace engine
                               SDB_DPSCB *dpscb,
                               BOOLEAN mustOID = TRUE,
                               BOOLEAN canUnLock = TRUE,
-                              INT64 position = -1 ) ;
+                              INT64 position = -1,
+                              utilInsertResult *insertResult = NULL ) ;
 
          // if deletedDataPtr = 0, will get from recordID
          // must hold mb exclusive lock
@@ -970,7 +972,7 @@ namespace engine
                               ossValuePtr deletedDataPtr,
                               _pmdEDUCB * cb,
                               SDB_DPSCB *dpscb,
-                              BOOLEAN    RCDoDelete = FALSE, 
+                              BOOLEAN    RCDoDelete = FALSE,
                               _dpsITransLockCallback * callback = NULL ) ;
 
          // if updatedDataPtr = 0, will get from recordID

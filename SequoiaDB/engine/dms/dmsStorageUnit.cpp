@@ -1554,7 +1554,8 @@ namespace engine
                                          BOOLEAN mustOID,
                                          BOOLEAN canUnLock,
                                          dmsMBContext *context,
-                                         INT64 position )
+                                         INT64 position,
+                                         utilInsertResult *insertResult )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
@@ -1570,7 +1571,7 @@ namespace engine
       }
 
       rc = _pDataSu->insertRecord( context, record, cb, dpscb, mustOID,
-                                   canUnLock, position ) ;
+                                   canUnLock, position, insertResult ) ;
       if ( rc )
       {
          goto error ;
@@ -1657,7 +1658,7 @@ namespace engine
 
    // NOTE: this funciton is currently only used by dmsMmapTest, not real code,
    // so we don't use callback. In case we use it for runtime, we need to
-   // consider old copy and callback functions. 
+   // consider old copy and callback functions.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DELETERECORDS, "_dmsStorageUnit::deleteRecords" )
    INT32 _dmsStorageUnit::deleteRecords ( const CHAR *pName,
                                           pmdEDUCB * cb,

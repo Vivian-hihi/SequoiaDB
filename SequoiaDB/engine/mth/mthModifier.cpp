@@ -2558,6 +2558,19 @@ namespace engine
                                             BSONObjIteratorSorted &es )
    {
       {
+         BSONObjBuilder redoRBuilder ;
+         UINT32 i = 0 ;
+         while ( i < _modifierElements.size() )
+         {
+            redoRBuilder.append( _modifierElements[i]._toModify ) ;
+            b.append( _modifierElements[i]._toModify ) ;
+            ++i ;
+         }
+
+         ADD_CHG_OBJECT( _dstChgBuilder, redoRBuilder.obj(), "$replace" ) ;
+      }
+
+      {
          BSONObjBuilder undoRBuilder ;
          while ( es.more() )
          {
@@ -2574,19 +2587,6 @@ namespace engine
       }
 
       {
-         BSONObjBuilder redoRBuilder ;
-         UINT32 i = 0 ;
-         while ( i < _modifierElements.size() )
-         {
-            redoRBuilder.append( _modifierElements[i]._toModify ) ;
-            b.append( _modifierElements[i]._toModify ) ;
-            ++i ;
-         }
-
-         ADD_CHG_OBJECT( _dstChgBuilder, redoRBuilder.obj(), "$replace" ) ;
-      }
-
-      {
          BSONObjBuilder redoKBuilder ;
          set<string>::iterator it = _keepKeys.begin() ;
          while ( it != _keepKeys.end() )
@@ -2598,7 +2598,6 @@ namespace engine
 
          ADD_CHG_OBJECT( _dstChgBuilder, redoKBuilder.obj(), "$keep" ) ;
       }
-
 
       return SDB_OK  ;
    }

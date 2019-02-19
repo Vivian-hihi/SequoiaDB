@@ -401,7 +401,7 @@ namespace engine
       // here we would use 0 offset directly
       if( hasNoExt() )
       {
-         // use the _ptr we set up in callback, 
+         // use the _ptr we set up in callback,
          return (const dmsRecord*)_ptr;
       }
       if ( 0 == len )
@@ -2943,7 +2943,8 @@ namespace engine
                                                SDB_DPSCB *dpscb,
                                                BOOLEAN mustOID,
                                                BOOLEAN canUnLock,
-                                               INT64 position )
+                                               INT64 position,
+                                               utilInsertResult *insertResult )
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD ) ;
@@ -3175,18 +3176,18 @@ namespace engine
                         lockModeToString( lockConflict._lockType ) ) ;
 
             isTransLocked = TRUE ;
-         
 
-            // Mark the oldVer of this lock to be newly created record, 
+
+            // Mark the oldVer of this lock to be newly created record,
             // protected by mbLatch
-            // FIXME: we now do it on LRBHeader, will change this to update a 
+            // FIXME: we now do it on LRBHeader, will change this to update a
             // local memory from callback
-            if ( pTransCB->isTransOn() && 
+            if ( pTransCB->isTransOn() &&
                  cb->getTransExecutor()->useTransLock() )
             {
                UTIL_OBJIDX  hdrIdx;
                dpsTransLRBHeader *lrbHdr = NULL;
-               dpsTransLockId lockId( _logicalCSID, context->mbID(), 
+               dpsTransLockId lockId( _logicalCSID, context->mbID(),
                                       &foundRID );
                pTransCB->getLockMgrHandle()->
                           getLRBHdrByLockId( lockId, hdrIdx, lrbHdr );
@@ -3209,7 +3210,7 @@ namespace engine
 
          // insert object's indexes
          rc = _pIdxSU->indexesInsert( context, pExtent->_logicID,
-                                      insertObj, foundRID, cb ) ;
+                                      insertObj, foundRID, cb, insertResult ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
       }
       catch( std::exception &e )
@@ -3282,7 +3283,7 @@ namespace engine
    //    corresponding log records and delete related indexes.
    // Input:
    //    RCDoDelete:  in RC isolation level, we can only delete the record
-   //                 if caller knows that transaction has committed. 
+   //                 if caller knows that transaction has committed.
    // Dependency:
    //    Record lock should be held in X. MBlatch should be held.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_DELETERECORD, "_dmsStorageDataCommon::deleteRecord" )
@@ -3291,7 +3292,7 @@ namespace engine
                                               ossValuePtr deletedDataPtr,
                                               pmdEDUCB *cb,
                                               SDB_DPSCB * dpscb,
-                                              BOOLEAN     RCDoDelete, 
+                                              BOOLEAN     RCDoDelete,
                                               _dpsITransLockCallback * callback)
    {
       INT32 rc                      = SDB_OK ;
@@ -3301,7 +3302,7 @@ namespace engine
       BOOLEAN isDeleting            = FALSE ;
       BOOLEAN isNeedToSetDeleting   = FALSE ;
       // save old version when transaction is turned on
-      BOOLEAN isNeedToSaveOldVer    = ( pTransCB->isTransOn() && 
+      BOOLEAN isNeedToSaveOldVer    = ( pTransCB->isTransOn() &&
                                     cb->getTransExecutor()->useTransLock() );
 
       dmsRecordID ovfRID ;
@@ -3361,7 +3362,7 @@ namespace engine
             rc = callback->saveOldVersionRecord ( &recordRW ) ;
 
             if( SDB_OK != rc )
-            { 
+            {
                PD_LOG ( PDERROR, "Failed to setup old version record" );
                goto error ;
             }
@@ -3390,9 +3391,9 @@ namespace engine
          // if need to save old verion, we should not immediately delete the
          // record, otherwise TB scan won't be able to find this record even if
          // the current transaction has not committed.
-         // In case caller know that this is not the original transaction 
+         // In case caller know that this is not the original transaction
          // marking delete, we can do he actual delete.
-         // Capped collection is special, we don't take record lock and we 
+         // Capped collection is special, we don't take record lock and we
          // always immediately delete.
          if ( isNeedToSaveOldVer && !RCDoDelete && !isCapped() )
          {
@@ -3401,7 +3402,7 @@ namespace engine
 
          // don't delete the record, someone are waitting for the record-X-Lock,
          // mark the record's attr to DMS_RECORD_FLAG_DELETING and write the log
-         // the last one who get the record-X-Lock will delete the record while 
+         // the last one who get the record-X-Lock will delete the record while
          // those who gets record-S-Lock will skip the record.
          if ( pTransCB->hasWait( _logicalCSID, context->mbID(), &recordID ) )
          {

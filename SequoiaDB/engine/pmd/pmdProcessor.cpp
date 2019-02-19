@@ -363,7 +363,7 @@ namespace engine
                              flags, flags ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Update:\nMatcher: %s\nUpdator: %s\n"
-                  "hint: %s\nFlag: 0x%08x(%u)", getSession()->sessionName(), 
+                  "hint: %s\nFlag: 0x%08x(%u)", getSession()->sessionName(),
                   selector.toString().c_str(),
                   updator.toString().c_str(), hint.toString().c_str(),
                   flags, flags ) ;
@@ -407,6 +407,21 @@ namespace engine
                              &pInsertor, count ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace insert msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
+      if ( (flag & FLG_INSERT_CONTONDUP) && (flag & FLG_INSERT_REPLACEONDUP) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,"Conflict insert flag(CONTONDUP and REPLACEONDUP):"
+                 "flag=%d,rc=%d", flag, rc ) ;
+         goto error ;
+      }
+
+      if ( (flag & FLG_INSERT_RETURN_OID) && (flag & FLG_INSERT_REPLACEONDUP) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR,"Conflict insert flag(RETURN_OID and REPLACEONDUP):"
+                 "flag=%d,rc=%d", flag, rc ) ;
+         goto error ;
+      }
 
       /// When insert virtual cs
       if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
@@ -459,8 +474,8 @@ namespace engine
                       flag ) ;
 
          PD_RC_CHECK( rc, PDERROR, "Session[%s] insert objs[%s, count:%d, "
-                      "collection: %s] failed, rc: %d", 
-                      getSession()->sessionName(), insertor.toString().c_str(), 
+                      "collection: %s] failed, rc: %d",
+                      getSession()->sessionName(), insertor.toString().c_str(),
                       count, pCollectionName, rc ) ;
       }
       catch( std::exception &e )
@@ -581,7 +596,7 @@ namespace engine
          catch ( std::exception &e )
          {
             PD_LOG ( PDERROR, "Session[%s] Failed to create matcher and "
-                     "selector for QUERY: %s", getSession()->sessionName(), 
+                     "selector for QUERY: %s", getSession()->sessionName(),
                      e.what () ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
@@ -649,7 +664,7 @@ namespace engine
       CHAR *pDeletorBuffer  = NULL ;
       CHAR *pHintBuffer     = NULL ;
 
-      rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName, 
+      rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName,
                               &pDeletorBuffer, &pHintBuffer ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract delete msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
@@ -693,9 +708,9 @@ namespace engine
          /*
          PD_LOG ( PDDEBUG, "Session[%s] Delete: Deletor: %s\nhint: %s\n"
                   "Flag: 0x%08x(%u)",
-                  getSession()->sessionName(), deletor.toString().c_str(), 
+                  getSession()->sessionName(), deletor.toString().c_str(),
                   hint.toString().c_str(), flags, flags ) ; */
-         rc = rtnDelete( pCollectionName, deletor, hint, flags, eduCB(), 
+         rc = rtnDelete( pCollectionName, deletor, hint, flags, eduCB(),
                          _pDMSCB, dpsCB, 1, &deletedNum ) ;
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DML, MSG_BS_DELETE_REQ, AUDIT_OBJ_CL,
@@ -748,7 +763,7 @@ namespace engine
 
    INT32 _pmdDataProcessor::_onKillContextsReqMsg( MsgHeader *msg )
    {
-      PD_LOG ( PDDEBUG, "session[%s] _onKillContextsReqMsg", 
+      PD_LOG ( PDDEBUG, "session[%s] _onKillContextsReqMsg",
                getSession()->sessionName() ) ;
 
       INT32 rc = SDB_OK ;
@@ -1329,7 +1344,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCOORDPROC_PROCOORDMSG, "_pmdCoordProcessor::_processCoordMsg" )
-   INT32 _pmdCoordProcessor::_processCoordMsg( MsgHeader *msg, 
+   INT32 _pmdCoordProcessor::_processCoordMsg( MsgHeader *msg,
                                                INT64 &contextID,
                                                rtnContextBuf &contextBuff )
    {
@@ -1343,7 +1358,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROCOORDMSG );
 
-      PD_TRACE1 ( SDB_PMDCOORDPROC_PROCOORDMSG, PD_PACK_INT ( opCode ) );  
+      PD_TRACE1 ( SDB_PMDCOORDPROC_PROCOORDMSG, PD_PACK_INT ( opCode ) );
 
       if ( MSG_AUTH_VERIFY_REQ == opCode )
       {
@@ -1571,7 +1586,7 @@ namespace engine
          }
       }
 
-      PD_TRACE1 ( SDB_PMDCOORDPROC_PROCOORDMSG, PD_PACK_INT ( needRollback ) );  
+      PD_TRACE1 ( SDB_PMDCOORDPROC_PROCOORDMSG, PD_PACK_INT ( needRollback ) );
 
       if ( rc && contextBuff.size() == 0 )
       {
@@ -1587,7 +1602,7 @@ namespace engine
 
          coordTransRollback rollbackOpr ;
          INT32 rcTmp = rollbackOpr.init( pResource, eduCB() ) ;
-         PD_RC_CHECK( rcTmp, PDERROR, 
+         PD_RC_CHECK( rcTmp, PDERROR,
                       "Rollback init operator[%s] failed, rc: %d",
                       rollbackOpr.getName(), rcTmp ) ;
 

@@ -50,6 +50,7 @@
 #include "dmsStatUnit.hpp"
 #include "dmsCachedPlanUnit.hpp"
 #include "ossMemPool.hpp"
+#include "utilInsertResult.hpp"
 
 using namespace bson ;
 
@@ -422,7 +423,8 @@ namespace engine
                                  BOOLEAN mustOID = TRUE,
                                  BOOLEAN canUnLock = TRUE,
                                  dmsMBContext *context = NULL,
-                                 INT64 position = -1 ) ;
+                                 INT64 position = -1,
+                                 utilInsertResult *insertResult = NULL ) ;
 
          INT32    updateRecords ( const CHAR *pName,
                                   _pmdEDUCB *cb,
