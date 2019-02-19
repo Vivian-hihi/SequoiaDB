@@ -44,7 +44,9 @@ public class SdbTestBase {
     private static final String TRANSLOCKWAIT = "translockwait" ;
     private static final String INDEXSCANSTEP = "indexscanstep" ;
     
-    private static AtomicInteger count = new AtomicInteger( 0 ) ;
+    private static AtomicInteger rcCnt = new AtomicInteger( 0 ) ;
+    private static AtomicInteger ruCnt = new AtomicInteger( 0 ) ;
+    private static AtomicInteger rcLockCnt = new AtomicInteger( 0 ) ;
     private static ConfigOptions options = new ConfigOptions() ;
     
     private static final int newIndexScanStep = 3 ;
@@ -78,13 +80,7 @@ public class SdbTestBase {
             if ( !workDirFile.exists() ) {
                 workDirFile.mkdir() ;
             }
-            
-            try {
-                Thread.sleep( 500000 ) ;
-            } catch ( InterruptedException e ) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+
         } catch ( BaseException e ) {
             e.printStackTrace() ;
             throw new SkipException( "initSuite failed" ) ;
@@ -288,8 +284,11 @@ public class SdbTestBase {
 
     @Parameters( { "TRANSACTIONON" } )
     @BeforeGroups( groups = "ru", alwaysRun = true )
-    public static void initRuGroups() {
+    public static synchronized void initRuGroups() {
         System.out.println("initRuGroups...........");
+        if ( ruCnt.getAndIncrement() > 0 ){
+           return ;
+        }
         int transisolation = 0 ;
         boolean translockwait = false ;
         try {
@@ -301,8 +300,12 @@ public class SdbTestBase {
     }
 
     @BeforeGroups( groups = "rc", alwaysRun = true )
-    public static void initRcGroups() {
+    public static synchronized void initRcGroups() {
         System.out.println("initRcGroups...........");
+        
+        if ( rcCnt.getAndIncrement() > 0){
+           return ;
+        }
         int transisolation = 1 ;
         boolean translockwait = false ;
         try {
@@ -314,8 +317,11 @@ public class SdbTestBase {
     }
 
     @BeforeGroups( groups = "rcwaitlock", alwaysRun = true)
-    public static void initRcLockwaitGroups() {
+    public static synchronized void initRcLockwaitGroups() {
         System.out.println("initRcLockwaitGroups...........");
+        if ( rcLockCnt.getAndIncrement() > 0 ){
+           return ;
+        }
         int transisolation = 1 ;
         boolean translockwait = true ;
         try {
@@ -327,7 +333,7 @@ public class SdbTestBase {
     }
 
     @AfterGroups( groups = { "ru", "rc", "rcwaitlock" }, alwaysRun = true )
-    public static void finiGroups() {
+    public static synchronized void finiGroups() {
         System.out.println("finiGroups...........");
         try {
             modifyNodeConf( false, 0, false, originalIndexScanStep ) ;
@@ -339,7 +345,6 @@ public class SdbTestBase {
 
     @AfterSuite( alwaysRun = true )
     public static void finiSuite() {
-        count.getAndIncrement() ;
         try {
             sequoiadb = new Sequoiadb( SdbTestBase.coordUrl, "", "", options ) ;
             if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
@@ -348,7 +353,6 @@ public class SdbTestBase {
             // sdb.close() ;
         } catch ( BaseException e ) {
             e.printStackTrace() ;
-            Assert.fail( e.getMessage() + " called: " + count.get() ) ;
         } finally {
             if ( sequoiadb != null ) {
                 sequoiadb.close() ;
@@ -364,5 +368,9 @@ public class SdbTestBase {
 
     public static String getWorkDir() {
         return workDir ;
+    }
+    
+    public static void main(String[] args){
+        SdbTestBase.initRcGroups();
     }
 }
