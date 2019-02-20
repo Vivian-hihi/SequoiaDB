@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BSONDecimal;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
@@ -18,8 +19,11 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
+import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.Node.NodeStatus;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -287,4 +291,54 @@ public class RenameUtil extends SdbTestBase {
 		
 	}
 	
+	public static String getGroupName( Sequoiadb sdb ) {
+        ArrayList< String > rgNames = CommLib.getDataGroupNames( sdb ) ;
+        int serino = ( int ) ( Math.random() * rgNames.size() ) ;
+        String groupName = rgNames.get( serino ) ;
+        return groupName ;
+    }
+	
+	public static ArrayList< BSONObject > insertDatas( DBCollection dbcl,
+            int insertNums, int beginNo ) {
+        int batchNums = 10000 ;
+        int times = insertNums / batchNums ;
+        int remainder = insertNums % batchNums ;
+        if ( times == 0 ) {
+            times = 1 ;
+        }
+
+        ArrayList< BSONObject > insertRecords = new ArrayList< BSONObject >() ;
+        for ( int k = 0; k < times; k++ ) {
+            if ( remainder != 0 && k == times - 1 ) {
+                batchNums = remainder ;
+            }
+
+            ArrayList< BSONObject > insertRecord = new ArrayList< BSONObject >() ;
+            for ( int i = 0; i < batchNums; i++ ) {
+                int count = beginNo++ ;
+                BSONObject obj = new BasicBSONObject() ;
+                obj.put( "testa", "test" + count ) ;
+                String str = "32345.06789123456" + count ;
+                BSONDecimal decimal = new BSONDecimal( str ) ;
+                obj.put( "decimala", decimal ) ;
+                obj.put( "no", count ) ;
+                obj.put( "order", count ) ;
+                obj.put( "inta", count ) ;
+                obj.put( "ftest", count + 0.2345 ) ;
+                obj.put( "str", "test_" + String.valueOf( count ) ) ;
+               
+                insertRecord.add( obj ) ;
+                insertRecords.add( obj ) ;
+            }
+            dbcl.insert( insertRecord ) ;
+        }
+        return insertRecords ;
+    }
+	
+	public static int  getNodeNum( Sequoiadb sdb,String groupName){
+		ReplicaGroup rg = sdb.getReplicaGroup(groupName);
+		@SuppressWarnings("deprecation")
+		int num = rg.getNodeNum(NodeStatus.SDB_NODE_ALL);
+		return num;        
+	}
 }
