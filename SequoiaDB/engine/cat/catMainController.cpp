@@ -1305,6 +1305,7 @@ namespace engine
       {
          pTmpMsg = ( MsgHeader* )( ( CHAR*)pMsg + pos ) ;
          pos += pTmpMsg->messageLength ;
+         reply.header.opCode = MAKE_REPLY_TYPE(pTmpMsg->opCode) ;
 
          /// Is the last
          if ( pos >= pMsg->messageLength )
