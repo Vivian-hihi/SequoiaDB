@@ -190,7 +190,8 @@ namespace engine
                              MsgHeader *msg,
                              INT64 &contextID,
                              rtnContextBuf &buf,
-                             INT32 &startFrom ) ;
+                             INT32 &startFrom,
+                             INT32 &opCode ) ;
 
       private:
          INT32 _getShardingKey( const CHAR* clName,

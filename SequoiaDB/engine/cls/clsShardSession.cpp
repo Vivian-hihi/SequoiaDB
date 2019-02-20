@@ -361,9 +361,6 @@ namespace engine
       _hasUpdateCataInfo = FALSE ;
       BOOLEAN isNeedRollback = FALSE;
 
-      PD_TRACE1( SDB__CLSSHDSESS__ONOPMSG, 
-                 PD_PACK_INT ( opCode ) );
-
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
       if ( isDelayLogin() )
@@ -375,7 +372,8 @@ namespace engine
       {
          if ( MSG_PACKET == opCode )
          {
-            rc = _onPacketMsg( handle, msg, contextID, buffObj, startFrom ) ;
+            rc = _onPacketMsg( handle, msg, contextID, buffObj,
+                               startFrom, opCode ) ;
             break ;
          }
 
@@ -3937,7 +3935,8 @@ namespace engine
                                        MsgHeader *msg,
                                        INT64 &contextID,
                                        rtnContextBuf &buf,
-                                       INT32 &startFrom )
+                                       INT32 &startFrom,
+                                       INT32 &opCode )
    {
       INT32 rc = SDB_OK ;
       INT32 pos = 0 ;
@@ -3949,6 +3948,7 @@ namespace engine
       while( pos < msg->messageLength )
       {
          pTmpMsg = ( MsgHeader* )( ( CHAR*)msg + pos ) ;
+         opCode = pTmpMsg->opCode ;
 
          rc = _onOPMsg( handle, pTmpMsg ) ;
          if ( rc )
