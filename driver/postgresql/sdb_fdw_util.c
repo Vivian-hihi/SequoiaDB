@@ -348,15 +348,7 @@ bool isSortCanPushDown( PlannerInfo *root, Index foreignTableIndex )
             elog( DEBUG1, "isSortCanPushDown:em->em_expr is not Var" ) ;
             return false ;
          }
-         /*
-         if (T_Var != nodeTag( em->em_expr ))
-         {
-            elog( DEBUG1, "isSortCanPushDown:em->em_expr is not Var" ) ;
-            return false ;
-         }
 
-         var = (Var *)em->em_expr ;
-         */
          if ( var->varno != foreignTableIndex ||  var->varlevelsup != 0 )
          {
             elog( DEBUG1, "isSortCanPushDown:foreignTableIndex=%d,varno=%d,"
