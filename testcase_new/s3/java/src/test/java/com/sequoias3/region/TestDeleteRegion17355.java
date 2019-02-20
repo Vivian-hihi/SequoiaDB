@@ -23,11 +23,9 @@ public class TestDeleteRegion17355 extends S3TestBase{
 	private String dataCSName = "dataCS17355";
 	private String[] metaClNames = {"metaCL17355","metaHistoryCL17355"};
 	private String[] dataClName = {"dataCL17355"};
-	private static Sequoiadb sdb = null;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
 		
@@ -47,16 +45,17 @@ public class TestDeleteRegion17355 extends S3TestBase{
         //合法值
         RegionUtils.deleteRegion(regionName);
         Assert.assertFalse(RegionUtils.headRegion(regionName));
-    	//TODO:1、这里注释代码要说明注释原因，如有问题单需要付上问题单号
-    	//非法值
+        
+    	//非法值      SEQUOIADBMAINSTREAM-4186
         /*RegionUtils.deleteRegion("");
         RegionUtils.deleteRegion(new String());*/
 	}
 	
 	@AfterClass
 	private void tearDown() throws Exception {
-		sdb.dropCollectionSpace(dataCSName);
-		sdb.dropCollectionSpace(metaCSName);
-		sdb.close();
+		try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")){
+			sdb.dropCollectionSpace(dataCSName);
+			sdb.dropCollectionSpace(metaCSName);
+		}
 	}
 }

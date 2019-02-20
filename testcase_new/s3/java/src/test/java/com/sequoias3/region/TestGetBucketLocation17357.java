@@ -28,12 +28,10 @@ public class TestGetBucketLocation17357 extends S3TestBase{
 	private String[] dataClName = {"dataCL17357"};
 	private String bucketName = "bucket17357";
 	private AmazonS3 s3Client = null;
-	private static Sequoiadb sdb = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
 		
@@ -67,11 +65,12 @@ public class TestGetBucketLocation17357 extends S3TestBase{
 	private void tearDown() throws Exception {
 		try {
             if (runSuccess) {
-                CommLib.clearBucket(s3Client, bucketName);
-                RegionUtils.deleteRegion(regionName);
-                sdb.dropCollectionSpace(dataCSName);
-                sdb.dropCollectionSpace(metaCSName);
-                sdb.close();
+            	try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")){
+            		CommLib.clearBucket(s3Client, bucketName);
+            		RegionUtils.deleteRegion(regionName);
+            		sdb.dropCollectionSpace(dataCSName);
+            		sdb.dropCollectionSpace(metaCSName);
+            	}
             }
         }finally {
             if(s3Client != null){

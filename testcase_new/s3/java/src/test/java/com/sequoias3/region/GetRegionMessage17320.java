@@ -1,6 +1,7 @@
 package com.sequoias3.region;
 
 import java.util.Date;
+import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -8,6 +9,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.CommLib;
@@ -99,7 +101,6 @@ public class GetRegionMessage17320 extends S3TestBase{
 	
 	@Test
 	public void testCreateRegion() throws Exception {
-		//TODO:1、没有校验桶列表信息
 		//specified mode : get region
 		GetRegionResult spResult = RegionUtils.getRegion(specifiedModeRegion);
 		Region spRegion = spResult.getRegion();
@@ -107,6 +108,8 @@ public class GetRegionMessage17320 extends S3TestBase{
 		Assert.assertEquals(spRegion.getMetaLocation(), metaCSName + "." + metaClNames[0]);
 		Assert.assertEquals(spRegion.getMetaHisLocation(), metaCSName + "." + metaClNames[1]);
 		Assert.assertEquals(spRegion.getDataLocation(), dataCSName + "." + dataClName[0]);
+		List<Bucket> buckets = spResult.getBuckets();
+		Assert.assertEquals(buckets.get(0).getName(), spmodeBucket);
         
 		
 		//ShardingType mode : get region
@@ -117,6 +120,8 @@ public class GetRegionMessage17320 extends S3TestBase{
 		Assert.assertEquals(stRegion.getDataCLShardingType(), "month");
 		Assert.assertEquals(stRegion.getMetaDomain(), metaDomain);
 		Assert.assertEquals(stRegion.getDataDomain(), dataDomain);
+		List<Bucket> buckets2 = stResult.getBuckets();
+		Assert.assertEquals(buckets2.get(0).getName(), shmodeBucket);
 		
     	runSuccess = true;
 	}
@@ -131,8 +136,8 @@ public class GetRegionMessage17320 extends S3TestBase{
 				sdb.dropCollectionSpace(dataCSName);
 				sdb.dropCollectionSpace(shardingDataCSName);
 				sdb.dropCollectionSpace(shardingMetaCSName);
-				sdb.dropDomain(dataDomain);
-				sdb.dropDomain(metaDomain);
+				RegionUtils.dropDomain(dataDomain);
+				RegionUtils.dropDomain(metaDomain);
 				RegionUtils.deleteRegion(specifiedModeRegion);
 				RegionUtils.deleteRegion(shardingModeRegion);
 				sdb.close();

@@ -24,13 +24,10 @@ public class TestHeadRegion17356 extends S3TestBase{
 	private String dataCSName = "dataCS17356";
 	private String[] metaClNames = {"metaCL17356","metaHistoryCL17356"};
 	private String[] dataClName = {"dataCL17356"};
-	private static Sequoiadb sdb = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
-		
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
 		
@@ -71,10 +68,11 @@ public class TestHeadRegion17356 extends S3TestBase{
 	@AfterClass
 	private void tearDown() throws Exception {
 		if (runSuccess) {
-			RegionUtils.deleteRegion(regionName);
-			sdb.dropCollectionSpace(dataCSName);
-			sdb.dropCollectionSpace(metaCSName);
-			sdb.close();
+			try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")){
+				RegionUtils.deleteRegion(regionName);
+				sdb.dropCollectionSpace(dataCSName);
+				sdb.dropCollectionSpace(metaCSName);
+			}
 		}
 	}
 }

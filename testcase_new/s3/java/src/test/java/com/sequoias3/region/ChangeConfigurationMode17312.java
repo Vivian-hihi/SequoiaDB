@@ -25,13 +25,10 @@ public class ChangeConfigurationMode17312 extends S3TestBase{
 	private String dataCSName = "dataCS17312";
 	private String[] metaClNames = {"metaCL17312","metaHistoryCL17312"};
 	private String[] dataClName = {"dataCL17312"};
-	private static Sequoiadb sdb = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		//TODO:1、公共方法中已new sdb（），建议用例中不用重新建连接
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
 		
@@ -45,7 +42,6 @@ public class ChangeConfigurationMode17312 extends S3TestBase{
 	
 	@Test
 	public void testCreateRegion() throws Exception {
-		//TODO:2、测试结果和文本用例测试结果不一致
 		//test a : change the specified mode to ShardingType mode
         Region oldRegion_1 = new Region();
         oldRegion_1.withName(specifiedRegionName)
@@ -94,11 +90,12 @@ public class ChangeConfigurationMode17312 extends S3TestBase{
 	@AfterClass
 	private void tearDown() throws Exception {
 		if (runSuccess) {
-			sdb.dropCollectionSpace(metaCSName);
-			sdb.dropCollectionSpace(dataCSName);
-			RegionUtils.deleteRegion(specifiedRegionName);
-			RegionUtils.deleteRegion(shardingTypeRegionName);
-			sdb.close();
+			try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");){
+				sdb.dropCollectionSpace(metaCSName);
+				sdb.dropCollectionSpace(dataCSName);
+				RegionUtils.deleteRegion(specifiedRegionName);
+				RegionUtils.deleteRegion(shardingTypeRegionName);
+			}
 		}
 	}
 }

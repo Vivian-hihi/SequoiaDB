@@ -32,13 +32,10 @@ public class GetRegionList17318 extends S3TestBase{
 	private String[] dataClName = {"dataCL17318"};
 	private List<String> regionNames = new ArrayList<>();
 	private int regionNum = 100;
-	private static Sequoiadb sdb = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
-		
 		RegionUtils.dropDomain(metaDomain);
 		RegionUtils.dropDomain(dataDomain);
 		
@@ -113,12 +110,13 @@ public class GetRegionList17318 extends S3TestBase{
 	@AfterClass
 	private void tearDown() throws Exception {
 		if (runSuccess) {
-			sdb.dropCollectionSpace(metaCSName);
-			sdb.dropCollectionSpace(dataCSName);
-			sdb.dropDomain(dataDomain);
-			sdb.dropDomain(metaDomain);
-			deleteRegions(regionNames);
-			sdb.close();
+			try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")){
+				sdb.dropCollectionSpace(metaCSName);
+				sdb.dropCollectionSpace(dataCSName);
+				sdb.dropDomain(dataDomain);
+				sdb.dropDomain(metaDomain);
+				deleteRegions(regionNames);
+			}
 		}
 	}
 	
@@ -137,14 +135,12 @@ public class GetRegionList17318 extends S3TestBase{
 			boolean isRepeat = unRepeatRegionNames.add(regionName);
 			Assert.assertTrue(isRepeat, "the region name " + regionName + " is repeated!");
 		}
-		//TODO:1、测试检测结果方式不严谨，建议匹配出比较结果，并抛出不一致的记录，方便定位
-		Assert.assertTrue(actRegions.containsAll(regionNames)," expect region num is : " + regionNames.size());
+		Assert.assertTrue(actRegions.containsAll(regionNames)," expect regions is : " + regionNames.toString() + ", act regions is : " + actRegions.toString());
 	}
 	
 	private void checkDeleteRegion(List<String> deleteRegions) throws Exception{
 		List<String> actRegions = RegionUtils.listRegions();
 		for(String region : deleteRegions){
-			//TODO:1、比较结果方式需要优化
 			Assert.assertFalse(actRegions.contains(region),"the region : " + region + " is still exist!");
 		}
 	}

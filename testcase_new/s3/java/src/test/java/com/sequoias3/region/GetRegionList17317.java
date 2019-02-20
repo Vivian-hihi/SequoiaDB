@@ -32,13 +32,10 @@ public class GetRegionList17317 extends S3TestBase{
 	private String[] dataClName = {"dataCL17317"};
 	private List<String> regionNames = new ArrayList<>();
 	private int regionNum = 2000;
-	private static Sequoiadb sdb = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
-		
 		RegionUtils.dropDomain(metaDomain);
 		RegionUtils.dropDomain(dataDomain);
 		
@@ -85,8 +82,7 @@ public class GetRegionList17317 extends S3TestBase{
 			boolean isRepeat = unRepeatRegionNames.add(regionName);
 			Assert.assertTrue(isRepeat, "the region name " + regionName + " is repeated!");
 		}
-		//TODO:1、测试检测结果方式不严谨，如果创建区域有重复则无法校验，另外实际和预期结果不一致，建议抛出不一致的记录，方便定位
-		Assert.assertTrue(actRegions.containsAll(regionNames));
+		Assert.assertTrue(actRegions.containsAll(regionNames)," expect regions is : " + regionNames.toString() + ", act regions is : " + actRegions.toString());
 		
     	runSuccess = true;
 	}
@@ -94,12 +90,13 @@ public class GetRegionList17317 extends S3TestBase{
 	@AfterClass
 	private void tearDown() throws Exception {
 		if (runSuccess) {
-			sdb.dropCollectionSpace(metaCSName);
-			sdb.dropCollectionSpace(dataCSName);
-			sdb.dropDomain(dataDomain);
-			sdb.dropDomain(metaDomain);
-			deleteRegions(regionNames);
-			sdb.close();
+			try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")){
+				sdb.dropCollectionSpace(metaCSName);
+				sdb.dropCollectionSpace(dataCSName);
+				sdb.dropDomain(dataDomain);
+				sdb.dropDomain(metaDomain);
+				deleteRegions(regionNames);
+			}
 		}
 	}
 	

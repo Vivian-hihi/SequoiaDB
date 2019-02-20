@@ -8,7 +8,6 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
@@ -31,7 +30,6 @@ public class GetRegionMessage17316 extends S3TestBase{
 	private String roleName = "normal";
 	private String bucketName = "bucket17316";
 	private String regionName = "beijing17316";
-	private static Sequoiadb sdb = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
@@ -43,7 +41,6 @@ public class GetRegionMessage17316 extends S3TestBase{
 		s3ClientA = CommLib.buildS3Client(acessKeysA[0], acessKeysA[1]);
 		s3ClientB = CommLib.buildS3Client(acessKeysB[0], acessKeysB[1]);
 		s3Client = CommLib.buildS3Client();
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 		
 		CommLib.clearBucket(s3Client, bucketName);
 		if(RegionUtils.headRegion(regionName)){
@@ -77,7 +74,6 @@ public class GetRegionMessage17316 extends S3TestBase{
 				RegionUtils.deleteRegion(regionName);
 				UserUtils.deleteUser(userNameA);
 				UserUtils.deleteUser(userNameB);
-				sdb.close();
 			}
 		}finally {
 			if( s3Client != null ){

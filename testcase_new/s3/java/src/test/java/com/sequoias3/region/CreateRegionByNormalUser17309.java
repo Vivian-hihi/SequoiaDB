@@ -29,7 +29,6 @@ public class CreateRegionByNormalUser17309 extends S3TestBase{
 	private String dataCSName = "dataCS17309";
 	private String[] metaClNames = {"metaCL17309","metaHistoryCL17309"};
 	private String[] dataClName = {"dataCL17309"};
-	private static Sequoiadb sdb = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
@@ -37,8 +36,6 @@ public class CreateRegionByNormalUser17309 extends S3TestBase{
 		CommLib.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
-		//TODO:1、公共方法中已new sdb（），建议用例中不用重新建连接
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
 		
@@ -69,10 +66,11 @@ public class CreateRegionByNormalUser17309 extends S3TestBase{
 	@AfterClass
 	private void tearDown() {
 		if (runSuccess) {
-			sdb.dropCollectionSpace(metaCSName);
-			sdb.dropCollectionSpace(dataCSName);
-			UserUtils.deleteUser(userName);
-			sdb.close();
+			try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")){
+				sdb.dropCollectionSpace(metaCSName);
+				sdb.dropCollectionSpace(dataCSName);
+				UserUtils.deleteUser(userName);
+			}
 		}
 	}
 }

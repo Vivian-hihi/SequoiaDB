@@ -6,7 +6,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
@@ -25,7 +24,6 @@ public class DeleteRegionByNormalUser17327 extends S3TestBase{
 	private String roleName = "normal";
 	private String[] accessKeys = null;
 	private String regionName = "Beijing17327";
-	private static Sequoiadb sdb = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
@@ -33,7 +31,6 @@ public class DeleteRegionByNormalUser17327 extends S3TestBase{
 		CommLib.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 		
 		if(RegionUtils.headRegion(regionName)){
 			RegionUtils.deleteRegion(regionName);
@@ -62,7 +59,6 @@ public class DeleteRegionByNormalUser17327 extends S3TestBase{
 		if (runSuccess) {
 			RegionUtils.deleteRegion(regionName);
 			UserUtils.deleteUser(userName);
-			sdb.close();
 		}
 	}
 }

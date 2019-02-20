@@ -30,17 +30,15 @@ import com.sequoias3.user.UserCommDefind;
  */
 
 public class TestGetRegion17354 extends S3TestBase{
-	private String regionName = "Beijing17354";
+	private String regionName = "beijing17354";
 	private String metaCSName = "metaCS17354";
 	private String dataCSName = "dataCS17354";
 	private String[] metaClNames = {"metaCL17354","metaHistoryCL17354"};
 	private String[] dataClName = {"dataCL17354"};
-	private static Sequoiadb sdb = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
 		
@@ -60,18 +58,17 @@ public class TestGetRegion17354 extends S3TestBase{
         //合法值
         GetRegionResult result = RegionUtils.getRegion(regionName);
         Region region = result.getRegion();
-        //TODO:1、用例中没有特别要求，region名没有必要大写，这里就不需要再转换大小写
-        Assert.assertEquals(region.getName(), regionName.toLowerCase());
+        Assert.assertEquals(region.getName(), regionName);
     	Assert.assertEquals(region.getMetaLocation(), metaCSName + "." + metaClNames[0]);
 		Assert.assertEquals(region.getMetaHisLocation(), metaCSName + "." + metaClNames[1]);
 		Assert.assertEquals(region.getDataLocation(), dataCSName + "." + dataClName[0]);
     	
     	//非法值
 		List<String> regionList = getRegion("");
-		Assert.assertTrue(regionList.contains(regionName.toLowerCase()));
+		Assert.assertTrue(regionList.contains(regionName));
     	
 		List<String> regionList2 = getRegion(new String());
-		Assert.assertTrue(regionList2.contains(regionName.toLowerCase()));
+		Assert.assertTrue(regionList2.contains(regionName));
 		
 		runSuccess = true;
 	}
@@ -79,10 +76,11 @@ public class TestGetRegion17354 extends S3TestBase{
 	@AfterClass
 	private void tearDown() throws Exception {
 		if (runSuccess) {
-			RegionUtils.deleteRegion(regionName);
-			sdb.dropCollectionSpace(dataCSName);
-			sdb.dropCollectionSpace(metaCSName);
-			sdb.close();
+			try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")){
+				RegionUtils.deleteRegion(regionName);
+				sdb.dropCollectionSpace(dataCSName);
+				sdb.dropCollectionSpace(metaCSName);
+			}
 		}
 	}
 	

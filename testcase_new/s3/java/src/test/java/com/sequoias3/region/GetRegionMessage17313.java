@@ -5,7 +5,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 
@@ -22,16 +25,18 @@ public class GetRegionMessage17313 extends S3TestBase{
 	private String shardingTypeRegionName = "ModeTwo17313";
 	private String metaCSName = "metaCS17313";
 	private String dataCSName = "dataCS17313";
+	private String specifiedBucket = "spbucket17313";
+	private String shardingBucket = "shbucket17313";
 	private String[] metaClNames = {"metaCL17313","metaHistoryCL17313"};
 	private String[] dataClName = {"dataCL17313"};
 	private String dataDomain = "dataDomain17313";
 	private String metaDomain = "metaDomain17313";
-	private static Sequoiadb sdb = null;
+	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
+		s3Client = CommLib.buildS3Client();
 		RegionUtils.dropDomain(metaDomain);
 		RegionUtils.dropDomain(dataDomain);
 		
@@ -48,7 +53,7 @@ public class GetRegionMessage17313 extends S3TestBase{
 			RegionUtils.deleteRegion(shardingTypeRegionName);
 		}
 	}
-	//TODO:1、测试点和文本用例不相符，请参考文本用例测试点
+	
 	@Test
 	public void testGetRegionMessage() throws Exception {
 		String metaLocation = metaCSName + "." + metaClNames[0];
@@ -64,12 +69,17 @@ public class GetRegionMessage17313 extends S3TestBase{
     	RegionUtils.putRegion(specifiedModeRegion);
     	
     	Assert.assertTrue(RegionUtils.headRegion(specifiedRegionName));
+    	s3Client.createBucket(new CreateBucketRequest(specifiedBucket, specifiedRegionName.toLowerCase()));
+    	Assert.assertEquals(s3Client.getBucketLocation(specifiedBucket), specifiedRegionName.toLowerCase());
+    	
     	GetRegionResult specifiedResult = RegionUtils.getRegion(specifiedRegionName);
     	Region currRegion = specifiedResult.getRegion();
     	Assert.assertEquals(currRegion.getName(), specifiedRegionName.toLowerCase());
     	Assert.assertEquals(currRegion.getMetaLocation(), metaLocation);
     	Assert.assertEquals(currRegion.getMetaHisLocation(), metaHisLocation);
     	Assert.assertEquals(currRegion.getDataLocation(), dataLocation);
+    	
+    	
     	
     	//test b : in ShardingType mode,get region message
     	Region shardingTypeModeRegion = new Region();
@@ -81,6 +91,9 @@ public class GetRegionMessage17313 extends S3TestBase{
     	RegionUtils.putRegion(shardingTypeModeRegion);
     	
     	Assert.assertTrue(RegionUtils.headRegion(shardingTypeRegionName));
+    	s3Client.createBucket(new CreateBucketRequest(shardingBucket, shardingTypeRegionName.toLowerCase()));
+    	Assert.assertEquals(s3Client.getBucketLocation(shardingBucket), shardingTypeRegionName.toLowerCase());
+    	
     	GetRegionResult shardingTypeResult = RegionUtils.getRegion(shardingTypeRegionName);
     	Region currRegion2 = shardingTypeResult.getRegion();
     	Assert.assertEquals(currRegion2.getName(), shardingTypeRegionName.toLowerCase());
@@ -95,13 +108,16 @@ public class GetRegionMessage17313 extends S3TestBase{
 	@AfterClass
 	private void tearDown() throws Exception {
 		if (runSuccess) {
-			sdb.dropCollectionSpace(dataCSName);
-			sdb.dropCollectionSpace(metaCSName);
-			sdb.dropDomain(dataDomain);
-			sdb.dropDomain(metaDomain);
-			RegionUtils.deleteRegion(specifiedRegionName);
-			RegionUtils.deleteRegion(shardingTypeRegionName);
-			sdb.close();
+			try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")){
+				s3Client.deleteBucket(specifiedBucket);
+				s3Client.deleteBucket(shardingBucket);
+				sdb.dropCollectionSpace(dataCSName);
+				sdb.dropCollectionSpace(metaCSName);
+				RegionUtils.dropDomain(metaDomain);
+				RegionUtils.dropDomain(dataDomain);
+				RegionUtils.deleteRegion(specifiedRegionName);
+				RegionUtils.deleteRegion(shardingTypeRegionName);
+			}
 		}
 	}
 }
