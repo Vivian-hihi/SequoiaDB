@@ -24,6 +24,7 @@ import com.sequoiadb.transaction.TransUtils;
  *
  */
 @Test(groups = "rc")
+//class名字跟用例名字不符，请修改
 public class InsertAndQuery17071 extends SdbTestBase {
      private Sequoiadb sdb = null;
      private String clName = "cl17071";
@@ -60,6 +61,7 @@ public class InsertAndQuery17071 extends SdbTestBase {
           // 读记录走表扫描
           DBCursor recordsCursor = cl.query(null, null, null, "{'':null}");
           DBCursor explainCursor = cl.explain(null, null, null, (BSONObject) JSON.parse("{'':null}"), 0, 1, 0, null);
+          //TODO:我觉得没有必要每个用例都去检查explain是否走表扫描或者索引扫描，建议去掉该步骤,如果要检查，封装成公共方法调用，其他地方请一并修改
           while (explainCursor.hasNext()) {
                String scanType = (String) explainCursor.getNext().get("ScanType");
                Assert.assertEquals(scanType, "tbscan");
@@ -91,7 +93,7 @@ public class InsertAndQuery17071 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
-          // 删除记录
+          // 删除记录，TODO:删除记录后，要校验是否删除成功，通过检查记录是否存在进行检验，其他地方请一并修改
           cl.delete("", "{'':'textIndex17190'}");
      }
 }

@@ -68,7 +68,7 @@ public class CRUDAndDDLFail17147 extends SdbTestBase {
           record = (BSONObject) JSON.parse("{_id:2, a:4, b:2}");
           expList.add(record);
 
-          // 执行DDL操作构造失败的场景
+          // 执行DDL操作构造失败的场景，TODO：不应该构造参数错误的错误信息，应该构造创建重复索引等引擎端的错误
           try {
                cl.createIndex("a", "", false, false);
                throw new BaseException(-999, "CREATEINDEX ERROR");

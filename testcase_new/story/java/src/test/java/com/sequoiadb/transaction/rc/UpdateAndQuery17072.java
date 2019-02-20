@@ -24,6 +24,7 @@ import com.sequoiadb.transaction.TransUtils;
  *
  */
 @Test(groups = "rc")
+//class名字跟用例名字不符，请修改
 public class UpdateAndQuery17072 extends SdbTestBase {
      private Sequoiadb sdb = null;
      private String clName = "cl17072";
@@ -81,7 +82,7 @@ public class UpdateAndQuery17072 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
-          // 记录删除索引字段
+          // 记录删除索引字段,TODO:更新强制走索引
           cl.update("{a:2}", "{$unset:{a:''}}", "{'':null}");
           expList.clear();
           expList.add((BSONObject) JSON.parse("{_id:1, b:1}"));
@@ -111,7 +112,7 @@ public class UpdateAndQuery17072 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
-          // 记录新增非索引字段
+          // 记录新增非索引字段,TODO:强制走索引扫描
           cl.update("{a:3}", "{$set:{c:1}}", "{'':null}");
           expList.clear();
           expList.add((BSONObject) JSON.parse("{_id:1, a:3, b:1, c:1}"));

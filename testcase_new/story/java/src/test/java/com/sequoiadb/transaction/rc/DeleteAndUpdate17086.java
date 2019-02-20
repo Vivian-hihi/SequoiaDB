@@ -73,7 +73,7 @@ public class DeleteAndUpdate17086 extends SdbTestBase {
           db1.beginTransaction();
           db2.beginTransaction();
 
-          // 事务1删除记录，并更新已被删除的记录的索引字段
+          // 事务1删除记录，并更新已被删除的记录的索引字段，TODO：强制走索引扫描
           cl1.delete("", "{'':null}");
           cl1.update("{a:1}", "{$set:{a:3}}", "{'':null}");
 

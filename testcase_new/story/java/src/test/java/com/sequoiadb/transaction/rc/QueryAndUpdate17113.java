@@ -120,7 +120,7 @@ public class QueryAndUpdate17113 extends SdbTestBase {
           cl3Update.start();
           Assert.assertTrue(cl3Update.matchBlockingMethod(cl3.getClass().getName(), "update"));
 
-          // 提交事务1
+          // 提交事务1，TODO:增加步骤判断事务3依然阻塞
           db1.commit();
 
           // 非事务表扫描

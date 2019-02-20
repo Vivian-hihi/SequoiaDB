@@ -156,5 +156,7 @@ public class QueryAndUpdate17110 extends SdbTestBase {
           Assert.assertEquals(actList, expList);
           recordsCursor.close();
           explainCursor.close();
+          
+          //TODO:新增一个步骤，删除记录，校验事务锁是否释放
      }
 }

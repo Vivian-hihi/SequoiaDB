@@ -23,12 +23,12 @@ import com.sequoiadb.transaction.TransUtils;
  * @testcase seqDB-17111:select for update并发读与更新并发
  * @date 2019-1-18
  * @author yinzhen
- *
+ * TODO:检视意见：QueryAndUpdateTbScan17111.java 存在同样的问题
  */
 @Test(groups = "rc")
 public class QueryAndUpdateIxScan17111 extends SdbTestBase {
      private Sequoiadb sdb = null;
-     private String clName = "cl17111ix";
+     private String clName = "cl17111ix";//TODO：集合名，先字母再数字，名字是不是要取tbscan？？？
      private DBCollection cl = null;
      private List<BSONObject> expList = new ArrayList<BSONObject>();
      private List<BSONObject> actList = new ArrayList<BSONObject>();
@@ -93,7 +93,7 @@ public class QueryAndUpdateIxScan17111 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
-          // 事务1 select for update读记录走索引扫描
+          // 事务1 select for update读记录走索引扫描，TODO:删除，在另一个用例中覆盖
           recordsCursor = cl1.query("{a:{$exists:1}}", null, null, "{'':'textIndex17111'}",
                     DBQuery.FLG_QUERY_FOR_UPDATE);
           explainCursor = cl1.explain((BSONObject) JSON.parse("{a:{$exists:1}}"), null, null,
@@ -115,7 +115,7 @@ public class QueryAndUpdateIxScan17111 extends SdbTestBase {
           cl3Update.start();
           Assert.assertTrue(cl3Update.matchBlockingMethod(cl3.getClass().getName(), "update"));
 
-          // 提交事务1事务2返回
+          // 提交事务1事务2返回，TODO：此处增加步骤判断事务3仍然阻塞
           db1.commit();
           if (!(cl2Thread.isSuccess())) {
                Assert.fail(cl2Thread.getErrorMsg() + "\n");

@@ -134,7 +134,7 @@ public class InsertAndQuery17085 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
-          // 事务2回滚
+          // 事务2回滚，TODO:回滚后通过记录查询，校验结果
           db2.rollback();
           recordsCursor.close();
           explainCursor.close();

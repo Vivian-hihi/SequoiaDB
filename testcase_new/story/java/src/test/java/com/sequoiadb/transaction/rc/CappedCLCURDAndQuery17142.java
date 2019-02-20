@@ -22,7 +22,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @testcase seqDB-17142:固定集合中增删改记录，与读并发
  * @date 2019-1-24
  * @author yinzhen
- *
+ * TODO：检视意见by zhaoyu:固定集合中的增删读操作均不是事务操作了，该用例需删除，其他事务模式下的固定集合用例也没必要验证了，详见问题单4168
  */
 @Test(groups = "rc")
 public class CappedCLCURDAndQuery17142 extends SdbTestBase {

@@ -75,7 +75,7 @@ public class UpdateAndQuery17087 extends SdbTestBase {
           db1.beginTransaction();
           db2.beginTransaction();
 
-          // 事务1更新记录为原值
+          // 事务1更新记录为原值，TODO：强制走索引扫描
           cl1.update("{a:1}", "{$set:{a:1}}", "{'':null}");
 
           // 事务2读记录走表扫描
@@ -136,5 +136,7 @@ public class UpdateAndQuery17087 extends SdbTestBase {
           db2.commit();
           recordsCursor.close();
           explainCursor.close();
+          
+          //TODO：新增一个步骤删除记录，检查事务锁是否释放；
      }
 }

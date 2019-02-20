@@ -77,6 +77,7 @@ public class QueryAndWrite17114 extends SdbTestBase {
      }
 
      @Test
+     //TODO:使用批量记录进行测试，建议每个事务至少操作1000条记录
      public void test() {
           // 开启并发事务
           db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
