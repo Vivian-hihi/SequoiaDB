@@ -97,6 +97,7 @@ public class CreateRegion17298 extends S3TestBase {
 			String versionId = i + "";
 			String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key, versionId);
 			Assert.assertEquals(downfileMd5, TestTools.getMD5(context.getBytes()));
+			TestTools.LocalFile.removeFile(localPath);
 		}
 		s3Client.shutdown();
 	}

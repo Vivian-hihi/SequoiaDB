@@ -5,9 +5,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 
@@ -20,17 +18,15 @@ import com.sequoias3.testcommon.s3utils.RegionUtils;
  */
 public class CreateRegion17292 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String regionName = "region17292";
-	private AmazonS3 s3Client = null;
+	private String regionName = "region17292";	
 	private String[] csNames = { "metaCS17292", "dataCS17292" };
-	private String[] dataclNames = { "metaCL17291", "metaHistroyCL17291" };
-	private String[] metaclNames = { "dataCL17291" };
+	private String[] dataclNames = { "metaCL17292", "metaHistroyCL17292" };
+	private String[] metaclNames = { "dataCL17292" };
 
 	@BeforeClass
 	private void setUp() {
 		RegionUtils.createCSAndCL(csNames[0], dataclNames);
-		RegionUtils.createCSAndCL(csNames[1], metaclNames);
-		s3Client = CommLib.buildS3Client();
+		RegionUtils.createCSAndCL(csNames[1], metaclNames);		
 	}
 
 	@Test
@@ -47,18 +43,15 @@ public class CreateRegion17292 extends S3TestBase {
 			Assert.assertEquals(e.getStatusCode(), 400);
 			Assert.assertEquals(e.getErrorCode(), "InvalidLocation");
 		}
+		
+		Assert.assertFalse(RegionUtils.headRegion(regionName), "region should be not exist!");
 		runSuccess = true;
 	}
 
 	@AfterClass
 	private void tearDown() {
-		try {
-			if (runSuccess) {
-				RegionUtils.dropCS(csNames);
-			}
-		} finally {
-			s3Client.shutdown();
+		if (runSuccess) {
+			RegionUtils.dropCS(csNames);
 		}
 	}
-
 }

@@ -5,9 +5,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 
@@ -20,8 +18,7 @@ import com.sequoias3.testcommon.s3utils.RegionUtils;
  */
 public class CreateRegion17294 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String regionName = "region17294";
-	private AmazonS3 s3Client = null;
+	private String regionName = "region17294";	
 	private String[] csNames = { "metaCS17294", "dataCS17294" };
 	private String[] metaclNames = { "metaCL17294" };
 	private String[] dataclNames = { "dataCL17294" };
@@ -29,8 +26,7 @@ public class CreateRegion17294 extends S3TestBase {
 	@BeforeClass
 	private void setUp() {
 		RegionUtils.createCSAndCL(csNames[0], metaclNames);
-		RegionUtils.createCSAndCL(csNames[1], dataclNames);
-		s3Client = CommLib.buildS3Client();
+		RegionUtils.createCSAndCL(csNames[1], dataclNames);		
 	}
 
 	@Test
@@ -55,13 +51,9 @@ public class CreateRegion17294 extends S3TestBase {
 	}
 
 	@AfterClass
-	private void tearDown() {
-		try {
-			if (runSuccess) {
-				RegionUtils.dropCS(csNames);
-			}
-		} finally {
-			s3Client.shutdown();
-		}
+	private void tearDown() {		
+		if (runSuccess) {
+			RegionUtils.dropCS(csNames);
+		}		
 	}
 }
