@@ -121,6 +121,7 @@ public class SdbTestBase {
         BSONObject nullObj = null ;
         
         do {
+            isOk = true ;
             for ( int pos = 0; pos < nodes.size(); ++pos ) {
                 BasicBSONObject node = ( BasicBSONObject ) nodes.get( pos ) ;
                 
