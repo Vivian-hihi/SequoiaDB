@@ -100,10 +100,7 @@ static List *SdbPlanForeignModify ( PlannerInfo *root,
 
 static void sdb_slot_deform_tuple( TupleTableSlot *slot, int natts ) ;
 
-static Var *getRealVar(Var *arg);
-
 static BOOLEAN isVarValid( Var *var, SdbExprTreeState *exprState ) ;
-
 
 typedef struct
 {
@@ -1359,43 +1356,6 @@ error:
    goto done ;
 }
 
-Var *getRealVar(Var *arg)
-{
-   if (NULL == arg)
-   {
-      return NULL;
-   }
-
-   if (T_Var == nodeTag(arg))
-   {
-      return arg;
-   }
-   else if (T_RelabelType == nodeTag(arg))
-   {
-      RelabelType* rtype = (RelabelType *)arg;
-      if (NULL == rtype->arg)
-      {
-         return NULL;
-      }
-
-      if (T_Var == nodeTag(rtype->arg))
-      {
-         return (Var *)rtype->arg;
-      }
-      else
-      {
-         elog(DEBUG1, "unreconigzed RelabelType's arg nodeType:nodeTag[%d]",
-              nodeTag(rtype->arg));
-         return NULL;
-      }
-   }
-   else
-   {
-      elog(DEBUG1, "unreconigzed nodeType:nodeTag[%d]", nodeTag(arg));
-      return NULL;
-   }
-}
-
 BOOLEAN isVarValid( Var *var, SdbExprTreeState *exprState )
 {
    if ( var->varlevelsup != 0 )
@@ -1441,7 +1401,7 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
    {
       if ( count == 0 )
       {
-         argument1 = getRealVar((Var *)lfirst(argumentCell));
+         argument1 = getRealVar(lfirst(argumentCell));
          if (NULL == argument1)
          {
             elog(DEBUG1, "argument1 is NULL") ;
@@ -1466,7 +1426,7 @@ INT32 sdbOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_state,
       }
       else
       {
-         argument2 = getRealVar((Var *)lfirst(argumentCell));
+         argument2 = getRealVar(lfirst(argumentCell));
          if (NULL == argument2)
          {
             elog(DEBUG1, "argument2 is NULL") ;
@@ -2684,7 +2644,7 @@ void sdbGetOptions( Oid foreignTableId, SdbInputOptions *options )
    CHAR *transaction          = NULL ;
    CHAR *pUseDecimal          = NULL ;
    INT32 isUseDecimal         = 0 ;
-   CHAR *pPushDownSortAndLimit = NULL ;
+   CHAR *pPushDownSortAndLimit= NULL ;
 
    if( NULL == options )
       goto done ;
@@ -2834,6 +2794,12 @@ void sdbGetOptions( Oid foreignTableId, SdbInputOptions *options )
    else
    {
       options->isPushDownLimit = 0 ;
+   }
+
+   if ( 1 == options->isPushDownLimit && 0 == options->isPushDownSort )
+   {
+      elog( ERROR, "when %s is on, %s must be on too",
+            OPTION_NAME_PUSHDOWNLIMIT, OPTION_NAME_PUSHDOWNSORT ) ;
    }
 
    /* fill up the result structure */
@@ -3749,7 +3715,8 @@ static void SdbGetForeignPaths( PlannerInfo *root,
     */
    totalCost = totalStartupCost + totalCPUCost + totalDiskCost ;
 
-   if ( fdw_state->isPushDownSort && isSortCanPushDown(root, baserel->relid ) )
+   if ( isConditionCanPushDown && fdw_state->isPushDownSort
+        && isSortCanPushDown(root, baserel->relid ) )
    {
       sort_path = root->sort_pathkeys ;
    }
