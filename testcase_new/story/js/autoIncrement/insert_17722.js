@@ -1,7 +1,7 @@
 /***************************************************************************
-@Description :seqDB-17722:increment为正值，插入值比序列的MaxValue稍小，再次插入自增字段未超MaxValue 
+@Description :seqDB-17723:increment为正值，插入值比序列的MaxValue稍小，再次插入自增字段超过MaxValue
 @Modify list :
-              2019-1-25  zhaoyu  Create
+              2019-1-28  zhaoyu  Create
 ****************************************************************************/
 function main()
 {
@@ -18,10 +18,10 @@ function main()
    var cacheSize = 1000;
    var acquireSize = 11;
    var maxValue = 10001;
-   var clName = COMMCLNAME + "_17722";   
+   var clName = COMMCLNAME + "_17723";   
    commDropCL(db, COMMCSNAME, clName, true, true);
    
-   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, {AutoIncrement:{Field:"id", AcquireSize:acquireSize, CacheSize:cacheSize, Cycled:true, MaxValue:maxValue, Increment:increment}});
+   var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, {AutoIncrement:{Field:"id", AcquireSize:acquireSize, CacheSize:cacheSize, Cycled:false, MaxValue:maxValue, Increment:increment}});
    commCreateIndex(dbcl, "id", {id:1}, true, true);
    
    var expR = [];
@@ -44,9 +44,9 @@ function main()
    }
    println("---prepare insert success");
    
-   //coordB指定自增字段插入记录，插入值是序列的maxValue-1,coordB丢弃本coord的缓存，重新从catalog上获取新缓存,[1,51]
-   cl[1].insert({a:sortField, id:maxValue-1});
-   expR.push({a:sortField, id:maxValue-1});
+   //coordB指定自增字段插入记录，插入值是序列的maxValue-5,coordB丢弃本coord的缓存，重新从catalog上获取新缓存[maxValue,maxValue]
+   cl[1].insert({a:sortField, id:maxValue-5});
+   expR.push({a:sortField, id:maxValue-5});
    println("---insert set autoIncrement success");
    
    //coordA插入记录，消耗完本coord的缓存，[1,51]
@@ -62,25 +62,37 @@ function main()
    checkRec(actR, expR);
    println("---check insert success");
    
-   //为了避免唯一键重复，删除集合中已有记录，方便校验后续生成的自增字段值
-   dbcl.remove();
-   expR = [];
-   
-   //coordA插入记录，插入成功，重新从catalog获取新的缓存,[46,106]
-   for(var i=0; i<2; i++)
+   //coordA插入记录，插入失败，超出序列值返回
+   try
    {
       cl[0].insert({a:sortField});
-      expR.push({a:sortField, id:56 + i*increment});
-      sortField++;  
+      throw "NEED_ERROR";
+   }catch(e)
+   {
+      if(e !== -325)
+      {
+         throw e;
+      }
    }
    println("---coordA get cache success");
    
-   //coordB插入记录，插入成功，重新获取缓存，[1,51]
-   for(var i=0; i<11; i++)
+   //coordB插入记录，插入成功，消耗完最后一个自增字段值
+   cl[1].insert({a:sortField});
+   expR.push({a:sortField, id:maxValue});
+   sortField++;  
+   println("---coordB insert success");
+      
+   //coordB插入记录，插入失败，超出序列值范围
+   try
    {
       cl[1].insert({a:sortField});
-      expR.push({a:sortField, id:1 + i*increment});
-      sortField++;  
+      throw "NEED_ERROR";
+   }catch(e)
+   {
+      if(e !== -325)
+      {
+         throw e;
+      }
    }
    println("---coordB get cache success");
    
@@ -93,12 +105,17 @@ function main()
    }
    println("---coordC insert success");
    
-   //coordC插入记录，插入成功，重新从catalog获取新的缓存,[111,161]
-   for(var i=0; i<2; i++)
+   //coordC插入记录，插入失败，超出序列值范围
+   try
    {
       cl[2].insert({a:sortField});
-      expR.push({a:sortField, id:111 + i*increment});
-      sortField++;  
+      throw "NEED_ERROR";
+   }catch(e)
+   {
+      if(e !== -325)
+      {
+         throw e;
+      }
    }
    println("---coordC get cache success");
    

@@ -65,7 +65,7 @@ function main()
    dbcl.remove();
    expR = [];
    
-   //coordA插入记录，插入成功，重新从catalog获取新的缓存,[12,22]
+   //coordA插入记录，插入失败
    try
    {
       cl[0].insert({a:sortField});
@@ -79,7 +79,7 @@ function main()
    }
    println("---coordA get cache success");
    
-   //coordB插入记录，插入成功，重新从catalog获取新的缓存,[12,22]
+   //coordB插入记录，插入失败
    try
    {
       cl[1].insert({a:sortField});

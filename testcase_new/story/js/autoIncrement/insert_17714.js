@@ -69,7 +69,7 @@ function main()
    }
    println("---coordA get new autoIncrement cache success");
    
-   //coordB再次插入记录，导致冲突，自增字段值进行调整
+   //coordB再次插入记录，使用新缓存
    cl[1].insert({a:sortField});
    expR.push({a:sortField, id:37});
    sortField++; 
