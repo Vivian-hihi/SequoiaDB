@@ -91,14 +91,28 @@ namespace engine
 
       void setRecordRW ( _dmsRecordRW * recordRW ) { _recordRW = recordRW; }
 
+      // set the latch mode of the index in memory tree
       void setMemTreeLatchMode ( const MEMTREE_LATCH_MODE m ) 
       {
          _memTreeLatchMode = m ; 
       }
 
+      // get the latch mode of the index in memory tree
       BOOLEAN memTreeLatchHeld() const
       {
          return ( MEMTREE_LATCH_NONE != _memTreeLatchMode) ;
+      }
+
+      // save the LID of the index being latched
+      void setLatcheidIdxLid ( const SINT32 lid )
+      {
+         _latchedIdxLid = lid ;
+      }
+
+      // get the LID of the index being latched
+      SINT32 getLatcheidIdxLid() const
+      {
+         return _latchedIdxLid ;
       }
 
       CHAR * getWorkingArea () { return (CHAR *) _oldVer ; }
@@ -117,6 +131,8 @@ namespace engine
       UINT32              _isolationLevel;
       BOOLEAN             _lockwaitLevel;
       MEMTREE_LATCH_MODE  _memTreeLatchMode;
+      SINT32              _latchedIdxLid ; // the Lid of the index the scanner use
+                                           // which we are holding a latch on
       _dpsTransExecutor * _transExecutor;  // use it to access thread local buf
       // DMS related information
       _dmsRecordRW       * _recordRW;

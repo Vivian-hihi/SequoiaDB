@@ -1088,7 +1088,7 @@ namespace engine
             idxTree->insert( &obj, rid, value, TRUE );
 #ifdef _DEBUG
             PD_LOG( PDDEBUG, "Inserted key(%s) into memIXTree: "
-                    "(csid=%d, clid=%d, idxlid=%d, rid=(%d,%d)",
+                    "(csid=%d, clid=%d, idxlid=%d, rid=(%d, %d)",
                     obj.toString().c_str(),
                     gid._csID,
                     gid._clID,
@@ -1102,7 +1102,7 @@ namespace engine
          {
             rc = SDB_SYS;
             PD_LOG( PDERROR, "Index does not exist in tree but failed to "
-                    "insert to set (csid=%d, clid=%d, idxlid=%d, rid=(%d,%d)",
+                    "insert to set (csid=%d, clid=%d, idxlid=%d, rid=(%d, %d)",
                     gid._csID,
                     gid._clID,
                     gid._idxLID,

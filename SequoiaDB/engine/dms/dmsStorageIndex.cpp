@@ -1929,6 +1929,7 @@ namespace engine
          Ordering order = Ordering::make(indexCB->keyPattern()) ;
          BOOLEAN  checkKey = FALSE;
          BOOLEAN  memTreeLatchHeld = FALSE;
+         SINT32   latchedIdxLid = DMS_INVALID_EXTENT ;
 
          // get a globalID to find the tree
          globIdxID gID;
@@ -1952,10 +1953,6 @@ namespace engine
          {
             // this flag is used for later to check new index key values
             checkKey = TRUE;
-            memTreeLatchHeld =
-                       ((dmsTransLockCallback*)callback)->memTreeLatchHeld();
-
-            oldVer = (oldVersionContainer*)callback->getWorkingArea();
 
             // 1. check if the in memory tree for this idx exist or not.
             // if not, create one. MBLatch protect us to do a dirty lookup
@@ -1967,12 +1964,24 @@ namespace engine
                // create the new tree
                oldVCB->latchX();
                oldVCB->addIdxTree(gID, indexCB);
-               oldVCB->releaseX();
                memTree = oldVCB->getIdxTree(gID);
+               oldVCB->releaseX();
             }
 
             // Note that once the tree is created, it won't be deleted
             // until system shutdown
+
+            latchedIdxLid =
+                       ((dmsTransLockCallback*)callback)->getLatcheidIdxLid();
+            memTreeLatchHeld = 
+                       ((dmsTransLockCallback*)callback)->memTreeLatchHeld();
+            if ( indexCB->getLogicalID() != latchedIdxLid ) 
+            {
+               // if the latchedIdxLid is not same as the index we're updating
+               // then we don't have the latch
+               memTreeLatchHeld = FALSE ;
+            }
+            oldVer = (oldVersionContainer*)callback->getWorkingArea();
 
             // 2. try insert if old version exist
             if( oldVer )
@@ -2012,9 +2021,10 @@ namespace engine
                // this index does not already exist in the tree
                if ( storeOldVer )
                {
-                     // 4. time insert the index to the tree.
-                     oldVCB->insertIdxObj( gID, (*itori), rid,
-                                           oldVer, !memTreeLatchHeld);
+                  // 4. time insert the index to the tree.
+                  oldVCB->insertIdxObj( gID, (*itori), rid,
+                                        oldVer,
+                                        !memTreeLatchHeld);
                }
 
                ixmExtent rootidx ( indexCB->getRoot(), this ) ;
@@ -2305,6 +2315,7 @@ namespace engine
          oldVersionCB *oldVCB = callback ? callback->getOldVCB() : NULL;
          preIdxTree * memTree = NULL;
          BOOLEAN memTreeLatchHeld = FALSE;
+         SINT32  latchedIdxLid = DMS_INVALID_EXTENT ;
          oldVersionContainer *oldVer = NULL;
 
          gID._csID = _pDataSu->logicalID() ;
@@ -2320,10 +2331,6 @@ namespace engine
          if( callback && oldVCB && oldVCB->isInitialized() )
          //     !( cb->getTransID() & DPS_TRANSID_ROLLBACKTAG_BIT ) )
          {
-            oldVer = (oldVersionContainer*)callback->getWorkingArea();
-            memTreeLatchHeld =
-                       ((dmsTransLockCallback*)callback)->memTreeLatchHeld();
-
             // 1. check if the in memory tree for this idx exist or not.
             // if not, create one
             oldVCB->latchX();
@@ -2332,11 +2339,24 @@ namespace engine
             {
                // create the tree
                oldVCB->addIdxTree(gID, indexCB);
+               memTree = oldVCB->getIdxTree(gID);
             }
 
             // Note that once the tree is created, it won't be deleted
             // until system shutdown
             oldVCB->releaseX();
+
+            oldVer = (oldVersionContainer*)callback->getWorkingArea();
+            latchedIdxLid =
+                       ((dmsTransLockCallback*)callback)->getLatcheidIdxLid();
+            memTreeLatchHeld =
+                       ((dmsTransLockCallback*)callback)->memTreeLatchHeld();
+            if ( indexCB->getLogicalID() != latchedIdxLid )
+            {
+               // if the latchedIdxLid is not same as the index we're deleting
+               // then we don't have the latch
+               memTreeLatchHeld = FALSE ;
+            }
 
             // 2. if oldVer exist in callback
             if( oldVer )

@@ -73,6 +73,7 @@ namespace engine
       _recordRW = recordRW;
       _transExecutor = eduCB->getTransExecutor();
       _memTreeLatchMode = MEMTREE_LATCH_NONE;
+      _latchedIdxLid = DMS_INVALID_EXTENT ;  // -1
       PD_TRACE_EXIT( SDB_DMSTRANSLOCKCALLBACK_DMSTRANSLOCKCALLBACK );
    }
 
@@ -344,14 +345,19 @@ namespace engine
          memTree = oldVCB->getIdxTree( gID );
          oldVCB->releaseS();
 
+#ifdef _DEBUG
+         SDB_ASSERT( ( NULL != memTree ), "tree should exist" );
+#endif
+
          // delete the entry from the tree, tree lock is taken in the func
          numDeleted = memTree->remove( idxobj, rid );
 
-
+#ifdef _DEBUG
          PD_TRACE1( SDB_DMSTRANSLOCKCALLBACK_BEFORELOCKRELEASE,
                     PD_PACK_INT(numDeleted) );
 
          SDB_ASSERT( ( 1 == numDeleted ), "deleted other than one keys" );
+#endif
 
          // now free the index object from segment
          //oldVCB->getMemBlockPool()-> release( (CHAR **) &idxobj,

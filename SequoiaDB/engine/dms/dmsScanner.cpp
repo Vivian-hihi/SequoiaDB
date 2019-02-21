@@ -2018,6 +2018,7 @@ namespace engine
       {
          _callback->setMemTreeLatchMode( ((rtnMergeIXScanner*)_scanner)->
                                          getMemtreeLatchMode() );
+         _callback->setLatcheidIdxLid( _scanner->getIdxLID() ) ;
       }
    }
 

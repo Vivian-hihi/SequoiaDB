@@ -669,8 +669,7 @@ namespace engine
                          const idxObj &robj ) const
       {
          bool rv = false;
-         if ( ( (lobj._idxLID < robj._idxLID) && (lobj._order > 0) ) || 
-              ( (lobj._idxLID > robj._idxLID) && (lobj._order < 0) ) ) 
+         if ( lobj._idxLID < robj._idxLID )
          {
             rv = true;
          }

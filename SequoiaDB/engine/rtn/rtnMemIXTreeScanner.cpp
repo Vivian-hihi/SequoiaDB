@@ -335,6 +335,16 @@ namespace engine
       // locate the first key
       if ( !_init )
       {
+         // tree never exist, finsh the scan
+         if ( NULL == _memIdxTree )
+         {
+            rc = SDB_IXM_EOC ;
+            goto done ;
+         }
+
+         // need to unset _eof since a tree can show up after pauseScan
+         _eof = FALSE ;
+   
          // hold the tree latch from first round in. It is only released
          // during pause, but re-acquired by resume.
          _latchX ? _memIdxTree->lockX() :  _memIdxTree->lockS();
@@ -615,7 +625,10 @@ namespace engine
 
       if ( rc == SDB_IXM_EOC )
       {
-         SDB_ASSERT( (_treeLatchHeld == TRUE), "tree latch should be held" );
+#ifdef _DEBUG
+         SDB_ASSERT( ( (_treeLatchHeld == TRUE) || ( NULL == _memIdxTree ) ), 
+                     "tree latch should be held if tree exists"  );
+#endif
          _eof = TRUE;
       }
       PD_TRACE_EXITRC( SDB__RTNMEMIXTREESCAN_ADVANCE, rc ) ;
@@ -729,6 +742,9 @@ namespace engine
                      _csID, _clID, _indexLID ) ;
 #endif
          }
+
+         _init = FALSE ;
+
          goto done;
       }
 
@@ -859,7 +875,10 @@ the only way is to bring back the index CB and access the index definition page
       gIdxID._clID = _clID;
       gIdxID._idxLID = _indexLID;
 
+      oldVCB->latchS();
       _memIdxTree = oldVCB->getIdxTree(gIdxID);
+      oldVCB->releaseS();
+
       if( (_memIdxTree == NULL) && ( _initialized == FALSE ) )
       {
           // tree never initialized before
