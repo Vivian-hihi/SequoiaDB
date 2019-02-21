@@ -77,18 +77,28 @@ public class TestInsertFlags16659 extends SdbTestBase{
         Assert.assertEquals(result2.get(OID), id2);
         Assert.assertEquals(cl.getCount(obj2), 1);
 
-        // case 5: flag 值不正确  1,2,-1
+        // case 5: flag 值为数值 1,2
         BSONObject obj3 = new BasicBSONObject().append("test1", 123);
         cl.insert(obj3, 1);
-        Assert.assertEquals(cl.getCount(obj3), 1);
+        Assert.assertEquals(cl.getCount(obj3), 1);        
+       
+        ObjectId id4 = new ObjectId();
+        BSONObject obj4 = new BasicBSONObject().append("test2", 123);       
+        obj4.put(OID, id4);
+        obj4.put("a", 1);
+        BSONObject result4 = cl.insert(obj4, 2);
+        Assert.assertEquals(result4.get(OID), id4);
+        Assert.assertEquals(cl.getCount(obj4), 1);       
         
-        BSONObject obj4 = new BasicBSONObject().append("test2", 123);
-        cl.insert(obj4, 2);
-        Assert.assertEquals(cl.getCount(obj4), 1);
-        
+        // case 6: flag 值为非法值如：-1
         BSONObject obj5 = new BasicBSONObject().append("test3", 123);
-        cl.insert(obj5, -1);
-        Assert.assertEquals(cl.getCount(obj5), 1);
+        try{
+        	cl.insert(obj5, -1);
+        	Assert.fail("Illegal flag insert failed!");
+        }catch(BaseException e){
+			Assert.assertEquals(e.getErrorCode(), -6,e.getMessage());
+		}        
+        Assert.assertEquals(cl.getCount(obj5), 0);
 	}
     
     @AfterClass

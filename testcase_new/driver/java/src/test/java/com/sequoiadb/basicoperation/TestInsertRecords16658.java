@@ -53,9 +53,7 @@ public class TestInsertRecords16658 extends SdbTestBase{
 		//存在重复数据，flag取值为0和FLG_INSERT_CONTONDUP
 		InsertRecordsDuplicateKey();	
 		
-		//flag取值不正确
-		InsertRecordsFlagError(1);
-		InsertRecordsFlagError(2);
+		//flag取值不正确	
 		InsertRecordsFlagError(-1);
 		
 		//设置ensureOID()为false，flag取值为FLG_INSERT_RETURN_OID
@@ -163,9 +161,14 @@ public class TestInsertRecords16658 extends SdbTestBase{
 		List<BSONObject>list = new ArrayList<BSONObject>();				
 		BSONObject obj = new BasicBSONObject();				
 		obj.put("no", flag);				
-		list.add(obj);		
-		cl.insertRecords(list, flag);				
-		Assert.assertEquals(cl.getCount(obj), 1, "when flag is " + flag + " , the actDatas is :" + cl.getCount(obj));
+		list.add(obj);	
+		try{
+			cl.insertRecords(list, flag);
+	        Assert.fail("Illegal flag insert failed!");
+	    }catch(BaseException e){
+	    	Assert.assertEquals(e.getErrorCode(), -6,e.getMessage());
+	    } 						
+		Assert.assertEquals(cl.getCount(obj), 0, "when flag is " + flag + " , the actDatas is :" + cl.getCount(obj));
 	}
     
     private void InsertRecordsSetEnsureOid(){
