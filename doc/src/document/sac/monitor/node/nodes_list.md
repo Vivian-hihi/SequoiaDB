@@ -2,7 +2,7 @@
 
   - 页面表格
 
-  ![节点列表](sac/monitor/node/nodes_list_1.jpg)
+  ![节点列表](sac/monitor/node/nodes_list_1.png)
 
   - 该页面的表格列出了当前服务所有节点的状态、节点名、主机名、所属分区组、角色、集合数、记录数和Lob数。
   
@@ -14,16 +14,14 @@
 
   - 启动节点
     1. 点击上方 **启动节点** 按钮，打开启动节点的窗口。
-       ![启动节点](sac/monitor/node/nodes_list_2.jpg)
+       ![启动节点](sac/monitor/node/nodes_list_2.png)
     2. 通过下拉菜单选择要启动的节点，点击确定。
 
   - 停止节点
     1. 点击上方 **停止节点** 按钮，打开停止节点的窗口。
-       ![停止节点](sac/monitor/node/nodes_list_3.jpg)
+       ![停止节点](sac/monitor/node/nodes_list_3.png)
     2. 通过下拉菜单选择要停止的节点，点击确定。
 
   > **note:**
-
   > 1. 当前服务没有可启动节点时，将无法使用 **启动节点** 操作。
-  
   > 2. 当前节点没有可停止节点时，将无法使用 **停止节点** 操作。

@@ -7,47 +7,36 @@
 
 ###节点信息###
 
-![节点信息](sac/monitor/node/node_info_1.jpg)
+![节点信息](sac/monitor/node/node_info_1.png)
 
-- 页面左侧显示节点的所属分区组、角色、节点ID、是否主节点、集合数、记录数、Lob数、主机、以及挂载路径。
+###节点会话###
 
-- 右侧显示该节点的增删改查30秒内的实时速率。
+![节点会话](sac/monitor/node/node_info_2.png)
 
+点击 **SessionID** 可以查看所选会话的详细信息。
 
-###会话###
+![节点会话](sac/monitor/node/node_info_2.1.png)
 
-![节点会话](sac/monitor/node/node_info_2.jpg)
-
-- 页面显示所选节点的会话快照表格。
-- 点击 **SessionID** 可以查看所选会话的详细信息。
-- 需要选择显示哪些字段，可以通过点击表格上方的 **选择显示列** 按钮来选择。
-- 需要排序时，可以通过点击表格表头来根据字段进行排序。
-- 需要搜索某个字段时，可以在所在字段上方的输入框输入关键字进行搜索。
-
-> **note:**
->
-> 1. 表格中 **Classify** 列是为了更好的分类而添加显示的字段，并不是会话快照自带的字段信息。
->
-> 2. 会话快照默认显示非 **Idle** 状态和外部的会话("Type"为"Agent"、"ShardAgent"、"ReplAgent"、"HTTPAgent"的会话)，可通过字段下方的筛选框选择显示所有会话。
->
-> 3. 会话快照对应的字段说明可以通过[会话快照](database_management/monitoring/snapshot/SDB_SNAP_SESSIONS.md)查看。
+> **Note:**  
+> 1. 点击 **选择显示列** 可以选择显示哪些字段。  
+> 2. 表格中 **Classify 列** 是为了更好的分类，并不是会话快照的字段。  
+> 3. 会话快照默认显示非 **Idle** 状态和外部的会话("Type"为"Agent"、"ShardAgent"、"ReplAgent"、"HTTPAgent"的会话)，可以自定义过滤。  
+> 4. 会话快照对应的字段说明可以在 [会话快照](database_management/monitoring/snapshot/SDB_SNAP_SESSIONS.md) 查看。
 
 ###上下文###
 
-![节点上下文](sac/monitor/node/node_info_3.jpg)
+![节点上下文](sac/monitor/node/node_info_3.png)
 
-- 页面显示所选节点的上下文快照表格。
-- 点击 **CntextID** 可以查看所选上下文的详细信息。
-- 需要选择显示哪些字段，可以通过点击表格上方的 **选择显示列** 按钮来选择。
-- 需要排序时，可以通过点击表格表头来根据字段进行排序。
-- 需要搜索某个字段时，可以在所在字段上方的输入框输入关键字进行搜索。
+点击 **CntextID** 可以查看所选上下文的详细信息。
 
->  **note:**
->
->  上下文快照对应的字段说明可以通过[上下文快照](database_management/monitoring/snapshot/SDB_SNAP_CONTEXTS.md)查看。
+![节点上下文](sac/monitor/node/node_info_3.1.png)
+
+> **Note:**  
+> 1. 点击 **选择显示列** 可以选择显示哪些字段。  
+> 2. 上下文快照对应的字段说明可以在 [上下文快照](database_management/monitoring/snapshot/SDB_SNAP_CONTEXTS.md) 查看。
 
 ###图表###
 
-![节点图表](sac/monitor/node/node_info_4.jpg)
+页面显示所选节点的会话、上下文和事务的实时数量图表。
 
-- 页面显示所选节点的会话、上下文和事务的实时数量图表。
+![节点图表](sac/monitor/node/node_info_4.png)
