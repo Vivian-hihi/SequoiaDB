@@ -185,7 +185,7 @@ namespace engine
       --_planTaskNum ;
    }
 
-   INT32 _omaAsyncTask::updateProgressToOM( BOOLEAN isSuccessReturn )
+   INT32 _omaAsyncTask::updateProgressToOM()
    {
       INT32 rc     = SDB_OK ;
       INT32 retRc  = SDB_OK ;
@@ -282,7 +282,7 @@ namespace engine
                goto done ;
             }
          }
-      }while( isSuccessReturn && cb->isInterrupted() == FALSE ) ;
+      } while( cb->isInterrupted() == FALSE ) ;
 
       rc = SDB_APP_INTERRUPT ;
       PD_LOG( PDERROR, "Receive interrupt when update remove db business task "
@@ -350,7 +350,7 @@ namespace engine
       }
 
       setPlanTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
-      updateProgressToOM( FALSE ) ;
+      updateProgressToOM() ;
 
    done:
       deleteOmaCmd( planCmd ) ;
@@ -469,7 +469,7 @@ namespace engine
 
       _setTaskResultInfoStatus( OMA_TASK_STATUS_FINISH ) ;
       setPlanTaskStatus( OMA_TASK_STATUS_FINISH ) ;
-      rc = updateProgressToOM( TRUE ) ;
+      rc = updateProgressToOM() ;
       if( rc )
       {
          PD_LOG( PDERROR, "Failed to update progress to om, rc=%d", rc ) ;
@@ -541,7 +541,7 @@ namespace engine
 
       setPlanTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
       _setTaskResultInfoStatus( OMA_TASK_STATUS_ROLLBACK ) ;
-      updateProgressToOM( FALSE ) ;
+      updateProgressToOM() ;
       
       if( planCmd == NULL )
       {
@@ -600,7 +600,7 @@ namespace engine
    done:
       _setTaskResultInfoStatus( OMA_TASK_STATUS_FINISH ) ;
       setPlanTaskStatus( OMA_TASK_STATUS_FINISH ) ;
-      updateProgressToOM( FALSE ) ;
+      updateProgressToOM() ;
       return rc ;
    error:
       _isSetErrInfo = TRUE ;
@@ -645,7 +645,7 @@ namespace engine
    error:
       _setTaskResultInfoStatus( OMA_TASK_STATUS_FAIL ) ;
       setPlanTaskStatus( OMA_TASK_STATUS_FAIL ) ;
-      updateProgressToOM( FALSE ) ;
+      updateProgressToOM() ;
       if( startTaskNum > 0 )
       {
          rc = _waitSubTask() ;
@@ -796,7 +796,7 @@ namespace engine
             rc = SDB_OK ;
          }
 
-         _task->updateProgressToOM( FALSE ) ;
+         _task->updateProgressToOM() ;
 
          rc = _addStepVar( cmd, OMA_STR_STEP_DOIT ) ;
          if( rc )
@@ -826,7 +826,7 @@ namespace engine
             goto error ;
          }
 
-         _task->updateProgressToOM( FALSE ) ;
+         _task->updateProgressToOM() ;
 
          _task->deleteOmaCmd( cmd ) ;
          cmd = NULL ;
@@ -840,7 +840,7 @@ namespace engine
       return rc ;
    error:
       _task->setPlanTaskStatus( OMA_TASK_STATUS_FAIL ) ;
-      _task->updateProgressToOM( FALSE ) ;
+      _task->updateProgressToOM() ;
       goto done ;
    }
 

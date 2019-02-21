@@ -56,7 +56,7 @@ namespace engine
       INT32 setTaskRunning( _omaCommand* cmd, const BSONObj& itemInfo ) ;
       INT32 updateTaskInfo( _omaCommand* cmd, const BSONObj& itemInfo ) ;
       void notifyUpdateProgress() ;
-      INT32 updateProgressToOM( BOOLEAN isSuccessReturn = TRUE ) ;
+      INT32 updateProgressToOM() ;
       _omaCommand* createOmaCmd() ;
       void deleteOmaCmd( _omaCommand* cmd ) ;
       const CHAR* getOmaCmdName() ;
