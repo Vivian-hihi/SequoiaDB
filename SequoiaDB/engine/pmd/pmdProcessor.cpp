@@ -407,13 +407,6 @@ namespace engine
                              &pInsertor, count ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace insert msg failed, rc: %d",
                    getSession()->sessionName(), rc ) ;
-      if ( (flag & FLG_INSERT_CONTONDUP) && (flag & FLG_INSERT_REPLACEONDUP) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR,"Conflict insert flag(CONTONDUP and REPLACEONDUP):"
-                 "flag=%d,rc=%d", flag, rc ) ;
-         goto error ;
-      }
 
       /// When insert virtual cs
       if ( 0 == ossStrncmp( pCollectionName, CMD_ADMIN_PREFIX SYS_VIRTUAL_CS".",
