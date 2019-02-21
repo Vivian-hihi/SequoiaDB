@@ -25,8 +25,7 @@ public class GroupWrapper {
     private static final String SYSCOLLECTIONSPACES = "SYSCOLLECTIONSPACES";
     private static final String SYSDOMAINS = "SYSDOMAINS";
     private static final String SYSNODES = "SYSNODES";
-   // private GroupMgr mgr;
-
+   
     public GroupWrapper(BasicBSONObject groupInfo, ReplicaGroup group, GroupMgr mgr) {
         this.groupInfo = groupInfo;
         this.group = group;
@@ -212,7 +211,6 @@ public class GroupWrapper {
         if (this.getGroupName().equals(CATA_RG_NAME)) {
             return inspectCata(true);
         } else {
-            System.out.println(getInspectStdout());
             return false;
         }
     }
@@ -222,14 +220,12 @@ public class GroupWrapper {
             return inspectCata(false);
         }
         String stdout = getInspectStdout();
-        String[] res = stdout.split("\n");
-        if (res.length != 8) {
-            return false;
+        if ( stdout.contains( "Reason for exit : exit with no records different" )){
+            return true ; 
+        }else{
+            System.out.println( stdout );
+            return false ;
         }
-        if (res[7].equals("Reason for exit : exit with no records different")) {
-            return true;
-        }
-        return false;
     }
 
     private boolean inspectCata(boolean printIncompatibility) {
@@ -313,5 +309,4 @@ public class GroupWrapper {
     public BasicBSONObject getGroupInfo() {
         return groupInfo;
     }
-
 }
