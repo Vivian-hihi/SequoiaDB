@@ -80,6 +80,7 @@ public class CappedCLCURDAndQuery17142 extends SdbTestBase {
           BSONObject record = (BSONObject) JSON.parse("{a:3, b:3}");
           cl1.insert(record);
           expList.add(record);
+          //TODO:多条记录查询，最好是使用排序，避免用例随机失败
           DBCursor recordsCursor = cl1.query(null, null, null, "{'':null}");
           actList = TransUtils.getReadActList(recordsCursor);
           actList = getNoOidRecords(actList);
@@ -89,6 +90,7 @@ public class CappedCLCURDAndQuery17142 extends SdbTestBase {
           // 事务2读记录走表扫描
           recordsCursor = cl2.query(null, null, null, "{'':null}");
           actList = TransUtils.getReadActList(recordsCursor);
+          //TODO:记录是固定的，比较的时候不需要剔除id字段
           actList = getNoOidRecords(actList);
           expList = getNoOidRecords(expList);
           Assert.assertEquals(actList, expList);
@@ -96,6 +98,7 @@ public class CappedCLCURDAndQuery17142 extends SdbTestBase {
           // 事务1执行pop操作
           recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
           actList = TransUtils.getReadActList(recordsCursor);
+          //TODO:封装成本地方法，此处调用
           for (int i = 0; i < actList.size(); i++) {
                BSONObject object = actList.get(i);
                int a = (int) object.get("a");
