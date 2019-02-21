@@ -12,7 +12,7 @@ SequoiaSQL-MySQL 服务关联 SequoiaDB 服务。
 
 ###创建关联
 
-1. 进入 **部署** 页面。
+1. 点击左侧导航的 **部署**，进入部署页面。
 
    ![关联服务](sac/deployment/relation/mysql_sdb_1.png)
 
@@ -20,23 +20,17 @@ SequoiaSQL-MySQL 服务关联 SequoiaDB 服务。
 
    ![关联服务](sac/deployment/relation/mysql_sdb_2.png)
 
-3. 在弹窗填写关联参数。
+3. 在弹窗填写关联参数，点击 **确定**, 创建关联完成。
 
    ![关联服务](sac/deployment/relation/mysql_sdb_3.png)
 
    ![关联服务](sac/deployment/relation/mysql_sdb_4.png)
 
-4. 创建关联成功。
-
    ![关联服务](sac/deployment/relation/mysql_sdb_5.png)
-
-5. 在 **部署** 页面可以看到服务的关联信息。
-
-   ![关联服务](sac/deployment/relation/mysql_sdb_6.png)
 
 ###解除关联
 
-1. 进入 **部署** 页面。
+1. 点击左侧导航的 **部署**，进入部署页面。
 
    ![关联服务](sac/deployment/relation/d_mysql_sdb_1.png)
 
@@ -44,14 +38,8 @@ SequoiaSQL-MySQL 服务关联 SequoiaDB 服务。
 
    ![关联服务](sac/deployment/relation/d_mysql_sdb_2.png)
 
-3. 选择要解除的 **关联名**，SequoiaSQL-MySQL 服务解除关联需要重启。
+3. 选择要解除的 **关联名**，点击 **确定**，解除关联完成。
 
    ![关联服务](sac/deployment/relation/d_mysql_sdb_3.png)
 
-4. 解除关联成功。
-
    ![关联服务](sac/deployment/relation/d_mysql_sdb_4.png)
-
-5. 在 **部署** 页面可以看到两个服务的关联信息已经没有了。
-
-   ![关联服务](sac/deployment/relation/d_mysql_sdb_5.png)
