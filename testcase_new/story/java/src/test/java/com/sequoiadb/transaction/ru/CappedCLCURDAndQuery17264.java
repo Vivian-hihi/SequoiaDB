@@ -82,11 +82,6 @@ public class CappedCLCURDAndQuery17264 extends SdbTestBase {
           cl1.insert(record);
           expList.add(record);
           DBCursor recordsCursor = cl1.query(null, null, null, "{'':null}");
-          DBCursor explainCursor = cl1.explain(null, null, null, (BSONObject) JSON.parse("{'':null}"), 0, 1, 0, null);
-          while (explainCursor.hasNext()) {
-               String scanType = (String) explainCursor.getNext().get("ScanType");
-               Assert.assertEquals(scanType, "tbscan");
-          }
           actList = TransUtils.getReadActList(recordsCursor);
           actList = getNoOidRecords(actList);
           expList = getNoOidRecords(expList);
@@ -134,8 +129,8 @@ public class CappedCLCURDAndQuery17264 extends SdbTestBase {
           expList = getNoOidRecords(expList);
           Assert.assertEquals(actList, expList);
 
-          // 提交事务1，并读记录走表扫描
-          db1.commit();
+          // 回滚事务1，并读记录走表扫描
+          db1.rollback();
           recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
           actList = TransUtils.getReadActList(recordsCursor);
           actList = getNoOidRecords(actList);
@@ -149,10 +144,9 @@ public class CappedCLCURDAndQuery17264 extends SdbTestBase {
           expList = getNoOidRecords(expList);
           Assert.assertEquals(actList, expList);
 
-          // 事务2提交
-          db2.commit();
+          // 事务2回滚
+          db2.rollback();
           recordsCursor.close();
-          explainCursor.close();
      }
 
      private List<BSONObject> getNoOidRecords(List<BSONObject> records) {
