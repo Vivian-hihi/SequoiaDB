@@ -556,19 +556,6 @@ namespace engine
          goto done ;
       }
 
-/*    // Another transaction might have updated the record and index under us
-      // while we are waiting for the record lock. We must re-evaluate the 
-      // index value with the savedObj to make sure we are still looking at
-      // the same index value.  
-      // for write mode, since we write _savedRID and _savedObj in advance, we
-      // don't do it here, so let's jump to done directly
-
-      if ( !_isReadOnly )
-      {
-         goto done ;
-      }
-*/
-
       // compare the historical index OID with the current index oid, to make
       // sure the index is not changed during the time
       if ( !_indexCB->isStillValid ( _indexOID ) ||
@@ -584,10 +571,22 @@ namespace engine
          goto error ;
       }
 
+      // for write mode, since we write _savedRID and _savedObj in advance, we
+      // don't do it here, so let's jump to done directly. However:
+      // Another transaction might have updated the record and index under us
+      // while we are waiting for the record lock. We must re-evaluate the 
+      // index value with the savedObj to make sure we are still looking at
+      // the same index value. Now is good because we have _isValid flag setup
+      if ( !_isReadOnly )
+      {
+         goto done ;
+      }
+
       if ( _isValid )
       {
          // this means the last scaned record is still here, so let's
          // reset _savedRID so that we'll call advance()
+         
          _savedRID.reset() ;
       }
       // do relocate if this is local disk scan. Otherwise the mergescan 
