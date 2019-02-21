@@ -291,13 +291,15 @@ namespace engine
          {
             UINT16 mbID = rootExtent.getMBID() ;
             UINT16 freeSize = rootExtent.getFreeSize() ;
+            // we need to set _totalIndexFreeSpace before freeExtent()
+            _pIndexSu->decStatFreeSpace( mbID, freeSize ) ;
             rc = freeExtent ( root ) ;
             if ( rc )
             {
+               _pIndexSu->addStatFreeSpace( mbID, freeSize ) ;
                PD_LOG ( PDERROR, "Failed to free extent %d", root ) ;
                goto error ;
             }
-            _pIndexSu->decStatFreeSpace( mbID, freeSize ) ;
          }
       }
       setFlag ( IXM_INDEX_FLAG_NORMAL ) ;

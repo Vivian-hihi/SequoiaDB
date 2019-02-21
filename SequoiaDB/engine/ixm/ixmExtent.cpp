@@ -2084,6 +2084,10 @@ namespace engine
             childExtentID = getChildExtentID ((UINT16)i) ;
             if ( childExtentID != DMS_INVALID_EXTENT )
             {
+               // truncated, the page is empty
+               // we need to set _totalIndexFreeSpace before freeExtent()
+               _pIndexSu->decStatFreeSpace( _extentHead->_mbID,
+                                            totalFreeSize ) ;
                try
                {
                   ixmExtent( childExtentID, _pIndexSu ).truncate ( indexCB,
@@ -2102,12 +2106,11 @@ namespace engine
                }
                catch ( std::exception &e )
                {
+                  _pIndexSu->addStatFreeSpace( _extentHead->_mbID,
+                                               totalFreeSize ) ;
                   PD_LOG( PDWARNING, "Occur exception:%s", e.what() ) ;
                }
 
-               /// truncated, the page is empty
-               _pIndexSu->decStatFreeSpace( _extentHead->_mbID,
-                                            totalFreeSize ) ;
                /*
                * To improve performance, not change the page except root
                */

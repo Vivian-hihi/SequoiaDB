@@ -1588,10 +1588,16 @@ namespace engine
          _maxSegID += 1 ;
          _dirtyList.setSize( segmentSize() - _dataSegID ) ;
 
+         // we need to set _storageUnitSize before depositASegment()
+         // If not, FreeSize calculated by snapshot cs may be
+         // larger than TotalSize.
+         _dmsHeader->_storageUnitSize += _segmentPages ;
+
          // update SME Manager
          rc = _smeMgr.depositASegment( (dmsExtentID)beginExtentID ) ;
          if ( rc )
          {
+            _dmsHeader->_storageUnitSize -= _segmentPages ;
             PD_LOG ( PDERROR, "Failed to deposit new segment into SMEMgr, "
                      "rc = %d", rc ) ;
             ossPanic() ;
@@ -1601,7 +1607,6 @@ namespace engine
          fileSize += _getSegmentSize() ;
 
          // update header
-         _dmsHeader->_storageUnitSize += _segmentPages ;
          _dmsHeader->_pageNum += _segmentPages ;
          _pageNum = _dmsHeader->_pageNum ;
       }

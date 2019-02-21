@@ -1461,6 +1461,12 @@ namespace engine
          context->mb()->_deleteList[i].reset() ;
       }
 
+      // We should set _totalDataFreeSpace before _freeExtent() which free
+      // pages in SME. If not, FreeDataSize calculated by snapshot cs will be
+      // larger than the actual one.
+      // FreeDataSize = freePages in sme * pageSize + each cl totalDataFreeSpace
+      context->mbStat()->_totalDataFreeSpace = 0 ;
+
       // Free all extent from the end. If the system went down becuase of power
       // cut, the file may be damanged. During the recovery, if we find any
       // damaged extent, try to truncate from the beginning also.
