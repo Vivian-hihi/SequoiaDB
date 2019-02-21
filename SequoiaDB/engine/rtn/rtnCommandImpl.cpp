@@ -1315,8 +1315,9 @@ namespace engine
                                        compType, &logicalID, extOptions ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to create collection %s, rc: %d",
-                  pCollection, rc ) ;
+         PD_LOG ( PDERROR,
+                  "Failed to create collection [name:%s, id:%llu], rc: %d",
+                  pCollection, clUniqueID, rc ) ;
          goto error ;
       }
       if ( !shardingKey.isEmpty() )
