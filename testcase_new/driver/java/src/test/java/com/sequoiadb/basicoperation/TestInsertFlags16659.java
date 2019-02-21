@@ -91,14 +91,15 @@ public class TestInsertFlags16659 extends SdbTestBase{
         Assert.assertEquals(cl.getCount(obj4), 1);       
         
         // case 6: flag 值为非法值如：-1
-        BSONObject obj5 = new BasicBSONObject().append("test3", 123);
-        try{
-        	cl.insert(obj5, -1);
-        	Assert.fail("Illegal flag insert failed!");
-        }catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(), -6,e.getMessage());
-		}        
-        Assert.assertEquals(cl.getCount(obj5), 0);
+        //http://jira:8080/browse/SEQUOIADBMAINSTREAM-4212问题单屏蔽用例
+//        BSONObject obj5 = new BasicBSONObject().append("test5", 123);
+//        try{
+//        	cl.insert(obj5, -1);        	
+//        	Assert.fail("Illegal flag insert failed!");
+//        }catch(BaseException e){        	
+//			Assert.assertEquals(e.getErrorCode(), -6,e.getMessage());
+//		}        
+//        Assert.assertEquals(cl.getCount(obj5), 0);
 	}
     
     @AfterClass

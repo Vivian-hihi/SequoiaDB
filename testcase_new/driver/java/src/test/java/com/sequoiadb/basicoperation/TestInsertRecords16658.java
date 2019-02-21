@@ -53,8 +53,8 @@ public class TestInsertRecords16658 extends SdbTestBase{
 		//存在重复数据，flag取值为0和FLG_INSERT_CONTONDUP
 		InsertRecordsDuplicateKey();	
 		
-		//flag取值不正确	
-		InsertRecordsFlagError(-1);
+		//flag取值不正确	http://jira:8080/browse/SEQUOIADBMAINSTREAM-4212问题单屏蔽用例
+		//InsertRecordsFlagError(-1);
 		
 		//设置ensureOID()为false，flag取值为FLG_INSERT_RETURN_OID
 		InsertRecordsSetEnsureOid();
