@@ -47,14 +47,14 @@ public class Transaction17358 extends SdbTestBase {
     @BeforeClass
     public void setUp(){
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        //TODO:为什么要在这里new？new完也不用，建议在定义的地方new，data、data2、data3等也类似，其他测试用例也需修改
+        //这里我有个疑问，为什么要在这里赋值，又不在这里使用；为了测试用例的清晰刻度，我觉得：这个变量是个全局变量，应该在定义的时候new，在使用的时候赋值
+        //另外：这里定义数据的时候，是不是使用字符串强转为BSONObject，可读性更强
         sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
-        //TODO:为什么要在这里new？new完也不用，建议在定义的地方new，data、data2、data3等也类似，其他测试用例也需修改
-        //这里我有个疑问，为什么要在这里赋值，又不在这里使用；为了测试用例的清晰刻度，我觉得：这个变量是个全局变量，应该在定义的时候new，在使用的时候赋值
-        //另外：这里定义数据的时候，是不是使用字符串强转为BSONObject，可读性更强
         expDataList = new ArrayList<BSONObject>();
         data = new BasicBSONObject();
         data.put("_id", "insertID17358_1");
