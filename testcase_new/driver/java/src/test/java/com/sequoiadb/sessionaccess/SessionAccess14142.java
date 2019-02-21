@@ -7,12 +7,12 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.List;
 import java.util.Random;
 
 import static org.testng.Assert.assertEquals;
@@ -30,15 +30,17 @@ public class SessionAccess14142 extends SdbTestBase {
     private Sequoiadb db;
     private DBCollection dbcl;
     private Random random = new Random();
-    private List<NodeWarrper> nodeList;
+    private BasicBSONList nodes;
     private String rgName = "sessionAccessRG14142";
 
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        CommLib.createRG(db, rgName);
+        nodes = CommLib.createRG(db, rgName);
         BSONObject options = new BasicBSONObject("Group", rgName);
+        options.put("ReplSize", -1);
         dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(clname, options);
+        CommLib.insertRecords(dbcl);
     }
 
     @AfterClass
@@ -68,14 +70,15 @@ public class SessionAccess14142 extends SdbTestBase {
         lob.close();
         db.setSessionAttr(options);
         String actualNodeName = CommLib.getActualDataNodeName(dbcl);
-        assertEquals(CommLib.getNodeWarrper(db, rgName, actualNodeName).getInstenceid(), expectid);
+        assertEquals(CommLib.getInstanceidByNodeName(nodes, actualNodeName), expectid);
         BSONObject actual = db.getSessionAttr();
         options.append("PreferedInstanceMode", "random");
         assertEquals(actual, options);
     }
     
     private int getRandomInstanceid() {
-    	nodeList = CommLib.getNodeList(db, rgName);
-        return nodeList.get(random.nextInt(nodeList.size())).getInstenceid();
+    	BasicBSONObject randomNode = (BasicBSONObject)nodes.get(random.nextInt(nodes.size()));
+        return Integer.parseInt(randomNode.getString("instanceid"));
     }
+    
 }
