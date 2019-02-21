@@ -52,6 +52,7 @@ public class UpdateRead17076_3 extends SdbTestBase {
 		db2.beginTransaction();
 		
   	    //记录新增索引字段
+		//TODO:新增所有字段，应该是插入记录没有索引字段，然后再使用set，这里覆盖的是更新索引字段的值
   	    cl1.update("{_id:1}", "{$set:{a:3}}", "{'':null}");
 		BSONObject updateR1 = (BSONObject)JSON.parse("{_id:1,a:3,b:1}");
 	    

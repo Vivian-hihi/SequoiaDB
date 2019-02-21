@@ -40,7 +40,7 @@ public class InsertRead17089 extends SdbTestBase {
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
 		cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
-        
+        //TODO:建议使用批插
         for(int i = 0; i < 50000; i++)
         {
         	BSONObject insertR = (BSONObject)JSON.parse("{_id:"+i+", a:1, b:1}");
@@ -55,7 +55,7 @@ public class InsertRead17089 extends SdbTestBase {
 		db1.beginTransaction();
 		db2.beginTransaction();
 		
-		//事务1执行批量更新
+		//事务1执行批量更新,TODO：强制走索引
 		cl1.update("{a:1}","{$set:{a:2}}", null);
 		
 		//事务2表扫描记录
@@ -74,6 +74,7 @@ public class InsertRead17089 extends SdbTestBase {
   		cursor = cl.query(null, null, "{_id:1}", "{'':null}");
   		actList = TransUtils.getReadActList(cursor);
   	    expList.clear();
+  	    //TODO:待公共方法提交后，可以调用公共方法，保持风格统一
 		for(int i = 0; i < 50000; i++)
         {
         	BSONObject updateR1 = (BSONObject)JSON.parse("{_id:"+i+", a:2, b:1}");

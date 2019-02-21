@@ -40,7 +40,7 @@ public class UpdateRead17091 extends SdbTestBase {
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
 		cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
-        
+        //TODO:使用批插
         for(int i=0; i<50000; i++)
         {
         	BSONObject insertR1 = (BSONObject)JSON.parse("{_id:"+i+", a:1, b:1}");
@@ -55,7 +55,7 @@ public class UpdateRead17091 extends SdbTestBase {
 		db1.beginTransaction();
 		db2.beginTransaction();
 		
-		//事务1执行多次更新
+		//事务1执行多次更新，TODO:多次更新同样的记录，这里只是更新了5w次，更新的是不同记录，另外，可以强制走索引
 		for(int i=0; i<50000; i++)
         {
 			cl1.update("{_id:"+i+"}","{$set:{a:"+i+"}}", null);

@@ -41,6 +41,7 @@ public class DeleteRead17090 extends SdbTestBase {
 		cl2 = db2.getCollectionSpace(csName).getCollection(clName);
 		cl.createIndex("a", "{a:1}", false, false);
 		
+		//TODO：这里建议使用批插
 		for(int i=0; i<50000; i++)
 		{
 			BSONObject insertR1 = (BSONObject)JSON.parse("{a:1, b:1}");
@@ -55,7 +56,7 @@ public class DeleteRead17090 extends SdbTestBase {
 		db1.beginTransaction();
 		db2.beginTransaction();
 		
-		//事务1执行批量删除
+		//事务1执行批量删除，TODO:强制走索引
 	    cl1.delete("{a:1}");
 		
 		//事务2表扫描记录

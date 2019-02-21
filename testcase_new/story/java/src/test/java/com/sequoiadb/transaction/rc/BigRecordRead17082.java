@@ -54,6 +54,7 @@ public class BigRecordRead17082 extends SdbTestBase {
 		db2.beginTransaction();
 		
 		//事务1对同一条记录执行多个操作
+		//TODO:下面操作的记录只有几个B，用例中写了长度至少要4K以上，建议使用1M或者5M，17083类似
 		cl1.insert("{_id:3, a:'aaaaaaaa', b:3}");
 		BSONObject insertR2 = (BSONObject)JSON.parse("{_id:2, a:'aaaaaaaa', b:2}");
 		cl1.insert(insertR2);

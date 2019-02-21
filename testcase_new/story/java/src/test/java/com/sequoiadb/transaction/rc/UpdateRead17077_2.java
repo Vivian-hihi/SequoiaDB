@@ -20,6 +20,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 @Test(groups = "rc")
 public class UpdateRead17077_2 extends SdbTestBase {
+    //TODO:集合名跟17077的其他用例相同，并发执行的时候会存在随机问题，请结合其他用例一起修改
 	private String clName = "cl_17077";
 	private Sequoiadb sdb = null;
 	private Sequoiadb db1 = null;

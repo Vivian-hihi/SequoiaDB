@@ -53,6 +53,7 @@ public class UpdateRead17117 extends SdbTestBase {
 		db2.beginTransaction();
 		
 		//事务1更新全部索引字段
+		//TODO:强制走索引
 		cl1.update(null,"{$set:{a:2, b:2, c:2}}", "{'':null}");
 		BSONObject updateR1 = (BSONObject)JSON.parse("{_id:1, a:2, b:2, c:2}");
 		expList.add(updateR1);

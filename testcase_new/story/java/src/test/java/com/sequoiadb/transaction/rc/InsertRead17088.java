@@ -20,6 +20,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 @Test(groups = "rc")
 public class InsertRead17088 extends SdbTestBase {
+    //TODO：集合名需带上用例编号，方便定位，请检查其他用例是否存在同样的问题
 	private String clName = "cl_17206";
 	private Sequoiadb sdb = null;
 	private Sequoiadb db1 = null;
@@ -51,6 +52,7 @@ public class InsertRead17088 extends SdbTestBase {
 		//事务1执行批量插入记录
 		for(int i=0; i<50000; i++)
 		{
+		    //TODO:注意空格的使用
 			BSONObject insertR = (BSONObject)JSON.parse("{_id:"+i+",a:"+i+",b:"+i+"}");
 			expList.add(insertR);
 		}
