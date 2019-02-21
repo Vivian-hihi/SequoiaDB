@@ -22,7 +22,6 @@ import com.sequoiadb.transaction.TransUtils;
  * @testcase seqDB-17142:固定集合中增删改记录，与读并发
  * @date 2019-1-24
  * @author yinzhen
- * TODO：检视意见by zhaoyu:固定集合中的增删读操作均不是事务操作了，该用例需删除，其他事务模式下的固定集合用例也没必要验证了，详见问题单4168
  */
 @Test(groups = "rc")
 public class CappedCLCURDAndQuery17142 extends SdbTestBase {
@@ -82,11 +81,6 @@ public class CappedCLCURDAndQuery17142 extends SdbTestBase {
           cl1.insert(record);
           expList.add(record);
           DBCursor recordsCursor = cl1.query(null, null, null, "{'':null}");
-          DBCursor explainCursor = cl1.explain(null, null, null, (BSONObject) JSON.parse("{'':null}"), 0, 1, 0, null);
-          while (explainCursor.hasNext()) {
-               String scanType = (String) explainCursor.getNext().get("ScanType");
-               Assert.assertEquals(scanType, "tbscan");
-          }
           actList = TransUtils.getReadActList(recordsCursor);
           actList = getNoOidRecords(actList);
           expList = getNoOidRecords(expList);
@@ -133,8 +127,8 @@ public class CappedCLCURDAndQuery17142 extends SdbTestBase {
           actList = getNoOidRecords(actList);
           Assert.assertEquals(actList, expList);
 
-          // 提交事务1，并读记录走表扫描
-          db1.commit();
+          // 回滚事务1，并读记录走表扫描
+          db1.rollback();
           recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
           actList = TransUtils.getReadActList(recordsCursor);
           actList = getNoOidRecords(actList);
@@ -145,11 +139,10 @@ public class CappedCLCURDAndQuery17142 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           actList = getNoOidRecords(actList);
           Assert.assertEquals(actList, expList);
-
-          // 事务2提交
-          db2.commit();
+          
+          // 事务2回滚
+          db2.rollback();
           recordsCursor.close();
-          explainCursor.close();
      }
 
      private List<BSONObject> getNoOidRecords(List<BSONObject> records) {
