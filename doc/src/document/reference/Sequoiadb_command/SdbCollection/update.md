@@ -22,9 +22,9 @@
 >
 > * 参数`hint`的用法与[find()](reference/Sequoiadb_command/SdbCollection/find.md)的相同。
 >
-> * 当 `KeepShardingKey` 为 false 时，如果包含对分区键的更新操作，将自动剔除掉对分区键的更新，但其他字段更新生效，且不会发生错误。当 KeepShardingKey 为 true 时，将会保留分区键字段。
+> * 当 `KeepShardingKey` 为 false 时，将不保留更新规则中的分区键字段，只更新非分区键字段。当 `KeepShardingKey` 为 true 时，会保留更新规则中的分区键字段。
 >
-> * 目前切分表上，不允许更新分区键。
+> * 目前不支持更新分区键。如果 `KeepShardingKey` 为 true，并且更新规则中带有分区键字段，将会报错-178。
 
 
 ##返回值##
@@ -37,7 +37,7 @@
   
 | 错误码   | 可能的原因               | 解决方法                                     |
 | -------- | ------------------------ | -------------------------------------------- |
-| -178     | 切分表上不允许更新分区键 | KeepShardingKey 设置为 false，自动过滤分区键 |
+| -178     | 分区集合上不支持更新分区键 | KeepShardingKey 设置为 false，自动过滤分区键 |
 
 ## 示例##
 
@@ -59,7 +59,7 @@
  > db.foo.bar.update( { $inc: { age: 1 } }, { age: { $gt: 20 } }, { "": "testIndex" } )
  ```
 
-* 指定更新记录时保留分区键，切分表foo.bar，分区键为 { b: 1 }
+* 指定更新记录时保留分区键，分区集合foo.bar，分区键为 { b: 1 }
 
  ```lang-javascript
  > db.foo.bar.update( { $set: { b: 1 } }, { }, { }, { KeepShardingKey: true } )
