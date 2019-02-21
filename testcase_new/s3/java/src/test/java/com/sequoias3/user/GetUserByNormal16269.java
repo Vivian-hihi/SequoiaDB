@@ -28,7 +28,7 @@ public class GetUserByNormal16269 extends S3TestBase {
             UserUtils.deleteUser(userName, UserUtils.accessKeyId, true);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
-                Assert.fail(e.getMessage());
+                throw e;
             }
         }
     }
@@ -45,11 +45,10 @@ public class GetUserByNormal16269 extends S3TestBase {
             Assert.fail("exp success but act success");
         } catch (HttpClientErrorException e) {
             String errorMsg = e.getResponseBodyAsString();
-            System.out.println("msg = " + errorMsg);
             JSONObject json1 = XML.toJSONObject(errorMsg);
             if (!json1.getJSONObject(UserCommDefind.error).getString(UserCommDefind.errorCode)
                     .contains("AccessDenied")) {
-                Assert.fail(e.getMessage());
+               throw e;
             }
         }
         runSuccess = true;
