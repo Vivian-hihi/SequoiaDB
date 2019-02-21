@@ -46,6 +46,7 @@ namespace engine
 {
    #define CHAR_DOUBLE_QUOTE  '"'
    #define CHAR_SINGLE_QUOTE  '\''
+   #define SPT_DOUBLE_TEMP_SIZE  512
 
    enum itemType
    {
@@ -1113,7 +1114,11 @@ namespace engine
          }
          else if ( e.type() == NumberDouble )
          {
-            ss << e.numberDouble() ;
+            FLOAT64 val = e.numberDouble() ;
+            CHAR tmp[SPT_DOUBLE_TEMP_SIZE] = { 0 } ;
+
+            ossSnprintf( tmp, SPT_DOUBLE_TEMP_SIZE, "%.16g", val ) ;
+            ss << tmp ;
          }
          else if ( e.type() == Bool )
          {
@@ -1228,7 +1233,11 @@ namespace engine
          }
          else if ( e.type() == NumberDouble )
          {
-            ss << e.numberDouble() ;
+            FLOAT64 val = e.numberDouble() ;
+            CHAR tmp[SPT_DOUBLE_TEMP_SIZE] = { 0 } ;
+
+            ossSnprintf( tmp, SPT_DOUBLE_TEMP_SIZE, "%.16g", val ) ;
+            ss << tmp ;
          }
          else if ( e.type() == Bool )
          {
