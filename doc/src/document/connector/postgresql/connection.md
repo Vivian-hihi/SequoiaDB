@@ -95,28 +95,26 @@ foo=# create foreign table test (name text, id numeric) server sdb_server option
 
 1. 数据类型的对应关系
 
-	| PostgreSQL	    | SequoiaDB       | 注意事项                                      |
-	| ----------------- | --------------- | --------------------------------------------- |
-	| smallint	        | int             | 当SequoiaDB中的值超过smallint范围时会发生截断 |
-	| integer        	| int             |                                               |
-	| bigint        	| long            |                                               |
-	| serial           	| int             |                                               |
-	| bigserial      	| long            |                                               |
-	| real              | double          | 存在精度问题，SequoiaDB 存储时不是完全一致    |
-	| double precision  | double          |                                               |
-	| numeric           | string          | 需要在创建外表时，不指定选项 decimal ，或者指定选项 decimal 为 'false' |
-	| numeric           | decimal         | 需要在创建外表时，指定选项 decimal 为 'on'    |
-	| decimal           | string          | 需要在创建外表时，不指定选项 decimal ，或者指定选项 decimal 为 'false' |
-	| decimal           | decimal         | 需要在创建外表时，指定选项 decimal 为 'on'    |
-	| text              | string          |                                               |
-	| char              | string          |                                               |
-	| varchar           | string          |                                               |
-	| bytea             | binary(type=0)  |                                               |
-	| date              | date            |                                               |
-	| timestamp         | timestamp       |                                               |
-	| TYPE[]            | array           | 仅支持一维数组                                |
-	| boolean           | boolean         |                                               |
-	| text              | null            |                                               |
+	| PostgreSQL	    | SequoiaDB        | 注意事项                                      |
+	| ----------------- | ---------------- | --------------------------------------------- |
+	| smallint	        | int              | 当SequoiaDB中的值超过smallint范围时会发生截断 |
+	| integer        	| int              |                                               |
+	| bigint        	| long             |                                               |
+	| serial           	| int              |                                               |
+	| bigserial      	| long             |                                               |
+	| real              | double           | 存在精度问题，SequoiaDB 存储时不是完全一致    |
+	| double precision  | double           |                                               |
+	| numeric           | decimal / string | 在创建外表时，指定选项 decimal 为 'on', numeric 映射对应 decimal ，否则对应 string   |
+	| decimal           | decimal / string | 在创建外表时，指定选项 decimal 为 'on', decimal 映射对应 decimal ，否则对应 string   |
+	| text              | string           |                                               |
+	| char              | string           |                                               |
+	| varchar           | string           |                                               |
+	| bytea             | binary(type=0)   |                                               |
+	| date              | date             |                                               |
+	| timestamp         | timestamp        |                                               |
+	| TYPE[]            | array            | 仅支持一维数组                                |
+	| boolean           | boolean          |                                               |
+	| text              | null             |                                               |
 
 2. 注意事项
 
