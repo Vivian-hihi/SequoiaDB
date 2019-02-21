@@ -10,14 +10,14 @@
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | -------- | ---- | -------- |
 | doc&#124;docs | Json 对象 | 文档记录。doc 为一条记录，docs 为多条记录。 | 是 |
-| flag | Int | 有效值为：SDB_INSERT_RETURN_ID、SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP。其中 SDB_INSERT_RETURN_ID 表示插入成功后返回记录中“_id”字段内容；SDB_INSERT_CONTONDUP 表示当发生索引建冲突时，跳过该条记录并继续插入其他记录；SDB_INSERT_REPLACEONDUP 表示当发生索引建冲突时，将已存在的记录更新为待插入的新纪录，并继续插入其他记录。默认情况下发生索引键冲突本命令失败并终止命令。| 否 |
+| flag | Int | 有效值为：SDB_INSERT_RETURN_ID、SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP。其中 SDB_INSERT_RETURN_ID 表示插入成功后返回记录中“_id”字段内容；SDB_INSERT_CONTONDUP 表示当发生索引建冲突时，跳过该条记录并继续插入其他记录；SDB_INSERT_REPLACEONDUP 表示当发生索引建冲突时，将已存在的记录更新为待插入的新纪录，并继续插入其他记录。默认情况下发生索引键冲突本命令失败并终止。| 否 |
 | options | Json 对象 | 指定插入的行为及结果。 | 否 |
 
 > **Note:**
 >
-> 单条插入支持的有效值为：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP
+> 单条插入支持的flag有效值为：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP
 >
->多条插入支持的有效值为：SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP
+> 多条插入支持的flag有效值为：SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP
 
 参数 options 属性选项如下：
 
