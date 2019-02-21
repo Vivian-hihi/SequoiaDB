@@ -3264,6 +3264,10 @@ namespace engine
          pTransCB->transLockRelease( cb, _logicalCSID, context->mbID(),
                                      &foundRID, callback ) ;
       }
+      if ( callback )
+      {
+         SDB_OSS_DEL callback ;
+      }
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize, cb ) ;

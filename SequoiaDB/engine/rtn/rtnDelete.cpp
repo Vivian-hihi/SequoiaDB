@@ -152,7 +152,7 @@ namespace engine
       try
       {
          // create local call back
-        
+
          callback = f.create( LOCK_CALLBACK_TYPE_DMS,
                               cb,
                               NULL );
@@ -169,14 +169,14 @@ namespace engine
          {
             rc = rtnGetTBScanner( pCollectionShortName, &planRuntime, su,
                                   mbContext, cb, &pScanner,
-                                  DMS_ACCESS_TYPE_DELETE, 
+                                  DMS_ACCESS_TYPE_DELETE,
                                   callback ) ;
          }
          else if ( planRuntime.getScanType() == IXSCAN )
          {
             rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su,
                                   mbContext, cb, &pScanner,
-                                  DMS_ACCESS_TYPE_DELETE, 
+                                  DMS_ACCESS_TYPE_DELETE,
                                   callback ) ;
          }
          else
@@ -259,7 +259,7 @@ namespace engine
       }
       if ( callback )
       {
-         SDB_OSS_DEL callback;
+         SDB_OSS_DEL callback ;
       }
       if ( mbContext )
       {
