@@ -436,6 +436,15 @@ function _getVersion( hostName, user, pwd, sshPort, installPath )
    return version ;
 }
 
+function string_encode( str )
+{
+   str = str.replace( new RegExp("\\\\",'g'), "\\\\" ) ;
+   str = str.replace( new RegExp('"','g'), "\\\"" ) ;
+   str = str.replace( new RegExp('\\$','g'), "\\\$" ) ;
+   str = str.replace( new RegExp('\\`','g'), "\\\`" ) ;
+   return '"' + str + '"' ;
+}
+
 function InstallPackage( taskID )
 {
    var PD_LOGGER = new Logger( "sequoiasql-mysql.js" ) ;
@@ -459,7 +468,7 @@ function InstallPackage( taskID )
    var expectTimeout = 30 ;
    var expectPath    = OMA_TEMP_EXPECT_PATH + '/bin/expect' ;
    var expectShell   = OMA_TEMP_EXPECT_PATH + '/shell/sudo_cmd.sh' ;
-   var expectExec    = 'LC_ALL=C;' + expectPath + ' ' + expectShell + ' ' + expectTimeout + ' ' + pwd + ' ' ;
+   var expectExec    = 'LC_ALL=C;' + expectPath + ' ' + expectShell + ' ' + expectTimeout + ' ' + string_encode( pwd ) + ' ' ;
 
    PD_LOGGER.setTaskId( taskID ) ;
 
@@ -467,6 +476,8 @@ function InstallPackage( taskID )
                                         hostName ) ) ;
    resultInfo[FIELD_FLOW].push( sprintf( "Begin to install packet: host [?]",
                                          hostName ) ) ;
+
+   PD_LOGGER.logTask( PDEVENT, expectExec ) ;
 
    try
    {
@@ -623,6 +634,19 @@ function CheckResult( taskID )
 
    for( var index in resultInfo )
    {
+      try
+      {
+         var hostName = resultInfo[index][FIELD_HOSTNAME] ;
+         var agentPort = _getAgentPort( hostName ) ;
+
+         remote = new Remote( hostName, agentPort ) ;
+         file = remote.getFile() ;
+         file.remove( OMA_TEMP_ROOT_PATH ) ;
+      }
+      catch( e )
+      {
+      }
+
       if( resultInfo[index][FIELD_ERRNO] != SDB_OK )
       {
          var error = new SdbError( resultInfo[index][FIELD_ERRNO],
