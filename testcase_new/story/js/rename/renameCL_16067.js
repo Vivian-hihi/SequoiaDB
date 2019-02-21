@@ -85,13 +85,14 @@ function checkSplitResult( csName, clName, taskId, expRecordNums, groupsInfo )
       //waiting for split 
       var sleepInteval=10;
       var sleepDuration=0;
-      var maxSleepDuration=10000;      
+      var maxSleepDuration=100000;      
       
-      while( (db.listTasks({ "Name": csName + "."+ clName }).next() !== undefined ) && sleepDuration < maxSleepDuration )
+      while( (db.listTasks({ "TaskID": taskId }).next() !== undefined ) && sleepDuration < maxSleepDuration )
       {        
          sleep( sleepInteval );
-         sleepDuration += sleepInteval;                       
+         sleepDuration += sleepInteval;                                
       }
+      println("---waiting split time:"+ sleepDuration);
       //check the record nums      
       var dbcl = db.getCS( csName ).getCL( clName );
       var count = dbcl.count();      
