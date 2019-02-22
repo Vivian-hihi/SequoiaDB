@@ -6,6 +6,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -33,6 +34,9 @@ public class SessionAccess14145 extends SdbTestBase {
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if(com.sequoiadb.testcommon.CommLib.isStandAlone(db)){
+			throw new SkipException("run mode is standalone,test case skip");
+		}
         nodes = CommLib.createRG(db, rgName);
         BSONObject options = new BasicBSONObject("Group", rgName);
         options.put("ReplSize", -1);
@@ -40,17 +44,9 @@ public class SessionAccess14145 extends SdbTestBase {
         CommLib.insertRecords(dbcl);
     }
 
-    @AfterClass
-    public void teardown() throws InterruptedException {
-        db.getCollectionSpace(SdbTestBase.csName).dropCollection(clname);
-        db.removeReplicaGroup(rgName);
-        db.close();
-    }
-
     @Test
     public void test14145() {
     	List<Integer> instanceidList = new ArrayList<Integer>();
-    	//TODO:1、获取instanceid已经有公共方法，这里没有必要在实现一次
         for (int i=0 ; i< nodes.size() ; i++) {
         	BasicBSONObject node = (BasicBSONObject)nodes.get(i);
         	instanceidList.add(Integer.parseInt(node.getString("instanceid")));
@@ -61,21 +57,25 @@ public class SessionAccess14145 extends SdbTestBase {
         BSONObject options = new BasicBSONObject("PreferedInstance", id).append("PreferedInstanceMode", "random");
         db.setSessionAttr(options);
         String actualNodeName = CommLib.getActualDataNodeName(dbcl);
-        //TODO:2、结果比较时验证访问节点，不要把测试点放在匹配instanceid上
-        int actualId = CommLib.getInstanceidByNodeName(nodes, actualNodeName);
-        if (actualId != id[0] && actualId != id[1]) {
-            fail("actual:" + actualId + " expect: " + id[0] + " or " + id[1]);
+        String expNodeName1 = CommLib.getNodeNameByInstanceId(nodes, instanceidList.get(0).toString());
+        String expNodeName2 = CommLib.getNodeNameByInstanceId(nodes, instanceidList.get(1).toString());
+        if (!actualNodeName.equals(expNodeName1) && !actualNodeName.equals(expNodeName2)) {
+            fail("actual node name :" + actualNodeName + " expect node name : " + expNodeName1 + " or " + expNodeName2);
         }
-
-        //TODO:3、请注意规范命名，这里actual、expect一般认为是匹配的，实际意义却不一致
-        BSONObject actual = db.getSessionAttr();
-        BasicBSONList actualIdList= (BasicBSONList) actual.get("PreferedInstance");
-        BasicBSONList expect=new BasicBSONList();
+        BSONObject actualSessionAttr = db.getSessionAttr();
+        BasicBSONList actualIdList= (BasicBSONList) actualSessionAttr.get("PreferedInstance");
+        BasicBSONList expectIdList=new BasicBSONList();
         for (int i : id) {
-            expect.add(i);
+        	expectIdList.add(i);
         }
-        assertEquals(actualIdList,expect);
-
-        assertEquals(actual.get("PreferedInstanceMode"),"random");
+        assertEquals(actualIdList,expectIdList);
+        assertEquals(actualSessionAttr.get("PreferedInstanceMode"),"random");
+    }
+    
+    @AfterClass
+    public void teardown() throws InterruptedException {
+        db.getCollectionSpace(SdbTestBase.csName).dropCollection(clname);
+        db.removeReplicaGroup(rgName);
+        db.close();
     }
 }

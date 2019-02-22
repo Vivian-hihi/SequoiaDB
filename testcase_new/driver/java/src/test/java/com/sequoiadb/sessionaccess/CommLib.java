@@ -3,23 +3,17 @@ package com.sequoiadb.sessionaccess;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
-import org.testng.SkipException;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 public class CommLib extends SdbTestBase {
 	
     public static  BasicBSONList createRG(Sequoiadb db, String rgName) {
     	int reservedPortBegin = SdbTestBase.reservedPortBegin;
-    	//TODO:1、环境判断不要放到公共方法中，在每个用例开始前判断
-    	if(isStandAlone(db)){
-			throw new SkipException("run mode is standalone,test case skip");
-		}
         ReplicaGroup rg = db.createReplicaGroup(rgName);
         int[][] param = {{reservedPortBegin+10, 7}, {reservedPortBegin+20, 8}, {reservedPortBegin+30, 9},};
         String hostName=db.getReplicaGroup("SYSCatalogGroup").getMaster().getHostName();
@@ -39,19 +33,6 @@ public class CommLib extends SdbTestBase {
         return nodes;
     }
     
-    //TODO:2、公共类已经有改方法，这个方法可以去掉
-    public static boolean isStandAlone(Sequoiadb sdb){
-		try{
-			sdb.listReplicaGroups();		
-		}catch(BaseException e){
-			if( e.getErrorCode() == -159 ){
-				System.out.printf("run mode is standalone");	 
-				return true;
-			} 	
-		}	
-		return false;
-	}
-    
     public static boolean isMaster(Sequoiadb db, String groupName, String nodeName){
     	ReplicaGroup rg = db.getReplicaGroup(groupName);
     	if (rg.getMaster().getNodeName().trim().equals(nodeName)) {
@@ -70,6 +51,16 @@ public class CommLib extends SdbTestBase {
     		}
     	}
     	return -1;
+    }
+    
+    public static String getNodeNameByInstanceId(BasicBSONList nodes, String instanceId){
+    	for(int i = 0 ; i < nodes.size() ; i++){
+    		BasicBSONObject node = (BasicBSONObject)nodes.get(i);
+    		if(node.getString("instanceid").equals(instanceId)){
+    			return node.getString("nodeName");
+    		}
+    	}
+    	return "";
     }
 
     public static BasicBSONList getInstanceidList(BasicBSONList nodes){
