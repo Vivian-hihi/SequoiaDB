@@ -616,8 +616,8 @@ namespace engine
    }
 
    INT32 _rtnDiskIXScanner::isCursorSame( const BSONObj &saveObj,
-                                      const dmsRecordID &saveRID,
-                                      BOOLEAN &isSame )
+                                          const dmsRecordID &saveRID,
+                                          BOOLEAN &isSame )
    {
       INT32 rc = SDB_OK ;
 

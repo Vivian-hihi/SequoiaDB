@@ -103,12 +103,29 @@ namespace engine
                                                      const BSONObj &objSched ) ;
 
          INT32          _buildPacketWithSessionInit( _pmdRemoteSession *pSession,
-                                                     _pmdSubSession *pSub ) ;
+                                                     _pmdSubSession *pSub,
+                                                     BOOLEAN isUpdate ) ;
 
          INT32          _onSendConnectOld( _pmdSubSession *pSub ) ;
 
       private:
+         BSONObj        _buildSessionInitObj( _pmdEDUCB *cb ) ;
+
+         INT32          _checkSessionSchedInfo( _pmdRemoteSession *pSession,
+                                                _pmdSubSession *pSub,
+                                                _pmdEDUCB *cb,
+                                                UINT32 &nodeSiteVer ) ;
+
+         INT32          _checkSessionAttr( _pmdRemoteSession *pSession,
+                                           _pmdSubSession *pSub,
+                                           _pmdEDUCB *cb,
+                                           UINT32 &nodeSiteVer ) ;
+
+      private:
          SESSION_INIT_TYPE    _initType ;
+         BOOLEAN              _initFinished ;
+         UINT64               _nodeVer ;
+         UINT64               _nodeID ;
 
    } ;
    typedef _coordRemoteHandlerBase coordRemoteHandlerBase ;

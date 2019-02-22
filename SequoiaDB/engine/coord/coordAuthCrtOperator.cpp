@@ -36,6 +36,8 @@
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    /*
@@ -66,21 +68,26 @@ namespace engine
       PD_TRACE_ENTRY ( COORD_AUTHCRTOPR_EXE ) ;
       const CHAR *pUserName = NULL ;
       const CHAR *pPassWord = NULL ;
+      BSONObj options ;
 
-      rc = forward( pMsg, cb, FALSE, contextID, &pUserName, &pPassWord ) ;
+      rc = forward( pMsg, cb, FALSE, contextID,
+                    &pUserName, &pPassWord, &options ) ;
       if ( pUserName )
       {
          /// AUDIT
          PD_AUDIT_OP( AUDIT_DCL, pMsg->opCode, AUDIT_OBJ_USER,
-                      pUserName, rc, "" ) ;
+                      pUserName, rc, "Options:%s",
+                      options.toString().c_str() ) ;
       }
       if ( rc )
       {
          goto error ;
       }
-
-      /// update user info
-      cb->setUserInfo( pUserName, pPassWord ) ;
+      else if ( *cb->getUserName() == '\0' )
+      {
+         cb->setUserInfo( pUserName, pPassWord ) ;
+         updateSessionByOptions( options ) ;
+      }
 
    done:
       PD_TRACE_EXITRC ( COORD_AUTHCRTOPR_EXE, rc ) ;
@@ -88,4 +95,5 @@ namespace engine
    error:
       goto done ;
    }
+
 }

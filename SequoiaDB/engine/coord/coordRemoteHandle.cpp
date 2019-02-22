@@ -56,7 +56,10 @@ namespace engine
    */
    _coordRemoteHandlerBase::_coordRemoteHandlerBase()
    {
-      _initType = INIT_V1 ;
+      _initType      = INIT_V1 ;
+      _initFinished  = TRUE ;
+      _nodeVer       = 0 ;
+      _nodeID        = 0 ;
    }
 
    _coordRemoteHandlerBase::~_coordRemoteHandlerBase()
@@ -75,9 +78,43 @@ namespace engine
                                           const MsgHeader *pReply,
                                           BOOLEAN isPending )
    {
-      /// do nothing
-   }
+      if ( !_initFinished || 0 != _nodeID )
+      {
+         MsgOpReply *pOpReply = ( MsgOpReply* )pReply ;
+         INT32 orgRspOpCode = (*ppSub)->getOrgRspOpCode() ;
+         pmdEDUCB *cb = pSession->getEDUCB() ;
+         pmdRemoteSessionSite* pSite = NULL ;
+         pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
 
+         if ( !_initFinished &&
+              ( SDB_INVALID_ROUTEID == pOpReply->flags ||
+                ( SDB_OK != pOpReply->flags &&
+                  ( MSG_COM_SESSION_INIT_RSP == orgRspOpCode ||
+                    MSG_PACKET_RES == orgRspOpCode )
+                 )
+               )
+             )
+         {
+            pSession->reConnectSubSession( pReply->routeID.value ) ;
+         }
+
+         _initFinished = TRUE ;
+
+         /// update node version
+         if ( 0 != _nodeID &&
+              ( SDB_OK == pOpReply->flags ||
+                ( MSG_COM_SESSION_INIT_RSP != orgRspOpCode &&
+                  MSG_PACKET_RES != orgRspOpCode )
+              )
+            )
+         {
+            pSite->setNodeVer( _nodeID, _nodeVer ) ;
+         }
+
+         _nodeID  = 0 ;
+         _nodeVer = 0 ;
+      }
+   }
 
    INT32 _coordRemoteHandlerBase::_onSendConnectOld( _pmdSubSession *pSub )
    {
@@ -117,18 +154,26 @@ namespace engine
                                                  const MsgHeader *pReq,
                                                  BOOLEAN isFirst )
    {
+      INT32 rc = SDB_OK ;
+
       if ( INIT_V0 == _initType )
       {
-         return _onSendConnectOld( pSub ) ;
+         rc = _onSendConnectOld( pSub ) ;
       }
       else
       {
-         return _buildPacketWithSessionInit( pSub->parent(), pSub ) ;
+         rc = _buildPacketWithSessionInit( pSub->parent(), pSub, FALSE ) ;
+         if ( SDB_OK == rc )
+         {
+            _initFinished = FALSE ;
+         }
       }
+      return rc ;
    }
 
    INT32 _coordRemoteHandlerBase::_buildPacketWithSessionInit( _pmdRemoteSession *pSession,
-                                                               _pmdSubSession *pSub )
+                                                               _pmdSubSession *pSub,
+                                                               BOOLEAN isUpdate )
    {
       INT32 rc = SDB_OK ;
       BSONObj objInfo ;
@@ -137,28 +182,10 @@ namespace engine
       UINT32 msgLength = sizeof( MsgComSessionInitReq ) ;
       pmdEDUCB *cb = pSession->getEDUCB() ;
 
-      const CHAR *pRemoteIP = "" ;
-      UINT16 remotePort = 0 ;
-
-      if ( cb->getSession() )
-      {
-         IClient *pClient = cb->getSession()->getClient() ;
-         if ( pClient )
-         {
-            pRemoteIP = pClient->getFromIPAddr() ;
-            remotePort = pClient->getFromPort() ;
-         }
-      }
-
       /// construct info
       try
       {
-         objInfo = BSON( SDB_AUTH_USER << cb->getUserName() <<
-                         SDB_AUTH_PASSWD << cb->getPassword() <<
-                         FIELD_NAME_HOST << pmdGetKRCB()->getHostName() <<
-                         PMD_OPTION_SVCNAME << pmdGetOptionCB()->getServiceAddr() <<
-                         FIELD_NAME_REMOTE_IP << pRemoteIP <<
-                         FIELD_NAME_REMOTE_PORT << (INT32)remotePort ) ;
+         objInfo = _buildSessionInitObj( cb ) ;
          msgLength += objInfo.objsize() ;
       }
       catch( std::exception &e )
@@ -192,6 +219,7 @@ namespace engine
       pInitReq->peerPort = 0 ;
       pInitReq->localTID = cb->getTID() ;
       pInitReq->localSessionID = cb->getID() ;
+      pInitReq->isUpdate = isUpdate ? 1 : 0 ;
       ossMemset( pInitReq->reserved, 0, sizeof( pInitReq->reserved ) ) ;
       ossMemcpy( pInitReq->data, objInfo.objdata(), objInfo.objsize() ) ;
 
@@ -212,6 +240,38 @@ namespace engine
       goto done ;
    }
 
+   BSONObj _coordRemoteHandlerBase::_buildSessionInitObj( _pmdEDUCB *cb )
+   {
+      const CHAR *pRemoteIP = "" ;
+      UINT16 remotePort = 0 ;
+      UINT32 mask = 0 ;
+      UINT32 configMask = 0 ;
+      BSONObjBuilder builder( 256 ) ;
+
+      if ( cb->getSession() )
+      {
+         IClient *pClient = cb->getSession()->getClient() ;
+         if ( pClient )
+         {
+            pRemoteIP = pClient->getFromIPAddr() ;
+            remotePort = pClient->getFromPort() ;
+         }
+      }
+
+      builder.append( SDB_AUTH_USER, cb->getUserName() ) ;
+      builder.append( SDB_AUTH_PASSWD, cb->getPassword() ) ;
+      builder.append( FIELD_NAME_HOST, pmdGetKRCB()->getHostName() ) ;
+      builder.append( PMD_OPTION_SVCNAME, pmdGetOptionCB()->getServiceAddr() ) ;
+      builder.append( FIELD_NAME_REMOTE_IP, pRemoteIP ) ;
+      builder.append( FIELD_NAME_REMOTE_PORT, (INT32)remotePort ) ;
+
+      pdGetCurAuditMask( AUDIT_LEVEL_USER, mask, configMask ) ;
+      builder.append( FIELD_NAME_AUDIT_MASK, (INT32)mask ) ;
+      builder.append( FIELD_NAME_AUDIT_CONFIG_MASK, (INT32)configMask ) ;
+
+      return builder.obj() ;
+   }
+
    INT32 _coordRemoteHandlerBase::_sessionInit( _pmdRemoteSession *pSession,
                                                 const MsgRouteID &nodeID,
                                                 _pmdEDUCB *cb )
@@ -225,28 +285,10 @@ namespace engine
       MsgComSessionInitReq *pInitReq = NULL ;
       UINT32 msgLength = sizeof( MsgComSessionInitReq ) ;
 
-      const CHAR *pRemoteIP = "" ;
-      UINT16 remotePort = 0 ;
-
-      if ( cb->getSession() )
-      {
-         IClient *pClient = cb->getSession()->getClient() ;
-         if ( pClient )
-         {
-            pRemoteIP = pClient->getFromIPAddr() ;
-            remotePort = pClient->getFromPort() ;
-         }
-      }
-
       /// construct info
       try
       {
-         objInfo = BSON( SDB_AUTH_USER << cb->getUserName() <<
-                         SDB_AUTH_PASSWD << cb->getPassword() <<
-                         FIELD_NAME_HOST << pmdGetKRCB()->getHostName() <<
-                         PMD_OPTION_SVCNAME << pmdGetOptionCB()->getServiceAddr() <<
-                         FIELD_NAME_REMOTE_IP << pRemoteIP <<
-                         FIELD_NAME_REMOTE_PORT << (INT32)remotePort ) ;
+         objInfo = _buildSessionInitObj( cb ) ;
          msgLength += objInfo.objsize() ;
       }
       catch( std::exception &e )
@@ -332,26 +374,15 @@ namespace engine
       goto done ;
    }
 
-   INT32 _coordRemoteHandlerBase::onSend( _pmdRemoteSession *pSession,
-                                          _pmdSubSession *pSub )
+   INT32 _coordRemoteHandlerBase::_checkSessionSchedInfo( _pmdRemoteSession *pSession,
+                                                          _pmdSubSession *pSub,
+                                                          _pmdEDUCB *cb,
+                                                          UINT32 &nodeSiteVer )
    {
       INT32 rc = SDB_OK ;
-      pmdEDUCB *cb = pSession->getEDUCB() ;
-      pmdRemoteSessionSite* pSite = NULL ;
       coordResource *pResource = pmdGetKRCB()->getCoordCB()->getResource() ;
-      INT32 version = SCHED_INVALID_VERSION ;
-      INT32 nodeSiteVer = SCHED_INVALID_VERSION ;
       schedItem *pItem = NULL ;
       schedInfo *pInfo = NULL ;
-      MsgRouteID nodeID = pSub->getNodeID() ;
-      pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
-
-      /// is not data node, ignored
-      if ( nodeID.columns.groupID < DATA_GROUP_ID_BEGIN ||
-           nodeID.columns.groupID > DATA_GROUP_ID_END )
-      {
-         goto done ;
-      }
 
       pItem = (schedItem*)cb->getSession()->getSchedItemPtr() ;
       if ( !pItem )
@@ -359,12 +390,10 @@ namespace engine
          goto done ;
       }
       pInfo = &(pItem->_info) ;
-      version = pInfo->getVersion() ;
-      nodeSiteVer = pSite->getNodeSchedVer( nodeID.value ) ;
 
-      if ( SCHED_UNKNWON_VERSION == version ||
-           ( pResource->getOmGroupInfo()->nodeCount() > 0 &&
-             version != nodeSiteVer ) )
+      if ( pResource->getOmGroupInfo()->nodeCount() > 0 &&
+           ( SCHED_UNKNWON_VERSION == pInfo->getVersion() ||
+             pInfo->isNew() ) )
       {
          /// update task info
          coordOmStrategyAgent *pAgent = pResource->getOmStrategyAgent() ;
@@ -378,7 +407,7 @@ namespace engine
          if ( SDB_OK == rc )
          {
             pInfo->fromBSON( ptr->toBSON( OM_STRATEGY_MASK_BASEINFO ), FALSE ) ;
-
+   
             if ( pItem->_ptr.get() &&
                  ( pItem->_ptr->getTaskID() != (UINT64)pInfo->getTaskID() ||
                    0 != ossStrcmp( pItem->_ptr->getTaskName(),
@@ -395,19 +424,109 @@ namespace engine
          }
       }
 
-      if ( pInfo->getVersion() != nodeSiteVer )
+      if ( pInfo->getVersion() != (INT32)nodeSiteVer )
       {
          /// rebuild message
          rc = _buildPacketWithUpdateSched( pSession, pSub, pInfo->toBSON() ) ;
-         if ( SDB_OK == rc )
+         if ( rc )
          {
-            pSite->setNodeSchedVer( nodeID.value, pInfo->getVersion() ) ;
+            PD_LOG( PDERROR, "Build packet message with update-sched failed, "
+                    "rc: %d", rc ) ;
+            goto error ;
          }
+
+         /// update version
+         nodeSiteVer = pInfo->getVersion() ;
       }
 
    done:
-      /// ignore error
-      return SDB_OK ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordRemoteHandlerBase::_checkSessionAttr( _pmdRemoteSession *pSession,
+                                                     _pmdSubSession *pSub,
+                                                     _pmdEDUCB *cb,
+                                                     UINT32 &nodeSiteVer )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 curVersion = pdGetCurAuditVersion() ;
+
+      if ( 0 != curVersion && curVersion != nodeSiteVer )
+      {
+         /// when net handle is invalid, the info will
+         /// stored in session-init message
+         if ( NET_INVALID_HANDLE != pSub->getHandle() )
+         {
+            rc = _buildPacketWithSessionInit( pSession, pSub, TRUE ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Build packet message with session-update "
+                       "failed, rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+
+         /// update version
+         nodeSiteVer = curVersion ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordRemoteHandlerBase::onSend( _pmdRemoteSession *pSession,
+                                          _pmdSubSession *pSub )
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *cb = pSession->getEDUCB() ;
+      pmdRemoteSessionSite* pSite = NULL ;
+      UINT32 nodeSiteSchedVer = (UINT32)SCHED_INVALID_VERSION ;
+      UINT32 nodeSiteSessionVer = 0 ;
+      UINT64 nodeSiteVer = 0 ;
+      MsgRouteID nodeID = pSub->getNodeID() ;
+
+      /// is not data node, ignored
+      if ( nodeID.columns.groupID < DATA_GROUP_ID_BEGIN ||
+           nodeID.columns.groupID > DATA_GROUP_ID_END )
+      {
+         goto done ;
+      }
+
+      pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+      if ( pSite->getNodeVer( nodeID.value, nodeSiteVer ) )
+      {
+         ossUnpack32From64( nodeSiteVer, nodeSiteSchedVer, 
+                            nodeSiteSessionVer ) ;
+      }
+
+      rc = _checkSessionSchedInfo( pSession, pSub, cb, nodeSiteSchedVer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = _checkSessionAttr( pSession, pSub, cb, nodeSiteSessionVer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      _nodeVer = ossPack32To64( nodeSiteSchedVer, nodeSiteSessionVer ) ;
+
+      /// has changed
+      if ( nodeSiteVer != _nodeVer )
+      {
+         _nodeID = nodeID.value ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _coordRemoteHandlerBase::setUserData( UINT64 data )
@@ -614,6 +733,8 @@ namespace engine
                                       const MsgHeader *pReply,
                                       BOOLEAN isPending )
    {
+      _coordRemoteHandlerBase::onReply( pSession, ppSub, pReply, isPending ) ;
+
       if ( _interruptWhenFailed )
       {
          MsgOpReply *pOpReply = ( MsgOpReply* )pReply ;

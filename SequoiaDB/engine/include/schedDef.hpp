@@ -120,6 +120,8 @@ namespace engine
          INT32    getVersion () const ;
          void     setVersion ( INT32 version ) ;
 
+         BOOLEAN  isNew() const { return _isNew ; }
+
       private:
          INT32                _nice ;
          INT64                _taskID ;
@@ -131,6 +133,7 @@ namespace engine
          CHAR                 _ip[ SCHED_IP_STR_LEN + 1 ] ;
 
          INT32                _version ;
+         BOOLEAN              _isNew ;
 
    } ;
    typedef _schedInfo schedInfo ;

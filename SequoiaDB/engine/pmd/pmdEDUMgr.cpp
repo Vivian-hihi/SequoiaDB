@@ -2085,7 +2085,7 @@ namespace engine
             }
 
             eduMgr->waitEDU( cb ) ;
-            initCurAuditMask( getAuditMask() ) ;
+            pdInitCurAuditMask( pdGetAuditMask() ) ;
 
             *(cb->getMonConfigCB()) = *(krcb->getMonCB()) ;
             cb->initMonAppCB() ;

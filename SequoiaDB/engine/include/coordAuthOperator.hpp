@@ -54,6 +54,10 @@ namespace engine
 
          virtual BOOLEAN      isReadOnly() const ;
 
+      private:
+
+         virtual void   _onSucReply( const MsgOpReply *pReply ) ;
+
    } ;
    typedef _coordAuthOperator coordAuthOperator ;
 

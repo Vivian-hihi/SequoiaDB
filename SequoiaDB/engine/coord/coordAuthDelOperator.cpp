@@ -78,6 +78,10 @@ namespace engine
       {
          goto error ;
       }
+      else if ( 0 == ossStrcmp( pUserName, cb->getUserName() ) )
+      {
+         cb->setUserInfo( "", "" ) ;
+      }
 
    done:
       PD_TRACE_EXITRC ( COORD_AUTHDELOPR_EXE, rc ) ;

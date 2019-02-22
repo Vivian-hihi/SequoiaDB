@@ -193,6 +193,9 @@ namespace engine
          BOOLEAN isClosed() const ;
          void    close() ;
 
+         void  getAuditConfig( UINT32 &auditMask, UINT32 &auditConfigMask ) ;
+         void  setAuditConfig( UINT32 auditMask, UINT32 auditConfigMask ) ;
+
       public:
          UINT64      sessionID () const ;
          EDUID       eduID () const ;
@@ -276,6 +279,10 @@ namespace engine
          UINT64               _identifyID ;
          UINT32               _identifyTID ;
          UINT64               _identifyEDUID ;
+
+         /// session audit config
+         UINT32               _auditMask ;
+         UINT32               _auditConfigMask ;
 
          ossAtomic32          _pendingMsgNum ;
          ossAtomic32          _holdCount ;

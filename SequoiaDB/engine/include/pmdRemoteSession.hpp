@@ -173,7 +173,9 @@ namespace engine
          BOOLEAN     hasStop() const { return _hasStop ; }
          void        clearSend() { _isSend = FALSE ; }
          NET_HANDLE  getHandle() const { return _handle ; }
+         INT32       getOrgRspOpCode() const { return _orgRspOpCode ; }
 
+         // control
          void        resetForResend() ;
 
       protected:
@@ -199,6 +201,7 @@ namespace engine
          pmdEDUMemTypes             _memType ;
          netIOVec                   _ioDatas ;
          INT32                      _reqOpCode ;
+         INT32                      _orgRspOpCode ;
 
          pmdEDUEvent                _event ;
          BOOLEAN                    _isProcessed ;
@@ -296,6 +299,7 @@ namespace engine
          void           delSubSession( UINT64 nodeID ) ;
          void           clearSubSession() ;
 
+         void           reConnectSubSession( UINT64 nodeID ) ;
          void           resetSubSession( UINT64 nodeID ) ;
          void           resetAllSubSession() ;
          /*
@@ -407,8 +411,9 @@ namespace engine
       typedef ossPoolMap< UINT64, pmdRemoteSession >  MAP_REMOTE_SESSION ;
       typedef MAP_REMOTE_SESSION::iterator            MAP_REMOTE_SESSION_IT ;
 
-      typedef ossPoolMap< UINT64, INT32 >             MAP_NODE_2_SHCEDVER ;
-      typedef MAP_NODE_2_SHCEDVER::iterator           MAP_NODE_2_SHCEDVER_IT ;
+      /// High(32): SchedVersion + Low(32) : SessionVersion
+      typedef ossPoolMap< UINT64, UINT64 >            MAP_NODE_2_VERSION ;
+      typedef MAP_NODE_2_VERSION::iterator            MAP_NODE_2_VERSION_IT ;
 
       typedef ossPoolMap< UINT64, INT32 >             MAP_NODE_2_SESSIONVER ;
       typedef MAP_NODE_2_SESSIONVER::iterator         MAP_NODE_2_SESSIONVER_IT ;
@@ -444,8 +449,8 @@ namespace engine
          const MAP_NODE2NET* getAddNodesMapPtr() { return &_mapNode2Net ; }
          UINT32   getAllNodeID( SET_NODEID &setNodes ) ;
 
-         INT32    getNodeSchedVer( UINT64 nodeID ) const ;
-         void     setNodeSchedVer( UINT64 nodeID, INT32 ver ) ;
+         BOOLEAN  getNodeVer( UINT64 nodeID, UINT64 &ver ) const ;
+         void     setNodeVer( UINT64 nodeID, UINT64 ver ) ;
 
       public:
 
@@ -490,7 +495,7 @@ namespace engine
 
          UINT64               _userData ;
 
-         MAP_NODE_2_SHCEDVER  _mapNode2Ver ;
+         MAP_NODE_2_VERSION   _mapNode2Ver ;
    } ;
    typedef _pmdRemoteSessionSite pmdRemoteSessionSite ;
 

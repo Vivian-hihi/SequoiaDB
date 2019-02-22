@@ -35,6 +35,8 @@
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    /*
@@ -75,6 +77,27 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _coordAuthOperator::_onSucReply( const MsgOpReply *pReply )
+   {
+      if ( pReply->header.messageLength > sizeof( MsgOpReply ) )
+      {
+         try
+         {
+            BSONObj obj( ( const CHAR* )pReply + sizeof( MsgOpReply ) ) ;
+            BSONElement e = obj.getField( FIELD_NAME_OPTIONS ) ;
+            if ( Object == e.type() )
+            {
+               updateSessionByOptions( e.embeddedObject() ) ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+            /// ignore
+         }
+      }
    }
 
 }

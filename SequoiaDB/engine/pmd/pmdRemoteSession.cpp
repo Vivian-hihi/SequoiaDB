@@ -53,6 +53,7 @@ namespace engine
       _reqID            = 0 ;
       _pReqMsg          = NULL ;
       _reqOpCode        = 0 ;
+      _orgRspOpCode     = 0 ;
       _isSend           = FALSE ;
       _isDisconnect     = TRUE ;
       _memType          = PMD_EDU_MEM_NONE ;
@@ -75,6 +76,7 @@ namespace engine
 
    void _pmdSubSession::clearReplyInfo()
    {
+      _orgRspOpCode = 0 ;
       if ( _event._Data && PMD_EDU_MEM_NONE != _event._dataMemType )
       {
          pmdEduEventRelase( _event, _parent->getEDUCB() ) ;
@@ -206,6 +208,7 @@ namespace engine
       if ( _event._Data )
       {
          pRsp = ( MsgHeader* )_event._Data ;
+         _orgRspOpCode = pRsp->opCode ;
          pRsp->opCode = MAKE_REPLY_TYPE( _reqOpCode ) ;
       }
    }
@@ -405,6 +408,19 @@ namespace engine
             it->second.setNeedToDel( FALSE ) ;
          }
          _mapSubSession.erase( it ) ;
+      }
+   }
+
+   void _pmdRemoteSession::reConnectSubSession( UINT64 nodeID )
+   {
+      MAP_SUB_SESSION_IT it = _mapSubSession.find( nodeID ) ;
+      if ( it != _mapSubSession.end() )
+      {
+         it->second._handle = NET_INVALID_HANDLE ;
+         if ( _pSite )
+         {
+            _pSite->removeNodeNet( nodeID ) ;
+         }
       }
    }
 
@@ -1425,20 +1441,20 @@ namespace engine
       return count ;
    }
 
-   INT32 _pmdRemoteSessionSite::getNodeSchedVer( UINT64 nodeID ) const
+   BOOLEAN _pmdRemoteSessionSite::getNodeVer( UINT64 nodeID, UINT64 &ver ) const
    {
-      INT32 ver = SCHED_INVALID_VERSION ;
-      MAP_NODE_2_SHCEDVER::const_iterator it ;
+      MAP_NODE_2_VERSION::const_iterator it ;
 
       it = _mapNode2Ver.find( nodeID ) ;
       if ( it != _mapNode2Ver.end() )
       {
          ver = it->second ;
+         return TRUE ;
       }
-      return ver ;
+      return FALSE ;
    }
 
-   void _pmdRemoteSessionSite::setNodeSchedVer( UINT64 nodeID, INT32 ver )
+   void _pmdRemoteSessionSite::setNodeVer( UINT64 nodeID, UINT64 ver )
    {
       _mapNode2Ver[ nodeID ] = ver ;
    }

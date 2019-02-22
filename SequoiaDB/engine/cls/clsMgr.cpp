@@ -306,6 +306,8 @@ namespace engine
             info._eduid = pSession->identifyEDUID() ;
             info._tid = pSession->identifyTID() ;
             info._username = pSession->getClient()->getUsername() ;
+            pSession->getAuditConfig( info._auditMask,
+                                      info._auditConfigMask ) ;
             if ( !info._username.empty() )
             {
                info._passwd = pSession->getClient()->getPassword() ;

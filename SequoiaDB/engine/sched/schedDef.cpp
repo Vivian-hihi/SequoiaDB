@@ -121,6 +121,7 @@ namespace engine
       setContainerName( SCHED_SYS_CONTAINER_NAME ) ;
 
       _version = SCHED_INVALID_VERSION ;
+      _isNew = TRUE ;
    }
 
    _schedInfo::~_schedInfo()
@@ -139,6 +140,8 @@ namespace engine
 
       setUserName( "" ) ;
       setIP( "" ) ;
+
+      _isNew = TRUE ;
    }
 
    BOOLEAN _schedInfo::isDefault() const
@@ -231,6 +234,8 @@ namespace engine
       {
          incVersion() ;
       }
+
+      _isNew = FALSE ;
 
       return SDB_OK ;
    }

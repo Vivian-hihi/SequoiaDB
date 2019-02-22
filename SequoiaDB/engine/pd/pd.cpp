@@ -552,6 +552,150 @@ void pdcheck(const CHAR* string, const CHAR* func, const CHAR* file, UINT32 line
    PD Audit Implement
 */
 
+struct _pdAuditConfig
+{
+   UINT32            _userMask ;
+   UINT32            _userConfigMask ;
+   UINT32            _csMask ;
+   UINT32            _csConfigMask ;
+   UINT32            _clMask ;
+   UINT32            _clConfigMask ;
+
+   UINT32            _version ;
+
+   BOOLEAN isInConfig( AUDIT_TYPE auditType ) const
+   {
+      UINT32 oprMask = pdAuditType2Mask( auditType ) ;
+      INT32 level = pdGetAuditTypeMinLevel( auditType ) ;
+      for ( ; level >= AUDIT_LEVEL_USER ; --level )
+      {
+         switch ( level )
+         {
+            case AUDIT_LEVEL_CL :
+               if ( _clConfigMask & oprMask )
+               {
+                  return ( oprMask & _clMask ) ? TRUE : FALSE ;
+               }
+               break ;
+            case AUDIT_LEVEL_CS :
+               if ( _csConfigMask & oprMask )
+               {
+                  return ( oprMask & _csMask ) ? TRUE : FALSE ;
+               }
+               break ;
+            case AUDIT_LEVEL_USER :
+               if ( _userConfigMask & oprMask )
+               {
+                  return ( oprMask & _userMask ) ? TRUE : FALSE ;
+               }
+               break ;
+            default :
+               break ;
+         }
+      }
+      return ( oprMask & pdGetAuditMask() ) ? TRUE : FALSE ;
+   }
+
+   void  updateConfig( AUDIT_LEVEL level, UINT32 mask, UINT32 configMask )
+   {
+      switch ( level )
+      {
+         case AUDIT_LEVEL_CL :
+            _clConfigMask = configMask ;
+            _clMask = mask ;
+            break ;
+         case AUDIT_LEVEL_CS :
+            _csConfigMask = configMask ;
+            _csMask = mask ;
+            break ;
+         case AUDIT_LEVEL_USER :
+            if ( configMask != _userConfigMask ||
+                 mask != _userMask )
+            {
+               _userConfigMask = configMask ;
+               _userMask = mask ;
+               ++_version ;
+            }
+            break ;
+         default :
+            break ;
+      }
+   }
+
+   void  getConfig( AUDIT_LEVEL level, UINT32 &mask, UINT32 &configMask )
+   {
+      switch ( level )
+      {
+         case AUDIT_LEVEL_CL :
+            configMask = _clConfigMask  ;
+            mask = _clMask ;
+            break ;
+         case AUDIT_LEVEL_CS :
+            configMask = _csConfigMask ;
+            mask = _csMask ;
+            break ;
+         case AUDIT_LEVEL_USER :
+            configMask = _userConfigMask ;
+            mask = _userMask ;
+            break ;
+         default :
+            break ;
+      }
+   }
+
+   UINT32 getVersion() const
+   {
+      return _version ;
+   }
+
+   void  clearConfig( AUDIT_LEVEL level )
+   {
+      switch ( level )
+      {
+         case AUDIT_LEVEL_CL :
+            _clConfigMask = 0 ;
+            _clMask = 0 ;
+            break ;
+         case AUDIT_LEVEL_CS :
+            _csConfigMask = 0 ;
+            _csMask = 0 ;
+            break ;
+         case AUDIT_LEVEL_USER :
+            if ( 0 != _userConfigMask ||
+                 0 != _userMask )
+            {
+               _userConfigMask = 0 ;
+               _userMask = 0 ;
+               _version = 0 ;
+            }
+            break ;
+         default :
+            break ;
+      }
+   }
+
+   void  clearUpBoundConfig( AUDIT_LEVEL level )
+   {
+      INT32 tmpLevel = AUDIT_LEVEL_CL ;
+      for ( ; tmpLevel >= (INT32)level ; --tmpLevel )
+      {
+         clearConfig( (AUDIT_LEVEL)tmpLevel ) ;
+      }
+   }
+
+   void  clearAllConfig()
+   {
+      _userMask         = 0 ;
+      _userConfigMask   = 0 ;
+      _csMask           = 0 ;
+      _csConfigMask     = 0 ;
+      _clMask           = 0 ;
+      _clConfigMask     = 0 ;
+      _version          = 0 ;
+   }
+} ;
+typedef _pdAuditConfig pdAuditConfig ;
+
 const CHAR* pdAuditObjType2String( AUDIT_OBJ_TYPE objtype )
 {
    const static CHAR* s_objtypeString[] = {
@@ -606,6 +750,22 @@ UINT32 pdAuditType2Mask( AUDIT_TYPE auditType )
    return 0 ;
 }
 
+AUDIT_LEVEL pdGetAuditTypeMinLevel( AUDIT_TYPE auditType )
+{
+   switch( auditType )
+   {
+      case AUDIT_DML :
+      case AUDIT_DQL :
+      case AUDIT_DELETE :
+      case AUDIT_UPDATE :
+      case AUDIT_INSERT :
+         return AUDIT_LEVEL_CL ;
+      default :
+         break ;
+   }
+   return AUDIT_LEVEL_USER ;
+}
+
 const CHAR* pdGetAuditTypeDesp( AUDIT_TYPE auditType )
 {
    switch( auditType )
@@ -640,6 +800,7 @@ const CHAR* pdGetAuditTypeDesp( AUDIT_TYPE auditType )
 
 static INT32 _pdString2AuditMask( const CHAR *pStr,
                                   UINT32 &mask,
+                                  BOOLEAN allowNot,
                                   UINT32 *pConfigMask )
 {
    if ( !pStr || !*pStr )
@@ -661,7 +822,7 @@ static INT32 _pdString2AuditMask( const CHAR *pStr,
       return SDB_OK ;
    }
 
-   if ( '!' == *start && !isNot )
+   if ( allowNot && '!' == *start && !isNot )
    {
       isNot = TRUE ;
       ++start ;
@@ -753,6 +914,7 @@ static INT32 _pdString2AuditMask( const CHAR *pStr,
 
 INT32 pdString2AuditMask( const CHAR *pStr,
                           UINT32 &mask,
+                          BOOLEAN allowNot,
                           UINT32 *pConfigMask )
 {
    INT32 rc = SDB_OK ;
@@ -769,7 +931,7 @@ INT32 pdString2AuditMask( const CHAR *pStr,
       {
          *p1 = 0 ;
       }
-      rc = _pdString2AuditMask( p, mask, pConfigMask ) ;
+      rc = _pdString2AuditMask( p, mask, allowNot, pConfigMask ) ;
       if ( p1 )
       {
          *p1 = '|' ;
@@ -783,36 +945,59 @@ INT32 pdString2AuditMask( const CHAR *pStr,
    return rc ;
 }
 
-UINT32& getAuditMask()
+static OSS_THREAD_LOCAL _pdAuditConfig s_curAuditConfig ;
+
+void pdInitCurAuditMask( UINT32 mask )
+{
+   s_curAuditConfig.clearAllConfig() ;
+}
+
+void pdUpdateCurAuditMask( AUDIT_LEVEL level, UINT32 mask, UINT32 configMask )
+{
+   s_curAuditConfig.updateConfig( level, mask, configMask ) ;
+}
+
+void pdClearCurAuditMask( AUDIT_LEVEL level )
+{
+   s_curAuditConfig.clearConfig( level ) ;
+}
+
+void pdClearCurUpBoundAuditMask( AUDIT_LEVEL level )
+{
+   s_curAuditConfig.clearUpBoundConfig( level ) ;
+}
+
+void pdClearCurAllAuditMask()
+{
+   s_curAuditConfig.clearAllConfig() ;
+}
+
+void pdGetCurAuditMask( AUDIT_LEVEL level, UINT32 &mask,UINT32 &configMask )
+{
+   s_curAuditConfig.getConfig( level, mask, configMask ) ;
+}
+
+BOOLEAN pdIsAuditTypeEnabled( AUDIT_TYPE auditType )
+{
+   return s_curAuditConfig.isInConfig( auditType ) ;
+}
+
+UINT32 pdGetCurAuditVersion()
+{
+   return s_curAuditConfig.getVersion() ;
+}
+
+UINT32& pdGetAuditMask()
 {
    static UINT32 s_auditMask = AUDIT_MASK_DEFAULT ;
    return s_auditMask ;
 }
 
-UINT32 setAuditMask( UINT32 newMask )
+UINT32 pdSetAuditMask( UINT32 newMask )
 {
-   UINT32 oldMask = getAuditMask() ;
-   getAuditMask() = newMask ;
+   UINT32 oldMask = pdGetAuditMask() ;
+   pdGetAuditMask() = newMask ;
    return oldMask ;
-}
-
-static OSS_THREAD_LOCAL UINT32 s_curAuditMask = 0 ;
-
-UINT32& getCurAuditMask()
-{
-   return s_curAuditMask ;
-}
-
-UINT32 setCurAuditMask( UINT32 newMask )
-{
-   UINT32 oldMask = getCurAuditMask() ;
-   getCurAuditMask() = newMask ;
-   return oldMask ;
-}
-
-void initCurAuditMask( UINT32 newMask )
-{
-   s_curAuditMask = newMask ;
 }
 
 const CHAR* getAuditName ()
@@ -887,7 +1072,7 @@ void pdAuditRaw( AUDIT_TYPE type, const CHAR *pData )
 {
    INT32 rc = SDB_OK ;
 
-   if ( !( getCurAuditMask() & pdAuditType2Mask( type ) ) )
+   if ( !pdIsAuditTypeEnabled( type ) )
       return ;
 
    // use thread specific pointer to make sure there's no nested pdLog (i.e.
@@ -976,7 +1161,7 @@ void pdAudit( AUDIT_TYPE type, const CHAR *pUserName,
               const CHAR* func, const CHAR* file,
               UINT32 line, const CHAR* format, ... )
 {
-   if ( !( getCurAuditMask() & pdAuditType2Mask( type ) ) )
+   if ( !pdIsAuditTypeEnabled( type ) )
       return ;
    va_list ap;
    PD_TRACE_ENTRY ( SDB_PDAUDIT ) ;

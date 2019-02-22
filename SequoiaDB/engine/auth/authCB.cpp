@@ -77,9 +77,37 @@ namespace engine
       _authEnabled = pmdGetOptionCB()->authEnabled() ;
    }
 
+   BSONObj _authCB::_desensitization( const BSONObj &options )
+   {
+      /// discard password
+      try
+      {
+         BSONObjBuilder builder( options.objsize() ) ;
+         BSONObjIterator itr( options ) ;
+         while ( itr.more() )
+         {
+            BSONElement e = itr.next() ;
+            if ( 0 == ossStrcmp( e.fieldName(), SDB_AUTH_PASSWD ) )
+            {
+               continue ;
+            }
+            builder.append( e ) ;
+         }
+         return builder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+      }
+
+      return options ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_AUTHENTICATE, "_authCB::authenticate" )
-   INT32 _authCB::authenticate( BSONObj &obj, _pmdEDUCB *cb,
-                                BOOLEAN chkPasswd )
+   INT32 _authCB::authenticate( BSONObj &obj,
+                                _pmdEDUCB *cb,
+                                BOOLEAN chkPasswd,
+                                BSONObj *pOutUserObj )
    {
       INT32 rc = SDB_OK ;
       BSONObj hint ;
@@ -154,6 +182,12 @@ namespace engine
       }
       else if ( 1 == buffObj.recordNum() )
       {
+         if ( pOutUserObj )
+         {
+            BSONObj tmpObj ;
+            buffObj.nextObj( tmpObj ) ;
+            *pOutUserObj =  _desensitization( tmpObj ) ;
+         }
          rc = SDB_OK ;
       }
       else
@@ -175,11 +209,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CREATEUSR, "_authCB::createUsr" )
-   INT32 _authCB::createUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w )
+   INT32 _authCB::createUsr( BSONObj &obj, _pmdEDUCB *cb,
+                             BSONObj *pOutObj, INT32 w )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB_CREATEUSR ) ;
-      rc = _createUsr( obj, cb, w ) ;
+      rc = _createUsr( obj, cb, pOutObj, w ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -471,7 +506,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__CREATEUSR, "_authCB::_createUsr" )
-   INT32 _authCB::_createUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w )
+   INT32 _authCB::_createUsr( BSONObj &obj, _pmdEDUCB *cb,
+                              BSONObj *pOutObj, INT32 w )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB__CREATEUSR ) ;
@@ -501,9 +537,9 @@ namespace engine
          rc = SDB_AUTH_USER_ALREADY_EXIST ;
          goto error ;
       }
-      else
+      else if ( pOutObj )
       {
-         /// do nothing
+         *pOutObj = _desensitization( obj ) ;
       }
 
    done:
@@ -598,7 +634,7 @@ namespace engine
                goto error ;
             }
 
-            rc = pdString2AuditMask( e.valuestr(), mask ) ;
+            rc = pdString2AuditMask( e.valuestr(), mask, TRUE ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Field[%s] is invalid in option[%s]",

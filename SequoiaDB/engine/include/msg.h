@@ -757,7 +757,8 @@ typedef struct _MsgComSessionInitReq
    UINT16      peerPort ;        /// 0, not used
    UINT32      localTID ;        /// local TID
    UINT64      localSessionID ;  /// local eduid
-   CHAR        reserved[8] ;
+   CHAR        isUpdate ;        /// whether is update
+   CHAR        reserved[7] ;
    CHAR        data[0] ;         /// BSON DATA( usename, passwd and so on...)
 } MsgComSessionInitReq ;
 

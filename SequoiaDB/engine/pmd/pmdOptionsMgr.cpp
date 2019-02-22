@@ -2340,7 +2340,7 @@ done:
 
       // audit mask check
       _auditMask = 0 ;
-      if ( SDB_OK != pdString2AuditMask( _auditMaskStr, _auditMask ) )
+      if ( SDB_OK != pdString2AuditMask( _auditMaskStr, _auditMask, FALSE ) )
       {
          std::cerr << PMD_OPTION_AUDIT_MASK << " value error, use default"
                    << endl ;

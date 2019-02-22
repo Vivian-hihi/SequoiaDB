@@ -462,6 +462,7 @@
 #define FIELD_NAME_REPLACEONDUP              "ReplaceOnDup"
 #define FIELD_NAME_RETURN_OID                "ReturnOID"
 #define FIELD_NAME_AUDIT_MASK                "AuditMask"
+#define FIELD_NAME_AUDIT_CONFIG_MASK         "AuditConfigMask"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"

@@ -36,6 +36,8 @@
 
 #include "coordOperator.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -54,7 +56,14 @@ namespace engine
                         BOOLEAN sWhenNoPrimary,
                         INT64 &contextID,
                         const CHAR **ppUserName = NULL,
-                        const CHAR **ppPass = NULL ) ;
+                        const CHAR **ppPass = NULL,
+                        BSONObj *pOptions = NULL ) ;
+
+         void  updateSessionByOptions( const BSONObj &options ) ;
+
+      private:
+
+         virtual void   _onSucReply( const MsgOpReply *pReply ) ;
 
    } ;
    typedef _coordAuthBase coordAuthBase ;
