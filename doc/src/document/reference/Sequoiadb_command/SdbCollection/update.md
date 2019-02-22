@@ -16,15 +16,13 @@
 
 | 参数名          | 参数类型 | 描述                | 默认值 |
 | --------------- | -------- | ------------------- | ------ |
-| KeepShardingKey | bool     | 是否保留分区键字段。| false  |
+| KeepShardingKey | bool     | 为 false 时，将不保留更新规则中的分区键字段，只更新非分区键字段。<br>为 true 时，将会保留更新规则中的分区键字段。| false  |
 
 > **Note:**
 >
 > * 参数`hint`的用法与[find()](reference/Sequoiadb_command/SdbCollection/find.md)的相同。
 >
-> * 当 `KeepShardingKey` 为 false 时，将不保留更新规则中的分区键字段，只更新非分区键字段。当 `KeepShardingKey` 为 true 时，会保留更新规则中的分区键字段。
->
-> * 目前不支持更新分区键。如果 `KeepShardingKey` 为 true，并且更新规则中带有分区键字段，将会报错-178。
+> * 目前分区集合上，不支持更新分区键。如果 `KeepShardingKey` 为 true，并且更新规则中带有分区键字段，将会报错-178。
 
 
 ##返回值##
@@ -37,7 +35,7 @@
   
 | 错误码   | 可能的原因               | 解决方法                                     |
 | -------- | ------------------------ | -------------------------------------------- |
-| -178     | 分区集合上不支持更新分区键 | KeepShardingKey 设置为 false，自动过滤分区键 |
+| -178     | 分区集合上不支持更新分区键 | KeepShardingKey 设置为 false，不更新分区键 |
 
 ## 示例##
 
@@ -59,10 +57,42 @@
  > db.foo.bar.update( { $inc: { age: 1 } }, { age: { $gt: 20 } }, { "": "testIndex" } )
  ```
 
-* 指定更新记录时保留分区键，分区集合foo.bar，分区键为 { b: 1 }
+* 分区集合 foo.bar，分区键为 { a: 1 }，含有以下记录
 
  ```lang-javascript
- > db.foo.bar.update( { $set: { b: 1 } }, { }, { }, { KeepShardingKey: true } )
+ > db.foo.bar.find()
+ {
+   "_id": {
+     "$oid": "5c6f660ce700db6048677154"
+   },
+   "a": 1,
+   "b": 1
+ }
+ Return 1 row(s).
+ ```
+ 
+ 指定 KeepShardingKey 参数：不保留更新规则中的分区键字段。只更新了非分区键 b 字段，分区键 a 字段的值没有被更新。
+ 
+ ```lang-javascript
+ > db.foo.bar.update( { $set: { a: 9, b: 9 } }, {}, {}, { KeepShardingKey: false } )
+ Takes 0.038184s.
+ >
+ > db.foo.bar.find()
+ {
+   "_id": {
+     "$oid": "5c6f660ce700db6048677154"
+   },
+   "a": 1,
+   "b": 9
+ }
+ Return 1 row(s).
+ Takes 0.006393s.
+ ```
+ 
+ 指定 KeepShardingKey 参数：保留更新规则中的分区键字段。因为目前不支持更新分区键，所以会报错。
+ 
+ ```lang-javascript
+ > db.foo.bar.update( { $set: { a: 9 } }, {}, {}, { KeepShardingKey: true } )
  (nofile):0 uncaught exception: -178
  Sharding key cannot be updated
  Takes 0.002696s.
