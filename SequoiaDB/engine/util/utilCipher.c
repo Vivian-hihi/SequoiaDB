@@ -178,11 +178,11 @@ static void _arrayRemoveElement( CHAR *array, UINT32 arrayLen, UINT32 index,
 * append the 'index' started with 'count' length array in the 'appendArray'
 * into the end of 'array'
 */
-static void _arrayAppendElement( CHAR *array, UINT32 arrayLen, 
-                                 CHAR *appendArray, UINT32 index, UINT32 count, 
+static void _arrayAppendElement( CHAR *array, UINT32 arrayLen,
+                                 CHAR *appendArray, UINT32 index, UINT32 count,
                                  UINT32 *arrayNewLen )
 {
-   SDB_ASSERT( NULL != array && NULL != appendArray, 
+   SDB_ASSERT( NULL != array && NULL != appendArray,
                "array & appendArray can't be NULL" ) ;
 
    ossMemcpy( array + arrayLen, appendArray + index, count ) ;
@@ -197,9 +197,9 @@ static void _arrayInsertElement( CHAR *array, UINT32 arrayLen, UINT32 startPos,
                                  CHAR *appendArray, UINT32 index, UINT32 count,
                                  UINT32 *arrayNewLen )
 {
-   SDB_ASSERT( NULL != array && NULL != appendArray, 
+   SDB_ASSERT( NULL != array && NULL != appendArray,
                "array & appendArray can't be NULL" ) ;
-   SDB_ASSERT( arrayLen - startPos > 0, 
+   SDB_ASSERT( arrayLen - startPos > 0,
                "arrayLen - startPos must be greater than 0" ) ;
 
    ossMemmove( array + startPos + count, array + startPos, arrayLen - startPos ) ;
@@ -234,9 +234,9 @@ void utilCipherGenerateRandomArray( CHAR* array, UINT32 arrayLen )
 * divide randArray into 3 pieces & insert into 3 random positon in destArray
 */
 void utilCipherInsertRandomArray( CHAR *destArray, UINT32 destArrayLen,
-                                  CHAR *randArray, UINT32 randArrayLen, 
+                                  CHAR *randArray, UINT32 randArrayLen,
                                   UINT32 *destArrayNewLen )
-{  
+{
    UINT32       insertLowPos = 0 ;
    UINT32       insertMidPos = 0 ;
    UINT32       insertHighPos = 0 ;
@@ -250,7 +250,7 @@ void utilCipherInsertRandomArray( CHAR *destArray, UINT32 destArrayLen,
    UINT32       piece1Len = 0 ;
    UINT32       piece2Len = 0 ;
    UINT32       piece3Len = 0 ;
-   UINT32       splitPos1 = 0 ; 
+   UINT32       splitPos1 = 0 ;
    UINT32       splitPos2 = 0 ;
 
    SDB_ASSERT( NULL != destArray, "destArray can't be NULL" ) ;
@@ -305,7 +305,7 @@ void utilCipherInsertRandomArray( CHAR *destArray, UINT32 destArrayLen,
    *destArrayNewLen = destArrayLen + insertLen ;
 }
 
-INT32 utilCipherExtractRandomArray( CHAR *cipherText, UINT32 cipherTextLen, 
+INT32 utilCipherExtractRandomArray( CHAR *cipherText, UINT32 cipherTextLen,
                                     CHAR *array, UINT32 *cipherTextNewLen, UINT32 *arrayNewLen )
 {
    INT32          rc = SDB_OK ;
@@ -320,7 +320,7 @@ INT32 utilCipherExtractRandomArray( CHAR *cipherText, UINT32 cipherTextLen,
    UINT8          randArrayPiece2Len = 0 ;
    UINT8          randArrayPiece3Len = 0 ;
 
-   SDB_ASSERT( NULL != cipherText && NULL != array, 
+   SDB_ASSERT( NULL != cipherText && NULL != array,
                "cipherText & array can't be NULL" ) ;
 
    // calculate random array position in cipherText, then extract
@@ -351,20 +351,20 @@ INT32 utilCipherExtractRandomArray( CHAR *cipherText, UINT32 cipherTextLen,
    ossMemcpy( randArrayPiece3, cipherText + insertHighPos, randArrayPiece3Len ) ;
 
    // erase random array from cipherText.
-   _arrayRemoveElement( cipherText, *cipherTextNewLen, 
+   _arrayRemoveElement( cipherText, *cipherTextNewLen,
                         insertHighPos, randArrayPiece3Len, cipherTextNewLen ) ;
-   _arrayRemoveElement( cipherText, *cipherTextNewLen, 
+   _arrayRemoveElement( cipherText, *cipherTextNewLen,
                         insertMidPos, randArrayPiece2Len, cipherTextNewLen ) ;
-   _arrayRemoveElement( cipherText, *cipherTextNewLen, 
+   _arrayRemoveElement( cipherText, *cipherTextNewLen,
                         insertLowPos, randArrayPiece1Len, cipherTextNewLen ) ;
    cipherText[(*cipherTextNewLen)] = '\0' ;
 
    *arrayNewLen = 0 ;
-   _arrayAppendElement( array, *arrayNewLen, 
+   _arrayAppendElement( array, *arrayNewLen,
                         randArrayPiece1, 1, randArrayPiece1Len - 2, arrayNewLen ) ;
-   _arrayAppendElement( array, *arrayNewLen, 
+   _arrayAppendElement( array, *arrayNewLen,
                         randArrayPiece2, 1, randArrayPiece2Len - 2, arrayNewLen ) ;
-   _arrayAppendElement( array, *arrayNewLen, 
+   _arrayAppendElement( array, *arrayNewLen,
                         randArrayPiece3, 1, randArrayPiece3Len - 1, arrayNewLen ) ;
 
 done:
@@ -389,13 +389,14 @@ INT32 utilCipherEncrypt( const CHAR *clearText, const CHAR *token,
    CHAR                  cipherString[CIPHER_STRING_MAX_LENGTH] = {'\0' } ;
    UINT32                cipherStringSize = 0 ;
 
-   DES_cblock            keyEncrypt ; 
+   DES_cblock            keyEncrypt ;
    DES_key_schedule      keySchedule ;
-   const_DES_cblock      inputText ; 
+   const_DES_cblock      inputText ;
    DES_cblock            outputText ;
    CHAR                  *result ;
    UINT32                resultSize = 0 ;
    UINT32                i = 0 ;
+   INT32                 copiedTokenLen = 0 ;
 
    SDB_ASSERT( NULL != clearText, "clearText can't be NULL" ) ;
    SDB_ASSERT( NULL != cipherText, "cipherText can't be NULL" ) ;
@@ -404,10 +405,12 @@ INT32 utilCipherEncrypt( const CHAR *clearText, const CHAR *token,
 
    if ( NULL != token && 0 != ossStrlen( token ) )
    {
-      ossStrncpy( cipherString, token, TOKEN_MAX_LENGTH ) ;
-      cipherStringSize += ossStrlen( token ) ;
+      INT32 tokenLen = ossStrlen( token ) ;
+      copiedTokenLen = tokenLen > TOKEN_MAX_LENGTH ? TOKEN_MAX_LENGTH : tokenLen ;
+      ossStrncpy( cipherString, token, copiedTokenLen ) ;
+      cipherStringSize += copiedTokenLen ;
    }
-   _arrayAppendElement( cipherString, NULL == token ? 0 : ossStrlen( token ),
+   _arrayAppendElement( cipherString, copiedTokenLen,
                         randArray, 0, RANDOM_ARRAY_MAX_LENGTH, &cipherStringSize ) ;
 
    _hashToKey( cipherString, cipherStringSize,
@@ -431,22 +434,22 @@ INT32 utilCipherEncrypt( const CHAR *clearText, const CHAR *token,
 
    for ( i = 0; i < clearTextSize / BYTES_PER_TIME; i++ )
    {
-      ossMemcpy( inputText, clearText + i * BYTES_PER_TIME, BYTES_PER_TIME ) ;  
-      DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_ENCRYPT ) ;  
+      ossMemcpy( inputText, clearText + i * BYTES_PER_TIME, BYTES_PER_TIME ) ;
+      DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_ENCRYPT ) ;
       _arrayAppendElement( result, resultSize,
                            (CHAR *)outputText, 0 , BYTES_PER_TIME, &resultSize ) ;
    }
 
-   if ( clearTextSize % BYTES_PER_TIME != 0 )  
+   if ( clearTextSize % BYTES_PER_TIME != 0 )
    {
       INT32 remainTextIndex = ( clearTextSize / BYTES_PER_TIME ) *
                                 BYTES_PER_TIME ;
       INT32 remainTextLen = clearTextSize % BYTES_PER_TIME ;
 
       // padding using 0s
-      ossMemset( inputText, 0, BYTES_PER_TIME ) ;  
-      ossMemcpy( inputText, clearText + remainTextIndex, remainTextLen ) ;  
-      DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_ENCRYPT ) ;  
+      ossMemset( inputText, 0, BYTES_PER_TIME ) ;
+      ossMemcpy( inputText, clearText + remainTextIndex, remainTextLen ) ;
+      DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_ENCRYPT ) ;
       _arrayAppendElement( result, resultSize,
                            (CHAR *)outputText, 0 , BYTES_PER_TIME, &resultSize ) ;
    }
@@ -479,9 +482,9 @@ INT32 utilCipherDecrypt( const CHAR *cipherText, const CHAR *token, CHAR *clearT
    CHAR                  *passwd = NULL ;
    CHAR                  cipherString[CIPHER_STRING_MAX_LENGTH] = {'\0'} ;
    UINT32                cipherStringSize = 0 ;
-   DES_cblock            keyEncrypt ; 
+   DES_cblock            keyEncrypt ;
    DES_key_schedule      keySchedule ;
-   const_DES_cblock      inputText ; 
+   const_DES_cblock      inputText ;
    DES_cblock            outputText ;
    UINT32                posInClearText = 0 ;
    UINT32                clearTextSize = 0 ;
@@ -533,9 +536,9 @@ INT32 utilCipherDecrypt( const CHAR *cipherText, const CHAR *token, CHAR *clearT
    }
 
    for ( i = 0; i < passwdLen / BYTES_PER_TIME; i++ )
-   {  
+   {
       ossMemcpy( inputText, passwd + i * BYTES_PER_TIME, BYTES_PER_TIME ) ;
-      DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_DECRYPT ) ;  
+      DES_ecb_encrypt( &inputText, &outputText, &keySchedule, DES_DECRYPT ) ;
 
       for ( j = 0; j < BYTES_PER_TIME; j++ )
       {
@@ -691,7 +694,7 @@ void _extractUserName( const CHAR *user, CHAR *userName, CHAR *fullName )
    ossStrncpy( fullName, user, ossStrlen( user ) ) ;
 }
 
-INT32 utilDecryptUserCipher( const CHAR *user, const CHAR *token, 
+INT32 utilDecryptUserCipher( const CHAR *user, const CHAR *token,
                              const CHAR *path, CHAR *connectionUser,
                              CHAR *clearText )
 {
@@ -738,9 +741,9 @@ INT32 utilDecryptUserCipher( const CHAR *user, const CHAR *token,
       foundNewline = ( CHAR * )memchr( startPosition + 1, '\n', fileLength ) ;
       if ( NULL != foundNewline )
       {
-         colonPos = ( CHAR * )memchr( startPosition, ':', 
+         colonPos = ( CHAR * )memchr( startPosition, ':',
                                       foundNewline - startPosition ) ;
-         atPos = ( CHAR * )memchr( startPosition, '@', 
+         atPos = ( CHAR * )memchr( startPosition, '@',
                                    foundNewline - startPosition ) ;
          if ( NULL == colonPos )
          {
@@ -764,7 +767,7 @@ INT32 utilDecryptUserCipher( const CHAR *user, const CHAR *token,
             break ;
          }
          else if ( NULL != atPos &&
-                   0 == memcmp( startPosition, userName, 
+                   0 == memcmp( startPosition, userName,
                                 fileUserNameLen > userNameLen ?
                                 fileUserNameLen : userNameLen ) )
          {
@@ -779,7 +782,7 @@ INT32 utilDecryptUserCipher( const CHAR *user, const CHAR *token,
       }
 
       fileLength -= ( foundNewline + 1 ) - startPosition ;
-      startPosition = foundNewline + 1 ;      
+      startPosition = foundNewline + 1 ;
    }
 
    if ( 1 == foundFullNameCount || 1 == foundHalfNameCount )

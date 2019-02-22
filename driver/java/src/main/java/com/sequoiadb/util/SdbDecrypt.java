@@ -39,6 +39,7 @@ class KeyValuePair {
 public class SdbDecrypt {
     private static final String SEP_CLUSTER = "@";
     private static final String SEP_PASSWORD = ":";
+    private static final int MAX_TOKEN_SIZE = 256;
 
     /**
      * parse cipher file, get the specify user's password.
@@ -106,10 +107,16 @@ public class SdbDecrypt {
     public String decryptPasswd(String encryptPasswd, String token) {
         final int DECRYPT_LENGTH = 8;
         final int KEY_LENGTH = 8;
-        KeyValuePair kv = parsePasswd(encryptPasswd);
 
+        if (null == encryptPasswd) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "encryptPasswd is null");
+        }
+
+        KeyValuePair kv = parsePasswd(encryptPasswd);
         byte[] key = kv.getKey();
         if (null != token) {
+            int maxTokenLen = token.length() < MAX_TOKEN_SIZE ? token.length() : MAX_TOKEN_SIZE;
+            token = token.substring(0, maxTokenLen);
             byte[] t = null;
             try {
                 t = token.getBytes("UTF-8");
@@ -258,7 +265,6 @@ public class SdbDecrypt {
             br = new BufferedReader(new FileReader(passwdFile));
             String line = null;
             while ((line = br.readLine()) != null) {
-                line = line.trim();
                 EN_MATCH_RESULT r = matchAndSet(line, info);
                 if (EN_MATCH_RESULT.perfect_match == r) {
                     return info;
@@ -278,7 +284,7 @@ public class SdbDecrypt {
 
     private EN_MATCH_RESULT matchAndSet(String line, SdbDecryptUserInfo info) {
         // user@cluster:encrypted password
-        int idxPasswd = line.indexOf(SEP_PASSWORD);
+        int idxPasswd = line.lastIndexOf(SEP_PASSWORD);
         if (-1 == idxPasswd) {
             return EN_MATCH_RESULT.mismatch;
         }
