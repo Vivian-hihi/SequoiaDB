@@ -53,6 +53,7 @@ public class TestObjectRequest17861 extends S3TestBase {
 
 	@Test
 	public void testasciiKeyName( ) throws Exception {
+		//测试特殊字符，如包含有 '\n' ,'\r','\u0085'的字符(对应十进制数字10，13，133)
 		String asciiKeyName = new String();
 		for(int i=1 ; i < 32 ; i ++){
 			asciiKeyName+=(char)i;
