@@ -241,7 +241,7 @@ namespace engine
       _username = info._username ;
       _passwd = info._passwd ;
       /// update audit mask
-      setAuditConfig( info._mask, info._configMask ) ;
+      setAuditConfig( info._auditMask, info._auditConfigMask ) ;
 
       if ( !info._objSchedInfo.isEmpty() )
       {
