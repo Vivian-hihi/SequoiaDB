@@ -59,6 +59,7 @@ public class SessionAccess14146 extends SdbTestBase {
         db.setSessionAttr(options);
         String actualNodeName = CommLib.getActualDataNodeName(dbcl);
         Assert.assertTrue(CommLib.isMaster(db, rgName, actualNodeName), "testa: current node name is : " + actualNodeName + "\n db.getSessionAttr():" + db.getSessionAttr());
+        //TODO:1、这个属性比较其它用例已测试过，本用例中没有测试点可以不校验
         BasicBSONObject actual = (BasicBSONObject) db.getSessionAttr();
         Assert.assertEquals(actual, options.append("Timeout",-1L));
         
@@ -81,6 +82,7 @@ public class SessionAccess14146 extends SdbTestBase {
 		    options = new BasicBSONObject("PreferedInstance", currPreferedInstance).append("PreferedInstanceMode", "ordered");
 		    db.setSessionAttr(options);
 		    actualNodeName = CommLib.getActualDataNodeName(dbcl);
+		    //TODO:2、比较访问节点就可以，不需要在通过节点去获取实例比较
 		    Assert.assertEquals(CommLib.getInstanceidByNodeName(nodes, actualNodeName), instanceidList.get(0));
 		    BasicBSONObject actSessionAttr = (BasicBSONObject) db.getSessionAttr();
 		    Assert.assertEquals(actSessionAttr,options.append("Timeout",-1L));
