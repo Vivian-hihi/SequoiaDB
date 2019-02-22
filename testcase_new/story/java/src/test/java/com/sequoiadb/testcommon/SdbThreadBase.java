@@ -63,14 +63,16 @@ public abstract class SdbThreadBase implements Runnable {
      * ------------------------------------------------------------
      */
     public Object getExecResult() throws InterruptedException {
-        if ( thread == null || thread.getState() == State.NEW
-                || thread.getState() == State.TERMINATED ) {
+        if ( thread == null || this.result != null ) {
             return this.result ;
         }
 
-        synchronized ( syncRes ) {
-            syncRes.wait() ;
+        while ( this.result == null ){
+            synchronized ( syncRes ) {
+                syncRes.wait(10) ;
+            }
         }
+        
         return this.result ;
     }
 
