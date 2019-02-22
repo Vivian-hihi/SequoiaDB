@@ -189,6 +189,10 @@ public abstract class SdbThreadBase implements Runnable {
                     e.printStackTrace() ;
                 }
             }
+            
+            if ( 0 == count.get() ) {
+                return false ;
+            }
         }
         
         final int fiftySeonds = 50000 ;
