@@ -163,7 +163,7 @@ public class Transaction17766 extends SdbTestBase {
         expDataList.clear();
         expDataList.add(data2);
         expDataList.add(data3);
-        //8 read after trans2 commit 
+        //8 read after trans2 rollback 
         sdb2.rollback();
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
         Assert.assertFalse(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));

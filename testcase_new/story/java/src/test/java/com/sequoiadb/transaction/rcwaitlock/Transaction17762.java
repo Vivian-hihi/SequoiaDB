@@ -93,6 +93,7 @@ public class Transaction17762 extends SdbTestBase {
     public void test(){
         
         //2 trans1 insert record R2
+        //未覆盖R1>R2
         CLTrans1.insert(data2);
         
         //3 trans2 update R2 and R2 to R3 and R4

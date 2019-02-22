@@ -105,6 +105,7 @@ public class Transaction17765 extends SdbTestBase {
     public void test(){
         
         //2 trans1 insert record
+        //TODO:未覆盖六种情况
         CLTrans1.update(new BasicBSONObject("a", 1), modifier3, null);
         
         //3 trans2 update

@@ -60,6 +60,7 @@ public class Transaction17829 extends SdbTestBase {
         data.put("b", 1);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
+        //插入顺序未覆盖：先R1后R2、先R2后R1
         cl.insert(data);
         
         data2 = new BasicBSONObject();

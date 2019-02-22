@@ -93,6 +93,7 @@ public class Transaction17761 extends SdbTestBase {
     public void test(){
         
         //2 query.update
+        //TODO:未覆盖R1大于R2
         CLTrans1.insert(data2);
         
         //3 trans2 update
@@ -101,6 +102,7 @@ public class Transaction17761 extends SdbTestBase {
         Assert.assertTrue(updateThread.matchBlockingMethod(CLTrans2.getClass().getName(), "update"));
         
         //4 trans3 read
+        //TODO:未覆盖用例中的六种情况
         QueryThread queryThread = new QueryThread();
         queryThread.start();
         Assert.assertTrue(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));

@@ -77,6 +77,7 @@ public class Transaction17763 extends SdbTestBase {
     public void test(){
         
         //2 trans1 query.update
+        //TODO：未覆盖R1>R2
         CLTrans1.insert(data2);
         
         //3 trans2 delete r1 and r2
