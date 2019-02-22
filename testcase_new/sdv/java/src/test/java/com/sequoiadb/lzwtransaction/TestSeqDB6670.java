@@ -114,8 +114,6 @@ public class TestSeqDB6670 extends SdbTestBase {
             if ((double) after.get("CurrentCompressionRatio") >= 1) {
                 Assert.fail("CurrentCompressionRatio >= 1 !");
             }
-            Assert.assertEquals(before.get("TotalDataPages").toString(), 
-                    after.get("TotalDataPages").toString());
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         }
