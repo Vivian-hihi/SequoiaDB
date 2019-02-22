@@ -35,6 +35,7 @@ public class InsertRead17152 extends SdbTestBase {
 	
 	@BeforeClass
     public void setUp(){
+	     //TODO:有的地方没有对齐，可能别的用例也有这个问题，可以用eclipse的自动排版对齐一下
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -56,6 +57,7 @@ public class InsertRead17152 extends SdbTestBase {
 		expList.add(insertR1);
 		
 		//事务2表扫描记录
+		//TODO:这里并不是事务2，这个Read类新起了一个连接，并没有用到事务2的连接去查询，别的用例也有这个问题，请修改
 		Read read1 = new Read("{'':null}");
 		read1.start();
 		Assert.assertTrue(read1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
@@ -121,6 +123,7 @@ public class InsertRead17152 extends SdbTestBase {
   	    actList.clear();
   	    
   	    //事务2提交
+  	    //TODO:用例已被导师修改新增了一个删除记录步骤
   	    db2.commit();
   	    cursor.close();
 	}

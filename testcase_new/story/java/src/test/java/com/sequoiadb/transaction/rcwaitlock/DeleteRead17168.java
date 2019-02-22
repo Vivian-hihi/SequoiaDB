@@ -54,6 +54,7 @@ public class DeleteRead17168 extends SdbTestBase {
 		db2.beginTransaction();
 		
 		//事务1执行批量更新
+		//TODO:这里注释应该是删除，并且要走索引扫描
 		cl1.delete("{a:1}");
 		
 		//事务2表扫描记录

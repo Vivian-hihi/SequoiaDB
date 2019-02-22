@@ -36,6 +36,7 @@ public class UpdateRead17154_3 extends SdbTestBase {
 	
 	@BeforeClass
     public void setUp(){
+	   //TODO:格式问题
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");

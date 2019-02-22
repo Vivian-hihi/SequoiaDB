@@ -35,6 +35,7 @@ public class UpdateRead17155_4 extends SdbTestBase {
 	
 	@BeforeClass
     public void setUp(){
+	   //TODO:格式问题
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -54,6 +55,7 @@ public class UpdateRead17155_4 extends SdbTestBase {
 		db2.beginTransaction();
 		
 		//事务1删除非索引字段的值
+		//TODO:走索引扫描
 		BSONObject updateR1 = (BSONObject)JSON.parse("{_id:1, a:1}");
 		cl1.update(null, "{$unset:{b:1}}", "{'':null}");
 		expList.add(updateR1);

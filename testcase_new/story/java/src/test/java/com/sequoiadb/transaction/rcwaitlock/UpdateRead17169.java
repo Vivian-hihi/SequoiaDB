@@ -35,6 +35,7 @@ public class UpdateRead17169 extends SdbTestBase {
 	
 	@BeforeClass
     public void setUp(){
+	   //TODO:格式问题
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -57,9 +58,11 @@ public class UpdateRead17169 extends SdbTestBase {
 		db2.beginTransaction();
 		
 		//事务1执行多次更新
+		//TODO:这里仅需要一条记录就可以了，因为不是批量操作
 		for(int i=0; i<50000; i++)
         {
         	BSONObject updateR = (BSONObject)JSON.parse("{_id:"+i+", a:"+i+", b:1}");
+        //TODO:更新要强制走索引扫描
 			cl1.update("{_id:"+i+"}","{$set:{a:"+i+"}}", null);
 			expList.add(updateR);
         }

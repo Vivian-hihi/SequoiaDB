@@ -35,6 +35,7 @@ public class MultiAtomOperationRead17159_2 extends SdbTestBase {
 	
 	@BeforeClass
     public void setUp(){
+	   //TODO:格式问题
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -58,6 +59,7 @@ public class MultiAtomOperationRead17159_2 extends SdbTestBase {
 		//事务1对不同记录执行多个原子操作
 		BSONObject insertR3 = (BSONObject)JSON.parse("{_id:3, a:3, b:3}");
 		cl1.insert(insertR3);
+		//TODO:强制走索引扫描
 		cl1.update("{_id:1}", "{$set:{a:11}}", "{'':null}");
 		BSONObject updateR1 = (BSONObject)JSON.parse("{_id:1, a:11, b:1}");
 		cl1.delete("{_id:2}", "{'':'a'}");

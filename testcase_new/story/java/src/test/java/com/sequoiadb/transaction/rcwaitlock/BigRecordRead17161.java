@@ -35,6 +35,7 @@ public class BigRecordRead17161 extends SdbTestBase {
 	
 	@BeforeClass
     public void setUp(){
+	   //TODO:格式问题
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -54,6 +55,8 @@ public class BigRecordRead17161 extends SdbTestBase {
 		db2.beginTransaction();
 		
 		//事务1对同一条记录执行多个操作
+		//TODO:记录长度未超过4K
+		//TODO:分成两个用例来写
 		cl1.insert("{_id:3, a:'aaaaaa', b:3}");
 		BSONObject insertR2 = (BSONObject)JSON.parse("{_id:2, a:'bbbbbbbb', b:2}");
 		cl1.insert(insertR2);

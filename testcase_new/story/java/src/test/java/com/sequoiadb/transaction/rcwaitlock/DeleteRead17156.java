@@ -34,6 +34,7 @@ public class DeleteRead17156 extends SdbTestBase {
 	
 	@BeforeClass
     public void setUp(){
+	   //TODO:格式问题
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -119,6 +120,7 @@ public class DeleteRead17156 extends SdbTestBase {
   	    actList.clear();
   	    
   	    //事务2提交
+  	//TODO:还有一步删除记录
   	    db2.commit();
   	    cursor.close();
 	}

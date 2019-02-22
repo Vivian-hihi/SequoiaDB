@@ -36,6 +36,7 @@ public class InsertRead17153 extends SdbTestBase {
 	
 	@BeforeClass
     public void setUp(){
+	     //TODO:代码格式问题
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -120,6 +121,7 @@ public class InsertRead17153 extends SdbTestBase {
   	    actList.clear();
   	    
   	    db2.rollback();
+  	//TODO:还有一个删除步骤
   	    cursor.close();
 	}
 	
