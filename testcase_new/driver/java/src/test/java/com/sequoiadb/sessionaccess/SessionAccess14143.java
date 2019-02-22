@@ -44,9 +44,11 @@ public class SessionAccess14143 extends SdbTestBase {
     @Test
     public void test14143() {
         String[] expectPreferedInstance = new String[]{"M", "S", "A"};
+        //TODO:1.没有验证取值为A
         for (String s : expectPreferedInstance) {
             BasicBSONObject options = new BasicBSONObject("PreferedInstance", s);
             db.setSessionAttr(options);
+            //TODO:1、变量名name太简洁，也没有加描述信息
             String name = CommLib.getActualDataNodeName(dbcl);
             if (s.equals("M")) {
                 assertTrue(CommLib.isMaster(db, rgName, name), "the actual data node name is: " + name + ",the current option is " + options.toString());

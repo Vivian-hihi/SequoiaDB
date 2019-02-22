@@ -51,15 +51,18 @@ public class SessionAccess14147 extends SdbTestBase {
         try{
             db.createCollectionSpace(csName).createCollection(clName);
         }catch (BaseException e){
+        	//TODO:1、等号两边需要空格，本用例中同类问题请一并修改
             if(e.getErrorCode()!=-13)
                 throw e;
         }finally {
             db.setSessionAttr(new BasicBSONObject("Timeout",-1L));
+            //TODO:2、这里的try-catch可以去掉，本用例中同类问题请一并修改
             try{
                 db.dropCollectionSpace(csName);
             }catch (BaseException e){}
         }
         
+        //TODO:3、timeout目前最小值是1000ms
         db.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
         db.setSessionAttr(new BasicBSONObject("Timeout", 200L));
         try{

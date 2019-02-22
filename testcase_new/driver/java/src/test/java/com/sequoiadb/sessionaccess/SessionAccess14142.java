@@ -55,6 +55,7 @@ public class SessionAccess14142 extends SdbTestBase {
         int expectid = getRandomInstanceid();
         BasicBSONObject options = new BasicBSONObject("PreferedInstance", expectid).append("Timeout", 200L);
         db.setSessionAttr(options);
+        //TODO:1、create lob走主节点，这里的instanceid不一定是主节点，如果是备节点，无法覆盖测试点。
         try {
             DBLob lob = dbcl.createLob();
             lob.write(new byte[1024 * 1024 * 10]);
@@ -62,7 +63,7 @@ public class SessionAccess14142 extends SdbTestBase {
         } catch (BaseException e) {
         	Assert.assertEquals(e.getErrorCode(), -13);
         }
-
+      //TODO:1、同todo1：如果是备节点，无法覆盖测试点。
         options.put("Timeout", 20000L);
         db.setSessionAttr(options);
         DBLob lob = dbcl.createLob();
@@ -70,9 +71,12 @@ public class SessionAccess14142 extends SdbTestBase {
         lob.close();
         db.setSessionAttr(options);
         String actualNodeName = CommLib.getActualDataNodeName(dbcl);
+        //TODO:2、这个测试点没有意义，已经选取了instanceid，然后使用了又比较instanceid是否正确，这个点是测试什么？如果比较访问节点直接获取访问节点比较
         assertEquals(CommLib.getInstanceidByNodeName(nodes, actualNodeName), expectid);
+        //TODO:3、变量命名建议符合实际用意，如果不好命名可以加描述信息
         BSONObject actual = db.getSessionAttr();
         options.append("PreferedInstanceMode", "random");
+        //TODO:4、这里比较结果还包括insertid和timeout参数
         assertEquals(actual, options);
     }
     

@@ -32,6 +32,7 @@ public class SessionAccess14144 extends SdbTestBase {
         nodes = CommLib.createRG(db, rgName);
         BSONObject options = new BasicBSONObject("Group", rgName);
         options.put("ReplSize", -1);
+        //TODO:1、clname区别建议改成clName
         dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(clname, options);
         CommLib.insertRecords(dbcl);
     }

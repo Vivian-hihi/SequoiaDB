@@ -16,7 +16,7 @@ public class CommLib extends SdbTestBase {
 	
     public static  BasicBSONList createRG(Sequoiadb db, String rgName) {
     	int reservedPortBegin = SdbTestBase.reservedPortBegin;
-    	
+    	//TODO:1、环境判断不要放到公共方法中，在每个用例开始前判断
     	if(isStandAlone(db)){
 			throw new SkipException("run mode is standalone,test case skip");
 		}
@@ -38,7 +38,8 @@ public class CommLib extends SdbTestBase {
         rg.start();
         return nodes;
     }
-
+    
+    //TODO:2、公共类已经有改方法，这个方法可以去掉
     public static boolean isStandAlone(Sequoiadb sdb){
 		try{
 			sdb.listReplicaGroups();		
@@ -59,6 +60,7 @@ public class CommLib extends SdbTestBase {
             return false;
         }
     }
+    
     
     public static int getInstanceidByNodeName(BasicBSONList nodes, String nodeName){
     	for(int i = 0 ; i < nodes.size() ; i++){
