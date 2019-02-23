@@ -237,11 +237,6 @@ namespace engine
             rc = indexExtent.advance ( _curIndexRID, _direction ) ;
             if ( rc )
             {
-               if( SDB_IXM_KEY_NOTEXIST == rc )
-               {
-                  // not exist means finished
-                  rc = SDB_IXM_EOC;
-               }
                goto error ;
             }
             if ( lastRID == _curIndexRID )
