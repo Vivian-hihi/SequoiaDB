@@ -3534,10 +3534,28 @@ namespace engine
          // set deleting attr
          else
          {
-            pRecord->setDeleting() ;
-            // need to dec count
-            --( pExtent->_recCount ) ;
-            --( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
+            // set the deleting flag if it hasn't been done.
+            //
+            // Scenario
+            //   do.tranBegin() 
+            //   db.cs.cl.remove({a:2})
+            //   db.cs.cl.update({$set:{'_id':2, 'a':2,'b':2}},{a:1})
+            //   db.transRollback()
+            // when rollback,
+            //   _clsReplayer::rollback 
+            //     rtnUpdate
+            //       _dmsIXSecScanner::advance
+            //         _dmsStorageDataCommon::deleteRecord
+            //  this time, isNeedToSetDeleting = 1, isDeleting = 1,
+            //  RCDoDelete = 0, pRecord->isDeleting() = 128,
+            //  X lock is acquired, we may end up decrease the counter twice
+            if ( DMS_RECORD_FLAG_DELETING != pRecord->isDeleting() )
+            {
+               pRecord->setDeleting() ;
+               // need to dec count
+               --( pExtent->_recCount ) ;
+               --( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
+            }
          }
 
          if ( FALSE == isDeleting )
