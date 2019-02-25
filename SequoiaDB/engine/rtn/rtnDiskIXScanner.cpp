@@ -581,7 +581,6 @@ namespace engine
       {
          // this means the last scaned record is still here, so let's
          // reset _savedRID so that we'll call advance()
-         
          _savedRID.reset() ;
       }
       // do relocate if this is local disk scan. Otherwise the mergescan 
