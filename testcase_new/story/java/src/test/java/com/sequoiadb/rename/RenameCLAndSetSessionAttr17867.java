@@ -49,7 +49,7 @@ public class RenameCLAndSetSessionAttr17867 extends SdbTestBase {
     private Sequoiadb listLobSessionSdb = null;    
     private String groupName = "" ;
     private CollectionSpace cs = null ;
-    private int recordNums = 300000 ; 
+    private int recordNums = 200000 ; 
     private ObjectId lobOid = new ObjectId("5c6a5aa3d5d5a3f1282f66d0");
     private byte[] lobBuff = new byte[1024 * 1024];   
 

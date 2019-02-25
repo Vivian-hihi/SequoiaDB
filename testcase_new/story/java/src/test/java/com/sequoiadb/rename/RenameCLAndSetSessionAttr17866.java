@@ -39,7 +39,7 @@ public class RenameCLAndSetSessionAttr17866 extends SdbTestBase {
     private Sequoiadb sessionSdb = null ;    
     private String groupName = "" ;
     private CollectionSpace cs = null ;
-    private int recordNums = 300000 ;    
+    private int recordNums = 200000 ;    
 
     @BeforeClass
     public void setUp() {
