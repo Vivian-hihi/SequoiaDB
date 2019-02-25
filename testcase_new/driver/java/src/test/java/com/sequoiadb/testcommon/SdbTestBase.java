@@ -17,13 +17,14 @@ public class SdbTestBase {
 	protected static int reservedPortEnd;
 	protected static String reservedDir;
 	protected static String workDir;
+	protected static String rootPassword;
 
 	@Parameters({"HOSTNAME", "SVCNAME", "CHANGEDPREFIX", 
-		"RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR" })
+		"RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR","ROOTPASSWD" })
 	@BeforeSuite
 	public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME,
 			       int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
-			       String WORKDIR){
+			       String WORKDIR,String ROOTPASSWD){
 		hostName    = HOSTNAME ;
 		serviceName = SVCNAME ;
 		csName      = COMMCSNAME ;
@@ -31,11 +32,12 @@ public class SdbTestBase {
 		reservedPortEnd   = RSRVPORTEND ;
 		reservedDir       = RSRVNODEDIR ;
 		workDir           = WORKDIR ;
+		rootPassword = ROOTPASSWD;
 		coordUrl = HOSTNAME + ":" + SVCNAME ;
 		
 		Sequoiadb db = null;
 		try{
-			db = new Sequoiadb(coordUrl, "", "");
+			db = new Sequoiadb(coordUrl, "sdbadmin", "sequoiadb");
 			boolean ret = createCommonCS(db);
 			Assert.assertTrue(ret);
 		}catch(BaseException e){
