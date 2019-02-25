@@ -177,4 +177,21 @@ public class TransUtils {
           }
           return actRList;
      }
+     
+     public static ArrayList<BSONObject> insertDatas(DBCollection cl, int startId, int endId, int insertValue) throws BaseException {
+         ArrayList<BSONObject> insertDatas = new ArrayList<BSONObject>();
+         for(int i=startId; i<endId; i++){
+             insertDatas.add((BSONObject) JSON.parse("{_id:" + i + ",a:" + insertValue + ",b:" + i + "}"));
+         }
+         cl.insert(insertDatas);
+         return insertDatas;
+     }
+     
+     public static ArrayList<BSONObject> getUpdateDatas(int startId, int endId, int updateValue){
+         ArrayList<BSONObject> updateDatas = new ArrayList<BSONObject>();
+         for(int i=startId; i<endId; i++){
+             updateDatas.add((BSONObject) JSON.parse("{_id:" + i + ",a:" + updateValue + ",b:" + i + "}"));
+         }
+         return updateDatas;
+     }
 }
