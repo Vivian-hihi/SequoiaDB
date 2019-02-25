@@ -58,8 +58,12 @@ public class GroupCheckResult {
         }
     }
 
-    public boolean checkWithLSN() {
-        return connCheck && primaryCheck && serviceCheck && deployCheck && LSNCheck;
+    public boolean checkWithLSN(boolean ignoreIndeploy) {
+        boolean ret = connCheck && primaryCheck && serviceCheck && LSNCheck; 
+        if (!ignoreIndeploy){
+            ret = ret && deployCheck ;
+        }
+        return ret ;
     }
 
     public boolean checkWithLSNAndDiskThreshold() {

@@ -182,7 +182,7 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    public boolean checkBusiness(int timeOutSecond, boolean ignoreIndeploy ) throws ReliabilityException {
+    public boolean checkBusiness( int timeOutSecond, boolean ignoreIndeploy ) throws ReliabilityException {
         refresh() ;
         long timestamp = System.currentTimeMillis();
         while (!checkBusiness(false, ignoreIndeploy)) {
@@ -376,7 +376,7 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    public boolean checkBusinessWithLSN(int timeOutSecond) throws ReliabilityException {
+    public boolean checkBusinessWithLSN( int timeOutSecond ) throws ReliabilityException {
         refresh() ;
         long timestamp = System.currentTimeMillis();
         boolean ret = true ;
@@ -386,7 +386,7 @@ public class GroupMgr {
                 printAndThrowAllException = true ;
             }
             try{
-                ret = checkBusinessWithLSN(printAndThrowAllException) ;
+                ret = checkBusinessWithLSN(printAndThrowAllException, true) ;
             }catch(ReliabilityException e){
                 if ( printAndThrowAllException ){
                     throw e ;
@@ -414,9 +414,10 @@ public class GroupMgr {
      * @throws ReliabilityException
      */
     // TODO:可被替代，屏蔽
-    public boolean checkBusinessWithLSN() throws ReliabilityException {
-        return checkBusinessWithLSN(120);
+    public boolean checkBusinessWithLSN( ) throws ReliabilityException {
+        return checkBusinessWithLSN( 120 );
     }
+    
 
     /**
      * 检测集群状态（组内是否有主，各节点可连接，ServiceStatus,组内LSN一致），
@@ -427,7 +428,7 @@ public class GroupMgr {
      * @throws ReliabilityException
      */
     // TODO:可被替代，屏蔽
-    private boolean checkBusinessWithLSN(boolean printAndThrowAllException) throws ReliabilityException {
+    private boolean checkBusinessWithLSN(boolean printAndThrowAllException, boolean ignoreIndeploy) throws ReliabilityException {
         boolean ret = false ;
         // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
         if (createTestCollection(printAndThrowAllException)) {
@@ -441,7 +442,7 @@ public class GroupMgr {
         List<GroupCheckResult> results = checkGroup(printAndThrowAllException);
 
         for (GroupCheckResult result : results) {
-            if (!result.checkWithLSN()) {
+            if (!result.checkWithLSN( ignoreIndeploy )) {
                 if (printAndThrowAllException) {
                     System.out.println(result.toString());
                 }
