@@ -107,6 +107,8 @@ public class InsertRead17192 extends SdbTestBase {
   	    
   	    db2.commit();
   	    cursor.close();
+  	    
+  	    //TODO:步骤9删除记录呢?
 	}
 	
 	@AfterClass

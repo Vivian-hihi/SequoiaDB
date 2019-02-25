@@ -52,7 +52,7 @@ public class UpdateRead17194_3 extends SdbTestBase {
 		db2.beginTransaction();
 		
 	    //记录新增索引字段
-	    cl1.update("{_id:1}", "{$set:{a:3}}", "{'':null}");
+	    cl1.update("{_id:1}", "{$set:{a:3}}", "{'':null}");//TODO:记录已有索引字段,与17194_1用例重复了
 		BSONObject updateR1 = (BSONObject)JSON.parse("{_id:1,a:3,b:1}");
 	    expList.add(updateR1);
 	    

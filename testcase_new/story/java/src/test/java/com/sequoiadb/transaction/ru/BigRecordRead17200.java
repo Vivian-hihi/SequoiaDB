@@ -41,13 +41,14 @@ public class BigRecordRead17200 extends SdbTestBase {
 		cl1 = db1.getCollectionSpace(csName).getCollection(clName);
 		cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
+        
     }
 	
 	@Test
     public void test(){
 		//集合中插入带索引的记录
 		BSONObject insertR1 = (BSONObject)JSON.parse("{_id:1, a:'aaaaaaaa', b:1}");
-		cl.insert(insertR1);
+		cl.insert(insertR1);//TODO:1M的记录呢?超过4K的记录呢
 		
 		//开启两个并发事务
 		db1.beginTransaction();

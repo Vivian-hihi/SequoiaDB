@@ -55,7 +55,7 @@ public class UpdateRead17232_4 extends SdbTestBase{
 		db2.beginTransaction();
 		
 		//事务1将部分索引字段删除
-		cl1.update(null,"{$set:{a:2, b:2}}", "{'':null}");
+		cl1.update(null,"{$set:{a:2, b:2}}", "{'':null}");//TODO:这里是更新索引字段吧,或者备注错了?
 		BSONObject updateR1 = (BSONObject)JSON.parse("{_id:1, a:2, b:2, c:1}");
 		expList.add(updateR1);
 		

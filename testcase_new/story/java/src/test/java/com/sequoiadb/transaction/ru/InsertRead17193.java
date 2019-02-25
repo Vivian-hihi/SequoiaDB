@@ -108,6 +108,8 @@ public class InsertRead17193 extends SdbTestBase {
   	    
   	    db2.rollback();
   	    cursor.close();
+  	    
+  	    //TODO:步骤9删除记录呢?
 	}
 	
 	@AfterClass

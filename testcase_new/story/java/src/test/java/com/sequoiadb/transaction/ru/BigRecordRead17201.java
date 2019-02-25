@@ -48,7 +48,7 @@ public class BigRecordRead17201 extends SdbTestBase {
     public void test(){
 		
 		BSONObject insertR1 = (BSONObject)JSON.parse("{_id:1, a:'aaaaaaaa', b:1}");
-		cl.insert(insertR1);
+		cl.insert(insertR1);//TODO:1M的记录呢?超过4K的记录呢
 		
 		db1.beginTransaction();
 		db2.beginTransaction();
