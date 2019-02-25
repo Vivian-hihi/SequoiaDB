@@ -1,12 +1,11 @@
 package com.sequoiadb.testcommon;
 
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
-
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 
 public class SdbTestBase {
 	protected static String coordUrl;
@@ -37,7 +36,7 @@ public class SdbTestBase {
 		
 		Sequoiadb db = null;
 		try{
-			db = new Sequoiadb(coordUrl, "sdbadmin", "sequoiadb");
+			db = new Sequoiadb(coordUrl, "", "");
 			boolean ret = createCommonCS(db);
 			Assert.assertTrue(ret);
 		}catch(BaseException e){
