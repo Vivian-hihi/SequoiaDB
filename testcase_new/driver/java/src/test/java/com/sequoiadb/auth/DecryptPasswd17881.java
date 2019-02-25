@@ -10,7 +10,10 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
- * Created by fanyu on 2019/2/22.
+ * @Description: seqDB-17881:decryptPasswd参数校验
+ * @author fanyu
+ * @Date:2019年02月22日
+ * @version:1.0
  */
 public class DecryptPasswd17881 extends SdbTestBase {
 

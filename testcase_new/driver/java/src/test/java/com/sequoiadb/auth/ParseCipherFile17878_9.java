@@ -16,7 +16,12 @@ import java.io.File;
 import java.io.FileReader;
 
 /**
- * Created by fanyu on 2019/2/22.
+ * @Description:  seqDB-17878:带token,单个cluster，密码文件包含每个cluster单个和多个用户
+ *  seqDB-17879:带token，多个cluster,密码文件包含每个cluster单个或多个用户
+ *  本用例只涉及单个集群单个用户，只进行简单的功能验证
+ * @author fanyu
+ * @Date:2019年02月22日
+ * @version:1.0
  */
 public class ParseCipherFile17878_9 extends SdbTestBase {
     private Sequoiadb sdb;

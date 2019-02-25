@@ -16,7 +16,10 @@ import java.io.File;
 import java.util.Random;
 
 /**
- * Created by fanyu on 2019/2/22.
+ * @Description: seqDB-17880:parseCipherFile参数检验,此用例密码文件中包含多个用户
+ * @author fanyu
+ * @Date:2019年02月22日
+ * @version:1.0
  */
 public class ParseCipherFile17880 extends SdbTestBase {
     private Sequoiadb sdb;
