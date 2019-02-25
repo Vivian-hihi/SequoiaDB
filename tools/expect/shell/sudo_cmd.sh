@@ -25,11 +25,13 @@ expect {
       send "$pwd\r"
    }
    timeout {
-      send \x03
-      interact
-      exit 1
+      foreach {pid spawnid os_error_flag value} [wait] break
+      exit $value
    }
-   eof { }
+   eof {
+      foreach {pid spawnid os_error_flag value} [wait] break
+      exit $value
+   }
 }
 
 expect {

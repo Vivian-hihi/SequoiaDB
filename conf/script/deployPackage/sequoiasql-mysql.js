@@ -252,7 +252,7 @@ function getPathList( path )
    }
 }
 
-function copyAllFile( file, hostName, agentPort, srcPath, dstPath )
+function copyAllFile( ssh, hostName, srcPath, dstPath )
 {
    var error = null ;
    var list = getPathList( srcPath ) ;
@@ -266,13 +266,13 @@ function copyAllFile( file, hostName, agentPort, srcPath, dstPath )
       {
          try
          {
-            file.mkdir( tmpDstPath ) ;
+            ssh.exec( 'mkdir -p ' + tmpDstPath ) ;
          }
          catch( e )
          {
          }
 
-         error = copyAllFile( file, hostName, agentPort, tmpSrcPath, tmpDstPath ) ;
+         error = copyAllFile( ssh, hostName, tmpSrcPath, tmpDstPath ) ;
          if ( error !== null )
          {
             break ;
@@ -282,15 +282,15 @@ function copyAllFile( file, hostName, agentPort, srcPath, dstPath )
       {
          try
          {
-            File.scp( tmpSrcPath, hostName + ':' + agentPort + '@' + tmpDstPath ) ;
-            file.chmod( tmpDstPath, 0755 ) ;
+            ssh.push( tmpSrcPath, tmpDstPath ) ;
+            ssh.exec( 'chmod 0755 ' + tmpDstPath ) ;
          }
          catch( e )
          {
             error = _getErrorMsg( getLastError(), e,
-                                  sprintf( "Failed to copy file: host [?:?], " +
+                                  sprintf( "Failed to copy file: host [?], " +
                                            "file [?]",
-                                           hostName, agentPort, tmpSrcPath ) ) ;
+                                           hostName, tmpSrcPath ) ) ;
             break ;
          }
       }
@@ -299,12 +299,32 @@ function copyAllFile( file, hostName, agentPort, srcPath, dstPath )
    return error ;
 }
 
-function sendExpect( file, hostName, agentPort )
+function sendExpect( ssh, hostName )
 {
    var srcPath = getExpectPath() ;
    var dstPath = OMA_TEMP_EXPECT_PATH ;
 
-   return copyAllFile( file, hostName, agentPort, srcPath, dstPath ) ;
+   return copyAllFile( ssh, hostName, srcPath, dstPath ) ;
+}
+
+function removeAgentTempDir()
+{
+   try
+   {
+      var taskInfo      = BUS_JSON[FIELD_INFO] ;
+      var hostInfo      = taskInfo[FIELD_HOST_INFO] ;
+
+      var hostName      = hostInfo[FIELD_HOSTNAME] ;
+      var sshPort       = hostInfo[FIELD_SSH_PORT] ;
+      var user          = hostInfo[FIELD_USER] ;
+      var pwd           = hostInfo[FIELD_PASSWD] ;
+      var ssh           = new Ssh( hostName, user, pwd, parseInt( sshPort ) ) ;
+
+      ssh.exec( 'rm -rf ' + OMA_TEMP_ROOT_PATH ) ;
+   }
+   catch( e )
+   {
+   }
 }
 
 function SendPackage( taskID )
@@ -317,12 +337,12 @@ function SendPackage( taskID )
 
    var installPacket = taskInfo[FIELD_INSTALL_PACKET] ;
    var hostName      = hostInfo[FIELD_HOSTNAME] ;
-   var agentPort     = _getAgentPort( hostName ) ;
+   var sshPort       = hostInfo[FIELD_SSH_PORT] ;
+   var user          = hostInfo[FIELD_USER] ;
+   var pwd           = hostInfo[FIELD_PASSWD] ;
    var destPath      = OMA_TEMP_PACKET_PATH ;
-   var destFileAddr  = hostName + ':' + agentPort + '@' + destPath +
-                       '/sequoiasql-mysql.run' ;
-   var remote        = null ;
-   var file          = null ;
+   var destFileName  = destPath + '/sequoiasql-mysql.run' ;
+   var ssh ;
 
    PD_LOGGER.setTaskId( taskID ) ;
 
@@ -336,15 +356,13 @@ function SendPackage( taskID )
 
    try
    {
-      remote = new Remote( hostName, agentPort ) ;
-      file = remote.getFile() ;
+      ssh = new Ssh( hostName, user, pwd, parseInt( sshPort ) ) ;
    }
    catch( e )
    {
       error = _getErrorMsg( getLastError(), e,
-                            sprintf( "Failed to get remote file obj: " +
-                                     "host [?:?]",
-                                     hostName, agentPort ) ) ;
+                            sprintf( "Failed to call ssh: host [?], detail[?]",
+                                     hostName, getLastErrMsg() ) ) ;
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
@@ -356,14 +374,14 @@ function SendPackage( taskID )
 
    try
    {
-      file.mkdir( destPath ) ;
+      ssh.exec( 'mkdir -p ' + destPath ) ;
    }
    catch( e )
    {
       error = _getErrorMsg( getLastError(), e,
-                            sprintf( "Failed create remote dir: host [?:?], " +
+                            sprintf( "Failed create remote dir: host [?], " +
                                      "path [?]",
-                                     hostName, agentPort, destPath ) ) ;
+                                     hostName, destPath ) ) ;
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
@@ -375,14 +393,14 @@ function SendPackage( taskID )
 
    try
    {
-      File.scp( installPacket, destFileAddr ) ;
+      ssh.push( installPacket, destFileName ) ;
    }
    catch( e )
    {
       error = _getErrorMsg( getLastError(), e,
-                            sprintf( "Failed copy package: host [?:?], " +
+                            sprintf( "Failed copy package: host [?], " +
                                      "package [?]",
-                                     hostName, agentPort, installPacket ) ) ;
+                                     hostName, installPacket ) ) ;
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
       resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
@@ -392,7 +410,7 @@ function SendPackage( taskID )
       return resultInfo ;
    }
 
-   error = sendExpect( file, hostName, agentPort ) ;
+   error = sendExpect( ssh, hostName ) ;
    if ( error !== null )
    {
       resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
@@ -465,7 +483,7 @@ function InstallPackage( taskID )
    var destPath      = OMA_TEMP_PACKET_PATH + '/sequoiasql-mysql.run' ;
    var ssh ;
 
-   var expectTimeout = 30 ;
+   var expectTimeout = 300 ;
    var expectPath    = OMA_TEMP_EXPECT_PATH + '/bin/expect' ;
    var expectShell   = OMA_TEMP_EXPECT_PATH + '/shell/sudo_cmd.sh' ;
    var expectExec    = 'LC_ALL=C;' + expectPath + ' ' + expectShell + ' ' + expectTimeout + ' ' + string_encode( pwd ) + ' ' ;
@@ -476,8 +494,6 @@ function InstallPackage( taskID )
                                         hostName ) ) ;
    resultInfo[FIELD_FLOW].push( sprintf( "Begin to install packet: host [?]",
                                          hostName ) ) ;
-
-   PD_LOGGER.logTask( PDEVENT, expectExec ) ;
 
    try
    {
@@ -497,35 +513,27 @@ function InstallPackage( taskID )
       return resultInfo ;
    }
 
-   if ( user != 'root' )
+   try
    {
-      try
-      {
-         var cmd = expectExec + 'ls' ;
-         ssh.exec( cmd ) ;
-      }
-      catch( e )
-      {
-         error = _getErrorMsg( getLastError(), e,
-                               sprintf( "Account ? does not have administrator privileges", user ) ) ;
-         resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
-         resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
-         resultInfo[FIELD_STATUS] = STATUS_FAIL ;
-         resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
-         resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
-         PD_LOGGER.logTask( PDERROR, error ) ;
-         return resultInfo ;
-      }
+      var cmd = expectExec + 'ls' ;
+      ssh.exec( cmd ) ;
+   }
+   catch( e )
+   {
+      error = _getErrorMsg( getLastError(), e,
+                            sprintf( "Account ? does not have administrator privileges", user ) ) ;
+      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+      resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+      resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+      PD_LOGGER.logTask( PDERROR, error ) ;
+      return resultInfo ;
    }
 
    try
    {
-      var cmd = 'chmod u+x ' + destPath ;
-
-      if ( user != 'root' )
-      {
-         cmd = expectExec + cmd ;
-      }
+      var cmd = expectExec + 'chmod u+x ' + destPath ;
 
       ssh.exec( cmd ) ;
    }
@@ -551,12 +559,7 @@ function InstallPackage( taskID )
       options += " --username " + sdbUser + " --userpasswd " + sdbPasswd ;
       options += " --groupname " + sdbUserGroup ;
 
-      var cmd = destPath + options ;
-
-      if ( user != 'root' )
-      {
-         cmd = expectExec + cmd ;
-      }
+      var cmd = expectExec + destPath + options ;
 
       ssh.exec( cmd ) ;
 
@@ -634,19 +637,6 @@ function CheckResult( taskID )
 
    for( var index in resultInfo )
    {
-      try
-      {
-         var hostName = resultInfo[index][FIELD_HOSTNAME] ;
-         var agentPort = _getAgentPort( hostName ) ;
-
-         remote = new Remote( hostName, agentPort ) ;
-         file = remote.getFile() ;
-         file.remove( OMA_TEMP_ROOT_PATH ) ;
-      }
-      catch( e )
-      {
-      }
-
       if( resultInfo[index][FIELD_ERRNO] != SDB_OK )
       {
          var error = new SdbError( resultInfo[index][FIELD_ERRNO],
@@ -690,6 +680,7 @@ function run()
          {
             result = InstallPackage( taskID ) ;
          }
+         removeAgentTempDir() ;
       }
       else if( BUS_JSON[FIELD_CMD] == "skip" )
       {
