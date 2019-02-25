@@ -152,7 +152,7 @@ function insertDataOverSize(dbcl)
       var strings = doc.toString();
       
       nextExpID = expID + recordLength;
-      if(nextExpID < maxLogicalID)
+      if(nextExpID <= maxLogicalID)
       {
          expIDs.push(expID);
          dbcl.insert( {a:strings} );

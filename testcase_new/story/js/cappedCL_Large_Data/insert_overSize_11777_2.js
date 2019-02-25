@@ -181,14 +181,15 @@ function insertDataOverSize(dbcl)
       
       //处理跨块的情况
       nextExpID = expID + recordLength;
-      if(nextExpID < maxLogicalID )
+      if(nextExpID <= maxLogicalID )
       {
-         if( blockID == Math.floor(nextExpID/oneBlockMaxLID))
+         if( nextExpID/oneBlockMaxLID !=blockID && blockID == Math.floor(nextExpID/oneBlockMaxLID))
          {
             expID = oneBlockMaxLID * blockID++;
             nextExpID = expID + recordLength;
             println("expID:" + expID);
             println("nextExpID:" + nextExpID);
+            println("recordLength:" + recordLength);
          }
          
          dbcl.insert( {a:strings} );
@@ -202,7 +203,8 @@ function insertDataOverSize(dbcl)
       {
          try
          {
-				dbcl.insert( {a:strings} );
+            dbcl.insert( {a:strings} );
+            println("recordLength:"+ recordLength);
             throw "NEED_ERROR";
          }catch(e)
          {
