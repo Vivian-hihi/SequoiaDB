@@ -97,7 +97,7 @@ public class UpdateAndQueryTbScan17165 extends SdbTestBase {
           Assert.assertEquals(actList, expList);
 
           // 事务1提交
-          db1.commit();
+          db1.commit();//TODO:建议用Assert.assertTrue(condition,msg);判断以下结果
           if (!(cl2Thread.isSuccess())) {
                Assert.fail(cl2Thread.getErrorMsg() + "\n");
           }

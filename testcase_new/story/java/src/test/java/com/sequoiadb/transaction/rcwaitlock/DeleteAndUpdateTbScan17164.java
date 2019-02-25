@@ -96,7 +96,7 @@ public class DeleteAndUpdateTbScan17164 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
-          // 事务1提交
+          // 事务1提交//TODO:建议用Assert.assertTrue(condition,msg);判断以下结果
           db1.commit();
           if (!(cl2Thread.isSuccess())) {
                Assert.fail(cl2Thread.getErrorMsg() + "\n");

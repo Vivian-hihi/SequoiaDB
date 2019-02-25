@@ -103,6 +103,7 @@ public class QueryAndUpdate17184 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
+          //TODO:事务2没有用queryAndUpdate
           // 事务2 select for update 读记录走表扫描
           recordsCursor = cl1.query(null, null, null, "{'':null}", DBQuery.FLG_QUERY_FOR_UPDATE);
           actList = TransUtils.getReadActList(recordsCursor);
@@ -123,7 +124,7 @@ public class QueryAndUpdate17184 extends SdbTestBase {
           db1.commit();
 
           // 提交事务2
-          db2.commit();
+          db2.commit();//TODO:用Assert.assertTure()
           if (!cl3Update.isSuccess()) {
                Assert.fail(cl3Update.getErrorMsg());
           }

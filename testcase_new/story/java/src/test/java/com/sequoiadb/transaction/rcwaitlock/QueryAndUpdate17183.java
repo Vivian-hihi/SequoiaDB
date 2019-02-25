@@ -82,6 +82,7 @@ public class QueryAndUpdate17183 extends SdbTestBase {
           db2.beginTransaction();
           db3.beginTransaction();
 
+          //TODO:事务1没有select for update
           // 事务1 select for update读记录走表扫描
           DBCursor recordsCursor = cl1.query(null, null, null, "{'':null}", DBQuery.FLG_QUERY_FOR_UPDATE);
           DBCursor explainCursor = cl1.explain(null, null, null, (BSONObject) JSON.parse("{'':null}"), 0, 1,
@@ -93,6 +94,7 @@ public class QueryAndUpdate17183 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
+          //TODO:事务1没有select for update
           // 事务1 select for update读记录走索引扫描
           recordsCursor = cl1.query("{a:{$exists:1}}", null, null, "{'':'textIndex17183'}",
                     DBQuery.FLG_QUERY_FOR_UPDATE);
@@ -121,7 +123,7 @@ public class QueryAndUpdate17183 extends SdbTestBase {
           Assert.assertTrue(cl3Update.matchBlockingMethod(cl3.getClass().getName(), "update"));
 
           // 提交事务1
-          db1.commit();
+          db1.commit();//TODO:用Assert.assertTure()
           if (!cl3Update.isSuccess()) {
                Assert.fail(cl3Update.getErrorMsg());
           }

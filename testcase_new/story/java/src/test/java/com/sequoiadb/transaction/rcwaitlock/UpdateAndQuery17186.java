@@ -104,7 +104,7 @@ public class UpdateAndQuery17186 extends SdbTestBase {
 
           // 提交事务1
           db1.commit();
-          if (!(cl2Thread.isSuccess())) {
+          if (!(cl2Thread.isSuccess())) {//TODO:用Assert.assertTure()
                Assert.fail(cl2Thread.getErrorMsg() + "\n");
           }
           try {

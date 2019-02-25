@@ -93,6 +93,7 @@ public class QueryAndUpdateIxScan17182 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
+          //TODO:事务1没有select for update
           // 事务1 select for update读记录走索引扫描
           recordsCursor = cl1.query("{a:{$exists:1}}", null, null, "{'':'textIndex17182'}",
                     DBQuery.FLG_QUERY_FOR_UPDATE);
@@ -105,6 +106,7 @@ public class QueryAndUpdateIxScan17182 extends SdbTestBase {
           actList = TransUtils.getReadActList(recordsCursor);
           Assert.assertEquals(actList, expList);
 
+          //TODO:事务2也没有用queryAndUpdate
           // 事务2 select for update读记录走索引扫描阻塞
           CL2Query cl2Thread = new CL2Query("{a:{$exists:1}}", "{'':'textIndex17182'}");
           cl2Thread.start();
@@ -116,7 +118,7 @@ public class QueryAndUpdateIxScan17182 extends SdbTestBase {
           Assert.assertTrue(cl3Update.matchBlockingMethod(cl3.getClass().getName(), "update"));
 
           // 提交事务1
-          db1.commit();
+          db1.commit();//TODO:用Assert.assertTure()
           if (!(cl2Thread.isSuccess())) {
                Assert.fail(cl2Thread.getErrorMsg() + "\n");
           }
@@ -138,7 +140,7 @@ public class QueryAndUpdateIxScan17182 extends SdbTestBase {
           Assert.assertEquals(actList, expList);
 
           // 提交事务2
-          db2.commit();
+          db2.commit();//TODO:用Assert.assertTure()
           if (!cl3Update.isSuccess()) {
                Assert.fail(cl3Update.getErrorMsg());
           }
