@@ -74,7 +74,7 @@ namespace engine
    /*
       TRANS LRB AND LRB HEADER
    */
-   #define DPS_TRANS_LRB_PER_SEG_DFT      ( 1048576 )
+   #define DPS_TRANS_LRB_PER_SEG_DFT      ( 524288 )
    #define DPS_TRANS_LRB_TOTAL_DFT        ( 536870912 )
    #define DPS_TRANS_LRB_MIN              ( 8192 )
    #define DPS_TRANS_LRB_MAX              ( 4294967295 )
