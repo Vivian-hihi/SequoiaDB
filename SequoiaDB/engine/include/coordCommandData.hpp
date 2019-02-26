@@ -525,11 +525,6 @@ namespace engine
          */
          virtual BOOLEAN _flagCommitOnRollbackFailed () { return TRUE ; }
 
-         /*
-            update catalog info before send command to Data Groups
-         */
-         virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
-
    } ;
    typedef _coordCMDCreateCollection coordCMDCreateCollection ;
 
