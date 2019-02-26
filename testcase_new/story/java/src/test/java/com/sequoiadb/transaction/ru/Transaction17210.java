@@ -22,6 +22,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @Version 1.00
  */
 @Test(groups="ru")
+//TODO:格式问题，有的是tab有的是4个空格，其它用例也有这个问题
 public class Transaction17210 extends SdbTestBase{
 	private Sequoiadb sdb =null;
 	private String clName = "cl_17220";
@@ -89,6 +90,7 @@ public class Transaction17210 extends SdbTestBase{
 		ArrayList<BSONObject> insertR1s = TransUtils.insertDatas(cl1, startId, stopId, insertValue);
         
 		//事务2插入记录R2，记录内容与R1相同
+		//TODO:这里的R1，R2似乎不相同，用例要求记录内容相同
 		ArrayList<BSONObject> insertR2s = TransUtils.insertDatas(cl2, startId + 1000, stopId + 1000, insertValue);
         
 		//事务1索引读

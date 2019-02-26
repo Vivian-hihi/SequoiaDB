@@ -25,6 +25,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @Date 2019-01-29
  * @Version 1.00
  */
+//TODO:格式问题
 @Test(groups="ru")
 public class Transaction17838B extends SdbTestBase{
 	private Sequoiadb sdb =null;
@@ -252,6 +253,7 @@ public class Transaction17838B extends SdbTestBase{
     private class UpdateThread extends SdbThreadBase {
         @Override
         public void exec() throws BaseException{
+           //TODO:走索引扫描
             hint = "{\"\":null}";
             cl2.update(null, "{$set:{a:3}}", hint);
         }

@@ -25,6 +25,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @Version 1.00
  */
 @Test(groups="ru")
+//TODO:格式问题
 public class Transaction17224 extends SdbTestBase{
 	private Sequoiadb sdb =null;
 	private String clName = "cl_17224";
@@ -96,6 +97,7 @@ public class Transaction17224 extends SdbTestBase{
         
 		//事务1匹配R1删除
 		hint = "{\"\":null}";
+		//TODO:索引扫描
 		cl1.delete(null, hint);
 		
 		//事务2匹配R1删除
@@ -230,6 +232,7 @@ public class Transaction17224 extends SdbTestBase{
         @Override
         public void exec() throws BaseException{
             hint = "{\"\":null}";
+          //TODO:走索引扫描
             cl2.delete(null, hint);
         }
     }

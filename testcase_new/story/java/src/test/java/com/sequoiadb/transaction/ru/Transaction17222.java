@@ -24,6 +24,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @Date 2019-01-15
  * @Version 1.00
  */
+//TODO:格式问题
 @Test(groups="ru")
 public class Transaction17222 extends SdbTestBase{
 	private Sequoiadb sdb =null;
@@ -96,6 +97,7 @@ public class Transaction17222 extends SdbTestBase{
 		ArrayList<BSONObject> insertR1s = TransUtils.insertDatas(cl, startId, stopId, insertValue);
         
 		//事务1匹配R1更新为R2
+		//TODO:走索引扫描
 		hint = "{\"\":null}";
 		cl1.update(null, "{$set:{a:" + updateValue + "}}", hint);
 		
@@ -252,6 +254,7 @@ public class Transaction17222 extends SdbTestBase{
         @Override
         public void exec() throws BaseException{
             hint = "{\"\":null}";
+          //TODO:走索引扫描
         	cl2.delete("{a:" + updateValue + "}", hint);
         }
     }

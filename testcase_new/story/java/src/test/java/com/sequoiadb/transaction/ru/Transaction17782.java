@@ -25,6 +25,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @Date 2019-01-29
  * @Version 1.00
  */
+//TODO:格式问题
 @Test(groups="ru")
 public class Transaction17782 extends SdbTestBase{
 	private Sequoiadb sdb =null;

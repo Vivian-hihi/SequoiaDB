@@ -23,6 +23,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @Version 1.00
  */
 @Test(groups="ru")
+//TODO:格式问题
 public class Transaction17218 extends SdbTestBase{
 	private Sequoiadb sdb =null;
 	private String clName = "cl_17218";
@@ -98,6 +99,7 @@ public class Transaction17218 extends SdbTestBase{
 		cl1.update(null, "{$set:{a:" + updateValue + "}}", hint);
 		
 		//事务2插入记录R3、R4,值分别与R1、R2相同
+		//TODO:这里插入的R3，R4的b值不和R1，R2相同
 		ArrayList<BSONObject> insertR2s = TransUtils.insertDatas(cl2, startId + 1000, stopId + 1000, insertValue);
         ArrayList<BSONObject> insertR3s = TransUtils.insertDatas(cl2, startId + 2000, stopId + 2000, updateValue);
         

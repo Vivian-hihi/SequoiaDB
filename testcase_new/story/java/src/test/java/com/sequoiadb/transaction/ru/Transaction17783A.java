@@ -25,9 +25,11 @@ import com.sequoiadb.transaction.TransUtils;
  * @Date 2019-01-29
  * @Version 1.00
  */
+//TODO:格式问题
 @Test(groups="ru")
 public class Transaction17783A extends SdbTestBase{
 	private Sequoiadb sdb =null;
+	//TODO:命名格式问题，集合命名应该是xxx17783，其它用例也有这个问题
 	private String clName = "cl_17783A";
 	private Sequoiadb db1;
 	private Sequoiadb db2;

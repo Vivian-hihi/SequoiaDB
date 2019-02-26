@@ -23,6 +23,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @Version 1.00
  */
 @Test(groups="ru")
+//TODO:格式问题
 public class Transaction17225 extends SdbTestBase{
 	private Sequoiadb sdb =null;
 	private String clName = "cl_17225";
@@ -97,6 +98,7 @@ public class Transaction17225 extends SdbTestBase{
 		cl1.delete(null, hint);
 		
 		//事务2插入R2，与R1相同
+		//TODO:R2，R1不相同b的值不一样
 		ArrayList<BSONObject> insertR2s = TransUtils.insertDatas(cl2, startId + 1000, stopId + 1000, insertValue);
         
 		//事务1索引读
@@ -236,6 +238,7 @@ public class Transaction17225 extends SdbTestBase{
 		db3.commit();
 		
 		//删除记录
+		//TODO:走索引扫描
 		cl.delete((BSONObject) null);
 		
 		//非事务索引读
