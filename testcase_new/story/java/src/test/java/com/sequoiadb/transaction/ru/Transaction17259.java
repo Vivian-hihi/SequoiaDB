@@ -18,13 +18,13 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description Transaction17259.java  创建/删除索引与事务操作并发  
+ * @Description Transaction17259.java 创建/删除索引与事务操作并发
  * @author luweikang
  * @date 2019年1月15日
  */
 @Test(groups = "ru")
 public class Transaction17259 extends SdbTestBase {
-    
+
     private String clName = "transCL_17259";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb2 = null;
@@ -33,71 +33,71 @@ public class Transaction17259 extends SdbTestBase {
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        expDataList = prepareData( recordNum );
-        
+        expDataList = prepareData(recordNum);
+
     }
-    
+
     @Test
-    public void test(){
-        
+    public void test() {
+
         sdb.beginTransaction();
         CRUDThread crudThread = new CRUDThread();
         crudThread.start();
-        
+
         IndexThread indexThread = new IndexThread();
         indexThread.start();
-        
+
         sdb2.beginTransaction();
         QueryThread queryThread = new QueryThread();
         queryThread.start();
-        
+
         Assert.assertTrue(crudThread.isSuccess(), crudThread.getErrorMsg());
         Assert.assertTrue(indexThread.isSuccess(), indexThread.getErrorMsg());
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
-        
+
         sdb.commit();
-        
+
         expDataList.clear();
         expDataList = expData();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         sdb2.commit();
         Assert.assertFalse(cl.isIndexExist("a"));
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         try {
             sdb.getCollectionSpace(csName).dropCollection(clName);
         } finally {
-            if(recordCur != null){
+            if (recordCur != null) {
                 recordCur.close();
             }
-            if( sdb != null ){
+            if (sdb != null) {
                 sdb.close();
             }
-            if( sdb2 != null ){
+            if (sdb2 != null) {
                 sdb2.close();
             }
         }
     }
-    
-    private List<BSONObject> prepareData(int recordNum){
+
+    private List<BSONObject> prepareData(int recordNum) {
         List<BSONObject> dataList = new ArrayList<BSONObject>();
         for (int i = 0; i < recordNum; i++) {
             BSONObject data = new BasicBSONObject();
@@ -109,11 +109,11 @@ public class Transaction17259 extends SdbTestBase {
         }
         return dataList;
     }
-    
-    private List<BSONObject> expData(){
+
+    private List<BSONObject> expData() {
         List<BSONObject> dataList = new ArrayList<BSONObject>();
         BSONObject data = null;
-        for (int i = 0; i < recordNum /2; i++) {
+        for (int i = 0; i < recordNum / 2; i++) {
             data = new BasicBSONObject();
             data.put("a", 1024);
             data.put("b", "test_update_1024");
@@ -123,57 +123,57 @@ public class Transaction17259 extends SdbTestBase {
         }
         return dataList;
     }
-    
+
     private class CRUDThread extends SdbThreadBase {
-        
+
         public void exec() {
             cl.insert(expDataList);
-            
-            String modifier = "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}"; 
+
+            String modifier = "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}";
             cl.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", modifier, null);
-            
+
             cl.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}");
         }
     }
-    
+
     private class IndexThread extends SdbThreadBase {
-        
+
         public void exec() {
-            try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
-                for(int i=0; i<10; i++){
+                for (int i = 0; i < 10; i++) {
                     dbcl.createIndex("a", "{a:1, b:-1}", false, false);
                     dbcl.dropIndex("a");
                 }
-            }catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 throw e;
             }
         }
     }
-    
+
     private class QueryThread extends SdbThreadBase {
-        
+
         public void exec() {
             DBCursor cur = null;
             try {
                 DBCollection dbcl = sdb2.getCollectionSpace(csName).getCollection(clName);
                 cur = dbcl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
-                while(cur.hasNext()){
+                while (cur.hasNext()) {
                     cur.getNext();
                 }
                 cur.close();
-                
+
                 cur = dbcl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
-                while(cur.hasNext()){
+                while (cur.hasNext()) {
                     cur.getNext();
                 }
-            }finally{
-                if( cur != null){
+            } finally {
+                if (cur != null) {
                     cur.close();
                 }
             }
         }
     }
-    
+
 }

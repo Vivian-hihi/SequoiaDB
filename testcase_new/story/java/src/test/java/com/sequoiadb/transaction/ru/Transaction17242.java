@@ -24,7 +24,7 @@ import com.sequoiadb.transaction.TransUtils;
  */
 @Test(groups = "ru")
 public class Transaction17242 extends SdbTestBase {
-    
+
     private String clName = "transCL_17242";
     private Sequoiadb sdb = null;
     private DBCollection cl = null;
@@ -32,9 +32,9 @@ public class Transaction17242 extends SdbTestBase {
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         data = new BasicBSONObject();
@@ -47,46 +47,46 @@ public class Transaction17242 extends SdbTestBase {
         expDataList = new ArrayList<BSONObject>();
         expDataList.add(data);
     }
-    
+
     @Test
-    public void test(){
-        
-        try(Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+    public void test() {
+
+        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
             transDB.beginTransaction();
             DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
-            //insert already exist record
+            // insert already exist record
             transCL.insert(data);
             Assert.fail("insert an existing record with an index,should be failed");
-        }catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         cl.delete("{'a': {'$isnull' :0}}");
-        Assert.assertEquals(cl.getCount(),0 );
+        Assert.assertEquals(cl.getCount(), 0);
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         try {
             sdb.getCollectionSpace(csName).dropCollection(clName);
         } finally {
-            if(recordCur != null){
+            if (recordCur != null) {
                 recordCur.close();
             }
-            if( sdb != null ){
+            if (sdb != null) {
                 sdb.close();
             }
         }
     }
-    
+
 }

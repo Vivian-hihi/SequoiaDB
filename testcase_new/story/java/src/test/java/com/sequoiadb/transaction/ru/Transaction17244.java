@@ -18,13 +18,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description Transaction17244.java 插入记录与本事务中更新的记录重复   
+ * @Description Transaction17244.java 插入记录与本事务中更新的记录重复
  * @author luweikang
  * @date 2019年1月15日
  */
 @Test(groups = "ru")
 public class Transaction17244 extends SdbTestBase {
-    
+
     private String clName = "transCL_17244";
     private Sequoiadb sdb = null;
     private DBCollection cl = null;
@@ -33,9 +33,9 @@ public class Transaction17244 extends SdbTestBase {
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a: 1}", true, false);
@@ -45,60 +45,60 @@ public class Transaction17244 extends SdbTestBase {
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
-        
+
         UpdateData = new BasicBSONObject();
         UpdateData.put("_id", "id17244");
         UpdateData.put("a", 17244);
-        UpdateData.put("b", "testTrans_17244" );
+        UpdateData.put("b", "testTrans_17244");
         UpdateData.put("c", 13700017243L);
         UpdateData.put("d", "customer transaction type data application. :17244");
-        
+
         expDataList = new ArrayList<BSONObject>();
         expDataList.add(data);
     }
-    
+
     @Test
-    public void test(){
-        
-        try(Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+    public void test() {
+
+        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
             transDB.beginTransaction();
             DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
             BSONObject modifier = new BasicBSONObject("$set", UpdateData);
             transCL.update(new BasicBSONObject("a", data.get("a")), modifier, null);
-            //insert the same record as the update
+            // insert the same record as the update
             transCL.insert(UpdateData);
             Assert.fail("insert an existing record with an index,should be failed");
-        }catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         cl.delete("{'a': {'$isnull' :0}}");
-        Assert.assertEquals(cl.getCount(),0 );
-        
+        Assert.assertEquals(cl.getCount(), 0);
+
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         try {
             sdb.getCollectionSpace(csName).dropCollection(clName);
         } finally {
-            if(recordCur != null){
+            if (recordCur != null) {
                 recordCur.close();
             }
-            if( sdb != null ){
+            if (sdb != null) {
                 sdb.close();
             }
         }
     }
-    
+
 }
