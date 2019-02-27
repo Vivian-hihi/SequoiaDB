@@ -20,81 +20,82 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @author luweikang
  * @version 1.00
  */
-@Test(groups="ru")
+@Test(groups = "ru")
 public class Snapshot13626 extends SdbTestBase {
-	
-	private String clName = "Snapshot13626";
-	private Sequoiadb sdb = null;
-	private String master = null;
-	
-	@BeforeClass(alwaysRun = true)
-	public void setUp(){
-		sdb = new Sequoiadb(coordUrl, "", "");
-		// 跳过 standAlone 和数据组不足的环境
-		if (CommLib.isStandAlone(sdb)) {
-			throw new SkipException("skip StandAlone");
-		}
-		List<String> groupsName = CommLib.getDataGroupNames( sdb );
-		if (groupsName.size() < 1) {
-			throw new SkipException("current environment less than tow groups ");
-		}
-		ReplicaGroup group = sdb.getReplicaGroup(groupsName.get(0));
-		sdb.getCollectionSpace( SdbTestBase.csName ).createCollection( clName ,new BasicBSONObject("Group", groupsName.get(0)));
-		String host = group.getMaster().getHostName();
-		int port = group.getMaster().getPort();
-		master = host + ":" + port;
-	}
-	
-	@Test(groups="ru")
-	public void test() throws InterruptedException{
-		TransactionThread transaction = new TransactionThread();
-		transaction.start(100);
-		Thread.sleep(5000);
-		
-		SnapshotThread snapshot = new SnapshotThread();
-		snapshot.start(20);
-		
-		Assert.assertTrue(transaction.isSuccess(), transaction.getErrorMsg());
-		Assert.assertTrue(snapshot.isSuccess(), snapshot.getErrorMsg());
-	}
-	
-	@AfterClass(alwaysRun = true)
-	public void tearDown(){
-		sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
-	}
-	
-	class TransactionThread extends SdbThreadBase {
 
-		@Override
-		public void exec() throws Exception {
-			try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
-			    DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-			    for(int i=0; i<70; i++){
-			        db.beginTransaction();
-			        for(int j=0; j<10; j++){
-			            cl.insert(new BasicBSONObject("a", i));
-			        }
-			        db.rollback();
-			    }
-			}
-		}
-	}
-	
-	class SnapshotThread extends SdbThreadBase {
+    private String clName = "Snapshot13626";
+    private Sequoiadb sdb = null;
+    private String master = null;
 
-		@Override
-		public void exec() throws Exception {
-			try(Sequoiadb db = new Sequoiadb(master, "", "")){
-    			for (int i = 0; i < 500; i++) {
-    				DBCursor cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_TRANSACTIONS, "", "", "");
-    				while(cursor.hasNext()){
-    					cursor.getNext().toString();
-    				}
-    				cursor.close();
-    			}
-			}
-		}
-		
-	}
-	
+    @BeforeClass(alwaysRun = true)
+    public void setUp() {
+        sdb = new Sequoiadb(coordUrl, "", "");
+        // 跳过 standAlone 和数据组不足的环境
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
+        }
+        List<String> groupsName = CommLib.getDataGroupNames(sdb);
+        if (groupsName.size() < 1) {
+            throw new SkipException("current environment less than tow groups ");
+        }
+        ReplicaGroup group = sdb.getReplicaGroup(groupsName.get(0));
+        sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName,
+                new BasicBSONObject("Group", groupsName.get(0)));
+        String host = group.getMaster().getHostName();
+        int port = group.getMaster().getPort();
+        master = host + ":" + port;
+    }
+
+    @Test(groups = "ru")
+    public void test() throws InterruptedException {
+        TransactionThread transaction = new TransactionThread();
+        transaction.start(100);
+        Thread.sleep(5000);
+
+        SnapshotThread snapshot = new SnapshotThread();
+        snapshot.start(20);
+
+        Assert.assertTrue(transaction.isSuccess(), transaction.getErrorMsg());
+        Assert.assertTrue(snapshot.isSuccess(), snapshot.getErrorMsg());
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void tearDown() {
+        sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
+    }
+
+    class TransactionThread extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+                for (int i = 0; i < 70; i++) {
+                    db.beginTransaction();
+                    for (int j = 0; j < 10; j++) {
+                        cl.insert(new BasicBSONObject("a", i));
+                    }
+                    db.rollback();
+                }
+            }
+        }
+    }
+
+    class SnapshotThread extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            try (Sequoiadb db = new Sequoiadb(master, "", "")) {
+                for (int i = 0; i < 500; i++) {
+                    DBCursor cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_TRANSACTIONS, "", "", "");
+                    while (cursor.hasNext()) {
+                        cursor.getNext().toString();
+                    }
+                    cursor.close();
+                }
+            }
+        }
+
+    }
+
 }
