@@ -155,7 +155,6 @@
                return true ;
             }, $scope.autoLanguage( '错误' ), $scope.autoLanguage( '获取日志失败。' ) ) ;
          } ) ;
-         $scope.GetLogWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ) ) ;
          $scope.GetLogWindow['callback']['SetTitle']( $scope.autoLanguage( '日志' ) ) ;
          $scope.GetLogWindow['callback']['Open']() ;
       }
