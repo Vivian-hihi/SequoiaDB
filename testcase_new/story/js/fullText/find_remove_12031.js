@@ -45,7 +45,7 @@ function main(){
    var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
    
    if (count != 8){
-      throw buildException( "Count ", null, "cappedCL.find({Type : 2}).count();", "success", "fail" );
+      throw buildException( "Count ", null, "cappedCL.find({Type : 2}).count();", 8, count );
    }
    
    checkRecords( actESRecords, actCLRecords );
