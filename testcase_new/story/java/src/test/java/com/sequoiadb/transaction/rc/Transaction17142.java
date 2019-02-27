@@ -42,6 +42,7 @@ public class Transaction17142 extends SdbTestBase {
           sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
           cappedCL = sdb.createCollectionSpace(csName, (BSONObject) JSON.parse("{Capped:true}"))
                     .createCollection(clName, (BSONObject) JSON.parse("{Capped:true, Size:1024}"));
+          //TODO:定义一个全局变量就可以了吧，不同的记录赋不同值，最好是能用JSON.parse强转，其他地方一并修改
           BSONObject object1 = new BasicBSONObject();
           long oid = 0L;
           object1.put("_id", oid);
@@ -66,6 +67,7 @@ public class Transaction17142 extends SdbTestBase {
           if (!db2.isClosed()) {
                db2.close();
           }
+          //TODO:直接删除cs
           CollectionSpace cs = sdb.getCollectionSpace(csName);
           if (cs.isCollectionExist(clName)) {
                cs.dropCollection(clName);
@@ -106,6 +108,7 @@ public class Transaction17142 extends SdbTestBase {
           // 事务1执行pop操作
           recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
           actList = TransUtils.getReadActList(recordsCursor);
+          //TODO:oid已使用变量定义，此处最好使用变量执行pop操作
           cl1.pop((BSONObject) JSON.parse("{LogicalID:0, Direction:1}"));
           cl1.pop((BSONObject) JSON.parse("{LogicalID:128, Direction:-1}"));
           expList.clear();
