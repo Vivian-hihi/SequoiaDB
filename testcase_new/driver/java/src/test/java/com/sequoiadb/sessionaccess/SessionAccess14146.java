@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -33,20 +34,20 @@ public class SessionAccess14146 extends SdbTestBase {
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if(com.sequoiadb.testcommon.CommLib.isStandAlone(db)){
+        if(CommLib.isStandAlone(db)){
 			throw new SkipException("run mode is standalone,test case skip");
 		}
-        nodes = CommLib.createRG(db, rgName);
+        nodes = Util.createRG(db, rgName);
         BSONObject options = new BasicBSONObject("Group", rgName);
-        options.put("ReplSize", -1);
+        options.put("ReplSize", 0);
         dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(clname, options);
-        CommLib.insertRecords(dbcl);
+        Util.insertRecords(dbcl);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
     public void test14146() {
-        BasicBSONList instanceidList = CommLib.getInstanceidList(nodes);
+    	List<Integer> instanceidList = Util.getInstanceidList(nodes);
 
         //指定多个instanceid实例和"M"
         List currPreferedInstanceM = new ArrayList(instanceidList);
@@ -54,16 +55,16 @@ public class SessionAccess14146 extends SdbTestBase {
         BasicBSONObject options = new BasicBSONObject("PreferedInstance", currPreferedInstanceM).append("PreferedInstanceMode", "ordered");
 
         db.setSessionAttr(options);
-        String actualNodeName = CommLib.getActualDataNodeName(dbcl);
-        Assert.assertTrue(CommLib.isMaster(db, rgName, actualNodeName), "testa: current node name is : " + actualNodeName + "\n db.getSessionAttr():" + db.getSessionAttr());
+        String actualNodeName = Util.getActualDataNodeName(dbcl);
+        Assert.assertTrue(Util.isMaster(db, rgName, actualNodeName), "testa: current node name is : " + actualNodeName + "\n db.getSessionAttr():" + db.getSessionAttr());
         
         //指定多个instanceid实例和"S"
         List currPreferedInstanceS = new ArrayList(instanceidList);
         currPreferedInstanceS.add("S");
         options = new BasicBSONObject("PreferedInstance", currPreferedInstanceS).append("PreferedInstanceMode", "ordered");
         db.setSessionAttr(options);
-        actualNodeName = CommLib.getActualDataNodeName(dbcl);
-        Assert.assertFalse(CommLib.isMaster(db, rgName, actualNodeName), "testc: current node name is : " + actualNodeName + "\n db.getSessionAttr():" + db.getSessionAttr());
+        actualNodeName = Util.getActualDataNodeName(dbcl);
+        Assert.assertFalse(Util.isMaster(db, rgName, actualNodeName), "testc: current node name is : " + actualNodeName + "\n db.getSessionAttr():" + db.getSessionAttr());
         
         //指定多个instanceid实例和"m","s","a","A"
         String[] ids = new String[]{"m", "s", "a", "A"};
@@ -72,8 +73,8 @@ public class SessionAccess14146 extends SdbTestBase {
 		    currPreferedInstance.add(id);
 		    options = new BasicBSONObject("PreferedInstance", currPreferedInstance).append("PreferedInstanceMode", "ordered");
 		    db.setSessionAttr(options);
-		    actualNodeName = CommLib.getActualDataNodeName(dbcl);
-		    String expNodeName = CommLib.getNodeNameByInstanceId(nodes, instanceidList.get(0).toString());
+		    actualNodeName = Util.getActualDataNodeName(dbcl);
+		    String expNodeName = Util.getNodeNameByInstanceId(nodes, instanceidList.get(0).toString());
 		    Assert.assertEquals(actualNodeName, expNodeName);
         }
     }

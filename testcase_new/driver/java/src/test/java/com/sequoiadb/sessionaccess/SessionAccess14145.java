@@ -2,6 +2,7 @@ package com.sequoiadb.sessionaccess;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -11,7 +12,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.testng.Assert.assertEquals;
@@ -34,31 +34,26 @@ public class SessionAccess14145 extends SdbTestBase {
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if(com.sequoiadb.testcommon.CommLib.isStandAlone(db)){
+        if(CommLib.isStandAlone(db)){
 			throw new SkipException("run mode is standalone,test case skip");
 		}
-        nodes = CommLib.createRG(db, rgName);
+        nodes = Util.createRG(db, rgName);
         BSONObject options = new BasicBSONObject("Group", rgName);
-        options.put("ReplSize", -1);
+        options.put("ReplSize", 0);
         dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(clname, options);
-        CommLib.insertRecords(dbcl);
+        Util.insertRecords(dbcl);
     }
 
     @Test
     public void test14145() {
-    	List<Integer> instanceidList = new ArrayList<Integer>();
-        for (int i=0 ; i< nodes.size() ; i++) {
-        	BasicBSONObject node = (BasicBSONObject)nodes.get(i);
-        	instanceidList.add(Integer.parseInt(node.getString("instanceid")));
-        }
-        
+    	List<Integer> instanceidList = Util.getInstanceidList(nodes);
     	int[] id = new int[]{instanceidList.get(0), instanceidList.get(1)};
 
         BSONObject options = new BasicBSONObject("PreferedInstance", id).append("PreferedInstanceMode", "random");
         db.setSessionAttr(options);
-        String actualNodeName = CommLib.getActualDataNodeName(dbcl);
-        String expNodeName1 = CommLib.getNodeNameByInstanceId(nodes, instanceidList.get(0).toString());
-        String expNodeName2 = CommLib.getNodeNameByInstanceId(nodes, instanceidList.get(1).toString());
+        String actualNodeName = Util.getActualDataNodeName(dbcl);
+        String expNodeName1 = Util.getNodeNameByInstanceId(nodes, instanceidList.get(0).toString());
+        String expNodeName2 = Util.getNodeNameByInstanceId(nodes, instanceidList.get(1).toString());
         if (!actualNodeName.equals(expNodeName1) && !actualNodeName.equals(expNodeName2)) {
             fail("actual node name :" + actualNodeName + " expect node name : " + expNodeName1 + " or " + expNodeName2);
         }

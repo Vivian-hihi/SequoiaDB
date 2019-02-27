@@ -4,7 +4,9 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.SkipException;
@@ -30,14 +32,14 @@ public class SessionAccess14147 extends SdbTestBase {
     @BeforeClass
     public void setup() {
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if(com.sequoiadb.testcommon.CommLib.isStandAlone(db)){
+        if(CommLib.isStandAlone(db)){
 			throw new SkipException("run mode is standalone,test case skip");
 		}
-        CommLib.createRG(db, rgName);
+        Util.createRG(db, rgName);
         BSONObject options = new BasicBSONObject("Group", rgName);
-        options.put("ReplSize", -1);
+        options.put("ReplSize", 0);
         dbcl = db.getCollectionSpace(SdbTestBase.csName).createCollection(clname, options);
-        CommLib.insertRecords(dbcl);
+        Util.insertRecords(dbcl);
     }
     
     @Test
