@@ -19,92 +19,92 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @FileName:seqDB-17824：更新与删除并发， 删除的记录同时匹配已提交记录及其他事务更新的记录，更新/删除走表扫描，事务提交，过程中读 
- * 更新/删除走表扫描,先插入R1再插入R2
+ * @FileName:seqDB-17824：更新与删除并发， 删除的记录同时匹配已提交记录及其他事务更新的记录，更新/删除走表扫描，事务提交，过程中读
+ *                                更新/删除走表扫描,先插入R1再插入R2
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
  */
-@Test(groups="rc")
-public class Transaction17824A extends SdbTestBase{
-	private Sequoiadb sdb =null;
-	private String clName = "cl_17824A";
-	private Sequoiadb db1;
-	private Sequoiadb db2;
-	private Sequoiadb db3;
-	private DBCollection cl1 = null;
+@Test(groups = "rc")
+public class Transaction17824A extends SdbTestBase {
+    private Sequoiadb sdb = null;
+    private String clName = "cl_17824A";
+    private Sequoiadb db1;
+    private Sequoiadb db2;
+    private Sequoiadb db3;
+    private DBCollection cl1 = null;
     private DBCollection cl2 = null;
     private DBCollection cl3 = null;
-	private DBCollection cl = null;
-	private ArrayList<BSONObject> expList = new ArrayList<BSONObject>();
-	private ArrayList<BSONObject> actList = new ArrayList<BSONObject>();
-	private DBCursor cursor = null;
-	private String hint;
-	
-	@BeforeClass
+    private DBCollection cl = null;
+    private ArrayList<BSONObject> expList = new ArrayList<BSONObject>();
+    private ArrayList<BSONObject> actList = new ArrayList<BSONObject>();
+    private DBCursor cursor = null;
+    private String hint;
+
+    @BeforeClass
     public void setUp() {
-		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		cl = sdb.getCollectionSpace(csName).createCollection(clName);
-		cl.createIndex("a", "{a:1}", false, false);
-	}
-	
-	@AfterClass
-    public void tearDown(){
-        //关闭所有游标
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a:1}", false, false);
+    }
+
+    @AfterClass
+    public void tearDown() {
+        // 关闭所有游标
         sdb.closeAllCursors();
         db1.closeAllCursors();
         db2.closeAllCursors();
         db3.closeAllCursors();
-        
-		//先关闭事务连接，再删除集合
-		CollectionSpace cs = sdb.getCollectionSpace(csName);
-		if(!db1.isClosed()){
-		    db1.close();
-		}
-		if(!db2.isClosed()){
-			db2.close();
-		}
-		if(!db3.isClosed()){
-			db3.close();
-		}
-		if(cs.isCollectionExist(clName)){
-			cs.dropCollection(clName);
-		}
-		if(!sdb.isClosed()){
-			sdb.close();
-		}
-	}
-	
+
+        // 先关闭事务连接，再删除集合
+        CollectionSpace cs = sdb.getCollectionSpace(csName);
+        if (!db1.isClosed()) {
+            db1.close();
+        }
+        if (!db2.isClosed()) {
+            db2.close();
+        }
+        if (!db3.isClosed()) {
+            db3.close();
+        }
+        if (cs.isCollectionExist(clName)) {
+            cs.dropCollection(clName);
+        }
+        if (!sdb.isClosed()) {
+            sdb.close();
+        }
+    }
+
     @Test
-    public void test(){
-		db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		
-		//开启3个并发事务
-		db1.beginTransaction();
-		db2.beginTransaction();
-		db3.beginTransaction();
-		cl1 = db1.getCollectionSpace(csName).getCollection(clName);
-		cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-		cl3 = db3.getCollectionSpace(csName).getCollection(clName);
-		
-		//插入记录R1、R2,先插入R1，再插入R2
-		BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1,a:1,b:1}");
+    public void test() {
+        db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+
+        // 开启3个并发事务
+        db1.beginTransaction();
+        db2.beginTransaction();
+        db3.beginTransaction();
+        cl1 = db1.getCollectionSpace(csName).getCollection(clName);
+        cl2 = db2.getCollectionSpace(csName).getCollection(clName);
+        cl3 = db3.getCollectionSpace(csName).getCollection(clName);
+
+        // 插入记录R1、R2,先插入R1，再插入R2
+        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1,a:1,b:1}");
         cl.insert(insertR1);
         BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2,a:2,b:2}");
         cl.insert(insertR2);
-		
-		//事务1更新记录R1为R3
+
+        // 事务1更新记录R1为R3
         hint = "{\"\":null}";
         cl1.update("{a:1}", "{$set:{a:3}}", hint);
-		
-		//事务2匹配R1、R2、R3删除
+
+        // 事务2匹配R1、R2、R3删除
         DeleteThread deleteThread = new DeleteThread();
         deleteThread.start();
         Assert.assertTrue(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
-        
-        //事务1索引读
+
+        // 事务1索引读
         BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:3,b:1}");
         expList.add(updateR1);
         expList.add(insertR2);
@@ -113,15 +113,15 @@ public class Transaction17824A extends SdbTestBase{
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //事务1记录读
+
+        // 事务1记录读
         hint = "{\"\":null}";
         cursor = cl1.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //事务3索引读
+
+        // 事务3索引读
         expList.clear();
         expList.add(insertR1);
         expList.add(insertR2);
@@ -130,15 +130,15 @@ public class Transaction17824A extends SdbTestBase{
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //事务3记录读
+
+        // 事务3记录读
         hint = "{\"\":null}";
         cursor = cl3.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //非事务索引读
+
+        // 非事务索引读
         expList.clear();
         expList.add(updateR1);
         expList.add(insertR2);
@@ -147,48 +147,48 @@ public class Transaction17824A extends SdbTestBase{
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //非事务记录读
+
+        // 非事务记录读
         hint = "{\"\":null}";
         cursor = cl.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-		//提交事务1
-		db1.commit();
-		Assert.assertTrue(deleteThread.isSuccess(),deleteThread.getErrorMsg());
-		
-		//非事务索引读
+
+        // 提交事务1
+        db1.commit();
+        Assert.assertTrue(deleteThread.isSuccess(), deleteThread.getErrorMsg());
+
+        // 非事务索引读
         expList.clear();
         hint = "{\"\":\"a\"}";
         cursor = cl.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //非事务记录读
+
+        // 非事务记录读
         hint = "{\"\":null}";
         cursor = cl.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //事务2索引读
+
+        // 事务2索引读
         hint = "{\"\":\"a\"}";
         cursor = cl2.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //事务2记录读
+
+        // 事务2记录读
         hint = "{\"\":null}";
         cursor = cl2.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //事务3索引读
+
+        // 事务3索引读
         expList.add(updateR1);
         expList.add(insertR2);
         hint = "{\"\":\"a\"}";
@@ -196,53 +196,53 @@ public class Transaction17824A extends SdbTestBase{
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //事务3记录读
+
+        // 事务3记录读
         hint = "{\"\":null}";
         cursor = cl3.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-		//提交事务2
-		db2.commit();
-        
-		//非事务索引读
-		expList.clear();
+
+        // 提交事务2
+        db2.commit();
+
+        // 非事务索引读
+        expList.clear();
         hint = "{\"\":\"a\"}";
         cursor = cl.query(null, null, null, hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //非事务记录读
+
+        // 非事务记录读
         hint = "{\"\":null}";
         cursor = cl.query(null, null, null, hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //事务3索引读
+
+        // 事务3索引读
         hint = "{\"\":\"a\"}";
         cursor = cl3.query(null, null, null, hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //事务3记录读
+
+        // 事务3记录读
         hint = "{\"\":null}";
         cursor = cl3.query(null, null, null, hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //提交事务3
+
+        // 提交事务3
         db3.commit();
-	}
-	
+    }
+
     private class DeleteThread extends SdbThreadBase {
         @Override
-        public void exec() throws BaseException{
+        public void exec() throws BaseException {
             hint = "{\"\":null}";
             cl2.delete(null, hint);
         }

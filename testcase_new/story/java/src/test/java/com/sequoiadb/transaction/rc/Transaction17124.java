@@ -18,13 +18,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description seqDB-17124 : 插入记录与其他事务中更新前的记录重复  
+ * @Description seqDB-17124 : 插入记录与其他事务中更新前的记录重复
  * @author luweikang
  * @date 2019年1月15日
  */
 @Test(groups = "rc")
 public class Transaction17124 extends SdbTestBase {
-    
+
     private String clName = "transCL_17124";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb2 = null;
@@ -37,9 +37,9 @@ public class Transaction17124 extends SdbTestBase {
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
@@ -53,7 +53,7 @@ public class Transaction17124 extends SdbTestBase {
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
         expDataList.add(data);
-        
+
         modifier = new BasicBSONObject();
         updateData = new BasicBSONObject();
         updateData.put("_id", "updateID17124");
@@ -62,19 +62,19 @@ public class Transaction17124 extends SdbTestBase {
         updateData.put("c", 13700017124L);
         updateData.put("d", "customer transaction type data application.");
         modifier.put("$set", updateData);
-        
+
         data2 = new BasicBSONObject();
         data2.put("_id", data.get("_id"));
         data2.put("a", 1);
         data2.put("b", 2);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
-        
+
         matcher = new BasicBSONObject("a", new BasicBSONObject("$isnull", 0));
     }
-    
+
     @Test
-    public void test1(){
+    public void test1() {
         sdb.beginTransaction();
         sdb.beginTransaction();
         try {
@@ -87,21 +87,21 @@ public class Transaction17124 extends SdbTestBase {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
         sdb.rollback();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
     }
-    
+
     @Test
-    public void test2(){
+    public void test2() {
         sdb.beginTransaction();
         sdb2.beginTransaction();
         try {
@@ -113,40 +113,40 @@ public class Transaction17124 extends SdbTestBase {
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
-        
+
         sdb.commit();
         expDataList.clear();
         expDataList.add(updateData);
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         cl.delete("{'a': {'$isnull' :0}}");
-        Assert.assertEquals(cl.getCount(),0 );
+        Assert.assertEquals(cl.getCount(), 0);
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         try {
             sdb.getCollectionSpace(csName).dropCollection(clName);
         } finally {
-            if(recordCur != null){
+            if (recordCur != null) {
                 recordCur.close();
             }
-            if( sdb != null ){
+            if (sdb != null) {
                 sdb.close();
             }
-            if( sdb2 != null ){
+            if (sdb2 != null) {
                 sdb2.close();
             }
         }
     }
-    
+
 }

@@ -18,13 +18,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description Transaction17133.java   更新已提交记录与其他事务删除的记录重复 
+ * @Description Transaction17133.java 更新已提交记录与其他事务删除的记录重复
  * @author luweikang
  * @date 2019年1月15日
  */
 @Test(groups = "rc")
 public class Transaction17133 extends SdbTestBase {
-    
+
     private String clName = "transCL_17133";
     private Sequoiadb sdb = null;
     private DBCollection cl = null;
@@ -35,9 +35,9 @@ public class Transaction17133 extends SdbTestBase {
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", true, false);
@@ -49,7 +49,7 @@ public class Transaction17133 extends SdbTestBase {
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         expDataList.add(data);
-        
+
         data2 = new BasicBSONObject();
         data2.put("_id", "insert1713302");
         data2.put("a", 2);
@@ -58,25 +58,25 @@ public class Transaction17133 extends SdbTestBase {
         data2.put("d", "customer transaction type data application.");
         expDataList.add(data2);
         cl.insert(expDataList);
-        
+
         updateData = new BasicBSONObject();
         updateData.put("_id", "insert1713301");
         updateData.put("a", 3);
         updateData.put("b", 2048);
         updateData.put("c", 13700000000L);
         updateData.put("d", "customer transaction type data application.");
-        
+
         modifier = new BasicBSONObject();
         modifier.put("$set", updateData);
-        
+
     }
-    
-    //TODO:SEQUOIADBMAINSTREAM-4113
-    @Test(enabled=false)
-    public void test1(){
+
+    // TODO:SEQUOIADBMAINSTREAM-4113
+    @Test(enabled = false)
+    public void test1() {
         Sequoiadb transDB1 = null;
         Sequoiadb transDB2 = null;
-        try{
+        try {
             transDB1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             transDB2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             transDB1.beginTransaction();
@@ -87,38 +87,39 @@ public class Transaction17133 extends SdbTestBase {
                 DBCollection transCL2 = transDB2.getCollectionSpace(csName).getCollection(clName);
                 transCL2.update(new BasicBSONObject("a", 2), modifier, null);
                 transDB2.commit();
-                //Assert.fail("insert an existing record with an index,should be failed");
+                // Assert.fail("insert an existing record with an index,should
+                // be failed");
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
             }
             transDB1.rollback();
-        }finally {
-            if(transDB1 != null){
+        } finally {
+            if (transDB1 != null) {
                 transDB1.close();
             }
-            if(transDB2 != null){
+            if (transDB2 != null) {
                 transDB2.close();
             }
         }
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
     }
-    
-    //TODO:SEQUOIADBMAINSTREAM-4113
-    @Test(enabled =false)
-    public void test2(){
+
+    // TODO:SEQUOIADBMAINSTREAM-4113
+    @Test(enabled = false)
+    public void test2() {
         Sequoiadb transDB1 = null;
         Sequoiadb transDB2 = null;
-        try{
+        try {
             transDB1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             transDB2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             transDB1.beginTransaction();
@@ -135,43 +136,42 @@ public class Transaction17133 extends SdbTestBase {
             transDB1.commit();
             expDataList.clear();
             expDataList.add(data2);
-        }finally {
-            if(transDB1 != null){
+        } finally {
+            if (transDB1 != null) {
                 transDB1.close();
             }
-            if(transDB2 != null){
+            if (transDB2 != null) {
                 transDB2.close();
             }
         }
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{'a':1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{'a':1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         cl.delete("{'a': {'$isnull' :0}}");
-        Assert.assertEquals(cl.getCount(),0 );
-        
+        Assert.assertEquals(cl.getCount(), 0);
+
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         try {
             sdb.getCollectionSpace(csName).dropCollection(clName);
         } finally {
-            if(recordCur != null){
+            if (recordCur != null) {
                 recordCur.close();
             }
-            if( sdb != null ){
+            if (sdb != null) {
                 sdb.close();
             }
         }
     }
-    
+
 }

@@ -17,225 +17,223 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
-
 /**
- * @FileName:seqDB-17095：插入与删除并发，事务提交，过程中读
- * 删除走索引扫描 
+ * @FileName:seqDB-17095：插入与删除并发，事务提交，过程中读 删除走索引扫描
  * @Author zhaoyu
  * @Date 2019-01-16
  * @Version 1.00
  */
-@Test(groups="rc")
-public class Transaction17095 extends SdbTestBase{
-	private Sequoiadb sdb =null;
-	private String clName = "cl_17095";
-	private Sequoiadb db1;
-	private Sequoiadb db2;
-	private Sequoiadb db3;
-	private DBCollection cl = null;
-	private DBCollection cl1 = null;
-	private DBCollection cl2 = null;
-	private DBCollection cl3 = null;
-	private ArrayList<BSONObject> expList = new ArrayList<BSONObject>();
-	private ArrayList<BSONObject> actList = new ArrayList<BSONObject>();
-	private DBCursor cursor = null;
+@Test(groups = "rc")
+public class Transaction17095 extends SdbTestBase {
+    private Sequoiadb sdb = null;
+    private String clName = "cl_17095";
+    private Sequoiadb db1;
+    private Sequoiadb db2;
+    private Sequoiadb db3;
+    private DBCollection cl = null;
+    private DBCollection cl1 = null;
+    private DBCollection cl2 = null;
+    private DBCollection cl3 = null;
+    private ArrayList<BSONObject> expList = new ArrayList<BSONObject>();
+    private ArrayList<BSONObject> actList = new ArrayList<BSONObject>();
+    private DBCursor cursor = null;
     private String hint = null;
     private int startId = 0;
     private int stopId = 1000;
     private int insertValue = 10000;
-    
-	@BeforeClass
+
+    @BeforeClass
     public void setUp() {
-		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		cl = sdb.getCollectionSpace(csName).createCollection(clName);
-		cl.createIndex("a", "{a:1}", false, false);
-	}
-	
-	@AfterClass
-    public void tearDown(){
-        //关闭所有游标
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a:1}", false, false);
+    }
+
+    @AfterClass
+    public void tearDown() {
+        // 关闭所有游标
         sdb.closeAllCursors();
         db1.closeAllCursors();
         db2.closeAllCursors();
         db3.closeAllCursors();
-        
-	    //先关闭事务连接，再删除集合
-		CollectionSpace cs = sdb.getCollectionSpace(csName);
-		if(!db1.isClosed()){
-			db1.close();
-		}
-		if(!db2.isClosed()){
-			db2.close();
-		}
-		if(!db3.isClosed()){
-			db3.close();
-		}
-		if(cs.isCollectionExist(clName)){
-			cs.dropCollection(clName);
-		}
-		if(!sdb.isClosed()){
-			sdb.close();
-		}
-	}
-	
+
+        // 先关闭事务连接，再删除集合
+        CollectionSpace cs = sdb.getCollectionSpace(csName);
+        if (!db1.isClosed()) {
+            db1.close();
+        }
+        if (!db2.isClosed()) {
+            db2.close();
+        }
+        if (!db3.isClosed()) {
+            db3.close();
+        }
+        if (cs.isCollectionExist(clName)) {
+            cs.dropCollection(clName);
+        }
+        if (!sdb.isClosed()) {
+            sdb.close();
+        }
+    }
+
     @Test
-    public void test(){
-		db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		
-		//开启3个并发事务
-		db1.beginTransaction();
-		db2.beginTransaction();
-		db3.beginTransaction();
-		cl1 = db1.getCollectionSpace(csName).getCollection(clName);
-		cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-		cl3 = db3.getCollectionSpace(csName).getCollection(clName);
-		
-		//事务1插入记录R1
-		ArrayList<BSONObject> insertR1s = TransUtils.insertDatas(cl1, startId, stopId, insertValue);
-		
-		//事务2匹配记录R1删除
-		DeleteThread deleteThread = new DeleteThread();
-		deleteThread.start();
-		Assert.assertTrue(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
-		
-		//事务1索引读
-		expList.addAll(insertR1s);
-		hint = "{\"\":\"a\"}";
-		cursor = cl1.query(null, null, "{_id:1}", hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//事务1记录读
-		hint = "{\"\":null}";
-		cursor = cl1.query(null, null, "{_id:1}", hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//事务3索引读
-		expList.clear();
-		hint = "{\"\":\"a\"}";
-		cursor = cl3.query(null, null, "{_id:1}", hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//事务3记录读
-		hint = "{\"\":null}";
-		cursor = cl3.query(null, null, "{_id:1}", hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//非事务索引读
-		expList.addAll(insertR1s);
+    public void test() {
+        db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+
+        // 开启3个并发事务
+        db1.beginTransaction();
+        db2.beginTransaction();
+        db3.beginTransaction();
+        cl1 = db1.getCollectionSpace(csName).getCollection(clName);
+        cl2 = db2.getCollectionSpace(csName).getCollection(clName);
+        cl3 = db3.getCollectionSpace(csName).getCollection(clName);
+
+        // 事务1插入记录R1
+        ArrayList<BSONObject> insertR1s = TransUtils.insertDatas(cl1, startId, stopId, insertValue);
+
+        // 事务2匹配记录R1删除
+        DeleteThread deleteThread = new DeleteThread();
+        deleteThread.start();
+        Assert.assertTrue(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
+
+        // 事务1索引读
+        expList.addAll(insertR1s);
         hint = "{\"\":\"a\"}";
-        cursor = cl.query(null, null, "{_id:1}", hint);
+        cursor = cl1.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-        //非事务记录读
+
+        // 事务1记录读
         hint = "{\"\":null}";
-        cursor = cl.query(null, null, "{_id:1}", hint);
+        cursor = cl1.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
-		//提交事务1
-		db1.commit();
-		Assert.assertTrue(deleteThread.isSuccess(), deleteThread.getErrorMsg());
-		
-		//非事务索引读
-		expList.clear();
-        hint = "{\"\":\"a\"}";
-        cursor = cl.query(null, null, "{_id:1}", hint);
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
-        actList.clear();
-        
-        //非事务记录读
-        hint = "{\"\":null}";
-        cursor = cl.query(null, null, "{_id:1}", hint);
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
-        actList.clear();
-        
-		//事务2索引读
-		hint = "{\"\":\"a\"}";
-		cursor = cl2.query(null, null, "{_id:1}", hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//事务2记录读
-        hint = "{\"\":null}";
-		cursor = cl2.query(null, null, "{_id:1}", hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//事务3索引读
-		expList.addAll(insertR1s);
-		hint = "{\"\":\"a\"}";
-		cursor = cl3.query(null, null, "{_id:1}", hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//事务3记录读
-		hint = "{\"\":null}";
-		cursor = cl3.query(null, null, "{_id:1}", hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//提交事务2
-		db2.commit();
-		
-		//非事务索引读
+
+        // 事务3索引读
         expList.clear();
-		hint = "{\"\":\"a\"}";
-		cursor = cl.query(null, null, null, hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//非事务记录读
-		hint = "{\"\":null}";
-		cursor = cl.query(null, null, null, hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//事务3索引读
-		hint = "{\"\":\"a\"}";
-		cursor = cl3.query(null, null, null, hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//事务3记录读
-		hint = "{\"\":null}";
-		cursor = cl3.query(null, null, null, hint);
-		actList = TransUtils.getReadActList(cursor);
-		Assert.assertEquals(actList, expList);
-		actList.clear();
-		
-		//提交事务3
-		db3.commit();
-		
-	}
-	
-	private class DeleteThread extends SdbThreadBase {
+        hint = "{\"\":\"a\"}";
+        cursor = cl3.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 事务3记录读
+        hint = "{\"\":null}";
+        cursor = cl3.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 非事务索引读
+        expList.addAll(insertR1s);
+        hint = "{\"\":\"a\"}";
+        cursor = cl.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 非事务记录读
+        hint = "{\"\":null}";
+        cursor = cl.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 提交事务1
+        db1.commit();
+        Assert.assertTrue(deleteThread.isSuccess(), deleteThread.getErrorMsg());
+
+        // 非事务索引读
+        expList.clear();
+        hint = "{\"\":\"a\"}";
+        cursor = cl.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 非事务记录读
+        hint = "{\"\":null}";
+        cursor = cl.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 事务2索引读
+        hint = "{\"\":\"a\"}";
+        cursor = cl2.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 事务2记录读
+        hint = "{\"\":null}";
+        cursor = cl2.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 事务3索引读
+        expList.addAll(insertR1s);
+        hint = "{\"\":\"a\"}";
+        cursor = cl3.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 事务3记录读
+        hint = "{\"\":null}";
+        cursor = cl3.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 提交事务2
+        db2.commit();
+
+        // 非事务索引读
+        expList.clear();
+        hint = "{\"\":\"a\"}";
+        cursor = cl.query(null, null, null, hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 非事务记录读
+        hint = "{\"\":null}";
+        cursor = cl.query(null, null, null, hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 事务3索引读
+        hint = "{\"\":\"a\"}";
+        cursor = cl3.query(null, null, null, hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 事务3记录读
+        hint = "{\"\":null}";
+        cursor = cl3.query(null, null, null, hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 提交事务3
+        db3.commit();
+
+    }
+
+    private class DeleteThread extends SdbThreadBase {
         @Override
-        public void exec() throws BaseException{
-            //删除走索引
+        public void exec() throws BaseException {
+            // 删除走索引
             hint = "{\"\":\"a\"}";
-        	cl2.delete(null, hint);
+            cl2.delete(null, hint);
         }
     }
 }

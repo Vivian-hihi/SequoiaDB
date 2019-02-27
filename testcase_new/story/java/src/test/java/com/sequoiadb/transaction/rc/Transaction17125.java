@@ -18,13 +18,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description seqDB-17125 : 插入记录与其他事务中更新后的记录重复 
+ * @Description seqDB-17125 : 插入记录与其他事务中更新后的记录重复
  * @author luweikang
  * @date 2019年1月15日
  */
 @Test(groups = "rc")
 public class Transaction17125 extends SdbTestBase {
-    
+
     private String clName = "transCL_17125";
     private Sequoiadb sdb = null;
     private DBCollection cl = null;
@@ -36,9 +36,9 @@ public class Transaction17125 extends SdbTestBase {
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         data = new BasicBSONObject();
@@ -50,7 +50,7 @@ public class Transaction17125 extends SdbTestBase {
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
         expDataList.add(data);
-        
+
         modifier = new BasicBSONObject();
         updateData = new BasicBSONObject();
         updateData.put("_id", "id17125");
@@ -59,22 +59,22 @@ public class Transaction17125 extends SdbTestBase {
         updateData.put("c", 13700017125L);
         updateData.put("d", "customer transaction type data application.");
         modifier.put("$set", updateData);
-        
+
         data2 = new BasicBSONObject();
         data2.put("_id", "id17125");
         data2.put("a", 17125);
         data2.put("b", 1);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
-        
+
         matcher = new BasicBSONObject("a", new BasicBSONObject("$isnull", 0));
     }
-    
+
     @Test
-    public void test1(){
+    public void test1() {
         Sequoiadb transDB1 = null;
         Sequoiadb transDB2 = null;
-        try{
+        try {
             transDB1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             transDB2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             transDB1.beginTransaction();
@@ -89,32 +89,32 @@ public class Transaction17125 extends SdbTestBase {
                 Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
             }
             transDB1.rollback();
-        }finally {
-            if(transDB1 != null){
+        } finally {
+            if (transDB1 != null) {
                 transDB1.close();
             }
-            if(transDB2 != null){
+            if (transDB2 != null) {
                 transDB2.close();
             }
         }
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
     }
-    
+
     @Test
-    public void test2(){
+    public void test2() {
         Sequoiadb transDB1 = null;
         Sequoiadb transDB2 = null;
-        try{
+        try {
             transDB1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             transDB2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             transDB1.beginTransaction();
@@ -131,11 +131,11 @@ public class Transaction17125 extends SdbTestBase {
             transDB1.commit();
             expDataList.clear();
             expDataList.add(updateData);
-        }finally {
-            if(transDB1 != null){
+        } finally {
+            if (transDB1 != null) {
                 transDB1.close();
             }
-            if(transDB2 != null){
+            if (transDB2 != null) {
                 transDB2.close();
             }
         }
@@ -143,28 +143,28 @@ public class Transaction17125 extends SdbTestBase {
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         cl.delete("{'a': {'$isnull' :0}}");
-        Assert.assertEquals(cl.getCount(),0 );
+        Assert.assertEquals(cl.getCount(), 0);
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         try {
             sdb.getCollectionSpace(csName).dropCollection(clName);
         } finally {
-            if(recordCur != null){
+            if (recordCur != null) {
                 recordCur.close();
             }
-            if( sdb != null ){
+            if (sdb != null) {
                 sdb.close();
             }
         }
     }
-    
+
 }

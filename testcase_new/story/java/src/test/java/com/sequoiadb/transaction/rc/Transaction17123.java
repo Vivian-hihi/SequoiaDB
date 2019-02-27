@@ -18,13 +18,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description Transaction17123.java  插入记录与其他事务中插入的记录重复 
+ * @Description Transaction17123.java 插入记录与其他事务中插入的记录重复
  * @author luweikang
  * @date 2019年1月15日
  */
 @Test(groups = "rc")
 public class Transaction17123 extends SdbTestBase {
-    
+
     private String clName = "transCL_17123";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb2 = null;
@@ -33,9 +33,9 @@ public class Transaction17123 extends SdbTestBase {
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
@@ -48,76 +48,76 @@ public class Transaction17123 extends SdbTestBase {
         expDataList = new ArrayList<BSONObject>();
         expDataList.add(data);
     }
-    
+
     @Test
-    public void test1(){
+    public void test1() {
         sdb.beginTransaction();
         sdb2.beginTransaction();
         DBCollection transCL1 = sdb.getCollectionSpace(csName).getCollection(clName);
-        //trans1 insert record R1
+        // trans1 insert record R1
         transCL1.insert(data);
         try {
             sdb2.beginTransaction();
             DBCollection transCL2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-            //insert record R2 same as the R1 
+            // insert record R2 same as the R1
             transCL2.insert(data);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
         sdb.rollback();
-        
-        Assert.assertEquals(cl.getCount(), 0) ;
-        
+
+        Assert.assertEquals(cl.getCount(), 0);
+
     }
-    
+
     @Test
-    public void test2(){
+    public void test2() {
         sdb.beginTransaction();
         sdb2.beginTransaction();
         DBCollection transCL1 = sdb.getCollectionSpace(csName).getCollection(clName);
-        //trans1 insert record R1
+        // trans1 insert record R1
         transCL1.insert(data);
         try {
             DBCollection transCL2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-            //insert record R2 same as the R1 
+            // insert record R2 same as the R1
             transCL2.insert(data);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
         sdb.commit();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         cl.delete("{'a': {'$isnull' :0}}");
-        Assert.assertEquals(cl.getCount(),0 );
-        
+        Assert.assertEquals(cl.getCount(), 0);
+
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         try {
             sdb.getCollectionSpace(csName).dropCollection(clName);
         } finally {
-            if(recordCur != null){
+            if (recordCur != null) {
                 recordCur.close();
             }
-            if( sdb != null ){
+            if (sdb != null) {
                 sdb.close();
             }
-            if( sdb2 != null ){
+            if (sdb2 != null) {
                 sdb2.close();
             }
         }
     }
-    
+
 }

@@ -17,13 +17,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description seqDB-17130 : 更新已提交记录与本事务中删除的记录唯一索引重复 
+ * @Description seqDB-17130 : 更新已提交记录与本事务中删除的记录唯一索引重复
  * @author luweikang
  * @date 2019年1月15日
  */
 @Test(groups = "rc")
 public class Transaction17130 extends SdbTestBase {
-    
+
     private String clName = "transCL_17130";
     private Sequoiadb sdb = null;
     private DBCollection cl = null;
@@ -34,9 +34,9 @@ public class Transaction17130 extends SdbTestBase {
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         data = new BasicBSONObject();
@@ -44,129 +44,129 @@ public class Transaction17130 extends SdbTestBase {
         data.put("b", "testTrans_17130");
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
-        
+
         data2 = new BasicBSONObject();
         data2.put("_id", "id17130");
         data2.put("a", 2);
         data2.put("b", 1024);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
-        
+
         expDataList = new ArrayList<BSONObject>();
         expDataList.add(data);
         expDataList.add(data2);
         cl.insert(expDataList);
         cl.createIndex("a", "{a:1}", true, false);
-        
+
         updateData = new BasicBSONObject();
         updateData.put("_id", "id17130");
         updateData.put("a", 1);
         updateData.put("b", "1024_update");
         updateData.put("c", 13700000000L);
         updateData.put("d", "customer transaction type data application.");
-        
+
         modifier = new BasicBSONObject();
         modifier.put("$set", updateData);
-        
+
     }
-    
-    //TODO:SEQUOIADBMAINSTREAM-4182
-    @Test(enabled=false)
-    public void test1(){
-        try(Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");){
+
+    // TODO:SEQUOIADBMAINSTREAM-4182
+    @Test(enabled = false)
+    public void test1() {
+        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
             transDB.beginTransaction();
             DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
-            //delete record R2
+            // delete record R2
             transCL.delete(new BasicBSONObject("a", data2.get("a")));
-            //update record R1 to R3 same as the R2
+            // update record R1 to R3 same as the R2
             transCL.update(new BasicBSONObject("a", 1), modifier, null);
-            
+
             expDataList.clear();
             expDataList.add(updateData);
-            
+
             recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
             actDataList = TransUtils.getReadActList(recordCur);
             Assert.assertEquals(actDataList, expDataList);
             actDataList.clear();
-            
+
             recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
             actDataList = TransUtils.getReadActList(recordCur);
             Assert.assertEquals(actDataList, expDataList);
             actDataList.clear();
-            
+
             transDB.rollback();
         }
-        
+
         expDataList.clear();
         expDataList.add(data);
         expDataList.add(data2);
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
     }
-    
-    //TODO:SEQUOIADBMAINSTREAM-4182
-    @Test(enabled=false)
-    public void test2(){
-        try(Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");){
+
+    // TODO:SEQUOIADBMAINSTREAM-4182
+    @Test(enabled = false)
+    public void test2() {
+        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
             transDB.beginTransaction();
             DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
-            //delete record R2
+            // delete record R2
             transCL.delete(new BasicBSONObject("a", data2.get("a")));
-            //update record R1 to R3 same as the R2
+            // update record R1 to R3 same as the R2
             transCL.update(new BasicBSONObject("a", 1), modifier, null);
-            
+
             expDataList.clear();
             expDataList.add(updateData);
-            
+
             recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
             actDataList = TransUtils.getReadActList(recordCur);
             Assert.assertEquals(actDataList, expDataList);
             actDataList.clear();
-            
+
             recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
             actDataList = TransUtils.getReadActList(recordCur);
             Assert.assertEquals(actDataList, expDataList);
             actDataList.clear();
-            
+
             transDB.commit();
         }
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         cl.delete("{'a': {'$isnull' :0}}");
-        Assert.assertEquals(cl.getCount(),0 );
-        
+        Assert.assertEquals(cl.getCount(), 0);
+
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         try {
             sdb.getCollectionSpace(csName).dropCollection(clName);
         } finally {
-            if(recordCur != null){
+            if (recordCur != null) {
                 recordCur.close();
             }
-            if( sdb != null ){
+            if (sdb != null) {
                 sdb.close();
             }
         }
     }
-    
+
 }

@@ -17,13 +17,13 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description Transaction17139.java  upsert操作时，事务回滚，与读并发 
+ * @Description Transaction17139.java upsert操作时，事务回滚，与读并发
  * @author luweikang
  * @date 2019年1月15日
  */
 @Test(groups = "rc")
 public class Transaction17139 extends SdbTestBase {
-    
+
     private String clName = "transCL_17139";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb2 = null;
@@ -32,24 +32,24 @@ public class Transaction17139 extends SdbTestBase {
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
-        expDataList = prepareData( recordNum );
+        expDataList = prepareData(recordNum);
         cl.insert(expDataList);
-        
+
     }
-    
+
     @Test
-    public void test(){
-        
+    public void test() {
+
         sdb.beginTransaction();
         sdb2.beginTransaction();
-        
+
         BSONObject modifier = null;
         BSONObject data = null;
         for (int i = 0; i < recordNum * 2; i++) {
@@ -63,52 +63,52 @@ public class Transaction17139 extends SdbTestBase {
             modifier.put("$set", data);
             cl.upsert(new BasicBSONObject("a", i), modifier, null);
         }
-        
+
         DBCollection transCL2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         recordCur = transCL2.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList, "check data");
         actDataList.clear();
-        
+
         recordCur = transCL2.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         sdb.rollback();
-        
+
         recordCur = transCL2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = transCL2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         sdb2.commit();
-        
+
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         try {
             sdb.getCollectionSpace(csName).dropCollection(clName);
         } finally {
-            if(recordCur != null){
+            if (recordCur != null) {
                 recordCur.close();
             }
-            if( sdb != null ){
+            if (sdb != null) {
                 sdb.close();
             }
-            if( sdb2 != null ){
+            if (sdb2 != null) {
                 sdb2.close();
             }
         }
     }
-    
-    private List<BSONObject> prepareData(int recordNum){
+
+    private List<BSONObject> prepareData(int recordNum) {
         List<BSONObject> dataList = new ArrayList<BSONObject>();
         BSONObject data = null;
         for (int i = 0; i < recordNum; i++) {
@@ -121,5 +121,5 @@ public class Transaction17139 extends SdbTestBase {
         }
         return dataList;
     }
-    
+
 }

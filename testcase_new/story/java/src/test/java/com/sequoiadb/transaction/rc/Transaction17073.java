@@ -25,63 +25,63 @@ import com.sequoiadb.transaction.TransUtils;
  */
 @Test(groups = "rc")
 public class Transaction17073 extends SdbTestBase {
-     private Sequoiadb sdb = null;
-     private String clName = "cl17073";
-     private DBCollection cl = null;
-     private List<BSONObject> expList = new ArrayList<BSONObject>();
-     private List<BSONObject> actList = new ArrayList<BSONObject>();
+    private Sequoiadb sdb = null;
+    private String clName = "cl17073";
+    private DBCollection cl = null;
+    private List<BSONObject> expList = new ArrayList<BSONObject>();
+    private List<BSONObject> actList = new ArrayList<BSONObject>();
 
-     @BeforeClass
-     public void setUp() {
-          sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-          cl = sdb.getCollectionSpace(csName).createCollection(clName);
-          cl.createIndex("textIndex17073", "{a:1}", false, false);
-          BSONObject record = (BSONObject) JSON.parse("{_id:1, a:1, b:1}");
-          cl.insert(record);
-     }
+    @BeforeClass
+    public void setUp() {
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("textIndex17073", "{a:1}", false, false);
+        BSONObject record = (BSONObject) JSON.parse("{_id:1, a:1, b:1}");
+        cl.insert(record);
+    }
 
-     @AfterClass
-     public void tearDown() {
-          CollectionSpace cs = sdb.getCollectionSpace(csName);
-          if (cs.isCollectionExist(clName)) {
-               cs.dropCollection(clName);
-          }
-          if (!sdb.isClosed()) {
-               sdb.close();
-          }
-     }
+    @AfterClass
+    public void tearDown() {
+        CollectionSpace cs = sdb.getCollectionSpace(csName);
+        if (cs.isCollectionExist(clName)) {
+            cs.dropCollection(clName);
+        }
+        if (!sdb.isClosed()) {
+            sdb.close();
+        }
+    }
 
-     @Test
-     public void test() {
-          // 开启事务
-          sdb.beginTransaction();
+    @Test
+    public void test() {
+        // 开启事务
+        sdb.beginTransaction();
 
-          // 删除记录R1
-          cl.delete("", "{'':'textIndex17073'}");
+        // 删除记录R1
+        cl.delete("", "{'':'textIndex17073'}");
 
-          // 读记录走表扫描
-          DBCursor recordsCursor = cl.query(null, null, null, "{'':null}");
-          actList = TransUtils.getReadActList(recordsCursor);
-          expList.clear();
-          Assert.assertEquals(actList, expList);
+        // 读记录走表扫描
+        DBCursor recordsCursor = cl.query(null, null, null, "{'':null}");
+        actList = TransUtils.getReadActList(recordsCursor);
+        expList.clear();
+        Assert.assertEquals(actList, expList);
 
-          // 读记录走索引扫描
-          recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17073'}");
-          actList = TransUtils.getReadActList(recordsCursor);
-          Assert.assertEquals(actList, expList);
+        // 读记录走索引扫描
+        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17073'}");
+        actList = TransUtils.getReadActList(recordsCursor);
+        Assert.assertEquals(actList, expList);
 
-          // 事务提交
-          sdb.commit();
+        // 事务提交
+        sdb.commit();
 
-          // 读记录走表扫描
-          recordsCursor = cl.query(null, null, null, "{'':null}");
-          actList = TransUtils.getReadActList(recordsCursor);
-          Assert.assertEquals(actList, expList);
+        // 读记录走表扫描
+        recordsCursor = cl.query(null, null, null, "{'':null}");
+        actList = TransUtils.getReadActList(recordsCursor);
+        Assert.assertEquals(actList, expList);
 
-          // 读记录走索引扫描
-          recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17073'}");
-          actList = TransUtils.getReadActList(recordsCursor);
-          Assert.assertEquals(actList, expList);
-          recordsCursor.close();
-     }
+        // 读记录走索引扫描
+        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17073'}");
+        actList = TransUtils.getReadActList(recordsCursor);
+        Assert.assertEquals(actList, expList);
+        recordsCursor.close();
+    }
 }
