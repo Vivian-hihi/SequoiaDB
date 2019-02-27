@@ -23,8 +23,8 @@ import java.util.Random;
  */
 public class ParseCipherFile17880 extends SdbTestBase {
     private Sequoiadb sdb;
-    private String[] usernames = {/*"user@17880","user:17880",*/"  user17880", "测试17880", "token17880A", "token17880B", "token17880C"};
-    private String[] passwords = {/*"user@17880","user:17880",*/"  user17880", "测试17880", "token17880A", "token17880B", "token17880C"};
+    private String[] usernames = {/*"user@17880","user:17880",*/"  user 17880 ", "测试17880", "token17880A", "token17880B", "token17880C"};
+    private String[] passwords = {/*"user@17880","user:17880",*/"  user 17880 ", "测试17880", "token17880A", "token17880B", "token17880C"};
     private String passwdFileName = "/password17880";
     private String passwordFilePath;
 
