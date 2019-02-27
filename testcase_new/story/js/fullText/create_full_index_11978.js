@@ -18,12 +18,13 @@ function main()
    commCreateCS( db, csName, false, {PageSize : 4096, LobPageSize : 4096} );
    var dbcl = commCreateCL( db, csName, clName );
    
-   commCreateIndex( dbcl, "a_11978", {content:"text"});
-   commCheckIndex( dbcl, "a_11978", true );
+   var textIndexName = "a_11978";
+   commCreateIndex( dbcl, textIndexName, {content:"text"});
+   commCheckIndex( dbcl, textIndexName, true );
    
    //固定集合属性为默认值(与原集合属性无关)
    var dbOperator = new DBOperator();
-   var cappedCLName = dbOperator.getCappedCLName( dbcl, "a_11978" );
+   var cappedCLName = dbOperator.getCappedCLName( dbcl, textIndexName );
    var group = commGetCLGroups( db, csName + "." + clName );
    
    var cappedDB = db.getRG(group[0]).getMaster().connect();
@@ -34,7 +35,10 @@ function main()
 	     "PageSize : 65536, LobPageSize : 262144", "PageSize : " + cappedAttr["Details"][0]["PageSize"] + " LobPageSize " + cappedAttr["Details"][0]["LobPageSize"]);
    }
    
+   var esIndexNames = dbOperator.getESIndexNames(csName, clName, textIndexName);
    commDropCS( db, csName );
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 main()

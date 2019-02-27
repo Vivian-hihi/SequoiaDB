@@ -55,6 +55,9 @@ function main()
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_14382");
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

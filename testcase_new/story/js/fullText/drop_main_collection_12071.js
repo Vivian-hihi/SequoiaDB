@@ -10,21 +10,21 @@ function main()
       return;
    }
    
-   var clName = COMMCLNAME + "_ES_12071";
-   commDropCL(db, COMMCSNAME, clName, true, true);
+   var mainclName = COMMCLNAME + "_ES_12071";
+   commDropCL(db, COMMCSNAME, mainclName, true, true);
    
    //主表及子表在相同和不同的集合空间上
-   commDropCL(db, COMMCSNAME, clName, true, true);
-   var mainCL = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingKey : {a : 1}, ShardingType : "range", IsMainCL : true});
-   var slaveCLName1 = "slave1_cl_12071";
-   commDropCL(db, COMMCSNAME, slaveCLName1, true, true);
-   var slaveCL1 = commCreateCL(db, COMMCSNAME, slaveCLName1);
-   var csName = "slave2_cs_12071";
+   commDropCL(db, COMMCSNAME, mainclName, true, true);
+   var mainCL = commCreateCLByOption( db, COMMCSNAME, mainclName, {ShardingKey : {a : 1}, ShardingType : "range", IsMainCL : true});
+   var subCLName1 = COMMCLNAME + "sub1_cl_12071";
+   commDropCL(db, COMMCSNAME, subCLName1, true, true);
+   var subCL1 = commCreateCL(db, COMMCSNAME, subCLName1);
+   var csName = COMMCSNAME + "sub2_cs_12071";
    commDropCS( db, csName );
-   var slaveCLName2 = "slave2_cl_12071";
-   var slaveCL2 = commCreateCL(db, csName, slaveCLName2);
-   mainCL.attachCL(COMMCSNAME + "." + slaveCLName1, {LowBound : {a : 0}, UpBound : {a : 4567}});
-   mainCL.attachCL(csName + "." + slaveCLName2, {LowBound : {a : 4567}, UpBound : {a : 10001}});
+   var subCLName2 = COMMCLNAME + "sub2_cl_12071";
+   var subCL2 = commCreateCL(db, csName, subCLName2);
+   mainCL.attachCL(COMMCSNAME + "." + subCLName1, {LowBound : {a : 0}, UpBound : {a : 4567}});
+   mainCL.attachCL(csName + "." + subCLName2, {LowBound : {a : 4567}, UpBound : {a : 10001}});
    
    //create index
    commCreateIndex( mainCL, "fullIndex_12071", {b : "text"});
@@ -32,8 +32,7 @@ function main()
    //insert records
    var records = new Array();
    for (var i = 0; i < 10000 ; i++){
-      var randomNum = parseInt(Math.random()*10000 + 1);
-      var record = {a : randomNum, b : "b" + i};
+      var record = {a : i, b : "b" + i};
       records.push(record);
    }
    insertRecords(mainCL, records);
@@ -43,38 +42,17 @@ function main()
       println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
       return ;
    }
-   checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12071", 10000)
+   checkMainCLFullSyncToES(COMMCSNAME, mainclName, "fullIndex_12071", 10000)
    
    //删除主表
    var dbOperator = new DBOperator();
-   var esIndexNames1 = dbOperator.getESIndexNames(COMMCSNAME, slaveCLName1, "fullIndex_12071");
-   var esIndexNames2 = dbOperator.getESIndexNames(csName, slaveCLName2, "fullIndex_12071");
-   
-   db.getCS(COMMCSNAME).dropCL(clName);   
+   var esIndexNames1 = dbOperator.getESIndexNames(COMMCSNAME, subCLName1, "fullIndex_12071");
+   var esIndexNames2 = dbOperator.getESIndexNames(csName, subCLName2, "fullIndex_12071");
+   commDropCL(db, COMMCSNAME, mainclName, false, false);  
    checkIndexNotExistInES(esIndexNames1);
    checkIndexNotExistInES(esIndexNames2);
    
-   try{
-      slaveCL1.insert({a : 1});
-      throw "INSERT ERROR"
-   }
-   catch (e){
-      if (-23 != e){
-         throw buildException("main()","slaveCL1 should be removed but not","-23 equal e", -23, e);
-      }
-   }
-   try{
-      slaveCL2.insert({a : 1});
-      throw "INSERT ERROR"
-   }
-   catch (e){
-      if (-23 != e){
-         throw buildException("main()","slaveCL2 should be removed but not","-23 equal e", -23, e);
-      }
-   }
-   
-   commDropCL(db, COMMCSNAME, slaveCLName1, true, true);
-   commDropCL(db, COMMCSNAME, clName, true, true);
+   commDropCL(db, COMMCSNAME, subCLName1, true, true);
    commDropCS( db, csName );
 }
 

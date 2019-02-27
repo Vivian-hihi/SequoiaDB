@@ -87,6 +87,10 @@ function main()
    checkResult(expResult, actResult2);
    println("---match all records for $and-$and-$not---");
 
+   var dbOperator = new DBOperator();
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true); 
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

@@ -44,5 +44,7 @@ function main()
    checkResult(expectResult.sort(compare("a")), actResult.sort(compare("a")));
   
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

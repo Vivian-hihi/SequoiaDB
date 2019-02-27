@@ -32,13 +32,16 @@ function main()
    var actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond, acSortCond );
    checkResult( expectResult, actResult );
   
-   skipCond = 4
+   skipCond = 4;
    var decSortCond = { a : -1 };
    expectResult = dbOperator.findFromCL( dbcl, null, selectorCond, decSortCond, null, null, skipCond );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond, decSortCond );
    checkResult( expectResult, actResult );
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL( db, COMMCSNAME, clName, true, true );
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function insertData( dbcl )

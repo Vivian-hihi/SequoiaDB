@@ -23,13 +23,13 @@ function main(){
    dbcl.insert(records);
    
    //创建全文索引，再次插入多条全文索引字段重复的记录
-   var fullIndex = "fullIndex_ES_14373";
-   commCreateIndex(dbcl, fullIndex, {about : "text", content : "text"});
+   var textIndexName = "textIndexName_ES_14373";
+   commCreateIndex(dbcl, textIndexName, {about : "text", content : "text"});
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 6);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 6);
    
    //记录插入成功，固定集合中记录正确，ES中记录正确
    var esOperator = new ESOperator();
@@ -40,6 +40,8 @@ function main(){
    checkRecords( expCLRecords, actESRecords );
       
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function checkRecords( expRecords, actRecords )

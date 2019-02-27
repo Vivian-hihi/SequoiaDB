@@ -43,6 +43,9 @@ function main()
    
    checkFullSyncToES(COMMCSNAME, clName, indexName, 2);
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, indexName);
    commDropCL( db, COMMCSNAME, clName);
+   //SEQUOIADBMAINSTREAM-3983 
+   checkIndexNotExistInES(esIndexNames);
 }
 main()

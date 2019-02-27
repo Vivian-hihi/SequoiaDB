@@ -15,21 +15,21 @@ function main(){
    
    //在同一字段上创建全文索引及普通索引，并插入包含索引字段的记录 
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
-   var fullIndex = "fullIndex_ES_12040";
-   commCreateIndex(dbcl, fullIndex, {content : "text", about : "text"});
+   var textIndexName = "textIndexName_ES_12040";
+   commCreateIndex(dbcl, textIndexName, {content : "text", about : "text"});
    commCreateIndex(dbcl, "commIndex", {content : 1});
    
    var dataGenerator = new commDataGenerator();
    var records = dataGenerator.getRecords(30, "string", ["about", "content", "information"]);
    dbcl.insert(records);
    
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 30);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 30);
    
    //使用全文索引字段进行查询并对字段进行选择，查询覆盖：普通查询、全文检索，选择符进行抽测，选择字段覆盖：_id、部分全文索引字段、全部索引字段、其他字段，检查结果 
    var dbOperator = new DBOperator();
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}};
    var selectorConf = {_id : {$include : 1}, about : {$include : 1}, content : {$default : "this is content "}, information : ""};
-   var hintConf = {"" : fullIndex};
+   var hintConf = {"" : textIndexName};
    var actRecords = dbOperator.findFromCL(dbcl, findConf, selectorConf, null, hintConf);
    
    var expRecords = dbOperator.findFromCL(dbcl, null, null, null, null);
@@ -42,7 +42,10 @@ function main(){
    var expRecords = getExpRecords(records);
    checkRecords( expRecords, actRecords );
       
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function getExpRecords(records){

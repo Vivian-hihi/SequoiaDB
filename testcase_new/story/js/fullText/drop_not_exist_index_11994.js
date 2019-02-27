@@ -19,6 +19,8 @@ function main()
    var indexName = "a_11994";
    commCreateIndex( dbcl, indexName, {content:"text"});
    commCheckIndex( dbcl, indexName, true );
+   var dbOperator = new DBOperator();
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, indexName);
    dbcl.dropIndex( indexName ); 
    
    //删除不存在的全文索引，删除失败
@@ -33,6 +35,7 @@ function main()
       }
    }
    commCheckIndex( dbcl, indexName, false );
+   checkIndexNotExistInES(esIndexNames);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
 }

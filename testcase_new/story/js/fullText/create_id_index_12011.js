@@ -15,7 +15,7 @@ function main()
    var textIndexName = "a_12011";
    
    commDropCL( db, COMMCSNAME, clName, true, true );
-   
+
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
    
    createIndexOnId( dbcl, textIndexName );
@@ -30,6 +30,7 @@ function createIndexOnId( dbcl, textIndexName )
    try
    {
       commCreateIndex( dbcl, textIndexName, { _id : "text" } );
+      throw 'create text index on _id should fail!';
    }catch( e )
    {
       if( e !== -6 )
@@ -44,6 +45,7 @@ function createIndexContainId( dbcl, textIndexName )
    try
    {
       commCreateIndex( dbcl, textIndexName, { _id : "text", a : "text" } );
+      throw 'create text index include _id should fail!';
    }catch( e )
    {
       if( e !== -6 )

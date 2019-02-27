@@ -19,14 +19,14 @@ function main()
    var dbcl1 = commCreateCL( db, csName, clName );
    var dbcl2 = commCreateCLByOption( db, csName, clName + "_2", {ShardingKey:{content:1}, ShardingType:"hash"} )
    var dbcl3 = commCreateCLByOption( db, csName, clName + "_3", {ShardingKey:{content:1}, ShardingType:"range"} )
-   var slaveCL1 = commCreateCL( db, csName, clName + "_4_1" );
-   var slaveCL2 = commCreateCL( db, csName, clName + "_4_2" );
+   var subCL1 = commCreateCL( db, csName, clName + "_4_1" );
+   var subCL2 = commCreateCL( db, csName, clName + "_4_2" );
    var mainCL = commCreateCLByOption( db, csName, clName + "_4", {ShardingKey:{content:1}, ShardingType:"range", IsMainCL:true} )
    mainCL.attachCL(csName + "." + clName + "_4_1", {LowBound : {content : "a"}, UpBound : {content : "f"}});
    mainCL.attachCL(csName + "." + clName + "_4_2", {LowBound : {content : "x"}, UpBound : {content : "z"}});
    
    //在不同的集合空间，不同的集合创建全文索引
-   var indexName = "a_14368"
+   var indexName = "a_14368";
    commCreateIndex( dbcl, indexName, {content:"text"});
    commCreateIndex( dbcl1, indexName, {content:"text"});
    commCreateIndex( dbcl2, indexName, {content:"text"});
@@ -44,10 +44,10 @@ function main()
    cappedArray.push(cappedCLName2);
    var cappedCLName3 = dbOperator.getCappedCLName( dbcl3, indexName );
    cappedArray.push(cappedCLName3);
-   var cappedSlaveCLName1 = dbOperator.getCappedCLName( slaveCL1, indexName );
-   cappedArray.push(cappedSlaveCLName1);
-   var cappedSlaveCLName2 = dbOperator.getCappedCLName( slaveCL2, indexName );
-   cappedArray.push(cappedSlaveCLName2);
+   var cappedSubCLName1 = dbOperator.getCappedCLName( subCL1, indexName );
+   cappedArray.push(cappedSubCLName1);
+   var cappedSubCLName2 = dbOperator.getCappedCLName( subCL2, indexName );
+   cappedArray.push(cappedSubCLName2);
    
    //检查固定集合名均不一致
    for (var i in cappedArray){
@@ -62,32 +62,39 @@ function main()
    checkExtDataName(dbcl1, indexName, cappedCLName1);
    checkExtDataName(dbcl2, indexName, cappedCLName2);
    checkExtDataName(dbcl3, indexName, cappedCLName3);
-   checkExtDataName(slaveCL1, indexName, cappedSlaveCLName1);
-   checkExtDataName(slaveCL2, indexName, cappedSlaveCLName2);
+   checkExtDataName(subCL1, indexName, cappedSubCLName1);
+   checkExtDataName(subCL2, indexName, cappedSubCLName2);
 
    //检查ES端的全文索引名字映射关系为固定集合名_组名
    var esOperator = new ESOperator();
    var groups = commGetCLGroups( db, COMMCSNAME + "." + clName );
-   var esIndexName = cappedCLName.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName);
+   var esIndexName1 = cappedCLName.toLowerCase() + "_" + groups[0];
+   esOperator.isExistIndexInES(esIndexName1);
    var groups = commGetCLGroups( db, csName + "." + clName );
-   var esIndexName = cappedCLName1.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName);
+   var esIndexName2 = cappedCLName1.toLowerCase() + "_" + groups[0];
+   esOperator.isExistIndexInES(esIndexName2);
    var groups = commGetCLGroups( db, csName + "." + clName + "_2" );
-   var esIndexName = cappedCLName2.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName);
+   var esIndexName3 = cappedCLName2.toLowerCase() + "_" + groups[0];
+   esOperator.isExistIndexInES(esIndexName3);
    var groups = commGetCLGroups( db, csName + "." + clName + "_3" );
-   var esIndexName = cappedCLName3.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName);
+   var esIndexName4 = cappedCLName3.toLowerCase() + "_" + groups[0];
+   esOperator.isExistIndexInES(esIndexName4);
    var groups = commGetCLGroups( db, csName + "." + clName + "_4_1" );
-   var esIndexName = cappedSlaveCLName1.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName);
+   var esIndexName5 = cappedSubCLName1.toLowerCase() + "_" + groups[0];
+   esOperator.isExistIndexInES(esIndexName5);
    var groups = commGetCLGroups( db, csName + "." + clName + "_4_2" );
-   var esIndexName = cappedSlaveCLName2.toLowerCase() + "_" + groups[0];
-   esOperator.isExistIndexInES(esIndexName);
+   var esIndexName6 = cappedSubCLName2.toLowerCase() + "_" + groups[0];
+   esOperator.isExistIndexInES(esIndexName6);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
    commDropCS( db, csName, true );
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexName1);
+   checkIndexNotExistInES(esIndexName2);
+   checkIndexNotExistInES(esIndexName3);
+   checkIndexNotExistInES(esIndexName4);
+   checkIndexNotExistInES(esIndexName5);
+   checkIndexNotExistInES(esIndexName6);
 }
 
 function checkExtDataName(dbcl, indexName, cappedCLName){

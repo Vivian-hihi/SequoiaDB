@@ -13,12 +13,12 @@ function main()
    
    var clName = COMMCLNAME + "_ES_15130";
    var clFullName = COMMCSNAME + "." + clName
-   var fullIndexName = "a_15138";
+   var textIndexName = "a_15138";
    var commIndexName = "b";
    
    commDropCL( db, COMMCSNAME, clName);
    var dbcl = commCreateCL( db, COMMCSNAME, clName);
-   commCreateIndex( dbcl, fullIndexName, {b:"text"});
+   commCreateIndex( dbcl, textIndexName, {b:"text"});
    commCreateIndex( dbcl, commIndexName, {a:-1});
    
    for(var j=0;j<3;j++)
@@ -39,7 +39,7 @@ function main()
    }
    
    var dbOperator = new DBOperator();
-   checkFullSyncToES(COMMCSNAME, clName, fullIndexName, 30000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 30000);
    
    var actCount = dbcl.count({$and:[{a:1},{"":{$Text:{query:{match:{b:"text2"}}}}}]});
    var expectCount = 0;
@@ -68,6 +68,9 @@ function main()
    }
    println("---check match all records---");
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL( db, COMMCSNAME, clName);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main()

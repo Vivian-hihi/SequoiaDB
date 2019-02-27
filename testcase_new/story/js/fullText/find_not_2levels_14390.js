@@ -101,6 +101,9 @@ function main()
    checkResult(expResult, actResult4);
    println("---match all records for $not-$not---"); 
 
+   var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

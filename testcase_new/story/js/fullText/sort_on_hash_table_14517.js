@@ -72,7 +72,10 @@ function main()
    checkResult(expResult, actResult);
    println("===sort full index field success===");
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_14517");
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 main()

@@ -53,7 +53,11 @@ function main()
    var expectCount = 20000;
    checkCount(expectCount, actCount);
 
+   var dbOperator = new DBOperator();
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 function checkCount( expectCount, actCount )
 {

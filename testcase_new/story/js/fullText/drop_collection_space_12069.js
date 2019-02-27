@@ -13,29 +13,24 @@ function main()
    var clName = COMMCLNAME + "_ES_12069";
    commDropCL(db, COMMCSNAME, clName, true, true);
    var mainCL = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingKey : {a : 1}, ShardingType : "range", IsMainCL : true});
-   var csName1 = "slave1_cs_12069";
+   var csName1 = "sub1_cs_12069";
    commDropCS( db, csName1 );
-   var slaveCLName1 = "slave1_cl_12069";
-   var slaveCL1 = commCreateCL(db, csName1, slaveCLName1);
-   var csName2 = "slave2_cs_12069";
+   var subCLName1 = "sub1_cl_12069";
+   var subCL1 = commCreateCL(db, csName1, subCLName1);
+   var csName2 = "sub2_cs_12069";
    commDropCS( db, csName2 );
-   var slaveCLName2 = "slave2_cl_12069";
-   var slaveCL2 = commCreateCL(db, csName2, slaveCLName2);
-   mainCL.attachCL(csName1 + "." + slaveCLName1, {LowBound : {a : 0}, UpBound : {a : 4567}});
-   mainCL.attachCL(csName2 + "." + slaveCLName2, {LowBound : {a : 4567}, UpBound : {a : 10001}});
+   var subCLName2 = "sub2_cl_12069";
+   var subCL2 = commCreateCL(db, csName2, subCLName2);
+   mainCL.attachCL(csName1 + "." + subCLName1, {LowBound : {a : 0}, UpBound : {a : 4567}});
+   mainCL.attachCL(csName2 + "." + subCLName2, {LowBound : {a : 4567}, UpBound : {a : 10001}});
    
    //create index
    commCreateIndex( mainCL, "fullIndex_12069", {b : "text"});
    
    //insert records
    var records = new Array();
-   var oneSubCLCount = 0;
    for (var i = 0; i < 10000 ; i++){
-      var randomNum = parseInt(Math.random()*10000 + 1);
-      if (randomNum < 4567){
-         oneSubCLCount++;
-      }
-      var record = {a : randomNum, b : "b" + i};
+      var record = {a : i, b : "b" + i};
       records.push(record);
    }
    insertRecords(mainCL, records);
@@ -48,20 +43,21 @@ function main()
    checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12069", 10000)
    
    //删除部分子表所在的集合空间
+   var dbOperator = new DBOperator();
+   var subESIndexNames1 = dbOperator.getESIndexNames(csName1, subCLName1, "fullIndex_12069"); 
    db.dropCS(csName1);
-   checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12069", 10000 - oneSubCLCount);
+   checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12069", 10000 - 4567);
    
    //其余子表主备节点数据一致
-   checkConsistency(csName2, slaveCLName2);
-   checkInspectResult(csName2, slaveCLName2, 5);
+   checkConsistency(csName2, subCLName2);
+   checkInspectResult(csName2, subCLName2, 5);
    
-   var dbOperator = new DBOperator();
-   var expResult = dbOperator.findFromCL(slaveCL2, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {b : ""});
-   var esIndexNames = dbOperator.getESIndexNames(csName2, slaveCLName2, "fullIndex_12069"); 
+   var expResult = dbOperator.findFromCL(subCL2, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {b : ""});
+   var subESIndexNames2 = dbOperator.getESIndexNames(csName2, subCLName2, "fullIndex_12069"); 
    var actResult = new Array();
    var esOperator = new ESOperator();
-   for (var i  in esIndexNames){
-      var esRecords = esOperator.findFromES(esIndexNames[i], '{"query":{"match_all":{}}, "size":10000}');
+   for (var i  in subESIndexNames2){
+      var esRecords = esOperator.findFromES(subESIndexNames2[i], '{"query":{"match_all":{}}, "size":10000}');
       actResult = actResult.concat(esRecords);
    }
    
@@ -72,6 +68,9 @@ function main()
    commDropCL(db, COMMCSNAME, clName, true, true);
    commDropCS( db, csName1 );
    commDropCS( db, csName2 );
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(subESIndexNames1);
+   checkIndexNotExistInES(subESIndexNames2);
 }
 
 main()

@@ -17,19 +17,19 @@ function main(){
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ReplSize : 0, AutoIndexId : false});
    
    //创建全文索引，并插入包含全文索引字段的记录
-   var fullIndex = "fullIndex_ES_12032";   
-   commCreateIndex(dbcl, fullIndex, {content : "text"});
+   var textIndexName = "textIndexName_ES_12032";   
+   commCreateIndex(dbcl, textIndexName, {content : "text"});
    var records = new Array();
    records[0] = {content : "this is my college"};
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 1);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
    
    //删除记录，检查结果
    removeRecords(dbcl);
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 1);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
    
    //记录删除失败，固定集合中记录正确，ES中记录正确
    var esOperator = new ESOperator();
@@ -42,7 +42,7 @@ function main(){
    //创建id索引后，再次删除记录，检查结果
    dbcl.createIdIndex();
    dbcl.remove({content : "this is my college"});
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 0);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 0);
    
    //记录删除成功，ES中最终无记录
    var actESRecords = esOperator.findFromES(esIndexNames[0], queryCond);
@@ -50,6 +50,8 @@ function main(){
    checkRecords( expCLRecords, actESRecords );
       
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function removeRecords(dbcl){

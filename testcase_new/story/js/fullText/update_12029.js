@@ -47,6 +47,8 @@ function main()
    checkResult( expectResult, actResult );
    
    commDropCL( db, COMMCSNAME, clName, true, true );
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function insertData( dbcl )

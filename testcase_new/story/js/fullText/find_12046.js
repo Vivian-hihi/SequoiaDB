@@ -22,10 +22,10 @@ function main()
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
 
    // check result
-   var dbOpr = new DBOperator();
+   var dbOperator = new DBOperator();
    var findCond = {"":{"$Text":{"query":{"match_all":{}}}}};
    var expResult = [{"a" : "testa"}];
-   var actResult = dbOpr.findFromCL(dbcl, findCond, {"a":{"$include":1}});
+   var actResult = dbOperator.findFromCL(dbcl, findCond, {"a":{"$include":1}});
    checkResult(expResult, actResult);
   
    // find with wrong search command
@@ -44,6 +44,9 @@ function main()
 
    }
 
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

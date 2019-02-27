@@ -15,7 +15,7 @@ function main()
    var dbcl = commCreateCL( db, COMMCSNAME, clName );
 
    var textIndexName = "textIndex_14381";
-   var commonIndexName = "commonIndex"
+   var commonIndexName = "commonIndex";
    dbcl.createIndex(textIndexName, {"a" : "text"});
    dbcl.createIndex(commonIndexName, {"b" : 1});
 
@@ -62,6 +62,9 @@ function main()
    expResult.sort(compare("a", compare("b")));
    checkResult(expResult, actResult);
 
+   var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);   
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

@@ -102,6 +102,10 @@ function main()
    checkResult(expResult, actResult4);
    println("---match all records for $and-$or---");
 
+   var dbOperator = new DBOperator();
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true); 
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

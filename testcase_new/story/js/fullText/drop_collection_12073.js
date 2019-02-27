@@ -15,8 +15,8 @@ function main(){
    
    //创建集合，并创建普通索引及全文索引 
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
-   var fullIndex = "fullIndex_ES_12073";
-   commCreateIndex(dbcl, fullIndex, {content : "text"});
+   var textIndexName = "textIndexName_ES_12073";
+   commCreateIndex(dbcl, textIndexName, {content : "text"});
    commCreateIndex(dbcl, "commIndex_12073", {content : 1});
    
    //插入lob、记录(包含索引及全文索引的记录) 
@@ -28,9 +28,9 @@ function main(){
    dbcl.putLob(testFile);
    
    var dbOperator = new DBOperator();
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
-   var cappedCLs = dbOperator.getCappedCLs(COMMCSNAME, clName, fullIndex);
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 10);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
+   var cappedCLs = dbOperator.getCappedCLs(COMMCSNAME, clName, textIndexName);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10);
    
    //删除集合，检查结果
    var commCS = db.getCS(COMMCSNAME);
@@ -41,6 +41,9 @@ function main(){
    checkAllResult(dbcl, esOperator, cappedCLs[0], esIndexNames[0]);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function lobGenerateFile( fileName, fileLine)

@@ -37,22 +37,10 @@ function main()
    
    checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12074", 100);
    
-   //删除集合，检查结果
-   var commCS = db.getCS(COMMCSNAME);
-   commCS.dropCL(clName);
-
-   try{
-      dbcl.insert({name:"zsan"});
-      throw "INSERTERR" ;
-   }
-   catch(e){
-      if(e != -23){
-         throw buildException("mian()", "collection do not drop", "equal", -23, e);
-      }
-   }
-   println("====dbcl.insert() check success===");
-   
-   commDropCL(db, COMMCSNAME, clName, true, true);
+   var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, "fullIndex_12074");
+   commDropCL(db, COMMCSNAME, clName, false, false);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function lobGenerateFile( fileName, fileLine)

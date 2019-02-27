@@ -31,6 +31,10 @@ function main()
    if (expResult[0]["a"] != actResult[0]["a"]){
       throw buildException("main()", "unexpect record value", "equal", expResult[0]["a"], actResult[0]["a"]);
    }
+   
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "a_11984");
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main()

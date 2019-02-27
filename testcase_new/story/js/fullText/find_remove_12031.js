@@ -15,8 +15,8 @@ function main(){
    
    //创建全文索引 
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
-   var fullIndex = "fullIndex_ES_12031";
-   commCreateIndex(dbcl, fullIndex, {about : "text", content : "text"});
+   var textIndexName = "textIndexName_ES_12031";
+   commCreateIndex(dbcl, textIndexName, {about : "text", content : "text"});
    
    //插入包含全文索引字段的记录 
    var records = new Array();
@@ -26,15 +26,15 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
-   var cappedCLs = dbOperator.getCappedCLs(COMMCSNAME, clName, fullIndex);
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 10);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
+   var cappedCLs = dbOperator.getCappedCLs(COMMCSNAME, clName, textIndexName);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10);
    
    //使用find.remove接口删除记录，检查结果 
    var cursor = dbcl.find({about : {"$gt": "about1"}}).remove(); //dbcl.find({about : {"$gt": "about1"}}).remove(); can not remove records
    while(cursor.next()){}
 
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 2);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 2);
    
    //记录更新成功，固定集合中记录正确，操作类型正确，es中记录最终与原集合一致
    var esOperator = new ESOperator();
@@ -51,6 +51,8 @@ function main(){
    checkRecords( actESRecords, actCLRecords );
    
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function checkRecords( expRecords, actRecords )

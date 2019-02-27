@@ -174,7 +174,10 @@ function main()
    checkResult(expResult, actResult);
    println("===skip < 10000 && limit > 10000 success===");
 
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_15132");
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function checkCount(expResult, actResult){

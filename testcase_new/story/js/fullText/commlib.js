@@ -65,9 +65,7 @@ function ESOperator()
    {
       var count = 0;
       // get curl command
-      var queryCount = "{\"query\" : {\"term\" : {\"_index\": \"" + esIndexName  + "\"}}}";         	            
-      var str = "curl -H " + HEADER + " -XGET " + HTTP + "/_count' -d '" + queryCount 
-	                  + "' 2>/dev/null";
+      var str = "curl -H " + HEADER + " -XGET " + HTTP + "/" + esIndexName + "/_count" + "' 2>/dev/null";
 
       // get count from ES
       try

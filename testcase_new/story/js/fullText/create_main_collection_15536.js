@@ -26,7 +26,8 @@ function main()
    mainCL.attachCL(COMMCSNAME + "." + slaveCLName2, {LowBound : {a : 4567}, UpBound : {a : 10001}});
    
    //createIndex
-   commCreateIndex( mainCL, "fullIndex_15536", {b : "text"});
+   var textIndexName = "fullIndex_15536";
+   commCreateIndex( mainCL, textIndexName, {b : "text"});
    
    //insert
    var records = new Array();
@@ -46,7 +47,7 @@ function main()
       println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
       return ;
    }
-   checkMainCLFullSyncToES(csName, clName, "fullIndex_15536", 10000);
+   checkMainCLFullSyncToES(csName, clName, textIndexName, 10000);
    
    //query
    var dbOperator = new DBOperator();
@@ -57,21 +58,26 @@ function main()
    //update
    mainCL.update({$set : {b : "helloworld"}}, {b : "b1"});
    mainCL.insert({a : 4568, b : "b4568"});
-   checkMainCLFullSyncToES(csName, clName, "fullIndex_15536", 10001);
+   checkMainCLFullSyncToES(csName, clName, textIndexName, 10001);
    var actResult = dbOperator.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(mainCL, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    
    //delete
    mainCL.remove({b : "helloworld"});
-   checkMainCLFullSyncToES(csName, clName, "fullIndex_15536", 10000);
+   checkMainCLFullSyncToES(csName, clName, textIndexName, 10000);
    var actResult = dbOperator.findFromCL(mainCL, {"" : {$Text : {"query" : {"match_all" : {}}}}}, null, {"_id" : 1});
    var expResult = dbOperator.findFromCL(mainCL, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    
+   var esIndexNames1 = dbOperator.getESIndexNames(COMMCSNAME, slaveCLName1, textIndexName);
+   var esIndexNames2 = dbOperator.getESIndexNames(COMMCSNAME, slaveCLName2, textIndexName);
    commDropCL(db, COMMCSNAME, slaveCLName1, true, true);
    commDropCL(db, COMMCSNAME, slaveCLName2, true, true);
    commDropCS( db, csName );
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames1);
+   checkIndexNotExistInES(esIndexNames2);
 }
 
 function initCappedCS( csName )

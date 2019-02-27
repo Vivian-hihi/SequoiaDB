@@ -62,6 +62,9 @@ function main()
    checkResult(expectRecords, actRecords);
    println("---check skip<1w,limit>1w success---");
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, indexName);
    commDropCL( db, COMMCSNAME, clName);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main()

@@ -15,8 +15,8 @@ function main(){
    
    //创建全文索引及普通索引，并插入包含索引字段的记录 
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
-   var fullIndex = "fullIndex_ES_14396";
-   commCreateIndex(dbcl, fullIndex, {about : "text"});
+   var textIndexName = "textIndexName_ES_14396";
+   commCreateIndex(dbcl, textIndexName, {about : "text"});
    commCreateIndex(dbcl, "commIndex", {about : 1});
    var records = new Array();
    for (var i = 0; i < 5;i++){
@@ -24,7 +24,7 @@ function main(){
    }
    dbcl.insert(records);
    
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 5);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 5);
    
    //在findOne中使用全文检索条件，覆盖：只带全文检索条件、混合查询，检查结果 
    var rec = dbcl.findOne({"" : {$Text : {"query" : {"match_all" : {}}}}},{about : ""});
@@ -45,7 +45,10 @@ function main(){
    checkRecords( expRecords,  actOnlyFullRecords);
    checkRecords( expRecords,  actMixRecords);
       
+   var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);   
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function checkRecords( expRecords, actRecords )

@@ -15,21 +15,21 @@ function main(){
    
    //创建全文索引 
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
-   var fullIndex = "fullIndex_ES_12033";
-   commCreateIndex(dbcl, fullIndex, {about : "text", content : "text"});
+   var textIndexName = "textIndexName_ES_12033";
+   commCreateIndex(dbcl, textIndexName, {about : "text", content : "text"});
    
    var dataGenerator = new commDataGenerator();
    var records = dataGenerator.getRecords(20, "string", ["about", "content"]);
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 20);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 20);
    
    //删除不存在的记录，检查结果 
    dbcl.remove({about : "what about you ", content : "this is my content"});
    
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 20);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 20);
    
    //命令行执行成功，固定集合中不新增记录，es中最终与原集合数据一致
    var esOperator = new ESOperator();
@@ -40,6 +40,8 @@ function main(){
    checkRecords( expCLRecords, actESRecords );
       
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function checkRecords( expRecords, actRecords )

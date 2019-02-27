@@ -64,6 +64,9 @@ function main()
    checkResult(expectRecords, actRecords);
    println("---check int update to string success---");
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, indexName);
    commDropCL( db, COMMCSNAME, clName);
+   //SEQUOIADBMAINSTREAM-3983 
+   checkIndexNotExistInES(esIndexNames);
 }
 main()

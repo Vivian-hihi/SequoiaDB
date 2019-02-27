@@ -16,8 +16,8 @@ function main(){
    //创建全文索引，并插入包含索引字段的记录 
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
    
-   var fullIndex = "fullIndex_ES_12064";
-   commCreateIndex(dbcl, fullIndex, {about : "text", content : "text"});
+   var textIndexName = "textIndexName_ES_12064";
+   commCreateIndex(dbcl, textIndexName, {about : "text", content : "text"});
    var dataGenerator = new commDataGenerator();
    var records = dataGenerator.getRecords(30000, "string", ["about", "content"]);
    insertRecords(dbcl, records);
@@ -28,7 +28,7 @@ function main(){
 	  return;
    }
    
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 30000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 30000);
    
    //使用全文索引字段进行查询并使用sort,返回的记录数超过1万条，检查结果
    var findConf = {"" : {$Text : {"query" : {"match_all" : {}}}}};
@@ -39,7 +39,10 @@ function main(){
    
    checkResult(actRecords, expRecords);   
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 main();

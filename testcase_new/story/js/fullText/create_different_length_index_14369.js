@@ -16,11 +16,14 @@ function main()
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
    
    //索引名长度为1时，全文索引创建成功
-   var indexName = "a_14369"
+   var indexName = "a_14369";
    dbcl.createIndex(indexName, {content : "text"});
    commCheckIndex( dbcl, indexName, true );
    println("===create index success===");
+   var dbOperator = new DBOperator();
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, indexName);
    commDropIndex( dbcl, indexName, true );
+   checkIndexNotExistInES(esIndexNames);
    
    //固定集合名长度小于127时，全文索引创建成功
    var indexName = "";
@@ -31,6 +34,7 @@ function main()
    commCheckIndex( dbcl, indexName, true );
    println("===create index success===");
    commDropIndex( dbcl, indexName, true );
+   checkIndexNotExistInES(esIndexNames);
    
    //固定集合名长度等于127时，全文索引创建成功
    var cursor = db.snapshot(8, {Name : COMMCSNAME + "." + clName});
@@ -49,6 +53,7 @@ function main()
    commCheckIndex( dbcl, indexName, true );
    println("===create index success===");
    commDropIndex( dbcl, indexName, true );
+   checkIndexNotExistInES(esIndexNames);
    
    //SEQUOIADBMAINSTREAM-3896
    //固定集合名长度等于128时，全文索引创建失败
@@ -66,6 +71,7 @@ function main()
       }
    }
    commCheckIndex( dbcl, indexName, false );
+   checkIndexNotExistInES(esIndexNames);
    println("===create index fail===");
    
    
@@ -84,6 +90,7 @@ function main()
       }
    }
    commCheckIndex( dbcl, indexName, false );
+   checkIndexNotExistInES(esIndexNames);
    println("===create index fail===");
    
    commDropCL(db, COMMCSNAME, clName, true, true);

@@ -39,7 +39,10 @@ function main()
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond );
    checkResult( expectResult, actResult );
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL( db, COMMCSNAME, clName, true, true );
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 main();

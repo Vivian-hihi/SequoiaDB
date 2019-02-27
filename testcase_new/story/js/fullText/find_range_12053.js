@@ -51,6 +51,9 @@ function main()
    checkResult(expResult, actResult);
    println("===find from more group success===");
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_12053");
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

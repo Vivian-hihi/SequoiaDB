@@ -15,8 +15,8 @@ function main(){
    
    //创建集合并创建全文索引
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
-   var fullIndex = "fullIndex_ES_15532";
-   commCreateIndex(dbcl, fullIndex, {about : "text", content : "text"});
+   var textIndexName = "textIndexName_ES_15532";
+   commCreateIndex(dbcl, textIndexName, {about : "text", content : "text"});
    
    //指定_id插入记录，覆盖：包含全文索引字段、不包含全文索引字段，检查结果
    var records = new Array();
@@ -25,8 +25,8 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 1);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
    
    var esOperator = new ESOperator();
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}'; 
@@ -47,6 +47,8 @@ function main(){
    checkRecords( expESRecords,  actESRecords);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function insertRecordsAgain(dbcl, records){

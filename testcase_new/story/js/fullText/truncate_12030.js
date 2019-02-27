@@ -48,6 +48,8 @@ function main(){
    checkRecords( expRecords,  actESRecords);
       
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function checkRecords( expRecords, actRecords )

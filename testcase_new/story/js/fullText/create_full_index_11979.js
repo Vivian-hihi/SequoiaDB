@@ -25,12 +25,13 @@ function main()
    //指定集合的replSize、group、AutoIndexId、压缩为非默认值
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {ReplSize : 0, Group : arrayGroup[0], AutoIndexId : false, Compressed : true, CompressionType : "lzw"} );
    
-   commCreateIndex( dbcl, "a_11979", {content:"text"});
-   commCheckIndex( dbcl, "a_11979", true );
+   var textIndexName = "a_11979";
+   commCreateIndex( dbcl, textIndexName, {content:"text"});
+   commCheckIndex( dbcl, textIndexName, true );
    
    //固定集合属性为默认值(与原集合属性无关)
    var dbOperator = new DBOperator();
-   var cappedCLName = dbOperator.getCappedCLName( dbcl, "a_11979" );
+   var cappedCLName = dbOperator.getCappedCLName( dbcl, textIndexName );
    var cappedDB = db.getRG(arrayGroup[0]).getMaster().connect();
    var cappedAttr = cappedDB.snapshot(4, {Name : cappedCLName + "." + cappedCLName});
    var cappedAttr = cappedAttr.next().toObj();
@@ -44,6 +45,10 @@ function main()
          throw buildException("main()", "capped cl's attributes is not default value", "expCappedAttr equal to actCappedAttr", JSON.stringify(expCappedAttr), JSON.stringify(actCappedAttr));	   
       }
    }  
+   
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main()

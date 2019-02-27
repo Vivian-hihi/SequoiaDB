@@ -47,6 +47,9 @@ function main()
    checkResult(expectRecords, actRecords);
    println("---check remove success---");
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, indexName);
    commDropCL( db, COMMCSNAME, clName);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

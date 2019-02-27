@@ -59,6 +59,10 @@ function main()
    checkResult(expResult, actResult); 
    println("---match all records---");
  
-   commDropCL(db, COMMCSNAME, clName, true, true); 
+   var dbOperator = new DBOperator();
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
+   commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);   
 }
 main();

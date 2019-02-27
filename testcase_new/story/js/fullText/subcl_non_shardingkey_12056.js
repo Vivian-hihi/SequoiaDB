@@ -61,9 +61,14 @@ function main()
    actResult.sort(compare("b"));
    checkResult(expResult, actResult);
 
+   var esIndexNames1 = dbOpr.getESIndexNames(COMMCSNAME, subCLName1, textIndexName);
+   var esIndexNames2 = dbOpr.getESIndexNames(COMMCSNAME, subCLName2, textIndexName);
    commDropCL(db, COMMCSNAME, subCLName1, true, true);
    commDropCL(db, COMMCSNAME, subCLName2, true, true);
    commDropCL(db, COMMCSNAME, mainCLName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames1);
+   checkIndexNotExistInES(esIndexNames2);
 }
 
 main()

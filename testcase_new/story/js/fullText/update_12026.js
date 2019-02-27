@@ -39,7 +39,10 @@ function main()
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond );
    checkResult( expectResult, actResult );
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL( db, COMMCSNAME, clName, true, true );
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function update( dbcl )
@@ -47,6 +50,7 @@ function update( dbcl )
    try
    {
       dbcl.update( { $set : { a : "text2", b : "text2" } } );
+      throw 'should update fail!';
    }
    catch( e )
    {

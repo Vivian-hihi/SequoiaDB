@@ -45,6 +45,9 @@ function main()
    var actResult = dbOpr.findFromCL(dbcl, findCond, {"a":{"$include":1}});
    checkResult(expResult, actResult);
 
+   var esIndexNames = dbOpr.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main();

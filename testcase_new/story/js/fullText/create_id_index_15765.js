@@ -15,8 +15,8 @@ function main(){
    
    //创建集合并创建全文索引(AutoIndexId为false)
    var dbcl = commCreateCLByOption(db, COMMCSNAME, clName, {ReplSize : 0, AutoIndexId : false});
-   var fullIndex = "fullIndex_ES_15765";
-   commCreateIndex(dbcl, fullIndex, {about : "text", content : "text"});
+   var textIndexName = "textIndexName_ES_15765";
+   commCreateIndex(dbcl, textIndexName, {about : "text", content : "text"});
    
    //插入_id重复的记录
    var records = new Array();
@@ -25,8 +25,8 @@ function main(){
    dbcl.insert(records);
    
    var dbOperator = new DBOperator();
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 1);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 1);
    
    var esOperator = new ESOperator();
    var queryCond = '{"query" : {"exists" : {"field" : "content"}}}'; 
@@ -55,11 +55,15 @@ function main(){
    checkRecords( expCLRecords,  actCLRecords);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function createCLIdIndex(dbcl){
    try{
       dbcl.createIdIndex();
+      throw 'create duplicate _id index should fail!';
    }
    catch(e){
       if(e != -38){

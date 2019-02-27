@@ -50,7 +50,10 @@ function main()
    var expResult = [{content:"a"},{content:"a"}];
    
    checkResult(expResult, actResult);
-   
+  
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, indexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 main()

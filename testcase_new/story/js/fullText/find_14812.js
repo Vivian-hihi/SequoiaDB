@@ -35,10 +35,10 @@ function main()
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10010);
    
    // match all records
-   var dbOpr = new DBOperator();
+   var dbOperator = new DBOperator();
    var findAllConf = {"":{"$Text":{"query":{"match_all":{}}}}};
-   var actResult = dbOpr.findFromCL(dbcl, findAllConf, {"a" : {"$include" : 1}});
-   var expResult = dbOpr.findFromCL(dbcl, null, {"a" : {"$include" : 1}});
+   var actResult = dbOperator.findFromCL(dbcl, findAllConf, {"a" : {"$include" : 1}});
+   var expResult = dbOperator.findFromCL(dbcl, null, {"a" : {"$include" : 1}});
    actResult.sort(compare("a"));
    expResult.sort(compare("a"));
    checkResult(expResult, actResult);
@@ -46,13 +46,16 @@ function main()
    // match + conds
    var strings = getStringsByLength(1024);
    var findMatchConf = {"":{"$Text":{"query":{"match":{ "a" : strings}}}}};
-   var actResult = dbOpr.findFromCL(dbcl, findMatchConf, {"a" : {"$include" : 1}});
-   var expResult = dbOpr.findFromCL(dbcl, {"a" : {"$gte" : strings}}, {"a" : {"$include" : 1}});
+   var actResult = dbOperator.findFromCL(dbcl, findMatchConf, {"a" : {"$include" : 1}});
+   var expResult = dbOperator.findFromCL(dbcl, {"a" : {"$gte" : strings}}, {"a" : {"$include" : 1}});
    actResult.sort(compare("a"));
    expResult.sort(compare("a"));
    checkResult(expResult, actResult);
 
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 function getStringsByLength( strLen )
 {

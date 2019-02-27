@@ -15,13 +15,13 @@ function main(){
    
    //创建全文索引，并插入包含全文索引字段的记录 
    var dbcl = commCreateCL(db, COMMCSNAME, clName, 0);
-   var fullIndex = "fullIndex_ES_12036";
-   commCreateIndex(dbcl, fullIndex, {content : "text", about : "text"});
+   var textIndexName = "textIndexName_ES_12036";
+   commCreateIndex(dbcl, textIndexName, {content : "text", about : "text"});
    var records = insertData(dbcl);
    
    var dbOperator = new DBOperator();
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, fullIndex);
-   checkFullSyncToES(COMMCSNAME, clName, fullIndex, 8);
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 8);
    
    //使用DSL的方式进行全文检索,在es中执行查询，查询结果正确
    
@@ -64,6 +64,8 @@ function main(){
    checkRecords( esRecords, clRecords );
       
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function insertData(dbcl){

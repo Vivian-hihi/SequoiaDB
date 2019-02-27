@@ -51,7 +51,10 @@ function main()
    
    checkFullSyncToES( COMMCSNAME, clName, textIndexName, 0 );
    
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    commDropCL( db, COMMCSNAME, clName, true, true );
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 function insertData( dbcl )

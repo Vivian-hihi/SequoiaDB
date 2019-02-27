@@ -44,6 +44,8 @@ function main()
    checkInspectResult(COMMCSNAME, clName, 5);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 main()

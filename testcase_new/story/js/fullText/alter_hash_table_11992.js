@@ -20,7 +20,8 @@ function main()
    commDropCL(db, COMMCSNAME, clName, true, true);
    
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {Group : groups[0][0]["GroupName"]} );
-   commCreateIndex( dbcl, "fullIndex_11992", {b : "text"});
+   var textIndexName = "fullIndex_11992";
+   commCreateIndex( dbcl, textIndexName, {b : "text"});
    
    //插入大量包含全文索引字段的数据
    var records = new Array();
@@ -35,16 +36,16 @@ function main()
       println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
       return ;
    }
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11992", 8000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 8000);
    
    //alter为hash切分表，切分键覆盖：非全文索引字段
    dbcl.alter({ShardingType : "hash", ShardingKey : {a : 1}})
    
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11992", 8000);
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 8000);
    var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
    var expResult = dbOperator.findFromCL (dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {b : ""});
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_11992");
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    var esIndexName = esIndexNames[0];
    var actResult = esOperator.findFromES (esIndexName, '{"query" : {"match_all" : {}}, "size" : 10000}');
    expResult.sort(compare("b"));
@@ -52,13 +53,13 @@ function main()
    checkResult(expResult, actResult);
    
    //alter为hash切分表，切分键覆盖：全文索引字段
-   dbcl.dropIndex("fullIndex_11992");
+   dbcl.dropIndex(textIndexName);
    checkIndexNotExistInES(esIndexNames);
    
-   commCreateIndex( dbcl, "fullIndex_11992", {a : "text"});
-   checkFullSyncToES(COMMCSNAME, clName, "fullIndex_11992", 8000);
+   commCreateIndex( dbcl, textIndexName, {a : "text"});
+   checkFullSyncToES(COMMCSNAME, clName, textIndexName, 8000);
    var expResult = dbOperator.findFromCL (dbcl, {"" : {$Text : {"query" : {"match_all" : {}}}}}, {a : ""});
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_11992");
+   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, textIndexName);
    var esIndexName = esIndexNames[0];
    var actResult = esOperator.findFromES (esIndexName, '{"query" : {"match_all" : {}}, "size" : 10000}');
    expResult.sort(compare("a"));
@@ -66,6 +67,9 @@ function main()
    checkResult(expResult, actResult);
    
    commDropCL(db, COMMCSNAME, clName, true, true);
+   
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES(esIndexNames);
 }
 
 main()
