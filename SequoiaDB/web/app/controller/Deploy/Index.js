@@ -2654,7 +2654,7 @@
                      "valid": {
                         "min": 1,
                         "max": 63,
-                        "regex": "^[a-zA-Z]+[0-9a-zA-Z_]*$"
+                        "regex": "^[a-zA-Z]+[0-9a-zA-Z_-]*$"
                      }
                   },
                   {
@@ -2880,7 +2880,8 @@
                   $.each( dbList, function( index, dbInfo ){
                      dbValid.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
                   } ) ;
-
+                  //pg不支持‘-’，如果名字带有‘-’修改为‘_’
+                  to = to.replace( '-', '_' ) ;
                   var relationName = sprintf( '?_?_?', fromValid[0]['value'], to, dbValid[0]['value'] ) ;
 
                   setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
@@ -2926,7 +2927,9 @@
                   $.each( dbList, function( index, dbInfo ){
                      dbValid.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
                   } ) ;
-
+                  
+                  //pg不支持‘-’，如果名字带有‘-’修改为‘_’
+                  to = to.replace( '-', '_' ) ;
                   var relationName = sprintf( '?_?_?', value, to, dbValid[0]['value'] ) ;
 
                   setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
@@ -2952,6 +2955,8 @@
 
             if( type == 'pg-sdb' )
             {
+               //pg不支持‘-’，如果名字带有‘-’修改为‘_’
+               to = to.replace( '-', '_' ) ;
                relationName = sprintf( '?_?_?', from, to, value ) ;
             }  
             else if( type == 'mysql-sdb' )
@@ -2973,7 +2978,9 @@
             if( type == 'pg-sdb' )
             {
                var dbName = current['DbName'] ;
-
+               
+               //pg不支持‘-’，如果名字带有‘-’修改为‘_’
+               value = value.replace( '-', '_' ) ;
                relationName = sprintf( '?_?_?', from, value, dbName ) ;
             }  
             else if( type == 'mysql-sdb' )
