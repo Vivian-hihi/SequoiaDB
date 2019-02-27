@@ -76,7 +76,13 @@
          }
       }
 
-      //上一步
+      
+      //部署包上一步
+      $scope.GotoPackage = function(){
+         $location.path( '/Deploy/Package' ).search( { 'r': new Date().getTime() } ) ;
+      }
+
+      //安装主机上一步
       $scope.GotoAddHost = function(){
          $location.path( '/Deploy/AddHost' ).search( { 'r': new Date().getTime() } ) ;
       }
