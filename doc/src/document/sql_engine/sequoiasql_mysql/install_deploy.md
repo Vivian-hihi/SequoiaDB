@@ -142,4 +142,39 @@
 
 ##SequoiaSQL MySQL开机自启动##
 
-1. 安装 SequoiaSQL MySQL 时，会自动添加系统服务：sequoiasql-mysql。该服务在启动时，会自动拉起相关的实例。
+1. 安装 SequoiaSQL MySQL 时，会自动添加系统服务：sequoiasql-mysql。该服务在启动时，会自动拉起相关的实例。在实例进程异常退出时，也会自动拉起实例。
+
+   >**Note:**   
+   >系统服务名为 sequoiasql-mysql[i]，i 为小于 50 的数值或者为空。
+
+   当添加一个新实例时，会自动加入 service 的管理中。
+
+   ```lang-javascript
+   $ bin/sdb_sql_ctl addinst myinst -D database/3306/
+   Adding instance myinst ...
+   ok
+   ```
+
+2. 查看服务运行状态
+
+   ```lang-javascript
+   $ service sequoiasql-mysql status
+     Status of service sequoiasql-mysql: 
+     running. (PID: 20679)
+   ```
+
+3. 停止服务
+
+   ```lang-javascript
+   $ service sequoiasql-mysql stop
+     Stoping service sequoiasql-mysql ...
+     ok.
+   ```
+   
+4. 启动服务
+
+   ```lang-javascript
+   $ service sequoiasql-mysql start
+     Starting service sequoiasql-mysql ...
+     ok. (PID: 20860)
+   ```
