@@ -49,10 +49,7 @@ public class Transaction17167 extends SdbTestBase {
 
         // 事务1执行批量更新
         cl1.update("{a:1}", "{$set:{a:2}}", null);
-        for (int i = 0; i < 50000; i++) {
-            BSONObject updateR = (BSONObject) JSON.parse("{_id:" + i + ", a:2, b:" + i + "}");
-            expList.add(updateR);
-        }
+        expList = TransUtils.getUpdateDatas(0, 50000, 2);
 
         // 事务2表扫描记录
         Read read1 = new Read("{'':null}");

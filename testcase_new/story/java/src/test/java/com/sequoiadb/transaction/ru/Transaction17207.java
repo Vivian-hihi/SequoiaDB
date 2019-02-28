@@ -9,11 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -54,11 +54,7 @@ public class Transaction17207 extends SdbTestBase {
 
         // 事务1执行批量更新
         cl1.update("{a:1}", "{$set:{a:2}}", null);
-        // TODO:可以调用公共方法getUpdateDatas生成，其他用例类似的地方一并修改
-        for (int i = 0; i < 50000; i++) {
-            BSONObject updateR = (BSONObject) JSON.parse("{_id:" + i + ", a:2, b:" + i + "}");
-            expList.add(updateR);
-        }
+        expList = TransUtils.getUpdateDatas(0, 50000, 2);
 
         // 事务2表扫描记录
         cursor = cl2.query(null, null, "{_id:1}", "{'':null}");

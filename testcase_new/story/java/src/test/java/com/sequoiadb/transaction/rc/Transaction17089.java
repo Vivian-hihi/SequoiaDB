@@ -69,10 +69,7 @@ public class Transaction17089 extends SdbTestBase {
         cursor = cl.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         expList.clear();
-        for (int i = 0; i < 50000; i++) {
-            BSONObject updateR1 = (BSONObject) JSON.parse("{_id:" + i + ", a:2, b:" + i + "}");
-            expList.add(updateR1);
-        }
+        expList = TransUtils.getUpdateDatas(0, 50000, 2);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
