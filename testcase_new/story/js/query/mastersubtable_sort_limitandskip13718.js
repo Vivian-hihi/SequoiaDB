@@ -12,6 +12,11 @@ function main()
 {
 	try
    {
+	   if( commIsStandalone(db) )
+	   {
+		   println(" Deploy mode is standalone!");
+		   return;
+	   }
 	   var opt = new Object();
 	   var subopt = new Object();
 	   subopt.a = 1;
