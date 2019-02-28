@@ -153,14 +153,13 @@ function checkResult(sel, field, exp_returnednum, beginnum, endnum, isAsc, query
 	   {
 		   if(e!="query-result-incorrect")
 		   {
-			   println("'select * from "+csName+"."+clName+" order by a' fail! rc="+e);
+			   println(queryname + " fail! rc="+e);
 			   throw e;
 		   }
 		   else
 		   {
-			   println("'select * from "+csName+"."+clName+" order by a' verify record fail! ");
+			   println(queryname + " fail!");
 			   throw e;
 		   }
 	   }
-		println(queryname + " finished!");
 }
