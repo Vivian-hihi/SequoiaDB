@@ -326,7 +326,8 @@ namespace engine
                  ->firstKeylocateDone() )
          {
             rcl = _leftIXScanner->relocateRID( _savedObj,
-                                               _savedRID );
+                                               _savedRID,
+                                               TRUE );
             if( SDB_OK != rcl && (SDB_IXM_EOC != rcl) )
             {
                rc = rcl;
@@ -337,7 +338,8 @@ namespace engine
          if ( _rightIXScanner->initialized() )
          {
             rcr = _rightIXScanner->relocateRID( _savedObj,
-                                                _savedRID );
+                                                _savedRID,
+                                                TRUE );
             if( SDB_OK != rcr && (SDB_IXM_EOC != rcr) )
             {
                rc = rcr;

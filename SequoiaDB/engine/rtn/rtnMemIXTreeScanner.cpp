@@ -205,6 +205,10 @@ namespace engine
    // Input:
    //    keyObj: BSONObj containing the key
    //    rid: record id
+   //    resetWithIndexPos: User can indicate if they want to reset 
+   //                       _savedObj/_savedRID using selected index
+   //                       position (_curIndexIter) or use the value 
+   //                       passed in
    // Output:
    //    _curIndexIter, _savedObj, _savedRID, _init  
    //    implicitly setup up when found the new location.
@@ -216,7 +220,8 @@ namespace engine
    //    Caller should hold the in memory tree latch.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNMEMIXTREESCAN_RELORID1, "_rtnMemIXTreeScanner::relocateRID" )
    INT32 _rtnMemIXTreeScanner::relocateRID ( const BSONObj     &keyObj,
-                                             const dmsRecordID &rid )
+                                             const dmsRecordID &rid,
+                                             const BOOLEAN resetWithIndexPos = TRUE )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNMEMIXTREESCAN_RELORID1 ) ;
@@ -240,31 +245,39 @@ namespace engine
                                    _direction );
          if( _curIndexIter != _memIdxTree->end() )
          {
-            // find the best match, save the object from the tree key value
-            UTIL_OBJIDX hdrIdx = _curIndexIter->second.getLRBHdrIdx() ;
-            dpsTransLRBHeader * lrbHdr = _pTransCB->getLockMgrHandle()
-                                         ->getLRBHdrPtrByIdx(hdrIdx);
-           
-            _curKeyObj = lrbHdr->getOldIdxValue(_indexLID)->copy();
-
-            SDB_ASSERT( _curKeyObj.equal(getCurIdxKeyObjFromIter()),
-                        "Map iterator index does not match lrbHdr" ); 
-            
-            // retrieve the rid from the key
-            _savedRID = _curIndexIter->first.getRID() ;
-            // let's verify the rid in LRBHdr match with the one in tree
-            dmsRecordID lrbHrdRID( lrbHdr->lockId.extentID(), 
-                                   lrbHdr->lockId.offset() );
-
-            if( lrbHrdRID != _savedRID )
+            if( resetWithIndexPos )
             {
-               rc = SDB_SYS;
-               PD_LOG( PDERROR, 
-                       "lrbHrdRID not match with the one in idx tree,"
-                       "lrbHdrRID=(%d,%d), treeRID=(%d,%d)",
-                       lrbHrdRID._extent, lrbHrdRID._offset, 
-                       _savedRID._extent, _savedRID._offset );
-               goto error;
+               // find the best match, save the object from the tree key value
+               UTIL_OBJIDX hdrIdx = _curIndexIter->second.getLRBHdrIdx() ;
+               dpsTransLRBHeader * lrbHdr = _pTransCB->getLockMgrHandle()
+                                            ->getLRBHdrPtrByIdx(hdrIdx);
+           
+               _curKeyObj = lrbHdr->getOldIdxValue(_indexLID)->copy();
+
+               SDB_ASSERT( _curKeyObj.equal(getCurIdxKeyObjFromIter()),
+                           "Map iterator index does not match lrbHdr" ); 
+               
+               // retrieve the rid from the key
+               _savedRID = _curIndexIter->first.getRID() ;
+               // let's verify the rid in LRBHdr match with the one in tree
+               dmsRecordID lrbHrdRID( lrbHdr->lockId.extentID(), 
+                                      lrbHdr->lockId.offset() );
+
+               if( lrbHrdRID != _savedRID )
+               {
+                  rc = SDB_SYS;
+                  PD_LOG( PDERROR, 
+                          "lrbHrdRID not match with the one in idx tree,"
+                          "lrbHdrRID=(%d,%d), treeRID=(%d,%d)",
+                          lrbHrdRID._extent, lrbHrdRID._offset, 
+                          _savedRID._extent, _savedRID._offset );
+                  goto error;
+               }
+            }
+            else 
+            {
+               _savedInMemObj = keyObj.copy() ;
+               _savedRID = rid ;
             }
          }
          else

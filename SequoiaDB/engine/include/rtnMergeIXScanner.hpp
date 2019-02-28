@@ -205,7 +205,8 @@ namespace engine
          return SDB_SYS;
       };
 
-      INT32 relocateRID ( const BSONObj &keyObj, const dmsRecordID &rid )
+      INT32 relocateRID ( const BSONObj &keyObj, const dmsRecordID &rid,
+                          const BOOLEAN resetWithIndexPos = FALSE )
       {
          return SDB_SYS;
       };

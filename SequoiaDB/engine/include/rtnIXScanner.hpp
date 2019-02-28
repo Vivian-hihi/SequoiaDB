@@ -161,7 +161,8 @@ namespace engine
       virtual void setMonCtxCB(monContextCB *monCtxCB) = 0;
 
       virtual INT32 relocateRID () = 0;
-      virtual INT32 relocateRID ( const BSONObj &keyObj, const dmsRecordID &rid ) = 0 ;
+      virtual INT32 relocateRID ( const BSONObj &keyObj, const dmsRecordID &rid,
+                                  const BOOLEAN resetWithIndexPos = FALSE ) = 0 ;
 
       virtual const BOOLEAN initialized() const = 0;
       virtual INT32 getDirection () const = 0 ;

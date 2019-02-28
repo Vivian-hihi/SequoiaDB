@@ -1959,7 +1959,9 @@ namespace engine
             // if not, create one. MBLatch protect us to do a dirty lookup
             // because no one else can come in to update same record/index
             // or create the same tree
+            oldVCB->latchS();
             memTree = oldVCB->getIdxTree(gID);
+            oldVCB->releaseS();
             if ( NULL == memTree )
             {
                // create the new tree
@@ -2334,18 +2336,20 @@ namespace engine
          {
             // 1. check if the in memory tree for this idx exist or not.
             // if not, create one
-            oldVCB->latchX();
+            oldVCB->latchS();
             memTree = oldVCB->getIdxTree(gID);
+            oldVCB->releaseS();
             if ( NULL == memTree )
             {
+               oldVCB->latchX();
                // create the tree
                oldVCB->addIdxTree(gID, indexCB);
                memTree = oldVCB->getIdxTree(gID);
+               oldVCB->releaseX();
             }
 
             // Note that once the tree is created, it won't be deleted
             // until system shutdown
-            oldVCB->releaseX();
 
             oldVer = (oldVersionContainer*)callback->getWorkingArea();
             latchedIdxLid =

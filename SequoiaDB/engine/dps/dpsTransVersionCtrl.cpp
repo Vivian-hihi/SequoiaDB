@@ -929,11 +929,12 @@ namespace engine
                                   const ixmIndexCB * indexCB )
    {
       PD_TRACE_ENTRY( SDB_OLDVERSIONCB_ADDIDXTREE );
+#ifdef _DEBUG
       PD_LOG( PDDEBUG, "Going to add in memory Index tree for (%d,%d,%d)",
               gid._csID,
               gid._clID,
               gid._idxLID );
-
+#endif
       // FIXME: Optimization to be considered
       // It's ok to have local variable t as the map will do memory allocation
       // However, this has performance overhead. 

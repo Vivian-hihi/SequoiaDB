@@ -251,7 +251,9 @@ namespace engine
       // otherwise rid is set to dmsRecordID
       INT32 advance ( dmsRecordID &rid ) ;
       INT32 relocateRID () ;
-      INT32 relocateRID ( const BSONObj &keyObj, const dmsRecordID &rid ) ;
+      INT32 relocateRID ( const BSONObj &keyObj,
+                          const dmsRecordID &rid,
+                          const BOOLEAN resetWithIndexPos ) ;
 
       virtual INT32 isCursorSame( const BSONObj &saveObj,
                                   const dmsRecordID &saveRID,

@@ -101,9 +101,13 @@ namespace engine
    }
 
    // change the scanner's current location to a given key and rid
+   // User can indicate if they want to reset _savedObj/_savedRID using 
+   // selected index RID position (_curIndexRID) or use the value passed in
+   // through resetWithIndexPos
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDISKIXSCAN_RELORID1, "_rtnDiskIXScanner::relocateRID" )
    INT32 _rtnDiskIXScanner::relocateRID ( const BSONObj &keyObj,
-                                          const dmsRecordID &rid )
+                                          const dmsRecordID &rid, 
+                                          const BOOLEAN resetWithIndexPos = FALSE )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNDISKIXSCAN_RELORID1 ) ;
@@ -129,14 +133,14 @@ namespace engine
                        "Failed to locate from new keyobj and rid: %s, %d,%d",
                        keyObj.toString().c_str(), rid._extent,
                        rid._offset ) ;
-//  FIXME: need further testing on the change as it breaks many testcases
-//  including split/split_after_insert_7460.js
-//       if ( found )
+
+        // set savedRID and object using passed in value when found or user 
+        // required so
+        if ( found || !resetWithIndexPos )
          {
             _savedObj = keyObj.copy() ;
             _savedRID = rid ;
          }
-/*
          else if ( !_curIndexRID.isNull() )
          {
 #ifdef _DEBUG
@@ -168,7 +172,7 @@ namespace engine
             }
             _savedRID = indexExtent.getRID ( _curIndexRID._slot ) ;
          }
-*/
+
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
          DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
       }
@@ -654,7 +658,7 @@ namespace engine
          // relocateRID
          // note relocateRID may relocate to the index that already read.
          // However after advance() returning the RID we'll check if the
-         // index already has been read, so we should be save to not
+         // index already has been read, so we should be safe to not
          // reset _savedRID
          rc = relocateRID() ;
          if ( rc )
