@@ -78,7 +78,7 @@ namespace engine
       CoordGroupList groupLst ;
       CoordGroupList sucGroupLst ;
       vector<BSONObj> cataObjs ;
-      rtnContextCoord *pCoordCtxForCata = NULL ; // rename
+      rtnContextCoord *pCoordCtxForCata = NULL ;
       rtnContextCoord *pCoordCtxForData = NULL ;
 
       CHAR *pCataMsgBuf = NULL ;
