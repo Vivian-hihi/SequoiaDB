@@ -235,15 +235,13 @@ public class Transaction17225 extends SdbTestBase {
         db3.commit();
 
         // 删除记录
-        hint = "{\"\":\"a\"}";
-        cl.delete(hint);
+        cl.delete((BSONObject) null);
 
         // 非事务索引读
         hint = "{\"\":\"a\"}";
         cursor = cl.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
-        ;
         actList.clear();
 
         // 非事务记录读
