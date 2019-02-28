@@ -3220,6 +3220,8 @@
                         scope.data.okText = $rootScope.autoLanguage( '确定' ) ;
                         scope.data.closeText = $rootScope.autoLanguage( '取消' ) ;
                         scope.data.ok = null ;
+                        scope.data.noClose = null ;
+                        scope.data.noOK = null ;
                         scope.data.context = '' ;
                      }
                   }

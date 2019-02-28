@@ -1617,7 +1617,7 @@
                         $scope.Components.Confirm.type = 3 ;
                         $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL-PostgreSQL 服务需要主机已经部署 SequoiaSQL-PostgreSQL 包。' ) ;
                         $scope.Components.Confirm.isShow = true ;
-                        $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+                        $scope.Components.Confirm.noClose = true ;
                      }
                      else
                      {
@@ -1650,7 +1650,7 @@
                         $scope.Components.Confirm.type = 3 ;
                         $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL-MySQL 服务需要主机已经部署 SequoiaSQL-MySQL 包。' ) ;
                         $scope.Components.Confirm.isShow = true ;
-                        $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+                        $scope.Components.Confirm.noClose = true ;
                      }
                      else
                      {
@@ -2023,7 +2023,7 @@
                $scope.Components.Confirm.type = 3 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '已经没有服务了。' ) ;
                $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+               $scope.Components.Confirm.noClose = true ;
                return ;
             }
             $scope.UninstallTips = '' ;
@@ -3387,7 +3387,7 @@
                $scope.Components.Confirm.type = 3 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '至少选择一台主机。' ) ;
                $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+               $scope.Components.Confirm.noClose = true ;
             }
          }
       }
@@ -3436,7 +3436,7 @@
                $scope.Components.Confirm.type = 3 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '至少选择一台主机。' ) ;
                $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+               $scope.Components.Confirm.noClose = true ;
             }
          }
       }
@@ -3601,7 +3601,7 @@
                $scope.Components.Confirm.type = 3 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '至少选择一台主机。' ) ;
                $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+               $scope.Components.Confirm.noClose = true ;
             }
          }
       }
@@ -3635,7 +3635,7 @@
             $scope.Components.Confirm.type = 3 ;
             $scope.Components.Confirm.context = $scope.autoLanguage( '至少选择一台主机。' ) ;
             $scope.Components.Confirm.isShow = true ;
-            $scope.Components.Confirm.okText = $scope.autoLanguage( '好的' ) ;
+            $scope.Components.Confirm.noClose = true ;
          }
       }
 
