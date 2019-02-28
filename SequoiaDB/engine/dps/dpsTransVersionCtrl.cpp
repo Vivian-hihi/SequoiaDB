@@ -441,7 +441,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_LOCATE, "preIdxTree::locate" )
    INT32 preIdxTree::locate ( const BSONObj      &keyObj,
                               const dmsRecordID  &rid,
-                              INDEX_BINARY_TREE::iterator it,
+                              INDEX_BINARY_TREE::iterator &it,
                               INT32               direction )
    {
       PD_TRACE_ENTRY( SDB_PREIDXTREE_LOCATE );
@@ -954,7 +954,7 @@ namespace engine
    {
       preIdxTree * memTree = NULL;
       PD_TRACE_ENTRY( SDB_OLDVERSIONCB_DELIDXTREE );
-#if 0
+#ifdef _DEBUG 
       // can enable this for debug purpose
       PD_LOG( PDDEBUG, "Going to delete in memory Index tree for (%d,%d,%d)",
               gid._csID,

@@ -278,7 +278,7 @@ namespace engine
    {
       if ( (ossValuePtr)0 == _ptr )
       {
-         std::string text = "Point is NULL: " ;
+         std::string text = "readPtr is NULL: " ;
          text += toString() ;
 
          if ( isNothrow() )
@@ -296,7 +296,7 @@ namespace engine
    {
       if ( (ossValuePtr)0 == _ptr )
       {
-         std::string text = "Point is NULL: " ;
+         std::string text = "writePtr is NULL: " ;
          text += toString() ;
 
          if ( isNothrow() )

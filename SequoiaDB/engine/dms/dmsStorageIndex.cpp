@@ -956,7 +956,8 @@ namespace engine
                gID._clID = context->mbID();
                gID._idxLID = indexLID;
 #ifdef _DEBUG
-               PD_LOG ( PDDEBUG, "Drop index delete in memory idx tree:(%d,%d,%d)",
+               PD_LOG ( PDDEBUG, "Drop index delete in memory idx tree:"
+                        "(%d, %d, %d)",
                         gID._csID, gID._clID, gID._idxLID ) ;
                PD_TRACE4( SDB__DMSSTORAGEINDEX_DROPIDX2,
                           PD_PACK_INT(gID._csID),

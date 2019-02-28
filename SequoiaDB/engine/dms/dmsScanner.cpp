@@ -1450,6 +1450,11 @@ namespace engine
       _firstRun = FALSE ;
       _onceRestNum = (INT64)pmdGetKRCB()->getOptionCB()->indexScanStep() ;
 
+#ifdef _DEBUG
+                  PD_LOG( PDDEBUG, "Scan firstInit done,_recordLock=%d, "
+                          "_onceRestNum=%d", _recordLock, _onceRestNum );
+#endif
+
    done:
       return rc ;
    error:
@@ -1582,7 +1587,7 @@ namespace engine
             PD_LOG( PDERROR, "IXScanner advance failed, rc: %d", rc ) ;
             goto error ;
          }
-         SDB_ASSERT( _curRID.isValid(), "rid msut valid" ) ;
+         SDB_ASSERT( _curRID.isValid(), "rid must be valid" ) ;
 
          // index block scan
          if ( _indexBlockScan )
@@ -1812,8 +1817,14 @@ namespace engine
             if ( _recordLock == DPS_TRANSLOCK_X )
 
             {
+#ifdef _DEBUG
+                  PD_LOG( PDDEBUG, "IX Scan handle deleting record"
+                                " rid(%d, %d)", 
+                                _curRID._extent, _curRID._offset ) ;
+#endif
                   rc = _scanner->pauseScan( ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d", rc ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d",
+                               rc ) ;
 
                   rc = _pSu->deleteRecord( _context, _curRID, 0, 
                                            cb, NULL, newXAcquire, _callback ) ;

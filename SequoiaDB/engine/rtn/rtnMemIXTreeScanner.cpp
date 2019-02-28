@@ -283,6 +283,8 @@ namespace engine
       
       // mark _init to true so that advance won't call keyLocate again
       _init = TRUE ;
+      // remove the eof flag so we will restart scan on the tree
+      _eof = FALSE ;
 
    done :
       PD_TRACE_EXITRC ( SDB__RTNMEMIXTREESCAN_RELORID1, rc ) ;
@@ -607,7 +609,10 @@ namespace engine
 
                // in readonly scenario, _savedRID should always be null
                // unless pauseScan() is called
-               _savedRID.reset() ;
+               if ( _isReadOnly )
+               {
+                  _savedRID.reset() ;
+               }
                rc = SDB_OK ;
                break ;
             }
@@ -631,6 +636,11 @@ namespace engine
 #endif
          _eof = TRUE;
       }
+
+      // Because we have MBLatch, as long as we finished advance, the returned
+      // rid is considered authentic value although the it might not be "valid"
+      _isValid = TRUE ;
+
       PD_TRACE_EXITRC( SDB__RTNMEMIXTREESCAN_ADVANCE, rc ) ;
       return rc ;
    error :
@@ -881,8 +891,9 @@ the only way is to bring back the index CB and access the index definition page
 
       if( (_memIdxTree == NULL) && ( _initialized == FALSE ) )
       {
-          // tree never initialized before
-          isSame = FALSE;
+          // tree never exist, then we consider it as same and don't
+          // bother to work on it
+          isSame = TRUE;
           goto done;
       }
 
@@ -902,6 +913,12 @@ the only way is to bring back the index CB and access the index definition page
       }
 
       done:
+#ifdef _DEBUG
+      PD_LOG ( PDDEBUG, "MemIXTreeScanner::isCursorSame,"
+               "saveObj=%s, saveRID=(%d, %d), isSame=%d, _initialized=%d ",
+               saveObj.toString().c_str(), saveRID._extent, 
+               saveRID._offset, isSame, _initialized );
+#endif
 
       return SDB_OK;
    }

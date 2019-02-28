@@ -90,7 +90,9 @@ namespace engine
    // destructor, do all rtnDiskIXScanner clean up plus free _memIXScanner
    _rtnMergeIXScanner::~_rtnMergeIXScanner()
    {
+#ifdef _DEBUG
       PD_LOG ( PDDEBUG, "Freeing IX Merge Scanner." );
+#endif
       if ( _leftIXScanner ) 
       {
          SDB_OSS_DEL _leftIXScanner;
@@ -116,12 +118,16 @@ namespace engine
       BOOLEAN   rightDone ;
       BOOLEAN   leftInit  ;
       BOOLEAN   rightInit ;
+      BOOLEAN   leftValid  ;
+      BOOLEAN   rightValid ;
 
    begin:
       leftDone  = _leftIXScanner->eof();  
       rightDone = _rightIXScanner->eof();  
       leftInit  = _leftIXScanner->initialized();
       rightInit = _rightIXScanner->initialized();
+      leftValid = _leftIXScanner->isValid() ;
+      rightValid = _rightIXScanner->isValid() ;
 
       SDB_ASSERT( ( leftInit || rightInit ), 
                   "At least one scanner must be initilized"); 
@@ -137,8 +143,8 @@ namespace engine
       // initialized at all
       if ( leftDone || !leftInit )
       {
-         // only advance if last time was from right
-         if( !_wasFromLeft )
+         // only advance if last time was from right or right was not valid
+         if( !_wasFromLeft || !rightValid )
          {
             rc = _rightIXScanner->advance( _rrid ) ;
          }
@@ -151,8 +157,8 @@ namespace engine
 
       if ( rightDone || !rightInit )
       {
-         // only advance if last time was from left
-         if( _wasFromLeft )
+         // only advance if last time was from left or left was not valid
+         if( _wasFromLeft || !leftValid )
          {
             rc = _leftIXScanner->advance( _lrid ) ;
          }
@@ -169,14 +175,20 @@ namespace engine
          _firstRun = FALSE;
       }
       // otherwise 
-      else if ( TRUE == _wasFromLeft )
-      {
-         // last index used was from left scanner, advance left 
-         rcl = _leftIXScanner->advance( _lrid ) ;
-      }
       else
       {
-         rcr = _rightIXScanner->advance( _rrid ) ;
+         if ( _wasFromLeft || !leftValid )
+         {
+            // last index used was from left scanner, or left became invalid
+            // after resume, we need to advance left 
+            rcl = _leftIXScanner->advance( _lrid ) ;
+         }
+         if ( !_wasFromLeft || !rightValid )
+         {
+            // last index used was from right scanner, or right became invalid
+            // after resume, we need to advance right
+            rcr = _rightIXScanner->advance( _rrid ) ;
+         }
       }
 
       // handle the case advance() return EOC
@@ -251,9 +263,14 @@ namespace engine
          }
          _sharedInfo.getDupBuf()->insert ( rid ) ;
       }
+#ifdef _DEBUG
+      PD_LOG ( PDDEBUG, "IX Merge Scanner advance, rc=%d, "
+               "_wasFromLeft=%d, rid=(%d, %d)", 
+               rc, _wasFromLeft, rid._extent, rid._offset );
 
       PD_TRACE1 ( SDB__RTNMERGEIXSCAN_ADVANCE, 
                   PD_PACK_INT(_wasFromLeft) ) ;
+#endif
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_ADVANCE, rc ) ;
 
       return rc ;
@@ -359,6 +376,12 @@ namespace engine
       _savedRID = getSavedRIDFromChild() ;
       _savedObj = getSavedObjFromChild()->copy() ;
       
+#ifdef _DEBUG
+      PD_LOG ( PDDEBUG, "IX Merge Scanner pauseScan, "
+               "_wasFromLeft=%d, _savedObj=%s, _savedRID=(%d, %d)", 
+                _wasFromLeft, _savedObj.toString().c_str(), 
+                _savedRID._extent, _savedRID._offset );
+#endif
    done :
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_PAUSESCAN, rc ) ;
       return rc ;

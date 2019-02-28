@@ -401,7 +401,7 @@ namespace engine
       // locate the best match key in the tree based on the order and direction
       INT32 locate ( const BSONObj      &keyObj,
                      const dmsRecordID  &rid,
-                     INDEX_BINARY_TREE::iterator it,
+                     INDEX_BINARY_TREE::iterator &it,
                      INT32               direction );
 
       // move the iterator to the proper key location
