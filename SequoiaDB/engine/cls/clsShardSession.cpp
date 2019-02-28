@@ -4447,7 +4447,16 @@ namespace engine
       // developping text search. The search engine adapter will query and pop
       // data from capped collections through the shard flat, if the version
       // checking is enable, no operations can be done.
-      clShortName = ossStrchr( name, '.' ) + 1 ;
+      clShortName = ossStrchr( name, '.' ) ;
+      if ( !clShortName || ( clShortName == name + ossStrlen( name ) ) )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Collection name[%s] is invalid. Full name is "
+                          "expected", name ) ;
+         goto error ;
+      }
+
+      clShortName++ ;
       if ( dmsIsSysCLName( clShortName ) )
       {
          goto done ;

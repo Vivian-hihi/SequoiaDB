@@ -108,7 +108,7 @@ namespace seadapter
       }
 
       // conf/log/seadapterlog
-      rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE, SDB_SEADPT_LOG_DIR ) ;
+      rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE, SEADPT_LOG_DIR ) ;
       if ( rc )
       {
          ossPrintf( "Build log path failed: %d", rc ) ;
@@ -117,7 +117,7 @@ namespace seadapter
 
       // conf/log/seadapterlog/SERVICE
       rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE,
-                        sdbGetSeAdptOptions()->getDbService() ) ;
+                        sdbGetSeAdptOptions()->getDBService() ) ;
       if ( rc )
       {
          ossPrintf( "Build log path failed: %d", rc ) ;
@@ -190,7 +190,7 @@ namespace seadapter
          // the same configuration file, or with the same db node service.
          ossStrncpy( lockFilePath, dialogPath, OSS_MAX_PATHSIZE + 1 ) ;
          rc = utilCatPath( lockFilePath, OSS_MAX_PATHSIZE,
-                           SDB_SEADPT_LOCK_FILE_NAME ) ;
+                           SEADPT_LOCK_FILE_NAME ) ;
          if ( rc )
          {
             ossPrintf( "Build path for lock file failed[%d]"OSS_NEWLINE, rc ) ;
@@ -215,8 +215,7 @@ namespace seadapter
       }
 
       // conf/log/seadapterlog/SERVICE/sdbseadapter.log
-      rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE,
-                        SDB_SEADPT_LOG_FILE_NAME ) ;
+      rc = utilCatPath( dialogPath, OSS_MAX_PATHSIZE, SEADPT_LOG_FILE_NAME ) ;
       if ( rc )
       {
          ossPrintf( "Failed to build dialog path failed(error=%d), "
@@ -271,9 +270,9 @@ namespace seadapter
          // Rename the process, adding the service name and role.
          CHAR pmdProcessName[OSS_RENAME_PROCESS_BUFFER_LEN + 1] = {0} ;
          ossSnprintf( pmdProcessName, OSS_RENAME_PROCESS_BUFFER_LEN,
-                      "%s(%s) %s", SDB_SEADPT_PROCESS_NAME,
+                      "%s(%s) %s", SEADPT_PROCESS_NAME,
                       sdbGetSeAdptOptions()->getSvcName(),
-                      SDB_SEADPT_ROLE_SHORT_STR ) ;
+                      SEADPT_ROLE_SHORT_STR ) ;
          ossEnableNameChanges( argc, argv ) ;
          ossRenameProcess( pmdProcessName ) ;
       }

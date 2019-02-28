@@ -36,20 +36,12 @@
    Last Changed =
 
 *******************************************************************************/
-#include "msgDef.hpp"
 #include "seAdptContext.hpp"
 #include "seAdptDef.hpp"
-#include "rtnSimpleCondParser.hpp"
 #include "utilESKeywordDef.hpp"
 #include "utilESUtil.hpp"
 
 using namespace bson ;
-
-#define SEADPT_ID_KEY_NAME          "_id"
-#define SEADPT_FETCH_BATCH_SIZE     10000
-#define SEADPT_FETCH_MAX_SIZE       100000
-#define SEADPT_ES_ID_FILTER_PATH    "filter_path=_scroll_id,hits.hits._id"
-#define SEADPT_ES_MAX_ID_SIZE       256
 
 namespace seadapter
 {
@@ -543,8 +535,8 @@ namespace seadapter
       BSONArray idArray ;
 
       BSONObj obj ;
-      UINT32 bufSize = SEADPT_ES_MAX_ID_SIZE ;
-      CHAR idBuff[ SEADPT_ES_MAX_ID_SIZE ] = { 0 } ;
+      UINT32 bufSize = SEADPT_MAX_ID_SZ + 1 ;
+      CHAR idBuff[ SEADPT_MAX_ID_SZ + 1 ] = { 0 } ;
 
       try
       {
@@ -552,15 +544,15 @@ namespace seadapter
          {
             BSONType type ;
             objBuff.nextObj( obj ) ;
-            idValue = obj.getStringField( SEADPT_ID_KEY_NAME ) ;
+            idValue = obj.getStringField( SEADPT_FIELD_NAME_ID ) ;
             SDB_ASSERT( idValue, "id value should not be NULL" ) ;
             // Skip the SDBCOMMIT mark record.
-            if ( 0 == ossStrcmp( SDB_SEADPT_COMMIT_ID, idValue ) )
+            if ( 0 == ossStrcmp( SEADPT_COMMIT_ID, idValue ) )
             {
                continue ;
             }
 
-            bufSize = SEADPT_ES_MAX_ID_SIZE ;
+            bufSize = SEADPT_MAX_ID_SZ + 1 ;
             ossMemset( idBuff, 0, bufSize ) ;
             rc = decodeID( idValue, idBuff, bufSize, type ) ;
             PD_RC_CHECK( rc, PDERROR, "Decode id[ %s ] failed[ %d ]",

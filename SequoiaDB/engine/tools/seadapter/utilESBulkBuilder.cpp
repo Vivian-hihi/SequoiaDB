@@ -49,41 +49,25 @@ namespace seadapter
 {
    _utilESBulkActionBase::_utilESBulkActionBase( const CHAR *index,
                                                  const CHAR *type )
+   : _ownData( FALSE ),
+     _index( index ),
+     _type( type ),
+     _id( NULL )
    {
-      SDB_ASSERT( index, "Index can't be NULL" ) ;
-      SDB_ASSERT( type, "Type can't be NULL" ) ;
-
-      _sourceData = NULL ;
-      _srcDataLen = 0 ;
-      _ownData = FALSE ;
-
-      // The index and type name can be empty, when specifying index and type
-      // names together with _bulk.
-      if ( index )
-      {
-         _index = std::string( index ) ;
-      }
-      if ( type )
-      {
-         _type = std::string( type ) ;
-      }
    }
 
    _utilESBulkActionBase::~_utilESBulkActionBase()
    {
-      if ( _sourceData && _ownData )
-      {
-         SDB_OSS_FREE( _sourceData ) ;
-      }
    }
 
-   INT32 _utilESBulkActionBase::setID( const std::string &id )
+   INT32 _utilESBulkActionBase::setID( const CHAR *id )
    {
       INT32 rc = SDB_OK ;
-      if ( id.empty() )
+      if ( !id || ( 0 == ossStrlen( id ) )
+           || ( ossStrlen( id ) > SEADPT_MAX_ID_SZ ))
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "_id is NULL" ) ;
+         PD_LOG( PDERROR, "_id is invalid" ) ;
          goto error ;
       }
 
@@ -95,60 +79,16 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _utilESBulkActionBase::setSourceData( const CHAR *sourceData,
-                                               INT32 length, BOOLEAN copy )
+   void _utilESBulkActionBase::setSourceData( const BSONObj &record )
    {
-      INT32 rc = SDB_OK ;
-
-      if ( !sourceData || length <=0 )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid source data or length" ) ;
-         goto error ;
-      }
-
-      // If source data has been set before, reset and release memory if
-      // necessary.
-      if ( _sourceData )
-      {
-         if ( _ownData )
-         {
-            SDB_OSS_FREE( _sourceData ) ;
-            _ownData = FALSE ;
-         }
-         _sourceData = NULL ;
-      }
-
-      if ( copy )
-      {
-         _sourceData = (CHAR *)SDB_OSS_MALLOC( length + 1 ) ;
-         if ( !_sourceData )
-         {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Allocate memory for source data failed, requested"
-                    " size[ %d ]", length ) ;
-            goto error ;
-         }
-         ossStrncpy( _sourceData, sourceData, length ) ;
-         _ownData = TRUE ;
-      }
-      else
-      {
-         _sourceData = (CHAR *)sourceData ;
-      }
-
-      _srcDataLen = length ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      SDB_ASSERT( !record.isEmpty(), "Data is empty" ) ;
+      _dataObj = record ;
    }
 
    UINT32 _utilESBulkActionBase::outSizeEstimate() const
    {
-      return ( UTIL_ESBULK_MIN_META_SIZE + _index.length() +
-               _type.length() + _id.length() + _srcDataLen ) ;
+      return ( UTIL_ESBULK_MIN_META_SIZE + ossStrlen( _index ) +
+               ossStrlen( _type ) + ossStrlen( _id ) + _dataObj.objsize() ) ;
    }
 
    INT32 _utilESBulkActionBase::output( CHAR *buffer, INT32 size,
@@ -198,60 +138,71 @@ namespace seadapter
    {
       INT32 rc = SDB_OK ;
       BOOLEAN begin = TRUE ;
+      INT32 writePos = 0 ;
+      INT32 writeNum = 0 ;
 
-      std::string metaData = std::string( "{\"" ) + _getActionName() + "\":{" ;
-      if ( withIndex )
-      {
-         if ( _index.empty() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Index name is empty" ) ;
-            goto error ;
-         }
-         metaData += "\"_index\":\"" + _index + "\"" ;
-         begin = FALSE ;
-      }
-      if ( withType )
-      {
-         if ( _type.empty() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Type name is empty" ) ;
-            goto error ;
-         }
-         if ( !begin )
-         {
-            metaData += "," ;
-         }
-         metaData += "\"_type\":\"" + _type + "\"" ;
-         begin = FALSE ;
-      }
-      if ( withID )
-      {
-         if ( _id.empty() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "_id is empty" ) ;
-            goto error ;
-         }
-         if ( !begin )
-         {
-            metaData += "," ;
-         }
-         metaData += "\"_id\":\"" + _id + "\"" ;
-      }
-
-      metaData += "}}\n" ;
-      if ( (UINT32)size < metaData.size() )
+      writeNum = ossSnprintf( buffer, size, "{\"%s\":{", _getActionName() ) ;
+      writePos += writeNum ;
+      if ( writePos >= size - 1 )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Buffer size[ %d ] is too small", size ) ;
+         PD_LOG( PDERROR, "Buffer size[%d] is too small", size ) ;
          goto error ;
       }
 
-      SDB_ASSERT( buffer, "Buffer is NULL" ) ;
-      ossStrncpy( buffer, metaData.c_str(), metaData.length() ) ;
-      length = metaData.length() ;
+      if ( withIndex )
+      {
+         writeNum = ossSnprintf( buffer + writePos, size - writePos,
+                                 "\"_index\":\"%s\"", _index ) ;
+         writePos += writeNum ;
+         begin = FALSE ;
+         if ( writePos >= size - 1 )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Buffer size[%d] is too small", size ) ;
+            goto error ;
+         }
+      }
+
+      if ( withType )
+      {
+         if ( !begin )
+         {
+            buffer[ writePos ] = ',' ;
+            ++writePos ;
+         }
+         writeNum = ossSnprintf( buffer + writePos, size - writePos,
+                                 "\"_type\":\"%s\"", _type ) ;
+         writePos += writeNum ;
+         begin = FALSE ;
+         if ( writePos >= size - 1 )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Buffer size[%d] is too small", size ) ;
+            goto error ;
+         }
+      }
+
+      if ( withID )
+      {
+         if ( !begin )
+         {
+            buffer[ writePos ] = ',' ;
+            ++writePos ;
+         }
+         writeNum = ossSnprintf( buffer + writePos, size - writePos,
+                                 "\"_id\":\"%s\"", _id ) ;
+         writePos += writeNum ;
+         if ( writePos >= size - 1 )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Buffer size[%d] is too small", size ) ;
+            goto error ;
+         }
+      }
+
+      writeNum = ossSnprintf( buffer + writePos, size - writePos, "}}\n" ) ;
+      length = writePos + writeNum ;
 
    done:
       return rc ;
@@ -288,17 +239,19 @@ namespace seadapter
                                               INT32 &length ) const
    {
       INT32 rc = SDB_OK ;
+      string dataStr = _dataObj.toString( false, true ) ;
 
       // One byte for the extra '\n' at the end of the line.
-      if ( size < _srcDataLen + 1 )
+      if ( (UINT32)size < dataStr.length() + 1 )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Buffer size[ %d ] is too small", size ) ;
          goto error ;
       }
-      ossStrncpy( buffer, _sourceData, _srcDataLen ) ;
-      buffer[ _srcDataLen ] = '\n' ;
-      length = _srcDataLen + 1 ;
+
+      ossStrncpy( buffer, dataStr.c_str(), dataStr.length() ) ;
+      buffer[ dataStr.length() ] = '\n' ;
+      length = dataStr.length() + 1 ;
 
    done:
       return rc ;
@@ -334,17 +287,19 @@ namespace seadapter
                                              INT32 &length ) const
    {
       INT32 rc = SDB_OK ;
+      string dataStr = _dataObj.toString( false, true ) ;
 
       // One byte for the extra '\n' at the end of the line.
-      if ( size < _srcDataLen + 1 )
+      if ( (UINT32)size < dataStr.length() + 1 )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Buffer size[ %d ] is too small", size ) ;
          goto error ;
       }
-      ossStrncpy( buffer, _sourceData, _srcDataLen ) ;
-      buffer[ _srcDataLen ] = '\n' ;
-      length = _srcDataLen + 1 ;
+
+      ossStrncpy( buffer, dataStr.c_str(), dataStr.length() ) ;
+      buffer[ dataStr.length() ] = '\n' ;
+      length = dataStr.length() + 1 ;
 
    done:
       return rc ;
@@ -383,13 +338,14 @@ namespace seadapter
       UINT32 writePos = 0 ;
       const CHAR *upsertStr = ",\"doc_as_upsert\":true" ;
       UINT32 upsertLen = ossStrlen( upsertStr ) ;
+      string dataStr = _dataObj.toString( false, true ) ;
 
       // The source data of update is in the following format:
       //    {"doc":{field1:val1, field2:val2,...,fieldn:valn}}\n
 
       // One byte for the extra '\n' at the end of the line.
-      if ( size < (INT32)( _srcDataLen + BULK_UPDATE_PREFIX_LEN + upsertLen +
-                           BULK_UPDATE_SUFFIX_LEN + 1 ) )
+      if ( size < (INT32)( dataStr.length() + BULK_UPDATE_PREFIX_LEN +
+                           upsertLen + BULK_UPDATE_SUFFIX_LEN + 1 ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Buffer size[ %d ] is too small", size ) ;
@@ -398,8 +354,8 @@ namespace seadapter
 
       ossStrncpy( buffer, BULK_UPDATE_PREFIX, BULK_UPDATE_PREFIX_LEN ) ;
       writePos = BULK_UPDATE_PREFIX_LEN ;
-      ossStrncpy( buffer + writePos, _sourceData, _srcDataLen ) ;
-      writePos += _srcDataLen ;
+      ossStrncpy( buffer + writePos, dataStr.c_str(), dataStr.length() ) ;
+      writePos += dataStr.length() ;
       ossStrncpy( buffer + writePos, upsertStr, upsertLen ) ;
       writePos += upsertLen ;
       ossStrncpy( buffer + writePos, BULK_UPDATE_SUFFIX,
@@ -442,17 +398,19 @@ namespace seadapter
                                               INT32 &length ) const
    {
       INT32 rc = SDB_OK ;
+      string dataStr = _dataObj.toString( false, true ) ;
 
       // One byte for the extra '\n' at the end of the line.
-      if ( size < _srcDataLen + 1 )
+      if ( (UINT32)size < dataStr.length() + 1 )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Buffer size[ %d ] is too small", size ) ;
          goto error ;
       }
-      ossStrncpy( buffer, _sourceData, _srcDataLen ) ;
-      buffer[ _srcDataLen ] = '\n' ;
-      length = _srcDataLen + 1 ;
+
+      ossStrncpy( buffer, dataStr.c_str(), dataStr.length() ) ;
+      buffer[ dataStr.length() ] = '\n' ;
+      length = dataStr.length() + 1 ;
 
    done:
       return rc ;

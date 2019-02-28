@@ -46,6 +46,7 @@
 #include "utilESCltFactory.hpp"
 #include "seAdptMsgHandler.hpp"
 #include "seAdptIdxMetaMgr.hpp"
+#include "seAdptDBAssist.hpp"
 
 using namespace engine ;
 
@@ -203,13 +204,12 @@ namespace seadapter
       utilESCltFactory*    getSeCltFactory() ;
       seSvcSessionMgr*     getSeAgentMgr() ;
       seIndexSessionMgr*   getIdxSessionMgr() ;
-      netRouteAgent*       getIdxRouteAgent() ;
       seIdxMetaMgr*        getIdxMetaCache() { return &_idxMetaCache ; }
+      seAdptDBAssist*      getDBAssist() { return &_dbAssist; }
 
       INT32 startInnerSession( SEADPT_SESSION_TYPE type,
                                UINT64 sessionID, void *data = NULL ) ;
       void  cleanInnerSession( INT32 type ) ;
-      INT32 sendToDataNode( MsgHeader *msg ) ;
       BOOLEAN isDataNodePrimary() { return _peerPrimary ; }
       void setDataNodePrimary( BOOLEAN isPrimary )
       {
@@ -218,10 +218,9 @@ namespace seadapter
 
       const CHAR *getDataNodeGrpName() { return _peerGroupName ; }
 
-      INT32 syncUpdateCLVersion( const CHAR *collectionName, INT64 millsec,
-                                 pmdEDUCB *cb, INT32 &version ) ;
-
       void resetIdxVersion() ;
+
+      INT32 updateCataInfo( INT64 millsec ) ;
 
    private:
       INT32 _startSvcListener() ;
@@ -242,11 +241,6 @@ namespace seadapter
       INT32 _setTimers() ;
       void  _killTimer( UINT32 timerID ) ;
 
-      INT32 _syncUpdateCataInfo( INT64 millsec ) ;
-
-      INT32 _onCatalogResMsg( NET_HANDLE handle, MsgHeader *msg ) ;
-      INT32 _sendCataQueryReq( const BSONObj &query, const BSONObj &selector,
-                               UINT64 requestID, _pmdEDUCB *cb ) ;
       INT32 _updateIndexInfo( const NET_HANDLE &handle, BSONObj &obj,
                               BOOLEAN &updated, BOOLEAN &upgrade ) ;
       INT32 _parseIndexInfo( const BSONElement *ele, seIndexMeta &idxMeta ) ;
@@ -260,7 +254,7 @@ namespace seadapter
       pmdAsyncMsgHandler      _svcMsgHandler ;
       pmdAsyncTimerHandler    _indexTimerHandler ;
       pmdAsyncTimerHandler    _svcTimerHandler ;
-      netRouteAgent           _indexNetRtAgent ;  // net route agent for indexer
+      seAdptDBAssist          _dbAssist ;
       netRouteAgent           _svcRtAgent ;
       seIndexSessionMgr       _idxSessionMgr ;
       seSvcSessionMgr         _svcSessionMgr ;
@@ -268,8 +262,6 @@ namespace seadapter
       CHAR                    _serviceName[ OSS_MAX_SERVICENAME + 1 ] ;
 
       ossEvent                _attachEvent ;
-      MsgRouteID              _dataNodeID ;
-      MsgRouteID              _cataNodeID ;
       BOOLEAN                 _peerPrimary ;    // If the connected data node is
                                                 // primary. If not, no document
                                                 // index should be done. The
@@ -286,9 +278,6 @@ namespace seadapter
       UINT32                  _idxUpdateTimerID ;  // For text index information update.
       UINT32                  _oneSecTimerID ;     // For session check by session managers.
       UINT32                  _esDetectTimerID ;
-      INT32                   _clVersion ;
-      ossSpinSLatch           _verUpdateLock ;
-      ossEvent                _cataEvent ;
       ossEvent                _registerEvent ;
 
       INT64                   _localIdxVer ;

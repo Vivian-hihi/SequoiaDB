@@ -415,7 +415,7 @@ namespace seadapter
          {
             if ( 1 == idxMetas.size() )
             {
-               index = idxMetas.front().getEsIdxName() ;
+               index = idxMetas.front().getESIdxName() ;
             }
             else
             {
@@ -463,7 +463,7 @@ namespace seadapter
          if ( idxName == itr->getOrigIdxName() )
          {
             found = TRUE ;
-            esIdxName = itr->getEsIdxName() ;
+            esIdxName = itr->getESIdxName() ;
             break ;
          }
       }

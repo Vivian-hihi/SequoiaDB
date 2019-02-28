@@ -110,12 +110,12 @@ namespace seadapter
             return _origIdxName ;
          }
 
-         const string& getEsIdxName() const
+         const string& getESIdxName() const
          {
             return _esIdxName ;
          }
 
-         const string& getEsTypeName() const
+         const string& getESTypeName() const
          {
             return _esTypeName ;
          }

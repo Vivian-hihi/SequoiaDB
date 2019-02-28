@@ -41,22 +41,23 @@
 
 #include "ossLatch.hpp"
 #include "utilESClt.hpp"
+#include "seAdptDef.hpp"
 
 namespace seadapter
 {
-   // Management of search engine client.
+   // Factory for search engine client.
    class _utilESCltFactory : public SDBObject
    {
    public:
       _utilESCltFactory() ;
       ~_utilESCltFactory() ;
 
-      INT32 init( const std::string &url, INT32 timeout ) ;
+      INT32 init( const CHAR *url, INT32 timeout ) ;
       INT32 create( utilESClt **seClt ) ;
 
    private:
-      std::string    _url ;      // Search engine address
-      INT32          _timeout ;
+      CHAR  _url[ SEADPT_SE_SVCADDR_MAX_SZ + 1 ] ;  // Search engine address
+      INT32 _timeout ;
    } ;
    typedef _utilESCltFactory utilESCltFactory ;
 }

@@ -61,7 +61,10 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include <string>
+#include "seAdptDef.hpp"
+#include "../bson/bson.hpp"
+
+using bson::BSONObj ;
 
 // Max and default data size of _bulk operation.
 #define UTIL_ESBULK_MAX_SIZE        32
@@ -82,15 +85,19 @@ namespace seadapter
    } ;
    typedef _utilESBulkActionType utilESBulkActionType ;
 
+   /**
+    * Note: Bulk operation items will NOT copy the data until it is appened to
+    * the bulk builder. So be sure the data it refers to is valid before it is
+    * processed.
+    */
    class _utilESBulkActionBase : public SDBObject
    {
       public:
          _utilESBulkActionBase( const CHAR *index, const CHAR *type ) ;
          virtual ~_utilESBulkActionBase() ;
 
-         INT32 setID( const std::string &id ) ;
-         INT32 setSourceData( const CHAR *sourceData, INT32 length,
-                              BOOLEAN copy = FALSE ) ;
+         INT32 setID( const CHAR *id ) ;
+         void setSourceData( const BSONObj &record ) ;
 
          // Estimate the output size requirement for output.
          UINT32 outSizeEstimate() const  ;
@@ -98,10 +105,10 @@ namespace seadapter
                        BOOLEAN withIndex = TRUE, BOOLEAN withType = TRUE,
                        BOOLEAN withID = TRUE ) const ;
 
-         const std::string& getIndexName() const { return _index ; }
-         const std::string& getTypeName() const { return _type ; }
-         const std::string& getID() const { return _id ; }
-         const CHAR* getSrcData() const { return _sourceData ; }
+         const CHAR* getIndexName() const { return _index ; }
+         const CHAR* getTypeName() const { return _type ; }
+         const CHAR* getID() const { return _id ; }
+         const BSONObj& getSrcData() const { return _dataObj ; }
 
          virtual utilESBulkActionType getActionType() const = 0 ;
 
@@ -118,13 +125,12 @@ namespace seadapter
          virtual BOOLEAN _hasSourceData() const = 0 ;
 
       protected:
-         CHAR       *_sourceData ;
-         INT32       _srcDataLen ;
-         BOOLEAN     _ownData ;
+         BSONObj       _dataObj ;
+         BOOLEAN       _ownData ;
       private:
-         std::string _index ;
-         std::string _type ;
-         std::string _id ;
+         const CHAR   *_index ;
+         const CHAR   *_type ;
+         const CHAR   *_id ;
    } ;
    typedef _utilESBulkActionBase utilESBulkActionBase ;
 

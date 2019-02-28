@@ -55,13 +55,13 @@ namespace seadapter
       void setSvcName( const CHAR *svcName ) ;
       const CHAR* getCfgFileName() const { return _cfgFileName ; }
       const CHAR* getSvcName() const { return _serviceName ; }
-      const CHAR* getDbHost() const { return _dbHost ; }
-      const CHAR* getDbService() const { return _dbService ; }
-      const CHAR* getSeHost() const { return _seHost ; }
-      const CHAR* getSeService() const { return _seService ; }
+      const CHAR* getDBHost() const { return _dbHost ; }
+      const CHAR* getDBService() const { return _dbService ; }
+      const CHAR* getSEHost() const { return _seHost ; }
+      const CHAR* getSEService() const { return _seService ; }
       PDLEVEL     getDiagLevel() const ;
       INT32       getTimeout() const ;
-      INT32       getBulkBuffSize() const ;
+      UINT32      getBulkBuffSize() const ;
 
    protected:
       virtual INT32 doDataExchange( engine::pmdCfgExchange *pEX ) ;
@@ -75,7 +75,7 @@ namespace seadapter
       CHAR     _seService[ OSS_MAX_SERVICENAME + 1 ] ;
       UINT16   _diagLevel ;
       INT32    _timeout ;
-      INT32    _bulkBuffSize ;
+      UINT32   _bulkBuffSize ;
    } ;
    typedef _seAdptOptionsMgr seAdptOptionsMgr ;
 }

@@ -45,6 +45,7 @@ namespace seadapter
 {
    _utilESCltFactory::_utilESCltFactory()
    {
+      ossMemset( _url, 0, sizeof( _url ) ) ;
       _timeout = 0 ;
    }
 
@@ -52,17 +53,18 @@ namespace seadapter
    {
    }
 
-   INT32 _utilESCltFactory::init( const std::string &url, INT32 timeout )
+   INT32 _utilESCltFactory::init( const CHAR *url, INT32 timeout )
    {
       INT32 rc = SDB_OK ;
 
-      if ( url.empty() )
+      if ( !url || ossStrlen( url ) > SEADPT_SE_SVCADDR_MAX_SZ )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Url to init search engine client manager is empty" ) ;
+         PD_LOG( PDERROR, "Url to init search engine client "
+                          "manager is invalid" ) ;
          goto error ;
       }
-      _url = url ;
+      ossStrncpy( _url, url, SEADPT_SE_SVCADDR_MAX_SZ + 1 ) ;
       _timeout = timeout ;
 
    done:
