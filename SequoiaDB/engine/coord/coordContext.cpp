@@ -226,6 +226,10 @@ namespace engine
                     contextID, routeID2String( routeID ).c_str() ) ;
 
             pSub = _pSession->addSubSession( routeID.value ) ;
+            // If other msg is sent before, and no reply has been received.
+            // At this time, the kill context msg will not be sent.
+            // So we need to clearSend() before sending kill context msg.
+            pSub->resetForResend() ;
             pSub->setReqMsg( (MsgHeader*)&killMsg, PMD_EDU_MEM_NONE ) ;
             _pSession->sendMsg( pSub ) ;
 
@@ -817,7 +821,7 @@ namespace engine
    {
       return _prepareSubCtxData( cb ) ;
    }
-   
+
    INT32 _rtnContextCoord::_saveEmptyOrderedSubCtx( rtnSubContext* subCtx )
    {
       INT32 rc = SDB_OK ;
