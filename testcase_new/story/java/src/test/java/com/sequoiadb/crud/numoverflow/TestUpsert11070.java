@@ -27,11 +27,12 @@ import com.sequoiadb.testcommon.SdbTestBase;
 */
 public class TestUpsert11070 extends SdbTestBase{
 	private String clName = "cl11070";
+	//TODO:1、请注意变量的范围，建议用private，默认情况下同包中其他类也能使用；另外string命名请规范，建议采用有意义的命名方式
 	Sequoiadb sdb = null;
 	
 	String string1 = "";
 	String string2 = "";
-	
+	//TODO:1、这里的name和v分别是什么意思？请明确定义变量名或者给出描述
 	private static int[] names = new int[1000];
 	private static AtomicInteger v = new AtomicInteger(0);
 	
@@ -41,6 +42,7 @@ public class TestUpsert11070 extends SdbTestBase{
 		if (CommLib.isStandAlone(sdb)){
 			throw new SkipException("is standalone skip testcase");
 		}
+		//TODO:2、这里设置了replsize为0，没有必要再去指定组
 		ArrayList<String> dataRG = getDataGroups(sdb);
 		ReplicaGroup dataRg = sdb.getReplicaGroup(dataRG.get(0));
 		String rgName = dataRg.getGroupName();
@@ -48,9 +50,10 @@ public class TestUpsert11070 extends SdbTestBase{
         options.put("ReplSize", 0);
 		sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName, options);
 		
-	}
+	}//TODO:3、代码段之间要空行
 	@Test()
 	public void prepare(){
+		//TODO:4、这里的常量数字分别代表啥意思？另外这里的预置条件没有必要单独写个test方法，请明确test的真正意义是测试步骤
 		for(int i = 0;i <1000; i++){
 			names[i] = i;
 		}
@@ -85,7 +88,7 @@ public class TestUpsert11070 extends SdbTestBase{
 			e.printStackTrace();
 			Assert.fail("insert failed",e);
 		}
-		
+		//TODO:5、既然用了testng的并发框架调度，这里为啥又写一个连接操作，测试点是什么？而且db1和db2的操作在这个线程是串行不是并发
 		try (Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
 			DBCollection cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 			BSONObject matcher2 = new BasicBSONObject();
@@ -109,7 +112,7 @@ public class TestUpsert11070 extends SdbTestBase{
 		sdb.getCollectionSpace(csName).dropCollection(clName);
 		sdb.close();
 	}
-	
+	//TODO:6、这个方法有公共方法，没有必要重新写
 	private ArrayList<String> getDataGroups(Sequoiadb sdb){
 		 ArrayList<String> groupList = new ArrayList<String>();
 		 try{
