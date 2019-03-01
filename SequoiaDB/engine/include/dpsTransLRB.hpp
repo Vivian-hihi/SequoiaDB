@@ -43,7 +43,7 @@
 #include "ossLatch.hpp"         // ossSpinXLatch
 #include "utilSegment.hpp"      // UTIL_UTIL_OBJIDX
 #include "dpsTransLockDef.hpp"  // DPS_TRANSLOCK_TYPE, dpsTransLockId
-#include "dpsTransVersionCtrl.hpp" // oldVersionContainer
+#include "dpsTransVersionCtrl.hpp" // oldVersionContainer 
 
 namespace engine
 {
@@ -59,8 +59,8 @@ namespace engine
       UTIL_OBJIDX eduLrbIdxPrev ;   // idx of prev LRB in chain EDU owning in tx
       UTIL_OBJIDX lrbHdrIdx ;       // idx of the LRB Header
       UTIL_OBJIDX nextLRBIdx ;      // idx of next LRB in the owner/waiter chain
-      ossTick beginTick ;           // timestamp( ossTick ) of owning / waiting
-      UINT32 refCounter ;           // lock reference counter
+      ossTick     beginTick ;       // timestamp( ossTick ) of owning / waiting
+      UINT32      refCounter ;      // lock reference counter
       DPS_TRANSLOCK_TYPE lockMode ; // lock mode, UINT8, 1 byte
       UINT8 pad[3] ;                // 3 byte for padding
    } ;  // 40 bytes in total
@@ -70,11 +70,11 @@ namespace engine
    class dpsTransLRBHeader : public SDBObject
    {
    public :
-      UTIL_OBJIDX nextLRBHdrIdx ;   // index of next LRB Header in the chain
-      UTIL_OBJIDX ownerLRBIdx ;     // index of the first owner LRB in its chain
-      UTIL_OBJIDX waiterLRBIdx ;    // index of the first waiter LRB in its chain
-      UTIL_OBJIDX upgradeLRBIdx;    // index of the first upgrader LRB in its chain
-      dpsTransLockId lockId ;  // lockId, 16 bytes
+      UTIL_OBJIDX nextLRBHdrIdx ;  // index of next LRB Header in the chain
+      UTIL_OBJIDX ownerLRBIdx ;    // index of the 1st owner LRB in its chain
+      UTIL_OBJIDX waiterLRBIdx ;   // index of the 1st waiter LRB in its chain
+      UTIL_OBJIDX upgradeLRBIdx;   // index of the 1st upgrader LRB in its chain
+      dpsTransLockId lockId ;      // lockId, 16 bytes
       oldVersionContainer *oldVer ;   // a pointer to the structure containing
                                       // version page/index information
    public :
@@ -105,7 +105,10 @@ namespace engine
 
       void setOldRecord(dmsRecord * r) { oldVer->setOldRecord(r); }
 
-      MEMBLOCKPOOL_TYPE &oldRecordMemType() { return oldVer->getRecordMemType(); }
+      MEMBLOCKPOOL_TYPE &oldRecordMemType() 
+      {
+         return oldVer->getRecordMemType(); 
+      }
 
       // try to insert to lid set. The caller should hold record lock in X
       // as the protection
@@ -137,7 +140,7 @@ namespace engine
       }
 
       //MEMBLOCKPOOL_TYPE &oldIdxMemType() { return oldVer->_idxMemType; }
-   } ;  // 48 bytes in total
+   } ;  // 40 bytes in total
 
 
    class dpsTransLRBHeaderHash : public SDBObject

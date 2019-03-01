@@ -9,7 +9,8 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the   GNU Affero General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
 
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -1444,6 +1445,55 @@ namespace engine
 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
 #endif
+      // short cut for non-leaf lock ( CS, CL ),
+      // lookup the executor _mapLockID map, if it is found and current
+      // lock mode covers the requesting mode then increase refCounter,
+      // and job is done. Otherwise, still need to go through the normal
+      // routine.
+      if ( ! lockId.isLeafLevel() )
+      {
+         // we actually don't need bkt latch for
+         // looking up CS,CL lock in the executor
+         // _mapLockID map
+         if ( bktLatched )
+         {
+            bLatched = TRUE ;
+         }
+
+         UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX ;
+         pLRB = NULL ;
+         if ( dpsTxExectr->findLock( lockId, lrbIdx ) )
+         { 
+            if ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+            {
+#ifdef _DEBUG
+              PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
+                         PD_PACK_STRING( "Found CS,CL lock LRB:" ),
+                         PD_PACK_UINT( lrbIdx ) ) ;
+#endif
+               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
+               if ( dpsLockCoverage( pLRB->lockMode, requestLockMode ) )
+               {
+                  if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
+                  {
+                     pLRB->refCounter ++ ;
+
+                     // clear the wait info in dpsTxExectr
+                     dpsTxExectr->clearWaiterInfo() ;
+                  }
+#ifdef _DEBUG
+                  PD_TRACE1( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
+                             PD_PACK_STRING( "CS,CL lock coverage chk passed"));
+#endif
+                  if( pdpsTxResInfo )
+                  {
+                     pdpsTxResInfo->_newAcquire = FALSE;
+                  }
+                  goto done ;
+               }
+            }
+         }
+      }
 
       // acquire and prepare new LRB and LRB Header
       if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
@@ -1552,48 +1602,6 @@ namespace engine
       if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
       {
          pLRBNew->lrbHdrIdx = hdrIdx ;
-      }
-
-      // short cut for non-leaf lock ( CS, CL ),
-      // lookup the executor _mapLockID map, if it is found and current
-      // lock mode covers the requesting mode then increase refCounter,
-      // and job is done. Otherwise, still need to go through the normal
-      // routine.
-      if ( ! lockId.isLeafLevel() )
-      {
-         UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX ;
-         pLRB = NULL ;
-         if ( dpsTxExectr->findLock( lockId, lrbIdx ) )
-         { 
-            if ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
-            {
-#ifdef _DEBUG
-              PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
-                         PD_PACK_STRING( "Found CS,CL lock LRB:" ),
-                         PD_PACK_UINT( lrbIdx ) ) ;
-#endif
-               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
-               if ( dpsLockCoverage( pLRB->lockMode, requestLockMode ) )
-               {
-                  if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
-                  {
-                     pLRB->refCounter++ ;
-
-                     // clear the wait info in dpsTxExectr
-                     dpsTxExectr->clearWaiterInfo() ;
-                  }
-#ifdef _DEBUG
-                  PD_TRACE1( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
-                             PD_PACK_STRING( "CS,CL lock coverage chk passed"));
-#endif
-                  if( pdpsTxResInfo )
-                  {
-                     pdpsTxResInfo->_newAcquire = FALSE;
-                  }
-                  goto done ;
-               }
-            }
-         }
       }
 
       // search owner LRB list, which is sorted on lock mode in ascent order
