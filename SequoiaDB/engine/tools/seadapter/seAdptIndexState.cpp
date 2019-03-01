@@ -349,8 +349,8 @@ namespace seadapter
             }
 
             rc = _validateProgress( session, progressInfo, valid ) ;
-            PD_RC_CHECK( rc, PDERROR, "Validate progress information of index[%s] "
-                                      "failed[%d]", esIdxName, rc ) ;
+            PD_RC_CHECK( rc, PDERROR, "Validate progress information of "
+                                      "index[%s] failed[%d]", esIdxName, rc ) ;
             if ( !valid )
             {
                PD_LOG( PDEVENT, "Commit mark for index[%s] is not as expected. "
@@ -1714,7 +1714,8 @@ namespace seadapter
          if ( !_typeSupport( type ) )
          {
             PD_LOG( PDERROR, "Operation type[%d] is not supported in "
-                             "source record: %s", type, origObj.toString().c_str() ) ;
+                             "source record: %s",
+                    type, origObj.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
