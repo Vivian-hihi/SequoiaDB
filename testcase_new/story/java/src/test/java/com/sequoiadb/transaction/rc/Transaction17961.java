@@ -18,15 +18,15 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @testcase seqDB-17873:更新记录与$id索引扫描并发
- * @date 2019-2-26
+ * @testcase seqDB-17961:删除记录与$id索引扫描并发
+ * @date 2019-3-1
  * @author yinzhen
  *
  */
 @Test(groups = "rc")
-public class Transaction17873 extends SdbTestBase {
+public class Transaction17961 extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "cl17873";
+    private String clName = "cl17961";
     private DBCollection cl = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
@@ -71,11 +71,8 @@ public class Transaction17873 extends SdbTestBase {
         db1.beginTransaction();
         db2.beginTransaction();
 
-        // 事务1更新记录
-        cl1.update("{a:1}", "{$set:{a:10}}", "{'':null}");
-        BSONObject record = (BSONObject) JSON.parse("{_id:1, a:10, b:1}");
-        List<BSONObject> expRecords = new ArrayList<>();
-        expRecords.add(record);
+        // 事务1删除记录
+        cl1.delete("{_id:1}", "{'':'$id'}");
 
         // 事务2读记录走表扫描
         DBCursor recordsCursor = cl2.query(null, null, null, "{'':null}");
@@ -94,12 +91,13 @@ public class Transaction17873 extends SdbTestBase {
         // 非事务表扫描
         recordsCursor = cl.query(null, null, null, "{'':null}");
         actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expRecords);
+        expList.clear();
+        Assert.assertEquals(actList, expList);
 
         // 非事务索引扫描
         recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'$id'}");
         actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expRecords);
+        Assert.assertEquals(actList, expList);
         recordsCursor.close();
     }
 }
