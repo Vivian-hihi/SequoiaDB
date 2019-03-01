@@ -626,6 +626,10 @@ namespace engine
                {
                   _savedRID.reset() ;
                }
+               else
+               {
+                  _savedInMemObj = _curKeyObj.getOwned() ;
+               }
                rc = SDB_OK ;
                break ;
             }

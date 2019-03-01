@@ -258,6 +258,12 @@ namespace engine
             // if we are able to find the recordid in dupBuffer, that
             // means we've already processed the record, so let's also
             // jump back to begin
+#ifdef _DEBUG
+      PD_LOG ( PDDEBUG, "IX Merge Scanner advance, found duplicated rid, "
+               "_wasFromLeft=%d, rid=(%d, %d)", 
+                _wasFromLeft, rid._extent, rid._offset );
+
+#endif			
             rid.reset() ;
             goto begin ;
          }
