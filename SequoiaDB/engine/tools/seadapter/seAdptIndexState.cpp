@@ -42,8 +42,13 @@
 
 namespace seadapter
 {
-   const UINT16 SEADPT_CONSULT_INTERVAL = 10000 ;
+   // Consult should be done in 5 seconds.
+   const UINT16 SEADPT_CONSULT_INTERVAL = 5000 ;
+
+   // Max retry times for indexing operations.
    const UINT16 SEADPT_INDEX_MAX_RETRY = 5 ;
+
+   // Request on data/cata node respond time limit.
    const UINT16 SEADPT_BASIC_OP_TIMEOUT = 3000 ;
 
    const CHAR* seAdptGetIndexerStateDesp( SEADPT_INDEXER_STATE state )
@@ -491,10 +496,13 @@ namespace seadapter
          {
             // No Records in capped collection. No cleanup required.
             _step = QUERY_CL_VERSION ;
+            rc = _queryCLVersion( session ) ;
+            PD_RC_CHECK( rc, PDERROR, "Query version of collection failed[%d]",
+                         rc ) ;
             goto done ;
          }
 
-         rc = _doClean( session, resultSet.front() ) ;
+         rc = _doCleanDB( session, resultSet.front() ) ;
          PD_RC_CHECK( rc, PDERROR, "Clean data on data node failed[%d]", rc ) ;
          _step = CLEAN_DB_P2 ;
          break ;
@@ -509,6 +517,9 @@ namespace seadapter
             goto error ;
          }
          _step = QUERY_CL_VERSION ;
+         rc = _queryCLVersion( session ) ;
+         PD_RC_CHECK( rc, PDERROR, "Query version of collection failed[%d]",
+                      rc ) ;
          break ;
       }
       case QUERY_CL_VERSION:
@@ -689,7 +700,7 @@ namespace seadapter
          PD_RC_CHECK( rc, PDERROR, "Create index on ES failed[%d]", rc ) ;
          // Intentially fall through.
       case CLEAN_DB_P1:
-         rc = _cleanDB( session ) ;
+         rc = _prepareCleanDB( session ) ;
          PD_RC_CHECK( rc, PDERROR, "Clean data on data node failed[%d]", rc ) ;
          break ;
       case QUERY_CL_VERSION:
@@ -760,7 +771,7 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptFullIndexState::_cleanDB( seAdptIndexSession *session )
+   INT32 _seAdptFullIndexState::_prepareCleanDB( seAdptIndexSession *session )
    {
       INT32 rc = SDB_OK ;
       BSONObj selector ;
@@ -790,6 +801,7 @@ namespace seadapter
 
       PD_LOG( PDDEBUG, "Ready to clean capped collection[%s]. Query for the "
                        "first record...", cappedCLName ) ;
+      _timeout = 0 ;
 
    done:
       return rc ;
@@ -797,8 +809,8 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptFullIndexState::_doClean( seAdptIndexSession *session,
-                                          const BSONObj &targetObj )
+   INT32 _seAdptFullIndexState::_doCleanDB( seAdptIndexSession *session,
+                                            const BSONObj &targetObj )
    {
       INT32 rc = SDB_OK ;
       seAdptDBAssist *dbAssist = session->dbAssist() ;
@@ -823,6 +835,7 @@ namespace seadapter
          PD_LOG( PDEVENT, "Begin to clean capped collection[%s] by pop "
                           "command. Pop options: %s",
                  cappedCLName, option.toString(false, true).c_str() ) ;
+         _timeout = 0 ;
       }
       catch ( std::exception &e )
       {
@@ -862,6 +875,7 @@ namespace seadapter
                                       session->eduCB() ) ;
       PD_RC_CHECK( rc, PDERROR, "Query catalogue information of collection[%s] "
                                 " failed[%d]", clName, rc ) ;
+      _timeout = 0 ;
 
    done:
       return rc ;
@@ -892,6 +906,7 @@ namespace seadapter
       rc = session->dbAssist()->sendToDataNode( (MsgHeader *)msg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[%d]",
                    rc ) ;
+      _timeout = 0 ;
 
    done:
       if ( msg )
@@ -983,7 +998,7 @@ namespace seadapter
             }
             goto error ;
          }
-         else if ( SDB_CLS_NOT_PRIMARY == rc )
+         else if ( SDB_CLS_NOT_PRIMARY == rc || SDB_NET_CANNOT_CONNECT == rc )
          {
             rc = session->updateCataInfo( OSS_ONE_SEC ) ;
             PD_RC_CHECK( rc, PDERROR, "Update catalogue information failed[%d]",
@@ -1012,6 +1027,8 @@ namespace seadapter
               _clVersion ) ;
 
       _step = QUERY_DATA ;
+      rc = _queryData( session ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query data failed[%d]", rc ) ;
 
    done:
       return rc ;
@@ -1060,6 +1077,7 @@ namespace seadapter
                  rc ) ;
          goto error ;
       }
+      _timeout = 0 ;
 
    done:
       if ( msg )
@@ -1288,6 +1306,9 @@ namespace seadapter
                              "processed. Ready to start a new query on it",
                     meta->getCappedCLName().c_str() ) ;
          }
+
+         // Wait for next round to be triggered by the timer.
+         _timeout = 0 ;
          _step = QUERY_DATA ;
          goto done ;
       }
@@ -1419,6 +1440,7 @@ namespace seadapter
       rc = session->dbAssist()->sendToDataNode( (MsgHeader *)msg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[%d]",
                    rc ) ;
+      _timeout = 0 ;
 
    done:
       if ( msg )
@@ -1451,6 +1473,7 @@ namespace seadapter
          PD_LOG( PDERROR, "Send getmore request to data node failed[%d]", rc ) ;
          goto error ;
       }
+      _timeout = 0 ;
 
    done:
       if ( msg )
@@ -1831,6 +1854,7 @@ namespace seadapter
          PD_LOG( PDEVENT, "Clean capped collection[%s] by pop "
                           "command. Pop options: %s",
                  cappedCLName, option.toString(false, true).c_str() ) ;
+         _timeout = 0 ;
          _step = CLEAN_SRC ;
       }
       catch ( std::exception &e )

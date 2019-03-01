@@ -87,6 +87,10 @@ namespace seadapter
       virtual INT32 processGetMoreRes( _seAdptIndexSession *session,
                                        NET_HANDLE handle, MsgHeader *msg ) = 0 ;
 
+      /**
+       * @brief Update progress document on search engine(Record with _id of
+       * SDBCOMMIT).
+       */
       INT32 updateProgress( _seAdptIndexSession *session,
                             BOOLEAN initial = FALSE ) ;
 
@@ -185,15 +189,15 @@ namespace seadapter
        * @brief Clean the source capped collection before full indexing. Do that
        * with a pop operation backwards to the first record.
        */
-      INT32 _cleanDB( _seAdptIndexSession *session ) ;
+      INT32 _prepareCleanDB( _seAdptIndexSession *session ) ;
 
       /**
        * @brief Send pop command to the data node.
        * @param session
        * @param targetObj The first record in the capped collection.
        */
-      INT32 _doClean( _seAdptIndexSession *session,
-                      const BSONObj &targetObj ) ;
+      INT32 _doCleanDB( _seAdptIndexSession *session,
+                        const BSONObj &targetObj ) ;
 
       INT32 _queryCLVersion( _seAdptIndexSession *session ) ;
 

@@ -113,11 +113,6 @@ namespace seadapter
          return _lastExpectLID ;
       }
 
-      INT64 getCleanID() const
-      {
-         return _lastCleanID ;
-      }
-
       INT32 updateCataInfo( INT64 millisec ) ;
       BOOLEAN validateMeta() ;
 
@@ -152,7 +147,6 @@ namespace seadapter
       UINT64 _requestID ;
       INT64 _expectLID ;
       INT64 _lastExpectLID ;
-      INT64 _lastCleanID ;
    } ;
    typedef _seAdptIndexSession seAdptIndexSession ;
 }

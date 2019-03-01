@@ -68,10 +68,10 @@ namespace seadapter
                                                const CHAR *host,
                                                const CHAR *service )
    {
-      if ( MSG_INVALID_ROUTEID == _dataNodeID.value &&
-           id.value != _dataNodeID.value )
+      if ( MSG_INVALID_ROUTEID != _dataNodeID.value )
       {
          _routeAgent.delRoute( _dataNodeID ) ;
+         _dataNetHandle = NET_INVALID_HANDLE ;
       }
 
       _dataNodeID = id ;
@@ -83,10 +83,10 @@ namespace seadapter
                                                const CHAR *host,
                                                const CHAR *service )
    {
-      if ( MSG_INVALID_ROUTEID == _cataPrimaryID.value &&
-           id.value != _cataPrimaryID.value )
+      if ( MSG_INVALID_ROUTEID != _cataPrimaryID.value )
       {
          _routeAgent.delRoute( _cataPrimaryID ) ;
+         _cataNetHandle = NET_INVALID_HANDLE ;
       }
 
       _cataPrimaryID = id ;

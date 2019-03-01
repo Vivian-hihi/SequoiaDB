@@ -63,8 +63,7 @@ namespace seadapter
      _tid( 0 ),
      _requestID( 0 ),
      _expectLID( SEADPT_INVALID_LID ),
-     _lastExpectLID( SEADPT_INVALID_LID ),
-     _lastCleanID( SEADPT_INVALID_LID )
+     _lastExpectLID( SEADPT_INVALID_LID )
    {
       SDB_ASSERT( idxMeta && idxMeta->getIdxDef().valid()
                   && !idxMeta->getIdxDef().isEmpty(),
