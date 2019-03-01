@@ -1474,26 +1474,35 @@ TEST(collection, sdbQuery_with_some_flags)
                     NULL, NULL, 0, -1, 0, &cursor ) ;
    CHECK_MSG("%s%d\n","rc = ", rc) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   displayRecord( &cursor ) ;
+
    // execute query
    rc = sdbQuery1 ( cl, NULL, NULL,
                     NULL, NULL, 0, -1, QUERY_FORCE_HINT, &cursor ) ;
    CHECK_MSG("%s%d\n","rc = ", rc) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   displayRecord( &cursor ) ;
+
    // execute query
    rc = sdbQuery1 ( cl, NULL, NULL,
                     NULL, NULL, 0, -1, QUERY_WITH_RETURNDATA, &cursor ) ;
    CHECK_MSG("%s%d\n","rc = ", rc) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   displayRecord( &cursor ) ;
+
    // execute query
    rc = sdbQuery1 ( cl, NULL, NULL,
                     NULL, NULL, 0, -1, QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA, &cursor ) ;
    CHECK_MSG("%s%d\n","rc = ", rc) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   displayRecord( &cursor ) ;
+
    // execute query
    rc = sdbQuery1 ( cl, NULL, NULL,
                     NULL, NULL, 0, -1, QUERY_FORCE_HINT | QUERY_PARALLED | QUERY_WITH_RETURNDATA, &cursor ) ;
    CHECK_MSG("%s%d\n","rc = ", rc) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   displayRecord( &cursor ) ;
 
    sdbDisconnect ( connection ) ;
    sdbReleaseCursor ( cursor ) ;
