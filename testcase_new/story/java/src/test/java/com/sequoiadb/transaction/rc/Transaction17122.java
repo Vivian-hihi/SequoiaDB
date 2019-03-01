@@ -27,7 +27,8 @@ public class Transaction17122 extends SdbTestBase {
     private String clName = "transCL_17122";
     private Sequoiadb sdb = null;
     private DBCollection cl = null;
-    private BSONObject data = null;
+    private BSONObject data1 = null;
+    private BSONObject data2 = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
@@ -36,15 +37,25 @@ public class Transaction17122 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        data = new BasicBSONObject();
-        data.put("_id", "testId17122");
-        data.put("a", 1);
-        data.put("b", "testTrans_17122");
-        data.put("c", 13700000000L);
-        data.put("d", "customer transaction type data application.");
-        cl.insert(data);
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
+        
+        data1 = new BasicBSONObject();
+        data1.put("_id", "testId17122");
+        data1.put("a", 1);
+        data1.put("b", "testTrans_17122");
+        data1.put("c", 13700000000L);
+        data1.put("d", "customer transaction type data application.");
+        cl.insert(data1);
+        
+        data2 = new BasicBSONObject();
+        data2.put("_id", "testId17122");
+        data2.put("a", 1);
+        data2.put("b", 17122);
+        data2.put("c", 13700000000L);
+        data2.put("flag", "flag17122");
+        data2.put("d", "customer transaction type data application.");
+        
     }
 
     // TODO:count num error, return -1 SEQUOIADBMAINSTREAM-4182
@@ -52,21 +63,18 @@ public class Transaction17122 extends SdbTestBase {
     public void test1() {
 
         sdb.beginTransaction();
-        DBCollection transCL = sdb.getCollectionSpace(csName).getCollection(clName);
-        BSONObject matcher = new BasicBSONObject("_id", data.get("_id"));
-        transCL.delete(matcher);
 
-        BSONObject testData = new BasicBSONObject();
-        testData.put("_id", data.get("_id"));
-        testData.put("a", data.get("a"));
-        testData.put("b", 17122);
-        testData.put("flag", "flag17122");
-        // insert
-        transCL.insert(testData);
+        //1 trans1 delete record R1
+        cl.delete("{'a': 1}");
 
+        //2 trans1 insert record R2 
+        cl.insert(data2);
+        
         sdb.rollback();
 
-        expDataList.add(data);
+        expDataList.clear();
+        expDataList.add(data1);
+        
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -87,22 +95,19 @@ public class Transaction17122 extends SdbTestBase {
     public void test2() {
 
         sdb.beginTransaction();
-        DBCollection transCL = sdb.getCollectionSpace(csName).getCollection(clName);
-        BSONObject matcher = new BasicBSONObject("_id", data.get("_id"));
-        transCL.delete(matcher);
 
-        BSONObject testData = new BasicBSONObject();
-        testData.put("_id", data.get("_id"));
-        testData.put("a", data.get("a"));
-        testData.put("b", 17122);
-        testData.put("flag", "flag17122");
-        // insert
-        transCL.insert(testData);
+        //1 trans1 delete record R1
+        cl.delete("{'a': 1}");
 
+        //2 trans1 insert record R2 
+        cl.insert(data2);
+        
         sdb.commit();
 
         expDataList.clear();
-        expDataList.add(testData);
+        expDataList.add(data1);
+        expDataList.add(data2);
+        
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -120,15 +125,13 @@ public class Transaction17122 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
+        
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

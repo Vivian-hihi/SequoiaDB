@@ -39,39 +39,49 @@ public class Transaction17257 extends SdbTestBase {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         expDataList = new ArrayList<BSONObject>();
+        
         data = new BasicBSONObject();
         data.put("a", 1);
         data.put("b", 1);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
-        expDataList.add(data);
+        cl.insert(data);
 
         data2 = new BasicBSONObject();
         data2.put("a", 1);
-        data2.put("b", 2);
+        data2.put("b", 1);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
-        expDataList.add(data2);
-        cl.insert(expDataList);
+        cl.insert(data2);
 
     }
-
-    // TODO:SEQUOIADBMAINSTREAM-4118
-    @Test(enabled = false)
-    public void test() {
-        try (Sequoiadb transDB1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
-            transDB1.beginTransaction();
-            DBCollection transCL1 = transDB1.getCollectionSpace(csName).getCollection(clName);
-            transCL1.delete("{a:1}");
-            try {
-                transCL1.createIndex("a", "{a:1}", true, false);
-                Assert.fail("create unique index should be failed");
-            } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
-            }
-            transDB1.rollback();
+    
+    //TODO:SEQUOIADBMAINSTREAM-4118
+    @Test(enabled=false)
+    public void test(){
+        
+        sdb.beginTransaction();
+        cl.delete("{a:1}");
+        
+        try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");){
+            //no trans create index
+            DBCollection cl2 = db.getCollectionSpace(csName).getCollection(clName);
+            cl2.createIndex("b", "{b:1}", true, false);
+            Assert.fail("create unique index should be failed");
+        }catch (BaseException e) {
+            Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
 
+        try {
+            //trans create index
+            cl.createIndex("a", "{a:1}", true, false);
+            Assert.fail("create unique index should be failed");
+        } catch (BaseException e) {
+            Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
+        }
+        
+        expDataList.add(data);
+        expDataList.add(data2);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList, "check data");
@@ -86,15 +96,12 @@ public class Transaction17257 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

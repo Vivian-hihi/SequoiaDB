@@ -37,6 +37,9 @@ public class Transaction17245 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a:1}", true, false);
+        expDataList = new ArrayList<BSONObject>();
+        
         data = new BasicBSONObject();
         data.put("a", 1);
         data.put("b", "testTrans_17245");
@@ -50,21 +53,16 @@ public class Transaction17245 extends SdbTestBase {
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
         data2.put("flag", "flag17245");
-
-        cl.createIndex("a", "{a:1}", true, false);
-        expDataList = new ArrayList<BSONObject>();
     }
 
     @Test
     public void test1() {
 
         sdb.beginTransaction();
-        DBCollection transCL = sdb.getCollectionSpace(csName).getCollection(clName);
-        BSONObject matcher = new BasicBSONObject("a", data.get("a"));
-        transCL.delete(matcher);
+        cl.delete("{'a': 1}");
 
         // insert thr same record as the delete
-        transCL.insert(data2);
+        cl.insert(data2);
         sdb.rollback();
 
         expDataList.clear();
@@ -84,12 +82,10 @@ public class Transaction17245 extends SdbTestBase {
     public void test2() throws InterruptedException {
 
         sdb.beginTransaction();
-        DBCollection transCL = sdb.getCollectionSpace(csName).getCollection(clName);
-        BSONObject matcher = new BasicBSONObject("a", data.get("a"));
-        transCL.delete(matcher);
+        cl.delete("{'a': 1}");
 
         // insert thr same record as the delete
-        transCL.insert(data2);
+        cl.insert(data2);
         sdb.commit();
 
         expDataList.clear();
@@ -111,15 +107,12 @@ public class Transaction17245 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

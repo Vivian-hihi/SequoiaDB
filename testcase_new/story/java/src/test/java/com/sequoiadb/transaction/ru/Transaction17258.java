@@ -27,7 +27,9 @@ public class Transaction17258 extends SdbTestBase {
 
     private String clName = "transCL_17258";
     private Sequoiadb sdb = null;
+    private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
+    private DBCollection cl2 = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
     private DBCursor recordCur = null;
@@ -40,6 +42,7 @@ public class Transaction17258 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
+        
         data = new BasicBSONObject();
         data.put("_id", "insert1725801");
         data.put("a", 1);
@@ -47,7 +50,6 @@ public class Transaction17258 extends SdbTestBase {
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
-        expDataList.add(data);
 
         data2 = new BasicBSONObject();
         data2.put("_id", "insert1725801");
@@ -55,37 +57,31 @@ public class Transaction17258 extends SdbTestBase {
         data2.put("b", 1024);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
+        
     }
 
     // TODO:SEQUOIADBMAINSTREAM-4118
     @Test(enabled = false)
     public void test() {
-        Sequoiadb transDB1 = null;
-        Sequoiadb transDB2 = null;
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+        
+        sdb.beginTransaction();
+        sdb2.beginTransaction();
+        
+        //1 trans1 delete R1
+        cl.delete("{'a':1}");
         try {
-            transDB1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            transDB2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            transDB1.beginTransaction();
-            DBCollection transCL1 = transDB1.getCollectionSpace(csName).getCollection(clName);
-            transCL1.delete("{'a':1}");
-            try {
-                transDB2.beginTransaction();
-                DBCollection transCL2 = transDB2.getCollectionSpace(csName).getCollection(clName);
-                transCL2.insert(data2);
-                Assert.fail("insert an existing record with an index,should be failed");
-            } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
-            }
-            transDB1.rollback();
-        } finally {
-            if (transDB1 != null) {
-                transDB1.close();
-            }
-            if (transDB2 != null) {
-                transDB2.close();
-            }
+            //trans2 insert record R2 same as the R1
+            cl2.insert(data2);
+            Assert.fail("insert an existing record with an index,should be failed");
+        } catch (BaseException e) {
+            Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
 
+        sdb.rollback();
+        
+        expDataList.add(data);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -100,15 +96,12 @@ public class Transaction17258 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

@@ -29,7 +29,7 @@ public class Transaction17130 extends SdbTestBase {
     private DBCollection cl = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
-    private BSONObject updateData = null;
+    private BSONObject data3 = null;
     private BSONObject modifier = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
@@ -58,15 +58,15 @@ public class Transaction17130 extends SdbTestBase {
         cl.insert(expDataList);
         cl.createIndex("a", "{a:1}", true, false);
 
-        updateData = new BasicBSONObject();
-        updateData.put("_id", "id17130");
-        updateData.put("a", 1);
-        updateData.put("b", "1024_update");
-        updateData.put("c", 13700000000L);
-        updateData.put("d", "customer transaction type data application.");
+        data3 = new BasicBSONObject();
+        data3.put("_id", "id17130");
+        data3.put("a", 1);
+        data3.put("b", "1024_update");
+        data3.put("c", 13700000000L);
+        data3.put("d", "customer transaction type data application.");
 
         modifier = new BasicBSONObject();
-        modifier.put("$set", updateData);
+        modifier.put("$set", data3);
 
     }
 
@@ -82,7 +82,7 @@ public class Transaction17130 extends SdbTestBase {
             transCL.update(new BasicBSONObject("a", 1), modifier, null);
 
             expDataList.clear();
-            expDataList.add(updateData);
+            expDataList.add(data3);
 
             recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
             actDataList = TransUtils.getReadActList(recordCur);
@@ -125,7 +125,7 @@ public class Transaction17130 extends SdbTestBase {
             transCL.update(new BasicBSONObject("a", 1), modifier, null);
 
             expDataList.clear();
-            expDataList.add(updateData);
+            expDataList.add(data3);
 
             recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
             actDataList = TransUtils.getReadActList(recordCur);
@@ -157,15 +157,12 @@ public class Transaction17130 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

@@ -37,31 +37,34 @@ public class Transaction17243 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a:1}", true, false);
+        expDataList = new ArrayList<BSONObject>();
+        
         data = new BasicBSONObject();
         data.put("a", 1);
         data.put("b", "testTrans_17243");
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
-        cl.createIndex("a", "{a:1}", true, false);
-        expDataList = new ArrayList<BSONObject>();
+        
         expDataList.add(data);
     }
 
     @Test
-    public void test() {
-
-        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-            BSONObject testData = new BasicBSONObject();
-            testData.put("a", 17243);
-            testData.put("b", "testTrans_17243");
-            testData.put("c", 13700017243L);
-            testData.put("d", "customer transaction type data application. :17243");
-            transDB.beginTransaction();
-            DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
-            transCL.insert(testData);
+    public void test(){
+        
+        try {
+            BSONObject data2 = new BasicBSONObject();
+            data2.put("a", 17243);
+            data2.put("b", "testTrans_17243" );
+            data2.put("c", 13700017243L);
+            data2.put("d", "customer transaction type data application. :17243");
+            
+            sdb.beginTransaction();
+            cl.insert(data2);
+            
             // insert the same record repeatedly
-            transCL.insert(testData);
+            cl.insert(data2);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
@@ -84,15 +87,12 @@ public class Transaction17243 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

@@ -29,7 +29,7 @@ public class Transaction17252 extends SdbTestBase {
     private DBCollection cl = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
-    private BSONObject updateData = null;
+    private BSONObject data3 = null;
     private BSONObject modifier = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
@@ -39,6 +39,9 @@ public class Transaction17252 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a:1}", true, false);
+        expDataList = new ArrayList<BSONObject>();
+        
         data = new BasicBSONObject();
         data.put("a", 1);
         data.put("b", "testTrans_17252");
@@ -52,36 +55,33 @@ public class Transaction17252 extends SdbTestBase {
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
 
-        expDataList = new ArrayList<BSONObject>();
         expDataList.add(data);
         expDataList.add(data2);
         cl.insert(expDataList);
-        cl.createIndex("a", "{a:1}", true, false);
 
-        updateData = new BasicBSONObject();
-        updateData.put("_id", "id17252");
-        updateData.put("a", 2);
-        updateData.put("b", "1024_update");
-        updateData.put("c", 13700000000L);
-        updateData.put("d", "customer transaction type data application.");
+        data3 = new BasicBSONObject();
+        data3.put("_id", "id17252");
+        data3.put("a", 2);
+        data3.put("b", "1024_update");
+        data3.put("c", 13700000000L);
+        data3.put("d", "customer transaction type data application.");
 
         modifier = new BasicBSONObject();
-        modifier.put("$set", updateData);
+        modifier.put("$set", data3);
 
     }
 
     @Test
-    public void test1() {
-        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
-            transDB.beginTransaction();
-            DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
-            // delete R2
-            transCL.delete(new BasicBSONObject("a", 2));
-            // update R1 to R3 same as the R2
-            transCL.update(new BasicBSONObject("a", 1), modifier, null);
-            transDB.rollback();
-        }
+    public void test1(){
 
+        //delete R2
+        sdb.beginTransaction();
+        cl.delete(new BasicBSONObject("a", 2));
+        
+        //update R1 to R3 same as the R2
+        cl.update(new BasicBSONObject("a", 1), modifier, null);
+        sdb.rollback();
+        
         expDataList.clear();
         expDataList.add(data);
         expDataList.add(data2);
@@ -100,19 +100,18 @@ public class Transaction17252 extends SdbTestBase {
 
     // TODO:SEQUOIADBMAINSTREAM-4182
     @Test(enabled = false)
-    public void test2() {
-        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
-            transDB.beginTransaction();
-            DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
-            // delete R2
-            transCL.delete(new BasicBSONObject("a", 2));
-            // update R1 to R3 same as the R2
-            transCL.update(new BasicBSONObject("a", 1), modifier, null);
-            transDB.commit();
-        }
+    public void test2(){
 
+        //delete R2
+        sdb.beginTransaction();
+        cl.delete(new BasicBSONObject("a", 2));
+        
+        //update R1 to R3 same as the R2
+        cl.update(new BasicBSONObject("a", 1), modifier, null);
+        sdb.commit();
+        
         expDataList.clear();
-        expDataList.add(updateData);
+        expDataList.add(data3);
 
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
@@ -131,15 +130,12 @@ public class Transaction17252 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

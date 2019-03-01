@@ -28,8 +28,9 @@ public class Transaction17140 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
+    private DBCollection cl2 = null;
     private BSONObject data = null;
-    private BSONObject updateData = null;
+    private BSONObject data2 = null;
     private BSONObject modifier = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
@@ -38,10 +39,10 @@ public class Transaction17140 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         expDataList = new ArrayList<BSONObject>();
+        
         data = new BasicBSONObject();
         data.put("_id", "insertID17140");
         data.put("a", 1);
@@ -51,64 +52,64 @@ public class Transaction17140 extends SdbTestBase {
         cl.insert(data);
 
         modifier = new BasicBSONObject();
-        updateData = new BasicBSONObject();
-        updateData.put("_id", "updateID17140");
-        updateData.put("a", 2);
-        updateData.put("b", "update2");
-        updateData.put("c", 13700000000L);
-        updateData.put("d", "customer transaction type data application.");
-        modifier.put("$set", updateData);
+        data2 = new BasicBSONObject();
+        data2.put("_id", "updateID17140");
+        data2.put("a", 2);
+        data2.put("b", "update2");
+        data2.put("c", 13700000000L);
+        data2.put("d", "customer transaction type data application.");
+        modifier.put("$set", data2);
     }
 
     @Test
     public void test() {
-
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+        
         sdb.beginTransaction();
         sdb2.beginTransaction();
-        DBCollection CLTrans1 = sdb.getCollectionSpace(csName).getCollection(clName);
-        DBCollection CLTrans2 = sdb2.getCollectionSpace(csName).getCollection(clName);
 
         // 2 query.update
-        DBCursor tbCur = CLTrans1.queryAndUpdate(new BasicBSONObject("a", 1), null, null, null, modifier, 0, -1, 0,
+        DBCursor tbCur = cl.queryAndUpdate(new BasicBSONObject("a", 1), null, null, null, modifier, 0, -1, 0,
                 true);
-        BSONObject actData = tbCur.getNext();
         try {
-            Assert.assertEquals(actData, updateData);
+            BSONObject actData = tbCur.getNext();
+            Assert.assertEquals(actData, data2);
         } finally {
             if (tbCur != null) {
                 tbCur.close();
             }
         }
 
-        expDataList.add(updateData);
         // trans1 query
-        recordCur = CLTrans1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        expDataList.add(data2);
+        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = CLTrans1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
+        // 3 trans2 query
         expDataList.clear();
         expDataList.add(data);
-        // 3 trans2 query
-        recordCur = CLTrans2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = CLTrans2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        expDataList.clear();
-        expDataList.add(updateData);
         // 4 commit trans1 and query
         sdb.commit();
+        expDataList.clear();
+        expDataList.add(data2);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -120,12 +121,12 @@ public class Transaction17140 extends SdbTestBase {
         actDataList.clear();
 
         // 5 trans2 query
-        recordCur = CLTrans2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = CLTrans2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -145,18 +146,15 @@ public class Transaction17140 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
-            if (sdb2 != null) {
-                sdb2.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if (recordCur != null) {
+            recordCur.close();
+        }
+        if (sdb != null) {
+            sdb.close();
+        }
+        if (sdb2 != null) {
+            sdb2.close();
         }
     }
 

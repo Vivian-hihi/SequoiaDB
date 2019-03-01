@@ -30,7 +30,6 @@ public class Transaction17249 extends SdbTestBase {
     private DBCollection cl = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
-    private BSONObject matcher = null;
     private BSONObject modifier = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
@@ -40,6 +39,9 @@ public class Transaction17249 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a:1}", true, false);
+        expDataList = new ArrayList<BSONObject>();
+        
         data = new BasicBSONObject();
         data.put("a", 1);
         data.put("b", "testTrans_17249");
@@ -51,27 +53,22 @@ public class Transaction17249 extends SdbTestBase {
         data2.put("b", 1);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
-
-        expDataList = new ArrayList<BSONObject>();
+        modifier = new BasicBSONObject();
+        modifier.put("$set", data2);
+        
         expDataList.add(data);
         expDataList.add(data2);
         cl.insert(expDataList);
-        cl.createIndex("a", "{a:1}", true, false);
-
-        matcher = new BasicBSONObject("_id", data.get("_id"));
-        modifier = new BasicBSONObject();
-        modifier.put("$set", data2);
 
     }
 
     @Test
-    public void test() {
-        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
-            transDB.beginTransaction();
-            DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
+    public void test(){
+        try {
+            sdb.beginTransaction();
             // update the record same the R1
-            transCL.update(matcher, modifier, null);
-            Assert.fail("insert an existing record with an index,should be failed");
+            cl.update(new BasicBSONObject("a", 1), modifier, null);
+            Assert.fail("update an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
@@ -93,15 +90,12 @@ public class Transaction17249 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

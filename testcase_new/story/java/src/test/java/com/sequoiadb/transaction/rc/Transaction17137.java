@@ -14,7 +14,6 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
@@ -22,78 +21,104 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = "rc")
+//@Test(groups = "rc")
 public class Transaction17137 extends SdbTestBase {
 
     private String clName = "transCL_17137";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb2 = null;
+    private Sequoiadb sdb3 = null;
     private DBCollection cl = null;
+    private DBCollection cl2 = null;
+    private DBCollection cl3 = null;
     private int recordNum = 10000;
     private DBCursor recordCur = null;
-    private List<BSONObject> expDataList = null;
+    private List<BSONObject> dataList1 = null;
+    private List<BSONObject> dataList2 = null;
     private List<BSONObject> actDataList = null;
+    private List<BSONObject> expDataList = null;
 
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        expDataList = prepareData(recordNum);
-
+        
+        List<BSONObject> prepareDataList = prepareData( recordNum );
+        dataList1 = prepareDataList.subList(0, recordNum/2 );
+        dataList2 = prepareDataList.subList(recordNum/2, recordNum );
+        cl.insert(dataList1);
+        
     }
 
     @Test
     public void test() {
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+        cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
 
         sdb.beginTransaction();
-        CRUDThread crudThread = new CRUDThread();
-        crudThread.start();
+        sdb3.beginTransaction();
+        
+        //1 trans1 insert/delete/update return R2s
+        cl.insert(dataList2);
 
-        IndexThread indexThread = new IndexThread();
-        indexThread.start();
+        cl.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}", null);
+        cl.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}");
+        //2 sdb2 create and drop index
+        for(int i=0; i<10; i++){
+            cl2.createIndex("a", "{a:1, b:-1}", false, false);
+            cl2.dropIndex("a");
+        }
+        cl2.createIndex("a", "{a:1, b:-1}", false, false);
 
-        sdb2.beginTransaction();
-        QueryThread queryThread = new QueryThread();
-        queryThread.start();
+        //3 trans2 query
+        expDataList = dataList1;
+        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
 
-        Assert.assertTrue(crudThread.isSuccess(), crudThread.getErrorMsg());
-        Assert.assertTrue(indexThread.isSuccess(), indexThread.getErrorMsg());
-        Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
+        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
 
+        //4 commit the trans1
         sdb.commit();
-
         expDataList.clear();
         expDataList = expData();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': null}");
+        //5 trans2 query
+        recordCur = cl3.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': 'a'}");
+        recordCur = cl3.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        sdb2.commit();
-        Assert.assertFalse(cl.isIndexExist("a"));
+        //6 commit all trans
+        sdb3.commit();
+        Assert.assertTrue(cl.isIndexExist("a"));
     }
 
-    @AfterClass(enabled = false)
+    @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
-            if (sdb2 != null) {
-                sdb2.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
+        }
+        if( sdb2 != null ){
+            sdb2.close();
+        }
+        if( sdb3 != null ){
+            sdb3.close();
         }
     }
 
@@ -122,58 +147,6 @@ public class Transaction17137 extends SdbTestBase {
             dataList.add(data);
         }
         return dataList;
-    }
-
-    private class CRUDThread extends SdbThreadBase {
-
-        public void exec() {
-            cl.insert(expDataList);
-
-            String modifier = "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}";
-            cl.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", modifier, null);
-
-            cl.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}");
-        }
-    }
-
-    private class IndexThread extends SdbThreadBase {
-
-        public void exec() {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
-                for (int i = 0; i < 10; i++) {
-                    dbcl.createIndex("a", "{a:1, b:-1}", false, false);
-                    dbcl.dropIndex("a");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
-            }
-        }
-    }
-
-    private class QueryThread extends SdbThreadBase {
-
-        public void exec() {
-            DBCursor cur = null;
-            try {
-                DBCollection dbcl = sdb2.getCollectionSpace(csName).getCollection(clName);
-                cur = dbcl.query("{'a': {'$isnull':0}}", null, null, "{'': null}");
-                while (cur.hasNext()) {
-                    cur.getNext();
-                }
-                cur.close();
-
-                cur = dbcl.query("{'a': {'$isnull':0}}", null, null, "{'': 'a'}");
-                while (cur.hasNext()) {
-                    cur.getNext();
-                }
-            } finally {
-                if (cur != null) {
-                    cur.close();
-                }
-            }
-        }
     }
 
 }

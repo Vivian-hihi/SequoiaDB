@@ -30,6 +30,7 @@ public class Transaction17127 extends SdbTestBase {
     private DBCollection cl = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
+    private BSONObject data3 = null;
     private BSONObject matcher = null;
     private BSONObject modifier = null;
     private DBCursor recordCur = null;
@@ -38,44 +39,50 @@ public class Transaction17127 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
+        
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a:1}", true, false);
+        expDataList = new ArrayList<BSONObject>();
+        
         data = new BasicBSONObject();
         data.put("a", 1);
-        data.put("b", "testTrans_17127");
+        data.put("b", 1);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
-
+        cl.insert(data);
+        
         data2 = new BasicBSONObject();
-        data2.put("a", "testTrans_17127Insert");
-        data2.put("b", 1);
+        data2.put("a", 2);
+        data2.put("b", 2);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
-
-        expDataList = new ArrayList<BSONObject>();
-        expDataList.add(data);
-        expDataList.add(data2);
-        cl.insert(expDataList);
-        cl.createIndex("a", "{a:1}", true, false);
+        cl.insert(data2);
+        
+        data3 = new BasicBSONObject();
+        data3.put("a", 2);
+        data3.put("b", 3);
+        data3.put("c", 13700000000L);
+        data3.put("d", "customer transaction type data application.");
 
         matcher = new BasicBSONObject("_id", data.get("_id"));
         modifier = new BasicBSONObject();
-        modifier.put("$set", data2);
-
+        modifier.put("$set", data3);
     }
 
     @Test
-    public void test() {
-        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
-            transDB.beginTransaction();
-            DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
-            // update record R1 to R3 same as the R2
-            transCL.update(matcher, modifier, null);
+    public void test(){
+        try{
+            sdb.beginTransaction();
+            //trans1 update record R1 to R3 same as the R2
+            cl.update(matcher, modifier, null);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
 
+        expDataList.add(data);
+        expDataList.add(data2);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -93,15 +100,13 @@ public class Transaction17127 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
+        
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

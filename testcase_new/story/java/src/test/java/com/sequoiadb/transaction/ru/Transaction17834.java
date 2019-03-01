@@ -32,9 +32,9 @@ public class Transaction17834 extends SdbTestBase {
     private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
     private Sequoiadb sdb3 = null;
-    private DBCollection CLTrans1 = null;
-    private DBCollection CLTrans2 = null;
-    private DBCollection CLTrans3 = null;
+    private DBCollection cl1 = null;
+    private DBCollection cl2 = null;
+    private DBCollection cl3 = null;
     private DBCollection cl = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
@@ -45,9 +45,6 @@ public class Transaction17834 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         expDataList = new ArrayList<BSONObject>();
@@ -67,43 +64,46 @@ public class Transaction17834 extends SdbTestBase {
         data2.put("d", "customer transaction type data application.");
         expDataList.add(data2);
 
-        sdb1.beginTransaction();
-        sdb2.beginTransaction();
-        sdb3.beginTransaction();
-        CLTrans1 = sdb1.getCollectionSpace(csName).getCollection(clName);
-        CLTrans2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-        CLTrans3 = sdb3.getCollectionSpace(csName).getCollection(clName);
+        sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+        cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
     }
 
     @Test
-    public void test() {
-
-        // 2 trans1 query.update
-        CLTrans1.insert(data2);
+    public void test(){
+        sdb1.beginTransaction();
+        sdb2.beginTransaction();
+        sdb3.beginTransaction();
+        
+        //2 trans1 query.update
+        cl1.insert(data2);
 
         // 3 trans2 delete r1 and r2
         DeleteThread deleteThread = new DeleteThread();
         deleteThread.start();
-        Assert.assertTrue(deleteThread.matchBlockingMethod(CLTrans2.getClass().getName(), "delete"));
+        Assert.assertTrue(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
 
         // 4 trans1 read
-        recordCur = CLTrans1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = CLTrans1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
         // 5 trans3 read
-        recordCur = CLTrans3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = CLTrans3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -121,59 +121,45 @@ public class Transaction17834 extends SdbTestBase {
 
         // 7 read after trans1 commit
         sdb1.commit();
-        Assert.assertEquals(0, cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
-                new BasicBSONObject("", null)));
-        Assert.assertEquals(0,
-                cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")));
+        Assert.assertEquals(0, cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)));
+        Assert.assertEquals(0, cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")));
 
         // 8 trans2 read
-        Assert.assertEquals(0, CLTrans2.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
-                new BasicBSONObject("", null)));
-        Assert.assertEquals(0, CLTrans2.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
-                new BasicBSONObject("", "a")));
+        Assert.assertEquals(0, cl2.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)));
+        Assert.assertEquals(0, cl2.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")));
 
         // 9 trans3 read
-        Assert.assertEquals(0, CLTrans3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
-                new BasicBSONObject("", null)));
-        Assert.assertEquals(0, CLTrans3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
-                new BasicBSONObject("", "a")));
+        Assert.assertEquals(0, cl3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)));
+        Assert.assertEquals(0, cl3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")));
 
         // 10 read after trans2 commit
-        sdb2.commit();
-        Assert.assertEquals(0, cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
-                new BasicBSONObject("", null)));
-        Assert.assertEquals(0,
-                cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")));
-
-        // 11 trans3 read
-        Assert.assertEquals(0, CLTrans3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
-                new BasicBSONObject("", null)));
-        Assert.assertEquals(0, CLTrans3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
-                new BasicBSONObject("", "a")));
-
+        Assert.assertEquals(0, cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)));
+        Assert.assertEquals(0, cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")));
+        
+        //11 trans3 read
+        Assert.assertEquals(0, cl3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)));
+        Assert.assertEquals(0, cl3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")));
+        
         sdb3.commit();
     }
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
-            if (sdb1 != null) {
-                sdb1.close();
-            }
-            if (sdb2 != null) {
-                sdb2.close();
-            }
-            if (sdb3 != null) {
-                sdb2.close();
-            }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
+        }
+        if( sdb1 != null ){
+            sdb1.close();
+        }
+        if( sdb2 != null ){
+            sdb2.close();
+        }
+        if( sdb3 != null ){
+            sdb3.close();
         }
     }
 
@@ -181,7 +167,7 @@ public class Transaction17834 extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            CLTrans2.delete("{'a': {'$isnull': 0}}", "{'':null}");
+            cl2.delete("{'a': {'$isnull': 0}}","{'':null}");
         }
     }
 

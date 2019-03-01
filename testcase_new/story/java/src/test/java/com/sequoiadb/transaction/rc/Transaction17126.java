@@ -29,6 +29,7 @@ public class Transaction17126 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
+    private DBCollection cl2 = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
     private DBCursor recordCur = null;
@@ -38,8 +39,10 @@ public class Transaction17126 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a:1}", true, false);
+        expDataList = new ArrayList<BSONObject>();
+        
         data = new BasicBSONObject();
         data.put("_id", "id17126");
         data.put("a", 1);
@@ -47,9 +50,6 @@ public class Transaction17126 extends SdbTestBase {
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
-        cl.createIndex("a", "{a:1}", true, false);
-        expDataList = new ArrayList<BSONObject>();
-        expDataList.add(data);
 
         data2 = new BasicBSONObject();
         data2.put("_id", "id17126");
@@ -58,23 +58,29 @@ public class Transaction17126 extends SdbTestBase {
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
 
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
     }
 
     @Test
     public void test1() {
+        
+        //1 trans1 delete R1
         sdb.beginTransaction();
+        cl.delete("{'a': 1}");
+        
+        //2 trans2 insert record R2 same as the R1
         sdb2.beginTransaction();
         try {
-            DBCollection transCL1 = sdb.getCollectionSpace(csName).getCollection(clName);
-            DBCollection transCL2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-            transCL1.delete("{'a': 1}");
-            transCL2.insert(data2);
+            cl2.insert(data2);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
+        
         sdb.rollback();
 
+        expDataList.add(data);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -89,17 +95,20 @@ public class Transaction17126 extends SdbTestBase {
 
     @Test
     public void test2() {
+        
+        //1 trans1 delete R1
         sdb.beginTransaction();
+        cl.delete("{'a': 1}");
+        
+        //2 trans2 insert record R2 same as the R1
         sdb2.beginTransaction();
         try {
-            DBCollection transCL1 = sdb.getCollectionSpace(csName).getCollection(clName);
-            DBCollection transCL2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-            transCL1.delete("{'a': {'$isnull' :0}}");
-            transCL2.insert(data2);
+            cl2.insert(data2);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
+        
         sdb.commit();
 
         Assert.assertEquals(cl.getCount(), 0);
@@ -107,18 +116,16 @@ public class Transaction17126 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
-            if (sdb2 != null) {
-                sdb2.close();
-            }
+        
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if(recordCur != null){
+            recordCur.close();
+        }
+        if( sdb != null ){
+            sdb.close();
+        }
+        if( sdb2 != null ){
+            sdb2.close();
         }
     }
 
