@@ -544,3 +544,61 @@ function attachCL( dbcl, subCLName, range )
       throw buildException("attachCL()", e, "attach cl", "attach cl success","attach cl fail");
    }
 }
+
+/*******************************************************************************
+*@Description : insert data of various data types
+*@Modify list :
+*              2019/3/1 wangkexin
+*******************************************************************************/
+function readyData( cl )
+{
+	try
+	{
+		println("\n---Begin to insert cl data.");
+		cl.insert({_id:1,Key:123});
+		cl.insert({_id:2,Key:{ "$numberLong" : "3000000000" }});
+		cl.insert({_id:3,Key:123.456});
+		cl.insert({_id:4,Key:{$decimal:"123.456"}});
+		cl.insert({_id:5,Key:"value"});
+		cl.insert({_id:6,Key:{ "$oid" : "123abcd00ef12358902300ef" }});
+		cl.insert({_id:7,Key:true});
+		cl.insert({_id:8,Key:{ "$date" : "2012-01-01" }});
+		cl.insert({_id:9,Key:{ "$timestamp" : "2012-01-01-13.14.26.124233" }});
+		cl.insert({_id:10,Key:{ "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" }});
+		cl.insert({_id:11,Key:{ "$regex" : "^张", "$options" : "i" }});
+		cl.insert({_id:12,Key:{ "subobj" : "value" }});
+		cl.insert({_id:13,Key:[ "abc", 0, "def" ]});
+		cl.insert({_id:14,Key:null});
+		cl.insert({_id:15,Key:{"$minKey": 1 }});
+		cl.insert({_id:16,Key:{"$maxKey": 1 }});
+	}
+	catch(e)
+	{
+		throw buildException("readyData()",e,"insert", "insert success","insert fail");
+	}
+}
+
+/*******************************************************************************
+*@Description : check cl data
+*@Modify list :
+*              2019/3/1 wangkexin
+*******************************************************************************/
+function checkCLData( rc, expRecs, expCnt )
+{
+   println("\n---Begin to check cl data.");
+   var recsArray = [];
+   while( tmpRecs = rc.next() )
+   {
+	   recsArray.push( tmpRecs.toObj() );
+   }
+   var expCnt = 16;
+   var actCnt  = recsArray.length;
+   var actRecs = JSON.stringify( recsArray );
+   if( actCnt !== expCnt || actRecs !== expRecs )
+   {
+	   throw buildException( "checkCLdata", null, "[find]",
+		  "[cnt:"+ expCnt +", recs:"+ expRecs +"]",
+		  "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
+   }
+   println( "cl records: "+ actRecs );
+}
