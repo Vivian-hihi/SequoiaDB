@@ -74,12 +74,12 @@ namespace engine
       // indicate if the scanner need to wait for lock
       //BOOLEAN                  _transLockwait;
 
-      // keep index and disk storage related information so that we can 
+      // keep index and disk storage related information so that we can
       // access extent on disk to validate if the index is still valid.
       // We can not simply rely on cached pointers to the in memory tree
-      // to tell if the index have changed or not. The easiest way is to 
+      // to tell if the index have changed or not. The easiest way is to
       // look up the extent header of the root page. The alternative is to
-      // go through the lock manager and follow through the lrbHdr. 
+      // go through the lock manager and follow through the lrbHdr.
       // However, another benefit of having following two poiter is to build
       // ixmExtent so that we can reuse its keyCmp function.(can we make the
       // keyCmp() static function instead)
@@ -101,7 +101,7 @@ namespace engine
       // which should be avoided. Thus we keep a set ( maybe we can further
       // improve performance by customize data structure ) to record id that
       // already scanned.
-      // note that a record id will not be changed during update because it 
+      // note that a record id will not be changed during update because it
       // will use overflowed record with existing record head
       scannerSharedInfo        _sharedInfo;
 /*
@@ -192,7 +192,7 @@ namespace engine
       {
          return _indexLID ;
       }
- 
+
       dmsStorageUnitID getCSID() const
       {
          return _su->CSID();
@@ -213,12 +213,12 @@ namespace engine
          return _sharedInfo.getDupBuf();
       }
 
-      const BOOLEAN initialized () const 
+      const BOOLEAN initialized () const
       {
          return _initialized;
       }
 
-      const BOOLEAN isValid () const 
+      const BOOLEAN isValid () const
       {
          // when we haven't done first run, consider it as valid
          return ( _isValid || !_init );
@@ -230,7 +230,7 @@ namespace engine
          _curIndexRID.reset() ;
          _listIterator.reset() ;
          if ( _sharedInfo.isLocal() )
-         { 
+         {
             _sharedInfo.getDupBuf()->clear() ;
          }
          _init    = FALSE ;
@@ -260,6 +260,12 @@ namespace engine
                                   BOOLEAN &isSame ) ;
 
       virtual void  removeDuplicatRID( const dmsRecordID &rid ) ;
+
+   protected:
+      rtnPredicateListIterator* getPredicateListInterator ()
+      {
+         return &_listIterator ;
+      }
 
    } ;
    typedef class _rtnDiskIXScanner rtnDiskIXScanner ;

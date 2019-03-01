@@ -2771,8 +2771,51 @@ namespace engine
       PD_TRACE_EXIT ( SDB__RTNPREDLISTITE_RESET ) ;
    }
 
-   // Description: 
-   //   Based on the current index key object, advance the predicate list 
+   INT32 _rtnPredicateListIterator::syncState(
+                                      const _rtnPredicateListIterator *source )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 i = 0 ;
+      if ( _predList._predicates.size()
+           != source->_predList._predicates.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Predlist's size must be same. size: %d, "
+                 "sourceSize: %d, rc: %d", _predList._predicates.size(),
+                 source->_predList._predicates.size(), rc ) ;
+         goto error ;
+      }
+
+      for ( i = 0; i < (INT32)_cmp.size(); ++i )
+      {
+         _cmp[i] = source->_cmp[i] ;
+      }
+
+      for ( i = 0; i < (INT32)_inc.size(); ++i )
+      {
+         _inc[i] = source->_inc[i] ;
+      }
+
+      for ( i = 0; i < (INT32)_currentKey.size(); ++i )
+      {
+         _currentKey[i] = source->_currentKey[i] ;
+      }
+
+      for ( i = 0; i < (INT32)_prevKey.size(); ++i )
+      {
+         _prevKey[i] = source->_prevKey[i] ;
+      }
+
+      _after = source->_after ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // Description:
+   //   Based on the current index key object, advance the predicate list
    //   iterator if needed
    // Input:
    //   curr: current index key object

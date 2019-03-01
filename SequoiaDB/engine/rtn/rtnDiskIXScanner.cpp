@@ -188,7 +188,7 @@ namespace engine
    error :
       goto done ;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDISKIXSCAN_RELORID2, "_rtnDiskIXScanner::relocateRID" )
    INT32 _rtnDiskIXScanner::relocateRID ()
    {
@@ -249,7 +249,7 @@ namespace engine
                                _order, _direction, _cb ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, 
+            PD_LOG ( PDERROR,
                      "failed to locate first key, rc: %d, rootExtent: %d",
                      rc, rootExtent ) ;
             goto error ;
@@ -332,9 +332,9 @@ namespace engine
             }
             // if both on recordRID and key object are the same, let's
             // say the index is not changed, that means we should move on
-            // to the next. The exception is in merge scan can, if merge 
-            // detected invalid, it already did relocated. So we shouldn't 
-            // advance to the next key in that case. 
+            // to the next. The exception is in merge scan can, if merge
+            // detected invalid, it already did relocated. So we shouldn't
+            // advance to the next key in that case.
             else if ( _sharedInfo.isLocal() || this->isValid() )
             {
                rc = indexExtent.advance ( _curIndexRID, _direction ) ;
@@ -436,7 +436,7 @@ namespace engine
                // make sure the RID we read is not psuedo-deleted
                if ( _savedRID.isNull()                       ||
                     ( _sharedInfo.isLocal() &&
-                      ( _sharedInfo.getDupBuf()->end() != 
+                      ( _sharedInfo.getDupBuf()->end() !=
                         _sharedInfo.getDupBuf()->find ( _savedRID ) ) ) )
                {
                   // usually this means a psuedo-deleted rid, we should jump
@@ -456,7 +456,7 @@ namespace engine
                   goto error ;
                }*/
                if ( _sharedInfo.isLocal() )
-               { 
+               {
                   _sharedInfo.getDupBuf()->insert ( _savedRID ) ;
                }
 
@@ -468,7 +468,7 @@ namespace engine
                   UINT16 idxslot = _curIndexRID._slot;
                   SINT32 ext = rid._extent;
                   SINT32 offset = rid._offset;
-                  PD_TRACE4( SDB__RTNDISKIXSCAN_ADVANCE, 
+                  PD_TRACE4( SDB__RTNDISKIXSCAN_ADVANCE,
                              PD_PACK_INT(idxext), PD_PACK_UINT(idxslot),
                              PD_PACK_INT(ext), PD_PACK_INT(offset) ) ;
                }
@@ -562,8 +562,8 @@ namespace engine
    done:
 #ifdef _DEBUG
       PD_LOG ( PDDEBUG, "Disk IX Scanner pauseScan, "
-               "_isReadOnly=%d, _savedObj=%s, _savedRID=(%d, %d)", 
-                _isReadOnly, _savedObj.toString().c_str(), 
+               "_isReadOnly=%d, _savedObj=%s, _savedRID=(%d, %d)",
+                _isReadOnly, _savedObj.toString().c_str(),
                 _savedRID._extent, _savedRID._offset );
 #endif
       PD_TRACE_EXITRC ( SDB__RTNDISKIXSCAN_PAUSESCAN, rc ) ;
@@ -636,7 +636,7 @@ namespace engine
       // for write mode, since we write _savedRID and _savedObj in advance, we
       // don't do it here, so let's jump to done directly. However:
       // Another transaction might have updated the record and index under us
-      // while we are waiting for the record lock. We must re-evaluate the 
+      // while we are waiting for the record lock. We must re-evaluate the
       // index value with the savedObj to make sure we are still looking at
       // the same index value. Now is good because we have _isValid flag setup
       if ( !_isReadOnly )
@@ -650,9 +650,9 @@ namespace engine
          // reset _savedRID so that we'll call advance()
          _savedRID.reset() ;
       }
-      // do relocate if this is local disk scan. Otherwise the mergescan 
-      // will do relocateRID call based on globally saved obj/rid. 
-      else if ( _sharedInfo.isLocal() )  
+      // do relocate if this is local disk scan. Otherwise the mergescan
+      // will do relocateRID call based on globally saved obj/rid.
+      else if ( _sharedInfo.isLocal() )
       {
          // when we get here, it means something changed and we need to
          // relocateRID
@@ -773,5 +773,4 @@ namespace engine
    error:
       goto done ;
    }
-
 }

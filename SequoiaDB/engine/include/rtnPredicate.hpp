@@ -623,6 +623,7 @@ namespace engine
       const vector<BOOLEAN> &inc() const { return _inc ; }
       void reset() ;
       BOOLEAN after() { return _after ; }
+      INT32 syncState( const _rtnPredicateListIterator *source ) ;
    private :
       rtnPredicateCompareResult
             validateCurrentStartStopKey ( INT32 keyIdx,

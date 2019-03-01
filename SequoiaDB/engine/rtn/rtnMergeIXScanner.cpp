@@ -62,7 +62,7 @@ namespace engine
       {
          _sharedInfo.init();
       }
-      else 
+      else
       {
          _sharedInfo.init(sharedInfo);
       }
@@ -79,11 +79,11 @@ namespace engine
       scannerFactory f;
       SDB_ASSERT ( indexCB && predList && su,
                    "indexCB, predList and su can't be NULL" ) ;
-      _leftIXScanner = f.getScanner( ltype, indexCB, predList, su, 
-                                     cb, &_sharedInfo );   
-      _rightIXScanner = f.getScanner( rtype, indexCB, predList, su, 
+      _leftIXScanner = f.getScanner( ltype, indexCB, predList, su,
+                                     cb, &_sharedInfo );
+      _rightIXScanner = f.getScanner( rtype, indexCB, predList, su,
                                       cb, &_sharedInfo );
-      SDB_ASSERT ( _leftIXScanner && _rightIXScanner, 
+      SDB_ASSERT ( _leftIXScanner && _rightIXScanner,
                    "Merge IX scanner creation failed" ) ;
    }
 
@@ -93,7 +93,7 @@ namespace engine
 #ifdef _DEBUG
       PD_LOG ( PDDEBUG, "Freeing IX Merge Scanner." );
 #endif
-      if ( _leftIXScanner ) 
+      if ( _leftIXScanner )
       {
          SDB_OSS_DEL _leftIXScanner;
       }
@@ -122,21 +122,21 @@ namespace engine
       BOOLEAN   rightValid ;
 
    begin:
-      leftDone  = _leftIXScanner->eof();  
-      rightDone = _rightIXScanner->eof();  
+      leftDone  = _leftIXScanner->eof();
+      rightDone = _rightIXScanner->eof();
       leftInit  = _leftIXScanner->initialized();
       rightInit = _rightIXScanner->initialized();
       leftValid = _leftIXScanner->isValid() ;
       rightValid = _rightIXScanner->isValid() ;
 
-      SDB_ASSERT( ( leftInit || rightInit ), 
-                  "At least one scanner must be initilized"); 
+      SDB_ASSERT( ( leftInit || rightInit ),
+                  "At least one scanner must be initilized");
 
       if ( ( leftDone || !leftInit ) && ( rightDone || !rightInit ) )
       {
          rc = SDB_IXM_EOC;
          PD_LOG ( PDDEBUG, "IX Merge Scanner has reach the end." );
-              
+
          goto done;
       }
       // quick return if one of the scanner is finished or is not
@@ -148,8 +148,8 @@ namespace engine
          {
             rc = _rightIXScanner->advance( _rrid ) ;
          }
-         // else 
-         
+         // else
+
          rid =  _rrid;
          _wasFromLeft = FALSE;
          goto done ;
@@ -174,13 +174,13 @@ namespace engine
          rcr = _rightIXScanner->advance( _rrid ) ;
          _firstRun = FALSE;
       }
-      // otherwise 
+      // otherwise
       else
       {
          if ( _wasFromLeft || !leftValid )
          {
             // last index used was from left scanner, or left became invalid
-            // after resume, we need to advance left 
+            // after resume, we need to advance left
             rcl = _leftIXScanner->advance( _lrid ) ;
          }
          if ( !_wasFromLeft || !rightValid )
@@ -196,7 +196,7 @@ namespace engine
       {
          rcl = SDB_OK;
          if ( rightDone )
-         { 
+         {
             rc = SDB_IXM_EOC;
          }
          else
@@ -207,12 +207,12 @@ namespace engine
          _wasFromLeft = FALSE;
          goto done;
       }
-         
+
       if( SDB_IXM_EOC == rcr )
       {
          rcr = SDB_OK;
          if ( rightDone )
-         { 
+         {
             rc = SDB_IXM_EOC;
          }
          else
@@ -223,14 +223,14 @@ namespace engine
          _wasFromLeft = TRUE;
          goto done;
       }
-      
+
       // in case of any other errors, goto error
       if( SDB_OK != rcl || SDB_OK != rcr )
       {
          rc = (rcl!= SDB_OK) ? rcl : rcr;
          goto error;
       }
-      // if we reach here, both scanners did return valid rid, 
+      // if we reach here, both scanners did return valid rid,
       // now compare index value from both scanners and return the one
       // come to the front.
       {
@@ -265,10 +265,10 @@ namespace engine
       }
 #ifdef _DEBUG
       PD_LOG ( PDDEBUG, "IX Merge Scanner advance, rc=%d, "
-               "_wasFromLeft=%d, rid=(%d, %d)", 
+               "_wasFromLeft=%d, rid=(%d, %d)",
                rc, _wasFromLeft, rid._extent, rid._offset );
 
-      PD_TRACE1 ( SDB__RTNMERGEIXSCAN_ADVANCE, 
+      PD_TRACE1 ( SDB__RTNMERGEIXSCAN_ADVANCE,
                   PD_PACK_INT(_wasFromLeft) ) ;
 #endif
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_ADVANCE, rc ) ;
@@ -302,7 +302,7 @@ namespace engine
          rc = rcl;
          goto error;
       }
-      
+
       rcr = _rightIXScanner->resumeScan( );
       if( SDB_OK != rcr && (SDB_IXM_EOC != rcr) )
       {
@@ -346,6 +346,19 @@ namespace engine
                goto error;
             }
          }
+
+         if ( !_wasFromLeft )
+         {
+            rc = _leftIXScanner->SyncPredStatus( _rightIXScanner ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to sync predList state."
+                         " rc: %d", rc ) ;
+         }
+         else
+         {
+            rc = _rightIXScanner->SyncPredStatus( _leftIXScanner ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to sync predList state."
+                         " rc: %d", rc ) ;
+         }
       }
    done :
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_RESUMESCAN, rc ) ;
@@ -373,15 +386,15 @@ namespace engine
          goto error;
       }
 
-      // globally save the obj and rid incase things changed after resume, 
+      // globally save the obj and rid incase things changed after resume,
       // at which time we need to do relocateRID based on these saved value
       _savedRID = getSavedRIDFromChild() ;
       _savedObj = getSavedObjFromChild()->copy() ;
-      
+
 #ifdef _DEBUG
       PD_LOG ( PDDEBUG, "IX Merge Scanner pauseScan, "
-               "_wasFromLeft=%d, _savedObj=%s, _savedRID=(%d, %d)", 
-                _wasFromLeft, _savedObj.toString().c_str(), 
+               "_wasFromLeft=%d, _savedObj=%s, _savedRID=(%d, %d)",
+                _wasFromLeft, _savedObj.toString().c_str(),
                 _savedRID._extent, _savedRID._offset );
 #endif
    done :

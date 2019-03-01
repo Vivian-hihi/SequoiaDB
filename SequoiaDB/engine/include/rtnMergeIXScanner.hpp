@@ -63,10 +63,10 @@ namespace engine
    // Index merge scanner is used to merge results from different scanner.
    // For instance, we have a scanner to traverse on disk index trees; we
    // also have in memory index tree to track previously committed indexes.
-   // As part of index scan, if a transaction require RC level isolation, 
+   // As part of index scan, if a transaction require RC level isolation,
    // it will use this merge scanner to retrieve the last committed version
    // record including the data on disk and in memory. In this case, we can
-   // instantiate the two scanner member to rtnDiskScanner and 
+   // instantiate the two scanner member to rtnDiskScanner and
    // rtnMemIXTreeScanner
    class _rtnMergeIXScanner : public rtnIXScanner
    {
@@ -157,19 +157,19 @@ namespace engine
 
       const BSONObj * getSavedObjFromChild () const
       {
-         return _wasFromLeft 
+         return _wasFromLeft
               ?  _leftIXScanner->getSavedObj()
               :  _rightIXScanner->getSavedObj();
       }
 
       dmsRecordID getSavedRIDFromChild () const
       {
-         return _wasFromLeft 
+         return _wasFromLeft
               ?  _leftIXScanner->getSavedRID()
               :  _rightIXScanner->getSavedRID() ;
       }
 
-      scannerSharedInfo * getSharedInfo() 
+      scannerSharedInfo * getSharedInfo()
       {
          return &_sharedInfo;
       }
@@ -181,7 +181,7 @@ namespace engine
 
       const BSONObj* getCurKeyObj() const
       {
-         SDB_ASSERT( _leftIXScanner && _rightIXScanner, 
+         SDB_ASSERT( _leftIXScanner && _rightIXScanner,
                     " merge scanner is not setup properly " );
          return  _wasFromLeft ? _leftIXScanner->getCurKeyObj() :
                                 _rightIXScanner->getCurKeyObj();
@@ -189,7 +189,7 @@ namespace engine
 
       dmsExtentID getIdxLID() const
       {
-         SDB_ASSERT( _leftIXScanner && _rightIXScanner, 
+         SDB_ASSERT( _leftIXScanner && _rightIXScanner,
                     " merge scanner is not setup properly " );
          // left and right should be built with the same indexCB, thus same LID
          return _leftIXScanner->getIdxLID();
@@ -211,7 +211,7 @@ namespace engine
          return SDB_SYS;
       };
 
-      const BOOLEAN initialized() const 
+      const BOOLEAN initialized() const
       {
          BOOLEAN rc = FALSE;
          if ( (_rightIXScanner && _rightIXScanner->initialized())  ||
@@ -229,19 +229,19 @@ namespace engine
 
       const MEMTREE_LATCH_MODE getMemtreeLatchMode()
       {
-         return _leftIXScanner->getMemtreeLatchMode(); 
+         return _leftIXScanner->getMemtreeLatchMode();
       }
 
       virtual INT32 isCursorSame( const BSONObj &saveObj,
                                   const dmsRecordID &saveRID,
                                   BOOLEAN &isSame )
       {
-         return _wasFromLeft  
-             ?  _leftIXScanner->isCursorSame( saveObj, saveRID, isSame ) 
+         return _wasFromLeft
+             ?  _leftIXScanner->isCursorSame( saveObj, saveRID, isSame )
              :  _rightIXScanner->isCursorSame( saveObj, saveRID, isSame );
       }
 
-      virtual void  removeDuplicatRID( const dmsRecordID &rid ) 
+      virtual void  removeDuplicatRID( const dmsRecordID &rid )
       {
          // do local remove inside merge Scanner
          _sharedInfo.getDupBuf()->erase( rid ) ;

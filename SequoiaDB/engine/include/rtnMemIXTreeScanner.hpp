@@ -81,18 +81,18 @@ namespace engine
       // set to true by relocateRID or first run of advance.
       // indicate if have done first run which will call keyLocate to point
       // _curIndexIter to a best starting point
-      BOOLEAN                   _init ; 
+      BOOLEAN                   _init ;
 
 
       // Track the current index iterator location under proper protection.
       // This could become invalid if the index is erased from the tree
-      // even worse case, if someone reused the same memory, they could 
+      // even worse case, if someone reused the same memory, they could
       // set some other information. So this iterator only gives a quick
       // access to previous locationr. As soon as we released the tree latch
       // you can no longer trust the information. We have to re-validate the
       // content (key information) in second against _curKeyObj. If they don't
       // match, we have to do a relocateRID based on savedObj.
-      // If we hold tree latch, after calling relocateRID, we can simply 
+      // If we hold tree latch, after calling relocateRID, we can simply
       // manipulate the iterator towards the direction. We can always store
       // current key value in _curKeyObj for computation/comparison purpose.
       INDEX_BINARY_TREE::iterator _curIndexIter;
@@ -108,8 +108,8 @@ namespace engine
       // note that a record id will not be changed during update because it will
       // use overflowed record with existing record head
       // we used a pointer here because the memIXTreeScanner are likely used
-      // together with another scanner (like disk scanner), we should share 
-      // the same dupBuffer. 
+      // together with another scanner (like disk scanner), we should share
+      // the same dupBuffer.
       scannerSharedInfo         _sharedInfo;
 /*
       UINT64                    _dedupBufferSize ;
@@ -117,18 +117,18 @@ namespace engine
 */
       // After releasing mbLatch and treeLatch, another session may change
       // the index structure. So everytime before pause, we must store
-      // the current index key value into _savedInMemObj, and the rid into 
-      // dmsRecordID. After resume, verify if it's still remaining the same. 
+      // the current index key value into _savedInMemObj, and the rid into
+      // dmsRecordID. After resume, verify if it's still remaining the same.
       // If the object doens't match the obj/rid in LRBHdr, something must
       // goes changed and we should relocate
-      // Because malloc is involved during the saving, we should only setup 
+      // Because malloc is involved during the saving, we should only setup
       // the BSONObj during pause(), otherwise it would affect runtime perf.
       BSONObj                   _savedInMemObj ;
       dmsRecordID               _savedRID ;
 
       UINT32                    _csID;      // collection space id
       UINT32                    _clID;      // collection id
-      OID                       _indexOID ; // index oid, 
+      OID                       _indexOID ; // index oid,
       dmsExtentID               _indexLID;  // index logic id
 
       BOOLEAN                   _isReadOnly;
@@ -138,7 +138,7 @@ namespace engine
       preIdxTree               *_memIdxTree;
       // Protocal to take and hold tree latch:
       // During tree scan (advance), we will hold the treeLatch so that commit
-      // or rollback won't remove the nodes from the tree while scanner is 
+      // or rollback won't remove the nodes from the tree while scanner is
       // walking over the tree. The latch is aquired by resume and released
       // by pause.
       BOOLEAN                   _treeLatchHeld;
@@ -178,7 +178,7 @@ namespace engine
          return _indexLID ;
       }
 
-      INDEX_BINARY_TREE::iterator getCurIndexIter () 
+      INDEX_BINARY_TREE::iterator getCurIndexIter ()
       {
          return _curIndexIter;
       }
@@ -241,7 +241,7 @@ namespace engine
       const MEMTREE_LATCH_MODE getMemtreeLatchMode()
       {
          MEMTREE_LATCH_MODE m = MEMTREE_LATCH_NONE;
-         if( _treeLatchHeld ) 
+         if( _treeLatchHeld )
          {
             m = _latchX ? MEMTREE_LATCH_X : MEMTREE_LATCH_S;
          }
@@ -278,11 +278,16 @@ namespace engine
                                   const dmsRecordID &saveRID,
                                   BOOLEAN &isSame ) ;
 
-      virtual void  removeDuplicatRID( const dmsRecordID &rid ) 
+      virtual void  removeDuplicatRID( const dmsRecordID &rid )
       {
          _sharedInfo.getDupBuf()->erase( rid ) ;
       }
 
+   protected:
+      rtnPredicateListIterator* getPredicateListInterator ()
+      {
+         return &_listIterator ;
+      }
 
    } ;
    typedef class _rtnMemIXTreeScanner rtnMemIXTreeScanner ;

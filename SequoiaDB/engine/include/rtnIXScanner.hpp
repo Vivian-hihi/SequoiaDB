@@ -57,7 +57,7 @@ namespace engine
    class _pmdEDUCB;
 
    #define RTN_IXSCANNER_DEDUPBUFSZ_DFT      (1024*1024)
- 
+
    // define type of index scanners
    enum IXScannerType
    {
@@ -91,7 +91,7 @@ namespace engine
 
       void init( _scannerSharedInfo* sharedInfo )
       {
-         // when dupBuff is created in merge scan, don't store and do 
+         // when dupBuff is created in merge scan, don't store and do
          // dedup in local scanner
          this->_dedupBufferSize = 0;
          this->_dupBuffer = NULL;
@@ -142,18 +142,18 @@ namespace engine
    */
    class _rtnIXScanner : public SDBObject
    {
-      
-      public:
+
+   public:
       _rtnIXScanner() {};
-      _rtnIXScanner( ixmIndexCB       *indexCB, 
+      _rtnIXScanner( ixmIndexCB       *indexCB,
                      rtnPredicateList *predList,
-                     _dmsStorageUnit  *su, 
+                     _dmsStorageUnit  *su,
                      _pmdEDUCB        *cb,
                      scannerSharedInfo * sharedInfo = NULL ) {};
 
       virtual ~_rtnIXScanner() {};
 
-      public:
+   public:
       virtual INT32 advance ( dmsRecordID &rid ) = 0;
       virtual INT32 resumeScan( ) = 0 ;
       virtual INT32 pauseScan( ) = 0;
@@ -172,17 +172,17 @@ namespace engine
       virtual dmsRecordID getSavedRID () const = 0;
       virtual const BSONObj * getSavedObj () const = 0;
 
-      // Dummy virtual functions. Defined here so that not all derived 
+      // Dummy virtual functions. Defined here so that not all derived
       // class need to implement them. But we are not suppose to invoke them
-      virtual INT32 compareWithCurKeyObj ( const BSONObj &keyObj ) const 
+      virtual INT32 compareWithCurKeyObj ( const BSONObj &keyObj ) const
                     {return 0;}
       virtual rtnPredicateList* getPredicateList () { return NULL; }
       virtual dmsRecIDSet * getDupBuff() { return NULL; }
-      virtual const MEMTREE_LATCH_MODE  getMemtreeLatchMode() 
+      virtual const MEMTREE_LATCH_MODE  getMemtreeLatchMode()
       {
-         return MEMTREE_LATCH_NONE; 
+         return MEMTREE_LATCH_NONE;
       }
- 
+
       const UINT32 type() const
       {
          return _type;
@@ -195,17 +195,59 @@ namespace engine
 
       virtual const BOOLEAN isValid() const
       {
-         return _isValid;
+         return _isValid ;
       }
 
       virtual INT32 isCursorSame( const BSONObj &saveObj,
                                   const dmsRecordID &saveRID,
                                   BOOLEAN &isSame ) = 0 ;
 
-      virtual void  removeDuplicatRID( const dmsRecordID &rid ) = 0;
+      virtual void removeDuplicatRID( const dmsRecordID &rid ) = 0 ;
 
+      INT32 SyncPredStatus( _rtnIXScanner *source )
+      {
+         INT32 rc = SDB_OK ;
+         rtnPredicateListIterator *targetPredIter = NULL ;
+         rtnPredicateListIterator *sourcePredIter = NULL ;
+         if ( NULL == source )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG ( PDERROR, "Source can't be NULL rc:%d", rc ) ;
+            goto error ;
+         }
 
-      protected:
+         sourcePredIter = source->getPredicateListInterator() ;
+         if ( NULL == sourcePredIter )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG ( PDERROR, "Source predicate list can't be NULL rc:%d", rc ) ;
+            goto error ;
+         }
+
+         targetPredIter = getPredicateListInterator() ;
+         if ( NULL == targetPredIter )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG ( PDERROR, "Target predicate list can't be NULL rc:%d", rc ) ;
+            goto error ;
+         }
+
+         rc = targetPredIter->syncState( sourcePredIter ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to sync state rc: %d", rc ) ;
+
+      done:
+         return rc ;
+      error:
+         goto done ;
+      }
+
+   protected:
+      virtual rtnPredicateListIterator* getPredicateListInterator ()
+      {
+         return NULL;
+      }
+
+   protected:
       IXScannerType  _type;
       BOOLEAN        _eof;
       BOOLEAN        _isValid;
