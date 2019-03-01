@@ -31,6 +31,12 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  *  @Date 2018-12-21
  *  @version 1.00
  */
+
+/**
+ * update
+ * @author wangkexin
+ * @Date 2019-2-28
+ */
 public class AlterDomainAndSplit16831 extends SdbTestBase{
 
     private Sequoiadb sdb = null;
@@ -48,7 +54,7 @@ public class AlterDomainAndSplit16831 extends SdbTestBase{
             throw new SkipException("skip StandAlone");
         }
         rgList = CommLib.getDataGroupNames(sdb);
-        if (rgList.size() < 1) {
+        if (rgList.size() <= 1) {
             throw new SkipException("current environment less than tow groups ");
         }
         if(sdb.isCollectionSpaceExist(localCSName)) {
