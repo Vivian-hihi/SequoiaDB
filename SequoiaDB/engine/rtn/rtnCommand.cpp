@@ -820,11 +820,13 @@ namespace engine
                                       SDB_DPSCB *dpsCB )
    {
       PD_TRACE_ENTRY( SDB__RTNCREATECL__CLEAN ) ;
+
       if ( CMD_SPACE_SERVICE_SHARD == getFromService() )
       {
          INT32 rc = SDB_OK ;
          string nameStr( _collectionName ) ;
          string csName = nameStr.substr( 0, nameStr.find( '.' ) ) ;
+
          rc = dmsCB->dropEmptyCollectionSpace( csName.c_str(), cb, dpsCB ) ;
          if ( rc && SDB_DMS_CS_NOT_EMPTY != rc )
          {
@@ -832,7 +834,15 @@ namespace engine
             PD_LOG( PDWARNING, "Drop new created collection space[%s] failed, "
                     "rc: %d", csName.c_str(), rc ) ;
          }
+
+         /// create collection failed, so we need to clear cache
+         catAgent *pCatAgent = sdbGetShardCB()->getCataAgent() ;
+
+         pCatAgent->lock_w () ;
+         pCatAgent->clear ( collectionFullName() ) ;
+         pCatAgent->release_w () ;
       }
+
       PD_TRACE_EXIT( SDB__RTNCREATECL__CLEAN ) ;
    }
 
