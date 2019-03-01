@@ -21,7 +21,6 @@ import com.sequoiadb.transaction.TransUtils;
  * @Date 2019-01-21
  * @Version 1.00
  */
-@Test(groups = "rc")
 public class Transaction17107 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl_17107";
@@ -109,6 +108,22 @@ public class Transaction17107 extends SdbTestBase {
         // 事务1记录读
         hint = "{\"\":null}";
         cursor = cl1.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+        
+        // 事务2索引读
+        expList.addAll(insertR1s);
+        expList.addAll(insertR2s);
+        hint = "{\"\":\"a\"}";
+        cursor = cl2.query(null, null, "{_id:1}", hint);
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 事务2记录读
+        hint = "{\"\":null}";
+        cursor = cl2.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
