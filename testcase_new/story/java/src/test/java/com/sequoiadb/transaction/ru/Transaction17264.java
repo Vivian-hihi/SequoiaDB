@@ -11,7 +11,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
@@ -36,27 +35,27 @@ public class Transaction17264 extends SdbTestBase {
     private Sequoiadb db2 = null;
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
-    private BSONObject object2 = null;
+    private BSONObject object = null;
 
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cappedCL = sdb.createCollectionSpace(csName, (BSONObject) JSON.parse("{Capped:true}")).createCollection(clName,
                 (BSONObject) JSON.parse("{Capped:true, Size:1024}"));
-        BSONObject object1 = new BasicBSONObject();
+        object = new BasicBSONObject();
         long oid = 0L;
-        object1.put("_id", oid);
-        object1.put("a", 1);
-        object1.put("b", 1);
-        cappedCL.insert(object1);
-        expList.add(object1);
-        object2 = new BasicBSONObject();
+        object.put("_id", oid);
+        object.put("a", 1);
+        object.put("b", 1);
+        cappedCL.insert(object);
+        expList.add(object);
+        object = new BasicBSONObject();
         oid = 64L;
-        object2.put("_id", oid);
-        object2.put("a", 2);
-        object2.put("b", 2);
-        cappedCL.insert(object2);
-        expList.add(object2);
+        object.put("_id", oid);
+        object.put("a", 2);
+        object.put("b", 2);
+        cappedCL.insert(object);
+        expList.add(object);
     }
 
     @AfterClass
@@ -66,10 +65,6 @@ public class Transaction17264 extends SdbTestBase {
         }
         if (!db2.isClosed()) {
             db2.close();
-        }
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
-        if (cs.isCollectionExist(clName)) {
-            cs.dropCollection(clName);
         }
         if (!sdb.isClosed()) {
             sdb.dropCollectionSpace(csName);
@@ -108,9 +103,9 @@ public class Transaction17264 extends SdbTestBase {
         recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
         actList = TransUtils.getReadActList(recordsCursor);
         cl1.pop((BSONObject) JSON.parse("{LogicalID:0, Direction:1}"));
-        cl1.pop((BSONObject) JSON.parse("{LogicalID:128, Direction:-1}"));
+        cl1.pop((BSONObject) JSON.parse("{LogicalID:" + oid + ", Direction:-1}"));
         expList.clear();
-        expList.add(object2);
+        expList.add(this.object);
 
         // 事务1读记录走表扫描
         recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
