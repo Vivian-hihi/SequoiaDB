@@ -499,6 +499,8 @@
             <move file ="${release_driver_dir}/PHP" tofile="${release_driver_dir}/PHP-${sequoiadb_version}-${platform}"/>
             <move file ="${release_driver_dir}/Postgresql" tofile="${release_driver_dir}/Postgresql-${sequoiadb_version}-${platform}"/>
             <move file ="${release_driver_dir}/Python" tofile="${release_driver_dir}/Python-${sequoiadb_version}-${platform}"/>
+            <move file ="${release_driver_dir}/Spark" tofile="${release_driver_dir}/Spark-${sequoiadb_version}-${platform}"/>
+            
             
             <tar destfile="${release_driver_dir}/C#-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
                  basedir="${release_driver_dir}" includes="C#-${sequoiadb_version}-${platform}/**/*"/>
@@ -514,6 +516,8 @@
                  basedir="${release_driver_dir}" includes="Postgresql-${sequoiadb_version}-${platform}/**/*"/>
             <tar destfile="${release_driver_dir}/Python-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
                  basedir="${release_driver_dir}" includes="Python-${sequoiadb_version}-${platform}/**/*"/>     
+            <tar destfile="${release_driver_dir}/Spark-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
+                 basedir="${release_driver_dir}" includes="Spark-${sequoiadb_version}-${platform}/**/*"/>    
          </then>
       </if>
       
