@@ -29,14 +29,14 @@ protected:
       INT32 rc = SDB_OK ;
       cs = SDB_INVALID_HANDLE ;
       cl = SDB_INVALID_HANDLE ;
-      csName = "csname_16623_16624_16654";
+      csName = "csname_16623_16624_16654" ;
       clName = "clname_16623_16624_16654" ;
       clFullName = "csname_16623_16624_16654.clname_16623_16624_16654" ; 
       testBase::SetUp() ;
    }
    void TearDown() 
    {
-      if( shouldClear() )
+      if( !isStandalone( db ) && shouldClear() )
       {
          INT32 rc = sdbDropCollectionSpace( db, csName ) ;
          ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
@@ -52,21 +52,26 @@ TEST_F( autoIncrementSequence16623_16624_16654, createDropAutoIncrement16623_166
    INT32 rc = SDB_OK ;
    sdbCursorHandle cursor = 0 ;
 
+   if ( isStandalone( db ) )
+   {
+      return ;      
+   }
+
    // create cs
    rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
 
    bson field ;
-   bson_init( &field );
-   bson_append_string( &field, "Field", "a" );
+   bson_init( &field ) ;
+   bson_append_string( &field, "Field", "a" ) ;
    bson_finish( &field ) ;
 
    // invalid cl handle
-   rc = sdbCreateAutoIncrement( cl, &field );
+   rc = sdbCreateAutoIncrement( cl, &field ) ;
    ASSERT_EQ( -6, rc ) << "should create autoIncrement fail with invalid handle" ;
-   rc = sdbDropAutoIncrement( cl, &field );
+   rc = sdbDropAutoIncrement( cl, &field ) ;
    ASSERT_EQ( -6, rc ) << "should drop autoIncrement fail with invalid handle" ;
-   bson_destroy( &field );
+   bson_destroy( &field ) ;
 
    // create cl
    rc = sdbCreateCollection( cs, clName, &cl ) ;
@@ -84,27 +89,27 @@ TEST_F( autoIncrementSequence16623_16624_16654, createDropAutoIncrement16623_166
 
    // invalid field
    bson invaildField ;
-   bson_init( &invaildField );
-   bson_append_int( &invaildField, "Field", 1 );
+   bson_init( &invaildField ) ;
+   bson_append_int( &invaildField, "Field", 1 ) ;
    bson_finish( &invaildField ) ;
-   rc = sdbCreateAutoIncrement( cl, &invaildField );  
+   rc = sdbCreateAutoIncrement( cl, &invaildField ) ;
    ASSERT_EQ( -6, rc ) << "should create autoIncrement fail with invalid field" ;
-   rc = sdbDropAutoIncrement(cl, &invaildField);
+   rc = sdbDropAutoIncrement(cl, &invaildField) ;
    ASSERT_EQ( -6, rc ) << "should drop autoIncrement fail with invalid field" ;
    bson_destroy( &invaildField ) ; 
 
    // create autoincrement
-   bson_init( &field );
-   bson_append_string( &field, "Field", "a" );
-   bson_append_int( &field, "Increment", 2 );
-   bson_append_int( &field, "StartValue", 2 );
-   bson_append_int( &field, "MinValue", 2 );
-   bson_append_int( &field, "CacheSize", 2000 );
-   bson_append_int( &field, "AcquireSize", 1500 );
-   bson_append_bool( &field, "Cycled", true );
+   bson_init( &field ) ;
+   bson_append_string( &field, "Field", "a" ) ;
+   bson_append_int( &field, "Increment", 2 ) ;
+   bson_append_int( &field, "StartValue", 2 ) ;
+   bson_append_int( &field, "MinValue", 2 ) ;
+   bson_append_int( &field, "CacheSize", 2000 ) ;
+   bson_append_int( &field, "AcquireSize", 1500 ) ;
+   bson_append_bool( &field, "Cycled", true ) ;
    bson_finish( &field ) ; 
-   rc = sdbCreateAutoIncrement( cl, &field );
-   ASSERT_EQ( SDB_OK, rc ) << "fail to create autoincrement ";
+   rc = sdbCreateAutoIncrement( cl, &field ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to create autoincrement " ;
    bson_destroy( &field ) ;
 
    // insert
@@ -118,7 +123,7 @@ TEST_F( autoIncrementSequence16623_16624_16654, createDropAutoIncrement16623_166
    bson_destroy ( &doc ) ;
 
    // get sequence name
-   bson matcher;
+   bson matcher ;
    bson_init( &matcher ) ;
    bson_append_string( &matcher, "Name", clFullName ) ;
    bson_finish( &matcher ) ;
@@ -160,8 +165,8 @@ TEST_F( autoIncrementSequence16623_16624_16654, createDropAutoIncrement16623_166
   rc = sdbNext( cursor, &autoIncObj ) ;
   ASSERT_EQ( SDB_OK, rc ) << "fail to next" ;
 
-  INT32 acquireSize, cacheSize, increment, minValue, startValue;
-  BOOLEAN cycled;
+  INT32 acquireSize, cacheSize, increment, minValue, startValue ;
+  BOOLEAN cycled ;
 
   bson_find( &it, &autoIncObj, "AcquireSize" ) ;
   acquireSize = bson_iterator_int( &it ) ;
@@ -191,11 +196,11 @@ TEST_F( autoIncrementSequence16623_16624_16654, createDropAutoIncrement16623_166
   sdbCloseCursor( cursor ) ;
 
   // drop not exist autoincrement 
-  bson nonExistField;
+  bson nonExistField ;
   bson_init( &nonExistField ) ;
   bson_append_string( &nonExistField, "Field", "non_exist" ) ;
   bson_finish( &nonExistField ) ;
-  rc = sdbDropAutoIncrement( cl, &nonExistField );
+  rc = sdbDropAutoIncrement( cl, &nonExistField ) ;
   ASSERT_EQ( -333, rc ) << "fail to drop not exisit autoincrement" ;
   bson_destroy( &nonExistField ) ;
 
@@ -216,7 +221,7 @@ TEST_F( autoIncrementSequence16623_16624_16654, createDropAutoIncrement16623_166
   rc = sdbNext( cursor, &autoIncObj ) ;
   bson_print( &autoIncObj ) ;
   ASSERT_EQ( SDB_DMS_EOC, rc ) << "fail to next" << rc ;
-//  SDB_ASSERT(NULL == autoIncObj, "autoIncObj is NULL");
+  //ASSERT_TRUE( bson_is_empty( &autoIncObj )) ;
   bson_destroy( &matcher ) ;
   bson_destroy( &autoIncObj ) ;
   sdbReleaseCursor( cursor ) ;
@@ -228,19 +233,24 @@ TEST_F( autoIncrementSequence16623_16624_16654, createAlterCollection16654 )
    INT32 rc = SDB_OK ;
    sdbCursorHandle cursor = 0 ;
 
+   if ( isStandalone( db ) )
+   {
+      return ;
+   }
+
    // create cs 
    rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
 
    // create cl with autoincrement
    bson field ;
-   bson_init( &field );
+   bson_init( &field ) ;
    bson_append_start_object( &field, "AutoIncrement" ) ;
-   bson_append_string( &field, "Field", "a" );
-   bson_append_int( &field, "Increment", 5 );
-   bson_append_int( &field, "CacheSize", 3000 );
-   bson_append_int( &field, "AcquireSize", 100 );
-   bson_append_finish_object( &field );
+   bson_append_string( &field, "Field", "a" ) ;
+   bson_append_int( &field, "Increment", 5 ) ;
+   bson_append_int( &field, "CacheSize", 3000 ) ;
+   bson_append_int( &field, "AcquireSize", 100 ) ;
+   bson_append_finish_object( &field ) ;
    bson_finish( &field ) ;
    rc = sdbCreateCollection1( cs, clName, &field, &cl ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
@@ -318,7 +328,7 @@ TEST_F( autoIncrementSequence16623_16624_16654, createAlterCollection16654 )
    bson_append_int( &field, "Increment", 10 ) ;
    bson_append_int( &field, "CacheSize", 2500 ) ;
    bson_append_int( &field, "AcquireSize", 500 ) ;
-   bson_append_finish_object( &field );
+   bson_append_finish_object( &field ) ;
    bson_finish( &field ) ;
    rc = sdbAlterCollection( cl, &field ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -344,13 +354,13 @@ TEST_F( autoIncrementSequence16623_16624_16654, createAlterCollection16654 )
    sdbCloseCursor( cursor ) ;
 
    // alter autoincrement
-   bson_init( &field );
+   bson_init( &field ) ;
    bson_append_start_object( &field, "AutoIncrement" ) ;
-   bson_append_string( &field, "Field", "a" );
-   bson_append_int( &field, "Increment", 20 );
-   bson_append_int( &field, "CacheSize", 5000 );
-   bson_append_int( &field, "AcquireSize", 800 );
-   bson_append_finish_object( &field );
+   bson_append_string( &field, "Field", "a" ) ;
+   bson_append_int( &field, "Increment", 20 ) ;
+   bson_append_int( &field, "CacheSize", 5000 ) ;
+   bson_append_int( &field, "AcquireSize", 800 ) ;
+   bson_append_finish_object( &field ) ;
    bson_finish( &field ) ;
    rc = sdbCLSetAttributes( cl, &field ) ;
    bson_destroy( &field ) ;
@@ -379,7 +389,7 @@ TEST_F( autoIncrementSequence16623_16624_16654, createAlterCollection16654 )
    bson_init( &field ) ;
    bson_append_string( &field, "Field", "a" ) ;
    bson_finish( &field ) ;
-   rc = sdbDropAutoIncrement( cl, &field );
+   rc = sdbDropAutoIncrement( cl, &field ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to drop autoincrement " << sequenceName ;
    bson_destroy( &field ) ;
    sdbReleaseCursor( cursor ) ;
