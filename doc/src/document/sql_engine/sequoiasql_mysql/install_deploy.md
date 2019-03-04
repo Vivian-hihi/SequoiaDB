@@ -10,14 +10,14 @@
 
 **说明：**
 
-（1）产品包名字以 sequoiasql-mysql-2.9-linux_x86_64-enterprise-installer.run 为例；
+（1）产品包名字以 sequoiasql-mysql-3.2-linux_x86_64-enterprise-installer.run 为例；
 
 （2）步骤以命令行方式进行介绍，图形界面按照图像向导提示完成。
 
 - 运行安装程序  
     
   ```lang-javascript
-  # ./sequoiasql-mysql-2.9-linux_x86_64-enterprise-installer.run --mode text
+  # ./sequoiasql-mysql-3.2-linux_x86_64-enterprise-installer.run --mode text
   ```
 
   >**Note:**   
