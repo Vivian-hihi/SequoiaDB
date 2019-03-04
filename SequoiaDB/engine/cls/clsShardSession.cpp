@@ -4683,6 +4683,10 @@ namespace engine
                                              _pDmsCB, _pDpsCB ) ;
          if ( SDB_OK == rc )
          {
+            _pCatAgent->lock_w () ;
+            _pCatAgent->clearBySpaceName( cs.c_str() ) ;
+            _pCatAgent->release_w () ;
+
             rc = SDB_DMS_CS_NOTEXIST ;
          }
          if ( rc != SDB_DMS_CS_NOTEXIST )
@@ -4698,6 +4702,10 @@ namespace engine
          rc = rtnDropCollectionCommand( clName, _pEDUCB, _pDmsCB, _pDpsCB ) ;
          if ( SDB_OK == rc )
          {
+            _pCatAgent->lock_w () ;
+            _pCatAgent->clear( clName ) ;
+            _pCatAgent->release_w () ;
+
             rc = SDB_DMS_NOTEXIST ;
          }
          if ( rc != SDB_DMS_NOTEXIST )
