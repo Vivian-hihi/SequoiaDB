@@ -583,7 +583,7 @@ function readyData( cl )
 *@Modify list :
 *              2019/3/1 wangkexin
 *******************************************************************************/
-function checkCLData( rc, expRecs, expCnt )
+function checkCLData( rc, expRecs )
 {
    println("\n---Begin to check cl data.");
    var recsArray = [];
