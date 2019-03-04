@@ -18,7 +18,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description seqDB-17129 : 更新已提交记录与本事务中插入的记录唯一索引重复
+ * @Description seqDB-17129 : 更新已提交记录与本事务中更新的记录唯一索引重复
  * @author luweikang
  * @date 2019年1月15日
  */

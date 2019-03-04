@@ -78,14 +78,14 @@ public class Transaction17124 extends SdbTestBase {
 
     @Test
     public void test1() {
+        sdb.beginTransaction();
+        sdb2.beginTransaction();
         
         //1 trans1 update R1 to R2
-        sdb.beginTransaction();
         cl.update(matcher, modifier, null);
         
         //2 trans2 insert record R3 same as the R1
         try {
-            sdb2.beginTransaction();
             cl2.insert(data3);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
@@ -110,14 +110,14 @@ public class Transaction17124 extends SdbTestBase {
 
     @Test
     public void test2() {
+        sdb.beginTransaction();
+        sdb2.beginTransaction();
         
         //1 trans1 update R1 to R2
-        sdb.beginTransaction();
         cl.update(matcher, modifier, null);
         
         //2 trans2 insert record R3 same as the R1
         try {
-            sdb2.beginTransaction();
             cl2.insert(data3);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {

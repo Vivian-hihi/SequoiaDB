@@ -63,7 +63,7 @@ public class Transaction17133 extends SdbTestBase {
 
         data3 = new BasicBSONObject();
         data3.put("_id", "insert1713301");
-        data3.put("a", 3);
+        data3.put("a", 1);
         data3.put("b", 2048);
         data3.put("c", 13700000000L);
         data3.put("d", "customer transaction type data application.");
@@ -74,8 +74,7 @@ public class Transaction17133 extends SdbTestBase {
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
     }
 
-    // TODO:SEQUOIADBMAINSTREAM-4113
-    @Test(enabled = false)
+    @Test
     public void test1() {
         
         //1 trans1 delete R1
@@ -95,20 +94,19 @@ public class Transaction17133 extends SdbTestBase {
         expDataList.add(data);
         expDataList.add(data2);
         
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
+        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
+        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
     }
 
-    // TODO:SEQUOIADBMAINSTREAM-4113
-    @Test(enabled = false)
+    @Test
     public void test2() {
 
         //1 trans1 delete R1
