@@ -34,13 +34,7 @@ function main()
       var record = {a : "a" + i, b : "b" + i};
       records.push(record);
    }
-   insertRecords(dbcl, records);
-   
-   if(10000 != dbcl.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   dbcl.insert(records);
    checkFullSyncToES(csName, clName, "fullIndex_12013", 10000);
    
    var dbOperator = new DBOperator();

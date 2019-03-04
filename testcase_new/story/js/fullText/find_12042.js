@@ -20,13 +20,7 @@ function main(){
    
    var dataGenerator = new commDataGenerator();
    var records = dataGenerator.getRecords(40000, "string", ["about", "content"]);
-   insertRecords(dbcl, records);
-   
-   var recordNum = parseInt(dbcl.count());
-   if(recordNum !== 40000){
-      println("insert has an error : SEQUOIADBMAINSTREAM-3827");
-	  return;
-   }
+   dbcl.insert(records);
    
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 40000);
    

@@ -28,8 +28,7 @@ function main()
       var record = {a : "a" + i, b : "b" + i};
       records.push(record);
    }
-   
-   insertRecords(dbcl, records);
+   dbcl.insert(records);
    
    //数据分布覆盖：1个组，索引字段覆盖：非分区键
    commCreateIndex( dbcl, "fullIndex1_11989", {b : "text"});

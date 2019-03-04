@@ -45,13 +45,7 @@ function main()
    for (var i = 0; i < 10000; i++){
       objs.push({a: "zzza " + i, a0: "zzz_12051 " + i });
    }
-   insertRecords(mainCL, objs);
-   
-   if(20000 != mainCL.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   mainCL.insert(objs);
    checkMainCLFullSyncToES(COMMCSNAME, mainCLName, textIndexName, 20000);
 
    // return datas from one subcl

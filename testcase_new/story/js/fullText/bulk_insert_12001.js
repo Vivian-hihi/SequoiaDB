@@ -25,7 +25,7 @@ function main()
       {
          doc.push({a:j*10000 + i + "text"});
       }
-      insertRecords(dbcl, doc);
+      dbcl.insert(doc);
    }
    commCreateIndex( dbcl, indexName, {a:"text"});
    
@@ -36,14 +36,7 @@ function main()
       {
          doc.push({a:j*10000 + i + "text"});
       }
-      insertRecords(dbcl, doc);
-   }
-   
-   var recordNum = parseInt(dbcl.count());
-   if(recordNum !== 40000)
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return;
+      dbcl.insert(doc);
    }
    
    var dbOperator = new DBOperator();

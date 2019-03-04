@@ -25,14 +25,7 @@ function main()
    {
       objs.push({a: "test_14380_" + i, b : "testb_" + i });
    }
-   insertRecords(dbcl, objs);
-
-   // if insert fail, exit
-   if(10000 != dbcl.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   dbcl.insert(objs);
 
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
    

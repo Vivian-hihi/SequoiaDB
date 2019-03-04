@@ -23,14 +23,7 @@ function main()
    var objs = new Array();
    for(var i = 0; i < 10000; i++) {  objs.push({a: strings4 + "_" + i});  } 
    for(var i = 0; i < 10; i++) {  objs.push({a: strings1024 + "_" + i});  } 
-   insertRecords(dbcl, objs);
-
-   // if insert fail, exit
-   if(10010 != dbcl.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   dbcl.insert(objs);
 
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10010);
    

@@ -776,25 +776,6 @@ function checkInspectResult(csName, clName, checkTimes)
 }
 
 /******************************************************************************
-*@Description : insert data,skip the error -321
-@input:         dbcl
-                records
-******************************************************************************/
-function insertRecords(dbcl, records)
-{
-   try
-   {
-      dbcl.insert(records);
-   }catch(e)
-   {
-      if(e !== -321)
-      {
-         throw buildException("insertRecords", "insert records fail", "fail", e, e);  
-      }
-   }
-}
-
-/******************************************************************************
 *@Description : remove duplicate items in array
 @input:         array
 ******************************************************************************/

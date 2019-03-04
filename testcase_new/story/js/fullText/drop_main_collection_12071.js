@@ -35,13 +35,7 @@ function main()
       var record = {a : i, b : "b" + i};
       records.push(record);
    }
-   insertRecords(mainCL, records);
-   
-   if(10000 != mainCL.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   mainCL.insert(records);
    checkMainCLFullSyncToES(COMMCSNAME, mainclName, "fullIndex_12071", 10000)
    
    //删除主表

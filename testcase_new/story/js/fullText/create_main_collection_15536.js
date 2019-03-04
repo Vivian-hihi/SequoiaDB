@@ -40,13 +40,7 @@ function main()
       var record = {a : randomNum, b : "b" + i};
       records.push(record);
    }
-   insertRecords(mainCL, records);
-   
-   if(10000 != mainCL.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   mainCL.insert(records);
    checkMainCLFullSyncToES(csName, clName, textIndexName, 10000);
    
    //query

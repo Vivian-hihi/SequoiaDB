@@ -45,13 +45,7 @@ function main()
    for (var i = 0; i < 10000 ; i++){
       objs.push({a: "zzz_12062 " + i, b: "testb_" + (10000 + i) });
    }
-   insertRecords(mainCL, objs);
-   
-   if(20000 != mainCL.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   mainCL.insert(objs);
    checkMainCLFullSyncToES(COMMCSNAME, mainCLName, textIndexName, 20000);
    
    // selector field is fulltext

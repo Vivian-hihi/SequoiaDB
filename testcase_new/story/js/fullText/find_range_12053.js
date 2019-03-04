@@ -28,13 +28,7 @@ function main()
       records.push(record1);
       records.push(record2);
    }
-   insertRecords(dbcl, records);
-   
-   if(10000 != dbcl.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   dbcl.insert(records);
    
    checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12053", 10000);
    dbcl.split(groups[0][0]["GroupName"], groups[1][0]["GroupName"], {a : "c"}, {a : "g"});

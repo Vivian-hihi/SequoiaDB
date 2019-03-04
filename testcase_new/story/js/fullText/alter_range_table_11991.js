@@ -29,13 +29,7 @@ function main()
       var record = {a : "a" + i, b : "b" + i};
       records.push(record);
    }
-   insertRecords(dbcl, records);
-   
-   if(10000 != dbcl.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   dbcl.insert(records);
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
    
    //alter为range切分表，切分键覆盖：非全文索引字段
@@ -70,13 +64,7 @@ function main()
       var record = {a : "a" + i, b : "b" + i};
       records.push(record);
    }
-   insertRecords(dbcl, records);
-   
-   if(10000 != dbcl.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   dbcl.insert(records);
    checkFullSyncToES(COMMCSNAME, clName, textIndexName, 10000);
    
    dbcl.alter({ShardingType : "range", ShardingKey : {b : 1}})

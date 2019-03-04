@@ -27,7 +27,7 @@ function main()
       var record = {a : "a" + i, b : "b" + i};
       records.push(record);
    }
-   insertRecords(dbcl, records);
+   dbcl.insert(records);
    
    //数据分布覆盖：1个组，索引字段覆盖：非分区键
    commCreateIndex( dbcl, "fullIndex1_11988", {b : "text"});
@@ -87,13 +87,8 @@ function main()
       var record = {a : "a" + i, b : "b" + i};
       records.push(record);
    }
-   insertRecords(dbcl, records);
+   dbcl.insert(records);
    
-   if(10000 != dbcl.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
    //数据分布覆盖：多个组，索引字段覆盖：非分区键
    commCreateIndex( dbcl, "fullIndex3_11988", {b : "text"});
    commCheckIndex( dbcl, "fullIndex3_11988", true );

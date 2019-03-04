@@ -24,14 +24,7 @@ function main()
    {
       var rd = new commDataGenerator();
       var recs = rd.getRecords( 10000, "string", ['a', 'b'] );
-      insertRecords(dbcl, recs);
-   }
-   
-   var recordNum = parseInt(dbcl.count());
-   if(recordNum !== 30000)
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return;
+      dbcl.insert(recs);
    }
    
    var dbOperator = new DBOperator();

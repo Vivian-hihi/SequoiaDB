@@ -33,13 +33,7 @@ function main()
       var record = {a : i, b : "b" + i};
       records.push(record);
    }
-   insertRecords(mainCL, records);
-   
-   if(10000 != mainCL.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   mainCL.insert(records);
    checkMainCLFullSyncToES(COMMCSNAME, clName, "fullIndex_12069", 10000)
    
    //删除部分子表所在的集合空间

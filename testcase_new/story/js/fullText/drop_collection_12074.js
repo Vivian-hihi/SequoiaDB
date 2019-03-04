@@ -30,7 +30,7 @@ function main()
       var record = {a : "a" + i, b : "b" + i};
       records.push(record);
    }
-   insertRecords(dbcl, records);
+   dbcl.insert(records);
    var testFile = CHANGEDPREFIX + "_lobTest.file" ;
    lobGenerateFile( testFile ) ;
    dbcl.putLob(testFile);

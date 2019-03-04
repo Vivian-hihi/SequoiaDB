@@ -26,13 +26,7 @@ function main()
       var record = {a : "a" + i, b : i};
       records.push(record);
    }
-   insertRecords(dbcl, records);
-   
-   if(30000 != dbcl.count())
-   {
-      println("---insert has an err:SEQUOIADBMAINSTREAM-3827");
-      return ;
-   }
+   dbcl.insert(records);
    
    checkFullSyncToES(COMMCSNAME, clName, "fullIndex_12054", 30000);
    
