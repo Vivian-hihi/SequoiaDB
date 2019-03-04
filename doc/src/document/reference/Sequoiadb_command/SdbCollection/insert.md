@@ -10,7 +10,7 @@
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | -------- | ---- | -------- |
 | doc&#124;docs | Json 对象 | 文档记录。doc 为一条记录，docs 为多条记录。 | 是 |
-| flag | Int | 有效值为：SDB_INSERT_RETURN_ID、SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP。其中 SDB_INSERT_RETURN_ID 表示插入成功后返回记录中“_id”字段内容；SDB_INSERT_CONTONDUP 表示当发生索引建冲突时，跳过该条记录并继续插入其他记录；SDB_INSERT_REPLACEONDUP 表示当发生索引建冲突时，将已存在的记录更新为待插入的新纪录，并继续插入其他记录。默认情况下发生索引键冲突本命令失败并终止。| 否 |
+| flag | Int | 有效值为：SDB_INSERT_RETURN_ID、SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP。其中 SDB_INSERT_RETURN_ID 表示插入成功后返回记录中“_id”字段内容；SDB_INSERT_CONTONDUP 表示当发生索引键冲突时，跳过该条记录并继续插入其他记录；SDB_INSERT_REPLACEONDUP 表示当发生索引键冲突时，将已存在的记录更新为待插入的新纪录，并继续插入其他记录。默认情况下发生索引键冲突本命令失败并终止。| 否 |
 | options | Json 对象 | 指定插入的行为及结果。 | 否 |
 
 > **Note:**
@@ -24,8 +24,8 @@
 | 属性名 | 类型 | 描述 | 格式 |
 | --- | --- | --- | --- |
 | ReturnOID | Bool | 表示插入是否返回记录的"_id"字段的内容。默认为false，表示不返回。| {ReturnOID: true} |
-| ContOnDup | Bool | 为 true 时，表示当发生索引建冲突时，跳过该条记录并继续插入其他记录；为 false 时，表示当发生索引建冲突时，返回失败并终止命令；。默认值为 false。| {ContOnDup: true} |
-| ReplaceOnDup | Bool | 为 true 时，表示当发生索引建冲突时，将已存在的记录更新为待插入的新纪录，并继续插入其他记录；为 false 时，表示当发生索引建冲突时，返回失败并终止命令；。默认值为 false。| {ReplaceOnDup: true} |
+| ContOnDup | Bool | 为 true 时，表示当发生索引键冲突时，跳过该条记录并继续插入其他记录；为 false 时，表示当发生索引键冲突时，返回失败并终止命令；。默认值为 false。| {ContOnDup: true} |
+| ReplaceOnDup | Bool | 为 true 时，表示当发生索引键冲突时，将已存在的记录更新为待插入的新纪录，并继续插入其他记录；为 false 时，表示当发生索引键冲突时，返回失败并终止命令；。默认值为 false。| {ReplaceOnDup: true} |
 
 > **Note:**
 >

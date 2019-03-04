@@ -591,7 +591,8 @@ SdbCollection.prototype.insert = function ( data , arg )
 {
    if ( (typeof data) != "object" )
    {
-      throw "SdbCollection.insert(): the 1st param should be obj or array of objs";
+      throw ( "SdbCollection.insert(): the 1st param should be "
+              + "obj or array of objs" ) ;
    }
 
    var flag = 0 ;
@@ -606,7 +607,8 @@ SdbCollection.prototype.insert = function ( data , arg )
    }
    else
    {
-      throw "SdbCollection.insert(): the 2nd param if existed should be a insert flag or insert options";
+      throw ( "SdbCollection.insert(): the 2nd param if existed should be "
+              + "a insert flag or insert options" ) ;
    }
 
    if ( data instanceof Array )
