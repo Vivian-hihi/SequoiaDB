@@ -778,94 +778,63 @@ namespace seadapter
                                      seIndexMeta &idxMeta )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *clName = NULL ;
-      const CHAR *idxName = NULL  ;
-      const CHAR *cappedCLName = NULL ;
-      BSONObj idxDef ;
-      BSONObj key ;
-      BSONElement lidEle ;
-      utilCLUniqueID clUniqID = UTIL_UNIQUEID_NULL ;
-      UINT32 clLogicalID = 0 ;
-      UINT32 idxLogicalID = 0 ;
 
       try
       {
          BSONObj idxObj = ele->Obj() ;
-         clName = idxObj.getStringField( FIELD_NAME_COLLECTION ) ;
-         if ( 0 == ossStrlen( clName ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Collection name not found in index infor" ) ;
-            goto error ;
-         }
+         BSONObj::iterator itr( idxObj ) ;
 
-         cappedCLName = idxObj.getStringField( SEADPT_NAME_CAPPED_COLLECTION ) ;
-         if ( 0 == ossStrlen( cappedCLName ) )
+         while ( itr.more() )
          {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR,
-                    "Capped collection name not found in index info" ) ;
-            goto error ;
-         }
-
-         idxDef = idxObj.getObjectField( FIELD_NAME_INDEX ) ;
-         if ( idxDef.isEmpty() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "No valid index definition in index info" ) ;
-            goto error ;
-         }
-
-         key = idxDef.getObjectField( IXM_FIELD_NAME_KEY ) ;
-         if ( key.isEmpty() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "No valid key definition in index info" ) ;
-            goto error ;
-         }
-
-         idxName = idxDef.getStringField( IXM_FIELD_NAME_NAME ) ;
-         if ( 0 == ossStrlen( idxName ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Get index name from definition failed" ) ;
-            goto error ;
-         }
-
-         lidEle = idxObj.getField( FIELD_NAME_ID ) ;
-         if ( Array != lidEle.type() )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Get logical id array from definition failed" ) ;
-            goto error ;
-         }
-
-         {
-            BSONObj lidObj = lidEle.embeddedObject() ;
-            if ( 3 != lidObj.nFields() )
+            BSONElement ele = itr.next() ;
+            if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_COLLECTION ) )
             {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Logical id field size is not as expected. "
-                       "Expected: 2, Actual: %d", lidObj.nFields() ) ;
-               goto error ;
+               idxMeta.setCLName( ele.valuestrsafe() ) ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(),
+                                      SEADPT_NAME_CAPPED_COLLECTION ) )
+            {
+               idxMeta.setCappedCLName( ele.valuestrsafe() ) ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_INDEX ) )
+            {
+               BSONObj idxDef = ele.Obj() ;
+               BSONObj key ;
+               if ( idxDef.isEmpty() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG( PDERROR, "No valid index definition in index info" ) ;
+                  goto error ;
+               }
+
+               key = idxDef.getObjectField( IXM_FIELD_NAME_KEY ) ;
+               if ( key.isEmpty() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG( PDERROR, "No valid key definition in index info" ) ;
+                  goto error ;
+               }
+               idxMeta.setIdxDef( key ) ;
+               idxMeta.setIdxName( idxDef.getStringField( IXM_FIELD_NAME_NAME ) ) ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_UNIQUEID ) )
+            {
+               idxMeta.setCLUniqID( (utilCLUniqueID)ele.numberLong() ) ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_LOGICAL_ID ) )
+            {
+               idxMeta.setCLLogicalID( (UINT32)ele.numberInt() ) ;
+            }
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_INDEXLID ) )
+            {
+               idxMeta.setIdxLogicalID( (UINT32)ele.numberInt() ) ;
             }
             else
             {
-               clUniqID = (UINT32)lidObj.getIntField( "0" ) ;
-               clLogicalID = (UINT32)lidObj.getIntField( "1" ) ;
-               idxLogicalID = (UINT32)lidObj.getIntField( "2" ) ;
+               PD_LOG( PDWARNING, "Ignore unknown field[%s]",
+                       ele.toString(false, true).c_str() ) ;
             }
          }
-
-         idxMeta.setCLName( clName ) ;
-         idxMeta.setIdxName( idxName ) ;
-         idxMeta.setCappedCLName( cappedCLName ) ;
-         rc = idxMeta.setIdxDef( key ) ;
-         PD_RC_CHECK( rc, PDERROR, "Set index difinition failed[ %d ]", rc ) ;
-
-         idxMeta.setCLUniqID( clUniqID ) ;
-         idxMeta.setCLLogicalID( clLogicalID ) ;
-         idxMeta.setIdxLogicalID( idxLogicalID ) ;
 
          _genESIdxName( idxMeta ) ;
          idxMeta.setESIdxType( _peerGroupName ) ;

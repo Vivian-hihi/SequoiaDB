@@ -2956,7 +2956,7 @@ namespace engine
                                idxInfo->_indexDef.objdata(),
                                idxInfo->_indexDef.objsize() ) ;
 
-         // Append cl unique id and logical ids of cl and index as an array.
+         // Append cl unique id and logical ids of cl and index.
          // They are used by the adapter to identify different indices with the
          // same meta data.
          // (1) If cs or cl has been recreated with the same name, the cl unique
@@ -2964,11 +2964,9 @@ namespace engine
          // (2) If collection is truncated, it's logical id will change.
          // (3) If index has been recreated, the index logical id will be
          //     different.
-         BSONArrayBuilder lidObjs( builder.subarrayStart( FIELD_NAME_ID ) ) ;
-         lidObjs.append( (INT64)clInfo->_clUniqueID ) ;
-         lidObjs.append( clInfo->_logicalID ) ;
-         lidObjs.append( idxInfo->_indexLID ) ;
-         lidObjs.done() ;
+         builder.append( FIELD_NAME_UNIQUEID, (INT64)clInfo->_clUniqueID ) ;
+         builder.append( FIELD_NAME_LOGICAL_ID, clInfo->_logicalID ) ;
+         builder.append( FIELD_NAME_INDEXLID, idxInfo->_indexLID ) ;
 
          builder.done() ;
 
