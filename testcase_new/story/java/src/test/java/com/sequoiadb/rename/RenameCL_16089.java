@@ -2,10 +2,13 @@ package com.sequoiadb.rename;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -14,6 +17,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
@@ -65,7 +69,7 @@ public class RenameCL_16089 extends SdbTestBase{
 		boolean split = splitThread.isSuccess();
 		
 		if(!rename){
-			Integer[] errnosA = { -147 };
+			Integer[] errnosA = { -147, -334 };
 			BaseException errorA = (BaseException)renameCLThread.getExceptions().get(0);
 			if( !Arrays.asList(errnosA).contains(errorA.getErrorCode()) ){
 				Assert.fail(renameCLThread.getErrorMsg());
@@ -85,20 +89,20 @@ public class RenameCL_16089 extends SdbTestBase{
 				RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
 				List<String> groups = new ArrayList<String>();
 				groups.add(sourceGroup);
-				RenameUtil.checkSplitResult(db, csName, newCLName, groups);
+				checkSplitResult(db, csName, newCLName, groups);
 			}else if(!rename && split){
 				cs = db.getCollectionSpace(csName);
-				Assert.assertFalse(cs.isCollectionExist(clName), "cl is been rename faild, should not exist");
+				Assert.assertTrue(cs.isCollectionExist(clName), "cl is been rename faild, should exist");
 				List<String> groups = new ArrayList<String>();
 				groups.add(sourceGroup);
 				groups.add(targetGroup);
-				RenameUtil.checkSplitResult(db, csName, clName, groups);
+				checkSplitResult(db, csName, clName, groups);
 			}else if(rename && split){
 				RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
 				List<String> groups = new ArrayList<String>();
 				groups.add(sourceGroup);
 				groups.add(targetGroup);
-				RenameUtil.checkSplitResult(db, csName, newCLName, groups);
+				checkSplitResult(db, csName, newCLName, groups);
 			}else{
 				Assert.fail("rename cl and split cl all failed");
 			}
@@ -134,7 +138,7 @@ public class RenameCL_16089 extends SdbTestBase{
 		public void exec() throws Exception {
 			try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
 				DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-				cl.split(sourceGroup, targetGroup, 50);
+				cl.split(sourceGroup, targetGroup, new BasicBSONObject("Partition", 1024), new BasicBSONObject("Partition", 2048));
 			}
 		}
 	}
@@ -146,5 +150,47 @@ public class RenameCL_16089 extends SdbTestBase{
 		options.put("Group", sourceGroup);
 		return cs.createCollection(clName, options);
 	}
+	
+    private void checkSplitResult(Sequoiadb db, String csName, String clName, List<String> groups){
+        
+        DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, new BasicBSONObject("Name", csName+"."+clName), null, null);
+        if(!cur.hasNext()){
+            Assert.fail("cl is not exist, " + csName + "." + clName);
+        }
+        
+        Set<String> actGroups = new HashSet<String>();
+        BSONObject obj = cur.getNext();
+        BasicBSONList cataInfo = (BasicBSONList) obj.get("CataInfo");
+        for (int i = 0; i < cataInfo.size(); i++) {
+            BSONObject info = (BSONObject) cataInfo.get(i);
+            String groupName = (String) info.get("GroupName");
+            //判断groupName是否属于groups
+            if(!groups.contains(groupName)){
+                Assert.fail("groupName error: exp: " +groups.toString() +" act: " + cataInfo.toString());
+            }
+            //将groupName存到set中,去重
+            actGroups.add(groupName);
+            
+            //判断切分范围
+            if( groups.size() == 1){
+                Assert.assertEquals((BSONObject)info.get("LowBound"), new BasicBSONObject("", 0));
+                Assert.assertEquals((BSONObject)info.get("UpBound"), new BasicBSONObject("", 4096));
+            }else if((int)info.get("ID") == 0) {
+                Assert.assertEquals((BSONObject)info.get("LowBound"), new BasicBSONObject("", 0));
+                Assert.assertEquals((BSONObject)info.get("UpBound"), new BasicBSONObject("", 1024));
+            }else if ((int)info.get("ID") == 1){
+                Assert.assertEquals((BSONObject)info.get("LowBound"), new BasicBSONObject("", 1024));
+                Assert.assertEquals((BSONObject)info.get("UpBound"), new BasicBSONObject("", 2048));
+            }else {
+                Assert.assertEquals((BSONObject)info.get("LowBound"), new BasicBSONObject("", 2048));
+                Assert.assertEquals((BSONObject)info.get("UpBound"), new BasicBSONObject("", 4096));
+            }
+        }
+        
+        //检查切分组是否符合预期值
+        if(actGroups.size() != groups.size()){
+            Assert.fail("cataInfo error: exp: " +groups.toString() +" act: " + actGroups.toString());
+        }
+    }
 	
 }
