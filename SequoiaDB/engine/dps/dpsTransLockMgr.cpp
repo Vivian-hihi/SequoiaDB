@@ -81,6 +81,28 @@ namespace engine
    {
       if ( _initialized )
       {
+#ifdef _DEBUG 
+         // collect bucket latch contention statistics info
+         UINT64 numContentions = 0 ;
+         UINT32 hasContentions  = 0 ;
+         for ( UINT32 i = 0; i < DPS_TRANS_LOCKBUCKET_SLOTS_MAX; i++ )
+         {
+            UINT32 count = _LockHdrBkt[i].contentionCnt.fetch() ;
+            if ( count )
+            {
+               hasContentions++ ;
+               numContentions += count ;
+            }
+         }
+         PD_LOG( PDEVENT,
+                 "Lock bucket latch contention statistics :"OSS_NEWLINE
+                 "  total number of buckets               : %u"OSS_NEWLINE
+                 "  number of bucket latch has contentions: %u"OSS_NEWLINE
+                 "  total number of contentions           : %llu"OSS_NEWLINE,
+                 DPS_TRANS_LOCKBUCKET_SLOTS_MAX,
+                 hasContentions,
+                 numContentions ) ;
+#endif
          // free LRB Header objects
          if ( _pLRBHdrMgr )
          {
@@ -128,6 +150,7 @@ namespace engine
       for ( UINT32 i = 0; i < DPS_TRANS_LOCKBUCKET_SLOTS_MAX; i++ )
       {
          _LockHdrBkt[i].lrbHdrIdx = UTIL_INVALID_OBJ_INDEX ;
+         _LockHdrBkt[i].contentionCnt.init( 0 ) ;
       }
 
       // new LRB manager
@@ -1495,6 +1518,8 @@ namespace engine
          }
       }
 
+      // normal lock acquire/try get/test routine
+
       // acquire and prepare new LRB and LRB Header
       if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
       {
@@ -2442,6 +2467,32 @@ namespace engine
       EDUID eduId = dpsTxExectr->getEDUID() ;
       BOOLEAN bLatched = FALSE ;
       BOOLEAN foundIncomp = FALSE ;
+
+      // short cut for non-leaf lock ( CS, CL ),
+      // lookup the executor _mapLockID map, if it is found and the current
+      // refCounter is greater than 1, we may simply decrease the refCounter.
+      // Otherwise, still need to go through the normal routine.
+      if ( ! lockId.isLeafLevel() )
+      {
+         // we don't need bkt latch when looking up CS,CL lock
+         // in the executor _mapLockID map
+         UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX ;
+         dpsTransLRB *pLRB = NULL ;
+         if ( dpsTxExectr->findLock( lockId, lrbIdx ) )
+         {
+            if ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+            {
+               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
+               if ( pLRB->refCounter > 1 )
+               {
+                  pLRB->refCounter-- ;
+                  goto done ;
+               }
+            }
+         }
+      }
+
+      // normal lock release routine
 
       // calculate the hash index by lockId
       bktIdx = _getBucketNo( lockId ) ;

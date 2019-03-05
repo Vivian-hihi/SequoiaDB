@@ -147,7 +147,17 @@ namespace engine
    {
    public :
       UTIL_OBJIDX    lrbHdrIdx    ; // index of 1st LRB Header in the chain
+#ifdef _DEBUG
+      ossAtomic32    contentionCnt; // latch contention counter
+#endif
       ossSpinXLatch  hashHdrLatch ; // ossSpinXLatch, 48 bytes
+#ifdef _DEBUG
+   public :
+   dpsTransLRBHeaderHash():
+      lrbHdrIdx( ),
+      contentionCnt( 0 )
+   {}
+#endif
    } ; // 56 bytes in total
 #pragma pack()
 }

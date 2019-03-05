@@ -237,6 +237,16 @@ namespace engine
       OSS_INLINE void _acquireOpLatch ( const UTIL_OBJIDX bucketIndex )
       {
          _rwMutex.lock_r() ;
+#ifdef _DEBUG
+         if ( _LockHdrBkt[ bucketIndex ].hashHdrLatch.try_get() )
+         {
+            return ;
+         }
+         else
+         {
+            _LockHdrBkt[ bucketIndex ].contentionCnt.inc() ;
+         }
+#endif
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
       }
 
