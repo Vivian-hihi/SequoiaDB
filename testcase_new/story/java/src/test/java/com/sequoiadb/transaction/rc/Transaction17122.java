@@ -70,6 +70,8 @@ public class Transaction17122 extends SdbTestBase {
         //2 trans1 insert record R2 
         cl.insert(data2);
         
+        //TODO：漏了一个步骤，其他类似用例请一并检查一下，是否有同样的遗漏
+        
         sdb.rollback();
 
         expDataList.clear();
