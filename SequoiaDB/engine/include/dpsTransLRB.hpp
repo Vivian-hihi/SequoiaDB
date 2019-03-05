@@ -41,40 +41,38 @@
 #define DPSTRANSLRB_HPP_
 
 #include "ossLatch.hpp"         // ossSpinXLatch
-#include "utilSegment.hpp"      // UTIL_UTIL_OBJIDX
 #include "dpsTransLockDef.hpp"  // DPS_TRANSLOCK_TYPE, dpsTransLockId
 #include "dpsTransVersionCtrl.hpp" // oldVersionContainer 
 
 namespace engine
 {
    class _dpsTransExecutor ;
-#pragma pack(4)
 
    // Lock Request Block ( LRB )
    class dpsTransLRB : public SDBObject
    {
    public :
       _dpsTransExecutor * dpsTxExectr ;                
-      UTIL_OBJIDX eduLrbIdxNext ;   // idx of next LRB in chain EDU owning in tx
-      UTIL_OBJIDX eduLrbIdxPrev ;   // idx of prev LRB in chain EDU owning in tx
-      UTIL_OBJIDX lrbHdrIdx ;       // idx of the LRB Header
-      UTIL_OBJIDX nextLRBIdx ;      // idx of next LRB in the owner/waiter chain
+      dpsTransLRB * eduLrbNext ;   // idx of next LRB in chain EDU owning in tx
+      dpsTransLRB * eduLrbPrev ;   // idx of prev LRB in chain EDU owning in tx
+      dpsTransLRBHeader* lrbHdr ;  // idx of the LRB Header
+      dpsTransLRB * nextLRB ;      // idx of next LRB in the owner/waiter chain
       ossTick     beginTick ;       // timestamp( ossTick ) of owning / waiting
       UINT32      refCounter ;      // lock reference counter
       DPS_TRANSLOCK_TYPE lockMode ; // lock mode, UINT8, 1 byte
       UINT8 pad[3] ;                // 3 byte for padding
-   } ;  // 40 bytes in total
+   } ;  // 56 bytes in total
 
 
    // Lock Request Block Header ( LRB Header )
    class dpsTransLRBHeader : public SDBObject
    {
    public :
-      UTIL_OBJIDX nextLRBHdrIdx ;  // index of next LRB Header in the chain
-      UTIL_OBJIDX ownerLRBIdx ;    // index of the 1st owner LRB in its chain
-      UTIL_OBJIDX waiterLRBIdx ;   // index of the 1st waiter LRB in its chain
-      UTIL_OBJIDX upgradeLRBIdx;   // index of the 1st upgrader LRB in its chain
-      dpsTransLockId lockId ;      // lockId, 16 bytes
+      dpsTransLRBHeader * nextLRBHdr ;   // index of next LRB Header in the chain
+      dpsTransLRB       * ownerLRB ;     // index of the first owner LRB in its chain
+      dpsTransLRB       * waiterLRB ;    // index of the first waiter LRB in its chain
+      dpsTransLRB       * upgradeLRB;    // index of the first upgrader LRB in its chain
+      dpsTransLockId lockId ;  // lockId, 16 bytes
       oldVersionContainer *oldVer ;   // a pointer to the structure containing
                                       // version page/index information
    public :
@@ -140,26 +138,25 @@ namespace engine
       }
 
       //MEMBLOCKPOOL_TYPE &oldIdxMemType() { return oldVer->_idxMemType; }
-   } ;  // 40 bytes in total
+   } ;  // 560 bytes in total
 
 
    class dpsTransLRBHeaderHash : public SDBObject
    {
    public :
-      UTIL_OBJIDX    lrbHdrIdx    ; // index of 1st LRB Header in the chain
+      dpsTransLRBHeader*    lrbHdr    ; // index of 1st LRB Header in the chain
 #ifdef _DEBUG
       ossAtomic32    contentionCnt; // latch contention counter
 #endif
       ossSpinXLatch  hashHdrLatch ; // ossSpinXLatch, 48 bytes
-#ifdef _DEBUG
    public :
-   dpsTransLRBHeaderHash():
-      lrbHdrIdx( ),
-      contentionCnt( 0 )
-   {}
+      dpsTransLRBHeaderHash():
+         lrbHdr(NULL)
+#ifdef _DEBUG
+         , contentionCnt( 0 )
 #endif
+      {}
    } ; // 56 bytes in total
-#pragma pack()
 }
 
 #endif // DPSTRANSLRB_HPP_

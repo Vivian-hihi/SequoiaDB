@@ -262,8 +262,8 @@ namespace engine
          monTransLockCur      _waitLock ;
          VEC_TRANSLOCKCUR     _lockList ;
 
-         UTIL_OBJIDX          _lastLRBIdx ;
-         UTIL_OBJIDX          _waitLRBIdx ;
+         dpsTransLRB*          _lastLRB ;
+         dpsTransLRB*          _waitLRB ;
 
       public:
          _monTransInfo()
@@ -281,8 +281,8 @@ namespace engine
             _locksNum = 0 ;
             _lockList.clear() ;
             _waitLock.clear() ;
-            _lastLRBIdx = UTIL_INVALID_OBJ_INDEX ;
-            _waitLRBIdx = UTIL_INVALID_OBJ_INDEX ;
+            _lastLRB = NULL ;
+            _waitLRB = NULL ;
          }
    } ;
    typedef _monTransInfo monTransInfo ;

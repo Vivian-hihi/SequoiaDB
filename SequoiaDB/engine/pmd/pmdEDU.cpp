@@ -1154,8 +1154,8 @@ namespace engine
       transInfo._transID      = _curTransID ;
       transInfo._curTransLsn  = _curTransLSN ;
 
-      transInfo._lastLRBIdx   = _transExecutor.getLastLRBIdx() ;
-      transInfo._waitLRBIdx   = _transExecutor.getWaiterLRBIdx() ;
+      transInfo._lastLRB   = _transExecutor.getLastLRB() ;
+      transInfo._waitLRB   = _transExecutor.getWaiterLRB() ;
 
       {
          ossScopedLock lock( &_mutex, SHARED ) ;

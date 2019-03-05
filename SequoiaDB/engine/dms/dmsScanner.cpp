@@ -1663,30 +1663,12 @@ namespace engine
             dpsTransRetInfo   lockConflict ;
             dmsIXTransContext ixTxContext( _context, _accessType,
                                            _scanner, isReadOnly() ) ;
-            dpsTransLRBHeader * lrbHdr;
 
             // It's possible that the index scan found old verion from 
             // in memory tree, but we should not blindly use that version
             // because a scan can come from the same transaction as an earlier
             // update, so we should allow the scan to use the latest version
             // on disk if we can get the S lock throuh tryS
-            // FIXME: this should be dead code now, memIXTreeScanner::advance()
-            // now return normal rid
-            if ( _curRID.isIDXRid() )
-            {
-               // In index scan, we hold the in memory tree latch
-               // which will prevent commit to clean up. so we can safely
-               // update record2RW ptr to in memory old version. 
-               // BTW, index in the mem-tree should be sync with the old 
-               // version record, so no need to re-verify record as above.
-               lrbHdr = _pTransCB->getLockMgrHandle()
-                                 ->getLRBHdrPtrByIdx(_curRID._offset);
-
-               _curRID._extent = lrbHdr->lockId.extentID() ;
-               _curRID._offset = lrbHdr->lockId.offset() ; 
-               _recordRW = _pSu->record2RW( _curRID, _context->mbID() ) ;
-
-            }
 
             // We should have already allocated the callback, this is to
             // setup proper recordRW in callback

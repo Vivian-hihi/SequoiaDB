@@ -45,7 +45,6 @@
 #include "sdbInterface.hpp"   // IContext
 #include "pmd.hpp"            // pmdGetOptionCB
 #include <stdio.h>
-
 #if 0
 //#ifdef _DEBUG    // once we upgrade the boost, we might want to have this
 #include <boost/stacktrace.hpp>
@@ -144,14 +143,6 @@ namespace engine
       UINT32 initLRB  = pmdGetOptionCB()->transLRBPerSegment(),
              totalLRB = pmdGetOptionCB()->transLRBTotal(),
              roundUp  = ossNextPowerOf2( initLRB ) ;
-       
-
-      // init lock header bucket
-      for ( UINT32 i = 0; i < DPS_TRANS_LOCKBUCKET_SLOTS_MAX; i++ )
-      {
-         _LockHdrBkt[i].lrbHdrIdx = UTIL_INVALID_OBJ_INDEX ;
-         _LockHdrBkt[i].contentionCnt.init( 0 ) ;
-      }
 
       // new LRB manager
       _pLRBMgr = SDB_OSS_NEW _utilSegmentManager< dpsTransLRB > ;
@@ -233,60 +224,9 @@ namespace engine
 
 
    // 
-   // Description: find the LRB Header address/pointer by its index
-   // Function:    the LRB Header manager uses the index to find the object
-   //              pointer from the object arrays   
-   // Input:       the object ( LRB Header ) index to the object arrays
-   // Output:      none
-   // Return:      the pointer of the object or NULL
-   // Dependency:  the lock manager must be initialized
-   dpsTransLRBHeader * dpsTransLockManager::_getLRBHdrPtrByIdx
-   (
-      const UTIL_OBJIDX hdrIdx
-   )
-   {
-#ifdef _DEBUG 
-      SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
-      SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
-                  "Invalid LRB Header index." ) ;
-#endif
-      dpsTransLRBHeader * pLRBHdr = _pLRBHdrMgr->getObjPtrByIndex( hdrIdx ) ;
-#ifdef _DEBUG 
-      SDB_ASSERT( pLRBHdr, "Invalid LRB Header." ) ;
-#endif      
-      return pLRBHdr ;
-   }
-
-
-   // 
-   // Description: find the LRB address/pointer by its index
-   // Function:    the LRB manager uses the index to find the object pointer
-   //              from the object arrays   
-   // Input:       the object ( LRB ) index to the object arrays
-   // Return:      the pointer of the object or NULL
-   // Dependency:  the lock manager must be initialized
-   //
-   OSS_INLINE dpsTransLRB * dpsTransLockManager::_getLRBPtrByIdx
-   (
-      const UTIL_OBJIDX idx
-   )
-   {
-#ifdef _DEBUG 
-      SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
-      SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( idx ), "Invalid LRB index." ) ;
-#endif      
-      dpsTransLRB * pLRB = _pLRBMgr->getObjPtrByIndex( idx );
-#ifdef _DEBUG 
-      SDB_ASSERT( pLRB, "Invalid LRB." ) ;
-#endif     
-      return pLRB ;
-   }
-
-
-   // 
    // Description: release/return a LRB Header to LRB Header manager
    // Function:    return a LRB Header to the LRB Header Manager
-   // Input:       the object ( LRB Header ) index to the object arrays
+   // Input:       the object ( LRB Header ) to the object arrays
    // Output:      none
    // Return:      SDB_OK or SDB_INVALIDARG when error      
    // Dependency:  the lock manager must be initialized
@@ -295,22 +235,25 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR, "dpsTransLockManager::_releaseLRBHdr" )
    OSS_INLINE INT32 dpsTransLockManager::_releaseLRBHdr
    (
-      const UTIL_OBJIDX hdrIdx
+      dpsTransLRBHeader *hdr
    )
    {
 #ifdef _DEBUG
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR ) ;
 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
-      SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
-                  "Invalid LRB Header index." ) ;
+      SDB_ASSERT( hdr, "Invalid LRB Header." ) ;
+
+      PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR,
+                 PD_PACK_STRING( "Release LRB Header:" ),
+                 PD_PACK_RAW( &hdr, sizeof(&hdr) ) ) ; 
 #endif
       // reset LRB Header
-      dpsTransLRBHeader * pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;   
-      pLRBHdr->nextLRBHdrIdx = UTIL_INVALID_OBJ_INDEX ;
-      pLRBHdr->ownerLRBIdx   = UTIL_INVALID_OBJ_INDEX ;
-      pLRBHdr->waiterLRBIdx  = UTIL_INVALID_OBJ_INDEX ;
-      pLRBHdr->upgradeLRBIdx = UTIL_INVALID_OBJ_INDEX ;
+      dpsTransLRBHeader * pLRBHdr = hdr;
+      pLRBHdr->nextLRBHdr = NULL ;
+      pLRBHdr->ownerLRB   = NULL ;
+      pLRBHdr->waiterLRB  = NULL ;
+      pLRBHdr->upgradeLRB = NULL ;
       if ( pLRBHdr->oldVer )
       {
          // debug code to track the guy freeing oldVer
@@ -324,15 +267,9 @@ namespace engine
       }
       pLRBHdr->lockId.reset() ;
 
-      // release LRB Header
-      INT32 rc = _pLRBHdrMgr->release( hdrIdx );
+      INT32 rc = _pLRBHdrMgr->release( hdr );
+
 #ifdef _DEBUG
-      SDB_ASSERT( SDB_OK == rc, "Failed to release LRB Header" ) ;
-
-      PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR,
-                 PD_PACK_STRING( "Release LRB Header:" ),
-                 PD_PACK_UINT( hdrIdx ) ) ; 
-
       PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR, rc ) ;
 #endif
       return rc ;
@@ -342,39 +279,39 @@ namespace engine
    // 
    // Description: release/return a LRB to LRB manager
    // Function:    return a LRB to the LRB Manager
-   // Input:       the object ( LRB ) index to the object arrays
+   // Input:       the object ( LRB ) to the object arrays
    // Output:      none
    // Return:      SDB_OK or SDB_INVALIDARG when error      
    // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASELRB, "dpsTransLockManager::_releaseLRB" )
-   OSS_INLINE INT32 dpsTransLockManager::_releaseLRB( const UTIL_OBJIDX idx )
+   OSS_INLINE INT32 dpsTransLockManager::_releaseLRB( dpsTransLRB *pLRB)
    {
 #ifdef _DEBUG
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASELRB ) ;
 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
-      SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( idx ), "Invalid LRB index." ) ;
+      SDB_ASSERT( pLRB, "Invalid LRB pointer." ) ;
 #endif
       // reset LRB
-      dpsTransLRB * pLRB  = _getLRBPtrByIdx( idx ) ;
-      pLRB->dpsTxExectr   = NULL ;
-      pLRB->eduLrbIdxNext = UTIL_INVALID_OBJ_INDEX ;
-      pLRB->eduLrbIdxPrev = UTIL_INVALID_OBJ_INDEX ;
-      pLRB->lrbHdrIdx     = UTIL_INVALID_OBJ_INDEX ;
-      pLRB->nextLRBIdx    = UTIL_INVALID_OBJ_INDEX ;
-      pLRB->lockMode      = DPS_TRANSLOCK_MAX ; 
-      pLRB->refCounter    = 0 ; 
+      pLRB->dpsTxExectr= NULL ;
+      pLRB->eduLrbNext = NULL ;
+      pLRB->eduLrbPrev = NULL ;
+      pLRB->lrbHdr     = NULL;
+      pLRB->nextLRB    = NULL ;
+      pLRB->lockMode   = DPS_TRANSLOCK_MAX ; 
+      pLRB->refCounter = 0 ;
       pLRB->beginTick.clear() ; 
       // release LRB
-      INT32 rc = _pLRBMgr->release( idx );
+      INT32 rc = _pLRBMgr->release( pLRB );
+
 #ifdef _DEBUG
       SDB_ASSERT( SDB_OK == rc, "Failed to release LRB" ) ;
 
       PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASELRB,
                  PD_PACK_STRING( "Release LRB:" ),
-                 PD_PACK_UINT( idx ) ) ; 
+                 PD_PACK_RAW( &pLRB, sizeof(&pLRB) ) ) ; 
 
       PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER__RELEASELRB, rc ) ;
 #endif
@@ -388,10 +325,8 @@ namespace engine
    //              lockId. 
    // Input: 
    //    lockId   -- lock Id
-   //    hdrIdx   -- the first LRB Header object index in the chain
+   //    pLRBHdr  -- the first LRB Header object in the chain
    // Output:
-   //    hdrIdx   -- the index of the first LRB Header object matches
-   //                the lockId if it is found.
    //    pLRBHdr  -- the pointer of first LRB Header object matches
    //                the lockId if it is found. If not, it shall be the
    //                pointer of the last LRB Header object in the list  
@@ -404,20 +339,20 @@ namespace engine
    BOOLEAN dpsTransLockManager::_getLRBHdrByLockId
    (
       const dpsTransLockId &lockId,
-      UTIL_OBJIDX          &hdrIdx,
       dpsTransLRBHeader *  &pLRBHdr
    ) 
    {
       BOOLEAN found = FALSE ;
-      while ( IS_VALID_SEG_OBJ_INDEX( hdrIdx ) )
+      dpsTransLRBHeader * pLocal = pLRBHdr;
+      while ( pLocal != NULL )
       {
-         pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
-         if ( lockId == pLRBHdr->lockId )
+         pLRBHdr = pLocal;
+         if ( lockId == pLocal->lockId )
          {
             found = TRUE ;
             break ;
          }
-         hdrIdx = pLRBHdr->nextLRBHdrIdx ;
+         pLocal = pLocal->nextLRBHdr ;
       }
       return found ;
    }
@@ -430,8 +365,6 @@ namespace engine
    // Input:
    //    lockId   -- lock Id
    // Output:
-   //    hdrIdx   -- the index of the first LRB Header object matches
-   //                the lockId if it is found.
    //    pLRBHdr  -- the pointer of first LRB Header object matches
    //                the lockId if it is found. If not, it shall be the
    //                pointer of the last LRB Header object in the list
@@ -443,7 +376,6 @@ namespace engine
    BOOLEAN dpsTransLockManager::getLRBHdrByLockId
    (
       const dpsTransLockId &lockId,
-      UTIL_OBJIDX          &hdrIdx,
       dpsTransLRBHeader *  &pLRBHdr
    )
    {
@@ -452,12 +384,10 @@ namespace engine
       {
          UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
 
-         hdrIdx = _LockHdrBkt[ bktIdx ].lrbHdrIdx ;
-         found  = _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) ;
+         pLRBHdr = _LockHdrBkt[ bktIdx ].lrbHdr ;
+         found  = _getLRBHdrByLockId( lockId, pLRBHdr ) ;
          if ( ! found ) 
          {
-
-            hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
             pLRBHdr = NULL ;
          } 
       }
@@ -475,11 +405,9 @@ namespace engine
    // Function:    walk through LRB list/chain, find the LRB with same eduId
    // Input:
    //    eduId    -- EDU Id.
-   //    lrbBegin -- the first LRB index in the chain( owner, waiter or upgrade
+   //    lrbBegin -- the first LRB pointer in the chain( owner, waiter or upgrade
    //                queue )
    // Output:
-   //    idxEduId -- the index of the first LRB object matches given eduId
-   //                if it is found.
    //    pLRBEduId-- the pointer of first LRB object matches the eduId
    //                if it is found. If not, it shall be the pointer of
    //                the last LRB object in the list
@@ -491,30 +419,25 @@ namespace engine
    BOOLEAN dpsTransLockManager::_getLRBByEDUId
    (
       const EDUID       eduId,
-      const UTIL_OBJIDX lrbBegin,
-      UTIL_OBJIDX     & idxEduId,
+      dpsTransLRB     * lrbBegin,
       dpsTransLRB *   & pLRBEduId
    )
    {
       BOOLEAN found = FALSE ;
-      UTIL_OBJIDX idx   = lrbBegin ;
-      dpsTransLRB *plrb = NULL ;
+      dpsTransLRB *plrb = lrbBegin ;
 
-      idxEduId  = UTIL_INVALID_OBJ_INDEX ; 
       pLRBEduId = NULL ;
-      while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+      while ( plrb )
       {
-         plrb = _getLRBPtrByIdx( idx ) ;
          if ( eduId == plrb->dpsTxExectr->getEDUID() )
          {
-            idxEduId  = idx ;
             pLRBEduId = plrb ;
 
             found = TRUE ;
             break ;
          }
          // move to next
-         idx = plrb->nextLRBIdx ;
+         plrb = plrb->nextLRB ;
       }
       return found ;
    }
@@ -526,10 +449,9 @@ namespace engine
    //              given eduId
    // Input:
    //    eduId    -- EDU Id.
-   //    lrbBegin -- the first LRB index in the chain( owner, waiter or upgrade
+   //    lrbBegin -- the first LRB pointer in the chain( owner, waiter or upgrade
    //                queue )
    // Output:
-   //    idxPrev  -- the index of the LRB in the list previous to the owner
    //    pLRBPrev -- the pointer of the LRB in the list previous to the owner
    // Return: 
    //    true  -- found the LRB object with the given eduId
@@ -539,37 +461,30 @@ namespace engine
    BOOLEAN dpsTransLockManager::_getPreviousLRB
    (
       const EDUID       eduId,
-      const UTIL_OBJIDX lrbBegin,
-      UTIL_OBJIDX     & indexPrev,
+      dpsTransLRB     * lrbBegin,
       dpsTransLRB *   & pLRBPrev
    )
    {
       BOOLEAN found = FALSE ;
-      UTIL_OBJIDX idx     = lrbBegin,
-                  idxPrev = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB *plrb     = NULL ,
+      dpsTransLRB *plrb     = lrbBegin, 
                   *plrbPrev = NULL ;
 
-      indexPrev = UTIL_INVALID_OBJ_INDEX ;
       pLRBPrev  = NULL ;
-      while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+      while ( plrb )
       {
-         plrb = _getLRBPtrByIdx( idx ) ;
          if ( eduId == plrb->dpsTxExectr->getEDUID() )
          {
-            indexPrev = idxPrev ;
             pLRBPrev  = plrbPrev ;
 
             found = TRUE ;
             break ;
          }
 
-         // remember previous index and pointer
-         idxPrev  = idx ;
+         // remember previous pointer
          plrbPrev = plrb ;
 
          // move to next
-         idx = plrb->nextLRBIdx ;
+         plrb = plrb->nextLRB ;
       }
       return found ;
    }
@@ -581,14 +496,11 @@ namespace engine
    // Input:
    //    eduId    -- EDU Id to search in owner LRB list
    //    lockMode -- lock mode to check ( waiter lock mode )
-   //    lrbBegin -- the first LRB index in the owne list
+   //    lrbBegin -- the first LRB in the owner list
    // Output:
-   //    idxEduId -- the index of the first LRB object matches given eduId
-   //                   if it is found.
    //    pLRBEduId-- the pointer of first LRB object matches the eduId
    //                if it is found. If not, it shall be the pointer of
    //                the last LRB object in the list
-   //    idxPrev  -- the index of the LRB in the list previous to the owner
    //    pLRBPrev -- the pointer of the LRB in the list previous to the owner
    //    foundIncomp -- if an incompatible one is found in owner list
    // Dependency:  the lock bucket latch shall be acquired
@@ -597,37 +509,27 @@ namespace engine
    (
       const EDUID               eduId,
       const DPS_TRANSLOCK_TYPE  lockMode, 
-      const UTIL_OBJIDX         lrbBegin,
-      UTIL_OBJIDX             & idxEduId,
+      dpsTransLRB              *lrbBegin,
       dpsTransLRB *           & pLRBEduId, 
-      UTIL_OBJIDX             & indexPrev,
       dpsTransLRB *           & pLRBPrev,
       BOOLEAN                 & foundIncomp
    )
    {
       EDUID lrbEduid  = 0 ;
-      UTIL_OBJIDX idx = lrbBegin,
-                  idxPrev = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB *plrb     = NULL ,
+      dpsTransLRB *plrb     = lrbBegin,
                   *plrbPrev = NULL ;
       BOOLEAN foundMyself = FALSE ;
 
-      idxEduId    = UTIL_INVALID_OBJ_INDEX ;
       pLRBEduId   = NULL ;
-      indexPrev   = UTIL_INVALID_OBJ_INDEX ;
       pLRBPrev    = NULL ;
       foundIncomp = FALSE ;
-      while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+      while ( plrb )
       {
-         plrb     = _getLRBPtrByIdx( idx ) ;
          lrbEduid = plrb->dpsTxExectr->getEDUID() ;
          if ( ( ! foundMyself ) && ( eduId == lrbEduid ) )
          {
-            // save the index if the given eduId is found in the owner list
-            idxEduId    = idx ;
+            // save the lrb if the given eduId is found in the owner list
             pLRBEduId   = plrb ;
-
-            indexPrev   = idxPrev ;
             pLRBPrev    = plrbPrev ;
 
             foundMyself = TRUE ;
@@ -646,12 +548,11 @@ namespace engine
             break ;
          }
 
-         // remember previous index and pointer
-         idxPrev  = idx ;
+         // remember previous pointer
          plrbPrev = plrb ;
 
          // move to next      
-         idx = plrb->nextLRBIdx ;
+         plrb = plrb->nextLRB ;
       }
    }
 
@@ -662,9 +563,8 @@ namespace engine
    // Input:
    //    eduId    -- EDU Id to search in owner LRB list
    //    lockMode -- lock mode to check ( waiter lock mode )
-   //    lrbBegin -- the first LRB index in the owne list
+   //    lrbBegin -- the first LRB pointer in the owne list
    // Output:
-   //    indexPrev   -- the index of the LRB in the list previous to the owner
    //    pLRBPrev    -- the pointer of the LRB in the list previous to the owner
    //    foundIncomp -- if an incompatible one is found in owner list
    // Dependency:  the lock bucket latch shall be acquired
@@ -673,29 +573,23 @@ namespace engine
    (
       const EDUID               eduId,
       const DPS_TRANSLOCK_TYPE  lockMode, 
-      const UTIL_OBJIDX         lrbBegin,
-      UTIL_OBJIDX             & indexPrev,
+      dpsTransLRB             * lrbBegin,
       dpsTransLRB *           & pLRBPrev,
       BOOLEAN                 & foundIncomp
    )
    {
       EDUID lrbEduid  = 0 ;
-      UTIL_OBJIDX idx = lrbBegin,
-                  idxPrev = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB *plrb     = NULL ,
+      dpsTransLRB *plrb     = lrbBegin ,
                   *plrbPrev = NULL ;
       BOOLEAN foundMyself = FALSE ;
 
-      indexPrev   = UTIL_INVALID_OBJ_INDEX ;
       pLRBPrev    = NULL ;
       foundIncomp = FALSE ;
-      while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+      while ( plrb )
       {
-         plrb     = _getLRBPtrByIdx( idx ) ;
          lrbEduid = plrb->dpsTxExectr->getEDUID() ;
          if ( ( ! foundMyself ) && ( eduId == lrbEduid ) )
          {
-            indexPrev   = idxPrev ;
             pLRBPrev    = plrbPrev ;
 
             foundMyself = TRUE ;
@@ -714,12 +608,11 @@ namespace engine
             break ;
          }
 
-         // remember previous index and pointer
-         idxPrev  = idx ;
+         // remember previous pointer
          plrbPrev = plrb ;
 
          // move to next      
-         idx = plrb->nextLRBIdx ;
+         plrb = plrb->nextLRB ;
       }
    }
 
@@ -728,66 +621,59 @@ namespace engine
    // Function:    walk through LRB list/chain, add the LRB at the end of
    //              list( owner, waiter or upgrade )
    // Input:
-   //    lrbBegin -- the first LRB index in the chain( owner, waiter or upgrade
+   //    lrbBegin -- the first LRB in the chain( owner, waiter or upgrade
    //                queue )
-   //    idxNew   -- the LRB index to be added in
+   //    lrbNew   -- the LRB to be added in
    // Output:     None
    // Return:     None
    // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_addToLRBListTail
    (
-      UTIL_OBJIDX       & lrbBegin,
-      const UTIL_OBJIDX   idxNew
+      dpsTransLRB* & lrbBegin,
+      dpsTransLRB*   lrbNew
    )
    {
-      if ( IS_VALID_SEG_OBJ_INDEX( lrbBegin ) )
+      if ( lrbBegin )
       {
-         dpsTransLRB * plrb = NULL ;
-         UTIL_OBJIDX   idx  = lrbBegin ;
+         dpsTransLRB * plrb = lrbBegin ;
 
          // find the last LRB
-         while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+         while ( plrb->nextLRB )
          {
-            plrb = _getLRBPtrByIdx( idx ) ;
-            idx  = plrb->nextLRBIdx ;
+            plrb = plrb->nextLRB ;
          }
-         plrb->nextLRBIdx = idxNew ;
+         plrb->nextLRB = lrbNew ;
       }
       else
       {
-         lrbBegin = idxNew ;
+         lrbBegin = lrbNew ;
       }
    }
 
 
    //
-   // Description: add a LRB to owner list right after a given LRB index
-   // Function:    the onwer list is sorted on lock mode in ascent order,
-   //              add a LRB right after the given LRB index 
+   // Description: add a LRB to owner list right after a given LRB
+   // Function:    the owner list is sorted on lock mode in ascent order,
+   //              add a LRB right after the given LRB 
    // Input:
-   //    lrbPos -- the LRB index where the new LRB index is being inserted after
+   //    lrbPos -- the LRB where the new LRB is being inserted after
    //               
-   //    idxNew -- the LRB index to be added in
+   //    lrbNew -- the LRB to be added in
    // Output:     None
    // Return:     None
    // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_addToOwnerLRBList
    (
-      const UTIL_OBJIDX insPos,
-      const UTIL_OBJIDX idxNew
+      dpsTransLRB *insPos,
+      dpsTransLRB *lrbNew
    )
    {
-      if (   IS_VALID_SEG_OBJ_INDEX( insPos )
-          && IS_VALID_SEG_OBJ_INDEX( idxNew ) )
+      if ( insPos && lrbNew )
       {   
-         dpsTransLRB *plrb, *pLRB ;
-         plrb = _getLRBPtrByIdx( insPos ) ;
-         pLRB = _getLRBPtrByIdx( idxNew ) ;
-         
-         pLRB->nextLRBIdx = plrb->nextLRBIdx ;
-         plrb->nextLRBIdx = idxNew ;
+         lrbNew->nextLRB = insPos->nextLRB ;
+         insPos->nextLRB = lrbNew ;
       }
    }
 
@@ -797,20 +683,19 @@ namespace engine
    // Function:    walk through owner LRB list ( it is sorted on lockMode in
    //              ascending order ) and find out :
    //              . if the edu is in owner list
-   //              . the index which the new LRB shall be inserted after
-   //              . the index of last compatible and pointer of first
+   //              . the pointer which the new LRB shall be inserted after
+   //              . the pointer of last compatible and pointer of first
    //                incompatible LRB
    // Input:
    //    eduId    -- edu Id
    //    lockMode -- lock mode
-   //    lrbBegin -- the first LRB index in the owner list
+   //    lrbBegin -- the first LRB pointer in the owner list
    // Output:
-   //    idxToInsert   -- the index which the new LRB shall be inserted after
-   //    idxLastComp   -- the index of last compatible LRB
+   //    pLRBToInsert  -- the lrb which the new LRB shall be inserted after
+   //    pLRBLastComp  -- the lrb of last compatible LRB
    //    pLRBIncomp    -- pointer of first incompatible LRB
-   //    idxEduId      -- the LRB index owned by same eduId
-   //    idxPrevEduId  -- the LRB index previous to the idxEduId
-   //    pLRBPrevEduId -- the address of the LRB previous to the idxEduId
+   //    pLRBEduId     -- the LRB owned by same eduId
+   //    pLRBPrevEduId -- the address of the LRB previous to the pLRBEduId
    // Return:     None
    // Dependency:  the lock bucket latch shall be acquired
    //
@@ -818,33 +703,29 @@ namespace engine
    (
       const EDUID               eduId,
       const DPS_TRANSLOCK_TYPE  lockMode, 
-      const UTIL_OBJIDX         lrbBegin,
-      UTIL_OBJIDX             & idxToInsert,
-      UTIL_OBJIDX             & idxLastComp,
+      dpsTransLRB             * lrbBegin,
+      dpsTransLRB *           & pLRBToInsert,
+      dpsTransLRB *           & pLRBLastComp,
       dpsTransLRB *           & pLRBIncomp,
-      UTIL_OBJIDX             & idxEduId,
-      UTIL_OBJIDX             & idxPrevEduId,
+      dpsTransLRB *           & pLRBEduId,
       dpsTransLRB *           & pLRBPrevEduId
    )
    {
       EDUID lrbEduid = 0 ;
-      UTIL_OBJIDX idx = lrbBegin, idxPrev = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB *plrb     = NULL,
+      dpsTransLRB *plrb     = lrbBegin,
                   *plrbPrev = NULL ;
       BOOLEAN foundMyself   = FALSE,
               foundInsert   = FALSE,
               foundLastComp = FALSE ;
 
-      while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+      while ( plrb )
       {
-         plrb     = _getLRBPtrByIdx( idx ) ;
          lrbEduid = plrb->dpsTxExectr->getEDUID() ;
          if ( ( ! foundMyself ) && ( eduId == lrbEduid ) )
          {
-            // save the index if the given eduId is found in the owner list
-            idxEduId      = idx ;
-            // save the previous LRB index and the pointer/address
-            idxPrevEduId  = idxPrev ;
+            // save the pointer if the given eduId is found in the owner list
+            pLRBEduId     = plrb;
+            // save the previous LRB pointer and the pointer/address
             pLRBPrevEduId = plrbPrev ;
             foundMyself   = TRUE ;
          }
@@ -852,8 +733,8 @@ namespace engine
          // the owner list is sorted on lock mode in ascent order
          if ( ( ! foundInsert ) && ( lockMode < plrb->lockMode ) )
          {
-            // save the LRB index where it shall be inserted after 
-            idxToInsert = idxPrev ;
+            // save the LRB pointer where it shall be inserted after 
+            pLRBToInsert = plrbPrev;
             foundInsert = TRUE ; 
          }
 
@@ -861,8 +742,7 @@ namespace engine
               && ( eduId != lrbEduid )
               && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
          {
-            // save the LRB index previous to first incompatible LRB
-            idxLastComp   = idxPrev ; 
+            pLRBLastComp  = plrbPrev;
             // save the address/pointer of first incompatible LRB
             pLRBIncomp    = plrb ;
             foundLastComp = TRUE ;
@@ -874,12 +754,11 @@ namespace engine
             break ;
          }
 
-         // remember previous index and pointer
-         idxPrev  = idx ;
+         // remember previous pointer
          plrbPrev = plrb ;
 
          // move to next
-         idx      = plrb->nextLRBIdx ;
+         plrb      = plrb->nextLRB ;
       }
    }
 
@@ -889,12 +768,12 @@ namespace engine
    //              of all locks acquired within a session/tx
    // Function:    walk through EDU LRB chain( doubly linked list ),
    //              add the LRB at the end of list. 
-   //              
-   //              the dpsTxExectr::_lastLRBIdx is the latest LRB index
+   //
+   //              the dpsTxExectr::_lastLRB is the latest LRB
    //              acquired within the same tx
    // Input:
    //    dpsTxExectr -- _dpsTransExecutor ptr
-   //    idx         -- the LRB index to be added in
+   //    insLRB      -- the LRB to be added in
    // Output:     None
    // Return:     None
    // Dependency:  the lock bucket latch shall be acquired
@@ -902,7 +781,7 @@ namespace engine
    void dpsTransLockManager::_addToEDULRBListTail
    (
       _dpsTransExecutor    * dpsTxExectr,
-      const UTIL_OBJIDX      idx,
+      dpsTransLRB          * insLRB,
       const dpsTransLockId & lockId
    )
    {
@@ -910,38 +789,32 @@ namespace engine
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
       {
-         // get the index of last LRB in the EDU LRB chain
+         // get the pointer of last LRB in the EDU LRB chain
          // and add the new LRB into the chain
-         UTIL_OBJIDX eduLRBIdx = dpsTxExectr->getLastLRBIdx() ;
-         if ( IS_VALID_SEG_OBJ_INDEX( eduLRBIdx ) )
+         dpsTransLRB *plrb = dpsTxExectr->getLastLRB() ;
+         if ( plrb )
          {
-            dpsTransLRB * plrb  = _getLRBPtrByIdx( eduLRBIdx )  ;
-            plrb->eduLrbIdxNext = idx ; 
-            if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+            plrb->eduLrbNext = insLRB ; 
+            if ( insLRB )
             {
-               dpsTransLRB *pLRB   = _getLRBPtrByIdx( idx ) ;
-               pLRB->eduLrbIdxPrev = eduLRBIdx ;
-               pLRB->eduLrbIdxNext = UTIL_INVALID_OBJ_INDEX ;
-            }
-         } 
-         else
-         {
-            // when dpsTxExectr->getLastLRBIdx() is invalid, means,
-            // this LRB ( idx ) is the first LRB to be added in EDU LRB list
-            if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
-            {
-               dpsTransLRB *pLRB   = _getLRBPtrByIdx( idx ) ;
-               pLRB->eduLrbIdxPrev = UTIL_INVALID_OBJ_INDEX ;
-               pLRB->eduLrbIdxNext = UTIL_INVALID_OBJ_INDEX ;
+               insLRB->eduLrbPrev = plrb ;
+               insLRB->eduLrbNext = NULL ;
             }
          }
-
-         if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+         else
+         {
+            if ( insLRB )
+            {
+               insLRB->eduLrbPrev = NULL ;
+               insLRB->eduLrbNext = NULL ;
+            }
+         }
+         if ( insLRB )
          {
             // add to executor lock map if it is CS or CL lock
             if ( ! lockId.isLeafLevel() )
             {
-               dpsTxExectr->addLock( lockId, idx ) ;
+               dpsTxExectr->addLock( lockId, insLRB ) ;
             }
 
             // increase the lock count
@@ -951,8 +824,8 @@ namespace engine
             dpsTxExectr->clearWaiterInfo() ;
          }
 
-         // save the last LRB index
-         dpsTxExectr->setLastLRBIdx( idx ) ;
+         // save the last LRB
+         dpsTxExectr->setLastLRB( insLRB ) ;
       }
    }
 
@@ -964,50 +837,44 @@ namespace engine
    //              from the chain. Please note, it doesn't release/return the
    //              LRB to the LRB manager. 
    // Input:
-   //    idxBegin -- the index of the LRB in the list that begin to search
-   //    idxDel   -- the index of the LRB object to be removed
+   //    beginLRB -- the LRB in the list that begin to search
+   //    delLRB   -- the LRB object to be removed
    //
    // Output:
-   //    idxBegin -- if the idxBegin is same as idxDel,
-   //                it will be updated with the index of LRB next to idxDel
-   //    idxNext  -- the index next to the idxDel
+   //    nextLRB  -- the next LRB to the delLRB
    // Return:     None
    // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_removeFromLRBList
    (
-      UTIL_OBJIDX     & idxBegin,
-      const UTIL_OBJIDX idxDel,
-      UTIL_OBJIDX     & idxNext
+      dpsTransLRB*     & beginLRB,
+      dpsTransLRB*       delLRB,
+      dpsTransLRB*     & nextLRB
    )
    {
-      idxNext = UTIL_INVALID_OBJ_INDEX ; 
-      if (    IS_VALID_SEG_OBJ_INDEX( idxBegin )
-           && IS_VALID_SEG_OBJ_INDEX( idxDel ) )
+      nextLRB = NULL;
+
+      if ( beginLRB && delLRB )
       {
-         UTIL_OBJIDX idx = idxBegin ;
-         dpsTransLRB *plrb, *pLRB ;
+         dpsTransLRB *plrb = beginLRB;
 
          // if the first one is the one to be removed
-         if ( idxDel == idxBegin )
+         if ( delLRB == beginLRB )
          {
-            pLRB = _getLRBPtrByIdx( idxDel ) ;
-            idxBegin = pLRB->nextLRBIdx ;
-            idxNext  = pLRB->nextLRBIdx ;
+            beginLRB = delLRB->nextLRB ;
+            nextLRB  = delLRB->nextLRB ;
          }
          else
          {
-            while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+            while ( plrb )
             {
-               plrb = _getLRBPtrByIdx( idx ) ;
-               if ( idxDel == plrb->nextLRBIdx )
+               if ( delLRB == plrb->nextLRB )
                {
-                  pLRB = _getLRBPtrByIdx( idxDel ) ;
-                  plrb->nextLRBIdx = pLRB->nextLRBIdx ;
-                  idxNext = pLRB->nextLRBIdx ;
+                  plrb->nextLRB = delLRB->nextLRB ;
+                  nextLRB = delLRB->nextLRB ;
                   break ;
                }
-               idx = plrb->nextLRBIdx ;
+               plrb = plrb->nextLRB ;
             }
          }
       }
@@ -1062,10 +929,9 @@ namespace engine
 
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
-      UTIL_OBJIDX idx = dpsTxExectr->getWaiterLRBIdx() ;
-      UTIL_OBJIDX idxNext = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX hdrIdx  = UTIL_INVALID_OBJ_INDEX ;
-      dpsTransLRB *pLRB = NULL , *plrb = NULL ;
+      dpsTransLRB *pLRB = dpsTxExectr->getWaiterLRB() ;
+      dpsTransLRB *pLRBNext = NULL;
+      dpsTransLRB *plrb = NULL ;
       dpsTransLRBHeader * pLRBHdr = NULL ;
 #ifdef _DEBUG
       EDUID eduIDTrc = 0 ;
@@ -1078,17 +944,15 @@ namespace engine
                  PD_PACK_UINT( bktIdx ),
                  PD_PACK_UINT( removeLRBHeader ),
                  PD_PACK_STRING( "LRB to be removed:" ),
-                 PD_PACK_UINT( idx ) ) ;
+                 PD_PACK_RAW( &pLRB, sizeof(&pLRB) ) ) ; 
 #endif
-      if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+      if ( pLRB )
       {
-         pLRB = _getLRBPtrByIdx( idx ) ;
 #ifdef _DEBUG
-         SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( pLRB->lrbHdrIdx ),
+         SDB_ASSERT( pLRB->lrbHdr != NULL,
                      "Invalid LRB Header." );
 #endif
-         hdrIdx  = pLRB->lrbHdrIdx ;
-         pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
+         pLRBHdr = pLRB->lrbHdr ;
 
          // sanity check, panic if fails.
          if ( ! ( pLRBHdr->lockId == lockId ) )
@@ -1112,38 +976,38 @@ namespace engine
          if ( DPS_QUE_UPGRADE == dpsTxExectr->getWaiterQueType() )
          {
             // remove from upgrade list
-            _removeFromLRBList( pLRBHdr->upgradeLRBIdx, idx, idxNext ) ; 
+            _removeFromLRBList( pLRBHdr->upgradeLRB, pLRB, pLRBNext ) ; 
 
             // clear the wait info in dpsTxExectr
             dpsTxExectr->clearWaiterInfo() ;
 
             // if it is the last one in upgrade list,
-            // set idxNext to the first one in waiter list
-            if ( ! IS_VALID_SEG_OBJ_INDEX( idxNext ) )
+            // set pLRBNext to the first one in waiter list
+            if ( ! pLRBNext )
             {
-               idxNext = pLRBHdr->waiterLRBIdx ;
+               pLRBNext = pLRBHdr->waiterLRB ;
             }
          }
          else if ( DPS_QUE_WAITER == dpsTxExectr->getWaiterQueType() )
          {
             // remove from waiter list
-            _removeFromLRBList( pLRBHdr->waiterLRBIdx, idx, idxNext ) ; 
+            _removeFromLRBList( pLRBHdr->waiterLRB, pLRB, pLRBNext ) ; 
 
             // clear the wait info in dpsTxExectr
             dpsTxExectr->clearWaiterInfo() ;
 
             // in case upgrade is not empty,
-            // set the idxNext to the first one in upgrade list,
+            // set the pLRBNext to the first one in upgrade list,
             // as the upgrade list is actually high priority waiter list
-            if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
+            if ( pLRBHdr->upgradeLRB  )
             {
-               idxNext = pLRBHdr->upgradeLRBIdx ;
+               pLRBNext = pLRBHdr->upgradeLRB ;
             }
          }
 #ifdef _DEBUG
          PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                     PD_PACK_STRING( "Next LRB in wait or upgrade list:" ),
-                    PD_PACK_UINT( idxNext ) ) ;
+                    PD_PACK_RAW( &pLRBNext, sizeof(&pLRBNext) ) ) ; 
 #endif
          // wake up the next waiting one if necessary.
          // Here are two cases :
@@ -1161,11 +1025,11 @@ namespace engine
          //    another approach is treat this EDU same as been waken up case
          //    and retry acquire. Or, do nothing let other waiters timeout.
          //    
-         if ( IS_VALID_SEG_OBJ_INDEX( idxNext ) )
+         if ( pLRBNext )
          {
-            plrb = _getLRBPtrByIdx( idxNext ) ;
+            plrb = pLRBNext;
 #ifdef _DEBUG
-            SDB_ASSERT( pLRB->lrbHdrIdx == plrb->lrbHdrIdx, "Invalid LRB" ) ;
+            SDB_ASSERT( pLRB->lrbHdr == plrb->lrbHdr, "Invalid LRB" ) ;
 #endif
             // the EDU was waken up ( _waitLock returned SDB_OK )
             if ( FALSE == removeLRBHeader ) 
@@ -1181,8 +1045,8 @@ namespace engine
                      SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                      PD_PACK_STRING( "Wake up EDU:" ),
                      PD_PACK_ULONG( eduIDTrc ),
-                     PD_PACK_STRING( "Waiter LRB idx:" ),
-                     PD_PACK_UINT( idxNext ) ) ;
+                     PD_PACK_STRING( "Waiter LRB:" ),
+                     PD_PACK_UINT( pLRBNext ) ) ;
 #endif
                }
             }
@@ -1190,7 +1054,7 @@ namespace engine
             {
                // the _waitLock() returned timeout or interrupted
 
-               if ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx ) )
+               if ( ! pLRBHdr->ownerLRB )
                {
                   // wake up next waiter if owner list is empty
                   _wakeUp( plrb->dpsTxExectr ) ;   
@@ -1201,36 +1065,36 @@ namespace engine
                      SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                      PD_PACK_STRING( "Wake up EDU:" ),
                      PD_PACK_ULONG( eduIDTrc ),
-                     PD_PACK_STRING( "Waiter LRB idx:" ),
-                     PD_PACK_UINT( idxNext ) ) ;
+                     PD_PACK_STRING( "Waiter LRB:" ),
+                     PD_PACK_UINT( pLRBNext ) ) ;
 #endif
                }
             }
          }
 
          // release the waiter LRB
-         _releaseLRB( idx ) ;      
+         _releaseLRB( pLRB ) ;      
 
          // when LRB Header is empty, release it if necessary
 #ifdef _DEBUG
-         SDB_ASSERT( ( IS_VALID_SEG_OBJ_INDEX( hdrIdx ) && pLRBHdr ),
+         SDB_ASSERT( ( pLRBHdr ),
                      "Invalid LRB Header." ) ;
 #endif
          if (    removeLRBHeader
-              && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx   ) )
-              && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
-              && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx  ) ) )
+              && ( !  pLRBHdr->ownerLRB   )
+              && ( !  pLRBHdr->upgradeLRB )
+              && ( !  pLRBHdr->waiterLRB  ) )
          {
 #ifdef _DEBUG
             PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
                        PD_PACK_STRING( "LRB Header to be removed:" ),
-                       PD_PACK_UINT( hdrIdx ) ) ;
+                       PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ) ) ;
 #endif
             // remove the LRB Header from the list
-            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdrIdx, hdrIdx ) ;
+            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr ) ;
             // release the LRB Header
-            _releaseLRBHdr( hdrIdx ) ;
-            hdrIdx = UTIL_INVALID_OBJ_INDEX ;
+            //
+            _releaseLRBHdr( pLRBHdr ) ;
             pLRBHdr = NULL ;
          }
       }
@@ -1244,45 +1108,41 @@ namespace engine
    //              the LRB Header from the chain. Please note, it doesn't
    //              release/return the LRB Header to the LRB Header manager.
    // Input:
-   //    idxBegin -- the index of the first LRB Header in the list
-   //    idxDel   -- the index of the LRB Header object to be removed
+   //    lrbBegin -- the first LRB Header in the list
+   //    lrbDel   -- the LRB Header object to be removed
    //
    // Output:
-   //    idxBegin -- if the idxBegin is same as idxDel, it will be updated with
-   //                the index of LRB Header next to idxDel
+   //    lrbBegin -- if the lrbBegin is same as lrbDel, it will be updated with
+   //                the LRB Header next to lrbDel
    // Return:     None
    // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_removeFromLRBHeaderList
    (
-      UTIL_OBJIDX & idxBegin,
-      UTIL_OBJIDX   idxDel
+      dpsTransLRBHeader* & lrbBegin,
+      dpsTransLRBHeader*   lrbDel
    )
    {
-      if (   IS_VALID_SEG_OBJ_INDEX( idxBegin )
-          && IS_VALID_SEG_OBJ_INDEX( idxDel ) )
+      if (   lrbBegin != NULL 
+          && lrbDel != NULL )
       {
-         UTIL_OBJIDX idx = idxBegin;
-         dpsTransLRBHeader *plrbHdr = NULL, *pLRBHeader = NULL;
+         dpsTransLRBHeader *plrbHdr = lrbBegin;
 
          // if the first one is the one to be removed
-         if ( idxDel == idxBegin )
+         if ( lrbDel == lrbBegin )
          {
-            pLRBHeader = _getLRBHdrPtrByIdx( idxDel ) ;
-            idxBegin   = pLRBHeader->nextLRBHdrIdx ;
+            lrbBegin = lrbDel->nextLRBHdr ;
          }
          else
          {
-            while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+            while ( plrbHdr != NULL )
             {
-               plrbHdr = _getLRBHdrPtrByIdx( idx ) ;
-               if ( idxDel == plrbHdr->nextLRBHdrIdx )
+               if ( lrbDel == plrbHdr->nextLRBHdr )
                {
-                  pLRBHeader             = _getLRBHdrPtrByIdx( idxDel ) ;
-                  plrbHdr->nextLRBHdrIdx = pLRBHeader->nextLRBHdrIdx ;
+                  plrbHdr->nextLRBHdr = lrbDel->nextLRBHdr ;
                   break ;
                }
-               idx = plrbHdr->nextLRBHdrIdx ;
+               plrbHdr = plrbHdr->nextLRBHdr ;
             }
          }
       }
@@ -1297,51 +1157,50 @@ namespace engine
    //              the LRB Header manager.
    // Input:
    //    dpsTxExectr  -- dpsTxExectr
-   //    idxDel       -- the index of the LRB object to be removed
+   //    delLrb       -- the LRB object to be removed
    //
    // Output:
-   //    dpsTxExectr->_lastLRBIdx -- the last LRB object index
-   //                                in the EDU LRB chain.
-   //                                If it is equal to idxDel, it will be
-   //                                updated with the index of LRB previous
-   //                                to idxDel
+   //    dpsTxExectr->_lastLRB -- the last LRB object
+   //                             in the EDU LRB chain.
+   //                             If it is equal to delLrb, it will be
+   //                             updated with the LRB previous
+   //                             to delLrb
    // Return:     None
    // Dependency:  the lock bucket latch shall be acquired
    //
    void dpsTransLockManager::_removeFromEDULRBList
    (
       _dpsTransExecutor    * dpsTxExectr,
-      const UTIL_OBJIDX      idxDel,
+      dpsTransLRB          * delLRB,
       const dpsTransLockId & lockId
    )
    {
       if (   ( dpsTxExectr )
-           && IS_VALID_SEG_OBJ_INDEX( idxDel )
-           && IS_VALID_SEG_OBJ_INDEX( dpsTxExectr->getLastLRBIdx() ) )
+           && delLRB
+           && dpsTxExectr->getLastLRB() ) 
       {
-         UTIL_OBJIDX eduLRBIdx = dpsTxExectr->getLastLRBIdx() ;
-         UTIL_OBJIDX idx       = eduLRBIdx ;
+         dpsTransLRB *eduLRB = dpsTxExectr->getLastLRB() ; 
+         dpsTransLRB *plrb = eduLRB;
          // walk though the EDU LRB list find and remove the give LRB
          // from the list
-         while ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+         while ( plrb )
          {
-            dpsTransLRB *plrb = _getLRBPtrByIdx( idx ) ;
             // found the LRB in chain and remove it
-            if ( idxDel == idx )
+            if ( delLRB == plrb )
             {
-               if ( IS_VALID_SEG_OBJ_INDEX( plrb->eduLrbIdxPrev ) )
+               if ( plrb->eduLrbPrev ) 
                {
-                  dpsTransLRB *plrbP = _getLRBPtrByIdx( plrb->eduLrbIdxPrev ) ;
-                  plrbP->eduLrbIdxNext = plrb->eduLrbIdxNext ;
+                  dpsTransLRB *plrbP = plrb->eduLrbPrev;
+                  plrbP->eduLrbNext = plrb->eduLrbNext ;
                }
-               if ( IS_VALID_SEG_OBJ_INDEX( plrb->eduLrbIdxNext ) )
+               if ( plrb->eduLrbNext ) 
                {
-                  dpsTransLRB *plrbN = _getLRBPtrByIdx( plrb->eduLrbIdxNext ) ;
-                  plrbN->eduLrbIdxPrev = plrb->eduLrbIdxPrev ;
+                  dpsTransLRB *plrbN = plrb->eduLrbNext ;
+                  plrbN->eduLrbPrev = plrb->eduLrbPrev ;
                }
-               if ( eduLRBIdx == idx )
+               if ( plrb == eduLRB )
                {
-                  dpsTxExectr->setLastLRBIdx( plrb->eduLrbIdxPrev ) ;
+                  dpsTxExectr->setLastLRB( plrb->eduLrbPrev ) ;
                }
  
                // remove the lock from lock ID map if it is CS or CL lock
@@ -1355,7 +1214,7 @@ namespace engine
 
                break ;
             }
-            idx = plrb->eduLrbIdxPrev ;
+            plrb = plrb->eduLrbPrev ;
          }
       }
    }
@@ -1430,17 +1289,14 @@ namespace engine
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
       INT32 rc = SDB_OK ;
-      UTIL_OBJIDX hdrIdxNew = UTIL_INVALID_OBJ_INDEX ,
-                  lrbIdxNew = UTIL_INVALID_OBJ_INDEX ,
-                  hdrIdx    = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX idxToInsert  = UTIL_INVALID_OBJ_INDEX ,
-                  idxLastComp  = UTIL_INVALID_OBJ_INDEX ,
-                  idxEduId     = UTIL_INVALID_OBJ_INDEX ,
-                  idxPrevEduId = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLRB *pLRBNew       = NULL ,
                   *pLRBIncomp    = NULL ,
+                  *pLRBLastComp  = NULL ,
+                  *pLRBToInsert  = NULL ,
                   *pLRBPrevEduId = NULL ,
+                  *pLRBEduID     = NULL ,
                   *pLRB          = NULL ;
+
       dpsTransLRBHeader *pLRBHdrNew = NULL ,
                         *pLRBHdr    = NULL ;
 
@@ -1483,23 +1339,21 @@ namespace engine
             bLatched = TRUE ;
          }
 
-         UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX ;
          pLRB = NULL ;
-         if ( dpsTxExectr->findLock( lockId, lrbIdx ) )
-         { 
-            if ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+         if ( dpsTxExectr->findLock( lockId, pLRB ) )
+         {
+            if ( pLRB )
             {
 #ifdef _DEBUG
-              PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
-                         PD_PACK_STRING( "Found CS,CL lock LRB:" ),
-                         PD_PACK_UINT( lrbIdx ) ) ;
+               PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
+                          PD_PACK_STRING( "Found CS,CL lock LRB:" ),
+                          PD_PACK_RAW( &pLRB, sizeof(&pLRB) ) ) ;
 #endif
-               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
                if ( dpsLockCoverage( pLRB->lockMode, requestLockMode ) )
                {
                   if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
                   {
-                     pLRB->refCounter ++ ;
+                     pLRB->refCounter++ ;
 
                      // clear the wait info in dpsTxExectr
                      dpsTxExectr->clearWaiterInfo() ;
@@ -1525,16 +1379,14 @@ namespace engine
       {
          // no need to allocate LRB Header and LRB for test mode
          rc = _prepareNewLRBAndHeader( dpsTxExectr, lockId, requestLockMode,
-                                       hdrIdxNew, pLRBHdrNew,
-                                       lrbIdxNew, pLRBNew ) ;
+                                       pLRBHdrNew,
+                                       pLRBNew ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
 #ifdef _DEBUG
-         SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( lrbIdxNew ) &&
-                     IS_VALID_SEG_OBJ_INDEX( hdrIdxNew ) &&
-                     pLRBNew &&
+         SDB_ASSERT( pLRBNew &&
                      pLRBHdrNew, "Invalid LRB or LRB Header." ) ;
 #endif
          bFreeLRB       = TRUE ;
@@ -1548,9 +1400,9 @@ namespace engine
 #ifdef _DEBUG
          PD_TRACE4( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                     PD_PACK_STRING("Acquired LRB Header:"),
-                    PD_PACK_UINT( hdrIdxNew ),
+                    PD_PACK_RAW( &pLRBHdrNew, sizeof(&pLRBHdrNew) ), 
                     PD_PACK_STRING("Acquired LRB:"),
-                    PD_PACK_UINT( lrbIdxNew ) ) ;
+                    PD_PACK_RAW( &pLRBNew, sizeof(&pLRBNew) ) ) ;
 #endif
       }
 
@@ -1562,15 +1414,15 @@ namespace engine
       bLatched = TRUE ;
 
       // if no LRB Header
-      if ( ! IS_VALID_SEG_OBJ_INDEX( _LockHdrBkt[ bktIdx ].lrbHdrIdx ) )
+      if (  _LockHdrBkt[ bktIdx ].lrbHdr == NULL )
       {
          if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
          {
             // add new LRB header to the link
-            _LockHdrBkt[ bktIdx ].lrbHdrIdx = hdrIdxNew ;
+            _LockHdrBkt[ bktIdx ].lrbHdr = pLRBHdrNew;
 
             // add new LRB to EDU LRB list
-            _addToEDULRBListTail( dpsTxExectr, lrbIdxNew, lockId ) ;
+            _addToEDULRBListTail( dpsTxExectr, pLRBNew, lockId ) ;
 
             // mark the new LRB and LRB Header are used
             bFreeLRB       = FALSE ;
@@ -1587,9 +1439,8 @@ namespace engine
 
       // LRB header exists,
       // lookup the LRB header list and find the one with same lockId
-      pLRBHdr = NULL ;
-      hdrIdx  = _LockHdrBkt[ bktIdx ].lrbHdrIdx ;
-      if ( ! _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) ) 
+      pLRBHdr = _LockHdrBkt[ bktIdx ].lrbHdr ;
+      if ( ! _getLRBHdrByLockId( lockId, pLRBHdr ) ) 
       {
          // no LRB header with same lockId is found,
          // add the new LRB Header in the lrb header list
@@ -1597,10 +1448,10 @@ namespace engine
          {
             // at this time, pLRBHdr shall be the tail of LRB header list.
             // add the new LRB header to LRB Header list ; 
-            pLRBHdr->nextLRBHdrIdx = hdrIdxNew ; 
+            pLRBHdr->nextLRBHdr = pLRBHdrNew ; 
 
             // add the new LRB to EDU LRB list
-            _addToEDULRBListTail( dpsTxExectr, lrbIdxNew, lockId ) ;
+            _addToEDULRBListTail( dpsTxExectr, pLRBNew, lockId ) ;
 
             // mark the new LRB and new LRB Header are used
             bFreeLRB       = FALSE ;
@@ -1616,59 +1467,55 @@ namespace engine
 #ifdef _DEBUG
       PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                  PD_PACK_STRING( "Found LRB Header:" ),
-                 PD_PACK_UINT( hdrIdx ) ) ;
+                 PD_PACK_RAW( &pLRBNew, sizeof ( &pLRBNew ) ) ) ;
 
       SDB_ASSERT( ( NULL != pLRBHdr ), "Invalid LRB Header" ) ;
-      SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ), "Invalid LRB Header index");
 #endif
       // found the LRB header with same lockId
 
-      // update the lrbHdrIdx of new LRB to current LRB Header index
+      // update the lrbHdrIdx of new LRB to current LRB Header
       if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
       {
-         pLRBNew->lrbHdrIdx = hdrIdx ;
+         pLRBNew->lrbHdr = pLRBHdr;
       }
 
       // search owner LRB list, which is sorted on lock mode in ascent order
       //  . to find if the edu is in owner list
-      //  . the index which the new LRB shall be inserted after
-      //  . the last index of compatible and pointer of first incompatible LRB
+      //  . the pointer which the new LRB shall be inserted after
+      //  . the last pointer of compatible and pointer of first incompatible LRB
       //
-      // idxToInsert   -- index to insert after
-      // idxLastComp   -- index of last compatible LRB
-      // idxEduId      -- LRB index with same EDUId
-      // idxPrevEduId  -- idx previous idxEduId
-      // pLRBPrevEduId -- addr of idxPrevEduId
+      // pLRBToInsert  -- lrb to insert after
+      // pLRBLastComp  -- last compatible LRB
       // pLRBIncomp    -- addr of first incompatible
-      _searchOwnerLRBList( eduId, requestLockMode, pLRBHdr->ownerLRBIdx,
-                           idxToInsert, idxLastComp, pLRBIncomp,
-                           idxEduId, idxPrevEduId, pLRBPrevEduId ) ;
+      // pLRBEduId     -- LRB with same EDUId
+      // pLRBPrevEduId -- addr of idxPrevEduId
+      _searchOwnerLRBList( eduId, requestLockMode, pLRBHdr->ownerLRB, pLRBToInsert,
+                           pLRBLastComp, pLRBIncomp,
+                           pLRBEduID,pLRBPrevEduId ) ;
 #ifdef _DEBUG
-      PD_TRACE7( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
+      PD_TRACE5( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                  PD_PACK_STRING( "Result of searching owner list:" ),
-                 PD_PACK_UINT( idxToInsert ),
-                 PD_PACK_UINT( idxLastComp ),
-                 PD_PACK_ULONG( pLRBIncomp ),
-                 PD_PACK_UINT( idxEduId ),
-                 PD_PACK_UINT( idxPrevEduId ),
-                 PD_PACK_ULONG( pLRBPrevEduId ) ) ;
+                 PD_PACK_RAW( &pLRBToInsert, sizeof (&pLRBToInsert) ),
+                 PD_PACK_RAW( &pLRBLastComp, sizeof (&pLRBLastComp) ),
+                 PD_PACK_RAW( &pLRBIncomp, sizeof (&pLRBIncomp) ),
+                 PD_PACK_RAW( &pLRBPrevEduId, sizeof (&pLRBPrevEduId) ) ) ;
 #endif
 
-      if ( IS_VALID_SEG_OBJ_INDEX( idxEduId ) )
+      if ( pLRBEduID )
       {
 #ifdef _DEBUG
          PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
                     PD_PACK_STRING( "Found in owner list, LRB:" ) ,
-                    PD_PACK_UINT( idxEduId ) ) ;
+                    PD_PACK_RAW( &pLRBEduID, sizeof (&pLRBEduID) ) ) ;
 #endif
          //
          // in owner list
          //
-         pLRB = _getLRBPtrByIdx( idxEduId ) ;
+         pLRB = pLRBEduID;
 #ifdef _DEBUG
-         SDB_ASSERT( pLRB && ( pLRB->lrbHdrIdx == hdrIdx ),
-                     "Invalid LRB or the lrbHdrIdx doesn't match "
-                     "the LRB Header index" ) ;
+         SDB_ASSERT( pLRB && ( pLRB->lrbHdr == pLRBHdr ),
+                     "Invalid LRB or the lrbHdr doesn't match "
+                     "the LRB Header" ) ;
 #endif
          // if current holding lock mode covers the requesting mode,
          // then job is done
@@ -1676,7 +1523,7 @@ namespace engine
          {
             if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
             {
-               pLRB->refCounter++ ;
+               pLRB->refCounter ++ ;
 
                // clear the wait info in dpsTxExectr
                dpsTxExectr->clearWaiterInfo() ;
@@ -1717,19 +1564,19 @@ namespace engine
          // try to do upgrade
          //
          // check if the requested mode is compatible with other owners
-         if ( IS_VALID_SEG_OBJ_INDEX( idxLastComp ) || ( NULL != pLRBIncomp ) )
+         if ( pLRBLastComp || ( NULL != pLRBIncomp ) ) 
          {
-            // valid idxLastComp or valid pLRBIncomp, means
+            // valid pLRBLastComp or valid pLRBIncomp, means
             // an incompatible LRB is found, i.e., not compatible
             // with others 
 
             if ( DPS_TRANSLOCK_OP_MODE_ACQUIRE == opMode )
             {
                // add the new LRB to upgrade list
-               _addToLRBListTail( pLRBHdr->upgradeLRBIdx, lrbIdxNew ) ;
+               _addToLRBListTail( pLRBHdr->upgradeLRB, pLRBNew ) ;
 
                // set the wait info in dpsTxExectr
-               dpsTxExectr->setWaiterInfo( lrbIdxNew, DPS_QUE_UPGRADE ) ;
+               dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_UPGRADE ) ;
 
                // mark the new LRB is used
                bFreeLRB = FALSE ;
@@ -1775,38 +1622,36 @@ namespace engine
                //   the lock mode in acsent order, we will need to move 
                //   the owner LRB to the right place by following two steps :
                //     . remove from current place
-               //     . move it to the place right after the idxToInsert
+               //     . move it to the place right after the pLRBToInsert
 
                // remove from current place
-               if ( IS_VALID_SEG_OBJ_INDEX( idxPrevEduId ) )
+               if ( pLRBPrevEduId )
                {
-                  // when idxPrevEduId is the valid, the pLRBPrevEduId
-                  // must be a valid address. 
 #ifdef _DEBUG
-                  SDB_ASSERT( pLRBPrevEduId, "Invalid LRB index " ) ;
+                  SDB_ASSERT( pLRBPrevEduId, "Invalid LRB" ) ;
 #endif
-                  pLRBPrevEduId->nextLRBIdx = pLRB->nextLRBIdx ;
+                  pLRBPrevEduId->nextLRB = pLRB->nextLRB ;
                }
                else
                {
-                  // if idxPrevEduId is invalid, means it is the first one
+                  // if pLRBPrevEduId is invalid, means it is the first one
                   // in the owner list
-                  pLRBHdr->ownerLRBIdx = pLRB->nextLRBIdx ;
+                  pLRBHdr->ownerLRB = pLRB->nextLRB ;
                }
 
                // insert it to the new position
-               if ( IS_VALID_SEG_OBJ_INDEX( idxToInsert ) )
+               if ( pLRBToInsert )
                {
-                  _addToOwnerLRBList( idxToInsert, idxEduId ) ;
+                  _addToOwnerLRBList( pLRBToInsert, pLRBEduID ) ;
                }
                else
                {
                   // set nextLRBIdx to UTIL_INVALID_OBJ_INDEX
                   // before adding it at the end of owner LRB list.
-                  pLRB->nextLRBIdx = UTIL_INVALID_OBJ_INDEX ;
+                  pLRB->nextLRB = NULL;
 
                   // add it at the end of owner list
-                  _addToLRBListTail( pLRBHdr->ownerLRBIdx, idxEduId ) ;
+                  _addToLRBListTail( pLRBHdr->ownerLRB, pLRBEduID ) ;
                }
 
                // clear the wait info in dpsTxExectr
@@ -1815,7 +1660,7 @@ namespace engine
                // update current lock mode to the request mode
                pLRB->lockMode = requestLockMode ;
              
-               pLRB->refCounter++ ;
+               pLRB->refCounter ++ ;
             }
 #ifdef _DEBUG
             PD_TRACE1( SDB_DPSTRANSLOCKMANAGER__TRYACQUIREORTEST,
@@ -1836,17 +1681,17 @@ namespace engine
          //
 
          // check if lock is compatible with all owners
-         if ( IS_VALID_SEG_OBJ_INDEX( idxLastComp ) || ( NULL != pLRBIncomp ) )
+         if ( pLRBLastComp ||  NULL != pLRBIncomp )
          {
             // found an incompatible one, i.e., not compatible with others
 
             if ( DPS_TRANSLOCK_OP_MODE_ACQUIRE == opMode )
             {
                // add it at the end of waiter list
-               _addToLRBListTail( pLRBHdr->waiterLRBIdx, lrbIdxNew ) ;
+               _addToLRBListTail( pLRBHdr->waiterLRB, pLRBNew ) ;
 
                // set the wait info in dpsTxExectr
-               dpsTxExectr->setWaiterInfo( lrbIdxNew, DPS_QUE_WAITER ) ;
+               dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_WAITER ) ;
 
                // mark the new LRB is used
                bFreeLRB = FALSE ; 
@@ -1890,24 +1735,24 @@ namespace engine
             // a. if both upgrade and waiter list are empty
             // b. if it is doing retry-acquire after been woken up.( when input
             //    parameter, bktLatched, is true, means retry acquiring )
-            if (   (    ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
-                     && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx ) ) )
+            if (   (    ( ! pLRBHdr->upgradeLRB ) 
+                     && ( ! pLRBHdr->waiterLRB ) )
                 || ( bktLatched ) )
             {
                if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
                {
                   // add the owner list
-                  if ( IS_VALID_SEG_OBJ_INDEX( idxToInsert ) )
+                  if ( pLRBToInsert )
                   { 
-                     _addToOwnerLRBList( idxToInsert, lrbIdxNew ) ;       
+                     _addToOwnerLRBList( pLRBToInsert, pLRBNew ) ;       
                   }
                   else
                   {
-                     _addToLRBListTail( pLRBHdr->ownerLRBIdx, lrbIdxNew ) ;   
+                     _addToLRBListTail( pLRBHdr->ownerLRB, pLRBNew ) ;   
                   }
 
                   // add the new LRB to EDU LRB list
-                  _addToEDULRBListTail( dpsTxExectr, lrbIdxNew, lockId ) ;
+                  _addToEDULRBListTail( dpsTxExectr, pLRBNew, lockId ) ;
 
                   // mark the new LRB is used
                   bFreeLRB = FALSE ;
@@ -1924,10 +1769,10 @@ namespace engine
                if ( DPS_TRANSLOCK_OP_MODE_ACQUIRE == opMode )
                {
                   // add to the end of waiter list
-                  _addToLRBListTail( pLRBHdr->waiterLRBIdx, lrbIdxNew ) ;
+                  _addToLRBListTail( pLRBHdr->waiterLRB, pLRBNew ) ;
 
                   // set the wait info in dpsTxExectr
-                  dpsTxExectr->setWaiterInfo( lrbIdxNew, DPS_QUE_WAITER ) ;
+                  dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_WAITER ) ;
 
                   // set return code to SDB_DPS_TRANS_APPEND_TO_WAIT
                   rc = SDB_DPS_TRANS_APPEND_TO_WAIT ;
@@ -1946,13 +1791,13 @@ namespace engine
                {
                   // pick first one from upgrade list or waiter list
                   // as the conflict lock info
-                  if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
+                  if ( pLRBHdr->upgradeLRB )
                   {
-                     pLRB = _getLRBPtrByIdx( pLRBHdr->upgradeLRBIdx ) ;
+                     pLRB = pLRBHdr->upgradeLRB;
                   }
                   else
                   {
-                     pLRB = _getLRBPtrByIdx( pLRBHdr->waiterLRBIdx ) ;
+                     pLRB = pLRBHdr->waiterLRB ;
                   }
                   pdpsTxResInfo->_lockID   = pLRBHdr->lockId ;
                   pdpsTxResInfo->_lockType = pLRB->lockMode ;
@@ -1998,22 +1843,22 @@ namespace engine
       }
       if ( bFreeLRB )
       {
-         _releaseLRB( lrbIdxNew ) ;
+         _releaseLRB( pLRBNew ) ;
          bFreeLRB = FALSE ;
       }
       else
       {
          // sample lock owning( first time ) or waiting timestamp ( ossTick )
          if (    ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
-              && IS_VALID_SEG_OBJ_INDEX( lrbIdxNew ) )
+              && pLRBNew )
          {
-            pLRB = _getLRBPtrByIdx( lrbIdxNew ) ;            
+            pLRB = pLRBNew;
             pLRB->beginTick.sample() ;
          }
       }
       if ( bFreeLRBHeader )
       {
-         _releaseLRBHdr( hdrIdxNew ) ;
+         _releaseLRBHdr( pLRBHdrNew ) ;
          bFreeLRBHeader = FALSE ;
       }
 
@@ -2034,9 +1879,7 @@ namespace engine
    //    lockId          -- lock id
    //    requestLockMode -- requested lock mode
    // Output:
-   //    hdrIdxNew       -- index of new LRB header
    //    pLRBHdrNew      -- pointer of the new LRB header object
-   //    lrbIdxNew       -- index of new LRB
    //    pLRBNew         -- pointer of the new LRB object
    // Return:  SDB_OK or any error returned from _utilSegmentManager::acquire   
    //
@@ -2045,9 +1888,7 @@ namespace engine
       _dpsTransExecutor *        dpsTxExectr,
       const dpsTransLockId     & lockId,
       const DPS_TRANSLOCK_TYPE   requestLockMode,
-      UTIL_OBJIDX              & hdrIdxNew,
       dpsTransLRBHeader *      & pLRBHdrNew, 
-      UTIL_OBJIDX              & lrbIdxNew,
       dpsTransLRB       *      & pLRBNew
    )
    {
@@ -2057,14 +1898,17 @@ namespace engine
       INT32   rc             = SDB_OK ;
       BOOLEAN lrbAcquired    = FALSE;
       BOOLEAN lrbHdrAcquired = FALSE;
+      UTIL_OBJIDX lrbIdxNew, hdrIdxNew;
 
       // acquire a free LRB
       rc = _pLRBMgr->acquire( lrbIdxNew, pLRBNew ) ;
+
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to acquire a free LRB (rc=%d)", rc );
          goto error ;
       }
+
 #ifdef _DEBUG
       SDB_ASSERT( pLRBNew,
                   "_prepareNewLRBAndHeader: LRB can't be null" ) ;
@@ -2073,34 +1917,36 @@ namespace engine
 
       // acuqire a free LRB Header
       rc = _pLRBHdrMgr->acquire( hdrIdxNew, pLRBHdrNew ) ;
+
       if ( SDB_OK != rc )
       {
          goto error ;
       }
+
 #ifdef _DEBUG
       SDB_ASSERT( pLRBHdrNew,
                   "_prepareNewLRBAndHeader: LRB Header can't be null" ) ;
 #endif
       // initial the new LRB
-      // and mark the new LRB Header index in its lrbHdrIdx
+      // and mark the new LRB Header in its lrbHdr
       pLRBNew->dpsTxExectr    = dpsTxExectr ;
       pLRBNew->lockMode       = requestLockMode ;
       pLRBNew->refCounter     = 1 ;
-      pLRBNew->eduLrbIdxNext  = UTIL_INVALID_OBJ_INDEX ;
-      pLRBNew->eduLrbIdxPrev  = UTIL_INVALID_OBJ_INDEX ;
-      pLRBNew->lrbHdrIdx      = hdrIdxNew ;
-      pLRBNew->nextLRBIdx     = UTIL_INVALID_OBJ_INDEX ;
+      pLRBNew->eduLrbNext     = NULL ;
+      pLRBNew->eduLrbPrev     = NULL ;
+      pLRBNew->lrbHdr         = pLRBHdrNew;
+      pLRBNew->nextLRB        = NULL;
       pLRBNew->beginTick.clear() ;
 
       // inital the new LRB Header
       // and add the new LRB into the new LRB Header owner list
-      pLRBHdrNew->lockId        = lockId ;
-      pLRBHdrNew->ownerLRBIdx   = lrbIdxNew ;
-      pLRBHdrNew->waiterLRBIdx  = UTIL_INVALID_OBJ_INDEX ;
-      pLRBHdrNew->upgradeLRBIdx = UTIL_INVALID_OBJ_INDEX ;
-      pLRBHdrNew->nextLRBHdrIdx = UTIL_INVALID_OBJ_INDEX ;
+      pLRBHdrNew->lockId     = lockId ;
+      pLRBHdrNew->ownerLRB   = pLRBNew;
+      pLRBHdrNew->waiterLRB  = NULL ;
+      pLRBHdrNew->upgradeLRB = NULL ;
+      pLRBHdrNew->nextLRBHdr = NULL ;
 
-      pLRBHdrNew->oldVer = SDB_OSS_NEW oldVersionContainer(hdrIdxNew);
+      pLRBHdrNew->oldVer = SDB_OSS_NEW oldVersionContainer(pLRBHdrNew);
       if ( pLRBHdrNew->oldVer == NULL )
       {
          rc = SDB_OOM;
@@ -2115,13 +1961,14 @@ namespace engine
       if( lrbAcquired )
       {
          // release LRB in case failed to acquire LRB Header
-         _releaseLRB( lrbIdxNew ) ;
+         _releaseLRB( pLRBNew ) ;
       }
 
       if( lrbHdrAcquired )
       {
          // release LRB in case failed to acquire LRB Header
-         _releaseLRBHdr( hdrIdxNew ) ;
+         //
+         _releaseLRBHdr( pLRBHdrNew ) ;
       }
 
       PD_LOG( PDERROR,
@@ -2453,17 +2300,13 @@ namespace engine
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 #endif
-      UTIL_OBJIDX hdrIdx         = UTIL_INVALID_OBJ_INDEX ,
-                  ownerLrbIdx    = UTIL_INVALID_OBJ_INDEX ,
-                  prevOwnerIdx   = UTIL_INVALID_OBJ_INDEX ,
-                  lrbHdrToRelase = UTIL_INVALID_OBJ_INDEX ,
-                  lrbToRelase    = UTIL_INVALID_OBJ_INDEX ;
       UTIL_OBJIDX bktIdx         = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX waiterIdx      = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLRB *pOwnerLRB     = NULL ,
+                  *lrbToRelase   = NULL ,
                   *pPrevOwnerLRB = NULL ,
                   *pWaiterLRB    = NULL ;
-      dpsTransLRBHeader *pLRBHdr = NULL ;
+      dpsTransLRBHeader *pLRBHdr = NULL, 
+                        *pLRBHdrToRelase = NULL;
       EDUID eduId = dpsTxExectr->getEDUID() ;
       BOOLEAN bLatched = FALSE ;
       BOOLEAN foundIncomp = FALSE ;
@@ -2476,13 +2319,11 @@ namespace engine
       {
          // we don't need bkt latch when looking up CS,CL lock
          // in the executor _mapLockID map
-         UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX ;
          dpsTransLRB *pLRB = NULL ;
-         if ( dpsTxExectr->findLock( lockId, lrbIdx ) )
+         if ( dpsTxExectr->findLock( lockId, pLRB ) )
          {
-            if ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+            if ( pLRB )
             {
-               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
                if ( pLRB->refCounter > 1 )
                {
                   pLRB->refCounter-- ;
@@ -2501,56 +2342,53 @@ namespace engine
       _acquireOpLatch( bktIdx ) ;
       bLatched = TRUE ;
 
-      if ( IS_VALID_SEG_OBJ_INDEX( _LockHdrBkt[bktIdx].lrbHdrIdx ) ) 
+      if ( _LockHdrBkt[bktIdx].lrbHdr != NULL ) 
       {
-         hdrIdx = _LockHdrBkt[bktIdx].lrbHdrIdx ;
+         pLRBHdr = _LockHdrBkt[bktIdx].lrbHdr ;
 
          // lookup LRB Header list to find the LRB Header with same lockId
-         if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
+         if ( _getLRBHdrByLockId( lockId, pLRBHdr ) )
          {
             // remove the LRB Header if onwer, waiter,
             // and upgrade list are all empty
-            if (    ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx   ) )
-                 && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
-                 && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx  ) ) )
+            if (    ( pLRBHdr->ownerLRB == NULL  ) 
+                 && ( pLRBHdr->upgradeLRB == NULL )
+                 && ( pLRBHdr->waiterLRB == NULL ) ) 
             {
-               _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdrIdx, hdrIdx);
+               _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr);
 
-               // save index of LRB Header to be released
-               lrbHdrToRelase = hdrIdx ;
+               pLRBHdrToRelase = pLRBHdr;
 #ifdef _DEBUG
                PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASE,
                           PD_PACK_STRING( "Remove empty LRB Header" ),
-                          PD_PACK_UINT( hdrIdx ) ) ;
-               PD_LOG( PDERROR, "Remove empty LRB Header %u", hdrIdx ) ;
+                          PD_PACK_RAW( &pLRBHdr, sizeof (&pLRBHdr) ) ) ;
+               PD_LOG( PDERROR, "Remove empty LRB Header %p", pLRBHdr ) ;
 #endif
                goto done ;
             }
 
             // lookup owner list to find the LRB with same eduid
-            ownerLrbIdx = UTIL_INVALID_OBJ_INDEX ;
             pOwnerLRB   = NULL ;
             _getLRBByEDUId( eduId,
-                            pLRBHdr->ownerLRBIdx,
-                            ownerLrbIdx,
+                            pLRBHdr->ownerLRB,
                             pOwnerLRB ) ;
 
-            if ( ! ( pOwnerLRB && IS_VALID_SEG_OBJ_INDEX( ownerLrbIdx ) ) )
+            if ( ! ( pOwnerLRB ) )
             {
 #ifdef _DEBUG
                PD_LOG( PDERROR,
                        "Owner LRB is not found."OSS_NEWLINE
                        "EDU:%llu lockId:%s"OSS_NEWLINE
-                       "LRB Header:%u Owner LRB:%u"OSS_NEWLINE,
+                       "LRB Header:%p Owner LRB:%p"OSS_NEWLINE,
                        eduId, lockId.toString().c_str(),
-                       hdrIdx, ownerLrbIdx ) ;
+                       pLRBHdr, pOwnerLRB ) ;
 #endif
                goto done ;
             }
             
             if ( bForceRelease )
             {
-               pOwnerLRB->refCounter = 0 ; 
+               pOwnerLRB->refCounter = 0 ;
             }
             else
             {
@@ -2583,15 +2421,13 @@ namespace engine
             }
 
             // get the waiter LRB pointer
-            if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
+            if ( pLRBHdr->upgradeLRB )
             {
-               pWaiterLRB = _getLRBPtrByIdx( pLRBHdr->upgradeLRBIdx ) ;
-               waiterIdx  = pLRBHdr->upgradeLRBIdx ;
+               pWaiterLRB = pLRBHdr->upgradeLRB ;
             }
-            else if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx ) )
+            else if ( pLRBHdr->waiterLRB  )
             {
-               pWaiterLRB = _getLRBPtrByIdx( pLRBHdr->waiterLRBIdx ) ;
-               waiterIdx  = pLRBHdr->waiterLRBIdx ;
+               pWaiterLRB = pLRBHdr->waiterLRB  ;
             }
             if ( pWaiterLRB )
             {
@@ -2599,27 +2435,27 @@ namespace engine
                // with other owners, and find the LRB privous the owner
                _checkWaiterLockModeWithOwners( eduId,
                                                pWaiterLRB->lockMode,
-                                               pLRBHdr->ownerLRBIdx,
-                                               prevOwnerIdx, pPrevOwnerLRB,
+                                               pLRBHdr->ownerLRB,
+                                               pPrevOwnerLRB,
                                                foundIncomp ) ;
             }
             else
             {
                // lookup owner list to find the LRB previous the owner
                _getPreviousLRB( eduId,
-                                pLRBHdr->ownerLRBIdx,
-                                prevOwnerIdx, pPrevOwnerLRB ) ;
+                                pLRBHdr->ownerLRB,
+                                pPrevOwnerLRB ) ;
 
             }
 
 #ifdef _DEBUG
             PD_TRACE8( SDB_DPSTRANSLOCKMANAGER__RELEASE,
                        PD_PACK_STRING( "LRB Header:" ),
-                       PD_PACK_UINT( hdrIdx ),
+                       PD_PACK_RAW( &pLRBHdr, sizeof (&pLRBHdr) ),
                        PD_PACK_STRING( "Owner LRB:" ),
-                       PD_PACK_UINT( ownerLrbIdx ),
-                       PD_PACK_STRING( "Waiter LRB idx:" ),
-                       PD_PACK_UINT( waiterIdx ) ,
+                       PD_PACK_RAW( &pOwnerLRB, sizeof (&pOwnerLRB) ),
+                       PD_PACK_STRING( "Waiter LRB:" ),
+                       PD_PACK_RAW( &pWaiterLRB, sizeof (&pWaiterLRB) ),
                        PD_PACK_STRING( "Found an incompatible in owner Q:" ),
                        PD_PACK_UINT( foundIncomp ) ) ;
 #endif
@@ -2631,17 +2467,17 @@ namespace engine
                           PD_PACK_STRING( "Remove from EDU LRB and owner Q" ) );
 #endif
                // remove it from EDU LRB list
-               _removeFromEDULRBList( dpsTxExectr, ownerLrbIdx, lockId ) ;
+               _removeFromEDULRBList( dpsTxExectr, pOwnerLRB, lockId ) ;
 
                // remove it from lock owner list
-               if ( pLRBHdr->ownerLRBIdx == ownerLrbIdx )
+               if ( pLRBHdr->ownerLRB == pOwnerLRB )
                {
                   // it is the first one in owner list
-                  pLRBHdr->ownerLRBIdx = pOwnerLRB->nextLRBIdx ;
+                  pLRBHdr->ownerLRB = pOwnerLRB->nextLRB ;
                }
-               else if ( IS_VALID_SEG_OBJ_INDEX( prevOwnerIdx ) )
+               else if ( pPrevOwnerLRB )
                {
-                  pPrevOwnerLRB->nextLRBIdx = pOwnerLRB->nextLRBIdx ;
+                  pPrevOwnerLRB->nextLRB = pOwnerLRB->nextLRB ;
                }
 
                // if the owner queue is empty ( after remove current owner ),
@@ -2649,34 +2485,33 @@ namespace engine
                // wake it up
                if ( pWaiterLRB && 
                     ( ( FALSE == foundIncomp ) || 
-                      ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx ) ) ) )
+                      ( ! pLRBHdr->ownerLRB ) ) )
                {
 #ifdef _DEBUG
                   eduIDTrc   = pWaiterLRB->dpsTxExectr->getEDUID() ;
                   PD_TRACE4( SDB_DPSTRANSLOCKMANAGER__RELEASE,
                              PD_PACK_STRING( "Wakeup the EDU:" ),
                              PD_PACK_ULONG( eduIDTrc ),
-                             PD_PACK_STRING( "Waiter LRB idx:" ),
-                             PD_PACK_UINT( waiterIdx ) ) ;
+                             PD_PACK_STRING( "Waiter LRB:" ),
+                             PD_PACK_RAW( &pWaiterLRB, sizeof(&pWaiterLRB) ) ) ;
 #endif
                   // wake up the edu by posting an event
                   _wakeUp( pWaiterLRB->dpsTxExectr ) ;
                }
 
-               // save the index of owner LRB to be released
-               lrbToRelase = ownerLrbIdx ; 
+               // save the pointer of owner LRB to be released
+               lrbToRelase = pOwnerLRB;
 
                // remove the LRB Header if onwer, waiter,
                // and upgrade list are all empty
-               if (    ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx   ) )
-                    && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
-                    && ( ! IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx  ) ) )
+               if (    ( pLRBHdr->ownerLRB == NULL )
+                    && ( pLRBHdr->upgradeLRB == NULL )
+                    && ( pLRBHdr->waiterLRB == NULL ) )
                {
-                  _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdrIdx, 
-                                            hdrIdx ) ;
+                  _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, 
+                                            pLRBHdr ) ;
 
-                  // save index of LRB Header to be released
-                  lrbHdrToRelase = hdrIdx ;
+                  pLRBHdrToRelase = pLRBHdr;
 #ifdef _DEBUG
                   PD_TRACE1( SDB_DPSTRANSLOCKMANAGER__RELEASE,
                              PD_PACK_STRING( "Remove LRB Header" ) ) ;
@@ -2700,15 +2535,13 @@ namespace engine
          _releaseOpLatch( bktIdx ) ;
          bLatched = FALSE ;
       }
-      if ( IS_VALID_SEG_OBJ_INDEX( lrbToRelase ) )
+      if ( lrbToRelase ) 
       {
          _releaseLRB( lrbToRelase ) ;
-         lrbToRelase = UTIL_INVALID_OBJ_INDEX ;
       }
-      if ( IS_VALID_SEG_OBJ_INDEX( lrbHdrToRelase ) )
+      if ( pLRBHdrToRelase )
       {
-         _releaseLRBHdr( lrbHdrToRelase ) ;
-         lrbHdrToRelase = UTIL_INVALID_OBJ_INDEX ; 
+         _releaseLRBHdr( pLRBHdrToRelase ) ;
       }
 
       PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER__RELEASE ) ;
@@ -2890,29 +2723,25 @@ namespace engine
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
 
-      if ( IS_VALID_SEG_OBJ_INDEX( dpsTxExectr->getLastLRBIdx() ) )
+      if ( dpsTxExectr->getLastLRB() )
       {
-         dpsTransLRB       *pLRB ;
+         dpsTransLRB       *pLRB = dpsTxExectr->getLastLRB() ;
          dpsTransLRBHeader *pLRBHdr ;
-         UTIL_OBJIDX hdrIdx, lrbIdx = dpsTxExectr->getLastLRBIdx() ;
-         dpsTransLockId lockId;
+         dpsTransLockId     lockId;
 
-         while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+         while ( pLRB )
          {
-            pLRB = _getLRBPtrByIdx( lrbIdx ) ;
-
-            // peek LRB Header index
-            hdrIdx = pLRB->lrbHdrIdx ;
+            // peek LRB Header 
+            pLRBHdr = pLRB->lrbHdr ;
 #ifdef _DEBUG
             PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
                        PD_PACK_STRING( "LRB Header and LRB:" ),
-                       PD_PACK_UINT( hdrIdx ),
-                       PD_PACK_UINT( lrbIdx ) ) ;
+                       PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ),
+                       PD_PACK_RAW( &pLRB, sizeof(&pLRB) ) ) ;
 #endif
             // get LRB Header
-            if ( IS_VALID_SEG_OBJ_INDEX( hdrIdx ) )
+            if ( pLRBHdr != NULL )
             {
-               pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
                lockId  = pLRBHdr->lockId ;
 #ifdef _DEBUG
                ossSnprintf( lockIdStr, sizeof( lockIdStr ),
@@ -2931,14 +2760,14 @@ namespace engine
             // _releaseAll will remove LRB from EDU list
             // by calling  _removeFromEDULRBList(),
             // where the dpsTxExectr->_lastLRBInList will be updated,
-            // so we may use dpsTxExectr->getLastLRBIdx() to move to
+            // so we may use dpsTxExectr->getLastLRB() to move to
             // previous LRB in the EDU LRB chain.
 
             // move to next lock to be released
-            // we can't use lrbIdx = lrbIdx->eduLrbIdxPrev to move to next
+            // we can't use pLRB = lrb->eduLrbPrev to move to next
             // LRB as _releaseAll() will remove upper level intent lock as well,
             // which may advance several LRBs ( CL, CS ).
-            lrbIdx = dpsTxExectr->getLastLRBIdx() ;
+            pLRB = dpsTxExectr->getLastLRB() ;
          }
       }
       PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER_RELEASEALL ) ;
@@ -3100,7 +2929,7 @@ namespace engine
          }
          isIntentLockAcquired = TRUE;
       }
-
+      
       // calculate the hash index by lockId
       bktIdx = _getBucketNo( lockId ) ;
 
@@ -3257,7 +3086,6 @@ namespace engine
    {
       BOOLEAN result = FALSE;
       UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
 
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
@@ -3274,15 +3102,14 @@ namespace engine
       // latch the LRB Header list
       _acquireOpLatch( bktIdx ) ;
 
-      hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
-      if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
+      pLRBHdr  = _LockHdrBkt[bktIdx].lrbHdr ;
+      if ( _getLRBHdrByLockId( lockId, pLRBHdr ) )
       {
-         SDB_ASSERT( pLRBHdr && IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
+         SDB_ASSERT( pLRBHdr,
                      "Invalid LRB Header" ) ;
          if (    pLRBHdr 
-              && IS_VALID_SEG_OBJ_INDEX( hdrIdx )
-              && (   IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx  ) 
-                  || IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) ) )
+              && (   pLRBHdr->waiterLRB != NULL   
+                  || pLRBHdr->upgradeLRB != NULL  ) )
          {
             result = TRUE ;
          } 
@@ -3304,15 +3131,13 @@ namespace engine
    //
    CHAR * dpsTransLockManager::_LRBToString 
    (
-      const UTIL_OBJIDX idx,
+      dpsTransLRB *pLRB,
       CHAR * pBuf,
       UINT32 bufSz 
    )
    {
-      if ( IS_VALID_SEG_OBJ_INDEX( idx )  )
+      if ( pLRB )
       {
-         dpsTransLRB *pLRB = _getLRBPtrByIdx( idx ) ;
-
          UINT32 seconds = 0, microseconds = 0 ;
          ossTickConversionFactor factor ;
          ossTick endTick ;
@@ -3321,13 +3146,13 @@ namespace engine
          delta.convertToTime( factor, seconds, microseconds ) ;
  
          ossSnprintf( pBuf, bufSz,
-                      "LRB: %u, dpsTxExectr: %p, "
-                      "eduLrbIdxNext: %u, eduLrbIdxPrev: %u, "
-                      "lrbHdrIdx: %u, nextLRBIdx: %u "
+                      "LRB: %p, dpsTxExectr: %p, "
+                      "eduLrbNext: %p, eduLrbPrev: %p, "
+                      "lrbHdr: %p, nextLRB: %p "
                       "refCounter: %llu, lockMode: %s, duration:%llu",
-                      idx, pLRB->dpsTxExectr,
-                      pLRB->eduLrbIdxNext, pLRB->eduLrbIdxPrev,
-                      pLRB->lrbHdrIdx, pLRB->nextLRBIdx,
+                      pLRB, pLRB->dpsTxExectr,
+                      pLRB->eduLrbNext, pLRB->eduLrbPrev,
+                      pLRB->lrbHdr, pLRB->nextLRB,
                       pLRB->refCounter,
                       lockModeToString( pLRB->lockMode ),
                       (UINT64)(seconds*1000 + microseconds / 1000 ) ) ;
@@ -3342,7 +3167,7 @@ namespace engine
    //
    CHAR * dpsTransLockManager::_LRBToString 
    (
-      const UTIL_OBJIDX idx,
+      dpsTransLRB *pLRB,
       CHAR * pBuf,
       UINT32 bufSz, 
       CHAR * prefix
@@ -3351,9 +3176,8 @@ namespace engine
       CHAR * pBuff = pBuf;
       CHAR * pDummy= "" ;
       CHAR * pStr  = ( prefix ? prefix : pDummy ) ;
-      if ( IS_VALID_SEG_OBJ_INDEX( idx )  )
+      if ( pLRB )
       {
-         dpsTransLRB *pLRB = _getLRBPtrByIdx( idx ) ;
 
          UINT32 seconds = 0, microseconds = 0 ;
          ossTickConversionFactor factor ;
@@ -3363,23 +3187,23 @@ namespace engine
          delta.convertToTime( factor, seconds, microseconds ) ;
 
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sLRB          : %u"OSS_NEWLINE, pStr,
-                               idx ) ;
+                               "%sLRB          : %p"OSS_NEWLINE, pStr,
+                               pLRB ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%sdpsTxExectr  : %p"OSS_NEWLINE, pStr,
                                pLRB->dpsTxExectr ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%seduLrbIdxNext: %u"OSS_NEWLINE, pStr,
-                               pLRB->eduLrbIdxNext ) ;
+                               "%seduLrbNext: %p"OSS_NEWLINE, pStr,
+                               pLRB->eduLrbNext ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%seduLrbIdxPrev: %u"OSS_NEWLINE, pStr,
-                               pLRB->eduLrbIdxPrev ) ;
+                               "%seduLrbPrev: %p"OSS_NEWLINE, pStr,
+                               pLRB->eduLrbPrev ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%slrbHdrIdx    : %u"OSS_NEWLINE, pStr,
-                               pLRB->lrbHdrIdx ) ;
+                               "%slrbHdr    : %p"OSS_NEWLINE, pStr,
+                               pLRB->lrbHdr ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%snextLRBIdx   : %u"OSS_NEWLINE, pStr,
-                               pLRB->nextLRBIdx ) ;
+                               "%snextLRB   : %p"OSS_NEWLINE, pStr,
+                               pLRB->nextLRB ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%srefCounter   : %llu"OSS_NEWLINE, pStr,
                                pLRB->refCounter ) ;
@@ -3399,23 +3223,22 @@ namespace engine
    //
    CHAR * dpsTransLockManager::_LRBHdrToString
    (
-      const UTIL_OBJIDX idx,
+      dpsTransLRBHeader *pLRBHdr,
       CHAR * pBuf,
       UINT32 bufSz 
    )
    {
-      if ( IS_VALID_SEG_OBJ_INDEX( idx )  )
+      if ( pLRBHdr )
       {
-         dpsTransLRBHeader *pLRBHdr = _getLRBHdrPtrByIdx( idx ) ;
          ossSnprintf( pBuf, bufSz,
-                      "LRB Header: %u, nextLRBHdrIdx: %u, "
-                      "ownerLRBIdx: %u, waiterLRBIdx : %u, upgradeLRBIdx: %u, "
+                      "LRB Header: %p, nextLRBHdr: %p, "
+                      "ownerLRB: %p, waiterLRB : %p, upgradeLRB: %p, "
                       "lockId: ( %s )",
-                      idx,
-                      pLRBHdr->nextLRBHdrIdx,
-                      pLRBHdr->ownerLRBIdx,
-                      pLRBHdr->waiterLRBIdx,               
-                      pLRBHdr->upgradeLRBIdx,
+                      pLRBHdr,
+                      pLRBHdr->nextLRBHdr,
+                      pLRBHdr->ownerLRB,
+                      pLRBHdr->waiterLRB,               
+                      pLRBHdr->upgradeLRB,
                       pLRBHdr->lockId.toString().c_str() ) ;
       }
       return pBuf;
@@ -3427,7 +3250,7 @@ namespace engine
    //
    CHAR * dpsTransLockManager::_LRBHdrToString 
    (
-      const UTIL_OBJIDX idx,
+      dpsTransLRBHeader *pLRBHdr,
       CHAR * pBuf,
       UINT32 bufSz, 
       CHAR * prefix
@@ -3436,24 +3259,23 @@ namespace engine
       CHAR * pBuff = pBuf;
       CHAR * pDummy= "" ;
       CHAR * pStr  = ( prefix ? prefix : pDummy ) ;
-      if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
+      if ( pLRBHdr )
       {
-         dpsTransLRBHeader *pLRBHdr = _getLRBHdrPtrByIdx( idx ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sLRB Header    : %u"OSS_NEWLINE, pStr,
-                               idx ) ;
+                               "%sLRB Header    : %p"OSS_NEWLINE, pStr,
+                               pLRBHdr ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%snextLRBHdrIdx : %u"OSS_NEWLINE, pStr,
-                               pLRBHdr->nextLRBHdrIdx);
+                               "%snextLRBHdr : %p"OSS_NEWLINE, pStr,
+                               pLRBHdr->nextLRBHdr);
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sownerLRBIdx   : %u"OSS_NEWLINE, pStr,
-                               pLRBHdr->ownerLRBIdx );
+                               "%sownerLRB   : %p"OSS_NEWLINE, pStr,
+                               pLRBHdr->ownerLRB );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%swaiterLRBIdx  : %u"OSS_NEWLINE, pStr,
-                               pLRBHdr->waiterLRBIdx );
+                               "%swaiterLRB  : %p"OSS_NEWLINE, pStr,
+                               pLRBHdr->waiterLRB );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%supgradeLRBIdx : %u"OSS_NEWLINE, pStr,
-                               pLRBHdr->upgradeLRBIdx );
+                               "%supgradeLRB : %u"OSS_NEWLINE, pStr,
+                               pLRBHdr->upgradeLRB );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%slockId        : ( %s )"OSS_NEWLINE, pStr,
                                pLRBHdr->lockId.toString().c_str() ) ;
@@ -3476,7 +3298,6 @@ namespace engine
       BOOLEAN             bOutputInPlainMode
    )
    {
-      UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX;
       dpsTransLRB *pLRB  = NULL ;
       CHAR * pStr = NULL ;
       CHAR * prefixStr = (CHAR*)"   " ; 
@@ -3491,26 +3312,24 @@ namespace engine
             goto error ;
          }
          
-         lrbIdx = dpsTxExectr->getLastLRBIdx() ;
-         while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+         pLRB = dpsTxExectr->getLastLRB() ;
+         while ( pLRB )
          {
-            pLRB    = _getLRBPtrByIdx( lrbIdx ) ;
-
-            SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( pLRB->lrbHdrIdx ),
-                        "Invalid LRB Header index." ) ;
+            SDB_ASSERT( pLRB->lrbHdr != NULL ,
+                        "Invalid LRB Header." ) ;
 
             if ( bOutputInPlainMode )
             {
-               pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
+               pStr = (CHAR*) _LRBToString( pLRB, szBuffer,
                                             sizeof(szBuffer) ) ;
             }
             else
             {
-               pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
+               pStr = (CHAR*) _LRBToString( pLRB, szBuffer,
                                             sizeof(szBuffer), prefixStr ) ;
             }
             fprintf( fp, "%s"OSS_NEWLINE, pStr ) ;
-            lrbIdx = pLRB->eduLrbIdxPrev ;
+            pLRB = pLRB->eduLrbPrev ;
          }
 
          // close output file
@@ -3536,12 +3355,10 @@ namespace engine
       BOOLEAN                bOutputInPlainMode
    )
    {
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX,
-                  hdrIdx = UTIL_INVALID_OBJ_INDEX,
-                  lrbIdx = UTIL_INVALID_OBJ_INDEX;
       dpsTransLockId iLockId;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
+      UTIL_OBJIDX        bktIdx;
       CHAR * pStr = NULL ;
       CHAR * prefixStr = (CHAR*)"   " ; 
       CHAR szBuffer[ DPS_STRING_LEN_MAX ] = { '\0' } ;
@@ -3568,8 +3385,8 @@ namespace engine
       // latch the bucket
       _acquireOpLatch( bktIdx ) ; 
 
-      hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
-      if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
+      pLRBHdr  = _LockHdrBkt[bktIdx].lrbHdr ;
+      if ( _getLRBHdrByLockId( lockId, pLRBHdr ) )
       {
          fprintf( fp, "%s",  "LRB Header " ) ;
          if ( lockId.isRootLevel() ) 
@@ -3589,15 +3406,15 @@ namespace engine
          fprintf( fp, "%s", "-------------------------------"OSS_NEWLINE ) ;
          if ( bOutputInPlainMode )
          {
-            pStr = (CHAR*) _LRBHdrToString( hdrIdx, szBuffer, sizeof(szBuffer));
+            pStr = (CHAR*) _LRBHdrToString( pLRBHdr, szBuffer, sizeof(szBuffer));
          }
          else
          {
-            pStr = (CHAR*) _LRBHdrToString( hdrIdx, szBuffer, sizeof(szBuffer),
+            pStr = (CHAR*) _LRBHdrToString( pLRBHdr, szBuffer, sizeof(szBuffer),
                                             NULL );
          }
          fprintf( fp, "%s"OSS_NEWLINE OSS_NEWLINE, pStr ) ;
-         if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx ) ) 
+         if ( pLRBHdr->ownerLRB ) 
          {
             if ( bOutputInPlainMode )
             {
@@ -3609,68 +3426,65 @@ namespace engine
                fprintf( fp, "%sOwner list:"OSS_NEWLINE, prefixStr ) ;
                fprintf( fp, "%s-----------"OSS_NEWLINE, prefixStr ) ;
             }
-            lrbIdx = pLRBHdr->ownerLRBIdx ;
-            while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+            pLRB = pLRBHdr->ownerLRB ;
+            while ( pLRB )
             {
-               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
                if ( bOutputInPlainMode )
                {
-                  pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
+                  pStr = (CHAR*) _LRBToString( pLRB, szBuffer,
                                                sizeof(szBuffer) ) ;
                }
                else
                {
-                  pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
+                  pStr = (CHAR*) _LRBToString( pLRB, szBuffer,
                                                sizeof(szBuffer), prefixStr ) ;
                }
                fprintf( fp, "%s"OSS_NEWLINE, pStr ) ;
-               lrbIdx = pLRB->nextLRBIdx ;
+               pLRB = pLRB->nextLRB ;
             } 
             fprintf( fp, "%s", OSS_NEWLINE ) ;
          }
-         if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
+         if ( pLRBHdr->upgradeLRB )
          {
             fprintf( fp, "%sUpgrade list:"OSS_NEWLINE, prefixStr ) ;
             fprintf( fp, "%s-------------"OSS_NEWLINE, prefixStr ) ;
-            lrbIdx = pLRBHdr->upgradeLRBIdx ;
-            while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+            pLRB = pLRBHdr->upgradeLRB ;
+            while ( pLRB )
             {
-               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
                if ( bOutputInPlainMode )
                {
-                  pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
+                  pStr = (CHAR*) _LRBToString( pLRB, szBuffer,
                                                sizeof(szBuffer) ) ;
                }
                else
                {
-                  pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
+                  pStr = (CHAR*) _LRBToString( pLRB, szBuffer,
                                                sizeof(szBuffer), prefixStr );
                }
                fprintf( fp, "%s"OSS_NEWLINE, pStr ) ;
-               lrbIdx = pLRB->nextLRBIdx ;
+               pLRB = pLRB->nextLRB ;
             }
             fprintf( fp, "%s", OSS_NEWLINE ) ;
          }
-         if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx ) )
+         if ( pLRBHdr->waiterLRB != NULL )
          {
             fprintf( fp, "%sWaiter list:"OSS_NEWLINE, prefixStr ) ;
             fprintf( fp, "%s------------"OSS_NEWLINE, prefixStr ) ;
-            lrbIdx = pLRBHdr->waiterLRBIdx ;
-            while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+            pLRB = pLRBHdr->waiterLRB ;
+            while ( pLRB )
             {
-               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
                if ( bOutputInPlainMode )
                {
-                  pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
+                  pStr = (CHAR*) _LRBToString( pLRB, szBuffer,
                                                sizeof(szBuffer) ) ;
                }
                else
                {
-                  pStr = (CHAR*) _LRBToString( lrbIdx, szBuffer,
+                  pStr = (CHAR*) _LRBToString( pLRB, szBuffer,
                                                sizeof(szBuffer), prefixStr );
                }
                fprintf( fp, "%s"OSS_NEWLINE, pStr ) ;
-               lrbIdx = pLRB->nextLRBIdx ;
+               pLRB = pLRB->nextLRB ;
             }
             fprintf( fp, "%s", OSS_NEWLINE ) ;
          }
@@ -3689,7 +3503,6 @@ namespace engine
       return ;
    }
 
-
    //
    // dump EDU LRB info into VEC_TRANSLOCKCUR
    // It walks through the EDU LRB chain, the caller shall acquire
@@ -3698,26 +3511,18 @@ namespace engine
    //
    void dpsTransLockManager::dumpLockInfo
    (
-      UTIL_OBJIDX         lastLRBIdx,
+      dpsTransLRB       * lastLRB,
       VEC_TRANSLOCKCUR  & vecLocks
    )
    {
       monTransLockCur monLock ;
-      UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
-      UTIL_OBJIDX lrbIdx = UTIL_INVALID_OBJ_INDEX ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
 
-      lrbIdx = lastLRBIdx ;
-      while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+      pLRB = lastLRB ;
+      while ( pLRB )
       {
-         pLRB    = _getLRBPtrByIdx( lrbIdx ) ;
-         hdrIdx  = pLRB->lrbHdrIdx ;
-
-         SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
-                     "Invalid LRB Header index." ) ;
-
-         pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
+         pLRBHdr  = pLRB->lrbHdr ;
 
          monLock._id    = pLRBHdr->lockId ;
          monLock._mode  = pLRB->lockMode ;
@@ -3726,32 +3531,26 @@ namespace engine
 
          vecLocks.push_back( monLock ) ;
 
-         lrbIdx = pLRB->eduLrbIdxPrev ;
+         pLRB = pLRB->eduLrbPrev ;
       }
    }
 
 
    // dump the lock info ( lockId, lockMode, refCounter ) into monTransLockCur
-   // via LRB index
+   // via LRB
    void dpsTransLockManager::dumpLockInfo
    (
-      UTIL_OBJIDX       lrbIdx,
+      dpsTransLRB      *lrb,
       monTransLockCur  &lockCur
    )
    {
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
-      UTIL_OBJIDX hdrIdx = UTIL_INVALID_OBJ_INDEX ;
 
-      if ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+      if ( lrb )
       {
-         pLRB    = _getLRBPtrByIdx( lrbIdx ) ;
-         hdrIdx  = pLRB->lrbHdrIdx ;
-
-         SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX( hdrIdx ),
-                     "Invalid LRB Header index." ) ;
-
-         pLRBHdr = _getLRBHdrPtrByIdx( hdrIdx ) ;
+         pLRB    = lrb ;
+         pLRBHdr  = pLRB->lrbHdr ;
 
          lockCur._id = pLRBHdr->lockId ;
          lockCur._mode = pLRB->lockMode ;
@@ -3772,9 +3571,7 @@ namespace engine
       monTransLockInfo     & monLockInfo
    )
    {
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ,
-                  hdrIdx = UTIL_INVALID_OBJ_INDEX ,
-                  lrbIdx = UTIL_INVALID_OBJ_INDEX ;
+      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
 
@@ -3786,19 +3583,17 @@ namespace engine
       // acquire bucket latch
       _acquireOpLatch( bktIdx ) ;
 
-      hdrIdx  = _LockHdrBkt[bktIdx].lrbHdrIdx ;
-      if ( _getLRBHdrByLockId( lockId, hdrIdx, pLRBHdr ) )
+      pLRBHdr = _LockHdrBkt[bktIdx].lrbHdr ;
+      if ( _getLRBHdrByLockId( lockId, pLRBHdr ) )
       {
          monLockInfo._id = pLRBHdr->lockId ;
 
          // owner list
-         if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->ownerLRBIdx ) )
+         if ( pLRBHdr->ownerLRB )
          {
-            lrbIdx = pLRBHdr->ownerLRBIdx ;
-            while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+            pLRB = pLRBHdr->ownerLRB ;
+            while ( pLRB )
             {
-               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
-
                monLockItem._eduID = pLRB->dpsTxExectr->getEDUID() ;
                monLockItem._mode  = pLRB->lockMode ;
                monLockItem._count = pLRB->refCounter ;
@@ -3806,17 +3601,15 @@ namespace engine
 
                monLockInfo._vecHolder.push_back( monLockItem ) ;
 
-               lrbIdx = pLRB->nextLRBIdx ;
+               pLRB = pLRB->nextLRB ;
             }
          }
          // upgrade list
-         if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->upgradeLRBIdx ) )
+         if ( pLRBHdr->upgradeLRB ) 
          {
-            lrbIdx = pLRBHdr->upgradeLRBIdx ;
-            while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+            pLRB = pLRBHdr->upgradeLRB ;
+            while ( pLRB )
             {
-               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
-
                monLockItem._eduID = pLRB->dpsTxExectr->getEDUID() ;
                monLockItem._mode  = pLRB->lockMode ;
                monLockItem._count = pLRB->refCounter ;
@@ -3824,17 +3617,15 @@ namespace engine
 
                monLockInfo._vecWaiter.push_back( monLockItem ) ;
 
-               lrbIdx = pLRB->nextLRBIdx ;
+               pLRB = pLRB->nextLRB ;
             }
          }
          // waiter list
-         if ( IS_VALID_SEG_OBJ_INDEX( pLRBHdr->waiterLRBIdx ) )
+         if ( pLRBHdr->waiterLRB  )
          {
-            lrbIdx = pLRBHdr->waiterLRBIdx ;
-            while ( IS_VALID_SEG_OBJ_INDEX( lrbIdx ) )
+            pLRB = pLRBHdr->waiterLRB ;
+            while ( pLRB )
             {
-               pLRB = _getLRBPtrByIdx( lrbIdx ) ;
-
                monLockItem._eduID = pLRB->dpsTxExectr->getEDUID() ;
                monLockItem._mode  = pLRB->lockMode ;
                monLockItem._count = pLRB->refCounter ;
@@ -3842,7 +3633,7 @@ namespace engine
 
                monLockInfo._vecWaiter.push_back( monLockItem ) ;
 
-               lrbIdx = pLRB->nextLRBIdx ;
+               pLRB = pLRB->nextLRB ;
             }
          }
       }

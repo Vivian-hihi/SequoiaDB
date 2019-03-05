@@ -1584,9 +1584,9 @@ namespace engine
       }
 
       /// dump lock info and waiter info
-      pLockMgr->dumpLockInfo( _curTransInfo._lastLRBIdx,
+      pLockMgr->dumpLockInfo( _curTransInfo._lastLRB,
                               _curTransInfo._lockList ) ;
-      pLockMgr->dumpLockInfo( _curTransInfo._waitLRBIdx,
+      pLockMgr->dumpLockInfo( _curTransInfo._waitLRB,
                               _curTransInfo._waitLock ) ;
 
       /// release lock
@@ -1616,7 +1616,7 @@ namespace engine
          /// waiter lock
          BSONObjBuilder subWaiter( builder.subobjStart(
                                    FIELD_NAME_TRANS_WAIT_LOCK ) ) ;
-         if ( IS_VALID_SEG_OBJ_INDEX( _curTransInfo._waitLRBIdx ) )
+         if ( _curTransInfo._waitLRB ) 
          {
             _curTransInfo._waitLock.toBson( subWaiter, FALSE ) ;
          }

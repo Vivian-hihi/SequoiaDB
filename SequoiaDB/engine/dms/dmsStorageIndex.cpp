@@ -1596,7 +1596,7 @@ namespace engine
                                                 const BSONObj& key,
                                                 dpsTransCB  * pTransCB )
    {
-      preIdxTreeNodeValue idxTreeNodeValue( UTIL_INVALID_OBJ_INDEX ) ;
+      preIdxTreeNodeValue idxTreeNodeValue( NULL );
       BOOLEAN hasDup = FALSE;
 
       if ( memTree->ixObjExist(key, idxTreeNodeValue) )
@@ -1612,11 +1612,9 @@ namespace engine
          //
          // if we can X lock on the record means we are changing this
          // record
-         SDB_ASSERT( IS_VALID_SEG_OBJ_INDEX(idxTreeNodeValue.getLRBHdrIdx()),
+         SDB_ASSERT( idxTreeNodeValue.getLRBHdr(),
                      "Invalid preIdxTree node value" ) ;
-         dpsTransLRBHeader * pLRBHdr =
-            pTransCB->getLockMgrHandle()
-                    ->getLRBHdrPtrByIdx(idxTreeNodeValue.getLRBHdrIdx());
+         dpsTransLRBHeader * pLRBHdr = idxTreeNodeValue.getLRBHdr();
          SDB_ASSERT( ( NULL != pLRBHdr ), "Invalide LRB Header" ) ;
          dmsRecordID recId( pLRBHdr->lockId.extentID(),
                             pLRBHdr->lockId.offset()) ;

@@ -299,7 +299,7 @@ namespace engine
    // we can only print the lbrHdrIdx now
    void preIdxTreeNodeValue::printValue() const
    {
-      PD_LOG( PDDEBUG, "====>preIdxTreeNodeValue=%d", _lrbHdrIdx );
+      PD_LOG( PDDEBUG, "====>preIdxTreeNodeValue=%p", _lrbHdr );
       return;
    }
 
@@ -570,8 +570,7 @@ namespace engine
             // retrieve the LRB header pointer and it should not be NULL because
             // lock should not be released before the tree is cleaned up. Same
             // reason, the _oldIdx should have been set up as well.
-            hdrIdx = iter->second.getLRBHdrIdx();
-            lrbHeaderPtr = cb->getLockMgrHandle()->getLRBHdrPtrByIdx(hdrIdx);
+            lrbHeaderPtr = iter->second.getLRBHdr();
             if( (NULL == lrbHeaderPtr) ||
                 (data = lrbHeaderPtr->getOldIdxValue(_idxLID)) == NULL )
             {
@@ -636,8 +635,7 @@ namespace engine
             // retrieve the LRB header pointer and it should not be NULL because
             // lock should not be released before the tree is cleaned up. Same
             // reason, the _oldIdx should have been set up as well.
-            hdrIdx = iter->second.getLRBHdrIdx();
-            lrbHeaderPtr = cb->getLockMgrHandle()->getLRBHdrPtrByIdx(hdrIdx);
+            lrbHeaderPtr = iter->second.getLRBHdr();
             if( (NULL == lrbHeaderPtr) ||
                 (data = lrbHeaderPtr->getOldIdxValue(_idxLID)) == NULL )
             {
@@ -708,7 +706,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_PREIDXTREE_KEYADVANCE );
       INT32               rc           = SDB_OK;
       const BSONObj     * data         = NULL;
-      UTIL_OBJIDX         hdrIdx       = 0;
       dpsTransLRBHeader * lrbHeaderPtr = NULL;
       
       if( direction > 0 )
@@ -728,14 +725,13 @@ namespace engine
             // retrieve the LRB header pointer and it should not be NULL because
             // lock should not be released before the tree is cleaned up. Same
             // reason, the _oldIdx should have been set up as well.
-            hdrIdx = iter->second.getLRBHdrIdx();
-            lrbHeaderPtr = cb->getLockMgrHandle()->getLRBHdrPtrByIdx(hdrIdx);
+            lrbHeaderPtr = iter->second.getLRBHdr();
             if( (NULL == lrbHeaderPtr) ||
                 (data = lrbHeaderPtr->getOldIdxValue(_idxLID)) == NULL )
             {
                rc = SDB_SYS;
                PD_LOG( PDERROR, "In memory idx tree points to non-exist lrbHeader"
-                                "(idx=%d)", hdrIdx );
+                                "(idx=%p)", lrbHeaderPtr );
                goto err;
             }
          }
@@ -761,14 +757,13 @@ namespace engine
             // retrieve the LRB header pointer and it should not be NULL because
             // lock should not be released before the tree is cleaned up. Same
             // reason, the _oldIdx should have been set up as well.
-            hdrIdx = iter->second.getLRBHdrIdx();
-            lrbHeaderPtr = cb->getLockMgrHandle()->getLRBHdrPtrByIdx(hdrIdx);
+            lrbHeaderPtr = iter->second.getLRBHdr();
             if( (NULL == lrbHeaderPtr) ||
                 (data = lrbHeaderPtr->getOldIdxValue(_idxLID)) == NULL )
             {
                rc = SDB_SYS;
                PD_LOG( PDERROR, "In memory idx tree points to non-exist lrbHeader"
-                                "(idx=%d)", hdrIdx );
+                                "(idx=%p)", lrbHeaderPtr );
                goto err;
             }
             
@@ -825,7 +820,7 @@ namespace engine
          if( startIter->first.toBson().equal(key) )
          {
             found = TRUE;
-            value.setValue( startIter->second.getLRBHdrIdx()) ;
+            value.setValue( startIter->second.getLRBHdr()) ;
             break;
          }
          if( startIter != endIter )
@@ -908,6 +903,21 @@ namespace engine
       releaseX();
    }
 
+   // based on global logic index id, get the in memory idx tree and remove it
+   // caller must hold latch of oldVersionCB in X
+   preIdxTree * oldVersionCB::getAndRemoveIdxTree( const globIdxID & gIdxID )
+   {
+      preIdxTree * tree = NULL;
+
+      IDXID_TO_TREE_MAP::iterator it = _idxTrees->find(gIdxID);
+      if ( it != _idxTrees->end() )
+      {
+         tree = const_cast<preIdxTree *> (it->second);
+         _idxTrees->erase(it);
+      }
+      return tree;
+   }
+
    // based on global logic index id, get the in memory idx tree
    // caller must hold latch of oldVersionCB
    preIdxTree * oldVersionCB::getIdxTree( const globIdxID & gIdxID )
@@ -915,11 +925,11 @@ namespace engine
       preIdxTree * tree = NULL;
 
       IDXID_TO_TREE_MAP::iterator it = _idxTrees->find(gIdxID);
-      if ( it != _idxTrees->end() )    
+      if ( it != _idxTrees->end() )
       {
          tree = const_cast<preIdxTree *> (it->second);
       }
-      return tree;  
+      return tree;
    }
 
    // Create an in memory index tree and add to the map
@@ -935,9 +945,6 @@ namespace engine
               gid._clID,
               gid._idxLID );
 #endif
-      // FIXME: Optimization to be considered
-      // It's ok to have local variable t as the map will do memory allocation
-      // However, this has performance overhead. 
       preIdxTree *t = SDB_OSS_NEW preIdxTree(gid._idxLID, indexCB);
       pair<IDXID_TO_TREE_MAP::iterator, bool> rv = 
          _idxTrees->insert( IDXID_TO_TREE_MAP_PAIR(gid, t) );
@@ -955,7 +962,7 @@ namespace engine
    {
       preIdxTree * memTree = NULL;
       PD_TRACE_ENTRY( SDB_OLDVERSIONCB_DELIDXTREE );
-#ifdef _DEBUG 
+#if 0
       // can enable this for debug purpose
       PD_LOG( PDDEBUG, "Going to delete in memory Index tree for (%d,%d,%d)",
               gid._csID,
@@ -965,16 +972,15 @@ namespace engine
 
       // Latch oldVCB and get the index tree
       latchX();
-      memTree = getIdxTree( gid );
+      memTree = getAndRemoveIdxTree( gid );
+      releaseX();
 
       if ( NULL != memTree )
       {
          memTree->clear();
-         _idxTrees->erase(gid);
          SDB_OSS_DEL memTree;
       }
 
-      releaseX();
       PD_TRACE_EXIT ( SDB_OLDVERSIONCB_DELIDXTREE );
    }
 
@@ -1058,7 +1064,7 @@ namespace engine
       {
          //not found, do the insert
          // first get the LRBHdr index from lock manager
-         preIdxTreeNodeValue value(oldVer->getLrbHdrIdx());
+         preIdxTreeNodeValue value(oldVer->getLrbHdr());
          //int objSize = obj.objsize();
 
          // a lock obj for set to insert with. Note that the set will do memory 

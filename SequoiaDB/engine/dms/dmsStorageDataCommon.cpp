@@ -3191,12 +3191,11 @@ namespace engine
             if ( pTransCB->isTransOn() &&
                  cb->getTransExecutor()->useTransLock() )
             {
-               UTIL_OBJIDX  hdrIdx;
                dpsTransLRBHeader *lrbHdr = NULL;
                dpsTransLockId lockId( _logicalCSID, context->mbID(),
                                       &foundRID );
                pTransCB->getLockMgrHandle()->
-                          getLRBHdrByLockId( lockId, hdrIdx, lrbHdr );
+                          getLRBHdrByLockId( lockId, lrbHdr );
                lrbHdr->setNewRecord();
                PD_TRACE2 ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD,
                            PD_PACK_STRING ( "Setting record new" ),

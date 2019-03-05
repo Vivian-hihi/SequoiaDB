@@ -211,29 +211,29 @@ namespace engine
    {
       public:
       // constructor
-      preIdxTreeNodeValue( const UTIL_OBJIDX & lrbHdrIdx )
+      preIdxTreeNodeValue( dpsTransLRBHeader* lrbHdr )
       {
-         _lrbHdrIdx = lrbHdrIdx;
+         _lrbHdr = lrbHdr;
       }
 
       ~preIdxTreeNodeValue()
       {
-         _lrbHdrIdx = UTIL_INVALID_OBJ_INDEX;
+         _lrbHdr = NULL;
       }
 
       BOOLEAN isValid() const
       {
-         return  ( UTIL_INVALID_OBJ_INDEX != _lrbHdrIdx ) ;
+         return  ( NULL != _lrbHdr ) ;
       }
 
-      void setValue( const UTIL_OBJIDX lrbHdrIdx )
+      void setValue( dpsTransLRBHeader* lrbHdr )
       {
-         _lrbHdrIdx = lrbHdrIdx ;
+         _lrbHdr = lrbHdr ;
       }
 
-      const UTIL_OBJIDX & getLRBHdrIdx()
+      dpsTransLRBHeader* &getLRBHdr()
       {
-         return _lrbHdrIdx;
+         return _lrbHdr;
       }
 
       // assistant function to print out the lrb hdr idx
@@ -242,7 +242,7 @@ namespace engine
       // private member
       private:
       // index to lock LRB header, which contain old version record
-      UTIL_OBJIDX   _lrbHdrIdx;
+      dpsTransLRBHeader*   _lrbHdr;
 
    };
 
@@ -598,6 +598,8 @@ namespace engine
                           oldVersionContainer *oldVer,
                           const BOOLEAN       takeLock = TRUE );
 
+      preIdxTree * getAndRemoveIdxTree( const globIdxID & gIdxID );
+
       preIdxTree * getIdxTree( const globIdxID & gIdxID );
       
       memBlockPool * getMemBlockPool() { return  _memBlockPool; }      
@@ -694,11 +696,11 @@ namespace engine
    class oldVersionContainer : public SDBObject
    {
       public:
-      oldVersionContainer(const UTIL_OBJIDX  idx )
+      oldVersionContainer(dpsTransLRBHeader* lrb )
       {
          _oldRecord = NULL;
          _order     = NULL;
-         _lrbHdrIdx  = idx;
+         _lrbHdr  = lrb;
          _isNewRecord = FALSE;
       }
 
@@ -776,11 +778,11 @@ namespace engine
       }
 
       idxObjSet & getIdxSet ()  { return _oldIdx; }
-      UTIL_OBJIDX  const getLrbHdrIdx()  { return _lrbHdrIdx; }
+      dpsTransLRBHeader*  const getLrbHdr()  { return _lrbHdr; }
 
       private:
       dmsRecord * _oldRecord;   // pointer to copy of old record
-      UTIL_OBJIDX _lrbHdrIdx;   // LRB header index
+      dpsTransLRBHeader* _lrbHdr;   // LRB header index
       BOOLEAN     _isNewRecord; // is this a newly created record or not
       // A set of index Lids (up to 64) associated to this record.
       // We use this to figure out if the idx was already stored in the tree

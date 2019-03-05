@@ -50,9 +50,9 @@ namespace engine
    */
    _dpsTransExecutor::_dpsTransExecutor()
    {
-      _waiterIdx        = UTIL_INVALID_OBJ_INDEX ;
+      _waiter           = NULL;
       _waiterQueType    = DPS_QUE_NULL ;
-      _lastLRBIdx       = UTIL_INVALID_OBJ_INDEX ;
+      _lastLRB          = NULL;
       _lockCount        = 0 ;
 
       _transIsolation   = DPS_TRANS_ISOLATION_DFT ;
@@ -71,7 +71,7 @@ namespace engine
    void _dpsTransExecutor::clearAll()
    {
       clearWaiterInfo() ;
-      clearLastLRBIdx() ;
+      clearLastLRB() ;
       clearLock() ;
       clearLockCount() ;
    }
@@ -80,28 +80,28 @@ namespace engine
    {
       SDB_ASSERT( _mapLockID.size() == 0, "Lock must be 0" ) ;
       SDB_ASSERT( _lockCount == 0, "Lock must be 0" ) ;
-      SDB_ASSERT( _waiterIdx == UTIL_INVALID_OBJ_INDEX,
+      SDB_ASSERT( _waiter == NULL,
                   "Waiter LRB must be invalid" ) ;
-      SDB_ASSERT( _lastLRBIdx == UTIL_INVALID_OBJ_INDEX,
+      SDB_ASSERT( _lastLRB == NULL,
                   "Last LRB must be invalid" ) ;
    }
 
-   void _dpsTransExecutor::setWaiterInfo( UTIL_OBJIDX lrbIdx,
+   void _dpsTransExecutor::setWaiterInfo( dpsTransLRB* waiter,
                                           DPS_TRANS_QUE_TYPE type )
    {
-      _waiterIdx     = lrbIdx ;
+      _waiter        = waiter ;
       _waiterQueType = type ;
    }
 
    void _dpsTransExecutor::clearWaiterInfo()
    {
-      _waiterIdx     = UTIL_INVALID_OBJ_INDEX ;
+      _waiter        = NULL;
       _waiterQueType = DPS_QUE_NULL ;
    }
 
-   UTIL_OBJIDX _dpsTransExecutor::getWaiterLRBIdx() const
+   dpsTransLRB* _dpsTransExecutor::getWaiterLRB() const
    {
-      return _waiterIdx ;
+      return _waiter ;
    }
 
    DPS_TRANS_QUE_TYPE _dpsTransExecutor::getWaiterQueType() const
@@ -109,30 +109,30 @@ namespace engine
       return _waiterQueType ;
    }
 
-   void _dpsTransExecutor::setLastLRBIdx( UTIL_OBJIDX lrbIdx )
+   void _dpsTransExecutor::setLastLRB( dpsTransLRB* lrb )
    {
-      _lastLRBIdx = lrbIdx ;
+      _lastLRB = lrb ;
    }
 
-   void _dpsTransExecutor::clearLastLRBIdx()
+   void _dpsTransExecutor::clearLastLRB()
    {
-      _lastLRBIdx = UTIL_INVALID_OBJ_INDEX ;
+      _lastLRB = NULL ;
    }
 
-   UTIL_OBJIDX _dpsTransExecutor::getLastLRBIdx() const
+   dpsTransLRB * _dpsTransExecutor::getLastLRB() const
    {
-      return _lastLRBIdx ;
+      return _lastLRB ;
    }
 
    BOOLEAN _dpsTransExecutor::addLock( const dpsTransLockId &lockID,
-                                       UTIL_OBJIDX lrbIdx )
+                                       dpsTransLRB * lrb )
    {
       BOOLEAN hasAdd = FALSE ;
 
       /// Not leaf level
       if ( !lockID.isLeafLevel() )
       {
-         if ( _mapLockID.insert( std::make_pair( lockID, lrbIdx ) ).second )
+         if ( _mapLockID.insert( std::make_pair( lockID, lrb ) ).second )
          {
             hasAdd = TRUE ;
          }
@@ -142,7 +142,7 @@ namespace engine
    }
 
    BOOLEAN _dpsTransExecutor::findLock( const dpsTransLockId &lockID,
-                                        UTIL_OBJIDX &lrbIdx ) const
+                                        dpsTransLRB * &lrb ) const
    {
       if ( lockID.isLeafLevel() )
       {
@@ -152,7 +152,7 @@ namespace engine
       DPS_LOCKID_MAP_CIT cit = _mapLockID.find( lockID ) ;
       if ( cit != _mapLockID.end() )
       {
-         lrbIdx = cit->second ;
+         lrb = cit->second ;
          return TRUE ;
       }
       return FALSE ;

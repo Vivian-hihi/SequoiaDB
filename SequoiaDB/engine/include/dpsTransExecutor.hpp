@@ -71,7 +71,7 @@ namespace engine
    */
    class _dpsTransExecutor
    {
-      typedef ossPoolMap<dpsTransLockId,UTIL_OBJIDX>     DPS_LOCKID_MAP ;
+      typedef ossPoolMap<dpsTransLockId,dpsTransLRB *>     DPS_LOCKID_MAP ;
       typedef DPS_LOCKID_MAP::iterator                   DPS_LOCKID_MAP_IT ;
       typedef DPS_LOCKID_MAP::const_iterator             DPS_LOCKID_MAP_CIT ;
 
@@ -86,21 +86,21 @@ namespace engine
 
       public:
 
-         void                 setWaiterInfo( UTIL_OBJIDX lrbIdx,
+         void                 setWaiterInfo( dpsTransLRB * lrb,
                                              DPS_TRANS_QUE_TYPE type ) ;
          void                 clearWaiterInfo() ;
 
-         UTIL_OBJIDX          getWaiterLRBIdx() const ;
+         dpsTransLRB*         getWaiterLRB() const ;
          DPS_TRANS_QUE_TYPE   getWaiterQueType() const ;
 
-         void                 setLastLRBIdx( UTIL_OBJIDX lrbIdx ) ;
-         void                 clearLastLRBIdx() ;
-         UTIL_OBJIDX          getLastLRBIdx() const ;
+         void                 setLastLRB( dpsTransLRB *lrb ) ;
+         void                 clearLastLRB() ;
+         dpsTransLRB *          getLastLRB() const ;
 
          BOOLEAN              addLock( const dpsTransLockId &lockID,
-                                       UTIL_OBJIDX lrbIdx ) ;
+                                       dpsTransLRB * lrb ) ;
          BOOLEAN              findLock( const dpsTransLockId &lockID,
-                                        UTIL_OBJIDX &lrbIdx ) const ;
+                                        dpsTransLRB * &lrb ) const ;
          BOOLEAN              removeLock( const dpsTransLockId &lockID ) ;
          void                 clearLock() ;
 
@@ -150,9 +150,9 @@ namespace engine
          virtual IExecutor*   getExecutor() = 0 ;
 
       protected:
-         UTIL_OBJIDX             _waiterIdx ;
+         dpsTransLRB *             _waiter ;
          DPS_TRANS_QUE_TYPE      _waiterQueType ;
-         UTIL_OBJIDX             _lastLRBIdx ;
+         dpsTransLRB *             _lastLRB ;
 
          DPS_LOCKID_MAP          _mapLockID ;
          UINT32                  _lockCount ;

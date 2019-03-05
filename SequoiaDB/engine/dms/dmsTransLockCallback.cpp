@@ -122,13 +122,10 @@ namespace engine
       {
          const dmsRecord   * r       = NULL;
          dmsRecord         * pbuf    = NULL;
-         UTIL_OBJIDX         hdrIdx;
-         dpsTransLRBHeader * lrbHdr = NULL;
+         dpsTransLRBHeader * lrbHdr  = NULL;
 
          // 0. get the old version record from lrbHdr
-         _transCB->getLockMgrHandle()-> getLRBHdrByLockId( lockId,
-                                        hdrIdx,
-                                        lrbHdr );
+         _transCB->getLockMgrHandle()-> getLRBHdrByLockId( lockId, lrbHdr );
 
          // When the update was done by non transaction session, it's
          // possible that the oldRecord does not exist. We do nothing
@@ -207,12 +204,11 @@ namespace engine
            ( (DPS_TRANSLOCK_OP_MODE_ACQUIRE == opMode ||
               DPS_TRANSLOCK_OP_MODE_TRY == opMode) ) )
       {
-         UTIL_OBJIDX        hdrIdx;
          dpsTransLRBHeader *lrbHdr = NULL;
 
          // 1. get the old version record from lrbHdr
          _transCB->getLockMgrHandle()->
-                       getLRBHdrByLockId( lockId, hdrIdx, lrbHdr );
+                       getLRBHdrByLockId( lockId,  lrbHdr );
 
          // this is after lock acquire and we got irc== OK, must have
          // the lock and must be able to find lrbHdr

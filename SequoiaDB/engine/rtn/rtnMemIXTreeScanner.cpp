@@ -248,9 +248,7 @@ namespace engine
             if( resetWithIndexPos )
             {
                // find the best match, save the object from the tree key value
-               UTIL_OBJIDX hdrIdx = _curIndexIter->second.getLRBHdrIdx() ;
-               dpsTransLRBHeader * lrbHdr = _pTransCB->getLockMgrHandle()
-                                            ->getLRBHdrPtrByIdx(hdrIdx);
+               dpsTransLRBHeader * lrbHdr = _curIndexIter->second.getLRBHdr() ;
            
                _curKeyObj = lrbHdr->getOldIdxValue(_indexLID)->copy();
 
@@ -454,10 +452,8 @@ namespace engine
             // _savedRID plus CSID and CLID to build the lockID and retrieve
             // the lrbHdr from lock manager
             dpsTransLockId lockId( _csID, _clID, &_savedRID );
-            UTIL_OBJIDX        hdrIdx;
             dpsTransLRBHeader *lrbHdr;
             if( !_pTransCB->getLockMgrHandle()->getLRBHdrByLockId( lockId, 
-                                                              hdrIdx,
                                                               lrbHdr ) )
             {
                // Couldn't find the lock in lock manager. This means
@@ -481,11 +477,11 @@ namespace engine
                   // already checked _curKeyObj, the _curIndexIter should
                   // still be valid, otherwise they are out of sync, that's
                   // really bad
-                  if ( _curIndexIter->second.getLRBHdrIdx() != hdrIdx )
+                  if ( _curIndexIter->second.getLRBHdr() != lrbHdr )
                   {
                      PD_LOG( PDERROR, 
-                           "_curIndexIter's _lrbHdrIdx does not match (%d,%d)",
-                           _curIndexIter->second.getLRBHdrIdx(), hdrIdx );
+                           "_curIndexIter's _lrbHdrIdx does not match (%p,%p)",
+                           _curIndexIter->second.getLRBHdr(), lrbHdr );
                      rc = SDB_SYS;
                      goto error;
                   }
@@ -823,12 +819,11 @@ the only way is to bring back the index CB and access the index definition page
           ( _curIndexIter == _memIdxTree->find( &_savedInMemObj,
                                               _savedRID ) ) )
       {
-         UTIL_OBJIDX   hdrIdx ;
          dpsTransLockId lockId( _csID, _clID, &_savedRID );
          dpsTransLRBHeader * lrbHdr;
          if( !_pTransCB->getLockMgrHandle()->getLRBHdrByLockId(
-                        lockId, hdrIdx, lrbHdr )  &&
-            (_curIndexIter->second.getLRBHdrIdx() == hdrIdx) )
+                        lockId, lrbHdr )  &&
+            (_curIndexIter->second.getLRBHdr() == lrbHdr) )
          {
             // this means the last scaned record is still here, so let's
             // reset _savedRID so that we'll call advance()
@@ -918,12 +913,11 @@ the only way is to bring back the index CB and access the index definition page
           ( _curIndexIter == _memIdxTree->find( &saveObj,
                                                 saveRID) ) )
       {
-         UTIL_OBJIDX    hdrIdx ;
          dpsTransLockId lockId( _csID, _clID, &saveRID );
          dpsTransLRBHeader * lrbHdr;
          if( !_pTransCB->getLockMgrHandle()->getLRBHdrByLockId(
-                        lockId, hdrIdx, lrbHdr )  &&
-            (_curIndexIter->second.getLRBHdrIdx() == hdrIdx) )
+                        lockId,  lrbHdr )  &&
+            (_curIndexIter->second.getLRBHdr() == lrbHdr) )
          {
             isSame = TRUE;
          }
