@@ -132,8 +132,8 @@ public class Transaction17358F extends SdbTestBase {
 
         //step6: no trans read
         expDataList.clear();
-        expDataList.add(data2);
         expDataList.add(data3);
+        expDataList.add(data2);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);

@@ -107,7 +107,7 @@ public class Transaction17362F extends SdbTestBase {
         sdb3.beginTransaction();
         
         //2 trans1 insert record
-        cl1.update(new BasicBSONObject("a", 1), modifier3, null);
+        cl1.update(new BasicBSONObject("a", 2), modifier3, null);
 
         // 3 trans2 update
         UpdateThread updateThread = new UpdateThread();
@@ -115,18 +115,17 @@ public class Transaction17362F extends SdbTestBase {
         Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
         //4 trans1 read
-        expDataList.add(data2);
         expDataList.add(data3);
+        expDataList.add(data2);
         recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        //TODO:index scan error
-//        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
-//        actDataList = TransUtils.getReadActList(recordCur);
-//        Assert.assertEquals(actDataList, expDataList);
-//        actDataList.clear();
+        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
         
         //5 trans3 read
         expDataList.clear();
@@ -143,8 +142,8 @@ public class Transaction17362F extends SdbTestBase {
         actDataList.clear();
 
         expDataList.clear();
-        expDataList.add(data2);
         expDataList.add(data3);
+        expDataList.add(data2);
         // 6 no trans read
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
@@ -162,8 +161,8 @@ public class Transaction17362F extends SdbTestBase {
         Assert.assertFalse(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
         expDataList.clear();
-        expDataList.add(data4);
         expDataList.add(data5);
+        expDataList.add(data4);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -187,8 +186,8 @@ public class Transaction17362F extends SdbTestBase {
 
         //9 trans3 read
         expDataList.clear();
-        expDataList.add(data2);
         expDataList.add(data3);
+        expDataList.add(data2);
         recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -201,8 +200,8 @@ public class Transaction17362F extends SdbTestBase {
 
         //10 read after trans2 commit 
         expDataList.clear();
-        expDataList.add(data4);
         expDataList.add(data5);
+        expDataList.add(data4);
         sdb2.commit();
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);

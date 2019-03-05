@@ -103,8 +103,8 @@ public class Transaction17359B extends SdbTestBase {
         Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
         //4 trans1 read
-        expDataList.add(data);
         expDataList.add(data2);
+        expDataList.add(data);
         recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -130,8 +130,8 @@ public class Transaction17359B extends SdbTestBase {
 
         // 6 no trans read
         expDataList.clear();
-        expDataList.add(data);
         expDataList.add(data2);
+        expDataList.add(data);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -235,10 +235,7 @@ public class Transaction17359B extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            BSONObject modifier = new BasicBSONObject();
-            modifier.put("a", 2);
-            modifier.put("b", 2);
-            cl2.update(null, new BasicBSONObject("$inc", modifier), null);
+            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'':'a'}");
         }
     }
 

@@ -235,10 +235,7 @@ public class Transaction17359A extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            BSONObject modifier = new BasicBSONObject();
-            modifier.put("a", 2);
-            modifier.put("b", 2);
-            cl2.update(null, new BasicBSONObject("$inc", modifier), null);
+            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'':'a'}");
         }
     }
 

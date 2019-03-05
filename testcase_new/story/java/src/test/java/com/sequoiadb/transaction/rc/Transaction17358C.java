@@ -105,8 +105,8 @@ public class Transaction17358C extends SdbTestBase {
         Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
         //step4: trans1 read  
-        expDataList.add(data);
         expDataList.add(data2);
+        expDataList.add(data);
         recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -132,8 +132,8 @@ public class Transaction17358C extends SdbTestBase {
 
         //step6: no trans read
         expDataList.clear();
-        expDataList.add(data);
         expDataList.add(data2);
+        expDataList.add(data);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -149,8 +149,8 @@ public class Transaction17358C extends SdbTestBase {
         Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
 
         expDataList.clear();
-        expDataList.add(data3);
         expDataList.add(data4);
+        expDataList.add(data3);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -174,8 +174,8 @@ public class Transaction17358C extends SdbTestBase {
 
         //step9: trans3 read
         expDataList.clear();
-        expDataList.add(data);
         expDataList.add(data2);
+        expDataList.add(data);
         recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -188,8 +188,8 @@ public class Transaction17358C extends SdbTestBase {
 
         //step10: read after trans2 commit 
         expDataList.clear();
-        expDataList.add(data3);
         expDataList.add(data4);
+        expDataList.add(data3);
         sdb2.commit();
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);

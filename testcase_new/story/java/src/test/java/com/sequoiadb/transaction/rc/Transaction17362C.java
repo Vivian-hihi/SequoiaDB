@@ -56,7 +56,7 @@ public class Transaction17362C extends SdbTestBase {
         data.put("_id", "insertID17362_1");
         data.put("a", 2);
         data.put("b", 2);
-        data.put("c", 23700000000L);
+        data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
 
@@ -106,7 +106,7 @@ public class Transaction17362C extends SdbTestBase {
         sdb2.beginTransaction();
         sdb3.beginTransaction();
         
-        //2 trans1 insert record
+        //2 trans1 update record R1 to R3
         cl1.update(new BasicBSONObject("a", 1), modifier3, null);
 
         // 3 trans2 update

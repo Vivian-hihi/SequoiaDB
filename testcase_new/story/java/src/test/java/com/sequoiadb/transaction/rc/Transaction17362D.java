@@ -79,15 +79,15 @@ public class Transaction17362D extends SdbTestBase {
 
         data4 = new BasicBSONObject();
         data4.put("_id", "insertID17362_2");
-        data4.put("a", 2);
+        data4.put("a", 3);
         data4.put("b", 3);
         data4.put("c", 13700000000L);
         data4.put("d", "customer transaction type data application.");
 
         data5 = new BasicBSONObject();
         data5.put("_id", "insertID17362_1");
-        data5.put("a", 3);
-        data5.put("b", 3);
+        data5.put("a", 4);
+        data5.put("b", 4);
         data5.put("c", 13700000000L);
         data5.put("d", "customer transaction type data application.");
 
@@ -106,8 +106,8 @@ public class Transaction17362D extends SdbTestBase {
         sdb2.beginTransaction();
         sdb3.beginTransaction();
         
-        //2 trans1 insert record
-        cl1.update(new BasicBSONObject("a", 1), modifier3, null);
+        //2 trans1 update record R1 to R3
+        cl1.update(new BasicBSONObject("a", 3), modifier3, null);
 
         // 3 trans2 update
         UpdateThread updateThread = new UpdateThread();
@@ -123,15 +123,15 @@ public class Transaction17362D extends SdbTestBase {
         actDataList.clear();
 
         //TODO:index scan error
-//        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
-//        actDataList = TransUtils.getReadActList(recordCur);
-//        Assert.assertEquals(actDataList, expDataList);
-//        actDataList.clear();
+        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
         
         //5 trans3 read
         expDataList.clear();
-        expDataList.add(data);
         expDataList.add(data2);
+        expDataList.add(data);
         recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -142,10 +142,10 @@ public class Transaction17362D extends SdbTestBase {
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        expDataList.clear();
-        expDataList.add(data2);
-        expDataList.add(data3);
         // 6 no trans read
+        expDataList.clear();
+        expDataList.add(data3);
+        expDataList.add(data4);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -253,7 +253,7 @@ public class Transaction17362D extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            cl2.update(null, "{'$inc': {'a': 1, 'b': 1}}", "{'': 'a'}" );
+            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': 'a'}" );
         }
     }
 
