@@ -162,6 +162,17 @@
  mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
 
+##在线修改 DDL##
+
+SequoiaSQL-MySQL 支持大多数 DDL 的在线修改。在线修改支持原表中（INPLACE）修改表属性，并且允许并发的 DML。可以通过 ALGORITHM 参数控制 ALTER TABLE 语句修改 DDL 时使用的算法。当 ALGORITHM = INPLACE 时，可以在线地修改表属性，而 ALGORITHM = COPY 时，则会把原表内容拷贝到新表，性能会下降。不指定 ALGORITHM 时会自动选择算法。如需在线修改 DDL，一般建议显式地指定 ALGORITHM = INPLACE。例子：
+
+ ```lang-javascript
+ mysql> alter table cl add index id_idx(id) algorithm=inplace;
+ ```
+
+###建表选项###
+
+可以在线修改字符集（CHARACTER SET）和重命名（RENAME）。但不能修改备注（COMMENT），因为它可能包含了建表时的自定义表配置。
 
 ##数据类型映射关系##
 
