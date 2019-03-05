@@ -18,7 +18,9 @@ function main()
 	           {No:3,a:[1,2,3,4,5]},
 	           {No:4,a:[1,2,3,4]},
 	           {No:5,a:[]},
-	           {No:6,a:1}];
+	           {No:6,a:1},
+	           {No:7,a:{b:1,a:true,c:12.3}},
+	           {No:8,a:{"test":{name:"lily",age:23}}}];
 	insertData(dbcl, doc);
    
    //many field,some exists,some Non-exists,SEQUOIADBMAINSTREAM-2036
@@ -30,6 +32,19 @@ function main()
 	                {No:5,a:0},
 	                {No:6,a:null}];
    checkResult( dbcl, null, selector1, expRecs1, {No:1} );
+   
+   //field is object
+   var findCond3 = {No:{"$gt":6}};
+   var selector3 = {"a":{$size:1},"a.b":{$size:1},"a.test":{$size:1}};
+   var expRecs3 = [{No:7,a:3},
+	                {No:8,a:1}];
+   checkResult( dbcl, null, selector3, expRecs3, {No:1} );
+   
+   //field is nested object 
+   var findCond3 = {No:8};
+   var selector3 = {"a.test":{$size:1}};
+   var expRecs3 = [ {No:8,a:2}];
+   checkResult( dbcl, null, selector3, expRecs3, {No:1} );
    
    var selector2 = {a:{$type:"a"}};
    InvalidArgCheck( dbcl, null, selector2, -6, {No:1} );
