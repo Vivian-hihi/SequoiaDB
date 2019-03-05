@@ -30,21 +30,22 @@ function main()
 	                {No:3,a:5},
 	                {No:4,a:4},
 	                {No:5,a:0},
-	                {No:6,a:null}];
+	                {No:6,a:null},
+	                {No:7,a:3},
+	                {No:8,a:1}];
    checkResult( dbcl, null, selector1, expRecs1, {No:1} );
    
    //field is object
-   var findCond3 = {No:{"$gt":6}};
-   var selector3 = {"a":{$size:1},"a.b":{$size:1},"a.test":{$size:1}};
-   var expRecs3 = [{No:7,a:3},
-	                {No:8,a:1}];
-   checkResult( dbcl, null, selector3, expRecs3, {No:1} );
+   var findCond3 = {No:7};
+   var selector3 = {"a.b":{$size:1}};
+   var expRecs3 = [{No:7,a:{b:null,a:true,c:12.3}}];
+   checkResult( dbcl, findCond3, selector3, expRecs3, {No:1} );
    
    //field is nested object 
-   var findCond3 = {No:8};
-   var selector3 = {"a.test":{$size:1}};
-   var expRecs3 = [ {No:8,a:2}];
-   checkResult( dbcl, null, selector3, expRecs3, {No:1} );
+   var findCond4 = {No:8};
+   var selector4 = {"a.test":{$size:1}};
+   var expRecs4 = [ {No:8,a:{"test":2}}];
+   checkResult( dbcl, findCond4, selector4, expRecs4, {No:1} );
    
    var selector2 = {a:{$type:"a"}};
    InvalidArgCheck( dbcl, null, selector2, -6, {No:1} );
