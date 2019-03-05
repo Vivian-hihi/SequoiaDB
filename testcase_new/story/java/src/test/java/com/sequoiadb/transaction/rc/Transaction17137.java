@@ -38,21 +38,19 @@ public class Transaction17137 extends SdbTestBase {
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
 
-    @BeforeClass
+    @BeforeClass(enabled = false)
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         expDataList = prepareData(recordNum);
         rs1 = expDataList.subList(0, recordNum/2);
-        System.out.println(rs1.size());
         rs2 = expDataList.subList(recordNum/2, recordNum);
-        System.out.println(rs2.size());
         cl.insert(rs1);
 
     }
 
-    @Test
+    @Test(enabled = false)
     public void test() {
 
         sdb.beginTransaction();
