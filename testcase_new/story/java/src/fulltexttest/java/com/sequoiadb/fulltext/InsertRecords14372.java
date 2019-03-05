@@ -25,92 +25,85 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @date 2018/11/19
  */
 public class InsertRecords14372 extends SdbTestBase {
-     private Sequoiadb sdb;
-     private DBCollection cl;
-     private String clName = "insertRecords14372";
-     private String fullIndexName = "fullIndex14372";
-     private Client esClient = null;
+	private Sequoiadb sdb;
+	private DBCollection cl;
+	private String clName = "insertRecords14372";
+	private String fullIndexName = "fullIndex14372";
+	private Client esClient = null;
 
-     @BeforeClass
-     public void setUp() {
-          this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-          CommLib commLib = new CommLib();
-          if (commLib.isStandAlone(sdb)) {
-               throw new SkipException("StandAlone environment!");
-          }
-          CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-          this.cl = cs.createCollection(clName);
-          esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
-                    Integer.parseInt(SdbTestBase.esServiceName));
-          this.cl.createIndex(fullIndexName,
-                    "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}",
-                    false, false);
-     }
+	@BeforeClass
+	public void setUp() {
+		this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		CommLib commLib = new CommLib();
+		if (commLib.isStandAlone(sdb)) {
+			throw new SkipException("StandAlone environment!");
+		}
+		CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
+		this.cl = cs.createCollection(clName);
+		esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
+				Integer.parseInt(SdbTestBase.esServiceName));
+		this.cl.createIndex(fullIndexName,
+				"{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}", false,
+				false);
+	}
 
-     @Test
-     public void test() {
-          this.insertData(FullTextUtils.INSERT_NUMS);// insert >128M
-          FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName,
-                    FullTextUtils.INSERT_NUMS);
-          FullTextUtils.checkConsistency(sdb, csName, clName);
-          this.insertData(FullTextUtils.INSERT_NUMS); // insert again
-          FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName,
-                    FullTextUtils.INSERT_NUMS * 2);
-          FullTextUtils.checkConsistency(sdb, csName, clName);
-     }
+	@Test
+	public void test() {
+		this.insertData(FullTextUtils.INSERT_NUMS);// insert >128M
+		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName,
+				FullTextUtils.INSERT_NUMS);
+		FullTextUtils.checkConsistency(sdb, csName, clName);
+		this.insertData(FullTextUtils.INSERT_NUMS); // insert again
+		FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName,
+				FullTextUtils.INSERT_NUMS * 2);
+		FullTextUtils.checkConsistency(sdb, csName, clName);
+	}
 
-     @AfterClass
-     public void tearDown() {
-          try {
-               CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-               cs.dropCollection(this.clName);
-          } catch (BaseException e) {
-               Assert.fail(e.getMessage() + "\r\n" + this.getKeyStack(e, this));
-          } finally {
-               if (sdb != null) {
-                    sdb.close();
-               }
-               if (esClient != null) {
-                    esClient.close();
-               }
-          }
-     }
+	@AfterClass
+	public void tearDown() {
+		try {
+			CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
+			cs.dropCollection(this.clName);
+		} catch (BaseException e) {
+			Assert.fail(e.getMessage() + "\r\n" + this.getKeyStack(e, this));
+		} finally {
+			if (sdb != null) {
+				sdb.close();
+			}
+			if (esClient != null) {
+				esClient.close();
+			}
+		}
+	}
 
-     public void insertData(int insertNums) {
-          List<BSONObject> records = new ArrayList<BSONObject>();
-          try {
-               for (int i = 0; i < 100; i++) {
-                    for (int j = 0; j < insertNums / 100; j++) {
-                         BSONObject record = (BSONObject) JSON.parse("{a: 'test_14372_" + i * j + "', b: '"
-                                   + FullTextUtils.getRandomString(64) + "', c: '" + FullTextUtils.getRandomString(64)
-                                   + "', d: '" + FullTextUtils.getRandomString(64) + "', e: '"
-                                   + FullTextUtils.getRandomString(128) + "', g: '" + FullTextUtils.getRandomString(256)
-                                   + "'}");
-                         records.add(record);
-                    }
-                    this.cl.insert(records);
-                    records.clear();
-               }
-          } catch (BaseException e) {
-               if (-321 == e.getErrorCode()) {
-                    throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-               }
-          }
-     }
+	public void insertData(int insertNums) {
+		List<BSONObject> records = new ArrayList<BSONObject>();
+		for (int i = 0; i < 100; i++) {
+			for (int j = 0; j < insertNums / 100; j++) {
+				BSONObject record = (BSONObject) JSON.parse("{a: 'test_14372_" + i * j + "', b: '"
+						+ FullTextUtils.getRandomString(64) + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '"
+						+ FullTextUtils.getRandomString(64) + "', e: '" + FullTextUtils.getRandomString(128) + "', g: '"
+						+ FullTextUtils.getRandomString(256) + "'}");
+				records.add(record);
+			}
+			this.cl.insert(records);
+			records.clear();
+		}
+	}
 
-     public String getKeyStack(Exception e, Object classObj) {
-          StringBuffer stackBuffer = new StringBuffer();
-          StackTraceElement[] stackElements = e.getStackTrace();
-          for (int i = 0; i < stackElements.length; i++) {
-               if (stackElements[i].toString().contains(classObj.getClass().getName())) {
-                    stackBuffer.append(stackElements[i].toString()).append("\r\n");
-               }
-          }
-          String str = stackBuffer.toString();
-          if (str.length() >= 2) {
-               return str.substring(0, str.length() - 2);
-          } else {
-               return str;
-          }
-     }
+	public String getKeyStack(Exception e, Object classObj) {
+		StringBuffer stackBuffer = new StringBuffer();
+		StackTraceElement[] stackElements = e.getStackTrace();
+		for (int i = 0; i < stackElements.length; i++) {
+			if (stackElements[i].toString().contains(classObj.getClass().getName())) {
+				stackBuffer.append(stackElements[i].toString()).append("\r\n");
+			}
+		}
+		String str = stackBuffer.toString();
+		if (str.length() >= 2) {
+			return str.substring(0, str.length() - 2);
+		} else {
+			return str;
+		}
+	}
 }

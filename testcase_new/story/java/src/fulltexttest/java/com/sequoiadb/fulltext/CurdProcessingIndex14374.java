@@ -31,151 +31,138 @@ import org.elasticsearch.client.*;
  */
 public class CurdProcessingIndex14374 extends SdbTestBase {
 
-     private Sequoiadb sdb = null;
-     private CollectionSpace cs = null;
-     private DBCollection cl = null;
-     private String clName = "ES_14374";
-     private Client esClient = null;
+	private Sequoiadb sdb = null;
+	private CollectionSpace cs = null;
+	private DBCollection cl = null;
+	private String clName = "ES_14374";
+	private Client esClient = null;
 
-     @BeforeClass
-     public void setUp() {
-          esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-          sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-          if (CommLib.isStandAlone(sdb)) {
-               throw new SkipException("skip StandAlone");
-          }
+	@BeforeClass
+	public void setUp() {
+		esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		if (CommLib.isStandAlone(sdb)) {
+			throw new SkipException("skip StandAlone");
+		}
 
-          // create cl
-          cs = sdb.getCollectionSpace(csName);
-          cl = cs.createCollection(clName);
-     }
+		// create cl
+		cs = sdb.getCollectionSpace(csName);
+		cl = cs.createCollection(clName);
+	}
 
-     @AfterClass
-     public void tearDown() {
-          cs.dropCollection(clName);
-          sdb.close();
-          esClient.close();
-     }
+	@AfterClass
+	public void tearDown() {
+		cs.dropCollection(clName);
+		sdb.close();
+		esClient.close();
+	}
 
-     @Test
-     public void test() {
-          boolean isSuccess = insertData(cl, FullTextUtils.INSERT_NUMS);
-          if (!isSuccess) {
-               throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-          }
+	@Test
+	public void test() {
+		insertData(cl, FullTextUtils.INSERT_NUMS);
 
-          // create fulltext
-          String textIndexName = "fulltext14374";
-          BSONObject indexObj = new BasicBSONObject();
-          indexObj.put("a", "text");
-          indexObj.put("b", "text");
-          indexObj.put("c", "text");
-          indexObj.put("d", "text");
-          indexObj.put("e", "text");
-          indexObj.put("f", "text");
-          indexObj.put("g", "text");
-          cl.createIndex(textIndexName, indexObj, false, false);
-          List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
+		// create fulltext
+		String textIndexName = "fulltext14374";
+		BSONObject indexObj = new BasicBSONObject();
+		indexObj.put("a", "text");
+		indexObj.put("b", "text");
+		indexObj.put("c", "text");
+		indexObj.put("d", "text");
+		indexObj.put("e", "text");
+		indexObj.put("f", "text");
+		indexObj.put("g", "text");
+		cl.createIndex(textIndexName, indexObj, false, false);
+		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
 
-          // insert/update/delete while index processing origin cl data
-          InsertThread insertThread = new InsertThread();
-          UpdateThread updateThread = new UpdateThread();
-          RemoveThread removeThread = new RemoveThread();
+		// insert/update/delete while index processing origin cl data
+		InsertThread insertThread = new InsertThread();
+		UpdateThread updateThread = new UpdateThread();
+		RemoveThread removeThread = new RemoveThread();
 
-          insertThread.start();
-          updateThread.start();
-          removeThread.start();
+		insertThread.start();
+		updateThread.start();
+		removeThread.start();
 
-          Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
-          Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
-          Assert.assertTrue(removeThread.isSuccess(), removeThread.getErrorMsg());
+		Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
+		Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
+		Assert.assertTrue(removeThread.isSuccess(), removeThread.getErrorMsg());
 
-          // check consistency after insert/update/delete
-          FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int) cl.getCount());
-          FullTextUtils.checkConsistency(sdb, csName, clName);
+		// check consistency after insert/update/delete
+		FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int) cl.getCount());
+		FullTextUtils.checkConsistency(sdb, csName, clName);
 
-          // drop fulltext
-          FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
+		// drop fulltext
+		FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
-          // check fulltext deleted
-          FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
-     }
+		// check fulltext deleted
+		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+	}
 
-     public boolean insertData(DBCollection cl, int insertNums) {
-          List<BSONObject> insertObjs = new ArrayList<>();
-          try {
-               for (int i = 0; i < 100; i++) {
-                    for (int j = 0; j < insertNums / 100; j++) {
-                         insertObjs.add((BSONObject) JSON.parse("{a: 'test_14374_" + i * j + "', b: '"
-                                   + FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64)
-                                   + "', d: '" + FullTextUtils.getRandomString(64) + "', e: '"
-                                   + FullTextUtils.getRandomString(128) + "', f: '" + FullTextUtils.getRandomString(128)
-                                   + "', g: " + i * j + "}"));
-                    }
-                    cl.insert(insertObjs, 0);
-                    insertObjs.clear();
-               }
-          } catch (BaseException e) {
-               if (-321 == e.getErrorCode()) {
-                    return false;
-               }
-               throw e;
-          }
+	public void insertData(DBCollection cl, int insertNums) {
+		List<BSONObject> insertObjs = new ArrayList<>();
+		for (int i = 0; i < 100; i++) {
+			for (int j = 0; j < insertNums / 100; j++) {
+				insertObjs.add((BSONObject) JSON.parse("{a: 'test_14374_" + i * j + "', b: '"
+						+ FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '"
+						+ FullTextUtils.getRandomString(64) + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '"
+						+ FullTextUtils.getRandomString(128) + "', g: " + i * j + "}"));
+			}
+			cl.insert(insertObjs, 0);
+			insertObjs.clear();
+		}
+	}
 
-          return true;
-     }
+	private class InsertThread extends SdbThreadBase {
 
-     private class InsertThread extends SdbThreadBase {
+		@Override
+		public void exec() throws Exception {
+			Sequoiadb db = null;
+			DBCollection cl = null;
+			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			cl = db.getCollectionSpace(csName).getCollection(clName);
+			int insertNums = 100000;
+			insertData(cl, insertNums);
+			db.close();
+		}
+	}
 
-          @Override
-          public void exec() throws Exception {
-               Sequoiadb db = null;
-               DBCollection cl = null;
-               db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-               cl = db.getCollectionSpace(csName).getCollection(clName);
-               int insertNums = 100000;
-               insertData(cl, insertNums);
-               db.close();
-          }
-     }
+	private class UpdateThread extends SdbThreadBase {
 
-     private class UpdateThread extends SdbThreadBase {
+		@Override
+		public void exec() throws Exception {
+			Sequoiadb db = null;
+			DBCollection cl = null;
+			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			cl = db.getCollectionSpace(csName).getCollection(clName);
 
-          @Override
-          public void exec() throws Exception {
-               Sequoiadb db = null;
-               DBCollection cl = null;
-               db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-               cl = db.getCollectionSpace(csName).getCollection(clName);
+			BSONObject modifier = new BasicBSONObject();
+			BSONObject value = new BasicBSONObject();
+			BSONObject matcher = new BasicBSONObject();
+			BSONObject subMatcher = new BasicBSONObject();
+			value.put("g", "-1");
+			modifier.put("$set", value);
+			subMatcher.put("$lt", 100000);
+			matcher.put("g", subMatcher);
+			cl.update(matcher, modifier, null);
+			db.close();
+		}
+	}
 
-               BSONObject modifier = new BasicBSONObject();
-               BSONObject value = new BasicBSONObject();
-               BSONObject matcher = new BasicBSONObject();
-               BSONObject subMatcher = new BasicBSONObject();
-               value.put("g", "-1");
-               modifier.put("$set", value);
-               subMatcher.put("$lt", 100000);
-               matcher.put("g", subMatcher);
-               cl.update(matcher, modifier, null);
-               db.close();
-          }
-     }
+	private class RemoveThread extends SdbThreadBase {
 
-     private class RemoveThread extends SdbThreadBase {
+		@Override
+		public void exec() throws Exception {
+			Sequoiadb db = null;
+			DBCollection cl = null;
+			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			cl = db.getCollectionSpace(csName).getCollection(clName);
 
-          @Override
-          public void exec() throws Exception {
-               Sequoiadb db = null;
-               DBCollection cl = null;
-               db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-               cl = db.getCollectionSpace(csName).getCollection(clName);
-
-               BSONObject matcher = new BasicBSONObject();
-               BSONObject subMatcher = new BasicBSONObject();
-               subMatcher.put("$gt", 100000);
-               matcher.put("g", subMatcher);
-               cl.delete(matcher);
-               db.close();
-          }
-     }
+			BSONObject matcher = new BasicBSONObject();
+			BSONObject subMatcher = new BasicBSONObject();
+			subMatcher.put("$gt", 100000);
+			matcher.put("g", subMatcher);
+			cl.delete(matcher);
+			db.close();
+		}
+	}
 }
