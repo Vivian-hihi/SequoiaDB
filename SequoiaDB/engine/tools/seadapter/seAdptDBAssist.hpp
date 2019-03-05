@@ -135,6 +135,8 @@ namespace seadapter
 
       INT32 sendToDataNode( const MsgHeader *msg ) ;
 
+      INT32 sendMsg( const MsgHeader *msg, NET_HANDLE handle ) ;
+
    private:
       INT32 _sendToCataNode( const MsgHeader *msg ) ;
 

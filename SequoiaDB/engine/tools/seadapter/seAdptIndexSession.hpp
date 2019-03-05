@@ -66,6 +66,7 @@ namespace seadapter
       INT32 handleQueryRes( NET_HANDLE handle, MsgHeader* msg ) ;
       INT32 handleGetMoreRes( NET_HANDLE handle, MsgHeader *msg ) ;
       INT32 handleCatalogRes( NET_HANDLE handle, MsgHeader *msg ) ;
+      INT32 handleKillCtxRes( NET_HANDLE handle, MsgHeader *msg ) ;
 
       // Called by session manager to check if this session times out. If yes,
       // the session will be released.
@@ -128,6 +129,13 @@ namespace seadapter
       BOOLEAN _needStateTransition() const ;
 
       INT32 _stateTransition() ;
+
+      /**
+       * @brief Clean obsolete context on data node. Obsolete contexts may be
+       * appeared when timeout for query respond. In that case, new query may
+       * have been sent, and the old context will leak if not killed manually.
+       */
+      INT32 _cleanObsoleteContext( NET_HANDLE handle, MsgHeader *msg ) ;
 
       void _cleanup() ;
 

@@ -48,6 +48,7 @@ namespace seadapter
       ON_MSG( MSG_BS_QUERY_RES, handleQueryRes )
       ON_MSG( MSG_BS_GETMORE_RES, handleGetMoreRes )
       ON_MSG( MSG_CAT_QUERY_CATALOG_RSP, handleCatalogRes )
+      ON_MSG( MSG_BS_KILL_CONTEXT_RES, handleKillCtxRes )
    END_OBJ_MSG_MAP()
 
    _seAdptIndexSession::_seAdptIndexSession( UINT64 sessionID,
@@ -92,6 +93,8 @@ namespace seadapter
 
       if ( msg->requestID != currentRequestID() )
       {
+         rc = _cleanObsoleteContext( handle, msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Clean obsolete context failed[%d]", rc ) ;
          goto done ;
       }
 
@@ -120,6 +123,8 @@ namespace seadapter
 
       if ( msg->requestID != currentRequestID() )
       {
+         rc = _cleanObsoleteContext( handle, msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Clean obsolete context failed[%d]", rc ) ;
          goto done ;
       }
 
@@ -146,6 +151,8 @@ namespace seadapter
 
       if ( msg->requestID != currentRequestID() )
       {
+         rc = _cleanObsoleteContext( handle, msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Clean obsolete context failed[%d]", rc ) ;
          goto done ;
       }
 
@@ -157,6 +164,21 @@ namespace seadapter
          rc = _stateTransition();
          PD_RC_CHECK( rc, PDERROR, "Indexer state transition failed[%d]", rc ) ;
       }
+
+   done:
+      return rc ;
+   error:
+      _quit = TRUE ;
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::handleKillCtxRes( NET_HANDLE handle,
+                                                MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = ((MsgOpReply *)msg)->flags ;
+      PD_RC_CHECK( rc, PDERROR, "Kill context failed[%d]", rc ) ;
 
    done:
       return rc ;
@@ -364,6 +386,30 @@ namespace seadapter
       PD_LOG( PDEVENT, "Indexer state transition done[%s => %s]",
               seAdptGetIndexerStateDesp( oldState ),
               seAdptGetIndexerStateDesp( _targetState ) ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexSession::_cleanObsoleteContext( NET_HANDLE handle,
+                                                     MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *killCtxMsg = NULL ;
+      INT32 buffSize = 0 ;
+      INT64 contextID = ((MsgOpReply *)msg)->contextID ;
+
+      rc = msgBuildKillContextsMsg( &killCtxMsg, &buffSize, 0,
+                                    1, &contextID, eduCB() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build kill context[%lld] message failed[%d]",
+                   rc ) ;
+      ((MsgHeader *)killCtxMsg)->TID = tid() ;
+      rc = _dbAssist->sendMsg( (const MsgHeader *)killCtxMsg, handle ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send kill context with net handle[%u] "
+                                "failed[%d]",
+                   handle, rc ) ;
 
    done:
       return rc ;

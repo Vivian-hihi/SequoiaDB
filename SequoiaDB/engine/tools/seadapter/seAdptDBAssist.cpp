@@ -266,6 +266,26 @@ namespace seadapter
       goto done ;
    }
 
+   INT32 _seAdptDBAssist::sendMsg( const MsgHeader *msg, NET_HANDLE handle )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( NET_INVALID_HANDLE == handle )
+      {
+         rc = SDB_NET_INVALID_HANDLE ;
+         PD_LOG( PDERROR, "Net handle is invalid" ) ;
+         goto error ;
+      }
+
+      rc = _routeAgent.syncSend( handle, (void *)msg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send message failed[%d]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _seAdptDBAssist::_sendToCataNode( const MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
