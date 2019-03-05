@@ -87,12 +87,12 @@ public class RenameCLAndSetSessionAttr17867 extends SdbTestBase {
     	//concurrent insert,construction of slave node synchronization can not keey up with the master node
         List< InsertThread > insertThreads = new ArrayList<>( ) ;        
         int beginNo = 0 ;
-        int endNo = 20000 ;
-        int numsPerBatch = 20000 ;
+        int endNo = 10000 ;
+        int numsPerBatch = 10000 ;
         for ( int i = 0; i < recordNums / numsPerBatch; i++ ) {
             insertThreads.add( new InsertThread( beginNo, endNo ) ) ;
             beginNo = endNo ;
-            endNo = beginNo + 20000 ;
+            endNo = beginNo + 10000 ;
         }
         for ( InsertThread insertThread : insertThreads ) {
             insertThread.start() ;
