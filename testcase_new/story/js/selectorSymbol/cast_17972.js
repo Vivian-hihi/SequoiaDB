@@ -6,7 +6,7 @@
 main();
 function main()
 {
-   var clName = "selector_cast_17927";   
+   var clName = "selector_cast_17972";   
    commDropCL( db, COMMCSNAME, clName, true, true,"drop CL in the beginning" ) ; 
    
    var dbcl = commCreateCL( db, COMMCSNAME, clName, 0 ); 
