@@ -472,7 +472,8 @@ namespace seadapter
                             &numReturned, resultSet ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query reply message failed[%d]", rc ) ;
 
-      if ( SDB_DMS_NOTEXIST == resultFlag || SDB_DMS_CS_NOTEXIST == resultFlag )
+      if ( SDB_DMS_NOTEXIST == resultFlag || SDB_DMS_CS_NOTEXIST == resultFlag
+           || SDB_DMS_CS_DELETING == resultFlag )
       {
          rc = resultFlag ;
          (void)_cleanSearchEngine( session ) ;
@@ -1209,7 +1210,8 @@ namespace seadapter
                             &numReturned, resultSet ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query reply message failed[%d]", rc ) ;
 
-      if ( SDB_DMS_NOTEXIST == resultFlag || SDB_DMS_CS_NOTEXIST == resultFlag )
+      if ( SDB_DMS_NOTEXIST == resultFlag || SDB_DMS_CS_NOTEXIST == resultFlag
+           || SDB_DMS_CS_DELETING == resultFlag )
       {
          rc = resultFlag ;
          (void)_cleanSearchEngine( session ) ;
