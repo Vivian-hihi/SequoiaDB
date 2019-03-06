@@ -1,0 +1,51 @@
+﻿/************************************
+*@Description: 匹配符$in$nin，插入空数组和正则 
+*@author:      wangkexin
+*@createdate:  2019.3.5
+*@testlinkCase:seqDB-11073
+**************************************/
+
+main();
+
+function main()
+{
+	var csName = CHANGEDPREFIX + "_11073_CS";
+	var clName = CHANGEDPREFIX + "_11073_CL";
+	
+	commDropCS(db, csName, true, "drop cs in the begin");
+	var cl = commCreateCL( db, csName, clName, null, null, true, false, "create cl in the begin" );
+	
+	println("---begin test---");
+	cl.insert({_id:1,a:[]});
+	cl.insert({_id:2,a:Regex("W","i")});
+	
+	var cursor1 = cl.find({a:{$in:[Regex("W","i")]}});
+	var expRecs1 = '[{"_id":2,"a":{"$regex":"W","$options":"i"}}]';
+	checkCLData( cursor1, expRecs1, 1);
+	
+	var cursor2 = cl.find({a:{$nin:[Regex("W","i")]}});
+	var expRecs2 = '[{"_id":1,"a":[]}]';
+	checkCLData( cursor2, expRecs2, 1);
+	
+	commDropCS( db, csName, true, "drop CS in the end" );
+}	
+
+function checkCLData( rc, expRecs, expCnt )
+{
+	println("\n---Begin to check cl data.");
+	var recsArray = [];
+	while( tmpRecs = rc.next() )
+	{
+		recsArray.push( tmpRecs.toObj() );
+	}
+	
+	var actCnt  = recsArray.length;
+	var actRecs = JSON.stringify( recsArray );
+	if( actCnt !== expCnt || actRecs !== expRecs )
+	{
+		throw buildException( "checkCLdata", null, "[find]",
+		  "[cnt:"+ expCnt +", recs:"+ expRecs +"]",
+		  "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
+	}
+	println( "cl records: "+ actRecs );
+}
