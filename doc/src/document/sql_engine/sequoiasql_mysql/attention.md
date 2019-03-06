@@ -21,9 +21,10 @@
 
 10. DDL操作不支持事务。
 
-11. 自增字段使用注意事项：
+11. 支持自增字段，MySQL表自增字段对应SequoiaDB的集合[自增字段](data_model/auto_increment.md)，只保证趋势递增，不保证连续递增，使用时需注意以下事项:
 
 * auto_increment_offset：该配置项主要解决多活主网下自增字段冲突问题，而SDB作为分布式数据库，自身能保证自增字段全局递增而不冲突，故忽略该配置项的作用；  
 * auto_increment_increment：自增字段数值由SDB生成，故除了创建表以外的行为（例如插入数据），该配置项不起作用，如需要修改步长，可以在SDB侧通过[SdbCollection.setAttributes()](reference/Sequoiadb_command/SdbCollection/setAttributes.md) 对对应的自增序列步长属性进行修改；
 * 暂不支持内置函数LAST_INSERT_ID()和C API接口mysql_insert_id()查看自增字段最近一次生成的字段值。
 * 无符号长整型取值范围：0-9223372036854775807。
+* 达范围最大值时，报“序列值超出范围”错误，而不是继续插入最大值。
