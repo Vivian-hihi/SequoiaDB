@@ -32,7 +32,7 @@ function main()
               {No:19,a:true},
               {No:20,a:{name:"zhang"}},
 	           {No:21,a:["a","b","c"]}
-	           {No:22,b:{$numberLong:"-9223372036854775808"}}];
+	           ];
 	insertData(dbcl, doc);
    
    var findCondition1 = {a:{$divide:1.2,$et:-1}};
