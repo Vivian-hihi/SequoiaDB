@@ -218,7 +218,10 @@ namespace engine
          // If this is the first update to the record, the caller will do the
          // setup. Note  the old version might have already been setup, then
          // we don't need to do anything again.
-         if ( lrbHdr->getOldRecord() == NULL )
+         // Special case is the new record created within the same transaction,
+         // we should not setup oldVer for it because there is no older verion
+         // for it.
+         if ( ( lrbHdr->getOldRecord() == NULL ) && !lrbHdr->isNewRecord() )
          {
             _oldVer = lrbHdr->oldVer;
          }

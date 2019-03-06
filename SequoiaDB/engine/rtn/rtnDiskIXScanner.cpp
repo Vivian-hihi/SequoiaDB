@@ -471,6 +471,10 @@ namespace engine
                   PD_TRACE4( SDB__RTNDISKIXSCAN_ADVANCE,
                              PD_PACK_INT(idxext), PD_PACK_UINT(idxslot),
                              PD_PACK_INT(ext), PD_PACK_INT(offset) ) ;
+                  PD_LOG ( PDDEBUG, "going to return rid(%d, %d) obj(%s) from"
+                           " _curIndexRID (%d, %d)" ,
+                           ext, offset, _curKeyObj.toString().c_str(),
+                           _curIndexRID._extent, _curIndexRID._slot ) ;
                }
 #endif
                // if we are write mode, let's record the _savedObj as well
@@ -670,6 +674,13 @@ namespace engine
 
    done :
 
+#ifdef _DEBUG
+      PD_LOG ( PDDEBUG, "Disk IX Scanner resumeScan, _initialized=%d, "
+               "_init=%d, _isValid=%d, _savedObj=%s, _savedRID=(%d, %d)",
+                _initialized, _init, 
+                _isValid, _savedObj.toString().c_str(),
+                _savedRID._extent, _savedRID._offset );
+#endif
       PD_TRACE_EXITRC ( SDB__RTNDISKIXSCAN_RESUMESCAN, rc ) ;
       return rc ;
    error :

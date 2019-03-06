@@ -1760,6 +1760,11 @@ namespace engine
                goto error ;
             }
          }
+#ifdef _DEBUG
+         PD_LOG ( PDDEBUG, "Succeeded insert index, rid(%d, %d, %d, %d, %d)",
+                  _pDataSu->logicalID(), context->mbID(), indexCB->getLogicalID(),
+                  rid._extent, rid._offset ) ;
+#endif
       }
 
    done :
@@ -2323,6 +2328,11 @@ namespace engine
          gID._clID = context->mbID() ;
          gID._idxLID = indexCB->getLogicalID() ;
 
+#ifdef _DEBUG
+         PD_LOG ( PDDEBUG, "Trying to delete index, rid(%d, %d, %d, %d, %d)",
+                  gID._csID, gID._clID, gID._idxLID,
+                  rid._extent, rid._offset ) ;
+#endif
 
          // logic to figure if need to insert the index into the in memory
          // old version tree if this index does not already exist in the tree

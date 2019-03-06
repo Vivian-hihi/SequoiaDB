@@ -1218,6 +1218,16 @@ namespace engine
             // this error represent duplicate key is not allowed and
             // duplicate key is detected
             PD_LOG ( PDINFO, "Duplicate key is detected" ) ;
+#ifdef _DEBUG
+            {
+               BOOLEAN e = indexCB->enforced();
+               BOOLEAN u = key.isUndefined () ;
+               PD_LOG ( PDERROR, "Page[%d]'s key node[%d] should NOT be used,"
+                        "kn:(%d, %d), enforced=%d, undefined=%d, rid=(%d, %d)",
+                        _me, pos, kn->_rid._extent, kn->_rid._offset, e, u,
+                        rid._extent, rid._offset ) ;
+            }
+#endif
             rc = SDB_IXM_DUP_KEY ;
             goto error ;
          }
@@ -1244,6 +1254,10 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to insert, rc = %d", rc ) ;
             goto error ;
          }
+#ifdef _DEBUG
+         PD_LOG ( PDERROR, "Inserted to index location(%d, %d),rid(%d, %d)",
+                        _me, pos, rid._extent, rid._offset ) ;
+#endif
       }
       // otherwise let's traverse down
       else
@@ -1292,6 +1306,10 @@ namespace engine
             goto error ;
          }
          result = TRUE ;
+#ifdef _DEBUG
+         PD_LOG ( PDDEBUG, "Deleted index for rid(%d, %d) from slot(%d, %d)",
+                  rid._extent, rid._offset, indexrid._extent, indexrid._slot );
+#endif
       }
    done :
       PD_TRACE_EXITRC ( SDB__IXMEXT_UNINDEX, rc );

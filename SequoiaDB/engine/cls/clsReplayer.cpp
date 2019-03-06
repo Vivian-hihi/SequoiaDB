@@ -1300,6 +1300,10 @@ namespace engine
             {
                PD_LOG( PDINFO, "Record[%s] exist when rollback delete",
                        obj.toString().c_str() ) ;
+#ifdef _DEBUG
+               SDB_ASSERT ( (rc == SDB_OK), 
+                            "Rollback should not hit dup key" );
+#endif
                rc = SDB_OK ;
             }
             break ;

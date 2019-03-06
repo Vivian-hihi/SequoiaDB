@@ -131,7 +131,13 @@ namespace engine
 
       SDB_ASSERT( ( leftInit || rightInit ),
                   "At least one scanner must be initilized");
-
+#ifdef _DEBUG
+      PD_LOG ( PDDEBUG, "IXMergeScanner advance: leftDone=%d,"
+               "rightDone=%d,leftInit=%d,rightInit=%d,leftValid=%d"
+               "rightValid=%d,_wasFromLeft=%d",
+               leftDone, rightDone, leftInit, rightInit, 
+               leftValid, rightValid, _wasFromLeft );
+#endif 
       if ( ( leftDone || !leftInit ) && ( rightDone || !rightInit ) )
       {
          rc = SDB_IXM_EOC;
@@ -211,7 +217,7 @@ namespace engine
       if( SDB_IXM_EOC == rcr )
       {
          rcr = SDB_OK;
-         if ( rightDone )
+         if ( leftDone )
          {
             rc = SDB_IXM_EOC;
          }
@@ -225,26 +231,50 @@ namespace engine
       }
 
       // in case of any other errors, goto error
-      if( SDB_OK != rcl || SDB_OK != rcr )
+      if ( ( SDB_OK != rcl ) || ( SDB_OK != rcr ) )
       {
-         rc = (rcl!= SDB_OK) ? rcl : rcr;
+         rc = (rcl != SDB_OK) ? rcl : rcr;
          goto error;
       }
+#ifdef _DEBUG
+      SDB_ASSERT( ( rc == SDB_OK ), "rc should be ok here");
+#endif
       // if we reach here, both scanners did return valid rid,
       // now compare index value from both scanners and return the one
       // come to the front.
       {
          ixmKeyOwned lkey( *(_leftIXScanner->getCurKeyObj()) );
          ixmKeyOwned rkey( *(_rightIXScanner->getCurKeyObj()) );
-         if( lkey.woCompare(rkey, _order) * _direction > 0 )
+         INT32 rt = lkey.woCompare(rkey, _order) ;
+
+         _wasFromLeft = TRUE;
+
+         if( rt * _direction > 0 )  // right key come first
          {
             _wasFromLeft = FALSE;
-            rid = _rrid;
+         }
+         else if ( rt == 0 ) // compare RID if key equal
+         {
+            if ( (_lrid._extent - _rrid._extent) * _direction > 0 )
+            {
+               _wasFromLeft = FALSE;
+            }
+            else if ( _lrid._extent == _rrid._extent )
+            {
+               if ( (_lrid._offset - _rrid._offset) * _direction > 0 )
+               {
+                  _wasFromLeft = FALSE;
+               }
+            }
+         }
+
+         if ( _wasFromLeft )
+         {
+            rid = _lrid;
          }
          else
          {
-            _wasFromLeft = TRUE;
-            rid = _lrid;
+            rid = _rrid;
          }
       }
    done :
