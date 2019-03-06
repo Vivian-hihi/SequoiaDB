@@ -25,9 +25,9 @@ import com.sequoiadb.transaction.TransUtils;
  * @date 2019年1月15日
  */
 @Test(groups = "rcwaitlock")
-public class Transaction17761 extends SdbTestBase {
+public class Transaction17761F extends SdbTestBase {
 
-    private String clName = "transCL_17761";
+    private String clName = "transCL_17761F";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
@@ -53,30 +53,30 @@ public class Transaction17761 extends SdbTestBase {
         
         data = new BasicBSONObject();
         data.put("_id", "insertID17761_1");
-        data.put("a", 1);
-        data.put("b", 1);
+        data.put("a", 3);
+        data.put("b", 3);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
 
         data2 = new BasicBSONObject();
         data2.put("_id", "insertID17761_2");
-        data2.put("a", 2);
-        data2.put("b", 2);
+        data2.put("a", 4);
+        data2.put("b", 4);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
 
         data3 = new BasicBSONObject();
         data3.put("_id", "insertID17761_1");
-        data3.put("a", 3);
-        data3.put("b", 3);
+        data3.put("a", 1);
+        data3.put("b", 1);
         data3.put("c", 13700000000L);
         data3.put("d", "customer transaction type data application.");
 
         data4 = new BasicBSONObject();
         data4.put("_id", "insertID17761_2");
-        data4.put("a", 4);
-        data4.put("b", 4);
+        data4.put("a", 2);
+        data4.put("b", 2);
         data4.put("c", 13700000000L);
         data4.put("d", "customer transaction type data application.");
 
@@ -96,7 +96,6 @@ public class Transaction17761 extends SdbTestBase {
         sdb3.beginTransaction();
         
         //2 query.update
-        //TODO :未覆盖R1大于R2
         cl1.insert(data2);
 
         // 3 trans2 update
@@ -105,15 +104,14 @@ public class Transaction17761 extends SdbTestBase {
         Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
         // 4 trans3 read
-        // TODO :未覆盖用例中的六种情况
         QueryThread queryThread = new QueryThread();
         queryThread.start();
         Assert.assertTrue(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        expDataList.clear();
-        expDataList.add(data2);
-        expDataList.add(data3);
         // 5 no trans read
+        expDataList.clear();
+        expDataList.add(data3);
+        expDataList.add(data2);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -207,10 +205,10 @@ public class Transaction17761 extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': 'a')");
+            cl2.update(null, "{'$inc': {'a': -2, 'b': -2}}", "{'': 'a'}");
         }
     }
-
+    
     private class QueryThread extends SdbThreadBase {
 
         @Override

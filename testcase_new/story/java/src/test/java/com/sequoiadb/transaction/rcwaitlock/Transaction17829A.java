@@ -19,27 +19,28 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description seqDB-17827.java
- *              插入与更新并发，更新的记录同时匹配已提交记录及其他事务插入的记录，更新走表扫描，事务提交，过程中读
+ * @Description seqDB-17829.java 更新并发，更新的记录同时匹配已提交记录及其他事务更新的记录，更新走表扫描，事务提交，过程中读
  * @author luweikang
  * @date 2019年1月15日
  */
 @Test(groups = "rcwaitlock")
-public class Transaction17827 extends SdbTestBase {
+public class Transaction17829A extends SdbTestBase {
 
-    private String clName = "transCL_17827";
+    private String clName = "transCL_17829A";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
     private Sequoiadb sdb3 = null;
-    private DBCollection cl = null;
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
     private DBCollection cl3 = null;
+    private DBCollection cl = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
     private BSONObject data3 = null;
     private BSONObject data4 = null;
+    private BSONObject data5 = null;
+    private BSONObject modifier3 = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
@@ -52,33 +53,41 @@ public class Transaction17827 extends SdbTestBase {
         expDataList = new ArrayList<BSONObject>();
         
         data = new BasicBSONObject();
-        data.put("_id", "insertID17827_1");
+        data.put("_id", "insertID17829_1");
         data.put("a", 1);
         data.put("b", 1);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
-        cl.insert(data);
 
         data2 = new BasicBSONObject();
-        data2.put("_id", "insertID17827_2");
+        data2.put("_id", "insertID17829_2");
         data2.put("a", 2);
         data2.put("b", 2);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
 
+        modifier3 = new BasicBSONObject();
         data3 = new BasicBSONObject();
-        data3.put("_id", "insertID17827_1");
+        data3.put("_id", "insertID17829_1");
         data3.put("a", 3);
         data3.put("b", 3);
         data3.put("c", 13700000000L);
         data3.put("d", "customer transaction type data application.");
+        modifier3.put("$set", data3);
 
         data4 = new BasicBSONObject();
-        data4.put("_id", "insertID17827_2");
+        data4.put("_id", "insertID17829_2");
         data4.put("a", 4);
         data4.put("b", 4);
         data4.put("c", 13700000000L);
         data4.put("d", "customer transaction type data application.");
+
+        data5 = new BasicBSONObject();
+        data5.put("_id", "insertID17829_1");
+        data5.put("a", 5);
+        data5.put("b", 5);
+        data5.put("c", 13700000000L);
+        data5.put("d", "customer transaction type data application.");
 
     }
 
@@ -91,14 +100,17 @@ public class Transaction17827 extends SdbTestBase {
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
         
+        cl.insert(data);
+        cl.insert(data2);
+        
         sdb1.beginTransaction();
         sdb2.beginTransaction();
         sdb3.beginTransaction();
         
-        //2 trans1 insert record R2
-        cl1.insert(data2);
+        //2 trans1 update record R1 to R3
+        cl1.update(new BasicBSONObject("a", 1), modifier3, null);
 
-        // 3 trans2 update R1 and R2 to R3 and R4
+        // 3 trans2 update
         UpdateThread updateThread = new UpdateThread();
         updateThread.start();
         Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
@@ -128,8 +140,8 @@ public class Transaction17827 extends SdbTestBase {
         Assert.assertFalse(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
         expDataList.clear();
-        expDataList.add(data3);
         expDataList.add(data4);
+        expDataList.add(data5);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -183,21 +195,24 @@ public class Transaction17827 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
-            recordCur.close();
-        }
-        if( sdb != null ){
-            sdb.close();
-        }
-        if( sdb1 != null ){
-            sdb1.close();
-        }
-        if( sdb2 != null ){
-            sdb2.close();
-        }
-        if( sdb3 != null ){
-            sdb3.close();
+        try {
+            sdb.getCollectionSpace(csName).dropCollection(clName);
+        } finally {
+            if (recordCur != null) {
+                recordCur.close();
+            }
+            if (sdb != null) {
+                sdb.close();
+            }
+            if (sdb1 != null) {
+                sdb1.close();
+            }
+            if (sdb2 != null) {
+                sdb2.close();
+            }
+            if (sdb3 != null) {
+                sdb3.close();
+            }
         }
     }
 
@@ -205,7 +220,7 @@ public class Transaction17827 extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': null}");
+            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': null}"  );
         }
     }
 
@@ -213,9 +228,10 @@ public class Transaction17827 extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
+
             List<BSONObject> queryList = new ArrayList<BSONObject>();
-            queryList.add(data3);
             queryList.add(data4);
+            queryList.add(data5);
             DBCursor cur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList, queryList);

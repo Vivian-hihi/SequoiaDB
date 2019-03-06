@@ -24,9 +24,9 @@ import com.sequoiadb.transaction.TransUtils;
  * @date 2019年1月15日
  */
 @Test(groups = "rcwaitlock")
-public class Transaction17762 extends SdbTestBase {
+public class Transaction17762A extends SdbTestBase {
 
-    private String clName = "transCL_17762";
+    private String clName = "transCL_17762A";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
@@ -95,7 +95,6 @@ public class Transaction17762 extends SdbTestBase {
         sdb3.beginTransaction();
         
         //2 trans1 insert record R2
-        //未覆盖R1>R2
         cl1.insert(data2);
 
         // 3 trans2 update R2 and R2 to R3 and R4
@@ -153,7 +152,6 @@ public class Transaction17762 extends SdbTestBase {
         // 8 read after trans2 commit
         sdb2.commit();
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
-        Assert.assertFalse(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
@@ -204,10 +202,7 @@ public class Transaction17762 extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            BSONObject modifier = new BasicBSONObject();
-            modifier.put("a", 2);
-            modifier.put("b", 2);
-            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': 'a')");
+            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': 'a'}");
         }
     }
 
