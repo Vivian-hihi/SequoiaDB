@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger ;
 import org.bson.BSONObject ;
 import org.bson.BasicBSONObject ;
 import org.bson.types.BasicBSONList ;
-import org.testng.SkipException ;
 import org.testng.annotations.AfterGroups ;
 import org.testng.annotations.AfterSuite ;
 import org.testng.annotations.AfterTest ;
@@ -87,7 +86,7 @@ public class SdbTestBase {
 
         } catch ( BaseException e ) {
             e.printStackTrace() ;
-            throw new SkipException( "initSuite failed" ) ;
+            throw new RuntimeException( "initSuite failed" ) ;
         } finally {
             sequoiadb.close() ;
         }
@@ -116,19 +115,19 @@ public class SdbTestBase {
                     dataConf, defaultConf, stdalnConf, defaultConf ) ;
         } catch ( IOException e1 ) {
             e1.printStackTrace() ;
-            throw new SkipException( "initGroups failed!!!" ) ;
+            throw new RuntimeException( "initGroups failed!!!" ) ;
         }
 
         String[] cmd ;
         try {
             cmd = getConfCmd( mode, confToolScript ) ;
             if ( !execCmd( cmd ) ) {
-                throw new SkipException(
+                throw new RuntimeException(
                         "exec script failed, initGroups failed!!!" ) ;
             }
         } catch ( IOException | InterruptedException e ) {
             e.printStackTrace() ;
-            throw new SkipException( "initGroups failed!!!" ) ;
+            throw new RuntimeException( "initGroups failed!!!" ) ;
         }
     }
 
