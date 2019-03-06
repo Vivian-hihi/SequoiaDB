@@ -260,10 +260,10 @@ namespace engine
             // jump back to begin
 #ifdef _DEBUG
       PD_LOG ( PDDEBUG, "IX Merge Scanner advance, found duplicated rid, "
-               "_wasFromLeft=%d, rid=(%d, %d)", 
+               "_wasFromLeft=%d, rid=(%d, %d)",
                 _wasFromLeft, rid._extent, rid._offset );
 
-#endif			
+#endif
             rid.reset() ;
             goto begin ;
          }
