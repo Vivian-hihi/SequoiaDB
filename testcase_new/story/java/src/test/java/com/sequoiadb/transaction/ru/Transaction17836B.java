@@ -25,6 +25,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @Date 2019-01-29
  * @Version 1.00
  */
+@Test(groups = "ru")
 public class Transaction17836B extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl_17836B";
