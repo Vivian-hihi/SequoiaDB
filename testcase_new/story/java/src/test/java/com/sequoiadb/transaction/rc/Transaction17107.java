@@ -130,6 +130,7 @@ public class Transaction17107 extends SdbTestBase {
         actList.clear();
 
         // 事务3索引读
+        expList.clear();
         expList.addAll(insertR1s);
         hint = "{\"\":\"a\"}";
         cursor = cl3.query(null, null, "{_id:1}", hint);
