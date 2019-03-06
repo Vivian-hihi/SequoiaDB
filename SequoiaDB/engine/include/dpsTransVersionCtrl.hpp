@@ -70,10 +70,10 @@ namespace engine
    // All these numbers should be power of 2
    // default seg size for large record (1K/4K)
    #define  DEFAULT_SEG_SIZE_FOR_LARGE_REC   8192
-   #define  MAX_SEG_SIZE_FOR_LARGE_REC   (DEFAULT_SEG_SIZE_FOR_LARGE_REC * 16)
+   #define  MAX_SEG_SIZE_FOR_LARGE_REC   (DEFAULT_SEG_SIZE_FOR_LARGE_REC * 64)
    // default seg size for small record (16B/32B/128B)
    #define  DEFAULT_SEG_SIZE_FOR_SMALL_REC   (DEFAULT_SEG_SIZE_FOR_LARGE_REC*8)
-   #define  MAX_SEG_SIZE_FOR_SMALL_REC   (MAX_SEG_SIZE_FOR_LARGE_REC*8)
+   #define  MAX_SEG_SIZE_FOR_SMALL_REC   (MAX_SEG_SIZE_FOR_LARGE_REC*32)
 
    enum MEMBLOCKPOOL_TYPE
    {

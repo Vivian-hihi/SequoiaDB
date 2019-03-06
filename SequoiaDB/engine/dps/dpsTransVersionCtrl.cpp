@@ -196,6 +196,7 @@ namespace engine
       if( NULL != memBlock )
       {
          *type = MEMBLOCKPOOL_TYPE_DYN;
+         rc = SDB_OK ;
       }
       else
       {

@@ -194,7 +194,6 @@ namespace engine
          UTIL_OBJIDX i    = 0 ;
          UTIL_OBJIDX j    = 0 ;
 #ifdef _DEBUG
-
          SDB_ASSERT( ( idx < _numOfObjs ) && IS_VALID_SEG_OBJ_INDEX( idx ),
                      "Invalid object index." ) ;
 #endif
@@ -445,12 +444,7 @@ namespace engine
 #ifdef _DEBUG
       SDB_ASSERT( _isInitialized,
                   "Expand can only be done when segment is initialized" ) ;
-      SDB_ASSERT( _isFull(),
-                  "Expand can only be done if all current objs are acquired" ) ;
-      SDB_ASSERT( ( newSize <= _maxNumOfObjs ),
-                  "Expand failed due to exceed object maximum threshold."  ) ;
 #endif
-
       if (    ( UTIL_INVALID_OBJ_INDEX != newSize )
            && ( newSize <= _maxNumOfObjs )
            && ( 0 != _delta ) )
@@ -492,9 +486,15 @@ namespace engine
                SDB_OSS_DEL [] pSegTmp ;  
             }
             rc = SDB_OOM ;
-
 #ifdef _DEBUG
-            SDB_ASSERT( ( SDB_OK == rc ), "Failed to expand, out of memory" ) ;
+            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+                    "Out of memory when expand : %d"OSS_NEWLINE
+                    "_delta        : %u"OSS_NEWLINE
+                    "_maxNumOfObjs : %u"OSS_NEWLINE
+                    "newSize       : %u"OSS_NEWLINE,
+                    rc,
+                    _maxNumOfObjs,
+                    newSize ) ;
 #endif
          }
       }
@@ -502,6 +502,17 @@ namespace engine
       {
          // exceed the lock resorce limitation
          rc = SDB_OSS_UP_TO_LIMIT ;
+#ifdef _DEBUG
+         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+                 "Exceed the resource limitation when expand : %d"OSS_NEWLINE
+                 "_delta        : %u"OSS_NEWLINE
+                 "_maxNumOfObjs : %u"OSS_NEWLINE
+                 "newSize       : %u"OSS_NEWLINE,
+                 rc,
+                 _delta,
+                 _maxNumOfObjs,
+                 newSize ) ;
+#endif
       }
 
       return rc ;
@@ -644,12 +655,39 @@ namespace engine
             {
                // exceed limitation
                rc = SDB_OSS_UP_TO_LIMIT ;
+
+               pdLog ( PDINFO, __FUNC__, __FILE__, __LINE__,
+                       "Exceed resource limitation "
+                       "when attempt to expand: %d"OSS_NEWLINE
+                       "  _delta           : %u"OSS_NEWLINE
+                       "  _maxNumOfObjs    : %u"OSS_NEWLINE
+                       "  _numOfObjs       : %u"OSS_NEWLINE
+                       "  _acquiredCounter : %u"OSS_NEWLINE,
+                       rc,
+                       _delta,
+                       _maxNumOfObjs,
+                       _numOfObjs,
+                       _acquiredCounter ) ;
+
                goto error ;
             }
             
             rc = _expandList() ;
             if ( rc )
             {
+
+               pdLog ( PDINFO, __FUNC__, __FILE__, __LINE__,
+                       "Failed to expand   : %u"OSS_NEWLINE
+                       "  _delta           : %u"OSS_NEWLINE
+                       "  _maxNumOfObjs    : %u"OSS_NEWLINE
+                       "  _numOfObjs       : %u"OSS_NEWLINE
+                       "  _acquiredCounter : %u"OSS_NEWLINE,
+                       rc,
+                       _delta,
+                       _maxNumOfObjs,
+                       _numOfObjs,
+                       _acquiredCounter ) ;
+
                goto error ;
             }
          }
@@ -670,6 +708,19 @@ namespace engine
             idx = UTIL_INVALID_OBJ_INDEX ;
             pT  = NULL ;
             rc  = SDB_SYS ;
+            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+                    "Sanity check failed: "OSS_NEWLINE
+                    "  idx       : %u"OSS_NEWLINE
+                    "  eyeCatcher: %x"OSS_NEWLINE
+                    "  flag      : %x"OSS_NEWLINE
+                    "  addr      : %p"OSS_NEWLINE
+                    "  obj addr  : %p"OSS_NEWLINE,
+                    _list[ _begin ],
+                    pObjX->_eyeCatcher,
+                    pObjX->_flag,
+                    pObjX,
+                    &( pObjX->_obj )  ) ;
+            SDB_ASSERT ( ( SDB_OK == rc ), "Sanity check failed !");
             goto error ;
          }
 #endif
@@ -703,9 +754,6 @@ namespace engine
       {
          _latch.release() ;
       }
-#ifdef _DEBUG
-      SDB_ASSERT( ( SDB_OK == rc ), "Acquire failed" ) ;
-#endif
       return rc ;
    error:
       goto done ;
@@ -776,9 +824,21 @@ namespace engine
                else
                {
                   rc = SDB_SYS ;
+                  pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+                          "Sanity check failed: "OSS_NEWLINE
+                          "  idx       : %u"OSS_NEWLINE
+                          "  eyeCatcher: %x"OSS_NEWLINE
+                          "  flag      : %x"OSS_NEWLINE
+                          "  addr      : %p"OSS_NEWLINE
+                          "  obj addr  : %p"OSS_NEWLINE,
+                          idx,
+                          pObjX->_eyeCatcher,
+                          pObjX->_flag,
+                          pObjX,
+                          &( pObjX->_obj )  ) ;
+                  SDB_ASSERT ( ( SDB_OK == rc ), "Sanity check failed !");
                   goto error ;
                }
-
                SDB_ASSERT (_list[_begin - 1] == UTIL_INVALID_OBJ_INDEX,
                            "Corruption detected in list");
 #endif
