@@ -60,20 +60,21 @@ public class Transaction17131 extends SdbTestBase {
         modifier = new BasicBSONObject();
         modifier.put("$set", data2);
 
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl2 = sdb2.getCollectionSpace(csName).createCollection(clName);
     }
 
     @Test
     public void test1() {
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+        
+        sdb.beginTransaction();
+        sdb2.beginTransaction();
         
         //trans1 insert record R2
-        sdb.beginTransaction();
         cl.insert(data2);
         
         try {
             // trans2 update record R1 to R3 same as the R2
-            sdb2.beginTransaction();
             cl2.update(new BasicBSONObject("a", 1), modifier, null);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {

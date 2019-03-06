@@ -61,13 +61,16 @@ public class Transaction17136 extends SdbTestBase {
 
     @Test
     public void test() {
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+        
+        sdb.beginTransaction();
+        sdb2.beginTransaction();
         
         //1 trans1 delete R1
-        sdb.beginTransaction();
         cl.delete("{'a':1}");
         try {
             //2 trans2 insert R2 same as the R1
-            sdb2.beginTransaction();
             cl2.insert(data2);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {

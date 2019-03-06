@@ -48,7 +48,7 @@ public class Transaction17139 extends SdbTestBase {
     @Test
     public void test() {
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl2 = sdb2.getCollectionSpace(csName).createCollection(clName);
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         
         sdb.beginTransaction();
         sdb2.beginTransaction();
