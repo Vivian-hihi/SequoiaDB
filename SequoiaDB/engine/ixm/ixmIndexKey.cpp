@@ -526,13 +526,13 @@ namespace engine
    }
 
    IndexSuitability _ixmIndexKeyGen::suitability( const BSONObj &query ,
-                                                 const BSONObj &order ) const
+                                                  const BSONObj &order ) const
    {
       return _suitability( query , order );
    }
 
    IndexSuitability _ixmIndexKeyGen::_suitability( const BSONObj& query ,
-                                                  const BSONObj& order ) const
+                                                   const BSONObj& order ) const
    {
        // TODO: optimize
        if ( anyElementNamesMatch( _keyPattern , query ) == 0 &&
