@@ -83,34 +83,47 @@ namespace bson {
         return x;
     }
 
-
     // for convenience, '{' is greater than anything and stops number parsing
-    inline int lexNumCmp( const char *s1, const char *s2 ) {
+    inline int lexNumCmp( const char *s1, const char *s2, bool pointend )
+    {
         bool p1, p2, n1, n2 ;
-        char *e1 ;
-        char *e2 ;
+        const char *e1 ;
+        const char *e2 ;
         int len1, len2, result ;
-        //cout << "START : " << s1 << "\t" << s2 << endl;
-        while( *s1 && *s2 ) {
 
+        //cout << "START : " << s1 << "\t" << s2 << endl;
+        while( ( *s1 && ( !pointend || '.' != *s1 ) ) &&
+               ( *s2 && ( !pointend || '.' != *s2 ) ) )
+        {
             p1 = ( *s1 == (char)255 );
             p2 = ( *s2 == (char)255 );
             //cout << "\t\t " << p1 << "\t" << p2 << endl;
             if ( p1 && !p2 )
-                return 1;
+                return 1 ;
             if ( p2 && !p1 )
-                return -1;
+                return -1 ;
 
             n1 = isNumber( *s1 );
             n2 = isNumber( *s2 );
 
-            if ( n1 && n2 ) {
+            if ( n1 && n2 )
+            {
+               int zerolen1 = 0 ;
+               int zerolen2 = 0 ;
                 // get rid of leading 0s
-                while ( *s1 == '0' ) s1++;
-                while ( *s2 == '0' ) s2++;
+                while ( *s1 == '0' )
+                {
+                    s1++ ;
+                    ++zerolen1 ;
+                }
+                while ( *s2 == '0' )
+                {
+                    s2++ ;
+                    ++zerolen2 ;
+                }
 
-                e1 = (char*)s1;
-                e2 = (char*)s2;
+                e1 = s1 ;
+                e2 = s2 ;
 
                 // find length
                 // if end of string, will break immediately ('\0')
@@ -130,6 +143,10 @@ namespace bson {
                 // if the lengths are equal, just strcmp
                 else if ( (result = strncmp(s1, s2, len1)) != 0 ) {
                     return result;
+                }
+                // compare the zero len
+                else if ( zerolen1 != zerolen2 ) {
+                    return zerolen1 < zerolen2 ? 1 : -1 ;
                 }
 
                 // otherwise, the numbers are equal
@@ -153,9 +170,9 @@ namespace bson {
             s1++; s2++;
         }
 
-        if ( *s1 )
+        if ( *s1 && ( !pointend || '.' != *s1 ) )
             return 1;
-        if ( *s2 )
+        if ( *s2 && ( !pointend || '.' != *s2 ) )
             return -1;
         return 0;
     }
@@ -762,59 +779,29 @@ namespace bson {
     {
         static int maxLoops = 1024 * 1024;
 
-        size_t lstart = 0;
-        size_t rstart = 0;
+        const char *lstart = l ;
+        const char *rstart = r ;
 
-        size_t lsize = strlen ( l ) ;
-        size_t rsize = strlen ( r ) ;
-        for ( int i=0; i<maxLoops; i++ ) {
-            if ( lstart >= lsize ) {
-                if ( rstart >= rsize )
-                    return SAME;
-                return RIGHT_SUBFIELD;
-            }
-            if ( rstart >= rsize )
-                return LEFT_SUBFIELD;
+        for ( int i = 0 ; i < maxLoops ; i++ )
+        {
+            if ( '\0' == *lstart )
+                return ( *rstart == '\0' ) ? SAME : RIGHT_SUBFIELD ;
+            else if ( *rstart == '\0' )
+                return LEFT_SUBFIELD ;
 
             // find the earliest '.' from current position
-            char *a = (char*)strchr ( &l[lstart], '.' ) ;
-            char *b = (char*)strchr ( &r[rstart], '.' ) ;
-            // locate the ., or end of the string
-            char *lend = ( NULL == a ) ? ( (char*)&l[lsize] ) : a ;
-            char *rend = ( NULL == b ) ? ( (char*)&r[rsize] ) : b ;
+            const char *lnext = strchr ( lstart, '.' ) ;
+            const char *rnext = strchr ( rstart, '.' ) ;
 
-            // get the original left and right
-            char lold = '\0' ;
-            char rold = '\0' ;
-            // set as end of string
-            if ( *lend != '\0' )
-            {
-               lold = *lend ;
-               *lend = '\0' ;
-            }
-            if ( *rend != '\0' )
-            {
-               rold = *rend ;
-               *rend = '\0' ;
-            }
             // do string compare
-            int x = lexNumCmp ( &l[lstart], &r[rstart] ) ;
-            // restore old value
-            if ( lold != '\0' )
-            {
-               *lend = lold ;
-            }
-            if ( rold != '\0' )
-            {
-               *rend = rold ;
-            }
+            int x = lexNumCmp( lstart, rstart, true ) ;
             if ( x < 0 )
-                return LEFT_BEFORE;
-            if ( x > 0 )
-                return RIGHT_BEFORE;
+                return LEFT_BEFORE ;
+            else if ( x > 0 )
+                return RIGHT_BEFORE ;
 
-            lstart = size_t(lend - l) + 1;
-            rstart = size_t(rend - r) + 1;
+            lstart = lnext ? ( lnext + 1 ) : "" ;
+            rstart = rnext ? ( rnext + 1 ) : "" ;
         }
 
         log() << "compareDottedFieldNames ERROR  l: " << l << " r: " << r
@@ -1644,7 +1631,7 @@ namespace bson {
         const char * x = *((const char**)a);
         const char * y = *((const char**)b);
         x++; y++;
-        return lexNumCmp( x , y );
+        return lexNumCmp( x , y, false ) ;
     }
 
     BSONObjIteratorSorted::BSONObjIteratorSorted( const BSONObj& o ) {
@@ -1660,7 +1647,7 @@ namespace bson {
         int x = 0;
         BSONObjIterator i( o );
         while ( i.more() ) {
-            _fields[x++] = i.next().rawdata();
+            _fields[x++] = i.next().rawdata() ;
             assert( _fields[x-1] );
         }
         assert( x == _nfields );
