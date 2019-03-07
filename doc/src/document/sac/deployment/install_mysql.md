@@ -26,5 +26,5 @@
   ![安装SequoiaSQL-MySQL](sac/deployment/add_mysql_4.jpg)
 
 > **Note：**  
-> SequoiaSQL-MySQL 服务创建后，可以关联 SequoiaDB 服务，[点击查看](sac/deployment/relationship_module.md)  
+> SequoiaSQL-MySQL 服务创建后，可以关联 SequoiaDB 服务，[点击查看](sac/deployment/relation/relationship_mysql.md)  
 > 也可以对 SequoiaSQL-MySQL 进行数据操作，[点击查看](sac/mysql_data/database.md)。

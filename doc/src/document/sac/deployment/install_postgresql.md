@@ -20,5 +20,5 @@
   ![安装SequoiaSQL-PostgreSQL](sac/deployment/add_pgsql_4.jpg)
 
 > **Note：**  
-> SequoiaSQL-PostgreSQL 服务创建后，可以关联 SequoiaDB 服务，[点击查看](sac/deployment/relationship_module.md)。  
+> SequoiaSQL-PostgreSQL 服务创建后，可以关联 SequoiaDB 服务，[点击查看](sac/deployment/relation/relationship_pg.md)。  
 > 也可以对 SequoiaSQL-PostgreSQL 进行数据操作，[点击查看](sac/postgresql_data/database.md)。
