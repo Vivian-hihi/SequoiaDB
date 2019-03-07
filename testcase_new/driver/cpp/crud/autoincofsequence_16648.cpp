@@ -34,9 +34,13 @@ protected:
       }
 
       rc = cs.createCollection( clName,  cl ) ;
-      if ( rc != -22 ) {
-         ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
+      if ( rc == -22 ) {
+      	 rc = cs.dropCollection( clName ) ;
+      	 ASSERT_EQ( SDB_OK, rc ) << "fail to drop cl " << clName ;
+      	 rc = cs.createCollection( clName,  cl ) ;
       }
+      
+      ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
       
    }
 
@@ -81,7 +85,7 @@ TEST_F( autoIncrement_16648, case16648 )
    
    sdbclient::sdbCursor cursor ;
    rc = cl.query( cursor );
-   ASSERT_EQ( SDB_OK, rc ) << "fail to createAutoIncrement " << opt.toString() ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to query " << opt.toString() ;
    
    bson::BSONObj ret ;
    int small,big ;
