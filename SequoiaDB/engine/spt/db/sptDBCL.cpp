@@ -882,19 +882,16 @@ namespace engine
          goto error ;
       }
 
-      if ( flags & FLG_INSERT_RETURN_OID )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "BulkInsert can't support flag "
-                        "SDB_INSERT_RETURN_ID" ) ;
-         goto error ;
-      }
-
       rc = _cl.insert( objVec, flags, &result ) ;
       if ( rc )
       {
          detail = BSON( SPT_ERR << "Failed to insert record" ) ;
          goto error ;
+      }
+
+      if ( flags & FLG_INSERT_RETURN_OID )
+      {
+         rval.getReturnVal().setValue( result ) ;
       }
 
    done:
