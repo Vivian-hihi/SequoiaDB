@@ -3,100 +3,94 @@
 *@Author:        2019-3-5  wangkexin
 ********************************************************************************/
 
-var csvContent = '"""Logicom Systems"" Ltd."' + "\n" ;
+var csvContent = '" ""Logicom Systems"" Ltd."' + "\n" ;
 main();
-//检视：文中tab键建议用空格代替
 function main()
 {  
-   try
-   {
-      var csName = COMMCSNAME;
-      var clName = COMMCLNAME+"_11549" ;
-      var cl = readyCL( csName, clName );
-      
-      var imprtFile = tmpFileDir +"11549.csv";
-      readyData( imprtFile );
-      importData( csName, clName, imprtFile);
-   	
-      checkCLData( cl );
-      cleanCL( csName, clName );
-   }
-      catch(e)//检视：注意代码格式
-   {
-   	throw e;
-   }
+    try
+    {
+        var csName = COMMCSNAME;
+        var clName = COMMCLNAME+"_11549" ;
+        var cl = readyCL( csName, clName );
+        
+        var imprtFile = tmpFileDir +"11549.csv";
+        readyData( imprtFile );
+        importData( csName, clName, imprtFile);
+        
+        checkCLData( cl );
+        cleanCL( csName, clName );
+    }
+    catch(e)
+    {
+        throw e;
+    }
 }
 
 function readyData( imprtFile)
 {
-   println("\n---Begin to ready data.");
-   
-   var file = fileInit( imprtFile );
-   file.write(csvContent);
-   var fileInfo = cmd.run( "cat "+ imprtFile );
-   println( imprtFile +"\n" + fileInfo );
-   file.close();
+    println("\n---Begin to ready data.");
+    
+    var file = fileInit( imprtFile );
+    file.write(csvContent);
+    file.close();
 }
 
 function importData( csName, clName, imprtFile )
 {
-   println("\n---Begin to import data and check exec result.");
-   
-   //remove rec file
-   var tmpRec = csName +"_"+ clName +"*.rec";
-   cmd.run( "rm -rf "+ tmpRec );
-   
-   //import operation
-   var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
-                     +" -c "+ csName +" -l "+ clName 
-                     +" --file "+ imprtFile
-					 +" --type csv "
-					 +" -a '\"' "
-					 +" -e ',' "
-					 +" --fields 'gfmc string default \"\"'"
-					 +" --trim 'both'";
-   println( imprtOption );
-   var rc = cmd.run( imprtOption );
-   println( rc );
-   
-   //check import results
-   var rcObj = rc.split("\n");
-   var expParseRecords    = "parsed records: 1";
-   var expImportedRecords = "imported records: 1";
-   var actParseRecords    = rcObj[0];
-   var actImportedRecords = rcObj[4];
-   if( expParseRecords !== actParseRecords 
-    || expImportedRecords !== actImportedRecords )
-   {
-      throw buildException( "importData", null, "[sdbimprt results]", 
+    println("\n---Begin to import data and check exec result.");
+    
+    //remove rec file
+    var tmpRec = csName +"_"+ clName +"*.rec";
+    cmd.run( "rm -rf "+ tmpRec );
+    
+    //import operation
+    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
+                    +" -c "+ csName +" -l "+ clName 
+                    +" --file "+ imprtFile
+                    +" --type csv "
+                    +" -a '\"' "
+                    +" -e ',' "
+                    +" --fields 'gfmc string default \"\"'"
+                    +" --trim 'both'";
+    var rc = cmd.run( imprtOption );
+    
+    //check import results
+    var rcObj = rc.split("\n");
+    var expParseRecords    = "parsed records: 1";
+    var expImportedRecords = "imported records: 1";
+    var actParseRecords    = rcObj[0];
+    var actImportedRecords = rcObj[4];
+    if( expParseRecords !== actParseRecords || expImportedRecords !== actImportedRecords )
+    {
+        throw buildException( "importData", null, "[sdbimprt results]", 
                         "["+ expParseRecords +", "+ expImportedRecords +"]", 
                         "["+ actParseRecords +", "+ actImportedRecords +"]" );
-   }
-    
-   // clean tmpRec
-   cmd.run( "rm -rf " + tmpRec );
+    }
+    // clean tmpRec
+    cmd.run( "rm -rf " + tmpRec );
 }
 
 function checkCLData( cl )
 {
-   println("\n---Begin to check cl data.");
-   
-   var rc = cl.find({},{_id:{$include:0}});
-   var recsArray = [];
-   while( tmpRecs = rc.next() )//检视：建议释放资源，查询返回的游标建议close
-   {
-      recsArray.push( tmpRecs.toObj() );
-   }
-   
-   var expCnt  = 1;  
-   var expRecs = '[{"gfmc":"\\\"Logicom Systems\\\" Ltd."}]';
-   var actCnt  = recsArray.length;
-   var actRecs = JSON.stringify( recsArray );
-   if( actCnt !== expCnt || actRecs !== expRecs )
-   {
-      throw buildException( "checkCLdata", null, "[find]", 
-                        "[cnt:"+ expCnt +", recs:"+ expRecs +"]", 
-                        "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
-   }
-   println( "cl records: "+ actRecs );
+    println("\n---Begin to check cl data.");
+    
+    var rc = cl.find({},{_id:{$include:0}});
+    var recsArray = [];
+    while( tmpRecs = rc.next() )
+    {
+        recsArray.push( tmpRecs.toObj() );
+    }
+    rc.close();
+    
+    var expCnt  = 1;
+    var expRecs = '[{"gfmc":"\\\"Logicom Systems\\\" Ltd."}]';
+    var actCnt  = recsArray.length;
+    var actRecs = JSON.stringify( recsArray );
+    if( actCnt !== expCnt || actRecs !== expRecs )
+    {
+        throw buildException( "checkCLdata", null, "[find]", 
+                    "[cnt:"+ expCnt +", recs:"+ expRecs +"]", 
+                    "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
+    }
+    println( "cl records: "+ actRecs );
 }

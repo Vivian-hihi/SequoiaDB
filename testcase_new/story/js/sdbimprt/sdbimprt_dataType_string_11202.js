@@ -5,137 +5,130 @@
 var key = "a";
 var csvContent = key + "\n" + "\"a\"\"\"" + "\n" ;
 main();
-//检视：文中tab键建议用空格代替
 function main()
-{  
-   try
-   {
-      var csName = COMMCSNAME;
-      var clName = COMMCLNAME+"_11202" ;
-      var cl = readyCL( csName, clName );
-      
-      var imprtFile = tmpFileDir +"11202.csv";
-      readyData( imprtFile );
-      importData( csName, clName, imprtFile);
-   	
-      checkCLData( cl );
-	  exportData( clName );
-      cleanCL( csName, clName );
-   }
-      catch(e)//检视：注意代码格式
-   {
-   	throw e;
-   }
+{
+    try
+    {
+        var csName = COMMCSNAME;
+        var clName = COMMCLNAME+"_11202" ;
+        var cl = readyCL( csName, clName );
+        
+        var imprtFile = tmpFileDir +"11202.csv";
+        readyData( imprtFile );
+        importData( csName, clName, imprtFile);
+        
+        checkCLData( cl );
+        exportData( clName );
+        cleanCL( csName, clName );
+    }
+    catch(e)
+    {
+        throw e;
+    }
 }
 
 function readyData( imprtFile)
 {
-   println("\n---Begin to ready data.");
-   
-   var file = fileInit( imprtFile );
-   file.write(csvContent);
-   var fileInfo = cmd.run( "cat "+ imprtFile );
-   println( imprtFile +"\n" + fileInfo );//检视：为什么已加打印？？
-   file.close();
+    println("\n---Begin to ready data.");
+    
+    var file = fileInit( imprtFile );
+    file.write(csvContent);
+    var fileInfo = cmd.run( "cat "+ imprtFile );
+    file.close();
 }
 
 function importData( csName, clName, imprtFile )
 {
-   println("\n---Begin to import data and check exec result.");
-   
-   //remove rec file
-   var tmpRec = csName +"_"+ clName +"*.rec";
-   cmd.run( "rm -rf "+ tmpRec );
-   
-   //import operation
-   var imprtOption = installDir +'bin/sdbimprt -s '+ COORDHOSTNAME +' -p '+ COORDSVCNAME 
-                     +' -c '+ csName +' -l '+ clName 
-                     +' --type csv '
-                     +' --file '+ imprtFile
-					 +' --headerline=true ';
-   println( imprtOption );
-   var rc = cmd.run( imprtOption );
-   println( rc );//检视：为什么已加打印？？
-   
-   //check import results
-   var rcObj = rc.split("\n");
-   var expParseRecords    = "parsed records: 1";
-   var expImportedRecords = "imported records: 1";
-   var actParseRecords    = rcObj[0];
-   var actImportedRecords = rcObj[4];
-   if( expParseRecords !== actParseRecords 
-    || expImportedRecords !== actImportedRecords )
-   {
-      throw buildException( "importData", null, "[sdbimprt results]", 
+    println("\n---Begin to import data and check exec result.");
+    
+    //remove rec file
+    var tmpRec = csName +"_"+ clName +"*.rec";
+    cmd.run( "rm -rf "+ tmpRec );
+    
+    //import operation
+    var imprtOption = installDir +'bin/sdbimprt -s '+ COORDHOSTNAME +' -p '+ COORDSVCNAME 
+                    +' -c '+ csName +' -l '+ clName 
+                    +' --type csv '
+                    +' --file '+ imprtFile
+                    +' --headerline=true ';
+    var rc = cmd.run( imprtOption );
+    
+    //check import results
+    var rcObj = rc.split("\n");
+    var expParseRecords    = "parsed records: 1";
+    var expImportedRecords = "imported records: 1";
+    var actParseRecords    = rcObj[0];
+    var actImportedRecords = rcObj[4];
+    if( expParseRecords !== actParseRecords || expImportedRecords !== actImportedRecords )
+    {
+        throw buildException( "importData", null, "[sdbimprt results]", 
                         "["+ expParseRecords +", "+ expImportedRecords +"]", 
                         "["+ actParseRecords +", "+ actImportedRecords +"]" );
-   }
+    }
     
-   // clean tmpRec
-   cmd.run( "rm -rf " + tmpRec );
+    // clean tmpRec
+    cmd.run( "rm -rf " + tmpRec );
 }
 
 function checkCLData( cl )
 {
-   println("\n---Begin to check cl data.");
-   
-   var rc = cl.find({},{_id:{$include:0}});
-   var recsArray = [];
-   while( tmpRecs = rc.next() )//检视：建议释放资源，查询返回的游标建议close
-   {
-      recsArray.push( tmpRecs.toObj() );
-   }
-   
-   var expCnt  = 1;  
-   var expRecs = '[{"a":"a\\\""}]';
-   var actCnt  = recsArray.length;
-   var actRecs = JSON.stringify( recsArray );
-   if( actCnt !== expCnt || actRecs !== expRecs )
-   {
-      throw buildException( "checkCLdata", null, "[find]", 
-                        "[cnt:"+ expCnt +", recs:"+ expRecs +"]", 
-                        "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
-   }
-   println( "cl records: "+ actRecs );
+    println("\n---Begin to check cl data.");
+    
+    var rc = cl.find({},{_id:{$include:0}});
+    var recsArray = [];
+    while( tmpRecs = rc.next() )
+    {
+        recsArray.push( tmpRecs.toObj() );
+    }
+    
+    rc.close();
+    var expCnt  = 1;
+    var expRecs = '[{"a":"a\\\""}]';
+    var actCnt  = recsArray.length;
+    var actRecs = JSON.stringify( recsArray );
+    if( actCnt !== expCnt || actRecs !== expRecs )
+    {
+        throw buildException( "checkCLdata", null, "[find]", 
+                    "[cnt:"+ expCnt +", recs:"+ expRecs +"]", 
+                    "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
+    }
+    println( "cl records: "+ actRecs );
 }
 
 function exportData( clname )
 {
-   var csvfile = tmpFileDir + "sdbexprt11202.csv" ;
-   cmd.run( "rm -rf " + csvfile ) ;
-   var command = installDir + "bin/sdbexprt" +
-                 " -s " + COORDHOSTNAME +
-                 " -p " + COORDSVCNAME + 
-                 " -c " + COMMCSNAME + 
-                 " -l " + clname +
-                 " --file " + csvfile + 
-                 " --type csv" +
-                 " --fields " + key ;
-   println( command );
-   var rc = cmd.run( command );
-   println( rc );//检视：为什么已加打印？？
-   
-   checkFileContent( csvfile, csvContent ) ;
+    var csvfile = tmpFileDir + "sdbexprt11202.csv" ;
+    cmd.run( "rm -rf " + csvfile ) ;
+    var command = installDir + "bin/sdbexprt" +
+                " -s " + COORDHOSTNAME +
+                " -p " + COORDSVCNAME + 
+                " -c " + COMMCSNAME + 
+                " -l " + clname +
+                " --file " + csvfile + 
+                " --type csv" +
+                " --fields " + key ;
+    var rc = cmd.run( command );
+    
+    checkFileContent( csvfile, csvContent ) ;
 }
 
 function checkFileContent( filename, expContent )
 {
-   try
-   {
-      var size = parseInt( File.stat( filename ).toObj().size ) ;
-      var file = new File( filename ) ;
-      var actContent = file.read( size ) ;
-      file.close() ;
-   }
-   catch( e )
-   {
-      throw buildException( "checkFileContent", null,
-            "read " + filename, 0, e ) ;
-   }
-   if( actContent !== expContent )
-   {
-      throw buildException( "checkFileContent", null,
-            "check " + filename + " content", 
-            expContent.slice( 0, 1024 ), actContent.slice( 0, 1024 ) ) ;//检视：为什么是0-1024？？字符串貌似没有1024那么长
-   }
+    try
+    {
+        var size = parseInt( File.stat( filename ).toObj().size ) ;
+        var file = new File( filename ) ;
+        var actContent = file.read( size ) ;
+        file.close() ;
+    }
+    catch( e )
+    {
+        throw buildException( "checkFileContent", null, "read " + filename, 0, e ) ;
+    }
+    if( actContent !== expContent )
+    {
+        throw buildException( "checkFileContent", null,
+                "check " + filename + " content", 
+                expContent, actContent);
+    }
 }
