@@ -9,63 +9,64 @@ main();
 
 function main()
 {
-	var csName = CHANGEDPREFIX + "_10901_CS";
-	var clName = CHANGEDPREFIX + "_10901_CL";
-	
-	commDropCS(db, csName, true, "drop cs in the begin");
-	var cl = commCreateCL( db, csName, clName, null, null, true, false, "create cl in the begin" );
-	
-	println("---begin test---");
-	insertData(cl);
-	
-	//在cl使用内置SQL进行select，where子句中的条件为a is not null
-	var sql = 'select * from '+csName+"."+clName+' where a is not null';
+    var csName = CHANGEDPREFIX + "_10901_CS";
+    var clName = CHANGEDPREFIX + "_10901_CL";
+    
+    commDropCS(db, csName, true, "drop cs in the begin");
+    var cl = commCreateCL( db, csName, clName, null, null, true, false, "create cl in the begin" );
+    
+    println("---begin test---");
+    insertData(cl);
+    
+    //在cl使用内置SQL进行select，where子句中的条件为a is not null
+    var sql = 'select * from '+csName+"."+clName+' where a is not null';
     var cursor = db.exec( sql );
-	var expRecs1 = '[{"_id":1,"a":1,"b":1},{"_id":2,"a":1}]';
-	checkCLData( cursor, expRecs1 , 2);
-	
-	//在cl使用内置SQL进行update，where子句中的条件为a is not null
-	var sql = 'update '+csName+"."+clName+' set a=123 where a is not null';
+    var expRecs1 = '[{"_id":1,"a":1,"b":1},{"_id":2,"a":1}]';
+    checkCLData( cursor, expRecs1 , 2);
+    
+    //在cl使用内置SQL进行update，where子句中的条件为a is not null
+    var sql = 'update '+csName+"."+clName+' set a=123 where a is not null';
     db.execUpdate( sql );
-	var cursor = cl.find();
-	var expRecs2 = '[{"_id":1,"a":123,"b":1},{"_id":2,"a":123},{"_id":3,"b":1},{"_id":4,"a":null}]';
-	checkCLData( cursor, expRecs2 , 4);
-	
-	//在cl使用内置SQL进行delete，where子句中的条件为a is not null
-	var sql = 'delete from '+csName+"."+clName+' where a is not null';
+    var cursor = cl.find();
+    var expRecs2 = '[{"_id":1,"a":123,"b":1},{"_id":2,"a":123},{"_id":3,"b":1},{"_id":4,"a":null}]';
+    checkCLData( cursor, expRecs2 , 4);
+    
+    //在cl使用内置SQL进行delete，where子句中的条件为a is not null
+    var sql = 'delete from '+csName+"."+clName+' where a is not null';
     db.execUpdate( sql );
-	var cursor = cl.find();
-	var expRecs3 = '[{"_id":3,"b":1},{"_id":4,"a":null}]';
-	checkCLData( cursor, expRecs3 , 2);
-	
-	commDropCS( db, csName, true, "drop CS in the end" );
+    var cursor = cl.find();
+    var expRecs3 = '[{"_id":3,"b":1},{"_id":4,"a":null}]';
+    checkCLData( cursor, expRecs3 , 2);
+    
+    commDropCS( db, csName, true, "drop CS in the end" );
 }
 
 function insertData( cl )
 {
-	println("\n---Begin to insert cl data.");
-	cl.insert({_id:1,a:1,b:1});
-	cl.insert({_id:2,a:1});
-	cl.insert({_id:3,b:1});
-	cl.insert({_id:4,a:null});
-}	
+    println("\n---Begin to insert cl data.");
+    cl.insert({_id:1,a:1,b:1});
+    cl.insert({_id:2,a:1});
+    cl.insert({_id:3,b:1});
+    cl.insert({_id:4,a:null});
+}
 
 function checkCLData( rc, expRecs, expCnt )
 {
-	println("\n---Begin to check cl data.");
-	var recsArray = [];
-	while( tmpRecs = rc.next() )
-	{
-		recsArray.push( tmpRecs.toObj() );
-	}
-	
-	var actCnt  = recsArray.length;
-	var actRecs = JSON.stringify( recsArray );
-	if( actCnt !== expCnt || actRecs !== expRecs )
-	{
-		throw buildException( "checkCLdata", null, "[find]",
-		  "[cnt:"+ expCnt +", recs:"+ expRecs +"]",
-		  "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
-	}
-	println( "cl records: "+ actRecs );
+    println("\n---Begin to check cl data.");
+    var recsArray = [];
+    while( tmpRecs = rc.next() )
+    {
+        recsArray.push( tmpRecs.toObj() );
+    }
+    rc.close();
+    
+    var actCnt  = recsArray.length;
+    var actRecs = JSON.stringify( recsArray );
+    if( actCnt !== expCnt || actRecs !== expRecs )
+    {
+        throw buildException( "checkCLdata", null, "[find]",
+            "[cnt:"+ expCnt +", recs:"+ expRecs +"]",
+            "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
+    }
+    println( "cl records: "+ actRecs );
 }
