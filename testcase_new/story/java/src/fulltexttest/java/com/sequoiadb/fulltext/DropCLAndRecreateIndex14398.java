@@ -28,115 +28,120 @@ import org.elasticsearch.client.*;
  */
 public class DropCLAndRecreateIndex14398 extends SdbTestBase {
 
-	private Sequoiadb sdb = null;
-	private CollectionSpace cs = null;
-	private DBCollection cl = null;
-	private String clName = "ES_cl_14398";
+    private Sequoiadb sdb = null;
+    private CollectionSpace cs = null;
+    private DBCollection cl = null;
+    private String clName = "ES_cl_14398";
 
-	private Client esClient = null;
+    private Client esClient = null;
+    private List<String> esIndexNames =  null;
 
-	@BeforeClass
-	public void setUp() {
-		esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		if (CommLib.isStandAlone(sdb)) {
-			throw new SkipException("skip StandAlone");
-		}
+    @BeforeClass
+    public void setUp() {
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
+        }
 
-		// create cl
-		cs = sdb.getCollectionSpace(csName);
-		cl = cs.createCollection(clName);
-	}
+        // create cl
+        cs = sdb.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
+    }
 
-	@AfterClass
-	public void tearDown() {
-		cs.dropCollection(clName);
-		sdb.close();
-		esClient.close();
-	}
+    @AfterClass
+    public void tearDown() {
+        cs.dropCollection(clName);
+        // check fulltext deleted
+        if(esIndexNames != null){
+            FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+        }
+        sdb.close();
+        esClient.close();
+    }
 
-	@Test
-	public void test() {
-		// create fulltext
-		String textIndexName = "fulltext14398";
-		BSONObject indexObj = new BasicBSONObject();
-		indexObj.put("a", "text");
-		indexObj.put("b", "text");
-		indexObj.put("c", "text");
-		indexObj.put("d", "text");
-		indexObj.put("e", "text");
-		indexObj.put("f", "text");
-		indexObj.put("g", "text");
-		cl.createIndex(textIndexName, indexObj, false, false);
+    @Test
+    public void test() {
+        // create fulltext
+        String textIndexName = "fulltext14398";
+        BSONObject indexObj = new BasicBSONObject();
+        indexObj.put("a", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
+        indexObj.put("f", "text");
+        indexObj.put("g", "text");
+        cl.createIndex(textIndexName, indexObj, false, false);
 
-		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
+        esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
 
-		// check drop cl and recreate index after index clear in ES
-		insertData(cl, FullTextUtils.INSERT_NUMS);
+        // check drop cl and recreate index after index clear in ES
+        insertData(cl, FullTextUtils.INSERT_NUMS);
 
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
-		FullTextUtils.checkConsistency(sdb, csName, clName);
+        FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
+        FullTextUtils.checkConsistency(sdb, csName, clName);
 
-		FullTextDBUtils.dropCollection(cs, clName);
+        FullTextDBUtils.dropCollection(cs, clName);
 
-		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+        FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
 
-		// recreate after ES index clear
-		cl = cs.createCollection(clName);
-		cl.createIndex(textIndexName, indexObj, false, false);
+        // recreate after ES index clear
+        cl = cs.createCollection(clName);
+        cl.createIndex(textIndexName, indexObj, false, false);
 
-		// insert new datas
-		int newInsertNums = 210000;
-		insertData(cl, newInsertNums);
+        // insert new datas
+        int newInsertNums = 210000;
+        insertData(cl, newInsertNums);
 
-		// check consistency
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
-		FullTextUtils.checkConsistency(sdb, csName, clName);
+        // check consistency
+        FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
+        FullTextUtils.checkConsistency(sdb, csName, clName);
 
-		System.out.println("----------success check drop cl after index clear in ES----------");
+        System.out.println("----------success check drop cl after index clear in ES----------");
 
-		// check drop cl and recreate index while index processing to clear in
-		// ES
-		FullTextDBUtils.dropFullTextIndex(cl, textIndexName);// init env
-		cl.truncate();
-		FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
-		cl.createIndex(textIndexName, indexObj, false, false);
+        // check drop cl and recreate index while index processing to clear in
+        // ES
+        FullTextDBUtils.dropFullTextIndex(cl, textIndexName);// init env
+        cl.truncate();
+        FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+        cl.createIndex(textIndexName, indexObj, false, false);
 
-		// init insert datas
-		insertData(cl, FullTextUtils.INSERT_NUMS);
+        // init insert datas
+        insertData(cl, FullTextUtils.INSERT_NUMS);
 
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
-		FullTextUtils.checkConsistency(sdb, csName, clName);
+        FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, FullTextUtils.INSERT_NUMS);
+        FullTextUtils.checkConsistency(sdb, csName, clName);
 
-		FullTextDBUtils.dropCollection(cs, clName);
+        FullTextDBUtils.dropCollection(cs, clName);
 
-		// recreate while index processing to clear
-		cl = cs.createCollection(clName);
-		cl.createIndex(textIndexName, indexObj, false, false);
+        // recreate while index processing to clear
+        cl = cs.createCollection(clName);
+        cl.createIndex(textIndexName, indexObj, false, false);
 
-		// insert new datas
-		insertData(cl, newInsertNums);
+        // insert new datas
+        insertData(cl, newInsertNums);
 
-		// check consistency
-		FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
-		FullTextUtils.checkConsistency(sdb, csName, clName);
+        // check consistency
+        FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, newInsertNums);
+        FullTextUtils.checkConsistency(sdb, csName, clName);
 
-		System.out.println("----------success check drop cl while index processing to clear in ES----------");
-	}
+        System.out.println("----------success check drop cl while index processing to clear in ES----------");
+    }
 
-	public void insertData(DBCollection cl, int insertNums) {
-		List<BSONObject> insertObjs = new ArrayList<>();
-		for (int i = 0; i < 100; i++) {
-			for (int j = 0; j < insertNums / 100; j++) {
-				insertObjs.add((BSONObject) JSON.parse("{a: 'test_14398_" + FullTextUtils.getRandomString(10)
-						+ "', b: '" + FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64)
-						+ "', d: '" + FullTextUtils.getRandomString(64) + "', e: '" + FullTextUtils.getRandomString(128)
-						+ "', f: '" + FullTextUtils.getRandomString(128) + "', g: " + i * j + "}"));
+    public void insertData(DBCollection cl, int insertNums) {
+        List<BSONObject> insertObjs = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                insertObjs.add((BSONObject) JSON.parse("{a: 'test_14398_" + FullTextUtils.getRandomString(10)
+                        + "', b: '" + FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64)
+                        + "', d: '" + FullTextUtils.getRandomString(64) + "', e: '" + FullTextUtils.getRandomString(128)
+                        + "', f: '" + FullTextUtils.getRandomString(128) + "', g: " + i * j + "}"));
 
-			}
-			cl.insert(insertObjs, 0);
-			insertObjs.clear();
-		}
-	}
+            }
+            cl.insert(insertObjs, 0);
+            insertObjs.clear();
+        }
+    }
 
 }
