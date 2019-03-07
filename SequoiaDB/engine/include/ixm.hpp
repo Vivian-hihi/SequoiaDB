@@ -59,8 +59,8 @@ namespace engine
 
    #define IXM_PAGE_SIZE4K  DMS_PAGE_SIZE4K
 
-   // (4096-32)/4-16 ( page size - page head ) / max records in 4k - metadata
-   #define IXM_KEY_MAX_SIZE            1000
+   #define IXM_KEY_SIZE_LIMIT          4096
+   #define IXM_KEY_NODE_NUM_MIN        3
    #define IXM_INVALID_OFFSET          0
    #define IXM_INDEX_NAME_SIZE         1024
    #define IXM_ID_KEY_NAME             "$id"

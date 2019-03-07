@@ -691,7 +691,7 @@ namespace engine
       // we should never call this function when there are less than two keys
       // (if that happen, after split and prompt to parent, we'll have empty
       // page
-      if ( getNumKeyNode() <= 2 )
+      if ( getNumKeyNode() < IXM_KEY_NODE_NUM_MIN )
       {
          PD_LOG ( PDERROR, "Only %d elements in the index",
                   (INT32)getNumKeyNode() ) ;
@@ -1166,9 +1166,12 @@ namespace engine
       const ixmKeyNode *kn = NULL ;
 
       // sanity check
-      if ( key.dataSize() >= IXM_KEY_MAX_SIZE )
+      INT32 keySizeMax = OSS_MIN( _pageSize / ( IXM_KEY_NODE_NUM_MIN + 1 ),
+                                  IXM_KEY_SIZE_LIMIT ) ;
+      if ( key.dataSize() > keySizeMax )
       {
-         PD_LOG ( PDERROR, "key size must be less than %d", IXM_KEY_MAX_SIZE ) ;
+         PD_LOG ( PDERROR, "key size must be less than or equal to %d",
+                  keySizeMax ) ;
          rc = SDB_IXM_KEY_TOO_LARGE ;
          goto error ;
       }
@@ -1373,7 +1376,7 @@ namespace engine
       }
       left = getKeyNode( pos )->_left ;
 
-      // All code path within this block will endup jumping to either 
+      // All code path within this block will endup jumping to either
       // done or error
       if ( 1 == getNumKeyNode() )
       {
@@ -2223,7 +2226,7 @@ namespace engine
                                INT32 keepFieldsNum, BOOLEAN skipToNext,
                                const vector < const BSONElement *> &matchEle,
                                const vector < BOOLEAN > &matchInclusive,
-                               const Ordering &o, INT32 direction ) 
+                               const Ordering &o, INT32 direction )
    {
       PD_TRACE_ENTRY ( SDB_IXMEXT__KEYCMP );
       BSONObjIterator ll ( currentKey ) ;
