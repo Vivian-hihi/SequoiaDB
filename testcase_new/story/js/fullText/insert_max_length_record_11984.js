@@ -37,4 +37,4 @@ function main()
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
-//main()
+main()
