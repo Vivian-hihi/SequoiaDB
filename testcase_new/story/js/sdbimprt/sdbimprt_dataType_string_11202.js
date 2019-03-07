@@ -5,7 +5,7 @@
 var key = "a";
 var csvContent = key + "\n" + "\"a\"\"\"" + "\n" ;
 main();
-
+//检视：文中tab键建议用空格代替
 function main()
 {  
    try
@@ -22,7 +22,7 @@ function main()
 	  exportData( clName );
       cleanCL( csName, clName );
    }
-      catch(e)
+      catch(e)//检视：注意代码格式
    {
    	throw e;
    }
@@ -35,7 +35,7 @@ function readyData( imprtFile)
    var file = fileInit( imprtFile );
    file.write(csvContent);
    var fileInfo = cmd.run( "cat "+ imprtFile );
-   println( imprtFile +"\n" + fileInfo );
+   println( imprtFile +"\n" + fileInfo );//检视：为什么已加打印？？
    file.close();
 }
 
@@ -55,7 +55,7 @@ function importData( csName, clName, imprtFile )
 					 +' --headerline=true ';
    println( imprtOption );
    var rc = cmd.run( imprtOption );
-   println( rc );
+   println( rc );//检视：为什么已加打印？？
    
    //check import results
    var rcObj = rc.split("\n");
@@ -81,7 +81,7 @@ function checkCLData( cl )
    
    var rc = cl.find({},{_id:{$include:0}});
    var recsArray = [];
-   while( tmpRecs = rc.next() )
+   while( tmpRecs = rc.next() )//检视：建议释放资源，查询返回的游标建议close
    {
       recsArray.push( tmpRecs.toObj() );
    }
@@ -113,7 +113,7 @@ function exportData( clname )
                  " --fields " + key ;
    println( command );
    var rc = cmd.run( command );
-   println( rc );
+   println( rc );//检视：为什么已加打印？？
    
    checkFileContent( csvfile, csvContent ) ;
 }
@@ -136,6 +136,6 @@ function checkFileContent( filename, expContent )
    {
       throw buildException( "checkFileContent", null,
             "check " + filename + " content", 
-            expContent.slice( 0, 1024 ), actContent.slice( 0, 1024 ) ) ;
+            expContent.slice( 0, 1024 ), actContent.slice( 0, 1024 ) ) ;//检视：为什么是0-1024？？字符串貌似没有1024那么长
    }
 }

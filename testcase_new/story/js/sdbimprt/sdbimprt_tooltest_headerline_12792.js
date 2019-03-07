@@ -7,7 +7,7 @@ var csvContent1 = 'NAME,ID\ntest1,123\ntest2,123\ntest3,123' + "\n" ;
 var csvContent2 = 'NAME|ID\ntest1|123\ntest2|123\ntest3|123' + "\n" ;
 var csvContent3 = 'NAME|ID\ntest1,123\ntest2,123\ntest3,123' + "\n" ;
 main();
-
+//检视：文中tab键建议用空格代替
 function main()
 {  
    try
@@ -23,9 +23,10 @@ function main()
       readyData( imprtFile2, csvContent2);
 	  var imprtFile3 = tmpFileDir +"12792c.csv";
       readyData( imprtFile3, csvContent3);
-	  
+	  //检视：建议以下不同测试点用空行隔开，显得代码不那么挤
 	  //1. 指定headerline=true，field字段，不指定分隔符
       importData( csName, clName, imprtFile1, true, 3, 0, 3);
+      //检视：前面五种场景预期结果expRecs均是一样，建议去掉多余的定义，相同预期结果定义一个expRecs
 	  var expRecs = '[{"yourname":"test1","yourid":123},{"yourname":"test2","yourid":123},{"yourname":"test3","yourid":123}]';
 	  checkCLData( cl, expRecs, 3);
 	  //2. 指定headerline=true，field字段，指定相同分隔符
@@ -51,7 +52,7 @@ function main()
       
       cleanCL( csName, clName );
    }
-      catch(e)
+      catch(e)//检视：注意代码格式
    {
    	throw e;
    }
@@ -126,9 +127,9 @@ function checkCLData( cl, expRecs, expCnt )
 {
    println("---Begin to check cl data.");
    
-   var rc = cl.find({},{_id:{$include:0}});
+   var rc = cl.find({},{_id:{$include:0}});//检视：cl中不止一条记录时建议查询使用排序，避免因为顺序问题随机失败
    var recsArray = [];
-   while( tmpRecs = rc.next() )
+   while( tmpRecs = rc.next() )//检视：建议释放资源，查询返回的游标建议close
    {
       recsArray.push( tmpRecs.toObj() );
    }

@@ -8,7 +8,7 @@ var csvContent2 = 'test|\ntest1|123\ntest2|456' + "\n" ;
 var csvContent3 = 'test|123\ntest1|\ntest2|456' + "\n" ;
 var csvContent4 = 'test|123\ntest1|456\ntest2|' + "\n" ;
 main();
-
+//检视：文中tab键建议用空格代替
 function main()
 {  
    try
@@ -26,7 +26,7 @@ function main()
       readyData( imprtFile3, csvContent3);
 	  var imprtFile4 = tmpFileDir +"12797d.csv";
       readyData( imprtFile4, csvContent4);
-	  
+	  //检视：建议以下不同测试点用空行隔开，显得代码不那么挤
 	  //1. strictfieldnum=true，字段数与定义一致
       importData( csName, clName, imprtFile1, 2, 0, 2, true);
 	  var expRecs = '[{"yourname":"test","yourid":123},{"yourname":"test1","yourid":456}]';
@@ -37,6 +37,8 @@ function main()
 	  var expRecs = '[{"yourname":"test1","yourid":123},{"yourname":"test2","yourid":456}]';
 	  checkCLData( cl, expRecs, 2);
 	  cl.truncate();
+     
+     //检视：请对照文本用例确认以下测试点，是否上传代码错误？
 	  /*//3. 指定headerline=true，field字段，指定与headerline不同的分隔符
       importData( csName, clName, imprtFile3, true, 3, 0, 3, ',');
 	  var expRecs = '[{"yourname":"test1","yourid":123},{"yourname":"test2","yourid":123},{"yourname":"test3","yourid":123}]';
@@ -135,9 +137,9 @@ function checkCLData( cl, expRecs, expCnt )
 {
    println("---Begin to check cl data.");
    
-   var rc = cl.find({},{_id:{$include:0}});
+   var rc = cl.find({},{_id:{$include:0}});//检视：cl中不止一条记录时建议查询使用排序，避免因为顺序问题随机失败
    var recsArray = [];
-   while( tmpRecs = rc.next() )
+   while( tmpRecs = rc.next() )//检视：建议释放资源，查询返回的游标建议close
    {
       recsArray.push( tmpRecs.toObj() );
    }

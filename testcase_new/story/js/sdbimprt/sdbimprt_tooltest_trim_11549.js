@@ -5,7 +5,7 @@
 
 var csvContent = '"""Logicom Systems"" Ltd."' + "\n" ;
 main();
-
+//检视：文中tab键建议用空格代替
 function main()
 {  
    try
@@ -21,7 +21,7 @@ function main()
       checkCLData( cl );
       cleanCL( csName, clName );
    }
-      catch(e)
+      catch(e)//检视：注意代码格式
    {
    	throw e;
    }
@@ -83,7 +83,7 @@ function checkCLData( cl )
    
    var rc = cl.find({},{_id:{$include:0}});
    var recsArray = [];
-   while( tmpRecs = rc.next() )
+   while( tmpRecs = rc.next() )//检视：建议释放资源，查询返回的游标建议close
    {
       recsArray.push( tmpRecs.toObj() );
    }
