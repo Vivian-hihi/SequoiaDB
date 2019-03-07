@@ -26,9 +26,11 @@ public class Transaction17259 extends SdbTestBase {
 
     private String clName = "transCL_17259";
     private Sequoiadb sdb = null;
+    private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
     private Sequoiadb sdb3 = null;
     private DBCollection cl = null;
+    private DBCollection cl1 = null;
     private DBCollection cl2 = null;
     private DBCollection cl3 = null;
     private int recordNum = 10000;
@@ -46,8 +48,10 @@ public class Transaction17259 extends SdbTestBase {
 
     @Test
     public void test() {
+        sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
 
@@ -55,9 +59,9 @@ public class Transaction17259 extends SdbTestBase {
         sdb3.beginTransaction();
         
         //1 trans1 insert/update/delete record  
-        cl.insert(expDataList);
-        cl.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}", null);
-        cl.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}");
+        cl1.insert(expDataList);
+        cl1.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}", null);
+        cl1.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}");
         
         //2 sdb2 create/drop index
         for (int i = 0; i < 10; i++) {
@@ -67,7 +71,8 @@ public class Transaction17259 extends SdbTestBase {
         cl2.createIndex("a", "{a:1, b:-1}", false, false);
         Assert.assertTrue(cl.isIndexExist("a"));
         
-        //3 trans2 selete record 
+        //3 trans2 selete record
+        expDataList = expData();
         recordCur = cl3.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -95,9 +100,9 @@ public class Transaction17259 extends SdbTestBase {
         actDataList.clear();
 
         //6 commit all trans
-        sdb2.commit();
+        sdb3.commit();
         
-        cl.delete("{'$isnull':{a: 1}}");
+        cl.delete("{a:{'$isnull': 0}}");
         Assert.assertEquals(cl.getCount(), 0);
     }
 

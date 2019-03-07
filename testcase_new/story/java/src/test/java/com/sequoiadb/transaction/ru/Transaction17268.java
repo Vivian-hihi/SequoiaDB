@@ -47,6 +47,7 @@ public class Transaction17268 extends SdbTestBase {
         expDataList = new ArrayList<BSONObject>();
         
         data = new BasicBSONObject();
+        data.put("_id", "insertId17268_1");
         data.put("a", 1);
         data.put("b", "testTrans_17268");
         data.put("c", 13700000000L);
@@ -56,7 +57,7 @@ public class Transaction17268 extends SdbTestBase {
 
         modifier = new BasicBSONObject();
         data2 = new BasicBSONObject();
-        data2.put("_id", "updateId17268");
+        data2.put("_id", "insertId17268_1");
         data2.put("a", 17268);
         data2.put("b", "testTrans_17268Update");
         data2.put("c", 13700017268L);
@@ -64,8 +65,8 @@ public class Transaction17268 extends SdbTestBase {
         modifier.put("$set", data2);
         
         data3 = new BasicBSONObject();
-        data3.put("_id", data.get("_id"));
-        data3.put("a", "testTrans_17268Insert");
+        data3.put("_id", "insertId17268_1");
+        data3.put("a", 1);
         data3.put("b", 1);
         data3.put("c", 13700000000L);
         data3.put("d", "customer transaction type data application.");
@@ -120,7 +121,7 @@ public class Transaction17268 extends SdbTestBase {
         }
         sdb.commit();
         expDataList.clear();
-        expDataList.add(data3);
+        expDataList.add(data2);
 
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);

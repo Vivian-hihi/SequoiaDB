@@ -72,11 +72,12 @@ public class Transaction17254 extends SdbTestBase {
         modifier.put("$set", data3);
 
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl2 = sdb2.getCollectionSpace(csName).createCollection(clName);
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
     }
 
     @Test
     public void test1() {
+        
         sdb.beginTransaction();
         sdb2.beginTransaction();
         

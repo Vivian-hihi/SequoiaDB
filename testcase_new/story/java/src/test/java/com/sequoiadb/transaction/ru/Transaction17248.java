@@ -60,11 +60,13 @@ public class Transaction17248 extends SdbTestBase {
         data2.put("d", "customer transaction type data application.");
 
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl2 = sdb2.getCollectionSpace(csName).createCollection(clName);
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
     }
 
     @Test
     public void test1() {
+        
+        
         sdb.beginTransaction();
         sdb2.beginTransaction();
         try {

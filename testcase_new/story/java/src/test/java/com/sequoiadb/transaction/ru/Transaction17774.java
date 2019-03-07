@@ -227,7 +227,7 @@ public class Transaction17774 extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}", "{'': null}");
+            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': 'a'}");
         }
     }
 

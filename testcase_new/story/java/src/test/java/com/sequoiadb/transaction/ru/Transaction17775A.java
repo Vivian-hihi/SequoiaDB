@@ -25,9 +25,9 @@ import com.sequoiadb.transaction.TransUtils;
  * @date 2019年1月15日
  */
 @Test(groups = "ru")
-public class Transaction17775 extends SdbTestBase {
+public class Transaction17775A extends SdbTestBase {
 
-    private String clName = "transCL_17775";
+    private String clName = "transCL_17775A";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
@@ -51,23 +51,22 @@ public class Transaction17775 extends SdbTestBase {
         
         data = new BasicBSONObject();
         data.put("_id", "insertID17775_2");
-        data.put("a", 2);
-        data.put("b", 2);
+        data.put("a", 1);
+        data.put("b", 1);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
 
         data2 = new BasicBSONObject();
         data2.put("_id", "insertID17775_1");
-        data2.put("a", 1);
-        data2.put("b", 1);
+        data2.put("a", 2);
+        data2.put("b", 2);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
 
     }
     
-    //TODO:SEQUOIADBMAINSTREAM-4194
-    @Test(enabled=false)
+    @Test
     public void test(){
         sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -88,37 +87,39 @@ public class Transaction17775 extends SdbTestBase {
         deleteThread.start();
         Assert.assertTrue(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
 
-        expDataList.add(data);
+        // 4 no trans read
+        expDataList.clear();
         expDataList.add(data2);
-        // 4 trans1 read
-        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:-1}", "{'': null}");
+        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+        
+        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+        
+        // 5 trans1 read
+        expDataList.clear();
+        expDataList.add(data2);
+        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a:-1}", "{'': 'a'}");
+        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        // 5 trans3 read
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: -1}", "{'': null}");
+        // 6 trans3 read
+        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: -1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        // 6 no trans read
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: -1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: -1}", "{'': 'a'}");
+        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -126,7 +127,6 @@ public class Transaction17775 extends SdbTestBase {
         // trans1 commit check trans2 success
         sdb1.commit();
         Assert.assertTrue(deleteThread.isSuccess(), deleteThread.getErrorMsg());
-        Assert.assertFalse(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
         
         //7 no trans read
         Assert.assertEquals(cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)), 0);

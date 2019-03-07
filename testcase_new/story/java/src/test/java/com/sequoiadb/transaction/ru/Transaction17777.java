@@ -40,7 +40,6 @@ public class Transaction17777 extends SdbTestBase {
     private BSONObject data3 = null;
     private BSONObject data4 = null;
     private BSONObject data5 = null;
-    private BSONObject data6 = null;
     private BSONObject modifier3 = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
@@ -71,7 +70,7 @@ public class Transaction17777 extends SdbTestBase {
 
         modifier3 = new BasicBSONObject();
         data3 = new BasicBSONObject();
-        data3.put("_id", "insertID17777_3");
+        data3.put("_id", "insertID17777_1");
         data3.put("a", 3);
         data3.put("b", 3);
         data3.put("c", 13700000000L);
@@ -79,25 +78,18 @@ public class Transaction17777 extends SdbTestBase {
         modifier3.put("$set", data3);
 
         data4 = new BasicBSONObject();
-        data4.put("_id", "insertID17777_1");
+        data4.put("_id", "insertID17777_2");
         data4.put("a", 4);
         data4.put("b", 4);
         data4.put("c", 13700000000L);
         data4.put("d", "customer transaction type data application.");
 
         data5 = new BasicBSONObject();
-        data5.put("_id", "insertID17777_2");
+        data5.put("_id", "insertID17777_1");
         data5.put("a", 5);
         data5.put("b", 5);
         data5.put("c", 13700000000L);
         data5.put("d", "customer transaction type data application.");
-
-        data6 = new BasicBSONObject();
-        data6.put("_id", "insertID17777_3");
-        data6.put("a", 6);
-        data6.put("b", 6);
-        data6.put("c", 13700000000L);
-        data6.put("d", "customer transaction type data application.");
 
     }
 
@@ -164,8 +156,8 @@ public class Transaction17777 extends SdbTestBase {
 
         //no trans read error
         expDataList.clear();
+        expDataList.add(data4);
         expDataList.add(data5);
-        expDataList.add(data6);
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{'a': 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -249,7 +241,7 @@ public class Transaction17777 extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}", "{'': 'a'}" );
+            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': 'a'}" );
         }
     }
 

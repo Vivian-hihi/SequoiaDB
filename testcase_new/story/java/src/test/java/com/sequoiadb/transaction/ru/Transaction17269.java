@@ -33,7 +33,6 @@ public class Transaction17269 extends SdbTestBase {
     private BSONObject data = null;
     private BSONObject data2 = null;
     private BSONObject data3 = null;
-    private BSONObject updateData = null;
     private BSONObject matcher = null;
     private BSONObject modifier = null;
     private DBCursor recordCur = null;
@@ -48,6 +47,7 @@ public class Transaction17269 extends SdbTestBase {
         expDataList = new ArrayList<BSONObject>();
         
         data = new BasicBSONObject();
+        data.put("_id", "insertId17269_1");
         data.put("a", 1);
         data.put("b", "testTrans_17269");
         data.put("c", 13700000000L);
@@ -57,7 +57,7 @@ public class Transaction17269 extends SdbTestBase {
 
         modifier = new BasicBSONObject();
         data2 = new BasicBSONObject();
-        data2.put("_id", "id17269");
+        data2.put("_id", "insertId17269_1");
         data2.put("a", 17269);
         data2.put("b", "testTrans_17269Update");
         data2.put("c", 13700017269L);
@@ -65,7 +65,7 @@ public class Transaction17269 extends SdbTestBase {
         modifier.put("$set", data2);
         
         data3 = new BasicBSONObject();
-        data3.put("_id", "id17269");
+        data3.put("_id", "insertId17269_2");
         data3.put("a", 17269);
         data3.put("b", 1);
         data3.put("c", 13700000000L);
@@ -121,7 +121,7 @@ public class Transaction17269 extends SdbTestBase {
         }
         sdb.commit();
         expDataList.clear();
-        expDataList.add(updateData);
+        expDataList.add(data2);
 
         recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
