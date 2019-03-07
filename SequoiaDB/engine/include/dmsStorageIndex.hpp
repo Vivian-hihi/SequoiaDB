@@ -109,7 +109,7 @@ namespace engine
          INT32    indexesInsert ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &inputObj, const dmsRecordID &rid,
                                   _pmdEDUCB *cb,
-                                  utilInsertResult *insertResult = NULL ) ;
+                                  utilInsertResult *insertResult = NULL );
 
          // Caller must hold mb exclusive lock
          INT32    indexesUpdate ( _dmsMBContext *context, dmsExtentID extLID,
@@ -219,10 +219,11 @@ namespace engine
                                const BSONObj &index,
                                INT32 &indexID ) ;
 
-         BOOLEAN _inMemDupKeyCheck( _pmdEDUCB   * cb,
-                                    preIdxTree * memTree,
-                                    const BSONObj&  key,
-                                    dpsTransCB *pTransCB );
+         BOOLEAN _inMemDupKeyCheck( _pmdEDUCB     * cb,
+                                    preIdxTree    * memTree,
+                                    const BSONObj & key,
+                                    dpsTransCB    * pTransCB,
+                                    const BOOLEAN   takeLock = TRUE );
 
       private:
          _dmsStorageData         *_pDataSu ;

@@ -1594,13 +1594,24 @@ namespace engine
    BOOLEAN _dmsStorageIndex::_inMemDupKeyCheck( _pmdEDUCB   * cb,
                                                 preIdxTree  * memTree,
                                                 const BSONObj& key,
-                                                dpsTransCB  * pTransCB )
+                                                dpsTransCB  * pTransCB,
+                                                const BOOLEAN   takeLock )
    {
       preIdxTreeNodeValue idxTreeNodeValue( NULL );
       BOOLEAN hasDup = FALSE;
-
-      if ( memTree->ixObjExist(key, idxTreeNodeValue) )
+      BOOLEAN releaseLock = FALSE;
+      if ( takeLock )
       {
+         memTree->lockS();
+         releaseLock = TRUE;
+      }
+      if ( !memTree->empty() &&  memTree->ixObjExist(key, idxTreeNodeValue) )
+      {
+         if ( releaseLock )
+         {
+            memTree->unlockS();
+            releaseLock = FALSE;
+         }
          // test X lock on the record to avoid duplicate key false alarm
          // for example:
          //   db.cs.createCL( "c1" )
@@ -1626,6 +1637,12 @@ namespace engine
             hasDup = TRUE;
          }
       }
+
+      if ( releaseLock )
+      {
+         memTree->unlockS();
+      }
+
       return hasDup;
 
    }
@@ -1705,7 +1722,7 @@ namespace engine
             // if not, there is no old version
             oldVCB->latchS();
             memTree = oldVCB->getIdxTree(gID);
-            if ( NULL != memTree && !memTree->empty() )
+            if ( NULL != memTree )
             {
                // Need to through the in memory tree to see if any index match
                checkKey = TRUE;
@@ -2058,7 +2075,8 @@ namespace engine
                // Check if the new index value exist in the index memory tree
                // when index is unique
                if( unique && checkKey &&
-                   _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB ) )
+                   _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB, 
+                                      !memTreeLatchHeld ) )
                {
                   // Internally will test X lock on the record to make sure key
                   // does not exist and avoid duplicate key false alarm
@@ -2151,7 +2169,8 @@ namespace engine
             // Check if the new index value exist in the index memory tree
             // when index is unique
             if( unique && checkKey &&
-                _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB ) )
+                _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB, 
+                                   !memTreeLatchHeld ) )
             {
                // memTree->printTree();  Enable if need to debug
                rc = SDB_IXM_DUP_KEY;
