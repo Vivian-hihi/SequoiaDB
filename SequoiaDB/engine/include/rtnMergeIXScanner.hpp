@@ -232,6 +232,12 @@ namespace engine
          return _leftIXScanner->getMemtreeLatchMode();
       }
 
+      virtual const BOOLEAN wasFromMemTreeScan() const
+      {
+         return _wasFromLeft ? _leftIXScanner->wasFromMemTreeScan() 
+                             : _rightIXScanner->wasFromMemTreeScan() ; 
+      }
+
       virtual INT32 isCursorSame( const BSONObj &saveObj,
                                   const dmsRecordID &saveRID,
                                   BOOLEAN &isSame )

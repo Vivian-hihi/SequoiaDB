@@ -261,6 +261,8 @@ namespace engine
 
       virtual void  removeDuplicatRID( const dmsRecordID &rid ) ;
 
+      virtual const BOOLEAN wasFromMemTreeScan () const { return FALSE ; }
+
    protected:
       rtnPredicateListIterator* getPredicateListInterator ()
       {

@@ -198,6 +198,11 @@ namespace engine
          return _isValid ;
       }
 
+      virtual const BOOLEAN wasFromMemTreeScan() const
+      {
+         return FALSE ;
+      }
+
       virtual INT32 isCursorSame( const BSONObj &saveObj,
                                   const dmsRecordID &saveRID,
                                   BOOLEAN &isSame ) = 0 ;

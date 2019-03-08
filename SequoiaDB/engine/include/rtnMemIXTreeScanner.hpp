@@ -283,6 +283,8 @@ namespace engine
          _sharedInfo.getDupBuf()->erase( rid ) ;
       }
 
+      virtual const BOOLEAN wasFromMemTreeScan () const { return TRUE ; }
+
    protected:
       rtnPredicateListIterator* getPredicateListInterator ()
       {
