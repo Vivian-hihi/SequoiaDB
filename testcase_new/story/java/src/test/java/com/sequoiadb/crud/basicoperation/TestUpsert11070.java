@@ -65,8 +65,10 @@ public class TestUpsert11070 extends SdbTestBase{
 			
 			cl.upsert(matcher, modifer, null);
 		} catch (BaseException e) {
-			e.printStackTrace();
-			Assert.fail("insert failed",e);
+			if(e.getErrorCode()!=-38){
+				e.printStackTrace();
+				Assert.fail("insert failed",e);
+			}
 		}
 	}
 	
