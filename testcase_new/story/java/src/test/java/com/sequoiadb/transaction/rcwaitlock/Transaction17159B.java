@@ -8,6 +8,7 @@ package com.sequoiadb.transaction.rcwaitlock;
 import java.util.ArrayList;
 import java.util.List;
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -43,22 +44,19 @@ public class Transaction17159B extends SdbTestBase {
 
     @Test
     public void test() {
-        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1, a:1, b:1}");
-        cl.insert(insertR1);
-        BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2, b:2}");
-        cl.insert(insertR2);
+        expList = TransUtils.insertDatas(cl, 0, 10000, 0);
 
         // 开启事务1
         db1.beginTransaction();
 
         // 事务1对不同记录执行多个原子操作
-        BSONObject insertR3 = (BSONObject) JSON.parse("{_id:3, a:3, b:3}");
-        cl1.insert(insertR3);
-        cl1.update("{_id:1}", "{$set:{a:11}}", "{'':'a'}");
-        BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1, a:11, b:1}");
-        cl1.delete("{_id:2}", "{'':'a'}");
-        expList.add(updateR1);
-        expList.add(insertR3);
+        for(int i=0; i<10000; i++){
+            cl1.delete("{_id:"+ i +"}", "{'':'a'}");
+            BSONObject insertR3 = (BSONObject) JSON.parse("{_id:"+ i +", a:"+ (-i) +",b:"+ i +"}");
+            cl1.insert(insertR3);
+            BSONObject modifier = new BasicBSONObject("a", i);
+            cl1.update((BSONObject)JSON.parse("{_id:"+ i +"}"), new BasicBSONObject("$inc", modifier), (BSONObject)JSON.parse("{'':'a'}"));
+        }
 
         // 事务2表扫描记录
         Read read1 = new Read("{'':null}");
@@ -78,9 +76,6 @@ public class Transaction17159B extends SdbTestBase {
         cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
-        expList.clear();
-        expList.add(insertR1);
-        expList.add(insertR2);
         db1.rollback();
 
         // 校验阻塞线程返回的记录
