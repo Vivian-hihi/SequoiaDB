@@ -288,7 +288,7 @@ namespace engine
       {
          oldVer = (oldVersionContainer*) _callback->getWorkingArea();
 
-         if( oldVer->idxLidExist( lid ) )
+         if( oldVer && oldVer->idxLidExist( lid ) )
          {
             BSONObj* oldValue = oldVer->getOldIdxValue( lid );
             if ( NULL != oldValue )
@@ -1521,8 +1521,8 @@ namespace engine
       ossValuePtr recordDataPtr ;
       dmsRecordData recordData ;
       BOOLEAN lockedRecord    = FALSE ;
-      BOOLEAN verifyRecord    = FALSE ;
       BOOLEAN newXAcquire     = FALSE ;
+      BOOLEAN usedOldVersion  = FALSE ;
 
       PD_TRACE_ENTRY ( SDB__DMSIXSECSCAN_ADVANCE );
 
@@ -1573,7 +1573,7 @@ namespace engine
 
       while ( _onceRestNum-- > 0 && 0 != _maxRecords )
       {
-         verifyRecord = FALSE; 
+         usedOldVersion = FALSE ;
          // advance index tree 
          rc = _scanner->advance( _curRID ) ;
          if ( SDB_IXM_EOC == rc )
@@ -1726,18 +1726,7 @@ namespace engine
                   }
                   else
                   {
-                     // When we use old version, we wouldn't have lock. 
-                     // There is a chance that the index on disk might not
-                     // match the old record if the change affected the index.
-                     // In that case, we need to re-verify the record with the
-                     // index again. Here is how this could happen:
-                     // Session 1 did update, changed index from 1 to 2, paused;
-                     // session 2 does index scan, searching for record with 
-                     // index 2. It found the index on disk. Did get record lock
-                     // and ended up using the old version from memory. But 
-                     // the old version record contain the index 1. We must verify
-                     // and skip this record. 
-                     verifyRecord = TRUE;
+                     usedOldVersion = TRUE;
 
                      // Note that in this case, recordRW is already setup by the 
                      // callback function. However, there is a catch here: we don't
@@ -1781,10 +1770,56 @@ namespace engine
 #endif
                continue;
             }
-             
-            if ( !verifyRecord )
+
+            // we only use old version when lock is not held. 
+            if ( !usedOldVersion )
             {
                lockedRecord = TRUE ;
+            }
+
+            // Two scenarios we need to consider re-verify the record:
+            // 1. When we use old version, we wouldn't have lock.
+            // There is a chance that the index on disk might not
+            // match the old record if the change affected the index.
+            // In that case, we need to re-verify the record with the
+            // index again. Here is how this could happen:
+            // Session 1 did update, changed index from 1 to 2, paused;
+            // session 2 does index scan, searching for record with
+            // index 2. It found the index on disk. Didn't get record lock
+            // and ended up using the old version from memory. But
+            // the old version record contain the index 1. We must verify
+            // and skip this record.
+            // 2. When the RID came from memory tree index scan, the same
+            // transaction might have modified the record earlier itself and
+            // it got the record lock this time, but the old index in the
+            // tree is different than the record on disk. If we directly
+            // return and use the record on disk because we have the lock,
+            // we may return wrong information because this record is not
+            // the same one the index hinted.
+            // To summerize the case, if the scan came from memory tree, we
+            // should only trust the old version(meaning lock not held), if
+            // the scan came from on disk index, we can only use the record
+            // on disk (not the old version). Basically on disk index and 
+            // record are pairs, old verion index and record are pairs. 
+            // we could reverify the index, or we made decide to just skip 
+            // the rid. I take the latter approach because: 1. verify index
+            // is very expensive. 2. we will come to the same rid from the
+            // other scanner anyway. 
+            if ( ( usedOldVersion && !( _scanner->wasFromMemTreeScan() ) ) ||
+                 ( !usedOldVersion && _scanner->wasFromMemTreeScan() ) )
+            {
+               if ( lockedRecord )
+               {
+                  _pTransCB->transLockRelease( cb, _pSu->logicalID(),
+                                               _context->mbID(), &_curRID, 
+                                               _callback ) ;
+                  lockedRecord = FALSE ;
+               }
+
+               // remove the duplicate key when we skip
+               _scanner->removeDuplicatRID( _curRID ) ;
+
+               continue;
             }
 
          } // end of (_recordLock != -1)
@@ -1837,28 +1872,6 @@ namespace engine
          }
          SDB_ASSERT( !_curRecordPtr->isDeleted(), 
                      "record can't be deleted" ) ;
-
-         if (verifyRecord)
-         {
-            // 1. verify if the index LID is among the set of index changed
-            // we can only get here when old version was used, and we do
-            // hold the mem tree latch. So the memory(oldVer) won't be 
-            // released under us.
-            // 2. retrieve the affected index from the old record
-            if ( isIdxChanged( _scanner->getIdxLID(), 
-                               _scanner->getCurKeyObj() ) )
-            {
-               // 3. skip the record if the retrieved index does NOT match
-               // the current index value (in scanner). Note that simply use
-               // the current predicate wouldn't help because the original and
-               // new key might land in the same range. 
-               // current index key is stored in _scanner.getCurKeyObj()
-               // remove the duplicate key when we skip
-               _scanner->removeDuplicatRID( _curRID ) ;
-
-               continue;
-            }
-         }
 
          recordID = _curRID ;
          rc = _pSu->extractData( _context, _recordRW, cb, recordData ) ;
