@@ -1450,9 +1450,9 @@ namespace engine
       _firstRun = FALSE ;
       _onceRestNum = (INT64)pmdGetKRCB()->getOptionCB()->indexScanStep() ;
 
-#ifdef _DEBUG
-                  PD_LOG( PDDEBUG, "Scan firstInit done,_recordLock=%d, "
-                          "_onceRestNum=%d", _recordLock, _onceRestNum );
+#if SDB_INTERNAL_DEBUG
+      PD_LOG( PDDEBUG, "Scan firstInit done,_recordLock=%d, "
+              "_onceRestNum=%d", _recordLock, _onceRestNum );
 #endif
 
    done:
@@ -1552,7 +1552,7 @@ namespace engine
                                mergeScanner->getSharedInfo(),
                                DMS_IS_WRITE_OPR( _accessType ) ) )
             {
-               PD_LOG ( PDDEBUG, "rtnMemIXTreeScanner not initialized" ) ;
+               PD_LOG ( PDINFO, "rtnMemIXTreeScanner not initialized" ) ;
             }                                           
          }
 
@@ -1763,7 +1763,7 @@ namespace engine
 
                /// remove the duplicate key
                _scanner->removeDuplicatRID( _curRID ) ;
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
                PD_LOG( PDDEBUG, "Cursor changed while waiting for lock,"
                                 " rid(%d, %d)", 
                                 _curRID._extent, _curRID._offset ) ;
@@ -1834,7 +1834,7 @@ namespace engine
             if ( _recordLock == DPS_TRANSLOCK_X )
 
             {
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
                   PD_LOG( PDDEBUG, "IX Scan handle deleting record"
                                 " rid(%d, %d)", 
                                 _curRID._extent, _curRID._offset ) ;

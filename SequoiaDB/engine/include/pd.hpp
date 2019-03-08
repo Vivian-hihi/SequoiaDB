@@ -123,6 +123,7 @@
                  fmt, ##__VA_ARGS__) ;                      \
    } while ( 0 )                                            \
 
+#define SDB_INTERNAL_DEBUG    0
 
 enum PDLEVEL
 {

@@ -67,7 +67,9 @@ namespace engine
          _sharedInfo.init(sharedInfo);
       }
       _savedRID.reset();
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "IX Merge Scanner created." );
+#endif
    }
 
    void _rtnMergeIXScanner::setMergeScanner( IXScannerType ltype,
@@ -90,7 +92,7 @@ namespace engine
    // destructor, do all rtnDiskIXScanner clean up plus free _memIXScanner
    _rtnMergeIXScanner::~_rtnMergeIXScanner()
    {
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "Freeing IX Merge Scanner." );
 #endif
       if ( _leftIXScanner )
@@ -288,7 +290,7 @@ namespace engine
             // if we are able to find the recordid in dupBuffer, that
             // means we've already processed the record, so let's also
             // jump back to begin
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "IX Merge Scanner advance, found duplicated rid, "
                "_wasFromLeft=%d, rid=(%d, %d)",
                 _wasFromLeft, rid._extent, rid._offset );
@@ -304,9 +306,9 @@ namespace engine
                "_wasFromLeft=%d, rid=(%d, %d)",
                rc, _wasFromLeft, rid._extent, rid._offset );
 
+#endif
       PD_TRACE1 ( SDB__RTNMERGEIXSCAN_ADVANCE,
                   PD_PACK_INT(_wasFromLeft) ) ;
-#endif
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_ADVANCE, rc ) ;
 
       return rc ;

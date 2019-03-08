@@ -87,7 +87,7 @@ namespace engine
                                           su->index(), NULL );
       reset();
       SDB_ASSERT ( _indexCB, "_indexCB creation failed" ) ;
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "Created Mem IXTree Scanner" );
 #endif
    }
@@ -173,7 +173,7 @@ namespace engine
          _curIndexIter = _memIdxTree->end();
          _initialized = TRUE;
 
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
          PD_LOG ( PDDEBUG, "rtnMemIXTreeScanner initialized (%d,%d, %d)",
                   csID, clID, _indexLID ) ;
 #endif
@@ -182,7 +182,7 @@ namespace engine
       {
          oldVCB->releaseS();
          _initialized = FALSE;
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
          PD_LOG ( PDDEBUG, "rtnMemIXTreeScanner init skipped (%d,%d, %d)",
                   csID, clID, _indexLID ) ;
 #endif
@@ -759,7 +759,7 @@ namespace engine
             // by setting this, mergescan will not come into memIXtree 
             // scan at all. we also don't hold any latch.
             _initialized = FALSE;
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
             PD_LOG ( PDDEBUG, "Memory idx tree not exist, rtnMemIXTreeScanner "
                      "resume skipped (%d,%d, %d)",
                      _csID, _clID, _indexLID ) ;
@@ -924,7 +924,7 @@ the only way is to bring back the index CB and access the index definition page
       }
 
       done:
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "MemIXTreeScanner::isCursorSame,"
                "saveObj=%s, saveRID=(%d, %d), isSame=%d, _initialized=%d ",
                saveObj.toString().c_str(), saveRID._extent, 

@@ -1257,10 +1257,6 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to insert, rc = %d", rc ) ;
             goto error ;
          }
-#ifdef _DEBUG
-         PD_LOG ( PDERROR, "Inserted to index location(%d, %d),rid(%d, %d)",
-                        _me, pos, rid._extent, rid._offset ) ;
-#endif
       }
       // otherwise let's traverse down
       else
@@ -1309,10 +1305,6 @@ namespace engine
             goto error ;
          }
          result = TRUE ;
-#ifdef _DEBUG
-         PD_LOG ( PDDEBUG, "Deleted index for rid(%d, %d) from slot(%d, %d)",
-                  rid._extent, rid._offset, indexrid._extent, indexrid._slot );
-#endif
       }
    done :
       PD_TRACE_EXITRC ( SDB__IXMEXT_UNINDEX, rc );

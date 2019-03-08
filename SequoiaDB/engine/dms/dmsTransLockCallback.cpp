@@ -225,7 +225,7 @@ namespace engine
          {
             _oldVer = lrbHdr->oldVer;
          }
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
          PD_LOG( PDDEBUG,
                  "Set oldVer(%d) for rid (%d, %d, %d, %d) in memory",
                  _oldVer,
@@ -310,7 +310,7 @@ namespace engine
          {
             oldVer->unsetRecordNew();
          }
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
          PD_LOG( PDDEBUG, "skipping beforeLockRelease callback, lockmode=%d,"
                           "refCounter=%d, oldVer=%d, rid=(%d, %d)",
                           lockMode, refCounter, oldVer, rid._extent, rid._offset );
@@ -319,11 +319,12 @@ namespace engine
       }
 
       SDB_ASSERT ( oldVCB != NULL, "oldVCB can't be NULL" );
-      // few common setups
 
+#ifdef _DEBUG
       PD_LOG( PDDEBUG,
               "Trying to delete old copy for rid (%d, %d, %d, %d) from memory",
               gID._csID, gID._clID, rid._extent, rid._offset );
+#endif
 
       // Now remove all indexes from the in memory index tree and free the
       // indexes. We can't simply do set clear because of the memory allocated
@@ -333,7 +334,7 @@ namespace engine
          gID._idxLID = it->_idxLID;
 
          idxobj = const_cast<BSONObj *>(&(it->_idxObj));
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
          PD_LOG( PDDEBUG,
                  "Trying to delete index (key=%s), id=(%d, %d, %d) "
                  "from in memory tree",

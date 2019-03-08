@@ -205,7 +205,9 @@ namespace engine
       }
 
       done:
+#ifdef _DEBUG
       PD_TRACE2( SDB_MEMBLOCKPOOL_ACQUIRE, PD_PACK_INT(askSize), PD_PACK_INT(*type) ); 
+#endif
       PD_TRACE_EXITRC( SDB_MEMBLOCKPOOL_ACQUIRE, rc );
       return rc; 
 
@@ -269,9 +271,9 @@ namespace engine
          }
          memBlock = NULL;
       }
-      // FIXME: this is debug level assert, what should we do in production??
+#ifdef _DEBUG
       SDB_ASSERT( ( SDB_OK == rc ), "Sever error during release" ); 
-
+#endif
       PD_TRACE_EXIT( SDB_MEMBLOCKPOOL_RELEASE );
    }
 
@@ -373,8 +375,10 @@ namespace engine
    {
       preIdxTreeNodeKey keyNode( keyData, rid, getOrdering() );
 
+#if SDB_INTERNAL_DEBUG
       PD_LOG( PDDEBUG, "preIdxTree:Inserting keyData, rid=(%d, %d)",
               rid._extent, rid._offset );
+#endif
       return insert( keyNode, value, lockHeld );
    }
    
@@ -412,7 +416,7 @@ namespace engine
    INT32 preIdxTree::remove( const BSONObj * keyData, const dmsRecordID & rid )
    {
       preIdxTreeNodeKey keyNode( keyData, rid, getOrdering() );
-#ifdef  _DEBUG    
+#if SDB_INTERNAL_DEBUG
       // can be used for debug purpose
       PD_LOG( PDDEBUG, "preIdxTree:removing keyData(%s), rid=(%d, %d)",
               keyData->toString().c_str(),
@@ -867,7 +871,9 @@ namespace engine
       _memBlockPool = new memBlockPool();
       _initialized = TRUE;
       releaseX();
+#ifdef _DEBUG
       PD_LOG( PDINFO, "Initialized oldVersionCB" );
+#endif
    }
 
    // destructor for oldVersionCB, will free up in memory index trees
@@ -884,8 +890,10 @@ namespace engine
          {
             // only give a warning as this could be expected during force 
             // shutdown when there are outstanding transactions
+#ifdef _DEBUG 
             PD_LOG( PDWARNING, 
                  "Trying to free up in memory index trees while no empty" );
+#endif
             (const_cast<preIdxTree *>(it->second))->clear();
          }
          _idxTrees->clear();
@@ -940,7 +948,7 @@ namespace engine
                                   const ixmIndexCB * indexCB )
    {
       PD_TRACE_ENTRY( SDB_OLDVERSIONCB_ADDIDXTREE );
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG( PDDEBUG, "Going to add in memory Index tree for (%d,%d,%d)",
               gid._csID,
               gid._clID,
@@ -963,8 +971,8 @@ namespace engine
    {
       preIdxTree * memTree = NULL;
       PD_TRACE_ENTRY( SDB_OLDVERSIONCB_DELIDXTREE );
-#if 0
-      // can enable this for debug purpose
+
+#if SDB_INTERNAL_DEBUG
       PD_LOG( PDDEBUG, "Going to delete in memory Index tree for (%d,%d,%d)",
               gid._csID,
               gid._clID,
@@ -1094,7 +1102,7 @@ namespace engine
          if( oldVer->insertIdx(myIdxObj) )
          {
             idxTree->insert( &obj, rid, value, TRUE );
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
             PD_LOG( PDDEBUG, "Inserted key(%s) into memIXTree: "
                     "(csid=%d, clid=%d, idxlid=%d, rid=(%d, %d)",
                     obj.toString().c_str(),

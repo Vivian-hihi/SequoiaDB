@@ -84,14 +84,14 @@ namespace engine
       SDB_ASSERT ( _indexCB, "_indexCB can't be NULL" ) ;
       _initialized = TRUE;
       reset() ;
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "Created Disk IX Scanner" );
 #endif
    }
 
    _rtnDiskIXScanner::~_rtnDiskIXScanner ()
    {
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "Freeing Disk IX Scanner" );
 #endif
       if ( _indexCB )
@@ -143,7 +143,7 @@ namespace engine
          }
          else if ( !_curIndexRID.isNull() )
          {
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
             PD_LOG ( PDDEBUG, "Going to save RID/Obj from current "
                      "index rid: (%d, %d)" , _curIndexRID._extent,
                      _curIndexRID._slot ) ;
@@ -254,7 +254,7 @@ namespace engine
                      rc, rootExtent ) ;
             goto error ;
          }
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
             PD_LOG ( PDDEBUG, "Going initial _curIndexRID (%d, %d)" ,
                      _curIndexRID._extent,
                      _curIndexRID._slot ) ;
@@ -462,7 +462,7 @@ namespace engine
 
                // ready to return to caller
                rid = _savedRID ;
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
                {
                   SINT32 idxext = _curIndexRID._extent;
                   UINT16 idxslot = _curIndexRID._slot;
@@ -564,7 +564,7 @@ namespace engine
       }
 
    done:
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "Disk IX Scanner pauseScan, "
                "_isReadOnly=%d, _savedObj=%s, _savedRID=(%d, %d)",
                 _isReadOnly, _savedObj.toString().c_str(),
@@ -674,7 +674,7 @@ namespace engine
 
    done :
 
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "Disk IX Scanner resumeScan, _initialized=%d, "
                "_init=%d, _isValid=%d, _savedObj=%s, _savedRID=(%d, %d)",
                 _initialized, _init, 
@@ -708,7 +708,7 @@ namespace engine
          }
       }
 
-#ifdef _DEBUG
+#if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "DiskIXScanner::isCursorSame,"
                "rc=%d,saveObj=%s, saveRID=(%d, %d), isSame=%d, _curIndexRID=(%d, %d)",
                rc, saveObj.toString().c_str(), saveRID._extent, saveRID._offset, isSame,
