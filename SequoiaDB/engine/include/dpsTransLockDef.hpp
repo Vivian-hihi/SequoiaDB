@@ -410,11 +410,29 @@ namespace engine
    OSS_INLINE UINT32 _dpsTransLockId::lockIdHash() const
    {
       UINT32 v = 0 ;
+      CHAR data[14] ; // sizeof CSID, extentID, recordOffset, collectionID
+      UINT32 * pInt32 ;
+      UINT16 * pInt16 ;
 
-      v  = ossHash((CHAR*)&( _logicCSID ),     sizeof( _logicCSID ), 5 ) ;
-      v ^= ossHash((CHAR*)&( _recordExtentID ),sizeof( _recordExtentID ), 5 );
-      v ^= ossHash((CHAR*)&( _recordOffset ),  sizeof( _recordOffset ), 5 ) ;
-      v ^= ossHash((CHAR*)&( _collectionID ),  sizeof( _collectionID ), 5 ) ;
+      // construct lockId into a "string" 
+      pInt32  = (UINT32*)&(data[0]) ;
+      *pInt32 = _logicCSID ; 
+
+      pInt32  = (UINT32*)&(data[4]) ;
+      *pInt32 = _recordExtentID ;
+
+      pInt32  = (UINT32*)&(data[8]) ;
+      *pInt32 = _recordOffset ;
+
+      pInt16  = (UINT16*)&(data[12]) ;
+      *pInt16 = _collectionID ;
+   
+      // ossHash use DJB Hash ( Daniel J. Bernstein ) algorithm :
+      //   h(i) = h(i-1) * 33 + str[i]
+      // bitwise multiplication x << 5 + x it equivalent to x * 33,
+      // where the magic 5 comes. However, there is no adequate
+      // explaination on why 33 is choosed as multiplier  
+      v = ossHash( (CHAR*)&( data[0] ), (UINT32)(sizeof( data )), 5 ) ; 
 
       return v ;
    }

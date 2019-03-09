@@ -502,17 +502,6 @@ namespace engine
       {
          // exceed the lock resorce limitation
          rc = SDB_OSS_UP_TO_LIMIT ;
-#ifdef _DEBUG
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Exceed the resource limitation when expand : %d"OSS_NEWLINE
-                 "_delta        : %u"OSS_NEWLINE
-                 "_maxNumOfObjs : %u"OSS_NEWLINE
-                 "newSize       : %u"OSS_NEWLINE,
-                 rc,
-                 _delta,
-                 _maxNumOfObjs,
-                 newSize ) ;
-#endif
       }
 
       return rc ;
@@ -741,10 +730,8 @@ namespace engine
       }
       else
       {
-#ifdef _DEBUG
          SDB_ASSERT( ( _isInitialized && _list ),
                      "_utilSegmentManager has to be initialized." ) ;
-#endif
          rc = SDB_SYS ;
          goto error ;
       }

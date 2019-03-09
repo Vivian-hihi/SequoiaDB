@@ -51,9 +51,9 @@ namespace engine
    class _dpsTransExecutor ;
    class _dpsITransLockCallback ;
    class _IContext ;
-
-   // lock bucket, 1M slots for now
-   #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UTIL_OBJIDX)( 1048576 ) )
+ 
+   // lock bucket,  524287 ( a prime number close to 524288  ) for now
+   #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UTIL_OBJIDX)( 524287 ) )
 
    enum DPS_TRANSLOCK_OP_MODE_TYPE
    {
@@ -177,7 +177,7 @@ namespace engine
       // calling this function and make sure the dpsTxExectr is still valid
       void dumpLockInfo
       (
-         dpsTransLRB*       lastLRB,
+         dpsTransLRB       * lastLRB,
          VEC_TRANSLOCKCUR  & vecLocks
       ) ;
      
@@ -186,8 +186,8 @@ namespace engine
       // calling this function and make sure the dpsTxExectr is still valid
       void dumpLockInfo
       (
-         dpsTransLRB*      lrb,
-         monTransLockCur  &lockCur
+         dpsTransLRB     * lrb,
+         monTransLockCur & lockCur
       ) ;
 
       // dump a specific lock info ( waiter, owners, upgrade list etc )
@@ -227,16 +227,6 @@ namespace engine
       OSS_INLINE void _acquireOpLatch ( const UTIL_OBJIDX bucketIndex )
       {
          _rwMutex.lock_r() ;
-#ifdef _DEBUG
-         if ( _LockHdrBkt[ bucketIndex ].hashHdrLatch.try_get() )
-         {
-            return ;
-         }
-         else
-         {
-            _LockHdrBkt[ bucketIndex ].contentionCnt.inc() ;
-         }
-#endif
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
       }
 
@@ -248,33 +238,33 @@ namespace engine
       }
 
       // release/return a LRB Header to LRB Header manager
-      INT32 _releaseLRBHdr( dpsTransLRBHeader* hdrLRB ) ;
+      INT32 _releaseLRBHdr( dpsTransLRBHeader * hdrLRB ) ;
 
       // get LRB Header handle ( address/pointer ) by LRB Header index
-      dpsTransLRBHeader * _getLRBHdrPtrByIdx( const dpsTransLRBHeader* hdrLRB ) ;
+      dpsTransLRBHeader * _getLRBHdrPtrByIdx( const dpsTransLRBHeader* hdrLRB );
 
       // get LRB pointer by its index
-      dpsTransLRB * _getLRBPtrByIdx( const dpsTransLRB* lrb );
+      dpsTransLRB * _getLRBPtrByIdx( const dpsTransLRB * lrb );
 
       // release/return a LRB to LRB manager 
-      INT32 _releaseLRB( dpsTransLRB* lrb );
+      INT32 _releaseLRB( dpsTransLRB * lrb );
 
       // search LRB list ( owner, waiter or upgrade list ) and find
       // the one with given eduId
       BOOLEAN _getLRBByEDUId
       (
-         const EDUID       eduId,
-         dpsTransLRB* lrbBegin,
-         dpsTransLRB *   & pLRBEduId
+         const EDUID     eduId,
+         dpsTransLRB *   lrbBegin,
+         dpsTransLRB * & pLRBEduId
       ) ;
 
       // search LRB list ( owner, waiter or upgrade list ) and find
       // the LRB previous the given eduId
       BOOLEAN _getPreviousLRB
       (
-         const EDUID       eduId,
-         dpsTransLRB* lrbBegin,
-         dpsTransLRB *   & pLRBPrev
+         const EDUID     eduId,
+         dpsTransLRB *   lrbBegin,
+         dpsTransLRB * & pLRBPrev
       ) ;
 
       //
@@ -285,7 +275,7 @@ namespace engine
       (
          const EDUID               eduId,
          const DPS_TRANSLOCK_TYPE  lockMode,
-         dpsTransLRB*              lrbBegin,
+         dpsTransLRB *             lrbBegin,
          dpsTransLRB *           & pLRBEduId,
          dpsTransLRB *           & pLRBPrev,
          BOOLEAN                 & foundIncomp
@@ -314,8 +304,8 @@ namespace engine
       // add a LRB at the end of the queue ( waiter, upgrade or owner list )
       void _addToLRBListTail
       (
-         dpsTransLRB*     & lrbBegin,
-         dpsTransLRB* idxNew
+         dpsTransLRB * & lrbBegin,
+         dpsTransLRB *   idxNew
       ) ;
 
 
@@ -323,8 +313,8 @@ namespace engine
       // sorted on lock mode in ascent order )
       void _addToOwnerLRBList
       (
-         dpsTransLRB* insPos,
-         dpsTransLRB* idxNew
+         dpsTransLRB * insPos,
+         dpsTransLRB * idxNew
       ) ; 
 
 
@@ -358,9 +348,9 @@ namespace engine
       // remove a LRB from a LRB list ( owner, waiter, upgrade list )
       void _removeFromLRBList
       (
-         dpsTransLRB*     & idxBegin,
-         dpsTransLRB     * lrb,
-         dpsTransLRB*     & idxNext
+         dpsTransLRB * & idxBegin,
+         dpsTransLRB *   lrb,
+         dpsTransLRB * & idxNext
       ) ;
 
 
@@ -368,7 +358,7 @@ namespace engine
       // and wake up the next one in the queue if necessary
       void _removeFromUpgradeOrWaitList
       (
-         _dpsTransExecutor *    dpsTxExectr,
+         _dpsTransExecutor    * dpsTxExectr,
          const dpsTransLockId & lockId,
          const UTIL_OBJIDX      bktIdx,
          const BOOLEAN          removeLRBHeader
@@ -378,8 +368,8 @@ namespace engine
       // remove a LRB Header from a LRB Header list
       void _removeFromLRBHeaderList
       (
-         dpsTransLRBHeader * &lrbBegin,
-         dpsTransLRBHeader * lrbDel
+         dpsTransLRBHeader * & lrbBegin,
+         dpsTransLRBHeader *   lrbDel
       ) ;
 
 
@@ -409,9 +399,9 @@ namespace engine
       // core logic of release a lock
       void _release
       (
-         _dpsTransExecutor       * dpsTxExectr,
-         const dpsTransLockId    & lockId,
-         const BOOLEAN             bForceRelease,
+         _dpsTransExecutor      * dpsTxExectr,
+         const dpsTransLockId   & lockId,
+         const BOOLEAN            bForceRelease,
          _dpsITransLockCallback * callback = NULL
       ) ;
 
@@ -419,8 +409,8 @@ namespace engine
       // core logic of release all locks an executor holding
       void _releaseAll
       (
-         _dpsTransExecutor    * dpsTxExectr,
-         const dpsTransLockId & lockId,
+         _dpsTransExecutor      * dpsTxExectr,
+         const dpsTransLockId   & lockId,
          _dpsITransLockCallback * callback = NULL
       ) ;
 
@@ -440,13 +430,13 @@ namespace engine
       UTIL_OBJIDX _getBucketNo( const dpsTransLockId &lockId );
 
       // wakeup a lock waiting exectuor ( EDU )
-      void _wakeUp( _dpsTransExecutor *dpsTxExectr ) ;
+      void _wakeUp( _dpsTransExecutor * dpsTxExectr ) ;
 
       // wait a lock till be woken up, lock timeout elapsed, or be interrupted
-      INT32 _waitLock( _dpsTransExecutor *dpsTxExectr ) ;
+      INT32 _waitLock( _dpsTransExecutor * dpsTxExectr ) ;
 
       // format LRB to string, flat one line
-      CHAR * _LRBToString ( dpsTransLRB *lrb, CHAR * pBuf, UINT32 bufSz ) ;
+      CHAR * _LRBToString ( dpsTransLRB * lrb, CHAR * pBuf, UINT32 bufSz ) ;
 
       // format LRB to string, one field/member per line, with optional prefix
       CHAR * _LRBToString 
@@ -460,18 +450,18 @@ namespace engine
       // format LRB Header to string, flat one line
       CHAR * _LRBHdrToString 
       (
-         dpsTransLRBHeader* lrbHdr,
-         CHAR            * pBuf,
-         UINT32            bufSz
+         dpsTransLRBHeader * lrbHdr,
+         CHAR              * pBuf,
+         UINT32              bufSz
       ) ;
 
       // format LRB Header, one field/member per line, with optional prefix
       CHAR * _LRBHdrToString
       (
-         dpsTransLRBHeader* lrbHdr,
-         CHAR            * pBuf,
-         UINT32            bufSz,
-         CHAR            * prefix
+         dpsTransLRBHeader * lrbHdr,
+         CHAR              * pBuf,
+         UINT32              bufSz,
+         CHAR              * prefix
       ) ;
 
    private:
