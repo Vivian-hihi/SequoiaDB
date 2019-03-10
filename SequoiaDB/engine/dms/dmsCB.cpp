@@ -1138,6 +1138,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_BLOCKWRITE );
 
+      if ( cb && SDB_DB_NORMAL == byStatus &&
+           DMS_LOCK_WHOLE == cb->getLockItem( SDB_LOCK_DMS )->getMode() )
+      {
+         cb->getLockItem( SDB_LOCK_DMS )->incCount() ;
+         goto done ;
+      }
+
       _stateMtx.get();
       if ( DMS_STATE_NORMAL != _dmsCBState )
       {
@@ -1180,6 +1187,7 @@ namespace engine
             if ( cb )
             {
                cb->getLockItem(SDB_LOCK_DMS)->setMode( DMS_LOCK_WHOLE ) ;
+               cb->getLockItem( SDB_LOCK_DMS )->incCount() ;
             }
             goto done;
          }
@@ -1199,15 +1207,29 @@ namespace engine
    void _SDB_DMSCB::unblockWrite( _pmdEDUCB *cb )
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_UNBLOCKWRITE );
+
+      SDB_ASSERT( ( cb->getLockItem( SDB_LOCK_DMS )->lockCount() > 0 &&
+                    DMS_LOCK_WHOLE ==
+                    cb->getLockItem( SDB_LOCK_DMS )->getMode() ),
+                  "The edu's lock mode or lock count is invalid" ) ;
+
+      if ( cb &&
+           cb->getLockItem( SDB_LOCK_DMS )->decCount() > 0 )
+      {
+         goto done ;
+      }
+
       _stateMtx.get() ;
       _dmsCBState = DMS_STATE_NORMAL ;
       PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
-      _blockEvent.signalAll() ;
       _stateMtx.release() ;
       if ( cb )
       {
          cb->getLockItem(SDB_LOCK_DMS)->setMode( DMS_LOCK_NONE ) ;
       }
+
+   done:
+      _blockEvent.signalAll() ;
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_UNBLOCKWRITE );
    }
 
@@ -1219,7 +1241,7 @@ namespace engine
 
    retry:
       /// Full-sync can't blockWrite, because create/drop index when
-      /// full-sync need to writable
+      /// full-sync need to writable in async thread tasks
       _stateMtx.get() ;
 
       if ( DMS_STATE_NORMAL != _dmsCBState )
@@ -1245,6 +1267,8 @@ namespace engine
       {
          _dmsCBState = DMS_STATE_FULLSYNC ;
          PMD_SET_DB_STATUS( SDB_DB_FULLSYNC ) ;
+         cb->getLockItem( SDB_LOCK_DMS )->setMode( DMS_LOCK_WHOLE ) ;
+         cb->getLockItem( SDB_LOCK_DMS )->incCount() ;
 
          _stateMtx.release() ;
       }
@@ -1256,9 +1280,19 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_FULLSYNCDOWN, "_SDB_DMSCB::fullSyncDown" )
    void _SDB_DMSCB::fullSyncDown( _pmdEDUCB *cb )
    {
-      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_FULLSYNCDOWN );
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_FULLSYNCDOWN ) ;
+
+      SDB_ASSERT( ( cb->getLockItem( SDB_LOCK_DMS )->lockCount() > 0 &&
+                    DMS_LOCK_WHOLE ==
+                    cb->getLockItem( SDB_LOCK_DMS )->getMode() ),
+                  "The edu's lock mode or lock count is invalid" ) ;
+
       ossScopedLock lock( &_stateMtx ) ;
-      _dmsCBState = DMS_STATE_NORMAL ;
+      if ( 0 == cb->getLockItem( SDB_LOCK_DMS )->decCount() )
+      {
+         cb->getLockItem( SDB_LOCK_DMS )->setMode( DMS_LOCK_NONE ) ;
+         _dmsCBState = DMS_STATE_NORMAL ;
+      }
       PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_FULLSYNCDOWN );
    }

@@ -857,10 +857,33 @@ namespace engine
             }
             rc = rtnRenameCollectionCommand( cs, oldCl, newCl,
                                              eduCB, _dmsCB, _dpsCB ) ;
-            if ( SDB_OK != rc )
+            if ( SDB_DMS_NOTEXIST == rc )
             {
-               PD_LOG( PDERROR, "failed to rename cs[%s] cl %s to %s, rc: %d",
-                       cs, oldCl, newCl, rc ) ;
+               INT32 rcTmp = SDB_OK ;
+               CHAR newCLFullName [ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
+               ossSnprintf( newCLFullName, DMS_COLLECTION_FULL_NAME_SZ,
+                            "%s.%s", cs, newCl ) ;
+               rcTmp = rtnTestCollectionCommand( newCLFullName, _dmsCB ) ;
+               if ( SDB_OK == rcTmp )
+               {
+                  /// When old cl doesn't exist, but new cl has already exist,
+                  /// we should ignore error
+                  rc = SDB_OK ;
+                  PD_LOG( PDWARNING, "Rename cl[%s.%s] to [%s.%s], old"
+                          " cl not exist, new cl exist, ignore error.",
+                          cs, oldCl, cs, newCl ) ;
+               }
+               else
+               {
+                  PD_LOG( PDERROR, "Failed to rename cl[%s.%s] to [%s.%s], "
+                          "rc: %d, test new cl rc: %d",
+                          cs, oldCl, cs, newCl, rc, rcTmp ) ;
+               }
+            }
+            else if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to rename cl[%s.%s] to [%s.%s], rc: %d",
+                       cs, oldCl, cs, newCl, rc ) ;
                goto error ;
             }
             break ;
@@ -892,9 +915,28 @@ namespace engine
             rc = rtnRenameCollectionSpaceCommand( oldName, newName,
                                                   eduCB, _dmsCB, _dpsCB ) ;
 #endif
-            if ( SDB_OK != rc )
+            if ( SDB_DMS_CS_NOTEXIST == rc )
             {
-               PD_LOG( PDERROR, "failed to rename %s to %s, rc: %d",
+               INT32 rcTmp = SDB_OK ;
+               rcTmp = rtnTestCollectionSpaceCommand( newName, _dmsCB ) ;
+               if ( SDB_OK == rcTmp )
+               {
+                  /// When old cs doesn't exist, but new cs has already exist,
+                  /// we should ignore error
+                  rc = SDB_OK ;
+                  PD_LOG( PDWARNING, "Replay log: rename cs[%s] to [%s], old"
+                          " cs not exist, new cs exist, ignore error.",
+                          oldName, newName ) ;
+               }
+               else
+               {
+                  PD_LOG( PDERROR, "Failed to rename cs[%s] to [%s], rc: %d, "
+                          "test new cs rc: %d", oldName, newName, rc, rcTmp ) ;
+               }
+            }
+            else if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to rename cs[%s] to [%s], rc: %d",
                        oldName, newName, rc ) ;
                goto error ;
             }
@@ -1301,7 +1343,7 @@ namespace engine
                PD_LOG( PDINFO, "Record[%s] exist when rollback delete",
                        obj.toString().c_str() ) ;
 #ifdef _DEBUG
-               SDB_ASSERT ( (rc == SDB_OK), 
+               SDB_ASSERT ( (rc == SDB_OK),
                             "Rollback should not hit dup key" );
 #endif
                rc = SDB_OK ;
