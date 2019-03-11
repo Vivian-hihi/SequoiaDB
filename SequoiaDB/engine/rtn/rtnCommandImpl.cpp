@@ -1567,6 +1567,8 @@ namespace engine
       utilRenameLogger logger ;
 
       /// dms lock
+      // When two threads concurrently do rename, blockWrite() will report
+      // -148. We retry multiple times to reduce the error.
       INT16 i = 0 ;
       while ( ( rc = dmsCB->blockWrite( cb ) )  &&
               ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
@@ -1818,6 +1820,8 @@ namespace engine
       dmsStorageUnit *su      = NULL ;
       BOOLEAN lockDMS         = FALSE ;
 
+      // When two threads concurrently do rename, blockWrite() will report
+      // -148. We retry multiple times to reduce the error.
       INT16 i = 0 ;
       while ( ( rc = dmsCB->blockWrite( cb ) )  &&
               ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )

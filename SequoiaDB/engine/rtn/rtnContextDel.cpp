@@ -1038,6 +1038,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS__TRYLOCK ) ;
 
+      // When two threads concurrently do rename, blockWrite() will report
+      // -148. We retry multiple times to reduce the error.
       INT16 i = 0 ;
       while ( ( rc = _pDmsCB->blockWrite( cb ) )  &&
               ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
@@ -1290,6 +1292,8 @@ namespace engine
       dmsMBContext* mbContext = NULL ;
       UINT16 mbID             = DMS_INVALID_MBID ;
 
+      // When two threads concurrently do rename, blockWrite() will report
+      // -148. We retry multiple times to reduce the error.
       INT16 i = 0 ;
       while ( ( rc = _pDmsCB->blockWrite( cb ) )  &&
               ( i < RTN_RENAME_BLOCKWRITE_TIMES ) )
