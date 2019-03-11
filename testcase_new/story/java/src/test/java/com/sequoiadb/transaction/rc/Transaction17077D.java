@@ -33,7 +33,7 @@ public class Transaction17077D extends SdbTestBase {
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
 
-    @BeforeClass
+    @BeforeClass(enabled = false)
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -44,7 +44,7 @@ public class Transaction17077D extends SdbTestBase {
         cl.createIndex("a", "{a:1, c:1}", false, false);
     }
 
-    @Test
+    @Test(enabled = false)
     public void test() {
         BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1, a:1, b:1}");
         cl.insert(insertR1);
@@ -115,7 +115,7 @@ public class Transaction17077D extends SdbTestBase {
         cursor.close();
     }
 
-    @AfterClass
+    @AfterClass(enabled = false)
     public void tearDown() {
         if (!db1.isClosed()) {
             db1.close();

@@ -33,7 +33,7 @@ public class Transaction17076D extends SdbTestBase {
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
 
-    @BeforeClass
+    @BeforeClass(enabled = false)
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -47,7 +47,7 @@ public class Transaction17076D extends SdbTestBase {
         expList.add(insertR1);
     }
 
-    @Test
+    @Test(enabled = false)
     public void test() {
         db1.beginTransaction();
         db2.beginTransaction();
@@ -111,7 +111,7 @@ public class Transaction17076D extends SdbTestBase {
         db2.commit();
     }
 
-    @AfterClass
+    @AfterClass(enabled = false)
     public void tearDown() {
         if (!db1.isClosed()) {
             db1.close();
