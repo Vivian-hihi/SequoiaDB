@@ -42,7 +42,7 @@ public class Transaction17098 extends SdbTestBase {
     private int stopId = 1000;
     private int insertValue = 10000;
     private int updateValue1 = 20000;
-    private int updateValue2 = 20000;
+    private int updateValue2 = 30000;
 
     @BeforeClass
     public void setUp() {
