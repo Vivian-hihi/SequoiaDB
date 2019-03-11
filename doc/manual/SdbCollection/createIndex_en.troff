@@ -72,6 +72,14 @@ Create an index for the collection to accelerate query.
    *  Index name should not be null string. It should not contain
    "." or "$". The length of it should be no more than 127B.
 .sp 2
+   *  IndexPageSize 4096 / 8192 / 16384 / 32768 / 65536 bytes, the 
+   maximum index value is 1024 / 2048 / 4096 / 4096 / 4096 bytes. 
+   For example, IndexPageSize is 4096 bytes, and "a" is index field,
+   the insertion record contains the "a" field { a: "fjsd..." }, 
+   and the value of the field exceeds 1011 characters ( the other 
+   13 characters are used for extra storage), the record cannot be 
+   inserted.
+.sp 2
    *  The number of the index fields should be no more than 32.
 .SH "Examples"
 

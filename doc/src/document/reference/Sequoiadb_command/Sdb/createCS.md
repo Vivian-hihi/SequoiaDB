@@ -14,7 +14,7 @@
 
  | 属性名 | 描述 | 格式 |
  | ------ | ------ | ------ |
- | PageSize | 数据页大小。单位为字节，默认值65536。 | PageSize: \<int32\> |
+ | PageSize | 数据页/索引页大小。单位为字节，默认值65536。 | PageSize: \<int32\> |
  | Domain | 所属域。 | Domain: \<string\> |
  | LobPageSize | Lob数据页大小。单位为字节，默认值262144。 | LobPageSize: \<int32\> |
 

@@ -25,7 +25,7 @@ Create a collection space in a database instance.
 .br
        Optional in a collection space.
 .sp 2
-       \fBPageSize\fR
+       \fBPageSize \\ IndexPageSize\fR
 .br
               Size of a data page. The default value is 65536B.
 .br
