@@ -848,6 +848,14 @@ namespace engine
             _lsn.offset += header->_length ;
             _lsn.version = header->_version ;
 
+            /// Should update the begin lsn offset, because in notifyLSN
+            /// function's some case, the _beginLSNOffset is add zero len
+            /// for perfermance
+            if ( header->_lsn == _beginLSNOffset )
+            {
+               _beginLSNOffset += header->_length ;
+            }
+
             // if we read something making the mb length exceed threshold, let's
             // break out from the loop
             if ( CLS_SYNC_MAX_LEN <= _mb.length() ||
