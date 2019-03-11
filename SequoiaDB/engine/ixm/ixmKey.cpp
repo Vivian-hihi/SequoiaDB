@@ -283,16 +283,8 @@ namespace engine
       return TRUE ;
    }
 
-
-   // convert from key to bson
-   BSONObj _ixmKey::toBson() const
+   void _ixmKey::_toBson(BSONObjBuilder &b) const
    {
-      if ( _keyData == 0 )
-         return BSONObj() ;
-      if ( !isCompactFormat() )
-         return _bson() ;
-
-      BSONObjBuilder b(512) ;
       const UINT8 *p = _keyData ;
       while ( TRUE )
       {
@@ -360,8 +352,30 @@ namespace engine
          if ( (bits & cHASMORE) == 0 )
             break ;
       }
-      return b.obj() ;
    }
+
+   // convert from key to bson
+   BSONObj _ixmKey::toBson(BufBuilder *builder) const
+   {
+      if ( _keyData == 0 )
+         return BSONObj() ;
+      if ( !isCompactFormat() )
+         return _bson() ;
+
+      if ( builder )
+      {
+         BSONObjBuilder b(*builder) ;
+         _toBson(b);
+         return BSONObj(b.done());
+      }
+      else
+      {
+         BSONObjBuilder b(512) ;
+         _toBson(b);
+         return BSONObj(b.obj());
+      }
+   }
+
    // convert a regular BSON object to key
    // this is done by adding a single 0xff at first byte (using b.appendUChar)
    // and then append obj.objdata()

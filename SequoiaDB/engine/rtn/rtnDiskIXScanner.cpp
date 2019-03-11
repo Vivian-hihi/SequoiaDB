@@ -160,7 +160,7 @@ namespace engine
             }
             try
             {
-               _savedObj = ixmKey(dataBuffer).toBson().copy() ;
+               _savedObj = ixmKey(dataBuffer).toBson().getOwned() ;
             }
             catch ( std::exception &e )
             {
@@ -549,7 +549,7 @@ namespace engine
          }
          try
          {
-            _savedObj = ixmKey(dataBuffer).toBson().copy() ;
+            _savedObj = ixmKey(dataBuffer).toBson().getOwned() ;
          }
          catch ( std::exception &e )
          {

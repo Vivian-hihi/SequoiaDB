@@ -315,7 +315,7 @@ namespace engine
    //    
    const BSONObj  _rtnMemIXTreeScanner::getCurIdxKeyObjFromIter()
    {
-      return _curIndexIter->first.toBson().copy();
+      return _curIndexIter->first.toBson().getOwned();
    }
 
    // Description

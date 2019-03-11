@@ -2309,6 +2309,8 @@ namespace engine
       INT32 low = ( INT32 )l ;
       INT32 high = ( INT32 )h ;
       INT32 m = 0 ;
+      BufBuilder builder;
+
       while ( TRUE )
       {
          if ( low > high )
@@ -2338,7 +2340,9 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         INT32 r = _keyCmp ( ixmKey(data).toBson(), prevKey, keepFieldsNum,
+
+         builder.reset();
+         INT32 r = _keyCmp ( ixmKey(data).toBson(&builder), prevKey, keepFieldsNum,
                              skipToNext, matchEle, matchInclusive, o, direction);
          if ( r < 0 )
          {

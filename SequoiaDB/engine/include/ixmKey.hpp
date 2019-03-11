@@ -100,7 +100,8 @@ namespace engine
       // well ordered equao
       BOOLEAN woEqual ( const _ixmKey &right ) const ;
       // to BSON object
-      BSONObj toBson() const ;
+      void _toBson( BSONObjBuilder &b ) const ;
+      BSONObj toBson( BufBuilder *bb = NULL ) const ;
       // convert to std::string
       std::string toString(BOOLEAN isArray = FALSE, BOOLEAN full=FALSE) const
       {
