@@ -20,6 +20,7 @@ import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sun.glass.ui.Cursor;
 
 
 /**
@@ -36,7 +37,7 @@ public class TestSeqDB6670 extends SdbTestBase {
     private int port1  ;
     private int port2 ;
     private int port3 ;
-    @BeforeClass
+    @BeforeClass(enabled = false)
     public void setUp() {
         try{
             this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -62,7 +63,7 @@ public class TestSeqDB6670 extends SdbTestBase {
      * 2、日志爆满，自动回滚
      * 3、检查返回结果，并检查数据压缩情况 
      */
-    @Test
+    @Test(enabled = false)
     public void test() {
         try {
             createDataGroup();
@@ -95,11 +96,27 @@ public class TestSeqDB6670 extends SdbTestBase {
             try {
                 this.cl.delete("{_id:{$et:114}}");
                 for (int i = 1; i <= 40000; i++) {
+                	System.out.println("start insert");
                     util.insertData(this.cl, 115, 116, 1024);
-                    this.cl.delete("{_id:{$et:115}}");
+                    System.out.println("insert"+i);
+                    DBCursor cursor = this.cl.query("{_id:115}", null, null, null, 0);
+                    while(cursor.hasNext()){
+                    	System.out.println("record1:" + cursor.getNext());
+                    }
+                    cursor.close();
+                    this.cl.delete("{_id:115}","{'':null}");
+                    cursor = this.cl.query("{_id:115}", null, null, null, 0);
+                    while(cursor.hasNext()){
+                    	System.out.println("record2:" + cursor.getNext());
+                    }
+                    cursor.close();
+                    
+                    System.out.println("delete"+i);
                 }
                 Assert.fail();
             } catch (BaseException e) {
+            	System.out.println("rollback");
+            	e.printStackTrace();
                 Assert.assertEquals(e.getErrorCode(), -203);
             }
             
@@ -206,6 +223,7 @@ public class TestSeqDB6670 extends SdbTestBase {
             BSONObject configure = new BasicBSONObject();
             configure.put("logfilenum", 5);
             configure.put("transactionon", true);
+            configure.put("diaglevel", 5);
             String hostName = sdb.getReplicaGroup("SYSCatalogGroup").getMaster().getHostName();
             try {
                 sdb.removeReplicaGroup(this.rgName);
@@ -234,13 +252,14 @@ public class TestSeqDB6670 extends SdbTestBase {
             option.put("Group", this.rgName);
             option.put("Compressed", true);
             option.put("CompressionType", "lzw");
+            option.put("ReplSize",0);
             this.cl = LzwTransUtils.createCL(this.cs, this.clName, option);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
     }
     
-    @AfterClass
+    @AfterClass(enabled = false)
     public void tearDown() {
         try {
             if (this.cs.isCollectionExist(this.clName)) {
