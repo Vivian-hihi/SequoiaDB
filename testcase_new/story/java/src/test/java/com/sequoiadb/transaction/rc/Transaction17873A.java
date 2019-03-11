@@ -24,9 +24,9 @@ import com.sequoiadb.transaction.TransUtils;
  *
  */
 @Test(groups = "rc")
-public class Transaction17873_1 extends SdbTestBase {
+public class Transaction17873A extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "cl17873";
+    private String clName = "cl17873A";
     private DBCollection cl = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
