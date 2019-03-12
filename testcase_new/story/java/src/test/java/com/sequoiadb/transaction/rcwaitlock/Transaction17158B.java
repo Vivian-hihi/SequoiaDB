@@ -8,7 +8,6 @@ package com.sequoiadb.transaction.rcwaitlock;
 import java.util.ArrayList;
 import java.util.List;
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -40,7 +39,7 @@ public class Transaction17158B extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
-        expList = TransUtils.insertDatas(cl, 0, 10000, 0);
+        TransUtils.insertDatas(cl, 0, 10000, 0);
     }
 
     @Test
@@ -50,11 +49,10 @@ public class Transaction17158B extends SdbTestBase {
 
         // 事务1对不同记录执行多个原子操作
         for(int i=0; i<10000; i++){
-            cl1.delete("{_id:"+ i +"}", "{'':'a'}");
-            BSONObject insertR3 = (BSONObject) JSON.parse("{_id:"+ i +", a:"+ (-i) +",b:"+ i +"}");
-            cl1.insert(insertR3);
-            BSONObject modifier = new BasicBSONObject("a", i);
-            cl1.update((BSONObject)JSON.parse("{_id:"+ i +"}"), new BasicBSONObject("$inc", modifier), (BSONObject)JSON.parse("{'':'a'}"));
+            cl1.delete("{_id:"+ i +"}");
+            cl1.insert((BSONObject) JSON.parse("{_id:"+ i +", a:"+ i +",b:"+ i +"}"));
+            cl1.update("{a:"+ i +"}","{$set:{a:"+ (i+10000) +"}}","{'':'a'}");
+            expList.add((BSONObject) JSON.parse("{_id:"+ i +", a:"+ (i+10000) +",b:"+ i +"}"));
         }
 
         // 事务2表扫描记录

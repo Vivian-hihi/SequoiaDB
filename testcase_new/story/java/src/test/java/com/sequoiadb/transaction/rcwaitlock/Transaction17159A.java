@@ -128,7 +128,7 @@ public class Transaction17159A extends SdbTestBase {
                 cursor = cl.query(null, null, "{_id:1}", hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
-                db2.commit();
+                db2.rollback();
             } catch (BaseException e) {
                 e.printStackTrace();
                 throw e;
