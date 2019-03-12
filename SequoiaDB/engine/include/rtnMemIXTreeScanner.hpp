@@ -241,7 +241,7 @@ namespace engine
       const MEMTREE_LATCH_MODE getMemtreeLatchMode()
       {
          MEMTREE_LATCH_MODE m = MEMTREE_LATCH_NONE;
-         if( _treeLatchHeld )
+         if( _initialized && _treeLatchHeld )
          {
             m = _latchX ? MEMTREE_LATCH_X : MEMTREE_LATCH_S;
          }

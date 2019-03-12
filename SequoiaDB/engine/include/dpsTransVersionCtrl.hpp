@@ -329,15 +329,6 @@ namespace engine
                      bson::Ordering::make (indexCB->keyPattern()) ) ;
       }
 
-      // copy constructor
-      preIdxTree( const preIdxTree & intree )
-      {
-         _idxLID = intree.getLID() ;
-         _tree =  intree.getTree() ;
-         //_tree = new INDEX_BINARY_TREE( *(intree.getTree()) );
-         _order = NULL ;  // user has to setup the order themselves
-         
-      }
 
       // destructor
       ~preIdxTree() 

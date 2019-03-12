@@ -954,13 +954,19 @@ namespace engine
               gid._clID,
               gid._idxLID );
 #endif
+
+#ifdef _DEBUG
+      {
+         preIdxTree * memTree = this->getIdxTree(gid);
+          
+         SDB_ASSERT( (NULL == memTree) , "memTree should not exist" ) ;
+      }
+#endif
+
       preIdxTree *t = SDB_OSS_NEW preIdxTree(gid._idxLID, indexCB);
       pair<IDXID_TO_TREE_MAP::iterator, bool> rv = 
          _idxTrees->insert( IDXID_TO_TREE_MAP_PAIR(gid, t) );
 
-      // setup the order in the preIdxTree
-      (const_cast<preIdxTree *> (rv.first->second))->setOrder(indexCB);
-      
       PD_TRACE_EXIT( SDB_OLDVERSIONCB_ADDIDXTREE );
    }
 

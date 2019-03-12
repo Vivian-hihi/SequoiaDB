@@ -360,8 +360,14 @@ namespace engine
    
          // hold the tree latch from first round in. It is only released
          // during pause, but re-acquired by resume.
-         _latchX ? _memIdxTree->lockX() :  _memIdxTree->lockS();
-         _treeLatchHeld = TRUE;
+         // There is an opportunity resume took the latch but decided
+         // we need to run through init code path due to tree showing up
+         // in the middle of the scan.
+         if ( !_treeLatchHeld )
+         {
+            _latchX ? _memIdxTree->lockX() :  _memIdxTree->lockS();
+            _treeLatchHeld = TRUE;
+         }
 
          // early exit if there is no index on this tree
          if( _memIdxTree->empty() )

@@ -519,15 +519,15 @@ namespace engine
                // be CPU overhead, and the lock try request could be starved
                // because we comeout instead of waiting in the queue.
                // For now, we take the simple approach, just wait on the lock
-               if ( rc == SDB_DPS_TRANS_LOCK_INCOMPATIBLE )
+               if ( SDB_DPS_TRANS_LOCK_INCOMPATIBLE == rc )
                {
                   if ( TRUE == lockConflict._skipNewRecord )
                   {
                      // For newly created records by another transaction,
                      // we could still find it through diskIXScan, we will
                      // skip those records without waiting for lock.
-                     rc = SDB_OK;
-                     continue;
+                     rc = SDB_OK ;
+                     continue ;
                   }
 
                   if( FALSE == lockConflict._useOldVersion )
@@ -1801,27 +1801,39 @@ namespace engine
             // the scan came from on disk index, we can only use the record
             // on disk (not the old version). Basically on disk index and 
             // record are pairs, old verion index and record are pairs. 
-            // we could reverify the index, or we made decide to just skip 
-            // the rid. I take the latter approach because: 1. verify index
-            // is very expensive. 2. we will come to the same rid from the
-            // other scanner anyway. 
-            if ( ( usedOldVersion && !( _scanner->wasFromMemTreeScan() ) ) ||
-                 ( !usedOldVersion && _scanner->wasFromMemTreeScan() ) )
+            // Because verify disk record's index is very expensive, we will
+            // simply skip the rid if scan is from memTree and we ended up
+            // using disk record. It's safe to do so because we will come to
+            // the same rid from the disk scanner anyway. We do allow disk
+            // index scan to use old version as long as the key matches .
+            if ( !usedOldVersion && _scanner->wasFromMemTreeScan() ) 
             {
-               if ( lockedRecord )
-               {
-                  _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                               _context->mbID(), &_curRID, 
-                                               _callback ) ;
-                  lockedRecord = FALSE ;
-               }
+               _pTransCB->transLockRelease( cb, _pSu->logicalID(),
+                                            _context->mbID(), &_curRID, 
+                                            _callback ) ;
+               lockedRecord = FALSE ;
 
                // remove the duplicate key when we skip
                _scanner->removeDuplicatRID( _curRID ) ;
 
                continue;
             }
+            else if ( usedOldVersion && !( _scanner->wasFromMemTreeScan() ) ) 
+            {
+               // 1. verify if the index LID is among the set of index changed
+               // we can only get here when old version was used, and we do
+               // hold the mem tree latch. So the memory(oldVer) won't be 
+               // released under us.
+               // 2. retrieve the affected index from the old record
+               if ( isIdxChanged( _scanner->getIdxLID(), 
+                                  _scanner->getCurKeyObj() ) )
+               {
+                  // remove the duplicate key when we skip
+                  _scanner->removeDuplicatRID( _curRID ) ;
 
+                  continue;
+               }
+            }
          } // end of (_recordLock != -1)
 
          // Move _curRecordPtr to here so that _recordRW is fully setup for 
