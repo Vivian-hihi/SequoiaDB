@@ -20,16 +20,16 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @FileName:seqDB-17771：删除与更新并发，删除的记录同时匹配已提交记录及其他事务更新的记录，事务提交，过程中读 索引扫描,
- * R2<R3<R1
+ * @FileName:seqDB-17767：更新与删除并发， 删除的记录同时匹配已提交记录及其他事务更新的记录，事务提交，过程中读
+ *                                索引扫描,R1<R3<R2
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
  */
 @Test(groups = "rcwaitlock")
-public class Transaction17771D extends SdbTestBase {
+public class Transaction17767B extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "cl_17771D";
+    private String clName = "cl_17767B";
     private Sequoiadb db1;
     private Sequoiadb db2;
     private Sequoiadb db3;
@@ -91,19 +91,19 @@ public class Transaction17771D extends SdbTestBase {
         cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl3 = db3.getCollectionSpace(csName).getCollection(clName);
 
-        // 插入记录R1、R2，R2<R1
-        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1,a:3,b:3}");
+        // 插入记录R1、R2，R1<R2
+        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1,a:1,b:1}");
         cl.insert(insertR1);
-        BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2,a:1,b:1}");
+        BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2,a:3,b:3}");
         cl.insert(insertR2);
 
-        // 事务1匹配R1删除
-        cl1.delete("{a:3}", hint);
+        // 事务1更新记录R1为R3,R1<R3<R2
+        cl1.update("{a:1}", "{$set:{a:2}}", hint);
 
-        // 事务2匹配R1、R2更新为R3、R4,R2<R3<R1
-        UpdateThread updateThread = new UpdateThread();
-        updateThread.start();
-        Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
+        // 事务2匹配R1、R2删除
+        DeleteThread deleteThread = new DeleteThread();
+        deleteThread.start();
+        Assert.assertTrue(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
 
         // 事务3记录读
         TransactionQueryThread tableScanThread1 = new TransactionQueryThread(cl3);
@@ -111,8 +111,9 @@ public class Transaction17771D extends SdbTestBase {
         Assert.assertTrue(tableScanThread1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 非事务读
-        BSONObject updateR2 = (BSONObject) JSON.parse("{_id:2,a:2,b:1}");
-        expList.add(updateR2);
+        BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:2,b:1}");
+        expList.add(updateR1);
+        expList.add(insertR2);
         cursor = cl.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
@@ -120,12 +121,11 @@ public class Transaction17771D extends SdbTestBase {
 
         // 提交事务1
         db1.commit();
-        Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
+        Assert.assertTrue(deleteThread.isSuccess(), deleteThread.getErrorMsg());
         Assert.assertTrue(tableScanThread1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        // 非事务记录读
+        // 非事务读
         expList.clear();
-        expList.add(updateR2);
         cursor = cl.query(null, null, "{_id:1}", hint);
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
@@ -141,8 +141,8 @@ public class Transaction17771D extends SdbTestBase {
         db2.commit();
         Assert.assertTrue(tableScanThread1.isSuccess(), tableScanThread1.getErrorMsg());
 
-        // 校验事务3读返回的记录
         try {
+            // 校验事务2提交后，读返回的记录
             actList = (ArrayList<BSONObject>) tableScanThread1.getExecResult();
             Assert.assertEquals(actList, expList);
             actList.clear();
@@ -167,23 +167,12 @@ public class Transaction17771D extends SdbTestBase {
 
         // 提交事务3
         db3.commit();
-
-        // 删除记录
-        cl.delete((BSONObject) null);
-
-        // 非事务记录读
-        expList.clear();
-        cursor = cl.query(null, null, null, hint);
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
-        actList.clear();
-
     }
 
-    private class UpdateThread extends SdbThreadBase {
+    private class DeleteThread extends SdbThreadBase {
         @Override
         public void exec() throws BaseException {
-            cl2.update(null, "{$set:{a:2}}", hint);
+            cl2.delete(null, hint);
         }
     }
 
@@ -205,4 +194,5 @@ public class Transaction17771D extends SdbTestBase {
             setExecResult(ret);
         }
     }
+
 }
