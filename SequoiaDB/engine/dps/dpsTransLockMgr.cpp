@@ -222,26 +222,12 @@ namespace engine
 
       SDB_ASSERT( pLRBHdr, "Invalid LRB Header pointer." ) ;
 #endif
-
-      // reset LRB Header
-      pLRBHdr->nextLRBHdr = NULL ;
-      pLRBHdr->ownerLRB   = NULL ;
-      pLRBHdr->waiterLRB  = NULL ;
-      pLRBHdr->upgradeLRB = NULL ;
-      if ( pLRBHdr->oldVer )
+      // debug code to track the guy freeing oldVer
+      if ( pLRBHdr->oldVer.getOldRecord() != NULL )
       {
-#if SDB_INTERNAL_DEBUG
-         // debug code to track the guy freeing oldVer
-         if ( pLRBHdr->oldVer->getOldRecord() != NULL )
-         {
-            PD_LOG ( PDDEBUG, "Freeing oldver while freeing LRBHdr for (%s).",
-                     pLRBHdr->lockId.toString().c_str() );
-         }
-#endif
-         SDB_OSS_DEL pLRBHdr->oldVer;
-         pLRBHdr->oldVer = NULL;
+         PD_LOG ( PDDEBUG, "Freeing oldver while freeing LRBHdr for (%s).",
+                  pLRBHdr->lockId.toString().c_str() );
       }
-      pLRBHdr->lockId.reset() ;
 
       INT32 rc = _pLRBHdrMgr->release( pLRBHdr );
 
@@ -272,16 +258,7 @@ namespace engine
 
       SDB_ASSERT( pLRB, "Invalid LRB pointer." ) ;
 #endif
-
-      // reset LRB
-      pLRB->dpsTxExectr= NULL ;
-      pLRB->eduLrbNext = NULL ;
-      pLRB->eduLrbPrev = NULL ;
-      pLRB->lrbHdr     = NULL;
-      pLRB->nextLRB    = NULL ;
-      pLRB->lockMode   = DPS_TRANSLOCK_MAX ; 
-      pLRB->refCounter = 0 ;
-      pLRB->beginTick.clear() ; 
+      // release LRB
 
       // release LRB
       INT32 rc = _pLRBMgr->release( pLRB );
@@ -1771,33 +1748,14 @@ namespace engine
                  PD_PACK_STRING( "Acquired LRB Header:" ),
                  PD_PACK_RAW( &pLRBHdrNew, sizeof(&pLRBHdrNew) ) ) ;
 #endif
-
-      // initial the new LRB
+      // initialize the new LRB
       // and mark the new LRB Header in its lrbHdr
-      pLRBNew->dpsTxExectr    = dpsTxExectr ;
-      pLRBNew->lockMode       = requestLockMode ;
-      pLRBNew->refCounter     = 1 ;
-      pLRBNew->eduLrbNext     = NULL ;
-      pLRBNew->eduLrbPrev     = NULL ;
-      pLRBNew->lrbHdr         = pLRBHdrNew;
-      pLRBNew->nextLRB        = NULL;
-      pLRBNew->beginTick.clear() ;
+      new (pLRBNew) dpsTransLRB(dpsTxExectr, requestLockMode, pLRBHdrNew);
 
       // inital the new LRB Header
       // and add the new LRB into the new LRB Header owner list
-      pLRBHdrNew->lockId     = lockId ;
+      new (pLRBHdrNew) dpsTransLRBHeader(lockId);
       pLRBHdrNew->ownerLRB   = pLRBNew;
-      pLRBHdrNew->waiterLRB  = NULL ;
-      pLRBHdrNew->upgradeLRB = NULL ;
-      pLRBHdrNew->nextLRBHdr = NULL ;
-
-      pLRBHdrNew->oldVer = SDB_OSS_NEW oldVersionContainer(pLRBHdrNew);
-      if ( pLRBHdrNew->oldVer == NULL )
-      {
-         rc = SDB_OOM;
-         PD_LOG( PDERROR, "Failed to acquire oldVer (rc=%d)", rc );
-         goto error;
-      }
 
    done:
 #ifdef _DEBUG
@@ -2251,7 +2209,7 @@ namespace engine
                callback->beforeLockRelease( lockId,
                                             pOwnerLRB->lockMode,
                                             pOwnerLRB->refCounter,
-                                            pLRBHdr->oldVer ) ;
+                                            &(pLRBHdr->oldVer) ) ;
                _acquireOpLatch( bktIdx ) ;
                bLatched = TRUE ;
             }

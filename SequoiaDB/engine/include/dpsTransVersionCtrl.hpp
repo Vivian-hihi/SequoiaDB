@@ -55,16 +55,16 @@
 namespace engine
 {
    // class forward declare
-   class preIdxTree;
-   class dpsTransCB;
-   class dpsTransLRBHeader;
-   class oldVersionContainer;
+   class preIdxTree ;
+   class dpsTransCB ;
+   class dpsTransLRBHeader ;
+   class oldVersionContainer ;
 
-   typedef  char    element16B[16];
-   typedef  char    element32B[32];
-   typedef  char    element128B[128];
-   typedef  char    element1K[1024];
-   typedef  char    element4K[4096];
+   typedef  char    element16B[16] ;
+   typedef  char    element32B[32] ;
+   typedef  char    element128B[128] ;
+   typedef  char    element1K[1024] ;
+   typedef  char    element4K[4096] ;
 
    // FIXME: provide nub to update through config
    // All these numbers should be power of 2
@@ -105,39 +105,39 @@ namespace engine
       public: 
       // constructor 
       // default one, might use db config
-      memBlockPool();
+      memBlockPool() ;
 
       //memBlockPool( UINT32 size1, UINT32 size2, Uint32 size3,
       //              UINT32 size4, UINT32 size5);
 
       // destructor
-      ~memBlockPool();
+      ~memBlockPool() ;
 
       INT32 acquire( UINT32 const askSize, CHAR * &memBlock,
-                     MEMBLOCKPOOL_TYPE * type );
+                     MEMBLOCKPOOL_TYPE * type ) ;
 
-      void  release( CHAR * &memBlock, MEMBLOCKPOOL_TYPE type );
+      void  release( CHAR * &memBlock, MEMBLOCKPOOL_TYPE type ) ;
 
       // FIXME: provide interface to access monitor counters
 
       // private attributes:
       private:
-      _utilSegmentManager<element16B>  *_16BSeg; // mem segs with 16B element
-      _utilSegmentManager<element32B>  *_32BSeg; // mem segs with 32B element 
-      _utilSegmentManager<element128B> *_128BSeg;// mem segs with 128B element 
-      _utilSegmentManager<element1K>   *_1KSeg;  // mem segs with 1 KB element
-      _utilSegmentManager<element4K>   *_4KSeg;  // mem segs with 4 KB element
+      _utilSegmentManager<element16B>  *_16BSeg ; // mem segs with 16B element
+      _utilSegmentManager<element32B>  *_32BSeg ; // mem segs with 32B element 
+      _utilSegmentManager<element128B> *_128BSeg ;// mem segs with 128B element 
+      _utilSegmentManager<element1K>   *_1KSeg ;  // mem segs with 1 KB element
+      _utilSegmentManager<element4K>   *_4KSeg ;  // mem segs with 4 KB element
 
       // counters for monitor
 
       // how many times we dynamic alloc because we failed in each segment
-      ossAtomic32  _numDynamicAlloc16B;  
-      ossAtomic32  _numDynamicAlloc32B;
-      ossAtomic32  _numDynamicAlloc128B;
-      ossAtomic32  _numDynamicAlloc1K;
-      ossAtomic32  _numDynamicAlloc4K;
+      ossAtomic32  _numDynamicAlloc16B ;
+      ossAtomic32  _numDynamicAlloc32B ;
+      ossAtomic32  _numDynamicAlloc128B ;
+      ossAtomic32  _numDynamicAlloc1K ;
+      ossAtomic32  _numDynamicAlloc4K ;
 
-   };
+   } ;
 
    /** definition of preIdxTreeNodeKey
     *  preIdxTreeNodeKey is the key for node in preIdxTree, it's child class
@@ -155,18 +155,18 @@ namespace engine
                          bson::Ordering * order )
       : ixmKeyOwned( *key )
       {
-         _rid._extent = rid._extent;
-         _rid._offset = rid._offset;
-         _order = order;
+         _rid._extent = rid._extent ;
+         _rid._offset = rid._offset ;
+         _order = order ;
       }
       
       // copy constructor
       preIdxTreeNodeKey( const preIdxTreeNodeKey & key )
       : ixmKeyOwned( key.toBson() )
       {
-         _rid._extent = key._rid._extent;
-         _rid._offset = key._rid._offset;
-         _order = key._order;
+         _rid._extent = key._rid._extent ;
+         _rid._offset = key._rid._offset ;
+         _order = key._order ;
       }
 
       ~preIdxTreeNodeKey ()
@@ -174,36 +174,36 @@ namespace engine
          // We do not want to free the keyData in super class as we don't 
          // own it, simply rid to invalid incase some one continue using it.
          // delete of the lock LRB does the clean up of the key space.
-         _rid.reset();
+         _rid.reset() ;
       }
 
       
       const bson::Ordering * getOrdering() const
       {
-         return _order;
+         return _order ;
       }
 
       const dmsRecordID & getRID() const
       {
-         return _rid;
+         return _rid ;
       }
 
       BOOLEAN isValid() const
       {
-         return _rid.isValid();
+         return _rid.isValid() ;
       }
       
       // assistant function to print out the rid ( and key )
-      void printKey() const;
+      void printKey() const ;
 
       // private attributes:
       private:
       // Original rid. This is used to differ duplicated keys when index is 
       // not unique
-      dmsRecordID       _rid;
+      dmsRecordID       _rid ;
       // it's shared from the tree. Check clsCataOrder()
-      bson::Ordering   *_order;
-   };
+      bson::Ordering   *_order ;
+   } ;
 
    // the index tree node value is the index into the lrbHdr which contain
    // both old version index and record
@@ -213,12 +213,12 @@ namespace engine
       // constructor
       preIdxTreeNodeValue( dpsTransLRBHeader* lrbHdr )
       {
-         _lrbHdr = lrbHdr;
+         _lrbHdr = lrbHdr ;
       }
 
       ~preIdxTreeNodeValue()
       {
-         _lrbHdr = NULL;
+         _lrbHdr = NULL ;
       }
 
       BOOLEAN isValid() const
@@ -233,20 +233,20 @@ namespace engine
 
       dpsTransLRBHeader* &getLRBHdr()
       {
-         return _lrbHdr;
+         return _lrbHdr ;
       }
 
       // assistant function to print out the lrb hdr idx
-      void printValue() const;
+      void printValue() const ;
          
       // private member
       private:
       // index to lock LRB header, which contain old version record
-      dpsTransLRBHeader*   _lrbHdr;
+      dpsTransLRBHeader*   _lrbHdr ;
 
-   };
+   } ;
 
-   typedef std::pair<preIdxTreeNodeKey, preIdxTreeNodeValue> TREE_NODE_PAIR;
+   typedef std::pair<preIdxTreeNodeKey, preIdxTreeNodeValue> TREE_NODE_PAIR ;
 
    // implement our own key comparison (less) function. 
    // Note that this does take the rid into consideration.
@@ -256,7 +256,7 @@ namespace engine
       bool operator () ( const preIdxTreeNodeKey & lhk, 
                          const preIdxTreeNodeKey & rhk ) const
       {
-         bool rv = false;
+         bool rv = false ;
          const bson::Ordering * pOrdering = 
             ( NULL != lhk.getOrdering() ) ? lhk.getOrdering()
                                           : rhk.getOrdering() ;
@@ -265,23 +265,23 @@ namespace engine
          INT32 rt = lhk.woCompare( rhk, *( pOrdering ) ) ; 
          if ( rt < 0 )
          {
-            rv = true;
+            rv = true ;
          }
          else if ( rt == 0 )// compare RID when key equals
          {
             // compare return -1 when lhk is before rhk
             if (lhk.getRID()._extent < rhk.getRID()._extent)
             {
-               rv = true;
+               rv = true ;
             }
             else if( lhk.getRID()._extent == rhk.getRID()._extent)
             {
-               rv = (lhk.getRID()._offset < rhk.getRID()._offset);
+               rv = (lhk.getRID()._offset < rhk.getRID()._offset) ;
             }
          }
-         return rv;
+         return rv ;
       }
-   };
+   } ;
 
    /*
    // FIXME: as an optimization, we should implement our own allocation
@@ -305,7 +305,7 @@ namespace engine
                      preIdxTreeNodeValue,
                      nodeKeyCompare
                      //myNodeAlloc
-                     > INDEX_BINARY_TREE;
+                     > INDEX_BINARY_TREE ;
 
    //typedef  std::map<ixmKey, preIdxTreeNode> INDEX_BINARY_TREE;
 
@@ -323,19 +323,19 @@ namespace engine
       // constructors & destructors
       preIdxTree(const UINT32 idxID, const ixmIndexCB * indexCB)
       {
-         _idxLID = idxID;
-         _tree = new INDEX_BINARY_TREE();
+         _idxLID = idxID ;
+         _tree = new INDEX_BINARY_TREE() ;
          _order = SDB_OSS_NEW clsCataOrder(
-                     bson::Ordering::make (indexCB->keyPattern()) );
+                     bson::Ordering::make (indexCB->keyPattern()) ) ;
       }
 
       // copy constructor
       preIdxTree( const preIdxTree & intree )
       {
-         _idxLID = intree.getLID();
+         _idxLID = intree.getLID() ;
          _tree =  intree.getTree() ;
          //_tree = new INDEX_BINARY_TREE( *(intree.getTree()) );
-         _order = NULL;  // user has to setup the order themselves
+         _order = NULL ;  // user has to setup the order themselves
          
       }
 
@@ -344,45 +344,45 @@ namespace engine
       {
          if ( NULL != _order )
          {
-            SDB_OSS_DEL _order;
+            SDB_OSS_DEL _order ;
          }
          // this will remove all elements in the tree. 
          // Note that this will free up all the keyData as it's not owned 
          // by the tree
          if( _tree )
          {
-            delete _tree;
-            _tree = NULL;
+            delete _tree ;
+            _tree = NULL ;
          }
       }
 
       INDEX_BINARY_TREE * getTree() const
       {
-         return _tree;
+         return _tree ;
       }
 
       void setOrder ( const ixmIndexCB * indexCB )
       {
          _order = SDB_OSS_NEW clsCataOrder(
-                     bson::Ordering::make (indexCB->keyPattern()) );
+                     bson::Ordering::make (indexCB->keyPattern()) ) ;
       }
 
       // get index logic ID
       UINT32 getLID() const 
       {
-         return _idxLID;
+         return _idxLID ;
       }
 
       bson::Ordering * getOrdering() const 
       {
-         return _order->getOrdering();
+         return _order->getOrdering() ;
       }
 
       // find a node based on the key, caller need to hold the latch
       // otherwise the iterator can change underneath
       INDEX_BINARY_TREE::iterator find ( const preIdxTreeNodeKey & key )
       {
-         return _tree->find( key );
+         return _tree->find( key ) ;
       }
 
       // find a node based on the key, caller need to hold the latch
@@ -390,26 +390,26 @@ namespace engine
       INDEX_BINARY_TREE::iterator find ( const BSONObj*  key,
                                          const dmsRecordID & rid )
       {
-         preIdxTreeNodeKey myKey( key, rid, getOrdering() );
-         return _tree->find( myKey );
+         preIdxTreeNodeKey myKey( key, rid, getOrdering() ) ;
+         return _tree->find( myKey ) ;
       }
 
       // Traverse the tree to see if the key exist, caller need to hold 
       // the latch otherwise the iterator can change underneath
-      BOOLEAN ixObjExist( const BSONObj&  key, preIdxTreeNodeValue & value );
+      BOOLEAN ixObjExist( const BSONObj&  key, preIdxTreeNodeValue & value ) ;
 
       // locate the best match key in the tree based on the order and direction
       INT32 locate ( const BSONObj      &keyObj,
                      const dmsRecordID  &rid,
                      INDEX_BINARY_TREE::iterator &it,
-                     INT32               direction );
+                     INT32               direction ) ;
 
       // move the iterator to the proper key location
       INT32 keyLocate( INDEX_BINARY_TREE::iterator &iter, const BSONObj &prevKey,
                        INT32 keepFieldsNum, BOOLEAN skipToNext,
                        const vector < const BSONElement *> &matchEle,
                        const vector < BOOLEAN > &matchInclusive,
-                       INT32 direction, dpsTransCB* cb ) const;
+                       INT32 direction, dpsTransCB* cb ) const ;
 
       // Advance the pushed down verb and locate the key
       INT32 keyAdvance( INDEX_BINARY_TREE::iterator &iter,
@@ -417,14 +417,14 @@ namespace engine
                         INT32 keepFieldsNum, BOOLEAN skipToNext,
                         const vector < const BSONElement *> &matchEle,
                         const vector < BOOLEAN > &matchInclusive,
-                        INT32 direction, dpsTransCB *cb ) const;
+                        INT32 direction, dpsTransCB *cb ) const ;
 
       // iterator operation, caller need to hold the latch
       // otherwise the iterator can change underneath
       INDEX_BINARY_TREE::iterator begin ()
       {
          // start from the beginning of map
-         return _tree->begin();
+         return _tree->begin() ;
       }
       
       // iterator operation, caller need to hold the latch,
@@ -432,39 +432,39 @@ namespace engine
       INDEX_BINARY_TREE::iterator end ( )  
       {
          // start from the end of map
-         return _tree->end();
+         return _tree->end() ;
       }
 
       void clear()
       {
-         lockX();
+         lockX() ;
          if (_tree)
          {
-            _tree->clear();
+            _tree->clear() ;
          }
-         unlockX();
+         unlockX() ;
       }
       // insert a node to map
       INT32 insert ( const preIdxTreeNodeKey &keyNode,
                      const preIdxTreeNodeValue & value,
-                     const BOOLEAN lockHeld = FALSE );
+                     const BOOLEAN lockHeld = FALSE ) ;
 
       INT32 insert ( const BSONObj * keyData, const dmsRecordID & rid,
                      const preIdxTreeNodeValue & value,
-                     const BOOLEAN lockHeld = FALSE );
+                     const BOOLEAN lockHeld = FALSE ) ;
 
       // delete a node
-      INT32 remove( const preIdxTreeNodeKey & keyNode );
-      INT32 remove( const BSONObj * keyData, const dmsRecordID & rid );
+      INT32 remove( const preIdxTreeNodeKey & keyNode ) ;
+      INT32 remove( const BSONObj * keyData, const dmsRecordID & rid ) ;
             
       void lockX()
       {
-         _latch.get();
+         _latch.get() ;
       }
 
       void lockS()
       {
-         _latch.get_shared();
+         _latch.get_shared() ;
       }
 
       void unlockX()
@@ -474,17 +474,17 @@ namespace engine
 
       void unlockS()
       {
-         _latch.release_shared();
+         _latch.release_shared() ;
       }
  
       BOOLEAN empty() const
       {
-         return _tree->empty();
+         return _tree->empty() ;
       }
 
       INT32 size() const
       {
-         return _tree->size();
+         return _tree->size() ;
       }
 
       // assistant function to print out the whole tree.
@@ -495,7 +495,7 @@ namespace engine
 
       // private attributes:
       private: 
-      UINT32              _idxLID; // index logic id
+      UINT32              _idxLID ; // index logic id
       // Latching protocal
       // 1. preIdxTree latch must be held in X to insert/delete node in the tree
       //    oldVersionCB(_oldVersionCBLatch) need to be held in S before
@@ -504,12 +504,12 @@ namespace engine
       //    latch, reverse order is OK. Keep in mind we store the _lrbHdrIdx
       //    in the tree so that we have direct access to lrbHdr without need
       //    to go through lrbhash bkt.
-      ossSpinSLatch       _latch;  // latch for concurrency control, 
+      ossSpinSLatch       _latch ;  // latch for concurrency control, 
                                    // adding/removing node need latch in X
                                    // find/travers need latch in S
-      INDEX_BINARY_TREE * _tree;   // tree to hold all old index key value
-      clsCataOrder      * _order;  // wrap class to hold the shared ordering
-   };
+      INDEX_BINARY_TREE * _tree ;   // tree to hold all old index key value
+      clsCataOrder      * _order ;  // wrap class to hold the shared ordering
+   } ;
 
    // implement our own globalID comparison (less) function. 
    // it's ordered by  _csID, _clID and _idxLID
@@ -518,37 +518,37 @@ namespace engine
       bool operator () ( const globIdxID &lid, 
                          const globIdxID &rid ) const
       {
-         bool rv = false;
+         bool rv = false ;
          // compare key value using ixmKey compare
          if ( lid._csID < rid._csID )
          {
-            rv = true;
+            rv = true ;
          }
          else if ( lid._csID == rid._csID )
          {
             if ( lid._clID < rid._clID )
             {
-               rv = true;
+               rv = true ;
             }
             else if (lid._clID == rid._clID)
             {
                if ( lid._idxLID < rid._idxLID )
                {
-                  rv = true; 
+                  rv = true ; 
                }
             }
          }
-         return rv;
+         return rv ;
       }
-   };
+   } ;
 
    // global map from an index to its own tree
    typedef  std::map< const globIdxID, 
                       const preIdxTree* ,
-                      globIDCompare > IDXID_TO_TREE_MAP;
+                      globIDCompare > IDXID_TO_TREE_MAP ;
 
    typedef  std::pair< const globIdxID, 
-                       const preIdxTree* > IDXID_TO_TREE_MAP_PAIR;
+                       const preIdxTree* > IDXID_TO_TREE_MAP_PAIR ;
 
    /** definition of oldVersionCB
     *  Control block holding all resources and structures for old version 
@@ -559,50 +559,50 @@ namespace engine
       // public interfaces
       public:
       // constructor
-      oldVersionCB();
+      oldVersionCB() ;
 
       // destructor
-      ~oldVersionCB();
+      ~oldVersionCB() ;
 
       const BOOLEAN isInitialized() const
       {
-         return _initialized;
+         return _initialized ;
       }
 
       void latchS()
       {
-         _oldVersionCBLatch.get_shared();
+         _oldVersionCBLatch.get_shared() ;
       }
 
       void latchX()
       {
-         _oldVersionCBLatch.get();
+         _oldVersionCBLatch.get() ;
       }
 
       void releaseX()
       {
-         _oldVersionCBLatch.release();
+         _oldVersionCBLatch.release() ;
       }
 
       void releaseS()
       {
-         _oldVersionCBLatch.release_shared();
+         _oldVersionCBLatch.release_shared() ;
       }
 
-      void addIdxTree( const globIdxID &gid, const ixmIndexCB * indexCB );
-      void delIdxTree( const globIdxID &gid );
+      void addIdxTree( const globIdxID &gid, const ixmIndexCB * indexCB ) ;
+      void delIdxTree( const globIdxID &gid ) ;
 
       INT32 insertIdxObj( const globIdxID     &gid, 
                           const BSONObj       &obj,
                           const dmsRecordID   &rid,
                           oldVersionContainer *oldVer,
-                          const BOOLEAN       takeLock = TRUE );
+                          const BOOLEAN       takeLock = TRUE ) ;
 
-      preIdxTree * getAndRemoveIdxTree( const globIdxID & gIdxID );
+      preIdxTree * getAndRemoveIdxTree( const globIdxID & gIdxID ) ;
 
-      preIdxTree * getIdxTree( const globIdxID & gIdxID );
+      preIdxTree * getIdxTree( const globIdxID & gIdxID ) ;
       
-      memBlockPool * getMemBlockPool() { return  _memBlockPool; }      
+      memBlockPool * getMemBlockPool() { return  _memBlockPool ; }
 
       // assistant function to print all tree's gid to diaglog
       void printTrees( BOOLEAN latched ) ;
@@ -610,19 +610,19 @@ namespace engine
       // counter to get number of indexes
       INT32 getNumTrees()
       {
-         return _idxTrees->size();
+         return _idxTrees->size() ;
       }
 
       // counter to get number of indexes
       INT32 getTotalTreeSize()
       {
-         UINT32  totalNum = 0;
-         for ( IDXID_TO_TREE_MAP::iterator it = _idxTrees->begin();
-               it != _idxTrees->end(); it++ )
+         UINT32  totalNum = 0 ;
+         for ( IDXID_TO_TREE_MAP::iterator it = _idxTrees->begin() ;
+               it != _idxTrees->end() ; it++ )
          {
-            totalNum += it->second->size();
+            totalNum += it->second->size() ;
          }
-         return totalNum;
+         return totalNum ;
       }
 
       // private functions
@@ -633,33 +633,33 @@ namespace engine
       // latch to protect the fields. Should hold it in X to initialize and 
       // destroy _memBlockPool, otherwise hold in S
       ossSpinSLatch       _oldVersionCBLatch ;
-      IDXID_TO_TREE_MAP * _idxTrees;  // trees holding older version of indexes
-      memBlockPool      * _memBlockPool; // pool of memory blocks holding old 
+      IDXID_TO_TREE_MAP * _idxTrees ;  // trees holding older version of indexes
+      memBlockPool      * _memBlockPool ; // pool of memory blocks holding old 
                                          // version of records
-      BOOLEAN             _initialized;  // flag indicating if it's initialized
-   };
+      BOOLEAN             _initialized ;  // flag indicating if it's initialized
+   } ;
 
    class idxObj
    {
       public:
       idxObj()
       {
-         _idxLID = -1;
-         _order = NULL;
+         _idxLID = -1 ;
+         _order = NULL ;
       }
 
       idxObj( const  idxObj & obj )
       {
-         _idxLID = obj._idxLID;
-         _order = obj._order;
-         _idxObj = obj._idxObj.copy();
+         _idxLID = obj._idxLID ;
+         _order = obj._order ;
+         _idxObj = obj._idxObj.copy() ;
       }
       public:
-      SINT32             _idxLID; // index unique logical ID
+      SINT32             _idxLID ; // index unique logical ID
       //MEMBLOCKPOOL_TYPE  _recordMemType;  // which seg was _idxObj allocated
-      bson::Ordering    *_order;  // pointer to ordering for comparison 
-      BSONObj            _idxObj; // BSON Object
-   };
+      bson::Ordering    *_order ;  // pointer to ordering for comparison 
+      BSONObj            _idxObj ; // BSON Object
+   } ;
 
    // implement our own idxObj comparison (less) function.
    // it's ordered by the unique _idxLID and bson obj
@@ -670,26 +670,26 @@ namespace engine
       bool operator () ( const idxObj &lobj,
                          const idxObj &robj ) const
       {
-         bool rv = false;
+         bool rv = false ;
          if ( lobj._idxLID < robj._idxLID )
          {
-            rv = true;
+            rv = true ;
          }
          else if( lobj._idxLID == robj._idxLID )
          {
             // same LID, do bson compare based on order
             rv = (lobj._idxObj.woCompare(robj._idxObj,
-                                          *(lobj._order)) < 0);
+                                          *(lobj._order)) < 0) ;
          }
-         return rv;
+         return rv ;
       }
-   };
+   } ;
 
    // Use set of idx lid to figure out if the first version of an index value 
    // was already stored or not. 
-   typedef std::set< SINT32 > idxLidSet;
+   typedef std::set< SINT32 > idxLidSet ;
    // use set of idxObj to store all index key values
-   typedef std::set< idxObj, idxObjCompare > idxObjSet;
+   typedef std::set< idxObj, idxObjCompare > idxObjSet ;
 
    // Class to store all information for old version record/indexes. This 
    // container is currently hanging off LRBHdr
@@ -698,37 +698,37 @@ namespace engine
       public:
       oldVersionContainer(dpsTransLRBHeader* lrb )
       {
-         _oldRecord = NULL;
-         _order     = NULL;
-         _lrbHdr  = lrb;
-         _isNewRecord = FALSE;
+         _oldRecord = NULL ;
+         _order     = NULL ;
+         _lrbHdr  = lrb ;
+         _isNewRecord = FALSE ;
       }
 
       // check if the index lid already exists in the set
       BOOLEAN idxLidExist(SINT32 id)
       {
-         return ( _oldIdxLid.find(id) != _oldIdxLid.end() );
+         return ( _oldIdxLid.find(id) != _oldIdxLid.end() ) ;
       }
 
       // based on index LID passed in, retrieve the index value
       BSONObj* getOldIdxValue(const  SINT32 lid )
       {
-         BSONObj * obj = NULL;
-         for ( idxObjSet::iterator i = _oldIdx.begin();
-               i != _oldIdx.end(); ++i )
+         BSONObj * obj = NULL ;
+         for ( idxObjSet::iterator i = _oldIdx.begin() ;
+               i != _oldIdx.end() ; ++i )
          {
             if ( i->_idxLID == lid )
             {
-               obj = const_cast<BSONObj *> (&(i->_idxObj));
-               break;
+               obj = const_cast<BSONObj *> (&(i->_idxObj)) ;
+               break ;
             }
          }
-         return obj;
+         return obj ;
       }
 
-      void setRecordNew() { _isNewRecord = TRUE; }
-      void unsetRecordNew() { _isNewRecord = FALSE; }
-      BOOLEAN isRecordNew() { return _isNewRecord; }
+      void setRecordNew() { _isNewRecord = TRUE ; }
+      void unsetRecordNew() { _isNewRecord = FALSE ; }
+      BOOLEAN isRecordNew() { return _isNewRecord ; }
 
       void setOrder( clsCataOrder* o ) { _order = o ; }
       void freeOrder( )
@@ -739,17 +739,17 @@ namespace engine
 
       clsCataOrder* getOrder () { return _order ; }
 
-      MEMBLOCKPOOL_TYPE & getRecordMemType() { return _recordMemType; }
+      MEMBLOCKPOOL_TYPE & getRecordMemType() { return _recordMemType ; }
 
-      dmsRecord * &getOldRecord() {return _oldRecord; }
-      void setOldRecord(dmsRecord * r) { _oldRecord = r; }
+      dmsRecord * &getOldRecord() { return _oldRecord ; }
+      void setOldRecord(dmsRecord * r) { _oldRecord = r ; }
 
       BOOLEAN insertLID( const  SINT32 lid )
       {
-         return _oldIdxLid.insert(lid).second;
+         return _oldIdxLid.insert(lid).second ;
       }
 
-      void clearIdxLid() { _oldIdxLid.clear(); }
+      void clearIdxLid() { _oldIdxLid.clear() ; }
 
       BOOLEAN  insertOldIdxLid( const  SINT32 lid, ixmIndexCB* indexCB )
       {
@@ -757,9 +757,9 @@ namespace engine
          if (!_order )
          {
             setOrder( SDB_OSS_NEW clsCataOrder(
-                               Ordering::make(indexCB->keyPattern()) ) );
+                               Ordering::make(indexCB->keyPattern()) ) ) ;
          }
-         return insertLID(lid);
+         return insertLID(lid) ;
       }
 
       // given an index object, insert into the idxObjSet. Return false
@@ -768,33 +768,33 @@ namespace engine
       BOOLEAN insertIdx( idxObj & i )
       {
          // set the ordering pointer first
-         i._order = _order->getOrdering();
-         return _oldIdx.insert(i).second;
+         i._order = _order->getOrdering() ;
+         return _oldIdx.insert(i).second ;
       }
 
       void deleteIdx( idxObjSet::iterator it )
       {
-         _oldIdx.erase(it);
+         _oldIdx.erase(it) ;
       }
 
-      idxObjSet & getIdxSet ()  { return _oldIdx; }
-      dpsTransLRBHeader*  const getLrbHdr()  { return _lrbHdr; }
+      idxObjSet & getIdxSet ()  { return _oldIdx ; }
+      dpsTransLRBHeader*  const getLrbHdr()  { return _lrbHdr ; }
 
       private:
-      dmsRecord * _oldRecord;   // pointer to copy of old record
-      dpsTransLRBHeader* _lrbHdr;   // LRB header index
-      BOOLEAN     _isNewRecord; // is this a newly created record or not
+      dmsRecord * _oldRecord ;   // pointer to copy of old record
+      dpsTransLRBHeader* _lrbHdr ;   // LRB header index
+      BOOLEAN     _isNewRecord ; // is this a newly created record or not
       // A set of index Lids (up to 64) associated to this record.
       // We use this to figure out if the idx was already stored in the tree
       // Keep in mind that RC require us read the last committed version which
       // will be the version before first update in the transaction
-      idxLidSet _oldIdxLid; 
+      idxLidSet _oldIdxLid ;
       // pointer to the order for comparison
-      clsCataOrder *_order;
+      clsCataOrder *_order ;
       // point to a set containing all key sets.
-      idxObjSet  _oldIdx;
+      idxObjSet  _oldIdx ;
       // tells which old record segment _oldRecord was allocated from
-      MEMBLOCKPOOL_TYPE _recordMemType; 
+      MEMBLOCKPOOL_TYPE _recordMemType ;
    };
 }
 

@@ -52,15 +52,29 @@ namespace engine
    class dpsTransLRB : public SDBObject
    {
    public :
-      _dpsTransExecutor * dpsTxExectr ;                
-      dpsTransLRB * eduLrbNext ;    // next LRB in chain EDU owning in tx
-      dpsTransLRB * eduLrbPrev ;    // prev LRB in chain EDU owning in tx
-      dpsTransLRB * nextLRB ;       // next LRB in the owner/waiter chain
-      dpsTransLRBHeader * lrbHdr ;  // LRB Header
-      ossTick       beginTick ;     // timestamp( ossTick ) of owning / waiting
-      UINT32        refCounter ;    // lock reference counter
+      _dpsTransExecutor * dpsTxExectr ;
+      dpsTransLRB * eduLrbNext ;   // next LRB in chain EDU owning in tx
+      dpsTransLRB * eduLrbPrev ;   // prev LRB in chain EDU owning in tx
+      dpsTransLRBHeader* lrbHdr ;  // the LRB Header
+      dpsTransLRB * nextLRB ;      // next LRB in the owner/waiter chain
+      ossTick     beginTick ;       // timestamp( ossTick ) of owning / waiting
+      UINT32      refCounter ;      // lock reference counter
       DPS_TRANSLOCK_TYPE lockMode ; // lock mode, UINT8, 1 byte
       UINT8 pad[3] ;                // 3 byte for padding
+
+      dpsTransLRB()
+         : dpsTxExectr( NULL ), eduLrbNext( NULL ), eduLrbPrev( NULL ),
+           lrbHdr( NULL ), nextLRB( NULL ), refCounter( 0 ),
+           lockMode( DPS_TRANSLOCK_MAX )
+      {}
+
+      dpsTransLRB( _dpsTransExecutor  *_dpsTxExectr,
+                   DPS_TRANSLOCK_TYPE  _lockMode,
+                   dpsTransLRBHeader  *_lrbHdr)
+         : dpsTxExectr ( _dpsTxExectr ), eduLrbNext( NULL ),
+           eduLrbPrev( NULL ), lrbHdr( _lrbHdr ),
+           nextLRB( NULL ), refCounter( 1 ), lockMode( _lockMode)
+      {}
    } ;  // 56 bytes in total
 
 
@@ -68,72 +82,66 @@ namespace engine
    class dpsTransLRBHeader : public SDBObject
    {
    public :
-      dpsTransLRBHeader * nextLRBHdr ; // next LRB Header in the chain
-      dpsTransLRB       * ownerLRB ;   // the first owner LRB in its chain
-      dpsTransLRB       * waiterLRB ;  // the first waiter LRB in its chain
-      dpsTransLRB       * upgradeLRB;  // the first upgrader LRB in its chain
-      dpsTransLockId lockId ;          // lockId, 16 bytes
-      oldVersionContainer * oldVer ;   // a pointer to the structure containing
-                                       // version page/index information
+      dpsTransLRBHeader * nextLRBHdr ;   // next LRB Header in the chain
+      dpsTransLRB       * ownerLRB ;     // the first owner LRB in its chain
+      dpsTransLRB       * waiterLRB ;    // the first waiter LRB in its chain
+      dpsTransLRB       * upgradeLRB;    // the first upgrader LRB in its chain
+      dpsTransLockId      lockId ;       // lockId, 16 bytes
+      oldVersionContainer oldVer ;       // a pointer to the structure containing
+                                         // version page/index information
    public :
+      dpsTransLRBHeader()
+         : nextLRBHdr(NULL), ownerLRB(NULL),
+           waiterLRB(NULL), upgradeLRB(NULL), oldVer(this) {}
+
+      dpsTransLRBHeader( dpsTransLockId lock )
+         : nextLRBHdr(NULL), ownerLRB(NULL),
+           waiterLRB(NULL), upgradeLRB(NULL),
+           lockId(lock), oldVer(this) {}
+
       // is this lock for a newly created record or not
-      BOOLEAN isNewRecord() { return oldVer ? oldVer->isRecordNew() : FALSE ; }
+      BOOLEAN isNewRecord()
+      { return oldVer.isRecordNew(); }
 
       void setNewRecord()
       {
-         if( oldVer )
-         { 
-            oldVer->setRecordNew();
-         }
+         oldVer.setRecordNew();
       }
       void unsetNewRecord()
       {
-         if( oldVer )
-         { 
-            oldVer->unsetRecordNew();
-         }
+         oldVer.unsetRecordNew();
       }
 
       // access to oldVersionContainer element
-      const dmsRecord * getOldRecord() const 
+      const dmsRecord * getOldRecord()
       {
-         return oldVer ? oldVer->getOldRecord() : NULL;
+         return oldVer.getOldRecord() ;
       }
 
-      void setOldRecord(dmsRecord * r) { oldVer->setOldRecord(r); }
+      void setOldRecord(dmsRecord * r) { oldVer.setOldRecord(r); }
 
-      MEMBLOCKPOOL_TYPE &oldRecordMemType() 
+      MEMBLOCKPOOL_TYPE &oldRecordMemType()
       {
-         return oldVer->getRecordMemType(); 
+         return oldVer.getRecordMemType();
       }
 
       // try to insert to lid set. The caller should hold record lock in X
       // as the protection
       // Return TRUE if succeeded. return FALSE if already exist.
       BOOLEAN  insertOldIdxLid( const  SINT32 lid, ixmIndexCB* indexCB )
-      { 
-         return oldVer->insertOldIdxLid(lid, indexCB); 
+      {
+         return oldVer.insertOldIdxLid(lid, indexCB); 
       }
 
       BOOLEAN idxLidExist(SINT32 id)
       {
-         BOOLEAN found  = FALSE;
-         if ( oldVer != NULL )
-         {
-            found = oldVer->idxLidExist(id);
-         }
-         return found;
+         return oldVer.idxLidExist(id);
       }
 
-      // given logical idx id, return the index value 
-      BSONObj* getOldIdxValue(const  SINT32 lid ) 
-      { 
-         BSONObj * obj = NULL;
-         if ( oldVer != NULL )
-         {
-            obj = oldVer->getOldIdxValue(lid);
-         }
-         return obj;
+      // given logical idx id, return the index value
+      BSONObj* getOldIdxValue(const  SINT32 lid )
+      {
+         return oldVer.getOldIdxValue(lid);
       }
 
       //MEMBLOCKPOOL_TYPE &oldIdxMemType() { return oldVer->_idxMemType; }

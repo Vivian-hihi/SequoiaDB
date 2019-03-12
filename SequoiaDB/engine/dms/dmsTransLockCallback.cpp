@@ -182,7 +182,7 @@ namespace engine
 
                   // set up the current oldVer in callback for this round,
                   // note that it is cleared during setup for each round
-                  _oldVer = lrbHdr->oldVer;
+                  _oldVer = &(lrbHdr->oldVer);
                   SDB_ASSERT( _oldVer, "oldVer does not exist!");
                   PD_TRACE1 ( SDB_DMSTRANSLOCKCALLBACK_AFTERLOCKACQUIRE,
                               PD_PACK_STRING("Will use old version") );
@@ -212,7 +212,7 @@ namespace engine
 
          // this is after lock acquire and we got irc== OK, must have
          // the lock and must be able to find lrbHdr
-         SDB_ASSERT ( ((lrbHdr != NULL) && (lrbHdr->oldVer != NULL)),
+         SDB_ASSERT ( lrbHdr != NULL,
                       "Can't find the lock" );
 
          // If this is the first update to the record, the caller will do the
@@ -223,7 +223,7 @@ namespace engine
          // for it.
          if ( ( lrbHdr->getOldRecord() == NULL ) && !lrbHdr->isNewRecord() )
          {
-            _oldVer = lrbHdr->oldVer;
+            _oldVer = &(lrbHdr->oldVer);
          }
 #if SDB_INTERNAL_DEBUG
          PD_LOG( PDDEBUG,
