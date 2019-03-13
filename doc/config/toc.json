@@ -2469,7 +2469,7 @@
                            "en": "arrayAccess()"
                         }
                      ]
-                  },
+                  },				  				  
                   {
                      "id": 1432190865,
                      "dir": "SdbReplicaGroup",
@@ -2730,6 +2730,222 @@
                         }
                      ]
                   },
+				  				  {
+                     "id": 1552033393,
+                     "dir": "File",
+                     "cn": "File",
+                     "en": "File",
+                     "contents": [
+                        {
+                           "id": 1552034276,
+                           "file": "chgrp",
+                           "cn": "chgrp()",
+                           "en": "chgrp()"
+                        },
+                        {
+                           "id": 1552034306,
+                           "file": "chmod",
+                           "cn": "chmod()",
+                           "en": "chmod()"
+                        },
+                        {
+                           "id": 1552034314,
+                           "file": "chown",
+                           "cn": "chown()",
+                           "en": "chown()"
+                        },
+                        {
+                           "id": 1552034408,
+                           "file": "close",
+                           "cn": "close()",
+                           "en": "close()"
+                        },
+                        {
+                           "id": 1552034465,
+                           "file": "copy",
+                           "cn": "copy()",
+                           "en": "copy()"
+                        },
+                        {
+                           "id": 1552034485,
+                           "file": "exist",
+                           "cn": "exist()",
+                           "en": "exist()"
+                        },
+                        {
+                           "id": 1552034509,
+                           "file": "File",
+                           "cn": "File()",
+                           "en": "File()"
+                        },
+                        {
+                           "id": 1552034536,
+                           "file": "find",
+                           "cn": "find()",
+                           "en": "find()"
+                        },
+                        {
+                           "id": 1552034961,
+                           "file": "getSize",
+                           "cn": "getSize()",
+                           "en": "getSize()"
+                        },
+                        {
+                           "id": 1552034969,
+                           "file": "getUmask",
+                           "cn": "getUmask()",
+                           "en": "getUmask()"
+                        },
+                        {
+                           "id": 1552034988,
+                           "file": "isDir",
+                           "cn": "isDir()",
+                           "en": "isDir()"
+                        },
+                        {
+                           "id": 1552034996,
+                           "file": "isEmptyDir",
+                           "cn": "isEmptyDir()",
+                           "en": "isEmptyDir()"
+                        },
+                        {
+                           "id": 1552035003,
+                           "file": "isFile",
+                           "cn": "isFile()",
+                           "en": "isFile()"
+                        },
+                        {
+                           "id": 1552035012,
+                           "file": "list",
+                           "cn": "list()",
+                           "en": "list()"
+                        },
+                        {
+                           "id": 1552035021,
+                           "file": "md5",
+                           "cn": "md5()",
+                           "en": "md5()"
+                        },
+                        {
+                           "id": 1552035037,
+                           "file": "mkdir",
+                           "cn": "mkdir()",
+                           "en": "mkdir()"
+                        },
+                        {
+                           "id": 1552035045,
+                           "file": "move",
+                           "cn": "move()",
+                           "en": "move()"
+                        },
+                        {
+                           "id": 1552035053,
+                           "file": "read",
+                           "cn": "read()",
+                           "en": "read()"
+                        },
+                        {
+                           "id": 1552035061,
+                           "file": "readContent",
+                           "cn": "readContent()",
+                           "en": "readContent()"
+                        },
+                        {
+                           "id": 1552035070,
+                           "file": "readLine",
+                           "cn": "readLine()",
+                           "en": "readLine()"
+                        },
+                        {
+                           "id": 1552035077,
+                           "file": "remove",
+                           "cn": "remove()",
+                           "en": "remove()"
+                        },
+                        {
+                           "id": 1552035084,
+                           "file": "scp",
+                           "cn": "scp()",
+                           "en": "scp()"
+                        },
+                        {
+                           "id": 1552035091,
+                           "file": "seek",
+                           "cn": "seek()",
+                           "en": "seek()"
+                        },
+                        {
+                           "id": 1552035099,
+                           "file": "setUmask",
+                           "cn": "setUmask()",
+                           "en": "setUmask()"
+                        },
+                        {
+                           "id": 1552035108,
+                           "file": "stat",
+                           "cn": "stat()",
+                           "en": "stat()"
+                        },
+                        {
+                           "id": 1552035115,
+                           "file": "write",
+                           "cn": "write()",
+                           "en": "write()"
+                        },
+                        {
+                           "id": 1552035121,
+                           "file": "writeContent",
+                           "cn": "writeContent()",
+                           "en": "writeContent()"
+                        }						
+                     ]
+                  },
+				  {
+                     "id": 1552035549,
+                     "dir": "FileContent",
+                     "cn": "FileContent",
+                     "en": "FileContent",
+                     "contents": [
+                        {
+                           "id": 1552035555,
+                           "file": "clear",
+                           "cn": "clear()",
+                           "en": "clear()"
+                        },
+                        {
+                           "id": 1552035562,
+                           "file": "getLength",
+                           "cn": "getLength()",
+                           "en": "getLength()"
+                        },
+                        {
+                           "id": 1552035568,
+                           "file": "toBase64Code",
+                           "cn": "toBase64Code()",
+                           "en": "toBase64Code()"
+                        }
+                     ]
+                  },
+				  {
+                     "id": 1552489109,
+                     "dir": "AuxiliaryObjects",
+                     "cn": "辅助类型对象",
+                     "en": "Auxiliary Objects",
+                     "contents": [
+						{
+						   "id": 1552489119,
+                           "file": "SdbSnapshotOption",
+                           "cn": "SdbSnapshotOption",
+                           "en": "SdbSnapshotOption"
+						},
+                        {
+						   "id": 1552489127,
+                           "file": "SdbQueryOption",
+                           "cn": "SdbQueryOption",
+                           "en": "SdbQueryOption"
+						}
+                     ]
+                  },
                   {
                      "id": 1440658402,
                      "dir": "SpecialObjects",
@@ -2789,19 +3005,7 @@
                            "file": "NumberDecimal",
                            "cn": "NumberDecimal",
                            "en": "NumberDecimal"
-                        },
-						{
-						   "id": 1533038433,
-                           "file": "SdbSnapshotOption",
-                           "cn": "SdbSnapshotOption",
-                           "en": "SdbSnapshotOption"
-						},
-                        {
-						   "id": 1533087921,
-                           "file": "SdbQueryOption",
-                           "cn": "SdbQueryOption",
-                           "en": "SdbQueryOption"
-						}
+                        }
                      ]
                   }
                ]
