@@ -242,6 +242,7 @@ function checkNodeHealth()
    var hasErrorNode = false;
    for(var i = 0; i < 600; i++ )
    {
+      hasErrorNode = false;
       var localNodes = db.snapshot( SDB_SNAP_HEALTH, new SdbSnapshotOption().sel({ServiceStatus:1,Status:1,NodeName:1}) ).toArray();
       for( var j in localNodes )
       {
@@ -289,6 +290,7 @@ function checkOneGroupPrimary( db, groupName )
    // wait group to select primary for 60000ms
    for(var i = 0; i < 600; i++ )
    {  
+      hasPrimary = false;
       // check primary at once
       var rc = db.exec( "select NodeName,IsPrimary from $SNAPSHOT_SYSTEM where GroupName='" + groupName + "'" );
       while( rc.next() )
