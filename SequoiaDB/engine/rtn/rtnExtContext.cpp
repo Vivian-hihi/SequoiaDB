@@ -586,7 +586,7 @@ namespace engine
       for ( EDP_VEC_ITR itr = _processorP1.begin(); itr != _processorP1.end(); )
       {
          (*itr)->doDropP1Cancel( cb, dpscb ) ;
-         _processorP1.erase( itr ) ;
+         itr = _processorP1.erase( itr ) ;
       }
 
       PD_TRACE_EXIT( SDB__RTNEXTDROPCSCTX__ONABORT ) ;
@@ -684,7 +684,7 @@ namespace engine
       for ( EDP_VEC_ITR itr = _processorP1.begin(); itr != _processorP1.end(); )
       {
          (*itr)->doDropP1Cancel( cb, dpscb ) ;
-         _processors.erase( itr ) ;
+         itr = _processorP1.erase( itr ) ;
       }
       PD_TRACE_EXIT( SDB__RTNEXTDROPCLCTX__ONABORT ) ;
       return SDB_OK ;
@@ -773,7 +773,7 @@ namespace engine
       for ( EDP_VEC_ITR itr = _processors.begin(); itr != _processors.end(); )
       {
          (*itr)->doDropP1Cancel( cb, dpscb ) ;
-         _processors.erase( itr ) ;
+         itr = _processors.erase( itr ) ;
       }
       PD_TRACE_EXIT( SDB__RTNEXTDROPIDXCTX__ONABORT ) ;
       return SDB_OK ;
@@ -867,7 +867,7 @@ namespace engine
             itr != _processors.end();)
       {
          (*itr)->doDropP1Cancel( cb, NULL ) ;
-         _processors.erase( itr ) ;
+         itr = _processors.erase( itr ) ;
       }
       goto done ;
    }
@@ -880,7 +880,7 @@ namespace engine
             itr != _processors.end(); )
       {
          (*itr)->doDropP1Cancel( cb, dpscb ) ;
-         _processors.erase( itr ) ;
+         itr = _processors.erase( itr ) ;
       }
       PD_TRACE_EXIT( SDB__RTNEXTTRUNCATECTX_ABORT ) ;
       return SDB_OK ;
