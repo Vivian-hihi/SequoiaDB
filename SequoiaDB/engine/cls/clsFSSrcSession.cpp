@@ -848,9 +848,9 @@ namespace engine
             _lsn.offset += header->_length ;
             _lsn.version = header->_version ;
 
-            /// Should update the begin lsn offset, because in notifyLSN
-            /// function's some case, the _beginLSNOffset is add zero len
-            /// for perfermance
+            /// We should update the begin lsn offset. Because in notifyLSN(),
+            /// when extLID is invalid, add ZERO to _beginLSNOffset for
+            /// perfermance
             if ( header->_lsn == _beginLSNOffset )
             {
                _beginLSNOffset += header->_length ;
