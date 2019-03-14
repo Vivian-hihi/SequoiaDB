@@ -3,7 +3,6 @@ package com.sequoias3.object;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -37,7 +36,6 @@ public class CreateObject16344 extends S3TestBase {
 	String bucketName = "bucket16344";
 	String keyName = "object16344";
 	private AmazonS3 s3Client = null;
-	private LinkedBlockingQueue<String> keyNames = new LinkedBlockingQueue<>();
 	private Random random = new Random();
 	private LinkedBlockingQueue<SaveEtagAndMd5> etag2md5 = new LinkedBlockingQueue<SaveEtagAndMd5>();	
 	private File localPath = null;
@@ -101,7 +99,6 @@ public class CreateObject16344 extends S3TestBase {
 					String currentName = keyName+ "." + i;
 					putObjResult = s3Client.putObject(bucketName, currentName, currContent);
 					etag2md5.offer(new SaveEtagAndMd5(currentName, putObjResult.getETag(), currmd5));
-					keyNames.add(currentName);
 				}
 			}finally{
 				if (s3Client != null) {
@@ -112,10 +109,10 @@ public class CreateObject16344 extends S3TestBase {
 	}
 	
 	private void checkCurrentObjectResult() throws Exception {
-		Assert.assertEquals(keyNames.size(), 10000, "keyNames size is wrong! ");
+		Assert.assertEquals(etag2md5.size(), 10000, "etag2md5 size is wrong! ");
 		for(int i = 0 ; i < 10000; i++){
-			String currentKeyName = keyNames.poll();
-			GetObjectRequest request = new GetObjectRequest(bucketName, currentKeyName);
+			SaveEtagAndMd5 expEtagAndMd5 = etag2md5.poll();
+			GetObjectRequest request = new GetObjectRequest(bucketName, expEtagAndMd5.getKeyName());
 			S3Object object = s3Client.getObject(request);
 			String actEtag = object.getObjectMetadata().getETag();
 			S3ObjectInputStream s3is = object.getObjectContent();		
@@ -124,35 +121,10 @@ public class CreateObject16344 extends S3TestBase {
 			ObjectUtils.inputStream2File(s3is,downloadPath);
 			s3is.close();
 	        String actMd5 = TestTools.getMD5(downloadPath);
-	        
-			String expEtagAndMd5[] = getEtagAndMd5ByKeyName(currentKeyName);
-			String expEtag = expEtagAndMd5[0];
-			String expMd5 = expEtagAndMd5[1];
 			
-			Assert.assertEquals(actEtag, expEtag, "etag is wrong , key name is:" + currentKeyName);
-			Assert.assertEquals(actMd5, expMd5, "MD5 is wrong , key name is:" + currentKeyName);
+			Assert.assertEquals(actEtag, expEtagAndMd5.getEtag(), "etag is wrong , key name is:" + expEtagAndMd5.getKeyName());
+			Assert.assertEquals(actMd5, expEtagAndMd5.getMd5(), "MD5 is wrong , key name is:" + expEtagAndMd5.getKeyName());
 		}
-	}
-	
-	private String[] getEtagAndMd5ByKeyName(String keyName){
-		Iterator<SaveEtagAndMd5> iterator = etag2md5.iterator();
-		boolean found = false;
-		String[] findEtagAndMd5 = new String[2];
-		while(iterator.hasNext()){
-			SaveEtagAndMd5 current = iterator.next();
-			String curkeyName = current.getKeyName();
-			if(curkeyName.equals(keyName)){
-				findEtagAndMd5[0] = current.getEtag();
-				findEtagAndMd5[1] = current.getMd5();
-				etag2md5.remove(current);
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			Assert.fail("keyName[" + keyName + "] not found");
-		}		
-		return findEtagAndMd5;
 	}
 	
 	private class SaveEtagAndMd5{
