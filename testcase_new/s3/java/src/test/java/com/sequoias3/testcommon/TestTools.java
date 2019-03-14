@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -224,7 +223,26 @@ public class TestTools {
 			}
 			return downloadPath;
 		}
+		
+		/**
+		 * create download path and file, by methodName and key
+		 */
+		public static String initDownloadPath(File localPath, String methodName, String key) throws Exception {
+			String downloadPath = null;
+			try {
+				int randomId = new Random().nextInt(10000);
+				String downLoadDir = localPath + File.separator + methodName;
+				createDir(downLoadDir);	
+				downloadPath = downLoadDir + File.separator + "key-" + key + "_" + System.currentTimeMillis()
+						+ "_" + randomId + ".lob";
+			} catch (Exception e) {
+				Assert.fail("downloadPath\n" + downloadPath);				
+			}
+			return downloadPath;
+		}
 	}
+	
+	
 
 	/**
 	 * get file's md5
