@@ -116,8 +116,7 @@ public class CreateObject16344 extends S3TestBase {
 			S3Object object = s3Client.getObject(request);
 			String actEtag = object.getObjectMetadata().getETag();
 			S3ObjectInputStream s3is = object.getObjectContent();		
-			String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
-					Thread.currentThread().getId());
+			String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(), expEtagAndMd5.getKeyName());
 			ObjectUtils.inputStream2File(s3is,downloadPath);
 			s3is.close();
 	        String actMd5 = TestTools.getMD5(downloadPath);
