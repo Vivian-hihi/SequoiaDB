@@ -34,6 +34,7 @@ public class CreateRegion17297 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String key = "key17297";
 	private AmazonS3 s3Client = null;
+	private int successConut = 0;
 
 	@BeforeClass
 	private void setUp() throws Exception {
@@ -53,7 +54,12 @@ public class CreateRegion17297 extends S3TestBase {
 
 		// create object on region
 		createObjectAndCheckResult(regionName, bucketName);
-		runSuccess = true;
+		
+		successConut++;
+		//after all 3 concurrent operations are successful,set runSuccess to true
+		if( successConut == 3 ){
+			runSuccess = true;
+		}		
 	}
 
 	@AfterClass
@@ -91,12 +97,14 @@ public class CreateRegion17297 extends S3TestBase {
 		s3Client.createBucket(bucketName, regionName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 		String context = "testcreatekeyonregion17297";
+		String expMd5 = TestTools.getMD5(context.getBytes());
 		for (int i = 0; i < 10; i++) {
 			s3Client.putObject(bucketName, key, context);
-			File localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+			File localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName() + bucketName );
+			//File localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName() );
 			String versionId = i + "";
-			String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key, versionId);
-			Assert.assertEquals(downfileMd5, TestTools.getMD5(context.getBytes()));
+			String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key, versionId);	
+			Assert.assertEquals(downfileMd5, expMd5,"the fail version is " + versionId + " bucket is "+ bucketName);
 			TestTools.LocalFile.removeFile(localPath);
 		}
 		s3Client.shutdown();
