@@ -8,7 +8,6 @@ package com.sequoiadb.transaction.rcwaitlock;
 import java.util.ArrayList;
 import java.util.List;
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -73,7 +72,7 @@ public class Transaction17159B extends SdbTestBase {
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         db1.rollback();
@@ -98,6 +97,7 @@ public class Transaction17159B extends SdbTestBase {
         private DBCollection cl = null;
         private DBCollection cl2 = null;
         private String hint = null;
+        private DBCursor cursor = null;
 
         public Read(String hint) {
             // TODO Auto-generated constructor stub
@@ -116,7 +116,7 @@ public class Transaction17159B extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                DBCursor cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{_id:1}", hint);
                 List<BSONObject> records = TransUtils.getReadActList(cursor);
                 setExecResult(records);
 
@@ -128,13 +128,14 @@ public class Transaction17159B extends SdbTestBase {
                 cursor = cl.query(null, null, "{_id:1}", hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), insertR1s);
 
-                db2.commit();
+                db2.rollback();
             } catch (BaseException e) {
                 e.printStackTrace();
                 throw e;
             } finally {
-                db2.rollback();
                 db2.close();
+                cursor.close();
+                db.close();
             }
         }
     }

@@ -67,8 +67,8 @@ public class Transaction17161 extends SdbTestBase {
         cl1.delete("{_id:2}", "{'':'a'}");
         // 事务1对不同记录执行多个操作
         cl1.insert(insertR2);
-        cl1.update("{_id:1}", "{$set:{a:'cccccccc'}}", "{'':'a'}");
-        cl1.delete("{_id:3}", "{'':'a'}");
+        cl1.update("{_id:1}", "{$set:{a:'cccccccc'}}", null);
+        cl1.delete("{_id:3}");
         BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:'cccccccc',b:'" + b1 + "'}");
         expList.add(updateR1);
         expList.add(insertR2);
@@ -115,6 +115,7 @@ public class Transaction17161 extends SdbTestBase {
         private DBCollection cl = null;
         private DBCollection cl2 = null;
         private String hint = null;
+        private DBCursor cursor = null;
 
         public Read(String hint) {
             // TODO Auto-generated constructor stub
@@ -133,7 +134,7 @@ public class Transaction17161 extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                DBCursor cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{_id:1}", hint);
                 List<BSONObject> records = TransUtils.getReadActList(cursor);
                 setExecResult(records);
 
@@ -150,7 +151,9 @@ public class Transaction17161 extends SdbTestBase {
                 e.printStackTrace();
                 throw e;
             } finally {
+                cursor.close();
                 db2.close();
+                db.close();
             }
         }
     }

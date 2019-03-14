@@ -8,7 +8,6 @@ package com.sequoiadb.transaction.rcwaitlock;
 import java.util.ArrayList;
 import java.util.List;
 import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -89,6 +88,7 @@ public class Transaction17166 extends SdbTestBase {
         private DBCollection cl = null;
         private DBCollection cl2 = null;
         private String hint = null;
+        private DBCursor cursor = null;
 
         public Read(String hint) {
             // TODO Auto-generated constructor stub
@@ -107,7 +107,7 @@ public class Transaction17166 extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                DBCursor cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{_id:1}", hint);
                 List<BSONObject> records = TransUtils.getReadActList(cursor);
                 setExecResult(records);
 
@@ -124,7 +124,9 @@ public class Transaction17166 extends SdbTestBase {
                 e.printStackTrace();
                 throw e;
             } finally {
+                cursor.close();
                 db2.close();
+                db.close();
             }
         }
     }

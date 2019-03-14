@@ -5,10 +5,8 @@ package com.sequoiadb.transaction.rcwaitlock;
  * @author xiaoni Zhao
  * @date 2019-1-22
  */
-import java.util.ArrayList;
 import java.util.List;
 import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -60,11 +58,11 @@ public class Transaction17168 extends SdbTestBase {
         Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, null, "{'':null}");
         Assert.assertTrue(TransUtils.getReadActList(cursor).isEmpty());
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl.query(null, null, null, "{'':'a'}");
         Assert.assertTrue(TransUtils.getReadActList(cursor).isEmpty());
 
         db1.commit();
@@ -89,6 +87,7 @@ public class Transaction17168 extends SdbTestBase {
         private DBCollection cl = null;
         private DBCollection cl2 = null;
         private String hint = null;
+        private DBCursor cursor = null;
 
         public Read(String hint) {
             // TODO Auto-generated constructor stub
@@ -107,16 +106,16 @@ public class Transaction17168 extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                DBCursor cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{_id:1}", hint);
                 List<BSONObject> records = TransUtils.getReadActList(cursor);
                 setExecResult(records);
 
                 // 事务2扫描记录
-                cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, null, hint);
                 Assert.assertTrue(TransUtils.getReadActList(cursor).isEmpty());
 
                 // 非事务扫描记录
-                cursor = cl.query(null, null, "{_id:1}", hint);
+                cursor = cl.query(null, null, null, hint);
                 Assert.assertTrue(TransUtils.getReadActList(cursor).isEmpty());
 
                 db2.commit();
@@ -124,7 +123,9 @@ public class Transaction17168 extends SdbTestBase {
                 e.printStackTrace();
                 throw e;
             } finally {
+                cursor.close();
                 db2.close();
+                db.close();
             }
         }
     }

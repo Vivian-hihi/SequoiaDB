@@ -96,6 +96,7 @@ public class Transaction17155B extends SdbTestBase {
         private DBCollection cl = null;
         private DBCollection cl2 = null;
         private String hint = null;
+        private DBCursor cursor = null;
 
         public Read(String hint) {
             // TODO Auto-generated constructor stub
@@ -114,16 +115,16 @@ public class Transaction17155B extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                DBCursor cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, null, hint);
                 List<BSONObject> records = TransUtils.getReadActList(cursor);
                 setExecResult(records);
 
                 // 事务2扫描记录
-                cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, null, hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
                 // 非事务扫描记录
-                cursor = cl.query(null, null, "{_id:1}", hint);
+                cursor = cl.query(null, null, null, hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
                 db2.rollback();
@@ -131,7 +132,9 @@ public class Transaction17155B extends SdbTestBase {
                 e.printStackTrace();
                 throw e;
             } finally {
+                cursor.close();
                 db2.close();
+                db.close();
             }
         }
     }

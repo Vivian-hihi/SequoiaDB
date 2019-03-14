@@ -60,7 +60,7 @@ public class Transaction17155C extends SdbTestBase {
         Assert.assertTrue(read1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 事务2索引扫描记录
-        Read read2 = new Read("{'':'a'}");
+        Read read2 = new Read("{'':'_id'}");
         read2.start();
         Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
@@ -69,7 +69,7 @@ public class Transaction17155C extends SdbTestBase {
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, null, "{'':'a'}");
+        cursor = cl.query(null, null, null, "{'':'_id'}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         expList.clear();
@@ -96,6 +96,7 @@ public class Transaction17155C extends SdbTestBase {
         private DBCollection cl = null;
         private DBCollection cl2 = null;
         private String hint = null;
+        private DBCursor cursor = null;
 
         public Read(String hint) {
             // TODO Auto-generated constructor stub
@@ -114,16 +115,16 @@ public class Transaction17155C extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                DBCursor cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, null, hint);
                 List<BSONObject> records = TransUtils.getReadActList(cursor);
                 setExecResult(records);
 
                 // 事务2扫描记录
-                cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, null, hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
                 // 非事务扫描记录
-                cursor = cl.query(null, null, "{_id:1}", hint);
+                cursor = cl.query(null, null, null, hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
                 db2.rollback();
@@ -131,7 +132,9 @@ public class Transaction17155C extends SdbTestBase {
                 e.printStackTrace();
                 throw e;
             } finally {
+                cursor.close();
                 db2.close();
+                db.close();
             }
         }
     }
