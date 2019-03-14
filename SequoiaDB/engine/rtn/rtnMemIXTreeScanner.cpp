@@ -69,6 +69,7 @@ namespace engine
      _cb(cb),
      _direction(predList->getDirection())
    {
+      INT32  rc = SDB_OK ;
       SDB_ASSERT ( indexCB && _predList && su,
                    "indexCB, predList and cb can't be NULL" ) ;
 
@@ -82,7 +83,14 @@ namespace engine
       _treeLatchHeld = FALSE;
       _initialized   = FALSE;
       _isValid       = FALSE;
-      _sharedInfo.init(sharedInfo);
+
+      if ( ( rc = _sharedInfo.init( (NULL == sharedInfo) ) ) != SDB_OK )
+      {
+         PD_LOG( PDERROR, 
+                 "Failed to create in memory tree scanner: %d", rc ) ;
+         throw pdGeneralException( rc, 
+                                   "Failed to create in memory tree scanner" ) ;
+      }
       _indexCB = SDB_OSS_NEW ixmIndexCB ( indexCB->getExtentID(), 
                                           su->index(), NULL );
       reset();
@@ -132,6 +140,7 @@ namespace engine
       oldVersionCB * oldVCB     = NULL;
       preIdxTree   * memIdxTree = NULL;
       globIdxID      gIdxID;
+      INT32          rc         = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__RTNMEMIXTREESCAN_INITMEMIXSCAN );
       SDB_ASSERT( pTransCB, "transCB can't be NULL" );
@@ -154,7 +163,13 @@ namespace engine
       _csID            = csID;
       _clID            = clID;
       _latchX          = latchX;
-      _sharedInfo.init(sharedInfo);
+      if ( ( rc = _sharedInfo.init( (NULL == sharedInfo) ) ) != SDB_OK )
+      {
+         PD_LOG( PDERROR, 
+                 "Failed to initialize in memory tree scanner: %d", rc ) ;
+         throw pdGeneralException( rc, 
+                                   "Failed to init in memory tree scanner" ) ;
+      }
 
       gIdxID._csID = csID;
       gIdxID._clID = clID;
@@ -827,7 +842,7 @@ the only way is to bring back the index CB and access the index definition page
       {
          dpsTransLockId lockId( _csID, _clID, &_savedRID );
          dpsTransLRBHeader * lrbHdr;
-         if( !_pTransCB->getLockMgrHandle()->getLRBHdrByLockId(
+         if( _pTransCB->getLockMgrHandle()->getLRBHdrByLockId(
                         lockId, lrbHdr )  &&
             (_curIndexIter->second.getLRBHdr() == lrbHdr) )
          {

@@ -373,6 +373,13 @@ namespace engine
             rtnIXScanner *scanner = ((dmsIXScanner*)pScanner)->getScanner() ;
             dmsRecordID rid ;
 
+            if ( !scanner )
+            {
+               rc = SDB_OOM ;
+               PD_RC_CHECK ( rc, PDERROR, 
+                             "Unable to allocate memory for index scanner:" ) ;
+            }
+
             if ( -1 == dir )
             {
                rid.resetMax () ;

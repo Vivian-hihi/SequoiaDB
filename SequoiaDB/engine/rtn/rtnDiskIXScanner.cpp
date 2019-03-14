@@ -61,20 +61,19 @@ namespace engine
      _cb(cb),
      _direction(predList->getDirection())
    {
+      INT32 rc = SDB_OK;
       SDB_ASSERT ( indexCB && _predList && _su,
                    "indexCB, predList and su can't be NULL" ) ;
 
       _type = SCANNER_TYPE_DISK;
-      if ( NULL != sharedInfo )
+      if ( (rc = _sharedInfo.init( ( NULL == sharedInfo ) ) ) != SDB_OK )
       {
-         _sharedInfo.init(sharedInfo);
-      }
-      else
-      {
-         INT32 rc = SDB_OK;
-         rc = _sharedInfo.init();
-         SDB_ASSERT( (rc == SDB_OK), "_sharedInfo init failed");
-      }
+         PD_LOG ( PDERROR, "Failed to create Disk IX Scanner: %d",
+                  rc ) ;
+         throw pdGeneralException( rc, "Failed to create Disk IX Scanner" ) ;
+      } 
+      SDB_ASSERT( (rc == SDB_OK), "_sharedInfo init failed");
+
       _eof = FALSE;
       indexCB->getIndexID ( _indexOID ) ;
       _indexCBExtent = indexCB->getExtentID () ;

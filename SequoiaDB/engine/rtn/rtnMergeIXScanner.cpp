@@ -52,20 +52,19 @@ namespace engine
                                 scannerSharedInfo * sharedInfo )
    : _order(Ordering::make(indexCB->keyPattern()))
    {
+      INT32  rc  = SDB_OK ;
       _direction = predList->getDirection();
       _firstRun = TRUE;
       _wasFromLeft = FALSE;
       _isValid = TRUE;
-      //_transLockwait = TRUE;  // default wait for lock
       _type = SCANNER_TYPE_MERGE;
-      if ( sharedInfo == NULL )
+
+      if ( ( rc = ( _sharedInfo.init( (NULL == sharedInfo) ) ) ) != SDB_OK )
       {
-         _sharedInfo.init();
+         PD_LOG( PDERROR, "Failed to create merge scanner: %d", rc ) ;
+         throw pdGeneralException( rc, "Failed to create merge scanner" ) ;
       }
-      else
-      {
-         _sharedInfo.init(sharedInfo);
-      }
+
       _savedRID.reset();
 #if SDB_INTERNAL_DEBUG
       PD_LOG ( PDDEBUG, "IX Merge Scanner created." );
@@ -85,6 +84,8 @@ namespace engine
                                      cb, &_sharedInfo );
       _rightIXScanner = f.getScanner( rtype, indexCB, predList, su,
                                       cb, &_sharedInfo );
+
+      // There was no memory allocation in above, so we shouldn't fail
       SDB_ASSERT ( _leftIXScanner && _rightIXScanner,
                    "Merge IX scanner creation failed" ) ;
    }
@@ -185,13 +186,15 @@ namespace engine
       // otherwise
       else
       {
-         if ( _wasFromLeft || !leftValid )
+         // need to check saved _lrid is valid or not because mem tree 
+         // scanner could show up after resume
+         if ( _wasFromLeft || !leftValid || !_lrid.isValid() )
          {
             // last index used was from left scanner, or left became invalid
             // after resume, we need to advance left
             rcl = _leftIXScanner->advance( _lrid ) ;
          }
-         if ( !_wasFromLeft || !rightValid )
+         if ( !_wasFromLeft || !rightValid || !_lrid.isValid() )
          {
             // last index used was from right scanner, or right became invalid
             // after resume, we need to advance right

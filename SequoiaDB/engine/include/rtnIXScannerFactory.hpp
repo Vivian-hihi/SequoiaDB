@@ -56,24 +56,33 @@ namespace engine
 			       scannerSharedInfo * sharedInfo = NULL )
       {
          rtnIXScanner *scanner = NULL;
-         switch (type) 
+         try
          {
-            case SCANNER_TYPE_DISK:
-                 scanner = SDB_OSS_NEW rtnDiskIXScanner( indexCB, predList,
-                                                      su, cb, sharedInfo ) ;
-                 break;
-            case SCANNER_TYPE_MEM_TREE:
-		 scanner = SDB_OSS_NEW rtnMemIXTreeScanner( indexCB, predList,
+            switch (type) 
+            {
+               case SCANNER_TYPE_DISK:
+                    scanner = SDB_OSS_NEW rtnDiskIXScanner( indexCB, predList,
                                                          su, cb, sharedInfo ) ;
-                 break;
-            case SCANNER_TYPE_MERGE:
-                 scanner = SDB_OSS_NEW rtnMergeIXScanner( indexCB, predList,
-                                                       su, cb, sharedInfo ) ;
-                 break;
-            default:
-                 scanner = NULL;
-                 break;
+                    break;
+               case SCANNER_TYPE_MEM_TREE:
+	            scanner = SDB_OSS_NEW rtnMemIXTreeScanner( indexCB, predList,
+                                                            su, cb, sharedInfo ) ;
+                    break;
+               case SCANNER_TYPE_MERGE:
+                    scanner = SDB_OSS_NEW rtnMergeIXScanner( indexCB, predList,
+                                                          su, cb, sharedInfo ) ;
+                    break;
+               default:
+                    scanner = NULL;
+                    break;
+            }
          }
+         catch( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Failed to get scanner: %s",
+                           e.what() ) ;
+            scanner = NULL;
+         } 
          return scanner;
       } 
    };

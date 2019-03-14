@@ -75,27 +75,29 @@ namespace engine
          this->free();
       }
 
-      INT32 init()
+      INT32 init( const BOOLEAN isLocal )
       {
          INT32 rc = SDB_OK;
-         _dedupBufferSize = RTN_IXSCANNER_DEDUPBUFSZ_DFT;
-         _dupBuffer = new dmsRecIDSet();
-         SDB_ASSERT( _dupBuffer, "_dupBuffer creation failed" );
-         if( _dupBuffer == NULL )
+         if ( isLocal )
          {
-            rc = SDB_OOM;
+            _dedupBufferSize = RTN_IXSCANNER_DEDUPBUFSZ_DFT;
+            _dupBuffer = new dmsRecIDSet();
+            SDB_ASSERT( _dupBuffer, "_dupBuffer creation failed" );
+            if( _dupBuffer == NULL )
+            {
+               rc = SDB_OOM;
+            }
+            _bufIsLocal = TRUE;
          }
-         _bufIsLocal = TRUE;
+         else
+         {
+            // when dupBuff is created in merge scan, don't store and do
+            // dedup in local scanner
+            _dedupBufferSize = 0;
+            _dupBuffer = NULL;
+            _bufIsLocal = FALSE;
+         }
          return rc;
-      }
-
-      void init( _scannerSharedInfo* sharedInfo )
-      {
-         // when dupBuff is created in merge scan, don't store and do
-         // dedup in local scanner
-         this->_dedupBufferSize = 0;
-         this->_dupBuffer = NULL;
-         this->_bufIsLocal = FALSE;
       }
 
       void free()
