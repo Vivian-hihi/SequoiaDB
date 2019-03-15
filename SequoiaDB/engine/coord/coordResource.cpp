@@ -1875,25 +1875,33 @@ namespace engine
       /// When collecton is main-cl, need to update all's sub-collections
       if ( tmpCataPtr->isMainCL() && tmpCataPtr->getSubCLCount() > 0 )
       {
-         CoordCataInfoPtr tmpPtr ;
-         try
+         if ( NULL != cataPtr.get()
+              && tmpCataPtr->getVersion() == cataPtr->getVersion() )
          {
-            obj = BSON( CAT_MAINCL_NAME << collectionName ) ;
+            // do nothing if version is same.
          }
-         catch( std::exception &e )
+         else
          {
-            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         rc = _updateCataInfo( obj, "", tmpPtr, cb ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Update collection[%s]'s all sub-collections "
-                    "catalog info failed, rc: %d", collectionName, rc ) ;
-            /// remove main-cl's cataloginfo
-            removeCataInfo( collectionName ) ;
-            goto error ;
+            CoordCataInfoPtr tmpPtr ;
+            try
+            {
+               obj = BSON( CAT_MAINCL_NAME << collectionName ) ;
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            rc = _updateCataInfo( obj, "", tmpPtr, cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Update collection[%s]'s all sub-collections "
+                       "catalog info failed, rc: %d", collectionName, rc ) ;
+               /// remove main-cl's cataloginfo
+               removeCataInfo( collectionName ) ;
+               goto error ;
+            }
          }
       }
 
@@ -2077,7 +2085,7 @@ namespace engine
             /// add to catalog map
             addCataInfo( tmpPtr ) ;
             /// set return
-            if ( isSpec && 
+            if ( isSpec &&
                  0 == ossStrcmp( collectionName, tmpPtr->getName() ) )
             {
                cataPtr = tmpPtr ;
