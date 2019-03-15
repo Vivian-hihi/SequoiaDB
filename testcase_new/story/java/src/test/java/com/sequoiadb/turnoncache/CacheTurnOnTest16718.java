@@ -35,8 +35,7 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 		};
 	}
 	
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@BeforeClass( enabled = false)
+	@BeforeClass
 	void init(){
 		try{
 			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -55,10 +54,12 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 		testCaseCSName += r.nextInt();
 		clName += r.nextInt();
 		
-		expectRes = "SDB_DMS_CS_NOTEXIST";
+		expectRes = "SDB_DMS_NOTEXIST";
+        if (isStandAlone()){
+            expectRes = "SDB_DMS_CS_NOTEXIST";
+        }
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@AfterMethod( enabled = false )
+	@AfterMethod
 	void clearCS(){
 		try{
 			if(db.isCollectionSpaceExist(testCaseCSName)){
@@ -183,15 +184,13 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 	    try {
 	        Thread.sleep(inteval);
 	    } catch (InterruptedException e) {
-	        // TODO Auto-generated catch block
 	        e.printStackTrace();
 	    }
 	    long end = System.currentTimeMillis() ;
 	    return end - start ;
 	}
 	
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@Test(dataProvider= "clientoption-provider", enabled = false)
+	@Test(dataProvider= "clientoption-provider")
 	void testCreateCS(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace  cs = createCS();
@@ -213,8 +212,7 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			}
 		}
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@Test(dataProvider= "clientoption-provider", enabled = false)
+	@Test(dataProvider= "clientoption-provider")
 	void testCreateCL(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -236,8 +234,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			}
 		}
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@Test(dataProvider= "clientoption-provider", enabled = false)
+	
+	@Test(dataProvider= "clientoption-provider")
 	void testCreateCLWithOptions(boolean enable, int inteval){
 		initClient(enable, inteval);
 		BSONObject options = new BasicBSONObject();
@@ -261,8 +259,7 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			}
 		}
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@Test(dataProvider= "clientoption-provider", enabled = false)
+	@Test(dataProvider= "clientoption-provider")
 	void testDropCS(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS();
@@ -275,8 +272,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 				new BaseException("SDB_DMS_CS_NOTEXIST").getErrorCode());
 		}
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@Test(dataProvider= "clientoption-provider", enabled =false)
+	
+	@Test(dataProvider= "clientoption-provider")
 	void testDropCL(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -291,8 +288,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 		}
 		dropCS(cs);
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@Test(dataProvider= "clientoption-provider", enabled = false)
+	
+	@Test(dataProvider= "clientoption-provider")
 	void testGetCSOfTimeOut(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS();
@@ -312,8 +309,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 					new BaseException("SDB_DMS_CS_NOTEXIST").getErrorCode());
 		}
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@Test(dataProvider= "clientoption-provider", enabled =false)
+	
+	@Test(dataProvider= "clientoption-provider")
 	void testGetCLOfTimeOut(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -349,8 +346,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 		}
 		return false;
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@Test(dataProvider= "clientoption-provider", enabled=false)
+	
+	@Test(dataProvider= "clientoption-provider")
 	void testGetCLAfterDropCS(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -362,8 +359,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			Assert.assertEquals(e.getErrorCode(), new BaseException(expectRes).getErrorCode());
 		}
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@Test(dataProvider= "clientoption-provider", enabled=false)
+	
+	@Test(dataProvider= "clientoption-provider")
 	void testUpdateTimeStamp(boolean enable, int inteval){
 		initClient(enable, inteval);
 		CollectionSpace cs = createCS(null);
@@ -400,8 +397,8 @@ public class CacheTurnOnTest16718 extends SdbTestBase{
 			}
 		}
 	}
-	//TODO:SEQUOIADBMAINSTREAM-3982
-	@AfterClass(enabled = false)
+	
+	@AfterClass
 	void fini(){
 		try{
 			if (db != null){
