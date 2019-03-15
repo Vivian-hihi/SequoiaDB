@@ -64,12 +64,11 @@ class Worker extends Thread {
     }
 
     private void waitForMyStep(MethodInfo sm) throws SchException {
-        if (es.getRunningStep() == sm.getStep()) {
-            return;
-        }
-
         try {
             synchronized (this) {
+                if (es.getRunningStep() == sm.getStep()) {
+                    return;
+                }
                 this.wait();
             }
 
