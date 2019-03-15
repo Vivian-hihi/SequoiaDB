@@ -577,44 +577,49 @@ TEST( turnonCache, getCSOfTimeOutandDropbyOtherConn )
 }
 
 // 删除cs后获取cs下的多个cl
-//TEST( turnonCache17281, getMulCLAfterDropCS)
-//{
-//   INT32 rc = SDB_OK ;
-//   sdbConnectionHandle db ;
-//   sdbCSHandle cs, cs1 ;
-//   sdbCollectionHandle cl[5], cl1[5] ;
-//   const CHAR* csName = "turnonCacheTestCs17281" ;
-//   CHAR clName[127] ;
-//   CHAR fullName[256] ;
+TEST( turnonCache17281, getMulCLAfterDropCS)
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle db ;
+   sdbCSHandle cs, cs1 ;
+   sdbCollectionHandle cl[5], cl1[5] ;
+   const CHAR* csName = "turnonCacheTestCs17281" ;
+   CHAR clName[127] ;
+   CHAR fullName[256] ;
+  
+   rc = connect( &db, 1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ; 
+   ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
    
-//   rc = connect( &db, 1 ) ;
-//   ASSERT_EQ( SDB_OK, rc ) ;
-//   rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ; 
-//   ASSERT_EQ( SDB_OK, rc ) << "fail to create cs " << csName ;
+   for( INT32 i = 0;i < 5;++i )
+   {
+      snprintf( clName, sizeof(clName), "%s%d", "turnonCacheTestCl17281", i ) ;
+      rc = sdbCreateCollection( cs, clName, &cl[i] ) ;
+      ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
+   }
    
-//   for( INT32 i = 0;i < 5;++i )
-//   {
-//      snprintf( clName, sizeof(clName), "%s%d", "turnonCacheTestCl17281", i ) ;
-//      rc = sdbCreateCollection( cs, clName, &cl[i] ) ;
-//      ASSERT_EQ( SDB_OK, rc ) << "fail to create cl " << clName ;
-//   }
+   rc = sdbDropCollectionSpace( db, csName ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
    
-//   rc = sdbDropCollectionSpace( db, csName ) ;
-//   ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs " << csName ;
-   
-//   INT32 expectRes = SDB_DMS_CS_NOTEXIST ;
-//   for( INT32 i = 0;i < 5;++i )
-//   {
-//      snprintf( fullName, sizeof(fullName), "%s.%s%d", csName, "turnonCacheTestCl17281", i ) ;
-//      rc = sdbGetCollection( db, fullName, &cl1[i] ) ;
-//      ASSERT_EQ( expectRes, rc ) << "fail to test get cl " << fullName ;
-//   }
+   INT32 expectRes = SDB_DMS_NOTEXIST ;
+   if( isStandalone( db ) )
+   {
+      expectRes = SDB_DMS_CS_NOTEXIST ;
+   }
+
+   for( INT32 i = 0;i < 5;++i )
+   {
+      snprintf( fullName, sizeof(fullName), "%s.%s%d", csName, "turnonCacheTestCl17281", i ) ;
+      rc = sdbGetCollection( db, fullName, &cl1[i] ) ;
+      ASSERT_EQ( expectRes, rc ) << "fail to test get cl " << fullName ;
+   }
  
-//   sdbDisconnect( db ) ;
-//   for( INT32 i = 0;i < 5;++i )
-//   {
-//      sdbReleaseCollection( cl[i] ) ;
-//   } 
-//   sdbReleaseCS( cs ) ;
-//   sdbReleaseConnection( db ) ;
-//}
+   sdbDisconnect( db ) ;
+   for( INT32 i = 0;i < 5;++i )
+   {
+      sdbReleaseCollection( cl[i] ) ;
+   } 
+   sdbReleaseCS( cs ) ;
+   sdbReleaseConnection( db ) ;
+}
