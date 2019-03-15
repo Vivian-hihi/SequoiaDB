@@ -409,20 +409,29 @@ namespace engine
 
    OSS_INLINE UINT32 _dpsTransLockId::lockIdHash() const
    {
-      CHAR data[14] ; // sizeof CSID, extentID, recordOffset, collectionID
+      UINT64 b = 0 ;
 
-      // construct lockId into a "string" 
-      *( ( UINT32* ) & ( data[ 0 ] ) )  = _logicCSID ; 
-      *( ( UINT32* ) & ( data[ 4 ] ) )  = _recordExtentID ;
-      *( ( UINT32* ) & ( data[ 8 ] ) )  = _recordOffset ;
-      *( ( UINT16* ) & ( data[ 12 ] ) ) = _collectionID ;
-   
+      if ( DMS_INVALID_OFFSET != _recordOffset )
+      {
+         // recordExtentID is unique within a CS, so no
+         // need to use collectionID
+         // 12 bits for CS, 24 bits for extentID, 28 bits for offset
+         b |= (UINT64)(_logicCSID & 0xFFF) << 52 ;
+         b |= (UINT64)(_recordExtentID & 0xFFFFFF) << 28 ;
+         b |= (_recordOffset & 0xFFFFFFF) ;
+      }
+      else
+      {
+         b |= (UINT64)(_logicCSID & 0xFFFFFFFF) << 32 ;
+         b |= (_collectionID & 0xFFFFFFF) ;
+      }
+
       // ossHash use DJB Hash ( Daniel J. Bernstein ) algorithm :
       //   h(i) = h(i-1) * 33 + str[i]
       // bitwise multiplication x << 5 + x it equivalent to x * 33,
       // where the magic 5 comes. However, there is no adequate
-      // explaination on why 33 is choosed as multiplier  
-      return ossHash( (CHAR*)&( data[0] ), (UINT32)(sizeof( data )), 5 ) ; 
+      // explaination on why 33 is choosed as multiplier
+      return ossHash( (CHAR*)&( b ), (sizeof( b )), 5 ) ;
    }
 
    OSS_INLINE BOOLEAN _dpsTransLockId::isLeafLevel() const
