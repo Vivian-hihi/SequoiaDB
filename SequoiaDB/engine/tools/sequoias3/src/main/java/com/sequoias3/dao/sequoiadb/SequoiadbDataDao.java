@@ -105,23 +105,38 @@ public class SequoiadbDataDao implements DataDao {
                 }
 
                 BSONObject option = null;
+                String regionName = null;
                 if (region != null && region.getDataDomain() != null){
                     option = new BasicBSONObject();
                     option.put("Domain", region.getDataDomain());
+                    regionName = region.getName();
                 }
 
                 if (!sdb.isCollectionSpaceExist(csName)) {
                     if(DBParamDefine.CREATE_OK == sdbDatasourceWrapper.createCS(sdb, csName, option)){
-                        sequoiadbRegionSpaceDao.insertRegionCSList(sdb, csName, region.getName());
+                        sequoiadbRegionSpaceDao.insertRegionCSList(sdb, csName, regionName);
                     }
                 }
-                sdbDatasourceWrapper.createCL(sdb, csName, clName, null);
+                BSONObject clOption = generateDataCLOption();
+                sdbDatasourceWrapper.createCL(sdb, csName, clName, clOption);
                 return createLob(sdb, csName, clName);
             } else {
                 logger.error("create lob failed. error:"+e);
                 throw e;
             }
         }
+    }
+
+    private BSONObject generateDataCLOption(){
+        BSONObject clOption = new BasicBSONObject();
+
+        BSONObject shardingKey = new BasicBSONObject("_id", 1);
+        clOption.put("ShardingKey", shardingKey);
+        clOption.put("ShardingType", "hash");
+        clOption.put("ReplSize", -1);
+        clOption.put("AutoSplit", true);
+
+        return clOption;
     }
 
     private DBLob createLob(Sequoiadb sdb, String csName, String clName){
