@@ -19,7 +19,7 @@
    </listeners>
 
    <!--The testcases of different configure should be placed in different <test> -->
-   <test name="rc" parallel="classes" thread-count="5">
+   <test name="rc">
       <groups>
          <run>
             <include name="rc" />
@@ -30,7 +30,7 @@
       </packages>
    </test>
 
-   <test name="ru" parallel="classes" thread-count="5">
+   <test name="ru">
       <groups>
          <run>
             <include name="ru" />
@@ -41,7 +41,7 @@
       </packages>
    </test>
 
-   <test name="rcwaitlock" parallel="classes" thread-count="5">
+   <test name="rcwaitlock">
       <groups>
          <run>
             <include name="rcwaitlock" />
