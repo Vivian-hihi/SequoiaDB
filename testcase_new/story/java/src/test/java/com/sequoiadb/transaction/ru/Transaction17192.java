@@ -109,7 +109,7 @@ public class Transaction17192 extends SdbTestBase {
 
         db2.commit();
 
-        cl.delete("{_id:1}", "{'':'a'}");
+        cl.delete("{a:1}");
 
         // 非事务表扫描记录
         cursor = cl.query(null, null, null, "{'':null}");

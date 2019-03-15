@@ -49,26 +49,24 @@ public class Transaction17198 extends SdbTestBase {
     @Test
     public void test() {
         // 集合中插入带索引的记录
-        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1,a:1,b:1}");
-        BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2,a:2,b:2}");
-        cl.insert(insertR1);
-        cl.insert(insertR2);
+        TransUtils.insertDatas(cl, 0, 10000, 0);
 
         db1.beginTransaction();
         db2.beginTransaction();
 
         // 事务1对同一条记录执行多个原子操作
-        BSONObject insertR3 = (BSONObject) JSON.parse("{_id:3,a:3,b:3}");
-        cl1.insert(insertR3);
-        cl1.update("{a:3}", "{$set:{a:33}}", "{'':'a'}");
-        cl1.delete("{a:33}", "{'':'a'}");
-        // 事务1对不同记录执行多个原子操作
-        cl1.insert(insertR3);
-        cl1.update("{_id:1}", "{$set:{a:11}}", "{'':'a'}");
-        cl1.delete("{_id:2}", "{'':'a'}");
-        BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:11,b:1}");
-        expList.add(updateR1);
-        expList.add(insertR3);
+        BSONObject insertR = (BSONObject) JSON.parse("{_id:20000,a:20000,b:20000}");
+        for(int i=0; i<10000; i++)
+        {
+            cl1.insert(insertR);
+            cl1.update("{a:20000}", "{$set:{a:20001}}", "{'':'a'}");
+            cl1.delete("{a:20001}", "{'':'a'}");
+            
+            cl1.delete("{_id:"+ i +"}");
+            cl1.insert((BSONObject) JSON.parse("{_id:"+ i +", a:"+ i +",b:"+ i +"}"));
+            cl1.update("{a:"+ i +"}","{$set:{a:"+ (i+10000) +"}}","{'':'a'}");
+            expList.add((BSONObject) JSON.parse("{_id:"+ i +", a:"+ (i+10000) +",b:"+ i +"}"));
+        }
 
         // 事务2表扫描记录
         cursor = cl2.query(null, null, "{_id:1}", "{'':null}");

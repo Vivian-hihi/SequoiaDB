@@ -48,34 +48,39 @@ public class Transaction17201 extends SdbTestBase {
 
     @Test
     public void test() {
-        String b1 = "b";
-        String b2 = "bb";
-        String b3 = "bbb";
+        String b = "b";
         for (int i = 0; i < 60 * 1024; i++) {
-            b1 = "aaaaaaaaaaaaaaaaaaaa" + b1;
-            b2 = "aaaaaaaaaaaaaaaaaaaa" + b2;
-            b3 = "aaaaaaaaaaaaaaaaaaaa" + b3;
+            b = "aaaaaaaaaaaaaaaaaaaa" + b;
         }
 
-        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1, a:'aaaaaa', b:'" + b1 + "'}");
-        cl.insert(insertR1);
+        // 集合中插入带索引的记录
+        List<BSONObject> insertR1s = new ArrayList<BSONObject>();
+        BSONObject insertR1 = null;
+        for(int i=0; i<10; i++)
+        {
+            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'aaaaaa', b:'" + b + "'}");
+            insertR1s.add(insertR1);
+        }
+        cl.insert(insertR1s);
 
         // 开启两个并发事务
         db1.beginTransaction();
         db2.beginTransaction();
 
         // 事务1执行多个操作
-        BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2, a:'aaaaaa', b:'" + b2 + "'}");
-        cl1.insert(insertR2);
-        cl1.insert("{_id:3, a:'aaaaaa', b:'" + b3 + "'}");
-        cl1.update("{_id:2}", "{$set:{a:'aaaaaaaaaa'}}", "{'':'a'}");
-        cl1.delete("{_id:2}", "{'':'a'}");
-        cl1.insert(insertR2);
-        cl1.update("{_id:1}", "{$set:{a:'aaaaaaaaaa'}}", "{'':'a'}");
-        cl1.delete("{_id:3}", "{'':'a'}");
-        BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:'aaaaaaaaaa',b:'" + b1 + "'}");
-        expList.add(updateR1);
-        expList.add(insertR2);
+        for(int i=0; i<10; i++){
+            BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'aaaaaaaa', b:'" + b + "'}");
+            // 事务1对同一条记录执行多个操作
+            cl1.insert(insertR2);
+            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'a'}}", null);
+            cl1.delete("{_id:"+ (10+i) +"}");
+            // 事务1对不同记录执行多个操作
+            cl1.delete("{_id:"+ i +"}");
+            cl1.insert(insertR2);
+            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'a'}}", null);
+            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'aaaaaaaa'}}", null);
+            expList.add(insertR2);
+        }
 
         // 事务2表扫描记录
         cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
@@ -106,27 +111,25 @@ public class Transaction17201 extends SdbTestBase {
         // 事务2表扫描记录
         cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
-        expList.clear();
-        expList.add(insertR1);
-        Assert.assertEquals(actList, expList);
+        Assert.assertEquals(actList, insertR1s);
         actList.clear();
 
         // 事务2索引扫描记录
         cursor = cl2.query(null, null, "{_id:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        Assert.assertEquals(actList, insertR1s);
         actList.clear();
 
         // 非事务表扫描记录
         cursor = cl.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        Assert.assertEquals(actList, insertR1s);
         actList.clear();
 
         // 非事务索引扫描记录
         cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        Assert.assertEquals(actList, insertR1s);
 
         db2.commit();
         cursor.close();

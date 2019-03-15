@@ -53,7 +53,7 @@ public class Transaction17207 extends SdbTestBase {
         db2.beginTransaction();
 
         // 事务1执行批量更新
-        cl1.update("{a:1}", "{$set:{a:2}}", null);
+        cl1.update("{a:1}", "{$set:{a:2}}", "{'':'a'}");
         expList = TransUtils.getUpdateDatas(0, 50000, 2);
 
         // 事务2表扫描记录

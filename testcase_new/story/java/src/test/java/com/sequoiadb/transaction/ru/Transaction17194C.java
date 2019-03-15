@@ -54,7 +54,7 @@ public class Transaction17194C extends SdbTestBase {
         db2.beginTransaction();
 
         // 记录新增索引字段
-        cl1.update("{_id:1}", "{$set:{a:3}}", "{'':null}");
+        cl1.update(null, "{$set:{a:3}}", "{'':'a'}");
         BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:3,b:1}");
         expList.add(updateR1);
 

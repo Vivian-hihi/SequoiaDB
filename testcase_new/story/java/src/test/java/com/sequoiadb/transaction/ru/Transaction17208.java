@@ -52,28 +52,28 @@ public class Transaction17208 extends SdbTestBase {
         db2.beginTransaction();
 
         // 事务1执行批量删除
-        cl1.delete("{a:1}");
+        cl1.delete("{a:1}","{'':'a'}");
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, "{a:1}", "{'':null}");
+        cursor = cl2.query(null, null, null, "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
+        cursor = cl2.query(null, null, null, "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':null}");
+        cursor = cl.query(null, null, null, "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
+        cursor = cl.query(null, null, null, "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();
@@ -81,25 +81,25 @@ public class Transaction17208 extends SdbTestBase {
         db1.commit();
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, "{a:1}", "{'':null}");
+        cursor = cl2.query(null, null, null, "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
+        cursor = cl2.query(null, null, null, "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':null}");
+        cursor = cl.query(null, null, null, "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
+        cursor = cl.query(null, null, null, "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();

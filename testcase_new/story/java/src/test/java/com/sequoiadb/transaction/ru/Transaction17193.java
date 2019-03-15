@@ -90,7 +90,6 @@ public class Transaction17193 extends SdbTestBase {
         actList.clear();
 
         // 事务2索引扫描记录
-        cl2.query();
         cursor = cl2.query(null, null, null, "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());

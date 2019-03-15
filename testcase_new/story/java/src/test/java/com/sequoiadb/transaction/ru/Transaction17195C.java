@@ -111,7 +111,6 @@ public class Transaction17195C extends SdbTestBase {
         Assert.assertEquals(actList, expList);
         actList.clear();
 
-        // 事务2提交
         db2.rollback();
         cursor.close();
     }
