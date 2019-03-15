@@ -119,7 +119,7 @@ namespace engine
    INT32 dpsTransLockManager::init()
    {
       INT32 rc = SDB_OK;
-      UINT32 initLRB  = pmdGetOptionCB()->transLRBPerSegment(),
+      UINT32 initLRB  = pmdGetOptionCB()->transLRBInit(),
              totalLRB = pmdGetOptionCB()->transLRBTotal(),
              roundUp  = ossNextPowerOf2( initLRB ) ;
 
@@ -138,9 +138,9 @@ namespace engine
       }
       PD_LOG( PDEVENT, 
               "Lock manager initializing"OSS_NEWLINE
-              "  LRBs per segment        : %u"OSS_NEWLINE
+              "  LRBs initial            : %u"OSS_NEWLINE
               "  LRBs Max                : %u"OSS_NEWLINE
-              "  LRB Headers per segment : %u"OSS_NEWLINE
+              "  LRB Headers initial     : %u"OSS_NEWLINE
               "  LRB Headers Max         : %u",
               roundUp, totalLRB, roundUp / 4, totalLRB ) ;
 
@@ -222,12 +222,15 @@ namespace engine
 
       SDB_ASSERT( pLRBHdr, "Invalid LRB Header pointer." ) ;
 #endif
+
+#if SDB_INTERNAL_DEBUG
       // debug code to track the guy freeing oldVer
       if ( pLRBHdr->oldVer.getOldRecord() != NULL )
       {
          PD_LOG ( PDDEBUG, "Freeing oldver while freeing LRBHdr for (%s).",
                   pLRBHdr->lockId.toString().c_str() );
       }
+#endif
 
       INT32 rc = _pLRBHdrMgr->release( pLRBHdr );
 
@@ -258,10 +261,9 @@ namespace engine
 
       SDB_ASSERT( pLRB, "Invalid LRB pointer." ) ;
 #endif
-      // release LRB
 
       // release LRB
-      INT32 rc = _pLRBMgr->release( pLRB );
+      INT32 rc = _pLRBMgr->release( pLRB ) ;
 
 #ifdef _DEBUG
       SDB_ASSERT( SDB_OK == rc, "Failed to release LRB" ) ;
@@ -1759,7 +1761,7 @@ namespace engine
 
    done:
 #ifdef _DEBUG
-      PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER_ACQUIRE, rc ) ;
+      PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER_PREPARENEWLRBANDHEADER, rc ) ;
 #endif
       return rc ;
    error :
@@ -2902,9 +2904,9 @@ namespace engine
          delta.convertToTime( factor, seconds, microseconds ) ;
  
          ossSnprintf( pBuf, bufSz,
-            "LRB: %u, EDU: %llu, dpsTxExectr: %p, "
-            "eduLrbNext: %u, eduLrbPrev: %u, "
-            "lrbHdr: %u, nextLRB: %u "
+            "LRB: %x, EDU: %llu, dpsTxExectr: %p, "
+            "eduLrbNext: %x, eduLrbPrev: %x, "
+            "lrbHdr: %x, nextLRB: %x "
             "refCounter: %llu, lockMode: %s, duration: %llu",
             _pLRBMgr->getIndexByAddr( pLRB ),
             pLRB->dpsTxExectr->getEDUID(), pLRB->dpsTxExectr,
@@ -2949,22 +2951,22 @@ namespace engine
                                "%sEDU          : %llu"OSS_NEWLINE, pStr,
                                pLRB->dpsTxExectr->getEDUID() ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sLRB          : %u"OSS_NEWLINE, pStr,
+                               "%sLRB          : %x"OSS_NEWLINE, pStr,
                                _pLRBMgr->getIndexByAddr( pLRB )) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%sdpsTxExectr  : %p"OSS_NEWLINE, pStr,
                                pLRB->dpsTxExectr ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%seduLrbNext   : %u"OSS_NEWLINE, pStr,
+                               "%seduLrbNext   : %x"OSS_NEWLINE, pStr,
                                _pLRBMgr->getIndexByAddr( pLRB->eduLrbNext )) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%seduLrbPrev   : %u"OSS_NEWLINE, pStr,
+                               "%seduLrbPrev   : %x"OSS_NEWLINE, pStr,
                                _pLRBMgr->getIndexByAddr( pLRB->eduLrbPrev )) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%slrbHdr       : %u"OSS_NEWLINE, pStr,
+                               "%slrbHdr       : %x"OSS_NEWLINE, pStr,
                                _pLRBHdrMgr->getIndexByAddr( pLRB->lrbHdr )) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%snextLRB      : %u"OSS_NEWLINE, pStr,
+                               "%snextLRB      : %x"OSS_NEWLINE, pStr,
                                _pLRBMgr->getIndexByAddr( pLRB->nextLRB )) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%srefCounter   : %llu"OSS_NEWLINE, pStr,
@@ -2993,8 +2995,8 @@ namespace engine
       if ( pLRBHdr )
       {
          ossSnprintf( pBuf, bufSz,
-          "LRB Header: %u, nextLRBHdr: %u, "
-          "ownerLRB: %u, waiterLRB : %u, upgradeLRB: %u, "
+          "LRB Header: %x, nextLRBHdr: %x, "
+          "ownerLRB: %x, waiterLRB : %x, upgradeLRB: %x, "
           "lockId: ( %s )",
           _pLRBHdrMgr->getIndexByAddr(pLRBHdr),
           _pLRBHdrMgr->getIndexByAddr(pLRBHdr->nextLRBHdr),
@@ -3024,19 +3026,19 @@ namespace engine
       if ( pLRBHdr )
       {
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sLRB Header : %u"OSS_NEWLINE, pStr,
+                               "%sLRB Header : %x"OSS_NEWLINE, pStr,
                                _pLRBHdrMgr->getIndexByAddr(pLRBHdr)) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%snextLRBHdr : %u"OSS_NEWLINE, pStr,
+                               "%snextLRBHdr : %x"OSS_NEWLINE, pStr,
                               _pLRBHdrMgr->getIndexByAddr(pLRBHdr->nextLRBHdr));
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sownerLRB   : %u"OSS_NEWLINE, pStr,
+                               "%sownerLRB   : %x"OSS_NEWLINE, pStr,
                                _pLRBMgr->getIndexByAddr(pLRBHdr->ownerLRB));
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%swaiterLRB  : %u"OSS_NEWLINE, pStr,
+                               "%swaiterLRB  : %x"OSS_NEWLINE, pStr,
                                _pLRBMgr->getIndexByAddr(pLRBHdr->waiterLRB));
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%supgradeLRB : %u"OSS_NEWLINE, pStr,
+                               "%supgradeLRB : %x"OSS_NEWLINE, pStr,
                                _pLRBMgr->getIndexByAddr(pLRBHdr->upgradeLRB));
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%slockId     : ( %s )"OSS_NEWLINE, pStr,

@@ -41,102 +41,131 @@
 #define UTIL_SEGMENT_HPP__
 
 #include <vector>
-#include "ossLatch.hpp"  // ossSpinXLatch
+#include "ossLatch.hpp"
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
+#include "ossAtomic.hpp"
 
 typedef UINT32 UTIL_OBJIDX ;
-
-// using namespace std ;
 #define UTIL_INVALID_OBJ_INDEX   (( UTIL_OBJIDX )( -1 ))
 
 namespace engine
 {
-#pragma pack(4)
+// Segment pool 0 :
+//
+//    segment 0: a segment is an array of object ( T )
+//      +-------------+-------------+   +-------------+
+//      | obj 0       | obj 1       |...| obj n - 1   |
+//      +-------------+-------------+   +-------------+
+//
+//    segment 1:
+//      +-------------+-------------+   +-------------+
+//      | obj n+0     | obj n+1     |...| obj n+n-1   |
+//      +-------------+-------------+   +-------------+
+//
+//      ...
+//
+//    segment m:
+//      +-------------+-------------+   +-------------+
+//      | obj m*n + 0 | obj m*n + 1 |...| obj m*n+n-1 |
+//      +-------------+-------------+   +-------------+
+//
+//    _list: an array of index ( object index in segments )
+//
+//       0     1    2    3          m*n + n-1
+//      +----+----+----+----+      +----+
+//      | -1 | -1 |  2 | 73 | ...  | 28 |
+//      +----+----+----+----+      +----+
+//                  ^
+//                  |
+//                 _begin
+//
+//    _begin     : the position in _list where to acquire a free object 
+//    _begin - 1 : the position in _list where to release/return an object
 //
 //
-// segment 0: a segment is an array of object ( T )
-//   +-------------+-------------+   +-------------+
-//   | obj 0       | obj 1       |...| obj n - 1   |
-//   +-------------+-------------+   +-------------+
+// Segment pool 1 :
 //
-// segment 1:
-//   +-------------+-------------+   +-------------+
-//   | obj n+0     | obj n+1     |...| obj n+n-1   |
-//   +-------------+-------------+   +-------------+
+// ...
 //
-//   ...
+// Segment pool 15
 //
-// segment m:
-//   +-------------+-------------+   +-------------+
-//   | obj m*n + 0 | obj m*n + 1 |...| obj m*n+n-1 |
-//   +-------------+-------------+   +-------------+
 //
-// _list: an array of index ( object index in segments )
-//
-//    0     1    2    3          m*n + n-1
-//   +----+----+----+----+      +----+
-//   | -1 | -1 |  2 | 73 | ...  | -1 |
-//   +----+----+----+----+      +----+
-//               ^
-//               |
-//              _begin
-//
-// _begin: the position in _list where to acquire a free object 
-// _begin-1 : the position in _list where to release/return an object
+// segments are logically organized by pools, each segment contains same number
+// of objects. Each object has a unique id, object index, a 32bit unsigned
+// integer. The high 4 bits of the object index reprsents the pool number,
+// while the lower 28 bits is object number within that pool.
+// 
 
-#ifdef _DEBUG
-   #define _SEGMENT_OBJ_EYE_CATCHER    ( ( UINT32 ) 0xBEEFCAFE )
-   #define _SEGMENT_OBJ_FLAG_ACQUIRED  ( ( UINT32 ) 0x0F0F     )
-   #define _SEGMENT_OBJ_FLAG_RELEASED  ( ( UINT32 ) 0xF0F0     )
-#endif
+   // max number of segment pool, shall be power of 2
+   #define _SEGMENT_MGR_MAX_POOLS      ( ( UINT32 ) 16 )
+   // masks for bitwise operations on object index correlated with pool number
+   #define _SEGMENT_OBJ_INDEX_MASK     ( ( UINT32 ) 0x0FFFFFFF )
+   #define _SEGMENT_OBJ_POOL_MASK      ( ( UINT32 ) 0xF0000000 )
+   #define _SEGMENT_OBJ_POOLID_SHIFT  ( 28 )
+
+   #define _SEGMENT_OBJ_EYE_CATCHER    ( ( UINT16 ) 0xBEEF )
+   #define _SEGMENT_OBJ_FLAG_ACQUIRED  ( ( UINT16 ) 0x5555 )
+   #define _SEGMENT_OBJ_FLAG_RELEASED  ( ( UINT16 ) 0xAAAA )
 
    #define IS_VALID_SEG_OBJ_INDEX( _objectIndex_ ) \
       ( UTIL_INVALID_OBJ_INDEX != _objectIndex_ )
 
+   // obtain the container _objX address from an obj ptr
+   #define _GET_OBJX_ADDRESS( _p_ )       ((CHAR*)( _p_ ) - 8)
+   // get the _objX._index address from an _objX ptr
+   #define _GET_OBJX_INDEX_OFFSET( _p_ )  ((CHAR*)( _p_ ) + 4)
+
+   #define _GET_PACKED_POOLID( _pool_ ) \
+             (( _pool_ << _SEGMENT_OBJ_POOLID_SHIFT ) & _SEGMENT_OBJ_POOL_MASK )
+
+   #define _GET_UNPACKED_POOLID( _idx_ ) \
+             (( _idx_ & _SEGMENT_OBJ_POOL_MASK ) >> _SEGMENT_OBJ_POOLID_SHIFT )
+
+
    template < class T >
-   class _utilSegmentManager : public SDBObject
+   class _utilSegmentPool : public SDBObject
    {
    private :
       struct _objX : public SDBObject
       {
-#ifdef _DEBUG
-         UINT32 _eyeCatcher ;
-         UINT32 _flag ;
-
+         UINT16      _eyeCatcher ;
+         UINT16      _flag ;
+         UTIL_OBJIDX _index ;
+         T           _obj ;
          _objX()
          {
             _eyeCatcher = _SEGMENT_OBJ_EYE_CATCHER ;
             _flag       = _SEGMENT_OBJ_FLAG_RELEASED ;
+            _index      = UTIL_INVALID_OBJ_INDEX ;
          }
-#endif
-         T      _obj ;
       } ;
 
-      UTIL_OBJIDX *  _list  ;         // a list of obj indices to a segment
-      UTIL_OBJIDX    _begin ;         // the position in list where acquire from
-      UTIL_OBJIDX    _numOfObjs ;     // total number of objects
-      UTIL_OBJIDX    _delta ;         // number of objects in a segment
-      UTIL_OBJIDX    _maxNumOfObjs ;  // max number of objects
-      UTIL_OBJIDX    _acquiredCounter;// acquired objects counter
-      UTIL_OBJIDX    _exponent ;      // exponent when round up to power of 2
+      UTIL_OBJIDX *  _list  ;         // a list/array of obj indices
+      UINT32         _begin ;         // the position in list where acquire from
+      UINT32         _delta ;         // number of objects in a segment
+      ossAtomic32    _numOfObjs ;     // total number of objects in this pool
+      UINT32         _maxNumOfObjs ;  // max number of objects in this pool
+      UINT32         _acquiredCounter;// acquired objects counter
+      UINT32         _exponent ;      // exponent when round up to power of 2
+      UINT32         _poolId  ;       // pool ID
+      BOOLEAN        _isInitialized ;
       ossSpinXLatch  _latch ;
       std::vector< _objX * > _segList;// a list of segments, each segment is
                                       // an array of object(T)
-      BOOLEAN        _isInitialized ;
-
    public :
-      _utilSegmentManager() : _list(NULL),
-                              _begin(0),
-                              _numOfObjs(0),
-                              _delta(0),
-                              _maxNumOfObjs(0),
-                              _acquiredCounter(0),
-                              _exponent(0),
-                              _isInitialized( FALSE )
-                              { }
+      _utilSegmentPool() : _list(NULL),
+                           _begin(0),
+                           _delta(0),
+                           _numOfObjs(0),
+                           _maxNumOfObjs(0),
+                           _acquiredCounter(0),
+                           _exponent(0),
+                           _poolId(0),
+                           _isInitialized( FALSE )
+                           { }
 
-      ~_utilSegmentManager() ;
+      ~_utilSegmentPool() ;
 
    private :
       //
@@ -144,7 +173,7 @@ namespace engine
       //              when no free objects
       // Input      : none
       // Return     : SDB_OK               -- normal
-      //              SDB_OSS_UP_TO_LIMIT  -- exceed resource max threshold
+      //              SDB_OSS_UP_TO_LIMIT  -- exceeds resource max threshold
       //              SDB_OOM              -- out of memory
       // Dependency : this function is called by acquire() only; and the caller
       //              shall make sure the operation is protected by latch
@@ -153,14 +182,14 @@ namespace engine
       //
       // Description: check if need to expand before acquire an free object
       // Input      : none
-      // Return     : TRUE   --  yes, need to expand
-      //              FALSE  --  no, acquire operation can proceed
+      // Return     : TRUE   -- need to expand
+      //              FALSE  -- no need to expand, acquire operation can proceed
       // Dependency : this function is called by acquire() only; the caller
       //              shall acquire the latch first.
       //
       OSS_INLINE BOOLEAN _isFull() const
       {
-         return _numOfObjs - 1 <= _acquiredCounter ? TRUE : FALSE ;
+         return ( _numOfObjs.peek() - 1 ) <= _acquiredCounter ? TRUE : FALSE ;
       }
 
       //
@@ -169,12 +198,12 @@ namespace engine
       // Input      : none
       // Return     : TRUE
       //              FALSE
-      // Dependency : this function is called by acquire() only, which shall
-      //              acquire the latch first. 
+      // Dependency : this function is called by acquire() only; the caller
+      //              shall acquire the latch first.
       //
       OSS_INLINE BOOLEAN _isUpToLimit() const
       {
-         return _numOfObjs >= _maxNumOfObjs ? TRUE : FALSE ;
+         return _numOfObjs.peek() >= _maxNumOfObjs ? TRUE : FALSE ;
       }
 
       //
@@ -189,26 +218,21 @@ namespace engine
       //              
       OSS_INLINE _objX * _getObjXByIndex( const UTIL_OBJIDX idx )
       {
-         _objX * pObj     = NULL ;
-         _objX * pSegList = NULL ;
-         UTIL_OBJIDX i    = 0 ;
-         UTIL_OBJIDX j    = 0 ;
+         _objX * pObj      = NULL ;
+         UTIL_OBJIDX index = ( idx & _SEGMENT_OBJ_INDEX_MASK ) ;
+
 #ifdef _DEBUG
-         SDB_ASSERT( ( idx < _numOfObjs ) && IS_VALID_SEG_OBJ_INDEX( idx ),
-                     "Invalid object index." ) ;
+         if ( IS_VALID_SEG_OBJ_INDEX( idx ) && ( index < _numOfObjs.fetch() ) )
 #endif
-         if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
          {
             // i = idx / _delta ;
             // j = idx % _delta ;
             // the _delta is round up to nearest power of 2,
             // so divide and modulo can be optimized
-            i = idx >> _exponent ;
-            j = idx & ( _delta - 1 ) ;
-            pSegList = ( _objX * )( _segList[i] ) ;
+            _objX * pSegList = ( _objX * )( _segList[ index >> _exponent ] ) ;
             if ( pSegList )
             {
-               pObj  = ( _objX * )&( pSegList[j] ) ;
+               pObj  = ( _objX * )&( pSegList[ index & ( _delta - 1 ) ] ) ;
             }
          }
          return pObj ;
@@ -221,9 +245,9 @@ namespace engine
       //     exponent -- exponent when round n up to the nearest power of 2
       // return:
       //   round up to nearest power of 2
-      UTIL_OBJIDX _nextPowerOf2( UTIL_OBJIDX n, UTIL_OBJIDX & exponent )
+      UINT32 _nextPowerOf2( UINT32 n, UINT32 & exponent )
       {
-         UTIL_OBJIDX result = 0 ;
+         UINT32 result = 0 ;
          BOOLEAN isPowerOf2 = FALSE ;
          exponent = 0 ;
          if ( ( n > 0 ) && ( ! ( n & ( n - 1 ) ) ) )
@@ -255,6 +279,7 @@ namespace engine
       //               . fill the object index array, _list,
       //                 with index of the newly allocated object 
       // Input      :
+      //              poolId          -- pool id
       //              numberOfObjs    -- number of objects in a segment
       //              maxNumberOfObjs -- max number of objects, the max thresold
       //
@@ -264,8 +289,9 @@ namespace engine
       // Dependency : this function shall be called one time only, and before
       //              any other function of this class.
       //
-      INT32 init( const UTIL_OBJIDX numberOfObjs,
-                  const UTIL_OBJIDX maxNumberOfObjs ) ;
+      INT32 init(  const UINT32 poolId,
+                   const UINT32 numberOfObjs,
+                   const UINT32 maxNumberOfObjs ) ;
 
       //
       // Description: Free all objects allocated in segments and the object
@@ -278,16 +304,10 @@ namespace engine
       void fini() ;
 
       //
-      // Description: peek total number of objects without latch
-      // Return     : total number of objects in segments
-      //
-      UTIL_OBJIDX getNumOfObjectsNoSync() ;
-
-      //
       // Description: get total number of objects in segments
       // Return     : total number of objects in segments
       //
-      UTIL_OBJIDX getNumOfObjects() ;
+      UINT32 getNumOfObjects() ;
 
       //
       // Description: get an object's address by its index
@@ -297,7 +317,7 @@ namespace engine
       // Dependency : this function shall be called after the class is
       //              initialized. It expects an correct index, i.e.,
       //              idx < _numOfObjs
-      OSS_INLINE T * getObjPtrByIndex( const UTIL_OBJIDX idx ) ;
+      T * getObjPtrByIndex( const UTIL_OBJIDX idx ) ;
 
       //
       // Description: get an object's index by its address
@@ -377,14 +397,28 @@ namespace engine
 
    // get an object's index by its address
    template < class T >
-   UTIL_OBJIDX _utilSegmentManager< T >::getIndexByAddr( const T * pT )
+   OSS_INLINE UTIL_OBJIDX _utilSegmentPool< T >::getIndexByAddr( const T * pT )
    {
       UTIL_OBJIDX idx  = UTIL_INVALID_OBJ_INDEX ;
 
       if ( NULL != pT )
       {
-         UTIL_OBJIDX segs = _segList.size() ;
+         _objX * pObjX = ( _objX * )_GET_OBJX_ADDRESS( pT ) ;
+         if ( pObjX &&
+              ( _SEGMENT_OBJ_EYE_CATCHER == pObjX->_eyeCatcher ) &&
+              ( ( pObjX->_index & _SEGMENT_OBJ_POOL_MASK ) == 
+                 _GET_PACKED_POOLID( _poolId ) ) )
+         {
+            idx = pObjX->_index ;
+         }
+
+#ifdef _DEBUG
+         // verify the index
+         UINT32  packedPoolID = _GET_PACKED_POOLID( _poolId ) ;
+         UTIL_OBJIDX index = UTIL_INVALID_OBJ_INDEX ;
+         UINT32 segs       = _segList.size() ;
          _objX  * pSegList = NULL ;
+
          for ( UTIL_OBJIDX i = 0; i < segs ; i++ )
          {
             pSegList = _segList[ i ] ;
@@ -392,23 +426,29 @@ namespace engine
                  && ( pT >= &( pSegList[ 0 ]._obj ) )
                  && ( pT <= &( pSegList[ _delta - 1 ]._obj ) ) )
             {
-               idx = i * _delta + 
+               index = i * _delta + 
                      ((CHAR*)pT - (CHAR*)&(pSegList[0]._obj)) / sizeof( _objX );
+               index = ( ( index & _SEGMENT_OBJ_INDEX_MASK ) | packedPoolID ) ;
+
+               SDB_ASSERT( ( index == idx ),
+                           "Verification failed, invalid address." ) ;
                break ;
             }
          }
+#endif
+
       }
       return idx ; 
    }
 
    // Free all objects allocated in segments and the object index array, _list
    template < class T >
-   void _utilSegmentManager< T >::fini()
+   void _utilSegmentPool< T >::fini()
    {
       if ( _isInitialized )
       {
-         UTIL_OBJIDX len = _segList.size() ;
-         for ( UTIL_OBJIDX i = 0; i < len ; i++ )
+         UINT32 len = _segList.size() ;
+         for ( UINT32 i = 0; i < len ; i++ )
          {
             if ( _segList[i] )
             {
@@ -424,7 +464,7 @@ namespace engine
    }
 
    template < class T >
-   _utilSegmentManager< T >::~_utilSegmentManager() 
+   _utilSegmentPool< T >::~_utilSegmentPool() 
    {
       if ( _isInitialized )
       {
@@ -434,12 +474,14 @@ namespace engine
 
    // allocate a new segment of objects and expand the _list
    template < class T >
-   INT32 _utilSegmentManager< T >::_expandList()
+   INT32 _utilSegmentPool< T >::_expandList()
    {
       INT32         rc       = SDB_OK ;
       UTIL_OBJIDX * pListTmp = NULL ;
       _objX       * pSegTmp  = NULL ;
-      UTIL_OBJIDX   newSize  = _numOfObjs + _delta ;
+      UINT32    numOfObjects = _numOfObjs.peek() ;
+      UINT32    newSize      = numOfObjects + _delta ;
+      UINT32    packedPoolID = _GET_PACKED_POOLID( _poolId ) ;
 
 #ifdef _DEBUG
       SDB_ASSERT( _isInitialized,
@@ -457,17 +499,20 @@ namespace engine
          if ( ( NULL != pListTmp ) && ( NULL != pSegTmp ) )
          {
             // copy old _list content
-            ossMemcpy( pListTmp, _list, sizeof( UTIL_OBJIDX ) * _numOfObjs ) ;
+            ossMemcpy( pListTmp, _list, sizeof( UTIL_OBJIDX ) * numOfObjects ) ;
 
             // initiate the newly allocated portion
-            for ( UTIL_OBJIDX i = 0 ; i < _delta ; i++ )
+            for ( UINT32 i = 0 ; i < _delta ; i++ )
             {
                // initialize the list
-               pListTmp[ _numOfObjs + i ] = _numOfObjs + i;
+               pListTmp[ numOfObjects + i ] = numOfObjects + i ;
+               // initialize the _objX
+               pSegTmp[i]._index =
+               (((numOfObjects + i) & _SEGMENT_OBJ_INDEX_MASK) | packedPoolID) ;
             }
 
             // set _numOfObjs to new size
-            _numOfObjs = newSize ;
+            _numOfObjs.swap( newSize ) ;
 
             // discard old _list
             SAFE_OSS_FREE( _list ) ;
@@ -476,7 +521,7 @@ namespace engine
             _list = pListTmp ;
 
             // add new segment to segment list
-            _segList.push_back( pSegTmp );
+            _segList.push_back( pSegTmp ) ;
          }
          else
          {
@@ -511,52 +556,64 @@ namespace engine
    //   numberOfObjs     -- number of objects in a segment
    //   maxNumberOfObjs  -- max number of objects 
    template < class T >
-   INT32 _utilSegmentManager< T >::init
+   INT32 _utilSegmentPool< T >::init
    (
-      const UTIL_OBJIDX numberOfObjs,
-      const UTIL_OBJIDX maxNumberOfObjs
+      const UINT32 poolId,
+      const UINT32 numberOfObjs,
+      const UINT32 maxNumberOfObjs
    )
    {
-      INT32   rc      = SDB_OK ;
-      _objX * pSegTmp = NULL ;
+      INT32   rc           = SDB_OK ;
+      _objX * pSegTmp      = NULL ;
+      UINT32  packedPoolID = _GET_PACKED_POOLID( poolId ) ;
 
       if (    ( UTIL_INVALID_OBJ_INDEX != numberOfObjs )
            && ( UTIL_INVALID_OBJ_INDEX != maxNumberOfObjs )
+           && ( _SEGMENT_OBJ_INDEX_MASK >= maxNumberOfObjs )
+           && ( _SEGMENT_MGR_MAX_POOLS > poolId ) 
            && ( 0 != numberOfObjs )
            && ( 0 != maxNumberOfObjs )
            && ( numberOfObjs <= maxNumberOfObjs ) )
       {
          // round up numberOfObjs to the nearest power of 2
          _delta        = _nextPowerOf2( numberOfObjs, _exponent ) ;
-         _numOfObjs    = _delta ;
+         _numOfObjs.swap( _delta ) ;
          _maxNumOfObjs = maxNumberOfObjs ;
-
-         SDB_ASSERT( ( _maxNumOfObjs >= _delta ),
-                     "Invalid arguments, maxNumberOfObjs value is too small." );
+         _poolId       = poolId ;
 
          if ( _maxNumOfObjs < _delta )
          {
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            _maxNumOfObjs = _delta ;
          }
       }
       else
       {
          rc = SDB_INVALIDARG ;
+         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+                 "Failed initialize due to invalid arguments, rc:%d"OSS_NEWLINE
+                 "   pool            : %u"OSS_NEWLINE
+                 "   numberOfObjs    : %u"OSS_NEWLINE
+                 "   maxNumberOfObjs : %u"OSS_NEWLINE,
+                 rc,
+                 _poolId,
+                 numberOfObjs,
+                 maxNumberOfObjs ) ;
          SDB_ASSERT( ( SDB_OK == rc ), "Invalid arguments" ) ;
          goto error ;
       }
 
       // allcoate memory
-      pSegTmp = SDB_OSS_NEW _objX[ _numOfObjs ] ;
-      _list = (UTIL_OBJIDX *)SDB_OSS_MALLOC( sizeof(UTIL_OBJIDX) * _numOfObjs );
+      pSegTmp = SDB_OSS_NEW _objX[ _delta ] ;
+      _list = (UTIL_OBJIDX *)SDB_OSS_MALLOC( sizeof(UTIL_OBJIDX) * _delta ) ;
       if ( ( NULL != _list ) && ( NULL != pSegTmp ) )
       {
          _begin = 0 ;
-         for ( UTIL_OBJIDX i = 0 ; i < _numOfObjs ; i++ )
+         for ( UINT32 i = 0 ; i < _delta ; i++ )
          {
             // initialize the list
             _list[ i ] = i ;
+            // initialize the _objX
+            pSegTmp[i]._index = ((i & _SEGMENT_OBJ_INDEX_MASK) | packedPoolID) ;
          }
          _segList.push_back( pSegTmp ) ;
          _isInitialized = TRUE ;
@@ -571,7 +628,17 @@ namespace engine
          SAFE_OSS_FREE( _list  ) ;
          _list = NULL ;
          rc = SDB_OOM ;
-         SDB_ASSERT( ( SDB_OK == rc ), "Failed to initialize, out of memory" );
+         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+                 "Out of memory when initialize, rc:%d"OSS_NEWLINE
+                 "   pool            : %u"OSS_NEWLINE
+                 "   numberOfObjs    : %u"OSS_NEWLINE
+                 "   maxNumberOfObjs : %u"OSS_NEWLINE
+                 "   objs per segment: %u"OSS_NEWLINE,
+                 rc,
+                 _poolId,
+                 numberOfObjs,
+                 maxNumberOfObjs,
+                 _delta ) ;
       }
    done:
       return rc ;
@@ -579,29 +646,16 @@ namespace engine
       goto done ;
    }
 
-   // peek _numOfObjs without latch
-   template < class T >
-   UTIL_OBJIDX _utilSegmentManager< T >::getNumOfObjectsNoSync()
-   {  
-      return _numOfObjs ;
-   }
-
    // get _numOfObjs
    template < class T >
-   UTIL_OBJIDX _utilSegmentManager< T >::getNumOfObjects()
+   OSS_INLINE UTIL_OBJIDX _utilSegmentPool< T >::getNumOfObjects()
    {  
-      UTIL_OBJIDX numOfObjs = 0 ;
-
-      _latch.get() ;
-      numOfObjs = _numOfObjs ;
-      _latch.release() ;
-
-      return numOfObjs ;
+      return _numOfObjs.fetch() ;
    }
 
    // get an object's address by its index 
    template < class T >
-   OSS_INLINE T * _utilSegmentManager< T >::getObjPtrByIndex
+   OSS_INLINE T * _utilSegmentPool< T >::getObjPtrByIndex
    (
       const UTIL_OBJIDX idx
    )
@@ -619,17 +673,18 @@ namespace engine
    //   idx -- the index of the object
    //   pT  -- the address of the object
    template < class T >
-   INT32 _utilSegmentManager< T >::acquire( UTIL_OBJIDX & idx,  T * &pT )
+   OSS_INLINE INT32 _utilSegmentPool< T >::acquire( UTIL_OBJIDX & idx, T * &pT )
    {
-      INT32   rc        = SDB_OK;
-      BOOLEAN bLatched  = FALSE ;
-      _objX * pObjX     = NULL ;
+      INT32   rc                = SDB_OK ;
+      BOOLEAN bLatched          = FALSE ;
+      _objX * pObjX             = NULL ;
+      const UINT32 packedPoolID = _GET_PACKED_POOLID( _poolId ) ;
 
       //         *       .
       // -       -       -       -      -
-      //         ^               ^
-      //         |  ==>          |
-      //         begin   next    end
+      //         ^               
+      //         |  ==>          
+      //         begin
       // when _acquiredCounter is equal to '_numOfObjs - 1',
       // means lack of free objects and we will
       // add a new segment and expand the _list
@@ -644,48 +699,48 @@ namespace engine
             {
                // exceed limitation
                rc = SDB_OSS_UP_TO_LIMIT ;
-
-               pdLog ( PDINFO, __FUNC__, __FILE__, __LINE__,
+               pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
                        "Exceed resource limitation "
                        "when attempt to expand: %d"OSS_NEWLINE
+                       "  _pool            : %u"OSS_NEWLINE
                        "  _delta           : %u"OSS_NEWLINE
                        "  _maxNumOfObjs    : %u"OSS_NEWLINE
                        "  _numOfObjs       : %u"OSS_NEWLINE
                        "  _acquiredCounter : %u"OSS_NEWLINE,
                        rc,
+                       _poolId,
                        _delta,
                        _maxNumOfObjs,
-                       _numOfObjs,
+                       _numOfObjs.peek(),
                        _acquiredCounter ) ;
-
                goto error ;
             }
             
             rc = _expandList() ;
             if ( rc )
             {
-
-               pdLog ( PDINFO, __FUNC__, __FILE__, __LINE__,
+               pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
                        "Failed to expand   : %u"OSS_NEWLINE
+                       "  _pool            : %u"OSS_NEWLINE
                        "  _delta           : %u"OSS_NEWLINE
                        "  _maxNumOfObjs    : %u"OSS_NEWLINE
                        "  _numOfObjs       : %u"OSS_NEWLINE
                        "  _acquiredCounter : %u"OSS_NEWLINE,
                        rc,
+                       _poolId,
                        _delta,
                        _maxNumOfObjs,
-                       _numOfObjs,
+                       _numOfObjs.peek(),
                        _acquiredCounter ) ;
-
                goto error ;
             }
          }
 
          pObjX = _getObjXByIndex( _list[ _begin ] ) ;
 
-#ifdef _DEBUG
          // sanity check
          if (    ( NULL != pObjX )
+              && ( packedPoolID == ( pObjX->_index & _SEGMENT_OBJ_POOL_MASK ) )
               && ( _SEGMENT_OBJ_EYE_CATCHER   == pObjX->_eyeCatcher )
               && ( _SEGMENT_OBJ_FLAG_RELEASED == pObjX->_flag ) )
          {
@@ -697,30 +752,50 @@ namespace engine
             idx = UTIL_INVALID_OBJ_INDEX ;
             pT  = NULL ;
             rc  = SDB_SYS ;
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Sanity check failed: "OSS_NEWLINE
-                    "  idx       : %u"OSS_NEWLINE
-                    "  eyeCatcher: %x"OSS_NEWLINE
-                    "  flag      : %x"OSS_NEWLINE
-                    "  addr      : %p"OSS_NEWLINE
-                    "  obj addr  : %p"OSS_NEWLINE,
-                    _list[ _begin ],
-                    pObjX->_eyeCatcher,
-                    pObjX->_flag,
-                    pObjX,
-                    &( pObjX->_obj )  ) ;
-            SDB_ASSERT ( ( SDB_OK == rc ), "Sanity check failed !");
+
+            if ( pObjX )
+            {
+               pdLog ( PDSEVERE, __FUNC__, __FILE__, __LINE__,
+                       "Sanity check failed: "OSS_NEWLINE
+                       "  _pool     : %u"OSS_NEWLINE
+                       "  idx       : %u"OSS_NEWLINE
+                       "  eyeCatcher: %x"OSS_NEWLINE
+                       "  flag      : %x"OSS_NEWLINE
+                       "  _objX addr: %p"OSS_NEWLINE
+                       "  obj addr  : %p"OSS_NEWLINE,
+                       _poolId,
+                       _list[ _begin ],
+                       pObjX->_eyeCatcher,
+                       pObjX->_flag,
+                       pObjX,
+                       &( pObjX->_obj )  ) ;
+            }
+            else
+            {
+               pdLog ( PDSEVERE, __FUNC__, __FILE__, __LINE__,
+                       "Sanity check failed: "OSS_NEWLINE
+                       "  _pool     : %u"OSS_NEWLINE
+                       "  idx       : %u"OSS_NEWLINE
+                       "  _objX addr: %p"OSS_NEWLINE,
+                       _poolId,
+                       _list[ _begin ],
+                       pObjX ) ;
+
+            }
+#ifdef _DEBUG
+            SDB_ASSERT ( ( SDB_OK == rc ), "Sanity check failed !") ;
+#endif
             goto error ;
          }
-#endif
+
          // get the obj index( to the segment, the object array )
-         idx = _list[ _begin ] ;
+         idx = (( _list[ _begin ] & _SEGMENT_OBJ_INDEX_MASK ) | packedPoolID ) ;
 
          // mark this slot is empty with invalid index number, -1
-         _list[ _begin ] = UTIL_INVALID_OBJ_INDEX ;
+         // _list[ _begin ] = UTIL_INVALID_OBJ_INDEX ;
 
          // advance to next position
-         _begin ++; 
+         _begin ++ ; 
 
          // increase the acquired counter
          _acquiredCounter ++ ;
@@ -731,7 +806,7 @@ namespace engine
       else
       {
          SDB_ASSERT( ( _isInitialized && _list ),
-                     "_utilSegmentManager has to be initialized." ) ;
+                     "_utilSegmentPool has to be initialized." ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -749,22 +824,20 @@ namespace engine
    // acquire a free object, upon successfully return,
    //   pT  -- the address of the object
    template < class T >
-   INT32 _utilSegmentManager< T >::acquire( T * &pT )
+   OSS_INLINE INT32 _utilSegmentPool< T >::acquire( T * &pT )
    {
       UTIL_OBJIDX idx = UTIL_INVALID_OBJ_INDEX ;
-      INT32  rc = acquire( idx, pT ) ;
-      return rc ;
+      return acquire( idx, pT ) ;
    }
 
    // release/return an object to the segments by its address
    //   pT -- address of the object
    template < class T >
-   INT32 _utilSegmentManager< T >::release( const T * pT )
+   OSS_INLINE INT32 _utilSegmentPool< T >::release( const T * pT )
    {
       INT32 rc   = SDB_OK ;
       UTIL_OBJIDX idx = getIndexByAddr( pT ) ;
-
-      if ( UTIL_INVALID_OBJ_INDEX != idx )
+      if ( IS_VALID_SEG_OBJ_INDEX( idx ) )
       {
          rc = release( idx ) ;
       }
@@ -781,7 +854,7 @@ namespace engine
    // release/return an object to the segments by its index
    //   idx -- the object index
    template < class T >
-   INT32 _utilSegmentManager< T >::release( const UTIL_OBJIDX idx )
+   OSS_INLINE INT32 _utilSegmentPool< T >::release( const UTIL_OBJIDX idx )
    {
       INT32   rc           = SDB_OK ;
       BOOLEAN bLatched     = FALSE ;
@@ -789,21 +862,29 @@ namespace engine
 
       if ( _isInitialized && ( NULL != _list ) )
       {
+         UTIL_OBJIDX packedPoolID = _GET_PACKED_POOLID( _poolId ) ;
+         if ( !( ( UTIL_INVALID_OBJ_INDEX != idx ) &&
+                 (( idx & _SEGMENT_OBJ_POOL_MASK ) == packedPoolID ) ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
          _latch.get() ;
          bLatched = TRUE ;
 
          if ( _acquiredCounter > 0 )
          {
-            if ( _numOfObjs != _begin ) // _list is not full
+            if ( _numOfObjs.peek() != _begin ) // _list is not full
             {
                // get the _objX address by the index
                pObjX = _getObjXByIndex( idx ) ;
 
-#ifdef _DEBUG
                // sanity check
-               if (    ( NULL != pObjX )
-                    && ( _SEGMENT_OBJ_EYE_CATCHER   == pObjX->_eyeCatcher )
-                    && ( _SEGMENT_OBJ_FLAG_ACQUIRED == pObjX->_flag ) )
+               if (( NULL != pObjX ) &&
+                   ((pObjX->_index & _SEGMENT_OBJ_POOL_MASK) == packedPoolID) &&
+                   ( _SEGMENT_OBJ_EYE_CATCHER   == pObjX->_eyeCatcher ) &&
+                   ( _SEGMENT_OBJ_FLAG_ACQUIRED == pObjX->_flag ) )
                {
                   // mark the _objX flag
                   pObjX->_flag = _SEGMENT_OBJ_FLAG_RELEASED ;
@@ -811,27 +892,43 @@ namespace engine
                else
                {
                   rc = SDB_SYS ;
-                  pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                          "Sanity check failed: "OSS_NEWLINE
-                          "  idx       : %u"OSS_NEWLINE
-                          "  eyeCatcher: %x"OSS_NEWLINE
-                          "  flag      : %x"OSS_NEWLINE
-                          "  addr      : %p"OSS_NEWLINE
-                          "  obj addr  : %p"OSS_NEWLINE,
-                          idx,
-                          pObjX->_eyeCatcher,
-                          pObjX->_flag,
-                          pObjX,
-                          &( pObjX->_obj )  ) ;
+
+                  if ( NULL != pObjX  )
+                  {
+                     pdLog ( PDSEVERE, __FUNC__, __FILE__, __LINE__,
+                             "Sanity check failed: "OSS_NEWLINE
+                             "  _pool     : %u"OSS_NEWLINE
+                             "  idx       : %u"OSS_NEWLINE
+                             "  eyeCatcher: %x"OSS_NEWLINE
+                             "  flag      : %x"OSS_NEWLINE
+                             "  _objX addr: %p"OSS_NEWLINE
+                             "  obj addr  : %p"OSS_NEWLINE,
+                             _poolId,
+                             idx,
+                             pObjX->_eyeCatcher,
+                             pObjX->_flag,
+                             pObjX,
+                             &( pObjX->_obj )  ) ;
+                  } 
+                  else
+                  {
+                     pdLog ( PDSEVERE, __FUNC__, __FILE__, __LINE__,
+                             "Sanity check failed: "OSS_NEWLINE
+                             "  _pool     : %u"OSS_NEWLINE
+                             "  idx       : %u"OSS_NEWLINE
+                             "  _objX addr: %p"OSS_NEWLINE,
+                             _poolId,
+                             idx,
+                             pObjX ) ;
+                  } 
+#ifdef _DEBUG
                   SDB_ASSERT ( ( SDB_OK == rc ), "Sanity check failed !");
+#endif
                   goto error ;
                }
-               SDB_ASSERT (_list[_begin - 1] == UTIL_INVALID_OBJ_INDEX,
-                           "Corruption detected in list");
-#endif
 
                // fill in current slot with the obj index( to the segment)
-               _list[ --_begin ] = idx ;
+               _list[ --_begin ] = ( idx & _SEGMENT_OBJ_INDEX_MASK ) ;
 
                // decrease the acquired counter
                _acquiredCounter -- ;
@@ -862,7 +959,7 @@ namespace engine
       {
 #ifdef _DEBUG
          SDB_ASSERT( ( _isInitialized && _list ),
-                     "_utilSegmentManager has to be initialized." ) ;
+                     "_utilSegmentPool has to be initialized." ) ;
 #endif
          rc = SDB_SYS ;
          goto error ;
@@ -881,7 +978,152 @@ namespace engine
    error:
       goto done ;
    }
-#pragma pack()
+
+
+   template < class T >
+   class _utilSegmentManager : public SDBObject
+   {
+      private :
+         // acquire operation proceed in round robin
+         ossAtomic32 _round ;
+         _utilSegmentPool< T > _pool[ _SEGMENT_MGR_MAX_POOLS ] ;         
+
+      private :
+         // internal / helper function to get the poolId an object belongs to
+         OSS_INLINE UINT32 _getPoolIdByAddr( const void * ptr )
+         {
+            UINT32 poolId = UTIL_INVALID_OBJ_INDEX ;
+            if ( NULL != ptr )
+            {
+               const void * p = (void*)_GET_OBJX_ADDRESS( ptr ) ;
+               if ( p && ( _SEGMENT_OBJ_EYE_CATCHER == *((UINT16*)p)) )
+               {
+                  // get obj index from _objX ptr
+                  poolId = *((UINT32*) _GET_OBJX_INDEX_OFFSET( p )) ;
+                  // unpack poolId from obj index
+                  poolId = _GET_UNPACKED_POOLID( poolId ) ;
+               }
+            }
+            return poolId ;
+         }
+
+      public  :
+         _utilSegmentManager() : _round( 0 ) {}
+
+         ~_utilSegmentManager() { fini(); } 
+
+         INT32 init( const UTIL_OBJIDX numberOfObjs,
+                     const UTIL_OBJIDX maxNumberOfObjs )
+         {
+            INT32 rc = SDB_OK ;
+            for ( UINT32 i = 0; i < _SEGMENT_MGR_MAX_POOLS ; i++ )
+            {
+               rc = _pool[ i ].init( i,
+                                     numberOfObjs    / _SEGMENT_MGR_MAX_POOLS,
+                                     maxNumberOfObjs / _SEGMENT_MGR_MAX_POOLS );
+               if ( SDB_OK != rc )
+               {
+                  pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+                          "Initialzation failed, pool:%u, rc:%d", i, rc ) ;
+                  break ;
+               }
+            }
+            return rc ;
+         }
+
+         void fini()
+         {
+            for ( UINT32 i = 0; i < _SEGMENT_MGR_MAX_POOLS ; i++ )
+            {
+               _pool[ i ].fini() ;
+            }
+         }
+
+         UINT32 getNumOfObjects()
+         {
+            UINT32 objs = 0 ;
+            for ( UINT32 i = 0; i < _SEGMENT_MGR_MAX_POOLS ; i++ )
+            {
+               objs += _pool[ i ].getNumOfObjects() ;
+            }
+            return objs ;
+         }
+
+         OSS_INLINE T * getObjPtrByIndex( const UTIL_OBJIDX idx )
+         {  
+            if ( ! IS_VALID_SEG_OBJ_INDEX( idx ) )
+            {
+               return NULL ;
+            }
+            return _pool[ _GET_UNPACKED_POOLID( idx ) ].getObjPtrByIndex( idx );
+         }
+
+         OSS_INLINE UTIL_OBJIDX getIndexByAddr ( const T * pT )
+         {
+            UINT32 pool = _getPoolIdByAddr( (void*)pT ) ;
+            if ( UTIL_INVALID_OBJ_INDEX != pool )
+            {
+               return _pool[ pool ].getIndexByAddr( pT ) ;
+            }
+            else
+            {
+               return UTIL_INVALID_OBJ_INDEX ;
+            }
+         }
+
+         OSS_INLINE INT32 acquire( UTIL_OBJIDX & idx,  T * &pT )
+         {
+            INT32 rc = SDB_OK ;
+            UINT32 pool ;
+            UINT32 retryCount = 0 ;
+            do
+            {
+               retryCount++ ;
+               // pool = _round.inc() % _SEGMENT_MGR_MAX_POOLS ;
+               // the _SEGMENT_MGR_MAX_POOLS is power of 2
+               // so modulo can be optimized
+               pool = _round.inc() & ( _SEGMENT_MGR_MAX_POOLS - 1 ) ;
+               rc = _pool[ pool ].acquire( idx, pT ) ;
+               if ( SDB_OK == rc )
+               {
+                  break ;
+               }
+            } while ( ( SDB_OSS_UP_TO_LIMIT == rc ) &&
+                      ( retryCount <= _SEGMENT_MGR_MAX_POOLS ) ) ;
+            return rc ;
+         } 
+
+         OSS_INLINE INT32 acquire( T * &pT )
+         {
+            UTIL_OBJIDX idx = UTIL_INVALID_OBJ_INDEX ;
+            return acquire( idx, pT ) ;
+         }
+
+         OSS_INLINE INT32 release( const UTIL_OBJIDX idx )
+         {
+            return _pool[ _GET_UNPACKED_POOLID( idx ) ].release( idx ) ;
+         }
+
+         OSS_INLINE INT32 release( const T * pT )
+         {
+            UINT32 pool = _getPoolIdByAddr( (void*)pT ) ;
+            if ( UTIL_INVALID_OBJ_INDEX != pool )
+            {
+               return _pool[ pool ].release( pT ) ;
+            }
+            else
+            {
+               return SDB_INVALIDARG ;
+            } 
+         }
+#ifdef _DEBUG
+         _utilSegmentPool< T > * getPoolHandle( const UINT32 pool )
+         {
+            return &( _pool[ pool % _SEGMENT_MGR_MAX_POOLS ] ) ;
+         }
+#endif
+   } ;
+
 } // namespace engine
 
 #endif // UTIL_SEGMENT_HPP__
