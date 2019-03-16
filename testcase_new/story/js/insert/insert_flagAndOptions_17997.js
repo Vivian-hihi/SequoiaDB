@@ -8,7 +8,7 @@ main();
 function main()
 {  
 	println("\n---Begin to run test");
-	var clName = COMMCLNAME + "_17997";
+	var clName = "insertFlag_17997";
 	var idxName = "idx";	
    var cl = readyCL( clName );
 	cl.createIndex( idxName, {a:1, b:1}, true, true );

@@ -8,13 +8,14 @@ main();
 function main()
 {  
 	println("\n---Begin to run test");
-	var clName = COMMCLNAME + "_18012";
+	var clName = "insertFlag_18012";
 	var idxName = "idx";	
    var cl = readyCL( clName );
 	cl.createIndex( idxName, {a:1}, true, true );
    cl.insert( [{a:1},{a:2}] );
    
    // test
+	println("\n---Begin to insert, flag[SDB_INSERT_REPLACEONDUP]");
 	var recsArray = [{a:1,b:1},{a:1,b:2},{a:2,c:1},{a:3}];
 	var rc = cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );
 	var expRecs = [{"a":1,"b":2},{"a":2,"c":1},{"a":3}];

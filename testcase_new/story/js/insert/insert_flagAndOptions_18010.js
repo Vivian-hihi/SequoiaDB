@@ -8,13 +8,14 @@ main();
 function main()
 {  
 	println("\n---Begin to run test");
-	var clName = COMMCLNAME + "_18010";
+	var clName = "insertFlag_18010";
 	var idxName = "idx";	
    var cl = readyCL( clName );
    cl.insert( {_id:1} );
    
    // test
    // ReturnOID:true,ContOnDup:true
+	println("\n---Begin to insert, options[ReturnOID:true,ContOnDup:true]");
 	var recsArray = [{_id:1,c:1},{_id:2}];
 	var rc = cl.insert( recsArray, {ReturnOID:true,ContOnDup:true} );
    checkReturnOid( rc );
@@ -22,6 +23,7 @@ function main()
    checkRecords( cl, expRecs );
    
    // ReturnOID:true,ReplaceOnDup:true
+	println("\n---Begin to insert, options[ReturnOID:true,ContOnDup:true]");
 	var recsArray = [{_id:3},{_id:1,c:2},{_id:4}];
 	var rc = cl.insert( recsArray, {ReturnOID:true,ReplaceOnDup:true} );
    checkReturnOid( rc );
