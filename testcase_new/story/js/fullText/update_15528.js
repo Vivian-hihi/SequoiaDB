@@ -12,24 +12,23 @@ function main()
     
    var esOperator = new ESOperator();
    var dbOperator = new DBOperator();
-   var csName = "update_15528_csName";
-   var clName = "update_15528_clName";
+   var clName = COMMCLNAME + "_ES_15528";
    var findCond  = {"":{"$Text":{"query":{"match_all":{}}}}};
    var queryCond = '{ "query" : { "match_all" : {} }, "size" : "20" }';
    var selectorCond = { a : "" };
    var textIndexName = "a_15528";
 
-   commDropCL( db, csName, clName, true, true );
+   commDropCL( db, COMMCSNAME, clName, true, true );
 
-   var dbcl = commCreateCL( db, csName, clName );
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
    
    insertData( dbcl );
    
    commCreateIndex( dbcl, textIndexName, { a: "text" } );
    
-   checkFullSyncToES( csName, clName, textIndexName, 4 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
    
-   var esIndexNames = dbOperator.getESIndexNames( csName, clName, textIndexName );
+   var esIndexNames = dbOperator.getESIndexNames( COMMCSNAME, clName, textIndexName );
    var expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    var actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
@@ -37,7 +36,7 @@ function main()
    update( dbcl );
    dbcl.insert({a : "new"});
    
-   checkFullSyncToES( csName, clName, textIndexName, 7 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 7 );
    
    expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
@@ -45,12 +44,12 @@ function main()
    
    dbcl.remove();
    
-   checkFullSyncToES( csName, clName, textIndexName, 0 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 0 );
    
    //insert again to test synchronize from cappedCL to ES
    insertData( dbcl );
    
-   checkFullSyncToES( csName, clName, textIndexName, 4 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 4 );
    
    expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
@@ -59,13 +58,13 @@ function main()
    update( dbcl );
    dbcl.insert({a : "new"});
    
-   checkFullSyncToES( csName, clName, textIndexName, 7 );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 7 );
    
    expectResult = esOperator.findFromES( esIndexNames[0], queryCond ).sort( compare( 'a' ) );
    actResult = dbOperator.findFromCL( dbcl, findCond, selectorCond ).sort( compare( 'a' ) );
    checkResult( expectResult, actResult );
    
-   commDropCL( db, csName, clName, true, true );
+   commDropCL( db, COMMCSNAME, clName, true, true );
    //SEQUOIADBMAINSTREAM-3983
    checkIndexNotExistInES(esIndexNames);
 }
