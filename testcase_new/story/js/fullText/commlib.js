@@ -114,6 +114,28 @@ function ESOperator()
 
       return commitID; 
    }
+   
+   /*****************************************************************
+   * run CURL command, to refresh ES after check sync 
+   *****************************************************************/
+   this.refreshFromES = function (esIndexName)
+   {
+      // get curl command
+      var str="curl -H " + HEADER + " -XPOST " + HTTP + "/" + esIndexName 
+                      + "/_refresh' 2>/dev/null";
+
+      // to get SDBCOMMITID from ES
+      try
+      {
+         cmd.run(str);
+         println(esIndexName + " refresh success!");
+      }
+      catch(e)
+      {
+         throw buildException("getCommitIDFromES()", "get commitid from es", str, "success","fail");
+      }
+
+   }
 
    /*****************************************************************
    * check if index is exist in elasticsearch      
@@ -319,6 +341,11 @@ function checkFullSyncToES(csName, clName, textIndexName, expectCount)
    // check all indices sync to ES
    checkCountInES(esIndexNames, expectCount);
    checkLidInES(esIndexNames, cappedCLs);
+   // refresh ES after check sync
+   for(var i in esIndexNames)
+   {
+      esOpr.refreshFromES(esIndexNames[i]);
+   }   
 }
 
 /*****************************************************************
