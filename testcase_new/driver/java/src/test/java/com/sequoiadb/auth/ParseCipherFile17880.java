@@ -31,6 +31,7 @@ public class ParseCipherFile17880 extends SdbTestBase {
     @BeforeClass(alwaysRun = true)
     private void setUp() throws Exception {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        //TODO:1、请使用CommLib中的公共方法
         if (!Util.isCluster(sdb)) {
             throw new SkipException("skip StandAlone");
         }
@@ -38,6 +39,7 @@ public class ParseCipherFile17880 extends SdbTestBase {
 
     @DataProvider(name = "range-provider")
     public Object[][] generateRangData() throws Exception {
+    	//TODO:2、removeUser的方法不要放在数据生成器中，下面方法中不是数据生成器的参数都需要提取出来。
         for (int i = 0; i < usernames.length; i++) {
             try {
                 sdb.removeUser(usernames[i], passwords[i]);
@@ -98,6 +100,7 @@ public class ParseCipherFile17880 extends SdbTestBase {
         //check
         Assert.assertEquals(info.getUserName(), username, info.toString());
         Assert.assertEquals(info.getPasswd(), password);
+        //TODO:1、验证用户密码可用，建议连接db后执行一个基本操作
         Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, info.getUserName(), info.getPasswd());
         db.disconnect();
     }
