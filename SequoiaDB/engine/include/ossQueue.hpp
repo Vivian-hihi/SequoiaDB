@@ -50,9 +50,9 @@ template<typename Data, class Container = deque<T>>
 class ossQueue : public SDBObject
 {
 private :
-   std::queue<Data> _queue ;
-   mutable boost::mutex _mutex ;
-   boost::condition_variable _cond ;
+   std::queue<Data,Container> _queue ;
+   mutable boost::mutex       _mutex ;
+   boost::condition_variable  _cond ;
 public :
    UINT32 size ()
    {
