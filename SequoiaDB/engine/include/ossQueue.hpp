@@ -46,7 +46,7 @@
 #include <boost/thread/thread_time.hpp>
 #include <boost/thread/cv_status.hpp>
 
-template<typename Data, class Container = std::deque<Data>>
+template<typename Data, class Container = std::deque<Data> >
 class ossQueue : public SDBObject
 {
 private :
