@@ -37,9 +37,10 @@ function main()//TODO: 用例有涉及2.8分支版本，请合入
     {
         db.getCS(csName).createCL(subCL_Name, subClOption);
         throw buildException("createCL()",null,"create collection should fail", "createCL failed", "createCL success");
-    }catch( e )
+        //TODO: throw "expect fail but actual success."，此处简单跑错就可以了，不需要调用buildException
+    }catch( e )//TODO: js里面规范：方法/大括号都需要换行
     {
-        if( e!=-6 )//TODO: 比较值都用3个等号，"==="或"!=="
+        if( e!=-6 )//TODO: 比较值都用3个等号，"==="或"!=="   //TODO: 变量和等号前后空格
         {
             throw buildException("createCL()",e ,"create collection should fail", '-6', e );
             /* TODO: 括号/逗号前后空格统一，逗号后需要有空格，另外变量前后空格
@@ -77,4 +78,4 @@ function removeDataRG( db, dataGroupNames )
         db.removeRG(dataGroupNames[i]);
     }
 }
-main();   //TODO: 写到最前面
+main();   //TODO: 放最前面（放所有函数前，用例注释后）

@@ -6,7 +6,7 @@
 **************************************/
 function main()
 {
-    var csName = COMMCSNAME + "_cs20";
+    var csName = COMMCSNAME + "_cs20"; //TODO: 不需要加COMMCSNAME或CHANGEDPREFIX，其他变量请一并修改
     var mainCL_Name = CHANGEDPREFIX + "_maincl20" ;
     var subCL_Name = CHANGEDPREFIX + "_subcl20";
     var clNum = 4096;
@@ -17,7 +17,7 @@ function main()
       return;
     }
     
-    println("--test start.");
+    println("--test start.");//TODO: 按规范在主要步骤打印，建议"\n---Begin to create subCL."
     //创建主表
     var mainCLOption = { ShardingKey:{"a":1}, ShardingType:"range", IsMainCL:true};
     var maincl = commCreateCLByOption( db, csName, mainCL_Name, mainCLOption, true, true);
@@ -26,15 +26,15 @@ function main()
     createSubCL(db, csName, subCL_Name, clNum);
     attachCL(csName, maincl, subCL_Name, clNum);
     
-    //随机检查attach的结果
+    //随机检查attach的结果  //TODO：每个子表都要检查吧，建议在主表插数据并且每个子表都有存入至少1条记录，主表插入后在子表查询数据正确性
     maincl.insert({a:23});
     var cursor = db.getCS(csName).getCL(subCL_Name+"_2").find();
-    if(cursor.next()==null)
+    if(cursor.next()==null)//TODO: 需要判断整条记录，如果{a:1}要落到子表1那判断=null测不出问题
     {
         throw buildException("attachCL()",null,"check record", "have data", "no data");
     }
     
-    println("--test end.");
+    println("--test end.");//TODO: 没意义，不用打印
     //清除环境
     commDropCS( db, csName, true, "drop CS in the end" );  
 }
@@ -58,4 +58,4 @@ function attachCL( csName, mainCL, subCLName, clNum )
         lowBound+=10;
     }
 }
-main();
+main();//TODO: 放最前面（放所有函数前，用例注释后）
