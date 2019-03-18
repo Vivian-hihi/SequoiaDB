@@ -10,14 +10,27 @@ import com.jacob.com.Variant;
 public class WordConvertor {
     private static final int max_word_picture_width = 420;
     private static Logger logger = Logger.getLogger(WordConvertor.class);
+    private Boolean isVisible = false;
+    private int periodCountOfPics;
+    private ActiveXComponent app = null;
 
-    public WordConvertor() {
+    public WordConvertor(Boolean isVisible, int periodCountOfPics) {
+        this.isVisible = isVisible;
+        this.periodCountOfPics = periodCountOfPics;
+    }
+
+    public void quitApp() {
+        if (null != app) {
+            app.invoke("Quit", new Variant[] {});
+            app = null;
+        }
     }
 
     public void htmlToWord(String htmlFile, String outWordFile) throws Exception {
-        ActiveXComponent app = new ActiveXComponent("Word.Application");
+        quitApp();
+        app = new ActiveXComponent("Word.Application");
         try {
-            app.setProperty("Visible", new Variant(false));
+            app.setProperty("Visible", new Variant(isVisible));
 
             Dispatch documents = app.getProperty("Documents").toDispatch();
             Dispatch doc = Dispatch.invoke(documents, "Open", Dispatch.Method,
@@ -31,15 +44,13 @@ public class WordConvertor {
             //Dispatch.call(documents, "Close", new Variant(0));
         }
         catch (Exception e) {
-            e.printStackTrace();
             throw e;
         }
         finally {
             try {
-                app.invoke("Quit", new Variant[] {});
+                quitApp();
             }
             catch (Exception e) {
-                e.printStackTrace();
                 throw e;
             }
             finally {
@@ -89,13 +100,16 @@ public class WordConvertor {
         return scale;
     }
 
-    private void adjustPicture(Dispatch doc) {
+    private void adjustPicture(Dispatch doc, PictureAdjustContext context) {
         Dispatch shapes = Dispatch.get(doc, "InLineShapes").toDispatch();
-        int count = Dispatch.get(shapes, "Count").toInt();
-        logger.debug("pictures count=" + count);
+        int maxCount = Dispatch.get(shapes, "Count").toInt();
+        context.setMaxCount(maxCount);
+        logger.debug("pictures count=" + maxCount);
 
-        for (int i = 1; i <= count; i++) {
-            Dispatch shape = Dispatch.call(shapes, "Item", new Variant(i)).toDispatch();
+        int idx = context.getIndex();
+        for (int pictureCount = 0; idx <= context.getMaxCount()
+                && pictureCount < context.getPeriodCount(); idx++, pictureCount++) {
+            Dispatch shape = Dispatch.call(shapes, "Item", new Variant(idx)).toDispatch();
             Dispatch.call(shape, "Select");
             int width = Dispatch.get(shape, "Width").toInt();
             int height = Dispatch.get(shape, "Height").toInt();
@@ -105,14 +119,25 @@ public class WordConvertor {
                 // 4 Linked picture. 
                 // 3 Picture. 
                 int scale = getScale(width, height);
-                logger.debug("picture[" + i + "]:width=" + width + ",height=" + height + ",scale="
+                logger.debug("picture[" + idx + "]:width=" + width + ",height=" + height + ",scale="
                         + scale + ",type=" + type);
                 if (100 != scale) {
                     Dispatch.put(shape, "ScaleWidth", new Variant(scale));
                     Dispatch.put(shape, "ScaleHeight", new Variant(scale));
                 }
+
+                if (type == 4) {
+                    Dispatch linkFormat = Dispatch.get(shape, "LinkFormat").toDispatch();
+                    Dispatch.put(linkFormat, "SavePictureWithDocument", new Variant(true));
+                    Dispatch.call(linkFormat, "BreakLink");
+                    linkFormat.safeRelease();
+                }
             }
+
+            shape.safeRelease();
         }
+
+        context.setIndex(idx);
     }
 
     private void adjustTables(Dispatch doc) {
@@ -154,7 +179,7 @@ public class WordConvertor {
     //        ActiveXComponent app = new ActiveXComponent("Word.Application");
     //        Dispatch doc = null;
     //        try {
-    //            //app.setProperty("Visible", new Variant(false));
+    //            //app.setProperty("Visible", new Variant(isVisible));
     //            Dispatch documents = app.getProperty("Documents").toDispatch();
     //
     //            //open the document
@@ -204,6 +229,10 @@ public class WordConvertor {
     //        }
     //    }
 
+    private static void addShutdownHook(WordConvertor wc) {
+        Runtime.getRuntime().addShutdownHook(new ShutdownHook(wc));
+    }
+
     public static void main(String args[]) throws Exception {
         ConvertHelper helper = new ConvertHelper();
         int result = helper.parseArgs(args);
@@ -215,14 +244,17 @@ public class WordConvertor {
         String output = helper.getOutput();
         Boolean hasTableOfContent = helper.getHasTableOfContent();
 
-        WordConvertor wc = new WordConvertor();
-        //wc.printTabContent(output);
-        //        
+        WordConvertor wc = new WordConvertor(helper.isVisible(), helper.getPeriodCountOfPic());
+        addShutdownHook(wc);
+
         logger.info("start to convert to doc");
         wc.htmlToWord(input, output);
         logger.info("start to adjust");
         wc.adjust(output, hasTableOfContent);
+        logger.info("start to adjust pictures");
+        wc.adjustAllPictures(output);
         logger.info("finish");
+
     }
 
     private Dispatch saveAndReopen(Dispatch documents, Dispatch doc, String wordFile) {
@@ -233,11 +265,58 @@ public class WordConvertor {
         return doc;
     }
 
-    public void adjust(String wordFile, Boolean hasTableOfContent) throws Exception {
-        ActiveXComponent app = new ActiveXComponent("Word.Application");
+    public void adjustAllPictures(String wordFile) throws Exception {
+        PictureAdjustContext context = new PictureAdjustContext(1, periodCountOfPics);
+        adjustPictures(wordFile, context);
+        while (context.getIndex() < context.getMaxCount()) {
+            adjustPictures(wordFile, context);
+        }
+    }
+
+    private void adjustPictures(String wordFile, PictureAdjustContext context) throws Exception {
+        quitApp();
+        app = new ActiveXComponent("Word.Application");
         Dispatch doc = null;
         try {
-            app.setProperty("Visible", new Variant(false));
+            app.setProperty("Visible", new Variant(isVisible));
+            Dispatch documents = app.getProperty("Documents").toDispatch();
+
+            //open the document
+            doc = Dispatch.call(documents, "Open", wordFile).toDispatch();
+
+            //in default pictures are too big to display in the word.
+            //adjust picture to a appropriate size
+            logger.info("start to adjust pictures from index:" + context.getIndex());
+            adjustPicture(doc, context);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+        finally {
+            try {
+                if (null != doc) {
+                    Dispatch.call(doc, "Save");
+                    Dispatch.call(doc, "Close", new Variant(0));
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                throw e;
+            }
+            finally {
+                quitApp();
+                ComThread.Release();
+            }
+        }
+    }
+
+    public void adjust(String wordFile, Boolean hasTableOfContent) throws Exception {
+        quitApp();
+        app = new ActiveXComponent("Word.Application");
+        Dispatch doc = null;
+        try {
+            app.setProperty("Visible", new Variant(isVisible));
             Dispatch documents = app.getProperty("Documents").toDispatch();
 
             //open the document
@@ -252,12 +331,6 @@ public class WordConvertor {
             setHeaderFooter(app, doc, "SequoiaDB用户使用手册");
             //save and reopen the doc. otherwise, setHeaderFooter will take no effect.
             doc = saveAndReopen(documents, doc, wordFile);
-
-            //in default pictures are too big to display in the word.
-            //adjust picture to a appropriate size
-            logger.info("start to adjust pictures");
-            adjustPicture(doc);
-            doc = saveAndReopen(documents, doc, wordFile);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -269,16 +342,65 @@ public class WordConvertor {
                     Dispatch.call(doc, "Save");
                     Dispatch.call(doc, "Close", new Variant(0));
                 }
-
-                app.invoke("Quit", new Variant[] {});
             }
             catch (Exception e) {
                 e.printStackTrace();
                 throw e;
             }
             finally {
+                quitApp();
                 ComThread.Release();
             }
         }
+    }
+}
+
+class ShutdownHook extends Thread {
+    private WordConvertor wc;
+
+    public ShutdownHook(WordConvertor wc) {
+        this.wc = wc;
+    }
+
+    @Override
+    public void run() {
+        if (null != wc) {
+            wc.quitApp();
+        }
+    }
+}
+
+class PictureAdjustContext {
+    private int maxCount;
+    private int index;
+    private int periodCount;
+
+    public PictureAdjustContext(int startIndex, int periodCount) {
+        this.index = startIndex;
+        this.periodCount = periodCount;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public int getMaxCount() {
+        return maxCount;
+    }
+
+    public void setMaxCount(int maxCount) {
+        this.maxCount = maxCount;
+    }
+
+    public int getPeriodCount() {
+        return periodCount;
+    }
+
+    public void setPeriodCount(int periodCount) {
+        this.periodCount = periodCount;
     }
 }
