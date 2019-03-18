@@ -42,6 +42,7 @@ public class InsertUpdateDel12010 extends SdbTestBase {
     private String fullIndexName = "fullIndex12010";
     private int insertNum = 5000;
     private List<BSONObject> actRecords = new ArrayList<BSONObject>();
+    private NodeWrapper cLGroupMaster = null;
 
     @BeforeClass()
     public void setUp() {
@@ -85,16 +86,14 @@ public class InsertUpdateDel12010 extends SdbTestBase {
         	FullTextUtils.checkFullSyncToES(esClient, db, csName, clName, fullIndexName, insertNum);
         	
         	//insert records
-            NodeWrapper cLGroupMaster = groupMgr.getGroupByName(groupName).getMaster();
+        	cLGroupMaster = groupMgr.getGroupByName(groupName).getMaster();
             cLGroupMaster.stop();
             insert();
             cLGroupMaster.start();
-        	System.out.println("===start end===");
             Assert.assertEquals(groupMgr.checkBusiness(600), true);
             
             FullTextUtils.checkFullSyncToES(esClient, db, csName, clName, fullIndexName, insertNum);
-            actRecords = FullTextDBUtils.getRecordsFromCL(cl, (BSONObject)JSON.parse("{'':{$Text:{query:{match_all:{}}}}}"), 
-       		     (BSONObject)JSON.parse("{a : ''}"), (BSONObject)JSON.parse("{_id : 1}"), null, 0, insertNum);
+            actRecords = FullTextDBUtils.getRecordsFromCL(cl, (BSONObject)JSON.parse("{'':{$Text:{query:{match_all:{}}}}}"), (BSONObject)JSON.parse("{a : ''}"), (BSONObject)JSON.parse("{_id : 1}"), null, 0, insertNum);
             checkRecords(insertRecords, actRecords);
             
             //update records
@@ -142,9 +141,17 @@ public class InsertUpdateDel12010 extends SdbTestBase {
  			}
  			cl.insert(insertRecords);
              }catch (BaseException e){
-            	if(e.getErrorCode() != -105){
-            		Assert.fail("insert error!"+e.getErrorCode());
-            	}
+                 if(e.getErrorCode() == -250){
+                     try {
+                        cLGroupMaster.start();
+                    } catch (ReliabilityException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                     throw new SkipException("less than one nodes!");
+                 }else if(e.getErrorCode() != -105){
+                     Assert.fail(e.getMessage());
+                 }
          } finally {
              if (db != null) {
             	 db.close();
@@ -161,9 +168,17 @@ public class InsertUpdateDel12010 extends SdbTestBase {
                 cl.update("{a: 'a" +i+ "'}", "{$set: {a : 'a'}}", null);
             }
             }catch (BaseException e){
-            	if(e.getErrorCode() != -105){
-            		Assert.fail("insert error!");
-            	}
+                if(e.getErrorCode() == -250){
+                    try {
+                        cLGroupMaster.start();
+                    } catch (ReliabilityException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                    throw new SkipException("less than one nodes!");
+                }else if(e.getErrorCode() != -105){
+                    Assert.fail(e.getMessage());
+                }
         } finally {
             if (db != null) {
             	db.close();
@@ -179,9 +194,17 @@ public class InsertUpdateDel12010 extends SdbTestBase {
                 cl.delete("{a : 'a'}");
             }
             }catch (BaseException e){
-            	if(e.getErrorCode() != -105){
-            		Assert.fail("insert error!");
-            	}
+                if(e.getErrorCode() == -250){
+                    try {
+                        cLGroupMaster.start();
+                    } catch (ReliabilityException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                    throw new SkipException("less than one nodes!");
+                }else if(e.getErrorCode() != -105){
+                    Assert.fail(e.getMessage());
+                }
         } finally {
             if (db != null) {
             	db.close();

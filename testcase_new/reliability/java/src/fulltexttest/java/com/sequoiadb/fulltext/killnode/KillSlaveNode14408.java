@@ -83,20 +83,14 @@ public class KillSlaveNode14408 extends SdbTestBase {
 
 	public void insertData() {
 		List<BSONObject> records = new ArrayList<BSONObject>();
-		try {
-			for (int i = 0; i < 100; i++) {
-				for (int j = 0; j < 5000; j++) {
-					BSONObject record = (BSONObject) JSON.parse("{a:'a" + i + "" + j + "',g:'g" + i + "" + j + "'}");
-					records.add(record);
-				}
-				this.cl.insert(records);
-				records.clear();
-			}
-		} catch (BaseException e) {
-			if (-321 == e.getErrorCode()) {
-				throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---");
-			}
-		}
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < 5000; j++) {
+                BSONObject record = (BSONObject) JSON.parse("{a:'a" + i + "" + j + "',g:'g" + i + "" + j + "'}");
+                records.add(record);
+            }
+            this.cl.insert(records);
+            records.clear();
+        }
 	}
 
 	@Test

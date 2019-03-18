@@ -20,17 +20,12 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.fulltext.FullTextESUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
 /**
  * @Description seqDB-12079: 集合中存在全文索引，修改普通集合的副本数 
  * @author xiaoni Zhao
@@ -51,6 +46,7 @@ public class AlterReplSize12079 extends SdbTestBase {
         try {
         	sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
     		CommLib commLib = new CommLib();
+    		
     		if (commLib.isStandAlone(sdb)) {
     			throw new SkipException("StandAlone environment!");
     		}
@@ -59,12 +55,10 @@ public class AlterReplSize12079 extends SdbTestBase {
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             groupMgr = GroupMgr.getInstance();
 
-            // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
             if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
             groupName = groupMgr.getAllDataGroupName().get(0);
-
             cs = sdb.getCollectionSpace(csName);
             cl = cs.createCollection(clName, (BSONObject) JSON
                     .parse("{Group:'"+groupName+"', ReplSize : 1}"));
@@ -81,30 +75,35 @@ public class AlterReplSize12079 extends SdbTestBase {
 
     public void insertData() {
 		List<BSONObject> records = new ArrayList<BSONObject>();
-		try {
-			for(int i = 0; i < 5000; i++) {
-				BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+"',b:'b"+i+"'}");
-				records.add(record);
-			}
-			cl.insert(records);
-		} catch (BaseException e) {
-			if (-321 == e.getErrorCode() || e.getErrorCode() != -105) {
-				throw new SkipException("---insert has an err:SEQUOIADBMAINSTREAM-3827---"+e.getErrorCode());
-			}
-		}
+        for(int i = 0; i < 5000; i++) {
+            BSONObject record = (BSONObject)JSON.parse("{a:'a"+i+"',b:'b"+i+"'}");
+            records.add(record);
+            System.out.println(i);
+        }
+        cl.insert(records);
 	}
     
     
     @Test
     public void test() {
         try {
-		    cl.createIndex(fullIndexName, "{\"a\":\"text\"}", false, false);
+		    cl.createIndex(fullIndexName, "{'a':'text'}", false, false);
         	insertData();
         	FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, clName, fullIndexName, 5000);
-            NodeWrapper cLGroupMaster = groupMgr.getGroupByName(groupName).getMaster();
+            System.out.println("start alter");
+        	NodeWrapper cLGroupMaster = groupMgr.getGroupByName(groupName).getMaster();
             cl.setAttributes((BSONObject)JSON.parse("{ReplSize : 3}"));
             cLGroupMaster.stop();
-            insertData();
+            try{
+                insertData();  
+            }catch(BaseException e){
+                if(e.getErrorCode() == -250){
+                    cLGroupMaster.start();
+                    throw new SkipException("less than one nodes!");
+                }else if(e.getErrorCode() != -105){
+                    Assert.fail(e.getMessage());
+                }
+            }            
             cLGroupMaster.start();
             Assert.assertEquals(groupMgr.checkBusiness(600), true);
             DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:'" +csName+ "." +clName+ "'}", null, null);
