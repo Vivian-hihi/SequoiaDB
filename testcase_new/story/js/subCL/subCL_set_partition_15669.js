@@ -4,7 +4,7 @@
 *@createDate:  2019.3.11
 *@testlinkCase: seqDB-15669
 **************************************/
-function main()
+function main()//TODO: 用例有涉及2.8分支版本，请合入
 {
     var csName = CHANGEDPREFIX + "_cs15669" ;//TODO: "cs15669"，不需要加CHANGEDPREFIX，这个是之前不好的代码习惯，不用参考
     var mainCL_Name = CHANGEDPREFIX + "_maincl15669" ;//TODO: 同上
