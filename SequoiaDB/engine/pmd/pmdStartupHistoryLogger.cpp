@@ -39,11 +39,26 @@
 #include "ossProc.hpp"
 #include "utilStr.hpp"
 #include "pmdDef.hpp"
+#include "ossVer.hpp"
 
 using namespace std ;
 
 namespace engine
 {
+   _pmdStartupLog::_pmdStartupLog()
+   :_pid( OSS_INVALID_PID ), _type( SDB_START_NORMAL )
+   {
+      ossGetSimpleVersion( _dbVersion, 32 ) ;
+   }
+
+   _pmdStartupLog::_pmdStartupLog( OSSPID pid,
+                                   ossTimestamp time,
+                                   SDB_START_TYPE type )
+   :_pid( pid ), _time( time ), _type( type )
+   {
+      ossGetSimpleVersion( _dbVersion, 32 ) ;
+   }
+
    BOOLEAN pmdStr2StartupLog( const string& str, pmdStartupLog& log )
    {
       BOOLEAN isOk = TRUE ;

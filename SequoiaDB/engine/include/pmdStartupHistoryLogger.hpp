@@ -37,7 +37,6 @@
 #define PMD_STARTUPHISTORYLOGGER_HPP_
 
 #include <vector>
-#include "ossVer.hpp"
 #include "ossFile.hpp"
 #include "ossUtil.hpp"
 #include "ossTypes.hpp"
@@ -65,17 +64,9 @@ namespace engine
       SDB_START_TYPE    _type ;
       CHAR              _dbVersion[32] ;
 
-      _pmdStartupLog()
-      :_pid( OSS_INVALID_PID ), _type( SDB_START_NORMAL )
-      {
-         ossGetSimpleVersion( _dbVersion, 32 ) ;
-      }
+      _pmdStartupLog() ;
 
-      _pmdStartupLog( OSSPID pid, ossTimestamp time, SDB_START_TYPE type )
-      :_pid( pid ), _time( time ), _type( type )
-      {
-         ossGetSimpleVersion( _dbVersion, 32 ) ;
-      }
+      _pmdStartupLog( OSSPID pid, ossTimestamp time, SDB_START_TYPE type ) ;
 
       string toString()
       {
