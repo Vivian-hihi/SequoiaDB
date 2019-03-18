@@ -124,7 +124,7 @@ function ESOperator()
       var str="curl -H " + HEADER + " -XPOST " + HTTP + "/" + esIndexName 
                       + "/_refresh' 2>/dev/null";
 
-      // to get SDBCOMMITID from ES
+      // to refresh shards from ES
       try
       {
          cmd.run(str);
@@ -390,6 +390,11 @@ function checkMainCLFullSyncToES(csName, mainCLName, textIndexName, expectCount)
 
    checkCountInES(esIndexNames, expectCount);
    checkLidInES(esIndexNames, cappedCLs); 
+   // refresh ES after check sync
+   for(var i in esIndexNames)
+   {
+      esOpr.refreshFromES(esIndexNames[i]);
+   }   
 }
 
 	
