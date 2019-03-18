@@ -54,9 +54,6 @@ using namespace engine ;
 
 BOOLEAN g_isTraceStarted = FALSE ;
 
-
-
-
 // extract high 32 bit as function component mask, and OR with
 // cb->_componentMask, if the result is 0 that means the component is not what
 // we want
@@ -84,14 +81,8 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
    }
 
    {
-      //UINT32 threadsType = currentThreadType() ;
       UINT32 tid = ossGetCurrentThreadID() ;
       UINT32 code = (UINT32)funcCode & 0xFFFFFFFF ;
-
-      //if( threadsType )
-      //{
-
-      //}
 
       if ( !pdCB->checkThread( tid ) )
       {
@@ -360,21 +351,6 @@ INT32 _pdTraceCB::start ( UINT64 size,
    INT32 rc = SDB_OK ;
    std::stringstream tidTextss ;
    std::stringstream funcTextss ;
-   std::vector< EDUID > threadTypesTids ;
-
-   PD_LOG ( PDWARNING, "StartEDULog" ) ;
-
-#ifdef SDB_ENGINE
-   pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
-   for( UINT32 i = 0; i < 42; i++ )
-   {
-      PD_LOG ( PDWARNING, "Start EDU[%d]",i ) ;
-      pEDUMgr->getEduIds( i, threadTypesTids ) ;
-      PD_LOG ( PDWARNING, "Stop EDU[%d]",i ) ;
-   }
-#endif // SDB_ENGINE
-
-   PD_LOG ( PDWARNING, "StopEDULog" ) ;
 
    while( !_metaOpr.compareAndSwap( 0, 1 ) )
    {
