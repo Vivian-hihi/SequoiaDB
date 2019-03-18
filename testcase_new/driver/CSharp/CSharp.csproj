@@ -158,6 +158,39 @@
     <Compile Include="AutoIncrement\AutoIncrement16636.cs" />
     <Compile Include="AutoIncrement\AutoIncrement16656.cs" />
     <Compile Include="Sdb\TestListReplicaGroups16815.cs" />
+    <Compile Include="Bson\TestBsonArray14618.cs" />
+    <Compile Include="Bson\TestBsonBinaryData14610.cs" />
+    <Compile Include="Bson\TestBsonBinaryData14612.cs" />
+    <Compile Include="Bson\TestBsonBoolean14619.cs" />
+    <Compile Include="Bson\TestBsonDateTime14640.cs" />
+    <Compile Include="Bson\TestBsonDateTime14639.cs" />
+    <Compile Include="Bson\TestBsonDecimal14620.cs" />
+    <Compile Include="Bson\TestBsonDecimal14621.cs" />
+    <Compile Include="Bson\TestBsonDecimal14622.cs" />
+    <Compile Include="Bson\TestBsonDecimal14623.cs" />
+    <Compile Include="Bson\TestBsonDecimal14624.cs" />
+    <Compile Include="Bson\TestBsonDecimal14625.cs" />
+    <Compile Include="Bson\TestBsonDecimal14626.cs" />
+    <Compile Include="Bson\TestBsonDecimal14630.cs" />
+    <Compile Include="Bson\TestBsonDecimal14635.cs" />
+    <Compile Include="Bson\TestBsonDouble14641.cs" />
+    <Compile Include="Bson\TestBsonMaxKey14604.cs" />
+    <Compile Include="Bson\TestBsonMaxKey14605.cs" />
+    <Compile Include="Bson\TestBsonMaxKey14606.cs" />
+    <Compile Include="Bson\TestBsonMaxKey14609.cs" />
+    <Compile Include="Bson\TestBsonMinKey14607.cs" />
+    <Compile Include="Bson\TestBsonMinKey14608.cs" />
+    <Compile Include="Bson\TestBsonMaxKey14637.cs" />
+    <Compile Include="Bson\TestBsonNull14644.cs" />
+    <Compile Include="Bson\TestBsonObjectId14613.cs" />
+    <Compile Include="Bson\TestBsonObjectId14615.cs" />
+    <Compile Include="Bson\TestBsonString14645.cs" />
+    <Compile Include="Bson\TestBsonTimestamp14598.cs" />
+    <Compile Include="Bson\TestBsonTimestamp14599.cs" />
+    <Compile Include="Bson\TestBsonTimestamp14600.cs" />
+    <Compile Include="Bson\TestBsonTimestamp14602.cs" />
+    <Compile Include="Bson\TestObjectId14646.cs" />
+    <Compile Include="Bson\TestObjectId14647.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
