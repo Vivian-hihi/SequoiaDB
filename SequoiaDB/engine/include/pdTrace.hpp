@@ -45,7 +45,6 @@
 #include "ossIO.hpp"
 #include <list>
 #include <vector>
-#include <ossVer.h>
 
 #ifdef SDB_ENGINE
 #include "pdTrace.h"
@@ -357,10 +356,7 @@ struct _pdTraceHeader
 
    UINT32   _pad1[ 7 ] ;
 
-   _pdTraceHeader()
-   {
-      reset() ;
-   }
+   _pdTraceHeader();
 
    void savePosition( UINT64 current, UINT64 bufSize )
    {
@@ -382,23 +378,8 @@ struct _pdTraceHeader
       }
    }
 
-   void reset()
-   {
-      ossMemset( this, 0, sizeof( _pdTraceHeader ) ) ;
-      ossMemcpy( _eyeCatcher, TRACECB_EYE_CATCHER, TRACECB_EYE_CATCHER_SIZE ) ;
-      _headerSize          = sizeof( _pdTraceHeader ) ;
-      _version             = PD_TRACE_VERSION_CUR ;
-      _engineVersion       = SDB_ENGINE_VERISON_CURRENT ;
-      _engineSubVersion    = SDB_ENGINE_SUBVERSION_CURRENT ;
-   #ifdef SDB_ENGINE_FIXVERSION_CURRENT
-      _engineFixVersion = SDB_ENGINE_FIXVERSION_CURRENT ;
-   #else
-      _engineFixVersion = PD_TRACE_INVALID_FIXVERSION ;
-   #endif
-      _release                = SDB_ENGINE_RELEASE_CURRENT ;
-      _functionsSegmentSize   = 0 ;
-      _functionsSegmentOffset = 0 ;
-   }
+   void reset();
+
 };
 typedef struct _pdTraceHeader pdTraceHeader ;
 

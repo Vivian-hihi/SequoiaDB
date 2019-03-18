@@ -38,7 +38,7 @@
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "pd.hpp"
-
+#include <ossVer.h>
 #if defined (SDB_ENGINE)
 #include "pmd.hpp"
 #include "pmdDef.hpp"
@@ -53,6 +53,9 @@
 using namespace engine ;
 
 BOOLEAN g_isTraceStarted = FALSE ;
+
+
+
 
 // extract high 32 bit as function component mask, and OR with
 // cb->_componentMask, if the result is 0 that means the component is not what
@@ -81,8 +84,14 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
    }
 
    {
+      //UINT32 threadsType = currentThreadType() ;
       UINT32 tid = ossGetCurrentThreadID() ;
       UINT32 code = (UINT32)funcCode & 0xFFFFFFFF ;
+
+      //if( threadsType )
+      //{
+
+      //}
 
       if ( !pdCB->checkThread( tid ) )
       {
@@ -164,6 +173,32 @@ done :
    {
       pdCB->finishWrite() ;
    }
+}
+
+/*
+   _pdTraceHeader implement
+*/
+void _pdTraceHeader::reset()
+{
+   ossMemset( this, 0, sizeof( _pdTraceHeader ) ) ;
+   ossMemcpy( _eyeCatcher, TRACECB_EYE_CATCHER, TRACECB_EYE_CATCHER_SIZE ) ;
+   _headerSize          = sizeof( _pdTraceHeader ) ;
+   _version             = PD_TRACE_VERSION_CUR ;
+   _engineVersion       = SDB_ENGINE_VERISON_CURRENT ;
+   _engineSubVersion    = SDB_ENGINE_SUBVERSION_CURRENT ;
+#ifdef SDB_ENGINE_FIXVERSION_CURRENT
+   _engineFixVersion = SDB_ENGINE_FIXVERSION_CURRENT ;
+#else
+   _engineFixVersion = PD_TRACE_INVALID_FIXVERSION ;
+#endif
+   _release                = SDB_ENGINE_RELEASE_CURRENT ;
+   _functionsSegmentSize   = 0 ;
+   _functionsSegmentOffset = 0 ;
+}
+
+_pdTraceHeader::_pdTraceHeader()
+{
+   reset();
 }
 
 /*
@@ -325,6 +360,21 @@ INT32 _pdTraceCB::start ( UINT64 size,
    INT32 rc = SDB_OK ;
    std::stringstream tidTextss ;
    std::stringstream funcTextss ;
+   std::vector< EDUID > threadTypesTids ;
+
+   PD_LOG ( PDWARNING, "StartEDULog" ) ;
+
+#ifdef SDB_ENGINE
+   pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+   for( UINT32 i = 0; i < 42; i++ )
+   {
+      PD_LOG ( PDWARNING, "Start EDU[%d]",i ) ;
+      pEDUMgr->getEduIds( i, threadTypesTids ) ;
+      PD_LOG ( PDWARNING, "Stop EDU[%d]",i ) ;
+   }
+#endif // SDB_ENGINE
+
+   PD_LOG ( PDWARNING, "StopEDULog" ) ;
 
    while( !_metaOpr.compareAndSwap( 0, 1 ) )
    {
