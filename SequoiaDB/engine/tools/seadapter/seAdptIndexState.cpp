@@ -162,7 +162,8 @@ namespace seadapter
       const CHAR *idxName = session->indexMeta()->getESIdxName().c_str() ;
 
       rc = es->indexExist( idxName, idxExist ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check index[%s] existence failed[%d]", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Check index[%s] existence failed[%d]",
+                   idxName,rc ) ;
       if ( idxExist )
       {
          rc = es->dropIndex( idxName ) ;
