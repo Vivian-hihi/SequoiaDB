@@ -53,7 +53,6 @@ namespace engine
    {
    public :
       _dpsTransExecutor * dpsTxExectr ;
-      dpsTransLRB * eduLrbNext ;   // next LRB in chain EDU owning in tx
       dpsTransLRB * eduLrbPrev ;   // prev LRB in chain EDU owning in tx
       dpsTransLRBHeader* lrbHdr ;  // the LRB Header
       dpsTransLRB * nextLRB ;      // next LRB in the owner/waiter chain
@@ -63,7 +62,7 @@ namespace engine
       UINT8 pad[3] ;                // 3 byte for padding
 
       dpsTransLRB()
-         : dpsTxExectr( NULL ), eduLrbNext( NULL ), eduLrbPrev( NULL ),
+         : dpsTxExectr( NULL ), eduLrbPrev( NULL ),
            lrbHdr( NULL ), nextLRB( NULL ), refCounter( 0 ),
            lockMode( DPS_TRANSLOCK_MAX )
       {}
@@ -71,7 +70,7 @@ namespace engine
       dpsTransLRB( _dpsTransExecutor  *_dpsTxExectr,
                    DPS_TRANSLOCK_TYPE  _lockMode,
                    dpsTransLRBHeader  *_lrbHdr)
-         : dpsTxExectr ( _dpsTxExectr ), eduLrbNext( NULL ),
+         : dpsTxExectr ( _dpsTxExectr ), 
            eduLrbPrev( NULL ), lrbHdr( _lrbHdr ),
            nextLRB( NULL ), refCounter( 1 ), lockMode( _lockMode)
       {}
@@ -87,17 +86,18 @@ namespace engine
       dpsTransLRB       * waiterLRB ;    // the first waiter LRB in its chain
       dpsTransLRB       * upgradeLRB;    // the first upgrader LRB in its chain
       dpsTransLockId      lockId ;       // lockId, 16 bytes
+      UTIL_OBJIDX         bktIdx ;       // hash bucket index
       oldVersionContainer oldVer ;       // a pointer to the structure containing
                                          // version page/index information
    public :
       dpsTransLRBHeader()
          : nextLRBHdr(NULL), ownerLRB(NULL),
-           waiterLRB(NULL), upgradeLRB(NULL), oldVer(this) {}
+           waiterLRB(NULL), upgradeLRB(NULL), bktIdx(-1), oldVer(this) {}
 
-      dpsTransLRBHeader( dpsTransLockId lock )
+      dpsTransLRBHeader( dpsTransLockId lock, UTIL_OBJIDX _bktIdx )
          : nextLRBHdr(NULL), ownerLRB(NULL),
            waiterLRB(NULL), upgradeLRB(NULL),
-           lockId(lock), oldVer(this) {}
+           lockId(lock), bktIdx(_bktIdx), oldVer(this) {}
 
       // is this lock for a newly created record or not
       BOOLEAN isNewRecord()

@@ -205,20 +205,6 @@ namespace engine
          dpsTransLRBHeader *  & pLRBHdr
       ) ;
 
-      // acquire lock bucket latch, wrapper of _acquireOpLatch()
-      void acquireLockBktLatch( const dpsTransLockId & lockId )
-      {
-         const UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
-         _acquireOpLatch( bktIdx ) ;
-      }
-
-      // release lock bucket latch, wrapper of _releaseOpLatch
-      void releaseLockBktLatch( const dpsTransLockId & lockId )
-      {
-         const UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
-         _releaseOpLatch( bktIdx ) ;
-      }
-
    private:
       // Latch for normal lock operation ( acquire, tryAcquire,
       // testAcquire, release, releaseAll, hasWait etc on ) :
@@ -421,6 +407,7 @@ namespace engine
          _dpsTransExecutor *        dpsTxExectr,
          const dpsTransLockId     & lockId,
          const DPS_TRANSLOCK_TYPE   requestLockMode,
+         const UTIL_OBJIDX          bktIdx,
          dpsTransLRBHeader *      & pLRBHdrNew,
          dpsTransLRB       *      & pLRBNew
       ) ;

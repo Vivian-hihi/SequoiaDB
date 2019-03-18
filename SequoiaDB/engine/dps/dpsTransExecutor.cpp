@@ -129,13 +129,9 @@ namespace engine
    {
       BOOLEAN hasAdd = FALSE ;
 
-      /// Not leaf level
-      if ( !lockID.isLeafLevel() )
+      if ( _mapLockID.insert( std::make_pair( lockID, lrb ) ).second )
       {
-         if ( _mapLockID.insert( std::make_pair( lockID, lrb ) ).second )
-         {
-            hasAdd = TRUE ;
-         }
+         hasAdd = TRUE ;
       }
 
       return hasAdd ;
@@ -144,11 +140,6 @@ namespace engine
    BOOLEAN _dpsTransExecutor::findLock( const dpsTransLockId &lockID,
                                         dpsTransLRB * &lrb ) const
    {
-      if ( lockID.isLeafLevel() )
-      {
-         return FALSE ;
-      }
-
       DPS_LOCKID_MAP_CIT cit = _mapLockID.find( lockID ) ;
       if ( cit != _mapLockID.end() )
       {
