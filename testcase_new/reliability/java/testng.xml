@@ -49,12 +49,11 @@
           <package name="com.sequoiadb.datasync.restartnode" />
       </packages>
     </test>
-	<!-- 问题单4093暂时屏蔽全文索引用例 -->
-   <!--test name="fulltext">
+   <test name="fulltext">
       <packages>
          <package name="com.sequoiadb.fulltext.killnode" />
          <package name="com.sequoiadb.fulltext.restartnode" />
       </packages>    
-   </test-->
+   </test>
 </suite>
    
