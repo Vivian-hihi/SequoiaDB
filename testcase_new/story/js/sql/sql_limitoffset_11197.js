@@ -9,7 +9,7 @@ main();
 
 function main()
 {
-    var csName = CHANGEDPREFIX + "_11197_CS";
+    var csName = CHANGEDPREFIX + "_11197_CS";//检视：无特殊情况，使用公共CS COMMCSNAME
     var clName1 = CHANGEDPREFIX + "_11197_CL_T1";
     var clName2 = CHANGEDPREFIX + "_11197_CL_T2";
 
@@ -81,7 +81,7 @@ function main()
     checkCLData( cursor, expRecs , 2);
 
     commDropCS( db, csName, true, "drop CS in the end" );
-}	
+}
 
 function checkCLData( rc, expRecs, expCnt )
 {

@@ -9,7 +9,7 @@ main();
 
 function main()
 {
-    var csName = CHANGEDPREFIX + "_11105_CS";
+    var csName = CHANGEDPREFIX + "_11105_CS";//检视：无特殊情况，使用公共CS COMMCSNAME
     var clName = CHANGEDPREFIX + "_11105_CL";
 
     commDropCS(db, csName, true, "drop cs in the begin");
@@ -26,9 +26,11 @@ function main()
     var cursor = db.exec( sql );
     var expRecs = '[{"_id":2,"a":1},{"_id":3,"a":2}]';
     checkCLData( cursor, expRecs , 2);
+    
+    //检视：db.exec("select * from cs.cl limit 2 offset 1")场景未实现自动化
 
     commDropCS( db, csName, true, "drop CS in the end" );
-}	
+}
 
 function checkCLData( rc, expRecs, expCnt )
 {

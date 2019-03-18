@@ -9,7 +9,7 @@ main();
 
 function main()
 {
-    var csName = CHANGEDPREFIX + "_11062_CS";
+    var csName = CHANGEDPREFIX + "_11062_CS";//检视：无特殊情况，使用公共CS COMMCSNAME
     var clName = CHANGEDPREFIX + "_11062_CL";
 
     commDropCS(db, csName, true, "drop cs in the begin");

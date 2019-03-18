@@ -9,7 +9,7 @@ main();
 
 function main()
 {
-    var csName = CHANGEDPREFIX + "_10900_CS";
+    var csName = CHANGEDPREFIX + "_10900_CS";//检视：无特殊情况，使用公共CS COMMCSNAME
     var clName = CHANGEDPREFIX + "_10900_CL";
     
     commDropCS(db, csName, true, "drop cs in the begin");
@@ -50,7 +50,7 @@ function insertData( cl )
     cl.insert({_id:2,a:1});
     cl.insert({_id:3,b:1});
     cl.insert({_id:4,a:null});
-}	
+}
 
 function checkCLData( rc, expRecs, expCnt )
 {

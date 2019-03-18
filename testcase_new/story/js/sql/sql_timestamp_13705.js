@@ -9,7 +9,7 @@ main();
 
 function main()
 {
-    var csName = CHANGEDPREFIX + "_13705_CS";
+    var csName = CHANGEDPREFIX + "_13705_CS";//检视：无特殊情况，使用公共CS COMMCSNAME
     var clName = CHANGEDPREFIX + "_13705_CL";
     
     commDropCS(db, csName, true, "drop cs in the begin");
@@ -47,7 +47,7 @@ function main()
     deleteSQL(db, cl, csName, clName, 'Timestamp("978192000000")', false);
     
     println( "---end the test---" );
-    commDropCS( db, csName, true, "drop CS in the end" );
+    commDropCS( db, csName, true, "drop CS in the end" );//检视：无特殊情况统一使用公共cs，最后删除用例的cl即可
 }
 
 function insertSQL(db, cl, csName, clName, insertValue, checkValue, result)
@@ -59,7 +59,7 @@ function insertSQL(db, cl, csName, clName, insertValue, checkValue, result)
         {
             db.execUpdate( sql );
             var cursor = cl.find({textFields:checkValue});
-            if(cursor.next()==null)
+            if(cursor.next()==null)//检视：查询出来的记录需要校验记录的正确性，此处使用===严格相等
             {
                 throw buildException("insertSQL()",null,"check record " + insertValue, "have data", "no data");
             }
@@ -99,7 +99,7 @@ function updateSQL(db, cl, csName, clName, oldValue, newValue, checkValue, resul
         {
             db.execUpdate(sql);
             var cursor = cl.find({textFields:checkValue});
-            if(cursor.next()==null)
+            if(cursor.next()==null)//检视：查询出来的记录需要校验记录的正确性，此处使用===严格相等
             {
                 throw buildException("updateSQL()",null,"check record " + newValue, "have data","no data");
             }
@@ -138,7 +138,7 @@ function selectSQL(db, csName, clName, value, result)
         try
         {
             var cursor = db.exec( sql );
-            if(cursor.next()==null)
+            if(cursor.next()==null)//检视：查询出来的记录需要校验记录的正确性，此处使用===判断严格相等
             {
                 throw buildException("selectSQL()",null,"check record " + value, "have data","no data");
             }
@@ -178,7 +178,7 @@ function deleteSQL(db, cl, csName, clName, deleteValue, checkValue, result)
         {
             db.execUpdate( sql );
             var cursor = cl.find({textFields:checkValue});
-            if(cursor.next()!=null)
+            if(cursor.next()!=null)//检视：查询出来的记录需要校验记录的正确性，此处使用!==
             {
                 throw buildException("deleteSQL()",null,"check record " + deleteValue, "no data","have data");
             }
