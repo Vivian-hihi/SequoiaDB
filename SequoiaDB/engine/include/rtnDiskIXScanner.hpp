@@ -126,6 +126,7 @@ namespace engine
 
       BOOLEAN                  _initialized ;
 
+      BufBuilder               _builder;
    public :
       _rtnDiskIXScanner ( ixmIndexCB *indexCB, rtnPredicateList *predList,
                           _dmsStorageUnit *su, _pmdEDUCB *cb,

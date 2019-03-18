@@ -362,6 +362,7 @@ namespace engine
             _savedRID.reset() ;
          }
       }
+
       // after getting the first key location or advanced to next, let's
       // exame if this index key is what we want
       while ( TRUE )
@@ -389,7 +390,8 @@ namespace engine
             // get the key from index rid
             try
             {
-               _curKeyObj = ixmKey(dataBuffer).toBson() ;
+               _builder.reset();
+               _curKeyObj = ixmKey(dataBuffer).toBson(&_builder) ;
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
                DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
             }
@@ -504,6 +506,7 @@ namespace engine
       {
          _eof = TRUE ;
       }
+
       // Because we have MBLatch, as long as we finished advance, the returned
       // rid is considered authentic value although the it might not be "valid"
       _isValid = TRUE ;
