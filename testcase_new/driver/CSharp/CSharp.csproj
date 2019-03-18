@@ -191,6 +191,10 @@
     <Compile Include="Bson\TestBsonTimestamp14602.cs" />
     <Compile Include="Bson\TestObjectId14646.cs" />
     <Compile Include="Bson\TestObjectId14647.cs" />
+    <Compile Include="Bson\TestBsonDecimal14629.cs" />
+    <Compile Include="Bson\TestBsonInt14642.cs" />
+    <Compile Include="Bson\TestBsonInt6414643.cs" />
+    <Compile Include="Bson\TestBsonObjectId14614.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
