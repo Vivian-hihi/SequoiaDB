@@ -32,6 +32,13 @@
       </packages>
    </test> 
    
+   <!-- 上传大对象/对象数量较大的用例 -->
+   <test name="largeobjects">  
+      <packages> 
+         <package name="com.sequoias3.object.serial" /> 
+      </packages>
+   </test>
+   
    <!-- 检测数据残留的用例 -->
    <test name="check">  
       <classes> 
