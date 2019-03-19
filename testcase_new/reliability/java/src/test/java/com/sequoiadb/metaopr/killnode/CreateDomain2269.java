@@ -52,7 +52,7 @@ public class CreateDomain2269 extends SdbTestBase {
     private static final int DOMAIN_NUM = 1000;
     private List<String> groupNames = null;
 
-    @BeforeClass(enabled=false)
+    @BeforeClass
     public void setUp() {
         Sequoiadb db = null;
         try {
@@ -75,7 +75,7 @@ public class CreateDomain2269 extends SdbTestBase {
         }
     }
 
-    @Test(enabled=false)
+    @Test
     public void test() {
         Sequoiadb db = null;
         try {
@@ -109,7 +109,7 @@ public class CreateDomain2269 extends SdbTestBase {
         }
     }
 
-    @AfterClass(enabled=false)
+    @AfterClass
     public void tearDown() {
         if (!runSuccess) { throw new SkipException("to save environment"); }
         Sequoiadb db = null;
