@@ -43,6 +43,7 @@
 #include "dpsLogWrapper.hpp"
 #include "dmsPageMap.hpp"
 #include "utilInsertResult.hpp"
+#include "dmsOprHandler.hpp"
 
 using namespace bson ;
 
@@ -109,20 +110,21 @@ namespace engine
          INT32    indexesInsert ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &inputObj, const dmsRecordID &rid,
                                   _pmdEDUCB *cb,
-                                  utilInsertResult *insertResult = NULL );
+                                  IDmsOprHandler *pOprHandle,
+                                  utilInsertResult *insertResult = NULL ) ;
 
          // Caller must hold mb exclusive lock
          INT32    indexesUpdate ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &originalObj, BSONObj &newObj,
                                   const dmsRecordID &rid, _pmdEDUCB *cb,
                                   BOOLEAN isRollback,
-                                  _dpsITransLockCallback * callback = NULL ) ;
+                                  IDmsOprHandler *pOprHandle ) ;
 
          // Caller must hold mb exclusive lock
          INT32    indexesDelete ( _dmsMBContext *context, dmsExtentID extLID,
                                   BSONObj &inputObj, const dmsRecordID &rid,
                                   _pmdEDUCB *cb,
-                                  _dpsITransLockCallback * callback = NULL ) ;
+                                  IDmsOprHandler *pOprHandle ) ;
 
          INT32    truncateIndexes ( _dmsMBContext *context, _pmdEDUCB *cb ) ;
 
@@ -181,18 +183,19 @@ namespace engine
                                  BSONObj &inputObj, const dmsRecordID &rid,
                                  _pmdEDUCB *cb, BOOLEAN dupAllowed,
                                  BOOLEAN dropDups,
+                                 IDmsOprHandler *pOprHandle,
                                  utilInsertResult *insertResult = NULL ) ;
 
          INT32    _indexUpdate ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &originalObj, BSONObj &newObj,
                                  const dmsRecordID &rid, _pmdEDUCB *cb,
                                  BOOLEAN isRollback,
-                                 _dpsITransLockCallback * callback = NULL ) ;
+                                 IDmsOprHandler *pOprHandle ) ;
 
          INT32    _indexDelete ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &inputObj, const dmsRecordID &rid,
                                  _pmdEDUCB *cb,
-                                 _dpsITransLockCallback * callback = NULL ) ;
+                                 IDmsOprHandler *pOprHandle ) ;
 
       private:
          virtual UINT64 _dataOffset() ;
@@ -220,12 +223,6 @@ namespace engine
                                const CHAR *indexName,
                                const BSONObj &index,
                                INT32 &indexID ) ;
-
-         BOOLEAN _inMemDupKeyCheck( _pmdEDUCB     * cb,
-                                    preIdxTree    * memTree,
-                                    const BSONObj & key,
-                                    dpsTransCB    * pTransCB,
-                                    const BOOLEAN   takeLock = TRUE );
 
       private:
          _dmsStorageData         *_pDataSu ;

@@ -74,8 +74,7 @@ namespace engine
                            _dmsMBContext *mbContext,
                            _pmdEDUCB *cb,
                            _dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType,
-                           _dpsITransLockCallback * callback = NULL ) ;
+                           DMS_ACCESS_TYPE accessType ) ;
 
    INT32 rtnGetTBScanner ( const CHAR *pCollectionShortName,
                            optAccessPlanRuntime *planRuntime,
@@ -83,8 +82,7 @@ namespace engine
                            _dmsMBContext *mbContext,
                            _pmdEDUCB *cb,
                            _dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType,
-                           _dpsITransLockCallback * callback = NULL ) ;
+                           DMS_ACCESS_TYPE accessType ) ;
 
    INT32 rtnGetIndexSeps( optAccessPlanRuntime *planRuntime,
                           _dmsStorageUnit *su,
@@ -522,8 +520,8 @@ namespace engine
                            _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
                            SDB_DPSCB *dpsCB );
    INT32 rtnTransReleaseLock( const CHAR *pCollection,
-                           _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
-                           SDB_DPSCB *dpsCB );
+                              _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
+                              SDB_DPSCB *dpsCB );
 
    INT32 rtnCorrectCollectionSpaceFile( const CHAR *dataPath,
                                         const CHAR *indexPath,

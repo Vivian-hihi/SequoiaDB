@@ -44,6 +44,7 @@
 #include "sdbInterface.hpp"
 #include "clsDCMgr.hpp"
 #include "monDMS.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -110,7 +111,7 @@ namespace engine
    */
    class _clsFreezingWindow : public SDBObject
    {
-      typedef std::set< UINT64 > OP_SET ;
+      typedef ossPoolSet< UINT64 >              OP_SET ;
       typedef ossPoolMap< std::string, OP_SET > MAP_WINDOW ;
 
       public:
@@ -154,16 +155,16 @@ namespace engine
    */
    class _clsShardMgr :  public _pmdObjBase
    {
-      typedef std::map<std::string, clsEventItem*>       MAP_CAT_EVENT ;
+      typedef ossPoolMap<std::string, clsEventItem*>     MAP_CAT_EVENT ;
       typedef MAP_CAT_EVENT::iterator                    MAP_CAT_EVENT_IT ;
 
-      typedef std::map<utilCLUniqueID, clsEventItem*>    MAP_CLID_EVENT ;
+      typedef ossPoolMap<utilCLUniqueID, clsEventItem*>  MAP_CLID_EVENT ;
       typedef MAP_CLID_EVENT::iterator                   MAP_CLID_EVENT_IT ;
 
-      typedef std::map<UINT32, clsEventItem*>            MAP_NM_EVENT ;
+      typedef ossPoolMap<UINT32, clsEventItem*>          MAP_NM_EVENT ;
       typedef MAP_NM_EVENT::iterator                     MAP_NM_EVENT_IT ;
 
-      typedef std::map<UINT64, clsCSEventItem*>          MAP_CS_EVENT ;
+      typedef ossPoolMap<UINT64, clsCSEventItem*>        MAP_CS_EVENT ;
       typedef MAP_CS_EVENT::iterator                     MAP_CS_EVENT_IT ;
 
       typedef std::map<UINT64, _netRouteNode>            MAP_ROUTE_NODE ;

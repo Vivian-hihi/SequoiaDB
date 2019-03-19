@@ -40,8 +40,7 @@
 #define QGMPTRTABLE_HPP_
 
 #include "qgmDef.hpp"
-#include <map>
-#include <set>
+#include "ossMemPool.hpp"
 #include "ossMem.hpp"
 
 namespace engine
@@ -57,12 +56,12 @@ namespace engine
       }
    } ;
 
-   typedef std::set<qgmField>                               PTR_TABLE ;
-   typedef std::map<const CHAR*, UINT32, qgm_char_cmp>      STR_TABLE ;
+   typedef ossPoolSet<qgmField>                             PTR_TABLE ;
+   typedef ossPoolMap<const CHAR*, UINT32, qgm_char_cmp>    STR_TABLE ;
 #if defined (_WINDOWS)
    typedef STR_TABLE::iterator                              STR_TABLE_IT ;
 #else
-   typedef std::map<const CHAR*, UINT32>::iterator          STR_TABLE_IT ;
+   typedef ossPoolMap<const CHAR*, UINT32>::iterator        STR_TABLE_IT ;
 #endif // _WINDOWS
 
    /*

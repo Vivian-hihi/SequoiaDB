@@ -96,6 +96,9 @@ namespace engine
    {
       _pEDUCB = cb ;
 
+      /// not use rollback segment
+      _pEDUCB->getTransExecutor()->setUseRollbackSemgent( FALSE, TRUE ) ;
+
       if ( _pCatCB )
       {
          _pCatCB->getCatGTSMgr()->attachCB( cb ) ;

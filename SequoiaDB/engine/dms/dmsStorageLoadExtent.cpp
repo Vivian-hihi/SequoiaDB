@@ -43,6 +43,7 @@
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "migLoad.hpp"
+#include "dmsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -383,6 +384,9 @@ namespace engine
       dmsExtentID    tempExtentID   = 0 ;
       monAppCB       *pMonAppCB     = cb ? cb->getMonAppCB() : NULL ;
 
+      dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(),
+                                     cb ) ;
+
       SDB_ASSERT ( _su, "_su can't be NULL" ) ;
       SDB_ASSERT ( mbContext, "dms mb context can't be NULL" ) ;
       SDB_ASSERT ( cb, "cb is NULL" ) ;
@@ -409,6 +413,9 @@ namespace engine
                   mbContext->mb()->_lastExtentID ) ;
          goto error ;
       }
+
+      callback.setIDInfo( _su->data()->CSID(), mbContext->mbID(),
+                          _su->data()->logicalID() ) ;
 
       clearFlagLoadLoad ( mbContext->mb() ) ;
       setFlagLoadBuild ( mbContext->mb() ) ;
@@ -486,7 +493,7 @@ namespace engine
 
                // attempt to insert into the index
                rc = _su->index()->indexesInsert( mbContext, tempExtentID, obj,
-                                                 recordID, cb ) ;
+                                                 recordID, cb, &callback ) ;
                // if any error happen
                if ( rc )
                {
@@ -516,7 +523,7 @@ namespace engine
                   }
                   rc = _su->data()->deleteRecord ( mbContext, recordID,
                                                    (ossValuePtr)recordData.data(),
-                                                   cb, NULL ) ;
+                                                   cb, NULL, NULL ) ;
                   if ( rc )
                   {
                      PD_LOG ( PDERROR, "Failed to rollback, rc = %d", rc ) ;

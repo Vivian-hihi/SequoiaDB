@@ -37,17 +37,16 @@
 #include "ossLatch.hpp"
 #include "schedDef.hpp"
 #include <boost/shared_ptr.hpp>
-#include <map>
-#include <set>
+#include "ossMemPool.hpp"
 
 using namespace std ;
 
 namespace engine
 {
 
-   typedef boost::shared_ptr<monSvcTaskInfo>    monSvcTaskInfoPtr ;
-   typedef map< UINT64, monSvcTaskInfoPtr >     MAP_SVCTASKINFO_PTR ;
-   typedef MAP_SVCTASKINFO_PTR::iterator        MAP_SVCTASKINFO_PTR_IT ;
+   typedef boost::shared_ptr<monSvcTaskInfo>       monSvcTaskInfoPtr ;
+   typedef ossPoolMap< UINT64, monSvcTaskInfoPtr > MAP_SVCTASKINFO_PTR ;
+   typedef MAP_SVCTASKINFO_PTR::iterator           MAP_SVCTASKINFO_PTR_IT ;
 
    /*
       _schedItem define

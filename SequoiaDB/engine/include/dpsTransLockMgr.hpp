@@ -42,6 +42,7 @@
 #include "utilSegment.hpp"
 #include "dpsTransLRB.hpp"
 #include "dpsTransLockDef.hpp"
+#include "dpsTransDef.hpp"
 #include "monDps.hpp"
 #include "ossAtomic.hpp"
 #include "ossRWMutex.hpp"
@@ -55,13 +56,6 @@ namespace engine
    // lock bucket,  524287 ( a prime number close to 524288  ) for now
    #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UTIL_OBJIDX)( 524287 ) )
 
-   enum DPS_TRANSLOCK_OP_MODE_TYPE
-   {
-      DPS_TRANSLOCK_OP_MODE_TRY = 0,
-      DPS_TRANSLOCK_OP_MODE_ACQUIRE,
-      DPS_TRANSLOCK_OP_MODE_TEST
-   } ;
-
    class dpsTransLockManager : public SDBObject
    {
       friend class _dpsTransExecutor ;
@@ -73,7 +67,8 @@ namespace engine
       // initialization,
       //   . init _LockHdrBkt
       //   . allocate segment for LRB and LRB Header
-      INT32 init() ;
+      INT32 init( UINT32 lrbInitNum = DPS_TRANS_LRB_INIT_DFT,
+                  UINT32 lrbTotalNum = DPS_TRANS_LRB_TOTAL_DFT ) ;
 
       // free allocated LRB and LRB Header segments
       void fini() ;
@@ -144,7 +139,8 @@ namespace engine
          _dpsTransExecutor        * dpsTxExectr,
          const dpsTransLockId     & lockId,
          const DPS_TRANSLOCK_TYPE   requestLockMode,
-         dpsTransRetInfo          * pdpsTxResInfo = NULL
+         dpsTransRetInfo          * pdpsTxResInfo = NULL,
+         _dpsITransLockCallback   * callback = NULL
       ) ;
 
       // Latching for monitoring / dumping locking info of an EDU.

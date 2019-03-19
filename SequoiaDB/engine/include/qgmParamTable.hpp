@@ -41,6 +41,7 @@
 
 #include "qgmDef.hpp"
 #include <vector>
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -52,8 +53,8 @@ namespace engine
       BSONElement ele ;
    } ;
 
-   typedef std::list<_qgmBsonPair>                 QGM_CONST_TABLE ;
-   typedef std::map<qgmDbAttr, BSONElement >       QGM_VAR_TABLE ;
+   typedef ossPoolList<_qgmBsonPair>               QGM_CONST_TABLE ;
+   typedef ossPoolMap<qgmDbAttr, BSONElement >     QGM_VAR_TABLE ;
 
    class _qgmParamTable : public SDBObject
    {

@@ -42,40 +42,117 @@
 
 #include "ossLatch.hpp"         // ossSpinXLatch
 #include "dpsTransLockDef.hpp"  // DPS_TRANSLOCK_TYPE, dpsTransLockId
-#include "dpsTransVersionCtrl.hpp" // oldVersionContainer 
+#include "ossAtomic.hpp"
 
 namespace engine
 {
    class _dpsTransExecutor ;
+   class dpsTransLRBHeader ;
 
    // Lock Request Block ( LRB )
    class dpsTransLRB : public SDBObject
    {
    public :
       _dpsTransExecutor * dpsTxExectr ;
-      dpsTransLRB * eduLrbPrev ;   // prev LRB in chain EDU owning in tx
-      dpsTransLRBHeader* lrbHdr ;  // the LRB Header
-      dpsTransLRB * nextLRB ;      // next LRB in the owner/waiter chain
-      ossTick     beginTick ;       // timestamp( ossTick ) of owning / waiting
-      UINT32      refCounter ;      // lock reference counter
-      DPS_TRANSLOCK_TYPE lockMode ; // lock mode, UINT8, 1 byte
-      UINT8 pad[3] ;                // 3 byte for padding
+      dpsTransLRB       * eduLrbPrev ; // prev LRB in chain EDU owning in tx
+      dpsTransLRBHeader * lrbHdr ;     // the LRB Header
+      dpsTransLRB       * nextLRB ;    // next LRB in the owner/waiter chain
+      ossTick           beginTick ;    // timestamp( ossTick ) of owning / waiting
+      UINT32            refCounter ;   // lock reference counter
+      DPS_TRANSLOCK_TYPE lockMode ;    // lock mode, UINT8, 1 byte
+      UINT8             pad[3] ;       // 3 byte for padding
 
       dpsTransLRB()
-         : dpsTxExectr( NULL ), eduLrbPrev( NULL ),
-           lrbHdr( NULL ), nextLRB( NULL ), refCounter( 0 ),
-           lockMode( DPS_TRANSLOCK_MAX )
-      {}
+      : dpsTxExectr( NULL ), eduLrbPrev( NULL ),
+        lrbHdr( NULL ), nextLRB( NULL ), refCounter( 0 ),
+        lockMode( DPS_TRANSLOCK_MAX )
+      {
+      }
 
       dpsTransLRB( _dpsTransExecutor  *_dpsTxExectr,
                    DPS_TRANSLOCK_TYPE  _lockMode,
                    dpsTransLRBHeader  *_lrbHdr)
-         : dpsTxExectr ( _dpsTxExectr ), 
-           eduLrbPrev( NULL ), lrbHdr( _lrbHdr ),
-           nextLRB( NULL ), refCounter( 1 ), lockMode( _lockMode)
-      {}
+      : dpsTxExectr ( _dpsTxExectr ),
+        eduLrbPrev( NULL ), lrbHdr( _lrbHdr ),
+        nextLRB( NULL ), refCounter( 1 ), lockMode( _lockMode)
+      {
+      }
    } ;  // 56 bytes in total
 
+   class dpsLRBExtData ;
+
+   typedef BOOLEAN (*DPS_EXTDATA_VALID_FUNC)( const dpsLRBExtData *pExtData ) ;
+   typedef BOOLEAN (*DPS_EXTDATA_RELEASE_CHECK)( const dpsLRBExtData *pExtData ) ;
+   typedef void    (*DPS_EXTDATA_RELEASE)( dpsLRBExtData *pExtData ) ;
+   typedef void    (*DPS_EXTDATA_ON_LOCKRELEASE)( const dpsTransLockId &lockId,
+                                                  DPS_TRANSLOCK_TYPE lockMode,
+                                                  UINT32 refCounter,
+                                                  dpsLRBExtData *pExtData ) ;
+
+   class dpsLRBExtData : public SDBObject
+   {
+   public:
+      UINT64      _data ;
+
+      DPS_EXTDATA_VALID_FUNC     _validFunc ;
+      DPS_EXTDATA_RELEASE_CHECK  _releaseCheckFunc ;
+      DPS_EXTDATA_RELEASE        _releaseFunc ;
+      DPS_EXTDATA_ON_LOCKRELEASE _onLockReleaseFunc ;
+
+      dpsLRBExtData()
+      {
+         _data = 0 ;
+         _validFunc = NULL ;
+         _releaseCheckFunc = NULL ;
+         _releaseFunc = NULL ;
+         _onLockReleaseFunc = NULL ;
+      }
+
+      void  setValidFunc( DPS_EXTDATA_VALID_FUNC pFunc )
+      {
+         _validFunc = pFunc ;
+      }
+      void  setReleaseCheckFunc( DPS_EXTDATA_RELEASE_CHECK pFunc )
+      {
+         _releaseCheckFunc = pFunc ;
+      }
+      void  setReleaseFunc( DPS_EXTDATA_RELEASE pFunc )
+      {
+         _releaseFunc = pFunc ;
+      }
+      void  setOnLockReleaseFunc( DPS_EXTDATA_ON_LOCKRELEASE pFunc )
+      {
+         _onLockReleaseFunc = pFunc ;
+      }
+
+      BOOLEAN  canRelease() const
+      {
+         if ( _releaseCheckFunc )
+         {
+            return _releaseCheckFunc( this ) ;
+         }
+         return TRUE ;
+      }
+
+      BOOLEAN  isValid() const
+      {
+         if ( _validFunc )
+         {
+            return _validFunc( this ) ;
+         }
+         return FALSE ;
+      }
+
+      BOOLEAN  release()
+      {
+         if ( _releaseFunc )
+         {
+            _releaseFunc( this ) ;
+            return TRUE ;
+         }
+         return FALSE ;
+      }
+   } ;
 
    // Lock Request Block Header ( LRB Header )
    class dpsTransLRBHeader : public SDBObject
@@ -87,76 +164,34 @@ namespace engine
       dpsTransLRB       * upgradeLRB;    // the first upgrader LRB in its chain
       dpsTransLockId      lockId ;       // lockId, 16 bytes
       UTIL_OBJIDX         bktIdx ;       // hash bucket index
-      oldVersionContainer oldVer ;       // a pointer to the structure containing
-                                         // version page/index information
+      /// user data
+      dpsLRBExtData extData ;
+
    public :
       dpsTransLRBHeader()
-         : nextLRBHdr(NULL), ownerLRB(NULL),
-           waiterLRB(NULL), upgradeLRB(NULL), bktIdx(-1), oldVer(this) {}
+      : nextLRBHdr(NULL), ownerLRB(NULL),
+        waiterLRB(NULL), upgradeLRB(NULL), bktIdx(-1)
+      {
+      }
 
       dpsTransLRBHeader( dpsTransLockId lock, UTIL_OBJIDX _bktIdx )
-         : nextLRBHdr(NULL), ownerLRB(NULL),
-           waiterLRB(NULL), upgradeLRB(NULL),
-           lockId(lock), bktIdx(_bktIdx), oldVer(this) {}
-
-      // is this lock for a newly created record or not
-      BOOLEAN isNewRecord()
-      { return oldVer.isRecordNew(); }
-
-      void setNewRecord()
+      : nextLRBHdr(NULL), ownerLRB(NULL),
+        waiterLRB(NULL), upgradeLRB(NULL),
+        lockId(lock), bktIdx(_bktIdx)
       {
-         oldVer.setRecordNew();
       }
-      void unsetNewRecord()
-      {
-         oldVer.unsetRecordNew();
-      }
-
-      // access to oldVersionContainer element
-      const dmsRecord * getOldRecord()
-      {
-         return oldVer.getOldRecord() ;
-      }
-
-      void setOldRecord(dmsRecord * r) { oldVer.setOldRecord(r); }
-
-      MEMBLOCKPOOL_TYPE &oldRecordMemType()
-      {
-         return oldVer.getRecordMemType();
-      }
-
-      // try to insert to lid set. The caller should hold record lock in X
-      // as the protection
-      // Return TRUE if succeeded. return FALSE if already exist.
-      BOOLEAN  insertOldIdxLid( const  SINT32 lid, ixmIndexCB* indexCB )
-      {
-         return oldVer.insertOldIdxLid(lid, indexCB); 
-      }
-
-      BOOLEAN idxLidExist(SINT32 id)
-      {
-         return oldVer.idxLidExist(id);
-      }
-
-      // given logical idx id, return the index value
-      BSONObj* getOldIdxValue(const  SINT32 lid )
-      {
-         return oldVer.getOldIdxValue(lid);
-      }
-
-      //MEMBLOCKPOOL_TYPE &oldIdxMemType() { return oldVer->_idxMemType; }
    } ;  // 56 bytes in total
-
 
    class dpsTransLRBHeaderHash : public SDBObject
    {
    public :
-      dpsTransLRBHeader * lrbHdr  ; // 1st LRB Header in the chain
-      ossSpinXLatch  hashHdrLatch ; // ossSpinXLatch, 48 bytes
+      dpsTransLRBHeader *lrbHdr  ;     // 1st LRB Header in the chain
+      ossSpinXLatch     hashHdrLatch ; // ossSpinXLatch, 48 bytes
    public :
-      dpsTransLRBHeaderHash():
-         lrbHdr(NULL)
-      {}
+      dpsTransLRBHeaderHash()
+      : lrbHdr(NULL)
+      {
+      }
    } ; // 56 bytes in total
 }
 

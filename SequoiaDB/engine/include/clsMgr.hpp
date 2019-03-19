@@ -50,7 +50,7 @@
 #include "clsCatalogAgent.hpp"
 #include "ossLatch.hpp"
 #include "clsTask.hpp"
-#include <map>
+#include "ossMemPool.hpp"
 #include <deque>
 #include <vector>
 #include <string>
@@ -203,7 +203,7 @@ namespace engine
       DECLARE_OBJ_MSG_MAP()
 
       typedef std::vector<_innerSessionInfo>    VECINNERPARAM ;
-      typedef std::map<UINT64, BSONObj>         MAPTASKQUERY ;
+      typedef ossPoolMap<UINT64, BSONObj>       MAPTASKQUERY ;
 
       public:
          _clsMgr() ;

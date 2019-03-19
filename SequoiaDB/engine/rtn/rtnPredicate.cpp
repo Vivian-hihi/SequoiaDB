@@ -455,7 +455,7 @@ namespace engine
          // means we don't have to extend
          cmp = _tail._stopKey._bound.woCompare ( n._stopKey._bound, FALSE ) ;
          if ( (cmp<0) || (cmp==0 && !_tail._stopKey._inclusive &&
-                                    !n._stopKey._inclusive ))
+                                    n._stopKey._inclusive ))
          {
             _tail._stopKey = n._stopKey ;
             // Have different major types, set to default
@@ -825,12 +825,15 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_SIMAPLEREGEX1 ) ;
       // by default return empty string
       BOOLEAN extended = FALSE ;
+      BOOLEAN multilineOK = FALSE ;
       string r = "";
       stringstream ss;
-      if (purePrefix)
-         *purePrefix = false;
 
-      BOOLEAN multilineOK;
+      if (purePrefix)
+      {
+         *purePrefix = FALSE;
+      }
+
       if ( regex[0] == '\\' && regex[1] == 'A')
       {
          multilineOK = TRUE ;
@@ -853,12 +856,16 @@ namespace engine
          switch (*(flags++))
          {
          case 'm': // multiline
-            if (multilineOK)
+            if ( multilineOK )
+            {
                continue;
+            }
             else
+            {
                goto done ;
+            }
          case 'x': // extended
-            extended = true;
+            extended = TRUE;
             break;
          case 's':
             continue;
@@ -904,9 +911,21 @@ namespace engine
                   }
                }
             }
+            else if ( c == 'n' )
+            {
+               ss << "\n" ;
+            }
+            else if ( c == 'r' )
+            {
+               ss << "\r" ;
+            }
+            else if ( c == 't' )
+            {
+               ss << "\t" ;
+            }
             else if ((c >= 'A' && c <= 'Z') ||
                      (c >= 'a' && c <= 'z') ||
-                     (c >= '0' && c <= '0') ||
+                     (c >= '0' && c <= '9') ||
                      (c == '\0'))
             {
                // don't know what to do with these
@@ -946,8 +965,10 @@ namespace engine
       if ( r.empty() && *regex == 0 )
       {
          r = ss.str();
-         if (purePrefix)
+         if ( purePrefix )
+         {
             *purePrefix = !r.empty();
+         }
       }
    done :
       PD_TRACE1 ( SDB_SIMAPLEREGEX1, PD_PACK_STRING ( r.c_str() ) ) ;
@@ -1093,9 +1114,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNPRED_OPOREQ ) ;
       startStopKeyUnionBuilder b ;
       RTN_SSKEY_LIST::const_iterator i = _startStopKeys.begin() ;
-      RTN_SSKEY_LIST::const_iterator j =
-                        right._startStopKeys.begin() ;
-      while ( i != _startStopKeys.end() && j != right._startStopKeys.end())
+      RTN_SSKEY_LIST::const_iterator j = right._startStopKeys.begin() ;
+      while ( i != _startStopKeys.end() && j != right._startStopKeys.end() )
       {
          INT32 cmp = i->_startKey._bound.woCompare ( j->_startKey._bound,
                                                      FALSE ) ;
@@ -1123,14 +1143,12 @@ namespace engine
    }
    // exclude operation for two keysets
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_OPMINUSEQ, "rtnPredicate::operator-=" )
-   const rtnPredicate &rtnPredicate::operator-=
-                      (const rtnPredicate &right)
+   const rtnPredicate &rtnPredicate::operator-=(const rtnPredicate &right)
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_OPMINUSEQ ) ;
       RTN_SSKEY_LIST newKeySet ;
       RTN_SSKEY_LIST::iterator i = _startStopKeys.begin() ;
-      RTN_SSKEY_LIST::const_iterator j =
-                        right._startStopKeys.begin() ;
+      RTN_SSKEY_LIST::const_iterator j = right._startStopKeys.begin() ;
       while ( i != _startStopKeys.end() && j != right._startStopKeys.end())
       {
          // compare start key for i and j
@@ -1192,7 +1210,7 @@ namespace engine
                                j->_stopKey._bound, FALSE ) ;
                if ( cmp2 < 0 || ( cmp2 == 0 && (
                          !i->_stopKey._inclusive ||
-                          j->_stopKey._inclusive )))
+                          j->_stopKey._inclusive ) ) )
                {
                   // condition 3:
                   // i: [start stop]
@@ -1276,12 +1294,6 @@ namespace engine
       finishOperation ( newKeySet, right ) ;
       PD_TRACE_EXIT ( SDB_RTNPRED_OPMINUSEQ ) ;
       return *this ;
-   }
-   BOOLEAN rtnPredicate::operator<= ( const rtnPredicate &r ) const
-   {
-      rtnPredicate temp = *this ;
-      temp -= r ;
-      return temp.isEmpty() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_RTNPRED, "rtnPredicate::rtnPredicate" )
@@ -1552,7 +1564,7 @@ namespace engine
       if ( !isNot )
       {
          // let's try to generate regex string if it's simple
-         const string r = simpleRegex( e ) ;
+         string r = simpleRegex( e ) ;
 
          if ( r.size() )
          {
@@ -2064,24 +2076,6 @@ namespace engine
       }
       PD_TRACE_EXIT ( SDB__RTNPRED_PARAMPRED ) ;
       return *pRet ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_MALEFORINDEX, "_rtnPredicateSet::matchLevelForIndex" )
-   INT32 _rtnPredicateSet::matchLevelForIndex (const BSONObj &keyPattern) const
-   {
-      // scan key from begin to end, return the first X elements that exist in
-      // the predicateset
-      PD_TRACE_ENTRY ( SDB__RTNPREDSET_MALEFORINDEX ) ;
-      INT32 level = 0 ;
-      BSONObjIterator i ( keyPattern ) ;
-      while ( i.more() )
-      {
-         BSONElement e = i.next() ;
-         if ( predicate(e.fieldName()).isGeneric() )
-            return level ;
-      }
-      PD_TRACE_EXIT ( SDB__RTNPREDSET_MALEFORINDEX ) ;
-      return level ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_ADDPRED, "_rtnPredicateSet::addPredicate" )

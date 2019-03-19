@@ -677,8 +677,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_EXTRACTDATA, "_dmsStorageDataCapped::extractData" )
-   INT32 _dmsStorageDataCapped::extractData( dmsMBContext *mbContext,
-                                             dmsRecordRW &recordRW,
+   INT32 _dmsStorageDataCapped::extractData( const dmsMBContext *mbContext,
+                                             const dmsRecordRW &recordRW,
                                              pmdEDUCB *cb,
                                              dmsRecordData &recordData )
    {
@@ -1166,7 +1166,7 @@ namespace engine
                                                       const dmsRecordData &recordData,
                                                       const BSONObj &newObj,
                                                       pmdEDUCB *cb,
-                                                      _dpsITransLockCallback * callback )
+                                                      IDmsOprHandler *pHandler )
    {
       SDB_ASSERT( FALSE, "Should not be here" ) ;
       return SDB_OPERATION_INCOMPATIBLE ;

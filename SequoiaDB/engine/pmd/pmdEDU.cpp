@@ -1037,7 +1037,7 @@ namespace engine
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       if ( pTransCB )
       {
-         pTransCB->transLockReleaseAll( this );
+         pTransCB->transLockReleaseAll( this, NULL ) ;
       }
       delTransaction() ;
    }

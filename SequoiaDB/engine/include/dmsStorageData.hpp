@@ -118,8 +118,8 @@ namespace engine
                                    dmsRecordID rid, SDB_DPSCB *dpscb,
                                    ossValuePtr dataPtr, _pmdEDUCB *cb ) ;
 
-      virtual INT32 extractData( dmsMBContext *mbContext,
-                                 dmsRecordRW &recordRW,
+      virtual INT32 extractData( const dmsMBContext *mbContext,
+                                 const dmsRecordRW &recordRW,
                                  _pmdEDUCB *cb,
                                  dmsRecordData &recordData ) ;
 
@@ -179,7 +179,7 @@ namespace engine
                                    const dmsRecordData &recordData,
                                    const BSONObj &newObj,
                                    _pmdEDUCB *cb,
-                                   _dpsITransLockCallback * callback = NULL ) ;
+                                   IDmsOprHandler *pHandler ) ;
 
    } ;
    typedef _dmsStorageData dmsStorageData ;

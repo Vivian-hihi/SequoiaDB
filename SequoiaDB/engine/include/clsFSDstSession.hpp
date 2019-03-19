@@ -48,6 +48,7 @@
 #include <vector>
 #include "../bson/bsonobj.h"
 #include "clsTask.hpp"
+#include "ossMemPool.hpp"
 
 using namespace std ;
 using namespace bson ;
@@ -197,7 +198,7 @@ namespace engine
    */
    class _clsFSDstSession : public _clsDataDstBaseSession
    {
-   typedef std::map<string, clsCSInfoTuple>     CS_INFO_TUPLES ;
+   typedef ossPoolMap<string, clsCSInfoTuple>   CS_INFO_TUPLES ;
 
    DECLARE_OBJ_MSG_MAP()
 

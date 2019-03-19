@@ -1628,7 +1628,8 @@ namespace engine
          {
             generator.getDataPtr( recordDataPtr ) ;
             rc = _pDataSu->updateRecord( context, recordID, recordDataPtr, cb,
-                                         dpscb, modifier ) ;
+                                         dpscb, modifier, NULL,
+                                         tbScanner.callbackHandler() ) ;
             PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
 
             ++numRecords ;
@@ -1698,7 +1699,8 @@ namespace engine
          {
             generator.getDataPtr( recordDataPtr ) ;
             rc = _pDataSu->deleteRecord( context, recordID, recordDataPtr,
-                                         cb, dpscb ) ;
+                                         cb, dpscb,
+                                         tbScanner.callbackHandler() ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
 
             ++numRecords ;

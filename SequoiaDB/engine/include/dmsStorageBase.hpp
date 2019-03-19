@@ -299,12 +299,12 @@ namespace engine
             If you set nothrow attribute, the both functions will return
             NULL instead of throw pdGeneralException with error.
          */
-         const CHAR*    readPtr( UINT32 offset, UINT32 len ) ;
+         const CHAR*    readPtr( UINT32 offset, UINT32 len ) const ;
          CHAR*          writePtr( UINT32 offset, UINT32 len ) ;
 
          template< typename T >
          const T*       readPtr( UINT32 offset = 0,
-                                 UINT32 len = sizeof(T) )
+                                 UINT32 len = sizeof(T) ) const
          {
             return ( const T* )readPtr( offset, len ) ;
          }
@@ -426,12 +426,12 @@ namespace engine
          }
 
          OSS_INLINE UINT32  extent2Segment( dmsExtentID extentID,
-                                            UINT32 *pSegOffset = NULL ) ;
+                                            UINT32 *pSegOffset = NULL ) const ;
          OSS_INLINE dmsExtentID segment2Extent( UINT32 segID,
-                                                UINT32 segOffset = 0 ) ;
+                                                UINT32 segOffset = 0 ) const ;
 
          OSS_INLINE dmsExtRW    extent2RW( INT32 extentID,
-                                           INT32 collectionID = -1 ) ;
+                                           INT32 collectionID = -1 ) const ;
          OSS_INLINE dmsExtentID rw2extentID( const dmsExtRW &rw ) ;
 
          OSS_INLINE const ossValuePtr beginFixedAddr( INT32 extentID,
@@ -452,8 +452,8 @@ namespace engine
          /*
             Make these function internal
          */
-         OSS_INLINE ossValuePtr extentAddr( INT32 extentID ) ;
-         OSS_INLINE dmsExtentID extentID( ossValuePtr extendAddr ) ;
+         OSS_INLINE ossValuePtr extentAddr( INT32 extentID ) const ;
+         OSS_INLINE dmsExtentID extentID( ossValuePtr extendAddr ) const ;
 
       public:
          INT32 openStorage ( const CHAR *pPath,
@@ -670,7 +670,7 @@ namespace engine
       return 0 ;
    }
    OSS_INLINE UINT32 _dmsStorageBase::extent2Segment( dmsExtentID extentID,
-                                                      UINT32 * pSegOffset )
+                                                      UINT32 * pSegOffset ) const
    {
       if ( pSegOffset )
       {
@@ -681,7 +681,7 @@ namespace engine
       return ( extentID >> _segmentPagesSquare ) + _dataSegID ;
    }
    OSS_INLINE dmsExtentID _dmsStorageBase::segment2Extent( UINT32 segID,
-                                                           UINT32 segOffset )
+                                                           UINT32 segOffset ) const
    {
       if ( segID < _dataSegID )
       {
@@ -690,7 +690,7 @@ namespace engine
       // the same with: ( segID - _dataSegID ) * _segmentPages + segOffset
       return (( segID - _dataSegID ) << _segmentPagesSquare ) + segOffset ;
    }
-   OSS_INLINE ossValuePtr _dmsStorageBase::extentAddr( INT32 extentID )
+   OSS_INLINE ossValuePtr _dmsStorageBase::extentAddr( INT32 extentID ) const
    {
       if ( DMS_INVALID_EXTENT == extentID )
       {
@@ -706,7 +706,7 @@ namespace engine
              (ossValuePtr)( segOffset << _pageSizeSquare ) ;
       // the same with: segOffset * _segmentPages
    }
-   OSS_INLINE dmsExtentID _dmsStorageBase::extentID( ossValuePtr extendAddr )
+   OSS_INLINE dmsExtentID _dmsStorageBase::extentID( ossValuePtr extendAddr ) const
    {
       if ( 0 == extendAddr || _maxSegID < 0 )
       {
@@ -736,10 +736,10 @@ namespace engine
       return segment2Extent( (UINT32)segID, segOffset ) ;
    }
    OSS_INLINE dmsExtRW _dmsStorageBase::extent2RW( INT32 extentID,
-                                                   INT32 collectionID )
+                                                   INT32 collectionID ) const
    {
       dmsExtRW rw ;
-      rw._pBase = this ;
+      rw._pBase = const_cast<_dmsStorageBase*>( this ) ;
       rw._extentID = extentID ;
       rw._collectionID = collectionID ;
       rw._ptr = extentAddr( extentID ) ;
@@ -796,57 +796,6 @@ namespace engine
          }
       }
    }
-
-   /*
-      DMS Other define
-   */
-   #define DMS_MON_OP_COUNT_INC( _pMonAppCB_, op, delta )  \
-   {                                                       \
-      if ( NULL != _pMonAppCB_ )                           \
-      {                                                    \
-         _pMonAppCB_->monOperationCountInc( op, delta ) ;  \
-      }                                                    \
-   }
-
-   #define DMS_MON_OP_TIME_INC( _pMonAppCB_, op, delta )   \
-   {                                                       \
-      if ( NULL != _pMonAppCB_ )                           \
-      {                                                    \
-         _pMonAppCB_->monOperationTimeInc( op, delta ) ;   \
-      }                                                    \
-   }
-
-   #define DMS_MON_CONTEXT_COUNT_INC( _monContextCB_, op, delta ) \
-   {                                                               \
-      if ( NULL != _monContextCB_ )                                \
-      {                                                            \
-         _monContextCB_->monOperationCountInc ( op, delta ) ;      \
-      }                                                            \
-   }
-
-   #define DMS_MON_CONTEXT_TIME_INC( _monContextCB_, op, delta )  \
-   {                                                               \
-      if ( NULL != _monContextCB_ )                                \
-      {                                                            \
-         _monContextCB_->monOperationTimeInc ( op, delta ) ;       \
-      }                                                            \
-   }
-
-   /****************************************************************************
-    * Specify the matrix for collection flag and access type, returns TRUE means
-    * access is allowed, otherwise return FALSE
-    * AccessType:       Query  Fetch  Insert  Update  Delete  Truncate CRT-IDX  DROP-IDX
-    *  FREE                N      N       N       N       N       N       N         N
-    *  NORMAL              Y      Y       Y       Y       Y       Y       Y         Y
-    *  DROPPED             N      N       N       N       N       N       N         N
-    *  OFFLINE REORG       N (only alloed in shadow copy phase, rebuild )
-    *                             N       N       N       N       N ( only allowed in
-    *  truncate phase )                                                   N         N
-    *  ONLINE REORG        Y      Y       Y       Y       Y       Y       Y         Y
-    *  Load                Y      Y       Y       Y       Y       N       Y         Y
-    ***************************************************************************/
-   BOOLEAN dmsAccessAndFlagCompatiblity ( UINT16 collectionFlag,
-                                          DMS_ACCESS_TYPE accessType ) ;
 
 }
 

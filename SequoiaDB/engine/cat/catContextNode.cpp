@@ -38,13 +38,16 @@
 
 #include "catCommon.hpp"
 #include "catContextNode.hpp"
+#include "clsMgr.hpp"
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
-#include "pmdCB.hpp"
 #include "rtn.hpp"
+#include "rtnCB.hpp"
 #include "utilCommon.hpp"
 
 #define CAT_PORT_STR_SZ 10
+
+using namespace bson ;
 
 namespace engine
 {

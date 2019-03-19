@@ -136,7 +136,7 @@ namespace engine
 
          // 2. loop each cs
          MON_CS_LIST csList ;
-         std::set<_monCollectionSpace>::const_iterator iterCS ;
+         MON_CS_LIST::const_iterator iterCS ;
 
          pDmsCB->dumpInfo( csList, FALSE ) ;
 

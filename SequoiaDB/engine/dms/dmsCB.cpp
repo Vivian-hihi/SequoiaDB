@@ -1805,7 +1805,10 @@ namespace engine
          dpsCB->writeData( info ) ;
       }
 
-      su->regEventHandler( &_statSUMgr ) ;
+      if ( _statSUMgr.initialized() )
+      {
+         su->regEventHandler( &_statSUMgr ) ;
+      }
       su->regEventHandler( pRtnCB->getAPM() ) ;
 
       if ( isLocked )

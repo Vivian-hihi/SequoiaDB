@@ -40,17 +40,18 @@
 #ifndef DPSTRANSVERSIONCTRL_HPP_
 #define DPSTRANSVERSIONCTRL_HPP_
 
-#include <map>
 #include "dms.hpp"
 #include "ixm.hpp"
 #include "ossAtomic.hpp"
 #include "ossLatch.hpp"
-#include "ixmKey.hpp"
-#include "dpsTransCB.hpp"
 #include "dmsRecord.hpp"
 #include "utilSegment.hpp"
 #include "clsCatalogAgent.hpp"
 #include "../bson/ordering.h"
+#include "ossMemPool.hpp"
+#include <boost/shared_ptr.hpp>
+
+using namespace bson ;
 
 namespace engine
 {
@@ -60,40 +61,100 @@ namespace engine
    class dpsTransLRBHeader ;
    class oldVersionContainer ;
 
-   typedef  char    element16B[16] ;
-   typedef  char    element32B[32] ;
-   typedef  char    element128B[128] ;
-   typedef  char    element1K[1024] ;
-   typedef  char    element4K[4096] ;
+   typedef  CHAR    element64B[64];
+   typedef  CHAR    element128B[128];
+   typedef  CHAR    element256B[256];
+   typedef  CHAR    element1K[1024];
+   typedef  CHAR    element4K[4096];
 
    // FIXME: provide nub to update through config
    // All these numbers should be power of 2
    // default seg size for large record (1K/4K)
-   #define  DEFAULT_SEG_SIZE_FOR_LARGE_REC   8192
-   #define  MAX_SEG_SIZE_FOR_LARGE_REC   (DEFAULT_SEG_SIZE_FOR_LARGE_REC * 64)
+   #define  DEFAULT_SEG_SIZE_FOR_LARGE_REC   (8192)
+   #define  MAX_SEG_SIZE_FOR_LARGE_REC       (DEFAULT_SEG_SIZE_FOR_LARGE_REC*64)
    // default seg size for small record (16B/32B/128B)
    #define  DEFAULT_SEG_SIZE_FOR_SMALL_REC   (DEFAULT_SEG_SIZE_FOR_LARGE_REC*8)
-   #define  MAX_SEG_SIZE_FOR_SMALL_REC   (MAX_SEG_SIZE_FOR_LARGE_REC*32)
+   #define  MAX_SEG_SIZE_FOR_SMALL_REC       (MAX_SEG_SIZE_FOR_LARGE_REC*32)
 
    enum MEMBLOCKPOOL_TYPE
    {
-      MEMBLOCKPOOL_TYPE_DYN = 0,  // dynamically allocate space
-      MEMBLOCKPOOL_TYPE_16,       // allocate from 16B pool
-      MEMBLOCKPOOL_TYPE_32,       // allocate from 32B pool
+      MEMBLOCKPOOL_TYPE_DYN = 1,  // dynamically allocate space
+      MEMBLOCKPOOL_TYPE_64,       // allocate from 64B pool
       MEMBLOCKPOOL_TYPE_128,
+      MEMBLOCKPOOL_TYPE_256,
       MEMBLOCKPOOL_TYPE_1024,
       MEMBLOCKPOOL_TYPE_4096,
       MEMBLOCKPOOL_TYPE_MAX
-   };
+   } ;
+
+   MEMBLOCKPOOL_TYPE dpsSize2MemType( UINT32 size ) ;
 
    // globIdxID uniquely define an index globally
-   struct globIdxID
+   class globIdxID : public SDBObject
    {
+   public:
       UINT32  _csID;   // collectionspace id
       UINT16  _clID;   // collection id
       SINT32  _idxLID; // index logic id
+
+      globIdxID()
+      {
+         _csID = DMS_INVALID_SUID ;
+         _clID = DMS_INVALID_MBID ;
+         _idxLID = -1 ;
+      }
+
+      globIdxID( UINT32 csID, UINT16 clID, SINT32 idxLID )
+      {
+         _csID = csID ;
+         _clID = clID ;
+         _idxLID = idxLID ;
+      }
+
+      bool operator< ( const globIdxID &rhs ) const
+      {
+         bool rv = false ;
+
+         if ( _csID < rhs._csID )
+         {
+            rv = true ;
+         }
+         else if ( _csID == rhs._csID )
+         {
+            if ( _clID < rhs._clID )
+            {
+               rv = true ;
+            }
+            else if ( _clID == rhs._clID )
+            {
+               if ( _idxLID < rhs._idxLID )
+               {
+                  rv = true ;
+               }
+            }
+         }
+
+         return rv ;
+      }
+
+      string toString() const ;
    } ;
 
+   /// Memory info:
+   /// | Type(4) | PoolAddr(8) | User Data |
+
+   #define DPS_MEM_SIZE_2_REALSIZE( sz ) \
+         ( (UINT32)sz + sizeof( UINT32 ) + sizeof( UINT64 ) )
+
+   #define DPS_MEM_PTR_2_USERPTR( ptr ) \
+         ( (CHAR*)(ptr) + sizeof(UINT32) + sizeof(UINT64) )
+
+   #define DPS_MEM_USERPTR_2_PTR( userPtr ) \
+         ( (CHAR*)(userPtr) - sizeof(UINT64) - sizeof(UINT32) )
+
+   #define DPS_MEM_PTR_TYPEPTR( ptr )  ( (UINT32*)(CHAR*)(ptr) )
+   #define DPS_MEM_PTR_ADDRPTR( ptr )  \
+         ( (UINT64*)((CHAR*)(ptr) + sizeof( UINT32 )) )
 
    /** definition of memBlockPool
     *  memBlockPool is a place holder for a set of memory pools based on 
@@ -101,8 +162,8 @@ namespace engine
     **/
    class memBlockPool : public SDBObject
    {
-      // public interfaces:
-      public: 
+   // public interfaces:
+   public: 
       // constructor 
       // default one, might use db config
       memBlockPool() ;
@@ -113,30 +174,67 @@ namespace engine
       // destructor
       ~memBlockPool() ;
 
-      INT32 acquire( UINT32 const askSize, CHAR * &memBlock,
-                     MEMBLOCKPOOL_TYPE * type ) ;
+      INT32 init() ;
+      void  fini() ;
 
-      void  release( CHAR * &memBlock, MEMBLOCKPOOL_TYPE type ) ;
+      INT32 acquire( UINT32 askSize, CHAR * &memBlock ) ;
+
+      void  release( CHAR *&memBlock ) ;
 
       // FIXME: provide interface to access monitor counters
 
-      // private attributes:
-      private:
-      _utilSegmentManager<element16B>  *_16BSeg ; // mem segs with 16B element
-      _utilSegmentManager<element32B>  *_32BSeg ; // mem segs with 32B element 
-      _utilSegmentManager<element128B> *_128BSeg ;// mem segs with 128B element 
-      _utilSegmentManager<element1K>   *_1KSeg ;  // mem segs with 1 KB element
-      _utilSegmentManager<element4K>   *_4KSeg ;  // mem segs with 4 KB element
+   // private attributes:
+   private:
+      _utilSegmentManager<element64B>  *_64BSeg; // mem segs with 64B element
+      _utilSegmentManager<element128B> *_128BSeg;// mem segs with 128B element
+      _utilSegmentManager<element256B> *_256BSeg;// mem segs with 256B element 
+      _utilSegmentManager<element1K>   *_1KSeg;  // mem segs with 1 KB element
+      _utilSegmentManager<element4K>   *_4KSeg;  // mem segs with 4 KB element
 
       // counters for monitor
 
       // how many times we dynamic alloc because we failed in each segment
-      ossAtomic32  _numDynamicAlloc16B ;
-      ossAtomic32  _numDynamicAlloc32B ;
+      ossAtomic32  _numDynamicAlloc64B ;
       ossAtomic32  _numDynamicAlloc128B ;
+      ossAtomic32  _numDynamicAlloc256B ;
       ossAtomic32  _numDynamicAlloc1K ;
       ossAtomic32  _numDynamicAlloc4K ;
+   } ;
 
+   /*
+      dpsTransRecordPtr define
+   */
+   class dpsOldRecordPtr
+   {
+      public:
+         dpsOldRecordPtr() ;
+         dpsOldRecordPtr( const dpsOldRecordPtr &rhs ) ;
+         ~dpsOldRecordPtr() ;
+
+         dpsOldRecordPtr& operator= ( const dpsOldRecordPtr &rhs ) ;
+         bool operator! () const { return get() ? false : true ; }
+
+         operator bool () { return get() ? true : false ; }
+         operator CHAR* () { return get () ; }
+         operator BOOLEAN () { return get() ? TRUE : FALSE ; }
+         operator const CHAR* () { return get() ; }
+
+         static dpsOldRecordPtr alloc( memBlockPool *pPool, UINT32 size ) ;
+
+      public:
+         CHAR*       get() ;
+         const CHAR* get() const ;
+         INT32       refCount() const ;
+         void        release() ;
+
+      private:
+         dpsOldRecordPtr( CHAR *ptr ) ;
+
+      protected:
+         INT32*      _refPtr() ;
+
+      private:
+         CHAR        *_ptr ;
    } ;
 
    /** definition of preIdxTreeNodeKey
@@ -144,170 +242,154 @@ namespace engine
     *  ixmKey. Note that the raw key is stored in _keyData from super class,
     *  it's also a pointer pointing to a memory block owned by record lock
     **/
-   //class preIdxTreeNodeKey : public ixmKey
-   class preIdxTreeNodeKey : public ixmKeyOwned
+   class preIdxTreeNodeKey : public SDBObject
    {
-      // public interfaces:
-      public: 
+   // public interfaces:
+   public: 
       // constructors:
       // use super class to construct key portion
-      preIdxTreeNodeKey( const BSONObj*  key, const dmsRecordID & rid,
-                         bson::Ordering * order )
-      : ixmKeyOwned( *key )
-      {
-         _rid._extent = rid._extent ;
-         _rid._offset = rid._offset ;
-         _order = order ;
-      }
-      
+      preIdxTreeNodeKey( const BSONObj* key,
+                         const dmsRecordID &rid,
+                         const Ordering *order ) ;
+
       // copy constructor
-      preIdxTreeNodeKey( const preIdxTreeNodeKey & key )
-      : ixmKeyOwned( key.toBson() )
-      {
-         _rid._extent = key._rid._extent ;
-         _rid._offset = key._rid._offset ;
-         _order = key._order ;
-      }
+      preIdxTreeNodeKey( const preIdxTreeNodeKey &key ) ;
 
-      ~preIdxTreeNodeKey ()
-      {
-         // We do not want to free the keyData in super class as we don't 
-         // own it, simply rid to invalid incase some one continue using it.
-         // delete of the lock LRB does the clean up of the key space.
-         _rid.reset() ;
-      }
+      ~preIdxTreeNodeKey () ;
 
-      
-      const bson::Ordering * getOrdering() const
+      const Ordering* getOrdering() const
       {
          return _order ;
       }
 
-      const dmsRecordID & getRID() const
+      const dmsRecordID& getRID() const
       {
-         return _rid ;
+         return _rid;
       }
 
       BOOLEAN isValid() const
       {
-         return _rid.isValid() ;
+         return _rid.isValid() && _order ;
       }
-      
-      // assistant function to print out the rid ( and key )
-      void printKey() const ;
+
+      const BSONObj& getKeyObj() const
+      {
+         return _keyObj ;
+      }
+
+      INT32 woCompare( const preIdxTreeNodeKey &right ) const
+      {
+         const Ordering *pOrder = _order ? _order : right._order ;
+         return _keyObj.woCompare( right._keyObj, *pOrder, FALSE ) ;
+      }
+
+      bool operator< ( const preIdxTreeNodeKey &right ) const
+      {
+         bool rv = false ;
+
+         INT32 rt = woCompare( right ) ;
+         if ( rt < 0 )
+         {
+            rv = true;
+         }
+         else if ( rt == 0 )// compare RID when key equals
+         {
+            // compare return -1 when lhk is before rhk
+            if ( _rid._extent < right._rid._extent )
+            {
+               rv = true ;
+            }
+            else if( _rid._extent == right._rid._extent )
+            {
+               rv = ( _rid._offset < right._rid._offset ) ;
+            }
+         }
+         return rv ;
+      }
+
+      bool operator== ( const preIdxTreeNodeKey &right ) const
+      {
+         if ( 0 == woCompare( right ) && _rid == right._rid )
+         {
+            return true ;
+         }
+         return false ;
+      }
+
+      string toString() const ;
 
       // private attributes:
-      private:
+   private:
+      BSONObj           _keyObj ;
       // Original rid. This is used to differ duplicated keys when index is 
       // not unique
       dmsRecordID       _rid ;
       // it's shared from the tree. Check clsCataOrder()
-      bson::Ordering   *_order ;
+      const Ordering    *_order ;
    } ;
 
    // the index tree node value is the index into the lrbHdr which contain
    // both old version index and record
    class preIdxTreeNodeValue : SDBObject
    {
-      public:
+   public:
       // constructor
-      preIdxTreeNodeValue( dpsTransLRBHeader* lrbHdr )
+      preIdxTreeNodeValue( oldVersionContainer *pOldVer = NULL )
       {
-         _lrbHdr = lrbHdr ;
+         _pOldVer = pOldVer ;
+      }
+
+      preIdxTreeNodeValue( const preIdxTreeNodeValue &rhs )
+      {
+         _pOldVer = rhs._pOldVer ;
       }
 
       ~preIdxTreeNodeValue()
       {
-         _lrbHdr = NULL ;
+         _pOldVer = NULL ;
+      }
+
+      preIdxTreeNodeValue& operator=( const preIdxTreeNodeValue &rhs )
+      {
+         _pOldVer = rhs._pOldVer ;
+         return *this ;
       }
 
       BOOLEAN isValid() const
       {
-         return  ( NULL != _lrbHdr ) ;
+         return _pOldVer ? TRUE : FALSE ;
       }
 
-      void setValue( dpsTransLRBHeader* lrbHdr )
-      {
-         _lrbHdr = lrbHdr ;
-      }
+      BOOLEAN isRecordDeleted() const ;
 
-      dpsTransLRBHeader* &getLRBHdr()
-      {
-         return _lrbHdr ;
-      }
+      BOOLEAN isRecordNew() const ;
 
-      // assistant function to print out the lrb hdr idx
-      void printValue() const ;
-         
-      // private member
-      private:
-      // index to lock LRB header, which contain old version record
-      dpsTransLRBHeader*   _lrbHdr ;
+      const oldVersionContainer* getOldVer() const { return _pOldVer ; }
+
+      dpsOldRecordPtr      getRecordPtr() const ;
+      const dmsRecord*     getRecord() const ;
+      const dmsRecordID&   getRecordID() const ;
+      BSONObj              getRecordObj() const ;
+      UINT32               getOwnnerTID() const ;
+
+      string toString() const ;
+
+   // private member
+   private:
+      oldVersionContainer        *_pOldVer ;
 
    } ;
 
-   typedef std::pair<preIdxTreeNodeKey, preIdxTreeNodeValue> TREE_NODE_PAIR ;
-
-   // implement our own key comparison (less) function. 
-   // Note that this does take the rid into consideration.
-   class nodeKeyCompare
-   {
-      public:
-      bool operator () ( const preIdxTreeNodeKey & lhk, 
-                         const preIdxTreeNodeKey & rhk ) const
-      {
-         bool rv = false ;
-         const bson::Ordering * pOrdering = 
-            ( NULL != lhk.getOrdering() ) ? lhk.getOrdering()
-                                          : rhk.getOrdering() ;
-         
-         // compare key value using ixmKey compare
-         INT32 rt = lhk.woCompare( rhk, *( pOrdering ) ) ; 
-         if ( rt < 0 )
-         {
-            rv = true ;
-         }
-         else if ( rt == 0 )// compare RID when key equals
-         {
-            // compare return -1 when lhk is before rhk
-            if (lhk.getRID()._extent < rhk.getRID()._extent)
-            {
-               rv = true ;
-            }
-            else if( lhk.getRID()._extent == rhk.getRID()._extent)
-            {
-               rv = (lhk.getRID()._offset < rhk.getRID()._offset) ;
-            }
-         }
-         return rv ;
-      }
-   } ;
-
-   /*
-   // FIXME: as an optimization, we should implement our own allocation
-   // logic, instead of doing dynamic mem alloc, we should acquire/release
-   // memory block from a mem pool
-   // define my own allocator for the map(tree)
-   class myNodeAlloc
-   {
-      // FIXME: To be implemented
-      myNodeAlloc();
-
-      // FIXME: allocate(), deallocate(), address(), To be implemented
-      
-      
-   }
-   */
-
-   // use std::map which is implemented using red-black tree to hold 
+   // use map which is implemented using red-black tree to hold
    // old version index value
-   typedef  std::map<preIdxTreeNodeKey, 
-                     preIdxTreeNodeValue,
-                     nodeKeyCompare
-                     //myNodeAlloc
-                     > INDEX_BINARY_TREE ;
+   typedef  ossPoolMap<preIdxTreeNodeKey,
+                       preIdxTreeNodeValue
+                       > INDEX_BINARY_TREE ;
 
-   //typedef  std::map<ixmKey, preIdxTreeNode> INDEX_BINARY_TREE;
+   typedef INDEX_BINARY_TREE::iterator                   INDEX_TREE_POS ;
+   typedef INDEX_BINARY_TREE::const_iterator             INDEX_TREE_CPOS ;
+   typedef INDEX_BINARY_TREE::reverse_iterator           INDEX_TREE_RPOS ;
+   typedef INDEX_BINARY_TREE::const_reverse_iterator     INDEX_TREE_CRPOS ;
 
    /** definition of preIdxTree
     *  preIdxTree is a red-black tree which holds all old key values of a 
@@ -318,175 +400,161 @@ namespace engine
     **/
    class preIdxTree : public SDBObject
    {
-      // public interfaces:
-      public: 
-      // constructors & destructors
-      preIdxTree(const UINT32 idxID, const ixmIndexCB * indexCB)
-      {
-         _idxLID = idxID ;
-         _tree = new INDEX_BINARY_TREE() ;
-         _order = SDB_OSS_NEW clsCataOrder(
-                     bson::Ordering::make (indexCB->keyPattern()) ) ;
-      }
+      friend class oldVersionCB ;
+      friend class oldVersionContainer ;
 
+   // public interfaces:
+   public: 
+      // constructors & destructors
+      preIdxTree( const UINT32 idxID, const ixmIndexCB *indexCB ) ;
+
+      // copy constructor
+      preIdxTree( const preIdxTree &intree ) ;
 
       // destructor
-      ~preIdxTree() 
+      ~preIdxTree() ;
+
+      BOOLEAN isValid() const
       {
-         if ( NULL != _order )
-         {
-            SDB_OSS_DEL _order ;
-         }
-         // this will remove all elements in the tree. 
-         // Note that this will free up all the keyData as it's not owned 
-         // by the tree
-         if( _tree )
-         {
-            delete _tree ;
-            _tree = NULL ;
-         }
+         return ( _isValid && _order ) ? TRUE : FALSE ;
       }
 
-      INDEX_BINARY_TREE * getTree() const
+      const INDEX_BINARY_TREE* getTree() const
       {
-         return _tree ;
-      }
-
-      void setOrder ( const ixmIndexCB * indexCB )
-      {
-         _order = SDB_OSS_NEW clsCataOrder(
-                     bson::Ordering::make (indexCB->keyPattern()) ) ;
+         return &_tree ;
       }
 
       // get index logic ID
-      UINT32 getLID() const 
+      UINT32 getLID() const
       {
          return _idxLID ;
       }
 
-      bson::Ordering * getOrdering() const 
+      const Ordering * getOrdering() const
       {
          return _order->getOrdering() ;
       }
 
-      // find a node based on the key, caller need to hold the latch
-      // otherwise the iterator can change underneath
-      INDEX_BINARY_TREE::iterator find ( const preIdxTreeNodeKey & key )
+      const BSONObj& getKeyPattern() const
       {
-         return _tree->find( key ) ;
+         return _keyPattern ;
       }
 
       // find a node based on the key, caller need to hold the latch
       // otherwise the iterator can change underneath
-      INDEX_BINARY_TREE::iterator find ( const BSONObj*  key,
-                                         const dmsRecordID & rid )
-      {
-         preIdxTreeNodeKey myKey( key, rid, getOrdering() ) ;
-         return _tree->find( myKey ) ;
-      }
+      INDEX_TREE_CPOS   find( const preIdxTreeNodeKey &key ) const ;
+      INDEX_TREE_CPOS   find ( const BSONObj *key,
+                               const dmsRecordID &rid ) const ;
+      BOOLEAN           isPosValid( INDEX_TREE_CPOS pos ) const ;
+
+      void              resetPos( INDEX_TREE_CPOS &pos ) const ;
+
+      // caller need to hold the latch otherwise the iterator can
+      // change underneath
+      const preIdxTreeNodeKey&   getNodeKey( INDEX_TREE_CPOS pos ) const ;
+      const preIdxTreeNodeValue& getNodeData( INDEX_TREE_CPOS pos ) const ;
 
       // Traverse the tree to see if the key exist, caller need to hold 
       // the latch otherwise the iterator can change underneath
-      BOOLEAN ixObjExist( const BSONObj&  key, preIdxTreeNodeValue & value ) ;
+      BOOLEAN isKeyExist( const BSONObj &key,
+                          preIdxTreeNodeValue &value ) const ;
+
+      INT32 advance( INDEX_TREE_CPOS &pos, INT32 direction ) const ;
 
       // locate the best match key in the tree based on the order and direction
       INT32 locate ( const BSONObj      &keyObj,
                      const dmsRecordID  &rid,
-                     INDEX_BINARY_TREE::iterator &it,
-                     INT32               direction ) ;
+                     INDEX_TREE_CPOS    &pos,
+                     BOOLEAN            &found,
+                     INT32              direction ) const ;
 
       // move the iterator to the proper key location
-      INT32 keyLocate( INDEX_BINARY_TREE::iterator &iter, const BSONObj &prevKey,
+      INT32 keyLocate( INDEX_TREE_CPOS &pos, const BSONObj &prevKey,
                        INT32 keepFieldsNum, BOOLEAN skipToNext,
-                       const vector < const BSONElement *> &matchEle,
-                       const vector < BOOLEAN > &matchInclusive,
-                       INT32 direction, dpsTransCB* cb ) const ;
+                       const vector< const BSONElement* > &matchEle,
+                       const vector< BOOLEAN > &matchInclusive,
+                       INT32 direction ) const ;
 
       // Advance the pushed down verb and locate the key
-      INT32 keyAdvance( INDEX_BINARY_TREE::iterator &iter,
+      INT32 keyAdvance( INDEX_TREE_CPOS &pos,
                         const BSONObj &prevKey,
                         INT32 keepFieldsNum, BOOLEAN skipToNext,
                         const vector < const BSONElement *> &matchEle,
                         const vector < BOOLEAN > &matchInclusive,
-                        INT32 direction, dpsTransCB *cb ) const ;
+                        INT32 direction ) const ;
 
-      // iterator operation, caller need to hold the latch
-      // otherwise the iterator can change underneath
-      INDEX_BINARY_TREE::iterator begin ()
-      {
-         // start from the beginning of map
-         return _tree->begin() ;
-      }
-      
-      // iterator operation, caller need to hold the latch,
-      // otherwise the iterator can change underneath
-      INDEX_BINARY_TREE::iterator end ( )  
-      {
-         // start from the end of map
-         return _tree->end() ;
-      }
+      void  setDeleted() { _isValid = FALSE ; }
 
-      void clear()
-      {
-         lockX() ;
-         if (_tree)
-         {
-            _tree->clear() ;
-         }
-         unlockX() ;
-      }
-      // insert a node to map
-      INT32 insert ( const preIdxTreeNodeKey &keyNode,
-                     const preIdxTreeNodeValue & value,
-                     const BOOLEAN lockHeld = FALSE ) ;
+      INT32 insertWithOldVer( const BSONObj *keyData,
+                              const dmsRecordID &rid,
+                              oldVersionContainer *oldVer,
+                              BOOLEAN hasLock ) ;
 
-      INT32 insert ( const BSONObj * keyData, const dmsRecordID & rid,
-                     const preIdxTreeNodeValue & value,
-                     const BOOLEAN lockHeld = FALSE ) ;
-
-      // delete a node
-      INT32 remove( const preIdxTreeNodeKey & keyNode ) ;
-      INT32 remove( const BSONObj * keyData, const dmsRecordID & rid ) ;
-            
       void lockX()
       {
-         _latch.get() ;
+         // _latch.get() ;
       }
 
       void lockS()
       {
-         _latch.get_shared() ;
+         // _latch.get_shared() ;
       }
 
       void unlockX()
       {
-         _latch.release() ;
+         // _latch.release() ;
       }
 
       void unlockS()
       {
-         _latch.release_shared() ;
+         // _latch.release_shared() ;
       }
  
       BOOLEAN empty() const
       {
-         return _tree->empty() ;
+         return _tree.empty() ;
       }
 
       INT32 size() const
       {
-         return _tree->size() ;
+         return _tree.size() ;
       }
 
       // assistant function to print out the whole tree.
       void printTree() const ;
 
-      // private functions:
-      private:
+   protected:
+      // insert a node to map
+      INT32 insert ( const preIdxTreeNodeKey &keyNode,
+                     const preIdxTreeNodeValue &value,
+                     BOOLEAN hasLock = FALSE ) ;
 
-      // private attributes:
-      private: 
-      UINT32              _idxLID ; // index logic id
+      INT32 insert ( const BSONObj *keyData,
+                     const dmsRecordID &rid,
+                     const preIdxTreeNodeValue &value,
+                     BOOLEAN hasLock = FALSE ) ;
+
+      // delete a node
+      UINT32 remove( const preIdxTreeNodeKey &keyNode,
+                     BOOLEAN hasLock = FALSE ) ;
+
+      UINT32 remove( const BSONObj *keyData,
+                     const dmsRecordID &rid,
+                     BOOLEAN hasLock = FALSE ) ;
+
+      void  clear( BOOLEAN hasLock = FALSE ) ;
+
+      BSONObj     _buildPredObj( const BSONObj &prevKey,
+                                 INT32 keepFieldsNum,
+                                 BOOLEAN skipToNext,
+                                 const vector< const BSONElement* > &matchEle,
+                                 const vector< BOOLEAN > &matchInclusive,
+                                 INT32 direction ) const ;
+
+   // private attributes:
+   private:
+      BOOLEAN              _isValid ;
+      UINT32               _idxLID ; // index logic id
       // Latching protocal
       // 1. preIdxTree latch must be held in X to insert/delete node in the tree
       //    oldVersionCB(_oldVersionCBLatch) need to be held in S before
@@ -495,51 +563,29 @@ namespace engine
       //    latch, reverse order is OK. Keep in mind we store the _lrbHdrIdx
       //    in the tree so that we have direct access to lrbHdr without need
       //    to go through lrbhash bkt.
+      /*
       ossSpinSLatch       _latch ;  // latch for concurrency control, 
-                                   // adding/removing node need latch in X
-                                   // find/travers need latch in S
-      INDEX_BINARY_TREE * _tree ;   // tree to hold all old index key value
-      clsCataOrder      * _order ;  // wrap class to hold the shared ordering
+                                    // adding/removing node need latch in X
+                                    // find/travers need latch in S
+      */
+      INDEX_BINARY_TREE    _tree ;  // tree to hold all old index key value
+      clsCataOrder         *_order ;// wrap class to hold the shared ordering
+      BSONObj              _keyPattern ;
+
    } ;
 
-   // implement our own globalID comparison (less) function. 
-   // it's ordered by  _csID, _clID and _idxLID
-   struct globIDCompare
-   {
-      bool operator () ( const globIdxID &lid, 
-                         const globIdxID &rid ) const
-      {
-         bool rv = false ;
-         // compare key value using ixmKey compare
-         if ( lid._csID < rid._csID )
-         {
-            rv = true ;
-         }
-         else if ( lid._csID == rid._csID )
-         {
-            if ( lid._clID < rid._clID )
-            {
-               rv = true ;
-            }
-            else if (lid._clID == rid._clID)
-            {
-               if ( lid._idxLID < rid._idxLID )
-               {
-                  rv = true ; 
-               }
-            }
-         }
-         return rv ;
-      }
-   } ;
+   typedef boost::shared_ptr<preIdxTree>     preIdxTreePtr ;
 
    // global map from an index to its own tree
-   typedef  std::map< const globIdxID, 
-                      const preIdxTree* ,
-                      globIDCompare > IDXID_TO_TREE_MAP ;
+   typedef  ossPoolMap< const globIdxID,
+                        preIdxTreePtr
+                       > IDXID_TO_TREE_MAP ;
 
-   typedef  std::pair< const globIdxID, 
-                       const preIdxTree* > IDXID_TO_TREE_MAP_PAIR ;
+   typedef IDXID_TO_TREE_MAP::iterator       IDXID_TO_TREE_MAP_IT ;
+
+   typedef  std::pair< const globIdxID,
+                       preIdxTreePtr
+                     > IDXID_TO_TREE_MAP_PAIR ;
 
    /** definition of oldVersionCB
     *  Control block holding all resources and structures for old version 
@@ -547,18 +593,16 @@ namespace engine
     **/
    class oldVersionCB : public SDBObject
    {
-      // public interfaces
-      public:
+   // public interfaces
+   public:
       // constructor
       oldVersionCB() ;
 
       // destructor
       ~oldVersionCB() ;
 
-      const BOOLEAN isInitialized() const
-      {
-         return _initialized ;
-      }
+      INT32 init() ;
+      void  fini() ;
 
       void latchS()
       {
@@ -580,213 +624,170 @@ namespace engine
          _oldVersionCBLatch.release_shared() ;
       }
 
-      void addIdxTree( const globIdxID &gid, const ixmIndexCB * indexCB ) ;
-      void delIdxTree( const globIdxID &gid ) ;
+      INT32             addIdxTree( const globIdxID &gid,
+                                    const ixmIndexCB *indexCB,
+                                    preIdxTreePtr &treePtr,
+                                    BOOLEAN hasLock ) ;
 
-      INT32 insertIdxObj( const globIdxID     &gid, 
-                          const BSONObj       &obj,
-                          const dmsRecordID   &rid,
-                          oldVersionContainer *oldVer,
-                          const BOOLEAN       takeLock = TRUE ) ;
+      preIdxTreePtr     getIdxTree( const globIdxID &gid,
+                                    BOOLEAN hasLock ) ;
 
-      preIdxTree * getAndRemoveIdxTree( const globIdxID & gIdxID ) ;
+      INT32             getOrCreateIdxTree( const globIdxID &gid,
+                                            const ixmIndexCB *indexCB,
+                                            preIdxTreePtr &treePtr,
+                                            BOOLEAN hasLock ) ;
 
-      preIdxTree * getIdxTree( const globIdxID & gIdxID ) ;
-      
-      memBlockPool * getMemBlockPool() { return  _memBlockPool ; }
+      void              delIdxTree( const globIdxID &gid,
+                                    BOOLEAN hasLock ) ;
 
-      // assistant function to print all tree's gid to diaglog
-      void printTrees( BOOLEAN latched ) ;
+      memBlockPool*     getMemBlockPool() { return  &_memBlockPool ; }
 
-      // counter to get number of indexes
-      INT32 getNumTrees()
-      {
-         return _idxTrees->size() ;
-      }
-
-      // counter to get number of indexes
-      INT32 getTotalTreeSize()
-      {
-         UINT32  totalNum = 0 ;
-         for ( IDXID_TO_TREE_MAP::iterator it = _idxTrees->begin() ;
-               it != _idxTrees->end() ; it++ )
-         {
-            totalNum += it->second->size() ;
-         }
-         return totalNum ;
-      }
-
-      // private functions
-      private:
-
-      // private attributes
-      private:
+   // private attributes
+   private:
       // latch to protect the fields. Should hold it in X to initialize and 
       // destroy _memBlockPool, otherwise hold in S
       ossSpinSLatch       _oldVersionCBLatch ;
-      IDXID_TO_TREE_MAP * _idxTrees ;  // trees holding older version of indexes
-      memBlockPool      * _memBlockPool ; // pool of memory blocks holding old 
-                                         // version of records
-      BOOLEAN             _initialized ;  // flag indicating if it's initialized
+      IDXID_TO_TREE_MAP   _idxTrees ;     // trees holding older version of indexes
+      memBlockPool        _memBlockPool ; // pool of memory blocks holding old 
+                                          // version of records
    } ;
 
-   class idxObj
+   /*
+      dpsIdxObj define
+   */
+   class dpsIdxObj : public SDBObject
    {
-      public:
-      idxObj()
+   public:
+      dpsIdxObj()
       {
          _idxLID = -1 ;
-         _order = NULL ;
       }
 
-      idxObj( const  idxObj & obj )
+      dpsIdxObj( const BSONObj &key, INT32 idxLID )
+      :_idxLID( idxLID ), _idxObj( key.getOwned() )
       {
-         _idxLID = obj._idxLID ;
-         _order = obj._order ;
-         _idxObj = obj._idxObj.copy() ;
       }
-      public:
-      SINT32             _idxLID ; // index unique logical ID
-      //MEMBLOCKPOOL_TYPE  _recordMemType;  // which seg was _idxObj allocated
-      bson::Ordering    *_order ;  // pointer to ordering for comparison 
-      BSONObj            _idxObj ; // BSON Object
-   } ;
 
-   // implement our own idxObj comparison (less) function.
-   // it's ordered by the unique _idxLID and bson obj
-   class idxObjCompare
-   {
-      public: 
+      dpsIdxObj( const dpsIdxObj &rhs )
+      {
+         _idxLID = rhs._idxLID ;
+         _idxObj = rhs._idxObj ;
+      }
 
-      bool operator () ( const idxObj &lobj,
-                         const idxObj &robj ) const
+      dpsIdxObj& operator= ( const dpsIdxObj &rhs )
+      {
+         _idxLID = rhs._idxLID ;
+         _idxObj = rhs._idxObj ;
+         return *this ;
+      }
+
+      SINT32   getIdxLID() const { return _idxLID ; }
+      const BSONObj& getKeyObj() const { return _idxObj ; }
+
+      void     setIdxLID( SINT32 idxLID ) { _idxLID = idxLID ; }
+      void     setKeyObj( const BSONObj &obj ) { _idxObj = obj.getOwned() ; }
+
+      bool     operator< ( const dpsIdxObj &rhs ) const
       {
          bool rv = false ;
-         if ( lobj._idxLID < robj._idxLID )
+
+         if ( _idxLID < rhs._idxLID )
          {
             rv = true ;
          }
-         else if( lobj._idxLID == robj._idxLID )
+         else if( _idxLID == rhs._idxLID )
          {
             // same LID, do bson compare based on order
-            rv = (lobj._idxObj.woCompare(robj._idxObj,
-                                          *(lobj._order)) < 0) ;
+            rv = ( _idxObj.woCompare( rhs._idxObj, BSONObj(), FALSE ) < 0 ) ;
          }
+
          return rv ;
       }
+
+   private:
+      SINT32            _idxLID ; // index unique logical ID
+      BSONObj           _idxObj ; // BSON Object
    } ;
 
    // Use set of idx lid to figure out if the first version of an index value 
    // was already stored or not. 
-   typedef std::set< SINT32 > idxLidSet ;
+   typedef ossPoolMap< SINT32, preIdxTreePtr >     idxLidMap ;
    // use set of idxObj to store all index key values
-   typedef std::set< idxObj, idxObjCompare > idxObjSet ;
+   typedef ossPoolSet< dpsIdxObj >                 idxObjSet ;
 
    // Class to store all information for old version record/indexes. This 
    // container is currently hanging off LRBHdr
    class oldVersionContainer : public SDBObject
    {
-      public:
-      oldVersionContainer(dpsTransLRBHeader* lrb )
-      {
-         _oldRecord = NULL ;
-         _order     = NULL ;
-         _lrbHdr  = lrb ;
-         _isNewRecord = FALSE ;
-      }
+      friend class preIdxTree ;
+
+   public:
+      oldVersionContainer( const dmsRecordID &rid ) ;
+      ~oldVersionContainer() ;
+
+      void* operator new ( size_t size, memBlockPool *pPool,
+                           std::nothrow_t ) ;
+
+      void operator delete ( void *p ) ;
+      void operator delete ( void *p, memBlockPool *pPool,
+                             std::nothrow_t ) ;
+
+      BOOLEAN              isRecordEmpty() const ;
+
+      const dmsRecordID&   getRecordID() const { return _rid ; }
+      dpsOldRecordPtr      getRecordPtr() const { return _recordPtr ; }
+      BSONObj              getRecordObj() const ;
+      const dmsRecord*     getRecord() const ;
+
+      INT32                saveRecord( const dmsRecord *pRecord,
+                                       const BSONObj &obj,
+                                       UINT32 ownnerTID,
+                                       memBlockPool *pPool ) ;
+      void                 releaseRecord() ;
+
+      void                 setRecordDeleted() ;
+      BOOLEAN              isRecordDeleted() const ;
+
+      void                 setRecordNew() ;
+      BOOLEAN              isRecordNew() const ;
+
+      void                 setRecordDummy( UINT32 ownnerTID ) ;
+      BOOLEAN              isRecordDummy() const ;
+      UINT32               getOwnnerTID() const ;
+
+      BOOLEAN              isIndexObjEmpty() const ;
 
       // check if the index lid already exists in the set
-      BOOLEAN idxLidExist(SINT32 id)
-      {
-         return ( _oldIdxLid.find(id) != _oldIdxLid.end() ) ;
-      }
+      BOOLEAN              idxLidExist( SINT32 idxLID ) const ;
+      BOOLEAN              insertIdxTree( preIdxTreePtr treePtr ) ;
 
       // based on index LID passed in, retrieve the index value
-      BSONObj* getOldIdxValue(const  SINT32 lid )
-      {
-         BSONObj * obj = NULL ;
-         for ( idxObjSet::iterator i = _oldIdx.begin() ;
-               i != _oldIdx.end() ; ++i )
-         {
-            if ( i->_idxLID == lid )
-            {
-               obj = const_cast<BSONObj *> (&(i->_idxObj)) ;
-               break ;
-            }
-         }
-         return obj ;
-      }
+      const dpsIdxObj*     getIdxObj( SINT32 idxLID ) const ;
+      BOOLEAN              isIdxObjExist( const dpsIdxObj &obj ) const ;
 
-      void setRecordNew() { _isNewRecord = TRUE ; }
-      void unsetRecordNew() { _isNewRecord = FALSE ; }
-      BOOLEAN isRecordNew() { return _isNewRecord ; }
-
-      void setOrder( clsCataOrder* o ) { _order = o ; }
-      void freeOrder( )
-      { 
-         SDB_OSS_DEL _order ;
-         _order = NULL ;
-      }
-
-      clsCataOrder* getOrder () { return _order ; }
-
-      MEMBLOCKPOOL_TYPE & getRecordMemType() { return _recordMemType ; }
-
-      dmsRecord * &getOldRecord() { return _oldRecord ; }
-      void setOldRecord(dmsRecord * r) { _oldRecord = r ; }
-
-      BOOLEAN insertLID( const  SINT32 lid )
-      {
-         return _oldIdxLid.insert(lid).second ;
-      }
-
-      void clearIdxLid() { _oldIdxLid.clear() ; }
-
-      BOOLEAN  insertOldIdxLid( const  SINT32 lid, ixmIndexCB* indexCB )
-      {
-         // only store order once
-         if (!_order )
-         {
-            setOrder( SDB_OSS_NEW clsCataOrder(
-                               Ordering::make(indexCB->keyPattern()) ) ) ;
-         }
-         return insertLID(lid) ;
-      }
-
+   protected:
       // given an index object, insert into the idxObjSet. Return false
       // if the same index for the record already exist. In this case,
       // the object was not inserted
-      BOOLEAN insertIdx( idxObj & i )
-      {
-         // set the ordering pointer first
-         i._order = _order->getOrdering() ;
-         return _oldIdx.insert(i).second ;
-      }
+      BOOLEAN              insertIdx( const dpsIdxObj &i ) ;
 
-      void deleteIdx( idxObjSet::iterator it )
-      {
-         _oldIdx.erase(it) ;
-      }
+   private:
+      dmsRecordID       _rid ;
+      dpsOldRecordPtr   _recordPtr ;   // pointer to copy of old record
+      UINT32            _ownnerTID ;
 
-      idxObjSet & getIdxSet ()  { return _oldIdx ; }
-      dpsTransLRBHeader*  const getLrbHdr()  { return _lrbHdr ; }
-
-      private:
-      dmsRecord * _oldRecord ;   // pointer to copy of old record
-      dpsTransLRBHeader* _lrbHdr ;   // LRB header index
-      BOOLEAN     _isNewRecord ; // is this a newly created record or not
+      BOOLEAN           _isDeleted ;
+      BOOLEAN           _isDummyRecord ;
+      BOOLEAN           _isNewRecord ; // is this a newly created record or not
       // A set of index Lids (up to 64) associated to this record.
       // We use this to figure out if the idx was already stored in the tree
       // Keep in mind that RC require us read the last committed version which
       // will be the version before first update in the transaction
-      idxLidSet _oldIdxLid ;
-      // pointer to the order for comparison
-      clsCataOrder *_order ;
+      idxLidMap         _oldIdxLid ; 
       // point to a set containing all key sets.
-      idxObjSet  _oldIdx ;
-      // tells which old record segment _oldRecord was allocated from
-      MEMBLOCKPOOL_TYPE _recordMemType ;
-   };
+      idxObjSet         _oldIdx ;
+   } ;
+
 }
 
 #endif //DPSTRANSVERSIONCTRL_HPP_

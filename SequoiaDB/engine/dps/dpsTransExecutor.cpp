@@ -74,6 +74,7 @@ namespace engine
       clearLastLRB() ;
       clearLock() ;
       clearLockCount() ;
+      clearRecordMap() ;
    }
 
    void _dpsTransExecutor::assertLocks()
@@ -84,6 +85,7 @@ namespace engine
                   "Waiter LRB must be invalid" ) ;
       SDB_ASSERT( _lastLRB == NULL,
                   "Last LRB must be invalid" ) ;
+      SDB_ASSERT( isRecordMapEmpty(), "Record map must be empty" ) ;
    }
 
    void _dpsTransExecutor::setWaiterInfo( dpsTransLRB* waiter,
@@ -301,6 +303,69 @@ namespace engine
       {
          setUseRollbackSemgent( TRUE, FALSE ) ;
       }
+   }
+
+   const _dpsTransExecutor::MAP_LSN_2_RECORD*
+      _dpsTransExecutor::getRecordMap() const
+   {
+      return &_mapLSN2Record ;
+   }
+
+   void _dpsTransExecutor::putRecord( DPS_LSN_OFFSET lsnOffset,
+                                      const dmsRecordID &item )
+   {
+      pair<MAP_LSN_2_RECORD_IT,BOOLEAN> ret ;
+      try
+      {
+         ret = _mapLSN2Record.insert( MAP_LSN_2_RECORD::value_type( lsnOffset,
+                                                                    item ) ) ;
+         if ( !ret.second )
+         {
+            SDB_ASSERT( FALSE, "Item must not been existed" ) ;
+            ret.first->second = item ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+      }
+   }
+
+   void _dpsTransExecutor::delRecord( DPS_LSN_OFFSET lsnOffset )
+   {
+      _mapLSN2Record.erase( lsnOffset ) ;
+   }
+
+   BOOLEAN _dpsTransExecutor::getRecord( DPS_LSN_OFFSET lsnOffset,
+                                         dmsRecordID &item,
+                                         BOOLEAN withDel )
+   {
+      MAP_LSN_2_RECORD_IT it = _mapLSN2Record.find( lsnOffset ) ;
+      if ( it != _mapLSN2Record.end() )
+      {
+         item = it->second ;
+         if ( withDel )
+         {
+            _mapLSN2Record.erase( it ) ;
+         }
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   void _dpsTransExecutor::clearRecordMap()
+   {
+      _mapLSN2Record.clear() ;
+   }
+
+   BOOLEAN _dpsTransExecutor::isRecordMapEmpty() const
+   {
+      return _mapLSN2Record.empty() ? TRUE : FALSE ;
+   }
+
+   UINT32 _dpsTransExecutor::getRecordMapSize() const
+   {
+      return _mapLSN2Record.size() ;
    }
 
 }

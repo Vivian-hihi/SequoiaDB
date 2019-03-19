@@ -313,8 +313,8 @@ namespace engine
    };
    typedef _CoordCataInfo CoordCataInfo ;
 
-   typedef boost::shared_ptr< CoordCataInfo >         CoordCataInfoPtr ;
-   typedef std::map< std::string, CoordCataInfoPtr >  CoordCataMap ;
+   typedef boost::shared_ptr< CoordCataInfo >            CoordCataInfoPtr ;
+   typedef ossPoolMap< std::string, CoordCataInfoPtr >   CoordCataMap ;
 
 }
 

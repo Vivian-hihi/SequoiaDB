@@ -38,11 +38,9 @@
 *******************************************************************************/
 
 #include "dmsStorageBase.hpp"
-#include "dmsStorageData.hpp"
 #include "dmsStorageJob.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
-#include "pmdStartup.hpp"
 #include "utilStr.hpp"
 #include "pmdEnv.hpp"
 
@@ -274,7 +272,7 @@ namespace engine
       return ( _attr & DMS_RW_ATTR_NOTHROW ) ? TRUE : FALSE ;
    }
 
-   const CHAR* _dmsExtRW::readPtr( UINT32 offset, UINT32 len )
+   const CHAR* _dmsExtRW::readPtr( UINT32 offset, UINT32 len ) const
    {
       if ( (ossValuePtr)0 == _ptr )
       {
@@ -1996,55 +1994,6 @@ namespace engine
       _blockScanSupport = FALSE ;
    }
 
-   /*
-      DMS TOOL FUNCTIONS:
-   */
-   BOOLEAN dmsAccessAndFlagCompatiblity ( UINT16 collectionFlag,
-                                          DMS_ACCESS_TYPE accessType )
-   {
-      // if we are in crash recovery mode, only recovery thread is able to
-      // perform query, in this case we always return TRUE
-      if ( !pmdGetStartup().isOK() )
-      {
-         return TRUE ;
-      }
-      else if ( DMS_IS_MB_FREE(collectionFlag) ||
-                DMS_IS_MB_DROPPED(collectionFlag) )
-      {
-         return FALSE ;
-      }
-      else if ( DMS_IS_MB_NORMAL(collectionFlag) )
-      {
-         return TRUE ;
-      }
-      else if ( DMS_IS_MB_OFFLINE_REORG(collectionFlag) )
-      {
-         if ( DMS_IS_MB_OFFLINE_REORG_TRUNCATE(collectionFlag) &&
-            ( accessType == DMS_ACCESS_TYPE_TRUNCATE ) )
-         {
-            return TRUE ;
-         }
-         else if ( ( DMS_IS_MB_OFFLINE_REORG_SHADOW_COPY ( collectionFlag ) ||
-                     DMS_IS_MB_OFFLINE_REORG_REBUILD( collectionFlag ) ) &&
-                  ( ( accessType == DMS_ACCESS_TYPE_QUERY ) ||
-                    ( accessType == DMS_ACCESS_TYPE_FETCH ) ) )
-         {
-            return TRUE ;
-         }
-         return FALSE ;
-      }
-      else if ( DMS_IS_MB_ONLINE_REORG(collectionFlag) )
-      {
-         return TRUE ;
-      }
-      else if ( DMS_IS_MB_LOAD ( collectionFlag ) &&
-                DMS_ACCESS_TYPE_TRUNCATE != accessType )
-      {
-         return TRUE ;
-      }
-
-      return FALSE ;
-    }
 }
 
 

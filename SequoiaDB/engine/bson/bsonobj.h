@@ -305,7 +305,7 @@ namespace bson {
           { return *(reinterpret_cast<const int*>(objdata())); }
 
         /** performs a cursory check on the object's size only. */
-        bool isValid();
+        bool isValid() const ;
 
         /** @return if the user is a valid user doc
             criter: isValid() no . or $ field names

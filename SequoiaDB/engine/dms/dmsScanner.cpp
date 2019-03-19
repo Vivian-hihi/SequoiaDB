@@ -75,8 +75,7 @@ namespace engine
    */
    _dmsScanner::_dmsScanner( dmsStorageDataCommon *su, dmsMBContext *context,
                              mthMatchRuntime *matchRuntime,
-                             DMS_ACCESS_TYPE accessType,
-                             _dpsITransLockCallback * callback )
+                             DMS_ACCESS_TYPE accessType )
    {
       SDB_ASSERT( su, "storage data can't be NULL" ) ;
       SDB_ASSERT( context, "context can't be NULL" ) ;
@@ -85,11 +84,9 @@ namespace engine
       _matchRuntime = matchRuntime ;
       _accessType = accessType ;
       _mbLockType = SHARED ;
-      _callback = (dmsTransLockCallback *)callback;
       _transIsolation = TRANS_ISOLATION_RU ;
       _waitLock = FALSE ;
       _useRollbackSegment = TRUE ;
-
 
       if ( DMS_IS_WRITE_OPR( _accessType ) )
       {
@@ -113,15 +110,15 @@ namespace engine
                                            DMS_ACCESS_TYPE accessType,
                                            INT64 maxRecords,
                                            INT64 skipNum,
-                                           INT32 flag,
-                                           _dpsITransLockCallback * callback )
-   :_dmsScanner( su, context, matchRuntime, accessType, callback ),
+                                           INT32 flag )
+   :_dmsScanner( su, context, matchRuntime, accessType ),
     _curRecordPtr( NULL )
    {
       _maxRecords          = maxRecords ;
       _skipNum             = skipNum ;
       _next                = DMS_INVALID_OFFSET ;
       _firstRun            = TRUE ;
+      _hasLockedRecord     = FALSE ;
       _extent              = NULL ;
       _pTransCB            = NULL ;
       _curRID._extent      = curExtentID ;
@@ -141,11 +138,18 @@ namespace engine
       _extent     = NULL ;
 
       if ( FALSE == _firstRun && _recordLock != DPS_TRANSLOCK_MAX &&
+           _hasLockedRecord &&
            DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID, _callback ) ;
+                                      &_curRID, &_callback ) ;
+         _hasLockedRecord = FALSE ;
       }
+   }
+
+   dmsTransLockCallback* _dmsExtScannerBase::callbackHandler()
+   {
+      return &_callback ;
    }
 
    dmsExtentID _dmsExtScannerBase::nextExtentID() const
@@ -200,11 +204,12 @@ namespace engine
       }
       // have locked, but not trans, need to release record lock held 
       // from last round of scan
-      else if ( _needUnLock && DMS_INVALID_OFFSET != _curRID._offset 
-                && !_curRID.isIDXRid() )
+      else if ( _needUnLock && _hasLockedRecord &&
+                DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID, _callback ) ;
+                                      &_curRID, &_callback ) ;
+         _hasLockedRecord = FALSE ;
       }
 
       rc = _fetchNext( recordID, generator, cb, mthContext ) ;
@@ -229,75 +234,32 @@ namespace engine
    void _dmsExtScannerBase::stop()
    {
       if ( FALSE == _firstRun && _recordLock != DPS_TRANSLOCK_MAX
-           && DMS_INVALID_OFFSET != _curRID._offset )
+           && _hasLockedRecord &&
+           DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID, _callback ) ;
+                                      &_curRID, &_callback ) ;
+         _hasLockedRecord = FALSE ;
       }
       _next = DMS_INVALID_OFFSET ;
       _curRID._offset = DMS_INVALID_OFFSET ;
    }
 
-   _dmsExtScanner::_dmsExtScanner( dmsStorageDataCommon *su, _dmsMBContext *context,
+   _dmsExtScanner::_dmsExtScanner( dmsStorageDataCommon *su,
+                                   _dmsMBContext *context,
                                    mthMatchRuntime *matchRuntime,
                                    dmsExtentID curExtentID,
                                    DMS_ACCESS_TYPE accessType,
                                    INT64 maxRecords,
                                    INT64 skipNum,
-                                   INT32 flag,
-                                   _dpsITransLockCallback * callback )
+                                   INT32 flag )
    : _dmsExtScannerBase( su, context, matchRuntime, curExtentID, accessType,
-                         maxRecords, skipNum, flag, callback )
+                         maxRecords, skipNum, flag )
    {
    }
 
    _dmsExtScanner::~_dmsExtScanner()
    {
-   }
-
-   // Description:
-   //    DMS setup lock call back function. It create the call back if not
-   // already exist. This function can be called by initial setup, or within
-   // each round of dms scan to update the recor.
-   // 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSCAN_SETUPTRANSLOCKCALLBACK, "_dmsScanner::setupTransLockCallback" )
-   void _dmsScanner::setupTransLockCallback( dmsRecordRW* recordRW )
-   {
-      PD_TRACE_ENTRY ( SDB__DMSSCAN_SETUPTRANSLOCKCALLBACK );
-
-      if ( _callback )
-      {
-         // callback already created, do cleanup and setup for this round
-         _callback->setRecordRW(recordRW);
-         _callback->resetWorkingArea();
-      }
-      PD_TRACE_EXIT ( SDB__DMSSCAN_SETUPTRANSLOCKCALLBACK );
-   }
-
-   // Description:
-   //    DMS verify if certain index (LID) was changed by any updates based on
-   // information kept in transCB callback oldVer
-   // Dependency:
-   //    Caller should guarantee the memory used here are safe
-   BOOLEAN _dmsScanner::isIdxChanged( dmsExtentID    lid,
-                                      const BSONObj* value )
-   {
-      BOOLEAN   changed = FALSE;
-      oldVersionContainer *oldVer = NULL;
-      if ( _callback )
-      {
-         oldVer = (oldVersionContainer*) _callback->getWorkingArea();
-
-         if( oldVer && oldVer->idxLidExist( lid ) )
-         {
-            BSONObj* oldValue = oldVer->getOldIdxValue( lid );
-            if ( NULL != oldValue )
-            {
-               changed = !(oldValue->equal(*value));
-            }
-         }
-      }
-      return changed;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEXTSCAN__FIRSTINIT, "_dmsExtScanner::_firstInit" )
@@ -314,17 +276,17 @@ namespace engine
       _waitLock = pExe->isTransWaitLock() ;
       _useRollbackSegment = pExe->useRollbackSegment() ;
 
-      /// When not use trans lock
-      if ( !pExe->useTransLock() )
-      {
-         _recordLock = DPS_TRANSLOCK_MAX ;
-         _selectForUpdate = FALSE ;
-      }
       /// When not in transaction
-      else if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+      if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
       {
+         /// When not use trans lock
+         if ( !pExe->useTransLock() )
+         {
+            _recordLock = DPS_TRANSLOCK_MAX ;
+            _selectForUpdate = FALSE ;
+         }
          /// Write operation should release lock right now
-         if ( DMS_IS_WRITE_OPR( _accessType ) )
+         else if ( DMS_IS_WRITE_OPR( _accessType ) )
          {
             _recordLock = DPS_TRANSLOCK_X ;
             _needUnLock = TRUE ;
@@ -336,12 +298,16 @@ namespace engine
             _recordLock = DPS_TRANSLOCK_MAX ;
             _selectForUpdate = FALSE ;
          }
-
       }
       /// In transaction
       else
       {
-         if ( DMS_IS_WRITE_OPR( _accessType ) )
+         if ( cb->isInRollback() )
+         {
+            _recordLock = DPS_TRANSLOCK_MAX ;
+            _selectForUpdate = FALSE ;
+         }
+         else if ( DMS_IS_WRITE_OPR( _accessType ) )
          {
             _recordLock = DPS_TRANSLOCK_X ;
             _needUnLock = FALSE ;
@@ -405,6 +371,11 @@ namespace engine
          goto error ;
       }
 
+      // set callback info
+      _callback.setBaseInfo( _pTransCB, cb ) ;
+      _callback.setIDInfo( _pSu->CSID(), _context->mbID(),
+                           _pSu->logicalID() ) ;
+
       // send pre-load request
       if ( bPreLoadEnabled && DMS_INVALID_EXTENT != _extent->_nextExtent )
       {
@@ -436,8 +407,9 @@ namespace engine
       BOOLEAN result          = TRUE ;
       ossValuePtr recordDataPtr ;
       dmsRecordData recordData ;
-      BOOLEAN lockedRecord    = FALSE ;
-      BOOLEAN newXAcquire     = FALSE ;
+      BOOLEAN ignoredLock     = FALSE ;
+
+      _hasLockedRecord        = FALSE ;
 
       PD_TRACE_ENTRY ( SDB__DMSEXTSCAN__FETCHNEXT );
       PD_TRACE5 ( SDB__DMSEXTSCAN__FETCHNEXT, 
@@ -460,27 +432,23 @@ namespace engine
          _recordRW = _pSu->record2RW( _curRID, _context->mbID() ) ;
          _curRecordPtr = _recordRW.readPtr( 0 ) ;
          _next = _curRecordPtr->getNextOffset() ;
-         newXAcquire = FALSE ;
+         ignoredLock = FALSE ;
 
          if ( _recordLock != DPS_TRANSLOCK_MAX )
          {
-
             dmsTBTransContext tbTxContext( _context, _accessType ) ;
             dpsTransRetInfo   lockConflict ;
 
-            // We should have already allocated the callback, this is to 
-            // setup proper recordRW in callback 
-            // FIXME: next step we will have caller create local variable
-            // and passed an instance of callback
-
-            setupTransLockCallback( &_recordRW );
+            // attach the recordRW in callback
+            _callback.attachRecordRW( &_recordRW ) ;
+            _callback.clearStatus() ;
 
             if ( DPS_TRANSLOCK_X == _recordLock )
             {
                rc = _pTransCB->transLockGetX( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
-                                              & tbTxContext, &lockConflict, _callback ) ;
-               newXAcquire = lockConflict._newAcquire;
+                                              & tbTxContext, &lockConflict,
+                                              &_callback ) ;
             }
             else if ( DPS_TRANSLOCK_U == _recordLock )
             {
@@ -489,75 +457,75 @@ namespace engine
                                               &tbTxContext,
                                               &lockConflict ) ;
             }
-            // We need to check TRANSWAITLOCK config to decide if
-            // we do try or acquire S lock. 
-            else if ( needWaitForLock() )
-            {
-               rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
-                                              _context->mbID(), &_curRID,
-                                              & tbTxContext,
-                                              &lockConflict ) ;
-            }
-
+            /// DPS_TRANSLOCK_S
             else
             {
-               // for new RC logic, we should first try on S lock instead 
-               // of directly wait on the record lock. Under the cover, 
-               // the lock call back function would try to use the old copy
-               // (previous committed version) if exist
-               rc = _pTransCB->transLockTryS( cb, _pSu->logicalID(),
-                                              _context->mbID(), &_curRID,
-                                               & lockConflict, _callback ) ;
-
-               // If failed with SDB_DPS_TRANS_LOCK_INCOMPATIBLE,
-               // that means the Xlock holder did not setup old version
-               // OR in a small timing window of update guy in the middle of   
-               // releasing lock. Either way, Let's wait on the record lock.
-               // Alternative solution is to use a while loop here, when failed
-               // to get lock, we will just do tryS again. We either get the 
-               // lock, or got old copy before come out. However, there could
-               // be CPU overhead, and the lock try request could be starved
-               // because we comeout instead of waiting in the queue.
-               // For now, we take the simple approach, just wait on the lock
-               if ( SDB_DPS_TRANS_LOCK_INCOMPATIBLE == rc )
+               if ( !needWaitForLock() )
                {
-                  if ( TRUE == lockConflict._skipNewRecord )
-                  {
-                     // For newly created records by another transaction,
-                     // we could still find it through diskIXScan, we will
-                     // skip those records without waiting for lock.
-                     rc = SDB_OK ;
-                     continue ;
-                  }
-
-                  if( FALSE == lockConflict._useOldVersion )
-                  {
-                     rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
+                  // for new RC logic, we should first try on S lock instead 
+                  // of directly wait on the record lock. Under the cover, 
+                  // the lock call back function would try to use the old copy
+                  // (previous committed version) if exist
+                  rc = _pTransCB->transLockTryS( cb, _pSu->logicalID(),
                                                  _context->mbID(), &_curRID,
-                                                 & tbTxContext, & lockConflict ) ;
+                                                  & lockConflict,
+                                                  & _callback ) ;
+                  if ( rc )
+                  {
+                     if ( _callback.isSkipRecord() )
+                     {
+                        // For newly created records by another transaction,
+                        // we could still find it through diskIXScan, we will
+                        // skip those records without waiting for lock.
+                        rc = SDB_OK ;
+                        ignoredLock = TRUE ;
+                        continue ;
+                     }
+                     else if ( _callback.isUseOldVersion() )
+                     {
+                        ignoredLock = TRUE ;
+                        rc = SDB_OK ;
+                     }
                   }
+               }
 
+               /// wait lock
+               if ( needWaitForLock() || rc )
+               {
+                  rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
+                                                 _context->mbID(), &_curRID,
+                                                 & tbTxContext,
+                                                 &lockConflict ) ;
                }
             }
 
-            // In case we use old version, we might not have the lock held
-            if ( ( rc != SDB_DPS_TRANS_LOCK_INCOMPATIBLE) || 
-                 ( TRUE != lockConflict._useOldVersion )  )
+            if ( rc )
             {
-               PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get record lock, rc: %d"OSS_NEWLINE
-                         "Request Mode:   %s"OSS_NEWLINE 
-                         "Conflict ( representative ):"OSS_NEWLINE
-                         "   EDUID:  %llu"OSS_NEWLINE
-                         "   LockId: %s"OSS_NEWLINE
-                         "   Mode:   %s"OSS_NEWLINE, 
-                         rc,
-                         lockModeToString( _recordLock ),
-                         lockConflict._eduID,
-                         lockConflict._lockID.toString().c_str(), 
-                         lockModeToString( lockConflict._lockType ) ) ;
+               PD_LOG( PDERROR,
+                       "Failed to get record lock, rc: %d"OSS_NEWLINE
+                       "Request Mode:   %s"OSS_NEWLINE 
+                       "Conflict ( representative ):"OSS_NEWLINE
+                       "   EDUID:  %llu"OSS_NEWLINE
+                       "   LockId: %s"OSS_NEWLINE
+                       "   Mode:   %s"OSS_NEWLINE, 
+                       rc,
+                       lockModeToString( _recordLock ),
+                       lockConflict._eduID,
+                       lockConflict._lockID.toString().c_str(), 
+                       lockModeToString( lockConflict._lockType ) ) ;
+               goto error ;
+            }
 
-               lockedRecord = TRUE ;
+            if ( !ignoredLock )
+            {
+               _hasLockedRecord = TRUE ;
+            }
+
+            if ( _callback.hasError() )
+            {
+               rc = _callback.getResult() ;
+               PD_LOG( PDERROR, "Occur error in callback, rc: %d", rc ) ;
+               goto error ;
             }
 
             // while we wait on the record lock, we could give up the mblatch,
@@ -572,7 +540,6 @@ namespace engine
             // let's the _curRecordPtr. Otherwise we might mistakenly skip
             // the record if it's being deleted.
             _curRecordPtr = _recordRW.readPtr( 0 ) ;
-
          }
 
          // if this delete is from the same transaction as marking it 
@@ -584,21 +551,21 @@ namespace engine
          {
             if ( _recordLock == DPS_TRANSLOCK_X )
             {
-                  INT32 rc1 = _pSu->deleteRecord( _context, _curRID,
-                                                  0, cb, NULL, 
-                                                  newXAcquire, _callback ) ;
-                  if ( rc1 )
-                  {
-                     PD_LOG( PDWARNING, "Failed to delete the deleting record, "
-                             "rc: %d", rc ) ;
-                  }
+               INT32 rc1 = _pSu->deleteRecord( _context, _curRID,
+                                               0, cb, NULL, NULL ) ;
+               if ( rc1 )
+               {
+                  PD_LOG( PDWARNING, "Failed to delete the deleting record, "
+                          "rc: %d", rc ) ;
+               }
             }
 
-            if ( lockedRecord )
+            if ( _hasLockedRecord )
             {
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                            _context->mbID(), &_curRID, _callback ) ;
-               lockedRecord = FALSE ;
+                                            _context->mbID(), &_curRID,
+                                            &_callback ) ;
+               _hasLockedRecord = FALSE ;
             }
             continue ;
          }
@@ -704,11 +671,12 @@ namespace engine
             }
          }
 
-         if ( lockedRecord == TRUE )
+         if ( _hasLockedRecord )
          {
             _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                         _context->mbID(), &_curRID, _callback ) ;
-            lockedRecord = FALSE ;
+                                         _context->mbID(), &_curRID,
+                                         &_callback ) ;
+            _hasLockedRecord = FALSE ;
          }
       } // while
 
@@ -719,10 +687,11 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__DMSEXTSCAN__FETCHNEXT, rc );
       return rc ;
    error:
-      if ( lockedRecord && _recordLock != DPS_TRANSLOCK_MAX )
+      if ( _hasLockedRecord )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID, _callback ) ;
+                                      &_curRID, &_callback ) ;
+         _hasLockedRecord = FALSE ;
       }
       recordID.reset() ;
       recordDataPtr = 0 ;
@@ -1099,9 +1068,8 @@ namespace engine
                                  DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords,
                                  INT64 skipNum,
-                                 INT32 flag, 
-                                 _dpsITransLockCallback * callback )
-   :_dmsScanner( su, context, matchRuntime, accessType, callback )
+                                 INT32 flag )
+   :_dmsScanner( su, context, matchRuntime, accessType )
    {
       _extScanner    = NULL ;
       _curExtentID   = DMS_INVALID_EXTENT ;
@@ -1118,6 +1086,15 @@ namespace engine
       {
          SDB_OSS_DEL _extScanner ;
       }
+   }
+
+   dmsTransLockCallback* _dmsTBScanner::callbackHandler()
+   {
+      if ( _extScanner )
+      {
+         return _extScanner->callbackHandler() ;
+      }
+      return NULL ;
    }
 
    INT32 _dmsTBScanner::_firstInit()
@@ -1157,8 +1134,7 @@ namespace engine
                                                     _accessType,
                                                     _maxRecords,
                                                     _skipNum,
-                                                    _flag, 
-                                                    _callback ) ;
+                                                    _flag ) ;
       if ( !_extScanner )
       {
          PD_LOG( PDERROR, "Create extent scanner failed" ) ;
@@ -1237,14 +1213,14 @@ namespace engine
                                        DMS_ACCESS_TYPE accessType,
                                        INT64 maxRecords,
                                        INT64 skipNum,
-                                       INT32 flag, 
-                                       _dpsITransLockCallback * callback )
-   :_dmsScanner( su, context, matchRuntime, accessType, callback ),
+                                       INT32 flag )
+   :_dmsScanner( su, context, matchRuntime, accessType ),
     _curRecordPtr( NULL )
    {
       _maxRecords          = maxRecords ;
       _skipNum             = skipNum ;
       _firstRun            = TRUE ;
+      _hasLockedRecord     = FALSE ;
       _pTransCB            = NULL ;
       _recordLock          = DPS_TRANSLOCK_MAX ;
       _needUnLock          = FALSE ;
@@ -1269,13 +1245,20 @@ namespace engine
    _dmsIXSecScanner::~_dmsIXSecScanner ()
    {
       if ( FALSE == _firstRun && _recordLock != DPS_TRANSLOCK_MAX
+           && _hasLockedRecord
            && DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID, _callback ) ;
+                                      &_curRID, &_callback ) ;
+         _hasLockedRecord = FALSE ;
       }
 
       _scanner    = NULL ;
+   }
+
+   dmsTransLockCallback* _dmsIXSecScanner::callbackHandler()
+   {
+      return &_callback ;
    }
 
    void  _dmsIXSecScanner::enableIndexBlockScan( const BSONObj &startKey,
@@ -1360,17 +1343,17 @@ namespace engine
       _waitLock = pExe->isTransWaitLock() ;
       _useRollbackSegment = pExe->useRollbackSegment() ;
 
-      /// When not use trans lock
-      if ( !pExe->useTransLock() )
-      {
-         _recordLock = DPS_TRANSLOCK_MAX ;
-         _selectForUpdate = FALSE ;
-      }
       /// When not in transaction
-      else if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+      if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
       {
+         /// When not use trans lock
+         if ( !pExe->useTransLock() )
+         {
+            _recordLock = DPS_TRANSLOCK_MAX ;
+            _selectForUpdate = FALSE ;
+         }
          /// Write operation should release lock right way
-         if ( DMS_IS_WRITE_OPR( _accessType ) )
+         else if ( DMS_IS_WRITE_OPR( _accessType ) )
          {
             _recordLock = DPS_TRANSLOCK_X ;
             _needUnLock = TRUE ;
@@ -1386,7 +1369,12 @@ namespace engine
       /// In transaction
       else
       {
-         if ( DMS_IS_WRITE_OPR( _accessType ) )
+         if ( cb->isInRollback() )
+         {
+            _recordLock = DPS_TRANSLOCK_MAX ;
+            _selectForUpdate = FALSE ;
+         }
+         else if ( DMS_IS_WRITE_OPR( _accessType ) )
          {
             _recordLock = DPS_TRANSLOCK_X ;
             _needUnLock = FALSE ;
@@ -1423,6 +1411,12 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      _scanner->setReadonly( isReadOnly() ) ;
+      if ( DPS_TRANSLOCK_MAX == _recordLock )
+      {
+         _scanner->disableByType( SCANNER_TYPE_MEM_TREE ) ;
+      }
       if ( cb && cb->isInterrupted() )
       {
          rc = SDB_APP_INTERRUPT ;
@@ -1442,18 +1436,19 @@ namespace engine
          goto error ;
       }
 
-      rc = _scanner->resumeScan( ) ;
+      rc = _scanner->resumeScan() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resum ixscan, rc: %d", rc ) ;
       _cb   = cb ;
+
+      /// set callback info
+      _callback.setBaseInfo( _pTransCB, cb ) ;
+      _callback.setIDInfo( _pSu->CSID(), _context->mbID(),
+                           _pSu->logicalID() ) ;
+      _callback.setIXScanner( _scanner ) ;
 
       // unset first run
       _firstRun = FALSE ;
       _onceRestNum = (INT64)pmdGetKRCB()->getOptionCB()->indexScanStep() ;
-
-#if SDB_INTERNAL_DEBUG
-      PD_LOG( PDDEBUG, "Scan firstInit done,_recordLock=%d, "
-              "_onceRestNum=%d", _recordLock, _onceRestNum );
-#endif
 
    done:
       return rc ;
@@ -1520,60 +1515,37 @@ namespace engine
       BOOLEAN result          = TRUE ;
       ossValuePtr recordDataPtr ;
       dmsRecordData recordData ;
-      BOOLEAN lockedRecord    = FALSE ;
-      BOOLEAN newXAcquire     = FALSE ;
-      BOOLEAN usedOldVersion  = FALSE ;
+      dmsRecordID waitUnlockRID ;
+      BOOLEAN ignoredLock     = FALSE ;
 
       PD_TRACE_ENTRY ( SDB__DMSIXSECSCAN_ADVANCE );
 
-      PD_TRACE5( SDB__DMSIXSECSCAN_ADVANCE, 
+      PD_TRACE5( SDB__DMSIXSECSCAN_ADVANCE,
                  PD_PACK_UINT(_needUnLock),
                  PD_PACK_UINT(_mbLockType),
                  PD_PACK_UINT(_accessType),
                  PD_PACK_UINT(_waitLock),
-                 PD_PACK_UINT(_recordLock) );    
+                 PD_PACK_UINT(_recordLock) );
 
       if ( _firstRun )
       {
-         // first initialize the merge scanner if needed
-         if ( SCANNER_TYPE_MERGE == _scanner->type() )
-         {
-            // Let's try to set up the in-memory tree for the mem scan
-            // it returns FALSE when the in memory tree does not exist 
-            // which means the index was never changed. 
-            // However the tree can show up in the middel of the scan
-            // after the pauseScan. So resumeScan should try to do the 
-            // same initialization
-            rtnMergeIXScanner *mergeScanner = (rtnMergeIXScanner*) _scanner;
-            if( !( (rtnMemIXTreeScanner *)mergeScanner->left())->
-                initMemIXScan(  pmdGetKRCB()->getTransCB(), 
-                               _pSu->logicalID(),
-                               _context->mbID(), 
-                               mergeScanner->getSharedInfo(),
-                               DMS_IS_WRITE_OPR( _accessType ) ) )
-            {
-               PD_LOG ( PDINFO, "rtnMemIXTreeScanner not initialized" ) ;
-            }                                           
-         }
-
          rc = _firstInit( cb ) ;
          PD_RC_CHECK( rc, PDWARNING, "first init failed, rc: %d", rc ) ;
-
-
-         // set up isReadOnly flag in scanner
-         _scanner->setIsReadOnly ( isReadOnly() );
       }
       // last run have record lock held, but not trans, need to release
       // record lock
-      else if ( _needUnLock && DMS_INVALID_OFFSET != _curRID._offset )
+      else if ( _needUnLock && _hasLockedRecord &&
+                DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID, _callback ) ;
+                                      &_curRID, &_callback ) ;
+         _hasLockedRecord = FALSE ;
       }
 
+      _hasLockedRecord = FALSE ;
       while ( _onceRestNum-- > 0 && 0 != _maxRecords )
       {
-         usedOldVersion = FALSE ;
+         ignoredLock = FALSE ;
          // advance index tree 
          rc = _scanner->advance( _curRID ) ;
          if ( SDB_IXM_EOC == rc )
@@ -1653,26 +1625,26 @@ namespace engine
          // version under the cover
          _recordRW = _pSu->record2RW( _curRID, _context->mbID() ) ;
 
-         newXAcquire = FALSE ;
-
          // If need lock and the RID was not setup from the in memory tree.
          // As an optimization, if the RID was originally found through in 
          // memory tree scan, don't try lock at all.
          if ( _recordLock != DPS_TRANSLOCK_MAX )
          {
             dpsTransRetInfo   lockConflict ;
-            dmsIXTransContext ixTxContext( _context, _accessType,
-                                           _scanner, isReadOnly() ) ;
+            dmsIXTransContext ixTxContext( _context, _accessType, _scanner ) ;
 
-            // It's possible that the index scan found old verion from 
-            // in memory tree, but we should not blindly use that version
-            // because a scan can come from the same transaction as an earlier
-            // update, so we should allow the scan to use the latest version
-            // on disk if we can get the S lock throuh tryS
+            /// already locked, but not the same, should release lock first
+            if ( waitUnlockRID.isValid() && _curRID != waitUnlockRID )
+            {
+               _pTransCB->transLockRelease( cb, _pSu->logicalID(),
+                                            _context->mbID(), &waitUnlockRID, 
+                                            &_callback ) ;
+               waitUnlockRID.reset() ;
+            }
 
-            // We should have already allocated the callback, this is to
-            // setup proper recordRW in callback
-            setupTransLockCallback( &_recordRW );
+            // attach the recordRW in callback
+            _callback.attachRecordRW( &_recordRW ) ;
+            _callback.clearStatus() ;
 
             if ( DPS_TRANSLOCK_X == _recordLock )
             {
@@ -1680,159 +1652,111 @@ namespace engine
                rc = _pTransCB->transLockGetX( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
                                               &ixTxContext, 
-                                              &lockConflict, _callback ) ;
-               newXAcquire = lockConflict._newAcquire;
+                                              &lockConflict, &_callback ) ;
             }
             else if ( DPS_TRANSLOCK_U == _recordLock )
             {
                rc = _pTransCB->transLockGetU( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
                                               &ixTxContext,
-                                              & lockConflict ) ;
+                                              &lockConflict, &_callback ) ;
             }
-            else if ( needWaitForLock() )
-            {
-               // no need to do callback if we decide to wait on the S lock
-               rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
-                                              _context->mbID(), &_curRID,
-                                              &ixTxContext, &lockConflict ) ;
-            }
+            // DPS_TRANSLOCK_S
             else
             {
-               rc = _pTransCB->transLockTryS( cb, _pSu->logicalID(),
-                                              _context->mbID(), &_curRID,
-                                              & lockConflict, _callback );
-
-               if ( rc == SDB_DPS_TRANS_LOCK_INCOMPATIBLE )
+               if ( !needWaitForLock() )
                {
-                  if ( TRUE == lockConflict._skipNewRecord )
+                  // for new RC logic, we should first try on S lock instead 
+                  // of directly wait on the record lock. Under the cover, 
+                  // the lock call back function would try to use the old copy
+                  // (previous committed version) if exist
+                  rc = _pTransCB->transLockTryS( cb, _pSu->logicalID(),
+                                                 _context->mbID(), &_curRID,
+                                                  &lockConflict,
+                                                  &_callback ) ;
+                  if ( rc )
                   {
-                     // For newly created records by another transaction,
-                     // we could still find it through diskIXScan, we will 
-                     // skip those records without waiting for lock. 
-                     rc = SDB_OK;
-                     continue;
+                     if ( _callback.isSkipRecord() )
+                     {
+                        // For newly created records by another transaction,
+                        // we could still find it through diskIXScan, we will
+                        // skip those records without waiting for lock.
+                        rc = SDB_OK ;
+                        ignoredLock = TRUE ;
+                        continue ;
+                     }
+                     else if ( _callback.isUseOldVersion() )
+                     {
+                        ignoredLock = TRUE ;
+                        rc = SDB_OK ;
+                     }
                   }
+               }
 
-                  if(  FALSE == lockConflict._useOldVersion )
-                  {
-                     // Can't get lock and didn't use old copy. This 
-                     // means the Xlock holder did not setup old version OR
-                     // in a small timing window of update guy in the middle of
-                     // releasing lock. Either way, Let's wait on the lock.
-                     rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
-                                              _context->mbID(), &_curRID,
-                                              & ixTxContext, & lockConflict ) ;
-                  }
-                  else
-                  {
-                     usedOldVersion = TRUE;
-
-                     // Note that in this case, recordRW is already setup by the 
-                     // callback function. However, there is a catch here: we don't
-                     // have lock, and once we return the record to caller, caller
-                     // did not know. It might blindly try to release lock once 
-                     // finished scan. But the worst case is to print warning msg
-                     // in diaglog. We may want to figure out ways to improve this, 
-                     // for example, set the rid to isIDXRid again, and skip lock
-                     // release in the case. For now, we don't bother.
-                     rc = SDB_OK;
-                  }
+               /// wait lock
+               if ( needWaitForLock() || rc )
+               {
+                  rc = _pTransCB->transLockGetS( cb, _pSu->logicalID(),
+                                                 _context->mbID(), &_curRID,
+                                                 &ixTxContext,
+                                                 &lockConflict,
+                                                 &_callback ) ;
                }
             }
 
-            PD_RC_CHECK( rc, PDERROR,
-                      "Failed to get record lock, rc: %d"OSS_NEWLINE
-                      " Request mode: %s"OSS_NEWLINE
-                      "Conflict ( representative ):"OSS_NEWLINE
-                      "   EDUID:  %llu"OSS_NEWLINE
-                      "   LockId: %s"OSS_NEWLINE
-                      "   Mode:   %s"OSS_NEWLINE,
-                      rc,
-                      lockModeToString( _recordLock ),
-                      lockConflict._eduID,
-                      lockConflict._lockID.toString().c_str(),
-                      lockModeToString( lockConflict._lockType ) ) ;
-
-            // index has changed under us between wait on lock and got lock
-            if ( !ixTxContext.isCursorValid() )
+            if ( waitUnlockRID.isValid() )
             {
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                            _context->mbID(), &_curRID, 
-                                            _callback ) ;
+                                            _context->mbID(), &waitUnlockRID, 
+                                            &_callback ) ;
+               waitUnlockRID.reset() ;
+            }
+
+            if ( rc )
+            {
+               PD_LOG( PDERROR,
+                       "Failed to get record lock, rc: %d"OSS_NEWLINE
+                       "Request Mode:   %s"OSS_NEWLINE 
+                       "Conflict ( representative ):"OSS_NEWLINE
+                       "   EDUID:  %llu"OSS_NEWLINE
+                       "   LockId: %s"OSS_NEWLINE
+                       "   Mode:   %s"OSS_NEWLINE, 
+                       rc,
+                       lockModeToString( _recordLock ),
+                       lockConflict._eduID,
+                       lockConflict._lockID.toString().c_str(), 
+                       lockModeToString( lockConflict._lockType ) ) ;
+               goto error ;
+            }
+
+            if ( !ignoredLock )
+            {
+               _hasLockedRecord = TRUE ;
+            }
+
+            if ( _callback.hasError() )
+            {
+               rc = _callback.getResult() ;
+               PD_LOG( PDERROR, "Occur error in callback, rc: %d", rc ) ;
+               goto error ;
+            }
+
+            // index has changed under us between wait on lock and got lock
+            if ( !ixTxContext.isCursorSame() || _callback.isSkipRecord() )
+            {
+               if ( _hasLockedRecord )
+               {
+                  waitUnlockRID = _curRID ;
+                  _hasLockedRecord = FALSE ;
+               }
 
                /// remove the duplicate key
                _scanner->removeDuplicatRID( _curRID ) ;
-#if SDB_INTERNAL_DEBUG
+#ifdef _DEBUG
                PD_LOG( PDDEBUG, "Cursor changed while waiting for lock,"
-                                " rid(%d, %d)", 
-                                _curRID._extent, _curRID._offset ) ;
+                       " rid(%d, %d)", _curRID._extent, _curRID._offset ) ;
 #endif
-               continue;
-            }
-
-            // we only use old version when lock is not held. 
-            if ( !usedOldVersion )
-            {
-               lockedRecord = TRUE ;
-            }
-
-            // Two scenarios we need to consider re-verify the record:
-            // 1. When we use old version, we wouldn't have lock.
-            // There is a chance that the index on disk might not
-            // match the old record if the change affected the index.
-            // In that case, we need to re-verify the record with the
-            // index again. Here is how this could happen:
-            // Session 1 did update, changed index from 1 to 2, paused;
-            // session 2 does index scan, searching for record with
-            // index 2. It found the index on disk. Didn't get record lock
-            // and ended up using the old version from memory. But
-            // the old version record contain the index 1. We must verify
-            // and skip this record.
-            // 2. When the RID came from memory tree index scan, the same
-            // transaction might have modified the record earlier itself and
-            // it got the record lock this time, but the old index in the
-            // tree is different than the record on disk. If we directly
-            // return and use the record on disk because we have the lock,
-            // we may return wrong information because this record is not
-            // the same one the index hinted.
-            // To summerize the case, if the scan came from memory tree, we
-            // should only trust the old version(meaning lock not held), if
-            // the scan came from on disk index, we can only use the record
-            // on disk (not the old version). Basically on disk index and 
-            // record are pairs, old verion index and record are pairs. 
-            // Because verify disk record's index is very expensive, we will
-            // simply skip the rid if scan is from memTree and we ended up
-            // using disk record. It's safe to do so because we will come to
-            // the same rid from the disk scanner anyway. We do allow disk
-            // index scan to use old version as long as the key matches .
-            if ( !usedOldVersion && _scanner->wasFromMemTreeScan() ) 
-            {
-               _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                            _context->mbID(), &_curRID, 
-                                            _callback ) ;
-               lockedRecord = FALSE ;
-
-               // remove the duplicate key when we skip
-               _scanner->removeDuplicatRID( _curRID ) ;
-
-               continue;
-            }
-            else if ( usedOldVersion && !( _scanner->wasFromMemTreeScan() ) ) 
-            {
-               // 1. verify if the index LID is among the set of index changed
-               // we can only get here when old version was used, and we do
-               // hold the mem tree latch. So the memory(oldVer) won't be 
-               // released under us.
-               // 2. retrieve the affected index from the old record
-               if ( isIdxChanged( _scanner->getIdxLID(), 
-                                  _scanner->getCurKeyObj() ) )
-               {
-                  // remove the duplicate key when we skip
-                  _scanner->removeDuplicatRID( _curRID ) ;
-
-                  continue;
-               }
+               continue ;
             }
          } // end of (_recordLock != -1)
 
@@ -1844,37 +1768,22 @@ namespace engine
          if ( _curRecordPtr->isDeleting() )
          {
             if ( _recordLock == DPS_TRANSLOCK_X )
-
             {
-#if SDB_INTERNAL_DEBUG
-                  PD_LOG( PDDEBUG, "IX Scan handle deleting record"
-                                " rid(%d, %d)", 
-                                _curRID._extent, _curRID._offset ) ;
-#endif
-                  rc = _scanner->pauseScan( ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to pause ixscan, rc: %d",
-                               rc ) ;
-
-                  rc = _pSu->deleteRecord( _context, _curRID, 0, 
-                                           cb, NULL, newXAcquire, _callback ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     PD_LOG( PDWARNING, "Failed to delete the deleting record, "
-                             "rc: %d", rc ) ;
-                  }
-           
-                  rc = _scanner->resumeScan( ) ;
-                  PD_RC_CHECK( rc, PDERROR, 
-                               "Failed to resume ixscan, rc: %d", rc ) ;
-
+               rc = _pSu->deleteRecord( _context, _curRID, 0,
+                                        cb, NULL, NULL ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDWARNING, "Failed to delete the deleting record, "
+                          "rc: %d", rc ) ;
+               }
             }
 
-            if ( lockedRecord )
+            if ( _hasLockedRecord )
             {
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                             _context->mbID(), &_curRID, 
-                                            _callback ) ;
-               lockedRecord = FALSE ;
+                                            &_callback ) ;
+               _hasLockedRecord = FALSE ;
             }
 
             /// remove the duplicate key
@@ -1975,22 +1884,21 @@ namespace engine
             }
          }
 
-
          // Proper found case will jump to done, if we got here, there was
          // either unmatch, or we need to skip. Either way, we should 
          // release the record lock before advance to next index
-         if ( lockedRecord )
+         if ( _hasLockedRecord )
          {
             _pTransCB->transLockRelease( cb, _pSu->logicalID(),
                                          _context->mbID(), &_curRID, 
-                                         _callback ) ;
-            lockedRecord = FALSE ;
+                                         &_callback ) ;
+            _hasLockedRecord = FALSE ;
          }
       } // while
 
       rc = SDB_DMS_EOC ;
       {
-         INT32 rcTmp = _scanner->pauseScan(  ) ;
+         INT32 rcTmp = _scanner->pauseScan() ;
          if ( rcTmp )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rcTmp ) ;
@@ -2000,25 +1908,20 @@ namespace engine
       goto error ;
 
    done:
-      if ( SDB_OK == rc && ( _onceRestNum <= 0 || 0 == _maxRecords ) )
+      if ( waitUnlockRID.isValid() )
       {
-         rc = _scanner->pauseScan( ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
-         }
+         _pTransCB->transLockRelease( cb, _pSu->logicalID(),
+                                      _context->mbID(), &waitUnlockRID, 
+                                      &_callback ) ;
       }
-
-      // set up memTree latch held mode in callback
-      setMemTreeLatchMode();
-
-      PD_TRACE_EXITRC ( SDB__DMSIXSECSCAN_ADVANCE, rc );
+      PD_TRACE_EXITRC ( SDB__DMSIXSECSCAN_ADVANCE, rc ) ;
       return rc ;
    error:
-      if ( lockedRecord && _recordLock != DPS_TRANSLOCK_MAX )
+      if ( _hasLockedRecord && _recordLock != DPS_TRANSLOCK_MAX )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID, _callback ) ;
+                                      &_curRID, &_callback ) ;
+         _hasLockedRecord = FALSE ;
       }
       recordID.reset() ;
       recordDataPtr = 0 ;
@@ -2027,30 +1930,19 @@ namespace engine
       goto done ;
    }
 
-   // setup the current in memory index tree latch held mode in callback 
-   // so that caller (like rtnUpdate/rtnDelete) knows if they should acquire
-   // the tree latch when inserting old version index to the tree
-   void _dmsIXSecScanner::setMemTreeLatchMode ()
-   {
-      if ( SCANNER_TYPE_MERGE == _scanner->type() && ( NULL != _callback ) )
-      {
-         _callback->setMemTreeLatchMode( ((rtnMergeIXScanner*)_scanner)->
-                                         getMemtreeLatchMode() );
-         _callback->setLatcheidIdxLid( _scanner->getIdxLID() ) ;
-      }
-   }
-
    void _dmsIXSecScanner::stop ()
    {
       if ( FALSE == _firstRun && _recordLock != DPS_TRANSLOCK_MAX
-           && DMS_INVALID_OFFSET != _curRID._offset )
+           && _hasLockedRecord &&
+           DMS_INVALID_OFFSET != _curRID._offset )
       {
          _pTransCB->transLockRelease( _cb, _pSu->logicalID(), _context->mbID(),
-                                      &_curRID, _callback ) ;
+                                      &_curRID, &_callback ) ;
+         _hasLockedRecord = FALSE ;
       }
       if ( DMS_INVALID_OFFSET != _curRID._offset )
       {
-         INT32 rc = _scanner->pauseScan(  ) ;
+         INT32 rc = _scanner->pauseScan() ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
@@ -2070,11 +1962,10 @@ namespace engine
                                  DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords,
                                  INT64 skipNum,
-                                 INT32 flag,
-                                 _dpsITransLockCallback * callback )
-   :_dmsScanner( su, context, matchRuntime, accessType, callback ),
+                                 INT32 flag )
+   :_dmsScanner( su, context, matchRuntime, accessType ),
     _secScanner( su, context, matchRuntime, scanner, accessType, maxRecords,
-                 skipNum, flag, callback )
+                 skipNum, flag )
    {
       _scanner       = scanner ;
       _eof           = FALSE ;
@@ -2088,6 +1979,11 @@ namespace engine
          SDB_OSS_DEL _scanner ;
       }
       _scanner       = NULL ;
+   }
+
+   dmsTransLockCallback* _dmsIXScanner::callbackHandler()
+   {
+      return _secScanner.callbackHandler() ;
    }
 
    void _dmsIXScanner::_resetIXSecScanner ()
@@ -2305,8 +2201,7 @@ namespace engine
                                                      DMS_ACCESS_TYPE accessType,
                                                      INT64 maxRecords,
                                                      INT64 skipNum,
-                                                     INT32 flag,
-                                                     _dpsITransLockCallback * callback )
+                                                     INT32 flag )
    {
       dmsExtScannerBase* scanner = NULL ;
 
@@ -2328,8 +2223,7 @@ namespace engine
                                               accessType,
                                               maxRecords,
                                               skipNum,
-                                              flag,
-                                              callback ) ;
+                                              flag ) ;
       }
 
       if ( !scanner )

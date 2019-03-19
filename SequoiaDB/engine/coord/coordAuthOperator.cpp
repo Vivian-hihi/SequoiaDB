@@ -81,7 +81,7 @@ namespace engine
 
    void _coordAuthOperator::_onSucReply( const MsgOpReply *pReply )
    {
-      if ( pReply->header.messageLength > sizeof( MsgOpReply ) )
+      if ( pReply->header.messageLength > (INT32)sizeof( MsgOpReply ) )
       {
          try
          {

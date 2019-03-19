@@ -82,12 +82,10 @@ namespace engine
       public:
          _dmsIXTransContext( _dmsMBContext *pMBContext,
                              DMS_ACCESS_TYPE accessType,
-                             _rtnIXScanner *pScanner,
-                             BOOLEAN isReadonly ) ;
+                             _rtnIXScanner *pScanner ) ;
          virtual ~_dmsIXTransContext() ;
 
-         BOOLEAN  isCursorValid() const ;
-         void     resetCursorValid() ;
+         BOOLEAN  isCursorSame() const ;
 
       public:
          virtual INT32 pause() ;
@@ -96,9 +94,7 @@ namespace engine
       protected:
          _rtnIXScanner           *_pScanner ;
          BOOLEAN                 _isReadonly ;
-         dmsRecordID             _saveRID ;
-         BSONObj                 _saveObj ;
-         BOOLEAN                 _isValid ;
+         BOOLEAN                 _isSame ;
 
    } ;
    typedef _dmsIXTransContext dmsIXTransContext ;

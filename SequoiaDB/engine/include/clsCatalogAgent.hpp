@@ -36,7 +36,7 @@
 
 #include "core.hpp"
 #include <string>
-#include <map>
+#include <ossMemPool.hpp>
 #include <vector>
 #include "oss.hpp"
 #include "clsBase.hpp"
@@ -148,7 +148,7 @@ namespace engine
          _clsCataOrder ( const Ordering &order ) ;
          ~_clsCataOrder () ;
 
-         Ordering* getOrdering () ;
+         const Ordering* getOrdering () const ;
 
       private:
          Ordering          _ordering ;
@@ -171,9 +171,9 @@ namespace engine
       friend class _clsCatalogAgent ;
 
       public:
-      typedef std::map<clsCataItemKey, clsCatalogItem*>  MAP_CAT_ITEM ;
-      typedef MAP_CAT_ITEM::iterator                     MAP_CAT_ITEM_IT ;
-      typedef MAP_CAT_ITEM_IT                            POSITION ;
+      typedef ossPoolMap<clsCataItemKey, clsCatalogItem*>   MAP_CAT_ITEM ;
+      typedef MAP_CAT_ITEM::iterator                        MAP_CAT_ITEM_IT ;
+      typedef MAP_CAT_ITEM_IT                               POSITION ;
 
       public:
          _clsCatalogSet ( const CHAR * name,
@@ -195,7 +195,7 @@ namespace engine
          VEC_GROUP_ID      *getAllGroupID () ;
          UINT32            getAllGroupID ( VEC_GROUP_ID &vecGroup ) const ;
          UINT32            groupCount () const ;
-         Ordering*         getOrdering () ;
+         const Ordering*   getOrdering () const ;
          const BSONObj&    getShardingKey () const  ;
          BSONObj           OwnedShardingKey () const ;
          BOOLEAN           isWholeRange () const ;
@@ -353,11 +353,11 @@ namespace engine
    class _clsCatalogAgent : public SDBObject
    {
       // map< hash value of cl name, catalog info >
-      typedef std::map<UINT32, _clsCatalogSet*>       CAT_MAP ;
-      typedef CAT_MAP::iterator                       CAT_MAP_IT ;
+      typedef ossPoolMap<UINT32, _clsCatalogSet*>           CAT_MAP ;
+      typedef CAT_MAP::iterator                             CAT_MAP_IT ;
       // map< unique id of cl, catalog info >
-      typedef std::map<utilCLUniqueID, _clsCatalogSet*> ID_CAT_MAP ;
-      typedef ID_CAT_MAP::iterator                    ID_CAT_MAP_IT ;
+      typedef ossPoolMap<utilCLUniqueID, _clsCatalogSet*>   ID_CAT_MAP ;
+      typedef ID_CAT_MAP::iterator                          ID_CAT_MAP_IT ;
 
       public:
          _clsCatalogAgent () ;
@@ -529,10 +529,10 @@ namespace engine
 
    class _clsNodeMgrAgent : public SDBObject
    {
-      typedef std::map<UINT32, clsGroupItem*>   GROUP_MAP ;
+      typedef ossPoolMap<UINT32, clsGroupItem*> GROUP_MAP ;
       typedef GROUP_MAP::iterator               GROUP_MAP_IT ;
 
-      typedef std::map<std::string, UINT32>     GROUP_NAME_MAP ;
+      typedef ossPoolMap<std::string, UINT32>   GROUP_NAME_MAP ;
       typedef GROUP_NAME_MAP::iterator          GROUP_NAME_MAP_IT ;
 
       public:

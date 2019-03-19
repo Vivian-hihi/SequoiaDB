@@ -113,7 +113,7 @@ namespace engine
 
          pDmsCB->dumpInfo( csList, FALSE ) ;
 
-         std::set<_monCollectionSpace>::const_iterator iterCS = csList.begin() ;
+         MON_CS_LIST::const_iterator iterCS = csList.begin() ;
          for ( ; iterCS != csList.end(); ++iterCS )
          {
             INT32 rc = SDB_OK ;

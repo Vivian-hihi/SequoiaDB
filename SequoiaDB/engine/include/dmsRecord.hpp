@@ -370,7 +370,8 @@ namespace engine
 
       void setCompressType ( UINT8 type )
       {
-         *(UINT32 *)( (CHAR *)this + DMS_RECORD_METADATA_SZ ) = type << 24 ;
+         *(UINT32 *)( (CHAR *)this + DMS_RECORD_METADATA_SZ ) |=
+            ( ( (UINT32)type << 24 ) & 0xFF000000 ) ;
 //#if defined (SDB_BIG_ENDIAN)
 //         ( (UINT8 *)this + DMS_RECORD_METADATA_SZ )[ 0 ] = type ;
 //#else
@@ -392,7 +393,8 @@ namespace engine
             setCompressed() ;
             UINT32 * temp = (UINT32 *)( (CHAR *)this + DMS_RECORD_METADATA_SZ ) ;
             (*temp) = data.len() ;
-            (*temp) |= ( ( data.getCompressType() << 24 ) & 0xFF000000 ) ;
+            (*temp) |= ( ( (UINT32)data.getCompressType() << 24 ) &
+                           0xFF000000 ) ;
             ossMemcpy( (CHAR*)this+DMS_RECORD_METADATA_SZ+sizeof(UINT32),
                        data.data(), data.len() ) ;
          }

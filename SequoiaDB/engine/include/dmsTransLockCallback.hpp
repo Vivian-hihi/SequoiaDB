@@ -41,105 +41,189 @@
 #define DMS_TRANS_LOCK_CALLBACK_HPP__
 
 #include "dpsTransLockCallback.hpp"
+#include "dmsOprHandler.hpp"
 #include "dpsTransCB.hpp"
 #include "pmdEDU.hpp"
+
+using namespace bson ;
 
 namespace engine
 {
 
-   class dpsTransCB;
-   class _dmsRecordRW;
-   class oldVersionContainer;
-   class oldVersionCB;
-
-   // current latch mode held on in memory index tree latch
-   enum MEMTREE_LATCH_MODE
-   {
-      MEMTREE_LATCH_NONE   = 0,   // No latch held
-      MEMTREE_LATCH_S,          
-      MEMTREE_LATCH_X          
-   };
+   class dpsTransCB ;
+   class _dmsRecordRW ;
+   class oldVersionContainer ;
+   class oldVersionCB ;
+   class _rtnIXScanner ;
 
    // Class to implment lock call back funtions for DMS scanner
-   class dmsTransLockCallback : public _dpsITransLockCallback
+   class dmsTransLockCallback : public _dpsITransLockCallback,
+                                public _IDmsOprHandler
    {
-      public:
-      //dmsTransLockCallback() {};
-      dmsTransLockCallback( dpsTransCB  * transCB,
-                            _pmdEDUCB   * eduCB,
-                            _dmsRecordRW * recordRW ) ;
+   public:
+      dmsTransLockCallback() ;
 
-      virtual ~dmsTransLockCallback() {};
+      dmsTransLockCallback( dpsTransCB *transCB,
+                            _pmdEDUCB  *eduCB ) ;
 
-      virtual void beforeLockAcquire( const dpsTransLockId    &lockId,
-                                      const INT32              irc,
-                                      const DPS_TRANSLOCK_TYPE requestLockMode,
-                                 const DPS_TRANSLOCK_OP_MODE_TYPE opMode
-                                ) {};
-      virtual void afterLockAcquire( const dpsTransLockId     &lockId,
-                                           INT32              &irc,
-                                     const DPS_TRANSLOCK_TYPE  requestLockMode,
-                                     const DPS_TRANSLOCK_OP_MODE_TYPE opMode,
-                                           dpsTransRetInfo *pdpsTxResInfo) ;
+      void     clearStatus() ;
 
-      virtual void beforeLockRelease( const dpsTransLockId     &lockId,
-                                      const DPS_TRANSLOCK_TYPE  lockMode,
-                                      const UINT64              refCounter,
-                                      oldVersionContainer      *oldVer ) ;
+      virtual ~dmsTransLockCallback() ;
 
-      virtual void afterLockRelease( const dpsTransLockId &lockId ) {};
+      void     setBaseInfo( dpsTransCB *transCB, _pmdEDUCB *eduCB ) ;
 
-      void setRecordRW ( _dmsRecordRW * recordRW ) { _recordRW = recordRW; }
+      void     setIDInfo( INT32 csID, UINT16 clID, UINT32 csLID ) ;
 
-      // set the latch mode of the index in memory tree
-      void setMemTreeLatchMode ( const MEMTREE_LATCH_MODE m ) 
+      void     setIXScanner( _rtnIXScanner *pScanner ) ;
+
+      void     attachRecordRW( _dmsRecordRW * recordRW ) ;
+      void     detachRecordRW() ;
+
+      /*
+         Status
+      */
+      BOOLEAN  isSkipRecord() const { return _skipRecord ; }
+      INT32    getResult() const { return _result ; }
+      BOOLEAN  hasError() const { return SDB_OK != _result ? TRUE : FALSE ; }
+      BOOLEAN  isUseOldVersion() const { return _useOldVersion ; }
+
+   public:
+
+      /// Interface
+      virtual void afterLockAcquire( const dpsTransLockId &lockId,
+                                     INT32 irc,
+                                     DPS_TRANSLOCK_TYPE requestLockMode,
+                                     DPS_TRANSLOCK_OP_MODE_TYPE opMode,
+                                     const dpsTransLRBHeader *pLRBHeader,
+                                     dpsLRBExtData *pExtData ) ;
+
+      virtual void beforeLockRelease( const dpsTransLockId &lockId,
+                                      DPS_TRANSLOCK_TYPE lockMode,
+                                      UINT32 refCounter,
+                                      const dpsTransLRBHeader *pLRBHeader,
+                                      dpsLRBExtData *pExtData ) ;
+
+   public:
+
+      virtual INT32 onCreateIndex( _dmsMBContext *context,
+                                   const ixmIndexCB *indexCB,
+                                   _pmdEDUCB *cb ) ;
+
+      virtual INT32 onDropIndex( _dmsMBContext *context,
+                                 const ixmIndexCB *indexCB,
+                                 _pmdEDUCB *cb ) ;
+
+      virtual INT32 onRebuildIndex( _dmsMBContext *context,
+                                    const ixmIndexCB *indexCB,
+                                    _pmdEDUCB *cb ) ;
+
+      virtual INT32 onInsertRecord( _dmsMBContext *context,
+                                    const BSONObj &object,
+                                    const dmsRecordID &rid,
+                                    const _dmsRecordRW *pRecordRW,
+                                    _pmdEDUCB* cb ) ;
+
+      virtual INT32 onDeleteRecord( _dmsMBContext *context,
+                                    const BSONObj &object,
+                                    const dmsRecordID &rid,
+                                    const _dmsRecordRW *pRecordRW,
+                                    _pmdEDUCB* cb ) ;
+
+      virtual INT32 onUpdateRecord( _dmsMBContext *context,
+                                    const BSONObj &orignalObj,
+                                    const BSONObj &newObj,
+                                    const dmsRecordID &rid,
+                                    const _dmsRecordRW *pRecordRW,
+                                    _pmdEDUCB* cb ) ;
+
+      virtual INT32 onInsertIndex( _dmsMBContext *context,
+                                   const ixmIndexCB *indexCB,
+                                   BOOLEAN isUnique,
+                                   BOOLEAN isEnforce,
+                                   const BSONObjSet &keySet,
+                                   const dmsRecordID &rid,
+                                   _pmdEDUCB* cb,
+                                   utilInsertResult *insertResult ) ;
+
+      virtual INT32 onUpdateIndex( _dmsMBContext *context,
+                                   const ixmIndexCB *indexCB,
+                                   BOOLEAN isUnique,
+                                   BOOLEAN isEnforce,
+                                   const BSONObjSet &oldKeySet,
+                                   const BSONObjSet &newKeySet,
+                                   const dmsRecordID &rid,
+                                   BOOLEAN isRollback,
+                                   _pmdEDUCB* cb ) ;
+
+      virtual INT32 onDeleteIndex( _dmsMBContext *context,
+                                   const ixmIndexCB *indexCB,
+                                   BOOLEAN isUnique,
+                                   const BSONObjSet &keySet,
+                                   const dmsRecordID &rid,
+                                   _pmdEDUCB* cb ) ;
+
+   protected:
+      enum _INSERT_CURSOR
       {
-         _memTreeLatchMode = m ; 
-      }
+         _INSERT_NONE,
+         _INSERT_CHECK
+      } ;
+      INT32         _checkInsertIndex( preIdxTreePtr &treePtr,
+                                       _INSERT_CURSOR &insertCursor,
+                                       const ixmIndexCB *indexCB,
+                                       BOOLEAN isUnique,
+                                       BOOLEAN isEnforce,
+                                       const BSONObj &keyObj,
+                                       const dmsRecordID &rid,
+                                       _pmdEDUCB* cb,
+                                       utilInsertResult *insertResult ) ;
 
-      // get the latch mode of the index in memory tree
-      BOOLEAN memTreeLatchHeld() const
-      {
-         return ( MEMTREE_LATCH_NONE != _memTreeLatchMode) ;
-      }
+   enum _DELETE_CURSOR
+   {
+      _DELETE_NONE,
+      _DELETE_IGNORE,
+      _DELETE_SAVE
+   } ;
+   INT32            _checkDeleteIndex( preIdxTreePtr &treePtr,
+                                       _DELETE_CURSOR &deleteCursor,
+                                       const ixmIndexCB *indexCB,
+                                       BOOLEAN isUnique,
+                                       const BSONObj &keyObj,
+                                       const dmsRecordID &rid,
+                                       _pmdEDUCB* cb ) ;
 
-      // save the LID of the index being latched
-      void setLatcheidIdxLid ( const SINT32 lid )
-      {
-         _latchedIdxLid = lid ;
-      }
+   private:
 
-      // get the LID of the index being latched
-      SINT32 getLatcheidIdxLid() const
-      {
-         return _latchedIdxLid ;
-      }
+      INT32    saveOldVersionRecord( const _dmsRecordRW *pRecordRW,
+                                     const dmsRecordID &rid,
+                                     const BSONObj &obj,
+                                     UINT32 ownnerTID ) ;
 
-      CHAR * getWorkingArea () { return (CHAR *) _oldVer ; }
-      void resetWorkingArea () { _oldVer = NULL ; }
-      UINT32 isolationLevel() const { return _isolationLevel ; }
-      BOOLEAN lockwaitLevel() const { return _lockwaitLevel ; }
+   private:
+      dpsTransCB           *_transCB ;    // use it to access global old copy tree
+      pmdEDUCB             *_eduCB ;
 
-      INT32 saveOldVersionRecord( _dmsRecordRW *recordRW );
-      oldVersionCB * getOldVCB() { return _transCB->getOldVCB(); }
-
-      // INT32 saveOldVersionIndexes( );
-
-      private:
-      dpsTransCB        * _transCB;   // use it to access global old copy tree
-      pmdEDUCB          * _eduCB;
-      UINT32              _isolationLevel;
-      BOOLEAN             _lockwaitLevel;
-      MEMTREE_LATCH_MODE  _memTreeLatchMode;
-      SINT32              _latchedIdxLid ; // the Lid of the index the scanner use
-                                           // which we are holding a latch on
-      _dpsTransExecutor * _transExecutor;  // use it to access thread local buf
       // DMS related information
-      _dmsRecordRW       * _recordRW;
+      _dmsRecordRW         * _recordRW ;
       // working area to be setup by callback function so the update can
       // put proper old copy into the area right before the update
-      oldVersionContainer *_oldVer;
-   };
+      oldVersionContainer  *_oldVer ;
+
+      /// control var
+      BOOLEAN              _skipRecord ;
+      INT32                _result ;
+      BOOLEAN              _useOldVersion ;
+      dpsOldRecordPtr      _recordPtr ;
+
+      /// status var
+      UINT32               _csLID ;
+      INT32                _csID ;
+      UINT16               _clID ;
+      SINT32               _latchedIdxLid ; // which we are holding a latch on
+      INT32                _latchedIdxMode ;
+      _rtnIXScanner        *_pScanner ;
+
+   } ;
 
 }
 

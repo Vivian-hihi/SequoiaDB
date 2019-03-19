@@ -46,6 +46,7 @@
 #include "dpsTransLockMgr.hpp"
 #include "utilSegment.hpp"
 #include "ossMemPool.hpp"
+#include "dpsDef.hpp"
 
 using namespace bson ;
 using namespace std ;
@@ -65,15 +66,18 @@ namespace engine
       DPS_QUE_WAITER
    } ;
 
-
    /*
       _dpsTransExecutor define
    */
    class _dpsTransExecutor
    {
-      typedef ossPoolMap<dpsTransLockId,dpsTransLRB *>     DPS_LOCKID_MAP ;
+      typedef ossPoolMap<dpsTransLockId,dpsTransLRB*>    DPS_LOCKID_MAP ;
       typedef DPS_LOCKID_MAP::iterator                   DPS_LOCKID_MAP_IT ;
       typedef DPS_LOCKID_MAP::const_iterator             DPS_LOCKID_MAP_CIT ;
+
+      typedef ossPoolMap<DPS_LSN_OFFSET,dmsRecordID>     MAP_LSN_2_RECORD ;
+      typedef MAP_LSN_2_RECORD::iterator                 MAP_LSN_2_RECORD_IT ;
+      typedef MAP_LSN_2_RECORD::const_iterator           MAP_LSN_2_RECORD_CIT ;
 
       friend class _pmdEDUCB ;
 
@@ -131,6 +135,20 @@ namespace engine
 
          void                 setUseTransLock( BOOLEAN use ) ;
 
+         /*
+            LSN to record map functions
+         */
+         const MAP_LSN_2_RECORD*    getRecordMap() const ;
+         void                       putRecord( DPS_LSN_OFFSET lsnOffset,
+                                               const dmsRecordID &item ) ;
+         void                       delRecord( DPS_LSN_OFFSET lsnOffset ) ;
+         BOOLEAN                    getRecord( DPS_LSN_OFFSET lsnOffset,
+                                               dmsRecordID &item,
+                                               BOOLEAN withDel = FALSE ) ;
+         void                       clearRecordMap() ;
+         BOOLEAN                    isRecordMapEmpty() const ;
+         UINT32                     getRecordMapSize() const ;
+
       protected:
          void                 initTransConf( INT32 isolation,
                                              UINT32 timeout,
@@ -150,12 +168,17 @@ namespace engine
          virtual IExecutor*   getExecutor() = 0 ;
 
       protected:
-         dpsTransLRB *             _waiter ;
+         dpsTransLRB *           _waiter ;
          DPS_TRANS_QUE_TYPE      _waiterQueType ;
-         dpsTransLRB *             _lastLRB ;
+         dpsTransLRB *           _lastLRB ;
 
          DPS_LOCKID_MAP          _mapLockID ;
          UINT32                  _lockCount ;
+
+         /*
+            LSN to record info
+         */
+         MAP_LSN_2_RECORD        _mapLSN2Record ;
 
       private:
          /// transaction configs

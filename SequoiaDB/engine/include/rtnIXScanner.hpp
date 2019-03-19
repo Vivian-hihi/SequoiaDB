@@ -44,19 +44,16 @@
 #include "ixm.hpp"
 #include "monCB.hpp"
 #include "rtnPredicate.hpp"
+#include "ossMemPool.hpp"
 #include "../bson/ordering.h"
 #include "../bson/oid.h"
-#include "dmsTransLockCallback.hpp"
-
 
 using namespace bson ;
 
 namespace engine
 {
-   class _dmsStorageUnit;
-   class _pmdEDUCB;
-
-   #define RTN_IXSCANNER_DEDUPBUFSZ_DFT      (1024*1024)
+   class _dmsStorageUnit ;
+   class _pmdEDUCB ;
 
    // define type of index scanners
    enum IXScannerType
@@ -65,60 +62,29 @@ namespace engine
       SCANNER_TYPE_MEM_TREE,
       SCANNER_TYPE_MERGE,
       SCANNER_TYPE_MAX
-   };
+   } ;
 
-   class _scannerSharedInfo
+   typedef ossPoolSet<dmsRecordID>           SET_RECORDID ;
+
+   /*
+      _rtnScannerSharedInfo define
+   */
+   class _rtnScannerSharedInfo : public SDBObject
    {
-      public:
-      ~_scannerSharedInfo()
-      {
-         this->free();
-      }
+   public:
+      _rtnScannerSharedInfo() ;
+      ~_rtnScannerSharedInfo() ;
 
-      INT32 init( const BOOLEAN isLocal )
-      {
-         INT32 rc = SDB_OK;
-         if ( isLocal )
-         {
-            _dedupBufferSize = RTN_IXSCANNER_DEDUPBUFSZ_DFT;
-            _dupBuffer = new dmsRecIDSet();
-            SDB_ASSERT( _dupBuffer, "_dupBuffer creation failed" );
-            if( _dupBuffer == NULL )
-            {
-               rc = SDB_OOM;
-            }
-            _bufIsLocal = TRUE;
-         }
-         else
-         {
-            // when dupBuff is created in merge scan, don't store and do
-            // dedup in local scanner
-            _dedupBufferSize = 0;
-            _dupBuffer = NULL;
-            _bufIsLocal = FALSE;
-         }
-         return rc;
-      }
+      BOOLEAN     insert( const dmsRecordID &rid ) ;
+      BOOLEAN     remove( const dmsRecordID &rid ) ;
+      BOOLEAN     exists( const dmsRecordID &rid ) const ;
 
-      void free()
-      {
-         if ( _bufIsLocal && (_dupBuffer != NULL) )
-         {
-            delete _dupBuffer;
-            _dupBuffer = NULL;
-         }
-      }
+      void        clear() ;
 
+      BOOLEAN     isUpToLimit() const ;
+      UINT64      getSize() const ;
 
-      void update();
-
-      BOOLEAN isLocal () const { return _bufIsLocal ; }
-
-      dmsRecIDSet * getDupBuf() { return _dupBuffer; }
-
-      UINT64 getBufSize()  { return _dedupBufferSize; }
-
-      private:
+   private:
       // need to store a duplicate buffer for dmsRecordID for each ixscan,
       // because each record may be refered by more than one index key (say
       // {c1:[1,2,3,4,5]}, there will be 5 index keys pointing to the same
@@ -131,12 +97,10 @@ namespace engine
       // we used a pointer here because the memIXTreeScanner are likely used
       // together with another scanner (like disk scanner), we should share
       // the same dupBuffer.
-      UINT64                    _dedupBufferSize ;
-      dmsRecIDSet              *_dupBuffer ;
-      BOOLEAN                   _bufIsLocal;
+      SET_RECORDID              _setDuplicate ;
 
-   };
-   typedef class _scannerSharedInfo scannerSharedInfo;
+   } ;
+   typedef _rtnScannerSharedInfo rtnScannerSharedInfo ;
 
    /*
       _rtnIXScanner define
@@ -144,124 +108,96 @@ namespace engine
    */
    class _rtnIXScanner : public SDBObject
    {
-
    public:
-      _rtnIXScanner() {};
-      _rtnIXScanner( ixmIndexCB       *indexCB,
+      _rtnIXScanner( ixmIndexCB *pIndexCB,
                      rtnPredicateList *predList,
                      _dmsStorageUnit  *su,
                      _pmdEDUCB        *cb,
-                     scannerSharedInfo * sharedInfo = NULL ) {};
+                     BOOLEAN indexCBOwned = FALSE ) ;
 
-      virtual ~_rtnIXScanner() {};
+      virtual ~_rtnIXScanner() ;
 
+      BOOLEAN     isReadonly() const ;
+
+      void        setShareInfo( rtnScannerSharedInfo *pInfo ) ;
+      BOOLEAN     isShareInfoFromSelf() const ;
+      BOOLEAN     removeDuplicatRID( const dmsRecordID &rid ) ;
+
+      dmsExtentID getIdxLID() const ;
+      const OID&  getIdxOID() const ;
+      INT32       getDirection () const ;
+
+      rtnPredicateList*       getPredicateList () ;
+      rtnScannerSharedInfo*   getSharedInfo() ;
+
+      _dmsStorageUnit*        getSu() ;
+      ixmIndexCB*             getIndexCB() ;
+      BOOLEAN                 getIndexCBOwned() const ;
+      _pmdEDUCB*              getEDUCB() ;
+
+      INT32       compareWithCurKeyObj( const BSONObj &keyObj ) const ;
+      INT32       syncPredStatus( _rtnIXScanner *source ) ;
+
+      BOOLEAN     eof() const ;
+
+   /// Interface
    public:
-      virtual INT32 advance ( dmsRecordID &rid ) = 0;
-      virtual INT32 resumeScan( ) = 0 ;
-      virtual INT32 pauseScan( ) = 0;
-      virtual void setIsReadOnly(BOOLEAN v) = 0;
-      virtual void setMonCtxCB(monContextCB *monCtxCB) = 0;
+      virtual INT32 init() ;
+      virtual void  setReadonly( BOOLEAN isReadonly ) ;
 
-      virtual INT32 relocateRID () = 0;
-      virtual INT32 relocateRID ( const BSONObj &keyObj, const dmsRecordID &rid,
-                                  const BOOLEAN resetWithIndexPos = FALSE ) = 0 ;
+      virtual INT32 advance ( dmsRecordID &rid ) = 0 ;
+      virtual INT32 resumeScan( BOOLEAN *pIsCursorSame = NULL ) = 0 ;
+      virtual INT32 pauseScan() = 0 ;
+      virtual void  setMonCtxCB( _monContextCB *monCtxCB ) = 0 ;
 
-      virtual const BOOLEAN initialized() const = 0;
-      virtual INT32 getDirection () const = 0 ;
-      virtual const BSONObj* getCurKeyObj() const = 0;
-      virtual dmsExtentID getIdxLID() const = 0;
+      virtual INT32 relocateRID( const BSONObj &keyObj,
+                                 const dmsRecordID &rid ) = 0 ;
 
-      virtual dmsRecordID getSavedRID () const = 0;
-      virtual const BSONObj * getSavedObj () const = 0;
+      virtual BOOLEAN         isAvailable() const = 0 ;
+      virtual IXScannerType   getType() const = 0 ;
+      virtual IXScannerType   getCurScanType() const = 0 ;
+      virtual void            disableByType( IXScannerType type ) = 0 ;
+      /*
+         return : -1, SHARED or EXCLUSIVE
+      */
+      virtual INT32           getLockModeByType( IXScannerType type ) const = 0 ;
 
-      // Dummy virtual functions. Defined here so that not all derived
-      // class need to implement them. But we are not suppose to invoke them
-      virtual INT32 compareWithCurKeyObj ( const BSONObj &keyObj ) const
-                    {return 0;}
-      virtual rtnPredicateList* getPredicateList () { return NULL; }
-      virtual dmsRecIDSet * getDupBuff() { return NULL; }
-      virtual const MEMTREE_LATCH_MODE  getMemtreeLatchMode()
-      {
-         return MEMTREE_LATCH_NONE;
-      }
+      virtual const BSONObj*  getCurKeyObj() const = 0 ;
+      virtual const dmsRecordID& getSavedRID () const = 0 ;
+      virtual const BSONObj*  getSavedObj () const = 0 ;
 
-      const UINT32 type() const
-      {
-         return _type;
-      }
-
-      const BOOLEAN eof() const
-      {
-         return _eof;
-      }
-
-      virtual const BOOLEAN isValid() const
-      {
-         return _isValid ;
-      }
-
-      virtual const BOOLEAN wasFromMemTreeScan() const
-      {
-         return FALSE ;
-      }
-
-      virtual INT32 isCursorSame( const BSONObj &saveObj,
-                                  const dmsRecordID &saveRID,
-                                  BOOLEAN &isSame ) = 0 ;
-
-      virtual void removeDuplicatRID( const dmsRecordID &rid ) = 0 ;
-
-      INT32 SyncPredStatus( _rtnIXScanner *source )
-      {
-         INT32 rc = SDB_OK ;
-         rtnPredicateListIterator *targetPredIter = NULL ;
-         rtnPredicateListIterator *sourcePredIter = NULL ;
-         if ( NULL == source )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG ( PDERROR, "Source can't be NULL rc:%d", rc ) ;
-            goto error ;
-         }
-
-         sourcePredIter = source->getPredicateListInterator() ;
-         if ( NULL == sourcePredIter )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG ( PDERROR, "Source predicate list can't be NULL rc:%d", rc ) ;
-            goto error ;
-         }
-
-         targetPredIter = getPredicateListInterator() ;
-         if ( NULL == targetPredIter )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG ( PDERROR, "Target predicate list can't be NULL rc:%d", rc ) ;
-            goto error ;
-         }
-
-         rc = targetPredIter->syncState( sourcePredIter ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to sync state rc: %d", rc ) ;
-
-      done:
-         return rc ;
-      error:
-         goto done ;
-      }
+      virtual INT32           isCursorSame( const BSONObj &saveObj,
+                                            const dmsRecordID &saveRID,
+                                            BOOLEAN &isSame ) = 0 ;
 
    protected:
-      virtual rtnPredicateListIterator* getPredicateListInterator ()
-      {
-         return NULL;
-      }
+      virtual INT32 relocateRID( BOOLEAN &found ) = 0 ;
+      virtual rtnPredicateListIterator*   getPredicateListInterator() = 0 ;
 
    protected:
-      IXScannerType  _type;
-      BOOLEAN        _eof;
-      BOOLEAN        _isValid;
+      BOOLEAN                 _insert2Dup( const dmsRecordID &rid ) ;
 
-   };
+   protected:
+      ixmIndexCB              *_indexCB ;
+      BOOLEAN                 _owned ;
+      rtnPredicateList        *_pPredList ;
+      _dmsStorageUnit         *_su ;
+      _pmdEDUCB               *_cb ;
+      rtnScannerSharedInfo    *_pInfo ;
+
+      INT32                   _direction ;
+      dmsExtentID             _indexLID ;
+      dmsExtentID             _indexCBExtent ;
+      OID                     _indexOID ;
+      Ordering                _order ;
+      BOOLEAN                 _eof ;
+
+   private:
+      BOOLEAN                 _isReadonly ;
+      rtnScannerSharedInfo    _sharedInfo ;
+
+   } ;
    typedef class _rtnIXScanner rtnIXScanner ;
-
 
 }
 

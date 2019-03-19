@@ -48,6 +48,7 @@
 
 #include "ossMemPool.hpp"
 #include "utilInsertResult.hpp"
+#include "dmsOprHandler.hpp"
 
 using namespace bson ;
 
@@ -88,114 +89,6 @@ namespace engine
    typedef class _idToInsertEle idToInsertEle ;
 
 #pragma pack()
-
-   /*
-      MB FLAG(_flag) values :
-   */
-   #define DMS_MB_BASE_MASK                        0x000F
-   // BASE MASK 0~3 bit
-   #define DMS_MB_FLAG_FREE                        0x0000
-   #define DMS_MB_FLAG_USED                        0x0001
-   #define DMS_MB_FLAG_DROPED                      0x0002
-
-   #define DMS_MB_OPR_TYPE_MASK                    0x00F0
-   // OPR MASK 4~7 bit
-   #define DMS_MB_FLAG_OFFLINE_REORG               0x0010
-   #define DMS_MB_FLAG_ONLINE_REORG                0x0020
-   #define DMS_MB_FLAG_LOAD                        0x0040
-
-   #define DMS_MB_OPR_PHASE_MASK                   0x0F00
-   // OPR PHASE 8~11 bit
-
-   // {{ DMS_MB_FLAG_OFFLINE_REORG OPR BEGIN
-   #define DMS_MB_FLAG_OFFLINE_REORG_SHADOW_COPY   0x0100
-   #define DMS_MB_FLAG_OFFLINE_REORG_TRUNCATE      0x0200
-   #define DMS_MB_FLAG_OFFLINE_REORG_COPY_BACK     0x0400
-   #define DMS_MB_FLAG_OFFLINE_REORG_REBUILD       0x0800
-   // DMS_MB_FLAG_OFFLINE_REORG OPR END }}
-
-   // {{ DMS_MB_FLAG_LOAD OPR BEGIN
-   #define DMS_MB_FLAG_LOAD_LOAD                   0x0100
-   #define DMS_MB_FLAG_LOAD_BUILD                  0x0200
-   // DMS_MB_FLAG_LOAD OPR END }}
-
-   #define DMS_MB_BASE_FLAG(x)                     ((x)&DMS_MB_BASE_MASK)
-   #define DMS_MB_OPR_FLAG(x)                      ((x)&DMS_MB_OPR_TYPE_MASK)
-   #define DMS_MB_PHASE_FLAG(x)                    ((x)&DMS_MB_OPR_PHASE_MASK)
-
-   #define DMS_IS_MB_FREE(x)        (DMS_MB_FLAG_FREE==(x))
-   #define DMS_SET_MB_FREE(x)       do {(x)=DMS_MB_FLAG_FREE ;} while(0)
-   #define DMS_IS_MB_INUSE(x)       (0!=((x)&DMS_MB_FLAG_USED))
-   #define DMS_SET_MB_INUSE(x)      do {(x)|=DMS_MB_FLAG_USED ;} while(0)
-   #define DMS_IS_MB_DROPPED(x)     (DMS_MB_FLAG_DROPED==(x))
-   #define DMS_SET_MB_DROPPED(x)    do {(x)=DMS_MB_FLAG_DROPED ;} while(0)
-   #define DMS_IS_MB_NORMAL(x)      (DMS_MB_FLAG_USED==(x))
-   #define DMS_SET_MB_NORMAL(x)     do {(x)=DMS_MB_FLAG_USED ;} while(0)
-
-   #define DMS_IS_MB_OFFLINE_REORG(x)  \
-      ((0!=((x)&DMS_MB_FLAG_OFFLINE_REORG))&&(DMS_IS_MB_INUSE(x)))
-   #define DMS_SET_MB_OFFLINE_REORG(x) \
-      do {(x)=DMS_MB_FLAG_OFFLINE_REORG|DMS_MB_FLAG_USED;} while(0)
-   #define DMS_IS_MB_ONLINE_REORG(x)   \
-      ((0!=((x)&DMS_MB_FLAG_ONLINE_REORG))&&(DMS_IS_MB_INUSE(x)))
-   #define DMS_SET_MB_ONLINE_REORG(x)  \
-      do {(x)=DMS_MB_FLAG_ONLINE_REORG|DMS_MB_FLAG_USED;} while(0)
-   #define DMS_IS_MB_OFFLINE_REORG_SHADOW_COPY(x)     \
-      ((0!=((x)&DMS_MB_FLAG_OFFLINE_REORG_SHADOW_COPY))&&\
-      (DMS_IS_MB_OFFLINE_REORG(x)))
-   #define DMS_SET_MB_OFFLINE_REORG_SHADOW_COPY(x)    \
-      do {(x)=DMS_MB_FLAG_OFFLINE_REORG_SHADOW_COPY|DMS_MB_FLAG_OFFLINE_REORG|\
-      DMS_MB_FLAG_USED;} while(0)
-   #define DMS_IS_MB_OFFLINE_REORG_TRUNCATE(x)        \
-      ((0!=((x)&DMS_MB_FLAG_OFFLINE_REORG_TRUNCATE))&&\
-      (DMS_IS_MB_OFFLINE_REORG(x)))
-   #define DMS_SET_MB_OFFLINE_REORG_TRUNCATE(x)       \
-      do {(x)=DMS_MB_FLAG_OFFLINE_REORG_TRUNCATE|DMS_MB_FLAG_OFFLINE_REORG|\
-      DMS_MB_FLAG_USED;} while(0)
-   #define DMS_IS_MB_OFFLINE_REORG_COPY_BACK(x)       \
-      ((0!=((x)&DMS_MB_FLAG_OFFLINE_REORG_COPY_BACK))&&\
-      (DMS_IS_MB_OFFLINE_REORG(x)))
-   #define DMS_SET_MB_OFFLINE_REORG_COPY_BACK(x)      \
-      do {(x)=DMS_MB_FLAG_OFFLINE_REORG_COPY_BACK|DMS_MB_FLAG_OFFLINE_REORG|\
-      DMS_MB_FLAG_USED;} while(0)
-   #define DMS_IS_MB_OFFLINE_REORG_REBUILD(x)         \
-      ((0!=((x)&DMS_MB_FLAG_OFFLINE_REORG_REBUILD))&&\
-      (DMS_IS_MB_OFFLINE_REORG(x)))
-   #define DMS_SET_MB_OFFLINE_REORG_REBUILD(x)        \
-      do {(x)=DMS_MB_FLAG_OFFLINE_REORG_REBUILD|DMS_MB_FLAG_OFFLINE_REORG|\
-      DMS_MB_FLAG_USED;} while(0)
-
-   #define DMS_IS_MB_LOAD(x)                          \
-      (0!=((x)&DMS_MB_FLAG_LOAD)&&(DMS_IS_MB_INUSE(x)))
-   #define DMS_SET_MB_LOAD(x)                         \
-      do {(x)=DMS_MB_FLAG_LOAD|DMS_MB_FLAG_USED;} while(0)
-   #define DMS_IS_MB_FLAG_LOAD_LOAD(x)                \
-      ((0!=((x)&DMS_MB_FLAG_LOAD_LOAD))&&(DMS_IS_MB_LOAD(x)))
-   #define DMS_SET_MB_FLAG_LOAD_LOAD(x)               \
-      do {(x)=DMS_MB_FLAG_LOAD_LOAD|DMS_MB_FLAG_LOAD|\
-      DMS_MB_FLAG_USED;} while(0)
-   #define DMS_IS_MB_FLAG_LOAD_BUILD(x)               \
-      ((0!=((x)&DMS_MB_FLAG_LOAD_BUILD))&&(DMS_IS_MB_LOAD(x)))
-   #define DMS_SET_MB_FLAG_LOAD_BUILD(x)              \
-      do {(x)=DMS_MB_FLAG_LOAD_BUILD|DMS_MB_FLAG_LOAD|\
-      DMS_MB_FLAG_USED;} while(0)
-
-   #define DMS_MB_STATINFO_FLAG_TRUNCATED  0x00000001
-
-   #define DMS_MB_STATINFO_IS_TRUNCATED(x) \
-      (0 != ((x) & DMS_MB_STATINFO_FLAG_TRUNCATED))
-   #define DMS_MB_STATINFO_SET_TRUNCATED(x) \
-      do { (x) |= DMS_MB_STATINFO_FLAG_TRUNCATED ; } while (0)
-   #define DMS_MB_STATINFO_CLEAR_TRUNCATED(x) \
-      do { (x) &= ~DMS_MB_STATINFO_FLAG_TRUNCATED ; } while (0)
-
-   /*
-      DMS MB ATTRIBUTE DEFINE
-   */
-   #define DMS_MB_ATTR_COMPRESSED         0x00000001
-   #define DMS_MB_ATTR_NOIDINDEX          0x00000002
-   #define DMS_MB_ATTR_CAPPED             0x00000004
-   #define DMS_MB_ATTR_STRICTDATAMODE     0x00000008
 
 #pragma pack(4)
    /*
@@ -603,6 +496,9 @@ namespace engine
          virtual ~_dmsMBContext() ;
          void _reset () ;
 
+         void  attachSubContext( _IContext *pContext ) ;
+         void  detachSubContext() ;
+
       public:
          virtual string toString () const ;
          virtual INT32  pause () ;
@@ -630,6 +526,8 @@ namespace engine
          UINT16            _mbID ;
          INT32             _mbLockType ;
          INT32             _resumeType ;
+
+         _IContext         *_pSubContext ;
    };
    typedef _dmsMBContext   dmsMBContext ;
 
@@ -731,38 +629,32 @@ namespace engine
    class _dmsRecordRW
    {
       friend class _dmsStorageDataCommon ;
-      friend class dmsTransLockCallback ;
-      friend class _dmsIXSecScanner;
 
       public:
          _dmsRecordRW() ;
-         ~_dmsRecordRW() ;
+         _dmsRecordRW( const _dmsRecordRW &rhs ) ;
+         virtual ~_dmsRecordRW() ;
 
          BOOLEAN           isEmpty() const ;
-         _dmsRecordRW      derivePre() ;
-         _dmsRecordRW      deriveNext() ;
-         _dmsRecordRW      deriveOverflow() ;
-         _dmsRecordRW      derive( const dmsRecordID &rid ) ;
+         _dmsRecordRW      derivePre() const ;
+         _dmsRecordRW      deriveNext() const ;
+         _dmsRecordRW      deriveOverflow() const ;
+         _dmsRecordRW      derive( const dmsRecordID &rid ) const ;
 
          void              setNothrow( BOOLEAN nothrow ) ;
          BOOLEAN           isNothrow() const ;
-         // if the rid was set to special one, we won't have _rw setup
-         BOOLEAN           hasNoExt()
-         {
-            return (_rid.isIDXRid() );
-         }
 
          dmsRecordID       getRecordID() const { return _rid ; }
 
          /*
             When len == 0, Use the record's size
          */
-         const dmsRecord*  readPtr( UINT32 len = sizeof( dmsRecord ) ) ;
+         const dmsRecord*  readPtr( UINT32 len = sizeof( dmsRecord ) ) const ;
          dmsRecord*        writePtr( UINT32 len = sizeof( dmsRecord ) ) ;
 
 
          template< typename T >
-         const T*          readPtr( UINT32 len = sizeof(T) )
+         const T*          readPtr( UINT32 len = sizeof(T) ) const
          {
             return ( const T* )readPtr( len ) ;
          }
@@ -778,9 +670,12 @@ namespace engine
       private:
          void              _doneAddr() ;
 
+      protected:
+         BOOLEAN           _isDirectMem ;
+         const dmsRecord   *_ptr ;
+
       private:
          dmsRecordID       _rid ;
-         const dmsRecord   *_ptr ;
          dmsExtRW          _rw ;
          _dmsStorageDataCommon   *_pData ;
    } ;
@@ -861,7 +756,8 @@ namespace engine
          dmsStorageUnitID CSID () const { return _CSID ; }
 
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext, UINT16 mbID,
-                                         UINT32 clLID, UINT32 startLID, INT32 lockType = -1 );
+                                         UINT32 clLID, UINT32 startLID,
+                                         INT32 lockType = -1 );
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext,
                                          const CHAR* pName,
                                          INT32 lockType = -1 ) ;
@@ -878,7 +774,7 @@ namespace engine
          OSS_INLINE UINT32 getCollectionNum() ;
 
          OSS_INLINE dmsRecordRW record2RW( const dmsRecordID &record,
-                                           UINT16 collectionID );
+                                           UINT16 collectionID ) const ;
 
          BOOLEAN isCapped () { return _isCapped; }
 
@@ -944,7 +840,7 @@ namespace engine
          INT32 truncateCollectionLoads( const CHAR *pName,
                                         dmsMBContext *context = NULL ) ;
 
-         INT32 changeCLUniqueID( const std::map<std::string, utilCLUniqueID>& clInfo,
+         INT32 changeCLUniqueID( const MAP_CLNAME_ID& clInfo,
                                  BOOLEAN setOnlyIfNull = TRUE,
                                  BOOLEAN resetOtherCl = FALSE ) ;
 
@@ -972,8 +868,7 @@ namespace engine
                               ossValuePtr deletedDataPtr,
                               _pmdEDUCB * cb,
                               SDB_DPSCB *dpscb,
-                              BOOLEAN    RCDoDelete = FALSE,
-                              _dpsITransLockCallback * callback = NULL ) ;
+                              IDmsOprHandler *pHandler = NULL ) ;
 
          // if updatedDataPtr = 0, will get from recordID
          // must hold mb exclusive lock
@@ -984,7 +879,7 @@ namespace engine
                               SDB_DPSCB *dpscb,
                               _mthModifier &modifier,
                               BSONObj* newRecord = NULL,
-                              _dpsITransLockCallback * callback = NULL ) ;
+                              IDmsOprHandler *pHandler = NULL ) ;
 
          virtual INT32 popRecord( dmsMBContext *context,
                                   INT64 targetID,
@@ -1008,8 +903,8 @@ namespace engine
          /*
             Caller must hold the mbContext
          */
-         virtual INT32 extractData( dmsMBContext *mbContext,
-                                    dmsRecordRW &recordRW,
+         virtual INT32 extractData( const dmsMBContext *mbContext,
+                                    const dmsRecordRW &recordRW,
                                     _pmdEDUCB *cb,
                                     dmsRecordData &recordData ) = 0 ;
 
@@ -1083,7 +978,7 @@ namespace engine
                                              const dmsRecordData &recordData,
                                              const BSONObj &newObj,
                                              _pmdEDUCB *cb,
-                                             _dpsITransLockCallback * callback = NULL ) = 0 ;
+                                             IDmsOprHandler *pHandler ) = 0 ;
 
          virtual INT32 _extentRemoveRecord( dmsMBContext *context,
                                             dmsExtRW &extRW,
@@ -1296,25 +1191,13 @@ namespace engine
       return (UINT32)_collectionNameMap.size() ;
    }
    OSS_INLINE dmsRecordRW _dmsStorageDataCommon::record2RW( const dmsRecordID &record,
-                                                 UINT16 collectionID )
+                                                            UINT16 collectionID ) const
    {
       dmsRecordRW rRW ;
-      rRW._pData = this ;
+      rRW._pData = const_cast<_dmsStorageDataCommon*>( this ) ;
       rRW._rid = record ;
-      // only setup extent address if this is regular extent, not the special
-      // in memory index record
-      if( !(record.isIDXRid()) )
-      {
-         rRW._rw = extent2RW( record._extent, collectionID ) ;
-         rRW._doneAddr() ;
-      }
-      else
-      {
-         // set the extent to(extid=DMS_IDX_RID_MASK, clid=DMS_INVALID_CLID)
-         // _ptr is set to NULL with DMS_INVALID_EXTENT. Caller need to set
-         // it up
-         rRW._rw = extent2RW( DMS_INVALID_EXTENT, DMS_INVALID_CLID ) ;
-      }
+      rRW._rw = extent2RW( record._extent, collectionID ) ;
+      rRW._doneAddr() ;
       return rRW ;
    }
 

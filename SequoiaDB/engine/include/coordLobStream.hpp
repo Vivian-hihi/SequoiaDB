@@ -184,7 +184,7 @@ namespace engine
          } ;
 
          typedef ossPoolMap<UINT32, subStream>     SUB_STREAMS ;
-         typedef std::set<ossValuePtr>             DONE_LST ;
+         typedef ossPoolSet<ossValuePtr>           DONE_LST ;
          typedef ossPoolMap<UINT32, dataGroup>     DATA_GROUPS ;
 
       private:

@@ -119,7 +119,7 @@ namespace engine
    // IS        x    x    x    x    x     x: upgrade is not allowed or needed
    // IX        v    x    x    x    x     v: upgrade is needed
    // S         v    x    x    x    x
-   // U         x    x    x    x    x
+   // U         x    x    v    x    x
    // X         x    x    v    v    x
    //
    // Valid upgrade :
@@ -136,7 +136,7 @@ namespace engine
      {{ 0, 0, 0, 0, 0 },
       { 1, 0, 0, 0, 0 },
       { 1, 0, 0, 0, 0 },
-      { 0, 0, 0, 0, 0 },
+      { 0, 0, 1, 0, 0 },
       { 0, 0, 1, 1, 0 }} ;
    OSS_INLINE INT32 dpsUpgradeCheck
    (
@@ -491,17 +491,11 @@ namespace engine
       dpsTransLockId       _lockID ;
       DPS_TRANSLOCK_TYPE   _lockType ;
       EDUID                _eduID ;
-      BOOLEAN              _useOldVersion ;  // if we use old version record 
-      BOOLEAN              _newAcquire ;     // if the lock was newly granted
-      BOOLEAN              _skipNewRecord ;  // if should skip the new record
 
       _dpsTransRetInfo()
       {
          _lockType      = DPS_TRANSLOCK_IS ;
          _eduID         = 0 ;
-         _useOldVersion = FALSE ;
-         _newAcquire    =FALSE ;
-         _skipNewRecord = FALSE ;
       }
    } ;
    typedef _dpsTransRetInfo dpsTransRetInfo ;

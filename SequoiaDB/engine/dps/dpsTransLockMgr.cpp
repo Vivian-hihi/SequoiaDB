@@ -43,7 +43,7 @@
 #include "dpsTrace.hpp"
 #include "pdTrace.hpp"
 #include "sdbInterface.hpp"   // IContext
-#include "pmd.hpp"            // pmdGetOptionCB
+
 #include <stdio.h>
 #if 0
 //#ifdef _DEBUG    // once we upgrade the boost, we might want to have this
@@ -116,12 +116,11 @@ namespace engine
    //              the caller shall make sure no thread is trying to access
    //              lock resource before lock manager is fully initialized
    //
-   INT32 dpsTransLockManager::init()
+   INT32 dpsTransLockManager::init( UINT32 lrbInitNum,
+                                    UINT32 lrbTotalNum )
    {
-      INT32 rc = SDB_OK;
-      UINT32 initLRB  = pmdGetOptionCB()->transLRBInit(),
-             totalLRB = pmdGetOptionCB()->transLRBTotal(),
-             roundUp  = ossNextPowerOf2( initLRB ) ;
+      INT32 rc = SDB_OK ;
+      UINT32 roundUp  = ossNextPowerOf2( lrbInitNum ) ;
 
       // new LRB manager
       _pLRBMgr = SDB_OSS_NEW _utilSegmentManager< dpsTransLRB > ;
@@ -132,9 +131,9 @@ namespace engine
          goto error ;
       }
 
-      if ( totalLRB < roundUp )
+      if ( lrbTotalNum < roundUp )
       {
-         totalLRB = roundUp ;
+         lrbTotalNum = roundUp ;
       }
       PD_LOG( PDEVENT, 
               "Lock manager initializing"OSS_NEWLINE
@@ -142,10 +141,10 @@ namespace engine
               "  LRBs Max                : %u"OSS_NEWLINE
               "  LRB Headers initial     : %u"OSS_NEWLINE
               "  LRB Headers Max         : %u",
-              roundUp, totalLRB, roundUp / 4, totalLRB ) ;
+              roundUp, lrbTotalNum, roundUp / 4, lrbTotalNum ) ;
 
       // init LRB manager
-      rc = _pLRBMgr->init( roundUp, totalLRB ) ;
+      rc = _pLRBMgr->init( roundUp, lrbTotalNum ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to allocate memory for LRB, rc: %d", rc ) ;
@@ -162,7 +161,7 @@ namespace engine
       }
 
       // init LRB Header manager
-      rc = _pLRBHdrMgr->init( roundUp / 4, totalLRB );
+      rc = _pLRBHdrMgr->init( roundUp / 4, lrbTotalNum );
       if ( rc )
       {
          PD_LOG( PDERROR,
@@ -223,14 +222,20 @@ namespace engine
       SDB_ASSERT( pLRBHdr, "Invalid LRB Header pointer." ) ;
 #endif
 
-#if SDB_INTERNAL_DEBUG
-      // debug code to track the guy freeing oldVer
-      if ( pLRBHdr->oldVer.getOldRecord() != NULL )
+      if ( pLRBHdr->extData.isValid() )
       {
-         PD_LOG ( PDDEBUG, "Freeing oldver while freeing LRBHdr for (%s).",
-                  pLRBHdr->lockId.toString().c_str() );
+         /// release check
+         SDB_ASSERT( pLRBHdr->extData.canRelease(),
+                     "Extend data can't be released" ) ;
+
+         /// release
+         if ( !pLRBHdr->extData.release() )
+         {
+            PD_LOG( PDWARNING, "Extend data[%llu] doesn't clear in LRBHdr[%s]",
+                    pLRBHdr->extData._data,
+                    pLRBHdr->lockId.toString().c_str() ) ;
+         }
       }
-#endif
 
       INT32 rc = _pLRBHdrMgr->release( pLRBHdr );
 
@@ -988,7 +993,8 @@ namespace engine
          if (    removeLRBHeader
               && ( !  pLRBHdr->ownerLRB   )
               && ( !  pLRBHdr->upgradeLRB )
-              && ( !  pLRBHdr->waiterLRB  ) )
+              && ( !  pLRBHdr->waiterLRB  )
+              && (    pLRBHdr->extData.canRelease() ) )
          {
 #ifdef _DEBUG
             PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST,
@@ -1252,10 +1258,8 @@ namespace engine
                      // clear the wait info in dpsTxExectr
                      dpsTxExectr->clearWaiterInfo() ;
                   }
-                  if( pdpsTxResInfo )
-                  {
-                     pdpsTxResInfo->_newAcquire = FALSE;
-                  }
+
+                  pLRBHdr = pLRB->lrbHdr ;
                   goto done ;
                }
             }
@@ -1281,12 +1285,6 @@ namespace engine
 #endif
          bFreeLRB       = TRUE ;
          bFreeLRBHeader = TRUE ;
-         if ( pdpsTxResInfo )
-         {
-            // default mark this edu has newly aquired/granted the lock
-            // we will mark it false if we found the lock been covered
-            pdpsTxResInfo->_newAcquire = TRUE;
-         }
       }
 
       // latch bucket
@@ -1310,7 +1308,7 @@ namespace engine
             // mark the new LRB and LRB Header are used
             bFreeLRB       = FALSE ;
             bFreeLRBHeader = FALSE ;
-
+            pLRBHdr        = pLRBHdrNew ;
          }
          // job done
          goto done;
@@ -1335,6 +1333,7 @@ namespace engine
             // mark the new LRB and new LRB Header are used
             bFreeLRB       = FALSE ;
             bFreeLRBHeader = FALSE ;
+            pLRBHdr        = pLRBHdrNew ;
          }
 
          // job done
@@ -1386,10 +1385,6 @@ namespace engine
 
                // clear the wait info in dpsTxExectr
                dpsTxExectr->clearWaiterInfo() ;
-            }
-            if ( pdpsTxResInfo )
-            {
-               pdpsTxResInfo->_newAcquire = FALSE;
             }
             goto done ; 
          }
@@ -1632,10 +1627,11 @@ namespace engine
       {
          // need to call this under bktlatch to make sure we are safe to
          // lookup information in LRBHdr
-         callback->afterLockAcquire( lockId, rc, 
+         callback->afterLockAcquire( lockId, rc,
                                      requestLockMode,
                                      opMode,
-                                     pdpsTxResInfo );
+                                     pLRBHdr,
+                                     pLRBHdr ? &(pLRBHdr->extData) : NULL ) ;
       }
 
       if ( bLatched )
@@ -1695,10 +1691,10 @@ namespace engine
       dpsTransLRB       *      & pLRBNew
    )
    {
-#ifdef _DEBUG
+
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_PREPARENEWLRBANDHEADER ) ;
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-#endif
+
       INT32   rc             = SDB_OK ;
       BOOLEAN lrbAcquired    = FALSE;
       BOOLEAN lrbHdrAcquired = FALSE;
@@ -1745,9 +1741,7 @@ namespace engine
       pLRBHdrNew->ownerLRB   = pLRBNew;
 
    done:
-#ifdef _DEBUG
       PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER_PREPARENEWLRBANDHEADER, rc ) ;
-#endif
       return rc ;
    error :
       if( lrbAcquired )
@@ -2195,7 +2189,20 @@ namespace engine
          callback->beforeLockRelease( lockId,
                                       pOwnerLRB->lockMode,
                                       pOwnerLRB->refCounter,
-                                      &(pLRBHdr->oldVer) ) ;
+                                      pLRBHdr,
+                                      pLRBHdr ? &(pLRBHdr->extData) :
+                                                NULL ) ;
+         _acquireOpLatch( bktIdx ) ;
+         bLatched = TRUE ;
+      }
+      else if ( pLRBHdr && pLRBHdr->extData._onLockReleaseFunc )
+      {
+         _releaseOpLatch( bktIdx ) ;
+         bLatched = FALSE ;
+         pLRBHdr->extData._onLockReleaseFunc( lockId,
+                                              pOwnerLRB->lockMode,
+                                              pOwnerLRB->refCounter,
+                                              &(pLRBHdr->extData) ) ;
          _acquireOpLatch( bktIdx ) ;
          bLatched = TRUE ;
       }
@@ -2261,7 +2268,8 @@ namespace engine
          // and upgrade list are all empty
          if (    ( NULL == pLRBHdr->ownerLRB )
               && ( NULL == pLRBHdr->upgradeLRB )
-              && ( NULL == pLRBHdr->waiterLRB ) )
+              && ( NULL == pLRBHdr->waiterLRB )
+              && ( pLRBHdr->extData.canRelease() ) )
          {
             _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, 
                                       pLRBHdr ) ;
@@ -2730,7 +2738,8 @@ namespace engine
       _dpsTransExecutor        * dpsTxExectr,
       const dpsTransLockId     & lockId,
       const DPS_TRANSLOCK_TYPE   requestLockMode,
-      dpsTransRetInfo          * pdpsTxResInfo
+      dpsTransRetInfo          * pdpsTxResInfo,
+      _dpsITransLockCallback   * callback
    )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_TESTACQUIRE ) ;
@@ -2775,7 +2784,8 @@ namespace engine
                     PD_PACK_STRING( iLockIdStr ),
                     PD_PACK_BYTE( iLockMode )  ) ;
 #endif
-         rc = testAcquire( dpsTxExectr, iLockId, iLockMode, pdpsTxResInfo);
+         rc = testAcquire( dpsTxExectr, iLockId, iLockMode,
+                           pdpsTxResInfo, callback );
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -2792,7 +2802,8 @@ namespace engine
                               DPS_TRANSLOCK_OP_MODE_TEST,
                               bktIdx,
                               FALSE,
-                              pdpsTxResInfo ) ;
+                              pdpsTxResInfo,
+                              callback ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

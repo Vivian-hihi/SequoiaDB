@@ -64,19 +64,12 @@ namespace engine
       _maxUsedSize         = 0 ;
       _logFileTotalSize    = 0 ;
       _accquiredSpace      = 0 ;
-      _transLockMgr        = SDB_OSS_NEW dpsTransLockManager();
+      _transLockMgr        = NULL ;      
       _oldVCB              = NULL;
    }
 
    dpsTransCB::~dpsTransCB()
    {
-      SDB_OSS_DEL _transLockMgr;
-      _transLockMgr = NULL;
-      if ( _oldVCB )
-      {
-         SDB_OSS_DEL _oldVCB;
-         _oldVCB = NULL;
-      }
    }
 
    SDB_CB_TYPE dpsTransCB::cbType () const
@@ -99,6 +92,44 @@ namespace engine
 
       // register event handle
       pmdGetKRCB()->regEventHandler( this ) ;
+
+      // only enable/setup old version CB if transaction is turned on
+      // Each session decide when to setup/use the old copy based on 
+      // isolation level (TRANS_ISOLATION_RC)
+      if( _isOn )
+      {
+         _transLockMgr = SDB_OSS_NEW dpsTransLockManager() ;
+         if ( !_transLockMgr )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+
+         // Initialize trans lock manager
+         //   . allocate memory and under layer structures for the LRBs,
+         //     LRB Headers, LRB Header Hash buckets
+         rc = _transLockMgr->init( pmdGetOptionCB()->transLRBInit(),
+                                   pmdGetOptionCB()->transLRBTotal() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to initialize lock manager, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+
+         _oldVCB = SDB_OSS_NEW oldVersionCB() ;
+         if ( !_oldVCB )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         rc = _oldVCB->init() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to init OldVersionCB, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
 
       // if enabled dps
       if ( pmdGetKRCB()->isCBValue( SDB_CB_DPS ) &&
@@ -139,16 +170,6 @@ namespace engine
             _maxUsedSize = 0 ;
          }
 
-         // Initialize trans lock manager
-         //   . allocate memory and under layer structures for the LRBs,
-         //     LRB Headers, LRB Header Hash buckets
-         rc = _transLockMgr->init() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to initialize lock manager, rc: %d", rc ) ;
-            goto error ;
-         }
-
          rc = sdbGetDPSCB()->readOldestBeginLsnOffset( startLsnOffset ) ;
          PD_RC_CHECK( rc, PDERROR, "Read oldest begin lsn offset failed:rc=%d",
                       rc ) ;
@@ -173,18 +194,6 @@ namespace engine
                     "be complete, the oldest lsn offset is %lld",
                     getTransMap()->size(), getOldestBeginLsn() ) ;
          }
-
-         // only enable/setup old version CB if transaction is turned on
-         // Each session decide when to setup/use the old copy based on 
-         // isolation level (TRANS_ISOLATION_RC)
-         // FIXME: confirm with Jianhui if DPS is enabled in replic nodes,
-         // and will this init function be called when a node is transition
-         // from replic to main role. If the answer is no, then we need to
-         // figure out proper condition to initialize the oldVCB and callbacks.
-         if( _isOn )
-         {
-            _oldVCB = SDB_OSS_NEW oldVersionCB();
-         }
       }
 
    done:
@@ -207,7 +216,20 @@ namespace engine
    {
       // unregister event handle
       pmdGetKRCB()->unregEventHandler( this ) ;
-      _transLockMgr->fini() ;
+
+      if ( _transLockMgr )
+      {
+         _transLockMgr->fini() ;
+         SDB_OSS_DEL _transLockMgr ;
+         _transLockMgr = NULL ;
+      }
+
+      if ( _oldVCB )
+      {
+         _oldVCB->fini() ;
+         SDB_OSS_DEL _oldVCB ;
+         _oldVCB = NULL ;
+      }
       return SDB_OK ;
    }
 
@@ -691,7 +713,8 @@ namespace engine
                                     UINT16 collectionID,
                                     const dmsRecordID *recordID,
                                     _IContext *pContext,
-                                    dpsTransRetInfo * pdpsTxResInfo )
+                                    dpsTransRetInfo * pdpsTxResInfo,
+                                    _dpsITransLockCallback * callback )
    {
       if ( !_isOn )
       {
@@ -700,7 +723,8 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _transLockMgr->acquire( eduCB->getTransExecutor(),
                                      lockId, DPS_TRANSLOCK_U,
-                                     pContext, pdpsTxResInfo );
+                                     pContext, pdpsTxResInfo,
+                                     callback ) ;
    }
 
 
@@ -770,7 +794,8 @@ namespace engine
                                      lockId, FALSE, callback );
    }
 
-   void dpsTransCB::transLockReleaseAll( _pmdEDUCB *eduCB )
+   void dpsTransCB::transLockReleaseAll( _pmdEDUCB *eduCB,
+                                         _dpsITransLockCallback * callback )
    {
       if ( 0 == eduCB->getTransExecutor()->getLockCount() )
       {
@@ -778,17 +803,7 @@ namespace engine
       }
       else
       {
-         // create local call back
-         dpsTransLockCallbackFactory f;
-         _dpsITransLockCallback * callback = NULL;
-
-         callback = f.create( LOCK_CALLBACK_TYPE_DMS,
-                              eduCB,
-                              NULL );
-
          _transLockMgr->releaseAll( eduCB->getTransExecutor(), callback );
-         SDB_OSS_DEL callback; 
-         return ;
       }
    }
 
@@ -800,7 +815,8 @@ namespace engine
    INT32 dpsTransCB::transLockTestS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                      UINT16 collectionID,
                                      const dmsRecordID *recordID,
-                                     dpsTransRetInfo * pdpsTxResInfo )
+                                     dpsTransRetInfo * pdpsTxResInfo,
+                                     _dpsITransLockCallback * callback )
    {
       if ( !_isOn )
       {
@@ -809,7 +825,8 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _transLockMgr->testAcquire( eduCB->getTransExecutor(),
                                         lockId, DPS_TRANSLOCK_S,
-                                        pdpsTxResInfo );
+                                        pdpsTxResInfo,
+                                        callback );
    }
 
    INT32 dpsTransCB::transLockTestIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
@@ -830,7 +847,8 @@ namespace engine
    INT32 dpsTransCB::transLockTestX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                      UINT16 collectionID,
                                      const dmsRecordID *recordID,
-                                     dpsTransRetInfo * pdpsTxResInfo )
+                                     dpsTransRetInfo * pdpsTxResInfo,
+                                     _dpsITransLockCallback * callback )
    {
       if ( !_isOn )
       {
@@ -839,14 +857,16 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _transLockMgr->testAcquire( eduCB->getTransExecutor(),
                                         lockId, DPS_TRANSLOCK_X,
-                                        pdpsTxResInfo );
+                                        pdpsTxResInfo,
+                                        callback ) ;
    }
 
 
    INT32 dpsTransCB::transLockTestU( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                      UINT16 collectionID,
                                      const dmsRecordID *recordID,
-                                     dpsTransRetInfo * pdpsTxResInfo )
+                                     dpsTransRetInfo * pdpsTxResInfo,
+                                     _dpsITransLockCallback * callback )
    {
       if ( !_isOn )
       {
@@ -855,7 +875,8 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _transLockMgr->testAcquire( eduCB->getTransExecutor(),
                                         lockId, DPS_TRANSLOCK_U,
-                                        pdpsTxResInfo );
+                                        pdpsTxResInfo,
+                                        callback ) ;
    }
 
 
@@ -894,7 +915,8 @@ namespace engine
    INT32 dpsTransCB::transLockTryU( _pmdEDUCB *eduCB, UINT32 logicCSID,
                                     UINT16 collectionID,
                                     const dmsRecordID *recordID,
-                                    dpsTransRetInfo * pdpsTxResInfo )
+                                    dpsTransRetInfo * pdpsTxResInfo,
+                                    _dpsITransLockCallback * callback )
    {
       if ( !_isOn )
       {
@@ -903,7 +925,8 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _transLockMgr->tryAcquire( eduCB->getTransExecutor(),
                                        lockId, DPS_TRANSLOCK_U,
-                                       pdpsTxResInfo );
+                                       pdpsTxResInfo,
+                                       callback );
    }
 
 
@@ -920,7 +943,8 @@ namespace engine
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _transLockMgr->tryAcquire( eduCB->getTransExecutor(),
                                        lockId, DPS_TRANSLOCK_S,
-                                       pdpsTxResInfo, callback );
+                                       pdpsTxResInfo,
+                                       callback ) ;
    }
 
 

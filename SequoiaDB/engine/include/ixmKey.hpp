@@ -108,11 +108,6 @@ namespace engine
          return toBson().toString(isArray, full);
       }
 
-      BOOLEAN isValid ()
-      {
-         return toBson().isValid () ;
-      }
-
       BOOLEAN isUndefined() const ;
 
       // get raw data

@@ -188,7 +188,7 @@ namespace engine
                                                 const dmsRecordData &recordData,
                                                 const BSONObj &newObj,
                                                 _pmdEDUCB *cb,
-                                                _dpsITransLockCallback * callback )
+                                                IDmsOprHandler *pHandler )
    {
       INT32 rc                     = SDB_OK ;
       UINT32 dmsRecordSize         = 0 ;
@@ -271,7 +271,7 @@ namespace engine
             rc = _pIdxSU->indexesUpdate( context, pExtent->_logicID,
                                          oriObj, newObj,
                                          recordRW.getRecordID(),
-                                         cb, FALSE, callback ) ;
+                                         cb, FALSE, pHandler ) ;
             rollbackIndex = TRUE ;
             if ( rc )
             {
@@ -401,7 +401,7 @@ namespace engine
          INT32 rc1 = _pIdxSU->indexesUpdate( context, pExtent->_logicID,
                                              newObj, oriObj,
                                              recordRW.getRecordID(),
-                                             cb, TRUE ) ;
+                                             cb, TRUE, NULL ) ;
          if ( rc1 )
          {
             PD_LOG ( PDERROR, "Failed to rollback update due to rc %d", rc1 ) ;
@@ -976,7 +976,7 @@ namespace engine
       {
          // we won't touch old verion if it's insert failure. 
          // No callback needed
-         rc = deleteRecord( context, rid, dataPtr, cb, dpscb ) ;
+         rc = deleteRecord( context, rid, dataPtr, cb, dpscb, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to rollback, rc: %d", rc ) ;
       }
       else if ( rid.isValid() )
@@ -992,8 +992,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_EXTRACTDATA, "_dmsStorageData::extractData" )
-   INT32 _dmsStorageData::extractData( dmsMBContext *mbContext,
-                                       dmsRecordRW &recordRW,
+   INT32 _dmsStorageData::extractData( const dmsMBContext *mbContext,
+                                       const dmsRecordRW &recordRW,
                                        _pmdEDUCB *cb,
                                        dmsRecordData &recordData )
    {

@@ -59,6 +59,16 @@ namespace engine
       TRANS_ISOLATION_MAX
    } ;
 
+   /*
+      DPS_TRANSLOCK_OP_MODE_TYPE define
+   */
+   enum DPS_TRANSLOCK_OP_MODE_TYPE
+   {
+      DPS_TRANSLOCK_OP_MODE_TRY = 0,
+      DPS_TRANSLOCK_OP_MODE_ACQUIRE,
+      DPS_TRANSLOCK_OP_MODE_TEST
+   } ;
+
    #define DPS_TRANS_ISOLATION_DFT        TRANS_ISOLATION_RU
    #define DPS_TRANS_DFT_TIMEOUT          (60)  /* 1 minute */
    #define DPS_TRANS_LOCKWAIT_DFT         FALSE
@@ -78,6 +88,7 @@ namespace engine
    #define DPS_TRANS_LRB_TOTAL_DFT        ( 268435456 )
    #define DPS_TRANS_LRB_MIN              ( 65536 )
    #define DPS_TRANS_LRB_MAX              ( 4294967295 )
+
 }
 
 #endif // DPS_TRANS_DEF_HPP__

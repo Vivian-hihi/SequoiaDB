@@ -42,11 +42,63 @@
 #include "pmdEDU.hpp"
 #include "ixm.hpp"
 #include "rtn.hpp"
+#include "pmdStartup.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 
 namespace engine
 {
+
+   /*
+      DMS TOOL FUNCTIONS:
+   */
+   BOOLEAN dmsAccessAndFlagCompatiblity ( UINT16 collectionFlag,
+                                          DMS_ACCESS_TYPE accessType )
+   {
+      // if we are in crash recovery mode, only recovery thread is able to
+      // perform query, in this case we always return TRUE
+      if ( !pmdGetStartup().isOK() )
+      {
+         return TRUE ;
+      }
+      else if ( DMS_IS_MB_FREE(collectionFlag) ||
+                DMS_IS_MB_DROPPED(collectionFlag) )
+      {
+         return FALSE ;
+      }
+      else if ( DMS_IS_MB_NORMAL(collectionFlag) )
+      {
+         return TRUE ;
+      }
+      else if ( DMS_IS_MB_OFFLINE_REORG(collectionFlag) )
+      {
+         if ( DMS_IS_MB_OFFLINE_REORG_TRUNCATE(collectionFlag) &&
+            ( accessType == DMS_ACCESS_TYPE_TRUNCATE ) )
+         {
+            return TRUE ;
+         }
+         else if ( ( DMS_IS_MB_OFFLINE_REORG_SHADOW_COPY ( collectionFlag ) ||
+                     DMS_IS_MB_OFFLINE_REORG_REBUILD( collectionFlag ) ) &&
+                  ( ( accessType == DMS_ACCESS_TYPE_QUERY ) ||
+                    ( accessType == DMS_ACCESS_TYPE_FETCH ) ) )
+         {
+            return TRUE ;
+         }
+         return FALSE ;
+      }
+      else if ( DMS_IS_MB_ONLINE_REORG(collectionFlag) )
+      {
+         return TRUE ;
+      }
+      else if ( DMS_IS_MB_LOAD ( collectionFlag ) &&
+                DMS_ACCESS_TYPE_TRUNCATE != accessType )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
    BOOLEAN dmsIsSysCSName ( const CHAR *collectionSpaceName )
    {
       if ( collectionSpaceName && ossStrlen ( collectionSpaceName ) >= 3 &&

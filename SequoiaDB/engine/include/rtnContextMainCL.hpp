@@ -43,6 +43,7 @@
 #include "rtnQueryOptions.hpp"
 #include "rtnContextMain.hpp"
 #include "rtnContextExplain.hpp"
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -158,7 +159,7 @@ namespace engine
    private:
       SUBCL_CTX_MAP              _subContextMap ;
       BOOLEAN                    _includeShardingOrder ;
-      std::list< std::string >   _subs ;
+      ossPoolList< std::string > _subs ;
    };
    typedef class _rtnContextMainCL rtnContextMainCL;
 

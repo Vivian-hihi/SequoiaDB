@@ -38,6 +38,7 @@
 #define COORD_INSERT_OPERATOR_HPP__
 
 #include "coordTransOperator.hpp"
+#include "ossMemPool.hpp"
 
 using namespace bson ;
 
@@ -49,9 +50,9 @@ namespace engine
    */
    class _coordInsertOperator : public _coordTransOperator
    {
-      typedef map< string, netIOVec >        SubCLObjsMap ;
-      typedef map< UINT32, SubCLObjsMap >    GroupSubCLMap ;
-      typedef vector< BSONObj >              VEC_OBJECT ;
+      typedef ossPoolMap< string, netIOVec >       SubCLObjsMap ;
+      typedef ossPoolMap< UINT32, SubCLObjsMap >   GroupSubCLMap ;
+      typedef vector< BSONObj >                    VEC_OBJECT ;
 
       class _SimpleBSONBuilder ;
 

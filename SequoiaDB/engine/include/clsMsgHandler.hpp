@@ -38,7 +38,7 @@
 #include "pmdAsyncHandler.hpp"
 #include "ossEvent.hpp"
 #include "ossLatch.hpp"
-#include <map>
+#include "ossMemPool.hpp"
 #include <vector>
 
 namespace engine
@@ -50,8 +50,8 @@ namespace engine
    */
    class _shdMsgHandler : public _pmdAsyncMsgHandler
    {
-      typedef std::set< ossEvent* >                SET_EVENTS ;
-      typedef std::map< NET_HANDLE, SET_EVENTS >   MAP_NET_2_EVENTS ;
+      typedef ossPoolSet< ossEvent* >              SET_EVENTS ;
+      typedef ossPoolMap< NET_HANDLE, SET_EVENTS > MAP_NET_2_EVENTS ;
       typedef MAP_NET_2_EVENTS::iterator           MAP_NET_2_EVENTS_IT ;
 
       public:

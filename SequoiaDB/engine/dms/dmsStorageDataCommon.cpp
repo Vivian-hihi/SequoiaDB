@@ -50,7 +50,7 @@
 #include "dmsTrace.hpp"
 #include "pd.hpp"
 #include "utilCompressor.hpp"
-#include "utilSegment.hpp"
+#include "dmsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -257,7 +257,18 @@ namespace engine
       _mbID          = DMS_INVALID_MBID ;
       _mbLockType    = -1 ;
       _resumeType    = -1 ;
+      _pSubContext   = NULL ;
       PD_TRACE_EXIT ( SDB__DMSMBCONTEXT__RESET ) ;
+   }
+
+   void _dmsMBContext::attachSubContext( _IContext *pContext )
+   {
+      _pSubContext = pContext ;
+   }
+
+   void _dmsMBContext::detachSubContext()
+   {
+      _pSubContext = NULL ;
    }
 
    string _dmsMBContext::toString() const
@@ -290,7 +301,13 @@ namespace engine
       _resumeType = _mbLockType ;
       if ( SHARED == _mbLockType || EXCLUSIVE == _mbLockType )
       {
-         rc = mbUnlock() ;
+         INT32 rc1 = SDB_OK, rc2 = SDB_OK ;
+         if ( _pSubContext )
+         {
+            rc1 = _pSubContext->pause() ;
+         }
+         rc2 = mbUnlock() ;
+         rc = rc1 ? rc1 : rc2 ;
       }
 
       PD_TRACE_EXITRC ( SDB__DMSMBCONTEXT_PAUSE, rc ) ;
@@ -307,6 +324,10 @@ namespace engine
          INT32 lockType = _resumeType ;
          _resumeType = -1 ;
          rc = mbLock( lockType ) ;
+         if ( SDB_OK == rc && _pSubContext )
+         {
+            rc = _pSubContext->resume() ;
+         }
       }
       PD_TRACE_EXITRC ( SDB__DMSMBCONTEXT_RESUME, rc ) ;
       return rc ;
@@ -319,6 +340,14 @@ namespace engine
    :_ptr( NULL )
    {
       _pData = NULL ;
+      _isDirectMem = FALSE ;
+   }
+
+   _dmsRecordRW::_dmsRecordRW( const _dmsRecordRW &rhs )
+   {
+      _ptr = rhs._ptr ;
+      _pData = rhs._pData ;
+      _isDirectMem = rhs._isDirectMem ;
    }
 
    _dmsRecordRW::~_dmsRecordRW()
@@ -330,7 +359,7 @@ namespace engine
       return _pData ? FALSE : TRUE ;
    }
 
-   _dmsRecordRW _dmsRecordRW::derive( const dmsRecordID &rid )
+   _dmsRecordRW _dmsRecordRW::derive( const dmsRecordID &rid ) const
    {
       if ( _pData )
       {
@@ -339,7 +368,7 @@ namespace engine
       return _dmsRecordRW() ;
    }
 
-   _dmsRecordRW _dmsRecordRW::deriveNext()
+   _dmsRecordRW _dmsRecordRW::deriveNext() const
    {
       if ( _ptr && DMS_INVALID_OFFSET != _ptr->_nextOffset )
       {
@@ -350,7 +379,7 @@ namespace engine
       return _dmsRecordRW() ;
    }
 
-   _dmsRecordRW _dmsRecordRW::derivePre()
+   _dmsRecordRW _dmsRecordRW::derivePre() const
    {
       if ( _ptr && DMS_INVALID_OFFSET != _ptr->_previousOffset )
       {
@@ -361,7 +390,7 @@ namespace engine
       return _dmsRecordRW() ;
    }
 
-   _dmsRecordRW _dmsRecordRW::deriveOverflow()
+   _dmsRecordRW _dmsRecordRW::deriveOverflow() const
    {
       if ( _ptr && _ptr->isOvf() )
       {
@@ -380,7 +409,7 @@ namespace engine
       return _rw.isNothrow() ;
    }
 
-   const dmsRecord* _dmsRecordRW::readPtr( UINT32 len )
+   const dmsRecord* _dmsRecordRW::readPtr( UINT32 len ) const
    {
       if ( !_ptr )
       {
@@ -395,15 +424,16 @@ namespace engine
          }
          throw pdGeneralException( SDB_SYS, text ) ;
       }
+
       // special case when we don't read through extent but use in memory
-      // old version (off lrbHdr) directly
+      // old version directly
       // record2RW already set the _prt to record directly based on rid
       // here we would use 0 offset directly
-      if( hasNoExt() )
+      if( _isDirectMem )
       {
-         // use the _ptr we set up in callback,
-         return (const dmsRecord*)_ptr;
+         return (const dmsRecord*)_ptr ;
       }
+
       if ( 0 == len )
       {
          len = _ptr->getSize() ;
@@ -439,6 +469,12 @@ namespace engine
          }
          throw pdGeneralException( SDB_SYS, text ) ;
       }
+
+      if ( _isDirectMem )
+      {
+         return ( dmsRecord* )_ptr ;
+      }
+
       if ( 0 == len )
       {
          len = _ptr->getSize() ;
@@ -2980,17 +3016,9 @@ namespace engine
       _dmsCompressorEntry *compressorEntry = &_compressorEntry[context->mbID()] ;
       UINT32 textIdxNum             = 0 ;
       IDmsExtDataHandler * handler  = NULL ;
+      BOOLEAN markInsert            = FALSE ;
+      dmsTransLockCallback callback( pTransCB, cb ) ;
 
-      dpsTransLockCallbackFactory f;
-      _dpsITransLockCallback * callback = NULL;
-
-      PD_TRACE6 ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD,
-                  PD_PACK_UINT( mustOID ),
-                  PD_PACK_UINT( canUnLock ),
-                  PD_PACK_UINT( position ),
-                  PD_PACK_ULONG( transID ),
-                  PD_PACK_ULONG( preTransLsn ),
-                  PD_PACK_ULONG( dpscb ) );
       if ( !isTransSupport() )
       {
          transID = DPS_INVALID_TRANS_ID ;
@@ -3000,83 +3028,125 @@ namespace engine
 
       try
       {
-         rc = _prepareInsertData( record, mustOID, cb, recordData,
-                                  newMem, position ) ;
-         PD_RC_CHECK( rc, PDERROR, "Prepare data for insertion failed, rc: %d",
-                      rc ) ;
-         if ( newMem )
+         /// when is rollback, and the rid is found
+         if ( DPS_INVALID_TRANS_ID != transID && cb->isInRollback() &&
+              cb->getTransExecutor()->getRecord( relatedLsn, foundRID ) )
          {
-            pMergedData = (CHAR *)recordData.data() ;
+#ifdef _DEBUG
+            const dmsRecord *pRecord = NULL ;
+
+            rc = context->mbLock( EXCLUSIVE ) ;
+            PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d",
+                         rc ) ;
+
+            recordRW = record2RW( foundRID, context->mbID() ) ;
+
+            /// 1. check status
+            pRecord = recordRW.readPtr<dmsRecord>() ;
+            SDB_ASSERT( pRecord->isDeleting(), "Record is not deleting" ) ;
+
+            /// 2. check lock
+            rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
+                                          &foundRID ) ;
+            SDB_ASSERT( SDB_OK == rc, "Trans lock failed" ) ;
+            isTransLocked = TRUE ;
+
+            /// 3. check the value is the same
+            rc = extractData( context, recordRW, cb, recordData ) ;
+            SDB_ASSERT( SDB_OK == rc, "Extrace data failed" ) ;
+            SDB_ASSERT( 0 == insertObj.woCompare(BSONObj(recordData.data())),
+                        "Data is not the same" ) ;
+
+            context->mbUnlock() ;
+#endif //_DEBUG
+
+            markInsert = TRUE ;
+            recordData.setData( insertObj.objdata(), insertObj.objsize(),
+                                UTIL_COMPRESSOR_INVALID, TRUE ) ;
          }
 
-         insertObj = BSONObj( recordData.data() ) ;
-         dmsRecordSize = recordData.len() ;
-
-         // check
-         if ( recordData.len() + DMS_RECORD_METADATA_SZ >
-              DMS_RECORD_USER_MAX_SZ )
+         if ( !markInsert )
          {
-            rc = SDB_DMS_RECORD_TOO_BIG ;
-            goto error ;
-         }
-
-         {
-            /* For concurrency protection with drop CL and set compresor. */
-            dmsCompressorGuard compGuard( compressorEntry, SHARED ) ;
-            if ( compressorEntry->ready() )
+            rc = _prepareInsertData( record, mustOID, cb, recordData,
+                                     newMem, position ) ;
+            PD_RC_CHECK( rc, PDERROR, "Prepare data for insertion failed, rc: %d",
+                         rc ) ;
+            if ( newMem )
             {
-               const CHAR *compressedData    = NULL ;
-               INT32 compressedDataSize      = 0 ;
-               UINT8 compressRatio           = 0 ;
-               rc = dmsCompress( cb, compressorEntry,
-                                 recordData.data(), recordData.len(),
-                                 &compressedData, &compressedDataSize,
-                                 compressRatio ) ;
-               // Compression is valid and ratio is less the threshold
-               if ( SDB_OK == rc &&
-                    compressedDataSize + sizeof(UINT32) < recordData.orgLen() &&
-                    compressRatio < UTIL_COMPRESSOR_DFT_MIN_RATIO )
-               {
-                  // 4 bytes len + compressed record
-                  dmsRecordSize = compressedDataSize + sizeof(UINT32) ;
-                  PD_TRACE2 ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD,
-                              PD_PACK_STRING ( "size after compress" ),
-                              PD_PACK_UINT ( dmsRecordSize ) ) ;
-
-                  // set the compression data
-                  recordData.setData( compressedData, compressedDataSize,
-                                      compressorEntry->getCompressorType(),
-                                      FALSE ) ;
-               }
-               else if ( rc )
-               {
-                  // In any case of error, leave it, and use the original data.
-                  if ( SDB_UTIL_COMPRESS_ABORT == rc )
-                  {
-                     PD_LOG( PDINFO, "Record compression aborted. "
-                             "Insert the original data. rc: %d", rc ) ;
-                  }
-                  else
-                  {
-                     PD_LOG( PDWARNING, "Record compression failed. "
-                             "Insert the original data. rc: %d", rc ) ;
-                  }
-                  rc = SDB_OK ;
-               }
+               pMergedData = (CHAR *)recordData.data() ;
             }
 
-            /*
-             * Release the guard to avoid deadlock with truncate/drop collection.
-             */
-            compGuard.release() ;
+            insertObj = BSONObj( recordData.data() ) ;
+            dmsRecordSize = recordData.len() ;
+
+            // check
+            if ( recordData.len() + DMS_RECORD_METADATA_SZ >
+                 DMS_RECORD_USER_MAX_SZ )
+            {
+               rc = SDB_DMS_RECORD_TOO_BIG ;
+               goto error ;
+            }
+
+            {
+               /* For concurrency protection with drop CL and set compresor. */
+               dmsCompressorGuard compGuard( compressorEntry, SHARED ) ;
+               if ( compressorEntry->ready() )
+               {
+                  const CHAR *compressedData    = NULL ;
+                  INT32 compressedDataSize      = 0 ;
+                  UINT8 compressRatio           = 0 ;
+                  rc = dmsCompress( cb, compressorEntry,
+                                    recordData.data(), recordData.len(),
+                                    &compressedData, &compressedDataSize,
+                                    compressRatio ) ;
+                  // Compression is valid and ratio is less the threshold
+                  if ( SDB_OK == rc &&
+                       compressedDataSize + sizeof(UINT32) <
+                       recordData.orgLen() &&
+                       compressRatio < UTIL_COMPRESSOR_DFT_MIN_RATIO )
+                  {
+                     // 4 bytes len + compressed record
+                     dmsRecordSize = compressedDataSize + sizeof(UINT32) ;
+                     PD_TRACE2 ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD,
+                                 PD_PACK_STRING ( "size after compress" ),
+                                 PD_PACK_UINT ( dmsRecordSize ) ) ;
+
+                     // set the compression data
+                     recordData.setData( compressedData, compressedDataSize,
+                                         compressorEntry->getCompressorType(),
+                                         FALSE ) ;
+                  }
+                  else if ( rc )
+                  {
+                     // In any case of error, leave it, and use the
+                     // original data.
+                     if ( SDB_UTIL_COMPRESS_ABORT == rc )
+                     {
+                        PD_LOG( PDINFO, "Record compression aborted. "
+                                "Insert the original data. rc: %d", rc ) ;
+                     }
+                     else
+                     {
+                        PD_LOG( PDWARNING, "Record compression failed. "
+                                "Insert the original data. rc: %d", rc ) ;
+                     }
+                     rc = SDB_OK ;
+                  }
+               }
+
+               /*
+                * Release the guard to avoid deadlock with truncate/drop
+                * collection.
+                */
+               compGuard.release() ;
+            }
+
+            // Step 2: Calculate the required space size, and allocate it,
+            // both for data record and replication log.
+            // Get the final recordsize that we have to allocate:
+            // reserved space, alignment, etc.
+            _finalRecordSize( dmsRecordSize, recordData ) ;
          }
-
-         // Step 2: Calculate the required space size, and allocate it, both
-         // for data record and replication log.
-
-         // Get the final recordsize that we have to allocate: reserved space,
-         // alignment, etc.
-         _finalRecordSize( dmsRecordSize, recordData ) ;
 
          // calc log reserve
          if ( dpscb )
@@ -3136,77 +3206,94 @@ namespace engine
             }
          }
 
-         if ( position >= 0 )
+         if ( markInsert )
          {
-            rc = _allocRecordSpaceByPos( context, dmsRecordSize, position,
-                                         foundRID, cb ) ;
+            dmsRecord *pRecord = NULL ;
+            extRW = extent2RW( foundRID._extent, context->mbID() ) ;
+            dmsExtent *pWRExtent = extRW.writePtr< dmsExtent >() ;
+            pExtent = pWRExtent ;
+
+            if ( !pExtent->validate( context->mbID() ) )
+            {
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            recordRW = record2RW( foundRID, context->mbID() ) ;
+            pRecord = recordRW.writePtr< dmsRecord >() ;
+            pRecord->unsetDeleting() ;
+
+            ++( pWRExtent->_recCount ) ;
+            ++( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
          }
          else
          {
-            rc = _allocRecordSpace( context, dmsRecordSize, foundRID, cb ) ;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Allocate space for record failed, "
-                      "rc: %d", rc ) ;
-
-         // Step 3: Insert the record into target extent.
-
-         /// validate the extent page infomation
-         extRW = extent2RW( foundRID._extent, context->mbID() ) ;
-         pExtent = extRW.readPtr<dmsExtent>() ;
-         if ( !pExtent->validate( context->mbID() ) )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         recordRW = record2RW( foundRID, context->mbID() ) ;
-
-         if ( dpscb && isTransSupport() )
-         {
-            dpsTransRetInfo lockConflict ;
-            // callback is created when transactionon
-            callback = f.create( LOCK_CALLBACK_TYPE_DMS,
-                                 cb, NULL );
-
-            rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
-                                          &foundRID, &lockConflict, callback ) ;
-            SDB_ASSERT( SDB_OK == rc, "Failed to get record-X-LOCK" );
-            PD_RC_CHECK( rc, PDERROR, "Failed to insert the record, get "
-                        "transaction-X-lock of record failed, rc: %d"OSS_NEWLINE
-                        "Conflict( representative ):"OSS_NEWLINE
-                        "   EDUID:  %llu"OSS_NEWLINE
-                        "   LockId: %s"OSS_NEWLINE
-                        "   Mode:   %s"OSS_NEWLINE,
-                        rc,
-                        lockConflict._eduID,
-                        lockConflict._lockID.toString().c_str(),
-                        lockModeToString( lockConflict._lockType ) ) ;
-
-            isTransLocked = TRUE ;
-
-
-            // Mark the oldVer of this lock to be newly created record,
-            // protected by mbLatch
-            // FIXME: we now do it on LRBHeader, will change this to update a
-            // local memory from callback
-            if ( pTransCB->isTransOn() &&
-                 cb->getTransExecutor()->useTransLock() )
+            if ( position >= 0 )
             {
-               dpsTransLRBHeader *lrbHdr = NULL;
-               dpsTransLockId lockId( _logicalCSID, context->mbID(),
-                                      &foundRID );
-               pTransCB->getLockMgrHandle()->
-                          getLRBHdrByLockId( lockId, lrbHdr );
-               lrbHdr->setNewRecord();
-               PD_TRACE2 ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD,
-                           PD_PACK_STRING ( "Setting record new" ),
-                           PD_PACK_UINT ( _logicalCSID ) );
+               rc = _allocRecordSpaceByPos( context, dmsRecordSize, position,
+                                            foundRID, cb ) ;
             }
-         }
+            else
+            {
+               rc = _allocRecordSpace( context, dmsRecordSize, foundRID, cb ) ;
+            }
+            PD_RC_CHECK( rc, PDERROR, "Allocate space for record failed, "
+                         "rc: %d", rc ) ;
 
-         // insert to extent
-         rc = _extentInsertRecord( context, extRW, recordRW, recordData,
-                                   dmsRecordSize, cb, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to append record, rc: %d", rc ) ;
+            // Step 3: Insert the record into target extent.
+            /// validate the extent page information
+            extRW = extent2RW( foundRID._extent, context->mbID() ) ;
+            pExtent = extRW.readPtr<dmsExtent>() ;
+            if ( !pExtent->validate( context->mbID() ) )
+            {
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            recordRW = record2RW( foundRID, context->mbID() ) ;
+
+            if ( dpscb && isTransSupport() )
+            {
+               dpsTransRetInfo lockConflict ;
+               callback.setIDInfo( CSID(), context->mbID(), _logicalCSID ) ;
+
+               rc = pTransCB->transLockTryX( cb, _logicalCSID,
+                                             context->mbID(),
+                                             &foundRID, &lockConflict,
+                                             &callback ) ;
+               SDB_ASSERT( SDB_OK == rc, "Failed to get record-X-LOCK" );
+               PD_RC_CHECK( rc, PDERROR, "Failed to insert the record, get "
+                           "transaction-X-lock of record failed, "
+                           "rc: %d"OSS_NEWLINE
+                           "Conflict( representative ):"OSS_NEWLINE
+                           "   EDUID:  %llu"OSS_NEWLINE
+                           "   LockId: %s"OSS_NEWLINE
+                           "   Mode:   %s"OSS_NEWLINE,
+                           rc,
+                           lockConflict._eduID,
+                           lockConflict._lockID.toString().c_str(),
+                           lockModeToString( lockConflict._lockType ) ) ;
+
+               isTransLocked = TRUE ;
+
+               if ( callback.hasError() )
+               {
+                  rc = callback.getResult() ;
+                  goto error ;
+               }
+
+               rc = callback.onInsertRecord( context, BSONObj(), foundRID,
+                                             NULL, cb ) ;
+               if ( rc )
+               {
+                  goto error ;
+               }
+            }
+
+            // insert to extent
+            rc = _extentInsertRecord( context, extRW, recordRW, recordData,
+                                      dmsRecordSize, cb, TRUE ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to append record, rc: %d", rc ) ;
+         }
 
          hasInsert = TRUE ;
          // update totalInsert monitor counter
@@ -3215,7 +3302,9 @@ namespace engine
 
          // insert object's indexes
          rc = _pIdxSU->indexesInsert( context, pExtent->_logicID,
-                                      insertObj, foundRID, cb, insertResult ) ;
+                                      insertObj, foundRID, cb,
+                                      dpscb ? &callback : NULL,
+                                      insertResult ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
       }
       catch( std::exception &e )
@@ -3261,11 +3350,7 @@ namespace engine
       if ( isTransLocked && ( transID == DPS_INVALID_TRANS_ID || rc ) )
       {
          pTransCB->transLockRelease( cb, _logicalCSID, context->mbID(),
-                                     &foundRID, callback ) ;
-      }
-      if ( callback )
-      {
-         SDB_OSS_DEL callback ;
+                                     &foundRID, &callback ) ;
       }
       if ( 0 != logRecSize )
       {
@@ -3301,19 +3386,14 @@ namespace engine
                                               ossValuePtr deletedDataPtr,
                                               pmdEDUCB *cb,
                                               SDB_DPSCB * dpscb,
-                                              BOOLEAN     RCDoDelete,
-                                              _dpsITransLockCallback * callback)
+                                              IDmsOprHandler *pHandler )
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_DELETERECORD ) ;
       dpsTransCB *pTransCB          = pmdGetKRCB()->getTransCB() ;
       monAppCB * pMonAppCB          = cb ? cb->getMonAppCB() : NULL ;
       BOOLEAN isDeleting            = FALSE ;
-      BOOLEAN isNeedToSetDeleting   = FALSE ;
-      // save old version when transaction is turned on
-      BOOLEAN isNeedToSaveOldVer    = ( pTransCB->isTransOn() &&
-                                    cb->getTransExecutor()->useTransLock() );
-
+      BOOLEAN markDeleting          = FALSE ;
       dmsRecordID ovfRID ;
       BSONObj delObject ;
       UINT32 logRecSize             = 0 ;
@@ -3330,6 +3410,7 @@ namespace engine
       dmsRecordData recordData ;
       UINT32 textIdxNum             = 0 ;
       IDmsExtDataHandler *handler   = NULL ;
+      BOOLEAN inTrans               = FALSE ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -3364,19 +3445,6 @@ namespace engine
          recordRW = record2RW( recordID, context->mbID() ) ;
          pRecord = recordRW.writePtr() ;
 
-         // call the function to setup the last committed version record
-         // if it does not already exist
-         if ( callback )
-         {
-            rc = callback->saveOldVersionRecord ( &recordRW ) ;
-
-            if( SDB_OK != rc )
-            {
-               PD_LOG ( PDERROR, "Failed to setup old version record" );
-               goto error ;
-            }
-         }
-
          if ( pRecord->isOvf() )
          {
             ovfRID = pRecord->getOvfRID() ;
@@ -3397,39 +3465,36 @@ namespace engine
             goto error ;
          }
 
-         // if need to save old verion, we should not immediately delete the
-         // record, otherwise TB scan won't be able to find this record even if
-         // the current transaction has not committed.
-         // In case caller know that this is not the original transaction
-         // marking delete, we can do he actual delete.
-         // Capped collection is special, we don't take record lock and we
-         // always immediately delete.
-         if ( isNeedToSaveOldVer && !RCDoDelete && !isCapped() )
+         // when in transaction(not rollback), we should not immediately
+         // delete the rcord, otherwise TB scan won't be able to find
+         // this record even if the current transaction has not committed.
+         if ( DPS_INVALID_TRANS_ID != transID && !cb->isInRollback() )
          {
-            isNeedToSetDeleting = TRUE ;
+            inTrans = TRUE ;
+            markDeleting = TRUE ;
          }
-
-         // don't delete the record, someone are waitting for the record-X-Lock,
+         // don't delete the record, someone are waitting for the record lock,
          // mark the record's attr to DMS_RECORD_FLAG_DELETING and write the log
          // the last one who get the record-X-Lock will delete the record while
          // those who gets record-S-Lock will skip the record.
-         if ( pTransCB->hasWait( _logicalCSID, context->mbID(), &recordID ) )
+         else if ( pTransCB->hasWait( _logicalCSID, context->mbID(),
+                                      &recordID ) )
          {
-            // someone else already marked it deleting, nothing need to be done
-            if ( pRecord->isDeleting() )
-            {
-               rc = SDB_OK ;
-               goto done ;
-            }
-            isNeedToSetDeleting = TRUE ;
+            markDeleting = TRUE ;
          }
-         else if ( pRecord->isDeleting() )
+
+         if ( pRecord->isDeleting() )
          {
             isDeleting = TRUE ;
+
+            if ( markDeleting )
+            {
+               goto done ;
+            }
          }
 
          // first time deletion of the record write the LR and delete indexes
-         if ( FALSE == isDeleting )
+         if ( !isDeleting )
          {
             if ( deletedDataPtr )
             {
@@ -3470,6 +3535,20 @@ namespace engine
                // first to reserve dps
                if ( NULL != dpscb )
                {
+                  if ( pHandler )
+                  {
+                     rc = pHandler->onDeleteRecord( context, delObject,
+                                                    recordID, &recordRW,
+                                                    cb ) ;
+                     if ( rc )
+                     {
+                        PD_LOG( PDERROR, "Process delete record(%s) in "
+                                "handler failed, rc: %d",
+                                delObject.toString().c_str(), rc ) ;
+                        goto error ;
+                     }
+                  }
+
                   _clFullName( context->mb()->_collectionName, fullName,
                                sizeof(fullName) ) ;
                   // reserved log-size
@@ -3499,7 +3578,8 @@ namespace engine
                // then delete indexes. Note that the old version indexes
                // would be kept in the in memory tree under the cover
                rc = _pIdxSU->indexesDelete( context, pExtent->_logicID,
-                                            delObject, recordID, cb, callback );
+                                            delObject, recordID, cb,
+                                            dpscb ? pHandler : NULL ) ;
                if ( rc )
                {
                   // if index delete fail, let's continue remove the record
@@ -3517,8 +3597,8 @@ namespace engine
             }
          }
 
-         // no wait for X lock, delete really
-         if ( FALSE == isNeedToSetDeleting )
+         // delete really
+         if ( !markDeleting )
          {
             rc = _extentRemoveRecord( context, extRW, recordRW, cb,
                                       !isDeleting ) ;
@@ -3533,31 +3613,13 @@ namespace engine
          // set deleting attr
          else
          {
-            // set the deleting flag if it hasn't been done.
-            //
-            // Scenario
-            //   do.tranBegin() 
-            //   db.cs.cl.remove({a:2})
-            //   db.cs.cl.update({$set:{'_id':2, 'a':2,'b':2}},{a:1})
-            //   db.transRollback()
-            // when rollback,
-            //   _clsReplayer::rollback 
-            //     rtnUpdate
-            //       _dmsIXSecScanner::advance
-            //         _dmsStorageDataCommon::deleteRecord
-            //  this time, isNeedToSetDeleting = 1, isDeleting = 1,
-            //  RCDoDelete = 0, pRecord->isDeleting() = 128,
-            //  X lock is acquired, we may end up decrease the counter twice
-            if ( DMS_RECORD_FLAG_DELETING != pRecord->isDeleting() )
-            {
-               pRecord->setDeleting() ;
-               // need to dec count
-               --( pExtent->_recCount ) ;
-               --( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
-            }
+            pRecord->setDeleting() ;
+            // need to dec count
+            --( pExtent->_recCount ) ;
+            --( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
          }
 
-         if ( FALSE == isDeleting )
+         if ( !isDeleting )
          {
             // increase conter
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DELETE, 1 ) ;
@@ -3572,7 +3634,7 @@ namespace engine
       }
 
       // if we are asked to log
-      if ( dpscb && FALSE == isDeleting )
+      if ( dpscb && !isDeleting )
       {
          try
          {
@@ -3594,12 +3656,19 @@ namespace engine
                        DMS_FILE_DATA ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert record into log, rc: %d",
                       rc ) ;
+
+         if ( markDeleting && inTrans )
+         {
+            /// put pair(lsn,record info), when rollback, can insert the record
+            /// to the same rid
+            cb->getTransExecutor()->putRecord( cb->getEndLsn(), recordID ) ;
+         }
       }
-      else if ( FALSE == isDeleting && cb->getLsnCount() > 0 )
+      else if ( !isDeleting && cb->getLsnCount() > 0 )
       {
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
                                                    DMS_FILE_DATA,
-                                                   cb->isDoRollback() ) ;
+                                                   cb->isDoRollback() ) ;         
       }
 
       if ( handler )
@@ -3630,7 +3699,7 @@ namespace engine
                                               SDB_DPSCB *dpscb,
                                               mthModifier &modifier,
                                               BSONObj* newRecord,
-                                              _dpsITransLockCallback * callback )
+                                              IDmsOprHandler *pHandler )
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_UPDATERECORD ) ;
@@ -3698,19 +3767,6 @@ namespace engine
          }
 #endif //_DEBUG
 
-         // call the function to setup the last committed version record
-         // if it does not already exist
-         if ( callback )
-         {
-            rc = callback->saveOldVersionRecord ( &recordRW ) ;
-
-            if( SDB_OK != rc )
-            {
-               PD_LOG ( PDERROR, "Failed to setup old version record" );
-               goto error ;
-            }
-         }
-
          // get data
          if ( updatedDataPtr )
          {
@@ -3745,6 +3801,21 @@ namespace engine
                   SDB_ASSERT( oldChg.isEmpty(),
                               "Old change must be empty" ) ;
                   goto done ;
+               }
+
+               if ( pHandler )
+               {
+                  rc = pHandler->onUpdateRecord( context, obj, newobj,
+                                                 recordID, &recordRW, cb ) ;
+                  if ( rc )
+                  {
+                     PD_LOG( PDERROR, "Process update record[%s] to [%s] "
+                             "in handler failed, rc: %d",
+                             obj.toString().c_str(),
+                             newobj.toString().c_str(),
+                             rc ) ;
+                     goto error ;
+                  }
                }
             }
             else
@@ -3786,7 +3857,7 @@ namespace engine
                                       relatedLSN, record ) ;
                if ( SDB_OK != rc )
                {
-                  PD_LOG( PDERROR, "failed to build record:%d", rc ) ;
+                  PD_LOG( PDERROR, "Failed to build record:%d", rc ) ;
                   goto error ;
                }
 
@@ -3806,7 +3877,8 @@ namespace engine
             }
 
             rc = _extentUpdatedRecord( context, extRW, recordRW,
-                                       recordData, newobj, cb, callback ) ;
+                                       recordData, newobj, cb,
+                                       dpscb ? pHandler : NULL ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to update record, rc: %d", rc ) ;

@@ -40,6 +40,7 @@
 #include "coordDef.hpp"
 #include "pmdOptionsMgr.hpp"
 #include "coordOmCache.hpp"
+#include "ossMemPool.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -65,19 +66,19 @@ namespace engine
          }
       } ;
 
-      typedef std::map< UINT32, CoordGroupInfoPtr >   MAP_GROUP_INFO ;
+      typedef ossPoolMap< UINT32, CoordGroupInfoPtr > MAP_GROUP_INFO ;
       typedef MAP_GROUP_INFO::iterator                MAP_GROUP_INFO_IT ;
 
-      typedef std::map<std::string, UINT32>           MAP_GROUP_NAME ;
+      typedef ossPoolMap<std::string, UINT32>         MAP_GROUP_NAME ;
       typedef MAP_GROUP_NAME::iterator                MAP_GROUP_NAME_IT ;
 
-      typedef std::map<const CHAR*, CoordCataInfoPtr, cmp_str> MAP_CATA_INFO ;
+      typedef ossPoolMap<const CHAR*, CoordCataInfoPtr, cmp_str>  MAP_CATA_INFO ;
 #if defined (_WINDOWS)
       typedef MAP_CATA_INFO::iterator                 MAP_CATA_INFO_IT ;
       typedef MAP_CATA_INFO::const_iterator           MAP_CATA_INFO_CIT ;
 #else
-      typedef std::map<const CHAR*, CoordCataInfoPtr>::iterator         MAP_CATA_INFO_IT ;
-      typedef std::map<const CHAR*, CoordCataInfoPtr>::const_iterator   MAP_CATA_INFO_CIT ;
+      typedef ossPoolMap<const CHAR*, CoordCataInfoPtr>::iterator       MAP_CATA_INFO_IT ;
+      typedef ossPoolMap<const CHAR*, CoordCataInfoPtr>::const_iterator MAP_CATA_INFO_CIT ;
 #endif // _WINDOWS
 
       public:

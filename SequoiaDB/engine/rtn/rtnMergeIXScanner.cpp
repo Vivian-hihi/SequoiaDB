@@ -36,73 +36,163 @@
    Last Changed =
 
 *******************************************************************************/
-#include "rtnIXScanner.hpp"
 #include "rtnMergeIXScanner.hpp"
-#include "rtnIXScannerFactory.hpp"
+#include "rtnDiskIXScanner.hpp"
+#include "rtnMemIXTreeScanner.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "dpsTransCB.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
-   _rtnMergeIXScanner::_rtnMergeIXScanner( ixmIndexCB *indexCB,
-                                rtnPredicateList *predList,
-                                _dmsStorageUnit *su, _pmdEDUCB *cb,
-                                scannerSharedInfo * sharedInfo )
-   : _order(Ordering::make(indexCB->keyPattern()))
+   /*
+      RTN_SUB_SCAN_TYPE define
+   */
+   enum RTN_SUB_SCAN_TYPE
    {
-      INT32  rc  = SDB_OK ;
-      _direction = predList->getDirection();
-      _firstRun = TRUE;
-      _wasFromLeft = FALSE;
-      _isValid = TRUE;
-      _type = SCANNER_TYPE_MERGE;
+      SCAN_NONE,
+      SCAN_LEFT,
+      SCAN_RIGHT
+   } ;
 
-      if ( ( rc = ( _sharedInfo.init( (NULL == sharedInfo) ) ) ) != SDB_OK )
-      {
-         PD_LOG( PDERROR, "Failed to create merge scanner: %d", rc ) ;
-         throw pdGeneralException( rc, "Failed to create merge scanner" ) ;
-      }
-
-      _savedRID.reset();
-#if SDB_INTERNAL_DEBUG
-      PD_LOG ( PDDEBUG, "IX Merge Scanner created." );
-#endif
-   }
-
-   void _rtnMergeIXScanner::setMergeScanner( IXScannerType ltype,
-                            IXScannerType rtype,
-                            ixmIndexCB *indexCB,
-                            rtnPredicateList *predList,
-                            dmsStorageUnit *su, pmdEDUCB *cb )
+   _rtnMergeIXScanner::_rtnMergeIXScanner( ixmIndexCB *pIndexCB,
+                                           rtnPredicateList *predList,
+                                           _dmsStorageUnit  *su,
+                                           _pmdEDUCB        *cb,
+                                           BOOLEAN indexCBOwnned )
+   :_rtnIXScanner( pIndexCB, predList, su, cb, indexCBOwnned )
    {
-      scannerFactory f;
-      SDB_ASSERT ( indexCB && predList && su,
-                   "indexCB, predList and su can't be NULL" ) ;
-      _leftIXScanner = f.getScanner( ltype, indexCB, predList, su,
-                                     cb, &_sharedInfo );
-      _rightIXScanner = f.getScanner( rtype, indexCB, predList, su,
-                                      cb, &_sharedInfo );
+      _fromDir = SCAN_NONE ;
+      _savedRID.reset() ;
 
-      // There was no memory allocation in above, so we shouldn't fail
-      SDB_ASSERT ( _leftIXScanner && _rightIXScanner,
-                   "Merge IX scanner creation failed" ) ;
+      _leftIXScanner  = NULL ;
+      _rightIXScanner = NULL ;
+
+      _leftType = SCANNER_TYPE_MEM_TREE ;
+      _rightType = SCANNER_TYPE_DISK ;
+
+      _leftEnabled = FALSE ;
+      _rightEnabled = FALSE ;
    }
 
    // destructor, do all rtnDiskIXScanner clean up plus free _memIXScanner
    _rtnMergeIXScanner::~_rtnMergeIXScanner()
    {
-#if SDB_INTERNAL_DEBUG
-      PD_LOG ( PDDEBUG, "Freeing IX Merge Scanner." );
-#endif
       if ( _leftIXScanner )
       {
-         SDB_OSS_DEL _leftIXScanner;
+         SDB_OSS_DEL _leftIXScanner ;
       }
       if ( _rightIXScanner )
       {
-         SDB_OSS_DEL _rightIXScanner;
+         SDB_OSS_DEL _rightIXScanner ;
+      }
+   }
+
+   void _rtnMergeIXScanner::setSubScannerType( IXScannerType leftType,
+                                               IXScannerType rightType )
+   {
+      _leftType = leftType ;
+      _rightType = rightType ;
+   }
+
+   INT32 _rtnMergeIXScanner::init()
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _rtnIXScanner::init() ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// create scanner
+      rc = _createScanner( _leftType, _leftIXScanner ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      _leftEnabled = TRUE ;
+
+      rc = _createScanner( _rightType, _rightIXScanner ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      _rightEnabled = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnMergeIXScanner::_createScanner( IXScannerType type,
+                                             _rtnIXScanner *&pScanner )
+   {
+      INT32 rc = SDB_OK ;
+
+      switch( type )
+      {
+         case SCANNER_TYPE_DISK :
+            pScanner = SDB_OSS_NEW _rtnDiskIXScanner( getIndexCB(),
+                                                      getPredicateList(),
+                                                      getSu(),
+                                                      getEDUCB(),
+                                                      getIndexCBOwned() ) ;
+            break ;
+         case SCANNER_TYPE_MEM_TREE :
+            pScanner = SDB_OSS_NEW _rtnMemIXTreeScanner( getIndexCB(),
+                                                         getPredicateList(),
+                                                         getSu(),
+                                                         getEDUCB(),
+                                                         getIndexCBOwned() ) ;
+            break ;
+         default :
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Invalid scanner type[%d]", type ) ;
+            goto error ;
+            break ;
+      }
+
+      if ( !pScanner )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Allocate scanner by type[%d] failed", type ) ;
+         goto error ;
+      }
+
+      /// init
+      rc = pScanner->init() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init scanner[Type:%d] failed, rc: %d", type, rc ) ;
+         goto error ;
+      }
+
+      /// set sub scan shared info to NULL
+      pScanner->setShareInfo( NULL ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnMergeIXScanner::setReadonly( BOOLEAN isReadonly )
+   {
+      _rtnIXScanner::setReadonly( isReadonly ) ;
+      SDB_ASSERT( isAvailable(), "Must be available" ) ;
+
+      if ( _leftIXScanner )
+      {
+         _leftIXScanner->setReadonly( isReadonly ) ;
+      }
+      if ( _rightIXScanner )
+      {
+         _rightIXScanner->setReadonly( isReadonly ) ;
       }
    }
 
@@ -114,87 +204,76 @@ namespace engine
    INT32 _rtnMergeIXScanner::advance( dmsRecordID &rid )
    {
       PD_TRACE_ENTRY ( SDB__RTNMERGEIXSCAN_ADVANCE ) ;
-      INT32     rc        = SDB_OK;  // return rc
-      INT32     rcl       = SDB_OK;  // rc from left scanner
-      INT32     rcr       = SDB_OK;  // rc from right scanner
-      BOOLEAN   leftDone  ;
-      BOOLEAN   rightDone ;
-      BOOLEAN   leftInit  ;
-      BOOLEAN   rightInit ;
-      BOOLEAN   leftValid  ;
-      BOOLEAN   rightValid ;
+
+      INT32     rc        = SDB_OK ;   // return rc
+      INT32     rcl       = SDB_OK ;   // rc from left scanner
+      INT32     rcr       = SDB_OK ;   // rc from right scanner
+      BOOLEAN   leftDone  = FALSE ;
+      BOOLEAN   rightDone = FALSE ;
+
+      const BSONObj *lObj = NULL ;
+      const BSONObj *rObj = NULL ;
+      INT32 result        = 0 ;
+
+      if ( !isAvailable() )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
    begin:
-      leftDone  = _leftIXScanner->eof();
-      rightDone = _rightIXScanner->eof();
-      leftInit  = _leftIXScanner->initialized();
-      rightInit = _rightIXScanner->initialized();
-      leftValid = _leftIXScanner->isValid() ;
-      rightValid = _rightIXScanner->isValid() ;
-
-      SDB_ASSERT( ( leftInit || rightInit ),
-                  "At least one scanner must be initilized");
-#ifdef _DEBUG
-      PD_LOG ( PDDEBUG, "IXMergeScanner advance: leftDone=%d,"
-               "rightDone=%d,leftInit=%d,rightInit=%d,leftValid=%d"
-               "rightValid=%d,_wasFromLeft=%d",
-               leftDone, rightDone, leftInit, rightInit, 
-               leftValid, rightValid, _wasFromLeft );
-#endif 
-      if ( ( leftDone || !leftInit ) && ( rightDone || !rightInit ) )
+      if ( !_leftEnabled || _leftIXScanner->eof() ||
+           !_leftIXScanner->isAvailable() )
       {
-         rc = SDB_IXM_EOC;
-         PD_LOG ( PDDEBUG, "IX Merge Scanner has reach the end." );
-
-         goto done;
+         _lrid.reset() ;
+         leftDone = TRUE ;
       }
-      // quick return if one of the scanner is finished or is not
-      // initialized at all
-      if ( leftDone || !leftInit )
+      if ( !_rightEnabled || _rightIXScanner->eof() ||
+           !_rightIXScanner->isAvailable() )
       {
-         // only advance if last time was from right or right was not valid
-         if( !_wasFromLeft || !rightValid )
-         {
-            rc = _rightIXScanner->advance( _rrid ) ;
-         }
-         // else
+         _rrid.reset() ;
+         rightDone = TRUE ;
+      }
 
-         rid =  _rrid;
-         _wasFromLeft = FALSE;
+      if ( leftDone && rightDone )
+      {
+         rc = SDB_IXM_EOC ;
          goto done ;
       }
-
-      if ( rightDone || !rightInit )
+      else if ( leftDone )
       {
-         // only advance if last time was from left or left was not valid
-         if( _wasFromLeft || !leftValid )
+         rcl = SDB_IXM_EOC ;
+         if ( SCAN_LEFT != _fromDir )
          {
-            rc = _leftIXScanner->advance( _lrid ) ;
+            rcr = _rightIXScanner->advance( _rrid ) ;
          }
-         rid = _lrid;
-         _wasFromLeft = TRUE;
-         goto done ;
+         _fromDir = SCAN_RIGHT ;
       }
-
-      if( _firstRun )
+      else if ( rightDone )
       {
-         // first time advance both
-         rcl = _leftIXScanner->advance( _lrid );
+         rcr = SDB_IXM_EOC ;
+         if ( SCAN_RIGHT != _fromDir )
+         {
+            rcl = _leftIXScanner->advance( _lrid ) ;
+         }
+         _fromDir = SCAN_LEFT ;
+      }
+      // first time advance both
+      else if( SCAN_NONE == _fromDir )
+      {
+         rcl = _leftIXScanner->advance( _lrid ) ;
          rcr = _rightIXScanner->advance( _rrid ) ;
-         _firstRun = FALSE;
       }
       // otherwise
       else
       {
-         // need to check saved _lrid is valid or not because mem tree 
-         // scanner could show up after resume
-         if ( _wasFromLeft || !leftValid || !_lrid.isValid() )
+         if ( SCAN_LEFT == _fromDir )
          {
             // last index used was from left scanner, or left became invalid
             // after resume, we need to advance left
             rcl = _leftIXScanner->advance( _lrid ) ;
          }
-         if ( !_wasFromLeft || !rightValid || !_lrid.isValid() )
+         else
          {
             // last index used was from right scanner, or right became invalid
             // after resume, we need to advance right
@@ -202,125 +281,94 @@ namespace engine
          }
       }
 
-      // handle the case advance() return EOC
-      if( SDB_IXM_EOC == rcl )
+      if ( rcl && SDB_IXM_EOC != rcl )
       {
-         rcl = SDB_OK;
-         if ( rightDone )
-         {
-            rc = SDB_IXM_EOC;
-         }
-         else
-         {
-            rc = rcr;
-         }
-         rid = _rrid;
-         _wasFromLeft = FALSE;
-         goto done;
+         rc = rcl ;
+         goto error ;
+      }
+      else if ( rcr && SDB_IXM_EOC != rcr )
+      {
+         rc = rcr ;
+         goto error ;
       }
 
-      if( SDB_IXM_EOC == rcr )
+      if ( rcl && rcr )
       {
-         rcr = SDB_OK;
-         if ( leftDone )
-         {
-            rc = SDB_IXM_EOC;
-         }
-         else
-         {
-            rc = rcl;
-         }
-         rid = _lrid;
-         _wasFromLeft = TRUE;
-         goto done;
+         rc = SDB_IXM_EOC ;
+         goto done ;
+      }
+      else if ( rcl )
+      {
+         rid = _rrid ;
+         _fromDir = SCAN_RIGHT ;
+         goto found ;
+      }
+      else if ( rcr )
+      {
+         rid = _lrid ;
+         _fromDir = SCAN_LEFT ;
+         goto found ;
       }
 
-      // in case of any other errors, goto error
-      if ( ( SDB_OK != rcl ) || ( SDB_OK != rcr ) )
-      {
-         rc = (rcl != SDB_OK) ? rcl : rcr;
-         goto error;
-      }
-#ifdef _DEBUG
-      SDB_ASSERT( ( rc == SDB_OK ), "rc should be ok here");
-#endif
       // if we reach here, both scanners did return valid rid,
       // now compare index value from both scanners and return the one
       // come to the front.
+      lObj = _leftIXScanner->getCurKeyObj() ;
+      rObj = _rightIXScanner->getCurKeyObj() ;
+      result = lObj->woCompare( *rObj, _order, false ) * _direction ;
+      if ( result < 0 )
       {
-         ixmKeyOwned lkey( *(_leftIXScanner->getCurKeyObj()) );
-         ixmKeyOwned rkey( *(_rightIXScanner->getCurKeyObj()) );
-         INT32 rt = lkey.woCompare(rkey, _order) ;
-
-         _wasFromLeft = TRUE;
-
-         if( rt * _direction > 0 )  // right key come first
+         _fromDir = SCAN_LEFT ;
+      }
+      else if ( result > 0 )
+      {
+         _fromDir = SCAN_RIGHT ;
+      }
+      else
+      {
+         if ( _lrid <= _rrid )
          {
-            _wasFromLeft = FALSE;
-         }
-         else if ( rt == 0 ) // compare RID if key equal
-         {
-            if ( (_lrid._extent - _rrid._extent) * _direction > 0 )
-            {
-               _wasFromLeft = FALSE;
-            }
-            else if ( _lrid._extent == _rrid._extent )
-            {
-               if ( (_lrid._offset - _rrid._offset) * _direction > 0 )
-               {
-                  _wasFromLeft = FALSE;
-               }
-            }
-         }
-
-         if ( _wasFromLeft )
-         {
-            rid = _lrid;
+            _fromDir = SCAN_LEFT ;
          }
          else
          {
-            rid = _rrid;
+            _fromDir = SCAN_RIGHT ;
          }
       }
-   done :
-      // before we decide to return the rid, try to put it in dup buffer
-      if( SDB_OK == rc )
+
+      if ( SCAN_LEFT == _fromDir )
       {
-         if ( _sharedInfo.isLocal() &&
-              ( _sharedInfo.getDupBuf()->end() !=
-                _sharedInfo.getDupBuf()->find ( rid ) ) )
-         {
-            // if we are able to find the recordid in dupBuffer, that
-            // means we've already processed the record, so let's also
-            // jump back to begin
-#if SDB_INTERNAL_DEBUG
-      PD_LOG ( PDDEBUG, "IX Merge Scanner advance, found duplicated rid, "
-               "_wasFromLeft=%d, rid=(%d, %d)",
-                _wasFromLeft, rid._extent, rid._offset );
-
-#endif
-            rid.reset() ;
-            goto begin ;
-         }
-         _sharedInfo.getDupBuf()->insert ( rid ) ;
+         rid = _lrid ;
       }
-#ifdef _DEBUG
-      PD_LOG ( PDDEBUG, "IX Merge Scanner advance, rc=%d, "
-               "_wasFromLeft=%d, rid=(%d, %d)",
-               rc, _wasFromLeft, rid._extent, rid._offset );
+      else
+      {
+         rid = _rrid ;
+      }
 
-#endif
-      PD_TRACE1 ( SDB__RTNMERGEIXSCAN_ADVANCE,
-                  PD_PACK_INT(_wasFromLeft) ) ;
+   found :
+      SDB_ASSERT( rid.isValid(), "RID must be valid" ) ;
+      if ( !_insert2Dup( rid ) )
+      {
+         rid.reset() ;
+         /// already exist
+         goto begin ;
+      }
+      // make sure we don't hit maximum size of dedup buffer
+      /*if ( _pInfo && _pInfo->isUpToLimit() )
+      {
+         rc = SDB_IXM_DEDUP_BUF_MAX ;
+         goto error ;
+      }*/
+
+   done :
+      if ( SDB_IXM_EOC == rc )
+      {
+         _eof = TRUE ;
+      }
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_ADVANCE, rc ) ;
-
       return rc ;
-
    error :
-      PD_LOG ( PDERROR, "Error during merge advance. rcl=%d, rcr=%d",
-               rcl, rcr );
       goto done ;
-
    }
 
    // restoring the bson key and rid for the current index rid. This is done by
@@ -330,120 +378,295 @@ namespace engine
    // the new position for the saved key+rid
    // this is used in query scan only
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNMERGEIXSCAN_RESUMESCAN, "_rtnMergeIXScanner::resumeScan" )
-   INT32 _rtnMergeIXScanner::resumeScan( )
+   INT32 _rtnMergeIXScanner::resumeScan( BOOLEAN *pIsCursorSame )
    {
-      SINT32 rc = SDB_OK;
-      SINT32 rcl = SDB_OK;
+      SINT32 rc = SDB_OK ;
+      SINT32 rcl = SDB_OK ;
       SINT32 rcr = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNMERGEIXSCAN_RESUMESCAN ) ;
 
-      rcl = _leftIXScanner->resumeScan( );
-      if( (SDB_OK != rcl) && (SDB_IXM_EOC != rcl) )
+      BOOLEAN isSame = TRUE ;
+      BOOLEAN lIsSame = TRUE ;
+      BOOLEAN rIsSame = TRUE ;
+
+      if ( _leftEnabled )
       {
-         rc = rcl;
-         goto error;
+         rcl = _leftIXScanner->resumeScan( &lIsSame ) ;
+      }
+      if ( _rightEnabled )
+      {
+         rcr = _rightIXScanner->resumeScan( &rIsSame ) ;
       }
 
-      rcr = _rightIXScanner->resumeScan( );
-      if( SDB_OK != rcr && (SDB_IXM_EOC != rcr) )
+      rc = rcl ? rcl : rcr ;
+      if ( rc )
       {
-         rc = rcr;
-         goto error;
+         goto error ;
       }
 
-      // Only EOC if both scanner hit EOC
-      if( (SDB_IXM_EOC == rcl) && (SDB_IXM_EOC == rcr) )
+      /// left has changed
+      if ( SCAN_LEFT == _fromDir && !lIsSame && _rightEnabled )
       {
-         rc = SDB_IXM_EOC;
-         goto done;
+         rc = _rightIXScanner->syncPredStatus( _leftIXScanner ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Sync left scanner predicate status to right "
+                    "failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         rc = _rightIXScanner->relocateRID( _savedObj, _savedRID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Relocate to obj(%s) and rid(%d,%d) faild in "
+                    "right scan, rc: %d", _savedObj.toString().c_str(),
+                    _savedRID._extent, _savedRID._offset, rc ) ;
+            goto error ;
+         }
+         _rrid.reset() ;
+         isSame = FALSE ;
+      }
+      /// right has changed
+      else if ( SCAN_RIGHT == _fromDir && !rIsSame && _leftEnabled )
+      {
+         rc = _leftIXScanner->syncPredStatus( _rightIXScanner ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Sync right scanner predicate status to left "
+                    "failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         rc = _leftIXScanner->relocateRID( _savedObj, _savedRID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Relocate to obj(%s) and rid(%d,%d) faild in "
+                    "left scan, rc: %d", _savedObj.toString().c_str(),
+                    _savedRID._extent, _savedRID._offset, rc ) ;
+            goto error ;
+         }
+         _lrid.reset() ;
+         isSame = FALSE ;
       }
 
-      // trigger relocateRID if anything changed from either side
-      if ( !_leftIXScanner->isValid() || !_rightIXScanner->isValid() )
+      /// when left has changed, but last from right
+      if ( SCAN_RIGHT == _fromDir && _leftEnabled &&
+           !_leftIXScanner->eof() &&
+           ( !lIsSame || _lrid.isNull() ) )
       {
-         // tree latch is held only after first keylocate done
-         if ( _leftIXScanner->initialized() &&
-              ((_rtnMemIXTreeScanner*) _leftIXScanner )
-                 ->firstKeylocateDone() )
+         rc = _leftIXScanner->advance( _lrid ) ;
+         if ( rc && SDB_IXM_EOC != rc )
          {
-            rcl = _leftIXScanner->relocateRID( _savedObj,
-                                               _savedRID,
-                                               TRUE );
-            if( SDB_OK != rcl && (SDB_IXM_EOC != rcl) )
-            {
-               rc = rcl;
-               goto error;
-            }
+            PD_LOG( PDERROR, "Left scan advance failed, rc: %d", rc ) ;
+            goto error ;
          }
-
-         if ( _rightIXScanner->initialized() )
-         {
-            rcr = _rightIXScanner->relocateRID( _savedObj,
-                                                _savedRID,
-                                                TRUE );
-            if( SDB_OK != rcr && (SDB_IXM_EOC != rcr) )
-            {
-               rc = rcr;
-               goto error;
-            }
-         }
-
-         if ( !_wasFromLeft )
-         {
-            rc = _leftIXScanner->SyncPredStatus( _rightIXScanner ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to sync predList state."
-                         " rc: %d", rc ) ;
-         }
-         else
-         {
-            rc = _rightIXScanner->SyncPredStatus( _leftIXScanner ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to sync predList state."
-                         " rc: %d", rc ) ;
-         }
+         rc = SDB_OK ;
       }
+      /// when right has changed, but last from left
+      if ( SCAN_LEFT == _fromDir && _rightEnabled &&
+           !_rightIXScanner->eof() &&
+           ( !rIsSame || _rrid.isNull() ) )
+      {
+         rc = _rightIXScanner->advance( _rrid ) ;
+         if ( rc && SDB_IXM_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Right scan advance failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         rc = SDB_OK ;
+      }
+
    done :
+      if ( pIsCursorSame )
+      {
+         *pIsCursorSame = isSame ;
+      }
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_RESUMESCAN, rc ) ;
       return rc ;
    error :
-      PD_LOG ( PDERROR, "Error during merge resume. rc=%d, rcr=%d, rcl=%d",
-               rc, rcr, rcl );
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNMERGEIXSCAN_PAUSESCAN, "_rtnMergeIXScanner::pauseScan" )
-   INT32 _rtnMergeIXScanner::pauseScan(  )
+   INT32 _rtnMergeIXScanner::pauseScan()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNMERGEIXSCAN_PAUSESCAN ) ;
-      rc = _leftIXScanner->pauseScan();
-      if( SDB_OK != rc )
+      INT32 rcl = SDB_OK ;
+      INT32 rcr = SDB_OK ;
+
+      if ( _leftEnabled )
       {
-         goto error;
+         rcl = _leftIXScanner->pauseScan() ;
+      }
+      if ( _rightEnabled )
+      {
+         rcr = _rightIXScanner->pauseScan() ;
       }
 
-      rc = _rightIXScanner->pauseScan();
-      if( SDB_OK != rc )
+      rc = rcl ? rcl : rcr ;
+      if ( rc )
       {
-         goto error;
+         goto error ;
       }
 
       // globally save the obj and rid incase things changed after resume,
       // at which time we need to do relocateRID based on these saved value
-      _savedRID = getSavedRIDFromChild() ;
-      _savedObj = getSavedObjFromChild()->copy() ;
+      if ( SCAN_NONE != _fromDir )
+      {
+         _savedRID = getSavedRIDFromChild() ;
+         _savedObj = getSavedObjFromChild()->getOwned() ;
+      }
 
-#ifdef _DEBUG
-      PD_LOG ( PDDEBUG, "IX Merge Scanner pauseScan, "
-               "_wasFromLeft=%d, _savedObj=%s, _savedRID=(%d, %d)",
-                _wasFromLeft, _savedObj.toString().c_str(),
-                _savedRID._extent, _savedRID._offset );
-#endif
-   done :
+   done:
       PD_TRACE_EXITRC ( SDB__RTNMERGEIXSCAN_PAUSESCAN, rc ) ;
       return rc ;
    error :
-      PD_LOG ( PDERROR, "Error during merge pause. rc=%d", rc );
       goto done ;
    }
+
+   const dmsRecordID& _rtnMergeIXScanner::getSavedRIDFromChild() const
+   {
+      SDB_ASSERT( SCAN_NONE != _fromDir, "Invalid scann from" ) ;
+
+      return ( SCAN_LEFT == _fromDir ) ? _leftIXScanner->getSavedRID() :
+                                         _rightIXScanner->getSavedRID() ;
+   }
+
+   const BSONObj* _rtnMergeIXScanner::getSavedObjFromChild() const
+   {
+      SDB_ASSERT( SCAN_NONE != _fromDir, "Invalid scann from" ) ;
+
+      return ( SCAN_LEFT ==_fromDir ) ? _leftIXScanner->getSavedObj() :
+                                        _rightIXScanner->getSavedObj() ;
+   }
+
+   void _rtnMergeIXScanner::setMonCtxCB( monContextCB *monCtxCB )
+   {
+      SDB_ASSERT( _leftIXScanner && _rightIXScanner,
+                  "Sub scanner is NULL" ) ;
+
+      if ( _leftIXScanner )
+      {
+         _leftIXScanner->setMonCtxCB( monCtxCB ) ;
+      }
+      if ( _rightIXScanner )
+      {
+         _rightIXScanner->setMonCtxCB( monCtxCB ) ;
+      }
+   }
+
+   INT32 _rtnMergeIXScanner::relocateRID( BOOLEAN &found )
+   {
+      SDB_ASSERT( FALSE, "Can't call the function" ) ;
+      return SDB_SYS ;
+   }
+
+   INT32 _rtnMergeIXScanner::relocateRID( const BSONObj &keyObj,
+                                          const dmsRecordID &rid )
+   {
+      INT32 rc = SDB_OK ;
+
+      _savedObj = keyObj.getOwned() ;
+      _savedRID = rid ;
+
+      if ( _leftEnabled && _leftIXScanner )
+      {
+         rc = _leftIXScanner->relocateRID( keyObj, rid ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Relocate rid in left scan failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( _rightEnabled && _rightIXScanner )
+      {
+         rc = _rightIXScanner->relocateRID( keyObj, rid ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Relocate rid in right scan failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
+
+      _eof = TRUE ;
+      _fromDir = SCAN_NONE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _rtnMergeIXScanner::isAvailable() const
+   {
+      return ( _leftIXScanner && _rightIXScanner ) ? TRUE : FALSE ;
+   }
+
+   IXScannerType _rtnMergeIXScanner::getType() const
+   {
+      return SCANNER_TYPE_MERGE ;
+   }
+
+   IXScannerType _rtnMergeIXScanner::getCurScanType() const
+   {
+      SDB_ASSERT( SCAN_NONE != _fromDir, "Invalid scann from" ) ;
+
+      return ( SCAN_LEFT == _fromDir ) ? _leftType : _rightType ;
+   }
+
+   void _rtnMergeIXScanner::disableByType( IXScannerType type )
+   {
+      if ( _leftType == type )
+      {
+         _leftEnabled = FALSE ;
+      }
+      else if ( _rightType == type )
+      {
+         _rightEnabled = FALSE ;
+      }
+   }
+
+   INT32 _rtnMergeIXScanner::getLockModeByType( IXScannerType type ) const
+   {
+      if ( _leftType == type && _leftIXScanner )
+      {
+         return _leftIXScanner->getLockModeByType( type ) ;
+      }
+      else if ( _rightType == type && _rightIXScanner )
+      {
+         return _rightIXScanner->getLockModeByType( type ) ;
+      }
+      return -1 ;
+   }
+
+   rtnPredicateListIterator*  _rtnMergeIXScanner::getPredicateListInterator()
+   {
+      SDB_ASSERT( FALSE, "Can't call the function" ) ;
+      return NULL ;
+   }
+
+   INT32 _rtnMergeIXScanner::isCursorSame( const BSONObj &saveObj,
+                                           const dmsRecordID &saveRID,
+                                           BOOLEAN &isSame )
+   {
+      SDB_ASSERT( SCAN_NONE != _fromDir, "Invalid scann from" ) ;
+
+      return ( SCAN_LEFT == _fromDir ) ?
+             _leftIXScanner->isCursorSame( saveObj, saveRID, isSame ) :
+             _rightIXScanner->isCursorSame( saveObj, saveRID, isSame ) ;
+   }
+
+   const BSONObj* _rtnMergeIXScanner::getCurKeyObj() const
+   {
+      SDB_ASSERT( isAvailable(), "Must be available" ) ;
+      SDB_ASSERT( SCAN_NONE != _fromDir, "Invalid scann from" ) ;
+
+      return  ( SCAN_LEFT == _fromDir ) ? _leftIXScanner->getCurKeyObj() :
+                                          _rightIXScanner->getCurKeyObj() ;
+   }
+
+
 }
 

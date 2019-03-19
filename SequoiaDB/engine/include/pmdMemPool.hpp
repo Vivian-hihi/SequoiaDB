@@ -41,6 +41,7 @@
 #include "ossAtomic.hpp"
 #include "utilCache.hpp"
 #include "rtnBackgroundJobBase.hpp"
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -50,7 +51,7 @@ namespace engine
    */
    class _pmdBuffPool : public _utilCacheMgr
    {
-      typedef list<_utilCacheUnit*>             LIST_UNIT ;
+      typedef ossPoolList<_utilCacheUnit*>            LIST_UNIT ;
 
       public:
          _pmdBuffPool() ;

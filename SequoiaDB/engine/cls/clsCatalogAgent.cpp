@@ -407,7 +407,7 @@ namespace engine
    {
    }
 
-   Ordering* _clsCataOrder::getOrdering ()
+   const Ordering* _clsCataOrder::getOrdering () const
    {
       return &_ordering ;
    }
@@ -516,7 +516,7 @@ namespace engine
       return _groupCount ;
    }
 
-   Ordering *_clsCatalogSet::getOrdering ()
+   const Ordering *_clsCatalogSet::getOrdering () const
    {
       if ( _pOrder )
       {
@@ -2008,7 +2008,7 @@ namespace engine
       {
          INT32 index = 0 ;
          INT32 dir = 1 ;
-         Ordering *pOrder = getOrdering () ;
+         const Ordering *pOrder = getOrdering () ;
          BSONObjIterator itr ( obj ) ;
          while ( itr.more() )
          {

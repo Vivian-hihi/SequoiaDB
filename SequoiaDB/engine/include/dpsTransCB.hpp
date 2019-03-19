@@ -154,14 +154,15 @@ namespace engine
                            const dmsRecordID *recordID = NULL,
                            _IContext *pContext = NULL,
                            dpsTransRetInfo * pdpsTxResInfo = NULL,
-                           _dpsITransLockCallback * callback = NULL );
+                           _dpsITransLockCallback *callback = NULL );
 
       // get record-U-lock: also get the space-IS-lock and collection-IS-lock
       INT32 transLockGetU( _pmdEDUCB *eduCB, UINT32 logicCSID,
                            UINT16 collectionID,
                            const dmsRecordID *recordID,
                            _IContext *pContext = NULL,
-                           dpsTransRetInfo * pdpsTxResInfo = NULL );
+                           dpsTransRetInfo * pdpsTxResInfo = NULL,
+                           _dpsITransLockCallback *callback = NULL );
 
       // get record-S-lock: also get the space-IS-lock and collection-IS-lock
       // get collection-S-lock: also get the space-IS-lock
@@ -170,7 +171,7 @@ namespace engine
                            const dmsRecordID *recordID = NULL,
                            _IContext *pContext = NULL,
                            dpsTransRetInfo * pdpsTxResInfo = NULL,
-                           _dpsITransLockCallback * callback = NULL );
+                           _dpsITransLockCallback *callback = NULL ) ;
 
       // also get the space-IS-lock
       INT32 transLockGetIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
@@ -189,9 +190,10 @@ namespace engine
       void transLockRelease( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
                              const dmsRecordID *recordID = NULL, 
-                             _dpsITransLockCallback * callback = NULL ) ;
+                             _dpsITransLockCallback *callback = NULL ) ;
 
-      void transLockReleaseAll( _pmdEDUCB *eduCB );
+      void transLockReleaseAll( _pmdEDUCB *eduCB,
+                                _dpsITransLockCallback * callback = NULL ) ;
 
       BOOLEAN isTransOn() const ;
 
@@ -201,7 +203,8 @@ namespace engine
       INT32 transLockTestS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                             UINT16 collectionID = DMS_INVALID_MBID,
                             const dmsRecordID *recordID = NULL,
-                            dpsTransRetInfo * pdpsTxResInfo = NULL );
+                            dpsTransRetInfo * pdpsTxResInfo = NULL,
+                            _dpsITransLockCallback *callback = NULL );
 
       INT32 transLockTestIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
@@ -213,7 +216,8 @@ namespace engine
       INT32 transLockTestX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                             UINT16 collectionID = DMS_INVALID_MBID,
                             const dmsRecordID *recordID = NULL,
-                            dpsTransRetInfo * pdpsTxResInfo = NULL );
+                            dpsTransRetInfo * pdpsTxResInfo = NULL,
+                            _dpsITransLockCallback *callback = NULL );
 
       INT32 transLockTestIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
@@ -225,7 +229,8 @@ namespace engine
       INT32 transLockTestU( _pmdEDUCB *eduCB, UINT32 logicCSID,
                             UINT16 collectionID ,
                             const dmsRecordID *recordID,
-                            dpsTransRetInfo * pdpsTxResInfo = NULL );
+                            dpsTransRetInfo * pdpsTxResInfo = NULL,
+                            _dpsITransLockCallback *callback = NULL );
 
 
       // try to get record-X-lock: also try to get the space-IS-lock and
@@ -243,7 +248,8 @@ namespace engine
       INT32 transLockTryU( _pmdEDUCB *eduCB, UINT32 logicCSID,
                            UINT16 collectionID ,
                            const dmsRecordID *recordID,
-                           dpsTransRetInfo * pdpsTxResInfo = NULL );
+                           dpsTransRetInfo * pdpsTxResInfo = NULL,
+                           _dpsITransLockCallback *callback = NULL );
 
       // try to get record-S-lock: also try to get the space-IS-lock and
       // collection-IS-lock

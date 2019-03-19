@@ -42,7 +42,7 @@
 #include "ossUtil.hpp"
 #include "sdbInterface.hpp"
 #include <vector>
-#include <list>
+#include "ossMemPool.hpp"
 
 using namespace std ;
 
@@ -568,7 +568,7 @@ namespace engine
    class _utilCacheBucket : public SDBObject
    {
       public:
-         typedef std::map< INT32, utilCachePage >        MAP_BLK_PAGE ;
+         typedef ossPoolMap< INT32, utilCachePage >      MAP_BLK_PAGE ;
 
          _utilCacheBucket( UINT32 blkID ) ;
          ~_utilCacheBucket() ;
@@ -822,7 +822,7 @@ namespace engine
    */
    class _utilCacheUnit : public SDBObject
    {
-      typedef std::map< INT32, utilCachePage* >       MAP_ID_2_PAGE_PRT ;
+      typedef ossPoolMap< INT32, utilCachePage* >     MAP_ID_2_PAGE_PRT ;
       typedef MAP_ID_2_PAGE_PRT::iterator             MAP_ID_2_PAGE_PRT_IT ;
       typedef MAP_ID_2_PAGE_PRT::const_iterator       MAP_ID_2_PAGE_PRT_CIT ;
 

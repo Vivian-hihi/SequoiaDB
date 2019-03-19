@@ -41,7 +41,7 @@
 #include "sdbIPersistence.hpp"
 #include "dpsLogWrapper.hpp"
 #include "rtnBackgroundJobBase.hpp"
-#include <list>
+#include "ossMemPool.hpp"
 
 using namespace std ;
 
@@ -53,7 +53,7 @@ namespace engine
    */
    class _pmdSyncMgr : public IDataSyncManager
    {
-      typedef list<IDataSyncBase*>              LIST_UNIT ;
+      typedef ossPoolList<IDataSyncBase*>          LIST_UNIT ;
 
       public:
          _pmdSyncMgr() ;

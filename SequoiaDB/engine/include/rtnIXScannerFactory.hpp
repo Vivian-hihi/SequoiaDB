@@ -47,45 +47,75 @@
 namespace engine
 {
    // class factory for initializing scanner purpose
-   class scannerFactory
+   class _rtnScannerFactory
    {
-      public:
-      rtnIXScanner* getScanner( IXScannerType type, ixmIndexCB *indexCB,
-                               rtnPredicateList *predList,
-                               _dmsStorageUnit *su, _pmdEDUCB *cb,
-			       scannerSharedInfo * sharedInfo = NULL )
+   public:
+      INT32             createScanner( IXScannerType type,
+                                       ixmIndexCB *indexCB,
+                                       rtnPredicateList *predList,
+                                       _dmsStorageUnit *su,
+                                       _pmdEDUCB *cb,
+                                       _rtnIXScanner *&pScanner )
       {
-         rtnIXScanner *scanner = NULL;
-         try
+         INT32 rc = SDB_OK ;
+
+         pScanner = NULL ;
+
+         switch (type) 
          {
-            switch (type) 
-            {
-               case SCANNER_TYPE_DISK:
-                    scanner = SDB_OSS_NEW rtnDiskIXScanner( indexCB, predList,
-                                                         su, cb, sharedInfo ) ;
-                    break;
-               case SCANNER_TYPE_MEM_TREE:
-	            scanner = SDB_OSS_NEW rtnMemIXTreeScanner( indexCB, predList,
-                                                            su, cb, sharedInfo ) ;
-                    break;
-               case SCANNER_TYPE_MERGE:
-                    scanner = SDB_OSS_NEW rtnMergeIXScanner( indexCB, predList,
-                                                          su, cb, sharedInfo ) ;
-                    break;
-               default:
-                    scanner = NULL;
-                    break;
-            }
+            case SCANNER_TYPE_DISK:
+               pScanner = SDB_OSS_NEW rtnDiskIXScanner( indexCB, predList,
+                                                        su, cb ) ;
+               break ;
+            case SCANNER_TYPE_MEM_TREE:
+		         pScanner = SDB_OSS_NEW rtnMemIXTreeScanner( indexCB, predList,
+                                                           su, cb ) ;
+               break ;
+            case SCANNER_TYPE_MERGE:
+               pScanner = SDB_OSS_NEW rtnMergeIXScanner( indexCB, predList,
+                                                         su, cb ) ;
+               break;
+            default :
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Invalid type[%d]", type ) ;
+               goto error ;
+               break ;
          }
-         catch( std::exception &e )
+
+         if ( !pScanner )
          {
-            PD_LOG ( PDERROR, "Failed to get scanner: %s",
-                           e.what() ) ;
-            scanner = NULL;
-         } 
-         return scanner;
-      } 
-   };
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Allocate scanner[type:%d] failed", type ) ;
+            goto error ;
+         }
+
+         rc = pScanner->init() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init scanner[type:%d] failed, rc: %d",
+                    type, rc ) ;
+            SDB_OSS_DEL pScanner ;
+            pScanner = NULL ;
+            goto error ;
+         }
+
+      done:
+         return rc ;
+      error:
+         goto done ;
+      }
+
+      void           releaseScanner( _rtnIXScanner *&pScanner )
+      {
+         if ( pScanner )
+         {
+            SDB_OSS_DEL pScanner ;
+            pScanner = NULL ;
+         }
+      }
+
+   } ;
+   typedef _rtnScannerFactory rtnScannerFactory ;
 
 
 }

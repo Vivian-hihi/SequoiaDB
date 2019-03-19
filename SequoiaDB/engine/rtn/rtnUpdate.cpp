@@ -46,7 +46,6 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "dmsScanner.hpp"
-#include "dpsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -129,9 +128,6 @@ namespace engine
       monContextCB monCtxCB ;
       rtnReturnOptions returnOptions ;
 
-      dpsTransLockCallbackFactory f;
-      _dpsITransLockCallback * callback = NULL;
-
       // updator is modifier
       if ( updator.isEmpty() )
       {
@@ -194,12 +190,6 @@ namespace engine
 
       try
       {
-         // create local call back
-
-         callback = f.create( LOCK_CALLBACK_TYPE_DMS,
-                              cb,
-                              NULL );
-
          apm = rtnCB->getAPM() ;
          SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
@@ -212,12 +202,13 @@ namespace engine
          {
             rc = rtnGetTBScanner( pCollectionShortName, &planRuntime, su,
                                   mbContext, cb, &pScanner,
-                                  DMS_ACCESS_TYPE_UPDATE, callback ) ;
+                                  DMS_ACCESS_TYPE_UPDATE ) ;
          }
          else if ( planRuntime.getScanType() == IXSCAN )
          {
-            rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su, mbContext,
-                                  cb, &pScanner, DMS_ACCESS_TYPE_UPDATE, callback ) ;
+            rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su,
+                                  mbContext, cb, &pScanner,
+                                  DMS_ACCESS_TYPE_UPDATE ) ;
          }
          else
          {
@@ -253,8 +244,10 @@ namespace engine
 
                mthContext.getDollarList( &dollarList ) ;
                generator.getDataPtr( recordDataPtr ) ;
-               rc = su->data()->updateRecord( mbContext, recordID, recordDataPtr,
-                                              cb, dpsCB, modifier, NULL, callback ) ;
+               rc = su->data()->updateRecord( mbContext, recordID,
+                                              recordDataPtr, cb, dpsCB,
+                                              modifier, NULL,
+                                              pScanner->callbackHandler() ) ;
                PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
 
                ++numUpdatedRecords ;
@@ -281,9 +274,10 @@ namespace engine
             monCtxCB.setQueryTime( queryTime ) ;
          }
 
-         // if we didn't update anything, let's attempt to insert if we are doing
-         // upsert
-         if ( ( 0 == numUpdatedRecords ) && options.testFlag( FLG_UPDATE_UPSERT ) )
+         // if we didn't update anything, let's attempt to insert if
+         // we are doing upsert
+         if ( ( 0 == numUpdatedRecords ) &&
+              options.testFlag( FLG_UPDATE_UPSERT ) )
          {
             BSONObj source = planRuntime.getEqualityQueryObject() ;
             PD_LOG ( PDDEBUG, "equality query object: %s",
@@ -306,19 +300,21 @@ namespace engine
                      target.toString().c_str() ) ;
 
             BSONElement setOnInsert =
-                           options.getHint().getField( FIELD_NAME_SET_ON_INSERT ) ;
+                       options.getHint().getField( FIELD_NAME_SET_ON_INSERT ) ;
             if ( !setOnInsert.eoo() )
             {
                rc = rtnUpsertSet( setOnInsert, target ) ;
-               PD_RC_CHECK( rc, PDERROR, "failed to set when upsert, rc: %d", rc ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to set when upsert, rc: %d", rc ) ;
             }
 
             rc = su->data()->insertRecord( mbContext, target, cb, dpsCB,
                                            TRUE, TRUE ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to insert record %s\ninto collection: %s",
-                        target.toString().c_str(), pCollectionShortName ) ;
+               PD_LOG ( PDERROR, "Failed to insert record %s\ninto "
+                        "collection: %s", target.toString().c_str(),
+                        pCollectionShortName ) ;
                goto error ;
             }
             ++insertNum ;
@@ -350,10 +346,6 @@ namespace engine
       if ( pScanner )
       {
          SDB_OSS_DEL pScanner ;
-      }
-      if ( callback )
-      {
-         SDB_OSS_DEL callback ;
       }
       if ( mbContext )
       {
@@ -395,8 +387,8 @@ namespace engine
 
          mthModifier setModifier ;
          rc = setModifier.loadPattern( setObj ) ;
-         PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected: { %s }, rc: %d",
-                      setOnInsert.toString().c_str(), rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected: { %s }, "
+                      "rc: %d", setOnInsert.toString().c_str(), rc ) ;
          rc = setModifier.modify( target, newTarget ) ;
          PD_RC_CHECK( rc, PDERROR, "failed to generate upsertor "
                       "record(rc=%d) by " FIELD_NAME_SET_ON_INSERT, rc ) ;

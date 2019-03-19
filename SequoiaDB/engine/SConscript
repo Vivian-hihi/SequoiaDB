@@ -213,6 +213,7 @@ rtnFiles = [
       "rtn/rtnCommandSnapshot.cpp",
       "rtn/rtnCommandList.cpp",
       "rtn/rtnPredicate.cpp",
+      "rtn/rtnIXScanner.cpp",
       "rtn/rtnDiskIXScanner.cpp",
       "rtn/rtnMemIXTreeScanner.cpp",
       "rtn/rtnMergeIXScanner.cpp",
@@ -454,7 +455,6 @@ dpsFiles = [
 
       "dps/dpsTransCBLockInfo.cpp",
       "dps/dpsTransExecutor.cpp",
-      "dps/dpsTransLockCallback.cpp",
       "dps/dpsTransVersionCtrl.cpp",
       "dps/dpsTransLockMgr.cpp",
       "dps/dpsOp2Record.cpp",

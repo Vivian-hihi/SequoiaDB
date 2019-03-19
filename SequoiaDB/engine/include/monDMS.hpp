@@ -48,6 +48,7 @@
 #include "../bson/bsonobj.h"
 #include <set>
 #include <vector>
+#include "ossMemPool.hpp"
 using namespace std ;
 using namespace bson ;
 
@@ -207,7 +208,7 @@ namespace engine
       }
    } ;
    typedef class _detailedInfo detailedInfo ;
-   typedef std::map<UINT32, detailedInfo> MON_CL_DETAIL_MAP ;
+   typedef ossPoolMap<UINT32, detailedInfo>  MON_CL_DETAIL_MAP ;
 
    /*
       _monCLSimple define
@@ -272,7 +273,7 @@ namespace engine
 
    typedef class _monCLSimple monCLSimple ;
 
-   typedef std::set<monCLSimple> MON_CL_SIM_LIST ;
+   typedef ossPoolSet<monCLSimple>  MON_CL_SIM_LIST ;
    typedef std::vector<monCLSimple> MON_CL_SIM_VEC ;
 
    /*
@@ -328,16 +329,16 @@ namespace engine
       }
 
    } ;
-   typedef class _monCollection monCollection ;
-   typedef std::set<monCollection> MON_CL_LIST ;
+   typedef class _monCollection        monCollection ;
+   typedef ossPoolSet<monCollection>   MON_CL_LIST ;
 
    /*
       _monCSSimple define
    */
 
    class _monCSSimple ;
-   typedef class _monCSSimple monCSSimple ;
-   typedef std::set<monCSSimple> MON_CS_SIM_LIST ;
+   typedef class _monCSSimple       monCSSimple ;
+   typedef ossPoolSet<monCSSimple>  MON_CS_SIM_LIST ;
 
    class _monCSSimple : public SDBObject
    {
@@ -527,8 +528,8 @@ namespace engine
          return *this ;
       }
    } ;
-   typedef class _monCollectionSpace monCollectionSpace ;
-   typedef std::set<monCollectionSpace> MON_CS_LIST ;
+   typedef class _monCollectionSpace      monCollectionSpace ;
+   typedef ossPoolSet<monCollectionSpace> MON_CS_LIST ;
 
    /*
       _monStorageUnit define
@@ -576,8 +577,8 @@ namespace engine
          _size = 0 ;
       }
    } ;
-   typedef class _monStorageUnit monStorageUnit ;
-   typedef std::set<monStorageUnit> MON_SU_LIST ;
+   typedef class _monStorageUnit       monStorageUnit ;
+   typedef ossPoolSet<monStorageUnit>  MON_SU_LIST ;
 
    /*
       _monCSName define

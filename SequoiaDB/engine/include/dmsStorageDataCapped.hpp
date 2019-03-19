@@ -266,7 +266,7 @@ namespace engine
                                           const dmsRecordData &recordData,
                                           const BSONObj &newObj,
                                           _pmdEDUCB *cb,
-                                          _dpsITransLockCallback * callback = NULL ) ;
+                                          IDmsOprHandler *pHandler ) ;
 
       virtual INT32 _extentRemoveRecord( dmsMBContext *context,
                                          dmsExtRW &extRW,
@@ -281,8 +281,8 @@ namespace engine
                                    ossValuePtr dataPtr,
                                    _pmdEDUCB *cb ) ;
 
-      virtual INT32 extractData( dmsMBContext *mbContext,
-                                 dmsRecordRW &recordRW,
+      virtual INT32 extractData( const dmsMBContext *mbContext,
+                                 const dmsRecordRW &recordRW,
                                  _pmdEDUCB *cb,
                                  dmsRecordData &recordData ) ;
 

@@ -37,52 +37,173 @@
 
 *******************************************************************************/
 
-#include "pmdCB.hpp"
-#include "ossErr.h"
 #include "dpsTransVersionCtrl.hpp"
-#include "dpsTransLockMgr.hpp"
+#include <sstream>
 #include "ossMem.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 #include "ixmExtent.hpp" // for _keyCmp
 
+using namespace bson ;
+
 namespace engine
 {
+   string globIdxID::toString() const
+   {
+      std::stringstream ss ;
+      ss << "CSID:" << _csID << "CLID:" << _clID
+         << "IDXLID:" << _idxLID ;
+      return ss.str() ;
+   }
+
+   MEMBLOCKPOOL_TYPE dpsSize2MemType( UINT32 size )
+   {
+      if ( size <= 64 )
+      {
+         return MEMBLOCKPOOL_TYPE_64 ;
+      }
+      else if ( size <= 128 )
+      {
+         return MEMBLOCKPOOL_TYPE_128 ;
+      }
+      else if ( size <= 256 )
+      {
+         return MEMBLOCKPOOL_TYPE_256 ;
+      }
+      else if ( size <= 1024 )
+      {
+         return MEMBLOCKPOOL_TYPE_1024 ;
+      }
+      else if ( size <= 4096 )
+      {
+         return MEMBLOCKPOOL_TYPE_4096 ;
+      }
+
+      return MEMBLOCKPOOL_TYPE_DYN ;
+   }
+
+   #define DPS_MEM_ACQUIRE_MAX_TRY_LEVEL     ( 3 )
+
    // memBlockPool default constructor, 
    memBlockPool::memBlockPool()
-   : _numDynamicAlloc16B( 0 ),
-     _numDynamicAlloc32B( 0 ),
+   : _numDynamicAlloc64B( 0 ),
      _numDynamicAlloc128B( 0 ),
+     _numDynamicAlloc256B( 0 ),
      _numDynamicAlloc1K( 0 ),
      _numDynamicAlloc4K( 0 )
-
    {
-      _16BSeg = new _utilSegmentManager<element16B>();
-      _32BSeg = new _utilSegmentManager<element32B>();
-      _128BSeg = new _utilSegmentManager<element128B>();
-      _1KSeg = new _utilSegmentManager<element1K>();
-      _4KSeg = new _utilSegmentManager<element4K>();
-
-      _16BSeg->init( DEFAULT_SEG_SIZE_FOR_SMALL_REC,
-                     MAX_SEG_SIZE_FOR_SMALL_REC );
-      _32BSeg->init( DEFAULT_SEG_SIZE_FOR_SMALL_REC, 
-                     MAX_SEG_SIZE_FOR_SMALL_REC );
-      _128BSeg->init( DEFAULT_SEG_SIZE_FOR_SMALL_REC,
-                      MAX_SEG_SIZE_FOR_SMALL_REC );
-      _1KSeg->init( DEFAULT_SEG_SIZE_FOR_LARGE_REC,
-                    MAX_SEG_SIZE_FOR_LARGE_REC );
-      _4KSeg->init( DEFAULT_SEG_SIZE_FOR_LARGE_REC,
-                    MAX_SEG_SIZE_FOR_LARGE_REC );
-
+      _64BSeg     = NULL ;
+      _128BSeg    = NULL ;
+      _256BSeg    = NULL ;
+      _1KSeg      = NULL ;
+      _4KSeg      = NULL ;
    }
 
    memBlockPool::~memBlockPool()
    {
-      delete _16BSeg;
-      delete _32BSeg;
-      delete _128BSeg;
-      delete _1KSeg;
-      delete _4KSeg;
+      fini() ;
+   }
+
+   INT32 memBlockPool::init()
+   {
+      INT32 rc = SDB_OK ;
+
+      /// when alloc or init failed, ignored
+      _64BSeg = SDB_OSS_NEW _utilSegmentManager<element64B>() ;
+      if ( _64BSeg )
+      {
+         rc = _64BSeg->init( DEFAULT_SEG_SIZE_FOR_SMALL_REC,
+                             MAX_SEG_SIZE_FOR_SMALL_REC ) ;
+         if ( rc )
+         {
+            SDB_OSS_DEL _64BSeg ;
+            _64BSeg = NULL ;
+            rc = SDB_OK ;
+         }
+      }
+
+      _128BSeg = SDB_OSS_NEW _utilSegmentManager<element128B>() ;
+      if ( _128BSeg )
+      {
+         rc = _128BSeg->init( DEFAULT_SEG_SIZE_FOR_SMALL_REC,
+                              MAX_SEG_SIZE_FOR_SMALL_REC ) ;
+         if ( rc )
+         {
+            SDB_OSS_DEL _128BSeg ;
+            _128BSeg = NULL ;
+            rc = SDB_OK ;
+         }
+      }
+
+      _256BSeg = SDB_OSS_NEW _utilSegmentManager<element256B>() ;
+      if ( _256BSeg )
+      {
+         rc = _256BSeg->init( DEFAULT_SEG_SIZE_FOR_SMALL_REC,
+                              MAX_SEG_SIZE_FOR_SMALL_REC ) ;
+         if ( rc )
+         {
+            SDB_OSS_DEL _256BSeg ;
+            _256BSeg = NULL ;
+            rc = SDB_OK ;
+         }
+      }
+
+      _1KSeg = SDB_OSS_NEW _utilSegmentManager<element1K>() ;
+      if ( _1KSeg )
+      {
+         rc = _1KSeg->init( DEFAULT_SEG_SIZE_FOR_LARGE_REC,
+                            MAX_SEG_SIZE_FOR_LARGE_REC ) ;
+         if ( rc )
+         {
+            SDB_OSS_DEL _1KSeg ;
+            _1KSeg = NULL ;
+            rc = SDB_OK ;
+         }
+      }
+
+      _4KSeg = SDB_OSS_NEW _utilSegmentManager<element4K>() ;
+      if ( _4KSeg )
+      {
+         rc = _4KSeg->init( DEFAULT_SEG_SIZE_FOR_LARGE_REC,
+                            MAX_SEG_SIZE_FOR_LARGE_REC ) ;
+         if ( rc )
+         {
+            SDB_OSS_DEL _4KSeg ;
+            _4KSeg = NULL ;
+            rc = SDB_OK ;
+         }
+      }
+
+      return rc ;
+   }
+
+   void memBlockPool::fini()
+   {
+      if ( _64BSeg )
+      {
+         SDB_OSS_DEL _64BSeg ;
+         _64BSeg = NULL ;
+      }
+      if ( _128BSeg )
+      {
+         SDB_OSS_DEL _128BSeg ;
+         _128BSeg = NULL ;
+      }
+      if ( _256BSeg )
+      {
+         SDB_OSS_DEL _256BSeg ;
+         _256BSeg = NULL ;
+      }
+      if ( _1KSeg )
+      {
+         SDB_OSS_DEL _1KSeg ;
+         _1KSeg = NULL ;
+      }
+      if ( _4KSeg )
+      {
+         SDB_OSS_DEL _4KSeg ;
+         _4KSeg = NULL ;
+      }
    }
 
    // Description:
@@ -97,213 +218,489 @@ namespace engine
    //   rc:  return SDB_OK if succeeded, otherwise error code
    //
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MEMBLOCKPOOL_ACQUIRE, "memBlockPool::acquire" )
-   INT32 memBlockPool::acquire( UINT32 const askSize,
-                                CHAR     *  &memBlock,
-                                MEMBLOCKPOOL_TYPE * type )
+   INT32 memBlockPool::acquire( UINT32 askSize, CHAR * &memBlock )
    {
-      PD_TRACE_ENTRY( SDB_MEMBLOCKPOOL_ACQUIRE );
-      INT32  rc = SDB_OK;
+      PD_TRACE_ENTRY( SDB_MEMBLOCKPOOL_ACQUIRE ) ;
+      INT32  rc = SDB_OK ;
+      MEMBLOCKPOOL_TYPE type = MEMBLOCKPOOL_TYPE_MAX ;
+
+      UINT32 realSize = 0 ;
+      UINT32 realType = MEMBLOCKPOOL_TYPE_MAX ;
+      CHAR *ptr = NULL ;
+      UINT32 tryLevel = 0 ;
 
       // input argument NOT NULL and NOT 0 check
-      SDB_ASSERT( type, "Invalid arguments" );
-      SDB_ASSERT( (askSize > 0), "Invalid arguments" );
+      SDB_ASSERT( askSize > 0, "Invalid arguments" ) ;
 
-      // do block aquirement based on size
-      if( askSize <= 16 )
+      if ( 0 == askSize )
       {
-         element16B * mem;
-         rc = _16BSeg->acquire( mem );
-         if ( SDB_OK == rc )
-         {
-            *type = MEMBLOCKPOOL_TYPE_16;
-            memBlock = (CHAR *) mem;
-            goto done;
-         }
-         else
-         {
-            _numDynamicAlloc16B.inc();
-            goto dynamic;
-         }
-      }
-      else if( askSize <= 32 )
-      {
-         element32B * mem;
-         rc = _32BSeg->acquire( mem );
-         if ( SDB_OK == rc )
-         {
-            *type = MEMBLOCKPOOL_TYPE_32;
-             memBlock = (CHAR *) mem;
-            goto done;
-         }
-         else
-         {
-            _numDynamicAlloc32B.inc();
-            goto dynamic;
-         }
-      }
-      else if( askSize <= 128 )
-      {
-         element128B * mem;
-         rc = _128BSeg->acquire( mem );
-         if ( SDB_OK == rc )
-         {
-            *type = MEMBLOCKPOOL_TYPE_128;
-             memBlock = (CHAR *) mem;
-            goto done;
-         }
-         else
-         {
-            _numDynamicAlloc128B.inc();
-            goto dynamic;
-         }
-      }
-      else if( askSize <= 1024 )
-      {
-         element1K * mem;
-         rc = _1KSeg->acquire( mem );
-         if ( SDB_OK == rc )
-         {
-            *type = MEMBLOCKPOOL_TYPE_1024;
-             memBlock = (CHAR *) mem;
-            goto done;
-         }
-         else
-         {
-            _numDynamicAlloc1K.inc();
-            goto dynamic;
-         }
-      }
-      else if( askSize <= 4096 )
-      {
-         element4K * mem;
-         rc = _4KSeg->acquire( mem );
-         if ( SDB_OK == rc )
-         {
-            *type = MEMBLOCKPOOL_TYPE_4096;
-             memBlock = (CHAR *) mem;
-            goto done;
-         }
-         else
-         {
-            _numDynamicAlloc4K.inc();
-            goto dynamic;
-         }
-      }
-      
-      // Failed to allocate from existing memory pool, dynamically alloc
-      dynamic:
-       memBlock = (CHAR*) SDB_OSS_MALLOC(askSize);
-      if( NULL != memBlock )
-      {
-         *type = MEMBLOCKPOOL_TYPE_DYN;
-         rc = SDB_OK ;
-      }
-      else
-      {
-         rc = SDB_OOM;
-         goto err;
+         goto done ;
       }
 
-      done:
-#ifdef _DEBUG
-      PD_TRACE2( SDB_MEMBLOCKPOOL_ACQUIRE, PD_PACK_INT(askSize), PD_PACK_INT(*type) ); 
-#endif
-      PD_TRACE_EXITRC( SDB_MEMBLOCKPOOL_ACQUIRE, rc );
-      return rc; 
+      realSize = DPS_MEM_SIZE_2_REALSIZE( askSize ) ;
+      type = dpsSize2MemType( realSize ) ;
 
-      err:
-      PD_LOG( PDERROR, "Having error when acquiring memory block: rc = %d. ", rc );
-      goto done;
+      switch ( type )
+      {
+         case MEMBLOCKPOOL_TYPE_64 :
+            if ( _64BSeg && SDB_OK == _64BSeg->acquire( (element64B*&)ptr ) )
+            {
+               realType = MEMBLOCKPOOL_TYPE_64 ;
+               break ;
+            }
+            _numDynamicAlloc64B.inc() ;
+            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
+            {
+               break ;
+            }
+            /// don't break
+         case MEMBLOCKPOOL_TYPE_128 :
+            if ( _128BSeg && SDB_OK == _128BSeg->acquire( (element128B*&)ptr ) )
+            {
+               realType = MEMBLOCKPOOL_TYPE_128 ;
+               break ;
+            }
+            _numDynamicAlloc128B.inc() ;
+            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
+            {
+               break ;
+            }
+            /// don't break
+         case MEMBLOCKPOOL_TYPE_256 :
+            if ( _256BSeg && SDB_OK == _256BSeg->acquire( (element256B*&)ptr ) )
+            {
+               realType = MEMBLOCKPOOL_TYPE_256 ;
+               break ;
+            }
+            _numDynamicAlloc256B.inc() ;
+            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
+            {
+               break ;
+            }
+            /// don't break
+         case MEMBLOCKPOOL_TYPE_1024 :
+            if ( _1KSeg && SDB_OK == _1KSeg->acquire( (element1K*&)ptr ) )
+            {
+               realType = MEMBLOCKPOOL_TYPE_1024 ;
+               break ;
+            }
+            _numDynamicAlloc1K.inc() ;
+            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
+            {
+               break ;
+            }
+            /// don't break
+         case MEMBLOCKPOOL_TYPE_4096 :
+            if ( _4KSeg && SDB_OK == _4KSeg->acquire( (element4K*&)ptr ) )
+            {
+               realType = MEMBLOCKPOOL_TYPE_4096 ;
+               break ;
+            }
+            _numDynamicAlloc4K.inc() ;
+            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
+            {
+               break ;
+            }
+            /// don't break
+         default :
+            break ;
+      }
+
+      if ( !ptr )
+      {
+         ptr = (CHAR*)SDB_OSS_MALLOC( realSize ) ;
+         if ( !ptr )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         realType = MEMBLOCKPOOL_TYPE_DYN ;
+      }
+
+      /// set type
+      *DPS_MEM_PTR_TYPEPTR( ptr ) = realType ;
+      /// set addr
+      *DPS_MEM_PTR_ADDRPTR( ptr ) = (UINT64)this ;
+      /// set user ptr
+      memBlock = DPS_MEM_PTR_2_USERPTR( ptr ) ;
+
+   done :
+      PD_TRACE3( SDB_MEMBLOCKPOOL_ACQUIRE,
+                 PD_PACK_UINT(askSize),
+                 PD_PACK_UINT(realSize),
+                 PD_PACK_UINT(realType) ) ;
+      PD_TRACE_EXITRC( SDB_MEMBLOCKPOOL_ACQUIRE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
    }
-
 
    // Description:
    //   release memory block to proper pool based on the type
    // Input:
    //   memBlock: pointer to the memory block address
-   //   type:     how the memory was allocated
    //
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MEMBLOCKPOOL_RELEASE, "memBlockPool::release" )
-   void memBlockPool::release( CHAR * &memBlock, MEMBLOCKPOOL_TYPE type )
+   void memBlockPool::release( CHAR * &memBlock )
    {
       PD_TRACE_ENTRY( SDB_MEMBLOCKPOOL_RELEASE );
-      PD_TRACE1( SDB_MEMBLOCKPOOL_RELEASE, PD_PACK_INT(type) );
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
+      UINT32 type = MEMBLOCKPOOL_TYPE_MAX ;
+      CHAR *ptr = NULL ;
 
-      SDB_ASSERT( ( NULL != memBlock ), "Invalid arguments" );
+      SDB_ASSERT( ( NULL != memBlock ), "Invalid arguments" ) ;
+
+      if ( NULL == memBlock )
+      {
+         goto done ;
+      }
+
+      ptr = DPS_MEM_USERPTR_2_PTR( memBlock ) ;
+      type = *DPS_MEM_PTR_TYPEPTR( ptr ) ;
+
       switch (type) 
       {
-         case MEMBLOCKPOOL_TYPE_16:
-         {
-            rc = _16BSeg->release( (element16B *) memBlock);
-            break;
-         }
-         case MEMBLOCKPOOL_TYPE_32:
-         {
-            rc = _32BSeg->release( (element32B *) memBlock);
-            break;
-         }
+         case MEMBLOCKPOOL_TYPE_64 :
+            rc = _64BSeg->release( (element64B *)ptr ) ;
+            break ;
          case MEMBLOCKPOOL_TYPE_128:
-         {
-            rc = _128BSeg->release( (element128B *) memBlock);
-            break;
-         }
+            rc = _128BSeg->release( (element128B *)ptr ) ;
+            break ;
+         case MEMBLOCKPOOL_TYPE_256:
+            rc = _256BSeg->release( (element256B *)ptr) ;
+            break ;
          case MEMBLOCKPOOL_TYPE_1024:
-         {
-            rc = _1KSeg->release( (element1K *) memBlock);
-            break;
-         }
+            rc = _1KSeg->release( (element1K *)ptr ) ;
+            break ;
          case MEMBLOCKPOOL_TYPE_4096:
-         {
-            rc = _4KSeg->release( (element4K *) memBlock);
-            break;
-         }
-         case MEMBLOCKPOOL_TYPE_DYN:
-         {
-            SDB_OSS_FREE(memBlock);
-            break;
-         }
+            rc = _4KSeg->release( (element4K *)ptr ) ;
+            break ;
+         case MEMBLOCKPOOL_TYPE_DYN :
+            SDB_OSS_FREE( ptr ) ;
+            break ;
          default:
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Invalid type (%d)", type ) ;
+            SDB_ASSERT( FALSE, "Invalid arguments" ) ;
+            break ;
+      }
+
+      SDB_ASSERT( ( SDB_OK == rc ), "Sever error during release" ) ;
+
+      if ( SDB_OK == rc )
+      {
+         memBlock = NULL ;
+      }
+
+   done:
+      PD_TRACE_EXIT( SDB_MEMBLOCKPOOL_RELEASE ) ;
+   }
+
+   /*
+      dpsOldRecordPtr implement
+   */
+   dpsOldRecordPtr::dpsOldRecordPtr()
+   {
+      _ptr = NULL ;
+   }
+
+   dpsOldRecordPtr::dpsOldRecordPtr( CHAR *ptr )
+   {
+      _ptr = ptr ;
+
+      if ( _ptr )
+      {
+         INT32 orgRef = ossFetchAndIncrement32( _refPtr() ) ;
+         SDB_ASSERT( orgRef >= 0, "Ref is invlaid" ) ;
+         SDB_UNUSED( orgRef ) ;
+      }
+   }
+
+   dpsOldRecordPtr::dpsOldRecordPtr( const dpsOldRecordPtr &rhs )
+   {
+      _ptr = rhs._ptr ;
+
+      if ( _ptr )
+      {
+         INT32 orgRef = ossFetchAndIncrement32( _refPtr() ) ;
+         SDB_ASSERT( orgRef >= 0, "Ref is invlaid" ) ;
+         SDB_UNUSED( orgRef ) ;
+      }
+   }
+
+   dpsOldRecordPtr::~dpsOldRecordPtr()
+   {
+      release() ;
+   }
+
+   void dpsOldRecordPtr::release()
+   {
+      if ( _ptr )
+      {
+         INT32 orgRef = ossFetchAndDecrement32( _refPtr() ) ;
+         SDB_ASSERT( orgRef >= 1, "Ref is invlaid" ) ;
+
+         if ( 1 == orgRef )
          {
-            PD_LOG( PDERROR, "Invalid type (%d)", type );
-            SDB_ASSERT( FALSE, "Invalid arguments" );
-            break;
+            CHAR *realPtr = DPS_MEM_USERPTR_2_PTR( _ptr ) ;
+            memBlockPool *pPool = NULL ;
+            pPool = ( memBlockPool* )*DPS_MEM_PTR_ADDRPTR( realPtr ) ;
+            SDB_ASSERT( pPool, "Memeory is invalid" ) ;
+
+            if ( pPool )
+            {
+               pPool->release( _ptr ) ;
+            }
+            _ptr = NULL ;
          }
-         memBlock = NULL;
       }
-#ifdef _DEBUG
-      SDB_ASSERT( ( SDB_OK == rc ), "Sever error during release" ); 
-#endif
-      PD_TRACE_EXIT( SDB_MEMBLOCKPOOL_RELEASE );
    }
 
-   // assistant function to print the index key
-   void preIdxTreeNodeKey::printKey() const
+   CHAR* dpsOldRecordPtr::get()
    {
-      try
-      {
-         PD_LOG( PDDEBUG, "====>preIdxTreeNodeKey: rid=(%d, %d), key=%s",
-                 _rid._extent, _rid._offset, 
-                 this->toString().c_str() );
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG ( PDERROR, "Failed to printKey: %s",
-                  e.what() ) ;
-#ifdef _DEBUG
-         SDB_ASSERT( FALSE, " printKey failed" );
-#endif
-      }
-
-      return;
+      return _ptr ? _ptr + sizeof( INT32 ) : NULL ;
    }
 
-   // assistant function to print the index value 
-   // we can only print the lbrHdrIdx now
-   void preIdxTreeNodeValue::printValue() const
+   const CHAR* dpsOldRecordPtr::get() const
    {
-      PD_LOG( PDDEBUG, "====>preIdxTreeNodeValue=%p", _lrbHdr );
-      return;
+      return _ptr ? _ptr + sizeof( INT32 ) : NULL ;
+   }
+
+   INT32 dpsOldRecordPtr::refCount() const
+   {
+      return _ptr ? *((INT32*)_ptr) : 0 ;
+   }
+
+   INT32* dpsOldRecordPtr::_refPtr()
+   {
+      return _ptr ? (INT32*)_ptr : NULL ;
+   }
+
+   dpsOldRecordPtr& dpsOldRecordPtr::operator= ( const dpsOldRecordPtr &rhs )
+   {
+      release() ;
+
+      _ptr = rhs._ptr ;
+      if ( _ptr )
+      {
+         INT32 orgRef = ossFetchAndIncrement32( _refPtr() ) ;
+         SDB_ASSERT( orgRef >= 0, "Ref is invlaid" ) ;
+         SDB_UNUSED( orgRef ) ;
+      }
+
+      return *this ;
+   }
+
+   dpsOldRecordPtr dpsOldRecordPtr::alloc( memBlockPool *pPool,
+                                           UINT32 size )
+   {
+      dpsOldRecordPtr recordPtr ;
+
+      if ( size > 0 )
+      {
+         UINT32 realSZ = size + sizeof( INT32 ) ;
+         CHAR *ptr = NULL ;
+
+         if ( SDB_OK == pPool->acquire( realSZ, ptr ) )
+         {
+            *(INT32*)ptr = 1 ;
+            recordPtr._ptr = ptr ;
+         }
+      }
+
+      return recordPtr ;
+   }
+
+   /*
+      preIdxTreeNodeKey implement
+   */
+   preIdxTreeNodeKey::preIdxTreeNodeKey( const BSONObj* key,
+                                         const dmsRecordID &rid,
+                                         const Ordering *order )
+   :_keyObj( *key ), _order( order )
+   {
+      _rid._extent = rid._extent ;
+      _rid._offset = rid._offset ;
+   }
+
+   preIdxTreeNodeKey::preIdxTreeNodeKey( const preIdxTreeNodeKey &key )
+   : _keyObj( key._keyObj ), _order( key._order )
+   {
+      _rid._extent = key._rid._extent ;
+      _rid._offset = key._rid._offset ;
+   }
+
+   preIdxTreeNodeKey::~preIdxTreeNodeKey ()
+   {
+      // We do not want to free the keyData in super class as we don't 
+      // own it, simply rid to invalid incase some one continue using it.
+      // delete of the lock LRB does the clean up of the key space.
+      _rid.reset() ;
+   }
+
+   string preIdxTreeNodeKey::toString() const
+   {
+      std::stringstream ss ;
+      ss << "RID(" << _rid._extent << "," << _rid._offset
+         << ", Key:" << _keyObj.toString() ;
+      return ss.str() ;
+   }
+
+   /*
+      preIdxTreeNodeValue implement
+   */
+   BOOLEAN preIdxTreeNodeValue::isRecordDeleted() const
+   {
+      if ( _pOldVer )
+      {
+         return _pOldVer->isRecordDeleted() ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN preIdxTreeNodeValue::isRecordNew() const
+   {
+      if ( _pOldVer )
+      {
+         return _pOldVer->isRecordNew() ;
+      }
+      return FALSE ;
+   }
+
+   dpsOldRecordPtr preIdxTreeNodeValue::getRecordPtr() const
+   {
+      if ( _pOldVer )
+      {
+         return _pOldVer->getRecordPtr() ;
+      }
+      return dpsOldRecordPtr() ;
+   }
+
+   const dmsRecord* preIdxTreeNodeValue::getRecord() const
+   {
+      return ( const dmsRecord* )getRecordPtr().get() ;
+   }
+
+   const dmsRecordID& preIdxTreeNodeValue::getRecordID() const
+   {
+      static dmsRecordID _dummyID ;
+      if ( _pOldVer )
+      {
+         return _pOldVer->getRecordID() ;
+      }
+      return _dummyID ;
+   }
+
+   BSONObj preIdxTreeNodeValue::getRecordObj() const
+   {
+      if ( _pOldVer )
+      {
+         return _pOldVer->getRecordObj() ;
+      }
+      return BSONObj() ;
+   }
+
+   UINT32 preIdxTreeNodeValue::getOwnnerTID() const
+   {
+      if ( _pOldVer )
+      {
+         return _pOldVer->getOwnnerTID() ;
+      }
+      return 0 ;
+   }
+
+   string preIdxTreeNodeValue::toString() const
+   {
+      dmsRecordID rid = getRecordID() ;
+      BSONObj obj = getRecordObj() ;
+
+      std::stringstream ss ;
+      ss << "RecordID(" <<  rid._extent << "," << rid._offset << "), " ;
+      if ( isRecordDeleted() )
+      {
+         ss << "(Deleted)" ;
+      }
+      ss << "Object(" << obj.toString() << ")" ;
+
+      return ss.str() ;
+   }
+
+   /*
+      preIdxTree implement
+   */
+   preIdxTree::preIdxTree( const UINT32 idxID, const ixmIndexCB *indexCB )
+   {
+      _isValid = TRUE ;
+      _idxLID = idxID ;
+      _keyPattern = indexCB->keyPattern().getOwned() ;
+      _order = SDB_OSS_NEW clsCataOrder( Ordering::make( _keyPattern ) ) ;
+   }
+   
+   // copy constructor
+   preIdxTree::preIdxTree( const preIdxTree &intree )
+   {
+      _idxLID = intree._idxLID ;
+      _keyPattern = intree._keyPattern ;
+      _tree = intree._tree ;
+      _isValid = intree._isValid ;
+      _order = SDB_OSS_NEW clsCataOrder( Ordering::make( _keyPattern ) ) ;
+   }
+   
+   // destructor
+   preIdxTree::~preIdxTree() 
+   {
+      if ( NULL != _order )
+      {
+         SDB_OSS_DEL _order ;
+      }
+   }
+
+   INDEX_TREE_CPOS preIdxTree::find( const preIdxTreeNodeKey &key ) const
+   {
+      return _tree.find( key ) ;
+   }
+
+   INDEX_TREE_CPOS preIdxTree::find ( const BSONObj *key,
+                                      const dmsRecordID &rid ) const
+   {
+      return find( preIdxTreeNodeKey( key, rid, getOrdering() ) ) ;
+   }
+
+   BOOLEAN preIdxTree::isPosValid( INDEX_TREE_CPOS pos ) const
+   {
+      return pos != _tree.end() ? TRUE : FALSE ;
+   }
+
+   void preIdxTree::resetPos( INDEX_TREE_CPOS & pos ) const
+   {
+      pos = _tree.end() ;
+   }
+
+   const preIdxTreeNodeKey& preIdxTree::getNodeKey( INDEX_TREE_CPOS pos ) const
+   {
+      SDB_ASSERT( pos != _tree.end(), "Pos is invalid" ) ;
+      return pos->first ;
+   }
+
+   const preIdxTreeNodeValue& preIdxTree::getNodeData( INDEX_TREE_CPOS pos ) const
+   {
+      SDB_ASSERT( pos != _tree.end(), "Pos is invalid" ) ;
+      return pos->second ;
+   }
+
+   void preIdxTree::clear( BOOLEAN hasLock )
+   {
+      if ( !hasLock )
+      {
+         lockX() ;
+      }
+
+      _tree.clear() ;
+   
+      if ( !hasLock )
+      {
+         unlockX() ;
+      }
    }
 
    // Description:
@@ -316,72 +713,163 @@ namespace engine
    //   SDB_OK if success.  Error code on any failure
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_INSERT, "preIdxTree::insert" )
    INT32 preIdxTree::insert ( const preIdxTreeNodeKey &keyNode,
-                              const preIdxTreeNodeValue & value,
-                              const BOOLEAN lockHeld )
+                              const preIdxTreeNodeValue &value,
+                              BOOLEAN hasLock )
    {
       PD_TRACE_ENTRY( SDB_PREIDXTREE_INSERT );
-      
-      INT32 rc = SDB_OK;
+
+      INT32 rc = SDB_OK ;
+      std::pair< INDEX_TREE_POS, BOOLEAN > ret ;
+      preIdxTreeNodeValue tmpValue ;
 
       //input check
-      SDB_ASSERT( keyNode.isValid(), "key is invalid");
-      SDB_ASSERT( value.isValid() , "value is invalid");
-      SDB_ASSERT( ( NULL != keyNode.getOrdering() ), "ordering is NULL");
+      SDB_ASSERT( keyNode.isValid(), "key is invalid" ) ;
+      SDB_ASSERT( value.isValid() , "value is invalid" ) ;
 
-//      TREE_NODE_PAIR myPair(keyNode, value);
-      std::pair< INDEX_BINARY_TREE::iterator, bool > ret;
-
-      // insert the pair into the map(tree)
-      if( !lockHeld )
+      if ( !keyNode.isValid() || !value.isValid() )
       {
-         lockX();
+         rc = SDB_SYS ;
+         goto error ;
       }
 
+      // insert the pair into the map(tree)
+      if( !hasLock )
+      {
+         lockX() ;
+      }
 
-      //ret = _tree->insert(myPair);
-      ret = _tree->insert( TREE_NODE_PAIR(keyNode, value) );
+      try
+      {
+         ret = _tree.insert( INDEX_BINARY_TREE::value_type( keyNode, value ) ) ;
+         if ( !ret.second )
+         {
+            tmpValue = ret.first->second ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         if( !hasLock )
+         {
+            unlockX();
+         }
 
-      if( !lockHeld )
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      if( !hasLock )
       {
          unlockX();
       }
 
       // Insert failed due to identical key(key+rid). This should not happen.
       // Instead of panic, let's return err and leave caller to handle
-      if ( false == ret.second )
+      if ( !ret.second )
       {
-         rc = SDB_IXM_IDENTICAL_KEY;
-         goto error;
+         rc = SDB_IXM_IDENTICAL_KEY ;
+
+         PD_LOG( PDWARNING, "Trying to insert identical keys into the memory"
+                 "tree, Key[%s], Value[%s], ConflictValue[%s]",
+                 keyNode.toString().c_str(),
+                 value.toString().c_str(),
+                 tmpValue.toString().c_str() ) ;
+
+         goto error ;
+      }
+      else
+      {
+         PD_LOG( PDDEBUG, "Inserted key[%s] to index tree  with value[%s]",
+                 keyNode.toString().c_str(), value.toString().c_str() ) ;
       }
 
-      done:
-      PD_TRACE_EXITRC( SDB_PREIDXTREE_INSERT, rc );
-      return rc;
-
-      error:
-      PD_LOG( PDERROR, "Trying to insert identical keys into the memory tree" );
-      keyNode.printKey();
-      value.printValue();
-      
-      goto done;
+   done:
+      PD_TRACE_EXITRC( SDB_PREIDXTREE_INSERT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // Create a node from key and rid, insert the node to map(tree)
    // Dependency: 
    //   Caller has to held the tree latch in X
-   INT32 preIdxTree::insert ( const BSONObj * keyData, const dmsRecordID & rid ,
-                              const preIdxTreeNodeValue & value ,
-                              const BOOLEAN lockHeld )
+   INT32 preIdxTree::insert ( const BSONObj *keyData,
+                              const dmsRecordID &rid,
+                              const preIdxTreeNodeValue &value,
+                              BOOLEAN hasLock )
    {
-      preIdxTreeNodeKey keyNode( keyData, rid, getOrdering() );
-
-#if SDB_INTERNAL_DEBUG
-      PD_LOG( PDDEBUG, "preIdxTree:Inserting keyData, rid=(%d, %d)",
-              rid._extent, rid._offset );
-#endif
-      return insert( keyNode, value, lockHeld );
+      preIdxTreeNodeKey keyNode( keyData, rid, getOrdering() ) ;
+      return insert( keyNode, value, hasLock ) ;
    }
-   
+
+   INT32 preIdxTree::insertWithOldVer( const BSONObj *keyData,
+                                       const dmsRecordID &rid,
+                                       oldVersionContainer *oldVer,
+                                       BOOLEAN hasLock )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( oldVer, "OldVer is NULL" ) ;
+      SDB_ASSERT( rid == oldVer->getRecordID(), "Record ID is not the same" ) ;
+
+      BOOLEAN isLocked = FALSE ;
+
+      try
+      {
+         dpsIdxObj myIdxObj( *keyData, getLID() ) ;
+         preIdxTreeNodeKey keyNode( &(myIdxObj.getKeyObj()), rid,
+                                    getOrdering() ) ;
+         preIdxTreeNodeValue keyValue( oldVer ) ;
+         INDEX_TREE_CPOS pos ;
+
+         if ( !hasLock )
+         {
+            lockX() ;
+            isLocked = TRUE ;
+         }
+
+         // check if it exist. We might be able to save this check if all
+         // callers did the check.
+         pos = find( keyNode ) ;
+         if ( isPosValid( pos ) )
+         {
+            /// already exist
+            goto done ;
+         }
+
+         SDB_ASSERT( oldVer->idxLidExist( getLID() ),
+                     "LID is not exist" ) ;
+
+         // insert to both idxset(oldVer) and idxTree
+         if( oldVer->insertIdx( myIdxObj ) )
+         {
+            insert( keyNode, keyValue, TRUE ) ;
+         }
+         else
+         {
+            rc = SDB_SYS ;
+            SDB_ASSERT( SDB_OK == rc, "Index tree's node is inconsistency with "
+                        "OldVer" ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done : 
+      if ( isLocked )
+      {
+         unlockX() ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // Description:
    //   delete a node from map. Latch is held within the function
    // Input:
@@ -389,40 +877,101 @@ namespace engine
    // Return:
    //   Number of node deleted from the map
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_REMOVE, "preIdxTree::remove" )
-   INT32 preIdxTree::remove( const preIdxTreeNodeKey & keyNode )
+   UINT32 preIdxTree::remove( const preIdxTreeNodeKey &keyNode,
+                              BOOLEAN hasLock )
    {
-      PD_TRACE_ENTRY( SDB_PREIDXTREE_REMOVE );
+      PD_TRACE_ENTRY( SDB_PREIDXTREE_REMOVE ) ;
 
-      INT32 numDeleted = 0;
+      INDEX_TREE_POS pos ;
+      UINT32 numDeleted = 0 ;
+      preIdxTreeNodeValue tmpValue ;
 
-      lockX();
+      SDB_ASSERT( keyNode.isValid(), "KeyNode is invalid" ) ;
 
-      numDeleted = _tree->erase( keyNode );
-      unlockX();
-
-#ifdef _DEBUG
-      if ( 1 != numDeleted )
+      if ( !hasLock )
       {
-         PD_LOG( PDERROR, "preIdxTree:removed %d nodes", numDeleted );
-         printTree();
+         lockX() ;
       }
 
-      SDB_ASSERT( ( 1 == numDeleted ), "deleted other than one keys" ); 
-#endif
-      PD_TRACE_EXITRC( SDB_PREIDXTREE_REMOVE, numDeleted );
-      return numDeleted;
+      pos = _tree.find( keyNode ) ;
+      if ( pos != _tree.end() )
+      {
+         tmpValue = pos->second ;
+         ++numDeleted ;
+         _tree.erase( pos ) ;
+      }
+
+      if ( !hasLock )
+      {
+         unlockX() ;
+      }
+
+      if ( 1 != numDeleted )
+      {
+         if ( _isValid )
+         {
+            PD_LOG( PDWARNING, "No found records in index tree with key[%s]",
+                    keyNode.toString().c_str() ) ;
+            SDB_ASSERT( ( 1 == numDeleted ),
+                        "Delete record number must be 1" ) ;
+            printTree() ;
+         }
+      }
+      else
+      {
+         PD_LOG( PDDEBUG, "Has removed one record from index tree, "
+                 "Key[%s], Value[%s]", keyNode.toString().c_str(),
+                 tmpValue.toString().c_str() ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB_PREIDXTREE_REMOVE, numDeleted ) ;
+      return numDeleted ;
    }
 
-   INT32 preIdxTree::remove( const BSONObj * keyData, const dmsRecordID & rid )
+   UINT32 preIdxTree::remove( const BSONObj *keyData,
+                              const dmsRecordID &rid,
+                              BOOLEAN hasLock )
    {
-      preIdxTreeNodeKey keyNode( keyData, rid, getOrdering() );
-#if SDB_INTERNAL_DEBUG
-      // can be used for debug purpose
-      PD_LOG( PDDEBUG, "preIdxTree:removing keyData(%s), rid=(%d, %d)",
-              keyData->toString().c_str(),
-              rid._extent, rid._offset );
-#endif
-      return remove(keyNode);
+      preIdxTreeNodeKey keyNode( keyData, rid, getOrdering() ) ;
+      return remove( keyNode, hasLock ) ;
+   }
+
+   INT32 preIdxTree::advance( INDEX_TREE_CPOS &pos, INT32 direction ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      while( TRUE )
+      {
+         if ( direction > 0 )
+         {
+            if ( pos == _tree.end() || ++pos == _tree.end() )
+            {
+               rc = SDB_IXM_EOC ;
+               goto error ;
+            }
+         }
+         else
+         {
+            INDEX_TREE_CRPOS rtempIter( pos ) ;
+            if ( rtempIter == _tree.rend() || ++rtempIter == _tree.rend() )
+            {
+               rc = SDB_IXM_EOC ;
+               goto error ;
+            }
+            pos = rtempIter.base() ;
+         }
+
+         /// check is deleted
+         if ( !pos->second.isRecordDeleted() )
+         {
+            break ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // Description:
@@ -432,7 +981,7 @@ namespace engine
    //   keyObj+rid: indexkey objct (with rid) to look for
    //   direction: search direction
    // Output:
-   //   it: The iterator pointing to the best location.
+   //   pos: The iterator pointing to the best location.
    //   found: find the exact match or not
    // Return:
    //   SDB_OK:  normal return
@@ -446,42 +995,77 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_LOCATE, "preIdxTree::locate" )
    INT32 preIdxTree::locate ( const BSONObj      &keyObj,
                               const dmsRecordID  &rid,
-                              INDEX_BINARY_TREE::iterator &it,
-                              INT32               direction )
+                              INDEX_TREE_CPOS    &pos,
+                              BOOLEAN            &found,
+                              INT32              direction ) const
    {
-      PD_TRACE_ENTRY( SDB_PREIDXTREE_LOCATE );
-      INT32  rc = SDB_OK;
-      preIdxTreeNodeKey myKey( &keyObj, rid, getOrdering() );
+      PD_TRACE_ENTRY( SDB_PREIDXTREE_LOCATE ) ;
+      INT32  rc = SDB_IXM_EOC ;
+      preIdxTreeNodeKey myKey( &keyObj, rid, getOrdering() ) ;
+
+      found = FALSE ;
+      pos = _tree.end() ;
 
       // quick check for exact match
-      INDEX_BINARY_TREE::iterator tempIter = _tree->find( myKey );
-      if( tempIter != _tree->end() )
+      INDEX_TREE_CPOS tempIter = _tree.find( myKey ) ;
+      if( tempIter != _tree.end() )
       {
-         it = tempIter;
-         goto done;
+         pos = tempIter ;
+         found = TRUE ;
+         rc = SDB_OK ;
+         goto done ;
       }
-      
-      // if we are here, the passed in it is definitly invalid, directly use
-      // map function to find the lower_bound or upper_bound 
-      if( direction >0 )
+
+      tempIter = _tree.lower_bound( myKey ) ;
+      if ( direction > 0 )
       {
-         
-         tempIter = _tree->lower_bound(myKey);
+         if ( tempIter != _tree.end() )
+         {
+            pos = tempIter ;
+            rc = SDB_OK ;
+            goto done ;
+         }
       }
       else
       {
-         tempIter = _tree->upper_bound(myKey);
+         INDEX_TREE_CRPOS rtempIter( tempIter ) ;
+         if ( rtempIter != _tree.rend() )
+         {
+            pos = (++rtempIter).base() ;
+            rc = SDB_OK ;
+            goto done ;
+         }
       }
 
-      if( tempIter != _tree->end() )
+   done:
+      PD_TRACE_EXITRC( SDB_PREIDXTREE_LOCATE, rc ) ;
+      return rc ;
+   }
+
+   BSONObj preIdxTree::_buildPredObj( const BSONObj &prevKey,
+                                      INT32 keepFieldsNum,
+                                      BOOLEAN skipToNext,
+                                      const vector< const BSONElement * > &matchEle,
+                                      const vector < BOOLEAN > &matchInclusive,
+                                      INT32 direction ) const
+   {
+      UINT32 index = 0 ;
+      BSONObjBuilder builder ;
+      BSONObjIterator itr( prevKey ) ;
+
+      for ( ; (INT32)index < keepFieldsNum ; ++index )
       {
-         it = tempIter;
-         goto done;
+         BSONElement e = itr.next() ;
+         builder.appendAs( e, "" ) ;
       }
-      
-      done:
-      PD_TRACE_EXITRC( SDB_PREIDXTREE_LOCATE, rc );
-      return rc;
+
+      while ( index < matchEle.size() )
+      {
+         builder.appendAs( *matchEle[ index ], "" ) ;
+         ++index ;
+      }
+
+      return builder.obj() ;
    }
 
    // Description:
@@ -512,163 +1096,86 @@ namespace engine
    // Dependency: 
    //   Caller must hold tree latch in S/X
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_KEYLOCATE, "preIdxTree::keyLocate" )
-   INT32 preIdxTree::keyLocate
-   ( INDEX_BINARY_TREE::iterator &iter, const BSONObj &prevKey,
-     INT32 keepFieldsNum, BOOLEAN skipToNext,
-     const vector < const BSONElement *> &matchEle,
-     const vector < BOOLEAN > &matchInclusive,
-     INT32 direction,
-     dpsTransCB* cb ) const
+   INT32 preIdxTree::keyLocate( INDEX_TREE_CPOS &pos,
+                                const BSONObj &prevKey,
+                                INT32 keepFieldsNum,
+                                BOOLEAN skipToNext,
+                                const vector< const BSONElement* > &matchEle,
+                                const vector< BOOLEAN > &matchInclusive,
+                                INT32 direction ) const
    {
-      PD_TRACE_ENTRY( SDB_PREIDXTREE_KEYLOCATE );
+      PD_TRACE_ENTRY( SDB_PREIDXTREE_KEYLOCATE ) ;
 
-      INT32               rc           = SDB_OK;
-      const BSONObj     * data         = NULL;
-      UTIL_OBJIDX         hdrIdx       = 0;
-      dpsTransLRBHeader * lrbHeaderPtr = NULL;
-      BOOLEAN             first        = TRUE;
-      
-      // create a dummyRid to form a map key search
-      dmsRecordID dummyRid; 
+      INT32               rc           = SDB_OK ;
+      BOOLEAN             found        = FALSE ;
+      INT32               result       = 0 ;
+      BSONObj             data ;
+      BSONObj             locateObj ;
+      dmsRecordID dummyRid ;
 
-      if (this->empty())
+      if ( empty() )
       {
-         rc = SDB_IXM_EOC;
+         pos = _tree.end() ;
+         rc = SDB_IXM_EOC ;
          goto done;
       }
-      // we will first use the above key to find a rough lower/upper bound,
-      // but we need to further use match criteria to accurately locate the
-      // best qualified key
-      if( direction > 0 )
-      { 
-         do
-         {
-            if( first )
-            {
-               bson::Ordering * ordering = this->getOrdering();
-               // FIXME: we need to use a better starting point by taking the 
-               // into consideration
-               // use the min dummy rid
-               dummyRid.resetMin();
-               // FIXME: use more information to create myKey. Note that the
-               // initial key is always dummy, which means we will always start
-               // with first key
-               preIdxTreeNodeKey myKey( &prevKey, dummyRid,
-                                        ordering );
-               // if do forward scan, the lower bound would be our start
-               iter = _tree->lower_bound(myKey);
-               first = FALSE;
-            }
-            else
-            {
-               // move forward
-               iter++;
-            }
-            // return EOC if we hit the end
-            if( iter == _tree->end() )
-            {
-               rc = SDB_IXM_EOC;
-               goto done;
-            }
 
-            // FIXME: debug code to validate the entry in the tree
-            // retrieve the LRB header pointer and it should not be NULL because
-            // lock should not be released before the tree is cleaned up. Same
-            // reason, the _oldIdx should have been set up as well.
-            lrbHeaderPtr = iter->second.getLRBHdr();
-            if( (NULL == lrbHeaderPtr) ||
-                (data = lrbHeaderPtr->getOldIdxValue(_idxLID)) == NULL )
-            {
-               rc = SDB_SYS;
-               PD_LOG( PDERROR, "In memory idx tree points to non-exist lrbHeader"
-                                "(hdrIdx=%d, header=%d)", hdrIdx, lrbHeaderPtr );
-               printTree();
-               SDB_ASSERT(FALSE, "LRB Header not valid");
-               goto err;
-            }
-            
-         }
-         // compare the key value one by one until we found the first one
-         // satisfying the matching criteria
-         while ( _ixmExtent::_keyCmp( *data, prevKey, keepFieldsNum,
-                          skipToNext, matchEle,
-                          matchInclusive, *(getOrdering()), direction ) < 0 );
-      }
-      else //  (direction < 0)
+      if ( direction > 0 )
       {
-         do
-         {
-            if( first )
-            {
-/*
-               bson::Ordering * ordering = this->getOrdering();
-                 
-               // we can use the max dummy rid, but there is no way to get 
-               // a max bson. Let's simply start with last element.
-               dummyRid.resetMax();
-               preIdxTreeNodeKey myKey( &prevKey, dummyRid, ordering );
-               // if do backward scan, the upper bound would be our start
-               iter = _tree->upper_bound(myKey);
-               // return EOC if we hit the end
-               if( iter == _tree->end() )
-               {
-                  rc = SDB_IXM_EOC;
-                  goto done;
-               }
-*/      
-               // we can use the max dummy rid, but there is no way to get 
-               // a max bson. Let's simply start with last element. Trick is
-               // use reverse iterator (rbegin)'s next and convert to 
-               // forward_iterator   
-               // FIXME: we need to use a better starting point by taking the 
-               // matchEle into consideration
-               iter = (++(_tree->rbegin())).base();
-               first = FALSE;
-            }
-            else
-            {
-               // can't move pass the begin
-               if( iter == _tree->begin() )
-               {
-                  rc = SDB_IXM_EOC;
-                  goto done;
-               }
-               // safe to move backward now
-               iter--;
-            }
-
-            // retrieve the LRB header pointer and it should not be NULL because
-            // lock should not be released before the tree is cleaned up. Same
-            // reason, the _oldIdx should have been set up as well.
-            lrbHeaderPtr = iter->second.getLRBHdr();
-            if( (NULL == lrbHeaderPtr) ||
-                (data = lrbHeaderPtr->getOldIdxValue(_idxLID)) == NULL )
-            {
-               rc = SDB_SYS;
-               PD_LOG( PDERROR, "In memory idx tree points to non-exist lrbHeader"
-                                "(idx=%d)", hdrIdx );
-               goto err;
-            }
-            
-         }
-         // compare the key value one by one until we found the first one
-         // satisfying the matching criteria
-         while ( _ixmExtent::_keyCmp( *data, prevKey, keepFieldsNum,
-                          skipToNext, matchEle,
-                          matchInclusive, *(this->getOrdering()), direction ) > 0 );
+         dummyRid.resetMin() ;
+      }
+      else
+      {
+         dummyRid.resetMax() ;
       }
 
-      // Once we reached here, we have found a best matching key pointed by 
-      // the iter
+      try
+      {
+         locateObj = _buildPredObj( prevKey, keepFieldsNum,
+                                    skipToNext, matchEle,
+                                    matchInclusive, direction ) ;
 
-      done:
-      PD_TRACE_EXITRC( SDB_PREIDXTREE_KEYLOCATE, rc );
+         rc = locate( locateObj, dummyRid, pos, found, direction ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Build pred object failed: %s", e.what() ) ;
+
+         pos = direction > 0 ? _tree.begin() : --( _tree.end() ) ;
+      }
+
+      data = getNodeKey( pos ).getKeyObj() ;
+      while ( TRUE )
+      {
+         result = _ixmExtent::_keyCmp( data, prevKey, keepFieldsNum,
+                                       skipToNext, matchEle,
+                                       matchInclusive,
+                                       *(this->getOrdering()),
+                                       direction ) ;
+         if ( result * direction >= 0 )
+         {
+            break ;
+         }
+
+         rc = advance( pos, direction ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         data = getNodeKey( pos ).getKeyObj() ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_PREIDXTREE_KEYLOCATE, rc ) ;
       return rc;
-
-      err:
-      PD_LOG( PDERROR, "Failed to locate the key:%s",
-              prevKey.toString().c_str() );
-      goto done;
+   error :
+      PD_LOG( PDDEBUG, "Failed to locate the key: %s, rc: %d",
+              prevKey.toString().c_str(), rc ) ;
+      goto done ;
    }
 
    // Description:
@@ -701,459 +1208,573 @@ namespace engine
    // Dependency:
    //   Caller must hold tree latch, the iter must not be tree end
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_KEYADVANCE, "preIdxTree::keyAdvance" )
-   INT32 preIdxTree::keyAdvance( INDEX_BINARY_TREE::iterator &iter,
+   INT32 preIdxTree::keyAdvance( INDEX_TREE_CPOS &pos,
                                  const BSONObj &prevKey,
                                  INT32 keepFieldsNum, BOOLEAN skipToNext,
                                  const vector < const BSONElement *> &matchEle,
                                  const vector < BOOLEAN > &matchInclusive,
-                                 INT32 direction, dpsTransCB *cb ) const
+                                 INT32 direction ) const
    {
       PD_TRACE_ENTRY( SDB_PREIDXTREE_KEYADVANCE );
-      INT32               rc           = SDB_OK;
-      const BSONObj     * data         = NULL;
-      dpsTransLRBHeader * lrbHeaderPtr = NULL;
-      
-      if( direction > 0 )
-      { 
-         do
-         {
-            // move forward
-            iter++;
+      INT32               rc           = SDB_OK ;
+      INT32               result       = 0 ;
+      BSONObj             data ;
 
-            // return EOC if we hit the end
-            if( iter == _tree->end() )
-            {
-               rc = SDB_IXM_EOC;
-               goto done;
-            }
-
-            // retrieve the LRB header pointer and it should not be NULL because
-            // lock should not be released before the tree is cleaned up. Same
-            // reason, the _oldIdx should have been set up as well.
-            lrbHeaderPtr = iter->second.getLRBHdr();
-            if( (NULL == lrbHeaderPtr) ||
-                (data = lrbHeaderPtr->getOldIdxValue(_idxLID)) == NULL )
-            {
-               rc = SDB_SYS;
-               PD_LOG( PDERROR, "In memory idx tree points to non-exist lrbHeader"
-                                "(idx=%p)", lrbHeaderPtr );
-               goto err;
-            }
-         }
-         // compare the key value one by one until we found the first one
-         // satisfying the matching criteria
-         while ( ixmExtent::_keyCmp( *data, prevKey, keepFieldsNum,
-                          skipToNext, matchEle,
-                          matchInclusive, *(getOrdering()), direction ) < 0 );
-      }
-      else //  (direction < 0)
+      while ( TRUE )
       {
-         do
+         rc = advance( pos, direction ) ;
+         if ( rc )
          {
-            // can't move pass the begin
-            if( iter == _tree->begin() )
-            {
-               rc = SDB_IXM_EOC;
-               goto done;
-            }
-            // safe to move backward now
-            iter--;
-
-            // retrieve the LRB header pointer and it should not be NULL because
-            // lock should not be released before the tree is cleaned up. Same
-            // reason, the _oldIdx should have been set up as well.
-            lrbHeaderPtr = iter->second.getLRBHdr();
-            if( (NULL == lrbHeaderPtr) ||
-                (data = lrbHeaderPtr->getOldIdxValue(_idxLID)) == NULL )
-            {
-               rc = SDB_SYS;
-               PD_LOG( PDERROR, "In memory idx tree points to non-exist lrbHeader"
-                                "(idx=%p)", lrbHeaderPtr );
-               goto err;
-            }
-            
+            goto error ;
          }
-         // compare the key value one by one until we found the first one
-         // satisfying the matching criteria
-         while ( ixmExtent::_keyCmp( *data, prevKey, keepFieldsNum,
-                          skipToNext, matchEle,
-                          matchInclusive, *(getOrdering()), direction ) > 0 );
-      } // end of else
-      done:
-      PD_TRACE_EXITRC( SDB_PREIDXTREE_KEYADVANCE, rc );
-      return rc;
 
-      err:
-      PD_LOG( PDERROR, "Failed to advance the key:%s",
-              prevKey.toString().c_str() );
-      goto done;
+         data = getNodeKey( pos ).getKeyObj() ;
+         result = _ixmExtent::_keyCmp( data, prevKey, keepFieldsNum,
+                                       skipToNext, matchEle,
+                                       matchInclusive,
+                                       *(this->getOrdering()),
+                                       direction ) ;
+         if ( result * direction >= 0 )
+         {
+            break ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_PREIDXTREE_KEYADVANCE, rc ) ;
+      return rc ;
+    error:
+      PD_LOG( PDDEBUG, "Failed to advance the key: %s, rc: %d",
+              prevKey.toString().c_str(), rc ) ;
+      goto done ;
    }
 
    // Traverse the tree to see if the key exist, caller need to hold
    // the latch otherwise the iterator can change underneath
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_IXOBJEXIST, "preIdxTree::ixObjExist" )
-   BOOLEAN preIdxTree::ixObjExist( const BSONObj&  key,
-                                   preIdxTreeNodeValue & value ) 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_ISKEYEXIST, "preIdxTree::isKeyExist" )
+   BOOLEAN preIdxTree::isKeyExist( const BSONObj &key,
+                                   preIdxTreeNodeValue &value ) const
    {
-      PD_TRACE_ENTRY( SDB_PREIDXTREE_IXOBJEXIST );
-      BOOLEAN found = FALSE;
-      dmsRecordID  rid;
- 
-      rid.resetMin();
-      preIdxTreeNodeKey lowKey( &key, rid, getOrdering() );
-      rid.resetMax();
-      preIdxTreeNodeKey highKey( &key, rid, getOrdering() );
+      PD_TRACE_ENTRY( SDB_PREIDXTREE_ISKEYEXIST );
+      BOOLEAN found = FALSE ;
 
-      INDEX_BINARY_TREE::iterator startIter;
-      INDEX_BINARY_TREE::iterator endIter;
+      if ( !_tree.empty() )
+      {
+         dmsRecordID rid ;
+         rid.resetMin() ;
+         preIdxTreeNodeKey lowKey( &key, rid, getOrdering() ) ;
+         rid.resetMax();
+         preIdxTreeNodeKey highKey( &key, rid, getOrdering() ) ;
 
-      // based on order, choose the proper range to search
-      if ( getOrdering()->get(_idxLID) > 0 )
-      {
-         startIter = _tree->lower_bound( lowKey );
-         endIter = _tree->upper_bound( highKey );
-      }
-      else
-      {
-         startIter = _tree->lower_bound( highKey );
-         endIter = _tree->upper_bound( lowKey );
-      }
+         INDEX_TREE_CPOS startIter ;
+         INDEX_TREE_CPOS endIter ;
 
-      // loop till hit end or pass endIter or found
-      while ( startIter != _tree->end() ) 
-      {
-         if( startIter->first.toBson().equal(key) )
+         startIter = _tree.lower_bound( lowKey ) ;
+         endIter = _tree.upper_bound( highKey ) ;
+
+         while ( startIter != _tree.end() && startIter != endIter )
          {
-            found = TRUE;
-            value.setValue( startIter->second.getLRBHdr()) ;
-            break;
-         }
-         if( startIter != endIter )
-         {
-            startIter++;
-         }
-         else
-         {
-            break;
+            if ( startIter->second.isRecordDeleted() )
+            {
+               ++startIter ;
+            }
+            else
+            {
+               found = TRUE ;
+               value = startIter->second ;
+               break ;
+            }
          }
       }
 
-      PD_TRACE1( SDB_PREIDXTREE_IXOBJEXIST,  PD_PACK_UINT(found) );
-      PD_TRACE_EXIT( SDB_PREIDXTREE_IXOBJEXIST );
-      return found;
+      PD_TRACE1( SDB_PREIDXTREE_ISKEYEXIST, PD_PACK_UINT( found ) ) ;
+      PD_TRACE_EXIT( SDB_PREIDXTREE_ISKEYEXIST );
+      return found ;
    }
 
    void preIdxTree::printTree() const
    {
-      PD_LOG( PDDEBUG, "==>: print nodes for tree(%d), size=%d",
-              _idxLID, this->size() );
-      INDEX_BINARY_TREE::iterator it = _tree->begin();
+      const UINT32 maxOnceOutSize = 3072 ;
+      UINT32 index = 0 ;
+      INDEX_TREE_CPOS pos ;
 
-      while ( it != _tree->end() )
+      while( TRUE )
       {
-         it->first.printKey();
-         it->second.printValue();
-         it++;
-      }
+         std::stringstream ss ;
 
+         if ( 0 == index )
+         {
+            ss << "==> Index tree[Key: " << _keyPattern.toString()
+               << ", LID:" << _idxLID
+               << ", Size:" << _tree.size()
+               << "] nodes:" << std::endl ;
+            pos = _tree.begin() ;
+         }
+
+         while ( pos != _tree.end() )
+         {
+            ss << ++index << "Key: " << pos->first.toString()
+               << ", Value: " << pos->second.toString()
+               << std::endl ;
+            ++pos ;
+
+            if ( ss.gcount() >= maxOnceOutSize )
+            {
+               break ;
+            }
+         }
+
+         if ( pos == _tree.end() )
+         {
+            ss << "<== End index tree" ;
+            PD_LOG( PDEVENT, ss.str().c_str() ) ;
+            break ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, ss.str().c_str() ) ;
+         }
+      }
    }
 
-   // constructor for oldVersionCB, will create in memory index trees
-   // and _memBlockPool. This will be invoked during dpsTransCB construction.
+   /*
+      oldVersionCB implement
+   */
    oldVersionCB::oldVersionCB()
    {
-      // Initialize oldVersionCB for runtime if db config transisolation
-      // is set to 1 (RC)
-      SDB_ASSERT( (TRUE == pmdGetOptionCB()->transactionOn() ), 
-                  "transactionOn must be enabled");
-      latchX();
-      _idxTrees = new IDXID_TO_TREE_MAP();
-      _memBlockPool = new memBlockPool();
-      _initialized = TRUE;
-      releaseX();
-#ifdef _DEBUG
-      PD_LOG( PDINFO, "Initialized oldVersionCB" );
-#endif
    }
 
-   // destructor for oldVersionCB, will free up in memory index trees
-   // and _memBlockPool. Caller should hold _oldVersionCBLatch(X) in dpsTransCB
    oldVersionCB::~oldVersionCB()
    {
-      latchX();
-      if ( TRUE == _initialized ) 
-      {
-         // loop through each inner tree and clear them before clear
-         // the outter tree
-         for ( IDXID_TO_TREE_MAP::iterator it = _idxTrees->begin();
-            it != _idxTrees->end(); it++ )
-         {
-            // only give a warning as this could be expected during force 
-            // shutdown when there are outstanding transactions
-#ifdef _DEBUG 
-            PD_LOG( PDWARNING, 
-                 "Trying to free up in memory index trees while no empty" );
-#endif
-            (const_cast<preIdxTree *>(it->second))->clear();
-         }
-         _idxTrees->clear();
-
-         // delete of the tree will remove all elements in the map, which will
-         // in turn call the destructor of each element class
-         delete _idxTrees;
-         _idxTrees = NULL;
-
-         // free all mem pools
-         delete _memBlockPool;
-         _memBlockPool = NULL;
-
-         _initialized = FALSE;
-      }
-      releaseX();
+      fini() ;
    }
 
-   // based on global logic index id, get the in memory idx tree and remove it
-   // caller must hold latch of oldVersionCB in X
-   preIdxTree * oldVersionCB::getAndRemoveIdxTree( const globIdxID & gIdxID )
+   INT32 oldVersionCB::init()
    {
-      preIdxTree * tree = NULL;
+      INT32 rc = SDB_OK ;
 
-      IDXID_TO_TREE_MAP::iterator it = _idxTrees->find(gIdxID);
-      if ( it != _idxTrees->end() )
+      rc = _memBlockPool.init() ;
+      if ( rc )
       {
-         tree = const_cast<preIdxTree *> (it->second);
-         _idxTrees->erase(it);
+         PD_LOG( PDERROR, "Init mem pool failed, rc: %d", rc ) ;
+         goto error ;
       }
-      return tree;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
-   // based on global logic index id, get the in memory idx tree
-   // caller must hold latch of oldVersionCB
-   preIdxTree * oldVersionCB::getIdxTree( const globIdxID & gIdxID )
+   void oldVersionCB::fini()
    {
-      preIdxTree * tree = NULL;
-
-      IDXID_TO_TREE_MAP::iterator it = _idxTrees->find(gIdxID);
-      if ( it != _idxTrees->end() )
+      /// check tree nodes
+      /*
+      IDXID_TO_TREE_MAP_IT it = _idxTrees.begin() ;
+      while( it != _idxTrees.end() )
       {
-         tree = const_cast<preIdxTree *> (it->second);
+         SDB_ASSERT( it->second->empty(), "Index tree should be empty" ) ;
+         ++it ;
       }
-      return tree;
+      */
+      _idxTrees.clear() ;
+
+      _memBlockPool.fini() ;
    }
 
    // Create an in memory index tree and add to the map
    // Caller must hold _oldVersionCBLatch in X
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OLDVERSIONCB_ADDIDXTREE, "oldVersionCB::addIdxTree" )
-   void oldVersionCB::addIdxTree( const globIdxID &gid,
-                                  const ixmIndexCB * indexCB )
+   INT32 oldVersionCB::addIdxTree( const globIdxID &gid,
+                                   const ixmIndexCB *indexCB,
+                                   preIdxTreePtr &treePtr,
+                                   BOOLEAN hasLock )
    {
-      PD_TRACE_ENTRY( SDB_OLDVERSIONCB_ADDIDXTREE );
-#if SDB_INTERNAL_DEBUG
-      PD_LOG( PDDEBUG, "Going to add in memory Index tree for (%d,%d,%d)",
-              gid._csID,
-              gid._clID,
-              gid._idxLID );
-#endif
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_OLDVERSIONCB_ADDIDXTREE ) ;
 
-#ifdef _DEBUG
+      preIdxTreePtr tmpTreePtr ;
+      preIdxTree *pTree = NULL ;
+      pair<IDXID_TO_TREE_MAP_IT, BOOLEAN> ret ;
+
+      pTree = SDB_OSS_NEW preIdxTree( gid._idxLID, indexCB ) ;
+      if ( !pTree || !pTree->isValid() )
       {
-         preIdxTree * memTree = this->getIdxTree(gid);
-          
-         SDB_ASSERT( (NULL == memTree) , "memTree should not exist" ) ;
+         rc = SDB_OOM ;
+         goto error ;
       }
-#endif
+      tmpTreePtr = preIdxTreePtr( pTree ) ;
+      pTree = NULL ;
 
-      preIdxTree *t = SDB_OSS_NEW preIdxTree(gid._idxLID, indexCB);
-      pair<IDXID_TO_TREE_MAP::iterator, bool> rv = 
-         _idxTrees->insert( IDXID_TO_TREE_MAP_PAIR(gid, t) );
+      if ( !hasLock )
+      {
+         latchX() ;
+      }
 
-      PD_TRACE_EXIT( SDB_OLDVERSIONCB_ADDIDXTREE );
+      ret = _idxTrees.insert( IDXID_TO_TREE_MAP_PAIR( gid, tmpTreePtr ) ) ;
+
+      if ( !hasLock )
+      {
+         releaseX() ;
+      }
+
+      if ( ret.second )
+      {
+         PD_LOG( PDDEBUG, "Create index tree[%s], Key:%s",
+                 gid.toString().c_str(),
+                 indexCB->keyPattern().toString().c_str() ) ;
+      }
+      else
+      {
+         /// alread exist, do nothing
+      }
+
+      treePtr = ret.first->second ;
+
+   done:
+      PD_TRACE_EXIT( SDB_OLDVERSIONCB_ADDIDXTREE ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // based on global logic index id, get the in memory idx tree
+   preIdxTreePtr oldVersionCB::getIdxTree( const globIdxID &gid,
+                                           BOOLEAN hasLock )
+   {
+      preIdxTreePtr treePtr ;
+      IDXID_TO_TREE_MAP_IT it ;
+
+      if ( !hasLock )
+      {
+         latchS() ;
+      }
+
+      it = _idxTrees.find( gid ) ;
+
+      if ( it != _idxTrees.end() )
+      {
+         treePtr = it->second ;
+      }
+
+      if ( !hasLock )
+      {
+         releaseS() ;
+      }
+
+      return treePtr ;
+   }
+
+   INT32 oldVersionCB::getOrCreateIdxTree( const globIdxID &gid,
+                                           const ixmIndexCB *indexCB,
+                                           preIdxTreePtr &treePtr,
+                                           BOOLEAN hasLock )
+   {
+      INT32 rc = SDB_OK ;
+
+      treePtr = getIdxTree( gid, hasLock ) ;
+      if ( treePtr.get() )
+      {
+         goto done ;
+      }
+
+      rc = addIdxTree( gid, indexCB, treePtr, hasLock ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // Delete an in memory index tree and remove it from the map
-   // _oldVersionCBLatch is held X in the function
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OLDVERSIONCB_DELIDXTREE, "oldVersionCB::delIdxTree" )
-   void oldVersionCB::delIdxTree( const globIdxID &gid )
+   void oldVersionCB::delIdxTree( const globIdxID &gid, BOOLEAN hasLock )
    {
-      preIdxTree * memTree = NULL;
+      preIdxTreePtr treePtr ;
+      IDXID_TO_TREE_MAP_IT it ;
+
       PD_TRACE_ENTRY( SDB_OLDVERSIONCB_DELIDXTREE );
 
-#if SDB_INTERNAL_DEBUG
-      PD_LOG( PDDEBUG, "Going to delete in memory Index tree for (%d,%d,%d)",
-              gid._csID,
-              gid._clID,
-              gid._idxLID );
-#endif
-
-      // Latch oldVCB and get the index tree
-      latchX();
-      memTree = getAndRemoveIdxTree( gid );
-      releaseX();
-
-      if ( NULL != memTree )
+      if ( !hasLock )
       {
-         memTree->clear();
-         SDB_OSS_DEL memTree;
+         latchX() ;
       }
 
-      PD_TRACE_EXIT ( SDB_OLDVERSIONCB_DELIDXTREE );
+      it = _idxTrees.find( gid ) ;
+      if ( it != _idxTrees.end() )
+      {
+         treePtr = it->second ;
+         _idxTrees.erase( it ) ;
+      }
+
+      if ( !hasLock )
+      {
+         releaseX() ;
+      }
+
+      if ( treePtr.get() )
+      {
+         PD_LOG( PDDEBUG, "Has removed index tree[%s], Key:%s",
+                 gid.toString().c_str(),
+                 treePtr->getKeyPattern().toString().c_str() ) ;
+         
+         treePtr->clear() ;
+         treePtr->setDeleted() ;
+      }
+
+      PD_TRACE_EXIT ( SDB_OLDVERSIONCB_DELIDXTREE ) ;
    }
 
-   // helper function to print the gids of all trees in _idxTrees
-   // Input:
-   //    latched: whether caller held the latch
-   void oldVersionCB::printTrees( BOOLEAN latched = FALSE ) 
+   /*
+      oldVersionContainer implement
+   */
+   oldVersionContainer::oldVersionContainer( const dmsRecordID &rid )
+   :_rid( rid )
    {
-      const preIdxTree *idxTree = NULL;
-      if ( !latched )
-      {
-         _oldVersionCBLatch.get() ;
-      }
-      if ( TRUE == _initialized ) 
-      {
-         UINT32 i = 0;
-         // loop through each inner tree and clear them before clear
-         // the outter tree
-         PD_LOG( PDINFO, "There are %d idx trees in _idxTrees, they are:",
-                 _idxTrees->size() );
+      _isNewRecord   = FALSE ;
+      _isDeleted     = FALSE ;
+      _isDummyRecord = FALSE ;
+      _ownnerTID     = 0 ;
+   }
 
-         for ( IDXID_TO_TREE_MAP::iterator it = _idxTrees->begin();
-            it != _idxTrees->end(); it++, i++ )
+   oldVersionContainer::~oldVersionContainer()
+   {
+      releaseRecord() ;
+   }
+
+   void* oldVersionContainer::operator new( size_t size,
+                                            memBlockPool *pPool,
+                                            std::nothrow_t )
+   {
+      CHAR *p = NULL ;
+      SDB_ASSERT( pPool && size > 0, "Arg is invalid" ) ;
+
+      pPool->acquire( (UINT32)size, p ) ;
+
+      return (void*)p ;
+   }
+
+   void oldVersionContainer::operator delete ( void *p )
+   {
+      if ( p )
+      {
+         CHAR *realPtr = DPS_MEM_USERPTR_2_PTR( p ) ;
+         memBlockPool* pPool = NULL ;
+         pPool = (memBlockPool*)*DPS_MEM_PTR_ADDRPTR( realPtr ) ;
+         SDB_ASSERT( pPool, "Memeory is invalid" ) ;
+
+         if ( pPool )
          {
-            idxTree = it->second;
-            PD_LOG( PDINFO, "==>Idx tree (%d): gid=(%d, %d, %d)",
-                    i, it->first._csID, it->first._clID, it->first._idxLID );
-            // print each idx in the tree
-            idxTree->printTree();
+            pPool->release( (CHAR*&)p ) ;
          }
       }
-      if ( !latched )
-      {
-         _oldVersionCBLatch.release() ;
-      }
    }
 
-   // Description:
-   //   Given an index object, find the proper in-memory tree and insert 
-   // into it if the index is not already there. If the index already
-   // exist, it's a no-op. This function will take proper tree latches
-   // under the cover
-   // Input: 
-   //   gid: global ID of the index (csid, clid, idxid)
-   //   obj: BSON containing the index
-   //   rid: record ID
-   //   oldVer: pointer to a constiner having older version record/idx
-   //   
-   // Dependency:
-   //   The index tree should already exist. (addIdxTree() should have been
-   // called by the caller earlier). Tree latch MUST have already been held.
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OLDVERSIONCB_INSERTIDXOBJ, "oldVersionCB::insertIdxObj" )
-   INT32 oldVersionCB::insertIdxObj( const globIdxID &gid, const BSONObj &obj,
-                                     const dmsRecordID &rid, 
-                                     oldVersionContainer *oldVer,
-                                     const BOOLEAN takeLock )
+   void oldVersionContainer::operator delete ( void *p,
+                                               memBlockPool *pPool,
+                                               std::nothrow_t )
    {
-      INT32       rc      = SDB_OK;
-      preIdxTree *idxTree = NULL;
-      BOOLEAN     locked  = FALSE;
+      oldVersionContainer::operator delete( p ) ;
+   }
 
-      PD_TRACE_ENTRY( SDB_OLDVERSIONCB_INSERTIDXOBJ );
-
-      // search for the tree without latch as tree latch might have already
-      // been held and tree is gurantee to exist
-      idxTree = getIdxTree(gid);
-
-      SDB_ASSERT( ( NULL != idxTree ), "index tree not exist" ); 
-
-      // lock the inner idx tree for both find and insert
-      if ( takeLock )
+   BOOLEAN oldVersionContainer::isRecordEmpty() const
+   {
+      if ( _isDummyRecord || _isNewRecord || _recordPtr.get() )
       {
-         idxTree->lockX();
-         locked = TRUE;
+         return FALSE ;
+      }
+      return TRUE ;
+   }
+
+   const dmsRecord* oldVersionContainer::getRecord() const
+   {
+      return ( const dmsRecord* )_recordPtr.get() ;
+   }
+
+   BSONObj oldVersionContainer::getRecordObj() const
+   {
+      const dmsRecord *pRecord = getRecord() ;
+      if ( pRecord && !pRecord->isCompressed() )
+      {
+         return BSONObj( pRecord->getData() ) ;
+      }
+      return BSONObj() ;
+   }
+
+   INT32 oldVersionContainer::saveRecord( const dmsRecord *pRecord,
+                                          const BSONObj &obj,
+                                          UINT32 ownnerTID,
+                                          memBlockPool *pPool )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 recSize = 0 ;
+      dmsRecord *pNewRecord = NULL ;
+
+      SDB_ASSERT( !_recordPtr.get(), "Old record is not NULL" ) ;
+      SDB_ASSERT( pRecord, "Record is NULL" ) ;
+
+      if ( _recordPtr.get() )
+      {
+         goto done ;
       }
 
-      // check if it exist. We might be able to save this check if all 
-      // callers did the check.
-      //if( idxTree->find( (CHAR *) &obj, rid ) == idxTree->end() )
-      if( idxTree->find( &obj, rid ) == idxTree->end() )
+      recSize = DMS_RECORD_METADATA_SZ + obj.objsize() ;
+      _recordPtr = dpsOldRecordPtr::alloc( pPool, recSize ) ;
+      if ( !_recordPtr.get() )
       {
-         //not found, do the insert
-         // first get the LRBHdr index from lock manager
-         preIdxTreeNodeValue value(oldVer->getLrbHdr());
-         //int objSize = obj.objsize();
+         PD_LOG( PDERROR, "Alloc memory(%u) failed, rc: %d",
+                 recSize, rc ) ;
+         goto error ;
+      }
 
-         // a lock obj for set to insert with. Note that the set will do memory 
-         // allocation by its own
-         idxObj  myIdxObj;
-         myIdxObj._idxLID = gid._idxLID;
-         // proper ordering pointer will be setup by the insert
-         myIdxObj._order = NULL;
-         // get memory from segment, copy the key obj in and hang off lrbHdr,
-         // Note that this segment is not released until release of the lock
-         // FIXME: having trouble acquire memory from _memBlockPool
-         // should we do this under LRB bucket latch. The latching protocal is:
-         // get idxTreeLatch before the lrbBucketLatch.
-         /*
-         _memBlockPool->acquire( objSize, (CHAR **)&(myIdxObj._idxObj),
-                                 &(myIdxObj._recordMemType) );
-         */
-         // currently use a dummy one which is dynamic allocation
-         // FIXME: the tree insert should call its allocate function which 
-         // should use segment
-         //myIdxObj._idxObj = new BSONObj();
-         //myIdxObj._recordMemType = MEMBLOCKPOOL_TYPE_DYN;
-         myIdxObj._idxObj = obj.copy();
- 
-         // insert to both idxset(oldVer) and idxTree
-         if( oldVer->insertIdx(myIdxObj) )
+      pNewRecord = ( dmsRecord* )_recordPtr.get() ;
+      /// copy header
+      ossMemcpy( _recordPtr.get(), (const void*)pRecord,
+                 DMS_RECORD_METADATA_SZ ) ;
+
+      pNewRecord->unsetCompressed() ;
+      pNewRecord->setSize( recSize ) ;
+
+      /// copy data
+      ossMemcpy( _recordPtr.get() + DMS_RECORD_METADATA_SZ,
+                 obj.objdata(), obj.objsize() ) ;
+
+#ifdef _DEBUG
+      PD_LOG ( PDDEBUG, "Saved old copy for rid(%d,%d) to oldVer(%d)",
+               _rid._extent, _rid._offset, this ) ;
+#endif //_DEBUG
+
+      _ownnerTID = ownnerTID ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN oldVersionContainer::isIndexObjEmpty() const
+   {
+      return _oldIdx.empty() ? TRUE : FALSE ;
+   }
+
+   void oldVersionContainer::releaseRecord()
+   {
+      preIdxTree *pTree = NULL ;
+      idxObjSet::iterator itSet ;
+      idxLidMap::iterator itMap ;
+
+      /// 1. release the tree node
+      itSet = _oldIdx.begin() ;
+      while( itSet != _oldIdx.end() )
+      {
+         const dpsIdxObj &tmpObj = *itSet ;
+
+         itMap = _oldIdxLid.find( tmpObj.getIdxLID() ) ;
+         if ( itMap == _oldIdxLid.end() )
          {
-            idxTree->insert( &obj, rid, value, TRUE );
-#if SDB_INTERNAL_DEBUG
-            PD_LOG( PDDEBUG, "Inserted key(%s) into memIXTree: "
-                    "(csid=%d, clid=%d, idxlid=%d, rid=(%d, %d)",
-                    obj.toString().c_str(),
-                    gid._csID,
-                    gid._clID,
-                    gid._idxLID,
-                    rid._extent,
-                    rid._offset );
-            //idxTree->printTree();
-#endif
+            SDB_ASSERT( FALSE, "Index[%u] can't found in index set" ) ;
          }
          else
          {
-            rc = SDB_SYS;
-            PD_LOG( PDERROR, "Index does not exist in tree but failed to "
-                    "insert to set (csid=%d, clid=%d, idxlid=%d, rid=(%d, %d)",
-                    gid._csID,
-                    gid._clID,
-                    gid._idxLID,
-                    rid._extent,
-                    rid._offset );
-            goto error;
-
+            pTree = (itMap->second).get() ;
+            pTree->remove( &(tmpObj.getKeyObj()), _rid, FALSE ) ;
          }
-
-         PD_TRACE5( SDB_OLDVERSIONCB_INSERTIDXOBJ, 
-                    PD_PACK_UINT(gid._csID),
-                    PD_PACK_UINT(gid._clID),
-                    PD_PACK_UINT(gid._idxLID),
-                    PD_PACK_INT(rid._extent),
-                    PD_PACK_INT(rid._offset) );
-         
+         ++itSet ;
       }
 
-      done: 
-      if ( locked )
-      {
-         idxTree->unlockX();
-      }
-      PD_TRACE_EXITRC( SDB_OLDVERSIONCB_INSERTIDXOBJ, rc );
-      return rc;
- 
-      error:
-      PD_LOG( PDERROR, "Failed to insert an index obj" );
-      goto done;
+      _oldIdx.clear() ;
+      _oldIdxLid.clear() ;
+
+      /// 2. release the record
+      _recordPtr = dpsOldRecordPtr() ;
+      _isNewRecord = FALSE ;
+      _isDeleted = FALSE ;
+      _isDummyRecord = FALSE ;
+      _ownnerTID = 0 ;
    }
 
+   void oldVersionContainer::setRecordDeleted()
+   {
+      _isDeleted = TRUE ;
+   }
+
+   void oldVersionContainer::setRecordNew()
+   {
+      _isNewRecord = TRUE ;
+   }
+
+   BOOLEAN oldVersionContainer::isRecordNew() const
+   {
+      return _isNewRecord ;
+   }
+
+   void oldVersionContainer::setRecordDummy( UINT32 ownnerTID )
+   {
+      _isDummyRecord = TRUE ;
+      _ownnerTID = ownnerTID ;
+   }
+
+   BOOLEAN oldVersionContainer::isRecordDummy() const
+   {
+      return _isDummyRecord ;
+   }
+
+   UINT32 oldVersionContainer::getOwnnerTID() const
+   {
+      return _ownnerTID ;
+   }
+
+   BOOLEAN oldVersionContainer::isRecordDeleted() const
+   {
+      return _isDeleted ;
+   }
+
+   // check if the index lid already exists in the set
+   BOOLEAN oldVersionContainer::idxLidExist( SINT32 idxLID ) const
+   {
+      return ( _oldIdxLid.find( idxLID ) != _oldIdxLid.end() ) ;
+   }
+
+   const dpsIdxObj* oldVersionContainer::getIdxObj( SINT32 idxLID ) const
+   {
+      const dpsIdxObj *pObj = NULL ;
+      for ( idxObjSet::const_iterator i = _oldIdx.begin() ;
+            i != _oldIdx.end() ;
+            ++i )
+      {
+         if ( i->getIdxLID() == idxLID )
+         {
+            pObj = &( *i ) ;
+            break ;
+         }
+      }
+
+      return pObj ;
+   }
+
+   BOOLEAN oldVersionContainer::isIdxObjExist( const dpsIdxObj &obj ) const
+   {
+      return _oldIdx.find( obj ) != _oldIdx.end() ? TRUE : FALSE ;
+   }
+
+   // given an index object, insert into the idxObjSet. Return false
+   // if the same index for the record already exist. In this case,
+   // the object was not inserted
+   BOOLEAN oldVersionContainer::insertIdx( const dpsIdxObj &i )
+   {
+      return _oldIdx.insert( i ).second ;
+   }
+
+   BOOLEAN oldVersionContainer::insertIdxTree( preIdxTreePtr treePtr )
+   {
+      return _oldIdxLid.insert( idxLidMap::value_type( treePtr->getLID(),
+                                                       treePtr ) ).second ;
+   }
+
+
 }  // end of namespace
+

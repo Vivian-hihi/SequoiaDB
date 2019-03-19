@@ -254,7 +254,7 @@ namespace bson {
     }
 
 
-    inline bool BSONObj::isValid() {
+    inline bool BSONObj::isValid() const {
         int x = objsize();
         return x > 0 && x <= BSONObjMaxInternalSize;
     }

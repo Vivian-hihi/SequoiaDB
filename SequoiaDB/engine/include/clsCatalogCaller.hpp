@@ -43,7 +43,7 @@
 #include "oss.hpp"
 #include "msg.hpp"
 
-#include <map>
+#include <ossMemPool.hpp>
 
 using namespace std ;
 namespace engine
@@ -77,7 +77,7 @@ namespace engine
          sendTimes = 0 ;
       }
    } ;
-   typedef std::map<UINT32, _clsCataCallerMeta> callerMeta ;
+   typedef ossPoolMap<UINT32, _clsCataCallerMeta>  callerMeta ;
 
    class _clsCatalogCaller : public SDBObject
    {

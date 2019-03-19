@@ -114,16 +114,13 @@ namespace engine
    */
    _dmsIXTransContext::_dmsIXTransContext( _dmsMBContext *pMBContext,
                                            DMS_ACCESS_TYPE accessType,
-                                           _rtnIXScanner *pScanner,
-                                           BOOLEAN isReadonly )
+                                           _rtnIXScanner *pScanner )
    :_dmsTBTransContext( pMBContext, accessType )
    {
       SDB_ASSERT( pScanner, "Scanner can't be NULL" ) ;
 
       _pScanner      = pScanner ;
-      _isReadonly    = isReadonly ;
-      _pScanner->setIsReadOnly(_isReadonly);
-      _isValid       = TRUE ;
+      _isSame        = TRUE ;
    }
 
    _dmsIXTransContext::~_dmsIXTransContext()
@@ -134,13 +131,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = _pScanner->pauseScan( ) ;
+      _isSame = TRUE ;
+
+      rc = _pScanner->pauseScan() ;
       if ( SDB_OK == rc )
       {
-         /// save info
-         _saveRID = _pScanner->getSavedRID() ;
-         _saveObj = _pScanner->getSavedObj()->copy() ;
-
          rc = _dmsTBTransContext::pause() ;
       }
 
@@ -161,15 +156,13 @@ namespace engine
       }
 
       /// then resume scanner
-      rc = _pScanner->resumeScan( ) ;
+      rc = _pScanner->resumeScan( &_isSame ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Resume index scanner failed, rc: %d",
                  rc ) ;
          goto error ;
       }
-      /// valid check
-      _pScanner->isCursorSame( _saveObj, _saveRID, _isValid ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB__DMSIXTRANSCONTEXT_RESUME, rc ) ;
@@ -178,14 +171,9 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN _dmsIXTransContext::isCursorValid() const
+   BOOLEAN _dmsIXTransContext::isCursorSame() const
    {
-      return _isValid ;
-   }
-
-   void _dmsIXTransContext::resetCursorValid()
-   {
-      _isValid = TRUE ;
+      return _isSame ;
    }
 
 }

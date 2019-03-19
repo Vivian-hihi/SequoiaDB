@@ -325,6 +325,7 @@ namespace engine
       {
          _startStopKeys.clear() ;
       }
+
       // intersection operation for two keysets
       const rtnPredicate &operator&= (rtnPredicate &right) ;
       // union operation for two keysets
@@ -332,12 +333,11 @@ namespace engine
       // exclude operation for two keysets
       const rtnPredicate &operator-= (const rtnPredicate &right) ;
       const rtnPredicate &operator= (const rtnPredicate &right) ;
-      BOOLEAN operator<= ( const rtnPredicate &r ) const ;
+
       void reverse ( rtnPredicate &result ) const ;
-      BOOLEAN isInit()
-      {
-         return _isInitialized ;
-      }
+
+      BOOLEAN isInit() const { return _isInitialized ; }
+
       // return the start key from the lowest range
       // eoo means invalid
       BSONElement min() const
@@ -485,7 +485,7 @@ namespace engine
       const RTN_PREDICATE_LIST &paramPredicate ( const CHAR *fieldName ) const ;
       const RTN_PREDICATE_MAP &predicates() const { return _predicates ; }
       RTN_PREDICATE_MAP &predicates() { return _predicates ; }
-      INT32 matchLevelForIndex ( const BSONObj &keyPattern ) const ;
+
       INT32 addPredicate ( const CHAR *fieldName, const BSONElement &e,
                            INT32 opType, BOOLEAN isNot, BOOLEAN mixCmp,
                            BOOLEAN addToParam, INT8 paramIndex,

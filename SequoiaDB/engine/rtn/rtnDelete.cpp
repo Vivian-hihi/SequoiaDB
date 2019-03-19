@@ -47,7 +47,6 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "dmsScanner.hpp"
-#include "dpsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -116,8 +115,6 @@ namespace engine
       dmsScanner *pScanner                = NULL ;
       BOOLEAN writable                    = FALSE ;
       INT64 delNum                        = 0 ;
-      dpsTransLockCallbackFactory f;
-      _dpsITransLockCallback * callback   = NULL;
 
       optAccessPlanRuntime planRuntime ;
 
@@ -151,12 +148,6 @@ namespace engine
 
       try
       {
-         // create local call back
-
-         callback = f.create( LOCK_CALLBACK_TYPE_DMS,
-                              cb,
-                              NULL );
-
          apm = rtnCB->getAPM() ;
          SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
@@ -169,15 +160,13 @@ namespace engine
          {
             rc = rtnGetTBScanner( pCollectionShortName, &planRuntime, su,
                                   mbContext, cb, &pScanner,
-                                  DMS_ACCESS_TYPE_DELETE,
-                                  callback ) ;
+                                  DMS_ACCESS_TYPE_DELETE ) ;
          }
          else if ( planRuntime.getScanType() == IXSCAN )
          {
             rc = rtnGetIXScanner( pCollectionShortName, &planRuntime, su,
                                   mbContext, cb, &pScanner,
-                                  DMS_ACCESS_TYPE_DELETE,
-                                  callback ) ;
+                                  DMS_ACCESS_TYPE_DELETE ) ;
          }
          else
          {
@@ -214,7 +203,8 @@ namespace engine
 
                generator.getDataPtr( recordDataPtr ) ;
                rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
-                                              cb, dpsCB, FALSE, callback ) ;
+                                              cb, dpsCB,
+                                              pScanner->callbackHandler() ) ;
                PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
                ++delNum ;
 
@@ -256,10 +246,6 @@ namespace engine
       if ( pScanner )
       {
          SDB_OSS_DEL pScanner ;
-      }
-      if ( callback )
-      {
-         SDB_OSS_DEL callback ;
       }
       if ( mbContext )
       {
@@ -404,7 +390,8 @@ namespace engine
             {
                generator.getDataPtr( recordDataPtr ) ;
                rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
-                                              cb, dpsCB ) ;
+                                              cb, dpsCB,
+                                              pScanner->callbackHandler() ) ;
                PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
             }
 

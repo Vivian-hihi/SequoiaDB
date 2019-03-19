@@ -980,13 +980,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_CLRALLDATA );
       _SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      std::set<_monCollectionSpace> csList ;
+      MON_CS_LIST csList ;
 
       PD_LOG ( PDEVENT, "Clear all dms data" ) ;
 
       //dump all collectionspace
       dmsCB->dumpInfo( csList, TRUE ) ;
-      std::set<_monCollectionSpace>::const_iterator it = csList.begin() ;
+      MON_CS_LIST::const_iterator it = csList.begin() ;
       // for now we don't need to latch dms, since it's only used by
       // full sync, and in that case there's no application able to modify
       // collection space information

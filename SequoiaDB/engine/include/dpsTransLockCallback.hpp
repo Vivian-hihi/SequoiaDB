@@ -42,71 +42,42 @@
 
 #include "oss.hpp"
 #include "dpsTransLockDef.hpp"
-#include "dpsTransLockMgr.hpp"
+#include "dpsTransDef.hpp"
+#include "dpsTransLRB.hpp"
 
 namespace engine
 {
 
-   class dpsTransCB;
-   class _pmdEDUCB;
-   class _dmsRecordRW;
-   class oldVersionContainer;
-
-   enum transLockCallbackType
-   {
-      LOCK_CALLBACK_TYPE_DMS = 0,
-      LOCK_CALLBACK_TYPE_MAX = 1
-   };
-
-   // pure virtual function as interface for callbacks
+   /*
+      _dpsITransLockCallback interface
+   */
    class _dpsITransLockCallback : public SDBObject
    {
-      public:
-      _dpsITransLockCallback() {};
-      _dpsITransLockCallback( dpsTransCB  * transCB,
-                              _pmdEDUCB   * eduCB,
-                              _dmsRecordRW * recordRW ) {};
-      virtual ~_dpsITransLockCallback() {};
+   public:
+      _dpsITransLockCallback()
+      {
+      }
 
-      virtual void beforeLockAcquire( const dpsTransLockId    &lockId,
-                                      const INT32              irc,
-                                      const DPS_TRANSLOCK_TYPE requestLockMode,
-                                      const DPS_TRANSLOCK_OP_MODE_TYPE opMode
-                                    ) = 0;
-      virtual void afterLockAcquire( const dpsTransLockId     &lockId,
-                                           INT32              &irc,
-                                     const DPS_TRANSLOCK_TYPE  requestLockMode,
-                                     const DPS_TRANSLOCK_OP_MODE_TYPE opMode,
-                                           dpsTransRetInfo    *pdpsTxResInfo
-                              ) = 0;
-      // FIXME: might want to remove pLRBHdr
+      virtual ~_dpsITransLockCallback()
+      {
+      }
+
+      /// Interface
+      virtual void afterLockAcquire( const dpsTransLockId &lockId,
+                                     INT32 irc,
+                                     DPS_TRANSLOCK_TYPE requestLockMode,
+                                     DPS_TRANSLOCK_OP_MODE_TYPE opMode,
+                                     const dpsTransLRBHeader *pLRBHeader,
+                                     dpsLRBExtData *pExtData ) = 0 ;
+
       virtual void beforeLockRelease( const dpsTransLockId &lockId,
-                                      const DPS_TRANSLOCK_TYPE  lockMode,
-                                      const UINT64              refCounter,
-                                      oldVersionContainer      *oldVer ) = 0;
+                                      DPS_TRANSLOCK_TYPE lockMode,
+                                      UINT32 refCounter,
+                                      const dpsTransLRBHeader *pLRBHeader,
+                                      dpsLRBExtData *pExtData ) = 0 ;
 
-      virtual void afterLockRelease( const dpsTransLockId &lockId ) = 0;
+   } ;
 
-
-      virtual void setRecordRW ( _dmsRecordRW * recordRW ) = 0;
-      virtual CHAR * getWorkingArea () = 0;
-      virtual void resetWorkingArea () = 0;
-      virtual INT32 saveOldVersionRecord(_dmsRecordRW * recordRW) = 0;
-      virtual oldVersionCB* getOldVCB() = 0;
-   };
-
-   // factory to create different type of instances for _dpsITransLockCallback
-   class dpsTransLockCallbackFactory : public SDBObject
-   {
-      public:
-      dpsTransLockCallbackFactory() {};
-      ~dpsTransLockCallbackFactory() {};
-
-      _dpsITransLockCallback *create( const INT32          type,
-                                            _pmdEDUCB    * eduCB,
-                                            _dmsRecordRW * recordRW );
-
-   };
 }
 
 #endif // DPS_TRANS_LOCK_CALLBACK_HPP__

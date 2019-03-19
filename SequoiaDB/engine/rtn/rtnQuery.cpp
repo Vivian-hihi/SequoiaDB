@@ -893,6 +893,7 @@ namespace engine
       dmsMBContext         *mbContext            = NULL ;
       rtnPredicateList     *predList             = NULL ;
       rtnIXScanner         *scanner              = NULL ;
+      rtnScannerFactory    f ;
 
       BSONObj hint ;
       BSONObj dummy ;
@@ -948,7 +949,10 @@ namespace engine
 
       // start building scanner
       {
-         scannerFactory   f;
+         IXScannerType scannerType = ( DPS_INVALID_TRANS_ID !=
+                                       cb->getTransID() ) ?
+                                       SCANNER_TYPE_MERGE :
+                                       SCANNER_TYPE_DISK ;
          dmsRecordID      rid ;
          if ( -1 == dir )
          {
@@ -959,7 +963,8 @@ namespace engine
             rid.resetMin () ;
          }
          // get the index control block we want
-         ixmIndexCB indexCB ( planRuntime->getIndexCBExtent(), su->index(), NULL ) ;
+         ixmIndexCB indexCB ( planRuntime->getIndexCBExtent(),
+                              su->index(), NULL ) ;
          PD_CHECK ( indexCB.isInitialized(), SDB_SYS, error, PDERROR,
                     "unable to get proper index control block" ) ;
          if ( indexCB.getLogicalID() != planRuntime->getIndexLID() )
@@ -976,13 +981,12 @@ namespace engine
          // set the traversal direction
          predList->setDirection ( dir ) ;
 
-         // FIXME: should we consider using MergeIXScanner here?
-         // we should take lock into consideration as well
-         // scanner should be deleted in context destructor
-         scanner = f.getScanner( SCANNER_TYPE_DISK,
-                                 &indexCB, predList, su, cb ) ;
-         PD_CHECK ( scanner, SDB_OOM, error, PDERROR,
-                    "Unable to allocate memory for scanner" ) ;
+         rc = f.createScanner( scannerType, &indexCB, predList,
+                               su, cb, scanner ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
 
          // reloate RID to the key that we want
          rc = scanner->relocateRID ( key, rid ) ;
@@ -1031,7 +1035,7 @@ namespace engine
       }
       if ( scanner )
       {
-         SDB_OSS_DEL scanner ;
+         f.releaseScanner( scanner ) ;
       }
       if ( DMS_INVALID_CS != suID )
       {

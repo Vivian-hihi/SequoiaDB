@@ -105,7 +105,7 @@ namespace engine
                              const dmsRecordID& recordID,
                              ossValuePtr recordDataPtr,
                              BSONObj& obj,
-                             _dpsITransLockCallback * callback = NULL ) ;
+                             IDmsOprHandler* pHandler ) ;
          virtual INT32     _prepareData( _pmdEDUCB *cb ) ;
          virtual BOOLEAN   _canPrefetch () const
          {
@@ -133,10 +133,12 @@ namespace engine
          INT32    _openTBScan ( _dmsStorageUnit *su,
                                 _dmsMBContext *mbContext,
                                 _pmdEDUCB *cb,
+                                const rtnReturnOptions &returnOptions,
                                 const BSONObj *blockObj ) ;
          INT32    _openIXScan ( _dmsStorageUnit *su,
                                 _dmsMBContext *mbContext,
                                 _pmdEDUCB *cb,
+                                const rtnReturnOptions &returnOptions,
                                 const BSONObj *blockObj,
                                 INT32 direction ) ;
 

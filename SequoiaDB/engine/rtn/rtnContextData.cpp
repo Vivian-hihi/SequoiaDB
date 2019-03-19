@@ -41,8 +41,6 @@
 #include "rtn.hpp"
 #include "pmd.hpp"
 #include "rtnIXScannerFactory.hpp"
-#include "rtnDiskIXScanner.hpp"
-#include "rtnMergeIXScanner.hpp"
 #include "dpsTransLockCallback.hpp"
 #include "dmsScanner.hpp"
 #include "dmsStorageUnit.hpp"
@@ -86,11 +84,8 @@ namespace engine
 
    _rtnContextData::~_rtnContextData ()
    {
-      if ( _scanner )
-      {
-         SDB_OSS_DEL _scanner ;
-         _scanner = NULL ;
-      }
+      rtnScannerFactory f ;
+      f.releaseScanner( _scanner ) ;
 
       // first release plan
       setQueryActivity( _hitEnd ) ;
@@ -152,17 +147,22 @@ namespace engine
    INT32 _rtnContextData::_openIXScan( dmsStorageUnit *su,
                                        dmsMBContext *mbContext,
                                        pmdEDUCB *cb,
+                                       const rtnReturnOptions &returnOptions,
                                        const BSONObj *blockObj,
                                        INT32 direction )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCONTEXTDATA_OPIXSC );
 
+      rtnScannerFactory f ;
+      IXScannerType scanType = ( DPS_INVALID_TRANS_ID != cb->getTransID() ) ?
+                               SCANNER_TYPE_MERGE : SCANNER_TYPE_DISK ;
       rtnPredicateList *predList = NULL ;
-      scannerFactory    f;
 
       // for index scan, we maintain context by runtime instead of by DMS
-      ixmIndexCB indexCB ( _planRuntime.getIndexCBExtent(), su->index(), NULL ) ;
+      ixmIndexCB indexCB ( _planRuntime.getIndexCBExtent(),
+                           su->index(),
+                           NULL ) ;
       if ( !indexCB.isInitialized() )
       {
          PD_LOG ( PDERROR, "unable to get proper index control block" ) ;
@@ -184,49 +184,13 @@ namespace engine
       // create scanner
       if ( _scanner )
       {
-         SDB_OSS_DEL _scanner ;
+         f.releaseScanner( _scanner ) ;
       }
-      // _scanner should be deleted in context destructor
-      // Initialize a merge index scanner if: 
-      //    readonly (not for update) scan in transaction,
-      //    isolation level = RC,
-      //    translockwait==TRANS_LOCKWAIT_NW,
-      // otherwise initialize to to disk scanner. 
-      if( ( DPS_INVALID_TRANS_ID != cb->getTransID() ) &&
-          ( SHARED == mbContext->mbLockType() )        &&
-          ( TRANS_ISOLATION_RC == pmdGetOptionCB()->transIsolation() ) )   
-      // We still need to check old copy so that update/delete wait
-      // on original record especially during index scan
-      //    ( FALSE == cb->getTransExecutor()->isTransWaitLock() ) )
+
+      rc = f.createScanner( scanType, &indexCB, predList, su, cb, _scanner ) ;
+      if ( rc )
       {
-         // we will initialize merge scanner with a mem_tree scanner and 
-         // disk scanner under the cover. There will be more initialization
-         // done at beginning of the scan. see _firstRun logic in advance()
-         _scanner = f.getScanner( SCANNER_TYPE_MERGE,
-                       &indexCB, predList, su, cb );
-         if ( !_scanner )
-         {
-            PD_LOG ( PDERROR, "Unable to allocate memory for merge scanner" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         rtnMergeIXScanner * mergeScanner = (rtnMergeIXScanner *)_scanner;
-         mergeScanner->setMergeScanner(
-                       SCANNER_TYPE_MEM_TREE, SCANNER_TYPE_DISK,
-                       &indexCB, predList, su, cb );
-         //mergeScanner->setNeedWaitForLock(FALSE);
-      }
-      else
-      {
-         _scanner = f.getScanner( SCANNER_TYPE_DISK, &indexCB, predList, 
-                                  su, cb ) ;
- 
-         if ( !_scanner )
-         {
-            PD_LOG ( PDERROR, "Unable to allocate memory for disk scanner" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
+         goto error ;
       }
       _scanner->setMonCtxCB ( &_monCtxCB ) ;
 
@@ -247,7 +211,6 @@ namespace engine
          }
       }
 
-
    done :
       PD_TRACE_EXITRC ( SDB_RTNCONTEXTDATA_OPIXSC , rc );
       return rc ;
@@ -259,6 +222,7 @@ namespace engine
    INT32 _rtnContextData::_openTBScan( dmsStorageUnit *su,
                                        dmsMBContext *mbContext,
                                        pmdEDUCB * cb,
+                                       const rtnReturnOptions &returnOptions,
                                        const BSONObj *blockObj )
    {
       INT32 rc = SDB_OK ;
@@ -333,12 +297,13 @@ namespace engine
 
       if ( TBSCAN == _planRuntime.getScanType() )
       {
-         rc = _openTBScan( su, mbContext, cb, blockObj ) ;
+         rc = _openTBScan( su, mbContext, cb, returnOptions, blockObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open tbscan, rc: %d", rc ) ;
       }
       else if ( IXSCAN == _planRuntime.getScanType() )
       {
-         rc = _openIXScan( su, mbContext, cb, blockObj, direction ) ;
+         rc = _openIXScan( su, mbContext, cb, returnOptions,
+                           blockObj, direction ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open ixscan, rc: %d", rc ) ;
       }
       else
@@ -502,7 +467,7 @@ namespace engine
                                         const dmsRecordID& recordID,
                                         ossValuePtr recordDataPtr,
                                         BSONObj& obj,
-                                        _dpsITransLockCallback * callback )
+                                        IDmsOprHandler* pHandler )
    {
       INT32 rc = SDB_OK ;
 
@@ -527,7 +492,7 @@ namespace engine
          rc = _su->data()->updateRecord( _mbContext, recordID,
                                          recordDataPtr, eduCB, getDPSCB(),
                                          _queryModifier->getModifier(),
-                                         newObjPtr, callback ) ;
+                                         newObjPtr, pHandler ) ;
          PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
          _queryModifier->getDollarList()->clear() ;
       }
@@ -535,7 +500,7 @@ namespace engine
       {
          rc = _su->data()->deleteRecord( _mbContext, recordID,
                                          recordDataPtr, eduCB, getDPSCB(),
-                                         FALSE, callback ) ;
+                                         pHandler ) ;
          PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
       }
 
@@ -659,12 +624,8 @@ namespace engine
       dmsExtScannerFactory* extFactory = dmsGetScannerFactory() ;
       dmsExtScannerBase* extScanner = NULL ;
 
-      // callback function related variable
-      dpsTransLockCallbackFactory f;
-      _dpsITransLockCallback * callback = NULL;
-
-
       PD_TRACE_ENTRY ( SDB__RTNCONTEXTDATA__PREPAREBYTBSCAN );
+
       if ( _selector.isInitialized() )
       {
          selector = &_selector ;
@@ -683,16 +644,10 @@ namespace engine
          generator.setQueryModify( TRUE ) ;
       }
 
-      // create the callback
-      callback = f.create( LOCK_CALLBACK_TYPE_DMS,
-                           cb,
-                           NULL );
-
       extScanner = extFactory->create( _su->data(), _mbContext, matchRuntime,
                                        _extentID, accessType,
                                        _numToReturn, _numToSkip,
-                                       _returnOptions.getFlag(),
-                                       callback ) ;
+                                       _returnOptions.getFlag() ) ;
       if ( !extScanner )
       {
          rc = SDB_OOM ;
@@ -728,7 +683,7 @@ namespace engine
                   //dollarList is pointed to _queryModifier->getDollarList()
                   mthContext.getDollarList( dollarList ) ;
                   rc = _queryModify( cb, recordID, recordDataPtr,
-                                     obj, callback ) ;
+                                     obj, extScanner->callbackHandler() ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
                   generator.resetValue( obj, &mthContext ) ;
                }
@@ -830,10 +785,6 @@ namespace engine
       {
          SDB_OSS_DEL extScanner ;
       }
-      if ( callback )
-      {
-         SDB_OSS_DEL callback ;
-      }
       PD_TRACE_EXITRC ( SDB__RTNCONTEXTDATA__PREPAREBYTBSCAN, rc );
       return rc ;
    error:
@@ -856,10 +807,6 @@ namespace engine
       dmsRecordID rid ;
       BSONObj dataRecord ;
 
-      // callback function related variable
-      dpsTransLockCallbackFactory f;
-      _dpsITransLockCallback * callback = NULL;
-
       PD_TRACE_ENTRY ( SDB__RTNCONTEXTDATA__PREPAREBYIXSCAN );
       if ( _selector.isInitialized() )
       {
@@ -874,10 +821,6 @@ namespace engine
       {
          generator.setQueryModify( TRUE ) ;
       }
-
-      callback = f.create( LOCK_CALLBACK_TYPE_DMS,
-                           cb,
-                           NULL );
 
       // loop until we read something in the buffer
       while ( numRecords() == startNumRecords )
@@ -898,8 +841,7 @@ namespace engine
          dmsIXSecScanner secScanner( _su->data(), _mbContext, matchRuntime,
                                      scanner, accessType, _numToReturn,
                                      _numToSkip,
-                                     _returnOptions.getFlag(),
-                                     callback ) ;
+                                     _returnOptions.getFlag() ) ;
          if ( _indexBlockScan )
          {
             secScanner.enableIndexBlockScan( _indexBlocks[0],
@@ -928,7 +870,7 @@ namespace engine
                      //dollarList is pointed to _queryModifier->getDollarList()
                      mthContext.getDollarList( dollarList ) ;
                      rc = _queryModify( cb, recordID, recordDataPtr,
-                                        obj, callback ) ;
+                                        obj, secScanner.callbackHandler() ) ;
                      PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
                      generator.resetValue( obj, &mthContext ) ;
                   }
@@ -1027,11 +969,6 @@ namespace engine
       {
          _mbContext->pause() ;
       }
-      if ( callback )
-      {
-         SDB_OSS_DEL callback ;
-      }
-
       PD_TRACE_EXITRC ( SDB__RTNCONTEXTDATA__PREPAREBYIXSCAN, rc );
       return rc ;
    error :

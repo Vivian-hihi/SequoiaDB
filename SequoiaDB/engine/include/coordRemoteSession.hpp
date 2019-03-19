@@ -73,7 +73,7 @@ namespace engine
    */
    class _coordSessionPropSite : public _rtnSessionProperty
    {
-      typedef std::map< UINT32, UINT64 >        MAP_GROUP_2_NODE ;
+      typedef ossPoolMap< UINT32, UINT64 >      MAP_GROUP_2_NODE ;
       typedef MAP_GROUP_2_NODE::iterator        MAP_GROUP_2_NODE_IT ;
 
       friend class _coordSessionPropMgr ;
@@ -111,8 +111,8 @@ namespace engine
    class _coordSessionPropMgr : public _IRemoteMgrHandle,
                                 public _rtnSessionProperty
    {
-      typedef map< UINT32, coordSessionPropSite >     MAP_TID_2_PROP ;
-      typedef MAP_TID_2_PROP::iterator                MAP_TID_2_PROP_IT ;
+      typedef ossPoolMap< UINT32, coordSessionPropSite >    MAP_TID_2_PROP ;
+      typedef MAP_TID_2_PROP::iterator                      MAP_TID_2_PROP_IT ;
 
       public:
          _coordSessionPropMgr() ;

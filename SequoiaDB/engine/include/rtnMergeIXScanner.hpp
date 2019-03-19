@@ -41,24 +41,12 @@
 #ifndef RTNMERGEIXSCANNER_HPP__
 #define RTNMERGEIXSCANNER_HPP__
 
-#include "core.hpp"
-#include "oss.hpp"
-#include "ixm.hpp"
-#include "rtnPredicate.hpp"
-#include "pmdEDU.hpp"
-#include "../bson/ordering.h"
-#include "../bson/oid.h"
-#include "dms.hpp"
-#include "monCB.hpp"
 #include "rtnIXScanner.hpp"
-#include "dmsStorageUnit.hpp"
-#include "dmsTransLockCallback.hpp"
 
+using namespace bson ;
 
 namespace engine
 {
-   class _rtnIXScanner;
-
 
    // Index merge scanner is used to merge results from different scanner.
    // For instance, we have a scanner to traverse on disk index trees; we
@@ -68,23 +56,66 @@ namespace engine
    // record including the data on disk and in memory. In this case, we can
    // instantiate the two scanner member to rtnDiskScanner and
    // rtnMemIXTreeScanner
-   class _rtnMergeIXScanner : public rtnIXScanner
+   class _rtnMergeIXScanner : public _rtnIXScanner
    {
-      private:
-      // indicate if the transaction need to wait for lock
-//      BOOLEAN           _transLockwait;
+   public:
+      _rtnMergeIXScanner( ixmIndexCB *pIndexCB,
+                          rtnPredicateList *predList,
+                          _dmsStorageUnit  *su,
+                          _pmdEDUCB        *cb,
+                          BOOLEAN indexCBOwnned = FALSE ) ;
+
+      virtual ~_rtnMergeIXScanner() ;
+
+      void     setSubScannerType( IXScannerType leftType,
+                                  IXScannerType rightType ) ;
+
+   /// Interface
+   public:
+      virtual INT32 init() ;
+      virtual void  setReadonly( BOOLEAN isReadonly ) ;
+   
+      virtual INT32 advance ( dmsRecordID &rid ) ;
+      virtual INT32 resumeScan( BOOLEAN *pIsCursorSame = NULL ) ;
+      virtual INT32 pauseScan() ;
+   
+      virtual void  setMonCtxCB( _monContextCB *monCtxCB ) ;
+   
+      virtual INT32 relocateRID( const BSONObj &keyObj,
+                                 const dmsRecordID &rid ) ;
+   
+      virtual BOOLEAN         isAvailable() const ;
+      virtual IXScannerType   getType() const ;
+      virtual IXScannerType   getCurScanType() const ;
+      virtual void            disableByType( IXScannerType type ) ;
+      virtual INT32           getLockModeByType( IXScannerType type ) const ;
+
+      virtual const BSONObj*  getCurKeyObj() const ;
+      virtual const dmsRecordID& getSavedRID () const { return _savedRID ; }
+      virtual const BSONObj*  getSavedObj () const { return &_savedObj ; }
+   
+      virtual INT32           isCursorSame( const BSONObj &saveObj,
+                                            const dmsRecordID &saveRID,
+                                            BOOLEAN &isSame ) ;
+
+   protected:
+      virtual INT32 relocateRID( BOOLEAN &found ) ;
+      virtual rtnPredicateListIterator*   getPredicateListInterator() ;
+
+   protected:
+      const BSONObj*       getSavedObjFromChild() const ;
+      const dmsRecordID&   getSavedRIDFromChild() const ;
+
+      INT32                _createScanner( IXScannerType type,
+                                           _rtnIXScanner *&pScanner ) ;
+
+   private:
 
       // flag indicating if the last index used was from left scanner
-      BOOLEAN           _wasFromLeft;
-      BOOLEAN           _firstRun;
+      INT32                   _fromDir ;
 
-      INT32             _direction ;
-      Ordering          _order ;
-
-      dmsRecordID       _lrid;   // for memIXScan return
-      dmsRecordID       _rrid;   // for DiskScan return
-
-      scannerSharedInfo _sharedInfo;  // shared information for both scanners
+      dmsRecordID             _lrid ;   // for leftScan return
+      dmsRecordID             _rrid ;   // for rightScan return
 
       // After releas mbLatch, another session may change the index structure
       // So everytime before pause, we must store the current index key value
@@ -97,164 +128,22 @@ namespace engine
       // relocate key.
       // Because malloc is involved during the saving, we should only setup
       // the BSONObj during pause(), otherwise it would affect runtime perf.
-      BSONObj                   _savedObj;
-      dmsRecordID               _savedRID ;
+      BSONObj                 _savedObj ;
+      dmsRecordID             _savedRID ;
 
       // pointer to left and right scanners to merge
-      rtnIXScanner *    _leftIXScanner;
-      rtnIXScanner *    _rightIXScanner;
+      rtnIXScanner            *_leftIXScanner ;
+      rtnIXScanner            *_rightIXScanner ;
 
-      public:
-      _rtnMergeIXScanner( ixmIndexCB *indexCB,
-                          rtnPredicateList *predList,
-                          _dmsStorageUnit *su, _pmdEDUCB *cb,
-                          scannerSharedInfo * sharedInfo = NULL );
+      IXScannerType           _leftType ;
+      IXScannerType           _rightType ;
 
-      ~_rtnMergeIXScanner();
+      BOOLEAN                 _leftEnabled ;
+      BOOLEAN                 _rightEnabled ;
 
-      void setIsReadOnly( BOOLEAN readOnly )
-      {
-         if ( _leftIXScanner )
-         {
-            _leftIXScanner->setIsReadOnly( readOnly );
-         }
-         if ( _rightIXScanner )
-         {
-            _rightIXScanner->setIsReadOnly( readOnly );
-         }
-      }
-
-      void setMergeScanner( IXScannerType ltype, IXScannerType rtype,
-                            ixmIndexCB *indexCB,
-                            rtnPredicateList *predList,
-                            dmsStorageUnit *su, pmdEDUCB *cb );
-
-      rtnIXScanner * left()
-      {
-         return _leftIXScanner;
-      }
-
-      rtnIXScanner * right()
-      {
-         return _rightIXScanner;
-      }
-
-      void setMonCtxCB ( monContextCB *monCtxCB )
-      {
-         if ( _leftIXScanner )
-         {
-            _leftIXScanner->setMonCtxCB( monCtxCB );
-         }
-         if ( _rightIXScanner )
-         {
-            _rightIXScanner->setMonCtxCB( monCtxCB );
-         }
-      }
-
-      const BSONObj * getSavedObj () const { return &_savedObj ; }
-
-      dmsRecordID getSavedRID () const { return _savedRID; }
-
-      const BSONObj * getSavedObjFromChild () const
-      {
-         return _wasFromLeft
-              ?  _leftIXScanner->getSavedObj()
-              :  _rightIXScanner->getSavedObj();
-      }
-
-      dmsRecordID getSavedRIDFromChild () const
-      {
-         return _wasFromLeft
-              ?  _leftIXScanner->getSavedRID()
-              :  _rightIXScanner->getSavedRID() ;
-      }
-
-      scannerSharedInfo * getSharedInfo()
-      {
-         return &_sharedInfo;
-      }
-
-      INT32 getDirection () const
-      {
-         return _direction;
-      }
-
-      const BSONObj* getCurKeyObj() const
-      {
-         SDB_ASSERT( _leftIXScanner && _rightIXScanner,
-                    " merge scanner is not setup properly " );
-         return  _wasFromLeft ? _leftIXScanner->getCurKeyObj() :
-                                _rightIXScanner->getCurKeyObj();
-      }
-
-      dmsExtentID getIdxLID() const
-      {
-         SDB_ASSERT( _leftIXScanner && _rightIXScanner,
-                    " merge scanner is not setup properly " );
-         // left and right should be built with the same indexCB, thus same LID
-         return _leftIXScanner->getIdxLID();
-      }
-
-      // This merges result from diskScanner and _memIXScanner
-      INT32 advance ( dmsRecordID &rid );
-      INT32 pauseScan(  );
-      INT32 resumeScan( );
-      // do not call these, it's defined and called in individual scanner
-      INT32 relocateRID ()
-      {
-         return SDB_SYS;
-      };
-
-      INT32 relocateRID ( const BSONObj &keyObj, const dmsRecordID &rid,
-                          const BOOLEAN resetWithIndexPos = FALSE )
-      {
-         return SDB_SYS;
-      };
-
-      const BOOLEAN initialized() const
-      {
-         BOOLEAN rc = FALSE;
-         if ( (_rightIXScanner && _rightIXScanner->initialized())  ||
-              (_leftIXScanner && _leftIXScanner->initialized()) )
-         {
-            rc = TRUE;
-         }
-         return rc;
-      }
-
-      dmsRecIDSet * getDupBuff()
-      {
-         return _sharedInfo.getDupBuf();
-      }
-
-      const MEMTREE_LATCH_MODE getMemtreeLatchMode()
-      {
-         return _leftIXScanner->getMemtreeLatchMode();
-      }
-
-      virtual const BOOLEAN wasFromMemTreeScan() const
-      {
-         return _wasFromLeft ? _leftIXScanner->wasFromMemTreeScan() 
-                             : _rightIXScanner->wasFromMemTreeScan() ; 
-      }
-
-      virtual INT32 isCursorSame( const BSONObj &saveObj,
-                                  const dmsRecordID &saveRID,
-                                  BOOLEAN &isSame )
-      {
-         return _wasFromLeft
-             ?  _leftIXScanner->isCursorSame( saveObj, saveRID, isSame )
-             :  _rightIXScanner->isCursorSame( saveObj, saveRID, isSame );
-      }
-
-      virtual void  removeDuplicatRID( const dmsRecordID &rid )
-      {
-         // do local remove inside merge Scanner
-         _sharedInfo.getDupBuf()->erase( rid ) ;
-      }
-
-   };
+   } ;
    typedef class _rtnMergeIXScanner rtnMergeIXScanner ;
 }
 
 #endif //RTNMERGEIXSCANNER_HPP__
+

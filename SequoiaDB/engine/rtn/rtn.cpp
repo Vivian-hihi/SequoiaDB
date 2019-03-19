@@ -42,7 +42,6 @@
 #include "pmdCB.hpp"
 #include "dmsStorageUnit.hpp"
 #include "dmsScanner.hpp"
-#include "rtnDiskIXScanner.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
@@ -1229,11 +1228,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNUNLOADALLCS ) ;
 
-      std::set<_monCollectionSpace> csList ;
+      MON_CS_LIST csList ;
 
       //dump all collectionspace
       dmsCB->dumpInfo( csList, TRUE ) ;
-      std::set<_monCollectionSpace>::const_iterator it = csList.begin() ;
+      MON_CS_LIST::const_iterator it = csList.begin() ;
       while ( it != csList.end() )
       {
          const _monCollectionSpace &cs = *it ;
@@ -1643,8 +1642,7 @@ namespace engine
                            dmsMBContext *mbContext,
                            pmdEDUCB *cb,
                            dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType,
-                           _dpsITransLockCallback * callback )
+                           DMS_ACCESS_TYPE accessType )
    {
       INT32 rc = SDB_OK ;
 
@@ -1657,9 +1655,10 @@ namespace engine
 
       mthMatchRuntime *matchRuntime = NULL ;
 
-      scannerFactory    f;
+      rtnScannerFactory    f ;
+      IXScannerType scanType = ( DPS_INVALID_TRANS_ID != cb->getTransID() ) ?
+                                 SCANNER_TYPE_MERGE : SCANNER_TYPE_DISK ;
       // delete and update should also use scanner properly
-      //rtnDiskIXScanner * scanner     = NULL ;
       _rtnIXScanner * scanner     = NULL ;
 
       // first shared lock to get metadata
@@ -1697,42 +1696,17 @@ namespace engine
          // get the matcher from plan instead of manually loading it
          matchRuntime = planRuntime->getMatchRuntime( TRUE ) ;
 
-         // allocate scanner, delete at end of the function
-         // as long as transaction is enabled, we must use merge scan
-         // otherwise initialize to to disk scanner.
-         if( ( DPS_INVALID_TRANS_ID != cb->getTransID() ) &&
-             ( TRUE == pmdGetOptionCB()->transactionOn() ) )
+         rc = f.createScanner( scanType, &indexCB, predList, su, cb, scanner ) ;
+         if ( rc )
          {
-            scanner = f.getScanner ( SCANNER_TYPE_MERGE, &indexCB, 
-                                     predList, su, cb ) ;
-            if ( !scanner )
-            {
-               PD_LOG ( PDERROR, "Unable to allocate memory for scanner" ) ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-            rtnMergeIXScanner * mergeScanner = (rtnMergeIXScanner *)scanner;
-            mergeScanner->setMergeScanner(
-                       SCANNER_TYPE_MEM_TREE, SCANNER_TYPE_DISK,
-                       &indexCB, predList, su, cb );
-         }
-         else
-         {
-            scanner = f.getScanner ( SCANNER_TYPE_DISK, &indexCB, 
-                                     predList, su, cb ) ;
-            if ( !scanner )
-            {
-               PD_LOG ( PDERROR, "Unable to allocate memory for scanner" ) ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
+            goto error ;
          }
       }
       mbContext->mbUnlock() ;
 
       *ppScanner = SDB_OSS_NEW dmsIXScanner( su->data(), mbContext,
                                              matchRuntime, scanner, TRUE,
-                                             accessType, -1, 0, 0, callback ) ;
+                                             accessType, -1, 0, 0 ) ;
       if ( !(*ppScanner) )
       {
          PD_LOG( PDERROR, "Unable to allocate memory for dms ixscanner" ) ;
@@ -1746,7 +1720,7 @@ namespace engine
    error :
       if ( scanner )
       {
-         SDB_OSS_DEL scanner ;
+         f.releaseScanner( scanner ) ;
       }
       mbContext->mbUnlock() ;
       goto done ;
@@ -1758,8 +1732,7 @@ namespace engine
                            dmsMBContext *mbContext,
                            pmdEDUCB *cb,
                            dmsScanner **ppScanner,
-                           DMS_ACCESS_TYPE accessType,
-                           _dpsITransLockCallback * callback )
+                           DMS_ACCESS_TYPE accessType )
    {
       INT32 rc                 = SDB_OK ;
       mthMatchRuntime *matchRuntime = planRuntime->getMatchRuntime() ;
@@ -1772,7 +1745,7 @@ namespace engine
 
       *ppScanner = SDB_OSS_NEW dmsTBScanner( su->data(), mbContext,
                                              matchRuntime, accessType,
-                                             -1, 0, 0, callback ) ;
+                                             -1, 0, 0 ) ;
       if ( !(*ppScanner) )
       {
          PD_LOG( PDERROR, "Unable to allocate memory for dms tbscanner" ) ;

@@ -79,8 +79,7 @@ namespace engine
       public:
          _dmsScanner ( _dmsStorageDataCommon *su, _dmsMBContext *context,
                        mthMatchRuntime *matchRuntime,
-                       DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
-                       _dpsITransLockCallback * callback = NULL );
+                       DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH ) ;
          virtual ~_dmsScanner () ;
 
          BOOLEAN  isReadOnly() const
@@ -88,13 +87,9 @@ namespace engine
             return SHARED == _mbLockType ? TRUE : FALSE ;
          }
 
-         void setupTransLockCallback( dmsRecordRW* recordRW );
+         virtual dmsTransLockCallback*    callbackHandler() = 0 ;
 
-         BOOLEAN isIdxChanged( dmsExtentID    lid,
-                               const BSONObj* value );
-
-         void setNeedWaitForLock( const BOOLEAN w ) { _waitLock = w; }
-         const BOOLEAN needWaitForLock() const { return _waitLock ; }
+         BOOLEAN needWaitForLock() const { return _waitLock ; }
 
       public:
          virtual INT32 advance ( dmsRecordID &recordID,
@@ -109,7 +104,7 @@ namespace engine
          mthMatchRuntime        *_matchRuntime ;
          DMS_ACCESS_TYPE         _accessType ;
          INT32                   _mbLockType ;
-         dmsTransLockCallback  *_callback ;
+
          INT32                   _transIsolation ;
          BOOLEAN                 _waitLock ;
          BOOLEAN                 _useRollbackSegment ;
@@ -131,9 +126,10 @@ namespace engine
                               DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                               INT64 maxRecords = -1,
                               INT64 skipNum = 0,
-                              INT32 flag = 0,
-                              _dpsITransLockCallback * callback = NULL ) ;
+                              INT32 flag = 0 ) ;
          virtual ~_dmsExtScannerBase () ;
+
+         virtual dmsTransLockCallback*       callbackHandler() ;
 
          const dmsExtent* curExtent () const { return _extent ; }
          dmsExtentID nextExtentID () const ;
@@ -166,11 +162,14 @@ namespace engine
          const dmsRecord      *_curRecordPtr ;
          dmsOffset            _next ;
          BOOLEAN              _firstRun ;
+         BOOLEAN              _hasLockedRecord ;
          dpsTransCB           *_pTransCB ;
          INT32                _recordLock ;
          BOOLEAN              _needUnLock ;
          BOOLEAN              _selectForUpdate ;
          _pmdEDUCB            *_cb ;
+
+         dmsTransLockCallback    _callback ;
    };
    typedef _dmsExtScannerBase dmsExtScannerBase ;
 
@@ -183,8 +182,7 @@ namespace engine
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                          INT64 maxRecords = -1,
                          INT64 skipNum = 0,
-                         INT32 flag = 0,
-                         _dpsITransLockCallback * callback = NULL ) ;
+                         INT32 flag = 0 ) ;
          virtual ~_dmsExtScanner() ;
 
       private:
@@ -252,9 +250,10 @@ namespace engine
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                          INT64 maxRecords = -1,
                          INT64 skipNum = 0,
-                         INT32 flag = 0,
-                         _dpsITransLockCallback * callback = NULL ) ;
+                         INT32 flag = 0  ) ;
          ~_dmsTBScanner () ;
+
+         virtual dmsTransLockCallback*    callbackHandler() ;
 
       public:
 
@@ -297,9 +296,10 @@ namespace engine
                             DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                             INT64 maxRecords = -1,
                             INT64 skipNum = 0,
-                            INT32 flag = 0,
-                            _dpsITransLockCallback * callback = NULL ) ;
+                            INT32 flag = 0 ) ;
          virtual ~_dmsIXSecScanner () ;
+
+         virtual dmsTransLockCallback*    callbackHandler() ;
 
          void  enableIndexBlockScan( const BSONObj &startKey,
                                      const BSONObj &endKey,
@@ -308,7 +308,6 @@ namespace engine
                                      INT32 direction ) ;
 
          void  enableCountMode() { _countOnly = TRUE ; }
-         void setMemTreeLatchMode() ;
          INT64 getMaxRecords() const { return _maxRecords ; }
          INT64 getSkipNum () const { return _skipNum ; }
          BOOLEAN eof () const { return _eof ; }
@@ -335,6 +334,7 @@ namespace engine
          dmsRecordRW          _recordRW ;
          const dmsRecord      *_curRecordPtr ;
          BOOLEAN              _firstRun ;
+         BOOLEAN              _hasLockedRecord ;
          dpsTransCB           *_pTransCB ;
          INT8                 _recordLock ;
          BOOLEAN              _needUnLock ;
@@ -343,6 +343,8 @@ namespace engine
          _rtnIXScanner        *_scanner ;
          INT64                _onceRestNum ;
          BOOLEAN              _eof ;
+
+         dmsTransLockCallback _callback ;
 
          BSONObj              _startKey ;
          BSONObj              _endKey ;
@@ -371,9 +373,10 @@ namespace engine
                          DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                          INT64 maxRecords = -1,
                          INT64 skipNum = 0,
-                         INT32 flag = 0,
-                         _dpsITransLockCallback * callback = NULL ) ;
+                         INT32 flag = 0 ) ;
          ~_dmsIXScanner () ;
+
+         virtual dmsTransLockCallback*    callbackHandler() ;
 
          _rtnIXScanner* getScanner () { return _scanner ; }
 
@@ -441,8 +444,7 @@ namespace engine
                                     DMS_ACCESS_TYPE accessType,
                                     INT64 maxRecords,
                                     INT64 skipNum,
-                                    INT32 flag,
-                                    _dpsITransLockCallback * callback = NULL ) ;
+                                    INT32 flag ) ;
    } ;
    typedef _dmsExtScannerFactory dmsExtScannerFactory ;
 

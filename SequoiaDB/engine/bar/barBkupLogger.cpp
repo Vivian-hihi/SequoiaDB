@@ -2399,13 +2399,13 @@ namespace engine
    INT32 _barRSBaseLogger::cleanDMSData ()
    {
       INT32 rc = SDB_OK ;
-      std::set<_monCollectionSpace> csList ;
+      MON_CS_LIST csList ;
 
       PD_LOG ( PDEVENT, "Clear dms data for restore" ) ;
 
       //dump all collectionspace
       _pDMSCB->dumpInfo( csList, TRUE ) ;
-      std::set<_monCollectionSpace>::const_iterator it = csList.begin() ;
+      MON_CS_LIST::const_iterator it = csList.begin() ;
       while ( it != csList.end() )
       {
          const _monCollectionSpace &cs = *it ;
