@@ -805,6 +805,7 @@ namespace engine
       _lockDMS    = FALSE ;
       _logicCSID  = DMS_INVALID_LOGICCSID ;
       _status     = RENAMECSPHASE_0 ;
+      _skipGetMore = FALSE ;
       ossMemset( _oldName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
       ossMemset( _newName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
    }
@@ -850,6 +851,7 @@ namespace engine
                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      INT32 rcNew = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS_OPEN ) ;
 
       /// check cs name
@@ -872,6 +874,20 @@ namespace engine
 
       /// test collection space exist
       rc = rtnTestCollectionSpaceCommand( pCSName, _pDmsCB ) ;
+
+      rcNew = rtnTestCollectionSpaceCommand( pNewCSName, _pDmsCB ) ;
+
+      if ( SDB_DMS_CS_NOTEXIST == rc && SDB_OK == rcNew )
+      {
+         // If old cs does not exist, but new cs already exists, then we just
+         // goto done, and skip get more stage.
+         _skipGetMore = TRUE ;
+         _isOpened = TRUE ;
+         rc = SDB_OK ;
+         PD_LOG( PDINFO, "Old cs[%s] does not exist, but new cs[%s] "
+                 "already exists, ignore error", pCSName, pNewCSName ) ;
+         goto done ;
+      }
       if ( SDB_DMS_CS_NOTEXIST == rc )
       {
          // Ignore collection space not exist, because it may be a cs of maincl.
@@ -882,15 +898,12 @@ namespace engine
          _isOpened = TRUE ;
          goto done ;
       }
-
-      rc = rtnTestCollectionSpaceCommand( pNewCSName, _pDmsCB ) ;
-      if ( SDB_OK == rc )
+      if ( SDB_OK == rcNew )
       {
          rc = SDB_DMS_CS_EXIST ;
-         PD_LOG( PDERROR,
-                 "Collection space[%s] already exists, rc: %d",
+         PD_LOG( PDERROR, "Collection space[%s] already exists, rc: %d",
                  pNewCSName, rc ) ;
-         goto done ;
+         goto error ;
       }
 
       /// lock
@@ -944,6 +957,13 @@ namespace engine
       vector< string >::iterator it ;
       ossPoolSet< string > mainCLs ;
       ossPoolSet< string >::iterator mainIter ;
+
+      if ( _skipGetMore )
+      {
+         _isOpened = FALSE ;
+         rc = SDB_DMS_EOC ;
+         goto done ;
+      }
 
       if ( !isOpened() )
       {
@@ -1123,6 +1143,7 @@ namespace engine
       _lockDMS       = FALSE ;
       _mbID          = DMS_INVALID_MBID ;
       _su            = NULL ;
+      _skipGetMore   = FALSE ;
       ossMemset( _clShortName, 0, sizeof( _clShortName ) ) ;
       ossMemset( _newCLShortName, 0, sizeof( _newCLShortName ) ) ;
       ossMemset( _clFullName, 0, sizeof( _clFullName ) ) ;
@@ -1151,6 +1172,7 @@ namespace engine
                                     _pmdEDUCB *cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
+      INT32 rcNew = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCTXRENAMECL_OPEN ) ;
 
       CHAR newCLFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
@@ -1190,22 +1212,32 @@ namespace engine
 
       /// test collection space exist
       rc = rtnTestCollectionCommand( _clFullName, _pDmsCB ) ;
-      if ( SDB_DMS_NOTEXIST == rc )
+
+      rcNew = rtnTestCollectionCommand( newCLFullName, _pDmsCB ) ;
+
+      if ( SDB_DMS_NOTEXIST == rc && SDB_OK == rcNew )
       {
-         PD_LOG( PDERROR,
-                 "Collection[%s] does not exists, rc: %d",
-                 _clFullName, rc ) ;
+         // If old cl does not exist, but new cl already exists,then we just
+         // goto done, and skip get more stage.
+         _skipGetMore = TRUE ;
+         _isOpened = TRUE ;
+         rc = SDB_OK ;
+         PD_LOG( PDINFO, "Old cl[%s] does not exist, but new cl[%s] "
+                 "already exists, ignore error", _clFullName, newCLFullName ) ;
          goto done ;
       }
-
-      rc = rtnTestCollectionSpaceCommand( newCLFullName, _pDmsCB ) ;
-      if ( SDB_OK == rc )
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Collection[%s] does not exist, rc: %d",
+                 _clFullName, rc ) ;
+         goto error ;
+      }
+      if ( SDB_OK == rcNew )
       {
          rc = SDB_DMS_EXIST ;
-         PD_LOG( PDERROR,
-                 "Collection[%s] already exists, rc: %d",
+         PD_LOG( PDERROR, "Collection[%s] already exists, rc: %d",
                  newCLFullName, rc ) ;
-         goto done ;
+         goto error ;
       }
 
       /// lock
@@ -1233,6 +1265,13 @@ namespace engine
       SDB_RTNCB * pRtnCB = pmdGetKRCB()->getRTNCB() ;
       clsCB * pClsCB = pmdGetKRCB()->getClsCB() ;
       CHAR mainCL[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { '\0' } ;
+
+      if ( _skipGetMore )
+      {
+         _isOpened = FALSE ;
+         rc = SDB_DMS_EOC ;
+         goto done ;
+      }
 
       if ( !isOpened() )
       {

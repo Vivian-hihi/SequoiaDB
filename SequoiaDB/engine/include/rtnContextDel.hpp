@@ -234,6 +234,7 @@ namespace engine
       UINT32               _logicCSID ;
       renameCSPhase        _status ;
       utilRenameLogger     _logger ;
+      BOOLEAN              _skipGetMore ;
    };
    typedef class _rtnContextRenameCS rtnContextRenameCS ;
 
@@ -278,6 +279,7 @@ namespace engine
       BOOLEAN              _lockDMS ;
       _dmsStorageUnit      *_su ;
       UINT16               _mbID ;
+      BOOLEAN              _skipGetMore ;
    };
    typedef class _rtnContextRenameCL rtnContextRenameCL ;
 
