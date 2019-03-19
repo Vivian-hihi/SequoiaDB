@@ -21,7 +21,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 
 /**
- * test content: 并发更新区域和使用区域
+ * test content: 相同区域并发创建对象
  * testlink-case: seqDB-17336
  * @author wangkexin
  * @Date 2019.01.29
