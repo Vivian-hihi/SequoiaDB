@@ -148,7 +148,7 @@ namespace engine
                             const dmsRecordID &rid,
                             const Ordering &order,
                             UINT16 &pos,
-                            INT32 &foundPos,
+                            INT32 &keyFoundPos,
                             BOOLEAN &sameFound ) const
    {
       INT32 rc = SDB_OK ;
@@ -1159,7 +1159,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__INSERT ) ;
 
-      INT32 foundPos = -1 ;
+      INT32 keyFoundPos = -1 ;
       BOOLEAN sameFound = FALSE ;
       UINT16 pos = 0 ;
       dmsExtentID ch = DMS_INVALID_EXTENT ;
@@ -1183,7 +1183,7 @@ namespace engine
 
    retry :
       // try to locate where the insert should happen
-      rc = find ( indexCB, key, rid, order, pos, foundPos, sameFound ) ;
+      rc = find ( indexCB, key, rid, order, pos, keyFoundPos, sameFound ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Error happened during find, rc = %d", rc ) ;
@@ -1206,9 +1206,9 @@ namespace engine
          rc = SDB_IXM_IDENTICAL_KEY ;
          goto error ;
       }
-      else if ( !dupAllowed && -1 != foundPos )
+      else if ( !dupAllowed && -1 != keyFoundPos )
       {
-         kn = getKeyNode( foundPos ) ;
+         kn = getKeyNode( keyFoundPos ) ;
          // if we find duplicate, let's check whether the key includes all
          // Undefined. If this is the case, it's a special case that user
          // doesn't define those keys, so we should allow it proceed ( which
@@ -1223,12 +1223,12 @@ namespace engine
 #ifdef _DEBUG
             PD_LOG ( PDWARNING, "Duplicate key is detected with rid(%d, %d), "
                      "page:%d, keynode:%d, insert rid:(%d, %d)",
-                     kn->_rid._extent, kn->_rid._offset, _me, foundPos,
+                     kn->_rid._extent, kn->_rid._offset, _me, keyFoundPos,
                      rid._extent, rid._offset ) ;
 #else
             PD_LOG ( PDINFO, "Duplicate key is detected with rid(%d, %d), "
                      "page:%d, keynode:%d, insert rid:(%d, %d)",
-                     kn->_rid._extent, kn->_rid._offset, _me, foundPos,
+                     kn->_rid._extent, kn->_rid._offset, _me, keyFoundPos,
                      rid._extent, rid._offset ) ;            
 #endif
             rc = SDB_IXM_DUP_KEY ;
@@ -1876,9 +1876,9 @@ namespace engine
       SDB_ASSERT ( 1 == direction || -1 == direction, "Invalid direction" ) ;
       UINT16 pos = 0 ;
       dmsExtentID childExtent = DMS_INVALID_EXTENT ;
-      INT32 foundPos = -1 ;
+      INT32 keyFoundPos = -1 ;
 
-      rc = find ( indexCB, key, rid, order, pos, foundPos, found ) ;
+      rc = find ( indexCB, key, rid, order, pos, keyFoundPos, found ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to find in locate" ) ;

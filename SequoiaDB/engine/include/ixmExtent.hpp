@@ -376,7 +376,7 @@ namespace engine
                    const dmsRecordID &rid,
                    const Ordering &order,
                    UINT16 &pos,
-                   INT32 &foundPos,
+                   INT32 &keyFoundPos,
                    BOOLEAN &sameFound ) const ;
 
       INT32 locate ( const BSONObj &key, const dmsRecordID &rid,
