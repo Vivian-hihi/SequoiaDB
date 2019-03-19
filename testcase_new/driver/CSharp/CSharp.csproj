@@ -195,6 +195,9 @@
     <Compile Include="Bson\TestBsonInt14642.cs" />
     <Compile Include="Bson\TestBsonInt6414643.cs" />
     <Compile Include="Bson\TestBsonObjectId14614.cs" />
+    <Compile Include="Bson\TestBsonArray14638.cs" />
+    <Compile Include="Bson\TestBsonBinaryData14611.cs" />
+    <Compile Include="Bson\TestObjectId14648.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
