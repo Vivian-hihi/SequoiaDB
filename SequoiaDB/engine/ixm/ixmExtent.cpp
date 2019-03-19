@@ -148,13 +148,13 @@ namespace engine
                             const dmsRecordID &rid,
                             const Ordering &order,
                             UINT16 &pos,
-                            BOOLEAN &keyFound,
+                            INT32 &foundPos,
                             BOOLEAN &sameFound ) const
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_FIND ) ;
 
-      keyFound = FALSE ;
+      foundPos = -1 ;
       sameFound = FALSE ;
 
       // use binary search, start from 0 and totalKeyNodeNum-1
@@ -187,7 +187,7 @@ namespace engine
          // duplicate first
          if ( 0 == result )
          {
-            keyFound = TRUE ;
+            foundPos = middle ;
             const ixmKeyNode *M = getKeyNode( middle ) ;
             // let's continue compare the RID
             result = rid.compare( M->_rid ) ;
@@ -1159,7 +1159,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__INSERT ) ;
 
-      BOOLEAN keyFound = FALSE ;
+      INT32 foundPos = -1 ;
       BOOLEAN sameFound = FALSE ;
       UINT16 pos = 0 ;
       dmsExtentID ch = DMS_INVALID_EXTENT ;
@@ -1183,16 +1183,16 @@ namespace engine
 
    retry :
       // try to locate where the insert should happen
-      rc = find ( indexCB, key, rid, order, pos, keyFound, sameFound ) ;
+      rc = find ( indexCB, key, rid, order, pos, foundPos, sameFound ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Error happened during find, rc = %d", rc ) ;
          goto error ;
       }
-      kn = getKeyNode( pos ) ;
 
       if ( sameFound )
       {
+         kn = getKeyNode( pos ) ;
          if ( kn->isUnused() )
          {
             rc = SDB_SYS ;
@@ -1206,29 +1206,30 @@ namespace engine
          rc = SDB_IXM_IDENTICAL_KEY ;
          goto error ;
       }
-      else if ( !dupAllowed && keyFound && kn->isUsed() )
+      else if ( !dupAllowed && -1 != foundPos )
       {
+         kn = getKeyNode( foundPos ) ;
          // if we find duplicate, let's check whether the key includes all
          // Undefined. If this is the case, it's a special case that user
          // doesn't define those keys, so we should allow it proceed ( which
          // may violate unique definition ). If we restricted this behavior,
          // user cannot insert records that does not contains the keys twice,
          // which is very violating "schemaless"
-         if ( indexCB->enforced() || !key.isUndefined () )
+         if ( kn->isUsed() && indexCB->enforced() || !key.isUndefined () )
          {
             // this error only returned when dupAllowed == FALSE
             // this error represent duplicate key is not allowed and
             // duplicate key is detected
-            PD_LOG ( PDINFO, "Duplicate key is detected" ) ;
 #ifdef _DEBUG
-            {
-               BOOLEAN e = indexCB->enforced();
-               BOOLEAN u = key.isUndefined () ;
-               PD_LOG ( PDERROR, "Page[%d]'s key node[%d] should NOT be used,"
-                        "kn:(%d, %d), enforced=%d, undefined=%d, rid=(%d, %d)",
-                        _me, pos, kn->_rid._extent, kn->_rid._offset, e, u,
-                        rid._extent, rid._offset ) ;
-            }
+            PD_LOG ( PDWARNING, "Duplicate key is detected with rid(%d, %d), "
+                     "page:%d, keynode:%d, insert rid:(%d, %d)",
+                     kn->_rid._extent, kn->_rid._offset, _me, foundPos,
+                     rid._extent, rid._offset ) ;
+#else
+            PD_LOG ( PDINFO, "Duplicate key is detected with rid(%d, %d), "
+                     "page:%d, keynode:%d, insert rid:(%d, %d)",
+                     kn->_rid._extent, kn->_rid._offset, _me, foundPos,
+                     rid._extent, rid._offset ) ;            
 #endif
             rc = SDB_IXM_DUP_KEY ;
             goto error ;
@@ -1875,9 +1876,9 @@ namespace engine
       SDB_ASSERT ( 1 == direction || -1 == direction, "Invalid direction" ) ;
       UINT16 pos = 0 ;
       dmsExtentID childExtent = DMS_INVALID_EXTENT ;
-      BOOLEAN keyFound = FALSE ;
+      INT32 foundPos = -1 ;
 
-      rc = find ( indexCB, key, rid, order, pos, keyFound, found ) ;
+      rc = find ( indexCB, key, rid, order, pos, foundPos, found ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to find in locate" ) ;

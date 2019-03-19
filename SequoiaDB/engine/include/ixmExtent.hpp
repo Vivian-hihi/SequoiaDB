@@ -49,7 +49,6 @@
 #include "pmdEDU.hpp"
 #include "dmsStorageBase.hpp"
 #include "dmsPageMap.hpp"
-#include "dpsTransVersionCtrl.hpp"
 
 using namespace bson ;
 
@@ -140,8 +139,6 @@ namespace engine
    */
    class _ixmExtent : public SDBObject
    {
-   friend class preIdxTree;
-
    protected:
       const ixmExtentHead  *_extentHead ;
       dmsExtentID          _me ;
@@ -379,7 +376,7 @@ namespace engine
                    const dmsRecordID &rid,
                    const Ordering &order,
                    UINT16 &pos,
-                   BOOLEAN &keyFound,
+                   INT32 &foundPos,
                    BOOLEAN &sameFound ) const ;
 
       INT32 locate ( const BSONObj &key, const dmsRecordID &rid,
