@@ -187,20 +187,21 @@ namespace engine
 
 
    // get intent lock mode
-   static DPS_TRANSLOCK_TYPE _intentLockMatrix[DPS_TRANSLOCK_MAX] =
+   static DPS_TRANSLOCK_TYPE _intentLockMatrix[DPS_TRANSLOCK_MAX+1] =
    {
       DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_IS
       DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_IX
       DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_S
       DPS_TRANSLOCK_IS,  // <-- DPS_TRANSLOCK_U
-      DPS_TRANSLOCK_IX   // <-- DPS_TRANSLOCK_X
+      DPS_TRANSLOCK_IX,   // <-- DPS_TRANSLOCK_X
+      DPS_TRANSLOCK_MAX
    };
    OSS_INLINE DPS_TRANSLOCK_TYPE dpsIntentLockMode
    (
       const DPS_TRANSLOCK_TYPE request
    )
    {
-      SDB_ASSERT( ( request < DPS_TRANSLOCK_MAX ), "Invalid argument" ) ;
+      SDB_ASSERT( ( request < (DPS_TRANSLOCK_MAX + 1) ), "Invalid argument" ) ;
       return ( _intentLockMatrix[request] ) ;
    }
 

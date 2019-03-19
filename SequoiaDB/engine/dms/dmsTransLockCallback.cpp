@@ -459,11 +459,12 @@ namespace engine
    // from the in-memory index tree. All information were kept in lrbHdr->oldVer
    // The latching protocal has to be:
    // 1. LRB hash bkt latch must be held(X) to tranverse/update lrbHdrs/LRBs
-   // 2. preIdxTree latch must be held in X to insert/delete node in the tree
+   // 2. preIdxTree latch must be held in X to insert/delete node in the tree,
    //    oldVersionCB(_oldVersionCBLatch) need to be held in S before
    //    accessing individual index tree.
-   // 3. Request preIdxTree latch while holding LRB hash bkt latch is OK,
-   //    But reverse order is forbidden.
+   // 3. Request preIdxTree latch while holding LRB hash bkt latch is forbidden,
+   //    But reverse order is OK. Note that the scanner will hold tree latch 
+   //    and acquire lock.
    //
    // Input:
    //    lockId: lock id to operate on

@@ -151,6 +151,8 @@ namespace engine
                                    _pmdEDUCB *cb,
                                    _mthMatchTreeContext *mhtContext = NULL) = 0 ;
          void _checkMaxRecordsNum( _mthRecordGenerator &generator ) ;
+         void acquireCSCLLock( ) ;
+         void releaseCSCLLock( ) ;
 
       protected:
          INT64                _maxRecords ;
@@ -166,6 +168,7 @@ namespace engine
          dpsTransCB           *_pTransCB ;
          INT32                _recordLock ;
          BOOLEAN              _needUnLock ;
+         BOOLEAN              _CSCLLockHeld ;
          BOOLEAN              _selectForUpdate ;
          _pmdEDUCB            *_cb ;
 
@@ -326,6 +329,8 @@ namespace engine
          dmsRecordID* _getStartRID () ;
          dmsRecordID* _getEndRID () ;
          void _updateMaxRecordsNum( _mthRecordGenerator &generator ) ;
+         void  acquireCSCLLock( ) ;
+         void  releaseCSCLLock( ) ;
 
       private:
          INT64                _maxRecords ;
@@ -356,6 +361,7 @@ namespace engine
          BOOLEAN              _includeStartKey ;
          BOOLEAN              _includeEndKey ;
          BOOLEAN              _countOnly ;
+         BOOLEAN              _CSCLLockHeld ;
    } ;
    typedef _dmsIXSecScanner dmsIXSecScanner ;
 

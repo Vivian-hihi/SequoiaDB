@@ -1499,6 +1499,12 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_OLDVERSIONCB_DELIDXTREE );
 
+#if SDB_INTERNAL_DEBUG
+      PD_LOG( PDDEBUG, "Going to delete in memory Index tree for (%d,%d,%d)",
+              gid._csID,
+              gid._clID,
+              gid._idxLID );
+#endif
       if ( !hasLock )
       {
          latchX() ;
@@ -1514,6 +1520,7 @@ namespace engine
       if ( !hasLock )
       {
          releaseX() ;
+
       }
 
       if ( treePtr.get() )

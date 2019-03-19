@@ -125,6 +125,7 @@ namespace engine
       _recordLock          = DPS_TRANSLOCK_MAX ;
       _needUnLock          = FALSE ;
       _selectForUpdate     = FALSE ;
+      _CSCLLockHeld        = FALSE ;
       _cb                  = NULL ;
 
       if ( OSS_BIT_TEST( flag, FLG_QUERY_FOR_UPDATE ) )
@@ -145,6 +146,8 @@ namespace engine
                                       &_curRID, &_callback ) ;
          _hasLockedRecord = FALSE ;
       }
+
+      releaseCSCLLock() ;
    }
 
    dmsTransLockCallback* _dmsExtScannerBase::callbackHandler()
@@ -167,6 +170,7 @@ namespace engine
            DMS_INVALID_EXTENT != nextExtentID() )
       {
          _curRID._extent = nextExtentID() ;
+         releaseCSCLLock() ;
          _firstRun = TRUE ;
          return SDB_OK ;
       }
@@ -241,8 +245,70 @@ namespace engine
                                       &_curRID, &_callback ) ;
          _hasLockedRecord = FALSE ;
       }
+      // release CSCL lock if held
+      releaseCSCLLock() ;
+
       _next = DMS_INVALID_OFFSET ;
       _curRID._offset = DMS_INVALID_OFFSET ;
+   }
+
+   void  _dmsExtScannerBase::acquireCSCLLock( ) 
+   {
+      INT32 rc = SDB_OK ;
+      if ( !_CSCLLockHeld )
+      {
+         dmsTBTransContext tbTxContext( _context, _accessType ) ;
+         dpsTransRetInfo   lockConflict ;
+
+         if ( DPS_TRANSLOCK_IS == dpsIntentLockMode( _recordLock ) ) 
+         {
+            rc = _pTransCB->transLockGetIS( _cb, _pSu->logicalID(),
+                                            _context->mbID(),
+                                            & tbTxContext, &lockConflict ) ;
+         }
+         else if ( DPS_TRANSLOCK_IX == dpsIntentLockMode( _recordLock ) )
+         {
+            rc = _pTransCB->transLockGetIX( _cb, _pSu->logicalID(),
+                                            _context->mbID(),
+                                             & tbTxContext, &lockConflict ) ;
+         }
+         else
+         {
+            goto done ;
+         }
+
+         // this is performance improvement, failed to get lock should not 
+         // fail the operation
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDWARNING,
+                     "Failed to get CS/CL lock, rc: %d"OSS_NEWLINE
+                     "Conflict ( representative ):"OSS_NEWLINE
+                     "   EDUID:  %llu"OSS_NEWLINE
+                     "   LockId: %s"OSS_NEWLINE
+                     "   Mode:   %s"OSS_NEWLINE, 
+                     rc,
+                     lockConflict._eduID,
+                     lockConflict._lockID.toString().c_str(), 
+                     lockModeToString( lockConflict._lockType ) ) ;
+         }
+         else
+         {
+            _CSCLLockHeld = TRUE ;
+         }
+      }
+   done:
+      return ; 
+   }
+
+   void   _dmsExtScannerBase::releaseCSCLLock( ) 
+   {
+      if ( _CSCLLockHeld )
+      {
+         _pTransCB->transLockRelease( _cb, _pSu->logicalID(), 
+                                      _context->mbID() );
+         _CSCLLockHeld = FALSE ;
+      }
    }
 
    _dmsExtScanner::_dmsExtScanner( dmsStorageDataCommon *su,
@@ -387,6 +453,12 @@ namespace engine
       _cb   = cb ;
       _next = _extent->_firstRecordOffset ;
 
+      // As a performance improvement, we are going to acquire the CS and 
+      // CL lock right in the beginning to avoid extra performance overhead
+      // to acquire these locks when acquiring record lock in each step
+      // We release and require the lock during pauseScan/resumeScan
+      acquireCSCLLock() ;
+
       // unset first run
       _firstRun = FALSE ;
 
@@ -396,6 +468,7 @@ namespace engine
    error:
       goto done ;
    }
+
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEXTSCAN__FETCHNEXT, "_dmsExtScanner::_fetchNext" )
    INT32 _dmsExtScanner::_fetchNext( dmsRecordID &recordID,
@@ -693,6 +766,8 @@ namespace engine
                                       &_curRID, &_callback ) ;
          _hasLockedRecord = FALSE ;
       }
+      releaseCSCLLock() ;
+
       recordID.reset() ;
       recordDataPtr = 0 ;
       generator.setDataPtr( recordDataPtr ) ;
@@ -1123,6 +1198,7 @@ namespace engine
    {
       _extScanner->_firstRun = TRUE ;
       _extScanner->_curRID._extent = _curExtentID ;
+      _extScanner->releaseCSCLLock() ;
    }
 
    INT32 _dmsTBScanner::_getExtScanner()
@@ -1235,6 +1311,7 @@ namespace engine
       _includeEndKey       = FALSE ;
       _blockScanDir        = 1 ;
       _countOnly           = FALSE ;
+      _CSCLLockHeld        = FALSE ;
 
       if ( OSS_BIT_TEST( flag, FLG_QUERY_FOR_UPDATE ) )
       {
@@ -1252,6 +1329,8 @@ namespace engine
                                       &_curRID, &_callback ) ;
          _hasLockedRecord = FALSE ;
       }
+
+      releaseCSCLLock() ;
 
       _scanner    = NULL ;
    }
@@ -1331,6 +1410,67 @@ namespace engine
             }
          }
       }
+   }
+
+   void _dmsIXSecScanner::acquireCSCLLock( ) 
+   {
+      INT32 rc = SDB_OK ;
+      if ( !_CSCLLockHeld )
+      {
+         dpsTransRetInfo   lockConflict ;
+         dmsIXTransContext ixTxContext( _context, _accessType,
+                                        _scanner ) ;
+
+         if ( DPS_TRANSLOCK_IS == dpsIntentLockMode( _recordLock ) ) 
+         {
+            rc = _pTransCB->transLockGetIS( _cb, _pSu->logicalID(),
+                                            _context->mbID(),
+                                            & ixTxContext, &lockConflict ) ;
+         }
+         else if ( DPS_TRANSLOCK_IX == dpsIntentLockMode( _recordLock ) )
+         {
+            rc = _pTransCB->transLockGetIX( _cb, _pSu->logicalID(),
+                                            _context->mbID(),
+                                             & ixTxContext, &lockConflict ) ;
+         }
+         else
+         {
+            goto done ;
+         }
+
+         // this is performance improvement, failed to get lock should not 
+         // fail the operation
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDWARNING,
+                      "Failed to get CS/CL lock, rc: %d"OSS_NEWLINE
+                      "Conflict ( representative ):"OSS_NEWLINE
+                      "   EDUID:  %llu"OSS_NEWLINE
+                      "   LockId: %s"OSS_NEWLINE
+                      "   Mode:   %s"OSS_NEWLINE, 
+                      rc,
+                      lockConflict._eduID,
+                      lockConflict._lockID.toString().c_str(), 
+                      lockModeToString( lockConflict._lockType ) ) ;
+         }
+         else
+         {
+            _CSCLLockHeld = TRUE ;
+         }
+      }
+   done:
+      return ; 
+   }
+
+   void  _dmsIXSecScanner::releaseCSCLLock( ) 
+   {
+      if ( _CSCLLockHeld )
+      {
+         _pTransCB->transLockRelease( _cb, _pSu->logicalID(), 
+                                      _context->mbID() ) ;
+         _CSCLLockHeld = FALSE ;
+      }
+
    }
 
    INT32 _dmsIXSecScanner::_firstInit( pmdEDUCB * cb )
@@ -1439,6 +1579,12 @@ namespace engine
       rc = _scanner->resumeScan() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resum ixscan, rc: %d", rc ) ;
       _cb   = cb ;
+
+      // As a performance improvement, we are going to acquire the CS and 
+      // CL lock right in the beginning to avoid extra performance overhead
+      // to acquire these locks when acquiring record lock in each step
+      // We release and require the lock during pauseScan/resumeScan
+      acquireCSCLLock() ;
 
       /// set callback info
       _callback.setBaseInfo( _pTransCB, cb ) ;
@@ -1904,6 +2050,8 @@ namespace engine
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rcTmp ) ;
             rc = rcTmp ;
          }
+         // release CS/CL lock when we are done
+         releaseCSCLLock() ;
       }
       goto error ;
 
@@ -1923,6 +2071,7 @@ namespace engine
                                       &_curRID, &_callback ) ;
          _hasLockedRecord = FALSE ;
       }
+      releaseCSCLLock() ;
       recordID.reset() ;
       recordDataPtr = 0 ;
       generator.setDataPtr( recordDataPtr ) ;
@@ -1948,6 +2097,7 @@ namespace engine
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
          }
       }
+      releaseCSCLLock() ;
       _curRID._offset = DMS_INVALID_OFFSET ;
    }
 
