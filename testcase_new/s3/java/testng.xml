@@ -27,14 +27,16 @@
                <package name="com.sequoias3.object.concurrent" />
                <package name="com.sequoias3.head" />
                <package name="com.sequoias3.user" />
-               <package name="com.sequoias3.region" />
-			   <package name="com.sequoias3.region.concurrent" />
+               <!--    <package name="com.sequoias3.region" />
+			      <package name="com.sequoias3.region.concurrent" />-->
       </packages>
    </test> 
    
-   <!-- 上传大对象/对象数量较大的用例 -->
+   <!-- 串行运行用例 -->
    <test name="largeobjects">  
       <packages> 
+         <package name="com.sequoias3.region" />
+			<package name="com.sequoias3.region.concurrent" />
          <package name="com.sequoias3.object.serial" /> 
       </packages>
    </test>
