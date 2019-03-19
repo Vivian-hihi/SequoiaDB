@@ -1166,12 +1166,11 @@ namespace engine
       const ixmKeyNode *kn = NULL ;
 
       // sanity check
-      INT32 keySizeMax = OSS_MIN( _pageSize / ( IXM_KEY_NODE_NUM_MIN + 1 ),
-                                  IXM_KEY_SIZE_LIMIT ) ;
-      if ( key.dataSize() > keySizeMax )
+      INT32 keySize = key.dataSize() ;
+      if ( keySize > _pIndexSu->indexKeySizeMax() )
       {
-         PD_LOG ( PDERROR, "key size must be less than or equal to %d",
-                  keySizeMax ) ;
+         PD_LOG ( PDERROR, "key size[%d] must be less than or equal to [%d]",
+                  keySize, _pIndexSu->indexKeySizeMax() ) ;
          rc = SDB_IXM_KEY_TOO_LARGE ;
          goto error ;
       }

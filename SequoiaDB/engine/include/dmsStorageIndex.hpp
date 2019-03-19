@@ -141,6 +141,8 @@ namespace engine
          void     addStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
          void     decStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
 
+         INT32    indexKeySizeMax() { return _idxKeySizeMax ; }
+
       private:
          INT32    _createIndex( _dmsMBContext *context,
                                 const BSONObj &index,
@@ -228,6 +230,7 @@ namespace engine
       private:
          _dmsStorageData         *_pDataSu ;
          dmsPageMapUnit          _mbPageInfo ;
+         INT32                   _idxKeySizeMax ; // max size of index key value
 
       friend class _dmsIndexBuilder ;
    };

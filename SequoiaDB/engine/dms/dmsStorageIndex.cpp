@@ -70,6 +70,7 @@ namespace engine
       _pDataSu = (dmsStorageData *)pDataSu ;
 
       _pDataSu->_attach( this ) ;
+      _idxKeySizeMax = 0 ;
    }
 
    _dmsStorageIndex::~_dmsStorageIndex()
@@ -231,6 +232,8 @@ namespace engine
          _pDataSu->flushMME( isSyncDeep() ) ;
       }
 
+      _idxKeySizeMax = OSS_MIN( _pageSize / ( IXM_KEY_NODE_NUM_MIN + 1 ),
+                                IXM_KEY_SIZE_LIMIT ) ;
    done:
       return rc ;
    error:
@@ -1996,9 +1999,9 @@ namespace engine
 
             latchedIdxLid =
                        ((dmsTransLockCallback*)callback)->getLatcheidIdxLid();
-            memTreeLatchHeld = 
+            memTreeLatchHeld =
                        ((dmsTransLockCallback*)callback)->memTreeLatchHeld();
-            if ( indexCB->getLogicalID() != latchedIdxLid ) 
+            if ( indexCB->getLogicalID() != latchedIdxLid )
             {
                // if the latchedIdxLid is not same as the index we're updating
                // then we don't have the latch
@@ -2075,7 +2078,7 @@ namespace engine
                // Check if the new index value exist in the index memory tree
                // when index is unique
                if( unique && checkKey &&
-                   _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB, 
+                   _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB,
                                       !memTreeLatchHeld ) )
                {
                   // Internally will test X lock on the record to make sure key
@@ -2169,7 +2172,7 @@ namespace engine
             // Check if the new index value exist in the index memory tree
             // when index is unique
             if( unique && checkKey &&
-                _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB, 
+                _inMemDupKeyCheck( cb, memTree, *itnew, pTransCB,
                                    !memTreeLatchHeld ) )
             {
                // memTree->printTree();  Enable if need to debug
