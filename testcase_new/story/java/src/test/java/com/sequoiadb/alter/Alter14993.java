@@ -79,14 +79,17 @@ public class Alter14993 extends SdbTestBase {
         }
     }
     
-    public class AlterCL extends SdbThreadBase{//TODO:alter只执行一次撞到并发的概率大吗？？是否考虑和14992A的方式一样增加并发概率
+    public class AlterCL extends SdbThreadBase{
 
         @Override
         public void exec() throws Exception {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                BSONObject options = new BasicBSONObject("ShardingKey", new BasicBSONObject("b", -1));
-                cl.alterCollection(options);
+                for (int i = 0; i < 5; i++) {
+                    cl.alterCollection(new BasicBSONObject("ShardingKey", new BasicBSONObject("b", -1)));
+                    cl.alterCollection(new BasicBSONObject("ShardingKey", new BasicBSONObject("c", 1)));
+                }
+                cl.alterCollection(new BasicBSONObject("ShardingKey", new BasicBSONObject("b", -1)));
             }
         }
     }
@@ -95,12 +98,19 @@ public class Alter14993 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
+            BSONObject options1 = new BasicBSONObject();
+            options1.put("StrictDataMode", true);
+            options1.put("ReplSize", -1);
+            BSONObject options2 = new BasicBSONObject();
+            options2.put("StrictDataMode", false);
+            options2.put("ReplSize", 1);
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                BSONObject options = new BasicBSONObject();
-                options.put("StrictDataMode", true);
-                options.put("ReplSize", -1);
-                cl.setAttributes(options);
+                for (int i = 0; i < 5; i++) {
+                    cl.setAttributes(options1);
+                    cl.setAttributes(options2);
+                }
+                cl.setAttributes(options1);
             }
         }
     }

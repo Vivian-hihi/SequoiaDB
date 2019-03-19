@@ -39,8 +39,13 @@ public class Alter14992A extends SdbTestBase {
     
     @Test
     public void test(){
-        AlterCL1 alter1 = new AlterCL1();
-        AlterCL2 alter2 = new AlterCL2();
+        BSONObject alterOption1 = new BasicBSONObject("ShardingKey", new BasicBSONObject("b", -1));
+        BSONObject alterOption2 = new BasicBSONObject("ShardingKey", new BasicBSONObject("c", 1));
+        AlterCL alter1 = new AlterCL(alterOption1, alterOption2);
+        
+        BSONObject alterOption3 = new BasicBSONObject("ShardingKey", new BasicBSONObject("d", 1));
+        BSONObject alterOption4 = new BasicBSONObject("ShardingKey", new BasicBSONObject("e", -1));
+        AlterCL alter2 = new AlterCL(alterOption3, alterOption4);
 
         alter1.start();
         alter2.start();
@@ -64,35 +69,26 @@ public class Alter14992A extends SdbTestBase {
         }
     }
     
-    public class AlterCL1 extends SdbThreadBase{//TODO:AlterCL1和AlterCL2功能一样，可以修改成传参的方式减少代码，只需要一个AlterCL类即可
+    public class AlterCL extends SdbThreadBase{
 
+        private BSONObject attrOption1 = null;
+        private BSONObject attrOption2 = null;
+        
+        public AlterCL(BSONObject options1, BSONObject options2) {
+            this.attrOption1 = options1;
+            this.attrOption2 = options2;
+        }
+        
         @Override
         public void exec() throws Exception {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                BSONObject alterOption1 = new BasicBSONObject("ShardingKey", new BasicBSONObject("b", -1));
-                BSONObject alterOption2 = new BasicBSONObject("ShardingKey", new BasicBSONObject("c", 1));
                 for (int i = 0; i < 10; i++) {
-                    cl.alterCollection(alterOption1);
-                    cl.alterCollection(alterOption2);
+                    cl.alterCollection(attrOption1);
+                    cl.alterCollection(attrOption2);
                 }
             }
         }
     }
     
-    public class AlterCL2 extends SdbThreadBase{
-
-        @Override
-        public void exec() throws Exception {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                BSONObject alterOption1 = new BasicBSONObject("ShardingKey", new BasicBSONObject("d", 1));
-                BSONObject alterOption2 = new BasicBSONObject("ShardingKey", new BasicBSONObject("e", -1));
-                for (int i = 0; i < 10; i++) {
-                    cl.enableSharding(alterOption1);
-                    cl.enableSharding(alterOption2);
-                }
-            }
-        }
-    }
 }

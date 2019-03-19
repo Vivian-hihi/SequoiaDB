@@ -39,14 +39,10 @@ public class Alter14992B extends SdbTestBase {
     
     @Test
     public void test(){
-        AlterCL1 alter1 = new AlterCL1();
-        AlterCL2 alter2 = new AlterCL2();
-
-        alter1.start();
-        alter2.start();
+        AlterCL alter = new AlterCL();
+        alter.start(10);
         
-        Assert.assertTrue(alter1.isSuccess(), alter1.getErrorMsg());
-        Assert.assertTrue(alter2.isSuccess(), alter2.getErrorMsg());
+        Assert.assertTrue(alter.isSuccess(), alter.getErrorMsg());
         
         DBCursor snap = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, new BasicBSONObject("Name", csName + "." + clName), null, null);
         BSONObject clOption = snap.getNext();
@@ -66,19 +62,7 @@ public class Alter14992B extends SdbTestBase {
         }
     }
     
-    public class AlterCL1 extends SdbThreadBase{//TODO:AlterCL1和AlterCL2一样，只需要一个AlterCL类即可
-
-        @Override
-        public void exec() throws Exception {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                BSONObject alterOption = new BasicBSONObject("CompressionType", "lzw");
-                cl.alterCollection(alterOption);
-            }
-        }
-    }
-    
-    public class AlterCL2 extends SdbThreadBase{
+    public class AlterCL extends SdbThreadBase{
 
         @Override
         public void exec() throws Exception {

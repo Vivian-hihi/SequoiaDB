@@ -3,7 +3,6 @@ package com.sequoiadb.alter;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -11,7 +10,6 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -26,16 +24,14 @@ public class Alter14996 extends SdbTestBase {
     private String csName = "cs_14996";
     private String clName = "cl_14996";
     
-    @BeforeClass
+    @BeforeClass(enabled = false)
     public void setUp(){
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
         sdb.createCollectionSpace(csName, new BasicBSONObject("PageSize", 4096));
     }
     
-    @Test
+    //TODO SEQUOIADBMAINSTREAM-4274
+    @Test(enabled = false)
     public void test(){
         AlterCS alterCS = new AlterCS();
         CreateCL createCL = new CreateCL();
@@ -70,7 +66,7 @@ public class Alter14996 extends SdbTestBase {
         }
     }
     
-    @AfterClass
+    @AfterClass(enabled = false)
     public void tearDown(){
         sdb.dropCollectionSpace(csName);
         if(sdb != null){

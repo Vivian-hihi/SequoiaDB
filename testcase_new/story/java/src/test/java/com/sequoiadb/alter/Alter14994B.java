@@ -25,6 +25,7 @@ public class Alter14994B extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String csName = "cs_14994B";
     private String clName = "cl_14994B";
+    private int newPageSize = 16384;
     
     @BeforeClass
     public void setUp(){
@@ -37,20 +38,16 @@ public class Alter14994B extends SdbTestBase {
     
     @Test
     public void test(){
-        SetAttributes1 setAttributes1 = new SetAttributes1();
-        SetAttributes2 setAttributes2 = new SetAttributes2();
-
-        setAttributes1.start();
-        setAttributes2.start();
+        SetAttributes setAttributes = new SetAttributes();
+        setAttributes.start(10);
         
-        Assert.assertTrue(setAttributes1.isSuccess(), setAttributes1.getErrorMsg());
-        Assert.assertTrue(setAttributes2.isSuccess(), setAttributes2.getErrorMsg());
+        Assert.assertTrue(setAttributes.isSuccess(), setAttributes.getErrorMsg());
         
         sdb.getCollectionSpace(csName).createCollection(clName);
         
         DBCursor snapCur = sdb.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, new BasicBSONObject("Name", csName), null, null);
         BSONObject csInfo = snapCur.getNext();
-        Assert.assertEquals(csInfo.get("PageSize"), 16384, "check cs PageSize");//TODO：多处用到的数值建议用变量存储
+        Assert.assertEquals(csInfo.get("PageSize"), newPageSize, "check cs PageSize");
         snapCur.close();
     }
     
@@ -62,30 +59,18 @@ public class Alter14994B extends SdbTestBase {
         }
     }
     
-    public class SetAttributes1 extends SdbThreadBase{//TODO:SetAttributes1和SetAttributes2线程类的代码一样，建议使用一份
+    public class SetAttributes extends SdbThreadBase{
 
         @Override
         public void exec() throws Exception {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
                 CollectionSpace cs = db.getCollectionSpace(csName);
                 BSONObject options = new BasicBSONObject();
-                options.put("PageSize", 16384);
+                options.put("PageSize", newPageSize);
                 cs.setAttributes(options);
             }
         }
     }
     
-    public class SetAttributes2 extends SdbThreadBase{
-        
-        @Override
-        public void exec() throws Exception {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
-                CollectionSpace cs = db.getCollectionSpace(csName);
-                BSONObject options = new BasicBSONObject();
-                options.put("PageSize", 16384);
-                cs.setAttributes(options);
-            }
-        }
-    }
 }
 

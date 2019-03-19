@@ -58,11 +58,13 @@ public class Alter14997A extends SdbTestBase {
         Assert.assertTrue(setGroups.isSuccess(), setGroups.getErrorMsg());
         Assert.assertTrue(setAttributes.isSuccess(), setAttributes.getErrorMsg());
         
-        DBCursor cur = sdb.listDomains(new BasicBSONObject("Name", domainName), null, null, null);//TODO:游标未关闭
+        DBCursor cur = sdb.listDomains(new BasicBSONObject("Name", domainName), null, null, null);
         BSONObject domainInfo = cur.getNext();
         List<BSONObject> group = (List<BSONObject>) domainInfo.get("Groups");
         String actGroupName = (String) group.get(0).get("GroupName");
         Assert.assertTrue(actGroupName.equals(groupNames.get(1))||actGroupName.equals(groupNames.get(2)), "check domain group name");
+        
+        cur.close();
     }
     
     @AfterClass

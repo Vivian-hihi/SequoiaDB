@@ -28,6 +28,7 @@ public class Alter14997B extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String domainName = "domain14997B";
     List<String> groupNames = new ArrayList<String>();
+    private String[] expGroups = new String[1];
     
     @BeforeClass
     public void setUp(){
@@ -44,6 +45,8 @@ public class Alter14997B extends SdbTestBase {
         domain1RG[0] = groupNames.get(0);
         options.put("Groups", domain1RG);
         sdb.createDomain(domainName, options);
+        
+        expGroups[0] =  groupNames.get(1);
     }
     
     @SuppressWarnings("unchecked")
@@ -62,7 +65,7 @@ public class Alter14997B extends SdbTestBase {
         BSONObject domainInfo = cur.getNext();
         List<BSONObject> group = (List<BSONObject>) domainInfo.get("Groups");
         String actGroupName = (String) group.get(0).get("GroupName");
-        Assert.assertTrue(actGroupName.equals(groupNames.get(1)), "check domain group name");
+        Assert.assertEquals(actGroupName, expGroups[0], "check domain group name");
     }
     
     @AfterClass
@@ -79,11 +82,7 @@ public class Alter14997B extends SdbTestBase {
         public void exec() throws Exception {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
                 Domain domain = db.getDomain(domainName);
-                BSONObject options = new BasicBSONObject();//TODO:修改为相同的group时，options可以使用同一个，不需要再在两个线程类中分别定义
-                String[] domainRG = new String[1];
-                domainRG[0] = groupNames.get(1);
-                options.put("Groups", domainRG);
-                domain.setGroups(options);
+                domain.setGroups(new BasicBSONObject("Groups", expGroups));
             }
         }
     }
@@ -94,11 +93,7 @@ public class Alter14997B extends SdbTestBase {
         public void exec() throws Exception {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
                 Domain domain = db.getDomain(domainName);
-                BSONObject options = new BasicBSONObject();//TODO:修改为相同的group时，options可以使用同一个，不需要再在两个线程类中分别定义
-                String[] domainRG = new String[1];
-                domainRG[0] = groupNames.get(1);
-                options.put("Groups", domainRG);
-                domain.setAttributes(options);
+                domain.setAttributes(new BasicBSONObject("Groups", expGroups));
             }
         }
     }

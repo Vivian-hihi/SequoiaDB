@@ -38,7 +38,7 @@ public class Alter14995 extends SdbTestBase {
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         
         BSONObject options1 = new BasicBSONObject();
-        String[] domain1RG = new String[1];//TODO:domain需要使用数据组至少2个，建议在setup中增加数据组的判断是否符合要求，否则开发环境会跑失败
+        String[] domain1RG = new String[1];
         domain1RG[0] = groupNames.get(0);
         options1.put("Groups", domain1RG);
         sdb.createDomain(domainName, options1);
@@ -49,8 +49,8 @@ public class Alter14995 extends SdbTestBase {
     @Test
     public void test(){
         SetDomain setDomain = new SetDomain();
-        SetAttributes1 setAttributes1 = new SetAttributes1();
-        SetAttributes2 setAttributes2 = new SetAttributes2();
+        SetAttributes setAttributes1 = new SetAttributes(new BasicBSONObject("PageSize", 16384));
+        SetAttributes setAttributes2 = new SetAttributes(new BasicBSONObject("LobPageSize", 32768));
 
         setDomain.start();
         setAttributes1.start();
@@ -96,30 +96,20 @@ public class Alter14995 extends SdbTestBase {
         }
     }
     
-    public class SetAttributes1 extends SdbThreadBase{//TODO:SetAttributes1和SetAttributes2可以通过传参的方式合成一个线程类
+    public class SetAttributes extends SdbThreadBase{
+        private BSONObject attrOptions = null;
         
+        public SetAttributes(BSONObject options) {
+            this.attrOptions = options;
+        }
         @Override
         public void exec() throws Exception {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
                 CollectionSpace cs = db.getCollectionSpace(csName);
-                BSONObject options = new BasicBSONObject();
-                options.put("PageSize", 16384);
-                cs.setAttributes(options);
+                cs.setAttributes(attrOptions);
             }
         }
     }
     
-    public class SetAttributes2 extends SdbThreadBase{
-        
-        @Override
-        public void exec() throws Exception {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
-                CollectionSpace cs = db.getCollectionSpace(csName);
-                BSONObject options = new BasicBSONObject();
-                options.put("LobPageSize", 32768);
-                cs.setAttributes(options);
-            }
-        }
-    }
 }
 
