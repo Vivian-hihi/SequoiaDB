@@ -97,13 +97,13 @@
    指定实例名为myinst，该实例名映射相应的数据目录和日志路径，用户可以根据自己需要指定不同的实例名，实例默认端口号为3306。
 
    ```lang-javascript
-   $ /bin/sdb_sql_ctl addinst myinst -D database/3306/
+   $ bin/sdb_sql_ctl addinst myinst -D database/3306/
    ```
 
    若端口号3306被占用，用户可以使用-p参数指定实例端口号：
 
    ```lang-javascript
-   $ /bin/sdb_sql_ctl addinst myinst -D database/3316/ -p 3316
+   $ bin/sdb_sql_ctl addinst myinst -D database/3316/ -p 3316
    ```
 
    查看实例：
@@ -126,7 +126,7 @@
 4. 查看实例状态
 
    ```lang-javascript
-   $bin/sdb_mysql_ctl status
+   $ bin/sdb_mysql_ctl status
    INSTANCE   PID        SVCNAME    SQLDATA                                 SQLLOG            
    myinst     25174      3306       /opt/sequoiasql/mysql/database/3306/    /opt/sequoiasql/mysql/myinst.log        
    Total: 1; Run: 1

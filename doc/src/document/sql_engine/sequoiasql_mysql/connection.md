@@ -129,9 +129,15 @@
 > * 自动分区默认启动，启动时，在mysql上创建表将同步在SequoiaDB上创建对应的分区表（hash分区，包含所有分区组）。
 > * 自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
 
-配置参数有两种修改方式。
+配置参数有三种修改方式。
 
-   (1)修改安装路径下的配置文件my.cnf，在[mysqldN]下添加/更改对应配置项（N表示正整数）。示例：
+   (1)使用工具sdb_sql_ctl修改配置
+
+ ```lang-javascript
+ $ bin/sdb_sql_ctl chconf myinst --sdb-use-partition=OFF
+ ```
+
+   (2)修改实例数据目录下的配置文件auto.cnf，在[mysqld]下添加/更改对应配置项。示例：
 
  ```lang-javascript
  sequoiadb_use_partition=OFF
@@ -139,7 +145,7 @@
 
 > **Note:**修改配置文件后需要重新启动MySQL服务
 
-   (2)通过MySQL命令行修改，示例：
+   (3)通过MySQL命令行修改，示例：
 
  ```lang-javascript
  mysql> SET GLOBAL sequoiadb_use_partition=OFF;
