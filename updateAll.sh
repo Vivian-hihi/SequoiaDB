@@ -63,7 +63,7 @@ function installES()
 function compile()
 {
    sleep 1
-   compileCmd="scons -s"
+   compileCmd="scons -j4 -s"
    if [ $isRelease -eq 0 ] ; then
       compileCmd=${compileCmd}" --dd"
    fi
@@ -335,24 +335,53 @@ if [ "$buildStr" == "" ] ; then
 fi
 
 # run entry
-
+modules=()
+costs=()
 if [ $needUpdate -ne 0 ] ; then
+   start=$(date +%s)
    svnUp
+   end=$(date +%s)
+   modules+=("svn")
+   costs+=($(($end - $start)))
 fi
 
 if [ $needCompile -ne 0 ] ; then
-  compile 
+   start=$(date +%s)
+   compile
+   end=$(date +%s)
+   modules+=("compile")
+   costs+=($(($end - $start)))
 fi
 
 if [ $startSdb -ne 0 -o $needInstall -ne 0 ] ; then
+   start=$(date +%s)
    installSdb
+   end=$(date +%s)
+   modules+=("installSdb")
+   costs+=($(($end - $start)))
 fi
 
 if [ $needInstallES -ne 0 ];then
+   start=$(date +%s)
    installES
+   end=$(date +%s)
+   modules+=("installES")
+   costs+=($(($end - $start)))
 fi
 
 if [ $autoTest -ne 0 ] ; then
+   start=$(date +%s)
    autoTest
+   end=$(date +%s)
+   modules+=("autoTest")
+   costs+=($(($end - $start)))
 fi
+
+echo "COST SUMMARY: "
+i=0
+while (($i < ${#modules[@]}))
+do
+   echo -e "\t${modules[$i]}:${costs[$i]}s"
+   ((i=$i+1))
+done
 
