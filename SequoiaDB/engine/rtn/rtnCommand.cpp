@@ -834,13 +834,6 @@ namespace engine
             PD_LOG( PDWARNING, "Drop new created collection space[%s] failed, "
                     "rc: %d", csName.c_str(), rc ) ;
          }
-
-         /// create collection failed, so we need to clear cache
-         catAgent *pCatAgent = sdbGetShardCB()->getCataAgent() ;
-
-         pCatAgent->lock_w () ;
-         pCatAgent->clear ( collectionFullName() ) ;
-         pCatAgent->release_w () ;
       }
 
       PD_TRACE_EXIT( SDB__RTNCREATECL__CLEAN ) ;

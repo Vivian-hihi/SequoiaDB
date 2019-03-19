@@ -1575,6 +1575,14 @@ namespace engine
             rc = rtnRunCommand( pCommand, getServiceType(),
                                 _pEDUCB, _pDmsCB, _pRtnCB,
                                 _pDpsCB, w, &contextID ) ;
+
+            if ( rc && CMD_CREATE_COLLECTION == pCommand->type() )
+            {
+               /// create collection failed, so we need to clear cache
+               _pCatAgent->lock_w () ;
+               _pCatAgent->clear ( pCommand->collectionFullName() ) ;
+               _pCatAgent->release_w () ;
+            }
          }
          if ( SDB_OK != rc )
          {
