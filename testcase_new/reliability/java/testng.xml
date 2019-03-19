@@ -19,19 +19,7 @@
         <listener class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener"/>
     </listeners>
 
-   <test name="reliability_normal1" preserve-order="true">
-      <packages>
-         <package name="com.sequoiadb.metaopr.networkfail.domain" />
-      </packages>
-   </test>
-   <test name="reliability_normal2" preserve-order="true">
-      <classes>
-         <class name="com.sequoiadb.metaopr.killnode.CreateDomain2268" />
-         <class name="com.sequoiadb.metaopr.killnode.CreateDomain2269" />
-         <class name="com.sequoiadb.metaopr.killnode.CreateDomain2405" />
-      </classes>
-   </test>
-    <!--test name="reliability_normal" preserve-order="true">
+    <test name="reliability_normal" preserve-order="true">
         <packages>
             <package name="com.sequoiadb.subcl.brokennetwork" />
             <package name="com.sequoiadb.subcl.killnode"></package>
@@ -42,14 +30,14 @@
             <package name="com.sequoiadb.split.brokennetwork"/>
             <package name="com.sequoiadb.metaopr.killnode" />
             <package name="com.sequoiadb.metaopr.networkfail.cl" />
-            <package name="com.sequoiadb.metaopr.networkfail.cs" /-->
+            <package name="com.sequoiadb.metaopr.networkfail.cs" />
             <!-- 问题单3930暂时屏蔽用例 -->
             <!-- <package name="com.sequoiadb.metaopr.networkfail.domain" /> -->
-            <!--package name="com.sequoiadb.metaopr.noderestart" />
-            <package name="com.sequoiadb.autoincrement.killnode" /-->
+            <package name="com.sequoiadb.metaopr.noderestart" />
+            <package name="com.sequoiadb.autoincrement.killnode" />
             <!--lob用例先不跑，等代码检视后再跑。-->
             <!--<package name="com.sequoiadb.lob" />-->
-            <!--package name="com.sequoiadb.cappedCL.killnode" />
+            <package name="com.sequoiadb.cappedCL.killnode" />
             <package name="com.sequoiadb.cappedCL.restartnode" />
         </packages>
     </test>
@@ -66,6 +54,6 @@
          <package name="com.sequoiadb.fulltext.killnode" />
          <package name="com.sequoiadb.fulltext.restartnode" />
       </packages>    
-   </test-->
+   </test>
 </suite>
    

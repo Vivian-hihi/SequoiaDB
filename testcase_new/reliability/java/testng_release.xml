@@ -20,7 +20,7 @@
 		<listener class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener"/>
 	</listeners>
    
-	<!--test name="reliability" preserve-order="true">
+	<test name="reliability" preserve-order="true">
 		<packages>
 			<package name="com.sequoiadb.subcl.diskfull" />
 			<package name="com.sequoiadb.split.diskfull" />
@@ -28,7 +28,7 @@
 			<package name="com.sequoiadb.datasync.diskfull" />
 			<package name="com.sequoiadb.cappedCL.diskfull"/>
 		</packages>
-	</test-->
+	</test>
 
 </suite>
    
