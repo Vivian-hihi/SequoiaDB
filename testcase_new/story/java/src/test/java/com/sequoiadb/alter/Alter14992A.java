@@ -64,7 +64,7 @@ public class Alter14992A extends SdbTestBase {
         }
     }
     
-    public class AlterCL1 extends SdbThreadBase{
+    public class AlterCL1 extends SdbThreadBase{//TODO:AlterCL1和AlterCL2功能一样，可以修改成传参的方式减少代码，只需要一个AlterCL类即可
 
         @Override
         public void exec() throws Exception {

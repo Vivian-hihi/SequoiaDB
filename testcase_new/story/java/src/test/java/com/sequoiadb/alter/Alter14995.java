@@ -38,7 +38,7 @@ public class Alter14995 extends SdbTestBase {
         List<String> groupNames = CommLib.getDataGroupNames(sdb);
         
         BSONObject options1 = new BasicBSONObject();
-        String[] domain1RG = new String[1];
+        String[] domain1RG = new String[1];//TODO:domain需要使用数据组至少2个，建议在setup中增加数据组的判断是否符合要求，否则开发环境会跑失败
         domain1RG[0] = groupNames.get(0);
         options1.put("Groups", domain1RG);
         sdb.createDomain(domainName, options1);
@@ -96,7 +96,7 @@ public class Alter14995 extends SdbTestBase {
         }
     }
     
-    public class SetAttributes1 extends SdbThreadBase{
+    public class SetAttributes1 extends SdbThreadBase{//TODO:SetAttributes1和SetAttributes2可以通过传参的方式合成一个线程类
         
         @Override
         public void exec() throws Exception {

@@ -79,7 +79,7 @@ public class Alter14997B extends SdbTestBase {
         public void exec() throws Exception {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
                 Domain domain = db.getDomain(domainName);
-                BSONObject options = new BasicBSONObject();
+                BSONObject options = new BasicBSONObject();//TODO:修改为相同的group时，options可以使用同一个，不需要再在两个线程类中分别定义
                 String[] domainRG = new String[1];
                 domainRG[0] = groupNames.get(1);
                 options.put("Groups", domainRG);
@@ -94,7 +94,7 @@ public class Alter14997B extends SdbTestBase {
         public void exec() throws Exception {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
                 Domain domain = db.getDomain(domainName);
-                BSONObject options = new BasicBSONObject();
+                BSONObject options = new BasicBSONObject();//TODO:修改为相同的group时，options可以使用同一个，不需要再在两个线程类中分别定义
                 String[] domainRG = new String[1];
                 domainRG[0] = groupNames.get(1);
                 options.put("Groups", domainRG);

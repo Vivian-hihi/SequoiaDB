@@ -79,7 +79,7 @@ public class Alter14993 extends SdbTestBase {
         }
     }
     
-    public class AlterCL extends SdbThreadBase{
+    public class AlterCL extends SdbThreadBase{//TODO:alter只执行一次撞到并发的概率大吗？？是否考虑和14992A的方式一样增加并发概率
 
         @Override
         public void exec() throws Exception {

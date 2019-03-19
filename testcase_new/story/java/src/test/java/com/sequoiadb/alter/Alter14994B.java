@@ -50,7 +50,7 @@ public class Alter14994B extends SdbTestBase {
         
         DBCursor snapCur = sdb.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONSPACES, new BasicBSONObject("Name", csName), null, null);
         BSONObject csInfo = snapCur.getNext();
-        Assert.assertEquals(csInfo.get("PageSize"), 16384, "check cs PageSize");
+        Assert.assertEquals(csInfo.get("PageSize"), 16384, "check cs PageSize");//TODO：多处用到的数值建议用变量存储
         snapCur.close();
     }
     
@@ -62,7 +62,7 @@ public class Alter14994B extends SdbTestBase {
         }
     }
     
-    public class SetAttributes1 extends SdbThreadBase{
+    public class SetAttributes1 extends SdbThreadBase{//TODO:SetAttributes1和SetAttributes2线程类的代码一样，建议使用一份
 
         @Override
         public void exec() throws Exception {
