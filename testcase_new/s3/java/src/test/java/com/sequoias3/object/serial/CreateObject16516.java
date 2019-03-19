@@ -10,7 +10,6 @@ import java.util.Random;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
@@ -31,17 +30,6 @@ import com.sequoias3.testcommon.TestTools;
  * @version 1.00
  */
 public class CreateObject16516 extends S3TestBase {
-	@DataProvider(name = "sizeProvider")
-	public Object[][] generateFileSize() {
-		return new Object[][] {
-				// test a : 上传对象内容大小为1G
-				new Object[] { new BigInteger("1073741824")},
-				// test b : 上传对象内容大小为2G
-				new Object[] {new BigInteger("2147483648")},
-				// test c : 上传对象内容大小为10G
-				new Object[] {new BigInteger("10737418240")}
-		};
-	}
 	String bucketName = "bucket16516";
 	String keyName = "object16516";
 	private AmazonS3 s3Client = null;
@@ -57,8 +45,10 @@ public class CreateObject16516 extends S3TestBase {
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 	}
 
-	@Test(dataProvider = "sizeProvider")
-	public void testPutObject(BigInteger fileSize) throws Exception {
+	@Test
+	public void testPutObject() throws Exception {
+		//上传对象内容大小为2G
+		BigInteger fileSize = new BigInteger("2147483648");
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 		
 		TestTools.LocalFile.removeFile(localPath);
