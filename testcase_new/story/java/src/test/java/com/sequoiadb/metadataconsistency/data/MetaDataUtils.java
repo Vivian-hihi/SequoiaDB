@@ -408,6 +408,10 @@ public class MetaDataUtils extends SdbTestBase {
 					String groupName = groupInfo.getString("GroupName");
 					// get node address within the group
 					List<String> nodeAddrs = getNodeAddress(db, groupName);
+					if(nodeAddrs.size() <= 1){
+					    // testing for consistency requires more than two nodes
+					    Assert.fail("the number of nodes in the group is less than 2!");
+					}
 					// direct node and compare node's data
 					int failCnt = 0;
 					int maxCnt = 600;
