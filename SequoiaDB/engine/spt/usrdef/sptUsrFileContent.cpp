@@ -45,8 +45,6 @@ JS_DESTRUCT_FUNC_DEFINE( _sptUsrFileContent, destruct )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFileContent, getLength )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFileContent, toBase64Code )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFileContent, clear )
-JS_MEMBER_FUNC_DEFINE( _sptUsrFileContent, memberHelp )
-JS_STATIC_FUNC_DEFINE( _sptUsrFileContent, staticHelp )
 
 JS_BEGIN_MAPPING( _sptUsrFileContent, "FileContent" )
    JS_ADD_CONSTRUCT_FUNC( construct )
@@ -54,8 +52,6 @@ JS_BEGIN_MAPPING( _sptUsrFileContent, "FileContent" )
    JS_ADD_MEMBER_FUNC( "getLength", getLength )
    JS_ADD_MEMBER_FUNC( "toBase64Code", toBase64Code )
    JS_ADD_MEMBER_FUNC( "clear", clear )
-   JS_ADD_MEMBER_FUNC( "help", memberHelp )
-   JS_ADD_STATIC_FUNC( "help", staticHelp )
 JS_MAPPING_END()
 
    _sptUsrFileContent::_sptUsrFileContent()
@@ -148,29 +144,4 @@ JS_MAPPING_END()
       return SDB_OK ;
    }
 
-   INT32 _sptUsrFileContent::memberHelp( const _sptArguments &arg,
-                                         _sptReturnVal &rval,
-                                         bson::BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "FileContent member functions:" << endl
-         << "   toBase64Code()" << endl
-         << "   getLength()" << endl
-         << "   clear()" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
-
-   INT32 _sptUsrFileContent::staticHelp( const _sptArguments &arg,
-                                         _sptReturnVal &rval,
-                                         bson::BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "FileContent member functions:" << endl
-         << "   toBase64Code()" << endl
-         << "   getLength()" << endl
-         << "   clear()" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
 }

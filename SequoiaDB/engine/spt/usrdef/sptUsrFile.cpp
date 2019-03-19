@@ -65,7 +65,6 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrFile, writeContent )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, close )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, getInfo )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, toString )
-JS_MEMBER_FUNC_DEFINE( _sptUsrFile, memberHelp )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrFile, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrFile, destruct )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, remove )
@@ -75,7 +74,6 @@ JS_STATIC_FUNC_DEFINE( _sptUsrFile, move )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, mkdir )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, getFileObj )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, md5 )
-JS_STATIC_FUNC_DEFINE( _sptUsrFile, staticHelp )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, readFile )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, find )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, list )
@@ -100,7 +98,6 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_seek", seek, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_getInfo", getInfo, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_toString", toString, 0 )
-   JS_ADD_MEMBER_FUNC( "help", memberHelp )
    JS_ADD_STATIC_FUNC_WITHATTR( "_getFileObj", getFileObj, 0 )
    JS_ADD_STATIC_FUNC_WITHATTR( "_readFile", readFile, 0 )
    JS_ADD_STATIC_FUNC_WITHATTR( "_getPathType", getPathType, 0 )
@@ -121,7 +118,6 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_STATIC_FUNC( "md5", md5 )
    JS_ADD_STATIC_FUNC( "_getPermission", getPermission )
    JS_ADD_STATIC_FUNC( "getSize", getFileSize )
-   JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
 JS_MAPPING_END()
@@ -736,43 +732,6 @@ JS_MAPPING_END()
       return rc ;
    error:
       goto done ;
-   }
-
-   INT32 _sptUsrFile::memberHelp( const _sptArguments & arg,
-                                  _sptReturnVal & rval,
-                                  BSONObj & detail )
-   {
-      stringstream ss ;
-      ss << "File functions:" << endl
-         << "   read( [size] )" << endl
-         << "   write( content )" << endl
-         << "   readContent( [size] )" << endl
-         << "   writeContent( fileContent )"
-         << "   - fileContent: a FileContent obj" << endl
-         << "   readLine()" << endl
-         << "   seek( offset, [where] ) " << endl
-         << "   close()" << endl
-         << "   remove( filepath )" << endl
-         << "   exist( filepath )" << endl
-         << "   copy( src, dst, [replace], [mode] )" << endl
-         << "   move( src, dst )" << endl
-         << "   mkdir( name, [mode] )" << endl
-         << "   find( optionObj, [filterObj] )" << endl
-         << "   chmod( filename, mode, [recursive] )" << endl
-         << "   chown( filename, optionObj, [recursive] )" << endl
-         << "   chgrp( filename, groupname, [recursive] )" << endl
-         << "   setUmask( umask )" << endl
-         << "   getUmask( base )" << endl
-         << "   list( [optionObj], [filterObj] )" << endl
-         << "   isFile( pathname )" << endl
-         << "   isDir( pathname )" << endl
-         << "   isEmptyDir( dirName )" << endl
-         << "   stat( filename )" << endl
-         << "   md5( filename )" << endl
-         << "   getInfo()" << endl
-         << "   getSize( filename )" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
    }
 
    INT32 _sptUsrFile::remove( const _sptArguments &arg,
@@ -1572,46 +1531,4 @@ JS_MAPPING_END()
       goto done ;
    }
 
-   INT32 _sptUsrFile::staticHelp( const _sptArguments &arg,
-                                  _sptReturnVal &rval,
-                                  BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "Methods to access:" << endl ;
-      ss << " var file = new File( filename, [permission], [mode] )" << endl ;
-      ss << " var file = remoteObj.getFile()" << endl ;
-      ss << " var file = remoteObj.getFile( [filename], [permission], [mode] )" << endl ;
-      ss << "File functions:" << endl ;
-      ss << "   read( [size] )" << endl ;
-      ss << "   write( content )" << endl ;
-      ss << "   readContent( [size] )" << endl ;
-      ss << "   writeContent( fileContent )" << endl ;
-      ss << "   readLine()" << endl ;
-      ss << "   seek( offset, [where] ) " << endl ;
-      ss << "   close()" << endl ;
-      ss << " File.remove( filepath )" << endl ;
-      ss << " File.exist( filepath )" << endl ;
-      ss << " File.copy( src, dst, [replace], [mode] )" << endl ;
-      ss << " File.move( src, dst )" << endl ;
-      ss << " File.mkdir( name, [mode] )" << endl ;
-      ss << " File.find( optionObj, [filterObj] )" << endl ;
-#if defined (_LINUX)
-      ss << " File.chmod( filename, mode, [recursive] )" << endl ;
-      ss << " File.chown( filename, optionObj, [recursive] )" << endl ;
-      ss << " File.chgrp( filename, groupname, [recursive] )" << endl ;
-      ss << " File.setUmask( umask )" << endl ;
-      ss << " File.getUmask( base )" << endl ;
-#endif
-      ss << " File.list( [optionObj], [filterObj] )" << endl ;
-      ss << " File.isFile( pathname )" << endl ;
-      ss << " File.isDir( pathname )" << endl ;
-      ss << " File.isEmptyDir( dirName )" << endl ;
-      ss << " File.stat( filename )" << endl ;
-      ss << " File.md5( filename )" << endl ;
-      ss << " File.scp( srcFile, dstFile, [isReplace], [mode] )" << endl ;
-      ss << " File.getSize( filename )" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
 }
-

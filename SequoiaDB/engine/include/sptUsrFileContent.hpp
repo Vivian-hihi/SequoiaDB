@@ -67,14 +67,6 @@ namespace engine
                    _sptReturnVal &rval,
                    bson::BSONObj &detail ) ;
 
-      INT32 memberHelp( const _sptArguments &arg,
-                        _sptReturnVal &rval,
-                        bson::BSONObj &detail ) ;
-
-      static INT32 staticHelp( const _sptArguments &arg,
-                               _sptReturnVal &rval,
-                               bson::BSONObj &detail ) ;
-
       inline SINT64 getLength()
       {
          return _length ;

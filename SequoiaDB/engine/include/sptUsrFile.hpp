@@ -110,19 +110,11 @@ namespace engine
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
 
-      INT32 memberHelp( const _sptArguments &arg,
-                        _sptReturnVal &rval,
-                        bson::BSONObj &detail ) ;
-
       static INT32 readFile( const _sptArguments &arg,
                              _sptReturnVal &rval,
                              bson::BSONObj &detail ) ;
 
       static INT32 getFileObj( const _sptArguments &arg,
-                               _sptReturnVal &rval,
-                               bson::BSONObj &detail ) ;
-
-      static INT32 staticHelp( const _sptArguments &arg,
                                _sptReturnVal &rval,
                                bson::BSONObj &detail ) ;
 
