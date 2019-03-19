@@ -154,7 +154,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_FIND ) ;
 
-      foundPos = -1 ;
+      keyFoundPos = -1 ;
       sameFound = FALSE ;
 
       // use binary search, start from 0 and totalKeyNodeNum-1
@@ -187,7 +187,7 @@ namespace engine
          // duplicate first
          if ( 0 == result )
          {
-            foundPos = middle ;
+            keyFoundPos = middle ;
             const ixmKeyNode *M = getKeyNode( middle ) ;
             // let's continue compare the RID
             result = rid.compare( M->_rid ) ;
