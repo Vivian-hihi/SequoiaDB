@@ -4,78 +4,100 @@
 *@createDate:  2019.3.11
 *@testlinkCase: seqDB-15669
 **************************************/
-function main()//TODO: 用例有涉及2.8分支版本，请合入
+main();
+function main()
 {
-    var csName = CHANGEDPREFIX + "_cs15669" ;//TODO: "cs15669"，不需要加CHANGEDPREFIX，这个是之前不好的代码习惯，不用参考
-    var mainCL_Name = CHANGEDPREFIX + "_maincl15669" ;//TODO: 同上
-    var subCL_Name = CHANGEDPREFIX + "_subcl15669";//TODO: 同上
+    var csName = "cs15669" ;
+    var mainCL_Name = "maincl15669" ;
+    var subCL_Name = "subcl15669";
     var domainName = "domain15669";
     
     if(true == commIsStandalone( db ))
     {
-      println( "run mode is standalone");
+      println( "run mode is standalone.");
       return;
     }
     
-    //创建多个组
-    var groupsArray = commGetGroups(db, false, "", false, true, true );
+    //新创建6个组
+    var groupsArray = commGetGroups( db, false, "", true, true, true );
+    var dataRGNum = groupsArray.length;
+    if(dataRGNum < 3)
+    {
+      println( "at least three data groups.");
+      return;
+    }
     var hostName = groupsArray[1][1].HostName;
-    var dataGroupNames = createDataGroups(db, hostName, 10);//TODO: 只在3组3节点测，新增6个组，每组一个节点
+    var newDataRGNames = createDataGroups( db, hostName, 6 );
+
+    //将新建的6个组和环境中原有的3个（或3个以上）的组名一起存放在totalDataRGNames中
+    var totalDataRGNames = getDateRGNames( newDataRGNames, groupsArray );
     
-    println("start create domain.");//TODO: 打印信息很奇怪，测试点没有打印信息创建domain有，建议此处删除，在创建主子表打印
-    //创建Domain   //TODO: 方法名很明显的可以不用写批注
-    db.createDomain(domainName,dataGroupNames,{AutoSplit:true});
-    //创建cs      //TODO：同上，批注去掉
-    commCreateCS(db, csName, true, "", {Domain:domainName});
-    //创建主表    //TODO: 创建主子表放到一个另一个方法里面，main里面代码尽量简洁
-    var mainCLOption = { ShardingKey:{"a":1}, ShardingType:"range", IsMainCL:true};
-    var dbcl = commCreateCLByOption( db, csName, mainCL_Name, mainCLOption, true, true);
+    db.createDomain( domainName, totalDataRGNames, {AutoSplit:true} );
+    commCreateCS( db, csName, true, "", {Domain:domainName} );
     
-    //创建子表
+    createMainCL( csName, mainCL_Name );
+    println("start to create sub cl.");
     var subClOption = {ShardingKey:{"b":1}, ShardingType:"hash", AutoSplit:true, Partition:8, ReplSize:0};
     try
     {
-        db.getCS(csName).createCL(subCL_Name, subClOption);
-        throw buildException("createCL()",null,"create collection should fail", "createCL failed", "createCL success");
-        //TODO: throw "expect fail but actual success."，此处简单跑错就可以了，不需要调用buildException
-    }catch( e )//TODO: js里面规范：方法/大括号都需要换行
+        db.getCS( csName ).createCL( subCL_Name, subClOption );
+        throw buildException( "createCL()", null, "create collection should fail", "createCL failed", "createCL success" );
+    }catch( e )
     {
-        if( e!=-6 )//TODO: 比较值都用3个等号，"==="或"!=="   //TODO: 变量和等号前后空格
+        if( e!==-6 )
         {
-            throw buildException("createCL()",e ,"create collection should fail", '-6', e );
-            /* TODO: 括号/逗号前后空格统一，逗号后需要有空格，另外变量前后空格
-               TODO: buildException( 函数名（此处为main，在其他方法的话则使用实际对应的方法名）,...,
-                     操作（如create subCL）, ... )，上面信息跟方法对不上 */
+            throw buildException( "main()", e, "create subCL", '-6', e );
         }
     }
     
-    println("--test end.");
     //清除环境
     commDropCS( db, csName, true, "drop CS in the end" );
-    removeDataRG(db, dataGroupNames);
-    db.dropDomain(domainName);  
+    removeDataRG( db, newDataRGNames );
+    db.dropDomain( domainName );  
+}
+
+function createMainCL( csName, mainCL_Name )
+{
+    println( "start to create main cl." );
+    var mainCLOption = { ShardingKey:{"a":1}, ShardingType:"range", IsMainCL:true };
+    var dbcl = commCreateCLByOption( db, csName, mainCL_Name, mainCLOption, true, true );
 }
 
 function createDataGroups( db, hostName , groupNum )
 {
     var dataGroupNames = [];
-    for(var i = 0; i < groupNum; i++)
+    for( var i = 0; i < groupNum; i++ )
     {
-        var port = parseInt(RSRVPORTBEGIN)+(i*10);
+        var port = parseInt( RSRVPORTBEGIN )+( i*10 );
         var rgName = "group15669_" + i;
-        var dataRG = db.createRG(rgName);
-        dataRG.createNode(hostName, port, RSRVNODEDIR+"data/"+port);
+        var dataRG = db.createRG( rgName );
+        dataRG.createNode( hostName, port, RSRVNODEDIR+"data/"+port );
         dataRG.start();
         dataGroupNames.push( rgName );
     }
     return dataGroupNames;
 }
 
+function getDateRGNames( newDataRGNames, originalDataRG )
+{
+    var DataRGNames = [];
+    for(var i=0 ; i < newDataRGNames.length ; i++)
+    {
+        DataRGNames.push( newDataRGNames[i] );
+    }
+    
+    for(var i = 0 ; i < originalDataRG.length; i++)
+    {
+        DataRGNames.push( originalDataRG[i][0].GroupName );
+    }
+    
+    return DataRGNames;
+}
+
 function removeDataRG( db, dataGroupNames )
 {
     for(var i = 0 ; i < dataGroupNames.length; i++)
     {
-        db.removeRG(dataGroupNames[i]);
+        db.removeRG( dataGroupNames[i] );
     }
 }
-main();   //TODO: 放最前面（放所有函数前，用例注释后）
