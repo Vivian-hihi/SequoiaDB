@@ -10,6 +10,7 @@
    <properties>
       <sdbdriver.version>${sdbdriver}</sdbdriver.version>
       <sdbdriver.dir>${sdbdriverDir}</sdbdriver.dir>
+      <threadexecutor.dir>${threadexecutorDir}</threadexecutor.dir>
 
       <!-- jars properties -->
       <testng.version>6.13.1</testng.version>
@@ -34,6 +35,13 @@
          <version>${sdbdriver.version}</version>
          <scope>system</scope>
          <systemPath>${sdbdriver.dir}/sequoiadb-driver-${sdbdriver.version}.jar</systemPath>
+      </dependency>
+      <dependency>
+         <groupId>com.sequoiadb</groupId>
+         <artifactId>threadexecutor</artifactId>
+         <version>1.0.0-SNAPSHOT</version>
+         <scope>system</scope>
+         <systemPath>${threadexecutor.dir}/threadexecutor-1.0.0-SNAPSHOT.jar</systemPath>
       </dependency>
       
       <!-- tools dependency-->
