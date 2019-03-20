@@ -23,6 +23,7 @@ import java.io.FileReader;
  * @Date:2019年02月22日
  * @version:1.0
  */
+//TODO:1、如果是两个用例建议带上两个用例ID，如ParseCipherFile17876_17877，另外用例中没有看到有17877用例的测试点
 public class ParseCipherFile17876_7 extends SdbTestBase {
     private Sequoiadb sdb;
     private String username = "user17876";
@@ -34,6 +35,7 @@ public class ParseCipherFile17876_7 extends SdbTestBase {
     @BeforeClass(alwaysRun = true)
     private void setUp() throws Exception {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        //TODO:2、建议用公共commlib方法中判断集群模式方法
         if (!Util.isCluster(sdb)) {
             throw new SkipException("skip StandAlone");
         }
@@ -61,6 +63,7 @@ public class ParseCipherFile17876_7 extends SdbTestBase {
         Assert.assertEquals(info.getUserName(), username, info.toString());
         Assert.assertEquals(info.getPasswd(), password);
         Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, info.getUserName(), info.getPasswd());
+       //TODO:3、用例中建议用新接口，不要用废弃接口，后面有用到废弃接口请一并修改
         db.disconnect();
     }
 
@@ -93,6 +96,7 @@ public class ParseCipherFile17876_7 extends SdbTestBase {
             new File(passwordFilePath).deleteOnExit();
             Util.removePasswdFile(Util.getSdbInstallDir() + "/bin"+ passwdFileName);
         } catch (BaseException e) {
+        	//TODO:4、本用例中清理环境，不需要捕获不存在异常，如果清理时不存在也是有问题的，这种错需要抛出来
             if (e.getErrorCode() != -300) {
                 throw e;
             }

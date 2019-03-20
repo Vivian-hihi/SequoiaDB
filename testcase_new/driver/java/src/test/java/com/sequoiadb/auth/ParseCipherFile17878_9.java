@@ -23,6 +23,7 @@ import java.io.FileReader;
  * @Date:2019年02月22日
  * @version:1.0
  */
+//TODO:1、描述中只涉及单个集群单个用户，不包含17879测试点，建议去掉该用例
 public class ParseCipherFile17878_9 extends SdbTestBase {
     private Sequoiadb sdb;
     private String username = "user17878";
@@ -34,6 +35,7 @@ public class ParseCipherFile17878_9 extends SdbTestBase {
     @BeforeClass(alwaysRun = true)
     private void setUp() throws Exception {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+      //TODO:2、建议用公共commlib方法中判断集群模式方法
         if (!Util.isCluster(sdb)) {
             throw new SkipException("skip StandAlone");
         }
@@ -60,6 +62,7 @@ public class ParseCipherFile17878_9 extends SdbTestBase {
         Assert.assertEquals(info.getUserName(), username, info.toString());
         Assert.assertEquals(info.getPasswd(), password);
         Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, info.getUserName(), info.getPasswd());
+        //TODO:3、用例中建议用新接口，不要用废弃接口，后面有用到废弃接口请一并修改
         db.disconnect();
     }
 
