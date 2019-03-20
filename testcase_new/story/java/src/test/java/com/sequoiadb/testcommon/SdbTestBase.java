@@ -46,6 +46,7 @@ public class SdbTestBase {
     private static final String TRANSISOLATION = "transisolation" ;
     private static final String TRANSLOCKWAIT = "translockwait" ;
     private static final String INDEXSCANSTEP = "indexscanstep" ;
+    private static final String TRANSTIMEOUT = "transactiontimeout" ;
 
     private static AtomicInteger rcCnt = new AtomicInteger( 0 ) ;
     private static AtomicInteger ruCnt = new AtomicInteger( 0 ) ;
@@ -54,6 +55,7 @@ public class SdbTestBase {
 
     private static final int newIndexScanStep = 3 ;
     private static final int originalIndexScanStep = 100 ;
+    private static final int timeOutLen = 60 ;
 
     @Parameters( { "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN",
             "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR", "CONFTOOL" } )
@@ -99,6 +101,7 @@ public class SdbTestBase {
         configs.append( TRANSISOLATION, transisolation ) ;
         configs.append( TRANSLOCKWAIT, translockwait ) ;
         configs.append( INDEXSCANSTEP, indexscanstep ) ;
+        configs.append( TRANSTIMEOUT, timeOutLen ) ;
         return configs ;
     }
 
