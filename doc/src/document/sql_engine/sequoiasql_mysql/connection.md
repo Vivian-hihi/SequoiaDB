@@ -155,7 +155,13 @@
 
 ###自定义表配置###
 
-   在mysql上创建表时，也可以通过comment参数传入自定义的表配置，comment参数为json格式，具体配置参数如下表：
+   在mysql上创建表时，可以在 table_option 的 comment 中通过指定关键词 "sequoiadb" ，并紧跟一 json 对象以传入自定义的表配置参数。
+
+```
+table_option:
+comment [=] "sequoiadb:{table_options:{...}}"
+```
+table_options 为 json 格式，具体配置参数如下表:
  
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | --- | ------ | ------ |
@@ -165,7 +171,7 @@
  在SequoiaDB上创建分区键为“{a:1,b:-1}”，分区类型为范围分区的集合cl  
 
  ```lang-javascript
- mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
+ mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="sequoiadb:{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
 
 ##在线修改 DDL##
