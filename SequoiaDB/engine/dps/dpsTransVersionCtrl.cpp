@@ -1173,8 +1173,6 @@ namespace engine
       PD_TRACE_EXITRC( SDB_PREIDXTREE_KEYLOCATE, rc ) ;
       return rc;
    error :
-      PD_LOG( PDDEBUG, "Failed to locate the key: %s, rc: %d",
-              prevKey.toString().c_str(), rc ) ;
       goto done ;
    }
 
@@ -1215,38 +1213,8 @@ namespace engine
                                  const vector < BOOLEAN > &matchInclusive,
                                  INT32 direction ) const
    {
-      PD_TRACE_ENTRY( SDB_PREIDXTREE_KEYADVANCE );
-      INT32               rc           = SDB_OK ;
-      INT32               result       = 0 ;
-      BSONObj             data ;
-
-      while ( TRUE )
-      {
-         rc = advance( pos, direction ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-
-         data = getNodeKey( pos ).getKeyObj() ;
-         result = _ixmExtent::_keyCmp( data, prevKey, keepFieldsNum,
-                                       skipToNext, matchEle,
-                                       matchInclusive,
-                                       *(this->getOrdering()),
-                                       direction ) ;
-         if ( result * direction >= 0 )
-         {
-            break ;
-         }
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB_PREIDXTREE_KEYADVANCE, rc ) ;
-      return rc ;
-    error:
-      PD_LOG( PDDEBUG, "Failed to advance the key: %s, rc: %d",
-              prevKey.toString().c_str(), rc ) ;
-      goto done ;
+      return keyLocate( pos, prevKey, keepFieldsNum, skipToNext,
+                        matchEle, matchInclusive, direction ) ;
    }
 
    // Traverse the tree to see if the key exist, caller need to hold
