@@ -9,13 +9,11 @@ main();
 
 function main()
 {
-    var csName = CHANGEDPREFIX + "_10900_CS";//检视：无特殊情况，使用公共CS COMMCSNAME
-    var clName = CHANGEDPREFIX + "_10900_CL";
+    var csName = COMMCSNAME;
+    var clName = "cl10900";
     
-    commDropCS(db, csName, true, "drop cs in the begin");
     var cl = commCreateCL( db, csName, clName, null, null, true, false, "create cl in the begin" );
     
-    println("---begin test---");
     insertData(cl);
     
     //在cl使用内置SQL进行select，where子句中的条件为a is null
@@ -40,12 +38,11 @@ function main()
     var expRecs3 = '[{"_id":1,"a":1,"b":1},{"_id":2,"a":1}]';
     checkCLData( cursor, expRecs3 , 2);
     
-    commDropCS( db, csName, true, "drop CS in the end" );
+    commDropCL( db, csName, clName, true, true, "drop CL in the end" );
 }
 
 function insertData( cl )
 {
-    println("\n---Begin to insert cl data.");
     cl.insert({_id:1,a:1,b:1});
     cl.insert({_id:2,a:1});
     cl.insert({_id:3,b:1});
@@ -54,7 +51,6 @@ function insertData( cl )
 
 function checkCLData( rc, expRecs, expCnt )
 {
-    println("\n---Begin to check cl data.");
     var recsArray = [];
     while( tmpRecs = rc.next() )
     {

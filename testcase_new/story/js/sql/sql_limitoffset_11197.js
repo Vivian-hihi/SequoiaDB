@@ -9,15 +9,13 @@ main();
 
 function main()
 {
-    var csName = CHANGEDPREFIX + "_11197_CS";//检视：无特殊情况，使用公共CS COMMCSNAME
-    var clName1 = CHANGEDPREFIX + "_11197_CL_T1";
-    var clName2 = CHANGEDPREFIX + "_11197_CL_T2";
+    var csName = COMMCSNAME;
+    var clName1 = "11197_CL_T1";
+    var clName2 = "11197_CL_T2";
 
-    commDropCS(db, csName, true, "drop cs in the begin");
     var cl_1 = commCreateCL( db, csName, clName1, null, null, true, false, "create cl in the begin" );
     var cl_2 = commCreateCL( db, csName, clName2, null, null, true, false, "create cl in the begin" );
 
-    println("---begin test---");
     cl_1.insert({_id:1,a:1,b:"test1",c:"c1"});
     cl_1.insert({_id:2,a:2,b:"test2",c:"c2"});
     cl_1.insert({_id:3,a:3,b:"test3",c:"c3"});
@@ -80,12 +78,12 @@ function main()
     var expRecs = '[{"a":3,"b":"test3","c":"c4"},{"a":3,"b":"test3","c":"c5"}]';
     checkCLData( cursor, expRecs , 2);
 
-    commDropCS( db, csName, true, "drop CS in the end" );
+    commDropCL( db, csName, clName1, true, true, "drop CL in the end" );
+    commDropCL( db, csName, clName2, true, true, "drop CL in the end" );
 }
 
 function checkCLData( rc, expRecs, expCnt )
 {
-    println("\n---begin to check cl data.");
     var recsArray = [];
     while( tmpRecs = rc.next() )
     {
