@@ -268,6 +268,20 @@ public class RegionUtils extends S3TestBase {
 		return clNames.contains(csName+"." + clName);
 	}
 
+	public static boolean doesCSExist(String csName){
+		Sequoiadb db = null;
+		boolean flag;
+		try{
+			db = new Sequoiadb(S3TestBase.coordUrl, "", "");
+			flag = db.isCollectionSpaceExist(csName);
+		}finally {
+			if(db != null){
+				db.close();
+			}
+		}
+		return flag;
+	}
+
 	public static void createDomain(String domainName) {
 		Sequoiadb sdb = null;
 		try {
