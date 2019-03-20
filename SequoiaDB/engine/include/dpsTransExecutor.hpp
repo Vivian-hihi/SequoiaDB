@@ -71,7 +71,36 @@ namespace engine
    */
    class _dpsTransExecutor
    {
-      typedef ossPoolMap<dpsTransLockId,dpsTransLRB*>    DPS_LOCKID_MAP ;
+      struct cmpCSCLLock
+      {
+         bool operator() ( const dpsTransLockId& lhs, 
+                           const dpsTransLockId& rhs ) const 
+         {
+            if ( lhs.csID() < rhs.csID() )
+            {
+               return TRUE ;
+            }
+            else if ( lhs.csID() > rhs.csID() )
+            {
+               return FALSE ;
+            }
+            if ( lhs.clID() < rhs.clID() )
+            {
+               return TRUE ;
+            }
+            else if ( lhs.clID() > rhs.clID() )
+            {
+               return FALSE ;
+            }
+            return FALSE ;
+         }
+      };
+
+      // Only CS and CL lock should be inserted in this map. If other locks
+      // are to be inserted, the cmpCSCLLock compare function needs to be updated
+      typedef ossPoolMap< dpsTransLockId,
+                          dpsTransLRB*, 
+                          cmpCSCLLock >                  DPS_LOCKID_MAP ;
       typedef DPS_LOCKID_MAP::iterator                   DPS_LOCKID_MAP_IT ;
       typedef DPS_LOCKID_MAP::const_iterator             DPS_LOCKID_MAP_CIT ;
 

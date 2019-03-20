@@ -163,18 +163,14 @@ namespace engine
       dpsTransLRB       * waiterLRB ;    // the first waiter LRB in its chain
       dpsTransLRB       * upgradeLRB;    // the first upgrader LRB in its chain
       dpsTransLockId      lockId ;       // lockId, 16 bytes
-      UTIL_OBJIDX         bktIdx ;       // hash bucket index
+      UINT32              bktIdx ;       // hash bucket index
       /// user data
       dpsLRBExtData extData ;
 
    public :
-      dpsTransLRBHeader()
-      : nextLRBHdr(NULL), ownerLRB(NULL),
-        waiterLRB(NULL), upgradeLRB(NULL), bktIdx(-1)
-      {
-      }
+      dpsTransLRBHeader();
 
-      dpsTransLRBHeader( dpsTransLockId lock, UTIL_OBJIDX _bktIdx )
+      dpsTransLRBHeader( dpsTransLockId lock, UINT32 _bktIdx )
       : nextLRBHdr(NULL), ownerLRB(NULL),
         waiterLRB(NULL), upgradeLRB(NULL),
         lockId(lock), bktIdx(_bktIdx)

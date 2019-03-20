@@ -53,6 +53,12 @@
 
 namespace engine
 {
+   dpsTransLRBHeader::dpsTransLRBHeader()
+   : nextLRBHdr(NULL), ownerLRB(NULL),
+     waiterLRB(NULL), upgradeLRB(NULL), bktIdx(DPS_TRANS_INVALID_BUCKET_SLOT)
+   {
+   }
+
    #define DPS_LOCKID_STRING_MAX_SIZE ( 128 ) 
    dpsTransLockManager::dpsTransLockManager() : _pLRBMgr( NULL ),
                                                 _pLRBHdrMgr( NULL ),
@@ -341,7 +347,7 @@ namespace engine
       BOOLEAN found = FALSE ;
       if ( lockId.isValid() )
       {
-         UTIL_OBJIDX bktIdx = _getBucketNo( lockId ) ;
+         UINT32 bktIdx = _getBucketNo( lockId ) ;
 
          pLRBHdr = _LockHdrBkt[ bktIdx ].lrbHdr ;
          found   = _getLRBHdrByLockId( lockId, pLRBHdr ) ;
@@ -650,7 +656,6 @@ namespace engine
    //    lrbBegin -- the first LRB pointer in the owner list
    // Output:
    //    pLRBToInsert  -- the lrb which the new LRB shall be inserted after
-   //    pLRBLastComp  -- the lrb of last compatible LRB
    //    pLRBIncomp    -- pointer of first incompatible LRB
    //    pLRBEduId     -- the LRB owned by same eduId
    //    pLRBPrevEduId -- the address of the LRB previous to the pLRBEduId
@@ -663,7 +668,6 @@ namespace engine
       const DPS_TRANSLOCK_TYPE  lockMode, 
       dpsTransLRB             * lrbBegin,
       dpsTransLRB *           & pLRBToInsert,
-      dpsTransLRB *           & pLRBLastComp,
       dpsTransLRB *           & pLRBIncomp,
       dpsTransLRB *           & pLRBEduId,
       dpsTransLRB *           & pLRBPrevEduId
@@ -700,7 +704,6 @@ namespace engine
               && ( eduId != lrbEduid )
               && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
          {
-            pLRBLastComp  = plrbPrev;
             // save the address/pointer of first incompatible LRB
             pLRBIncomp    = plrb ;
             foundLastComp = TRUE ;
@@ -743,34 +746,31 @@ namespace engine
       const dpsTransLockId & lockId
    )
    {
-#ifdef _DEBUG
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-#endif
+
+      // get the pointer of last LRB in the EDU LRB chain
+      // and add the new LRB into the chain
+      dpsTransLRB *plrb = dpsTxExectr->getLastLRB() ;
+
+      if ( insLRB )
       {
-         // get the pointer of last LRB in the EDU LRB chain
-         // and add the new LRB into the chain
-         dpsTransLRB *plrb = dpsTxExectr->getLastLRB() ;
+         insLRB->eduLrbPrev = plrb ;
 
-         if ( insLRB )
+         // add to executor lock map if it is CS or CL lock
+         if ( ! lockId.isLeafLevel() )
          {
-            insLRB->eduLrbPrev = plrb ;
-
-            // add to executor lock map if it is CS or CL lock
-            if ( ! lockId.isLeafLevel() )
-            {
-               dpsTxExectr->addLock( lockId, insLRB ) ;
-            }
-
-            // increase the lock count
-            dpsTxExectr->incLockCount() ;
-
-            // clear the wait info in dpsTxExectr
-            dpsTxExectr->clearWaiterInfo() ;
+            dpsTxExectr->addLock( lockId, insLRB ) ;
          }
 
-         // save the last LRB
-         dpsTxExectr->setLastLRB( insLRB ) ;
+         // increase the lock count
+         dpsTxExectr->incLockCount() ;
+
+         // clear the wait info in dpsTxExectr
+         dpsTxExectr->clearWaiterInfo() ;
       }
+
+      // save the last LRB
+      dpsTxExectr->setLastLRB( insLRB ) ;
    }
 
 
@@ -862,7 +862,7 @@ namespace engine
    (
       _dpsTransExecutor *    dpsTxExectr,
       const dpsTransLockId & lockId,
-      const UTIL_OBJIDX      bktIdx,
+      const UINT32           bktIdx,
       const BOOLEAN          removeLRBHeader
    )
    {
@@ -1184,7 +1184,7 @@ namespace engine
       const dpsTransLockId             & lockId,
       const DPS_TRANSLOCK_TYPE           requestLockMode,
       const DPS_TRANSLOCK_OP_MODE_TYPE   opMode,
-      const UTIL_OBJIDX                  bktIdx,
+      UINT32                             bktIdx,
       const BOOLEAN                      bktLatched,
       dpsTransRetInfo                  * pdpsTxResInfo,
       _dpsITransLockCallback           * callback 
@@ -1197,7 +1197,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       dpsTransLRB *pLRBNew       = NULL ,
                   *pLRBIncomp    = NULL ,
-                  *pLRBLastComp  = NULL ,
                   *pLRBToInsert  = NULL ,
                   *pLRBPrevEduId = NULL ,
                   *pLRBEduID     = NULL ,
@@ -1264,6 +1263,12 @@ namespace engine
                }
             }
          }
+      }
+
+      if ( bktIdx == DPS_TRANS_INVALID_BUCKET_SLOT )
+      {
+         // calculate the hash index by lockId 
+         bktIdx = _getBucketNo( lockId ) ;
       }
 
       // normal lock acquire/try get/test routine
@@ -1356,13 +1361,12 @@ namespace engine
       //  . the last pointer of compatible and pointer of first incompatible LRB
       //
       // pLRBToInsert  -- lrb to insert after
-      // pLRBLastComp  -- last compatible LRB
       // pLRBIncomp    -- addr of first incompatible
       // pLRBEduId     -- LRB with same EDUId
       // pLRBPrevEduId -- addr of idxPrevEduId
       _searchOwnerLRBList( eduId, requestLockMode,
                            pLRBHdr->ownerLRB, pLRBToInsert,
-                           pLRBLastComp, pLRBIncomp,
+                           pLRBIncomp,
                            pLRBEduID,pLRBPrevEduId ) ;
       if ( pLRBEduID )
       {
@@ -1408,9 +1412,9 @@ namespace engine
          // try to do upgrade
          //
          // check if the requested mode is compatible with other owners
-         if ( pLRBLastComp || ( NULL != pLRBIncomp ) ) 
+         if ( NULL != pLRBIncomp ) 
          {
-            // valid pLRBLastComp or valid pLRBIncomp, means
+            // valid pLRBIncomp, means
             // an incompatible LRB is found, i.e., not compatible
             // with others 
 
@@ -1479,8 +1483,6 @@ namespace engine
                }
                else
                {
-                  // set nextLRBIdx to UTIL_INVALID_OBJ_INDEX
-                  // before adding it at the end of owner LRB list.
                   pLRB->nextLRB = NULL;
 
                   // add it at the end of owner list
@@ -1506,7 +1508,7 @@ namespace engine
          //
 
          // check if lock is compatible with all owners
-         if ( pLRBLastComp || ( NULL != pLRBIncomp ) )
+         if ( NULL != pLRBIncomp ) 
          {
             // found an incompatible one, i.e., not compatible with others
 
@@ -1686,7 +1688,7 @@ namespace engine
       _dpsTransExecutor *        dpsTxExectr,
       const dpsTransLockId     & lockId,
       const DPS_TRANSLOCK_TYPE   requestLockMode,
-      const UTIL_OBJIDX          bktIdx,
+      const UINT32               bktIdx,
       dpsTransLRBHeader *      & pLRBHdrNew, 
       dpsTransLRB       *      & pLRBNew
    )
@@ -1717,7 +1719,7 @@ namespace engine
 
       lrbAcquired = TRUE;
 
-      // acuqire a free LRB Header
+      // acquire a free LRB Header
       rc = _pLRBHdrMgr->acquire( hdrIdxNew, pLRBHdrNew ) ;
 
       if ( SDB_OK != rc )
@@ -1831,7 +1833,7 @@ namespace engine
       DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       BOOLEAN isIntentLockAcquired = FALSE ;
 
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
+      UINT32 bktIdx = DPS_TRANS_INVALID_BUCKET_SLOT ;
       BOOLEAN bLatched   = FALSE ;
 #ifdef _DEBUG
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
@@ -2080,7 +2082,7 @@ namespace engine
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 #endif
 
-      UTIL_OBJIDX bktIdx         = UTIL_INVALID_OBJ_INDEX ;
+      UINT32 bktIdx              = DPS_TRANS_INVALID_BUCKET_SLOT ;
       dpsTransLRB *pOwnerLRB     = NULL ,
                   *lrbToRelase   = NULL ,
                   *pPrevOwnerLRB = NULL ,
@@ -2338,15 +2340,13 @@ namespace engine
 
       if ( lockId.isValid() )
       {
-         dpsTransLockId iLockId ;
-
          // main logic of release by lockId
          _release( dpsTxExectr, lockId, bForceRelease, callback ) ;
 
          // release the intent lock
          if ( ! lockId.isRootLevel() )
          {
-            iLockId = lockId.upOneLevel() ;
+            dpsTransLockId iLockId = lockId.upOneLevel() ;
 #ifdef _DEBUG
             PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_RELEASE,
                        PD_PACK_STRING( "Releasing intent lock:" ),
@@ -2530,12 +2530,12 @@ namespace engine
    // Return:
    //    index to the LRB Header bucket
    //
-   UTIL_OBJIDX dpsTransLockManager::_getBucketNo
+   UINT32 dpsTransLockManager::_getBucketNo
    (
       const dpsTransLockId &lockId
    )
    {
-      return (UTIL_OBJIDX)( lockId.lockIdHash() % DPS_TRANS_LOCKBUCKET_SLOTS_MAX );
+      return (UINT32)( lockId.lockIdHash() % DPS_TRANS_LOCKBUCKET_SLOTS_MAX );
    }
 
 
@@ -2640,9 +2640,7 @@ namespace engine
 
       INT32 rc = SDB_OK ;
       dpsTransLockId iLockId;
-      DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       BOOLEAN isIntentLockAcquired = FALSE;
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
 #ifdef _DEBUG
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 #endif
@@ -2657,8 +2655,8 @@ namespace engine
       // it is not need to get intent lock while lock space
       if ( ! lockId.isRootLevel() )
       {
+         DPS_TRANSLOCK_TYPE iLockMode = dpsIntentLockMode( requestLockMode ) ;
          iLockId = lockId.upOneLevel() ;
-         iLockMode = dpsIntentLockMode( requestLockMode ) ;
 #ifdef _DEBUG
          ossSnprintf( iLockIdStr, sizeof( iLockIdStr ),
                       "%s", iLockId.toString().c_str() ) ;
@@ -2675,14 +2673,11 @@ namespace engine
          isIntentLockAcquired = TRUE;
       }
       
-      // calculate the hash index by lockId
-      bktIdx = _getBucketNo( lockId ) ;
-
       // try to acquire the lock
       // when tryAcquire will not add LRB to either upgrade or waiter list
       rc = _tryAcquireOrTest( dpsTxExectr, lockId, requestLockMode,
                               DPS_TRANSLOCK_OP_MODE_TRY,
-                              bktIdx,
+                              DPS_TRANS_INVALID_BUCKET_SLOT,
                               FALSE,
                               pdpsTxResInfo, 
                               callback ) ;
@@ -2759,7 +2754,7 @@ namespace engine
       INT32 rc = SDB_OK;
       dpsTransLockId iLockId;
       DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
+      UINT32 bktIdx = DPS_TRANS_INVALID_BUCKET_SLOT ;
 #ifdef _DEBUG
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 #endif
@@ -2832,7 +2827,7 @@ namespace engine
    BOOLEAN dpsTransLockManager::hasWait( const dpsTransLockId &lockId )
    {
       BOOLEAN result = FALSE;
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX ;
+      UINT32 bktIdx = DPS_TRANS_INVALID_BUCKET_SLOT ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
 
       SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
@@ -3103,7 +3098,7 @@ namespace engine
       dpsTransLockId iLockId;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
-      UTIL_OBJIDX        bktIdx;
+      UINT32        bktIdx;
       CHAR * pStr = NULL ;
       CHAR * prefixStr = (CHAR*)"   " ; 
       CHAR szBuffer[ DPS_STRING_LEN_MAX ] = { '\0' } ;
@@ -3316,7 +3311,7 @@ namespace engine
       monTransLockInfo     & monLockInfo
    )
    {
-      UTIL_OBJIDX bktIdx = UTIL_INVALID_OBJ_INDEX;
+      UINT32 bktIdx = DPS_TRANS_INVALID_BUCKET_SLOT ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
 

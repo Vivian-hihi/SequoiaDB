@@ -54,7 +54,8 @@ namespace engine
    class _IContext ;
  
    // lock bucket,  524287 ( a prime number close to 524288  ) for now
-   #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UTIL_OBJIDX)( 524287 ) )
+   #define DPS_TRANS_LOCKBUCKET_SLOTS_MAX ( (UINT32) 524287 ) 
+   #define DPS_TRANS_INVALID_BUCKET_SLOT DPS_TRANS_LOCKBUCKET_SLOTS_MAX
 
    class dpsTransLockManager : public SDBObject
    {
@@ -206,14 +207,14 @@ namespace engine
       // testAcquire, release, releaseAll, hasWait etc on ) :
       //     . latch _rwMutext in shared mode
       //     . latch a bucket slot in exclusively
-      OSS_INLINE void _acquireOpLatch ( const UTIL_OBJIDX bucketIndex )
+      OSS_INLINE void _acquireOpLatch ( const UINT32 bucketIndex )
       {
          _rwMutex.lock_r() ;
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.get() ;
       }
 
       // release latches for normal lock operation
-      OSS_INLINE void _releaseOpLatch ( const UTIL_OBJIDX bucketIndex )
+      OSS_INLINE void _releaseOpLatch ( const UINT32 bucketIndex )
       {
          _LockHdrBkt[ bucketIndex ].hashHdrLatch.release() ;
          _rwMutex.release_r() ;
@@ -221,12 +222,6 @@ namespace engine
 
       // release/return a LRB Header to LRB Header manager
       INT32 _releaseLRBHdr( dpsTransLRBHeader * hdrLRB ) ;
-
-      // get LRB Header handle ( address/pointer ) by LRB Header index
-      dpsTransLRBHeader * _getLRBHdrPtrByIdx( const dpsTransLRBHeader* hdrLRB );
-
-      // get LRB pointer by its index
-      dpsTransLRB * _getLRBPtrByIdx( const dpsTransLRB * lrb );
 
       // release/return a LRB to LRB manager 
       INT32 _releaseLRB( dpsTransLRB * lrb );
@@ -310,7 +305,6 @@ namespace engine
          const DPS_TRANSLOCK_TYPE  lockMode,
          dpsTransLRB *             lrbBegin,
          dpsTransLRB *           & pLRBToInsert,
-         dpsTransLRB *           & pLRBLastComp,
          dpsTransLRB *           & pLRBIncomp,
          dpsTransLRB *           & pLRBEduId,
          dpsTransLRB *           & pLRBPrevEduId
@@ -342,7 +336,7 @@ namespace engine
       (
          _dpsTransExecutor    * dpsTxExectr,
          const dpsTransLockId & lockId,
-         const UTIL_OBJIDX      bktIdx,
+         const UINT32           bktIdx,
          const BOOLEAN          removeLRBHeader
       ) ;
 
@@ -363,7 +357,6 @@ namespace engine
          const dpsTransLockId & lockId
       ) ;
 
-
       // core logic of acquire, try or test to get a lock with given mode
       INT32 _tryAcquireOrTest
       (
@@ -371,7 +364,7 @@ namespace engine
          const dpsTransLockId             & lockId,
          const DPS_TRANSLOCK_TYPE           requestLockMode,
          const DPS_TRANSLOCK_OP_MODE_TYPE   opMode,
-         const UTIL_OBJIDX                  bktIdx,
+         UINT32                             bktIdx,
          const BOOLEAN                      bktLatched,
          dpsTransRetInfo                  * pdpsTxResInfo,
          _dpsITransLockCallback           * callback = NULL
@@ -403,14 +396,14 @@ namespace engine
          _dpsTransExecutor *        dpsTxExectr,
          const dpsTransLockId     & lockId,
          const DPS_TRANSLOCK_TYPE   requestLockMode,
-         const UTIL_OBJIDX          bktIdx,
+         const UINT32               bktIdx,
          dpsTransLRBHeader *      & pLRBHdrNew,
          dpsTransLRB       *      & pLRBNew
       ) ;
 
 
       // calculate the index to LRB Header bucket
-      UTIL_OBJIDX _getBucketNo( const dpsTransLockId &lockId );
+      UINT32 _getBucketNo( const dpsTransLockId &lockId );
 
       // wakeup a lock waiting exectuor ( EDU )
       void _wakeUp( _dpsTransExecutor * dpsTxExectr ) ;
@@ -458,7 +451,7 @@ namespace engine
       //   class dpsTransLRBHeaderHash : public SDBObject
       //   {
       //   public :
-      //      UTIL_OBJIDX    lrbHdrIdx ;     -- LRB Header index
+      //      dpsTransLRBHeader    lrbHdr ;  -- LRB Header
       //      ossSpinXLatch  hashHdrLatch ;  -- bucket slot latch
       //   } ;
       dpsTransLRBHeaderHash  _LockHdrBkt[ DPS_TRANS_LOCKBUCKET_SLOTS_MAX ] ;
