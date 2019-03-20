@@ -3802,21 +3802,6 @@ namespace engine
                               "Old change must be empty" ) ;
                   goto done ;
                }
-
-               if ( pHandler )
-               {
-                  rc = pHandler->onUpdateRecord( context, obj, newobj,
-                                                 recordID, &recordRW, cb ) ;
-                  if ( rc )
-                  {
-                     PD_LOG( PDERROR, "Process update record[%s] to [%s] "
-                             "in handler failed, rc: %d",
-                             obj.toString().c_str(),
-                             newobj.toString().c_str(),
-                             rc ) ;
-                     goto error ;
-                  }
-               }
             }
             else
             {
@@ -3828,6 +3813,21 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to create modified record, rc: %d",
                         rc ) ;
                goto error ;
+            }
+
+            if ( dpscb && pHandler )
+            {
+               rc = pHandler->onUpdateRecord( context, obj, newobj,
+                                              recordID, &recordRW, cb ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Process update record[%s] to [%s] "
+                          "in handler failed, rc: %d",
+                          obj.toString().c_str(),
+                          newobj.toString().c_str(),
+                          rc ) ;
+                  goto error ;
+               }
             }
 
             textIdxNum = context->mbStat()->_textIdxNum ;
