@@ -953,12 +953,12 @@ namespace engine
          else
          {
             INDEX_TREE_CRPOS rtempIter( pos ) ;
-            if ( rtempIter == _tree.rend() || ++rtempIter == _tree.rend() )
+            if ( rtempIter == _tree.rend() )
             {
                rc = SDB_IXM_EOC ;
                goto error ;
             }
-            pos = rtempIter.base() ;
+            pos = (++rtempIter).base() ;
          }
 
          /// check is deleted
