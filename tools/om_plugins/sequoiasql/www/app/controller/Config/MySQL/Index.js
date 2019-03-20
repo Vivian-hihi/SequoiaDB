@@ -71,7 +71,7 @@
          var tmp = {} ;
          for( var key in updator )
          {
-            if ( confFileList.indexOf( key ) >= 0 )
+            if ( confFileList.indexOf( key ) >= 0 || key.indexOf( 'sequoiadb_' ) >= 0 )
             {
                tmp[key] = updator[key] ;
             }
