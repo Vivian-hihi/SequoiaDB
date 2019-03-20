@@ -10,7 +10,7 @@ Global
 
 将 db.traceOff() 导出来的 trace 文件格式化为用户可读的内容，并输出到指定文件。
 
-##参数描述##
+##参数##
 
 * `formatType` ( *Int32*， *必填* )
 
@@ -42,20 +42,16 @@ Global
 
 `traceFmt()`函数常见异常如下：
 
-| 错误码 | 错误类型 | 可能的原因 | 解决方法 |
-| ------ | --- | ------ | ------ |
-| -3 | SDB_PERM | 权限错误 | 检查输入、输出文件路径是否存在权限问题 |
-| -4 | SDB_FNE | 文件不存在 | 检查输入文件是否存在 |
-| -6 | SDB_INVALIDARG | 参数错误 | 检查输入的类型是否正确 |
-| -189 | SDB_PD_TRACE_FILE_INVALID | 输入的trace文件不合法| 确认输入的文件是否合法	|
+| 错误码 | 错误类型                  | 可能的原因            | 解决方法               |
+| ------ | ------------------------- | --------------------- | ---------------------- |
+| -3     | SDB_PERM                  | 权限错误              | 检查输入、输出文件路径是否存在权限问题 |
+| -4     | SDB_FNE                   | 文件不存在            | 检查输入文件是否存在   |
+| -6     | SDB_INVALIDARG            | 参数错误              | 检查输入的类型是否正确 |
+| -189   | SDB_PD_TRACE_FILE_INVALID | 输入的trace文件不合法 | 确认输入的文件是否合法 |
 
 当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
 或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
 可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
-
-##版本##
-
-v1.0及以上版本。
 
 ##示例##
 

@@ -37,7 +37,7 @@ Connect to the data node 20000, turn on database engine program tracking
 .nf
 \f[C]
 >\ var\ data\ =\ new\ Sdb(\ "localhost",\ 20000\ )
->\ data.traceOn(\ 10000,\ "dms",\ "_dmsStorageUnit::insertRecord"\ )
+>\ data.traceOn(\ 1000,\ "dms",\ "_dmsStorageUnit::insertRecord"\ )
 \f[]
 .fi
 .IP \[bu] 2
@@ -58,7 +58,7 @@ return result we expected.
 .IP
 .nf
 \f[C]
->\ db.traceResume()
+>\ data.traceResume()
 \f[]
 .fi
 .IP \[bu] 2
@@ -66,6 +66,6 @@ Using traceStatus() to view the tracking status of the current program.
 .IP
 .nf
 \f[C]
->\ db.traceStatus()
+>\ data.traceStatus()
 \f[]
 .fi

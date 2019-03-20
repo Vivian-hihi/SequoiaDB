@@ -159,9 +159,6 @@ T}
 when exception happen, use getLastError() to get the error code and use
 getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
-.SH HISTORY
-.PP
-Since v1.0.
 .SH EXAMPLES
 .IP \[bu] 2
 Format trace input to output.

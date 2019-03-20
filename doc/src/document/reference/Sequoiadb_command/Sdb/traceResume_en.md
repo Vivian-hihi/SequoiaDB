@@ -3,6 +3,7 @@
 traceResume - Resume the breakpoint tracking program.
 
 ##SYNOPSIS##
+
 ***db.traceResume()***
 
 ##CATEGORY##
@@ -14,6 +15,7 @@ Sdb
 Turn on the database engine program tracking while db.traceOn() specifies a breakpoint. When the tracked module was blocked because of the breakpoint, db.traceResume() can wake up the module which was tracked and blocked. 
 
 ##PARAMETERS##
+
 None
 
 ##RETURN VALUE##
@@ -32,7 +34,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ```lang-javascript
 > var data = new Sdb( "localhost", 20000 )
-> data.traceOn( 10000, "dms", "_dmsStorageUnit::insertRecord" )
+> data.traceOn( 1000, "dms", "_dmsStorageUnit::insertRecord" )
 ```
 
 * Connect to the coord node 50000. collection named bar and collectionspace named foo are belong to the data node 20000, and execute an insert operation. However, the insert operation will be blocked.
@@ -45,11 +47,11 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * After resume the breakpoint tracking program, the insert operation succeeded and return result we expected.
 
 ```lang-javascript
-> db.traceResume()
+> data.traceResume()
 ```
 
 * Using [traceStatus()](reference/Sequoiadb_command/Sdb/traceStatus.md) to view the tracking status of the current program. 
 
 ```lang-javascript
-> db.traceStatus()
+> data.traceStatus()
 ```

@@ -3,6 +3,7 @@
 traceStatus - Show the tracking status of the current program.
 
 ##SYNOPSIS##
+
 ***db.traceStatus()***
 
 ##CATEGORY##
@@ -14,6 +15,7 @@ Sdb
 Show the tracking status of the current program.
 
 ##PARAMETERS##
+
 None
 
 ##RETURN VALUE##
