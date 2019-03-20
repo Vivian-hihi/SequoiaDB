@@ -59,7 +59,6 @@
 #include "dpsLogDef.hpp"
 #include "dpsTransCB.hpp"
 #include "dpsTransLockDef.hpp"
-#include "dpsTransCBLockInfo.hpp"
 #include "pmdTransExecutor.hpp"
 #endif // SDB_ENGINE
 
@@ -69,6 +68,9 @@ using namespace std ;
 
 namespace engine
 {
+
+   typedef ossPoolMap<UINT32, MsgRouteID>  DpsTransNodeMap ;
+
    /*
       CONST VALUE DEFINE
    */

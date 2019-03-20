@@ -421,9 +421,9 @@ namespace engine
               0 == ossStrncmp( (*it).c_str(), pCSName, nameLen ) &&
               '.' == (*it).c_str()[nameLen] )
          {
+            delCLList.push_back( *it ) ;
             it = _fullNames.erase ( it ) ;
             nDelNum++ ;
-            delCLList.push_back( *it ) ;
             continue ;
          }
 

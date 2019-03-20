@@ -452,8 +452,6 @@ dpsFiles = [
       "dps/dpsMetaFile.cpp",
       "dps/dpsLogRecord.cpp",
       "dps/dpsTransCB.cpp",
-
-      "dps/dpsTransCBLockInfo.cpp",
       "dps/dpsTransExecutor.cpp",
       "dps/dpsTransVersionCtrl.cpp",
       "dps/dpsTransLockMgr.cpp",

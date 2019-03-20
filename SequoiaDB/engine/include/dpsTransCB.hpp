@@ -48,8 +48,6 @@
 #include "dms.hpp"
 #include "dpsTransLockMgr.hpp"
 #include "dpsLogRecord.hpp"
-#include "dpsTransVersionCtrl.hpp"
-#include "dpsTransCBLockInfo.hpp" //DpsTransCBLockList
 #include "sdbInterface.hpp"
 #include "ossEvent.hpp"
 #include "ossMemPool.hpp"
@@ -64,7 +62,7 @@ namespace engine
    class _pmdEDUCB;
    class _dmsExtScanner ;
    class _dmsIXSecScanner ;
-   class oldVersionCB;;
+   class oldVersionCB;
    class dpsTransLockManager;
    class _dpsITransLockCallback;
 
@@ -108,10 +106,8 @@ namespace engine
       DPS_TRANS_ID allocTransID() ;
       DPS_TRANS_ID getRollbackID( DPS_TRANS_ID transID ) ;
       DPS_TRANS_ID getTransID( DPS_TRANS_ID rollbackID ) ;
-      oldVersionCB * getOldVCB ()
-      {
-         return _oldVCB;
-      }
+
+      oldVersionCB * getOldVCB () { return _oldVCB ; }
 
       BOOLEAN isRollback( DPS_TRANS_ID transID ) ;
       BOOLEAN isFirstOp( DPS_TRANS_ID transID );
@@ -293,10 +289,9 @@ namespace engine
       UINT64            _logFileTotalSize ;
       UINT64            _accquiredSpace ;
 
-      TRANS_ID_LSN_MAP    _rollbackInfo ;
-      dpsTransLockManager *_transLockMgr ;
-      oldVersionCB     *_oldVCB ; // control block holding old(last committed)
-                              // version of record and index key value
+      dpsTransLockManager  *_transLockMgr ;
+      oldVersionCB         *_oldVCB ;  // control block holding old(last committed)
+                                       // version of record and index key value
 
    } ;
 

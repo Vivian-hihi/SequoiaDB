@@ -41,6 +41,7 @@
 #define DMS_TRANS_LOCK_CALLBACK_HPP__
 
 #include "dpsTransLockCallback.hpp"
+#include "dpsTransVersionCtrl.hpp"
 #include "dmsOprHandler.hpp"
 #include "dpsTransCB.hpp"
 #include "pmdEDU.hpp"

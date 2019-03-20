@@ -37,18 +37,17 @@
 
 #include "dpsTransCB.hpp"
 #include "dpsTransLockMgr.hpp"
-#include "dpsTransVersionCtrl.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 #include "pmdEDU.hpp"
 #include "pmdEDUMgr.hpp"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
 #include "pmdDef.hpp"
 #include "dpsLogRecord.hpp"
 #include "dpsMessageBlock.hpp"
 #include "dpsLogRecordDef.hpp"
 #include "dpsTransLockCallback.hpp"
+#include "dpsTransVersionCtrl.hpp"
 #include "pmdStartup.hpp"
 
 namespace engine

@@ -1555,11 +1555,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       EDUID eduID = PMD_INVALID_EDUID ;
       pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
-      dpsTransCB *pTransCB= sdbGetTransCB() ;
+      dpsTransCB *pTransCB = sdbGetTransCB() ;
       dpsTransLockManager *pLockMgr = pTransCB->getLockMgrHandle() ;
 
    retry:
-      if ( _eduList.empty() )
+      if ( !pLockMgr || _eduList.empty() )
       {
          _hitEnd = TRUE ;
          rc = SDB_DMS_EOC ;

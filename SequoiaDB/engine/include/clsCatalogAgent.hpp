@@ -36,7 +36,7 @@
 
 #include "core.hpp"
 #include <string>
-#include <ossMemPool.hpp>
+#include "ossMemPool.hpp"
 #include <vector>
 #include "oss.hpp"
 #include "clsBase.hpp"
