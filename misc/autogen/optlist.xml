@@ -1815,7 +1815,7 @@
            2. 取值列表：<fig></fig>
              ● 0: RU，读未提交。<fig></fig>
              ● 1: RC, 读已提交。<fig></fig>
-             ● 0: RS，读稳定性。<fig></fig>
+             ● 2: RS，读稳定性。<fig></fig>
          </cn>
       </detail>
       <type>int</type>
