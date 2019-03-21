@@ -40,7 +40,6 @@
 #include "dmsStorageDataCommon.hpp"
 #include "dmsStorageIndex.hpp"
 #include "dmsStorageLob.hpp"
-#include "pmd.hpp"
 #include "dpsTransCB.hpp"
 #include "dpsTransLockCallback.hpp"
 #include "dpsOp2Record.hpp"
