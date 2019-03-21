@@ -2,6 +2,7 @@ package com.sequoiadb.transaction.rc;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -43,6 +44,7 @@ public class Transaction17114 extends SdbTestBase {
     private DBCollection cl4 = null;
     private DBCollection cl5 = null;
     private CountDownLatch latch = null;
+    private List<BSONObject> expList = new ArrayList<>();
 
     @BeforeClass
     public void setUp() {
@@ -74,19 +76,19 @@ public class Transaction17114 extends SdbTestBase {
             sdb.close();
         }
     }
-    
+
     @DataProvider(name = "index")
     public Object[][] createIndex() {
         return new Object[][] { { "{'a':-1}" }, { "{'a':1}" } };
     }
 
-    @Test(dataProvider="index")
+    @Test(dataProvider = "index")
     public void test(String indexKey) {
         latch = new CountDownLatch(4);
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("textIndex17114", indexKey, false, false);
         insertData();
-        
+
         // 开启并发事务
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -107,7 +109,7 @@ public class Transaction17114 extends SdbTestBase {
         // 事务1插入记录
         InsertThread insertThread = new InsertThread();
         insertThread.start();
-        
+
         // 事务2更新记录
         UpdateThread updateThread = new UpdateThread();
         updateThread.start();
@@ -123,121 +125,127 @@ public class Transaction17114 extends SdbTestBase {
         // 事务5读记录走表扫描
         QueryThread2 queryThread2 = new QueryThread2();
         queryThread2.start();
-        
+
         Assert.assertTrue(insertThread.isSuccess());
         Assert.assertTrue(updateThread.isSuccess());
         Assert.assertTrue(deleteThread.isSuccess());
         Assert.assertTrue(queryThread.isSuccess());
         Assert.assertTrue(queryThread2.isSuccess());
-        
+
         // 提交事务
         db1.commit();
         db2.commit();
         db3.commit();
         db4.commit();
         db5.commit();
-        
+
+        // 非事务表扫描
+        DBCursor cursor = cl.query("", "", "{_id:1}", "{'':null}");
+        List<BSONObject> actList = TransUtils.getReadActList(cursor);
+        getExpList();
+        Assert.assertEquals(actList, expList);
+
         try {
             latch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } finally {
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            cs.dropCollection(clName);
         }
-        
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
-        cs.dropCollection(clName);
     }
 
     private void insertData() {
         List<BSONObject> records = new ArrayList<>();
-        for (int i = 1; i <= 4000; i++) {
+        for (int i = 1; i <= 40000; i++) {
             BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ", b:" + i + "}");
             records.add(record);
         }
+        expList.clear();
+        expList.addAll(records);
         Collections.shuffle(records);
         cl.insert(records);
     }
-    
-    class InsertThread extends SdbThreadBase{
+
+    private void getExpList() {
+        List<BSONObject> records = new ArrayList<>();
+        for (int i = 1; i < 10001; i++) {
+            BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ",a:" + (i - 10) + ", b:" + i + "}");
+            records.add(record);
+        }
+        expList.clear();
+        expList.addAll(records);
+        records.clear();
+        for (int i = 20001; i <= 50000; i++) {
+            BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ", b:" + i + "}");
+            records.add(record);
+        }
+        expList.addAll(records);
+    }
+
+    class InsertThread extends SdbThreadBase {
         @Override
         public void exec() throws Exception {
             try {
+                System.out.println("Begin insert : " + new Date());
                 List<BSONObject> records = new ArrayList<>();
-                //TODO:为了保证插入与其他线程能够大概率的真正并发，这里建议做多次循环插入，比如10次
-                for (int i = 4001; i <= 5000; i++) {
+                for (int i = 40001; i <= 50000; i++) {
                     BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ", b:" + i + "}");
                     records.add(record);
                 }
                 Collections.shuffle(records);
                 cl1.insert(records);
+                System.out.println("End insert : " + new Date());
             } catch (Exception e) {
                 e.printStackTrace();
                 throw e;
-            }
-            finally {
+            } finally {
                 latch.countDown();
             }
         }
     }
-    
-    class UpdateThread extends SdbThreadBase{
 
-        @Override
-        public void exec() throws Exception { 
-            //TODO:既然验证索引排序查询，这里不建议将索引字段更新为同一个值，可以使用$inc更新符
-            cl2.update("{a:{$lt:'1001'}}", "{$set:{a:1}}", "{'':'textIndex17114'}");
-            latch.countDown();
-        }
-    }
-    
-    class DeleteThread extends SdbThreadBase{
+    class UpdateThread extends SdbThreadBase {
 
         @Override
         public void exec() throws Exception {
-            cl3.delete("{$and:[{a:{$gt:1000}},{a:{$lt:2001}}]}", "{'':'textIndex17114'}");
+            cl2.update("{$and:[{a:{$gt:0}},{a:{$lt:10001}}]}", "{$inc:{a:-10}}", "{'':'textIndex17114'}");
             latch.countDown();
         }
     }
-    
-    class QueryThread extends SdbThreadBase{
+
+    class DeleteThread extends SdbThreadBase {
 
         @Override
         public void exec() throws Exception {
-            DBCursor cursor = cl4.query("{$and:[{a:{$gt:2000}},{a:{$lt:3001}}]}", null, "{_id:1}", "{'':'textIndex17114'}");
+            System.out.println("Begin delete : " + new Date());
+            cl3.delete("{$and:[{a:{$gt:10000}},{a:{$lt:20001}}]}", "{'':'textIndex17114'}");
+            System.out.println("End delete : " + new Date());
+            latch.countDown();
+        }
+    }
+
+    class QueryThread extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            DBCursor cursor = cl4.query(null, null, "{_id:1}", "{'':'textIndex17114'}");
             List<BSONObject> records = TransUtils.getReadActList(cursor);
-            List<BSONObject> expList = cl4Query();
-            Assert.assertEquals(records, expList);
-            latch.countDown();
-        }
-    }
-    
-    class QueryThread2 extends SdbThreadBase{
-
-        @Override
-        public void exec() throws Exception {
-            DBCursor cursor = cl5.query("{$and:[{a:{$gt:3000}},{a:{$lt:4001}}]}", null, "{_id:-1}", "{'':null}");
-            List<BSONObject> records = TransUtils.getReadActList(cursor);
-            List<BSONObject> expList = cl5Query();
             Assert.assertEquals(records, expList);
             latch.countDown();
         }
     }
 
-    private List<BSONObject> cl4Query() {
-        List<BSONObject> records = new ArrayList<>();
-        for (int i = 2001; i <= 3000; i++) {
-            BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ", b:" + i + "}");
-            records.add(record);
-        }
-        return records;
-    }
+    class QueryThread2 extends SdbThreadBase {
 
-    private List<BSONObject> cl5Query() {
-        List<BSONObject> records = new ArrayList<>();
-        for (int i = 3001; i <= 4000; i++) {
-            BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ", b:" + i + "}");
-            records.add(record);
+        @Override
+        public void exec() throws Exception {
+            DBCursor cursor = cl5.query(null, null, "{_id:-1}", "{'':null}");
+            List<BSONObject> records = TransUtils.getReadActList(cursor);
+            List<BSONObject> expRecords = new ArrayList<>(expList);
+            Collections.reverse(expRecords);
+            Assert.assertEquals(records, expRecords);
+            latch.countDown();
         }
-        Collections.reverse(records);
-        return records;
     }
 }
