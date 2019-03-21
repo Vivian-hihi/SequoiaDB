@@ -81,7 +81,7 @@ function importData( csName, clName, imprtFile, headerline, expParseRecordsNum, 
                     +' --type csv '
                     +' --file '+ imprtFile
                     +' --fields "yourname string,yourid int"'
-                    +'	--headerline ' + headerline;
+                    +' --headerline ' + headerline;
     }
     else
     {
@@ -91,7 +91,7 @@ function importData( csName, clName, imprtFile, headerline, expParseRecordsNum, 
                     +' --file '+ imprtFile
                     +' -e "'+delfield+'"'
                     +' --fields "yourname string,yourid int"'
-                    +'	--headerline ' + headerline;
+                    +' --headerline ' + headerline;
     }
     var rc = cmd.run( imprtOption );
     
@@ -109,7 +109,7 @@ function importData( csName, clName, imprtFile, headerline, expParseRecordsNum, 
     {
         throw buildException( "importData", null, "[sdbimprt results]", 
                         "["+ expParseRecords +", "+ expImportedRecords +"]", 
-						"["+ expParseFailure +", "+ actParseFailure +"]", 
+                        "["+ expParseFailure +", "+ actParseFailure +"]", 
                         "["+ actParseRecords +", "+ actImportedRecords +"]" );
     }
     
