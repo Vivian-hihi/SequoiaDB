@@ -5,9 +5,11 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.DBCollection;
@@ -20,7 +22,8 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @Description seqDB-17358.java
- *              插入与更新并发，更新的记录同时匹配已提交记录及其他事务插入的记录，更新走索引，事务提交，过程中读
+ * 插入与更新并发，更新的记录同时匹配已提交记录及其他事务插入的记录，更新走索引，事务提交，过程中读
+ * R3>R2>R1
  * @author luweikang
  * @date 2019年1月15日
  */
@@ -36,196 +39,369 @@ public class Transaction17358A extends SdbTestBase {
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
     private DBCollection cl3 = null;
-    private BSONObject data = null;
-    private BSONObject data2 = null;
-    private BSONObject data3 = null;
-    private BSONObject data4 = null;
     private DBCursor recordCur = null;
-    private List<BSONObject> expDataList = null;
-    private List<BSONObject> actDataList = null;
-
+    private BSONObject insertR1 = new BasicBSONObject();
+    private BSONObject insertR2 = new BasicBSONObject();
+    private BSONObject updateR1 = new BasicBSONObject();
+    private BSONObject updateR2 = new BasicBSONObject();
+    private List<BSONObject> actDataList = new ArrayList<BSONObject>();
+    private List<BSONObject> expDataList = new ArrayList<BSONObject>();
+    
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        cl.createIndex("a", "{a:1}", false, false);
-        expDataList = new ArrayList<BSONObject>();
-        
-        data = new BasicBSONObject();
-        data.put("_id", "insertID17358_1");
-        data.put("a", 1);
-        data.put("b", 1);
-        data.put("c", 13700000000L);
-        data.put("d", "customer transaction type data application.");
-        cl.insert(data);
-
-        data2 = new BasicBSONObject();
-        data2.put("_id", "insertID17358_2");
-        data2.put("a", 2);
-        data2.put("b", 2);
-        data2.put("c", 13700000000L);
-        data2.put("d", "customer transaction type data application.");
-
-        data3 = new BasicBSONObject();
-        data3.put("_id", "insertID17358_1");
-        data3.put("a", 3);
-        data3.put("b", 3);
-        data3.put("c", 13700000000L);
-        data3.put("d", "customer transaction type data application.");
-
-        data4 = new BasicBSONObject();
-        data4.put("_id", "insertID17358_2");
-        data4.put("a", 4);
-        data4.put("b", 4);
-        data4.put("c", 13700000000L);
-        data4.put("d", "customer transaction type data application.");
-        
+        insertR1 = (BSONObject) JSON.parse("{_id:'insertID17358A_1',a:1,b:1,c:1}");
+        insertR2 = (BSONObject) JSON.parse("{_id:'insertID17358A_2',a:2,b:2,c:2}");
+        updateR1 = (BSONObject) JSON.parse("{_id:'insertID17358A_1',a:3,b:3,c:1}");
+        updateR2 = (BSONObject) JSON.parse("{_id:'insertID17358A_2',a:4,b:4,c:2}");
     }
-
-    @Test
-    public void test(){
-        sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
-        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-        cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
+    
+    @DataProvider(name = "index")
+    public Object[][] createIndex(){
         
-        //step1: begin trans
-        sdb1.beginTransaction();
-        sdb2.beginTransaction();
-        sdb3.beginTransaction();
+        //第一次非事务读正序查询的预期结果
+        List<BSONObject> expPositiveReadList1 = new ArrayList<BSONObject>();
+        expPositiveReadList1.add(insertR2);
+        expPositiveReadList1.add(updateR1);
         
-        //step2: trans1 insert record R2, R2 > R1
-        cl1.insert(data2);
-
-        // step3: trans2 update record R1 and R2 to R3 and R4
-        UpdateThread updateThread = new UpdateThread();
-        updateThread.start();
-        Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
-
-        //step4: trans1 read  
-        expDataList.add(data);
-        expDataList.add(data2);
-        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl1.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+        //第一次非事务读逆序查询的预期结果
+        List<BSONObject> expReverseReadList1 = new ArrayList<BSONObject>();
+        expReverseReadList1.add(updateR1);
+        expReverseReadList1.add(insertR2);
         
-        //step5: trans3 read
-        expDataList.clear();
-        expDataList.add(data);
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        //step6: no trans read
-        expDataList.clear();
-        expDataList.add(data2);
-        expDataList.add(data3);
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+        //第二次非事务读正序查询的预期结果
+        List<BSONObject> expPositiveReadList2 = new ArrayList<BSONObject>();
+        expPositiveReadList2.add(updateR1);
+        expPositiveReadList2.add(updateR2);
         
-        //step7: read after trans1 commit 
-        sdb1.commit();
-        Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
+        //第二次非事务读逆序查询的预期结果
+        List<BSONObject> expReverseReadList2 = new ArrayList<BSONObject>();
+        expReverseReadList2.add(updateR2);
+        expReverseReadList2.add(updateR1);
+        
+        //第一次非事务读正序查询的预期结果
+        List<BSONObject> expPositiveReadList3 = new ArrayList<BSONObject>();
+        expPositiveReadList3.add(insertR1);
+        expPositiveReadList3.add(insertR2);
+        
+        //第一次非事务读逆序查询的预期结果
+        List<BSONObject> expReverseReadList3 = new ArrayList<BSONObject>();
+        expReverseReadList3.add(insertR2);
+        expReverseReadList3.add(insertR1);
+        
+        return new Object[][]{
+            {"{'a': 1}",
+             expPositiveReadList1,
+             expReverseReadList1,
+             expPositiveReadList2,
+             expReverseReadList2},
+            {"{'a': 1, b: 1}",
+             expPositiveReadList1,
+             expReverseReadList1,
+             expPositiveReadList2,
+             expReverseReadList2},
+            {"{'a': 1, b: -1}",
+             expPositiveReadList1,
+             expReverseReadList1,
+             expPositiveReadList2,
+             expReverseReadList2},
+            {"{'a': -1}",
+             expPositiveReadList3,
+             expReverseReadList3,
+             expPositiveReadList2,
+             expReverseReadList2},
+            {"{'a': -1, b: 1}",
+             expPositiveReadList3,
+             expReverseReadList3,
+             expPositiveReadList2,
+             expReverseReadList2},
+            {"{'a': -1, b: -1}",
+             expPositiveReadList3,
+             expReverseReadList3,
+             expPositiveReadList2,
+             expReverseReadList2},
+           
+        };
+    }
+    
+    @Test(dataProvider = "index")
+    public void test(String indexKey,
+            List<BSONObject> expPositiveReadList1, 
+            List<BSONObject> expReverseReadList1, 
+            List<BSONObject> expPositiveReadList2, 
+            List<BSONObject> expReverseReadList2){
+        try{
+            //插入记录R1
+            cl.insert(insertR1);
+            cl.createIndex("a", indexKey, false, false);
+            
+            sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
+            cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+            cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
+            
+            //开启事务
+            sdb1.beginTransaction();
+            sdb2.beginTransaction();
+            sdb3.beginTransaction();
+            
+            //事务1插入记录，R1>R2
+            cl1.insert(insertR2);
 
-        expDataList.clear();
-        expDataList.add(data3);
-        expDataList.add(data4);
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //事务2更新记录R1为R3，R2为R4,R4>R3>R2>R1
+            UpdateThread updateThread = new UpdateThread();
+            updateThread.start();
+            Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //事务1记录读，正序查询
+            expDataList.clear();
+            expDataList.add(insertR1);
+            expDataList.add(insertR2);
+            recordCur = cl1.query(null, null, "{a: 1, b:-1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //事务1索引读，正序查询
+            recordCur = cl1.query(null, null, "{a: 1, b:-1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //事务1记录读，逆序查询
+            expDataList.clear();
+            expDataList.add(insertR2);
+            expDataList.add(insertR1);
+            recordCur = cl1.query(null, null, "{a: -1, b:1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //事务1索引读，逆序查询
+            recordCur = cl1.query(null, null, "{a: -1, b:1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //事务3记录读，正序查询
+            expDataList.clear();
+            expDataList.add(insertR1);
+            recordCur = cl3.query(null, null, "{a: 1, b:-1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //事务3索引读，正序查询
+            recordCur = cl3.query(null, null, "{a: 1, b:-1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
 
-        // step8: trans2 read
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //事务3记录读，逆序查询
+            recordCur = cl3.query(null, null, "{a: -1, b:1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //事务3索引读，逆序查询
+            recordCur = cl3.query(null, null, "{a: -1, b:1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //非事务记录读，正序查询
+            recordCur = cl.query(null, null, "{a: 1, b:-1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expPositiveReadList1);
+            actDataList.clear();
 
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //非事务索引读，正序查询
+            recordCur = cl.query(null, null, "{a: 1, b:-1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expPositiveReadList1);
+            actDataList.clear();
+            
+            //非事务记录读，逆序查询
+            recordCur = cl.query(null, null, "{a: -1, b:1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expReverseReadList1);
+            actDataList.clear();
 
-        //step9: trans3 read
-        expDataList.clear();
-        expDataList.add(data);
-        expDataList.add(data2);
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //非事务索引读，逆序查询
+            recordCur = cl.query(null, null, "{a: -1, b:1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expReverseReadList1);
+            actDataList.clear();
+            
+            //提交事务1 
+            sdb1.commit();
+            Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
+            
+            //非事务记录读，正序查询
+            recordCur = cl.query(null, null, "{a: 1, b:-1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expPositiveReadList2);
+            actDataList.clear();
 
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //非事务索引读，正序查询
+            recordCur = cl.query(null, null, "{a: 1, b:-1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expPositiveReadList2);
+            actDataList.clear();
+            
+            //非事务记录读，逆序查询
+            recordCur = cl.query(null, null, "{a: -1, b:1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expReverseReadList2);
+            actDataList.clear();
 
-        //step10: read after trans2 commit 
-        expDataList.clear();
-        expDataList.add(data3);
-        expDataList.add(data4);
-        sdb2.commit();
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //非事务索引读，逆序查询
+            recordCur = cl.query(null, null, "{a: -1, b:1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expReverseReadList2);
+            actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //事务2记录读，正序查询
+            expDataList.clear();
+            expDataList.add(updateR1);
+            expDataList.add(updateR2);
+            recordCur = cl2.query(null, null, "{a: 1, b:-1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
 
-        // step11: trans3 read
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //事务2索引读，正序查询
+            recordCur = cl2.query(null, null, "{a: 1, b:-1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
 
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            //事务2记录读，逆序查询
+            expDataList.clear();
+            expDataList.add(updateR2);
+            expDataList.add(updateR1);
+            recordCur = cl2.query(null, null, "{a: -1, b:1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
 
-        sdb3.commit();
+            //事务2索引读，逆序查询
+            recordCur = cl2.query(null, null, "{a: -1, b:1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //事务3记录读，正序查询
+            expDataList.clear();
+            expDataList.add(insertR1);
+            expDataList.add(insertR2);
+            recordCur = cl3.query(null, null, "{a:1, b:-1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
 
+            //事务3索引读，正序查询
+            recordCur = cl3.query(null, null, "{a:1, b:-1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //事务3记录读，逆序查询
+            expDataList.clear();
+            expDataList.add(insertR2);
+            expDataList.add(insertR1);
+            recordCur = cl3.query(null, null, "{a:-1, b:1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+
+            //事务3索引读，逆序查询
+            recordCur = cl3.query(null, null, "{a:-1, b:1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+
+            //提交事务2 
+            sdb2.commit();
+            
+            //非事务记录读，正序查询
+            recordCur = cl.query(null, null, "{a: 1, b:-1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expPositiveReadList2);
+            actDataList.clear();
+
+            //非事务索引读，正序查询
+            recordCur = cl.query(null, null, "{a: 1, b:-1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expPositiveReadList2);
+            actDataList.clear();
+            
+            //非事务记录读，逆序查询
+            recordCur = cl.query(null, null, "{a: -1, b:1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expReverseReadList2);
+            actDataList.clear();
+
+            //非事务索引读，逆序查询
+            recordCur = cl.query(null, null, "{a: -1, b:1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expReverseReadList2);
+            actDataList.clear();
+
+            //事务3记录读，正序查询
+            expDataList.clear();
+            expDataList.add(updateR1);
+            expDataList.add(updateR2);
+            recordCur = cl3.query(null, null, "{a: 1, b:-1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+
+            //事务3索引读，正序查询
+            recordCur = cl3.query(null, null, "{a: 1, b:-1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+
+            //事务3记录读，逆序查询
+            expDataList.clear();
+            expDataList.add(updateR2);
+            expDataList.add(updateR1);
+            recordCur = cl3.query(null, null, "{a: -1, b:1}", "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+
+            //事务3索引读，逆序查询
+            recordCur = cl3.query(null, null, "{a: -1, b:1}", "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+            
+            //提交事务3
+            sdb3.commit();
+        }finally{
+          //关闭事务连接
+            sdb1.close();
+            sdb2.close();
+            sdb3.close();
+            
+            //删除索引
+            if(cl.isIndexExist("a")){
+                cl.dropIndex("a"); 
+            }
+            
+            //删除记录
+            cl.truncate();
+            
+        }
     }
 
     @AfterClass
     public void tearDown(){
-        
-        sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
-            recordCur.close();
-        }
-        if( sdb != null ){
-            sdb.close();
-        }
         if( sdb1 != null ){
             sdb1.close();
         }
@@ -236,6 +412,10 @@ public class Transaction17358A extends SdbTestBase {
             sdb3.close();
         }
         
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if( sdb != null ){
+            sdb.close();
+        }
     }
 
     private class UpdateThread extends SdbThreadBase {

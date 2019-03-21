@@ -50,7 +50,7 @@ public class Transaction17077A extends SdbTestBase {
         db2.beginTransaction();
 
         // 记录新增索引字段
-        cl1.update(null, "{$set:{c:1}}", "{'':null}");
+        cl1.update("{_id:1}", "{$set:{c:1}}", "{'':null}");
         BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:1,b:1,c:1}");
 
         // 事务2表扫描记录

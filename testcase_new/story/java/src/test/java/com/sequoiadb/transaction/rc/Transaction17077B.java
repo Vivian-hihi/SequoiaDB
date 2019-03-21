@@ -55,7 +55,7 @@ public class Transaction17077B extends SdbTestBase {
 
         // 记录删除索引字段
         BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1, b:1}");
-        cl1.update(null, "{$unset:{a:1}}", "{'':null}");
+        cl1.update("{a:1}", "{$unset:{a:1}}", "{'':null}");
 
         // 事务2表扫描记录
         cursor = cl2.query(null, null, null, "{'':null}");
@@ -78,7 +78,7 @@ public class Transaction17077B extends SdbTestBase {
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, null, "{'':'_id'}");
+        cursor = cl.query(null, null, null, "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();

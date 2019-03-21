@@ -8,6 +8,7 @@ package com.sequoiadb.transaction.rc;
 import java.util.ArrayList;
 import java.util.List;
 import org.bson.BSONObject;
+import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

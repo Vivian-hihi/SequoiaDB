@@ -18,7 +18,6 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 @Test(groups = "rc")
@@ -27,16 +26,12 @@ public class Transaction17082 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private Sequoiadb db1 = null;
     private Sequoiadb db2 = null;
-    private Sequoiadb dbT = null;
-    private Sequoiadb dbI = null;
     private DBCollection cl = null;
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
     private DBCursor cursor = null;
-    private List<BSONObject> insertR1s = new ArrayList<BSONObject>();
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
-    private String b = "b";
 
     @BeforeClass
     public void setUp() {
@@ -51,46 +46,55 @@ public class Transaction17082 extends SdbTestBase {
 
     @Test
     public void test() {
-    	for (int i = 0; i < 60 * 1024; i++) {
-            b = "aaaaaaaaaaaaaaaaaaaa" + b;
+
+        String b1 = "b";
+        String b2 = "bb";
+        String b3 = "bbb";
+        for (int i = 0; i < 60 * 1024; i++) {
+            b1 = "aaaaaaaaaaaaaaaaaaaa" + b1;
+            b2 = "aaaaaaaaaaaaaaaaaaaa" + b2;
+            b3 = "aaaaaaaaaaaaaaaaaaaa" + b3;
         }
-    	
-    	// 集合中插入带索引的记录
-        BSONObject insertR1 = null;
-        for(int i=0; i<10; i++)
-        {
-            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'aaaaaa', b:'" + b + "'}");
-            insertR1s.add(insertR1);
-        }
-        cl.insert(insertR1s);
+
+        // 集合中插入带索引的记录
+        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1, a:'aaaaaa', b:'" + b1 + "'}");
+        cl.insert(insertR1);
+        expList.add(insertR1);
 
         // 开启两个并发事务
         db1.beginTransaction();
         db2.beginTransaction();
 
-        //事务2并发表扫描
-        dbT = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        dbT.beginTransaction();
-        Read read1 = new Read(dbT, "{'':null}");
-        read1.start();
-        
-        //事务1执行多个原子操作
-        Operation operation = new Operation();
-        operation.start();
-        
-        //事务2并发索引扫描
-        dbI = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        dbI.beginTransaction();
-        Read read2 = new Read(dbI, "{'':'a'}");
-        read2.start();
-        
-        if (!read1.isSuccess() || !read2.isSuccess() || !operation.isSuccess()){
-        	Assert.fail(read1.getErrorMsg() + read2.getErrorMsg() + operation.getErrorMsg());
-        }
+        // 事务1对同一条记录执行多个操作
+        cl1.insert("{_id:3, a:'aaaaaa', b:'" + b3 + "'}");
+        BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2, a:'aaaaaa', b:'" + b2 + "'}");
+        cl1.insert(insertR2);
+        cl1.update("{_id:2}", "{$set:{a:'a'}}", "{'':'a'}");
+        cl1.delete("{_id:2}", "{'':'a'}");
+        // 事务1对不同记录执行多个操作
+        cl1.insert(insertR2);
+        BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1, a:'a', b:'" + b1 + "'}");
+        cl1.update("{_id:1}", "{$set:{a:'a'}}", "{'':'a'}");
+        cl1.delete("{_id:3}", "{'':'a'}");
+
+        // 事务2表扫描记录
+        cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
+
+        // 事务2索引扫描记录
+        cursor = cl2.query(null, null, "{_id:1}", "{'':'a'}");
+        actList = TransUtils.getReadActList(cursor);
+        Assert.assertEquals(actList, expList);
+        actList.clear();
 
         // 非事务表扫描记录
         cursor = cl.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
+        expList.clear();
+        expList.add(updateR1);
+        expList.add(insertR2);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
@@ -125,55 +129,6 @@ public class Transaction17082 extends SdbTestBase {
         Assert.assertEquals(actList, expList);
 
         db2.commit();
-        dbI.commit();
-        dbT.commit();
-        cursor.close();
-    }
-    
-    private class Operation extends SdbThreadBase{
-		@Override
-		public void exec() throws Exception {
-			// TODO Auto-generated method stub
-	        // 事务1执行多个原子操作
-	        for(int i=0; i<10; i++){
-	            BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'aaaaaaaa', b:'" + b + "'}");
-	            // 事务1对同一条记录执行多个操作
-	            cl1.insert(insertR2);
-	            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'a'}}", null);
-	            cl1.delete("{_id:"+ (10+i) +"}");
-	            // 事务1对不同记录执行多个操作
-	            cl1.delete("{_id:"+ i +"}");
-	            cl1.insert(insertR2);
-	            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'a'}}", null);
-	            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'aaaaaaaa'}}", null);
-	            expList.add(insertR2);
-	        }
-		}
-    }
-    
-    private class Read extends SdbThreadBase{
-    	private String hint = null;
-    	private Sequoiadb db2 = null;
-    	private DBCollection cl2 = null;
-    	private DBCursor cursor = null;
-    	
-    	public Read(Sequoiadb db2, String hint) {
-			// TODO Auto-generated constructor stub
-    		this.db2 = db2;
-    		this.hint = hint;
-		}
-    	
-		@Override
-		public void exec() throws Exception {
-			// TODO Auto-generated method stub
-    		cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-			// 事务2扫描记录
-			for(int i=0; i<10; i++){
-		        cursor = cl2.query(null, null, "{_id:1}", hint);
-		        Assert.assertEquals(TransUtils.getReadActList(cursor), insertR1s);
-			}
-			cursor.close();
-		}
     }
 
     @AfterClass

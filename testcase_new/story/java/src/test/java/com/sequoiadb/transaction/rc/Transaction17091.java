@@ -63,19 +63,19 @@ public class Transaction17091 extends SdbTestBase {
         }
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, null, "{'':null}");
+        cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, null, "{'':'a'}");
+        cursor = cl2.query(null, null, "{_id:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, null, "{'':null}");
+        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         expList.clear();
         BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1, a:100001, b:100001}");
@@ -84,7 +84,7 @@ public class Transaction17091 extends SdbTestBase {
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, null, "{'':'a'}");
+        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
@@ -92,25 +92,25 @@ public class Transaction17091 extends SdbTestBase {
         db1.commit();
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, null, "{'':null}");
+        cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, null, "{'':'a'}");
+        cursor = cl2.query(null, null, "{_id:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, null, "{'':null}");
+        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, null, "{'':'a'}");
+        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();

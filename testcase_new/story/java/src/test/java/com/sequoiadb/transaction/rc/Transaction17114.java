@@ -162,6 +162,7 @@ public class Transaction17114 extends SdbTestBase {
         public void exec() throws Exception {
             try {
                 List<BSONObject> records = new ArrayList<>();
+                //TODO:为了保证插入与其他线程能够大概率的真正并发，这里建议做多次循环插入，比如10次
                 for (int i = 4001; i <= 5000; i++) {
                     BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ", b:" + i + "}");
                     records.add(record);
@@ -182,6 +183,7 @@ public class Transaction17114 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception { 
+            //TODO:既然验证索引排序查询，这里不建议将索引字段更新为同一个值，可以使用$inc更新符
             cl2.update("{a:{$lt:'1001'}}", "{$set:{a:1}}", "{'':'textIndex17114'}");
             latch.countDown();
         }

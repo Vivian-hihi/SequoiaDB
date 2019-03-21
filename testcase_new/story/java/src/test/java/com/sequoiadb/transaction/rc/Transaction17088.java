@@ -53,13 +53,13 @@ public class Transaction17088 extends SdbTestBase {
         expList = TransUtils.insertDatas(cl1, 0, 50000, 1);
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, null, "{'':null}");
+        cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, null, "{'':'a'}");
+        cursor = cl2.query(null, null, "{_id:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.isEmpty());
         actList.clear();

@@ -22,15 +22,15 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @FileName:seqDB-17366：删除并发，删除的记录同时匹配已提交记录及其他事务删除的记录，事务回滚，过程中读 删除走索引扫描，R1<R2
+ * @FileName:seqDB-17366：删除并发，删除的记录同时匹配已提交记录及其他事务删除的记录，事务回滚，过程中读 删除走索引扫描，R1>R2
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
  */
 @Test(groups = "rc")
-public class Transaction17367A extends SdbTestBase {
+public class Transaction17367B extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "cl_17367A";
+    private String clName = "cl_17367B";
     private Sequoiadb db1;
     private Sequoiadb db2;
     private Sequoiadb db3;
@@ -49,51 +49,39 @@ public class Transaction17367A extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        insertR1 = (BSONObject) JSON.parse("{_id:'insertID17367A_1',a:1,b:1,c:1}");
-        insertR2 = (BSONObject) JSON.parse("{_id:'insertID17367A_2',a:2,b:2,c:2}");
+        insertR1 = (BSONObject) JSON.parse("{_id:'insertID17367A_1',a:2,b:2,c:2}");
+        insertR2 = (BSONObject) JSON.parse("{_id:'insertID17367A_2',a:1,b:1,c:1}");
     }
     
     @DataProvider(name = "index")
     public Object[][] createIndex(){
         
         //第一次非事务读正序查询的预期结果
-        List<BSONObject> expPositiveReadList1 = new ArrayList<BSONObject>();
-        expPositiveReadList1.add(insertR2);
+        List<BSONObject> expReadList1 = new ArrayList<BSONObject>();
         
         //第一次非事务读逆序查询的预期结果
-        List<BSONObject> expReverseReadList1 = new ArrayList<BSONObject>();
-        expReverseReadList1.add(insertR2);
-        
-        //第一次非事务读正序查询的预期结果
-        List<BSONObject> expReadList1 = new ArrayList<BSONObject>();
+        List<BSONObject> expReadList2 = new ArrayList<BSONObject>();
+        expReadList2.add(insertR2);
         
         return new Object[][]{
             {"{'a': 1}",
-             expPositiveReadList1,
-             expReverseReadList1},
+             expReadList1},
             {"{'a': 1, b: 1}",
-             expPositiveReadList1,
-             expReverseReadList1},
+             expReadList1},
             {"{'a': 1, b: -1}",
-             expPositiveReadList1,
-             expReverseReadList1},
+             expReadList1},
             {"{'a': -1}",
-             expReadList1,
-             expReadList1},
+             expReadList2},
             {"{'a': -1, b: 1}",
-             expReadList1,
-             expReadList1},
+             expReadList2},
             {"{'a': -1, b: -1}",
-             expReadList1,
-             expReadList1},
+             expReadList2},
            
         };
     }
 
     @Test(dataProvider = "index")
-    public void test(String indexKey,
-            List<BSONObject> expPositiveReadList1, 
-            List<BSONObject> expReverseReadList1) {
+    public void test(String indexKey, List<BSONObject> expReadList) {
         try{
             // 插入记录R1、R2，R1小于R2
             cl.insert(insertR1);
@@ -114,7 +102,7 @@ public class Transaction17367A extends SdbTestBase {
 
             // 事务1删除记录R1
             hint = "{\"\":\"a\"}";
-            cl1.delete("{a:1}", hint);
+            cl1.delete("{a:2}", hint);
 
             // 事务2匹配R1、R2删除
             DeleteThread deleteThread = new DeleteThread();
@@ -153,8 +141,8 @@ public class Transaction17367A extends SdbTestBase {
 
             // 事务3正序记录读
             expList.clear();
-            expList.add(insertR1);
             expList.add(insertR2);
+            expList.add(insertR1);
             hint = "{\"\":null}";
             cursor = cl3.query(null, null, "{a: 1, b: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
@@ -170,8 +158,8 @@ public class Transaction17367A extends SdbTestBase {
 
             // 事务3逆序记录读
             expList.clear();
-            expList.add(insertR2);
             expList.add(insertR1);
+            expList.add(insertR2);
             hint = "{\"\":null}";
             cursor = cl3.query(null, null, "{a: -1, b: 1}", hint);
             actList = TransUtils.getReadActList(cursor);
@@ -189,28 +177,28 @@ public class Transaction17367A extends SdbTestBase {
             hint = "{\"\":null}";
             cursor = cl.query(null, null, "{a: 1, b: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expPositiveReadList1);
+            Assert.assertEquals(actList, expReadList);
             actList.clear();
 
             // 非事务正序索引读
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, "{a: 1, b: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expPositiveReadList1);
+            Assert.assertEquals(actList, expReadList);
             actList.clear();
 
             // 非事务逆序记录读
             hint = "{\"\":null}";
             cursor = cl.query(null, null, "{a: -1, b: 1}", hint);
             actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReverseReadList1);
+            Assert.assertEquals(actList, expReadList);
             actList.clear();
 
             // 非事务逆序索引读
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, "{a: -1, b: 1}", hint);
             actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReverseReadList1);
+            Assert.assertEquals(actList, expReadList);
             actList.clear();
 
             // 回滚事务1
@@ -275,8 +263,8 @@ public class Transaction17367A extends SdbTestBase {
 
             // 事务3正序记录读
             expList.clear();
-            expList.add(insertR1);
             expList.add(insertR2);
+            expList.add(insertR1);
             hint = "{\"\":null}";
             cursor = cl3.query(null, null, "{a: 1, b: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
@@ -292,8 +280,8 @@ public class Transaction17367A extends SdbTestBase {
 
             // 事务3逆序记录读
             expList.clear();
-            expList.add(insertR2);
             expList.add(insertR1);
+            expList.add(insertR2);
             hint = "{\"\":null}";
             cursor = cl3.query(null, null, "{a: -1, b: 1}", hint);
             actList = TransUtils.getReadActList(cursor);
