@@ -40,13 +40,13 @@ public class GetObjectList16517 extends S3TestBase {
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
-	@BeforeClass
+	@BeforeClass(enabled=false)
 	private void setUp() throws Exception {
 		s3Client = CommLib.buildS3Client();
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 	}
 
-	@Test(dataProvider = "numberProvider")
+	@Test(dataProvider = "numberProvider", enabled=false)
 	public void testGetObjectList(int objectTotalNum) throws Exception {
 		//put multiple objects
 		for(int i = 0 ; i < objectTotalNum ; i++){
@@ -71,7 +71,7 @@ public class GetObjectList16517 extends S3TestBase {
 		runSuccess =true;
 	}
 
-	@AfterClass
+	@AfterClass(enabled=false)
 	private void tearDown() {
 		if (runSuccess) {
 			CommLib.deleteAllObjectVersions(s3Client, bucketName);
