@@ -235,48 +235,28 @@ namespace engine
          dpsTransLRB * & pLRBEduId
       ) ;
 
-      // search LRB list ( owner, waiter or upgrade list ) and find
-      // the LRB previous the given eduId
-      BOOLEAN _getPreviousLRB
+      // search the EDU LRB list and find the LRB associated with same lock Id
+      dpsTransLRB * _getLRBFromEDULRBList
       (
-         const EDUID     eduId,
-         dpsTransLRB *   lrbBegin,
-         dpsTransLRB * & pLRBPrev
+         _dpsTransExecutor    * dpsTxExectr,
+         const dpsTransLockId & lockId
       ) ;
 
-      //
-      // walk through the owner LRB list, find the one with given
-      // eduid and check if the input lockMode is compatible with
-      // all owners
-      void _getLRBByEDUIdAndCheckWaiterLockMode
-      (
-         const EDUID               eduId,
-         const DPS_TRANSLOCK_TYPE  lockMode,
-         dpsTransLRB *             lrbBegin,
-         dpsTransLRB *           & pLRBEduId,
-         dpsTransLRB *           & pLRBPrev,
-         BOOLEAN                 & foundIncomp
-      ) ;
-
-      // walk through the owner LRB list check if the input
-      // lockMode is compatible with other owners
-      void _checkWaiterLockModeWithOwners
-      (
-         const EDUID               eduId,
-         const DPS_TRANSLOCK_TYPE  lockMode,
-         dpsTransLRB *             lrbBegin,
-         dpsTransLRB *           & pLRBPrev,
-         BOOLEAN                 & foundIncomp
-      ) ;
-
-      // get LRB Header ( index and its pointer ) of a given lock from
-      // LRB Header bucket
+      // get LRB Header poiner of a given lock from LRB Header bucket
       BOOLEAN _getLRBHdrByLockId
       (
          const dpsTransLockId & lockId,
          dpsTransLRBHeader *  & pLRBHdr
       ) ;
 
+      // walk through the owner LRB list check if the input
+      // lockMode is compatible with other owners
+      BOOLEAN _checkWaiterLockModeWithOwners
+      (
+         const dpsTransLRB *       lrbBegin,
+         const dpsTransLRB *       ownerLrb,
+         const DPS_TRANSLOCK_TYPE  lockMode
+      ) ;
 
       // add a LRB at the end of the queue ( waiter, upgrade or owner list )
       void _addToLRBListTail
@@ -306,10 +286,8 @@ namespace engine
          dpsTransLRB *             lrbBegin,
          dpsTransLRB *           & pLRBToInsert,
          dpsTransLRB *           & pLRBIncomp,
-         dpsTransLRB *           & pLRBEduId,
-         dpsTransLRB *           & pLRBPrevEduId
+         dpsTransLRB *           & pLRBEduId
       ) ;
-
 
       // add a LRB at the end of the EDU LRB chain,
       // which is a list of all locks acquired within a session/tx
@@ -320,15 +298,12 @@ namespace engine
          const dpsTransLockId & lockId
       ) ;
 
-
       // remove a LRB from a LRB list ( owner, waiter, upgrade list )
       void _removeFromLRBList
       (
          dpsTransLRB * & idxBegin,
-         dpsTransLRB *   lrb,
-         dpsTransLRB * & idxNext
+         dpsTransLRB *   lrb
       ) ;
-
 
       // remove LRB from waiter or upgrade queue/list,
       // and wake up the next one in the queue if necessary
@@ -364,31 +339,22 @@ namespace engine
          const dpsTransLockId             & lockId,
          const DPS_TRANSLOCK_TYPE           requestLockMode,
          const DPS_TRANSLOCK_OP_MODE_TYPE   opMode,
-         UINT32                             bktIdx,
+         const UINT32                       bktIdx,
          const BOOLEAN                      bktLatched,
          dpsTransRetInfo                  * pdpsTxResInfo,
          _dpsITransLockCallback           * callback = NULL
       ) ;
 
-
       // core logic of release a lock
       void _release
       (
-         _dpsTransExecutor      * dpsTxExectr,
-         const dpsTransLockId   & lockId,
-         const BOOLEAN            bForceRelease,
-         _dpsITransLockCallback * callback = NULL
+         _dpsTransExecutor       * dpsTxExectr,
+         const dpsTransLockId    & lockId,
+         dpsTransLRB             * pOwnerLRB,
+         const BOOLEAN             bForceRelease,
+         UINT32                  & refCountToDecrease,
+         _dpsITransLockCallback  * callback = NULL
       ) ;
-
-
-      // core logic of release all locks an executor holding
-      void _releaseAll
-      (
-         _dpsTransExecutor      * dpsTxExectr,
-         const dpsTransLockId   & lockId,
-         _dpsITransLockCallback * callback = NULL
-      ) ;
-
 
       // acquire and setup a new LRB header and a new LRB
       INT32 _prepareNewLRBAndHeader
@@ -400,7 +366,6 @@ namespace engine
          dpsTransLRBHeader *      & pLRBHdrNew,
          dpsTransLRB       *      & pLRBNew
       ) ;
-
 
       // calculate the index to LRB Header bucket
       UINT32 _getBucketNo( const dpsTransLockId &lockId );

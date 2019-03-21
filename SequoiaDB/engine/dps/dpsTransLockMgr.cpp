@@ -53,13 +53,14 @@
 
 namespace engine
 {
+   #define DPS_LOCKID_STRING_MAX_SIZE ( 128 ) 
+
    dpsTransLRBHeader::dpsTransLRBHeader()
    : nextLRBHdr(NULL), ownerLRB(NULL),
      waiterLRB(NULL), upgradeLRB(NULL), bktIdx(DPS_TRANS_INVALID_BUCKET_SLOT)
    {
    }
 
-   #define DPS_LOCKID_STRING_MAX_SIZE ( 128 ) 
    dpsTransLockManager::dpsTransLockManager() : _pLRBMgr( NULL ),
                                                 _pLRBHdrMgr( NULL ),
                                                 _initialized( FALSE )
@@ -356,13 +357,6 @@ namespace engine
             pLRBHdr = NULL ;
          } 
       }
-#ifdef _DEBUG
-      else
-      {
-         PD_LOG( PDERROR,
-                 "Invalid lockId:%s", lockId.toString().c_str() ) ;
-      }
-#endif
       return found ;
    }
 
@@ -403,122 +397,9 @@ namespace engine
             found = TRUE ;
             break ;
          }
-         // move to next
          plrb = plrb->nextLRB ;
       }
       return found ;
-   }
-
-   //
-   // Description: search the LRB chain and find the LRB previous the
-   //              given eduid
-   // Function:    walk through LRB list/chain find the LRB previous the
-   //              given eduId
-   // Input:
-   //    eduId    -- EDU Id.
-   //    lrbBegin -- the first LRB pointer in the chain( owner,
-   //                waiter or upgrade queue )
-   // Output:
-   //    pLRBPrev -- the pointer of the LRB in the list previous to the owner
-   // Return: 
-   //    true  -- found the LRB object with the given eduId
-   //    false -- not found
-   // Dependency:  the lock bucket latch shall be acquired
-   //
-   BOOLEAN dpsTransLockManager::_getPreviousLRB
-   (
-      const EDUID       eduId,
-      dpsTransLRB     * lrbBegin,
-      dpsTransLRB *   & pLRBPrev
-   )
-   {
-      BOOLEAN found = FALSE ;
-      dpsTransLRB *plrb     = lrbBegin, 
-                  *plrbPrev = NULL ;
-
-      pLRBPrev  = NULL ;
-      while ( plrb )
-      {
-         if ( eduId == plrb->dpsTxExectr->getEDUID() )
-         {
-            pLRBPrev  = plrbPrev ;
-            found = TRUE ;
-            break ;
-         }
-
-         // remember previous pointer
-         plrbPrev = plrb ;
-
-         // move to next
-         plrb = plrb->nextLRB ;
-      }
-      return found ;
-   }
-
-   //
-   // Description: walk through the owner LRB list, find the one with given
-   //              eduid and check if the input lockMode is compatible with
-   //              all owners
-   // Input:
-   //    eduId    -- EDU Id to search in owner LRB list
-   //    lockMode -- lock mode to check ( waiter lock mode )
-   //    lrbBegin -- the first LRB in the owner list
-   // Output:
-   //    pLRBEduId-- the pointer of first LRB object matches the eduId
-   //                if it is found. If not, it shall be the pointer of
-   //                the last LRB object in the list
-   //    pLRBPrev -- the pointer of the LRB in the list previous to the owner
-   //    foundIncomp -- if an incompatible one is found in owner list
-   // Dependency:  the lock bucket latch shall be acquired
-   //
-   void dpsTransLockManager::_getLRBByEDUIdAndCheckWaiterLockMode
-   (
-      const EDUID               eduId,
-      const DPS_TRANSLOCK_TYPE  lockMode, 
-      dpsTransLRB *             lrbBegin,
-      dpsTransLRB *           & pLRBEduId, 
-      dpsTransLRB *           & pLRBPrev,
-      BOOLEAN                 & foundIncomp
-   )
-   {
-      EDUID lrbEduid  = 0 ;
-      dpsTransLRB *plrb     = lrbBegin,
-                  *plrbPrev = NULL ;
-      BOOLEAN foundMyself = FALSE ;
-
-      pLRBEduId   = NULL ;
-      pLRBPrev    = NULL ;
-      foundIncomp = FALSE ;
-      while ( plrb )
-      {
-         lrbEduid = plrb->dpsTxExectr->getEDUID() ;
-         if ( ( ! foundMyself ) && ( eduId == lrbEduid ) )
-         {
-            // save the lrb if the given eduId is found in the owner list
-            pLRBEduId   = plrb ;
-            pLRBPrev    = plrbPrev ;
-            foundMyself = TRUE ;
-         }
-
-         if (    ( ! foundIncomp )
-              && ( eduId != lrbEduid )
-              && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
-         {
-            foundIncomp = TRUE ;
-         } 
-
-         // break if all jobs are done
-         if ( foundMyself && foundIncomp )
-         {
-            break ;
-         }
-
-         // remember previous pointer
-         plrbPrev = plrb ;
-
-         // move to next      
-         plrb = plrb->nextLRB ;
-      }
    }
 
 
@@ -526,59 +407,39 @@ namespace engine
    // Description: walk through the owner LRB list check if the input
    //              lockMode is compatible with other owners
    // Input:
-   //    eduId    -- EDU Id to search in owner LRB list
    //    lockMode -- lock mode to check ( waiter lock mode )
-   //    lrbBegin -- the first LRB pointer in the owne list
+   //    lrbBegin -- the LRB in owner queue to start searching
+   //    ownerLrb -- owner LRB
    // Output:
-   //    pLRBPrev    -- the pointer of the LRB in the list previous to the owner
-   //    foundIncomp -- if an incompatible one is found in owner list
+   //    none
+   // Return:
+   //    TRUE     -- if an incompatible one is found in owner list
+   //    FALS     -- compatible with owners
    // Dependency:  the lock bucket latch shall be acquired
    //
-   void dpsTransLockManager::_checkWaiterLockModeWithOwners
+   BOOLEAN dpsTransLockManager::_checkWaiterLockModeWithOwners
    (
-      const EDUID               eduId,
-      const DPS_TRANSLOCK_TYPE  lockMode, 
-      dpsTransLRB *             lrbBegin,
-      dpsTransLRB *           & pLRBPrev,
-      BOOLEAN                 & foundIncomp
+      const dpsTransLRB *       lrbBegin,
+      const dpsTransLRB *       ownerLrb,
+      const DPS_TRANSLOCK_TYPE  lockMode
    )
    {
-      EDUID lrbEduid  = 0 ;
-      dpsTransLRB *plrb     = lrbBegin ,
-                  *plrbPrev = NULL ;
-      BOOLEAN foundMyself = FALSE ;
+      dpsTransLRB *plrb = (dpsTransLRB *)lrbBegin ;
+      BOOLEAN foundIncomp = FALSE ;
 
-      pLRBPrev    = NULL ;
-      foundIncomp = FALSE ;
       while ( plrb )
       {
-         lrbEduid = plrb->dpsTxExectr->getEDUID() ;
-         if ( ( ! foundMyself ) && ( eduId == lrbEduid ) )
-         {
-            pLRBPrev    = plrbPrev ;
-            foundMyself = TRUE ;
-         }
-
-         if (    ( ! foundIncomp )
-              && ( eduId != lrbEduid )
-              && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
+         if ( ( ownerLrb != plrb ) &&
+              ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
          {
             foundIncomp = TRUE ;
-         } 
-
-         // break if all jobs are done
-         if ( foundMyself && foundIncomp )
-         {
             break ;
          }
-
-         // remember previous pointer
-         plrbPrev = plrb ;
-
-         // move to next      
          plrb = plrb->nextLRB ;
       }
+      return foundIncomp ;
    }
+
 
    //
    // Description: add a LRB at the end of the LRB chain/list
@@ -607,11 +468,22 @@ namespace engine
          {
             plrb = plrb->nextLRB ;
          }
+         // add this new LRB behind the last LRB
          plrb->nextLRB = lrbNew ;
+         if ( lrbNew )
+         {
+            lrbNew->prevLRB = plrb ;
+            lrbNew->nextLRB = NULL ;
+         }
       }
       else
       {
          lrbBegin = lrbNew ;
+         if ( lrbNew )
+         {
+            lrbNew->prevLRB = NULL ;
+            lrbNew->nextLRB = NULL ;
+         }
       }
    }
 
@@ -635,8 +507,13 @@ namespace engine
    )
    {
       if ( insPos && lrbNew )
-      {   
+      {
          lrbNew->nextLRB = insPos->nextLRB ;
+         lrbNew->prevLRB = insPos ;
+         if ( insPos->nextLRB )
+         {
+            insPos->nextLRB->prevLRB = lrbNew ;
+         }
          insPos->nextLRB = lrbNew ;
       }
    }
@@ -658,7 +535,6 @@ namespace engine
    //    pLRBToInsert  -- the lrb which the new LRB shall be inserted after
    //    pLRBIncomp    -- pointer of first incompatible LRB
    //    pLRBEduId     -- the LRB owned by same eduId
-   //    pLRBPrevEduId -- the address of the LRB previous to the pLRBEduId
    // Return:     None
    // Dependency:  the lock bucket latch shall be acquired
    //
@@ -669,8 +545,7 @@ namespace engine
       dpsTransLRB             * lrbBegin,
       dpsTransLRB *           & pLRBToInsert,
       dpsTransLRB *           & pLRBIncomp,
-      dpsTransLRB *           & pLRBEduId,
-      dpsTransLRB *           & pLRBPrevEduId
+      dpsTransLRB *           & pLRBEduId
    )
    {
       EDUID lrbEduid = 0 ;
@@ -687,8 +562,6 @@ namespace engine
          {
             // save the pointer if the given eduId is found in the owner list
             pLRBEduId     = plrb;
-            // save the previous LRB pointer and the pointer/address
-            pLRBPrevEduId = plrbPrev ;
             foundMyself   = TRUE ;
          }
 
@@ -746,15 +619,25 @@ namespace engine
       const dpsTransLockId & lockId
    )
    {
-      SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-
-      // get the pointer of last LRB in the EDU LRB chain
-      // and add the new LRB into the chain
-      dpsTransLRB *plrb = dpsTxExectr->getLastLRB() ;
-
       if ( insLRB )
       {
-         insLRB->eduLrbPrev = plrb ;
+         // get the pointer of last LRB in the EDU LRB chain
+         // and add the new LRB into the chain
+         dpsTransLRB *plrb = dpsTxExectr->getLastLRB() ;
+         if ( plrb )
+         {
+            plrb->eduLrbNext   = insLRB ; 
+            insLRB->eduLrbPrev = plrb ;
+            insLRB->eduLrbNext = NULL ;
+         }
+         else
+         {
+            insLRB->eduLrbPrev = NULL ;
+            insLRB->eduLrbNext = NULL ;
+         }
+
+         // set this newly inserted lrb as the last LRB
+         dpsTxExectr->setLastLRB( insLRB ) ;
 
          // add to executor lock map if it is CS or CL lock
          if ( ! lockId.isLeafLevel() )
@@ -768,9 +651,6 @@ namespace engine
          // clear the wait info in dpsTxExectr
          dpsTxExectr->clearWaiterInfo() ;
       }
-
-      // save the last LRB
-      dpsTxExectr->setLastLRB( insLRB ) ;
    }
 
 
@@ -792,33 +672,29 @@ namespace engine
    void dpsTransLockManager::_removeFromLRBList
    (
       dpsTransLRB*     & beginLRB,
-      dpsTransLRB*       delLRB,
-      dpsTransLRB*     & nextLRB
+      dpsTransLRB*       delLRB
    )
    {
-      nextLRB = NULL;
-
       if ( beginLRB && delLRB )
       {
-         dpsTransLRB *plrb = beginLRB;
-
          // if the first one is the one to be removed
          if ( delLRB == beginLRB )
          {
             beginLRB = delLRB->nextLRB ;
-            nextLRB  = delLRB->nextLRB ;
+            if ( delLRB->nextLRB )
+            {
+               delLRB->nextLRB->prevLRB = NULL ;
+            }
          }
          else
          {
-            while ( plrb )
+            SDB_ASSERT( delLRB->prevLRB, "Invalid LRB, prevLRB is NULL" ) ;
             {
-               if ( delLRB == plrb->nextLRB )
-               {
-                  plrb->nextLRB = delLRB->nextLRB ;
-                  nextLRB = delLRB->nextLRB ;
-                  break ;
-               }
-               plrb = plrb->nextLRB ;
+               delLRB->prevLRB->nextLRB = delLRB->nextLRB ;
+            }
+            if ( delLRB->nextLRB )
+            {
+               delLRB->nextLRB->prevLRB = delLRB->prevLRB ;
             }
          }
       }
@@ -868,13 +744,8 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__REMOVEFROMUPGRADEORWAITLIST ) ;
 
-#ifdef _DEBUG
-      SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-#endif
-
       dpsTransLRB *pLRB = dpsTxExectr->getWaiterLRB() ;
       dpsTransLRB *pLRBNext = NULL;
-      dpsTransLRB *plrb = NULL ;
       dpsTransLRBHeader * pLRBHdr = NULL ;
 
 #ifdef _DEBUG
@@ -895,7 +766,8 @@ namespace engine
 #ifdef _DEBUG
          SDB_ASSERT( pLRB->lrbHdr != NULL, "Invalid LRB Header." );
 #endif
-         pLRBHdr = pLRB->lrbHdr ;
+         pLRBHdr  = pLRB->lrbHdr ;
+         pLRBNext = pLRB->nextLRB ;
 
          // sanity check, panic if fails.
          if ( ! ( pLRBHdr->lockId == lockId ) )
@@ -911,7 +783,7 @@ namespace engine
          if ( DPS_QUE_UPGRADE == dpsTxExectr->getWaiterQueType() )
          {
             // remove from upgrade list
-            _removeFromLRBList( pLRBHdr->upgradeLRB, pLRB, pLRBNext ) ; 
+            _removeFromLRBList( pLRBHdr->upgradeLRB, pLRB ) ; 
 
             // clear the wait info in dpsTxExectr
             dpsTxExectr->clearWaiterInfo() ;
@@ -926,7 +798,7 @@ namespace engine
          else if ( DPS_QUE_WAITER == dpsTxExectr->getWaiterQueType() )
          {
             // remove from waiter list
-            _removeFromLRBList( pLRBHdr->waiterLRB, pLRB, pLRBNext ) ; 
+            _removeFromLRBList( pLRBHdr->waiterLRB, pLRB ) ; 
 
             // clear the wait info in dpsTxExectr
             dpsTxExectr->clearWaiterInfo() ;
@@ -958,17 +830,16 @@ namespace engine
          //    
          if ( pLRBNext )
          {
-            plrb = pLRBNext;
 #ifdef _DEBUG
-            SDB_ASSERT( pLRB->lrbHdr == plrb->lrbHdr, "Invalid LRB" ) ;
+            SDB_ASSERT( pLRB->lrbHdr == pLRBNext->lrbHdr, "Invalid LRB" ) ;
 #endif
             // the EDU was waken up ( _waitLock returned SDB_OK )
             if ( FALSE == removeLRBHeader ) 
             {
-               if ( dpsIsLockCompatible( pLRB->lockMode, plrb->lockMode ) )
+               if ( dpsIsLockCompatible( pLRB->lockMode, pLRBNext->lockMode ) )
                {
                   // wake up next waiter if the lock mode is compatible
-                  _wakeUp( plrb->dpsTxExectr ) ;   
+                  _wakeUp( pLRBNext->dpsTxExectr ) ;   
                }
             }
             else
@@ -978,7 +849,7 @@ namespace engine
                if ( ! pLRBHdr->ownerLRB )
                {
                   // wake up next waiter if owner list is empty
-                  _wakeUp( plrb->dpsTxExectr ) ;   
+                  _wakeUp( pLRBNext->dpsTxExectr ) ;   
                }
             }
          }
@@ -1087,41 +958,26 @@ namespace engine
    {
       if ( dpsTxExectr && delLRB && dpsTxExectr->getLastLRB() ) 
       {
-         dpsTransLRB *eduLRB = dpsTxExectr->getLastLRB() ; 
-         dpsTransLRB *plrb = eduLRB;
-         dpsTransLRB *prevLRB = NULL ;
-         // walk though the EDU LRB list find and remove the give LRB
-         // from the list
-         while ( plrb )
+         if ( delLRB->eduLrbPrev )
          {
-            // found the LRB in chain and remove it
-            if ( delLRB == plrb )
-            {
-               if ( prevLRB )
-               {
-                  prevLRB->eduLrbPrev = plrb->eduLrbPrev ;
-               }
-
-               if ( plrb == eduLRB )
-               {
-                  dpsTxExectr->setLastLRB( plrb->eduLrbPrev ) ;
-               }
- 
-               // remove the lock from lock ID map if it is CS or CL lock
-               if ( ! lockId.isLeafLevel() )
-               {
-                  dpsTxExectr->removeLock( lockId ) ;
-               }
-
-               // decrease the lock count
-               dpsTxExectr->decLockCount() ;
-
-               break ;
-            }
-            prevLRB = plrb ;
-            plrb = plrb->eduLrbPrev ;
-
+            delLRB->eduLrbPrev->eduLrbNext = delLRB->eduLrbNext ;
          }
+         if ( delLRB->eduLrbNext )
+         {
+            delLRB->eduLrbNext->eduLrbPrev = delLRB->eduLrbPrev ;
+         }
+         // set new last LRB if I am the last one
+         if ( dpsTxExectr->getLastLRB() == delLRB )
+         {
+            dpsTxExectr->setLastLRB( delLRB->eduLrbPrev ) ;
+         } 
+         // remove the lock from lock ID map if it is CS or CL lock
+         if ( ! lockId.isLeafLevel() )
+         {
+            dpsTxExectr->removeLock( lockId ) ;
+         }
+         // decrease the lock count
+         dpsTxExectr->decLockCount() ;
       }
    }
 
@@ -1184,7 +1040,7 @@ namespace engine
       const dpsTransLockId             & lockId,
       const DPS_TRANSLOCK_TYPE           requestLockMode,
       const DPS_TRANSLOCK_OP_MODE_TYPE   opMode,
-      UINT32                             bktIdx,
+      const UINT32                       bktIdx,
       const BOOLEAN                      bktLatched,
       dpsTransRetInfo                  * pdpsTxResInfo,
       _dpsITransLockCallback           * callback 
@@ -1198,7 +1054,6 @@ namespace engine
       dpsTransLRB *pLRBNew       = NULL ,
                   *pLRBIncomp    = NULL ,
                   *pLRBToInsert  = NULL ,
-                  *pLRBPrevEduId = NULL ,
                   *pLRBEduID     = NULL ,
                   *pLRB          = NULL ;
 
@@ -1265,12 +1120,6 @@ namespace engine
          }
       }
 
-      if ( bktIdx == DPS_TRANS_INVALID_BUCKET_SLOT )
-      {
-         // calculate the hash index by lockId 
-         bktIdx = _getBucketNo( lockId ) ;
-      }
-
       // normal lock acquire/try get/test routine
 
       // acquire and prepare new LRB and LRB Header
@@ -1285,9 +1134,6 @@ namespace engine
          {
             goto error ;
          }
-#ifdef _DEBUG
-         SDB_ASSERT( pLRBNew && pLRBHdrNew, "Invalid LRB or LRB Header." ) ;
-#endif
          bFreeLRB       = TRUE ;
          bFreeLRBHeader = TRUE ;
       }
@@ -1363,11 +1209,8 @@ namespace engine
       // pLRBToInsert  -- lrb to insert after
       // pLRBIncomp    -- addr of first incompatible
       // pLRBEduId     -- LRB with same EDUId
-      // pLRBPrevEduId -- addr of idxPrevEduId
-      _searchOwnerLRBList( eduId, requestLockMode,
-                           pLRBHdr->ownerLRB, pLRBToInsert,
-                           pLRBIncomp,
-                           pLRBEduID,pLRBPrevEduId ) ;
+      _searchOwnerLRBList( eduId, requestLockMode, pLRBHdr->ownerLRB,
+                           pLRBToInsert, pLRBIncomp, pLRBEduID ) ;
       if ( pLRBEduID )
       {
          //
@@ -1412,11 +1255,10 @@ namespace engine
          // try to do upgrade
          //
          // check if the requested mode is compatible with other owners
-         if ( NULL != pLRBIncomp ) 
+         if ( NULL != pLRBIncomp )
          {
-            // valid pLRBIncomp, means
-            // an incompatible LRB is found, i.e., not compatible
-            // with others 
+            // valid pLRBIncomp means an incompatible LRB is found,
+            // i.e., not compatible with others 
 
             if ( DPS_TRANSLOCK_OP_MODE_ACQUIRE == opMode )
             {
@@ -1465,28 +1307,17 @@ namespace engine
                //     . move it to the place right after the pLRBToInsert
 
                // remove from current place
-               if ( pLRBPrevEduId )
-               {
-                  pLRBPrevEduId->nextLRB = pLRB->nextLRB ;
-               }
-               else
-               {
-                  // if pLRBPrevEduId is invalid, means it is the first one
-                  // in the owner list
-                  pLRBHdr->ownerLRB = pLRB->nextLRB ;
-               }
+               _removeFromLRBList( pLRBHdr->ownerLRB, pLRB ) ;
 
                // insert it to the new position
                if ( pLRBToInsert )
                {
-                  _addToOwnerLRBList( pLRBToInsert, pLRBEduID ) ;
+                  _addToOwnerLRBList( pLRBToInsert, pLRB ) ;
                }
                else
                {
-                  pLRB->nextLRB = NULL;
-
                   // add it at the end of owner list
-                  _addToLRBListTail( pLRBHdr->ownerLRB, pLRBEduID ) ;
+                  _addToLRBListTail( pLRBHdr->ownerLRB, pLRB ) ;
                }
 
                // clear the wait info in dpsTxExectr
@@ -1508,7 +1339,7 @@ namespace engine
          //
 
          // check if lock is compatible with all owners
-         if ( NULL != pLRBIncomp ) 
+         if ( NULL != pLRBIncomp )
          {
             // found an incompatible one, i.e., not compatible with others
 
@@ -1695,7 +1526,6 @@ namespace engine
    {
 
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_PREPARENEWLRBANDHEADER ) ;
-      SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 
       INT32   rc             = SDB_OK ;
       BOOLEAN lrbAcquired    = FALSE;
@@ -1815,7 +1645,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_ACQUIRE ) ;
 #ifdef _DEBUG
       CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
-      CHAR iLockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
       ossSnprintf( lockIdStr, sizeof( lockIdStr ),
                    "%s", lockId.toString().c_str() ) ;
       PD_TRACE5( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
@@ -1827,17 +1656,16 @@ namespace engine
 
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
+
       INT32 rc  = SDB_OK ,
             rc2 = SDB_OK ; // context pause or resume return code
       dpsTransLockId     iLockId ;
       DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       BOOLEAN isIntentLockAcquired = FALSE ;
 
-      UINT32 bktIdx = DPS_TRANS_INVALID_BUCKET_SLOT ;
-      BOOLEAN bLatched   = FALSE ;
-#ifdef _DEBUG
-      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
-#endif
+      UINT32  bktIdx   = DPS_TRANS_INVALID_BUCKET_SLOT ;
+      BOOLEAN bLatched = FALSE ;
+
       if ( ! lockId.isValid() )
       {
          rc = SDB_SYS ;
@@ -1851,11 +1679,11 @@ namespace engine
          iLockId   = lockId.upOneLevel() ;
          iLockMode = dpsIntentLockMode( requestLockMode ) ;
 #ifdef _DEBUG
-         ossSnprintf( iLockIdStr, sizeof( iLockIdStr ),
+         ossSnprintf( lockIdStr, sizeof( lockIdStr ),
                       "%s", iLockId.toString().c_str() ) ;
          PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
                     PD_PACK_STRING( "Acquiring intent lock:" ),
-                    PD_PACK_STRING( iLockIdStr ),
+                    PD_PACK_STRING( lockIdStr ),
                     PD_PACK_BYTE( iLockMode )  ) ;
 #endif
          rc = acquire( dpsTxExectr, iLockId, iLockMode, 
@@ -1914,10 +1742,7 @@ namespace engine
       // init rc2. it is used to mark whether the context has
       // been successfully paused / resumed
       rc2 = SDB_OK ;
-#ifdef _DEBUG
-      PD_TRACE1( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
-                 PD_PACK_STRING("Lock waiting process") ) ;
-#endif
+
       // pause the context before waiting the lock
       if ( pContext )
       {
@@ -1930,19 +1755,18 @@ namespace engine
       }
       if ( SDB_OK != rc2 )
       {
-         PD_LOG( PDERROR, "Failed to pause context, rc:%d", rc2 ) ;
          goto postLockWaiting ;
       }
      
       // wait for the lock
       rc = _waitLock( dpsTxExectr ) ;
-#ifdef _DEBUG
-      PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
-                 PD_PACK_STRING("waitLock rc:"),
-                 PD_PACK_INT( rc ) )  ;
-#endif
       if ( SDB_OK != rc )
       {
+#ifdef _DEBUG
+         PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
+                    PD_PACK_STRING("waitLock rc:"),
+                    PD_PACK_INT( rc ) )  ;
+#endif
          goto postLockWaiting ;
       }
 
@@ -1955,10 +1779,6 @@ namespace engine
                     PD_PACK_STRING("context resume rc:"),
                     PD_PACK_INT( rc2 ) )  ;
 #endif
-      }
-      if ( SDB_OK != rc2 )
-      {
-         PD_LOG( PDERROR, "Failed to resume context, rc:%d", rc2 ) ;
       }
 
    postLockWaiting:
@@ -1988,10 +1808,6 @@ namespace engine
       //     between itself and the one is woken up
       if ( ( SDB_OK == rc ) && ( SDB_OK == rc2 ) && bLatched )
       {
-#ifdef _DEBUG
-         PD_TRACE1( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
-                    PD_PACK_STRING("Retry acquire") ) ;
-#endif
          goto acquireRetry ;
       }
 
@@ -2001,12 +1817,6 @@ namespace engine
          bLatched = FALSE ;
       }
 
-      // when _waitLock() fails ( timeout or be interrupted ), or pause/resume
-      // context fails, we will need to release upper level intent lock
-#ifdef _DEBUG
-      PD_TRACE1( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
-                 PD_PACK_STRING("lock waiting error code path") ) ;
-#endif
       // set recode to rc2 when _waitLock() succeeded but resume()
       // or pause() failed
       if ( ( SDB_OK != rc2 ) && ( SDB_OK == rc ) )
@@ -2015,26 +1825,59 @@ namespace engine
       }
 
    error:
+      // when _waitLock() fails ( timeout or be interrupted ), or pause/resume
+      // context fails, we will need to release upper level intent lock
       if ( bLatched )
       {
          _releaseOpLatch( bktIdx ) ;
          bLatched = FALSE ;
       }
-#ifdef _DEBUG
-      PD_TRACE1( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
-                 PD_PACK_STRING("Error code path") ) ;
-#endif
       if ( isIntentLockAcquired )
       {
          release( dpsTxExectr, iLockId, FALSE ) ;
          isIntentLockAcquired = FALSE ;
 #ifdef _DEBUG
+         ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                      "%s", iLockId.toString().c_str() ) ;
          PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_ACQUIRE,
-                    PD_PACK_STRING( "Release intent lock:" ),
-                    PD_PACK_STRING( iLockId.toString().c_str() ) ) ;
+                    PD_PACK_STRING( "Error code path, release intent lock:" ),
+                    PD_PACK_STRING( lockIdStr ) ) ;
 #endif
       }
       goto done ;
+   }
+
+
+   //
+   // Description: search EDU LRB chain and find the LRB has same lock ID
+   // Function:    walk through the EDU LRB chain( doubly linked list ),
+   //              and search for the LRB with the LRB Header it associated to
+   //              containing the same lockId.
+   // Input:
+   //    dpsTxExectr  -- dpsTxExectr
+   //    lockId       -- the lock ID
+   // Output:
+   //    None
+   // Return:      the LRB pointer when it is found
+   //              NULL when it is not found
+   // Dependency:  None
+   //
+   dpsTransLRB * dpsTransLockManager::_getLRBFromEDULRBList
+   (
+      _dpsTransExecutor    * dpsTxExectr,
+      const dpsTransLockId & lockId
+   )
+   {
+      dpsTransLRB * pLRB = dpsTxExectr->getLastLRB() ;
+      while ( pLRB )
+      {
+         if ( ( NULL != pLRB->lrbHdr ) && ( lockId == pLRB->lrbHdr->lockId ) )
+         {
+            break ;
+         }
+         pLRB = pLRB->eduLrbPrev ;
+      }
+      return pLRB ;
    }
 
 
@@ -2048,21 +1891,37 @@ namespace engine
    //           .  remove the LRB Header if it is empty ( owner, waiter,
    //              upgrade list are all empty )
    // Input:
-   //    dpsTxExectr     -- dpsTransExecutor
-   //    lockId          -- lock id
-   //    bForceRelease   -- force release flag
-   //    callback        -- pointer to translock callback
+   //    dpsTxExectr         -- dpsTransExecutor
+   //    lockId              -- lock id
+   //    bForceRelease       -- force release flag
+   //    refCountToDecrease  -- value to be decreased from lock refCounter
+   //                           when release CL,CS lock in 'force' mode ;
+   //                           if this value is zero, then set lock refCounter
+   //                           to zero when release CL,CS lock in 'force' 
+   //                           
+   //    callback            -- pointer to translock callback
    // Output :
-   //    none
+   //    bForceRelease       -- value of lock refCounter if release
+   //                           a record lock with 'force' mode
+   //                           
    // Dependency:  the lock manager must be initialized
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASE, "dpsTransLockManager::_release" )
+
+   // When a record lock is acquired, intent lock on CS, CL are also acquired,
+   // hence 3 LRBs per record lock if the record locks come from different CL
+   // and CS. We assume two record locks on average in OLTP env, thus we may
+   // have 6 LRBs in EDU LRB list.
+#define DPS_EDU_LRB_LIST_AVERAGE_LEN ( 7 ) 
+
    void dpsTransLockManager::_release
    (
       _dpsTransExecutor       * dpsTxExectr,
       const dpsTransLockId    & lockId,
+      dpsTransLRB             * pOwnerLRB,
       const BOOLEAN             bForceRelease,
+      UINT32                  & refCountToDecrease,
       _dpsITransLockCallback  * callback
    )
    {
@@ -2077,206 +1936,274 @@ namespace engine
                  PD_PACK_ULONG( callback ),
                  PD_PACK_STRING( lockIdStr ),
                  PD_PACK_UINT( bForceRelease ) ) ;
-
-      SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 #endif
 
-      UINT32 bktIdx              = DPS_TRANS_INVALID_BUCKET_SLOT ;
-      dpsTransLRB *pOwnerLRB     = NULL ,
+      UINT32       bktIdx        = DPS_TRANS_INVALID_BUCKET_SLOT ;
+      dpsTransLRB *pMyLRB        = pOwnerLRB,
                   *lrbToRelase   = NULL ,
-                  *pPrevOwnerLRB = NULL ,
                   *pWaiterLRB    = NULL ;
       dpsTransLRBHeader *pLRBHdr = NULL, 
                         *pLRBHdrToRelase = NULL;
       EDUID eduId = dpsTxExectr->getEDUID() ;
       BOOLEAN bLatched = FALSE ;
       BOOLEAN foundIncomp = FALSE ;
-      BOOLEAN foundLRB = FALSE ;
 
-      // short cut for non-leaf lock ( CS, CL ),
-      // lookup the executor _mapLockID map, if it is found and the current
-      // refCounter is greater than 1, we may simply decrease the refCounter.
-      // Otherwise, still need to go through the normal routine.
-      if ( ! lockId.isLeafLevel() )
+      // short cut that we may do without bkt latch.
+      // If we have the LRB, not doing "force release" and refCounter > 1,
+      // we may simply decrease the refCounter. Otherwise, we shall go through
+      // the normal routine.
+      if ( ( ! bForceRelease ) && pMyLRB && ( pMyLRB->refCounter > 1 ) )
       {
-         // we don't need bkt latch when looking up CS,CL lock
-         // in the executor _mapLockID map
-         if ( dpsTxExectr->findLock( lockId, pOwnerLRB ) )
+         pMyLRB->refCounter-- ;
+         goto done ;
+      }
+
+      // some quick ways to get LRB
+      if ( NULL == pMyLRB )
+      {
+         // for non-leaf lock ( CS, CL ), lookup the executor _mapLockID map
+         if ( ! lockId.isLeafLevel() )
          {
-            if ( pOwnerLRB )
+            dpsTxExectr->findLock( lockId, pMyLRB ) ;
+            if ( ( ! bForceRelease ) && pMyLRB && ( pMyLRB->refCounter > 1 ) )
             {
-               if ( pOwnerLRB->refCounter > 1 )
+               pMyLRB->refCounter-- ;
+               goto done ;
+            }
+         }
+         else
+         {
+            // for record lock, if an EDU doesn't hold many locks, i.e.,
+            // the EDU LRB list is short, looking up that list could be less
+            // expensive than walking through LRB Header chain and owner list,
+            // since we don't have to get bkt latch when searching EDU LRB list.
+            // 
+            // when a record lock is acquired, intent lock on CS, CL are also
+            // acquired. Here we assume two record locks on average, thus we
+            // may have 6 LRBs in EDU LRB list
+            if ( dpsTxExectr->getLockCount() < DPS_EDU_LRB_LIST_AVERAGE_LEN )
+            {
+               pMyLRB = _getLRBFromEDULRBList( dpsTxExectr, lockId ) ;
+               if ( ( ! bForceRelease ) && pMyLRB && ( pMyLRB->refCounter > 1) )
                {
-                  pOwnerLRB->refCounter-- ;
+                  pMyLRB->refCounter-- ;
                   goto done ;
                }
-               foundLRB = TRUE ;
             }
          }
       }
 
       // normal lock release routine
 
-      if ( foundLRB )
+      // calculate the hash index by lockId
+      if ( NULL != pMyLRB )
       {
-         bktIdx = pOwnerLRB->lrbHdr->bktIdx ;
-
-         // latch the bucket 
-         _acquireOpLatch( bktIdx ) ;
-         bLatched = TRUE ;
-
-         pLRBHdr = pOwnerLRB->lrbHdr ;
+         bktIdx = pMyLRB->lrbHdr->bktIdx ;
       }
       else
       {
-         // calculate the hash index by lockId
          bktIdx = _getBucketNo( lockId ) ;
+      }
 
-         // latch the bucket 
-         _acquireOpLatch( bktIdx ) ;
-         bLatched = TRUE ;
+      // latch the bucket 
+      _acquireOpLatch( bktIdx ) ;
+      bLatched = TRUE ;
 
-         pLRBHdr = _LockHdrBkt[bktIdx].lrbHdr ;
-
-         if ( !_getLRBHdrByLockId( lockId, pLRBHdr ) )
+      if ( NULL != _LockHdrBkt[bktIdx].lrbHdr ) 
+      {
+         // get the LRB Header
+         if ( NULL != pMyLRB )
          {
-            PD_LOG( PDERROR,
-                    "LRB Header is not found."OSS_NEWLINE
-                    "EDU:%llu lockId:%s"OSS_NEWLINE
-                    "LRB Header:%p"OSS_NEWLINE,
-                    eduId, lockId.toString().c_str(),
-                    pLRBHdr ) ;
-            goto done ;
+            pLRBHdr = pMyLRB->lrbHdr ; 
+         }
+         else
+         {
+            pLRBHdr = _LockHdrBkt[bktIdx].lrbHdr ;
+            // lookup LRB Header list to find the LRB Header with same lockId
+            if ( ! _getLRBHdrByLockId( lockId, pLRBHdr ) )
+            {
+               // we shall not get here, which means LRB header was not found
+               SDB_ASSERT( ( NULL != pLRBHdr ),
+                           "Trying to release a non-exist lock" ) ;
+               // set pLRBHdr to NULL
+               pLRBHdr = NULL ;
+            }
          }
 
-         _getLRBByEDUId( eduId, pLRBHdr->ownerLRB, pOwnerLRB ) ;
-
-         if ( ! ( pOwnerLRB ) )
+         if ( NULL != pLRBHdr )
          {
-            PD_LOG( PDERROR,
-                    "Owner LRB is not found."OSS_NEWLINE
-                    "EDU:%llu lockId:%s"OSS_NEWLINE
-                    "LRB Header:%p Owner LRB:%p"OSS_NEWLINE,
-                    eduId, lockId.toString().c_str(),
-                    pLRBHdr, pOwnerLRB ) ;
-            goto done ;
-         }
-      }
-       
-      // By now we should have a OwnerLRB
-      if ( bForceRelease )
-      {
-         pOwnerLRB->refCounter = 0 ;
-      }
-      else
-      {
-         SDB_ASSERT( pOwnerLRB->refCounter > 0, "refCounter is negative");
-         pOwnerLRB->refCounter -- ; 
-      }
+            // remove the LRB Header if owner, waiter,
+            // and upgrade list are all empty
+            if (    ( NULL == pLRBHdr->ownerLRB ) 
+                 && ( NULL == pLRBHdr->upgradeLRB )
+                 && ( NULL == pLRBHdr->waiterLRB )
+                 && ( pLRBHdr->extData.canRelease() ) )
+
+            {
+#ifdef _DEBUG
+               PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASE,
+                          PD_PACK_STRING( "LRB Header to be removed:" ),
+                          PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ) ) ;
+#endif
+               _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr);
+               pLRBHdrToRelase = pLRBHdr;
+               goto done ;
+            }
+
+            // lookup owner list to find the LRB with same eduid
+            if ( NULL == pMyLRB )
+            {
+               _getLRBByEDUId( eduId, pLRBHdr->ownerLRB, pMyLRB ) ;
+               if ( ! ( pMyLRB ) )
+               {
+#ifdef _DEBUG
+                  PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASE,
+                             PD_PACK_STRING( "Owner LRB is not found." ),
+                             PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ) ) ;
+#endif
+                  goto done ;
+               }
+            }
+
+            // By now we should have the owner LRB           
+            if ( bForceRelease )
+            {
+               if ( lockId.isLeafLevel() )
+               { 
+                  // save the record lock refCounter to output parameter 
+                  // so can we decrease that value for CL,CS lock later
+                  refCountToDecrease = pMyLRB->refCounter ;
+                  pMyLRB->refCounter = 0 ;
+               }
+               else
+               {
+                  if ( 0 == refCountToDecrease )
+                  { 
+                     // when release CL, CL lock with 'refoce' mode,
+                     // if the refCounter passed in is zero, 
+                     // then set lock refCounter to zero
+                     pMyLRB->refCounter = 0 ;
+                  }
+                  else
+                  {
+                     // when release CL, CL lock with 'refoce' mode,
+                     // if the refCounter passed in is non-zero value, 
+                     // then substract that value from current lock refCounter
+                     pMyLRB->refCounter -= refCountToDecrease ;
+                  }
+               }
+            }
+            else
+            {
+#ifdef _DEBUG
+               SDB_ASSERT( pMyLRB->refCounter > 0, "refCounter is negative");
+#endif
+               pMyLRB->refCounter -- ; 
+            }
 
 #if SDB_INTERNAL_DEBUG
-      PD_LOG( PDDEBUG, "releasing lock before callback,"
-              " lockid=%s,bForceRelease=%d,callback=%x,refcounter=%d",
-              lockIdStr, bForceRelease, callback, pOwnerLRB->refCounter);
+            PD_LOG( PDDEBUG, "releasing lock before callback,"
+                    " lockid=%s,bForceRelease=%d,callback=%x,refcounter=%d",
+                    lockIdStr, bForceRelease, callback, pMyLRB->refCounter);
 #endif
-      // invoke call back function before release
-      if( callback )
-      {
-         // must release bkt latch before calling callback function.
-         // otherwise we could cause dead latch because we might acquire
-         // in memory idx tree latch under the cover
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
-         callback->beforeLockRelease( lockId,
-                                      pOwnerLRB->lockMode,
-                                      pOwnerLRB->refCounter,
-                                      pLRBHdr,
-                                      pLRBHdr ? &(pLRBHdr->extData) :
-                                                NULL ) ;
-         _acquireOpLatch( bktIdx ) ;
-         bLatched = TRUE ;
-      }
-      else if ( pLRBHdr && pLRBHdr->extData._onLockReleaseFunc )
-      {
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
-         pLRBHdr->extData._onLockReleaseFunc( lockId,
-                                              pOwnerLRB->lockMode,
-                                              pOwnerLRB->refCounter,
-                                              &(pLRBHdr->extData) ) ;
-         _acquireOpLatch( bktIdx ) ;
-         bLatched = TRUE ;
-      }
+            // invoke call back function before release
+            if( callback )
+            {
+               // must release bkt latch before calling callback function.
+               // otherwise we could cause dead latch because we might acquire
+               // in memory idx tree latch under the cover
+               _releaseOpLatch( bktIdx ) ;
+               bLatched = FALSE ;
+               callback->beforeLockRelease( lockId,
+                                            pMyLRB->lockMode,
+                                            pMyLRB->refCounter,
+                                            pLRBHdr,
+                                            pLRBHdr ? &(pLRBHdr->extData) :
+                                                      NULL ) ;
+               _acquireOpLatch( bktIdx ) ;
+               bLatched = TRUE ;
+            }
+            else if ( pLRBHdr && pLRBHdr->extData._onLockReleaseFunc )
+            {
+               _releaseOpLatch( bktIdx ) ;
+               bLatched = FALSE ;
+               pLRBHdr->extData._onLockReleaseFunc( lockId,
+                                                    pMyLRB->lockMode,
+                                                    pMyLRB->refCounter,
+                                                    &(pLRBHdr->extData) ) ;
+               _acquireOpLatch( bktIdx ) ;
+               bLatched = TRUE ;
+            }
 
-      // get the waiter LRB pointer
-      if ( pLRBHdr->upgradeLRB )
-      {
-         pWaiterLRB = pLRBHdr->upgradeLRB ;
-      }
-      else if ( pLRBHdr->waiterLRB  )
-      {
-         pWaiterLRB = pLRBHdr->waiterLRB  ;
-      }
-      if ( pWaiterLRB )
-      {
-         // lookup owner list check if the waiter lockMode is compabile
-         // with other owners, and find the LRB privous the owner
-         _checkWaiterLockModeWithOwners( eduId,
-                                         pWaiterLRB->lockMode,
-                                         pLRBHdr->ownerLRB,
-                                         pPrevOwnerLRB,
-                                         foundIncomp ) ;
-      }
-      else
-      {
-         // lookup owner list to find the LRB previous the owner
-         _getPreviousLRB( eduId,
-                          pLRBHdr->ownerLRB,
-                          pPrevOwnerLRB ) ;
+            if ( 0 == pMyLRB->refCounter )
+            {
+               // get the waiter LRB pointer
+               if ( pLRBHdr->upgradeLRB )
+               {
+                  pWaiterLRB = pLRBHdr->upgradeLRB ;
+               }
+               else if ( pLRBHdr->waiterLRB  )
+               {
+                  pWaiterLRB = pLRBHdr->waiterLRB  ;
+               }
+               if ( pWaiterLRB )
+               {
+                  // lookup owner list check if the waiter lockMode is compabile
+                  // with other owners
+                  //
+                  // REVISIT
+                  // if we may simply starting from the LRB just before
+                  // the owner since the owner LRB list is sorted on lock mode
+                  // in ascend order
+                  foundIncomp = _checkWaiterLockModeWithOwners(
+                                    pMyLRB->prevLRB ? pMyLRB->prevLRB
+                                                    : pMyLRB->nextLRB,
+                                    pMyLRB,
+                                    pWaiterLRB->lockMode ) ;
+               }
 
-      }
+               // remove it from EDU LRB list
+               _removeFromEDULRBList( dpsTxExectr, pMyLRB, lockId ) ;
 
-      if ( 0 == pOwnerLRB->refCounter )
-      {
-         // remove it from EDU LRB list
-         _removeFromEDULRBList( dpsTxExectr, pOwnerLRB, lockId ) ;
+               // remove it from lock owner list
+               _removeFromLRBList( pLRBHdr->ownerLRB, pMyLRB ) ;
 
-         // remove it from lock owner list
-         if ( pLRBHdr->ownerLRB == pOwnerLRB )
+               // if the owner queue is empty ( after remove current owner ),
+               // or if the waiter lockMode is compabile with other owners
+               // wake it up
+               if ( pWaiterLRB && 
+                    ( ( FALSE == foundIncomp ) || ( ! pLRBHdr->ownerLRB ) ) )
+               {
+                  // wake up the edu by posting an event
+                  _wakeUp( pWaiterLRB->dpsTxExectr ) ;
+               }
+
+               // save the pointer of owner LRB to be released
+               lrbToRelase = pMyLRB;
+
+               // remove the LRB Header if owner, waiter,
+               // and upgrade list are all empty
+               if (    ( NULL == pLRBHdr->ownerLRB )
+                    && ( NULL == pLRBHdr->upgradeLRB )
+                    && ( NULL == pLRBHdr->waiterLRB )
+                    && ( pLRBHdr->extData.canRelease() ) )
+               {
+                  _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, 
+                                            pLRBHdr ) ;
+                  pLRBHdrToRelase = pLRBHdr;
+               }
+            }  // end of if pMyLRB->refCounter is zero
+         } // end of if pLRBHdr in not NULL
+#ifdef _DEBUG
+         else 
          {
-            // it is the first one in owner list
-            pLRBHdr->ownerLRB = pOwnerLRB->nextLRB ;
-         }
-         else if ( pPrevOwnerLRB )
-         {
-            pPrevOwnerLRB->nextLRB = pOwnerLRB->nextLRB ;
-         }
+            // if we got here, means either pMyLRB->lrbHdr was NULL or
+            // _getLRBHdrByLockId didn't find the LRB Header by lockId
+            SDB_ASSERT( (NULL != pLRBHdr), 
+                        "Trying to release a non-exist lock" ) ;
 
-         // if the owner queue is empty ( after remove current owner ),
-         // or if the waiter lockMode is compabile with other owners
-         // wake it up
-         if ( pWaiterLRB && 
-              ( ( FALSE == foundIncomp ) || ( ! pLRBHdr->ownerLRB ) ) )
-         {
-            // wake up the edu by posting an event
-            _wakeUp( pWaiterLRB->dpsTxExectr ) ;
          }
-
-         // save the pointer of owner LRB to be released
-         lrbToRelase = pOwnerLRB;
-
-         // remove the LRB Header if onwer, waiter,
-         // and upgrade list are all empty
-         if (    ( NULL == pLRBHdr->ownerLRB )
-              && ( NULL == pLRBHdr->upgradeLRB )
-              && ( NULL == pLRBHdr->waiterLRB )
-              && ( pLRBHdr->extData.canRelease() ) )
-         {
-            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, 
-                                      pLRBHdr ) ;
-            pLRBHdrToRelase = pLRBHdr;
-         }
+#endif
       }
    done: 
       // release the bucket latch
@@ -2335,26 +2262,37 @@ namespace engine
                  PD_PACK_UINT( bForceRelease ) ) ;
 
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
 #endif
-
       if ( lockId.isValid() )
       {
-         // main logic of release by lockId
-         _release( dpsTxExectr, lockId, bForceRelease, callback ) ;
-
-         // release the intent lock
-         if ( ! lockId.isRootLevel() )
-         {
-            dpsTransLockId iLockId = lockId.upOneLevel() ;
+         dpsTransLockId myLockId = lockId ;
+         BOOLEAN done = FALSE ;
+         UINT32  refCountToBeDecreased = 0 ;
+         do 
+         { 
 #ifdef _DEBUG
-            PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_RELEASE,
-                       PD_PACK_STRING( "Releasing intent lock:" ),
-                       PD_PACK_STRING( iLockId.toString().c_str() ),
-                       PD_PACK_UINT( bForceRelease ) ) ;
-#endif 
-            release( dpsTxExectr, iLockId, bForceRelease ) ;
-         }
+            ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                         "%s", myLockId.toString().c_str() ) ;
+            PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_RELEASE,
+                       PD_PACK_STRING( "releasing lockId:"),
+                       PD_PACK_STRING( lockIdStr ) ) ;
+#endif
+            // main logic of release by lockId
+            _release( dpsTxExectr, myLockId,
+                      NULL, bForceRelease, refCountToBeDecreased,
+                      callback ) ;
+
+            // release the intent lock
+            if ( ! myLockId.isRootLevel() )
+            {
+               myLockId = myLockId.upOneLevel() ;
+            }
+            else
+            {
+               done = TRUE ;
+               break ;
+            }
+         } while ( ! done ) ;
       }
       else
       {
@@ -2364,81 +2302,6 @@ namespace engine
       PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER_RELEASE ) ;
       return ;
    }
-
-
-   //
-   // Description: an EDU release a lock with force mode. 
-   // Function: core function/logic of releaseAll, force release a lock,
-   //           . remove from the edu ( caller ) LRB chain
-   //           . remove it from owner list
-   //           . wake up a waiter when necessary
-   //           . release the upper level intent lock
-   // Input:
-   //    dpsTxExectr -- pointer to _dpsTransExecutor 
-   //    lockId      -- lock id
-   // Output:
-   //    none
-   // Dependency:  the lock manager must be initialized
-   //
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASEALL, "dpsTransLockManager::_releaseAll" )
-   void dpsTransLockManager::_releaseAll
-   (
-      _dpsTransExecutor    * dpsTxExectr,
-      const dpsTransLockId & lockId,
-      _dpsITransLockCallback * callback
-   )
-   {
-      PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER__RELEASEALL ) ;
-#ifdef _DEBUG
-      CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
-      ossSnprintf( lockIdStr, sizeof( lockIdStr ),
-                   "%s", lockId.toString().c_str() ) ;
-      PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASEALL,
-                 PD_PACK_ULONG( dpsTxExectr ),
-                 PD_PACK_STRING( lockIdStr ) ) ;
-
-      SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
-#endif
-
-      dpsTransLockId iLockId;
- 
-      if ( lockId.isValid() )
-      { 
-         // main logic of release by lockId
-         if ( lockId.isLeafLevel() )
-         {
-            // force release mode for record lock only,
-            // otherwise it may cause CS, CL lock be released earlier if
-            // there are mulitple record locks under that CL
-            _release( dpsTxExectr, lockId, TRUE, callback ) ;
-         }
-         else
-         {
-            _release( dpsTxExectr, lockId, FALSE, callback ) ;
-         }
-
-         // release the intent lock
-         if ( ! lockId.isRootLevel() )
-         {
-            iLockId = lockId.upOneLevel() ;
-#ifdef _DEBUG
-            PD_TRACE2( SDB_DPSTRANSLOCKMANAGER__RELEASEALL,
-                       PD_PACK_STRING( "ReleasingAll intent lock:"),
-                       PD_PACK_STRING( iLockId.toString().c_str() ) ) ;
-#endif
-            _releaseAll( dpsTxExectr, iLockId ) ;
-         }
-      }
-      else
-      {
-         PD_LOG( PDERROR, "Invalid lockId:%s", lockId.toString().c_str() ) ;
-      }
-
-      PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER__RELEASEALL ) ;
-      return ;
-   }
-
 
    //
    // Description: Force release all locks an EDU is holding 
@@ -2457,68 +2320,84 @@ namespace engine
    //
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER_RELEASEALL, "dpsTransLockManager::releaseAll" )
-   void dpsTransLockManager::releaseAll( _dpsTransExecutor *dpsTxExectr,
-                                         _dpsITransLockCallback * callback )
+   void dpsTransLockManager::releaseAll
+   (
+      _dpsTransExecutor      * dpsTxExectr,
+      _dpsITransLockCallback * callback
+   )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_RELEASEALL ) ;
 #ifdef _DEBUG
       CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
       PD_TRACE1( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
                  PD_PACK_ULONG( dpsTxExectr ) ) ;
-
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
-
       if ( dpsTxExectr->getLastLRB() )
       {
-         dpsTransLRB       *pLRB = dpsTxExectr->getLastLRB() ;
-         dpsTransLRBHeader *pLRBHdr ;
-         dpsTransLockId     lockId;
-
-         while ( pLRB )
+         // walk through EDU LRB list,
+         //   first loop, release all record locks with force mode.
+         //   second loop, release all CL locks with force mode. 
+         //   last loopi, release all CS locks 
+         for ( UINT32 loop = 0 ; loop < 3; loop++ )
          {
-            // peek LRB Header 
-            pLRBHdr = pLRB->lrbHdr ;
-#ifdef _DEBUG
-            PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
-                       PD_PACK_STRING( "LRB Header and LRB:" ),
-                       PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ),
-                       PD_PACK_RAW( &pLRB, sizeof(&pLRB) ) ) ;
-#endif
-            // get LRB Header
-            if ( NULL != pLRBHdr )
+            dpsTransLRB       * pLRB = dpsTxExectr->getLastLRB() ;
+            dpsTransLRBHeader * pLRBHdr ;
+            dpsTransLockId      lockId ;
+            UINT32              refCount = 0 ;
+
+            while ( pLRB )
             {
-               lockId  = pLRBHdr->lockId ;
+               // save the next LRB address, pLRB->eduLrbPrev,
+               // before release
+               dpsTransLRB * pNextOne = pLRB->eduLrbPrev ;
+               // peek LRB Header 
+               pLRBHdr = pLRB->lrbHdr ;
 #ifdef _DEBUG
-               ossSnprintf( lockIdStr, sizeof( lockIdStr ),
-                            "%s", lockId.toString().c_str() ) ;
-               PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
-                          PD_PACK_STRING( "Releasing lock:" ),
-                          PD_PACK_STRING( lockIdStr ) ) ;
-
-               SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+               PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
+                          PD_PACK_STRING( "LRB Header and LRB:" ),
+                          PD_PACK_RAW( &pLRBHdr, sizeof(&pLRBHdr) ),
+                          PD_PACK_RAW( &pLRB, sizeof(&pLRB) ) ) ;
+               SDB_ASSERT( pLRBHdr, "LRB Header can't be null" ) ;
 #endif
-
-               // release the lock 
-               _releaseAll( dpsTxExectr, lockId, callback ) ;
-            }
-
-            // _releaseAll will remove LRB from EDU list
-            // by calling  _removeFromEDULRBList(),
-            // where the dpsTxExectr->_lastLRBInList will be updated,
-            // so we may use dpsTxExectr->getLastLRB() to move to
-            // previous LRB in the EDU LRB chain.
-
-            // move to next lock to be released
-            // we can't use pLRB = lrb->eduLrbPrev to move to next
-            // LRB as _releaseAll() will remove upper level intent lock as well,
-            // which may advance several LRBs ( CL, CS ).
-            pLRB = dpsTxExectr->getLastLRB() ;
+               // get LRB Header
+               if ( NULL != pLRBHdr )
+               {
+                  lockId  = pLRBHdr->lockId ;
+#ifdef _DEBUG
+                  SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
+#endif
+                  // first loop, release all record locks 
+                  if ( ( 0 == loop ) && ( ! lockId.isLeafLevel() ) )
+                  {
+                     goto nextLock ;
+                  }
+                  // second loop, release all CL locks
+                  if ( ( 1 == loop ) && lockId.isRootLevel() )
+                  {
+                     goto nextLock ;
+                  }
+#ifdef _DEBUG
+                  ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                               "%s", lockId.toString().c_str() ) ;
+                  PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_RELEASEALL,
+                             PD_PACK_STRING( "Releasing lock:" ),
+                             PD_PACK_STRING( lockIdStr ) ) ;
+#endif
+                  refCount = 0 ;
+                  _release( dpsTxExectr, lockId, pLRB, TRUE, refCount,
+                            callback ) ; 
+               }
+nextLock:
+               // move to next lock attempt to be released
+               pLRB = pNextOne ;
+            } // end while
          }
       }
       PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER_RELEASEALL ) ;
       return ;
    }
+
 
 
    //
@@ -2535,7 +2414,7 @@ namespace engine
       const dpsTransLockId &lockId
    )
    {
-      return (UINT32)( lockId.lockIdHash() % DPS_TRANS_LOCKBUCKET_SLOTS_MAX );
+      return (UINT32)( lockId.lockIdHash() % DPS_TRANS_LOCKBUCKET_SLOTS_MAX ) ;
    }
 
 
@@ -2626,7 +2505,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_TRYACQUIRE ) ;
 #ifdef _DEBUG
       CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
-      CHAR iLockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
       ossSnprintf( lockIdStr, sizeof( lockIdStr ),
                    "%s", lockId.toString().c_str() ) ;
       PD_TRACE4( SDB_DPSTRANSLOCKMANAGER_TRYACQUIRE,
@@ -2640,10 +2518,10 @@ namespace engine
 
       INT32 rc = SDB_OK ;
       dpsTransLockId iLockId;
+      DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       BOOLEAN isIntentLockAcquired = FALSE;
-#ifdef _DEBUG
-      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
-#endif
+      UINT32 bktIdx = DPS_TRANS_INVALID_BUCKET_SLOT ;
+
       if ( ! lockId.isValid() )
       {
          rc = SDB_SYS ;
@@ -2655,14 +2533,14 @@ namespace engine
       // it is not need to get intent lock while lock space
       if ( ! lockId.isRootLevel() )
       {
-         DPS_TRANSLOCK_TYPE iLockMode = dpsIntentLockMode( requestLockMode ) ;
          iLockId = lockId.upOneLevel() ;
+         iLockMode = dpsIntentLockMode( requestLockMode ) ;
 #ifdef _DEBUG
-         ossSnprintf( iLockIdStr, sizeof( iLockIdStr ),
+         ossSnprintf( lockIdStr, sizeof( lockIdStr ),
                       "%s", iLockId.toString().c_str() ) ;
          PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_TRYACQUIRE,
                     PD_PACK_STRING( "Trying intent lock:" ),
-                    PD_PACK_STRING( iLockIdStr ),
+                    PD_PACK_STRING( lockIdStr ),
                     PD_PACK_BYTE( iLockMode )  ) ;
 #endif
          rc = tryAcquire( dpsTxExectr, iLockId, iLockMode, pdpsTxResInfo );
@@ -2672,12 +2550,15 @@ namespace engine
          }
          isIntentLockAcquired = TRUE;
       }
+
+      // calculate the hash index by lockId 
+      bktIdx = _getBucketNo( lockId ) ;
       
       // try to acquire the lock
       // when tryAcquire will not add LRB to either upgrade or waiter list
       rc = _tryAcquireOrTest( dpsTxExectr, lockId, requestLockMode,
                               DPS_TRANSLOCK_OP_MODE_TRY,
-                              DPS_TRANS_INVALID_BUCKET_SLOT,
+                              bktIdx,
                               FALSE,
                               pdpsTxResInfo, 
                               callback ) ;
@@ -2696,9 +2577,11 @@ namespace engine
          release( dpsTxExectr, iLockId, FALSE ) ;
          isIntentLockAcquired = FALSE ;
 #ifdef _DEBUG
+         ossSnprintf( lockIdStr, sizeof( lockIdStr ),
+                      "%s", iLockId.toString().c_str() ) ;
          PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_TRYACQUIRE,
                     PD_PACK_STRING( "Release intent lock:" ),
-                    PD_PACK_STRING( iLockId.toString().c_str() ) ) ;
+                    PD_PACK_STRING( lockIdStr ) ) ;
 #endif
       }
       goto done;
@@ -2740,7 +2623,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_TESTACQUIRE ) ;
 #ifdef _DEBUG
       CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
-      CHAR iLockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
       ossSnprintf( lockIdStr, sizeof( lockIdStr ),
                    "%s", lockId.toString().c_str() ) ;
       PD_TRACE4( SDB_DPSTRANSLOCKMANAGER_TESTACQUIRE,
@@ -2755,9 +2637,7 @@ namespace engine
       dpsTransLockId iLockId;
       DPS_TRANSLOCK_TYPE iLockMode = DPS_TRANSLOCK_MAX ;
       UINT32 bktIdx = DPS_TRANS_INVALID_BUCKET_SLOT ;
-#ifdef _DEBUG
-      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
-#endif
+
       if ( ! lockId.isValid() )
       {
          rc = SDB_SYS ;
@@ -2772,11 +2652,11 @@ namespace engine
          iLockId = lockId.upOneLevel() ;
          iLockMode = dpsIntentLockMode( requestLockMode ) ;
 #ifdef _DEBUG
-         ossSnprintf( iLockIdStr, sizeof( iLockIdStr ),
+         ossSnprintf( lockIdStr, sizeof( lockIdStr ),
                       "%s", iLockId.toString().c_str() ) ;
          PD_TRACE3( SDB_DPSTRANSLOCKMANAGER_TESTACQUIRE,
                     PD_PACK_STRING( "Testing intent lock:" ),
-                    PD_PACK_STRING( iLockIdStr ),
+                    PD_PACK_STRING( lockIdStr ),
                     PD_PACK_BYTE( iLockMode )  ) ;
 #endif
          rc = testAcquire( dpsTxExectr, iLockId, iLockMode,
@@ -2827,10 +2707,9 @@ namespace engine
    BOOLEAN dpsTransLockManager::hasWait( const dpsTransLockId &lockId )
    {
       BOOLEAN result = FALSE;
-      UINT32 bktIdx = DPS_TRANS_INVALID_BUCKET_SLOT ;
+      UINT32 bktIdx  = DPS_TRANS_INVALID_BUCKET_SLOT ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
 
-      SDB_ASSERT( lockId.isValid(), "Invalid lockId" ) ;
       if ( ! lockId.isValid() )
       {
          PD_LOG( PDERROR, "Invalid lockId:%s", lockId.toString().c_str() ) ;
@@ -2885,14 +2764,16 @@ namespace engine
  
          ossSnprintf( pBuf, bufSz,
             "LRB: %x, EDU: %llu, dpsTxExectr: %p, "
-            "eduLrbPrev: %x, "
-            "lrbHdr: %x, nextLRB: %x "
+            "eduLrbNext: %x, eduLrbPrev: %x, "
+            "lrbHdr: %x, nextLRB: %x ,prevLRB: %x, "
             "refCounter: %llu, lockMode: %s, duration: %llu",
             _pLRBMgr->getIndexByAddr( pLRB ),
             pLRB->dpsTxExectr->getEDUID(), pLRB->dpsTxExectr,
+            _pLRBMgr->getIndexByAddr( pLRB->eduLrbNext ),
             _pLRBMgr->getIndexByAddr( pLRB->eduLrbPrev ),
             _pLRBHdrMgr->getIndexByAddr( pLRB->lrbHdr  ),
             _pLRBMgr->getIndexByAddr( pLRB->nextLRB    ),
+            _pLRBMgr->getIndexByAddr( pLRB->prevLRB    ),
             pLRB->refCounter,
             lockModeToString( pLRB->lockMode ),
             (UINT64)(seconds*1000 + microseconds / 1000 ) ) ;
@@ -2936,6 +2817,9 @@ namespace engine
                                "%sdpsTxExectr  : %p"OSS_NEWLINE, pStr,
                                pLRB->dpsTxExectr ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
+                               "%seduLrbNext   : %x"OSS_NEWLINE, pStr,
+                               _pLRBMgr->getIndexByAddr( pLRB->eduLrbNext )) ;
+         pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%seduLrbPrev   : %x"OSS_NEWLINE, pStr,
                                _pLRBMgr->getIndexByAddr( pLRB->eduLrbPrev )) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
@@ -2944,6 +2828,9 @@ namespace engine
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%snextLRB      : %x"OSS_NEWLINE, pStr,
                                _pLRBMgr->getIndexByAddr( pLRB->nextLRB )) ;
+         pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
+                               "%sprevLRB      : %x"OSS_NEWLINE, pStr,
+                               _pLRBMgr->getIndexByAddr( pLRB->prevLRB )) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%srefCounter   : %llu"OSS_NEWLINE, pStr,
                                pLRB->refCounter ) ;
@@ -3098,7 +2985,7 @@ namespace engine
       dpsTransLockId iLockId;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
-      UINT32        bktIdx;
+      UINT32             bktIdx;
       CHAR * pStr = NULL ;
       CHAR * prefixStr = (CHAR*)"   " ; 
       CHAR szBuffer[ DPS_STRING_LEN_MAX ] = { '\0' } ;
@@ -3311,7 +3198,7 @@ namespace engine
       monTransLockInfo     & monLockInfo
    )
    {
-      UINT32 bktIdx = DPS_TRANS_INVALID_BUCKET_SLOT ;
+      UINT32             bktIdx  = DPS_TRANS_INVALID_BUCKET_SLOT ;
       dpsTransLRBHeader *pLRBHdr = NULL ;
       dpsTransLRB       *pLRB    = NULL ;
 

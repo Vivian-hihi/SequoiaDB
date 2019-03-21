@@ -54,30 +54,42 @@ namespace engine
    {
    public :
       _dpsTransExecutor * dpsTxExectr ;
+      dpsTransLRB       * eduLrbNext ; // next LRB in chain EDU owning in tx
       dpsTransLRB       * eduLrbPrev ; // prev LRB in chain EDU owning in tx
       dpsTransLRBHeader * lrbHdr ;     // the LRB Header
       dpsTransLRB       * nextLRB ;    // next LRB in the owner/waiter chain
-      ossTick           beginTick ;    // timestamp( ossTick ) of owning / waiting
-      UINT32            refCounter ;   // lock reference counter
-      DPS_TRANSLOCK_TYPE lockMode ;    // lock mode, UINT8, 1 byte
-      UINT8             pad[3] ;       // 3 byte for padding
+      dpsTransLRB       * prevLRB ;    // prev LRB in the owner/waiter chain
+      ossTick             beginTick ;  // timestamp( ossTick ) of owning/waiting
+      UINT32              refCounter ; // lock reference counter
+      DPS_TRANSLOCK_TYPE  lockMode ;   // lock mode, UINT8, 1 byte
+      UINT8               pad[3] ;     // 3 byte for padding
 
       dpsTransLRB()
-      : dpsTxExectr( NULL ), eduLrbPrev( NULL ),
-        lrbHdr( NULL ), nextLRB( NULL ), refCounter( 0 ),
+      : dpsTxExectr( NULL ),
+        eduLrbNext( NULL ),
+        eduLrbPrev( NULL ),
+        lrbHdr( NULL ),
+        nextLRB( NULL ),
+        prevLRB( NULL ),
+        refCounter( 0 ),
         lockMode( DPS_TRANSLOCK_MAX )
       {
       }
 
       dpsTransLRB( _dpsTransExecutor  *_dpsTxExectr,
                    DPS_TRANSLOCK_TYPE  _lockMode,
-                   dpsTransLRBHeader  *_lrbHdr)
+                   dpsTransLRBHeader  *_lrbHdr )
       : dpsTxExectr ( _dpsTxExectr ),
-        eduLrbPrev( NULL ), lrbHdr( _lrbHdr ),
-        nextLRB( NULL ), refCounter( 1 ), lockMode( _lockMode)
+        eduLrbNext( NULL ),
+        eduLrbPrev( NULL ),
+        lrbHdr( _lrbHdr ),
+        nextLRB( NULL ),
+        prevLRB( NULL ),
+        refCounter( 1 ),
+        lockMode( _lockMode )
       {
       }
-   } ;  // 56 bytes in total
+   } ;  // 64 bytes in total
 
    class dpsLRBExtData ;
 
@@ -176,7 +188,7 @@ namespace engine
         lockId(lock), bktIdx(_bktIdx)
       {
       }
-   } ;  // 56 bytes in total
+   } ;
 
    class dpsTransLRBHeaderHash : public SDBObject
    {
