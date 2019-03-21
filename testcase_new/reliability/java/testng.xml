@@ -39,6 +39,7 @@
             <!--<package name="com.sequoiadb.lob" />-->
             <package name="com.sequoiadb.cappedCL.killnode" />
             <package name="com.sequoiadb.cappedCL.restartnode" />
+            <package name="com.sequoiadb.rename" />
         </packages>
     </test>
     
