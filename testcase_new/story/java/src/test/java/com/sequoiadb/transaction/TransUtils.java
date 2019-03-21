@@ -1,6 +1,7 @@
 package com.sequoiadb.transaction;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
@@ -138,8 +139,7 @@ public class TransUtils {
         DBCursor dbc = null;
         ArrayList<String> resault = new ArrayList<String>();
         try {
-            CommLib commlib = new CommLib();
-            ArrayList<String> groups = commlib.getDataGroupNames(sdb);
+            ArrayList<String> groups = CommLib.getDataGroupNames(sdb);
             dbc = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:\"" + csName + "." + clName + "\"}", null, null);
             BasicBSONList list = null;
             if (dbc.hasNext()) {
@@ -186,6 +186,20 @@ public class TransUtils {
         cl.insert(insertDatas);
         return insertDatas;
     }
+    
+    public static ArrayList<BSONObject> insertRandomDatas(DBCollection cl, int startId, int endId, int insertValue)
+            throws BaseException {
+        ArrayList<BSONObject> insertDatas = new ArrayList<BSONObject>();
+        ArrayList<BSONObject> expDatas = new ArrayList<BSONObject>();
+        for (int i = startId; i < endId; i++) {
+            BSONObject data = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ",b:" + insertValue + i + "}");
+            insertDatas.add(data);
+            expDatas.add(data);
+        }
+        Collections.shuffle(insertDatas);
+        cl.insert(insertDatas);
+        return expDatas;
+    }
 
     public static ArrayList<BSONObject> getUpdateDatas(int startId, int endId, int updateValue) {
         ArrayList<BSONObject> updateDatas = new ArrayList<BSONObject>();
@@ -193,5 +207,13 @@ public class TransUtils {
             updateDatas.add((BSONObject) JSON.parse("{_id:" + i + ",a:" + updateValue + ",b:" + i + "}"));
         }
         return updateDatas;
+    }
+    
+    public static ArrayList<BSONObject> getIncDatas(int startId, int endId, int incValue, int insertValue) {
+        ArrayList<BSONObject> incDatas = new ArrayList<BSONObject>();
+        for (int i = startId; i < endId; i++) {
+            incDatas.add((BSONObject) JSON.parse("{_id:" + i + ",a:" + (incValue + i) + ",b:" + insertValue + i + "}"));
+        }
+        return incDatas;
     }
 }
