@@ -63,7 +63,7 @@ function installES()
 function compile()
 {
    sleep 1
-   compileCmd="scons -j4 -s"
+   compileCmd="scons -s"
    if [ $isRelease -eq 0 ] ; then
       compileCmd=${compileCmd}" --dd"
    fi
