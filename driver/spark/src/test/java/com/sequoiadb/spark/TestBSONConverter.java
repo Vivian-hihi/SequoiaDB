@@ -330,7 +330,7 @@ public class TestBSONConverter {
         assertEquals(SparkDateType, BSONConverter.compatibleType(SparkDateType, SparkNullType));
         assertEquals(SparkStringType, BSONConverter.compatibleType(SparkDateType, SparkStringType));
         assertEquals(SparkDateType, BSONConverter.compatibleType(SparkDateType, SparkDateType));
-        assertEquals(SparkStringType, BSONConverter.compatibleType(SparkDateType, SparkTimestampType));
+        assertEquals(SparkTimestampType, BSONConverter.compatibleType(SparkDateType, SparkTimestampType));
         assertEquals(SparkStringType, BSONConverter.compatibleType(SparkDateType, SparkBinaryType));
     }
 
@@ -346,7 +346,7 @@ public class TestBSONConverter {
             BSONConverter.compatibleType(SparkTimestampType, SparkDecimalType.SYSTEM_DEFAULT()));
         assertEquals(SparkTimestampType, BSONConverter.compatibleType(SparkTimestampType, SparkNullType));
         assertEquals(SparkStringType, BSONConverter.compatibleType(SparkTimestampType, SparkStringType));
-        assertEquals(SparkStringType, BSONConverter.compatibleType(SparkTimestampType, SparkDateType));
+        assertEquals(SparkTimestampType, BSONConverter.compatibleType(SparkTimestampType, SparkDateType));
         assertEquals(SparkTimestampType, BSONConverter.compatibleType(SparkTimestampType, SparkTimestampType));
         assertEquals(SparkStringType, BSONConverter.compatibleType(SparkTimestampType, SparkBinaryType));
     }

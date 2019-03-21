@@ -16,6 +16,7 @@
 
 package com.sequoiadb.spark
 
+import java.lang.reflect.Field
 import java.math.BigInteger
 import java.sql.{Date, Timestamp}
 import java.text.SimpleDateFormat
@@ -24,7 +25,7 @@ import java.util.UUID
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.analysis.{DecimalPrecision, TypeCoercion}
 import org.apache.spark.sql.catalyst.expressions.GenericRow
-import org.apache.spark.sql.types._
+import org.apache.spark.sql.types.{DataType, _}
 import org.bson.types._
 import org.bson.{BSONObject, BasicBSONObject}
 
@@ -598,6 +599,28 @@ private[spark] object BSONConverter {
     private[spark] val DoubleDecimal = DecimalType(30, 15)
     private[spark] val BigIntDecimal = DecimalType(38, 0)
 
+    private lazy val findTightestCommonType: (DataType, DataType) => Option[DataType] = {
+        val cls = TypeCoercion.getClass
+        val f: Field = {
+            try {
+                cls.getDeclaredField("findTightestCommonType")
+            } catch {
+                case _: NoSuchFieldException => {
+                    cls.getDeclaredField("findTightestCommonTypeOfTwo")
+                }
+                case e: Throwable => throw e
+            }
+        }
+
+        f.setAccessible(true)
+        try {
+            f.get(TypeCoercion)
+                .asInstanceOf[(DataType, DataType) => Option[DataType]]
+        } finally {
+            f.setAccessible(false)
+        }
+    }
+
     private[spark] def forType(dataType: DataType): DecimalType = dataType match {
         case ByteType => ByteDecimal
         case ShortType => ShortDecimal
@@ -616,7 +639,7 @@ private[spark] object BSONConverter {
       * }}}
       */
     def compatibleType(t1: DataType, t2: DataType): DataType = {
-        TypeCoercion.findTightestCommonTypeOfTwo(t1, t2) match {
+        findTightestCommonType(t1, t2) match {
             case Some(commonType) => commonType
             case None =>
                 // t1 or t2 is a StructType, ArrayType, or an unexpected type.
