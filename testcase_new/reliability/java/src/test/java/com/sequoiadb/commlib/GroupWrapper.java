@@ -63,7 +63,7 @@ public class GroupWrapper {
         } catch (BaseException e) {
             System.out.println("hostName:" + hostName + " error:" + e.getErrorCode());
             System.out.println("port:" + port);
-            throw new ReliabilityException(e);
+            throw e;
         }
     }
 

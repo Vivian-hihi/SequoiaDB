@@ -343,6 +343,9 @@ public class GroupMgr {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
             for (index = 0; index < groupNames.size(); index++) {
+                if(cs.isCollectionExist("clForTestBusiness_reliability")){
+                    cs.dropCollection("clForTestBusiness_reliability");
+                }
                 cs.createCollection("clForTestBusiness_reliability", (BSONObject) JSON
                         .parse("{ReplSize:0,Group:'" + groupNames.get(index) + "'}"));
 
