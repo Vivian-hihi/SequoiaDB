@@ -2168,9 +2168,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to do complete on collection [%s], "
                    "rc: %d", collection, rc ) ;
 
-      rc = _pResource->updateCataInfo( collection, cataPtr, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to update catalog info of "
-                   "collection [%s], rc: %d", collection, rc ) ;
+      _pResource->removeCataInfo( collection ) ;
 
    done :
       return rc ;
