@@ -1,7 +1,6 @@
 package com.sequoiadb.transaction.rc;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -29,19 +28,19 @@ public class Transaction17137 extends SdbTestBase {
 
     private String clName = "transCL_17137";
     private Sequoiadb sdb = null;
+    private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
-    private int recordNum = 200000;
+    private int recordNum = 20000;
     private DBCursor recordCur = null;
     private List<BSONObject> rs1 = null;
     private List<BSONObject> rs2 = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
 
-    @BeforeClass(enabled = false)
+    @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         expDataList = prepareData(recordNum);
         rs1 = expDataList.subList(0, recordNum/2);
@@ -50,10 +49,12 @@ public class Transaction17137 extends SdbTestBase {
 
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() {
+        sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
-        sdb.beginTransaction();
+        sdb1.beginTransaction();
         sdb2.beginTransaction();
         
         CRUDThread crudThread = new CRUDThread();
@@ -69,17 +70,17 @@ public class Transaction17137 extends SdbTestBase {
         Assert.assertTrue(indexThread.isSuccess(), indexThread.getErrorMsg());
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
 
-        sdb.commit();
+        sdb1.commit();
 
         expDataList.clear();
         expDataList = expData();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': null}");
+        recordCur = cl.query(null, "{'_id': {'$include': 0}}", null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': 'a'}");
+        recordCur = cl.query(null, "{'_id': {'$include': 0}}", null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -88,20 +89,20 @@ public class Transaction17137 extends SdbTestBase {
         Assert.assertFalse(cl.isIndexExist("a"));
     }
 
-    @AfterClass(enabled = false)
+    @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
-            if (sdb2 != null) {
-                sdb2.close();
-            }
+        if (sdb1 != null) {
+            sdb1.close();
+        }
+        if (sdb2 != null) {
+            sdb2.close();
+        }
+        if (recordCur != null) {
+            recordCur.close();
+        }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if (sdb != null) {
+            sdb.close();
         }
     }
 
@@ -135,21 +136,19 @@ public class Transaction17137 extends SdbTestBase {
     private class CRUDThread extends SdbThreadBase {
 
         public void exec() {
-            System.out.println("crud: "+ new Date());
-            cl.insert(rs2);
+            DBCollection cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
+            cl1.insert(rs2);
 
             String modifier = "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}";
-            cl.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", modifier, null);
+            cl1.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", modifier, null);
 
-            cl.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}");
-            System.out.println("crud: "+ new Date());
+            cl1.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}");
         }
     }
 
     private class IndexThread extends SdbThreadBase {
 
         public void exec() {
-            System.out.println("index: "+ new Date());
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
                 for (int i = 0; i < 100; i++) {
@@ -157,26 +156,23 @@ public class Transaction17137 extends SdbTestBase {
                     dbcl.dropIndex("a");
                 }
             }
-            System.out.println("index: "+ new Date());
         }
     }
 
     private class QueryThread extends SdbThreadBase {
 
         public void exec() {
-            System.out.println("query: "+ new Date());
             DBCursor cur = null;
             try {
                 for (int i = 0; i < 10; i++) {
-                    System.out.println("select times: " + i);
                     DBCollection dbcl = sdb2.getCollectionSpace(csName).getCollection(clName);
-                    cur = dbcl.query("{'a': {'$isnull':0}}", null, "{a :1}", "{'': null}");
+                    cur = dbcl.query(null, null, "{a :1}", "{'': null}");
                     List<BSONObject> actList = TransUtils.getReadActList(cur);
                     Assert.assertEquals(actList, rs1, "select times: " +i);
                     actList.clear();
                     
                     try {
-                        cur = dbcl.query("{'a': {'$isnull':0}}", null, "{a :1}", "{'': 'a'}");
+                        cur = dbcl.query(null, null, "{a :1}", "{'': 'a'}");
                         actList = TransUtils.getReadActList(cur);
                         Assert.assertEquals(actList, rs1, "select times: " +i);
                     } catch (BaseException e) {
@@ -191,7 +187,6 @@ public class Transaction17137 extends SdbTestBase {
                     cur.close();
                 }
             }
-            System.out.println("query: "+ new Date());
         }
     }
 

@@ -71,12 +71,12 @@ public class Transaction17138 extends SdbTestBase {
         }
 
         // 3 trans2 select record R1
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
+        recordCur = cl2.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, dataList, "check data by tbscan");
         actDataList.clear();
 
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
+        recordCur = cl2.query(null, null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, dataList, "check data by ixscan");
         actDataList.clear();
@@ -85,12 +85,12 @@ public class Transaction17138 extends SdbTestBase {
         sdb.commit();
 
         // 5 trans2 select record R1 and R2
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl2.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl2.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();

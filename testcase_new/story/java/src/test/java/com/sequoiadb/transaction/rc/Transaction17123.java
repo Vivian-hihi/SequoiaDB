@@ -93,12 +93,12 @@ public class Transaction17123 extends SdbTestBase {
         sdb.commit();
 
         expDataList.add(data);
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': null}");
+        recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, null, "{'': 'a'}");
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
