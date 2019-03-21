@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.ru;
+package com.sequoiadb.transaction.rcwaitlock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,15 +20,15 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @testcase seqDB-17238:select for update并发读与更新并发
- * @date 2019-1-16
+ * @testcase seqDB-17182:select for update并发读与更新并发
+ * @date 2019-1-22
  * @author yinzhen
  *
  */
-@Test(groups = "ru")
-public class Transaction17238_1 extends SdbTestBase {
+@Test(groups = "rcwaitlock")
+public class Transaction17182B extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "tbscan17238";
+    private String clName = "ixsacn17182";
     private DBCollection cl = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
@@ -43,7 +43,7 @@ public class Transaction17238_1 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        cl.createIndex("textIndex17238", "{a:1}", false, false);
+        cl.createIndex("textIndex17182", "{a:1}", false, false);
         BSONObject record = (BSONObject) JSON.parse("{_id:1, a:1, b:1}");
         cl.insert(record);
         expList.add(record);
@@ -82,14 +82,13 @@ public class Transaction17238_1 extends SdbTestBase {
         cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl3 = db3.getCollectionSpace(csName).getCollection(clName);
 
-        // 事务1 select for update读记录走索引扫描
-        DBCursor recordsCursor = cl1.query("{a:{$exists:1}}", null, null, "{'':'textIndex17238'}",
-                DBQuery.FLG_QUERY_FOR_UPDATE);
+        // 事务1 select for update读记录走表扫描
+        DBCursor recordsCursor = cl1.query(null, null, null, "{'':null}", DBQuery.FLG_QUERY_FOR_UPDATE);
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
-        // 事务2 select for update读记录走表扫描阻塞
-        CL2Query cl2Thread = new CL2Query(null, "{'':null}");
+        // 事务2 select for update读记录走索引扫描阻塞
+        CL2Query cl2Thread = new CL2Query("{a:{$exists:1}}", "{'':'textIndex17182'}");
         cl2Thread.start();
         Assert.assertTrue(cl2Thread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
@@ -117,7 +116,7 @@ public class Transaction17238_1 extends SdbTestBase {
         Assert.assertEquals(actList, expList);
 
         // 非事务索引扫描
-        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17238'}");
+        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17182'}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
@@ -128,15 +127,15 @@ public class Transaction17238_1 extends SdbTestBase {
         }
 
         // 非事务表扫描
-        recordsCursor = cl.query(null, null, null, "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
         BSONObject record = (BSONObject) JSON.parse("{_id:1, a:4, b:1}");
         expList.clear();
         expList.add(record);
+        recordsCursor = cl.query(null, null, null, "{'':null}");
+        actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
         // 非事务索引扫描
-        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17238'}");
+        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17182'}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
@@ -146,7 +145,7 @@ public class Transaction17238_1 extends SdbTestBase {
         Assert.assertEquals(actList, expList);
 
         // 事务3读走索引扫描
-        recordsCursor = cl3.query("{a:{$exists:1}}", null, null, "{'':'textIndex17238'}");
+        recordsCursor = cl3.query("{a:{$exists:1}}", null, null, "{'':'textIndex17183'}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
@@ -159,7 +158,7 @@ public class Transaction17238_1 extends SdbTestBase {
         Assert.assertEquals(actList, expList);
 
         // 非事务索引扫描
-        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17238'}");
+        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17182'}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
         recordsCursor.close();
@@ -192,7 +191,7 @@ public class Transaction17238_1 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            cl3.update("{a:1}", "{$set:{a:4}}", "{'':'textIndex17238'}");
+            cl3.update("{a:1}", "{$set:{a:4}}", "{'':'textIndex17182'}");
         }
     }
 }

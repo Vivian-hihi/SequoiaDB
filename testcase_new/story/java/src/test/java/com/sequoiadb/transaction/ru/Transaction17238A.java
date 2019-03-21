@@ -21,14 +21,14 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @testcase seqDB-17238:select for update并发读与更新并发
- * @date 2019-2-14
+ * @date 2019-1-16
  * @author yinzhen
  *
  */
 @Test(groups = "ru")
-public class Transaction17238_2 extends SdbTestBase {
+public class Transaction17238A extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "ixscan17238";
+    private String clName = "tbscan17238";
     private DBCollection cl = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
@@ -82,13 +82,14 @@ public class Transaction17238_2 extends SdbTestBase {
         cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl3 = db3.getCollectionSpace(csName).getCollection(clName);
 
-        // 事务1 select for update读记录走表扫描
-        DBCursor recordsCursor = cl1.query(null, null, null, "{'':null}", DBQuery.FLG_QUERY_FOR_UPDATE);
+        // 事务1 select for update读记录走索引扫描
+        DBCursor recordsCursor = cl1.query("{a:{$exists:1}}", null, null, "{'':'textIndex17238'}",
+                DBQuery.FLG_QUERY_FOR_UPDATE);
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
-        // 事务2 select for update读记录走索引扫描阻塞
-        CL2Query cl2Thread = new CL2Query("{a:{$exists:1}}", "{'':'textIndex17238'}");
+        // 事务2 select for update读记录走表扫描阻塞
+        CL2Query cl2Thread = new CL2Query(null, "{'':null}");
         cl2Thread.start();
         Assert.assertTrue(cl2Thread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
