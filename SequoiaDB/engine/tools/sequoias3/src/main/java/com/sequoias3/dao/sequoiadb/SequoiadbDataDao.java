@@ -106,10 +106,12 @@ public class SequoiadbDataDao implements DataDao {
 
                 BSONObject option = null;
                 String regionName = null;
-                if (region != null && region.getDataDomain() != null){
-                    option = new BasicBSONObject();
-                    option.put("Domain", region.getDataDomain());
+                if (region != null){
                     regionName = region.getName();
+                    if (region.getDataDomain() != null){
+                        option = new BasicBSONObject();
+                        option.put("Domain", region.getDataDomain());
+                    }
                 }
 
                 if (!sdb.isCollectionSpaceExist(csName)) {
