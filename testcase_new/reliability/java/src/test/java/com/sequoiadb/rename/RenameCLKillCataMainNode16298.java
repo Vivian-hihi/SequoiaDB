@@ -52,7 +52,7 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase{
         groupMgr = GroupMgr.getInstance();
 
         // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-        if (!groupMgr.checkBusiness(20)) {
+        if (!groupMgr.checkBusinessWithLSN(20)) {
             throw new SkipException("checkBusiness return false");
         }
         groupName = groupMgr.getAllDataGroupName().get(0);
@@ -83,7 +83,7 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase{
         
         Assert.assertTrue(renameTask.isSuccess(), renameTask.getErrorMsg());
         Assert.assertTrue(faultTask.isSuccess(), faultTask.getErrorMsg());
-        Assert.assertTrue(groupMgr.checkBusiness(120));
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
         
         //继续执行rename将剩下未修改的cl修改,然后再进行检查结果
         for (int i = 0; i < oldCLNameList.size(); i++) {
@@ -101,7 +101,7 @@ public class RenameCLKillCataMainNode16298 extends SdbTestBase{
         	Assert.assertEquals(actNum, 1000, "check record num");
 		}
         
-        Assert.assertTrue(groupMgr.checkBusiness(120));
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 	}
 	
 	@AfterClass

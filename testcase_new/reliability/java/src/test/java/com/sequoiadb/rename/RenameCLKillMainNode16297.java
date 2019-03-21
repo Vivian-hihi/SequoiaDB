@@ -53,8 +53,8 @@ public class RenameCLKillMainNode16297 extends SdbTestBase{
         groupMgr = GroupMgr.getInstance();
 
         // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-        if (!groupMgr.checkBusiness(20)) {
-            throw new SkipException("checkBusiness return false");
+        if (!groupMgr.checkBusinessWithLSN(20)) {
+            throw new SkipException("checkBusinessWithLSN return false");
         }
         groupName = groupMgr.getAllDataGroupName().get(0);
 
@@ -81,7 +81,7 @@ public class RenameCLKillMainNode16297 extends SdbTestBase{
         mgr.execute();
         
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
-        Assert.assertTrue(groupMgr.checkBusiness(120));
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 
         for (int i = 0; i < oldCLNameList.size(); i++) {
             if( completeTimes < i + 1 ){
@@ -98,7 +98,7 @@ public class RenameCLKillMainNode16297 extends SdbTestBase{
         	Assert.assertEquals(actNum, 1000, "check record num");
 		}
         
-        Assert.assertTrue(groupMgr.checkBusiness(120));
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 	}
 	
 	@AfterClass

@@ -39,7 +39,7 @@ public class RenameCSKillMainNode16296 extends SdbTestBase{
 	private DBCollection cl = null;
 	
 	
-	@BeforeClass(enabled=false)
+	@BeforeClass
 	public void setUp() throws ReliabilityException{
         System.out.println(
                 "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
@@ -47,8 +47,8 @@ public class RenameCSKillMainNode16296 extends SdbTestBase{
         groupMgr = GroupMgr.getInstance();
 
         // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-        if (!groupMgr.checkBusiness(20)) {
-            throw new SkipException("checkBusiness return false");
+        if (!groupMgr.checkBusinessWithLSN(20)) {
+            throw new SkipException("checkBusinessWithLSN return false");
         }
         groupName = groupMgr.getAllDataGroupName().get(0);
 
@@ -57,7 +57,7 @@ public class RenameCSKillMainNode16296 extends SdbTestBase{
         cl = cs.createCollection(clName, new BasicBSONObject("Group", groupName));
 	}
 	
-	@Test(enabled=false)
+	@Test
     public void test() throws ReliabilityException {
         GroupWrapper dataGroup = groupMgr.getGroupByName(groupName);
         NodeWrapper dataMaster = dataGroup.getMaster();
@@ -75,7 +75,7 @@ public class RenameCSKillMainNode16296 extends SdbTestBase{
 		}
         
         Assert.assertTrue(faultTask.isSuccess(), faultTask.getErrorMsg());
-        Assert.assertTrue(groupMgr.checkBusiness(120));
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
         
         RenameUtils.retryRenameCS(oldCSName, newCSName);
         RenameUtils.checkRenameCSResult(sdb, oldCSName, newCSName, 1);
@@ -86,10 +86,10 @@ public class RenameCSKillMainNode16296 extends SdbTestBase{
         long actNum = cl.getCount();
         Assert.assertEquals(actNum, 1000, "check record num");
         
-        Assert.assertTrue(groupMgr.checkBusiness(120));
+        Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 	}
 	
-	@AfterClass(enabled=false)
+	@AfterClass
     public void tearDown() {
 		try {
 			sdb.dropCollectionSpace(newCSName);
