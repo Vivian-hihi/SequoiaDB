@@ -5,7 +5,7 @@
 
  ```lang-javascript
  $ export MYSQL_HOME=/opt/sequoiasql/mysql
- $ ${MYSQL_HOME}/bin/mysql --defaults-file=${MYSQL_HOME}/my.cnf -S ${MYSQL_HOME}/data3306/mysqld.sock -u root -p
+ $ ${MYSQL_HOME}/bin/mysql --defaults-file=${MYSQL_HOME}/database/3306/auto.cnf -S ${MYSQL_HOME}/database/3306/mysqld.sock -u root -p
  ```
 
 2. 配置SequoiaDB连接地址
@@ -14,13 +14,11 @@
 
    默认的SequoiaDB连接地址为“localhost:11810”，如需修改可参考以下两种方式
    
-   (1)通过bin/sdb_mysql_ctl指定端口号修改
+   (1)通过bin/sdb_mysql_ctl指定实例名修改
 
  ```lang-javascript
-    # ./bin/sdb_mysql_ctl config 3306 sequoiadb_conn_addr 192.168.20.37:11810,192.168.20.38:11810
+    # bin/sdb_sql_ctl config myinst --sdb_conn_addr=192.168.20.37:11810,192.168.20.38:11810
  ```
-
-   > **Note:**该操作目前会修改所有实例sequoiadb_conn_addr的值
 
    (2)通过配置文件修改，参考[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)。
 
