@@ -176,7 +176,8 @@ public class Transaction17137 extends SdbTestBase {
                         actList = TransUtils.getReadActList(cur);
                         Assert.assertEquals(actList, rs1, "select times: " +i);
                     } catch (BaseException e) {
-                        if(e.getErrorCode() != -48 && e.getErrorCode() != -52){
+                        int actErrCode = e.getErrorCode();
+                        if(actErrCode != -48 && actErrCode != -52 && actErrCode != -10){
                             e.printStackTrace();
                             throw e;
                         }
