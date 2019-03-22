@@ -39,6 +39,7 @@ public class SdbTestBase {
     protected static String reservedDir ;
     protected static String workDir ;
     private static String confToolScript ;
+    private static String enableTransaction ;
     private static Sequoiadb sequoiadb = null ;
     private static final String ROLE = "Role" ;
     private static final String DATA = "data" ;
@@ -51,6 +52,7 @@ public class SdbTestBase {
     private static AtomicInteger rcCnt = new AtomicInteger( 0 ) ;
     private static AtomicInteger ruCnt = new AtomicInteger( 0 ) ;
     private static AtomicInteger rcLockCnt = new AtomicInteger( 0 ) ;
+    private static AtomicInteger rsLockCnt = new AtomicInteger( 0 ) ;
     private static ConfigOptions options = new ConfigOptions() ;
 
     private static final int newIndexScanStep = 3 ;
@@ -58,11 +60,12 @@ public class SdbTestBase {
     private static final int timeOutLen = 60 ;
 
     @Parameters( { "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN",
-            "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR", "CONFTOOL" } )
+            "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR", "CONFTOOL", "ENABLETRANSACTION" } )
     @BeforeSuite( alwaysRun = true )
     public static void initSuite( String HOSTNAME, String SVCNAME,
             String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
-            String RSRVNODEDIR, String WORKDIR, @Optional( "" ) String CONFTOOL ) {
+            String RSRVNODEDIR, String WORKDIR, @Optional( "" ) String CONFTOOL,
+            @Optional( "false" ) String ENABLETRANSACTION ) {
         System.out.println( "initSuite....." ) ;
         hostName = HOSTNAME ;
         serviceName = SVCNAME ;
@@ -73,7 +76,12 @@ public class SdbTestBase {
         workDir = WORKDIR ;
         coordUrl = HOSTNAME + ":" + SVCNAME ;
         confToolScript = CONFTOOL ;
+        enableTransaction = ENABLETRANSACTION ;
         try {
+            if ( !enableTransaction.equals(  "false" ) ){
+                modifyNodeConfAndRestart( true, "before" ) ;
+            }
+            
             options.setSocketKeepAlive( true ) ;
             sequoiadb = new Sequoiadb( SdbTestBase.coordUrl, "", "", options ) ;
             if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
@@ -94,10 +102,14 @@ public class SdbTestBase {
         }
     }
 
-    private static BSONObject buildNodeConf( boolean transactionon,
-            int transisolation, boolean translockwait, int indexscanstep ) {
+    private static BSONObject buildNodeConf( boolean transactionon) {
         BasicBSONObject configs = new BasicBSONObject() ;
         configs.append( TRANSACTIONON, transactionon ) ;
+        return configs ;
+    }
+    
+    private static BSONObject buildNodeConf( int transisolation, boolean translockwait, int indexscanstep ){
+        BasicBSONObject configs = new BasicBSONObject() ;
         configs.append( TRANSISOLATION, transisolation ) ;
         configs.append( TRANSLOCKWAIT, translockwait ) ;
         configs.append( INDEXSCANSTEP, indexscanstep ) ;
@@ -106,13 +118,10 @@ public class SdbTestBase {
     }
 
     private static void modifyNodeConfAndRestart( boolean transactionon,
-            int transisolation, boolean translockwait, int indexScanStep,
             String mode ) {
         BSONObject defaultConf = new BasicBSONObject() ;
-        BSONObject dataConf = buildNodeConf( transactionon, transisolation,
-                translockwait, indexScanStep ) ;
-        BSONObject stdalnConf = buildNodeConf( transactionon, transisolation,
-                translockwait, indexScanStep ) ;
+        BSONObject dataConf = buildNodeConf( transactionon ) ;
+        BSONObject stdalnConf = buildNodeConf( transactionon ) ;
         try {
             createConfFile( defaultConf, defaultConf, defaultConf, defaultConf,
                     dataConf, defaultConf, stdalnConf, defaultConf ) ;
@@ -134,6 +143,17 @@ public class SdbTestBase {
         }
     }
 
+    private static void modifyNodeConf( int transisolation, boolean translockwait, int indexscanstep ){
+        BSONObject cfg = buildNodeConf( transisolation, translockwait, indexscanstep ) ;
+        BSONObject opt = new BasicBSONObject().append( ROLE, DATA ) ;
+        try{
+            sequoiadb.updateConfig( cfg, opt ) ;
+        }catch( BaseException e ){
+            e.printStackTrace() ;
+            throw e ;
+        }
+    }
+    
     @BeforeGroups( groups = "ru", alwaysRun = true )
     public static synchronized void initRuGroups() {
         System.out.println( "initRuGroups..........." ) ;
@@ -141,7 +161,7 @@ public class SdbTestBase {
             return ;
         }
 
-        modifyNodeConfAndRestart( true, 0, false, newIndexScanStep, "before" ) ;
+        modifyNodeConf( 0, false, newIndexScanStep ) ;
     }
 
     @BeforeGroups( groups = "rc", alwaysRun = true )
@@ -151,7 +171,7 @@ public class SdbTestBase {
             return ;
         }
 
-        modifyNodeConfAndRestart( true, 1, false, newIndexScanStep, "before" ) ;
+        modifyNodeConf( 1, false, newIndexScanStep ) ;
     }
 
     @BeforeGroups( groups = "rcwaitlock", alwaysRun = true )
@@ -161,20 +181,32 @@ public class SdbTestBase {
             return ;
         }
 
-        modifyNodeConfAndRestart( true, 1, true, newIndexScanStep, "before" ) ;
+        modifyNodeConf( 1, true, newIndexScanStep ) ;
+    }
+    
+    @BeforeGroups( groups = "rs", alwaysRun = true )
+    public static synchronized void initRsGroups() {
+        System.out.println( "initRsGroups..........." ) ;
+        if ( rsLockCnt.getAndIncrement() > 0 ) {
+            return ;
+        }
+
+        modifyNodeConf( 2, false, newIndexScanStep ) ;
     }
 
-    @AfterGroups( groups = { "ru", "rc", "rcwaitlock" }, alwaysRun = true )
+    @AfterGroups( groups = { "ru", "rc", "rs", "rcwaitlock" }, alwaysRun = true )
     public static synchronized void finiGroups2() {
         System.out.println( "finiGroups..........." ) ;
 
-        modifyNodeConfAndRestart( false, 0, false, originalIndexScanStep,
-                "before" ) ;
+        modifyNodeConf( 0, false, originalIndexScanStep ) ;
     }
 
     @AfterSuite( alwaysRun = true )
     public static void finiSuite() {
         try {
+            if ( !enableTransaction.equals(  "false" ) ){
+                modifyNodeConfAndRestart( false, "after" ) ;
+            }
             sequoiadb = new Sequoiadb( SdbTestBase.coordUrl, "", "", options ) ;
             if ( sequoiadb.isCollectionSpaceExist( csName ) ) {
                 sequoiadb.dropCollectionSpace( csName ) ;
