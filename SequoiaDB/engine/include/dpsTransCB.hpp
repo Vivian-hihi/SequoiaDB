@@ -59,18 +59,18 @@ namespace engine
    #define DPS_TRANSID_SN_BIT                   0X000000FFFFFFFFFFll
    #define DPS_TRANSID_VALID_BIT                0XFFFF00FFFFFFFFFFll
 
-   class _pmdEDUCB;
+   class _pmdEDUCB ;
    class _dmsExtScanner ;
    class _dmsIXSecScanner ;
-   class oldVersionCB;
-   class dpsTransLockManager;
-   class _dpsITransLockCallback;
+   class oldVersionCB ;
+   class dpsTransLockManager ;
+   class _dpsITransLockCallback ;
 
-   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_MAP;
-   typedef ossPoolMap<DPS_TRANS_ID, _pmdEDUCB * >   TRANS_CB_MAP;
-   typedef ossPoolMap<DPS_LSN_OFFSET, DPS_TRANS_ID>  TRANS_LSN_ID_MAP;
-   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET>  TRANS_ID_LSN_MAP;
-   typedef std::queue< EDUID >                     TRANS_EDU_LIST ;
+   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_MAP ;
+   typedef ossPoolMap<DPS_TRANS_ID, _pmdEDUCB * >   TRANS_CB_MAP ;
+   typedef ossPoolMap<DPS_LSN_OFFSET, DPS_TRANS_ID> TRANS_LSN_ID_MAP ;
+   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_ID_LSN_MAP ;
+   typedef std::queue< EDUID >                      TRANS_EDU_LIST ;
 
    /*
       dpsTransCB define
@@ -110,8 +110,8 @@ namespace engine
       oldVersionCB * getOldVCB () { return _oldVCB ; }
 
       BOOLEAN isRollback( DPS_TRANS_ID transID ) ;
-      BOOLEAN isFirstOp( DPS_TRANS_ID transID );
-      void    clearFirstOpTag( DPS_TRANS_ID &transID );
+      BOOLEAN isFirstOp( DPS_TRANS_ID transID ) ;
+      void    clearFirstOpTag( DPS_TRANS_ID &transID ) ;
 
       INT32 startRollbackTask() ;
       INT32 stopRollbackTask() ;
@@ -150,7 +150,7 @@ namespace engine
                            const dmsRecordID *recordID = NULL,
                            _IContext *pContext = NULL,
                            dpsTransRetInfo * pdpsTxResInfo = NULL,
-                           _dpsITransLockCallback *callback = NULL );
+                           _dpsITransLockCallback *callback = NULL ) ;
 
       // get record-U-lock: also get the space-IS-lock and collection-IS-lock
       INT32 transLockGetU( _pmdEDUCB *eduCB, UINT32 logicCSID,
@@ -158,7 +158,7 @@ namespace engine
                            const dmsRecordID *recordID,
                            _IContext *pContext = NULL,
                            dpsTransRetInfo * pdpsTxResInfo = NULL,
-                           _dpsITransLockCallback *callback = NULL );
+                           _dpsITransLockCallback *callback = NULL ) ;
 
       // get record-S-lock: also get the space-IS-lock and collection-IS-lock
       // get collection-S-lock: also get the space-IS-lock
@@ -173,13 +173,13 @@ namespace engine
       INT32 transLockGetIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                             UINT16 collectionID = DMS_INVALID_MBID,
                             _IContext *pContext = NULL,
-                            dpsTransRetInfo * pdpsTxResInfo = NULL );
+                            dpsTransRetInfo * pdpsTxResInfo = NULL ) ;
 
       // also get the space-IS-lock
       INT32 transLockGetIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                             UINT16 collectionID = DMS_INVALID_MBID,
                             _IContext *pContext = NULL,
-                            dpsTransRetInfo * pdpsTxResInfo = NULL );
+                            dpsTransRetInfo * pdpsTxResInfo = NULL ) ;
 
       // release record-lock: also release the space-lock and collection-lock
       // release collection-lock: also release the space-lock
@@ -200,12 +200,12 @@ namespace engine
                             UINT16 collectionID = DMS_INVALID_MBID,
                             const dmsRecordID *recordID = NULL,
                             dpsTransRetInfo * pdpsTxResInfo = NULL,
-                            _dpsITransLockCallback *callback = NULL );
+                            _dpsITransLockCallback *callback = NULL ) ;
 
       INT32 transLockTestIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
                              const dmsRecordID *recordID = NULL,
-                             dpsTransRetInfo * pdpsTxResInfo = NULL );
+                             dpsTransRetInfo * pdpsTxResInfo = NULL ) ;
 
       // test if the lock can be got.
       // test record-X-lock: also test the space-IS-lock and collection-IX-lock
@@ -213,12 +213,12 @@ namespace engine
                             UINT16 collectionID = DMS_INVALID_MBID,
                             const dmsRecordID *recordID = NULL,
                             dpsTransRetInfo * pdpsTxResInfo = NULL,
-                            _dpsITransLockCallback *callback = NULL );
+                            _dpsITransLockCallback *callback = NULL ) ;
 
       INT32 transLockTestIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
                              const dmsRecordID *recordID = NULL,
-                             dpsTransRetInfo * pdpsTxResInfo = NULL );
+                             dpsTransRetInfo * pdpsTxResInfo = NULL ) ;
 
       // test if the lock can be got.
       // test record-U-lock: also test the space-IS-lock and collection-IS-lock
@@ -226,7 +226,7 @@ namespace engine
                             UINT16 collectionID ,
                             const dmsRecordID *recordID,
                             dpsTransRetInfo * pdpsTxResInfo = NULL,
-                            _dpsITransLockCallback *callback = NULL );
+                            _dpsITransLockCallback *callback = NULL ) ;
 
 
       // try to get record-X-lock: also try to get the space-IS-lock and
@@ -245,7 +245,7 @@ namespace engine
                            UINT16 collectionID ,
                            const dmsRecordID *recordID,
                            dpsTransRetInfo * pdpsTxResInfo = NULL,
-                           _dpsITransLockCallback *callback = NULL );
+                           _dpsITransLockCallback *callback = NULL ) ;
 
       // try to get record-S-lock: also try to get the space-IS-lock and
       // collection-IS-lock
@@ -254,7 +254,7 @@ namespace engine
                            UINT16 collectionID = DMS_INVALID_MBID,
                            const dmsRecordID *recordID = NULL,
                            dpsTransRetInfo * pdpsTxResInfo = NULL,
-                           _dpsITransLockCallback * callback = NULL );
+                           _dpsITransLockCallback * callback = NULL ) ;
 
       BOOLEAN hasWait( UINT32 logicCSID, UINT16 collectionID,
                        const dmsRecordID *recordID) ;
