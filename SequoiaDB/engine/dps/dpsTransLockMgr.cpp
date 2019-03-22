@@ -1907,14 +1907,13 @@ namespace engine
    // Dependency:  the lock manager must be initialized
    //
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASE, "dpsTransLockManager::_release" )
-
    // When a record lock is acquired, intent lock on CS, CL are also acquired,
    // hence 3 LRBs per record lock if the record locks come from different CL
    // and CS. We assume two record locks on average in OLTP env, thus we may
    // have 6 LRBs in EDU LRB list.
-#define DPS_EDU_LRB_LIST_AVERAGE_LEN ( 7 ) 
 
+   #define DPS_EDU_LRB_LIST_AVERAGE_LEN ( 7 ) 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCKMANAGER__RELEASE, "dpsTransLockManager::_release" )
    void dpsTransLockManager::_release
    (
       _dpsTransExecutor       * dpsTxExectr,
