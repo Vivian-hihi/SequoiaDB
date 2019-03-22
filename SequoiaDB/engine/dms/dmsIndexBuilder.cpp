@@ -205,6 +205,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      dpsTransExecutor *pTransExe = _eduCB->getTransExecutor() ;
+
+      /// first get transisolation
+      INT32 oldIsolation = pTransExe->getTransIsolation() ;
+      UINT32 oldMask = pTransExe->getTransConfMask() ; | 
+      /// set isolation to ru
+      pTransExe->setTransIsolation( TRANS_ISOLATION_RU, FALSE ) ;
+
       rc = _init() ;
       if ( SDB_DMS_EOC == rc )
       {
@@ -230,6 +238,9 @@ namespace engine
       }
 
    done:
+      /// restore transisolation
+      pTransExe->setTransIsolation( oldIsolation,
+                                    ( oldMask & TRANS_CONF_MASK_ISOLATION ) ) ;
       return rc ;
    init_error:
       goto done ;
