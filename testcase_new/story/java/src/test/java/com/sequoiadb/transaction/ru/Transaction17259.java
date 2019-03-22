@@ -73,12 +73,12 @@ public class Transaction17259 extends SdbTestBase {
         
         //3 trans2 selete record
         expDataList = expData();
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': null}");
+        recordCur = cl3.query(null, "{'_id': {'$include': 0}}", null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': 'a'}");
+        recordCur = cl3.query(null, "{'_id': {'$include': 0}}", null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -89,12 +89,12 @@ public class Transaction17259 extends SdbTestBase {
         //5 trans2 selete record
         expDataList.clear();
         expDataList = expData();
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': null}");
+        recordCur = cl3.query(null, "{'_id': {'$include': 0}}", null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", "{'_id': {'$include': 0}}", null, "{'': 'a'}");
+        recordCur = cl3.query(null, "{'_id': {'$include': 0}}", null, "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
