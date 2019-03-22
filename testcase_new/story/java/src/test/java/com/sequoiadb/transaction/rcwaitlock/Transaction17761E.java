@@ -112,12 +112,12 @@ public class Transaction17761E extends SdbTestBase {
         expDataList.clear();
         expDataList.add(data2);
         expDataList.add(data);
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -130,23 +130,23 @@ public class Transaction17761E extends SdbTestBase {
         expDataList.clear();
         expDataList.add(data4);
         expDataList.add(data3);
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
         // 7 trans2 read
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl2.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl2.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -156,23 +156,23 @@ public class Transaction17761E extends SdbTestBase {
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
         Assert.assertFalse(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
         // 9 trans3 read
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl3.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl3.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -216,13 +216,13 @@ public class Transaction17761E extends SdbTestBase {
             List<BSONObject> expQueryList = new ArrayList<BSONObject>();
             expQueryList.add(data4);
             expQueryList.add(data3);
-            DBCursor cur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+            DBCursor cur = cl3.query(null, null, "{a:1}", "{'': null}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
             //TODO 非问题待确认 SEQUOIADBMAINSTREAM-4241
-//            Assert.assertEquals(actQueryList, expQueryList);
+            Assert.assertEquals(actQueryList, expQueryList);
             actQueryList.clear();
 
-            cur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+            cur = cl3.query(null, null, "{a:1}", "{'': 'a'}");
             actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList, expQueryList);
 

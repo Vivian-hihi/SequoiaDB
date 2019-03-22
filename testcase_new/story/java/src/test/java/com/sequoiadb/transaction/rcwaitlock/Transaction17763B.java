@@ -96,12 +96,12 @@ public class Transaction17763B extends SdbTestBase {
         expDataList.clear();
         expDataList.add(data2);
         expDataList.add(data);
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
+        recordCur = cl.query(null, null, "{a: 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
         
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
+        recordCur = cl.query(null, null, "{a: 1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -152,7 +152,7 @@ public class Transaction17763B extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            cl2.delete("{'a': {'$isnull': 0}}", "{'': 'a'}");
+            cl2.delete(null, "{'': 'a'}");
         }
     }
 
@@ -162,12 +162,12 @@ public class Transaction17763B extends SdbTestBase {
         public void exec() throws BaseException {
 
             //TODO 第一次查询结果错误
-            DBCursor cur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': null}");
+            DBCursor cur = cl3.query(null, null, "{a: 1}", "{'': null}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
-//            Assert.assertEquals(actQueryList.size(), 0);
+            Assert.assertEquals(actQueryList.size(), 0);
             actQueryList.clear();
 
-            cur = cl3.query("{'a': {'$isnull': 0}}", null, "{a: 1}", "{'': 'a'}");
+            cur = cl3.query(null, null, "{a: 1}", "{'': 'a'}");
             actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList.size(), 0);
 

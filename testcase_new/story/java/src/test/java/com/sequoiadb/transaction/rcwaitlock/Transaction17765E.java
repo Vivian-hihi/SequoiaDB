@@ -24,9 +24,9 @@ import com.sequoiadb.transaction.TransUtils;
  * @date 2019年1月15日
  */
 @Test(groups = "rcwaitlock")
-public class Transaction17765 extends SdbTestBase {
+public class Transaction17765E extends SdbTestBase {
 
-    private String clName = "transCL_17765";
+    private String clName = "transCL_17765D";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
@@ -54,8 +54,8 @@ public class Transaction17765 extends SdbTestBase {
         
         data = new BasicBSONObject();
         data.put("_id", "insertID17765_1");
-        data.put("a", 1);
-        data.put("b", 1);
+        data.put("a", 3);
+        data.put("b", 3);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
@@ -71,8 +71,8 @@ public class Transaction17765 extends SdbTestBase {
         modifier3 = new BasicBSONObject();
         data3 = new BasicBSONObject();
         data3.put("_id", "insertID17765_1");
-        data3.put("a", 3);
-        data3.put("b", 3);
+        data3.put("a", 1);
+        data3.put("b", 1);
         data3.put("c", 13700000000L);
         data3.put("d", "customer transaction type data application.");
         modifier3.put("$set", data3);
@@ -86,8 +86,8 @@ public class Transaction17765 extends SdbTestBase {
 
         data5 = new BasicBSONObject();
         data5.put("_id", "insertID17765_1");
-        data5.put("a", 5);
-        data5.put("b", 5);
+        data5.put("a", 3);
+        data5.put("b", 3);
         data5.put("c", 13700000000L);
         data5.put("d", "customer transaction type data application.");
 
@@ -107,7 +107,6 @@ public class Transaction17765 extends SdbTestBase {
         sdb3.beginTransaction();
         
         //2 trans1 insert record
-        //TODO:未覆盖六种情况
         cl1.update(new BasicBSONObject("a", 1), modifier3, null);
 
         // 3 trans2 update
@@ -122,14 +121,14 @@ public class Transaction17765 extends SdbTestBase {
 
         //5 no trans read
         expDataList.clear();
-        expDataList.add(data2);
         expDataList.add(data3);
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        expDataList.add(data2);
+        recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -141,24 +140,24 @@ public class Transaction17765 extends SdbTestBase {
 
         expDataList.clear();
         expDataList.add(data4);
-        expDataList.add(data5);
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        expDataList.add(data3);
+        recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
         // 7 trans2 read
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl2.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl2.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl2.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -168,23 +167,23 @@ public class Transaction17765 extends SdbTestBase {
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
         Assert.assertFalse(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
         // 9 trans3 read
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+        recordCur = cl3.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        recordCur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
+        recordCur = cl3.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
@@ -227,17 +226,12 @@ public class Transaction17765 extends SdbTestBase {
         public void exec() throws BaseException {
 
             List<BSONObject> queryList = new ArrayList<BSONObject>();
-            queryList.add(data4);
             queryList.add(data5);
-            DBCursor cur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': null}");
+            queryList.add(data4);
+            DBCursor cur = cl3.query(null, null, "{a:1}", "{'': 'a'}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
-            // TODO:tbscan error
-            // Assert.assertEquals(actQueryList, queryList);
-            actQueryList.clear();
-
-            cur = cl3.query("{'a': {'$isnull': 0}}", null, "{a:1}", "{'': 'a'}");
-            actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList, queryList);
+            actQueryList.clear();
 
             cur.close();
         }
