@@ -24,9 +24,9 @@ import com.sequoiadb.transaction.TransUtils;
  * @date 2019年1月15日
  */
 @Test(groups = "ru")
-public class Transaction17777 extends SdbTestBase {
+public class Transaction17777B extends SdbTestBase {
 
-    private String clName = "transCL_17777";
+    private String clName = "transCL_17777B";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
@@ -54,16 +54,16 @@ public class Transaction17777 extends SdbTestBase {
         
         data = new BasicBSONObject();
         data.put("_id", "insertID17777_1");
-        data.put("a", 1);
-        data.put("b", 1);
+        data.put("a", 2);
+        data.put("b", 2);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
 
         data2 = new BasicBSONObject();
         data2.put("_id", "insertID17777_2");
-        data2.put("a", 2);
-        data2.put("b", 2);
+        data2.put("a", 1);
+        data2.put("b", 1);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
         cl.insert(data2);
@@ -79,8 +79,8 @@ public class Transaction17777 extends SdbTestBase {
 
         data4 = new BasicBSONObject();
         data4.put("_id", "insertID17777_2");
-        data4.put("a", 4);
-        data4.put("b", 4);
+        data4.put("a", 3);
+        data4.put("b", 3);
         data4.put("c", 13700000000L);
         data4.put("d", "customer transaction type data application.");
 
@@ -115,8 +115,8 @@ public class Transaction17777 extends SdbTestBase {
         Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
         //4 trans1 read
-        expDataList.add(data2);
         expDataList.add(data3);
+        expDataList.add(data4);
         recordCur = cl1.query(null, null, "{'a': 1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);

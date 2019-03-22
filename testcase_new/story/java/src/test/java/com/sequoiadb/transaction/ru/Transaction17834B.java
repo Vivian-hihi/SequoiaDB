@@ -25,9 +25,9 @@ import com.sequoiadb.transaction.TransUtils;
  * @date 2019年1月15日
  */
 @Test(groups = "ru")
-public class Transaction17834 extends SdbTestBase {
+public class Transaction17834B extends SdbTestBase {
 
-    private String clName = "transCL_17834";
+    private String clName = "transCL_17834B";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
@@ -50,16 +50,16 @@ public class Transaction17834 extends SdbTestBase {
         expDataList = new ArrayList<BSONObject>();
         data = new BasicBSONObject();
         data.put("_id", "insertID17834_1");
-        data.put("a", 1);
-        data.put("b", 1);
+        data.put("a", 2);
+        data.put("b", 2);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
 
         data2 = new BasicBSONObject();
         data2.put("_id", "insertID17834_2");
-        data2.put("a", 2);
-        data2.put("b", 2);
+        data2.put("a", 1);
+        data2.put("b", 1);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
         expDataList.add(data2);
