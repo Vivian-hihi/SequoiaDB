@@ -25,10 +25,21 @@
       <!-- surefire properties -->
       <surefire-plugin.version>2.20.1</surefire-plugin.version>
       
+      <slf4j-api.version>1.7.5</slf4j-api.version> 
    </properties>
 
    <dependencies>
-
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j-api.version}</version>
+        </dependency>
+   
       <dependency>
          <groupId>com.sequoiadb</groupId>
          <artifactId>sequoiadb-driver</artifactId>
