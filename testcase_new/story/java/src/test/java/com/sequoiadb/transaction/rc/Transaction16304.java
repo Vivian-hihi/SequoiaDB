@@ -18,6 +18,7 @@ import com.sequoiadb.base.DBQuery;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
  * @FileName:Transaction16304 test query() with QUERY_FLG_FOR_UPDATE
@@ -32,6 +33,8 @@ public class Transaction16304 extends SdbTestBase {
     private Sequoiadb sdb2;
     private CollectionSpace cs;
     private DBCollection cl;
+    private DBCollection cl1 ;
+    private DBCollection cl2 ;
     private String clName = "cl16304";
     private String commCSName;
     private ArrayList<BSONObject> insertRecods;
@@ -53,136 +56,57 @@ public class Transaction16304 extends SdbTestBase {
     
     @Test
     private void testTrans16304() {
-    	String flagCom = "commit";
-    	String flagRoll = "rollback";
-    	
-        //test query + update
-        testQueryAndUpdate(flagCom);
-        //clean up cl and insert data
-        cleanAndInsert();
+    	//因query接口使用QUERY_FLG_FOR_UPDATE执行查询已在用例17111中覆盖，这里只测试queryone接口
+		sdb.beginTransaction();
+	    sdb2.beginTransaction();
+	    cl1 = sdb.getCollectionSpace(commCSName).getCollection(clName);
+	    cl2 = sdb2.getCollectionSpace(commCSName).getCollection(clName);
+	    
+	    BSONObject obj = cl1.queryOne(null,null,null,null, DBQuery.FLG_QUERY_FOR_UPDATE);
+	    BSONObject expobj =  new BasicBSONObject();
+		expobj.put("_id", 0);
+		expobj.put("num", 0);
+		Assert.assertEquals(obj,expobj);
+		
+		CL2Update cl2Update = new CL2Update();
+        cl2Update.start();
+        Assert.assertTrue(cl2Update.matchBlockingMethod(cl2.getClass().getName(), "update"));
         
-        testQueryAndUpdate(flagRoll);
-        cleanAndInsert();
-        
-        //test queryOne + update
-        testQueryOneAndUpdate(flagCom);
-        cleanAndInsert();
-        
-        testQueryOneAndUpdate(flagRoll);
+        sdb.commit();
+        Assert.assertTrue(cl2Update.isSuccess(), cl2Update.getErrorMsg());
+        sdb2.commit();
+	    checkResultAfterUpdate(cl2);
     }
     
-    private void testQueryAndUpdate(String flag){
-    	try {
-    		sdb.beginTransaction();
-		    sdb2.beginTransaction();
-		    DBCollection cl1 = sdb.getCollectionSpace(commCSName).getCollection(clName);
-		    DBCollection cl2 = sdb2.getCollectionSpace(commCSName).getCollection(clName);
-		    
-		    DBCursor cursor = cl1.query("","","","", DBQuery.FLG_QUERY_FOR_UPDATE);
-		    List<BSONObject> actualList = new ArrayList<BSONObject>();
-    		while(cursor.hasNext()) {
-	            actualList.add(cursor.getNext());
+    @AfterClass
+    public void tearDown(){
+        try{
+	        CollectionSpace cs = sdb.getCollectionSpace(csName);    
+	        if(cs.isCollectionExist(clName)){
+	            cs.dropCollection(clName);
 	        }
-		    cursor.close();
-            Assert.assertEquals(actualList, insertRecods);
-            
-		    DBQuery query = new DBQuery();
-		    query.setModifier((BSONObject) JSON.parse("{$set:{num:22}}"));
-		    
-    		switch (flag) {
-			case "commit":
-				try{
-			    	cl2.update(query);
-			    	Assert.fail("update should fail----query-commit");
-			    }catch(BaseException e){
-			    	Assert.assertEquals(e.getErrorCode(), -13);
-			    	
-			    	sdb.commit();
-			    	cl2.update(query);
-			    	checkResultAfterUpdate(cl2);
-			    }
-				break;
-			case "rollback":
-				try{
-			    	cl2.update(query);
-			    	Assert.fail("update should fail----query-rollback");
-			    }catch(BaseException e){
-			    	Assert.assertEquals(e.getErrorCode(), -13);
-			    	
-			    	sdb.rollback();
-			    	cl2.update(query);
-			    	checkResultAfterUpdate(cl2);
-			    }
-				break;
-
-			default:
-				Assert.fail("The parameter is not commit or rollback,please check it again!");
-				break;
-			}
-        }catch (BaseException e) { 
-            Assert.fail("Sequoiadb driver TestTransaction16304 testQueryAndUpdate error, error description:" + e.getMessage());
+        }catch(BaseException e){            
+            Assert.fail(e.getMessage());
+        }finally{
+            sdb.close();
+            sdb2.close();
         }
     }
     
-    private void testQueryOneAndUpdate(String flag){
-    	try {
-    		sdb.beginTransaction();
-		    sdb2.beginTransaction();
-		    DBCollection cl1 = sdb.getCollectionSpace(commCSName).getCollection(clName);
-		    DBCollection cl2 = sdb2.getCollectionSpace(commCSName).getCollection(clName);
-		    
-		    BSONObject obj = cl1.queryOne(null,null,null,null, DBQuery.FLG_QUERY_FOR_UPDATE);
-		    DBQuery query = new DBQuery();
-		    query.setModifier((BSONObject) JSON.parse("{$set:{num:22}}"));
-		    
-    		switch (flag) {
-			case "commit":
-				try{
-			    	cl2.update(query);
-			    	Assert.fail("update should fail----queryOne-commit");
-			    }catch(BaseException e){
-			    	Assert.assertEquals(e.getErrorCode(), -13);
-			    	
-			    	BSONObject expobj =  new BasicBSONObject();
-		    		expobj.put("_id", 0);
-		    		expobj.put("num", 0);
-		    		Assert.assertEquals(obj,expobj);
-			    	
-			    	sdb.commit();
-			    	cl2.update(query);
-			    	checkResultAfterUpdate(cl2);
-			    }
-				break;
-			case "rollback":
-				try{
-			    	cl2.update(query);
-			    	Assert.fail("update should fail----queryOne-rollback");
-			    }catch(BaseException e){
-			    	Assert.assertEquals(e.getErrorCode(), -13);
-			    	
-			    	BSONObject expobj =  new BasicBSONObject();
-		    		expobj.put("_id", 0);
-		    		expobj.put("num", 0);
-		    		Assert.assertEquals(obj,expobj);
-			    	
-			    	sdb.rollback();
-			    	cl2.update(query);
-			    	checkResultAfterUpdate(cl2);
-			    }
-				break;
-
-			default:
-				Assert.fail("The parameter is not commit or rollback,please check it again!");
-				break;
-			}
-        }catch (BaseException e) { 
-            Assert.fail("Sequoiadb driver TestTransaction16304 testQueryOneAndUpdate error, error description:" + e.getMessage());
+    private void insertData(){
+        try{
+            BSONObject bson;
+            insertRecods = new ArrayList<BSONObject>();
+            for (int i = 0; i < 10000; i++) {
+                bson = new BasicBSONObject();
+                bson.put("_id", i);
+                bson.put("num", i);
+                insertRecods.add(bson);
+            } 
+            cl.insert(insertRecods, 0 );
+        }catch (BaseException e) {
+            Assert.fail("Sequoiadb driver TestTransaction16304 insertData error, error description:" + e.getMessage());
         }
-    }
-    
-    private void cleanAndInsert(){
-    	cl.truncate();
-        insertData();
     }
     
     private void checkResultAfterUpdate(DBCollection cl){
@@ -203,34 +127,12 @@ public class Transaction16304 extends SdbTestBase {
         Assert.assertEquals(actualList, expectedList);
     }
     
-    private void insertData(){
-        try{
-            BSONObject bson;
-            insertRecods = new ArrayList<BSONObject>();
-            for (int i = 0; i < 10000; i++) {
-                bson = new BasicBSONObject();
-                bson.put("_id", i);
-                bson.put("num", i);
-                insertRecods.add(bson);
-            } 
-            cl.insert(insertRecods, 0 );
-        }catch (BaseException e) {
-            Assert.fail("Sequoiadb driver TestTransaction16304 insertData error, error description:" + e.getMessage());
-        }
-    }
-    
-    @AfterClass
-    public void tearDown(){
-        try{
-	        CollectionSpace cs = sdb.getCollectionSpace(csName);    
-	        if(cs.isCollectionExist(clName)){
-	            cs.dropCollection(clName);
-	        }
-        }catch(BaseException e){            
-            Assert.fail(e.getMessage());
-        }finally{
-            sdb.close();
-            sdb2.close();
+    private class CL2Update extends SdbThreadBase {
+        @Override
+        public void exec() throws Exception {
+        	DBQuery query = new DBQuery();
+		    query.setModifier((BSONObject) JSON.parse("{$set:{num:22}}"));
+            cl2.update(query);
         }
     }
 }
