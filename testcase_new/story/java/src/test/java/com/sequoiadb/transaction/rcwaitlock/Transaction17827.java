@@ -221,10 +221,6 @@ public class Transaction17827 extends SdbTestBase {
             Assert.assertEquals(actQueryList, queryList);
             actQueryList.clear();
 
-            cur = cl3.query(null, null, "{a:1}", "{'': 'a'}");
-            actQueryList = TransUtils.getReadActList(cur);
-            Assert.assertEquals(actQueryList, queryList);
-
             cur.close();
         }
     }

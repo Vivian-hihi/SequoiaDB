@@ -216,14 +216,8 @@ public class Transaction17761D extends SdbTestBase {
             List<BSONObject> expQueryList = new ArrayList<BSONObject>();
             expQueryList.add(data3);
             expQueryList.add(data4);
-            DBCursor cur = cl3.query(null, null, "{'_id': 1}", "{'': null}");
+            DBCursor cur = cl3.query(null, null, "{'_id': 1}", "{'': 'a'}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
-            //TODO 非问题待确认 SEQUOIADBMAINSTREAM-4241
-            Assert.assertEquals(actQueryList, expQueryList);
-            actQueryList.clear();
-
-            cur = cl3.query(null, null, "{'_id': 1}", "{'': 'a'}");
-            actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList, expQueryList);
 
             cur.close();

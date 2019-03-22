@@ -160,13 +160,8 @@ public class Transaction17763A extends SdbTestBase {
         @Override
         public void exec() throws BaseException {
 
-            DBCursor cur = cl3.query(null, null, "{a: 1}", "{'': null}");
+            DBCursor cur = cl3.query(null, null, "{a: 1}", "{'': 'a'}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
-            Assert.assertEquals(actQueryList.size(), 0);
-            actQueryList.clear();
-
-            cur = cl3.query(null, null, "{a: 1}", "{'': 'a'}");
-            actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList.size(), 0);
 
             cur.close();

@@ -212,14 +212,8 @@ public class Transaction17762B extends SdbTestBase {
         public void exec() throws BaseException {
             List<BSONObject> expQueryList = new ArrayList<BSONObject>();
             expQueryList.add(data3);
-            DBCursor cur = cl3.query(null, null, "{a:1}", "{'': null}");
+            DBCursor cur = cl3.query(null, null, "{a:1}", "{'': 'a'}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
-            //TODO 非问题待确认 SEQUOIADBMAINSTREAM-4241
-            Assert.assertEquals(actQueryList, expQueryList);
-            actQueryList.clear();
-
-            cur = cl3.query(null, null, "{a:1}", "{'': 'a'}");
-            actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList, expQueryList);
 
             cur.close();

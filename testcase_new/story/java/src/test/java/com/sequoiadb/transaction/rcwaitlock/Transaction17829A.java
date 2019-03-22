@@ -235,11 +235,6 @@ public class Transaction17829A extends SdbTestBase {
             DBCursor cur = cl3.query(null, null, "{a:1}", "{'': null}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList, queryList);
-            actQueryList.clear();
-
-            cur = cl3.query(null, null, "{a:1}", "{'': 'a'}");
-            actQueryList = TransUtils.getReadActList(cur);
-            Assert.assertEquals(actQueryList, queryList);
 
             cur.close();
         }

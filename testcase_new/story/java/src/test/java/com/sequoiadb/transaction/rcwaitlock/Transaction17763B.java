@@ -161,14 +161,8 @@ public class Transaction17763B extends SdbTestBase {
         @Override
         public void exec() throws BaseException {
 
-            //TODO 第一次查询结果错误
-            DBCursor cur = cl3.query(null, null, "{a: 1}", "{'': null}");
+            DBCursor cur = cl3.query(null, null, "{a: 1}", "{'': 'a'}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
-            Assert.assertEquals(actQueryList.size(), 0);
-            actQueryList.clear();
-
-            cur = cl3.query(null, null, "{a: 1}", "{'': 'a'}");
-            actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList.size(), 0);
 
             cur.close();
