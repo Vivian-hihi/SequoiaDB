@@ -342,13 +342,6 @@ namespace engine
       _isDirectMem = FALSE ;
    }
 
-   _dmsRecordRW::_dmsRecordRW( const _dmsRecordRW &rhs )
-   {
-      _ptr = rhs._ptr ;
-      _pData = rhs._pData ;
-      _isDirectMem = rhs._isDirectMem ;
-   }
-
    _dmsRecordRW::~_dmsRecordRW()
    {
    }
@@ -3667,7 +3660,7 @@ namespace engine
       {
          context->mbStat()->updateLastLSNWithComp( cb->getEndLsn(),
                                                    DMS_FILE_DATA,
-                                                   cb->isDoRollback() ) ;         
+                                                   cb->isDoRollback() ) ;
       }
 
       if ( handler )

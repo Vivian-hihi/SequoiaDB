@@ -632,7 +632,6 @@ namespace engine
 
       public:
          _dmsRecordRW() ;
-         _dmsRecordRW( const _dmsRecordRW &rhs ) ;
          virtual ~_dmsRecordRW() ;
 
          BOOLEAN           isEmpty() const ;
