@@ -36,10 +36,10 @@ public class TestResidualData extends S3TestBase{
         
         for(String csName : csNames){
         	if(csName.startsWith("S3_")){
-        		if(csName.startsWith("S3_SYS_Meta")){
-        			s3CSNames.add(csName);
-        		}else{
+        		if(csName.contains("DataCS")){
         			s3DataCSNames.add(csName);
+        		}else{
+        			s3CSNames.add(csName);
         		}
         	}
         }
