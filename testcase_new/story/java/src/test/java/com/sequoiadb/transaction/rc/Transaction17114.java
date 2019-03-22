@@ -28,7 +28,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author yinzhen
  *
  */
-@Test(groups = "rc")
+@Test(groups = "rc", enabled=false)
 public class Transaction17114 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl17114";
@@ -46,12 +46,12 @@ public class Transaction17114 extends SdbTestBase {
     private CountDownLatch latch = null;
     private List<BSONObject> expList = new ArrayList<>();
 
-    @BeforeClass
+    @BeforeClass(enabled=false)
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
     }
 
-    @AfterClass
+    @AfterClass(enabled=false)
     public void tearDown() {
         if (!db1.isClosed()) {
             db1.close();
@@ -82,7 +82,7 @@ public class Transaction17114 extends SdbTestBase {
         return new Object[][] { { "{'a':-1}" }, { "{'a':1}" } };
     }
 
-    @Test(dataProvider = "index")
+    @Test(dataProvider = "index", enabled=false)
     public void test(String indexKey) {
         latch = new CountDownLatch(4);
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
