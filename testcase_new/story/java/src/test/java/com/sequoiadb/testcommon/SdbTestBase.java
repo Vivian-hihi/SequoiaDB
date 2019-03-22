@@ -146,8 +146,8 @@ public class SdbTestBase {
     private static void modifyNodeConf( int transisolation, boolean translockwait, int indexscanstep ){
         BSONObject cfg = buildNodeConf( transisolation, translockwait, indexscanstep ) ;
         BSONObject opt = new BasicBSONObject().append( ROLE, DATA ) ;
-        try{
-            sequoiadb.updateConfig( cfg, opt ) ;
+        try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "", options )){
+            sdb.updateConfig( cfg, opt ) ;
         }catch( BaseException e ){
             e.printStackTrace() ;
             throw e ;
