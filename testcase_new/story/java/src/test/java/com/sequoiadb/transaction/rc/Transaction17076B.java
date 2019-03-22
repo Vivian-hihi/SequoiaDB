@@ -78,7 +78,7 @@ public class Transaction17076B extends SdbTestBase {
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, null, "{'':'a'}");
+        cursor = cl.query(null, null, null, "{'':'_id'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
@@ -92,7 +92,7 @@ public class Transaction17076B extends SdbTestBase {
         actList.clear();
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, null, "{'':'a'}");
+        cursor = cl2.query(null, null, null, "{'':'_id'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
@@ -104,7 +104,7 @@ public class Transaction17076B extends SdbTestBase {
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, null, "{'':'a'}");
+        cursor = cl.query(null, null, null, "{'':'_id'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
