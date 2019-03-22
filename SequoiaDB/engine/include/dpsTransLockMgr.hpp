@@ -254,7 +254,6 @@ namespace engine
       BOOLEAN _checkWaiterLockModeWithOwners
       (
          const dpsTransLRB *       lrbBegin,
-         const dpsTransLRB *       ownerLrb,
          const DPS_TRANSLOCK_TYPE  lockMode
       ) ;
 
@@ -339,7 +338,7 @@ namespace engine
          const dpsTransLockId             & lockId,
          const DPS_TRANSLOCK_TYPE           requestLockMode,
          const DPS_TRANSLOCK_OP_MODE_TYPE   opMode,
-         const UINT32                       bktIdx,
+         UINT32                             bktIdx,
          const BOOLEAN                      bktLatched,
          dpsTransRetInfo                  * pdpsTxResInfo,
          _dpsITransLockCallback           * callback = NULL
