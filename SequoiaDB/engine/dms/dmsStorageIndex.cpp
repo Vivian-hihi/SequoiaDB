@@ -1645,6 +1645,9 @@ namespace engine
 
          for ( it = keySet.begin() ; it != keySet.end() ; ++it )
          {
+#if defined (_DEBUG)
+            PD_LOG ( PDDEBUG, "Insert key: %s", (*it).toString().c_str() ) ;
+#endif
             ixmKeyOwned ko ((*it)) ;
             rc = _indexInsert ( indexCB, ko, rid, order, cb,
                                 dupAllowed, dropDups ) ;
@@ -2105,7 +2108,7 @@ namespace engine
          for ( it = keySet.begin() ; it != keySet.end() ; it++ )
          {
 #if defined (_DEBUG)
-            PD_LOG ( PDDEBUG, "Key %s", (*it).toString().c_str() ) ;
+            PD_LOG ( PDDEBUG, "Delete key: %s", (*it).toString().c_str() ) ;
 #endif
             // get root in each loop, since root page may change after each
             // insert (root split)
