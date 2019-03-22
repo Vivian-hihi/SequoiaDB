@@ -13,6 +13,7 @@
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
    <parameter name="CONFTOOL" value="trunk/misc/ci_new/src/test/exec_testcase/changeConf.js" />
+   <parameter name="ENABLETRANSACTION" value="true" />
 
    <listeners>
       <listener class-name="com.sequoiadb.testcommon.TimePrinterListener"/>
