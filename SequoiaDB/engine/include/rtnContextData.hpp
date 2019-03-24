@@ -105,7 +105,8 @@ namespace engine
                              const dmsRecordID& recordID,
                              ossValuePtr recordDataPtr,
                              BSONObj& obj,
-                             IDmsOprHandler* pHandler ) ;
+                             IDmsOprHandler* pHandler,
+                             const dmsTransRecordInfo *pInfo ) ;
          virtual INT32     _prepareData( _pmdEDUCB *cb ) ;
          virtual BOOLEAN   _canPrefetch () const
          {

@@ -867,7 +867,8 @@ namespace engine
                               ossValuePtr deletedDataPtr,
                               _pmdEDUCB * cb,
                               SDB_DPSCB *dpscb,
-                              IDmsOprHandler *pHandler = NULL ) ;
+                              IDmsOprHandler *pHandler = NULL,
+                              const dmsTransRecordInfo *pInfo = NULL ) ;
 
          // if updatedDataPtr = 0, will get from recordID
          // must hold mb exclusive lock

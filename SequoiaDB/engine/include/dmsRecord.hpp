@@ -312,7 +312,7 @@ namespace engine
       }
       void setAttr( BYTE attr )
       {
-         _head._recordHead[ 0 ] = (BYTE)((attr&0xF0)|getState()) ;
+         _head._recordHead[ 0 ] |= (BYTE)(attr&0xF0) ;
       }
       void unsetAttr( BYTE attr )
       {

@@ -255,7 +255,7 @@ namespace engine
    void  _dmsExtScannerBase::acquireCSCLLock( ) 
    {
       INT32 rc = SDB_OK ;
-      if ( !_CSCLLockHeld )
+      if ( !_CSCLLockHeld && DPS_TRANSLOCK_X != _recordLock )
       {
          dmsTBTransContext tbTxContext( _context, _accessType ) ;
          dpsTransRetInfo   lockConflict ;
@@ -625,7 +625,8 @@ namespace engine
             if ( _recordLock == DPS_TRANSLOCK_X )
             {
                INT32 rc1 = _pSu->deleteRecord( _context, _curRID,
-                                               0, cb, NULL, NULL ) ;
+                                               0, cb, NULL, NULL,
+                                               _callback.getTransRecordInfo() ) ;
                if ( rc1 )
                {
                   PD_LOG( PDWARNING, "Failed to delete the deleting record, "
@@ -1415,7 +1416,7 @@ namespace engine
    void _dmsIXSecScanner::acquireCSCLLock( ) 
    {
       INT32 rc = SDB_OK ;
-      if ( !_CSCLLockHeld )
+      if ( !_CSCLLockHeld && DPS_TRANSLOCK_X != _recordLock )
       {
          dpsTransRetInfo   lockConflict ;
          dmsIXTransContext ixTxContext( _context, _accessType,
@@ -1916,7 +1917,8 @@ namespace engine
             if ( _recordLock == DPS_TRANSLOCK_X )
             {
                rc = _pSu->deleteRecord( _context, _curRID, 0,
-                                        cb, NULL, NULL ) ;
+                                        cb, NULL, NULL,
+                                        _callback.getTransRecordInfo() ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDWARNING, "Failed to delete the deleting record, "

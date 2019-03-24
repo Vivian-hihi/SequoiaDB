@@ -3020,11 +3020,12 @@ namespace engine
 
       try
       {
+         dpsTransExecutor *pTransExe = cb->getTransExecutor() ;
          /// when is rollback, and the rid is found
          if ( DPS_INVALID_TRANS_ID != transID && cb->isInRollback() &&
-              cb->getTransExecutor()->getRecord( relatedLsn, foundRID ) )
+              pTransExe->getRecord( relatedLsn, foundRID, TRUE ) )
          {
-#ifdef _DEBUG
+            markInsert = TRUE ;
             const dmsRecord *pRecord = NULL ;
 
             rc = context->mbLock( EXCLUSIVE ) ;
@@ -3035,24 +3036,28 @@ namespace engine
 
             /// 1. check status
             pRecord = recordRW.readPtr<dmsRecord>() ;
-            SDB_ASSERT( pRecord->isDeleting(), "Record is not deleting" ) ;
-
-            /// 2. check lock
-            rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID(),
-                                          &foundRID ) ;
-            SDB_ASSERT( SDB_OK == rc, "Trans lock failed" ) ;
-            isTransLocked = TRUE ;
-
-            /// 3. check the value is the same
-            rc = extractData( context, recordRW, cb, recordData ) ;
-            SDB_ASSERT( SDB_OK == rc, "Extrace data failed" ) ;
-            SDB_ASSERT( 0 == insertObj.woCompare(BSONObj(recordData.data())),
-                        "Data is not the same" ) ;
+            if ( !pRecord->isDeleting() )
+            {
+               SDB_ASSERT( FALSE, "Record is not deleting" ) ;
+               markInsert = FALSE ;
+            }
+            /// 2. check the value is the same
+            else
+            {
+               rc = extractData( context, recordRW, cb, recordData ) ;
+               if ( rc )
+               {
+                  SDB_ASSERT( FALSE, "Extrace data failed" ) ;
+                  markInsert = FALSE ;
+               }
+               else if ( 0 != insertObj.woCompare(BSONObj(recordData.data())) )
+               {
+                  SDB_ASSERT( FALSE, "Data is not the same" ) ;
+                  markInsert = FALSE ;
+               }
+            }
 
             context->mbUnlock() ;
-#endif //_DEBUG
-
-            markInsert = TRUE ;
             recordData.setData( insertObj.objdata(), insertObj.objsize(),
                                 UTIL_COMPRESSOR_INVALID, TRUE ) ;
          }
@@ -3243,7 +3248,7 @@ namespace engine
             }
             recordRW = record2RW( foundRID, context->mbID() ) ;
 
-            if ( dpscb && isTransSupport() )
+            if ( dpscb && isTransSupport() && !cb->isInRollback() )
             {
                dpsTransRetInfo lockConflict ;
                callback.setIDInfo( CSID(), context->mbID(), _logicalCSID ) ;
@@ -3355,8 +3360,10 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD, rc ) ;
       return rc ;
    error:
-      ( void )_onInsertFail( context, hasInsert, foundRID,
-                             dropDps, (ossValuePtr)insertObj.objdata(), cb ) ;
+      ( void )_onInsertFail( context, ( markInsert ? TRUE : hasInsert),
+                             foundRID, dropDps,
+                             (ossValuePtr)insertObj.objdata(),
+                             cb ) ;
       if ( handler )
       {
          handler->abortOperation( DMS_EXTOPR_TYPE_INSERT, cb ) ;
@@ -3378,7 +3385,8 @@ namespace engine
                                               ossValuePtr deletedDataPtr,
                                               pmdEDUCB *cb,
                                               SDB_DPSCB * dpscb,
-                                              IDmsOprHandler *pHandler )
+                                              IDmsOprHandler *pHandler,
+                                              const dmsTransRecordInfo *pInfo )
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_DELETERECORD ) ;
@@ -3403,6 +3411,7 @@ namespace engine
       UINT32 textIdxNum             = 0 ;
       IDmsExtDataHandler *handler   = NULL ;
       BOOLEAN inTrans               = FALSE ;
+      BOOLEAN hasWaitLock           = FALSE ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -3463,23 +3472,36 @@ namespace engine
          if ( DPS_INVALID_TRANS_ID != transID && !cb->isInRollback() )
          {
             inTrans = TRUE ;
-            markDeleting = TRUE ;
          }
+
          // don't delete the record, someone are waitting for the record lock,
          // mark the record's attr to DMS_RECORD_FLAG_DELETING and write the log
          // the last one who get the record-X-Lock will delete the record while
          // those who gets record-S-Lock will skip the record.
-         else if ( pTransCB->hasWait( _logicalCSID, context->mbID(),
-                                      &recordID ) )
+         if ( pTransCB->hasWait( _logicalCSID, context->mbID(), &recordID ) )
          {
             markDeleting = TRUE ;
+            hasWaitLock = TRUE ;
+         }
+         else if ( inTrans )
+         {
+            markDeleting = TRUE ;
+            if ( pInfo && pInfo->_transInsert )
+            {
+               markDeleting = FALSE ;
+            }
          }
 
          if ( pRecord->isDeleting() )
          {
             isDeleting = TRUE ;
 
-            if ( markDeleting )
+            if ( !hasWaitLock && markDeleting && pInfo &&
+                 pInfo->_refCount == 1 )
+            {
+               markDeleting = FALSE ;
+            }
+            else if ( markDeleting )
             {
                goto done ;
             }

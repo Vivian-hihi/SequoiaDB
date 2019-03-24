@@ -239,6 +239,12 @@ namespace engine
       _result           = SDB_OK ;
       _useOldVersion    = FALSE ;
       _recordPtr        = dpsOldRecordPtr() ;
+      _recordInfo.reset() ;
+   }
+
+   const dmsTransRecordInfo* dmsTransLockCallback::getTransRecordInfo() const
+   {
+      return &_recordInfo ;
    }
 
    // Description:
@@ -269,6 +275,7 @@ namespace engine
    void dmsTransLockCallback::afterLockAcquire( const dpsTransLockId &lockId,
                                                 INT32 irc,
                                                 DPS_TRANSLOCK_TYPE requestLockMode,
+                                                UINT32 refCounter,
                                                 DPS_TRANSLOCK_OP_MODE_TYPE opMode,
                                                 const dpsTransLRBHeader *pLRBHeader,
                                                 dpsLRBExtData *pExtData )
@@ -366,6 +373,9 @@ namespace engine
       else if ( SDB_OK == irc )
       {
          SDB_ASSERT( pExtData, "ExtData is invalid " ) ;
+         SDB_ASSERT( refCounter > 0, "Ref count must > 0" ) ;
+
+         _recordInfo._refCount = refCounter ;
 
          if ( !pExtData )
          {
@@ -415,6 +425,7 @@ namespace engine
                _skipRecord = TRUE ;
                /// remove the duplicate rid
                _pScanner->removeDuplicatRID( _oldVer->getRecordID() ) ;
+               _oldVer = NULL ;
                goto done ;
             }
 
@@ -426,6 +437,12 @@ namespace engine
 
                PD_LOG( PDDEBUG, "Delete old record for rid[%s] from memory",
                        lockId.toString().c_str() ) ;
+            }
+
+            if ( _oldVer->isRecordNew() &&
+                 _oldVer->getOwnnerTID() == _eduCB->getTID() )
+            {
+               _recordInfo._transInsert = TRUE ;
             }
 
             if ( notTransOrRollback )
@@ -442,8 +459,11 @@ namespace engine
          }
 
 #ifdef _DEBUG
-         PD_LOG( PDDEBUG, "Set oldVer[%u] for rid[%s] in memory",
-                 _oldVer, lockId.toString().c_str() ) ;
+         if ( _oldVer )
+         {
+            PD_LOG( PDDEBUG, "Set oldVer[%u] for rid[%s] in memory",
+                    _oldVer, lockId.toString().c_str() ) ;
+         }
 #endif //_DEBUG
       }
 

@@ -1146,6 +1146,7 @@ namespace engine
             bFreeLRB       = FALSE ;
             bFreeLRBHeader = FALSE ;
             pLRBHdr        = pLRBHdrNew ;
+            pLRB           = pLRBNew ;
          }
          // job done
          goto done;
@@ -1171,6 +1172,7 @@ namespace engine
             bFreeLRB       = FALSE ;
             bFreeLRBHeader = FALSE ;
             pLRBHdr        = pLRBHdrNew ;
+            pLRB           = pLRBNew ;
          }
 
          // job done
@@ -1237,7 +1239,7 @@ namespace engine
             }
             goto done ;
          }
-       
+
          // try to do upgrade
          //
          // check if the requested mode is compatible with other owners
@@ -1338,7 +1340,7 @@ namespace engine
                dpsTxExectr->setWaiterInfo( pLRBNew, DPS_QUE_WAITER ) ;
 
                // mark the new LRB is used
-               bFreeLRB = FALSE ; 
+               bFreeLRB = FALSE ;
 
                // set return code to SDB_DPS_TRANS_APPEND_TO_WAIT
                rc = SDB_DPS_TRANS_APPEND_TO_WAIT ;
@@ -1390,6 +1392,7 @@ namespace engine
 
                   // mark the new LRB is used
                   bFreeLRB = FALSE ;
+                  pLRB     = pLRBNew ;
                }
 
                // job done
@@ -1410,7 +1413,6 @@ namespace engine
 
                   // mark the new LRB is used
                   bFreeLRB = FALSE ;
-
                }
                else
                {
@@ -1448,6 +1450,7 @@ namespace engine
          // lookup information in LRBHdr
          callback->afterLockAcquire( lockId, rc,
                                      requestLockMode,
+                                     pLRB ? pLRB->refCounter : 0,
                                      opMode,
                                      pLRBHdr,
                                      pLRBHdr ? &(pLRBHdr->extData) : NULL ) ;

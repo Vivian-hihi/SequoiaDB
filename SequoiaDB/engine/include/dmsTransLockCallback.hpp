@@ -88,12 +88,15 @@ namespace engine
       BOOLEAN  hasError() const { return SDB_OK != _result ? TRUE : FALSE ; }
       BOOLEAN  isUseOldVersion() const { return _useOldVersion ; }
 
+      const dmsTransRecordInfo*  getTransRecordInfo() const ;
+
    public:
 
       /// Interface
       virtual void afterLockAcquire( const dpsTransLockId &lockId,
                                      INT32 irc,
                                      DPS_TRANSLOCK_TYPE requestLockMode,
+                                     UINT32 refCounter,
                                      DPS_TRANSLOCK_OP_MODE_TYPE opMode,
                                      const dpsTransLRBHeader *pLRBHeader,
                                      dpsLRBExtData *pExtData ) ;
@@ -223,6 +226,8 @@ namespace engine
       SINT32               _latchedIdxLid ; // which we are holding a latch on
       INT32                _latchedIdxMode ;
       _rtnIXScanner        *_pScanner ;
+
+      dmsTransRecordInfo   _recordInfo ;
 
    } ;
 

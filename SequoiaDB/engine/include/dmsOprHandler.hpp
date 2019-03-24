@@ -54,6 +54,26 @@ namespace engine
    class _pmdEDUCB ;
 
    /*
+      _dmsTransRecordInfo define
+   */
+   struct _dmsTransRecordInfo
+   {
+      UINT32         _refCount ;
+      BOOLEAN        _transInsert ;
+
+      _dmsTransRecordInfo()
+      {
+         reset() ;
+      }
+      void reset()
+      {
+         _refCount = 0 ;
+         _transInsert = FALSE ;
+      }
+   } ;
+   typedef _dmsTransRecordInfo dmsTransRecordInfo ;
+
+   /*
       _IDmsOprHandler define
    */
    class _IDmsOprHandler
