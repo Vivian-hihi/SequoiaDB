@@ -8,8 +8,8 @@
 
 function main()
 {
-   var csName = COMMCLNAME + "_yt";
-   var clName = COMMCLNAME + "_yt";
+   var csName = COMMCLNAME + "_yt6022";
+   var clName = COMMCLNAME + "_yt6022";
    
    try
    {

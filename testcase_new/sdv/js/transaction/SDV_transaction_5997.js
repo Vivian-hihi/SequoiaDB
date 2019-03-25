@@ -3,7 +3,7 @@
 @author£º2015-11-18 wuyan  Init
 ***************************************************************************** */
 
-var csName     = CHANGEDPREFIX + "_cs" ;  
+var csName     = CHANGEDPREFIX + "_cs5997" ;  
 function preCheckEnv(db)
 {
    try
@@ -32,8 +32,8 @@ function createCL(csName)
 {
     try
 	{
-      var mainCLName = CHANGEDPREFIX + "_mcl" ;
-      var subCLName  = CHANGEDPREFIX + "_scl" ;
+      var mainCLName = CHANGEDPREFIX + "_mcl5997" ;
+      var subCLName  = CHANGEDPREFIX + "_scl5997" ;
         
       var cs = commCreateCS( db, csName, true, "create cs in the beginning" );
       var mainCL = cs.createCL( mainCLName, { ShardingKey:{ no:1 }, ShardingType:"range", ReplSize:0, 

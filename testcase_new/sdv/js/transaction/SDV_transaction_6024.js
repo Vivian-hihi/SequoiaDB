@@ -8,8 +8,8 @@ main();
 function main()
 {
    var csName = COMMCSNAME;
-   var mainclName = COMMCLNAME + "_maincl";
-   var subclName  = COMMCLNAME + "_subcl";   
+   var mainclName = COMMCLNAME + "_maincl6024";
+   var subclName  = COMMCLNAME + "_subcl6024";   
    
    try
    {

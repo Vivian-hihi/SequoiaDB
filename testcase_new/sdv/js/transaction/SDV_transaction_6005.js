@@ -2,7 +2,39 @@
 @discretion: 切分表执行事务操作，创建唯一索引插入相同记录
 @author：2015-11-21 wuyan  Init
 ***************************************************************************** */
-var clName = CHANGEDPREFIX + "_transaction012";
+
+// SEQUOIADBMAINSTREAM-4182
+// main();
+function main()
+{		
+	try
+	{
+	   var clName = CHANGEDPREFIX + "_transaction6005";
+      if( !commIsTransEnabled(db) )
+      {
+         println( "transaction is disabled" ) ;   
+      }
+      
+      var cl = splitCl(COMMCSNAME, clName ); 
+      
+      transOperation(cl)  
+      
+      //@ clean end
+		commDropCL( db, COMMCSNAME, clName, false, false,"drop CL in the beginning" );
+   }
+   catch( e )
+   {
+      throw e;
+   }
+   finally
+   {
+      if ( undefined !== db )
+      {
+         db.close();
+      }
+   }
+}
+
 function splitCl(csName,clName)
 {
    var allGroupInfo = commGetGroups(db, true) 
@@ -87,35 +119,5 @@ function transOperation(cl)
       
    checkResult( cl, false, insert ) ;    
 }
-function main()
-{		
-	try
-	{
-      if( !commIsTransEnabled(db) )
-      {
-         println( "transaction is disabled" ) ;   
-      }
-      
-      var cl = splitCl(COMMCSNAME, clName ); 
-      
-      transOperation(cl)  
-      
-      //@ clean end
-		commDropCL( db, COMMCSNAME, clName, false, false,"drop CL in the beginning" );
-   }
-   catch( e )
-   {
-      throw e;
-   }
-   finally
-   {
-      if ( undefined !== db )
-      {
-         db.close();
-      }
-   }
-}
 
-// SEQUOIADBMAINSTREAM-4182
-// main();
 

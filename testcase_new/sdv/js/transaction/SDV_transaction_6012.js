@@ -2,8 +2,37 @@
 @discretion: 创建唯一索引，插入相同记录
 @author：2015-11-21 wuyan  Init
 ***************************************************************************** */
+main();
+function main()
+{		
+	try
+	{
+	   var clName = CHANGEDPREFIX + "_transaction6012";
+      if( !commIsTransEnabled( db ) )
+      {
+         println( "transaction is disabled" ) ;   
+      }
 
-var clName = CHANGEDPREFIX + "_transaction023";
+      var cl = commCreateCL( db, COMMCSNAME, clName, 0, false, true, true ) ; 
+      commCreateIndex( cl, 'testIndex', {no:1}, true, false)      
+      transOperation( cl )   
+      
+      //@ clean end
+		commDropCL( db, COMMCSNAME, clName, false, false,"drop CL in the beginning" );
+   }
+   catch( e )
+   {
+      throw e;
+   }
+   finally
+   {
+      if ( undefined !== db )
+      {
+         db.close();
+      }
+   }
+}
+
 function transOperation( cl )
 {
    var dataNum = 1000; 
@@ -47,34 +76,4 @@ function transOperation( cl )
       
    checkResult( cl, false, insert ) ;  
 }
-function main()
-{		
-	try
-	{
-      if( !commIsTransEnabled( db ) )
-      {
-         println( "transaction is disabled" ) ;   
-      }
-
-      var cl = commCreateCL( db, COMMCSNAME, clName, 0, false, true, true ) ; 
-      commCreateIndex( cl, 'testIndex', {no:1}, true, false)      
-      transOperation( cl )   
-      
-      //@ clean end
-		commDropCL( db, COMMCSNAME, clName, false, false,"drop CL in the beginning" );
-   }
-   catch( e )
-   {
-      throw e;
-   }
-   finally
-   {
-      if ( undefined !== db )
-      {
-         db.close();
-      }
-   }
-}
-
-main();
 

@@ -3,7 +3,7 @@
 @author£º2015-11-17 wuyan  Init
 ***************************************************************************** */
 
-var clName = CHANGEDPREFIX + "_transaction002";
+var clName = CHANGEDPREFIX + "_transaction5991";
 
 function main()
 {		
