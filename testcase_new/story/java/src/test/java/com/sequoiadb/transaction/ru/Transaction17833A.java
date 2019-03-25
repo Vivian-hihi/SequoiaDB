@@ -40,8 +40,6 @@ public class Transaction17833A extends SdbTestBase {
     private BSONObject data2 = null;
     private BSONObject data3 = null;
     private BSONObject data4 = null;
-    private BSONObject modifier3 = null;
-    private BSONObject modifier4 = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
@@ -50,7 +48,7 @@ public class Transaction17833A extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        cl.createIndex("a", "{a:1}", false, false);
+        cl.createIndex("a", "{a: 1}", false, false);
         cl.createIndex("b", "{b: -1}", false, false);
         expDataList = new ArrayList<BSONObject>();
         
@@ -69,23 +67,19 @@ public class Transaction17833A extends SdbTestBase {
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
 
-        modifier3 = new BasicBSONObject();
         data3 = new BasicBSONObject();
-        data3.put("_id", "updateID17833_1");
+        data3.put("_id", "insertID17833_1");
         data3.put("a", 3);
         data3.put("b", 3);
         data3.put("c", 13700000000L);
         data3.put("d", "customer transaction type data application.");
-        modifier3.put("$set", data3);
 
-        modifier4 = new BasicBSONObject();
         data4 = new BasicBSONObject();
-        data4.put("_id", "updateID17833_2");
+        data4.put("_id", "insertID17833_2");
         data4.put("a", 4);
         data4.put("b", 4);
         data4.put("c", 13700000000L);
         data4.put("d", "customer transaction type data application.");
-        modifier4.put("$set", data4);
 
     }
 
@@ -110,9 +104,9 @@ public class Transaction17833A extends SdbTestBase {
         updateThread.start();
         Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
+        // 4 trans1 read
         expDataList.add(data2);
         expDataList.add(data3);
-        // 4 trans1 read
         recordCur = cl1.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -235,7 +229,7 @@ public class Transaction17833A extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            cl2.update(null, "{'inc': {'a': 2, 'b': 3}}", "{'': null}");
+            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': null}");
         }
     }
 

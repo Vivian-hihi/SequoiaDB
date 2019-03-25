@@ -117,9 +117,9 @@ public class Transaction17835B extends SdbTestBase {
         updateThread.start();
         Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
-//        expDataList.add(data3);
-        expDataList.add(data4);
         // 4 trans1 read
+        expDataList.add(data3);
+        expDataList.add(data4);
         recordCur = cl1.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
