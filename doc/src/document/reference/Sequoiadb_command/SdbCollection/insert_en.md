@@ -16,10 +16,6 @@ Collection
 
 Insert record or records into the current collection. If the current collection does not exist, please create it first.
 
-**Note：**
-
-When the provided record does not have an "_id" field, the database will add one for it.
-
 ##PARAMETERS##
 
 * `doc/docs` ( *Object/Array of Object*， *Required* )
@@ -28,35 +24,34 @@ When the provided record does not have an "_id" field, the database will add one
 
 * `flag` ( *Int32*， *Optional* )
 
-	Insert flag, use to control the behavior of inserting. Can be the follow value:
+	Insert flag, use to control the behavior and result of inserting. Can be the follow value:
 
 	* 0, default value.
 	* SDB_INSERT_RETURN_ID, means return the value of "_id" field of the record.
 	* SDB_INSERT_CONTONDUP, means continue inserting (no errors were reported) when hitting index key duplicate error.
     * SDB_INSERT_REPLACEONDUP, means replace the exist value to the inserting value when hitting index key duplicate error, and continue the left records (no errors were reported).
 
-> **Note:**
->
-> when inserting a single record, the available flag is：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP
->
-> when inserting multiple records, the available flag is：SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP
-
 * `options` ( *Object*， *Optional* )
 
-	Options for control the behavior of inserting. Can be the follow options:
+	Insert options, use to control the behavior and result of inserting. So far, its role is consistent with the argument `flag`, and it can be the follow value:
+	* `ReturnOID` ( *Bool*, *Optional* ): the same with "SDB_INSERT_RETURN_ID" in argument `flag`.
+	* `ContOnDup` ( *Bool*, *Optional* ): the same with "SDB_INSERT_CONTONDUP" in argument `flag`.
+	* `ReplaceOnDup` ( *Bool*, *Optional* ): the same with "SDB_INSERT_REPLACEONDUP" in argument `flag`.
 
-	* ContOnDup(Bool): represent whether insert continue(no errors were reported) when hitting index key duplicate error. 
-	* ReturnOID(Bool): represent whether insert return the "_id" field of the record for user.
-    * ReplaceOnDup(Bool): represent whether replace the exist value to the inserting value when hitting index key duplicate error, and continue the left records (no errors were reported).
+**Note:**
 
-	Format: { ContOnDup: true, ReturnOID: false }
+* When the provided record does not have an "_id" field, the database will add one for it.
+ 
+* When inserting a single record, the available flag is：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP; When inserting multiple records, the available flag contains all flags.
 
 ##RETURN VALUE##
 
 On success, the follow result will be returned:
 
-* When insert a single record with the flag of "SDB_INSERT_RETURN_ID", return the value of "_id" field(Only when the value of "_id" field is type of ObjectId. For the other element type, return a 12 bytes string which is "000000000000000000000000" ).
-* When using the "ReturnOID" options to control the insert behavior, a Json object will be returned.
+* When using "SDB_INSERT_RETURN_ID" in flag or "ReturnOID" in options to control the insert behavior and result, a Json object will be returned.
+	* for single inserting: return the value of field "_id".
+	* for bulk inseting: return the value of field "_id" by array.
+
 * Void for the other situations.
 
 On error, exception will be thrown.
@@ -67,9 +62,10 @@ the exceptions of `insert()` are as below:
 
 | Error code | Error type | Description | Solution |
 | ------ | ------ | --- | ------ |
-| -38 | SDB_IXM_DUP_KEY | The same unique index value conflicts with this record. | Check the record to make sure no duplicate  index key is offered. |
-| -34 | SDB_DMS_CS_NOTEXIST | Collection space does not exist. | Check whether the collection space exist or not. |
+| -6 | SDB_INVALIDARG | Invalid Argument. | Check whether the argument is invalid or not. |
 | -23 | SDB_DMS_NOTEXIST| Collection does not exist. | heck whether the collection exist or not. |
+| -34 | SDB_DMS_CS_NOTEXIST | Collection space does not exist. | Check whether the collection space exist or not. |
+| -38 | SDB_IXM_DUP_KEY | The same unique index value conflicts with this record. | Check the record to make sure no duplicate  index key is offered. |
 
 when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please  reference to [Troubleshooting](troubleshooting/general/general_guide.md).
 
