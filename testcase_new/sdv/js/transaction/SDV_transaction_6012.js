@@ -10,7 +10,8 @@ function main()
 	   var clName = CHANGEDPREFIX + "_transaction6012";
       if( !commIsTransEnabled( db ) )
       {
-         println( "transaction is disabled" ) ;   
+         println( "transaction is disabled" ) ; 
+         return;  
       }
 
       var cl = commCreateCL( db, COMMCSNAME, clName, 0, false, true, true ) ; 

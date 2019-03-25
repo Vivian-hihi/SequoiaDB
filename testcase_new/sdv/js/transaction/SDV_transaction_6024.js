@@ -4,7 +4,6 @@
 *@Author:  		TingYU  2015/11/24
 ************************************************************************/
 main();
-
 function main()
 {
    var csName = COMMCSNAME;
@@ -57,10 +56,7 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-   }
+   }   
 }
 
 function createMaincl( csName, mainclName )

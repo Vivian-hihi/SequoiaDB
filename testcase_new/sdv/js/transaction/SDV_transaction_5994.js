@@ -3,11 +3,13 @@
 @author£º2015-11-18 wuyan  Init
 ***************************************************************************** */
 
-var clName = CHANGEDPREFIX + "_transaction5994";
+// SEQUOIADBMAINSTREAM-4182
+// main();
 function main()
 {		
 	try
 	{
+	   var clName = CHANGEDPREFIX + "_transaction5994";
       if( !commIsTransEnabled( db ) )
       {
          println( "transaction is disabled" ) ;   
@@ -25,9 +27,7 @@ function main()
       var removeNum = 88;
       var remove = new removeData( cl , removeNum );
       execTransaction(beginTrans,remove,commitTrans);
-      checkResult( cl, true, remove ); 
-      
-      
+      checkResult( cl, true, remove );       
         
 	   //@ clean end
 		commDropCL( db, COMMCSNAME, clName, false, false,"drop CL in the beginning" );
@@ -35,16 +35,7 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-      if ( undefined !== db )
-      {
-         db.close();
-      }
-   }
+   }   
 }
 
-// SEQUOIADBMAINSTREAM-4182
-// main();
 

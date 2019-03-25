@@ -2,14 +2,14 @@
 @discretion: 事务不存在执行提交
 @author：2015-11-23 wuyan  Init
 ***************************************************************************** */
-
-var clName = CHANGEDPREFIX + "_transaction6020";
-
+main();
 function main()
-{		
+{	
+   var clName = CHANGEDPREFIX + "_transaction6020";	
    if( !commIsTransEnabled( db ) )
    {
-      println( "transaction is disabled" ) ;   
+      println( "transaction is disabled" ) ; 
+      return;  
    }
 
    var cl = commCreateCL( db, COMMCSNAME, clName, 0, false, true, true ) ; 
@@ -33,5 +33,5 @@ function main()
 	commDropCL( db, COMMCSNAME, clName, false, false,"drop CL in the beginning" );
 }
 
-main();
+
 

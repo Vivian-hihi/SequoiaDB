@@ -2,62 +2,30 @@
 @discretion: 主子表执行事务操作，提交事务
 @author：2015-11-18 wuyan  Init
 ***************************************************************************** */
-
-var csName     = CHANGEDPREFIX + "_cs5997" ;  
-function preCheckEnv(db)
-{
-   try
+main();
+function main()
+{		
+	try
 	{
-      if (commIsStandalone(db))
+	   var csName  = CHANGEDPREFIX + "_cs5997" ; 
+	   	   
+	   if (commIsStandalone(db))
       {
+         println( "skip standalone!" ) ; 
          return;
       }
       if( !commIsTransEnabled( db ) )
       {
-         println( "transaction is disabled" ) ;   
+         println( "transaction is disabled" ) ;  
+         return; 
       }
       if( commGetGroupsNum(db) < 2 )
       {  
 	      println("This testcase needs at least 2 groups to split sub cl!");
 		   return;
 	   }
-   }
-   catch( e )
-   {
-      throw e;
-   }
-}
-
-function createCL(csName)
-{
-    try
-	{
-      var mainCLName = CHANGEDPREFIX + "_mcl5997" ;
-      var subCLName  = CHANGEDPREFIX + "_scl5997" ;
-        
-      var cs = commCreateCS( db, csName, true, "create cs in the beginning" );
-      var mainCL = cs.createCL( mainCLName, { ShardingKey:{ no:1 }, ShardingType:"range", ReplSize:0, 
-                              Compressed:true, IsMainCL:true } ) ; 
-      println("mainCL="+mainCL)
-      var subCL = cs.createCL( subCLName, { ShardingKey:{ no:1 }, ShardingType: "hash", ReplSize:0,
-                              Compressed:true} ) ;
-      var options = { LowBound: {"no":0}, UpBound: {"no":1000} } ; 
-      mainCL.attachCL( COMMCSNAME+"."+subCLName, options ); 
-      println("test")
-      return mainCL;
-    }
-   catch( e )
-   {
-      throw e;
-   }    
-}
-
-function main()
-{		
-	try
-	{
-	   preCheckEnv(db);	     
-	   var cl = createCL(COMMCSNAME);
+	   	     
+	   var cl = createCL(csName);
 	   
       var dataNum = 1000; 
       var insert = new insertData( cl, dataNum ); 
@@ -83,7 +51,32 @@ function main()
          db.close();
       }
    }
+} 
+
+
+function createCL(csName)
+{
+    try
+	{
+      var mainCLName = CHANGEDPREFIX + "_mcl5997" ;
+      var subCLName  = CHANGEDPREFIX + "_scl5997" ;
+        
+      var cs = commCreateCS( db, csName, true, "create cs in the beginning" );
+      var mainCL = cs.createCL( mainCLName, { ShardingKey:{ no:1 }, ShardingType:"range", ReplSize:0, 
+                              Compressed:true, IsMainCL:true } ) ; 
+     
+      var subCL = cs.createCL( subCLName, { ShardingKey:{ no:1 }, ShardingType: "hash", ReplSize:0,
+                              Compressed:true} ) ;
+      var options = { LowBound: {"no":0}, UpBound: {"no":1000} } ; 
+      mainCL.attachCL( csName+"."+subCLName, options );     
+      return mainCL;
+    }
+   catch( e )
+   {
+      throw e;
+   }    
 }
 
-main();
+
+
 

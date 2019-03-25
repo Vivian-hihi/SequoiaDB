@@ -10,8 +10,8 @@
 function main()
 {
    var csName = COMMCSNAME;
-   var mainclName = COMMCLNAME + "_maincl";
-   var subclName  = COMMCLNAME + "_subcl";   
+   var mainclName = COMMCLNAME + "_maincl6071";
+   var subclName  = COMMCLNAME + "_subcl6071";   
    
    try
    {
@@ -50,17 +50,11 @@ function main()
       //commit
       try
       {   
-         execTransaction( commitTrans );
-        // throw buildException( "commitTrans()", "", "excute commit after insert fail",
-                              // -196, "did not throw any error" );
+         execTransaction( commitTrans );         
       }
       catch(e)
-      {
-        // var expErr = "commitTrans() unknown error expect: " + -196;
-        // if( e !== expErr )
-         //{
-            throw e;
-         //}
+      {        
+         throw e;         
       }
       checkResult( maincl, false, remove );
                     
@@ -70,10 +64,7 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-   }            
+   }              
 }
 
 function readyCL( csName, mainclName, subclName )

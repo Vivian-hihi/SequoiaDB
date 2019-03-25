@@ -3,14 +3,16 @@
 @author£º2015-11-18 wuyan  Init
 ***************************************************************************** */
 
-var clName = CHANGEDPREFIX + "_transaction5995";
+main();
 function main()
 {		
 	try
 	{
+	   var clName = CHANGEDPREFIX + "_transaction5995";
       if( !commIsTransEnabled( db ) )
       {
-         println( "transaction is disabled" ) ;   
+         println( "transaction is disabled" ) ; 
+         return;  
       }
       
       beginTrans();
@@ -33,15 +35,8 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-      if ( undefined !== db )
-      {
-         db.close();
-      }
-   }
+   }   
 }
 
-main();
+
 

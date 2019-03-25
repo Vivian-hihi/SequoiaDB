@@ -28,17 +28,11 @@ function main()
       //rollback
       try
       {   
-         execTransaction( rollbackTrans );
-         //throw buildException( "rollbackTrans()", "", "excute rollback after commit",
-                              // -196, "did not throw any error" );
+         execTransaction( rollbackTrans );         
       }
       catch(e)
-      {
-         //var expErr = "rollbackTrans() unknown error expect: " + -196;
-         //if( e !== expErr )
-         //{
-            throw e;
-         //}
+      {         
+         throw e;    
       }
       checkResult( cl, true, insert );
                     
@@ -47,8 +41,5 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-   }
+   }   
 }

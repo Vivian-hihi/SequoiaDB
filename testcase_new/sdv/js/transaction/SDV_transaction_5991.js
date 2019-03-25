@@ -2,16 +2,16 @@
 @discretion: 重复开启事务,执行事务操作后提交
 @author：2015-11-17 wuyan  Init
 ***************************************************************************** */
-
-var clName = CHANGEDPREFIX + "_transaction5991";
-
+main();
 function main()
 {		
 	try
 	{
+	   var clName = CHANGEDPREFIX + "_transaction5991";
       if( !commIsTransEnabled( db ) )
       {
-         println( "transaction is disabled" ) ;   
+         println( "transaction is disabled" ) ; 
+         return;  
       }
 
       var cl = commCreateCL( db, COMMCSNAME, clName, 0, false, true, true ) ; 
@@ -26,14 +26,7 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-      if ( undefined !== db )
-      {
-         db.close();
-      }
-   }
+   }   
 }
-main();
+
 

@@ -5,7 +5,6 @@
                wuyan 2017/1/6(修改重复执行回滚不报错) 
 ************************************************************************/
 main();
-
 function main()
 {
    var csName = COMMCSNAME + "_yt6025";
@@ -49,8 +48,5 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-   }
+   }   
 }

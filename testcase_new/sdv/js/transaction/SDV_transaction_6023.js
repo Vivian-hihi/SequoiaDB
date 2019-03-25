@@ -55,10 +55,7 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-   }
+   }   
 }
 
 function createSplitCL( csName, clName, option )

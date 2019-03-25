@@ -5,18 +5,17 @@
 ************************************************************************/
 // SEQUOIADBMAINSTREAM-4182
 // main();
-
 function main()
-{
-   var csName = COMMCSNAME + "_yt";
-   var clName = COMMCLNAME + "_yt";
-   
+{      
    try
    {
+      var csName = COMMCSNAME + "_yt6021";
+      var clName = COMMCLNAME + "_yt6021";
+      
       if( !commIsTransEnabled( db ) )
       {
          println( "transaction is disabled" );
-         return; //∏ÊÀﬂŒ‚—ﬁ º”return
+         return; 
       }
       var cl = readyCL( csName, clName, {ReplSize:0} );
       
@@ -38,8 +37,5 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-   }
+   }  
 }

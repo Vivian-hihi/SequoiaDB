@@ -9,8 +9,8 @@
 
 function main()
 {
-   var csName = COMMCSNAME + "_yt";
-   var clName = COMMCLNAME + "_yt";
+   var csName = COMMCSNAME + "_yt6029";
+   var clName = COMMCLNAME + "_yt6029";
    
    try
    {
@@ -31,17 +31,11 @@ function main()
       //rollback again
       try
       {   
-         execTransaction( rollbackTrans );
-         //throw buildException( "rollbackTrans()", "", "excute rollback after commit",
-                               //-196, "did not throw any error" );
+         execTransaction( rollbackTrans );         
       }
       catch(e)
-      {
-         //var expErr = "rollbackTrans() unknown error expect: " + -196;
-         //if( e !== expErr )
-        // {
-            throw e;
-         //}
+      {         
+         throw e;         
       }
       checkResult( cl, false, remove );
                     
@@ -50,8 +44,5 @@ function main()
    catch( e )
    {
       throw e;
-   }
-   finally
-   {
-   }
+   }   
 }

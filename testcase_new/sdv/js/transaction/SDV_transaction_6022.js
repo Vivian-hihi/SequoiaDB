@@ -7,12 +7,12 @@
 // main();
 
 function main()
-{
-   var csName = COMMCLNAME + "_yt6022";
-   var clName = COMMCLNAME + "_yt6022";
-   
+{  
    try
    {
+      var csName = COMMCLNAME + "_yt6022";
+      var clName = COMMCLNAME + "_yt6022";
+      
       if( !commIsTransEnabled( db ) )
       {
          println( "transaction is disabled" );
