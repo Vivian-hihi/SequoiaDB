@@ -222,6 +222,7 @@ function getTimeToLocal(inputTime)
     var localTime = '';
     year = new Date(inputTime).getFullYear();
     inputTime = new Date(inputTime).getTime();
+    //在1928年1月1日前，由UTC时间戳转成中国本地时区的时间，都会加上5分52秒。
     if(year < 1928)
     {
         inputTime = inputTime + 5*60*1000 + 52*1000;
