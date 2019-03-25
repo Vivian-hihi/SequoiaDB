@@ -432,27 +432,29 @@ namespace engine
       BSONObj confProperties ;
       BSONObj buzInfoForCluster ;
       BSONObj hostsInfoForCluster ;
-      string extendConfigMod ;
+      omArgOptions option( _request ) ;
 
       _setFileLanguageSep() ;
 
       pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
 
-      rc = _getRestInfo( extendConfig, extendConfigMod ) ;
-      if( rc )
+      rc = option.parseRestArg( "j|b", OM_REST_FIELD_CONFIGINFO, &extendConfig,
+                                       OM_REST_FIELD_FORCE, &_force ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, option.getErrorMsg() ) ;
+         PD_LOG( PDERROR, "failed to parse rest arg: rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = _checkBusiness() ;
+      rc = _check( extendConfig ) ;
       if( rc )
       {
-         PD_LOG( PDERROR, "_checkBusiness failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "failed to check: rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = _readConfigProperties( extendConfigMod, confProperties ) ;
+      rc = _readConfigProperties( confProperties ) ;
       if( rc )
       {
          PD_LOG( PDERROR, "_combineConfDetail failed:rc=%d", rc ) ;
@@ -496,71 +498,20 @@ namespace engine
       goto done ;
    }
 
-   INT32 omExtendBusinessCommand::_getRestInfo( BSONObj &extendConfig,
-                                                string& extendConfigMod )
-   {
-      INT32 rc = SDB_OK ;
-      string configInfo ;
-
-      configInfo = _request->getQuery( OM_REST_FIELD_CONFIGINFO ) ;
-      if( configInfo.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "rest field is null:field=%s",
-                             OM_REST_FIELD_CONFIGINFO ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      rc = fromjson( configInfo.c_str(), extendConfig ) ;
-      if( rc )
-      {
-         _errorMsg.setError( TRUE, "invalid json: %s=%s",
-                             OM_REST_FIELD_CONFIGINFO, configInfo.c_str() ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      _clusterName = extendConfig.getStringField( OM_BSON_CLUSTER_NAME ) ;
-      if( _clusterName.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "%s is empty", OM_BSON_CLUSTER_NAME ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      _businessName = extendConfig.getStringField( OM_BSON_BUSINESS_NAME ) ;
-      if( _businessName.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "%s is empty", OM_BSON_BUSINESS_NAME ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-      extendConfigMod = extendConfig.getStringField( OM_BSON_DEPLOY_MOD ) ;
-      if( extendConfigMod.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "%s is empty", OM_BSON_DEPLOY_MOD ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omExtendBusinessCommand::_checkBusiness()
+   INT32 omExtendBusinessCommand::_check( BSONObj &extendConfig )
    {
       INT32 rc = SDB_OK ;
       INT64 taskID = -1 ;
       BSONObj buzInfo ;
       string clusterName ;
       omDatabaseTool dbTool( _cb ) ;
+
+      rc = _checkRestInfo( extendConfig ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to check rest info: rc=%d", rc ) ;
+         goto error ;
+      }
 
       rc = dbTool.getOneBusinessInfo( _businessName, buzInfo ) ;
       if ( SDB_DMS_RECORD_NOTEXIST == rc )
@@ -582,7 +533,7 @@ namespace engine
       _deployMod    = buzInfo.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD ) ;
       clusterName   = buzInfo.getStringField( OM_BUSINESS_FIELD_CLUSTERNAME ) ;
 
-      if( _businessType != OM_BUSINESS_SEQUOIADB )
+      if( OM_BUSINESS_SEQUOIADB != _businessType )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "Unsupported business type:type=%s",
@@ -590,7 +541,7 @@ namespace engine
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
-      else if( _deployMod != OM_DEPLOY_MOD_DISTRIBUTION )
+      else if( OM_DEPLOY_MOD_DISTRIBUTION != _deployMod )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "Unsupported deployment mode:type=%s",
@@ -624,9 +575,44 @@ namespace engine
       goto done ;
    }
 
-   INT32 omExtendBusinessCommand::_readConfigProperties(
-                                                const string& extendConfigMod,
-                                                BSONObj& buzDetail )
+   INT32 omExtendBusinessCommand::_checkRestInfo( BSONObj &extendConfig )
+   {
+      INT32 rc = SDB_OK ;
+
+      _clusterName = extendConfig.getStringField( OM_BSON_CLUSTER_NAME ) ;
+      if( 0 == _clusterName.length() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "%s is empty", OM_BSON_CLUSTER_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      _businessName = extendConfig.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if( 0 == _businessName.length() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "%s is empty", OM_BSON_BUSINESS_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      _extendMod = extendConfig.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      if( 0 == _extendMod.length() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "%s is empty", OM_BSON_DEPLOY_MOD ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omExtendBusinessCommand::_readConfigProperties( BSONObj& buzDetail )
    {
       INT32 rc = SDB_OK ;
       string separateConfig ;
@@ -651,7 +637,7 @@ namespace engine
       while ( iterList != deployModList.end() )
       {
          string deployMod = iterList->getStringField( OM_BSON_DEPLOY_MOD ) ;
-         if ( extendConfigMod == deployMod )
+         if ( _extendMod == deployMod )
          {
             BSONObj bsonDeployMod = *iterList ;
             separateConfig = bsonDeployMod.getStringField(
@@ -803,7 +789,7 @@ namespace engine
       }
 
       rc = confBuilder->checkConfig( confProperties, hostsInfoForCluster,
-                                     buzInfoForCluster, extendConfig ) ;
+                                     buzInfoForCluster, extendConfig, _force ) ;
       if ( SDB_OK != rc )
       {
          _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;

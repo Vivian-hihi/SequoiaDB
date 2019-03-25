@@ -137,6 +137,7 @@ namespace engine
    public:
       REST_CONSTRUCTOR_PARA_INHERIT( omExtendBusinessCommand, omAuthCommand )
       {
+         _force = FALSE ;
       }
 
       ~omExtendBusinessCommand()
@@ -150,10 +151,9 @@ namespace engine
       virtual INT32 doCommand() ;
 
    private:
-      INT32 _getRestInfo( BSONObj &extendConfig, string& extendConfigMod ) ;
-      INT32 _checkBusiness() ;
-      INT32 _readConfigProperties( const string& extendConfigMod,
-                                   BSONObj& buzDetail ) ;
+      INT32 _check( BSONObj &extendConfig ) ;
+      INT32 _checkRestInfo( BSONObj &extendConfig ) ;
+      INT32 _readConfigProperties( BSONObj& buzDetail ) ;
       INT32 _getClusterInfo( BSONObj& hostsInfoForCluster,
                              BSONObj& buzInfoForCluster ) ;
       INT32 _checkExtendConfig( const BSONObj& confProperties,
@@ -173,7 +173,9 @@ namespace engine
       string _clusterName ;
       string _businessName ;
       string _businessType ;
+      string _extendMod ;
       string _deployMod ;
+      BOOLEAN _force ;
    } ;
 
    class omShrinkBusinessCommand : public omAuthCommand
