@@ -156,6 +156,9 @@
             }, $scope.autoLanguage( '错误' ), $scope.autoLanguage( '获取日志失败。' ) ) ;
          } ) ;
          $scope.GetLogWindow['callback']['SetTitle']( $scope.autoLanguage( '日志' ) ) ;
+         $scope.GetLogWindow['callback']['SetCloseButton']( $scope.autoLanguage( '关闭' ), function(){
+            $scope.GetLogWindow['callback']['Close']() ;
+         } ) ;
          $scope.GetLogWindow['callback']['Open']() ;
       }
 

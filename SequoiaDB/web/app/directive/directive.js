@@ -788,6 +788,12 @@
                         scope.closeModal() ;
                      }
                   }
+
+                  //取消关闭按钮文本
+                  if( typeof( scope.data.CloseText ) != 'undefined' )
+                  {
+                     scope.Setting.Text.Close = scope.data.CloseText ;
+                  }
                }
             } ;
          }
