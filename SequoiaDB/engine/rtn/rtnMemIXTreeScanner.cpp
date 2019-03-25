@@ -255,6 +255,11 @@ namespace engine
          }
          /// reset position
          rc = SDB_OK ;
+
+         PD_LOG( PDDEBUG, "Relocate to end, obj(%s), rid(%d,%d)",
+                 _savedObj.toString().c_str(), _savedRID._extent,
+                 _savedRID._offset ) ;
+
          _memIdxTree->resetPos( _curIndexPos ) ;
          goto done ;
       }
@@ -263,6 +268,10 @@ namespace engine
       {
          found = FALSE ;
       }
+
+      PD_LOG( PDDEBUG, "Relocate to obj(%s) with rid(%d,%d), found(%d)",
+              _savedObj.toString().c_str(), _savedRID._extent,
+              _savedRID._offset, found ) ;
 
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
       DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
@@ -476,6 +485,9 @@ namespace engine
       {
          _eof = TRUE ;
          rid.reset() ;
+
+         PD_LOG( PDDEBUG, "Hit end with obj(%s)",
+                 _curKeyObj.toString().c_str() ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNMEMIXTREESCAN_ADVANCE, rc ) ;
       return rc ;
@@ -495,6 +507,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNMEMIXTREESCAN_PAUSESCAN ) ;
 
+      _curKeyObj = BSONObj() ;
+
       // do nothing if the in memory tree is not initialized or haven't done 
       // first round or we don't have tree latch. There are special boundary 
       // case in IXSec scan where we may call pause scan twice, the second 
@@ -512,6 +526,10 @@ namespace engine
             _memIdxTree->getNodeKey( _curIndexPos ) ;
          _savedRID = nodeKey.getRID() ;
          _savedObj = nodeKey.getKeyObj().getOwned() ;
+
+         PD_LOG( PDDEBUG, "Paused in obj(%s) with rid(%d,%d)",
+                 _savedObj.toString().c_str(),
+                 _savedRID._extent, _savedRID._offset ) ;
       }
       catch ( std::exception &e )
       {

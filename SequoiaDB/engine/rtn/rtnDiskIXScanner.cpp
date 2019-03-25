@@ -148,6 +148,7 @@ namespace engine
          if ( found && !isReadonly() )
          {
             _savedRID._offset -= 1 ;
+            found = FALSE ;
          }
 
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
@@ -451,6 +452,9 @@ namespace engine
       {
          _eof = TRUE ;
          rid.reset() ;
+
+         PD_LOG( PDDEBUG, "Hit end with last obj(%s)",
+                 _curKeyObj.toString().c_str() ) ;
       }
       PD_TRACE_EXITRC( SDB__RTNDISKIXSCAN_ADVANCE, rc ) ;
       return rc ;
@@ -502,6 +506,10 @@ namespace engine
             goto error ;
          }
          _savedRID = indexExtent.getRID( _curIndexRID._slot ) ;
+
+         PD_LOG( PDDEBUG, "Paused in obj(%s) with rid(%d,%d)",
+                 _savedObj.toString().c_str(),
+                 _savedRID._extent, _savedRID._offset ) ;
       }
 
    done:
@@ -523,6 +531,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNDISKIXSCAN_RESUMESCAN ) ;
       BOOLEAN isSame = TRUE ;
+
+      _curKeyObj = BSONObj() ;
 
       if ( !_indexCB )
       {
@@ -588,6 +598,11 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to relocate RID, rc: %d", rc ) ;
             goto error ;
          }
+
+         PD_LOG( PDDEBUG, "Relocate in obj(%s) with rid(%d,%d), found(%d)",
+                 _savedObj.toString().c_str(), _savedRID._extent,
+                 _savedRID._offset, isSame ) ;
+
          if ( isSame )
          {
             _savedRID.reset() ;

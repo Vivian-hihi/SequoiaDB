@@ -414,6 +414,12 @@ namespace engine
                     "failed, rc: %d", rc ) ;
             goto error ;
          }
+
+         PD_LOG( PDDEBUG, "Left scanner has been changed, relocate right "
+                 "scanner to obj(%s) with rid(%d,%d)",
+                 _savedObj.toString().c_str(),
+                 _savedRID._extent, _savedRID._offset ) ;
+
          rc = _rightIXScanner->relocateRID( _savedObj, _savedRID ) ;
          if ( rc )
          {
@@ -435,6 +441,12 @@ namespace engine
                     "failed, rc: %d", rc ) ;
             goto error ;
          }
+
+         PD_LOG( PDDEBUG, "Right scanner has been changed, relocate left "
+                 "scanner to obj(%s) with rid(%d,%d)",
+                 _savedObj.toString().c_str(),
+                 _savedRID._extent, _savedRID._offset ) ;
+
          rc = _leftIXScanner->relocateRID( _savedObj, _savedRID ) ;
          if ( rc )
          {
@@ -458,6 +470,9 @@ namespace engine
             PD_LOG( PDERROR, "Left scan advance failed, rc: %d", rc ) ;
             goto error ;
          }
+         PD_LOG( PDDEBUG, "Left scanner advance to obj(%s) with rid(%d,%d)",
+                 _leftIXScanner->getCurKeyObj()->toString().c_str(),
+                 _lrid._extent, _lrid._offset ) ;
          rc = SDB_OK ;
       }
       /// when right has changed, but last from left
@@ -471,6 +486,9 @@ namespace engine
             PD_LOG( PDERROR, "Right scan advance failed, rc: %d", rc ) ;
             goto error ;
          }
+         PD_LOG( PDDEBUG, "Right scanner advance to obj(%s) with rid(%d,%d)",
+                 _rightIXScanner->getCurKeyObj()->toString().c_str(),
+                 _rrid._extent, _rrid._offset ) ;
          rc = SDB_OK ;
       }
 
@@ -514,6 +532,11 @@ namespace engine
       {
          _savedRID = getSavedRIDFromChild() ;
          _savedObj = getSavedObjFromChild()->getOwned() ;
+
+         PD_LOG( PDDEBUG, "Paused in obj(%s) with rid(%d,%d), From(%s)",
+                 _savedObj.toString().c_str(), _savedRID._extent,
+                 _savedRID._offset,
+                 ( SCAN_LEFT == _fromDir ? "LEFT" : "RIGHT" ) ) ;
       }
 
    done:
