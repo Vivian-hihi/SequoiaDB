@@ -99,7 +99,7 @@
       }
 
       var extendSdb = function( config ){
-         var data = { 'cmd': 'extend business', 'ConfigInfo': JSON.stringify( config ) } ;
+         var data = { 'cmd': 'extend business', 'Force': true, 'ConfigInfo': JSON.stringify( config ) } ;
          SdbRest.OmOperation( data, {
             'success': function( taskInfo ){
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
