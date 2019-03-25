@@ -11,7 +11,9 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.sequoias3.region.Region;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -112,9 +114,16 @@ public class CreateObjectsInSameRegion17336 extends S3TestBase{
 	}
 	
 	private void checkResult(AmazonS3 s3Client, String keyName) throws Exception{
-		S3Object obj = s3Client.getObject(bucketName, keyName);
-		Assert.assertEquals(obj.getKey(), keyName);
-		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+		GetObjectRequest request = new GetObjectRequest(bucketName, keyName);
+    	S3Object object = s3Client.getObject(request);
+    	Assert.assertEquals(object.getKey(), keyName);
+    	
+		S3ObjectInputStream s3is = object.getObjectContent();		
+		String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+				Thread.currentThread().getId());
+		ObjectUtils.inputStream2File(s3is,downloadPath);
+		s3is.close();
+        String downfileMd5 = TestTools.getMD5(downloadPath);
 		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 	}
 }
