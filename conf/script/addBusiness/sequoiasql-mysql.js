@@ -482,8 +482,7 @@ function Rollback( PD_LOGGER )
 
          //del inst
          args = '' ;
-         args += ' delinst ' + businessName ;
-         args += ' --print'
+         args += ' delinst ' + businessName + ' --baklog' ;
          error = _runRemoteCmd( cmd, exec, args, timeout ) ;
          if ( error !== null )
          {
