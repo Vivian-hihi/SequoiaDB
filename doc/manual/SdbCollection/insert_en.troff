@@ -18,11 +18,6 @@ Collection
 .PP
 Insert record or records into the current collection.
 If the current collection does not exist, please create it first.
-.PP
-\f[B]Note：\f[]
-.PP
-When the provided record does not have an "_id" field, the database will add one
-for it.
 .SH PARAMETERS
 .IP \[bu] 2
 \f[C]doc/docs\f[] ( \f[I]Object/Array of Object\f[]， \f[I]Required\f[] )
@@ -35,7 +30,7 @@ Can not be null.
 \f[C]flag\f[] ( \f[I]Int32\f[]， \f[I]Optional\f[] )
 .RS 2
 .PP
-Insert flag, use to control the behavior of inserting.
+Insert flag, use to control the behavior and result of inserting.
 Can be the follow value:
 .IP \[bu] 2
 0, default value.
@@ -49,46 +44,43 @@ SDB_INSERT_REPLACEONDUP, means replace the exist value to the inserting value
 when hitting index key duplicate error, and continue the left records (no errors
 were reported).
 .RE
-.RS
-.PP
-\f[B]Note:\f[]
-.PP
-when inserting a single record, the available flag
-is：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP
-.PP
-when inserting multiple records, the available flag
-is：SDB_INSERT_CONTONDUP、SDB_INSERT_REPLACEONDUP
-.RE
 .IP \[bu] 2
 \f[C]options\f[] ( \f[I]Object\f[]， \f[I]Optional\f[] )
 .RS 2
-.PP
-Options for control the behavior of inserting.
-Can be the follow options:
+Insert options, use to control the behavior and result of inserting.
+So far, its role is consistent with the argument \f[C]flag\f[], and it can be
+the follow value:
 .IP \[bu] 2
-ContOnDup(Bool): represent whether insert continue(no errors were reported) when
-hitting index key duplicate error.
+\f[C]ReturnOID\f[] ( \f[I]Bool\f[], \f[I]Optional\f[] ): the same with
+"SDB_INSERT_RETURN_ID" in argument \f[C]flag\f[].
 .IP \[bu] 2
-ReturnOID(Bool): represent whether insert return the "_id" field of the record
-for user.
+\f[C]ContOnDup\f[] ( \f[I]Bool\f[], \f[I]Optional\f[] ): the same with
+"SDB_INSERT_CONTONDUP" in argument \f[C]flag\f[].
 .IP \[bu] 2
-ReplaceOnDup(Bool): represent whether replace the exist value to the inserting
-value when hitting index key duplicate error, and continue the left records (no
-errors were reported).
-.PP
-Format: { ContOnDup: true, ReturnOID: false }
+\f[C]ReplaceOnDup\f[] ( \f[I]Bool\f[], \f[I]Optional\f[] ): the same with
+"SDB_INSERT_REPLACEONDUP" in argument \f[C]flag\f[].
 .RE
+.PP
+\f[B]Note:\f[]
+.IP \[bu] 2
+When the provided record does not have an "_id" field, the database will add one
+for it.
+.IP \[bu] 2
+When inserting a single record, the available flag
+is：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP; When inserting multiple
+records, the available flag contains all flags.
 .SH RETURN VALUE
 .PP
 On success, the follow result will be returned:
 .IP \[bu] 2
-When insert a single record with the flag of "SDB_INSERT_RETURN_ID", return the
-value of "_id" field(Only when the value of "_id" field is type of ObjectId.
-For the other element type, return a 12 bytes string which is
-"000000000000000000000000" ).
+When using "SDB_INSERT_RETURN_ID" in flag or "ReturnOID" in options to control
+the insert behavior and result, a Json object will be returned.
+.RS 2
 .IP \[bu] 2
-When using the "ReturnOID" options to control the insert behavior, a Json object
-will be returned.
+for single inserting: return the value of field "_id".
+.IP \[bu] 2
+for bulk inseting: return the value of field "_id" by array.
+.RE
 .IP \[bu] 2
 Void for the other situations.
 .PP
@@ -115,32 +107,49 @@ _
 T{
 1
 T}@T{
-\-38
+\-6
 T}@T{
-SDB_IXM_DUP_KEY
+SDB_INVALIDARG
 T}@T{
-The same unique index
+Invalid Argument.
 T}@T{
-Check the record to
+Check whether the
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
-value conflicts with
 T}@T{
-make sure no duplicate
+argument is invalid or
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
-this record.
 T}@T{
-index key is offered.
+not.
 T}
 T{
 2
+T}@T{
+\-23
+T}@T{
+SDB_DMS_NOTEXIST
+T}@T{
+Collection does not
+T}@T{
+heck whether the
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+exist.
+T}@T{
+collection exist or not.
+T}
+T{
+3
 T}@T{
 \-34
 T}@T{
@@ -166,23 +175,31 @@ T}@T{
 or not.
 T}
 T{
-3
+4
 T}@T{
-\-23
+\-38
 T}@T{
-SDB_DMS_NOTEXIST
+SDB_IXM_DUP_KEY
 T}@T{
-Collection does not
+The same unique index
 T}@T{
-heck whether the
+Check the record to
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
-exist.
+value conflicts with
 T}@T{
-collection exist or not.
+make sure no duplicate
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+this record.
+T}@T{
+index key is offered.
 T}
 .TE
 .PP
