@@ -572,6 +572,10 @@ namespace engine
       {
          goto error ;
       }
+      if ( isSame )
+      {
+         _curKeyObj = _savedObj ;
+      }
 
       if ( !isReadonly() )
       {
@@ -606,6 +610,7 @@ namespace engine
          if ( isSame )
          {
             _savedRID.reset() ;
+            _curKeyObj = _savedObj ;
          }
       }
 

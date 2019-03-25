@@ -507,8 +507,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNMEMIXTREESCAN_PAUSESCAN ) ;
 
-      _curKeyObj = BSONObj() ;
-
       // do nothing if the in memory tree is not initialized or haven't done 
       // first round or we don't have tree latch. There are special boundary 
       // case in IXSec scan where we may call pause scan twice, the second 
@@ -566,6 +564,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN isSame = TRUE ;
       oldVersionCB * oldVCB = _pTransCB->getOldVCB() ;
+
+      _curKeyObj = BSONObj() ;
 
       SDB_ASSERT( !_treeLatchHeld, "Tree latch shouldn't be held" ) ;
 
@@ -625,6 +625,7 @@ namespace engine
          // reset _savedRID so that we'll call advance()
          _savedRID.reset() ;
          isSame = TRUE ;
+         _curKeyObj = _savedObj ;
          goto done ;
       }
 
@@ -644,6 +645,7 @@ namespace engine
       if ( isSame )
       {
          _savedRID.reset() ;
+         _curKeyObj = _savedObj ;
          goto done ;
       }
 
