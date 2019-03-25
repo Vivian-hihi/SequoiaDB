@@ -87,7 +87,8 @@ namespace engine
             return SHARED == _mbLockType ? TRUE : FALSE ;
          }
 
-         virtual dmsTransLockCallback*    callbackHandler() = 0 ;
+         virtual dmsTransLockCallback*       callbackHandler() = 0 ;
+         virtual const dmsTransRecordInfo*   recordInfo() const = 0 ;
 
          BOOLEAN needWaitForLock() const { return _waitLock ; }
 
@@ -130,6 +131,7 @@ namespace engine
          virtual ~_dmsExtScannerBase () ;
 
          virtual dmsTransLockCallback*       callbackHandler() ;
+         virtual const dmsTransRecordInfo*   recordInfo() const ;
 
          const dmsExtent* curExtent () const { return _extent ; }
          dmsExtentID nextExtentID () const ;
@@ -151,8 +153,8 @@ namespace engine
                                    _pmdEDUCB *cb,
                                    _mthMatchTreeContext *mhtContext = NULL) = 0 ;
          void _checkMaxRecordsNum( _mthRecordGenerator &generator ) ;
-         void acquireCSCLLock( ) ;
-         void releaseCSCLLock( ) ;
+         void acquireCSCLLock() ;
+         void releaseCSCLLock() ;
 
       protected:
          INT64                _maxRecords ;
@@ -256,7 +258,8 @@ namespace engine
                          INT32 flag = 0  ) ;
          ~_dmsTBScanner () ;
 
-         virtual dmsTransLockCallback*    callbackHandler() ;
+         virtual dmsTransLockCallback*       callbackHandler() ;
+         virtual const dmsTransRecordInfo*   recordInfo() const ;
 
       public:
 
@@ -302,7 +305,8 @@ namespace engine
                             INT32 flag = 0 ) ;
          virtual ~_dmsIXSecScanner () ;
 
-         virtual dmsTransLockCallback*    callbackHandler() ;
+         virtual dmsTransLockCallback*       callbackHandler() ;
+         virtual const dmsTransRecordInfo*   recordInfo() const ;
 
          void  enableIndexBlockScan( const BSONObj &startKey,
                                      const BSONObj &endKey,
@@ -382,7 +386,8 @@ namespace engine
                          INT32 flag = 0 ) ;
          ~_dmsIXScanner () ;
 
-         virtual dmsTransLockCallback*    callbackHandler() ;
+         virtual dmsTransLockCallback*       callbackHandler() ;
+         virtual const dmsTransRecordInfo*   recordInfo() const ;
 
          _rtnIXScanner* getScanner () { return _scanner ; }
 

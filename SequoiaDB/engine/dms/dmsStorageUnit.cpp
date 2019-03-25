@@ -1694,15 +1694,14 @@ namespace engine
          numRecords = 0 ;
          dmsTBScanner tbScanner( _pDataSu, context, matchRuntime,
                                  DMS_ACCESS_TYPE_DELETE, maxDelete ) ;
-         dmsTransLockCallback *pCallback = tbScanner.callbackHandler() ;
          while ( SDB_OK == ( rc = tbScanner.advance( recordID, generator,
                                                      cb ) ) )
          {
             generator.getDataPtr( recordDataPtr ) ;
             rc = _pDataSu->deleteRecord( context, recordID, recordDataPtr,
                                          cb, dpscb,
-                                         pCallback,
-                                         pCallback->getTransRecordInfo() ) ;
+                                         tbScanner.callbackHandler(),
+                                         tbScanner.recordInfo() ) ;
             PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
 
             ++numRecords ;

@@ -155,6 +155,11 @@ namespace engine
       return &_callback ;
    }
 
+   const dmsTransRecordInfo* _dmsExtScannerBase::recordInfo() const
+   {
+      return _callback.getTransRecordInfo() ;
+   }
+
    dmsExtentID _dmsExtScannerBase::nextExtentID() const
    {
       if ( _extent )
@@ -1173,6 +1178,15 @@ namespace engine
       return NULL ;
    }
 
+   const dmsTransRecordInfo* _dmsTBScanner::recordInfo() const
+   {
+      if ( _extScanner )
+      {
+         return _extScanner->recordInfo() ;
+      }
+      return NULL ;
+   }
+
    INT32 _dmsTBScanner::_firstInit()
    {
       INT32 rc = SDB_OK ;
@@ -1339,6 +1353,11 @@ namespace engine
    dmsTransLockCallback* _dmsIXSecScanner::callbackHandler()
    {
       return &_callback ;
+   }
+
+   const dmsTransRecordInfo* _dmsIXSecScanner::recordInfo() const
+   {
+      return _callback.getTransRecordInfo() ;
    }
 
    void  _dmsIXSecScanner::enableIndexBlockScan( const BSONObj &startKey,
@@ -2136,6 +2155,11 @@ namespace engine
    dmsTransLockCallback* _dmsIXScanner::callbackHandler()
    {
       return _secScanner.callbackHandler() ;
+   }
+
+   const dmsTransRecordInfo* _dmsIXScanner::recordInfo() const
+   {
+      return _secScanner.recordInfo() ;
    }
 
    void _dmsIXScanner::_resetIXSecScanner ()

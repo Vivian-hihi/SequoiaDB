@@ -186,7 +186,6 @@ namespace engine
             ossTickDelta queryTime ;
             monContextCB monCtxCB ;
             rtnReturnOptions returnOptions ;
-            dmsTransLockCallback *pCallback = pScanner->callbackHandler() ;
 
             if ( cb->getMonConfigCB()->timestampON )
             {
@@ -205,8 +204,8 @@ namespace engine
                generator.getDataPtr( recordDataPtr ) ;
                rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
                                               cb, dpsCB,
-                                              pCallback,
-                                              pCallback->getTransRecordInfo() ) ;
+                                              pScanner->callbackHandler(),
+                                              pScanner->recordInfo() ) ;
                PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
                ++delNum ;
 
@@ -386,7 +385,6 @@ namespace engine
             _mthRecordGenerator generator ;
             dmsRecordID recordID ;
             ossValuePtr recordDataPtr = 0 ;
-            dmsTransLockCallback *pCallback = pScanner->callbackHandler() ;
 
             while ( SDB_OK == ( rc = pScanner->advance( recordID, generator,
                                                         cb ) ) )
@@ -394,8 +392,8 @@ namespace engine
                generator.getDataPtr( recordDataPtr ) ;
                rc = su->data()->deleteRecord( mbContext, recordID, recordDataPtr,
                                               cb, dpsCB,
-                                              pCallback,
-                                              pCallback->getTransRecordInfo() ) ;
+                                              pScanner->callbackHandler(),
+                                              pScanner->recordInfo() ) ;
                PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
             }
 

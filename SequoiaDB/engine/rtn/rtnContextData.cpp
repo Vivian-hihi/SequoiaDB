@@ -624,7 +624,6 @@ namespace engine
       mthSelector *selector   = NULL ;
       dmsExtScannerFactory* extFactory = dmsGetScannerFactory() ;
       dmsExtScannerBase* extScanner = NULL ;
-      dmsTransLockCallback *pCallback = NULL ;
 
       PD_TRACE_ENTRY ( SDB__RTNCONTEXTDATA__PREPAREBYTBSCAN );
 
@@ -656,7 +655,6 @@ namespace engine
          PD_LOG( PDERROR, "Failed to create extent scanner" ) ;
          goto error ;
       }
-      pCallback = extScanner->callbackHandler() ;
 
       while ( numRecords() == startNumRecords )
       {
@@ -686,8 +684,8 @@ namespace engine
                   //dollarList is pointed to _queryModifier->getDollarList()
                   mthContext.getDollarList( dollarList ) ;
                   rc = _queryModify( cb, recordID, recordDataPtr,
-                                     obj, pCallback,
-                                     pCallback->getTransRecordInfo() ) ;
+                                     obj, extScanner->callbackHandler(),
+                                     extScanner->recordInfo() ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
                   generator.resetValue( obj, &mthContext ) ;
                }
@@ -807,7 +805,6 @@ namespace engine
       monAppCB * pMonAppCB       = cb ? cb->getMonAppCB() : NULL ;
       BOOLEAN hasLocked          = _mbContext->isMBLock() ;
       INT32 startNumRecords      = numRecords();
-      dmsTransLockCallback *pCallback = NULL ;
 
       dmsRecordID rid ;
       BSONObj dataRecord ;
@@ -859,7 +856,6 @@ namespace engine
          {
             secScanner.enableCountMode() ;
          }
-         pCallback = secScanner.callbackHandler() ;
 
          while ( SDB_OK == ( rc = secScanner.advance( recordID, generator,
                                                       cb, &mthContext ) ) )
@@ -876,8 +872,8 @@ namespace engine
                      //dollarList is pointed to _queryModifier->getDollarList()
                      mthContext.getDollarList( dollarList ) ;
                      rc = _queryModify( cb, recordID, recordDataPtr,
-                                        obj,  pCallback,
-                                        pCallback->getTransRecordInfo() ) ;
+                                        obj,  secScanner.callbackHandler(),
+                                        secScanner.recordInfo() ) ;
                      PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
                      generator.resetValue( obj, &mthContext ) ;
                   }
