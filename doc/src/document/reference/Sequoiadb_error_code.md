@@ -285,8 +285,8 @@
 | SDB_CAT_IMAGE_NOT_CONFIG | -285 | 集群未配置镜像 |
 | SDB_CAT_DUAL_WRITABLE | -286 | 本集群和镜像集群都为可写状态 |
 | SDB_CAT_CLUSTER_IS_READONLY | -287 | 集群为只读模式 |
-| SDB_RTN_QUERYMODIFY_SORT_NO_IDX | -288 | 在’查询并修改‘操作使用排序时必须使用索引 |
-| SDB_RTN_QUERYMODIFY_MULTI_NODES | -289 | ’查询并修改‘操作不能在多个节点或子表上执行skip和limit操作 |
+| SDB_RTN_QUERYMODIFY_SORT_NO_IDX | -288 | 在 ‘查询并修改’ 操作使用排序时必须使用索引 |
+| SDB_RTN_QUERYMODIFY_MULTI_NODES | -289 | ‘查询并修改’ 操作不能在多个节点或子表上执行skip和limit操作 |
 | SDB_DIR_NOT_EMPTY | -290 | 指定目录不为空 |
 | SDB_IXM_EXIST_COVERD_ONE | -291 | 已经存在一个可以处理本场景的索引 |
 | SDB_CAT_IMAGE_IS_CONFIGURED | -292 | 集群已配置镜像 |
