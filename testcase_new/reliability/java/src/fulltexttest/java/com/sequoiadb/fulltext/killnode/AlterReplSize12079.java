@@ -95,12 +95,10 @@ public class AlterReplSize12079 extends SdbTestBase {
             cl.setAttributes((BSONObject)JSON.parse("{ReplSize : 3}"));
             cLGroupMaster.stop();
             try{
-                insertData();  
+                insertData(); 
+                throw new SkipException("insert error!");
             }catch(BaseException e){
-                if(e.getErrorCode() == -250){
-                    cLGroupMaster.start();
-                    throw new SkipException("less than one nodes!");
-                }else if(e.getErrorCode() != -105){
+                if(e.getErrorCode() != -105){
                     Assert.fail(e.getMessage());
                 }
             }            

@@ -141,15 +141,7 @@ public class InsertUpdateDel12010 extends SdbTestBase {
  			}
  			cl.insert(insertRecords);
              }catch (BaseException e){
-                 if(e.getErrorCode() == -250){
-                     try {
-                        cLGroupMaster.start();
-                    } catch (ReliabilityException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-                     throw new SkipException("less than one nodes!");
-                 }else if(e.getErrorCode() != -105){
+                 if(e.getErrorCode() != -105){
                      Assert.fail(e.getMessage());
                  }
          } finally {
@@ -167,16 +159,9 @@ public class InsertUpdateDel12010 extends SdbTestBase {
             for(int i = 0; i < insertNum; i++){
                 cl.update("{a: 'a" +i+ "'}", "{$set: {a : 'a'}}", null);
             }
+            Assert.fail("update error!");
             }catch (BaseException e){
-                if(e.getErrorCode() == -250){
-                    try {
-                        cLGroupMaster.start();
-                    } catch (ReliabilityException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-                    throw new SkipException("less than one nodes!");
-                }else if(e.getErrorCode() != -105){
+                if(e.getErrorCode() != -105){
                     Assert.fail(e.getMessage());
                 }
         } finally {
@@ -193,16 +178,9 @@ public class InsertUpdateDel12010 extends SdbTestBase {
             for(int i = 0; i < insertNum; i++){
                 cl.delete("{a : 'a'}");
             }
+            Assert.fail("delete error!");
             }catch (BaseException e){
-                if(e.getErrorCode() == -250){
-                    try {
-                        cLGroupMaster.start();
-                    } catch (ReliabilityException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-                    throw new SkipException("less than one nodes!");
-                }else if(e.getErrorCode() != -105){
+                if(e.getErrorCode() != -105){
                     Assert.fail(e.getMessage());
                 }
         } finally {
