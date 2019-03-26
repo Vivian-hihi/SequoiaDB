@@ -448,12 +448,6 @@ namespace engine
                break ;
             case MSG_BS_TRANS_QUERY_REQ :
                // See isNeedRollback logic in query above
-               rc = _checkPrimaryStatus() ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDINFO, "failed to check primary status:%d", rc ) ;
-                  break ;
-               }
                rc = _onTransQueryReqMsg( handle, msg, buffObj, startFrom,
                                          contextID ) ;
                break ;
@@ -1799,12 +1793,24 @@ namespace engine
                                               INT32 & startingPos,
                                               INT64 & contextID )
    {
-      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      INT32 rc = SDB_OK ;
+
+      rc = _checkPrimaryStatus() ;
+      if ( rc )
       {
-         return SDB_DPS_TRANS_NO_TRANS;
+         PD_LOG( PDINFO, "Failed to check primary status: %d", rc ) ;
       }
-      return _onQueryReqMsg( handle, msg, buffObj, startingPos,
-                             contextID ) ;
+      else if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      {
+         rc = SDB_DPS_TRANS_NO_TRANS ;
+      }
+      else
+      {
+         rc = _onQueryReqMsg( handle, msg, buffObj, startingPos,
+                              contextID ) ;
+      }
+
+      return rc ;
    }
 
    INT32 _clsShdSession::_onTransGetMoreReqMsg( MsgHeader * msg,
