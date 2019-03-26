@@ -44,32 +44,35 @@ public class Transaction17161 extends SdbTestBase {
     @Test
     public void test() {
 
-        String b1 = "b";
-        String b2 = "bb";
-        String b3 = "bbb";
-        for (int i = 0; i < 60 * 1024; i++) {
-            b1 = "aaaaaaaaaaaaaaaaaaaa" + b1;
-            b2 = "aaaaaaaaaaaaaaaaaaaa" + b2;
-            b3 = "aaaaaaaaaaaaaaaaaaaa" + b3;
+        StringBuilder b = new StringBuilder("bbbbbbbbbbbbbbbbbbbb");
+        for (int i = 0; i < 60 * 1000; i++) {
+            b.append("bbbbbbbbbbbbbbbbbbbb");
+        }
+        
+        StringBuilder a1 = new StringBuilder("a");
+        StringBuilder a2 = new StringBuilder("aa");
+        for (int i = 0; i < 4000; i++) {
+            a1.append("a");
+            a2.append("a");
         }
 
-        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1, a:'aaaaaa', b:'" + b1 + "'}");
+        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1, a:'aaaaaa', b:'" + b + "'}");
         cl.insert(insertR1);
 
         // 开启事务1
         db1.beginTransaction();
 
         // 事务1对同一条记录执行多个操作
-        cl1.insert("{_id:3, a:'aaaaaa', b:'" + b3 + "'}");
-        BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2, a:'aaaaaa', b:'" + b2 + "'}");
+        BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2, a:'"+ a1 +"', b:'" + b + "'}");
         cl1.insert(insertR2);
-        cl1.update("{_id:2}", "{$set:{a:'cccccccc'}}", "{'':'a'}");
-        cl1.delete("{_id:2}", "{'':'a'}");
+        cl1.update("{_id:2}", "{$set:{a:'"+ a2 +"'}}", null);
+        cl1.delete("{_id:2}");
         // 事务1对不同记录执行多个操作
+        cl1.insert("{_id:3, a:'"+ a1 +"', b:'" + b + "'}");
         cl1.insert(insertR2);
-        cl1.update("{_id:1}", "{$set:{a:'cccccccc'}}", null);
+        cl1.update("{_id:1}", "{$set:{a:'"+ a2 +"'}}", null);
         cl1.delete("{_id:3}");
-        BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:'cccccccc',b:'" + b1 + "'}");
+        BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:'"+ a2 +"',b:'" + b + "'}");
         expList.add(updateR1);
         expList.add(insertR2);
 
