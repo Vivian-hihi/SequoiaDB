@@ -153,7 +153,7 @@ function checkRecords( cl, recs )
    {
       rcRecs.push( tmpRecs.toObj() );
    }   
-   
+   //TODO :建议这里将rc游标关闭
    var expRecs = JSON.stringify( recs );
    var actRecs = JSON.stringify( rcRecs );
    if( expRecs !== actRecs )
