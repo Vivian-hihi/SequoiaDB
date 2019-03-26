@@ -96,8 +96,8 @@ namespace engine
    */
    struct _dmsMetadataBlock
    {
-      // every records < 32 bytes go to slot 0
-      // every records >=32 and < 64 go to slot 1...
+      // every records <= 32 bytes go to slot 0
+      // every records >32 and <= 64 go to slot 1...
       // every records
       enum deleteListType
       {
