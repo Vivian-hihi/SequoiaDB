@@ -404,8 +404,8 @@ namespace engine
          goto error ;
       }
 
-      /// left has changed
-      if ( SCAN_LEFT == _fromDir && !lIsSame && _rightEnabled )
+      /// sync left to right
+      if ( SCAN_LEFT == _fromDir && _rightEnabled )
       {
          rc = _rightIXScanner->syncPredStatus( _leftIXScanner ) ;
          if ( rc )
@@ -415,8 +415,7 @@ namespace engine
             goto error ;
          }
 
-         PD_LOG( PDDEBUG, "Left scanner has been changed, relocate right "
-                 "scanner to obj(%s) with rid(%d,%d)",
+         PD_LOG( PDDEBUG, "Relocate right scanner to obj(%s) with rid(%d,%d)",
                  _savedObj.toString().c_str(),
                  _savedRID._extent, _savedRID._offset ) ;
 
@@ -431,8 +430,8 @@ namespace engine
          _rrid.reset() ;
          isSame = FALSE ;
       }
-      /// right has changed
-      else if ( SCAN_RIGHT == _fromDir && !rIsSame && _leftEnabled )
+      /// sync right to left
+      else if ( SCAN_RIGHT == _fromDir && _leftEnabled )
       {
          rc = _leftIXScanner->syncPredStatus( _rightIXScanner ) ;
          if ( rc )
@@ -442,8 +441,7 @@ namespace engine
             goto error ;
          }
 
-         PD_LOG( PDDEBUG, "Right scanner has been changed, relocate left "
-                 "scanner to obj(%s) with rid(%d,%d)",
+         PD_LOG( PDDEBUG, "Relocate left scanner to obj(%s) with rid(%d,%d)",
                  _savedObj.toString().c_str(),
                  _savedRID._extent, _savedRID._offset ) ;
 
