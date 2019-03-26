@@ -2456,6 +2456,50 @@ namespace engine
 
       BSONObj setObject, unsetObject ;
 
+      /// we need to check something before execute
+      if ( RTN_ALTER_CS_SET_ATTRIBUTES == _task->getActionType() )
+      {
+         const rtnCSSetAttributeTask * localTask =
+                     dynamic_cast< const rtnCSSetAttributeTask * >( _task ) ;
+         PD_CHECK( NULL != localTask, SDB_INVALIDARG, error, PDERROR,
+                   "Failed to get alter task" ) ;
+
+         if ( localTask->testArgumentMask( UTIL_CS_CAPPED_FIELD ) )
+         {
+            // get cs object: _boData
+            BOOLEAN isExist = FALSE ;
+            rc = catCheckSpaceExist( _dataName.c_str(), isExist, _boData, cb ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get info of collection space [%s], rc: %d",
+                         _dataName.c_str(), rc ) ;
+            PD_CHECK( isExist, SDB_DMS_CS_NOTEXIST, error, PDWARNING,
+                      "Collection space [%s] does not exist!",
+                      _dataName.c_str() ) ;
+
+            // The collection space should be empty
+            rc = _checkEmptyCollectionSpace( cb ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to check collection space [%s], rc: %d",
+                         _dataName.c_str(), rc ) ;
+         }
+
+         if ( localTask->testArgumentMask( UTIL_CS_PAGESIZE_FIELD ) )
+         {
+            // get groups of cs : _groups
+            rc = catGetCSGroupsFromCLs( _dataName.c_str(), cb, _groups ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get group list of cs[%s], rc: %d",
+                         _dataName.c_str(), rc ) ;
+
+            // The collection space should not have data
+            PD_CHECK( 0 == _groups.size(), SDB_DMS_CS_NOT_EMPTY,
+                     error, PDERROR, "Failed to check alter task [%s]: "
+                     "collection space [%s] is not empty",
+                     _task->getActionName(), _dataName.c_str() ) ;
+         }
+      }
+
+      /// execute
       rc = _buildSetFields( setObject ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build set fields, rc: %d", rc ) ;
 
@@ -2556,7 +2600,7 @@ namespace engine
       PD_CHECK( NULL != localTask, SDB_INVALIDARG, error, PDERROR,
                       "Failed to get alter task" ) ;
 
-      rc = _checkEmptyCollectionSpace( cb, lockMgr ) ;
+      rc = _checkEmptyCollectionSpace( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to check collection space [%s], rc: %d",
                    _dataName.c_str(), rc ) ;
 
@@ -2581,7 +2625,7 @@ namespace engine
       PD_CHECK( NULL != localTask, SDB_INVALIDARG, error, PDERROR,
                       "Failed to get alter task" ) ;
 
-      rc = _checkEmptyCollectionSpace( cb, lockMgr ) ;
+      rc = _checkEmptyCollectionSpace( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to check collection space [%s], rc: %d",
                    _dataName.c_str(), rc ) ;
 
@@ -2623,7 +2667,7 @@ namespace engine
       if ( localTask->testArgumentMask( UTIL_CS_CAPPED_FIELD ) )
       {
          // The collection space should be empty
-         rc = _checkEmptyCollectionSpace( cb, lockMgr ) ;
+         rc = _checkEmptyCollectionSpace( cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to check collection space [%s], rc: %d",
                       _dataName.c_str(), rc ) ;
       }
@@ -2776,8 +2820,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCSTASK__CHKEMPTYCS, "_catCtxAlterCSTask::_checkEmptyCollectionSpace" )
-   INT32 _catCtxAlterCSTask::_checkEmptyCollectionSpace ( _pmdEDUCB * cb,
-                                                          catCtxLockMgr & lockMgr )
+   INT32 _catCtxAlterCSTask::_checkEmptyCollectionSpace ( _pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
 

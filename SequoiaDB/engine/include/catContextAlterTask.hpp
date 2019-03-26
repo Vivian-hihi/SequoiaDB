@@ -389,8 +389,7 @@ namespace engine
          INT32 _checkGroups ( _pmdEDUCB * cb,
                               catCtxLockMgr & lockMgr ) ;
 
-         INT32 _checkEmptyCollectionSpace ( _pmdEDUCB * cb,
-                                            catCtxLockMgr & lockMgr ) ;
+         INT32 _checkEmptyCollectionSpace ( _pmdEDUCB * cb ) ;
 
          virtual INT32 _buildSetFields ( BSONObj & setObject ) ;
 
