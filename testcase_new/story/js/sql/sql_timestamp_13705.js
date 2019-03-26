@@ -23,9 +23,9 @@ function main()
     insertSQL(db, cl, csName, clName, 'Timestamp("2038-01-19T03:14:08.000000Z")', false);
     insertSQL(db, cl, csName, clName, 'Timestamp("978192000000")', false);
     
-    selectSQL(db, csName, clName, 'Timestamp("2019-03-02T10:48:50.000000Z")', {$timestamp:"2019-03-02T10:48:50.000000Z"}, true);
-    selectSQL(db, csName, clName, 'Timestamp("1901-12-13T20:45:52.000000Z")', {$timestamp:"1901-12-13T20:45:52.000000Z"},true);
-    selectSQL(db, csName, clName, 'Timestamp("2038-01-19T03:14:07.999999Z")', {$timestamp:"2038-01-19T03:14:07.999999Z"},true);
+    selectSQL(db, csName, clName, 'Timestamp("2019-03-02T10:48:50.000000Z")', true);
+    selectSQL(db, csName, clName, 'Timestamp("1901-12-13T20:45:52.000000Z")', true);
+    selectSQL(db, csName, clName, 'Timestamp("2038-01-19T03:14:07.999999Z")', true);
     selectSQL(db, csName, clName, 'Timestamp("1901-12-13T20:45:51.999999Z")', false);
     selectSQL(db, csName, clName, 'Timestamp("2038-01-19T03:14:08.000000Z")', false);
     selectSQL(db, csName, clName, 'Timestamp("978192000000")', false);
@@ -55,14 +55,10 @@ function insertSQL(db, cl, csName, clName, insertValue, checkValue, result)
         try
         {
             db.execUpdate( sql );
-            var cursor = cl.find({textFields:checkValue},{"_id":{"$include":0}});
-            var expstring = '{"num":3,"textFields":{"$timestamp":"' + getTimeToLocal(checkValue["$timestamp"]) + '"}}';
-            var actString = JSON.stringify(cursor.next().toObj());
-            //将获得的时间最后三位毫秒去掉
-            actString = actString.substr(0,actString.length-6) + '"}}';
-            if(expstring !== actString)
+            var cursor = cl.find({textFields:checkValue});
+            if(cursor.next() === undefined)
             {
-                throw buildException("insertSQL()",null,"check record " + insertValue, expstring, actString);
+                throw buildException("insertSQL()",null,"check record " + insertValue, "have data", "no data");
             }
         }
         catch( e )
@@ -99,13 +95,10 @@ function updateSQL(db, cl, csName, clName, oldValue, newValue, checkValue, resul
         try
         {
             db.execUpdate(sql);
-            var cursor = cl.find({textFields:checkValue},{"_id":{"$include":0}});
-            var expstring = '{"num":3,"textFields":{"$timestamp":"' + getTimeToLocal(checkValue["$timestamp"]) + '"}}';
-            var actString = JSON.stringify(cursor.next().toObj());
-            actString = actString.substr(0,actString.length-6) + '"}}';
-            if(expstring !== actString)
+            var cursor = cl.find({textFields:checkValue});
+            if(cursor.next() === undefined)
             {
-                throw buildException("updateSQL()",null,"check record " + insertValue, expstring, actString);
+                throw buildException("updateSQL()",null,"check record " + newValue, "have data","no data");
             }
         }
         catch( e )
@@ -134,20 +127,17 @@ function updateSQL(db, cl, csName, clName, oldValue, newValue, checkValue, resul
     }
 }
 
-function selectSQL(db, csName, clName, value, checkValue, result)
+function selectSQL(db, csName, clName, value, result)
 {
-    var sql = 'select num,textFields from '+csName+"."+clName+' where textFields=' + value;
+    var sql = 'select * from '+csName+"."+clName+' where textFields=' + value;
     if(result)
     {
         try
         {
             var cursor = db.exec( sql );
-            var expstring = '{"num":3,"textFields":{"$timestamp":"' + getTimeToLocal(checkValue["$timestamp"]) + '"}}';
-            var actString = JSON.stringify(cursor.next().toObj());
-            actString = actString.substr(0,actString.length-6) + '"}}';
-            if(expstring !== actString)
+            if(cursor.next() === undefined)
             {
-                throw buildException("selectSQL()",null,"check record " + insertValue, expstring, actString);
+                throw buildException("selectSQL()",null,"check record " + value, "have data","no data");
             }
         }
         catch( e )
@@ -163,7 +153,7 @@ function selectSQL(db, csName, clName, value, checkValue, result)
     {
         try
         {
-            db.exec( sql );
+            db.execUpdate( sql );
             throw buildException("selectSQL()",null,"select error record " + value, "select failed", "select success");
         }
         catch( e )
@@ -185,7 +175,7 @@ function deleteSQL(db, cl, csName, clName, deleteValue, checkValue, result)
         {
             db.execUpdate( sql );
             var cursor = cl.find({textFields:checkValue});
-            if(cursor.next() != null)
+            if(cursor.next() !== undefined)
             {
                 throw buildException("deleteSQL()",null,"check record " + deleteValue, "no data","have data");
             }
@@ -214,23 +204,4 @@ function deleteSQL(db, cl, csName, clName, deleteValue, checkValue, result)
             }
         }
     }
-}
-
-function getTimeToLocal(inputTime)
-{
-    //将UTC时间转化为本地时间
-    var localTime = '';
-    year = new Date(inputTime).getFullYear();
-    inputTime = new Date(inputTime).getTime();
-    //在1928年1月1日前，由UTC时间戳转成中国本地时区的时间，都会加上5分52秒。
-    if(year < 1928)
-    {
-        inputTime = inputTime + 5*60*1000 + 52*1000;
-    }
-    const offset = (new Date()).getTimezoneOffset();
-    localTime = (new Date(inputTime - offset * 60000)).toISOString();
-    localTime = localTime.substr(0,localTime.length-1);
-    localTime = localTime.replace('T','-');
-    localTime = localTime.replace(/:/g,'.');
-    return localTime;
 }
