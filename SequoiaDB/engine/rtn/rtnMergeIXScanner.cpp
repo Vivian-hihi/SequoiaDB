@@ -328,11 +328,11 @@ namespace engine
       {
          if ( _lrid <= _rrid )
          {
-            _fromDir = SCAN_LEFT ;
+            _fromDir = _direction > 0 ? SCAN_LEFT : SCAN_RIGHT ;
          }
          else
          {
-            _fromDir = SCAN_RIGHT ;
+            _fromDir = _direction > 0 ? SCAN_RIGHT : SCAN_LEFT ;
          }
       }
 
