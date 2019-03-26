@@ -81,7 +81,7 @@ T}@T{
 T}@T{
 SDB_PERM
 T}@T{
-Permission Error.
+Permission Error
 T}@T{
 Check the path of the
 T}
@@ -106,7 +106,7 @@ T}@T{
 T}@T{
 SDB_FNE
 T}@T{
-File Not Exist.
+File Not Exist
 T}@T{
 Check the input file
 T}
@@ -124,7 +124,7 @@ T}@T{
 T}@T{
 SDB_INVALIDARG
 T}@T{
-Invalid Argument.
+Invalid Argument
 T}@T{
 Check the input format
 T}
@@ -142,7 +142,7 @@ T}@T{
 T}@T{
 SDB_PD_TRACE_FILE_
 T}@T{
-Trace file is not valid.
+Trace file is not valid
 T}@T{
 Check the input file is
 T}
@@ -159,6 +159,9 @@ T}
 when exception happen, use getLastError() to get the error code and use
 getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
+.SH HISTORY
+.PP
+Since v1.0.
 .SH EXAMPLES
 .IP \[bu] 2
 Format trace input to output.

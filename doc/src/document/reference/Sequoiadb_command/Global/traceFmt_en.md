@@ -56,6 +56,10 @@ the exceptions of `traceFmt()` are as below:
 
 when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please  reference to [Troubleshooting](troubleshooting/general/general_guide.md).
 
+##HISTORY##
+
+Since v1.0.
+
 ##EXAMPLES##
 
 * Format trace input to output.
