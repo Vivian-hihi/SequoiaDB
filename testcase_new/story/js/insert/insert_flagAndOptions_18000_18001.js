@@ -8,17 +8,17 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");
+	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格
 	var clName = "insertFlag_18000";
 	var idxName = "idx";	
    var cl = readyCL( clName );
-	cl.createIndex( idxName, {a:1, b:1}, true, true );
+	cl.createIndex( idxName, {a:1, b:1}, true, true );//TODO :建议这里使用公共方法创建索引commCreateIndex
    cl.insert( {a:1,b:1} );
    
    // key not conflict
 	println("\n---Begin to insert, key not conflict");
 	var recsArray = [{c:1},{a:2,c:1},{a:2,b:1,c:1}];
-	cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );
+	cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );//TODO :用例没有覆盖option格式为：{ReplaceOnDup: true}的情况
 	var expRecs = [{"c":1},{"a":1,"b":1},{"a":2,"c":1},{"a":2,"b":1,"c":1}];
    checkRecords( cl, expRecs );
    
@@ -59,7 +59,7 @@ function keyConflict( cl, recsArray )
 	{
 	   try
 	   {
-	      cl.insert( recsArray[i] );
+	      cl.insert( recsArray[i] );//TODO :单插数据冲突已经在用例17999中覆盖了，这里可以不用再重复测试了吧
          throw "expect fail, but actual succ."
 	   }
       catch(e)

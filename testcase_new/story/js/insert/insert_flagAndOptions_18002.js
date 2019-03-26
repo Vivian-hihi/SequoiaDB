@@ -5,7 +5,7 @@
 ******************************************************************************/
 main();
 
-function main()
+function main()//TODO :建议将用例里面的tab键改为空格
 {  
    if( commIsStandalone( db ) )
    {
@@ -25,10 +25,10 @@ function main()
    var cl = cs.createCL( mainCLName, {ShardingKey:{a:1},IsMainCL:true} );  
    cs.createCL( subCLName, {ShardingKey:{a:1}} );
    cl.attachCL( csName +"."+ subCLName, {LowBound:{a:1},UpBound:{a:100}} );
-	cl.createIndex( "idx", {a:1}, true, true );
+	cl.createIndex( "idx", {a:1}, true, true );//TODO :1.建议这里使用公共方法创建索引commCreateIndex 2.这里使用的是单键索引，与文本用例中描述不符，可修改下文本用例
 	
    // test
-   cl.insert( {a:1} );
+   cl.insert( {a:1} );//TODO :这里是不是少覆盖了一个测试点，option为SDB_INSERT_RETURN_ID
    // SDB_INSERT_CONTONDUP
 	println("\n---Begin to insert, flag[SDB_INSERT_CONTONDUP]");
 	var recsArray = [{a:1,b:1},{a:2}];

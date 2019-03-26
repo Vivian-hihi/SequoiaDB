@@ -7,9 +7,9 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");
+	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格
 	var clName = "insertFlag_18010";
-	var idxName = "idx";	
+	var idxName = "idx";	//TODO :建议将无用变量去掉，并修改文本用例中的对应描述（第一条）
    var cl = readyCL( clName );
    cl.insert( {_id:1} );
    
@@ -35,7 +35,7 @@ function main()
 
 function checkRecords( cl, recs ) 
 {
-   var rc = cl.find( {} ).sort({a:1} );
+   var rc = cl.find( {} ).sort({a:1} );//TODO :本用例中未插入字段为a的数据，建议将这里的查询条件优化一下
    var rcRecs = new Array();
    while( tmpRecs = rc.next() )
    {
@@ -56,7 +56,7 @@ function checkReturnOid( rc ) {
       var oid = rc[i].toObj()["_id"]["$oid"];
       var expTypeOid = "string";
       var actTypeOid = typeof( oid );
-      if( expTypeOid !== actTypeOid )
+      if( expTypeOid !== actTypeOid )//TODO :这里比较的是Oid的类型是否为string，但是没有比较Oid的值是否正确
       {
          throw buildException( "checkReturnOid", null, "", expTypeOid, "  " + actTypeOid );
       } 

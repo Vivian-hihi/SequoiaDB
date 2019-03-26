@@ -7,11 +7,11 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");
+	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格，用例里面的格式也可以再对齐下
 	var clName = "insertFlag_17997";
 	var idxName = "idx";	
    var cl = readyCL( clName );
-	cl.createIndex( idxName, {a:1, b:1}, true, true );
+	cl.createIndex( idxName, {a:1, b:1}, true, true );//TODO :建议这里使用公共方法创建索引commCreateIndex
    
    // test
    insertNotSetFlag( cl );
@@ -32,7 +32,7 @@ function insertNotSetFlag( cl )
    try
    {
       cl.insert( {a:1,c:1} );
-      throw "expect fail, but actual succ." 
+      throw "expect fail, but actual succ."  //TODO :建议使用buildException抛出异常，定位问题时可以更清晰，如果觉得太繁琐也可不用
    }
    catch(e)
    {
@@ -165,7 +165,7 @@ function checkRecords( cl, recs )
 function checkReturnOid( rc ) {
    var oid = rc.toObj()["_id"]["$oid"];
    var expTypeOid = "string";
-   var actTypeOid = typeof( oid );
+   var actTypeOid = typeof( oid );//TODO :这里比较的是Oid的类型是否为string，但是没有比较Oid的值是否正确
    if( expTypeOid !== actTypeOid )
    {
       throw buildException( "checkReturnOid", null, "", expTypeOid, "  " + actTypeOid );

@@ -8,16 +8,16 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");
+	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格
 	var clName = "insertFlag_17998";
 	var idxName = "idx";	
    var cl = readyCL( clName );
-	cl.createIndex( idxName, {a:1, b:1}, true, true );
+	cl.createIndex( idxName, {a:1, b:1}, true, true );//TODO :建议这里使用公共方法创建索引commCreateIndex
    cl.insert( {a:1,b:1} );
    
    // key not conflict
 	var recsArray = [{c:1},{a:2,c:2},{a:3,b:3,c:3}];
-	keyNotConflict( cl, recsArray );
+	keyNotConflict( cl, recsArray );//TODO :用例没有覆盖option格式为：{ReplaceOnDup: true}的情况
 	var expRecs = [{"c":1},{"a":1,"b":1},{"a":2,"c":2},{"a":3,"b":3,"c":3}];
    checkRecords( cl, expRecs );
    

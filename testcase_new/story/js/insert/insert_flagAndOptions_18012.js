@@ -7,7 +7,7 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");
+	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格
 	var clName = "insertFlag_18012";
 	var idxName = "idx";	
    var cl = readyCL( clName );

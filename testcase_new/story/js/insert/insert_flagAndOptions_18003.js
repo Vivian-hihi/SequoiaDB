@@ -7,11 +7,11 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");
+	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格
 	var clName = "insertFlag_18003";
 	var idxName = "idx";	
    var cl = readyCL( clName );
-	cl.createIndex( idxName, {a:1, b:1}, true, true );
+	cl.createIndex( idxName, {a:1, b:1}, true, true );//TODO :建议这里使用公共方法创建索引commCreateIndex 
    
    // test
    setOptions_RC_true( cl );
@@ -57,7 +57,7 @@ function setOptions_RC_false( cl )
 	var recsArray = [{a:1,b:1,c:3},{a:3}];
    try
    {
-	   cl.insert( recsArray, {ReturnOID:false,ContOnDup:false} );
+	   cl.insert( recsArray, {ReturnOID:false,ContOnDup:false} );//TODO :这里只能说明ContOnDup生效了，但是因为报错无法得知ReturnOID是否生效，建议再设置一组数据不冲突的情况检测ReturnOID参数是否生效
       throw "expect fail, but actual succ." 
    }
    catch(e)
@@ -82,7 +82,7 @@ function setOptions_RR_false( cl )
 	var recsArray = [{a:1,b:1,c:4},{a:4}];
    try
    {
-	   cl.insert( recsArray, {ReturnOID:false,ReplaceOnDup:false} );
+	   cl.insert( recsArray, {ReturnOID:false,ReplaceOnDup:false} );//TODO :与上一个方法相同，未检测ReturnOID是否生效，也可以测试一组{ReturnOID:false,ReplaceOnDup:true}的数据
       throw "expect fail, but actual succ." 
    }
    catch(e)
@@ -115,7 +115,7 @@ function setOptions_CR( cl )
    {
       if( -6 !== e )
       {
-   	   throw buildException( "setOptions_CR", null, "", -6, "  " + -38 );
+   	   throw buildException( "setOptions_CR", null, "", -6, "  " + -38 );//TODO :这里实际结果应该是e吧，可能返回的错误码不是-38
    	}
    }   
 	var expRecs = [{"a":1,"b":1}];
@@ -176,7 +176,7 @@ function checkReturnOid( rc ) {
       var oid = rc[i].toObj()["_id"]["$oid"];
       var expTypeOid = "string";
       var actTypeOid = typeof( oid );
-      if( expTypeOid !== actTypeOid )
+      if( expTypeOid !== actTypeOid )//TODO :这里比较的是Oid的类型是否为string，但是没有比较Oid的值是否正确
       {
          throw buildException( "checkReturnOid", null, "", expTypeOid, "  " + actTypeOid );
       } 

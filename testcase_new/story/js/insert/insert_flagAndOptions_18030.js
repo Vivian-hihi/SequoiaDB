@@ -7,8 +7,8 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");
-	var clName = COMMCLNAME + "_18012";
+	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格
+	var clName = COMMCLNAME + "_18012";//TODO :这里的用例编号以及上方用例描述里的用例编号和用例名称需要修改一下
    var cl = readyCL( clName );
 	cl.createIndex( "idx1", {a:1,b:1}, true, true );
 	cl.createIndex( "idx2", {a:1,c:1}, true, true );
