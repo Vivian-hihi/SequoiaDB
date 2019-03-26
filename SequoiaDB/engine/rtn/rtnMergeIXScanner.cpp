@@ -385,7 +385,7 @@ namespace engine
       SINT32 rcr = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNMERGEIXSCAN_RESUMESCAN ) ;
 
-      BOOLEAN isSame = TRUE ;
+      BOOLEAN isSame  = TRUE ;
       BOOLEAN lIsSame = TRUE ;
       BOOLEAN rIsSame = TRUE ;
 
@@ -402,6 +402,15 @@ namespace engine
       if ( rc )
       {
          goto error ;
+      }
+
+      if ( SCAN_LEFT == _fromDir )
+      {
+         isSame = lIsSame ;
+      }
+      else if ( SCAN_RIGHT == _fromDir )
+      {
+         isSame = rIsSame ;
       }
 
       /// sync left to right
@@ -428,7 +437,6 @@ namespace engine
             goto error ;
          }
          _rrid.reset() ;
-         isSame = FALSE ;
       }
       /// sync right to left
       else if ( SCAN_RIGHT == _fromDir && _leftEnabled )
@@ -454,7 +462,6 @@ namespace engine
             goto error ;
          }
          _lrid.reset() ;
-         isSame = FALSE ;
       }
 
       /// when left has changed, but last from right
