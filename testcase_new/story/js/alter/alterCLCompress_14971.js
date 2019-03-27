@@ -34,7 +34,7 @@ function main(db)
       insertRecs( dbcl2 );
       dbcl2.setAttributes({CompressionType:"lzw"}); 
            
-      var insertRecsNum = 600000 ;       
+      var insertRecsNum = 200000 ;       
       insertBuildDictionaryRecs( dbcl2, insertRecsNum );
       
       //get random 10 records to check data
@@ -67,14 +67,16 @@ function insertBuildDictionaryRecs( cl, insertRecsNum )
 {
    println("\n---Begin to insert records, insertRecsNum: "+ insertRecsNum );
    
-   for( k = 100; k < insertRecsNum; k += 50000 )
+   for( k = 100; k < insertRecsNum; k += 20000 )
    {
       var doc = [];
-      for( i = 0+k; i < 50000+k; i++ )
+      for( i = 0+k; i < 20000 + k; i++ )
       {
-         doc.push( {total_account:i,account_id:i,tx_number:"testR"+i,tx_info:"xzposs/565bf18944f4f14fea84341b/image/20160101_1.png.png"} )
+         doc.push( {total_account:i,account_id:i,tx_number:"testR"+i,tx_info:"xzposs/565bf18944f4f14fea84341b/image/20160101_1.png.png", "text": "paddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingData"} )
+         
       };
       cl.insert(doc);
+      
    }  
 }
 
@@ -92,17 +94,17 @@ function insertRecs( cl)
 
 function checkRecords( cl, insertRecsNum, checkRecsNum  )
 {				
-	println("\n---Begin to check Records. checkRecsNum: "+ checkRecsNum );     
+	println("\n---Begin to check Records. checkRecsNum: "+ checkRecsNum );
    for( j = 0; j < checkRecsNum; j++ )
    {
-      var i = parseInt( Math.random() * insertRecsNum );       
+      var i = parseInt( Math.random() * insertRecsNum );
       if( i < 100 )
       {
          var recsCnt = cl.find( {total_account:i,account_id:i,tx_number:"test"+i,tx_info:"xzposs/565bf18944f4f14fea84341b/image/2016_1.png"} ).count();
       }
       else
       {
-         var recsCnt = cl.find( {total_account:i,account_id:i,tx_number:"testR"+i,tx_info:"xzposs/565bf18944f4f14fea84341b/image/20160101_1.png.png"} ).count();
+         var recsCnt = cl.find( {total_account:i,account_id:i,tx_number:"testR"+i,tx_info:"xzposs/565bf18944f4f14fea84341b/image/20160101_1.png.png", "text": "paddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingDatapaddingData"} ).count();
       }
       
       var expctCnt = 1 ;
