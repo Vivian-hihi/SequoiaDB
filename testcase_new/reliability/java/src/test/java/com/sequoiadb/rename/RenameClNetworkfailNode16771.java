@@ -41,6 +41,7 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase{
 	private GroupMgr groupMgr = null;
 	private String groupName = null;
 	private Sequoiadb sdb = null;
+	private Sequoiadb sdb1 = null;
 	private int clNum = 10;
 	private int completeTimes = 0;
 	
@@ -59,6 +60,7 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase{
         groupName = groupMgr.getAllDataGroupName().get(0);
 
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         CollectionSpace cs = sdb.createCollectionSpace(csName);
         for (int i = 0; i < clNum; i++) {
         	cs.createCollection(oldCLName + i, new BasicBSONObject("Group", groupName));
@@ -106,9 +108,12 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase{
 				sdb.dropCollectionSpace(csName);
 			}
 		} finally {
-			if(sdb != null){
+			if(sdb != null && !sdb.isClosed()){
 				sdb.close();
 			}
+			if(sdb1 != null && !sdb1.isClosed() ){
+                sdb1.close();
+            }
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 		}
@@ -118,9 +123,10 @@ public class RenameClNetworkfailNode16771 extends SdbTestBase{
 		
         @Override
         public void exec() throws Exception {
-            try( Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "") ) {
+            try {
+                CollectionSpace cs = sdb1.getCollectionSpace(csName);
             	for (int i = 0; i < oldCLNameList.size(); i++) {
-            		db.getCollectionSpace(csName).renameCollection(oldCLNameList.get(i), newCLNameList.get(i));
+            	    cs.renameCollection(oldCLNameList.get(i), newCLNameList.get(i));
             		completeTimes++;
 				}
             }catch(BaseException e){
