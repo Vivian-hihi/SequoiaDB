@@ -1055,7 +1055,6 @@ function checkStats( db, csName, clNames, indexName, clExistStat, indexExistStat
          }
          
          //cl统计表信息中存在统计信息且数据页不小于10
-         println("clStats.length:" + clStats.length);
          var clExistsStatCount = 0;
          for(var k = 0; k < clStats.length; k++ )
          {
@@ -1094,7 +1093,6 @@ function checkStats( db, csName, clNames, indexName, clExistStat, indexExistStat
          }
          
          //索引统计表信息中存在统计信息
-         println("indexStats.length:" + indexStats.length);    
          var indexExistsStatCount = 0;
          for(var h = 0; h < indexStats.length; h++ )
          {
