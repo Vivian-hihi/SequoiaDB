@@ -180,7 +180,7 @@ function checkConsistency(db, csName, clName, groups)
 {
    if(csName == null) { var csName = "UNDEFINED"; }
    if(clName == null) { var clName = "UNDEFINED"; }
-   if(groups == undefined) { var groups = commGetCLGroups( db, csName + "." + clName ); }
+   if(groups == undefined) { var groups = getGroupsFromcl( db, csName + "." + clName ); }
    
    //the longest waiting time is 600S
    var lsnFlag = false;
@@ -247,7 +247,7 @@ function checkStat( db, csName, clName, indexName, clExistStat, indexExistStat, 
 {
    if( clExistStat == undefined ){ clExistStat = true;}
    if( indexExistStat == undefined ){ indexExistStat = true;}
-   if( groups == undefined ){var groups = commGetCLGroups( db, csName + "." + clName );}
+   if( groups == undefined ){var groups = getGroupsFromcl( db, csName + "." + clName );}
    
    //get all nodes
    var datas = getNodesInGroups(db, groups);
@@ -658,7 +658,7 @@ function getSrcGroup( csName, clName )
 **************************************/
 function updateIndexStateInfo( db, csName, clName, indexName, mcvValues, fracs )
 {
-   var groups = commGetCLGroups( db, csName + "." + clName );
+   var groups = getGroupsFromcl( db, csName + "." + clName );
    var datas = getNodesInGroups(db, groups);
    
    //update all nodes
@@ -811,7 +811,7 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
    if(groups !== undefined){
       var datas = getNodesInGroups(db, groups);
    }else{
-      var groups = commGetCLGroups( db, clFullName );
+      var groups = getGroupsFromcl( db, clFullName );
       var datas = getNodesInGroups(db, groups);
    }
    
@@ -825,7 +825,7 @@ function checkSnapShotAccessPlans( clFullName, expectAccessPlans, actAccessPlans
       if(groups !== undefined){
          var datas = getNodesInGroups(db, groups);
       }else{
-         var groups = commGetCLGroups( db, clFullName );
+         var groups = getGroupsFromcl( db, clFullName );
          var datas = getNodesInGroups(db, groups);
       }
       //判断普通表一组一节点的情况
@@ -993,4 +993,139 @@ function split( csName, clName, srcGroupName, desGroupName, startCondition, endC
    {
       throw e;
    }
+}
+
+/************************************
+*@Description: get groups from cl 
+*@author:      zhaoyu
+*@createdate:  2019.3.27
+**************************************/
+function getGroupsFromcl( db, clFullName )
+{
+   var tmpArray = commGetCLGroups( db, clFullName );
+   var groupNames = new Array();
+   for(var i=0; i<tmpArray.length; i++)
+   {
+      if(groupNames.indexOf(tmpArray[i]) === -1)
+      {
+         groupNames.push(tmpArray[i]);
+         
+      }
+   }
+   return groupNames ;
+}
+
+
+/************************************
+*@Description: 检查统计信息,优化用例后新增加方法
+*@author:      zhaoyu
+*@createDate:  2019.3.27
+**************************************/
+function checkStats( db, csName, clNames, indexName, clExistStat, indexExistStat, groups )
+{
+   if( clExistStat == undefined ){ clExistStat = true;}
+   if( indexExistStat == undefined ){ indexExistStat = true;}
+   if( groups == undefined ){var groups = getGroupsFromcl( db, csName + "." + clNames[0] );}
+   
+   var indexNames = new Array();
+   if( Array.isArray(indexName) == true )
+   { 
+      indexNames = indexName;
+   }else
+   {
+      indexNames.push(indexName);
+   }
+   
+   //get all nodes
+   var datas = getNodesInGroups(db, groups);
+   //check each node
+   println("datas:" + datas);
+   for(var i = 0; i < datas.length; i++)
+   {
+      var nodesInGroup = datas[i];
+      for(var j = 0; j< nodesInGroup.length; j++)
+      {
+         //检查cl统计表信息 
+         var clStats = nodesInGroup[j].SYSSTAT.SYSCOLLECTIONSTAT.find().toArray();
+         
+         //需要检查cl统计表信息时，统计表信息不能为空
+         if(clExistStat === true && clStats.length <1)
+         {
+            throw "NO_CL_STAT";
+         }
+         
+         //cl统计表信息中存在统计信息且数据页不小于10
+         println("clStats.length:" + clStats.length);
+         var clExistsStatCount = 0;
+         for(var k = 0; k < clStats.length; k++ )
+         {
+            var clStat = eval( "(" + clStats[k] + ")");
+            var actualCSName = clStat.CollectionSpace;
+            var actualCLName = clStat.Collection;
+            var totalDataPages = clStat.TotalDataPages;
+            if(actualCSName === csName && 
+               -1 != clNames.indexOf(actualCLName) && totalDataPages > 10)
+            {
+               clExistsStatCount ++;
+            }
+         }
+         
+         //是否存在cl统计表信息与预期结果校验   
+         if(clExistStat && clExistsStatCount !== clNames.length)
+         {
+            println("host:" + nodesInGroup[j] + "\nclExistStat:" + clExistStat + "\nclExistsStatCount:" + clExistsStatCount + ",clNames.length:" + clNames.length);
+            throw "CL_HAS_STAT_ERR";
+         }
+         if(!clExistStat && clExistsStatCount !== 0)
+         {
+            println("host:" + nodesInGroup[j] + "\nclExistStat:" + clExistStat + "\nclExistsStatCount:" + clExistsStatCount);
+            throw "CL_HAS_NO_STAT_ERR";
+         }
+         
+         //检查索引统计表信息
+         var indexStats = nodesInGroup[j].SYSSTAT.SYSINDEXSTAT.find().toArray();
+         
+         //需要检查索引统计表信息时，统计表信息不能为空
+         if(indexExistStat === true && indexStats.length <1)
+         {
+            println("indexExistStat:" + indexExistStat);
+            println("indexStats.length:" + indexStats.length);
+            throw "NO_INDEX_STAT";
+         }
+         
+         //索引统计表信息中存在统计信息
+         println("indexStats.length:" + indexStats.length);    
+         var indexExistsStatCount = 0;
+         for(var h = 0; h < indexStats.length; h++ )
+         {
+            var indexStat = eval( "(" + indexStats[h] + ")");
+            var actualCSName = indexStat.CollectionSpace;
+            var actualCLName = indexStat.Collection;
+            var actualIndexName = indexStat.Index;
+            if(actualCSName === csName && 
+               -1 != clNames.indexOf(actualCLName) &&  
+               -1 != indexNames.indexOf(actualIndexName) &&
+               indexStat.hasOwnProperty('MCV'))
+            {
+               indexExistsStatCount ++;
+            }
+         }
+         
+         //是否存在索引统计表信息与预期结果校验  
+         if(indexExistStat && indexExistsStatCount !== clNames.length * indexNames.length)
+         {
+            println("host:" + nodesInGroup[j] + "\nindexExistStat:" + indexExistStat + "\nindexExistsStatCount:" + indexExistsStatCount + ",clNames.length * indexNames.length:" + clNames.length * indexNames.length);
+            throw "INDEX_HAS_STAT_ERR";
+         }
+         
+         if(!indexExistStat && indexExistsStatCount!== 0)
+         {
+            println("host:" + nodesInGroup[j] + "\nindexExistStat:" + indexExistStat + "\nindexExistsStatCount:" + indexExistsStatCount);
+            throw "INDEX_HAS_NO_STAT_ERR";
+         }  
+         
+      }
+   }
+	println("check stat sucess");
+     
 }

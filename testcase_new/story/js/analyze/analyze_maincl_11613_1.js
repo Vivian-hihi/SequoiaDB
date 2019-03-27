@@ -113,14 +113,8 @@ function main()
    checkConsistency(db, null, null, [srcGroupName, desGroupName]);
    
    //检查统计信息
-   checkStat( db, maincsName, subclName1, "$shard", false, false );
-   checkStat( db, maincsName, subclName2, "$shard", false, false );
-   checkStat( db, subcsName1, subclName3, "$shard", false, false );
-   checkStat( db, subcsName1, subclName4, "$shard", false, false );
-   checkStat( db, maincsName, subclName1, "a1", false, false );
-   checkStat( db, maincsName, subclName2, "a1", false, false );
-   checkStat( db, subcsName1, subclName3, "a1", false, false );
-   checkStat( db, subcsName1, subclName4, "a1", false, false );
+   checkStats( db, maincsName, [subclName1, subclName2], ["$shard", "a1"], false, false, [srcGroupName, desGroupName] );
+   checkStats( db, subcsName1, [subclName3, subclName4], ["$shard", "a1"], false, false, [srcGroupName, desGroupName] );
    
    //主备节点上检查访问计划
    checkExplainBeforeAnalyze();
@@ -150,15 +144,8 @@ function main()
    checkConsistency(db, null, null, [srcGroupName, desGroupName]);
    
    //检查统计
-   checkStat( db, maincsName, subclName1, "$shard", true, true );
-   checkStat( db, maincsName, subclName2, "$shard", true, true );
-   checkStat( db, subcsName1, subclName3, "$shard", true, true );
-   checkStat( db, subcsName1, subclName4, "$shard", true, true );
-   
-   checkStat( db, maincsName, subclName1, "a1", true, true );
-   checkStat( db, maincsName, subclName2, "a1", true, true );
-   checkStat( db, subcsName1, subclName3, "a1", true, true );
-   checkStat( db, subcsName1, subclName4, "a1", true, true );
+   checkStats( db, maincsName, [subclName1, subclName2], ["$shard", "a1"], true, true, [srcGroupName, desGroupName] );
+   checkStats( db, subcsName1, [subclName3, subclName4], ["$shard", "a1"], true, true, [srcGroupName, desGroupName] );
    
    //检查访问计划快照
    var expAccessPlan = [];
@@ -193,15 +180,8 @@ function main()
    checkConsistency(db, null, null, [srcGroupName, desGroupName]);
    
    //检查统计
-   checkStat( db, maincsName, subclName1, "$shard", true, true );
-   checkStat( db, maincsName, subclName2, "$shard", true, true );
-   checkStat( db, subcsName1, subclName3, "$shard", true, true );
-   checkStat( db, subcsName1, subclName4, "$shard", true, true );
-   
-   checkStat( db, maincsName, subclName1, "a1", true, true );
-   checkStat( db, maincsName, subclName2, "a1", true, true );
-   checkStat( db, subcsName1, subclName3, "a1", true, true );
-   checkStat( db, subcsName1, subclName4, "a1", true, true );
+   checkStats( db, maincsName, [subclName1, subclName2], ["$shard", "a1"], true, true, [srcGroupName, desGroupName] );
+   checkStats( db, subcsName1, [subclName3, subclName4], ["$shard", "a1"], true, true, [srcGroupName, desGroupName] );
    
    //检查访问计划快照
    var expAccessPlan = [];
@@ -239,15 +219,8 @@ function main()
    checkConsistency(db, null, null, [srcGroupName, desGroupName]);
    
    //检查统计信息
-   checkStat( db, maincsName, subclName1, "$shard", true, true );
-   checkStat( db, maincsName, subclName2, "$shard", true, true );
-   checkStat( db, subcsName1, subclName3, "$shard", true, true );
-   checkStat( db, subcsName1, subclName4, "$shard", true, true );
-   
-   checkStat( db, maincsName, subclName1, "a1", true, true );
-   checkStat( db, maincsName, subclName2, "a1", true, true );
-   checkStat( db, subcsName1, subclName3, "a1", true, true );
-   checkStat( db, subcsName1, subclName4, "a1", true, true );
+   checkStats( db, maincsName, [subclName1, subclName2], ["$shard", "a1"], true, true, [srcGroupName, desGroupName] );
+   checkStats( db, subcsName1, [subclName3, subclName4], ["$shard", "a1"], true, true, [srcGroupName, desGroupName] );
    
    //检查访问计划快照
    var expAccessPlan = [];
@@ -376,3 +349,4 @@ function checkExplainBeforeAnalyze()
    
    println("check index before analyze success!");
 }
+
