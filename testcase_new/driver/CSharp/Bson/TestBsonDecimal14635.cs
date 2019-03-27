@@ -54,7 +54,7 @@ namespace CSharp.Bson
                 new BsonDocument("MIN", new BsonDecimal("-INF")),
                 new BsonDocument("MIN", new BsonDecimal("-inf")),
                 new BsonDocument("NaN", new BsonDecimal("NAN")),
-                new BsonDocument("NaN", new BsonDecimal("nan")),//
+                new BsonDocument("NaN", new BsonDecimal("nan")),
                 new BsonDocument("MAX", new BsonDecimal("MAX", 10, 2)),
                 new BsonDocument("MAX", new BsonDecimal("max", 10, 2)),
                 new BsonDocument("MAX", new BsonDecimal("INF", 10, 2)),

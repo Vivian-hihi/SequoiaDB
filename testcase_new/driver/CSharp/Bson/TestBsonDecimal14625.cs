@@ -9,7 +9,7 @@ using CSharp.TestCommon;
 
 namespace CSharp.Bson
 {
-    /**
+    /**  TODO：手工用例没有步骤
      * description:  
      *                BSONDecimal（Decimal value)
      *                1.插入一条decimal的数据，value参数覆盖：合法值，如典型值m+n小于147455、边界值m+n=147455,非法值，如m+n=147456

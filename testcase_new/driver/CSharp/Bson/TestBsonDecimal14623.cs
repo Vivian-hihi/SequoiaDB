@@ -49,7 +49,7 @@ namespace CSharp.Bson
             //value参数实际的整数位数为n，value参数实际的小数位数为m
             BsonDecimal decimal1 = new BsonDecimal("123.456721", 9, 4);//n<=precision-scale precision>scale m>=scale
             BsonDecimal decimal2 = new BsonDecimal("123.456721", 9, 3);//m 小于 scale 
-            BsonDecimal decimal3 = new BsonDecimal("123.456721", 9, 4);//m 小于 scale 
+            BsonDecimal decimal3 = new BsonDecimal("123.456721", 9, 4);//m 等于 scale 
             try
             {
                 BsonDecimal decimal4 = new BsonDecimal("123.456721", 9, 7);//n>precision-scale
@@ -61,7 +61,7 @@ namespace CSharp.Bson
             }
             try
             {
-                BsonDecimal decimal5 = new BsonDecimal("123.456721", 6, 7);//n>precision-scale
+                BsonDecimal decimal5 = new BsonDecimal("123.456721", 6, 7);//n>precision<=scale
                 Assert.Fail("expected failed!");
             }
             catch (ArgumentException e)

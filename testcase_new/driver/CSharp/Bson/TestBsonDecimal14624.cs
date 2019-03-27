@@ -56,6 +56,7 @@ namespace CSharp.Bson
             {
                 m += "1";
             }
+            Console.WriteLine(m);
             BsonDecimal decimal2 = new BsonDecimal(n + "."+ m);
             try
             {

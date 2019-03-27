@@ -88,6 +88,7 @@ namespace CSharp.Bson
                 new BsonDocument("sequoiadb1", "sequoiadb"),
                 new BsonDocument("sequoiadb2", 1)
             };
+            //TODO:需要跟开发确认capacity是int数组类型还是int类型
             int[] capacity = new int[]{1,2,3};
 
             BsonDocument record = new BsonDocument()

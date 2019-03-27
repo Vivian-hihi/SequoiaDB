@@ -9,6 +9,7 @@ using CSharp.TestCommon;
 
 namespace CSharp.Bson
 {
+    //TODO:这里的注释写成了14622的注释了
     /**
      * description:  
      *                BSONDecimal(String value, int precision, int scale)
@@ -62,6 +63,7 @@ namespace CSharp.Bson
             cur.Close();
             Assert.AreEqual(1, count);
 
+            //TODO:参数为非法值时未覆盖全，precision为字母时；建议用具体的Exception
             try
             {
                 BsonDecimal decimal3 = new BsonDecimal("1", 0, 1);
@@ -73,6 +75,7 @@ namespace CSharp.Bson
             }
             try
             {
+                //TODO:这里理论上是成功的吧
                 BsonDecimal decimal4 = new BsonDecimal("1", 101, 1);
                 Assert.Fail("expected failed!");
             }

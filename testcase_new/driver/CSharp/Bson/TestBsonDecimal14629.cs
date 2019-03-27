@@ -55,6 +55,7 @@ namespace CSharp.Bson
             Assert.AreEqual(true, decimal1.Equals(decimal1));
             Assert.AreEqual(decimal1.GetHashCode(), decimal1.GetHashCode());
 
+            //TODO：下面几个注释没有对应，需改正
             //值相等但精度不相等
             BsonDecimal decimal2 = new BsonDecimal("123.456", 6, 3);
             Assert.AreEqual(1, decimal1.CompareTo(decimal2));
