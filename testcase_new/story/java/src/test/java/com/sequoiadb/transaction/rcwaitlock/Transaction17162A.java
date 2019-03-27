@@ -62,6 +62,7 @@ public class Transaction17162A extends SdbTestBase {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void test() {
         // 开启2个并发事务

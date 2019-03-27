@@ -107,7 +107,7 @@ public class Transaction17765D extends SdbTestBase {
         sdb3.beginTransaction();
         
         //2 trans1 insert record
-        cl1.update(new BasicBSONObject("a", 1), modifier3, null);
+        cl1.update(new BasicBSONObject("a", 3), modifier3, null);
 
         // 3 trans2 update
         UpdateThread updateThread = new UpdateThread();
@@ -122,7 +122,7 @@ public class Transaction17765D extends SdbTestBase {
         //5 no trans read
         expDataList.clear();
         expDataList.add(data3);
-        expDataList.add(data2);
+        expDataList.add(data4);
         recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -139,8 +139,8 @@ public class Transaction17765D extends SdbTestBase {
         Assert.assertFalse(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
         expDataList.clear();
-        expDataList.add(data3);
         expDataList.add(data4);
+        expDataList.add(data5);
         recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -226,8 +226,8 @@ public class Transaction17765D extends SdbTestBase {
         public void exec() throws BaseException {
 
             List<BSONObject> queryList = new ArrayList<BSONObject>();
-            queryList.add(data5);
             queryList.add(data4);
+            queryList.add(data5);
             DBCursor cur = cl3.query(null, null, "{a:1}", "{'': 'a'}");
             List<BSONObject> actQueryList = TransUtils.getReadActList(cur);
             Assert.assertEquals(actQueryList, queryList);

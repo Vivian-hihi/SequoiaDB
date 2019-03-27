@@ -41,6 +41,7 @@ public class Transaction17156 extends SdbTestBase {
         cl.insert(insertR1);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void test() {
         // 开启事务1
@@ -92,13 +93,11 @@ public class Transaction17156 extends SdbTestBase {
         private DBCursor cursor = null;
 
         public Read(String hint) {
-            // TODO Auto-generated constructor stub
             this.hint = hint;
         }
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cl = db.getCollectionSpace(csName).getCollection(clName);

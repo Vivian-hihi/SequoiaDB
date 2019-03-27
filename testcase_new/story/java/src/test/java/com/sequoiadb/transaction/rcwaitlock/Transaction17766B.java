@@ -107,7 +107,7 @@ public class Transaction17766B extends SdbTestBase {
         sdb3.beginTransaction();
         
         //2 trans1 update record R1 to R3
-        cl1.update(new BasicBSONObject("a", 1), modifier3, null);
+        cl1.update(new BasicBSONObject("a", 2), modifier3, null);
 
         // 3 trans2 update R1/R2/R3 to R4/R5/R6
         UpdateThread updateThread = new UpdateThread();

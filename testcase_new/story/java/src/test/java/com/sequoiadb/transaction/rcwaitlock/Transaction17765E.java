@@ -79,15 +79,15 @@ public class Transaction17765E extends SdbTestBase {
 
         data4 = new BasicBSONObject();
         data4.put("_id", "insertID17765_2");
-        data4.put("a", 4);
-        data4.put("b", 4);
+        data4.put("a", 5);
+        data4.put("b", 5);
         data4.put("c", 13700000000L);
         data4.put("d", "customer transaction type data application.");
 
         data5 = new BasicBSONObject();
         data5.put("_id", "insertID17765_1");
-        data5.put("a", 3);
-        data5.put("b", 3);
+        data5.put("a", 4);
+        data5.put("b", 4);
         data5.put("c", 13700000000L);
         data5.put("d", "customer transaction type data application.");
 
@@ -107,7 +107,7 @@ public class Transaction17765E extends SdbTestBase {
         sdb3.beginTransaction();
         
         //2 trans1 insert record
-        cl1.update(new BasicBSONObject("a", 1), modifier3, null);
+        cl1.update(new BasicBSONObject("a", 3), modifier3, null);
 
         // 3 trans2 update
         UpdateThread updateThread = new UpdateThread();
@@ -139,8 +139,8 @@ public class Transaction17765E extends SdbTestBase {
         Assert.assertFalse(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
 
         expDataList.clear();
+        expDataList.add(data5);
         expDataList.add(data4);
-        expDataList.add(data3);
         recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -216,7 +216,7 @@ public class Transaction17765E extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': 'a'}" );
+            cl2.update(null, "{'$inc': {'a': 3, 'b': 3}}", "{'': 'a'}" );
         }
     }
 

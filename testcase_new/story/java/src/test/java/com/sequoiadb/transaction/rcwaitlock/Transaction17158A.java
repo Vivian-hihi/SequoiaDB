@@ -85,8 +85,7 @@ public class Transaction17158A extends SdbTestBase {
         try {
             Assert.assertEquals(read1.getExecResult(), expList);
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Assert.fail(e.getMessage());
         }
 
         db2.commit();
@@ -102,13 +101,11 @@ public class Transaction17158A extends SdbTestBase {
         private DBCursor cursor = null;
 
         public Read(String hint) {
-            // TODO Auto-generated constructor stub
             this.hint = hint;
         }
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cl = db.getCollectionSpace(csName).getCollection(clName);
