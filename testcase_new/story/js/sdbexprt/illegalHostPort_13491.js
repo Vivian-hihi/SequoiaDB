@@ -15,7 +15,6 @@ function main()
    var cl = commCreateCL( db, csname, clname, 0 ) ;
    cl.insert( doc ) ;
    testExprtIllegalHost() ;
-   testExprtIllegalPort() ;
    testExprtUnusedPort() ;
    commDropCL( db, csname, clname ) ;
 }
@@ -35,23 +34,6 @@ function testExprtIllegalHost()
    testRunCommand( command, 135 ) ;
    
    cmd.run( "rm -rf " + csvfile ) ;
-}
-
-function testExprtIllegalPort()
-{
-   var jsonfile = workDir + "sdbexprt13491.json" ;
-   cmd.run( "rm -rf " + jsonfile ) ;
-   var command = installPath + "bin/sdbexprt" + 
-                 " -s " + COORDHOSTNAME +
-                 " -p 22" +     // ssh service port
-                 " -c " + csname + 
-                 " -l " + clname + 
-                 " --type json" + 
-                 " --file " + jsonfile + 
-                 " --fields a" ;
-   testRunCommand( command, 8 ) ;
-   
-   cmd.run( "rm -rf " + jsonfile ) ;
 }
 
 function testExprtUnusedPort()
