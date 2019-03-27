@@ -13,7 +13,6 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.metadataconsistency.data.MetaDataUtils;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -29,42 +28,42 @@ public class SubCL101 extends SdbTestBase {
 	private Sequoiadb sdb;
 	private DBCollection mCL;
 	private String srcRg;
-	private String trgRg;
-	private String domainName = "dm101";
-	private String csName = "cs101";
-	private String mCLName = "mcl";
-	private String sCLName = "scl";
-	private int recordsNum = 10000;
+	private String dstRg;
+	private final static String DOMAIN_NAME = "dm101";
+	private final static String CS_NAME     = "cs101";
+	private final static String MAINCL_NAME = "mcl";
+	private final static String SUBCL_NAME  = "scl";
+	private final static int RECORDS_NUM = 10000;
 
 	@BeforeClass
 	private void setUp() {
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		
-		if( MetaDataUtils.isStandAlone(sdb) || MetaDataUtils.OneGroupMode(sdb) ) {
+		if( CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb) ) {
 			throw new SkipException("The mode is standlone, "
 					+ "or only one group, skip the testCase.");
 		}
 		
 		ArrayList<String> groupNames = CommLib.getDataGroupNames(sdb);
 		srcRg = groupNames.get(0);
-		trgRg = groupNames.get(1);
+		dstRg = groupNames.get(1);
 		
 		// create domain
-		String[] clRgNames = {srcRg, trgRg};		
+		String[] clRgNames = {srcRg, dstRg};		
 		BSONObject dmOpt = new BasicBSONObject();
 		dmOpt.put("Groups", clRgNames);
 		dmOpt.put("AutoSplit", true);
-		sdb.createDomain(domainName, dmOpt);
+		sdb.createDomain(DOMAIN_NAME, dmOpt);
 		
 		// create cs
 		BSONObject csOpt = new BasicBSONObject();
-		csOpt.put("Domain", domainName);
-		CollectionSpace cs = sdb.createCollectionSpace(csName, csOpt);
+		csOpt.put("Domain", DOMAIN_NAME);
+		CollectionSpace cs = sdb.createCollectionSpace(CS_NAME, csOpt);
 		
 		// create mainCL/subCL/attachCL
-		mCL = cs.createCollection(mCLName, 
+		mCL = cs.createCollection(MAINCL_NAME, 
 				(BSONObject) JSON.parse("{IsMainCL:true, ShardingKey:{_id:1}}"));
-		DBCollection sCL = cs.createCollection(sCLName, 
+		DBCollection sCL = cs.createCollection(SUBCL_NAME, 
 				(BSONObject) JSON.parse("{ShardingKey:{_id:1}, ShardingType:'hash'}"));
 		mCL.attachCollection(sCL.getFullName(), 
 				(BSONObject) JSON.parse(
@@ -73,7 +72,7 @@ public class SubCL101 extends SdbTestBase {
 
 	@Test
 	private void test() {
-		this.insertData(mCL, recordsNum);
+		this.insertData(mCL, RECORDS_NUM);
 		// check results
 		Sequoiadb srcRgDB = null;
 		Sequoiadb trgRgDB = null;
@@ -81,16 +80,16 @@ public class SubCL101 extends SdbTestBase {
 		long trgRecCnt = 0;
 		try {
 			srcRgDB = sdb.getReplicaGroup(srcRg).getMaster().connect();
-			srcRecCnt = srcRgDB.getCollectionSpace(csName).getCollection(sCLName).getCount();
+			srcRecCnt = srcRgDB.getCollectionSpace(CS_NAME).getCollection(SUBCL_NAME).getCount();
 	
-			trgRgDB = sdb.getReplicaGroup(trgRg).getMaster().connect();
-			trgRecCnt = trgRgDB.getCollectionSpace(csName).getCollection(sCLName).getCount();
+			trgRgDB = sdb.getReplicaGroup(dstRg).getMaster().connect();
+			trgRecCnt = trgRgDB.getCollectionSpace(CS_NAME).getCollection(SUBCL_NAME).getCount();
 		} finally {
 			if (srcRgDB != null) srcRgDB.close();
 			if (trgRgDB != null) trgRgDB.close();
 		}	
 		
-		Assert.assertEquals(srcRecCnt + trgRecCnt, recordsNum);
+		Assert.assertEquals(srcRecCnt + trgRecCnt, RECORDS_NUM);
 		
 		long diffVal = Math.abs(srcRecCnt - trgRecCnt);
 		long maxCnt = Math.max(srcRecCnt, trgRecCnt);
@@ -102,8 +101,8 @@ public class SubCL101 extends SdbTestBase {
 	@AfterClass
 	private void tearDown() {
 		try {
-			sdb.dropCollectionSpace(csName);
-			sdb.dropDomain(domainName);
+			sdb.dropCollectionSpace(CS_NAME);
+			sdb.dropDomain(DOMAIN_NAME);
 		} finally {
 			if (sdb != null) {
 				sdb.close();
