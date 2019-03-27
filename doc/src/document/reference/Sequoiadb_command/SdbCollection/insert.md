@@ -37,7 +37,7 @@ Collection
 
 **Note:**
 
-* 如果插入的记录不指定“_id”字段时，SequoiaDB 会自动为记录添加一个“_id”字段来标识记录的唯一性。
+* 当插入的记录不包含“_id”字段时，SequoiaDB 会自动为记录添加一个“_id”字段来唯一标识该记录。
 
 * 单条插入支持的 `flag` 有效值为：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP；
 而批量插入支持所有的 `flag` 的有效值。使用参数 `options` 时的情况与使用参数 `flag` 的一致。
