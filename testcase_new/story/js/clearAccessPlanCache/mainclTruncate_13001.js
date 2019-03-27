@@ -131,15 +131,8 @@ function main()
    checkConsistency(db, null, null, [srcGroupName, desGroupName]);
    
    //检查统计
-   checkStat( db, maincsName, subclName1, "$shard", true, true );
-   checkStat( db, maincsName, subclName2, "$shard", true, true );
-   checkStat( db, subcsName1, subclName3, "$shard", true, true );
-   checkStat( db, subcsName1, subclName4, "$shard", true, true );
-   
-   checkStat( db, maincsName, subclName1, "a1", true, true );
-   checkStat( db, maincsName, subclName2, "a1", true, true );
-   checkStat( db, subcsName1, subclName3, "a1", true, true );
-   checkStat( db, subcsName1, subclName4, "a1", true, true );
+   checkStats( db, maincsName, [subclName1, subclName2], ["$shard", "a1"] , true, true );
+   checkStats( db, subcsName1, [subclName3, subclName4], ["$shard", "a1"], true, true );
    
    //执行查询
    var findConf = {a0:{$in:[0,10000]}};
@@ -168,13 +161,9 @@ function main()
    //检查统计
    checkStat( db, maincsName, subclName1, "$shard", false, false );
    checkStat( db, maincsName, subclName2, "$shard", true, true );
-   checkStat( db, subcsName1, subclName3, "$shard", true, true );
-   checkStat( db, subcsName1, subclName4, "$shard", true, true );
-   
    checkStat( db, maincsName, subclName1, "a1", false, false );
    checkStat( db, maincsName, subclName2, "a1", true, true );
-   checkStat( db, subcsName1, subclName3, "a1", true, true );
-   checkStat( db, subcsName1, subclName4, "a1", true, true );
+   checkStats( db, subcsName1, [subclName3, subclName4], ["$shard", "a1"], true, true );
    
    //检查访问计划快照
    var tmp = [{GroupName:srcGroupName,ScanType:"ixscan",IndexName:"$shard"},
