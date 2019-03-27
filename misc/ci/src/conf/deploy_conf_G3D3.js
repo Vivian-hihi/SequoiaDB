@@ -47,5 +47,6 @@ var dataConf  = { diaglevel:diagLevel,
                   diagnum:30,
                   logfilenum:40,
                   plancachelevel:3,
+                  auditmask:"SYSTEM|DDL|DCL|DML",
                   fap:fapValue
                 };
