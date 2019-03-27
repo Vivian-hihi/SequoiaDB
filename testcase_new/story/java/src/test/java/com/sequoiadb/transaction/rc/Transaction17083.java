@@ -37,7 +37,9 @@ public class Transaction17083 extends SdbTestBase {
     private List<BSONObject> insertR1s = new ArrayList<BSONObject>();
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
-    private String b = "b";
+    private StringBuilder b = new StringBuilder("bbbbbbbbbbbbbbbbbbbb");
+    private StringBuilder a1 = new StringBuilder("a");
+    private StringBuilder a2 = new StringBuilder("aa");
 
     @BeforeClass
     public void setUp() {
@@ -52,15 +54,20 @@ public class Transaction17083 extends SdbTestBase {
 
     @Test
     public void test() {
-        for (int i = 0; i < 60 * 1024; i++) {
-            b = "aaaaaaaaaaaaaaaaaaaa" + b;
+        for (int i = 0; i < 60 * 1000; i++) {
+            b.append("bbbbbbbbbbbbbbbbbbbb");
+        }
+        
+        for (int i = 0; i < 4000; i++) {
+            a1.append("a");
+            a2.append("a");
         }
 
         // 集合中插入带索引的记录
         BSONObject insertR1 = null;
-        for(int i=0; i<50; i++)
+        for(int i=0; i<10; i++)
         {
-            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'aaaaaa', b:'" + b + "'}");
+            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1 +"', b:'" + b + "'}");
             insertR1s.add(insertR1);
         }
         cl.insert(insertR1s);
@@ -137,18 +144,19 @@ public class Transaction17083 extends SdbTestBase {
 		@Override
 		public void exec() throws Exception {
 			// TODO Auto-generated method stub
-	        for(int i=0; i<50; i++){
-                BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (50+i) +", a:'aaaaaaaa', b:'" + b + "'}");
+	        for(int i=0; i<10; i++){
+                BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'"+ a1 +"', b:'" + b + "'}");
                 // 事务1对同一条记录执行多个操作
                 cl1.insert(insertR2);
-                cl1.update("{_id:"+ (50+i) +"}", "{$set:{a:'a'}}", null);
-                cl1.delete("{_id:"+ (50+i) +"}");
+                cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'"+ a2 +"'}}", "{'':'_id'}");
+                cl1.delete("{_id:"+ (10+i) +"}", "{'':'_id'}");
                 // 事务1对不同记录执行多个操作
-                cl1.delete("{_id:"+ i +"}");
+                cl1.delete("{_id:"+ i +"}", "{'':'_id'}");
                 cl1.insert(insertR2);
-                cl1.update("{_id:"+ (50+i) +"}", "{$set:{a:'a'}}", null);
-                cl1.update("{_id:"+ (50+i) +"}", "{$set:{a:'aaaaaaaa'}}", null);
+                cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'"+ a2 +"'}}", "{'':'_id'}");
+                cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'"+ a1 +"'}}", "{'':'_id'}");
                 expList.add(insertR2);
+                System.out.println("Operate-17083:"+i);
             }
 		}
     }
@@ -169,9 +177,10 @@ public class Transaction17083 extends SdbTestBase {
 			// TODO Auto-generated method stub
     		cl2 = db2.getCollectionSpace(csName).getCollection(clName);
 			// 事务2扫描记录
-			for(int i=0; i<10; i++){
+			for(int i=0; i<5; i++){
 		        cursor = cl2.query(null, null, "{_id:1}", hint);
 		        Assert.assertEquals(TransUtils.getReadActList(cursor), insertR1s);
+		        System.out.println("read-17083:"+i);
 			}
 			cursor.close();
 		}

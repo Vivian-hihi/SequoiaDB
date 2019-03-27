@@ -34,7 +34,10 @@ public class Transaction17201 extends SdbTestBase {
     private DBCursor cursor = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
-
+    private StringBuilder b = new StringBuilder("bbbbbbbbbbbbbbbbbbbb");
+    private StringBuilder a1 = new StringBuilder("a");
+    private StringBuilder a2 = new StringBuilder("aa");
+    
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -48,9 +51,13 @@ public class Transaction17201 extends SdbTestBase {
 
     @Test
     public void test() {
-        String b = "b";
-        for (int i = 0; i < 60 * 1024; i++) {
-            b = "aaaaaaaaaaaaaaaaaaaa" + b;
+        for (int i = 0; i < 60 * 1000; i++) {
+            b.append("bbbbbbbbbbbbbbbbbbbb");
+        }
+        
+        for (int i = 0; i < 4000; i++) {
+            a1.append("a");
+            a2.append("a");
         }
 
         // 集合中插入带索引的记录
@@ -58,7 +65,7 @@ public class Transaction17201 extends SdbTestBase {
         BSONObject insertR1 = null;
         for(int i=0; i<10; i++)
         {
-            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'aaaaaa', b:'" + b + "'}");
+            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1 +"', b:'" + b + "'}");
             insertR1s.add(insertR1);
         }
         cl.insert(insertR1s);
@@ -69,16 +76,16 @@ public class Transaction17201 extends SdbTestBase {
 
         // 事务1执行多个操作
         for(int i=0; i<10; i++){
-            BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'aaaaaaaa', b:'" + b + "'}");
+            BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'"+ a1 +"', b:'" + b + "'}");
             // 事务1对同一条记录执行多个操作
             cl1.insert(insertR2);
-            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'a'}}", null);
+            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'"+ a2 +"'}}", null);
             cl1.delete("{_id:"+ (10+i) +"}");
             // 事务1对不同记录执行多个操作
             cl1.delete("{_id:"+ i +"}");
             cl1.insert(insertR2);
-            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'a'}}", null);
-            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'aaaaaaaa'}}", null);
+            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'"+ a2 +"'}}", null);
+            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'"+ a1 +"'}}", null);
             expList.add(insertR2);
         }
 

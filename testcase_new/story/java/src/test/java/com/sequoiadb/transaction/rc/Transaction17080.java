@@ -50,7 +50,7 @@ public class Transaction17080 extends SdbTestBase {
 
     @Test
     public void test() {
-        insertR1s = TransUtils.insertDatas(cl, 0, 10000, 0);
+        insertR1s = TransUtils.insertDatas(cl, 0, 10000, (int)(Math.random()*10000+1));
         
         db1.beginTransaction();
         db2.beginTransaction();
@@ -86,19 +86,19 @@ public class Transaction17080 extends SdbTestBase {
         db1.commit();
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl2.query(null, null, "{a:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, "{a:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
@@ -129,7 +129,7 @@ public class Transaction17080 extends SdbTestBase {
 	            cl1.insert((BSONObject) JSON.parse("{_id:"+ i +", a:"+ i +",b:"+ i +"}"));
 	            cl1.update("{a:"+ i +"}","{$set:{a:"+ (i+10000) +"}}","{'':'a'}");
 	            expList.add((BSONObject) JSON.parse("{_id:"+ i +", a:"+ (i+10000) +",b:"+ i +"}"));
-	            System.out.println("operation"+i);
+	            System.out.println("operation-17080"+i);
 	        }
 		}
     }
@@ -156,6 +156,7 @@ public class Transaction17080 extends SdbTestBase {
  		        cursor = cl2.query(null, null, "{_id:1}", hint);
 		        actList = TransUtils.getReadActList(cursor);
 		        Assert.assertEquals(actList, insertR1s);
+		        System.out.println("read-17080:"+i);
 			}
 			cursor.close();
 		}

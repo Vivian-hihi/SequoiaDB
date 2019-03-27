@@ -50,7 +50,7 @@ public class Transaction17081 extends SdbTestBase {
 
     @Test
     public void test() {
-        insertR1s = TransUtils.insertDatas(cl, 0, 10000, 0);
+        insertR1s = TransUtils.insertDatas(cl, 0, 10000, (int)(Math.random()*10000+1));
         
         db1.beginTransaction();
         db2.beginTransaction();
@@ -126,7 +126,7 @@ public class Transaction17081 extends SdbTestBase {
                 cl1.insert((BSONObject) JSON.parse("{_id:"+ i +", a:"+ i +",b:"+ i +"}"));
                 cl1.update("{a:"+ i +"}","{$set:{a:"+ (i+10000) +"}}","{'':'a'}");
                 expList.add((BSONObject) JSON.parse("{_id:"+ i +", a:"+ (i+10000) +",b:"+ i +"}"));
-                System.out.println("operation"+i);
+                System.out.println("operation-17081"+i);
             }
         }
     }
@@ -153,6 +153,7 @@ public class Transaction17081 extends SdbTestBase {
                 cursor = cl2.query(null, null, "{_id:1}", hint);
                 actList = TransUtils.getReadActList(cursor);
                 Assert.assertEquals(actList, insertR1s);
+                System.out.println("read-17081"+i);
             }
             cursor.close();
         }
