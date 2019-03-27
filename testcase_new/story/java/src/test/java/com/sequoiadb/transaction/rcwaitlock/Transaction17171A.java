@@ -56,22 +56,6 @@ public class Transaction17171A extends SdbTestBase {
         };
     }
     
-    @Test(dataProvider = "index")
-    public void test(String indexKey) {
-        try{
-            cl.createIndex("a", indexKey, false, false);
-            
-            
-        } finally {
-            db1.commit();
-            db2.commit();
-            db3.commit();
-            if(cl.isIndexExist("a")){
-                cl.dropIndex("a");
-            }
-            cl.truncate();
-        }
-
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
