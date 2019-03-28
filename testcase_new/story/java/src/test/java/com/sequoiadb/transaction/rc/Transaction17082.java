@@ -38,7 +38,7 @@ public class Transaction17082 extends SdbTestBase {
     private List<BSONObject> actList = new ArrayList<BSONObject>();
     private StringBuilder b = new StringBuilder("bbbbbbbbbbbbbbbbbbbb");
     private StringBuilder a1 = new StringBuilder("a");
-    private StringBuilder a2 = new StringBuilder("aa");
+    private StringBuilder a2 = null;
 
     @BeforeClass
     public void setUp() {
@@ -59,14 +59,14 @@ public class Transaction17082 extends SdbTestBase {
         
         for (int i = 0; i < 4000; i++) {
             a1.append("a");
-            a2.append("a");
         }
+        a2 = a1.append("a");
     	
     	// 集合中插入带索引的记录
         BSONObject insertR1 = null;
         for(int i=0; i<10; i++)
         {
-            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1 +"', b:'" + b + "'}");
+            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1+i +"', b:'" + b + "'}");
             insertR1s.add(insertR1);
         }
         cl.insert(insertR1s);
@@ -96,38 +96,38 @@ public class Transaction17082 extends SdbTestBase {
         }
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, "{a:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
 
         db1.commit();
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl2.query(null, null, "{a:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, "{a:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
 
@@ -143,18 +143,17 @@ public class Transaction17082 extends SdbTestBase {
 			// TODO Auto-generated method stub
 	        // 事务1执行多个原子操作
 	        for(int i=0; i<10; i++){
-	            BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'"+ a1 +"', b:'" + b + "'}");
+	            BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'"+ a1+(10+i) +"', b:'" + b + "'}");
 	            // 事务1对同一条记录执行多个操作
 	            cl1.insert(insertR2);
-	            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'"+ a2 +"'}}", "{'':'_id'}");
-	            cl1.delete("{_id:"+ (10+i) +"}", "{'':'_id'}");
+	            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a2+(10+i) +"'}}", "{'':'a'}");
+	            cl1.delete("{a:'"+ a2+(10+i) +"'}", "{'':'a'}");
 	            // 事务1对不同记录执行多个操作
-	            cl1.delete("{_id:"+ i +"}");
+	            cl1.delete("{a:'"+ a1+i +"'}", "{'':'a'}");
 	            cl1.insert(insertR2);
-	            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'"+ a2 +"'}}", "{'':'_id'}");
-	            cl1.update("{_id:"+ (10+i) +"}", "{$set:{a:'"+ a1 +"'}}", "{'':'_id'}");
+	            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a2+(10+i) +"'}}", "{'':'a'}");
+	            cl1.update("{a:'"+ a2+(10+i) +"'}", "{$set:{a:'"+ a1+(10+i) +"'}}", "{'':'a'}");
 	            expList.add(insertR2);
-	            System.out.println("operation-17082:"+i);
 	        }
 		}
     }
@@ -177,9 +176,8 @@ public class Transaction17082 extends SdbTestBase {
     		cl2 = db2.getCollectionSpace(csName).getCollection(clName);
 			// 事务2扫描记录
 			for(int i=0; i<5; i++){
-		        cursor = cl2.query(null, null, "{_id:1}", hint);
+		        cursor = cl2.query(null, null, "{a:1}", hint);
 		        Assert.assertEquals(TransUtils.getReadActList(cursor), insertR1s);
-		        System.out.println("read-17082:"+i);
 			}
 			cursor.close();
 		}

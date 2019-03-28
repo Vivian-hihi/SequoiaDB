@@ -30,6 +30,7 @@ public class Transaction17160 extends SdbTestBase {
     private DBCollection cl = null;
     private DBCollection cl1 = null;
     private DBCursor cursor = null;
+    private List<BSONObject> insertR1s = new ArrayList<BSONObject>();
     private List<BSONObject> expList = new ArrayList<BSONObject>();
 
     @BeforeClass
@@ -50,31 +51,39 @@ public class Transaction17160 extends SdbTestBase {
         }
         
         StringBuilder a1 = new StringBuilder("a");
-        StringBuilder a2 = new StringBuilder("aa");
+        StringBuilder a2 = null;
         for (int i = 0; i < 4000; i++) {
             a1.append("a");
-            a2.append("a");
         }
+        a2 = a1.append("a");
 
-        BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1, a:'"+ a1 +"', b:'" + b + "'}");
-        cl.insert(insertR1);
+        // 集合中插入带索引的记录
+        BSONObject insertR1 = null;
+        for(int i=0; i<10; i++)
+        {
+            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1+i +"', b:'" + b + "'}");
+            insertR1s.add(insertR1);
+        }
+        cl.insert(insertR1s);
 
         // 开启事务1
         db1.beginTransaction();
 
         // 事务1对同一条记录执行多个操作
-        BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2, a:'"+ a1 +"', b:'" + b + "'}");
-        cl1.insert(insertR2);
-        cl1.update("{_id:2}", "{$set:{a:'"+ a2 +"'}}", null);
-        cl1.delete("{_id:2}");
-        // 事务1对不同记录执行多个操作
-        cl1.insert("{_id:3, a:'"+ a1 +"', b:'" + b + "'}");
-        cl1.insert(insertR2);
-        cl1.update("{_id:1}", "{$set:{a:'"+ a2 +"'}}", null);
-        cl1.delete("{_id:3}");
-        BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1,a:'"+ a2 +"',b:'" + b + "'}");
-        expList.add(updateR1);
-        expList.add(insertR2);
+        for(int i=0; i<10; i++)
+        {
+            BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'"+ a1+(10+i) +"', b:'" + b + "'}");
+            // 事务1对同一条记录执行多个操作
+            cl1.insert(insertR2);
+            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a2+(10+i) +"'}}", "{'':'a'}");
+            cl1.delete("{a:'"+ a2+(10+i) +"'}", "{'':'a'}");
+            // 事务1对不同记录执行多个操作
+            cl1.delete("{a:'"+ a1+i +"'}", "{'':'a'}");
+            cl1.insert(insertR2);
+            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a2+(10+i) +"'}}", "{'':'a'}");
+            cl1.update("{a:'"+ a2+(10+i) +"'}", "{$set:{a:'"+ a1+(10+i) +"'}}", "{'':'a'}");
+            expList.add(insertR2);
+        }
 
         // 事务2表扫描记录
         Read read1 = new Read("{'':null}");
@@ -87,11 +96,11 @@ public class Transaction17160 extends SdbTestBase {
         Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, "{a:1}", "{'':null}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         db1.commit();
@@ -135,16 +144,16 @@ public class Transaction17160 extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{a:1}", hint);
                 List<BSONObject> records = TransUtils.getReadActList(cursor);
                 setExecResult(records);
 
                 // 事务2扫描记录
-                cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{a:1}", hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
                 // 非事务扫描记录
-                cursor = cl.query(null, null, "{_id:1}", hint);
+                cursor = cl.query(null, null, "{a:1}", hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
                 db2.commit();
