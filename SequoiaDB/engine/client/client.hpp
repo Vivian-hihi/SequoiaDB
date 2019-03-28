@@ -68,7 +68,7 @@ do                                     \
 #define FLG_INSERT_CONTONDUP      0x00000001
 /** The flag represent whether insert return the "_id" field of the record for user */
 #define FLG_INSERT_RETURN_OID     0x00000002
-/** The flag represent whether insert becomes update when hitting index key duplicate error */
+/** The flag represent replacing the existing record by the new record and continuing when insert hitting index key duplicate error */
 #define FLG_INSERT_REPLACEONDUP   0x00000004
 
 
@@ -773,8 +773,8 @@ namespace sdbclient
                                      error, database will skip them and go on 
                                      inserting.
                <li>
-               FLG_INSERT_RETURN_OID:    return the value of "_id" field in the record.
-                              <li>
+               FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.
+               <li>
                FLG_INSERT_REPLACEONDUP:
                                       if the record hit index key duplicate 
                                       error, database will replace the existing 
@@ -823,13 +823,14 @@ namespace sdbclient
                                      error, database will skip them and go on 
                                      inserting.
                <li>
-               FLG_INSERT_RETURN_OID:    return the value of "_id" field in the record.
+               FLG_INSERT_RETURN_OID:
+                                     return the value of "_id" field in the record.
                <li>
                FLG_INSERT_REPLACEONDUP:
-                           if the record hit index key duplicate 
-                           error, database will replace the existing 
-                           record by the inserting new record and them 
-                           go on inserting.
+                                     if the record hit index key duplicate 
+                                     error, database will replace the existing 
+                                     record by the inserting new record and then 
+                                     go on inserting.
 
           \param [out] pResult The result of inserting. Can be NULL or a bson:
                <ul>
@@ -877,13 +878,14 @@ namespace sdbclient
                                      error, database will skip them and go on 
                                      inserting.
                <li>
-               FLG_INSERT_RETURN_OID:    return the value of "_id" field in the records.
+               FLG_INSERT_RETURN_OID:    
+                                     return the value of "_id" field in the records.
                <li>
                FLG_INSERT_REPLACEONDUP:
-                            if the record hit index key duplicate 
-                            error, database will replace the existing 
-                            record by the inserting new record and them 
-                            go on inserting.
+                                     if the record hit index key duplicate 
+                                     error, database will replace the existing 
+                                     record by the inserting new record and then 
+                                     go on inserting.
 
           \param [out] pResult The result of inserting. 
                        Can be NULL or a bson:
@@ -930,10 +932,10 @@ namespace sdbclient
                                      inserting.
                <li>
                FLG_INSERT_REPLACEONDUP:
-                                  if the record hit index key duplicate 
-                                  error, database will replace the existing 
-                                  record by the inserting new record and them 
-                                  go on inserting.
+                                     if the record hit index key duplicate 
+                                     error, database will replace the existing 
+                                     record by the inserting new record and them 
+                                     go on inserting.
 
           \param [in] objs The bson objects to be inserted.
           \retval SDB_OK Operation Success.

@@ -1604,12 +1604,13 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                                error, database will skip them and go on 
                                inserting.
          <li>
-         FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.
+         FLG_INSERT_RETURN_OID: 
+                               return the value of "_id" field in the record.
          <li>
          FLG_INSERT_REPLACEONDUP:
-                           if the record hit index key duplicate 
-                           error, database will replace the existing 
-                           record by the inserting new record.
+                               if the record hit index key duplicate 
+                               error, database will replace the existing 
+                               record by the inserting new record.
 
     \param [out] pResult The result of inserting. Can be NULL or a bson:
          <ul>
@@ -1650,7 +1651,7 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
          FLG_INSERT_REPLACEONDUP:
                                if the record hit index key duplicate 
                                error, database will replace the existing 
-                               record by the inserting new record and them 
+                               record by the inserting new record and then 
                                go on inserting.
 
     \param [in] objs The array of bson objects to be inserted, cannot be null.
@@ -1708,13 +1709,14 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                error, database will skip them and go on 
                                inserting.
          <li>
-         FLG_INSERT_RETURN_OID: return the value of "_id" field in the records.
+         FLG_INSERT_RETURN_OID: 
+                               return the value of "_id" field in the records.
          <li>
          FLG_INSERT_REPLACEONDUP:
-                                if the record hit index key duplicate 
-                                error, database will replace the existing 
-                                record by the inserting new record and them 
-                                go on inserting.
+                               if the record hit index key duplicate 
+                               error, database will replace the existing 
+                               record by the inserting new record and then 
+                               go on inserting.
 
     \param [in] objs The array of bson objects to be inserted, cannot be null.
     \param [in] num The number of inserted bson objects.
