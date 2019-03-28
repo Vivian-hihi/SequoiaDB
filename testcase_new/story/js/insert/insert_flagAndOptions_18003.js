@@ -7,11 +7,11 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格
-	var clName = "insertFlag_18003";
-	var idxName = "idx";	
+   println("\n---Begin to run test");
+   var clName = "insertFlag_18003";
+   var idxName = "idx";   
    var cl = readyCL( clName );
-	cl.createIndex( idxName, {a:1, b:1}, true, true );//TODO :建议这里使用公共方法创建索引commCreateIndex 
+   cl.createIndex( idxName, {a:1, b:1}, true, true );
    
    // test
    setOptions_RC_true( cl );
@@ -25,50 +25,50 @@ function main()
 
 function setOptions_RC_true( cl )
 {
-	println("\n---Begin to insert, set options[{ReturnOID:true,ContOnDup:true}].");
-   cl.insert( {a:1,b:1} );
+   println("\n---Begin to insert, set options[{ReturnOID:true,ContOnDup:true}].");
+   cl.insert( {_id:1,a:1,b:1} );
    
-	var recsArray = [{a:1,b:1,c:1},{a:2}];
-	var rc = cl.insert( recsArray, {ReturnOID:true,ContOnDup:true} );
-   checkReturnOid( rc );
-	var expRecs = [{"a":1,"b":1},{"a":2}];
+   var recsArray = [{_id:2,a:1,b:1,c:1},{_id:3,a:2}];
+   var rc = cl.insert( recsArray, {ReturnOID:true,ContOnDup:true} );
+   checkReturnOid( rc, [2,3] );
+   var expRecs = [{"_id":1,"a":1,"b":1},{"_id":3,"a":2}];
    checkRecords( cl, expRecs );
    cl.remove();
 }
 
 function setOptions_RR_true( cl )
 {
-	println("\n---Begin to insert, set options[{ReturnOID:true,ReplaceOnDup:true}].");
-   cl.insert( {a:1,b:1} );
+   println("\n---Begin to insert, set options[{ReturnOID:true,ReplaceOnDup:true}].");
+   cl.insert( {_id:1,a:1,b:1} );
    
-	var recsArray = [{a:1,b:1,c:2},{a:3}];
-	var rc = cl.insert( recsArray, {ReturnOID:true,ReplaceOnDup:true} );
-   checkReturnOid( rc );
-	var expRecs = [{"a":1,"b":1,"c":2},{"a":3}];
+   var recsArray = [{_id:2,a:1,b:1,c:2},{_id:3,a:3}];
+   var rc = cl.insert( recsArray, {ReturnOID:true,ReplaceOnDup:true} );
+   checkReturnOid( rc, [2,3] );
+   var expRecs = [{"_id":1,"a":1,"b":1,"c":2},{"_id":3,"a":3}];
    checkRecords( cl, expRecs );
    cl.remove();
 }
 
 function setOptions_RC_false( cl )
 {
-	println("\n---Begin to insert, set options[{ReturnOID:false,ContOnDup:false}].");
-   cl.insert( {a:1,b:1} );
-	
-	var recsArray = [{a:1,b:1,c:3},{a:3}];
+   println("\n---Begin to insert, set options[{ReturnOID:false,ContOnDup:false}].");
+   cl.insert( {_id:1,a:1,b:1} );
+   
+   var recsArray = [{a:1,b:1,c:3},{a:3}];
    try
    {
-	   cl.insert( recsArray, {ReturnOID:false,ContOnDup:false} );//TODO :这里只能说明ContOnDup生效了，但是因为报错无法得知ReturnOID是否生效，建议再设置一组数据不冲突的情况检测ReturnOID参数是否生效
+      cl.insert( recsArray, {ReturnOID:false,ContOnDup:false} );//TODO :这里只能说明ContOnDup生效了，但是因为报错无法得知ReturnOID是否生效，建议再设置一组数据不冲突的情况检测ReturnOID参数是否生效 //TODO:请往上看，2个都为true的情况
       throw "expect fail, but actual succ." 
    }
    catch(e)
    {
       if( -38 !== e )
       {
-   	   throw e;
-   	}
+         throw e;
+      }
    }
    
-	var expRecs = [{"a":1,"b":1}];
+   var expRecs = [{"_id":1,"a":1,"b":1}];
    checkRecords( cl, expRecs );
    
    cl.remove();
@@ -76,24 +76,24 @@ function setOptions_RC_false( cl )
 
 function setOptions_RR_false( cl )
 {
-	println("\n---Begin to insert, set options[{ReturnOID:false,ReplaceOnDup:false}].");
-   cl.insert( {a:1,b:1} );
+   println("\n---Begin to insert, set options[{ReturnOID:false,ReplaceOnDup:false}].");
+   cl.insert( {_id:1,a:1,b:1} );
    
-	var recsArray = [{a:1,b:1,c:4},{a:4}];
+   var recsArray = [{a:1,b:1,c:4},{a:2}];
    try
    {
-	   cl.insert( recsArray, {ReturnOID:false,ReplaceOnDup:false} );//TODO :与上一个方法相同，未检测ReturnOID是否生效，也可以测试一组{ReturnOID:false,ReplaceOnDup:true}的数据
+      cl.insert( recsArray, {ReturnOID:false,ReplaceOnDup:false} );//TODO :与上一个方法相同，未检测ReturnOID是否生效，也可以测试一组{ReturnOID:false,ReplaceOnDup:true}的数据//TODO：同上
       throw "expect fail, but actual succ." 
    }
    catch(e)
    {
       if( -38 !== e )
       {
-   	   throw e;
-   	}
+         throw e;
+      }
    }
    
-	var expRecs = [{"a":1,"b":1}];
+   var expRecs = [{"_id":1,"a":1,"b":1}];
    checkRecords( cl, expRecs );
    
    cl.remove();
@@ -101,51 +101,52 @@ function setOptions_RR_false( cl )
 
 function setOptions_CR( cl )
 {
-	println("\n---Begin to insert, set options[{ContOnDup:true,ReplaceOnDup:true}].");
-   cl.insert( {a:1,b:1} );
+   println("\n---Begin to insert, set options[{ContOnDup:true,ReplaceOnDup:true}].");
+   cl.insert( {_id:1,a:1,b:1} );
    
-	// ContOnDup:true,ReplaceOnDup:true
-	var recsArray = [{a:1,b:1,c:5},{a:5}];
+   // ContOnDup:true,ReplaceOnDup:true
+   var recsArray = [{_id:2,a:1,b:1,c:5},{_id:3,a:5}];
    try
    {
-	   cl.insert( recsArray, {ContOnDup:true,ReplaceOnDup:true} );
+      cl.insert( recsArray, {ContOnDup:true,ReplaceOnDup:true} );
       throw "expect fail, but actual succ." 
    }
    catch(e)
    {
       if( -6 !== e )
       {
-   	   throw buildException( "setOptions_CR", null, "", -6, "  " + -38 );//TODO :这里实际结果应该是e吧，可能返回的错误码不是-38
-   	}
+         throw buildException( "setOptions_CR", null, "", -6, "  " + e );
+      }
    }   
-	var expRecs = [{"a":1,"b":1}];
+   var expRecs = [{"_id":1,"a":1,"b":1}];
    checkRecords( cl, expRecs );
    
    // ContOnDup:true,ReplaceOnDup:false
-	var recsArray = [{a:1,b:1,c:6},{a:6}];
-   cl.insert( recsArray, {ContOnDup:true,ReplaceOnDup:false} );
-	var expRecs = [{"a":1,"b":1},{"a":6}];
+   var recsArray = [{_id:4,a:1,b:1,c:6},{_id:5,a:6}];
+   var rc = cl.insert( recsArray, {ReturnOID:true,ContOnDup:true,ReplaceOnDup:false} );
+   checkReturnOid( rc, [4,5] );
+   var expRecs = [{"_id":1,"a":1,"b":1},{"_id":5,"a":6}];
    checkRecords( cl, expRecs );
    
    // ContOnDup:false,ReplaceOnDup:true
-	var recsArray = [{a:1,b:1,c:7},{a:7}];
+   var recsArray = [{_id:6,a:1,b:1,c:7},{_id:7,a:7}];
    cl.insert( recsArray, {ContOnDup:false,ReplaceOnDup:true} );
-	var expRecs = [{"a":1,"b":1,"c":7},{"a":6},{"a":7}];
+   var expRecs = [{"_id":1,"a":1,"b":1,"c":7},{_id:5,"a":6},{_id:7,"a":7}];
    checkRecords( cl, expRecs );
    
    // ContOnDup:false,ReplaceOnDup:false
-	var recsArray = [{a:1,b:1,c:8},{a:8}];
+   var recsArray = [{_id:8,a:1,b:1,c:8},{_id:9,a:8}];
    try
    {
-	   cl.insert( recsArray, {ContOnDup:false,ReplaceOnDup:false} );
+      cl.insert( recsArray, {ContOnDup:false,ReplaceOnDup:false} );
       throw "expect fail, but actual succ." 
    }
    catch(e)
    {
       if( -38 !== e )
       {
-   	   throw e;
-   	}
+         throw buildException( "setOptions_CR", null, "", -38, "  " + e );
+      }
    }
    
    checkRecords( cl, expRecs );   
@@ -155,7 +156,7 @@ function setOptions_CR( cl )
 
 function checkRecords( cl, recs ) 
 {
-   var rc = cl.find( {}, {_id:{$include:0}} ).sort({a:1} );
+   var rc = cl.find( {} ).sort({a:1} );
    var rcRecs = new Array();
    while( tmpRecs = rc.next() )
    {
@@ -170,15 +171,13 @@ function checkRecords( cl, recs )
    }
 }
 
-function checkReturnOid( rc ) {
-   for( var i = 0; i < rc.length; i++ )
-   {
-      var oid = rc[i].toObj()["_id"]["$oid"];
-      var expTypeOid = "string";
-      var actTypeOid = typeof( oid );
-      if( expTypeOid !== actTypeOid )//TODO :这里比较的是Oid的类型是否为string，但是没有比较Oid的值是否正确
+function checkReturnOid( rc, expOids ) { 
+   var actOids = rc.toObj()["_id"];
+   for (var i = 0; i < actOids.length; i++)
+	{
+      if( expOids[i] !== actOids[i] )
       {
-         throw buildException( "checkReturnOid", null, "", expTypeOid, "  " + actTypeOid );
-      } 
-   }
+         throw buildException( "checkReturnOid", null, "", expOids[i], "  " + actOids[i] );
+      } 		
+   } 
 }

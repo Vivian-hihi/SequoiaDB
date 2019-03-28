@@ -7,11 +7,11 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格，用例里面的格式也可以再对齐下
-	var clName = "insertFlag_17997";
-	var idxName = "idx";	
+   println("\n---Begin to run test");
+   var clName = "insertFlag_17997";
+   var idxName = "idx";   
    var cl = readyCL( clName );
-	cl.createIndex( idxName, {a:1, b:1}, true, true );//TODO :建议这里使用公共方法创建索引commCreateIndex
+   cl.createIndex( idxName, {a:1, b:1}, true, true );
    
    // test
    insertNotSetFlag( cl );
@@ -23,49 +23,54 @@ function main()
 
 function insertNotSetFlag( cl )
 {
-	println("\n---Begin to insert docs, not set flag");
-	// index key not conflict
-	var recs = [{"a":1},{"a":2}];
+   println("\n---Begin to insert docs, not set flag");
+   // index key not conflict
+   var recs = [{"a":1},{"a":2}];
    cl.insert( recs );
    
    // index key conflict
    try
    {
       cl.insert( {a:1,c:1} );
-      throw "expect fail, but actual succ."  //TODO :建议使用buildException抛出异常，定位问题时可以更清晰，如果觉得太繁琐也可不用
+      throw "expect fail, but actual succ."  //TODO :建议使用buildException抛出异常，定位问题时可以更清晰，如果觉得太繁琐也可不用 //TODO：不需要
    }
    catch(e)
    {
       if( -38 !== e )
       {
-   	   throw e;
-   	}
+         throw e;
+      }
    }
    
    checkRecords( cl, recs );
    
-	cl.remove();
+   cl.remove();
 }
 
 function insertSetFlag_ReturnOid( cl )
 {
-	println("\n---Begin to insert docs, set flag[SDB_INSERT_RETURN_ID]/options[ReturnOID]");
-	cl.insert({a:1,b:1});
-	
-	// index key not conflict
-   var rc = cl.insert( {a:1,b:2}, SDB_INSERT_RETURN_ID );
-   checkReturnOid( rc );
+   println("\n---Begin to insert docs, set flag[SDB_INSERT_RETURN_ID]/options[ReturnOID]");
+   cl.insert({a:1,b:1});
    
+   // index key not conflict
+   var rc = cl.insert( {a:1,b:2}, SDB_INSERT_RETURN_ID );
+   if( null === rc )
+   {
+      throw buildException( "checkReturnOid", null, "", "return oid", "  " + null );
+   } 
    var rc = cl.insert( {a:1,b:3}, {ReturnOID:true} );
-   checkReturnOid( rc );
+   if( null === rc )
+   {
+      throw buildException( "checkReturnOid", null, "", "return oid", "  " + null );
+   } 
    
    var rc = cl.insert( {a:1,b:4}, {ReturnOID:false} );
    if( null != rc )
    {
       throw buildException( "checkReturnOid", null, "", "not return oid", "  " + "return oid" );
    } 
-	
-	// index key conflict
+   
+   // index key conflict
    try
    {
       var rc = cl.insert( {a:1,b:1,c:1}, SDB_INSERT_RETURN_ID );
@@ -75,21 +80,21 @@ function insertSetFlag_ReturnOid( cl )
    {
       if( -38 != e )
       {
-   	   throw e;
-   	}
+         throw e;
+      }
    }
    
    var expRecs = [{"a":1,"b":1},{"a":1,"b":2},{"a":1,"b":3},{"a":1,"b":4}];
    checkRecords( cl, expRecs );
    
-	cl.remove();
+   cl.remove();
 }
 
 function insertSetFlag_ContOnDup( cl )
 {
-	println("\n---Begin to insert docs, set flag[SDB_INSERT_CONTONDUP]/options[ContOnDup]");
-	// index key not conflict
-	cl.insert([{a:1,b:1}]);
+   println("\n---Begin to insert docs, set flag[SDB_INSERT_CONTONDUP]/options[ContOnDup]");
+   // index key not conflict
+   cl.insert([{a:1,b:1}]);
    
    // index key conflict
    // SDB_INSERT_CONTONDUP
@@ -107,8 +112,8 @@ function insertSetFlag_ContOnDup( cl )
    {
       if( -38 !== e )
       {
-   	   throw e;
-   	}
+         throw e;
+      }
    }
    
    // insert one doc, flag: SDB_INSERT_CONTONDUP
@@ -121,8 +126,8 @@ function insertSetFlag_ContOnDup( cl )
    {
       if( -6 !== e )
       {
-   	   throw e;
-   	}
+         throw e;
+      }
    }
    
    // insert one doc, options：ContOnDup
@@ -135,39 +140,29 @@ function insertSetFlag_ContOnDup( cl )
    {
       if( -6 !== e )
       {
-   	   throw e;
-   	}
+         throw e;
+      }
    }
    
    var expRecs = [{"a":1,"b":1},{"a":2},{"a":3}];
    checkRecords( cl, expRecs );
    
-	cl.remove();
+   cl.remove();
 }
 
 function checkRecords( cl, recs ) 
 {
-   var rc = cl.find( {}, {_id:{$include:0}} ).sort({a:1} );
+   var rc = cl.find( {}, {_id:{$include:0}} ).sort( {a:1} );
    var rcRecs = new Array();
    while( tmpRecs = rc.next() )
    {
       rcRecs.push( tmpRecs.toObj() );
    }   
-   //TODO :建议这里将rc游标关闭
+   //TODO :建议这里将rc游标关闭  //TODO: 不需要，游标遍历完会自动关闭。
    var expRecs = JSON.stringify( recs );
    var actRecs = JSON.stringify( rcRecs );
    if( expRecs !== actRecs )
    {
       throw buildException( "checkResult", null, "", expRecs, "  " + actRecs );
    }
-}
-
-function checkReturnOid( rc ) {
-   var oid = rc.toObj()["_id"]["$oid"];
-   var expTypeOid = "string";
-   var actTypeOid = typeof( oid );//TODO :这里比较的是Oid的类型是否为string，但是没有比较Oid的值是否正确
-   if( expTypeOid !== actTypeOid )
-   {
-      throw buildException( "checkReturnOid", null, "", expTypeOid, "  " + actTypeOid );
-   } 
 }

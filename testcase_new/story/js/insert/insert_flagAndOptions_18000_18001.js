@@ -8,44 +8,44 @@ main();
 
 function main()
 {  
-	println("\n---Begin to run test");//TODO :建议将用例里面的tab键改为空格
-	var clName = "insertFlag_18000";
-	var idxName = "idx";	
+   println("\n---Begin to run test");
+   var clName = "insertFlag_18000";
+   var idxName = "idx";   
    var cl = readyCL( clName );
-	cl.createIndex( idxName, {a:1, b:1}, true, true );//TODO :建议这里使用公共方法创建索引commCreateIndex
+   cl.createIndex( idxName, {a:1, b:1}, true, true );//TODO :建议这里使用公共方法创建索引commCreateIndex //TODO: 不需要
    cl.insert( {a:1,b:1} );
    
    // key not conflict
-	println("\n---Begin to insert, key not conflict");
-	var recsArray = [{c:1},{a:2,c:1},{a:2,b:1,c:1}];
-	cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );//TODO :用例没有覆盖option格式为：{ReplaceOnDup: true}的情况
-	var expRecs = [{"c":1},{"a":1,"b":1},{"a":2,"c":1},{"a":2,"b":1,"c":1}];
+   println("\n---Begin to insert, key not conflict");
+   var recsArray = [{c:1},{a:2,c:1},{a:2,b:1,c:1}];
+   cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );//TODO :用例没有覆盖option格式为：{ReplaceOnDup: true}的情况 //TODO:有覆盖，见18003
+   var expRecs = [{"c":1},{"a":1,"b":1},{"a":2,"c":1},{"a":2,"b":1,"c":1}];
    checkRecords( cl, expRecs );
    
    // key conflict
-	println("\n---Begin to insert, key conflict");
-	var firstRecord = {c:2};
-	var middRecord  = {a:2,c:3};
-	var lastRecord  = {a:2,b:1,c:5};
-	var recsArray   = [firstRecord, middRecord, lastRecord];
-	keyConflict( cl, recsArray );	
-	
+   println("\n---Begin to insert, key conflict");
+   var firstRecord = {c:2};
+   var middRecord  = {a:2,c:3};
+   var lastRecord  = {a:2,b:1,c:5};
+   var recsArray   = [firstRecord, middRecord, lastRecord];
+   keyConflict( cl, recsArray );   
+   
    // first record conflict
-	println("   first record conflict.");
-	var recsArray = [ firstRecord,{a:3} ];
-	cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );
-	
-	// middle record conflict
-	println("   middle record conflict.");
-	var recsArray = [{a:4}, middRecord, {a:4,b:1}];
-	cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );
-	
-	// last record conflict	
-	println("   last record conflict.");
-	var recsArray = [ {a:5}, lastRecord ];
-	cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );
-	
-	var expRecs = [{"c":2},{"a":1,"b":1},{"a":2,"c":3},{"a":2,"b":1,"c":5},{"a":3},{"a":4},{"a":4,"b":1},{"a":5}];
+   println("   first record conflict.");
+   var recsArray = [ firstRecord,{a:3} ];
+   cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );
+   
+   // middle record conflict
+   println("   middle record conflict.");
+   var recsArray = [{a:4}, middRecord, {a:4,b:1}];
+   cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );
+   
+   // last record conflict   
+   println("   last record conflict.");
+   var recsArray = [ {a:5}, lastRecord ];
+   cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );
+   
+   var expRecs = [{"c":2},{"a":1,"b":1},{"a":2,"c":3},{"a":2,"b":1,"c":5},{"a":3},{"a":4},{"a":4,"b":1},{"a":5}];
    checkRecords( cl, expRecs );
    
    cleanCL( clName );
@@ -53,23 +53,24 @@ function main()
 
 function keyConflict( cl, recsArray )
 {
-	println("\n---Begin to insert, key conflict.");
-	// key conflict, not set flag
-	for( var i = 0; i < recsArray.length; i++ )
-	{
-	   try
-	   {
-	      cl.insert( recsArray[i] );//TODO :单插数据冲突已经在用例17999中覆盖了，这里可以不用再重复测试了吧
+   println("\n---Begin to insert, key conflict.");
+   // key conflict, not set flag
+   for( var i = 0; i < recsArray.length; i++ )
+   {
+      try
+      {
+         cl.insert( recsArray[i] );//TODO :单插数据冲突已经在用例17999中覆盖了，这里可以不用再重复测试了吧 
+                                  //TODO: 1.没有设置flag,17999有设flag;2.文本用例有写了先插入冲突的记录检查是否报错，再设置flag插入，避免数据准备错误，非测试点。
          throw "expect fail, but actual succ."
-	   }
+      }
       catch(e)
       {
          if( -38 !== e )
          {
-      	   throw e;
-      	}
+            throw e;
+         }
       }
-	}
+   }
 }
 
 function checkRecords( cl, recs ) 
