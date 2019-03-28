@@ -57,7 +57,7 @@ namespace CSharp.Bson
             }
             catch (ArgumentException e)
             {
-                 Console.WriteLine(e);
+                 
             }
             try
             {
@@ -66,7 +66,7 @@ namespace CSharp.Bson
             }
             catch (ArgumentException e)
             {
-                 Console.WriteLine(e);
+                 
             }
             BsonDocument record = new BsonDocument();
             record.Add("decimal1", decimal1);

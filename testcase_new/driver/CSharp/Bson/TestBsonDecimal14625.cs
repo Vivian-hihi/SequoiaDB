@@ -9,10 +9,10 @@ using CSharp.TestCommon;
 
 namespace CSharp.Bson
 {
-    /**  TODO：手工用例没有步骤
+    /**  
      * description:  
      *                BSONDecimal（Decimal value)
-     *                1.插入一条decimal的数据，value参数覆盖：合法值，如典型值m+n小于147455、边界值m+n=147455,非法值，如m+n=147456
+     *                1.插入一条decimal的数据，value参数覆盖：Decimal.MaxValue  Decimal.MinValue
      * testcase:     14625
      * author:       chensiqin
      * date:         2019/03/13
@@ -54,7 +54,7 @@ namespace CSharp.Bson
             cl.Insert(record);
 
             DBCursor cur = cl.Query();
-
+            
             int count = 0;
             while (cur.Next() != null)
             {

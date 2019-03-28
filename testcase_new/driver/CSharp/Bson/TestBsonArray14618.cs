@@ -88,9 +88,9 @@ namespace CSharp.Bson
                 new BsonDocument("sequoiadb1", "sequoiadb"),
                 new BsonDocument("sequoiadb2", 1)
             };
-            //TODO:需要跟开发确认capacity是int数组类型还是int类型
-            int[] capacity = new int[]{1,2,3};
-
+            int[] arr = new int[]{1,2,3};
+            BsonArray ba = new BsonArray(3);
+            Assert.AreEqual(3, ba.Capacity);
             BsonDocument record = new BsonDocument()
                 .Add("arr1", new BsonArray())
                 .Add("arr2", new BsonArray(boolList))
@@ -102,7 +102,7 @@ namespace CSharp.Bson
                 .Add("arr8", new BsonArray(objectIdList))
                 .Add("arr9", new BsonArray(stringList))
                 .Add("arr10", new BsonArray(docList))
-                .Add("arr11", new BsonArray(capacity))
+                .Add("arr11", new BsonArray(arr))
                 .Add("arr12", new BsonArray().Add(doc.GetElement("test").Value))
                 .Add("arr13", new BsonArray().AddRange(boolList))
                 .Add("arr14", new BsonArray().AddRange(bsonValueList))
