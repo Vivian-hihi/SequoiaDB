@@ -68,6 +68,8 @@ do                                     \
 #define FLG_INSERT_CONTONDUP      0x00000001
 /** The flag represent whether insert return the "_id" field of the record for user */
 #define FLG_INSERT_RETURN_OID     0x00000002
+/** The flag represent whether insert becomes update when hitting index key duplicate error */
+#define FLG_INSERT_REPLACEONDUP   0x00000004
 
 
 // client socket timeout value
