@@ -341,6 +341,11 @@ namespace SequoiaDB
          *                      inserting.
          *               <li>SDBConst.FLG_INSERT_RETURN_OID:
          *                      return the value of "_id" field in the record.
+         *               <li>SDBConst.FLG_INSERT_REPLACEONDUP:
+         *                      if the record hit index key duplicate 
+         *                      error, database will replace the existing 
+         *                      record by the inserting new record and them 
+         *                      go on inserting.
          *               </ul>
          *  \return The result of inserting, can be the follow value:
          *              <ul>
@@ -420,6 +425,10 @@ namespace SequoiaDB
          *               <li>SDBConst.FLG_INSERT_RETURN_OID:
          *                      return the value of "_id" field in the record.
          *                      When set this flag, "EnsureOID" will be set to true.
+         *               <li>SDBConst.FLG_INSERT_REPLACEONDUP:
+         *                      if the record hit index key duplicate 
+         *                      error, database will replace the existing 
+         *                      record by the inserting new record.
          *              </ul>
          *  \return The result of inserting, can be the follow value:
          *          <ul>
