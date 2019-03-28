@@ -131,7 +131,10 @@ public class RenameCSNetworkfailNode16771 extends SdbTestBase{
                     completeTimes++;
                 }
             }catch(BaseException e){
-            	Assert.assertEquals(e.getErrorCode(), -134, e.getMessage());
+                int actErrCode = e.getErrorCode();
+                if( actErrCode != -134 && actErrCode != -15){
+                    throw e;
+                }
             }
         }
     }
