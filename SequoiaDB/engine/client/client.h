@@ -123,6 +123,9 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 #define FLG_INSERT_CONTONDUP              0x00000001
 /** The flag represent whether insert return the "_id" field of the record for user */
 #define FLG_INSERT_RETURN_OID             0x00000002
+/** The flag represent replacing the existing record by the new record and continuing when insert hitting index key duplicate error */
+#define FLG_INSERT_REPLACEONDUP           0x00000004
+
 
 
 /** The sharding key in update rule is not filtered, when executing update or upsert. */
@@ -1602,6 +1605,12 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                                inserting.
          <li>
          FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.
+         <li>
+         FLG_INSERT_REPLACEONDUP:
+                           if the record hit index key duplicate 
+                           error, database will replace the existing 
+                           record by the inserting new record.
+
     \param [out] pResult The result of inserting. Can be NULL or a bson:
          <ul>
          <li> NULL: 
@@ -1612,6 +1621,8 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                when flag "FLG_INSERT_RETURN_OID" is set, return the 
                value of "_id" field of the inserted record. 
                e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
+         </ul>
+                                
     \retval SDB_OK Operation Success.
     \retval Others Operation Fail.
 */
@@ -1635,6 +1646,12 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
                                if the record hit index key duplicate
                                error, database will skip them and go on 
                                inserting.
+         <li>
+         FLG_INSERT_REPLACEONDUP:
+                               if the record hit index key duplicate 
+                               error, database will replace the existing 
+                               record by the inserting new record and them 
+                               go on inserting.
 
     \param [in] objs The array of bson objects to be inserted, cannot be null.
     \param [in] num The number of inserted bson objects.
@@ -1692,6 +1709,13 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                inserting.
          <li>
          FLG_INSERT_RETURN_OID: return the value of "_id" field in the records.
+         <li>
+         FLG_INSERT_REPLACEONDUP:
+                                if the record hit index key duplicate 
+                                error, database will replace the existing 
+                                record by the inserting new record and them 
+                                go on inserting.
+
     \param [in] objs The array of bson objects to be inserted, cannot be null.
     \param [in] num The number of inserted bson objects.
     \param [out] pResult The result of inserting. Can be NULL or a bson:

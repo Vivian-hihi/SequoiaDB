@@ -774,6 +774,11 @@ namespace sdbclient
                                      inserting.
                <li>
                FLG_INSERT_RETURN_OID:    return the value of "_id" field in the record.
+                              <li>
+               FLG_INSERT_REPLACEONDUP:
+                                      if the record hit index key duplicate 
+                                      error, database will replace the existing 
+                                      record by the inserting new record.
           \param [out] pResult The result of inserting. Can be NULL or a bson:
                <ul>
                <li> NULL: 
@@ -784,6 +789,9 @@ namespace sdbclient
                      when flag "FLG_INSERT_RETURN_OID" is set, return the 
                      value of "_id" field of the inserted record. 
                      e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
+               </ul>
+
+
           \retval SDB_OK Operation Success.
           \retval Others Operation Fail.
       */
@@ -816,6 +824,13 @@ namespace sdbclient
                                      inserting.
                <li>
                FLG_INSERT_RETURN_OID:    return the value of "_id" field in the record.
+               <li>
+               FLG_INSERT_REPLACEONDUP:
+                           if the record hit index key duplicate 
+                           error, database will replace the existing 
+                           record by the inserting new record and them 
+                           go on inserting.
+
           \param [out] pResult The result of inserting. Can be NULL or a bson:
                <ul>
                <li> NULL: 
@@ -827,6 +842,8 @@ namespace sdbclient
                      values of "_id" field in a bson array. 
                      e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
                                       { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
+               </ul>
+
           \retval SDB_OK Operation Success.
           \retval Others Operation Fail.
       */
@@ -861,6 +878,13 @@ namespace sdbclient
                                      inserting.
                <li>
                FLG_INSERT_RETURN_OID:    return the value of "_id" field in the records.
+               <li>
+               FLG_INSERT_REPLACEONDUP:
+                            if the record hit index key duplicate 
+                            error, database will replace the existing 
+                            record by the inserting new record and them 
+                            go on inserting.
+
           \param [out] pResult The result of inserting. 
                        Can be NULL or a bson:
                <ul>
@@ -873,6 +897,8 @@ namespace sdbclient
                      values of "_id" field in a bson array. 
                      e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
                                       { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
+               </ul>
+               
           \retval SDB_OK Operation Success.
           \retval Others Operation Fail.
       */
@@ -902,6 +928,12 @@ namespace sdbclient
                                      if some records hit index key duplicate
                                      error, database will skip them and go on 
                                      inserting.
+               <li>
+               FLG_INSERT_REPLACEONDUP:
+                                  if the record hit index key duplicate 
+                                  error, database will replace the existing 
+                                  record by the inserting new record and them 
+                                  go on inserting.
 
           \param [in] objs The bson objects to be inserted.
           \retval SDB_OK Operation Success.
