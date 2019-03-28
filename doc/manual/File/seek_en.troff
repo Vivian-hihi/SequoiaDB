@@ -80,53 +80,47 @@ T{
 T}@T{
 b
 T}@T{
-Perform an offset
-T}
-T{
-T}@T{
-T}@T{
-operation from the
-T}
-T{
-T}@T{
-T}@T{
-beginning of the file
+File offset is offset
 T}
 T{
 2
 T}@T{
 c
 T}@T{
-Perform an offset
+File offset is the
 T}
 T{
 T}@T{
 T}@T{
-operation from the
+offset of the current
 T}
 T{
 T}@T{
 T}@T{
-current cursor position
-T}
-T{
-T}@T{
-T}@T{
-of the file
+file cursor plus offset
 T}
 T{
 3
 T}@T{
 e
 T}@T{
-Offset the file cursor
+File offset is file
 T}
 T{
 T}@T{
 T}@T{
-to the end of the file
+size plus offset
 T}
 .TE
+.RS
+.PP
+Note:
+.RE
+.RS
+.PP
+When the "where" parameter is \[aq]e\[aq], the "offset" parameter can be
+negative.
+.RE
 .SH RETURN VALUE
 .PP
 On success, return void.
@@ -183,9 +177,8 @@ Offset the file cursor to the end of the file.
 .nf
 \f[C]
 >\ file.seek(0)
->\ file.seek(\ 2,\ "e"\ )
+>\ file.seek(\ \-5,\ "e"\ )
 >\ file.read()
-sdbSP.js:2555\ uncaught\ exception:\ \-9
-Hit\ end\ of\ file
+adb.
 \f[]
 .fi

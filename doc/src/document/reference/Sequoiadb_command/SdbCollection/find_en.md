@@ -66,6 +66,10 @@ search result can be iterated in the client.
 	* when the value of field name is 1, means sort by field name in ascending order.
 	* when the value of field name is -1, means sort by field name in decending order.
 
+* `SdbQueryOption` ( *Object*， *Optional* )
+
+	Use an object to specify record query parameters.For more detial, please  reference to [SdbQueryOption](reference/Sequoiadb_command/AuxiliaryObjects/SdbQueryOption.md).
+
 **Note：**
 
 * The parameter 'sel' is an object, the values of it's fields are empty string, 

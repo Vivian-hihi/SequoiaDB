@@ -91,6 +91,13 @@ when the value of field name is 1, means sort by field name in ascending order.
 when the value of field name is \-1, means sort by field name in decending
 order.
 .RE
+.IP \[bu] 2
+\f[C]SdbQueryOption\f[] ( \f[I]Object\f[]， \f[I]Optional\f[] )
+.RS 2
+.PP
+Use an object to specify record query parameters.For more detial, please
+reference to SdbQueryOption.
+.RE
 .PP
 \f[B]Note：\f[]
 .IP \[bu] 2

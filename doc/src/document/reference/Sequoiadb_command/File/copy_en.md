@@ -16,12 +16,12 @@ Copy file.
 
 ##PARAMETERS##
 
-| Name    | Type     | Default | Description                     | Required or not |
-| ------- | -------- | ------- | ------------------------------- | --------------- |
-| src     | string   | ---     | source file path                | yes             |
-| des     | string   | ---     | destination file path           | yes             |
-| replace | boolean  | false   | whether replace the source file | not             |
-| mode    | int      | 0644    | set file permissions            | not             |
+| Name    | Type     | Default                   | Description                     | Required or not |
+| ------- | -------- | ------------------------- | ------------------------------- | --- |
+| src     | string   | ---                       | source file path                | yes |
+| des     | string   | ---                       | destination file path           | yes |
+| replace | boolean  | false                     | whether replace the source file | not |
+| mode    | int      | source file's permissions | set file permissions            | not |
 
 ##RETURN VALUE##
 

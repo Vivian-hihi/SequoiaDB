@@ -59,7 +59,7 @@ Collection
 
 * `SdbQueryOption` ( *Object*， *选填* )
 
-	使用一个对象来指定记录查询参数。使用方法可参考[SdbQueryOption](reference/Sequoiadb_command/SpecialObjects/SdbQueryOption.md)。
+	使用一个对象来指定记录查询参数。使用方法可参考[SdbQueryOption](reference/Sequoiadb_command/AuxiliaryObjects/SdbQueryOption.md)。
 
 **注意：**
 

@@ -1,6 +1,6 @@
 ##NAME##
 
-chown - Change the group of the file.
+chgrp - Change the group of the file.
 
 ##SYNOPSIS##
 

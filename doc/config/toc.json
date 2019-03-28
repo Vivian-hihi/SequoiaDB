@@ -2777,13 +2777,7 @@
                            "file": "File",
                            "cn": "File()",
                            "en": "File()"
-                        },						
-                        {
-                           "id": 1552034408,
-                           "file": "close",
-                           "cn": "close()",
-                           "en": "close()"
-                        },						
+                        },												
 						{
                            "id": 1552034961,
                            "file": "find",

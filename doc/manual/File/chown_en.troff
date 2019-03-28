@@ -145,11 +145,9 @@ T}@T{
 T}@T{
 T}
 .TE
-.RS
 .PP
-Note:
-.RE
-.RS
+Note :
+.PP
 .PP
 Two parameters, username and groupname, must specify one of them.
 .RE

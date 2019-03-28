@@ -23,11 +23,15 @@ Moving to a specified position in a file.
 
 The optional values of the 'where' parameter are as follows:
 
-| 可选值 | 描述                                                                     |
-| ------ | ------------------------------------------------------------------------ |
-|   b    | Perform an offset operation from the beginning of the file               |
-|   c    | Perform an offset operation from the current cursor position of the file |
-|   e    | Offset the file cursor to the end of the file                            | 
+| 可选值 | 描述                                                             |
+| ------ | ---------------------------------------------------------------- |
+|   b    | File offset is offset                                            |
+|   c    | File offset is the offset of the current file cursor plus offset |
+|   e    | File offset is file size plus offset                             | 
+
+>Note:
+
+>When the "where" parameter is 'e', the "offset" parameter can be negative.
 
 ##RETURN VALUE##
 
@@ -77,8 +81,7 @@ quoiadb is wonderful.
 
 ```lang-javascript
 > file.seek(0)
-> file.seek( 2, "e" )
+> file.seek( -5, "e" )
 > file.read()
-sdbSP.js:2555 uncaught exception: -9
-Hit end of file
+adb.
 ```

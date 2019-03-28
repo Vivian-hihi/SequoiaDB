@@ -88,11 +88,19 @@ mode
 T}@T{
 int
 T}@T{
-0644
+source file\[aq]s
 T}@T{
 set file permissions
 T}@T{
 not
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+permissions
+T}@T{
+T}@T{
 T}
 .TE
 .SH RETURN VALUE

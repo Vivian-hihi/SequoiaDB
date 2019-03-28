@@ -35,6 +35,6 @@ File
 
 * 关闭文件。
 
-  ```lang-javacript
+  ```lang-javascript
   > file.close()
   ```

@@ -29,9 +29,9 @@ The detailed description of 'options' parameter is as follows:
 | username  | string | not             | { username: "username" }   | username    |
 | groupname | string | not             | { groupname: "groupname" } | groupname   |
 
-> Note:
+>Note:
 
-> Two parameters, username and groupname, must specify one of them.
+>Two parameters, username and groupname, must specify one of them.
 
 ##RETURN VALUE##
 

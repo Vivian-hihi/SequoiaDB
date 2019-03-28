@@ -38,6 +38,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Close the opened file.
 
-```lang-javacript
+```lang-javascript
 > file.close()
 ```

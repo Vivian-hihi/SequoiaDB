@@ -27,7 +27,7 @@ File
 
 常见错误可参考[错误码](reference/Sequoiadb_error_code.md)。
 
-##EXAMPLES##
+##示例##
 
 * 设置新建文件的权限掩码。
 
