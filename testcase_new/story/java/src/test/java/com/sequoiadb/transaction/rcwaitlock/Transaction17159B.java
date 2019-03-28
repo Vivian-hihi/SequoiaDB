@@ -44,17 +44,17 @@ public class Transaction17159B extends SdbTestBase {
 
     @Test
     public void test() {
-        insertR1s = TransUtils.insertDatas(cl, 0, 10000, 0);
+        insertR1s = TransUtils.insertRandomDatas(cl, 0, 10000, 0);
 
         // 开启事务1
         db1.beginTransaction();
 
         // 事务1对不同记录执行多个原子操作
         for(int i=0; i<10000; i++){
-            cl1.delete("{_id:"+ i +"}");
-            cl1.insert((BSONObject) JSON.parse("{_id:"+ i +", a:"+ i +",b:"+ i +"}"));
+            cl1.delete("{a:"+ i +"}", "{'':'a'}");
+            cl1.insert((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ i +",b:"+ i +"}"));
             cl1.update("{a:"+ i +"}","{$set:{a:"+ (i+10000) +"}}","{'':'a'}");
-            expList.add((BSONObject) JSON.parse("{_id:"+ i +", a:"+ (i+10000) +",b:"+ i +"}"));
+            expList.add((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ (i+10000) +",b:"+ i +"}"));
         }
 
         // 事务2表扫描记录
@@ -68,7 +68,7 @@ public class Transaction17159B extends SdbTestBase {
         Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, "{a:1}", "{'':null}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         // 非事务索引扫描记录
@@ -116,16 +116,16 @@ public class Transaction17159B extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{a:1}", hint);
                 List<BSONObject> records = TransUtils.getReadActList(cursor);
                 setExecResult(records);
 
                 // 事务2扫描记录
-                cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{a:1}", hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), insertR1s);
 
                 // 非事务扫描记录
-                cursor = cl.query(null, null, "{_id:1}", hint);
+                cursor = cl.query(null, null, "{a:1}", hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), insertR1s);
 
                 db2.rollback();

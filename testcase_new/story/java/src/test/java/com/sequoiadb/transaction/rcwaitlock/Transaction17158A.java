@@ -44,7 +44,7 @@ public class Transaction17158A extends SdbTestBase {
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
-        expList = TransUtils.insertDatas(cl, 0, 10000, 0);
+        expList = TransUtils.insertRandomDatas(cl, 0, 10000, 0);
     }
 
     @Test
@@ -52,11 +52,11 @@ public class Transaction17158A extends SdbTestBase {
         db1.beginTransaction();
 
         // 事务1对同一条记录执行多个原子操作
-        BSONObject insertR3 = (BSONObject) JSON.parse("{a:3,b:3}");
+        BSONObject insertR3 = (BSONObject) JSON.parse("{a:10000,b:10000}");
         for(int i=0; i<10000; i++){
             cl1.insert(insertR3);
-            cl1.update("{a:3}", "{$set:{a:33}}", "{'':'a'}");
-            cl1.delete("{a:33}", "{'':'a'}");
+            cl1.update("{a:10000}", "{$set:{a:10001}}", "{'':'a'}");
+            cl1.delete("{a:10001}", "{'':'a'}");
         }
 
         // 事务2表扫描记录
@@ -65,15 +65,15 @@ public class Transaction17158A extends SdbTestBase {
         Assert.assertTrue(read1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, "{a:1}", "{'':null}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         db1.commit();
@@ -115,16 +115,16 @@ public class Transaction17158A extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{a:1}", hint);
                 List<BSONObject> records = TransUtils.getReadActList(cursor);
                 setExecResult(records);
 
                 // 事务2扫描记录
-                cursor = cl2.query(null, null, "{_id:1}", hint);
+                cursor = cl2.query(null, null, "{a:1}", hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
                 // 非事务扫描记录
-                cursor = cl.query(null, null, "{_id:1}", hint);
+                cursor = cl.query(null, null, "{a:1}", hint);
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
                 db2.commit();

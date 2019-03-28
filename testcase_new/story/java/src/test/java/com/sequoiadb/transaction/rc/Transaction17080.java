@@ -50,7 +50,7 @@ public class Transaction17080 extends SdbTestBase {
 
     @Test
     public void test() {
-        insertR1s = TransUtils.insertDatas(cl, 0, 10000, (int)(Math.random()*10000+1));
+        insertR1s = TransUtils.insertRandomDatas(cl, 0, 10000, 10000);
         
         db1.beginTransaction();
         db2.beginTransaction();
@@ -76,7 +76,7 @@ public class Transaction17080 extends SdbTestBase {
         }
         
         //非事务表扫描
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, "{a:1}", "{'':null}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
         
         //非事务索引扫描
@@ -125,11 +125,10 @@ public class Transaction17080 extends SdbTestBase {
 	            cl1.update("{a:20000}", "{$set:{a:20001}}", "{'':'a'}");
 	            cl1.delete("{a:20001}", "{'':'a'}");
 	            
-	            cl1.delete("{_id:"+ i +"}");
-	            cl1.insert((BSONObject) JSON.parse("{_id:"+ i +", a:"+ i +",b:"+ i +"}"));
+	            cl1.delete("{a:"+ i +"}", "{'':'a'}");
+	            cl1.insert((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ i +",b:"+ i +"}"));
 	            cl1.update("{a:"+ i +"}","{$set:{a:"+ (i+10000) +"}}","{'':'a'}");
-	            expList.add((BSONObject) JSON.parse("{_id:"+ i +", a:"+ (i+10000) +",b:"+ i +"}"));
-	            System.out.println("operation-17080"+i);
+	            expList.add((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ (i+10000) +",b:"+ i +"}"));
 	        }
 		}
     }
@@ -152,11 +151,10 @@ public class Transaction17080 extends SdbTestBase {
 			// TODO Auto-generated method stub
 	        cl2 = db2.getCollectionSpace(csName).getCollection(clName);
 			// 事务2扫描记录i
-			for(int i=0; i<50; i++){
- 		        cursor = cl2.query(null, null, "{_id:1}", hint);
+			for(int i=0; i<25; i++){
+ 		        cursor = cl2.query(null, null, "{a:1}", hint);
 		        actList = TransUtils.getReadActList(cursor);
 		        Assert.assertEquals(actList, insertR1s);
-		        System.out.println("read-17080:"+i);
 			}
 			cursor.close();
 		}
