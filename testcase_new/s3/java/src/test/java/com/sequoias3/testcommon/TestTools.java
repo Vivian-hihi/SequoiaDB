@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
+import org.apache.commons.codec.binary.Hex;
 import org.testng.Assert;
 
 public class TestTools {	
@@ -250,14 +251,27 @@ public class TestTools {
 	 * @param pathName
 	 * @return
 	 * @throws IOException
-	 */
-	public static String getMD5(String pathName) throws IOException {
+	 */	
+	public static String getMD5(String pathName) throws IOException{
+		FileInputStream fileInputStream = null;
 		File file = new File(pathName);
-		try (FileInputStream fis = new FileInputStream(file)) {
-			byte[] buffer = new byte[(int) file.length()];
-			fis.read(buffer);
-			return getMD5(buffer);
-		}
+		try{
+			MessageDigest md5 = MessageDigest.getInstance("MD5");
+			fileInputStream = new FileInputStream(file);
+			byte[] buffer = new byte[8192];
+			int length;
+			while( (length = fileInputStream.read(buffer)) != -1){
+				md5.update(buffer, 0, length);
+			}
+			return new String(Hex.encodeHex(md5.digest()));
+		}catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}finally {
+			if( fileInputStream != null ){
+				fileInputStream.close();
+			}
+		}		
 	}
 
 	public static String getMD5(Object buffer) {
