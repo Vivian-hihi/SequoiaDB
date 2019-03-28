@@ -621,10 +621,7 @@ namespace engine
          dpsTxExectr->setLastLRB( insLRB ) ;
 
          // add to executor lock map if it is CS or CL lock
-         if ( ! lockId.isLeafLevel() )
-         {
-            dpsTxExectr->addLock( lockId, insLRB ) ;
-         }
+         dpsTxExectr->addLock( lockId, insLRB ) ;
 
          // increase the lock count
          dpsTxExectr->incLockCount() ;
@@ -953,10 +950,8 @@ namespace engine
             dpsTxExectr->setLastLRB( delLRB->eduLrbPrev ) ;
          } 
          // remove the lock from lock ID map if it is CS or CL lock
-         if ( ! lockId.isLeafLevel() )
-         {
-            dpsTxExectr->removeLock( lockId ) ;
-         }
+         dpsTxExectr->removeLock( lockId ) ;
+         
          // decrease the lock count
          dpsTxExectr->decLockCount() ;
       }
@@ -1064,39 +1059,35 @@ namespace engine
 
       SDB_ASSERT( _initialized, "dpsTransLockManager is not initialized." ) ;
 #endif
+      if ( bktLatched )
+      {
+         bLatched = TRUE ;
+      }
+
       // short cut for non-leaf lock ( CS, CL ),
       // lookup the executor _mapLockID map, if it is found and current
       // lock mode covers the requesting mode then increase refCounter,
       // and job is done. Otherwise, still need to go through the normal
       // routine.
-      if ( ! lockId.isLeafLevel() )
+      // we actually don't need bkt latch for
+      // looking up CS,CL lock in the executor
+      // _mapLockID map
+      if ( dpsTxExectr->findLock( lockId, pLRB ) )
       {
-         // we actually don't need bkt latch for
-         // looking up CS,CL lock in the executor
-         // _mapLockID map
-         if ( bktLatched )
+         if ( pLRB )
          {
-            bLatched = TRUE ;
-         }
-
-         pLRB = NULL ;
-         if ( dpsTxExectr->findLock( lockId, pLRB ) )
-         {
-            if ( pLRB )
+            if ( dpsLockCoverage( pLRB->lockMode, requestLockMode ) )
             {
-               if ( dpsLockCoverage( pLRB->lockMode, requestLockMode ) )
+               if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
                {
-                  if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
-                  {
-                     pLRB->refCounter++ ;
+                  pLRB->refCounter++ ;
 
-                     // clear the wait info in dpsTxExectr
-                     dpsTxExectr->clearWaiterInfo() ;
-                  }
-
-                  pLRBHdr = pLRB->lrbHdr ;
-                  goto done ;
+                  // clear the wait info in dpsTxExectr
+                  dpsTxExectr->clearWaiterInfo() ;
                }
+
+               pLRBHdr = pLRB->lrbHdr ;
+               goto done ;
             }
          }
       }

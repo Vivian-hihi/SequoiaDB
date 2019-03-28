@@ -201,7 +201,7 @@ namespace engine
          DPS_TRANS_QUE_TYPE      _waiterQueType ;
          dpsTransLRB *           _lastLRB ;
 
-         DPS_LOCKID_MAP          _mapLockID ;
+         DPS_LOCKID_MAP          _mapCSCLLockID ;
          UINT32                  _lockCount ;
 
          /*

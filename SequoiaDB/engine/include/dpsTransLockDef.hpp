@@ -240,13 +240,15 @@ namespace engine
          {
             _logicCSID        = logicCSID ;
             _collectionID     = collectionID ;
-            _recordExtentID   = DMS_INVALID_EXTENT ;
-            _recordOffset     = DMS_INVALID_OFFSET ;
-
             if ( recordID )
             {
                _recordExtentID= recordID->_extent ;
                _recordOffset  = recordID->_offset ;
+            }
+            else
+            {
+               _recordExtentID= DMS_INVALID_EXTENT ;
+               _recordOffset  = DMS_INVALID_OFFSET ;
             }
          }
 
@@ -369,34 +371,14 @@ namespace engine
 
    OSS_INLINE _dpsTransLockId _dpsTransLockId::upOneLevel() const
    {
-      _dpsTransLockId id( *this ) ;
-
-      if ( id.isValid() )
+      if ( DMS_INVALID_OFFSET != _recordOffset )
       {
-         if ( DMS_INVALID_MBID != id._collectionID )
-         {
-            if ( DMS_INVALID_OFFSET != id._recordOffset )
-            {
-               // record lock => collection lock
-               id._recordOffset   = DMS_INVALID_OFFSET ;
-               id._recordExtentID = DMS_INVALID_EXTENT ;
-            }
-            else
-            {
-               // collection lock => collection space lock
-               id._collectionID   = DMS_INVALID_MBID ;
-               id._recordExtentID = DMS_INVALID_EXTENT ;
-            }
-         }
-         else
-         {
-            // collection space lock
-            id._recordOffset   = DMS_INVALID_OFFSET ;
-            id._recordExtentID = DMS_INVALID_EXTENT ;
-         }
+         return _dpsTransLockId( _logicCSID, _collectionID, NULL ) ;
       }
-
-      return id ;
+      else
+      {
+         return _dpsTransLockId( _logicCSID, DMS_INVALID_MBID, NULL ) ;
+      }
    }
 
    OSS_INLINE BOOLEAN _dpsTransLockId::isValid() const

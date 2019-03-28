@@ -79,7 +79,7 @@ namespace engine
 
    void _dpsTransExecutor::assertLocks()
    {
-      SDB_ASSERT( _mapLockID.size() == 0, "Lock must be 0" ) ;
+      SDB_ASSERT( _mapCSCLLockID.size() == 0, "Lock must be 0" ) ;
       SDB_ASSERT( _lockCount == 0, "Lock must be 0" ) ;
       SDB_ASSERT( _waiter == NULL,
                   "Waiter LRB must be invalid" ) ;
@@ -129,36 +129,46 @@ namespace engine
    BOOLEAN _dpsTransExecutor::addLock( const dpsTransLockId &lockID,
                                        dpsTransLRB * lrb )
    {
-      BOOLEAN hasAdd = FALSE ;
-
-      if ( _mapLockID.insert( std::make_pair( lockID, lrb ) ).second )
+      // only add CS or CL lock into the map
+      if ( ! lockID.isLeafLevel() )
       {
-         hasAdd = TRUE ;
+         if ( _mapCSCLLockID.insert( std::make_pair( lockID, lrb ) ).second )
+         {
+            return TRUE ;
+         }
       }
-
-      return hasAdd ;
+      return FALSE ;
    }
 
    BOOLEAN _dpsTransExecutor::findLock( const dpsTransLockId &lockID,
                                         dpsTransLRB * &lrb ) const
    {
-      DPS_LOCKID_MAP_CIT cit = _mapLockID.find( lockID ) ;
-      if ( cit != _mapLockID.end() )
+      // only search the map if it is CS or CL lock
+      if ( ! lockID.isLeafLevel() )
       {
-         lrb = cit->second ;
-         return TRUE ;
+         DPS_LOCKID_MAP_CIT cit = _mapCSCLLockID.find( lockID ) ;
+         if ( cit != _mapCSCLLockID.end() )
+         {
+            lrb = cit->second ;
+            return TRUE ;
+         }
       }
       return FALSE ;
    }
 
    BOOLEAN _dpsTransExecutor::removeLock( const dpsTransLockId &lockID )
    {
-      return _mapLockID.erase( lockID ) ? TRUE : FALSE ;
+      // only do the remove if it is CS or CL lock
+      if ( ! lockID.isLeafLevel() )
+      {
+         return _mapCSCLLockID.erase( lockID ) ? TRUE : FALSE ;
+      }
+      return FALSE ;
    }
 
    void _dpsTransExecutor::clearLock()
    {
-      _mapLockID.clear() ;
+      _mapCSCLLockID.clear() ;
    }
 
    void _dpsTransExecutor::incLockCount()
