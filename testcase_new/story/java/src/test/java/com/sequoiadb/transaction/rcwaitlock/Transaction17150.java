@@ -60,13 +60,23 @@ public class Transaction17150 extends SdbTestBase {
         cl.update("{a:1}", "{$set:{a:2}}", "{'':'textIndex17150'}");
         expList.add((BSONObject) JSON.parse("{_id:1, a:2, b:1}"));
 
-        // 读记录走表扫描
-        DBCursor recordsCursor = cl.query(null, null, null, "{'':null}");
+        // 读记录走表扫描，使用更新前条件查询
+        DBCursor recordsCursor = cl.query("{a:1}", null, null, "{'':null}");
+        actList = TransUtils.getReadActList(recordsCursor);
+        Assert.assertEquals(actList, new ArrayList<BSONObject>());
+
+        // 读记录走索引扫描，使用更新后条件查询
+        recordsCursor = cl.query("{a:1}", null, null, "{'':'textIndex17150'}");
+        actList = TransUtils.getReadActList(recordsCursor);
+        Assert.assertEquals(actList, new ArrayList<BSONObject>());
+        
+        // 读记录走表扫描，使用更新后条件查询
+        recordsCursor = cl.query("{a:2}", null, null, "{'':null}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
-        // 读记录走索引扫描
-        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17150'}");
+        // 读记录走索引扫描，使用更新后条件查询
+        recordsCursor = cl.query("{a:2}", null, null, "{'':'textIndex17150'}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
@@ -81,7 +91,7 @@ public class Transaction17150 extends SdbTestBase {
         Assert.assertEquals(actList, expList);
 
         // 读记录走索引扫描
-        recordsCursor = cl.query("{b:{$exists:1}}", null, null, "{'':'textIndex17150'}");
+        recordsCursor = cl.query(null, null, null, "{'':'textIndex17150'}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 

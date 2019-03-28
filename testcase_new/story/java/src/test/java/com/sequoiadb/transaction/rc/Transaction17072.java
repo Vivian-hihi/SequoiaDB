@@ -60,16 +60,26 @@ public class Transaction17072 extends SdbTestBase {
         cl.update("{a:1}", "{$set:{a:2}}", "{'':'textIndex17072'}");
         expList.add((BSONObject) JSON.parse("{_id:1, a:2, b:1}"));
 
-        // 读记录走表扫描
-        DBCursor recordsCursor = cl.query(null, null, null, "{'':null}");
+        // 读记录走表扫描,查询条件使用更新后值
+        DBCursor recordsCursor = cl.query("{a:2}", null, null, "{'':null}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
-        // 读记录走索引扫描
-        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17072'}");
+        // 读记录走索引扫描,查询条件使用更新后值
+        recordsCursor = cl.query("{a:2}", null, null, "{'':'textIndex17072'}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, expList);
 
+        // 读记录走表扫描,查询条件使用更新前值
+        recordsCursor = cl.query("{a:1}", null, null, "{'':null}");
+        actList = TransUtils.getReadActList(recordsCursor);
+        Assert.assertEquals(actList, new ArrayList<BSONObject>());
+
+        // 读记录走索引扫描,查询条件使用更新前值
+        recordsCursor = cl.query("{a:1}", null, null, "{'':'textIndex17072'}");
+        actList = TransUtils.getReadActList(recordsCursor);
+        Assert.assertEquals(actList, new ArrayList<BSONObject>());
+        
         // 记录删除索引字段
         cl.update("{a:2}", "{$unset:{a:''}}", "{'':'textIndex17072'}");
         expList.clear();
