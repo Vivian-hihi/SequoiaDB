@@ -35,7 +35,7 @@ public class Transaction17087 extends SdbTestBase {
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
 
-    @BeforeClass(enabled = false)
+    @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
@@ -45,7 +45,7 @@ public class Transaction17087 extends SdbTestBase {
         expList.add(record);
     }
 
-    @AfterClass(enabled = false)
+    @AfterClass
     public void tearDown() {
         if (!db1.isClosed()) {
             db1.close();
@@ -62,7 +62,7 @@ public class Transaction17087 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test(enabled=false)
     public void test() {
         // 开启2个并发事务
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
