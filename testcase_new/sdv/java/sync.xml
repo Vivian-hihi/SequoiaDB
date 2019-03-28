@@ -16,9 +16,9 @@
    </listeners>
    
    <test name="lzwtransaction">
-      <classes>
-          <class name="com.sequoiadb.lzwtransaction.TestSeqDB6670"/>
-      </classes>
+      <packages>
+          <package name="com.sequoiadb.lzwtransactionsync"/>
+      </packages>
    </test>
 </suite>
    

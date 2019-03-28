@@ -18,10 +18,9 @@
    
    <!--The testcases of different configure should be placed in different <test> -->
    <test name="lzwtransaction">
-      <classes>
-          <class name="com.sequoiadb.lzwtransaction.TestCompress6668"/>
-          <class name="com.sequoiadb.lzwtransaction.TestCompress6669"/>
-      </classes>
+      <packages>
+          <package name="com.sequoiadb.lzwtransaction"/>
+      </packages>
    </test>
 
 </suite>
