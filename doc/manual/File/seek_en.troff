@@ -112,11 +112,9 @@ T}@T{
 size plus offset
 T}
 .TE
-.RS
 .PP
 Note:
 .RE
-.RS
 .PP
 When the "where" parameter is \[aq]e\[aq], the "offset" parameter can be
 negative.
