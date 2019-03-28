@@ -24,9 +24,9 @@ import com.sequoiadb.transaction.TransUtils;
  * @date 2019年1月15日
  */
 @Test(groups = "rc")
-public class Transaction17137 extends SdbTestBase {
+public class Transaction17137B extends SdbTestBase {
 
-    private String clName = "transCL_17137";
+    private String clName = "transCL_17137B";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb1 = null;
     private Sequoiadb sdb2 = null;
@@ -71,6 +71,7 @@ public class Transaction17137 extends SdbTestBase {
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
 
         sdb1.commit();
+        Assert.assertTrue(cl.isIndexExist("a"));
 
         expDataList.clear();
         expDataList = expData();
@@ -86,7 +87,17 @@ public class Transaction17137 extends SdbTestBase {
         actDataList.clear();
 
         sdb2.commit();
-        Assert.assertFalse(cl.isIndexExist("a"));
+        
+        recordCur = cl.query(null, "{'_id': {'$include': 0}}", null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+
+        recordCur = cl.query(null, "{'_id': {'$include': 0}}", null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+        
     }
 
     @AfterClass
@@ -150,11 +161,14 @@ public class Transaction17137 extends SdbTestBase {
 
         public void exec() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                db.beginTransaction();
                 DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
                 for (int i = 0; i < 100; i++) {
                     dbcl.createIndex("a", "{a:1, b:-1}", false, false);
                     dbcl.dropIndex("a");
                 }
+                dbcl.createIndex("a", "{a:1, b:-1}", false, false);
+                db.commit();
             }
         }
     }

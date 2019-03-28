@@ -40,8 +40,10 @@ public class Transaction17100 extends SdbTestBase {
     private String hint = null;
     private int startId = 0;
     private int stopId = 1000;
-    private int insertValue = 10000;
-    private int updateValue = 20000;
+    private int updateValue = 1000;
+    private int insertValue3 = stopId + updateValue;
+    private int insertValue4 = stopId + updateValue * 2;
+    private int stopValue4 = stopId + updateValue * 3; 
 
     @DataProvider(name = "index")
     public Object[][] createIndex(){
@@ -102,18 +104,18 @@ public class Transaction17100 extends SdbTestBase {
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
     
             // 1 插入记录R1
-            ArrayList<BSONObject> insertR1s = TransUtils.insertDatas(cl, startId, stopId, insertValue);
+            ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl, startId, stopId);
     
             // 2 事务1匹配R1更新为R2
             hint = "{\"\":\"a\"}";
-            cl1.update(null, "{$set:{a:" + updateValue + "}}", hint);
+            cl1.update("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", "{$inc:{a:" + updateValue + "}}", hint);
     
             // 3 事务2插入记录R3、R4
-            ArrayList<BSONObject> insertR2s = TransUtils.insertDatas(cl2, startId + 1000, stopId + 1000, insertValue);
-            ArrayList<BSONObject> insertR3s = TransUtils.insertDatas(cl2, startId + 2000, stopId + 2000, updateValue);
+            ArrayList<BSONObject> insertR2s = TransUtils.insertRandomDatas(cl2, insertValue3, insertValue4);
+            ArrayList<BSONObject> insertR3s = TransUtils.insertRandomDatas(cl2, insertValue4, stopValue4);
     
             // 4 事务1记录读
-            ArrayList<BSONObject> updateR1s = TransUtils.getUpdateDatas(startId, stopId, updateValue);
+            ArrayList<BSONObject> updateR1s = TransUtils.getIncDatas(startId, stopId, updateValue);
             expList.addAll(updateR1s);
             hint = "{\"\":null}";
             cursor = cl1.query(null, null, "{_id:1}", hint);
@@ -421,13 +423,13 @@ public class Transaction17100 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
             actList.clear();
         } finally {
-            db1.close();
-            db2.close();
-            db3.close();
+            db1.commit();
+            db2.commit();
+            db3.commit();
             if(cl.isIndexExist("a")){
                 cl.dropIndex("a");
             }
-//            cl.truncate();
+            cl.truncate();
         }
     }
 

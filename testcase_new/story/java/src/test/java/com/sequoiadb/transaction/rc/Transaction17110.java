@@ -208,9 +208,9 @@ public class Transaction17110 extends SdbTestBase {
             cl.delete(null, "{'':'a'}");
             recordsCursor.close();
         } finally {
-            db1.close();
-            db2.close();
-            db3.close();
+            db1.commit();
+            db2.commit();
+            db3.commit();
             if(cl.isIndexExist("a")){
                 cl.dropIndex("a");
             }

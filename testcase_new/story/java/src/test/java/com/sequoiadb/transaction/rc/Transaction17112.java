@@ -246,9 +246,9 @@ public class Transaction17112 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
             recordsCursor.close();
         } finally {
-            db1.close();
-            db2.close();
-            db3.close();
+            db1.commit();
+            db2.commit();
+            db3.commit();
             if(cl.isIndexExist("a")){
                 cl.dropIndex("a");
             }

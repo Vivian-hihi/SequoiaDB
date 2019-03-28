@@ -42,7 +42,6 @@ public class Transaction17094 extends SdbTestBase {
     private String hint = null;
     private int startId = 0;
     private int stopId = 1000;
-    private int insertValue = 10000;
     private int updateValue = 20000;
 
     @DataProvider(name = "index")
@@ -104,7 +103,7 @@ public class Transaction17094 extends SdbTestBase {
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
     
             // 2 事务1插入记录R1
-            ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl1, startId, stopId, insertValue);
+            ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl1, startId, stopId);
     
             // 3 事务2匹配记录R1更新为R2
             UpdateThread updateThread = new UpdateThread();
@@ -351,9 +350,9 @@ public class Transaction17094 extends SdbTestBase {
             // 提交事务3
             db3.commit();
         } finally {
-            db1.close();
-            db2.close();
-            db3.close();
+            db1.commit();
+            db2.commit();
+            db3.commit();
             if(cl.isIndexExist("a")){
                 cl.dropIndex("a");
             }

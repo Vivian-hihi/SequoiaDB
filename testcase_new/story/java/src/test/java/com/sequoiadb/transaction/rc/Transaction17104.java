@@ -42,7 +42,6 @@ public class Transaction17104 extends SdbTestBase {
     private String hint = null;
     private int startId = 0;
     private int stopId = 1000;
-    private int insertValue = 10000;
     private int updateValue = 20000;
 
     @DataProvider(name = "index")
@@ -104,11 +103,11 @@ public class Transaction17104 extends SdbTestBase {
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
     
             // 1 插入记录R1
-            ArrayList<BSONObject> insertR1s = TransUtils.insertDatas(cl, startId, stopId, insertValue);
+            ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl, startId, stopId);
     
             // 2 事务1匹配R1更新为R2
             hint = "{\"\":null}";
-            cl1.update(null, "{$set:{a:" + updateValue + "}}", hint);
+            cl1.update("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", "{$inc:{a:" + updateValue + "}}", hint);
     
             // 3 事务2匹配R2删除
             DeleteThread deleteThread = new DeleteThread();
@@ -116,7 +115,7 @@ public class Transaction17104 extends SdbTestBase {
             Assert.assertTrue(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
     
             // 4 事务1记录读
-            ArrayList<BSONObject> updateR1s = TransUtils.getUpdateDatas(startId, stopId, updateValue);
+            ArrayList<BSONObject> updateR1s = TransUtils.getIncDatas(startId, stopId, updateValue);
             expList.addAll(updateR1s);
             hint = "{\"\":null}";
             cursor = cl1.query(null, null, "{_id:1}", hint);
@@ -387,9 +386,9 @@ public class Transaction17104 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
             actList.clear();
         } finally {
-            db1.close();
-            db2.close();
-            db3.close();
+            db1.commit();
+            db2.commit();
+            db3.commit();
             if(cl.isIndexExist("a")){
                 cl.dropIndex("a");
             }
@@ -401,7 +400,7 @@ public class Transaction17104 extends SdbTestBase {
         @Override
         public void exec() throws BaseException {
             hint = "{\"\":null}";
-            cl2.delete("{a:" + updateValue + "}", hint);
+            cl2.delete("{a: {$gte: " + (startId + updateValue) + ", $lt: " + (stopId + updateValue) + "}}", hint);
         }
     }
 }

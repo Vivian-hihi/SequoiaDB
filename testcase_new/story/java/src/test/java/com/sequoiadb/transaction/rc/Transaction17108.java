@@ -42,7 +42,6 @@ public class Transaction17108 extends SdbTestBase {
     private String hint = null;
     private int startId = 0;
     private int stopId = 1000;
-    private int insertValue = 10000;
     private int updateValue = 20000;
 
     @DataProvider(name = "index")
@@ -104,7 +103,7 @@ public class Transaction17108 extends SdbTestBase {
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
         
             // 1 插入记录R1
-            ArrayList<BSONObject> insertR1s = TransUtils.insertDatas(cl, startId, stopId, insertValue);
+            ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl, startId, stopId);
         
             // 2 事务1匹配R1删除
             hint = "{\"\":\"a\"}";
@@ -354,9 +353,9 @@ public class Transaction17108 extends SdbTestBase {
             // 提交事务3
             db3.commit();
         } finally {
-            db1.close();
-            db2.close();
-            db3.close();
+            db1.commit();
+            db2.commit();
+            db3.commit();
             if(cl.isIndexExist("a")){
                 cl.dropIndex("a");
             }
@@ -368,7 +367,7 @@ public class Transaction17108 extends SdbTestBase {
         @Override
         public void exec() throws BaseException {
             hint = "{\"\":\"a\"}";
-            cl2.update(null, "{$set:{a:" + updateValue + "}}", hint);
+            cl2.update("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", "{$inc:{a:" + updateValue + "}}", hint);
         }
     }
 

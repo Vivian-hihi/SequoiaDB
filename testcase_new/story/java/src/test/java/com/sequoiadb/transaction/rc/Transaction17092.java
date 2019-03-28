@@ -37,7 +37,6 @@ public class Transaction17092 extends SdbTestBase {
     private String hint = null;
     private int startId = 0;
     private int stopId = 1000;
-    private int insertValue = 10000;
 
     @DataProvider(name = "index")
     public Object[][] createIndex(){
@@ -99,10 +98,10 @@ public class Transaction17092 extends SdbTestBase {
             DBCollection cl3 = db3.getCollectionSpace(csName).getCollection(clName);
     
             // 2 事务1插入记录R1
-            ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl1, startId, stopId, insertValue);
+            ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl1, startId, stopId);
     
             // 3 事务2插入记录R2，记录内容与R1相同
-            ArrayList<BSONObject> insertR2s = TransUtils.insertRandomDatas(cl2, startId + 1000, stopId + 1000, insertValue);
+            ArrayList<BSONObject> insertR2s = TransUtils.insertRandomDatas(cl2, startId + 1000, stopId + 1000);
     
             // 4 事务1记录读
             expList.addAll(insertR1s);
@@ -408,9 +407,9 @@ public class Transaction17092 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
             actList.clear();
         } finally {
-            db1.close();
-            db2.close();
-            db3.close();
+            db1.commit();
+            db2.commit();
+            db3.commit();
             if(cl.isIndexExist("a")){
                 cl.dropIndex("a");
             }
