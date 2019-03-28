@@ -187,12 +187,12 @@ public class TransUtils {
         return insertDatas;
     }
     
-    public static ArrayList<BSONObject> insertRandomDatas(DBCollection cl, int startId, int endId, int insertValue)
+    public static ArrayList<BSONObject> insertRandomDatas(DBCollection cl, int startId, int endId)
             throws BaseException {
         ArrayList<BSONObject> insertDatas = new ArrayList<BSONObject>();
         ArrayList<BSONObject> expDatas = new ArrayList<BSONObject>();
         for (int i = startId; i < endId; i++) {
-            BSONObject data = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ",b:" + insertValue + i + "}");
+            BSONObject data = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ",b:" + i + "}");
             insertDatas.add(data);
             expDatas.add(data);
         }
@@ -209,10 +209,10 @@ public class TransUtils {
         return updateDatas;
     }
     
-    public static ArrayList<BSONObject> getIncDatas(int startId, int endId, int incValue, int insertValue) {
+    public static ArrayList<BSONObject> getIncDatas(int startId, int endId, int incValue) {
         ArrayList<BSONObject> incDatas = new ArrayList<BSONObject>();
         for (int i = startId; i < endId; i++) {
-            incDatas.add((BSONObject) JSON.parse("{_id:" + i + ",a:" + (incValue + i) + ",b:" + insertValue + i + "}"));
+            incDatas.add((BSONObject) JSON.parse("{_id:" + i + ",a:" + (incValue + i) + ",b:" + i + "}"));
         }
         return incDatas;
     }
