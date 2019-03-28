@@ -150,8 +150,8 @@ public class ThreadExecutor {
                 logger.error("method is not finish:m={}", m);
             }
 
-            throw new SchException("method should be fininshed in step " + getRunningStep()
-                    + ", but still running:method=" + tmpMethod);
+            throw new SchException("wait worker timeout in step " + getRunningStep() + ":method="
+                    + tmpMethod + ",timeout=" + waitTime);
         }
         catch (SchException e) {
             throw e;
