@@ -78,7 +78,7 @@ public class Transaction18045 extends SdbTestBase {
     }
 
     @DataProvider(name = "index")
-    public Object[][] createIndex() {
+    private Object[][] createIndex() {
         return new Object[][] { { "{'a':1, 'b':1}" }, {"{'a':1, 'b':-1}"},  { "{'a':-1, 'b':1}" }, { "{'a':-1, 'b':-1}" } };
     }
 
@@ -167,7 +167,7 @@ public class Transaction18045 extends SdbTestBase {
         }
     }
     
-    public void tearDownCommit() {
+    private void tearDownCommit() {
         db1.commit();
         db2.commit();
         db3.commit();
@@ -176,7 +176,7 @@ public class Transaction18045 extends SdbTestBase {
     }
 
     // 构造记录 a 字段相等 b 字段不相等，a b 字段都不相等的记录
-    public void insertData() {
+    private void insertData() {
         int a = 0;
         List<BSONObject> records = new ArrayList<BSONObject>();
         for (int i = 0; i <= 40000; i++) {
@@ -194,7 +194,7 @@ public class Transaction18045 extends SdbTestBase {
         cl.insert(records);
     }
 
-    public Integer[] getAllRandArray() {
+    private Integer[] getAllRandArray() {
         List<Integer> randList = new ArrayList<>();
         for (int i = 0; i <= 50000; i++) {
             randList.add(i);
@@ -270,7 +270,7 @@ public class Transaction18045 extends SdbTestBase {
         }
     }
 
-    public Integer[] getRandomArray() {
+    private Integer[] getRandomArray() {
         List<Integer> randList = new ArrayList<>();
         for (int i = 0; i <= 40000; i++) {
             randList.add(i);
