@@ -44,7 +44,7 @@ public class Transaction17158A extends SdbTestBase {
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
-        expList = TransUtils.insertRandomDatas(cl, 0, 10000, 0);
+        expList = TransUtils.insertRandomDatas(cl, 0, 10000);
     }
 
     @Test

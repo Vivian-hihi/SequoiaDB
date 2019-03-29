@@ -47,7 +47,7 @@ public class Transaction17159A extends SdbTestBase {
 
     @Test
     public void test() {
-        expList = TransUtils.insertRandomDatas(cl, 0, 10000, 0);
+        expList = TransUtils.insertRandomDatas(cl, 0, 10000);
 
         // 开启事务1
         db1.beginTransaction();

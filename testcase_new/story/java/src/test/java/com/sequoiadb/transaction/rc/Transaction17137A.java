@@ -151,9 +151,9 @@ public class Transaction17137A extends SdbTestBase {
             cl1.insert(rs2);
 
             String modifier = "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}";
-            cl1.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", modifier, null);
+            cl1.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", modifier, "{'': null}");
 
-            cl1.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}");
+            cl1.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}", "{'': null}");
         }
     }
 

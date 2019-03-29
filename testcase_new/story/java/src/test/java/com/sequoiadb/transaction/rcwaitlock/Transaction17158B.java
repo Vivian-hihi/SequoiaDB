@@ -39,7 +39,7 @@ public class Transaction17158B extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
-        TransUtils.insertRandomDatas(cl, 0, 10000, 0);
+        TransUtils.insertRandomDatas(cl, 0, 10000);
     }
 
     @Test

@@ -49,7 +49,7 @@ public class Transaction17199 extends SdbTestBase {
     @Test
     public void test() {
         // 集合中插入带索引的记录
-        insertR1s = TransUtils.insertRandomDatas(cl, 0, 10000, 0);
+        insertR1s = TransUtils.insertRandomDatas(cl, 0, 10000);
 
         db1.beginTransaction();
         db2.beginTransaction();

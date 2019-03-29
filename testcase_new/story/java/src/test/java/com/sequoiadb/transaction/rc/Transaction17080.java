@@ -50,7 +50,7 @@ public class Transaction17080 extends SdbTestBase {
 
     @Test
     public void test() {
-        insertR1s = TransUtils.insertRandomDatas(cl, 0, 10000, 10000);
+        insertR1s = TransUtils.insertRandomDatas(cl, 0, 10000);
         
         db1.beginTransaction();
         db2.beginTransaction();
@@ -117,7 +117,6 @@ public class Transaction17080 extends SdbTestBase {
     private class Operation extends SdbThreadBase{
 		@Override
 		public void exec() throws Exception {
-			// TODO Auto-generated method stub
 		    BSONObject insertR = (BSONObject) JSON.parse("{_id:20000,a:20000,b:20000}");
 	        for(int i=0; i<10000; i++)
 	        {
@@ -141,14 +140,12 @@ public class Transaction17080 extends SdbTestBase {
         private List<BSONObject> actList = new ArrayList<BSONObject>();
     	
     	public Read(Sequoiadb db2, String hint) {
-			// TODO Auto-generated constructor stub
     		this.db2 = db2;
     		this.hint = hint;
 		}
     	
 		@Override
 		public void exec() throws Exception {
-			// TODO Auto-generated method stub
 	        cl2 = db2.getCollectionSpace(csName).getCollection(clName);
 			// 事务2扫描记录i
 			for(int i=0; i<25; i++){
