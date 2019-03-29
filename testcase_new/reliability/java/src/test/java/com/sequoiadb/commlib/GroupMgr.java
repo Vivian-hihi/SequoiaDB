@@ -254,7 +254,6 @@ public class GroupMgr {
         GroupWrapper catagroup = getGroupByNameInner("SYSCatalogGroup");
         List<NodeWrapper> nodes = catagroup.getNodes();
         boolean ret = true;
-        long[] clCount = new long[nodes.size()];
         long prevCount = -1 ;
         int i = 0;
         for (NodeWrapper node : nodes) {
@@ -281,7 +280,7 @@ public class GroupMgr {
         }
         
         if ( printAndThrowAllException && !ret ){
-            System.out.println( "SYSCatalogGroup SYSCAT.SYSCOLLECTIONS not inconsistent" ) ;
+            System.out.println( "SYSCatalogGroup SYSCAT.SYSCOLLECTIONS inconsistent" ) ;
         }
         
         return ret ;
