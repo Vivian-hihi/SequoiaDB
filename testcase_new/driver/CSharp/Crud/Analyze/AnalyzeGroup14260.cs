@@ -41,7 +41,10 @@ namespace CSharp.Crud.Analyze
                 skipTest = true;
                 return;
             }
-
+            if (sdb.IsCollectionSpaceExist(csName))
+            {
+                sdb.DropCollectionSpace(csName);
+            }
             CollectionSpace cs = sdb.CreateCollectionSpace(csName);
             List<string> groupNames = Common.getDataGroupNames(sdb);
             analyzeGroup = groupNames.ElementAt(0);
@@ -97,10 +100,7 @@ namespace CSharp.Crud.Analyze
             DBCursor cursor = cl.Explain(cond, null, null, null, 0, -1, 0, options);
             string actScanType = cursor.Next().GetValue("ScanType").ToString();
             cursor.Close();
-            if (expScanType != actScanType)
-            {
-                throw new Exception("wrong scan type. expect: " + expScanType + ", actual: " + actScanType);
-            }
+            Assert.AreEqual(expScanType, actScanType, "wrong scan type. expect: " + expScanType + ", actual: " + actScanType);
         }
     }
 }

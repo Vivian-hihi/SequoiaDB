@@ -32,6 +32,10 @@ namespace CSharp.Crud.Analyze
             Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + " begin: " + this.GetType().ToString());
             sdb = new Sequoiadb(SdbTestBase.coordUrl);
             sdb.Connect();
+            if (sdb.IsCollectionSpaceExist(csName))
+            {
+                sdb.DropCollectionSpace(csName);
+            }
             CollectionSpace cs = sdb.CreateCollectionSpace(csName);
             analyzeCl = cs.CreateCollection(analyzeClName);
             AnalyzeCommon.InsertDataWithIndex(analyzeCl);

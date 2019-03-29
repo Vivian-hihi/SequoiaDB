@@ -35,6 +35,10 @@ namespace CSharp.Crud.Analyze
             for (int i = 0; i < csNum; ++i)
             {
                 string csName = csBaseName + "_" + i;
+                if (sdb.IsCollectionSpaceExist(csName))
+                {
+                    sdb.DropCollectionSpace(csName);
+                }
                 CollectionSpace cs = sdb.CreateCollectionSpace(csName);
                 for (int j = 0; j < clNumPerCs; ++j)
                 {

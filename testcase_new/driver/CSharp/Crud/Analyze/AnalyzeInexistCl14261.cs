@@ -41,10 +41,7 @@ namespace CSharp.Crud.Analyze
             }
             catch (BaseException e)
             {
-                if (e.ErrorCode != -23)
-                {
-                    throw e;
-                }
+                Assert.AreEqual(-23, e.ErrorCode);
             }
         }
 
