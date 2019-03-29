@@ -18,7 +18,7 @@ function main(db)
       dbcl.createIndex("idxa",{'stra':-1},true);
       
       var maxLen = 1011;
-      var strValue = getRandomString(maxLen);
+      var strValue = getRandomString(maxLen);      
       dbcl.insert({'stra' : strValue, 'no' : 1});
       
       checkResult(dbcl,{'stra' : strValue, 'no' : 1});     
@@ -29,4 +29,16 @@ function main(db)
    {
       throw e ;
    }   
+}
+
+function getRandomString(len)
+{
+   var str = "abcdefghijklmnopqrstuvwxyz1234567890!@#$%^&*()_+";
+   var tmp = "";
+   var l = str.length;
+   for( var i = 0; i < len; i++ )
+   {
+      tmp += str.charAt(Math.floor(Math.random() * l));
+   }
+   return tmp;
 }
