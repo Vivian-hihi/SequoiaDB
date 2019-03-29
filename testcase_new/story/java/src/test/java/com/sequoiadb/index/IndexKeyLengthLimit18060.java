@@ -58,7 +58,7 @@ public class IndexKeyLengthLimit18060 extends SdbTestBase {
 			String subCSName = csName + "_" + no;
 			DBCollection cl = IndexUtils.createCSAndCL(sdb, subCSName, clName, pageSize);
 			
-			int recordNum = 10000;
+			int recordNum = 5000;
 			ArrayList<BSONObject> insertRecords = IndexUtils.insertData(cl, recordNum, length);
 			
 			cl.createIndex("testindex", "{'testa':-1}", false, false);			
