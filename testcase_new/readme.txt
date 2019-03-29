@@ -13,4 +13,4 @@ ssl_9651.py
 index_9477.py
 
 sdv/js/ssl用例：commlib中写死了ip地址，用例待修改，责任人：吴艳  已修改2017.1.21（余婷）
-sdv_datasync_015_adddatanode.js  ---虚拟机同步太慢导致用例失败，是否修改用例？责任人：王文静
+sdv_datasync_015_adddatanode.js  ---虚拟机同步太慢导致用例失败，是否修改用例？责任人：王文净
