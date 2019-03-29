@@ -273,6 +273,11 @@ namespace engine
          dpsTransLRB * idxNew
       ) ; 
 
+      void _moveToEDULRBListTail
+      (
+         _dpsTransExecutor    * dpsTxExectr,
+         dpsTransLRB          * insLRB
+      ) ;
 
       // search owner LRB list, and find
       //  . if the edu is in owner list

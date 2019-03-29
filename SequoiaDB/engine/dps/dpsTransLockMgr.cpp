@@ -631,6 +631,49 @@ namespace engine
       }
    }
 
+   //
+   // Description: move a LRB to the end of the EDU LRB list
+   // Function:    move a LRB to the end of the EDU LRB list
+   //
+   //              The reason for this is to ensure that during
+   //              lock release, it can search the correct LRB
+   //              through EDU LRB list in constant time
+   // Input:
+   //    dpsTxExectr -- _dpsTransExecutor ptr
+   //    insLRB      -- the LRB to be moved
+   // Output:     None
+   // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired
+   //              insLRB is not NULL
+   //
+   void dpsTransLockManager::_moveToEDULRBListTail
+   (
+      _dpsTransExecutor    * dpsTxExectr,
+      dpsTransLRB          * insLRB
+   )
+   {
+      dpsTransLRB *plrb = dpsTxExectr->getLastLRB() ;
+      if ( plrb == insLRB)
+      {
+         return ;
+      }
+
+      if ( insLRB->eduLrbPrev )
+      {
+         insLRB->eduLrbPrev->eduLrbNext = insLRB->eduLrbNext ;
+      }
+      if ( insLRB->eduLrbNext )
+      {
+         insLRB->eduLrbNext->eduLrbPrev = insLRB->eduLrbPrev ;
+      }
+
+      plrb->eduLrbNext   = insLRB ;
+      insLRB->eduLrbPrev = plrb ;
+      insLRB->eduLrbNext = NULL ;
+
+      // set this newly inserted lrb as the last LRB
+      dpsTxExectr->setLastLRB( insLRB ) ;
+   }
 
    //
    // Description: remove a LRB from a LRB chain
@@ -1209,6 +1252,8 @@ namespace engine
             {
                pLRB->refCounter ++ ;
 
+               _moveToEDULRBListTail( dpsTxExectr, pLRB ) ;
+
                // clear the wait info in dpsTxExectr
                dpsTxExectr->clearWaiterInfo() ;
             }
@@ -1298,6 +1343,8 @@ namespace engine
                   // add it at the end of owner list
                   _addToLRBListTail( pLRBHdr->ownerLRB, pLRB ) ;
                }
+
+               _moveToEDULRBListTail( dpsTxExectr, pLRB ) ;
 
                // clear the wait info in dpsTxExectr
                dpsTxExectr->clearWaiterInfo() ;
@@ -1941,6 +1988,9 @@ namespace engine
          else
          {
             // for record lock, find the LRB from the EDU LRB list
+            // in a single lock release scenario, the lock ID's LRB should
+            // be at the end of the EDU LRB list. This should be guaranteed 
+            // through _moveToEDULRBListTail and _addToEDULRBListTail
             pMyLRB = _getLRBFromEDULRBList( dpsTxExectr, lockId ) ;
          }
 
