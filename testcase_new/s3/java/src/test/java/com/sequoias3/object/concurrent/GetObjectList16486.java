@@ -89,6 +89,7 @@ public class GetObjectList16486 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
+				deleteObjectsAndBucket();
 				UserUtils.deleteUser(userName);
 			}
 		} catch (BaseException e) {
@@ -175,5 +176,12 @@ public class GetObjectList16486 extends S3TestBase {
 				}
 			}			
 		}		
+	}
+	
+	private void deleteObjectsAndBucket(){
+		for(int i = 0 ; i < expresultList1.size() ; i++){
+			s3Client.deleteObject(bucketName, expresultList1.get(i));
+		}
+		s3Client.deleteBucket(bucketName);
 	}
 }
