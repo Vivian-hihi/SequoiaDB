@@ -37,6 +37,7 @@ public class CommLib {
 				S3TestBase.s3ClientUrl + "/s3", clientRegion);
 		ClientConfiguration config = new ClientConfiguration();
 		config.setUseExpectContinue(false);
+		config.setSocketTimeout(300000);
 		s3Client = AmazonS3ClientBuilder.standard()
 				.withEndpointConfiguration(endpointConfiguration)
 				.withClientConfiguration(config)
