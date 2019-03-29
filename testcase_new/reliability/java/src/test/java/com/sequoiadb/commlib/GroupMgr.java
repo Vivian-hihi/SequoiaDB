@@ -255,13 +255,19 @@ public class GroupMgr {
         List<NodeWrapper> nodes = catagroup.getNodes();
         boolean ret = true;
         long[] clCount = new long[nodes.size()];
+        long prevCount = -1 ;
         int i = 0;
         for (NodeWrapper node : nodes) {
             Sequoiadb db = node.connect();
             try {
                 DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
                 long count = cl.getCount();
-                clCount[i++] = count;
+                if ( prevCount == -1){
+                    prevCount = count ;
+                }else if ( prevCount != count){
+                    ret = false;
+                    break ; 
+                }
             } catch (BaseException e) {
                 ret = false;
                 if (printAndThrowAllException) {
@@ -273,21 +279,12 @@ public class GroupMgr {
                 db.close();
             }
         }
-        if (ret == false) {
-            return ret;
-        } else {
-            boolean isConsistency = true;
-            long aCount = clCount[0];
-            for (i = 1; i < clCount.length; ++i) {
-                long bCount = clCount[i];
-                if (aCount != bCount) {
-                    isConsistency = false;
-                    break;
-                }
-            }
-            ret = isConsistency;
-            return ret;
+        
+        if ( printAndThrowAllException && !ret ){
+            System.out.println( "SYSCatalogGroup SYSCAT.SYSCOLLECTIONS not inconsistent" ) ;
         }
+        
+        return ret ;
     }
     
     private boolean waitCatalogSync(boolean printAndThrowAllException) throws ReliabilityException {
@@ -306,12 +303,10 @@ public class GroupMgr {
         }
         if (ret) {
             return ret;
-        } else if (printAndThrowAllException) {
-            ret = isCatalogSync(printAndThrowAllException);
-            return ret;
         } else {
+            ret = isCatalogSync(true);
             return ret;
-        }
+        } 
     }
     
     private boolean dropTestCollection(boolean printAndThrowAllException) throws ReliabilityException {
