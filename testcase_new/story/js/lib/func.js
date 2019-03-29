@@ -703,30 +703,33 @@ function commGetCLGroups( db, clName )
    {
       return new Array() ;
    }
-
+   
    var tmpArray = new Array() ;
-   var tmpInfo ;
+   var groups = {} ;
+   var cursor ;
    try
    {
-      tmpInfo = db.snapshot(8).toArray() ;
+      cursor = db.snapshot(8, {Name:clName}) ;
    }
    catch( e )
    {
       println( "commGetCLGroups: snapshot collection space failed: " + e ) ;
       throw e ;
    }
-   for ( var i = 0 ; i < tmpInfo.length ; ++i )
+
+   while ( cursor.next() )
    {
-      var tmpObj = eval( "(" + tmpInfo[i] + ")" ) ;
-      if ( tmpObj.Name != clName )
+      var cataInfo = cursor.current().toObj()['CataInfo'] ;
+      for ( var i = 0 ; i < cataInfo.length; ++i )
       {
-         continue ;
-      }
-      for ( var j = 0 ; j < tmpObj.CataInfo.length; ++j )
-      {
-         tmpArray.push( tmpObj.CataInfo[j].GroupName ) ;
+         if ( groups[ cataInfo[i].GroupName ] === undefined )
+         {
+            tmpArray.push( cataInfo[i].GroupName ) ;
+            groups[ cataInfo[i].GroupName ] = 1 ;
+         }
       }
    }
+
    return tmpArray ;
 }
 
