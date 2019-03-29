@@ -79,7 +79,7 @@ public class Transaction18045 extends SdbTestBase {
 
     @DataProvider(name = "index")
     public Object[][] createIndex() {
-        return new Object[][] { { "{'a':1, 'b':1}" }, { "{'a':-1, 'b':1}" }, { "{'a':-1, 'b':-1}" } };
+        return new Object[][] { { "{'a':1, 'b':1}" }, {"{'a':1, 'b':-1}"},  { "{'a':-1, 'b':1}" }, { "{'a':-1, 'b':-1}" } };
     }
 
     @Test(dataProvider = "index")
@@ -160,10 +160,19 @@ public class Transaction18045 extends SdbTestBase {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
+            tearDownCommit();
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             cs.dropCollection(clName);
             System.out.println("--复合索引 " + indexKey + " 结束事务--");
         }
+    }
+    
+    public void tearDownCommit() {
+        db1.commit();
+        db2.commit();
+        db3.commit();
+        db4.commit();
+        db5.commit();
     }
 
     // 构造记录 a 字段相等 b 字段不相等，a b 字段都不相等的记录
