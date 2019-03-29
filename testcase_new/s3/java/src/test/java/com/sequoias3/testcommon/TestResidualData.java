@@ -3,7 +3,9 @@ package com.sequoias3.testcommon;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.testng.Assert;
@@ -71,6 +73,9 @@ public class TestResidualData extends S3TestBase{
 	
 	private void printResidualMetaData(CollectionSpace cs, List<DBCollection> clList){
         DBCursor cursor = null;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+        Date date = new Date();
+        String s3SysDataRegionSpaceName = "S3_SYS_Data_" + sdf.format(date);
         try{
 		    for(DBCollection cl : clList) {
 		        cursor = cl.query();
@@ -78,7 +83,7 @@ public class TestResidualData extends S3TestBase{
 		        	printInfo+="\n===============begin print " + cs.getName() +"."+ cl.getName() + " data============\n";
 		            while(cursor.hasNext()){
 		                if(cursor.getNext().containsField("Name")){
-		                    if(!cursor.getCurrent().get("Name").equals(S3TestBase.s3UserName)&&!cursor.getCurrent().get("Name").equals(S3TestBase.bucketName)&&!cursor.getCurrent().get("Name").equals(S3TestBase.enableVerBucketName)){
+		                    if(!cursor.getCurrent().get("Name").equals(S3TestBase.s3UserName)&&!cursor.getCurrent().get("Name").equals(S3TestBase.bucketName)&&!cursor.getCurrent().get("Name").equals(S3TestBase.enableVerBucketName)&&!cursor.getCurrent().get("Name").equals(s3SysDataRegionSpaceName)){
 		                    	printInfo+=cursor.getCurrent().toString()+"\n";
 		                        errorCount++;
 		                    }
