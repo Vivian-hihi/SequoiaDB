@@ -9,6 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -28,7 +29,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author yinzhen
  *
  */
-//@Test(groups = "rc")
+@Test(groups = "rc")
 public class Transaction18046 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl18046";
@@ -139,7 +140,9 @@ public class Transaction18046 extends SdbTestBase {
             Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
             db1.commit();
 
+            int doTimes = 0;
             while (true) {
+                doTimes ++;
                 boolean update = updateThread.matchBlockingMethod(DBCollection.class.getName(), "update");
                 boolean delete = deleteThread.matchBlockingMethod(DBCollection.class.getName(), "delete");
                 boolean updateFlag = false;
@@ -156,9 +159,11 @@ public class Transaction18046 extends SdbTestBase {
                         deleteFlag = true;
                     }
                 }
-                System.out.println("Update : " + updateFlag + ", Delete : " + deleteFlag);
                 if (updateFlag && deleteFlag) {
                     break;
+                }
+                if (doTimes == 120) {
+                    throw new SkipException("Transactions deadlocks skip this testcase");
                 }
                 try {
                     Thread.sleep(1000);
