@@ -3,7 +3,6 @@ package com.sequoiadb.fulltext.killnode;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
@@ -15,7 +14,6 @@ import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.fulltext.FullTextESUtils;
 import com.sequoiadb.fulltext.FullTextUtils;
 import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
@@ -75,8 +73,7 @@ public class KillMasterNode14406 extends SdbTestBase {
 			if (sdb != null) {
 				sdb.close();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
-					+ this.getStackString(e));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
 		}
 	}
 
@@ -107,8 +104,8 @@ public class KillMasterNode14406 extends SdbTestBase {
 					0);
 			TaskMgr mgr = new TaskMgr(faultTask);
 			mgr.execute();
-			Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-			Assert.assertEquals(groupMgr.checkBusiness(120), true);
+			Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+            Assert.assertTrue(groupMgr.checkBusinessWithLSN(120));
 
 			FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName, 500000);
 
@@ -148,28 +145,13 @@ public class KillMasterNode14406 extends SdbTestBase {
 				commCS.dropCollection(clName);
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage() + "\r\n" + this.getStackString(e));
+			Assert.fail(e.getMessage());
 		} finally {
 			if (sdb != null) {
 				sdb.close();
 			}
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-		}
-	}
-
-	// 获取异常的堆栈信息字串
-	public static String getStackString(Exception e) {
-		StringBuffer stackBuffer = new StringBuffer();
-		StackTraceElement[] stackElements = e.getStackTrace();
-		for (int i = 0; i < stackElements.length; i++) {
-			stackBuffer.append(stackElements[i].toString()).append("\r\n");
-		}
-		String str = stackBuffer.toString();
-		if (str.length() >= 2) {
-			return str.substring(0, str.length() - 2);
-		} else {
-			return str;
 		}
 	}
 }
