@@ -116,8 +116,6 @@ namespace seadapter
    // Manager of seAdptIndexSession.
    class _seIndexSessionMgr : public pmdAsycSessionMgr
    {
-      typedef map<UINT64, seIndexMeta>          TASK_SESSION_MAP ;
-      typedef TASK_SESSION_MAP::iterator        TASK_SESSION_MAP_ITR ;
    public:
       _seIndexSessionMgr( _seAdptCB *pAdptCB ) ;
       virtual ~_seIndexSessionMgr() ;
@@ -133,13 +131,17 @@ namespace seadapter
 
       virtual void onSessionDestoryed( pmdAsyncSession *pSession ) ;
 
-      INT32 refreshTasks( BSONObj &obj ) ;
+      /**
+       * @brief Refresh indexing tasks. It will start all index job whose
+       * metadata flag is pending.
+       */
+      INT32 refreshTasks() ;
+
       void  stopAllIndexer( const NET_HANDLE &handle ) ;
 
       INT32 setOptionMgr( const seAdptOptionsMgr *optionMgr ) ;
       const seAdptOptionsMgr *getOptionMgr() const { return _optionMgr ; }
 
-      BOOLEAN sessionMetaCheck( const seIndexMeta &idxMeta ) ;
    protected:
       virtual SDB_SESSION_TYPE _prepareCreate( UINT64 sessionID,
                                                INT32 startType,
@@ -157,13 +159,9 @@ namespace seadapter
          return ossPack32To64( PMD_BASE_HANDLE_ID, _innerSessionID ) ;
       }
 
-      TASK_SESSION_ITEM* _findTask( const seIndexMeta *idxMeta ) ;
-
    private:
       _seAdptCB               *_pAdptCB ;
       const seAdptOptionsMgr  *_optionMgr ;
-      TASK_SESSION_MAP         _taskSessionMap ;
-      UINT32                   _indexSessionTimer ;
       UINT32                   _innerSessionID ;
    } ;
    typedef _seIndexSessionMgr seIndexSessionMgr ;
@@ -204,7 +202,7 @@ namespace seadapter
       utilESCltFactory*    getSeCltFactory() ;
       seSvcSessionMgr*     getSeAgentMgr() ;
       seIndexSessionMgr*   getIdxSessionMgr() ;
-      seIdxMetaMgr*        getIdxMetaCache() { return &_idxMetaCache ; }
+      seIdxMetaMgr*        getIdxMetaMgr() { return &_idxMetaMgr ; }
       seAdptDBAssist*      getDBAssist() { return &_dbAssist; }
 
       INT32 startInnerSession( SEADPT_SESSION_TYPE type,
@@ -241,11 +239,7 @@ namespace seadapter
       INT32 _setTimers() ;
       void  _killTimer( UINT32 timerID ) ;
 
-      INT32 _updateIndexInfo( const NET_HANDLE &handle, BSONObj &obj,
-                              BOOLEAN &updated, BOOLEAN &upgrade ) ;
-      INT32 _parseIndexInfo( const BSONElement *ele, seIndexMeta &idxMeta ) ;
-
-      void _genESIdxName( seIndexMeta &idxMeta ) ;
+      INT32 _updateIndexInfo( const NET_HANDLE &handle, BSONObj &obj ) ;
 
       BOOLEAN _isESOnline() ;
 
@@ -281,7 +275,7 @@ namespace seadapter
       ossEvent                _registerEvent ;
 
       INT64                   _localIdxVer ;
-      seIdxMetaMgr            _idxMetaCache ;
+      seIdxMetaMgr            _idxMetaMgr ;
       MsgHeader              *_regMsgBuff ;
       utilESClt              *_esClt ;          // Used to check ES status.
       BOOLEAN                 _indexerOn ;

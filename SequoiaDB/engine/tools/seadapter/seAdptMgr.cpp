@@ -40,14 +40,11 @@
 #include "seAdptMgr.hpp"
 #include "seAdptAgentSession.hpp"
 #include "seAdptIndexSession.hpp"
-#include "msgMessage.hpp"
 
 #define DATA_NODE_GRP_ID                        10000
 #define DATA_NODE_ID                            10000
-#define SEADPT_NAME_CAPPED_COLLECTION           "CappedCL"
 #define SEADPT_INIT_TEXT_INDEX_VERSION          (-1)
 #define SEADPT_IDX_UPDATE_INTERVAL              ( 5 * OSS_ONE_SEC )
-#define SEADPT_CAT_RETRY_MAX_TIMES              3
 #define SEADPT_PORT_STR_SZ                      10
 #define SEADPT_MAX_PORT                         65535
 #define SEADPT_SVC_PORT_PLUS                    7
@@ -112,7 +109,6 @@ namespace seadapter
    {
       _pAdptCB = pAdptCB ;
       _optionMgr = NULL ;
-      _indexSessionTimer = NET_INVALID_TIMER_ID ;
       _innerSessionID = 0 ;
    }
 
@@ -126,66 +122,45 @@ namespace seadapter
       return ossPack32To64( PMD_BASE_HANDLE_ID, header->TID ) ;
    }
 
-   INT32 _seIndexSessionMgr::refreshTasks( BSONObj &obj )
+   INT32 _seIndexSessionMgr::refreshTasks()
    {
       INT32 rc = SDB_OK ;
-      std::set< UINT64 > obsoleteSessions ;
-      seIdxMetaMgr* idxMetaCache = _pAdptCB->getIdxMetaCache() ;
+      vector<UINT16> imIDs ;
+      seIdxMetaMgr* idxMetaMgr = _pAdptCB->getIdxMetaMgr() ;
+      seIdxMetaContext *imContext = NULL ;
 
-      try
+      idxMetaMgr->getCurrentIMIDs( imIDs ) ;
+
+      for ( vector<UINT16>::iterator itr = imIDs.begin(); itr != imIDs.end();
+            ++itr )
       {
-         // Check if all the indices in the cache are in the task list. If not,
-         // add them.
-         idxMetaCache->lock( SHARED ) ;
-         TASK_SESSION_MAP taskMapTmp ;
-         const IDX_META_MAP* metaMap = idxMetaCache->getIdxMetaMap() ;
-
-         for ( IDX_META_MAP_CITR mItr = metaMap->begin();
-               mItr != metaMap->end(); ++mItr )
+         // Start new task.
+         seIdxMetaContext *imContext = NULL ;
+         UINT64 sessionID = _newSessionID() ;
+         rc = idxMetaMgr->getIMContext( &imContext, *itr, SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get index meta context failed[%d]",
+                      rc ) ;
+         if ( idxMetaMgr->getMetaVersion() == imContext->meta()->getVersion() &&
+              SEADPT_IM_STAT_PENDING == imContext->meta()->getStat() )
          {
-            for ( IDX_META_VEC_CITR vItr = mItr->second.begin();
-                  vItr != mItr->second.end(); ++vItr )
-            {
-               TASK_SESSION_ITEM* taskItem = _findTask( &*vItr ) ;
-               if ( !taskItem )
-               {
-                  // If not found in the task list, start the task, and
-                  // insert into the task list.
-                  UINT64 sessionID = _newSessionID() ;
-                  _pAdptCB->startInnerSession( SEADPT_SESSION_INDEX,
-                                               sessionID,
-                                               (void *)(&*vItr ) ) ;
-                  taskMapTmp.insert( TASK_SESSION_ITEM(sessionID, *vItr ) ) ;
-               }
-               else
-               {
-                  // If found, insert the original item into task list, as
-                  // we are generating the full task map.
-                  taskMapTmp.insert( *taskItem ) ;
-               }
-            }
+            _pAdptCB->startInnerSession( SEADPT_SESSION_INDEX,
+                                         sessionID, (void *)imContext ) ;
+            imContext->metaUnlock() ;
+            // Note: Do not release the imContext. It will be used by the session,
+            // and released when the session exists.
          }
-
-         for ( TASK_SESSION_MAP_ITR itr = _taskSessionMap.begin();
-               itr != _taskSessionMap.end(); itr++ )
+         else
          {
-            if ( taskMapTmp.end() == taskMapTmp.find( itr->first ) )
-            {
-               obsoleteSessions.insert( itr->first ) ;
-            }
+            imContext->metaUnlock() ;
+            idxMetaMgr->releaseIMContext( imContext ) ;
          }
-
-         _taskSessionMap = taskMapTmp ;
-         idxMetaCache->unlock( SHARED ) ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         goto error ;
       }
 
    done:
+      if ( imContext && imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
       return rc ;
    error:
       goto done ;
@@ -197,7 +172,6 @@ namespace seadapter
       // remainning tasks.
       handleSessionClose( handle ) ;
       _pAdptCB->cleanInnerSession( SEADPT_SESSION_INDEX ) ;
-      _taskSessionMap.clear() ;
    }
 
    INT32 _seIndexSessionMgr::setOptionMgr( const seAdptOptionsMgr *optionMgr )
@@ -215,18 +189,6 @@ namespace seadapter
       return rc ;
    error:
       goto done ;
-   }
-
-   BOOLEAN _seIndexSessionMgr::sessionMetaCheck( const seIndexMeta &idxMeta )
-   {
-      seIdxMetaMgr *idxMetaCache = _pAdptCB->getIdxMetaCache() ;
-      seIndexMeta *target = NULL ;
-
-      idxMetaCache->lock( SHARED ) ;
-      target = idxMetaCache->getIdxMeta( idxMeta ) ;
-      idxMetaCache->unlock( SHARED ) ;
-
-      return ( NULL != target ) ;
    }
 
    SDB_SESSION_TYPE _seIndexSessionMgr::_prepareCreate( UINT64 sessionID,
@@ -264,8 +226,17 @@ namespace seadapter
 
    void _seIndexSessionMgr::onSessionDestoryed( pmdAsyncSession *pSession )
    {
-      _taskSessionMap.erase( pSession->sessionID() ) ;
-      // If any session exists, force get text index information from data node.
+      seIdxMetaMgr* idxMetaMgr = _pAdptCB->getIdxMetaMgr() ;
+      seIdxMetaContext *imContext =
+            ((seAdptIndexSession *)pSession)->idxMetaContext() ;
+      seIndexMeta *meta = imContext->meta() ;
+      imContext->metaLock( EXCLUSIVE ) ;
+      if ( SEADPT_IM_STAT_NORMAL == meta->getStat() )
+      {
+         imContext->meta()->setStat( SEADPT_IM_STAT_PENDING ) ;
+      }
+      imContext->metaUnlock() ;
+      idxMetaMgr->releaseIMContext( imContext ) ;
       _pAdptCB->resetIdxVersion() ;
    }
 
@@ -283,11 +254,8 @@ namespace seadapter
       }
       else if ( SDB_SESSION_SE_INDEX == sessionType )
       {
-         seIndexMeta *idxMeta = (seIndexMeta *)data ;
-         if ( idxMeta->valid() )
-         {
-            pSession = SDB_OSS_NEW seAdptIndexSession( sessionID, idxMeta ) ;
-         }
+         seIdxMetaContext *imContext = (seIdxMetaContext*)data ;
+         pSession = SDB_OSS_NEW seAdptIndexSession( sessionID, imContext ) ;
       }
       else
       {
@@ -295,23 +263,6 @@ namespace seadapter
       }
 
       return pSession ;
-   }
-
-   TASK_SESSION_ITEM*
-   _seIndexSessionMgr::_findTask( const seIndexMeta *idxMeta )
-   {
-      TASK_SESSION_ITEM* item = NULL ;
-      for ( TASK_SESSION_MAP_ITR itr = _taskSessionMap.begin() ;
-            itr != _taskSessionMap.end(); ++itr )
-      {
-         if ( *idxMeta == itr->second )
-         {
-            item = &*itr ;
-            break ;
-         }
-      }
-
-      return item ;
    }
 
    BEGIN_OBJ_MSG_MAP( _seAdptCB, _pmdObjBase )
@@ -332,7 +283,6 @@ namespace seadapter
       ossMemset( _serviceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
       _selfRouteID.value = MSG_INVALID_ROUTEID ;
       _peerPrimary = FALSE ;
-      ossMemset( _peerGroupName, 0, OSS_MAX_GROUPNAME_SIZE + 1 ) ;
       _regTimerID = NET_INVALID_TIMER_ID ;
       _idxUpdateTimerID = NET_INVALID_TIMER_ID ;
       _oneSecTimerID = NET_INVALID_TIMER_ID ;
@@ -623,8 +573,7 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptCB::_updateIndexInfo( const NET_HANDLE &handle, BSONObj &obj,
-                                      BOOLEAN &updated, BOOLEAN &upgrade )
+   INT32 _seAdptCB::_updateIndexInfo( const NET_HANDLE &handle, BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       INT64 peerVersion = -1 ;
@@ -654,7 +603,6 @@ namespace seadapter
                   PD_LOG( PDEVENT, "Peer node is primary. Search engine adapter"
                           " switch from READONLY mode to READWRITE mode" ) ;
                   setDataNodePrimary( TRUE ) ;
-                  upgrade = TRUE ;
                }
             }
             else
@@ -686,7 +634,13 @@ namespace seadapter
             peerVersion = ele.numberLong() ;
             if ( peerVersion != _localIdxVer )
             {
-               INT32 textIdxNum = obj.getIntField( FIELD_NAME_TOTAL_COUNT ) ;
+               PD_LOG( PDDEBUG, "Index version: local[%lld] != peer[%lld]. "
+                                "Ready to update local metas",
+                       _localIdxVer, peerVersion ) ;
+#ifdef _DEBUG
+               _idxMetaMgr.printAllIdxMetas() ;
+#endif
+
                BSONElement idxEles = obj.getField( FIELD_NAME_INDEXES ) ;
                if ( EOO == idxEles.type() )
                {
@@ -696,66 +650,26 @@ namespace seadapter
                }
 
                {
+                  _idxMetaMgr.setMetaVersion( peerVersion ) ;
                   vector<BSONElement> idxElements = idxEles.Array() ;
                   for ( vector<BSONElement>::iterator itr = idxElements.begin();
                         itr != idxElements.end(); ++itr )
                   {
-                     seIndexMeta idxMeta ;
-                     seIndexMeta *oldMeta = NULL ;
-                     rc = _parseIndexInfo( &*itr, idxMeta ) ;
-                     if ( rc )
-                     {
-                        PD_LOG( PDERROR, "Parse index definition failed[ %d ]",
-                                rc ) ;
-                        continue ;
-                     }
-
-                     // Update to the new version.
-                     idxMeta.setVersion( peerVersion ) ;
-                     // Lock the cache, try to find the index meta. If found,
-                     // update its version number. If not, add it to the cache.
-                     _idxMetaCache.lock( EXCLUSIVE ) ;
-                     oldMeta = _idxMetaCache.getIdxMeta( idxMeta ) ;
-                     if ( !oldMeta )
-                     {
-                        // No need to take lock on this temporary cache.
-                        _idxMetaCache.addIdxMeta( idxMeta.getOrigCLName().c_str(),
-                                                  idxMeta ) ;
-                        PD_LOG( PDDEBUG, "New index metadata added: %s",
-                                idxMeta.toString().c_str() ) ;
-                     }
-                     else
-                     {
-                        oldMeta->setVersion( peerVersion ) ;
-                     }
-                     _idxMetaCache.unlock( EXCLUSIVE ) ;
+                     BSONObj idxInfoObj = itr->Obj() ;
+                     rc = _idxMetaMgr.addIdxMeta( idxInfoObj, NULL, TRUE ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Add index metadata failed[%d]. "
+                                               "Index metadata: %s",
+                                  rc, idxInfoObj.toString().c_str() ) ;
                   }
-
-                  if ( textIdxNum == (INT32)idxElements.size() )
-                  {
-                     PD_LOG( PDDEBUG, "Change local version from [ %d ] to [ %d ]",
-                             _localIdxVer, peerVersion ) ;
-                     _localIdxVer = peerVersion ;
-                  }
-                  else
-                  {
-                     PD_LOG( PDWARNING, "Not all text indices information are "
-                                        "received. Total: %d, actual received:"
-                                        " %d. Local index version will remain "
-                                        "unchanged. Local: %lld. Peer: %lld",
-                             textIdxNum, idxElements.size(),
-                             _localIdxVer, peerVersion ) ;
-                  }
-                  updated = TRUE ;
-
-                  _idxMetaCache.lock( EXCLUSIVE ) ;
-                  _idxMetaCache.cleanByVer( peerVersion ) ;
-                  _idxMetaCache.unlock( EXCLUSIVE ) ;
+                  _idxMetaMgr.clearObsoleteMeta() ;
                }
+               _localIdxVer = peerVersion ;
+#ifdef _DEBUG
+               _idxMetaMgr.printAllIdxMetas() ;
+#endif
             }
             else
             {
-               updated = FALSE ;
                PD_LOG( PDDEBUG, "Text index version are the same[%lld], no need "
                        "for updating", _localIdxVer ) ;
             }
@@ -765,84 +679,6 @@ namespace seadapter
       {
          PD_LOG( PDERROR, "Parse index information failed: %s", e.what() ) ;
          rc = SDB_SYS ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _seAdptCB::_parseIndexInfo( const BSONElement *ele,
-                                     seIndexMeta &idxMeta )
-   {
-      INT32 rc = SDB_OK ;
-
-      try
-      {
-         BSONObj idxObj = ele->Obj() ;
-         BSONObj::iterator itr( idxObj ) ;
-
-         while ( itr.more() )
-         {
-            BSONElement ele = itr.next() ;
-            if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_COLLECTION ) )
-            {
-               idxMeta.setCLName( ele.valuestrsafe() ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(),
-                                      SEADPT_NAME_CAPPED_COLLECTION ) )
-            {
-               idxMeta.setCappedCLName( ele.valuestrsafe() ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_INDEX ) )
-            {
-               BSONObj idxDef = ele.Obj() ;
-               BSONObj key ;
-               if ( idxDef.isEmpty() )
-               {
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG( PDERROR, "No valid index definition in index info" ) ;
-                  goto error ;
-               }
-
-               key = idxDef.getObjectField( IXM_FIELD_NAME_KEY ) ;
-               if ( key.isEmpty() )
-               {
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG( PDERROR, "No valid key definition in index info" ) ;
-                  goto error ;
-               }
-               idxMeta.setIdxDef( key ) ;
-               idxMeta.setIdxName( idxDef.getStringField( IXM_FIELD_NAME_NAME ) ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_UNIQUEID ) )
-            {
-               idxMeta.setCLUniqID( (utilCLUniqueID)ele.numberLong() ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_LOGICAL_ID ) )
-            {
-               idxMeta.setCLLogicalID( (UINT32)ele.numberInt() ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_INDEXLID ) )
-            {
-               idxMeta.setIdxLogicalID( (UINT32)ele.numberInt() ) ;
-            }
-            else
-            {
-               PD_LOG( PDWARNING, "Ignore unknown field[%s]",
-                       ele.toString(false, true).c_str() ) ;
-            }
-         }
-
-         _genESIdxName( idxMeta ) ;
-         idxMeta.setESIdxType( _peerGroupName ) ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexpected exception happed: %s", e.what() ) ;
          goto error ;
       }
 
@@ -1105,8 +941,7 @@ namespace seadapter
             goto error ;
          }
 
-         ossStrncpy( _peerGroupName, peerGrpName, OSS_MAX_GROUPNAME_SIZE ) ;
-         _peerGroupName[ OSS_MAX_GROUPNAME_SIZE ] = '\0' ;
+         _idxMetaMgr.setFixTypeName( peerGrpName ) ;
 
          cataInfoObj = objVec[0].getObjectField( FIELD_NAME_CATALOGINFO ) ;
          if ( cataInfoObj.isEmpty() )
@@ -1328,8 +1163,6 @@ namespace seadapter
       INT32 startFrom = 0 ;
       INT32 numReturned = 0 ;
       vector<BSONObj> objVec ;
-      BOOLEAN updated = FALSE ;
-      BOOLEAN upgrade = FALSE ;
       const INT32 expectReplySz = 1 ;
 
       rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
@@ -1349,7 +1182,7 @@ namespace seadapter
          goto error ;
       }
 
-      rc = _updateIndexInfo( handle, objVec[0], updated, upgrade ) ;
+      rc = _updateIndexInfo( handle, objVec[0] ) ;
       PD_RC_CHECK( rc, PDERROR, "Update indices information failed[ %d ]",
                    rc ) ;
 
@@ -1360,12 +1193,11 @@ namespace seadapter
       //     lost with ES. Now it's alive again. Tasks should be restarted.
       if ( _isESOnline() )
       {
-         if ( ( updated && isDataNodePrimary() ) || upgrade ||
-              ( !_indexerOn && isDataNodePrimary() ) )
+         if ( isDataNodePrimary() )
          {
             PD_LOG( PDEVENT, "Index information updated or data node upgrade. "
                              "Refresh index tasks") ;
-            rc = _idxSessionMgr.refreshTasks( objVec[0] ) ;
+            rc = _idxSessionMgr.refreshTasks() ;
             PD_RC_CHECK( rc, PDERROR, "Update text index information failed[ %d ]",
                          rc ) ;
             rc = _startInnerSession( SEADPT_SESSION_INDEX, &_idxSessionMgr ) ;
@@ -1400,10 +1232,6 @@ namespace seadapter
          _killTimer( _idxUpdateTimerID ) ;
          _idxUpdateTimerID = NET_INVALID_TIMER_ID ;
       }
-
-      _idxMetaCache.lock( EXCLUSIVE ) ;
-      _idxMetaCache.clear() ;
-      _idxMetaCache.unlock( EXCLUSIVE ) ;
 
       PD_LOG( PDEVENT, "Network broken with data node. Stop all indexing jobs "
               "and try to register on data node again..." ) ;
@@ -1450,20 +1278,6 @@ namespace seadapter
    void _seAdptCB::_killTimer( UINT32 timerID )
    {
       _dbAssist.routeAgent()->removeTimer( timerID ) ;
-   }
-
-   void _seAdptCB::_genESIdxName( seIndexMeta &idxMeta )
-   {
-      // ES index name is in the format of cappedCLName_groupName.
-      std::string::size_type pos = idxMeta.getCappedCLName().find('.') ;
-      std::string cappedCLName = idxMeta.getCappedCLName().substr( pos + 1 ) ;
-      // From ES6.0, one index can contain only one type. So we need to append
-      // the group name to the ES index name, to handle index data splited to
-      // more than one group.
-      std::string esIdx = cappedCLName + "_" + _peerGroupName ;
-      // ES index names should be in lower case.
-      std::transform( esIdx.begin(), esIdx.end(), esIdx.begin(), ::tolower ) ;
-      idxMeta.setESIdxName( esIdx.c_str() ) ;
    }
 
    BOOLEAN _seAdptCB::_isESOnline()

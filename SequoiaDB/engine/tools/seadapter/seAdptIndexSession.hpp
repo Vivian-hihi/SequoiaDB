@@ -54,19 +54,13 @@ namespace seadapter
    // operation.
    class _seAdptIndexSession : public _pmdAsyncSession
    {
-      DECLARE_OBJ_MSG_MAP()
    public:
-      _seAdptIndexSession( UINT64 sessionID, const seIndexMeta *idxMeta ) ;
+      _seAdptIndexSession( UINT64 sessionID, seIdxMetaContext *idxMeta ) ;
       virtual ~_seAdptIndexSession() ;
 
       virtual EDU_TYPES eduType() const ;
       virtual SDB_SESSION_TYPE sessionType() const ;
       virtual const CHAR* className() const { return "Indexer" ; }
-
-      INT32 handleQueryRes( NET_HANDLE handle, MsgHeader* msg ) ;
-      INT32 handleGetMoreRes( NET_HANDLE handle, MsgHeader *msg ) ;
-      INT32 handleCatalogRes( NET_HANDLE handle, MsgHeader *msg ) ;
-      INT32 handleKillCtxRes( NET_HANDLE handle, MsgHeader *msg ) ;
 
       // Called by session manager to check if this session times out. If yes,
       // the session will be released.
@@ -75,7 +69,7 @@ namespace seadapter
       // Called by self thread, in the main loop of the thread.
       virtual void onTimer( UINT64 timerID, UINT32 interval ) ;
 
-      const seIndexMeta* indexMeta() const ;
+      seIdxMetaContext* idxMetaContext() const ;
 
       seAdptDBAssist* dbAssist() const ;
 
@@ -114,12 +108,23 @@ namespace seadapter
          return _lastExpectLID ;
       }
 
+      const CHAR *getESIdxName() const
+      {
+         return _seIdxName ;
+      }
+
+      const CHAR *getESTypeName() const
+      {
+         return _seTypeName ;
+      }
+
       INT32 updateCataInfo( INT64 millisec ) ;
-      BOOLEAN validateMeta() ;
 
    protected:
       virtual void _onAttach() ;
       virtual void _onDetach() ;
+
+      virtual INT32 _defaultMsgFunc( NET_HANDLE handle, MsgHeader *msg );
 
    private:
       INT32 _init( seAdptDBAssist *dbAssist, UINT32 tid ) ;
@@ -142,7 +147,9 @@ namespace seadapter
    private:
       BOOLEAN _quit ;
       BOOLEAN _initialized ;
-      seIndexMeta _meta ;
+      seIdxMetaContext *_imContext ;
+      CHAR _seIdxName[ SEADPT_MAX_IDXNAME_SZ + 1 ] ;
+      CHAR _seTypeName[ SEADPT_MAX_TYPE_SZ + 1 ] ;
 
       seAdptIndexerState *_stateInstance ;
       SEADPT_INDEXER_STATE _targetState ;

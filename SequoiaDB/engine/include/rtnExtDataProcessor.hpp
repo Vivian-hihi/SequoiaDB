@@ -138,6 +138,8 @@ namespace engine
       INT32 processUpdate( const BSONObj &originalObj, const BSONObj &newObj,
                            pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
 
+      INT32 processTruncate( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
+
       INT32 doDropP1( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
       INT32 doDropP1Cancel( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;
       INT32 doDropP2( pmdEDUCB *cb, SDB_DPSCB *dpsCB = NULL ) ;

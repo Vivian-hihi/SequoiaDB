@@ -2586,9 +2586,6 @@ namespace engine
                                         context->mb()->_collectionName, cb ) ;
             PD_RC_CHECK( rc, PDERROR, "External operation on truncate "
                          "collection failed, rc: %d", rc ) ;
-            rc = handler->done( DMS_EXTOPR_TYPE_TRUNCATE, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External done operation failed, rc: %d",
-                         rc ) ;
          }
          else
          {
@@ -2631,6 +2628,13 @@ namespace engine
          context->_clLID           = newCLID ;
       }
       DMS_MB_STATINFO_SET_TRUNCATED( context->mbStat()->_flag ) ;
+
+      if ( handler )
+      {
+         rc = handler->done( DMS_EXTOPR_TYPE_TRUNCATE, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "External done operation failed, rc: %d",
+                      rc ) ;
+      }
 
       // write dps log
       if ( dpscb )

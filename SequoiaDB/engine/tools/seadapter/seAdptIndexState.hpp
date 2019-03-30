@@ -41,11 +41,11 @@
 
 #include "netDef.hpp"
 #include "msg.hpp"
+#include "pmdObjBase.hpp"
 #include "rtnExtOprDef.hpp"
 #include "../bson/bson.hpp"
 
-using engine::NET_HANDLE ;
-using engine::_rtnExtOprType ;
+using namespace engine ;
 using bson::BSONObj ;
 
 namespace seadapter
@@ -66,45 +66,55 @@ namespace seadapter
    const CHAR* seAdptGetIndexerStateDesp( SEADPT_INDEXER_STATE state ) ;
 
    //  Indexer state interface, defining processing of all the states.
-   class _seAdptIndexerState : public SDBObject
+   class _seAdptIndexerState : public _pmdObjBase
    {
+      DECLARE_OBJ_MSG_MAP()
    public:
-      _seAdptIndexerState() ;
+      _seAdptIndexerState( _seAdptIndexSession *session ) ;
       virtual ~_seAdptIndexerState() {}
 
       virtual SEADPT_INDEXER_STATE type() const = 0 ;
 
       // onTimer() will be called by the async session framework if no new
       // message received within more than one second.
-      virtual INT32 onTimer( _seAdptIndexSession *session,
-                             UINT32 interval ) = 0 ;
+      virtual INT32 onTimer( UINT32 interval ) ;
 
-      // Process the reply of query from db.
-      virtual INT32 processQueryRes( _seAdptIndexSession *session,
-                                     NET_HANDLE handle, MsgHeader *msg ) = 0 ;
+      virtual INT32 handleQueryRes( NET_HANDLE handle, MsgHeader* msg ) ;
+      virtual INT32 handleGetmoreRes( NET_HANDLE handle, MsgHeader* msg ) ;
+      virtual INT32 handleCatalogRes( NET_HANDLE handle, MsgHeader* msg ) ;
+      virtual INT32 handleKillCtxRes( NET_HANDLE handle, MsgHeader* msg ) ;
 
-      // Process the reply of getMore from db.
-      virtual INT32 processGetMoreRes( _seAdptIndexSession *session,
-                                       NET_HANDLE handle, MsgHeader *msg ) = 0 ;
+   protected:
+      virtual INT32 _processTimeout() = 0 ;
+      virtual INT32 _processQueryRes( INT64 contextID,
+                                      INT32 startFrom, INT32 numReturned,
+                                      vector<BSONObj> &resultSet ) ;
+      virtual INT32 _processGetmoreRes( INT32 flag, INT64 contextID,
+                                        INT32 startFrom, INT32 numReturned,
+                                        vector<BSONObj> &resultSet ) ;
+      virtual INT32 _processCatalogRes( INT64 contextID,
+                                        INT32 startFrom, INT32 numReturned,
+                                        vector<BSONObj> &resultSet ) ;
 
       /**
-       * @brief Update progress document on search engine(Record with _id of
+       * Update progress document on search engine(Record with _id of
        * SDBCOMMIT).
        */
-      INT32 updateProgress( _seAdptIndexSession *session,
-                            BOOLEAN initial = FALSE ) ;
+      INT32 _updateProgress( UINT32 hashVal ) ;
+      INT32 _getProgressInfo( BSONObj &progressInfo ) ;
 
-   protected:
-      INT32 _getProgressInfo( _seAdptIndexSession *session,
-                              BSONObj &progressInfo ) ;
-
-      INT32 _validateProgress( _seAdptIndexSession *session,
-                               const BSONObj &progressInfo,
+      // Check if it's still the current index.
+      INT32 _validateProgress( const BSONObj &progressInfo,
                                BOOLEAN &valid ) ;
 
-      INT32 _cleanSearchEngine( _seAdptIndexSession *session ) ;
+      INT32 _cleanObsoleteContext( NET_HANDLE handle, MsgHeader *msg ) ;
+      // Drop index on search engine.
+      INT32 _cleanSearchEngine() ;
+
+      virtual const CHAR *_getStepDesp() const = 0 ;
 
    protected:
+      _seAdptIndexSession *_session ;
       UINT32 _timeout ;
       UINT16 _retryTimes ;
    } ;
@@ -121,26 +131,23 @@ namespace seadapter
    class _seAdptConsultState : public seAdptIndexerState
    {
    public:
-      _seAdptConsultState() ;
+      _seAdptConsultState( _seAdptIndexSession *session ) ;
       ~_seAdptConsultState() ;
 
       SEADPT_INDEXER_STATE type() const ;
 
-      INT32 processQueryRes( _seAdptIndexSession *session,
-                             NET_HANDLE handle, MsgHeader *msg ) ;
-      INT32 processGetMoreRes( _seAdptIndexSession *session,
-                               NET_HANDLE handle, MsgHeader *msg ) ;
+   private:
+      INT32 _processTimeout() ;
+      INT32 _processQueryRes( INT64 contextID, INT32 startFrom,
+                              INT32 numReturned, vector<BSONObj> &resultSet ) ;
 
-      INT32 onTimer( _seAdptIndexSession *session, UINT32 interval ) ;
+      const CHAR *_getStepDesp() const ;
+      INT32 _consult() ;
+      INT32 _queryExpectRecord( INT64 expectLID ) ;
+      BOOLEAN _progressMatch( const BSONObj &record ) ;
 
    private:
-      INT32 _consult( _seAdptIndexSession *session ) ;
-      INT32 _queryMinIDOnDB( _seAdptIndexSession *session ) ;
-      BOOLEAN _progressMatch( INT64 minLID ) ;
-
-   private:
-      BOOLEAN _checkLID ;
-      INT64 _expectLID ;
+      BSONObj _progressInfo ;
    } ;
    typedef _seAdptConsultState seAdptConsultState ;
 
@@ -163,62 +170,57 @@ namespace seadapter
          QUERY_DATA
       } ;
    public:
-      _seAdptFullIndexState() ;
+      _seAdptFullIndexState( _seAdptIndexSession *session ) ;
       ~_seAdptFullIndexState() ;
 
       SEADPT_INDEXER_STATE type() const ;
 
-      /**
-       * @brief Process query reply. In full indexing state, there are 3 kinds
-       * of queries:
-       * (1) Query version of original collection from catalogue node.
-       * (2) Query data of original collection.
-       * (3) Query data of capped collection.
-       */
-      INT32 processQueryRes( _seAdptIndexSession *session,
-                             NET_HANDLE handle, MsgHeader *msg ) ;
-      INT32 processGetMoreRes( _seAdptIndexSession *session,
-                               NET_HANDLE handle, MsgHeader *msg ) ;
+   private:
+      INT32 _processTimeout() ;
+      INT32 _processCatalogRes( INT64 contextID,
+                                INT32 startFrom, INT32 numReturned,
+                                vector<BSONObj> &resultSet ) ;
 
-      INT32 onTimer( _seAdptIndexSession *session, UINT32 interval ) ;
+      INT32 _processQueryRes( INT64 contextID, INT32 startFrom,
+                              INT32 numReturned,
+                              vector<BSONObj> &resultSet ) ;
+
+      INT32 _processGetmoreRes( INT32 flag, INT64 contextID,
+                                INT32 startFrom, INT32 numReturned,
+                                vector<BSONObj> &resultSet ) ;
 
    private:
-      INT32 _crtESIdx( _seAdptIndexSession *session ) ;
+      const CHAR *_getStepDesp() const ;
+
+      INT32 _crtESIdx() ;
 
       /**
        * @brief Clean the source capped collection before full indexing. Do that
        * with a pop operation backwards to the first record.
        */
-      INT32 _prepareCleanDB( _seAdptIndexSession *session ) ;
+      INT32 _prepareCleanDB() ;
 
       /**
        * @brief Send pop command to the data node.
-       * @param session
+       * @param _session
        * @param targetObj The first record in the capped collection.
        */
-      INT32 _doCleanDB( _seAdptIndexSession *session,
-                        const BSONObj &targetObj ) ;
+      INT32 _doCleanDB( const BSONObj &targetObj ) ;
 
-      INT32 _queryCLVersion( _seAdptIndexSession *session ) ;
+      INT32 _queryCLVersion() ;
 
       /**
        * @brief Send query request to the original collection.
        */
-      INT32 _queryData( _seAdptIndexSession *session ) ;
+      INT32 _queryData() ;
 
       /**
        * @brief Generate options for querying the original collection.
        */
-      INT32 _genQueryOptions( _seAdptIndexSession *session,
-                              BSONObj &query, BSONObj &selector ) ;
+      INT32 _genQueryOptions( BSONObj &query, BSONObj &selector ) ;
 
-      INT32 _handleCLVersionRes( _seAdptIndexSession *session,
-                                 INT32 result, const BSONObj &record ) ;
 
-      INT32 _handleQueryDataRes( _seAdptIndexSession *session, INT32 result,
-                                 INT64 contextID ) ;
-
-      INT32 _getMore( _seAdptIndexSession *session, INT64 contextID ) ;
+      INT32 _getMore( INT64 contextID ) ;
 
       INT32 _parseRecord( const BSONObj &origRecord, string &finalID,
                           BSONObj &finalRecord ) ;
@@ -240,40 +242,41 @@ namespace seadapter
       enum _STEP
       {
          QUERY_DATA,
-         CLEAN_SRC
+         GETMORE_DATA,
+         CLEAN_SRC,
       } ;
    public:
-      _seAdptIncIndexState() ;
+      _seAdptIncIndexState( _seAdptIndexSession *session ) ;
       ~_seAdptIncIndexState() ;
 
       SEADPT_INDEXER_STATE type() const ;
 
-      INT32 processQueryRes( _seAdptIndexSession *session,
-                             NET_HANDLE handle, MsgHeader *msg ) ;
-      INT32 processGetMoreRes( _seAdptIndexSession *session,
-                               NET_HANDLE handle, MsgHeader *msg ) ;
-
-      INT32 onTimer( _seAdptIndexSession *session, UINT32 interval ) ;
-
    private:
-      INT32 _genQueryOptions( _seAdptIndexSession *session,
-                              BSONObj &query, BSONObj &selector ) ;
-      INT32 _queryData( _seAdptIndexSession *session ) ;
-      INT32 _getMore( _seAdptIndexSession *session, INT64 contextID ) ;
+      INT32 _processTimeout() ;
+      INT32 _processQueryRes( INT64 contextID, INT32 startFrom,
+                              INT32 numReturned,
+                              vector<BSONObj> &resultSet ) ;
+
+      INT32 _processGetmoreRes( INT32 flag, INT64 contextID,
+                                INT32 startFrom, INT32 numReturned,
+                                vector<BSONObj> &resultSet ) ;
+
+      const CHAR *_getStepDesp() const ;
+      INT32 _genQueryOptions( BSONObj &query, BSONObj &selector ) ;
+      INT32 _queryData() ;
+      INT32 _getMore( INT64 contextID ) ;
 
       /**
        * @brief Process documents fetched from capped collection.
        * @param docs Documents to be processed.
        */
-      INT32 _processDocuments( _seAdptIndexSession *session,
-                               const vector<BSONObj> &docs ) ;
+      INT32 _processDocuments( const vector<BSONObj> &docs ) ;
 
       /**
        * @brief Process one document.
        * @param logicalID Logical ID of the record.
        */
-      INT32 _processDocument( _seAdptIndexSession *session,
-                              const BSONObj &document, INT64 &logicalID ) ;
+      INT32 _processDocument( const BSONObj &document, INT64 &logicalID ) ;
 
       /**
        * @brief Check if the first record is the one we expected. If not, it
@@ -281,14 +284,13 @@ namespace seadapter
        * Index on search engine will be dropped. Full indexing will be started.
        * @param doc First record of data fetched in this round.
        */
-      INT32 _consistencyCheck( _seAdptIndexSession *session,
-                               const BSONObj &doc ) ;
+      INT32 _consistencyCheck( const BSONObj &doc ) ;
 
       INT32 _parseRecord( const BSONObj &origObj, _rtnExtOprType &oprType,
                           string &finalID, INT64 &logicalID,
                           BSONObj &sourceObj, string *newFinalID ) ;
 
-      INT32 _cleanData( _seAdptIndexSession *session ) ;
+      INT32 _cleanData() ;
 
       BOOLEAN _typeSupport( INT32 type )
       {

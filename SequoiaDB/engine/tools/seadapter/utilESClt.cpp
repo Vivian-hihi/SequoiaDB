@@ -835,7 +835,7 @@ namespace seadapter
       try
       {
          BSONElement ele = fullObj.getField( ES_SOURCE_KEY ) ;
-         newObj = ele.Obj() ;
+         newObj = ele.Obj().getOwned() ;
       }
       catch ( std::exception &e )
       {

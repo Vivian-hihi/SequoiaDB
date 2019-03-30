@@ -62,6 +62,7 @@ namespace seadapter
    #define SEADPT_NODE_ID                 0
    #define SEADPT_SVC_ID                  0
 
+   #define SEADPT_MAX_IDX_NUM             64
    #define SEADPT_MAX_IDXNAME_SZ          255
    #define SEADPT_MAX_TYPE_SZ             127
    #define SEADPT_MAX_ID_SZ               512
@@ -74,6 +75,8 @@ namespace seadapter
    #define SEADPT_FIELD_NAME_LID         "_lid"
    #define SEADPT_FIELD_NAME_CLLID       "_cllid"
    #define SEADPT_FIELD_NAME_IDXLID      "_idxlid"
+   #define SEADPT_FIELD_NAME_HASH        "_hash"
+   #define SEADPT_FIELD_NAME_CAPPEDCL    "CappedCL"
 
    #define SEADPT_OPERATOR_STR_OR        "$or"
    #define SEADPT_OPERATOR_STR_EXIST     "$exists"

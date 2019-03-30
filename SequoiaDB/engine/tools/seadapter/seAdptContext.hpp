@@ -44,6 +44,7 @@
 #include "utilESClt.hpp"
 #include "utilESFetcher.hpp"
 #include "rtnSimpleCondParser.hpp"
+#include "seAdptIdxMetaMgr.hpp"
 
 using namespace engine ;
 
@@ -89,12 +90,12 @@ namespace seadapter
    class _seAdptContextBase : public SDBObject
    {
    public:
-      _seAdptContextBase( const string &indexName,
-                          const string &typeName,
-                          utilESClt *seClt ) ;
-      virtual ~_seAdptContextBase() ;
+      _seAdptContextBase() {}
+      virtual ~_seAdptContextBase() {}
 
-      virtual INT32 open( const BSONObj &matcher,
+      virtual INT32 open( seIdxMetaContext *imContext,
+                          utilESClt *esClt,
+                          const BSONObj &matcher,
                           const BSONObj &selector,
                           const BSONObj &orderBy,
                           const BSONObj &hint,
@@ -102,13 +103,6 @@ namespace seadapter
                           pmdEDUCB *eduCB ) = 0 ;
       // Prepare the selector, matcher, order by and hint in objBuff.
       virtual INT32 getMore( INT32 returnNum, utilCommObjBuff &objBuff ) = 0 ;
-
-   protected:
-      string _indexName ;
-      string _type ;
-      utilESClt *_esClt ;
-      string _scrollID ;
-      utilCommObjBuff _objBuff ;
    } ;
    typedef _seAdptContextBase seAdptContextBase ;
 
@@ -116,12 +110,12 @@ namespace seadapter
    class _seAdptContextQuery : public _seAdptContextBase
    {
    public:
-      _seAdptContextQuery( const string &indexName,
-                           const string &typeName,
-                           utilESClt *seClt ) ;
+      _seAdptContextQuery() ;
       virtual ~_seAdptContextQuery() ;
 
-      INT32 open( const BSONObj &matcher,
+      INT32 open( seIdxMetaContext *imContext,
+                  utilESClt *esClt,
+                  const BSONObj &matcher,
                   const BSONObj &selector,
                   const BSONObj &orderBy,
                   const BSONObj &hint,
@@ -140,6 +134,8 @@ namespace seadapter
       INT32 _buildInCond( utilCommObjBuff &objBuff,
                           BSONObj &condition ) ;
    private:
+      seIdxMetaContext       *_imContext ;
+      utilESClt              *_esClt ;
       seAdptQueryRebuilder    _queryRebuilder ;
       rtnSimpleCondParseTree  _condTree ;
       utilESFetcher          *_esFetcher ;

@@ -80,6 +80,16 @@ namespace seadapter
       INT32 updateCataNodeRoute( const MsgRouteID &id, const CHAR *host,
                                  const CHAR *service ) ;
 
+      MsgRouteID dataNodeID() const
+      {
+         return _dataNodeID ;
+      }
+
+      MsgRouteID cataPrimaryID() const
+      {
+         return _cataPrimaryID ;
+      }
+
       void setDataNetHandle( NET_HANDLE handle ) ;
 
       void setCataNetHandle( NET_HANDLE handle ) ;

@@ -297,8 +297,6 @@ namespace engine
 
    private:
       virtual INT32 _onDone( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
-
-      virtual INT32 _onAbort( _pmdEDUCB *cb, SDB_DPSCB *dpscb = NULL ) ;
    } ;
    typedef _rtnExtTruncateCtx rtnExtTruncateCtx ;
 

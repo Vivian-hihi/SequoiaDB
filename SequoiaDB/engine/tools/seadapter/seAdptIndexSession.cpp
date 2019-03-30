@@ -44,19 +44,12 @@
 
 namespace seadapter
 {
-   BEGIN_OBJ_MSG_MAP( _seAdptIndexSession, _pmdAsyncSession)
-      ON_MSG( MSG_BS_QUERY_RES, handleQueryRes )
-      ON_MSG( MSG_BS_GETMORE_RES, handleGetMoreRes )
-      ON_MSG( MSG_CAT_QUERY_CATALOG_RSP, handleCatalogRes )
-      ON_MSG( MSG_BS_KILL_CONTEXT_RES, handleKillCtxRes )
-   END_OBJ_MSG_MAP()
-
    _seAdptIndexSession::_seAdptIndexSession( UINT64 sessionID,
-                                             const seIndexMeta *idxMeta )
+                                             seIdxMetaContext *imContext )
    : _pmdAsyncSession( sessionID ),
      _quit( FALSE ),
      _initialized( FALSE ),
-     _meta( *idxMeta ),
+     _imContext( imContext ),
      _stateInstance( NULL ),
      _targetState( CONSULT ),
      _dbAssist( NULL ),
@@ -66,9 +59,8 @@ namespace seadapter
      _expectLID( SEADPT_INVALID_LID ),
      _lastExpectLID( SEADPT_INVALID_LID )
    {
-      SDB_ASSERT( idxMeta && idxMeta->getIdxDef().valid()
-                  && !idxMeta->getIdxDef().isEmpty(),
-                  "Index definition is invalid" ) ;
+      ossMemset( _seIdxName, 0, SEADPT_MAX_IDXNAME_SZ + 1 ) ;
+      ossMemset( _seTypeName, 0, SEADPT_MAX_TYPE_SZ + 1 ) ;
    }
 
    _seAdptIndexSession::~_seAdptIndexSession()
@@ -84,107 +76,6 @@ namespace seadapter
    EDU_TYPES _seAdptIndexSession::eduType() const
    {
       return EDU_TYPE_SE_INDEX ;
-   }
-
-   INT32 _seAdptIndexSession::handleQueryRes( NET_HANDLE handle,
-                                              MsgHeader* msg )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( msg->requestID != currentRequestID() )
-      {
-         rc = _cleanObsoleteContext( handle, msg ) ;
-         PD_RC_CHECK( rc, PDERROR, "Clean obsolete context failed[%d]", rc ) ;
-         goto done ;
-      }
-
-      rc = _stateInstance->processQueryRes( this, handle, msg );
-      PD_RC_CHECK( rc, PDERROR, "Process query reply failed[%d]", rc ) ;
-
-      if ( _needStateTransition() )
-      {
-         rc = _stateTransition();
-         PD_RC_CHECK( rc, PDERROR, "Indexer state transition failed[%d]", rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      _quit = TRUE ;
-      goto done ;
-   }
-
-   // When some records are fetched from data node, different operation will be
-   // done based on the status.
-   INT32 _seAdptIndexSession::handleGetMoreRes( NET_HANDLE handle,
-                                                MsgHeader *msg )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( msg->requestID != currentRequestID() )
-      {
-         rc = _cleanObsoleteContext( handle, msg ) ;
-         PD_RC_CHECK( rc, PDERROR, "Clean obsolete context failed[%d]", rc ) ;
-         goto done ;
-      }
-
-      rc = _stateInstance->processGetMoreRes( this, handle, msg ) ;
-      PD_RC_CHECK( rc, PDERROR, "Process getmore reply failed[%d]", rc ) ;
-
-      if ( _needStateTransition() )
-      {
-         rc = _stateTransition();
-         PD_RC_CHECK( rc, PDERROR, "Indexer state transition failed[%d]", rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      _quit = TRUE ;
-      goto done ;
-   }
-
-   INT32 _seAdptIndexSession::handleCatalogRes( NET_HANDLE handle,
-                                                MsgHeader *msg )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( msg->requestID != currentRequestID() )
-      {
-         rc = _cleanObsoleteContext( handle, msg ) ;
-         PD_RC_CHECK( rc, PDERROR, "Clean obsolete context failed[%d]", rc ) ;
-         goto done ;
-      }
-
-      rc = _stateInstance->processQueryRes( this, handle, msg );
-      PD_RC_CHECK( rc, PDERROR, "Process catalog query reply failed[%d]", rc ) ;
-
-      if ( _needStateTransition() )
-      {
-         rc = _stateTransition();
-         PD_RC_CHECK( rc, PDERROR, "Indexer state transition failed[%d]", rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      _quit = TRUE ;
-      goto done ;
-   }
-
-   INT32 _seAdptIndexSession::handleKillCtxRes( NET_HANDLE handle,
-                                                MsgHeader *msg )
-   {
-      INT32 rc = SDB_OK ;
-
-      rc = ((MsgOpReply *)msg)->flags ;
-      PD_RC_CHECK( rc, PDERROR, "Kill context failed[%d]", rc ) ;
-
-   done:
-      return rc ;
-   error:
-      _quit = TRUE ;
-      goto done ;
    }
 
    BOOLEAN _seAdptIndexSession::timeout( UINT32 interval )
@@ -216,7 +107,7 @@ namespace seadapter
          }
       }
 
-      rc = _stateInstance->onTimer( this, interval );
+      rc = _stateInstance->onTimer( interval );
       PD_RC_CHECK( rc, PDERROR, "Process timer event failed[%d]", rc ) ;
 
       if ( _needStateTransition() )
@@ -232,9 +123,9 @@ namespace seadapter
       goto done ;
    }
 
-   const seIndexMeta *_seAdptIndexSession::indexMeta() const
+   seIdxMetaContext *_seAdptIndexSession::idxMetaContext() const
    {
-      return &_meta ;
+      return _imContext ;
    }
 
    seAdptDBAssist *_seAdptIndexSession::dbAssist() const
@@ -258,19 +149,22 @@ namespace seadapter
       return sdbGetSeAdapterCB()->updateCataInfo( millisec ) ;
    }
 
-   BOOLEAN _seAdptIndexSession::validateMeta()
-   {
-      return ((_seIndexSessionMgr *)_pSessionMgr)->sessionMetaCheck( _meta ) ;
-   }
-
    void _seAdptIndexSession::_onAttach()
    {
+      seIndexMeta *meta = NULL ;
+      _imContext->metaLock( EXCLUSIVE ) ;
+      meta = _imContext->meta() ;
+      ossStrncpy( _seIdxName, meta->getESIdxName(), SEADPT_MAX_IDXNAME_SZ ) ;
+      ossStrncpy( _seTypeName, meta->getESTypeName(), SEADPT_MAX_TYPE_SZ ) ;
+      meta->setStat( SEADPT_IM_STAT_NORMAL ) ;
+
       PD_LOG( PDEVENT, "New index task starts: original collection[ %s ], "
                        "index[ %s ], capped collection[ %s ], search engine "
                        "index[ %s ], search engine type[ %s ]",
-              _meta.getOrigCLName().c_str(), _meta.getOrigIdxName().c_str(),
-              _meta.getCappedCLName().c_str(), _meta.getESIdxName().c_str(),
-              _meta.getESTypeName().c_str() ) ;
+              meta->getOrigCLName(), meta->getOrigIdxName(),
+              meta->getCappedCLName(), _seIdxName, _seTypeName ) ;
+
+      _imContext->metaUnlock() ;
    }
 
    void _seAdptIndexSession::_onDetach()
@@ -293,6 +187,19 @@ namespace seadapter
       }
       return ;
    error:
+      goto done ;
+   }
+
+   INT32
+   _seAdptIndexSession::_defaultMsgFunc( NET_HANDLE handle, MsgHeader *msg )
+   {
+      INT32 rc = _stateInstance->dispatchMsg( handle, msg, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Dispatch message failed[%d]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      _quit = TRUE ;
       goto done ;
    }
 
@@ -343,13 +250,13 @@ namespace seadapter
       switch ( state )
       {
       case CONSULT:
-         instance = SDB_OSS_NEW _seAdptConsultState ;
+         instance = SDB_OSS_NEW _seAdptConsultState( this ) ;
          break ;
       case FULL_INDEX:
-         instance = SDB_OSS_NEW _seAdptFullIndexState ;
+         instance = SDB_OSS_NEW _seAdptFullIndexState( this ) ;
          break ;
       default:
-         instance = SDB_OSS_NEW _seAdptIncIndexState ;
+         instance = SDB_OSS_NEW _seAdptIncIndexState( this ) ;
          break ;
       }
 
@@ -386,30 +293,6 @@ namespace seadapter
       PD_LOG( PDEVENT, "Indexer state transition done[%s => %s]",
               seAdptGetIndexerStateDesp( oldState ),
               seAdptGetIndexerStateDesp( _targetState ) ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _seAdptIndexSession::_cleanObsoleteContext( NET_HANDLE handle,
-                                                     MsgHeader *msg )
-   {
-      INT32 rc = SDB_OK ;
-      CHAR *killCtxMsg = NULL ;
-      INT32 buffSize = 0 ;
-      INT64 contextID = ((MsgOpReply *)msg)->contextID ;
-
-      rc = msgBuildKillContextsMsg( &killCtxMsg, &buffSize, 0,
-                                    1, &contextID, eduCB() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build kill context[%lld] message failed[%d]",
-                   rc ) ;
-      ((MsgHeader *)killCtxMsg)->TID = tid() ;
-      rc = _dbAssist->sendMsg( (const MsgHeader *)killCtxMsg, handle ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send kill context with net handle[%u] "
-                                "failed[%d]",
-                   handle, rc ) ;
 
    done:
       return rc ;

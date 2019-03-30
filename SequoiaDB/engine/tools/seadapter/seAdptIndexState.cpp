@@ -42,14 +42,11 @@
 
 namespace seadapter
 {
-   // Consult should be done in 5 seconds.
-   const UINT16 SEADPT_CONSULT_INTERVAL = 5000 ;
+   // Basic operation time limit.
+   const UINT16 SEADPT_BASIC_OP_TIMEOUT = 5000 ;
 
    // Max retry times for indexing operations.
-   const UINT16 SEADPT_INDEX_MAX_RETRY = 5 ;
-
-   // Request on data/cata node respond time limit.
-   const UINT16 SEADPT_BASIC_OP_TIMEOUT = 3000 ;
+   const UINT16 SEADPT_INDEX_MAX_RETRY = 60 ;
 
    const CHAR* seAdptGetIndexerStateDesp( SEADPT_INDEXER_STATE state )
    {
@@ -67,32 +64,334 @@ namespace seadapter
       return "Unknow" ;
    }
 
-   _seAdptIndexerState::_seAdptIndexerState()
-   : _timeout( 0 ),
+   BEGIN_OBJ_MSG_MAP( _seAdptIndexerState, _pmdObjBase )
+      ON_MSG( MSG_BS_QUERY_RES, handleQueryRes )
+      ON_MSG( MSG_BS_GETMORE_RES, handleGetmoreRes )
+      ON_MSG( MSG_CAT_QUERY_CATALOG_RSP, handleCatalogRes )
+      ON_MSG( MSG_BS_KILL_CONTEXT_RES, handleKillCtxRes )
+   END_OBJ_MSG_MAP()
+   _seAdptIndexerState::_seAdptIndexerState( _seAdptIndexSession *session )
+   : _session( session ),
+     _timeout( 0 ),
      _retryTimes( 0 )
    {
    }
 
-   INT32 _seAdptIndexerState::updateProgress( seAdptIndexSession *session,
-                                              BOOLEAN initial  )
+   INT32 _seAdptIndexerState::onTimer( UINT32 interval )
    {
       INT32 rc = SDB_OK ;
-      const seIndexMeta *meta = session->indexMeta() ;
-      seAdptSEAssist *seAssist = session->seAssist() ;
+
+      _timeout += interval ;
+      if ( _timeout < SEADPT_BASIC_OP_TIMEOUT )
+      {
+         goto done ;
+      }
+
+      ++_retryTimes ;
+      if ( _retryTimes > SEADPT_INDEX_MAX_RETRY )
+      {
+         // Incase of timeout, let's check if the index exists or not.
+         seIdxMetaContext *imContext = _session->idxMetaContext() ;
+         INT32 rcTmp = imContext->metaLock( SHARED ) ;
+         if ( SDB_RTN_INDEX_NOTEXIST == rcTmp )
+         {
+            rc = rcTmp ;
+            goto error ;
+         }
+         else if ( SDB_OK == rcTmp )
+         {
+            imContext->metaUnlock() ;
+         }
+         rc = SDB_TIMEOUT ;
+         PD_LOG( PDERROR, "In stage[%s:%s] operation timeout",
+                 seAdptGetIndexerStateDesp( type() ), _getStepDesp() ) ;
+         goto error ;
+      }
+
+      _timeout = 0 ;
+
+      rc = _processTimeout() ;
+      PD_RC_CHECK( rc, PDERROR, "Process timeout failed[%d]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      if ( SDB_RTN_INDEX_NOTEXIST == rc )
+      {
+         PD_LOG( PDEVENT, "Index meta not found. "
+                          "Clean index on search engine" ) ;
+         INT32 rcTmp = _cleanSearchEngine() ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Clean index[%s] on search engine failed[%d]",
+                    _session->getESIdxName(), rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
+   INT32 _seAdptIndexerState::handleQueryRes( NET_HANDLE handle,
+                                              MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flag = SDB_OK ;
+      INT64 contextID = -1 ;
+      INT32 startFrom = 0 ;
+      INT32 numReturned = 0 ;
+      vector<BSONObj> resultSet ;
+      seAdptDBAssist *dbAssist = _session->dbAssist() ;
+
+      // If it's obsolete message, just ignore.
+      if ( msg->requestID != _session->currentRequestID() )
+      {
+         rc = _cleanObsoleteContext( handle, msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Clean obsolete context failed[%d]", rc ) ;
+         PD_LOG( PDWARNING, "Request id in message[%llu] dose not match the "
+                            "current id[%llu]. Ignore the message",
+                 msg->requestID, _session->currentRequestID() ) ;
+         goto done ;
+      }
+
+      if ( !dbAssist->dataNetHandleValid() )
+      {
+         dbAssist->setDataNetHandle( handle ) ;
+      }
+
+      rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
+                            &numReturned, resultSet ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract query reply message failed[%d]", rc ) ;
+
+      rc = flag ;
+
+      // If original CL/CS or capped CS/CL is dropped, remove the index on
+      // search engine.
+      if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc
+           || SDB_DMS_CS_DELETING == rc )
+      {
+         PD_LOG( PDEVENT, "Index on data node is dropped. Clean index[%s] on "
+                          "search engine", _session->getESIdxName() ) ;
+         {
+            INT32 rcTmp = _cleanSearchEngine() ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Clean index[%s] on search engine failed[%d]",
+                       _session->getESIdxName(), rcTmp ) ;
+            }
+         }
+         goto error ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "In stage[%s:%s] query request failed[%d]",
+                 seAdptGetIndexerStateDesp( type() ), _getStepDesp(),  rc ) ;
+         goto error ;
+      }
+
+      rc = _processQueryRes( contextID, startFrom, numReturned, resultSet ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process query reply failed[%d]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      if ( SDB_RTN_INDEX_NOTEXIST == rc )
+      {
+         PD_LOG( PDEVENT, "Index meta not found. "
+                          "Clean index on search engine" ) ;
+         INT32 rcTmp = _cleanSearchEngine() ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Clean index[%s] on search engine failed[%d]",
+                    _session->getESIdxName(), rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
+   INT32
+   _seAdptIndexerState::handleGetmoreRes( NET_HANDLE handle, MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flag = 0;
+      INT64 contextID = 0;
+      INT32 startFrom = 0;
+      INT32 numReturned = 0;
+      vector<BSONObj> resultSet;
+
+      // If it's obsolete message, just ignore.
+      if ( msg->requestID != _session->currentRequestID() )
+      {
+         rc = _cleanObsoleteContext( handle, msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Clean obsolete context failed[%d]", rc ) ;
+         PD_LOG( PDWARNING, "Request id in message[%llu] dose not match the "
+                            "current id[%llu]. Ignore the message",
+                 msg->requestID, _session->currentRequestID() ) ;
+         goto done ;
+      }
+
+      rc = msgExtractReply( ( CHAR * )msg, &flag, &contextID, &startFrom,
+                            &numReturned, resultSet );
+      PD_RC_CHECK( rc, PDERROR, "Extract getmore reply message failed[%d]",
+                   rc );
+
+      rc = _processGetmoreRes( flag, contextID, startFrom,
+                               numReturned, resultSet ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process getmore reply failed[%d]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      if ( SDB_RTN_INDEX_NOTEXIST == rc )
+      {
+         PD_LOG( PDEVENT, "Index meta not found. "
+                          "Clean index on search engine" ) ;
+         INT32 rcTmp = _cleanSearchEngine() ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Clean index[%s] on search engine failed[%d]",
+                    _session->getESIdxName(), rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
+   INT32 _seAdptIndexerState::handleCatalogRes( NET_HANDLE handle,
+                                                MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flag = SDB_OK ;
+      INT64 contextID = -1 ;
+      INT32 startFrom = 0 ;
+      INT32 numReturned = 0 ;
+      vector<BSONObj> resultSet ;
+      seAdptDBAssist *dbAssist = _session->dbAssist() ;
+
+      // If it's obsolete message, just ignore.
+      if ( msg->requestID != _session->currentRequestID() )
+      {
+         rc = _cleanObsoleteContext( handle, msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Clean obsolete context failed[%d]", rc ) ;
+         PD_LOG( PDWARNING, "Request id in message[%llu] dose not match the "
+                            "current id[%llu]. Ignore the message",
+                 msg->requestID, _session->currentRequestID() ) ;
+         goto done ;
+      }
+
+      if ( !dbAssist->cataNetHandleValid() )
+      {
+         dbAssist->setCataNetHandle( handle ) ;
+      }
+
+      rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
+                            &numReturned, resultSet ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract catalogue reply message failed[%d]",
+                   rc ) ;
+
+      rc = flag ;
+
+      // If original CL/CS or capped CS/CL is dropped, remove the index on
+      // search engine.
+      if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc
+           || SDB_DMS_CS_DELETING == rc )
+      {
+         PD_LOG( PDEVENT, "Original collection is dropped. Clean index[%s] on "
+                          "search engine", _session->getESIdxName() ) ;
+         {
+            INT32 rcTmp = _cleanSearchEngine() ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Clean index[%s] on search engine failed[%d]",
+                       _session->getESIdxName(), rcTmp ) ;
+            }
+         }
+         goto error ;
+      }
+      else if ( SDB_CLS_NOT_PRIMARY == rc || SDB_NET_CANNOT_CONNECT == rc )
+      {
+         rc = _session->updateCataInfo( OSS_ONE_SEC ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update catalogue information failed[%d]",
+                      rc ) ;
+         // Stay in state of QUERY_CL_VERSION. Wait for next query of the
+         // collection version.
+         goto done ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "In stage[%s:%s] query request failed[%d]",
+                 seAdptGetIndexerStateDesp( type() ), _getStepDesp(),  rc ) ;
+         goto error ;
+      }
+
+      rc = _processCatalogRes( contextID, startFrom, numReturned, resultSet ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process catalog reply failed[%d]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      if ( SDB_RTN_INDEX_NOTEXIST == rc )
+      {
+         PD_LOG( PDEVENT, "Index meta not found. "
+                          "Clean index on search engine" ) ;
+         INT32 rcTmp = _cleanSearchEngine() ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Clean index[%s] on search engine failed[%d]",
+                    _session->getESIdxName(), rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
+   INT32 _seAdptIndexerState::handleKillCtxRes( NET_HANDLE handle,
+                                                MsgHeader *msg )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _seAdptIndexerState::_processQueryRes( INT64 contextID,
+                                                INT32 startFrom,
+                                                INT32 numReturned,
+                                                vector<BSONObj> &resultSet )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _seAdptIndexerState::_processGetmoreRes( INT32 flag, INT64 contextID,
+                                                  INT32 startFrom,
+                                                  INT32 numReturned,
+                                                  vector<BSONObj> &resultSet )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _seAdptIndexerState::_processCatalogRes( INT64 contextID,
+                                                  INT32 startFrom,
+                                                  INT32 numReturned,
+                                                  vector<BSONObj> &resultSet )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _seAdptIndexerState::_updateProgress( UINT32 hashVal )
+   {
+      INT32 rc = SDB_OK ;
+      const seIdxMetaContext *imContext = _session->idxMetaContext() ;
+      seAdptSEAssist *seAssist = _session->seAssist() ;
 
       try
       {
          BSONObj progressObj =
-               BSON( SEADPT_FIELD_NAME_CLUID << (INT64)meta->getCLUID() <<
-                     SEADPT_FIELD_NAME_CLLID << meta->getCLLID() <<
-                     SEADPT_FIELD_NAME_IDXLID << meta->getIdxLID() <<
+               BSON( SEADPT_FIELD_NAME_CLUID << (INT64)imContext->getCLUID() <<
+                     SEADPT_FIELD_NAME_CLLID << imContext->getCLLID() <<
+                     SEADPT_FIELD_NAME_IDXLID << imContext->getIdxLID() <<
                      SEADPT_FIELD_NAME_LID <<
-                        ( initial ? -1 : session->getExpectLID() ) ) ;
-         rc =
-            seAssist->indexDocument( meta->getESIdxName().c_str(),
-                                    meta->getESTypeName().c_str(),
-                                    SEADPT_COMMIT_ID,
-                                    progressObj.toString(false, true).c_str() ) ;
+                        ( ( 0 == hashVal ) ? -1 : _session->getExpectLID() ) <<
+                     SEADPT_FIELD_NAME_HASH << hashVal ) ;
+
+         rc = seAssist->indexDocument(
+               _session->getESIdxName(),
+               _session->getESTypeName(),
+               SEADPT_COMMIT_ID,
+               progressObj.toString(false, true).c_str() ) ;
          PD_RC_CHECK( rc, PDERROR, "Update progress in search engine "
                                    "failed[%d]. Progress information: %s",
                       rc, progressObj.toString(false, true).c_str() ) ;
@@ -110,34 +409,31 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptIndexerState::_getProgressInfo( seAdptIndexSession *session,
-                                                BSONObj &progressInfo )
+   INT32 _seAdptIndexerState::_getProgressInfo( BSONObj &progressInfo )
    {
-      const seIndexMeta *meta = session->indexMeta() ;
-      seAdptSEAssist *seAssist = session->seAssist() ;
+      seAdptSEAssist *seAssist = _session->seAssist() ;
 
-      // Try to get the SDBCOMMIT record.
-      return seAssist->getDocument( meta->getESIdxName().c_str(),
-                                    meta->getESTypeName().c_str(),
+      return seAssist->getDocument( _session->getESIdxName(),
+                                    _session->getESTypeName(),
                                     SEADPT_COMMIT_ID, progressInfo ) ;
    }
 
-   INT32 _seAdptIndexerState::_validateProgress( seAdptIndexSession *session,
-                                                 const BSONObj &progressInfo,
+   INT32 _seAdptIndexerState::_validateProgress( const BSONObj &progressInfo,
                                                  BOOLEAN &valid )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN validate = FALSE ;
-      const seIndexMeta *meta = session->indexMeta() ;
+      const seIdxMetaContext *imContext = _session->idxMetaContext() ;
       try
       {
          validate =
-               ( ( (UINT32)progressInfo.getIntField( SEADPT_FIELD_NAME_CLUID )
-                   == meta->getCLUID() ) &&
+               ( ( (UINT64)
+                   progressInfo.getField( SEADPT_FIELD_NAME_CLUID ).numberLong()
+                   == imContext->getCLUID() ) &&
                  ( (UINT32)progressInfo.getIntField( SEADPT_FIELD_NAME_CLLID )
-                   == meta->getCLLID() ) &&
+                   == imContext->getCLLID() ) &&
                  ( (UINT32)progressInfo.getIntField( SEADPT_FIELD_NAME_IDXLID )
-                   == meta->getIdxLID() ) ) ;
+                   == imContext->getIdxLID() ) ) ;
 
          valid = validate ;
       }
@@ -154,16 +450,41 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptIndexerState::_cleanSearchEngine( seAdptIndexSession *session )
+   INT32 _seAdptIndexerState::_cleanObsoleteContext( NET_HANDLE handle,
+                                                     MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *killCtxMsg = NULL ;
+      INT32 buffSize = 0 ;
+      INT64 contextID = ((MsgOpReply *)msg)->contextID ;
+      seAdptDBAssist *dbAssist = _session->dbAssist() ;
+
+      rc = msgBuildKillContextsMsg( &killCtxMsg, &buffSize, 0,
+                                    1, &contextID, _session->eduCB() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build kill context[%lld] message failed[%d]",
+                   rc ) ;
+      ((MsgHeader *)killCtxMsg)->TID = _session->tid() ;
+      rc = dbAssist->sendMsg( (const MsgHeader *)killCtxMsg, handle ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send kill context with net handle[%u] "
+                                "failed[%d]",
+                   handle, rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptIndexerState::_cleanSearchEngine()
    {
       INT32 rc = SDB_OK ;
       BOOLEAN idxExist = FALSE ;
-      seAdptSEAssist *es= session->seAssist() ;
-      const CHAR *idxName = session->indexMeta()->getESIdxName().c_str() ;
+      seAdptSEAssist *es= _session->seAssist() ;
+      const CHAR *idxName = _session->getESIdxName() ;
 
       rc = es->indexExist( idxName, idxExist ) ;
       PD_RC_CHECK( rc, PDERROR, "Check index[%s] existence failed[%d]",
-                   idxName,rc ) ;
+                   idxName, rc ) ;
       if ( idxExist )
       {
          rc = es->dropIndex( idxName ) ;
@@ -178,9 +499,8 @@ namespace seadapter
       goto done ;
    }
 
-   _seAdptConsultState::_seAdptConsultState()
-   : _checkLID( FALSE ),
-     _expectLID( SEADPT_INVALID_LID )
+   _seAdptConsultState::_seAdptConsultState( _seAdptIndexSession *session )
+   : _seAdptIndexerState( session )
    {
    }
 
@@ -188,120 +508,15 @@ namespace seadapter
    {
    }
 
-   INT32 _seAdptConsultState::processQueryRes( seAdptIndexSession *session,
-                                               NET_HANDLE handle,
-                                               MsgHeader *msg )
-   {
-      INT32 rc = SDB_OK ;
-      INT64 contextID = -1 ;
-      INT32 startFrom = 0 ;
-      INT32 numReturned = 0 ;
-      vector<BSONObj> docObjs ;
-      MsgOpReply *reply = (MsgOpReply *)msg ;
-      INT32 result = reply->flags ;
-      INT64 minLID = SEADPT_INVALID_LID ;
-      const CHAR *esIdxName = session->indexMeta()->getESIdxName().c_str() ;
-
-      if ( NET_INVALID_HANDLE != handle &&
-           !session->dbAssist()->dataNetHandleValid() )
-      {
-         session->dbAssist()->setDataNetHandle( handle ) ;
-      }
-
-      if ( msg->requestID != session->currentRequestID() )
-      {
-         goto done ;
-      }
-
-      rc = msgExtractReply( (CHAR *)msg, &result, &contextID, &startFrom,
-                            &numReturned, docObjs ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Extract query reply message failed[%d]", rc ) ;
-         goto error ;
-      }
-
-      rc = result ;
-      // If capped collection or collection space is deleted, remove the index.
-      if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc
-           || SDB_DMS_CS_DELETING == rc )
-      {
-         PD_LOG( PDEVENT, "Index on data node is dropped. Clean index[%s] on "
-                          "search engine", esIdxName ) ;
-         {
-            INT32 rcTmp = _cleanSearchEngine( session ) ;
-            if ( rcTmp )
-            {
-               PD_LOG( PDERROR, "Clean index[%s] failed", esIdxName ) ;
-            }
-         }
-         goto error ;
-      }
-      else if ( rc )
-      {
-         PD_LOG( PDERROR, "Query request failed[%d]", rc ) ;
-         goto error ;
-      }
-
-      if ( numReturned > 0 )
-      {
-         SDB_ASSERT( 1 == numReturned, "Number returned should be 1" ) ;
-         minLID = docObjs[0].getField( SEADPT_FIELD_NAME_ID ).Number() ;
-      }
-
-      if ( _progressMatch( minLID ) )
-      {
-         session->setExpectLID( _expectLID ) ;
-         session->triggerStateTransition( INCREMENT_INDEX ) ;
-      }
-      else
-      {
-         rc = _cleanSearchEngine( session ) ;
-         PD_RC_CHECK( rc, PDERROR, "Clean index[%s] on search engine "
-                                   "failed[%d]", esIdxName, rc ) ;
-         session->triggerStateTransition( FULL_INDEX ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _seAdptConsultState::processGetMoreRes( seAdptIndexSession *session,
-                                                 NET_HANDLE handle,
-                                                 MsgHeader *msg )
-   {
-      return SDB_OK ;
-   }
-
    SEADPT_INDEXER_STATE _seAdptConsultState::type() const
    {
       return CONSULT ;
    }
 
-   INT32 _seAdptConsultState::onTimer( seAdptIndexSession *session,
-                                       UINT32 interval )
+   INT32 _seAdptConsultState::_processTimeout()
    {
       INT32 rc = SDB_OK ;
-
-      _timeout += interval ;
-      if ( _timeout < SEADPT_CONSULT_INTERVAL )
-      {
-         goto done ;
-      }
-
-      ++_retryTimes ;
-      if ( _retryTimes > SEADPT_INDEX_MAX_RETRY )
-      {
-         rc = SDB_TIMEOUT ;
-         PD_LOG( PDERROR, "Index consult timeout" ) ;
-         goto error ;
-      }
-
-      _timeout = 0 ;
-
-      rc = _consult( session ) ;
+      rc = _consult() ;
       PD_RC_CHECK( rc, PDERROR, "Indexing consult failed[%d]", rc ) ;
 
    done:
@@ -310,14 +525,50 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptConsultState::_consult( seAdptIndexSession *session )
+   INT32 _seAdptConsultState::_processQueryRes( INT64 contextID,
+                                                INT32 startFrom,
+                                                INT32 numReturned,
+                                                vector<BSONObj> &resultSet )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == numReturned || !_progressMatch( resultSet[0] ) )
+      {
+         PD_LOG( PDERROR, "Record of expected progress[%s] is not found "
+                          "on data node. Drop and recreate index again",
+                 _progressInfo.toString(false, true).c_str() ) ;
+         rc = _cleanSearchEngine() ;
+         PD_RC_CHECK( rc, PDERROR, "Clean index[%s] on search engine "
+                                   "failed[%d]",
+                      _session->getESIdxName(), rc ) ;
+         _session->triggerStateTransition( FULL_INDEX ) ;
+      }
+      else
+      {
+         _session->setExpectLID(
+               _progressInfo.getField(SEADPT_FIELD_NAME_LID).numberLong() ) ;
+         _session->triggerStateTransition( INCREMENT_INDEX ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR *_seAdptConsultState::_getStepDesp() const
+   {
+      return "Query min logical id" ;
+   }
+
+   INT32 _seAdptConsultState::_consult()
    {
       INT32 rc = SDB_OK ;
       BOOLEAN exist = FALSE ;
-      const CHAR *esIdxName = session->indexMeta()->getESIdxName().c_str() ;
+      const CHAR *esIdxName = _session->getESIdxName() ;
 
       // 1. Check if the index exists on search engine.
-      rc = session->seAssist()->indexExist( esIdxName,  exist ) ;
+      rc = _session->seAssist()->indexExist( esIdxName,  exist ) ;
       PD_RC_CHECK( rc, PDERROR, "Check index[%s] existance on search engine "
                                 "failed[%d]", esIdxName, rc ) ;
 
@@ -325,7 +576,7 @@ namespace seadapter
       {
          PD_LOG( PDEVENT, "Index[%s] not found on search engine. "
                           "Start full indexing", esIdxName ) ;
-         session->triggerStateTransition( FULL_INDEX ) ;
+         _session->triggerStateTransition( FULL_INDEX ) ;
          goto done ;
       }
       else
@@ -333,18 +584,18 @@ namespace seadapter
          try
          {
             // 2. If index exists, get and validate the meta data.
-            BSONObj progressInfo ;
             BOOLEAN valid = FALSE ;
-            rc = _getProgressInfo( session, progressInfo ) ;
+            INT64 expectLID = SEADPT_INVALID_LID ;
+            rc = _getProgressInfo( _progressInfo ) ;
             if ( SDB_INVALIDARG == rc )
             {
                PD_LOG( PDEVENT, "Commit mark for index[%s] dose not exist. "
                                 "The index on search engine will be re-created",
                        esIdxName ) ;
-               rc = _cleanSearchEngine( session ) ;
+               rc = _cleanSearchEngine() ;
                PD_RC_CHECK( rc, PDERROR, "Clean index[%s] on search engine "
                                          "failed[%d]", esIdxName, rc ) ;
-               session->triggerStateTransition( FULL_INDEX ) ;
+               _session->triggerStateTransition( FULL_INDEX ) ;
                goto done ;
             }
             else if ( rc )
@@ -354,7 +605,7 @@ namespace seadapter
                goto error ;
             }
 
-            rc = _validateProgress( session, progressInfo, valid ) ;
+            rc = _validateProgress( _progressInfo, valid ) ;
             PD_RC_CHECK( rc, PDERROR, "Validate progress information of "
                                       "index[%s] failed[%d]", esIdxName, rc ) ;
             if ( !valid )
@@ -362,20 +613,26 @@ namespace seadapter
                PD_LOG( PDEVENT, "Commit mark for index[%s] is not as expected. "
                                 "The index on search engine will be re-created",
                        esIdxName ) ;
-               rc = _cleanSearchEngine( session ) ;
+               rc = _cleanSearchEngine() ;
                PD_RC_CHECK( rc, PDERROR, "Clean index[%s] on search engine "
                                          "failed[%d]", esIdxName, rc ) ;
-               session->triggerStateTransition( FULL_INDEX ) ;
+               _session->triggerStateTransition( FULL_INDEX ) ;
                goto done ;
             }
 
-            // 3. Get _lid in commit mark, and ready to compare with db.
-            _expectLID =
-                  progressInfo.getField(SEADPT_FIELD_NAME_LID).numberLong() ;
+            // 3. Query expected record from data node.
+            expectLID =
+                  _progressInfo.getField(SEADPT_FIELD_NAME_LID).numberLong() ;
+            if ( -1 == expectLID )
+            {
+               // In the last run, full indexing had just finished.
+               _session->triggerStateTransition( INCREMENT_INDEX ) ;
+               goto done ;
+            }
 
-            rc = _queryMinIDOnDB( session ) ;
-            PD_RC_CHECK( rc, PDERROR, "Query min logical ID on data node "
-                                      "failed[%d]", rc ) ;
+            rc = _queryExpectRecord( expectLID ) ;
+            PD_RC_CHECK( rc, PDERROR, "Query record on data node failed[%d]",
+                         rc ) ;
          }
          catch ( std::exception &e )
          {
@@ -391,54 +648,77 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptConsultState::_queryMinIDOnDB( _seAdptIndexSession *session )
+   INT32 _seAdptConsultState::_queryExpectRecord( INT64 expectLID )
    {
       INT32 rc = SDB_OK ;
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
-      BSONObj selector ;
-      seAdptDBAssist* dbAssist = session->dbAssist() ;
+      BSONObj condition ;
+      seAdptDBAssist* dbAssist = _session->dbAssist() ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
+      const seIndexMeta *meta = imContext->meta() ;
 
       try
       {
-         // In the capped collection, the field name of logical id is '_id', and
-         // the original '_id' is named '_rid'.
-         selector = BSON( SEADPT_FIELD_NAME_ID << "" ) ;
-         rc = msgBuildQueryMsg( &msg, &bufSize,
-                                session->indexMeta()->getCappedCLName().c_str(),
-                                FLG_QUERY_WITH_RETURNDATA,
-                                session->nextRequestID(), 0, 1, NULL,
-                                &selector, NULL, NULL, session->eduCB() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Build query message failed[%d]", rc ) ;
-         ((MsgHeader *)msg)->TID = session->tid() ;
-         rc = dbAssist->sendToDataNode( (const MsgHeader *)msg ) ;
-         PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[%d]",
-                      rc ) ;
+         condition = BSON( SEADPT_FIELD_NAME_ID << expectLID ) ;
       }
       catch ( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
          goto error ;
       }
 
+      rc = imContext->metaLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index metadata in SHARED mode "
+                                "failed[%d]", rc ) ;
+      rc = msgBuildQueryMsg( &msg, &bufSize,
+                             meta->getCappedCLName(),
+                             FLG_QUERY_WITH_RETURNDATA,
+                             _session->nextRequestID(), 0, 1, &condition,
+                             NULL, NULL, NULL, _session->eduCB() ) ;
+      imContext->metaUnlock() ;
+      PD_RC_CHECK( rc, PDERROR, "Build query message failed[%d]", rc ) ;
+      ((MsgHeader *)msg)->TID = _session->tid() ;
+      rc = dbAssist->sendToDataNode( (const MsgHeader *)msg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[%d]",
+                   rc ) ;
+
    done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
       if ( msg )
       {
-         msgReleaseBuffer( msg, session->eduCB() ) ;
+         msgReleaseBuffer( msg, _session->eduCB() ) ;
       }
       return rc ;
    error:
       goto done ;
    }
 
-   BOOLEAN _seAdptConsultState::_progressMatch( INT64 minLID )
+   BOOLEAN _seAdptConsultState::_progressMatch( const BSONObj &record )
    {
-      return minLID <= _expectLID ;
+      BOOLEAN match = FALSE ;
+      try
+      {
+         UINT32 expectHash =
+               (UINT32)(_progressInfo.getIntField( SEADPT_FIELD_NAME_HASH ) ) ;
+         match =
+               ( ossHash( record.objdata(), record.objsize() ) == expectHash ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+      }
+
+      return match ;
    }
 
-   _seAdptFullIndexState::_seAdptFullIndexState()
-   : _step( CLEAN_ES ),
+   _seAdptFullIndexState::_seAdptFullIndexState( _seAdptIndexSession *session )
+   : _seAdptIndexerState( session ),
+     _step( CLEAN_ES ),
      _clVersion( -1 )
    {
    }
@@ -452,107 +732,123 @@ namespace seadapter
       return FULL_INDEX ;
    }
 
-   INT32 _seAdptFullIndexState::processQueryRes( seAdptIndexSession *session,
-                                                 NET_HANDLE handle,
-                                                 MsgHeader *msg )
+   INT32 _seAdptFullIndexState::_processTimeout()
    {
       INT32 rc = SDB_OK ;
-      INT32 resultFlag = 0 ;
-      INT64 contextID = 0 ;
-      INT32 startFrom = 0 ;
-      INT32 numReturned = 0 ;
-      vector<BSONObj> resultSet ;
 
-      // If it's not the reply of the current request, just ignore.
-      if ( msg->requestID != session->currentRequestID() )
+      switch ( _step )
       {
-         goto done ;
+      case CLEAN_ES:
+         rc = _cleanSearchEngine() ;
+         PD_RC_CHECK( rc, PDERROR, "Clean data on ES failed[%d]", rc ) ;
+         _step = CRT_ES_IDX ;
+         // Intentially fall through.
+      case CRT_ES_IDX:
+         rc = _crtESIdx() ;
+         PD_RC_CHECK( rc, PDERROR, "Create index on ES failed[%d]", rc ) ;
+         // Intentially fall through.
+      case CLEAN_DB_P1:
+         rc = _prepareCleanDB() ;
+         PD_RC_CHECK( rc, PDERROR, "Clean data on data node failed[%d]", rc ) ;
+         break ;
+      case QUERY_CL_VERSION:
+         rc = _queryCLVersion() ;
+         PD_RC_CHECK( rc, PDERROR, "Query version of collection failed[%d]",
+                      rc ) ;
+         break ;
+      case QUERY_DATA:
+         rc = _queryData() ;
+         PD_RC_CHECK( rc, PDERROR, "Query data failed[%d]", rc ) ;
+         break ;
+      default:
+         break ;
       }
 
-      rc = msgExtractReply( (CHAR *)msg, &resultFlag, &contextID, &startFrom,
-                            &numReturned, resultSet ) ;
-      PD_RC_CHECK( rc, PDERROR, "Extract query reply message failed[%d]", rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
-      if ( SDB_DMS_NOTEXIST == resultFlag || SDB_DMS_CS_NOTEXIST == resultFlag
-           || SDB_DMS_CS_DELETING == resultFlag )
+   INT32 _seAdptFullIndexState::_processCatalogRes( INT64 contextID,
+                                                    INT32 startFrom,
+                                                    INT32 numReturned,
+                                                    vector<BSONObj> &resultSet )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 1 != numReturned )
       {
-         rc = resultFlag ;
-         (void)_cleanSearchEngine( session ) ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Expect result number is 1. Actual: %d",
+                 numReturned ) ;
          goto error ;
       }
 
+      try
+      {
+         BSONObj record ;
+         record = resultSet.front() ;
+         _clVersion = record.getIntField( FIELD_NAME_VERSION ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         goto error ;
+      }
+      PD_LOG( PDDEBUG, "Update local version of original collection to %d",
+              _clVersion ) ;
+
+      _step = QUERY_DATA ;
+      rc = _queryData() ;
+      PD_RC_CHECK( rc, PDERROR, "Query data failed[%d]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptFullIndexState::_processQueryRes( INT64 contextID,
+                                                  INT32 startFrom,
+                                                  INT32 numReturned,
+                                                  vector<BSONObj> &resultSet )
+   {
+      INT32 rc = SDB_OK ;
       switch ( _step )
       {
       case CLEAN_DB_P1:
       {
-         if ( resultFlag )
-         {
-            rc = resultFlag ;
-            PD_LOG( PDERROR, "Query clean target on db failed[%d]", rc ) ;
-            goto error ;
-         }
-
          SDB_ASSERT( numReturned <=1, "Return number is not as expected") ;
-
          if ( 0 == numReturned )
          {
             // No Records in capped collection. No cleanup required.
             _step = QUERY_CL_VERSION ;
-            rc = _queryCLVersion( session ) ;
+            rc = _queryCLVersion() ;
             PD_RC_CHECK( rc, PDERROR, "Query version of collection failed[%d]",
                          rc ) ;
             goto done ;
          }
 
-         rc = _doCleanDB( session, resultSet.front() ) ;
+         rc = _doCleanDB( resultSet.front() ) ;
          PD_RC_CHECK( rc, PDERROR, "Clean data on data node failed[%d]", rc ) ;
          _step = CLEAN_DB_P2 ;
          break ;
       }
       case CLEAN_DB_P2:
       {
-         // Make sure the pop succeeded.
-         if ( resultFlag )
-         {
-            rc = resultFlag ;
-            PD_LOG( PDERROR, "Pop capped collection data failed[%d]", rc ) ;
-            goto error ;
-         }
          _step = QUERY_CL_VERSION ;
-         rc = _queryCLVersion( session ) ;
+         rc = _queryCLVersion() ;
          PD_RC_CHECK( rc, PDERROR, "Query version of collection failed[%d]",
-                      rc ) ;
-         break ;
-      }
-      case QUERY_CL_VERSION:
-      {
-         BSONObj record ;
-
-         if ( NET_INVALID_HANDLE != handle &&
-              !session->dbAssist()->cataNetHandleValid() )
-         {
-            session->dbAssist()->setCataNetHandle( handle ) ;
-         }
-
-         if ( 1 != numReturned )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Expect result number is 1. Actual: %d",
-                    numReturned ) ;
-            goto error ;
-         }
-
-         record = resultSet.front() ;
-         rc = _handleCLVersionRes( session, resultFlag, record ) ;
-         PD_RC_CHECK( rc, PDERROR, "Process query respond message failed[%d]",
                       rc ) ;
          break ;
       }
       case QUERY_DATA:
       {
-         rc = _handleQueryDataRes( session, resultFlag, contextID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Process query respond message failed[%d]",
-                      rc ) ;
+         rc = _getMore( contextID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Send getmore request to data node "
+                                   "failed[%d]", rc ) ;
          break ;
       }
       default:
@@ -565,48 +861,33 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptFullIndexState::processGetMoreRes( seAdptIndexSession *session,
-                                                   NET_HANDLE handle,
-                                                   MsgHeader *msg )
+   INT32 _seAdptFullIndexState::_processGetmoreRes( INT32 flag, INT64 contextID,
+                                                    INT32 startFrom,
+                                                    INT32 numReturned,
+                                                    vector<BSONObj> &resultSet )
    {
-      INT32 rc = SDB_OK;
-      MsgOpReply *reply = ( MsgOpReply * )msg;
-      INT32 flag = 0;
-      INT64 contextID = 0;
-      INT32 startFrom = 0;
-      INT32 numReturned = 0;
-      vector<BSONObj> resultSet;
-      seAdptSEAssist* seAssist = session->seAssist() ;
-      const seIndexMeta* meta = session->indexMeta() ;
-
-      if ( msg->requestID != session->currentRequestID() )
-      {
-         goto done;
-      }
-
-      rc = msgExtractReply( ( CHAR * )msg, &flag, &contextID, &startFrom,
-                            &numReturned, resultSet );
-      PD_RC_CHECK( rc, PDERROR, "Extract query reply message failed[%d]", rc );
+      INT32 rc = SDB_OK ;
+      seAdptSEAssist *seAssist = _session->seAssist() ;
 
       try
       {
          if ( SDB_DMS_EOC == flag )
          {
-            rc = updateProgress( session, TRUE ) ;
+            rc = _updateProgress( 0 ) ;
             PD_RC_CHECK( rc, PDERROR, "Update indexing progress failed[%d]",
                          rc ) ;
-            session->triggerStateTransition( INCREMENT_INDEX ) ;
+            _session->triggerStateTransition( INCREMENT_INDEX ) ;
             goto done ;
          }
-         else if ( SDB_OK != reply->flags )
+         else if ( SDB_OK != flag )
          {
-            rc = reply->flags;
+            rc = flag ;
             PD_LOG( PDERROR, "Get more failed[%d]", rc );
             goto error;
          }
 
-         rc = seAssist->bulkPrepare( meta->getESIdxName().c_str(),
-                                     meta->getESTypeName().c_str() ) ;
+         rc = seAssist->bulkPrepare( _session->getESIdxName(),
+                                     _session->getESTypeName() ) ;
          PD_RC_CHECK( rc, PDERROR, "Prepare of bulk operation failed[%d]",
                       rc ) ;
 
@@ -636,8 +917,8 @@ namespace seadapter
             }
 
             {
-               utilESActionIndex item( meta->getESIdxName().c_str(),
-                                       meta->getESTypeName().c_str() ) ;
+               utilESActionIndex item( _session->getESIdxName(),
+                                       _session->getESTypeName() ) ;
                rc = item.setID( finalID.c_str() ) ;
                PD_RC_CHECK( rc, PDERROR, "Set _id for action failed[%d]",
                             rc ) ;
@@ -652,7 +933,7 @@ namespace seadapter
          rc = seAssist->bulkFinish() ;
          PD_RC_CHECK( rc, PDERROR, "Finish operation of bulk failed[%d]",
                       rc ) ;
-         rc = _getMore( session, contextID ) ;
+         rc = _getMore( contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Send getmore request to data node "
                                    "failed[%d]", rc ) ;
       }
@@ -664,78 +945,47 @@ namespace seadapter
       }
 
    done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 _seAdptFullIndexState::onTimer( seAdptIndexSession *session,
-                                         UINT32 interval )
-   {
-      INT32 rc = SDB_OK ;
-
-      _timeout += interval ;
-      if ( _timeout < SEADPT_BASIC_OP_TIMEOUT )
-      {
-         goto done ;
-      }
-
-      ++_retryTimes ;
-      if ( _retryTimes > SEADPT_INDEX_MAX_RETRY )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Full index failed" ) ;
-         goto error ;
-      }
-
-      _timeout = 0 ;
-
-      switch ( _step )
-      {
-      case CLEAN_ES:
-         rc = _cleanSearchEngine( session ) ;
-         PD_RC_CHECK( rc, PDERROR, "Clean data on ES failed[%d]", rc ) ;
-         _step = CRT_ES_IDX ;
-         // Intentially fall through.
-      case CRT_ES_IDX:
-         rc = _crtESIdx( session ) ;
-         PD_RC_CHECK( rc, PDERROR, "Create index on ES failed[%d]", rc ) ;
-         // Intentially fall through.
-      case CLEAN_DB_P1:
-         rc = _prepareCleanDB( session ) ;
-         PD_RC_CHECK( rc, PDERROR, "Clean data on data node failed[%d]", rc ) ;
-         break ;
-      case QUERY_CL_VERSION:
-         rc = _queryCLVersion( session ) ;
-         PD_RC_CHECK( rc, PDERROR, "Query version of collection failed[%d]",
-                      rc ) ;
-         break ;
-      case QUERY_DATA:
-         rc = _queryData( session ) ;
-         PD_RC_CHECK( rc, PDERROR, "Query data failed[%d]", rc ) ;
-         break ;
-      default:
-         break ;
-      }
-
-   done:
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _seAdptFullIndexState::_crtESIdx( seAdptIndexSession *session )
+   const CHAR *_seAdptFullIndexState::_getStepDesp() const
+   {
+      switch ( _step )
+      {
+      case CLEAN_ES:
+         return "Clean search engine" ;
+      case CRT_ES_IDX:
+         return "Create index on search engine" ;
+      case CLEAN_DB_P1:
+         return "Clean DB phase 1" ;
+      case CLEAN_DB_P2:
+         return "Clean DB phase 2" ;
+      case QUERY_CL_VERSION:
+         return "Query collection version";
+      default:
+         return "Query data";
+      }
+   }
+
+   INT32 _seAdptFullIndexState::_crtESIdx()
    {
       INT32 rc = SDB_OK ;
-      seAdptSEAssist *se = session->seAssist() ;
-      const seIndexMeta *indexMeta = session->indexMeta() ;
-      const CHAR *idxName = indexMeta->getESIdxName().c_str() ;
-      const CHAR *typeName = indexMeta->getESTypeName().c_str() ;
+      seAdptSEAssist *se = _session->seAssist() ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
+      const seIndexMeta *indexMeta = imContext->meta() ;
+      const CHAR *idxName = _session->getESIdxName() ;
+      const CHAR *typeName = _session->getESTypeName() ;
 
       try
       {
          BSONObj mappingObj ;
          utilESMapping mapping( idxName, typeName ) ;
+
+         rc = imContext->metaLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Lock index metadata in SHARED mode "
+                                   "failed[%d]", rc ) ;
 
          // Generate the Elasticsearch index mapping. Only string fields.
          BSONObjIterator itr( indexMeta->getIdxDef() ) ;
@@ -744,6 +994,8 @@ namespace seadapter
             BSONElement ele = itr.next() ;
             mapping.addProperty( ele.fieldName(), ES_TEXT ) ;
          }
+
+         imContext->metaUnlock() ;
 
          rc = mapping.toObj( mappingObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Build index mapping object failed[%d]",
@@ -768,18 +1020,22 @@ namespace seadapter
       _step = CLEAN_DB_P1 ;
 
    done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _seAdptFullIndexState::_prepareCleanDB( seAdptIndexSession *session )
+   INT32 _seAdptFullIndexState::_prepareCleanDB()
    {
       INT32 rc = SDB_OK ;
       BSONObj selector ;
-      seAdptDBAssist *dbAssist = session->dbAssist() ;
-      const CHAR *cappedCLName =
-            session->indexMeta()->getCappedCLName().c_str() ;
+      seAdptDBAssist *dbAssist = _session->dbAssist() ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
+      const seIndexMeta *meta = imContext->meta() ;
 
       // Get the _id of the first record in capped collection.
       try
@@ -793,50 +1049,62 @@ namespace seadapter
          goto error ;
       }
 
-      rc = dbAssist->queryOnDataNode( cappedCLName, session->nextRequestID(),
-                                      session->tid(), FLG_QUERY_WITH_RETURNDATA,
+      rc = imContext->metaLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index metadata in SHARED mode "
+                                "failed[%d]", rc ) ;
+      rc = dbAssist->queryOnDataNode( meta->getCappedCLName(),
+                                      _session->nextRequestID(),
+                                      _session->tid(), FLG_QUERY_WITH_RETURNDATA,
                                       0, 1, NULL, &selector,
-                                      NULL, NULL, session->eduCB() ) ;
+                                      NULL, NULL, _session->eduCB() ) ;
       PD_RC_CHECK( rc, PDERROR, "Query _id of the first record in "
                                 "collection[%s] failed[%d]",
-                   cappedCLName, rc ) ;
+                   meta->getCappedCLName(), rc ) ;
 
       PD_LOG( PDDEBUG, "Ready to clean capped collection[%s]. Query for the "
-                       "first record...", cappedCLName ) ;
+                       "first record...", meta->getCappedCLName() ) ;
       _timeout = 0 ;
 
    done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _seAdptFullIndexState::_doCleanDB( seAdptIndexSession *session,
-                                            const BSONObj &targetObj )
+   INT32 _seAdptFullIndexState::_doCleanDB( const BSONObj &targetObj )
    {
       INT32 rc = SDB_OK ;
-      seAdptDBAssist *dbAssist = session->dbAssist() ;
-      const CHAR *cappedCLName =
-            session->indexMeta()->getCappedCLName().c_str() ;
+      seAdptDBAssist *dbAssist = _session->dbAssist() ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
+      const seIndexMeta *meta = imContext->meta() ;
 
       try
       {
          BSONObjBuilder builder ;
          BSONObj option ;
          BSONElement lidEle= targetObj.getField( "_id" ) ;
-         builder.append( FIELD_NAME_COLLECTION, cappedCLName ) ;
+
+         rc = imContext->metaLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Lock index metadata in SHARED mode "
+                                   "failed[%d]", rc ) ;
+         builder.append( FIELD_NAME_COLLECTION, meta->getCappedCLName() ) ;
          builder.appendAs( lidEle, FIELD_NAME_LOGICAL_ID ) ;
          builder.appendIntOrLL( FIELD_NAME_DIRECTION, -1 ) ;
          option = builder.done() ;
 
          rc = dbAssist->doCmdOnDataNode( CMD_ADMIN_PREFIX CMD_NAME_POP,
-                                         option, session->nextRequestID(),
-                                         session->tid(), session->eduCB() ) ;
+                                         option, _session->nextRequestID(),
+                                         _session->tid(), _session->eduCB() ) ;
          PD_RC_CHECK( rc, PDERROR, "Send pop command to data node failed[%d]",
                       rc ) ;
          PD_LOG( PDEVENT, "Begin to clean capped collection[%s] by pop "
                           "command. Pop options: %s",
-                 cappedCLName, option.toString(false, true).c_str() ) ;
+                 meta->getCappedCLName(),
+                 option.toString(false, true).c_str() ) ;
          _timeout = 0 ;
       }
       catch ( std::exception &e )
@@ -847,17 +1115,22 @@ namespace seadapter
       }
 
    done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _seAdptFullIndexState::_queryCLVersion( seAdptIndexSession *session )
+   INT32 _seAdptFullIndexState::_queryCLVersion()
    {
       INT32 rc = SDB_OK ;
       BSONObj selector ;
-      seAdptDBAssist *dbAssist = session->dbAssist() ;
-      const CHAR *clName = session->indexMeta()->getOrigCLName().c_str() ;
+      seAdptDBAssist *dbAssist = _session->dbAssist() ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
+      const seIndexMeta *meta = imContext->meta() ;
 
       try
       {
@@ -871,61 +1144,79 @@ namespace seadapter
          goto error ;
       }
 
-      // Send query message to catalogue.
-      rc = dbAssist->queryCLCataInfo( clName, session->nextRequestID(),
-                                      session->tid(), &selector,
-                                      session->eduCB() ) ;
+      rc = imContext->metaLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index metadata in SHARED mode "
+                                "failed[%d]", rc ) ;
+      rc = dbAssist->queryCLCataInfo( meta->getOrigCLName(),
+                                      _session->nextRequestID(),
+                                      _session->tid(), &selector,
+                                      _session->eduCB() ) ;
       PD_RC_CHECK( rc, PDERROR, "Query catalogue information of collection[%s] "
-                                " failed[%d]", clName, rc ) ;
+                                " failed[%d]", meta->getOrigCLName(), rc ) ;
       _timeout = 0 ;
 
    done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _seAdptFullIndexState::_queryData( seAdptIndexSession *session )
-   {
-      INT32 rc = SDB_OK ;
-      MsgOpQuery *msg = NULL ;
-      INT32 bufSize = 0 ;
-      BSONObj query ;
-      BSONObj selector ;
-
-      rc = _genQueryOptions( session, query, selector ) ;
-      PD_RC_CHECK( rc, PDERROR, "Generate query and selector for the original "
-                                "colleciton failed[%d]", rc ) ;
-      PD_LOG( PDDEBUG, "Full indexing query condition: %s",
-              query.toString(false, true).c_str() ) ;
-      rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize,
-                             session->indexMeta()->getOrigCLName().c_str(),
-                             0, session->nextRequestID(), 0, -1, &query,
-                             &selector, NULL, NULL, session->eduCB() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build query message failed[%d]", rc ) ;
-      msg->version = _clVersion ;
-      msg->header.TID = session->tid() ;
-      rc = session->dbAssist()->sendToDataNode( (MsgHeader *)msg ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[%d]",
-                   rc ) ;
-      _timeout = 0 ;
-
-   done:
-      if ( msg )
+      if ( imContext->isMetaLocked() )
       {
-         msgReleaseBuffer( (CHAR *)msg, session->eduCB() ) ;
+         imContext->metaUnlock() ;
       }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _seAdptFullIndexState::_genQueryOptions( seAdptIndexSession *session,
-                                                  BSONObj &query,
+   INT32 _seAdptFullIndexState::_queryData()
+   {
+      INT32 rc = SDB_OK ;
+      MsgOpQuery *msg = NULL ;
+      INT32 bufSize = 0 ;
+      BSONObj query ;
+      BSONObj selector ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
+      const seIndexMeta *meta = imContext->meta() ;
+
+      rc = imContext->metaLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index metadata in SHARED mode "
+                                "failed[%d]", rc ) ;
+      rc = _genQueryOptions( query, selector ) ;
+      PD_RC_CHECK( rc, PDERROR, "Generate query and selector for the original "
+                                "colleciton failed[%d]", rc ) ;
+      PD_LOG( PDDEBUG, "Full indexing query condition: %s",
+              query.toString(false, true).c_str() ) ;
+      rc = msgBuildQueryMsg( (CHAR **)&msg, &bufSize,
+                             meta->getOrigCLName(),
+                             0, _session->nextRequestID(), 0, -1, &query,
+                             &selector, NULL, NULL, _session->eduCB() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build query message failed[%d]", rc ) ;
+      imContext->metaUnlock() ;
+
+      msg->version = _clVersion ;
+      msg->header.TID = _session->tid() ;
+      rc = _session->dbAssist()->sendToDataNode( (MsgHeader *)msg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[%d]",
+                   rc ) ;
+      _timeout = 0 ;
+
+   done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
+      if ( msg )
+      {
+         msgReleaseBuffer( (CHAR *)msg, _session->eduCB() ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptFullIndexState::_genQueryOptions( BSONObj &query,
                                                   BSONObj &selector )
    {
       INT32 rc = SDB_OK ;
-      const seIndexMeta* meta = session->indexMeta() ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
+      const seIndexMeta *meta = imContext->meta() ;
 
       SDB_ASSERT( meta, "index meta is NULL" ) ;
 
@@ -933,7 +1224,7 @@ namespace seadapter
       {
          BSONObjBuilder queryBuilder ;
          BSONObjBuilder selectorBuilder ;
-         BSONObjIterator idxItr( session->indexMeta()->getIdxDef() ) ;
+         BSONObjIterator idxItr( meta->getIdxDef() ) ;
          BSONArrayBuilder
             queryObj( queryBuilder.subarrayStart( SEADPT_OPERATOR_STR_OR ) ) ;
 
@@ -974,105 +1265,30 @@ namespace seadapter
       }
 
    done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32
-   _seAdptFullIndexState::_handleCLVersionRes( seAdptIndexSession *session,
-                                               INT32 result,
-                                               const BSONObj &record )
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *origCLName = session->indexMeta()->getOrigCLName().c_str() ;
-
-      rc = result ;
-      if ( rc )
-      {
-         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_CS_NOTEXIST == rc )
-         {
-            INT32 rcTmp = _cleanSearchEngine( session ) ;
-            if ( rcTmp )
-            {
-               PD_LOG( PDERROR, "Clean index[%s] on search engine failed[%d]",
-                       session->indexMeta()->getESIdxName().c_str(), rcTmp ) ;
-            }
-            goto error ;
-         }
-         else if ( SDB_CLS_NOT_PRIMARY == rc || SDB_NET_CANNOT_CONNECT == rc )
-         {
-            rc = session->updateCataInfo( OSS_ONE_SEC ) ;
-            PD_RC_CHECK( rc, PDERROR, "Update catalogue information failed[%d]",
-                         rc ) ;
-            // Stay in state of QUERY_CL_VERSION. Wait for next query of the
-            // collection version.
-            goto done ;
-         }
-
-         PD_LOG( PDERROR, "Query version of collection[%s] on catalogue "
-                          "failed[%d]", origCLName, rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         _clVersion = record.getIntField( FIELD_NAME_VERSION ) ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-      PD_LOG( PDDEBUG, "Update local version of original collection to %d",
-              _clVersion ) ;
-
-      _step = QUERY_DATA ;
-      rc = _queryData( session ) ;
-      PD_RC_CHECK( rc, PDERROR, "Query data failed[%d]", rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32
-   _seAdptFullIndexState::_handleQueryDataRes( seAdptIndexSession *session,
-                                               INT32 result, INT64 contextID )
-   {
-      INT32 rc = SDB_OK ;
-
-      rc = result ;
-      PD_RC_CHECK( rc, PDERROR, "Query data failed[%d]", rc ) ;
-
-      rc = _getMore( session, contextID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send getmore request to data node "
-                                "failed[%d]", rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _seAdptFullIndexState::_getMore( seAdptIndexSession *session,
-                                          INT64 contextID )
+   INT32 _seAdptFullIndexState::_getMore( INT64 contextID )
    {
       INT32 rc = SDB_OK ;
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
 
       rc = msgBuildGetMoreMsg( &msg, &bufSize, -1, contextID,
-                               session->nextRequestID(), session->eduCB() ) ;
+                               _session->nextRequestID(), _session->eduCB() ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Build get more request failed[%d]", rc ) ;
          goto error ;
       }
-      ((MsgHeader *)msg)->TID = session->tid() ;
-      rc = session->dbAssist()->sendToDataNode( (const MsgHeader *)msg ) ;
+      ((MsgHeader *)msg)->TID = _session->tid() ;
+      rc = _session->dbAssist()->sendToDataNode( (const MsgHeader *)msg ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Send get more request to data node failed[%d]",
@@ -1084,7 +1300,7 @@ namespace seadapter
    done:
       if ( msg )
       {
-         msgReleaseBuffer( msg, session->eduCB() ) ;
+         msgReleaseBuffer( msg, _session->eduCB() ) ;
       }
       return rc ;
    error:
@@ -1175,8 +1391,9 @@ namespace seadapter
       goto done ;
    }
 
-   _seAdptIncIndexState::_seAdptIncIndexState()
-   : _step( QUERY_DATA ),
+   _seAdptIncIndexState::_seAdptIncIndexState( _seAdptIndexSession *session )
+   : _seAdptIndexerState( session ),
+     _step( QUERY_DATA ),
      _hasNewData( FALSE ),
      _firstBatchData( TRUE ),
      _expectRecHash( 0 ),
@@ -1190,62 +1407,49 @@ namespace seadapter
 
    }
 
-   INT32 _seAdptIncIndexState::processQueryRes( seAdptIndexSession *session,
-                                                NET_HANDLE handle,
-                                                MsgHeader *msg )
+   INT32 _seAdptIncIndexState::_processTimeout()
    {
       INT32 rc = SDB_OK ;
-      INT32 resultFlag = 0 ;
-      INT64 contextID = 0 ;
-      INT32 startFrom = 0 ;
-      INT32 numReturned = 0 ;
-      vector<BSONObj> resultSet ;
 
-      // If it's not the reply of the current request, just ignore.
-      if ( msg->requestID != session->currentRequestID() )
+      if ( QUERY_DATA == _step )
       {
-         goto done ;
+         rc = _queryData() ;
+         PD_RC_CHECK( rc, PDERROR, "Query data of capped collection failed[%d]",
+                      rc ) ;
       }
 
-      rc = msgExtractReply( (CHAR *)msg, &resultFlag, &contextID, &startFrom,
-                            &numReturned, resultSet ) ;
-      PD_RC_CHECK( rc, PDERROR, "Extract query reply message failed[%d]", rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
-      if ( SDB_DMS_NOTEXIST == resultFlag || SDB_DMS_CS_NOTEXIST == resultFlag
-           || SDB_DMS_CS_DELETING == resultFlag )
-      {
-         rc = resultFlag ;
-         (void)_cleanSearchEngine( session ) ;
-         goto error ;
-      }
+   SEADPT_INDEXER_STATE _seAdptIncIndexState::type() const
+   {
+      return INCREMENT_INDEX ;
+   }
+
+   INT32 _seAdptIncIndexState::_processQueryRes( INT64 contextID,
+                                                 INT32 startFrom,
+                                                 INT32 numReturned,
+                                                 vector<BSONObj> &resultSet )
+   {
+      INT32 rc = SDB_OK ;
 
       switch ( _step )
       {
       case QUERY_DATA:
       {
-         if ( resultFlag )
-         {
-            rc = resultFlag ;
-            PD_LOG( PDERROR, "Query clean target on db failed[%d]", rc ) ;
-            goto error ;
-         }
-         rc = _getMore( session, contextID ) ;
+         rc = _getMore( contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Getmore request failed[%d]", rc ) ;
          _queryCtxID = contextID ;
          _firstBatchData = TRUE ;
          break ;
       }
       case CLEAN_SRC:
-         if ( resultFlag )
-         {
-            rc = resultFlag ;
-            PD_LOG( PDERROR, "Clean source capped collection failed[%d]", rc ) ;
-            goto error ;
-         }
-
          // After clean the last batch of data, continue to fetch next batch of
          // data with the original query context.
-         rc = _getMore( session, _queryCtxID ) ;
+         rc = _getMore( _queryCtxID ) ;
          PD_RC_CHECK( rc, PDERROR, "Getmore request failed[%d]", rc ) ;
       default:
          goto error ;
@@ -1257,27 +1461,16 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptIncIndexState::processGetMoreRes( seAdptIndexSession *session,
-                                                  NET_HANDLE handle,
-                                                  MsgHeader *msg )
+   INT32 _seAdptIncIndexState::_processGetmoreRes( INT32 flag, INT64 contextID,
+                                                   INT32 startFrom,
+                                                   INT32 numReturned,
+                                                   vector<BSONObj> &resultSet )
    {
       INT32 rc = SDB_OK ;
-      INT32 flag = 0;
-      INT64 contextID = 0;
-      INT32 startFrom = 0;
-      INT32 numReturned = 0;
-      vector<BSONObj> resultSet;
-      const seIndexMeta* meta = session->indexMeta() ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
 
-      if ( msg->requestID != session->currentRequestID() )
-      {
-         goto done;
-      }
-
-      rc = msgExtractReply( ( CHAR * )msg, &flag, &contextID, &startFrom,
-                            &numReturned, resultSet );
-      PD_RC_CHECK( rc, PDERROR, "Extract query reply message failed[%d]", rc );
-
+      rc = imContext->metaLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index meta failed[%d]", rc ) ;
 
       if ( SDB_DMS_EOC == flag )
       {
@@ -1290,24 +1483,12 @@ namespace seadapter
          // So we check the meta data. If it's the second condition, let's just
          // quit. The new worker will drop and create the ES index during
          // consult.
-         if ( SEADPT_INVALID_LID == session->getExpectLID() && !_hasNewData )
-         {
-            if ( FALSE == session->validateMeta() )
-            {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Can not find expected record in capped "
-                                "collection[%s]",
-                       meta->getCappedCLName().c_str() ) ;
-               goto error ;
-            }
-         }
-
          if ( _hasNewData )
          {
             _hasNewData = FALSE ;
             PD_LOG( PDDEBUG, "All records in capped collection[%s] have been "
                              "processed. Ready to start a new query on it",
-                    meta->getCappedCLName().c_str() ) ;
+                    imContext->meta()->getCappedCLName() ) ;
          }
 
          // Wait for next round to be triggered by the timer.
@@ -1324,23 +1505,23 @@ namespace seadapter
 
       try
       {
-         rc = _processDocuments( session, resultSet ) ;
+         rc = _processDocuments( resultSet ) ;
          PD_RC_CHECK( rc, PDERROR, "Index documents on search engine "
                                    "failed[%d]", rc ) ;
 
          if ( _hasNewData &&
-              session->getLastExpectLID() != SEADPT_INVALID_LID &&
-              ( session->getLastExpectLID() < session->getExpectLID() ) )
+              _session->getLastExpectLID() != SEADPT_INVALID_LID &&
+              ( _session->getLastExpectLID() < _session->getExpectLID() ) )
          {
             // pop data
-            rc = _cleanData( session ) ;
+            rc = _cleanData() ;
             PD_RC_CHECK( rc, PDERROR, "Send clean data request failed[%d]",
                          rc ) ;
             goto done ;
          }
          else
          {
-            rc = _getMore( session, contextID ) ;
+            rc = _getMore( contextID ) ;
             PD_RC_CHECK( rc, PDERROR, "Send getmore request to data node "
                                       "failed[%d]", rc ) ;
          }
@@ -1357,45 +1538,29 @@ namespace seadapter
       }
 
    done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _seAdptIncIndexState::onTimer( seAdptIndexSession *session,
-                                        UINT32 interval )
+   const CHAR *_seAdptIncIndexState::_getStepDesp() const
    {
-      INT32 rc = SDB_OK ;
-
-      _timeout += interval ;
-
-      if ( _timeout < SEADPT_BASIC_OP_TIMEOUT )
+      switch ( _step )
       {
-         goto done ;
+      case QUERY_DATA:
+         return "Query data" ;
+      case GETMORE_DATA:
+         return "Get more data" ;
+      default:
+         return "Clean capped collection" ;
       }
-
-      _timeout = 0 ;
-
-      if ( QUERY_DATA == _step )
-      {
-         rc = _queryData( session ) ;
-         PD_RC_CHECK( rc, PDERROR, "Query data of capped collection failed[%d]",
-                      rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
-   SEADPT_INDEXER_STATE _seAdptIncIndexState::type() const
-   {
-      return INCREMENT_INDEX ;
-   }
-
-   INT32 _seAdptIncIndexState::_genQueryOptions( seAdptIndexSession *session,
-                                                 BSONObj &query,
+   INT32 _seAdptIncIndexState::_genQueryOptions( BSONObj &query,
                                                  BSONObj &selector )
    {
       INT32 rc = SDB_OK ;
@@ -1403,7 +1568,7 @@ namespace seadapter
       try
       {
          query = BSON( SEADPT_FIELD_NAME_ID <<
-                       BSON( "$gte" << session->getExpectLID() ) ) ;
+                       BSON( "$gte" << _session->getExpectLID() ) ) ;
          PD_LOG( PDDEBUG, "Inremental condition: %s",
                  query.toString(false, true).c_str() ) ;
          selector = BSONObj() ;
@@ -1421,56 +1586,75 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptIncIndexState::_queryData( seAdptIndexSession *session )
+   INT32 _seAdptIncIndexState::_queryData()
    {
       INT32 rc = SDB_OK ;
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
       BSONObj query ;
       BSONObj selector ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
 
-      rc = _genQueryOptions( session, query, selector ) ;
+      rc = _genQueryOptions( query, selector ) ;
       PD_RC_CHECK( rc, PDERROR, "Generate query and selector for the capped"
                                 "colleciton failed[%d]", rc ) ;
       PD_LOG( PDDEBUG, "Incremental indexing query condition: %s",
               query.toString(false, true).c_str() ) ;
+
+      // Need to get the capped collection name from the metadata item. So need
+      // to latch it.
+      rc = imContext->metaLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index meta failed[%d]", rc ) ;
+
       rc = msgBuildQueryMsg( &msg, &bufSize,
-                             session->indexMeta()->getCappedCLName().c_str(),
-                             0, session->nextRequestID(), 0, -1, &query,
-                             &selector, NULL, NULL, session->eduCB() ) ;
+                             imContext->meta()->getCappedCLName(),
+                             0, _session->nextRequestID(), 0, -1, &query,
+                             &selector, NULL, NULL, _session->eduCB() ) ;
       PD_RC_CHECK( rc, PDERROR, "Build query message failed[%d]", rc ) ;
-      ((MsgHeader *)msg)->TID = session->tid() ;
-      rc = session->dbAssist()->sendToDataNode( (MsgHeader *)msg ) ;
+
+      imContext->metaUnlock() ;
+
+      ((MsgHeader *)msg)->TID = _session->tid() ;
+      rc = _session->dbAssist()->sendToDataNode( (MsgHeader *)msg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send query message to data node failed[%d]",
                    rc ) ;
       _timeout = 0 ;
 
    done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
+
       if ( msg )
       {
-         msgReleaseBuffer( msg, session->eduCB() ) ;
+         msgReleaseBuffer( msg, _session->eduCB() ) ;
       }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _seAdptIncIndexState::_getMore( seAdptIndexSession *session,
-                                         INT64 contextID )
+   INT32 _seAdptIncIndexState::_getMore( INT64 contextID )
    {
       INT32 rc = SDB_OK ;
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
+
+      _step = GETMORE_DATA ;
+      rc = imContext->metaLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index meta failed[%d]", rc ) ;
 
       rc = msgBuildGetMoreMsg( &msg, &bufSize, -1, contextID,
-                               session->nextRequestID(), session->eduCB() ) ;
+                               _session->nextRequestID(), _session->eduCB() ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Build getmore request failed[%d]", rc ) ;
          goto error ;
       }
-      ((MsgHeader *)msg)->TID = session->tid() ;
-      rc = session->dbAssist()->sendToDataNode( (const MsgHeader *)msg ) ;
+      ((MsgHeader *)msg)->TID = _session->tid() ;
+      rc = _session->dbAssist()->sendToDataNode( (const MsgHeader *)msg ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Send getmore request to data node failed[%d]", rc ) ;
@@ -1479,23 +1663,25 @@ namespace seadapter
       _timeout = 0 ;
 
    done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
       if ( msg )
       {
-         msgReleaseBuffer( msg, session->eduCB() ) ;
+         msgReleaseBuffer( msg, _session->eduCB() ) ;
       }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _seAdptIncIndexState::_processDocuments( seAdptIndexSession *session,
-                                                  const vector <BSONObj> &docs )
+   INT32 _seAdptIncIndexState::_processDocuments( const vector <BSONObj> &docs )
    {
       INT32 rc = SDB_OK ;
       UINT32 lastObjHash = 0 ;
       INT64 logicalID = SEADPT_INVALID_LID ;
-      const seIndexMeta *meta = session->indexMeta() ;
-      seAdptSEAssist* seAssist = session->seAssist() ;
+      seAdptSEAssist* seAssist = _session->seAssist() ;
 
       try
       {
@@ -1503,16 +1689,15 @@ namespace seadapter
          {
             if ( _firstBatchData && 0 != _expectRecHash )
             {
-               rc = _consistencyCheck( session, docs.front() ) ;
+               rc = _consistencyCheck( docs.front() ) ;
                if ( rc )
                {
-                  PD_LOG( PDERROR, "The first record in capped collection[%s]"
+                  PD_LOG( PDERROR, "The first record in capped collection"
                                    " is not as we expected. Clean index[%s] on "
                                    "search engine",
-                          meta->getCappedCLName().c_str(),
-                          meta->getESIdxName().c_str() ) ;
+                          _session->getESIdxName() ) ;
                   {
-                     INT32 rcTmp = _cleanSearchEngine( session ) ;
+                     INT32 rcTmp = _cleanSearchEngine() ;
                      if ( rcTmp )
                      {
                         PD_LOG( PDERROR, "Cleanup on search engine when "
@@ -1544,7 +1729,7 @@ namespace seadapter
 
          // We always get one more record, if the _expectLID is not -1. So the
          // first one should be filtered out.
-         if ( SEADPT_INVALID_LID != session->getExpectLID() && _firstBatchData )
+         if ( SEADPT_INVALID_LID != _session->getExpectLID() && _firstBatchData )
          {
             itr++ ;
             if ( itr == docs.end() )
@@ -1554,13 +1739,13 @@ namespace seadapter
             }
          }
 
-         rc = seAssist->bulkPrepare( meta->getESIdxName().c_str(),
-                                     meta->getESTypeName().c_str() ) ;
+         rc = seAssist->bulkPrepare( _session->getESIdxName(),
+                                     _session->getESTypeName() ) ;
          PD_RC_CHECK( rc, PDERROR, "Prepare of bulk operation failed[%d]",
                       rc ) ;
          for ( ; itr != docs.end(); ++itr )
          {
-            rc = _processDocument( session, *itr, logicalID ) ;
+            rc = _processDocument( *itr, logicalID ) ;
             PD_RC_CHECK( rc, PDERROR, "Process document failed[%d]. "
                                       "Document: %s",
                          rc, itr->toString(false, true).c_str() ) ;
@@ -1579,8 +1764,8 @@ namespace seadapter
 
       if ( SEADPT_INVALID_LID != logicalID )
       {
-         session->setExpectLID( logicalID ) ;
-         rc = updateProgress( session ) ;
+         _session->setExpectLID( logicalID ) ;
+         rc = _updateProgress( lastObjHash ) ;
          PD_RC_CHECK( rc, PDERROR, "Update progress failed[%d]", rc ) ;
       }
 
@@ -1593,8 +1778,7 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptIncIndexState::_processDocument( _seAdptIndexSession *session,
-                                                 const BSONObj &document,
+   INT32 _seAdptIncIndexState::_processDocument( const BSONObj &document,
                                                  INT64 &logicalID )
    {
       INT32 rc = SDB_OK ;
@@ -1605,7 +1789,7 @@ namespace seadapter
       string finalID ;
       string finalIdNew ;
       _rtnExtOprType oprType = RTN_EXT_INVALID ;
-      seAdptSEAssist *seAssist = session->seAssist() ;
+      seAdptSEAssist *seAssist = _session->seAssist() ;
 
       rc = _parseRecord( document, oprType, finalID, logicalID,
                          sourceObj, &finalIdNew ) ;
@@ -1686,22 +1870,20 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptIncIndexState::_consistencyCheck( seAdptIndexSession *session,
-                                                  const BSONObj &doc )
+   INT32 _seAdptIncIndexState::_consistencyCheck( const BSONObj &doc )
    {
       INT32 rc = SDB_OK ;
 
       // Check if the first record is the one we expected. If not, start
       // over again. Check only once in one query round.
-      if ( SEADPT_INVALID_LID != session->getExpectLID() )
+      if ( SEADPT_INVALID_LID != _session->getExpectLID() )
       {
          UINT32 objHash = ossHash( doc.objdata(), doc.objsize() ) ;
          if ( objHash != _expectRecHash )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "The first record in capped collection[ %s ]"
-                             " is not as we expected",
-                    session->indexMeta()->getCappedCLName().c_str() ) ;
+            PD_LOG( PDERROR, "The first record in capped collection is not as "
+                             "we expected" ) ;
             goto error ;
          }
          _hasNewData = FALSE ;
@@ -1826,37 +2008,43 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptIncIndexState::_cleanData( _seAdptIndexSession *session )
+   INT32 _seAdptIncIndexState::_cleanData()
    {
       INT32 rc = SDB_OK ;
-      seAdptDBAssist *dbAssist = session->dbAssist() ;
-      const CHAR *cappedCLName =
-            session->indexMeta()->getCappedCLName().c_str() ;
+      seAdptDBAssist *dbAssist = _session->dbAssist() ;
+      seIdxMetaContext *imContext = _session->idxMetaContext() ;
+      const seIndexMeta *meta = imContext->meta() ;
 
-      if ( SEADPT_INVALID_LID == session->getLastExpectLID() ||
+      if ( SEADPT_INVALID_LID == _session->getLastExpectLID() ||
            0 == _expectRecHash )
       {
          _step = QUERY_DATA ;
          goto done ;
       }
 
+      rc = imContext->metaLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index meta failed[%d]", rc ) ;
+
       try
       {
          BSONObjBuilder builder ;
          BSONObj option ;
-         builder.append( FIELD_NAME_COLLECTION, cappedCLName ) ;
-         builder.append( FIELD_NAME_LOGICAL_ID, session->getLastExpectLID() ) ;
+
+         PD_RC_CHECK( rc, PDERROR, "Lock index metadata failed[%d]", rc ) ;
+         builder.append( FIELD_NAME_COLLECTION, meta->getCappedCLName() ) ;
+         builder.append( FIELD_NAME_LOGICAL_ID, _session->getLastExpectLID() ) ;
          builder.appendIntOrLL( FIELD_NAME_DIRECTION, 1 ) ;
          option = builder.done() ;
 
          rc = dbAssist->doCmdOnDataNode( CMD_ADMIN_PREFIX CMD_NAME_POP,
-                                         option, session->nextRequestID(),
-                                         session->tid(), session->eduCB() ) ;
+                                         option, _session->nextRequestID(),
+                                         _session->tid(), _session->eduCB() ) ;
          PD_RC_CHECK( rc, PDERROR, "Send command to catalogue node failed[%d]",
                       rc ) ;
          PD_LOG( PDEVENT, "Clean capped collection[%s] by pop "
                           "command. Pop options: %s",
-                 cappedCLName, option.toString(false, true).c_str() ) ;
+                 meta->getCappedCLName(),
+                 option.toString(false, true).c_str() ) ;
          _timeout = 0 ;
          _step = CLEAN_SRC ;
       }
@@ -1868,6 +2056,10 @@ namespace seadapter
       }
 
    done:
+      if ( imContext->isMetaLocked() )
+      {
+         imContext->metaUnlock() ;
+      }
       return rc ;
    error:
       goto done ;

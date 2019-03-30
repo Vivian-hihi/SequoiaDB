@@ -37,7 +37,6 @@
 
 *******************************************************************************/
 #include "seAdptContext.hpp"
-#include "seAdptDef.hpp"
 #include "utilESKeywordDef.hpp"
 #include "utilESUtil.hpp"
 
@@ -129,23 +128,9 @@ namespace seadapter
       goto done ;
    }
 
-   _seAdptContextBase::_seAdptContextBase( const string &indexName,
-                                           const string &typeName,
-                                           utilESClt *seClt )
-   {
-      _indexName = indexName ;
-      _type = typeName ;
-      _esClt = seClt ;
-   }
-
-   _seAdptContextBase::~_seAdptContextBase()
-   {
-   }
-
-   _seAdptContextQuery::_seAdptContextQuery( const string &indexName,
-                                             const string &typeName,
-                                             utilESClt *seClt )
-   : _seAdptContextBase( indexName, typeName, seClt ),
+   _seAdptContextQuery::_seAdptContextQuery()
+   : _imContext( NULL ),
+     _esClt( NULL ),
      _esFetcher( NULL )
    {
    }
@@ -158,7 +143,9 @@ namespace seadapter
       }
    }
 
-   INT32 _seAdptContextQuery::open( const BSONObj &matcher,
+   INT32 _seAdptContextQuery::open( seIdxMetaContext *imContext,
+                                    utilESClt *esClt,
+                                    const BSONObj &matcher,
                                     const BSONObj &selector,
                                     const BSONObj &orderBy,
                                     const BSONObj &hint,
@@ -178,6 +165,9 @@ namespace seadapter
       BSONObj textObj ;
 
       objBuff.reset() ;
+
+      _imContext = imContext ;
+      _esClt = esClt ;
 
       _condTree.parse( matcher ) ;
       textNode = _condTree.getTextNode() ;
@@ -387,16 +377,21 @@ namespace seadapter
             _esFetcher = NULL ;
          }
 
+         rc = _imContext->resume() ;
+         PD_RC_CHECK( rc, PDERROR, "Lock index metadata failed[%d]", rc ) ;
          if ( rangeSet )
          {
-            _esFetcher = SDB_OSS_NEW utilESPageFetcher( _indexName.c_str(),
-                                                        _type.c_str() ) ;
+            _esFetcher = SDB_OSS_NEW
+                  utilESPageFetcher( _imContext->meta()->getESIdxName(),
+                                     _imContext->meta()->getESTypeName() ) ;
          }
          else
          {
-            _esFetcher = SDB_OSS_NEW utilESScrollFetcher( _indexName.c_str(),
-                                                          _type.c_str() ) ;
+            _esFetcher = SDB_OSS_NEW
+                  utilESScrollFetcher( _imContext->meta()->getESIdxName(),
+                                       _imContext->meta()->getESTypeName() ) ;
          }
+         _imContext->pause() ;
 
          if ( !_esFetcher )
          {

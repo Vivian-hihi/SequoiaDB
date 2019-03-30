@@ -38,7 +38,6 @@
 *******************************************************************************/
 #include "seAdptAgentSession.hpp"
 #include "rtnContextBuff.hpp"
-#include "msgMessage.hpp"
 #include "utilCommon.hpp"
 
 using engine::_pmdEDUCB ;
@@ -53,6 +52,7 @@ namespace seadapter
    _seAdptAgentSession::_seAdptAgentSession( UINT64 sessionID )
    : _pmdAsyncSession( sessionID )
    {
+      _imContext = NULL ;
       _seCltFactory = sdbGetSeCltFactory() ;
       _esClt = NULL ;
       _contextIDHWM = 0 ;
@@ -209,6 +209,16 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Session[ %s ] extract query message "
                    "failed[ %d ]", sessionName(), rc ) ;
 
+      if ( !_esClt )
+      {
+         rc = _seCltFactory->create( &_esClt ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "Connect to search engine failed[ %d ]", rc ) ;
+            goto error ;
+         }
+      }
+
       try
       {
          BSONObj matcher( pQuery ) ;
@@ -217,22 +227,11 @@ namespace seadapter
          BSONObj hint ( pHint ) ;
          BSONObj newHint ;
 
-         if ( !_esClt )
-         {
-            rc = _seCltFactory->create( &_esClt ) ;
-            if ( rc )
-            {
-               PD_LOG_MSG( PDERROR, "Connect to search engine failed[ %d ]", rc ) ;
-               goto error ;
-            }
-         }
+         rc = _selectIndex( pCollectionName, hint, newHint ) ;
+         PD_RC_CHECK( rc, PDERROR, "Select index for collection[%s] failed[%d]",
+                      pCollectionName, rc ) ;
 
-         rc = _selectIndex( pCollectionName, hint, newHint,
-                            indexName, typeName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Select index failed[ %d ]", rc ) ;
-
-         context = SDB_OSS_NEW seAdptContextQuery( indexName,
-                                                    typeName, _esClt ) ;
+         context = SDB_OSS_NEW seAdptContextQuery() ;
          if ( !context )
          {
             rc = SDB_OOM ;
@@ -241,7 +240,7 @@ namespace seadapter
             goto error ;
          }
 
-         rc = context->open( matcher, selector, orderBy,
+         rc = context->open( _imContext, _esClt, matcher, selector, orderBy,
                              newHint, objBuff, eduCB ) ;
          if ( rc )
          {
@@ -264,6 +263,10 @@ namespace seadapter
       }
 
    done:
+      if ( _imContext && _imContext->isMetaLocked() )
+      {
+         _imContext->metaUnlock() ;
+      }
       return rc ;
    error:
       if ( context )
@@ -347,34 +350,23 @@ namespace seadapter
 
    INT32 _seAdptAgentSession::_selectIndex( const CHAR *clName,
                                             const BSONObj &hint,
-                                            BSONObj &newHint,
-                                            string &index,
-                                            string &type )
+                                            BSONObj &newHint )
    {
       INT32 rc = SDB_OK ;
-      seIdxMetaMgr* idxMetaCache = NULL ;
-      IDX_META_VEC idxMetas ;
-      BOOLEAN cacheLocked = FALSE ;
+      seIdxMetaMgr* idxMetaMgr = NULL ;
       BSONObjBuilder builder ;
       UINT32 textIdxNum = 0 ;
+      map<string, UINT16> idxNameMap ;
+      UINT16 imID = SEADPT_INVALID_IMID ;
 
-      idxMetaCache = sdbGetSeAdapterCB()->getIdxMetaCache() ;
-      idxMetaCache->lock( SHARED ) ;
-      cacheLocked = TRUE ;
+      idxMetaMgr = sdbGetSeAdapterCB()->getIdxMetaMgr() ;
 
-      // If no text index information found for the collection, report error.
-      rc = idxMetaCache->getIdxMetas( clName, idxMetas ) ;
-      if ( rc )
+      idxMetaMgr->getIdxNamesByCL( clName, idxNameMap ) ;
+      if ( 0 == idxNameMap.size() )
       {
-         PD_LOG_MSG( PDERROR, "No index information found for collection"
-                     "[ %s ], rc[ %d ]", clName, rc ) ;
-         goto error ;
-      }
-      if ( 0 == idxMetas.size() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "No index information found for "
-                     "collection[ %s ]", clName ) ;
+         rc = SDB_RTN_INDEX_NOTEXIST ;
+         PD_LOG_MSG( PDERROR, "No index information found for collection[%s]",
+                     clName ) ;
          goto error ;
       }
 
@@ -393,13 +385,15 @@ namespace seadapter
                continue ;
             }
 
-            if ( _isTextIdx( idxMetas, idxName, esIdxName ) )
+            map<string, UINT16>::iterator itr =
+                  idxNameMap.find( idxName.c_str() )  ;
+            if ( itr != idxNameMap.end() )
             {
                // If multiple text indices specified in the hint, use the first
                // one.
                if ( 0 == textIdxNum )
                {
-                  index = esIdxName ;
+                  imID = itr->second ;
                }
                textIdxNum++ ;
             }
@@ -413,23 +407,27 @@ namespace seadapter
          // the collection, use it for search. Otherwise, report error.
          if ( 0 == textIdxNum )
          {
-            if ( 1 == idxMetas.size() )
+            if ( 1 == idxNameMap.size() )
             {
-               index = idxMetas.front().getESIdxName() ;
+               imID = idxNameMap.begin()->second ;
             }
             else
             {
                rc = SDB_INVALIDARG ;
                PD_LOG_MSG( PDERROR, "Text index name should be specified in "
-                           "hint when there are multiple text indices") ;
+                                    "hint when there are multiple text indices") ;
                goto error ;
             }
          }
-         idxMetaCache->unlock() ;
-         cacheLocked = FALSE ;
 
+         if ( _imContext )
+         {
+            idxMetaMgr->releaseIMContext( _imContext ) ;
+         }
+
+         rc = idxMetaMgr->getIMContext( &_imContext, imID, SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get index meta context failed[%d]", rc ) ;
          newHint = builder.obj() ;
-         type = sdbGetSeAdapterCB()->getDataNodeGrpName() ;
       }
       catch ( std::exception &e )
       {
@@ -442,33 +440,9 @@ namespace seadapter
               hint.toString( FALSE, TRUE ).c_str(),
               newHint.toString( FALSE, TRUE ).c_str() ) ;
    done:
-      if ( cacheLocked )
-      {
-         idxMetaCache->unlock() ;
-      }
       return rc ;
    error:
       goto done ;
-   }
-
-   BOOLEAN _seAdptAgentSession::_isTextIdx( const IDX_META_VEC &idxMetas,
-                                            const string &idxName,
-                                            string &esIdxName )
-   {
-      BOOLEAN found = FALSE ;
-
-      for ( IDX_META_VEC_CITR itr = idxMetas.begin(); itr != idxMetas.end();
-            ++itr )
-      {
-         if ( idxName == itr->getOrigIdxName() )
-         {
-            found = TRUE ;
-            esIdxName = itr->getESIdxName() ;
-            break ;
-         }
-      }
-
-      return found ;
    }
 }
 

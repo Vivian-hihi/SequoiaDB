@@ -426,6 +426,24 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_PROCESSTRUNCATE, "_rtnExtDataProcessor::processTruncate" )
+   INT32 _rtnExtDataProcessor::processTruncate( pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_PROCESSTRUNCATE ) ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+
+      rc = rtnTruncCollectionCommand( _cappedCLName, cb, dmsCB, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Truncate capped collection[%s] failed[%d]",
+                   _cappedCLName,  rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSOR_PROCESSTRUNCATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_DODROPP1, "_rtnExtDataProcessor::doDropP1" )
    INT32 _rtnExtDataProcessor::doDropP1( pmdEDUCB *cb, SDB_DPSCB *dpsCB )
    {

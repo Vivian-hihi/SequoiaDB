@@ -39,6 +39,7 @@
 
 #include "rtnExtContext.hpp"
 #include "rtnTrace.hpp"
+#include "rtnCB.hpp"
 
 namespace engine
 {
@@ -796,7 +797,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_OPEN ) ;
       std::vector<rtnExtDataProcessor *> processors ;
-      vector<rtnExtDataProcessor *> processorP1 ;
 
       _processorMgr = processorMgr ;
       rc = processorMgr->getProcessorsByCL( csName, clName, EXCLUSIVE,
@@ -811,9 +811,9 @@ namespace engine
       for ( vector<rtnExtDataProcessor *>::iterator itr = processors.begin();
             itr != processors.end(); ++itr )
       {
-         rc = (*itr)->doDropP1( cb, dpscb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Drop phase 1 failed[ %d ]", rc ) ;
-         processorP1.push_back( *itr ) ;
+         rc = (*itr)->processTruncate( cb, dpscb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Process truncate collection failed[%d]",
+                      rc ) ;
       }
 
    done:
@@ -824,65 +824,18 @@ namespace engine
       PD_TRACE_EXITRC( SDB__RTNEXTTRUNCATECTX_OPEN, rc ) ;
       return rc ;
    error:
-      INT32 rcTmp = SDB_OK ;
-      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
-            itr != _processors.end(); ++itr )
-      {
-         (*itr)->doDropP1Cancel( cb, NULL ) ;
-      }
-      for ( vector<rtnExtDataProcessor *>::iterator itr = processorP1.begin();
-            itr != processorP1.end(); ++itr )
-      {
-         rcTmp = (*itr)->doDropP1Cancel( cb, NULL ) ;
-         if ( rcTmp )
-         {
-            PD_LOG( PDERROR, "Drop phase 1 cancel failed[ %d ]", rc ) ;
-         }
-      }
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_DONE, "_rtnExtTruncateCtx::_onDone" )
    INT32 _rtnExtTruncateCtx::_onDone( pmdEDUCB *cb, SDB_DPSCB *dpscb )
    {
-      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_DONE ) ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
 
-      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
-            itr != _processors.end(); ++itr )
-      {
-         rc = (*itr)->doDropP2( cb, dpscb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Drop phase 2 failed[ %d ]", rc ) ;
-         rc = (*itr)->doRebuild( cb, dpscb ) ;
-         PD_RC_CHECK( rc, PDERROR, "External data rebuild failed[ %d ]", rc ) ;
-         rc = (*itr)->active() ;
-         PD_RC_CHECK( rc, PDERROR, "Active processor failed[ %d ]", rc ) ;
-      }
+      rtnCB->incTextIdxVersion() ;
 
-   done:
-      PD_TRACE_EXITRC( SDB__RTNEXTTRUNCATECTX_DONE, rc ) ;
-      return rc ;
-   error:
-      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
-            itr != _processors.end();)
-      {
-         (*itr)->doDropP1Cancel( cb, NULL ) ;
-         itr = _processors.erase( itr ) ;
-      }
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTTRUNCATECTX_ABORT, "_rtnExtTruncateCtx::_onAbort" )
-   INT32 _rtnExtTruncateCtx::_onAbort( pmdEDUCB *cb, SDB_DPSCB *dpscb )
-   {
-      PD_TRACE_ENTRY( SDB__RTNEXTTRUNCATECTX_ABORT ) ;
-      for ( vector<rtnExtDataProcessor *>::iterator itr = _processors.begin();
-            itr != _processors.end(); )
-      {
-         (*itr)->doDropP1Cancel( cb, dpscb ) ;
-         itr = _processors.erase( itr ) ;
-      }
-      PD_TRACE_EXIT( SDB__RTNEXTTRUNCATECTX_ABORT ) ;
+      PD_TRACE_EXIT( SDB__RTNEXTTRUNCATECTX_DONE ) ;
       return SDB_OK ;
    }
 

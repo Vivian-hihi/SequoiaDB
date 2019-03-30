@@ -597,6 +597,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONRENAMECS ) ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
 
       SDB_ASSERT( oldCSName, "Old CS name is null" ) ;
       SDB_ASSERT( newCSName, "New CS name is null" ) ;
@@ -609,6 +610,8 @@ namespace engine
       rc = _edpMgr->renameCS( oldCSName, newCSName ) ;
       PD_RC_CHECK( rc, PDERROR, "External data processor manager rename cs "
                                 "failed[ %d ]", rc ) ;
+
+      rtnCB->incTextIdxVersion() ;
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONRENAMECS, rc ) ;
       return rc ;
@@ -624,6 +627,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAHANDLER_ONRENAMECL ) ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
 
       SDB_ASSERT( csName, "CS name is null" ) ;
       SDB_ASSERT( oldCLName, "Old CL name is null" ) ;
@@ -637,6 +641,7 @@ namespace engine
       rc = _edpMgr->renameCL( csName, oldCLName, newCLName ) ;
       PD_RC_CHECK( rc, PDERROR, "External data processor manager rename cl "
                                 "failed[ %d ]", rc ) ;
+      rtnCB->incTextIdxVersion() ;
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTDATAHANDLER_ONRENAMECL, rc ) ;
       return rc ;
