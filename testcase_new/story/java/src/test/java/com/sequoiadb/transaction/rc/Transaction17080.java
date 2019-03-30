@@ -44,7 +44,7 @@ public class Transaction17080 extends SdbTestBase {
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl2 = db1.getCollectionSpace(csName).getCollection(clName);
+        cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
     }
 

@@ -1,24 +1,20 @@
 package com.sequoiadb.transaction.ru;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * @Description seqDB-17201:   对大记录进行操作与读并发，事务回滚  
+ * @author Zhao Xiaoni
+ * @date 2019-1-16
+ */
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-/**
- * @Description seqDB-17201:   对大记录进行操作与读并发，事务回滚  
- * @author Zhao Xiaoni
- * @date 2019-1-16
- */
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
@@ -32,11 +28,6 @@ public class Transaction17201 extends SdbTestBase {
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
     private DBCursor cursor = null;
-    private List<BSONObject> expList = new ArrayList<BSONObject>();
-    private List<BSONObject> actList = new ArrayList<BSONObject>();
-    private StringBuilder b = new StringBuilder("bbbbbbbbbbbbbbbbbbbb");
-    private StringBuilder a1 = new StringBuilder("a");
-    private StringBuilder a2 = null;
     
     @BeforeClass
     public void setUp() {
@@ -51,24 +42,21 @@ public class Transaction17201 extends SdbTestBase {
 
     @Test
     public void test() {
+        StringBuilder b = new StringBuilder( 60 * 1000 * 20 );
         for (int i = 0; i < 60 * 1000; i++) {
             b.append("bbbbbbbbbbbbbbbbbbbb");
         }
         
-        for (int i = 0; i < 4000; i++) {
-            a1.append("a");
+        StringBuilder a1 = new StringBuilder( 4000 );
+        for (int i = 0; i < 200; i++) {
+            a1.append("aaaaaaaaaaaaaaaaaaaa");
         }
-        a2 = a1.append("a");
-
-        // 集合中插入带索引的记录
-        List<BSONObject> insertR1s = new ArrayList<BSONObject>();
-        BSONObject insertR1 = null;
+        
         for(int i=0; i<10; i++)
         {
-            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1+i +"', b:'" + b + "'}");
-            insertR1s.add(insertR1);
+            BSONObject insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1+i +"', b:'" + b + "'}");
+            cl.insert( insertR1 ) ;
         }
-        cl.insert(insertR1s);
 
         // 开启两个并发事务
         db1.beginTransaction();
@@ -79,64 +67,48 @@ public class Transaction17201 extends SdbTestBase {
             BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'"+ a1+(10+i) +"', b:'" + b + "'}");
             // 事务1对同一条记录执行多个操作
             cl1.insert(insertR2);
-            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a2+(10+i) +"'}}", null);
-            cl1.delete("{a:'"+ a2+(10+i) +"'}");
+            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a1+'a'+(10+i) +"'}}", "{'':'a'}");
+            cl1.delete("{a:'"+ a1+'a'+(10+i) +"'}", "{'':'a'}");
             // 事务1对不同记录执行多个操作
             cl1.delete("{a:'"+ a1+i +"'}", "{'':'a'}");
             cl1.insert(insertR2);
-            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a2+(10+i) +"'}}", null);
-            cl1.update("{a:'"+ a2+(10+i) +"'}", "{$set:{a:'"+ a1+(10+i) +"'}}", null);
-            expList.add(insertR2);
+            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a1+'a'+(10+i) +"'}}", "{'':'a'}");
+            cl1.update("{a:'"+ a1+'a'+(10+i) +"'}", "{$set:{a:'"+ a1+(10+i) +"'}}", "{'':'a'}");
         }
 
         // 事务2表扫描记录
         cursor = cl2.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
-        actList.clear();
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 10));
 
         // 事务2索引扫描记录
         cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
-        actList.clear();
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 10));
 
         // 非事务表扫描记录
         cursor = cl.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
-        actList.clear();
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 10));
 
         // 非事务索引扫描记录
         cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
-        actList.clear();
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 10));
 
         db1.rollback();
 
         // 事务2表扫描记录
         cursor = cl2.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, insertR1s);
-        actList.clear();
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 0));
 
         // 事务2索引扫描记录
         cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, insertR1s);
-        actList.clear();
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 0));
 
         // 非事务表扫描记录
         cursor = cl.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, insertR1s);
-        actList.clear();
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 0));
 
         // 非事务索引扫描记录
         cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, insertR1s);
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 0));
 
         db2.commit();
         cursor.close();

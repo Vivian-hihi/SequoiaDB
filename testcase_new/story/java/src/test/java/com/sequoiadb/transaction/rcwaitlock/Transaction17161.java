@@ -5,8 +5,6 @@ package com.sequoiadb.transaction.rcwaitlock;
  * @author xiaoni Zhao
  * @date 2019-1-23
  */
-import java.util.ArrayList;
-import java.util.List;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
@@ -30,8 +28,7 @@ public class Transaction17161 extends SdbTestBase {
     private DBCollection cl = null;
     private DBCollection cl1 = null;
     private DBCursor cursor = null;
-    private List<BSONObject> insertR1s = new ArrayList<BSONObject>();
-    private List<BSONObject> expList = new ArrayList<BSONObject>();
+    private StringBuilder a1 = null;
 
     @BeforeClass
     public void setUp() {
@@ -45,43 +42,37 @@ public class Transaction17161 extends SdbTestBase {
     @Test
     public void test() {
 
-        StringBuilder b = new StringBuilder("bbbbbbbbbbbbbbbbbbbb");
+        StringBuilder b = new StringBuilder( 60 * 1000 * 20 );
         for (int i = 0; i < 60 * 1000; i++) {
             b.append("bbbbbbbbbbbbbbbbbbbb");
         }
         
-        StringBuilder a1 = new StringBuilder("a");
-        StringBuilder a2 = null;
-        for (int i = 0; i < 4000; i++) {
-            a1.append("a");
+        a1 = new StringBuilder( 4000 );
+        for (int i = 0; i < 200; i++) {
+            a1.append("aaaaaaaaaaaaaaaaaaaa");
         }
-        a2 = a1.append("a");
-
-        BSONObject insertR1 = null;
+        
         for(int i=0; i<10; i++)
         {
-            insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1+i +"', b:'" + b + "'}");
-            insertR1s.add(insertR1);
+            BSONObject insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1+i +"', b:'" + b + "'}");
+            cl.insert( insertR1 ) ;
         }
-        cl.insert(insertR1s);
-
-        // 开启事务1
+       
         db1.beginTransaction();
-
+        
         // 事务1对同一条记录执行多个操作
         for(int i=0; i<10; i++)
         {
             BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'"+ a1+(10+i) +"', b:'" + b + "'}");
             // 事务1对同一条记录执行多个操作
             cl1.insert(insertR2);
-            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a2+(10+i) +"'}}", "{'':'a'}");
-            cl1.delete("{a:'"+ a2+(10+i) +"'}", "{'':'a'}");
+            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a1+'a'+(10+i) +"'}}", "{'':'a'}");
+            cl1.delete("{a:'"+ a1+'a'+(10+i) +"'}", "{'':'a'}");
             // 事务1对不同记录执行多个操作
             cl1.delete("{a:'"+ a1+i +"'}", "{'':'a'}");
             cl1.insert(insertR2);
-            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a2+(10+i) +"'}}", "{'':'a'}");
-            cl1.update("{a:'"+ a2+(10+i) +"'}", "{$set:{a:'"+ a1+(10+i) +"'}}", "{'':'a'}");
-            expList.add(insertR2);
+            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a1+'a'+(10+i) +"'}}", "{'':'a'}");
+            cl1.update("{a:'"+ a1+'a'+(10+i) +"'}", "{$set:{a:'"+ a1+(10+i) +"'}}", "{'':'a'}");
         }
 
         // 事务2表扫描记录
@@ -95,12 +86,12 @@ public class Transaction17161 extends SdbTestBase {
         Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':null}");
-        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
+        cursor = cl.query(null, "{id:1, a:1}", "{a:1}", "{'':null}");
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 10));
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
-        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
+        cursor = cl.query(null, "{id:1, a:1}", "{a:1}", "{'':'a'}");
+        Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 10));
 
         db1.rollback();
 
@@ -109,8 +100,8 @@ public class Transaction17161 extends SdbTestBase {
             Assert.fail(read1.getErrorMsg() + read2.getErrorMsg());
         }
         try {
-            Assert.assertEquals(read1.getExecResult(), insertR1s);
-            Assert.assertEquals(read2.getExecResult(), insertR1s);
+            Assert.assertTrue((boolean) read1.getExecResult());
+            Assert.assertTrue((boolean) read2.getExecResult());
         } catch (Exception e) {
             Assert.fail(e.getMessage());
         }
@@ -143,17 +134,17 @@ public class Transaction17161 extends SdbTestBase {
             db2.beginTransaction();
 
             try {
-                cursor = cl2.query(null, null, "{a:1}", hint);
-                List<BSONObject> records = TransUtils.getReadActList(cursor);
-                setExecResult(records);
+                cursor = cl2.query(null, "{id:1, a:1}", "{a:1}", hint);
+                boolean ret = TransUtils.getReadActList(cursor, a1, 0);
+                setExecResult(ret);
 
                 // 事务2扫描记录
-                cursor = cl2.query(null, null, "{a:1}", hint);
-                Assert.assertEquals(TransUtils.getReadActList(cursor), insertR1s);
+                cursor = cl2.query(null, "{id:1, a:1}", "{a:1}", hint);
+                Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 0));
 
                 // 非事务扫描记录
-                cursor = cl.query(null, null, "{a:1}", hint);
-                Assert.assertEquals(TransUtils.getReadActList(cursor), insertR1s);
+                cursor = cl.query(null, "{id:1, a:1}", "{a:1}", hint);
+                Assert.assertTrue(TransUtils.getReadActList(cursor, a1, 0));
 
                 db2.rollback();
             } catch (BaseException e) {

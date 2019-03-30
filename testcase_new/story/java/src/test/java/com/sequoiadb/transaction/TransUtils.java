@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 
@@ -199,6 +200,30 @@ public class TransUtils {
         Collections.shuffle(insertDatas);
         cl.insert(insertDatas);
         return expDatas;
+    }
+    
+    public static boolean getReadActList(DBCursor cursor, StringBuilder expRes, int pos ) throws BaseException {
+        String prefix = expRes.toString() ;
+        int diff = 1 ;
+        if ( pos >= 10 ) {diff = 2 ;}
+        while (cursor.hasNext()) {
+            BasicBSONObject record = (BasicBSONObject)cursor.getNext();
+            String filedA = record.getString("a") ;
+            if ( filedA.indexOf( prefix ) == -1 ){
+                return false ;
+            }
+            
+            if (filedA.length() - prefix.length() != diff  ) {
+                return false ;
+            }
+            
+            if ( Integer.parseInt( filedA.substring(prefix.length()) ) != pos ) {
+                return false ;
+            }
+            
+            pos++ ;
+        }
+        return true ;
     }
 
     public static ArrayList<BSONObject> getUpdateDatas(int startId, int endId, int updateValue) {
