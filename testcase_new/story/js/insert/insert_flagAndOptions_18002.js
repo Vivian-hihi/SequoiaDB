@@ -45,10 +45,12 @@ function main()
    
    // SDB_INSERT_RETURN_ID
    println("\n---Begin to insert, flag[SDB_INSERT_RETURN_ID]");
-   var recsArray = [{a:4}];
-   var rc = cl.insert( recsArray, SDB_INSERT_RETURN_ID );
-   checkReturnOid( cl, rc, {a:4} )
-   var expRecs = [{"a":1,"b":2},{"a":2},{"a":3},{"a":4}];
+   var rc = cl.insert( {a:1,b:3}, {ReturnOID:true,ReplaceOnDup:true} );
+   if( null === rc )
+   {
+      throw buildException( "insertSetFlag_ReturnOid", null, "", "return oid", "  " + null );
+   } 
+   var expRecs = [{"a":1,"b":3},{"a":2},{"a":3}];
    checkRecords( cl, expRecs );
    
    cleanCL( mainCLName );
