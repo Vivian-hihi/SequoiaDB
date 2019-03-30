@@ -44,7 +44,6 @@ public class Transaction17180B extends SdbTestBase {
     private String hint = "{\"\":\"a\"}";
     private int startId = 0;
     private int stopId = 1000;
-    private int insertValue = 10000;
     private int updateValue = 20000;
 
     @DataProvider(name = "index")
@@ -114,10 +113,10 @@ public class Transaction17180B extends SdbTestBase {
             cl4 = db4.getCollectionSpace(csName).getCollection(clName);
     
             // 插入记录R1
-            TransUtils.insertDatas(cl, startId, stopId, insertValue);
+            TransUtils.insertRandomDatas(cl, startId, stopId);
     
             // 事务1匹配R1删除
-            cl1.delete(null, hint);
+            cl1.delete("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", hint);
     
             // 事务2匹配R1更新为R2
             UpdateThread updateThread = new UpdateThread();
@@ -125,23 +124,23 @@ public class Transaction17180B extends SdbTestBase {
             Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
     
             // 事务3读
-            TransactionQueryThread tableScanThread1 = new TransactionQueryThread(cl3, "{_id:1}");
+            TransactionQueryThread tableScanThread1 = new TransactionQueryThread(cl3, "{a:1}");
             tableScanThread1.start();
             Assert.assertTrue(tableScanThread1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
     
             // 事务4逆序读
-            TransactionQueryThread tableScanThread2 = new TransactionQueryThread(cl4, "{_id:1}");
+            TransactionQueryThread tableScanThread2 = new TransactionQueryThread(cl4, "{a:1}");
             tableScanThread2.start();
             Assert.assertTrue(tableScanThread2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
             
             // 非事务读
-            cursor = cl.query(null, null, "{_id:1}", hint);
+            cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
             // 非事务逆序读
-            cursor = cl.query(null, null, "{_id: -1}", hint);
+            cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
@@ -175,25 +174,25 @@ public class Transaction17180B extends SdbTestBase {
             }
             
             // 非事务读
-            cursor = cl.query(null, null, "{_id:1}", hint);
+            cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
             
             // 非事务逆序读
-            cursor = cl.query(null, null, "{_id: -1}", hint);
+            cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
             // 事务2读
-            cursor = cl2.query(null, null, "{_id:1}", hint);
+            cursor = cl2.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
             // 事务2逆序读
-            cursor = cl2.query(null, null, "{_id: -1}", hint);
+            cursor = cl2.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
@@ -202,25 +201,25 @@ public class Transaction17180B extends SdbTestBase {
             db2.commit();
     
             // 非事务读
-            cursor = cl.query(null, null, "{_id:1}", hint);
+            cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
             // 非事务逆序读
-            cursor = cl.query(null, null, "{_id: -1}", hint);
+            cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
             
             // 事务3读
-            cursor = cl3.query(null, null, "{_id:1}", hint);
+            cursor = cl3.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
             // 事务3逆序读
-            cursor = cl3.query(null, null, "{_id: -1}", hint);
+            cursor = cl3.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
@@ -254,7 +253,7 @@ public class Transaction17180B extends SdbTestBase {
         @Override
         public void exec() throws BaseException {
             hint = "{\"\":\"a\"}";
-            cl2.update(null, "{$set:{a:" + updateValue + "}}", hint);
+            cl2.update("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", "{$inc:{a:" + updateValue + "}}", hint);
         }
     }
 

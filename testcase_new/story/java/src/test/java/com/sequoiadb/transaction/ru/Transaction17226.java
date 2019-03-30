@@ -41,7 +41,6 @@ public class Transaction17226 extends SdbTestBase {
     private String hint = null;
     private int startId = 0;
     private int stopId = 1000;
-    private int insertValue = 10000;
     private int updateValue = 20000;
 
     @DataProvider(name = "index")
@@ -103,11 +102,11 @@ public class Transaction17226 extends SdbTestBase {
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
     
             // 插入记录R1
-            TransUtils.insertDatas(cl, startId, stopId, insertValue);
+            TransUtils.insertRandomDatas(cl, startId, stopId);
     
             // 事务1匹配R1删除
             hint = "{\"\":\"a\"}";
-            cl1.delete(null, hint);
+            cl1.delete("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", hint);
     
             // 事务2匹配R1更新为R2
             UpdateThread updateThread = new UpdateThread();
@@ -362,7 +361,7 @@ public class Transaction17226 extends SdbTestBase {
         @Override
         public void exec() throws BaseException {
             hint = "{\"\":\"a\"}";
-            cl2.update(null, "{$set:{a:" + updateValue + "}}", hint);
+            cl2.update("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", "{$inc:{a:" + updateValue + "}}", hint);
         }
     }
 

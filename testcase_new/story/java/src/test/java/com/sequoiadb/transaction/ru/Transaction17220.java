@@ -42,7 +42,6 @@ public class Transaction17220 extends SdbTestBase {
     private String hint = null;
     private int startId = 0;
     private int stopId = 1000;
-    private int insertValue = 10000;
     private int updateValue = 20000;
 
     @DataProvider(name = "index")
@@ -104,11 +103,11 @@ public class Transaction17220 extends SdbTestBase {
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
     
             // 插入记录R1
-            TransUtils.insertDatas(cl, startId, stopId, insertValue);
+            TransUtils.insertRandomDatas(cl, startId, stopId);
     
             // 事务1匹配R1更新为R2
             hint = "{\"\":null}";
-            cl1.update(null, "{$set:{a:" + updateValue + "}}", hint);
+            cl1.update("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", "{$inc:{a:" + updateValue + "}}", hint);
     
             // 事务2匹配R1删除
             DeleteThread deleteThread = new DeleteThread();
@@ -116,7 +115,7 @@ public class Transaction17220 extends SdbTestBase {
             Assert.assertTrue(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
     
             // 事务1记录读
-            ArrayList<BSONObject> updateR1s = TransUtils.getUpdateDatas(startId, stopId, updateValue);
+            ArrayList<BSONObject> updateR1s = TransUtils.getIncDatas(startId, stopId, updateValue);
             expList.addAll(updateR1s);
             hint = "{\"\":null}";
             cursor = cl1.query(null, null, "{_id:1}", hint);
@@ -377,7 +376,7 @@ public class Transaction17220 extends SdbTestBase {
         @Override
         public void exec() throws BaseException {
             hint = "{\"\":null}";
-            cl2.delete("{a:" + insertValue + "}", hint);
+            cl2.delete("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", hint);
         }
     }
 
