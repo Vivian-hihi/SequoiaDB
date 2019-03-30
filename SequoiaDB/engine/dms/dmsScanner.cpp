@@ -397,15 +397,11 @@ namespace engine
                  _selectForUpdate )
             {
                _needUnLock = FALSE ;
+               _waitLock = TRUE ;
             }
             else
             {
                _needUnLock = TRUE ;
-            }
-
-            if ( _selectForUpdate )
-            {
-               _waitLock = TRUE ;
             }
          }
       }
@@ -1553,15 +1549,11 @@ namespace engine
                  _selectForUpdate )
             {
                _needUnLock = FALSE ;
+               _waitLock = TRUE ;
             }
             else
             {
                _needUnLock = TRUE ;
-            }
-
-            if ( _selectForUpdate )
-            {
-               _waitLock = TRUE ;
             }
          }
       }
