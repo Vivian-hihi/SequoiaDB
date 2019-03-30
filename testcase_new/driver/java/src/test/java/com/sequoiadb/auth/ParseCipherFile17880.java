@@ -17,8 +17,8 @@ import java.io.File;
 import java.util.Random;
 
 /**
- * @Description: seqDB-17880:parseCipherFile参数检验,此用例密码文件中包含多个用户
  * @author fanyu
+ * @Description: seqDB-17880:parseCipherFile参数检验,此用例密码文件中包含多个用户
  * @Date:2019年02月22日
  * @version:1.0
  */
@@ -28,7 +28,7 @@ public class ParseCipherFile17880 extends SdbTestBase {
     private String[] passwords = {/*"user@17880","user:17880",*/"  user 17880 ", "测试17880", "token17880A", "token17880B", "token17880C"};
     private String passwdFileName = "/password17880";
     private String passwordFilePath;
-    private String[] tokens = {getRandomString(257)," ","测试"};
+    private String[] tokens = {getRandomString(257), " ", "测试"};
 
     @BeforeClass(alwaysRun = true)
     private void setUp() throws Exception {
@@ -82,26 +82,20 @@ public class ParseCipherFile17880 extends SdbTestBase {
         Assert.assertEquals(info.getPasswd(), password);
         Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, info.getUserName(), info.getPasswd());
         Assert.assertFalse(db.isCollectionSpaceExist("ParseCipherFile17880"));
-        db.disconnect();
+        db.close();
     }
 
     @AfterClass(alwaysRun = true)
     private void tearDown() throws Exception {
         try {
             for (int i = 0; i < usernames.length; i++) {
-                try {
-                    sdb.removeUser(usernames[i], passwords[i]);
-                } catch (BaseException e) {
-                    if (e.getErrorCode() != -300) {
-                        throw e;
-                    }
-                }
+                sdb.removeUser(usernames[i], passwords[i]);
             }
             new File(passwordFilePath).deleteOnExit();
-            Util.removePasswdFile(Util.getSdbInstallDir() + "/bin"+ passwdFileName);
+            Util.removePasswdFile(Util.getSdbInstallDir() + "/bin" + passwdFileName);
         } finally {
             if (sdb != null) {
-                sdb.disconnect();
+                sdb.close();
             }
         }
     }
