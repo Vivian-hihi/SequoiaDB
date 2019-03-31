@@ -325,10 +325,10 @@ namespace seadapter
             {
                // If it's the first, but not the last meta item,
                _clNameMap.erase( meta->getOrigCLName() ) ;
-               meta = &_metas[ nextIMID ] ;
-               meta->setPrior( SEADPT_INVALID_IMID ) ;
-               _clUIDMap[ meta->getCLUID() ] = nextIMID ;
-               _clNameMap[ meta->getOrigCLName() ] = nextIMID ;
+               seIndexMeta *metaNext = &_metas[ nextIMID ] ;
+               metaNext->setPrior( SEADPT_INVALID_IMID ) ;
+               _clUIDMap[ metaNext->getCLUID() ] = nextIMID ;
+               _clNameMap[ metaNext->getOrigCLName() ] = nextIMID ;
             }
             ossUnlatch( &_mapLatch, EXCLUSIVE ) ;
          }
