@@ -3,8 +3,7 @@
                seqDB-6021:执行事务回滚_SD.transaction.032
 *@Author:  		TingYU  2015/11/23
 ************************************************************************/
-// SEQUOIADBMAINSTREAM-4182
-// main();
+main();
 function main()
 {      
    try

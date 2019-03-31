@@ -3,8 +3,7 @@
 @author£º2015-11-18 wuyan  Init
 ***************************************************************************** */
 
-// SEQUOIADBMAINSTREAM-4182
-// main();
+main();
 function main()
 {		
 	try
