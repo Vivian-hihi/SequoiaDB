@@ -80,6 +80,19 @@ public class Transaction17252 extends SdbTestBase {
         
         //update R1 to R3 same as the R2
         cl.update(new BasicBSONObject("a", 1), modifier, null);
+        
+        expDataList.clear();
+        expDataList.add(data3);
+        recordCur = cl.query(null, null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+        
         sdb.rollback();
         
         expDataList.clear();
@@ -98,8 +111,7 @@ public class Transaction17252 extends SdbTestBase {
 
     }
 
-    // TODO:SEQUOIADBMAINSTREAM-4182
-    @Test(enabled = false)
+    @Test
     public void test2(){
 
         //delete R2
@@ -108,6 +120,19 @@ public class Transaction17252 extends SdbTestBase {
         
         //update R1 to R3 same as the R2
         cl.update(new BasicBSONObject("a", 1), modifier, null);
+        
+        expDataList.clear();
+        expDataList.add(data3);
+        recordCur = cl.query(null, null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+        
         sdb.commit();
         
         expDataList.clear();

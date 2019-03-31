@@ -70,8 +70,7 @@ public class Transaction17130 extends SdbTestBase {
 
     }
 
-    // TODO:SEQUOIADBMAINSTREAM-4182
-    @Test(enabled = false)
+    @Test
     public void test1() {
         try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
             transDB.beginTransaction();
@@ -113,8 +112,7 @@ public class Transaction17130 extends SdbTestBase {
 
     }
 
-    // TODO:SEQUOIADBMAINSTREAM-4182
-    @Test(enabled = false)
+    @Test
     public void test2() {
         try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
             transDB.beginTransaction();
