@@ -63,6 +63,19 @@ public class Transaction17245 extends SdbTestBase {
 
         // insert thr same record as the delete
         cl.insert(data2);
+        
+        expDataList.clear();
+        expDataList.add(data2);
+        recordCur = cl.query(null, null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+        
         sdb.rollback();
 
         expDataList.clear();
@@ -86,10 +99,21 @@ public class Transaction17245 extends SdbTestBase {
 
         // insert thr same record as the delete
         cl.insert(data2);
-        sdb.commit();
-
+        
         expDataList.clear();
         expDataList.add(data2);
+        recordCur = cl.query(null, null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+        
+        sdb.commit();
+
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);

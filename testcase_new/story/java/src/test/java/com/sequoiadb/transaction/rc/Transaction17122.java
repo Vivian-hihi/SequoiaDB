@@ -58,8 +58,7 @@ public class Transaction17122 extends SdbTestBase {
         
     }
 
-    // TODO:count num error, return -1 SEQUOIADBMAINSTREAM-4182
-    @Test(enabled = false)
+    @Test
     public void test1() {
 
         sdb.beginTransaction();
@@ -70,13 +69,22 @@ public class Transaction17122 extends SdbTestBase {
         //2 trans1 insert record R2 
         cl.insert(data2);
         
-        //TODO：漏了一个步骤，其他类似用例请一并检查一下，是否有同样的遗漏
+        expDataList.clear();
+        expDataList.add(data2);
+        recordCur = cl.query(null, null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
         
         sdb.rollback();
 
         expDataList.clear();
         expDataList.add(data1);
-        
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -92,8 +100,7 @@ public class Transaction17122 extends SdbTestBase {
 
     }
 
-    // TODO:count num error, return -1 SEQUOIADBMAINSTREAM-4182
-    @Test(enabled = false)
+    @Test
     public void test2() {
 
         sdb.beginTransaction();
@@ -104,12 +111,20 @@ public class Transaction17122 extends SdbTestBase {
         //2 trans1 insert record R2 
         cl.insert(data2);
         
+        expDataList.clear();
+        expDataList.add(data2);
+        recordCur = cl.query(null, null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+        
         sdb.commit();
 
-        expDataList.clear();
-        expDataList.add(data1);
-        expDataList.add(data2);
-        
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
