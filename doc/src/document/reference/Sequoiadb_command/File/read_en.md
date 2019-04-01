@@ -40,7 +40,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Read the contents of the file
 
-```lang-javacript
+```lang-javascript
 > file.read()
 SquoiaDB
 ```

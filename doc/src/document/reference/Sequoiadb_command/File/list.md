@@ -41,7 +41,7 @@ options 参数详细说明如下：
 
 * 列出当前目录的文件；
 
-  ```lang-javacript
+  ```lang-javascript
   > File.list( { detail: true, pathname: "/opt/trunk/test" } )
   {
     "name": "test_one",
@@ -63,7 +63,7 @@ options 参数详细说明如下：
 
 * 列出当前目录的文件后，对结果进行筛选。
 
-  ```lang-javasript
+  ```lang-javascript
   > File.list( { detail: true, pathname: "/opt/trunk/test" }, { $and: [ { name: "test_one" }, { size: "0" } ] } )
   {
     "name": "test_one",

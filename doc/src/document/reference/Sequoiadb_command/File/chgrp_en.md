@@ -36,6 +36,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Change the group of the file.
 
-```lang-javacript
+```lang-javascript
 > File.chgrp( "/opt/trunk/file", "sequoiadb", false )
 ```

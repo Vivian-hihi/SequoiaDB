@@ -34,7 +34,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Get the md5 value of the file.
 
-```lang-javacript
+```lang-javascript
 > File.md5( "/opt/trunk/test/test_one" )
 f8fef4e0f30176c126d85cadca298a7c
 ```

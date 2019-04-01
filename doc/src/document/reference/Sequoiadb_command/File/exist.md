@@ -31,7 +31,7 @@ File
 
 * 判断文件是否存在。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.exist( "/opt/trunk/file" )
   true
   ```

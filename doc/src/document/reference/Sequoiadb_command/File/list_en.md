@@ -44,7 +44,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * List directory contents
 
-```lang-javacript
+```lang-javascript
 > File.list( { detail: true, pathname: "/opt/trunk/test" } )
 {
   "name": "test_one",
@@ -66,7 +66,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * List directory contents and filter the result set
 
-```lang-javasript
+```lang-javascript
 > File.list( { detail: true, pathname: "/opt/trunk/test" }, { $and: [ { name: "test_one" }, { size: "0" } ] } )
 {
   "name": "test_one",

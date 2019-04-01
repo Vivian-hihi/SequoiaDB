@@ -48,7 +48,7 @@ true
 
 * Write file.
 
-```lang-javacript
+```lang-javascript
 > var file = new File( "/opt/trunk/file.dump" )
 > file.writeContent( content )
 ```

@@ -45,7 +45,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Find a file;
 
-```lang-javacript
+```lang-javascript
 > File.find( { mode: "n", value: "tmp" } )
 {
   "pathname": "./tmp"
@@ -63,7 +63,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Find a file and filter the result set
 
-```lang-javasript
+```lang-javascript
 > File.find( { mode: "n", value: "tmp" }, { $or: [ { pathname: "./bin/tmp" }, { pathname: "./database/41000/tmp" } ] } )
 {
   "pathname": "./database/41000/tmp"

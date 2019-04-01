@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Determine if it is a normal file
 
-```lang-javacript
+```lang-javascript
 > File.isFile( "/opt/trunk/test" )
 true
 ```

@@ -38,7 +38,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Get the size of the file.
 
-```lang-javacript
+```lang-javascript
 > File.getSize( "/opt/trunk/test/test_one" )
 13558
 ```

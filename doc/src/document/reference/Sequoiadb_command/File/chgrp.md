@@ -33,6 +33,6 @@ File
 
 * 设置文件的所属用户组。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.chgrp( "/opt/trunk/file", "sequoiadb", false )
   ```

@@ -145,11 +145,9 @@ T}@T{
 T}@T{
 T}
 .TE
-.PP
 Note :
 .PP
-.PP
-Two parameters, username and groupname, must specify one of them.
+	Two parameters, username and groupname, must specify one of them.
 .RE
 .SH RETURN VALUE
 .PP

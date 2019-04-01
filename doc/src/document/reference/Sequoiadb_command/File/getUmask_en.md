@@ -33,7 +33,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Get file mode creation mask.
 
-```lang-javacript
+```lang-javascript
 > File.getUmask( 8 )    // Octal
 0022
 > File.getUmask( 10 )   // Decimal

@@ -45,7 +45,7 @@ File
 
 * 往文件中写入 fileContent 对象中的二进制内容。
 
-  ```lang-javacript
+  ```lang-javascript
   > var file = new File( "/opt/trunk/file.dump" )
   > file.writeContent( content )
   ```

@@ -38,7 +38,7 @@ File
 
 * 读取文件。
 
-  ```lang-javacript
+  ```lang-javascript
   > file.seek(0)
   > file.readLine()
   0:sequoiadb is wonderful. 

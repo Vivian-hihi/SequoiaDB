@@ -53,7 +53,7 @@ where 参数可选值如下表：
 
 * 移动文件游标，从文件开头位置执行偏移；
 
-  ```lang-javacript
+  ```lang-javascript
   > file.seek(2)
   > file.read()
   sequoiadb is wonderful.

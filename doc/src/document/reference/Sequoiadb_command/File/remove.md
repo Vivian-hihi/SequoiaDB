@@ -31,7 +31,7 @@ File
 
 * 查看 test 目录下的文件；
 
-  ```lang-javacript
+  ```lang-javascript
   > File.list( { pathname: "/opt/trunk/test" } )
   {
     "name": "test_twe",
@@ -52,7 +52,7 @@ File
 
 * 再次查看 test 目录下的文件。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.list( { pathname: "/opt/trunk/test" } )
   {
     "name": "test_one",

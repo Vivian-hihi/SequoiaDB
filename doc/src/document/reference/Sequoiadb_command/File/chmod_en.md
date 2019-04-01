@@ -36,6 +36,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Change file mode bits.
 
-```lang-javacript
+```lang-javascript
 > File.chmod( "/opt/trunk/file", 664, false )
 ```

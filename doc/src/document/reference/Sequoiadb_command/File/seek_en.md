@@ -56,7 +56,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Moving cursor, and perform an offset operation from the beginning of the file;
 
-```lang-javacript
+```lang-javascript
 > file.seek(2)
 > file.read()
 sequoiadb is wonderful.

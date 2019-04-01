@@ -32,6 +32,6 @@ File
 
 * 移动文件。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.move( "/opt/trunk/srcFile", "/opt/trunk/desFile" )
   ```

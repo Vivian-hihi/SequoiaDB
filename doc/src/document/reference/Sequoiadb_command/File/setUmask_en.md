@@ -34,7 +34,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Set file mode creation mask.
 
-```lang-javacript
+```lang-javascript
 > File.getUmask( 8 )
 0022
 > File.setUmask( 0664 )

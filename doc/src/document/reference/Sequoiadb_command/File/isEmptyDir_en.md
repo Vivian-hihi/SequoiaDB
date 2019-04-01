@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Determine if the directory is empty.
 
-```lang-javacript
+```lang-javascript
 > File.isEmptyDir( "/opt/trunk/test" )
 false
 ```

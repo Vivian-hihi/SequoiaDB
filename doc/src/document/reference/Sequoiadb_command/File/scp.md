@@ -38,7 +38,7 @@ File
 
 * 远程拷贝文件。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.scp( "192.168.20.71:11790@/opt/trunk/test/test_one", "192.168.20.71:11790@/opt/trunk/test/test_four" )
   Success to copy file from 192.168.20.71:11790@/opt/trunk/test/test_one to 192.168.20.71:11790@/opt/trunk/test/test_four
   ```

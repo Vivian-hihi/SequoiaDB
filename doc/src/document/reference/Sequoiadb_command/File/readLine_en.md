@@ -41,7 +41,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Read file.
 
-```lang-javacript
+```lang-javascript
 > file.seek(0)
 > file.readLine()
 0:sequoiadb is wonderful. 

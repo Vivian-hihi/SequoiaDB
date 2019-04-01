@@ -35,6 +35,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Move a file.
 
-```lang-javacript
+```lang-javascript
 > File.move( "/opt/trunk/srcFile", "/opt/trunk/desFile" )
 ```

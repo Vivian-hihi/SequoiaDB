@@ -40,7 +40,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Write file;
 
-```lang-javacript
+```lang-javascript
 > file.write( "sequoiadb" )
 ```
 

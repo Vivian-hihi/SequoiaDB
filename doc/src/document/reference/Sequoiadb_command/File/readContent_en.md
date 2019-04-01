@@ -40,7 +40,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Read the contents of the file into the fileContent object
 
-```lang-javacript
+```lang-javascript
 > var content = file.readContent()
 > content instanceof FileContent   // Verify that content is a 'FileContent' object
 true

@@ -37,7 +37,7 @@ File
 
 * 读取文本文件内容。
 
-  ```lang-javacript
+  ```lang-javascript
   > file.read()
   SquoiaDB
   ```

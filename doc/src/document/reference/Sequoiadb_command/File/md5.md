@@ -32,7 +32,7 @@ File
 
 * 获取文件的 md5 值。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.md5( "/opt/trunk/test/test_one" )
   f8fef4e0f30176c126d85cadca298a7c
   ```

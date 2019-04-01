@@ -50,6 +50,6 @@ mode 参数的可选值如下表：
 
 * 打开一个文件。
 
-  ```lang-javacript
+  ```lang-javascript
   > var file = new File( filepath, 0664, SDB_FILE_READWRITE | SDB_FILE_CREATE )
   ```

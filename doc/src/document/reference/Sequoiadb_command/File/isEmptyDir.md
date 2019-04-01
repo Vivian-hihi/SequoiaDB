@@ -31,7 +31,7 @@ File
 
 * 判断指定目录否为空目录。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.isEmptyDir( "/opt/trunk/test" )
   false
   ```

@@ -42,7 +42,7 @@ filter 参数支持对结果中的某些字段进行 and 、 or 、not 和精确
 
 * 查找文件；
 
-  ```lang-javacript
+  ```lang-javascript
   > File.find( { mode: "n", value: "tmp" } )
   {
     "pathname": "./tmp"
@@ -60,7 +60,7 @@ filter 参数支持对结果中的某些字段进行 and 、 or 、not 和精确
 
 * 查找文件后，对结果进行筛选。
 
- ```lang-javasript
+ ```lang-javascript
  > File.find( { mode: "n", value: "tmp" }, { $or: [ { pathname: "./bin/tmp" }, { pathname: "./database/41000/tmp" } ] } )
   {
     "pathname": "./database/41000/tmp"

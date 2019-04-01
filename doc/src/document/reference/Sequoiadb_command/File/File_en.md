@@ -53,6 +53,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Create a new file and open it in read-write mode.
 
-```lang-javacript
+```lang-javascript
 > var file = new File( filepath, 0664, SDB_FILE_READWRITE | SDB_FILE_CREATE )
 ```

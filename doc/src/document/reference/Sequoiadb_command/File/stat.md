@@ -31,7 +31,7 @@ File
 
 * 显示文件的状态信息。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.stat( "/opt/trunk/test/test_one" )
   {
     "name": "/opt/trunk/test/test_one",

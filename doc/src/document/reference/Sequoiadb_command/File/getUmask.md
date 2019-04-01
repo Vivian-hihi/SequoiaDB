@@ -31,7 +31,7 @@ File
 
 * 获取新建文件权限的掩码。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.getUmask( 8 )    // 八进制
   0022
   > File.getUmask( 10 )   // 十进制

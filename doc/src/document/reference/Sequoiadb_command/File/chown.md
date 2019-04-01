@@ -44,7 +44,7 @@ options 参数详细说明如下：
 
 * 设置文件的所有者。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.chown( "/opt/trunk/file", { "username": "sequoiadb" }, false )
   // 或者
   > File.chown( "/opt/trunk/file", { "groupname": "sequoiadbGroup" }, true )

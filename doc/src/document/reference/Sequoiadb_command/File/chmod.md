@@ -33,6 +33,6 @@ File
 
 * 设置文件权限。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.chmod( "/opt/trunk/file", 0664, false )
   ```

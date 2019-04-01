@@ -32,6 +32,6 @@ File
 
 * 创建目录。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.mkdir( "/opt/trunk/newDirectory" )
   ```

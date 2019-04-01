@@ -35,6 +35,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Create a directory.
 
-```lang-javacript
+```lang-javascript
 > File.mkdir( "/opt/trunk/newDirectory", 0755 )
 ```

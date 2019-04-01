@@ -34,7 +34,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Display file or file system status.
 
-```lang-javacript
+```lang-javascript
 > File.stat( "/opt/trunk/test/test_one" )
 {
   "name": "/opt/trunk/test/test_one",

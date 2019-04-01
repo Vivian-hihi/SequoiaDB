@@ -37,7 +37,7 @@ File
 
 * 读取二进制文件内容并存入 fileContent 对象中。
 
-  ```lang-javacript
+  ```lang-javascript
   > var content = file.readContent()
   > content instanceof FileContent   // 验证 content 是否为 FileContent 对象
   true

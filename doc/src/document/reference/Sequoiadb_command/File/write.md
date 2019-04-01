@@ -37,7 +37,7 @@ File
 
 * 往当前文件游标指向的位置写入内容；
 
-  ```lang-javacript
+  ```lang-javascript
   > file.write( "SequoiaDB" )
   ```
 

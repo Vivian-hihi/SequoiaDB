@@ -31,7 +31,7 @@ File
 
 * 判断指定文件名是否为目录。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.isDir( "/opt/trunk/test" )
   true
   ```

@@ -35,7 +35,7 @@ File
 
 * 获取文件的大小。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.getSize( "/opt/trunk/test/test_one" )
   13558
   ```

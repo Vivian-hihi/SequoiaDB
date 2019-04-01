@@ -31,7 +31,7 @@ File
 
 * 设置新建文件的权限掩码。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.getUmask( 8 )
   0022
   > File.setUmask( 0664 )

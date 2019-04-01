@@ -31,7 +31,7 @@ File
 
 * 判断指定文件名是否为普通文件。
 
-  ```lang-javacript
+  ```lang-javascript
   > File.isFile( "/opt/trunk/test" )
   false
   ```

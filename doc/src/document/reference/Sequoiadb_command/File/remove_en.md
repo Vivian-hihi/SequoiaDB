@@ -34,7 +34,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * View the file in the 'test' directory;
 
-```lang-javacript
+```lang-javascript
 > File.list( { pathname: "/opt/trunk/test" } )
 {
   "name": "test_twe",
@@ -55,7 +55,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * View the file in the 'test' directory again.
 
-```lang-javacript
+```lang-javascript
 > File.list( { pathname: "/opt/trunk/test" } )
 {
   "name": "test_one",
