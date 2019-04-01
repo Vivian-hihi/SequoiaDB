@@ -257,40 +257,57 @@ namespace engine
          const DPS_TRANSLOCK_TYPE  lockMode
       ) ;
 
-      // add a LRB at the end of the queue ( waiter, upgrade or owner list )
+      // add a LRB at the end of the queue ( waiter or upgrade list )
       void _addToLRBListTail
       (
          dpsTransLRB * & lrbBegin,
          dpsTransLRB *   idxNew
       ) ;
 
+      // add a LRB at the beginning of the queue ( owner list )
+      void _addToLRBListHead
+      (
+         dpsTransLRB * & lrbBegin,
+         dpsTransLRB *   lrbNew
+      ) ;
 
       // add a LRB at the given position in owner list ( the owner list is
-      // sorted on lock mode in ascent order )
+      // sorted on lock mode in descending order )
       void _addToOwnerLRBList
       (
          dpsTransLRB * insPos,
          dpsTransLRB * idxNew
       ) ; 
 
-      void _moveToEDULRBListTail
-      (
-         _dpsTransExecutor    * dpsTxExectr,
-         dpsTransLRB          * insLRB
-      ) ;
-
       // search owner LRB list, and find
       //  . if the edu is in owner list
-      //  . the index which the new LRB shall be inserted after
-      //  . the last index of compatible and pointer of first incompatible LRB
+      //  . the position where the new LRB shall be inserted after
+      //  . the pointer of first incompatible LRB
       void _searchOwnerLRBList
       (
          const EDUID               eduId,
          const DPS_TRANSLOCK_TYPE  lockMode,
          dpsTransLRB *             lrbBegin,
          dpsTransLRB *           & pLRBToInsert,
-         dpsTransLRB *           & pLRBIncomp,
-         dpsTransLRB *           & pLRBEduId
+         dpsTransLRB *           & pLRBIncompatible,
+         dpsTransLRB *           & pLRBOwner
+      ) ;
+
+      // search owner LRB list, and find
+      //  . the position where the new LRB shall be inserted after
+      //  . the pointer of first incompatible LRB
+      void _searchOwnerLRBListForInsertAndIncompatible
+      (
+         const DPS_TRANSLOCK_TYPE  lockMode,
+         dpsTransLRB             * lrbBegin,
+         dpsTransLRB *           & pLRBToInsert,
+         dpsTransLRB *           & pLRBIncompatible
+      ) ;
+
+      void _moveToEDULRBListTail
+      (
+         _dpsTransExecutor    * dpsTxExectr,
+         dpsTransLRB          * insLRB
       ) ;
 
       // add a LRB at the end of the EDU LRB chain,

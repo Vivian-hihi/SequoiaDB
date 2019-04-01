@@ -487,8 +487,37 @@ namespace engine
 
 
    //
+   // Description: add a LRB at the head of the LRB chain/list
+   // Function:    add the LRB at the head of list
+   // Input:
+   //    lrbBegin -- the first LRB in the chain
+   //    lrbNew   -- the LRB to be added in
+   // Output:     None
+   // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired
+   //
+   void dpsTransLockManager::_addToLRBListHead
+   (
+      dpsTransLRB * & lrbBegin,
+      dpsTransLRB *   lrbNew
+   )
+   {
+      if ( lrbBegin )
+      {
+         lrbBegin->prevLRB  = lrbNew ;
+      }
+      if ( lrbNew )
+      {
+         lrbNew->nextLRB = lrbBegin ;
+         lrbNew->prevLRB = NULL ;
+      }
+      lrbBegin = lrbNew ;   
+   }
+
+
+   //
    // Description: add a LRB to owner list right after a given LRB
-   // Function:    the owner list is sorted on lock mode in ascent order,
+   // Function:    the owner list is sorted on lock mode in descending order,
    //              add a LRB right after the given LRB 
    // Input:
    //    lrbPos -- the LRB where the new LRB is being inserted after
@@ -520,7 +549,7 @@ namespace engine
    //
    // Description: search owner LRB list and find the expected LRB
    // Function:    walk through owner LRB list ( it is sorted on lockMode in
-   //              ascending order ) and find out :
+   //              descending order ) and find out :
    //              . if the edu is in owner list
    //              . the pointer which the new LRB shall be inserted after
    //              . the pointer of last compatible and pointer of first
@@ -530,50 +559,154 @@ namespace engine
    //    lockMode -- lock mode
    //    lrbBegin -- the first LRB pointer in the owner list
    // Output:
-   //    pLRBToInsert  -- the lrb which the new LRB shall be inserted after
-   //    pLRBIncomp    -- pointer of first incompatible LRB
-   //    pLRBEduId     -- the LRB owned by same eduId
+   //    pLRBToInsert      -- the lrb which the new LRB shall be inserted after
+   //    pLRBIncompatible  -- pointer of first incompatible LRB
+   //    pLRBOwner         -- the LRB owned by same eduId
    // Return:     None
-   // Dependency:  the lock bucket latch shall be acquired
-   //
+   // Dependency:  the lock bucket latch shall be acquired and
+   //              all output parameters are initialized as NULL
    void dpsTransLockManager::_searchOwnerLRBList
    (
       const EDUID               eduId,
       const DPS_TRANSLOCK_TYPE  lockMode, 
       dpsTransLRB             * lrbBegin,
       dpsTransLRB *           & pLRBToInsert,
-      dpsTransLRB *           & pLRBIncomp,
-      dpsTransLRB *           & pLRBEduId
+      dpsTransLRB *           & pLRBIncompatible,
+      dpsTransLRB *           & pLRBOwner
    )
    {
+#ifdef _DEBUG
+      SDB_ASSERT( ( NULL == pLRBToInsert ),     "Invalid pLRBToInsert" ) ;
+      SDB_ASSERT( ( NULL == pLRBIncompatible ), "Invalid pLRBIncompatible" ) ;
+      SDB_ASSERT( ( NULL == pLRBOwner ),        "Invalid pLRBOwner" ) ;
+#endif
       EDUID lrbEduid = 0 ;
-      dpsTransLRB *plrb = lrbBegin ;
+      dpsTransLRB *plrb = lrbBegin, *plrbPrev = NULL;
+      BOOLEAN foundIns = FALSE ;
 
       while ( plrb )
       {
-         lrbEduid = plrb->dpsTxExectr->getEDUID() ;
-         if ( eduId == lrbEduid ) 
-         {
-            // save the pointer if the given eduId is found in the owner list
-            pLRBEduId = plrb;
+         // check if this LRB owned by the requested EDU, i.e., owner LRB
+         if ( NULL == pLRBOwner )
+         { 
+            lrbEduid = plrb->dpsTxExectr->getEDUID() ;
+            if ( eduId == lrbEduid ) 
+            {
+               // save the pointer if the given eduId is found in the owner list
+               pLRBOwner = plrb;
+            }
          }
 
-         // the owner list is sorted on lock mode in ascent order
-         if ( lockMode < plrb->lockMode ) 
+         // to find the insert position of this LRB
+         // the owner list is sorted on lock mode in descending order
+         if ( ! foundIns )
          {
-            // save the LRB pointer where it shall be inserted after 
-            pLRBToInsert = plrb->prevLRB ;
+            if ( lockMode >= plrb->lockMode ) 
+            {
+               // save the LRB pointer where it shall be inserted after 
+               pLRBToInsert = plrb->prevLRB ;
+               foundIns     = TRUE ;
+            }
          }
 
-         if ( ( eduId != lrbEduid )
-              && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
+         // check if the requested lock mode is compatible other owners.
+         // If not, remember the first incompatible one. 
+         if ( NULL == pLRBIncompatible )
          {
-            // save the address/pointer of first incompatible LRB
-            pLRBIncomp = plrb ;
-         } 
+            if (    ( plrb != pLRBOwner )
+                 && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
+            {
+               // save the address/pointer of first incompatible LRB
+               pLRBIncompatible = plrb ;
+            }
+         }
 
          // move to next
+         plrbPrev = plrb ;
          plrb = plrb->nextLRB ;
+      }
+     
+      if ( ( NULL != lrbBegin ) && ( ! foundIns ) )
+      {
+         // if the request lock mode is smaller than all owners,
+         // the insert position is the end of the list
+         pLRBToInsert = plrbPrev ;
+      }
+   }
+
+
+   //
+   // Description: search owner LRB list and find the expected LRB
+   // Function:    walk through owner LRB list ( it is sorted on lockMode in
+   //              descending order ) and find out :
+   //              . the pointer which the new LRB shall be inserted after
+   //              . the pointer of last compatible and pointer of first
+   //                incompatible LRB
+   // Input:
+   //    lockMode -- lock mode
+   //    lrbBegin -- the first LRB pointer in the owner list
+   // Output:
+   //    pLRBToInsert      -- the lrb which the new LRB shall be inserted after
+   //    pLRBIncompatible  -- pointer of first incompatible LRB
+   // Return:     None
+   // Dependency:  the lock bucket latch shall be acquired and
+   //              all output parameters are initialized as NULL
+   void dpsTransLockManager::_searchOwnerLRBListForInsertAndIncompatible
+   (
+      const DPS_TRANSLOCK_TYPE  lockMode, 
+      dpsTransLRB             * lrbBegin,
+      dpsTransLRB *           & pLRBToInsert,
+      dpsTransLRB *           & pLRBIncompatible
+   )
+   {
+#ifdef _DEBUG
+      SDB_ASSERT( ( NULL == pLRBToInsert ),     "Invalid pLRBToInsert" ) ;
+      SDB_ASSERT( ( NULL == pLRBIncompatible ), "Invalid pLRBIncompatible" ) ;
+#endif
+      dpsTransLRB *plrb = lrbBegin, *plrbPrev = NULL;
+      BOOLEAN foundIns = FALSE ;
+
+      while ( plrb )
+      {
+         // to find the insert position of this LRB
+         // the owner list is sorted on lock mode in descending order
+         if ( ! foundIns )
+         {
+            if ( lockMode >= plrb->lockMode ) 
+            {
+               // save the LRB pointer where it shall be inserted after 
+               pLRBToInsert = plrb->prevLRB ;
+               foundIns     = TRUE ;
+            }
+         }
+
+         // check if the requested lock mode is compatible other owners.
+         // If not, remember the first incompatible one. 
+         if ( NULL == pLRBIncompatible )
+         {
+            if ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) )
+            {
+               // save the address/pointer of first incompatible LRB
+               pLRBIncompatible = plrb ;
+            }
+         }
+
+         // early exit if all jobs are done (insert position, incompatible LRB)
+         if ( foundIns && pLRBIncompatible )
+         {
+            break ;
+         }
+
+         // move to next
+         plrbPrev = plrb ;
+         plrb = plrb->nextLRB ;
+      }
+     
+      if ( ( NULL != lrbBegin ) && ( ! foundIns ) )
+      {
+         // if the request lock mode is smaller than all owners,
+         // the insert position is the end of the list
+         pLRBToInsert = plrbPrev ;
       }
    }
 
@@ -1070,11 +1203,11 @@ namespace engine
       SDB_ASSERT( dpsTxExectr, "dpsTxExectr can't be null" ) ;
 #endif
       INT32 rc = SDB_OK ;
-      dpsTransLRB *pLRBNew       = NULL ,
-                  *pLRBIncomp    = NULL ,
-                  *pLRBToInsert  = NULL ,
-                  *pLRBEduID     = NULL ,
-                  *pLRB          = NULL ;
+      dpsTransLRB *pLRBNew          = NULL ,
+                  *pLRBIncompatible = NULL ,
+                  *pLRBToInsert     = NULL ,
+                  *pLRBOwner        = NULL ,
+                  *pLRB             = NULL ;
 
       dpsTransLRBHeader *pLRBHdrNew = NULL ,
                         *pLRBHdr    = NULL ;
@@ -1112,13 +1245,15 @@ namespace engine
       // lock mode covers the requesting mode then increase refCounter,
       // and job is done. Otherwise, still need to go through the normal
       // routine.
-      // we actually don't need bkt latch for
-      // looking up CS,CL lock in the executor
-      // _mapLockID map
+      // we actually don't need bkt latch for looking up CS,CL lock
+      // in the executor _mapLockID map
+      //
+      // findLock works for CS or CL lock only
       if ( dpsTxExectr->findLock( lockId, pLRB ) )
       {
          if ( pLRB )
          {
+            pLRBOwner = pLRB ;
             if ( dpsLockCoverage( pLRB->lockMode, requestLockMode ) )
             {
                if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
@@ -1223,22 +1358,49 @@ namespace engine
          pLRBNew->lrbHdr = pLRBHdr;
       }
 
-      // search owner LRB list, which is sorted on lock mode in ascent order
-      //  . to find if the edu is in owner list
-      //  . the pointer which the new LRB shall be inserted after
-      //  . the last pointer of compatible and pointer of first incompatible LRB
-      //
-      // pLRBToInsert  -- lrb to insert after
-      // pLRBIncomp    -- addr of first incompatible
-      // pLRBEduId     -- LRB with same EDUId
-      _searchOwnerLRBList( eduId, requestLockMode, pLRBHdr->ownerLRB,
-                           pLRBToInsert, pLRBIncomp, pLRBEduID ) ;
-      if ( pLRBEduID )
+      // Record lock
+      if ( lockId.isLeafLevel() )
+      {
+         // For record lock,
+         // search owner LRB list, which is sorted on lock mode
+         // in descending order, to find
+         //  . if the edu is in owner list
+         //  . the pointer which the new LRB shall be inserted after
+         //  . the pointer of first incompatible LRB
+         //
+         // pLRBToInsert     -- lrb to insert after
+         // pLRBIncompatible -- lrb of first incompatible
+         // pLRBOwner        -- lrb owned by same EDUId
+         _searchOwnerLRBList( eduId,
+                              requestLockMode,
+                              pLRBHdr->ownerLRB,
+                              pLRBToInsert,
+                              pLRBIncompatible,
+                              pLRBOwner ) ;
+      }
+      // CS or CL Lock
+      else
+      {
+         // For CS, CL lock
+         // the owner LRB should already checked by findLock, result is saved
+         // in pLRBOwner. now search owner LRB list to find
+         //  . the position where the new LRB shall be inserted after
+         //  . the pointer of first incompatible LRB
+         //
+         // pLRBToInsert     -- lrb to insert after
+         // pLRBIncompatible -- lrb of first incompatible
+         _searchOwnerLRBListForInsertAndIncompatible( requestLockMode,
+                                                      pLRBHdr->ownerLRB,
+                                                      pLRBToInsert,
+                                                      pLRBIncompatible ) ;
+      }
+
+      if ( pLRBOwner )
       {
          //
          // in owner list
          //
-         pLRB = pLRBEduID;
+         pLRB = pLRBOwner ;
 #ifdef _DEBUG
          SDB_ASSERT( pLRB && ( pLRB->lrbHdr == pLRBHdr ),
                      "Invalid LRB or the lrbHdr doesn't match "
@@ -1279,9 +1441,9 @@ namespace engine
          // try to do upgrade
          //
          // check if the requested mode is compatible with other owners
-         if ( NULL != pLRBIncomp )
+         if ( NULL != pLRBIncompatible )
          {
-            // valid pLRBIncomp means an incompatible LRB is found,
+            // valid pLRBIncompatible means an incompatible LRB is found,
             // i.e., not compatible with others 
 
             if ( DPS_TRANSLOCK_OP_MODE_ACQUIRE == opMode )
@@ -1310,8 +1472,9 @@ namespace engine
             if ( pdpsTxResInfo )
             {
                pdpsTxResInfo->_lockID   = pLRBHdr->lockId ;
-               pdpsTxResInfo->_lockType = pLRBIncomp->lockMode ;
-               pdpsTxResInfo->_eduID    = pLRBIncomp->dpsTxExectr->getEDUID();
+               pdpsTxResInfo->_lockType = pLRBIncompatible->lockMode ;
+               pdpsTxResInfo->_eduID    =
+                  pLRBIncompatible->dpsTxExectr->getEDUID() ;
             }
 
             // job done
@@ -1340,8 +1503,8 @@ namespace engine
                }
                else
                {
-                  // add it at the end of owner list
-                  _addToLRBListTail( pLRBHdr->ownerLRB, pLRB ) ;
+                  // add it at the beginning of owner list
+                  _addToLRBListHead( pLRBHdr->ownerLRB, pLRB ) ;
                }
 
                _moveToEDULRBListTail( dpsTxExectr, pLRB ) ;
@@ -1365,7 +1528,7 @@ namespace engine
          //
 
          // check if lock is compatible with all owners
-         if ( NULL != pLRBIncomp )
+         if ( NULL != pLRBIncompatible )
          {
             // found an incompatible one, i.e., not compatible with others
 
@@ -1392,8 +1555,9 @@ namespace engine
             if ( pdpsTxResInfo )
             {
                pdpsTxResInfo->_lockID   = pLRBHdr->lockId ;
-               pdpsTxResInfo->_lockType = pLRBIncomp->lockMode ;
-               pdpsTxResInfo->_eduID    = pLRBIncomp->dpsTxExectr->getEDUID();
+               pdpsTxResInfo->_lockType = pLRBIncompatible->lockMode ;
+               pdpsTxResInfo->_eduID    = 
+                  pLRBIncompatible->dpsTxExectr->getEDUID() ;
             }
 
             // job done
@@ -1422,7 +1586,7 @@ namespace engine
                   }
                   else
                   {
-                     _addToLRBListTail( pLRBHdr->ownerLRB, pLRBNew ) ;   
+                     _addToLRBListHead( pLRBHdr->ownerLRB, pLRBNew ) ;   
                   }
 
                   // add the new LRB to EDU LRB list
@@ -2123,11 +2287,6 @@ namespace engine
          {
             // lookup owner list check if the waiter lockMode is compabile
             // with other owners
-            //
-            // REVISIT
-            // if we may simply starting from the LRB just before
-            // the owner since the owner LRB list is sorted on lock mode
-            // in ascend order
             foundIncomp = _checkWaiterLockModeWithOwners(
                               pLRBHdr->ownerLRB,
                               pWaiterLRB->lockMode ) ;
@@ -2152,8 +2311,7 @@ namespace engine
               && ( NULL == pLRBHdr->waiterLRB )
               && ( pLRBHdr->extData.canRelease() ) )
          {
-            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, 
-                                      pLRBHdr ) ;
+            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr ) ;
             pLRBHdrToRelease = pLRBHdr;
          }
       }  // end of if pMyLRB->refCounter is zero
