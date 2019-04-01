@@ -34,7 +34,7 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
 	
    @BeforeClass
    public void setUp() {
-      System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
+      System.out.println(this.getClass().getName() + " begin at " + sdf.format(new Date()));
       boolean isCapped = true;
       sdb = new Sequoiadb(SdbTestBase.coordUrl, "","");
       cappedCL = CappedCLUtils.createCL(sdb, cappedCSName, cappedCLName, isCapped);
@@ -49,7 +49,7 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
       queryThread.start(threadNum);
 		
       Assert.assertTrue(queryThread.isSuccess(),queryThread.getErrorMsg());
-	}
+	  }
 	
    @AfterClass
    public void tearDown() {
@@ -68,22 +68,22 @@ public class QueryGreatConcurrentcy11806 extends SdbTestBase{
 	
    private class QueryThread extends SdbThreadBase{
 	 
-         @Override 
-            public void exec() throws Exception{
-               Sequoiadb db = null;
-               DBCollection cl = null;
-               try{
-                  db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                  cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);  	                
-                  CappedCLUtils.checkLogicalID(cl,stringLength,Thread.currentThread().getName());
-               }catch(BaseException e){
-                  if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
-                     throw e;
-                  }
-               }finally{
-                   db.close();
-               }
-           }
+      @Override 
+      public void exec() throws Exception{
+         Sequoiadb db = null;
+         DBCollection cl = null;
+         try{
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);  	                
+            CappedCLUtils.checkLogicalID(cl,stringLength, Thread.currentThread().getName());
+         }catch(BaseException e){
+            if(e.getErrorCode() != -23 || e.getErrorCode() != -34){
+               throw e;
+            }
+         }finally{
+            db.close();
+         }
+      }
    }
 
 }
