@@ -62,7 +62,7 @@ public class Transaction17087 extends SdbTestBase {
         }
     }
 
-    @Test(enabled=false)
+    @Test
     public void test() {
         // 开启2个并发事务
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
