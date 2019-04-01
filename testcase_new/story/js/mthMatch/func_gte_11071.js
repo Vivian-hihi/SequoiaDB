@@ -4,12 +4,12 @@
 *@createdate:  2019.3.5
 *@testlinkCase: 
 **************************************/
+main();
 function main()
 {
-    var csName = CHANGEDPREFIX + "_11072_CS";
-    var clName = CHANGEDPREFIX + "_11072_CL";
+    var csName = COMMCSNAME;
+    var clName = "cl11071";
 
-    commDropCS(db, csName, true, "drop cs in the begin");
     var cl = commCreateCL( db, csName, clName, null, null, true, false, "create cl in the begin" );
 
     //insert data 
@@ -18,5 +18,6 @@ function main()
     var findCondition = {a:{$gte:[1,2,3]}};
     var expRecs = [{"a":[1,2,3]}];
     checkResult( cl, findCondition, null, expRecs, {_id:1} );
+    
+    commDropCL( db, csName, clName, true, true, "drop CL in the end" );
 }
-main()
