@@ -43,6 +43,7 @@ File
     "mode": "-rw-r--r--",
     "user": "root"
   }
+  ```
 
 * 删除 test 目录下的 test_twe 文件；
 

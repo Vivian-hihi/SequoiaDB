@@ -57,10 +57,22 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 View the file in the \[aq]test\[aq] directory;
-.PP
-```lang\-javacript > File.list( { pathname: "/opt/trunk/test" } ) { "name":
-"test_twe", "mode": "\-rw\-r\-\-r\-\-", "user": "root" } { "name": "test_one",
-"mode": "\-rw\-r\-\-r\-\-", "user": "root" }
+.IP
+.nf
+\f[C]
+>\ File.list(\ {\ pathname:\ "/opt/trunk/test"\ }\ )
+{
+\ \ "name":\ "test_twe",
+\ \ "mode":\ "\-rw\-r\-\-r\-\-",
+\ \ "user":\ "root"
+}
+{
+\ \ "name":\ "test_one",
+\ \ "mode":\ "\-rw\-r\-\-r\-\-",
+\ \ "user":\ "root"
+}
+\f[]
+.fi
 .IP \[bu] 2
 Delete the file named \[aq]test_twe\[aq] in the \[aq]test\[aq] directory;
 .IP

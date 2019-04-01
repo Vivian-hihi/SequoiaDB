@@ -46,6 +46,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
   "mode": "-rw-r--r--",
   "user": "root"
 }
+```
 
 * Delete the file named 'test_twe' in the 'test' directory;
 
