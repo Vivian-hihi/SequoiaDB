@@ -23,11 +23,11 @@
       </packages>      
    </test>
    <!--SEQUOIADBMAINSTREAM-3978-->
-   <!--test name="fulltext" parallel="classes" thread-count="5">
+   <test name="fulltext" parallel="classes" thread-count="5">
       <packages>
          <package name="com.sequoiadb.fulltext" />
       </packages>    
-   </test-->
+   </test>
    
 </suite>
    
