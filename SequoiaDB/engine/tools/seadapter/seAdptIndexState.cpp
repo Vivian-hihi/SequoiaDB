@@ -152,6 +152,8 @@ namespace seadapter
          goto done ;
       }
 
+      _retryTimes = 0 ;
+
       if ( !dbAssist->dataNetHandleValid() )
       {
          dbAssist->setDataNetHandle( handle ) ;
@@ -228,6 +230,8 @@ namespace seadapter
          goto done ;
       }
 
+      _retryTimes = 0 ;
+
       rc = msgExtractReply( ( CHAR * )msg, &flag, &contextID, &startFrom,
                             &numReturned, resultSet );
       PD_RC_CHECK( rc, PDERROR, "Extract getmore reply message failed[%d]",
@@ -275,6 +279,8 @@ namespace seadapter
                  msg->requestID, _session->currentRequestID() ) ;
          goto done ;
       }
+
+      _retryTimes = 0 ;
 
       if ( !dbAssist->cataNetHandleValid() )
       {
@@ -344,6 +350,7 @@ namespace seadapter
    INT32 _seAdptIndexerState::handleKillCtxRes( NET_HANDLE handle,
                                                 MsgHeader *msg )
    {
+      _retryTimes = 0 ;
       return SDB_OK ;
    }
 
