@@ -35,7 +35,7 @@ FileContent
 
 * 读取文件内容到 fileContent 对象中
 
-  ```lang-javacript
+  ```lang-javascript
   > var content = binaryFile.readContent( 10000 )
   ```
 
