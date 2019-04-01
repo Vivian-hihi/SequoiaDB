@@ -126,7 +126,7 @@
 4. 查看实例状态
 
    ```lang-javascript
-   $ bin/sdb_mysql_ctl status
+   $ bin/sdb_sql_ctl status
    INSTANCE   PID        SVCNAME    SQLDATA                                 SQLLOG            
    myinst     25174      3306       /opt/sequoiasql/mysql/database/3306/    /opt/sequoiasql/mysql/myinst.log        
    Total: 1; Run: 1

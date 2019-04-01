@@ -14,7 +14,7 @@
 
    默认的SequoiaDB连接地址为“localhost:11810”，如需修改可参考以下两种方式
    
-   (1)通过bin/sdb_mysql_ctl指定实例名修改
+   (1)通过bin/sdb_sql_ctl指定实例名修改
 
  ```lang-javascript
     # bin/sdb_sql_ctl config myinst --sdb_conn_addr=192.168.20.37:11810,192.168.20.38:11810
