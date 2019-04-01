@@ -9,13 +9,11 @@ main();
 
 function main()
 {
-    var csName = CHANGEDPREFIX + "_11072_CS";
-    var clName = CHANGEDPREFIX + "_11072_CL";
+    var csName = COMMCSNAME;
+    var clName = "cl11072";
 
-    commDropCS(db, csName, true, "drop cs in the begin");
     var cl = commCreateCL( db, csName, clName, null, null, true, false, "create cl in the begin" );
 
-    println("---begin test---");
     cl.insert({_id:1,a:[1,{"$regex":"^W","$options":""}]});
     cl.insert({_id:2,a:1});
     cl.insert({_id:3,a:{"$regex":"^W","$options":""}});
@@ -24,7 +22,7 @@ function main()
     var expRecs = '[{"_id":1,"a":[1,{"$regex":"^W","$options":""}]}]';
     checkCLData( cursor, expRecs, 1);
 
-    commDropCS( db, csName, true, "drop CS in the end" );
+    commDropCL( db, csName, clName, true, true, "drop CL in the end" );
 }	
 
 function checkCLData( rc, expRecs, expCnt )
