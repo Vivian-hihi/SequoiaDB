@@ -48,9 +48,9 @@ public class Transaction17757B extends SdbTestBase {
     @DataProvider(name = "index")
     public Object[][] createIndex(){
         return new Object[][]{
-            {"{'a': 1}", "{'a': 1}"},
-            {"{'a': -1, 'b': 1}", "{'a': -1}"}
+            {"{'a': 1}", "{'a': -1}"}
         };
+        //{"{'a': -1, 'b': 1}", "{'a': -1}"}
     }
     
     @BeforeClass
