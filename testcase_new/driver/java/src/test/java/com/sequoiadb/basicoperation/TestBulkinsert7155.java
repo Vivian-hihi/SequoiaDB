@@ -1,6 +1,5 @@
 package com.sequoiadb.basicoperation;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -10,7 +9,6 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONDecimal;
 import org.bson.types.BasicBSONList;
-//import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
@@ -41,8 +39,6 @@ public class TestBulkinsert7155 extends SdbTestBase{
 	
 	@BeforeClass
 	public void setUp( ){
-		System.out.println(this.getClass().getName()+" begin at "
-				+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			sdb.setSessionAttr(new BasicBSONObject("PreferedInstance", "M")); 
@@ -75,6 +71,7 @@ public class TestBulkinsert7155 extends SdbTestBase{
 	/**
 	*test bulkInsert (List< BSONObject > insertor, int flag)��set flag=FLG_INSERT_CONTONDUP 
 	*/
+	@SuppressWarnings("deprecation")
 	public void bulkInsert(){
 		try{
 			List<BSONObject>list = new ArrayList<BSONObject>();			
@@ -132,6 +129,7 @@ public class TestBulkinsert7155 extends SdbTestBase{
 	/**
 	*test bulkInsert (List< BSONObject > insertor, int flag)��set flag=0 
 	*/
+	@SuppressWarnings("deprecation")
 	public void bulkInsertDuplicateKey(){
 		try{
 			List<BSONObject>list = new ArrayList<BSONObject>();		
@@ -160,11 +158,19 @@ public class TestBulkinsert7155 extends SdbTestBase{
 	/**
 	*test bulkInsert (List< BSONObject > insertor, int flag)��set flag=1/-1,ignore flag value 
 	*/
+	@SuppressWarnings("deprecation")
 	public void bulkInsertFlagError(){
 		List<BSONObject>list = new ArrayList<BSONObject>();				
 		BSONObject obj = new BasicBSONObject();				
 		obj.put("no", 1);				
-		list.add(obj);		
+		list.add(obj);	
+		try{
+			cl.bulkInsert(list, -1);
+			Assert.fail("when flag is -1,it should fail!");
+		}catch(BaseException e){
+			Assert.assertEquals(e.getErrorCode(), -6,"unexpected error code");	
+		}
+		
 		try{
 			cl.bulkInsert(list, 1);				
 			long count = cl.getCount();
@@ -180,9 +186,7 @@ public class TestBulkinsert7155 extends SdbTestBase{
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
 			}				
-			sdb.disconnect();
-			System.out.println(this.getClass().getName()+" end at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+			sdb.close();
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}

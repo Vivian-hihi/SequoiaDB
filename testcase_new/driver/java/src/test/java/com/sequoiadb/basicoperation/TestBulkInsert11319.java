@@ -1,6 +1,5 @@
 package com.sequoiadb.basicoperation;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -41,8 +40,6 @@ public class TestBulkInsert11319 extends SdbTestBase{
 	
 	@BeforeClass
 	public void setUp( ){
-		System.out.println(this.getClass().getName()+" begin at "
-				+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");			
 			sdb.setSessionAttr(new BasicBSONObject("PreferedInstance", "M")); 
@@ -171,6 +168,13 @@ public class TestBulkInsert11319 extends SdbTestBase{
 		obj.put("no", 1);				
 		list.add(obj);		
 		try{
+			cl.insert(list, -1);
+			Assert.fail("when flag is -1,it should fail!");
+		}catch(BaseException e){
+			Assert.assertEquals(e.getErrorCode(), -6,"unexpected error code");	
+		}
+		
+		try{
 			cl.insert(list, 1);				
 			long count = cl.getCount();
 			Assert.assertEquals(count,4,"the 3th insert actDatas is :"+count);
@@ -187,8 +191,6 @@ public class TestBulkInsert11319 extends SdbTestBase{
 				cs.dropCollection(clName);
 			}			
 			sdb.close();
-			System.out.println(this.getClass().getName()+" end at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
 		}
