@@ -73,10 +73,15 @@ namespace engine
    */
    class _coordSessionPropSite : public _rtnSessionProperty
    {
-      typedef ossPoolMap< UINT32, UINT64 >      MAP_GROUP_2_NODE ;
-      typedef MAP_GROUP_2_NODE::iterator        MAP_GROUP_2_NODE_IT ;
+      public:
+         typedef ossPoolMap< UINT32, UINT64 >      MAP_GROUP_2_NODE ;
+         typedef MAP_GROUP_2_NODE::iterator        MAP_GROUP_2_NODE_IT ;
 
-      friend class _coordSessionPropMgr ;
+         typedef ossPoolMap< UINT32, MsgRouteID >  MAP_TRANS_NODES ;
+         typedef MAP_TRANS_NODES::iterator         MAP_TRANS_NODES_IT ;
+         typedef MAP_TRANS_NODES::const_iterator   MAP_TRANS_NODES_CIT ;
+
+         friend class _coordSessionPropMgr ;
 
       public:
          _coordSessionPropSite() ;
@@ -90,17 +95,43 @@ namespace engine
          void        delLastNode( UINT32 groupID ) ;
          void        delLastNode( UINT32 groupID, UINT64 nodeID ) ;
 
+         /*
+            Trans info
+         */
+         BOOLEAN     isTransNode( const MsgRouteID &routeID ) const ;
+         BOOLEAN     getTransNodeRouteID( UINT32 groupID,
+                                          MsgRouteID &routeID ) const ;
+         BOOLEAN     hasTransNode( UINT32 groupID ) const ;
+         BOOLEAN     isTransNodeEmpty() const ;
+
+         BOOLEAN     delTransNode( const MsgRouteID &routeID ) ;
+         void        addTransNode( const MsgRouteID &routeID ) ;
+
+         UINT32      getTransNodeSize() const ;
+         UINT32      dumpTransNode( SET_ROUTEID &setID ) const ;
+
+         const MAP_TRANS_NODES* getTransNodeMap() const ;
+
+         INT32       beginTrans( _pmdEDUCB *cb ) ;
+         void        endTrans( _pmdEDUCB *cb ) ;
+
          _pmdEDUCB*  getEDUCB() { return _pEDUCB ; }
+         pmdRemoteSessionSite* getSite() { return _pSite ; }
 
       protected :
          virtual void _onSetInstance () ;
 
       private:
          void        setEduCB( _pmdEDUCB *cb ) ;
+         void        setSite( pmdRemoteSessionSite *pSite ) ;
 
       private:
-         MAP_GROUP_2_NODE  _mapLastNodes ;
-         _pmdEDUCB         *_pEDUCB ;
+         MAP_GROUP_2_NODE     _mapLastNodes ;
+         _pmdEDUCB            *_pEDUCB ;
+         pmdRemoteSessionSite *_pSite ;
+
+         MAP_TRANS_NODES      _mapTransNodes ;
+         INT32                _transResult ;
    } ;
 
    typedef _coordSessionPropSite coordSessionPropSite ;

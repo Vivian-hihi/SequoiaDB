@@ -147,9 +147,10 @@ namespace engine
                                  INT64 &delNum ) ;
          INT32 _onQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                 rtnContextBuf &buffObj, INT32 &startingPos,
-                                INT64 &contextID ) ;
+                                INT64 &contextID, BOOLEAN &needRollback ) ;
          INT32 _onGetMoreReqMsg ( MsgHeader *msg, rtnContextBuf &buffObj,
-                                  INT32 &startingPos, INT64 &contextID ) ;
+                                  INT32 &startingPos, INT64 &contextID,
+                                  BOOLEAN &needRollback ) ;
          INT32 _onKillContextsReqMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
          INT32 _onMsgReq ( NET_HANDLE handle, MsgHeader *msg ) ;
          INT32 _onInterruptMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
@@ -166,9 +167,7 @@ namespace engine
                                       INT64 &delNum ) ;
          INT32 _onTransQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                      rtnContextBuf &buffObj, INT32 &startingPos,
-                                     INT64 &contextID ) ;
-         INT32 _onTransGetMoreReqMsg ( MsgHeader *msg, rtnContextBuf &buffObj,
-                                       INT32 &startingPos, INT64 &contextID ) ;
+                                     INT64 &contextID, BOOLEAN &needRollback ) ;
          INT32 _onSessionInitReqMsg ( MsgHeader *msg ) ;
 
          INT32 _onCatalogChangeNtyMsg( MsgHeader *msg ) ;
@@ -238,7 +237,6 @@ namespace engine
                              const CHAR *pOrderBy,
                              const CHAR *pHint,
                              INT16 w,
-                             INT32 version,
                              SINT64 &contextID );
 
          INT32 _getOnMainCL( const CHAR *pCommand,
@@ -270,7 +268,6 @@ namespace engine
 
          INT32 _dropMainCL( const CHAR *pCollection,
                            INT16 w,
-                           INT32 version,
                            SINT64 &contextID ) ;
 
          INT32 _renameMainCL( const CHAR *pCollection,

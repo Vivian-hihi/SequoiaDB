@@ -55,7 +55,10 @@ namespace engine
          virtual INT32           processMsg( MsgHeader *msg,
                                              rtnContextBuf &contextBuff,
                                              INT64 &contextID,
-                                             BOOLEAN &needReply ) ;
+                                             BOOLEAN &needReply,
+                                             BOOLEAN &needRollback ) ;
+
+         virtual INT32           doRollback() ;
 
          virtual const CHAR*           processorName() const ;
          virtual SDB_PROCESSOR_TYPE    processorType() const ;
@@ -72,16 +75,19 @@ namespace engine
          INT32                   _onQueryReqMsg( MsgHeader * msg,
                                                  SDB_DPSCB *dpsCB,
                                                  _rtnContextBuf &buffObj,
-                                                 INT64 &contextID ) ;
+                                                 INT64 &contextID,
+                                                 BOOLEAN &needRollback ) ;
          INT32                   _onDelReqMsg( MsgHeader * msg, 
                                                SDB_DPSCB *dpsCB ) ;
          INT32                   _onGetMoreReqMsg( MsgHeader * msg,
                                                    rtnContextBuf &buffObj,
-                                                   INT64 &contextID ) ;
+                                                   INT64 &contextID,
+                                                   BOOLEAN &needRollback ) ;
          INT32                   _onKillContextsReqMsg( MsgHeader *msg ) ;
          INT32                   _onSQLMsg( MsgHeader *msg,
                                             INT64 &contextID,
-                                            SDB_DPSCB *dpsCB ) ;
+                                            SDB_DPSCB *dpsCB,
+                                            BOOLEAN &needRollback ) ;
          INT32                   _onTransBeginMsg () ;
          INT32                   _onTransCommitMsg ( SDB_DPSCB *dpsCB ) ;
          INT32                   _onTransRollbackMsg ( SDB_DPSCB *dpsCB ) ;
@@ -135,7 +141,10 @@ namespace engine
          virtual INT32           processMsg( MsgHeader *msg,
                                              rtnContextBuf &contextBuff,
                                              INT64 &contextID,
-                                             BOOLEAN &needReply ) ;
+                                             BOOLEAN &needReply,
+                                             BOOLEAN &needRollback ) ;
+
+         virtual INT32           doRollback() ;
 
          virtual const CHAR*           processorName() const ;
          virtual SDB_PROCESSOR_TYPE    processorType() const ;
@@ -152,7 +161,9 @@ namespace engine
       private:
          INT32                   _processCoordMsg( MsgHeader *msg,
                                                    INT64 &contextID,
-                                                   rtnContextBuf &contextBuff ) ;
+                                                   rtnContextBuf &contextBuff,
+                                                   BOOLEAN &needReply,
+                                                   BOOLEAN &needRollback ) ;
    } ;
 
    typedef _pmdCoordProcessor pmdCoordProcessor ;

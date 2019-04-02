@@ -110,22 +110,26 @@ namespace engine
          else if ( !e.eoo() )
          {
             PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                    FIELD_NAME_SEQUENCE_NAME, obj.toString( false, false).c_str() ) ;
+                    FIELD_NAME_SEQUENCE_NAME,
+                    obj.toString( false, false).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
          else
          {
             PD_LOG( PDERROR, "Missing field[%s] in obj[%s]",
-                    FIELD_NAME_SEQUENCE_NAME, obj.toString( false, false ).c_str() ) ;
+                    FIELD_NAME_SEQUENCE_NAME,
+                    obj.toString( false, false ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
          if( obj.hasField( FIELD_NAME_SEQUENCE_ID ) )
          {
             e = obj.getField( FIELD_NAME_SEQUENCE_ID ) ;
-            PD_CHECK( e.isNumber(), SDB_INVALIDARG, error, PDERROR, "Field[%s] is invalid in obj[%s]",
-                     FIELD_NAME_SEQUENCE_ID, obj.toString( false, false ).c_str() ) ;
+            PD_CHECK( e.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                      "Field[%s] is invalid in obj[%s]",
+                     FIELD_NAME_SEQUENCE_ID,
+                     obj.toString( false, false ).c_str() ) ;
             _sequenceID = e.Long() ;
          }
       }

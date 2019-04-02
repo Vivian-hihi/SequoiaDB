@@ -553,6 +553,7 @@ namespace engine
       INT64 contextID = -1 ;
       rtnContextBuf contextBuff ;
       BOOLEAN needReplay = FALSE ;
+      BOOLEAN needRollback = FALSE ;
       MsgHeader *msg = NULL ;
       restAdaptor *pAdaptor = sdbGetPMDController()->getRestAdptor() ;
       _omTransferProcessor *transProcessor = NULL ;
@@ -606,7 +607,7 @@ namespace engine
       }
 
       rtnCode = transProcessor->processMsg( msg, contextBuff, contextID, 
-                                            needReplay ) ;
+                                            needReplay, needRollback ) ;
       if ( rtnCode )
       {
          BSONObj tmp ;

@@ -463,6 +463,7 @@
 #define FIELD_NAME_RETURN_OID                "ReturnOID"
 #define FIELD_NAME_AUDIT_MASK                "AuditMask"
 #define FIELD_NAME_AUDIT_CONFIG_MASK         "AuditConfigMask"
+#define FIELD_NAME_ROLLBACK                  "Rollback"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"

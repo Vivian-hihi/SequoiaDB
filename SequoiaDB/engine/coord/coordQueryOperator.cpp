@@ -63,6 +63,8 @@ namespace engine
       _processRet = SDB_OK ;
       setReadOnly( readOnly ) ;
 
+      _needRollback = FALSE ;
+
       const static string s_name( "Query" ) ;
       setName( s_name ) ;
    }
@@ -75,7 +77,7 @@ namespace engine
 
    BOOLEAN _coordQueryOperator::needRollback() const
    {
-      return FALSE;
+      return _needRollback ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__CHECKQUERYMDY, "_coordQueryOperator::_checkQueryModify" )
@@ -460,6 +462,11 @@ namespace engine
                              numToSkip, numToReturn,
                              flag, flag ) ;
 
+         if ( OSS_BIT_TEST( flag, FLG_QUERY_MODIFY ) )
+         {
+            _needRollback = TRUE ;
+         }
+
          rc = queryOrDoOnCL( pMsg, cb, &pContext, sendOpt, NULL, buf ) ;
          /// AUDIT
          PD_AUDIT_OP( ( flag & FLG_QUERY_MODIFY ? AUDIT_DML : AUDIT_DQL ),
@@ -477,6 +484,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Query failed, rc: %d", rc ) ;
 
          contextID = pContext->contextID() ;
+
+         if ( OSS_BIT_TEST( flag, FLG_QUERY_MODIFY ) )
+         {
+            pContext->setModify( TRUE ) ;
+         }
 
          if ( OSS_BIT_TEST(flag, FLG_QUERY_PREPARE_MORE ) &&
               !OSS_BIT_TEST(flag, FLG_QUERY_MODIFY ) )
@@ -662,7 +674,20 @@ namespace engine
 
    void _coordQueryOperator::_prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg )
    {
-      pMsg->opCode = MSG_BS_TRANS_QUERY_REQ ;
+      MsgOpQuery *pQueryMsg = ( MsgOpQuery* )pMsg ;
+      if ( '$' != pQueryMsg->name[0] )
+      {
+         pMsg->opCode = MSG_BS_TRANS_QUERY_REQ ;
+      }
+   }
+
+   BOOLEAN _coordQueryOperator::_isTrans( pmdEDUCB *cb, MsgHeader *pMsg )
+   {
+      if ( MSG_BS_TRANS_QUERY_REQ != GET_REQUEST_TYPE(pMsg->opCode) )
+      {
+         return FALSE ;
+      }
+      return cb->isTransaction() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__QUERYORDOONCL, "_coordQueryOperator::_queryOrDoOnCL" )

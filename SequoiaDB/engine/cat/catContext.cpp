@@ -67,6 +67,7 @@ namespace engine
       _hasUpdated = FALSE ;
       _needClearAfterDone = FALSE ;
       _version = -1 ;
+      _hitEnd = FALSE ;
    }
 
    _catContextBase::~_catContextBase ()
@@ -154,20 +155,13 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXBASE_GETMORE, "_catContextBase::getMore" )
-   INT32 _catContextBase::getMore ( INT32 maxNumToReturn,
-                                    rtnContextBuf &buffObj,
-                                    _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXBASE_PREPAREDATA, "_catContextBase::_prepareData" )
+   INT32 _catContextBase::_prepareData ( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      rtnContextBuf buffObj ;
 
-      PD_TRACE_ENTRY( SDB_CATCTXBASE_GETMORE ) ;
-
-      if ( !isOpened() )
-      {
-         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
-         goto error ;
-      }
+      PD_TRACE_ENTRY( SDB_CATCTXBASE_PREPAREDATA ) ;
 
       switch ( _status )
       {
@@ -229,15 +223,23 @@ namespace engine
       {
          // End of execution
          rc = SDB_DMS_EOC ;
-         _isOpened = FALSE ;
+      }
+      else
+      {
+         rc = appendObjs( buffObj.data(), buffObj.size(),
+                          buffObj.recordNum() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Append data(%d) failed, rc: %d",
+                    buffObj.size(), rc ) ;
+            goto error ;
+         }
       }
 
-      PD_LOG( PDDEBUG,
-              "catContext [%lld]: finished get-more",
-              contextID() ) ;
+      PD_LOG( PDDEBUG, "Finished context[%lld] getmore", contextID() ) ;
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXBASE_GETMORE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXBASE_PREPAREDATA, rc ) ;
       return rc ;
 
    error :

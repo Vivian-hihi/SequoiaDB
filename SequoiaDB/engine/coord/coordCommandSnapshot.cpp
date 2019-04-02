@@ -110,16 +110,7 @@ namespace engine
       ctrlParam._emptyFilterSel = NODE_SEL_PRIMARY ;
 
       ctrlParam._useSpecialNode = TRUE ;
-      DpsTransNodeMap *pMap = cb->getTransNodeLst() ;
-      if ( pMap )
-      {
-         DpsTransNodeMap::iterator it = pMap->begin() ;
-         while( it != pMap->end() )
-         {
-            ctrlParam._specialNodes.insert( it->second.value ) ;
-            ++it ;
-         }
-      }
+      _groupSession.getPropSite()->dumpTransNode( ctrlParam._specialNodes ) ;
    }
 
    /*

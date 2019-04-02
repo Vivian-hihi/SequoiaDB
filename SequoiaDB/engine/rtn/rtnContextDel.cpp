@@ -58,6 +58,7 @@ namespace engine
       _gotDmsCBWrite = FALSE ;
       _gotLogSize = 0 ;
       _logicCSID = DMS_INVALID_LOGICCSID ;
+      _hitEnd     = FALSE ;
       ossMemset( _name, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
    }
 
@@ -166,9 +167,7 @@ namespace engine
          << ",Step:" << _status ;
    }
 
-   INT32 _rtnContextDelCS::getMore( INT32 maxNumToReturn,
-                                    rtnContextBuf &buffObj,
-                                    _pmdEDUCB *cb )
+   INT32 _rtnContextDelCS::_prepareData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       SDB_RTNCB *pRtnCB = sdbGetRTNCB() ;
@@ -179,12 +178,6 @@ namespace engine
       vector< string >::iterator it ;
       ossPoolSet< string > mainCLs ;
       ossPoolSet< string >::iterator mainIter ;
-
-      if ( !isOpened() )
-      {
-         rc = SDB_DMS_CONTEXT_IS_CLOSE;
-         goto error ;
-      }
 
       _pCatAgent->lock_w() ;
       _pCatAgent->clearBySpaceName( _name, &subCLs, &mainCLs ) ;
@@ -234,8 +227,6 @@ namespace engine
          pClsCB->invalidateCache( _name, DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
       }
 
-      /// close context
-      _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
 
       /// wait all collection space's task finished
@@ -246,9 +237,9 @@ namespace engine
       }
 
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    INT32 _rtnContextDelCS::_tryLock( const CHAR *pCollectionName,
@@ -338,6 +329,7 @@ namespace engine
       _mbContext     = NULL ;
       _su            = NULL ;
       _clShortName   = NULL ;
+      _hitEnd = FALSE ;
       ossMemset( _collectionName, 0, sizeof( _collectionName ) ) ;
    }
 
@@ -463,21 +455,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextDelCL::getMore( INT32 maxNumToReturn,
-                                    rtnContextBuf &buffObj,
-                                    _pmdEDUCB *cb )
+   INT32 _rtnContextDelCL::_prepareData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       SDB_RTNCB * pRtnCB = pmdGetKRCB()->getRTNCB() ;
       clsCB * pClsCB = pmdGetKRCB()->getClsCB() ;
       clsTaskMgr * pTaskMgr = pClsCB->getTaskMgr() ;
       CHAR mainCL[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { '\0' } ;
-
-      if ( !isOpened() )
-      {
-         rc = SDB_DMS_CONTEXT_IS_CLOSE;
-         goto error ;
-      }
 
       _pCatAgent->lock_w () ;
       _pCatAgent->clear ( _collectionName, mainCL ) ;
@@ -518,7 +502,6 @@ namespace engine
       _hasDropped = TRUE ;
 
       _clean( cb ) ;
-      _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
 
       /// wait all collection's task finished
@@ -544,9 +527,9 @@ namespace engine
       }
 
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    void _rtnContextDelCL::_toString( stringstream &ss )
@@ -618,8 +601,8 @@ namespace engine
    {
       _pCatAgent     = pmdGetKRCB()->getClsCB()->getCatAgent() ;
       _pRtncb        = pmdGetKRCB()->getRTNCB();
-      _version       = -1 ;
       _lockDms       = FALSE ;
+      _hitEnd        = FALSE ;
       ossMemset( _name, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 );
    }
 
@@ -655,7 +638,6 @@ namespace engine
 
    INT32 _rtnContextDelMainCL::open( const CHAR *pCollectionName,
                                      vector< string > &subCLList,
-                                     INT32 version,
                                      _pmdEDUCB *cb,
                                      INT16 w )
    {
@@ -663,8 +645,6 @@ namespace engine
       vector< string >::iterator iter ;
       rtnContextDelCL *delContext   = NULL ;
       SINT64 contextID              = -1 ;
-
-      _version                      = version ;
 
       SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" ) ;
       PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
@@ -716,35 +696,10 @@ namespace engine
       goto done;
    }
 
-   INT32 _rtnContextDelMainCL::getMore( INT32 maxNumToReturn,
-                                        rtnContextBuf &buffObj,
-                                        _pmdEDUCB *cb )
+   INT32 _rtnContextDelMainCL::_prepareData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      INT32 curVer = -1 ;
-      _clsCatalogSet *pCataSet = NULL ;
       SUBCL_CONTEXT_LIST::iterator iterCtx ;
-
-      if ( !isOpened() )
-      {
-         rc = SDB_DMS_CONTEXT_IS_CLOSE;
-         goto error ;
-      }
-
-      /// get last catalog info
-      _pCatAgent->lock_r() ;
-      pCataSet = _pCatAgent->collectionSet( _name ) ;
-      if ( pCataSet )
-      {
-         curVer = pCataSet->getVersion() ;
-      }
-      _pCatAgent->release_r() ;
-
-      if ( -1 != curVer && curVer != _version )
-      {
-         rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
-         goto error ;
-      }
 
       /// drop sub collections
       iterCtx = _subContextList.begin() ;
@@ -773,7 +728,6 @@ namespace engine
                                       DPS_LOG_INVALIDCATA_TYPE_CATA |
                                       DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
 
-      _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
 
    done:
@@ -789,8 +743,7 @@ namespace engine
 
    void _rtnContextDelMainCL::_toString( stringstream &ss )
    {
-      ss << ",Name:" << _name
-         << ",Version:" << _version ;
+      ss << ",Name:" << _name ;
    }
 
    RTN_CTX_AUTO_REGISTER(_rtnContextRenameCS, RTN_CONTEXT_RENAMECS, "RENAMECS")
@@ -806,6 +759,7 @@ namespace engine
       _logicCSID  = DMS_INVALID_LOGICCSID ;
       _status     = RENAMECSPHASE_0 ;
       _skipGetMore = FALSE ;
+      _hitEnd     = FALSE ;
       ossMemset( _oldName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
       ossMemset( _newName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
    }
@@ -942,13 +896,11 @@ namespace engine
       goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECS_GETMORE, "_rtnContextRenameCS::getMore" )
-   INT32 _rtnContextRenameCS::getMore( INT32 maxNumToReturn,
-                                       rtnContextBuf &buffObj,
-                                       _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECS_PREPAREDATA, "_rtnContextRenameCS::_prepareData" )
+   INT32 _rtnContextRenameCS::_prepareData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS_GETMORE ) ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECS_PREPAREDATA ) ;
 
       SDB_RTNCB *pRtnCB = sdbGetRTNCB() ;
       clsCB *pClsCB = sdbGetClsCB() ;
@@ -963,12 +915,6 @@ namespace engine
          _isOpened = FALSE ;
          rc = SDB_DMS_EOC ;
          goto done ;
-      }
-
-      if ( !isOpened() )
-      {
-         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
-         goto error ;
       }
 
       _pCatAgent->lock_w() ;
@@ -1032,15 +978,13 @@ namespace engine
          pClsCB->invalidateCache( _oldName, DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
       }
 
-      /// close context
-      _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECS_GETMORE, rc ) ;
-      return rc;
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECS_PREPAREDATA, rc ) ;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    void _rtnContextRenameCS::_toString( stringstream &ss )
@@ -1144,6 +1088,7 @@ namespace engine
       _mbID          = DMS_INVALID_MBID ;
       _su            = NULL ;
       _skipGetMore   = FALSE ;
+      _hitEnd        = FALSE ;
       ossMemset( _clShortName, 0, sizeof( _clShortName ) ) ;
       ossMemset( _newCLShortName, 0, sizeof( _newCLShortName ) ) ;
       ossMemset( _clFullName, 0, sizeof( _clFullName ) ) ;
@@ -1254,13 +1199,11 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECL_GETMORE, "_rtnContextRenameCL::getMore" )
-   INT32 _rtnContextRenameCL::getMore( INT32 maxNumToReturn,
-                                       rtnContextBuf &buffObj,
-                                       _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMECL_PREPAREDATA, "_rtnContextRenameCL::_prepareData" )
+   INT32 _rtnContextRenameCL::_prepareData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECL_GETMORE ) ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMECL_PREPAREDATA ) ;
 
       SDB_RTNCB * pRtnCB = pmdGetKRCB()->getRTNCB() ;
       clsCB * pClsCB = pmdGetKRCB()->getClsCB() ;
@@ -1268,15 +1211,8 @@ namespace engine
 
       if ( _skipGetMore )
       {
-         _isOpened = FALSE ;
          rc = SDB_DMS_EOC ;
          goto done ;
-      }
-
-      if ( !isOpened() )
-      {
-         rc = SDB_DMS_CONTEXT_IS_CLOSE;
-         goto error ;
       }
 
       _pCatAgent->lock_w () ;
@@ -1303,14 +1239,14 @@ namespace engine
                    _clShortName, _newCLShortName, rc ) ;
 
       _releaseLock( cb ) ;
-      _isOpened = FALSE ;
+
       rc = SDB_DMS_EOC ;
 
    done:
-      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECL_GETMORE, rc ) ;
-      return rc;
+      PD_TRACE_EXITRC( SDB__RTNCTXRENAMECL_PREPAREDATA, rc ) ;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    void _rtnContextRenameCL::_toString( stringstream &ss )
@@ -1416,6 +1352,7 @@ namespace engine
       _pDmsCB        = pmdGetKRCB()->getDMSCB() ;
       _pCatAgent     = pmdGetKRCB()->getClsCB()->getCatAgent() ;
       _lockDms       = FALSE ;
+      _hitEnd        = FALSE ;
       ossMemset( _name, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 );
    }
 
@@ -1481,20 +1418,11 @@ namespace engine
       goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMEMCL_GETMORE, "_rtnContextRenameMainCL::getMore" )
-   INT32 _rtnContextRenameMainCL::getMore( INT32 maxNumToReturn,
-                                           rtnContextBuf &buffObj,
-                                           _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCTXRENAMEMCL_PREPAREDATA, "_rtnContextRenameMainCL::_prepareData" )
+   INT32 _rtnContextRenameMainCL::_prepareData( _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNCTXRENAMEMCL_GETMORE ) ;
+      PD_TRACE_ENTRY( SDB__RTNCTXRENAMEMCL_PREPAREDATA ) ;
       SDB_RTNCB *pRtnCB = sdbGetRTNCB() ;
-
-      if ( !isOpened() )
-      {
-         rc = SDB_DMS_CONTEXT_IS_CLOSE;
-         goto error ;
-      }
 
       /// clear main collection's catalog info
       _pCatAgent->lock_w () ;
@@ -1509,15 +1437,9 @@ namespace engine
                                       DPS_LOG_INVALIDCATA_TYPE_CATA |
                                       DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
 
-      _isOpened = FALSE ;
-      rc = SDB_DMS_EOC ;
-
-   done:
       _clean( cb ) ;
-      PD_TRACE_EXITRC( SDB__RTNCTXRENAMEMCL_GETMORE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+      PD_TRACE_EXIT( SDB__RTNCTXRENAMEMCL_PREPAREDATA ) ;
+      return SDB_DMS_EOC ;
    }
 
    void _rtnContextRenameMainCL::_toString( stringstream &ss )

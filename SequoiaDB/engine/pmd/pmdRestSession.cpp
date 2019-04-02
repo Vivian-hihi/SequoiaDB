@@ -563,6 +563,7 @@ namespace engine
       INT64 contextID = -1 ;
       rtnContextBuf contextBuff ;
       BOOLEAN needReplay = FALSE ;
+      BOOLEAN needRollback = FALSE ;
       MsgHeader *msg = NULL ;
 
       rc = _translateMSG( pAdaptor, request, &msg ) ;
@@ -587,7 +588,7 @@ namespace engine
       }
 
       rtnCode = getProcessor()->processMsg( msg, contextBuff, contextID,
-                                            needReplay ) ;
+                                            needReplay, needRollback ) ;
       if ( rtnCode )
       {
          BSONObj tmp ;

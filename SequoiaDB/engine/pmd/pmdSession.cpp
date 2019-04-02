@@ -53,7 +53,6 @@ namespace engine
    {
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
       _needReply = TRUE ;
-      _needRollback = FALSE ;
    }
 
    _pmdLocalSession::~_pmdLocalSession()
@@ -308,27 +307,13 @@ namespace engine
       _replyHeader.header.TID         = msg->TID ;
       _replyHeader.header.routeID     = pmdGetNodeID() ;
 
-      if ( MSG_BS_INTERRUPTE == msg->opCode ||
-           MSG_BS_INTERRUPTE_SELF == msg->opCode ||
-           MSG_BS_DISCONNECT == msg->opCode )
+      if ( isNoReplyMsg( msg->opCode ) )
       {
          _needReply = FALSE ;
       }
       else
       {
          _needReply = TRUE ;
-      }
-
-      if ( MSG_BS_UPDATE_REQ == msg->opCode ||
-           MSG_BS_INSERT_REQ == msg->opCode ||
-           MSG_BS_DELETE_REQ == msg->opCode ||
-           MSG_BS_TRANS_COMMIT_REQ == msg->opCode )
-      {
-         _needRollback = TRUE ;
-      }
-      else
-      {
-         _needRollback = FALSE ;
       }
 
       // start operator
@@ -366,8 +351,11 @@ namespace engine
       rtnContextBuf contextBuff ;
       INT32 opCode      = msg->opCode ;
 
-      PD_TRACE_ENTRY( SDB_PMDLOCALSN_PROMSG );
-      PD_TRACE1 ( SDB_PMDLOCALSN_PROMSG, PD_PACK_INT ( opCode ) );
+      BOOLEAN needRollback = FALSE ;
+
+      PD_TRACE_ENTRY( SDB_PMDLOCALSN_PROMSG ) ;
+
+      UINT64 bTime = ossGetCurrentMicroseconds() ;
 
       // prepare
       rc = _onMsgBegin( msg ) ;
@@ -375,25 +363,23 @@ namespace engine
       {
          rc = _processor->processMsg( msg, contextBuff,
                                       _replyHeader.contextID,
-                                      _needReply ) ;
+                                      _needReply,
+                                      needRollback ) ;
          pBody     = contextBuff.data() ;
          bodyLen   = contextBuff.size() ;
          _replyHeader.numReturned = contextBuff.recordNum() ;
          _replyHeader.startFrom = (INT32)contextBuff.getStartFrom() ;
-         if ( SDB_OK != rc )
-         {
-            if ( _needRollback )
-            {
-               PD_LOG( PDDEBUG, "Session[%s] rolling back operation "
-                       "(opCode=%d, rc=%d)", sessionName(), msg->opCode, rc ) ;
 
-               INT32 rcTmp = rtnTransRollback( eduCB(), getDPSCB() ) ;
-               if ( rcTmp )
-               {
-                  PD_LOG( PDERROR, "Session[%s] failed to rollback trans "
-                          "info, rc: %d", sessionName(), rcTmp ) ;
-               }
-               _needRollback = FALSE ;
+         if ( SDB_OK != rc && needRollback )
+         {
+            PD_LOG( PDDEBUG, "Session[%s] rolling back operation "
+                    "(opCode=%d, rc=%d)", sessionName(), msg->opCode, rc ) ;
+
+            INT32 rcTmp = _processor->doRollback() ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Session[%s] failed to rollback trans "
+                       "info, rc: %d", sessionName(), rcTmp ) ;
             }
          }
       }
@@ -426,8 +412,23 @@ namespace engine
 
       // end
       _onMsgEnd( rc, msg ) ;
+
+      UINT64 eTime = ossGetCurrentMicroseconds() ;
+      if ( eTime > bTime )
+      {
+         monSvcTaskInfo *pInfo = NULL ;
+         pInfo = eduCB()->getMonAppCB()->getSvcTaskInfo() ;
+         if ( pInfo )
+         {
+            /// it doesn't matter wether type is MON_TOTAL_WRITE_TIME
+            /// or MON_TOTAL_READ_TIME
+            pInfo->monOperationTimeInc( MON_TOTAL_WRITE_TIME,
+                                        eTime - bTime ) ;
+         }
+      }
+
       rc = SDB_OK ;
-      PD_TRACE_EXITRC ( SDB_PMDLOCALSN_PROMSG, rc );
+      PD_TRACE_EXITRC ( SDB_PMDLOCALSN_PROMSG, rc ) ;
       return rc ;
    }
 

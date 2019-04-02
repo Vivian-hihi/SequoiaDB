@@ -79,16 +79,17 @@ namespace engine
    INT32 _pmdDataProcessor::processMsg( MsgHeader *msg,
                                         rtnContextBuf &contextBuff,
                                         INT64 &contextID,
-                                        BOOLEAN &needReply )
+                                        BOOLEAN &needReply,
+                                        BOOLEAN &needRollback )
    {
       INT32 rc     = SDB_OK ;
       INT32 opCode = msg->opCode ;
-      UINT64 bTime = ossGetCurrentMicroseconds() ;
 
       PD_TRACE_ENTRY ( SDB_PMDDATAPROC_PROMSG );
-      PD_TRACE1 ( SDB_PMDDATAPROC_PROMSG, PD_PACK_INT ( opCode ) );
 
       SDB_ASSERT( getSession(), "Must attach session at first" ) ;
+
+      needRollback = FALSE ;
 
       if ( MSG_AUTH_VERIFY_REQ == opCode )
       {
@@ -123,30 +124,36 @@ namespace engine
                rc = _onMsgReqMsg( msg ) ;
                break ;
             case MSG_BS_UPDATE_REQ :
+               needRollback = TRUE ;
                rc = _onUpdateReqMsg( msg, getDPSCB() ) ;
                break ;
             case MSG_BS_INSERT_REQ :
+               needRollback = TRUE ;
                rc = _onInsertReqMsg( msg ) ;
                break ;
             case MSG_BS_QUERY_REQ :
-               rc = _onQueryReqMsg( msg, getDPSCB(), contextBuff, contextID ) ;
+               rc = _onQueryReqMsg( msg, getDPSCB(), contextBuff, contextID,
+                                    needRollback ) ;
                break ;
             case MSG_BS_DELETE_REQ :
+               needRollback = TRUE ;
                rc = _onDelReqMsg( msg, getDPSCB() ) ;
                break ;
             case MSG_BS_GETMORE_REQ :
-               rc = _onGetMoreReqMsg( msg, contextBuff, contextID ) ;
+               rc = _onGetMoreReqMsg( msg, contextBuff, contextID,
+                                      needRollback ) ;
                break ;
             case MSG_BS_KILL_CONTEXT_REQ :
                rc = _onKillContextsReqMsg( msg ) ;
                break ;
             case MSG_BS_SQL_REQ :
-               rc = _onSQLMsg( msg, contextID, getDPSCB() ) ;
+               rc = _onSQLMsg( msg, contextID, getDPSCB(), needRollback ) ;
                break ;
             case MSG_BS_TRANS_BEGIN_REQ :
                rc = _onTransBeginMsg() ;
                break ;
             case MSG_BS_TRANS_COMMIT_REQ :
+               needRollback = TRUE ;
                rc = _onTransCommitMsg( getDPSCB() ) ;
                break ;
             case MSG_BS_TRANS_ROLLBACK_REQ :
@@ -194,19 +201,21 @@ namespace engine
       }
 
    done:
-      UINT64 eTime = ossGetCurrentMicroseconds() ;
-      if ( eTime > bTime )
+      if ( SDB_DMS_EOC == rc )
       {
-         monSvcTaskInfo *pInfo = NULL ;
-         pInfo = eduCB()->getMonAppCB()->getSvcTaskInfo() ;
-         if ( pInfo )
-         {
-            pInfo->monOperationTimeInc( MON_TOTAL_WRITE_TIME,
-                                        eTime - bTime ) ;
-         }
+         needRollback = FALSE ;
       }
-      PD_TRACE_EXITRC ( SDB_PMDDATAPROC_PROMSG, rc );
+      PD_TRACE_EXITRC ( SDB_PMDDATAPROC_PROMSG, rc ) ;
       return rc ;
+   }
+
+   INT32 _pmdDataProcessor::doRollback()
+   {
+      if ( eduCB() )
+      {
+         return rtnTransRollback( eduCB(), getDPSCB() ) ;
+      }
+      return SDB_OK ;
    }
 
    INT32 _pmdDataProcessor::_onMsgReqMsg( MsgHeader * msg )
@@ -488,7 +497,8 @@ namespace engine
    INT32 _pmdDataProcessor::_onQueryReqMsg( MsgHeader * msg,
                                             SDB_DPSCB *dpsCB,
                                             _rtnContextBuf &buffObj,
-                                            INT64 &contextID )
+                                            INT64 &contextID,
+                                            BOOLEAN &needRollback )
    {
       INT32 rc = SDB_OK ;
       INT32 flags = 0 ;
@@ -528,6 +538,11 @@ namespace engine
                                 hint.toString().c_str(),
                                 numToSkip, numToReturn,
                                 flags, flags ) ;
+
+            if ( flags & FLG_QUERY_MODIFY )
+            {
+               needRollback = TRUE ;
+            }
 
             /*
             PD_LOG ( PDDEBUG, "Session[%s] Query: Matcher: %s\nSelector: "
@@ -728,7 +743,8 @@ namespace engine
 
    INT32 _pmdDataProcessor::_onGetMoreReqMsg( MsgHeader * msg,
                                               rtnContextBuf &buffObj,
-                                              INT64 &contextID )
+                                              INT64 &contextID,
+                                              BOOLEAN &needRollback )
    {
       INT32 rc         = SDB_OK ;
       INT32 numToRead  = 0 ;
@@ -746,7 +762,8 @@ namespace engine
       PD_LOG ( PDDEBUG, "Session[%s] GetMore: contextID:%lld\nnumToRead: %d",
                getSession()->sessionName(), contextID, numToRead ) ; */
 
-      rc = rtnGetMore ( contextID, numToRead, buffObj, eduCB(), _pRTNCB ) ;
+      rc = rtnGetMore ( contextID, numToRead, buffObj, eduCB(),
+                        _pRTNCB, &needRollback ) ;
 
    done:
       return rc ;
@@ -789,12 +806,12 @@ namespace engine
 
    INT32 _pmdDataProcessor::_onSQLMsg( MsgHeader *msg,
                                        INT64 &contextID,
-                                       SDB_DPSCB *dpsCB )
+                                       SDB_DPSCB *dpsCB,
+                                       BOOLEAN &needRollback )
    {
       CHAR *sql = NULL ;
       INT32 rc = SDB_OK ;
       SQL_CB *sqlcb = pmdGetKRCB()->getSqlCB() ;
-      BOOLEAN needRollback = FALSE ;
 
       rc = msgExtractSql( (CHAR*)msg, &sql ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract sql msg failed, rc: %d",
@@ -807,14 +824,6 @@ namespace engine
       rc = sqlcb->exec( sql, eduCB(), contextID, needRollback ) ;
       if ( rc )
       {
-         if ( needRollback )
-         {
-            INT32 rcTmp = rtnTransRollback( eduCB(), dpsCB );
-            if ( rcTmp )
-            {
-               PD_LOG ( PDERROR, "Failed to rollback, rc: %d", rcTmp );
-            }
-         }
          goto error ;
       }
 
@@ -1339,19 +1348,16 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCOORDPROC_PROCOORDMSG, "_pmdCoordProcessor::_processCoordMsg" )
    INT32 _pmdCoordProcessor::_processCoordMsg( MsgHeader *msg,
                                                INT64 &contextID,
-                                               rtnContextBuf &contextBuff )
+                                               rtnContextBuf &contextBuff,
+                                               BOOLEAN &needReply,
+                                               BOOLEAN &needRollback )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN needRollback = FALSE ;
-      UINT64 bTime = ossGetCurrentMicroseconds() ;
-      UINT64 eTime = 0 ;
       INT32 opCode = msg->opCode ;
       CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
       coordResource *pResource = pCoordCB->getResource() ;
 
-      PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROCOORDMSG );
-
-      PD_TRACE1 ( SDB_PMDCOORDPROC_PROCOORDMSG, PD_PACK_INT ( opCode ) );
+      PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROCOORDMSG ) ;
 
       if ( MSG_AUTH_VERIFY_REQ == opCode )
       {
@@ -1588,31 +1594,14 @@ namespace engine
          contextBuff = rtnContextBuf( obj ) ;
       }
 
-      if ( needRollback && rc )
-      {
-         PD_LOG ( PDDEBUG, "Rolling back operation(op=%d, rc=%d) on coord",
-                  opCode, rc ) ;
-
-         coordTransRollback rollbackOpr ;
-         INT32 rcTmp = rollbackOpr.init( pResource, eduCB() ) ;
-         PD_RC_CHECK( rcTmp, PDERROR,
-                      "Rollback init operator[%s] failed, rc: %d",
-                      rollbackOpr.getName(), rcTmp ) ;
-
-         rollbackOpr.rollback( eduCB() ) ;
-      }
-
    done:
-      eTime = ossGetCurrentMicroseconds() ;
-      if ( eTime > bTime )
+      if ( SDB_DMS_EOC == rc )
       {
-         monSvcTaskInfo *pInfo = NULL ;
-         pInfo = eduCB()->getMonAppCB()->getSvcTaskInfo() ;
-         if ( pInfo )
-         {
-            pInfo->monOperationTimeInc( MON_TOTAL_WRITE_TIME,
-                                        eTime - bTime ) ;
-         }
+         needRollback = FALSE ;
+      }
+      else if ( eduCB()->getTransRC() )
+      {
+         needRollback = TRUE ;
       }
       PD_TRACE_EXITRC ( SDB_PMDCOORDPROC_PROCOORDMSG, rc );
       return rc ;
@@ -1703,8 +1692,10 @@ namespace engine
          rc = opr.init( pResource, eduCB() ) ;
          PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
                       opr.getName(), rc ) ;
-         needRollback = opr.needRollback() ;
          rc = opr.execute( msg, eduCB(), contextID, &buffObj ) ;
+         /// should call opr.needRollback() after execute. because
+         /// the func 'needRollback()' is take effect in execute()
+         needRollback = opr.needRollback() ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
@@ -1750,17 +1741,19 @@ namespace engine
    INT32 _pmdCoordProcessor::processMsg( MsgHeader *msg,
                                          rtnContextBuf &contextBuff,
                                          INT64 &contextID,
-                                         BOOLEAN &needReply )
+                                         BOOLEAN &needReply,
+                                         BOOLEAN &needRollback )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDCOORDPROC_PROMSG );
 
-      rc = _processCoordMsg( msg, contextID, contextBuff ) ;
+      rc = _processCoordMsg( msg, contextID, contextBuff,
+                             needReply, needRollback ) ;
       if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
       {
          contextBuff.release() ;
-         rc = _pmdDataProcessor::processMsg( msg, contextBuff,
-                                             contextID, needReply ) ;
+         rc = _pmdDataProcessor::processMsg( msg, contextBuff, contextID,
+                                             needReply, needRollback ) ;
       }
 
       if ( rc )
@@ -1777,6 +1770,37 @@ namespace engine
 
       PD_TRACE_EXITRC ( SDB_PMDCOORDPROC_PROMSG, rc );
       return rc ;
+   }
+
+   INT32 _pmdCoordProcessor::doRollback()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( eduCB() )
+      {
+         CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
+         coordResource *pResource = pCoordCB->getResource() ;
+
+         coordTransRollback rollbackOpr ;
+         rc = rollbackOpr.init( pResource, eduCB() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rollback init operator[%s] failed, rc: %d",
+                    rollbackOpr.getName(), rc ) ;
+            goto error ;
+         }
+
+         rc = rollbackOpr.rollback( eduCB() ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
 }

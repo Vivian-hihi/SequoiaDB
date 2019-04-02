@@ -42,6 +42,7 @@
 #include "coordCB.hpp"
 #include "coordResource.hpp"
 #include "msgMessage.hpp"
+#include "coordRemoteSession.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -57,9 +58,9 @@ namespace engine
    _coordRemoteHandlerBase::_coordRemoteHandlerBase()
    {
       _initType      = INIT_V1 ;
-      _initFinished  = TRUE ;
-      _nodeVer       = 0 ;
-      _nodeID        = 0 ;
+
+      coordRemoteHandleStatus tmp ;
+      SDB_UNUSED( tmp ) ;
    }
 
    _coordRemoteHandlerBase::~_coordRemoteHandlerBase()
@@ -78,41 +79,99 @@ namespace engine
                                           const MsgHeader *pReply,
                                           BOOLEAN isPending )
    {
-      if ( !_initFinished || 0 != _nodeID )
+      pmdEDUCB *cb = pSession->getEDUCB() ;
+      coordRemoteHandleStatus *pStatus = NULL ;
+      pStatus = ( coordRemoteHandleStatus* )(*ppSub)->getUDFData() ;
+
+      if ( !pStatus->_initFinished || pStatus->_initTrans ||
+           0 != pStatus->_nodeID )
       {
          MsgOpReply *pOpReply = ( MsgOpReply* )pReply ;
          INT32 orgRspOpCode = (*ppSub)->getOrgRspOpCode() ;
-         pmdEDUCB *cb = pSession->getEDUCB() ;
-         pmdRemoteSessionSite* pSite = NULL ;
+         pmdRemoteSessionSite *pSite = NULL ;
+         coordSessionPropSite *pPropSite = NULL ;
          pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+         pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
 
-         if ( !_initFinished &&
-              ( SDB_INVALID_ROUTEID == pOpReply->flags ||
-                ( SDB_OK != pOpReply->flags &&
-                  ( MSG_COM_SESSION_INIT_RSP == orgRspOpCode ||
-                    MSG_PACKET_RES == orgRspOpCode )
-                 )
-               )
-             )
+         if ( SDB_INVALID_ROUTEID == pOpReply->flags )
          {
             pSession->reConnectSubSession( pReply->routeID.value ) ;
+
+            if ( pStatus->_initTrans )
+            {
+               pPropSite->delTransNode( pReply->routeID ) ;
+            }
          }
-
-         _initFinished = TRUE ;
-
-         /// update node version
-         if ( 0 != _nodeID &&
-              ( SDB_OK == pOpReply->flags ||
-                ( MSG_COM_SESSION_INIT_RSP != orgRspOpCode &&
-                  MSG_PACKET_RES != orgRspOpCode )
-              )
-            )
+         else if ( SDB_OK != pOpReply->flags &&
+                   SDB_DMS_EOC != pOpReply->flags )
          {
-            pSite->setNodeVer( _nodeID, _nodeVer ) ;
+            if ( MSG_COM_SESSION_INIT_RSP == orgRspOpCode ||
+                 MSG_PACKET_RES == orgRspOpCode )
+            {
+               pSession->reConnectSubSession( pReply->routeID.value ) ;
+
+               if ( pStatus->_initTrans )
+               {
+                  pPropSite->delTransNode( pReply->routeID ) ;
+               }
+            }
+            else if ( MSG_BS_TRANS_BEGIN_RSP == orgRspOpCode )
+            {
+               pPropSite->delTransNode( (*ppSub)->getNodeID() ) ;
+            }
+         }
+         else
+         {
+            /// update node version
+            if ( 0 != pStatus->_nodeID &&
+                 MSG_COM_SESSION_INIT_RSP != orgRspOpCode &&
+                 MSG_PACKET_RES != orgRspOpCode )
+            {
+               pSite->setNodeVer( pStatus->_nodeID, pStatus->_nodeVer ) ;
+            }
          }
 
-         _nodeID  = 0 ;
-         _nodeVer = 0 ;
+         pStatus->init() ;
+      }
+
+      /// When in transaction, and data node has rollbacked,
+      /// so need to set transaction result
+      MsgOpReply *pOpReply = ( MsgOpReply* )pReply ;
+      if ( cb->isTransaction() &&
+           pReply->routeID.columns.groupID >= DATA_GROUP_ID_BEGIN &&
+           pReply->routeID.columns.groupID <= DATA_GROUP_ID_END &&
+           SDB_OK != pOpReply->flags &&
+           SDB_DMS_EOC != pOpReply->flags &&
+           SDB_CLS_COORD_NODE_CAT_VER_OLD != pOpReply->flags )
+      {
+         MsgRouteID routeID = pReply->routeID ;
+         INT32 rcTmp = pOpReply->flags ;
+
+         if ( SDB_DPS_TRANS_NO_TRANS == rcTmp )
+         {
+            cb->setTransRC( SDB_DPS_TRANS_NO_TRANS ) ;
+         }
+         else if ( pReply->messageLength > (INT32)sizeof( MsgOpReply ) )
+         {
+            try
+            {
+               BSONObj errObj( ( const CHAR* )pReply + sizeof( MsgOpReply )  ) ;
+               BSONElement e = errObj.getField( FIELD_NAME_ROLLBACK ) ;
+               if ( e.isBoolean() && e.boolean() )
+               {
+                  PD_LOG( PDWARNING, "Remote node[%s] has rollbacked "
+                          "transaction due to error[%d] in session[%s]",
+                          routeID2String( routeID ).c_str(), rcTmp,
+                          cb->toString().c_str() ) ;
+                  cb->setTransRC( rcTmp ) ;
+               }
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+               /// ignored
+            }
+         }
       }
    }
 
@@ -155,8 +214,10 @@ namespace engine
                                                  BOOLEAN isFirst )
    {
       INT32 rc = SDB_OK ;
+      coordRemoteHandleStatus *pStatus = NULL ;
+      pStatus = ( coordRemoteHandleStatus* )pSub->getUDFData() ;
 
-      if ( INIT_V0 == _initType )
+      if ( INIT_V0 == _initType || isNoReplyMsg( pReq->opCode ) )
       {
          rc = _onSendConnectOld( pSub ) ;
       }
@@ -165,7 +226,7 @@ namespace engine
          rc = _buildPacketWithSessionInit( pSub->parent(), pSub, FALSE ) ;
          if ( SDB_OK == rc )
          {
-            _initFinished = FALSE ;
+            pStatus->_initFinished = FALSE ;
          }
       }
       return rc ;
@@ -374,6 +435,44 @@ namespace engine
       goto done ;
    }
 
+   INT32 _coordRemoteHandlerBase::_checkSessionTransaction( _pmdRemoteSession *pSession,
+                                                            _pmdSubSession *pSub,
+                                                            _pmdEDUCB *cb,
+                                                            coordRemoteHandleStatus *pStatus )
+   {
+      INT32 rc = SDB_OK ;
+      pmdRemoteSessionSite *pSite = NULL ;
+      coordSessionPropSite *pPropSite = NULL ;
+
+      if ( isTransBSMsg( pSub->getOrgReqOpCode() ) )
+      {
+         pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+         pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
+
+         if ( !pPropSite->hasTransNode( pSub->getNodeID().columns.groupID ) )
+         {
+            MsgOpTransBegin msgReq ;
+            msgReq.header.messageLength = sizeof( MsgOpTransBegin ) ;
+            msgReq.header.opCode = MSG_BS_TRANS_BEGIN_REQ ;
+            msgReq.header.routeID.value = 0 ;
+            msgReq.header.TID = cb->getTID() ;
+
+            rc = _buildPacket( pSession,pSub, &msgReq.header ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            pStatus->_initTrans = TRUE ;
+            pPropSite->addTransNode( pSub->getNodeID() ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _coordRemoteHandlerBase::_checkSessionSchedInfo( _pmdRemoteSession *pSession,
                                                           _pmdSubSession *pSub,
                                                           _pmdEDUCB *cb,
@@ -484,6 +583,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdEDUCB *cb = pSession->getEDUCB() ;
       pmdRemoteSessionSite* pSite = NULL ;
+      coordRemoteHandleStatus *pStatus = NULL ;
       UINT32 nodeSiteSchedVer = (UINT32)SCHED_INVALID_VERSION ;
       UINT32 nodeSiteSessionVer = 0 ;
       UINT64 nodeSiteVer = 0 ;
@@ -491,7 +591,8 @@ namespace engine
 
       /// is not data node, ignored
       if ( nodeID.columns.groupID < DATA_GROUP_ID_BEGIN ||
-           nodeID.columns.groupID > DATA_GROUP_ID_END )
+           nodeID.columns.groupID > DATA_GROUP_ID_END ||
+           isNoReplyMsg( pSub->getOrgReqOpCode() ) )
       {
          goto done ;
       }
@@ -503,7 +604,17 @@ namespace engine
                             nodeSiteSessionVer ) ;
       }
 
+      pStatus = ( coordRemoteHandleStatus* )pSub->getUDFData() ;
+      pStatus->init() ;
+
       rc = _checkSessionSchedInfo( pSession, pSub, cb, nodeSiteSchedVer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// init trans
+      rc = _checkSessionTransaction( pSession, pSub, cb, pStatus ) ;
       if ( rc )
       {
          goto error ;
@@ -515,18 +626,35 @@ namespace engine
          goto error ;
       }
 
-      _nodeVer = ossPack32To64( nodeSiteSchedVer, nodeSiteSessionVer ) ;
-
+      pStatus->_nodeVer = ossPack32To64( nodeSiteSchedVer,
+                                         nodeSiteSessionVer ) ;
       /// has changed
-      if ( nodeSiteVer != _nodeVer )
+      if ( nodeSiteVer != pStatus->_nodeVer )
       {
-         _nodeID = nodeID.value ;
+         pStatus->_nodeID = nodeID.value ;
       }
 
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   void _coordRemoteHandlerBase::onHandleClose( _pmdRemoteSessionSite *pSite,
+                                                NET_HANDLE handle,
+                                                const MsgHeader *pReply )
+   {
+      _coordSessionPropSite *pPropSite = NULL ;
+      pPropSite = ( _coordSessionPropSite* )pSite->getUserData() ;
+
+      if ( pPropSite && pPropSite->isTransNode( pReply->routeID ) )
+      {
+         pSite->eduCB()->setTransRC( SDB_COORD_REMOTE_DISC ) ;
+
+         PD_LOG( PDERROR, "Session[%s] disconnect with node[%s] in "
+                 "transaction", pPropSite->getEDUCB()->toString().c_str(),
+                 routeID2String(pReply->routeID).c_str() ) ;
+      }
    }
 
    void _coordRemoteHandlerBase::setUserData( UINT64 data )
@@ -733,9 +861,18 @@ namespace engine
                                       const MsgHeader *pReply,
                                       BOOLEAN isPending )
    {
+      BOOLEAN transRollback = FALSE ;
+      _pmdEDUCB *cb = pSession->getEDUCB() ;
+      INT32 beforeRC = cb->getTransRC() ;
+
       _coordRemoteHandlerBase::onReply( pSession, ppSub, pReply, isPending ) ;
 
-      if ( _interruptWhenFailed )
+      if ( SDB_OK == beforeRC && SDB_OK != cb->getTransRC() )
+      {
+         transRollback = TRUE ;
+      }
+
+      if ( transRollback || _interruptWhenFailed )
       {
          MsgOpReply *pOpReply = ( MsgOpReply* )pReply ;
          /// When not ok and not in ignored rc set

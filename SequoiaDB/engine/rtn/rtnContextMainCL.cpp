@@ -205,6 +205,7 @@ namespace engine
       : _rtnContextMain( contextID, eduID ),
         _includeShardingOrder( FALSE )
    {
+      _isWrite = FALSE ;
    }
 
    _rtnContextMainCL::~_rtnContextMainCL()
@@ -351,6 +352,7 @@ namespace engine
 
          if ( NULL != contextObj && contextObj->isWrite() )
          {
+            _isWrite = TRUE ;
             contextObj->setWriteInfo( this->getDPSCB(),
                                       this->getW() ) ;
          }
@@ -454,8 +456,8 @@ namespace engine
    }
 
    INT32 _rtnContextMainCL::_prepareSubCLData( SINT64 contextID,
-                                                _pmdEDUCB * cb,
-                                                INT32 maxNumToReturn )
+                                               _pmdEDUCB * cb,
+                                               INT32 maxNumToReturn )
    {
       INT32 rc = SDB_OK;
       _SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB();

@@ -69,8 +69,9 @@ namespace engine
          cb->setCurTransLsn( DPS_INVALID_LSN_OFFSET ) ;
          sdbGetTransCB()->addTransCB( cb->getTransID(), cb ) ;
       }
-      PD_LOG( PDINFO, "Begin transaction operations(transID=%llu)",
-              cb->getTransID() ) ;
+      PD_LOG( PDINFO, "Begin transaction operations(%04x%010x)",
+              DPS_TRANS_GET_NODEID( cb->getTransID() ),
+              DPS_TRANS_GET_SN( cb->getTransID() ) ) ;
       PD_TRACE_EXIT ( SDB_RTNTRANSBEGIN ) ;
 
    done:
@@ -113,8 +114,10 @@ namespace engine
       SDB_ASSERT( firstTransLsn != DPS_INVALID_LSN_OFFSET,
                   "First transaction lsn can't be invalid" ) ;
 
-      PD_LOG( PDINFO, "Execute commit(transID=%llu, lastLsn=%llu)",
-              curTransID, preTransLsn ) ;
+      PD_LOG( PDINFO, "Execute commit(ID:%04x%010x, LastLsn=%llu)",
+              DPS_TRANS_GET_NODEID( curTransID ),
+              DPS_TRANS_GET_SN( curTransID ),
+              preTransLsn ) ;
 
       rc = dpsTransCommit2Record( curTransID, preTransLsn, firstTransLsn,
                                   record ) ;
@@ -176,8 +179,9 @@ namespace engine
          goto done ;
       }
 
-      PD_LOG ( PDEVENT, "Begin to rollback transaction[ID:%llu, "
-               "lastLsn:%llu]...", transID, curLsnOffset ) ;
+      PD_LOG ( PDEVENT, "Begin to rollback transaction[ID:%04x%010x, "
+               "lastLsn:%llu]...", DPS_TRANS_GET_NODEID( transID ),
+               DPS_TRANS_GET_SN( transID ), curLsnOffset ) ;
       doRollback = TRUE ;
 
       cb->setTransID( rollbackID ) ;
@@ -239,8 +243,11 @@ namespace engine
             if ( rc )
             {
                ++retryTimes ;
-               PD_LOG( PDERROR, "Rollback transaction[ID:%llu, lsn=%llu, "
-                       "time=%u] failed, rc: %d", transID, dpsLsn.offset,
+               PD_LOG( PDERROR, "Rollback transaction[ID:%04x%010x, lsn=%llu, "
+                       "time=%u] failed, rc: %d",
+                       DPS_TRANS_GET_NODEID( transID ),
+                       DPS_TRANS_GET_SN( transID ),
+                       dpsLsn.offset,
                        retryTimes, rc ) ;
                if ( retryTimes >= RTN_TRANS_ROLLBACK_RETRY_TIMES )
                {
@@ -274,8 +281,9 @@ namespace engine
 
       if ( doRollback )
       {
-         PD_LOG ( PDEVENT, "Rollback transaction[ID:%llu] finished with "
-                  "rc[%d]", transID, rc ) ;
+         PD_LOG ( PDEVENT, "Rollback transaction[ID:%04x%010x] finished with "
+                  "rc[%d]", DPS_TRANS_GET_NODEID( transID ),
+                  DPS_TRANS_GET_SN( transID ), rc ) ;
       }
 
 #if defined ( _DEBUG )
@@ -319,8 +327,9 @@ namespace engine
          curLsnOffset = iterMap->second ;
          cb->setTransID( rollbackID ) ;
 
-         PD_LOG( PDEVENT, "Begin to rollback transaction[ID: %llu, "
-                 "lastLSN: %llu]...", transID, curLsnOffset ) ;
+         PD_LOG( PDEVENT, "Begin to rollback transaction[ID:%04x%010x, "
+                 "LastLSN: %llu]...", DPS_TRANS_GET_NODEID( transID ),
+                 DPS_TRANS_GET_SN( transID ), curLsnOffset ) ;
 
          while ( curLsnOffset != DPS_INVALID_LSN_OFFSET )
          {
@@ -396,8 +405,10 @@ namespace engine
                if ( rc )
                {
                   ++retryTimes ;
-                  PD_LOG( PDERROR, "Rollback transaction[ID:%llu, lsn=%llu, "
-                          "time=%u] failed,  rc: %d", transID,
+                  PD_LOG( PDERROR, "Rollback transaction[ID:%04x%010x, "
+                          "lsn=%llu, time=%u] failed,  rc: %d",
+                          DPS_TRANS_GET_NODEID( transID ),
+                          DPS_TRANS_GET_SN( transID ),
                           dpsLsn.offset, retryTimes, rc ) ;
                   if ( retryTimes >= RTN_TRANS_ROLLBACK_RETRY_TIMES )
                   {
@@ -420,8 +431,9 @@ namespace engine
 
          /// remove the transaction
          pTransMap->erase( iterMap ) ;
-         PD_LOG( PDEVENT, "Rollback transaction[ID:%lld] finished with rc[%d]",
-                 transID, rc ) ;
+         PD_LOG( PDEVENT, "Rollback transaction(%04x%010x) finished "
+                 "with rc[%d]", DPS_TRANS_GET_NODEID( transID ),
+                 DPS_TRANS_GET_SN( transID ), rc ) ;
       } /// while ( pTransMap->size() != 0 )
 
    done:

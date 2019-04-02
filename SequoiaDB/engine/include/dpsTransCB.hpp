@@ -54,11 +54,6 @@
 
 namespace engine
 {
-   #define DPS_TRANSID_ROLLBACKTAG_BIT          0X0000800000000000ll
-   #define DPS_TRANSID_FIRSTOP_BIT              0X0000400000000000ll
-   #define DPS_TRANSID_SN_BIT                   0X000000FFFFFFFFFFll
-   #define DPS_TRANSID_VALID_BIT                0XFFFF00FFFFFFFFFFll
-
    class _pmdEDUCB ;
    class _dmsExtScanner ;
    class _dmsIXSecScanner ;

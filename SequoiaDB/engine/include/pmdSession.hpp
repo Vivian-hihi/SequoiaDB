@@ -85,7 +85,6 @@ namespace engine
       protected:
          MsgOpReply           _replyHeader ;
          BOOLEAN              _needReply ;
-         BOOLEAN              _needRollback ;
 
          BSONObj              _errorInfo ;
 

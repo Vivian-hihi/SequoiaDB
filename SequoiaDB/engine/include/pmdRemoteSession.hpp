@@ -99,6 +99,12 @@ namespace engine
             return SDB_OK ;
          }
 
+         virtual void   onHandleClose( _pmdRemoteSessionSite *pSite,
+                                       NET_HANDLE handle,
+                                       const MsgHeader *pReply )
+         {
+         }
+
          virtual void   setUserData( UINT64 data ) {}
    } ;
    typedef _IRemoteSessionHandler IRemoteSessionHandler ;
@@ -120,6 +126,7 @@ namespace engine
    } ;
    typedef _IRemoteMgrHandle IRemoteMgrHandle ;
 
+   #define PMD_SUBSESSION_UDF_DATA_LEN          ( 24 )
    /*
       _pmdSubSession define
    */
@@ -157,8 +164,11 @@ namespace engine
          UINT64      getNodeIDUInt() const { return _nodeID.value ; }
          MsgRouteID  getNodeID() const { return _nodeID ; }
          UINT64      getReqID() const { return _reqID ; }
+
          void        setUserData( UINT64 userData ) { _userData = userData ; }
          UINT64      getUserData() const { return _userData ; }
+
+         CHAR*       getUDFData() { return _udfData ; }
 
          // Process
          void        setProcessInfo( INT32 processResult ) ;
@@ -173,6 +183,7 @@ namespace engine
          BOOLEAN     hasStop() const { return _hasStop ; }
          void        clearSend() { _isSend = FALSE ; }
          NET_HANDLE  getHandle() const { return _handle ; }
+         INT32       getOrgReqOpCode() const { return _reqOpCode ; }
          INT32       getOrgRspOpCode() const { return _orgRspOpCode ; }
 
          // control
@@ -208,6 +219,8 @@ namespace engine
          INT32                      _processResult ;
 
          UINT64                     _userData ;
+         CHAR                       _udfData[ PMD_SUBSESSION_UDF_DATA_LEN ] ;
+
          BOOLEAN                    _needToDel ;
          BOOLEAN                    _hasStop ;
          NET_HANDLE                 _handle ;
@@ -414,9 +427,6 @@ namespace engine
       /// High(32): SchedVersion + Low(32) : SessionVersion
       typedef ossPoolMap< UINT64, UINT64 >            MAP_NODE_2_VERSION ;
       typedef MAP_NODE_2_VERSION::iterator            MAP_NODE_2_VERSION_IT ;
-
-      typedef ossPoolMap< UINT64, INT32 >             MAP_NODE_2_SESSIONVER ;
-      typedef MAP_NODE_2_SESSIONVER::iterator         MAP_NODE_2_SESSIONVER_IT ;
 
       typedef ossPoolSet< UINT16 >                    SET_NODES ;
 

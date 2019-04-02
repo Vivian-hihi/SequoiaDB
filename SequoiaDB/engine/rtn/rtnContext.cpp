@@ -168,9 +168,9 @@ namespace engine
    }
 
    INT32 _rtnContextStoreBuf::appendObjs( const CHAR* objBuf,
-                                             INT32 len,
-                                             INT32 num,
-                                             BOOLEAN needAligned )
+                                          INT32 len,
+                                          INT32 num,
+                                          BOOLEAN needAligned )
    {
       INT32 rc = SDB_OK ;
 

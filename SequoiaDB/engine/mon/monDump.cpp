@@ -1604,8 +1604,9 @@ namespace engine
          /// nodeID(16bit) | TAG(8bit) | SN(40bit)
          CHAR strTransID[ 4 + 2 + 10 + 2 ] = { 0 } ;
          ossSnprintf( strTransID, sizeof( strTransID ) - 1,
-                      "%04x%010x", ( _curTransInfo._transID >> 48 ),
-                      ( _curTransInfo._transID & DPS_TRANSID_SN_BIT ) ) ;
+                      "%04x%010x",
+                      DPS_TRANS_GET_NODEID( _curTransInfo._transID ),
+                      DPS_TRANS_GET_SN( _curTransInfo._transID ) ) ;
          builder.append( FIELD_NAME_TRANSACTION_ID, strTransID ) ;
          builder.appendBool( FIELD_NAME_IS_ROLLBACK,
                              pTransCB->isRollback( _curTransInfo._transID ) ?

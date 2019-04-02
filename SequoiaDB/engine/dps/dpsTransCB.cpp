@@ -242,7 +242,7 @@ namespace engine
       while ( 0 == temp )
       {
          temp = _TransIDL48Cur.inc();
-         temp = ( temp & DPS_TRANSID_SN_BIT ) | _TransIDH16 |
+         temp = DPS_TRANS_GET_SN( temp ) | _TransIDH16 |
                 DPS_TRANSID_FIRSTOP_BIT;
       }
       return temp ;
@@ -287,7 +287,7 @@ namespace engine
 
    DPS_TRANS_ID dpsTransCB::getTransID( DPS_TRANS_ID rollbackID )
    {
-      return rollbackID & DPS_TRANSID_VALID_BIT ;
+      return DPS_TRANS_GET_ID( rollbackID ) ;
    }
 
    BOOLEAN dpsTransCB::isRollback( DPS_TRANS_ID transID )
@@ -301,16 +301,12 @@ namespace engine
 
    BOOLEAN dpsTransCB::isFirstOp( DPS_TRANS_ID transID )
    {
-      if ( transID & DPS_TRANSID_FIRSTOP_BIT )
-      {
-         return TRUE;
-      }
-      return FALSE;
+      return DPS_TRANS_IS_FIRSTOP( transID ) ? TRUE : FALSE ;
    }
 
    void dpsTransCB::clearFirstOpTag( DPS_TRANS_ID &transID )
    {
-      transID = transID & ( ~DPS_TRANSID_FIRSTOP_BIT );
+      DPS_TRANS_CLEAR_FIRSTOP( transID ) ;
    }
 
    INT32 dpsTransCB::startRollbackTask()

@@ -105,6 +105,8 @@ namespace engine
 
          virtual void         _prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg ) ;
 
+         virtual BOOLEAN      _isTrans( pmdEDUCB *cb, MsgHeader *pMsg ) ;
+
          INT32                _queryOrDoOnCL( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
                                               rtnContextCoord **pContext,
@@ -175,7 +177,8 @@ namespace engine
          rtnContextCoord            *_pContext ;
          INT32                      _processRet ;
          vector<CHAR*>              _vecBlock ;
-         BOOLEAN                    _readOnly ;
+
+         BOOLEAN                    _needRollback ;
 
    } ;
    typedef _coordQueryOperator coordQueryOperator ;

@@ -65,8 +65,8 @@ namespace engine
                       SINT32 maxNumToReturn,    // input, max record to read
                       rtnContextBuf &buffObj,   // output
                       pmdEDUCB *cb,             // input educb
-                      SDB_RTNCB *rtnCB          // input runtimecb
-                      )
+                      SDB_RTNCB *rtnCB,         // input runtimecb
+                      BOOLEAN *pNeedRollback )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETMORE ) ;
@@ -83,6 +83,11 @@ namespace engine
          PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
+      }
+
+      if ( pNeedRollback )
+      {
+         *pNeedRollback = context->needRollback() ;
       }
 
       rc = context->getMore( maxNumToReturn, buffObj, cb ) ;

@@ -278,9 +278,9 @@ namespace engine
                               INT32 num,
                               BOOLEAN needAligned = TRUE ) ;
 
-         virtual INT32    getMore( INT32 maxNumToReturn,
-                                   rtnContextBuf &buffObj,
-                                   _pmdEDUCB *cb ) ;
+         INT32    getMore( INT32 maxNumToReturn,
+                           rtnContextBuf &buffObj,
+                           _pmdEDUCB *cb ) ;
 
          virtual void     getErrorInfo( INT32 rc,
                                         _pmdEDUCB *cb,
@@ -337,6 +337,7 @@ namespace engine
          virtual RTN_CONTEXT_TYPE getType () const = 0 ;
          virtual _dmsStorageUnit* getSU () = 0 ;
          virtual BOOLEAN          isWrite() const { return FALSE ; }
+         virtual BOOLEAN          needRollback() const { return FALSE ; }
 
          virtual optAccessPlanRuntime * getPlanRuntime ()
          {

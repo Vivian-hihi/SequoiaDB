@@ -369,14 +369,7 @@ namespace engine
          _relatedTransLSN = relatedLSN ;
       }
       DPS_LSN_OFFSET getRelatedTransLSN() const { return _relatedTransLSN ; }
-      INT32    createTransaction() ;
-      void     delTransaction() ;
-      void     addTransNode( const MsgRouteID &routeID ) ;
-      void     delTransNode( const MsgRouteID &routeID ) ;
-      void     getTransNodeRouteID( UINT32 groupID, MsgRouteID &routeID ) ;
-      DpsTransNodeMap *getTransNodeLst() ;
-      BOOLEAN  isTransaction() ;
-      BOOLEAN  isTransNode( MsgRouteID &routeID ) ;
+      BOOLEAN  isTransaction() const ;
       void     startRollback() { _isDoRollback = TRUE ; }
       void     stopRollback() { _isDoRollback = FALSE ; }
       BOOLEAN  isInRollback() const { return _isDoRollback ; }
@@ -462,7 +455,6 @@ namespace engine
 
       // transaction related variables
       DPS_LSN_OFFSET          _relatedTransLSN ;
-      DpsTransNodeMap         *_pTransNodeMap ;
       INT32                   _transRC ;
 
       pmdTransExecutor        _transExecutor ;

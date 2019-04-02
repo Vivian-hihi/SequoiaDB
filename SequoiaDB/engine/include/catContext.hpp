@@ -89,14 +89,11 @@ namespace engine
                            rtnContextBuf &buffObj,
                            _pmdEDUCB *cb ) ;
 
-      virtual INT32 getMore ( INT32 maxNumToReturn,
-                              rtnContextBuf &buffObj,
-                              _pmdEDUCB *cb ) ;
+   protected:
+      virtual INT32 _prepareData ( _pmdEDUCB *cb ) ;
 
    protected:
       virtual void _setStatus ( CAT_CONTEXT_STATUS status ) ;
-
-      virtual INT32 _prepareData ( _pmdEDUCB *cb ) { return SDB_OK ; }
 
       virtual INT32 _parseQuery (_pmdEDUCB *cb ) = 0 ;
 

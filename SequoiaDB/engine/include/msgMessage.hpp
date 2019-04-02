@@ -78,6 +78,30 @@ BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg ) ;
    ( msgIsInnerOpReply(msg) ? sizeof(MsgOpReply) : \
                               sizeof(MsgInternalReplyHeader) )
 
+OSS_INLINE BOOLEAN isNoReplyMsg( INT32 opCode )
+{
+   if ( MSG_CAT_GRP_CHANGE_NTY == opCode ||
+        MSG_BS_DISCONNECT == opCode ||
+        MSG_BS_INTERRUPTE == opCode ||
+        MSG_BS_INTERRUPTE_SELF == opCode )
+   {
+      return TRUE ;
+   }
+   return FALSE ;
+}
+
+OSS_INLINE BOOLEAN isTransBSMsg( INT32 opCode )
+{
+   if ( MSG_BS_TRANS_INSERT_REQ == GET_REQUEST_TYPE( opCode ) ||
+        MSG_BS_TRANS_UPDATE_REQ == GET_REQUEST_TYPE( opCode ) ||
+        MSG_BS_TRANS_DELETE_REQ == GET_REQUEST_TYPE( opCode ) ||
+        MSG_BS_TRANS_QUERY_REQ  == GET_REQUEST_TYPE( opCode ) )
+   {
+      return TRUE ;
+   }
+   return FALSE ;
+}
+
 /*
  * Create Update Message in ppBuffer
  * in/out ppBuffer

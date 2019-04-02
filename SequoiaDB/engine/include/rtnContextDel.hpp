@@ -70,11 +70,8 @@ namespace engine
       INT32 open( const CHAR *pCollectionName,
                   _pmdEDUCB *cb );
 
-      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                             _pmdEDUCB *cb );
-
    protected:
-      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
       virtual void  _toString( stringstream &ss ) ;
 
    private:
@@ -112,13 +109,10 @@ namespace engine
       virtual BOOLEAN          isWrite() const { return TRUE ; }
 
       INT32 open( const CHAR *pCollectionName, _pmdEDUCB *cb,
-                  INT16 w );
-
-      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                             _pmdEDUCB *cb );
+                  INT16 w ) ;
 
    protected:
-      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
       virtual void  _toString( stringstream &ss ) ;
 
    private:
@@ -158,18 +152,15 @@ namespace engine
       virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
+      virtual BOOLEAN          isWrite() const { return TRUE ; }
 
       INT32 open( const CHAR *pCollectionName,
                   vector< string > &subCLList,
-                  INT32 version,
                   _pmdEDUCB *cb,
                   INT16 w ) ;
 
-      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                             _pmdEDUCB *cb ) ;
-
    protected:
-      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
       virtual void  _toString( stringstream &ss ) ;
 
    private:
@@ -180,7 +171,6 @@ namespace engine
       _SDB_RTNCB                 *_pRtncb;
       CHAR                       _name[ DMS_COLLECTION_FULL_NAME_SZ + 1 ];
       SUBCL_CONTEXT_LIST         _subContextList ;
-      INT32                      _version ;
       BOOLEAN                    _lockDms ;
 
    };
@@ -211,11 +201,8 @@ namespace engine
       INT32 open( const CHAR *pCSName, const CHAR *pNewCSName,
                   _pmdEDUCB *cb );
 
-      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                             _pmdEDUCB *cb );
-
    protected:
-      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
       virtual void  _toString( stringstream &ss ) ;
 
    private:
@@ -256,11 +243,8 @@ namespace engine
                   const CHAR *newCLShortName,
                   _pmdEDUCB *cb, INT16 w = 1 ) ;
 
-      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                             _pmdEDUCB *cb );
-
    protected:
-      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
       virtual void  _toString( stringstream &ss ) ;
 
    private:
@@ -298,11 +282,9 @@ namespace engine
       virtual BOOLEAN          isWrite() const { return TRUE ; }
 
       INT32 open( const CHAR *pCollectionName, _pmdEDUCB *cb, INT16 w ) ;
-      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                             _pmdEDUCB *cb ) ;
 
    protected:
-      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
       virtual void  _toString( stringstream &ss ) ;
 
    private:

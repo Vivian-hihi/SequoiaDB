@@ -267,7 +267,8 @@ namespace engine
                       SINT32 maxNumToReturn,       // input, max record to read
                       rtnContextBuf &buffObj,      // output
                       pmdEDUCB *cb,                // input educb
-                      SDB_RTNCB *rtnCB             // input runtimecb
+                      SDB_RTNCB *rtnCB,            // input runtimecb
+                      BOOLEAN *pNeedRollback = NULL
                       ) ;
 
    INT32 rtnLoadCollectionSpace ( const CHAR *pCSName,

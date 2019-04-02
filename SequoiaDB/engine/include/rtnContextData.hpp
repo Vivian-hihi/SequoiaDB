@@ -99,6 +99,7 @@ namespace engine
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () { return _su ; }
          virtual BOOLEAN          isWrite() const ;
+         virtual BOOLEAN          needRollback() const ;
 
       protected:
          INT32 _queryModify( _pmdEDUCB* eduCB,

@@ -121,6 +121,7 @@ namespace engine
                               BOOLEAN preRead = TRUE ) ;
 
          INT32    reopen () ;
+         void     setModify( BOOLEAN modify ) ;
 
          void     killSubContexts( _pmdEDUCB *cb ) ;
 
@@ -132,11 +133,13 @@ namespace engine
          virtual void optimizeReturnOptions ( MsgOpQuery * pQueryMsg,
                                               UINT32 targetGroupNum ) ;
 
-         virtual void     getErrorInfo( INT32 rc,
-                                        pmdEDUCB *cb,
-                                        rtnContextBuf &buffObj ) ;
+         virtual void      getErrorInfo( INT32 rc,
+                                         pmdEDUCB *cb,
+                                         rtnContextBuf &buffObj ) ;
 
-         virtual UINT32   getCachedRecordNum() ;
+         virtual UINT32    getCachedRecordNum() ;
+
+         virtual BOOLEAN   needRollback() const { return _isModify ; }
 
       public:
          virtual std::string      name() const ;
@@ -185,6 +188,8 @@ namespace engine
          _coordNoSessionInitHandler _handler ;
          _pmdRemoteSessionSite      *_pSite ;
          _pmdRemoteSession          *_pSession ;
+
+         BOOLEAN                    _isModify ;
    } ;
    typedef _rtnContextCoord rtnContextCoord ;
 

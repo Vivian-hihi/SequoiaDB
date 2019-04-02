@@ -85,7 +85,10 @@ namespace engine
          virtual INT32                 processMsg( MsgHeader *msg,
                                                    rtnContextBuf &contextBuff,
                                                    INT64 &contextID,
-                                                   BOOLEAN &needReply ) ;
+                                                   BOOLEAN &needReply,
+                                                   BOOLEAN &needRollback ) ;
+
+         virtual INT32                 doRollback() ;
 
          virtual const CHAR*           processorName() const ;
          virtual SDB_PROCESSOR_TYPE    processorType() const ;

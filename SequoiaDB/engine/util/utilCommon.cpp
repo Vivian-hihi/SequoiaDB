@@ -304,7 +304,8 @@ namespace engine
       return FALSE ;
    }
 
-   BSONObj utilGetErrorBson( INT32 flags, const CHAR *detail )
+   BSONObj utilGetErrorBson( INT32 flags, const CHAR *detail,
+                             BOOLEAN *pRollback )
    {
       static BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;
       static BOOLEAN _init = FALSE ;
@@ -337,12 +338,20 @@ namespace engine
       }
 
       // return new obj
-      if ( detail && *detail != 0 )
+      if ( ( detail && *detail != 0  ) || pRollback )
       {
          BSONObjBuilder bb ;
          bb.append ( OP_ERRNOFIELD, flags ) ;
          bb.append ( OP_ERRDESP_FIELD, getErrDesp ( flags ) ) ;
-         bb.append ( OP_ERR_DETAIL, detail ) ;
+
+         if ( detail )
+         {
+            bb.append ( OP_ERR_DETAIL, *detail ) ;
+         }
+         if ( pRollback )
+         {
+            bb.appendBool ( FIELD_NAME_ROLLBACK, *pRollback ? TRUE : FALSE ) ;
+         }
          return bb.obj() ;
       }
       // return fix obj

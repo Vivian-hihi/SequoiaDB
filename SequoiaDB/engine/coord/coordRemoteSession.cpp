@@ -38,6 +38,8 @@
 #include "msgMessageFormat.hpp"
 #include "coordCommon.hpp"
 #include "pmdEDU.hpp"
+#include "pmd.hpp"
+#include "dpsTransCB.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -54,8 +56,10 @@ namespace engine
    _coordSessionPropSite::_coordSessionPropSite ()
    : _rtnSessionProperty(),
      _mapLastNodes(),
-     _pEDUCB( NULL )
+     _pEDUCB( NULL ),
+     _pSite( NULL )
    {
+      _transResult = 0 ;
    }
 
    _coordSessionPropSite::~_coordSessionPropSite()
@@ -113,9 +117,133 @@ namespace engine
       _pEDUCB = cb ;
    }
 
+   void _coordSessionPropSite::setSite( pmdRemoteSessionSite *pSite )
+   {
+      _pSite = pSite ;
+   }
+
    void _coordSessionPropSite::_onSetInstance ()
    {
       clear() ;
+   }
+
+   BOOLEAN _coordSessionPropSite::isTransNode( const MsgRouteID &routeID ) const
+   {
+      BOOLEAN found = FALSE ;
+      MAP_TRANS_NODES_CIT cit ;
+
+      cit = _mapTransNodes.find( routeID.columns.groupID ) ;
+      if ( cit != _mapTransNodes.end() &&
+           cit->second.value == routeID.value )
+      {
+         found = TRUE ;
+      }
+
+      return found ;
+   }
+
+   BOOLEAN _coordSessionPropSite::getTransNodeRouteID( UINT32 groupID,
+                                                       MsgRouteID &routeID ) const
+   {
+      BOOLEAN found = FALSE ;
+      MAP_TRANS_NODES_CIT cit ;
+      routeID.value = 0 ;
+
+      cit = _mapTransNodes.find( routeID.columns.groupID ) ;
+      if ( cit != _mapTransNodes.end() )
+      {
+         routeID = cit->second ;
+         found = TRUE ;
+      }
+
+      return found ;
+   }
+
+   BOOLEAN _coordSessionPropSite::hasTransNode( UINT32 groupID ) const
+   {
+      if ( _mapTransNodes.find( groupID ) != _mapTransNodes.end() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _coordSessionPropSite::isTransNodeEmpty() const
+   {
+      return _mapTransNodes.empty() ;
+   }
+
+   BOOLEAN _coordSessionPropSite::delTransNode( const MsgRouteID &routeID )
+   {
+      MAP_TRANS_NODES_IT it = _mapTransNodes.find( routeID.columns.groupID ) ;
+      if ( it != _mapTransNodes.end() &&
+           it->second.value == routeID.value )
+      {
+         _mapTransNodes.erase( it ) ;
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   void _coordSessionPropSite::addTransNode( const MsgRouteID &routeID )
+   {
+      _mapTransNodes[ routeID.columns.groupID ] = routeID ;
+   }
+
+   UINT32 _coordSessionPropSite::getTransNodeSize() const
+   {
+      return _mapTransNodes.size() ;
+   }
+
+   UINT32 _coordSessionPropSite::dumpTransNode( SET_ROUTEID &setID ) const
+   {
+      MAP_TRANS_NODES_CIT cit = _mapTransNodes.begin() ;
+      while( cit != _mapTransNodes.end() )
+      {
+         setID.insert( cit->second.value ) ;
+         ++cit ;
+      }
+      return _mapTransNodes.size() ;
+   }
+
+   const _coordSessionPropSite::MAP_TRANS_NODES*
+      _coordSessionPropSite::getTransNodeMap() const
+   {
+      return &_mapTransNodes ;
+   }
+
+   INT32 _coordSessionPropSite::beginTrans( _pmdEDUCB *cb )
+   {
+      if ( !cb->isTransaction() )
+      {
+         SDB_ASSERT( _mapTransNodes.empty(), "Trans node is not empty" ) ;
+
+         dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
+         DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
+
+         /// alloc trans id
+         transID = pTransCB->allocTransID() ;
+         /// clear first op
+         DPS_TRANS_CLEAR_FIRSTOP( transID ) ;
+
+         /// set trans id
+         cb->setTransID( transID ) ;
+         cb->setTransRC( SDB_OK ) ;
+
+         _mapTransNodes.clear() ;
+
+         PD_LOG( PDINFO, "Begin transaction(%04x%010x)",
+                 DPS_TRANS_GET_NODEID( transID ),
+                 DPS_TRANS_GET_SN( transID ) ) ;
+      }
+
+      return SDB_OK ;
+   }
+
+   void _coordSessionPropSite::endTrans( _pmdEDUCB *cb )
+   {
+      cb->setTransID( DPS_INVALID_TRANS_ID ) ;
+      _mapTransNodes.clear() ;
    }
 
    /*
@@ -138,6 +266,7 @@ namespace engine
       propSite.setInstanceOption( _instanceOption ) ;
       propSite.setOperationTimeout( _operationTimeout ) ;
       propSite.setEduCB( cb ) ;
+      propSite.setSite( pSite ) ;
       pSite->setUserData( (UINT64)&propSite ) ;
    }
 
@@ -149,6 +278,7 @@ namespace engine
       if ( pPropSite )
       {
          pPropSite->setEduCB( NULL ) ;
+         pPropSite->setSite( NULL ) ;
          pSite->setUserData( 0 ) ;
       }
       _mapProps.erase( cb->getTID() ) ;
@@ -281,8 +411,8 @@ namespace engine
          addGroupPtr2Map( _groupPtr ) ;
       }
 
-      _pPropSite->getEDUCB()->getTransNodeRouteID( groupID, nodeID ) ;
       /// In transaction, need to use the trans node
+      _pPropSite->getTransNodeRouteID( groupID, nodeID ) ;
       if ( MSG_INVALID_ROUTEID != nodeID.value &&
            _svcType == nodeID.columns.serviceID )
       {

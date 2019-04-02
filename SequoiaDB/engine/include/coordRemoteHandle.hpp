@@ -47,6 +47,36 @@ using namespace bson ;
 namespace engine
 {
 
+   #pragma pack(4)
+
+   /*
+      _coordRemoteHandleStatus define
+   */
+   struct _coordRemoteHandleStatus
+   {
+      UINT16               _initFinished ;
+      UINT16               _initTrans ;
+      UINT64               _nodeVer ;
+      UINT64               _nodeID ;
+
+      _coordRemoteHandleStatus()
+      {
+         SDB_ASSERT( sizeof( *this ) <= PMD_SUBSESSION_UDF_DATA_LEN,
+                     "Size must <= PMD_SUBSESSION_UDF_DATA_LEN" ) ;
+         init() ;
+      }
+      void init()
+      {
+         _initFinished = TRUE ;
+         _initTrans = FALSE ;
+         _nodeVer = 0 ;
+         _nodeID = 0 ;
+      }
+   } ;
+   typedef _coordRemoteHandleStatus coordRemoteHandleStatus ;
+
+   #pragma pack()
+
    /*
       _coordRemoteHandlerBase define
    */
@@ -86,6 +116,11 @@ namespace engine
          virtual INT32  onSend( _pmdRemoteSession *pSession,
                                 _pmdSubSession *pSub ) ;
 
+         virtual void   onHandleClose( _pmdRemoteSessionSite *pSite,
+                                       NET_HANDLE handle,
+                                       const MsgHeader *pReply ) ;
+
+
          virtual void   setUserData( UINT64 data ) ;
 
       protected:
@@ -111,6 +146,11 @@ namespace engine
       private:
          BSONObj        _buildSessionInitObj( _pmdEDUCB *cb ) ;
 
+         INT32          _checkSessionTransaction( _pmdRemoteSession *pSession,
+                                                  _pmdSubSession *pSub,
+                                                  _pmdEDUCB *cb,
+                                                  coordRemoteHandleStatus *pStatus ) ;
+
          INT32          _checkSessionSchedInfo( _pmdRemoteSession *pSession,
                                                 _pmdSubSession *pSub,
                                                 _pmdEDUCB *cb,
@@ -123,9 +163,6 @@ namespace engine
 
       private:
          SESSION_INIT_TYPE    _initType ;
-         BOOLEAN              _initFinished ;
-         UINT64               _nodeVer ;
-         UINT64               _nodeID ;
 
    } ;
    typedef _coordRemoteHandlerBase coordRemoteHandlerBase ;

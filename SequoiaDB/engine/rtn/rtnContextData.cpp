@@ -125,6 +125,11 @@ namespace engine
       return _queryModifier ? TRUE : FALSE ;
    }
 
+   BOOLEAN _rtnContextData::needRollback() const
+   {
+      return isWrite() ;
+   }
+
    void _rtnContextData::_toString( stringstream & ss )
    {
       if ( NULL != _su && NULL != _planRuntime.getPlan() )

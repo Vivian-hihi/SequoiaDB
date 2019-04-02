@@ -132,7 +132,8 @@ namespace engine
    INT32 _omTransferProcessor::processMsg( MsgHeader *msg,
                                            rtnContextBuf &contextBuff,
                                            INT64 &contextID,
-                                           BOOLEAN &needReply )
+                                           BOOLEAN &needReply,
+                                           BOOLEAN &needRollback )
    {
       pmdKRCB *pKrcb       = pmdGetKRCB();
       SDB_RTNCB *pRtncb    = pKrcb->getRTNCB();
@@ -211,6 +212,11 @@ namespace engine
          }
       }
       goto done ;
+   }
+
+   INT32 _omTransferProcessor::doRollback()
+   {
+      return SDB_OK ;
    }
 
    SDB_PROCESSOR_TYPE _omTransferProcessor::processorType() const

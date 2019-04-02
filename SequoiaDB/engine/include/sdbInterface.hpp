@@ -329,14 +329,16 @@ namespace engine
    {
       UINT32   _lockMode ;
       UINT32   _lockCount ;
+      UINT32   _lockHWCount ;
 
       sdbLockItem() { reset() ; }
-      void     reset() { _lockMode = 0 ; _lockCount = 0 ; }
+      void     reset() { _lockMode = 0 ; _lockCount = 0 ; _lockHWCount = 0 ; }
       void     setMode( UINT32 mode ) { _lockMode = mode ; }
       UINT32   getMode() const { return _lockMode ; }
-      UINT32   incCount() { return ++_lockCount ; }
+      UINT32   incCount() { ++_lockHWCount ; return ++_lockCount ; }
       UINT32   decCount() { return --_lockCount ; }
       UINT32   lockCount() const { return _lockCount ; }
+      UINT32   lockHWCount() const { return _lockHWCount ; }
    } ;
 
    /*

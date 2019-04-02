@@ -67,6 +67,8 @@ namespace engine
 
       _pSite            = NULL ;
       _pSession         = NULL ;
+
+      _isModify         = FALSE ;
    }
 
    _rtnContextCoord::~_rtnContextCoord ()
@@ -336,6 +338,11 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _rtnContextCoord::setModify( BOOLEAN modify )
+   {
+      _isModify = modify ;
    }
 
    INT32 _rtnContextCoord::reopen ()

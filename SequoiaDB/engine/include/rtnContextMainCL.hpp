@@ -122,6 +122,9 @@ namespace engine
          return !_options.isOrderByEmpty() && !_includeShardingOrder ;
       }
 
+      virtual BOOLEAN          isWrite() const { return _isWrite ; }
+      virtual BOOLEAN          needRollback() const { return _isWrite ; }
+
    protected:
       virtual void _toString( stringstream &ss ) ;
       INT32   _prepareAllSubCtxDataByOrder( _pmdEDUCB *cb ) ;
@@ -160,6 +163,7 @@ namespace engine
       SUBCL_CTX_MAP              _subContextMap ;
       BOOLEAN                    _includeShardingOrder ;
       ossPoolList< std::string > _subs ;
+      BOOLEAN                    _isWrite ;
    };
    typedef class _rtnContextMainCL rtnContextMainCL;
 

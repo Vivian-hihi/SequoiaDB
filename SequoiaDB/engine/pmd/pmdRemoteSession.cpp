@@ -34,7 +34,7 @@
 #include "pmdRemoteSession.hpp"
 #include "pmdEDU.hpp"
 #include "msgMessage.hpp"
-#include "schedDef.hpp"
+#include "pmdTrace.h"
 
 #include "../bson/bson.h"
 
@@ -61,6 +61,7 @@ namespace engine
       _isProcessed      = FALSE ;
       _processResult    = SDB_OK ;
       _userData         = 0 ;
+      ossMemset( _udfData, 0, sizeof( _udfData ) ) ;
       _needToDel        = FALSE ;
       _hasStop          = FALSE ;
       _handle           = NET_INVALID_HANDLE ;
@@ -996,10 +997,12 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDRMTSESSION_WAITREPLY, "_pmdRemoteSession::waitReply" )
    INT32 _pmdRemoteSession::waitReply( BOOLEAN waitAll,
                                        VEC_SUB_SESSIONPTR *pSubs )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__PMDRMTSESSION_WAITREPLY ) ;
 
       if ( !pSubs )
       {
@@ -1020,13 +1023,18 @@ namespace engine
          }
       }
 
+      PD_TRACE_EXITRC( SDB__PMDRMTSESSION_WAITREPLY, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDRMTSESSION_WAITREPLY1, "_pmdRemoteSession::waitReply1" )
    INT32 _pmdRemoteSession::waitReply1( BOOLEAN waitAll,
                                         MAP_SUB_SESSIONPTR *pSubs )
    {
       INT32 rc                      = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB__PMDRMTSESSION_WAITREPLY1 ) ;
+
       pmdEDUEvent event ;
       INT64 timeout                 = OSS_ONE_SEC ;
       UINT32 totalUnReplyNum        = 0 ;
@@ -1137,6 +1145,7 @@ namespace engine
 
    done:
       _totalWaitTime += ( _milliTimeoutHard - _milliTimeout ) ;
+      PD_TRACE_EXITRC( SDB__PMDRMTSESSION_WAITREPLY1, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1490,12 +1499,9 @@ namespace engine
       {
          MAP_SUB_SESSIONPTR disSubs ;
 
-         if ( eduCB()->isTransNode( pReply->routeID ) )
+         if ( pHandle )
          {
-            eduCB()->setTransRC( ((MsgOpReply*)pReply)->flags ) ;
-            PD_LOG( PDERROR, "Session[%s] disconnect with node[%s] in "
-                    "transaction", _pEDUCB->toString().c_str(),
-                    routeID2String(pReply->routeID).c_str() ) ;
+            pHandle->onHandleClose( this, handle, pReply ) ;
          }
 
          itPtr = _mapReq2SubSession.begin() ;

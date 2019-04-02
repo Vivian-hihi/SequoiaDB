@@ -188,6 +188,8 @@ namespace engine
          pInfo = eduCB()->getMonAppCB()->getSvcTaskInfo() ;
          if ( pInfo )
          {
+            /// it doesn't matter wether type is MON_TOTAL_READ_TIME or
+            /// MON_TOTAL_WRITE_TIME
             pInfo->monOperationTimeInc( MON_TOTAL_WRITE_TIME,
                                         costUsecs ) ;
          }
@@ -361,7 +363,8 @@ namespace engine
       _cmdCollectionName.clear() ;
       _isMainCL        = FALSE ;
       _hasUpdateCataInfo = FALSE ;
-      BOOLEAN isNeedRollback = FALSE;
+      BOOLEAN isNeedRollback = FALSE ;
+      BOOLEAN hasRollbacked = FALSE ;
 
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
@@ -412,17 +415,12 @@ namespace engine
                rc = _onDeleteReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_QUERY_REQ :
-               // There is no need to rollback any query. Simply fail it.
-               // If we decide to change this logic some day, we need to keep
-               // the same logic in coord.
-               // See related code in _pmdLocalSession::_onMsgBegin and
-               // _coordQueryOperator::needRollback
                rc = _onQueryReqMsg ( handle, msg, buffObj, startFrom,
-                                     contextID ) ;
+                                     contextID, isNeedRollback ) ;
                break ;
             case MSG_BS_GETMORE_REQ :
-               // Same isNeedRollback logic as query
-               rc = _onGetMoreReqMsg ( msg, buffObj, startFrom, contextID ) ;
+               rc = _onGetMoreReqMsg ( msg, buffObj, startFrom,
+                                       contextID, isNeedRollback ) ;
                break ;
             case MSG_BS_TRANS_UPDATE_REQ :
                isNeedRollback = TRUE ;
@@ -447,13 +445,8 @@ namespace engine
                rc = _onTransDeleteReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_TRANS_QUERY_REQ :
-               // See isNeedRollback logic in query above
                rc = _onTransQueryReqMsg( handle, msg, buffObj, startFrom,
-                                         contextID ) ;
-               break ;
-            case MSG_BS_TRANS_GETMORE_REQ :
-               // See isNeedRollback logic in query above
-               rc = _onTransGetMoreReqMsg ( msg, buffObj, startFrom, contextID ) ;
+                                         contextID, isNeedRollback ) ;
                break ;
             case MSG_BS_KILL_CONTEXT_REQ :
                rc = _onKillContextsReqMsg ( handle, msg ) ;
@@ -594,7 +587,7 @@ namespace engine
          loop = FALSE ;
       }
 
-      if ( MSG_BS_INTERRUPTE == opCode )
+      if ( isNoReplyMsg( opCode ) )
       {
          //not to reply
          goto done ;
@@ -617,8 +610,10 @@ namespace engine
       if ( SDB_OK != rc )
       {
          /// when coord catalog info is old, can't rollback, coord will retry
-         if ( SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
-              isNeedRollback && _pReplSet->primaryIsMe () )
+         if ( isNeedRollback &&
+              SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
+              SDB_DMS_EOC != rc &&
+              DPS_INVALID_TRANS_ID != _pEDUCB->getTransID() )
          {
             PD_LOG ( PDDEBUG, "Rolling back operation(op=%d, rc=%d) on data",
                      opCode, rc ) ;
@@ -627,20 +622,31 @@ namespace engine
             {
                PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
             }
+            hasRollbacked = TRUE ;
          }
 
          if ( 0 == buffObj.size() )
          {
             _errorInfo = utilGetErrorBson( rc, _pEDUCB->getInfo(
-                                           EDU_INFO_ERROR ) ) ;
+                                           EDU_INFO_ERROR ), &hasRollbacked ) ;
             buffObj = rtnContextBuf( _errorInfo.objdata(),
                                      _errorInfo.objsize(),
                                      1 ) ;
          }
+         else
+         {
+            SDB_ASSERT( 1 == buffObj.recordNum(), "Record number must be 1" ) ;
+            BSONObj errObj( buffObj.data() ) ;
+            BSONObjBuilder errBuilder( errObj.objsize() * 2 ) ;
+            errBuilder.appendElements( errObj ) ;
+            errBuilder.appendBool( FIELD_NAME_ROLLBACK, hasRollbacked ) ;
+            buffObj = rtnContextBuf( errObj ) ;
+         }
 
          if ( rc != SDB_DMS_EOC )
          {
-            PD_LOG ( PDERROR, "Session[%s] process OP[type:%u] failed[rc:%d]",
+            PD_LOG ( (SDB_CLS_COORD_NODE_CAT_VER_OLD==rc ? PDINFO : PDERROR),
+                     "Session[%s] process OP[type:%u] failed[rc:%d]",
                      sessionName(), opCode, rc ) ;
          }
 
@@ -1256,7 +1262,8 @@ namespace engine
    INT32 _clsShdSession::_onQueryReqMsg ( NET_HANDLE handle, MsgHeader * msg,
                                           rtnContextBuf &buffObj,
                                           INT32 &startingPos,
-                                          INT64 &contextID )
+                                          INT64 &contextID,
+                                          BOOLEAN &needRollback )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONQYREQMSG ) ;
 
@@ -1294,6 +1301,7 @@ namespace engine
 
          if ( flags & FLG_QUERY_MODIFY )
          {
+            needRollback = TRUE ;
             rc = _checkWriteStatus() ;
             if ( SDB_OK != rc )
             {
@@ -1548,7 +1556,7 @@ namespace engine
             rc = _runOnMainCL( pCollectionName, pCommand, flags, numToSkip,
                                numToReturn, pQueryBuff, pFieldSelector,
                                pOrderByBuffer, pHintBuffer, w,
-                               pQuery->version, contextID );
+                               contextID ) ;
          }
          else
          {
@@ -1602,7 +1610,8 @@ namespace engine
    INT32 _clsShdSession::_onGetMoreReqMsg( MsgHeader * msg,
                                            rtnContextBuf &buffObj,
                                            INT32 & startingPos,
-                                           INT64 &contextID )
+                                           INT64 &contextID,
+                                           BOOLEAN &needRollback )
    {
       PD_LOG ( PDDEBUG, "session[%s] _onGetMoreReqMsg", sessionName() ) ;
 
@@ -1627,7 +1636,8 @@ namespace engine
       PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
                numToRead ) ; */
 
-      rc = rtnGetMore ( contextID, numToRead, buffObj, _pEDUCB, _pRtnCB ) ;
+      rc = rtnGetMore ( contextID, numToRead, buffObj, _pEDUCB,
+                        _pRtnCB, &needRollback ) ;
 
       startingPos = ( INT32 )buffObj.getStartFrom() ;
 
@@ -1722,6 +1732,10 @@ namespace engine
       {
          return SDB_CLS_NOT_PRIMARY;
       }
+      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      {
+         return SDB_DPS_TRANS_NO_TRANS ;
+      }
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,
                           "TransactionID: 0x%016x(%llu)",
@@ -1791,7 +1805,8 @@ namespace engine
                                               MsgHeader * msg,
                                               rtnContextBuf & buffObj,
                                               INT32 & startingPos,
-                                              INT64 & contextID )
+                                              INT64 & contextID,
+                                              BOOLEAN &needRollback )
    {
       INT32 rc = SDB_OK ;
 
@@ -1807,24 +1822,10 @@ namespace engine
       else
       {
          rc = _onQueryReqMsg( handle, msg, buffObj, startingPos,
-                              contextID ) ;
+                              contextID, needRollback ) ;
       }
 
       return rc ;
-   }
-
-   INT32 _clsShdSession::_onTransGetMoreReqMsg( MsgHeader * msg,
-                                                rtnContextBuf &buffObj,
-                                                INT32 & startingPos,
-                                                INT64 &contextID )
-   {
-      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
-      {
-         _pEDUCB->contextDelete( contextID ) ;
-         return SDB_DPS_TRANS_NO_TRANS;
-      }
-      return _onGetMoreReqMsg( msg, buffObj, startingPos,
-                               contextID ) ;
    }
 
    void _clsShdSession::_login()
@@ -2623,7 +2624,6 @@ namespace engine
                                        const CHAR *pOrderBy,
                                        const CHAR *pHint,
                                        INT16 w,
-                                       INT32 version,
                                        SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
@@ -2667,7 +2667,7 @@ namespace engine
       case CMD_DROP_COLLECTION:
          /// wait sync in context, not set writable
          rc = _dropMainCL( pCommand->collectionFullName(), w,
-                           version, contextID );
+                           contextID );
          break;
 
       case CMD_RENAME_COLLECTION:
@@ -3108,7 +3108,6 @@ namespace engine
 
    INT32 _clsShdSession::_dropMainCL( const CHAR *pCollection,
                                       INT16 w,
-                                      INT32 version,
                                       SINT64 &contextID )
    {
       INT32 rc = SDB_OK ;
@@ -3126,7 +3125,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to create context, drop "
                    "main collection[%s] failed, rc: %d", pCollection,
                    rc ) ;
-      rc = delContext->open( pCollection, subCLLst, version, _pEDUCB, w ) ;
+      rc = delContext->open( pCollection, subCLLst, _pEDUCB, w ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to open context, drop "
                    "main collection[%s] failed, rc: %d", pCollection,
                    rc ) ;

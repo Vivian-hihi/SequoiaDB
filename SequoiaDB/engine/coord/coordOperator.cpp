@@ -243,44 +243,41 @@ namespace engine
          groupID = routeID.columns.groupID ;
          rcTmp = pReply->flags ;
 
-         if ( rcTmp && !options.isIgnored( rcTmp ) )
+         if ( rcTmp &&
+              _isTrans( cb, (MsgHeader*)pReply ) &&
+              SDB_OK != cb->getTransRC() )
          {
-            /// if error is not 'SDB_CLS_COORD_NODE_CAT_VER_OLD', 
-            /// in transaction report error
-            if ( _isTrans( cb, (MsgHeader*)pReply ) )
+            processType = COORD_PROCESS_NOK ;
+            if ( !result.pushNokRC( routeID.value, pReply ) )
             {
-               processType = COORD_PROCESS_NOK ;
-               if ( SDB_CLS_COORD_NODE_CAT_VER_OLD != rcTmp ||
-                    !result.pushNokRC( routeID.value, pReply ) )
-               {
-                  PD_LOG( PDERROR, "Do trans command[%d] on data node[%s] "
-                          "failed, rc: %d", inMsg.opCode(),
-                          routeID2String( routeID ).c_str(), rcTmp ) ;
-                  rc = rc ? rc : rcTmp ;
-               }
+               rc = rc ? rc : rcTmp ;
+            }
+            PD_LOG( ( rc ? PDERROR : PDINFO ),
+                    "Do trans command[%d] on data node[%s] "
+                    "failed, rc: %d", inMsg.opCode(),
+                    routeID2String( routeID ).c_str(), rcTmp ) ;
+         }
+         else if ( rcTmp && !options.isIgnored( rcTmp ) )
+         {
+            if ( pCtrl->canRetry( rcTmp, routeID, primaryID,
+                                  isReadOnly(), TRUE ) )
+            {
+               processType = COORD_PROCESS_IGNORE ;
+               result.pushIgnoreRC( routeID.value, rcTmp ) ;
+               rcTmp = SDB_OK ;
+               needRetry = TRUE ;
             }
             else
             {
-               if ( pCtrl->canRetry( rcTmp, routeID, primaryID,
-                                     isReadOnly(), TRUE ) )
+               processType = COORD_PROCESS_NOK ;
+               if ( !result.pushNokRC( routeID.value, pReply ) )
                {
-                  processType = COORD_PROCESS_IGNORE ;
-                  result.pushIgnoreRC( routeID.value, rcTmp ) ;
-                  rcTmp = SDB_OK ;
-                  needRetry = TRUE ;
+                  rc = rc ? rc : rcTmp ;
                }
-               else
-               {
-                  processType = COORD_PROCESS_NOK ;
-                  if ( !result.pushNokRC( routeID.value, pReply ) )
-                  {
-                     rc = rc ? rc : rcTmp ;
-                  }
-                  PD_LOG( ( rc ? PDERROR : PDINFO ),
-                          "Failed to execute command[%u] on "
-                          "node[%s], rc: %d", inMsg.opCode(),
-                          routeID2String( routeID ).c_str(), rcTmp ) ;
-               }
+               PD_LOG( ( rc ? PDERROR : PDINFO ),
+                       "Failed to execute command[%u] on "
+                       "node[%s], rc: %d", inMsg.opCode(),
+                       routeID2String( routeID ).c_str(), rcTmp ) ;
             }
          }
          else

@@ -134,7 +134,6 @@ namespace engine
 
 #if defined ( SDB_ENGINE )
       _relatedTransLSN  = DPS_INVALID_LSN_OFFSET ;
-      _pTransNodeMap    = NULL ;
       _transRC          = SDB_OK ;
 
       _curRequestID     = 1 ;
@@ -155,16 +154,8 @@ namespace engine
          SDB_OSS_FREE ( _pErrorBuff ) ;
          _pErrorBuff = NULL ;
       }
-#if defined ( SDB_ENGINE )
-      if ( _pTransNodeMap )
-      {
-         delete _pTransNodeMap;
-         _pTransNodeMap = NULL;
-      }
-#endif // SDB_ENGINE
 
       clear() ;
-
    }
 
    void _pmdEDUCB::clear()
@@ -1034,118 +1025,17 @@ namespace engine
       _curTransID = DPS_INVALID_TRANS_ID ;
       _relatedTransLSN = DPS_INVALID_LSN_OFFSET ;
       _curTransLSN = DPS_INVALID_LSN_OFFSET ;
-      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
+      _transRC = SDB_OK ;
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
       if ( pTransCB )
       {
          pTransCB->transLockReleaseAll( this, NULL ) ;
       }
-      delTransaction() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CREATETRANSACTION, "_pmdEDUCB::createTransaction" )
-   INT32 _pmdEDUCB::createTransaction()
+   BOOLEAN _pmdEDUCB::isTransaction() const
    {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_CREATETRANSACTION );
-      INT32 rc = SDB_OK;
-      if ( NULL == _pTransNodeMap )
-      {
-         _pTransNodeMap = new DpsTransNodeMap;
-         setTransRC(SDB_OK);
-      }
-      if ( NULL == _pTransNodeMap )
-      {
-         rc = SDB_OOM;
-      }
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_CREATETRANSACTION );
-      return rc;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DELTRANSACTION, "_pmdEDUCB::delTransaction" )
-   void _pmdEDUCB::delTransaction()
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_DELTRANSACTION );
-      if ( _pTransNodeMap )
-      {
-         delete _pTransNodeMap;
-         _pTransNodeMap = NULL;
-      }
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_DELTRANSACTION );
-   }
-
-   DpsTransNodeMap *_pmdEDUCB::getTransNodeLst()
-   {
-      return _pTransNodeMap;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ADDTRANSNODE, "_pmdEDUCB::addTransNode" )
-   void _pmdEDUCB::addTransNode( const MsgRouteID &routeID )
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_ADDTRANSNODE );
-      if ( _pTransNodeMap )
-      {
-         (*_pTransNodeMap)[routeID.columns.groupID] = routeID;
-      }
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_ADDTRANSNODE );
-   }
-
-   void _pmdEDUCB::delTransNode( const MsgRouteID &routeID )
-   {
-      if ( _pTransNodeMap )
-      {
-         UINT32 groupID = routeID.columns.groupID ;
-         DpsTransNodeMap::iterator it = _pTransNodeMap->find( groupID ) ;
-         if ( it != _pTransNodeMap->end() &&
-              it->second.value == routeID.value )
-         {
-            _pTransNodeMap->erase( it ) ;
-         }
-      }
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSNODEROUTEID, "_pmdEDUCB::getTransNodeRouteID" )
-   void _pmdEDUCB::getTransNodeRouteID( UINT32 groupID,
-                                        MsgRouteID &routeID )
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_GETTRANSNODEROUTEID );
-      DpsTransNodeMap::iterator iterMap;
-      routeID.value = 0;
-      if ( _pTransNodeMap )
-      {
-         iterMap = _pTransNodeMap->find( groupID );
-         if ( iterMap != _pTransNodeMap->end() )
-         {
-            routeID = iterMap->second;
-         }
-      }
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_GETTRANSNODEROUTEID );
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ISTRANSNODE, "_pmdEDUCB::isTransNode" )
-   BOOLEAN _pmdEDUCB::isTransNode( MsgRouteID &routeID )
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_ISTRANSNODE );
-      BOOLEAN isTransNode = FALSE;
-      DpsTransNodeMap::iterator iterMap;
-      if ( _pTransNodeMap )
-      {
-         iterMap = _pTransNodeMap->find( routeID.columns.groupID );
-         if (  iterMap != _pTransNodeMap->end()
-               && iterMap->second.value == routeID.value )
-         {
-            isTransNode = TRUE;
-         }
-      }
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_ISTRANSNODE );
-      return isTransNode;
-   }
-
-   BOOLEAN _pmdEDUCB::isTransaction()
-   {
-      if ( _pTransNodeMap )
-      {
-         return TRUE;
-      }
-      return FALSE;
+      return ( DPS_INVALID_TRANS_ID != _curTransID ) ? TRUE : FALSE ;
    }
 
    void _pmdEDUCB::dumpTransInfo( monTransInfo &transInfo )
