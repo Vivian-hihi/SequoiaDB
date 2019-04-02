@@ -2,7 +2,7 @@
 *@Description:   seqDB-13716:rang分区表使用切分键/非切分键sort+limit+skip执行查询
 *@Author:        2019-2-26  wangkexin
 ********************************************************************************/
-rownums = 10000;
+rownums = 10000;//TODO:1、变量定义到方法内部
 
 main();
 function main()
@@ -20,7 +20,7 @@ function main()
 	   //query 1 使用切分键执行查询 sort
 	   var sel_1 = rangeCL.find({},{a:""}).sort({a:1});
 	   checkResult(sel_1, "a", rownums, 1, null, true, "query1");
-	   
+	   //TODO:5、请确认这里使用1000有什么含义？请确认测试点？
 	   //query 2 使用切分键执行查询 limit 覆盖值小于等于1000、大于1000
 	   var sel_2_1 = rangeCL.find({},{a:""}).limit(500);
 	   checkResult(sel_2_1, "a", 500, null, rownums, false, "query2_1");
@@ -96,9 +96,9 @@ function main()
 		throw e;
 	}
 }
-
+//TODO:2、插入数据要改为批量插入
 function loadData(cl, rownums)
-{
+{//TODO:3、这里的funname没有必要重新定义
    var funname = "loadData";
    try
    {
@@ -109,7 +109,7 @@ function loadData(cl, rownums)
       buildException(funname, e);
    }
 }
-
+//TODO:4、这个方法实现太复杂，参数名也没有描述说明，另外比较结果建议针对不同的查询条件比较记录值
 function checkResult(sel, field, exp_returnednum, beginnum, endnum, isAsc, queryname)
 {
 	try
