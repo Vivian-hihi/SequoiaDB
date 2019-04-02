@@ -51,7 +51,7 @@ function insertData( varCL, srcGroupName, destGroupName )
 function checkResult( varCL )
 {
    try{
-      var cur = varCL.find({"$or":[{"a":1},{"b":1}]});
+      var cur = varCL.find({"$or":[{"a":1},{"b":1}]}).sort({b:-1});
       var expFindResult = [{a:0, b:1, c:0},{a:1,b:0,c:0}];
       checkRec(cur, expFindResult);
       
