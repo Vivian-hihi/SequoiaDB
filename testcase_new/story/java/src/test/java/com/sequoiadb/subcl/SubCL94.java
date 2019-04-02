@@ -32,6 +32,7 @@ public class SubCL94 extends SdbTestBase{
 	private DBCollection mainCL;
 	private String mainCLName = "mainCL94";
 	private String subCLName = "subCL94";
+	private int insertNum = 100;
 	
 
 	@DataProvider(name = "coordNodes", parallel=true)
@@ -83,7 +84,7 @@ public class SubCL94 extends SdbTestBase{
 		DBCollection maincl = db.getCollectionSpace(SdbTestBase.csName).getCollection(mainCLName);
 		maincl.delete("");
 		List<BSONObject> insertor = new ArrayList<>();
-		for(int i = 0 ; i < 100 ; i++){
+		for(int i = 0 ; i < insertNum ; i++){
 			BSONObject obj = new BasicBSONObject();
 			obj.put("a", i);
 			insertor.add(obj);
@@ -96,7 +97,6 @@ public class SubCL94 extends SdbTestBase{
 	@AfterClass
 	public void tearDown() {
 		try {
-			commCS.dropCollection(subCLName);
 			commCS.dropCollection(mainCLName);
 		} finally {
 			if (sdb != null) {
