@@ -293,7 +293,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
          if ( needRollback )
          {
             PD_LOG( PDDEBUG, "Session rolling back operation "
-                    "(opCode=%d, rc=%d)", (MsgHeader *)pMsg->opCode, rc ) ;
+                    "(opCode=%d, rc=%d)", ((MsgHeader*)pMsg)->opCode, rc ) ;
 
             INT32 rcTmp = getProcessor()->doRollback() ;
             if ( rcTmp )
