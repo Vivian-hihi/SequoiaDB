@@ -1,6 +1,7 @@
 package com.sequoiadb.split;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -164,6 +165,7 @@ public class SplitHash11558C extends SdbTestBase {
         @ExecuteOrder(step = 1)
         @ExpectBlock(confirmTime = 5, contOnStep = 2)
         private void splitOper() {
+            System.out.println(new Date() + " " + this.getClass().getName().toString());
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -187,7 +189,7 @@ public class SplitHash11558C extends SdbTestBase {
 
         @ExecuteOrder(step = 2)
         private void deleteOper() throws InterruptedException {
-            System.out.println("begin to delete invalid sharding key fields records.");
+            System.out.println(new Date() + " " + this.getClass().getName().toString());
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
