@@ -92,6 +92,8 @@ namespace engine
          _coordRemoteHandlerBase() ;
          virtual ~_coordRemoteHandlerBase() ;
 
+         BOOLEAN  isVersion0() const ;
+
       public:
          virtual INT32  onSendFailed( _pmdRemoteSession *pSession,
                                       _pmdSubSession **ppSub,

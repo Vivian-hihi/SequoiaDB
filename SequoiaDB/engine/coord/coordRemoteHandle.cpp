@@ -67,6 +67,11 @@ namespace engine
    {
    }
 
+   BOOLEAN _coordRemoteHandlerBase::isVersion0() const
+   {
+      return ( INIT_V0 == _initType ) ? TRUE : FALSE ;
+   }
+
    INT32 _coordRemoteHandlerBase::onSendFailed( _pmdRemoteSession *pSession,
                                                 _pmdSubSession **ppSub,
                                                 INT32 flag )

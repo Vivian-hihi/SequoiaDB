@@ -77,6 +77,20 @@ namespace engine
          _prepareForTrans( cb, inMsg.msg() ) ;
       }
 
+      /// when data is old version
+      if ( _remoteHandler.isVersion0() && _isTrans( cb, inMsg.msg() ) )
+      {
+         ROUTE_RC_MAP newNodeMap ;
+         // build trans session on new data groups
+         rc = buildTransSession( options._groupLst, cb, newNodeMap ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to build transaction session on "
+                    "data nodes, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
       rc = coordOperator::doOnGroups( inMsg, options, cb, result ) ;
       if ( rc )
       {
