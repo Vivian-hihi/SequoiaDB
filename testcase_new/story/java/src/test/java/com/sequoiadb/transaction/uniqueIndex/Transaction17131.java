@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.rc;
+package com.sequoiadb.transaction.uniqueIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,22 +18,20 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description seqDB-17125 : 插入记录与其他事务中更新后的记录重复
+ * @Description Transaction17131.java 更新已提交记录与其他事务更新的记录重复
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = "rc")
-public class Transaction17125 extends SdbTestBase {
+@Test(groups = {"rc", "ru"})
+public class Transaction17131 extends SdbTestBase {
 
-    private String clName = "transCL_17125";
+    private String clName = "transCL_17131";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
     private DBCollection cl2 = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
-    private BSONObject data3 = null;
-    private BSONObject matcher = null;
     private BSONObject modifier = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
@@ -43,56 +41,50 @@ public class Transaction17125 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
+        cl.createIndex("a", "{a:1}", true, false);
         
         data = new BasicBSONObject();
         data.put("a", 1);
-        data.put("b", 2);
+        data.put("b", "testTrans_17131");
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
 
-        modifier = new BasicBSONObject();
         data2 = new BasicBSONObject();
-        data2.put("_id", "id17125_2");
+        data2.put("_id", "id17131");
         data2.put("a", 2);
-        data2.put("b", 2);
+        data2.put("b", 1024);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
+        modifier = new BasicBSONObject();
         modifier.put("$set", data2);
-        matcher = new BasicBSONObject("a", 1);
-        
-        data3 = new BasicBSONObject();
-        data3.put("_id", "id17125_2");
-        data3.put("a", 2);
-        data3.put("b", 3);
-        data3.put("flag", "data3");
-        data3.put("c", 13700017125L);
-        data3.put("d", "customer transaction type data application.");
-        
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+
     }
 
     @Test
     public void test1() {
-        //1 trans1 update R1 to R2
-        sdb.beginTransaction();
-        cl.update(matcher, modifier, null);
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         
-        //2 trans2 insert record R3 same as the R2
+        sdb.beginTransaction();
         sdb2.beginTransaction();
+        
+        //trans1 insert record R2
+        cl.insert(data2);
+        
         try {
-            cl2.insert(data3);
+            // trans2 update record R1 to R3 same as the R2
+            cl2.update(new BasicBSONObject("a", 1), modifier, null);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
 
         sdb.rollback();
-        
+        expDataList.clear();
         expDataList.add(data);
+
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -108,23 +100,24 @@ public class Transaction17125 extends SdbTestBase {
     @Test
     public void test2() {
         
-        //1 trans1 update R1 to R2
+        //trans1 insert record R2
         sdb.beginTransaction();
-        cl.update(matcher, modifier, null);
+        cl.insert(data2);
         
-        //2 trans2 insert record R3 same as the R2
-        sdb2.beginTransaction();
         try {
-            cl2.insert(data3);
+            // trans2 update record R1 to R3 same as the R2
+            sdb2.beginTransaction();
+            cl2.update(new BasicBSONObject("a", 1), modifier, null);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
         
         sdb.commit();
-        
         expDataList.clear();
+        expDataList.add(data);
         expDataList.add(data2);
+
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -137,6 +130,7 @@ public class Transaction17125 extends SdbTestBase {
 
         cl.delete("{'a': {'$isnull' :0}}");
         Assert.assertEquals(cl.getCount(), 0);
+
     }
 
     @AfterClass

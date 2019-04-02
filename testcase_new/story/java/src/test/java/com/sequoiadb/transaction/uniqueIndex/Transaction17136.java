@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.ru;
+package com.sequoiadb.transaction.uniqueIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,14 +18,14 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description seqDB-17248 : 插入记录与其他事务中删除的记录重复
+ * @Description Transaction17136.java 回滚的记录与其他事务的记录重复
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = "ru")
-public class Transaction17248 extends SdbTestBase {
+@Test(groups = {"rc", "ru"})
+public class Transaction17136 extends SdbTestBase {
 
-    private String clName = "transCL_17248";
+    private String clName = "transCL_17136";
     private Sequoiadb sdb = null;
     private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
@@ -44,43 +44,42 @@ public class Transaction17248 extends SdbTestBase {
         expDataList = new ArrayList<BSONObject>();
         
         data = new BasicBSONObject();
-        data.put("_id", "id17248");
+        data.put("_id", "insert1713601");
         data.put("a", 1);
-        data.put("b", 1);
+        data.put("b", "testTrans_17136");
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
-        expDataList.add(data);
 
         data2 = new BasicBSONObject();
-        data2.put("_id", "id17248");
+        data2.put("_id", "insert1713601");
         data2.put("a", 1);
-        data2.put("b", 2);
+        data2.put("b", 1024);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
-
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
     }
 
     @Test
-    public void test1() {
-        
+    public void test() {
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         
         sdb.beginTransaction();
         sdb2.beginTransaction();
+        
+        //1 trans1 delete R1
+        cl.delete("{'a':1}");
         try {
-            // 1 trans1 delete record
-            cl.delete("{'a': {'$isnull' :0}}");
-            
-            // 2 trans2 insert the same record as the delete
+            //2 trans2 insert R2 same as the R1
             cl2.insert(data2);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
-        sdb.rollback();
 
+        sdb.rollback();
+        expDataList.add(data);
+        
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -93,26 +92,6 @@ public class Transaction17248 extends SdbTestBase {
 
     }
 
-    @Test
-    public void test2() {
-        sdb.beginTransaction();
-        sdb2.beginTransaction();
-        try {
-            // 1 trans1 delete record
-            cl.delete("{'a': {'$isnull' :0}}");
-            
-            // 2 trans2 insert the same record as the delete
-            cl2.insert(data2);
-            Assert.fail("insert an existing record with an index,should be failed");
-        } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
-        }
-        sdb.commit();
-
-        Assert.assertEquals(cl.getCount(), 0, "trans1 delete record commit");
-
-    }
-
     @AfterClass
     public void tearDown() {
         sdb.getCollectionSpace(csName).dropCollection(clName);
@@ -121,9 +100,6 @@ public class Transaction17248 extends SdbTestBase {
         }
         if( sdb != null ){
             sdb.close();
-        }
-        if( sdb2 != null ){
-            sdb2.close();
         }
     }
 

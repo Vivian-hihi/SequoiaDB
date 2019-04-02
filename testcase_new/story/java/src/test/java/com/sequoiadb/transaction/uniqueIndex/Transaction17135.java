@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.ru;
+package com.sequoiadb.transaction.uniqueIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +22,8 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = "ru")
-public class Transaction17257 extends SdbTestBase {
+@Test(groups = {"rc", "ru"})
+public class Transaction17135 extends SdbTestBase {
 
     private String clName = "transCL_17135";
     private Sequoiadb sdb = null;
@@ -45,14 +45,15 @@ public class Transaction17257 extends SdbTestBase {
         data.put("b", 1);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
-        cl.insert(data);
+        expDataList.add(data);
 
         data2 = new BasicBSONObject();
         data2.put("a", 1);
-        data2.put("b", 1);
+        data2.put("b", 2);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
-        cl.insert(data2);
+        expDataList.add(data2);
+        cl.insert(expDataList);
 
     }
     
@@ -60,28 +61,17 @@ public class Transaction17257 extends SdbTestBase {
     @Test(enabled=false)
     public void test(){
         
+        //1 delete record R1 
         sdb.beginTransaction();
         cl.delete("{a:1}");
-        
-        try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");){
-            //no trans create index
-            DBCollection cl2 = db.getCollectionSpace(csName).getCollection(clName);
-            cl2.createIndex("b", "{b:1}", true, false);
-            Assert.fail("create unique index should be failed");
-        }catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
-        }
-
         try {
-            //trans create index
+            //2 create unique index
             cl.createIndex("a", "{a:1}", true, false);
-            Assert.fail("create unique index should be failed");
+            Assert.fail("create index should be error");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
-        
-        expDataList.add(data);
-        expDataList.add(data2);
+
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList, "check data");

@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.ru;
+package com.sequoiadb.transaction.uniqueIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,26 +13,22 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description Transaction17253.java 更新已提交记录与其他事务插入的记录重复
+ * @Description Transaction17122.java 插入记录与本事务中删除的记录重复
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = "ru")
-public class Transaction17253 extends SdbTestBase {
+@Test(groups = {"rc", "ru"})
+public class Transaction17122 extends SdbTestBase {
 
-    private String clName = "transCL_17253";
+    private String clName = "transCL_17122";
     private Sequoiadb sdb = null;
-    private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
-    private DBCollection cl2 = null;
-    private BSONObject data = null;
+    private BSONObject data1 = null;
     private BSONObject data2 = null;
-    private BSONObject modifier = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
@@ -44,45 +40,51 @@ public class Transaction17253 extends SdbTestBase {
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
         
-        data = new BasicBSONObject();
-        data.put("a", 1);
-        data.put("b", "testTrans_17253");
-        data.put("c", 13700000000L);
-        data.put("d", "customer transaction type data application.");
-        cl.insert(data);
-
+        data1 = new BasicBSONObject();
+        data1.put("_id", "testId17122");
+        data1.put("a", 1);
+        data1.put("b", "testTrans_17122");
+        data1.put("c", 13700000000L);
+        data1.put("d", "customer transaction type data application.");
+        cl.insert(data1);
+        
         data2 = new BasicBSONObject();
-        data2.put("_id", "id17253");
-        data2.put("a", 2);
-        data2.put("b", 1024);
+        data2.put("_id", "testId17122");
+        data2.put("a", 1);
+        data2.put("b", 17122);
         data2.put("c", 13700000000L);
+        data2.put("flag", "flag17122");
         data2.put("d", "customer transaction type data application.");
-        modifier = new BasicBSONObject();
-        modifier.put("$set", data2);
-
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+        
     }
 
     @Test
     public void test1() {
+
         sdb.beginTransaction();
-        sdb2.beginTransaction();
-        
-        // 1 trans1 insert record R2
+
+        //1 trans1 delete record R1
+        cl.delete("{'a': 1}");
+
+        //2 trans1 insert record R2 
         cl.insert(data2);
         
-        try {
-            // 2 trans update R1 same as the R2
-            cl2.update(new BasicBSONObject("a", 1), modifier, null);
-            Assert.fail("insert an existing record with an index,should be failed");
-        } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
-        }
+        expDataList.clear();
+        expDataList.add(data2);
+        recordCur = cl.query(null, null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
         
         sdb.rollback();
-        expDataList.add(data);
-        
+
+        expDataList.clear();
+        expDataList.add(data1);
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -93,28 +95,35 @@ public class Transaction17253 extends SdbTestBase {
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
+        cl.delete("{'a': {'$isnull' :0}}");
+        Assert.assertEquals(cl.getCount(), 0);
+
     }
 
     @Test
     public void test2() {
+
         sdb.beginTransaction();
-        sdb2.beginTransaction();
-        
-        // 1 trans1 insert record R2
+
+        //1 trans1 delete record R1
+        cl.delete("{'a': 1}");
+
+        //2 trans1 insert record R2 
         cl.insert(data2);
         
-        try {
-            // 2 trans update R1 same as the R2
-            cl2.update(new BasicBSONObject("a", 1), modifier, null);
-            Assert.fail("insert an existing record with an index,should be failed");
-        } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
-        }
+        expDataList.clear();
+        expDataList.add(data2);
+        recordCur = cl.query(null, null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
+
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
+        actDataList.clear();
         
         sdb.commit();
-        expDataList.clear();
-        expDataList.add(data);
-        expDataList.add(data2);
 
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
@@ -133,15 +142,13 @@ public class Transaction17253 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        
         sdb.getCollectionSpace(csName).dropCollection(clName);
         if(recordCur != null){
             recordCur.close();
         }
         if( sdb != null ){
             sdb.close();
-        }
-        if( sdb2 != null ){
-            sdb2.close();
         }
     }
 

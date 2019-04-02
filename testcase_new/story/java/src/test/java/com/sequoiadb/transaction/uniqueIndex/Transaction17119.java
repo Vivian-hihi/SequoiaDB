@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.rc;
+package com.sequoiadb.transaction.uniqueIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,14 +18,14 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description Transaction17121.java 插入记录与本事务中更新的记录重复
- * @author luweikang
- * @date 2019年1月15日
+ * @FileName seqDB-17119 : 事务中插入记录与已提交记录唯一索引重复
+ * @Author luweikang
+ * @Date 2019年1月15日
  */
-@Test(groups = "rc")
-public class Transaction17121 extends SdbTestBase {
+@Test(groups = {"rc", "ru"})
+public class Transaction17119 extends SdbTestBase {
 
-    private String clName = "transCL_17121";
+    private String clName = "transCL_17119";
     private Sequoiadb sdb = null;
     private DBCollection cl = null;
     private BSONObject data = null;
@@ -37,11 +37,12 @@ public class Transaction17121 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
         
         data = new BasicBSONObject();
         data.put("a", 1);
-        data.put("b", "testTrans_17121");
+        data.put("b", "testTrans_17119");
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
@@ -51,21 +52,12 @@ public class Transaction17121 extends SdbTestBase {
     @Test
     public void test(){
         
-        try {
-            sdb.beginTransaction();
-            BSONObject data2 = new BasicBSONObject();
-            data2.put("_id", "id17121");
-            data2.put("a", 17121);
-            data2.put("b", "testTrans_17121" );
-            data2.put("c", 13700000000L);
-            data2.put("d", "customer transaction type data application.");
-            BSONObject modifier = new BasicBSONObject("$set", data2);
+        try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+            db.beginTransaction();
+            DBCollection cl2 = db.getCollectionSpace(csName).getCollection(clName);
             
-            //1 update record R1 to R2
-            cl.update(new BasicBSONObject("a", data.get("a")), modifier, null);
-            
-            //2 insert record R3 same as the R2  
-            cl.insert(data2);
+            //1 trans1 insert already exist record
+            cl2.insert(data);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
@@ -83,7 +75,6 @@ public class Transaction17121 extends SdbTestBase {
 
         cl.delete("{'a': {'$isnull' :0}}");
         Assert.assertEquals(cl.getCount(), 0);
-        
     }
 
     @AfterClass

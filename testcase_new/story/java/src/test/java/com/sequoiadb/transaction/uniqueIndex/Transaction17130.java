@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.ru;
+package com.sequoiadb.transaction.uniqueIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,14 +17,14 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description seqDB-17252 : 更新已提交记录与本事务中删除的记录唯一索引重复
+ * @Description seqDB-17130 : 更新已提交记录与本事务中删除的记录唯一索引重复
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = "ru")
-public class Transaction17252 extends SdbTestBase {
+@Test(groups = {"rc", "ru"})
+public class Transaction17130 extends SdbTestBase {
 
-    private String clName = "transCL_17252";
+    private String clName = "transCL_17130";
     private Sequoiadb sdb = null;
     private DBCollection cl = null;
     private BSONObject data = null;
@@ -39,29 +39,28 @@ public class Transaction17252 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        cl.createIndex("a", "{a:1}", true, false);
-        expDataList = new ArrayList<BSONObject>();
-        
         data = new BasicBSONObject();
         data.put("a", 1);
-        data.put("b", "testTrans_17252");
+        data.put("b", "testTrans_17130");
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
 
         data2 = new BasicBSONObject();
-        data2.put("_id", "id17252");
+        data2.put("_id", "id17130");
         data2.put("a", 2);
         data2.put("b", 1024);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
 
+        expDataList = new ArrayList<BSONObject>();
         expDataList.add(data);
         expDataList.add(data2);
         cl.insert(expDataList);
+        cl.createIndex("a", "{a:1}", true, false);
 
         data3 = new BasicBSONObject();
-        data3.put("_id", "id17252");
-        data3.put("a", 2);
+        data3.put("_id", "id17130");
+        data3.put("a", 1);
         data3.put("b", "1024_update");
         data3.put("c", 13700000000L);
         data3.put("d", "customer transaction type data application.");
@@ -72,29 +71,31 @@ public class Transaction17252 extends SdbTestBase {
     }
 
     @Test
-    public void test1(){
+    public void test1() {
+        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
+            transDB.beginTransaction();
+            DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
+            // delete record R2
+            transCL.delete(new BasicBSONObject("a", data2.get("a")));
+            // update record R1 to R3 same as the R2
+            transCL.update(new BasicBSONObject("a", 1), modifier, null);
 
-        //delete R2
-        sdb.beginTransaction();
-        cl.delete(new BasicBSONObject("a", 2));
-        
-        //update R1 to R3 same as the R2
-        cl.update(new BasicBSONObject("a", 1), modifier, null);
-        
-        expDataList.clear();
-        expDataList.add(data3);
-        recordCur = cl.query(null, null, null, "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            expDataList.clear();
+            expDataList.add(data3);
 
-        recordCur = cl.query(null, null, null, "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-        
-        sdb.rollback();
-        
+            recordCur = cl.query(null, null, null, "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+
+            recordCur = cl.query(null, null, null, "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+
+            transDB.rollback();
+        }
+
         expDataList.clear();
         expDataList.add(data);
         expDataList.add(data2);
@@ -112,31 +113,30 @@ public class Transaction17252 extends SdbTestBase {
     }
 
     @Test
-    public void test2(){
+    public void test2() {
+        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
+            transDB.beginTransaction();
+            DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
+            // delete record R2
+            transCL.delete(new BasicBSONObject("a", data2.get("a")));
+            // update record R1 to R3 same as the R2
+            transCL.update(new BasicBSONObject("a", 1), modifier, null);
 
-        //delete R2
-        sdb.beginTransaction();
-        cl.delete(new BasicBSONObject("a", 2));
-        
-        //update R1 to R3 same as the R2
-        cl.update(new BasicBSONObject("a", 1), modifier, null);
-        
-        expDataList.clear();
-        expDataList.add(data3);
-        recordCur = cl.query(null, null, null, "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+            expDataList.clear();
+            expDataList.add(data3);
 
-        recordCur = cl.query(null, null, null, "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-        
-        sdb.commit();
-        
-        expDataList.clear();
-        expDataList.add(data3);
+            recordCur = cl.query(null, null, null, "{'': null}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+
+            recordCur = cl.query(null, null, null, "{'': 'a'}");
+            actDataList = TransUtils.getReadActList(recordCur);
+            Assert.assertEquals(actDataList, expDataList);
+            actDataList.clear();
+
+            transDB.commit();
+        }
 
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);

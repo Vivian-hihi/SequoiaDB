@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.ru;
+package com.sequoiadb.transaction.uniqueIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,20 +18,19 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description Transaction17258.java 回滚的记录与其他事务的记录重复
+ * @Description seqDB-17129 : 更新已提交记录与本事务中更新的记录唯一索引重复
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = "ru")
-public class Transaction17258 extends SdbTestBase {
+@Test(groups = {"rc", "ru"})
+public class Transaction17129 extends SdbTestBase {
 
-    private String clName = "transCL_17258";
+    private String clName = "transCL_17129";
     private Sequoiadb sdb = null;
-    private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
-    private DBCollection cl2 = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
+    private BSONObject modifier = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
@@ -40,48 +39,50 @@ public class Transaction17258 extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        cl.createIndex("a", "{a:1}", true, false);
-        expDataList = new ArrayList<BSONObject>();
-        
         data = new BasicBSONObject();
-        data.put("_id", "insert1725801");
         data.put("a", 1);
-        data.put("b", "testTrans_17258");
+        data.put("b", "testTrans_17129");
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
-        cl.insert(data);
 
         data2 = new BasicBSONObject();
-        data2.put("_id", "insert1725801");
         data2.put("a", 2);
         data2.put("b", 1024);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
-        
+
+        expDataList = new ArrayList<BSONObject>();
+        expDataList.add(data);
+        expDataList.add(data2);
+        cl.insert(expDataList);
+        cl.createIndex("a", "{a:1}", true, false);
+
+        BSONObject data3 = new BasicBSONObject();
+        data3.put("_id", "id17129");
+        data3.put("a", "testTrans_17129Update");
+        data3.put("b", 1);
+        data3.put("c", 13700000000L);
+        data3.put("d", "customer transaction type data application.");
+
+        modifier = new BasicBSONObject();
+        modifier.put("$set", data3);
+
     }
 
-    // TODO:SEQUOIADBMAINSTREAM-4118
-    @Test(enabled = false)
-    public void test() {
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-        
-        sdb.beginTransaction();
-        sdb2.beginTransaction();
-        
-        //1 trans1 delete R1
-        cl.delete("{'a':1}");
+    @Test
+    public void test(){
         try {
-            //trans2 insert record R2 same as the R1
-            cl2.insert(data2);
+            // update record R1 to R3
+            sdb.beginTransaction();
+            cl.update(new BasicBSONObject("a", 1), modifier, null);
+            
+            // update record R2 to R4 same as the R3
+            cl.update(new BasicBSONObject("a", 2), modifier, null);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
 
-        sdb.rollback();
-        
-        expDataList.add(data);
         recordCur = cl.query(null, null, null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -91,6 +92,9 @@ public class Transaction17258 extends SdbTestBase {
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
+
+        cl.delete("{'a': {'$isnull' :0}}");
+        Assert.assertEquals(cl.getCount(), 0);
 
     }
 
