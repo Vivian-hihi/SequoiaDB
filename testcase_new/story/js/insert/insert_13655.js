@@ -6,12 +6,10 @@
 **************************************/
 function main()
 {
-    var csName = COMMCSNAME + "_cs13655";
-    var clName = CHANGEDPREFIX + "_cl13655" ;
+    var clName = "cl13655" ;
     
-    println("--test start.");
     //插入正常记录，执行查询，检查结果
-    var cl = commCreateCL( db, csName, clName );
+    var cl = commCreateCL( db, COMMCSNAME, clName );
     var insert_string = {_id:1,field:123,name:"赵钱孙李陈"} ; 
     cl.insert(insert_string) ;
     cl.createIndex("myIndex13655",{field:1,name:1});
@@ -34,9 +32,8 @@ function main()
     var errInsertString5 = {field:repeat("field", 1024)};
     checkErrCodeAndNodeName(cl, errInsertString5, -39, expNodeName);
     
-    println("--test end.");
     //清除环境
-    commDropCS( db, csName, true, "drop CS in the end" );  
+    commDropCL( db, COMMCSNAME, clName, true, true, "drop CL in the end" );  
 }
 
 function checkRecords( cl, insert_string )
