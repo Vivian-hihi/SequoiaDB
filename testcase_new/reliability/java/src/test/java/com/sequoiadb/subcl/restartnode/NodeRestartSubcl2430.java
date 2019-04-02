@@ -97,7 +97,7 @@ public class NodeRestartSubcl2430 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            Assert.assertEquals(groupMgr.checkBusiness(120), true);
+            Assert.assertEquals(groupMgr.checkBusinessWithLSN(120), true);
             Assert.assertEquals(subCLGroup.checkInspect(60), true);
 
             // 再次删除

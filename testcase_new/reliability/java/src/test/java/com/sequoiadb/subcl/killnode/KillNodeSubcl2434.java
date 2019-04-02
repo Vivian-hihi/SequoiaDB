@@ -94,7 +94,7 @@ public class KillNodeSubcl2434 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            Assert.assertEquals(groupMgr.checkBusiness(120), true);
+            Assert.assertEquals(groupMgr.checkBusinessWithLSN(120), true);
             Assert.assertEquals(cataGroup.checkInspect(60), true);
             // 插入数据
             for (int i = 0; i < 500; i++) {

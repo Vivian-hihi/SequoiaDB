@@ -97,7 +97,7 @@ public class NodeRestartSubcl2427 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            Assert.assertEquals(groupMgr.checkBusiness(120), true);
+            Assert.assertEquals(groupMgr.checkBusinessWithLSN(120), true);
             Assert.assertEquals(cataGroup.checkInspect(60), true);
 
             // 向脱离的子表插入数据

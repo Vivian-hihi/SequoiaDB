@@ -99,7 +99,7 @@ public class CRUDAndAddNodeWithIndex3182 extends SdbTestBase {
 			mgr.check();
 			Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 			
-			if ( !groupMgr.checkBusiness( 600, true )){
+			if ( !groupMgr.checkBusinessWithLSN( 600 )){
 			    Assert.fail("checkBusiness occurs time out");
 			}
 

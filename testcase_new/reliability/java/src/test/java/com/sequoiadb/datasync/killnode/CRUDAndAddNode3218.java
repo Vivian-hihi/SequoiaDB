@@ -99,7 +99,7 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
             // Note: 有包含过去的Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
             taskMgr.check(); 
             // 公共的结果检查，以下为检查cl所在数据组节点间一致性
-            if ( !groupMgr.checkBusiness( 600, true )){
+            if ( !groupMgr.checkBusinessWithLSN( 600 )){
                 Assert.fail("checkBusinessWithExNode occurs time out(2)");
             }
             if (!clGroupWrapper.checkInspect(1)) {
