@@ -271,6 +271,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
    INT32 tmp = SDB_OK ;
    INT32 bodyLen = 0 ;
    BOOLEAN needReply = FALSE ;
+   BOOLEAN needRollback = FALSE ;
    bson::BSONObjBuilder bob ;
    mongoDataPacket &packet = _converter.getParser().dataPacket() ;
 
@@ -283,11 +284,25 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
    {
       rc = getProcessor()->processMsg( (MsgHeader *) pMsg,
                                        _contextBuff, _replyHeader.contextID,
-                                       needReply ) ;
+                                       needReply,
+                                       needRollback ) ;
       _errorInfo = engine::utilGetErrorBson( rc,
                    _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
       if ( SDB_OK != rc )
       {
+         if ( needRollback )
+         {
+            PD_LOG( PDDEBUG, "Session rolling back operation "
+                    "(opCode=%d, rc=%d)", (MsgHeader *)pMsg->opCode, rc ) ;
+
+            INT32 rcTmp = getProcessor()->doRollback() ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Session failed to rollback trans "
+                       "info, rc: %d", rcTmp ) ;
+            }
+         }
+
          tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
          // build error msg
          bob.append( "ok", FALSE ) ;
