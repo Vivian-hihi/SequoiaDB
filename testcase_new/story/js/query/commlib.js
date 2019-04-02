@@ -600,5 +600,6 @@ function checkCLData( rc, expRecs )
 		  "[cnt:"+ expCnt +", recs:"+ expRecs +"]",
 		  "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
    }
+   //TODO:1、正常情况下不要打印记录信息，没有意义
    println( "cl records: "+ actRecs );
 }

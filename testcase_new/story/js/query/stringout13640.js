@@ -11,7 +11,7 @@ function main()
       var csName = COMMCSNAME;
       var clName = COMMCLNAME+"_13640" ;
       var cl = commCreateCL( db, csName, clName );
-      
+      //TODO:1、请确认下覆盖查询条件组合
       readyData( cl );
 	  //特殊数据类型如：最小值$minKey、最大值$maxKey、空值null、数组、对象、二进制数据、正则表达式会被忽略，stringout会返回"":""
 	  //使用$include选择符，排序字段：查询字段  排序顺序：顺序排序  指定flags=FLG_QUERY_STRINGOUT
