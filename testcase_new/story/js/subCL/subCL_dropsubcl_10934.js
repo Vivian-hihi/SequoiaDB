@@ -4,11 +4,11 @@
 *@createDate:  2019.3.12
 *@testlinkCase: seqDB-10934
 **************************************/
+main();
 function main()
 {
-    var csName = COMMCSNAME + "_cs10934";
-    var mainCL_Name = CHANGEDPREFIX + "_maincl10934" ;
-    var subCL_Name = CHANGEDPREFIX + "_subcl10934";
+    var mainCL_Name = "maincl10934" ;
+    var subCL_Name = "subcl10934";
     var clNum = 10;
     
     if(true == commIsStandalone( db ))
@@ -17,37 +17,32 @@ function main()
       return;
     }
     
-    println("--test start.");
+    var db1 = null;
+    var db2 = null;
     try
     {
-        var db1 = new Sdb( COORDHOSTNAME, COORDSVCNAME );
+        //连接1挂载子表后删除子表
+        db1 = new Sdb( COORDHOSTNAME, COORDSVCNAME );
         
-        //创建cs
-        commCreateCS(db1, csName, true, "" );
-        
-        //创建主表
         var mainCLOption = { ShardingKey:{"a":1}, ShardingType:"range", IsMainCL:true};
-        var maincl = commCreateCLByOption( db1, csName, mainCL_Name, mainCLOption, true, true);
-        
-        //创建子表
-        var subClOption = {ShardingKey:{"b":1}, ShardingType:"hash", AutoSplit:true, ReplSize:0};
-        commCreateCLByOption( db1, csName, subCL_Name, subClOption, true, true );
-        
-        //挂载子表
-        var options = {LowBound:{ a:1 },UpBound:{ a: 100 }};
-        maincl.attachCL(csName + "." + subCL_Name, options);
+        var maincl = commCreateCLByOption( db1, COMMCSNAME, mainCL_Name, mainCLOption, true, true);
 
-        //插入数据
+        var subClOption = {ShardingKey:{"b":1}, ShardingType:"hash", AutoSplit:true, ReplSize:0};
+        commCreateCLByOption( db1, COMMCSNAME, subCL_Name, subClOption, true, true );
+
+        var options = {LowBound:{ a:1 },UpBound:{ a: 100 }};
+        maincl.attachCL(COMMCSNAME + "." + subCL_Name, options);
+
         maincl.insert({a:10});
+
+        db1.getCS(COMMCSNAME).dropCL(subCL_Name);
         
-        //删除子表
-        db1.getCS(csName).dropCL(subCL_Name);
-        
-        var db2 = new Sdb( COORDHOSTNAME, COORDSVCNAME );
+        //连接2再次删除子表，并通过主表查询
+        db2 = new Sdb( COORDHOSTNAME, COORDSVCNAME );
         try
         {
-            db2.getCS(csName).dropCL(subCL_Name);
-            throw buildException("dropCL()",null,"drop collection should fail", "dropCL failed", "dropCL success");
+            db2.getCS(COMMCSNAME).dropCL(subCL_Name);
+            throw "expect fail but success!";
         }
         catch( e )
         {
@@ -56,9 +51,8 @@ function main()
                 throw buildException("dropCL()",e ,"drop collection should fail", '-23', e );
             }
         }
-        
-        //通过主表查询数据
-        var cursor = db2.getCS(csName).getCL(mainCL_Name).find();
+
+        var cursor = db2.getCS(COMMCSNAME).getCL(mainCL_Name).find();
         if(cursor.next()!=null)
         {
             throw buildException("find",null,"check record", "no data", "have data");
@@ -76,8 +70,6 @@ function main()
         }
     }
     
-    println("--test end.");
     //清除环境
-    commDropCS( db, csName, true, "drop CS in the end" );  
+    commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "drop CL in the end" );  
 }
-main();

@@ -11,6 +11,8 @@ function main()
     var mainCL_Name = "maincl62";
     var subCL_Name = "subcl62";
     var subCLFullName = csName + "." + subCL_Name;
+    var operationNum = 100;
+    
     if(true == commIsStandalone( db ))
     {
       println( "run mode is standalone");
@@ -26,8 +28,8 @@ function main()
     var subcl = commCreateCLByOption( db, csName, subCL_Name, subClOption, true, true );
     
     //循环多次attach子表/detach子表 
-    var options = { LowBound:{ a:0 },UpBound:{ a: 100} };
-    for(var i = 0 ; i < 100 ; i++)
+    var options = { LowBound:{ a:0 },UpBound:{ a: operationNum } };
+    for(var i = 0 ; i < operationNum ; i++)
     {
         maincl.attachCL( subCLFullName, options );
         maincl.insert({a:i});
@@ -35,14 +37,16 @@ function main()
     }
     
     cursor = subcl.find({},{"_id":{"$include":0}});
-    for(var i = 0 ; i < 100 ; i++)
+    var i = 0;
+    while( cursor.next() != null )
     {
         var insert_obj = {"a": i};
-        var act_obj = cursor.next().toObj();
+        var act_obj = cursor.current().toObj();
         if(insert_obj["a"] !== act_obj["a"])
         {
-            throw buildException("checkResult()",null,"check collection record, cl:" + subCSName + "." + subclName+"_"+i, insert_obj["a"], act_obj["a"]);
+            throw buildException("checkResult()",null,"check collection record, cl:" + csName + "." + subCL_Name+"_"+i, insert_obj["a"], act_obj["a"]);
         }
+        i++;
     }
     cursor.close();
     
