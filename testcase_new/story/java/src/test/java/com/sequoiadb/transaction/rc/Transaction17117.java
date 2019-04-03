@@ -96,7 +96,7 @@ public class Transaction17117 extends SdbTestBase {
         actList.clear();
         
         // 事务2表扫描记录、逆序
-        cursor = cl2.query(null, null, "{b:-1}", "{'':null}");
+        cursor = cl2.query(null, null, "{a:-1, b:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, invExpList);
         actList.clear();
@@ -159,7 +159,7 @@ public class Transaction17117 extends SdbTestBase {
                 actList.clear();
                 
                 // 事务1表扫描记录、逆序
-                cursor = cl1.query(null, null, "{a:-1}", "{'':null}");
+                cursor = cl1.query(null, null, "{a:-1, b:1}", "{'':null}");
                 actList = TransUtils.getReadActList(cursor);
                 Assert.assertEquals(actList, invExpList);
                 actList.clear();
@@ -203,7 +203,7 @@ public class Transaction17117 extends SdbTestBase {
             actList.clear();
             
             // 事务2表扫描记录、逆序
-            cursor = cl2.query(null, null, "{b:-1}", "{'':null}");
+            cursor = cl2.query(null, null, "{a:-1, b:1}", "{'':null}");
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, invInsertR1s);
             actList.clear();
