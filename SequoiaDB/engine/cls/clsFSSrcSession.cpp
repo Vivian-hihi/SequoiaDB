@@ -899,10 +899,10 @@ namespace engine
             goto error ;
          }
       }
-      else if ( retryTime < 10 )
+      else if ( retryTime < 5 )
       {
          ++retryTime ;
-         ossSleep( 100 ) ;
+         ossSleep( 200 ) ;
          goto retry ;
       }
       else
