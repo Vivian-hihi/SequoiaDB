@@ -1,5 +1,6 @@
 ##语法##
 ***db.collectionspace.collection.createIndex\(\<name\>,\<indexDef\>,\[isUnique\],\[enforced\],\[sortBufferSize\])***
+***db.collectionspace.collection.createIndex\(\<name\>,\<indexDef\>,\[options\])***
 
 为集合创建[索引](basic_operation/indexes.md)，提高查询速度。
 
@@ -12,6 +13,16 @@
 | isUnique | Boolean | 索引是否唯一，默认 false。设置为 true 时代表该索引为唯一索引。 | 否 |
 | enforced | Boolean | 索引是否强制唯一，可选参数，在 isUnique 为 true 时生效，默认 false。设置为 true 时代表该索引在 isUnique 为 true 的前提下，不可存在一个以上全空的索引键。 | 否 |
 | sortBufferSize | int | 创建索引时使用的排序缓存的大小，单位为MB。取值为0时表示不使用排序缓存。默认为64。| 否 |
+| options | Json 对象 | 可选项，详见 options 选项说明。| 否 |
+
+##options 选项##
+
+| 属性名          | 参数类型 | 描述                | 默认值 |
+| --------------- | -------- | ------------------- | ------ |
+| Unique          | Boolean  | 索引是否唯一。| false  |
+| Enforced        | Boolean  | 索引是否强制唯一。| false  |
+| NotNull         | Boolean  | 索引的任意一个字段是否允许为 null 或者不存在。| false  |
+| SortBufferSize  | int      | 创建索引时使用的排序缓存的大小。| 64MB  |
 
 > **Note:**
 >
@@ -33,5 +44,23 @@
 * 在集合 bar 下为字段名 age 创建名为 ageIndex 的唯一索引，记录按 age 字段值的升序排序。
 
  ```lang-javascript
- db.foo.bar.createIndex( "ageIndex", { age: 1 }, true )
+ > db.foo.bar.createIndex( "ageIndex", { age: 1 }, true )
+ ```
+
+* 集合 bar 创建唯一索引，并且索引字段不允许为 null 或者不存在 。
+
+ ```lang-javascript
+ > db.foo.bar.createIndex( "ab", { a: 1, b: 1 }, { Unique: true, NotNull: true } )
+ >
+ > // b 字段为 null，插入索引时报错
+ > db.foo.bar.insert( { a: 1, b: null } )
+ sdb.js:625 uncaught exception: -339
+ Any field of index key should exist and cannot be null
+ Takes 0.002531s.
+ > 
+ > // b 字段不存在，插入索引时报错
+ > db.foo.bar.insert( { a: 1 } )
+ sdb.js:625 uncaught exception: -339
+ Any field of index key should exist and cannot be null
+ Takes 0.002531s.
  ```
