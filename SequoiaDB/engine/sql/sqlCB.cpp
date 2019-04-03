@@ -166,7 +166,7 @@ namespace engine
       needRollback = container->needRollback() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to execute pty tree:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to execute qgm tree, rc: %d", rc ) ;
          goto error ;
       }
 
