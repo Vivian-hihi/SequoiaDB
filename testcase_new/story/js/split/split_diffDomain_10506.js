@@ -3,10 +3,11 @@
 *@author：2019-3-13 wangkexin
 *@testlinkCase: seqDB-10506
 **************************************/
-var csName = COMMCSNAME + "_cs10506";
-var clName = CHANGEDPREFIX + "_cl10506" ;
+main();
 function main()
 {
+    var csName = "cs10506";
+    var clName = "cl10506" ;
     var domainName = "mydomain10506";
     
     if( true == commIsStandalone( db ) )
@@ -40,55 +41,62 @@ function main()
     {
         println("srcGrName :" + srcGrName_a + " , tarGrName : " + tarGrName_c);
         cl.split( srcGrName_a,  tarGrName_c, { Partition: 10 }, { Partition: 20 } )
-        throw buildException("split()",null,"split should fail", "split failed", "split success");
+        throw "expect fail but succeed";
     }
     catch( e )
     {
-        if(e!=-216)
+        if( e !== -216 )
         {
             throw buildException("split()",e ,"target group is not in domain", '-216', e );
         }
     }
     
     println("--start check split result");
-    //查看数据切分结果，分别连接coord、源组data、目标组data查询
-    checkResult(COORDHOSTNAME, COORDSVCNAME, null, null, 100);
-    checkResult(groupsInfo[0][1], groupsInfo[0][2], groupsInfo[1][1], groupsInfo[1][2], 100);
+    //查看数据切分结果，分别连接coord、源组data、目标组data查询(这里的目标组为自动切分的目标组,组b)
+    var coord = new Sdb( COORDHOSTNAME, COORDSVCNAME );
+    var rga_data = new Sdb(groupsInfo[0][1], groupsInfo[0][2]);
+    var rgb_data = new Sdb(groupsInfo[1][1], groupsInfo[1][2]);
     
-    //再次插入数据
-    insertData( db, csName, clName, 100 );
-    checkResult(COORDHOSTNAME, COORDSVCNAME, null, null, 200);
-    checkResult(groupsInfo[0][1], groupsInfo[0][2], groupsInfo[1][1], groupsInfo[1][2], 200);
+    try
+    {
+        checkResult(coord, null, csName, clName, 100);
+        checkResult(rga_data, rgb_data, csName, clName, 100);
+        
+        //再次插入数据
+        insertData(db, csName, clName, 100);
+        checkResult(coord, null, csName, clName, 200);
+        checkResult(rga_data, rgb_data, csName, clName, 200);
+    }
+    finally
+    {
+        coord.close();
+        rga_data.close();
+        rgb_data.close();
+    }
     
     println("--clean cs and domain");
     commDropCS( db, csName, true, "drop CS in the end" );
     db.dropDomain(domainName);
 }
 
-function checkResult( hostname1, svcname1, hostname2, svcname2, expCount )
+function checkResult( db1, db2, csName, clName, expCount )
 {
-    var db1 = new Sdb( hostname1, svcname1 );
     var actCount1 = db1.getCS(csName).getCL(clName).find().count();
-    
-    if(hostname2 == undefined && svcname2 == undefined)
+
+    if( db2 == undefined )
     {
-        if(actCount1!=expCount)
+        if( Number(actCount1) !== expCount )
         {
-            throw buildException("count()",e ,"The number of queries received by connecting "+hostname1+":"+svcname1+" is incorrect", expCount, actCount1 );
+            throw buildException("checkResult()", null, "The number of queries received by connecting coord is incorrect", expCount, actCount1);
         }
-        db1.close();
     }
     else
     {
-        var db2 = new Sdb( hostname2, svcname2 );
         var actCount2 = db2.getCS(csName).getCL(clName).find().count();
         var actCount = actCount1+actCount2;
-        if(actCount!=expCount)
+        if( actCount !== expCount )
         {
-            throw buildException("count()",e ,"The number of queries received by connecting "+hostname1+":"+svcname1+" and "+hostname2+":"+svcname2+"  is incorrect actCount1 = " + actCount1 + " ,actCount2 = " + actCount2, expCount, actCount );
+            throw buildException("checkResult()", null, "The number of queries received by connecting rga_data and rgb_data is incorrect actCount1 = " + actCount1 + " ,actCount2 = " + actCount2, expCount, actCount);
         }
-        db1.close();
-        db2.close();
     }
 }
-main();
