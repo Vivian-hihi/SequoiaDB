@@ -2621,18 +2621,6 @@ namespace engine
             return FALSE ;
          }
 
-         /// transaction check
-         INT32 rc = rtnTransTryOrTestLockCL( _curCollecitonName.c_str(),
-                                             DPS_TRANSLOCK_S, TRUE, eduCB() ) ;
-         if ( SDB_DMS_CS_NOTEXIST != rc || SDB_DMS_NOTEXIST != rc ||
-              SDB_OK != rc )
-         {
-            PD_LOG( PDINFO, "Session[%s] test collection[%s]'s shared "
-                    "trans-lock failed, rc: %d", sessionName(),
-                    _curCollecitonName.c_str(), rc ) ;
-            return FALSE ;
-         }
-
          if ( FALSE == _getLastEndNtyOffset )
          {
             _getLastEndNtyOffset = TRUE ;

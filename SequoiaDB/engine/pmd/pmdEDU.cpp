@@ -795,7 +795,9 @@ namespace engine
          _writingDB = TRUE ;
          _writingID = pmdAcquireGlobalID() ;
       }
-      else if ( !writing && 0 == getLockItem(SDB_LOCK_DMS)->lockCount() )
+      else if ( !writing && 0 == getLockItem(SDB_LOCK_DMS)->lockCount() &&
+                ( DPS_INVALID_TRANS_ID == _curTransID ||
+                  DPS_INVALID_LSN_OFFSET == _curTransLSN ) )
       {
          _writingDB = FALSE ;
          _writingID = 0 ;
