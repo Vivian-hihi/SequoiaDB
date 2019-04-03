@@ -81,10 +81,11 @@ public class Transaction17943 extends SdbTestBase {
             latch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } finally {
+            
+            // 删除索引
+            cl.dropIndex("textIndex17943");
         }
-
-        // 删除索引
-        cl.dropIndex("textIndex17943");
     }
 
     private void insertData() {
@@ -129,7 +130,7 @@ public class Transaction17943 extends SdbTestBase {
                         if (e.getErrorCode() == -13) {
                             db.rollback();
                             continue;
-                        }else {
+                        } else {
                             Assert.fail(e.getMessage());
                         }
                     }
