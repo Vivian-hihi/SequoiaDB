@@ -100,11 +100,11 @@ function crudAndCheckDetached( maincl, subcl )
    try
    {
        maincl.insert(obj);
-       throw buildException("crudAndCheckDetached()", null, "Insert data into detached cl", "insert failed", "insert success");
+       throw "expect insert to fail, but succeed.";
    }
    catch( e )
    {
-       if( e!=-135 )
+       if( e !== -135 )
        {
            throw buildException( "crudAndCheckDetached()", e, "unexpected error code", '-135', e );
        }
@@ -114,7 +114,7 @@ function crudAndCheckDetached( maincl, subcl )
    var cursor = subcl.findOne(obj);
    if(cursor.next() === undefined)
    {
-       throw buildException("crudAndCheckDetached()", null, "remove data from detached cl", "remove failed", "remove success");
+       throw "remove data from detached cl succeed.";
    }
    
    subcl.insert({field:123});
@@ -122,13 +122,13 @@ function crudAndCheckDetached( maincl, subcl )
    cursor = subcl.findOne({field:111});
    if(cursor.next() !== undefined)
    {
-       throw buildException("crudAndCheckDetached()", null, "update data from detached cl", "update failed", "update success");
+       throw "update data from detached cl succeed.";
    }
    
    cursor = maincl.find(obj);
    if(cursor.next() !== undefined)
    {
-       throw buildException("crudAndCheckDetached()", null, "query data from detached cl", "query failed", "query success");
+       throw "query data from detached cl succeed.";
    }
    cursor.close();
 }
@@ -154,7 +154,7 @@ function crudAndCheck( maincl, subcl )
    cursor = subcl.find();
    if(cursor.next() !== undefined)
    {
-      throw buildException("crudAndCheck()", null, "remove data from attached cl", "remove success", "remove failed");
+      throw "remove data from attached cl failed.";
    }
    
    //insert
@@ -162,7 +162,7 @@ function crudAndCheck( maincl, subcl )
    maincl.insert(obj);
    if( 1 !== Number(maincl.count()) )
    {
-       throw buildException( "crudAndCheck()", null, "insert data from attached cl", "have data", "no data" );
+       throw "insert data from attached cl failed.";
    }
    cursor = subcl.find(obj);
    if( cursor.next().toObj()["a"] !== obj["a"] )

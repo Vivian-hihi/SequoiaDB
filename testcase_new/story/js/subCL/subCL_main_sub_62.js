@@ -11,7 +11,7 @@ function main()
     var mainCL_Name = "maincl62";
     var subCL_Name = "subcl62";
     var subCLFullName = csName + "." + subCL_Name;
-    var operationNum = 100;
+    var operationNum = 50;
     
     if(true == commIsStandalone( db ))
     {
