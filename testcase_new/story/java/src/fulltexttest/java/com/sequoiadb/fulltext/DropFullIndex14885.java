@@ -83,7 +83,7 @@ public class DropFullIndex14885 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            sdb.dropCollectionSpace(csName14885);
+            FullTextDBUtils.dropCollectionSpace(sdb, csName14885);
         } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + this.getKeyStack(e, this));
         } finally {

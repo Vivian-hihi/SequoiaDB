@@ -52,7 +52,7 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        sdb.dropCollectionSpace(this.csName);
+        FullTextDBUtils.dropCollectionSpace(sdb, csName);
         // check fulltext deleted
         if(esIndexNames != null){
             FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);

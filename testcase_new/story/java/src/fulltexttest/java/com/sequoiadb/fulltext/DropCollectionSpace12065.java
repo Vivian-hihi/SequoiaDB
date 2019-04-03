@@ -82,7 +82,7 @@ public class DropCollectionSpace12065 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            sdb.dropCollectionSpace(csName12065);
+            FullTextDBUtils.dropCollectionSpace(sdb, csName12065);
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -34, e.getMessage());
         } finally {

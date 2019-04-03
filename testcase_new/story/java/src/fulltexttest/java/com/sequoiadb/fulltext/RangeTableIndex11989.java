@@ -73,7 +73,7 @@ public class RangeTableIndex11989 extends SdbTestBase {
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            cs.dropCollection(clName);
+            FullTextDBUtils.dropCollection(cs, clName);
         } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + this.getKeyStack(e, this));
         } finally {

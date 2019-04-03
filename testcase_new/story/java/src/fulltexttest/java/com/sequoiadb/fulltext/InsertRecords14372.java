@@ -65,7 +65,7 @@ public class InsertRecords14372 extends SdbTestBase {
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-            cs.dropCollection(this.clName);
+            FullTextDBUtils.dropCollection(cs, clName);
             // check fulltext deleted
             if(esIndexNames != null){
                 FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);

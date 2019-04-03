@@ -65,9 +65,9 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        cs.dropCollection(subCLName1);
-        cs.dropCollection(subCLName2);
-        cs.dropCollection(mainCLName);
+        FullTextDBUtils.dropCollection(cs, subCLName1);
+        FullTextDBUtils.dropCollection(cs, subCLName2);
+        FullTextDBUtils.dropCollection(cs, mainCLName);
         sdb.close();
         esClient.close();
     }

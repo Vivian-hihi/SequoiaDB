@@ -51,7 +51,7 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        cs.dropCollection(clName);
+        FullTextDBUtils.dropCollection(cs, clName);
         sdb.close();
         esClient.close();
     }
