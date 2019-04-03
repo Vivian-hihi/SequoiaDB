@@ -7,14 +7,12 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
-import com.sequoias3.common.DataShardingType;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.DataAttr;
 import com.sequoias3.core.Region;
 import com.sequoias3.dao.*;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
-import com.sequoias3.utils.ShardingTypeUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Repository;
 import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
 
 @Repository("DataDao")
 public class SequoiadbDataDao implements DataDao {
@@ -43,6 +40,9 @@ public class SequoiadbDataDao implements DataDao {
 
     @Autowired
     SequoiadbRegionSpaceDao sequoiadbRegionSpaceDao;
+
+    @Autowired
+    SdbBaseOperation sdbBaseOperation;
 
     @Override
     public DataAttr insertObjectData(String csName, String clName, InputStream data, Region region)
@@ -115,12 +115,13 @@ public class SequoiadbDataDao implements DataDao {
                 }
 
                 if (!sdb.isCollectionSpaceExist(csName)) {
-                    if(DBParamDefine.CREATE_OK == sdbDatasourceWrapper.createCS(sdb, csName, option)){
-                        sequoiadbRegionSpaceDao.insertRegionCSList(sdb, csName, regionName);
+                    if(DBParamDefine.CREATE_OK == sdbBaseOperation.createCS(sdb, csName, option)){
+                        sequoiadbRegionSpaceDao.insertRegionCSList(csName, regionName);
                     }
                 }
+
                 BSONObject clOption = generateDataCLOption();
-                sdbDatasourceWrapper.createCL(sdb, csName, clName, clOption);
+                sdbBaseOperation.createCL(sdb, csName, clName, clOption);
                 return createLob(sdb, csName, clName);
             } else {
                 logger.error("create lob failed. error:"+e);
@@ -133,6 +134,7 @@ public class SequoiadbDataDao implements DataDao {
         BSONObject clOption = new BasicBSONObject();
 
         BSONObject shardingKey = new BasicBSONObject("_id", 1);
+        clOption.put("AutoIndexId", false);
         clOption.put("ShardingKey", shardingKey);
         clOption.put("ShardingType", "hash");
         clOption.put("ReplSize", -1);
@@ -247,52 +249,4 @@ public class SequoiadbDataDao implements DataDao {
         }
     }
 
-    @Override
-    public String getDataCSName(Region region, Date date){
-        StringBuilder csName = new StringBuilder();
-
-        if (null != region){
-            if (region.getDataLocation() != null){
-                csName.append(region.getDataCSLocation());
-            }else {
-                csName.append(DBParamDefine.CS_S3);
-                csName.append(region.getName());
-                csName.append(DBParamDefine.CS_DATA);
-                DataShardingType type = DataShardingType.getShardingType(region.getDataCSShardingType());
-                if (type != null){
-                    csName.append("_");
-                    csName.append(ShardingTypeUtils.getShardingTypeStr(type, date));
-                }
-            }
-        }else {
-            csName.append(sdbConfig.getDataCsName());
-            csName.append("_");
-            csName.append(ShardingTypeUtils.getShardingTypeStr(DataShardingType.YEAR, date));
-        }
-
-        return csName.toString();
-    }
-
-    @Override
-    public String getDataClName(Region region, Date date){
-        StringBuilder clName = new StringBuilder();
-
-        if (null != region){
-            if (region.getDataLocation() != null){
-                clName.append(region.getDataCLLocation());
-            }else {
-                clName.append(DaoCollectionDefine.OBJECT_DATA_LIST);
-                DataShardingType type = DataShardingType.getShardingType(region.getDataCLShardingType());
-                if (type != null){
-                    clName.append("_");
-                    clName.append(ShardingTypeUtils.getShardingTypeStr(type, date));
-                }
-            }
-        }else {
-            clName.append(DaoCollectionDefine.OBJECT_DATA_LIST);
-            clName.append("_");
-            clName.append(ShardingTypeUtils.getShardingTypeStr(DataShardingType.QUARTER, date));
-        }
-        return clName.toString();
-    }
 }

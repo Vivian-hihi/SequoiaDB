@@ -1,7 +1,9 @@
 package com.sequoias3;
 
 import com.sequoias3.common.InitAdminUserDefine;
+import com.sequoias3.core.IDGenerator;
 import com.sequoias3.core.User;
+import com.sequoias3.dao.IDGeneratorDao;
 import com.sequoias3.dao.UserDao;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
@@ -20,14 +22,17 @@ public class InitAdminUserConfig implements ApplicationRunner {
     @Autowired
     private UserDao userDao;
 
+    @Autowired
+    IDGeneratorDao idGeneratorDao;
+
     @Override
     public void run(ApplicationArguments applicationArguments)
             throws Exception {
         try {
-            if (userDao.getMaxID() == 0) {
+            if (userDao.getUserByName(InitAdminUserDefine.ADMIN_NAME) == null) {
                 User u = new User();
                 u.setUserName(InitAdminUserDefine.ADMIN_NAME);
-                u.setUserId(1);
+                u.setUserId(idGeneratorDao.getNewId(IDGenerator.TYPE_USER));
                 u.setRole(InitAdminUserDefine.ADMIN_ROLE);
                 u.setAccessKeyID(InitAdminUserDefine.ADMIN_ACCESSKEYID);
                 u.setSecretAccessKey(InitAdminUserDefine.ADMIN_SECRETACCESSKEY);

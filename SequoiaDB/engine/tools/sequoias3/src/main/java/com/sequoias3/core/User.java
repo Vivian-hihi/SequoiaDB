@@ -14,7 +14,7 @@ public class User {
     @JsonProperty(DISPLAY_NAME)
     private String userName;
     @JsonProperty(JSON_KEY_USERID)
-    private int userId;
+    private long userId;
     @JsonIgnore
     private String role;
     @JsonIgnore
@@ -30,11 +30,11 @@ public class User {
         this.userName = username;
     }
 
-    public int getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(int userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 

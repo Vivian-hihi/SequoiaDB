@@ -1,6 +1,7 @@
 package com.sequoias3.service.impl;
 
 import com.sequoias3.common.DBParamDefine;
+import com.sequoias3.common.DelimiterStatus;
 import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.common.VersioningStatusType;
 import com.sequoias3.context.Context;
@@ -16,6 +17,7 @@ import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
+import com.sequoias3.utils.DirUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -27,11 +29,8 @@ import sun.misc.BASE64Decoder;
 
 import javax.servlet.ServletOutputStream;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.*;
 
-import static com.sequoias3.utils.DataFormatUtils.formatDate;
 import static com.sequoias3.utils.DataFormatUtils.parseDate;
 
 @Service
@@ -65,8 +64,14 @@ public class ObjectServiceImpl implements ObjectService {
     @Autowired
     RegionDao regionDao;
 
+    @Autowired
+    DirDao dirDao;
+
+    @Autowired
+    IDGeneratorDao idGenerator;
+
     @Override
-    public PutDeleteResult putObject(int ownerID, String bucketName, String objectName,
+    public PutDeleteResult putObject(long ownerID, String bucketName, String objectName,
                                      String contentMD5, Map<String, String> headers,
                                      Map<String, String> xMeta, InputStream inputStream)
             throws S3ServerException {
@@ -92,8 +97,8 @@ public class ObjectServiceImpl implements ObjectService {
 
         //get cs and cl
         Date createDate      = new Date();
-        String dataCsName    = dataDao.getDataCSName(region, createDate);
-        String dataClName    = dataDao.getDataClName(region, createDate);
+        String dataCsName    = regionDao.getDataCSName(region, createDate);
+        String dataClName    = regionDao.getDataClName(region, createDate);
 
         DataAttr insertResult;
         try {//insert lob
@@ -152,7 +157,7 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public GetResult getObject(int ownerID, String bucketName, String objectName,
+    public GetResult getObject(long ownerID, String bucketName, String objectName,
                                Long versionId, Boolean isNoVersion, Map headers,
                                Range range)
             throws S3ServerException {
@@ -164,10 +169,10 @@ public class ObjectServiceImpl implements ObjectService {
                 region = regionDao.queryRegion(bucket.getRegion());
             }
 
-            String metaCsName    = metaDao.getMetaCurCSName(region);
-            String metaClName    = metaDao.getMetaCurCLName(region);
-            String metaHisCsName = metaDao.getMetaHisCSName(region);
-            String metaHisClName = metaDao.getMetaHisCLName(region);
+            String metaCsName    = regionDao.getMetaCurCSName(region);
+            String metaClName    = regionDao.getMetaCurCLName(region);
+            String metaHisCsName = regionDao.getMetaHisCSName(region);
+            String metaHisClName = regionDao.getMetaHisCLName(region);
 
             int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
             while (tryTime > 0) {
@@ -267,7 +272,7 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public PutDeleteResult deleteObject(int ownerID, String bucketName, String objectName)
+    public PutDeleteResult deleteObject(long ownerID, String bucketName, String objectName)
             throws S3ServerException {
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
@@ -283,10 +288,9 @@ public class ObjectServiceImpl implements ObjectService {
             PutDeleteResult response = null;
             switch (versioningStatusType) {
                 case NONE:
-                    String metaCsName    = metaDao.getMetaCurCSName(region);
-                    String metaClName    = metaDao.getMetaCurCLName(region);
-                    ObjectMeta objectMeta = metaDao.queryAndRemoveMeta(metaCsName, metaClName,
-                            bucket.getBucketId(), objectName);
+                    String metaCsName    = regionDao.getMetaCurCSName(region);
+                    String metaClName    = regionDao.getMetaCurCLName(region);
+                    ObjectMeta objectMeta = removeMetaForNoneVersioning(metaCsName, metaClName, bucket, objectName);
                     deleteObjectLob(objectMeta);
                     return null;
                 case SUSPENDED:
@@ -324,7 +328,7 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public PutDeleteResult deleteObject(int ownerID, String bucketName, String objectName,
+    public PutDeleteResult deleteObject(long ownerID, String bucketName, String objectName,
                                         Long versionId, Boolean isNoVersion)
             throws S3ServerException {
         try {
@@ -335,18 +339,17 @@ public class ObjectServiceImpl implements ObjectService {
                 region = regionDao.queryRegion(bucket.getRegion());
             }
 
-            String metaCsName    = metaDao.getMetaCurCSName(region);
-            String metaClName    = metaDao.getMetaCurCLName(region);
-            String metaHisCsName = metaDao.getMetaHisCSName(region);
-            String metaHisClName = metaDao.getMetaHisCLName(region);
+            String metaCsName    = regionDao.getMetaCurCSName(region);
+            String metaClName    = regionDao.getMetaCurCLName(region);
+            String metaHisCsName = regionDao.getMetaHisCSName(region);
+            String metaHisClName = regionDao.getMetaHisCLName(region);
 
             VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
             ObjectMeta deleteObject = null;
             switch (versioningStatusType){
                 case NONE:
                     if (isNoVersion != null) {
-                        ObjectMeta objectMeta = metaDao.queryAndRemoveMeta(metaCsName, metaClName,
-                                bucket.getBucketId(), objectName);
+                        ObjectMeta objectMeta = removeMetaForNoneVersioning(metaCsName, metaClName, bucket, objectName);
                         deleteObject = objectMeta;
                     }
                     break;
@@ -368,13 +371,20 @@ public class ObjectServiceImpl implements ObjectService {
                             ObjectMeta objectMeta1 = metaDao.queryForUpdate(connection, metaHisCsName,
                                     metaHisClName, bucket.getBucketId(), objectName, null, null);
                             if (objectMeta1 != null){
+                                objectMeta1.setParentId1(objectMeta.getParentId1());
+                                objectMeta1.setParentId2(objectMeta.getParentId2());
                                 metaDao.updateMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
                                         objectName, versionId, objectMeta1);
                                 metaDao.removeMeta(connection, metaHisCsName, metaHisClName, bucket.getBucketId(),
                                         objectName, objectMeta1.getVersionId(), null);
                             }else {
+                                deleteDirForObject(connection, metaCsName, metaClName, bucket, objectName);
                                 metaDao.removeMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
                                         objectName, versionId, null);
+                                Bucket newBucket = bucketDao.getBucketById(bucket.getBucketId());
+                                if (newBucket.getDelimiter() != bucket.getDelimiter()){
+                                    deleteDirForObject(connection, metaCsName, metaClName, newBucket, objectName);
+                                }
                             }
                         }else{
                             ObjectMeta objectMeta2 = null;
@@ -415,12 +425,13 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public ListObjectsResult listObjects(int ownerID, String bucketName, String prefix,
+    public ListObjectsResult listObjects(long ownerID, String bucketName, String prefix,
                                          String delimiter, String startAfter, Integer maxKeys,
                                          String continueToken, String encodingType, Boolean fetchOwner)
             throws S3ServerException {
         Context queryContext = null;
-        QueryDbCursor dbCursor = null;
+        QueryDbCursor dbCursorKeys = null;
+        QueryDbCursor dbCursorDir = null;
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
             Region region = null;
@@ -430,10 +441,10 @@ public class ObjectServiceImpl implements ObjectService {
             ListObjectsResult listObjectsResult = new ListObjectsResult(bucketName, maxKeys,
                     encodingType, prefix, startAfter, delimiter, continueToken);
 
-            String metaCsName = metaDao.getMetaCurCSName(region);
-            String metaClName = metaDao.getMetaCurCLName(region);
+            String metaCsName = regionDao.getMetaCurCSName(region);
+            String metaClName = regionDao.getMetaCurCLName(region);
 
-            //get cursor
+            String newStartAfter = startAfter;
             if (null != continueToken) {
                 queryContext = contextManager.get(continueToken);
                 if (null == queryContext) {
@@ -443,118 +454,84 @@ public class ObjectServiceImpl implements ObjectService {
                 if (!IsContextMatch(queryContext, prefix, startAfter, delimiter)){
                     queryContext = null;
                 }else{
-                    dbCursor = metaDao.queryMetaByBucket(metaCsName, metaClName,
-                            bucket.getBucketId(), prefix, queryContext.getLastKey(),
-                            false, false);
+                    newStartAfter = queryContext.getLastKey();
                 }
-            }
-            if (null == queryContext){
-                dbCursor = metaDao.queryMetaByBucket(metaCsName, metaClName,
-                        bucket.getBucketId(), prefix, startAfter,
-                        false, false);
-            }
-
-            if (null == dbCursor) {
-                return listObjectsResult;
             }
 
             Owner owner = null;
             if (fetchOwner){
                 owner = userDao.getOwnerByUserID(ownerID);
             }
-
             int count = 0;
             int maxNumber = Math.min(maxKeys, RestParamDefine.MAX_KEYS_DEFAULT);
-            int prefixLen = 0;
-            if (null != prefix){
-                prefixLen = prefix.length();
-            }
-            int delimiterLen = 0;
-            if (null != delimiter) {
-                delimiterLen = delimiter.length();
-            }
-            //no delimiter
-            if (null == delimiter) {
-                LinkedHashSet<Content> contentList = listObjectsResult.getContentList();
-                while (dbCursor.hasNext() && count < maxNumber) {
-                    BSONObject record = dbCursor.getNext();
-                    Content content = convertBsonToContent(record, encodingType);
-                    content.setOwner(owner);
-                    contentList.add(content);
-                    count++;
+
+            String parentIdName = getParentName(delimiter, bucket);
+            ObjectsFilter filter;
+            if (parentIdName != null){
+                Long parentId = getParentId(metaCsName, bucket.getBucketId(), prefix, delimiter);
+                dbCursorDir = dirDao.queryDirList(metaCsName, bucket.getBucketId(),
+                        delimiter, prefix, startAfter);
+                if (parentId != null){
+                    dbCursorKeys = metaDao.queryMetaListByParentId(metaCsName,
+                            metaClName, bucket.getBucketId(), parentIdName, parentId,
+                            prefix, startAfter, null, false);
                 }
-            }else{
-                LinkedHashSet<Content> contentList = listObjectsResult.getContentList();
-                LinkedHashSet<CommonPrefix> commonPrefixesList = listObjectsResult.getCommonPrefixList();
-                if (queryContext != null && queryContext.getLastCommonPrefix() != null) {
-                    count = skipLastCommonPrefix(queryContext.getLastCommonPrefix(),
-                            dbCursor, delimiter, prefixLen, encodingType, listObjectsResult, count, owner);
-                    queryContext.setLastCommonPrefix(null);
-                } else if (startAfter != null){
-                    count = skipLastCommonPrefix(startAfter,
-                            dbCursor, delimiter, prefixLen, encodingType, listObjectsResult, count, owner);
+
+                filter = new ObjectsFilter(dbCursorDir, dbCursorKeys,
+                        prefix, delimiter, newStartAfter, encodingType, FilterRecord.FILTER_DIR);
+            }else {
+                dbCursorKeys = metaDao.queryMetaByBucket(metaCsName, metaClName,
+                        bucket.getBucketId(), prefix, newStartAfter,
+                        null, false);
+
+                if (null == delimiter){
+                    filter = new ObjectsFilter(null, dbCursorKeys,
+                            prefix, delimiter, newStartAfter, encodingType, FilterRecord.FILTER_NO_DELIMITER);
+                }else {
+                    filter = new ObjectsFilter(null, dbCursorKeys,
+                            prefix, delimiter, newStartAfter, encodingType, FilterRecord.FILTER_DELIMITER);
                 }
-                while (dbCursor.hasNext() && count < maxNumber) {
-                    BSONObject record = dbCursor.getNext();
-                    String key = record.get(ObjectMeta.META_KEY_NAME).toString();
-                    int delimiterIndex = key.indexOf(delimiter, prefixLen);
-                    if (-1 != delimiterIndex){
-                        //commonprefix
-                        CommonPrefix commonPrefix = new CommonPrefix(key.substring(0, delimiterIndex+delimiterLen), encodingType);
-                        if (!commonPrefixesList.contains(commonPrefix)){
-                            commonPrefixesList.add(commonPrefix);
-                            count++;
-                        }
-                    }else{
-                        //contents
-                        Content content = convertBsonToContent(record, encodingType);
-                        content.setOwner(owner);
-                        contentList.add(content);
+            }
+
+            if (queryContext != null){
+                filter.setLastCommonPrefix(queryContext.getLastCommonPrefix());
+            }
+
+            LinkedHashSet<Content> contentList = listObjectsResult.getContentList();
+            LinkedHashSet<CommonPrefix> commonPrefixesList = listObjectsResult.getCommonPrefixList();
+            FilterRecord matcher;
+            while ((matcher =  filter.getNextRecord()) != null){
+                if (matcher.getRecordType() == FilterRecord.COMMONPREFIX){
+                    if (!commonPrefixesList.contains(matcher.getCommonPrefix())) {
+                        commonPrefixesList.add(matcher.getCommonPrefix());
                         count++;
                     }
+                }else if (matcher.getRecordType() == FilterRecord.CONTENT){
+                    matcher.getContent().setOwner(owner);
+                    contentList.add(matcher.getContent());
+                    count++;
+                }
+
+                if (count >= maxNumber){
+                    break;
                 }
             }
+
             listObjectsResult.setKeyCount(count);
-
-            if (dbCursor.hasNext()) {
-                Boolean isHasNext = true;
-                String lastCommonPrefix = null;
-                BSONObject record = dbCursor.getCurrent();
-                String key = record.get(ObjectMeta.META_KEY_NAME).toString();
-                String lastKey = key;
-                if (null != delimiter) {
-                    int delimiterIndex = key.indexOf(delimiter, prefixLen);
-                    if (-1 != delimiterIndex) {
-                        lastCommonPrefix = key.substring(0, delimiterIndex+delimiterLen);
-                        String newLastKey = getNewLastkey(dbCursor, lastCommonPrefix, key);
-                        if (null == newLastKey){
-                            isHasNext = false;
-                        }else {
-                            lastKey = newLastKey;
-                        }
-                    }
+            if (filter.hasNext()){
+                if (null == queryContext) {
+                    queryContext = contextManager.create(bucket.getBucketId());
+                    queryContext.setPrefix(prefix);
+                    queryContext.setStartAfter(startAfter);
+                    queryContext.setDelimiter(delimiter);
                 }
 
-                if (isHasNext) {
-                    if (null == queryContext) {
-                        queryContext = contextManager.create(bucket.getBucketId());
-                        queryContext.setPrefix(prefix);
-                        queryContext.setStartAfter(startAfter);
-                        queryContext.setDelimiter(delimiter);
-                    }
-
-                    queryContext.setLastKey(lastKey);
-                    if (lastCommonPrefix != null) {
-                        queryContext.setLastCommonPrefix(lastCommonPrefix);
-                    }
-                    listObjectsResult.setIsTruncated(true);
-                    listObjectsResult.setNextContinueToken(queryContext.getToken());
-                }else {
-                    contextManager.release(queryContext);
-                }
-            } else {
-                contextManager.release(queryContext);
+                queryContext.setLastKey(filter.getLastKey());
+                queryContext.setLastCommonPrefix(filter.getLastCommonPrefix());
+                listObjectsResult.setIsTruncated(true);
+                listObjectsResult.setNextContinueToken(queryContext.getToken());
             }
+
             return listObjectsResult;
         } catch (S3ServerException e){
             contextManager.release(queryContext);
@@ -563,17 +540,19 @@ public class ObjectServiceImpl implements ObjectService {
             contextManager.release(queryContext);
             throw new S3ServerException(S3Error.OBJECT_LIST_FAILED, "error message:"+e.getMessage(), e);
         }finally {
-            metaDao.releaseQueryDbCursor(dbCursor);
+            metaDao.releaseQueryDbCursor(dbCursorDir);
+            metaDao.releaseQueryDbCursor(dbCursorKeys);
         }
     }
 
     @Override
-    public ListVersionsResult listVersions(int ownerID, String bucketName, String prefix,
+    public ListVersionsResult listVersions(long ownerID, String bucketName, String prefix,
                                            String delimiter, String keyMarker, String versionIdMarker,
                                            Integer maxKeys, String encodingType)
             throws S3ServerException {
         QueryDbCursor queryDbCursorCur = null;
         QueryDbCursor queryDbCursorHis = null;
+        QueryDbCursor queryDbCursorDir = null;
         try {
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);
             Region region = null;
@@ -583,60 +562,100 @@ public class ObjectServiceImpl implements ObjectService {
             ListVersionsResult listVersionsResult = new ListVersionsResult(bucketName, maxKeys,
                     encodingType, prefix, delimiter, keyMarker, versionIdMarker);
 
-            String metaCsName    = metaDao.getMetaCurCSName(region);
-            String metaClName    = metaDao.getMetaCurCLName(region);
-            String metaHisCsName = metaDao.getMetaHisCSName(region);
-            String metaHisClName = metaDao.getMetaHisCLName(region);
+            String metaCsName    = regionDao.getMetaCurCSName(region);
+            String metaClName    = regionDao.getMetaCurCLName(region);
+            String metaHisCsName = regionDao.getMetaHisCSName(region);
+            String metaHisClName = regionDao.getMetaHisCLName(region);
             //get sdb and cursor
-            Boolean isSpecInnerVersionId = false;
             Long specifiedVersionId = null;
             if (versionIdMarker != null && versionIdMarker.length() > 0){
-                specifiedVersionId = isExistKeyVersion(metaCsName, metaClName, metaHisCsName, metaHisClName,
+                specifiedVersionId = getInnerVersionId(metaCsName, metaClName, metaHisCsName, metaHisClName,
                         keyMarker, versionIdMarker,bucket);
-                if (specifiedVersionId != null){
-                    isSpecInnerVersionId = true;
-                }
-            }
-            queryDbCursorCur = metaDao.queryMetaByBucket(metaCsName, metaClName,
-                    bucket.getBucketId(), prefix, keyMarker, isSpecInnerVersionId, true);
-            if (queryDbCursorCur == null){
-                return listVersionsResult;
-            }
-
-            queryDbCursorHis = metaDao.queryMetaByBucket(metaHisCsName, metaHisClName,
-                    bucket.getBucketId(), prefix, keyMarker, isSpecInnerVersionId, true);
-            if (queryDbCursorHis != null){
-                if (queryDbCursorHis.hasNext()){
-                    queryDbCursorHis.getNext();
-                }else {
-                    metaDao.releaseQueryDbCursor(queryDbCursorHis);
-                    queryDbCursorHis = null;
-                }
             }
 
             int count = 0;
             int maxNumber = Math.min(maxKeys, RestParamDefine.MAX_KEYS_DEFAULT);
             Owner owner = userDao.getOwnerByUserID(ownerID);
-            int prefixLen = 0;
-            if (null != prefix){
-                prefixLen = prefix.length();
+
+            VersionsFilter filter;
+            String parentIdName = getParentName(delimiter, bucket);
+            if (parentIdName == null) {
+                queryDbCursorCur = metaDao.queryMetaByBucket(metaCsName, metaClName,
+                        bucket.getBucketId(), prefix, keyMarker, specifiedVersionId, true);
+                if (queryDbCursorCur == null) {
+                    return listVersionsResult;
+                }
+
+                queryDbCursorHis = metaDao.queryMetaByBucket(metaHisCsName, metaHisClName,
+                        bucket.getBucketId(), prefix, keyMarker, specifiedVersionId, true);
+
+                if (delimiter != null) {
+                    filter = new VersionsFilter(queryDbCursorCur,
+                            queryDbCursorDir, queryDbCursorHis, prefix, delimiter,
+                            keyMarker, specifiedVersionId, encodingType, owner,
+                            FilterRecord.FILTER_DELIMITER);
+                }else {
+                    filter = new VersionsFilter(queryDbCursorCur,
+                            queryDbCursorDir, queryDbCursorHis, prefix, delimiter,
+                            keyMarker, specifiedVersionId, encodingType, owner,
+                            FilterRecord.FILTER_NO_DELIMITER);
+                }
+            }else {
+                Long parentId = getParentId(metaCsName, bucket.getBucketId(), prefix, delimiter);
+                queryDbCursorDir = dirDao.queryDirList(metaCsName, bucket.getBucketId(),
+                        delimiter, prefix, keyMarker);
+                if (parentId != null){
+                    queryDbCursorCur = metaDao.queryMetaListByParentId(metaCsName,
+                            metaClName, bucket.getBucketId(), parentIdName, parentId,
+                            prefix, keyMarker, specifiedVersionId, false);
+                }
+
+                filter = new VersionsFilter(queryDbCursorCur, queryDbCursorDir,
+                        null, prefix, delimiter, keyMarker, specifiedVersionId,
+                        encodingType, owner, FilterRecord.FILTER_DIR);
             }
 
-            if (keyMarker != null){
-                count = skipKeyMarker(queryDbCursorCur, queryDbCursorHis, keyMarker, specifiedVersionId,
-                        listVersionsResult, delimiter, maxNumber, encodingType, owner, prefixLen);
-                if (count >= maxNumber){
-                    return listVersionsResult;
+            FilterRecord matcher = null;
+            LinkedHashSet<CommonPrefix> commonPrefixesList = listVersionsResult.getCommonPrefixList();
+            while (count < maxNumber){
+                if (!filter.isFilterReady()){
+                    metaDao.releaseQueryDbCursor(queryDbCursorHis);
+                    List<String> keys = filter.getCurKeys();
+                    if (keys.size() > 0){
+                        queryDbCursorHis = metaDao.queryMetaByBucketInKeys(metaHisCsName, metaHisClName, bucket.getBucketId(), keys);
+                        filter.setHisCursor(queryDbCursorHis);
+                    }
+                }
+
+                if ((matcher = filter.getNextRecord()) != null){
+                    if (matcher.getRecordType() == FilterRecord.COMMONPREFIX){
+                        if (!commonPrefixesList.contains(matcher.getCommonPrefix())){
+                            commonPrefixesList.add(matcher.getCommonPrefix());
+                            count++;
+                        }
+                    }else if (matcher.getRecordType() == FilterRecord.DELETEMARKER){
+                        listVersionsResult.getDeleteMarkerList().add(matcher.getDeleteMarker());
+                        count++;
+                    }else if (matcher.getRecordType() == FilterRecord.VERSION){
+                        listVersionsResult.getVersionList().add(matcher.getVersion());
+                        count++;
+                    }
+                }else {
+                    break;
                 }
             }
 
-            if (delimiter == null){
-                recordVersionsWithNoDelimiter(queryDbCursorCur, queryDbCursorHis,
-                        listVersionsResult, count, maxNumber, encodingType, owner);
-            }else {
-                recordVersionsWithDelimiter(queryDbCursorCur, queryDbCursorHis,
-                        listVersionsResult, delimiter, count, maxNumber, prefixLen,
-                        encodingType, owner);
+            if (filter.hasNext()){
+                listVersionsResult.setIsTruncated(true);
+                if (matcher.getRecordType() == FilterRecord.COMMONPREFIX){
+                    listVersionsResult.setNextKeyMarker(matcher.getCommonPrefix().getPrefix());
+                }else if (matcher.getRecordType() == FilterRecord.DELETEMARKER){
+                    listVersionsResult.setNextKeyMarker(matcher.getDeleteMarker().getKey());
+                    listVersionsResult.setNextVersionIdMarker(matcher.getDeleteMarker().getVersionId());
+                }else if (matcher.getRecordType() == FilterRecord.VERSION){
+                    listVersionsResult.setNextKeyMarker(matcher.getVersion().getKey());
+                    listVersionsResult.setNextVersionIdMarker(matcher.getVersion().getVersionId());
+                }
             }
 
             return listVersionsResult;
@@ -648,6 +667,7 @@ public class ObjectServiceImpl implements ObjectService {
         }finally {
             metaDao.releaseQueryDbCursor(queryDbCursorCur);
             metaDao.releaseQueryDbCursor(queryDbCursorHis);
+            metaDao.releaseQueryDbCursor(queryDbCursorDir);
         }
     }
 
@@ -658,10 +678,10 @@ public class ObjectServiceImpl implements ObjectService {
             if (bucket.getRegion() != null) {
                 region = regionDao.queryRegion(bucket.getRegion());
             }
-            String metaCsName    = metaDao.getMetaCurCSName(region);
-            String metaClName    = metaDao.getMetaCurCLName(region);
-            String metaHisCsName = metaDao.getMetaHisCSName(region);
-            String metaHisClName = metaDao.getMetaHisCLName(region);
+            String metaCsName    = regionDao.getMetaCurCSName(region);
+            String metaClName    = regionDao.getMetaCurCLName(region);
+            String metaHisCsName = regionDao.getMetaHisCSName(region);
+            String metaHisClName = regionDao.getMetaHisCLName(region);
 
             long curCount = metaDao.getObjectNumber(metaCsName, metaClName, bucket.getBucketId());
             long hisCount = metaDao.getObjectNumber(metaHisCsName, metaHisClName, bucket.getBucketId());
@@ -680,14 +700,15 @@ public class ObjectServiceImpl implements ObjectService {
             if (bucket.getRegion() != null) {
                 region = regionDao.queryRegion(bucket.getRegion());
             }
-            String metaCsName    = metaDao.getMetaCurCSName(region);
-            String metaClName    = metaDao.getMetaCurCLName(region);
-            String metaHisCsName = metaDao.getMetaHisCSName(region);
-            String metaHisClName = metaDao.getMetaHisCLName(region);
+            String metaCsName    = regionDao.getMetaCurCSName(region);
+            String metaClName    = regionDao.getMetaCurCLName(region);
+            String metaHisCsName = regionDao.getMetaHisCSName(region);
+            String metaHisClName = regionDao.getMetaHisCLName(region);
             long bucketId = bucket.getBucketId();
 
             deleteObjectByClBucket(metaHisCsName, metaHisClName, bucketId);
             deleteObjectByClBucket(metaCsName, metaClName, bucketId);
+            dirDao.delete(null, metaCsName, bucketId, null, null);
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
@@ -695,10 +716,76 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
+    private String getParentName(String delimiter, Bucket bucket){
+        if (delimiter != null) {
+            if (bucket.getDelimiter() == 1) {
+                if (delimiter.equals(bucket.getDelimiter1())
+                        && DelimiterStatus.getDelimiterStatus(bucket.getDelimiter1Status()) == DelimiterStatus.NORMAL) {
+                    return ObjectMeta.META_PARENTID1;
+                }
+            } else {
+                if (delimiter.equals(bucket.getDelimiter2())
+                        && DelimiterStatus.getDelimiterStatus(bucket.getDelimiter2Status()) == DelimiterStatus.NORMAL) {
+                    return ObjectMeta.META_PARENTID2;
+                }
+            }
+        }
+        return null;
+    }
+
+    private Long getParentId(String metaCsName, long bucketId, String prefix, String delimiter)
+            throws S3ServerException{
+        Long parentId = null;
+        if (prefix != null){
+            String dirName = DirUtils.getDir(prefix, delimiter);
+            if (dirName != null){
+                Dir dir = dirDao.queryDir(null, metaCsName, bucketId,
+                        delimiter, dirName, false);
+                if (dir != null){
+                    parentId = dir.getID();
+                }
+            }else {
+                parentId = 0L;
+            }
+        }else {
+            parentId = 0L;
+        }
+        return parentId;
+    }
+
+    private ObjectMeta removeMetaForNoneVersioning(String metaCsName, String metaClName, Bucket bucket, String objectName)
+            throws S3ServerException{
+        ConnectionDao connection = daoMgr.getConnectionDao();
+        transaction.begin(connection);
+        logger.info("transaction begin. Key:{}", objectName);
+        try {
+            ObjectMeta objectMeta = metaDao.queryForUpdate(connection, metaCsName,
+                    metaClName, bucket.getBucketId(), objectName, null, null);
+            if (objectMeta != null){
+                deleteDirForObject(connection, metaCsName, metaClName, bucket, objectName);
+                metaDao.removeMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
+                        objectName, null, null);
+                Bucket newBucket = bucketDao.getBucketById(bucket.getBucketId());
+                if (newBucket.getDelimiter() != bucket.getDelimiter()){
+                    deleteDirForObject(connection, metaCsName, metaClName, newBucket, objectName);
+                }
+            }
+            logger.info("transaction commit. Key:{}", objectName);
+            transaction.commit(connection);
+            return objectMeta;
+        }catch(Exception e){
+            logger.info("transaction rollback. Key:{}", objectName);
+            transaction.rollback(connection);
+            throw e;
+        } finally {
+            daoMgr.releaseConnectionDao(connection);
+        }
+    }
+
     private void deleteObjectByClBucket(String metaCsName, String metaClName, long bucketId)
             throws S3ServerException{
         QueryDbCursor queryDbCursor = metaDao.queryMetaByBucket(metaCsName, metaClName,
-                bucketId, null, null, false, true);
+                bucketId, null, null, null, true);
         if (queryDbCursor == null){
             return;
         }
@@ -724,13 +811,6 @@ public class ObjectServiceImpl implements ObjectService {
         }finally {
             daoMgr.releaseConnectionDao(connection);
         }
-    }
-
-    private void recordVersionsTruncated(ListVersionsResult listVersionsResult,
-                                         String nextKey, String nextVersionId) {
-        listVersionsResult.setIsTruncated(true);
-        listVersionsResult.setNextVersionIdMarker(nextVersionId);
-        listVersionsResult.setNextKeyMarker(nextKey);
     }
 
     private ObjectMeta buildObjectMeta(String objectName, long bucketId, Map headers,
@@ -773,195 +853,6 @@ public class ObjectServiceImpl implements ObjectService {
         }
 
         return objectMeta;
-    }
-
-    private Content convertBsonToContent(BSONObject bsonObject, String encodingType) throws S3ServerException{
-        try {
-            Content content = new Content();
-            if (null != encodingType) {
-                content.setKey(URLEncoder.encode(bsonObject.get(ObjectMeta.META_KEY_NAME).toString(), "UTF-8"));
-            } else {
-                content.setKey(bsonObject.get(ObjectMeta.META_KEY_NAME).toString());
-            }
-            content.setLastModified(formatDate((long) bsonObject.get(ObjectMeta.META_LAST_MODIFIED)));
-            content.seteTag(bsonObject.get(ObjectMeta.META_ETAG).toString());
-            content.setSize((long) bsonObject.get(ObjectMeta.META_SIZE));
-            return content;
-        }catch (UnsupportedEncodingException e){
-            //logger.error("Encode object name failed. e", e);
-            throw new S3ServerException(S3Error.UNKNOWN_ERROR,
-                    "encode object name failed."+e.getMessage(), e);
-        }
-    }
-
-    private void recordVersionsWithDelimiter(QueryDbCursor queryDbCursorCur, QueryDbCursor queryDbCursorHis,
-                                            ListVersionsResult listVersionsResult, String delimiter, int count,
-                                            int maxNumber, int prefixLen, String encodingType, Owner owner)
-            throws S3ServerException{
-        int delimiterLen = delimiter.length();
-        LinkedHashSet<CommonPrefix> commonPrefixesList = listVersionsResult.getCommonPrefixList();
-
-        Cur:
-        while(queryDbCursorCur.hasNext()){
-            Boolean isCommonPrefix = false;
-            CommonPrefix commonPrefix = null;
-            String curPrefix = null;
-            BSONObject recordA = queryDbCursorCur.getNext();
-            String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
-            int delimiterIndex = keyA.indexOf(delimiter, prefixLen);
-            if (-1 != delimiterIndex){
-                isCommonPrefix = true;
-                curPrefix = keyA.substring(0, delimiterIndex+delimiterLen);
-                commonPrefix = new CommonPrefix(curPrefix, encodingType);
-                if (!commonPrefixesList.contains(commonPrefix)){
-                    commonPrefixesList.add(commonPrefix);
-                    count++;
-                }
-            }else{
-                recordVersionDeleteMarker(recordA, listVersionsResult,
-                        encodingType, owner, true);
-                count++;
-            }
-
-            if (count >= maxNumber) {
-                if (isCommonPrefix){
-                    if (getNewLastkey(queryDbCursorCur, curPrefix, keyA) != null) {
-                        recordVersionsTruncated(listVersionsResult, commonPrefix.getPrefix(), null);
-                    }
-                }else if (!isCommonPrefix && (queryDbCursorCur.hasNext() || queryDbCursorHis != null)){
-                    Version version = convertBsonToVersion(recordA, encodingType);
-                    recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
-                }
-                break;
-            }
-
-            while(queryDbCursorHis != null){
-                BSONObject recordB = queryDbCursorHis.getCurrent();
-                String keyB = recordB.get(ObjectMeta.META_KEY_NAME).toString();
-                int result = keyB.compareTo(keyA);
-                if (0 == result) {
-                    if (!isCommonPrefix) {
-                        recordVersionDeleteMarker(recordB, listVersionsResult,
-                                encodingType, owner, false);
-                        count++;
-                    }
-                }else if (result > 0){
-                    break;
-                }
-
-                if (count >= maxNumber) {
-                    if (queryDbCursorCur.hasNext() || queryDbCursorHis.hasNext()) {
-                        Version version = convertBsonToVersion(recordB, encodingType);
-                        recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
-                    }
-                    break Cur;
-                }
-                if (queryDbCursorHis.hasNext()){
-                    queryDbCursorHis.getNext();
-                }else {
-                    metaDao.releaseQueryDbCursor(queryDbCursorHis);
-                    queryDbCursorHis = null;
-                }
-            }
-        }
-    }
-
-    private void recordVersionsWithNoDelimiter(QueryDbCursor queryDbCursorCur, QueryDbCursor queryDbCursorHis,
-                                            ListVersionsResult listVersionsResult, int count, int maxNumber,
-                                              String encodingType, Owner owner)
-            throws S3ServerException{
-
-        Cur:
-        while(queryDbCursorCur.hasNext()){
-            BSONObject recordA = queryDbCursorCur.getNext();
-            String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
-            recordVersionDeleteMarker(recordA, listVersionsResult,
-                    encodingType, owner, true);
-            count++;
-
-            if (count >= maxNumber) {
-                if (queryDbCursorCur.hasNext() || queryDbCursorHis != null){
-                    Version version = convertBsonToVersion(recordA, encodingType);
-                    recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
-                }
-                break;
-            }
-
-            while(queryDbCursorHis != null){
-                BSONObject recordB = queryDbCursorHis.getCurrent();
-                String keyB = recordB.get(ObjectMeta.META_KEY_NAME).toString();
-                int result = keyB.compareTo(keyA);
-                if (0 == result) {
-                    recordVersionDeleteMarker(recordB, listVersionsResult,
-                            encodingType, owner, false);
-                    count++;
-                }else if (result > 0){
-                    break;
-                }
-
-                if (count >= maxNumber) {
-                    if (queryDbCursorCur.hasNext() || queryDbCursorHis.hasNext()) {
-                        Version version = convertBsonToVersion(recordB, encodingType);
-                        recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
-                    }
-                    break Cur;
-                }
-                if (queryDbCursorHis.hasNext()){
-                    queryDbCursorHis.getNext();
-                }else {
-                    metaDao.releaseQueryDbCursor(queryDbCursorHis);
-                    queryDbCursorHis = null;
-                }
-            }
-        }
-    }
-
-    private void recordVersionDeleteMarker(BSONObject bsonObject, ListVersionsResult result,
-                                           String encodingType, Owner owner, Boolean isLatest)
-            throws S3ServerException{
-        Version version = convertBsonToVersion(bsonObject, encodingType);
-        if ((Boolean)bsonObject.get(ObjectMeta.META_DELETE_MARKER)) {
-            RawVersion deleteMarker = new RawVersion();
-            deleteMarker.setKey(version.getKey());
-            deleteMarker.setLastModified(version.getLastModified());
-            deleteMarker.setVersionId(version.getVersionId());
-            deleteMarker.setIsLatest(isLatest);
-            deleteMarker.setOwner(owner);
-            result.getDeleteMarkerList().add(deleteMarker);
-        }else {
-            version.setIsLatest(isLatest);
-            version.setOwner(owner);
-            result.getVersionList().add(version);
-        }
-    }
-
-    private Version convertBsonToVersion(BSONObject bsonObject, String encodingType)throws S3ServerException{
-        try{
-            Version version = new Version();
-            if (null != encodingType) {
-                version.setKey(URLEncoder.encode(bsonObject.get(ObjectMeta.META_KEY_NAME).toString(), "UTF-8"));
-            } else {
-                version.setKey(bsonObject.get(ObjectMeta.META_KEY_NAME).toString());
-            }
-            version.setLastModified(formatDate((long) bsonObject.get(ObjectMeta.META_LAST_MODIFIED)));
-            if ((Boolean)bsonObject.get(ObjectMeta.META_NO_VERSION_FLAG)) {
-                version.setVersionId(ObjectMeta.NULL_VERSION_ID);
-            }else{
-                version.setVersionId(bsonObject.get(ObjectMeta.META_VERSION_ID).toString());
-            }
-
-            if (bsonObject.get(ObjectMeta.META_ETAG) != null) {
-                version.seteTag(bsonObject.get(ObjectMeta.META_ETAG).toString());
-            }
-            if (bsonObject.get(ObjectMeta.META_SIZE) != null) {
-                version.setSize((long) bsonObject.get(ObjectMeta.META_SIZE));
-            }
-            return version;
-        }catch (UnsupportedEncodingException e){
-            //logger.error("Encode object name failed. e", e);
-            throw new S3ServerException(S3Error.UNKNOWN_ERROR,
-                    "encode object name failed."+e.getMessage(), e);
-        }
     }
 
     private Boolean isMd5EqualWithETag(String contentMd5, String eTag) throws S3ServerException{
@@ -1067,188 +958,6 @@ public class ObjectServiceImpl implements ObjectService {
         return true;
     }
 
-    private int skipLastCommonPrefix(String lastCommonPrefix, QueryDbCursor dbCursor,
-                                      String delimiter, int prefixLen, String encodingType,
-                                      ListObjectsResult listObjectsResult, int count, Owner owner)
-            throws S3ServerException{
-        int delimiterLen = 0;
-        if (null != delimiter){
-            delimiterLen = delimiter.length();
-        }
-        LinkedHashSet<Content> contentList = listObjectsResult.getContentList();
-        LinkedHashSet<CommonPrefix> commonPrefixesList = listObjectsResult.getCommonPrefixList();
-        while (dbCursor.hasNext()) {
-            BSONObject record = dbCursor.getNext();
-            String key = record.get(ObjectMeta.META_KEY_NAME).toString();
-            int delimiterIndex = key.indexOf(delimiter, prefixLen);
-            if (-1 != delimiterIndex) {
-                String keyCommonPrefix = key.substring(0, delimiterIndex + delimiterLen);
-                int comResult = keyCommonPrefix.compareTo(lastCommonPrefix);
-                if (comResult <= 0) {
-                    continue;
-                }
-                CommonPrefix commonPrefix = new CommonPrefix(keyCommonPrefix, encodingType);
-                if (!commonPrefixesList.contains(commonPrefix)) {
-                    commonPrefixesList.add(commonPrefix);
-                    count++;
-                }
-                break;
-            } else {
-                Content content = convertBsonToContent(record, encodingType);
-                content.setOwner(owner);
-                contentList.add(content);
-                count++;
-                break;
-            }
-        }
-
-        return count;
-    }
-
-    private int skipKeyMarker(QueryDbCursor cursorCur, QueryDbCursor cursorHis, String keyMarker, Long versionId,
-                              ListVersionsResult listVersionsResult, String delimiter, int maxNumber,
-                              String encodingType, Owner owner, int prefixLen)
-            throws S3ServerException{
-        try {
-            int count = 0;
-            Boolean isFindNext = false;
-            LinkedHashSet<CommonPrefix> commonPrefixesList = listVersionsResult.getCommonPrefixList();
-
-            int delimiterLen = 0;
-            if (null != delimiter) {
-                delimiterLen = delimiter.length();
-            }
-
-            Loop:
-            while (cursorCur.hasNext() && !isFindNext) {
-                Boolean isCommonPrefix = false;
-                CommonPrefix commonPrefix = null;
-                String curPrefix = null;
-                BSONObject recordA = cursorCur.getNext();
-                String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
-                int delimiterIndex = -1;
-                if (null != delimiter) {
-                    delimiterIndex = keyA.indexOf(delimiter, prefixLen);
-                }
-                if (-1 != delimiterIndex) {
-                    isCommonPrefix = true;
-                    curPrefix = keyA.substring(0, delimiterIndex + delimiterLen);
-                    int comResult = curPrefix.compareTo(keyMarker);
-                    if (comResult > 0) {
-                        isFindNext = true;
-                        commonPrefix = new CommonPrefix(curPrefix, encodingType);
-                        if (!commonPrefixesList.contains(commonPrefix)) {
-                            commonPrefixesList.add(commonPrefix);
-                            count++;
-                        }
-                    }
-                } else {
-                    if (null == versionId) {
-                        isFindNext = true;
-                    }
-                    if (keyA.compareTo(keyMarker) > 0){
-                        isFindNext = true;
-                    }
-                    if (isFindNext) {
-                        recordVersionDeleteMarker(recordA, listVersionsResult,
-                                encodingType, owner, true);
-                        count++;
-                    } else {
-                        Long versionA = (Long)recordA.get(ObjectMeta.META_VERSION_ID);
-                        if (keyA.equals(keyMarker)){
-                            if (versionId > versionA){
-                                isFindNext = true;
-                                recordVersionDeleteMarker(recordA, listVersionsResult,
-                                        encodingType, owner, true);
-                                count++;
-                            }else if (versionId == versionA){
-                                isFindNext = true;
-                            }
-                        }
-                    }
-                }
-                if (count >= maxNumber) {
-                    if (isCommonPrefix) {
-                        if (commonPrefix != null && getNewLastkey(cursorCur, curPrefix, keyA) != null) {
-                            recordVersionsTruncated(listVersionsResult, commonPrefix.getPrefix(), null);
-                        }
-                    } else if (!isCommonPrefix && (cursorCur.hasNext() || cursorHis != null)) {
-                        Version version = convertBsonToVersion(recordA, encodingType);
-                        recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
-                    }
-                    break;
-                }
-
-                while (cursorHis != null) {
-                    BSONObject recordB = cursorHis.getCurrent();
-                    String keyB = recordB.get(ObjectMeta.META_KEY_NAME).toString();
-                    int result = keyB.compareTo(keyA);
-                    if (0 == result) {
-                        if (!isCommonPrefix) {
-                            if (isFindNext) {
-                                recordVersionDeleteMarker(recordB, listVersionsResult,
-                                        encodingType, owner, false);
-                                count++;
-                            } else {
-                                Long versionB = (Long)recordB.get(ObjectMeta.META_VERSION_ID);
-                                if (keyB.equals(keyMarker)){
-                                    if (versionId > versionB){
-                                        isFindNext = true;
-                                        recordVersionDeleteMarker(recordB, listVersionsResult,
-                                                encodingType, owner, false);
-                                        count++;
-                                    }else if (versionId == versionB){
-                                        isFindNext = true;
-                                    }
-                                }
-                            }
-                        }
-                    } else if (result > 0) {
-                        break;
-                    }
-
-                    if (count >= maxNumber) {
-                        if (cursorCur.hasNext() || cursorHis.hasNext()) {
-                            Version version = convertBsonToVersion(recordB, encodingType);
-                            recordVersionsTruncated(listVersionsResult, version.getKey(), version.getVersionId());
-                        }
-                        break Loop;
-                    }
-                    if (cursorHis.hasNext()) {
-                        cursorHis.getNext();
-                    } else {
-                        metaDao.releaseQueryDbCursor(cursorHis);
-                        cursorHis = null;
-                    }
-                }
-            }
-            return count;
-        }catch (S3ServerException e){
-            throw e;
-        }
-    }
-
-    private String getNewLastkey(QueryDbCursor cursorCur, String curCommonPrefix, String curKey)
-            throws S3ServerException{
-        if (null == cursorCur){
-            return null;
-        }
-
-        String lastKey = curKey;
-        while (cursorCur.hasNext()){
-            BSONObject recordA = cursorCur.getNext();
-            String keyA = recordA.get(ObjectMeta.META_KEY_NAME).toString();
-            if(keyA.startsWith(curCommonPrefix)){
-                lastKey = keyA;
-                continue;
-            }else {
-                return lastKey;
-            }
-        }
-
-        return null;
-    }
-
     private Boolean generateNoVersionFlag(VersioningStatusType status){
         if (null == status){
             return false;
@@ -1272,7 +981,7 @@ public class ObjectServiceImpl implements ObjectService {
                     break;
                 }catch (S3ServerException e){
                     if (e.getError() == S3Error.OBJECT_IS_IN_USE && tryTime > 0){
-                        if (tryTime  == DBParamDefine.DB_DUPLICATE_MAX_TIME-1){
+                        if (tryTime == DBParamDefine.DB_DUPLICATE_MAX_TIME-1){
                             logger.error("lob is in use.lob is:{}",deleteObject);
                         }
                         continue;
@@ -1284,13 +993,108 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
+    private void buildDirForObject(ConnectionDao connection, String metaCsName, Bucket bucket,
+                                   String objectName, ObjectMeta objectMeta, Region region)
+            throws S3ServerException{
+        long bucketId = bucket.getBucketId();
+        if (bucket.getDelimiter1() != null) {
+            DelimiterStatus status = DelimiterStatus.getDelimiterStatus(bucket.getDelimiter1Status());
+            if (status == DelimiterStatus.NORMAL
+                    || status == DelimiterStatus.CREATING
+                    || status == DelimiterStatus.SUSPENDED) {
+                String dirName = DirUtils.getDir(objectName, bucket.getDelimiter1());
+                if (dirName != null) {
+                    Dir dir = dirDao.queryDir(connection, metaCsName, bucketId, bucket.getDelimiter1(), dirName, true);
+                    if (dir != null) {
+                        objectMeta.setParentId1(dir.getID());
+                    } else {
+                        long newId = idGenerator.getNewId(IDGenerator.TYPE_PARENTID);
+                        Dir newDir = new Dir(bucketId, bucket.getDelimiter1(), dirName, newId);
+                        dirDao.insertDir(connection, metaCsName, newDir, region);
+                        objectMeta.setParentId1(newId);
+                    }
+                }else {
+                    objectMeta.setParentId1(0L);
+                }
+            }
+        }
+
+        if (bucket.getDelimiter2() != null) {
+            DelimiterStatus status = DelimiterStatus.getDelimiterStatus(bucket.getDelimiter2Status());
+            if (status == DelimiterStatus.NORMAL
+                    || status == DelimiterStatus.CREATING
+                    || status == DelimiterStatus.SUSPENDED) {
+                String dirName = DirUtils.getDir(objectName, bucket.getDelimiter2());
+                if (dirName != null) {
+                    Dir dir = dirDao.queryDir(connection, metaCsName, bucketId, bucket.getDelimiter2(), dirName, true);
+                    if (dir != null) {
+                        objectMeta.setParentId2(dir.getID());
+                    } else {
+                        long newId = idGenerator.getNewId(IDGenerator.TYPE_PARENTID);
+                        Dir newDir = new Dir(bucketId, bucket.getDelimiter2(), dirName, newId);
+                        dirDao.insertDir(connection, metaCsName, newDir, region);
+                        objectMeta.setParentId2(newId);
+                    }
+                }else {
+                    objectMeta.setParentId2(0L);
+                }
+            }
+        }
+    }
+
+    private void deleteDirForObject(ConnectionDao connection, String metaCsName, String metaClName,
+                                    Bucket bucket, String objectName)
+            throws S3ServerException{
+        if (bucket.getDelimiter1() != null) {
+            DelimiterStatus status = DelimiterStatus.getDelimiterStatus(bucket.getDelimiter1Status());
+            if (status == DelimiterStatus.NORMAL
+                    || status == DelimiterStatus.CREATING
+                    || status == DelimiterStatus.SUSPENDED) {
+                String dirName = DirUtils.getDir(objectName, bucket.getDelimiter1());
+                if (dirName != null) {
+                    Dir dir = dirDao.queryDir(connection, metaCsName, bucket.getBucketId(),
+                            bucket.getDelimiter1(), dirName, true);
+                    if (dir != null) {
+                        String parentIdName = ObjectMeta.META_PARENTID1;
+                        if(!metaDao.queryOneOtherMetaByParentId(connection, metaCsName, metaClName,
+                                bucket.getBucketId(), objectName, parentIdName, dir.getID())){
+                            dirDao.delete(connection, metaCsName, dir.getBucketId(),
+                                    null, dir.getID());
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bucket.getDelimiter2() != null) {
+            DelimiterStatus status = DelimiterStatus.getDelimiterStatus(bucket.getDelimiter2Status());
+            if (status == DelimiterStatus.NORMAL
+                    || status == DelimiterStatus.CREATING
+                    || status == DelimiterStatus.SUSPENDED) {
+                String dirName = DirUtils.getDir(objectName, bucket.getDelimiter2());
+                if (dirName != null) {
+                    Dir dir = dirDao.queryDir(connection, metaCsName, bucket.getBucketId(),
+                            bucket.getDelimiter2(), dirName, true);
+                    if (dir != null) {
+                        String parentIdName = ObjectMeta.META_PARENTID2;
+                        if(!metaDao.queryOneOtherMetaByParentId(connection, metaCsName, metaClName,
+                                bucket.getBucketId(), objectName, parentIdName, dir.getID())){
+                            dirDao.delete(connection, metaCsName, bucket.getBucketId(),
+                                    null, dir.getID());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private void writeObjectMeta(ObjectMeta objectMeta, String objectName, long bucketId,
                                  VersioningStatusType versioningStatusType, Region region)
             throws S3ServerException{
-        String metaCsName    = metaDao.getMetaCurCSName(region);
-        String metaClName    = metaDao.getMetaCurCLName(region);
-        String metaHisCSName = metaDao.getMetaHisCSName(region);
-        String metaHisClName = metaDao.getMetaHisCLName(region);
+        String metaCsName    = regionDao.getMetaCurCSName(region);
+        String metaClName    = regionDao.getMetaCurCLName(region);
+        String metaHisCSName = regionDao.getMetaHisCSName(region);
+        String metaHisClName = regionDao.getMetaHisCLName(region);
 
         int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
         while (tryTime > 0) {
@@ -1303,11 +1107,20 @@ public class ObjectServiceImpl implements ObjectService {
                         bucketId, objectName, null, null);
                 if (null == metaResult) {
                     objectMeta.setVersionId(0);
+                    Bucket bucket = bucketDao.getBucketById(bucketId);
+                    buildDirForObject(connection, metaCsName, bucket, objectName, objectMeta, region);
                     metaDao.insertMeta(connection, metaCsName, metaClName, objectMeta,
                             false, region);
+                    Bucket newBucket = bucketDao.getBucketById(bucketId);
+                    if (bucket.getDelimiter() != newBucket.getDelimiter()) {
+                        transaction.rollback(connection);
+                        continue;
+                    }
                     transaction.commit(connection);
                 } else {
                     objectMeta.setVersionId(metaResult.getVersionId() + 1);
+                    objectMeta.setParentId1(metaResult.getParentId1());
+                    objectMeta.setParentId2(metaResult.getParentId2());
                     if (VersioningStatusType.NONE == versioningStatusType
                             || (VersioningStatusType.SUSPENDED == versioningStatusType
                             && metaResult.getNoVersionFlag())) {
@@ -1351,7 +1164,7 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
-    private Long isExistKeyVersion(String metaCsName, String metaClName,
+    private Long getInnerVersionId(String metaCsName, String metaClName,
                                    String metaHisCsName, String metaHisClName, String keyMarker, String versionIdMarker, Bucket bucket)
             throws S3ServerException{
         try {

@@ -7,8 +7,8 @@ import java.util.Map;
 public class ObjectMeta {
     public static final String META_KEY_NAME            = "Key";
     public static final String META_BUCKET_ID           = "BucketId";
-    public static final String META_CS_NAME             = "CsName";
-    public static final String META_CL_NAME             = "ClName";
+    public static final String META_CS_NAME             = "CSName";
+    public static final String META_CL_NAME             = "CLName";
     public static final String META_LOB_ID              = "LobId";
     public static final String META_VERSION_ID          = "VersionId";
     public static final String META_NO_VERSION_FLAG     = "NoVersionFlag";
@@ -23,6 +23,8 @@ public class ObjectMeta {
     public static final String META_EXPIRES             = "Expires";
     public static final String META_CONTENT_LANGUAGE    = "ContentLanguage";
     public static final String META_LIST                = "MetaList";
+    public static final String META_PARENTID1           = "ParentId1";
+    public static final String META_PARENTID2           = "ParentId2";
 
     public static final String NULL_VERSION_ID          = "null";
 
@@ -44,6 +46,8 @@ public class ObjectMeta {
     private String expires;
     private String contentLanguage;
     private Map<String, String> metaList;
+    private Long parentId1;
+    private Long parentId2;
 
     public long getBucketId() {
         return bucketId;
@@ -189,4 +193,19 @@ public class ObjectMeta {
         return metaList;
     }
 
+    public void setParentId1(Long parentId1) {
+        this.parentId1 = parentId1;
+    }
+
+    public Long getParentId1() {
+        return parentId1;
+    }
+
+    public void setParentId2(Long parentId2) {
+        this.parentId2 = parentId2;
+    }
+
+    public Long getParentId2() {
+        return parentId2;
+    }
 }

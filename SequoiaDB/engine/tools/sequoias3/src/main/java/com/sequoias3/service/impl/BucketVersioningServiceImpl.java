@@ -1,6 +1,5 @@
 package com.sequoias3.service.impl;
 
-import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.common.VersioningStatusType;
 import com.sequoias3.core.Bucket;
 import com.sequoias3.model.*;
@@ -29,10 +28,10 @@ public class BucketVersioningServiceImpl implements BucketVersioningService {
     UserDao userDao;
 
     @Override
-    public void putBucketVersioning(int ownerID, String bucketName, String status) throws S3ServerException {
+    public void putBucketVersioning(long ownerID, String bucketName, String status) throws S3ServerException {
         try {
             bucketService.getBucket(ownerID, bucketName);
-            bucketDao.updateBucket(bucketName, status, null);
+            bucketDao.updateBucketVersioning(bucketName, status);
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
@@ -42,7 +41,7 @@ public class BucketVersioningServiceImpl implements BucketVersioningService {
     }
 
     @Override
-    public VersioningConfigurationNull getBucketVersioning(int ownerID, String bucketName)
+    public VersioningConfigurationNull getBucketVersioning(long ownerID, String bucketName)
             throws S3ServerException{
         try{
             Bucket bucket = bucketService.getBucket(ownerID, bucketName);

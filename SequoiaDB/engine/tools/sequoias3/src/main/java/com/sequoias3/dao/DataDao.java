@@ -17,7 +17,5 @@ public interface DataDao {
 
     void deleteObjectDataByLobId(ConnectionDao connectionDao, String csName, String clName, ObjectId lobId) throws S3ServerException;
 
-    String getDataCSName(Region region, Date date);
 
-    String getDataClName(Region region, Date date);
 }

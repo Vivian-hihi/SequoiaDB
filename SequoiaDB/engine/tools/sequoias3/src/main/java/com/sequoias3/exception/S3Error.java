@@ -26,6 +26,8 @@ public enum S3Error {
     REGION_LOCATION_SPLIT(-332, "InvalidLocation", "Location cannot be split to CS and CL."),
     REGION_LOCATION_EXIST(-333, "InvalidLocation", "Location not found"),
 
+    REGION_COLLECTION_NOT_EXIST(-340, "RegionCollectionNotExist", "Collection not exist."),
+
     // dao error
     DAO_GETCONN_ERROR(-401, "GetDBConnectFail", "Get connection failed."),
     DAO_DUPLICATE_KEY(-402, "DuplicateKey", "Duplicate key."),
@@ -43,6 +45,9 @@ public enum S3Error {
     BUCKET_VERSIONING_SET_FAILED(-503, "PutBucketVersioningFailed", "Put bucket versioning failed."),
     BUCKET_VERSIONING_GET_FAILED(-504, "GetBucketVersioningFailed", "Get bucket versioning failed."),
     BUCKET_LOCATION_GET_FAILED(-505, "GetBucketLocationFailed", "Get bucket location failed."),
+    BUCKET_DELIMITER_PUT_FAILED(-506, "PutBucketDelimiterFailed", "Put bucket delimiter failed."),
+    BUCKET_DELIMITER_GET_FAILED(-507, "GetBucketDelimiterFailed", "Get bucket delimiter failed."),
+    BUCKET_DELIMITER_NOT_STABLE(-508, "DelimiterNotStable", "Delimiter is not stable now, please try again later."),
 
     BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The specified bucket does not exist."),
     BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The specified bucket Name is not valid."),

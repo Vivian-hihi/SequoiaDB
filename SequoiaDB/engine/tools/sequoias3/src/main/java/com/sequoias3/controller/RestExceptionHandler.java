@@ -85,6 +85,7 @@ public class RestExceptionHandler {
             case REGION_CONFLICT_TYPE:
             case REGION_CONFLICT_DOMAIN:
             case REGION_CONFLICT_LOCATION:
+            case BUCKET_DELIMITER_NOT_STABLE:
                 status = HttpStatus.CONFLICT;
                 break;
             case OBJECT_IF_MATCH_FAILED:

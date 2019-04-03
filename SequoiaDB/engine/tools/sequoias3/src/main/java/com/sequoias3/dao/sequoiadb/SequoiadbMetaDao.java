@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository("MetaDao")
 public class SequoiadbMetaDao implements MetaDao {
     private static final Logger logger = LoggerFactory.getLogger(SequoiadbMetaDao.class);
@@ -31,23 +33,27 @@ public class SequoiadbMetaDao implements MetaDao {
     @Autowired
     SequoiadbRegionSpaceDao sequoiadbRegionSpaceDao;
 
+    @Autowired
+    SdbBaseOperation sdbBaseOperation;
+
     @Override
     public void insertMeta(ConnectionDao connection, String csMetaName, String clMetaName,
                            ObjectMeta objectMeta, Boolean isHistory, Region region)
             throws S3ServerException {
-        Sequoiadb sdb = null;
         try {
-            sdb = ((SdbConnectionDao)connection).getConnection();
+            Sequoiadb sdb = ((SdbConnectionDao)connection).getConnection();
             insert(sdb, csMetaName, clMetaName, objectMeta, isHistory);
         }catch (BaseException e){
             if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()
                     || e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
-                createMetaCSCL(sdb, region, csMetaName, clMetaName, isHistory);
-                insert(sdb, csMetaName, clMetaName, objectMeta, isHistory);
+                logger.info("no collection. cl = {}.{}", csMetaName, clMetaName);
+                throw new S3ServerException(S3Error.REGION_COLLECTION_NOT_EXIST, "no meta collection");
             } else {
-                logger.error("insert meta failed. error:",e);
+                logger.error("insert meta failed. error:"+e);
                 throw e;
             }
+        }catch (Exception e){
+            throw e;
         }
     }
 
@@ -81,7 +87,7 @@ public class SequoiadbMetaDao implements MetaDao {
 
     @Override
     public QueryDbCursor queryMetaByBucket(String metaCsName, String metaClName, long bucketId,
-                                           String prefix, String startAfter, Boolean specifiedVId,
+                                           String prefix, String startAfter, Long specifiedVId,
                                            Boolean isIncludeDeleteMarker) throws S3ServerException{
         Sequoiadb sdb = null;
         DBCursor dbCursor = null;
@@ -100,7 +106,7 @@ public class SequoiadbMetaDao implements MetaDao {
                 keyMatcher.put(DBParamDefine.REGEX, "^" + prefix + ".*");
             }
             if (startAfter != null){
-                if (specifiedVId) {
+                if (specifiedVId != null) {
                     keyMatcher.put(DBParamDefine.NOT_SMALL, startAfter);
                 }else{
                     keyMatcher.put(DBParamDefine.GREATER, startAfter);
@@ -110,17 +116,7 @@ public class SequoiadbMetaDao implements MetaDao {
                 matcher.put(ObjectMeta.META_KEY_NAME, keyMatcher);
             }
 
-            BSONObject selector = new BasicBSONObject();
-            selector.put(ObjectMeta.META_KEY_NAME, "");
-            selector.put(ObjectMeta.META_VERSION_ID, "");
-            selector.put(ObjectMeta.META_LAST_MODIFIED, 0);
-            selector.put(ObjectMeta.META_ETAG, "");
-            selector.put(ObjectMeta.META_SIZE, "");
-            selector.put(ObjectMeta.META_DELETE_MARKER, 0);
-            selector.put(ObjectMeta.META_CS_NAME, 0);
-            selector.put(ObjectMeta.META_CL_NAME, 0);
-            selector.put(ObjectMeta.META_LOB_ID, 0);
-            selector.put(ObjectMeta.META_NO_VERSION_FLAG, 0);
+            BSONObject selector = buildSelectForMeta();
 
             BSONObject orderBy = new BasicBSONObject();
             orderBy.put(ObjectMeta.META_KEY_NAME, 1);
@@ -129,7 +125,7 @@ public class SequoiadbMetaDao implements MetaDao {
             dbCursor = cl.query(matcher, selector, orderBy,null, 0);
             return new SdbQueryDbCursor(sdb, dbCursor);
         }catch (BaseException e){
-            sdbDatasourceWrapper.releaseDBCursor(dbCursor);
+            sdbBaseOperation.releaseDBCursor(dbCursor);
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
             if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
                     e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
@@ -140,7 +136,7 @@ public class SequoiadbMetaDao implements MetaDao {
                 throw e;
             }
         } catch (Exception e){
-            sdbDatasourceWrapper.releaseDBCursor(dbCursor);
+            sdbBaseOperation.releaseDBCursor(dbCursor);
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
             logger.error("query metalist by bucket failed.");
             throw e;
@@ -188,9 +184,64 @@ public class SequoiadbMetaDao implements MetaDao {
     }
 
     @Override
-    public ObjectMeta queryAndRemoveMeta(String metaCsName, String metaClName, long bucketId, String objectName) throws S3ServerException {
+    public QueryDbCursor queryMetaByBucketForUpdate(ConnectionDao connection,
+                                                    String metaCsName, String metaClName,
+                                                    long bucketId, String prefix,
+                                                    String startAfter, int limitNum)
+            throws S3ServerException {
+        DBCursor dbCursor = null;
+        try {
+            Sequoiadb sdb =  ((SdbConnectionDao)connection).getConnection();
+            CollectionSpace cs = sdb.getCollectionSpace(metaCsName);
+            DBCollection cl = cs.getCollection(metaClName);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(ObjectMeta.META_BUCKET_ID, bucketId);
+            BSONObject keyMatcher = new BasicBSONObject();
+            if (prefix != null){
+                keyMatcher.put(DBParamDefine.REGEX, "^" + prefix + ".*");
+            }
+            if (startAfter != null){
+                keyMatcher.put(DBParamDefine.GREATER, startAfter);
+            }
+            if (!keyMatcher.isEmpty()) {
+                matcher.put(ObjectMeta.META_KEY_NAME, keyMatcher);
+            }
+
+            BSONObject selector = new BasicBSONObject();
+            selector.put(ObjectMeta.META_KEY_NAME, "");
+            selector.put(ObjectMeta.META_VERSION_ID, "");
+            selector.put(ObjectMeta.META_DELETE_MARKER, 0);
+
+            BSONObject orderBy = new BasicBSONObject();
+            orderBy.put(ObjectMeta.META_KEY_NAME, 1);
+            orderBy.put(ObjectMeta.META_VERSION_ID, -1);
+
+            dbCursor = cl.query(matcher, selector, orderBy,null, 0, limitNum, DBQuery.FLG_QUERY_FOR_UPDATE);
+            return new SdbQueryDbCursor(sdb, dbCursor);
+        }catch (BaseException e){
+            sdbBaseOperation.releaseDBCursor(dbCursor);
+            if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
+                    e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+                //no cs or cl ,return null
+                return null;
+            } else {
+                logger.error("query metalist by bucket failed. error:",e);
+                throw e;
+            }
+        } catch (Exception e){
+            sdbBaseOperation.releaseDBCursor(dbCursor);
+            logger.error("query metalist by bucket failed.");
+            throw e;
+        }
+    }
+
+    @Override
+    public QueryDbCursor queryMetaByBucketInKeys(String metaCsName, String metaClName,
+                                               long bucketId, List<String> keys)
+            throws S3ServerException {
         Sequoiadb sdb = null;
-        DBCursor queryResult = null;
+        DBCursor dbCursor = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
             CollectionSpace cs = sdb.getCollectionSpace(metaCsName);
@@ -198,30 +249,141 @@ public class SequoiadbMetaDao implements MetaDao {
 
             BSONObject matcher = new BasicBSONObject();
             matcher.put(ObjectMeta.META_BUCKET_ID, bucketId);
-            matcher.put(ObjectMeta.META_KEY_NAME, objectName);
 
-            queryResult = cl.queryAndRemove(matcher, null, null, null, 0, 1, 0);
-            if (queryResult.hasNext()){
-                return convertBsonToMeta(queryResult.getNext());
-            }else {
-                return null;
+            BSONObject nameMatcher = new BasicBSONObject();
+            int size = keys.size();
+            if (size > 0){
+                nameMatcher.put(DBParamDefine.IN, keys);
             }
+
+            if (!nameMatcher.isEmpty()) {
+                matcher.put(ObjectMeta.META_KEY_NAME, nameMatcher);
+            }
+
+            BSONObject selector = buildSelectForMeta();
+
+            BSONObject orderBy = new BasicBSONObject();
+            orderBy.put(ObjectMeta.META_KEY_NAME, 1);
+            orderBy.put(ObjectMeta.META_VERSION_ID, -1);
+
+            dbCursor = cl.query(matcher, selector, orderBy,null, 0);
+            return new SdbQueryDbCursor(sdb, dbCursor);
         }catch (BaseException e){
+            sdbBaseOperation.releaseDBCursor(dbCursor);
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
             if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
                     e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
                 //no cs or cl ,return null
                 return null;
             } else {
-                logger.error("queryandremove meta failed. error:",e);
+                logger.error("query metalist by bucket parentId failed. error:",e);
                 throw e;
             }
-        }catch (Exception e){
-            logger.error("query meta and remove failed.");
-            throw e;
-        }finally {
-            sdbDatasourceWrapper.releaseDBCursor(queryResult);
+        } catch (Exception e){
+            sdbBaseOperation.releaseDBCursor(dbCursor);
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            logger.error("query metalist by bucket failed.");
+            throw e;
+        }
+    }
 
+    @Override
+    public QueryDbCursor queryMetaListByParentId(String metaCsName, String metaClName,
+                                                 long bucketId, String parentIdName,
+                                                 long parentId, String prefix, String startAfter,
+                                                 Long versionIdMarker, Boolean isIncludeDeleteMarker)
+            throws S3ServerException {
+        Sequoiadb sdb = null;
+        DBCursor dbCursor = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(metaCsName);
+            DBCollection cl = cs.getCollection(metaClName);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(ObjectMeta.META_BUCKET_ID, bucketId);
+            if (!isIncludeDeleteMarker) {
+                matcher.put(ObjectMeta.META_DELETE_MARKER, false);
+            }
+            matcher.put(parentIdName, parentId);
+            BSONObject nameMatcher = new BasicBSONObject();
+            if (prefix != null){
+                nameMatcher.put(DBParamDefine.REGEX, "^" + prefix + ".*");
+            }
+            if (startAfter != null){
+                if (versionIdMarker == null) {
+                    nameMatcher.put(DBParamDefine.GREATER, startAfter);
+                }else {
+                    nameMatcher.put(DBParamDefine.NOT_SMALL, startAfter);
+                }
+            }
+            if (!nameMatcher.isEmpty()) {
+                matcher.put(ObjectMeta.META_KEY_NAME, nameMatcher);
+            }
+
+            BSONObject selector = buildSelectForMeta();
+
+            BSONObject orderBy = new BasicBSONObject();
+            orderBy.put(ObjectMeta.META_KEY_NAME, 1);
+            orderBy.put(ObjectMeta.META_VERSION_ID, -1);
+
+            dbCursor = cl.query(matcher, selector, orderBy,null, 0);
+            return new SdbQueryDbCursor(sdb, dbCursor);
+        }catch (BaseException e){
+            sdbBaseOperation.releaseDBCursor(dbCursor);
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
+                    e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+                //no cs or cl ,return null
+                return null;
+            } else {
+                logger.error("query metalist by bucket parentId failed. error:",e);
+                throw e;
+            }
+        } catch (Exception e){
+            sdbBaseOperation.releaseDBCursor(dbCursor);
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            logger.error("query metalist by bucket failed.");
+            throw e;
+        }
+    }
+
+    @Override
+    public Boolean queryOneOtherMetaByParentId(ConnectionDao connection, String metaCsName,
+                                          String metaClName, long bucketId, String objectName,
+                                          String parentIdName, long parentId)
+            throws S3ServerException {
+        try {
+            Sequoiadb sdb = ((SdbConnectionDao)connection).getConnection();
+            CollectionSpace cs = sdb.getCollectionSpace(metaCsName);
+            DBCollection cl = cs.getCollection(metaClName);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(ObjectMeta.META_BUCKET_ID, bucketId);
+            matcher.put(parentIdName, parentId);
+
+            BSONObject keyMatcher = new BasicBSONObject();
+            keyMatcher.put(DBParamDefine.NOT_EQUAL, objectName);
+            matcher.put(ObjectMeta.META_KEY_NAME, keyMatcher);
+
+            BSONObject result = cl.queryOne(matcher, null, null,null, 0);
+            if (result != null){
+                return true;
+            }else {
+                return false;
+            }
+        }catch (BaseException e){
+            if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
+                    e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+                //no cs or cl ,return null
+                return false;
+            } else {
+                logger.error("query one meta by parentId failed. error:",e);
+                throw e;
+            }
+        } catch (Exception e){
+            logger.error("query one meta by parentId failed.");
+            throw e;
         }
     }
 
@@ -292,6 +454,31 @@ public class SequoiadbMetaDao implements MetaDao {
     }
 
     @Override
+    public void updateMetaParentId(ConnectionDao connection, String metaCsName, String metaClName,
+                                   long bucketId, String objectName, String parentIdName, long parentId)
+            throws S3ServerException {
+        try {
+            Sequoiadb sdb = ((SdbConnectionDao)connection).getConnection();
+            CollectionSpace cs = sdb.getCollectionSpace(metaCsName);
+            DBCollection cl = cs.getCollection(metaClName);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(ObjectMeta.META_BUCKET_ID, bucketId);
+            matcher.put(ObjectMeta.META_KEY_NAME, objectName);
+
+            BSONObject updateData = new BasicBSONObject();
+            updateData.put(parentIdName, parentId);
+            BSONObject setUpdate = new BasicBSONObject();
+            setUpdate.put(DBParamDefine.MODIFY_SET, updateData);
+
+            cl.update(matcher, setUpdate, null);
+        } catch (Exception e){
+            logger.error("update meta failed. error:"+e.getMessage());
+            throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error.", e);
+        }
+    }
+
+    @Override
     public void removeMeta(ConnectionDao connection, String metaCsName, String metaClName, long bucketId,
                            String objectName, Long versionId, Boolean noVersionFlag)
             throws S3ServerException {
@@ -347,60 +534,19 @@ public class SequoiadbMetaDao implements MetaDao {
         }
     }
 
-    @Override
-    public String getMetaCurCSName( Region region){
-        StringBuilder csName = new StringBuilder();
-
-        if (null != region){
-            if (region.getMetaLocation() != null){
-                csName.append(region.getMetaCSLocation());
-            }else {
-                csName.append(DBParamDefine.CS_S3);
-                csName.append(region.getName());
-                csName.append(DBParamDefine.CS_META);
-            }
-        }else {
-            csName.append(config.getMetaCsName());
-        }
-
-        return csName.toString();
-    }
-
-    @Override
-    public String getMetaCurCLName(Region region){
-        if (region != null && region.getMetaLocation() != null){
-            return region.getMetaCLLocation();
-        }else {
-            return DaoCollectionDefine.OBJECT_META_LIST;
-        }
-    }
-
-    @Override
-    public String getMetaHisCSName( Region region){
-        StringBuilder csName = new StringBuilder();
-
-        if (null != region){
-            if (region.getMetaHisLocation() != null){
-                csName.append(region.getMetaHisCSLocation());
-            }else {
-                csName.append(DBParamDefine.CS_S3);
-                csName.append(region.getName());
-                csName.append(DBParamDefine.CS_META);
-            }
-        }else {
-            csName.append(config.getMetaCsName());
-        }
-
-        return csName.toString();
-    }
-
-    @Override
-    public String getMetaHisCLName(Region region){
-        if (region != null && region.getMetaHisLocation() != null){
-            return region.getMetaHisCLLocation();
-        }else {
-            return DaoCollectionDefine.OBJECT_META_LIST_HISTORY;
-        }
+    private BSONObject buildSelectForMeta(){
+        BSONObject selector = new BasicBSONObject();
+        selector.put(ObjectMeta.META_KEY_NAME, "");
+        selector.put(ObjectMeta.META_VERSION_ID, "");
+        selector.put(ObjectMeta.META_LAST_MODIFIED, 0);
+        selector.put(ObjectMeta.META_ETAG, "");
+        selector.put(ObjectMeta.META_SIZE, "");
+        selector.put(ObjectMeta.META_DELETE_MARKER, 0);
+        selector.put(ObjectMeta.META_CS_NAME, 0);
+        selector.put(ObjectMeta.META_CL_NAME, 0);
+        selector.put(ObjectMeta.META_LOB_ID, 0);
+        selector.put(ObjectMeta.META_NO_VERSION_FLAG, 0);
+        return selector;
     }
 
     private ObjectMeta convertBsonToMeta(BSONObject bsonObject){
@@ -447,6 +593,12 @@ public class SequoiadbMetaDao implements MetaDao {
             BSONObject xMeta = (BSONObject)bsonObject.get(ObjectMeta.META_LIST);
             object.setMetaList(xMeta.toMap());
         }
+        if (bsonObject.get(ObjectMeta.META_PARENTID1) != null){
+            object.setParentId1((long)bsonObject.get(ObjectMeta.META_PARENTID1));
+        }
+        if (bsonObject.get(ObjectMeta.META_PARENTID2) != null){
+            object.setParentId2((long)bsonObject.get(ObjectMeta.META_PARENTID2));
+        }
         return object;
     }
 
@@ -479,6 +631,8 @@ public class SequoiadbMetaDao implements MetaDao {
             BSONObject xMetaList = new BasicBSONObject(meta.getMetaList());
             objectMeta.put(ObjectMeta.META_LIST, xMetaList);
         }
+        objectMeta.put(ObjectMeta.META_PARENTID1, meta.getParentId1());
+        objectMeta.put(ObjectMeta.META_PARENTID2, meta.getParentId2());
 
         return objectMeta;
     }
@@ -487,55 +641,10 @@ public class SequoiadbMetaDao implements MetaDao {
     public void releaseQueryDbCursor(QueryDbCursor queryDbCursor) {
         if (queryDbCursor != null) {
             SdbQueryDbCursor sdbQueryDbCursor = (SdbQueryDbCursor)queryDbCursor;
-            sdbDatasourceWrapper.releaseDBCursor(sdbQueryDbCursor.getCursor());
+            sdbBaseOperation.releaseDBCursor(sdbQueryDbCursor.getCursor());
             sdbDatasourceWrapper.releaseSequoiadb(sdbQueryDbCursor.getSdb());
             sdbQueryDbCursor.setCursor(null);
             sdbQueryDbCursor.setSdb(null);
         }
-    }
-
-    private void createMetaCSCL(Sequoiadb sdb, Region region, String csMetaName,
-                                String clMetaName, Boolean isHistory)
-            throws S3ServerException{
-        if (region != null && region.getMetaLocation() != null) {
-            throw new S3ServerException(S3Error.REGION_LOCATION_NOT_EXIST,
-                    "location not exist. csName="+csMetaName+", clName="+clMetaName);
-        }else{
-            if (!sdb.isCollectionSpaceExist(csMetaName)) {
-                BSONObject option = null;
-                if (region != null && region.getMetaDomain() != null){
-                    option = new BasicBSONObject();
-                    option.put("Domain", region.getMetaDomain());
-                }
-                if(DBParamDefine.CREATE_OK == sdbDatasourceWrapper.createCS(sdb, csMetaName, option)){
-                    sequoiadbRegionSpaceDao.insertRegionCSList(sdb, csMetaName, region.getName());
-                }
-            }
-
-            BSONObject option = generateMetaCLOption();
-            sdbDatasourceWrapper.createCL(sdb, csMetaName, clMetaName, option);
-            BSONObject indexKey = new BasicBSONObject();
-            String indexName = ObjectMeta.META_BUCKET_ID + "+" + ObjectMeta.META_KEY_NAME;
-            indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
-            indexKey.put(ObjectMeta.META_KEY_NAME, 1);
-            if (isHistory) {
-                indexKey.put(ObjectMeta.META_VERSION_ID, 1);
-                indexName = indexName + "+" + ObjectMeta.META_VERSION_ID;
-            }
-            sdbDatasourceWrapper.createIndex(sdb, csMetaName, clMetaName,
-                    indexName, indexKey, true, true);
-        }
-    }
-
-    private BSONObject generateMetaCLOption(){
-        BSONObject clOption = new BasicBSONObject();
-
-        BSONObject shardingKey = new BasicBSONObject(ObjectMeta.META_KEY_NAME, 1);
-        clOption.put("ShardingKey", shardingKey);
-        clOption.put("ShardingType", "hash");
-        clOption.put("ReplSize", -1);
-        clOption.put("AutoSplit", true);
-
-        return clOption;
     }
 }

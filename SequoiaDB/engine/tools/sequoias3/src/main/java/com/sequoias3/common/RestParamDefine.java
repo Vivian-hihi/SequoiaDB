@@ -7,6 +7,7 @@ public class RestParamDefine {
     public static final String VERSION_ID              = "versionId";
     public static final String VERSIONING              = "versioning";
     public static final String LOCATION                = "location";
+    public static final String DELIMITER               = "delimiter-config";
 
     public static final int    MAX_KEYS_DEFAULT        = 1000;
 

@@ -45,7 +45,7 @@ public class ObjectController {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
         String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.debug("put object. bucketName={}, objectName={}", bucketName, objectName);
+        logger.info("put object. bucketName={}, objectName={}", bucketName, objectName);
 
         Map<String, String> requestHeaders = new HashMap<>();
         Map<String, String> xMeta          = new HashMap<>();
@@ -77,7 +77,7 @@ public class ObjectController {
                     result.getVersionId());
         }
 
-        logger.debug("put object success. bucketName={}, objectName={}, versionId={}, eTag={}", bucketName, objectName, result.getVersionId(), result.geteTag());
+        logger.info("put object success. bucketName={}, objectName={}, versionId={}, eTag={}", bucketName, objectName, result.getVersionId(), result.geteTag());
         return ResponseEntity.ok()
                 .headers(headers)
                 .build();
@@ -92,7 +92,7 @@ public class ObjectController {
             throws S3ServerException, IOException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
         String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.debug("get object. bucketName={}, objectName={}", bucketName, objectName);
+        logger.info("get object. bucketName={}, objectName={}", bucketName, objectName);
 
         Map<String,String> requestHeaders = new HashMap<>();
         Enumeration headerNames = httpServletRequest.getHeaderNames();
@@ -140,6 +140,8 @@ public class ObjectController {
         }finally {
             objectService.releaseGetResult(result);
         }
+
+        logger.info("get object success. bucketName={}, objectName={}", bucketName, objectName);
     }
 
     @DeleteMapping(value = "/{bucketname:.+}/**", produces = MediaType.APPLICATION_XML_VALUE)
@@ -149,7 +151,7 @@ public class ObjectController {
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
         String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.debug("delete object. bucketName={}, objectName={}", bucketName, objectName);
+        logger.info("delete object. bucketName={}, objectName={}", bucketName, objectName);
 
         PutDeleteResult result = objectService.deleteObject(operator.getUserId(), bucketName, objectName);
         HttpHeaders headers = new HttpHeaders();
@@ -163,6 +165,7 @@ public class ObjectController {
                         result.getVersionId());
             }
         }
+        logger.info("delete object success. bucketName={}, objectName={}", bucketName, objectName);
         return ResponseEntity.noContent()
                 .headers(headers)
                 .build();
@@ -176,7 +179,7 @@ public class ObjectController {
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
         String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.debug("delete object with version id. bucketName={}, objectName={}, versionId={}",
+        logger.info("delete object with version id. bucketName={}, objectName={}, versionId={}",
                 bucketName, objectName, versionId);
 
         Boolean nullVersionFlag = null;
@@ -188,6 +191,9 @@ public class ObjectController {
         objectService.deleteObject(operator.getUserId(), bucketName, objectName, cvtVersionId, nullVersionFlag);
         HttpHeaders headers = new HttpHeaders();
         headers.add(RestParamDefine.DeleteObjectResultHeader.VERSION_ID, versionId);
+
+        logger.info("delete object with version id success. bucketName={}, objectName={}, versionId={}",
+                bucketName, objectName, versionId);
         return ResponseEntity.noContent()
                 .headers(headers)
                 .build();
@@ -206,7 +212,7 @@ public class ObjectController {
                                         @RequestParam(value = RestParamDefine.ListObjectsPara.FETCH_OWNER, required = false, defaultValue = "false") Boolean fetchOwner)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
-        logger.debug("list objectsV2. bucketName={}",bucketName);
+        logger.info("list objectsV2. bucketName={}",bucketName);
 
         if (null != encodingType) {
             if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {

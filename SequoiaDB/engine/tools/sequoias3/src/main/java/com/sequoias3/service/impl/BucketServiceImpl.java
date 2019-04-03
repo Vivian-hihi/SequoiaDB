@@ -1,6 +1,7 @@
 package com.sequoias3.service.impl;
 
 import com.sequoias3.common.DBParamDefine;
+import com.sequoias3.common.DelimiterStatus;
 import com.sequoias3.common.VersioningStatusType;
 import com.sequoias3.config.BucketConfig;
 import com.sequoias3.core.*;
@@ -43,8 +44,11 @@ public class BucketServiceImpl implements BucketService {
     @Autowired
     Transaction transaction;
 
+    @Autowired
+    IDGeneratorDao idGeneratorDao;
+
     @Override
-    public void createBucket(int ownerID, String bucketName, String region) throws S3ServerException {
+    public void createBucket(long ownerID, String bucketName, String region) throws S3ServerException {
         int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
 
         //check bucketname
@@ -89,12 +93,16 @@ public class BucketServiceImpl implements BucketService {
 
                 //insert bucket
                 Bucket bucket = new Bucket();
-                bucket.setBucketId(bucketDao.getMaxID()+1);
+                bucket.setBucketId(idGeneratorDao.getNewId(IDGenerator.TYPE_BUCKET));
                 bucket.setBucketName(newBucketName);
                 bucket.setOwnerId(ownerID);
                 bucket.setTimeMillis(System.currentTimeMillis());
                 bucket.setVersioningStatus(VersioningStatusType.NONE.getName());
-                bucket.setDelimiter(DBParamDefine.DB_AUTO_DELIMITER);
+                bucket.setDelimiter(1);
+                bucket.setDelimiter1(DBParamDefine.DB_AUTO_DELIMITER);
+                bucket.setDelimiter1CreateTime(System.currentTimeMillis());
+                bucket.setDelimiter1ModTime(System.currentTimeMillis());
+                bucket.setDelimiter1Status(DelimiterStatus.NORMAL.getName());
                 bucket.setRegion(region);
                 bucketDao.insertBucket(bucket);
                 return;
@@ -116,7 +124,7 @@ public class BucketServiceImpl implements BucketService {
     }
 
     @Override
-    public void deleteBucket(int ownerID, String bucketName) throws S3ServerException {
+    public void deleteBucket(long ownerID, String bucketName) throws S3ServerException {
         try {
             String deleteName = bucketName.toLowerCase();
 
@@ -162,7 +170,7 @@ public class BucketServiceImpl implements BucketService {
     }
 
     @Override
-    public Bucket getBucket(int ownerID, String bucketName)
+    public Bucket getBucket(long ownerID, String bucketName)
             throws S3ServerException{
         Bucket bucket = bucketDao.getBucketByName(bucketName.toLowerCase());
         if (bucket == null){
@@ -196,7 +204,7 @@ public class BucketServiceImpl implements BucketService {
     }
 
     @Override
-    public LocationConstraint getBucketLocation(int ownerID, String bucketName) throws S3ServerException {
+    public LocationConstraint getBucketLocation(long ownerID, String bucketName) throws S3ServerException {
         try{
             Bucket bucket = getBucket(ownerID, bucketName);
             LocationConstraint locationConstraint = new LocationConstraint();

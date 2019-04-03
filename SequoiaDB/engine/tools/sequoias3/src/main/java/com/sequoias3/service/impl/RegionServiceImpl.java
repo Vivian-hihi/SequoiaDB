@@ -88,6 +88,11 @@ public class RegionServiceImpl implements RegionService {
 
                         regionCon.setCreateTime(System.currentTimeMillis());
                         regionDao.insertRegion(connection, regionCon);
+                        if (RegionParamDefine.ConfigType.FixedType != configType){
+                            regionDao.createMetaCSCL(regionCon, regionDao.getMetaCurCSName(regionCon), regionDao.getMetaCurCLName(regionCon), false);
+                            regionDao.createMetaCSCL(regionCon, regionDao.getMetaHisCSName(regionCon), regionDao.getMetaHisCLName(regionCon), true);
+                        }
+                        regionDao.createDirCSCL(regionCon, regionDao.getMetaCurCSName(regionCon));
                     }
                     transaction.commit(connection);
                     return;

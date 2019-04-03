@@ -32,6 +32,10 @@ public class SdbTransaction implements Transaction {
     public void commit(ConnectionDao connection) throws S3ServerException {
         SdbConnectionDao sdbConnection = (SdbConnectionDao)connection;
         Sequoiadb sdb = sdbConnection.getConnection();
+        if (sdb == null){
+            logger.error("commit sdb is null.");
+            return;
+        }
         try {
             sdb.commit();
         }catch (Exception e){
@@ -46,6 +50,10 @@ public class SdbTransaction implements Transaction {
     public void rollback(ConnectionDao connection) {
         SdbConnectionDao sdbConnection = (SdbConnectionDao)connection;
         Sequoiadb sdb = sdbConnection.getConnection();
+        if (sdb == null){
+            logger.error("rollback sdb is null.");
+            return;
+        }
         try {
             sdb.rollback();
         }catch (Exception e){

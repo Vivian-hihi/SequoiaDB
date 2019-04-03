@@ -13,6 +13,9 @@ public class SequoiadbConfig {
     List<String> urlList;
     SequoiadbMetaConfig meta;
     SequoiadbDataConfig data;
+    String auth;
+    String username;
+    String password;
 
     int     maxConnectionNum   = 500;
     int     deltaIncCount      = 20;
@@ -46,6 +49,30 @@ public class SequoiadbConfig {
 
     public List<String> getUrlList() {
         return urlList;
+    }
+
+    public String getAuth() {
+        return auth;
+    }
+
+    public void setAuth(String auth) {
+        this.auth = auth;
+
+        if (auth != null){
+            String[] userPassword = auth.split(":");
+            if (userPassword.length > 1) {
+                this.username = userPassword[0];
+                this.password = userPassword[1];
+            }
+        }
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public SequoiadbMetaConfig getMeta() {

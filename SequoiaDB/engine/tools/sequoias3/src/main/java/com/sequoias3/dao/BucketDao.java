@@ -1,5 +1,6 @@
 package com.sequoias3.dao;
 
+import com.sequoias3.common.DelimiterStatus;
 import com.sequoias3.core.Bucket;
 import com.sequoias3.exception.S3ServerException;
 
@@ -13,14 +14,24 @@ public interface BucketDao {
 
     Bucket getBucketByName(String bucketName) throws S3ServerException;
 
-    List<Bucket> getBucketListByOwnerID(int ownerId) throws S3ServerException;
+    Bucket getBucketById(long bucketId) throws S3ServerException;
+
+    List<Bucket> getBucketListByOwnerID(long ownerId) throws S3ServerException;
 
     List<Bucket> getBucketListByRegion(ConnectionDao connection, String regionName) throws S3ServerException;
 
-    long getMaxID() throws S3ServerException;
+    List<Bucket> getBucketListByDelimiterStatus(DelimiterStatus status, Long overTime) throws S3ServerException;
 
-    long getBucketNumber(int ownerID) throws S3ServerException;
+    long getBucketNumber(long ownerID) throws S3ServerException;
 
-    void updateBucket(String bucketName, String status, String delimiter)
+    void updateBucketVersioning(String bucketName, String status)
             throws S3ServerException;
+
+    void updateBucketDelimiter(ConnectionDao connection, String bucketName, Bucket bucket)
+            throws S3ServerException;
+
+    void cleanBucketDelimiter(ConnectionDao connection, String bucketName, int delimiter)
+            throws S3ServerException;
+
+    Bucket queryBucketForUpdate(ConnectionDao connection, String bucketName) throws S3ServerException;
 }

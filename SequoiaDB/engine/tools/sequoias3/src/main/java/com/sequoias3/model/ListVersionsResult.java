@@ -21,10 +21,10 @@ public class ListVersionsResult {
     @JsonProperty("Delimiter")
     private String delimiter;
 
-    @JsonProperty("KeyMarker ")
+    @JsonProperty("KeyMarker")
     private String keyMarker;
 
-    @JsonProperty("VersionIdMarker ")
+    @JsonProperty("VersionIdMarker")
     private String versionIdMarker;
 
     @JsonProperty("MaxKeys")

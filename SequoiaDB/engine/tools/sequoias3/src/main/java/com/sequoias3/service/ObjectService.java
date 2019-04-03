@@ -14,12 +14,12 @@ import java.io.InputStream;
 import java.util.Map;
 
 public interface ObjectService {
-    PutDeleteResult putObject(int ownerID, String bucketName, String objectName,
+    PutDeleteResult putObject(long ownerID, String bucketName, String objectName,
                               String contentMD5, Map<String, String> requestHeaders,
                               Map<String, String> xMeta, InputStream inputStream)
             throws S3ServerException;
 
-    GetResult getObject(int ownerID, String bucketName, String objectName,
+    GetResult getObject(long ownerID, String bucketName, String objectName,
                         Long versionId, Boolean isNoVersion, Map matchers,
                         Range range)
             throws S3ServerException;
@@ -29,19 +29,19 @@ public interface ObjectService {
     void readObjectData(DataLob data, ServletOutputStream outputStream, Range range)
             throws S3ServerException;
 
-    PutDeleteResult deleteObject(int ownerID, String bucketName, String objectName)
+    PutDeleteResult deleteObject(long ownerID, String bucketName, String objectName)
             throws S3ServerException;
 
-    PutDeleteResult deleteObject(int ownerID, String bucketName,
+    PutDeleteResult deleteObject(long ownerID, String bucketName,
                                  String objectName, Long versionId, Boolean isNoVersion)
             throws S3ServerException;
 
-    ListObjectsResult listObjects(int ownerID, String bucketName, String prefix,
+    ListObjectsResult listObjects(long ownerID, String bucketName, String prefix,
                                   String delimiter, String startAfter, Integer maxKeys,
                                   String continueToken, String encodingType, Boolean fetchOwner)
             throws S3ServerException;
 
-    ListVersionsResult listVersions(int ownerID, String bucketName, String prefix,
+    ListVersionsResult listVersions(long ownerID, String bucketName, String prefix,
                                     String delimiter, String keyMarker, String versionIdMarker,
                                     Integer maxKeys, String encodingType)
             throws S3ServerException;

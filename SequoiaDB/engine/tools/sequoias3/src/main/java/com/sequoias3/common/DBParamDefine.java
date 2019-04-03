@@ -10,9 +10,15 @@ public class DBParamDefine {
     public static final String CS_DATA = "_DataCS";
 
     public static final String MODIFY_SET   = "$set";
+    public static final String MODIFY_UNSET = "$unset";
     public static final String REGEX        = "$regex";
     public static final String GREATER      = "$gt";
     public static final String NOT_SMALL    = "$gte";
+    public static final String LESS_THAN    = "$lt";
+    public static final String INCREASE     = "$inc";
+    public static final String IN           = "$in";
+    public static final String OR           = "$or";
+    public static final String NOT_EQUAL    = "$ne";
 
     public static final int    CREATE_OK     = 1;
     public static final int    CREATE_EXIST  = 2;

@@ -1,12 +1,10 @@
 package com.sequoias3.dao.sequoiadb;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.*;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
+import com.sequoias3.common.DelimiterStatus;
 import com.sequoias3.config.SequoiadbConfig;
 import com.sequoias3.core.Bucket;
 import com.sequoias3.dao.BucketDao;
@@ -35,6 +33,9 @@ public class SequoiadbBucketDao implements BucketDao {
     @Autowired
     SequoiadbConfig config;
 
+    @Autowired
+    SdbBaseOperation sdbBaseOperation;
+
     @Override
     public void insertBucket(Bucket bucket) throws S3ServerException {
         Sequoiadb sdb = null;
@@ -49,8 +50,17 @@ public class SequoiadbBucketDao implements BucketDao {
             newBucket.put(Bucket.BUCKET_OWNERID, bucket.getOwnerId());
             newBucket.put(Bucket.BUCKET_CREATETIME, bucket.getTimeMillis());
             newBucket.put(Bucket.BUCKET_VERSIONINGSTATUS, bucket.getVersioningStatus());
-            newBucket.put(Bucket.BUCKET_DELIMITER, bucket.getDelimiter());
             newBucket.put(Bucket.BUCKET_REGION, bucket.getRegion());
+            newBucket.put(Bucket.BUCKET_DELIMITER, bucket.getDelimiter());
+            newBucket.put(Bucket.BUCKET_DELIMITER1,bucket.getDelimiter1());
+            newBucket.put(Bucket.BUCKET_DELIMITER1CREATETIME, bucket.getDelimiter1CreateTime());
+            newBucket.put(Bucket.BUCKET_DELIMITER1MODTIME, bucket.getDelimiter1ModTime());
+            newBucket.put(Bucket.BUCKET_DELIMITER1STATUS, bucket.getDelimiter1Status());
+            newBucket.put(Bucket.BUCKET_DELIMITER2, bucket.getDelimiter2());
+            newBucket.put(Bucket.BUCKET_DELIMITER2CREATETIME, bucket.getDelimiter2CreateTime());
+            newBucket.put(Bucket.BUCKET_DELIMITER2MODTIME, bucket.getDelimiter2ModTime());
+            newBucket.put(Bucket.BUCKET_DELIMITER2STATUS, bucket.getDelimiter2Status());
+            newBucket.put(Bucket.BUCKET_TASKID, bucket.getTaskID());
 
             cl.insert(newBucket);
         }catch (BaseException e){
@@ -115,7 +125,33 @@ public class SequoiadbBucketDao implements BucketDao {
     }
 
     @Override
-    public List<Bucket> getBucketListByOwnerID(int ownerId) throws S3ServerException {
+    public Bucket getBucketById(long bucketId) throws S3ServerException {
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(Bucket.BUCKET_ID, bucketId);
+
+            BSONObject queryResult = cl.queryOne(matcher,null,null,null,0);
+
+            if (null == queryResult) {
+                return null;
+            }
+
+            return convertBsonToBucket(queryResult);
+        }catch (Exception e) {
+            logger.error("getBucketByName failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        }  finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    @Override
+    public List<Bucket> getBucketListByOwnerID(long ownerId) throws S3ServerException {
         Sequoiadb sdb = null;
         DBCursor cursor = null;
         ArrayList<Bucket> bucketList = new ArrayList<Bucket>();
@@ -142,7 +178,7 @@ public class SequoiadbBucketDao implements BucketDao {
             logger.error("getBucketListByOwnerID failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
-            sdbDatasourceWrapper.releaseDBCursor(cursor);
+            sdbBaseOperation.releaseDBCursor(cursor);
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
@@ -178,7 +214,7 @@ public class SequoiadbBucketDao implements BucketDao {
             logger.error("getBucketListByRegion failed. errorMessage = " + e.getMessage(), e);
             throw e;
         } finally {
-            sdbDatasourceWrapper.releaseDBCursor(cursor);
+            sdbBaseOperation.releaseDBCursor(cursor);
             if (null == connection){
                 sdbDatasourceWrapper.releaseSequoiadb(sdb);
             }
@@ -186,34 +222,51 @@ public class SequoiadbBucketDao implements BucketDao {
     }
 
     @Override
-    public long getMaxID() throws S3ServerException {
+    public List<Bucket> getBucketListByDelimiterStatus(DelimiterStatus status, Long overTime) throws S3ServerException {
         Sequoiadb sdb = null;
+        DBCursor cursor = null;
+        ArrayList<Bucket> bucketList = new ArrayList<Bucket>();
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
             CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
             DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
 
-            BSONObject selector = new BasicBSONObject();
-            selector.put(Bucket.BUCKET_ID, "");
-            BSONObject orderBy = new BasicBSONObject();
-            orderBy.put(Bucket.BUCKET_ID, -1);
-            BSONObject queryResult = cl.queryOne(null, selector, orderBy, null, 0);
+            BSONObject timeMatcher = new BasicBSONObject();
+            timeMatcher.put(DBParamDefine.LESS_THAN, System.currentTimeMillis() - overTime);
 
-            if (null != queryResult) {
-                return (long) (queryResult.get(Bucket.BUCKET_ID));
-            } else {
-                return 0;
+            List<BSONObject> matcher = new ArrayList<>();
+            BSONObject matcher1 = new BasicBSONObject();
+            matcher1.put(Bucket.BUCKET_DELIMITER1STATUS, status.getName());
+            matcher1.put(Bucket.BUCKET_DELIMITER1MODTIME, timeMatcher);
+
+            BSONObject matcher2 = new BasicBSONObject();
+            matcher2.put(Bucket.BUCKET_DELIMITER2STATUS, status.getName());
+            matcher2.put(Bucket.BUCKET_DELIMITER2MODTIME, timeMatcher);
+
+            matcher.add(matcher1);
+            matcher.add(matcher2);
+
+            BSONObject matcherMulti = new BasicBSONObject();
+            matcherMulti.put(DBParamDefine.OR, matcher);
+
+            cursor = cl.query(matcherMulti, null, null,null);
+            while (cursor.hasNext()){
+                BSONObject record = cursor.getNext();
+                Bucket bucket = convertBsonToBucket(record);
+                bucketList.add(bucket);
             }
+            return bucketList;
         }catch (Exception e) {
-            logger.error("getMaxID failed. errorMessage = " + e.getMessage(), e);
+            logger.error("getBucketListByRegion failed. errorMessage = " + e.getMessage(), e);
             throw e;
-        }finally{
+        } finally {
+            sdbBaseOperation.releaseDBCursor(cursor);
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
 
     @Override
-    public long getBucketNumber(int ownerID) throws S3ServerException{
+    public long getBucketNumber(long ownerID) throws S3ServerException{
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -224,7 +277,6 @@ public class SequoiadbBucketDao implements BucketDao {
             matcher.put(Bucket.BUCKET_OWNERID, ownerID);
 
             return cl.getCount(matcher);
-
         }catch (Exception e) {
             logger.error("getBucketNumber failed. errorMessage = " + e.getMessage(), e);
             throw e;
@@ -234,7 +286,7 @@ public class SequoiadbBucketDao implements BucketDao {
     }
 
     @Override
-    public void updateBucket(String bucketName, String status, String delimiter) throws S3ServerException {
+    public void updateBucketVersioning(String bucketName, String status) throws S3ServerException {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -248,9 +300,7 @@ public class SequoiadbBucketDao implements BucketDao {
             if (status != null){
                 modifier.put(Bucket.BUCKET_VERSIONINGSTATUS, status);
             }
-            if (delimiter != null){
-                modifier.put(Bucket.BUCKET_DELIMITER, delimiter);
-            }
+
             BSONObject setModifier = new BasicBSONObject();
             setModifier.put(DBParamDefine.MODIFY_SET, modifier);
 
@@ -264,17 +314,164 @@ public class SequoiadbBucketDao implements BucketDao {
         }
     }
 
+    @Override
+    public void updateBucketDelimiter(ConnectionDao connection, String bucketName, Bucket bucket)
+            throws S3ServerException {
+        Sequoiadb sdb = null;
+        try{
+            if (connection != null) {
+                sdb = ((SdbConnectionDao) connection).getConnection();
+            }else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+            }
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            DBCollection    cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(Bucket.BUCKET_NAME, bucketName);
+
+            BSONObject update = new BasicBSONObject();
+            if (bucket.getDelimiter() != null) {
+                update.put(Bucket.BUCKET_DELIMITER, bucket.getDelimiter());
+            }
+            if (bucket.getDelimiter1() != null) {
+                update.put(Bucket.BUCKET_DELIMITER1, bucket.getDelimiter1());
+            }
+            if (bucket.getDelimiter1CreateTime() != null) {
+                update.put(Bucket.BUCKET_DELIMITER1CREATETIME, bucket.getDelimiter1CreateTime());
+            }
+            if (bucket.getDelimiter1ModTime() != null) {
+                update.put(Bucket.BUCKET_DELIMITER1MODTIME, bucket.getDelimiter1ModTime());
+            }
+            if (bucket.getDelimiter1Status() != null) {
+                update.put(Bucket.BUCKET_DELIMITER1STATUS, bucket.getDelimiter1Status());
+            }
+            if (bucket.getDelimiter2() != null) {
+                update.put(Bucket.BUCKET_DELIMITER2, bucket.getDelimiter2());
+            }
+            if (bucket.getDelimiter2CreateTime() != null) {
+                update.put(Bucket.BUCKET_DELIMITER2CREATETIME, bucket.getDelimiter2CreateTime());
+            }
+            if (bucket.getDelimiter2ModTime() != null) {
+                update.put(Bucket.BUCKET_DELIMITER2MODTIME, bucket.getDelimiter2ModTime());
+            }
+            if (bucket.getDelimiter2Status() != null) {
+                update.put(Bucket.BUCKET_DELIMITER2STATUS, bucket.getDelimiter2Status());
+            }
+            if (bucket.getTaskID() != null){
+                update.put(Bucket.BUCKET_TASKID, bucket.getTaskID());
+            }
+
+            BSONObject upSet = new BasicBSONObject();
+            upSet.put(DBParamDefine.MODIFY_SET, update);
+            cl.update(matcher, upSet, null);
+        }catch (Exception e){
+            logger.error("update bucket delimiter failed. bucketNme:{}", bucketName);
+            throw e;
+        }finally {
+            if (connection == null){
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            }
+        }
+
+    }
+
+    @Override
+    public void cleanBucketDelimiter(ConnectionDao connection, String bucketName, int delimiter)
+            throws S3ServerException{
+        try {
+            Sequoiadb sdb = ((SdbConnectionDao)connection).getConnection();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            DBCollection    cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(Bucket.BUCKET_NAME, bucketName);
+
+            BSONObject update = new BasicBSONObject();
+            if (delimiter == 1) {
+                update.put(Bucket.BUCKET_DELIMITER1, null);
+                update.put(Bucket.BUCKET_DELIMITER1CREATETIME, null);
+                update.put(Bucket.BUCKET_DELIMITER1MODTIME, null);
+                update.put(Bucket.BUCKET_DELIMITER1STATUS, null);
+                update.put(Bucket.BUCKET_TASKID, null);
+            }else {
+                update.put(Bucket.BUCKET_DELIMITER2, null);
+                update.put(Bucket.BUCKET_DELIMITER2CREATETIME, null);
+                update.put(Bucket.BUCKET_DELIMITER2MODTIME, null);
+                update.put(Bucket.BUCKET_DELIMITER2STATUS, null);
+                update.put(Bucket.BUCKET_TASKID, null);
+            }
+            BSONObject unSet = new BasicBSONObject();
+            unSet.put(DBParamDefine.MODIFY_UNSET, update);
+
+            cl.update(matcher, unSet, null);
+        }catch (Exception e){
+            logger.error("clear bucket delimiter:{} failed. bucketName:{}", delimiter, bucketName);
+            throw e;
+        }
+    }
+
+    @Override
+    public Bucket queryBucketForUpdate(ConnectionDao connection, String bucketName) throws S3ServerException {
+        try {
+            Sequoiadb sdb = ((SdbConnectionDao)connection).getConnection();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(Bucket.BUCKET_NAME, bucketName);
+
+            BSONObject queryResult = cl.queryOne(matcher,null,null,null,DBQuery.FLG_QUERY_FOR_UPDATE);
+
+            if (null == queryResult) {
+                return null;
+            }
+
+            return convertBsonToBucket(queryResult);
+        }catch (Exception e) {
+            logger.error("getBucketByName failed. errorMessage = " + e.getMessage(), e);
+            throw e;
+        }
+    }
+
     private Bucket convertBsonToBucket(BSONObject bsonObject) {
         Bucket bucket = new Bucket();
         bucket.setBucketId((long)bsonObject.get(Bucket.BUCKET_ID));
         bucket.setBucketName(bsonObject.get(Bucket.BUCKET_NAME).toString());
-        bucket.setOwnerId((int)bsonObject.get(Bucket.BUCKET_OWNERID));
+        bucket.setOwnerId((long)bsonObject.get(Bucket.BUCKET_OWNERID));
         bucket.setTimeMillis((long)bsonObject.get(Bucket.BUCKET_CREATETIME));
         bucket.setFormatDate(DataFormatUtils.formatDate((long)bsonObject.get(Bucket.BUCKET_CREATETIME)));
         bucket.setVersioningStatus(bsonObject.get(Bucket.BUCKET_VERSIONINGSTATUS).toString());
-        bucket.setDelimiter(bsonObject.get(Bucket.BUCKET_DELIMITER).toString());
         if (bsonObject.get(Bucket.BUCKET_REGION) != null){
             bucket.setRegion(bsonObject.get(Bucket.BUCKET_REGION).toString());
+        }
+        bucket.setDelimiter((int)bsonObject.get(Bucket.BUCKET_DELIMITER));
+        if (bsonObject.get(Bucket.BUCKET_DELIMITER1) != null){
+            bucket.setDelimiter1(bsonObject.get(Bucket.BUCKET_DELIMITER1).toString());
+        }
+        if (bsonObject.get(Bucket.BUCKET_DELIMITER1CREATETIME) != null){
+            bucket.setDelimiter1CreateTime((long)bsonObject.get(Bucket.BUCKET_DELIMITER1CREATETIME));
+        }
+        if (bsonObject.get(Bucket.BUCKET_DELIMITER1MODTIME) != null){
+            bucket.setDelimiter1ModTime((long)bsonObject.get(Bucket.BUCKET_DELIMITER1MODTIME));
+        }
+        if (bsonObject.get(Bucket.BUCKET_DELIMITER1STATUS) != null){
+            bucket.setDelimiter1Status(bsonObject.get(Bucket.BUCKET_DELIMITER1STATUS).toString());
+        }
+        if (bsonObject.get(Bucket.BUCKET_DELIMITER2) != null){
+            bucket.setDelimiter2(bsonObject.get(Bucket.BUCKET_DELIMITER2).toString());
+        }
+        if (bsonObject.get(Bucket.BUCKET_DELIMITER2CREATETIME) != null){
+            bucket.setDelimiter2CreateTime((long)bsonObject.get(Bucket.BUCKET_DELIMITER2CREATETIME));
+        }
+        if (bsonObject.get(Bucket.BUCKET_DELIMITER2MODTIME) != null){
+            bucket.setDelimiter2ModTime((long)bsonObject.get(Bucket.BUCKET_DELIMITER2MODTIME));
+        }
+        if (bsonObject.get(Bucket.BUCKET_DELIMITER2STATUS) != null){
+            bucket.setDelimiter2Status(bsonObject.get(Bucket.BUCKET_DELIMITER2STATUS).toString());
+        }
+        if (bsonObject.get(Bucket.BUCKET_TASKID) != null){
+            bucket.setTaskID((long)bsonObject.get(Bucket.BUCKET_TASKID));
         }
         return bucket;
     }

@@ -4,8 +4,10 @@ import com.sequoiadb.base.*;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoias3.common.DBParamDefine;
+import com.sequoias3.common.DataShardingType;
 import com.sequoias3.common.RegionParamDefine;
 import com.sequoias3.config.SequoiadbConfig;
+import com.sequoias3.core.Dir;
 import com.sequoias3.core.ObjectMeta;
 import com.sequoias3.core.Region;
 import com.sequoias3.core.RegionSpace;
@@ -14,6 +16,7 @@ import com.sequoias3.dao.DaoCollectionDefine;
 import com.sequoias3.dao.RegionDao;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
+import com.sequoias3.utils.ShardingTypeUtils;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.slf4j.Logger;
@@ -22,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Repository("RegionDao")
@@ -33,6 +37,12 @@ public class SequoiadbRegionDao implements RegionDao {
 
     @Autowired
     SequoiadbConfig config;
+
+    @Autowired
+    SdbBaseOperation sdbBaseOperation;
+
+    @Autowired
+    SequoiadbRegionSpaceDao sequoiadbRegionSpaceDao;
 
     @Override
     public void insertRegion(ConnectionDao connection, Region regionCon) throws S3ServerException {
@@ -132,7 +142,7 @@ public class SequoiadbRegionDao implements RegionDao {
             logger.error("queryRegionList failed. errorMessage = " + e.getMessage());
             throw e;
         }finally {
-            sdbDatasourceWrapper.releaseDBCursor(cursor);
+            sdbBaseOperation.releaseDBCursor(cursor);
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
@@ -193,14 +203,14 @@ public class SequoiadbRegionDao implements RegionDao {
 
                 if (findIndex == false) {
                     BSONObject indexKey = new BasicBSONObject();
-                    String indexName = ObjectMeta.META_BUCKET_ID + "+" + ObjectMeta.META_KEY_NAME;
+                    String indexName = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME;
                     indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
                     indexKey.put(ObjectMeta.META_KEY_NAME, 1);
                     if (locationType == RegionParamDefine.LocationType.MetaHis) {
                         indexKey.put(ObjectMeta.META_VERSION_ID, 1);
-                        indexName = indexName + "+" + ObjectMeta.META_VERSION_ID;
+                        indexName = indexName + "_" + ObjectMeta.META_VERSION_ID;
                     }
-                    sdbDatasourceWrapper.createIndex(sdb, CSName, CLName,
+                    sdbBaseOperation.createIndex(sdb, CSName, CLName,
                             indexName, indexKey, true, true);
                 }
             }
@@ -264,7 +274,202 @@ public class SequoiadbRegionDao implements RegionDao {
         }
     }
 
+    @Override
+    public String getMetaCurCSName( Region region){
+        StringBuilder csName = new StringBuilder();
 
+        if (null != region){
+            if (region.getMetaLocation() != null){
+                csName.append(region.getMetaCSLocation());
+            }else {
+                csName.append(DBParamDefine.CS_S3);
+                csName.append(region.getName());
+                csName.append(DBParamDefine.CS_META);
+            }
+        }else {
+            csName.append(config.getMetaCsName());
+        }
+
+        return csName.toString();
+    }
+
+    @Override
+    public String getMetaCurCLName(Region region){
+        if (region != null && region.getMetaLocation() != null){
+            return region.getMetaCLLocation();
+        }else {
+            return DaoCollectionDefine.OBJECT_META_LIST;
+        }
+    }
+
+    @Override
+    public String getMetaHisCSName( Region region){
+        StringBuilder csName = new StringBuilder();
+
+        if (null != region){
+            if (region.getMetaHisLocation() != null){
+                csName.append(region.getMetaHisCSLocation());
+            }else {
+                csName.append(DBParamDefine.CS_S3);
+                csName.append(region.getName());
+                csName.append(DBParamDefine.CS_META);
+            }
+        }else {
+            csName.append(config.getMetaCsName());
+        }
+
+        return csName.toString();
+    }
+
+    @Override
+    public String getMetaHisCLName(Region region){
+        if (region != null && region.getMetaHisLocation() != null){
+            return region.getMetaHisCLLocation();
+        }else {
+            return DaoCollectionDefine.OBJECT_META_LIST_HISTORY;
+        }
+    }
+
+    @Override
+    public String getDataCSName(Region region, Date date){
+        StringBuilder csName = new StringBuilder();
+
+        if (null != region){
+            if (region.getDataLocation() != null){
+                csName.append(region.getDataCSLocation());
+            }else {
+                csName.append(DBParamDefine.CS_S3);
+                csName.append(region.getName());
+                csName.append(DBParamDefine.CS_DATA);
+                DataShardingType type = DataShardingType.getShardingType(region.getDataCSShardingType());
+                if (type != null){
+                    csName.append("_");
+                    csName.append(ShardingTypeUtils.getShardingTypeStr(type, date));
+                }
+            }
+        }else {
+            csName.append(config.getDataCsName());
+            csName.append("_");
+            csName.append(ShardingTypeUtils.getShardingTypeStr(DataShardingType.YEAR, date));
+        }
+
+        return csName.toString();
+    }
+
+    @Override
+    public String getDataClName(Region region, Date date){
+        StringBuilder clName = new StringBuilder();
+
+        if (null != region){
+            if (region.getDataLocation() != null){
+                clName.append(region.getDataCLLocation());
+            }else {
+                clName.append(DaoCollectionDefine.OBJECT_DATA_LIST);
+                DataShardingType type = DataShardingType.getShardingType(region.getDataCLShardingType());
+                if (type != null){
+                    clName.append("_");
+                    clName.append(ShardingTypeUtils.getShardingTypeStr(type, date));
+                }
+            }
+        }else {
+            clName.append(DaoCollectionDefine.OBJECT_DATA_LIST);
+            clName.append("_");
+            clName.append(ShardingTypeUtils.getShardingTypeStr(DataShardingType.QUARTER, date));
+        }
+        return clName.toString();
+    }
+
+    @Override
+    public void createMetaCSCL(Region region, String csMetaName,
+                                String clMetaName, Boolean isHistory)
+            throws S3ServerException{
+        Sequoiadb sdb = null;
+        try {
+            if (region != null && region.getMetaLocation() != null) {
+                throw new S3ServerException(S3Error.REGION_LOCATION_NOT_EXIST,
+                        "location not exist. csName=" + csMetaName + ", clName=" + clMetaName);
+            } else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+                if (!sdb.isCollectionSpaceExist(csMetaName)) {
+                    BSONObject option = null;
+                    if (region != null && region.getMetaDomain() != null) {
+                        option = new BasicBSONObject();
+                        option.put("Domain", region.getMetaDomain());
+                    }
+
+                    if (DBParamDefine.CREATE_OK == sdbBaseOperation.createCS(sdb, csMetaName, option)) {
+                        sequoiadbRegionSpaceDao.insertRegionCSList(csMetaName, region.getName());
+                    }
+                }
+
+                BSONObject option = generateMetaCLOption();
+                sdbBaseOperation.createCL(sdb, csMetaName, clMetaName, option);
+
+                BSONObject indexKey = new BasicBSONObject();
+                String indexName = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME;
+                indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
+                indexKey.put(ObjectMeta.META_KEY_NAME, 1);
+                if (isHistory) {
+                    indexKey.put(ObjectMeta.META_VERSION_ID, 1);
+                    indexName = indexName + "_" + ObjectMeta.META_VERSION_ID;
+                }
+
+                sdbBaseOperation.createIndex(sdb, csMetaName, clMetaName,
+                            indexName, indexKey, true, true);
+            }
+        }finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    private BSONObject generateMetaCLOption(){
+        BSONObject clOption = new BasicBSONObject();
+
+        BSONObject shardingKey = new BasicBSONObject(ObjectMeta.META_KEY_NAME, 1);
+        clOption.put("ShardingKey", shardingKey);
+        clOption.put("ShardingType", "hash");
+        clOption.put("ReplSize", -1);
+        clOption.put("AutoSplit", true);
+
+        return clOption;
+    }
+
+    @Override
+    public void createDirCSCL(Region region, String metaCsName)
+            throws S3ServerException {
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            if (!sdb.isCollectionSpaceExist(metaCsName)) {
+                if (region != null && region.getMetaLocation() != null) {
+                    throw new S3ServerException(S3Error.REGION_LOCATION_NOT_EXIST,
+                            "location not exist. csName=" + metaCsName);
+                } else {
+                    BSONObject option = null;
+                    if (region != null && region.getMetaDomain() != null) {
+                        option = new BasicBSONObject();
+                        option.put("Domain", region.getMetaDomain());
+                    }
+                    if (DBParamDefine.CREATE_OK == sdbBaseOperation.createCS(sdb, metaCsName, option)) {
+                        sequoiadbRegionSpaceDao.insertRegionCSList(metaCsName, region.getName());
+                    }
+                }
+            }
+
+            sdbBaseOperation.createCL(sdb, metaCsName, DaoCollectionDefine.OBJECT_DIR, null);
+
+            BSONObject indexKey = new BasicBSONObject();
+            String indexName = "dirIndex";
+            indexKey.put(Dir.DIR_BUCKETID, 1);
+            indexKey.put(Dir.DIR_DELIMITER, 1);
+            indexKey.put(Dir.DIR_NAME, 1);
+            sdbBaseOperation.createIndex(sdb, metaCsName, DaoCollectionDefine.OBJECT_DIR,
+                    indexName, indexKey, true, true);
+
+        }finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
 
     private Region convertBsonToRegion(BSONObject result){
         if (null == result){

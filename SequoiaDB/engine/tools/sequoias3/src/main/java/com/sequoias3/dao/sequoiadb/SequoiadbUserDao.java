@@ -154,7 +154,7 @@ public class SequoiadbUserDao implements UserDao {
     }
 
     @Override
-    public Owner getOwnerByUserID(int userId) throws S3ServerException{
+    public Owner getOwnerByUserID(long userId) throws S3ServerException{
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -178,7 +178,7 @@ public class SequoiadbUserDao implements UserDao {
     }
 
     @Override
-    public int getMaxID() throws S3ServerException {
+    public long getMaxID() throws S3ServerException {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
@@ -192,9 +192,9 @@ public class SequoiadbUserDao implements UserDao {
             BSONObject queryResult = cl.queryOne(null, selector, orderBy, null, 0);
 
             if (null != queryResult) {
-                return (int) (queryResult.get(User.JSON_KEY_USERID));
+                return (long) (queryResult.get(User.JSON_KEY_USERID));
             } else {
-                return 0;
+                return 0L;
             }
         } catch (BaseException e) {
             logger.error("getMaxID failed. errorMessage = " + e.getMessage(), e);
@@ -210,7 +210,7 @@ public class SequoiadbUserDao implements UserDao {
             user.setUserName(bsonObject.get(User.JSON_KEY_USERNAME).toString());
         }
         if (bsonObject.containsField(User.JSON_KEY_USERID)) {
-            user.setUserId((int) (bsonObject.get(User.JSON_KEY_USERID)));
+            user.setUserId((long) (bsonObject.get(User.JSON_KEY_USERID)));
         }
         if (bsonObject.containsField(User.JSON_KEY_ROLE)) {
             user.setRole(bsonObject.get(User.JSON_KEY_ROLE).toString());
@@ -230,7 +230,7 @@ public class SequoiadbUserDao implements UserDao {
             owner.setUserName(bsonObject.get(User.JSON_KEY_USERNAME).toString());
         }
         if (bsonObject.containsField(User.JSON_KEY_USERID)) {
-            owner.setUserId((int) (bsonObject.get(User.JSON_KEY_USERID)));
+            owner.setUserId((long) (bsonObject.get(User.JSON_KEY_USERID)));
         }
 
         return owner;

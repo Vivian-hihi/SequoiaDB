@@ -4,11 +4,9 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.config.SequoiadbConfig;
-import com.sequoias3.core.Bucket;
-import com.sequoias3.core.Region;
-import com.sequoias3.core.RegionSpace;
-import com.sequoias3.core.User;
+import com.sequoias3.core.*;
 import com.sequoias3.dao.DaoCollectionDefine;
+import com.sequoias3.dao.IDGeneratorDao;
 import com.sequoias3.exception.S3ServerException;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -27,12 +25,18 @@ public class SdbInitSystem {
     @Autowired
     SequoiadbConfig config;
 
+    @Autowired
+    SdbBaseOperation sdbBaseOperation;
+
+    @Autowired
+    IDGeneratorDao idGeneratorDao;
+
     public void createSystemCS() throws S3ServerException {
         Sequoiadb sdb = null;
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
             if(!sdb.isCollectionSpaceExist(config.getMetaCsName())){
-                sdbDatasourceWrapper.createCS(sdb, config.getMetaCsName(), null);
+                sdbBaseOperation.createCS(sdb, config.getMetaCsName(), null);
             }
         } catch (Exception e){
             logger.error("create system cs failed.", e);
@@ -48,7 +52,7 @@ public class SdbInitSystem {
             sdb = sdbDatasourceWrapper.getSequoiadb();
             CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
             if(!cs.isCollectionExist(DaoCollectionDefine.USER_LIST_COLLECTION)) {
-                sdbDatasourceWrapper.createCL(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createCL(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.USER_LIST_COLLECTION, null);
             }
 
@@ -58,7 +62,7 @@ public class SdbInitSystem {
             if (!cl.isIndexExist(IDIndexName)) {
                 BSONObject IDIndexKey = new BasicBSONObject();
                 IDIndexKey.put(User.JSON_KEY_USERID, 1);
-                sdbDatasourceWrapper.createIndex(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.USER_LIST_COLLECTION,
                         IDIndexName, IDIndexKey, true, true);
             }
@@ -67,7 +71,7 @@ public class SdbInitSystem {
             if (!cl.isIndexExist(nameIndexName)) {
                 BSONObject nameIndexKey = new BasicBSONObject();
                 nameIndexKey.put(User.JSON_KEY_USERNAME, 1);
-                sdbDatasourceWrapper.createIndex(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.USER_LIST_COLLECTION,
                         nameIndexName, nameIndexKey, true, true);
             }
@@ -76,7 +80,7 @@ public class SdbInitSystem {
             if (!cl.isIndexExist(accessIndexName)) {
                 BSONObject accessIndexKey = new BasicBSONObject();
                 accessIndexKey.put(User.JSON_KEY_ACCESS_KEY_ID, 1);
-                sdbDatasourceWrapper.createIndex(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.USER_LIST_COLLECTION,
                         accessIndexName, accessIndexKey, true, true);
             }
@@ -94,7 +98,7 @@ public class SdbInitSystem {
             sdb = sdbDatasourceWrapper.getSequoiadb();
             CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
             if(!cs.isCollectionExist(DaoCollectionDefine.BUCKET_LIST_COLLECTION)) {
-                sdbDatasourceWrapper.createCL(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createCL(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.BUCKET_LIST_COLLECTION, null);
             }
             DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
@@ -103,7 +107,7 @@ public class SdbInitSystem {
             if (!cl.isIndexExist(IDIndexName)) {
                 BSONObject IDIndexKey = new BasicBSONObject();
                 IDIndexKey.put(Bucket.BUCKET_ID, 1);
-                sdbDatasourceWrapper.createIndex(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.BUCKET_LIST_COLLECTION,
                         IDIndexName, IDIndexKey, true, true);
             }
@@ -112,7 +116,7 @@ public class SdbInitSystem {
             if (!cl.isIndexExist(nameIndexName)) {
                 BSONObject nameIndexKey = new BasicBSONObject();
                 nameIndexKey.put(Bucket.BUCKET_NAME, 1);
-                sdbDatasourceWrapper.createIndex(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.BUCKET_LIST_COLLECTION,
                         nameIndexName, nameIndexKey, true, true);
             }
@@ -130,7 +134,7 @@ public class SdbInitSystem {
             sdb = sdbDatasourceWrapper.getSequoiadb();
             CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
             if(!cs.isCollectionExist(DaoCollectionDefine.REGION_LIST_COLLECTION)) {
-                sdbDatasourceWrapper.createCL(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createCL(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.REGION_LIST_COLLECTION, null);
             }
 
@@ -140,7 +144,7 @@ public class SdbInitSystem {
             if (!cl.isIndexExist(indexName)) {
                 BSONObject indexKey = new BasicBSONObject();
                 indexKey.put(Region.REGION_NAME, 1);
-                sdbDatasourceWrapper.createIndex(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.REGION_LIST_COLLECTION,
                         indexName, indexKey, true, true);
             }
@@ -158,7 +162,7 @@ public class SdbInitSystem {
             sdb = sdbDatasourceWrapper.getSequoiadb();
             CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
             if (!cs.isCollectionExist(DaoCollectionDefine.REGION_SPACE_LIST)) {
-                sdbDatasourceWrapper.createCL(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createCL(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.REGION_SPACE_LIST, null);
             }
 
@@ -168,12 +172,62 @@ public class SdbInitSystem {
             if (!cl.isIndexExist(indexName)) {
                 BSONObject indexKey = new BasicBSONObject();
                 indexKey.put(RegionSpace.REGION_SPACE_NAME, 1);
-                sdbDatasourceWrapper.createIndex(sdb, config.getMetaCsName(),
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.REGION_SPACE_LIST,
                         indexName, indexKey, true, true);
             }
         } catch (Exception e) {
             logger.error("create region space cl failed.", e);
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    public void createIDGeneratorCL() throws S3ServerException{
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            if (!cs.isCollectionExist(DaoCollectionDefine.ID_GENERATOR)){
+                sdbBaseOperation.createCL(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.ID_GENERATOR, null);
+            }
+
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.ID_GENERATOR);
+            String indexName = "typeIndex";
+            if (!cl.isIndexExist(indexName)){
+                BSONObject indexKey = new BasicBSONObject();
+                indexKey.put(IDGenerator.ID_TYPE, 1);
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.ID_GENERATOR, indexName,
+                        indexKey, true, true);
+            }
+
+            idGeneratorDao.insertId(IDGenerator.TYPE_USER);
+            idGeneratorDao.insertId(IDGenerator.TYPE_BUCKET);
+            idGeneratorDao.insertId(IDGenerator.TYPE_PARENTID);
+            idGeneratorDao.insertId(IDGenerator.TYPE_TASK);
+        }catch (Exception e) {
+            logger.error("create IDTable failed.", e);
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    public void createTaskCL() throws S3ServerException{
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            if (!cs.isCollectionExist(DaoCollectionDefine.TASK_COLLECTION)){
+                sdbBaseOperation.createCL(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.TASK_COLLECTION, null);
+            }
+
+        }catch (Exception e) {
+            logger.error("create TaskTable failed.", e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);

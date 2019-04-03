@@ -32,8 +32,13 @@ public class SequoiadbRegionSpaceDao implements RegionSpaceDao {
     @Autowired
     SequoiadbConfig config;
 
-    public void insertRegionCSList(Sequoiadb sdb, String spaceName, String regionName) throws S3ServerException {
+    @Autowired
+    SdbBaseOperation sdbBaseOperation;
+
+    public void insertRegionCSList(String spaceName, String regionName) throws S3ServerException {
+        Sequoiadb sdb = null;
         try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
             CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
             DBCollection cl = cs.getCollection(DaoCollectionDefine.REGION_SPACE_LIST);
 
@@ -45,6 +50,8 @@ public class SequoiadbRegionSpaceDao implements RegionSpaceDao {
             cl.insert(spaceData);
         } catch (Exception e){
             logger.error("insert into RegionSpaceList failed. space name:"+spaceName+", regionName:"+regionName, e);
+        }finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
 
@@ -93,7 +100,7 @@ public class SequoiadbRegionSpaceDao implements RegionSpaceDao {
             logger.error("queryRegionCSList failed. error message:"+ e.getMessage());
             throw e;
         }finally {
-            sdbDatasourceWrapper.releaseDBCursor(cursor);
+            sdbBaseOperation.releaseDBCursor(cursor);
             if (null == connection) {
                 sdbDatasourceWrapper.releaseSequoiadb(sdb);
             }
@@ -122,7 +129,7 @@ public class SequoiadbRegionSpaceDao implements RegionSpaceDao {
     public void dropRegionCollectionSpace(ConnectionDao connection, String CSName) throws S3ServerException {
         try {
             Sequoiadb sdb = ((SdbConnectionDao) connection).getConnection();
-            sdbDatasourceWrapper.dropCS(sdb, CSName);
+            sdbBaseOperation.dropCS(sdb, CSName);
         }catch (Exception e){
             logger.error("dropCS failed. error message:"+ e.getMessage());
             throw e;

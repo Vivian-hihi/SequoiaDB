@@ -9,13 +9,13 @@ public class Owner {
     @JsonProperty(DISPLAY_NAME)
     private String userName;
     @JsonProperty(JSON_KEY_USERID)
-    private int userId;
+    private long userId;
 
-    public void setUserId(int userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 
-    public int getUserId() {
+    public long getUserId() {
         return userId;
     }
 

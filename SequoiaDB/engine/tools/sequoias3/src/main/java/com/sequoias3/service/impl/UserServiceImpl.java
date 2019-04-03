@@ -3,6 +3,8 @@ package com.sequoias3.service.impl;
 import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.common.InitAdminUserDefine;
 import com.sequoias3.common.UserParamDefine;
+import com.sequoias3.core.IDGenerator;
+import com.sequoias3.dao.IDGeneratorDao;
 import com.sequoias3.model.AccessKeys;
 import com.sequoias3.core.Bucket;
 import com.sequoias3.core.User;
@@ -35,6 +37,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private BucketService bucketService;
 
+    @Autowired
+    IDGeneratorDao idGeneratorDao;
+
     @Override
     public AccessKeys createUser(String newUserName,
                                  String role) throws S3ServerException {
@@ -62,7 +67,7 @@ public class UserServiceImpl implements UserService {
                 //       4.set user attribute
                 User u = new User();
                 u.setUserName(userName);
-                u.setUserId(userDao.getMaxID() + 1);
+                u.setUserId(idGeneratorDao.getNewId(IDGenerator.TYPE_USER));
                 u.setRole(null == role ? UserParamDefine.ROLE_NORMAL : role);
                 u.setAccessKeyID(accessKeyID);
                 u.setSecretAccessKey(secretAccessKey);
@@ -154,10 +159,10 @@ public class UserServiceImpl implements UserService {
                         bucketService.deleteBucketForce(bucketList.get(i));
                     } catch (S3ServerException e) {
                         throw new S3ServerException(e.getError(),
-                                "clean bucket failed, bucket=" + bucketList.get(i).getBucketName());
+                                "clean bucket failed, bucket=" + bucketList.get(i).getBucketName(), e);
                     } catch (Exception e) {
                         throw new S3ServerException(S3Error.USER_DELETE_CLEAN_FAILED,
-                                "clean bucket failed, bucket=" + bucketList.get(i).getBucketName());
+                                "clean bucket failed, bucket=" + bucketList.get(i).getBucketName(), e);
                     }
                 }
             }else if(bucketList.size() > 0 ){
