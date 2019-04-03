@@ -4,6 +4,7 @@
 *@createDate:  2019.3.12
 *@testlinkCase: seqDB-13655
 **************************************/
+main();
 function main()
 {
     var clName = "cl13655" ;
@@ -50,20 +51,20 @@ function checkErrCodeAndNodeName(cl, errInsString, errorCode, expNodeName)
     try
     {
         cl.insert(errInsString);
-        throw buildException("insert()",null,"insert error record", "insert failed", "insert success");
+        throw "expect fail but success.";
     }
     catch( e )
     {
-        if(e!=errorCode)
+        if( e !== errorCode )
         {
-            throw buildException("insert()",e ,"insert record", errorCode, e );
+            throw buildException("checkErrCodeAndNodeName()",e ,"insert record", errorCode, e );
         }
     }
     
     var actNodeName = getNodeName(cl);
     if (!compareObj(expNodeName, actNodeName))
     {
-        throw buildException("compare()", null, "compare node name after test error code = " + errorCode, expNodeName, actNodeName);
+        throw buildException("checkErrCodeAndNodeName()", null, "compare node name after test error code = " + errorCode, expNodeName, actNodeName);
     }
 }
 
@@ -79,4 +80,3 @@ function repeat(str, n)
 {
     return new Array(n+1).join(str);
 }
-main();
