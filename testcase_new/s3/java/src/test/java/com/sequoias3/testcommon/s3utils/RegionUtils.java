@@ -312,18 +312,20 @@ public class RegionUtils extends S3TestBase {
 		}
 	}
 
-	public static void dropDomain(String domainName){
-		Sequoiadb sdb = null;
-		try {
-			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
+	public static void dropDomain(String domainName){		
+		try ( Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "") ){			
 			if(sdb.isDomainExist(domainName)){
 				sdb.dropDomain(domainName);
 			}
-		} finally {
-			if (null != sdb) {
-				sdb.close();
+		} 
+	}
+	
+	public static void dropCS(String csName){		
+		try( Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "") ) {			
+			if(sdb.isCollectionSpaceExist(csName)){
+				sdb.dropCollectionSpace(csName);
 			}
-		}
+		} 
 	}
 
 	public static int getRecordNum(String csName,String clName){
