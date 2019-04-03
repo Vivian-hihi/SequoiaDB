@@ -89,7 +89,7 @@ function checkResult( cl, expObj )
     {
         if( cursor.current().toObj()["a"] !== expObj["a"] )
         {
-            throw buildException("checkResult()", null, "query data from coord2", "have data", "no data");
+            throw buildException("checkResult()", null, "query data from coord2", expObj["a"], cursor.current().toObj()["a"]);
         }
     }
     cursor.close();
