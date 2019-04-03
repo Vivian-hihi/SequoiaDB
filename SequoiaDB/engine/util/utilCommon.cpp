@@ -346,7 +346,7 @@ namespace engine
 
          if ( detail )
          {
-            bb.append ( OP_ERR_DETAIL, *detail ) ;
+            bb.append ( OP_ERR_DETAIL, detail ) ;
          }
          if ( pRollback )
          {
