@@ -43,6 +43,7 @@ public class SplitHash11558B extends SdbTestBase {
     private ArrayList<String> clNames = new ArrayList<>();
     private ArrayList<Object> validDataArr = new ArrayList<>();
     private ArrayList<Object> invalidDataArr = new ArrayList<>();
+    private boolean runSuccess = false;
 
     @BeforeClass
     private void setUp() {
@@ -134,14 +135,17 @@ public class SplitHash11558B extends SdbTestBase {
             Assert.assertEquals(totalCnt, validDataArr.size());
 
             this.checkGroups(cl);
-        }
+        }        
+        runSuccess = true;
     }
 
     @AfterClass
     private void tearDown() {
         try {
-            for (int i = 0; i < clNames.size(); i++) {
-                cs.dropCollection(clNames.get(i));
+            if (runSuccess) {
+                for (int i = 0; i < clNames.size(); i++) {
+                    cs.dropCollection(clNames.get(i));
+                }
             }
         } finally {
             if (sdb != null) {
@@ -167,7 +171,14 @@ public class SplitHash11558B extends SdbTestBase {
             try {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+                
+                System.out.println(new Date() + " begin to split[" + clName + "], srcRg[" + srcRg + "], dstRg[" + dstRg +"]");
+                db.msg("begin to split[" + clName + "], srcRg[" + srcRg + "], dstRg[" + dstRg +"]");
+                
                 cl.split(srcRg, dstRg, percent);
+                
+                db.msg("split end, " + clName);                
+                System.out.println(new Date() + " split end, " + clName);
             } finally {
                 if (db != null)
                     db.close();
@@ -191,7 +202,17 @@ public class SplitHash11558B extends SdbTestBase {
             try {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+                
+                System.out.println(new Date() + " begin to delete " + clName);
+                db.msg("begin to delete " + clName);
+                
                 cl.delete(matcher);
+                
+                db.msg("delete end, " + clName);
+                System.out.println(new Date() + " delete end, " + clName);
+                
+                DBCursor cr = cl.query(matcher, null, null, null);
+                Assert.assertFalse(cr.hasNext());
             } finally {
                 if (db != null)
                     db.close();
