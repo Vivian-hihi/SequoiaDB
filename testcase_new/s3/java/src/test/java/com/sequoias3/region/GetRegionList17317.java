@@ -31,7 +31,7 @@ public class GetRegionList17317 extends S3TestBase{
 	private String[] metaClNames = {"metaCL17317","metaHistoryCL17317"};
 	private String[] dataClName = {"dataCL17317"};
 	private List<String> regionNames = new ArrayList<>();
-	private int regionNum = 2000;
+	private int regionNum = 50;
 	private boolean runSuccess = false;
 
 	@BeforeClass
@@ -92,10 +92,10 @@ public class GetRegionList17317 extends S3TestBase{
 		if (runSuccess) {
 			try(Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")){
 				sdb.dropCollectionSpace(metaCSName);
-				sdb.dropCollectionSpace(dataCSName);
+				sdb.dropCollectionSpace(dataCSName);				
+				deleteRegions(regionNames);
 				sdb.dropDomain(dataDomain);
 				sdb.dropDomain(metaDomain);
-				deleteRegions(regionNames);
 			}
 		}
 	}

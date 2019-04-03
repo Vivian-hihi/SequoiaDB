@@ -37,8 +37,10 @@ public class GetRegionMessage17313 extends S3TestBase{
 	@BeforeClass
 	private void setUp() throws Exception {
 		s3Client = CommLib.buildS3Client();
-		RegionUtils.dropDomain(metaDomain);
+		RegionUtils.dropCS(metaCSName);
+		RegionUtils.dropCS(dataCSName);;
 		RegionUtils.dropDomain(dataDomain);
+		RegionUtils.dropDomain(metaDomain);
 		
 		RegionUtils.createDomain(dataDomain);
 		RegionUtils.createDomain(metaDomain);
@@ -112,11 +114,11 @@ public class GetRegionMessage17313 extends S3TestBase{
 				s3Client.deleteBucket(specifiedBucket);
 				s3Client.deleteBucket(shardingBucket);
 				sdb.dropCollectionSpace(dataCSName);
-				sdb.dropCollectionSpace(metaCSName);
-				RegionUtils.dropDomain(metaDomain);
-				RegionUtils.dropDomain(dataDomain);
+				sdb.dropCollectionSpace(metaCSName);			
 				RegionUtils.deleteRegion(specifiedRegionName);
 				RegionUtils.deleteRegion(shardingTypeRegionName);
+				RegionUtils.dropDomain(metaDomain);
+				RegionUtils.dropDomain(dataDomain);
 			}
 		}
 	}

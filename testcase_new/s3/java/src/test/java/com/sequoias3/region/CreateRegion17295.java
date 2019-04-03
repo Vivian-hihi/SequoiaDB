@@ -61,8 +61,8 @@ public class CreateRegion17295 extends S3TestBase {
 		// check auto create Index
 		String metaIndexKey = "{ \"BucketId\" : 1 , \"Key\" : 1 }";
 		String metaHisIndexKey = "{ \"BucketId\" : 1 , \"Key\" : 1 , \"VersionId\" : 1 }";
-		checkIndex(csNames[0], metaclNames[0], "BucketId+Key", metaIndexKey);
-		checkIndex(csNames[0], metaclNames[1], "BucketId+Key+VersionId", metaHisIndexKey);
+		checkIndex(csNames[0], metaclNames[0], "BucketId_Key", metaIndexKey);
+		checkIndex(csNames[0], metaclNames[1], "BucketId_Key_VersionId", metaHisIndexKey);
 
 		// create object on region
 		createObjectAndCheckResult();
