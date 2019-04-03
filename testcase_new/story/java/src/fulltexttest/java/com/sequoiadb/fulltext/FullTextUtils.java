@@ -14,307 +14,292 @@ import org.elasticsearch.client.*;
 
 public class FullTextUtils {
 
-	public static final int INSERT_NUMS = 200000; // insert 20w datas
+	  public static final int INSERT_NUMS = 200000; // insert 20w datas
 
-	/**
-	 * @param esClient
-	 * @param db
-	 * @param csName
-	 * @param clName
-	 * @param textIndexName
-	 * @param expectCount
-	 */
-	public static void checkFullSyncToES(Client esClient, Sequoiadb db, String csName, String clName,
-			String textIndexName, int expectCount) {
-		List<String> esIndexNames = FullTextDBUtils.getESIndexNames(db, csName, clName, textIndexName);
-		List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs(db, csName, clName, textIndexName);
+	  /**
+	   * @param esClient
+	   * @param db
+	   * @param csName
+	   * @param clName
+	   * @param textIndexName
+	   * @param expectCount
+	   */ 
+	  public static void checkFullSyncToES(Client esClient, Sequoiadb db, String csName, String clName,
+			   String textIndexName, int expectCount) {
+		    List<String> esIndexNames = FullTextDBUtils.getESIndexNames(db, csName, clName, textIndexName);
+		    List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs(db, csName, clName, textIndexName);
 
-		// check indexnames sync to ES
-		for (String esIndexName : esIndexNames) {
-			String msg = esIndexName + " is not exist";
-			Assert.assertTrue(FullTextESUtils.isExistIndexInES(esClient, esIndexName), msg);
-		}
+		    // check indexnames sync to ES
+		    for (String esIndexName : esIndexNames) {
+			      String msg = esIndexName + " is not exist";
+			      Assert.assertTrue(FullTextESUtils.isExistIndexInES(esClient, esIndexName), msg);
+		    }
 
-		// check all indices sync to ES
-		checkCountInES(esClient, esIndexNames, expectCount);
-		checkLidInES(esClient, esIndexNames, cappedCLs);
-	}
+		    // check all indices sync to ES
+		    checkCountInES(esClient, esIndexNames, expectCount);
+		    checkLidInES(esClient, esIndexNames, cappedCLs);
+	  }
 
-	/**
-	 * @param esClient
-	 * @param db
-	 * @param csName
-	 * @param mainCLName
-	 * @param textIndexName
-	 * @param expectCount
-	 */
-	public static void checkMainCLFullSyncToES(Client esClient, Sequoiadb db, String csName, String mainCLName,
-			String textIndexName, int expectCount) {
-		List<String> subCLFullNames = FullTextDBUtils.getSubCLNames(db, csName + "." + mainCLName);
+	  /**
+	   * @param esClient
+	   * @param db
+	   * @param csName
+	   * @param mainCLName
+	   * @param textIndexName
+	   * @param expectCount
+	   */
+	  public static void checkMainCLFullSyncToES(Client esClient, Sequoiadb db, String csName, String mainCLName,
+			   String textIndexName, int expectCount) {
+		    List<String> subCLFullNames = FullTextDBUtils.getSubCLNames(db, csName + "." + mainCLName);
 
-		// get all indexs from maincl
-		List<String> esIndexNames = new ArrayList<>();
-		List<DBCollection> cappedCLs = new ArrayList<>();
-		for (String subCLFullName : subCLFullNames) {
-			String subCSName = subCLFullName.split("\\.")[0];
-			String subCLName = subCLFullName.split("\\.")[1];
+		    // get all indexs from maincl
+		    List<String> esIndexNames = new ArrayList<>();
+		    List<DBCollection> cappedCLs = new ArrayList<>();
+		    for (String subCLFullName : subCLFullNames) {
+			      String subCSName = subCLFullName.split("\\.")[0];
+			      String subCLName = subCLFullName.split("\\.")[1];
 
-			esIndexNames.addAll(FullTextDBUtils.getESIndexNames(db, subCSName, subCLName, textIndexName));
-			cappedCLs.addAll(FullTextDBUtils.getCappedCLs(db, subCSName, subCLName, textIndexName));
-		}
-		esIndexNames = removeDuplicateItems(esIndexNames);
-		// sort esIndexNames
-		FullTextDBUtils.compare(esIndexNames);
+			      esIndexNames.addAll(FullTextDBUtils.getESIndexNames(db, subCSName, subCLName, textIndexName));
+			      cappedCLs.addAll(FullTextDBUtils.getCappedCLs(db, subCSName, subCLName, textIndexName));
+		    }
+		    esIndexNames = removeDuplicateItems(esIndexNames);
+		    // sort esIndexNames
+		    FullTextDBUtils.compare(esIndexNames);
 
-		// check indexnames sync to ES
-		for (String esIndexName : esIndexNames) {
-			String msg = esIndexName + " is not exist";
-			Assert.assertTrue(FullTextESUtils.isExistIndexInES(esClient, esIndexName), msg);
-		}
+		    // check indexnames sync to ES
+		    for (String esIndexName : esIndexNames) {
+			      String msg = esIndexName + " is not exist";
+			      Assert.assertTrue(FullTextESUtils.isExistIndexInES(esClient, esIndexName), msg);
+		    }
 
-		// check all indices sync to ES
-		checkCountInES(esClient, esIndexNames, expectCount);
-		checkLidInES(esClient, esIndexNames, cappedCLs);
-	}
+		    // check all indices sync to ES
+		    checkCountInES(esClient, esIndexNames, expectCount);
+		    checkLidInES(esClient, esIndexNames, cappedCLs);
+	  }
 
-	/**
-	 * @param esClient
-	 * @param esIndexNames
-	 */
-	public static void checkIndexNotExistInES(Client esClient, List<String> esIndexNames) {
-		// check indexnames sync to ES
-		for (String esIndexName : esIndexNames) {
-			String msg = esIndexName + " is exist";
-			Assert.assertTrue(FullTextESUtils.isIndexDeletedInES(esClient, esIndexName), msg);
-		}
-	}
+	  /**
+	   * @param esClient
+	   * @param esIndexNames
+	   */
+	  public static void checkIndexNotExistInES(Client esClient, List<String> esIndexNames) {
+		    // check indexnames sync to ES
+		    for (String esIndexName : esIndexNames) {
+			      String msg = esIndexName + " is exist";
+			      Assert.assertTrue(FullTextESUtils.isIndexDeletedInES(esClient, esIndexName), msg);
+		    }
+	  }
 
-	/**
-	 * @param esClient
-	 * @param esIndexNames
-	 * @param expectCount
-	 */
-	public static void checkCountInES(Client esClient, List<String> esIndexNames, int expectCount) {
-		boolean isSync = false;
-		int timeout = 600;
-		int doTimes = 0;
-		int interval = 1; // interval 1s
-		int actCount = 0;
+	  /**
+	   * @param esClient
+	   * @param esIndexNames
+	   * @param expectCount
+	   */
+	  public static void checkCountInES(Client esClient, List<String> esIndexNames, int expectCount) {
+		    boolean isSync = false;
+		    int timeout = 600;
+		    int doTimes = 0;
+		    int interval = 1; // interval 1s
+		    int actCount = 0;
 
-		while (true) {
-			actCount = 0;
-			// Add counts of all indices
-			for (String esIndexName : esIndexNames) {
-				actCount += (FullTextESUtils.getCountFromES(esClient, esIndexName) - 1);
-			}
+		    while (true) {
+			      actCount = 0;
+			      // Add counts of all indices
+			      for (String esIndexName : esIndexNames) {
+				        actCount += (FullTextESUtils.getCountFromES(esClient, esIndexName) - 1);
+			      }
 
-			// if expect count < act count, exit
-			if (actCount == expectCount) {
-				isSync = true;
-				break;
-			} else {
-				doTimes++;
-				System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", actCount: "
-						+ actCount + ", expectCount: " + expectCount);
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
+			      // if expect count < act count, exit
+			      if (actCount == expectCount) {
+				        isSync = true;
+				        break;
+			      } else {
+				        doTimes++;
+				        System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", actCount: "
+						                    + actCount + ", expectCount: " + expectCount);
+				        try {
+					          Thread.sleep(1000);
+				        } catch (InterruptedException e) {
+					          e.printStackTrace();
+				        }
+			      }
+      }
+		    // print message while not finish sync
+		    String msg = "";
+		    for (String esIndexName : esIndexNames) {
+			      msg += esIndexName + "/";
+		    }
+		    Assert.assertTrue(isSync, "check " + msg + " count syn to es fail");
+	  }
 
-		}
-		// after count fininsh sync
-		// System.out.println("esIndexNames: " + esIndexNames.toString() + ",
-		// doTimes: " + doTimes + ", actCount: " + actCount + ", expectCount: "
-		// + expectCount);
+  	/**
+	   * @param esClient
+	   * @param esIndexNames
+	   * @param cappedCLs
+	   */
+	  public static void checkLidInES(Client esClient, List<String> esIndexNames, List<DBCollection> cappedCLs) {
+		    boolean isSync = false;
+		    int timeout = 600;
+		    int doTimes = 0;
+		    int interval = 1; // interval 1s
 
-		// print message while not finish sync
-		String msg = "";
-		for (String esIndexName : esIndexNames) {
-			msg += esIndexName + "/";
-		}
-		Assert.assertTrue(isSync, "check " + msg + " count syn to es fail");
-	}
+		    // get all lids from all groups
+		    List<Integer> lastLogicalIDs = new ArrayList<>();
+		    for (DBCollection cappedCL : cappedCLs) {
+			      lastLogicalIDs.add(FullTextDBUtils.getLastLid(cappedCL));
+		    }
 
-	/**
-	 * @param esClient
-	 * @param esIndexNames
-	 * @param cappedCLs
-	 */
-	public static void checkLidInES(Client esClient, List<String> esIndexNames, List<DBCollection> cappedCLs) {
-		boolean isSync = false;
-		int timeout = 600;
-		int doTimes = 0;
-		int interval = 1; // interval 1s
+		    List<Integer> commitIDs = null;
 
-		// get all lids from all groups
-		List<Integer> lastLogicalIDs = new ArrayList<>();
-		for (DBCollection cappedCL : cappedCLs) {
-			lastLogicalIDs.add(FullTextDBUtils.getLastLid(cappedCL));
-		}
+		    while (true) {
+			      // get all commitids from all esIndexNames
+			      commitIDs = new ArrayList<>();
+			      for (int i = 0; i < esIndexNames.size(); i++) {
+				        commitIDs.add(FullTextESUtils.getCommitIDFromES(esClient, esIndexNames.get(i)));
+			      }
 
-		List<Integer> commitIDs = null;
+			      for (int i = 0; i < esIndexNames.size(); i++) {
+				        if (commitIDs.get(i).intValue() != lastLogicalIDs.get(i).intValue()) {
+					          isSync = false;
+					          break;
+				        } else {
+					          isSync = true;
+				        }
+			      }
 
-		while (true) {
-			// get all commitids from all esIndexNames
-			commitIDs = new ArrayList<>();
-			for (int i = 0; i < esIndexNames.size(); i++) {
-				commitIDs.add(FullTextESUtils.getCommitIDFromES(esClient, esIndexNames.get(i)));
-			}
+			      // check sync finish or not
+			      if (isSync) {
+				        break;
+			      } else {
+				        doTimes++;
+				        System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes
+						                    + ", commitIDs: " + commitIDs.toString() + ", lastLogicalIDs: " + lastLogicalIDs.toString());
+				        try {
+					          Thread.sleep(1000);
+				        } catch (InterruptedException e) {
+					          e.printStackTrace();
+				        }
+			      }
+		    }
 
-			for (int i = 0; i < esIndexNames.size(); i++) {
-				if (commitIDs.get(i).intValue() != lastLogicalIDs.get(i).intValue()) {
-					isSync = false;
-					break;
-				} else {
-					isSync = true;
-				}
-			}
+	    	// print message while not finish sync
+		    String msg = "";
+		    for (String esIndexName : esIndexNames) {
+			      msg += esIndexName + "/";
+		    }
+		    Assert.assertTrue(isSync, "check " + msg + " lid syn to es fail");
+	  }
 
-			// check sync finish or not
-			if (isSync) {
-				break;
-			} else {
-				doTimes++;
-				System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes
-						+ ", commitIDs: " + commitIDs.toString() + ", lastLogicalIDs: " + lastLogicalIDs.toString());
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
+  	/**
+	   * @param arrayList
+	   */
+	  public static List<String> removeDuplicateItems(List<String> arrayList) {
+		    HashSet uniqueSet = new HashSet(arrayList);
+		    arrayList.clear();
+		    arrayList.addAll(uniqueSet);
+		    return arrayList;
+	  }
 
-		}
+	  /**
+	   * @param length
+	   */
+	  public static String getRandomString(int length) {
+		    String base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()!";
+		    StringBuffer sb = new StringBuffer();
+		    for (int i = 0; i < length; i++) {
+			      char randomChar = base.charAt(new Random().nextInt(base.length()));
+			      sb.append(randomChar);
+		    }
+		    return sb.toString();
+	  }
 
-		// after lid finish sync
-		// System.out.println("esIndexNames: " + esIndexNames.toString() + ",
-		// doTimes: " + doTimes + ", commitIDs: " + commitIDs.toString() + ",
-		// lastLogicalIDs: " + lastLogicalIDs.toString());
+	  public static void checkConsistency(Sequoiadb sdb, String csName, String clName) {
+		    boolean isConsistency = false;
+		    List<String> groups = FullTextDBUtils.getCLGroups(sdb, csName + "." + clName);
+		    groups = removeDuplicateItems(groups);
+		    for (int i = 0; i < groups.size(); i++) {
+         List<Node> nodes = new ArrayList<Node>();
+			      String groupName = groups.get(i);
+			      List<String> nodeNames = CommLib.getNodeAddress(sdb, groupName);
+			      for (String nodeName : nodeNames) {
+				        nodes.add(sdb.getReplicaGroup(groupName).getNode(nodeName));
+		      	}
+			      isConsistency = isConsistency(nodes, csName, clName);
+			      Assert.assertTrue(isConsistency, "check inspect fail");
+	    	}
+	  }
 
-		// print message while not finish sync
-		String msg = "";
-		for (String esIndexName : esIndexNames) {
-			msg += esIndexName + "/";
-		}
-		Assert.assertTrue(isSync, "check " + msg + " lid syn to es fail");
-	}
+  	public static void checkMainCLConsistency(Sequoiadb sdb, String mainclFullName) {
+		    List<String> subclNames = FullTextDBUtils.getSubCLNames(sdb, mainclFullName);
+	   	 for (int i = 0; i < subclNames.size(); i++) {
+		     	 String subcsName = subclNames.get(i).split("\\.")[0];
+			      String subclName = subclNames.get(i).split("\\.")[1];
+			      checkConsistency(sdb, subcsName, subclName);
+	    	}
+  	}
 
-	/**
-	 * @param arrayList
-	 */
-	public static List<String> removeDuplicateItems(List<String> arrayList) {
-		HashSet uniqueSet = new HashSet(arrayList);
-		arrayList.clear();
-		arrayList.addAll(uniqueSet);
-		return arrayList;
-	}
+	  public static boolean isConsistency(List<Node> nodes, String csName, String clName) {
+		    boolean isConsistency = false;
+		    int doTimes = 0;
+      int timeout = 600;
+		    while (true) {
+			      isConsistency = isNodeRecordsConsistency(nodes, csName, clName);
+			      if (isConsistency) {
+				        return isConsistency;
+			      } else {
+				        doTimes++;
+			        	System.out.println("csName : " + csName + " clName: " + clName + " isConsistency : " + isConsistency
+						                  + " , doTimes: " + doTimes);
+			        	try {
+					          Thread.sleep(1000);
+				        } catch (InterruptedException e) {
+					          e.printStackTrace();
+				        }
+			      }
+			      if (doTimes >= timeout) {
+				        break;
+			      }
+		    }
+		    return isConsistency;
+	  }
 
-	/**
-	 * @param length
-	 */
-	public static String getRandomString(int length) {
-		String base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()!";
-		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < length; i++) {
-			char randomChar = base.charAt(new Random().nextInt(base.length()));
-			sb.append(randomChar);
-		}
-		return sb.toString();
-	}
+	  public static boolean isNodeRecordsConsistency(List<Node> nodes, String csName, String clName) {
+		    if (nodes.size() == 1) {
+			      return true;
+		    }
+		    Sequoiadb firstNode = nodes.get(0).connect();
+		    DBCollection cl1 = firstNode.getCollectionSpace(csName).getCollection(clName);
+		    for (int i = 1; i < nodes.size(); i++) {
+			      Sequoiadb nextNode = nodes.get(i).connect();
+			      DBCollection cl2 = nextNode.getCollectionSpace(csName).getCollection(clName);
+			      if (cl1.getCount() != cl2.getCount()) {
+				        System.out.println("cl from " + nodes.get(0).getNodeName() + "'s count: " + cl1.getCount() + ", cl from " 
+                        + nodes.get(i).getNodeName() + "'s count: " + cl2.getCount());
+				        return false;
+			      }
+			      DBCursor cl1Cursor = cl1.query(null, null, "{\"_id\":1}", null);
+			      DBCursor cl2Cursor = cl2.query(null, null, "{\"_id\":1}", null);
+			      if (!isCLRecordsConsistency(cl1Cursor, cl2Cursor)) {
+				        return false;
+			      }
+		    }
+		    return true;
+	  }
 
-	public static void checkConsistency(Sequoiadb sdb, String csName, String clName) {
-		if (FullTextDBUtils.isMainCL(sdb, csName + "." + clName)) {
-			checkMainCLConsistency(sdb, csName + "." + clName);
-			return;
-		}
-		boolean isConsistency = false;
-		List<String> groupNames = FullTextDBUtils.getCLGroups(sdb, csName + "." + clName);
-		groupNames = removeDuplicateItems(groupNames);
-		for (int i = 0; i < groupNames.size(); i++) {
-			String groupName = groupNames.get(i);
-			List<String> nodeNames = CommLib.getNodeAddress(sdb, groupName);
-			ReplicaGroup group = sdb.getReplicaGroup(groupName);
-			List<Node> nodes = new ArrayList<Node>();
-			for (String nodeName : nodeNames) {
-				nodes.add(group.getNode(nodeName));
-			}
-			isConsistency = isConsistency(nodes, csName, clName);
-			Assert.assertTrue(isConsistency, "check inspect fail");
-		}
-	}
-
-	public static void checkMainCLConsistency(Sequoiadb sdb, String mainCLFullName) {
-		List<String> subCLNames = FullTextDBUtils.getSubCLNames(sdb, mainCLFullName);
-		for (int i = 0; i < subCLNames.size(); i++) {
-			String tmpCSName = subCLNames.get(i).split("\\.")[0];
-			String tmpCLName = subCLNames.get(i).split("\\.")[1];
-			checkConsistency(sdb, tmpCSName, tmpCLName);
-		}
-	}
-
-	public static boolean isConsistency(List<Node> nodes, String csName, String clName) {
-		boolean isConsistency = false;
-		int doTimes = 0;
-		while (true) {
-			isConsistency = isNodeRecordsConsistency(nodes, csName, clName);
-			if (isConsistency) {
-				return isConsistency;
-			} else {
-				doTimes++;
-				System.out.println("csName : " + csName + " clName: " + clName + " isConsistency : " + isConsistency
-						+ " , doTimes: " + doTimes);
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			if (doTimes == 120) {
-				break;
-			}
-		}
-		return isConsistency;
-	}
-
-	public static boolean isNodeRecordsConsistency(List<Node> nodes, String csName, String clName) {
-		if (nodes.size() == 1) {
-			return true;
-		}
-		Sequoiadb firstDataDB = nodes.get(0).connect();
-		DBCollection firstCL = firstDataDB.getCollectionSpace(csName).getCollection(clName);
-		for (int i = 1; i < nodes.size(); i++) {
-			Sequoiadb anotherDataDB = nodes.get(i).connect();
-			DBCollection anotherCL = anotherDataDB.getCollectionSpace(csName).getCollection(clName);
-			if (firstCL.getCount() != anotherCL.getCount()) {
-				System.out.println("expCount : " + firstCL.getCount() + "  actCount : " + anotherCL.getCount());
-				return false;
-			}
-			DBCursor firstCLCursor = firstCL.query(null, null, "{\"_id\":1}", null);
-			DBCursor anotherCLCursor = anotherCL.query(null, null, "{\"_id\":1}", null);
-			if (!isCLRecordsConsistency(firstCLCursor, anotherCLCursor)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public static boolean isCLRecordsConsistency(DBCursor firstCLCursor, DBCursor anotherCLCursor) {
-		try {
-			while (firstCLCursor.hasNext() && anotherCLCursor.hasNext()) {
-				BSONObject firstCLRecord = firstCLCursor.getNext();
-				BSONObject anotherCLRecord = anotherCLCursor.getNext();
-				if (!firstCLRecord.equals(anotherCLRecord)) {
-					System.out.println("First collection record : " + firstCLRecord.toString()
-							+ "\n Another collection record : " + anotherCLRecord.toString());
-					return false;
-				}
-			}
-		} finally {
-			firstCLCursor.close();
-			anotherCLCursor.close();
-		}
-		return true;
-	}
+	  public static boolean isCLRecordsConsistency(DBCursor cl1Cursor, DBCursor cl2Cursor) {
+		    try {
+			      while (cl1Cursor.hasNext() && cl2Cursor.hasNext()) {
+				        BSONObject cl1Record = cl1Cursor.getNext();
+				        BSONObject cl2Record = cl2Cursor.getNext();
+				        if (!cl1Record.equals(cl2Record)) {
+					          System.out.println("collection from first node's record : " + cl1Record.toString()
+							                   + "\n collection from anohter node's record : " + cl2Record.toString());
+					          return false;
+				        }
+			      }
+		    } finally {
+			      cl1Cursor.close();
+			      cl2Cursor.close();
+		    }
+		    return true;
+  	}
 }
