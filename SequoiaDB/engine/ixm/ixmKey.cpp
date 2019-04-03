@@ -45,8 +45,10 @@
 #include "ixmTrace.hpp"
 namespace engine
 {
-   // each field has a 1 byte prefix, including
-   // [NOT USED] [HASMORE] [x] [y] [canontype_4bits]
+   // each field has a 1 byte prefix, including 8bits:
+   // 1          1          1   1   1  1  1  1
+   // ---------- ---------- --- --- -----------
+   // [NOT USED] [HAS MORE] [x] [y] [canontype]
    enum _ixmCanonicalTypes
    {
       cminkey         = 1   , // minkey
@@ -246,6 +248,87 @@ namespace engine
                    "builder length must be same as data length" ) ;
       SDB_ASSERT ( (*_keyData & cNOTUSED) == 0,
                    "Flag is not correct" ) ;
+   }
+
+   // check whether there is a null field or undefined field
+   BOOLEAN _ixmKey::hasNullOrUndefined() const
+   {
+      BOOLEAN foundOut = FALSE ;
+
+      if ( _keyData == 0 )
+      {
+         goto done ;
+      }
+
+      if ( !isCompactFormat() )
+      {
+         // if it's native bson type, we have to go through each element and
+         // check whether if it's undefined or null
+         BSONObjIterator it ( _bson() ) ;
+         while ( it.more() )
+         {
+            BSONElement ele = it.next() ;
+            if ( Undefined == ele.type() || jstNULL == ele.type() )
+            {
+               foundOut = TRUE ;
+               break ;
+            }
+         }
+         goto done ;
+      }
+      else
+      {
+         // it is compact format, we need to loop through all types and
+         // check whether any field is cundefined or cnull.
+         const UINT8 *p = _keyData ;
+         while ( TRUE )
+         {
+            UINT8 bits = *p++ ;
+            switch ( bits & cCANONTYPEMASK )
+            {
+               case cnull:
+               case cundefined:
+                  foundOut = TRUE ;
+                  break ;
+               case cminkey:
+               case cmaxkey:
+               case cfalse:
+               case ctrue:
+                  break ;
+               case cstring:
+               {
+                  UINT8 len = *p++ ;
+                  p += len ;
+                  break ;
+               }
+               case cbindata:
+               {
+                  INT32 len = binDataCodeToLength( *p++ ) ;
+                  p += len ;
+               }
+               case coid:
+                  p += sizeof( OID ) ;
+                  break ;
+               case cdate:
+                  p += sizeof( Date_t ) ;
+                  break ;
+               case cdouble:
+                  p += sizeof( FLOAT64 ) ;
+                  break ;
+               default:
+                  PD_LOG( PDERROR, "Invalid key is accessed" ) ;
+                  throw pdGeneralException( "Invalid Key is accessed" ) ;
+            }
+
+            if ( foundOut || 0 == ( bits & cHASMORE ) )
+            {
+               break ;
+            }
+         }
+      }
+
+   done:
+      return foundOut ;
    }
 
    // check whether all keys are undefined type

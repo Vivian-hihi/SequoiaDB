@@ -1181,6 +1181,14 @@ namespace engine
          goto error ;
       }
 
+      if ( indexCB->notNull() && key.hasNullOrUndefined() )
+      {
+         rc = SDB_IXM_KEY_NOTNULL ;
+         PD_LOG ( PDERROR, "Any field of index key cannot be null "
+                  "or does not exist, rc: %d", rc ) ;
+         goto error ;
+      }
+
    retry :
       // try to locate where the insert should happen
       rc = find ( indexCB, key, rid, order, pos, keyFoundPos, sameFound ) ;
@@ -1229,7 +1237,7 @@ namespace engine
             PD_LOG ( PDINFO, "Duplicate key is detected with rid(%d, %d), "
                      "page:%d, keynode:%d, insert rid:(%d, %d)",
                      kn->_rid._extent, kn->_rid._offset, _me, keyFoundPos,
-                     rid._extent, rid._offset ) ;            
+                     rid._extent, rid._offset ) ;
 #endif
             rc = SDB_IXM_DUP_KEY ;
             goto error ;

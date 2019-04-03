@@ -496,14 +496,17 @@
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
 #define IXM_FIELD_NAME_UNIQUE                "unique"
+#define IXM_FIELD_NAME_UNIQUE1               "Unique"
 #define IXM_FIELD_NAME_V                     "v"
 #define IXM_FIELD_NAME_ENFORCED              "enforced"
+#define IXM_FIELD_NAME_ENFORCED1             "Enforced"
 #define IXM_FIELD_NAME_DROPDUPS              "dropDups"
 #define IXM_FIELD_NAME_2DRANGE               "2drange"
 #define IXM_FIELD_NAME_INDEX_DEF             "IndexDef"
 #define IXM_FIELD_NAME_INDEX_FLAG            "IndexFlag"
 #define IXM_FIELD_NAME_SCAN_EXTLID           "ScanExtentLID"
 #define IXM_FIELD_NAME_SORT_BUFFER_SIZE      "SortBufferSize"
+#define IXM_FIELD_NAME_NOTNULL               "NotNull"
 
 
 #define CMD_ADMIN_PREFIX                     "$"

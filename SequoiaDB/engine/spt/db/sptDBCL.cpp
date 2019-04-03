@@ -757,6 +757,26 @@ namespace engine
          goto error ;
       }
 
+      // arg2 may be options object or native type
+      if ( arg.isObject( 2 ) )
+      {
+         BSONObj options ;
+         rc = arg.getBsonobj( 2, options ) ;
+         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            detail = BSON( SPT_ERR << "Options must be obj" ) ;
+            goto error ;
+         }
+
+         rc = _cl.createIndex( indexDef, indexName.c_str(), options ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to create index" ) ;
+            goto error ;
+         }
+         goto done ;
+      }
+
       rc = arg.getNative( 2, &isUnique, SPT_NATIVE_INT32 ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {

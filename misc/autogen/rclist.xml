@@ -2714,5 +2714,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_IXM_KEY_NOTNULL</name>
+         <description>
+            <en>Any field of index key should exist and cannot be null</en>
+            <cn>索引键的任意一个字段都不允许不存在或者为NULL</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>

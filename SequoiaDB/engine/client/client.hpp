@@ -92,9 +92,9 @@ do                                     \
 #define QUERY_PREPARE_MORE                0x00004000
 /** The sharding key in update rule is not filtered, when executing queryAndUpdate. */
 #define QUERY_KEEP_SHARDINGKEY_IN_UPDATE  0x00008000
-/** When the transaction is turned on and the transaction isolation level is "RC", 
+/** When the transaction is turned on and the transaction isolation level is "RC",
     the transaction lock will be released after the record is read by default.
-    However, when setting this flag, the transaction lock will not released until 
+    However, when setting this flag, the transaction lock will not released until
     the transaction is committed or rollback. When the transaction is turned off or
     the transaction isolation level is "RU", the flag does not work. */
 #define QUERY_FOR_UPDATE                  0x00010000
@@ -261,7 +261,7 @@ namespace sdbclient
       // object ( required )
       // returns id as the pointer pointing to _id bson element
       virtual INT32 insert ( const bson::BSONObj &obj, bson::OID *id = NULL ) = 0 ;
-      virtual INT32 insert ( const bson::BSONObj &obj, 
+      virtual INT32 insert ( const bson::BSONObj &obj,
                              INT32 flags,
                              bson::BSONObj *pResult = NULL ) = 0 ;
       virtual INT32 insert ( std::vector<bson::BSONObj> &objs,
@@ -401,6 +401,9 @@ namespace sdbclient
                                   BOOLEAN isUnique,
                                   BOOLEAN isEnforced,
                                   INT32 sortBufferSize ) = 0 ;
+      virtual INT32 createIndex ( const bson::BSONObj &indexDef,
+                                  const CHAR *pName,
+                                  const bson::BSONObj &options ) = 0 ;
       virtual INT32 getIndexes ( _sdbCursor **cursor,
                                  const CHAR *pName ) = 0 ;
       virtual INT32 getIndexes ( sdbCursor &cursor,
@@ -728,21 +731,21 @@ namespace sdbclient
       /** \fn INT32 insert ( bson::BSONObj &obj, bson::OID *pId = NULL )
           \brief Insert a bson object into current collection
           \param [in] obj The bson object to be inserted.
-          \param [out] pId The object id of inserted bson object. Can be the 
+          \param [out] pId The object id of inserted bson object. Can be the
                            follow value:
                <ul>
-               <li> NULL: 
+               <li> NULL:
                      when this argument is NULL.
-               <li> valid OID object: 
-                     when the inserted bson object has no "_id" or it has a 
+               <li> valid OID object:
+                     when the inserted bson object has no "_id" or it has a
                      field which type is "ObjectId", pId has a valid value.
-                     In this case, pId points the position of the record where 
-                     the value of "_id" field is. Note that: the memory of pId 
-                     will be invalidated when next insert/bulkInsert is 
+                     In this case, pId points the position of the record where
+                     the value of "_id" field is. Note that: the memory of pId
+                     will be invalidated when next insert/bulkInsert is
                      performed or the inserted bson object is destroyed.
-               <li> invalid OID object: 
+               <li> invalid OID object:
                      when the inserted bson object has "_id" field and its type
-                     is not an "ObjectId" type, pId gets a invalid value which 
+                     is not an "ObjectId" type, pId gets a invalid value which
                      is "000000000000000000000000".
           \retval SDB_OK Operation Success.
           \retval Others Operation Fail.
@@ -754,7 +757,7 @@ namespace sdbclient
          return pCollection->insert ( obj, pId ) ;
       }
 
-      /** \fn INT32 insert ( const bson::BSONObj &obj, 
+      /** \fn INT32 insert ( const bson::BSONObj &obj,
                              INT32 flags,
                              bson::BSONObj *pResult = NULL )
           \brief Insert a bson object into current collection.
@@ -764,30 +767,30 @@ namespace sdbclient
                             the follow values:
                <ul>
                <li>
-               0:                    while 0 is set(default to be 0), database 
-                                     will stop inserting when some records hit 
+               0:                    while 0 is set(default to be 0), database
+                                     will stop inserting when some records hit
                                      index key duplicate error.
                <li>
-               FLG_INSERT_CONTONDUP: 
+               FLG_INSERT_CONTONDUP:
                                      if some records hit index key duplicate
-                                     error, database will skip them and go on 
+                                     error, database will skip them and go on
                                      inserting.
                <li>
                FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.
                <li>
                FLG_INSERT_REPLACEONDUP:
-                                      if the record hit index key duplicate 
-                                      error, database will replace the existing 
+                                      if the record hit index key duplicate
+                                      error, database will replace the existing
                                       record by the inserting new record.
           \param [out] pResult The result of inserting. Can be NULL or a bson:
                <ul>
-               <li> NULL: 
+               <li> NULL:
                      when this argument is NULL.
-               <li> empty bson: when this argument is not NULL but there is no 
+               <li> empty bson: when this argument is not NULL but there is no
                                 result return.
-               <li> bson which contains the "_id" field: 
-                     when flag "FLG_INSERT_RETURN_OID" is set, return the 
-                     value of "_id" field of the inserted record. 
+               <li> bson which contains the "_id" field:
+                     when flag "FLG_INSERT_RETURN_OID" is set, return the
+                     value of "_id" field of the inserted record.
                      e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
                </ul>
 
@@ -804,7 +807,7 @@ namespace sdbclient
          return pCollection->insert ( obj, flags, pResult ) ;
       }
 
-      /** \fn INT32 insert ( std::vector<bson::BSONObj> &objs, 
+      /** \fn INT32 insert ( std::vector<bson::BSONObj> &objs,
                              INT32 flags = 0,
                              bson::BSONObj *pResult = NULL )
           \brief Insert a bson object into current collection.
@@ -814,34 +817,34 @@ namespace sdbclient
                             the follow values:
                <ul>
                <li>
-               0:                    while 0 is set(default to be 0), database 
-                                     will stop inserting when some records hit 
+               0:                    while 0 is set(default to be 0), database
+                                     will stop inserting when some records hit
                                      index key duplicate error.
                <li>
-               FLG_INSERT_CONTONDUP: 
+               FLG_INSERT_CONTONDUP:
                                      if some records hit index key duplicate
-                                     error, database will skip them and go on 
+                                     error, database will skip them and go on
                                      inserting.
                <li>
                FLG_INSERT_RETURN_OID:
                                      return the value of "_id" field in the record.
                <li>
                FLG_INSERT_REPLACEONDUP:
-                                     if the record hit index key duplicate 
-                                     error, database will replace the existing 
-                                     record by the inserting new record and then 
+                                     if the record hit index key duplicate
+                                     error, database will replace the existing
+                                     record by the inserting new record and then
                                      go on inserting.
 
           \param [out] pResult The result of inserting. Can be NULL or a bson:
                <ul>
-               <li> NULL: 
+               <li> NULL:
                      when this argument is NULL.
-               <li> empty bson: when this argument is not NULL but there is no 
+               <li> empty bson: when this argument is not NULL but there is no
                                 result return.
-               <li> bson which contains the field "_id": 
-                     when flag "FLG_INSERT_RETURN_OID" is set, return all the 
-                     values of "_id" field in a bson array. 
-                     e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
+               <li> bson which contains the field "_id":
+                     when flag "FLG_INSERT_RETURN_OID" is set, return all the
+                     values of "_id" field in a bson array.
+                     e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" },
                                       { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
                </ul>
 
@@ -857,7 +860,7 @@ namespace sdbclient
          return pCollection->insert( objs, flags, pResult ) ;
       }
 
-      /** \fn INT32 insert ( bson::BSONObj objs[], 
+      /** \fn INT32 insert ( bson::BSONObj objs[],
                              INT32 size,
                              INT32 flags = 0,
                              bson::BSONObj *pResult = NULL )
@@ -869,43 +872,43 @@ namespace sdbclient
                             the follow values:
                <ul>
                <li>
-               0:                    while 0 is set(default to be 0), database 
-                                     will stop inserting when some records hit 
+               0:                    while 0 is set(default to be 0), database
+                                     will stop inserting when some records hit
                                      index key duplicate error.
                <li>
-               FLG_INSERT_CONTONDUP: 
+               FLG_INSERT_CONTONDUP:
                                      if some records hit index key duplicate
-                                     error, database will skip them and go on 
+                                     error, database will skip them and go on
                                      inserting.
                <li>
-               FLG_INSERT_RETURN_OID:    
+               FLG_INSERT_RETURN_OID:
                                      return the value of "_id" field in the records.
                <li>
                FLG_INSERT_REPLACEONDUP:
-                                     if the record hit index key duplicate 
-                                     error, database will replace the existing 
-                                     record by the inserting new record and then 
+                                     if the record hit index key duplicate
+                                     error, database will replace the existing
+                                     record by the inserting new record and then
                                      go on inserting.
 
-          \param [out] pResult The result of inserting. 
+          \param [out] pResult The result of inserting.
                        Can be NULL or a bson:
                <ul>
-               <li> NULL: 
+               <li> NULL:
                      when this argument is NULL.
-               <li> empty bson: when this argument is not NULL but there is no 
+               <li> empty bson: when this argument is not NULL but there is no
                                 result return.
-               <li> bson which contains the "_id" field: 
-                     when flag "FLG_INSERT_RETURN_OID" is set, return all the 
-                     values of "_id" field in a bson array. 
-                     e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
+               <li> bson which contains the "_id" field:
+                     when flag "FLG_INSERT_RETURN_OID" is set, return all the
+                     values of "_id" field in a bson array.
+                     e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" },
                                       { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
                </ul>
-               
+
           \retval SDB_OK Operation Success.
           \retval Others Operation Fail.
       */
-      INT32 insert ( const bson::BSONObj objs[], 
-                     INT32 size, 
+      INT32 insert ( const bson::BSONObj objs[],
+                     INT32 size,
                      INT32 flags = 0,
                      bson::BSONObj *pResult = NULL )
       {
@@ -922,19 +925,19 @@ namespace sdbclient
                             the follow values:
                <ul>
                <li>
-               0:                    while 0 is set(default to be 0), database 
-                                     will stop inserting when some records hit 
+               0:                    while 0 is set(default to be 0), database
+                                     will stop inserting when some records hit
                                      index key duplicate error.
                <li>
-               FLG_INSERT_CONTONDUP: 
+               FLG_INSERT_CONTONDUP:
                                      if some records hit index key duplicate
-                                     error, database will skip them and go on 
+                                     error, database will skip them and go on
                                      inserting.
                <li>
                FLG_INSERT_REPLACEONDUP:
-                                     if the record hit index key duplicate 
-                                     error, database will replace the existing 
-                                     record by the inserting new record and them 
+                                     if the record hit index key duplicate
+                                     error, database will replace the existing
+                                     record by the inserting new record and them
                                      go on inserting.
 
           \param [in] objs The bson objects to be inserted.
@@ -1297,8 +1300,7 @@ namespace sdbclient
       INT32 createIndex ( const bson::BSONObj &indexDef,
                           const CHAR *pIndexName,
                           BOOLEAN isUnique,
-                          BOOLEAN isEnforced
-                        )
+                          BOOLEAN isEnforced )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
@@ -1332,6 +1334,32 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pCollection->createIndex ( indexDef, pIndexName, isUnique,
                                            isEnforced, sortBufferSize ) ;
+      }
+
+      /** \fn INT32 createIndex ( const bson::BSONObj &indexDef,
+                                  const CHAR *pIndexName,
+                                  const bson::BSONObj &options )
+          \brief Create the index in current collection
+          \param [in] indexDef The bson structure of index element, e.g. {name:1, age:-1}
+          \param [in] pIndexName The index name
+          \param [in] options The options are as below:
+
+              Unique:    Whether the index elements are unique or not
+              Enforced:  Whether the index is enforced unique.
+                         This element is meaningful when Unique is true
+              NotNull:   Any field of index key should exist and cannot be null when NotNull is true
+              SortBufferSize: The size of sort buffer used when creating index.
+                              Unit is MB. Zero means don't use sort buffer
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 createIndex ( const bson::BSONObj &indexDef,
+                          const CHAR *pIndexName,
+                          const bson::BSONObj &options )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->createIndex ( indexDef, pIndexName, options ) ;
       }
 
       /* \fn INT32 getIndexes ( _sdbCursor **cursor,
@@ -1928,7 +1956,7 @@ namespace sdbclient
       /** \fn INT32 setAttributes ( const bson::BSONObj &options )
           \brief Alter the current collection
           \param [in] options The modified options as following:
-  
+
               ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
               ShardingKey  : Assign the sharding key
               ShardingType : Assign the sharding type
@@ -1938,7 +1966,7 @@ namespace sdbclient
               StrictDataMode : Using strict date mode in numeric operations or not
                              e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
               AutoIncrement: Assign attributes of an autoincrement field or batch autoincrement fields.
-                             e.g. {AutoIncrement:{Field:"a",MaxValue:2000}}, 
+                             e.g. {AutoIncrement:{Field:"a",MaxValue:2000}},
                              {AutoIncrement:[{Field:"a",MaxValue:2000},{Field:"a",MaxValue:4000}]}
           \note Can't alter attributes about split in partition collection; After altering a collection to
                 be a partition collection, need to split this collection manually
@@ -1955,7 +1983,7 @@ namespace sdbclient
       /* \fn INT32 pop( const bson::BSONObj &option )
          \brief Pop records from a capped collection
          \param [in] option The pop options as follows:
-  
+
              Direction   : The direction to pop record. 1: pop forward. -1: pop backward.
                            The default value is 1.
          \retval SDB_OK Operation Success
@@ -2179,7 +2207,7 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pNode->getNodeID( nodeID ) ;
       }
-      
+
       /** \fn INT32  stop ()
           \brief Stop the node.
           \retval SDB_OK Operation Success
@@ -2620,8 +2648,8 @@ namespace sdbclient
          \param [in] options The options of attach. Can not be null or empty.
                              Can be the follow options:
                <ul>
-               <li>KeepData : Whether to keep the original data of the new 
-                              node. This option has no default value. User 
+               <li>KeepData : Whether to keep the original data of the new
+                              node. This option has no default value. User
                               should specify its value explicitly.
          \retval SDB_OK Operation Success
          \retval Others Operation Fail
@@ -2645,7 +2673,7 @@ namespace sdbclient
                              Can be the follow options:
                <ul>
                <li>KeepData: Whether to keep the original data of the
-                             detached node. This option has no default 
+                             detached node. This option has no default
                              value. User should specify its value explicitly.
                <li>Enforced: Whether to detach the node forcibly, default
                              to be false.
@@ -4088,7 +4116,7 @@ namespace sdbclient
       virtual BOOLEAN isValid() = 0 ;
 
       virtual BOOLEAN isClosed() = 0 ;
-   
+
       // domain
       virtual INT32 createDomain ( const CHAR *pDomainName,
                                    const bson::BSONObj &options,
@@ -4414,7 +4442,7 @@ namespace sdbclient
       {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
-         return pSDB->changeUsrPasswd( pUsrName, pOldPasswd, pNewPasswd ) ;         
+         return pSDB->changeUsrPasswd( pUsrName, pOldPasswd, pNewPasswd ) ;
       }
 
       /** \fn void disconnect ()
@@ -4480,7 +4508,7 @@ namespace sdbclient
          }
          RELEASE_INNER_HANDLE( cursor.pCursor ) ;
          return pSDB->getSnapshot ( cursor, snapType, condition,
-                                    selector, orderBy, hint, 
+                                    selector, orderBy, hint,
                                     numToSkip, numToReturn ) ;
       }
 
@@ -4535,7 +4563,7 @@ namespace sdbclient
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
          return pSDB->getSnapshot ( cursor, snapType, condition,
-                                    selector, orderBy, hint, 
+                                    selector, orderBy, hint,
                                     numToSkip, numToReturn ) ;
       }
 
@@ -5846,14 +5874,14 @@ namespace sdbclient
                               About the parameter 'options', please reference to the official
                               website(www.sequoiadb.com) and then search "位置命令参数"
                               for more details. Some of its optional parameters are as bellow:
-                              
+
                               <ul>
                                  <li>Global(Bool)                      : execute this command in global or not. While 'options' is null, it's equals to {Glocal: true}.
                                  <li>GroupID(INT32 or INT32 Array)     : specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
                                  <li>GroupName(String or String Array) : specified one or several groups by their group names. e.g. {GroupID:"group1"}.
                                  <li>...
                               </ul>
-          
+
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -5883,7 +5911,7 @@ namespace sdbclient
          return pSDB->reloadConfig( options ) ;
       }
 
-      /** \fn INT32 updateConfig(const bson::BSONObj &configs, 
+      /** \fn INT32 updateConfig(const bson::BSONObj &configs,
                                  const bson::BSONObj &options)
           \brief Update node config and take effect.
           \param [in] configs the specific configuration parameters to update.
@@ -5898,7 +5926,7 @@ namespace sdbclient
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 updateConfig( const bson::BSONObj &configs = _sdbStaticObject, 
+      INT32 updateConfig( const bson::BSONObj &configs = _sdbStaticObject,
                           const bson::BSONObj &options = _sdbStaticObject )
       {
          if( !pSDB )
@@ -5906,7 +5934,7 @@ namespace sdbclient
          return pSDB->updateConfig( configs, options ) ;
       }
 
-      /** \fn INT32 deleteConfig(const bson::BSONObj &configs, 
+      /** \fn INT32 deleteConfig(const bson::BSONObj &configs,
                                  const bson::BSONObj &options)
           \brief Delete node config and take effect.
           \param [in] configs the specific configuration parameters to delete.
@@ -5921,7 +5949,7 @@ namespace sdbclient
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 deleteConfig( const bson::BSONObj &configs = _sdbStaticObject, 
+      INT32 deleteConfig( const bson::BSONObj &configs = _sdbStaticObject,
                           const bson::BSONObj &options = _sdbStaticObject )
       {
          if( !pSDB )
@@ -6105,7 +6133,7 @@ namespace sdbclient
           \brief Get the error object(only return by engine) of the last operation.
                  The error object will not be clean up automatically until the next
                  error object cover it.
-          \param [out] errObj The return error bson object. 
+          \param [out] errObj The return error bson object.
                               It contains the follow fields:
                                <ul>
                                <li>
@@ -6115,11 +6143,11 @@ namespace sdbclient
                                <li>
                                detail:      the error detail.
                                </ul>
-                       Actrally, the follow extended fields may return from the 
+                       Actrally, the follow extended fields may return from the
                        database depend on the operations:
                                <ul>
                                <li>
-                               ErrNodes:    More detailed error message.  
+                               ErrNodes:    More detailed error message.
                                </ul>
           \retval SDB_OK Operation Success.
           \retval SDB_DMS_EOC There is no error object.
@@ -6140,7 +6168,7 @@ namespace sdbclient
          if( !pSDB ) return  ;
          return pSDB->cleanLastErrorObj() ;
       }
-      
+
    } ;
    /** \typedef class sdb sdb
          \brief Class sdb definition for sdb.

@@ -389,6 +389,24 @@ namespace engine
             rs = FALSE;
             goto done;
          }
+
+         BOOLEAN lNotNull = FALSE;
+         BOOLEAN rNotNull = FALSE;
+         BSONElement beLNotNull = _infoObj.getField( IXM_NOTNULL_FIELD );
+         BSONElement beRNotNull = defObj.getField( IXM_NOTNULL_FIELD );
+         if ( beLNotNull.booleanSafe() )
+         {
+            lNotNull = TRUE;
+         }
+         if ( beRNotNull.booleanSafe() )
+         {
+            rNotNull = TRUE;
+         }
+         if ( lNotNull != rNotNull )
+         {
+            rs = FALSE;
+            goto done;
+         }
       }
       catch( std::exception &e )
       {

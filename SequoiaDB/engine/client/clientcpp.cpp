@@ -908,7 +908,7 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::_insert ( const BSONObj &obj, 
+   INT32 _sdbCollectionImpl::_insert ( const BSONObj &obj,
                                        INT32 flags,
                                        BSONObj &newObj )
    {
@@ -973,7 +973,7 @@ do                                                            \
          }
          if ( jstOID == newObj.getField( CLIENT_RECORD_ID_FIELD ).type() )
          {
-            *id = newObj.getField ( CLIENT_RECORD_ID_FIELD ).__oid();   
+            *id = newObj.getField ( CLIENT_RECORD_ID_FIELD ).__oid();
          }
          else
          {
@@ -987,8 +987,8 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::insert ( const bson::BSONObj &obj, 
-                                      INT32 flags, 
+   INT32 _sdbCollectionImpl::insert ( const bson::BSONObj &obj,
+                                      INT32 flags,
                                       bson::BSONObj *pResult )
    {
       INT32 rc = SDB_OK ;
@@ -1145,7 +1145,7 @@ do                                                            \
          {
             try
             {
-               sub.append( newObj.getField ( CLIENT_RECORD_ID_FIELD ) ) ;     
+               sub.append( newObj.getField ( CLIENT_RECORD_ID_FIELD ) ) ;
             }
             catch ( std::exception )
             {
@@ -1682,6 +1682,67 @@ do                                                            \
       goto done ;
    }
 
+   INT32 _sdbCollectionImpl::_createIndex ( const BSONObj &indexDef,
+                                            const CHAR *pIndexName,
+                                            const BSONObj &options )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj hint, matcher ;
+      BSONObjBuilder indexBuild, sortBufBuild ;
+
+      if ( _collectionFullName [0] == '\0' || !_connection ||
+           !pIndexName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // for example, build below message:
+      // macher: { Collection:"foo.bar",
+      //           Index:{ key: {a:1}, name: 'aIdx', Unique: true,
+      //                   Enforced: true, NotNull: true } }
+      // hint:   { SortBufferSize: 1024 }
+
+      indexBuild.append( IXM_FIELD_NAME_KEY, indexDef ) ;
+      indexBuild.append( IXM_FIELD_NAME_NAME, pIndexName ) ;
+
+      {
+         BSONObjIterator it( options );
+         while( it.more() )
+         {
+            BSONElement e = it.next();
+            if ( 0 == ossStrcmp( e.fieldName(),
+                                 IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
+            {
+               sortBufBuild.append( e ) ;
+            }
+            else
+            {
+               indexBuild.append( e ) ;
+            }
+         }
+      }
+
+      matcher = BSON ( FIELD_NAME_COLLECTION << _collectionFullName <<
+                       FIELD_NAME_INDEX << indexBuild.obj() ) ;
+      hint = sortBufBuild.obj() ;
+
+      rc = _connection->_runCommand( CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
+                                     &matcher, NULL, NULL, &hint ) ;
+      /// ignore update result
+      updateCachedObject( rc, _connection->_getCachedContainer(),
+                          _collectionFullName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 _sdbCollectionImpl::createIndex ( const BSONObj &indexDef,
                                            const CHAR *pIndexName,
                                            BOOLEAN isUnique,
@@ -1699,6 +1760,13 @@ do                                                            \
    {
       return _createIndex ( indexDef, pIndexName, isUnique,
                             isEnforced, sortBufferSize ) ;
+   }
+
+   INT32 _sdbCollectionImpl::createIndex ( const BSONObj &indexDef,
+                                           const CHAR *pIndexName,
+                                           const BSONObj &options )
+   {
+      return _createIndex( indexDef, pIndexName, options ) ;
    }
 
    INT32 _sdbCollectionImpl::getIndexes ( _sdbCursor **cursor,
@@ -1799,7 +1867,7 @@ do                                                            \
       {
          goto error ;
       }
-      
+
    done:
       cursor.close() ;
       return rc ;
@@ -2541,7 +2609,7 @@ do                                                            \
       ((_sdbLobImpl*)*lob)->_lobSize = 0 ;
       ((_sdbLobImpl*)*lob)->_createTime = 0 ;
       ((_sdbLobImpl*)*lob)->_modificationTime = 0 ;
-   
+
       ele = obj.getField( FIELD_NAME_LOB_SIZE ) ;
       if ( NumberInt == ele.type() || NumberLong == ele.type() )
       {
@@ -3129,7 +3197,7 @@ do                                                            \
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
-      BSONObjBuilder builder ;      
+      BSONObjBuilder builder ;
       BSONArrayBuilder autoincBuilder( builder.subarrayStart( FIELD_NAME_AUTOINCREMENT )) ;
 
       if( !options.size() )
@@ -3167,7 +3235,7 @@ do                                                            \
    INT32 _sdbCollectionImpl::dropAutoIncrement( const CHAR* fieldName )
    {
       INT32 rc = SDB_OK ;
-      BSONObj obj ;      
+      BSONObj obj ;
       BSONObjBuilder builder ;
 
       if( !fieldName )
@@ -3236,7 +3304,7 @@ do                                                            \
    error:
       goto done ;
 
-   }   
+   }
 
    INT32 _sdbCollectionImpl::enableSharding ( const bson::BSONObj & options )
    {
@@ -4226,7 +4294,7 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      if ( NULL == pHostName || !*pHostName || 
+      if ( NULL == pHostName || !*pHostName ||
            NULL == pSvcName || !*pSvcName )
       {
          rc = SDB_INVALIDARG ;
@@ -4269,7 +4337,7 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      if ( NULL == pHostName || !*pHostName || 
+      if ( NULL == pHostName || !*pHostName ||
            NULL == pSvcName || !*pSvcName )
       {
          rc = SDB_INVALIDARG ;
@@ -6486,7 +6554,7 @@ do                                                            \
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      
+
       if ( pUsrName && pPasswd )
       {
          pUN = pUsrName ;
@@ -6978,7 +7046,7 @@ do                                                            \
    {
       INT32 rc = SDB_OK ;
       UINT16 port ;
-      
+
       if ( !pHostName || !*pHostName || !pServiceName || !*pServiceName )
       {
          rc = SDB_INVALIDARG ;
@@ -7372,7 +7440,7 @@ do                                                            \
       INT32 rc            = SDB_OK ;
 
       if ( !pCollectionFullName || !*pCollectionFullName || !collection ||
-           ossStrlen ( pCollectionFullName ) > 
+           ossStrlen ( pCollectionFullName ) >
            CLIENT_CS_NAMESZ + CLIENT_COLLECTION_NAMESZ + 1 )
       {
          rc = SDB_INVALIDARG ;
@@ -7882,7 +7950,7 @@ do                                                            \
       BSONObj replicaGroupName ;
       _sdbReplicaGroupImpl *replset = NULL ;
 
-      if ( !pName || !*pName || 
+      if ( !pName || !*pName ||
            ossStrlen ( pName ) > CLIENT_REPLICAGROUP_NAMESZ || !rg )
       {
          rc = SDB_INVALIDARG ;
@@ -8322,7 +8390,7 @@ do                                                            \
 
    INT32 _sdbImpl::waitTasks ( const SINT64 *taskIDs, SINT32 num )
    {
-      INT32 rc = SDB_OK ;      
+      INT32 rc = SDB_OK ;
       BSONObj newObj ;
 
       // check argument
@@ -9383,7 +9451,7 @@ do                                                            \
 
       if ( _pErrorBuf && _errorBufSize >= 5 &&
            *(INT32*)_pErrorBuf >= 5 )
-      {  
+      {
          try
          {
             localObj.init( _pErrorBuf ) ;
@@ -9408,13 +9476,13 @@ do                                                            \
          rc = SDB_DMS_EOC ;
          goto error ;
       }
-   
+
    done :
       return rc ;
    error :
       goto done ;
    }
-   
+
    void _sdbImpl::cleanLastErrorObj()
    {
       _setErrorBuffer( NULL, 0 ) ;

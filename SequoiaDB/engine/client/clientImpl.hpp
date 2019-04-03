@@ -346,6 +346,9 @@ namespace sdbclient
                           BOOLEAN isUnique,
                           BOOLEAN isEnforced,
                           INT32 sortBufferSize ) ;
+      INT32 createIndex ( const BSONObj &indexDef,
+                          const CHAR *pIndexName,
+                          const BSONObj &options ) ;
       INT32 getIndexes ( _sdbCursor **cursor,
                          const CHAR *pName ) ;
       INT32 getIndexes ( sdbCursor &cursor,
@@ -517,6 +520,8 @@ namespace sdbclient
       INT32 _createIndex ( const BSONObj &indexDef, const CHAR *pName,
                            BOOLEAN isUnique, BOOLEAN isEnforced,
                            INT32 sortBufferSize ) ;
+      INT32 _createIndex ( const BSONObj &indexDef, const CHAR *pIndexName,
+                           const BSONObj &options ) ;
 
       INT32 _alterInternal ( const CHAR * taskName,
                              const bson::BSONObj * argument,
@@ -1148,9 +1153,9 @@ namespace sdbclient
       void _unregDomain ( _sdbDomainImpl *domain ) ;
       void _unregDataCenter ( _sdbDataCenterImpl *dc ) ;
       void _unregLob ( _sdbLobImpl *lob ) ;
-      
+
       hashTable* _getCachedContainer() const ;
-      
+
       INT32 _connect( const CHAR *pHostName, UINT16 port ) ;
 
       INT32 _traceStrtok( BSONArrayBuilder &arrayBuilder, const CHAR* pLine ) ;

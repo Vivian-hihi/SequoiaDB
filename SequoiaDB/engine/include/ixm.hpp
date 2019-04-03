@@ -247,9 +247,9 @@ namespace engine
          // create index def from page
          try
          {
-            _infoObj = BSONObj ( ((const CHAR*)_extent) +
-                                 IXM_INDEX_CB_EXTENT_METADATA_SIZE ) ;
-         }
+            _infoObj = BSONObj( ((const CHAR*)_extent) +
+                                IXM_INDEX_CB_EXTENT_METADATA_SIZE ) ;
+                  }
          catch ( std::exception &e )
          {
             PD_LOG ( PDERROR, "Failed to load info obj for index: %s",
@@ -611,6 +611,10 @@ namespace engine
             enforced = e.booleanSafe() ;
             fieldCount ++ ;
          }
+         if ( obj.hasField ( IXM_NOTNULL_FIELD ))
+         {
+            fieldCount ++ ;
+         }
          if ( obj.hasField ( IXM_DROPDUP_FIELD ))
          {
             fieldCount ++ ;
@@ -649,6 +653,13 @@ namespace engine
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" ) ;
          return _infoObj[ IXM_ENFORCED_FIELD ].trueValue() ;
+      }
+
+      BOOLEAN notNull() const
+      {
+         SDB_ASSERT ( _isInitialized,
+                      "index details must be initialized first" ) ;
+         return _infoObj[ IXM_NOTNULL_FIELD ].trueValue() ;
       }
 
       /** return true if dropDups was set when building index (if any

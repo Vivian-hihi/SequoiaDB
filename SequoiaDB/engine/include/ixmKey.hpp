@@ -108,6 +108,8 @@ namespace engine
          return toBson().toString(isArray, full);
       }
 
+      BOOLEAN hasNullOrUndefined() const ;
+
       BOOLEAN isUndefined() const ;
 
       // get raw data

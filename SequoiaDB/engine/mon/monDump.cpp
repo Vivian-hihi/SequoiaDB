@@ -945,6 +945,8 @@ namespace engine
                         indexObj.getBoolField(IXM_DROPDUP_FIELD) ) ;
             ob.append ( IXM_ENFORCED_FIELD,
                         indexObj.getBoolField(IXM_ENFORCED_FIELD) ) ;
+            ob.append ( IXM_NOTNULL_FIELD,
+                        indexObj.getBoolField(IXM_NOTNULL_FIELD) ) ;
             BSONObj range = indexObj.getObjectField( IXM_2DRANGE_FIELD ) ;
             if ( !range.isEmpty() )
             {
@@ -1617,7 +1619,7 @@ namespace engine
          /// waiter lock
          BSONObjBuilder subWaiter( builder.subobjStart(
                                    FIELD_NAME_TRANS_WAIT_LOCK ) ) ;
-         if ( _curTransInfo._waitLRB ) 
+         if ( _curTransInfo._waitLRB )
          {
             _curTransInfo._waitLock.toBson( subWaiter, FALSE ) ;
          }
@@ -3278,6 +3280,8 @@ namespace engine
                       indexObj.getBoolField( IXM_DROPDUP_FIELD ) ) ;
          sub.append ( IXM_ENFORCED_FIELD,
                       indexObj.getBoolField( IXM_ENFORCED_FIELD ) ) ;
+         sub.append ( IXM_NOTNULL_FIELD,
+                      indexObj.getBoolField( IXM_NOTNULL_FIELD ) ) ;
          BSONObj range = indexObj.getObjectField( IXM_2DRANGE_FIELD ) ;
          if ( !range.isEmpty() )
          {
