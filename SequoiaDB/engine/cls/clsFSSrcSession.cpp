@@ -2628,7 +2628,8 @@ namespace engine
               SDB_OK != rc )
          {
             PD_LOG( PDINFO, "Session[%s] test collection[%s]'s shared "
-                    "trans-lock failed, rc: %d", rc ) ;
+                    "trans-lock failed, rc: %d", sessionName(),
+                    _curCollecitonName.c_str(), rc ) ;
             return FALSE ;
          }
 
