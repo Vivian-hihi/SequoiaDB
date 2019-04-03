@@ -450,9 +450,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnTransTryLockCL( const CHAR *pCollection, INT32 lockType,
-                            _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
-                            SDB_DPSCB *dpsCB )
+   INT32 rtnTransTryOrTestLockCL( const CHAR *pCollection,
+                                  INT32 lockType,
+                                  BOOLEAN isTest,
+                                  _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       dmsStorageUnitID suID = DMS_INVALID_CS;
@@ -460,31 +461,46 @@ namespace engine
       dmsStorageUnit *su = NULL;
       const CHAR *pCollectionShortName = NULL;
       dpsTransCB *pTransCB = sdbGetTransCB() ;
-      UINT16 collectionID = DMS_INVALID_MBID;
+      UINT16 collectionID = DMS_INVALID_MBID ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+
       SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB  can't be NULL" ) ;
-      SDB_ASSERT ( dpsCB, "dpsCB  can't be NULL" ) ;
       SDB_ASSERT ( cb, "cb  can't be NULL" ) ;
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID );
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name"
-                  "(collection:%s, rc=%d)", pCollection, rc ) ;
-      rc = su->data()->findCollection ( pCollectionShortName, collectionID ) ;
-      logicCSID = su->LogicalCSID();
+                   "(collection:%s, rc=%d)", pCollection, rc ) ;
+      rc = su->data()->findCollection( pCollectionShortName, collectionID ) ;
+      logicCSID = su->LogicalCSID() ;
       dmsCB->suUnlock ( suID );
       PD_RC_CHECK( rc, PDERROR, "Failed to find the collection"
-                   "(collection:%s, rc=%d)", pCollection, rc );
+                   "(collection:%s, rc=%d)", pCollection, rc ) ;
       switch( lockType )
       {
       case DPS_TRANSLOCK_S:
-            rc = pTransCB->transLockTryS( cb, logicCSID, collectionID );
+         if ( isTest )
+         {
+            rc = pTransCB->transLockTestS( cb, logicCSID, collectionID ) ;
+         }
+         else
+         {
+            rc = pTransCB->transLockTryS( cb, logicCSID, collectionID ) ;
+         }
             break;
       case DPS_TRANSLOCK_X:
-            rc = pTransCB->transLockTryX( cb, logicCSID, collectionID );
-            break;
+         if ( isTest )
+         {
+            rc = pTransCB->transLockTestX( cb, logicCSID, collectionID ) ;
+         }
+         else
+         {
+            rc = pTransCB->transLockTryX( cb, logicCSID, collectionID ) ;
+         }
+         break;
       default:
-            rc = SDB_INVALIDARG;
-            PD_RC_CHECK( rc, PDERROR, "invalid lock-type" ) ;
+         rc = SDB_INVALIDARG;
+         PD_RC_CHECK( rc, PDERROR, "invalid lock-type" ) ;
       }
    done:
       return rc ;
@@ -492,18 +508,20 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnTransTryLockCS( const CHAR *pSpace, INT32 lockType,
-                            _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
-                            SDB_DPSCB *dpsCB )
+   INT32 rtnTransTryOrTestLockCS( const CHAR *pSpace,
+                                  INT32 lockType,
+                                  BOOLEAN isTest,
+                                  _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       dmsStorageUnitID suID = DMS_INVALID_CS;
       UINT32 logicCSID = ~0;
       dmsStorageUnit *su = NULL;
       dpsTransCB *pTransCB = sdbGetTransCB() ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+
       SDB_ASSERT ( pSpace, "space can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB  can't be NULL" ) ;
-      SDB_ASSERT ( dpsCB, "dpsCB  can't be NULL" ) ;
       SDB_ASSERT ( cb, "cb  can't be NULL" ) ;
       UINT32 length = ossStrlen ( pSpace );
       PD_CHECK( (length > 0 && length <= DMS_SU_NAME_SZ), SDB_INVALIDARG,
@@ -519,14 +537,28 @@ namespace engine
       switch( lockType )
       {
       case DPS_TRANSLOCK_S:
-            rc = pTransCB->transLockTryS( cb, logicCSID );
-            break;
+         if ( isTest )
+         {
+            rc = pTransCB->transLockTestS( cb, logicCSID ) ;
+         }
+         else
+         {
+            rc = pTransCB->transLockTryS( cb, logicCSID ) ;
+         }
+         break;
       case DPS_TRANSLOCK_X:
-            rc = pTransCB->transLockTryX( cb, logicCSID );
-            break;
+         if ( isTest )
+         {
+            rc = pTransCB->transLockTestX( cb, logicCSID ) ;
+         }
+         else
+         {
+            rc = pTransCB->transLockTryX( cb, logicCSID ) ;
+         }
+         break;
       default:
-            rc = SDB_INVALIDARG;
-            PD_RC_CHECK( rc, PDERROR, "invalid lock-type" );
+         rc = SDB_INVALIDARG;
+         PD_RC_CHECK( rc, PDERROR, "invalid lock-type" );
       }
    done:
       return rc;

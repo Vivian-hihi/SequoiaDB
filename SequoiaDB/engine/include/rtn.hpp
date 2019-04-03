@@ -514,12 +514,17 @@ namespace engine
    INT32 rtnTransCommit( _pmdEDUCB *cb, SDB_DPSCB *dpsCB );
    INT32 rtnTransRollback( _pmdEDUCB * cb, SDB_DPSCB *dpsCB );
    INT32 rtnTransRollbackAll( _pmdEDUCB * cb );
-   INT32 rtnTransTryLockCL( const CHAR *pCollection, INT32 lockType,
-                           _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
-                           SDB_DPSCB *dpsCB );
-   INT32 rtnTransTryLockCS( const CHAR *pSpace, INT32 lockType,
-                           _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
-                           SDB_DPSCB *dpsCB );
+
+   INT32 rtnTransTryOrTestLockCL( const CHAR *pCollection,
+                                  INT32 lockType,
+                                  BOOLEAN isTest,
+                                  _pmdEDUCB *cb ) ;
+
+   INT32 rtnTransTryOrTestLockCS( const CHAR *pSpace,
+                                  INT32 lockType,
+                                  BOOLEAN isTest,
+                                  _pmdEDUCB *cb ) ;
+
    INT32 rtnTransReleaseLock( const CHAR *pCollection,
                               _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
                               SDB_DPSCB *dpsCB );

@@ -2615,9 +2615,20 @@ namespace engine
          pmdEDUMgr *pEDUMgr = eduCB()->getEDUMgr() ;
          if ( pEDUMgr->getWritingEDUCount( -1, _ntyOverTime ) > 0 )
          {
-            PD_LOG( PDDEBUG, "Session[%s] operator ID [%llu] : Waiting for "
+            PD_LOG( PDINFO, "Session[%s] operator ID [%llu] : Waiting for "
                     "other operations to finish", sessionName(),
                     _ntyOverTime ) ;
+            return FALSE ;
+         }
+
+         /// transaction check
+         INT32 rc = rtnTransTryOrTestLockCL( _curCollecitonName.c_str(),
+                                             DPS_TRANSLOCK_S, TRUE, eduCB() ) ;
+         if ( SDB_DMS_CS_NOTEXIST != rc || SDB_DMS_NOTEXIST != rc ||
+              SDB_OK != rc )
+         {
+            PD_LOG( PDINFO, "Session[%s] test collection[%s]'s shared "
+                    "trans-lock failed, rc: %d", rc ) ;
             return FALSE ;
          }
 
