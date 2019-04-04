@@ -1,165 +1,200 @@
 /*******************************************************************************
-*@Description:   seqDB-13717:rang分区表使用切分键/非切分键sort+limit+skip执行查询
+*@Description:   seqDB-13717: hash分区表使用切分键/非切分键sort+limit+skip执行查询 
 *@Author:        2019-2-26  wangkexin
 ********************************************************************************/
-rownums = 10000;//TODO:1、变量定义到方法内部
-
 main();
 function main()
 {
-	try
-   {
-	   var csName = COMMCSNAME;
-	   var clName = COMMCLNAME+"_13717";
-	   
-	   var varCS = commCreateCS( db, csName, true, "create CS in the beginning" );
-	   var hashCL = varCS.createCL(clName,{ShardingKey:{a:1},ShardingType:'hash',ReplSize:0});
-	   
-	   loadData(hashCL, rownums);
-	   println("insert data finished!");
-	   //query 1 使用切分键执行查询 sort
-	   var sel_1 = hashCL.find({},{a:""}).sort({a:1});
-	   checkResult(sel_1, "a", rownums, 1, null, true, "query1");
-	   //TODO:5、请确认这里使用1000有什么含义？请确认测试点？
-	   //query 2 使用切分键执行查询 limit 覆盖值小于等于1000、大于1000
-	   var sel_2_1 = hashCL.find({},{a:""}).limit(500);
-	   checkResult(sel_2_1, "a", 500, null, rownums, false, "query2_1");
-	   
-	   var sel_2_2 = hashCL.find({},{a:""}).limit(1000);
-	   checkResult(sel_2_2, "a", 1000, null, rownums, false, "query2_2");
-	   
-	   var sel_2_3 = hashCL.find({},{a:""}).limit(1500);
-	   checkResult(sel_2_3, "a", 1500, null, rownums, false, "query2_3");
-	   
-	   //query 3 使用切分键执行查询 skip 覆盖值小于等于1000、大于1000
-	   var sel_3_1 = hashCL.find({},{a:""}).skip(500);
-	   checkResult(sel_3_1, "a", rownums-500, null, rownums-500, false, "query3_1");
-	   
-	   var sel_3_2 = hashCL.find({},{a:""}).skip(1000);
-	   checkResult(sel_3_2, "a", rownums-1000, null, rownums-1000, false, "query3_2");
-	   
-	   var sel_3_3 = hashCL.find({},{a:""}).skip(1500);
-	   checkResult(sel_3_3, "a", rownums-1500, null, rownums-1500, false, "query3_3");
-	   
-	   //query 4 使用切分键执行查询 sort+limit+skip  limit/skip覆盖值小于等于1000、大于1000
-	   var sel_4_1 = hashCL.find({},{a:""}).sort({a:1}).limit(500).skip(200);
-	   checkResult(sel_4_1, "a", 500, 201, null, true, "query4_1");
-	   
-	   var sel_4_2 = hashCL.find({},{a:""}).sort({a:1}).limit(1000).skip(1000);
-	   checkResult(sel_4_2, "a", 1000, 1001, null, true, "query4_2");
-	   
-	   var sel_4_3 = hashCL.find({},{a:""}).sort({a:1}).limit(1500).skip(1200);
-	   checkResult(sel_4_3, "a", 1500, 1201, null, true, "query4_3");
-	   
-	   
-	   
-	   //query 5 使用非切分键执行查询 sort
-	   var sel_5 = hashCL.find({},{b:""}).sort({b:1});
-	   checkResult(sel_5, "b", rownums, 0, null, true, "query5");
-	   
-	   //query 6 使用非切分键执行查询 limit 覆盖值小于等于1000、大于1000
-	   var sel_6_1 = hashCL.find().limit(500);
-	   checkResult(sel_6_1, "b", 500, 0, null, true, "query6_1");
-	   
-	   var sel_6_2 = hashCL.find().limit(1000);
-	   checkResult(sel_6_2, "b", 1000, 0, null, true, "query6_2");
-	   
-	   var sel_6_3 = hashCL.find().limit(1500);
-	   checkResult(sel_6_3, "b", 1500, 0, null, true, "query6_3");
-	   
-	   //query 7 使用非切分键执行查询 skip 覆盖值小于等于1000、大于1000
-	   var sel_7_1 = hashCL.find().skip(500);
-	   checkResult(sel_7_1, "b", rownums-500, 500, null, true, "query7_1");
-	   
-	   var sel_7_2 = hashCL.find().skip(1000);
-	   checkResult(sel_7_2, "b", rownums-1000, 1000, null, true, "query7_2");
-	   
-	   var sel_7_3 = hashCL.find().skip(1500);
-	   checkResult(sel_7_3, "b", rownums-1500, 1500, null, true, "query7_3");
-	   
-	   //query 8 使用非切分键执行查询 sort+limit+skip  limit/skip覆盖值小于等于1000、大于1000
-	   var sel_8_1 = hashCL.find().sort({b:1}).limit(500).skip(200);
-	   checkResult(sel_8_1, "b", 500, 200, null, true, "query8_1");
-	   
-	   var sel_8_2 = hashCL.find().sort({b:1}).limit(1000).skip(1000);
-	   checkResult(sel_8_2, "b", 1000, 1000, null, true, "query8_2");
-	   
-	   var sel_8_3 = hashCL.find().sort({b:1}).limit(1500).skip(1200);
-	   checkResult(sel_8_3, "b", 1500, 1200, null, true, "query8_3");
-	   
-	   //drop cl
-	   commDropCL( db, csName, clName, false, false, "drop cl in the end" ) ;
-	   println("drop cl finished")
-	}
-	catch(e)
-	{
-		throw e;
-	}
+    var rownums = 10000;
+    var csName = COMMCSNAME;
+    var clName = "cl13716";
+
+    var clOpt = {ShardingKey:{a:1},ShardingType:'hash',ReplSize:0};
+    var rangeCL = commCreateCLByOption( db, csName, clName, clOpt );
+
+    loadData(rangeCL, rownums);
+    println("insert data finished!");
+    //query 1 使用切分键执行查询 sort
+    var sel_1 = rangeCL.find({},{a:""}).sort({a:1});
+    checkResult_sort(sel_1, "a", true, rownums);
+
+    //query 2 使用切分键执行查询 limit 覆盖值小于等于1000、大于1000
+    var sel_2_1 = rangeCL.find({},{a:""}).limit(500);
+    checkResult_limit(sel_2_1, "a", 500);
+
+    var sel_2_2 = rangeCL.find({},{a:""}).limit(1000);
+    checkResult_limit(sel_2_2, "a", 1000);
+
+    var sel_2_3 = rangeCL.find({},{a:""}).limit(1500);
+    checkResult_limit(sel_2_3, "a", 1500);
+
+    //query 3 使用切分键执行查询 skip 覆盖值小于等于1000、大于1000
+    var sel_3_1 = rangeCL.find({},{a:""}).skip(500);
+    checkResult_skip(sel_3_1, "a", 500, rownums-500);
+
+    var sel_3_2 = rangeCL.find({},{a:""}).skip(1000);
+    checkResult_skip(sel_3_2, "a", 1000, rownums-1000);
+
+    var sel_3_3 = rangeCL.find({},{a:""}).skip(1500);
+    checkResult_skip(sel_3_3, "a", 1500, rownums-1500);
+
+    //query 4 使用切分键执行查询 sort+limit+skip  limit/skip覆盖值小于等于1000、大于1000
+    var sel_4_1 = rangeCL.find({},{a:""}).sort({a:1}).limit(500).skip(200);
+    checkResult_sort_limit_skip(sel_4_1, "a", true, 500, 200, rownums);
+
+    var sel_4_2 = rangeCL.find({},{a:""}).sort({a:1}).limit(1000).skip(1000);
+    checkResult_sort_limit_skip(sel_4_2, "a", true, 1000, 1000, rownums);
+
+    var sel_4_3 = rangeCL.find({},{a:""}).sort({a:-1}).limit(1500).skip(1200);
+    checkResult_sort_limit_skip(sel_4_3, "a", false, 1500, 1200, rownums);
+
+    //query 5 使用非切分键执行查询 sort
+    var sel_5 = rangeCL.find({},{b:""}).sort({b:-1});
+    checkResult_sort(sel_5, "b", false, rownums);
+
+    //query 6 使用非切分键执行查询 limit 覆盖值小于等于1000、大于1000
+    var sel_6_1 = rangeCL.find().limit(500);
+    checkResult_limit(sel_6_1, "b", 500);
+
+    var sel_6_2 = rangeCL.find().limit(1000);
+    checkResult_limit(sel_6_2, "b", 1000);
+
+    var sel_6_3 = rangeCL.find().limit(1500);
+    checkResult_limit(sel_6_3, "b", 1500);
+
+    //query 7 使用非切分键执行查询 skip 覆盖值小于等于1000、大于1000
+    var sel_7_1 = rangeCL.find({},{b:""}).skip(500);
+    checkResult_skip(sel_7_1, "b", 500, rownums-500);
+
+    var sel_7_2 = rangeCL.find({},{b:""}).skip(1000);
+    checkResult_skip(sel_7_2, "b", 1000, rownums-1000);
+
+    var sel_7_3 = rangeCL.find({},{b:""}).skip(1500);
+    checkResult_skip(sel_7_3, "b", 1500, rownums-1500);
+
+    //query 8 使用非切分键执行查询 sort+limit+skip  limit/skip覆盖值小于等于1000、大于1000
+    var sel_8_1 = rangeCL.find().sort({b:1}).limit(500).skip(200);
+    checkResult_sort_limit_skip(sel_8_1, "b", true, 500, 200, rownums);
+
+    var sel_8_2 = rangeCL.find().sort({b:1}).limit(1000).skip(1000);
+    checkResult_sort_limit_skip(sel_8_2, "b", true, 1000, 1000, rownums);
+
+    var sel_8_3 = rangeCL.find().sort({b:-1}).limit(1500).skip(1200);
+    checkResult_sort_limit_skip(sel_8_3, "b", false, 1500, 1200, rownums);
+
+    //drop cl
+    commDropCL( db, csName, clName, true, true, "drop cl in the end" ) ;
 }
-//TODO:2、插入数据要改为批量插入
+
 function loadData(cl, rownums)
-{//TODO:3、这里的funname没有必要重新定义
-   var funname = "loadData";
-   try
-   {
-      for(var i=0;i<rownums;i++){cl.insert({a:rownums-i,b:i,c:"abcdefghijkl"+i});}
-   }
-   catch(e)
-   {
-      buildException(funname, e);
-   }
-}
-//TODO:4、这个方法实现太复杂，参数名也没有描述说明，另外比较结果建议针对不同的查询条件比较记录值
-function checkResult(sel, field, exp_returnednum, beginnum, endnum, isAsc, queryname)
 {
-	try
-	   {
-		   var act_resurnednum = 0;
-		   var flag = true;
-		   //The field is in ascending order when checking.
-		   if(isAsc)
-		   {
-			   var i = beginnum;
-		   }
-		   else{
-			   var i = endnum;
-		   }
-		   while(sel.next())
-		   {
-			   var ret = sel.current();
-			   if(ret.toObj()[field]!=i)
-			   {
-				   flag = false;
-				   println("ret.toObj()['" + field + "']!=i" + "   ret.toObj()['" + field + "']: " + ret.toObj()[field] + ", i: " + i);
-				   throw "query-result-incorrect";
-			   }
-			   if(isAsc)
-			   {
-				   i++;
-			   }else
-			   {
-				   i--;
-			   }
-			   act_resurnednum++;
-		   }
-		   sel.close();
-		   if(act_resurnednum != exp_returnednum)
-		   {
-			   println("flag = " + flag + ", exp_returnednum =" + exp_returnednum + ", act_resurnednum =" + act_resurnednum);
-			   throw "query-result-incorrect";
-		   }
-	   }
-	   catch(e)
-	   {
-		   if(e!="query-result-incorrect")
-		   {
-			   println(queryname + " fail! rc="+e);
-			   throw e;
-		   }
-		   else
-		   {
-			   println(queryname + " fail!");
-			   throw e;
-		   }
-	   }
+    var record = [];
+    for( var i = 0; i < rownums; i++ )
+    {
+        record.push({a:i,b:i,c:"abcdefghijkl"+i});
+    }
+    cl.insert(record);
+}
+
+function checkResult_sort( sel, field, isAsc, rownums )
+{
+    var act_resurnednum = 0;
+    if(isAsc)
+    {
+       var i = 0;
+    }else
+    {
+       var i = rownums - 1 ;
+    }
+    while(sel.next())
+    {
+        var ret = sel.current();
+        if(ret.toObj()[field] !== i)
+        {
+           throw buildException("checkResult_sort", null, "check field [" + field + "] data. ", i, ret.toObj()[field]);
+        }
+        if(isAsc)
+        {
+           i++;
+        }else
+        {
+           i--;
+        }
+        act_resurnednum++;
+    }
+    if(act_resurnednum !== rownums)
+    {
+       throw buildException("checkResult_sort", null, "check returned num of field [" + field + "]", rownums, act_resurnednum);
+    }
+}
+
+function checkResult_limit( sel, field, limitNum )
+{
+    var i = 0;
+    while(sel.next())
+    {
+        var ret = sel.current();
+        if(ret.toObj()[field] !== i)
+        {
+           throw buildException("checkResult_limit", null, "check field [" + field + "] data. ", i, ret.toObj()[field]);
+        }
+        i++;
+    }
+    if(i !== limitNum)
+    {
+       throw buildException("checkResult_limit", null, "check returned num of field [" + field + "]", limitNum, i);
+    }
+}
+
+function checkResult_skip( sel, field, skipNum, exp_returnednum )
+{
+    var act_resurnednum = 0;
+    var i = skipNum;
+    while(sel.next())
+    {
+        var ret = sel.current();
+        if(ret.toObj()[field] !== i)
+        {
+           throw buildException("checkResult_skip", null, "check field [" + field + "] data. ", i, ret.toObj()[field]);
+        }
+        i++;
+        act_resurnednum++;
+    }
+    if(act_resurnednum !== exp_returnednum)
+    {
+       throw buildException("checkResult_skip", null, "check returned num of field [" + field + "]", exp_returnednum, act_resurnednum);
+    }
+}
+
+
+function checkResult_sort_limit_skip( sel, field, isAsc, limitNum, skipNum, rownums )
+{
+    var act_resurnednum = 0;
+    if(isAsc)
+    {
+       var i = skipNum;
+    }else
+    {
+       var i = (rownums - skipNum) - 1;
+    }
+    while(sel.next())
+    {
+        var ret = sel.current();
+        if(ret.toObj()[field] !== i)
+        {
+           throw buildException("checkResult_sort_limit_skip", null, "check field [" + field + "] data. ", i, ret.toObj()[field]);
+        }
+        if(isAsc)
+        {
+           i++;
+        }else
+        {
+           i--;
+        }
+        act_resurnednum++;
+    }
+    if(act_resurnednum !== limitNum)
+    {
+       throw buildException("checkResult_sort_limit_skip", null, "check returned num of field [" + field + "]", limitNum, act_resurnednum);
+    }
 }
