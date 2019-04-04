@@ -1639,92 +1639,95 @@ namespace engine
 
       SDB_DMSCB * dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB * rtnCB = pmdGetKRCB()->getRTNCB() ;
-      INT64 contextID = -1 ;
-      BSONObj matcher ;
-      rtnQueryOptions queryOptions ;
+      BSONObj matcher, matcherMaincl ;
       CHAR lowBound[ DMS_COLLECTION_SPACE_NAME_SZ + 1 + 1 ] = { 0 } ;
       CHAR upBound[  DMS_COLLECTION_SPACE_NAME_SZ + 1 + 1 ] = { 0 } ;
 
+      rtnQueryOptions queryOptions ;
+      queryOptions.setCLFullName( CAT_COLLECTION_INFO_COLLECTION ) ;
+
+      // eg: csName is "test", { Name: { $regex: "^test\\." } } is equal to
+      // { Name: { $gt: "test.", $lt: "test/" } }. So if csName has
+      // metacharacter(eg: "^"), we do not need to escape it.
       ossStrncpy( lowBound, csName, DMS_COLLECTION_NAME_SZ ) ;
       ossStrncat( lowBound, ".", 1 ) ;
       ossStrncpy( upBound, csName, DMS_COLLECTION_NAME_SZ ) ;
       ossStrncat( upBound, "/", 1 ) ;
 
-      if ( !includeSubCLGroups )
-      {
-         // eg: csName is "test", { Name: { $regex: "^test\\." } } is equal to
-         // { Name: { $gt: "test.", $lt: "test/" } }. So if csName has
-         // metacharacter(eg: "^"), we do not need to escape it.
-         matcher = BSON( CAT_COLLECTION_NAME
-                      << BSON( "$gt" << lowBound << "$lt" << upBound ) ) ;
-      }
-      else
-      {
-         matcher = BSON( "$or"
-                      << BSON_ARRAY( BSON( CAT_COLLECTION_NAME
-                                        << BSON( "$gt" << lowBound
-                                              << "$lt" << upBound ) )
-                                  << BSON( CAT_MAINCL_NAME
-                                        << BSON( "$gt" << lowBound
-                                              << "$lt" << upBound ) ) ) ) ;
-      }
+      matcher = BSON( CAT_COLLECTION_NAME
+                   << BSON( "$gt" << lowBound << "$lt" << upBound ) ) ;
 
-      queryOptions.setCLFullName( CAT_COLLECTION_INFO_COLLECTION ) ;
-      queryOptions.setQuery( matcher ) ;
+      // if includeSubCLGroups = TRUE, and this cs has main cl, we should also
+      // get groups of subcl
+      matcherMaincl = BSON( CAT_MAINCL_NAME
+                         << BSON( "$gt" << lowBound << "$lt" << upBound ) ) ;
 
-      // query
-      rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
-                   "rc: %d", CAT_COLLECTION_INFO_COLLECTION, rc ) ;
-
-      // get more
-      while ( TRUE )
+      INT8 loopTime = includeSubCLGroups ? 2 : 1 ;
+      for ( INT8 i = 0; i < loopTime; i++ )
       {
-         BSONObj obj ;
-         rtnContextBuf contextBuf ;
-         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
-         if ( SDB_DMS_EOC == rc )
+         if ( 0 == i )
          {
-            rc = SDB_OK ;
-            break ;
+            queryOptions.setQuery( matcher ) ;
          }
-         PD_RC_CHECK( rc, PDERROR, "Get more failed, rc: %d", rc ) ;
-
-         try
+         else
          {
-            obj = BSONObj( contextBuf.data() ) ;
-            BSONElement eleCataInfo = obj.getField( CAT_CATALOGINFO_NAME ) ;
-            if ( Array != eleCataInfo.type() )
+            queryOptions.setQuery( matcherMaincl ) ;
+         }
+
+         // query
+         INT64 contextID = -1 ;
+         rc = rtnQuery( queryOptions, cb, dmsCB, rtnCB, contextID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, "
+                      "rc: %d", CAT_COLLECTION_INFO_COLLECTION, rc ) ;
+
+         // get more
+         while ( TRUE )
+         {
+            BSONObj obj ;
+            rtnContextBuf contextBuf ;
+            rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
+            if ( SDB_DMS_EOC == rc )
             {
-               continue ;
+               rc = SDB_OK ;
+               break ;
             }
-            BSONObjIterator itr( eleCataInfo.embeddedObject() ) ;
-            while( itr.more() )
+            PD_RC_CHECK( rc, PDERROR, "Get more failed, rc: %d", rc ) ;
+
+            try
             {
-               BSONElement e = itr.next() ;
-               if ( Object != e.type() )
+               obj = BSONObj( contextBuf.data() ) ;
+               BSONElement eleCataInfo = obj.getField( CAT_CATALOGINFO_NAME ) ;
+               if ( Array != eleCataInfo.type() )
                {
                   continue ;
                }
-               BSONObj cataItemObj = e.embeddedObject() ;
-               BSONElement eleGrpID = cataItemObj.getField( CAT_GROUPID_NAME ) ;
-               if ( eleGrpID.isNumber() )
+               BSONObjIterator itr( eleCataInfo.embeddedObject() ) ;
+               while( itr.more() )
                {
-                  groups.insert( eleGrpID.numberInt() ) ;
+                  BSONElement e = itr.next() ;
+                  if ( Object != e.type() )
+                  {
+                     continue ;
+                  }
+                  BSONObj cataItemObj = e.embeddedObject() ;
+                  BSONElement eleGrpID = cataItemObj.getField( CAT_GROUPID_NAME ) ;
+                  if ( eleGrpID.isNumber() )
+                  {
+                     groups.insert( eleGrpID.numberInt() ) ;
+                  }
                }
             }
-         }
-         catch( exception & e )
-         {
-            rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
-            PD_LOG( PDERROR,
-                    "Get collection name from obj[%s] occur exception: %s",
-                    obj.toString().c_str(), e.what() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
+            catch( exception & e )
+            {
+               rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
+               PD_LOG( PDERROR,
+                       "Get collection name from obj[%s] occur exception: %s",
+                       obj.toString().c_str(), e.what() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+         }// end of get more
       }
-
    done :
       PD_TRACE_EXITRC( SDB_CATGETCSGRPS, rc ) ;
       return rc ;

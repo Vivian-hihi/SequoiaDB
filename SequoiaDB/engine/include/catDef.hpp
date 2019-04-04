@@ -64,6 +64,8 @@
                                           CAT_COLLECTION_NAME":1}, unique: true, enforced: true } "
 #define CAT_COLLECTION_IDIDX              "{name:\"SYSIDX2\",key: {"\
                                           CAT_CL_UNIQUEID":1}, unique: true, enforced: false } "
+#define CAT_COLLECTION_MAINCLIDX          "{name:\"SYSIDX3\",key: {"\
+                                          CAT_MAINCL_NAME":1}} "
 #define CAT_TASK_INFO_CLOBJIDX            "{name:\"SYSIDX1\",key: {"\
                                           CAT_TASKID_NAME":1}, unique: true }"
 #define CAT_DOMAIN_NAMEIDX                "{name:\"SYSIDX1\",key: {"\
