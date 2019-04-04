@@ -308,6 +308,11 @@ namespace engine
                   PD_LOG ( PDERROR, "Failed to relocate RID, rc: %d", rc ) ;
                   goto error ;
                }
+               if ( isSame && ( !getSharedInfo() ||
+                                !getSharedInfo()->exists( _savedRID ) ) )
+               {
+                  isSame = FALSE ;
+               }
             }
             // if both on recordRID and key object are the same, let's
             // say the index is not changed, that means we should move on
