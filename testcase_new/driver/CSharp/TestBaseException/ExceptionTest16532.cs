@@ -58,7 +58,7 @@ namespace CSharp.TestBaseException
                 Assert.AreEqual(-6, errorObject.GetElement("errno").Value);
                 Assert.AreEqual("Invalid Argument", errorObject.GetElement("description").Value);
                 ReplicaGroup rg = sdb.GetReplicaGroup(dataGroupNames[0]);
-                string expected = "[{ \"NodeName\" : \"" + rg.GetMaster().NodeName + "\", \"GroupName\" : \"" + dataGroupNames[0] + "\", \"Flag\" : -6, \"ErrInfo\" : { \"errno\" : -6, \"description\" : \"Invalid Argument\", \"detail\" : \"Updator operator[$seta] error\" } }]";
+                string expected = "[{ \"NodeName\" : \"" + rg.GetMaster().NodeName + "\", \"GroupName\" : \"" + dataGroupNames[0] + "\", \"Flag\" : -6, \"ErrInfo\" : { \"errno\" : -6, \"description\" : \"Invalid Argument\", \"detail\" : \"Updator operator[$seta] error\", \"Rollback\" : false } }]";
  
                 Assert.AreEqual(expected, errorObject.GetElement("ErrNodes").Value.ToString());
             }
