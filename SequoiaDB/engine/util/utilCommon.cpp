@@ -348,6 +348,10 @@ namespace engine
          {
             bb.append ( OP_ERR_DETAIL, detail ) ;
          }
+         else
+         {
+            bb.append( OP_ERR_DETAIL, "" ) ;
+         }
          if ( pRollback )
          {
             bb.appendBool ( FIELD_NAME_ROLLBACK, *pRollback ? TRUE : FALSE ) ;
