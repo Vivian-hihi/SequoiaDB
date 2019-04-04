@@ -224,11 +224,11 @@ public class SubCL10554 extends SdbTestBase {
 	public void checkIndexExist(DBCollection cl) {
 		DBCursor dbc = null;
 		BSONObject idIndex = (BSONObject) JSON
-				.parse("{name: \"$id\",key: {_id: 1},v: 0,unique: true,dropDups: false,enforced: true}");
+				.parse("{name: \"$id\",key: {_id: 1}}");
 		BSONObject shardingKeyIndex = (BSONObject) JSON
-				.parse("{name: \"shardingKeyIndex\",key: {sk: 1},v: 0,unique: false,dropDups: false,enforced: false}");
+				.parse("{name: \"shardingKeyIndex\",key: {sk: 1}}");
 		BSONObject commIndex = (BSONObject) JSON
-				.parse("{name: \"commIndex\",key: {num: 1},v: 0,unique: false,dropDups: false,enforced: false}");
+				.parse("{name: \"commIndex\",key: {num: 1}}");
 		ArrayList<BSONObject> expect = new ArrayList<BSONObject>();
 		expect.add(idIndex);
 		expect.add(shardingKeyIndex);
@@ -237,8 +237,10 @@ public class SubCL10554 extends SdbTestBase {
 		try {
 			dbc = cl.getIndexes();
 			while (dbc.hasNext()) {
-				BSONObject actual = (BSONObject) dbc.getNext().get("IndexDef");
-				actual.removeField("_id");
+			    BSONObject record = (BSONObject) dbc.getNext().get("IndexDef");
+                BasicBSONObject actual = new BasicBSONObject();
+                actual.put("name", record.get("name"));
+                actual.put("key", record.get("key"));
 				for (int i = 0; i < expect.size(); i++) {
 					if (actual.equals(expect.get(i))) {
 						machFlag = true;
