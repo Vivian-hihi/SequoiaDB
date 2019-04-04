@@ -14,6 +14,30 @@ import java.util.Date;
 public class TimePrinterListener extends TestListenerAdapter {
 
     @Override
+    public void onTestStart(ITestResult itr){
+        super.onTestStart( itr ) ;
+        SdbTestBase.incCaseNum() ;
+    }
+    
+    @Override
+    public void onTestSuccess(ITestResult itr){
+        super.onTestSuccess( itr ) ;
+        SdbTestBase.decCaseNum() ;
+    }
+    
+    @Override
+    public void onTestFailure(ITestResult itr){
+        super.onTestFailure( itr ) ;
+        SdbTestBase.decCaseNum() ;
+    }
+    
+    @Override
+    public void onTestSkipped(ITestResult itr){
+        super.onTestFailure( itr ) ;
+        SdbTestBase.decCaseNum() ;
+    }
+    
+    @Override
     public void onConfigurationSuccess(ITestResult itr) {
         super.onConfigurationSuccess(itr);
         if (itr.getMethod().isAfterClassConfiguration()) {

@@ -55,6 +55,7 @@ public class SdbTestBase {
     private static AtomicInteger rsLockCnt = new AtomicInteger( 0 ) ;
     private static ConfigOptions options = new ConfigOptions() ;
 
+    private static AtomicInteger runCaseNum = new AtomicInteger(0) ;
     private static final int newIndexScanStep = 3 ;
     private static final int originalIndexScanStep = 100 ;
     private static final int timeOutLen = 60 ;
@@ -108,6 +109,14 @@ public class SdbTestBase {
         return configs ;
     }
     
+    public static void incCaseNum(){
+        runCaseNum.incrementAndGet() ;
+    }
+    
+    public static void decCaseNum(){
+        runCaseNum.decrementAndGet() ;
+    }
+    
     private static BSONObject buildNodeConf( int transisolation, boolean translockwait, int indexscanstep ){
         BasicBSONObject configs = new BasicBSONObject() ;
         configs.append( TRANSISOLATION, transisolation ) ;
@@ -154,7 +163,7 @@ public class SdbTestBase {
         }
     }
     
-    @BeforeGroups( groups = "ru", alwaysRun = true )
+    @BeforeGroups( groups = "ru" )
     public static synchronized void initRuGroups() {
         System.out.println( "initRuGroups..........." ) ;
         if ( ruCnt.getAndIncrement() > 0 ) {
@@ -164,7 +173,7 @@ public class SdbTestBase {
         modifyNodeConf( 0, false, newIndexScanStep ) ;
     }
 
-    @BeforeGroups( groups = "rc", alwaysRun = true )
+    @BeforeGroups( groups = "rc" )
     public static synchronized void initRcGroups() {
         System.out.println( "initRcGroups..........." ) ;
         if ( rcCnt.getAndIncrement() > 0 ) {
@@ -174,7 +183,7 @@ public class SdbTestBase {
         modifyNodeConf( 1, false, newIndexScanStep ) ;
     }
 
-    @BeforeGroups( groups = "rcwaitlock", alwaysRun = true )
+    @BeforeGroups( groups = "rcwaitlock" )
     public static synchronized void initRcLockwaitGroups() {
         System.out.println( "initRcLockwaitGroups..........." ) ;
         if ( rcLockCnt.getAndIncrement() > 0 ) {
@@ -184,7 +193,7 @@ public class SdbTestBase {
         modifyNodeConf( 1, true, newIndexScanStep ) ;
     }
     
-    @BeforeGroups( groups = "rs", alwaysRun = true )
+    @BeforeGroups( groups = "rs" )
     public static synchronized void initRsGroups() {
         System.out.println( "initRsGroups..........." ) ;
         if ( rsLockCnt.getAndIncrement() > 0 ) {
@@ -194,13 +203,15 @@ public class SdbTestBase {
         modifyNodeConf( 2, false, newIndexScanStep ) ;
     }
 
-    @AfterGroups( groups = { "ru", "rc", "rs", "rcwaitlock" }, alwaysRun = true )
-    public static synchronized void finiGroups2() {
+    @AfterGroups(groups = {"rc", "ru", "rcwaitlock", "rswaitlock"}, alwaysRun = true )
+    public static synchronized void finiGroups() {
+        if ( runCaseNum.get() != 0){
+            return ;
+        }
         System.out.println( "finiGroups..........." ) ;
-
         modifyNodeConf( 0, false, originalIndexScanStep ) ;
     }
-
+    
     @AfterSuite( alwaysRun = true )
     public static void finiSuite() {
         try {
