@@ -203,7 +203,7 @@ public class SdbTestBase {
         modifyNodeConf( 2, false, newIndexScanStep ) ;
     }
 
-    @AfterGroups(groups = {"rc", "ru", "rcwaitlock", "rswaitlock"}, alwaysRun = true )
+    @AfterGroups(groups = {"rc", "ru", "rcwaitlock", "rs"}, alwaysRun = true )
     public static synchronized void finiGroups() {
         if ( runCaseNum.get() != 0){
             return ;
