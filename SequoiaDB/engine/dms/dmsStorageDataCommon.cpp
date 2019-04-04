@@ -3471,7 +3471,7 @@ namespace engine
          }
 
          // when in transaction(not rollback), we should not immediately
-         // delete the rcord, otherwise TB scan won't be able to find
+         // delete the record, otherwise TB scan won't be able to find
          // this record even if the current transaction has not committed.
          if ( DPS_INVALID_TRANS_ID != transID && !cb->isInRollback() )
          {
