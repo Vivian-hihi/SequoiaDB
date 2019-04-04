@@ -53,5 +53,16 @@
       </packages>
    </test>
    
+   <test name="uniqueindexrc">
+      <groups>
+         <run>
+            <include name="rc" />
+         </run>
+      </groups>
+      <packages>
+         <package name="ccom.sequoiadb.transaction.uniqueIndex" />
+      </packages>
+   </test>
+   
 </suite>
    
