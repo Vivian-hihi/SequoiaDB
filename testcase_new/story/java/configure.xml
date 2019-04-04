@@ -28,6 +28,7 @@
       </groups>
       <packages>
          <package name="com.sequoiadb.transaction.rc" />
+         <package name="com.sequoiadb.transaction.uniqueIndex" />
       </packages>
    </test>
 
@@ -39,6 +40,7 @@
       </groups>
       <packages>
          <package name="com.sequoiadb.transaction.ru" />
+         <package name="com.sequoiadb.transaction.uniqueIndex" />
       </packages>
    </test>
 
@@ -50,17 +52,6 @@
       </groups>
       <packages>
          <package name="com.sequoiadb.transaction.rcwaitlock" />
-      </packages>
-   </test>
-   
-   <test name="uniqueindexrc">
-      <groups>
-         <run>
-            <include name="rc" />
-         </run>
-      </groups>
-      <packages>
-         <package name="ccom.sequoiadb.transaction.uniqueIndex" />
       </packages>
    </test>
    
