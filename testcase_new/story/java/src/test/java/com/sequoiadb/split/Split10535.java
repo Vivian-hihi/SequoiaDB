@@ -154,17 +154,19 @@ public class Split10535 extends SdbTestBase {
 	public void checkIndexNonExist(DBCollection cl) {
 		DBCursor dbc = null;
 		BSONObject idIndex = (BSONObject) JSON
-				.parse("{name: \"$id\",key: {_id: 1},v: 0,unique: true,dropDups: false,enforced: true}");
+				.parse("{name: \"$id\",key: {_id: 1}}");
 		BSONObject shardingKeyIndex = (BSONObject) JSON
-				.parse("{name: \"$shard\",key: {sk: 1},v: 0,unique: false,dropDups: false,enforced: false}");
+				.parse("{name: \"$shard\",key: {sk: 1}}");
 		ArrayList<BSONObject> expect = new ArrayList<BSONObject>();
 		expect.add(idIndex);
 		expect.add(shardingKeyIndex);
 		try {
 			dbc = cl.getIndexes();
 			while (dbc.hasNext()) {
-				BSONObject actual = (BSONObject) dbc.getNext().get("IndexDef");
-				actual.removeField("_id");
+			    BSONObject record = (BSONObject) dbc.getNext().get("IndexDef");
+                BasicBSONObject actual = new BasicBSONObject();
+                actual.put("name", record.get("name"));
+                actual.put("key", record.get("key"));
 				if (expect.contains(actual)) {
 					expect.remove(actual);
 				} else {

@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -100,9 +101,9 @@ public class Split10534 extends SdbTestBase {
 			db = new Sequoiadb(coordUrl, "", "");
 			// 预期索引集合indexes加入默认的id索引和shard索引
 			BSONObject idIndex = (BSONObject) JSON
-					.parse("{name: \"$id\",key: {_id: 1},v: 0,unique: true,dropDups: false,enforced: true}");
+					.parse("{name: \"$id\",key: {_id: 1}}");
 			BSONObject shardingKeyIndex = (BSONObject) JSON
-					.parse("{name: \"$shard\",key: {sk: 1},v: 0,unique: false,dropDups: false,enforced: false}");
+					.parse("{name: \"$shard\",key: {sk: 1}}");
 			indexes.add(idIndex);
 			indexes.add(shardingKeyIndex);
 
@@ -201,8 +202,10 @@ public class Split10534 extends SdbTestBase {
 			DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
 			dbc = cl.getIndexes();
 			while (dbc.hasNext()) {
-				BSONObject actual = (BSONObject) dbc.getNext().get("IndexDef");
-				actual.removeField("_id");
+			    BSONObject record = (BSONObject) dbc.getNext().get("IndexDef");
+                BasicBSONObject actual = new BasicBSONObject();
+                actual.put("name", record.get("name"));
+                actual.put("key", record.get("key"));
 				if (indexesCopy.contains(actual)) {
 					indexesCopy.remove(actual);
 				} else {
@@ -259,7 +262,7 @@ public class Split10534 extends SdbTestBase {
                     int oder = i % 2 == 0 ? 1 : -1;
                     cl.createIndex(indexName, "{" + indexName + ":" + oder + "}", false, false);
                     BSONObject indexObj = (BSONObject) JSON.parse("{name:'" + indexName + "',key: {" + indexName + ": "
-                            + oder + "},v: 0,unique: false,dropDups: false,enforced: false}");
+                            + oder + "}}");
                     indexes.add(indexObj);
                 }
             }catch (BaseException e) {
