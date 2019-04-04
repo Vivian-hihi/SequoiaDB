@@ -28,9 +28,9 @@ import com.sequoiadb.transaction.TransUtils;
  *
  */
 @Test(groups = "rs")
-public class Transaction17943 extends SdbTestBase {
+public class Transaction17943B extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "cl17943";
+    private String clName = "cl17943B";
     private DBCollection cl = null;
     private CountDownLatch latch = null;
 
@@ -63,7 +63,7 @@ public class Transaction17943 extends SdbTestBase {
             latch = new CountDownLatch(3);
 
             // 创建索引
-            cl.createIndex("textIndex17943", indexKey, false, false);
+            cl.createIndex("textIndex17943B", indexKey, false, false);
 
             // 开启3个并发事务
             UpdateThread updateThread1 = new UpdateThread(50, 0);
@@ -84,7 +84,7 @@ public class Transaction17943 extends SdbTestBase {
         } finally {
             
             // 删除索引
-            cl.dropIndex("textIndex17943");
+            cl.dropIndex("textIndex17943B");
         }
     }
 
@@ -124,8 +124,8 @@ public class Transaction17943 extends SdbTestBase {
 
                     // 由于更新和读存在死锁，因此需要规避此问题
                     try {
-                        cl.update("{b:" + aid + "}", "{$inc:{a:-" + value + "}}", "{'':'textIndex17943'}");
-                        cl.update("{b:" + bid + "}", "{$inc:{a:" + value + "}}", "{'':'textIndex17943'}");
+                        cl.update("{b:" + aid + "}", "{$inc:{a:-" + value + "}}", "{'':'textIndex17943B'}");
+                        cl.update("{b:" + bid + "}", "{$inc:{a:" + value + "}}", "{'':'textIndex17943B'}");
                     } catch (BaseException e) {
                         if (e.getErrorCode() == -13) {
                             db.rollback();
@@ -136,7 +136,7 @@ public class Transaction17943 extends SdbTestBase {
                     }
 
                     // 提交更新事务
-                    db.commit();
+                    db.rollback();
                     if (count == endCount) {
                         break;
                     } else {
@@ -183,7 +183,7 @@ public class Transaction17943 extends SdbTestBase {
                     int sum = (int) sumValue;
 
                     // 提交查询事务
-                    db.commit();
+                    db.rollback();
                     if (sum != 1000000) {
                         System.out.println(Thread.currentThread().getName() + " SUM : " + sum + " doTimes : " + count);
                         throw new Exception("VALUENUM ERROR");
