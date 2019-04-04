@@ -102,7 +102,7 @@ public class Transaction17111B extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务2 select for update 读记录走索引扫描阻塞
-            CL2Query cl2Thread = new CL2Query("{a:{$exists:1}}", "{'':'a'}");
+            CL2Query cl2Thread = new CL2Query(null, "{'':'a'}");
             cl2Thread.start();
             Assert.assertTrue(cl2Thread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
     
@@ -128,7 +128,7 @@ public class Transaction17111B extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17111'}");
+            recordsCursor = cl.query(null, null, null, "{'':'textIndex17111'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -139,7 +139,7 @@ public class Transaction17111B extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务逆序索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, "{a: -1}", "{'':'textIndex17111'}");
+            recordsCursor = cl.query(null, null, "{a: -1}", "{'':'textIndex17111'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     
@@ -156,7 +156,7 @@ public class Transaction17111B extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17111'}");
+            recordsCursor = cl.query(null, null, null, "{'':'textIndex17111'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -167,7 +167,7 @@ public class Transaction17111B extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务逆序索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, "{a: -1}", "{'':'textIndex17111'}");
+            recordsCursor = cl.query(null, null, "{a: -1}", "{'':'textIndex17111'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     
@@ -178,7 +178,7 @@ public class Transaction17111B extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务3索引扫描
-            recordsCursor = cl3.query("{a:{$exists:1}}", null, null, "{'':'textIndex17111'}");
+            recordsCursor = cl3.query(null, null, null, "{'':'textIndex17111'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -189,7 +189,7 @@ public class Transaction17111B extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务3逆序索引扫描
-            recordsCursor = cl3.query("{a:{$exists:1}}", null, "{a: -1}", "{'':'textIndex17111'}");
+            recordsCursor = cl3.query(null, null, "{a: -1}", "{'':'textIndex17111'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     
@@ -203,7 +203,7 @@ public class Transaction17111B extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17111'}");
+            recordsCursor = cl.query(null, null, null, "{'':'textIndex17111'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -214,7 +214,7 @@ public class Transaction17111B extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务逆序索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, "{a: -1}", "{'':'textIndex17111'}");
+            recordsCursor = cl.query(null, null, "{a: -1}", "{'':'textIndex17111'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             recordsCursor.close();

@@ -365,7 +365,7 @@ public class Transaction17094 extends SdbTestBase {
         public void exec() throws BaseException {
             // 更新走索引
             hint = "{\"\":\"a\"}";
-            cl2.update(null, "{$set:{a:" + updateValue + "}}", hint);
+            cl2.update(null, "{$inc:{a:" + updateValue + "}}", hint);
         }
     }
 

@@ -2,8 +2,10 @@ package com.sequoiadb.transaction.rc;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 
 import org.bson.BSONObject;
+import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -14,6 +16,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
@@ -40,6 +43,8 @@ public class Transaction17107 extends SdbTestBase {
     private String hint = null;
     private int startId = 0;
     private int stopId = 1000;
+    private int startId2 = 1000;
+    private int stopId2 = 2000;
 
     @DataProvider(name = "index")
     public Object[][] createIndex(){
@@ -107,7 +112,7 @@ public class Transaction17107 extends SdbTestBase {
             cl1.delete(null, hint);
     
             // 3 事务2插入R2，与R1相同
-            ArrayList<BSONObject> insertR2s = TransUtils.insertRandomDatas(cl2, startId + 1000, stopId + 1000);
+            ArrayList<BSONObject> insertR2s = this.insertRandomDatas(cl2, startId2, stopId2, 0);
     
             // 4 事务1记录读
             expList.clear();
@@ -141,15 +146,16 @@ public class Transaction17107 extends SdbTestBase {
             // 5 事务2记录读
             expList.addAll(insertR1s);
             expList.addAll(insertR2s);
+            Collections.sort(expList, new OrderBy());
             hint = "{\"\":null}";
-            cursor = cl2.query(null, null, "{a:1}", hint);
+            cursor = cl2.query(null, null, "{a:1, b:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
             // 事务2索引读
             hint = "{\"\":\"a\"}";
-            cursor = cl2.query(null, null, "{a:1}", hint);
+            cursor = cl2.query(null, null, "{a:1, b:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
@@ -157,14 +163,14 @@ public class Transaction17107 extends SdbTestBase {
             // 5 事务2记录逆序读
             Collections.reverse(expList);
             hint = "{\"\":null}";
-            cursor = cl2.query(null, null, "{a: -1}", hint);
+            cursor = cl2.query(null, null, "{a: -1, b: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
             // 事务2索引逆序读
             hint = "{\"\":\"a\"}";
-            cursor = cl2.query(null, null, "{a: -1}", hint);
+            cursor = cl2.query(null, null, "{a: -1, b: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
@@ -416,5 +422,45 @@ public class Transaction17107 extends SdbTestBase {
             }
             cl.truncate();
         }
+    }
+    
+    private ArrayList<BSONObject> insertRandomDatas(DBCollection cl, int startId, int endId, int startValue)
+            throws BaseException {
+        ArrayList<BSONObject> insertDatas = new ArrayList<BSONObject>();
+        ArrayList<BSONObject> expDatas = new ArrayList<BSONObject>();
+        for (int i = startId; i < endId; i++) {
+            BSONObject data = (BSONObject) JSON.parse("{_id:" + i + ",a:" + (startValue + i) + ",b:" + (startId + i) + "}");
+            insertDatas.add(data);
+            expDatas.add(data);
+        }
+        Collections.shuffle(insertDatas);
+        cl.insert(insertDatas);
+        return expDatas;
+    }
+    
+    public class OrderBy implements Comparator<BSONObject>{
+
+        @Override
+        public int compare(BSONObject obj1, BSONObject obj2) {
+            int flag = 0;
+            int a1 = (int) obj1.get("a");
+            int b1 = (int) obj1.get("b");
+            int a2 = (int) obj2.get("a");
+            int b2 = (int) obj2.get("b");
+            if(a1 > a2 ){
+                flag = 1;
+            }else if( a1 < a2){
+                flag = -1;
+            }else{
+                if(b1 > b2 ){
+                    flag = 1;
+                }else if( b1 < b2 ){
+                    flag = -1;
+                }
+            }
+            
+            return flag;
+        }
+        
     }
 }

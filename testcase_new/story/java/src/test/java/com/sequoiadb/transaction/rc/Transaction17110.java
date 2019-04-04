@@ -98,7 +98,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务1读记录走索引扫描
-            recordsCursor = cl1.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl1.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -108,7 +108,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务1逆序读记录走索引扫描
-            recordsCursor = cl1.query("{a:{$exists:1}}", null, "{'a': -1}", "{'':'a'}");
+            recordsCursor = cl1.query(null, null, "{'a': -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     
@@ -118,7 +118,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务2读记录走索引扫描
-            recordsCursor = cl2.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl2.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -128,7 +128,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务2逆序读记录走索引扫描
-            recordsCursor = cl2.query("{a:{$exists:1}}", "{'a': -1}", null, "{'':'a'}");
+            recordsCursor = cl2.query(null, "{'a': -1}", null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
     
             // 5 事务3更新记录
@@ -143,7 +143,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务3读记录走索引扫描
-            recordsCursor = cl3.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl3.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -153,7 +153,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务3逆序读记录走索引扫描
-            recordsCursor = cl3.query("{a:{$exists:1}}", null, "{'a': -1}", "{'':'a'}");
+            recordsCursor = cl3.query(null, null, "{'a': -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     
@@ -167,7 +167,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -177,7 +177,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描逆序读
-            recordsCursor = cl.query("{a:{$exists:1}}", null, "{'a': -1}", "{'':'a'}");
+            recordsCursor = cl.query(null, null, "{'a': -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     
@@ -190,7 +190,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -200,7 +200,7 @@ public class Transaction17110 extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描逆序读
-            recordsCursor = cl.query("{a:{$exists:1}}", null, "{'a': -1}", "{'':'a'}");
+            recordsCursor = cl.query(null, null, "{'a': -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     

@@ -100,7 +100,7 @@ public class Transaction17092 extends SdbTestBase {
             // 2 事务1插入记录R1
             ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl1, startId, stopId);
     
-            // 3 事务2插入记录R2，记录内容与R1相同
+            // 3 事务2插入记录R2
             ArrayList<BSONObject> insertR2s = TransUtils.insertRandomDatas(cl2, startId + 1000, stopId + 1000);
     
             // 4 事务1记录读

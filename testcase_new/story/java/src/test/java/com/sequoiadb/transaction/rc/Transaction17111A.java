@@ -98,7 +98,7 @@ public class Transaction17111A extends SdbTestBase {
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
     
             // 事务1 select for update读记录走索引扫描
-            DBCursor recordsCursor = cl1.query("{a:{$exists:1}}", null, null, "{'':'a'}",
+            DBCursor recordsCursor = cl1.query(null, null, null, "{'':'a'}",
                     DBQuery.FLG_QUERY_FOR_UPDATE);
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
@@ -130,7 +130,7 @@ public class Transaction17111A extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -141,7 +141,7 @@ public class Transaction17111A extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务逆序索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, "{a: -1}", "{'':'a'}");
+            recordsCursor = cl.query(null, null, "{a: -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     
@@ -158,7 +158,7 @@ public class Transaction17111A extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -169,7 +169,7 @@ public class Transaction17111A extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务逆序索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, "{a: -1}", "{'':'a'}");
+            recordsCursor = cl.query(null, null, "{a: -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     
@@ -180,7 +180,7 @@ public class Transaction17111A extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务3索引扫描
-            recordsCursor = cl3.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl3.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -191,7 +191,7 @@ public class Transaction17111A extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 事务3逆序索引扫描
-            recordsCursor = cl3.query("{a:{$exists:1}}", null, "{a: -1}", "{'':'a'}");
+            recordsCursor = cl3.query(null, null, "{a: -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
     
@@ -205,7 +205,7 @@ public class Transaction17111A extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             
@@ -216,7 +216,7 @@ public class Transaction17111A extends SdbTestBase {
             Assert.assertEquals(actList, expList);
     
             // 非事务索引扫描
-            recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'a'}");
+            recordsCursor = cl.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             recordsCursor.close();

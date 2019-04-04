@@ -113,6 +113,8 @@ public class Transaction17171A extends SdbTestBase {
             Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
     
             // 事务3读
+            // 该查询不进行正序索引 逆序查询,反之亦然.原因是因为正序索引进行更新操作时是正向扫描记录,加锁顺序是1 2 3
+            // 而此时进行逆序查询,加锁是逆向加锁,加锁顺序是3 2 1,所以读取的记录会有不确定性,故不做测试
             TransactionQueryThread tableScanThread = new TransactionQueryThread(cl3, orderBy);
             tableScanThread.start();
             Assert.assertTrue(tableScanThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
