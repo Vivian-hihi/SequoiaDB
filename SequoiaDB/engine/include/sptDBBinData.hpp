@@ -52,6 +52,9 @@ namespace engine
                               string &errMsg ) ;
       static INT32 bsonToJSObj( sdbclient::sdb &db, const BSONObj &data,
                                 _sptReturnVal &rval, bson::BSONObj &detail ) ;
+      static INT32 help( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail ) ;
    } ;
    typedef _sptDBBinData sptDBBinData ;
 }

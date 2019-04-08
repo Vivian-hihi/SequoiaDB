@@ -39,11 +39,13 @@ namespace engine
    #define SPT_NUMBERLONG_SPECIALOBJ_FIELD "$numberLong"
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBNumberLong, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBNumberLong, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBNumberLong, help )
 
    JS_BEGIN_MAPPING( _sptDBNumberLong, SPT_NUMBERLONG_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_SPECIAL_FIELD_NAME( SPT_NUMBERLONG_SPECIALOBJ_FIELD )
+      JS_ADD_STATIC_FUNC( "help", help )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBNumberLong::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBNumberLong::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBNumberLong::bsonToJSObj )
@@ -405,5 +407,21 @@ namespace engine
       }
       return TRUE ;
    }
+
+   INT32 _sptDBNumberLong::help( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "   { \"$numberLong\": <data> }   " << endl ;
+      ss << "   numberLong( <data> )             "
+         << "-- Data type: long integer" << endl ;
+      ss << "--Static methods for class SdbDate : " << endl ;
+      ss << "--Instance methods for class SdbDate : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
 }
 

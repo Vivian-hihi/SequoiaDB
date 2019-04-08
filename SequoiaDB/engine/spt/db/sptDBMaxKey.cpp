@@ -37,11 +37,13 @@ namespace engine
    #define SPT_MAXKEY_SPECIAL_FIELD "$maxKey"
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBMaxKey, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBMaxKey, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBMaxKey, help )
 
    JS_BEGIN_MAPPING( _sptDBMaxKey, SPT_MAXKEY_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_SPECIAL_FIELD_NAME( SPT_MAXKEY_SPECIAL_FIELD )
+      JS_ADD_STATIC_FUNC( "help", help )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBMaxKey::cvtToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBMaxKey::bsonToJSObj )
    JS_MAPPING_END()
@@ -107,5 +109,21 @@ namespace engine
       SAFE_OSS_DELETE( maxKey ) ;
       goto done ;
    }
+
+   INT32 _sptDBMaxKey::help( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "   { \"$MaxKey\": 1 }   " << endl ;
+      ss << "   MaxKey()             "
+         << "-- Data type: the maximum of all data types" << endl ;
+      ss << "--Static methods for class SdbDate : " << endl ;
+      ss << "--Instance methods for class SdbDate : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
 }
 

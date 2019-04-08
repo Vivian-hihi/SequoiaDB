@@ -41,11 +41,13 @@ namespace engine
    #define SPT_BINDATA_SPECIALOBJ_TYPE_FIELD    "$type"
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBBinData, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBBinData, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBBinData, help )
 
    JS_BEGIN_MAPPING( _sptDBBinData, SPT_BINDATA_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_SPECIAL_FIELD_NAME( SPT_BINDATA_SPECIALOBJ_BINARY_FIELD )
+      JS_ADD_STATIC_FUNC( "help", help )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBBinData::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBBinData::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBBinData::bsonToJSObj )
@@ -337,4 +339,20 @@ namespace engine
       SAFE_OSS_DELETE( pBinData ) ;
       goto done ;
    }
+
+   INT32 _sptDBBinData::help( const _sptArguments &arg,
+                              _sptReturnVal &rval,
+                              BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "   { \"$binary\": <data>, \"$type\": <type> }   " << endl ;
+      ss << "   BinData( <data>, <type> )                    "
+         << "-- Data type: binary data in base64 form" << endl ;
+      ss << "--Static methods for class SdbDate : " << endl ;
+      ss << "--Instance methods for class SdbDate : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
 }

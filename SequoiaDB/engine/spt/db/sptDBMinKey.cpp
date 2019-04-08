@@ -37,11 +37,13 @@ namespace engine
    #define SPT_MINKEY_SPECIAL_FIELD "$minKey"
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBMinKey, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBMinKey, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBMinKey, help )
 
    JS_BEGIN_MAPPING( _sptDBMinKey, SPT_MINKEY_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_SPECIAL_FIELD_NAME( SPT_MINKEY_SPECIAL_FIELD )
+      JS_ADD_STATIC_FUNC( "help", help )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBMinKey::cvtToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBMinKey::bsonToJSObj )
    JS_MAPPING_END()
@@ -107,6 +109,21 @@ namespace engine
    error:
       SAFE_OSS_DELETE( minKey ) ;
       goto done ;
+   }
+
+   INT32 _sptDBMinKey::help( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "   { \"$MinKey\": 1 }   " << endl ;
+      ss << "   MinKey()             "
+         << "-- Data type: the minimum of all data types" << endl ;
+      ss << "--Static methods for class SdbDate : " << endl ;
+      ss << "--Instance methods for class SdbDate : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
    }
 }
 

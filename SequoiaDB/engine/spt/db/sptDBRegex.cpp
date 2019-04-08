@@ -30,6 +30,7 @@
 
 *******************************************************************************/
 #include "sptDBRegex.hpp"
+using namespace bson ;
 namespace engine
 {
    #define SPT_REGEX_NAME  "Regex"
@@ -40,11 +41,13 @@ namespace engine
    #define SPT_REGEX_FIELD_NUM   2
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBRegex, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBRegex, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBRegex, help )
 
    JS_BEGIN_MAPPING( _sptDBRegex, SPT_REGEX_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_SPECIAL_FIELD_NAME( SPT_REGEX_SPECIALOBJ_REGEX_FIELD )
+      JS_ADD_STATIC_FUNC( "help", help )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBRegex::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBRegex::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBRegex::bsonToJSObj )
@@ -238,4 +241,20 @@ namespace engine
       SAFE_OSS_DELETE( pRegex ) ;
       goto done ;
    }
+
+   INT32 _sptDBRegex::help( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "   { \"$regex\": <pattern>, \"$options\": <options> }   " << endl ;
+      ss << "   Regex( <pattern>, <options> )                        "
+         << "-- Regular expression" << endl ;
+      ss << "--Static methods for class SdbDate : " << endl ;
+      ss << "--Instance methods for class SdbDate : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
 }

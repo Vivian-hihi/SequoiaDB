@@ -41,11 +41,13 @@ namespace engine
 
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBOID, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBOID, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBOID, help )
 
    JS_BEGIN_MAPPING( _sptDBOID, SPT_OID_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_SPECIAL_FIELD_NAME( SPT_OID_SPECIAL_FIELD )
+      JS_ADD_STATIC_FUNC( "help", help )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBOID::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBOID::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBOID::bsonToJSObj )
@@ -180,4 +182,20 @@ namespace engine
       SAFE_OSS_DELETE( pOid ) ;
       goto done ;
    }
+
+   INT32 _sptDBOID::help( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "   { \"$oid\": <data> }   " << endl ;
+      ss << "   ObjectId( [data] )     "
+         << "-- Data type: object id( OID )" << endl ;
+      ss << "--Static methods for class SdbDate : " << endl ;
+      ss << "--Instance methods for class SdbDate : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
 }

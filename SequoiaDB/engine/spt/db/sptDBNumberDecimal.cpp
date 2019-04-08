@@ -37,11 +37,13 @@ namespace engine
    #define SPT_NUMBERDECIMAL_SPECIALOBJ_PRECISION_FIELD "$precision"
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBNumberDecimal, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBNumberDecimal, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBNumberDecimal, help )
 
    JS_BEGIN_MAPPING( _sptDBNumberDecimal, "NumberDecimal" )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_SPECIAL_FIELD_NAME( SPT_NUMBERDECIMAL_SPECIALOBJ_DECIMAL_FIELD )
+      JS_ADD_STATIC_FUNC( "help", help )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBNumberDecimal::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBNumberDecimal::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBNumberDecimal::bsonToJSObj )
@@ -194,5 +196,21 @@ namespace engine
    error:
       goto done ;
    }
-}
 
+   INT32 _sptDBNumberDecimal::help( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "   { \"$decimal\": <data> }   " << endl ;
+      ss << "   { \"$decimal\": <data>, " << endl;
+      ss << "     \"$precision\": [<precision>, <scale>] }   "
+         << "-- Data type: high-precision number" << endl ;
+      ss << "--Static methods for class SdbDate : " << endl ;
+      ss << "--Instance methods for class SdbDate : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
+}

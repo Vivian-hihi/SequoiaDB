@@ -39,10 +39,12 @@ namespace engine
    #define SPT_TIMESTAMP_SPECIAL_FIELD "$timestamp"
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBTimestamp, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBTimestamp, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBTimestamp, help )
 
    JS_BEGIN_MAPPING( _sptDBTimestamp, SPT_TIMESTAMP_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
+      JS_ADD_STATIC_FUNC( "help", help )
       JS_SET_SPECIAL_FIELD_NAME( SPT_TIMESTAMP_SPECIAL_FIELD )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBTimestamp::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBTimestamp::fmpToBSON )
@@ -246,4 +248,21 @@ namespace engine
       SAFE_OSS_DELETE( pTimestamp ) ;
       goto done ;
    }
+
+   INT32 _sptDBTimestamp::help( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class Timestamp : " << endl ;
+      ss << "   { \"$timestamp\": <time> }             " << endl ;
+      ss << "   Timestamp( [time] )                    " << endl ;
+      ss << "   Timestamp( <second>, <microsecond> )   "
+         << "-- Data type: timestamp" << endl ;
+      ss << "--Static methods for class Timestamp : " << endl ;
+      ss << "--Instance methods for class Timestamp : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
 }
