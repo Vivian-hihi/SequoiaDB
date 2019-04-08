@@ -56,11 +56,13 @@ namespace engine
 
       PD_LOG( PDINFO, "Start a background job[%s]", job->name() ) ;
 
+#if defined ( SDB_ENGINE )
       if ( !job->useTransLock() )
       {
          cb->getTransExecutor()->setUseTransLock( FALSE ) ;
          cb->getTransExecutor()->setTransIsolation( TRANS_ISOLATION_RU ) ;
       }
+#endif // SDB_ENGINE
 
       cb->setName( job->name() ) ;
       job->attachIn( cb ) ;
