@@ -112,8 +112,8 @@ namespace engine
    }
 
    INT32 _sptDBMinKey::help( const _sptArguments &arg,
-                                  _sptReturnVal &rval,
-                                  BSONObj &detail )
+                             _sptReturnVal &rval,
+                             BSONObj &detail )
    {
       stringstream ss ;
       ss << "--Constructor methods for class SdbDate : " << endl ;

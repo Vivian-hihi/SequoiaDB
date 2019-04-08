@@ -250,8 +250,8 @@ namespace engine
    }
 
    INT32 _sptDBTimestamp::help( const _sptArguments &arg,
-                                  _sptReturnVal &rval,
-                                  BSONObj &detail )
+                                _sptReturnVal &rval,
+                                BSONObj &detail )
    {
       stringstream ss ;
       ss << "--Constructor methods for class Timestamp : " << endl ;
