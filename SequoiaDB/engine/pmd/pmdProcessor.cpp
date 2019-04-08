@@ -214,6 +214,15 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _pmdDataProcessor::doCommit()
+   {
+      if ( eduCB() )
+      {
+         return rtnTransCommit( eduCB(), getDPSCB() ) ;
+      }
+      return SDB_OK ;
+   }
+
    INT32 _pmdDataProcessor::_onMsgReqMsg( MsgHeader * msg )
    {
       return rtnMsg( (MsgOpMsg*)msg ) ;
@@ -1859,6 +1868,46 @@ namespace engine
          }
 
          rc = rollbackOpr.rollback( eduCB() ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdCoordProcessor::doCommit()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( eduCB() )
+      {
+         CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
+         coordResource *pResource = pCoordCB->getResource() ;
+
+         INT64 contextID = -1 ;
+         MsgOpTransCommit commitMsg ;
+         coordTransCommit commitOpr ;
+         rc = commitOpr.init( pResource, eduCB() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                    commitOpr.getName(), rc ) ;
+            goto error ;
+         }
+
+         commitMsg.header.messageLength = sizeof( MsgOpTransCommit ) ;
+         commitMsg.header.opCode = MSG_BS_TRANS_COMMIT_REQ ;
+         commitMsg.header.requestID = 0 ;
+         commitMsg.header.routeID.value = 0 ;
+         commitMsg.header.TID = 0 ;
+   
+         rc = commitOpr.execute( &commitMsg.header, eduCB(),
+                                 contextID, NULL ) ;
          if ( rc )
          {
             goto error ;

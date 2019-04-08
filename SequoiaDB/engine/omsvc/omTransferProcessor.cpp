@@ -219,6 +219,11 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _omTransferProcessor::doCommit()
+   {
+      return SDB_OK ;
+   }
+
    SDB_PROCESSOR_TYPE _omTransferProcessor::processorType() const
    {
       return SDB_PROCESSOR_OM ;

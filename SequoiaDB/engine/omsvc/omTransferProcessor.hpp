@@ -89,6 +89,7 @@ namespace engine
                                                    BOOLEAN &needRollback ) ;
 
          virtual INT32                 doRollback() ;
+         virtual INT32                 doCommit() ;
 
          virtual const CHAR*           processorName() const ;
          virtual SDB_PROCESSOR_TYPE    processorType() const ;

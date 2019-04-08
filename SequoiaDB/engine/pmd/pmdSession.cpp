@@ -376,7 +376,7 @@ namespace engine
             isAutoCommit = TRUE ;
             if ( SDB_OK == rc || SDB_DMS_EOC == rc )
             {
-               rc = rtnTransCommit( eduCB(), getDPSCB() ) ;
+               rc = _processor->doCommit() ;
             }
          }
 
