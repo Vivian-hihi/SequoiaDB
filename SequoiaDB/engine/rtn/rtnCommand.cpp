@@ -2493,6 +2493,7 @@ error:
          goto error ;
       }
 
+      /*
       rc = tmpOptionsCB.toBSON( userConfig, PMD_CFG_MASK_SKIP_UNFIELD ) ;
       if ( rc )
       {
@@ -2501,6 +2502,8 @@ error:
       }
 
       rc = optCB->update( userConfig, FALSE, returnObj ) ;
+      */
+      rc = optCB->update( _newCfgObj, FALSE, returnObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Update config[%s] failed, rc: %d",
