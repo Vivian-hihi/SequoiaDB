@@ -55,5 +55,16 @@
       </packages>
    </test>
    
+   <test name="rs" parallel="classes" thread-count="5">
+      <groups>
+         <run>
+            <include name="rs" />
+         </run>
+      </groups>
+      <packages>
+         <package name="com.sequoiadb.transaction.rs" />
+      </packages>
+   </test>
+   
 </suite>
    
