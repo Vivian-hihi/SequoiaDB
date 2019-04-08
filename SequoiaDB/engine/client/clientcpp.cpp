@@ -1698,7 +1698,7 @@ do                                                            \
       }
 
       // for example, build below message:
-      // macher: { Collection:"foo.bar",
+      // macher: { Collection: "foo.bar",
       //           Index:{ key: {a:1}, name: 'aIdx', Unique: true,
       //                   Enforced: true, NotNull: true } }
       // hint:   { SortBufferSize: 1024 }
