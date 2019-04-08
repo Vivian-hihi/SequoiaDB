@@ -53,11 +53,14 @@ namespace engine
    #define RTN_TRANS_ROLLBACK_RETRY_INTERVAL          OSS_ONE_SEC
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSBEGIN, "rtnTransBegin" )
-   INT32 rtnTransBegin( _pmdEDUCB * cb )
+   INT32 rtnTransBegin( _pmdEDUCB * cb,
+                        BOOLEAN isAutoCommit,
+                        DPS_TRANS_ID specID )
    {
       PD_TRACE_ENTRY ( SDB_RTNTRANSBEGIN ) ;
       SDB_ASSERT( cb, "cb can't be null" ) ;
       INT32 rc = SDB_OK ;
+
       if ( !sdbGetTransCB()->isTransOn() )
       {
          rc = SDB_DPS_TRANS_DIABLED ;
@@ -65,16 +68,32 @@ namespace engine
       }
       if ( cb->getTransID() == DPS_INVALID_TRANS_ID )
       {
-         cb->setTransID( sdbGetTransCB()->allocTransID() ) ;
+         if ( DPS_INVALID_TRANS_ID != specID )
+         {
+            cb->setTransID( DPS_TRANS_SET_FIRSTOP( specID ) ) ;
+         }
+         else
+         {
+            cb->setTransID( sdbGetTransCB()->allocTransID( isAutoCommit ) ) ;
+         }
          cb->setCurTransLsn( DPS_INVALID_LSN_OFFSET ) ;
-         sdbGetTransCB()->addTransCB( cb->getTransID(), cb ) ;
+
+         if ( !sdbGetTransCB()->addTransCB( cb->getTransID(), cb ) )
+         {
+            PD_LOG( PDERROR, "Transaction(%04x%010x) is alredy exist",
+                    DPS_TRANS_GET_NODEID( cb->getTransID() ),
+                    DPS_TRANS_GET_SN( cb->getTransID() ) ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
       }
+
       PD_LOG( PDINFO, "Begin transaction operations(%04x%010x)",
               DPS_TRANS_GET_NODEID( cb->getTransID() ),
               DPS_TRANS_GET_SN( cb->getTransID() ) ) ;
-      PD_TRACE_EXIT ( SDB_RTNTRANSBEGIN ) ;
 
    done:
+      PD_TRACE_EXIT ( SDB_RTNTRANSBEGIN ) ;
       return rc;
    error:
       goto done ;

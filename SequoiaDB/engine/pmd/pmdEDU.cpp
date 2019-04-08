@@ -901,7 +901,10 @@ namespace engine
       {
          _transExecutor.initTransConf( optCB->transIsolation(),
                                        optCB->transTimeout() * OSS_ONE_SEC,
-                                       optCB->transLockwait() ) ;
+                                       optCB->transLockwait(),
+                                       optCB->transAutoCommit(),
+                                       optCB->transAutoRollback(),
+                                       optCB->transUseRBS() ) ;
       }
 #endif //SDB_ENGINE
    }
@@ -914,7 +917,10 @@ namespace engine
       {
          _transExecutor.updateTransConf( optCB->transIsolation(),
                                          optCB->transTimeout() * OSS_ONE_SEC,
-                                         optCB->transLockwait() ) ;
+                                         optCB->transLockwait(),
+                                         optCB->transAutoCommit(),
+                                         optCB->transAutoRollback(),
+                                         optCB->transUseRBS() ) ;
       }
 #endif //SDB_ENGINE
    }
@@ -1036,6 +1042,11 @@ namespace engine
    BOOLEAN _pmdEDUCB::isTransaction() const
    {
       return ( DPS_INVALID_TRANS_ID != _curTransID ) ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _pmdEDUCB::isAutoCommitTrans() const
+   {
+      return DPS_TRANS_IS_AUTOCOMMIT( _curTransID ) ? TRUE : FALSE ;
    }
 
    void _pmdEDUCB::dumpTransInfo( monTransInfo &transInfo )

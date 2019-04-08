@@ -233,13 +233,26 @@ namespace engine
       }
       else
       {
+         rtnContextBase *pContext = NULL ;
+         /// begin auto commit transaction
+         rc = _checkTransAutoCommit( TRUE, eduCB ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
          // close prefetch
          rc = rtnQuery ( pCLName, selector, _condition,
                          _orderby, _hint, 0, eduCB, _skip, _return,
-                         _dmsCB, _rtnCB, _contextID, NULL, FALSE ) ;
+                         _dmsCB, _rtnCB, _contextID, &pContext, FALSE ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
+         }
+
+         if ( eduCB->isAutoCommitTrans() )
+         {
+            pContext->setTransContext( TRUE ) ;
          }
       }
 

@@ -47,8 +47,6 @@ using namespace bson ;
 namespace engine
 {
 
-   #define CLS_CLEAN_TRANS_MIN_TIMEOUT          ( 300000 )   // 5 min
-
    _clsCleanupJob::_clsCleanupJob ( const std::string &clFullName,
                                     const BSONObj &splitKeyObj,
                                     const BSONObj &splitEndKeyObj,
@@ -100,13 +98,6 @@ namespace engine
 
    void _clsCleanupJob::_onAttach()
    {
-      dpsTransExecutor *pExe = eduCB()->getTransExecutor() ;
-      UINT32 transTimeout = pExe->getTransTimeout() * 5 ;
-      if ( transTimeout < CLS_CLEAN_TRANS_MIN_TIMEOUT )
-      {
-         transTimeout = CLS_CLEAN_TRANS_MIN_TIMEOUT ;
-      }
-      pExe->setTransTimeout( transTimeout, TRUE ) ;
    }
 
    CLS_CLEANUP_TYPE _clsCleanupJob::_cleanupType () const

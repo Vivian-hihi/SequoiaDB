@@ -3089,6 +3089,8 @@ INT32 clientBuildTransactionBegMsg( CHAR **ppBuffer, INT32 *bufferSize,
    transBeginMsg->header.messageLength = sizeof( MsgOpTransBegin ) + 0 ;
    transBeginMsg->header.routeID.value = 0 ;
    transBeginMsg->header.TID           = ossGetCurrentThreadID() ;
+   transBeginMsg->transID              = 0 ;
+   ossMemset( transBeginMsg->reserved, 0, sizeof( transBeginMsg->reserved ) ) ;
    if( endianConvert )
    {
       clientEndianConvertHeader ( &transBeginMsg->header ) ;

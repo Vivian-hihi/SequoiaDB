@@ -148,6 +148,7 @@ namespace engine
 
          virtual BOOLEAN reuseEDU() const { return FALSE ; }
          virtual BOOLEAN isSystem() const { return FALSE ; }
+         virtual BOOLEAN useTransLock() const { return FALSE ; }
 
       protected:
          virtual void _onAttach() ;

@@ -725,7 +725,9 @@ typedef struct _MsgAuthDelUsr MsgAuthDelUsr ;
 
 typedef struct _MsgOpTransBegin
 {
-   MsgHeader header;
+   MsgHeader header ;
+   UINT64    transID ;
+   CHAR      reserved[8] ;
 } MsgOpTransBegin;
 
 typedef struct _MsgOpTransCommit

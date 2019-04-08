@@ -122,6 +122,11 @@ namespace engine
                                              const BSONObj &deletor ) ;
 
       protected:
+         INT32                   _checkTransOperator( BOOLEAN checkDps = TRUE ) ;
+         INT32                   _checkTransAutoCommit( const MsgHeader *msg,
+                                                        BOOLEAN checkDps = TRUE ) ;
+
+      protected:
          _SDB_KRCB *             _pKrcb ;
          _SDB_DMSCB *            _pDMSCB ;
          _SDB_RTNCB *            _pRTNCB ;

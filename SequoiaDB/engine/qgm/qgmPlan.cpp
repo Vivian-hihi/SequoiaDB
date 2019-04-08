@@ -183,6 +183,44 @@ namespace engine
       goto done ;
    }
 
-   
+   INT32 _qgmPlan::_checkTransOperator( BOOLEAN dpsValid )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( pmdGetDBRole() == SDB_ROLE_DATA ||
+           pmdGetDBRole() == SDB_ROLE_CATALOG )
+      {
+         rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
+         PD_LOG_MSG( PDERROR, "In sharding mode, couldn't execute "
+                     "transaction operation from local service" ) ;
+      }
+      else if ( !dpsValid )
+      {
+         rc = SDB_PERM ;
+         PD_LOG_MSG( PDERROR, "Couldn't execute transaction operation when "
+                     "dps log is off" ) ;
+      }
+
+      return rc ;
+   }
+
+   INT32 _qgmPlan::_checkTransAutoCommit( BOOLEAN dpsValid, _pmdEDUCB *eduCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !eduCB->isTransaction() )
+      {
+         if ( eduCB->getTransExecutor()->isTransAutoCommit() )
+         {
+            rc = _checkTransOperator( dpsValid ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = rtnTransBegin( eduCB, TRUE ) ;
+            }
+         }
+      }
+
+      return rc ;
+   }
 
 }

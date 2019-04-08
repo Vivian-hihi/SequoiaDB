@@ -1680,6 +1680,9 @@ namespace engine
       }
       sdbGetReplCB()->getFaultEvent()->signalAll( SDB_CLS_FULL_SYNC ) ;
 
+      // not use trans lock
+      eduCB()->getTransExecutor()->setUseTransLock( FALSE ) ;
+
       /// begin
       _begin() ;
    }

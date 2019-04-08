@@ -105,6 +105,9 @@ namespace engine
 
          virtual void         _prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg ) ;
 
+         virtual BOOLEAN      _canPrepareTrans( pmdEDUCB *cb,
+                                                const MsgHeader *pMsg ) const ;
+
          virtual BOOLEAN      _isTrans( pmdEDUCB *cb, MsgHeader *pMsg ) ;
 
          INT32                _queryOrDoOnCL( MsgHeader *pMsg,

@@ -64,6 +64,10 @@ namespace engine
          goto error ;
       }
 
+      // not use transaction
+      cb->getTransExecutor()->setUseTransLock( FALSE ) ;
+      cb->getTransExecutor()->setTransIsolation( TRANS_ISOLATION_RU, TRUE ) ;
+
       //Wait event msg and dispatch msg
       while ( !cb->isDisconnected() )
       {

@@ -65,8 +65,8 @@ namespace engine
                       SINT32 maxNumToReturn,    // input, max record to read
                       rtnContextBuf &buffObj,   // output
                       pmdEDUCB *cb,             // input educb
-                      SDB_RTNCB *rtnCB,         // input runtimecb
-                      BOOLEAN *pNeedRollback )
+                      SDB_RTNCB *rtnCB          // input runtimecb
+                      )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETMORE ) ;
@@ -85,12 +85,40 @@ namespace engine
          goto error ;
       }
 
-      if ( pNeedRollback )
+      rc = rtnGetMore( context, maxNumToReturn, buffObj, cb, rtnCB ) ;
+      if ( rc )
       {
-         *pNeedRollback = context->needRollback() ;
+         goto error ;
       }
 
-      rc = context->getMore( maxNumToReturn, buffObj, cb ) ;
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNGETMORE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETMORE1, "rtnGetMore" )
+   INT32 rtnGetMore ( rtnContext *pContext,     // input, context
+                      SINT32 maxNumToReturn,    // input, max record to read
+                      rtnContextBuf &buffObj,   // output
+                      pmdEDUCB *cb,             // input educb
+                      SDB_RTNCB *rtnCB          // input runtimecb
+                      )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNGETMORE1 ) ;
+
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
+
+      if ( !pContext )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = pContext->getMore( maxNumToReturn, buffObj, cb ) ;
       if ( rc )
       {
          if ( SDB_DMS_EOC == rc )
@@ -99,25 +127,25 @@ namespace engine
             goto error ;
          }
          PD_LOG( PDERROR, "Failed to get more from context[%lld], rc: %d",
-                 context->contextID(), rc ) ;
+                 pContext->contextID(), rc ) ;
          /// get detial information
-         context->getErrorInfo( rc, cb, buffObj ) ;
+         pContext->getErrorInfo( rc, cb, buffObj ) ;
          goto error ;
       }
 
       /// wait for sync
-      if ( context->isWrite() && context->getDPSCB() && context->getW() > 1 )
+      if ( pContext->isWrite() && pContext->getDPSCB() && pContext->getW() > 1 )
       {
-         context->getDPSCB()->completeOpr( cb, context->getW() ) ;
+         pContext->getDPSCB()->completeOpr( cb, pContext->getW() ) ;
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_RTNGETMORE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_RTNGETMORE1, rc ) ;
       return rc ;
    error :
-      if ( context )
+      if ( pContext )
       {
-         rtnCB->contextDelete ( contextID, cb ) ;
+         rtnCB->contextDelete ( pContext->contextID(), cb ) ;
       }
       goto done ;
    }

@@ -212,7 +212,8 @@ namespace engine
       return &_mapTransNodes ;
    }
 
-   INT32 _coordSessionPropSite::beginTrans( _pmdEDUCB *cb )
+   INT32 _coordSessionPropSite::beginTrans( _pmdEDUCB *cb,
+                                            BOOLEAN isAutoCommit )
    {
       if ( !cb->isTransaction() )
       {
@@ -222,7 +223,7 @@ namespace engine
          DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
 
          /// alloc trans id
-         transID = pTransCB->allocTransID() ;
+         transID = pTransCB->allocTransID( isAutoCommit ) ;
          /// clear first op
          DPS_TRANS_CLEAR_FIRSTOP( transID ) ;
 

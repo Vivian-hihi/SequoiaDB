@@ -214,6 +214,13 @@ namespace engine
             }
             else
             {
+               /// begin auto commit transaction
+               rc = _checkTransAutoCommit( dpsCB ? TRUE : FALSE, eduCB ) ;
+               if ( rc )
+               {
+                  goto error ;
+               }
+
                rc = rtnInsert ( _fullName.c_str(), obj, 1, 0, eduCB,
                                 dmsCB, dpsCB ) ;
                if ( rc )

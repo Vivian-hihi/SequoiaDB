@@ -72,6 +72,9 @@ namespace engine
    #define DPS_TRANS_ISOLATION_DFT        TRANS_ISOLATION_RU
    #define DPS_TRANS_DFT_TIMEOUT          (60)  /* 1 minute */
    #define DPS_TRANS_LOCKWAIT_DFT         FALSE
+   #define DPS_TRANS_AUTOCOMMIT_DFT       FALSE
+   #define DPS_TRANS_AUTOROLLBACK_DFT     TRUE
+   #define DPS_TRANS_USE_RBS_DFT          TRUE
 
    /*
       TRANS CONFIG MASK
@@ -80,6 +83,8 @@ namespace engine
    #define TRANS_CONF_MASK_TIMEOUT           0x00000002
    #define TRANS_CONF_MASK_WAITLOCK          0x00000004
    #define TRANS_CONF_MASK_USERBS            0x00000008
+   #define TRANS_CONF_MASK_AUTOCOMMIT        0x00000010
+   #define TRANS_CONF_MASK_AUTOROLLBACK      0x00000020
 
    /*
       TRANS LRB AND LRB HEADER

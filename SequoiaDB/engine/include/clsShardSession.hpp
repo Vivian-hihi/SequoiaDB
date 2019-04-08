@@ -154,10 +154,10 @@ namespace engine
          INT32 _onKillContextsReqMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
          INT32 _onMsgReq ( NET_HANDLE handle, MsgHeader *msg ) ;
          INT32 _onInterruptMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
-         INT32 _onTransBeginMsg ();
-         INT32 _onTransCommitMsg ();
-         INT32 _onTransRollbackMsg ();
-         INT32 _onTransCommitPreMsg( MsgHeader *msg );
+         INT32 _onTransBeginMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onTransCommitMsg (NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onTransRollbackMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onTransCommitPreMsg( NET_HANDLE handle, MsgHeader *msg );
          INT32 _onTransUpdateReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                       INT64 &updateNum ) ;
          INT32 _onTransInsertReqMsg ( NET_HANDLE handle, MsgHeader *msg,
@@ -309,6 +309,8 @@ namespace engine
 
          INT32 _testCollectionBeforeCreate( const CHAR* clName,
                                             utilCLUniqueID clUniqueID ) ;
+
+         INT32 _checkTransAutoCommit( const MsgHeader *msg ) ;
 
       protected:
          _clsReplicateSet       *_pReplSet ;

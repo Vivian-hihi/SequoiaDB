@@ -124,7 +124,9 @@ namespace engine
       INT32 fetchNext( qgmFetchOut &next ) ;
 
    protected:
-      void _modifyAttrAlias(  ) ;
+
+      INT32       _checkTransOperator( BOOLEAN dpsValid ) ;
+      INT32       _checkTransAutoCommit( BOOLEAN dpsValid, _pmdEDUCB *eduCB ) ;
 
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) = 0 ;

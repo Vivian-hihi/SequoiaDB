@@ -267,8 +267,14 @@ namespace engine
                       SINT32 maxNumToReturn,       // input, max record to read
                       rtnContextBuf &buffObj,      // output
                       pmdEDUCB *cb,                // input educb
-                      SDB_RTNCB *rtnCB,            // input runtimecb
-                      BOOLEAN *pNeedRollback = NULL
+                      SDB_RTNCB *rtnCB             // input runtimecb
+                      ) ;
+
+   INT32 rtnGetMore ( rtnContext *pContext,        // input, context
+                      SINT32 maxNumToReturn,       // input, max record to read
+                      rtnContextBuf &buffObj,      // output
+                      pmdEDUCB *cb,                // input educb
+                      SDB_RTNCB *rtnCB             // input runtimecb
                       ) ;
 
    INT32 rtnLoadCollectionSpace ( const CHAR *pCSName,
@@ -510,10 +516,14 @@ namespace engine
                          SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                          INT16 w = 1, INT64 *pContextID = NULL ) ;
 
-   INT32 rtnTransBegin( _pmdEDUCB *cb );
+   INT32 rtnTransBegin( _pmdEDUCB *cb,
+                        BOOLEAN isAutoCommit = FALSE,
+                        DPS_TRANS_ID specID = DPS_INVALID_TRANS_ID ) ;
    INT32 rtnTransCommit( _pmdEDUCB *cb, SDB_DPSCB *dpsCB );
    INT32 rtnTransRollback( _pmdEDUCB * cb, SDB_DPSCB *dpsCB );
    INT32 rtnTransRollbackAll( _pmdEDUCB * cb );
+
+   void  rtnUnsetTransContext( _pmdEDUCB *cb, SDB_RTNCB *rtnCB ) ;
 
    INT32 rtnTransTryOrTestLockCL( const CHAR *pCollection,
                                   INT32 lockType,

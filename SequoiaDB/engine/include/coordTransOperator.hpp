@@ -70,6 +70,9 @@ namespace engine
          virtual void               _prepareForTrans( pmdEDUCB *cb,
                                                       MsgHeader *pMsg ) = 0 ;
 
+         virtual BOOLEAN            _canPrepareTrans( pmdEDUCB *cb,
+                                                      const MsgHeader *pMsg ) const ;
+
          virtual BOOLEAN            _isTrans( pmdEDUCB *cb, MsgHeader *pMsg ) ;
 
          virtual void               _onNodeReply( INT32 processType,

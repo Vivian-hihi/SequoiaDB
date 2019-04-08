@@ -449,7 +449,7 @@ namespace engine
       pmdRemoteSessionSite *pSite = NULL ;
       coordSessionPropSite *pPropSite = NULL ;
 
-      if ( isTransBSMsg( pSub->getOrgReqOpCode() ) )
+      if ( cb->isTransaction() && isTransBSMsg( pSub->getOrgReqOpCode() ) )
       {
          pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
          pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
@@ -461,6 +461,8 @@ namespace engine
             msgReq.header.opCode = MSG_BS_TRANS_BEGIN_REQ ;
             msgReq.header.routeID.value = 0 ;
             msgReq.header.TID = cb->getTID() ;
+            msgReq.transID = DPS_TRANS_GET_ID( cb->getTransID() ) ;
+            ossMemset( msgReq.reserved, 0, sizeof( msgReq.reserved ) ) ;
 
             rc = _buildPacket( pSession,pSub, &msgReq.header ) ;
             if ( rc )

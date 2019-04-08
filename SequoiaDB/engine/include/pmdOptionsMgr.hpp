@@ -580,6 +580,9 @@ namespace engine
          OSS_INLINE UINT32 transLRBTotal () const { return _transLRBTotal ; }
          OSS_INLINE INT32 transIsolation () const { return _transIsolation; }
          OSS_INLINE BOOLEAN transLockwait () const { return _transLockwait; }
+         OSS_INLINE BOOLEAN transAutoCommit() const { return _transAutoCommit ; }
+         OSS_INLINE BOOLEAN transAutoRollback() const { return _transAutoRollback ; }
+         OSS_INLINE BOOLEAN transUseRBS() const { return _transUseRBS ; }
          OSS_INLINE BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
          OSS_INLINE UINT32 memDebugSize () const { return _memDebugSize ; }
          OSS_INLINE UINT32 indexScanStep () const { return _indexScanStep ; }
@@ -682,7 +685,10 @@ namespace engine
          BOOLEAN     _transactionOn ;
          UINT32      _transTimeout ;
          INT32       _transIsolation ;
-         BOOLEAN     _transLockwait;
+         BOOLEAN     _transLockwait ;
+         BOOLEAN     _transAutoCommit ;
+         BOOLEAN     _transAutoRollback ;
+         BOOLEAN     _transUseRBS ;
          UINT32      _transLRBInit ;
          UINT32      _transLRBTotal ;
          UINT32      _sharingBreakTime ;

@@ -593,15 +593,25 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::BEGINTRAN == _commandType )
       {
-         rc = rtnTransBegin( eduCB ) ;
+         rc = _checkTransOperator( dpsCB ? TRUE : FALSE ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = rtnTransBegin( eduCB ) ;
+         }
       }
       else if ( SQL_GRAMMAR::ROLLBACK == _commandType )
       {
-         rc = rtnTransRollback( eduCB, dpsCB ) ;
+         if ( eduCB->isTransaction() )
+         {
+            rc = rtnTransRollback( eduCB, dpsCB ) ;
+         }
       }
       else if ( SQL_GRAMMAR::COMMIT == _commandType )
       {
-         rc = rtnTransCommit( eduCB, dpsCB ) ;
+         if ( eduCB->isTransaction() )
+         {
+            rc = rtnTransCommit( eduCB, dpsCB ) ;
+         }
       }
       else
       {

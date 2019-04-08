@@ -39,6 +39,7 @@
 #include "msgMessageFormat.hpp"
 #include "coordUtil.hpp"
 #include "rtnCommandDef.hpp"
+#include "rtn.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -71,10 +72,25 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( cb->isTransaction() )
+      if ( _canPrepareTrans( cb, inMsg.msg() ) )
       {
-         // need add transaction info for the send msg
-         _prepareForTrans( cb, inMsg.msg() ) ;
+         if ( !cb->isTransaction() &&
+              cb->getTransExecutor()->isTransAutoCommit() )
+         {
+            _prepareForTrans( cb, inMsg.msg() ) ;
+
+            /// when group is one, push down autocommit to data node,
+            /// otherwise begin transaction
+            if ( options._groupLst.size() > 1 )
+            {
+               _groupSession.getPropSite()->beginTrans( cb, TRUE ) ;
+            }
+         }
+         else if ( cb->isTransaction() )
+         {
+            // need add transaction info for the send msg
+            _prepareForTrans( cb, inMsg.msg() ) ;
+         }
       }
 
       /// when data is old version
@@ -116,6 +132,12 @@ namespace engine
          return FALSE ;
       }
       return cb->isTransaction() ;
+   }
+
+   BOOLEAN _coordTransOperator::_canPrepareTrans( pmdEDUCB *cb,
+                                                  const MsgHeader *pMsg ) const
+   {
+      return TRUE ;
    }
 
    void _coordTransOperator::_onNodeReply( INT32 processType,
@@ -240,6 +262,8 @@ namespace engine
          msgReq.header.opCode = MSG_BS_TRANS_BEGIN_REQ ;
          msgReq.header.routeID.value = 0 ;
          msgReq.header.TID = cb->getTID() ;
+         msgReq.transID = DPS_TRANS_GET_ID( cb->getTransID() ) ;
+         ossMemset( msgReq.reserved, 0, sizeof( msgReq.reserved ) ) ;
 
          iterGroup = groupLst.begin() ;
          while(  iterGroup != groupLst.end() )
@@ -300,8 +324,15 @@ namespace engine
                                     INT64 &contextID,
                                     rtnContextBuf *buf )
    {
+      INT32 rc = SDB_OK ;
       contextID   = -1 ;
-      return _groupSession.getPropSite()->beginTrans( cb ) ;
+      rc = _groupSession.getPropSite()->beginTrans( cb ) ;
+      if ( SDB_OK == rc )
+      {
+         /// unset all trans context
+         rtnUnsetTransContext( cb, pmdGetKRCB()->getRTNCB() ) ;
+      }
+      return rc ;
    }
 
    /*

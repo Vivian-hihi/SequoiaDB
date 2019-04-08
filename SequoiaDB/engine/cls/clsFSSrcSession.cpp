@@ -163,6 +163,8 @@ namespace engine
    {
       // register session
       _pRepl->regSession ( this ) ;
+      // not use trans lock
+      eduCB()->getTransExecutor()->setUseTransLock( FALSE ) ;
    }
 
    void _clsDataSrcBaseSession::_onDetach()

@@ -352,6 +352,7 @@ namespace engine
       INT32 opCode      = msg->opCode ;
 
       BOOLEAN needRollback = FALSE ;
+      BOOLEAN isAutoCommit = FALSE ;
 
       PD_TRACE_ENTRY( SDB_PMDLOCALSN_PROMSG ) ;
 
@@ -370,7 +371,21 @@ namespace engine
          _replyHeader.numReturned = contextBuff.recordNum() ;
          _replyHeader.startFrom = (INT32)contextBuff.getStartFrom() ;
 
-         if ( SDB_OK != rc && needRollback )
+         if ( eduCB()->isAutoCommitTrans() )
+         {
+            isAutoCommit = TRUE ;
+            if ( SDB_OK == rc || SDB_DMS_EOC == rc )
+            {
+               rc = rtnTransCommit( eduCB(), getDPSCB() ) ;
+            }
+         }
+
+         if ( SDB_OK != rc && eduCB()->isTransaction() &&
+              ( isAutoCommit || SDB_OK != eduCB()->getTransRC() ||
+                ( needRollback &&
+                  eduCB()->getTransExecutor()->isTransAutoRollback() )
+              )
+            )
          {
             PD_LOG( PDDEBUG, "Session[%s] rolling back operation "
                     "(opCode=%d, rc=%d)", sessionName(), msg->opCode, rc ) ;

@@ -350,6 +350,8 @@ namespace engine
       _enableMonContext    = FALSE ;
       _enableQueryActivity = FALSE ;
 
+      _isTransCtx          = FALSE ;
+
       _monCtxCB.setContextID( contextID ) ;
    }
 
@@ -390,6 +392,16 @@ namespace engine
    {
       _pDpsCB  = dpsCB ;
       _w       = w ;
+   }
+
+   void _rtnContextBase::setTransContext( BOOLEAN transCtx )
+   {
+      _isTransCtx = transCtx ;
+   }
+
+   BOOLEAN _rtnContextBase::isTransContext() const
+   {
+      return _isTransCtx ;
    }
 
    INT32 _rtnContextBase::getReference() const

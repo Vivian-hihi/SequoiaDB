@@ -201,10 +201,6 @@ namespace engine
       }
 
    done:
-      if ( SDB_DMS_EOC == rc )
-      {
-         needRollback = FALSE ;
-      }
       PD_TRACE_EXITRC ( SDB_PMDDATAPROC_PROMSG, rc ) ;
       return rc ;
    }
@@ -317,6 +313,47 @@ namespace engine
       goto done ;
    }
 
+   INT32 _pmdDataProcessor::_checkTransOperator( BOOLEAN checkDps )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( pmdGetDBRole() == SDB_ROLE_DATA ||
+           pmdGetDBRole() == SDB_ROLE_CATALOG )
+      {
+         rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
+         PD_LOG_MSG( PDERROR, "In sharding mode, couldn't execute "
+                     "transaction operation from local service" ) ;
+      }
+      else if ( checkDps && !getDPSCB() )
+      {
+         rc = SDB_PERM ;
+         PD_LOG_MSG( PDERROR, "Couldn't execute transaction operation when "
+                     "dps log is off" ) ;
+      }
+
+      return rc ;
+   }
+
+   INT32 _pmdDataProcessor::_checkTransAutoCommit( const MsgHeader *msg,
+                                                   BOOLEAN checkDps )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !eduCB()->isTransaction() )
+      {
+         if ( eduCB()->getTransExecutor()->isTransAutoCommit() )
+         {
+            rc = _checkTransOperator( checkDps ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = rtnTransBegin( eduCB(), TRUE ) ;
+            }
+         }
+      }
+
+      return rc ;
+   }
+
    INT32 _pmdDataProcessor::_onUpdateReqMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
    {
       INT32 rc    = SDB_OK ;
@@ -352,6 +389,13 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
+      }
+
+      /// check auto-commit
+      rc = _checkTransAutoCommit( msg ) ;
+      if ( rc )
+      {
+         goto error ;
       }
 
       try
@@ -447,6 +491,13 @@ namespace engine
          }
       }
 
+      /// check auto-commit
+      rc = _checkTransAutoCommit( msg ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
       try
       {
          INT32   insertedNum = 0 ;
@@ -520,6 +571,15 @@ namespace engine
       if ( !rtnIsCommand ( pCollectionName ) )
       {
          rtnContextBase *pContext = NULL ;
+
+         /// check auto-commit
+         rc = _checkTransAutoCommit( msg, ( flags & FLG_QUERY_MODIFY ) ?
+                                          TRUE : FALSE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
          try
          {
             BSONObj matcher ( pQueryBuff ) ;
@@ -574,6 +634,10 @@ namespace engine
                goto error ;
             }
 
+            if ( eduCB()->isAutoCommitTrans() )
+            {
+               pContext->setTransContext( TRUE ) ;
+            }
             /// if write operator, need set dps info( local session: w=1)
             if ( pContext && pContext->isWrite() )
             {
@@ -699,6 +763,13 @@ namespace engine
          }
       }
 
+      /// check auto-commit
+      rc = _checkTransAutoCommit( msg ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
       try
       {
          INT64 deletedNum = 0 ;
@@ -748,6 +819,7 @@ namespace engine
    {
       INT32 rc         = SDB_OK ;
       INT32 numToRead  = 0 ;
+      rtnContext *pContext = NULL ;
 
       rc = msgExtractGetMore ( (CHAR*)msg, &numToRead, &contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract get more msg failed, "
@@ -762,10 +834,37 @@ namespace engine
       PD_LOG ( PDDEBUG, "Session[%s] GetMore: contextID:%lld\nnumToRead: %d",
                getSession()->sessionName(), contextID, numToRead ) ; */
 
-      rc = rtnGetMore ( contextID, numToRead, buffObj, eduCB(),
-                        _pRTNCB, &needRollback ) ;
+      pContext = _pRTNCB->contextFind ( contextID, eduCB() ) ;
+      if ( !pContext )
+      {
+         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      needRollback = pContext->needRollback() ;
+
+      /// trans context
+      if ( pContext->isTransContext() && !eduCB()->isTransaction() )
+      {
+         rc = rtnTransBegin( eduCB(), TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+      rc = rtnGetMore ( pContext, numToRead, buffObj, eduCB(), _pRTNCB ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
    done:
+      if ( SDB_DMS_EOC == rc )
+      {
+         needRollback = FALSE ;
+      }
       return rc ;
    error:
       goto done ;
@@ -835,36 +934,25 @@ namespace engine
 
    INT32 _pmdDataProcessor::_onTransBeginMsg ()
    {
-      INT32 rc = SDB_OK ;
-      if ( pmdGetDBRole() != SDB_ROLE_STANDALONE )
-      {
-         rc = SDB_PERM ;
-         PD_LOG( PDERROR, "In sharding mode, couldn't execute "
-                 "transaction operation from local service" ) ;
-         goto error ;
-      }
-      else
+      INT32 rc = _checkTransOperator() ;
+      if ( SDB_OK == rc )
       {
          rc = rtnTransBegin( eduCB() ) ;
-      }
 
-   done:
+         if ( SDB_OK == rc )
+         {
+            /// unset all trans context
+            rtnUnsetTransContext( eduCB(), _pRTNCB ) ;
+         }
+      }
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _pmdDataProcessor::_onTransCommitMsg ( SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      if ( pmdGetDBRole() != SDB_ROLE_STANDALONE )
-      {
-         rc = SDB_PERM ;
-         PD_LOG( PDERROR, "In sharding mode, couldn't execute "
-                 "transaction operation from local service" ) ;
-         goto error ;
-      }
-      else
+
+      if ( eduCB()->isTransaction() )
       {
          // add last op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,
@@ -875,23 +963,14 @@ namespace engine
          rc = rtnTransCommit( eduCB(), dpsCB ) ;
       }
 
-   done:
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _pmdDataProcessor::_onTransRollbackMsg ( SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      if ( pmdGetDBRole() != SDB_ROLE_STANDALONE )
-      {
-         rc = SDB_PERM ;
-         PD_LOG( PDERROR, "In sharding mode, couldn't execute "
-                 "transaction operation from local service" ) ;
-         goto error ;
-      }
-      else
+
+      if ( eduCB()->isTransaction() )
       {
          // add last op info
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_ROLLBACK_REQ,
@@ -902,10 +981,7 @@ namespace engine
          rc = rtnTransRollback( eduCB(), dpsCB ) ;
       }
 
-   done:
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _pmdDataProcessor::_onAggrReqMsg( MsgHeader *msg, INT64 &contextID )
@@ -1595,14 +1671,6 @@ namespace engine
       }
 
    done:
-      if ( SDB_DMS_EOC == rc )
-      {
-         needRollback = FALSE ;
-      }
-      else if ( eduCB()->getTransRC() )
-      {
-         needRollback = TRUE ;
-      }
       PD_TRACE_EXITRC ( SDB_PMDCOORDPROC_PROCOORDMSG, rc );
       return rc ;
    error:

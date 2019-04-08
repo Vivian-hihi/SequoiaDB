@@ -489,6 +489,10 @@ namespace engine
          {
             pContext->setModify( TRUE ) ;
          }
+         if ( cb->isAutoCommitTrans() )
+         {
+            pContext->setTransContext( TRUE ) ;
+         }
 
          if ( OSS_BIT_TEST(flag, FLG_QUERY_PREPARE_MORE ) &&
               !OSS_BIT_TEST(flag, FLG_QUERY_MODIFY ) )
@@ -674,11 +678,21 @@ namespace engine
 
    void _coordQueryOperator::_prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg )
    {
-      MsgOpQuery *pQueryMsg = ( MsgOpQuery* )pMsg ;
-      if ( '$' != pQueryMsg->name[0] )
+      if ( _canPrepareTrans( cb, pMsg ) )
       {
          pMsg->opCode = MSG_BS_TRANS_QUERY_REQ ;
       }
+   }
+
+   BOOLEAN _coordQueryOperator::_canPrepareTrans( pmdEDUCB *cb,
+                                                  const MsgHeader *pMsg ) const
+   {
+      const MsgOpQuery *pQueryMsg = ( const MsgOpQuery* )pMsg ;
+      if ( '$' != pQueryMsg->name[0] )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
    BOOLEAN _coordQueryOperator::_isTrans( pmdEDUCB *cb, MsgHeader *pMsg )

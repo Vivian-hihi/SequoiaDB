@@ -464,6 +464,12 @@
 #define FIELD_NAME_AUDIT_MASK                "AuditMask"
 #define FIELD_NAME_AUDIT_CONFIG_MASK         "AuditConfigMask"
 #define FIELD_NAME_ROLLBACK                  "Rollback"
+#define FIELD_NAME_TRANSISOLATION            "TransIsolation"
+#define FIELD_NAME_TRANS_TIMEOUT             "TransTimeout"
+#define FIELD_NAME_TRANS_WAITLOCK            "TransWaitLock"
+#define FIELD_NAME_TRANS_USE_RBS             "TransUseRBS"
+#define FIELD_NAME_TRANS_AUTOCOMMIT          "TransAutoCommit"
+#define FIELD_NAME_TRANS_AUTOROLLBACK        "TransAutoRollback"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"

@@ -1167,8 +1167,6 @@ namespace engine
 
    void _clsBucketSyncJob::_onAttach()
    {
-      /// not use trans lock
-      eduCB()->getTransExecutor()->setUseTransLock( FALSE ) ;
    }
 
    void _clsBucketSyncJob::_onDetach()

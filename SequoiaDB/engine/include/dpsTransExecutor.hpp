@@ -149,6 +149,8 @@ namespace engine
          UINT32               getTransTimeout() const ;
          BOOLEAN              isTransWaitLock() const ;
          BOOLEAN              useRollbackSegment() const ;
+         BOOLEAN              isTransAutoCommit() const ;
+         BOOLEAN              isTransAutoRollback() const ;
          BOOLEAN              useTransLock() const ;
 
          UINT32               getTransConfMask() const ;
@@ -161,6 +163,10 @@ namespace engine
                                                 BOOLEAN enableMask = TRUE ) ;
          void                 setUseRollbackSemgent( BOOLEAN use,
                                                      BOOLEAN enableMask = TRUE ) ;
+         void                 setTransAutoCommit( BOOLEAN autoCommit,
+                                                  BOOLEAN enableMask = TRUE ) ;
+         void                 setTransAutoRollback( BOOLEAN autoRollback,
+                                                    BOOLEAN enableMask = TRUE ) ;
 
          void                 setUseTransLock( BOOLEAN use ) ;
 
@@ -181,11 +187,17 @@ namespace engine
       protected:
          void                 initTransConf( INT32 isolation,
                                              UINT32 timeout,
-                                             BOOLEAN waitLock ) ;
+                                             BOOLEAN waitLock,
+                                             BOOLEAN autoCommit,
+                                             BOOLEAN autoRollback,
+                                             BOOLEAN useRBS ) ;
 
          void                 updateTransConf( INT32 isolation,
                                                UINT32 timeout,
-                                               BOOLEAN waitLock ) ;
+                                               BOOLEAN waitLock,
+                                               BOOLEAN autoCommit,
+                                               BOOLEAN autoRollback,
+                                               BOOLEAN useRBS ) ;
 
       public:
          /*
@@ -217,6 +229,11 @@ namespace engine
          BOOLEAN                 _transWaitLock ;  
          // if transaction use old copy in rollback segment
          BOOLEAN                 _useRollbackSegment ;
+         // insert/update/delete/query operator auto use transaction
+         BOOLEAN                 _transAutoCommit ;
+         // when transaction operator failed, wether rollback auto
+         BOOLEAN                 _transAutoRollback ;
+
          UINT32                  _transConfMask ;
 
          BOOLEAN                 _useTransLock ;

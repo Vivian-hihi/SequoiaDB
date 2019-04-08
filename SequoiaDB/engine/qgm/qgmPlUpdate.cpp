@@ -157,6 +157,13 @@ namespace engine
              dpsCB = NULL ;
          }
 
+         /// begin auto commit transaction
+         rc = _checkTransAutoCommit( dpsCB ? TRUE : FALSE, eduCB ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
          rc = rtnUpdate( clName.c_str(), _condition, _updater, hint,
                          _flag, eduCB, dmsCB, dpsCB ) ;
          if( SDB_OK != rc )

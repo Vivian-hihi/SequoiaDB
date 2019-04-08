@@ -236,15 +236,18 @@ namespace engine
    {
    }
 
-   DPS_TRANS_ID dpsTransCB::allocTransID()
+   DPS_TRANS_ID dpsTransCB::allocTransID( BOOLEAN isAutoCommit )
    {
-      DPS_TRANS_ID temp = 0;
-      while ( 0 == temp )
+      DPS_TRANS_ID temp = _TransIDL48Cur.inc() ;
+
+      temp = DPS_TRANS_GET_SN( temp ) | _TransIDH16 |
+             DPS_TRANSID_FIRSTOP_BIT ;
+
+      if ( isAutoCommit )
       {
-         temp = _TransIDL48Cur.inc();
-         temp = DPS_TRANS_GET_SN( temp ) | _TransIDH16 |
-                DPS_TRANSID_FIRSTOP_BIT;
+         DPS_TRANS_SET_AUTOCOMMIT( temp ) ;
       }
+
       return temp ;
    }
 
@@ -400,15 +403,17 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_ADDTRANSCB, "dpsTransCB::addTransCB" )
-   void dpsTransCB::addTransCB( DPS_TRANS_ID transID, _pmdEDUCB *eduCB )
+   BOOLEAN dpsTransCB::addTransCB( DPS_TRANS_ID transID, _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSCB_ADDTRANSCB ) ;
+      BOOLEAN hasInsert = FALSE ;
       {
-         transID = getTransID( transID );
-         ossScopedLock _lock( &_CBMapMutex );
-         _cbMap[ transID ] = eduCB;
+         transID = getTransID( transID ) ;
+         ossScopedLock _lock( &_CBMapMutex ) ;
+         hasInsert = _cbMap.insert( std::make_pair( transID, eduCB ) ).second ;
       }
-      PD_TRACE_EXIT ( SDB_DPSTRANSCB_ADDTRANSCB );
+      PD_TRACE_EXIT ( SDB_DPSTRANSCB_ADDTRANSCB ) ;
+      return hasInsert ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_DELTRANSCB, "dpsTransCB::delTransCB" )

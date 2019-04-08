@@ -98,7 +98,7 @@ namespace engine
       | nodeID(16bit) | TAG(8bit) | SN(40bit) |
       +---------------+-----------+-----------+
       */
-      DPS_TRANS_ID allocTransID() ;
+      DPS_TRANS_ID allocTransID( BOOLEAN isAutoCommit = FALSE ) ;
       DPS_TRANS_ID getRollbackID( DPS_TRANS_ID transID ) ;
       DPS_TRANS_ID getTransID( DPS_TRANS_ID rollbackID ) ;
 
@@ -116,11 +116,11 @@ namespace engine
       void addTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset ) ;
       void updateTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset ) ;
 
-      void addTransCB( DPS_TRANS_ID transID, _pmdEDUCB *eduCB ) ;
-      void delTransCB( DPS_TRANS_ID transID ) ;
-      void dumpTransEDUList( TRANS_EDU_LIST  &eduList ) ;
-      UINT32 getTransCBSize() ;
-      void termAllTrans() ;
+      BOOLEAN  addTransCB( DPS_TRANS_ID transID, _pmdEDUCB *eduCB ) ;
+      void     delTransCB( DPS_TRANS_ID transID ) ;
+      void     dumpTransEDUList( TRANS_EDU_LIST  &eduList ) ;
+      UINT32   getTransCBSize() ;
+      void     termAllTrans() ;
       TRANS_MAP *getTransMap() ;
 
       void clearTransInfo() ;

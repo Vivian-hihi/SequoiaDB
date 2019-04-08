@@ -370,6 +370,7 @@ namespace engine
       }
       DPS_LSN_OFFSET getRelatedTransLSN() const { return _relatedTransLSN ; }
       BOOLEAN  isTransaction() const ;
+      BOOLEAN  isAutoCommitTrans() const ;
       void     startRollback() { _isDoRollback = TRUE ; }
       void     stopRollback() { _isDoRollback = FALSE ; }
       BOOLEAN  isInRollback() const { return _isDoRollback ; }

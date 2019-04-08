@@ -59,6 +59,8 @@ namespace engine
       _transTimeout     = DPS_TRANS_DFT_TIMEOUT ;
       _transWaitLock    = DPS_TRANS_LOCKWAIT_DFT ;
       _useRollbackSegment = TRUE ;
+      _transAutoCommit  = FALSE ;
+      _transAutoRollback= TRUE ;
       _transConfMask    = 0 ;
 
       _useTransLock     = TRUE ;
@@ -215,6 +217,16 @@ namespace engine
       return _useRollbackSegment ;
    }
 
+   BOOLEAN _dpsTransExecutor::isTransAutoCommit() const
+   {
+      return _transAutoCommit ;
+   }
+
+   BOOLEAN _dpsTransExecutor::isTransAutoRollback() const
+   {
+      return _transAutoRollback ;
+   }
+
    BOOLEAN _dpsTransExecutor::useTransLock() const
    {
       return _useTransLock ;
@@ -275,6 +287,26 @@ namespace engine
       }
    }
 
+   void _dpsTransExecutor::setTransAutoCommit( BOOLEAN autoCommit,
+                                               BOOLEAN enableMask )
+   {
+      _transAutoCommit = autoCommit ;
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_AUTOCOMMIT ;
+      }
+   }
+
+   void _dpsTransExecutor::setTransAutoRollback( BOOLEAN autoRollback,
+                                                 BOOLEAN enableMask )
+   {
+      _transAutoRollback = autoRollback ;
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_AUTOROLLBACK ;
+      }
+   }
+
    void _dpsTransExecutor::setUseTransLock( BOOLEAN use )
    {
       _useTransLock = use ;
@@ -282,36 +314,57 @@ namespace engine
 
    void _dpsTransExecutor::initTransConf( INT32 isolation,
                                           UINT32 timeout,
-                                          BOOLEAN waitLock )
+                                          BOOLEAN waitLock,
+                                          BOOLEAN autoCommit,
+                                          BOOLEAN autoRollback,
+                                          BOOLEAN useRBS )
    {
       _transConfMask = 0 ;
       setTransIsolation( isolation, FALSE ) ;
       setTransTimeout( timeout, FALSE ) ;
       setTransWaitLock( waitLock, FALSE ) ;
-      setUseRollbackSemgent( TRUE, FALSE ) ;
+      setTransAutoCommit( autoCommit, FALSE ) ;
+      setTransAutoRollback( autoRollback, FALSE ) ;
+      setUseRollbackSemgent( useRBS, FALSE ) ;
 
       _useTransLock        = TRUE ;
    }
 
    void _dpsTransExecutor::updateTransConf( INT32 isolation,
                                             UINT32 timeout,
-                                            BOOLEAN waitLock )
+                                            BOOLEAN waitLock,
+                                            BOOLEAN autoCommit,
+                                            BOOLEAN autoRollback,
+                                            BOOLEAN useRBS )
    {
-      if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_ISOLATION ) )
-      {
-         setTransIsolation( isolation, FALSE ) ;
-      }
+      /// only timeout can update in transaction
       if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_TIMEOUT ) )
       {
          setTransTimeout( timeout, FALSE ) ;
       }
-      if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_WAITLOCK ) )
+
+      if ( DPS_INVALID_TRANS_ID == getExecutor()->getTransID() )
       {
-         setTransWaitLock( waitLock, FALSE ) ;
-      }
-      if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_USERBS ) )
-      {
-         setUseRollbackSemgent( TRUE, FALSE ) ;
+         if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_ISOLATION ) )
+         {
+            setTransIsolation( isolation, FALSE ) ;
+         }
+         if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_WAITLOCK ) )
+         {
+            setTransWaitLock( waitLock, FALSE ) ;
+         }
+         if ( !OSS_BIT_TEST ( _transAutoCommit, TRANS_CONF_MASK_AUTOCOMMIT ) )
+         {
+            setTransAutoCommit( autoCommit, FALSE ) ;
+         }
+         if ( !OSS_BIT_TEST ( _transAutoRollback, TRANS_CONF_MASK_AUTOROLLBACK ) )
+         {
+            setTransAutoRollback( autoRollback, FALSE ) ;
+         }
+         if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_USERBS ) )
+         {
+            setUseRollbackSemgent( useRBS, FALSE ) ;
+         }
       }
    }
 

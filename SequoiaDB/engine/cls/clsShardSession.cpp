@@ -364,7 +364,7 @@ namespace engine
       _isMainCL        = FALSE ;
       _hasUpdateCataInfo = FALSE ;
       BOOLEAN isNeedRollback = FALSE ;
-      BOOLEAN hasRollbacked = FALSE ;
+      BOOLEAN isAutoCommit = FALSE ;
 
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
@@ -398,7 +398,7 @@ namespace engine
                rc = _onUpdateReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_INSERT_REQ :
-               {
+            {
                MsgOpInsert *pInsert = (MsgOpInsert*)msg ;
                INT32 insertedNum = 0 ;
                INT32 ignoredNum = 0 ;
@@ -408,7 +408,7 @@ namespace engine
                {
                   contextID = ossPack32To64( insertedNum, ignoredNum ) ;
                }
-               }
+            }
                break ;
             case MSG_BS_DELETE_REQ :
                isNeedRollback = TRUE ;
@@ -427,7 +427,7 @@ namespace engine
                rc = _onTransUpdateReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_TRANS_INSERT_REQ :
-               {
+            {
                INT32 insertedNum = 0 ;
                INT32 ignoredNum = 0 ;
                MsgOpInsert *pInsert = (MsgOpInsert*)msg ;
@@ -438,7 +438,7 @@ namespace engine
                {
                   contextID = ossPack32To64( insertedNum, ignoredNum ) ;
                }
-               }
+            }
                break ;
             case MSG_BS_TRANS_DELETE_REQ :
                isNeedRollback = TRUE ;
@@ -467,20 +467,20 @@ namespace engine
                break ;
 #endif
             case MSG_BS_TRANS_BEGIN_REQ :
-               rc = _onTransBeginMsg();
+               rc = _onTransBeginMsg( handle, msg ) ;
                break;
 
             case MSG_BS_TRANS_COMMIT_REQ :
                isNeedRollback = TRUE ;
-               rc = _onTransCommitMsg();
+               rc = _onTransCommitMsg( handle, msg );
                break;
 
             case MSG_BS_TRANS_ROLLBACK_REQ:
-               rc = _onTransRollbackMsg();
+               rc = _onTransRollbackMsg( handle, msg ) ;
                break;
 
             case MSG_BS_TRANS_COMMITPRE_REQ:
-               rc = _onTransCommitPreMsg( msg );
+               rc = _onTransCommitPreMsg( handle, msg );
                break;
 
             case MSG_COM_SESSION_INIT_REQ:
@@ -488,8 +488,7 @@ namespace engine
                break;
 
             case MSG_BS_LOB_OPEN_REQ:
-               rc = _onOpenLobReq( msg, contextID,
-                                   buffObj ) ;
+               rc = _onOpenLobReq( msg, contextID, buffObj ) ;
                break ;
             case MSG_BS_LOB_WRITE_REQ:
                rc = _onWriteLobReq( msg ) ;
@@ -607,13 +606,25 @@ namespace engine
       _replyHeader.header.TID = msg->TID ;
       _replyHeader.header.routeID.value = 0 ;
 
+      /// auto-commit process
+      if ( eduCB()->isAutoCommitTrans() )
+      {
+         isAutoCommit = TRUE ;
+         if ( SDB_OK == rc || SDB_DMS_EOC == rc )
+         {
+            rc = rtnTransCommit( eduCB(), _pDpsCB ) ;
+         }
+      }
+
       if ( SDB_OK != rc )
       {
+         BOOLEAN inTrans = _pEDUCB->isTransaction() ;
+         BOOLEAN hasRollbacked = FALSE ;
+
          /// when coord catalog info is old, can't rollback, coord will retry
-         if ( isNeedRollback &&
-              SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
-              SDB_DMS_EOC != rc &&
-              DPS_INVALID_TRANS_ID != _pEDUCB->getTransID() )
+         if ( inTrans && ( isAutoCommit ||
+              ( isNeedRollback && SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
+                _pEDUCB->getTransExecutor()->isTransAutoRollback() ) ) )
          {
             PD_LOG ( PDDEBUG, "Rolling back operation(op=%d, rc=%d) on data",
                      opCode, rc ) ;
@@ -628,7 +639,8 @@ namespace engine
          if ( 0 == buffObj.size() )
          {
             _errorInfo = utilGetErrorBson( rc, _pEDUCB->getInfo(
-                                           EDU_INFO_ERROR ), &hasRollbacked ) ;
+                                           EDU_INFO_ERROR ),
+                                           inTrans ? &hasRollbacked : NULL ) ;
             buffObj = rtnContextBuf( _errorInfo.objdata(),
                                      _errorInfo.objsize(),
                                      1 ) ;
@@ -1618,6 +1630,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONGETMOREREQMSG ) ;
       INT32 numToRead = 0 ;
+      rtnContext *pContext = NULL ;
 
       rc = msgExtractGetMore ( (CHAR*)msg, &numToRead, &contextID ) ;
       if ( SDB_OK != rc )
@@ -1631,17 +1644,42 @@ namespace engine
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "ContextID:%lld, NumToRead:%d",
                           contextID, numToRead ) ;
-
       /*
       PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
                numToRead ) ; */
 
-      rc = rtnGetMore ( contextID, numToRead, buffObj, _pEDUCB,
-                        _pRtnCB, &needRollback ) ;
+      pContext = _pRtnCB->contextFind ( contextID, eduCB() ) ;
+      if ( !pContext )
+      {
+         PD_LOG ( PDERROR, "Context %lld does not exist", contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+      needRollback = pContext->needRollback() ;
+
+      /// trans context
+      if ( pContext->isTransContext() && !eduCB()->isTransaction() )
+      {
+         rc = rtnTransBegin( eduCB(), TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+      rc = rtnGetMore ( pContext, numToRead, buffObj, eduCB(), _pRtnCB ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       startingPos = ( INT32 )buffObj.getStartFrom() ;
 
    done:
+      if ( SDB_DMS_EOC == rc )
+      {
+         needRollback = FALSE ;
+      }
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONGETMOREREQMSG, rc ) ;
       return rc ;
    error:
@@ -1716,21 +1754,41 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSSHDSESS__ONINRPTMSG ) ;
       return SDB_OK ;
    }
-   INT32 _clsShdSession::_onTransBeginMsg ()
+
+   INT32 _clsShdSession::_onTransBeginMsg( NET_HANDLE handle, MsgHeader *msg )
    {
-      INT32 rc = _checkWriteStatus() ;
-      if ( rc )
+      INT32 rc = SDB_OK ;
+
+      rc = _checkPrimaryStatus() ;
+      if ( SDB_OK == rc )
       {
-         return rc;
+         MsgOpTransBegin *pTransBegin = ( MsgOpTransBegin* )msg ;
+         /// Old trans begin msg is only a MsgHeader
+         if ( msg->messageLength > sizeof( MsgHeader ) &&
+              DPS_INVALID_TRANS_ID != pTransBegin->transID &&
+              0 != DPS_TRANS_GET_NODEID( pTransBegin->transID ) )
+         {
+            rc = rtnTransBegin( _pEDUCB, FALSE, pTransBegin->transID ) ;
+         }
+         else
+         {
+            rc = rtnTransBegin( _pEDUCB ) ;
+         }
+
+         if ( SDB_OK == rc )
+         {
+            /// unset all trans context
+            rtnUnsetTransContext( eduCB(), _pRtnCB ) ;
+         }
       }
-      return rtnTransBegin( _pEDUCB ) ;
+      return rc ;
    }
 
-   INT32 _clsShdSession::_onTransCommitMsg ()
+   INT32 _clsShdSession::_onTransCommitMsg( NET_HANDLE handle, MsgHeader *msg )
    {
-      if ( !(_pReplSet->primaryIsMe ()) )
+      if ( !_pReplSet->primaryIsMe() )
       {
-         return SDB_CLS_NOT_PRIMARY;
+         return SDB_CLS_NOT_PRIMARY ;
       }
       if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
       {
@@ -1744,11 +1802,11 @@ namespace engine
       return rtnTransCommit( _pEDUCB, _pDpsCB );
    }
 
-   INT32 _clsShdSession::_onTransRollbackMsg ()
+   INT32 _clsShdSession::_onTransRollbackMsg( NET_HANDLE handle, MsgHeader *msg )
    {
-      if ( !(_pReplSet->primaryIsMe ()) )
+      if ( !_pReplSet->primaryIsMe() )
       {
-         return SDB_CLS_NOT_PRIMARY;
+         return SDB_CLS_NOT_PRIMARY ;
       }
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_ROLLBACK_REQ,
@@ -1758,7 +1816,8 @@ namespace engine
       return rtnTransRollback( _pEDUCB, _pDpsCB ) ;
    }
 
-   INT32 _clsShdSession::_onTransCommitPreMsg( MsgHeader *msg )
+   INT32 _clsShdSession::_onTransCommitPreMsg( NET_HANDLE handle,
+                                               MsgHeader *msg )
    {
       if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
       {
@@ -1767,15 +1826,39 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _clsShdSession::_checkTransAutoCommit( const MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_pEDUCB->isTransaction() )
+      {
+         if ( _pEDUCB->getTransExecutor()->isTransAutoCommit() )
+         {
+            rc = _checkPrimaryStatus() ;
+            if ( SDB_OK == rc )
+            {
+               rc = rtnTransBegin( _pEDUCB, TRUE ) ;
+            }
+         }
+         else
+         {
+            rc = SDB_DPS_TRANS_NO_TRANS ;
+         }
+      }
+
+      return rc ;
+   }
+
    INT32 _clsShdSession::_onTransUpdateReqMsg ( NET_HANDLE handle,
                                                 MsgHeader *msg,
                                                 INT64 &updateNum )
    {
-      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      INT32 rc = _checkTransAutoCommit( msg ) ;
+      if ( SDB_OK == rc )
       {
-         return SDB_DPS_TRANS_NO_TRANS;
+         rc = _onUpdateReqMsg( handle, msg, updateNum ) ;
       }
-      return _onUpdateReqMsg( handle, msg, updateNum );
+      return rc ;
    }
 
    INT32 _clsShdSession::_onTransInsertReqMsg ( NET_HANDLE handle,
@@ -1783,22 +1866,24 @@ namespace engine
                                                 INT32 &insertedNum,
                                                 INT32 &ignoredNum )
    {
-      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      INT32 rc = _checkTransAutoCommit( msg ) ;
+      if ( SDB_OK == rc )
       {
-         return SDB_DPS_TRANS_NO_TRANS;
+         rc = _onInsertReqMsg( handle, msg, insertedNum, ignoredNum ) ;
       }
-      return _onInsertReqMsg( handle, msg, insertedNum, ignoredNum );
+      return rc ;
    }
 
    INT32 _clsShdSession::_onTransDeleteReqMsg ( NET_HANDLE handle,
                                                 MsgHeader *msg,
                                                 INT64 &delNum )
    {
-      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      INT32 rc = _checkTransAutoCommit( msg ) ;
+      if ( SDB_OK == rc )
       {
-         return SDB_DPS_TRANS_NO_TRANS;
+         rc = _onDeleteReqMsg( handle, msg, delNum ) ;
       }
-      return _onDeleteReqMsg( handle, msg, delNum );
+      return rc ;
    }
 
    INT32 _clsShdSession::_onTransQueryReqMsg( NET_HANDLE handle,
@@ -1808,23 +1893,12 @@ namespace engine
                                               INT64 & contextID,
                                               BOOLEAN &needRollback )
    {
-      INT32 rc = SDB_OK ;
-
-      rc = _checkPrimaryStatus() ;
-      if ( rc )
-      {
-         PD_LOG( PDINFO, "Failed to check primary status: %d", rc ) ;
-      }
-      else if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
-      {
-         rc = SDB_DPS_TRANS_NO_TRANS ;
-      }
-      else
+      INT32 rc = _checkTransAutoCommit( msg ) ;
+      if ( SDB_OK == rc )
       {
          rc = _onQueryReqMsg( handle, msg, buffObj, startingPos,
                               contextID, needRollback ) ;
       }
-
       return rc ;
    }
 

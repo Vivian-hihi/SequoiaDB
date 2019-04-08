@@ -1863,6 +1863,9 @@ done:
       _transactionOn       = FALSE ;
       _transIsolation      = DPS_TRANS_ISOLATION_DFT ;
       _transLockwait       = DPS_TRANS_LOCKWAIT_DFT ;
+      _transAutoCommit     = DPS_TRANS_AUTOCOMMIT_DFT ;
+      _transAutoRollback   = DPS_TRANS_AUTOROLLBACK_DFT ;
+      _transUseRBS         = DPS_TRANS_USE_RBS_DFT ;
       _transTimeout        = DPS_TRANS_DFT_TIMEOUT ;
       _transLRBInit        = DPS_TRANS_LRB_INIT_DFT ;
       _transLRBTotal       = DPS_TRANS_LRB_TOTAL_DFT ;
@@ -2102,6 +2105,15 @@ done:
       // --translockwait
       rdxBooleanS( pEX, PMD_OPTION_TRANS_LOCKWAIT, _transLockwait, FALSE,
                    PMD_CFG_CHANGE_RUN, DPS_TRANS_LOCKWAIT_DFT, FALSE ) ;
+      // --transautocommit
+      rdxBooleanS( pEX, PMD_OPTION_TRANS_AUTOCOMMIT, _transAutoCommit, FALSE,
+                   PMD_CFG_CHANGE_RUN, DPS_TRANS_AUTOCOMMIT_DFT, FALSE ) ;
+      // --transautorollback
+      rdxBooleanS( pEX, PMD_OPTION_TRANS_AUTOROLLBACK, _transAutoRollback, FALSE,
+                   PMD_CFG_CHANGE_RUN, DPS_TRANS_AUTOROLLBACK_DFT, FALSE ) ;
+      // --transuserbs
+      rdxBooleanS( pEX, PMD_OPTION_TRANS_USE_RBS, _transUseRBS, FALSE,
+                   PMD_CFG_CHANGE_RUN, DPS_TRANS_USE_RBS_DFT, FALSE ) ;
       // --translrbinit
       rdxUInt( pEX, PMD_OPTION_TRANS_LRB_INIT, _transLRBInit,FALSE,
                PMD_CFG_CHANGE_REBOOT, DPS_TRANS_LRB_INIT_DFT, FALSE ) ;
@@ -2596,6 +2608,10 @@ done:
          PD_CHECK( _logFileNum >= 5, SDB_INVALIDARG, error, PDERROR,
                    "The value of parameter \"logfilenum\" must be greater than 5 "
                    "when configure transaction" ) ;
+      }
+      else
+      {
+         _transAutoCommit = FALSE ;
       }
 
       if ( _memDebugSize != 0 )

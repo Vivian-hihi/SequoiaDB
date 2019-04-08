@@ -112,7 +112,7 @@ namespace engine
 
          const MAP_TRANS_NODES* getTransNodeMap() const ;
 
-         INT32       beginTrans( _pmdEDUCB *cb ) ;
+         INT32       beginTrans( _pmdEDUCB *cb, BOOLEAN isAutoCommit = FALSE ) ;
          void        endTrans( _pmdEDUCB *cb ) ;
 
          _pmdEDUCB*  getEDUCB() { return _pEDUCB ; }

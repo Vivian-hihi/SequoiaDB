@@ -314,6 +314,9 @@ namespace engine
          SDB_DPSCB*     getDPSCB() { return _pDpsCB ; }
          INT16          getW() const { return _w ; }
 
+         void           setTransContext( BOOLEAN transCtx ) ;
+         BOOLEAN        isTransContext() const ;
+
       // prefetch
       public:
          void     enablePrefetch ( _pmdEDUCB *cb,
@@ -442,6 +445,8 @@ namespace engine
 
          BOOLEAN                 _canPrepareMore ;
          INT32                   _prepareMoreDataLimit ;
+
+         BOOLEAN                 _isTransCtx ;
    } ;
    typedef _rtnContextBase rtnContextBase ;
    typedef _rtnContextBase rtnContext ;
