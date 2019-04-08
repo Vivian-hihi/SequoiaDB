@@ -69,7 +69,7 @@ namespace engine
       // not use transaction
       cb->getTransExecutor()->setUseTransLock( FALSE ) ;
       cb->getTransExecutor()->setTransIsolation( TRANS_ISOLATION_RU, TRUE ) ;
-#endif SDB_ENGINE
+#endif //SDB_ENGINE
 
       //Wait event msg and dispatch msg
       while ( !cb->isDisconnected() )
