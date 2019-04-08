@@ -319,9 +319,9 @@ namespace engine
    {
    }
 
-   INT32 _coordTransBegin::beginTrans( pmdEDUCB *cb )
+   INT32 _coordTransBegin::beginTrans( pmdEDUCB *cb, BOOLEAN isAutoCommit )
    {
-      return _groupSession.getPropSite()->beginTrans( cb ) ;
+      return _groupSession.getPropSite()->beginTrans( cb, isAutoCommit ) ;
    }
 
    INT32 _coordTransBegin::execute( MsgHeader *pMsg,
@@ -331,7 +331,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       contextID   = -1 ;
-      rc = _groupSession.getPropSite()->beginTrans( cb ) ;
+      rc = beginTrans( cb ) ;
       if ( SDB_OK == rc )
       {
          /// unset all trans context

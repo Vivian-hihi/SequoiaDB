@@ -1933,7 +1933,7 @@ namespace engine
          goto error ;
       }
 
-      rc = oprBegin.beginTrans( eduCB() ) ;
+      rc = oprBegin.beginTrans( eduCB(), isAutoCommit ) ;
       if ( rc )
       {
          goto error ;
