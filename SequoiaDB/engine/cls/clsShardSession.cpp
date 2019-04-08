@@ -1400,6 +1400,10 @@ namespace engine
                goto error ;
             }
 
+            if ( eduCB()->isAutoCommitTrans() )
+            {
+               pContext->setTransContext( TRUE ) ;
+            }
             /// set write info
             if ( pContext && pContext->isWrite() )
             {
