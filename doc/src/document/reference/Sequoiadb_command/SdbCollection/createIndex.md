@@ -1,5 +1,6 @@
 ##语法##
 ***db.collectionspace.collection.createIndex\(\<name\>,\<indexDef\>,\[isUnique\],\[enforced\],\[sortBufferSize\])***
+
 ***db.collectionspace.collection.createIndex\(\<name\>,\<indexDef\>,\[options\])***
 
 为集合创建[索引](basic_operation/indexes.md)，提高查询速度。
