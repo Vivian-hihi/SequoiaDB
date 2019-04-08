@@ -60,7 +60,7 @@ public class Hash12018 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        FullTextDBUtils.dropCollectionSpace(sdb, clName);
+        FullTextDBUtils.dropCollection(cs, clName);
         // check fulltext deleted
         if(esIndexNames != null){
             FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
