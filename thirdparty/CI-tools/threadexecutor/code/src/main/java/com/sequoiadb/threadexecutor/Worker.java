@@ -14,6 +14,7 @@ import com.sequoiadb.threadexecutor.exception.SchException;
 class Worker extends Thread {
     private static final Logger logger = LoggerFactory.getLogger(Worker.class);
 
+    private boolean runningFlag = true;
     private ThreadExecutor es;
     private Object o;
     private List<MethodInfo> methodList = new ArrayList<>();
@@ -69,7 +70,16 @@ class Worker extends Thread {
                 if (es.getRunningStep() == sm.getStep()) {
                     return;
                 }
+
+                if (!runningFlag()) {
+                    return;
+                }
+
                 this.wait();
+
+                if (!runningFlag()) {
+                    return;
+                }
             }
 
             if (es.getRunningStep() != sm.getStep()) {
@@ -125,12 +135,24 @@ class Worker extends Thread {
         }
     }
 
-    public void innerRun() throws SchException {
+    public void setRunningFlag(boolean running) {
+        runningFlag = running;
+    }
+
+    private boolean runningFlag() {
+        return runningFlag;
+    }
+
+    private void innerRun() throws SchException {
         readyForSchedule();
         status.setStatus(EN_WORK_STATUS.FINISH);
 
         for (MethodInfo m : methodList) {
             waitForMyStep(m);
+            if (!runningFlag()) {
+                logger.info("stop while running flag is false");
+                break;
+            }
             updateStatus(m.getStep(), EN_WORK_STATUS.RUNNING);
             workingMethod = m;
             try {

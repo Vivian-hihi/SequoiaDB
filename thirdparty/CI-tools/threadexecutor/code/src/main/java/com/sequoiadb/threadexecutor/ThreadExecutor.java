@@ -2,6 +2,7 @@ package com.sequoiadb.threadexecutor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -226,8 +227,41 @@ public class ThreadExecutor {
                 checkAllBlockingMethodIsRunning(entry.getKey(), methods);
             }
         }
+        catch (Throwable t) {
+            notifyAllWorkerQuit();
+            logger.error("run schedule failed", t);
+            throw t;
+        }
         finally {
-            executeService.shutdownNow();
+            logger.info("shutting down all threads");
+            executeService.shutdown();
+            // wait all threads is really quit
+            while (!executeService.isTerminated()) {
+                try {
+                    Thread.sleep(1000);
+                }
+                catch (Exception e) {
+                }
+            }
+
+            logger.info("all threads are shutted down");
+        }
+    }
+
+    private void notifyAllWorkerQuit() throws SchException {
+        try {
+            object2Worker.values();
+            Set<Worker> workers = new HashSet<>();
+            for (Worker w : object2Worker.values()) {
+                w.setRunningFlag(false);
+                workers.add(w);
+            }
+
+            //wait up all threads, let them have opportunity to check the running flag
+            notifyAllRelateWorkers(workers);
+        }
+        catch (Exception e) {
+            logger.warn("notify all workers failed", e);
         }
     }
 
