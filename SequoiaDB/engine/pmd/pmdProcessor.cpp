@@ -821,6 +821,11 @@ namespace engine
       goto done ;
    }
 
+   INT32 _pmdDataProcessor::_beginTrans( BOOLEAN isAutoCommit )
+   {
+      return rtnTransBegin( eduCB(), isAutoCommit ) ;
+   }
+
    INT32 _pmdDataProcessor::_onGetMoreReqMsg( MsgHeader * msg,
                                               rtnContextBuf &buffObj,
                                               INT64 &contextID,
@@ -856,7 +861,7 @@ namespace engine
       /// trans context
       if ( pContext->isTransContext() && !eduCB()->isTransaction() )
       {
-         rc = rtnTransBegin( eduCB(), TRUE ) ;
+         rc = _beginTrans( TRUE ) ;
          if ( rc )
          {
             goto error ;
@@ -1853,26 +1858,22 @@ namespace engine
    INT32 _pmdCoordProcessor::doRollback()
    {
       INT32 rc = SDB_OK ;
+      CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
+      coordResource *pResource = pCoordCB->getResource() ;
 
-      if ( eduCB() )
+      coordTransRollback rollbackOpr ;
+      rc = rollbackOpr.init( pResource, eduCB() ) ;
+      if ( rc )
       {
-         CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
-         coordResource *pResource = pCoordCB->getResource() ;
+         PD_LOG( PDERROR, "Rollback init operator[%s] failed, rc: %d",
+                 rollbackOpr.getName(), rc ) ;
+         goto error ;
+      }
 
-         coordTransRollback rollbackOpr ;
-         rc = rollbackOpr.init( pResource, eduCB() ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Rollback init operator[%s] failed, rc: %d",
-                    rollbackOpr.getName(), rc ) ;
-            goto error ;
-         }
-
-         rc = rollbackOpr.rollback( eduCB() ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
+      rc = rollbackOpr.rollback( eduCB() ) ;
+      if ( rc )
+      {
+         goto error ;
       }
 
    done:
@@ -1884,35 +1885,58 @@ namespace engine
    INT32 _pmdCoordProcessor::doCommit()
    {
       INT32 rc = SDB_OK ;
+      CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
+      coordResource *pResource = pCoordCB->getResource() ;
 
-      if ( eduCB() )
+      INT64 contextID = -1 ;
+      MsgOpTransCommit commitMsg ;
+      coordTransCommit commitOpr ;
+      rc = commitOpr.init( pResource, eduCB() ) ;
+      if ( rc )
       {
-         CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
-         coordResource *pResource = pCoordCB->getResource() ;
+         PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                 commitOpr.getName(), rc ) ;
+         goto error ;
+      }
 
-         INT64 contextID = -1 ;
-         MsgOpTransCommit commitMsg ;
-         coordTransCommit commitOpr ;
-         rc = commitOpr.init( pResource, eduCB() ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
-                    commitOpr.getName(), rc ) ;
-            goto error ;
-         }
+      commitMsg.header.messageLength = sizeof( MsgOpTransCommit ) ;
+      commitMsg.header.opCode = MSG_BS_TRANS_COMMIT_REQ ;
+      commitMsg.header.requestID = 0 ;
+      commitMsg.header.routeID.value = 0 ;
+      commitMsg.header.TID = 0 ;
 
-         commitMsg.header.messageLength = sizeof( MsgOpTransCommit ) ;
-         commitMsg.header.opCode = MSG_BS_TRANS_COMMIT_REQ ;
-         commitMsg.header.requestID = 0 ;
-         commitMsg.header.routeID.value = 0 ;
-         commitMsg.header.TID = 0 ;
-   
-         rc = commitOpr.execute( &commitMsg.header, eduCB(),
-                                 contextID, NULL ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
+      rc = commitOpr.execute( &commitMsg.header, eduCB(),
+                              contextID, NULL ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdCoordProcessor::_beginTrans( BOOLEAN isAutoCommit )
+   {
+      INT32 rc = SDB_OK ;
+      CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
+      coordResource *pResource = pCoordCB->getResource() ;
+
+      coordTransBegin oprBegin ;
+      rc = oprBegin.init( pResource, eduCB() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                 oprBegin.getName(), rc ) ;
+         goto error ;
+      }
+
+      rc = oprBegin.beginTrans( eduCB() ) ;
+      if ( rc )
+      {
+         goto error ;
       }
 
    done:

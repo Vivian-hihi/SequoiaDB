@@ -449,7 +449,10 @@ namespace engine
       pmdRemoteSessionSite *pSite = NULL ;
       coordSessionPropSite *pPropSite = NULL ;
 
-      if ( cb->isTransaction() && isTransBSMsg( pSub->getOrgReqOpCode() ) )
+      if ( ( cb->isTransaction() &&
+             isTransBSMsg( pSub->getOrgReqOpCode() ) ) ||
+           ( cb->isAutoCommitTrans() &&
+             MSG_BS_GETMORE_REQ == pSub->getOrgReqOpCode() ) )
       {
          pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
          pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;

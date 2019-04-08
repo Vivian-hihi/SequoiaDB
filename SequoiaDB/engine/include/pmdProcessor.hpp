@@ -128,6 +128,9 @@ namespace engine
                                                         BOOLEAN checkDps = TRUE ) ;
 
       protected:
+         virtual INT32           _beginTrans( BOOLEAN isAutoCommit ) ;
+
+      protected:
          _SDB_KRCB *             _pKrcb ;
          _SDB_DMSCB *            _pDMSCB ;
          _SDB_RTNCB *            _pRTNCB ;
@@ -155,6 +158,9 @@ namespace engine
 
          virtual const CHAR*           processorName() const ;
          virtual SDB_PROCESSOR_TYPE    processorType() const ;
+
+      protected:
+         virtual INT32           _beginTrans( BOOLEAN isAutoCommit ) ;
 
       protected:
          virtual void                  _onAttach () ;

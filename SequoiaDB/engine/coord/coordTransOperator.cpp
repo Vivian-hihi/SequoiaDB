@@ -319,6 +319,11 @@ namespace engine
    {
    }
 
+   INT32 _coordTransBegin::beginTrans( pmdEDUCB *cb )
+   {
+      return _groupSession.getPropSite()->beginTrans( cb ) ;
+   }
+
    INT32 _coordTransBegin::execute( MsgHeader *pMsg,
                                     pmdEDUCB *cb,
                                     INT64 &contextID,

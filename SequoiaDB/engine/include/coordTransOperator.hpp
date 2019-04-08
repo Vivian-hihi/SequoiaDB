@@ -103,6 +103,8 @@ namespace engine
          _coordTransBegin() ;
          virtual ~_coordTransBegin() ;
 
+         INT32         beginTrans( pmdEDUCB *cb ) ;
+
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
