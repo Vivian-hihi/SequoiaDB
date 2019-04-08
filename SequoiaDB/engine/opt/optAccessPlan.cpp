@@ -650,7 +650,7 @@ namespace engine
 
       if ( bestPath.isEmpty() )
       {
-         PD_LOG( PDWARNING, "Failed to estimate hint plans" ) ;
+         PD_LOG( PDINFO, "Failed to estimate hint plans" ) ;
          rc = SDB_RTN_INVALID_HINT ;
          goto error ;
       }
