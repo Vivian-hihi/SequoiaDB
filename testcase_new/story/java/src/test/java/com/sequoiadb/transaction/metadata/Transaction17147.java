@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction.rc;
+package com.sequoiadb.transaction.metadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author yinzhen
  *
  */
-@Test(groups = "rc")
+@Test(groups = {"rc", "ru"})
 public class Transaction17147 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl17147";
