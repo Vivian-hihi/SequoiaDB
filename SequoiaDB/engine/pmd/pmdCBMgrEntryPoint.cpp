@@ -33,6 +33,7 @@
 
 #include "pmdEDUMgr.hpp"
 #include "pmdObjBase.hpp"
+#include "dpsTransDef.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
