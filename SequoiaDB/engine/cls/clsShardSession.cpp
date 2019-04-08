@@ -612,7 +612,8 @@ namespace engine
          isAutoCommit = TRUE ;
          if ( SDB_OK == rc || SDB_DMS_EOC == rc )
          {
-            rc = rtnTransCommit( eduCB(), _pDpsCB ) ;
+            INT32 rcTmp = rtnTransCommit( eduCB(), _pDpsCB ) ;
+            rc = rcTmp ? rcTmp : rc ;
          }
       }
 
@@ -1670,6 +1671,7 @@ namespace engine
       rc = rtnGetMore ( pContext, numToRead, buffObj, eduCB(), _pRtnCB ) ;
       if ( rc )
       {
+         contextID = -1 ;
          goto error ;
       }
 

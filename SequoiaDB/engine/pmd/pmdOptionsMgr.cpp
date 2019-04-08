@@ -2609,10 +2609,6 @@ done:
                    "The value of parameter \"logfilenum\" must be greater than 5 "
                    "when configure transaction" ) ;
       }
-      else
-      {
-         _transAutoCommit = FALSE ;
-      }
 
       if ( _memDebugSize != 0 )
       {

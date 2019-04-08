@@ -376,7 +376,8 @@ namespace engine
             isAutoCommit = TRUE ;
             if ( SDB_OK == rc || SDB_DMS_EOC == rc )
             {
-               rc = _processor->doCommit() ;
+               INT32 rcTmp = _processor->doCommit() ;
+               rc = rcTmp ? rcTmp : rc ;
             }
          }
 

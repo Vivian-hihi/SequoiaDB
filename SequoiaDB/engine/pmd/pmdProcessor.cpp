@@ -866,6 +866,7 @@ namespace engine
       rc = rtnGetMore ( pContext, numToRead, buffObj, eduCB(), _pRTNCB ) ;
       if ( rc )
       {
+         contextID = -1 ;
          goto error ;
       }
 
