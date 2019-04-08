@@ -1842,12 +1842,69 @@
              ● true: wait for the lock to be released and get the newly committed version.<fig></fig>
           </en>
           <cn>1. 指定事务在RC隔离级别下记录锁的等待行为，默认是FALSE。需要与transisolation配合使用<fig></fig>
-            2. 取值列表：<fig></fig>
+              2. 取值列表：<fig></fig>
               ● false: 不等待记录锁，直接从系统读取最后一次提交的版本。<fig></fig>
               ● true: 等待记录锁，读取最新提交版本的数据<fig></fig>
         </cn>
       </detail>
       <default>false</default>
+      <typeofweb>boolean</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_TRANS_AUTOCOMMIT</name>
+      <long>transautocommit</long>
+      <description>
+         <en>Whether enable automatic transaction or not. Default is FALSE</en>
+         <cn>是否开启自动事务提交。默认为FALSE。</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+         <en>Whether enable automatic transaction or not. Default is FALSE. Take effect when transaction is on.</en>
+         <cn>是否开启自动事务提交，默认是FALSE。只有当 transaction 开启时取值才会生效。</cn>
+      </detail>
+      <default>false</default>
+      <typeofweb>boolean</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_TRANS_AUTOROLLBACK</name>
+      <long>transautorollback</long>
+      <description>
+         <en>Whether enable automatically rollback when transaction operation failed or not. Default is TRUE.</en>
+         <cn>事务操作失败是否自动回滚该事务。默认为TRUE。</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+         <en>1. Whether enable automatically rollback when transaction operation failed or not. Default is TRUE. Take effect when transaction is on.</en>
+         <cn>1.事务操作失败是否自动回滚该事务。默认为TRUE。只有当 transaction 开启时取值才会生效。</cn>
+      </detail>
+      <default>true</default>
+      <typeofweb>boolean</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_TRANS_USE_RBS</name>
+      <long>transuserbs</long>
+      <description>
+         <en>Whether use rollback segment or not in transaction. Default is TRUE.</en>
+         <cn>事务操作是否使用回滚段。默认为TRUE。</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+         <en>Whether use rollback segment or not in transaction. Default is TRUE. Take effect when transaction is on.</en>
+         <cn>事务操作是否使用回滚段。默认为TRUE。只有当 transaction 开启时取值才会有效。</cn>
+      </detail>
+      <default>true</default>
       <typeofweb>boolean</typeofweb>
    </opt>
 
