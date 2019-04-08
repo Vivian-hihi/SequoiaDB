@@ -29,6 +29,7 @@
       <packages>
          <package name="com.sequoiadb.transaction.rc" />
          <package name="com.sequoiadb.transaction.uniqueIndex" />
+         <package name="com.sequoiadb.transaction.metadata" />
       </packages>
    </test>
 
@@ -41,6 +42,7 @@
       <packages>
          <package name="com.sequoiadb.transaction.ru" />
          <package name="com.sequoiadb.transaction.uniqueIndex" />
+         <package name="com.sequoiadb.transaction.metadata" />
       </packages>
    </test>
 
