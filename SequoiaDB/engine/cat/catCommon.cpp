@@ -1710,10 +1710,10 @@ namespace engine
                      continue ;
                   }
                   BSONObj cataItemObj = e.embeddedObject() ;
-                  BSONElement eleGrpID = cataItemObj.getField( CAT_GROUPID_NAME ) ;
-                  if ( eleGrpID.isNumber() )
+                  BSONElement eleGID = cataItemObj.getField( CAT_GROUPID_NAME ) ;
+                  if ( eleGID.isNumber() )
                   {
-                     groups.insert( eleGrpID.numberInt() ) ;
+                     groups.insert( eleGID.numberInt() ) ;
                   }
                }
             }
