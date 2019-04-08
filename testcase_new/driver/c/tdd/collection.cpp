@@ -103,12 +103,11 @@ TEST(collection,sdbCreateIndex)
    sdbCursorHandle cursor         = 0 ;
    const CHAR *pIndexName1        = INDEX_NAME ;
    const CHAR *pIndexName2        = "index_c_offline" ;
+   const CHAR *pIndexName3        = "index_c_options" ;
    const CHAR *pStr               = NULL ;
    INT32 rc                       = SDB_OK ;
    bson_iterator it1 ;
-   bson_iterator it2 ;
-   bson obj ;
-   bson tmp_obj ;
+   bson obj, options ;
    rc = initEnv( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // connect to database
@@ -147,7 +146,6 @@ TEST(collection,sdbCreateIndex)
    printf( "After creating index in online mode ,the current index is:\n" ) ;
    bson_print( &obj ) ;
    bson_iterator_init( &it1, &obj ) ;
-   bson_init( &tmp_obj ) ;
    while( BSON_EOO != ( bson_iterator_next ( &it1 ) ) )
    {
       const CHAR *pKey = bson_iterator_key( &it1 ) ;
@@ -192,7 +190,6 @@ TEST(collection,sdbCreateIndex)
    printf( "After creating index in offline mode ,the current index is:\n" ) ;
    bson_print( &obj ) ;
    bson_iterator_init( &it1, &obj ) ;
-   bson_init( &tmp_obj ) ;
    while( BSON_EOO != ( bson_iterator_next ( &it1 ) ) )
    {
       const CHAR *pKey = bson_iterator_key( &it1 ) ;
@@ -210,6 +207,56 @@ TEST(collection,sdbCreateIndex)
             {
                pStr = bson_iterator_string( &it ) ;
                ASSERT_EQ( 0, strncmp( pStr, pIndexName2, sizeof(pIndexName2) ) ) ;
+            }
+         }
+         bson_destroy( &tmp_obj ) ;
+      }
+   }
+   bson_destroy ( &obj ) ;
+   
+   /// create index using options
+   bson_init( &obj ) ;
+   bson_append_int( &obj, "name3", 1 ) ;
+   bson_append_int( &obj, "age3", -1 ) ;
+   bson_finish( &obj ) ;
+   bson_init( &options ) ;
+   bson_append_bool( &options, "Unique", true ) ;
+   bson_append_bool( &options, "NotNull", true ) ;
+   bson_append_int( &options, "SortBufferSize", 32 ) ;
+   bson_finish( &options ) ;
+   // create index
+   rc = sdbCreateIndex2 ( collection, &obj, pIndexName3, &options ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy ( &obj ) ;
+   bson_destroy ( &options ) ;
+   // get the index
+   rc = sdbGetIndexes( collection, pIndexName3, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // print the index record
+   bson_init( &obj ) ;
+   rc = sdbCurrent( cursor, &obj ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "After creating index using options,the current index is:\n" ) ;
+   bson_print( &obj ) ;
+   bson_iterator_init( &it1, &obj ) ;
+   while( BSON_EOO != ( bson_iterator_next ( &it1 ) ) )
+   {
+      const CHAR *pKey = bson_iterator_key( &it1 ) ;
+      if ( 0 == strncmp( pKey, "IndexDef", sizeof("IndexDef") ) )
+      {
+         bson_iterator it ;
+         bson tmp_obj ;
+         bson_init( &tmp_obj ) ;
+         bson_iterator_subobject( &it1, &tmp_obj ) ;
+         bson_iterator_init( &it, &tmp_obj ) ;
+         while( BSON_EOO != ( bson_iterator_next ( &it ) ) )
+         {
+            const CHAR *pKey = bson_iterator_key( &it ) ;
+            if ( 0 == strncmp( pKey, "name", sizeof("name") ) )
+            {
+               pStr = bson_iterator_string( &it ) ;
+               ASSERT_EQ( 0, strncmp( pStr, pIndexName3, sizeof(pIndexName3) ) ) ;
             }
          }
          bson_destroy( &tmp_obj ) ;

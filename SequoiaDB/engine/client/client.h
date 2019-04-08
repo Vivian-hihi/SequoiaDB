@@ -111,9 +111,9 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 #define QUERY_PREPARE_MORE                0x00004000
 /** The sharding key in update rule is not filtered, when executing queryAndUpdate. */
 #define QUERY_KEEP_SHARDINGKEY_IN_UPDATE  0x00008000
-/** When the transaction is turned on and the transaction isolation level is "RC", 
+/** When the transaction is turned on and the transaction isolation level is "RC",
     the transaction lock will be released after the record is read by default.
-    However, when setting this flag, the transaction lock will not released until 
+    However, when setting this flag, the transaction lock will not released until
     the transaction is committed or rollback. When the transaction is turned off or
     the transaction isolation level is "RU", the flag does not work. */
 #define QUERY_FOR_UPDATE                  0x00010000
@@ -1186,7 +1186,7 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
         StrictDataMode : Using strict date mode in numeric operations or not
                          e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
         AutoIncrement: Assign attributes of an autoincrement field or batch autoincrement fields.
-                       e.g. {AutoIncrement:{Field:"a",MaxValue:2000}}, 
+                       e.g. {AutoIncrement:{Field:"a",MaxValue:2000}},
                        {AutoIncrement:[{Field:"a",MaxValue:2000},{Field:"a",MaxValue:4000}]}
     \note Can't alter attributes about split in partition collection; After altering a collection to
           be a partition collection, need to split this collection manually
@@ -1463,6 +1463,30 @@ SDB_EXPORT INT32 sdbCreateIndex1 ( sdbCollectionHandle cHandle,
                                    BOOLEAN isEnforced,
                                    INT32 sortBufferSize ) ;
 
+/** \fn INT32 sdbCreateIndex2 ( sdbCollectionHandle cHandle,
+                                bson *indexDef,
+                                const CHAR *pIndexName,
+                                bson *options )
+    \brief Create the index in current collection
+    \param [in] cHandle The collection handle
+    \param [in] indexDef The bson structure of index element, e.g. {name:1, age:-1}
+    \param [in] pIndexName The index name
+    \param [in] options The options are as below:
+
+        Unique:    Whether the index elements are unique or not
+        Enforced:  Whether the index is enforced unique.
+                   This element is meaningful when Unique is true
+        NotNull:   Any field of index key should exist and cannot be null when NotNull is true
+        SortBufferSize: The size of sort buffer used when creating index.
+                        Unit is MB. Zero means don't use sort buffer
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCreateIndex2 ( sdbCollectionHandle cHandle,
+                                   bson *indexDef,
+                                   const CHAR *pIndexName,
+                                   bson *options ) ;
+
 /** \fn INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
                               const CHAR *pIndexName,
                               sdbCursorHandle *handle )
@@ -1567,15 +1591,15 @@ SDB_EXPORT INT32 sdbInsert ( sdbCollectionHandle cHandle,
     \brief Insert a bson object into current collection.
     \param [in] cHandle The collection handle.
     \param [in] obj The bson object to be inserted, cannot be null.
-    \param [out] pId The object id of inserted bson object. Can be the 
+    \param [out] pId The object id of inserted bson object. Can be the
                      follow value:
          <ul>
-         <li> NULL: 
+         <li> NULL:
                when this argument is NULL.
-         <li> value of "_id" field: 
-               pId points the position of the record where 
-               the value of "_id" field is. Note that: the memory of pId 
-               will be invalidated when next insert/bulkInsert is 
+         <li> value of "_id" field:
+               pId points the position of the record where
+               the value of "_id" field is. Note that: the memory of pId
+               will be invalidated when next insert/bulkInsert is
                performed or the inserted bson object is destroyed.
     \retval SDB_OK Operation Success.
     \retval Others Operation Fail.
@@ -1585,7 +1609,7 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
 
 
 /** \fn INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
-                           bson *obj, INT32 flags, 
+                           bson *obj, INT32 flags,
                            bson *pResullt )
     \brief Insert a bson object into current collection.
     \param [in] cHandle The collection handle.
@@ -1595,35 +1619,35 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                       the follow values:
          <ul>
          <li>
-         0:                    while 0 is set(default to be 0), database 
-                               will stop inserting when the record hit 
+         0:                    while 0 is set(default to be 0), database
+                               will stop inserting when the record hit
                                index key duplicate error.
          <li>
-         FLG_INSERT_CONTONDUP: 
+         FLG_INSERT_CONTONDUP:
                                if the record hit index key duplicate
-                               error, database will skip them and go on 
+                               error, database will skip them and go on
                                inserting.
          <li>
-         FLG_INSERT_RETURN_OID: 
+         FLG_INSERT_RETURN_OID:
                                return the value of "_id" field in the record.
          <li>
          FLG_INSERT_REPLACEONDUP:
-                               if the record hit index key duplicate 
-                               error, database will replace the existing 
+                               if the record hit index key duplicate
+                               error, database will replace the existing
                                record by the inserting new record.
 
     \param [out] pResult The result of inserting. Can be NULL or a bson:
          <ul>
-         <li> NULL: 
+         <li> NULL:
                when this argument is NULL.
-         <li> empty bson: when this argument is not NULL but there is no 
+         <li> empty bson: when this argument is not NULL but there is no
                           result return.
-         <li> bson which contains the "_id" field: 
-               when flag "FLG_INSERT_RETURN_OID" is set, return the 
-               value of "_id" field of the inserted record. 
+         <li> bson which contains the "_id" field:
+               when flag "FLG_INSERT_RETURN_OID" is set, return the
+               value of "_id" field of the inserted record.
                e.g.: { "_id": { "$oid": "5c456e8eb17ab30cfbf1d5d1" } }
          </ul>
-                                
+
     \retval SDB_OK Operation Success.
     \retval Others Operation Fail.
 */
@@ -1639,19 +1663,19 @@ SDB_EXPORT INT32 sdbInsert2 ( sdbCollectionHandle cHandle,
                       the follow values:
          <ul>
          <li>
-         0:                    while 0 is set(default to be 0), database 
-                               will stop inserting when the record hit 
+         0:                    while 0 is set(default to be 0), database
+                               will stop inserting when the record hit
                                index key duplicate error.
          <li>
-         FLG_INSERT_CONTONDUP: 
+         FLG_INSERT_CONTONDUP:
                                if the record hit index key duplicate
-                               error, database will skip them and go on 
+                               error, database will skip them and go on
                                inserting.
          <li>
          FLG_INSERT_REPLACEONDUP:
-                               if the record hit index key duplicate 
-                               error, database will replace the existing 
-                               record by the inserting new record and then 
+                               if the record hit index key duplicate
+                               error, database will replace the existing
+                               record by the inserting new record and then
                                go on inserting.
 
     \param [in] objs The array of bson objects to be inserted, cannot be null.
@@ -1690,7 +1714,7 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                  SINT32 flags, bson **objs, SINT32 num ) ;
 
 /** \fn INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
-                                  SINT32 flags, bson **objs, 
+                                  SINT32 flags, bson **objs,
                                   SINT32 num,
                                   bson *pResult )
     \brief Insert a bulk of bson objects into current collection.
@@ -1700,42 +1724,42 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                       the follow values:
          <ul>
          <li>
-         0:                    while 0 is set(default to be 0), database 
-                               will stop inserting when the record hit 
+         0:                    while 0 is set(default to be 0), database
+                               will stop inserting when the record hit
                                index key duplicate error.
          <li>
-         FLG_INSERT_CONTONDUP: 
+         FLG_INSERT_CONTONDUP:
                                if the record hit index key duplicate
-                               error, database will skip them and go on 
+                               error, database will skip them and go on
                                inserting.
          <li>
-         FLG_INSERT_RETURN_OID: 
+         FLG_INSERT_RETURN_OID:
                                return the value of "_id" field in the records.
          <li>
          FLG_INSERT_REPLACEONDUP:
-                               if the record hit index key duplicate 
-                               error, database will replace the existing 
-                               record by the inserting new record and then 
+                               if the record hit index key duplicate
+                               error, database will replace the existing
+                               record by the inserting new record and then
                                go on inserting.
 
     \param [in] objs The array of bson objects to be inserted, cannot be null.
     \param [in] num The number of inserted bson objects.
     \param [out] pResult The result of inserting. Can be NULL or a bson:
          <ul>
-         <li> NULL: 
+         <li> NULL:
                when this argument is NULL.
-         <li> empty bson: when this argument is not NULL but there is no 
+         <li> empty bson: when this argument is not NULL but there is no
                           result return.
-         <li> bson which contains the "_id" field: 
-               when flag "FLG_INSERT_RETURN_OID" is set, return all the 
-               values of "_id" field in a bson array. 
-               e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" }, 
+         <li> bson which contains the "_id" field:
+               when flag "FLG_INSERT_RETURN_OID" is set, return all the
+               values of "_id" field in a bson array.
+               e.g.: { "_id": [ { "$oid": "5c456e8eb17ab30cfbf1d5d1" },
                                 { "$oid": "5c456e8eb17ab30cfbf1d5d2" } ] }
     \retval SDB_OK Operation Success.
     \retval Others Operation Fail.
 */
 SDB_EXPORT INT32 sdbBulkInsert2 ( sdbCollectionHandle cHandle,
-                                  SINT32 flags, bson **objs, 
+                                  SINT32 flags, bson **objs,
                                   SINT32 num,
                                   bson *pResult ) ;
 
@@ -2712,14 +2736,14 @@ SDB_EXPORT INT32 sdbListGroupsInDomain( sdbDomainHandle cHandle,
                         About the parameter 'options', please reference to the official
                         website(www.sequoiadb.com) and then search "位置命令参数"
                         for more details. Some of its optional parameters are as bellow:
-                        
+
                         <ul>
                            <li>Global(Bool)                      : execute this command in global or not. While 'options' is null, it's equals to {Glocal: true}.
                            <li>GroupID(INT32 or INT32 Array)     : specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
                            <li>GroupName(String or String Array) : specified one or several groups by their group names. e.g. {GroupID:"group1"}.
                            <li>...
                         </ul>
-    
+
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -2883,7 +2907,7 @@ SDB_EXPORT INT32 sdbGetLobModificationTime( sdbLobHandle lobHandle,
 /** \fn BOOLEAN sdbLobIsEof( sdbLobHandle lobHandle )
     \brief Check whether current offset has reached to the max size of current lob.
     \param [in] lobHandle The large object handle
-    \retval Return true if yes while false for not, 
+    \retval Return true if yes while false for not,
             while the input handle is invalid, return true.
 */
 SDB_EXPORT BOOLEAN sdbLobIsEof( sdbLobHandle lobHandle ) ;
@@ -2969,7 +2993,7 @@ SDB_EXPORT INT32 sdbTruncateCollection( sdbConnectionHandle cHandle,
                            Can be the follow options:
          <ul>
          <li>KeepData: Whether to keep the original data of the
-                       detached node. This option has no default 
+                       detached node. This option has no default
                        value. User should specify its value explicitly.
          <li>Enforced: Whether to detach the node forcibly, default
                        to be false.
@@ -2992,8 +3016,8 @@ SDB_EXPORT INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
     \param [in] options The options of attach. Can not be null or empty.
                         Can be the follow options:
         <ul>
-        <li>KeepData : Whether to keep the original data of the new 
-                       node. This option has no default value. User 
+        <li>KeepData : Whether to keep the original data of the new
+                       node. This option has no default value. User
                        should specify its value explicitly.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -3467,7 +3491,7 @@ SDB_EXPORT INT32 sdbAnalyze( sdbConnectionHandle cHandle,
            The error object will not be clean up automatically until the next
            error object cover it.
     \param [in] cHandle The handle of current connection.
-    \param [out] errObj The return error bson object. 
+    \param [out] errObj The return error bson object.
                         It contains the follow fields:
                          <ul>
                          <li>
@@ -3477,11 +3501,11 @@ SDB_EXPORT INT32 sdbAnalyze( sdbConnectionHandle cHandle,
                          <li>
                          detail:      the error detail.
                          </ul>
-                 Actrally, the follow extended fields may return from the 
+                 Actrally, the follow extended fields may return from the
                  database depend on the operations:
                          <ul>
                          <li>
-                         ErrNodes:    More detailed error message.  
+                         ErrNodes:    More detailed error message.
                          </ul>
     \retval SDB_OK Get error object Success.
     \retval SDB_DMS_EOC There is no error object.
