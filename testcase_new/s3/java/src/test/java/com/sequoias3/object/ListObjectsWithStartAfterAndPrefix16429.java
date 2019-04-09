@@ -29,13 +29,13 @@ import com.sequoias3.testcommon.TestTools;
 public class ListObjectsWithStartAfterAndPrefix16429 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket16429";
-	private String key = "/aa//bb/object16429.png";
+	private String key = "&aa&&bb&object16429.png";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 2;
 	private int objectNums = 1500;
 	private File localPath = null;
 	private String filePath = null;
-	private String prefix = "/dir_1/prefix/test16429";;
+	private String prefix = "&dir_1&prefix&test16429";;
 
 	@SuppressWarnings("deprecation")
 	@BeforeClass

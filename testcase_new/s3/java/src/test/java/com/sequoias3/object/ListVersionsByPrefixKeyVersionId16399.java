@@ -30,7 +30,7 @@ import java.util.UUID;
 public class ListVersionsByPrefixKeyVersionId16399 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16399";
-    private String[] objectNames = {"dir16399/subdir16399A","dir16399/dir16399A/dir16399AB","dir16399A","dir16399B"};
+    private String[] objectNames = {"dir16399%subdir16399A","dir16399%dir16399A%dir16399AB","dir16399A","dir16399B"};
     private List<String> sortObjectNames = new ArrayList<String>();
     private AmazonS3 s3Client = null;
     private int versionNum = 3;

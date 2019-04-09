@@ -36,7 +36,7 @@ public class ListVersionsWithDiffConds16498 extends S3TestBase {
 	private String roleName = "normal";
 	private String[] acessKeys = null;
 	private String bucketName = "bucket16498";
-	private String key = "/dir-1/bb/object16498";
+	private String key = "%dir-1%bb%object16498";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 200;
 	private int updateSize = 1024 * 100;

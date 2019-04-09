@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoiadb.exception.BaseException;
@@ -34,7 +35,8 @@ public class UpdateSameObjectWithVersion16497 extends S3TestBase {
 	private String userName = "user16497";
 	private String bucketName = "bucket16497";
 	private String content = "content16497";
-	private String keyName = "key16497";
+	//private String keyName = "key16490";
+	private String keyName = "keytest19497";
 	private String roleName = "normal";
 	private List<String> expEtags = new ArrayList<>();
 	private String[] acessKeys = null;
@@ -56,8 +58,10 @@ public class UpdateSameObjectWithVersion16497 extends S3TestBase {
 		List<UpdateObjectThread> updateObjects = new ArrayList<>();		
 		for( int i = 0; i < defaultNums ; i++){
 			String currContent = content + "." + ObjectUtils.getRandomString(i);	
-			updateObjects.add( new UpdateObjectThread(currContent));
+			System.out.println("---begin = "+i);
+			updateObjects.add( new UpdateObjectThread(currContent,i));
 			expEtags.add(TestTools.getMD5(currContent.getBytes()));
+			System.out.println("---end = "+i);
 		}
 		
 		for( UpdateObjectThread updateObject : updateObjects ){
@@ -89,15 +93,20 @@ public class UpdateSameObjectWithVersion16497 extends S3TestBase {
 	
 	private class UpdateObjectThread extends S3ThreadBase{
 		String content;	
-		public UpdateObjectThread ( String content ){
+		int i;
+		public UpdateObjectThread ( String content,int i ){
 			this.content = content;	
+			this.i = i;
 		}
 		@Override
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLib.buildS3Client(acessKeys[0], acessKeys[1]);	
-			try{
-				s3Client.putObject(bucketName, keyName, content);
+			try{	
+				System.out.println("---begin:"+i);
+				PutObjectResult result = s3Client.putObject(bucketName, keyName, content);				
+				System.out.println("---end  i:"+i+",version:"+result.getVersionId()+ " etag:"+result.getETag());
 			}finally{
+				System.out.println("----end put i="+i);
 				if (s3Client != null) {
 					s3Client.shutdown();
 				}

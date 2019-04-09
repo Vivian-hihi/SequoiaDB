@@ -29,7 +29,7 @@ import com.sequoias3.testcommon.TestTools;
 public class ListObjectsWithMaxkeys16426 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket16426";
-	private String key = "/aa//bb/object16426.png";
+	private String key = "%aa%%bb%object16426.png";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 100;
 	private int objectNums = 200;

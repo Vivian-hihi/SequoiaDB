@@ -26,7 +26,7 @@ import java.util.List;
 public class DeleteAndListVersions16495 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket16495";
-	private String keyName = "aa/bb/object16495";
+	private String keyName = "aa%bb%object16495";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 1024;
 	private File localPath = null;

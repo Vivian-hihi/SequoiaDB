@@ -42,11 +42,11 @@ public class GetObjectVersionList16389 extends S3TestBase {
 		
 		//put multiple objects
 		for(int i = 0 ; i < objectTotalNum ; i++){
-			keyName[i] = "/dir"+i+"/16389";
+			keyName[i] = "_dir" + i + "_16389";
 			s3Client.putObject(bucketName, keyName[i], "object_file16389");
 			expVersionsKeyNameList.add(keyName[i]);
 		}
-		//delete object key = "/dir1/16389" and "/dir4/16389"
+		//delete object key = "dir1_16389" and "dir4_16389"
 		s3Client.deleteObject(bucketName, keyName[1]);
 		expDeleteMarKersList.add(keyName[1]);
 		
@@ -55,7 +55,7 @@ public class GetObjectVersionList16389 extends S3TestBase {
 		
 		//set bucket version status is Suspended
 		CommLib.setBucketVersioning(s3Client, bucketName, "Suspended");
-		//delete object key = "/dir0/16389"
+		//delete object key = "dir0_16389"
 		s3Client.deleteObject(bucketName, keyName[0]);
 		expDeleteMarKersList.add(keyName[0]);
 	}

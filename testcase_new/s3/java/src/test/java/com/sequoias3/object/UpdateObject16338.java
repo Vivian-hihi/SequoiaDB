@@ -25,7 +25,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class UpdateObject16338 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String keyName = "aa/bb/object16338";
+	private String keyName = "aa%bb%object16338";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 50;
 	private int updateSize = 1024 * 200;

@@ -22,7 +22,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class DeleteObject16444 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String key = "//aa/%maa/bb*中文/object16444";
+	private String key = "&&aa&%maa&bb*中文&object16444";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 300;
 	private int updateSize = 1024 * 20;

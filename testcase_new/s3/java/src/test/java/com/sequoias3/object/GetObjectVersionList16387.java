@@ -27,8 +27,8 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 public class GetObjectVersionList16387 extends S3TestBase {
 	private String bucketName = "bucket16387";
-	private String keyName = "/dir/dir";
-	private String repeatedKeyName = keyName+"1/16387";
+	private String keyName = "dir";
+	private String repeatedKeyName = keyName + "_1_16387";
 	private List<String> expresultList = new ArrayList<String>();
 	private int objectTotalNum = 5;
 	private String latestVersionId = null;
@@ -44,13 +44,12 @@ public class GetObjectVersionList16387 extends S3TestBase {
 		
 		//put multiple objects
 		for(int i = 0 ; i < objectTotalNum ; i++){
-			String currentKeyName = keyName+i+"/16387";
+			String currentKeyName = keyName + i + "_16387";
 			s3Client.putObject(bucketName, currentKeyName, "object_file16387");
 			expresultList.add(currentKeyName);
 		}
 		
-		//put object key = "/dir/dir1/16387" twice again
-		
+		//put object key = "dir_1_16387" twice again		
 		s3Client.putObject(bucketName, repeatedKeyName, "object_file16387");
 		expresultList.add(repeatedKeyName);
 		PutObjectResult result = s3Client.putObject(bucketName, repeatedKeyName, "object_file16387");

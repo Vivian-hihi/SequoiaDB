@@ -28,7 +28,7 @@ import com.sequoias3.testcommon.TestTools;
 public class ListObjects16418 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket16418";
-	private String key = "aa/bb/object16418";
+	private String key = "aa*bb*object16418";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 2;
 	private int updateSize = 1024 * 10;

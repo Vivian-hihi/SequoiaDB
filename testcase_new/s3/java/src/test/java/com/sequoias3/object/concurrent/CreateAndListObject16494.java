@@ -27,7 +27,7 @@ import java.util.List;
 public class CreateAndListObject16494 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket16494";
-	private String keyName = "aa/bb/object16494";
+	private String keyName = "aa%bb%object16494";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 1024;
 	private File localPath = null;

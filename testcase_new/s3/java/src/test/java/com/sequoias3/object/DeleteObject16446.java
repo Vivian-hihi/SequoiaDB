@@ -25,7 +25,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 public class DeleteObject16446 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket16446";
-	private String key = "/aa/%maa/bb*中文/objectOfdeleteTag16446";
+	private String key = "&aa&%maa&bb*中文&objectOfdeleteTag16446";
 	private AmazonS3 s3Client = null;
 
 	@SuppressWarnings("deprecation")

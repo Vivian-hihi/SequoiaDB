@@ -29,13 +29,13 @@ import com.sequoias3.testcommon.TestTools;
 public class ListObjectsWithDelimiter16422 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket16422";
-	private String key = "/aa/bb/object16422";
+	private String key = "%aa%bb%object16422";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 100;
 	private int matchObjectNums = 40;
 	private File localPath = null;
 	private String filePath = null;
-	private String delimiter = "/aa/";;
+	private String delimiter = "%aa%";;
 
 	@SuppressWarnings("deprecation")
 	@BeforeClass

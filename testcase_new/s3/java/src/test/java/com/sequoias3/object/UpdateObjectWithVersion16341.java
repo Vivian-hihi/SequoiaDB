@@ -35,7 +35,7 @@ public class UpdateObjectWithVersion16341 extends S3TestBase {
 	}
 
 	private boolean runSuccess = false;
-	private String key = "aa/bb/object16341";
+	private String key = "aa%bb%object16341";
 	private String bucketName = "bucket16341";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 100;

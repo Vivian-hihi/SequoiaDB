@@ -28,7 +28,7 @@ import java.util.UUID;
 public class ListVersionsByNextKeyMaxKey16414 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16414";
-    private String[] objectNames = {"16414/123", "16414/456", "16414/789", "16414/ABC", "16414/DEF"};
+    private String[] objectNames = {"16414%123", "16414%456", "16414%789", "16414%ABC", "16414%DEF"};
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
 

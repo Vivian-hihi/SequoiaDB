@@ -25,7 +25,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 public class DeleteObject16445 extends S3TestBase{
 	private boolean runSuccess = false;		
 	private String bucketName = "bucket16445";
-	private String key = "//aa/%maa/bb*中文/object16445";	
+	private String key = "$$aa$%maa$bb*中文$object16445";	
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 500;	
 	private File localPath = null;

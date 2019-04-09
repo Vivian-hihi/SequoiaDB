@@ -33,7 +33,7 @@ public class ListVersionsByMaxKeys16396 extends S3TestBase {
     private boolean runSuccess3 = false;
     private boolean runSuccess4 = false;
     private String bucketName = "bucket16396";
-    private String[] objectNames = {"dir16396/dir16396A/dir16396AB","dir16396/subdir16396A","dir16396A","dir16396B"};
+    private String[] objectNames = {"dir16396%dir16396A%dir16396AB","dir16396%subdir16396A","dir16396A","dir16396B"};
     private AmazonS3 s3Client = null;
     private int fileSize = 3;
     private File localPath = null;

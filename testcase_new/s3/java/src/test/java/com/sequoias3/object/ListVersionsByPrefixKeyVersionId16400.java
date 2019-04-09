@@ -28,8 +28,7 @@ public class ListVersionsByPrefixKeyVersionId16400 extends S3TestBase {
     private boolean runSuccess1 = false;
     private boolean runSuccess2 = false;
     private String bucketName = "bucket16400";
-    private String[] objectNames = {"dir16400/dir16400A/dir16400AB","dir16400/subdir16400A","dirsub16400A","dirsub16400B"};
-    // private String[] objectNames = {"dir16400A","dir16400B","dir16400C","dir16400D"};
+    private String[] objectNames = {"dir16400$dir16400A$dir16400AB","dir16400$subdir16400A","dirsub16400A","dirsub16400B"};
     private List<String> objectNameList = new ArrayList<String>();
     private AmazonS3 s3Client = null;
     private int versionNum = 500;

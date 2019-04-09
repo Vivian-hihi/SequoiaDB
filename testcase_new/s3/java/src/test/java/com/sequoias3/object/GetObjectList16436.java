@@ -26,7 +26,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class GetObjectList16436 extends S3TestBase {
 	private String bucketName = "bucket16436";
-	private String keyName = "/dir/dir";
+	private String keyName = "%%dir";
 	private List<String> keyNameList = new ArrayList<String>(10);
 	private int objectTotalNum = 10;
 	private AmazonS3 s3Client = null;
@@ -40,7 +40,7 @@ public class GetObjectList16436 extends S3TestBase {
 
 		// put multiple objects
 		for (int i = 0; i < objectTotalNum; i++) {
-			String currentKeyName = keyName + i + "/16436";
+			String currentKeyName = keyName + i + "_16436";
 			s3Client.putObject(bucketName, currentKeyName, "object_file16436");
 			keyNameList.add(currentKeyName);
 		}
@@ -50,7 +50,7 @@ public class GetObjectList16436 extends S3TestBase {
 	public void testGetObjectList() throws Exception {
 		int maxKeys = 2;
 		//startAfter match the first record
-		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withStartAfter("/dir/dir0/16436").withMaxKeys(maxKeys);
+		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withStartAfter("%%dir0_16436").withMaxKeys(maxKeys);
 		List<S3ObjectSummary> objectSummaries = new ArrayList<S3ObjectSummary>();
 		ListObjectsV2Result result; 
 		//currentTurn is query times
@@ -76,7 +76,7 @@ public class GetObjectList16436 extends S3TestBase {
 		//startAfter match the last record
 		maxKeys = 5;
 		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName)
-				.withStartAfter("/dir/dir"+ (objectTotalNum-1) +"/16436").withMaxKeys(maxKeys);
+				.withStartAfter("%%dir"+ (objectTotalNum-1) +"_16436").withMaxKeys(maxKeys);
 		ListObjectsV2Result result2 = s3Client.listObjectsV2(req2);
 		List<S3ObjectSummary> objectSummaries2 = result2.getObjectSummaries();
 		Assert.assertEquals(objectSummaries2.size(), 0, "The number of returned results is wrong");

@@ -26,7 +26,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class DeleteSameObjectWithVersionId16502 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String key = "//aa/%maa/bb*中文/object16502";
+	private String key = "aa%maa%bb*中文/object16502";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 20;
 	private int updateSize = 1024 * 1024 * 2;

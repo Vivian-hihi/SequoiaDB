@@ -27,7 +27,7 @@ import com.sequoias3.testcommon.TestTools;
 public class ListObjectsWithStartAfterAndPrefix16427 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket16427";
-	private String key = "/aa//bb/object16427.png";
+	private String key = "*aa**bb*object16427.png";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 20;
 	private int objectNums = 10;

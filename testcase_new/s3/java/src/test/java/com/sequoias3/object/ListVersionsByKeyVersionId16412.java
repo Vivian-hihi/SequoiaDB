@@ -30,7 +30,7 @@ import java.util.UUID;
 public class ListVersionsByKeyVersionId16412 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket16412";
-    private String[] objectNames = {"aaa/16412", "bbb/16412", "ccc/16412"};
+    private String[] objectNames = {"aaa%16412", "bbb%16412", "ccc%16412"};
     private List<PutObjectResult> objectList = new ArrayList<PutObjectResult>();
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
@@ -76,8 +76,8 @@ public class ListVersionsByKeyVersionId16412 extends S3TestBase {
             expMap.add(objectNames[objectNames.length-1], String.valueOf(i));
         }
         //check
-        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
-        ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),new LinkedMultiValueMap<String, String>());
+        Assert.assertEquals(vsList1.isTruncated(),false,"vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList1,new ArrayList<String>(),expMap);
         runSuccess = true;
     }
 

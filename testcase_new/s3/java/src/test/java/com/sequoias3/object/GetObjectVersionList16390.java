@@ -29,7 +29,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class GetObjectVersionList16390 extends S3TestBase {
 	private String bucketName = "bucket16390";
-	private String[] keyName = {"dir1/dir2/test1","dir1/dir2/test2","test3","test4"};
+	private String[] keyName = {"dir1%dir2%test1_16390","dir1%dir2%test2_16390","test3_16390","test4_16390"};
 	private String prefix = "dir1";
 	private List<String> expEtagList = new ArrayList<String>();
 	private String content = "object16390";

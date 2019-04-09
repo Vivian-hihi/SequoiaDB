@@ -26,7 +26,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class CreateObject16335 extends S3TestBase {
 	private boolean runSuccess = false;
-	private String keyName = "//aa/%maa/bb/object16335";
+	private String keyName = "aa%maa%bb%object16335";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 1024 * 300;
 	private File localPath = null;

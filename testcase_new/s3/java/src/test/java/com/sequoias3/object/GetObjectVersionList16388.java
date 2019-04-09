@@ -42,16 +42,16 @@ public class GetObjectVersionList16388 extends S3TestBase {
 		
 		//put multiple objects
 		for(int i = 0 ; i < objectTotalNum ; i++){
-			keyName[i] = "/dir"+i+"/16388";
+			keyName[i] = "dir" + i + "_16388";
 			s3Client.putObject(bucketName, keyName[i], "object_file16388");
 			expVersionsKeyNameList.add(keyName[i]);
 		}
 		
-		//put object key = "/dir/dir1/16388" again
+		//put object key = "dir1_16388" again
 		s3Client.putObject(bucketName, keyName[1], "object_file16388");
 		expVersionsKeyNameList.add(keyName[1]);
 		
-		//delete object key = "/dir/dir1/16388" and "/dir/dir4/16388"
+		//delete object key = "dir1_16388" and "dir4_16388"
 		s3Client.deleteObject(bucketName, keyName[1]);
 		expDeleteMarKersList.add(keyName[1]);
 		

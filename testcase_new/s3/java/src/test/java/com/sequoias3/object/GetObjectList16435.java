@@ -26,7 +26,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
  */
 public class GetObjectList16435 extends S3TestBase {
 	private String bucketName = "bucket16435";
-	private String keyName = "/dir/dir";
+	private String keyName = "dir%test16435";
 	private List<String> expresultList = new ArrayList<String>();
 	private int objectNum = 25;
 	private int anotherObjectNum = 4;
@@ -43,14 +43,14 @@ public class GetObjectList16435 extends S3TestBase {
 		
 		//put multiple objects
 		for(int i = 0 ; i < objectNum ; i++){
-			String currentKeyName = keyName+i+"/16435";
+			String currentKeyName = keyName + "_" + i ;
 			s3Client.putObject(bucketName, currentKeyName, "object_file16435"+"."+i);
 			expresultList.add(currentKeyName);
 		}
 		//put another objects
 		for(int i = 0 ; i < anotherObjectNum ; i++){
-			String currentKeyName = "test"+i;
-			s3Client.putObject(bucketName, "test"+i, "object_file16435_"+i);
+			String currentKeyName = "test16435" + "_" + i;
+			s3Client.putObject(bucketName, currentKeyName, "object_file16435_"+i);
 			expresultList.add(currentKeyName);
 		}
 	}

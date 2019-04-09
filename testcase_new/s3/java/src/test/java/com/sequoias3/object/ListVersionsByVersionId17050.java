@@ -28,7 +28,7 @@ import java.util.UUID;
 public class ListVersionsByVersionId17050 extends S3TestBase {
     private boolean runSuccess = false;
     private String bucketName = "bucket17050";
-    private String[] objectNames = {"17050//123", "17050//345", "17050//567", "17050//9AB", "17050//CDE"};
+    private String[] objectNames = {"17050%%123", "17050%%345", "17050%%567", "17050%%9AB", "17050%%CDE"};
     private AmazonS3 s3Client = null;
     private int versionNum = 3;
 

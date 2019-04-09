@@ -24,7 +24,7 @@ import com.sequoias3.testcommon.S3TestBase;
  */
 public class GetObjectVersionList16391 extends S3TestBase {
 	private String bucketName = "bucket16391";
-	private String[] keyName = {"dir1/test1","dir1/dir2/test2","test3","test4"};
+	private String[] keyName = {"dir1%test1","dir1%dir2%test2","test3","test4"};
 	private String prefix = "dir2";
 	private String file = "object16391";
 	private AmazonS3 s3Client = null;
