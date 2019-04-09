@@ -3,13 +3,13 @@ package com.sequoiadb.transaction.rc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -19,6 +19,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -131,8 +132,8 @@ public class Transaction18046 extends SdbTestBase {
             queryThread2.start();
 
             // 先判断表扫描和索引扫描记录
-            Assert.assertTrue(queryThread.isSuccess());
-            Assert.assertTrue(queryThread2.isSuccess());
+            Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
+            Assert.assertTrue(queryThread2.isSuccess(), queryThread2.getErrorMsg());
             db4.commit();
             db5.commit();
 
@@ -162,14 +163,12 @@ public class Transaction18046 extends SdbTestBase {
                 if (updateFlag && deleteFlag) {
                     break;
                 }
-                if (doTimes == 120) {
-                    throw new SkipException("Transactions deadlocks skip this testcase");
-                }
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                Assert.assertNotEquals(doTimes, 120);
             }
 
             // 提交事务
@@ -214,7 +213,7 @@ public class Transaction18046 extends SdbTestBase {
         List<BSONObject> records = new ArrayList<BSONObject>();
         for (int i = 0; i <= 40000; i++) {
             if (i < 20000) {
-                a = 100;
+                a = i % 1000;
             } else {
                 a = i;
             }
@@ -222,9 +221,26 @@ public class Transaction18046 extends SdbTestBase {
             records.add(object);
         }
         expList.clear();
-        expList.addAll(records);
         Collections.shuffle(records);
         cl.insert(records);
+        expList.addAll(records);
+        
+        Collections.sort(expList, new Comparator<BSONObject>() {
+
+            @Override
+            public int compare(BSONObject obj1, BSONObject obj2) {
+                if((int)obj1.get("a") > (int)obj2.get("a")) {
+                    return 1;
+                }
+                if ((int)obj1.get("a") < (int)obj2.get("a")) {
+                    return -1;
+                }
+                if ((int)obj1.get("a") == (int)obj2.get("a")) {
+                    return -((int)obj1.get("b") - (int)obj2.get("b"));
+                }
+                return 0;
+            }
+        });
     }
 
     private Integer[] getAllRandArray() {
@@ -263,8 +279,13 @@ public class Transaction18046 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            cl2.update("{$and:[{b:{$gt:35000}},{b:{$lt:45001}}]}", "{$inc:{a:10, b:10}}", "{'':'textIndex18046'}");
-            latch.countDown();
+            try {
+                cl2.update("{$and:[{b:{$gt:35000}},{b:{$lt:45001}}]}", "{$inc:{a:10, b:10}}", "{'':'textIndex18046'}");                
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -13);
+            }finally {
+                latch.countDown();                
+            }
         }
     }
 
@@ -273,8 +294,13 @@ public class Transaction18046 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            cl3.delete("{$and:[{b:{$gt:32000}},{b:{$lt:42001}}]}", "{'':'textIndex18046'}");
-            latch.countDown();
+            try {
+                cl3.delete("{$and:[{b:{$gt:32000}},{b:{$lt:42001}}]}", "{'':'textIndex18046'}");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -13);
+            }finally {
+                latch.countDown();                
+            }
         }
     }
 
