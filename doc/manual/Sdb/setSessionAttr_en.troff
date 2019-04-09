@@ -60,6 +60,16 @@ Set session attributes.
 .br
               "PreferedInstanceMode : "random"
 .br
+       \fBPreferedStrict\fR
+.br
+              Specify whether the node selection is a strict
+              mode, and when it is a strict mode, the node
+              can only be selected from the specified IDs by
+              "PreferedInstance".
+              Default is FALSE.
+.br
+              "PreferedStrict : "true"
+.br
        \fBTimeout\fR
 .br
               The timeout (in ms) for operations in the current
