@@ -52,7 +52,9 @@ public class TestResidualData extends S3TestBase{
             List<String> clNameList = cs.getCollectionNames();
             for(String csclName : clNameList){
                 String clname = csclName.substring(cs.getName().length()+1);
-                clList.add(cs.getCollection(clname));
+                if(!clname.equals("S3_IDGenerator")){
+                	clList.add(cs.getCollection(clname));
+                }
             }
             printResidualMetaData(cs, clList);
         }
