@@ -115,6 +115,8 @@ public class Transaction17757B extends SdbTestBase {
             Assert.assertTrue(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
     
             // 事务3读
+            // 该查询不进行正序索引 逆序查询,反之亦然.原因是因为正序索引进行更新操作时是正向扫描记录,加锁顺序是1 2 3
+            // 而此时进行逆序查询,加锁是逆向加锁,加锁顺序是3 2 1,所以读取的记录会有不确定性,故不做测试
             TransactionQueryThread tableScanThread1 = new TransactionQueryThread(cl3, orderBy);
             tableScanThread1.start();
             Assert.assertTrue(tableScanThread1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
@@ -137,17 +139,29 @@ public class Transaction17757B extends SdbTestBase {
     
             // 非事务读
             expList.clear();
-            cursor = cl.query(null, null, orderBy, hint);
+            cursor = cl.query(null, null, "{'a': 1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
+            // 非事务逆序读
+            cursor = cl.query(null, null, "{'a': -1}", hint);
+            actList = TransUtils.getReadActList(cursor);
+            Assert.assertEquals(actList, expList);
+            actList.clear();
+            
             // 事务2读
-            cursor = cl2.query(null, null, orderBy, hint);
+            cursor = cl2.query(null, null, "{'a': 1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
+            // 事务2逆序读
+            cursor = cl2.query(null, null, "{'a': -1}", hint);
+            actList = TransUtils.getReadActList(cursor);
+            Assert.assertEquals(actList, expList);
+            actList.clear();
+            
             // 提交事务2
             db2.commit();
             Assert.assertTrue(tableScanThread1.isSuccess(), tableScanThread1.getErrorMsg());
@@ -163,17 +177,29 @@ public class Transaction17757B extends SdbTestBase {
             }
     
             // 非事务读
-            cursor = cl.query(null, null, orderBy, hint);
+            cursor = cl.query(null, null, "{'a': 1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
+            // 非事务逆序读
+            cursor = cl.query(null, null, "{'a': -1}", hint);
+            actList = TransUtils.getReadActList(cursor);
+            Assert.assertEquals(actList, expList);
+            actList.clear();
+            
             // 事务3读
-            cursor = cl3.query(null, null, orderBy, hint);
+            cursor = cl3.query(null, null, "{'a': 1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
     
+            // 事务3逆序读
+            cursor = cl3.query(null, null, "{'a': -1}", hint);
+            actList = TransUtils.getReadActList(cursor);
+            Assert.assertEquals(actList, expList);
+            actList.clear();
+            
             // 提交事务3
             db3.commit();
             

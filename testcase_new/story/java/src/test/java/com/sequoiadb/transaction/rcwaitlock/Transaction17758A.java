@@ -79,7 +79,7 @@ public class Transaction17758A extends SdbTestBase {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(enabled=false)
+    @Test
     public void test() {
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -131,7 +131,6 @@ public class Transaction17758A extends SdbTestBase {
             actList.clear();
 
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             Assert.fail();
         }
