@@ -65,6 +65,7 @@
       </groups>
       <packages>
          <package name="com.sequoiadb.transaction.rs" />
+         <package name="com.sequoiadb.transaction.rcwaitlock" />
       </packages>
    </test>
    
