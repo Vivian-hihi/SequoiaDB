@@ -34,7 +34,7 @@ function main()
    }
    
    // create rg and node
-   var dbPath = commGetInstallPath() + "/database/data/" ;
+   var dbPath = commGetInstallPath() + "/database/data/" ;//TODO: 新增节点要统一放到 RSRVNODEDIR 目录
    createGroupAndNode( db, hostName, groupName, svcName, dbPath );
    
    //test update config
