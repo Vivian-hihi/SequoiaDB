@@ -962,6 +962,29 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_PREFINST_STRICT</name>
+      <long>preferedstrict</long>
+      <description>
+         <en>Specify whether the node selection is a strict mode, and when it is a strict mode, the node can only be selected from the specified by preferedinstance.</en>
+         <cn>指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferedinstance 指定中选取。</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon new connection</en>
+         <cn>新连接生效</cn>
+      </reloadstrategy>
+      <detail>
+         <en>Specify whether the node selection is a strict mode, and when it is a strict mode, the node can only be selected from the specified by preferedinstance.</en>
+         <cn>指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferedinstance 指定中选取。</cn>
+      </detail>
+      <typeofweb>boolean</typeofweb>
+      <default>false</default>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_INSTANCE_ID</name>
       <long>instanceid</long>
       <description>
@@ -1804,6 +1827,10 @@
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon next transaction</en>
+         <cn>下一次事务中生效</cn>
+      </reloadstrategy>
       <detail>
          <en>1. Specify the isolation level of transaction. Value is 0(RU), 1(RC), 2(RS). Default is 0.<fig></fig>
            2. Value enumeration:<fig></fig>
@@ -1835,6 +1862,10 @@
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon next transaction</en>
+         <cn>下一次事务中生效</cn>
+      </reloadstrategy>
       <detail>
          <en>1. Specify the record lock wait behavior within transaction under RC isolation level. Value is TRUE/FALSE. Default is FALSE. Should be used in conjunction with transisolation<fig></fig>
            2. Value enumeration:<fig></fig>
@@ -1862,6 +1893,10 @@
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon next transaction</en>
+         <cn>下一次事务中生效</cn>
+      </reloadstrategy>
       <detail>
          <en>Whether enable automatic transaction or not. Default is FALSE. Take effect when transaction is on.</en>
          <cn>是否开启自动事务提交，默认是FALSE。只有当 transaction 开启时取值才会生效。</cn>
@@ -1881,6 +1916,10 @@
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon next transaction</en>
+         <cn>下一次事务中生效</cn>
+      </reloadstrategy>
       <detail>
          <en>1. Whether enable automatically rollback when transaction operation failed or not. Default is TRUE. Take effect when transaction is on.</en>
          <cn>1.事务操作失败是否自动回滚该事务。默认为TRUE。只有当 transaction 开启时取值才会生效。</cn>
@@ -1900,6 +1939,10 @@
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon next transaction</en>
+         <cn>下一次事务中生效</cn>
+      </reloadstrategy>
       <detail>
          <en>Whether use rollback segment or not in transaction. Default is TRUE. Take effect when transaction is on.</en>
          <cn>事务操作是否使用回滚段。默认为TRUE。只有当 transaction 开启时取值才会有效。</cn>
