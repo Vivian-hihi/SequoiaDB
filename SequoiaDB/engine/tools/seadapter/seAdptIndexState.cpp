@@ -72,6 +72,7 @@ namespace seadapter
    END_OBJ_MSG_MAP()
    _seAdptIndexerState::_seAdptIndexerState( _seAdptIndexSession *session )
    : _session( session ),
+     _begin( TRUE ),
      _timeout( 0 ),
      _retryTimes( 0 )
    {
@@ -81,37 +82,45 @@ namespace seadapter
    {
       INT32 rc = SDB_OK ;
 
-      _timeout += interval ;
-      if ( _timeout < SEADPT_BASIC_OP_TIMEOUT )
+      // No wait for the first round of all states.
+      if ( !_begin )
       {
-         goto done ;
-      }
-
-      ++_retryTimes ;
-      if ( _retryTimes > SEADPT_INDEX_MAX_RETRY )
-      {
-         // Incase of timeout, let's check if the index exists or not.
-         seIdxMetaContext *imContext = _session->idxMetaContext() ;
-         INT32 rcTmp = imContext->metaLock( SHARED ) ;
-         if ( SDB_RTN_INDEX_NOTEXIST == rcTmp )
+         _timeout += interval ;
+         if ( _timeout < SEADPT_BASIC_OP_TIMEOUT )
          {
-            rc = rcTmp ;
+            goto done ;
+         }
+
+         ++_retryTimes ;
+         if ( _retryTimes > SEADPT_INDEX_MAX_RETRY )
+         {
+            // Incase of timeout, let's check if the index exists or not.
+            seIdxMetaContext *imContext = _session->idxMetaContext() ;
+            INT32 rcTmp = imContext->metaLock( SHARED ) ;
+            if ( SDB_RTN_INDEX_NOTEXIST == rcTmp )
+            {
+               rc = rcTmp ;
+               goto error ;
+            }
+            else if ( SDB_OK == rcTmp )
+            {
+               imContext->metaUnlock() ;
+            }
+            rc = SDB_TIMEOUT ;
+            PD_LOG( PDERROR, "In stage[%s:%s] operation timeout",
+                    seAdptGetIndexerStateDesp( type() ), _getStepDesp() ) ;
             goto error ;
          }
-         else if ( SDB_OK == rcTmp )
-         {
-            imContext->metaUnlock() ;
-         }
-         rc = SDB_TIMEOUT ;
-         PD_LOG( PDERROR, "In stage[%s:%s] operation timeout",
-                 seAdptGetIndexerStateDesp( type() ), _getStepDesp() ) ;
-         goto error ;
-      }
 
-      _timeout = 0 ;
+         _timeout = 0 ;
+      }
 
       rc = _processTimeout() ;
       PD_RC_CHECK( rc, PDERROR, "Process timeout failed[%d]", rc ) ;
+      if ( _begin )
+      {
+         _begin = FALSE ;
+      }
 
    done:
       return rc ;
@@ -236,6 +245,26 @@ namespace seadapter
                             &numReturned, resultSet );
       PD_RC_CHECK( rc, PDERROR, "Extract getmore reply message failed[%d]",
                    rc );
+
+      rc = flag ;
+
+      // If original CL/CS or capped CS/CL is dropped, remove the index on
+      // search engine.
+      if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc
+           || SDB_DMS_CS_DELETING == rc )
+      {
+         PD_LOG( PDEVENT, "Index on data node is dropped. Clean index[%s] on "
+                          "search engine", _session->getESIdxName() ) ;
+         {
+            INT32 rcTmp = _cleanSearchEngine() ;
+            if ( rcTmp )
+            {
+               PD_LOG( PDERROR, "Clean index[%s] on search engine failed[%d]",
+                       _session->getESIdxName(), rcTmp ) ;
+            }
+         }
+         goto error ;
+      }
 
       rc = _processGetmoreRes( flag, contextID, startFrom,
                                numReturned, resultSet ) ;

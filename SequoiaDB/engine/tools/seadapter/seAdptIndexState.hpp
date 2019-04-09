@@ -115,6 +115,7 @@ namespace seadapter
 
    protected:
       _seAdptIndexSession *_session ;
+      BOOLEAN _begin ;
       UINT32 _timeout ;
       UINT16 _retryTimes ;
    } ;

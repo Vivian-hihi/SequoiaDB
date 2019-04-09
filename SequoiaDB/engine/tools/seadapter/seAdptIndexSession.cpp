@@ -151,20 +151,44 @@ namespace seadapter
 
    void _seAdptIndexSession::_onAttach()
    {
+      INT32 rc = SDB_OK ;
       seIndexMeta *meta = NULL ;
-      _imContext->metaLock( EXCLUSIVE ) ;
+
+      SDB_ASSERT( _imContext, "Index meta context is NULL") ;
+
+      // Lock and check the status of the meta. If this thread starts slow, the
+      // manager may try to start a new thread again. So these checks are about
+      // to avoid starting multiple indexers for on index.
+      rc = _imContext->metaLock( EXCLUSIVE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Lock index meta in EXCLUSIVE mode failed[%s]",
+                   rc ) ;
       meta = _imContext->meta() ;
+      if ( SEADPT_IM_STAT_PENDING != meta->getStat() )
+      {
+         PD_LOG( PDDEBUG, "Index meta stat is %d. Quit this indexer",
+                 meta->getStat() ) ;
+         goto error ;
+      }
+
       ossStrncpy( _seIdxName, meta->getESIdxName(), SEADPT_MAX_IDXNAME_SZ ) ;
       ossStrncpy( _seTypeName, meta->getESTypeName(), SEADPT_MAX_TYPE_SZ ) ;
       meta->setStat( SEADPT_IM_STAT_NORMAL ) ;
 
-      PD_LOG( PDEVENT, "New index task starts: original collection[ %s ], "
-                       "index[ %s ], capped collection[ %s ], search engine "
-                       "index[ %s ], search engine type[ %s ]",
+      PD_LOG( PDEVENT, "New index task starts: original collection[%s], "
+                       "index[%s], capped collection[%s], search engine "
+                       "index[%s], search engine type[%s]",
               meta->getOrigCLName(), meta->getOrigIdxName(),
               meta->getCappedCLName(), _seIdxName, _seTypeName ) ;
 
-      _imContext->metaUnlock() ;
+   done:
+      if ( _imContext->isMetaLocked() )
+      {
+         _imContext->metaUnlock() ;
+      }
+      return ;
+   error:
+      _quit = TRUE ;
+      goto done ;
    }
 
    void _seAdptIndexSession::_onDetach()

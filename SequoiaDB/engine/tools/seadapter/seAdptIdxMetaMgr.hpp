@@ -205,6 +205,8 @@ namespace seadapter
             return _idxLogicalID ;
          }
 
+         _seIndexMeta& operator=( _seIndexMeta &right ) ;
+
          std::string toString() const
          {
             try
@@ -446,7 +448,6 @@ namespace seadapter
       INT32  _addIdxMeta( utilCLUniqueID clUID, const BSONObj &idxMeta,
                           UINT16 *idxMetaID = NULL ) ;
       INT32  _parseIdxMetaData( const BSONObj &indexInfo, seIndexMeta &meta ) ;
-      INT32  _fillIdxMetaData( seIndexMeta *meta, const BSONObj &indexInfo ) ;
       INT32  _updateIdxMeta( UINT16 idxMetaID, const BSONObj &idxMeta ) ;
 
    private:

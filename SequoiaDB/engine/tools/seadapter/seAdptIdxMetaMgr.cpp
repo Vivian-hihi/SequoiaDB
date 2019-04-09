@@ -150,6 +150,51 @@ namespace seadapter
       goto done ;
    }
 
+   _seIndexMeta &_seIndexMeta::operator=( _seIndexMeta &right )
+   {
+      _version = right._version ;
+      if ( 0 != ossStrcmp( _origCLName, right._origCLName ) )
+      {
+         ossStrncpy( _origCLName, right._origCLName, SEADPT_MAX_CL_NAME_SZ ) ;
+      }
+      if ( 0 != ossStrcmp( _origIdxName, right._origIdxName ) )
+      {
+         ossStrncpy( _origIdxName, right._origIdxName,
+                     SEADPT_MAX_DBIDX_NAME_SZ ) ;
+      }
+      if ( 0 != ossStrcmp( _cappedCLName, right._cappedCLName ) )
+      {
+         ossStrncpy( _cappedCLName, right._cappedCLName,
+                     SEADPT_MAX_CL_NAME_SZ ) ;
+      }
+      if ( 0 != ossStrcmp( _esIdxName, right._esIdxName ) )
+      {
+         ossStrncpy( _esIdxName, right._esIdxName, SEADPT_MAX_IDXNAME_SZ ) ;
+      }
+      if ( 0 != ossStrcmp( _esTypeName, right._esTypeName ) )
+      {
+         ossStrncpy( _esTypeName, right._esTypeName, SEADPT_MAX_TYPE_SZ ) ;
+      }
+      if ( _clUniqID != right._clUniqID )
+      {
+         _clUniqID = right._clUniqID ;
+      }
+      if ( _clLogicalID != right._clLogicalID )
+      {
+         _clLogicalID = right._clLogicalID ;
+      }
+      if ( _idxLogicalID != right._idxLogicalID )
+      {
+         _idxLogicalID = right._idxLogicalID ;
+      }
+      if ( 0 != _indexDef.woCompare( right._indexDef ) )
+      {
+         _indexDef = right._indexDef ;
+      }
+
+      return *this ;
+   }
+
    _seIdxMetaContext::_seIdxMetaContext()
    {
       _reset() ;
@@ -476,6 +521,11 @@ namespace seadapter
       INT32 rc = SDB_OK ;
       UINT16 imID = SEADPT_INVALID_IMID ;
       seIndexMeta *meta = NULL ;
+      seIndexMeta metaTmp ;
+
+      rc = _parseIdxMetaData( idxMeta, metaTmp ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse index meta data failed[%d]. Meta: %s",
+                   rc, idxMeta.toString(false, true).c_str() ) ;
 
       // 1. Find a free slot for the metadata.
       // 2. Update information in the slot. The slot can not be used by other
@@ -500,17 +550,8 @@ namespace seadapter
          goto error ;
       }
 
-      rc = _fillIdxMetaData( meta, idxMeta ) ;
-      if ( rc )
-      {
-         meta->unlock( EXCLUSIVE ) ;
-         PD_LOG ( PDERROR, "Fill index metadata failed[%d]. Data: %s",
-                  rc, idxMeta.toString(false, true).c_str() ) ;
-         goto error ;
-      }
-
+      *meta = metaTmp ;
       meta->setStat( SEADPT_IM_STAT_PENDING ) ;
-      meta->setVersion( _version ) ;
 
       // Once we insert the unique id into the map, and release the metadata
       // lock, the index meta can be found by any session.
@@ -615,99 +656,6 @@ namespace seadapter
          goto error ;
       }
 
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _seIdxMetaMgr::_fillIdxMetaData( seIndexMeta *meta,
-                                          const BSONObj &indexInfo )
-   {
-      INT32 rc = SDB_OK ;
-
-      try
-      {
-         BSONObj::iterator itr( indexInfo ) ;
-
-         while ( itr.more() )
-         {
-            BSONElement ele = itr.next() ;
-            if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_COLLECTION ) )
-            {
-               meta->setCLName( ele.valuestrsafe() ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(),
-                                      SEADPT_FIELD_NAME_CAPPEDCL ) )
-            {
-               meta->setCappedCLName( ele.valuestrsafe() ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_INDEX ) )
-            {
-               BSONObj idxDef = ele.Obj() ;
-               BSONObj key ;
-               if ( idxDef.isEmpty() )
-               {
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG( PDERROR, "No valid index definition in index info" ) ;
-                  goto error ;
-               }
-
-               key = idxDef.getObjectField( IXM_FIELD_NAME_KEY ) ;
-               if ( key.isEmpty() )
-               {
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG( PDERROR, "No valid key definition in index info" ) ;
-                  goto error ;
-               }
-               meta->setIdxDef( key ) ;
-               meta->setIdxName( idxDef.getStringField( IXM_FIELD_NAME_NAME ) ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_UNIQUEID ) )
-            {
-               meta->setCLUniqID( (utilCLUniqueID)ele.numberLong() ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_LOGICAL_ID ) )
-            {
-               meta->setCLLogicalID( (UINT32)ele.numberInt() ) ;
-            }
-            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_INDEXLID ) )
-            {
-               meta->setIdxLogicalID( (UINT32)ele.numberInt() ) ;
-            }
-            else
-            {
-               PD_LOG( PDWARNING, "Ignore unknown field[%s]",
-                       ele.toString(false, true).c_str() ) ;
-            }
-         }
-
-         {
-            // ES index name is in the format of cappedCLName_groupName.
-            const CHAR *dot = ossStrchr( meta->getCappedCLName(), '.' ) ;
-            SDB_ASSERT( dot, "No dot found in the capped collection full name" ) ;
-            const CHAR *cappedCLName = dot + 1 ;
-            // From ES6.0, one index can contain only one type. So we need to append
-            // the group name to the ES index name, to handle index data splited to
-            // more than one group.
-            std::string esIdx = std::string(cappedCLName) + "_" + _typeName ;
-            // ES index names should be in lower case.
-            std::transform( esIdx.begin(), esIdx.end(), esIdx.begin(), ::tolower ) ;
-            meta->setESIdxName( esIdx.c_str() ) ;
-            meta->setESTypeName( _typeName ) ;
-            meta->setVersion( _version ) ;
-            PD_LOG( PDDEBUG, "New index metadata filled: %s",
-                    meta->toString().c_str() ) ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexpected exception happed: %s", e.what() ) ;
-         goto error ;
-      }
-
    done:
       return rc ;
    error:
@@ -753,13 +701,24 @@ namespace seadapter
       }
       else
       {
+         BOOLEAN newIndex = FALSE ;
          ossStrncpy( oldCLName, meta->getOrigCLName(),
                      SEADPT_MAX_CL_NAME_SZ ) ;
 
-         rc = _fillIdxMetaData( meta, idxMeta ) ;
-         PD_RC_CHECK( rc, PDERROR, "Fill index metadata failed[%d]. Data: %s",
-                      rc, idxMeta.toString(false, true).c_str() ) ;
+         meta->lock( EXCLUSIVE ) ;
+         if ( meta->getCLUID() != metaTmp.getCLUID() ||
+              meta->getCLLID() != metaTmp.getCLLID() ||
+              meta->getIdxLID() != metaTmp.getIdxLID() )
+         {
+            newIndex = TRUE ;
+         }
 
+         *meta = metaTmp ;
+         if ( newIndex )
+         {
+            meta->setStat( SEADPT_IM_STAT_PENDING ) ;
+         }
+         meta->unlock( EXCLUSIVE ) ;
          // If the collection name changed, need update the name map.
          if ( 0 != ossStrcmp( oldCLName, meta->getOrigCLName() ) )
          {

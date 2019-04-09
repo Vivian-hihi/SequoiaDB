@@ -163,6 +163,12 @@ namespace seadapter
       _seAdptCB               *_pAdptCB ;
       const seAdptOptionsMgr  *_optionMgr ;
       UINT32                   _innerSessionID ;
+
+      // Index meta ids for whom sessions have been started. It's main purpose
+      // is to avoid starting multiple sessions for the same index. Items will
+      // be inserted when starting a session, and erased when session exists.
+      ossSpinXLatch            _activeWorkerLatch ;
+      set<UINT16>              _activeWorkers ;
    } ;
    typedef _seIndexSessionMgr seIndexSessionMgr ;
 
