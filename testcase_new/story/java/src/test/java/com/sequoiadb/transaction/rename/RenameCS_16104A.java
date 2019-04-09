@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction;
+package com.sequoiadb.transaction.rename;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -22,23 +22,24 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @author luweikang
  * @date 2018年10月17日
  */
-public class RenameCS_16104 extends SdbTestBase {
+@Test(groups = "ru")
+public class RenameCS_16104A extends SdbTestBase {
 
-    private String csName = "renameCS_16104";
-    private String newCSName = "renameCS_16104_new";
-    private String clName = "rename_CL_16104";
+    private String csName = "renameCS_16104A";
+    private String newCSName = "renameCS_16104A_new";
+    private String clName = "rename_CL_16104A";
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private int recordNum = 1000;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cs = sdb.createCollectionSpace(csName);
         cs.createCollection(clName);
     }
 
-    @Test(groups = "ru")
+    @Test
     public void test() {
         RenameCSThread renameCSThread = new RenameCSThread();
         TransactionThread transThread = new TransactionThread();
@@ -81,7 +82,7 @@ public class RenameCS_16104 extends SdbTestBase {
         }
     }
 
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     public void tearDown() {
         try {
             CommLib.clearCS(sdb, csName);
@@ -106,14 +107,11 @@ public class RenameCS_16104 extends SdbTestBase {
     private class TransactionThread extends SdbThreadBase {
         @Override
         public void exec() throws Exception {
-            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            try {
+            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 db.beginTransaction();
                 RenameUtil.insertData(cl, recordNum);
                 db.commit();
-            } finally {
-                db.close();
             }
         }
     }

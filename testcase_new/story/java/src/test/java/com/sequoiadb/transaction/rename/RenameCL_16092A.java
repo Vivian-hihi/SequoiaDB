@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction;
+package com.sequoiadb.transaction.rename;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -22,23 +22,24 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @author luweikang
  * @date 2018年10月17日
  */
-public class RenameCL_16092 extends SdbTestBase {
+@Test(groups = "ru")
+public class RenameCL_16092A extends SdbTestBase {
 
-    private String csName = "renameCS_16092";
-    private String clName = "rename_CL_16092";
-    private String newCLName = "rename_CL_16092_new";
+    private String csName = "renameCS_16092A";
+    private String clName = "rename_CL_16092A";
+    private String newCLName = "rename_CL_16092A_new";
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private int recordNum = 2000;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cs = sdb.createCollectionSpace(csName);
         cs.createCollection(clName);
     }
 
-    @Test(groups = "ru")
+    @Test
     public void test() {
         RenameCLThread renameCLThread = new RenameCLThread();
         TransactionThread transThread = new TransactionThread();
@@ -84,7 +85,7 @@ public class RenameCL_16092 extends SdbTestBase {
         }
     }
 
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     public void tearDown() {
         try {
             CommLib.clearCS(sdb, csName);
