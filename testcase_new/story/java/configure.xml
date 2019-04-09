@@ -68,5 +68,16 @@
       </packages>
    </test>
    
+   <test name="rename" parallel="classes" thread-count="1">
+      <groups>
+         <run>
+            <include name="ru" />
+         </run>
+      </groups>
+      <packages>
+         <package name="com.sequoiadb.transaction.rename" />
+      </packages>
+   </test>
+   
 </suite>
    
