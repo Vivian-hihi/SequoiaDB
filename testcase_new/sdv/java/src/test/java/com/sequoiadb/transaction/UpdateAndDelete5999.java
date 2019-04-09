@@ -59,18 +59,32 @@ public class UpdateAndDelete5999 extends SdbConfTestBase{
         
         UpdateThread updateThread = new UpdateThread();
         DeleteThread deleteThread = new DeleteThread();
+        
         updateThread.start();
         deleteThread.start();
+        
+        if (updateThread.isSuccess()&&!deleteThread.isSuccess()) {			
+			BaseException e = (BaseException) (deleteThread.getExceptions().get(0));
+			if (e.getErrorCode()!=-13) {
+				Assert.fail("delete thread fail:" + deleteThread.getErrorMsg() + "  e:" + e.getErrorCode());
+			}				
+			checkUpdateResult();
+		} else if(!updateThread.isSuccess()&&deleteThread.isSuccess()){
+			BaseException e = (BaseException) (updateThread.getExceptions().get(0));
+			if (e.getErrorCode()!=-13) {
+				Assert.fail("update thread fail:" + updateThread.getErrorMsg() + "  e:" + e.getErrorCode());
+			}				
+			checkDeleteResult();
+		} else {
+			Assert.fail("Unexpected results! updateThreadError:" + updateThread.getErrorMsg() + "deleteThreadError:"
+					+ deleteThread.getErrorMsg());
+		}
         
         db1.commit();
         db2.commit();
         
-        Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
-        Assert.assertTrue(deleteThread.isSuccess(), deleteThread.getErrorMsg());
-		
         db1.close();
         db2.close();
-        checkResult();
 	}
 	
 	@AfterClass
@@ -99,13 +113,15 @@ public class UpdateAndDelete5999 extends SdbConfTestBase{
         }
     }
 	
-	private void checkResult(){
-		long actCount = cl.getCount(del_matcher);
-		Assert.assertEquals(actCount, 0, "Deleted data still exists!");
-		
+	private void checkUpdateResult(){
 		BSONObject matcher = new BasicBSONObject();
 		matcher.put("age", 5999);
-		actCount = cl.getCount(matcher);
+		long actCount = cl.getCount(matcher);
 		Assert.assertEquals(actCount, 1, "Update data does not exist!");
+	}
+	
+	private void checkDeleteResult(){
+		long count = cl.getCount(del_matcher);
+		Assert.assertEquals(count, 0, "Deleted data still exists!");
 	}
 }
