@@ -82,6 +82,8 @@ namespace fs = boost::filesystem ;
 #define OPTION_JUDGE_BALANCE "balance"
 #define OPTION_REPAIRE      "repaire"
 #define OPTION_FORCE        "force"
+#define OPTION_HELPFULL   "helpfull"
+
 
 #define OPTION_REPAIRE_DESP \
    "repaire the db info, like --repaire mb:Flag=0,Attr=1\n"\
@@ -120,7 +122,11 @@ namespace fs = boost::filesystem ;
        ( COMMANDS_STRING(OPTION_SHOW_CONTENT, ",p"), boost::program_options::value<string>(), "display data/index content(true/false)" ) \
        ( OPTION_ONLY_META, boost::program_options::value<string>(), "inspect only meta(Header, SME, MME), true/false" ) \
        ( OPTION_JUDGE_BALANCE, boost::program_options::value<string>(), "open lob buckets balance judgement" ) \
-       ( OPTION_FORCE, "force dump all invalid mb, delete list and index list and so on" ) \
+       ( OPTION_FORCE, "force dump all invalid mb, delete list and index list and so on" ) 
+
+//hidden options
+#define HIDDEN_OPTIONS \
+       ( OPTION_HELPFULL,"help all configs") \
        ( COMMANDS_STRING(OPTION_REPAIRE, ",r"), boost::program_options::value<string>(), OPTION_REPAIRE_DESP )
 
 // bitwise operation
@@ -465,9 +471,15 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    CHAR actionString[BUFFERSIZE] = {0} ;
    CHAR outputFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
    po::variables_map vm ;
+   po::options_description all ( "Command options" ) ;
+   ADD_PARAM_OPTIONS_BEGIN ( all )
+      COMMANDS_OPTIONS
+      HIDDEN_OPTIONS
+   ADD_PARAM_OPTIONS_END
+         
    try
    {
-      po::store ( po::parse_command_line ( argc, argv, desc ), vm ) ;
+      po::store ( po::parse_command_line ( argc, argv, all ), vm ) ;
       po::notify ( vm ) ;
    }
    catch ( po::unknown_option &e )
@@ -504,6 +516,12 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    {
       ossPrintVersion( "SDB DmsDump" ) ;
       rc = SDB_PMD_VERSION_ONLY ;
+      goto done ;
+   }
+   else if( vm.count( OPTION_HELPFULL) )
+   {
+      displayArg ( all ) ;
+      rc = SDB_PMD_HELP_ONLY ;
       goto done ;
    }
    // for dbpath, copy to gDatabasePath
