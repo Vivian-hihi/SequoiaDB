@@ -28,17 +28,21 @@ import com.sequoiadb.transaction.TransUtils;
 @Test(groups = {"rc", "ru"})
 public class Transaction17147 extends SdbTestBase {
     private Sequoiadb sdb = null;
+    private Sequoiadb db2 = null;
     private String clName = "cl17147";
     private CollectionSpace cs;
     private DBCollection cl = null;
+    private DBCollection cl2 = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
 
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cs = sdb.getCollectionSpace(csName);
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         BSONObject record = (BSONObject) JSON.parse("{_id:1, a:1, b:1}");
         cl.insert(record);
         record = (BSONObject) JSON.parse("{_id:2, a:2, b:2}");
@@ -53,6 +57,9 @@ public class Transaction17147 extends SdbTestBase {
         }
         if (!sdb.isClosed()) {
             sdb.close();
+        }
+        if (!db2.isClosed()) {
+            db2.close();
         }
     }
 
@@ -158,6 +165,17 @@ public class Transaction17147 extends SdbTestBase {
             if (e.getErrorCode() != -4) {
                 Assert.fail(e.getMessage());
             }
+        }
+        try {
+            db2.beginTransaction();
+            cl2.truncate();
+            throw new BaseException(-999, "TRUNCATE ERROR");
+        } catch (BaseException e) {
+            if (e.getErrorCode() != -190) {
+                Assert.fail(e.getMessage());
+            }
+        }finally {
+            db2.commit();
         }
 
         // 事务提交
