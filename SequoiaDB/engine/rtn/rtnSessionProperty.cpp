@@ -51,6 +51,7 @@ namespace engine
     */
    _rtnInstanceOption::_rtnInstanceOption ()
    : _mode( (UINT8)PREFER_INSTANCE_MODE_UNKNOWN ),
+     _strict( 0 ),
      _specInstance( (INT8)PREFER_INSTANCE_TYPE_UNKNOWN ),
      _instanceList()
    {
@@ -58,6 +59,7 @@ namespace engine
 
    _rtnInstanceOption::_rtnInstanceOption ( const rtnInstanceOption & option )
    : _mode( option._mode ),
+     _strict( option._strict ),
      _specInstance( option._specInstance ),
      _instanceList()
    {
@@ -71,6 +73,7 @@ namespace engine
    rtnInstanceOption & _rtnInstanceOption::operator = ( const rtnInstanceOption & option )
    {
       _mode = option._mode ;
+      _strict = option._strict ;
       _specInstance = option._specInstance ;
       _instanceList = option._instanceList ;
       return ( *this ) ;
@@ -82,6 +85,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNINST_RESET ) ;
 
       _mode = (UINT8)PREFER_INSTANCE_MODE_UNKNOWN ;
+      _strict = 0 ;
       _clearInstance() ;
 
       PD_TRACE_EXIT( SDB__RTNINST_RESET ) ;
@@ -449,6 +453,11 @@ namespace engine
       goto done ;
    }
 
+   void _rtnInstanceOption::setPreferredStrict( BOOLEAN strict )
+   {
+      _strict = strict ? 1 : 0 ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINST_TOBSON, "_rtnInstanceOption::toBSON" )
    void _rtnInstanceOption::toBSON ( BSONObjBuilder & builder ) const
    {
@@ -494,6 +503,7 @@ namespace engine
                break ;
          }
          builder.append( FIELD_NAME_PREFERED_INSTANCE_MODE, modeStr ) ;
+         builder.appendBool( FIELD_NAME_PREFERED_STRICT, _strict ) ;
       }
       else
       {
@@ -555,16 +565,23 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSESSPROP_SETINSTOPT, "_rtnSessionProperty::setInstanceOption" )
    void _rtnSessionProperty::setInstanceOption ( const CHAR * instanceStr,
                                                  const CHAR * instanceModeStr,
+                                                 BOOLEAN preferedStrict,
                                                  RTN_PREFER_INSTANCE_TYPE defaultInstance )
    {
       PD_TRACE_ENTRY( SDB__RTNSESSPROP_SETINSTOPT ) ;
 
       _instanceOption.parsePreferredInstance( instanceStr ) ;
       _instanceOption.parsePreferredInstanceMode( instanceModeStr ) ;
+      _instanceOption.setPreferredStrict( preferedStrict ) ;
 
       if ( !_instanceOption.isValidated() )
       {
          _instanceOption.setPreferredInstance( defaultInstance ) ;
+      }
+
+      if ( !_instanceOption.hasCommonInstance() )
+      {
+         _instanceOption.setPreferredStrict( FALSE ) ;
       }
 
       PD_TRACE_EXIT( SDB__RTNSESSPROP_SETINSTOPT ) ;
@@ -726,7 +743,8 @@ namespace engine
       {
          BSONElement field = iter.next() ;
 
-         if ( 0 == ossStrcmp( field.fieldName(), FIELD_NAME_PREFERED_INSTANCE_V1 ) )
+         if ( 0 == ossStrcasecmp( field.fieldName(),
+                                  FIELD_NAME_PREFERED_INSTANCE_V1 ) )
          {
             /// PreferedInstance
             rc = instanceOption.parsePreferredInstance( field ) ;
@@ -737,18 +755,29 @@ namespace engine
 
             gotInstance = TRUE ;
          }
-         else if ( 0 == ossStrcmp( field.fieldName(),
-                                   FIELD_NAME_PREFERED_INSTANCE_MODE ) )
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_PREFERED_INSTANCE_MODE ) )
          {
             /// PreferedInstanceMode
             PD_CHECK( String == field.type(), SDB_INVALIDARG, error,
                       PDERROR, "Field[%s] is not string",
                       FIELD_NAME_PREFERED_INSTANCE_MODE ) ;
 
-            rc = instanceOption.parsePreferredInstanceMode( field.valuestrsafe() ) ;
+            rc = instanceOption.parsePreferredInstanceMode(
+               field.valuestrsafe() ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to parse preferred instance "
                          "mode, rc: %d", rc ) ;
 
+            gotInstance = TRUE ;
+         }
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_PREFERED_STRICT ) )
+         {
+            PD_CHECK( Bool == field.type(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not boolean",
+                      FIELD_NAME_PREFERED_STRICT ) ;
+
+            instanceOption.setPreferredStrict( field.boolean() ) ;
             gotInstance = TRUE ;
          }
          else if ( 0 == ossStrcmp( field.fieldName(), FIELD_NAME_TIMEOUT ) )
@@ -761,7 +790,8 @@ namespace engine
             operationTimeout = (INT64)field.numberLong() ;
             gotOperationTimeout = TRUE ;
          }
-         else if ( 0 == ossStrcmp( field.fieldName(), FIELD_NAME_PREFERED_INSTANCE ) )
+         else if ( 0 == ossStrcmp( field.fieldName(),
+                                   FIELD_NAME_PREFERED_INSTANCE ) )
          {
             /// do nothing
          }
@@ -776,6 +806,10 @@ namespace engine
 
       if ( gotInstance )
       {
+         if ( !instanceOption.hasCommonInstance() )
+         {
+            instanceOption.setPreferredStrict( FALSE ) ;
+         }
          setInstanceOption( instanceOption ) ;
          _onSetInstance() ;
       }

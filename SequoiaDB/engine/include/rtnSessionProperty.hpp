@@ -127,7 +127,12 @@ namespace engine
             return (RTN_PREFER_INSTANCE_MODE)_mode ;
          }
 
-         void reset () ;
+         OSS_INLINE BOOLEAN isPreferredStrict() const
+         {
+            return _strict ? TRUE : FALSE ;
+         }
+
+         void  reset () ;
          INT32 setPreferredInstance ( PREFER_REPLICA_TYPE replType ) ;
          INT32 setPreferredInstance ( RTN_PREFER_INSTANCE_TYPE instance ) ;
          INT32 setPreferredInstanceMode ( RTN_PREFER_INSTANCE_MODE mode ) ;
@@ -135,6 +140,8 @@ namespace engine
          INT32 parsePreferredInstance ( const bson::BSONElement & option ) ;
          INT32 parsePreferredInstance ( const CHAR * instanceStr ) ;
          INT32 parsePreferredInstanceMode ( const CHAR * instanceModeStr ) ;
+
+         void  setPreferredStrict( BOOLEAN strict ) ;
 
          void toBSON ( bson::BSONObjBuilder & builder ) const ;
 
@@ -149,6 +156,7 @@ namespace engine
 
       protected :
          UINT8             _mode ;
+         UINT8             _strict ;
          INT8              _specInstance ;
          RTN_INSTANCE_LIST _instanceList ;
    } ;
@@ -170,6 +178,7 @@ namespace engine
 
          void setInstanceOption ( const CHAR * instanceStr,
                                   const CHAR * instanceModeStr,
+                                  BOOLEAN preferedStrict,
                                   RTN_PREFER_INSTANCE_TYPE defaultInstance ) ;
 
          OSS_INLINE void setInstanceOption ( const rtnInstanceOption & instanceOption )

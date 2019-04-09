@@ -630,6 +630,7 @@ namespace engine
          OSS_INLINE UINT32 getPlanCacheLevel() const { return _planCacheLevel ; }
          OSS_INLINE const CHAR * getPrefInstStr () const { return _prefInstStr ; }
          OSS_INLINE const CHAR * getPrefInstModeStr () const { return _prefInstModeStr ; }
+         OSS_INLINE BOOLEAN isPreferedStrict() const { return _preferedStrict ; }
          OSS_INLINE UINT32 getInstanceID () const { return _instanceID ; }
          OSS_INLINE UINT32 getMaxConn () const { return _maxconn ; }
          OSS_INLINE UINT32 getSvcSchedulerType() const { return _svcSchedulerType ; }
@@ -734,6 +735,7 @@ namespace engine
          UINT32      _maxconn;
          UINT32      _svcSchedulerType ;
          UINT32      _svcMaxConcurrency ;
+         BOOLEAN     _preferedStrict ;
 
 #ifdef SDB_ENTERPRISE
 

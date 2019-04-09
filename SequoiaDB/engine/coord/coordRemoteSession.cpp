@@ -601,6 +601,11 @@ namespace engine
             _selectedPositions.pop_front() ;
             selected = TRUE ;
          }
+         else if ( instanceOption.isPreferredStrict() )
+         {
+            pos = COORD_GROUP_SEL_INVALID ;
+            selected = TRUE ;
+         }
       }
 
       if ( !selected )
@@ -687,7 +692,16 @@ namespace engine
          tmpPos = pos ;
          if ( selTimes > 0 )
          {
-            if ( _selectedPositions.empty() )
+            if ( !_selectedPositions.empty() )
+            {
+               tmpPos = _selectedPositions.front() ;
+               _selectedPositions.pop_front() ;
+            }
+            else if ( instanceOption.isPreferredStrict() )
+            {
+               break ;
+            }
+            else
             {
                // Only when choose from group will consider move position
                // for slave preferred option
@@ -695,11 +709,6 @@ namespace engine
                // preferred option
                isSlavePreferred = instanceOption.isSlavePerferred() ;
                tmpPos = ( tmpPos + 1 ) % nodeCount ;
-            }
-            else
-            {
-               tmpPos = _selectedPositions.front() ;
-               _selectedPositions.pop_front() ;
             }
          }
 

@@ -1914,6 +1914,8 @@ done:
       _svcSchedulerType = 0 ;
       _svcMaxConcurrency= 0 ;
 
+      _preferedStrict = FALSE ;
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -2059,6 +2061,9 @@ done:
       rdxString( pEX, PMD_OPTION_PREFINST_MODE, _prefInstModeStr,
                  sizeof( _prefInstModeStr ), FALSE, PMD_CFG_CHANGE_RUN,
                  PMD_DFT_PREFINST_MODE ) ;
+      // --preferedstrict
+      rdxBooleanS( pEX, PMD_OPTION_PREFINST_STRICT, _preferedStrict, FALSE,
+                   PMD_CFG_CHANGE_RUN, FALSE ) ;
       // --instanceid
       rdxUInt( pEX, PMD_OPTION_INSTANCE_ID, _instanceID, FALSE, PMD_CFG_CHANGE_REBOOT,
                PMD_DFT_INSTANCE_ID, FALSE ) ;
