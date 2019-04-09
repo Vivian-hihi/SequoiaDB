@@ -21,8 +21,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @FileName:seqDB-17831：删除并发，删除的记录同时匹配已提交记录及其他事务删除的记录，删除走表扫描，事务提交，过程中读 表扫描，
- *                                                                      先插入R2，
- *                                                                      再插入R1
+ * 先插入R2,再插入R1
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
@@ -52,11 +51,9 @@ public class Transaction17831B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        // 关闭所有游标
-        sdb.closeAllCursors();
-        db1.closeAllCursors();
-        db2.closeAllCursors();
-        db3.closeAllCursors();
+        db1.commit();
+        db2.commit();
+        db3.commit();
 
         // 先关闭事务连接，再删除集合
         CollectionSpace cs = sdb.getCollectionSpace(csName);

@@ -48,6 +48,8 @@ public class Transaction17163B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
         if (!db1.isClosed()) {
             db1.close();
         }
@@ -63,6 +65,7 @@ public class Transaction17163B extends SdbTestBase {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void test() {
         // 开启2个并发事务

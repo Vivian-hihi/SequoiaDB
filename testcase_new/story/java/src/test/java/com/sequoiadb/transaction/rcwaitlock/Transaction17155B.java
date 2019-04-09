@@ -132,6 +132,7 @@ public class Transaction17155B extends SdbTestBase {
                 e.printStackTrace();
                 throw e;
             } finally {
+                db2.rollback();
                 cursor.close();
                 db2.close();
                 db.close();
@@ -141,6 +142,7 @@ public class Transaction17155B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
         if (!db1.isClosed()) {
             db1.close();
         }

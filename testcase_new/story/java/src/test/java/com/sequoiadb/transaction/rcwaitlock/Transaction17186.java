@@ -46,12 +46,15 @@ public class Transaction17186 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
         if (!db1.isClosed()) {
             db1.close();
         }
         if (!db2.isClosed()) {
             db2.close();
         }
+        
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);
@@ -61,6 +64,7 @@ public class Transaction17186 extends SdbTestBase {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void test() {
         // 开启2个并发事务

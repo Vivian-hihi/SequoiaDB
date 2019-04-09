@@ -208,10 +208,10 @@ public class Transaction17770B extends SdbTestBase {
             db4.commit();
         }finally{
             //关闭事务连接
-            db1.close();
-            db2.close();
-            db3.close();
-            db4.close();
+            db1.commit();
+            db2.commit();
+            db3.commit();
+            db4.commit();
             
             //删除索引
             if(cl.isIndexExist("a")){

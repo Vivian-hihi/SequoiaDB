@@ -307,10 +307,10 @@ public class Transaction17765A extends SdbTestBase {
             
         }finally{
             //关闭事务连接
-            sdb1.close();
-            sdb2.close();
-            sdb3.close();
-            sdb4.close();
+            sdb1.commit();
+            sdb2.commit();
+            sdb3.commit();
+            sdb4.commit();
             
             //删除索引
             if(cl.isIndexExist("a")){
@@ -335,6 +335,9 @@ public class Transaction17765A extends SdbTestBase {
         }
         if( sdb3 != null ){
             sdb3.close();
+        }
+        if( sdb4 != null ){
+            sdb4.close();
         }
 
         CollectionSpace cs = sdb.getCollectionSpace(csName);

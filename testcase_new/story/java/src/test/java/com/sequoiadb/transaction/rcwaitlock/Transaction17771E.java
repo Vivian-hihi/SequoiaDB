@@ -51,11 +51,9 @@ public class Transaction17771E extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        // 关闭所有游标
-        sdb.closeAllCursors();
-        db1.closeAllCursors();
-        db2.closeAllCursors();
-        db3.closeAllCursors();
+        db1.commit();
+        db2.commit();
+        db3.commit();
 
         // 先关闭事务连接，再删除集合
         CollectionSpace cs = sdb.getCollectionSpace(csName);

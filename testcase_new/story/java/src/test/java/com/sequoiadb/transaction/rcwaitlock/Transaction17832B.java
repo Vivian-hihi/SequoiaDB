@@ -51,11 +51,9 @@ public class Transaction17832B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        // 关闭所有游标
-        sdb.closeAllCursors();
-        db1.closeAllCursors();
-        db2.closeAllCursors();
-        db3.closeAllCursors();
+        db1.commit();
+        db2.commit();
+        db3.commit();
 
         // 先关闭事务连接，再删除集合
         CollectionSpace cs = sdb.getCollectionSpace(csName);
@@ -91,7 +89,7 @@ public class Transaction17832B extends SdbTestBase {
         cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl3 = db3.getCollectionSpace(csName).getCollection(clName);
 
-        // 插入记录R1、R2，R1<R2
+        // 插入记录R2、R1
         BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2,a:2,b:2}");
         cl.insert(insertR2);
         BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1,a:1,b:1}");

@@ -15,7 +15,6 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
@@ -50,6 +49,9 @@ public class Transaction17181 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
+        db3.commit();
         if (!db1.isClosed()) {
             db1.close();
         }
@@ -59,6 +61,7 @@ public class Transaction17181 extends SdbTestBase {
         if (!db3.isClosed()) {
             db3.close();
         }
+        
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);

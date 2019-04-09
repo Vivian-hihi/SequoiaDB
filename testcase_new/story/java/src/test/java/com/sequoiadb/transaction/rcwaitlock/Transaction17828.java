@@ -20,7 +20,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @Description seqDB-17828.java 插入与删除并发，
- *              删除的记录同时匹配已提交记录及其他事务插入的记录，删除走表扫描，事务提交，过程中读
+ * 删除的记录同时匹配已提交记录及其他事务插入的记录，删除走表扫描，事务提交，过程中读
  * @author luweikang
  * @date 2019年1月15日
  */
@@ -134,13 +134,12 @@ public class Transaction17828 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        sdb.getCollectionSpace(csName).dropCollection(clName);
         if(recordCur != null){
             recordCur.close();
         }
-        if( sdb != null ){
-            sdb.close();
-        }
+        sdb1.commit();
+        sdb2.commit();
+        sdb3.commit();
         if( sdb1 != null ){
             sdb1.close();
         }
@@ -149,6 +148,10 @@ public class Transaction17828 extends SdbTestBase {
         }
         if( sdb3 != null ){
             sdb3.close();
+        }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

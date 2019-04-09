@@ -144,13 +144,12 @@ public class Transaction17764A extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        sdb.getCollectionSpace(csName).dropCollection(clName);
         if(recordCur != null){
             recordCur.close();
         }
-        if( sdb != null ){
-            sdb.close();
-        }
+        sdb1.commit();
+        sdb2.commit();
+        sdb3.commit();
         if( sdb1 != null ){
             sdb1.close();
         }
@@ -159,6 +158,10 @@ public class Transaction17764A extends SdbTestBase {
         }
         if( sdb3 != null ){
             sdb3.close();
+        }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

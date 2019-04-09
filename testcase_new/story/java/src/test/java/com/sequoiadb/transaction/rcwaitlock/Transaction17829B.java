@@ -195,24 +195,24 @@ public class Transaction17829B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        try {
-            sdb.getCollectionSpace(csName).dropCollection(clName);
-        } finally {
-            if (recordCur != null) {
-                recordCur.close();
-            }
-            if (sdb != null) {
-                sdb.close();
-            }
-            if (sdb1 != null) {
-                sdb1.close();
-            }
-            if (sdb2 != null) {
-                sdb2.close();
-            }
-            if (sdb3 != null) {
-                sdb3.close();
-            }
+        if(recordCur != null){
+            recordCur.close();
+        }
+        sdb1.commit();
+        sdb2.commit();
+        sdb3.commit();
+        if( sdb1 != null ){
+            sdb1.close();
+        }
+        if( sdb2 != null ){
+            sdb2.close();
+        }
+        if( sdb3 != null ){
+            sdb3.close();
+        }
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if( sdb != null ){
+            sdb.close();
         }
     }
 

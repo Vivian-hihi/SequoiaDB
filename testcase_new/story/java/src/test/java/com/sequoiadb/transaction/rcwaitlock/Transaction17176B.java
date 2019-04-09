@@ -53,14 +53,9 @@ public class Transaction17176B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        // 关闭所有游标
-        sdb.closeAllCursors();
-        db1.closeAllCursors();
-        db2.closeAllCursors();
-        db3.closeAllCursors();
-
-        // 先关闭事务连接，再删除集合
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
+        db1.commit();
+        db2.commit();
+        db3.commit();
         if (!db1.isClosed()) {
             db1.close();
         }
@@ -70,6 +65,8 @@ public class Transaction17176B extends SdbTestBase {
         if (!db3.isClosed()) {
             db3.close();
         }
+
+        CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);
         }

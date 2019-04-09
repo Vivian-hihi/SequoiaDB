@@ -27,7 +27,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author yinzhen
  *
  */
-@Test(groups = "rcwaitlock")
+@Test(groups = {"rcwaitlock", "rs"})
 public class Transaction17185 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl17185";
@@ -51,6 +51,11 @@ public class Transaction17185 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
+        db3.commit();
+        db4.commit();
+        db5.commit();
         if (!db1.isClosed()) {
             db1.close();
         }
@@ -66,6 +71,7 @@ public class Transaction17185 extends SdbTestBase {
         if (!db5.isClosed()) {
             db5.close();
         }
+        
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);

@@ -51,6 +51,9 @@ public class Transaction17184 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
+        db3.commit();
         if (!db1.isClosed()) {
             db1.close();
         }
@@ -60,6 +63,7 @@ public class Transaction17184 extends SdbTestBase {
         if (!db3.isClosed()) {
             db3.close();
         }
+        
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);

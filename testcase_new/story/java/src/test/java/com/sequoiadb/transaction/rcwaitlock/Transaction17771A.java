@@ -20,8 +20,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @FileName:seqDB-17771：删除与更新并发，删除的记录同时匹配已提交记录及其他事务更新的记录，事务提交，过程中读 索引扫描,R1<R2<
- *                                                                  R3
+ * @FileName:seqDB-17771：删除与更新并发，删除的记录同时匹配已提交记录及其他事务更新的记录，事务提交，过程中读 索引扫描
+ * R1<R2<R3
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
@@ -51,11 +51,9 @@ public class Transaction17771A extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        // 关闭所有游标
-        sdb.closeAllCursors();
-        db1.closeAllCursors();
-        db2.closeAllCursors();
-        db3.closeAllCursors();
+        db1.commit();
+        db2.commit();
+        db3.commit();
 
         // 先关闭事务连接，再删除集合
         CollectionSpace cs = sdb.getCollectionSpace(csName);

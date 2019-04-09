@@ -39,6 +39,7 @@ public class Transaction17168 extends SdbTestBase {
         TransUtils.insertDatas(cl, 0, 50000, 1);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void test() {
         // 开启事务1
@@ -123,6 +124,7 @@ public class Transaction17168 extends SdbTestBase {
                 e.printStackTrace();
                 throw e;
             } finally {
+                db2.commit();
                 cursor.close();
                 db2.close();
                 db.close();
@@ -132,6 +134,7 @@ public class Transaction17168 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
         if (!db1.isClosed()) {
             db1.close();
         }
