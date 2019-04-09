@@ -122,7 +122,7 @@ public class TestPutObjectRequest16478 extends S3TestBase {
 			s3Client.putObject(new PutObjectRequest(bucketName, "/dir/test16478", new File(nonexistentFilePath)));
 			Assert.fail("when file path does not exist,it should fail");
 		}catch(SdkClientException e){			
-			//Assert.assertTrue(e.getMessage().contains("No such file or directory"),e.getMessage());
+			Assert.assertTrue(e.getMessage().contains("No such file or directory"),e.getMessage());
 		}
 		runSuccess = true;
 	}

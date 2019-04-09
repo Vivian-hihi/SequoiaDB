@@ -35,7 +35,6 @@ public class UpdateSameObjectWithVersion16497 extends S3TestBase {
 	private String userName = "user16497";
 	private String bucketName = "bucket16497";
 	private String content = "content16497";
-	//private String keyName = "key16490";
 	private String keyName = "keytest19497";
 	private String roleName = "normal";
 	private List<String> expEtags = new ArrayList<>();
