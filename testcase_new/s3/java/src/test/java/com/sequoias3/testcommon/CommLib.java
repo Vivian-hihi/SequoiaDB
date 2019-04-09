@@ -83,7 +83,7 @@ public class CommLib {
 	public static void clearBucket( AmazonS3 s3Client, String bucketName ){
 		if(s3Client.doesBucketExist(bucketName)){
 			String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
-			if( bucketVerStatus == "null"){
+			if( bucketVerStatus == "Off"){
 				deleteAllObjects(s3Client, bucketName);
 			}else{
 				deleteAllObjectVersions( s3Client, bucketName );;	
@@ -97,7 +97,7 @@ public class CommLib {
 	* @param s3Client
 	* @param bucketName	
 	*/
-	public static void deleteAllObjects( AmazonS3 s3Client,String bucketName ){
+	public static void deleteAllObjects( AmazonS3 s3Client,String bucketName ){		
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName)
 				.withEncodingType("url");
 		ListObjectsV2Result result;		
@@ -106,7 +106,7 @@ public class CommLib {
 			Iterator<S3ObjectSummary> objIter = result.getObjectSummaries().iterator();		    
 		    while( objIter.hasNext()){
 		    	S3ObjectSummary vs = objIter.next();		    	
-		    	s3Client.deleteObject(bucketName,vs.getKey());		    	
+		    	s3Client.deleteObject(bucketName,vs.getKey());			    	
 		    }
 		    String continuationToken = result.getNextContinuationToken();
 			request.setContinuationToken(continuationToken);
@@ -126,7 +126,7 @@ public class CommLib {
 			Iterator<S3VersionSummary> versionIter = versionList.getVersionSummaries()
 					.iterator();			
 			while (versionIter.hasNext()) {			
-				S3VersionSummary vs = versionIter.next();							
+				S3VersionSummary vs = versionIter.next();				
 				s3Client.deleteVersion(bucketName, vs.getKey(), vs.getVersionId());
 			}
 				
