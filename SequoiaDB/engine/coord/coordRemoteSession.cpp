@@ -528,6 +528,11 @@ namespace engine
 
       _pos = _calcBeginPos( groupItem, _pPropSite->getInstanceOption(),
                             ossRand() ) ;
+      if ( _pos < 0 )
+      {
+         rc = SDB_CLS_NODE_NOT_EXIST ;
+         goto error ;
+      }
       rc = _nextPos( _groupPtr, _pPropSite->getInstanceOption(),
                      _selTimes, _pos, nodeID ) ;
       if ( rc )
