@@ -965,8 +965,8 @@
       <name>PMD_OPTION_PREFINST_STRICT</name>
       <long>preferedstrict</long>
       <description>
-         <en>Specify whether the node selection is a strict mode, and when it is a strict mode, the node can only be selected from the specified by preferedinstance.</en>
-         <cn>指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferedinstance 指定中选取。</cn>
+         <en>Specify whether the node selection is a strict mode, and when it is a strict mode, the node can only be selected from the specified IDs by preferedinstance.Default is FALSE.</en>
+         <cn>指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferedinstance 指定的ID中选取，默认为FALSE。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -977,8 +977,8 @@
          <cn>新连接生效</cn>
       </reloadstrategy>
       <detail>
-         <en>Specify whether the node selection is a strict mode, and when it is a strict mode, the node can only be selected from the specified by preferedinstance.</en>
-         <cn>指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferedinstance 指定中选取。</cn>
+         <en>Specify whether the node selection is a strict mode, and when it is a strict mode, the node can only be selected from the specified IDs by preferedinstance.Default is FALSE.</en>
+         <cn>指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferedinstance 指定的ID中选取，默认为FALSE。</cn>
       </detail>
       <typeofweb>boolean</typeofweb>
       <default>false</default>
