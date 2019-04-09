@@ -75,7 +75,10 @@ public class UpdateAndDelete5999 extends SdbConfTestBase{
 				Assert.fail("update thread fail:" + updateThread.getErrorMsg() + "  e:" + e.getErrorCode());
 			}				
 			checkDeleteResult();
-		} else {
+		} else if(updateThread.isSuccess()&&deleteThread.isSuccess()){
+			checkUpdateResult();
+			checkDeleteResult();
+		}else {
 			Assert.fail("Unexpected results! updateThreadError:" + updateThread.getErrorMsg() + "deleteThreadError:"
 					+ deleteThread.getErrorMsg());
 		}
