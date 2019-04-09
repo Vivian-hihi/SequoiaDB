@@ -422,6 +422,7 @@ namespace engine
       stringstream ss ;
 
       ss << "IsOpened:" << ( _isOpened ? 1 : 0 )
+         << ",IsTrans:" << ( _isTransCtx ? 1 : 0 )
          << ",HitEnd:" << ( _hitEnd ? 1 : 0 )
          << ",BufferSize:" << _buffer.bufferSize() ;
 
