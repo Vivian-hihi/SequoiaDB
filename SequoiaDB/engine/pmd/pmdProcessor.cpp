@@ -697,6 +697,10 @@ namespace engine
          rc = rtnInitCommand( pCommand , flags, numToSkip, numToReturn,
                               pQueryBuff, pFieldSelector, pOrderByBuffer,
                               pHintBuffer ) ;
+         if ( pCommand->hasBuff() )
+         {
+            buffObj = pCommand->getBuff() ;
+         }
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -721,6 +725,10 @@ namespace engine
          rc = rtnRunCommand( pCommand, getSession()->getServiceType(),
                              eduCB(), _pDMSCB, _pRTNCB,
                              dpsCB, 1, &contextID ) ;
+         if ( pCommand->hasBuff() )
+         {
+            buffObj = pCommand->getBuff() ;
+         }
          if ( rc )
          {
             goto error ;

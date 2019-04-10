@@ -127,6 +127,41 @@ namespace engine
       clear() ;
    }
 
+   void _coordSessionPropSite::_toBson( BSONObjBuilder &builder ) const
+   {
+      _pEDUCB->getTransExecutor()->toBson( builder ) ;
+   }
+
+   INT32 _coordSessionPropSite::_checkTransConf( const _dpsTransConfItem *pTransConf )
+   {
+      INT32 rc = SDB_OK ;
+
+      /// When in transaction, can only update transtimeout
+      if ( _pEDUCB->isTransaction() )
+      {
+         UINT32 mask = pTransConf->getTransConfMask() ;
+         OSS_BIT_CLEAR( mask, TRANS_CONF_MASK_TIMEOUT ) ;
+
+         if ( 0 != mask )
+         {
+            PD_LOG_MSG( PDERROR, "In transaction can only update %s",
+                        FIELD_NAME_TRANS_TIMEOUT ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _coordSessionPropSite::_updateTransConf( const _dpsTransConfItem *pTransConf )
+   {
+      _pEDUCB->getTransExecutor()->updateByMask( *pTransConf ) ;
+   }
+
    BOOLEAN _coordSessionPropSite::isTransNode( const MsgRouteID &routeID ) const
    {
       BOOLEAN found = FALSE ;

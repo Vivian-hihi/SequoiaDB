@@ -1821,7 +1821,7 @@
       <long>transisolation</long>
       <description>
          <en>Specify the isolation level of transaction, 0 for RU, 1 for RC, 2 for RS. Default is 0</en>
-         <cn>指定事务的隔离级别，0为RU级别，1为RC级别，2为RS级别，3为RR级别。默认为0。</cn>
+         <cn>指定事务的隔离级别，0为RU级别，1为RC级别，2为RS级别。默认为0。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>

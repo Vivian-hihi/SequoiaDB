@@ -63,6 +63,8 @@ namespace engine
       UINT32   _auditMask ;
       UINT32   _auditConfigMask ;
 
+      dpsTransConfItem  _transConf ;
+
       BSONObj  _objSchedInfo ;
 
       _clsIdentifyInfo()
@@ -103,6 +105,8 @@ namespace engine
          BOOLEAN isDelayLogin() const ;
          void    setLogout() ;
          void    setDelayLogin( const clsIdentifyInfo &info ) ;
+
+         const dpsTransConfItem&    getTransConf() const ;
 
       protected:
          INT32 _checkWriteStatus() ;
@@ -339,6 +343,7 @@ namespace engine
          string                 _username ;
          string                 _passwd ;
          BSONObj                _objDelayInfo ;
+         dpsTransConfItem       _transConf ;
 
          UINT32                 _inPacketLevel ;
          INT64                  _pendingContextID ;

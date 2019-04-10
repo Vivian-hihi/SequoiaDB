@@ -331,9 +331,13 @@ namespace engine
       builder.append( FIELD_NAME_REMOTE_IP, pRemoteIP ) ;
       builder.append( FIELD_NAME_REMOTE_PORT, (INT32)remotePort ) ;
 
+      /// audit mask
       pdGetCurAuditMask( AUDIT_LEVEL_USER, mask, configMask ) ;
       builder.append( FIELD_NAME_AUDIT_MASK, (INT32)mask ) ;
       builder.append( FIELD_NAME_AUDIT_CONFIG_MASK, (INT32)configMask ) ;
+
+      /// trans info
+      cb->getTransExecutor()->toBson( builder ) ;
 
       return builder.obj() ;
    }
@@ -560,7 +564,9 @@ namespace engine
                                                      UINT32 &nodeSiteVer )
    {
       INT32 rc = SDB_OK ;
-      UINT32 curVersion = pdGetCurAuditVersion() ;
+      UINT32 curAuditVersion = pdGetCurAuditVersion() ;
+      UINT32 curTransVer = cb->getTransExecutor()->getTransConfVer() ;
+      UINT32 curVersion = curAuditVersion + curTransVer ;
 
       if ( 0 != curVersion && curVersion != nodeSiteVer )
       {

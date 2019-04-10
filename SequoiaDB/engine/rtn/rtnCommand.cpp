@@ -78,6 +78,16 @@ namespace engine
       _fromService = fromService ;
    }
 
+   BOOLEAN _rtnCommand::hasBuff() const
+   {
+      return _buff.size() > 0 ? TRUE : FALSE ;
+   }
+
+   const rtnContextBuf& _rtnCommand::getBuff() const
+   {
+      return _buff ;
+   }
+
    INT32 _rtnCommand::spaceNode()
    {
       return CMD_SPACE_NODE_ALL ;
@@ -3660,7 +3670,60 @@ error:
 
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnSetSessionAttr )
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNSETSESSATTR_INIT, "_rtnSetSessionAttr::init" )
+   /*
+      _rtnLocalSessionProp implement
+   */
+   _rtnLocalSessionProp::_rtnLocalSessionProp()
+   {
+      _cb = NULL ;
+   }
+
+   void _rtnLocalSessionProp::bindEDU( _pmdEDUCB * cb )
+   {
+      _cb = cb ;
+   }
+
+   void _rtnLocalSessionProp::_toBson( BSONObjBuilder &builder ) const
+   {
+      if ( _cb )
+      {
+         _cb->getTransExecutor()->toBson( builder ) ;
+      }
+   }
+
+   INT32 _rtnLocalSessionProp::_checkTransConf( const _dpsTransConfItem *pTransConf )
+   {
+      INT32 rc = SDB_OK ;
+
+      /// When in transaction, can only update transtimeout
+      if ( _cb && _cb->isTransaction() )
+      {
+         UINT32 mask = pTransConf->getTransConfMask() ;
+         OSS_BIT_CLEAR( mask, TRANS_CONF_MASK_TIMEOUT ) ;
+
+         if ( 0 != mask )
+         {
+            PD_LOG_MSG( PDERROR, "In transaction can only update %s",
+                        FIELD_NAME_TRANS_TIMEOUT ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnLocalSessionProp::_updateTransConf( const _dpsTransConfItem *pTransConf )
+   {
+      if ( _cb )
+      {
+         _cb->getTransExecutor()->updateByMask( *pTransConf ) ;
+      }
+   }
+
    INT32 _rtnSetSessionAttr::init( INT32 flags, INT64 numToSkip,
                                    INT64 numToReturn,
                                    const CHAR *pMatcherBuff,
@@ -3668,16 +3731,25 @@ error:
                                    const CHAR *pOrderByBuff,
                                    const CHAR *pHintBuff )
    {
-      INT32 rc = SDB_OK ;
+      _pMatchBuff = pMatcherBuff ;
+      return SDB_OK ;
+   }
 
-      PD_TRACE_ENTRY( SDB__RTNSETSESSATTR_INIT ) ;
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNSETSESSATTR_DOIT, "_rtnSetSessionAttr::doit" )
+   INT32 _rtnSetSessionAttr::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                   _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                   INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNSETSESSATTR_DOIT ) ;
 
       try
       {
-         BSONObj property( pMatcherBuff ) ;
-         rtnSessionProperty sessProperty ;
+         BSONObj property( _pMatchBuff ) ;
+         _rtnLocalSessionProp sessionProp ;
+         sessionProp.bindEDU( cb ) ;
 
-         rc = sessProperty.parseProperty( property ) ;
+         rc = sessionProp.parseProperty( property ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse session property, "
                       "rc: %d", rc ) ;
       }
@@ -3690,18 +3762,10 @@ error:
       }
 
    done :
-      PD_TRACE_EXITRC( SDB__RTNSETSESSATTR_INIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNSETSESSATTR_DOIT, rc ) ;
       return rc ;
-
    error :
       goto done ;
-   }
-
-   INT32 _rtnSetSessionAttr::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                                   _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                                   INT16 w, INT64 *pContextID )
-   {
-      return SDB_OK ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnGetSessionAttr )
@@ -3729,6 +3793,11 @@ error:
                                     _SDB_RTNCB * rtnCB, _dpsLogWrapper * dpsCB,
                                     INT16 w, INT64 * pContextID )
    {
+      _rtnLocalSessionProp sessionProp ;
+      sessionProp.bindEDU( cb ) ;
+
+      _buff = rtnContextBuf( sessionProp.toBSON() ) ;
+
       return SDB_OK ;
    }
 

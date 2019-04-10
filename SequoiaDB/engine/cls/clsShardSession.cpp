@@ -233,6 +233,11 @@ namespace engine
       _logout = TRUE ;
    }
 
+   const dpsTransConfItem& _clsShdSession::getTransConf() const
+   {
+      return _transConf ;
+   }
+
    void _clsShdSession::setDelayLogin( const clsIdentifyInfo &info )
    {
       _delayLogin = TRUE ;
@@ -244,6 +249,8 @@ namespace engine
       _passwd = info._passwd ;
       /// update audit mask
       setAuditConfig( info._auditMask, info._auditConfigMask ) ;
+      /// update trans conf
+      _transConf = info._transConf ;
 
       if ( !info._objSchedInfo.isEmpty() )
       {
@@ -1458,6 +1465,10 @@ namespace engine
          rc = rtnInitCommand( pCommand , flags, numToSkip, numToReturn,
                               pQueryBuff, pFieldSelector, pOrderByBuffer,
                               pHintBuffer ) ;
+         if ( pCommand->hasBuff() )
+         {
+            buffObj = pCommand->getBuff() ;
+         }
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -1594,7 +1605,10 @@ namespace engine
             rc = rtnRunCommand( pCommand, getServiceType(),
                                 _pEDUCB, _pDmsCB, _pRtnCB,
                                 _pDpsCB, w, &contextID ) ;
-
+            if ( pCommand->hasBuff() )
+            {
+               buffObj = pCommand->getBuff() ;
+            }
             if ( rc && CMD_CREATE_COLLECTION == pCommand->type() )
             {
                /// create collection failed, so we need to clear cache
@@ -1931,6 +1945,12 @@ namespace engine
       getAuditConfig( auditMask, auditConfigMask ) ;
       pdUpdateCurAuditMask( AUDIT_LEVEL_USER, auditMask, auditConfigMask ) ;
 
+      /// update trans conf
+      if ( 0 != _transConf.getTransConfMask() )
+      {
+         eduCB()->getTransExecutor()->copyFrom( _transConf ) ;
+      }
+
       ossUnpack32From64( identifyID(), ip, port ) ;
       /// set detail name
       CHAR szTmpIP[ 50 ] = { 0 } ;
@@ -1987,6 +2007,8 @@ namespace engine
                                (UINT32)eConfigMask.numberInt() ) ;
             }
 
+            _transConf.fromBson( obj ) ;
+
             if ( isSetLogout() )
             {
                BSONElement remoteIP = obj.getField( FIELD_NAME_REMOTE_IP ) ;
@@ -2009,6 +2031,11 @@ namespace engine
                getAuditConfig( auditMask, auditConfigMask ) ;
                pdUpdateCurAuditMask( AUDIT_LEVEL_USER, auditMask,
                                      auditConfigMask ) ;
+               /// update trans conf
+               if ( 0 != _transConf.getTransConfMask() )
+               {
+                  eduCB()->getTransExecutor()->copyFrom( _transConf ) ;
+               }
             }
          }
          catch( std::exception &e )

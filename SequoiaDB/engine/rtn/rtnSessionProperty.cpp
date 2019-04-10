@@ -35,6 +35,7 @@
 *******************************************************************************/
 
 #include "rtnSessionProperty.hpp"
+#include "dpsTransExecutor.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "msg.hpp"
@@ -643,6 +644,8 @@ namespace engine
       _instanceOption.toBSON( builder ) ;
       builder.append( FIELD_NAME_TIMEOUT, _operationTimeout ) ;
 
+      _toBson( builder ) ;
+
       return builder.obj() ;
    }
 
@@ -737,6 +740,7 @@ namespace engine
 
       BOOLEAN gotInstance = FALSE ;
       BOOLEAN gotOperationTimeout = FALSE ;
+      dpsTransConfItem transConf ;
 
       BSONObjIterator iter( property ) ;
       while ( iter.more() )
@@ -780,7 +784,7 @@ namespace engine
             instanceOption.setPreferredStrict( field.boolean() ) ;
             gotInstance = TRUE ;
          }
-         else if ( 0 == ossStrcmp( field.fieldName(), FIELD_NAME_TIMEOUT ) )
+         else if ( 0 == ossStrcasecmp( field.fieldName(), FIELD_NAME_TIMEOUT ) )
          {
             /// Timeout
             PD_CHECK( field.isNumber(), SDB_INVALIDARG, error,
@@ -790,10 +794,75 @@ namespace engine
             operationTimeout = (INT64)field.numberLong() ;
             gotOperationTimeout = TRUE ;
          }
-         else if ( 0 == ossStrcmp( field.fieldName(),
-                                   FIELD_NAME_PREFERED_INSTANCE ) )
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_PREFERED_INSTANCE ) )
          {
             /// do nothing
+         }
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_TRANSISOLATION ) )
+         {
+            PD_CHECK( field.isNumber(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not number",
+                      FIELD_NAME_TRANSISOLATION ) ;
+            INT32 transIsolation = field.numberInt() ;
+            if ( transIsolation < TRANS_ISOLATION_RU ||
+                 transIsolation >= TRANS_ISOLATION_MAX )
+            {
+               PD_LOG( PDERROR, "Field[%s]'s value is invalid",
+                       field.toString().c_str() ) ;
+               goto error ;
+            }
+            transConf.setTransIsolation( transIsolation, TRUE ) ;
+         }
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_TRANS_TIMEOUT ) )
+         {
+            PD_CHECK( field.isNumber(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not number",
+                      FIELD_NAME_TRANS_TIMEOUT ) ;
+            INT32 transTimeout = field.numberInt() ;
+            if ( transTimeout < 0 )
+            {
+               transTimeout = 0 ;
+            }
+            transConf.setTransTimeout( transTimeout * OSS_ONE_SEC, TRUE ) ;
+         }
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_TRANS_WAITLOCK ) )
+         {
+            PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not number",
+                      FIELD_NAME_TRANS_WAITLOCK ) ;
+            transConf.setTransWaitLock( field.boolean() ? TRUE : FALSE,
+                                        TRUE ) ;
+         }
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_TRANS_USE_RBS ) )
+         {
+            PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not number",
+                      FIELD_NAME_TRANS_USE_RBS ) ;
+            transConf.setUseRollbackSemgent( field.boolean() ? TRUE : FALSE,
+                                             TRUE ) ;
+         }
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_TRANS_AUTOCOMMIT ) )
+         {
+            PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not number",
+                      FIELD_NAME_TRANS_AUTOCOMMIT ) ;
+            transConf.setTransAutoCommit( field.boolean() ? TRUE : FALSE,
+                                          TRUE ) ;
+         }
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_TRANS_AUTOROLLBACK ) )
+         {
+            PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not number",
+                      FIELD_NAME_TRANS_AUTOROLLBACK ) ;
+            transConf.setTransAutoRollback( field.boolean() ? TRUE : FALSE,
+                                            TRUE ) ;
          }
          else
          {
@@ -802,6 +871,17 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+      }
+
+      if ( transConf.getTransConfMask() )
+      {
+         rc = _checkTransConf( &transConf ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         /// update trans conf
+         _updateTransConf( &transConf ) ;
       }
 
       if ( gotInstance )
@@ -825,6 +905,15 @@ namespace engine
 
    error :
       goto done ;
+   }
+
+   INT32 _rtnSessionProperty::_checkTransConf( const _dpsTransConfItem *pTransConf )
+   {
+      return SDB_OK ;
+   }
+
+   void _rtnSessionProperty::_updateTransConf( const _dpsTransConfItem *pTransConf )
+   {
    }
 
 }

@@ -77,6 +77,52 @@ Set session attributes.
               Minimum value is 1000 ms.
 .br
               "Timeout" : 10000
+.br
+       \fBTransIsolation\fR
+.br
+              The isolation level of transaction in the current
+              session. 0 for RU, 1 for RC, 2 for RS.
+.br
+              "TransIsolation" : 1
+.br
+       \fBTransTimeout\fR
+.br
+              The timeout of waiting the transaction-lock(in second)
+              in the current session.
+              Only the TransTimeout can update in transaction, other
+              transaction attributes should update outside of
+              transaction.
+.br
+              "TransTimeout" : 10
+.br
+       \fBTransWaitLock\fR
+.br
+              Specify the lock wait behavior within transaction under
+              RC isolation level in current session.
+.br
+              "TransWaitLock" : true
+.br
+       \fBTransUseRBS\fR
+.br
+              Specify whether use rollback segment or not in
+              transaction in the current session.
+.br
+              "TransUseRBS" : true
+.br
+       \fBTransAutoCommit\fR
+.br
+              Specify whether enable automatic transaction or not
+              in the current session.
+.br
+              "TransAutoCommit" : true
+.br
+       \fBTransAutoRollback\fR
+.br
+              Specify whether enable automatically rollback when
+              transaction operation failed or not in the current
+              session.
+.br
+              "TransAutoRollback" : true
 .SH "Examples"
 
 .sp 2

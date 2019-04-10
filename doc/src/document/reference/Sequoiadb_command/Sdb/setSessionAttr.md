@@ -18,6 +18,12 @@
 | PreferedInstanceMode | 指定会话当多个实例符合 PreferedInstance 的条件时的选择模式。<br>"random"：从候选的实例中随机选择。<br>"ordered"：从候选的实例中按照 PerferedInstance 的顺序进行选择。 | ```PreferedInstaceMode : "random"``` |
 | PreferedStrict   |  指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferedinstance 指定的ID中选取 |  ```PreferedStrict : true ``` |
 | Timeout | 指定会话执行操作的超时时间（单位：毫秒）。<br>-1 表示不进行超时检测。<br>最小值为 1000 毫秒。 | ```Timeout : 10000``` |
+| TransIsolation | 会话事务的隔离级别，0为RU级别，1为RC级别，2为RS级别 | ```TransIsolation : 1``` |
+| TransTimeout   | 会话事务锁等待超时时间（单位：秒） | ```TransTimeout : 10``` |
+| TransWaitLock  | 会话事务在RC隔离级别下是否需要等锁 | ```TransWaitLock : true``` |
+| TransUseRBS    | 会话事务是否使用回滚段             | ```TransUseRBS : true``` |
+| TransAutoCommit| 会话事务是否支持自动事务提交       | ```TransAutoCommit : true``` |
+| TransAutoRollback| 会话事务在操作失败时是否自动回滚 | ```TransAutoRollback : true``` |
 
 >   **Note:**
 >
@@ -31,6 +37,7 @@
 >       *   如果没有符合 PreferedInstance 的实例，会话将随机选择使用上一次写操作的实例，即可读写（主）实例进行查询（如无写操作，则随机选取实例）。
 >       *   在节点配置了instanceid的情况下，按照instanceid进行获取。在节点没有配置instanceid的情况下，按照节点的nodeid在组内的排序序列（从1开始）作为instanceid来进行选取，例如 组 db1 中有3个节点 [ { NodeID:1001}, {NodeID:1004}, {NodeID:1002} ]，那么其节点的 instanceid 分别为 1, 3, 2。如果指定的1-255的实例ID大于数据组内的节点总数，则实例ID对节点总数取模后在组内按照nodeid的排序顺序选取。
 >   *   Timeout 的默认值是 -1，即不进行超时检测。
+>   *   事务相关属性只有 TransTimeout 允许在事务中设置，其它事务属性需要在非事务中设置。
 >   *   获取会话属性请参考 [Sdb.getSessionAttr()](reference/Sequoiadb_command/Sdb/getSessionAttr.md) 。
 
 ##返回值##

@@ -954,6 +954,10 @@ retry :
       rc = rtnInitCommand( pCommand , flags, numToSkip, numToReturn,
                            pQueryBuff, pFieldSelector, pOrderByBuffer,
                            pHintBuffer ) ;
+      if ( pCommand->hasBuff() )
+      {
+         buffObj = pCommand->getBuff() ;
+      }
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -989,6 +993,10 @@ retry :
       {
          rc = rtnRunCommand( pCommand, CMD_SPACE_SERVICE_SHARD, _pEDUCB,
                              _pDmsCB, _pRtnCB, _pDpsCB, w, &contextID ) ;
+         if ( pCommand->hasBuff() )
+         {
+            buffObj = pCommand->getBuff() ;
+         }
          PD_RC_CHECK ( rc, PDERROR, "Run command[%s] failed, rc: %d",
                        pCommand->name(), rc ) ;
       }

@@ -42,6 +42,8 @@
 #include "ossMemPool.hpp"
 #include "../bson/bson.h"
 
+using namespace bson ;
+
 namespace engine
 {
    #define RTN_SESSION_OPERATION_TIMEOUT_MIN ( 1000 )    // 1000ms
@@ -76,6 +78,7 @@ namespace engine
     */
    class _rtnInstanceOption ;
    typedef class _rtnInstanceOption rtnInstanceOption ;
+   class _dpsTransConfItem ;
 
    class _rtnInstanceOption : public SDBObject
    {
@@ -228,19 +231,23 @@ namespace engine
             return _operationTimeout ;
          }
 
-         INT32 parseProperty ( const bson::BSONObj & property ) ;
+         INT32 parseProperty( const BSONObj &property ) ;
 
-         bson::BSONObj toBSON () const ;
+         BSONObj toBSON () const ;
 
       protected :
          INT32 _parsePropertyV0 ( const bson::BSONObj & property ) ;
          INT32 _parsePropertyV1 ( const bson::BSONObj & property ) ;
 
-         virtual void _onSetInstance () {}
+         virtual void   _onSetInstance () {}
+         virtual void   _toBson( BSONObjBuilder &builder ) const {}
+
+         virtual INT32  _checkTransConf( const _dpsTransConfItem *pTransConf ) ;
+         virtual void   _updateTransConf( const _dpsTransConfItem *pTransConf ) ;
 
       protected :
-         rtnInstanceOption _instanceOption ;
-         INT64             _operationTimeout ;
+         rtnInstanceOption    _instanceOption ;
+         INT64                _operationTimeout ;
    } ;
 
 }

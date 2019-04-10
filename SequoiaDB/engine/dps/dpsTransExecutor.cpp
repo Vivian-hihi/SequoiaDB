@@ -42,8 +42,286 @@
 #include "dpsTransCB.hpp"
 #include "dpsTransLRB.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
+
+   /*
+      _dpsTransConfItem implement
+   */
+   _dpsTransConfItem::_dpsTransConfItem()
+   {
+      reset() ;
+   }
+
+   _dpsTransConfItem::~_dpsTransConfItem()
+   {
+   }
+
+   void _dpsTransConfItem::reset()
+   {
+      _transIsolation   = DPS_TRANS_ISOLATION_DFT ;
+      _transTimeout     = DPS_TRANS_DFT_TIMEOUT * OSS_ONE_SEC ;
+      _transWaitLock    = DPS_TRANS_LOCKWAIT_DFT ;
+      _useRollbackSegment = TRUE ;
+      _transAutoCommit  = FALSE ;
+      _transAutoRollback= TRUE ;
+      _transConfMask    = 0 ;
+      _transConfVer     = 1 ;
+   }
+
+   void _dpsTransConfItem::resetConfMask()
+   {
+      _transConfMask = 0 ;
+   }
+
+   void _dpsTransConfItem::resetConfMask( UINT32 bitMask )
+   {
+      OSS_BIT_CLEAR( _transConfMask, bitMask ) ;
+   }
+
+   INT32 _dpsTransConfItem::getTransIsolation() const
+   {
+      return _transIsolation ;
+   }
+
+   UINT32 _dpsTransConfItem::getTransTimeout() const
+   {
+      return _transTimeout ;
+   }
+
+   BOOLEAN _dpsTransConfItem::isTransWaitLock() const
+   {
+      return _transWaitLock ;
+   }
+
+   BOOLEAN _dpsTransConfItem::useRollbackSegment() const
+   {
+      return _useRollbackSegment ;
+   }
+
+   BOOLEAN _dpsTransConfItem::isTransAutoCommit() const
+   {
+      return _transAutoCommit ;
+   }
+
+   BOOLEAN _dpsTransConfItem::isTransAutoRollback() const
+   {
+      return _transAutoRollback ;
+   }
+
+   UINT32 _dpsTransConfItem::getTransConfMask() const
+   {
+      return _transConfMask ;
+   }
+
+   UINT32 _dpsTransConfItem::getTransConfVer() const
+   {
+      return _transConfVer ;
+   }
+
+   void _dpsTransConfItem::setTransIsolation( INT32 isolation,
+                                              BOOLEAN enableMask )
+   {
+      if ( isolation >= TRANS_ISOLATION_RU &&
+           isolation <= TRANS_ISOLATION_MAX - 1 &&
+           _transIsolation != isolation )
+      {
+         _transIsolation = isolation ;
+         ++_transConfVer ;
+      }
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_ISOLATION ;
+      }
+   }
+
+   void _dpsTransConfItem::setTransTimeout( UINT32 timeout,
+                                            BOOLEAN enableMask )
+   {
+      if ( _transTimeout != timeout )
+      {
+         _transTimeout = timeout ;
+         ++_transConfVer ;
+      }
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_TIMEOUT ;
+      }
+   }
+
+   void _dpsTransConfItem::setTransWaitLock( BOOLEAN waitLock,
+                                             BOOLEAN enableMask )
+   {
+      if ( _transWaitLock != waitLock )
+      {
+         _transWaitLock = waitLock ;
+         ++_transConfVer ;
+      }
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_WAITLOCK ;
+      }
+   }
+
+   void _dpsTransConfItem::setUseRollbackSemgent( BOOLEAN use,
+                                                  BOOLEAN enableMask )
+   {
+      if ( _useRollbackSegment != use )
+      {
+         _useRollbackSegment = use ;
+         ++_transConfVer ;
+      }
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_USERBS ;
+      }
+   }
+
+   void _dpsTransConfItem::setTransAutoCommit( BOOLEAN autoCommit,
+                                               BOOLEAN enableMask )
+   {
+      if ( _transAutoCommit != autoCommit )
+      {
+         _transAutoCommit = autoCommit ;
+         ++_transConfVer ;
+      }
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_AUTOCOMMIT ;
+      }
+   }
+
+   void _dpsTransConfItem::setTransAutoRollback( BOOLEAN autoRollback,
+                                                 BOOLEAN enableMask )
+   {
+      if ( _transAutoRollback != autoRollback )
+      {
+         _transAutoRollback = autoRollback ;
+         ++_transConfVer ;
+      }
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_AUTOROLLBACK ;
+      }
+   }
+
+   void _dpsTransConfItem::updateByMask( const _dpsTransConfItem &rhs )
+   {
+      UINT32 rhsMask = rhs.getTransConfMask() ;
+      UINT32 oldTransConfVer = _transConfVer ;
+
+      if ( rhsMask & TRANS_CONF_MASK_ISOLATION )
+      {
+         setTransIsolation( rhs.getTransIsolation(), TRUE ) ;
+      }
+      if ( rhsMask & TRANS_CONF_MASK_TIMEOUT )
+      {
+         setTransTimeout( rhs.getTransTimeout(), TRUE ) ;
+      }
+      if ( rhsMask & TRANS_CONF_MASK_USERBS )
+      {
+         setUseRollbackSemgent( rhs.useRollbackSegment(), TRUE ) ;
+      }
+      if ( rhsMask & TRANS_CONF_MASK_AUTOCOMMIT )
+      {
+         setTransAutoCommit( rhs.isTransAutoCommit(), TRUE ) ;
+      }
+      if ( rhsMask & TRANS_CONF_MASK_AUTOROLLBACK )
+      {
+         setTransAutoRollback( rhs.isTransAutoRollback(), TRUE ) ;
+      }
+      if ( rhsMask & TRANS_CONF_MASK_WAITLOCK )
+      {
+         setTransWaitLock( rhs.isTransWaitLock(), TRUE ) ;
+      }
+
+      if ( oldTransConfVer != _transConfVer )
+      {
+         _transConfVer = oldTransConfVer + 1 ;
+      }
+   }
+
+   void _dpsTransConfItem::copyFrom( const _dpsTransConfItem &rhs )
+   {
+      *this = rhs ;
+   }
+
+   void _dpsTransConfItem::toBson( BSONObjBuilder & builder ) const
+   {
+      try
+      {
+         builder.append( FIELD_NAME_TRANSISOLATION, _transIsolation ) ;
+         builder.append( FIELD_NAME_TRANS_TIMEOUT,
+                         _transTimeout / OSS_ONE_SEC ) ;
+         builder.appendBool( FIELD_NAME_TRANS_USE_RBS, _useRollbackSegment ) ;
+         builder.appendBool( FIELD_NAME_TRANS_WAITLOCK, _transWaitLock ) ;
+         builder.appendBool( FIELD_NAME_TRANS_AUTOCOMMIT, _transAutoCommit ) ;
+         builder.appendBool( FIELD_NAME_TRANS_AUTOROLLBACK,
+                             _transAutoRollback ) ;
+      }
+      catch ( std::exception &e )
+      {
+         /// ignore
+         PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+      }
+   }
+
+   void _dpsTransConfItem::fromBson( const BSONObj &obj )
+   {
+      UINT32 oldTransConfVer = _transConfVer ;
+
+      try
+      {
+         BSONObjIterator itr( obj ) ;
+         while( itr.more() )
+         {
+            BSONElement e = itr.next() ;
+
+            if ( 0 == ossStrcmp( e.fieldName(),
+                                 FIELD_NAME_TRANSISOLATION ) )
+            {
+               setTransIsolation( e.numberInt(), TRUE ) ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(),
+                                      FIELD_NAME_TRANS_TIMEOUT ) )
+            {
+               setTransTimeout( e.numberInt() * OSS_ONE_SEC, TRUE ) ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(),
+                                      FIELD_NAME_TRANS_USE_RBS ) )
+            {
+               setUseRollbackSemgent( e.booleanSafe(), TRUE ) ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(),
+                                      FIELD_NAME_TRANS_WAITLOCK ) )
+            {
+               setTransWaitLock( e.booleanSafe(), TRUE ) ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(),
+                                      FIELD_NAME_TRANS_AUTOCOMMIT ) )
+            {
+               setTransAutoCommit( e.booleanSafe(), TRUE ) ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(),
+                                      FIELD_NAME_TRANS_AUTOROLLBACK ) )
+            {
+               setTransAutoRollback( e.booleanSafe(), TRUE ) ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Occur exeption: %s", e.what() ) ;
+         /// ignore
+      }
+
+      if ( oldTransConfVer != _transConfVer )
+      {
+         _transConfVer = oldTransConfVer + 1 ;
+      }
+   }
 
    /*
       _dpsTransExecutor implement
@@ -54,14 +332,6 @@ namespace engine
       _waiterQueType    = DPS_QUE_NULL ;
       _lastLRB          = NULL;
       _lockCount        = 0 ;
-
-      _transIsolation   = DPS_TRANS_ISOLATION_DFT ;
-      _transTimeout     = DPS_TRANS_DFT_TIMEOUT ;
-      _transWaitLock    = DPS_TRANS_LOCKWAIT_DFT ;
-      _useRollbackSegment = TRUE ;
-      _transAutoCommit  = FALSE ;
-      _transAutoRollback= TRUE ;
-      _transConfMask    = 0 ;
 
       _useTransLock     = TRUE ;
       _reservedLogSpace = 0 ;
@@ -200,114 +470,9 @@ namespace engine
       return _lockCount ;
    }
 
-   INT32 _dpsTransExecutor::getTransIsolation() const
-   {
-      return _transIsolation ;
-   }
-
-   UINT32 _dpsTransExecutor::getTransTimeout() const
-   {
-      return _transTimeout ;
-   }
-
-   BOOLEAN _dpsTransExecutor::isTransWaitLock() const
-   {
-      return _transWaitLock ;
-   }
-
-   BOOLEAN _dpsTransExecutor::useRollbackSegment() const
-   {
-      return _useRollbackSegment ;
-   }
-
-   BOOLEAN _dpsTransExecutor::isTransAutoCommit() const
-   {
-      return _transAutoCommit ;
-   }
-
-   BOOLEAN _dpsTransExecutor::isTransAutoRollback() const
-   {
-      return _transAutoRollback ;
-   }
-
    BOOLEAN _dpsTransExecutor::useTransLock() const
    {
       return _useTransLock ;
-   }
-
-   UINT32 _dpsTransExecutor::getTransConfMask() const
-   {
-      return _transConfMask ;
-   }
-
-   void _dpsTransExecutor::setTransIsolation( INT32 isolation,
-                                              BOOLEAN enableMask )
-   {
-      if ( isolation >= TRANS_ISOLATION_RU &&
-           isolation <= TRANS_ISOLATION_MAX - 1 )
-      {
-         _transIsolation = isolation ;
-      }
-      else
-      {
-         _transIsolation = DPS_TRANS_ISOLATION_DFT ;
-      }
-
-      if ( enableMask )
-      {
-         _transConfMask |= TRANS_CONF_MASK_ISOLATION ;
-      }
-   }
-
-   void _dpsTransExecutor::setTransTimeout( UINT32 timeout,
-                                            BOOLEAN enableMask )
-   {
-      _transTimeout = timeout ;
-
-      if ( enableMask )
-      {
-         _transConfMask |= TRANS_CONF_MASK_TIMEOUT ;
-      }
-   }
-
-   void _dpsTransExecutor::setTransWaitLock( BOOLEAN waitLock,
-                                             BOOLEAN enableMask )
-   {
-      _transWaitLock = waitLock ;
-      if ( enableMask )
-      {
-         _transConfMask |= TRANS_CONF_MASK_WAITLOCK ;
-      }
-   }
-
-   void _dpsTransExecutor::setUseRollbackSemgent( BOOLEAN use,
-                                                  BOOLEAN enableMask )
-   {
-      _useRollbackSegment = use ;
-      if ( enableMask )
-      {
-         _transConfMask |= TRANS_CONF_MASK_USERBS ;
-      }
-   }
-
-   void _dpsTransExecutor::setTransAutoCommit( BOOLEAN autoCommit,
-                                               BOOLEAN enableMask )
-   {
-      _transAutoCommit = autoCommit ;
-      if ( enableMask )
-      {
-         _transConfMask |= TRANS_CONF_MASK_AUTOCOMMIT ;
-      }
-   }
-
-   void _dpsTransExecutor::setTransAutoRollback( BOOLEAN autoRollback,
-                                                 BOOLEAN enableMask )
-   {
-      _transAutoRollback = autoRollback ;
-      if ( enableMask )
-      {
-         _transConfMask |= TRANS_CONF_MASK_AUTOROLLBACK ;
-      }
    }
 
    void _dpsTransExecutor::setUseTransLock( BOOLEAN use )
@@ -323,6 +488,7 @@ namespace engine
                                           BOOLEAN useRBS )
    {
       _transConfMask = 0 ;
+
       setTransIsolation( isolation, FALSE ) ;
       setTransTimeout( timeout, FALSE ) ;
       setTransWaitLock( waitLock, FALSE ) ;
@@ -331,6 +497,7 @@ namespace engine
       setUseRollbackSemgent( useRBS, FALSE ) ;
 
       _useTransLock        = TRUE ;
+      _transConfVer        = 1 ;
    }
 
    void _dpsTransExecutor::updateTransConf( INT32 isolation,
@@ -340,6 +507,8 @@ namespace engine
                                             BOOLEAN autoRollback,
                                             BOOLEAN useRBS )
    {
+      UINT32 oldTransConfVer = _transConfVer ;
+
       /// only timeout can update in transaction
       if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_TIMEOUT ) )
       {
@@ -368,6 +537,11 @@ namespace engine
          {
             setUseRollbackSemgent( useRBS, FALSE ) ;
          }
+      }
+
+      if ( oldTransConfVer != _transConfVer )
+      {
+         _transConfVer = oldTransConfVer + 1 ;
       }
    }
 

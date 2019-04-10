@@ -42,7 +42,9 @@
 #include "msg.hpp"
 #include "migLoad.hpp"
 #include "rtnAlterJob.hpp"
+#include "rtnContextBuff.hpp"
 #include "rtnQueryOptions.hpp"
+#include "rtnSessionProperty.hpp"
 
 using namespace bson ;
 
@@ -73,6 +75,9 @@ namespace engine
          void  setFromService( INT32 fromService ) ;
          INT32 getFromService() const { return _fromService ; }
 
+         BOOLEAN                 hasBuff() const ;
+         const rtnContextBuf&    getBuff() const ;
+
          virtual INT32 spaceNode () ;
          virtual INT32 spaceService () ;
 
@@ -95,6 +100,7 @@ namespace engine
 
       protected:
          INT32             _fromService ;
+         rtnContextBuf     _buff ;
 
    };
 
@@ -1269,12 +1275,32 @@ namespace engine
       const CHAR *_fullName ;
    } ;
 
+   /*
+      _rtnLocalSessionProp define
+   */
+   class _rtnLocalSessionProp : public _rtnSessionProperty
+   {
+      public:
+         _rtnLocalSessionProp() ;
+
+         void           bindEDU( _pmdEDUCB *cb ) ;
+
+      protected:
+         virtual void   _toBson( BSONObjBuilder &builder ) const ;
+         virtual INT32  _checkTransConf( const _dpsTransConfItem *pTransConf ) ;
+         virtual void   _updateTransConf( const _dpsTransConfItem *pTransConf ) ;
+
+      private:
+         _pmdEDUCB      *_cb ;
+   } ;
+   typedef _rtnLocalSessionProp rtnLocalSessionProp ;
+
    class _rtnSetSessionAttr : public _rtnCommand
    {
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSetSessionAttr() {}
+         _rtnSetSessionAttr() { _pMatchBuff = NULL ; }
          virtual ~_rtnSetSessionAttr() {}
 
       public:
@@ -1289,6 +1315,9 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
+
+      private:
+         const CHAR     *_pMatchBuff ;
    } ;
 
    class _rtnGetSessionAttr : public _rtnCommand

@@ -67,9 +67,70 @@ namespace engine
    } ;
 
    /*
+      _dpsTransConfItem define
+   */
+   class _dpsTransConfItem
+   {
+      public:
+         _dpsTransConfItem() ;
+         virtual ~_dpsTransConfItem() ;
+
+      public:
+         INT32                getTransIsolation() const ;
+         UINT32               getTransTimeout() const ;
+         BOOLEAN              isTransWaitLock() const ;
+         BOOLEAN              useRollbackSegment() const ;
+         BOOLEAN              isTransAutoCommit() const ;
+         BOOLEAN              isTransAutoRollback() const ;
+
+         UINT32               getTransConfMask() const ;
+         UINT32               getTransConfVer() const ;
+
+         void                 setTransIsolation( INT32 isolation,
+                                                 BOOLEAN enableMask = TRUE ) ;
+         void                 setTransTimeout( UINT32 timeout,
+                                               BOOLEAN enableMask = TRUE ) ;
+         void                 setTransWaitLock( BOOLEAN waitLock,
+                                                BOOLEAN enableMask = TRUE ) ;
+         void                 setUseRollbackSemgent( BOOLEAN use,
+                                                     BOOLEAN enableMask = TRUE ) ;
+         void                 setTransAutoCommit( BOOLEAN autoCommit,
+                                                  BOOLEAN enableMask = TRUE ) ;
+         void                 setTransAutoRollback( BOOLEAN autoRollback,
+                                                    BOOLEAN enableMask = TRUE ) ;
+
+         void                 reset() ;
+         void                 resetConfMask() ;
+         void                 resetConfMask( UINT32 bitMask ) ;
+
+         void                 updateByMask( const _dpsTransConfItem &rhs ) ;
+         void                 copyFrom( const _dpsTransConfItem &rhs ) ;
+
+         void                 toBson( BSONObjBuilder &builder ) const ;
+         void                 fromBson( const BSONObj &obj ) ;
+
+      protected:
+         INT32                   _transIsolation ;
+         UINT32                  _transTimeout ;      /// Unit:ms
+         // if transaction wait for lock
+         BOOLEAN                 _transWaitLock ;  
+         // if transaction use old copy in rollback segment
+         BOOLEAN                 _useRollbackSegment ;
+         // insert/update/delete/query operator auto use transaction
+         BOOLEAN                 _transAutoCommit ;
+         // when transaction operator failed, wether rollback auto
+         BOOLEAN                 _transAutoRollback ;
+
+         UINT32                  _transConfMask ;
+         UINT32                  _transConfVer ;
+
+   } ;
+   typedef _dpsTransConfItem dpsTransConfItem ;
+
+   /*
       _dpsTransExecutor define
    */
-   class _dpsTransExecutor
+   class _dpsTransExecutor : public _dpsTransConfItem
    {
       struct cmpCSCLLock
       {
@@ -145,30 +206,8 @@ namespace engine
          /*
             Transaction Related
          */
-         INT32                getTransIsolation() const ;
-         UINT32               getTransTimeout() const ;
-         BOOLEAN              isTransWaitLock() const ;
-         BOOLEAN              useRollbackSegment() const ;
-         BOOLEAN              isTransAutoCommit() const ;
-         BOOLEAN              isTransAutoRollback() const ;
-         BOOLEAN              useTransLock() const ;
-
-         UINT32               getTransConfMask() const ;
-
-         void                 setTransIsolation( INT32 isolation,
-                                                 BOOLEAN enableMask = TRUE ) ;
-         void                 setTransTimeout( UINT32 timeout,
-                                               BOOLEAN enableMask = TRUE ) ;
-         void                 setTransWaitLock( BOOLEAN waitLock,
-                                                BOOLEAN enableMask = TRUE ) ;
-         void                 setUseRollbackSemgent( BOOLEAN use,
-                                                     BOOLEAN enableMask = TRUE ) ;
-         void                 setTransAutoCommit( BOOLEAN autoCommit,
-                                                  BOOLEAN enableMask = TRUE ) ;
-         void                 setTransAutoRollback( BOOLEAN autoRollback,
-                                                    BOOLEAN enableMask = TRUE ) ;
-
          void                 setUseTransLock( BOOLEAN use ) ;
+         BOOLEAN              useTransLock() const ;
 
          /*
             LSN to record map functions
@@ -228,20 +267,6 @@ namespace engine
          MAP_LSN_2_RECORD        _mapLSN2Record ;
 
       private:
-         /// transaction configs
-         INT32                   _transIsolation ;
-         UINT32                  _transTimeout ;      /// Unit:ms
-         // if transaction wait for lock
-         BOOLEAN                 _transWaitLock ;  
-         // if transaction use old copy in rollback segment
-         BOOLEAN                 _useRollbackSegment ;
-         // insert/update/delete/query operator auto use transaction
-         BOOLEAN                 _transAutoCommit ;
-         // when transaction operator failed, wether rollback auto
-         BOOLEAN                 _transAutoRollback ;
-
-         UINT32                  _transConfMask ;
-
          BOOLEAN                 _useTransLock ;
          // undo LR space reserved by this transaction
          UINT64                  _reservedLogSpace ;

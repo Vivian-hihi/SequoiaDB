@@ -316,6 +316,8 @@ namespace engine
             {
                info._objSchedInfo = pSession->getSchedInfo()->toBSON() ;
             }
+            /// save trans conf
+            info._transConf = pShdSession->getTransConf() ;
             _mapIdentifys[ pSession->sessionID() ] = info ;
          }
       }
