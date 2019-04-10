@@ -79,8 +79,8 @@ public class Transaction17943A extends SdbTestBase {
             Assert.assertTrue(updateThread2.isSuccess(), updateThread2.getErrorMsg());
 
             latch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (BaseException | InterruptedException e) {
+            Assert.fail(e.getMessage());
         } finally {
 
             // 删除索引
@@ -165,10 +165,12 @@ public class Transaction17943A extends SdbTestBase {
 
                     // 开启查询事务
                     db.beginTransaction();
-                    String sql = "select sum(a) as sum from " + csName + "." + clName;
+                    String sql = "select sum(a) as sum from " + csName + "." + clName + " /*+use_index(textIndex17943A)*/";
                     DBCursor cursor = null;
+                    List<BSONObject> actNums = null;
                     try {
                         cursor = db.exec(sql);
+                        actNums = TransUtils.getReadActList(cursor);
                     } catch (BaseException e) {
                         if (e.getErrorCode() == -13) {
                             db.rollback();
@@ -177,7 +179,6 @@ public class Transaction17943A extends SdbTestBase {
                             Assert.fail(e.getMessage());
                         }
                     }
-                    List<BSONObject> actNums = TransUtils.getReadActList(cursor);
                     Assert.assertEquals(actNums.size(), 1);
                     double sumValue = (double) actNums.get(0).get("sum");
                     int sum = (int) sumValue;
