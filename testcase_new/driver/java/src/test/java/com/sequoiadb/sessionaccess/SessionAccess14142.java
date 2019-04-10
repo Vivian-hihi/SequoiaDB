@@ -80,6 +80,7 @@ public class SessionAccess14142 extends SdbTestBase {
         assertEquals(slaveNodeName, actualNodeName);
         BSONObject actSessionAttr = db.getSessionAttr();
         expSessionAttr.append("PreferedInstanceMode", "random");
+        expSessionAttr.append("PreferedStrict", false);
         expSessionAttr.append("Timeout", 20000L);
         assertEquals(actSessionAttr, expSessionAttr);
     }

@@ -56,6 +56,7 @@ public class SessionAccess14144 extends SdbTestBase {
         //assert getSessionAttr
         BSONObject actual = db.getSessionAttr();
         options.append("PreferedInstanceMode", "ordered");
+        options.append("PreferedStrict", false);
         options.append("Timeout",-1L);
         assertEquals(actual,options);
     }

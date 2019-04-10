@@ -60,7 +60,7 @@ public class SessionAccess14143 extends SdbTestBase {
             } else if (s.equals("S")) {
                 assertFalse(SessionAccessUtil.isMaster(db, rgName, hostName), "the actual data node name is: " + hostName + ",the current option is " + options.toString());
             }
-            options.append("PreferedInstanceMode", "random").append("Timeout", -1L);
+            options.append("PreferedInstanceMode", "random").append("PreferedStrict", false).append("Timeout", -1L);
             assertEquals(db.getSessionAttr(),options);
         }
         
@@ -81,7 +81,7 @@ public class SessionAccess14143 extends SdbTestBase {
         
         //Set中存放的是不重复的元素，如果actNodeNames大小为1时，代表实际操作的节点只有一个，没有随机取值
         Assert.assertNotEquals(actNodeNames.size(), 1, "When PreferedInstance is 'A', the actual node is unchanged, the node name is:" + actNodeNames.iterator().next());
-        options.append("PreferedInstanceMode", "random").append("Timeout", -1L);
+        options.append("PreferedInstanceMode", "random").append("PreferedStrict", false).append("Timeout", -1L);
         assertEquals(db.getSessionAttr(),options);
     }
     
