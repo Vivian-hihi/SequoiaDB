@@ -1115,11 +1115,9 @@ namespace engine
    {
       if ( _maxLRSize1 < recordSize )
       {
-         if ( _maxLRSize1 > _maxLRSize2 )
-         {
-            _maxLRSize2 = _maxLRSize1 ;
-            _maxLRLSN2 = _maxLRLSN1 ;
-         }
+         _maxLRSize2 = 0 ;
+         _maxLRLSN2 = DPS_INVALID_LSN_OFFSET ;
+
          _maxLRSize1 = recordSize ;
          _maxLRLSN1 = recordLSN ;
       }
