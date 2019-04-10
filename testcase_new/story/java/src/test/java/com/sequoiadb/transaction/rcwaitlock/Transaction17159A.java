@@ -49,8 +49,9 @@ public class Transaction17159A extends SdbTestBase {
     public void test() {
         expList = TransUtils.insertRandomDatas(cl, 0, 10000);
 
-        // 开启事务1
+        // 开启事务
         db1.beginTransaction();
+        db2.beginTransaction();
 
         // 事务1对同一条记录执行多个原子操作
         BSONObject insertR3 = (BSONObject) JSON.parse("{a:20000,b:20000}");
@@ -65,7 +66,7 @@ public class Transaction17159A extends SdbTestBase {
         read1.start();
         Assert.assertTrue(read1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        // 事务2索引扫描记录
+        // 操作同一条记录时，事务2索引扫描不阻塞，读老记录，单号记录为SEQUOIADBMAINSTREAM-4254
         cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
