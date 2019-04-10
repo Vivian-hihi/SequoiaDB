@@ -382,6 +382,20 @@ namespace engine
 
       pmdTransExecutor*    getTransExecutor() ;
 
+      void     addReservedSpace( const UINT64 len )
+      { 
+         _transExecutor.addReservedSpace( len ) ;
+      }
+
+      UINT64   getReservedSpace() const 
+      { 
+         return _transExecutor.getReservedSpace(); 
+      }
+
+      void     resetLogSpace()
+      { 
+         _transExecutor.resetLogSpace(); 
+      }
    #endif // SDB_ENGINE
 
    protected:
@@ -459,6 +473,7 @@ namespace engine
       INT32                   _transRC ;
 
       pmdTransExecutor        _transExecutor ;
+
    #endif // SDB_ENGINE
 
       /*

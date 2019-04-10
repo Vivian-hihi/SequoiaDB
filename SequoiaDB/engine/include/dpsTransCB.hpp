@@ -258,13 +258,20 @@ namespace engine
 
       void releaseLogSpace( UINT32 length, _pmdEDUCB *cb ) ;
 
+      void releaseRBLogSpace( _pmdEDUCB *cb ) ;
+
       UINT64 remainLogSpace() ;
 
       UINT64 usedLogSpace() ;
 
       dpsTransLockManager * getLockMgrHandle() ;
 
+      UINT32 getMaxLRSize() ;
+      void   updateMaxLRSize( UINT32 recordSize, DPS_LSN_OFFSET curLSN ) ;
+      void   printCounters() ;
+
    private:
+
    private:
       DPS_TRANS_ID      _TransIDH16 ;
       ossAtomic64       _TransIDL48Cur ;
@@ -280,9 +287,23 @@ namespace engine
       TRANS_ID_LSN_MAP  _idBeginLsnMap ;
       BOOLEAN           _isNeedSyncTrans ;
       ossSpinXLatch     _maxFileSizeMutex ;
-      UINT64            _maxUsedSize ;
       UINT64            _logFileTotalSize ;
-      UINT64            _accquiredSpace ;
+
+      // Largest two record size within the system, and the most recent LR LSN
+      // used these two record. We need the largest record size to caculate if
+      // we have sufficient log size for LR during reserveLogSpace
+      UINT32            _maxLRSize1 ;
+      UINT64            _maxLRLSN1 ;
+      UINT32            _maxLRSize2 ;
+      UINT64            _maxLRLSN2 ;
+      // The _reservedRBspace and _reservedSpace are incremented by the size of
+      // LR at runtime before writting LR. Once LR is written, _reservedSpace
+      // is released. 
+      // each transaction also track total log space it reserves
+      // for rollback. The space is released during commit or rollback.
+      // _reservedRBSpace holds the sum of such space from all transactions
+      ossAtomic64       _reservedRBSpace ; 
+      ossAtomic64       _reservedSpace ;
 
       dpsTransLockManager  *_transLockMgr ;
       oldVersionCB         *_oldVCB ;  // control block holding old(last committed)

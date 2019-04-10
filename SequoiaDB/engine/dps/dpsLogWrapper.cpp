@@ -436,11 +436,12 @@ namespace engine
            DPS_INVALID_TRANS_ID != cb->getTransID() )
       {
          UINT64 transID = cb->getTransID() ;
+         dpsTransCB * transCB = sdbGetTransCB() ;
          cb->setCurTransLsn( info.getMergeBlock().record().head()._lsn ) ;
 
-         if ( sdbGetTransCB()->isFirstOp( transID ) )
+         if ( transCB->isFirstOp( transID ) )
          {
-            sdbGetTransCB()->clearFirstOpTag( transID ) ;
+            transCB->clearFirstOpTag( transID ) ;
             cb->setTransID( transID ) ;
          }
       }

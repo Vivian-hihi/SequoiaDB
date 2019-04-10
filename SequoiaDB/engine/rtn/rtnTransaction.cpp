@@ -122,6 +122,8 @@ namespace engine
          cb->setTransID( DPS_INVALID_TRANS_ID ) ;
          // release all transactions lock
          sdbGetTransCB()->transLockReleaseAll( cb ) ;
+         // reduce the reservedLogSpace from dps for the transaction
+         sdbGetTransCB()->releaseRBLogSpace( cb ) ;
          goto done ;
       }
 
@@ -159,6 +161,9 @@ namespace engine
       cb->getTransExecutor()->clearRecordMap() ;
       // release all transactions lock
       sdbGetTransCB()->transLockReleaseAll( cb ) ;
+
+      // reduce the reservedLogSpace from dps for the transaction
+      sdbGetTransCB()->releaseRBLogSpace( cb ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_RTNTRANSCOMMIT, rc ) ;
@@ -296,6 +301,10 @@ namespace engine
       // clear all lsn mapping
       cb->getTransExecutor()->clearRecordMap() ;
       sdbGetTransCB()->transLockReleaseAll( cb ) ;
+
+      // reduce the reservedLogSpace from dps for the transaction
+      sdbGetTransCB()->releaseRBLogSpace( cb ) ;
+
       cb->stopRollback() ;
 
       if ( doRollback )

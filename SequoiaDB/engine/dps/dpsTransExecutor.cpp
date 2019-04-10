@@ -64,6 +64,7 @@ namespace engine
       _transConfMask    = 0 ;
 
       _useTransLock     = TRUE ;
+      _reservedLogSpace = 0 ;
    }
 
    _dpsTransExecutor::~_dpsTransExecutor()
@@ -77,6 +78,7 @@ namespace engine
       clearLock() ;
       clearLockCount() ;
       clearRecordMap() ;
+      resetLogSpace() ;
    }
 
    void _dpsTransExecutor::assertLocks()
@@ -88,6 +90,7 @@ namespace engine
       SDB_ASSERT( _lastLRB == NULL,
                   "Last LRB must be invalid" ) ;
       SDB_ASSERT( isRecordMapEmpty(), "Record map must be empty" ) ;
+      SDB_ASSERT( _reservedLogSpace == 0, "Reserved log space must be 0" ) ;
    }
 
    void _dpsTransExecutor::setWaiterInfo( dpsTransLRB* waiter,
@@ -429,6 +432,21 @@ namespace engine
    UINT32 _dpsTransExecutor::getRecordMapSize() const
    {
       return _mapLSN2Record.size() ;
+   }
+
+   void  _dpsTransExecutor::addReservedSpace( const UINT64 len )
+   {
+      _reservedLogSpace += len ;
+   }
+
+   UINT64 _dpsTransExecutor::getReservedSpace() const 
+   { 
+      return _reservedLogSpace ; 
+   }
+
+   void  _dpsTransExecutor::resetLogSpace()
+   {
+      _reservedLogSpace = 0 ;
    }
 
 }

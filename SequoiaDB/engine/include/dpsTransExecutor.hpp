@@ -199,6 +199,12 @@ namespace engine
                                                BOOLEAN autoRollback,
                                                BOOLEAN useRBS ) ;
 
+         void     addReservedSpace( const UINT64 len ) ;
+
+         UINT64   getReservedSpace() const ;
+
+         void     resetLogSpace() ;
+     
       public:
          /*
             Interface
@@ -237,6 +243,8 @@ namespace engine
          UINT32                  _transConfMask ;
 
          BOOLEAN                 _useTransLock ;
+         // undo LR space reserved by this transaction
+         UINT64                  _reservedLogSpace ;
 
    } ;
    typedef _dpsTransExecutor dpsTransExecutor ;

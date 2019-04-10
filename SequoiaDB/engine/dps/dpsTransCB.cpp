@@ -54,17 +54,21 @@ namespace engine
 {
 
    dpsTransCB::dpsTransCB()
-   :_TransIDL48Cur( 1 )
+   :_TransIDL48Cur( 1 ) ,
+    _reservedRBSpace( 0 ) ,
+    _reservedSpace( 0 ) 
    {
       _TransIDH16          = 0;
       _isOn                = FALSE ;
       _doRollback          = FALSE ;
       _isNeedSyncTrans     = TRUE ;
-      _maxUsedSize         = 0 ;
       _logFileTotalSize    = 0 ;
-      _accquiredSpace      = 0 ;
       _transLockMgr        = NULL ;      
       _oldVCB              = NULL;
+      _maxLRSize1          = 0 ; 
+      _maxLRSize2          = 0 ; 
+      _maxLRLSN1           = DPS_INVALID_LSN_OFFSET ;
+      _maxLRLSN2           = DPS_INVALID_LSN_OFFSET ;
    }
 
    dpsTransCB::~dpsTransCB()
@@ -138,37 +142,6 @@ namespace engine
          UINT32 logFileNum = pmdGetOptionCB()->getReplLogFileNum() ;
          _logFileTotalSize = logFileSize * logFileNum ;
 
-         if ( logFileNum >= 5 )
-         {
-            // reserved 2 log-file: because size of rollback-log is bigger than operation-log
-            UINT64 reservedSize = logFileSize * 2 ;
-
-            // (1).the max-size of operation-log(update) is 2*DMS_RECORD_MAX_SZ,
-            // (2).the max-size of unavailable space in cross-file is
-            // 2*DMS_RECORD_MAX_SZ*(logFileNum -2),
-            // the available size is: availableSize =
-            // _logFileTotalSize - (2) - reservedSize;
-            // the availableSize can used for operation-log and rollback-log,
-            // so the size of operation-log is:
-            // _maxUsedSize = availableSize / 2;
-            _maxUsedSize = ( _logFileTotalSize - reservedSize
-                                 - 2 * DMS_RECORD_MAX_SZ * ( logFileNum - 2 ) ) / 2 ;
-
-            // if the logFileSize is 32M, the caculation method is:
-            // if the transaction-operation-log  caused X(MB) of log-file,
-            // the rollback-log will caused up to 2X( 1X for normal rollback-log
-            // and 1X for cross-file-space )
-            UINT64 temp = ( _logFileTotalSize - reservedSize ) / 3 ;
-            if ( _maxUsedSize > temp || 0 == _maxUsedSize )
-            {
-               _maxUsedSize = temp ;
-            }
-         }
-         else
-         {
-            _maxUsedSize = 0 ;
-         }
-
          rc = sdbGetDPSCB()->readOldestBeginLsnOffset( startLsnOffset ) ;
          PD_RC_CHECK( rc, PDERROR, "Read oldest begin lsn offset failed:rc=%d",
                       rc ) ;
@@ -229,6 +202,7 @@ namespace engine
          SDB_OSS_DEL _oldVCB ;
          _oldVCB = NULL ;
       }
+
       return SDB_OK ;
    }
 
@@ -961,6 +935,22 @@ namespace engine
       return _transLockMgr->hasWait( lockId );
    }
 
+   // FIXME:
+   // New algorithm to decide if we have sufficent log space for new LR:
+   // Support archive logging for transaction is the ultimate goal, meanwhile,
+   // we will use following method if circular logging is in use:
+   // 1. we will track two largest record size on each node.  These two number
+   // has the LR lsn associated with it.  We can guarantee the larger one is
+   // always greater or equal than the largest uncommitted record within the
+   // system by only reduce it after a full cycle of all logs
+   // 2. we use a _reservedSpace to count all outstanding LR space required
+   // including potential rollback LRs.  This can be implemented as each
+   // transaction keep track of it's reservedSpace, and only release those
+   // space at commit or rollbacktime.  non transactional LR reserved space
+   // can be released after the LR is written
+   // 3. log reserve logic:    rc = SDB_DPS_LOG_FILE_OUT_OF_SIZE if
+   // ( ( usedSize + logfilesize + length + _reservedSpace + 
+   //     (totalfile# - usedfile# -1 )*max_record_size ) > _logFileTotalSize ) 
    INT32 dpsTransCB::reservedLogSpace( UINT32 length, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
@@ -971,24 +961,35 @@ namespace engine
       }
 
       {
-         ossScopedLock _lock( &_maxFileSizeMutex );
-         _accquiredSpace += length;
+         _reservedSpace.add( length ) ;
+         _reservedRBSpace.add( length ) ;
       }
       usedSize = usedLogSpace();
-      if ( usedSize + _accquiredSpace >= _maxUsedSize )
+
+      if ( remainLogSpace() == 0 )
       {
+#ifdef _DEBUG
+         UINT64 logFileSize = pmdGetOptionCB()->getReplLogFileSz() ;
+         UINT32 logFileNum = pmdGetOptionCB()->getReplLogFileNum() ;
+         DPS_LSN_OFFSET curLsnOffset = 
+                             pmdGetKRCB()->getDPSCB()->expectLsn().offset;
+         DPS_LSN_OFFSET beginLsnOffset = getOldestBeginLsn();
+
+         PD_LOG( PDWARNING, "Running out of log space, please commit existing "
+                 "transactions. (length=%u, usedSize=%u, maxLRSize=%u, " 
+                 "beginlsn=%u, curlsn=%u, logFileSize=%u, logFileNum=%u, "
+                 "remainLogSpace=%u) " ,
+                 length, usedSize, getMaxLRSize(), beginLsnOffset,
+                 curLsnOffset, logFileSize, logFileNum, remainLogSpace() ) ;
+         printCounters( ) ;
+#endif
+
          rc = SDB_DPS_LOG_FILE_OUT_OF_SIZE ;
-         ossScopedLock _lock( &_maxFileSizeMutex );
-         if ( _accquiredSpace >= length )
-         {
-            _accquiredSpace -= length ;
-         }
-         else
-         {
-            _accquiredSpace = 0 ;
-         }
+         _reservedRBSpace.sub( length ) ;
+         _reservedSpace.sub( length ) ;
          goto error ;
       }
+      cb->addReservedSpace( length ) ;
    done:
       return rc;
    error:
@@ -1001,15 +1002,20 @@ namespace engine
       {
          return ;
       }
-      ossScopedLock _lock( &_maxFileSizeMutex );
-      if ( _accquiredSpace >= length )
+
+      _reservedSpace.sub( length ) ;
+
+      // for non-transactional LR, we can release the reserved space 
+      if ( !cb->isTransaction() )
       {
-         _accquiredSpace -= length ;
+         releaseRBLogSpace( cb ) ;
       }
-      else
-      {
-         _accquiredSpace = 0 ;
-      }
+   }
+
+   void dpsTransCB::releaseRBLogSpace( _pmdEDUCB *cb )
+   {
+      _reservedRBSpace.sub( cb->getReservedSpace() ) ;
+      cb->resetLogSpace() ;
    }
 
    UINT64 dpsTransCB::usedLogSpace()
@@ -1040,23 +1046,48 @@ namespace engine
       return usedSize ;
    }
 
+   // Calculate remaining log space based on current usage and predicted
+   // waste space
    UINT64 dpsTransCB::remainLogSpace()
    {
       UINT64 remainSize = _logFileTotalSize ;
-      UINT64 allocatedSize = 0 ;
+      UINT64 totalSpace = 0 ;
+      UINT64 usedSize = 0 ;
+      UINT64 logFileSize = 0 ;
+      UINT32 logFileNum = 0 ;
 
       if ( !_isOn )
       {
          goto done ;
       }
 
+      // new calculation: based on current logspace usage to decide if we have
+      // enough space for new request. The rule of thumb: we can't overwrite
+      // any logs from the oldest uncommitted transaction (lowtran). 
+      // usedSize: include LRs from uncommitted transaction, LRs from committed
+      // transactions but held by lowtran, also LRs from nontransaction
+      // _reservedSpace: contain space for undo LRs(rollback purpose) for all 
+      // the uncommitted transaction
+      // logFileSize: leave one log file as the beginLSN could be in the middle
+      // of a log file, but we can't reuse the whole file
+      // For the unused file, we should expect waste space for each of them, 
+      // the waste space is predicated base on current max LR size.
       {
-      ossScopedLock _lock( &_maxFileSizeMutex ) ;
-      allocatedSize = _accquiredSpace + usedLogSpace() ;
+         UINT32 adjust = 0 ;
+         usedSize = usedLogSpace() ;
+         logFileSize = pmdGetOptionCB()->getReplLogFileSz() ;
+         logFileNum = pmdGetOptionCB()->getReplLogFileNum() ;
+         adjust = ( usedSize > logFileSize ) ?
+                  ( usedSize - logFileSize ) / logFileSize : 0 ;
+                  
+         totalSpace = ( usedSize + logFileSize + _reservedRBSpace.peek() +
+            _reservedSpace.peek() +
+            (logFileNum - adjust -1 ) * getMaxLRSize() ) ;
       }
-      if ( _maxUsedSize > allocatedSize )
+
+      if ( totalSpace < _logFileTotalSize )
       {
-         remainSize = _maxUsedSize - allocatedSize ;
+         remainSize = _logFileTotalSize - totalSpace ;
       }
       else
       {
@@ -1066,6 +1097,63 @@ namespace engine
       return remainSize ;
    }
 
+   UINT32 dpsTransCB::getMaxLRSize() 
+   {
+      return ( 0 != _maxLRSize1 ) ? _maxLRSize1 : DMS_RECORD_MAX_SZ ;
+   }
+
+   // based on the input log record size and lsn, update the stored
+   // maxLRSize as needed. Caller need to guarantee serialization.
+   void  dpsTransCB::updateMaxLRSize( UINT32 recordSize, 
+                                      DPS_LSN_OFFSET recordLSN ) 
+   {
+      if ( _maxLRSize1 < recordSize )
+      {
+         _maxLRSize1 = recordSize ;
+         _maxLRLSN1 = recordLSN ;
+      }
+      else
+      {
+         if ( _maxLRSize2 < recordSize )
+         {
+            _maxLRSize2 = recordSize ;
+            _maxLRLSN2 = recordLSN ;
+         }
+         
+         // when the recordLSN wrapped whole log files, we guarantee safe to
+         // update the _maxLRSize1, reduce it to _maxLRSize2, and set its lsn
+         // to the recordLSN
+         if ( ( recordLSN - _maxLRLSN1 ) > _logFileTotalSize )
+         {
+#if SDB_INTERNAL_DEBUG
+            PD_LOG( PDDEBUG, "Going to reduce maxLRSize1 size, "
+                    "_maxLRLSN1=%u, recordLSN=%u ",
+                    _maxLRLSN1, recordLSN );
+            printCounters( ) ;
+#endif
+            _maxLRSize1 = _maxLRSize2 ;
+            // this LR LSN is very close to curLSN
+            _maxLRLSN1 = recordLSN ;
+            _maxLRSize2 = 0 ;
+            _maxLRLSN2 = DPS_INVALID_LSN_OFFSET ;
+         }
+      }
+   }
+
+
+   void  dpsTransCB::printCounters() 
+   {
+#ifdef _DEBUG
+      PD_LOG( PDDEBUG, "Dumping dpsTransCB Log related counters: "
+                       "_logFileTotalSize=%u, _reservedRBSpace=%u, "
+                       "_reservedSpace=%u, "
+                       "_maxLRSize1=%u, _maxLRLSN1=%u, " 
+                       "_maxLRSize2=%u, _maxLRLSN2=%u, ", 
+                       _logFileTotalSize, 
+                       _reservedRBSpace.peek(), _reservedSpace.peek(),
+                       _maxLRSize1, _maxLRLSN1, _maxLRSize2, _maxLRLSN2 ) ;
+#endif
+   }
 
    dpsTransLockManager * dpsTransCB::getLockMgrHandle()
    {
