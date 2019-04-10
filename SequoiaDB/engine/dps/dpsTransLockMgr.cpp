@@ -88,6 +88,8 @@ namespace engine
    {
       if ( _initialized )
       {
+         _initialized = FALSE ;
+
          // free LRB Header objects
          if ( _pLRBHdrMgr )
          {
@@ -106,7 +108,6 @@ namespace engine
          SAFE_OSS_DELETE( _pLRBMgr ) ;
          _pLRBMgr = NULL ;
 
-         _initialized = FALSE ;
       }
    }
 
@@ -202,6 +203,25 @@ namespace engine
          _pLRBHdrMgr = NULL ;
       }
       goto done ;
+   }
+
+
+   //
+   // Description: free LRB and LRB Header free segments
+   //              higher than high water mark 
+   // Function:    free LRB and LRB header free segments
+   // Input:       none 
+   // Output:      none
+   // Return:      none 
+   // Dependency:  the lock manager must be initialized. 
+   //              This function is called by a background thread periodically
+   void dpsTransLockManager::tryToShrinkLRBAndLRBHeaderPool()
+   {
+      if ( _pLRBMgr && _pLRBHdrMgr && _initialized )
+      {
+         _pLRBMgr->shrink() ;
+         _pLRBHdrMgr->shrink() ;
+      }
    }
 
 

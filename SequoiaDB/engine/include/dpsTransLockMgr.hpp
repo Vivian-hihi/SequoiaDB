@@ -202,6 +202,11 @@ namespace engine
          dpsTransLRBHeader *  & pLRBHdr
       ) ;
 
+      // try to free LRB and LRB header segments higher current high water mark
+      // this function is desgined to be called by background thread
+      // periodically
+      void tryToShrinkLRBAndLRBHeaderPool() ;
+
    private:
       // Latch for normal lock operation ( acquire, tryAcquire,
       // testAcquire, release, releaseAll, hasWait etc on ) :
