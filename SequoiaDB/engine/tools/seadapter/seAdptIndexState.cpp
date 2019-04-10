@@ -148,7 +148,6 @@ namespace seadapter
       INT32 startFrom = 0 ;
       INT32 numReturned = 0 ;
       vector<BSONObj> resultSet ;
-      seAdptDBAssist *dbAssist = _session->dbAssist() ;
 
       // If it's obsolete message, just ignore.
       if ( msg->requestID != _session->currentRequestID() )
@@ -162,12 +161,6 @@ namespace seadapter
       }
 
       _retryTimes = 0 ;
-
-      if ( !dbAssist->dataNetHandleValid() )
-      {
-         dbAssist->setDataNetHandle( handle ) ;
-      }
-
       rc = msgExtractReply( (CHAR *)msg, &flag, &contextID, &startFrom,
                             &numReturned, resultSet ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query reply message failed[%d]", rc ) ;

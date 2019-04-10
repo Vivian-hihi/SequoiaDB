@@ -863,7 +863,7 @@ namespace seadapter
 
       rc = _dbAssist.sendToDataNode( (const MsgHeader *)authMsg ) ;
       PD_RC_CHECK( rc, PDERROR, "Send register request to data node "
-                   "failed%d]", rc ) ;
+                   "failed[%d]", rc ) ;
       PD_LOG( PDDEBUG, "Send register message to data node successfully. "
               "Information: %s", authObj.toString().c_str() ) ;
 
@@ -1040,6 +1040,7 @@ namespace seadapter
                                                 _idxUpdateTimerID ) ;
          PD_RC_CHECK( rc, PDERROR, "Register timer failed[ %d ]", rc ) ;
       }
+      _dbAssist.setDataNetHandle( handle ) ;
       _registerEvent.signalAll() ;
 
    done:
@@ -1268,6 +1269,7 @@ namespace seadapter
               "and try to register on data node again..." ) ;
       _idxSessionMgr.stopAllIndexer( handle ) ;
       _indexerOn = FALSE ;
+      _dbAssist.setDataNetHandle( NET_INVALID_HANDLE ) ;
 
       rc = _resumeRegister() ;
       PD_RC_CHECK( rc, PDERROR, "Resume register failed[ %d ]", rc ) ;
