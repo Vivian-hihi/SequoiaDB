@@ -935,22 +935,19 @@ namespace engine
       return _transLockMgr->hasWait( lockId );
    }
 
-   // FIXME:
-   // New algorithm to decide if we have sufficent log space for new LR:
+   // Agorithm to decide if we have sufficent log space for new LR:
    // Support archive logging for transaction is the ultimate goal, meanwhile,
    // we will use following method if circular logging is in use:
    // 1. we will track two largest record size on each node.  These two number
    // has the LR lsn associated with it.  We can guarantee the larger one is
    // always greater or equal than the largest uncommitted record within the
    // system by only reduce it after a full cycle of all logs
-   // 2. we use a _reservedSpace to count all outstanding LR space required
+   // 2. we use a _reservedRBSpace to count all outstanding LR space required
    // including potential rollback LRs.  This can be implemented as each
    // transaction keep track of it's reservedSpace, and only release those
    // space at commit or rollbacktime.  non transactional LR reserved space
    // can be released after the LR is written
-   // 3. log reserve logic:    rc = SDB_DPS_LOG_FILE_OUT_OF_SIZE if
-   // ( ( usedSize + logfilesize + length + _reservedSpace + 
-   //     (totalfile# - usedfile# -1 )*max_record_size ) > _logFileTotalSize ) 
+   // 3. we use a _reservedRBSpace to count all unwritten LR space
    INT32 dpsTransCB::reservedLogSpace( UINT32 length, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
@@ -1061,28 +1058,34 @@ namespace engine
          goto done ;
       }
 
-      // new calculation: based on current logspace usage to decide if we have
-      // enough space for new request. The rule of thumb: we can't overwrite
+      // culation: based on current logspace usage to decide how much
+      // space left. The rule of thumb: we can't overwrite
       // any logs from the oldest uncommitted transaction (lowtran). 
       // usedSize: include LRs from uncommitted transaction, LRs from committed
       // transactions but held by lowtran, also LRs from nontransaction
-      // _reservedSpace: contain space for undo LRs(rollback purpose) for all 
+      // _reservedRBSpace: contain space for undo LRs(rollback purpose) for all 
       // the uncommitted transaction
+      // _reservedSpace: contain space for all unwritten LRs
       // logFileSize: leave one log file as the beginLSN could be in the middle
       // of a log file, but we can't reuse the whole file
       // For the unused file, we should expect waste space for each of them, 
       // the waste space is predicated base on current max LR size.
+      // Free log space logic:    
+      // _logFileTotalSize - ( usedSize + logfilesize + length +
+      //                      _reservedSpace + _reservedRBSpace +
+      //                      (#totalfile - usedfile -1 )*max_record_size )
       {
          UINT32 adjust = 0 ;
          usedSize = usedLogSpace() ;
          logFileSize = pmdGetOptionCB()->getReplLogFileSz() ;
          logFileNum = pmdGetOptionCB()->getReplLogFileNum() ;
+         // need a round down to guarantee enough waste space 
          adjust = ( usedSize > logFileSize ) ?
                   ( usedSize - logFileSize ) / logFileSize : 0 ;
                   
-         totalSpace = ( usedSize + logFileSize + _reservedRBSpace.peek() +
-            _reservedSpace.peek() +
-            (logFileNum - adjust -1 ) * getMaxLRSize() ) ;
+         totalSpace =  usedSize + logFileSize + _reservedRBSpace.peek() +
+                       _reservedSpace.peek() +
+                       (logFileNum - adjust -1 ) * getMaxLRSize() ;
       }
 
       if ( totalSpace < _logFileTotalSize )
