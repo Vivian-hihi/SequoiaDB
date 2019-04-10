@@ -80,8 +80,8 @@ public class Transaction17138 extends SdbTestBase {
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, dataList, "check data by ixscan");
         actDataList.clear();
-        
-        // 4 commit trans1 
+
+        // 4 commit trans1
         sdb.commit();
 
         // 5 trans2 select record R1 and R2
@@ -102,13 +102,13 @@ public class Transaction17138 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
-        if( sdb2 != null ){
+        if (sdb2 != null) {
             sdb2.close();
         }
     }

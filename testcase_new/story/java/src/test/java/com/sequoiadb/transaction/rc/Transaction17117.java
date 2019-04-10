@@ -1,4 +1,5 @@
 package com.sequoiadb.transaction.rc;
+
 /**
  * @Description seqDB-17117:   更新多个索引，同时与读并发   
  * @author Zhao Xiaoni
@@ -50,34 +51,37 @@ public class Transaction17117 extends SdbTestBase {
     @Test
     public void test() {
         List<BSONObject> insertR1s = new ArrayList<BSONObject>();
-        for(int i=0; i<15000; i++){
-            insertR1s.add((BSONObject)JSON.parse("{_id:"+ i +", a:"+ (i+1) +", b:"+ (i+2) +"}"));
-            //获取更新前逆序数据invInsertR1s
-            invInsertR1s.add((BSONObject)JSON.parse("{_id:"+ (14999-i) +", a:"+ (15000-i) +", b:"+ (15001-i) +"}"));
-            //获取更新后正序数据posExpList
-            BSONObject updateR1 = (BSONObject) JSON.parse("{_id:"+ (15000+i) +", a:"+ (15001+i) +", b:"+ (15002+i) +"}");
+        for (int i = 0; i < 15000; i++) {
+            insertR1s.add((BSONObject) JSON.parse("{_id:" + i + ", a:" + (i + 1) + ", b:" + (i + 2) + "}"));
+            // 获取更新前逆序数据invInsertR1s
+            invInsertR1s.add(
+                    (BSONObject) JSON.parse("{_id:" + (14999 - i) + ", a:" + (15000 - i) + ", b:" + (15001 - i) + "}"));
+            // 获取更新后正序数据posExpList
+            BSONObject updateR1 = (BSONObject) JSON
+                    .parse("{_id:" + (15000 + i) + ", a:" + (15001 + i) + ", b:" + (15002 + i) + "}");
             posExpList.add(updateR1);
-            //获取更新后逆序数据invExpList
-            updateR1 = (BSONObject) JSON.parse("{_id:"+ (29999-i) +", a:"+ (30000-i) +", b:"+ (30001-i) +"}");
+            // 获取更新后逆序数据invExpList
+            updateR1 = (BSONObject) JSON
+                    .parse("{_id:" + (29999 - i) + ", a:" + (30000 - i) + ", b:" + (30001 - i) + "}");
             invExpList.add(updateR1);
         }
-        posInsertR1s.addAll( insertR1s );
+        posInsertR1s.addAll(insertR1s);
         Collections.shuffle(insertR1s);
         cl.insert(insertR1s);
-        
+
         db2.beginTransaction();
 
         ReadThread readThread = new ReadThread();
         readThread.start();
-        
+
         // 事务1更新全部索引字段
         UpdateThread updateThread = new UpdateThread(readThread);
         updateThread.start();
-        
+
         if (!updateThread.isSuccess()) {
             Assert.fail(updateThread.getErrorMsg());
         }
-        
+
         // 非事务表扫描记录
         cursor = cl.query(null, null, "{_id:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
@@ -94,7 +98,7 @@ public class Transaction17117 extends SdbTestBase {
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, posExpList);
         actList.clear();
-        
+
         // 事务2表扫描记录、逆序
         cursor = cl2.query(null, null, "{a:-1, b:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
@@ -106,7 +110,7 @@ public class Transaction17117 extends SdbTestBase {
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, posExpList);
         actList.clear();
-        
+
         // 事务2索引扫描记录、逆序
         cursor = cl2.query(null, null, "{a:-1, b:1}", "{'':'ab'}");
         actList = TransUtils.getReadActList(cursor);
@@ -128,13 +132,13 @@ public class Transaction17117 extends SdbTestBase {
 
         cursor.close();
     }
-    
-    private class UpdateThread extends SdbThreadBase{
+
+    private class UpdateThread extends SdbThreadBase {
         private Sequoiadb db1 = null;
         private DBCollection cl1 = null;
         private DBCursor cursor = null;
         private ReadThread readThread = null;
-        
+
         public UpdateThread(ReadThread readThread) {
             // TODO Auto-generated constructor stub
             this.readThread = readThread;
@@ -143,21 +147,23 @@ public class Transaction17117 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             // TODO Auto-generated method stub
-            try{
+            try {
                 db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 cl1 = db1.getCollectionSpace(csName).getCollection(clName);
                 db1.beginTransaction();
-                
-                for(int i=0; i<15000; i++){
-                    cl1.update("{a:"+ (i+1) +"}", "{$set:{_id:"+ (15000+i) +", a:"+ (15001+i) +", b:"+ (15002+i) +"}}","{'':'a'}");
+
+                for (int i = 0; i < 15000; i++) {
+                    cl1.update("{a:" + (i + 1) + "}",
+                            "{$set:{_id:" + (15000 + i) + ", a:" + (15001 + i) + ", b:" + (15002 + i) + "}}",
+                            "{'':'a'}");
                 }
-                
+
                 // 事务1表扫描记录、正序
                 cursor = cl1.query(null, null, "{a:1}", "{'':null}");
                 actList = TransUtils.getReadActList(cursor);
                 Assert.assertEquals(actList, posExpList);
                 actList.clear();
-                
+
                 // 事务1表扫描记录、逆序
                 cursor = cl1.query(null, null, "{a:-1, b:1}", "{'':null}");
                 actList = TransUtils.getReadActList(cursor);
@@ -169,30 +175,30 @@ public class Transaction17117 extends SdbTestBase {
                 actList = TransUtils.getReadActList(cursor);
                 Assert.assertEquals(actList, posExpList);
                 actList.clear();
-                
+
                 // 事务1走"ab"索引扫描记录、逆序
                 cursor = cl1.query(null, null, "{a:-1, b:1}", "{'':'ab'}");
                 actList = TransUtils.getReadActList(cursor);
                 Assert.assertEquals(actList, invExpList);
                 actList.clear();
-                
+
                 if (!readThread.isSuccess()) {
                     Assert.fail(readThread.getErrorMsg());
                 }
                 db1.commit();
-            }catch(BaseException e){
+            } catch (BaseException e) {
                 e.printStackTrace();
-            }finally {
+            } finally {
                 cursor.close();
                 db1.close();
             }
-        }   
+        }
     }
-    
-    private class ReadThread extends SdbThreadBase{
+
+    private class ReadThread extends SdbThreadBase {
         private List<BSONObject> actList = new ArrayList<BSONObject>();
-        private DBCursor cursor = null; 
-        
+        private DBCursor cursor = null;
+
         @Override
         public void exec() throws Exception {
             // TODO Auto-generated method stub
@@ -201,7 +207,7 @@ public class Transaction17117 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, posInsertR1s);
             actList.clear();
-            
+
             // 事务2表扫描记录、逆序
             cursor = cl2.query(null, null, "{a:-1, b:1}", "{'':null}");
             actList = TransUtils.getReadActList(cursor);
@@ -213,8 +219,8 @@ public class Transaction17117 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, posInsertR1s);
             actList.clear();
-            
-            // 事务2走"ab"索引扫描记录、逆序 
+
+            // 事务2走"ab"索引扫描记录、逆序
             cursor = cl2.query(null, null, "{a:-1,b:1}", "{'':'ab'}");
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, invInsertR1s);

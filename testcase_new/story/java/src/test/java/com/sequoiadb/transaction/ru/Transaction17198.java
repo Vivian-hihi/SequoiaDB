@@ -56,16 +56,15 @@ public class Transaction17198 extends SdbTestBase {
 
         // 事务1对同一条记录执行多个原子操作
         BSONObject insertR = (BSONObject) JSON.parse("{_id:20000,a:20000,b:20000}");
-        for(int i=0; i<10000; i++)
-        {
+        for (int i = 0; i < 10000; i++) {
             cl1.insert(insertR);
             cl1.update("{a:20000}", "{$set:{a:20001}}", "{'':'a'}");
             cl1.delete("{a:20001}", "{'':'a'}");
-            
-            cl1.delete("{a:"+ i +"}", "{'':'a'}");
-            cl1.insert((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ i +",b:"+ i +"}"));
-            cl1.update("{a:"+ i +"}","{$set:{a:"+ (i+10000) +"}}","{'':'a'}");
-            expList.add((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ (i+10000) +",b:"+ i +"}"));
+
+            cl1.delete("{a:" + i + "}", "{'':'a'}");
+            cl1.insert((BSONObject) JSON.parse("{_id:" + (10000 + i) + ", a:" + i + ",b:" + i + "}"));
+            cl1.update("{a:" + i + "}", "{$set:{a:" + (i + 10000) + "}}", "{'':'a'}");
+            expList.add((BSONObject) JSON.parse("{_id:" + (10000 + i) + ", a:" + (i + 10000) + ",b:" + i + "}"));
         }
 
         // 事务2表扫描记录

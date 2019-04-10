@@ -22,7 +22,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = {"rc", "ru"})
+@Test(groups = { "rc", "ru" })
 public class Transaction17132 extends SdbTestBase {
 
     private String clName = "transCL_17132";
@@ -44,7 +44,7 @@ public class Transaction17132 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data = new BasicBSONObject();
         data.put("_id", "insert1713201");
         data.put("a", 1);
@@ -76,11 +76,11 @@ public class Transaction17132 extends SdbTestBase {
 
     @Test
     public void test1() {
-        
-        //trans1 update record R1 to R3
+
+        // trans1 update record R1 to R3
         sdb.beginTransaction();
         cl.update(new BasicBSONObject("a", 1), modifier, null);
-        
+
         try {
             // trans2 update record R2 to R4 same as the R3
             sdb2.beginTransaction();
@@ -89,7 +89,7 @@ public class Transaction17132 extends SdbTestBase {
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
-        
+
         sdb.rollback();
         expDataList.clear();
         expDataList.add(data);
@@ -110,10 +110,10 @@ public class Transaction17132 extends SdbTestBase {
     @Test
     public void test2() {
 
-        //trans1 update record R1 to R3
+        // trans1 update record R1 to R3
         sdb.beginTransaction();
         cl.update(new BasicBSONObject("a", 1), modifier, null);
-        
+
         try {
             // trans2 update record R2 to R4 same as the R3
             sdb2.beginTransaction();
@@ -122,7 +122,7 @@ public class Transaction17132 extends SdbTestBase {
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
-        
+
         sdb.commit();
         expDataList.clear();
         expDataList.add(data2);
@@ -132,7 +132,7 @@ public class Transaction17132 extends SdbTestBase {
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl.query(null, null, "{'a':1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -146,13 +146,13 @@ public class Transaction17132 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
-        if( sdb2 != null ){
+        if (sdb2 != null) {
             sdb2.close();
         }
     }

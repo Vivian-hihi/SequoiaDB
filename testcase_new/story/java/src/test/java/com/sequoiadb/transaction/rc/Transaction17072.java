@@ -79,7 +79,7 @@ public class Transaction17072 extends SdbTestBase {
         recordsCursor = cl.query("{a:1}", null, null, "{'':'textIndex17072'}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, new ArrayList<BSONObject>());
-        
+
         // 记录删除索引字段
         cl.update("{a:2}", "{$unset:{a:''}}", "{'':'textIndex17072'}");
         expList.clear();

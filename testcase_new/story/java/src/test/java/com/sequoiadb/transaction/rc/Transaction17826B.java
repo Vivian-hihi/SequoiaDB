@@ -22,8 +22,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @FileName:seqDB-17826：删除与更新并发，删除的记录同时匹配已提交记录及其他事务更新的记录，事务提交，过程中读
- * 更新/删除走表扫描,先插入R2，再插入R1
+ * @FileName:seqDB-17826：删除与更新并发，删除的记录同时匹配已提交记录及其他事务更新的记录，事务提交，过程中读 更新/删除走表扫描,
+ *                                                                  先插入R2，再插入R1
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
@@ -55,34 +55,24 @@ public class Transaction17826B extends SdbTestBase {
         insertR2 = (BSONObject) JSON.parse("{_id:'insertID17826A_2',a:2,b:2,c:2}");
         updateR2 = (BSONObject) JSON.parse("{_id:'insertID17826A_2',a:3,b:3,c:2}");
     }
-    
+
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        
-        //第一次非事务读查询的预期结果
+    public Object[][] createIndex() {
+
+        // 第一次非事务读查询的预期结果
         List<BSONObject> expReadList = new ArrayList<BSONObject>();
         expReadList.add(updateR2);
-        
-        return new Object[][]{
-            {"{'a': 1}",
-             expReadList},
-            {"{'a': 1, b: 1}",
-             expReadList},
-            {"{'a': 1, b: -1}",
-             expReadList},
-            {"{'a': -1}",
-             expReadList},
-            {"{'a': -1, b: 1}",
-             expReadList},
-            {"{'a': -1, b: -1}",
-             expReadList},
-           
+
+        return new Object[][] { { "{'a': 1}", expReadList }, { "{'a': 1, b: 1}", expReadList },
+                { "{'a': 1, b: -1}", expReadList }, { "{'a': -1}", expReadList }, { "{'a': -1, b: 1}", expReadList },
+                { "{'a': -1, b: -1}", expReadList },
+
         };
     }
 
     @Test(dataProvider = "index")
     public void test(String indexKey, List<BSONObject> expReadList) {
-        try{
+        try {
             // 插入记录R1、R2
             cl.insert(insertR2);
             cl.insert(insertR1);
@@ -355,22 +345,22 @@ public class Transaction17826B extends SdbTestBase {
             actList.clear();
 
             // 提交事务3
-            db3.commit();          
-        }finally{
-            //关闭事务连接
+            db3.commit();
+        } finally {
+            // 关闭事务连接
             db1.close();
             db2.close();
             db3.close();
-            
-            //删除索引
-            if(cl.isIndexExist("a")){
-                cl.dropIndex("a"); 
+
+            // 删除索引
+            if (cl.isIndexExist("a")) {
+                cl.dropIndex("a");
             }
-            
-            //删除记录
+
+            // 删除记录
             cl.truncate();
         }
-        
+
     }
 
     @AfterClass

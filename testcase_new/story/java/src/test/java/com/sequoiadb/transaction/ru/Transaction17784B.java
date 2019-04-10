@@ -23,7 +23,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @FileName:seqDB-17784:删除与更新并发，删除的记录同时匹配已提交记录及其他事务更新的记录，事务回滚，过程中读 更新/删除走索引扫描,
- * R1>R2
+ *                                                                  R1>R2
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
@@ -57,28 +57,22 @@ public class Transaction17784B extends SdbTestBase {
         updateR1 = (BSONObject) JSON.parse("{_id:'insertID17784B_1',a:4,b:2}");
         updateR2 = (BSONObject) JSON.parse("{_id:'insertID17784B_2',a:3,b:1}");
     }
-    
 
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        //正序索引读
+    public Object[][] createIndex() {
+        // 正序索引读
         List<BSONObject> expReadList1 = new ArrayList<BSONObject>();
         expReadList1.add(updateR2);
-        
-        //逆序索引读
+
+        // 逆序索引读
         List<BSONObject> expReadList2 = new ArrayList<BSONObject>();
         expReadList2.add(insertR2);
-        return new Object[][]{
-            {"{'a': 1}",
-             expReadList1},
-            {"{'a': -1}",
-             expReadList2}
-        };
+        return new Object[][] { { "{'a': 1}", expReadList1 }, { "{'a': -1}", expReadList2 } };
     }
-    
+
     @Test(dataProvider = "index")
     public void test(String indexKey, List<BSONObject> expReadList) {
-        try{
+        try {
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -295,7 +289,7 @@ public class Transaction17784B extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务索引读，正序
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, "{a:1}", hint);
@@ -350,26 +344,24 @@ public class Transaction17784B extends SdbTestBase {
 
             // 提交事务3
             db3.commit();
-            
-        }finally{
-            //关闭事务连接
+
+        } finally {
+            // 关闭事务连接
             db1.close();
             db2.close();
             db3.close();
-            
-            //删除索引
-            if(cl.isIndexExist("a")){
-                cl.dropIndex("a"); 
-            }
-            
-            //删除记录
-            cl.truncate();
-            
-        }
-        
-    }
-    
 
+            // 删除索引
+            if (cl.isIndexExist("a")) {
+                cl.dropIndex("a");
+            }
+
+            // 删除记录
+            cl.truncate();
+
+        }
+
+    }
 
     @AfterClass
     public void tearDown() {
@@ -382,7 +374,7 @@ public class Transaction17784B extends SdbTestBase {
         if (!db3.isClosed()) {
             db3.close();
         }
-        
+
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);
@@ -391,7 +383,6 @@ public class Transaction17784B extends SdbTestBase {
             sdb.close();
         }
     }
-
 
     private class UpdateThread extends SdbThreadBase {
         @Override

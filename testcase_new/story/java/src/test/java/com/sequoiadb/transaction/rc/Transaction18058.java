@@ -61,8 +61,8 @@ public class Transaction18058 extends SdbTestBase {
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         db1.beginTransaction();
-        
-        //插入记录R1及R2
+
+        // 插入记录R1及R2
         BSONObject insertR1 = (BSONObject) JSON.parse("{_id:1, a:1, b:1}");
         BSONObject insertR2 = (BSONObject) JSON.parse("{_id:2, a:2, b:2}");
         cl.insert(insertR1);
@@ -73,35 +73,35 @@ public class Transaction18058 extends SdbTestBase {
 
         // 事务中更新记录R1为R4
         cl1.update("{a:1}", "{$inc:{a:2}}", "{\"\":\"a\"}");
-        
-        // 事务中更新记录R3为R5
-        cl1.update("{a:3}", "{$inc:{a:2}}", "{\"\":\"a\"}");
-        
+
         // 事务中更新记录R3为R5
         cl1.update("{a:3}", "{$inc:{a:2}}", "{\"\":\"a\"}");
 
-        //事务中表扫描查询
+        // 事务中更新记录R3为R5
+        cl1.update("{a:3}", "{$inc:{a:2}}", "{\"\":\"a\"}");
+
+        // 事务中表扫描查询
         expList.add(insertR2);
         BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1, a:5, b:1}");
         expList.add(updateR1);
         cursor = cl1.query(null, null, "{a:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
-        
-        //事务中索引查询
+
+        // 事务中索引查询
         cursor = cl1.query(null, null, "{a:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
-        
+
         // 事务1、2提交
         db1.commit();
 
-        //表扫描查询
+        // 表扫描查询
         cursor = cl.query(null, null, "{a:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
-        
-        //索引查询
+
+        // 索引查询
         cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);

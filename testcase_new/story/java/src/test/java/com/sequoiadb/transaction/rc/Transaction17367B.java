@@ -52,37 +52,27 @@ public class Transaction17367B extends SdbTestBase {
         insertR1 = (BSONObject) JSON.parse("{_id:'insertID17367A_1',a:2,b:2,c:2}");
         insertR2 = (BSONObject) JSON.parse("{_id:'insertID17367A_2',a:1,b:1,c:1}");
     }
-    
+
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        
-        //第一次非事务读正序查询的预期结果
+    public Object[][] createIndex() {
+
+        // 第一次非事务读正序查询的预期结果
         List<BSONObject> expReadList1 = new ArrayList<BSONObject>();
-        
-        //第一次非事务读逆序查询的预期结果
+
+        // 第一次非事务读逆序查询的预期结果
         List<BSONObject> expReadList2 = new ArrayList<BSONObject>();
         expReadList2.add(insertR2);
-        
-        return new Object[][]{
-            {"{'a': 1}",
-             expReadList1},
-            {"{'a': 1, b: 1}",
-             expReadList1},
-            {"{'a': 1, b: -1}",
-             expReadList1},
-            {"{'a': -1}",
-             expReadList2},
-            {"{'a': -1, b: 1}",
-             expReadList2},
-            {"{'a': -1, b: -1}",
-             expReadList2},
-           
+
+        return new Object[][] { { "{'a': 1}", expReadList1 }, { "{'a': 1, b: 1}", expReadList1 },
+                { "{'a': 1, b: -1}", expReadList1 }, { "{'a': -1}", expReadList2 }, { "{'a': -1, b: 1}", expReadList2 },
+                { "{'a': -1, b: -1}", expReadList2 },
+
         };
     }
 
     @Test(dataProvider = "index")
     public void test(String indexKey, List<BSONObject> expReadList) {
-        try{
+        try {
             // 插入记录R1、R2，R1小于R2
             cl.insert(insertR1);
             cl.insert(insertR2);
@@ -356,22 +346,22 @@ public class Transaction17367B extends SdbTestBase {
 
             // 提交事务3
             db3.commit();
-            
-        }finally{
-            //关闭事务连接
+
+        } finally {
+            // 关闭事务连接
             db1.close();
             db2.close();
             db3.close();
-            
-            //删除索引
-            if(cl.isIndexExist("a")){
-                cl.dropIndex("a"); 
+
+            // 删除索引
+            if (cl.isIndexExist("a")) {
+                cl.dropIndex("a");
             }
-            
-            //删除记录
+
+            // 删除记录
             cl.truncate();
         }
-        
+
     }
 
     @AfterClass

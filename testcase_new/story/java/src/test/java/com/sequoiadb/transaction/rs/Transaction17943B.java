@@ -82,7 +82,7 @@ public class Transaction17943B extends SdbTestBase {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            
+
             // 删除索引
             cl.dropIndex("textIndex17943B");
         }

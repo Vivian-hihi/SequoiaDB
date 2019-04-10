@@ -22,7 +22,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = {"rc", "ru"})
+@Test(groups = { "rc", "ru" })
 public class Transaction17134 extends SdbTestBase {
 
     private String clName = "transCL_17134";
@@ -40,7 +40,7 @@ public class Transaction17134 extends SdbTestBase {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data = new BasicBSONObject();
         data.put("a", 1);
         data.put("b", 1);
@@ -63,17 +63,17 @@ public class Transaction17134 extends SdbTestBase {
         data3.put("d", "customer transaction type data application.");
         modifier.put("$set", data3);
     }
-    
-    //TODO:SEQUOIADBMAINSTREAM-4116
-    @Test(enabled=false)
-    public void test(){
-        
-        //1 update R1 to R3
+
+    // TODO:SEQUOIADBMAINSTREAM-4116
+    @Test(enabled = false)
+    public void test() {
+
+        // 1 update R1 to R3
         sdb.beginTransaction();
         cl.update(new BasicBSONObject("b", 1), modifier, null);
-        
+
         try {
-            //2 create unique index
+            // 2 create unique index
             cl.createIndex("a", "{a:1}", true, false);
             Assert.fail("create index should be error");
         } catch (BaseException e) {
@@ -98,10 +98,10 @@ public class Transaction17134 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
     }

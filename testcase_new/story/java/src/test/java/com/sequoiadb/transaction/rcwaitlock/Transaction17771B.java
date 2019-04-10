@@ -21,7 +21,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @FileName:seqDB-17771：删除与更新并发，删除的记录同时匹配已提交记录及其他事务更新的记录，事务提交，过程中读 索引扫描
- * R1<R3<R2
+ *                                                                  R1<R3<R2
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00

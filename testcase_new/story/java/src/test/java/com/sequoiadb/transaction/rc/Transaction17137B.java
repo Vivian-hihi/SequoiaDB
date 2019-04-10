@@ -43,8 +43,8 @@ public class Transaction17137B extends SdbTestBase {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         expDataList = prepareData(recordNum);
-        rs1 = expDataList.subList(0, recordNum/2);
-        rs2 = expDataList.subList(recordNum/2, recordNum);
+        rs1 = expDataList.subList(0, recordNum / 2);
+        rs2 = expDataList.subList(recordNum / 2, recordNum);
         cl.insert(rs1);
 
     }
@@ -56,7 +56,7 @@ public class Transaction17137B extends SdbTestBase {
 
         sdb1.beginTransaction();
         sdb2.beginTransaction();
-        
+
         CRUDThread crudThread = new CRUDThread();
         crudThread.start();
 
@@ -87,7 +87,7 @@ public class Transaction17137B extends SdbTestBase {
         actDataList.clear();
 
         sdb2.commit();
-        
+
         recordCur = cl.query(null, "{'_id': {'$include': 0}}", null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -97,7 +97,7 @@ public class Transaction17137B extends SdbTestBase {
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
     }
 
     @AfterClass
@@ -182,16 +182,16 @@ public class Transaction17137B extends SdbTestBase {
                     DBCollection dbcl = sdb2.getCollectionSpace(csName).getCollection(clName);
                     cur = dbcl.query(null, null, "{a :1}", "{'': null}");
                     List<BSONObject> actList = TransUtils.getReadActList(cur);
-                    Assert.assertEquals(actList, rs1, "select times: " +i);
+                    Assert.assertEquals(actList, rs1, "select times: " + i);
                     actList.clear();
-                    
+
                     try {
                         cur = dbcl.query(null, null, "{a :1}", "{'': 'a'}");
                         actList = TransUtils.getReadActList(cur);
-                        Assert.assertEquals(actList, rs1, "select times: " +i);
+                        Assert.assertEquals(actList, rs1, "select times: " + i);
                     } catch (BaseException e) {
                         int actErrCode = e.getErrorCode();
-                        if(actErrCode != -48 && actErrCode != -52 && actErrCode != -10){
+                        if (actErrCode != -48 && actErrCode != -52 && actErrCode != -10) {
                             e.printStackTrace();
                             throw e;
                         }

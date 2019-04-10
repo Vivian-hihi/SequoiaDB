@@ -54,33 +54,25 @@ public class Transaction17770A extends SdbTestBase {
         insertR1 = (BSONObject) JSON.parse("{_id:'insertID17770A_1',a:1,b:1}");
         insertR2 = (BSONObject) JSON.parse("{_id:'insertID17770A_2',a:2,b:2}");
     }
-    
 
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        //正序索引，正序索引读
+    public Object[][] createIndex() {
+        // 正序索引，正序索引读
         List<BSONObject> expPositiveReadList = new ArrayList<BSONObject>();
         expPositiveReadList.add(insertR2);
-        
-        return new Object[][]{
-            {"{'a': 1}",
-             expPositiveReadList},
-            {"{'a': -1}",
-             new ArrayList<BSONObject>()}
-        };
-    }
 
+        return new Object[][] { { "{'a': 1}", expPositiveReadList }, { "{'a': -1}", new ArrayList<BSONObject>() } };
+    }
 
     @SuppressWarnings("unchecked")
     @Test(dataProvider = "index")
-    public void test(String indexKey,
-            List<BSONObject> expPositiveReadList) {
-        try{
+    public void test(String indexKey, List<BSONObject> expPositiveReadList) {
+        try {
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db4 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            
+
             // 开启4个并发事务
             db1.beginTransaction();
             db2.beginTransaction();
@@ -113,13 +105,13 @@ public class Transaction17770A extends SdbTestBase {
             TransactionQueryThread tableScanThread2 = new TransactionQueryThread(cl4, "{a:1}");
             tableScanThread2.start();
             Assert.assertTrue(tableScanThread2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
- 
+
             // 非事务读,正序
             cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expPositiveReadList);
             actList.clear();
-            
+
             // 非事务读,逆序
             cursor = cl.query(null, null, "{a:-1}", hint);
             actList = TransUtils.getReadActList(cursor);
@@ -157,18 +149,18 @@ public class Transaction17770A extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 提交事务2
             db2.commit();
             Assert.assertTrue(tableScanThread1.isSuccess(), tableScanThread1.getErrorMsg());
             Assert.assertTrue(tableScanThread2.isSuccess(), tableScanThread2.getErrorMsg());
-            
+
             try {
                 // 校验事务3读返回的记录
                 actList = (ArrayList<BSONObject>) tableScanThread1.getExecResult();
                 Assert.assertEquals(actList, expList);
                 actList.clear();
-                
+
                 // 校验事务4读返回的记录
                 actList = (ArrayList<BSONObject>) tableScanThread2.getExecResult();
                 Assert.assertEquals(actList, expList);
@@ -191,7 +183,7 @@ public class Transaction17770A extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务记录读,逆序
             cursor = cl.query(null, null, "{a:-1}", hint);
             actList = TransUtils.getReadActList(cursor);
@@ -207,23 +199,23 @@ public class Transaction17770A extends SdbTestBase {
             // 提交事务3
             db3.commit();
             db4.commit();
-        }finally{
-            //关闭事务连接
+        } finally {
+            // 关闭事务连接
             db1.commit();
             db2.commit();
             db3.commit();
             db4.commit();
-            
-            //删除索引
-            if(cl.isIndexExist("a")){
-                cl.dropIndex("a"); 
+
+            // 删除索引
+            if (cl.isIndexExist("a")) {
+                cl.dropIndex("a");
             }
-            
-            //删除记录
+
+            // 删除记录
             cl.truncate();
-            
+
         }
-        
+
     }
 
     @AfterClass

@@ -23,7 +23,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @FileName:seqDB-17364：更新与删除并发， 删除的记录同时匹配已提交记录及其他事务更新的记录，事务提交，过程中读
- * 更新/删除走索引扫描,R1<R3<R2
+ *                                更新/删除走索引扫描,R1<R3<R2
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
@@ -54,59 +54,43 @@ public class Transaction17364B extends SdbTestBase {
         insertR1 = (BSONObject) JSON.parse("{_id:'insertID17364B_1',a:1,b:1,c:1}");
         insertR2 = (BSONObject) JSON.parse("{_id:'insertID17364B_2',a:3,b:3,c:3}");
         updateR1 = (BSONObject) JSON.parse("{_id:'insertID17364B_1',a:2,b:2,c:1}");
-        
+
     }
-    
+
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        
-        //第一次非事务读正序查询的预期结果
+    public Object[][] createIndex() {
+
+        // 第一次非事务读正序查询的预期结果
         List<BSONObject> expPositiveReadList1 = new ArrayList<BSONObject>();
         expPositiveReadList1.add(updateR1);
         expPositiveReadList1.add(insertR2);
-        
-        //第一次非事务读逆序查询的预期结果
+
+        // 第一次非事务读逆序查询的预期结果
         List<BSONObject> expReverseReadList1 = new ArrayList<BSONObject>();
         expReverseReadList1.add(insertR2);
         expReverseReadList1.add(updateR1);
-        
-        //第一次非事务读正序查询的预期结果
+
+        // 第一次非事务读正序查询的预期结果
         List<BSONObject> expReadList3 = new ArrayList<BSONObject>();
         expReadList3.add(updateR1);
-        
-        return new Object[][]{
-            {"{'a': 1}",
-             expPositiveReadList1,
-             expReverseReadList1},
-            {"{'a': 1, b: 1}",
-             expPositiveReadList1,
-             expReverseReadList1},
-            {"{'a': 1, b: -1}",
-             expPositiveReadList1,
-             expReverseReadList1},
-            {"{'a': -1}",
-             expReadList3,
-             expReadList3},
-            {"{'a': -1, b: 1}",
-             expReadList3,
-             expReadList3},
-            {"{'a': -1, b: -1}",
-             expReadList3,
-             expReadList3},
-           
+
+        return new Object[][] { { "{'a': 1}", expPositiveReadList1, expReverseReadList1 },
+                { "{'a': 1, b: 1}", expPositiveReadList1, expReverseReadList1 },
+                { "{'a': 1, b: -1}", expPositiveReadList1, expReverseReadList1 },
+                { "{'a': -1}", expReadList3, expReadList3 }, { "{'a': -1, b: 1}", expReadList3, expReadList3 },
+                { "{'a': -1, b: -1}", expReadList3, expReadList3 },
+
         };
     }
 
     @Test(dataProvider = "index")
-    public void test(String indexKey,
-            List<BSONObject> expPositiveReadList1, 
-            List<BSONObject> expReverseReadList1) {
-        try{
+    public void test(String indexKey, List<BSONObject> expPositiveReadList1, List<BSONObject> expReverseReadList1) {
+        try {
             // 插入记录R1、R2,R1<R2
             cl.insert(insertR1);
             cl.insert(insertR2);
             cl.createIndex("a", indexKey, false, false);
-            
+
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -137,7 +121,7 @@ public class Transaction17364B extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务1正序索引读
             hint = "{\"\":\"a\"}";
             cursor = cl1.query(null, null, "{a: 1, b: -1}", hint);
@@ -154,7 +138,7 @@ public class Transaction17364B extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务1逆序索引读
             hint = "{\"\":\"a\"}";
             cursor = cl1.query(null, null, "{a: -1, b: 1}", hint);
@@ -171,7 +155,7 @@ public class Transaction17364B extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3正序索引读
             hint = "{\"\":\"a\"}";
             cursor = cl3.query(null, null, "{a: 1, b: -1}", hint);
@@ -188,7 +172,7 @@ public class Transaction17364B extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3逆序索引读
             hint = "{\"\":\"a\"}";
             cursor = cl3.query(null, null, "{a: -1, b: 1}", hint);
@@ -379,25 +363,25 @@ public class Transaction17364B extends SdbTestBase {
 
             // 提交事务3
             db3.commit();
-            
-        }finally{
-            //关闭事务连接
+
+        } finally {
+            // 关闭事务连接
             db1.close();
             db2.close();
             db3.close();
-            
-            //删除索引
-            if(cl.isIndexExist("a")){
-                cl.dropIndex("a"); 
+
+            // 删除索引
+            if (cl.isIndexExist("a")) {
+                cl.dropIndex("a");
             }
-            
-            //删除记录
+
+            // 删除记录
             cl.truncate();
-            
+
         }
-        
+
     }
-    
+
     @AfterClass
     public void tearDown() {
         // 先关闭事务连接，再删除集合
@@ -418,7 +402,6 @@ public class Transaction17364B extends SdbTestBase {
             sdb.close();
         }
     }
-
 
     private class DeleteThread extends SdbThreadBase {
         @Override

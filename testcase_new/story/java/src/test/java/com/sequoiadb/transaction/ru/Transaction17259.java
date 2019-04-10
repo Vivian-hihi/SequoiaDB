@@ -57,21 +57,22 @@ public class Transaction17259 extends SdbTestBase {
 
         sdb.beginTransaction();
         sdb3.beginTransaction();
-        
-        //1 trans1 insert/update/delete record  
+
+        // 1 trans1 insert/update/delete record
         cl1.insert(expDataList);
-        cl1.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}", null);
+        cl1.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}",
+                null);
         cl1.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}");
-        
-        //2 sdb2 create/drop index
+
+        // 2 sdb2 create/drop index
         for (int i = 0; i < 10; i++) {
             cl2.createIndex("a", "{a:1, b:-1}", false, false);
             cl2.dropIndex("a");
         }
         cl2.createIndex("a", "{a:1, b:-1}", false, false);
         Assert.assertTrue(cl.isIndexExist("a"));
-        
-        //3 trans2 selete record
+
+        // 3 trans2 selete record
         expDataList = expData();
         recordCur = cl3.query(null, "{'_id': {'$include': 0}}", null, "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
@@ -83,10 +84,10 @@ public class Transaction17259 extends SdbTestBase {
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        //4 commit trans1
+        // 4 commit trans1
         sdb.commit();
 
-        //5 trans2 selete record
+        // 5 trans2 selete record
         expDataList.clear();
         expDataList = expData();
         recordCur = cl3.query(null, "{'_id': {'$include': 0}}", null, "{'': null}");
@@ -99,9 +100,9 @@ public class Transaction17259 extends SdbTestBase {
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        //6 commit all trans
+        // 6 commit all trans
         sdb3.commit();
-        
+
         cl.delete("{a:{'$isnull': 0}}");
         Assert.assertEquals(cl.getCount(), 0);
     }
@@ -149,7 +150,5 @@ public class Transaction17259 extends SdbTestBase {
         }
         return dataList;
     }
-
-
 
 }

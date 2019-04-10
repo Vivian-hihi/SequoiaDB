@@ -54,7 +54,7 @@ public class Transaction17159A extends SdbTestBase {
 
         // 事务1对同一条记录执行多个原子操作
         BSONObject insertR3 = (BSONObject) JSON.parse("{a:20000,b:20000}");
-        for(int i=0; i<10000; i++){
+        for (int i = 0; i < 10000; i++) {
             cl1.insert(insertR3);
             cl1.update("{a:20000}", "{$set:{a:20001}}", "{'':'a'}");
             cl1.delete("{a:20001}", "{'':'a'}");

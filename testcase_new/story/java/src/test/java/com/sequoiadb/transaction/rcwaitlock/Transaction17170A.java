@@ -126,14 +126,14 @@ public class Transaction17170A extends SdbTestBase {
             e.printStackTrace();
             Assert.fail();
         }
-        
-        //事务3再次索引读
+
+        // 事务3再次索引读
         db3.beginTransaction();
-        try{
+        try {
             DBCursor indexCursor = cl3.query(null, null, null, hint);
             while (indexCursor.hasNext()) {
-            } 
-        }catch(BaseException e){
+            }
+        } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -13);
         }
 

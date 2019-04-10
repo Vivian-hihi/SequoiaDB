@@ -20,7 +20,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @Description seqDB-17828.java 插入与删除并发，
- * 删除的记录同时匹配已提交记录及其他事务插入的记录，删除走表扫描，事务提交，过程中读
+ *              删除的记录同时匹配已提交记录及其他事务插入的记录，删除走表扫描，事务提交，过程中读
  * @author luweikang
  * @date 2019年1月15日
  */
@@ -66,19 +66,19 @@ public class Transaction17828 extends SdbTestBase {
     }
 
     @Test
-    public void test(){
+    public void test() {
         sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
-        
+
         sdb1.beginTransaction();
         sdb2.beginTransaction();
         sdb3.beginTransaction();
-        
-        //2 trans1 insert record R2
+
+        // 2 trans1 insert record R2
         cl1.insert(data2);
 
         // 3 trans2 delete r1 and r2
@@ -91,7 +91,7 @@ public class Transaction17828 extends SdbTestBase {
         queryThread.start();
         Assert.assertTrue(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        //5 no trans read
+        // 5 no trans read
         expDataList.clear();
         expDataList.add(data2);
         recordCur = cl.query(null, null, "{a:1}", "{'': null}");
@@ -108,49 +108,63 @@ public class Transaction17828 extends SdbTestBase {
         sdb1.commit();
         Assert.assertTrue(deleteThread.isSuccess(), deleteThread.getErrorMsg());
         Assert.assertFalse(deleteThread.matchBlockingMethod(cl2.getClass().getName(), "delete"));
-        
-        //no trans read
-        Assert.assertEquals(cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)), 0);
-        Assert.assertEquals(cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")), 0 );
-        
-        //7 trans2 read
-        Assert.assertEquals(cl2.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)), 0);
-        Assert.assertEquals(cl2.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")), 0 );
-        
-        //8 read after trans2 commit 
+
+        // no trans read
+        Assert.assertEquals(
+                cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)),
+                0);
+        Assert.assertEquals(
+                cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")),
+                0);
+
+        // 7 trans2 read
+        Assert.assertEquals(cl2.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
+                new BasicBSONObject("", null)), 0);
+        Assert.assertEquals(
+                cl2.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")),
+                0);
+
+        // 8 read after trans2 commit
         sdb2.commit();
         Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
         Assert.assertFalse(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
-        
-        Assert.assertEquals(cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)), 0);
-        Assert.assertEquals(cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")), 0 );
-        
-        //9 trans3 read
-        Assert.assertEquals(cl3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)), 0);
-        Assert.assertEquals(cl3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")), 0 );
-        
+
+        Assert.assertEquals(
+                cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", null)),
+                0);
+        Assert.assertEquals(
+                cl.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")),
+                0);
+
+        // 9 trans3 read
+        Assert.assertEquals(cl3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)),
+                new BasicBSONObject("", null)), 0);
+        Assert.assertEquals(
+                cl3.getCount(new BasicBSONObject("a", new BasicBSONObject("$isnull", 0)), new BasicBSONObject("", "a")),
+                0);
+
         sdb3.commit();
     }
 
     @AfterClass
     public void tearDown() {
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
         sdb1.commit();
         sdb2.commit();
         sdb3.commit();
-        if( sdb1 != null ){
+        if (sdb1 != null) {
             sdb1.close();
         }
-        if( sdb2 != null ){
+        if (sdb2 != null) {
             sdb2.close();
         }
-        if( sdb3 != null ){
+        if (sdb3 != null) {
             sdb3.close();
         }
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
     }

@@ -49,7 +49,7 @@ public class Transaction17762B extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data = new BasicBSONObject();
         data.put("_id", "insertID17762_1");
         data.put("a", 2);
@@ -82,19 +82,19 @@ public class Transaction17762B extends SdbTestBase {
     }
 
     @Test
-    public void test(){
+    public void test() {
         sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
-        
+
         sdb1.beginTransaction();
         sdb2.beginTransaction();
         sdb3.beginTransaction();
-        
-        //2 trans1 insert record R2
+
+        // 2 trans1 insert record R2
         cl1.insert(data2);
 
         // 3 trans2 update R2 and R2 to R3 and R4
@@ -107,7 +107,7 @@ public class Transaction17762B extends SdbTestBase {
         queryThread.start();
         Assert.assertTrue(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        //5 no trans read
+        // 5 no trans read
         expDataList.clear();
         expDataList.add(data2);
         expDataList.add(data);
@@ -180,24 +180,24 @@ public class Transaction17762B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
         sdb1.commit();
         sdb2.commit();
         sdb3.commit();
-        if( sdb1 != null ){
+        if (sdb1 != null) {
             sdb1.close();
         }
-        if( sdb2 != null ){
+        if (sdb2 != null) {
             sdb2.close();
         }
-        if( sdb3 != null ){
+        if (sdb3 != null) {
             sdb3.close();
         }
-        
+
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
     }

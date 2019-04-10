@@ -41,21 +41,21 @@ public class Transaction17260 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         expDataList = new ArrayList<BSONObject>();
-        
-        dataList = prepareData( recordNum );
+
+        dataList = prepareData(recordNum);
         cl.insert(dataList);
 
     }
 
     @Test
-    public void test(){
+    public void test() {
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-        
+
         sdb.beginTransaction();
         sdb2.beginTransaction();
 
-        //trans1 upsert record R1s to R2s
+        // trans1 upsert record R1s to R2s
         BSONObject modifier = null;
         BSONObject data = null;
         for (int i = 0; i < recordNum * 2; i++) {
@@ -71,21 +71,21 @@ public class Transaction17260 extends SdbTestBase {
             expDataList.add(data);
         }
 
-        //trans2 query
+        // trans2 query
         recordCur = cl2.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         recordCur = cl2.query(null, null, "{a:1}", "{'': 'a'}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
-        //trans1 commit trans
+
+        // trans1 commit trans
         sdb.commit();
 
-        //trans2 query
+        // trans2 query
         recordCur = cl2.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -127,5 +127,5 @@ public class Transaction17260 extends SdbTestBase {
         }
         return dataList;
     }
-    
+
 }

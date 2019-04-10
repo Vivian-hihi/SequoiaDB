@@ -40,7 +40,7 @@ public class Transaction17139 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         expDataList = prepareData(recordNum);
-        
+
         cl.insert(expDataList);
 
     }
@@ -49,11 +49,11 @@ public class Transaction17139 extends SdbTestBase {
     public void test() {
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-        
+
         sdb.beginTransaction();
         sdb2.beginTransaction();
 
-        //2 trans1 upsert R1 to R2
+        // 2 trans1 upsert R1 to R2
         BSONObject modifier = null;
         BSONObject data = null;
         for (int i = 0; i < recordNum * 2; i++) {
@@ -79,10 +79,10 @@ public class Transaction17139 extends SdbTestBase {
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        //4 trans1 rollback
+        // 4 trans1 rollback
         sdb.rollback();
 
-        //5 trans2 query
+        // 5 trans2 query
         recordCur = cl2.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
@@ -100,13 +100,13 @@ public class Transaction17139 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
-        if( sdb2 != null ){
+        if (sdb2 != null) {
             sdb2.close();
         }
     }

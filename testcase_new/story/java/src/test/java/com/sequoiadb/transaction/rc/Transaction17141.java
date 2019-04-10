@@ -41,7 +41,7 @@ public class Transaction17141 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data = new BasicBSONObject();
         data.put("_id", "insertID17141");
         data.put("a", 1);
@@ -57,7 +57,7 @@ public class Transaction17141 extends SdbTestBase {
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
         cl.insert(data2);
-        
+
     }
 
     @Test
@@ -67,8 +67,8 @@ public class Transaction17141 extends SdbTestBase {
 
         sdb.beginTransaction();
         sdb2.beginTransaction();
-        
-        //2 trans1 query and remove
+
+        // 2 trans1 query and remove
         DBCursor tbCur = cl.queryAndRemove(new BasicBSONObject("a", 1), null, null, null, -1, -1, 0);
         BSONObject actData = tbCur.getNext();
         try {
@@ -79,7 +79,7 @@ public class Transaction17141 extends SdbTestBase {
             }
         }
 
-        //trans1 query 
+        // trans1 query
         expDataList.add(data2);
         recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
@@ -91,7 +91,7 @@ public class Transaction17141 extends SdbTestBase {
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        //3 trans2 query 
+        // 3 trans2 query
         expDataList.clear();
         expDataList.add(data);
         expDataList.add(data2);
@@ -105,7 +105,7 @@ public class Transaction17141 extends SdbTestBase {
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        //4 commit trans1 and query
+        // 4 commit trans1 and query
         sdb.commit();
         expDataList.clear();
         expDataList.add(data2);
@@ -145,15 +145,15 @@ public class Transaction17141 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        
+
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
-        if( sdb2 != null ){
+        if (sdb2 != null) {
             sdb2.close();
         }
     }

@@ -22,7 +22,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = {"rc", "ru"})
+@Test(groups = { "rc", "ru" })
 public class Transaction17127 extends SdbTestBase {
 
     private String clName = "transCL_17127";
@@ -39,26 +39,26 @@ public class Transaction17127 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        
+
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data = new BasicBSONObject();
         data.put("a", 1);
         data.put("b", 1);
         data.put("c", 13700000000L);
         data.put("d", "customer transaction type data application.");
         cl.insert(data);
-        
+
         data2 = new BasicBSONObject();
         data2.put("a", 2);
         data2.put("b", 2);
         data2.put("c", 13700000000L);
         data2.put("d", "customer transaction type data application.");
         cl.insert(data2);
-        
+
         data3 = new BasicBSONObject();
         data3.put("a", 2);
         data3.put("b", 3);
@@ -71,10 +71,10 @@ public class Transaction17127 extends SdbTestBase {
     }
 
     @Test
-    public void test(){
-        try{
+    public void test() {
+        try {
             sdb.beginTransaction();
-            //trans1 update record R1 to R3 same as the R2
+            // trans1 update record R1 to R3 same as the R2
             cl.update(matcher, modifier, null);
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
@@ -100,12 +100,12 @@ public class Transaction17127 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        
+
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
     }

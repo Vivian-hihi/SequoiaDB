@@ -23,7 +23,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @FileName:seqDB-17825：删除并发，删除的记录同时匹配已提交记录及其他事务删除的记录，事务提交，过程中读 删除走表扫描，
- * 先插入R1，再插入R2
+ *                                                               先插入R1，再插入R2
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
@@ -53,46 +53,31 @@ public class Transaction17825A extends SdbTestBase {
         insertR1 = (BSONObject) JSON.parse("{_id:'insertID17825A_1',a:1,b:1,c:1}");
         insertR2 = (BSONObject) JSON.parse("{_id:'insertID17825A_2',a:2,b:2,c:2}");
     }
-    
+
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        
-        //第一次非事务读正序查询的预期结果
+    public Object[][] createIndex() {
+
+        // 第一次非事务读正序查询的预期结果
         List<BSONObject> expPositiveReadList1 = new ArrayList<BSONObject>();
         expPositiveReadList1.add(insertR2);
-        
-        //第一次非事务读逆序查询的预期结果
+
+        // 第一次非事务读逆序查询的预期结果
         List<BSONObject> expReverseReadList1 = new ArrayList<BSONObject>();
         expReverseReadList1.add(insertR2);
-        
-        return new Object[][]{
-            {"{'a': 1}",
-             expPositiveReadList1,
-             expReverseReadList1},
-            {"{'a': 1, b: 1}",
-             expPositiveReadList1,
-             expReverseReadList1},
-            {"{'a': 1, b: -1}",
-             expPositiveReadList1,
-             expReverseReadList1},
-            {"{'a': -1}",
-             expPositiveReadList1,
-             expReverseReadList1},
-            {"{'a': -1, b: 1}",
-             expPositiveReadList1,
-             expReverseReadList1},
-            {"{'a': -1, b: -1}",
-             expPositiveReadList1,
-             expReverseReadList1},
-           
+
+        return new Object[][] { { "{'a': 1}", expPositiveReadList1, expReverseReadList1 },
+                { "{'a': 1, b: 1}", expPositiveReadList1, expReverseReadList1 },
+                { "{'a': 1, b: -1}", expPositiveReadList1, expReverseReadList1 },
+                { "{'a': -1}", expPositiveReadList1, expReverseReadList1 },
+                { "{'a': -1, b: 1}", expPositiveReadList1, expReverseReadList1 },
+                { "{'a': -1, b: -1}", expPositiveReadList1, expReverseReadList1 },
+
         };
     }
 
     @Test(dataProvider = "index")
-    public void test(String indexKey,
-            List<BSONObject> expPositiveReadList1, 
-            List<BSONObject> expReverseReadList1) {
-        try{
+    public void test(String indexKey, List<BSONObject> expPositiveReadList1, List<BSONObject> expReverseReadList1) {
+        try {
             // 插入记录R1、R2
             cl.insert(insertR1);
             cl.insert(insertR2);
@@ -362,22 +347,22 @@ public class Transaction17825A extends SdbTestBase {
 
             // 提交事务3
             db3.commit();
-            
-        }finally{
-            //关闭事务连接
+
+        } finally {
+            // 关闭事务连接
             db1.close();
             db2.close();
             db3.close();
-            
-            //删除索引
-            if(cl.isIndexExist("a")){
-                cl.dropIndex("a"); 
+
+            // 删除索引
+            if (cl.isIndexExist("a")) {
+                cl.dropIndex("a");
             }
-            
-            //删除记录
+
+            // 删除记录
             cl.truncate();
         }
-        
+
     }
 
     @AfterClass

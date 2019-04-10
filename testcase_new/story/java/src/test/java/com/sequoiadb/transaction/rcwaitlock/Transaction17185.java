@@ -27,7 +27,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author yinzhen
  *
  */
-@Test(groups = {"rcwaitlock", "rs"})
+@Test(groups = { "rcwaitlock", "rs" })
 public class Transaction17185 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl17185";
@@ -71,7 +71,7 @@ public class Transaction17185 extends SdbTestBase {
         if (!db5.isClosed()) {
             db5.close();
         }
-        
+
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);
@@ -86,13 +86,13 @@ public class Transaction17185 extends SdbTestBase {
         return new Object[][] { { "{'a':-1}" }, { "{'a':1}" } };
     }
 
-    @Test(dataProvider="index")
+    @Test(dataProvider = "index")
     public void test(String indexKey) {
         latch = new CountDownLatch(4);
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("textIndex17185", indexKey, false, false);
         insertData();
-        
+
         // 开启并发事务
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -113,7 +113,7 @@ public class Transaction17185 extends SdbTestBase {
         // 事务1插入记录
         InsertThread insertThread = new InsertThread();
         insertThread.start();
-        
+
         // 事务2更新记录
         UpdateThread updateThread = new UpdateThread();
         updateThread.start();
@@ -129,27 +129,27 @@ public class Transaction17185 extends SdbTestBase {
         // 事务5读记录走表扫描
         QueryThread2 queryThread2 = new QueryThread2();
         queryThread2.start();
-        
+
         Assert.assertTrue(insertThread.isSuccess());
         Assert.assertTrue(updateThread.isSuccess());
         Assert.assertTrue(deleteThread.isSuccess());
         Assert.assertTrue(queryThread.isSuccess());
-        
+
         // 提交事务
         db1.commit();
         db2.commit();
         db3.commit();
         db4.commit();
-        
+
         Assert.assertTrue(queryThread2.isSuccess());
         db5.commit();
-        
+
         try {
             latch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        
+
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         cs.dropCollection(clName);
     }
@@ -163,8 +163,8 @@ public class Transaction17185 extends SdbTestBase {
         Collections.shuffle(records);
         cl.insert(records);
     }
-    
-    class InsertThread extends SdbThreadBase{
+
+    class InsertThread extends SdbThreadBase {
         @Override
         public void exec() throws Exception {
             try {
@@ -178,23 +178,22 @@ public class Transaction17185 extends SdbTestBase {
             } catch (Exception e) {
                 e.printStackTrace();
                 throw e;
-            }
-            finally {
+            } finally {
                 latch.countDown();
             }
         }
     }
-    
-    class UpdateThread extends SdbThreadBase{
+
+    class UpdateThread extends SdbThreadBase {
 
         @Override
-        public void exec() throws Exception { 
+        public void exec() throws Exception {
             cl2.update("{a:{$lt:'1001'}}", "{$set:{a:1}}", "{'':'textIndex17185'}");
             latch.countDown();
         }
     }
-    
-    class DeleteThread extends SdbThreadBase{
+
+    class DeleteThread extends SdbThreadBase {
 
         @Override
         public void exec() throws Exception {
@@ -202,20 +201,21 @@ public class Transaction17185 extends SdbTestBase {
             latch.countDown();
         }
     }
-    
-    class QueryThread extends SdbThreadBase{
+
+    class QueryThread extends SdbThreadBase {
 
         @Override
         public void exec() throws Exception {
-            DBCursor cursor = cl4.query("{$and:[{a:{$gt:2000}},{a:{$lt:3001}}]}", null, "{_id:1}", "{'':'textIndex17185'}");
+            DBCursor cursor = cl4.query("{$and:[{a:{$gt:2000}},{a:{$lt:3001}}]}", null, "{_id:1}",
+                    "{'':'textIndex17185'}");
             List<BSONObject> records = TransUtils.getReadActList(cursor);
             List<BSONObject> expList = cl4Query();
             Assert.assertEquals(records, expList);
             latch.countDown();
         }
     }
-    
-    class QueryThread2 extends SdbThreadBase{
+
+    class QueryThread2 extends SdbThreadBase {
 
         @Override
         public void exec() throws Exception {

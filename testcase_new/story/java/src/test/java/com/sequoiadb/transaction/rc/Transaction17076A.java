@@ -68,7 +68,7 @@ public class Transaction17076A extends SdbTestBase {
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
         actList.clear();
-        
+
         // 事务2表扫描记录,匹配条件使用更新后值
         cursor = cl2.query("{a:2}", null, null, "{'':null}");
         actList = TransUtils.getReadActList(cursor);

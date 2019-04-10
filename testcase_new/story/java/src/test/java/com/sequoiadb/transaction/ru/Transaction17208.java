@@ -52,7 +52,7 @@ public class Transaction17208 extends SdbTestBase {
         db2.beginTransaction();
 
         // 事务1执行批量删除
-        cl1.delete("{a:1}","{'':'a'}");
+        cl1.delete("{a:1}", "{'':'a'}");
 
         // 事务2表扫描记录
         cursor = cl2.query(null, null, null, "{'':null}");

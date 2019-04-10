@@ -26,7 +26,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @version 1.00
  */
 @Test(groups = "rc")
-public class Transaction16303 extends SdbTestBase{
+public class Transaction16303 extends SdbTestBase {
     private Sequoiadb sdb;
     private Sequoiadb sdb2;
     private CollectionSpace cs;
@@ -34,44 +34,44 @@ public class Transaction16303 extends SdbTestBase{
     private String clName = "cl16303";
     private String commCSName;
     private ArrayList<BSONObject> insertRecods;
-    
+
     @BeforeClass
-	public void setUp() {
-		String coordAddr = SdbTestBase.coordUrl;
-		commCSName = SdbTestBase.csName;
-		try {
-			sdb = new Sequoiadb(coordAddr, "", "");
-			sdb2 = new Sequoiadb(coordAddr, "", "");
-			cs = sdb.getCollectionSpace(commCSName);
-			cl = cs.createCollection(clName, new BasicBSONObject("ReplSize", 0));
-			insertData();
-		}catch (BaseException e) {
-			Assert.fail("Sequoiadb driver TestTransaction16303 setUp error, error description:" + e.getMessage());
-		}
-	}
+    public void setUp() {
+        String coordAddr = SdbTestBase.coordUrl;
+        commCSName = SdbTestBase.csName;
+        try {
+            sdb = new Sequoiadb(coordAddr, "", "");
+            sdb2 = new Sequoiadb(coordAddr, "", "");
+            cs = sdb.getCollectionSpace(commCSName);
+            cl = cs.createCollection(clName, new BasicBSONObject("ReplSize", 0));
+            insertData();
+        } catch (BaseException e) {
+            Assert.fail("Sequoiadb driver TestTransaction16303 setUp error, error description:" + e.getMessage());
+        }
+    }
 
     @Test
     private void testTrans16303() {
-    	String flagCom = "commit";
-    	String flagRoll = "rollback";
-        
-    	//test query + update
+        String flagCom = "commit";
+        String flagRoll = "rollback";
+
+        // test query + update
         testQueryAndUpdate(flagCom);
-        //clean up cl and insert data
+        // clean up cl and insert data
         cleanAndInsert();
-        
+
         testQueryAndUpdate(flagRoll);
         cleanAndInsert();
-        
-        //test queryOne + update
+
+        // test queryOne + update
         testQueryOneAndUpdate(flagCom);
         cleanAndInsert();
-        
+
         testQueryOneAndUpdate(flagRoll);
     }
-    
-    private void testQueryAndUpdate(String flag){
-    	try {
+
+    private void testQueryAndUpdate(String flag) {
+        try {
             sdb.beginTransaction();
             sdb2.beginTransaction();
             DBCollection cl1 = sdb.getCollectionSpace(commCSName).getCollection(clName);
@@ -83,27 +83,27 @@ public class Transaction16303 extends SdbTestBase{
             cl2.update(query);
             sdb.commit();
             switch (flag) {
-			case "commit":
-            	sdb2.commit();
+            case "commit":
+                sdb2.commit();
                 DBCursor cursor2 = cl2.query();
                 checkResultAfterUpdate(cursor2);
                 break;
-			case "rollback":
-            	sdb2.rollback();
-            	DBCursor cursor3 = cl2.query();
-            	checkQueryResult(cursor3);
-            	break;
-			default:
-				Assert.fail("The parameter is not commit or rollback,please check it again!");
-				break;
-			}
-        }catch (BaseException e) { 
+            case "rollback":
+                sdb2.rollback();
+                DBCursor cursor3 = cl2.query();
+                checkQueryResult(cursor3);
+                break;
+            default:
+                Assert.fail("The parameter is not commit or rollback,please check it again!");
+                break;
+            }
+        } catch (BaseException e) {
             Assert.fail("Sequoiadb driver TestTransaction16303 testQuery error, error description:" + e.getMessage());
         }
     }
-    
-    private void testQueryOneAndUpdate(String flag){
-    	try {
+
+    private void testQueryOneAndUpdate(String flag) {
+        try {
             sdb.beginTransaction();
             sdb2.beginTransaction();
             DBCollection cl1 = sdb.getCollectionSpace(commCSName).getCollection(clName);
@@ -113,51 +113,52 @@ public class Transaction16303 extends SdbTestBase{
             query.setModifier((BSONObject) JSON.parse("{$set:{age:22}}"));
             cl2.update(query);
             sdb.commit();
-            //check result
-            BSONObject expobj =  new BasicBSONObject();
-    		expobj.put("_id", 0);
-    		expobj.put("age", 0);
-    		Assert.assertEquals(obj,expobj);
-    		
-    		switch (flag) {
-			case "commit":
-            	sdb2.commit();
-            	DBCursor cursor2 = cl2.query();
+            // check result
+            BSONObject expobj = new BasicBSONObject();
+            expobj.put("_id", 0);
+            expobj.put("age", 0);
+            Assert.assertEquals(obj, expobj);
+
+            switch (flag) {
+            case "commit":
+                sdb2.commit();
+                DBCursor cursor2 = cl2.query();
                 checkResultAfterUpdate(cursor2);
                 break;
-			case "rollback":
-            	sdb2.rollback();
-            	DBCursor cursor3 = cl2.query();
-            	checkQueryResult(cursor3);
-            	break;
+            case "rollback":
+                sdb2.rollback();
+                DBCursor cursor3 = cl2.query();
+                checkQueryResult(cursor3);
+                break;
 
-			default:
-				Assert.fail("The parameter is not commit or rollback,please check it again!");
-				break;
-			}
-        }catch (BaseException e) { 
-            Assert.fail("Sequoiadb driver TestTransaction16303 testQueryOne error, error description:" + e.getMessage());
+            default:
+                Assert.fail("The parameter is not commit or rollback,please check it again!");
+                break;
+            }
+        } catch (BaseException e) {
+            Assert.fail(
+                    "Sequoiadb driver TestTransaction16303 testQueryOne error, error description:" + e.getMessage());
         }
     }
-    
-    private void checkQueryResult(DBCursor cursor){
-    	List<BSONObject> actualList = new ArrayList<BSONObject>();
-    	while(cursor.hasNext()) {
+
+    private void checkQueryResult(DBCursor cursor) {
+        List<BSONObject> actualList = new ArrayList<BSONObject>();
+        while (cursor.hasNext()) {
             actualList.add(cursor.getNext());
         }
-	    cursor.close();
+        cursor.close();
         Assert.assertEquals(actualList, insertRecods);
     }
-    
-    private void checkResultAfterUpdate(DBCursor cursor){
-    	List<BSONObject> actualList = new ArrayList<BSONObject>();
-    	while(cursor.hasNext()) {
+
+    private void checkResultAfterUpdate(DBCursor cursor) {
+        List<BSONObject> actualList = new ArrayList<BSONObject>();
+        while (cursor.hasNext()) {
             actualList.add(cursor.getNext());
         }
-	    cursor.close();
-	    
-	    List<BSONObject> expectedList = new ArrayList<BSONObject>();
-	    for (int i =0; i < insertRecods.size(); i++) {
+        cursor.close();
+
+        List<BSONObject> expectedList = new ArrayList<BSONObject>();
+        for (int i = 0; i < insertRecods.size(); i++) {
             BSONObject obj = new BasicBSONObject();
             obj = insertRecods.get(i);
             obj.put("age", 22);
@@ -165,14 +166,14 @@ public class Transaction16303 extends SdbTestBase{
         }
         Assert.assertEquals(actualList, expectedList);
     }
-    
-    private void cleanAndInsert(){
+
+    private void cleanAndInsert() {
         cl.truncate();
         insertData();
     }
-    
-    private void insertData(){
-        try{
+
+    private void insertData() {
+        try {
             BSONObject bson;
             insertRecods = new ArrayList<BSONObject>();
             for (int i = 0; i < 10000; i++) {
@@ -180,23 +181,23 @@ public class Transaction16303 extends SdbTestBase{
                 bson.put("_id", i);
                 bson.put("age", i);
                 insertRecods.add(bson);
-            } 
-            cl.insert(insertRecods, 0 );
-        }catch (BaseException e) {
+            }
+            cl.insert(insertRecods, 0);
+        } catch (BaseException e) {
             Assert.fail("Sequoiadb driver TestTransaction16303 insertData error, error description:" + e.getMessage());
         }
     }
-    
+
     @AfterClass
-    public void tearDown(){
-        try{
-	        CollectionSpace cs = sdb.getCollectionSpace(csName);    
-	        if(cs.isCollectionExist(clName)){
-	            cs.dropCollection(clName);
-	        }
-        }catch(BaseException e){            
+    public void tearDown() {
+        try {
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+        } catch (BaseException e) {
             Assert.fail(e.getMessage());
-        }finally{
+        } finally {
             sdb.close();
             sdb2.close();
         }

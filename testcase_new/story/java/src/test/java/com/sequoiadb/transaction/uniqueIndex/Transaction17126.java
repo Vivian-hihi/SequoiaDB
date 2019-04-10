@@ -22,7 +22,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = {"rc", "ru"})
+@Test(groups = { "rc", "ru" })
 public class Transaction17126 extends SdbTestBase {
 
     private String clName = "transCL_17126";
@@ -42,7 +42,7 @@ public class Transaction17126 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data = new BasicBSONObject();
         data.put("_id", "id17126");
         data.put("a", 1);
@@ -64,12 +64,12 @@ public class Transaction17126 extends SdbTestBase {
 
     @Test
     public void test1() {
-        
-        //1 trans1 delete R1
+
+        // 1 trans1 delete R1
         sdb.beginTransaction();
         cl.delete("{'a': 1}");
-        
-        //2 trans2 insert record R2 same as the R1
+
+        // 2 trans2 insert record R2 same as the R1
         sdb2.beginTransaction();
         try {
             cl2.insert(data2);
@@ -77,7 +77,7 @@ public class Transaction17126 extends SdbTestBase {
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
-        
+
         sdb.rollback();
 
         expDataList.add(data);
@@ -95,12 +95,12 @@ public class Transaction17126 extends SdbTestBase {
 
     @Test
     public void test2() {
-        
-        //1 trans1 delete R1
+
+        // 1 trans1 delete R1
         sdb.beginTransaction();
         cl.delete("{'a': 1}");
-        
-        //2 trans2 insert record R2 same as the R1
+
+        // 2 trans2 insert record R2 same as the R1
         sdb2.beginTransaction();
         try {
             cl2.insert(data2);
@@ -108,7 +108,7 @@ public class Transaction17126 extends SdbTestBase {
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
-        
+
         sdb.commit();
 
         Assert.assertEquals(cl.getCount(), 0);
@@ -116,15 +116,15 @@ public class Transaction17126 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        
+
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
-        if( sdb2 != null ){
+        if (sdb2 != null) {
             sdb2.close();
         }
     }

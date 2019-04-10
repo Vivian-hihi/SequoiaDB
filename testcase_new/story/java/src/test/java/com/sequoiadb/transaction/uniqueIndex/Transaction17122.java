@@ -21,7 +21,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = {"rc", "ru"})
+@Test(groups = { "rc", "ru" })
 public class Transaction17122 extends SdbTestBase {
 
     private String clName = "transCL_17122";
@@ -39,7 +39,7 @@ public class Transaction17122 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data1 = new BasicBSONObject();
         data1.put("_id", "testId17122");
         data1.put("a", 1);
@@ -47,7 +47,7 @@ public class Transaction17122 extends SdbTestBase {
         data1.put("c", 13700000000L);
         data1.put("d", "customer transaction type data application.");
         cl.insert(data1);
-        
+
         data2 = new BasicBSONObject();
         data2.put("_id", "testId17122");
         data2.put("a", 1);
@@ -55,7 +55,7 @@ public class Transaction17122 extends SdbTestBase {
         data2.put("c", 13700000000L);
         data2.put("flag", "flag17122");
         data2.put("d", "customer transaction type data application.");
-        
+
     }
 
     @Test
@@ -63,12 +63,12 @@ public class Transaction17122 extends SdbTestBase {
 
         sdb.beginTransaction();
 
-        //1 trans1 delete record R1
+        // 1 trans1 delete record R1
         cl.delete("{'a': 1}");
 
-        //2 trans1 insert record R2 
+        // 2 trans1 insert record R2
         cl.insert(data2);
-        
+
         expDataList.clear();
         expDataList.add(data2);
         recordCur = cl.query(null, null, null, "{'': null}");
@@ -80,7 +80,7 @@ public class Transaction17122 extends SdbTestBase {
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         sdb.rollback();
 
         expDataList.clear();
@@ -105,12 +105,12 @@ public class Transaction17122 extends SdbTestBase {
 
         sdb.beginTransaction();
 
-        //1 trans1 delete record R1
+        // 1 trans1 delete record R1
         cl.delete("{'a': 1}");
 
-        //2 trans1 insert record R2 
+        // 2 trans1 insert record R2
         cl.insert(data2);
-        
+
         expDataList.clear();
         expDataList.add(data2);
         recordCur = cl.query(null, null, null, "{'': null}");
@@ -122,7 +122,7 @@ public class Transaction17122 extends SdbTestBase {
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
-        
+
         sdb.commit();
 
         recordCur = cl.query(null, null, null, "{'': null}");
@@ -142,12 +142,12 @@ public class Transaction17122 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        
+
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
     }

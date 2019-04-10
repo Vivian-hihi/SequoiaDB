@@ -45,13 +45,10 @@ public class Transaction17108 extends SdbTestBase {
     private int updateValue = 20000;
 
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        return new Object[][]{
-            {"{'a': 1}"},
-            {"{'a': -1, 'b': 1}"},
-        };
+    public Object[][] createIndex() {
+        return new Object[][] { { "{'a': 1}" }, { "{'a': -1, 'b': 1}" }, };
     }
-    
+
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -89,11 +86,11 @@ public class Transaction17108 extends SdbTestBase {
     public void test(String indexKey) {
         try {
             cl.createIndex("a", indexKey, false, false);
-            
+
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        
+
             // 开启3个并发事务
             db1.beginTransaction();
             db2.beginTransaction();
@@ -101,19 +98,19 @@ public class Transaction17108 extends SdbTestBase {
             cl1 = db1.getCollectionSpace(csName).getCollection(clName);
             cl2 = db2.getCollectionSpace(csName).getCollection(clName);
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
-        
+
             // 1 插入记录R1
             ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl, startId, stopId);
-        
+
             // 2 事务1匹配R1删除
             hint = "{\"\":\"a\"}";
             cl1.delete(null, hint);
-        
+
             // 3 事务2匹配R1更新为R2
             UpdateThread updateThread = new UpdateThread();
             updateThread.start();
             Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
-        
+
             // 4 事务1记录读
             expList.clear();
             hint = "{\"\":null}";
@@ -121,28 +118,28 @@ public class Transaction17108 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务1索引读
             hint = "{\"\":\"a\"}";
             cursor = cl1.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 4 事务1记录逆序读
             hint = "{\"\":null}";
             cursor = cl1.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务1索引逆序读
             hint = "{\"\":\"a\"}";
             cursor = cl1.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 5 事务3记录读
             expList.addAll(insertR1s);
             hint = "{\"\":null}";
@@ -150,14 +147,14 @@ public class Transaction17108 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务3索引读
             hint = "{\"\":\"a\"}";
             cursor = cl3.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 5 事务3记录逆序读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -165,14 +162,14 @@ public class Transaction17108 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务3索引逆序读
             hint = "{\"\":\"a\"}";
             cursor = cl3.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 6 非事务记录读
             expList.clear();
             hint = "{\"\":null}";
@@ -180,14 +177,14 @@ public class Transaction17108 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 非事务索引读
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 6 非事务记录逆序读
             expList.clear();
             hint = "{\"\":null}";
@@ -195,168 +192,168 @@ public class Transaction17108 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 非事务索引逆序读
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 7 提交事务1
             db1.commit();
             Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
-        
+
             // 7 非事务记录读
             hint = "{\"\":null}";
             cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 非事务索引读
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 7 非事务记录逆序读
             hint = "{\"\":null}";
             cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 非事务索引逆序读
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 8 事务2记录读
             hint = "{\"\":null}";
             cursor = cl2.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务2索引读
             hint = "{\"\":\"a\"}";
             cursor = cl2.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 8 事务2记录逆序读
             hint = "{\"\":null}";
             cursor = cl2.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务2索引逆序读
             hint = "{\"\":\"a\"}";
             cursor = cl2.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 9 事务3记录读
             hint = "{\"\":null}";
             cursor = cl3.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务3索引读
             hint = "{\"\":\"a\"}";
             cursor = cl3.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 9 事务3记录逆序读
             hint = "{\"\":null}";
             cursor = cl3.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务3索引逆序读
             hint = "{\"\":\"a\"}";
             cursor = cl3.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 10 提交事务2
             db2.commit();
-        
+
             // 10 非事务记录读
             hint = "{\"\":null}";
             cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 非事务索引读
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 10 非事务记录逆序读
             hint = "{\"\":null}";
             cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 非事务索引逆序读
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 11 事务3记录读
             hint = "{\"\":null}";
             cursor = cl3.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务3索引读
             hint = "{\"\":\"a\"}";
             cursor = cl3.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 11 事务3记录逆序读
             hint = "{\"\":null}";
             cursor = cl3.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 事务3索引逆序读
             hint = "{\"\":\"a\"}";
             cursor = cl3.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-        
+
             // 提交事务3
             db3.commit();
         } finally {
             db1.commit();
             db2.commit();
             db3.commit();
-            if(cl.isIndexExist("a")){
+            if (cl.isIndexExist("a")) {
                 cl.dropIndex("a");
             }
             cl.truncate();

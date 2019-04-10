@@ -50,11 +50,11 @@ public class Transaction17159B extends SdbTestBase {
         db1.beginTransaction();
 
         // 事务1对不同记录执行多个原子操作
-        for(int i=0; i<10000; i++){
-            cl1.delete("{a:"+ i +"}", "{'':'a'}");
-            cl1.insert((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ i +",b:"+ i +"}"));
-            cl1.update("{a:"+ i +"}","{$set:{a:"+ (i+10000) +"}}","{'':'a'}");
-            expList.add((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ (i+10000) +",b:"+ i +"}"));
+        for (int i = 0; i < 10000; i++) {
+            cl1.delete("{a:" + i + "}", "{'':'a'}");
+            cl1.insert((BSONObject) JSON.parse("{_id:" + (10000 + i) + ", a:" + i + ",b:" + i + "}"));
+            cl1.update("{a:" + i + "}", "{$set:{a:" + (i + 10000) + "}}", "{'':'a'}");
+            expList.add((BSONObject) JSON.parse("{_id:" + (10000 + i) + ", a:" + (i + 10000) + ",b:" + i + "}"));
         }
 
         // 事务2表扫描记录

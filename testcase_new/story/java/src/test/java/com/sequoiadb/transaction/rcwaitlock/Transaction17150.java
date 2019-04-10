@@ -70,7 +70,7 @@ public class Transaction17150 extends SdbTestBase {
         recordsCursor = cl.query("{a:1}", null, null, "{'':'textIndex17150'}");
         actList = TransUtils.getReadActList(recordsCursor);
         Assert.assertEquals(actList, new ArrayList<BSONObject>());
-        
+
         // 读记录走表扫描，使用更新后条件查询
         recordsCursor = cl.query("{a:2}", null, null, "{'':null}");
         actList = TransUtils.getReadActList(recordsCursor);

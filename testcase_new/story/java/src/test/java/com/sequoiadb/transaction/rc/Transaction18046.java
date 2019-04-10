@@ -143,7 +143,7 @@ public class Transaction18046 extends SdbTestBase {
 
             int doTimes = 0;
             while (true) {
-                doTimes ++;
+                doTimes++;
                 boolean update = updateThread.matchBlockingMethod(DBCollection.class.getName(), "update");
                 boolean delete = deleteThread.matchBlockingMethod(DBCollection.class.getName(), "delete");
                 boolean updateFlag = false;
@@ -224,19 +224,19 @@ public class Transaction18046 extends SdbTestBase {
         Collections.shuffle(records);
         cl.insert(records);
         expList.addAll(records);
-        
+
         Collections.sort(expList, new Comparator<BSONObject>() {
 
             @Override
             public int compare(BSONObject obj1, BSONObject obj2) {
-                if((int)obj1.get("a") > (int)obj2.get("a")) {
+                if ((int) obj1.get("a") > (int) obj2.get("a")) {
                     return 1;
                 }
-                if ((int)obj1.get("a") < (int)obj2.get("a")) {
+                if ((int) obj1.get("a") < (int) obj2.get("a")) {
                     return -1;
                 }
-                if ((int)obj1.get("a") == (int)obj2.get("a")) {
-                    return -((int)obj1.get("b") - (int)obj2.get("b"));
+                if ((int) obj1.get("a") == (int) obj2.get("a")) {
+                    return -((int) obj1.get("b") - (int) obj2.get("b"));
                 }
                 return 0;
             }
@@ -280,11 +280,11 @@ public class Transaction18046 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             try {
-                cl2.update("{$and:[{b:{$gt:35000}},{b:{$lt:45001}}]}", "{$inc:{a:10, b:10}}", "{'':'textIndex18046'}");                
+                cl2.update("{$and:[{b:{$gt:35000}},{b:{$lt:45001}}]}", "{$inc:{a:10, b:10}}", "{'':'textIndex18046'}");
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -13);
-            }finally {
-                latch.countDown();                
+            } finally {
+                latch.countDown();
             }
         }
     }
@@ -298,8 +298,8 @@ public class Transaction18046 extends SdbTestBase {
                 cl3.delete("{$and:[{b:{$gt:32000}},{b:{$lt:42001}}]}", "{'':'textIndex18046'}");
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -13);
-            }finally {
-                latch.countDown();                
+            } finally {
+                latch.countDown();
             }
         }
     }

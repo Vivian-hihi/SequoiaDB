@@ -49,13 +49,10 @@ public class Transaction17756B extends SdbTestBase {
     private int updateValue2 = 30000;
 
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        return new Object[][]{
-            {"{'a': 1}"},
-            {"{'a': -1, 'b': 1}"}
-        };
+    public Object[][] createIndex() {
+        return new Object[][] { { "{'a': 1}" }, { "{'a': -1, 'b': 1}" } };
     }
-    
+
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -93,14 +90,14 @@ public class Transaction17756B extends SdbTestBase {
     @SuppressWarnings("unchecked")
     @Test(dataProvider = "index")
     public void test(String indexKey) {
-        try{
+        try {
             cl.createIndex("a", indexKey, false, false);
-            
+
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db4 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-    
+
             // 开启3个并发事务
             db1.beginTransaction();
             db2.beginTransaction();
@@ -110,28 +107,28 @@ public class Transaction17756B extends SdbTestBase {
             cl2 = db2.getCollectionSpace(csName).getCollection(clName);
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
             cl4 = db4.getCollectionSpace(csName).getCollection(clName);
-    
+
             // 插入记录R1
             ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl, startId, stopId);
-    
+
             // 事务1匹配R1更新为R2
             cl1.update("{a: {$gte: " + startId + ", $lt: " + stopId + "}}", "{$inc:{a:" + updateValue1 + "}}", hint);
-    
+
             // 事务2匹配R2更新为R3
             UpdateThread updateThread = new UpdateThread();
             updateThread.start();
             Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
-    
+
             // 事务3读
             TransactionQueryThread tableScanThread1 = new TransactionQueryThread(cl3, "{a:1}");
             tableScanThread1.start();
             Assert.assertTrue(tableScanThread1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
-    
+
             // 事务4逆序读
             TransactionQueryThread tableScanThread2 = new TransactionQueryThread(cl4, "{a: -1}");
             tableScanThread2.start();
             Assert.assertTrue(tableScanThread2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
-            
+
             // 非事务读
             ArrayList<BSONObject> updateR1s = TransUtils.getIncDatas(startId, stopId, updateValue1);
             expList.addAll(updateR1s);
@@ -139,20 +136,20 @@ public class Transaction17756B extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 非事务逆序读
             Collections.reverse(expList);
             cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 提交事务1
             db1.rollback();
             Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
             Assert.assertTrue(tableScanThread1.isSuccess(), tableScanThread1.getErrorMsg());
             Assert.assertTrue(tableScanThread2.isSuccess(), tableScanThread2.getErrorMsg());
-    
+
             // 检查事务3读
             expList.clear();
             expList.addAll(insertR1s);
@@ -160,90 +157,90 @@ public class Transaction17756B extends SdbTestBase {
                 actList = (ArrayList<BSONObject>) tableScanThread1.getExecResult();
                 Assert.assertEquals(actList, expList);
                 actList.clear();
-    
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
-    
+
             // 检查事务4逆序读
             Collections.reverse(expList);
             try {
                 actList = (ArrayList<BSONObject>) tableScanThread2.getExecResult();
                 Assert.assertEquals(actList, expList);
                 actList.clear();
-                
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Assert.fail(e.getMessage());
             }
-            
+
             // 非事务读
             Collections.reverse(expList);
             cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 非事务逆序读
             Collections.reverse(expList);
             cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务2读
             Collections.reverse(expList);
             cursor = cl2.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 事务2逆序读
             Collections.reverse(expList);
             cursor = cl2.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 提交事务2
             db2.commit();
-    
+
             // 非事务读
             Collections.reverse(expList);
             cursor = cl.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 非事务逆序读
             Collections.reverse(expList);
             cursor = cl.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3读
             Collections.reverse(expList);
             cursor = cl3.query(null, null, "{a:1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 事务3逆序读
             Collections.reverse(expList);
             cursor = cl3.query(null, null, "{a: -1}", hint);
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 提交事务3
             db3.commit();
             db4.commit();
-    
+
             // 删除记录
             cl.delete((BSONObject) null);
-    
+
             // 非事务读
             expList.clear();
             cursor = cl.query(null, null, null, hint);
@@ -255,7 +252,7 @@ public class Transaction17756B extends SdbTestBase {
             db2.commit();
             db3.commit();
             db4.commit();
-            if(cl.isIndexExist("a")){
+            if (cl.isIndexExist("a")) {
                 cl.dropIndex("a");
             }
             cl.truncate();
@@ -265,7 +262,8 @@ public class Transaction17756B extends SdbTestBase {
     private class UpdateThread extends SdbThreadBase {
         @Override
         public void exec() throws BaseException {
-            cl2.update("{a: {$gte: " + (startId + updateValue1) + ", $lt: " + (stopId + updateValue1) + "}}", "{$inc:{a:" + updateValue2 + "}}", hint);
+            cl2.update("{a: {$gte: " + (startId + updateValue1) + ", $lt: " + (stopId + updateValue1) + "}}",
+                    "{$inc:{a:" + updateValue2 + "}}", hint);
         }
     }
 

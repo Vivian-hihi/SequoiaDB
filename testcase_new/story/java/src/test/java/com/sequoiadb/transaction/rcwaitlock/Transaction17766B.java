@@ -51,7 +51,7 @@ public class Transaction17766B extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data = new BasicBSONObject();
         data.put("_id", "insertID17766_1");
         data.put("a", 2);
@@ -94,19 +94,19 @@ public class Transaction17766B extends SdbTestBase {
     }
 
     @Test
-    public void test(){
+    public void test() {
         sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
-        
+
         sdb1.beginTransaction();
         sdb2.beginTransaction();
         sdb3.beginTransaction();
-        
-        //2 trans1 update record R1 to R3
+
+        // 2 trans1 update record R1 to R3
         cl1.update(new BasicBSONObject("a", 2), modifier3, null);
 
         // 3 trans2 update R1/R2/R3 to R4/R5/R6
@@ -119,7 +119,7 @@ public class Transaction17766B extends SdbTestBase {
         queryThread.start();
         Assert.assertTrue(queryThread.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        //5 no trans read
+        // 5 no trans read
         expDataList.clear();
         expDataList.add(data3);
         expDataList.add(data4);
@@ -162,7 +162,7 @@ public class Transaction17766B extends SdbTestBase {
         Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
-        //8 read after trans2 rollback 
+        // 8 read after trans2 rollback
         expDataList.clear();
         expDataList.add(data2);
         expDataList.add(data3);
@@ -197,23 +197,23 @@ public class Transaction17766B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
         sdb1.commit();
         sdb2.commit();
         sdb3.commit();
-        if( sdb1 != null ){
+        if (sdb1 != null) {
             sdb1.close();
         }
-        if( sdb2 != null ){
+        if (sdb2 != null) {
             sdb2.close();
         }
-        if( sdb3 != null ){
+        if (sdb3 != null) {
             sdb3.close();
         }
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
     }
@@ -222,7 +222,7 @@ public class Transaction17766B extends SdbTestBase {
 
         @Override
         public void exec() throws BaseException {
-            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': 'a'}" );
+            cl2.update(null, "{'$inc': {'a': 2, 'b': 2}}", "{'': 'a'}");
         }
     }
 

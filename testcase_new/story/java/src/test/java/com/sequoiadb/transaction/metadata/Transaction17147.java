@@ -25,7 +25,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author yinzhen
  *
  */
-@Test(groups = {"rc", "ru"})
+@Test(groups = { "rc", "ru" })
 public class Transaction17147 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private Sequoiadb db2 = null;
@@ -174,7 +174,7 @@ public class Transaction17147 extends SdbTestBase {
             if (e.getErrorCode() != -190) {
                 Assert.fail(e.getMessage());
             }
-        }finally {
+        } finally {
             db2.commit();
         }
 

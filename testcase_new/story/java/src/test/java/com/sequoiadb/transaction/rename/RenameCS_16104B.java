@@ -109,12 +109,12 @@ public class RenameCS_16104B extends SdbTestBase {
     private class TransactionThread extends SdbThreadBase {
         @Override
         public void exec() throws Exception {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 db.beginTransaction();
                 RenameUtil.insertData(cl, recordNum);
                 db.commit();
-            } 
+            }
         }
     }
 

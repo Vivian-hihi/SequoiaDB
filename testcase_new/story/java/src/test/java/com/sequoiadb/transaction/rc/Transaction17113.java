@@ -42,13 +42,10 @@ public class Transaction17113 extends SdbTestBase {
     private DBCollection cl3 = null;
 
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        return new Object[][]{
-            {"{'a': 1}"},
-            {"{'a': -1, 'b': 1}"},
-        };
+    public Object[][] createIndex() {
+        return new Object[][] { { "{'a': 1}" }, { "{'a': -1, 'b': 1}" }, };
     }
-    
+
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -79,12 +76,12 @@ public class Transaction17113 extends SdbTestBase {
     public void test(String indexKey) {
         try {
             cl.createIndex("a", indexKey, false, false);
-            
+
             BSONObject R1 = (BSONObject) JSON.parse("{_id:1, a:1, b:1}");
             cl.insert(R1);
             expList.clear();
             expList.add(R1);
-        
+
             // 开启并发事务
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -95,87 +92,87 @@ public class Transaction17113 extends SdbTestBase {
             cl1 = db1.getCollectionSpace(csName).getCollection(clName);
             cl2 = db2.getCollectionSpace(csName).getCollection(clName);
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
-    
+
             // 事务1表扫描
             DBCursor recordsCursor = cl1.query(null, null, null, "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 事务1索引扫描
             recordsCursor = cl1.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-            
+
             // 事务1逆序表扫描
             Collections.reverse(expList);
             recordsCursor = cl1.query(null, null, "{a: -1}", "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 事务1逆序索引扫描
             recordsCursor = cl1.query(null, null, "{a: -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 事务2 select for update读记录走表扫描
             Collections.reverse(expList);
             recordsCursor = cl2.query(null, null, null, "{'':null}", DBQuery.FLG_QUERY_FOR_UPDATE);
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 事务2 select for update读记录走索引扫描
             recordsCursor = cl2.query(null, null, null, "{'':'a'}", DBQuery.FLG_QUERY_FOR_UPDATE);
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-            
-            //事务2 select for update逆序读记录走表扫描
+
+            // 事务2 select for update逆序读记录走表扫描
             Collections.reverse(expList);
             recordsCursor = cl2.query(null, null, "{a: -1}", "{'':null}", DBQuery.FLG_QUERY_FOR_UPDATE);
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 事务2 select for update逆序读记录走索引扫描
             recordsCursor = cl2.query(null, null, "{a: -1}", "{'':'a'}", DBQuery.FLG_QUERY_FOR_UPDATE);
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 事务3更新记录阻塞
             CL3Update cl3Update = new CL3Update();
             cl3Update.start();
             Assert.assertTrue(cl3Update.matchBlockingMethod(cl3.getClass().getName(), "update"));
-    
+
             // 提交事务1
             db1.commit();
             Assert.assertTrue(cl3Update.matchBlockingMethod(cl3.getClass().getName(), "update"));
-    
+
             // 非事务表扫描
             Collections.reverse(expList);
             recordsCursor = cl.query(null, null, null, "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 非事务索引扫描
             recordsCursor = cl.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-            
+
             // 非事务逆序表扫描
             Collections.reverse(expList);
             recordsCursor = cl.query(null, null, "{a: -1}", "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 非事务逆序索引扫描
             recordsCursor = cl.query(null, null, "{a: -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 提交事务2
             db2.commit();
             if (!cl3Update.isSuccess()) {
                 Assert.fail(cl3Update.getErrorMsg());
             }
-    
+
             // 非事务表扫描
             BSONObject record = (BSONObject) JSON.parse("{_id:1, a:4, b:1}");
             expList.clear();
@@ -183,66 +180,66 @@ public class Transaction17113 extends SdbTestBase {
             recordsCursor = cl.query(null, null, null, "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 非事务索引扫描
             recordsCursor = cl.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-            
+
             // 非事务逆序表扫描
             Collections.reverse(expList);
             recordsCursor = cl.query(null, null, "{a: -1}", "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 非事务逆序索引扫描
             recordsCursor = cl.query(null, null, "{a: -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 事务3表扫描
             Collections.reverse(expList);
             recordsCursor = cl3.query(null, null, null, "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 事务3索引扫描
             recordsCursor = cl3.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-            
+
             // 事务3逆序表扫描
             Collections.reverse(expList);
             recordsCursor = cl3.query(null, null, "{a: -1}", "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 事务3逆序索引扫描
             recordsCursor = cl3.query(null, null, "{a: -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 提交事务3
             db3.commit();
-    
+
             // 非事务表扫描
             Collections.reverse(expList);
             recordsCursor = cl.query(null, null, null, "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 非事务索引扫描
             recordsCursor = cl.query(null, null, null, "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
             recordsCursor.close();
-            
+
             // 非事务逆序表扫描
             Collections.reverse(expList);
             recordsCursor = cl.query(null, null, "{a: -1}", "{'':null}");
             actList = TransUtils.getReadActList(recordsCursor);
             Assert.assertEquals(actList, expList);
-    
+
             // 非事务逆序索引扫描
             recordsCursor = cl.query(null, null, "{a: -1}", "{'':'a'}");
             actList = TransUtils.getReadActList(recordsCursor);
@@ -252,7 +249,7 @@ public class Transaction17113 extends SdbTestBase {
             db1.commit();
             db2.commit();
             db3.commit();
-            if(cl.isIndexExist("a")){
+            if (cl.isIndexExist("a")) {
                 cl.dropIndex("a");
             }
             cl.truncate();

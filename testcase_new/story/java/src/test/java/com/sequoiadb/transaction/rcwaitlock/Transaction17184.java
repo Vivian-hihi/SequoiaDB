@@ -63,7 +63,7 @@ public class Transaction17184 extends SdbTestBase {
         if (!db3.isClosed()) {
             db3.close();
         }
-        
+
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);

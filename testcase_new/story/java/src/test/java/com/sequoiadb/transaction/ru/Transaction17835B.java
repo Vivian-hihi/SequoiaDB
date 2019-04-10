@@ -20,7 +20,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @Description seqDB-17835.java
- * 更新并发，更新的记录同时匹配已提交记录及其他事务更新的记录，更新操作走表扫描，事务提交，过程中读
+ *              更新并发，更新的记录同时匹配已提交记录及其他事务更新的记录，更新操作走表扫描，事务提交，过程中读
  * @author luweikang
  * @date 2019年1月15日
  */
@@ -52,7 +52,7 @@ public class Transaction17835B extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         cl.createIndex("b", "{b: -1}", false, false);
-        
+
         expDataList = new ArrayList<BSONObject>();
         data = new BasicBSONObject();
         data.put("_id", "insertID17835_1");
@@ -94,22 +94,22 @@ public class Transaction17835B extends SdbTestBase {
     }
 
     @Test
-    public void test(){
+    public void test() {
         cl.insert(data2);
         cl.insert(data);
-        
+
         sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         sdb3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
         cl3 = sdb3.getCollectionSpace(csName).getCollection(clName);
-        
+
         sdb1.beginTransaction();
         sdb2.beginTransaction();
         sdb3.beginTransaction();
-        
-        //2 trans1 update record
+
+        // 2 trans1 update record
         cl1.update(new BasicBSONObject("a", 1), modifier3, null);
 
         // 3 trans2 update
@@ -155,7 +155,7 @@ public class Transaction17835B extends SdbTestBase {
         // 7 read after trans1 commit
         sdb1.commit();
         Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
-        
+
         expDataList.clear();
         expDataList.add(data4);
         expDataList.add(data5);
@@ -220,20 +220,20 @@ public class Transaction17835B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb1 != null ){
+        if (sdb1 != null) {
             sdb1.close();
         }
-        if( sdb2 != null ){
+        if (sdb2 != null) {
             sdb2.close();
         }
-        if( sdb3 != null ){
+        if (sdb3 != null) {
             sdb3.close();
         }
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
     }

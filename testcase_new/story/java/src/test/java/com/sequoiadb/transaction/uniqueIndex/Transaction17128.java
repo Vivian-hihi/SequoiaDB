@@ -22,7 +22,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = {"rc", "ru"})
+@Test(groups = { "rc", "ru" })
 public class Transaction17128 extends SdbTestBase {
 
     private String clName = "transCL_17128";
@@ -42,7 +42,7 @@ public class Transaction17128 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", true, false);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data = new BasicBSONObject();
         data.put("a", 1);
         data.put("b", 1);
@@ -72,13 +72,13 @@ public class Transaction17128 extends SdbTestBase {
     }
 
     @Test
-    public void test(){
-        try{
-            //trans1 insert record R2
+    public void test() {
+        try {
+            // trans1 insert record R2
             sdb.beginTransaction();
             cl.insert(data2);
-            
-            //trans1 update record R1 to R3 same as the R3
+
+            // trans1 update record R1 to R3 same as the R3
             cl.update(matcher, modifier, null);
             Assert.fail("update record as an existing record with an index,should be failed");
         } catch (BaseException e) {
@@ -104,10 +104,10 @@ public class Transaction17128 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(recordCur != null){
+        if (recordCur != null) {
             recordCur.close();
         }
-        if( sdb != null ){
+        if (sdb != null) {
             sdb.close();
         }
     }

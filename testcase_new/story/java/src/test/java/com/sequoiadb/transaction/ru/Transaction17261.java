@@ -40,9 +40,9 @@ public class Transaction17261 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         expDataList = new ArrayList<BSONObject>();
-        
-        cl.insert(prepareData( recordNum ));
-        
+
+        cl.insert(prepareData(recordNum));
+
     }
 
     @Test

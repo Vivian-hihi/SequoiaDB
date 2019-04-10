@@ -42,7 +42,7 @@ public class Transaction17140 extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         expDataList = new ArrayList<BSONObject>();
-        
+
         data = new BasicBSONObject();
         data.put("_id", "insertID17140");
         data.put("a", 1);
@@ -65,13 +65,12 @@ public class Transaction17140 extends SdbTestBase {
     public void test() {
         sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
-        
+
         sdb.beginTransaction();
         sdb2.beginTransaction();
 
         // 2 query.update
-        DBCursor tbCur = cl.queryAndUpdate(new BasicBSONObject("a", 1), null, null, null, modifier, 0, -1, 0,
-                true);
+        DBCursor tbCur = cl.queryAndUpdate(new BasicBSONObject("a", 1), null, null, null, modifier, 0, -1, 0, true);
         try {
             BSONObject actData = tbCur.getNext();
             Assert.assertEquals(actData, data2);

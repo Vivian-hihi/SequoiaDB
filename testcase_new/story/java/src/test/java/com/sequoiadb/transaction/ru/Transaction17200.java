@@ -42,20 +42,19 @@ public class Transaction17200 extends SdbTestBase {
 
     @Test
     public void test() {
-        StringBuilder b = new StringBuilder( 60 * 1000 * 20 );
+        StringBuilder b = new StringBuilder(60 * 1000 * 20);
         for (int i = 0; i < 60 * 1000; i++) {
             b.append("bbbbbbbbbbbbbbbbbbbb");
         }
-        
-        StringBuilder a1 = new StringBuilder( 4000 );
+
+        StringBuilder a1 = new StringBuilder(4000);
         for (int i = 0; i < 200; i++) {
             a1.append("aaaaaaaaaaaaaaaaaaaa");
         }
-        
-        for(int i=0; i<10; i++)
-        {
-            BSONObject insertR1 = (BSONObject) JSON.parse("{_id:"+ i +", a:'"+ a1+i +"', b:'" + b + "'}");
-            cl.insert( insertR1 ) ;
+
+        for (int i = 0; i < 10; i++) {
+            BSONObject insertR1 = (BSONObject) JSON.parse("{_id:" + i + ", a:'" + a1 + i + "', b:'" + b + "'}");
+            cl.insert(insertR1);
         }
 
         // 开启两个并发事务
@@ -63,17 +62,18 @@ public class Transaction17200 extends SdbTestBase {
         db2.beginTransaction();
 
         // 事务1执行多个原子操作
-        for(int i=0; i<10; i++){
-            BSONObject insertR2 = (BSONObject) JSON.parse("{_id:"+ (10+i) +", a:'"+ a1+(10+i) +"', b:'" + b + "'}");
+        for (int i = 0; i < 10; i++) {
+            BSONObject insertR2 = (BSONObject) JSON
+                    .parse("{_id:" + (10 + i) + ", a:'" + a1 + (10 + i) + "', b:'" + b + "'}");
             // 事务1对同一条记录执行多个操作
             cl1.insert(insertR2);
-            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a1+'a'+(10+i) +"'}}", "{'':'a'}");
-            cl1.delete("{a:'"+ a1+'a'+(10+i) +"'}", "{'':'a'}");
+            cl1.update("{a:'" + a1 + (10 + i) + "'}", "{$set:{a:'" + a1 + 'a' + (10 + i) + "'}}", "{'':'a'}");
+            cl1.delete("{a:'" + a1 + 'a' + (10 + i) + "'}", "{'':'a'}");
             // 事务1对不同记录执行多个操作
-            cl1.delete("{a:'"+ a1+i +"'}", "{'':'a'}");
+            cl1.delete("{a:'" + a1 + i + "'}", "{'':'a'}");
             cl1.insert(insertR2);
-            cl1.update("{a:'"+ a1+(10+i) +"'}", "{$set:{a:'"+ a1+'a'+(10+i) +"'}}", "{'':'a'}");
-            cl1.update("{a:'"+ a1+'a'+(10+i) +"'}", "{$set:{a:'"+ a1+(10+i) +"'}}", "{'':'a'}");
+            cl1.update("{a:'" + a1 + (10 + i) + "'}", "{$set:{a:'" + a1 + 'a' + (10 + i) + "'}}", "{'':'a'}");
+            cl1.update("{a:'" + a1 + 'a' + (10 + i) + "'}", "{$set:{a:'" + a1 + (10 + i) + "'}}", "{'':'a'}");
         }
 
         // 事务2表扫描记录

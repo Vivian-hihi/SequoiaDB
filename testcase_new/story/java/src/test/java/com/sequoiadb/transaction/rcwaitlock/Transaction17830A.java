@@ -21,7 +21,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @FileName:seqDB-17830：更新与删除并发， 删除的记录同时匹配已提交记录及其他事务更新的记录，更新/删除走表扫描，事务提交，过程中读
- * 表扫描,先插入R1，再插入R2
+ *                                表扫描,先插入R1，再插入R2
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00

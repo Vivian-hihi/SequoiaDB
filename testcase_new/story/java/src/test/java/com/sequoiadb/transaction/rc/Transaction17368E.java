@@ -23,7 +23,7 @@ import com.sequoiadb.transaction.TransUtils;
 
 /**
  * @FileName:seqDB-17368：删除与更新并发，删除的记录同时匹配已提交记录及其他事务更新的记录，事务提交，过程中读 更新/删除走索引扫描,
- * R2<R3<R1
+ *                                                                  R2<R3<R1
  * @Author zhaoyu
  * @Date 2019-01-29
  * @Version 1.00
@@ -55,46 +55,29 @@ public class Transaction17368E extends SdbTestBase {
         insertR2 = (BSONObject) JSON.parse("{_id:'insertID17368E_2',a:1,b:1,c:1}");
         updateR2 = (BSONObject) JSON.parse("{_id:'insertID17368E_2',a:2,b:2,c:1}");
     }
-    
+
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        
-        //第一次非事务读查询的预期结果
+    public Object[][] createIndex() {
+
+        // 第一次非事务读查询的预期结果
         List<BSONObject> expReadList1 = new ArrayList<BSONObject>();
         expReadList1.add(insertR2);
-        
-        //第二次非事务读查询的预期结果
+
+        // 第二次非事务读查询的预期结果
         List<BSONObject> expReadList2 = new ArrayList<BSONObject>();
         expReadList2.add(updateR2);
-        
-        return new Object[][]{
-            {"{'a': 1}",
-             expReadList2,
-             expReadList2},
-            {"{'a': 1, b: 1}",
-             expReadList2,
-             expReadList2},
-            {"{'a': 1, b: -1}",
-             expReadList2,
-             expReadList2},
-            {"{'a': -1}",
-             expReadList1,
-             expReadList2},
-            {"{'a': -1, b: 1}",
-             expReadList1,
-             expReadList2},
-            {"{'a': -1, b: -1}",
-             expReadList1,
-             expReadList2},
-           
+
+        return new Object[][] { { "{'a': 1}", expReadList2, expReadList2 },
+                { "{'a': 1, b: 1}", expReadList2, expReadList2 }, { "{'a': 1, b: -1}", expReadList2, expReadList2 },
+                { "{'a': -1}", expReadList1, expReadList2 }, { "{'a': -1, b: 1}", expReadList1, expReadList2 },
+                { "{'a': -1, b: -1}", expReadList1, expReadList2 },
+
         };
     }
 
     @Test(dataProvider = "index")
-    public void test(String indexKey,
-            List<BSONObject> expReadList1, 
-            List<BSONObject> expReadList2) {
-        try{
+    public void test(String indexKey, List<BSONObject> expReadList1, List<BSONObject> expReadList2) {
+        try {
             // 插入记录R1、R2
             cl.insert(insertR1);
             cl.insert(insertR2);
@@ -367,22 +350,22 @@ public class Transaction17368E extends SdbTestBase {
             actList.clear();
 
             // 提交事务3
-            db3.commit();          
-        }finally{
-            //关闭事务连接
+            db3.commit();
+        } finally {
+            // 关闭事务连接
             db1.close();
             db2.close();
             db3.close();
-            
-            //删除索引
-            if(cl.isIndexExist("a")){
-                cl.dropIndex("a"); 
+
+            // 删除索引
+            if (cl.isIndexExist("a")) {
+                cl.dropIndex("a");
             }
-            
-            //删除记录
+
+            // 删除记录
             cl.truncate();
         }
-        
+
     }
 
     @AfterClass

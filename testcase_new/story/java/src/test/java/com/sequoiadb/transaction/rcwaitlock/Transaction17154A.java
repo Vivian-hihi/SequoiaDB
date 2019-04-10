@@ -66,12 +66,12 @@ public class Transaction17154A extends SdbTestBase {
         read2.start();
         Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        //事务3记录读，匹配条件使用更新前值
+        // 事务3记录读，匹配条件使用更新前值
         Read read3 = new Read("{a:1}", "{'':null}", new ArrayList<BSONObject>());
         read3.start();
         Assert.assertTrue(read3.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        //事务3索引读，匹配条件使用更新前值
+        // 事务3索引读，匹配条件使用更新前值
         Read read4 = new Read("{a:1}", "{'':'a'}", new ArrayList<BSONObject>());
         read4.start();
         Assert.assertTrue(read4.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
@@ -117,7 +117,7 @@ public class Transaction17154A extends SdbTestBase {
             this.hint = hint;
             this.findConf = findConf;
             this.expScanList = expScanList;
-            
+
         }
 
         @Override
@@ -127,7 +127,6 @@ public class Transaction17154A extends SdbTestBase {
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cl = db.getCollectionSpace(csName).getCollection(clName);
             cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-            
 
             // 开启并发事务2
             db2.beginTransaction();

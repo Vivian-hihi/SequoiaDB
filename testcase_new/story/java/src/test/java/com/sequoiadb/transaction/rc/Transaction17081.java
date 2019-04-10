@@ -51,38 +51,38 @@ public class Transaction17081 extends SdbTestBase {
     @Test
     public void test() {
         insertR1s = TransUtils.insertRandomDatas(cl, 0, 10000);
-        
+
         db1.beginTransaction();
         db2.beginTransaction();
 
-        //事务1执行多个原子操作
+        // 事务1执行多个原子操作
         Operation operation = new Operation();
         operation.start();
-        
-        //事务2并发表扫描
+
+        // 事务2并发表扫描
         dbT = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         dbT.beginTransaction();
         Read read1 = new Read(dbT, "{'':null}");
         read1.start();
-        
-        //事务2并发索引扫描
+
+        // 事务2并发索引扫描
         dbI = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         dbI.beginTransaction();
         Read read2 = new Read(dbI, "{'':'a'}");
         read2.start();
-        
-        if (!read1.isSuccess() || !read2.isSuccess() || !operation.isSuccess()){
+
+        if (!read1.isSuccess() || !read2.isSuccess() || !operation.isSuccess()) {
             Assert.fail(read1.getErrorMsg() + read2.getErrorMsg() + operation.getErrorMsg());
         }
 
-        //非事务表扫描
+        // 非事务表扫描
         cursor = cl.query(null, null, "{a:1}", "{'':null}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
-        
-        //非事务索引扫描
+
+        // 非事务索引扫描
         cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
         Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
-        
+
         db1.rollback();
 
         // 事务2表扫描记录
@@ -111,41 +111,40 @@ public class Transaction17081 extends SdbTestBase {
         db2.rollback();
     }
 
-    private class Operation extends SdbThreadBase{
+    private class Operation extends SdbThreadBase {
         @Override
         public void exec() throws Exception {
             BSONObject insertR = (BSONObject) JSON.parse("{_id:20000,a:20000,b:20000}");
-            for(int i=0; i<10000; i++)
-            {
+            for (int i = 0; i < 10000; i++) {
                 cl1.insert(insertR);
                 cl1.update("{a:20000}", "{$set:{a:20001}}", "{'':'a'}");
                 cl1.delete("{a:20001}", "{'':'a'}");
-                
-                cl1.delete("{a:"+ i +"}", "{'':'a'}");
-                cl1.insert((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ i +",b:"+ i +"}"));
-                cl1.update("{a:"+ i +"}","{$set:{a:"+ (i+10000) +"}}","{'':'a'}");
-                expList.add((BSONObject) JSON.parse("{_id:"+ (10000+i) +", a:"+ (i+10000) +",b:"+ i +"}"));
+
+                cl1.delete("{a:" + i + "}", "{'':'a'}");
+                cl1.insert((BSONObject) JSON.parse("{_id:" + (10000 + i) + ", a:" + i + ",b:" + i + "}"));
+                cl1.update("{a:" + i + "}", "{$set:{a:" + (i + 10000) + "}}", "{'':'a'}");
+                expList.add((BSONObject) JSON.parse("{_id:" + (10000 + i) + ", a:" + (i + 10000) + ",b:" + i + "}"));
             }
         }
     }
-    
-    private class Read extends SdbThreadBase{
+
+    private class Read extends SdbThreadBase {
         private Sequoiadb db2 = null;
         private DBCollection cl2 = null;
         private String hint = null;
         private DBCursor cursor = null;
         private List<BSONObject> actList = new ArrayList<BSONObject>();
-        
+
         public Read(Sequoiadb db2, String hint) {
             this.db2 = db2;
             this.hint = hint;
         }
-        
+
         @Override
         public void exec() throws Exception {
             cl2 = db2.getCollectionSpace(csName).getCollection(clName);
             // 事务2扫描记录
-            for(int i=0; i<25; i++){
+            for (int i = 0; i < 25; i++) {
                 cursor = cl2.query(null, null, "{a:1}", hint);
                 actList = TransUtils.getReadActList(cursor);
                 Assert.assertEquals(actList, insertR1s);
@@ -153,7 +152,7 @@ public class Transaction17081 extends SdbTestBase {
             cursor.close();
         }
     }
-    
+
     @AfterClass
     public void tearDown() {
         if (!db1.isClosed()) {

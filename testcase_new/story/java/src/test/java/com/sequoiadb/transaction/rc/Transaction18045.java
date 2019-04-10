@@ -79,7 +79,8 @@ public class Transaction18045 extends SdbTestBase {
 
     @DataProvider(name = "index")
     private Object[][] createIndex() {
-        return new Object[][] { { "{'a':1, 'b':1}" }, {"{'a':1, 'b':-1}"},  { "{'a':-1, 'b':1}" }, { "{'a':-1, 'b':-1}" } };
+        return new Object[][] { { "{'a':1, 'b':1}" }, { "{'a':1, 'b':-1}" }, { "{'a':-1, 'b':1}" },
+                { "{'a':-1, 'b':-1}" } };
     }
 
     @Test(dataProvider = "index")
@@ -166,7 +167,7 @@ public class Transaction18045 extends SdbTestBase {
             System.out.println("--复合索引 " + indexKey + " 结束事务--");
         }
     }
-    
+
     private void tearDownCommit() {
         db1.commit();
         db2.commit();

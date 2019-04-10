@@ -45,13 +45,10 @@ public class Transaction17211 extends SdbTestBase {
     private int updateValue = 20000;
 
     @DataProvider(name = "index")
-    public Object[][] createIndex(){
-        return new Object[][]{
-            {"{'a': 1}"},
-            {"{'a': -1, 'b': 1}"}
-        };
+    public Object[][] createIndex() {
+        return new Object[][] { { "{'a': 1}" }, { "{'a': -1, 'b': 1}" } };
     }
-    
+
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -87,13 +84,13 @@ public class Transaction17211 extends SdbTestBase {
 
     @Test(dataProvider = "index")
     public void test(String indexKey) {
-        try{
+        try {
             cl.createIndex("a", indexKey, false, false);
-            
+
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-    
+
             // 开启3个并发事务
             db1.beginTransaction();
             db2.beginTransaction();
@@ -101,15 +98,15 @@ public class Transaction17211 extends SdbTestBase {
             cl1 = db1.getCollectionSpace(csName).getCollection(clName);
             cl2 = db2.getCollectionSpace(csName).getCollection(clName);
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
-    
+
             // 事务1插入记录R1
             ArrayList<BSONObject> insertR1s = TransUtils.insertRandomDatas(cl1, startId, stopId);
-    
+
             // 事务2匹配记录R1更新为R2
             UpdateThread updateThread = new UpdateThread();
             updateThread.start();
             Assert.assertTrue(updateThread.matchBlockingMethod(cl2.getClass().getName(), "update"));
-    
+
             // 事务1记录读
             expList.addAll(insertR1s);
             hint = "{\"\":null}";
@@ -117,7 +114,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务1记录逆序读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -125,7 +122,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务1索引读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -133,7 +130,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 事务1索引逆序读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -141,7 +138,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3记录读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -149,7 +146,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 事务3记录逆序读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -157,7 +154,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3索引读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -165,7 +162,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3索引逆序读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -173,7 +170,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务记录读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -181,7 +178,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 非事务记录逆序读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -189,7 +186,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务索引读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -197,7 +194,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务索引逆序读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -205,11 +202,11 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 提交事务1
             db1.commit();
             Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
-    
+
             // 非事务记录读
             expList.clear();
             ArrayList<BSONObject> updateR1s = TransUtils.getIncDatas(startId, stopId, updateValue);
@@ -219,7 +216,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 非事务记录逆序读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -227,7 +224,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务索引读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -235,7 +232,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务索引逆序读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -243,7 +240,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务2记录读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -251,7 +248,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务2记录逆序读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -259,7 +256,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务2索引读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -267,7 +264,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务2索引逆序读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -275,7 +272,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3记录读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -283,7 +280,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3记录逆序读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -291,7 +288,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 事务3索引读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -299,7 +296,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3索引逆序读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -307,10 +304,10 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 提交事务2
             db2.commit();
-    
+
             // 非事务记录读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -318,7 +315,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务记录读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -326,7 +323,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 非事务索引读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -334,7 +331,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务索引逆序读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -342,7 +339,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3记录读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -350,7 +347,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3记录逆序读
             Collections.reverse(expList);
             hint = "{\"\":null}";
@@ -358,7 +355,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-    
+
             // 事务3索引读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -366,7 +363,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 事务3索引逆序读
             Collections.reverse(expList);
             hint = "{\"\":\"a\"}";
@@ -374,13 +371,13 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 提交事务3
             db3.commit();
-    
+
             // 删除记录
             cl1.delete((BSONObject) null);
-    
+
             // 非事务记录读
             expList.clear();
             hint = "{\"\":null}";
@@ -388,7 +385,7 @@ public class Transaction17211 extends SdbTestBase {
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, expList);
             actList.clear();
-            
+
             // 非事务索引读
             hint = "{\"\":\"a\"}";
             cursor = cl.query(null, null, null, hint);
@@ -399,7 +396,7 @@ public class Transaction17211 extends SdbTestBase {
             db1.commit();
             db2.commit();
             db3.commit();
-            if(cl.isIndexExist("a")){
+            if (cl.isIndexExist("a")) {
                 cl.dropIndex("a");
             }
             cl.truncate();
