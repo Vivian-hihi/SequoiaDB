@@ -950,8 +950,8 @@ namespace engine
    // 3. we use a _reservedRBSpace to count all unwritten LR space
    INT32 dpsTransCB::reservedLogSpace( UINT32 length, _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK;
-      UINT64 usedSize = 0;
+      INT32 rc = SDB_OK ;
+
       if ( !_isOn || ( cb && cb->isInRollback() ) )
       {
          goto done ;
@@ -961,7 +961,6 @@ namespace engine
          _reservedSpace.add( length ) ;
          _reservedRBSpace.add( length ) ;
       }
-      usedSize = usedLogSpace();
 
       if ( remainLogSpace() == 0 )
       {
@@ -976,7 +975,7 @@ namespace engine
                  "transactions. (length=%u, usedSize=%u, maxLRSize=%u, " 
                  "beginlsn=%u, curlsn=%u, logFileSize=%u, logFileNum=%u, "
                  "remainLogSpace=%u) " ,
-                 length, usedSize, getMaxLRSize(), beginLsnOffset,
+                 length, usedLogSpace(), getMaxLRSize(), beginLsnOffset,
                  curLsnOffset, logFileSize, logFileNum, remainLogSpace() ) ;
          printCounters( ) ;
 #endif
@@ -1028,8 +1027,8 @@ namespace engine
       {
          goto done;
       }
-      curLsn = dpsCB->expectLsn();
-      curLsnOffset = curLsn.offset;
+      curLsn = dpsCB->expectLsn() ;
+      curLsnOffset = curLsn.offset ;
       if ( DPS_INVALID_LSN_OFFSET == curLsnOffset )
       {
          goto done;
@@ -1052,9 +1051,17 @@ namespace engine
       UINT64 usedSize = 0 ;
       UINT64 logFileSize = 0 ;
       UINT32 logFileNum = 0 ;
+      UINT32 adjust = 0 ;
 
       if ( !_isOn )
       {
+         goto done ;
+      }
+
+      usedSize = usedLogSpace() ;
+      if ( 0 == usedSize )
+      {
+         // no transaction
          goto done ;
       }
 
@@ -1070,23 +1077,18 @@ namespace engine
       // of a log file, but we can't reuse the whole file
       // For the unused file, we should expect waste space for each of them, 
       // the waste space is predicated base on current max LR size.
-      // Free log space logic:    
+      // Free log space logic: 
       // _logFileTotalSize - ( usedSize + logfilesize + length +
       //                      _reservedSpace + _reservedRBSpace +
       //                      (#totalfile - usedfile -1 )*max_record_size )
-      {
-         UINT32 adjust = 0 ;
-         usedSize = usedLogSpace() ;
-         logFileSize = pmdGetOptionCB()->getReplLogFileSz() ;
-         logFileNum = pmdGetOptionCB()->getReplLogFileNum() ;
-         // need a round down to guarantee enough waste space 
-         adjust = ( usedSize > logFileSize ) ?
-                  ( usedSize - logFileSize ) / logFileSize : 0 ;
-                  
-         totalSpace =  usedSize + logFileSize + _reservedRBSpace.peek() +
-                       _reservedSpace.peek() +
-                       (logFileNum - adjust -1 ) * getMaxLRSize() ;
-      }
+      logFileSize = pmdGetOptionCB()->getReplLogFileSz() ;
+      logFileNum = pmdGetOptionCB()->getReplLogFileNum() ;
+      // need a round down to guarantee enough waste space
+      adjust = ( usedSize > logFileSize ) ?
+               ( usedSize - logFileSize ) / logFileSize : 0 ;
+      totalSpace =  usedSize + logFileSize + _reservedRBSpace.peek() +
+                    _reservedSpace.peek() +
+                    ( logFileNum - adjust - 1 ) * getMaxLRSize() ;
 
       if ( totalSpace < _logFileTotalSize )
       {
@@ -1096,6 +1098,7 @@ namespace engine
       {
          remainSize = 0 ;
       }
+
    done:
       return remainSize ;
    }
@@ -1112,6 +1115,11 @@ namespace engine
    {
       if ( _maxLRSize1 < recordSize )
       {
+         if ( _maxLRSize1 > _maxLRSize2 )
+         {
+            _maxLRSize2 = _maxLRSize1 ;
+            _maxLRLSN2 = _maxLRLSN1 ;
+         }
          _maxLRSize1 = recordSize ;
          _maxLRLSN1 = recordLSN ;
       }
@@ -1122,7 +1130,7 @@ namespace engine
             _maxLRSize2 = recordSize ;
             _maxLRLSN2 = recordLSN ;
          }
-         
+ 
          // when the recordLSN wrapped whole log files, we guarantee safe to
          // update the _maxLRSize1, reduce it to _maxLRSize2, and set its lsn
          // to the recordLSN
@@ -1143,7 +1151,6 @@ namespace engine
       }
    }
 
-
    void  dpsTransCB::printCounters() 
    {
 #ifdef _DEBUG
@@ -1162,7 +1169,6 @@ namespace engine
    {
       return ( _transLockMgr->isInitialized() ? (  _transLockMgr ) : NULL ) ; 
    }
-
 
    /*
       get global trans cb
