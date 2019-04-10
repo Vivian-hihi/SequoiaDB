@@ -136,13 +136,13 @@ public class Transaction17114 extends SdbTestBase {
             deleteThread.start();
 
             // 事务4读记录走索引扫描
-            QueryThread positiveThread = new QueryThread(cl4, "{_id:1}", "{'':'textIndex17114'}", expList);
+            QueryThread positiveThread = new QueryThread(cl4, "{a:1}", "{'':'textIndex17114'}", expList);
             positiveThread.start();
 
             List<BSONObject> expRecords = new ArrayList<>(expList);
             Collections.reverse(expRecords);
-            
-            QueryThread reverseThread = new QueryThread(cl5, "{_id:-1}", "{'':'textIndex17114'}", expRecords);
+
+            QueryThread reverseThread = new QueryThread(cl5, "{a:-1}", "{'':'textIndex17114'}", expRecords);
             reverseThread.start();
 
             // 事务5读记录走表扫描
@@ -196,7 +196,7 @@ public class Transaction17114 extends SdbTestBase {
             System.out.println("结束事务，索引 " + indexKey + " --");
         }
     }
-    
+
     private void insertData() {
         List<BSONObject> records = new ArrayList<>();
         for (int i = 1; i <= 40000; i++) {
