@@ -2,6 +2,8 @@ package com.sequoiadb.transaction;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -240,5 +242,68 @@ public class TransUtils {
             incDatas.add((BSONObject) JSON.parse("{_id:" + i + ",a:" + (incValue + i) + ",b:" + i + "}"));
         }
         return incDatas;
+    }
+    
+    /**
+              *     构造复合索引所需要的数据
+              *     如： a:0, b:0
+     *      a:1, b:0
+     *      a:1, b:1
+     *      a:1, b:2
+     *      ...
+     *      a:2, b:2
+     *      a:3, b:0
+     *      a:3, b:1
+     *      ...
+     *  a 为偶数时，a 和 b 一致
+     *  a 为奇数时，有多条记录 a 相等，b 不相等
+     *  aStart a 的起始值，aEnd a 的结束值，bStart a 为奇数时 b 的起始值，bEnd a 为奇数时 b 的结束值
+              *      返回 list 长度 为 11*(aEnd - aStart)/2
+     * @return
+     */
+    public static List<BSONObject> getCompositeRecords(int aStart, int aEnd, int bStart, int bEnd) {
+        int a = 0;
+        int b = 0;
+        int id = 0;
+        List<BSONObject> records = new ArrayList<BSONObject>();
+        for (int i = aStart; i < aEnd; i++) {
+            if (i % 2 == 0) {
+                a = i;
+                b = i;
+                BSONObject object = (BSONObject) JSON.parse("{_id:" + id++ + ", a:" + a + ", b:" + b + "}");
+                records.add(object);
+            } else {
+                for (int j = bStart; j < bEnd; j++) {
+                    a = i;
+                    b = j;
+                    BSONObject object = (BSONObject) JSON.parse("{_id:" + id++ + ", a:" + a + ", b:" + b + "}");
+                    records.add(object);
+                }
+            }
+        }
+        Collections.shuffle(records);
+        return records;
+    }
+    
+    /**
+              *   排序
+              *   参数 key ：true b 字段正序排序，false 逆序
+     * @param records
+     */
+    public static void sortCompositeRecords(List<BSONObject> records, final boolean key) {
+        
+        Collections.sort(records, new Comparator<BSONObject>() {
+            @Override
+            public int compare(BSONObject obj1, BSONObject obj2) {
+                if ((int) obj1.get("a") == (int) obj2.get("a")) {
+                    return (int) obj1.get("b") - (int) obj2.get("b");
+                } else {
+                    if (key) {
+                        return (int) obj1.get("a") - (int) obj2.get("a");
+                    }
+                    return -((int) obj1.get("a") - (int) obj2.get("a"));
+                }
+            }
+        });
     }
 }

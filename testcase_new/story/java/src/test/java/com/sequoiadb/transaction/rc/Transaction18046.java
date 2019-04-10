@@ -3,7 +3,6 @@ package com.sequoiadb.transaction.rc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -92,7 +91,9 @@ public class Transaction18046 extends SdbTestBase {
             latch = new CountDownLatch(5);
             cl = sdb.getCollectionSpace(csName).createCollection(clName);
             cl.createIndex("textIndex18046", indexKey, false, false);
-            insertData();
+            expList = TransUtils.getCompositeRecords(0, 8000, 0, 10);
+            cl.insert(expList);
+            TransUtils.sortCompositeRecords(expList, true);
 
             // 开启并发事务
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -124,11 +125,11 @@ public class Transaction18046 extends SdbTestBase {
             deleteThread.start();
 
             // 事务4读记录走索引扫描
-            QueryThread queryThread = new QueryThread();
+            QueryThread queryThread = new QueryThread(cl4, "{'':'textIndex18046'}");
             queryThread.start();
 
             // 事务5读记录走表扫描
-            QueryThread2 queryThread2 = new QueryThread2();
+            QueryThread queryThread2 = new QueryThread(cl5, "{'':null}");
             queryThread2.start();
 
             // 先判断表扫描和索引扫描记录
@@ -189,58 +190,19 @@ public class Transaction18046 extends SdbTestBase {
             Assert.assertEquals(tbScanActList, ixScanActList);
 
             latch.await();
-        } catch (InterruptedException e) {
+        } catch (BaseException | InterruptedException e) {
             e.printStackTrace();
+            Assert.fail(e.getMessage());
         } finally {
-            tearDownCommit();
+            db1.commit();
+            db2.commit();
+            db3.commit();
+            db4.commit();
+            db5.commit();
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             cs.dropCollection(clName);
             System.out.println("--复合索引 " + indexKey + " 结束事务--");
         }
-    }
-
-    private void tearDownCommit() {
-        db1.commit();
-        db2.commit();
-        db3.commit();
-        db4.commit();
-        db5.commit();
-    }
-
-    // 构造记录 a 字段相等 b 字段不相等，a b 字段都不相等的记录
-    private void insertData() {
-        int a = 0;
-        List<BSONObject> records = new ArrayList<BSONObject>();
-        for (int i = 0; i <= 40000; i++) {
-            if (i < 20000) {
-                a = i % 1000;
-            } else {
-                a = i;
-            }
-            BSONObject object = (BSONObject) JSON.parse("{_id:" + i + ", a:" + a + ", b:" + (40000 - i) + "}");
-            records.add(object);
-        }
-        expList.clear();
-        Collections.shuffle(records);
-        cl.insert(records);
-        expList.addAll(records);
-
-        Collections.sort(expList, new Comparator<BSONObject>() {
-
-            @Override
-            public int compare(BSONObject obj1, BSONObject obj2) {
-                if ((int) obj1.get("a") > (int) obj2.get("a")) {
-                    return 1;
-                }
-                if ((int) obj1.get("a") < (int) obj2.get("a")) {
-                    return -1;
-                }
-                if ((int) obj1.get("a") == (int) obj2.get("a")) {
-                    return -((int) obj1.get("b") - (int) obj2.get("b"));
-                }
-                return 0;
-            }
-        });
     }
 
     private Integer[] getAllRandArray() {
@@ -259,7 +221,7 @@ public class Transaction18046 extends SdbTestBase {
         public void exec() throws Exception {
             try {
                 List<BSONObject> records = new ArrayList<>();
-                for (int i = 40001; i <= 50000; i++) {
+                for (int i = 44001; i <= 54000; i++) {
                     BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ", a:" + i + ", b:" + i + "}");
                     records.add(record);
                 }
@@ -280,7 +242,7 @@ public class Transaction18046 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             try {
-                cl2.update("{$and:[{b:{$gt:35000}},{b:{$lt:45001}}]}", "{$inc:{a:10, b:10}}", "{'':'textIndex18046'}");
+                cl2.update("{$and:[{b:{$gt:39000}},{b:{$lt:49001}}]}", "{$inc:{a:10, b:10}}", "{'':'textIndex18046'}");
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -13);
             } finally {
@@ -295,7 +257,7 @@ public class Transaction18046 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             try {
-                cl3.delete("{$and:[{b:{$gt:32000}},{b:{$lt:42001}}]}", "{'':'textIndex18046'}");
+                cl3.delete("{$and:[{b:{$gt:36000}},{b:{$lt:46001}}]}", "{'':'textIndex18046'}");
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -13);
             } finally {
@@ -306,7 +268,7 @@ public class Transaction18046 extends SdbTestBase {
 
     private Integer[] getRandomArray() {
         List<Integer> randList = new ArrayList<>();
-        for (int i = 0; i <= 40000; i++) {
+        for (int i = 0; i <= 44000; i++) {
             randList.add(i);
         }
         Collections.shuffle(randList);
@@ -315,28 +277,21 @@ public class Transaction18046 extends SdbTestBase {
     }
 
     class QueryThread extends SdbThreadBase {
+        private DBCollection cl;
+        private String hint;
+
+        private QueryThread(DBCollection cl, String hint) {
+            this.cl = cl;
+            this.hint = hint;
+        }
 
         @Override
         public void exec() throws Exception {
             Integer[] randArray = getRandomArray();
-            DBCursor cursor = cl4.query("{$and:[{a:{$in:" + Arrays.toString(randArray) + "}},{b:{$in:"
-                    + Arrays.toString(randArray) + "}}]}", null, "{a:1, b:-1}", "{'':'textIndex18046'}");
+            DBCursor cursor = cl.query("{$and:[{a:{$in:" + Arrays.toString(randArray) + "}},{b:{$in:"
+                    + Arrays.toString(randArray) + "}}]}", null, "{a:1, b:1}", hint);
             List<BSONObject> records = TransUtils.getReadActList(cursor);
             System.out.println("索引扫描  Records : " + records.size() + ", ExpRecords : " + expList.size());
-            Assert.assertEquals(records, expList);
-            latch.countDown();
-        }
-    }
-
-    class QueryThread2 extends SdbThreadBase {
-
-        @Override
-        public void exec() throws Exception {
-            Integer[] randArray = getRandomArray();
-            DBCursor cursor = cl5.query("{$and:[{a:{$in:" + Arrays.toString(randArray) + "}},{b:{$in:"
-                    + Arrays.toString(randArray) + "}}]}", null, "{a:1, b:-1}", "{'':null}");
-            List<BSONObject> records = TransUtils.getReadActList(cursor);
-            System.out.println("表扫描  Records : " + records.size() + ", ExpRecords : " + expList.size());
             Assert.assertEquals(records, expList);
             latch.countDown();
         }
