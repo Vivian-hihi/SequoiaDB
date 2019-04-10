@@ -636,6 +636,8 @@ namespace engine
          OSS_INLINE UINT32 getSvcSchedulerType() const { return _svcSchedulerType ; }
          OSS_INLINE UINT32 getSvcMaxConcurrency() const { return _svcMaxConcurrency ; }
 
+	 OSS_INLINE BOOLEAN isSleepEnabled() const { return _enableSleep ; }
+
          std::string getOmAddr() const ;
 
 #ifdef SDB_ENTERPRISE
@@ -736,6 +738,7 @@ namespace engine
          UINT32      _svcSchedulerType ;
          UINT32      _svcMaxConcurrency ;
          BOOLEAN     _preferedStrict ;
+         BOOLEAN     _enableSleep ;
 
 #ifdef SDB_ENTERPRISE
 

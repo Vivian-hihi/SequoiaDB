@@ -86,6 +86,9 @@ namespace engine
       _monCfgCB.timestampON = TRUE ;
       _monDBCB.recordActivateTimestamp () ;
 
+      // set sleep state to TRUE during initialization
+      _keepSleep = TRUE ;
+
       // register config handler to option mgr
       _optioncb.setConfigHandler( this ) ;
    }

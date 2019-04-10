@@ -224,6 +224,8 @@ namespace engine
       monDBCB        _monDBCB ;
       schedTaskMgr   _svcTaskMgr ;
 
+      BOOLEAN        _keepSleep ;   // RESERVED FOR NOW, can be used to jump out sleep in the future
+
    public :
       pmdEDUMgr* getEDUMgr ()
       {
@@ -389,6 +391,14 @@ namespace engine
       {
          ossMemset( _hostName, 0, sizeof(_hostName) ) ;
          ossStrncpy ( _hostName, hostName, sizeof(_hostName) - 1 );
+      }
+      BOOLEAN getKeepSleep()
+      {
+         return _keepSleep ;
+      }
+      void setKeepSleep( BOOLEAN option )
+      {
+         _keepSleep = option ;
       }
 
       ossTick  getCurTime() ;

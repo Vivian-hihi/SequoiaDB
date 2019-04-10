@@ -307,6 +307,65 @@ namespace engine
       return ;
    }
 
+   void pmdFreezeHandler( OSS_HANDPARMS )
+   {
+#if defined( SDB_ENGINE )
+      // check whether the current is shielding signal
+      if ( ossGetSignalShieldFlag() )
+      {
+         ossGetPendingSignal() = signum ;
+         goto done ;
+      }
+
+      if ( signum == OSS_FREEZE_SIGNAL_INTERNAL )
+      {
+         PD_LOG ( PDEVENT, "Signal %d is received, "
+                  "prepare to freeze current thread", signum ) ;
+
+         // fall into sleep and keep checking the sleep state change
+         while ( (TRUE == pmdGetOptionCB()->isSleepEnabled()) &&
+                 (TRUE == pmdGetKRCB()->getKeepSleep()))
+	 {
+            ossSleep(500) ;
+	 }
+
+      }
+      else
+      {
+         PD_LOG ( PDWARNING, "Unexpected signal is received: %d",
+                  signum ) ;
+      }
+
+   done :
+#endif // SDB_ENGINE
+      return ;
+   }
+
+   void pmdSleepInstance()
+   {
+#if defined( SDB_ENGINE )
+      PD_LOG ( PDEVENT, "prepare to freeze all threads" ) ;
+
+      // get signal shiled here to prevent the current thread is interrupt
+      // as this may cause dead latch if this interface is called inside a
+      // signal handler since the EDU list latch will be hold here
+      ossSignalShield * pShield = new ossSignalShield() ; 
+      pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
+      pMgr->killByThreadID( OSS_FREEZE_SIGNAL_INTERNAL ) ;
+      // delete the shield and process any pending signal
+      delete pShield ;
+
+      // fall into sleep and keep checking the sleep state change
+      while ( (TRUE == pmdGetOptionCB()->isSleepEnabled()) &&
+              (TRUE == pmdGetKRCB()->getKeepSleep()))
+      {
+         ossSleep(500) ;
+      }
+
+#endif
+      return ;
+   }
+
    INT32 pmdEnableSignalEvent( const CHAR *filepath, PMD_ON_QUIT_FUNC pFunc,
                                INT32 *pDelSig )
    {
@@ -377,6 +436,28 @@ namespace engine
          goto error ;
       }
 
+       // signal freeze aka engine wise sleep
+      newact.sa_sigaction = ( OSS_SIGFUNCPTR ) pmdSleepInstance ;
+      newact.sa_flags |= SA_SIGINFO ;
+      newact.sa_flags |= SA_ONSTACK ;
+      if ( sigaction ( OSS_FREEZE_SIGNAL, &newact, NULL ) )
+      {
+         PD_LOG ( PDERROR, "Failed to setup signal handler for freeze signal" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // signal handler for sleep internal
+      newact.sa_sigaction = ( OSS_SIGFUNCPTR ) pmdFreezeHandler ;
+      newact.sa_flags |= SA_SIGINFO ;
+      newact.sa_flags |= SA_ONSTACK ;
+      if ( sigaction ( OSS_FREEZE_SIGNAL_INTERNAL, &newact, NULL ) )
+      {
+         PD_LOG ( PDERROR, "Failed to setup signal handler for freeze signal internal" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
       /// ignore the SIGPIPE
       signal( SIGPIPE, SIG_IGN ) ;
 
@@ -391,6 +472,8 @@ namespace engine
       sigSet.sigDel ( OSS_STACK_DUMP_SIGNAL_INTERNAL ) ;
       sigSet.sigDel ( OSS_TEST_SIGNAL ) ;
       sigSet.sigDel ( OSS_INTERNAL_TEST_SIGNAL ) ;
+      sigSet.sigDel ( OSS_FREEZE_SIGNAL ) ;
+      sigSet.sigDel ( OSS_FREEZE_SIGNAL_INTERNAL ) ;
 
       if ( pDelSig )
       {

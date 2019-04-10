@@ -1916,6 +1916,8 @@ done:
 
       _preferedStrict = FALSE ;
 
+      _enableSleep = FALSE ;
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -2297,6 +2299,10 @@ done:
       // --svcmaxconcurrency
       rdxUInt( pEX, PMD_OPTION_SVC_MAX_CONCURRENCY, _svcMaxConcurrency, FALSE,
                PMD_CFG_CHANGE_RUN, 100, FALSE ) ;
+
+      // --enablesleep
+      rdxBooleanS( pEX, PMD_OPTION_SLEEP, _enableSleep, FALSE,
+                   PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
 
       // end map
 

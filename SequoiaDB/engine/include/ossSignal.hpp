@@ -54,6 +54,9 @@
    #define OSS_TEST_SIGNAL                35       /// SIGRTMIN+1
    #define OSS_INTERNAL_TEST_SIGNAL       36       /// SIGRTMIN+2
 
+   #define OSS_FREEZE_SIGNAL		  37       /// SIGRTMIN+3
+   #define OSS_FREEZE_SIGNAL_INTERNAL     38       /// SIGRTMIN+4
+
    typedef ucontext_t * ossSignalContext ;
 
    /* Set Handler for Signal */

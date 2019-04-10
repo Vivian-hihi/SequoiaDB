@@ -1999,5 +1999,28 @@
       <typeofweb>num</typeofweb>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_SLEEP</name>
+      <long>enableSleep</long>
+      <description>
+        <en>Specify whether sleep engine function is on</en>
+        <cn>指定引擎休眠供能是否开启</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+        <en>Specify the behviour when sending particular sleep signal to engine. When the switch is on, the engine will be freeze for debug.
+	    When it turns off, nothing will happen. The DEFAULT value is FALSE, as it is only fo the purpose of debug, it is not supposed to be
+            exposed in customer environment.<fig></fig>
+        </en>
+        <cn>指定 发送特定睡眠信号给数据库引擎时，引擎的反应。当睡眠开关开启，引擎会进入冻结状态，所有的线程停滞供debug。
+	    当开关关闭，不会发生任何行为。初始值为FALSE，因为这个开关只是为了debug使用的，不应该暴露在实际客户生产环境中。<fig></fig>
+        </cn>
+      </detail>
+      <default>false</default>
+      <hidden>true</hidden>
+   </opt>
 
 </optlist>
