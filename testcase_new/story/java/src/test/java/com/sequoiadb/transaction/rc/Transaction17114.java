@@ -27,7 +27,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author yinzhen
  *
  */
-@Test(groups = { "rc", "rs" })
+@Test(groups = { "rc" })
 public class Transaction17114 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl17114";
@@ -136,17 +136,20 @@ public class Transaction17114 extends SdbTestBase {
             deleteThread.start();
 
             // 事务4读记录走索引扫描
-            QueryThread positiveThread = new QueryThread(cl4, "{_id:1}", "{'':'textIndex17114'}");
+            QueryThread positiveThread = new QueryThread(cl4, "{_id:1}", "{'':'textIndex17114'}", expList);
             positiveThread.start();
 
-            QueryThread2 reverseThread = new QueryThread2(cl5, "{_id:-1}", "{'':'textIndex17114'}");
+            List<BSONObject> expRecords = new ArrayList<>(expList);
+            Collections.reverse(expRecords);
+            
+            QueryThread reverseThread = new QueryThread(cl5, "{_id:-1}", "{'':'textIndex17114'}", expRecords);
             reverseThread.start();
 
             // 事务5读记录走表扫描
-            QueryThread positiveThread2 = new QueryThread(cl6, "{_id:1}", "{'':null}");
+            QueryThread positiveThread2 = new QueryThread(cl6, "{a:1}", "{'':null}", expList);
             positiveThread2.start();
 
-            QueryThread2 reverseThread2 = new QueryThread2(cl7, "{_id:-1}", "{'':null}");
+            QueryThread reverseThread2 = new QueryThread(cl7, "{a:-1}", "{'':null}", expRecords);
             reverseThread2.start();
 
             Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
@@ -179,14 +182,21 @@ public class Transaction17114 extends SdbTestBase {
 
             latch.await();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Assert.fail(e.getMessage());
         } finally {
+            db1.commit();
+            db2.commit();
+            db3.commit();
+            db4.commit();
+            db5.commit();
+            db6.commit();
+            db7.commit();
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             cs.dropCollection(clName);
             System.out.println("结束事务，索引 " + indexKey + " --");
         }
     }
-
+    
     private void insertData() {
         List<BSONObject> records = new ArrayList<>();
         for (int i = 1; i <= 40000; i++) {
@@ -257,41 +267,20 @@ public class Transaction17114 extends SdbTestBase {
         private String sort;
         private String hint;
         private DBCollection cl;
+        private List<BSONObject> expRecords;
 
-        private QueryThread(DBCollection cl, String sort, String hint) {
+        private QueryThread(DBCollection cl, String sort, String hint, List<BSONObject> expRecords) {
             super();
             this.cl = cl;
             this.sort = sort;
             this.hint = hint;
+            this.expRecords = expRecords;
         }
 
         @Override
         public void exec() throws Exception {
             DBCursor cursor = cl.query(null, null, sort, hint);
             List<BSONObject> records = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(records, expList);
-            latch.countDown();
-        }
-    }
-
-    class QueryThread2 extends SdbThreadBase {
-        private String sort;
-        private String hint;
-        private DBCollection cl;
-
-        private QueryThread2(DBCollection cl, String sort, String hint) {
-            super();
-            this.cl = cl;
-            this.sort = sort;
-            this.hint = hint;
-        }
-
-        @Override
-        public void exec() throws Exception {
-            DBCursor cursor = cl.query(null, null, sort, hint);
-            List<BSONObject> records = TransUtils.getReadActList(cursor);
-            List<BSONObject> expRecords = new ArrayList<>(expList);
-            Collections.reverse(expRecords);
             Assert.assertEquals(records, expRecords);
             latch.countDown();
         }
