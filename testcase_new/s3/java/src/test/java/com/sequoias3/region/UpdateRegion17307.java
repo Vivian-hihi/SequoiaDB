@@ -57,7 +57,6 @@ public class UpdateRegion17307 extends S3TestBase {
             RegionUtils.putRegion(region);
             Assert.fail("exp failed but act success,region = " + region.toString());
         } catch (AmazonS3Exception e) {
-            e.printStackTrace();
             if (e.getStatusCode() != 409 && !e.getErrorCode().contains("ConflictDomain")) {
                 throw e;
             }
