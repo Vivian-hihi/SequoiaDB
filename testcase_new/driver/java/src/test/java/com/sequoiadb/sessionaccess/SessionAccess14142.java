@@ -78,11 +78,15 @@ public class SessionAccess14142 extends SdbTestBase {
         
         String actualNodeName = SessionAccessUtil.getActualDataNodeName(dbcl);
         assertEquals(slaveNodeName, actualNodeName);
+        
+        String expPreferedInstance = expSessionAttr.getString("PreferedInstance").toString();
+        String expTimeout = expSessionAttr.getString("Timeout").toString();
+        
         BSONObject actSessionAttr = db.getSessionAttr();
-        expSessionAttr.append("PreferedInstanceMode", "random");
-        expSessionAttr.append("PreferedStrict", false);
-        expSessionAttr.append("Timeout", 20000L);
-        assertEquals(actSessionAttr, expSessionAttr);
+        String actPreferedInstance = actSessionAttr.get("PreferedInstance").toString();
+        String actTimeout = actSessionAttr.get("Timeout").toString();
+        assertEquals(actPreferedInstance, expPreferedInstance);
+        assertEquals(actTimeout, expTimeout);
     }
     
     @AfterClass

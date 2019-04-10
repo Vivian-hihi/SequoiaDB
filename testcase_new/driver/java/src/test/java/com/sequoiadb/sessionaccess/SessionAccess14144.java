@@ -54,11 +54,14 @@ public class SessionAccess14144 extends SdbTestBase {
         BasicBSONObject expNode = (BasicBSONObject)nodes.get(0);
         assertEquals(actualNodeName, expNode.getString("nodeName"));
         //assert getSessionAttr
-        BSONObject actual = db.getSessionAttr();
-        options.append("PreferedInstanceMode", "ordered");
-        options.append("PreferedStrict", false);
-        options.append("Timeout",-1L);
-        assertEquals(actual,options);
+        String expPreferedInstance = options.getString("PreferedInstance").toString();
+        String expPreferedInstanceMode = options.getString("PreferedInstanceMode").toString();
+        
+        BSONObject actSessionAttr = db.getSessionAttr();
+        String actPreferedInstance = actSessionAttr.get("PreferedInstance").toString();
+        String actPreferedInstanceMode = actSessionAttr.get("PreferedInstanceMode").toString();
+        assertEquals(actPreferedInstance, expPreferedInstance);
+        assertEquals(actPreferedInstanceMode, expPreferedInstanceMode);
     }
     
     @AfterClass
