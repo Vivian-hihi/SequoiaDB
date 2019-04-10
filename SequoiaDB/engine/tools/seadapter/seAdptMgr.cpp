@@ -585,25 +585,6 @@ namespace seadapter
       _localIdxVer = SEADPT_INIT_TEXT_INDEX_VERSION ;
    }
 
-   // Update catalogue address by registering again.
-   INT32 _seAdptCB::updateCataInfo( INT64 millsec )
-   {
-      INT32 rc = SDB_OK ;
-
-      _registerEvent.reset() ;
-
-      rc = _resumeRegister() ;
-      PD_RC_CHECK( rc, PDERROR, "Resume register failed[%d]", rc ) ;
-
-      rc = _registerEvent.wait( millsec ) ;
-      PD_RC_CHECK( rc, PDERROR, "Update catalogue info failed[%d]", rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _seAdptCB::_updateIndexInfo( const NET_HANDLE &handle, BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
@@ -931,11 +912,7 @@ namespace seadapter
       INT32 numReturned = 0 ;
       vector<BSONObj> objVec ;
       BSONObj cataInfoObj ;
-
-      const CHAR *cataHost = NULL ;
-      const CHAR *cataSvc = NULL ;
       const CHAR *peerGrpName = NULL ;
-      MsgRouteID cataNodeID ;
 
       // Adapter has registered successfully.
       if ( NET_INVALID_TIMER_ID == _regTimerID )
@@ -963,6 +940,9 @@ namespace seadapter
             goto error ;
          }
 
+         PD_LOG( PDDEBUG, "Register reply message: %s",
+                 objVec[0].toString(false, true).c_str() ) ;
+
          _peerPrimary = objVec[0].getBoolField( FIELD_NAME_IS_PRIMARY ) ;
          peerGrpName = objVec[0].getStringField( FIELD_NAME_GROUPNAME ) ;
          if ( 0 == ossStrlen( peerGrpName ) )
@@ -982,26 +962,14 @@ namespace seadapter
             goto error ;
          }
 
-         cataHost = cataInfoObj.getStringField( FIELD_NAME_HOST ) ;
-         cataSvc = cataInfoObj.getStringField( FIELD_NAME_SERVICE_NAME ) ;
-         cataNodeID.columns.groupID =
-               (UINT32)cataInfoObj.getIntField( FIELD_NAME_GROUPID ) ;
-         cataNodeID.columns.nodeID =
-               (UINT16)cataInfoObj.getIntField( FIELD_NAME_NODEID ) ;
-         cataNodeID.columns.serviceID =
-               (UINT16)cataInfoObj.getIntField( FIELD_NAME_SERVICE ) ;
+         rc = _dbAssist.updateGroupInfo( cataInfoObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update catalog group info failed[%d]",
+                      rc ) ;
       }
       catch ( std::exception &e )
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-
-      rc = _dbAssist.updateCataNodeRoute( cataNodeID, cataHost, cataSvc ) ;
-      if ( rc && SDB_NET_UPDATE_EXISTING_NODE != rc )
-      {
-         PD_LOG( PDERROR, "Update route failed[ %d ]", rc ) ;
          goto error ;
       }
 
@@ -1227,8 +1195,6 @@ namespace seadapter
       {
          if ( isDataNodePrimary() )
          {
-            PD_LOG( PDEVENT, "Index information updated or data node upgrade. "
-                             "Refresh index tasks") ;
             rc = _idxSessionMgr.refreshTasks() ;
             PD_RC_CHECK( rc, PDERROR, "Update text index information failed[ %d ]",
                          rc ) ;
@@ -1269,7 +1235,7 @@ namespace seadapter
               "and try to register on data node again..." ) ;
       _idxSessionMgr.stopAllIndexer( handle ) ;
       _indexerOn = FALSE ;
-      _dbAssist.setDataNetHandle( NET_INVALID_HANDLE ) ;
+      _dbAssist.invalidNetHandle( handle ) ;
 
       rc = _resumeRegister() ;
       PD_RC_CHECK( rc, PDERROR, "Resume register failed[ %d ]", rc ) ;

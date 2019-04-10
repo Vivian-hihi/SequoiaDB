@@ -730,7 +730,7 @@ if linux:
 
 sdbseadapter = toolEnv.Program("sdbseadapter",
 		 sdbSEAdptFiles,
-		 LIBDEPS=["pd","oss","msg","util","bson","pmd","pmdMT","net","rtnJob"],
+		 LIBDEPS=["pd","oss","msg","util","bson","pmd","pmdMT","net","rtnJob","rtn","ixm","cls"],
 		 _LIBDEPS='$_LIBDEPS_OBJS' )
 		 
 if linux64:

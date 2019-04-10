@@ -3253,11 +3253,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDMGR__GENAUTHREPLYINFO ) ;
       BSONObjBuilder builder ;
-      UINT32 tmpPos = CLS_RG_NODE_POS_INVALID ;
-      MsgRouteID cataRouteID ;
-      string cataHost ;
-      string cataSvc ;
-      MSG_ROUTE_SERVICE_TYPE svcType = MSG_ROUTE_CAT_SERVICE ;
       CHAR groupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] = { 0 } ;
 
       pmdGetKRCB()->getGroupName( groupName, OSS_MAX_GROUPNAME_SIZE + 1 ) ;
@@ -3278,22 +3273,10 @@ namespace engine
          builder.appendBool( FIELD_NAME_IS_PRIMARY, pmdIsPrimary() ) ;
          builder.append( FIELD_NAME_GROUPNAME, groupName ) ;
 
-         tmpPos = _cataGrpItem.getPrimaryPos() ;
-         rc = _cataGrpItem.getNodeInfo( tmpPos, cataRouteID, cataHost,
-                                        cataSvc, svcType ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get catalog node info failed[%d]", rc ) ;
+         if ( _cataGrpItem.nodeCount() > 0 )
          {
-            BSONObjBuilder subBuilder(
-                  builder.subobjStart( FIELD_NAME_CATALOGINFO ) ) ;
-            subBuilder.append( FIELD_NAME_HOST, cataHost ) ;
-            subBuilder.append( FIELD_NAME_SERVICE_NAME, cataSvc ) ;
-            subBuilder.append( FIELD_NAME_GROUPID,
-                               cataRouteID.columns.groupID ) ;
-            subBuilder.append( FIELD_NAME_NODEID,
-                               cataRouteID.columns.nodeID ) ;
-            subBuilder.append( FIELD_NAME_SERVICE,
-                               cataRouteID.columns.serviceID ) ;
-            subBuilder.done() ;
+            BSONObj cataInfo = _buildCataGroupInfo() ;
+            builder.append( FIELD_NAME_CATALOGINFO, cataInfo ) ;
          }
 
          replyInfo = builder.obj() ;
@@ -3310,6 +3293,62 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   BSONObj _clsShardMgr::_buildCataGroupInfo()
+   {
+      BSONObj obj ;
+
+      if ( _cataGrpItem.nodeCount() > 0 )
+      {
+         clsNodeItem *primary =
+               _cataGrpItem.nodeItemByPos( _cataGrpItem.getPrimaryPos() ) ;
+         try
+         {
+            BSONObjBuilder builder( 1024 ) ;
+            builder.append( CAT_GROUPID_NAME, CATALOG_GROUPID ) ;
+            builder.append( CAT_GROUPNAME_NAME, CATALOG_GROUPNAME ) ;
+            builder.append(CAT_ROLE_NAME, SDB_ROLE_CATALOG ) ;
+            builder.append( FIELD_NAME_SECRETID, (INT32) 0 ) ;
+            builder.append( CAT_VERSION_NAME, (INT32)1 ) ;
+            builder.append( CAT_PRIMARY_NAME,
+                            (INT32)primary->_id.columns.nodeID ) ;
+
+            BSONArrayBuilder arrGroup( builder.subarrayStart( CAT_GROUP_NAME ) ) ;
+
+            for ( UINT32 i = 0; i < _cataGrpItem.nodeCount(); ++i )
+            {
+               BSONObjBuilder node( arrGroup.subobjStart() ) ;
+               clsNodeItem *nodeItem = _cataGrpItem.nodeItemByPos( i ) ;
+               node.append( CAT_NODEID_NAME,
+                            (INT32)nodeItem->_id.columns.nodeID ) ;
+               node.append( CAT_HOST_FIELD_NAME, nodeItem->_host ) ;
+
+               INT32 status = 0 ;
+               _cataGrpItem.getNodeInfo( i, status ) ;
+               node.append( CAT_STATUS_NAME, (INT32)status ) ;
+               // Service:[{},{}...]
+               BSONArrayBuilder arrSvc( node.subarrayStart(
+                                         CAT_SERVICE_FIELD_NAME ) ) ;
+               BSONObjBuilder svc( arrSvc.subobjStart() ) ;
+               svc.append( CAT_SERVICE_TYPE_FIELD_NAME,
+                           (INT32)MSG_ROUTE_CAT_SERVICE ) ;
+               svc.append( CAT_SERVICE_NAME_FIELD_NAME,
+                           nodeItem->_service[ MSG_ROUTE_CAT_SERVICE ] ) ;
+               svc.done() ;
+               arrSvc.done() ;
+               node.done() ;
+            }
+            arrGroup.done() ;
+            obj = builder.obj() ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Unexpected exception occurred: %s", e.what() ) ;
+         }
+      }
+
+      return obj ;
    }
 
    INT64 _clsShardMgr::netIn()

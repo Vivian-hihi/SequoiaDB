@@ -305,6 +305,7 @@ namespace engine
          INT32 _updateRemoteEndpointInfo( NET_HANDLE handle,
                                           const BSONObj &regInfo ) ;
          INT32 _genAuthReplyInfo( BSONObj &replyInfo ) ;
+         BSONObj _buildCataGroupInfo() ;
 
       private:
          _netRouteAgent                *_pNetRtAgent ;

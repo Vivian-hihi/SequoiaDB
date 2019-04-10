@@ -144,11 +144,6 @@ namespace seadapter
       _targetState = targetState ;
    }
 
-   INT32 _seAdptIndexSession::updateCataInfo( INT64 millisec )
-   {
-      return sdbGetSeAdapterCB()->updateCataInfo( millisec ) ;
-   }
-
    void _seAdptIndexSession::_onAttach()
    {
       INT32 rc = SDB_OK ;

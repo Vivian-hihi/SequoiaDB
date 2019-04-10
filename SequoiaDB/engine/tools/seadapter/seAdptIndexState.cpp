@@ -333,13 +333,18 @@ namespace seadapter
          }
          goto error ;
       }
-      else if ( SDB_CLS_NOT_PRIMARY == rc || SDB_NET_CANNOT_CONNECT == rc )
+      else if ( SDB_CLS_NOT_PRIMARY == rc )
       {
-         rc = _session->updateCataInfo( OSS_ONE_SEC ) ;
-         PD_RC_CHECK( rc, PDERROR, "Update catalogue information failed[%d]",
+         MsgRouteID newPrimary ;
+         newPrimary.columns.groupID = CATALOG_GROUPID ;
+         newPrimary.columns.nodeID = startFrom ;
+         newPrimary.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+         rc = dbAssist->setCataPrimaryID( newPrimary ) ;
+         PD_RC_CHECK( rc, PDERROR, "Set primary of catalog group failed[%d]",
                       rc ) ;
          // Stay in state of QUERY_CL_VERSION. Wait for next query of the
          // collection version.
+         rc = SDB_OK ;
          goto done ;
       }
       else if ( rc )

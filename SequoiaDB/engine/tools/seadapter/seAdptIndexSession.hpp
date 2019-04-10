@@ -118,8 +118,6 @@ namespace seadapter
          return _seTypeName ;
       }
 
-      INT32 updateCataInfo( INT64 millisec ) ;
-
    protected:
       virtual void _onAttach() ;
       virtual void _onDetach() ;

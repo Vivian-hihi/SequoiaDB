@@ -224,8 +224,6 @@ namespace seadapter
 
       void resetIdxVersion() ;
 
-      INT32 updateCataInfo( INT64 millsec ) ;
-
    private:
       INT32 _startSvcListener() ;
       INT32 _initSdbAddr() ;

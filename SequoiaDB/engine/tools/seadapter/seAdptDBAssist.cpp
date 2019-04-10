@@ -43,10 +43,10 @@ namespace seadapter
    _seAdptDBAssist::_seAdptDBAssist( _netMsgHandler *msgHandler )
    : _routeAgent( msgHandler ),
      _dataNetHandle( NET_INVALID_HANDLE ),
-     _cataNetHandle( NET_INVALID_HANDLE )
+     _cataNetHandle( NET_INVALID_HANDLE ),
+     _cataGrpInfo( CATALOG_GROUPID )
    {
       _dataNodeID.value = MSG_INVALID_ROUTEID ;
-      _cataPrimaryID.value = MSG_INVALID_ROUTEID ;
    }
 
    _seAdptDBAssist::~_seAdptDBAssist()
@@ -79,19 +79,39 @@ namespace seadapter
       return _routeAgent.updateRoute( id, host, service ) ;
    }
 
-   INT32 _seAdptDBAssist::updateCataNodeRoute( const MsgRouteID &id,
-                                               const CHAR *host,
-                                               const CHAR *service )
+   INT32 _seAdptDBAssist::updateGroupInfo( const BSONObj &obj )
    {
-      if ( MSG_INVALID_ROUTEID != _cataPrimaryID.value )
+      INT32 rc = SDB_OK ;
+
+      rc = _cataGrpInfo.updateGroupItem( obj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update group info from bson[%s] failed[%d]",
+                   obj.toString().c_str(), rc ) ;
+
+      rc = _updateRouteInfo() ;
+      PD_RC_CHECK( rc, PDERROR, "Update route infor failed[%d]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _seAdptDBAssist::setCataPrimaryID( MsgRouteID &primary )
+   {
+      INT32 rc = SDB_OK ;
+      MsgRouteID currentPrimary = _cataGrpInfo.primary( MSG_ROUTE_CAT_SERVICE ) ;
+      if ( primary.value != currentPrimary.value )
       {
-         _routeAgent.delRoute( _cataPrimaryID ) ;
          _cataNetHandle = NET_INVALID_HANDLE ;
+         rc = _cataGrpInfo.updatePrimary( primary, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update catalog primary to node[%u] "
+                                   "failed[%d]", primary.columns.nodeID, rc ) ;
       }
 
-      _cataPrimaryID = id ;
-
-      return _routeAgent.updateRoute( id, host, service ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _seAdptDBAssist::setDataNetHandle( NET_HANDLE handle )
@@ -102,6 +122,18 @@ namespace seadapter
    void _seAdptDBAssist::setCataNetHandle( NET_HANDLE handle )
    {
       _cataNetHandle = handle ;
+   }
+
+   void _seAdptDBAssist::invalidNetHandle( NET_HANDLE handle )
+   {
+      if ( handle == _dataNetHandle )
+      {
+         _dataNetHandle = NET_INVALID_HANDLE ;
+      }
+      else if ( handle == _cataNetHandle )
+      {
+         _cataNetHandle = NET_INVALID_HANDLE ;
+      }
    }
 
    INT32 _seAdptDBAssist::queryOnDataNode( const CHAR *clName,
@@ -286,6 +318,38 @@ namespace seadapter
       goto done ;
    }
 
+   INT32 _seAdptDBAssist::_updateRouteInfo()
+   {
+      INT32 rc = SDB_OK ;
+      string host ;
+      string service ;
+      MsgRouteID routeID ;
+      routeID.value = MSG_INVALID_ROUTEID ;
+
+      UINT32 index = 0 ;
+      while ( SDB_OK == _cataGrpInfo.getNodeInfo( index++, routeID, host,
+                                   service, MSG_ROUTE_CAT_SERVICE ) )
+      {
+         rc = _routeAgent.updateRoute( routeID, host.c_str(),
+                                       service.c_str() ) ;
+         if ( SDB_OK != rc )
+         {
+            if ( SDB_NET_UPDATE_EXISTING_NODE == rc )
+            {
+               rc = SDB_OK ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Update route[%s] failed[%d]",
+                       routeID2String( routeID ).c_str(), rc ) ;
+               break ;
+            }
+         }
+      }
+
+      return rc ;
+   }
+
    INT32 _seAdptDBAssist::_sendToCataNode( const MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
@@ -298,7 +362,8 @@ namespace seadapter
       }
       else
       {
-         rc = _routeAgent.syncSend( _cataPrimaryID, (void *)msg ) ;
+         rc = _routeAgent.syncSend(
+                 _cataGrpInfo.primary( MSG_ROUTE_CAT_SERVICE ), (void *)msg ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Send message to catalogue node failed[%d]",
                    rc ) ;

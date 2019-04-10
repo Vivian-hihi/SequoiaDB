@@ -42,11 +42,13 @@
 #include "msgMessage.hpp"
 #include "netRouteAgent.hpp"
 #include "netMsgHandler.hpp"
+#include "clsCatalogAgent.hpp"
 
 using namespace engine;
 
 namespace seadapter
 {
+   typedef clsGroupItem    CataGroupInfo ;
    /**
     * Assistant for communication with data/cata nodes. It holds the
     * netRouteAgent object, and is responsible for sending message with it.
@@ -70,29 +72,20 @@ namespace seadapter
       INT32 updateDataNodeRoute( const MsgRouteID &id, const CHAR *host,
                                  const CHAR *service ) ;
 
-      /**
-       * @brief Update route information of the catalogue primary node.
-       *
-       * Only maintain information of the primary catalogue node. If switch
-       * of primary happens in the catalogue group, need to update the
-       * infomation by calling this function.
-       */
-      INT32 updateCataNodeRoute( const MsgRouteID &id, const CHAR *host,
-                                 const CHAR *service ) ;
+      INT32 updateGroupInfo( const BSONObj &obj ) ;
 
       MsgRouteID dataNodeID() const
       {
          return _dataNodeID ;
       }
 
-      MsgRouteID cataPrimaryID() const
-      {
-         return _cataPrimaryID ;
-      }
+      INT32 setCataPrimaryID( MsgRouteID &primary ) ;
 
       void setDataNetHandle( NET_HANDLE handle ) ;
 
       void setCataNetHandle( NET_HANDLE handle ) ;
+
+      void invalidNetHandle( NET_HANDLE handle ) ;
 
       BOOLEAN dataNetHandleValid() const
       {
@@ -148,14 +141,15 @@ namespace seadapter
       INT32 sendMsg( const MsgHeader *msg, NET_HANDLE handle ) ;
 
    private:
+      INT32 _updateRouteInfo() ;
       INT32 _sendToCataNode( const MsgHeader *msg ) ;
 
    private:
       netRouteAgent _routeAgent ;
       MsgRouteID _dataNodeID ;
-      MsgRouteID _cataPrimaryID ;
       NET_HANDLE _dataNetHandle ;
       NET_HANDLE _cataNetHandle ;
+      CataGroupInfo _cataGrpInfo ;
    } ;
    typedef _seAdptDBAssist seAdptDBAssist ;
 }
