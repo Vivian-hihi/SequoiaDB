@@ -4106,7 +4106,8 @@ namespace sdbclient
       virtual INT32 setSessionAttr ( const bson::BSONObj &options =
                                      _sdbStaticObject ) = 0 ;
       // get session attribute
-      virtual INT32 getSessionAttr ( bson::BSONObj & result ) = 0 ;
+      virtual INT32 getSessionAttr ( bson::BSONObj &result,
+                                     BOOLEAN useCache = TRUE ) = 0 ;
 
       // close all cursor
       virtual INT32 closeAllCursors () = 0 ;
@@ -5551,16 +5552,18 @@ namespace sdbclient
       /** \fn INT32 getSessionAttr ( bson::BSONObj & result ) ;
           \brief Get the attributes of the session.
           \param [out] result The return bson object
+          \param [in] useCache Whether to use cache
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 getSessionAttr ( bson::BSONObj & result )
+      INT32 getSessionAttr ( bson::BSONObj & result,
+                             BOOLEAN useCache = TRUE )
       {
          if ( !pSDB )
          {
             return SDB_NOT_CONNECTED ;
          }
-         return pSDB->getSessionAttr( result ) ;
+         return pSDB->getSessionAttr( result, useCache ) ;
       }
 
       /** \fn INT32 closeAllCursors () ;

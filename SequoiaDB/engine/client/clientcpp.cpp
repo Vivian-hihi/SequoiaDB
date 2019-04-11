@@ -8545,8 +8545,8 @@ do                                                            \
 
       if ( !it.more() )
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         _clearSessionAttrCache( TRUE ) ;
+         goto done ;
       }
 
       while ( it.more() )
@@ -8631,7 +8631,7 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbImpl::getSessionAttr ( BSONObj & attribute )
+   INT32 _sdbImpl::getSessionAttr ( BSONObj &attribute, BOOLEAN useCache )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN gotAttribute = FALSE ;
@@ -8642,11 +8642,14 @@ do                                                            \
          goto error ;
       }
 
-      _getSessionAttrCache( attribute ) ;
-      if ( !attribute.isEmpty() )
+      if ( useCache )
       {
-         gotAttribute = TRUE ;
-         goto done ;
+         _getSessionAttrCache( attribute ) ;
+         if ( !attribute.isEmpty() )
+         {
+            gotAttribute = TRUE ;
+            goto done ;
+         }
       }
 
       rc = _runCommand( CMD_ADMIN_PREFIX CMD_NAME_GETSESS_ATTR,

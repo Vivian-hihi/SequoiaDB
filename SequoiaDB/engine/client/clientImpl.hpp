@@ -1499,7 +1499,7 @@ namespace sdbclient
       // set session attribute
       INT32 setSessionAttr ( const bson::BSONObj &options = _sdbStaticObject ) ;
 
-      INT32 getSessionAttr ( bson::BSONObj & attribute ) ;
+      INT32 getSessionAttr ( bson::BSONObj &attribute, BOOLEAN useCache = TRUE ) ;
 
       // close all cursors
       INT32 closeAllCursors ();

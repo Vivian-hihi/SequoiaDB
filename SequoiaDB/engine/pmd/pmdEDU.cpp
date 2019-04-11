@@ -137,6 +137,7 @@ namespace engine
       _transRC          = SDB_OK ;
 
       _curRequestID     = 1 ;
+      _confChangeID     = 0 ;
 #endif // SDB_ENGINE
 
       _pErrorBuff = (CHAR *)SDB_OSS_MALLOC( EDU_ERROR_BUFF_SIZE + 1 ) ;
@@ -899,6 +900,7 @@ namespace engine
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
       if ( optCB->transactionOn() )
       {
+         _confChangeID = optCB->getChangeID() ;
          _transExecutor.initTransConf( optCB->transIsolation(),
                                        optCB->transTimeout() * OSS_ONE_SEC,
                                        optCB->transLockwait(),
@@ -913,8 +915,9 @@ namespace engine
    {
 #if defined ( SDB_ENGINE )
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
-      if ( optCB->transactionOn() )
+      if ( optCB->transactionOn() && _confChangeID != optCB->getChangeID() )
       {
+         _confChangeID = optCB->getChangeID() ;
          _transExecutor.updateTransConf( optCB->transIsolation(),
                                          optCB->transTimeout() * OSS_ONE_SEC,
                                          optCB->transLockwait(),

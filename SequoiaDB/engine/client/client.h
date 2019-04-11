@@ -2513,6 +2513,20 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbGetSessionAttr ( sdbConnectionHandle cHandle,
                                      bson * result ) ;
 
+/** \fn INT32 sdbGetSessionAttrEx ( sdbConnectionHandle cHandle,
+                                    BOOLEAN useCache,
+                                    bson * result ) ;
+    \brief Set the attributes of the session.
+    \param [in] cHandle The connection handle
+    \param [in ] useCache Whether to use cache
+    \param [out] result The return bson object
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetSessionAttrEx ( sdbConnectionHandle cHandle,
+                                       BOOLEAN useCache,
+                                       bson * result ) ;
+
 /** \fn BOOLEAN sdbIsClosed( sdbConnectionHandle cHandle )
     \brief Judge whether the connection is closed or not.
     \param [in] cHandle the connection handle.

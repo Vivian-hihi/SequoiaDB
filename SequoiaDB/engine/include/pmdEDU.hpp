@@ -473,6 +473,7 @@ namespace engine
       INT32                   _transRC ;
 
       pmdTransExecutor        _transExecutor ;
+      UINT32                  _confChangeID ;
 
    #endif // SDB_ENGINE
 

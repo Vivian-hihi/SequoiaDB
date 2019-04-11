@@ -9185,10 +9185,15 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
    // check argument
-   if ( !options || bson_is_empty( options ) )
+   if ( !options )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
+   }
+   if ( bson_is_empty( options ) )
+   {
+      _sdbClearSessionAttrCache( connection, TRUE ) ;
+      goto done ;
    }
 
    BSON_INIT( newObj ) ;
@@ -9317,8 +9322,9 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetSessionAttr ( sdbConnectionHandle cHandle,
-                                     bson * result )
+SDB_EXPORT INT32 sdbGetSessionAttrEx ( sdbConnectionHandle cHandle,
+                                       BOOLEAN useCache,
+                                       bson * result )
 {
    INT32 rc = SDB_OK ;
    BOOLEAN gotHandle = FALSE ;
@@ -9336,7 +9342,7 @@ SDB_EXPORT INT32 sdbGetSessionAttr ( sdbConnectionHandle cHandle,
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    gotHandle = TRUE ;
 
-   if ( _sdbGetSessionAttrCache( connection, result ) )
+   if ( useCache && _sdbGetSessionAttrCache( connection, result ) )
    {
       gotAttribute = TRUE ;
       goto done ;
@@ -9412,6 +9418,12 @@ error :
       _sdbClearSessionAttrCache( connection, TRUE ) ;
    }
    goto done ;
+}
+
+SDB_EXPORT INT32 sdbGetSessionAttr ( sdbConnectionHandle cHandle,
+                                     bson * result )
+{
+   return sdbGetSessionAttrEx( cHandle, TRUE, result ) ;
 }
 
 SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, const CHAR *msg )

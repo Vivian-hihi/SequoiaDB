@@ -1958,7 +1958,7 @@ namespace engine
       bson::BSONObj result ;
       sptBsonobj * sptResult = NULL ;
 
-      rc = _sptSdb.getSessionAttr( result ) ;
+      rc = _sptSdb.getSessionAttr( result, FALSE ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to get session attributes" ) ;
