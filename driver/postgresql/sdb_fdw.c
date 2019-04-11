@@ -473,6 +473,10 @@ List *serializeSdbExecState( SdbExecState *fdwState )
    result = lappend( result, serializeString( fdwState->cipherfile ) ) ;
    /* preferenceInstance */
    result = lappend( result, serializeString( fdwState->preferenceInstance ) ) ;
+   /* preferenceInstanceMode */
+   result = lappend( result, serializeString( fdwState->preferenceInstanceMode ) ) ;
+   /* sessionTimeout */
+   result = lappend( result, serializeInt( fdwState->sessionTimeout ) ) ;
    /* transaction */
    result = lappend( result, serializeString( fdwState->transaction ) ) ;
 
@@ -579,7 +583,15 @@ SdbExecState *deserializeSdbExecState( List *sdbExecStateList )
    fdwState->preferenceInstance = deserializeString( lfirst( cell ) ) ;
    cell = lnext( cell ) ;
 
-   /* preferenceInstance */
+   /* preferenceInstanceMode */
+   fdwState->preferenceInstanceMode = deserializeString( lfirst( cell ) ) ;
+   cell = lnext( cell ) ;
+
+   /* sessionTimeout */
+   fdwState->sessionTimeout = ( int )DatumGetInt32( ( ( Const * )lfirst( cell ) )->constvalue ) ;
+   cell = lnext( cell ) ;
+
+   /* transaction */
    fdwState->transaction = deserializeString( lfirst( cell ) ) ;
    cell = lnext( cell ) ;
 
