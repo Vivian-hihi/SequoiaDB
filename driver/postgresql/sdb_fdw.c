@@ -401,6 +401,7 @@ void initSdbExecState( SdbExecState *sdbExecState )
    sdbExecState->limit = -1 ;
    sdbExecState->isPushDownSort = 1 ;
    sdbExecState->isPushDownLimit = 1 ;
+   sdbExecState->sessionTimeout = DEFAULT_SESSION_TIMEOUT ;
 }
 
 Const *serializeString( const char *s )
