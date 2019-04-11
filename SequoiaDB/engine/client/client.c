@@ -1976,9 +1976,9 @@ error :
 #define ENCRYTED_STR_LEN   ( SDB_MD5_DIGEST_LENGTH * 2 + 1 )
 
 static INT32 _sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
-                              const CHAR *pUsrName, const CHAR *pPasswd,
-                              BOOLEAN useSSL,
-                              sdbConnectionHandle *handle )
+                           const CHAR *pUsrName, const CHAR *pPasswd,
+                           BOOLEAN useSSL,
+                           sdbConnectionHandle *handle )
 {
    INT32 rc                            = SDB_OK ;
    BOOLEAN hasMutexInit                = FALSE ;
