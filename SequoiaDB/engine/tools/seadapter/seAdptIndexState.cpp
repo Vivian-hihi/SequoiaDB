@@ -333,15 +333,21 @@ namespace seadapter
          }
          goto error ;
       }
-      else if ( SDB_CLS_NOT_PRIMARY == rc )
+      else if ( SDB_CLS_NOT_PRIMARY == rc || SDB_NET_CANNOT_CONNECT == rc )
       {
-         MsgRouteID newPrimary ;
-         newPrimary.columns.groupID = CATALOG_GROUPID ;
-         newPrimary.columns.nodeID = startFrom ;
-         newPrimary.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
-         rc = dbAssist->setCataPrimaryID( newPrimary ) ;
-         PD_RC_CHECK( rc, PDERROR, "Set primary of catalog group failed[%d]",
-                      rc ) ;
+         // startFrom will contain the primary node id, if any.
+         if ( INVALID_NODE_ID == startFrom && ( SDB_NET_CANNOT_CONNECT != rc ) )
+         {
+            PD_LOG( PDERROR, "No primary in catalogue group now. Wait for 1 "
+                             "second and retry..." ) ;
+            ossSleep( OSS_ONE_SEC ) ;
+         }
+         else
+         {
+            rc = dbAssist->changeCataPrimary( startFrom ) ;
+            PD_RC_CHECK( rc, PDERROR, "Set primary of catalog group failed[%d]",
+                         rc ) ;
+         }
          // Stay in state of QUERY_CL_VERSION. Wait for next query of the
          // collection version.
          rc = SDB_OK ;
@@ -1196,6 +1202,10 @@ namespace seadapter
       }
       return rc ;
    error:
+      if ( SDB_NET_CANNOT_CONNECT == rc )
+      {
+         dbAssist->changeCataPrimary( INVALID_NODEID ) ;
+      }
       goto done ;
    }
 

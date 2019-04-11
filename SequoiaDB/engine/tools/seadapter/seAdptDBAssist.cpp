@@ -96,17 +96,40 @@ namespace seadapter
       goto done ;
    }
 
-   INT32 _seAdptDBAssist::setCataPrimaryID( MsgRouteID &primary )
+   INT32 _seAdptDBAssist::changeCataPrimary( UINT16 nodeID )
    {
       INT32 rc = SDB_OK ;
-      MsgRouteID currentPrimary = _cataGrpInfo.primary( MSG_ROUTE_CAT_SERVICE ) ;
-      if ( primary.value != currentPrimary.value )
+      MsgRouteID newPrimary ;
+      MsgRouteID currentPrimary =
+            _cataGrpInfo.primary( MSG_ROUTE_CAT_SERVICE ) ;
+      newPrimary.value = MSG_INVALID_ROUTEID ;
+
+      if ( nodeID == currentPrimary.columns.nodeID )
       {
-         _cataNetHandle = NET_INVALID_HANDLE ;
-         rc = _cataGrpInfo.updatePrimary( primary, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Update catalog primary to node[%u] "
-                                   "failed[%d]", primary.columns.nodeID, rc ) ;
+         goto done ;
       }
+
+      if ( INVALID_NODE_ID == nodeID )
+      {
+         // If specify an invalid id, just skip to the next node.
+         UINT32 newPrimaryPos =
+               ( _cataGrpInfo.getPrimaryPos() + 1 ) % _cataGrpInfo.nodeCount() ;
+         rc = _cataGrpInfo.getNodeID( newPrimaryPos, newPrimary,
+                                      MSG_ROUTE_CAT_SERVICE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get node id failed[%d]", rc ) ;
+      }
+      else if ( nodeID != currentPrimary.columns.nodeID )
+      {
+         newPrimary.columns.groupID = CATALOG_GROUPID ;
+         newPrimary.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+         newPrimary.columns.nodeID = nodeID ;
+      }
+      _cataNetHandle = NET_INVALID_HANDLE ;
+      rc = _cataGrpInfo.updatePrimary( newPrimary, TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update catalog primary to node[%u] "
+                                "failed[%d]", newPrimary.columns.nodeID, rc ) ;
+      PD_LOG( PDDEBUG, "Change catalogue primary node from %u to %u",
+              currentPrimary.columns.nodeID, newPrimary.columns.nodeID ) ;
 
    done:
       return rc ;

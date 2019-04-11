@@ -79,7 +79,7 @@ namespace seadapter
          return _dataNodeID ;
       }
 
-      INT32 setCataPrimaryID( MsgRouteID &primary ) ;
+      INT32 changeCataPrimary( UINT16 nodeID ) ;
 
       void setDataNetHandle( NET_HANDLE handle ) ;
 

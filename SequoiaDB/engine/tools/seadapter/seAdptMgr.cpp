@@ -1224,21 +1224,26 @@ namespace seadapter
    {
       INT32 rc = SDB_OK ;
 
-      // Kill the index update timer, and resume the register.
-      if ( NET_INVALID_TIMER_ID != _idxUpdateTimerID )
-      {
-         _killTimer( _idxUpdateTimerID ) ;
-         _idxUpdateTimerID = NET_INVALID_TIMER_ID ;
-      }
-
-      PD_LOG( PDEVENT, "Network broken with data node. Stop all indexing jobs "
-              "and try to register on data node again..." ) ;
-      _idxSessionMgr.stopAllIndexer( handle ) ;
-      _indexerOn = FALSE ;
       _dbAssist.invalidNetHandle( handle ) ;
-
-      rc = _resumeRegister() ;
-      PD_RC_CHECK( rc, PDERROR, "Resume register failed[ %d ]", rc ) ;
+      if ( _dbAssist.dataNetHandleValid() )
+      {
+         PD_LOG( PDERROR, "Network broken with catalogue node" ) ;
+      }
+      else
+      {
+         // Kill the index update timer, and resume the register.
+         if ( NET_INVALID_TIMER_ID != _idxUpdateTimerID )
+         {
+            _killTimer( _idxUpdateTimerID ) ;
+            _idxUpdateTimerID = NET_INVALID_TIMER_ID ;
+         }
+         PD_LOG( PDERROR, "Network broken with data node. Stop all indexing "
+                          "jobs and try to register on data node again..." ) ;
+         _idxSessionMgr.stopAllIndexer( handle ) ;
+         _indexerOn = FALSE ;
+         rc = _resumeRegister() ;
+         PD_RC_CHECK( rc, PDERROR, "Resume register failed[%d]", rc ) ;
+      }
 
    done:
       return rc ;
