@@ -68,6 +68,7 @@ public class TimePrinterListener extends TestListenerAdapter {
     public void beforeConfiguration(ITestResult tr) {
         super.beforeConfiguration(tr);
         if (tr.getMethod().isBeforeClassConfiguration()) {
+            SdbTestBase.setRunGroup( tr.getMethod().getGroups() ) ;
             printBeginTime(tr);
             dbMsgBeginTime(tr);
         }
