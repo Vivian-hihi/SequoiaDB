@@ -1093,25 +1093,6 @@ NumberLong.prototype.valueOf = function() {
 
 // end NumberLong
 
-// NumberDecimal
-if ( !NumberDecimal.prototype )
-   NumberDecimal.prototype = {}
-
-NumberDecimal.prototype.valueOf = function() {
-   if ( typeof(this._decimal ) == "string" )
-   {
-      return parseInt(this._decimal) ;
-   }
-   return this._decimal ;
-}
-
-NumberDecimal.prototype.toString = function() {
-   return "NumberDecimal(\"" + this._decimal + "\", \""
-		                       + this._precision + "\")" ;
-}
-
-// end NumberDecimal
-
 // SdbDate
 if ( !SdbDate.prototype )
    SdbDate.prototype = {}

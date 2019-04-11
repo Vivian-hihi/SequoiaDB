@@ -33,16 +33,13 @@
 using namespace bson ;
 namespace engine
 {
-   #define SPT_NUMBERDECIMAL_NAME                       "NumberDecimal"
-   #define SPT_NUMBERDECIMAL_DECIMAL_FIELD              "_decimal"
-   #define SPT_NUMBERDECIMAL_PRECISION_FIELD            "_precision"
    #define SPT_NUMBERDECIMAL_SPECIALOBJ_DECIMAL_FIELD   "$decimal"
    #define SPT_NUMBERDECIMAL_SPECIALOBJ_PRECISION_FIELD "$precision"
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBNumberDecimal, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBNumberDecimal, destruct )
    JS_STATIC_FUNC_DEFINE( _sptDBNumberDecimal, help )
 
-   JS_BEGIN_MAPPING( _sptDBNumberDecimal, SPT_NUMBERDECIMAL_NAME )
+   JS_BEGIN_MAPPING( _sptDBNumberDecimal, "NumberDecimal" )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_SET_SPECIAL_FIELD_NAME( SPT_NUMBERDECIMAL_SPECIALOBJ_DECIMAL_FIELD )
@@ -61,122 +58,11 @@ namespace engine
    }
 
    INT32 _sptDBNumberDecimal::construct( const _sptArguments &arg,
-                                         _sptReturnVal &rval,
-                                         bson::BSONObj &detail )
+                                  _sptReturnVal &rval,
+                                  bson::BSONObj &detail )
    {
-      INT32  rc = SDB_OK ;
-
-      if( arg.argc() < 1 )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Only need one argument" ) ;
-         goto error ;
-      }
-
-      if( arg.isString( 0 ) )
-      {
-         string dataStr ;
-         rc = arg.getString( 0, dataStr ) ;
-         if( SDB_OK != rc )
-         {
-            rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "Failed to get data" ) ;
-            goto error ;
-         }
-         rval.addSelfProperty( SPT_NUMBERDECIMAL_DECIMAL_FIELD )
-                             ->setValue( dataStr ) ;
-      }
-      else if( arg.isNumber( 0 ) )
-      {
-         FLOAT64 dataNum ;
-         rc = arg.getNative( 0, &dataNum, SPT_NATIVE_FLOAT64 ) ;
-         if( SDB_OK != rc )
-         {
-            rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "Failed to get data" ) ;
-            goto error ;
-         }
-         rval.addSelfProperty( SPT_NUMBERDECIMAL_DECIMAL_FIELD )
-                              ->setValue( dataNum ) ;
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Data must be string or number" ) ;
-         goto error ;
-      }
-
-      // precisionStr include totalPrecision or scale
-      if( arg.argc() == 2 )
-      {
-         if( arg.isInt( 1 ) )
-         {
-            UINT32 totalPrecision = 0;
-            rc = arg.getNative( 1, &totalPrecision, SPT_NATIVE_INT32 ) ;
-            if( SDB_OK != rc )
-            {
-               detail = BSON( SPT_ERR << "Failed to get total precision" ) ;
-               goto error ;
-            }
-            rval.addSelfProperty( SPT_NUMBERDECIMAL_PRECISION_FIELD )
-                                 ->setValue( totalPrecision ) ;
-         }
-         else if( arg.isObject( 1 ) )
-         {
-            BSONObj precisionObj ;
-            string  precisionStr ;
-            // tmp stores totalPrecision or scale
-            INT32 tmp[2] = { 0 } ;
-            stringstream ss ;
-
-            rc = arg.getBsonobj( 1, precisionObj ) ;
-            if( SDB_OK != rc )
-            {
-               detail = BSON( SPT_ERR << "Failed to get precision and scale" ) ;
-               goto error ;
-            }
-
-            try
-            {
-               BSONObj::iterator itr( precisionObj ) ;
-               UINT8 i = 0;
-               while( itr.more() )
-               {
-                  itr.next().Val( tmp[i] ) ;
-                  if( tmp <= 0 )
-                  {
-                     rc = SDB_INVALIDARG ;
-                     detail = BSON( SPT_ERR <<
-                              "Total precision and scale must be greater than zero" ) ;
-                     goto error ;
-                  }
-                  i++ ;
-               }
-               ss << tmp[0] << "," << tmp[1];
-               precisionStr = ss.str() ;
-            }
-            catch( std::exception e )
-            {
-               rc = SDB_INVALIDARG ;
-               detail = BSON( SPT_ERR <<
-                              "Failed to get precision array element" ) ;
-               goto error ;
-            }
-
-            rval.addSelfProperty( SPT_NUMBERDECIMAL_PRECISION_FIELD )
-                                 ->setValue( precisionStr ) ;
-         }
-         else
-         {
-            detail = BSON( SPT_ERR << "Precision must be int or array type" ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      detail = BSON( SPT_ERR << "use of new SdbReplicaGroup() is forbidden" ) ;
+      return SDB_SYS ;
    }
 
    INT32 _sptDBNumberDecimal::destruct()
@@ -190,14 +76,13 @@ namespace engine
                                          string &errMsg )
    {
       INT32 rc = SDB_OK ;
-      string decimalStr ;
-      string precisionStr ;
-      INT32  totalPrecision ;
-      INT32  scale ;
-      BOOLEAN appendSuccess = FALSE ;
-
       if( isSpecialObj )
       {
+         string decimalStr ;
+         string precisionStr ;
+         INT32 precision ;
+         INT32 scale ;
+         BOOLEAN appendSuccess = FALSE ;
          rc = value.getStringField( SPT_NUMBERDECIMAL_SPECIALOBJ_DECIMAL_FIELD,
                                     decimalStr ) ;
          if( SDB_OK != rc )
@@ -215,15 +100,14 @@ namespace engine
                errMsg = "Decimal $precision must be obj" ;
                goto error ;
             }
-            rc = _getDecimalPrecision( precisionStr.c_str(), &totalPrecision,
+            rc = _getDecimalPrecision( precisionStr.c_str(), &precision,
                                        &scale ) ;
             if ( SDB_OK != rc )
             {
                errMsg = "Failed to conversion Decimal" ;
                goto error ;
             }
-            appendSuccess = builder.appendDecimal( key, decimalStr,
-                                                   totalPrecision, scale ) ;
+            appendSuccess = builder.appendDecimal( key, decimalStr, precision, scale ) ;
          }
          else
          {
@@ -236,79 +120,11 @@ namespace engine
             goto error ;
          }
       }
-
       else
       {
-         SPT_JS_TYPE fieldType ;
-         rc = value.getFieldType( SPT_NUMBERDECIMAL_DECIMAL_FIELD, fieldType ) ;
-         if( SDB_OK != rc )
-         {
-            errMsg = "Failed to get decimal field type" ;
-            goto error ;
-         }
-
-         if( SPT_JS_TYPE_STRING == fieldType )
-         {
-            rc = value.getStringField( SPT_NUMBERDECIMAL_DECIMAL_FIELD,
-                                       decimalStr,
-                                       SPT_CVT_FLAGS_FROM_STRING ) ;
-            if( SDB_OK != rc )
-            {
-               errMsg = "Failed to get decimal field string value" ;
-               goto error ;
-            }
-         }
-
-         else if( SPT_JS_TYPE_INT == fieldType ||
-                  SPT_JS_TYPE_DOUBLE == fieldType )
-         {
-            FLOAT64 tmpNumber ;
-            stringstream ss ;
-            rc = value.getDoubleField( SPT_NUMBERDECIMAL_DECIMAL_FIELD,
-                                       tmpNumber,
-                                       SPT_CVT_FLAGS_FROM_INT |
-                                       SPT_CVT_FLAGS_FROM_DOUBLE ) ;
-            if( SDB_OK != rc )
-            {
-               errMsg = "Failed to get decimal field number value" ;
-               goto error ;
-            }
-            ss << tmpNumber ;
-            decimalStr = ss.str() ;
-         }
-         else
-         {
-            rc = SDB_INVALIDARG ;
-            errMsg = "NumberDecimal decimal field must be string or number" ;
-            goto error ;
-         }
-
-         rc = value.getStringField( SPT_NUMBERDECIMAL_PRECISION_FIELD,
-                                    precisionStr,
-                                    SPT_CVT_FLAGS_FROM_STRING ) ;
-         if( SDB_OK == rc )
-         {
-            rc = _getDecimalPrecision( precisionStr.c_str(), &totalPrecision,
-                                       &scale ) ;
-            if ( SDB_OK != rc )
-            {
-               errMsg = "Failed to conversion Decimal" ;
-               goto error ;
-            }
-            appendSuccess = builder.appendDecimal( key, decimalStr,
-                                                   totalPrecision, scale ) ;
-         }
-         else
-         {
-            appendSuccess = builder.appendDecimal( key, decimalStr ) ;
-         }
-
-         if( FALSE == appendSuccess )
-         {
-            rc = SDB_INVALIDARG ;
-            errMsg = "Failed to append deciaml" ;
-            goto error ;
-         }
+         rc = SDB_SYS ;
+         errMsg = "Decimal must be special obj" ;
+         goto error ;
       }
    done:
       return rc ;
@@ -319,27 +135,8 @@ namespace engine
    INT32 _sptDBNumberDecimal::fmpToBSON( const sptObject &value,
                                          BSONObj &retObj, string &errMsg )
    {
-      INT32 rc = SDB_OK ;
-      string decimalStr ;
-      string precisionStr ;
-      rc = value.getStringField( SPT_NUMBERDECIMAL_DECIMAL_FIELD, decimalStr ) ;
-      if( SDB_OK != rc )
-      {
-         errMsg = "Failed to get decimalStr field" ;
-         goto error ;
-      }
-      rc = value.getStringField( SPT_NUMBERDECIMAL_PRECISION_FIELD, precisionStr ) ;
-      if( SDB_OK != rc )
-      {
-         errMsg = "Failed to get precisionStr field" ;
-         goto error ;
-      }
-      retObj = BSON( SPT_NUMBERDECIMAL_DECIMAL_FIELD << decimalStr <<
-                     SPT_NUMBERDECIMAL_PRECISION_FIELD << precisionStr ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      errMsg = "Decimal must be special obj" ;
+      return SDB_SYS ;
    }
 
    INT32 _sptDBNumberDecimal::bsonToJSObj( sdbclient::sdb &db,
@@ -347,58 +144,12 @@ namespace engine
                                            _sptReturnVal &rval,
                                            bson::BSONObj &detail )
    {
-      INT32 rc = SDB_OK ;
-      string decimalStr ;
-      string precisionStr ;
-      BSONElement decimalEle ;
-      BSONElement precisionEle ;
-      sptDBNumberDecimal *pDecimal = NULL ;
-
-      decimalEle = data.getField( SPT_NUMBERDECIMAL_DECIMAL_FIELD ) ;
-      precisionEle = data.getField( SPT_NUMBERDECIMAL_PRECISION_FIELD ) ;
-
-      if( String != decimalEle.type() )
-      {
-         detail = BSON( SPT_ERR << "Decimal must be string" ) ;
-         goto error ;
-      }
-
-      if( String != precisionEle.type() )
-      {
-         detail = BSON( SPT_ERR << "Precision must be string" ) ;
-         goto error ;
-      }
-
-      decimalStr = decimalEle.String() ;
-      precisionStr = precisionEle.String() ;
-
-      pDecimal = SDB_OSS_NEW sptDBNumberDecimal() ;
-      if( NULL == pDecimal )
-      {
-         rc = SDB_OOM ;
-         detail = BSON( SPT_ERR << "Failed to new sptDBNumberDecimal obj" ) ;
-         goto error ;
-      }
-      rc = rval.setUsrObjectVal< sptDBNumberDecimal >( pDecimal ) ;
-      if( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "Failed to set return obj" ) ;
-         goto error ;
-      }
-
-      rval.addReturnValProperty( SPT_NUMBERDECIMAL_DECIMAL_FIELD )
-                               ->setValue( decimalStr ) ;
-      rval.addReturnValProperty( SPT_NUMBERDECIMAL_PRECISION_FIELD )
-                               ->setValue( precisionStr ) ;
-   done:
-      return rc ;
-   error:
-      SAFE_OSS_DELETE( pDecimal ) ;
-      goto done ;
+      detail = BSON( SPT_ERR << "Decimal must be special obj" ) ;
+      return SDB_SYS ;
    }
 
    INT32 _sptDBNumberDecimal::_getDecimalPrecision( const CHAR *precisionStr,
-                                                    INT32 *totalPrecision,
+                                                    INT32 *precision,
                                                     INT32 *scale )
    {
       //precisionStr:10,6
@@ -433,7 +184,7 @@ namespace engine
          }
          p++ ;
       }
-      rc = sscanf ( precisionStr, "%d,%d", totalPrecision, scale ) ;
+      rc = sscanf ( precisionStr, "%d,%d", precision, scale ) ;
       if ( 2 != rc )
       {
          rc = SDB_INVALIDARG ;
@@ -453,9 +204,8 @@ namespace engine
       stringstream ss ;
       ss << "--Constructor methods for class SdbDate : " << endl ;
       ss << "   { \"$decimal\": <data> }   " << endl ;
-      ss << "   { \"$decimal\": <data>, " << endl ;
-      ss << "     \"$precision\": [ <precision>, <scale> ] }   " << endl ;
-      ss << "   NumberDecimal( <data> [, <precision>, <scale> )  "
+      ss << "   { \"$decimal\": <data>, " << endl;
+      ss << "     \"$precision\": [<precision>, <scale>] }   "
          << "-- Data type: high-precision number" << endl ;
       ss << "--Static methods for class SdbDate : " << endl ;
       ss << "--Instance methods for class SdbDate : " << endl ;
