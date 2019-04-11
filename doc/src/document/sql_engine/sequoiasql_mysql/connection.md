@@ -17,7 +17,7 @@
    (1)通过bin/sdb_sql_ctl指定实例名修改
 
  ```lang-javascript
-    # bin/sdb_sql_ctl config myinst --sdb_conn_addr=192.168.20.37:11810,192.168.20.38:11810
+    # bin/sdb_sql_ctl chconf myinst --sdb-conn-addr=192.168.20.37:11810,192.168.20.38:11810
  ```
 
    (2)通过配置文件修改，参考[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)。
