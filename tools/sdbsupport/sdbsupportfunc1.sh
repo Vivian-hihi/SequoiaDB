@@ -190,7 +190,7 @@ if [ $? -ne 0 ] ; then
    sdbEchoLog "ERROR" "$FUNCNAME" "${LINENO}" "Failed to connect to sdb : $HOST/$PORT/$USER/$PASSWD"
 else
    if [ "$context" == "true" ] ; then
-      $SDB "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/$HOST.$PORT.snapshot_contests
+      $SDB "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/$HOST.$PORT.snapshot_contexts
    fi
    if [ "$session" == "true" ] ; then
       $SDB "db.snapshot(SDB_SNAP_SESSIONS)" >> SDBSNAPS/$HOST.$PORT.snapshot_sessions
