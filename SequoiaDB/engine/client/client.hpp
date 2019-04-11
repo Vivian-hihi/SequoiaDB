@@ -4208,8 +4208,12 @@ namespace sdbclient
       virtual INT32 renameCollectionSpace( const CHAR* oldName,
                                            const CHAR* newName,
                         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
       virtual INT32 getLastErrorObj( bson::BSONObj &result ) = 0 ;
-      virtual void cleanLastErrorObj() = 0 ;
+      virtual void  cleanLastErrorObj() = 0 ;
+
+      virtual INT32 getLastResultObj( bson::BSONObj &result,
+                                      BOOLEAN getOwned = FALSE ) const = 0 ;
    } ;
    /** \typedef class _sdb _sdb
    */
@@ -6167,6 +6171,24 @@ namespace sdbclient
       {
          if( !pSDB ) return  ;
          return pSDB->cleanLastErrorObj() ;
+      }
+
+      /** \fn INT32 getLastResultObj( bson::BSONObj &result ) const
+          \brief Get the result object(only return by engine) of the last operation.
+                 The result object will not be clean up automatically until the next
+                 result object cover it.
+          \param [out] result The return result bson object.
+          \param [in]  getOwned Wether the return result bson object should get
+                       owned memory or not.
+          \retval SDB_OK Operation Success.
+          \retval Others Operation Fail.
+      */
+      INT32 getLastResultObj( bson::BSONObj &result,
+                              BOOLEAN getOwned = FALSE ) const
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->getLastResultObj( result, getOwned ) ;
       }
 
    } ;

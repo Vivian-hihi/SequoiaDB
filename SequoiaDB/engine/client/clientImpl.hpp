@@ -1092,14 +1092,19 @@ namespace sdbclient
       std::set<ossValuePtr>    _lobs ;
       hashTable               *_tb ;
       bson::BSONObj            _attributeCache ;
+
       const CHAR*              _pErrorBuf ;
       INT32                    _errorBufSize ;
+
+      const CHAR*              _pResultBuf ;
+      INT32                    _resultBufSize ;
 
       // last send or recive time
       ossTimestamp             _lastAliveTime;
 
       void _disconnect () ;
       void _setErrorBuffer( const CHAR *pBuf, INT32 bufSize ) ;
+      void _setResultBuffer( const CHAR *pBuf, INT32 bufSize ) ;
       INT32 _send ( CHAR *pBuffer ) ;
       INT32 _recv ( CHAR **ppBuffer, INT32 *size ) ;
 
@@ -1610,6 +1615,9 @@ namespace sdbclient
 
       INT32 getLastErrorObj( bson::BSONObj &result ) ;
       void  cleanLastErrorObj() ;
+
+      INT32 getLastResultObj( bson::BSONObj &result,
+                              BOOLEAN getOwned = FALSE ) const ;
 
    } ;
    typedef class _sdbImpl sdbImpl ;

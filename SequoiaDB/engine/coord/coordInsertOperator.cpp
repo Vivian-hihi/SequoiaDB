@@ -161,6 +161,9 @@ namespace engine
       _ignoredNum = 0 ;
       _hasRetry = FALSE ;
 
+      _hasGenerated = FALSE ;
+      _lastGenerateID = 0 ;
+
       const static string s_insertStr("Insert" ) ;
       setName( s_insertStr ) ;
    }
@@ -283,6 +286,7 @@ namespace engine
          if ( 0 == result._sucGroupLst.size() &&
               ( curAutoIncIDs != lastAutoIncIDs || needNewAutoInc ) )
          {
+            _hasGenerated = FALSE ;
             needNewAutoInc = FALSE ;
             // in case of reshard, clear the last shard result.
             cataPtr->isMainCL() ? _grpSubCLDatas.clear() : inMsg.data()->clear() ;
@@ -298,6 +302,11 @@ namespace engine
             inMsg._pMsg = (MsgHeader*)pNewMsg ;
             lastAutoIncIDs = curAutoIncIDs ;
          }
+      }
+      else
+      {
+         inMsg._pMsg = (MsgHeader*)pInsertMsg ;
+         _hasGenerated = FALSE ;
       }
 
       pTmpInsertMsg = (MsgOpInsert*) inMsg._pMsg ;
@@ -346,6 +355,11 @@ namespace engine
       {
          /// InsertedNum(Hi) + IgnoredNum(Lo)
          contextID = ossPack32To64( _insertedNum, _ignoredNum ) ;
+      }
+      if ( buf && _hasGenerated )
+      {
+         *buf = rtnContextBuf( BSON( FIELD_NAME_LAST_GENERATE_ID <<
+                                     _lastGenerateID ) ) ;
       }
       msgReleaseBuffer( pNewMsg, cb ) ;
       PD_TRACE_EXITRC ( COORD_INSERTOPR_EXE, rc ) ;
@@ -1173,6 +1187,11 @@ namespace engine
             goto error ;
          }
 
+         if ( !_hasGenerated )
+         {
+            _lastGenerateID = nextValue ;
+            _hasGenerated = TRUE ;
+         }
          builder.append( pItem->fieldName(), nextValue ) ;
       }
       else

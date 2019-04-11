@@ -6220,9 +6220,14 @@ do                                                            \
    _tb ( NULL ),
    _attributeCache ()
    {
+      _pErrorBuf = NULL ;
+      _errorBufSize = 0 ;
+      _pResultBuf = NULL ;
+      _resultBufSize = 0 ;
+
       initHashTable( &_tb ) ;
       // get current time
-      ossGetCurrentTime(_lastAliveTime);
+      ossGetCurrentTime(_lastAliveTime) ;
    }
 
    _sdbImpl::~_sdbImpl ()
@@ -6324,6 +6329,7 @@ do                                                            \
       }
       _clearSessionAttrCache( FALSE ) ;
       _setErrorBuffer( NULL, 0 ) ;
+      _setResultBuffer( NULL, 0 ) ;
    }
 
    INT32 _sdbImpl::_connect ( const CHAR *pHostName,
@@ -7110,6 +7116,12 @@ do                                                            \
       _errorBufSize = bufSize ;
    }
 
+   void _sdbImpl::_setResultBuffer( const CHAR *pBuf, INT32 bufSize )
+   {
+      _pResultBuf = pBuf ;
+      _resultBufSize = bufSize ;
+   }
+
    INT32 _sdbImpl::_send ( CHAR *pBuffer )
    {
       INT32 rc = SDB_OK ;
@@ -7238,6 +7250,8 @@ do                                                            \
 
       _pErrorBuf = NULL ;
       _errorBufSize = 0 ;
+      _pResultBuf = NULL ;
+      _resultBufSize = 0 ;
       if ( SDB_OK != replyFlag && SDB_DMS_EOC != replyFlag)
       {
          INT32 dataOff     = 0 ;
@@ -7252,6 +7266,8 @@ do                                                            \
          {
             _pErrorBuf = ( *ppBuffer ) + dataOff ;
             _errorBufSize = dataSize ;
+            _pResultBuf = _pErrorBuf ;
+            _resultBufSize = _errorBufSize ;
             if ( _sdbErrorOnReplyCallback &&
                  SDB_OK == extractErrorObj( _pErrorBuf,
                                              NULL, &pErr, &pDetail ) )
@@ -7259,6 +7275,24 @@ do                                                            \
                (*_sdbErrorOnReplyCallback)( _pErrorBuf, (UINT32)_errorBufSize,
                                             replyFlag, pErr, pDetail ) ;
             }
+         }
+      }
+      /*
+         Temp solution. Insert result return the LastGenerateID
+      */
+      else if ( SDB_OK == replyFlag && 1 == numReturned &&
+                MSG_BS_INSERT_RES == ((MsgHeader*)(*ppBuffer))->opCode )
+      {
+         INT32 dataOff     = 0 ;
+         INT32 dataSize    = 0 ;
+
+         dataOff = ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) ;
+         dataSize = ( ( MsgHeader* )( *ppBuffer ) )->messageLength - dataOff ;
+         /// save result info
+         if ( dataSize > 0 )
+         {
+            _pResultBuf = ( *ppBuffer ) + dataOff ;
+            _resultBufSize = dataSize ;
          }
       }
 
@@ -9486,6 +9520,53 @@ do                                                            \
    void _sdbImpl::cleanLastErrorObj()
    {
       _setErrorBuffer( NULL, 0 ) ;
+   }
+
+   INT32 _sdbImpl::getLastResultObj( bson::BSONObj &result,
+                                     BOOLEAN getOwned ) const
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj localObj ;
+
+      if ( _pResultBuf && _resultBufSize >= 5 &&
+           *(INT32*)_pResultBuf >= 5 )
+      {
+         try
+         {
+            localObj.init( _pResultBuf ) ;
+         }
+         catch( std::exception )
+         {
+            rc = SDB_CORRUPTED_RECORD ;
+            goto error ;
+         }
+         try
+         {
+            if ( getOwned )
+            {
+               result = localObj.copy() ;
+            }
+            else
+            {
+               result = localObj ;
+            }
+         }
+         catch( std::exception )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
    }
 
    _sdb *_sdb::getObj ( BOOLEAN useSSL )

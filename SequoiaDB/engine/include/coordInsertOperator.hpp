@@ -182,6 +182,9 @@ namespace engine
          UINT32         _ignoredNum ;
          BOOLEAN        _hasRetry ;
 
+         BOOLEAN        _hasGenerated ;
+         INT64          _lastGenerateID ;
+
          /*
             For main collection
          */

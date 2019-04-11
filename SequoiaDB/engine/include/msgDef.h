@@ -471,6 +471,7 @@
 #define FIELD_NAME_TRANS_USE_RBS             "TransUseRBS"
 #define FIELD_NAME_TRANS_AUTOCOMMIT          "TransAutoCommit"
 #define FIELD_NAME_TRANS_AUTOROLLBACK        "TransAutoRollback"
+#define FIELD_NAME_LAST_GENERATE_ID          "LastGenerateID"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"
