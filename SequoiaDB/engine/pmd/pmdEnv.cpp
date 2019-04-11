@@ -326,7 +326,7 @@ namespace engine
          while ( (TRUE == pmdGetOptionCB()->isSleepEnabled()) &&
                  (TRUE == pmdGetKRCB()->getKeepSleep()))
 	 {
-            ossSleep(500) ;
+            ossSleep(OSS_ONE_SEC) ;
 	 }
 
       }
@@ -359,7 +359,7 @@ namespace engine
       while ( (TRUE == pmdGetOptionCB()->isSleepEnabled()) &&
               (TRUE == pmdGetKRCB()->getKeepSleep()))
       {
-         ossSleep(500) ;
+         ossSleep(OSS_ONE_SEC) ;
       }
 
 #endif

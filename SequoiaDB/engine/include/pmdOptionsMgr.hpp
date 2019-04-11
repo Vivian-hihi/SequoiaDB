@@ -636,7 +636,7 @@ namespace engine
          OSS_INLINE UINT32 getSvcSchedulerType() const { return _svcSchedulerType ; }
          OSS_INLINE UINT32 getSvcMaxConcurrency() const { return _svcMaxConcurrency ; }
 
-	 OSS_INLINE BOOLEAN isSleepEnabled() const { return _enableSleep ; }
+         OSS_INLINE BOOLEAN isSleepEnabled() const { return _enableSleep ; }
 
          std::string getOmAddr() const ;
 

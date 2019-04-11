@@ -54,6 +54,8 @@
 #include "ossEDU.hpp"
 #include <time.h>
 
+#include "pmdEnv.hpp"
+
 namespace  engine
 {
    // For whenever trying to use thread-based long jump pointer, here are
@@ -257,7 +259,10 @@ namespace  engine
 
       // dump stack trace
       ossStackTrace( OSS_HANDARGS, dumpPath ) ;
-
+#if defined ( SDB_ENGINE )
+      // freeze engine here
+      pmdSleepInstance() ;
+#endif
       // restore system default signal handler
       ossSignalHandlerAbort( OSS_HANDARGS, dumpPath ) ;
 
