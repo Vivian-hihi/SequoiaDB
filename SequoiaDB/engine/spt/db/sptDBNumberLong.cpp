@@ -208,7 +208,7 @@ namespace engine
          {
             goto error ;
          }
-         if( SPT_JS_TYPE_STRING )
+         if( SPT_JS_TYPE_STRING == fieldType )
          {
             rc = obj.getStringField( SPT_NUMBERLONG_SPECIALOBJ_FIELD, valStr ) ;
             if( SDB_OK != rc )
