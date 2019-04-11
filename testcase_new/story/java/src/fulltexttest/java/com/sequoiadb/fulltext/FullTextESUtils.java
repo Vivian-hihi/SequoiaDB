@@ -27,177 +27,199 @@ import org.elasticsearch.search.SearchHit;
 
 public class FullTextESUtils {
 
-	@SuppressWarnings("resource")
-	public static Client createTransportClient(String esHostName, int port) {
-		System.setProperty("es.set.netty.runtime.available.processors", "false");
-		Client client = null;
-		try {
-			// default settings must be "Settings.EMPTY"
-			client = new PreBuiltTransportClient(Settings.EMPTY)
-					.addTransportAddress(new TransportAddress(InetAddress.getByName(esHostName), port));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return client;
-	}
+    @SuppressWarnings("resource")
+    public static Client createTransportClient( String esHostName, int port ) {
+        System.setProperty( "es.set.netty.runtime.available.processors",
+                "false" );
+        Client client = null;
+        try {
+            // default settings must be "Settings.EMPTY"
+            client = new PreBuiltTransportClient( Settings.EMPTY )
+                    .addTransportAddress( new TransportAddress(
+                            InetAddress.getByName( esHostName ), port ) );
+        } catch ( Exception e ) {
+            e.printStackTrace();
+        }
+        return client;
+    }
 
-	/**
-	 * @param esClient
-	 * @param esIndexName
-	 */
-	public static List<BSONObject> getAllRecordsFromES(Client esClient, String esIndexName) {
-		List<BSONObject> objs = new ArrayList<>();
+    /**
+     * @param esClient
+     * @param esIndexName
+     */
+    public static List< BSONObject > getAllRecordsFromES( Client esClient,
+            String esIndexName ) {
+        List< BSONObject > objs = new ArrayList<>();
 
-		SearchResponse response = esClient.prepareSearch(esIndexName).setScroll(new TimeValue(60000))
-				.setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setQuery(QueryBuilders.matchAllQuery()).setSize(100)
-				.execute().actionGet();
+        SearchResponse response = esClient.prepareSearch( esIndexName )
+                .setScroll( new TimeValue( 60000 ) )
+                .setSearchType( SearchType.DFS_QUERY_THEN_FETCH )
+                .setQuery( QueryBuilders.matchAllQuery() ).setSize( 100 )
+                .execute().actionGet();
 
-		String[] clusterIds = new String[] { "_lid", "_cluid", "_cllid", "_idxlid" };
-		for (SearchHit searchHit : response.getHits()) {
-			Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
-			Set<String> keySet = sourceAsMap.keySet();
-			BSONObject obj = new BasicBSONObject();
-			for (String string : keySet) {
-				// remove keys about es cluster
-				for (int i = 0; i < clusterIds.length; i++) {
-					if (string.contains(clusterIds[i])) {
-						break;
-					} else if (i == clusterIds.length - 1) {
-						obj.put(string, sourceAsMap.get(string));
-						objs.add(obj);
-					}
-				}
-			}
-		}
+        String[] clusterIds = new String[] { "_lid", "_cluid", "_cllid",
+                "_idxlid" };
+        for ( SearchHit searchHit : response.getHits() ) {
+            Map< String, Object > sourceAsMap = searchHit.getSourceAsMap();
+            Set< String > keySet = sourceAsMap.keySet();
+            BSONObject obj = new BasicBSONObject();
+            for ( String string : keySet ) {
+                // remove keys about es cluster
+                for ( int i = 0; i < clusterIds.length; i++ ) {
+                    if ( string.contains( clusterIds[ i ] ) ) {
+                        break;
+                    } else if ( i == clusterIds.length - 1 ) {
+                        obj.put( string, sourceAsMap.get( string ) );
+                        objs.add( obj );
+                    }
+                }
+            }
+        }
 
-		return objs;
-	}
+        return objs;
+    }
 
-	/**
-	 * @param esClient
-	 * @param esIndexName
-	 */
-	public static long getCountFromES(Client esClient, String esIndexName) {
-		long count = 0;
-		SearchResponse response = esClient.prepareSearch(esIndexName).setQuery(QueryBuilders.matchAllQuery())
-				.setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setSize(0).execute().actionGet();
-		count = response.getHits().totalHits;
-		return count;
-	}
+    /**
+     * @param esClient
+     * @param esIndexName
+     */
+    public static long getCountFromES( Client esClient, String esIndexName ) {
+        long count = 0;
+        SearchResponse response = esClient.prepareSearch( esIndexName )
+                .setQuery( QueryBuilders.matchAllQuery() )
+                .setSearchType( SearchType.DFS_QUERY_THEN_FETCH ).setSize( 0 )
+                .execute().actionGet();
+        count = response.getHits().totalHits;
+        return count;
+    }
 
-	/**
-	 * @param esClient
-	 * @param esIndexName
-	 */
-	public static int getCommitIDFromES(Client esClient, String esIndexName) {
-		int commitID = -1;
+    /**
+     * @param esClient
+     * @param esIndexName
+     */
+    public static int getCommitIDFromES( Client esClient, String esIndexName ) {
+        int commitID = -1;
 
-		SearchResponse response = esClient.prepareSearch(esIndexName)
-				.setQuery(QueryBuilders.matchQuery("_id", "SDBCOMMIT")).execute().actionGet();
+        SearchResponse response = esClient.prepareSearch( esIndexName )
+                .setQuery( QueryBuilders.matchQuery( "_id", "SDBCOMMIT" ) )
+                .execute().actionGet();
 
-		for (SearchHit searchHit : response.getHits()) {
-			Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
-			commitID = (int) sourceAsMap.get("_lid");
-		}
+        for ( SearchHit searchHit : response.getHits() ) {
+            Map< String, Object > sourceAsMap = searchHit.getSourceAsMap();
+            commitID = ( int ) sourceAsMap.get( "_lid" );
+        }
 
-		return commitID;
-	}
+        return commitID;
+    }
 
-	/**
-	 * @param esClient
-	 * @param esIndexName
-	 */
-	public static boolean isExistIndexInES(Client esClient, String esIndexName) {
-		boolean isExist = false;
-		int timeout = 600; // timeout 600s
-		int doTimes = 0;
-		int interval = 1;
+    /**
+     * @param esClient
+     * @param esIndexName
+     */
+    public static boolean isExistIndexInES( Client esClient,
+            String esIndexName ) {
+        boolean isExist = false;
+        int timeout = 600; // timeout 600s
+        int doTimes = 0;
+        int interval = 1;
 
-		IndicesExistsResponse existResponse = null;
-		while (doTimes * interval < timeout) {
-			existResponse = esClient.admin().indices().exists(new IndicesExistsRequest().indices(esIndexName))
-					.actionGet();
-			isExist = existResponse.isExists();
+        IndicesExistsResponse existResponse = null;
+        while ( doTimes * interval < timeout ) {
+            existResponse = esClient.admin().indices()
+                    .exists( new IndicesExistsRequest().indices( esIndexName ) )
+                    .actionGet();
+            isExist = existResponse.isExists();
 
-			if (!isExist) {
-				doTimes++;
-				// interval 1s each time
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			} else {
-				break;
-			}
-		}
+            if ( !isExist ) {
+                doTimes++;
+                // interval 1s each time
+                try {
+                    Thread.sleep( 1000 );
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
+                }
+            } else {
+                // sleep for 6s, in case of old fulltext is read, because es
+                // will refresh interval 5s
+                try {
+                    Thread.sleep( 6000 );
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+        }
 
-		return isExist;
-	}
+        return isExist;
+    }
 
-	/**
-	 * @param esClient
-	 * @param esIndexName
-	 */
-	public static boolean isIndexDeletedInES(Client esClient, String esIndexName) {
-		boolean isDeleted = true;
-		int timeout = 600; // timeout 600s
-		int doTimes = 0;
-		int interval = 1;
+    /**
+     * @param esClient
+     * @param esIndexName
+     */
+    public static boolean isIndexDeletedInES( Client esClient,
+            String esIndexName ) {
+        boolean isDeleted = true;
+        int timeout = 600; // timeout 600s
+        int doTimes = 0;
+        int interval = 1;
 
-		IndicesExistsResponse existResponse = null;
-		while (doTimes * interval < timeout) {
-			existResponse = esClient.admin().indices().exists(new IndicesExistsRequest().indices(esIndexName))
-					.actionGet();
-			isDeleted = !existResponse.isExists();
+        IndicesExistsResponse existResponse = null;
+        while ( doTimes * interval < timeout ) {
+            existResponse = esClient.admin().indices()
+                    .exists( new IndicesExistsRequest().indices( esIndexName ) )
+                    .actionGet();
+            isDeleted = !existResponse.isExists();
 
-			if (!isDeleted) {
-				doTimes++;
-				// interval 1s each time
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			} else {
-				break;
-			}
-		}
+            if ( !isDeleted ) {
+                doTimes++;
+                // interval 1s each time
+                try {
+                    Thread.sleep( 1000 );
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
+                }
+            } else {
+                break;
+            }
+        }
 
-		return isDeleted;
-	}
+        return isDeleted;
+    }
 
-	/**
-	 * @param esClient
-	 */
-	public static boolean isDeleteAllIndices(Client esClient) {
-		boolean isSuccess = false;
-		DeleteIndexRequest deleteRequest = new DeleteIndexRequest("_all");
-		DeleteIndexResponse deleteResponse = esClient.admin().indices().delete(deleteRequest).actionGet();
-		isSuccess = deleteResponse.isAcknowledged();
-		return isSuccess;
-	}
+    /**
+     * @param esClient
+     */
+    public static boolean isDeleteAllIndices( Client esClient ) {
+        boolean isSuccess = false;
+        DeleteIndexRequest deleteRequest = new DeleteIndexRequest( "_all" );
+        DeleteIndexResponse deleteResponse = esClient.admin().indices()
+                .delete( deleteRequest ).actionGet();
+        isSuccess = deleteResponse.isAcknowledged();
+        return isSuccess;
+    }
 
-	/**
-	 * @param esClient
-	 */
-	public static void getAllIndices(Client esClient) {
-		ActionFuture<IndicesStatsResponse> isr = esClient.admin().indices().stats(new IndicesStatsRequest().all());
-		IndicesAdminClient indicesAdminClient = esClient.admin().indices();
-		Map<String, IndexStats> indexStatsMap = isr.actionGet().getIndices();
-		Set<String> sets = isr.actionGet().getIndices().keySet();
-		System.out.println("get all indieces in ES: ");
-		for (String set : sets) {
-			System.out.println(set);
-		}
-	}
+    /**
+     * @param esClient
+     */
+    public static void getAllIndices( Client esClient ) {
+        ActionFuture< IndicesStatsResponse > isr = esClient.admin().indices()
+                .stats( new IndicesStatsRequest().all() );
+        IndicesAdminClient indicesAdminClient = esClient.admin().indices();
+        Map< String, IndexStats > indexStatsMap = isr.actionGet().getIndices();
+        Set< String > sets = isr.actionGet().getIndices().keySet();
+        System.out.println( "get all indieces in ES: " );
+        for ( String set : sets ) {
+            System.out.println( set );
+        }
+    }
 
-	/**
-	 * @param esClient
-	 */
-	public static void clearAllIndicesInES(Client esClient) {
-		if (!FullTextESUtils.isDeleteAllIndices(esClient)) {
-			FullTextESUtils.getAllIndices(esClient);
-		}
-	}
+    /**
+     * @param esClient
+     */
+    public static void clearAllIndicesInES( Client esClient ) {
+        if ( !FullTextESUtils.isDeleteAllIndices( esClient ) ) {
+            FullTextESUtils.getAllIndices( esClient );
+        }
+    }
 }

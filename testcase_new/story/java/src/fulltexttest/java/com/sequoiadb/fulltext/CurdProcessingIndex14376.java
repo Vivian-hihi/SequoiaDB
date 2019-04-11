@@ -36,27 +36,28 @@ public class CurdProcessingIndex14376 extends SdbTestBase {
     private DBCollection cl = null;
     private String clName = "ES_14376";
     private Client esClient = null;
-    private List<String> esIndexNames = null;
+    private List< String > esIndexNames = null;
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
+        esClient = FullTextESUtils.createTransportClient( esHostName,
+                Integer.parseInt( esServiceName ) );
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "skip StandAlone" );
         }
 
         // create cl
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
+        cs = sdb.getCollectionSpace( csName );
+        cl = cs.createCollection( clName );
     }
 
     @AfterClass
     public void tearDown() {
-        FullTextDBUtils.dropCollection(cs, clName);
+        FullTextDBUtils.dropCollection( cs, clName );
         // check fulltext deleted
-        if(esIndexNames != null){
-            FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+        if ( esIndexNames != null ) {
+            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
         }
         sdb.close();
         esClient.close();
@@ -67,18 +68,19 @@ public class CurdProcessingIndex14376 extends SdbTestBase {
         // create fulltext
         String textIndexName = "fulltext14376";
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put("a", "text");
-        indexObj.put("b", "text");
-        indexObj.put("c", "text");
-        indexObj.put("d", "text");
-        indexObj.put("e", "text");
-        indexObj.put("f", "text");
-        indexObj.put("g", "text");
-        cl.createIndex(textIndexName, indexObj, false, false);
+        indexObj.put( "a", "text" );
+        indexObj.put( "b", "text" );
+        indexObj.put( "c", "text" );
+        indexObj.put( "d", "text" );
+        indexObj.put( "e", "text" );
+        indexObj.put( "f", "text" );
+        indexObj.put( "g", "text" );
+        cl.createIndex( textIndexName, indexObj, false, false );
 
-        esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
+        esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
+                textIndexName );
 
-        insertData(cl, FullTextUtils.INSERT_NUMS);
+        insertData( cl, FullTextUtils.INSERT_NUMS );
 
         // insert/update/delete while index processing cappedcl data
         InsertThread insertThread = new InsertThread();
@@ -89,25 +91,33 @@ public class CurdProcessingIndex14376 extends SdbTestBase {
         updateThread.start();
         removeThread.start();
 
-        Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
-        Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
-        Assert.assertTrue(removeThread.isSuccess(), removeThread.getErrorMsg());
+        Assert.assertTrue( insertThread.isSuccess(),
+                insertThread.getErrorMsg() );
+        Assert.assertTrue( updateThread.isSuccess(),
+                updateThread.getErrorMsg() );
+        Assert.assertTrue( removeThread.isSuccess(),
+                removeThread.getErrorMsg() );
 
         // check consistency after insert/update/delete
-        FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int) cl.getCount());
-        FullTextUtils.checkConsistency(sdb, csName, clName);
+        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
+                textIndexName, ( int ) cl.getCount() );
+        FullTextUtils.checkConsistency( sdb, csName, clName );
     }
 
-    public void insertData(DBCollection cl, int insertNums) {
-        List<BSONObject> insertObjs = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
-                insertObjs.add((BSONObject) JSON.parse("{a: 'test_14376_" + i * j + "', b: '"
-                        + FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '"
-                        + FullTextUtils.getRandomString(64) + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '"
-                        + FullTextUtils.getRandomString(128) + "', g: " + i * j + "}"));
+    public void insertData( DBCollection cl, int insertNums ) {
+        List< BSONObject > insertObjs = new ArrayList<>();
+        for ( int i = 0; i < 100; i++ ) {
+            for ( int j = 0; j < insertNums / 100; j++ ) {
+                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14376_"
+                        + i * j + "', b: '"
+                        + FullTextUtils.getRandomString( 32 ) + "', c: '"
+                        + FullTextUtils.getRandomString( 64 ) + "', d: '"
+                        + FullTextUtils.getRandomString( 64 ) + "', e: '"
+                        + FullTextUtils.getRandomString( 128 ) + "', f: '"
+                        + FullTextUtils.getRandomString( 128 ) + "', g: "
+                        + i * j + "}" ) );
             }
-            cl.insert(insertObjs, 0);
+            cl.insert( insertObjs, 0 );
             insertObjs.clear();
         }
     }
@@ -118,10 +128,10 @@ public class CurdProcessingIndex14376 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(clName);
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl = db.getCollectionSpace( csName ).getCollection( clName );
             int insertNums = 100000;
-            insertData(cl, insertNums);
+            insertData( cl, insertNums );
             db.close();
         }
     }
@@ -132,18 +142,18 @@ public class CurdProcessingIndex14376 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(clName);
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl = db.getCollectionSpace( csName ).getCollection( clName );
 
             BSONObject modifier = new BasicBSONObject();
             BSONObject value = new BasicBSONObject();
             BSONObject matcher = new BasicBSONObject();
             BSONObject subMatcher = new BasicBSONObject();
-            value.put("g", "-1");
-            modifier.put("$set", value);
-            subMatcher.put("$lt", 100000);
-            matcher.put("g", subMatcher);
-            cl.update(matcher, modifier, null);
+            value.put( "g", "-1" );
+            modifier.put( "$set", value );
+            subMatcher.put( "$lt", 100000 );
+            matcher.put( "g", subMatcher );
+            cl.update( matcher, modifier, null );
             db.close();
         }
     }
@@ -154,14 +164,14 @@ public class CurdProcessingIndex14376 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(clName);
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl = db.getCollectionSpace( csName ).getCollection( clName );
 
             BSONObject matcher = new BasicBSONObject();
             BSONObject subMatcher = new BasicBSONObject();
-            subMatcher.put("$gt", 100000);
-            matcher.put("g", subMatcher);
-            cl.delete(matcher);
+            subMatcher.put( "$gt", 100000 );
+            matcher.put( "g", subMatcher );
+            cl.delete( matcher );
             db.close();
         }
     }

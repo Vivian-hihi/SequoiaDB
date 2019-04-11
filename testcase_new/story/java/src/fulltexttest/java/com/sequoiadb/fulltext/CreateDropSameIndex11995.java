@@ -38,20 +38,21 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
+        esClient = FullTextESUtils.createTransportClient( esHostName,
+                Integer.parseInt( esServiceName ) );
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "skip StandAlone" );
         }
 
         // create cl
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
+        cs = sdb.getCollectionSpace( csName );
+        cl = cs.createCollection( clName );
     }
 
     @AfterClass
     public void tearDown() {
-        FullTextDBUtils.dropCollection(cs, clName);
+        FullTextDBUtils.dropCollection( cs, clName );
         sdb.close();
         esClient.close();
     }
@@ -59,69 +60,77 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
     @Test
     public void test() {
         // insert large datas
-        insertData(cl, FullTextUtils.INSERT_NUMS);
+        insertData( cl, FullTextUtils.INSERT_NUMS );
 
         String textIndexName = "fulltext11995";
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put("a", "text");
-        indexObj.put("b", "text");
-        indexObj.put("c", "text");
-        indexObj.put("d", "text");
-        indexObj.put("e", "text");
-        indexObj.put("f", "text");
+        indexObj.put( "a", "text" );
+        indexObj.put( "b", "text" );
+        indexObj.put( "c", "text" );
+        indexObj.put( "d", "text" );
+        indexObj.put( "e", "text" );
+        indexObj.put( "f", "text" );
 
-        List<String> esIndexNames = null;
+        List< String > esIndexNames = null;
 
         // loop create and drop fulltext while processing origin data
         int doTimes = 10;
-        while (--doTimes > 0) {
-            cl.createIndex(textIndexName, indexObj, false, false);
-            esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, textIndexName);
-            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
-            FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+        while ( --doTimes > 0 ) {
+            cl.createIndex( textIndexName, indexObj, false, false );
+            esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
+                    textIndexName );
+            FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
+            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
         }
 
         // create and drop fulltext while processing cappedcl data
         doTimes = 5;
         int newInsertNums = 100000;
-        while (--doTimes > 0) {
-            cl.createIndex(textIndexName, indexObj, false, false);
-            insertData(cl, 1000);
-            FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int) cl.getCount());
-            FullTextUtils.checkConsistency(sdb, csName, clName);
+        while ( --doTimes > 0 ) {
+            cl.createIndex( textIndexName, indexObj, false, false );
+            insertData( cl, 1000 );
+            FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
+                    textIndexName, ( int ) cl.getCount() );
+            FullTextUtils.checkConsistency( sdb, csName, clName );
 
-            InsertThread insertThread = new InsertThread(newInsertNums);
+            InsertThread insertThread = new InsertThread( newInsertNums );
             DropIndexThread dropIdxThread = new DropIndexThread();
             insertThread.start();
             dropIdxThread.start();
 
-            Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
-            Assert.assertTrue(dropIdxThread.isSuccess(), dropIdxThread.getErrorMsg());
-            FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+            Assert.assertTrue( insertThread.isSuccess(),
+                    insertThread.getErrorMsg() );
+            Assert.assertTrue( dropIdxThread.isSuccess(),
+                    dropIdxThread.getErrorMsg() );
+            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
         }
 
         // last time create index
-        cl.createIndex(textIndexName, indexObj, false, false);
+        cl.createIndex( textIndexName, indexObj, false, false );
         // check consistency
-        FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, textIndexName, (int) cl.getCount());
-        FullTextUtils.checkConsistency(sdb, csName, clName);
+        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
+                textIndexName, ( int ) cl.getCount() );
+        FullTextUtils.checkConsistency( sdb, csName, clName );
 
         // last time drop index
-        FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
+        FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
         // check fulltext deleted
-        FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
     }
 
-    public void insertData(DBCollection cl, int insertNums) {
-        List<BSONObject> insertObjs = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
-                insertObjs.add((BSONObject) JSON.parse("{a: 'test_11995_" + i * j + "', b: '"
-                        + FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '"
-                        + FullTextUtils.getRandomString(64) + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '"
-                        + FullTextUtils.getRandomString(128) + "'}"));
+    public void insertData( DBCollection cl, int insertNums ) {
+        List< BSONObject > insertObjs = new ArrayList<>();
+        for ( int i = 0; i < 100; i++ ) {
+            for ( int j = 0; j < insertNums / 100; j++ ) {
+                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_11995_"
+                        + i * j + "', b: '"
+                        + FullTextUtils.getRandomString( 32 ) + "', c: '"
+                        + FullTextUtils.getRandomString( 64 ) + "', d: '"
+                        + FullTextUtils.getRandomString( 64 ) + "', e: '"
+                        + FullTextUtils.getRandomString( 128 ) + "', f: '"
+                        + FullTextUtils.getRandomString( 128 ) + "'}" ) );
             }
-            cl.insert(insertObjs, 0);
+            cl.insert( insertObjs, 0 );
             insertObjs.clear();
         }
     }
@@ -130,7 +139,7 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
 
         int insertNums = 0;
 
-        public InsertThread(int insertNums) {
+        public InsertThread( int insertNums ) {
             this.insertNums = insertNums;
         }
 
@@ -138,10 +147,10 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(clName);
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl = db.getCollectionSpace( csName ).getCollection( clName );
             // insert records in cappedCL
-            insertData(cl, insertNums);
+            insertData( cl, insertNums );
             db.close();
         }
     }
@@ -151,11 +160,11 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(clName);
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl = db.getCollectionSpace( csName ).getCollection( clName );
             String textIndexName = "fulltext11995";
             // drop fulltext
-            FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
+            FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
         }
 
     }

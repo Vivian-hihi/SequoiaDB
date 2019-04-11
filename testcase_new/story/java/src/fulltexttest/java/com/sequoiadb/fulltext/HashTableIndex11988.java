@@ -29,89 +29,100 @@ public class HashTableIndex11988 extends SdbTestBase {
     private DBCollection cl;
     private String clName = "hashTableIndex11988";
     private String fullIndexName = "fullIndex11988";
-    private List<String> groupNames;
+    private List< String > groupNames;
     private Client esClient = null;
 
     @BeforeClass
     public void setUp() {
-        this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        this.sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         CommLib commLib = new CommLib();
-        if (commLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
+        if ( commLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "StandAlone environment!" );
         }
-        this.groupNames = commLib.getDataGroupNames(sdb);
-        if (groupNames.size() < 2) {
-            throw new SkipException("Less than two groups!");
+        this.groupNames = commLib.getDataGroupNames( sdb );
+        if ( groupNames.size() < 2 ) {
+            throw new SkipException( "Less than two groups!" );
         }
-        CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-        this.cl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash',AutoSplit:true}"));
-        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
-                Integer.parseInt(SdbTestBase.esServiceName));
+        CollectionSpace cs = sdb.getCollectionSpace( SdbTestBase.csName );
+        this.cl = cs.createCollection( clName, ( BSONObject ) JSON.parse(
+                "{ShardingKey:{a:1},ShardingType:'hash',AutoSplit:true}" ) );
+        esClient = FullTextESUtils.createTransportClient(
+                SdbTestBase.esHostName,
+                Integer.parseInt( SdbTestBase.esServiceName ) );
     }
 
     @Test
     public void test() {
-        this.insertData(FullTextUtils.INSERT_NUMS);
+        this.insertData( FullTextUtils.INSERT_NUMS );
 
         // 创建全文索引，索引字段覆盖：分区键和非分区键
-        this.cl.createIndex(fullIndexName,
-                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}", false,
-                false);
-        FullTextUtils.checkFullSyncToES(esClient, sdb, SdbTestBase.csName, this.clName, this.fullIndexName,
-                FullTextUtils.INSERT_NUMS);
-        FullTextUtils.checkConsistency(sdb, csName, clName);
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, SdbTestBase.csName, this.clName,
-                this.fullIndexName);
+        this.cl.createIndex( fullIndexName,
+                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}",
+                false, false );
+        FullTextUtils.checkFullSyncToES( esClient, sdb, SdbTestBase.csName,
+                this.clName, this.fullIndexName, FullTextUtils.INSERT_NUMS );
+        FullTextUtils.checkConsistency( sdb, csName, clName );
+        List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
+                SdbTestBase.csName, this.clName, this.fullIndexName );
 
-        FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
+        FullTextDBUtils.dropFullTextIndex( cl, fullIndexName );
 
-        FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            FullTextDBUtils.dropCollection(cs, clName);
-        } catch (BaseException e) {
-            Assert.fail(e.getMessage() + "\r\n" + this.getKeyStack(e, this));
+            CollectionSpace cs = sdb.getCollectionSpace( csName );
+            FullTextDBUtils.dropCollection( cs, clName );
+        } catch ( BaseException e ) {
+            Assert.fail(
+                    e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
         } finally {
-            if (sdb != null) {
+            if ( sdb != null ) {
                 sdb.close();
             }
-            if (esClient != null) {
+            if ( esClient != null ) {
                 esClient.close();
             }
         }
     }
 
-    public void insertData(int insertNums) {
-        List<BSONObject> records = new ArrayList<BSONObject>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
-                BSONObject record = (BSONObject) JSON.parse("{a: 'test_hash11988_" + i * j + "', b: '"
-                        + FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '"
-                        + FullTextUtils.getRandomString(64) + "', e: '" + FullTextUtils.getRandomString(128) + "', g: '"
-                        + FullTextUtils.getRandomString(128) + "'}");
-                records.add(record);
+    public void insertData( int insertNums ) {
+        List< BSONObject > records = new ArrayList< BSONObject >();
+        for ( int i = 0; i < 100; i++ ) {
+            for ( int j = 0; j < insertNums / 100; j++ ) {
+                BSONObject record = ( BSONObject ) JSON
+                        .parse( "{a: 'test_hash11988_" + i * j + "', b: '"
+                                + FullTextUtils.getRandomString( 32 )
+                                + "', c: '"
+                                + FullTextUtils.getRandomString( 64 )
+                                + "', d: '"
+                                + FullTextUtils.getRandomString( 64 )
+                                + "', e: '"
+                                + FullTextUtils.getRandomString( 128 )
+                                + "', g: '"
+                                + FullTextUtils.getRandomString( 128 ) + "'}" );
+                records.add( record );
             }
-            this.cl.insert(records);
+            this.cl.insert( records );
             records.clear();
         }
     }
 
-    public String getKeyStack(Exception e, Object classObj) {
+    public String getKeyStack( Exception e, Object classObj ) {
         StringBuffer stackBuffer = new StringBuffer();
         StackTraceElement[] stackElements = e.getStackTrace();
-        for (int i = 0; i < stackElements.length; i++) {
-            if (stackElements[i].toString().contains(classObj.getClass().getName())) {
-                stackBuffer.append(stackElements[i].toString()).append("\r\n");
+        for ( int i = 0; i < stackElements.length; i++ ) {
+            if ( stackElements[ i ].toString()
+                    .contains( classObj.getClass().getName() ) ) {
+                stackBuffer.append( stackElements[ i ].toString() )
+                        .append( "\r\n" );
             }
         }
         String str = stackBuffer.toString();
-        if (str.length() >= 2) {
-            return str.substring(0, str.length() - 2);
+        if ( str.length() >= 2 ) {
+            return str.substring( 0, str.length() - 2 );
         } else {
             return str;
         }

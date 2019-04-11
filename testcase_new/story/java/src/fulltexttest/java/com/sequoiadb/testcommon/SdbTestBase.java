@@ -23,13 +23,14 @@ public class SdbTestBase {
     protected static String reservedDir;
     protected static String workDir;
 
-    @Parameters({"HOSTNAME", "SVCNAME", "ESHOSTNAME", "ESSVCNAME", "CHANGEDPREFIX",
-            "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR"})
+    @Parameters({ "HOSTNAME", "SVCNAME", "ESHOSTNAME", "ESSVCNAME",
+            "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR",
+            "WORKDIR" })
     @BeforeSuite
-    public static void initSuite(String HOSTNAME, String SVCNAME, 
-                                 String ESHOSTNAME, String ESSVCNAME, String COMMCSNAME,  
-                                 int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
-                                 String WORKDIR) {
+    public static void initSuite( String HOSTNAME, String SVCNAME,
+            String ESHOSTNAME, String ESSVCNAME, String COMMCSNAME,
+            int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
+            String WORKDIR ) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         esHostName = ESHOSTNAME;
@@ -44,21 +45,21 @@ public class SdbTestBase {
         Sequoiadb db = null;
         Client esClient = null;
         try {
-            esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-            // delete indices in ES before running testcases
-            FullTextESUtils.clearAllIndicesInES(esClient); 
-            db = new Sequoiadb(coordUrl, "", "");
-            if (db.isCollectionSpaceExist(csName)) db.dropCollectionSpace(csName);
-            db.createCollectionSpace(csName);
-            File workDirFile = new File(workDir);
-            if (!workDirFile.exists()) {
+            esClient = FullTextESUtils.createTransportClient( esHostName,
+                    Integer.parseInt( esServiceName ) );
+            db = new Sequoiadb( coordUrl, "", "" );
+            if ( db.isCollectionSpaceExist( csName ) )
+                db.dropCollectionSpace( csName );
+            db.createCollectionSpace( csName );
+            File workDirFile = new File( workDir );
+            if ( !workDirFile.exists() ) {
                 workDirFile.mkdir();
             }
         } finally {
-            if (db != null) {
+            if ( db != null ) {
                 db.disconnect();
             }
-            if(esClient != null){
+            if ( esClient != null ) {
                 esClient.close();
             }
         }
@@ -68,12 +69,12 @@ public class SdbTestBase {
     public static void finiSuite() {
         Sequoiadb db = null;
         try {
-            db = new Sequoiadb(coordUrl, "", "");
-            if (db.isCollectionSpaceExist(csName)) {
-                db.dropCollectionSpace(csName);
+            db = new Sequoiadb( coordUrl, "", "" );
+            if ( db.isCollectionSpaceExist( csName ) ) {
+                db.dropCollectionSpace( csName );
             }
         } finally {
-            if (db != null) {
+            if ( db != null ) {
                 db.disconnect();
             }
         }

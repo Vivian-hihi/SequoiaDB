@@ -28,66 +28,79 @@ public class SplitAndInsert12020 extends SdbTestBase {
     private Client esClient = null;
     private String srcGroup = null;
     private String desGroup = null;
-    private List<String> esIndexNames = null;
+    private List< String > esIndexNames = null;
 
     @BeforeClass
     public void setUp() {
 
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         CommLib commLib = new CommLib();
-        if (commLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
+        if ( commLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "StandAlone environment!" );
         }
-        ArrayList<String> groupsName = CommLib.getDataGroupNames(sdb);
-        if (groupsName.size() < 2) {
-            throw new SkipException("current environment less than tow groups ");
+        ArrayList< String > groupsName = CommLib.getDataGroupNames( sdb );
+        if ( groupsName.size() < 2 ) {
+            throw new SkipException(
+                    "current environment less than tow groups " );
         }
-        srcGroup = groupsName.get(0);
-        desGroup = groupsName.get(1);
+        srcGroup = groupsName.get( 0 );
+        desGroup = groupsName.get( 1 );
 
-        cl = sdb.getCollectionSpace(csName).createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingType:'hash', ShardingKey:{a:1}, Group:'" + srcGroup + "'}"));
-        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
-                Integer.parseInt(SdbTestBase.esServiceName));
+        cl = sdb.getCollectionSpace( csName ).createCollection( clName,
+                ( BSONObject ) JSON.parse(
+                        "{ShardingType:'hash', ShardingKey:{a:1}, Group:'"
+                                + srcGroup + "'}" ) );
+        esClient = FullTextESUtils.createTransportClient(
+                SdbTestBase.esHostName,
+                Integer.parseInt( SdbTestBase.esServiceName ) );
     }
 
     @Test
     public void test() {
-        cl.createIndex(fullTextIndexName,
-                (BSONObject) JSON.parse("{a : 'text', b : 'text', c : 'text', d : 'text', e : 'text', f : 'text'}"),
-                false, false);
-        esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, clName, fullTextIndexName);
-        cl.split(srcGroup, desGroup, 50);
+        cl.createIndex( fullTextIndexName, ( BSONObject ) JSON.parse(
+                "{a : 'text', b : 'text', c : 'text', d : 'text', e : 'text', f : 'text'}" ),
+                false, false );
+        esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
+                fullTextIndexName );
+        cl.split( srcGroup, desGroup, 50 );
         insertData();
-        FullTextUtils.checkFullSyncToES(esClient, sdb, csName, clName, fullTextIndexName, FullTextUtils.INSERT_NUMS);
-        FullTextUtils.checkConsistency(sdb, csName, clName);
+        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
+                fullTextIndexName, FullTextUtils.INSERT_NUMS );
+        FullTextUtils.checkConsistency( sdb, csName, clName );
     }
 
     @AfterClass
     public void tearDown() {
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
-        if (cs.isCollectionExist(clName)) {
-            FullTextDBUtils.dropCollection(cs, clName);
+        CollectionSpace cs = sdb.getCollectionSpace( csName );
+        if ( cs.isCollectionExist( clName ) ) {
+            FullTextDBUtils.dropCollection( cs, clName );
         }
         // check fulltext deleted
-        if(esIndexNames != null){
-            FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
+        if ( esIndexNames != null ) {
+            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
         }
         sdb.close();
         esClient.close();
     }
 
     public void insertData() {
-        List<BSONObject> records = new ArrayList<BSONObject>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < FullTextUtils.INSERT_NUMS / 100; j++) {
-                BSONObject record = (BSONObject) JSON.parse("{a: 'test_hash12020_" + i * j + "', b: '"
-                        + FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '"
-                        + FullTextUtils.getRandomString(64) + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '"
-                        + FullTextUtils.getRandomString(128) + "'}");
-                records.add(record);
+        List< BSONObject > records = new ArrayList< BSONObject >();
+        for ( int i = 0; i < 100; i++ ) {
+            for ( int j = 0; j < FullTextUtils.INSERT_NUMS / 100; j++ ) {
+                BSONObject record = ( BSONObject ) JSON
+                        .parse( "{a: 'test_hash12020_" + i * j + "', b: '"
+                                + FullTextUtils.getRandomString( 32 )
+                                + "', c: '"
+                                + FullTextUtils.getRandomString( 64 )
+                                + "', d: '"
+                                + FullTextUtils.getRandomString( 64 )
+                                + "', e: '"
+                                + FullTextUtils.getRandomString( 128 )
+                                + "', f: '"
+                                + FullTextUtils.getRandomString( 128 ) + "'}" );
+                records.add( record );
             }
-            this.cl.insert(records);
+            this.cl.insert( records );
             records.clear();
         }
     }
