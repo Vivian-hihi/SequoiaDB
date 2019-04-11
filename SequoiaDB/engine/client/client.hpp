@@ -163,8 +163,8 @@ namespace sdbclient
    public :
       _sdbCursor () {}
       virtual ~_sdbCursor () {}
-      virtual INT32 next          ( bson::BSONObj &obj ) = 0 ;
-      virtual INT32 current       ( bson::BSONObj &obj ) = 0 ;
+      virtual INT32 next          ( bson::BSONObj &obj, BOOLEAN getOwned = TRUE ) = 0 ;
+      virtual INT32 current       ( bson::BSONObj &obj, BOOLEAN getOwned = TRUE ) = 0 ;
       virtual INT32 close () = 0 ;
    } ;
 
@@ -204,30 +204,32 @@ namespace sdbclient
          }
       }
 
-      /** \fn  INT32 next ( bson::BSONObj &obj )
+      /** \fn  INT32 next ( bson::BSONObj &obj, BOOLEAN getOwned = TRUE )
             \brief Return the next document of current cursor, and move forward
+            \param [in] getOwned whether the return bson object should have its own buffer
             \param [out] obj The return bson object
             \retval SDB_OK Operation Success
             \retval Others Operation Fail
       */
-      INT32 next ( bson::BSONObj &obj )
+      INT32 next ( bson::BSONObj &obj, BOOLEAN getOwned = TRUE )
       {
          if ( !pCursor )
             return SDB_NOT_CONNECTED ;
-         return pCursor->next ( obj ) ;
+         return pCursor->next ( obj, getOwned ) ;
       }
 
       /** \fn INT32 current ( bson::BSONObj &obj )
             \brief Return the current document of cursor, and don't move
+            \param [in] getOwned whether the return bson object should have its own buffer
             \param [out] obj The return bson object
             \retval SDB_OK Operation Success
             \retval Others Operation Fail
       */
-      INT32 current ( bson::BSONObj &obj )
+      INT32 current ( bson::BSONObj &obj, BOOLEAN getOwned = TRUE )
       {
          if ( !pCursor )
             return SDB_NOT_CONNECTED ;
-         return pCursor->current ( obj ) ;
+         return pCursor->current ( obj, getOwned ) ;
       }
 
       /** \fn INT32 close ()

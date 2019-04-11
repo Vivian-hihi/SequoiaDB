@@ -84,8 +84,8 @@ namespace sdbclient
       _sdbCursorImpl () ;
       ~_sdbCursorImpl () ;
 
-      INT32 next          ( BSONObj &obj ) ;
-      INT32 current       ( BSONObj &obj ) ;
+      INT32 next          ( BSONObj &obj, BOOLEAN getOwned = TRUE ) ;
+      INT32 current       ( BSONObj &obj, BOOLEAN getOwned = TRUE ) ;
       INT32 close () ;
    } ;
 

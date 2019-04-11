@@ -434,10 +434,9 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbCursorImpl::next ( BSONObj &obj )
+   INT32 _sdbCursorImpl::next ( BSONObj &obj, BOOLEAN getOwned )
    {
       INT32 rc = SDB_OK ;
-      BSONObj localobj ;
       MsgOpReply *pReply = NULL ;
 
       // check wether the cursor had been close or not
@@ -501,8 +500,12 @@ do                                                            \
          }
       }
       // then let's read the object
-      localobj.init ( &_pReceiveBuffer [ _offset ] ) ;
-      obj = localobj.copy () ;
+      obj.init ( &_pReceiveBuffer [ _offset ] ) ;
+     
+      if ( TRUE == getOwned )
+      {
+          obj = obj.copy();
+      }
       ++_totalRead ;
 
    done :
@@ -511,10 +514,9 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbCursorImpl::current ( BSONObj &obj )
+   INT32 _sdbCursorImpl::current ( BSONObj &obj, BOOLEAN getOwned )
    {
       INT32 rc = SDB_OK ;
-      BSONObj localobj ;
 
       if ( _isClosed )
       {
@@ -524,7 +526,7 @@ do                                                            \
 
       if ( -1 == _offset )
       {
-         rc = next( obj ) ;
+         rc = next( obj, getOwned ) ;
          if ( rc )
          {
             goto error ;
@@ -532,8 +534,12 @@ do                                                            \
       }
       else
       {
-         localobj.init ( &_pReceiveBuffer [ _offset ] ) ;
-         obj = localobj.copy () ;
+         obj.init ( &_pReceiveBuffer [ _offset ] ) ;
+
+         if ( TRUE == getOwned )
+         {
+            obj = obj.copy() ;
+         }
       }
 
    done :

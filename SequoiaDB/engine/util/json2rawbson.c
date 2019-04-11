@@ -41,6 +41,9 @@
 #else
 #include "jstobs.h"
 #endif
+
+void*    allocBson(int size);
+
 // This function should NEVER be directly called other than fromjson.cpp
 // The reason to separate this function into different file is that
 // client/jstobs.h uses bson structure, but fromjson.cpp uses bson namespace, so
@@ -60,7 +63,7 @@ CHAR * json2rawbson ( const CHAR *str, BOOLEAN isBatch )
       if ( obj.data )
       {
          INT32 bsonsize = *((INT32*)obj.data) ;
-         p = (CHAR*)malloc ( bsonsize + sizeof(unsigned)) ;
+         p = (CHAR*)allocBson ( bsonsize + sizeof(unsigned)) ;
          if ( p )
          {
             memset ( p, 0, bsonsize + sizeof(unsigned) ) ;
