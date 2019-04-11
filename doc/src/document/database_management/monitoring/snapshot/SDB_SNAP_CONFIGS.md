@@ -21,7 +21,7 @@ SDB_SNAP_CONFIGS
 
 > **Note:**
 
->在查询快照时指定快照参数，请参考 [SdbSnapshotOption](reference/Sequoiadb_command/SpecialObjects/SdbSnapshotOption.md)。
+>在查询快照时指定快照参数，请参考 [SdbSnapshotOption](reference/Sequoiadb_command/AuxiliaryObjects/SdbSnapshotOption.md)。
 
 ##示例##
 
