@@ -281,7 +281,7 @@ public class SdbTestBase {
     }
 
     @BeforeGroups( groups = { RU, RC, RCWAITLOCK, RS, RCAUTO, RCUSERBS } )
-    public static synchronized void initGroups() {
+    public static synchronized void initTestGroups() {
         if ( group2Count.get( testGroup ).getAndIncrement() > 0 ) {
             return ;
         }
@@ -291,7 +291,7 @@ public class SdbTestBase {
     }
 
     @AfterGroups( groups = { RC, RU, RCWAITLOCK, RS, RCAUTO, RCUSERBS }, alwaysRun = true )
-    public static synchronized void finiGroups() {
+    public static synchronized void finiTestGroups() {
         if ( initCount.get() == 0 ){
             return ;
         }
