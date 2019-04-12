@@ -1106,8 +1106,17 @@ namespace DriverTest
         [TestMethod()]
         public void getSessionAttr_Test()
         {
+            // case 1:
             BsonDocument attribute = sdb.GetSessionAttr();
+            BsonDocument attribute2 = sdb.GetSessionAttr();
+            Assert.IsTrue(attribute == attribute2);
+            BsonDocument attribute3 = sdb.GetSessionAttr(false);
+            Assert.IsTrue(attribute == attribute3);
             Console.WriteLine(attribute.ToString());
+            // case 2:
+            sdb.SetSessionAttr(new BsonDocument());
+            BsonDocument attribute4 = sdb.GetSessionAttr();
+            Assert.IsTrue(attribute3 == attribute4);
         }
 
         [TestMethod()]
