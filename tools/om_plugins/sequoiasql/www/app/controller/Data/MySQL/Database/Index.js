@@ -988,7 +988,7 @@
                {
                   var formVal2 = $scope.CreateTableWindow['config']['Form2'].getValue() ;
                   formVal2 = modalValue2Create( formVal2 ) ;
-                  sql += sprintf( ' comment = "?"', JSON.stringify( formVal2 ).replace( /\"/g, "\\\"" ) ) ;
+                  sql += sprintf( ' comment = "sequoiadb:?"', JSON.stringify( formVal2 ).replace( /\"/g, "\\\"" ) ) ;
                }
                $scope.createTable( sql, formVal1['dbName'] ) ;
                $scope.CreateTableWindow['callback']['Close']() ;
