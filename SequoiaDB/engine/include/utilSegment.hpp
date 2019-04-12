@@ -51,6 +51,24 @@ typedef UINT32 UTIL_OBJIDX ;
 
 namespace engine
 {
+
+   /*
+      _utilSegmentHandler define
+   */
+   class _utilSegmentHandler
+   {
+      public:
+         _utilSegmentHandler() {}
+         virtual ~_utilSegmentHandler() {}
+
+      public:
+         virtual BOOLEAN   canAllocSegment( UINT64 size ) const = 0 ;
+         virtual void      onAllocSegment( UINT64 size ) = 0 ;
+         virtual BOOLEAN   canReleaseSegment( UINT64 size ) const = 0 ;
+         virtual void      onReleaseSegment( UINT64 size ) = 0 ;
+   } ;
+   typedef _utilSegmentHandler utilSegmentHandler ;
+
 // Segment pool 0 :
 //
 //    segment 0: a segment is an array of object ( T )
@@ -102,7 +120,7 @@ namespace engine
    // masks for bitwise operations on object index correlated with pool number
    #define _SEGMENT_OBJ_INDEX_MASK     ( ( UINT32 ) 0x0FFFFFFF )
    #define _SEGMENT_OBJ_POOL_MASK      ( ( UINT32 ) 0xF0000000 )
-   #define _SEGMENT_OBJ_POOLID_SHIFT  ( 28 )
+   #define _SEGMENT_OBJ_POOLID_SHIFT   ( 28 )
 
    #define _SEGMENT_OBJ_EYE_CATCHER    ( ( UINT16 ) 0xBEEF )
    #define _SEGMENT_OBJ_FLAG_ACQUIRED  ( ( UINT16 ) 0x5555 )
@@ -162,6 +180,8 @@ namespace engine
       ossSpinXLatch  _latch ;
       std::vector< _objX * > _segList;// a list of segments, each segment is
                                       // an array of object(T)
+      utilSegmentHandler   *_pHandler;// callback handler
+
    public :
       _utilSegmentPool() : _list(NULL),
                            _begin(0),
@@ -172,7 +192,8 @@ namespace engine
                            _poolId(0),
                            _maintaining(0),
                            _highWatermark(0),
-                           _isInitialized( FALSE )
+                           _isInitialized( FALSE ),
+                           _pHandler( NULL )
                            { }
 
       ~_utilSegmentPool() ;
@@ -301,7 +322,8 @@ namespace engine
       //
       INT32 init(  const UINT32 poolId,
                    const UINT32 numberOfObjs,
-                   const UINT32 maxNumberOfObjs ) ;
+                   const UINT32 maxNumberOfObjs,
+                   utilSegmentHandler *pHandler = NULL ) ;
 
       //
       // Description: Free all objects allocated in segments and the object
@@ -402,7 +424,7 @@ namespace engine
 
       OSS_INLINE BOOLEAN shrinkInProgress()
       {
-         return ( ( 1 == _maintaining.fetch() ) ? TRUE : FALSE ) ;
+         return _maintaining.compare( 1 ) ;
       }
 
       OSS_INLINE UINT32 getHighWatermark() { return _highWatermark.fetch() ; }
@@ -418,7 +440,7 @@ namespace engine
       //              initialized.
       //              shrink() protects all underneath operations by latch.
       //
-      INT32 shrink( UINT32 freeSegToKeep = 1 ) ;
+      INT32 shrink( UINT32 freeSegToKeep = 1, UINT32 *pFreeSegNum = NULL ) ;
 
    #ifdef _DEBUG
       UTIL_OBJIDX * getListAddr() { return _list ; } 
@@ -486,11 +508,17 @@ namespace engine
                SDB_OSS_DEL [] ( _segList[i] ) ;
             }
             _segList[i] = NULL ;
+
+            if ( _pHandler )
+            {
+               _pHandler->onReleaseSegment( (UINT64)_delta * sizeof( T ) ) ;
+            }
          }
          _segList.clear() ;
          SAFE_OSS_FREE( _list ) ;
          _list = NULL ;
          _isInitialized = FALSE ;
+         _pHandler = NULL ;
       }
    }
 
@@ -530,7 +558,10 @@ namespace engine
          if ( ( NULL != pListTmp ) && ( NULL != pSegTmp ) )
          {
             // copy old _list content
-            ossMemcpy( pListTmp, _list, sizeof( UTIL_OBJIDX ) * numOfObjects ) ;
+            if ( _list )
+            {
+               ossMemcpy( pListTmp, _list, sizeof( UTIL_OBJIDX ) * numOfObjects ) ;
+            }
 
             // initiate the newly allocated portion
             for ( UINT32 i = 0 ; i < _delta ; i++ )
@@ -583,15 +614,17 @@ namespace engine
       return rc ;
    }
 
-
    #define UTIL_SEGMENT_OBJ_IN_USE_RATIO_THRESHOLD ( 0.85 )
    template < class T >
-   INT32 _utilSegmentPool< T >::shrink( UINT32 freeSegToKeep )
+   INT32 _utilSegmentPool< T >::shrink( UINT32 freeSegToKeep,
+                                        UINT32 *pFreeSegNum )
    {
       INT32         rc       = SDB_OK ;
       BOOLEAN       bLatched = FALSE ;
       UTIL_OBJIDX * pListTmp = NULL, * pUsedList = NULL ;
       UINT32        numOfObjects, maxObj, newSize, segInUse ;
+      UINT32        freeSegNum = 0 ;
+      UINT64        freeSize = 0 ;
 
 #ifdef _DEBUG
       SDB_ASSERT( _isInitialized,
@@ -609,7 +642,7 @@ namespace engine
 
          // if 85% of objects in pool are in use, implies the system might be
          // busy. Likely a new segment might be added in soon.
-         float ratio = _begin / numOfObjects ;
+         FLOAT64 ratio = _begin / numOfObjects ;
          if ( ratio >= UTIL_SEGMENT_OBJ_IN_USE_RATIO_THRESHOLD )
          {
             goto done ;
@@ -637,8 +670,8 @@ namespace engine
             // then, starting from the end of the pUsedList, find the first
             // element is not equal to -1, and its index is the max object
             // index in use
-            for ( UINT32 i = numOfObjects - 1; i >= 0; i-- )
-            {    
+            for ( UINT32 i = numOfObjects - 1 ; i >= 0 ; i-- )
+            {
                if ( UTIL_INVALID_OBJ_INDEX != pUsedList[i] )
                {
                   maxObj = i ;
@@ -658,7 +691,17 @@ namespace engine
 
          // if there are enough segments to be freed
          if ( _segList.size() > segInUse )
-         { 
+         {
+            freeSegNum = _segList.size() - segInUse ;
+            freeSize = ( (UINT64)freeSegNum << _exponent ) * sizeof( T ) ;
+
+            if ( _pHandler &&
+                 !_pHandler->canReleaseSegment( freeSize ) )
+            {
+               /// can't release
+               goto done ;
+            }
+
             // calculate new size
             newSize = ( segInUse << _exponent ) ;
             // allocate _list with new size
@@ -712,6 +755,11 @@ namespace engine
                   SDB_OSS_DEL [] ( _segList[i] ) ;
                   _segList.pop_back() ;
                }
+
+               if ( _pHandler )
+               {
+                  _pHandler->onReleaseSegment( freeSize ) ;
+               }
             }  // if pListTemp is allocated
             else
             {
@@ -736,6 +784,10 @@ namespace engine
       {
          SAFE_OSS_FREE( pUsedList ) ;
       }
+      if ( pFreeSegNum )
+      {
+         *pFreeSegNum = freeSegNum ;
+      }
       return rc ;
    error:
       goto done ;
@@ -750,12 +802,11 @@ namespace engine
    (
       const UINT32 poolId,
       const UINT32 numberOfObjs,
-      const UINT32 maxNumberOfObjs
+      const UINT32 maxNumberOfObjs,
+      utilSegmentHandler *pHandler
    )
    {
       INT32   rc           = SDB_OK ;
-      _objX * pSegTmp      = NULL ;
-      UINT32  packedPoolID = _GET_PACKED_POOLID( poolId ) ;
 
       if (    ( UTIL_INVALID_OBJ_INDEX != numberOfObjs )
            && ( UTIL_INVALID_OBJ_INDEX != maxNumberOfObjs )
@@ -766,7 +817,6 @@ namespace engine
       {
          // round up numberOfObjs to the nearest power of 2
          _delta        = _nextPowerOf2( numberOfObjs, _exponent ) ;
-         _numOfObjs.swap( _delta ) ;
          _maxNumOfObjs = maxNumberOfObjs ;
          _poolId       = poolId ;
 
@@ -774,6 +824,9 @@ namespace engine
          {
             _maxNumOfObjs = _delta ;
          }
+         _highWatermark.init( _delta << 1 ) ;
+         _pHandler = pHandler ;
+         _isInitialized = TRUE ;
       }
       else
       {
@@ -784,53 +837,13 @@ namespace engine
                  "   numberOfObjs    : %u"OSS_NEWLINE
                  "   maxNumberOfObjs : %u"OSS_NEWLINE,
                  rc,
-                 _poolId,
+                 poolId,
                  numberOfObjs,
                  maxNumberOfObjs ) ;
          SDB_ASSERT( ( SDB_OK == rc ), "Invalid arguments" ) ;
          goto error ;
       }
 
-      // allcoate memory
-      pSegTmp = SDB_OSS_NEW _objX[ _delta ] ;
-      _list = (UTIL_OBJIDX *)SDB_OSS_MALLOC( sizeof(UTIL_OBJIDX) * _delta ) ;
-      if ( ( NULL != _list ) && ( NULL != pSegTmp ) )
-      {
-         _begin = 0 ;
-         _highWatermark.swap( 2 * _delta ) ;
-         for ( UINT32 i = 0 ; i < _delta ; i++ )
-         {
-            // initialize the list
-            _list[ i ] = i ;
-            // initialize the _objX
-            pSegTmp[i]._index = ((i & _SEGMENT_OBJ_INDEX_MASK) | packedPoolID) ;
-         }
-         _segList.push_back( pSegTmp ) ;
-         _maintaining.swap( 0 ) ;
-         _isInitialized = TRUE ;
-      }
-      else
-      {
-         if ( NULL != pSegTmp )
-         {
-            SDB_OSS_DEL [] pSegTmp ;
-            pSegTmp = NULL ;
-         }
-         SAFE_OSS_FREE( _list  ) ;
-         _list = NULL ;
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR,
-                 "Out of memory when initialize, rc:%d"OSS_NEWLINE
-                 "   pool            : %u"OSS_NEWLINE
-                 "   numberOfObjs    : %u"OSS_NEWLINE
-                 "   maxNumberOfObjs : %u"OSS_NEWLINE
-                 "   objs per segment: %u"OSS_NEWLINE,
-                 rc,
-                 _poolId,
-                 numberOfObjs,
-                 maxNumberOfObjs,
-                 _delta ) ;
-      }
    done:
       return rc ;
    error:
@@ -875,9 +888,9 @@ namespace engine
       // add a new segment and expand the _list
       _latch.get() ;
       bLatched = TRUE ;
-      if ( _isInitialized && ( NULL != _list ) )
+      if ( _isInitialized )
       {
-         if ( _needExpand() ) // need to expand
+         if ( !_list || _needExpand() ) // need to expand
          {
             if ( _isUpToLimit() )
             {
@@ -899,7 +912,15 @@ namespace engine
                        _begin ) ;
                goto error ;
             }
-            
+            else if ( _pHandler &&
+                      !_pHandler->canAllocSegment( _delta * sizeof( T ) ) )
+            {
+               rc = SDB_OSS_UP_TO_LIMIT ;
+               PD_LOG( PDWARNING, "Can't alloc segment[%d * %d] by handler",
+                       _delta, sizeof( T ) ) ;
+               goto error ;
+            }
+
             rc = _expandList() ;
             if ( rc )
             {
@@ -917,6 +938,11 @@ namespace engine
                        _numOfObjs.peek(),
                        _begin ) ;
                goto error ;
+            }
+
+            if ( _pHandler )
+            {
+               _pHandler->onAllocSegment( _delta * sizeof( T ) ) ;
             }
          }
 
@@ -1197,14 +1223,16 @@ namespace engine
          ~_utilSegmentManager() { fini(); } 
 
          INT32 init( const UTIL_OBJIDX numberOfObjs,
-                     const UTIL_OBJIDX maxNumberOfObjs )
+                     const UTIL_OBJIDX maxNumberOfObjs,
+                     utilSegmentHandler *pHandler = NULL )
          {
             INT32 rc = SDB_OK ;
             for ( UINT32 i = 0; i < _SEGMENT_MGR_MAX_POOLS ; i++ )
             {
                rc = _pool[ i ].init( i,
                                      numberOfObjs    / _SEGMENT_MGR_MAX_POOLS,
-                                     maxNumberOfObjs / _SEGMENT_MGR_MAX_POOLS );
+                                     maxNumberOfObjs / _SEGMENT_MGR_MAX_POOLS,
+                                     pHandler ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, 
