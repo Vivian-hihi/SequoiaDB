@@ -6,6 +6,7 @@ import com.sequoiadb.test.common.Constants;
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
 import org.junit.*;
 
 import java.util.Random;
@@ -215,17 +216,49 @@ public class SdbSetSessionAttr {
     }
 
     @Test
+    public void setSessionAttr_test_trans() {
+        BSONObject options = new BasicBSONObject();
+        options.put("TransIsolation", 1);
+        options.put("TransTimeout", 120);
+        options.put("TransLockWait", true);
+        options.put("TransUseRBS", false);
+        options.put("TransAutoCommit", true);
+        options.put("TransAutoRollback", false);
+
+        sdb.setSessionAttr(options);
+        BSONObject sessionAttr = sdb.getSessionAttr();
+        System.out.println(sessionAttr);
+        String expectString = "{ \"PreferedInstance\" : \"M\" , \"PreferedInstanceMode\" : \"random\" , \"PreferedStrict\" : false , \"Timeout\" : -1 , \"TransIsolation\" : 1 , \"TransTimeout\" : 120 , \"TransUseRBS\" : false , \"TransLockWait\" : true , \"TransAutoCommit\" : true , \"TransAutoRollback\" : false }";
+        BSONObject expectObject =(BSONObject)JSON.parse(expectString);
+        System.out.println(expectObject);
+//        boolean result = sessionAttr.toString().equals(expectString);
+        boolean result = sessionAttr.equals(expectObject);
+        Assert.assertTrue(result);
+    }
+
+    @Test
     public void getSessionAttr_test() {
         if (!isCluster)
             return;
-        // test
         try {
+            // case 1: getSessionAttr() test
             BSONObject result = sdb.getSessionAttr();
+            BSONObject result2 = sdb.getSessionAttr();
             System.out.println(result.toString());
+            Assert.assertTrue( result == result2);
+            BSONObject result3 = sdb.getSessionAttr(false);
+            Assert.assertTrue( result != result3);
+            Assert.assertTrue( result.equals(result3));
+            // case 2: setSessionAttr() test
+            sdb.setSessionAttr(new BasicBSONObject());
+            BSONObject result4 = sdb.getSessionAttr(true);
+            Assert.assertTrue( result3 != result4);
+            Assert.assertTrue( result3.equals(result4));
         } catch (BaseException e) {
             System.out.println(e.getMessage());
             assertTrue(false);
         }
+
     }
 
     @Test
@@ -241,4 +274,5 @@ public class SdbSetSessionAttr {
             assertTrue(false);
         }
     }
+
 }

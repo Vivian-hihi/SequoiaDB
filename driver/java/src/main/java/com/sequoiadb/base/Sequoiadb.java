@@ -1733,38 +1733,23 @@ public class Sequoiadb implements Closeable {
     /**
      * Set the attributes of the current session.
      *
-     * @param options The configuration options for the current session.The options are as below:
-     *                <ul>
-     *                <li>PreferedInstance : Preferred instance for read request in the current session. Could be single value in "M", "m", "S", "s", "A", "a", 1-255, or BSON Array to include multiple values. e.g. { "PreferedInstance" : [ 1, 7 ] }.
-     *                <ul>
-     *                <li>"M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.</li>
-     *                <li>"S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.</li>
-     *                <li>"A", "a": any instance.</li>
-     *                <li>1-255: the instance with specified instance ID.</li>
-     *                <li>If multiple alphabet instances are given, only first one will be used.</li>
-     *                <li>If matched instance is not found, will choose instance by random.</li>
-     *                </ul>
-     *                </li>
-     *                <li>PreferedInstanceMode : The mode to choose query instance when multiple preferred instances are found in the current session. e.g. { "PreferedInstanceMode : "random" }.
-     *                <ul>
-     *                <li>"random": choose the instance from matched instances by random.</li>
-     *                <li>"ordered": choose the instance from matched instances by the order of "PreferedInstance".</li>
-     *                </ul>
-     *                </li>
-     *                <li>Timeout : The timeout (in ms) for operations in the current session. -1 means no timeout for operations. e.g. { "Timeout" : 10000 }.
-     *                </li>
-     *                </ul>
+     * @param options The options for setting session attributes. Can not be
+     *                null. While it's a empty options, the local session attributes
+     *                cache will be cleanup. Please reference
+     *                {@see <a href=http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-302>here</a>}
+     *                for more detail.
      * @throws BaseException If error happens.
      */
     public void setSessionAttr(BSONObject options) throws BaseException {
-        if (null == options || options.isEmpty()) {
+        if (options == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "options can not be null");
+        }
+        if (options.isEmpty()) {
+            clearSessionAttrCache();
             return;
         }
-
         BSONObject newObj = new BasicBSONObject();
-
         newObj.putAll(options);
-
         if (options.containsField(SdbConstants.FIELD_NAME_PREFERED_INSTANCE)) {
             // Add old version of preferred instance
             Object value = options.get(SdbConstants.FIELD_NAME_PREFERED_INSTANCE);
@@ -1788,31 +1773,45 @@ public class Sequoiadb implements Closeable {
         }
 
         clearSessionAttrCache();
-
         AdminRequest request = new AdminRequest(AdminCommand.SET_SESSION_ATTRIBUTE, newObj);
         SdbReply response = requestAndResponse(request);
         throwIfError(response);
     }
 
     /**
-     * Get the attributes of the current session.
+     * Get the attributes of the current session from the local cache if possible.
      *
      * @return the BSONObject of the session attribute.
      * @throws BaseException If error happens.
      * @since 2.8.5
      */
     public BSONObject getSessionAttr() throws BaseException {
-        BSONObject result = getSessionAttrCache();
-        if (null != result) {
-            return result;
+        return getSessionAttr(true);
+    }
+
+    /**
+     * Get the attributes of the current session.
+     *
+     * @param useCache use the local cache or not.
+     * @return the BSONObject of the session attribute.
+     * @throws BaseException If error happens.
+     * @since 3.2
+     */
+    public BSONObject getSessionAttr(boolean useCache) throws BaseException {
+        BSONObject result = null;
+        if (useCache) {
+            result = getSessionAttrCache();
+            if (result != null) {
+                return result;
+            }
         }
         AdminRequest request = new AdminRequest(AdminCommand.GET_SESSION_ATTRIBUTE);
         SdbReply response = requestAndResponse(request);
         throwIfError(response);
         ResultSet resultSet = response.getResultSet();
-        if (null != resultSet && resultSet.hasNext()) {
+        if (resultSet != null && resultSet.hasNext()) {
             result = resultSet.getNext();
-            if (null == result) {
+            if (result == null) {
                 clearSessionAttrCache();
             } else {
                 setSessionAttrCache(result);
