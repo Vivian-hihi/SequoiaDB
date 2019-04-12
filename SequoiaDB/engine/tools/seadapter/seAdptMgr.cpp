@@ -127,7 +127,6 @@ namespace seadapter
       INT32 rc = SDB_OK ;
       vector<UINT16> imIDs ;
       seIdxMetaMgr* idxMetaMgr = _pAdptCB->getIdxMetaMgr() ;
-      seIdxMetaContext *imContext = NULL ;
 
       idxMetaMgr->getCurrentIMIDs( imIDs ) ;
 
@@ -135,6 +134,7 @@ namespace seadapter
             ++itr )
       {
          // Start new task.
+         BOOLEAN startNew = FALSE ;
          seIdxMetaContext *imContext = NULL ;
          rc = idxMetaMgr->getIMContext( &imContext, *itr, SHARED ) ;
          PD_RC_CHECK( rc, PDERROR, "Get index meta context failed[%d]",
@@ -148,6 +148,7 @@ namespace seadapter
             {
                _pAdptCB->startInnerSession( SEADPT_SESSION_INDEX,
                                             _newSessionID(), (void *)imContext ) ;
+               startNew = TRUE ;
                _activeWorkers.insert( meta->getID() ) ;
             }
             _activeWorkerLatch.release() ;
@@ -155,13 +156,15 @@ namespace seadapter
             // and released when the session exists.
          }
          imContext->metaUnlock() ;
+         if ( !startNew )
+         {
+            // If no new task starts for the index, release the index meta
+            // context.
+            idxMetaMgr->releaseIMContext( imContext ) ;
+         }
       }
 
    done:
-      if ( imContext && imContext->isMetaLocked() )
-      {
-         imContext->metaUnlock() ;
-      }
       return rc ;
    error:
       goto done ;
@@ -253,10 +256,6 @@ namespace seadapter
       }
 
    done:
-      if ( imContext->isMetaLocked() )
-      {
-         imContext->metaUnlock() ;
-      }
       // The index meta context is created before the session starts, and
       // released when session destroyed.
       idxMetaMgr->releaseIMContext( imContext ) ;

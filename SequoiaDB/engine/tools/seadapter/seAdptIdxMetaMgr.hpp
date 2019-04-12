@@ -395,7 +395,7 @@ namespace seadapter
 
    public:
       _seIdxMetaMgr() ;
-      ~_seIdxMetaMgr() {}
+      ~_seIdxMetaMgr() ;
 
       void setFixTypeName( const CHAR *type ) ;
 

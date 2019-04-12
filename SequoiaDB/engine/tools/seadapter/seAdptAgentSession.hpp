@@ -86,10 +86,9 @@ namespace seadapter
       INT32 _reply( MsgOpReply *header, const CHAR *buff, UINT32 size ) ;
       INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader *msg ) ;
       INT32 _selectIndex( const CHAR *clName, const BSONObj &hint,
-                          BSONObj &newHint ) ;
+                          BSONObj &newHint, UINT16 &indexID ) ;
 
    private:
-      seIdxMetaContext  *_imContext ;
       utilESCltFactory  *_seCltFactory ;
       utilESClt         *_esClt ;
       CTX_MAP           _ctxMap ;

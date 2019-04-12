@@ -52,7 +52,6 @@ namespace seadapter
    _seAdptAgentSession::_seAdptAgentSession( UINT64 sessionID )
    : _pmdAsyncSession( sessionID )
    {
-      _imContext = NULL ;
       _seCltFactory = sdbGetSeCltFactory() ;
       _esClt = NULL ;
       _contextIDHWM = 0 ;
@@ -198,9 +197,6 @@ namespace seadapter
       CHAR *pFieldSelector = NULL ;
       CHAR *pOrderBy = NULL ;
       CHAR *pHint = NULL ;
-
-      string indexName ;
-      string typeName ;
       seAdptContextQuery *context = NULL ;
 
       rc = msgExtractQuery( (CHAR *)msg, &flag, &pCollectionName,
@@ -226,8 +222,9 @@ namespace seadapter
          BSONObj orderBy ( pOrderBy ) ;
          BSONObj hint ( pHint ) ;
          BSONObj newHint ;
+         UINT16 indexID = SEADPT_INVALID_IMID ;
 
-         rc = _selectIndex( pCollectionName, hint, newHint ) ;
+         rc = _selectIndex( pCollectionName, hint, newHint, indexID ) ;
          PD_RC_CHECK( rc, PDERROR, "Select index for collection[%s] failed[%d]",
                       pCollectionName, rc ) ;
 
@@ -240,8 +237,8 @@ namespace seadapter
             goto error ;
          }
 
-         rc = context->open( _imContext, _esClt, matcher, selector, orderBy,
-                             newHint, objBuff, eduCB ) ;
+         rc = context->open( pCollectionName, indexID, _esClt, matcher,
+                             selector, orderBy, newHint, objBuff, eduCB ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC != rc )
@@ -263,10 +260,6 @@ namespace seadapter
       }
 
    done:
-      if ( _imContext && _imContext->isMetaLocked() )
-      {
-         _imContext->metaUnlock() ;
-      }
       return rc ;
    error:
       if ( context )
@@ -350,18 +343,18 @@ namespace seadapter
 
    INT32 _seAdptAgentSession::_selectIndex( const CHAR *clName,
                                             const BSONObj &hint,
-                                            BSONObj &newHint )
+                                            BSONObj &newHint,
+                                            UINT16 &indexID )
    {
       INT32 rc = SDB_OK ;
-      seIdxMetaMgr* idxMetaMgr = NULL ;
       BSONObjBuilder builder ;
       UINT32 textIdxNum = 0 ;
       map<string, UINT16> idxNameMap ;
       UINT16 imID = SEADPT_INVALID_IMID ;
 
-      idxMetaMgr = sdbGetSeAdapterCB()->getIdxMetaMgr() ;
-
-      idxMetaMgr->getIdxNamesByCL( clName, idxNameMap ) ;
+      indexID = SEADPT_INVALID_IMID ;
+      sdbGetSeAdapterCB()->getIdxMetaMgr()->getIdxNamesByCL( clName,
+                                                             idxNameMap ) ;
       if ( 0 == idxNameMap.size() )
       {
          rc = SDB_RTN_INDEX_NOTEXIST ;
@@ -420,14 +413,8 @@ namespace seadapter
             }
          }
 
-         if ( _imContext )
-         {
-            idxMetaMgr->releaseIMContext( _imContext ) ;
-         }
-
-         rc = idxMetaMgr->getIMContext( &_imContext, imID, SHARED ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get index meta context failed[%d]", rc ) ;
          newHint = builder.obj() ;
+         indexID = imID ;
       }
       catch ( std::exception &e )
       {

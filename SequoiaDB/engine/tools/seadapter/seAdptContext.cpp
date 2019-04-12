@@ -37,6 +37,7 @@
 
 *******************************************************************************/
 #include "seAdptContext.hpp"
+#include "seAdptMgr.hpp"
 #include "utilESKeywordDef.hpp"
 #include "utilESUtil.hpp"
 
@@ -141,9 +142,14 @@ namespace seadapter
       {
          SDB_OSS_DEL _esFetcher ;
       }
+      if ( _imContext )
+      {
+         sdbGetSeAdapterCB()->getIdxMetaMgr()->releaseIMContext( _imContext ) ;
+      }
    }
 
-   INT32 _seAdptContextQuery::open( seIdxMetaContext *imContext,
+   INT32 _seAdptContextQuery::open( const CHAR *clName,
+                                    UINT16 indexID,
                                     utilESClt *esClt,
                                     const BSONObj &matcher,
                                     const BSONObj &selector,
@@ -166,9 +172,20 @@ namespace seadapter
 
       objBuff.reset() ;
 
-      _imContext = imContext ;
-      _esClt = esClt ;
+      rc = sdbGetSeAdapterCB()->getIdxMetaMgr()->
+            getIMContext( &_imContext, indexID, SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get index meta context for collection[%s] "
+                                "failed[%d]", clName, rc ) ;
 
+      // Check if the index meta still belongs to the collection.
+      if ( 0 != ossStrcmp( clName, _imContext->meta()->getOrigCLName() ) )
+      {
+         PD_LOG( PDERROR, "Index for collection[%s] dose not exist", clName ) ;
+         rc = SDB_RTN_INDEX_NOTEXIST ;
+         goto error ;
+      }
+
+      _esClt = esClt ;
       _condTree.parse( matcher ) ;
       textNode = _condTree.getTextNode() ;
       if ( !textNode )

@@ -93,7 +93,8 @@ namespace seadapter
       _seAdptContextBase() {}
       virtual ~_seAdptContextBase() {}
 
-      virtual INT32 open( seIdxMetaContext *imContext,
+      virtual INT32 open( const CHAR *clName,
+                          UINT16 indexID,
                           utilESClt *esClt,
                           const BSONObj &matcher,
                           const BSONObj &selector,
@@ -113,7 +114,8 @@ namespace seadapter
       _seAdptContextQuery() ;
       virtual ~_seAdptContextQuery() ;
 
-      INT32 open( seIdxMetaContext *imContext,
+      INT32 open( const CHAR *clName,
+                  UINT16 indexID,
                   utilESClt *esClt,
                   const BSONObj &matcher,
                   const BSONObj &selector,

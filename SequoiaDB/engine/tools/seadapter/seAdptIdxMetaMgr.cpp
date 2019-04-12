@@ -253,6 +253,18 @@ namespace seadapter
       }
    }
 
+   _seIdxMetaMgr::~_seIdxMetaMgr()
+   {
+      for ( vector<seIdxMetaContext *>::const_iterator itr = _vecContext.begin();
+            itr != _vecContext.end(); ++itr )
+      {
+         if ( *itr )
+         {
+            SDB_OSS_DEL *itr ;
+         }
+      }
+   }
+
    void _seIdxMetaMgr::setFixTypeName( const CHAR *type )
    {
       SDB_ASSERT( type && ossStrlen( type ) <= SEADPT_MAX_TYPE_SZ,
