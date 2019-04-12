@@ -397,7 +397,7 @@ TEST_F( dbFuncParamTest, setSessionAttr12715 )
    INT32 rc = SDB_OK ;
    BSONObj options ;
    rc = db.setSessionAttr( options ) ;
-   EXPECT_EQ( SDB_INVALIDARG, rc ) ;
+   EXPECT_EQ( 0, rc ) ;
 
    options = BSON( "preferInst" << "M" ) ;
    rc = db.setSessionAttr( options ) ;
