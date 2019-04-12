@@ -5525,22 +5525,11 @@ namespace sdbclient
 
       /** \fn INT32 setSessionAttr ( const bson::BSONObj &options ) ;
           \brief Set the attributes of the session.
-          \param [in] options The configuration options for session.The options are as below:
-
-              PreferedInstance : Preferred instance for read request in the current session. Could be single value in "M", "m", "S", "s", "A", "a", 1-255, or BSON Array to include multiple values.
-                                 e.g. { "PreferedInstance" : [ 1, 7 ] }.
-                                 "M", "m": read and write instance( master instance ). If multiple numeric instances are given with "M", matched master instance will be chosen in higher priority. If multiple numeric instances are given with "M" or "m", master instance will be chosen if no numeric instance is matched.
-                                 "S", "s": read only instance( slave instance ). If multiple numeric instances are given with "S", matched slave instances will be chosen in higher priority. If multiple numeric instances are given with "S" or "s", slave instance will be chosen if no numeric instance is matched.
-                                 "A", "a": any instance.
-                                 1-255: the instance with specified instance ID.
-                                 If multiple alphabet instances are given, only first one will be used.
-                                 If matched instance is not found, will choose instance by random.
-              PreferedInstanceMode : The mode to choose query instance when multiple preferred instances are found in the current session.
-                                     e.g. { "PreferedInstanceMode : "random" }.
-                                     "random": choose the instance from matched instances by random.
-                                     "ordered": choose the instance from matched instances by the order of "PreferedInstance".
-              Timeout : The timeout (in ms) for operations in the current session. -1 means no timeout for operations.
-                        e.g. { "Timeout" : 10000 }.
+          \param [in] options The options for setting session attributes. Can not be 
+                      NULL. While it's a empty options, the local session attributes 
+                      cache will be cleanup. Please reference 
+                      <a href="http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-302">here</a> 
+                      for more detail.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -5551,10 +5540,11 @@ namespace sdbclient
          return pSDB->setSessionAttr ( options ) ;
       }
 
-      /** \fn INT32 getSessionAttr ( bson::BSONObj & result ) ;
-          \brief Get the attributes of the session.
-          \param [out] result The return bson object
-          \param [in] useCache Whether to use cache
+      /** \fn INT32 getSessionAttr ( bson::BSONObj & result,
+                                     BOOLEAN useCache = TRUE) ;
+          \brief Get the attributes of the current session.
+          \param [out] result The return bson object.
+          \param [in] useCache Whether to use cache in local, default to be TRUE.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
