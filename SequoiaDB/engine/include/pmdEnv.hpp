@@ -174,6 +174,8 @@ namespace engine
 
    INT32&   pmdGetSigNum() ;
 
+   void     pmdSleepInstance() ;
+
    /*
       Env define
    */
