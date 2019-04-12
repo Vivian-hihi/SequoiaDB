@@ -1168,6 +1168,14 @@ namespace engine
       return ( _transLockMgr->isInitialized() ? (  _transLockMgr ) : NULL ) ; 
    }
 
+   void dpsTransCB::tryToShrinkLRBPools()
+   {
+      if ( _transLockMgr && _transLockMgr->isInitialized() )
+      {
+         _transLockMgr->tryToShrinkLRBAndLRBHeaderPool();
+      }
+   }
+
    /*
       get global trans cb
    */

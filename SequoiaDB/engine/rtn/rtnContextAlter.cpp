@@ -384,10 +384,12 @@ namespace engine
                       "collection space [%s], rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
                       "   Mode:   %s"OSS_NEWLINE,
                       collectionSpace, rc,
                       lockConflict._eduID,
+                      lockConflict._tid,
                       lockConflict._lockID.toString().c_str(),
                       lockModeToString( lockConflict._lockType ) ) ;
 
@@ -698,10 +700,12 @@ namespace engine
                       "collection [%s], rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
                       "   Mode:   %s"OSS_NEWLINE,
                       collection, rc,
                       lockConflict._eduID,
+                      lockConflict._tid,
                       lockConflict._lockID.toString().c_str(),
                       lockModeToString( lockConflict._lockType ) ) ;
 

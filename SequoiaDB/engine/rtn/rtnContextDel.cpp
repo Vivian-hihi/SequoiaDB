@@ -268,10 +268,12 @@ namespace engine
                       "Get transaction-lock of CS(%s) failed(rc=%d)"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
                       "   Mode:   %s"OSS_NEWLINE,
                       pCollectionName, rc,
                       lockConflict._eduID,
+                      lockConflict._tid,
                       lockConflict._lockID.toString().c_str(),
                       lockModeToString( lockConflict._lockType ) ) ;
 
@@ -373,10 +375,12 @@ namespace engine
                       OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
                       "   Mode:   %s"OSS_NEWLINE,
                       pCollectionName, rc,
                       lockConflict._eduID,
+                      lockConflict._tid,
                       lockConflict._lockID.toString().c_str(),
                       lockModeToString( lockConflict._lockType ) ) ;
 
@@ -1038,10 +1042,12 @@ namespace engine
                       "Get transaction-lock of CS[%s] failed, rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
                       "   Mode:   %s"OSS_NEWLINE,
                       pCSName, rc,
                       lockConflict._eduID,
+                      lockConflict._tid,
                       lockConflict._lockID.toString().c_str(),
                       lockModeToString( lockConflict._lockType ) ) ;
 
@@ -1306,10 +1312,12 @@ namespace engine
                       OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
                       "   Mode:   %s"OSS_NEWLINE,
                       _clFullName, rc,
                       lockConflict._eduID,
+                      lockConflict._tid,
                       lockConflict._lockID.toString().c_str(),
                       lockModeToString( lockConflict._lockType ) ) ;
 

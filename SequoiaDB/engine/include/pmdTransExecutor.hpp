@@ -61,6 +61,7 @@ namespace engine
             Interface
          */
          virtual EDUID        getEDUID() const ;
+         virtual UINT32       getTID() const ;
          virtual void         wakeup() ;
          virtual INT32        wait( INT64 timeout ) ;
          virtual IExecutor*   getExecutor() ;

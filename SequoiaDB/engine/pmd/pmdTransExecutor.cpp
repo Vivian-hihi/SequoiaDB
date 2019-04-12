@@ -69,6 +69,15 @@ namespace engine
       return PMD_INVALID_EDUID ;
    }
 
+   UINT32 _pmdTransExecutor::getTID() const
+   {
+      if ( _pEDUCB )
+      {
+         return _pEDUCB->getTID() ;
+      }
+      return PMD_INVALID_EDUID ;
+   }
+
    void _pmdTransExecutor::wakeup()
    {
       SDB_ASSERT( _pEDUCB, "EDU CB can't be NULL" ) ;

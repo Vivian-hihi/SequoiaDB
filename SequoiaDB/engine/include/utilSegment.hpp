@@ -584,6 +584,7 @@ namespace engine
    }
 
 
+   #define UTIL_SEGMENT_OBJ_IN_USE_RATIO_THRESHOLD ( 0.85 )
    template < class T >
    INT32 _utilSegmentPool< T >::shrink( UINT32 freeSegToKeep )
    {
@@ -596,6 +597,7 @@ namespace engine
       SDB_ASSERT( _isInitialized,
                   "shirk can only be done when segment is initialized" ) ;
 #endif
+
       _latch.get() ;
       bLatched = TRUE ;
       // this flag is checked without latching
@@ -604,6 +606,15 @@ namespace engine
       {
          numOfObjects = _numOfObjs.peek() ;
          maxObj       = 0 ;
+
+         // if 85% of objects in pool are in use, implies the system might be
+         // busy. Likely a new segment might be added in soon.
+         float ratio = _begin / numOfObjects ;
+         if ( ratio >= UTIL_SEGMENT_OBJ_IN_USE_RATIO_THRESHOLD )
+         {
+            goto done ;
+         }
+
          // find the max obj index in use
          if ( _begin > 0 )
          {

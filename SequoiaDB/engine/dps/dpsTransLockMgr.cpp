@@ -1454,6 +1454,7 @@ namespace engine
                pdpsTxResInfo->_lockID   = pLRBHdr->lockId ;
                pdpsTxResInfo->_lockType = pLRB->lockMode ;
                pdpsTxResInfo->_eduID    = pLRB->dpsTxExectr->getEDUID();
+               pdpsTxResInfo->_tid      = pLRB->dpsTxExectr->getTID() ;
             }
             goto done ;
          }
@@ -1495,6 +1496,8 @@ namespace engine
                pdpsTxResInfo->_lockType = pLRBIncompatible->lockMode ;
                pdpsTxResInfo->_eduID    =
                   pLRBIncompatible->dpsTxExectr->getEDUID() ;
+               pdpsTxResInfo->_tid      =
+                  pLRBIncompatible->dpsTxExectr->getTID() ;
             }
 
             // job done
@@ -1578,6 +1581,8 @@ namespace engine
                pdpsTxResInfo->_lockType = pLRBIncompatible->lockMode ;
                pdpsTxResInfo->_eduID    = 
                   pLRBIncompatible->dpsTxExectr->getEDUID() ;
+               pdpsTxResInfo->_tid      =
+                  pLRBIncompatible->dpsTxExectr->getTID() ;
             }
 
             // job done
@@ -1657,6 +1662,7 @@ namespace engine
                   pdpsTxResInfo->_lockID   = pLRBHdr->lockId ;
                   pdpsTxResInfo->_lockType = pLRB->lockMode ;
                   pdpsTxResInfo->_eduID    = pLRB->dpsTxExectr->getEDUID() ;
+                  pdpsTxResInfo->_tid      = pLRB->dpsTxExectr->getTID() ;
                }
 
                // job done

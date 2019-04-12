@@ -37,12 +37,14 @@
 #include "pmdEDU.hpp"
 #include "rtn.hpp"
 #include "ossUtil.h"
+#include "dpsTransCB.hpp"
 
 namespace engine
 {
    INT32 pmdDpsTransRollbackEntryPoint( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK ;
+      UINT64 timeCount = 0 ;
 
       while( !cb->isDisconnected() )
       {
@@ -62,6 +64,18 @@ namespace engine
             }
             pmdEduEventRelase( event, cb ) ;
          }
+
+         timeCount++ ;
+         // try to shrink LRB and LRB header pools every 15 minutes
+         if (    ( 0 == ( timeCount % DPS_TRANS_LRB_SHRINK_INTERVAL ) ) 
+              && ( ! PMD_IS_DB_DOWN() ) )
+         {
+            dpsTransCB * pTransCB = pmdGetKRCB()->getTransCB() ;
+            if ( pTransCB )
+            {
+               pTransCB->tryToShrinkLRBPools() ;
+            }
+         } 
       }
       rc = SDB_OK ;
       return rc ;

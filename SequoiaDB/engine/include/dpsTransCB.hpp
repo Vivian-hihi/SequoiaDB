@@ -67,6 +67,9 @@ namespace engine
    typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_ID_LSN_MAP ;
    typedef std::queue< EDUID >                      TRANS_EDU_LIST ;
 
+   // LRB shrink opreation interval, 900 seconds
+   #define DPS_TRANS_LRB_SHRINK_INTERVAL ( 900 )
+
    /*
       dpsTransCB define
    */
@@ -265,6 +268,7 @@ namespace engine
       UINT64 usedLogSpace() ;
 
       dpsTransLockManager * getLockMgrHandle() ;
+      void tryToShrinkLRBPools() ;
 
       UINT32 getMaxLRSize() ;
       void   updateMaxLRSize( UINT32 recordSize, DPS_LSN_OFFSET curLSN ) ;

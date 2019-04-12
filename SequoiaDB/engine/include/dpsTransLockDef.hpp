@@ -474,11 +474,13 @@ namespace engine
       dpsTransLockId       _lockID ;
       DPS_TRANSLOCK_TYPE   _lockType ;
       EDUID                _eduID ;
+      UINT32               _tid ;
 
       _dpsTransRetInfo()
       {
          _lockType      = DPS_TRANSLOCK_IS ;
          _eduID         = 0 ;
+         _tid           = 0 ;
       }
    } ;
    typedef _dpsTransRetInfo dpsTransRetInfo ;
