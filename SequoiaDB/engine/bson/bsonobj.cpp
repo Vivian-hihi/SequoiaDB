@@ -1678,8 +1678,4 @@ namespace bson {
         return v;
     }
 
-    extern "C" void* allocBson(int sz)
-    {
-        return TrivialAllocator::Malloc(sz);
-    }
 } // namespace bson

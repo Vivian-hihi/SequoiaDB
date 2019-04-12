@@ -14,6 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
 #pragma once
 
 #include <cfloat>
@@ -23,7 +24,6 @@
 #include "../inline_decls.h"
 #include "../stringdata.h"
 #include "../bsonassert.h"
-#include <boost/pool/pool_alloc.hpp>
 
 namespace bson {
     /* Accessing unaligned doubles on ARM generates an alignment trap and aborts
@@ -55,9 +55,7 @@ accesses) is the same as if
     */
     const int BSONObjMaxInternalSize = BSONObjMaxUserSize + ( 16 * 1024 );
 
-#define BSON_DEFAULT_BUF_SIZE ( 1024 )
-
-    const int BufferMaxSize = 64 * 1024 * 1024 ;
+    const int BufferMaxSize = 64 * 1024 * 1024;
 
     class StringBuilder;
 
@@ -65,48 +63,19 @@ accesses) is the same as if
 
     class TrivialAllocator {
     public:
-        static void* Malloc(size_t sz) 
-        { 
-            if ( sz <= BSON_DEFAULT_BUF_SIZE )
-            {
-                return boost::fast_pool_allocator<char[BSON_DEFAULT_BUF_SIZE]>::allocate();
-            }
-            else 
-            {
-                return malloc ( sz ) ;
-            }
-        }
-        
-        static void* Realloc(void *p, size_t old_sz, size_t sz) 
-        {
-            void *ptr = Malloc( sz ) ; 
-            memcpy ( ptr, p, old_sz ) ;
-            Free ( p, old_sz ) ;
-            return ptr ;
-        }
-
-        static void Free(void *p, size_t sz) 
-        { 
-            if (sz <= BSON_DEFAULT_BUF_SIZE)
-            {
-                boost::fast_pool_allocator<char[BSON_DEFAULT_BUF_SIZE]>::deallocate((char (*)[BSON_DEFAULT_BUF_SIZE])p);
-            }
-            else 
-            {
-                free ( p ) ;
-            }
-            return ;
-        }
+        void* Malloc(size_t sz) { return malloc(sz); }
+        void* Realloc(void *p, size_t sz) { return realloc(p, sz); }
+        void Free(void *p) { free(p); }
     };
 
     class StackAllocator {
     public:
-        enum { SZ = BSON_DEFAULT_BUF_SIZE };
+        enum { SZ = 512 };
         void* Malloc(size_t sz) {
             if( sz <= SZ ) return buf;
             return malloc(sz);
         }
-        void* Realloc(void *p, size_t old_sz, size_t sz) {
+        void* Realloc(void *p, size_t sz) {
             if( p == buf ) {
                 if( sz <= SZ ) return buf;
                 void *d = malloc(sz);
@@ -115,7 +84,7 @@ accesses) is the same as if
             }
             return realloc(p, sz);
         }
-        void Free(void *p, size_t size) {
+        void Free(void *p) {
             if( p != buf )
                 free(p);
         }
@@ -130,9 +99,8 @@ accesses) is the same as if
         _BufBuilder& operator=( const _BufBuilder& );
         Allocator al;
     public:
-        _BufBuilder(int initsize = BSON_DEFAULT_BUF_SIZE) : size(initsize) {
+        _BufBuilder(int initsize = 512) : size(initsize) {
             if ( size > 0 ) {
-                size = size < BSON_DEFAULT_BUF_SIZE ? BSON_DEFAULT_BUF_SIZE : size;
                 data = (char *) al.Malloc(size);
                 if( data == 0 )
                     msgasserted(10000, "out of memory BufBuilder");
@@ -147,7 +115,7 @@ accesses) is the same as if
 
         void kill() {
             if ( data ) {
-                al.Free(data, size);
+                al.Free(data);
                 data = 0;
             }
         }
@@ -160,7 +128,7 @@ accesses) is the same as if
             l = 0;
             reservedBytes = 0;
             if ( maxSize && size > maxSize ) {
-                al.Free(data, size);
+                al.Free(data);
                 data = (char*)al.Malloc(maxSize);
                 size = maxSize;
             }
@@ -274,7 +242,7 @@ accesses) is the same as if
                 a = minSize + 16 * 1024;
             if ( a > BufferMaxSize )
                 msgasserted(13548, "BufBuilder grow() > 64MB");
-            data = (char *) al.Realloc(data, size, a);
+            data = (char *) al.Realloc(data, a);
             if ( !data )
                msgasserted(13550, "BufBuilder grow() out-of-memory");
             size= a;

@@ -145,7 +145,7 @@ namespace bson {
        getOwned() method.  the presumption being that is better.
     */
     inline NOINLINE_DECL BSONObj BSONObj::copy() const {
-        Holder *h = (Holder*) TrivialAllocator::Malloc(objsize() + sizeof(unsigned));
+        Holder *h = (Holder*) malloc(objsize() + sizeof(unsigned));
         if ( !h )
             msgasserted( 13551, "BSONObj copy() out-of-memory" );
         h->zero();

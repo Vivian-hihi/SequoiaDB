@@ -500,8 +500,7 @@ namespace bson {
                 assert((int)h->refCount > 0); // make sure we haven't already freed the buffer
 #endif
                 if(--(h->refCount) == 0){
-                    TrivialAllocator::Free(h,
-                                           *(reinterpret_cast<int*>(&(h->data))));
+                    free(h);
                 }
             }
         };
