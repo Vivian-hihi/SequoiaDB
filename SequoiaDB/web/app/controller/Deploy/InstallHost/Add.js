@@ -100,7 +100,9 @@
 			         tempHostInfo['Port']				= hostInfo['Port'] ;
 			         tempHostInfo['Service']			= hostInfo['Service'] ;
 			         tempHostInfo['OMA']				= hostInfo['OMA'] ;
-			         tempHostInfo['Safety']			= hostInfo['Safety'] ;
+			         tempHostInfo['POSTGRESQL']    = hostInfo['POSTGRESQL'] ;
+                  tempHostInfo['MYSQL']         = hostInfo['MYSQL'] ;
+                  tempHostInfo['Safety']			= hostInfo['Safety'] ;
 			         tempHostInfo['OS']				= hostInfo['OS'] ;
 			         tempHostInfo['InstallPath']	= hostInfo['InstallPath'] ;
 			         tempHostInfo['Disk']				= [] ;

@@ -24,6 +24,8 @@
       $scope.InputErrNum = {} ;
       $scope.ShowType  = 'normal' ;
       
+      var isDeployPackage = false ; //是否需要部署包
+      var allHostSelectList = [] ;
       var hostSelectList = [] ;
       var installConfig = [] ;
       var buildConf = [] ;
@@ -33,7 +35,8 @@
       }
 
       //生成form表单
-      var buildConfForm= function( config ){
+      function buildConfForm( config )
+      {
          installConfig = config[0] ;
          buildConf = config[0]['Config'] ;
          $scope.Template = config[0]['Property'] ;
@@ -42,16 +45,74 @@
             'keyWidth': '200px',
             'inputList': _Deploy.ConvertTemplate( $scope.Template, 0 )
          } ;
-         $scope.AllForm['normal']['inputList'].splice( 0, 0, {
-            "name": "HostName",
-            "webName": 'hostname',
-            "type": "select",
-            "value": hostSelectList[0]['key'],
-            "valid": hostSelectList
-         } ) ;
+         if ( isDeployPackage == false )
+         {
+            $scope.AllForm['normal']['inputList'].splice( 0, 0, {
+               "name": "HostName",
+               "webName": 'hostname',
+               "type": "select",
+               "value": hostSelectList[0]['key'],
+               "valid": hostSelectList
+            } ) ;
+         }
+         else
+         {
+            $scope.AllForm['normal']['inputList'].splice( 0, 0, {
+               "name": "HostName",
+               "webName": $scope.autoLanguage( '主机名' ),
+               "type": "select",
+               "required": true,
+               "value": allHostSelectList[0]['key'],
+               "valid": allHostSelectList
+            } ) ;
+
+            $scope.AllForm['normal']['inputList'].splice( 1, 0, {
+               "name": "InstallPath",
+               "webName": $scope.autoLanguage( '安装路径' ),
+               "type": "string",
+               "required": true,
+               "value": '/opt/sequoiasql/postgresql/',
+               "valid": {
+                  "min": 1
+               }
+            } ) ;
+
+            $scope.AllForm['normal']['inputList'].splice( 2, 0, {
+               "name": "User",
+               "webName": $scope.autoLanguage( '用户名' ),
+               "type": "string",
+               "required": true,
+               "value": "root",
+               "valid": {
+                  "min": 1
+               }
+            } ) ;
+
+            $scope.AllForm['normal']['inputList'].splice( 3, 0, {
+               "name": "Passwd",
+               "webName": $scope.autoLanguage( '密码' ),
+               "type": "password",
+               "required": true,
+               "value": "",
+               "valid": {
+                  "min": 1
+               }
+            } ) ;
+         }
+
          $.each( $scope.AllForm['normal']['inputList'], function( index ){
             var name = $scope.AllForm['normal']['inputList'][index]['name'] ;
-            $scope.AllForm['normal']['inputList'][index]['value'] = buildConf[0][name] ;
+            if ( hasKey( buildConf[0], name ) )
+            {
+               var tmp = buildConf[0][name] ;
+
+               if ( name == 'dbpath' && isDeployPackage )
+               {
+                  tmp = catPath( '/opt/sequoiasql/postgresql', tmp ) ;
+               }
+
+               $scope.AllForm['normal']['inputList'][index]['value'] = tmp ;
+            }
          } ) ;
 
          var otherForm = _Deploy.ConvertTemplate( $scope.Template, 1, true, true ) ;
@@ -97,6 +158,7 @@
                   if( hostInfo['ClusterName'] == clusterName )
                   {
                      $.each( hostInfo['Packages'], function( packageIndex, packageInfo ){
+                        allHostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
                         if( packageInfo['Name'] == 'sequoiasql-postgresql' )
                         {
                            hostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
@@ -105,6 +167,13 @@
                      } ) ;
                   }
                } ) ;
+
+               if ( hostSelectList.length == 0 )
+               {
+                  isDeployPackage = true ;
+                  configure['HostInfo'].push( { 'HostName': allHostSelectList[0]['value'] } ) ; 
+               }
+
                getModuleConfig() ;
             },
             'failed': function( errorInfo ){
@@ -207,10 +276,47 @@
             } ) ;
          } ) ;
 
+         var filterDeployKey = [ 'InstallPath', 'User', 'Passwd' ] ;
+
          config['Config'] = [ {} ] ;
          $.each( allFormVal, function( key, value ){
+            if ( isDeployPackage == true && filterDeployKey.indexOf( key ) >= 0 )
+            {
+               return true ;
+            }
             config['Config'][0][key] = value ;
          } ) ;
+
+         return config ;
+      }
+
+      function convertDeployConfig()
+      {
+         var allFormVal = {} ;
+
+         $.each( $scope.AllForm, function( key, formInfo ){
+            var formVal = formInfo.getValue() ;
+
+            $.each( formVal, function( key2, value ){
+               if(  value.length > 0 || ( typeof( value ) == 'number' && isNaN( value ) == false ) )
+               {
+                  allFormVal[key2] = value ;
+               }
+            } ) ;
+         } ) ;
+
+         var config = {} ;
+         config['ClusterName'] = installConfig['ClusterName'] ;
+         config['PackageName'] = 'sequoiasql-postgresql' ;
+         config['InstallPath'] = allFormVal['InstallPath'] ;
+         config['HostInfo'] = JSON.stringify( { "HostInfo" : [ {
+            "HostName": allFormVal['HostName'],
+            "User":     allFormVal['User'],
+            "Passwd":   allFormVal['Passwd']
+         } ] } ) ;
+         config['User']       = allFormVal['User'] ;
+         config['Passwd']     = '-' ;
+         config['Enforced']   = false;
 
          return config ;
       }
@@ -230,6 +336,34 @@
             }
          } ) ;
          return result ;
+      }
+
+      function deployPackage( addBuzConfig )
+      {
+         var config = convertDeployConfig() ;
+         var data = {
+            'cmd': 'deploy package',
+            'ClusterName': config['ClusterName'],
+            'PackageName': config['PackageName'],
+            'InstallPath': config['InstallPath'],
+            'HostInfo':    config['HostInfo'],
+            'User':        config['User'],
+            'Passwd':      config['Passwd'],
+            'Enforced':    config['Enforced']
+         } ;
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $rootScope.tempData( 'Deploy', 'SecondTask', addBuzConfig ) ;
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+               $location.path( '/Deploy/Task/Module' ).search( { 'r': new Date().getTime() } ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  deployPackage( packageInfo ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
       }
 
       $scope.GotoInstall = function(){
@@ -253,8 +387,18 @@
             } ) ;
             configure['Config'].push( nodeConfig ) ;
          } ) ;
+
          if( configure )
-            installPgsql( configure ) ;
+         {
+            if ( isDeployPackage )
+            {
+               deployPackage( configure ) ;
+            }
+            else
+            {
+               installPgsql( configure ) ;
+            }
+         }
       }
 
    } ) ;

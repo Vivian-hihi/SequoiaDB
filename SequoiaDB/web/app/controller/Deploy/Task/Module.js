@@ -3,7 +3,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Deploy.Task.Install.Ctrl', function( $scope, $compile, $location, $rootScope, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Deploy.Task.Install.Ctrl', function( $scope, $compile, $location, $rootScope, $timeout, SdbRest, SdbFunction ){
 
       //初始化
       $scope.ContainerBox = [ { offsetY: -70 }, { offsetY: -4 } ] ;
@@ -18,19 +18,35 @@
             'max': 50
          }
       } ;
+      //添加服务 弹窗
+      $scope.InstallModule = {
+         'config': {},
+         'callback': {}
+      } ;
       $scope.TaskInfo = [] ;
 
       //输出到表格task的数据
       $scope.NewTaskInfo = [] ;
 
+      //复合任务
+      var isSecondTask   = false ;
+      var isCompoundTask = false ;
+
       var installTask = $rootScope.tempData( 'Deploy', 'ModuleTaskID' ) ;
       var shrink = $rootScope.tempData( 'Deploy', 'Shrink' ) ;
       $scope.DeployType  = $rootScope.tempData( 'Deploy', 'Model' ) ;
       $scope.ModuleType  = $rootScope.tempData( 'Deploy', 'Module' ) ;
+      var secondTask = $rootScope.tempData( 'Deploy', 'SecondTask' ) ;
       if( $scope.DeployType == null || $scope.ModuleType == null || installTask == null )
       {
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
+      }
+
+      if ( secondTask )
+      {
+         $rootScope.tempData( 'Deploy', 'SecondTask', null ) ;
+         isCompoundTask = true ;
       }
 
       if( $scope.DeployType != 'Task' )
@@ -203,6 +219,115 @@
 
       var firstTime = true ;
 
+      function execSecondTask( installConfig )
+      {
+         var data = { 'cmd': 'add business', 'ConfigInfo': JSON.stringify( installConfig ) } ;
+
+         if( installConfig['BusinessType'] == 'sequoiasql-mysql' )
+         {
+            data['Force'] = true ;
+         }
+
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $scope.IsFinish = false ;
+               isSecondTask = true ;
+               installTask = taskInfo[0]['TaskID'] ;
+               queryTask( taskInfo[0]['TaskID'] ) ;
+            },
+            'failed': function( errorInfo ){
+               $scope.BarColor = 2 ;
+               $scope.TimeLeft = '' ;
+               $scope.IsFinish = true ;
+               $scope.IsError = true ;
+               $scope.TaskInfo['Progress'] = 100 ;
+               $scope.TaskInfo['TaskName'] = 'ADD_BUSINESS' ;
+               $scope.TaskInfo['Info']['BusinessName'] = installConfig['BusinessName'] ;
+
+               $.each( $scope.NewTaskInfo['ResultInfo'], function( index, hostInfo ){
+                  $scope.NewTaskInfo['ResultInfo'][index]['errno'] = 1 ;
+                  $scope.NewTaskInfo['ResultInfo'][index]['Status'] = 4 ;
+                  $scope.NewTaskInfo['ResultInfo'][index]['StatusDesc'] = 'FINISH' ;
+                  $scope.NewTaskInfo['ResultInfo'][index]['Flow'].push( 'Failed to add service, errno: ' + errorInfo['errno'] ) ;
+               } ) ;
+            }
+         }, { 'showLoading': false } ) ;
+      }
+
+      //打开 添加服务 弹窗
+      function ShowInstallModule()
+      {
+         $scope.InstallModule['config'] = {
+            inputList: [
+               {
+                  "name": 'moduleName',
+                  "webName": $scope.autoLanguage( '服务名' ),
+                  "type": "string",
+                  "required": true,
+                  "value": 'SequoiaSQL-MySQL_Service',
+                  "valid": {
+                     "min": 1,
+                     "max": 127,
+                     'regex': '^[0-9a-zA-Z_-]+$'
+                  }
+               },
+               {
+                  "name": 'moduleType',
+                  "webName": $scope.autoLanguage( '服务类型' ),
+                  "type": "select",
+                  "value": 'sequoiasql-mysql',
+                  "valid": [
+                     { 'key': 'SequoiaSQL-PostgreSQL', 'value': 'sequoiasql-postgresql' },
+                     { 'key': 'SequoiaSQL-MySQL', 'value': 'sequoiasql-mysql' }
+                  ],
+                  "onChange": function( name, key, value ){
+                      $scope.InstallModule['config']['inputList'][0]['value'] = key + '_service' ;
+                  }
+               }
+            ]
+         } ;
+            
+         $scope.InstallModule['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.InstallModule['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.InstallModule['config'].getValue() ;
+               $rootScope.tempData( 'Deploy', 'Model', 'Module' ) ;
+               $rootScope.tempData( 'Deploy', 'Module', formVal['moduleType'] ) ;
+               $rootScope.tempData( 'Deploy', 'ModuleName', formVal['moduleName'] ) ;
+               $rootScope.tempData( 'Deploy', 'ClusterName', $scope.TaskInfo['Info']['ClusterName'] ) ;
+
+               //当服务类型是postgresql时
+               if( formVal['moduleType'] == 'sequoiasql-postgresql' )
+               {
+                  var businessConf = {} ;
+                  businessConf['ClusterName']  = $scope.TaskInfo['Info']['ClusterName'] ;
+                  businessConf['BusinessName'] = formVal['moduleName'] ;
+                  businessConf['BusinessType'] = formVal['moduleType'] ;
+                  businessConf['DeployMod']    = '' ;
+                  businessConf['Property']     = [] ;
+                  $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
+                  $location.path( '/Deploy/PostgreSQL-Mod' ).search( { 'r': new Date().getTime() } ) ;
+               }
+               else if( formVal['moduleType'] == 'sequoiasql-mysql' )
+               {
+                  var businessConf = {} ;
+                  businessConf['ClusterName']  = $scope.TaskInfo['Info']['ClusterName'] ;
+                  businessConf['BusinessName'] = formVal['moduleName'] ;
+                  businessConf['BusinessType'] = formVal['moduleType'] ;
+                  businessConf['DeployMod']    = '' ;
+                  businessConf['Property']     = [] ;
+                  $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
+                  $location.path( '/Deploy/MySQL-Mod' ).search( { 'r': new Date().getTime() } ) ;
+               }
+            }
+            return isAllClear ;
+         } ) ;
+         $scope.InstallModule['callback']['SetTitle']( $scope.autoLanguage( '创建服务' ) ) ;
+         $scope.InstallModule['callback']['SetIcon']( '' ) ;
+         $scope.InstallModule['callback']['Open']() ;
+      }
+
       //循环查询任务信息
       var queryTask = function( taskID ){
          $rootScope.tempData( 'Deploy', 'InstallTask', taskID ) ;
@@ -294,6 +419,11 @@
                      $scope.TimeLeft = 1 ;
                   }
 
+                  if ( isCompoundTask && isSecondTask == false )
+                  {
+                     $scope.TimeLeft += 1 ;
+                  }
+
                   if( $scope.TaskInfo['Status'] == 4 )
                   {
                      $scope.BarColor = 3 ;
@@ -331,6 +461,7 @@
                   {
                      $scope.NewTaskInfo = $scope.TaskInfo ;
                   }
+
                   $.each( $scope.NewTaskInfo['ResultInfo'], function( index, hostInfo ){
                      if( hostInfo['Status'] == $scope.TaskInfo['ResultInfo'][index]['Status'] && hostInfo['errno'] == $scope.TaskInfo['ResultInfo'][index]['errno'] )
                      {
@@ -352,11 +483,54 @@
                   $rootScope.bindResize() ;
                   $scope.$apply() ;
 
+                  if ( isCompoundTask )
+                  {
+                     if ( isSecondTask == false )
+                     {
+                        $scope.TaskInfo['Progress'] = parseInt( $scope.TaskInfo['Progress'] / 2 ) ;
+                     }
+                     else
+                     {
+                        $scope.TaskInfo['Progress'] = parseInt( $scope.TaskInfo['Progress'] / 2 ) + 50 ;
+                     }
+                  }
+
                   if( $scope.IsFinish == false )
                   {
                      SdbFunction.Timeout( function(){
                         queryTask( taskID ) ;
                      }, 1500 ) ;
+                  }
+                  else
+                  {
+                     if ( isSecondTask == false && isCompoundTask && errorNum == 0 )
+                     {
+                        $scope.BarColor = 0 ;
+                        execSecondTask( secondTask ) ;
+                     }
+                     else if( isCompoundTask && errorNum > 0 )
+                     {
+                        $scope.TaskInfo['Progress'] = 100 ;
+                        $scope.BarColor = 2 ;
+                     }
+                     else if( $scope.DeployType == 'Module' &&
+                              $scope.ModuleType == 'sequoiadb' &&
+                              $scope.TaskInfo['TaskName'] == 'ADD_BUSINESS' &&
+                              $scope.TaskInfo['ResultInfo'].length > 1 &&
+                              isCompoundTask == false &&
+                              errorNum == 0 )
+                     {
+                        $timeout( function(){
+                           $scope.Components.Confirm.type = 2 ;
+                           $scope.Components.Confirm.context = $scope.autoLanguage( '是否创建SequoiaSQL服务？' ) ;
+                           $scope.Components.Confirm.isShow = true ;
+                           $scope.Components.Confirm.okText = $scope.pAutoLanguage( '是' ) ;
+                           $scope.Components.Confirm.ok = function(){
+                              $scope.Components.Confirm.isShow = false ;
+                              ShowInstallModule() ;
+                           }
+                        }, 10 ) ;
+                     }
                   }
                }
                else
@@ -379,6 +553,7 @@
       }
 
       queryTask( installTask ) ;
+
 
    } ) ;
 }());

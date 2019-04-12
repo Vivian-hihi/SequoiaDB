@@ -523,6 +523,8 @@
    "是": "Yes",
    "是的": "Yes",
    "是的，删除": "Yes",
+   "是否创建SequoiaSQL服务？": "Do you create a SequoiaSQL service?",
+   "是否创建SequoiaSQL服务和SequoiaDB服务的关联？": "Do you create relationship between SequoiaSQL service and SequoiaDB service?",
    "是否回滚": "Rollback",
    "是否确定立即生效策略配置？": "Are you sure flush strategy ?",
    "是否确定删除策略：RuleID: ?？": "Are you sure delete this Strategy: RuleID: ??",

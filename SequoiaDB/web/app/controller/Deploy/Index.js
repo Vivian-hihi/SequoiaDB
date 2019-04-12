@@ -3,7 +3,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //主控制器
-   sacApp.controllerProvider.register( 'Deploy.Index.Ctrl', function( $scope, $location, $rootScope, SdbFunction, SdbRest, SdbSignal, SdbSwap, Loading ){
+   sacApp.controllerProvider.register( 'Deploy.Index.Ctrl', function( $scope, $location, $rootScope, SdbFunction, SdbRest, SdbSignal, SdbSwap, SdbPromise, Loading ){
       var defaultShow = $rootScope.tempData( 'Deploy', 'Index' ) ;
       //初始化
       $scope.ShowType  = 1 ;
@@ -47,11 +47,14 @@
       //清空Deploy域的数据
       $rootScope.tempData( 'Deploy' ) ;
 
+      SdbSwap.RelationshipPromise = SdbPromise.init( 2, 1 ) ;
+
       //获取业务关联关系
       SdbSwap.getRelationship = function(){
          var data = { 'cmd': 'list relationship' } ;
          SdbRest.OmOperation( data, {
             'success': function( result ){
+               SdbSwap.RelationshipPromise.resolve( 'relationship', result ) ;
                SdbSwap.relationshipList = result ;
                $.each( $scope.ModuleList, function( index, moduleInfo ){
                   moduleInfo['Relationship'] = [] ;
@@ -448,6 +451,7 @@
          var data = { 'cmd': 'query business' } ;
          SdbRest.OmOperation( data, {
             'success': function( moduleList ){
+               SdbSwap.RelationshipPromise.resolve( 'moduleList', moduleList ) ;
                $scope.ModuleList = moduleList ;
                host_module_table = [] ;
                autoQueryModuleIndex = [] ;
@@ -1612,14 +1616,14 @@
                            } ) ;
                         }
                      } ) ;
-                     if( checkSqlHost == 0 )
+                     /*if( checkSqlHost == 0 )
                      {
                         $scope.Components.Confirm.type = 3 ;
                         $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL-PostgreSQL 服务需要主机已经部署 SequoiaSQL-PostgreSQL 包。' ) ;
                         $scope.Components.Confirm.isShow = true ;
                         $scope.Components.Confirm.noClose = true ;
                      }
-                     else
+                     else*/
                      {
                         var businessConf = {} ;
                         businessConf['ClusterName'] = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
@@ -1645,14 +1649,14 @@
                            } ) ;
                         }
                      } ) ;
-                     if( checkSqlHost == 0 )
+                     /*if( checkSqlHost == 0 )
                      {
                         $scope.Components.Confirm.type = 3 ;
                         $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL-MySQL 服务需要主机已经部署 SequoiaSQL-MySQL 包。' ) ;
                         $scope.Components.Confirm.isShow = true ;
                         $scope.Components.Confirm.noClose = true ;
                      }
-                     else
+                     else*/
                      {
                         var businessConf = {} ;
                         businessConf['ClusterName'] = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
@@ -3130,6 +3134,39 @@
          $scope.CreateRelationWindow['callback']['SetTitle']( $scope.autoLanguage( '创建关联' ) ) ;
          $scope.CreateRelationWindow['callback']['Open']() ;
       } ;
+
+      SdbSwap.RelationshipPromise.then( function( data ){
+         if( data['relationship'].length == 0 )
+         {
+            var service1 = null ;
+            var service2 = null ;
+            $.each( data['moduleList'], function( index, info ){
+               if( isNull( service1 ) && info['BusinessType'] == 'sequoiadb' && info['DeployMod'] == 'distribution' )
+               {
+                  service1 = info['BusinessName'] ;
+               }
+               else if ( isNull( service2 ) && info['BusinessType'] == 'sequoiasql-mysql' || nfo['BusinessType'] == 'sequoiasql-postgresql' )
+               {
+                  service2 = info['BusinessName'] ;
+               }
+               if( isString( service1) && isString( service2 ) )
+               {
+                  return false ;
+               }
+            } ) ;
+            if( isString( service1) && isString( service2 ) )
+            {
+               $scope.Components.Confirm.type = 2 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '是否创建SequoiaSQL服务和SequoiaDB服务的关联？' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.pAutoLanguage( '是' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  $scope.OpenCreateRelation() ;
+               }
+            }
+         }
+      } ) ;
 
       //解除关联 弹窗
       $scope.RemoveRelationWindow = {

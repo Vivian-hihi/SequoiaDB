@@ -23,6 +23,8 @@
 
       $scope.ShowType  = 1 ;
       
+      var isDeployPackage = false ; //是否需要部署包
+      var allHostSelectList = [] ;
       var hostSelectList = [] ;
       var installConfig = [] ;
       var buildConf = [] ;
@@ -32,7 +34,8 @@
       }
 
       //生成form表单
-      var buildConfForm= function( config ){
+      function buildConfForm( config )
+      {
          installConfig = config[0] ;
          buildConf = config[0]['Config'] ;
          $scope.Template = config[0]['Property'] ;
@@ -41,14 +44,61 @@
             'keyWidth': '200px',
             'inputList': _Deploy.ConvertTemplate( $scope.Template, 0 )
          } ;
-         $scope.Form1['inputList'].splice( 0, 0, {
-            "name": "HostName",
-            "webName": $scope.autoLanguage( '主机名' ),
-            "type": "select",
-            "value": hostSelectList[0]['key'],
-            "valid": hostSelectList
-         } ) ;
-         $scope.Form1['inputList'].splice( 1, 0, {
+         if( isDeployPackage == false )
+         {
+            $scope.Form1['inputList'].splice( 0, 0, {
+               "name": "HostName",
+               "webName": $scope.autoLanguage( '主机名' ),
+               "type": "select",
+               "value": hostSelectList[0]['key'],
+               "valid": hostSelectList
+            } ) ;
+         }
+         else
+         {
+            $scope.Form1['inputList'].splice( 0, 0, {
+               "name": "HostName",
+               "webName": $scope.autoLanguage( '主机名' ),
+               "type": "select",
+               "required": true,
+               "value": allHostSelectList[0]['key'],
+               "valid": allHostSelectList
+            } ) ;
+
+            $scope.Form1['inputList'].splice( 1, 0, {
+               "name": "InstallPath",
+               "webName": $scope.autoLanguage( '安装路径' ),
+               "type": "string",
+               "required": true,
+               "value": '/opt/sequoiasql/mysql/',
+               "valid": {
+                  "min": 1
+               }
+            } ) ;
+
+            $scope.Form1['inputList'].splice( 2, 0, {
+               "name": "User",
+               "webName": $scope.autoLanguage( '用户名' ),
+               "type": "string",
+               "required": true,
+               "value": "root",
+               "valid": {
+                  "min": 1
+               }
+            } ) ;
+
+            $scope.Form1['inputList'].splice( 3, 0, {
+               "name": "Passwd",
+               "webName": $scope.autoLanguage( '密码' ),
+               "type": "password",
+               "required": true,
+               "value": "",
+               "valid": {
+                  "min": 1
+               }
+            } ) ;
+         }
+         $scope.Form1['inputList'].splice( isDeployPackage ? 4 : 1, 0, {
             "name": "GrantType",
             "webName": $scope.autoLanguage( '访问授权' ),
             "type": "select",
@@ -92,52 +142,19 @@
          } ) ;
          $.each( $scope.Form1['inputList'], function( index ){
             var name = $scope.Form1['inputList'][index]['name'] ;
-            if( typeof( buildConf[0][name] ) != 'undefined' )
+            if ( hasKey( buildConf[0], name ) )
             {
-               $scope.Form1['inputList'][index]['value'] = buildConf[0][name] ;
+               var tmp = buildConf[0][name] ;
+
+               if ( name == 'dbpath' && isDeployPackage )
+               {
+                  tmp = catPath( '/opt/sequoiasql/mysql', tmp ) ;
+               }
+
+               $scope.Form1['inputList'][index]['value'] = tmp ;
             }
          } ) ;
       }
-
-      $scope.Form2 = {
-         'keyWidth': '200px',
-         'inputList': [
-            {
-               "name": "other",
-               "webName": $scope.autoLanguage( "自定义配置" ),
-               "type": "list",
-               "valid": {
-                  "min": 0
-               },
-               "child": [
-                  [
-                     {
-                        "name": "name",
-                        "webName": $scope.autoLanguage( "参数名" ), 
-                        "placeholder": $scope.autoLanguage( "参数名" ),
-                        "type": "string",
-                        "valid": {
-                           "min": 1
-                        },
-                        "default": "",
-                        "value": ""
-                     },
-                     {
-                        "name": "value",
-                        "webName": $scope.autoLanguage( "值" ), 
-                        "placeholder": $scope.autoLanguage( "值" ),
-                        "type": "string",
-                        "valid": {
-                           "min": 1
-                        },
-                        "default": "",
-                        "value": ""
-                     }
-                  ]
-               ]
-            }
-         ]
-      } ;
 
       //获取配置
       var getModuleConfig = function(){
@@ -165,6 +182,7 @@
                   if( hostInfo['ClusterName'] == clusterName )
                   {
                      $.each( hostInfo['Packages'], function( packageIndex, packageInfo ){
+                        allHostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
                         if( packageInfo['Name'] == 'sequoiasql-mysql' )
                         {
                            hostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
@@ -173,6 +191,12 @@
                      } ) ;
                   }
                } ) ;
+
+               if ( hostSelectList.length == 0 )
+               {
+                  isDeployPackage = true ;
+                  configure['HostInfo'].push( { 'HostName': allHostSelectList[0]['value'] } ) ; 
+               }
 
                getModuleConfig() ;
             },
@@ -206,7 +230,8 @@
          } ) ;
       }
 
-      var convertConfig = function(){
+      function convertConfig()
+      {
          var config = {} ;
          config['ClusterName']  = installConfig['ClusterName'] ;
          config['BusinessType'] = installConfig['BusinessType'] ;
@@ -214,7 +239,6 @@
          config['DeployMod']    = installConfig['DeployMod'] ;
 
          var allFormVal = {} ;
-         var checkErrNum = 0 ;
 
          var isAllClear1 = $scope.Form1.check( function( formVal ){
             var error = [] ;
@@ -229,32 +253,22 @@
             return error ;
          } ) ;
 
-         var isAllClear2 = $scope.Form2.check() ;
-
-         if( isAllClear1 == false || isAllClear2 == false )
-         {
-            ++checkErrNum ;
-         }
-
-         if ( checkErrNum > 0 )
+         if( isAllClear1 == false )
          {
             return false ;
          }
 
-         var formVal1 = $scope.Form1.getValue() ;
-         var formVal2 = $scope.Form2.getValue() ;
+         var filterDeployKey = [ 'InstallPath', 'User', 'Passwd' ] ;
 
+         var formVal1 = $scope.Form1.getValue() ;
          $.each( formVal1, function( key2, value ){
+            if ( isDeployPackage == true && filterDeployKey.indexOf( key2 ) >= 0 )
+            {
+               return true ;
+            }
             if(  value.length > 0 || ( typeof( value ) == 'number' && isNaN( value ) == false ) )
             {
                allFormVal[key2] = value ;
-            }
-         } ) ;
-
-         $.each( formVal2['other'], function( index, conf ){
-            if( conf['name'] != '' )
-            {
-               allFormVal[ conf['name'] ] = conf['value'] ;
             }
          } ) ;
 
@@ -264,6 +278,62 @@
          } ) ;
 
          return config ;
+      }
+
+      function convertDeployConfig()
+      {
+         var allFormVal = {} ;
+
+         var formVal = $scope.Form1.getValue() ;
+         $.each( formVal, function( key2, value ){
+            if(  value.length > 0 || ( typeof( value ) == 'number' && isNaN( value ) == false ) )
+            {
+               allFormVal[key2] = value ;
+            }
+         } ) ;
+
+         var config = {} ;
+         config['ClusterName'] = installConfig['ClusterName'] ;
+         config['PackageName'] = 'sequoiasql-mysql' ;
+         config['InstallPath'] = allFormVal['InstallPath'] ;
+         config['HostInfo'] = JSON.stringify( { "HostInfo" : [ {
+            "HostName": allFormVal['HostName'],
+            "User":     allFormVal['User'],
+            "Passwd":   allFormVal['Passwd']
+         } ] } ) ;
+         config['User']       = allFormVal['User'] ;
+         config['Passwd']     = '-' ;
+         config['Enforced']   = false;
+
+         return config ;
+      }
+
+      function deployPackage( addBuzConfig )
+      {
+         var config = convertDeployConfig() ;
+         var data = {
+            'cmd': 'deploy package',
+            'ClusterName': config['ClusterName'],
+            'PackageName': config['PackageName'],
+            'InstallPath': config['InstallPath'],
+            'HostInfo':    config['HostInfo'],
+            'User':        config['User'],
+            'Passwd':      config['Passwd'],
+            'Enforced':    config['Enforced']
+         } ;
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $rootScope.tempData( 'Deploy', 'SecondTask', addBuzConfig ) ;
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+               $location.path( '/Deploy/Task/Module' ).search( { 'r': new Date().getTime() } ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  deployPackage( packageInfo ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
       }
 
       $scope.GotoInstall = function(){
@@ -296,13 +366,27 @@
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.okText = $scope.pAutoLanguage( '继续' ) ;
                $scope.Components.Confirm.ok = function(){
-                  installMysql( configure ) ;
                   $scope.Components.Confirm.isShow = false ;
+                  if ( isDeployPackage )
+                  {
+                     deployPackage( configure ) ;
+                  }
+                  else
+                  {
+                     installMysql( configure ) ;
+                  }
                }
             }
             else
             {
-               installMysql( configure ) ;
+               if ( isDeployPackage )
+               {
+                  deployPackage( configure ) ;
+               }
+               else
+               {
+                  installMysql( configure ) ;
+               }
             }
          }
       }

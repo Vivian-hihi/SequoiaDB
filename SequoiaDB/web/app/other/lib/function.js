@@ -212,8 +212,43 @@ var resolveFun = function( files ){
    }
 } ;
 
+//路径组合
+function catPath( path, subPath )
+{
+   var len = path.length ;
+   var chr1 = path.charAt( len - 1 ) ;
+   var chr2 = subPath.charAt( 0 ) ;
+   var hasSeparator1 = false ;
+   var hasSeparator2 = false ;
+
+   if ( chr1 == '/' || chr1 == '\\' )
+   {
+      hasSeparator1 = true ;
+   }
+
+   if ( chr2 == '/' || chr2 == '\\' )
+   {
+      hasSeparator2 = true ;
+   }
+
+   if ( hasSeparator1 == false &&
+        hasSeparator2 == false )
+   {
+      return path + '/' + subPath ;
+   }
+   else if ( ( hasSeparator1 == true && hasSeparator2 == false ) ||
+             ( hasSeparator1 == false && hasSeparator2 == true ) )
+   {
+      return path + subPath ;
+   }
+   else
+   {
+      return path + subPath.substring( 1 ) ;
+   }
+}
+
 //格式化
-var sprintf = function( format )
+function sprintf( format )
 {
 	var len = arguments.length;
 	var strLen = format.length ;
