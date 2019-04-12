@@ -6,7 +6,7 @@
 
 ###返回值###
 
-Json 对象，表示会话属性，字段信息如下
+Json 对象，表示会话属性，字段信息如下：
 
 | 属性名 | 描述      |
 | ------ | --------- |
@@ -14,12 +14,12 @@ Json 对象，表示会话属性，字段信息如下
 | PreferedInstanceMode | 指定会话当多个实例符合 PreferedInstance 的条件时的选择模式。<br>"random"：从候选的实例中随机选择。<br>"ordered"：从候选的实例中按照 PerferedInstance 的顺序进行选择。 |
 | PreferedStrict   | 指定节点选择是否为严格模式 |
 | Timeout | 指定会话执行操作的超时时间（单位：毫秒），-1 表示不进行超时检测。 |
-| TransIsolation | 会话事务的隔离级别，0为RU级别，1为RC级别，2为RS级别 |
-| TransTimeout   | 会话事务锁等待超时时间（单位：秒） |
-| TransWaitLock  | 会话事务在RC隔离级别下是否需要等锁 |
-| TransUseRBS    | 会话事务是否使用回滚段             |
-| TransAutoCommit| 会话事务是否支持自动事务提交       |
-| TransAutoRollback| 会话事务在操作失败时是否自动回滚 |
+| TransIsolation | 会话事务的隔离级别，0为RU级别，1为RC级别，2为RS级别。 |
+| TransTimeout   | 会话事务锁等待超时时间（单位：秒）。 |
+| TransLockWait  | 会话事务在RC隔离级别下是否需要等锁。 |
+| TransUseRBS    | 会话事务是否使用回滚段。             |
+| TransAutoCommit| 会话事务是否支持自动事务提交。       |
+| TransAutoRollback| 会话事务在操作失败时是否自动回滚。 |
 
 >   **Note:**
 >

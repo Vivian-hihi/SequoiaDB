@@ -18,12 +18,12 @@
 | PreferedInstanceMode | 指定会话当多个实例符合 PreferedInstance 的条件时的选择模式。<br>"random"：从候选的实例中随机选择。<br>"ordered"：从候选的实例中按照 PerferedInstance 的顺序进行选择。 | ```PreferedInstaceMode : "random"``` |
 | PreferedStrict   |  指定节点选择是否为严格模式，当为严格模式时，节点只能从 preferedinstance 指定的ID中选取 |  ```PreferedStrict : true ``` |
 | Timeout | 指定会话执行操作的超时时间（单位：毫秒）。<br>-1 表示不进行超时检测。<br>最小值为 1000 毫秒。 | ```Timeout : 10000``` |
-| TransIsolation | 会话事务的隔离级别，0为RU级别，1为RC级别，2为RS级别 | ```TransIsolation : 1``` |
-| TransTimeout   | 会话事务锁等待超时时间（单位：秒） | ```TransTimeout : 10``` |
-| TransWaitLock  | 会话事务在RC隔离级别下是否需要等锁 | ```TransWaitLock : true``` |
-| TransUseRBS    | 会话事务是否使用回滚段             | ```TransUseRBS : true``` |
-| TransAutoCommit| 会话事务是否支持自动事务提交       | ```TransAutoCommit : true``` |
-| TransAutoRollback| 会话事务在操作失败时是否自动回滚 | ```TransAutoRollback : true``` |
+| TransIsolation | 会话事务的隔离级别，0为RU级别，1为RC级别，2为RS级别。 | ```TransIsolation : 1``` |
+| TransTimeout   | 会话事务锁等待超时时间（单位：秒）。 | ```TransTimeout : 10``` |
+| TransLockWait  | 会话事务在RC隔离级别下是否需要等锁。 | ```TransLockWait : true``` |
+| TransUseRBS    | 会话事务是否使用回滚段。             | ```TransUseRBS : true``` |
+| TransAutoCommit| 会话事务是否支持自动事务提交。       | ```TransAutoCommit : true``` |
+| TransAutoRollback| 会话事务在操作失败时是否自动回滚。 | ```TransAutoRollback : true``` |
 
 >   **Note:**
 >
