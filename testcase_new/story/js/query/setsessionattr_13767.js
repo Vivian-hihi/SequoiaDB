@@ -16,45 +16,6 @@ function main()
    var bRet=true;
    try
    {
-      db.setSessionAttr();
-   }
-   catch(e)
-   {
-      bRet = false;
-   }
-
-   if (true == bRet)
-   {
-      println("db.setSessionAttr() parameter illegal")
-      throw -1
-   }
-
-   bRet = true;
-   try
-   {
-      db.setSessionAttr({})
-   }
-   catch(e)
-   {
-      if (-6 == e)
-      {
-         bRet=false; 
-      }
-      else
-      {
-         println("db.setSessionAttr({}) parameter illegal")
-         throw e
-      }
-   }
-   if ( true == bRet )
-   {
-      println("db.setSessionAttr({}) parameter illegal")
-      throw -1
-   }
-
-   bRet = true ;
-   try
-   {
       db.setSessionAttr({"PreferedInstance":800})
    }
    catch(e)
