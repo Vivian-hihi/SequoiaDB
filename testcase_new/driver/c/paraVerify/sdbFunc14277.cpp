@@ -640,7 +640,7 @@ TEST_F( sdbParaVerify, sessionAttr )
    bson_init( &emptyOpt ) ;
    bson_finish( &emptyOpt ) ;
    rc = sdbSetSessionAttr( db, &emptyOpt ) ;
-   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    bson_destroy( &option ) ;
    bson_destroy( &emptyOpt ) ;
 
