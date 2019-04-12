@@ -155,6 +155,7 @@ public class SdbTestBase {
                 if ( doc.getString( TRANSACTIONON ).equals( "FALSE" ) ) {
                     istransactionOn = false ;
                 }
+                doc.remove( TRANSACTIONON ) ;
             }
             cursor.close() ;
         }
