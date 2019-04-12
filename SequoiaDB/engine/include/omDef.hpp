@@ -220,6 +220,8 @@ namespace engine
    #define OM_HOST_FIELD_TIME                   "Time"
    #define OM_HOST_FIELD_OS                     "OS"
    #define OM_HOST_FIELD_OMA                    "OMA"
+   #define OM_HOST_FIELD_POSTGRESQL             "POSTGRESQL"
+   #define OM_HOST_FIELD_MYSQL                  "MYSQL"
    #define OM_HOST_FIELD_OM_HASINSTALL          "HasInstalled"
    #define OM_HOST_FIELD_OM_VERSION             OM_HOST_FIELD_VERSION
    #define OM_HOST_FIELD_OM_PATH                "Path"
@@ -724,6 +726,8 @@ unique: true, enforced: true }"
    #define  OM_SCAN_HOST_STATUS_FINISH       "finish"
    #define  OM_BSON_FIELD_OS                 OM_HOST_FIELD_OS
    #define  OM_BSON_FIELD_OMA                OM_HOST_FIELD_OMA
+   #define  OM_BSON_FIELD_POSTGRESQL         OM_HOST_FIELD_POSTGRESQL
+   #define  OM_BSON_FIELD_MYSQL              OM_HOST_FIELD_MYSQL
    #define  OM_BSON_FIELD_MEMORY             "Memory"
    #define  OM_BSON_FIELD_DISK               OM_HOST_FIELD_DISK
    #define  OM_BSON_FIELD_DISK_NAME          OM_HOST_FIELD_DISK_NAME

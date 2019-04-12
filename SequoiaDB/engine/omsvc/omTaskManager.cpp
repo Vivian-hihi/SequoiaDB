@@ -395,30 +395,80 @@ namespace engine
             }
 
             {
-               BSONObj packageInfo ;
-               BSONObj oma = oneHost.getObjectField( OM_HOST_FIELD_OMA ) ;
-               string version = oma.getStringField( OM_HOST_FIELD_OM_VERSION ) ;
-               string hostName = oneHost.getStringField( OM_HOST_FIELD_NAME ) ;
-               string installPath = oneHost.getStringField(
+               BSONArrayBuilder packageBuilder ;
+
+               {
+                  BSONObj packageInfo ;
+                  BSONObj oma = oneHost.getObjectField( OM_HOST_FIELD_OMA ) ;
+                  string version = oma.getStringField(
+                                                   OM_HOST_FIELD_OM_VERSION ) ;
+                  string hostName = oneHost.getStringField(
+                                                   OM_HOST_FIELD_NAME ) ;
+                  string installPath = oneHost.getStringField(
                                                    OM_HOST_FIELD_INSTALLPATH ) ;
 
-               if ( version.empty() )
-               {
-                  _getPackageVersion( taskResultInfo, hostName, version ) ;
                   if ( version.empty() )
                   {
-                     version = omVersion ;
+                     _getPackageVersion( taskResultInfo, hostName, version ) ;
+                     if ( version.empty() )
+                     {
+                        version = omVersion ;
+                     }
                   }
-               }
 
-               packageInfo = BSON(
+                  packageInfo = BSON(
                            OM_HOST_FIELD_PACKAGENAME << OM_BUSINESS_SEQUOIADB <<
                            OM_HOST_FIELD_INSTALLPATH << installPath <<
                            OM_HOST_FIELD_VERSION << version ) ;
 
+                  packageBuilder.append( packageInfo ) ;
+               }
+
+               {
+                  BSONObj packageInfo ;
+                  BSONObj postgres = oneHost.getObjectField(
+                                                   OM_HOST_FIELD_POSTGRESQL ) ;
+                  string version = postgres.getStringField(
+                                                   OM_HOST_FIELD_OM_VERSION ) ;
+                  string installPath = postgres.getStringField(
+                                                   OM_HOST_FIELD_OM_PATH ) ;
+
+                  if ( !version.empty() )
+                  {
+                     packageInfo = BSON(
+                           OM_HOST_FIELD_PACKAGENAME <<
+                                          OM_BUSINESS_SEQUOIASQL_POSTGRESQL <<
+                           OM_HOST_FIELD_INSTALLPATH << installPath <<
+                           OM_HOST_FIELD_VERSION << version ) ;
+
+                     packageBuilder.append( packageInfo ) ;
+                  }
+               }
+
+               {
+                  BSONObj packageInfo ;
+                  BSONObj mysql = oneHost.getObjectField(
+                                                   OM_HOST_FIELD_MYSQL ) ;
+                  string version = mysql.getStringField(
+                                                   OM_HOST_FIELD_OM_VERSION ) ;
+                  string installPath = mysql.getStringField(
+                                                   OM_HOST_FIELD_OM_PATH ) ;
+
+                  if ( !version.empty() )
+                  {
+                     packageInfo = BSON(
+                           OM_HOST_FIELD_PACKAGENAME <<
+                                             OM_BUSINESS_SEQUOIASQL_MYSQL <<
+                           OM_HOST_FIELD_INSTALLPATH << installPath <<
+                           OM_HOST_FIELD_VERSION << version ) ;
+
+                     packageBuilder.append( packageInfo ) ;
+                  }
+               }
+
                oneHostBuilder.appendElements( oneHost ) ;
                oneHostBuilder.append( OM_HOST_FIELD_PACKAGES,
-                                      BSON_ARRAY( packageInfo ) ) ;
+                                      packageBuilder.arr() ) ;
                oneHost = oneHostBuilder.obj() ;
             }
 
