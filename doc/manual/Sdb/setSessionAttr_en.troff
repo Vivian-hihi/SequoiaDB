@@ -95,12 +95,12 @@ Set session attributes.
 .br
               "TransTimeout" : 10
 .br
-       \fBTransWaitLock\fR
+       \fBTransLockWait\fR
 .br
               Specify the lock wait behavior within transaction under
               RC isolation level in current session.
 .br
-              "TransWaitLock" : true
+              "TransLockWait" : true
 .br
        \fBTransUseRBS\fR
 .br
