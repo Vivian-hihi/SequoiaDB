@@ -22,7 +22,7 @@ function(backupName, path)
    bakBackup( this.db , { "Name": backupName} );
    if ( this.group !== undefined )
    {
-      println( "backup on " + this.group[0].GroupName ) ;
+      println( "backup on " + this.group.GroupName ) ;
       this.removeNodeExceptPrimary() ;
    }
   
@@ -37,7 +37,7 @@ function(backupName, path)
    }
    if ( this.group !== undefined )
    {
-      this.checkBackupRes( bakInfo, 1, [ this.group[0].GroupName ] ) ;
+      this.checkBackupRes( bakInfo, 1, [ this.group.GroupName ] ) ;
    }
    else
    {
@@ -47,7 +47,7 @@ function(backupName, path)
    bakRemoveBackups( this.db, backupName, false ) ;
    if ( this.group !== undefined )
    {
-      this.checkBackupRes( bakInfo, 0, [ this.group[0].GroupName ] ) ;
+      this.checkBackupRes( bakInfo, 0, [ this.group.GroupName ] ) ;
    }
    else
    {

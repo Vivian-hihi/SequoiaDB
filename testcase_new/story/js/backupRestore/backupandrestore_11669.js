@@ -43,21 +43,21 @@ function(backupName, path)
    }
    
    var times = 1 ;
-   this.checkBackupRes( bakInfo, times++, [ this.group[0].GroupName ] ) ; 
+   this.checkBackupRes( bakInfo, times++, [ this.group.GroupName ] ) ; 
    bakInsertData( this.cl, this.docs ) ;
    this.oids.push( sdbPutLob( this.cl, path ) );
    bakBackup( this.db , { "Name": backupName, EnsureInc:true } );
-   this.checkBackupRes( bakInfo, times++, [ this.group[0].GroupName ] ) ;
+   this.checkBackupRes( bakInfo, times++, [ this.group.GroupName ] ) ;
 
    bakInsertData( this.cl, this.docs ) ;
    this.oids.push( sdbPutLob( this.cl, path ) );
    bakBackup( this.db , { "Name": backupName, EnsureInc:true } );
    if ( this.group !== undefined )
    {
-      println( "backup on " + this.group[0].GroupName ) ;
+      println( "backup on " + this.group.GroupName ) ;
       this.removeNodeExceptPrimary() ;
    }
-   this.checkBackupRes( bakInfo, times,  [ this.group[0].GroupName ]) ;
+   this.checkBackupRes( bakInfo, times,  [ this.group.GroupName ]) ;
    println( "begin restore..." );
    sdbRestore( this.sdb, this.cmd, bakInfo, this.nodeinfo ) ;
    this.checkResult( times ) ;

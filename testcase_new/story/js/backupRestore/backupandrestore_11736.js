@@ -22,15 +22,15 @@ function()
 {
    this.groupNames = [];
    this.groups = commGetGroups( this.db ) ;
-   // 整个集群备份，任意挑一个组恢复
-   var pos = Math.floor( Math.random() * this.groups.length ) ;
-   this.group = this.groups[pos] ;
-   
+   var hosts = getAllHosts( this.groups ) ;
+   createBackupRestoreGroup( db, hosts ) ;
+   this.group = db.getRG( backupandrestoreGroup ).getDetail().next().toObj() ;
+
    for ( var i = 0; i < this.groups.length; ++i )
    {
       this.groupNames.push( this.groups[i][0].GroupName );
    }
-   
+   this.groupNames.push( backupandrestoreGroup ) ; 
    this.domainName = "backup11736" ;
    try
    {
@@ -43,7 +43,6 @@ function()
       if ( e !== -214)
          throw new Error( "getDomain(" + this.domainName +"),err=" + e ) ;
    }
-   
    try
    {
       this.db.createDomain( this.domainName, this.groupNames, {AutoSplit:true} ) ;
@@ -64,12 +63,20 @@ backupTestCase11736.prototype.init=
 function()
 {
    this.createShardingCL() ;
-   var primaryPos = this.group[0].PrimaryPos ;
-   var hostName = this.group[primaryPos].HostName ;
-   var svcName = this.group[primaryPos].svcname ;
-   var dbPath = this.group[primaryPos].dbpath ;
-   this.nodeinfo = new nodeInfo( this.group[0].GroupName, hostName, svcName, dbPath);
-   this.cmd = getCmdByHostName( this.localCmd, hostName )  ;
+   println( JSON.stringify( this.group) );
+   for ( var i = 0; i < this.group.Group.length; ++i ){
+      if ( this.group.PrimaryNode === this.group.Group[i].NodeID ||  i === this.group.Group.length - 1 )
+      {
+         var hostName = this.group.Group[i].HostName ;
+         var svcName = this.group.Group[i].Service[0].Name ;
+         var dbPath = this.group.Group[i].dbpath ;
+         println( "init " + hostName + svcName + dbPath );
+         this.nodeinfo = new nodeInfo( this.group.GroupName, hostName, svcName, dbPath);
+         this.cmd = getCmdByHostName( this.localCmd, hostName )  ;
+         break ;
+       }
+   }
+   
    return true ;
 }
 
@@ -83,7 +90,7 @@ function(backupName, path)
    this.oids.push( sdbPutLob( this.cl, path ) );
    println( "putLob: " + this.oids[0] ) ;
    
-   // 全量备份
+    // 全量备份
    bakBackup( this.db , { "Name": backupName} );
    this.checkBackupRes( bakInfo, 1, this.groupNames ) ;
    
@@ -102,9 +109,10 @@ function(backupName, path)
    this.checkBackupRes( bakInfo, 2, this.groupNames ) ;
    if ( this.group !== undefined )
    {
-      println( "backup on " + this.group[0].GroupName ) ;
+      println( "backup on " + this.group.GroupName ) ;
       this.removeNodeExceptPrimary() ;
    }
+   println( "start restore..." );
    sdbRestore( this.sdb, this.cmd, bakInfo, this.nodeinfo ) ;
    this.checkResult( 2 ) ;
 }

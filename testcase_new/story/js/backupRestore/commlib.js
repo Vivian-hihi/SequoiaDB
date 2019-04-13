@@ -8,6 +8,42 @@
 
 var csName = COMMCSNAME ;
 var clName = COMMCLNAME ;
+var backupandrestoreGroup = 'backup_restore' ;
+
+function isPortUsed( port )
+{
+   try{
+      var cmd = new Cmd();    
+      cmd.run("lsof -nP -iTCP:" + port +" -sTCP:LISTEN") ;
+      return true ;
+   }catch(e){
+      return false ;
+   }
+}
+
+function getLocalHostName()
+{
+   var cmd = new Cmd() ;
+   return cmd.run('hostname').split('\n')[0] ;
+}
+
+function createBackupRestoreGroup( db, hosts )
+{
+   var rg = db.createRG(backupandrestoreGroup) ;
+   var port = parseInt( RSRVPORTBEGIN ) ;
+   var hostname = getLocalHostName() ;
+   for ( var i = 0; i < 3; ++i ){
+      while ( isPortUsed( port ) ){
+         port += 10 ;
+      }
+      println( hostname )
+      println( port )
+      rg.createNode( hostname, port, RSRVNODEDIR + port ) ;
+      rg.start();
+      port += 10 ;
+   }
+   rg.start();
+}
 
 function nodeInfo( groupName, hostName, svcName, dbPath )
 {
@@ -358,6 +394,7 @@ function sdbRestore( db, cmd, bakInfo, node )
       var isStandalone = true ;
    }
 
+   println("stop node...")
    stopNode( db, isStandalone, cmd, node ) ;
    var execProg = getExecPath( cmd ) + "sdbrestore" ;
    println(  execProg + " --bkname " + bakInfo.bakName + " --bkpath " + bakInfo.bakPath +
@@ -524,6 +561,23 @@ function getBackups( db, filter, grpNameArray )
    return backUp ;
 }
 
+function getAllHosts( groups )
+{
+   var hosts = [] ;
+   var host2Count = {} ;
+   for ( var i = 0; i < groups.length; ++i )
+   {
+      for ( var j = 1; j < groups[i].length; ++j ){
+         if ( host2Count[groups[i][j].HostName] === undefined )
+         {
+            hosts.push( groups[i][j].HostName ) ;
+            host2Count[groups[i][j].HostName] = 1;
+         }
+      }
+   }
+   return hosts ;
+}
+
 function backupTestCase( sdb )
 {
    this.sdb = sdb ;
@@ -540,16 +594,24 @@ function()
    if ( !commIsStandalone(db) ){
       println( " running in cluster " ) ;
       this.groups = commGetGroups( db ) ;
-      var pos = Math.floor( Math.random() * this.groups.length ) ;
-      this.group = this.groups[pos] ;
-      var primaryPos = this.group[0].PrimaryPos ;
-      var hostName = this.group[primaryPos].HostName ;
-      var svcName = this.group[primaryPos].svcname ;
-      var dbPath = this.group[primaryPos].dbpath ;
-      this.nodeinfo = new nodeInfo( this.group[0].GroupName, hostName, svcName, dbPath);
+      var hosts = getAllHosts( this.groups ) ;
+      createBackupRestoreGroup( db, hosts ) ;
+      this.group = db.getRG( backupandrestoreGroup ).getDetail().next().toObj() ;
+      println( JSON.stringify( this.group) ) ;
+      var primaryPos = this.group.PrimaryNode ;
+      
+      for ( var i = 0; i < this.group.Group.length; ++i){
+         if ( primaryPos = this.group.Group[i].NodeID )
+         {
+            var hostName = this.group.Group[i].HostName ;
+            var svcName = this.group.Group[i].Service[0].Name ;
+            var dbPath = this.group.Group[i].dbpath ;
+         }
+      }
+      this.nodeinfo = new nodeInfo( this.group.GroupName, hostName, svcName, dbPath);
       
       this.db = new Sdb( hostName, svcName ) ;
-      var opt = {Group: this.group[0].GroupName, ReplSize:-1}
+      var opt = {Group: this.group.GroupName, ReplSize:-1}
       this.cl = commCreateCLByOption( this.sdb, this.csName, this.clName, opt,  true, false, 
                    "Create collection in the beginning" ) ;
       this.cmd = getCmdByHostName( this.localCmd, hostName )  ;
@@ -568,6 +630,13 @@ function ()
 {
    commDropCL( db, this.csName, this.clName, true, true, "Drop CL in the beginning" ) ;
    bakRemoveBackups( db, CHANGEDPREFIX, true ) ;
+   try
+   {
+      db.getRG( backupandrestoreGroup ) ;
+      db.removeRG( backupandrestoreGroup ) ;
+   }catch(e){
+      
+   }
    println( "Clear the backup in the beginning" ) ;
    return this.init() ;
 }
@@ -707,14 +776,21 @@ function()
 backupTestCase.prototype.removeNodeExceptPrimary =
 function()
 {
-  for ( var i = 1; i < this.group.length; ++i )
+  this.group = this.sdb.getRG( backupandrestoreGroup ).getDetail().next().toObj() ;
+  for ( var i = 0; i < this.group.Group.length; ++i )
   {
-     var hostName = this.group[i].HostName ; 
-     var svcName = this.group[i].svcname ; 
-     if ( hostName !== this.nodeinfo.hostName ||
-          svcName !==  this.nodeinfo.svcName)
+     var hostName = this.group.Group[i].HostName ; 
+     var svcName = this.group.Group[i].Service[0].Name ; 
+     println( this.group.PrimaryNode ); 
+     println( this.group.Group[i].NodeID ) ;
+     if ( this.group.PrimaryNode !== this.group.Group[i].NodeID )
      {
-        this.sdb.getRG( this.group[0].GroupName).removeNode( hostName, svcName ) ;
+        try
+        {
+           this.sdb.getRG( this.group.GroupName).removeNode( hostName, svcName ) ;
+        }catch(e){
+            println( "removeNodeExceptPrimary" + hostName + ":" + svcName );
+        }
      }
   }
 }
@@ -722,16 +798,16 @@ function()
 backupTestCase.prototype.addNodeExceptPrimary=
 function()
 {
-  for ( var i = 1; i < this.group.length; ++i )
+  for ( var i = 0; i < this.group.Group.length; ++i )
   {
-     var hostName = this.group[i].HostName ; 
-     var svcName = this.group[i].svcname ; 
-     var dbPath = this.group[i].dbpath ;
-     if ( hostName !== this.nodeinfo.hostName ||
-          svcName !==  this.nodeinfo.svcName)
+     var hostName = this.group.Group[i].HostName ; 
+     var svcName = this.group.Group[i].Service[0].Name ; 
+     var dbPath = this.group.Group[i].dbpath;
+     if ( this.group.PrimaryNode != this.group.Group[i].NodeID )
      {
         try{
-           this.sdb.getRG( this.group[0].GroupName).createNode( hostName, svcName, dbPath ) ;
+           this.sdb.getRG( this.group.GroupName).createNode( hostName, parseInt(svcName), dbPath ) ;
+           this.sdb.getRG( this.group.GroupName).start() ;
         }catch(e){
            if ( e !== -145){
               println( "createNode(" + hostName + "," + svcName + "," + dbPath +" ),err" + e);
@@ -739,7 +815,7 @@ function()
         }
      }
   }
-  db.getRG( this.group[0].GroupName).start() ;
+  db.getRG( this.group.GroupName).start() ;
   var totalTimeLen = 60 ;
   var alreadySleepTime = 0 ;
   while (true)
@@ -773,4 +849,5 @@ function tearDown()
 {
    bakRemoveBackups( this.db, CHANGEDPREFIX, true ) ;
    commDropCL( this.sdb, this.csName, this.clName, true, false, "Drop CL in the end" ) ;
+   this.sdb.removeRG( backupandrestoreGroup ) ;
 }

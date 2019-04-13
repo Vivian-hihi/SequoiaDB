@@ -35,7 +35,7 @@ function(backupName, path)
    bakBackup( this.db , { "Name": backupName} );
    if ( this.group !== undefined )
    {
-      println( "backup on " + this.group[0].GroupName ) ;
+      println( "backup on " + this.group.GroupName ) ;
       this.removeNodeExceptPrimary() ;
    }
   
