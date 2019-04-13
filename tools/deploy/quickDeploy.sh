@@ -4,18 +4,18 @@ function build_help()
 {
    echo ""
    echo "Usage:"
-   echo "  --db         deploy SequoiaDB"
+   echo "  --sdb         deploy SequoiaDB"
    echo "  --mysql      deploy SequoiaSQL-MySQL"
    echo "  --pg         deploy SequoiaSQL-PostgreSQL"
 }
 
-DEPLOY_DB=0
+DEPLOY_SDB=0
 DEPLOY_MYSQL=0
 DEPLOY_PG=0
 HAS_PARAMETER=0
 
 #Parse command line parameters
-ARGS=`getopt -o h --long help,db,pg,mysql -n 'quickDeploy.sh' -- "$@"`
+ARGS=`getopt -o h --long help,sdb,pg,mysql -n 'quickDeploy.sh' -- "$@"`
 ret=$?
 test $ret -ne 0 && exit $ret
 
@@ -24,7 +24,7 @@ eval set -- "${ARGS}"
 while true
 do
    case "$1" in
-      --db )           DEPLOY_DB=1
+      --sdb )          DEPLOY_SDB=1
                        HAS_PARAMETER=1
                        shift
                        ;;
@@ -49,7 +49,7 @@ do
 done
 
 if [ $HAS_PARAMETER -eq 0 ]; then
-   DEPLOY_DB=1
+   DEPLOY_SDB=1
    DEPLOY_MYSQL=1
    DEPLOY_PG=1
 fi
@@ -75,7 +75,7 @@ jsFile=$myPath/quickDeploy.js
 #generate parameters
 jsParameter="'"
 
-if [ $DEPLOY_DB -eq 1 ]; then
+if [ $DEPLOY_SDB -eq 1 ]; then
    jsParameter=${jsParameter}"var sdb=true;"
 fi
 
