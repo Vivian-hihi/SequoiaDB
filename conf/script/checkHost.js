@@ -333,6 +333,80 @@ function _getOMAInfo()
    }
 }
 
+//get pg info
+function _getPostgresInfo()
+{
+   var pgInfo = {
+      'Version': '',
+      'SdbUser': '',
+      'Path'   : ''
+   } ;
+
+   try
+   {
+      if ( File.exist( '/etc/default/sequoiasql-postgresql' ) )
+      {
+         var config = Oma.getIniConfigs( '/etc/default/sequoiasql-postgresql' ).toObj() ;
+
+         if ( File.exist( config['INSTALL_DIR'] + '/bin/postgres' ) &&
+              File.exist( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl' ) )
+         {
+            var cmd = new Cmd() ;
+            var result = cmd.run( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl', '--version' ) ;
+
+            result = result.replace( /[\r]/g, '' ) ;
+            result = result.replace( /[\n]/g, '' ) ;
+
+            pgInfo['Version'] = result ;
+            pgInfo['SdbUser'] = config['USER'] ;
+            pgInfo['Path']    = config['INSTALL_DIR'] ;
+         }
+      }
+   }
+   catch( e )
+   {
+   }
+
+   RET_JSON['POSTGRESQL'] = pgInfo ;
+}
+
+//get mysql info
+function _getMySQLInfo()
+{
+   var mysqlInfo = {
+      'Version': '',
+      'SdbUser': '',
+      'Path'   : ''
+   } ;
+
+   try
+   {
+      if ( File.exist( '/etc/default/sequoiasql-mysql' ) )
+      {
+         var config = Oma.getIniConfigs( '/etc/default/sequoiasql-mysql' ).toObj() ;
+
+         if ( File.exist( config['INSTALL_DIR'] + '/bin/mysql' ) &&
+              File.exist( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl' ) )
+         {
+            var cmd = new Cmd() ;
+            var result = cmd.run( 'cat', config['INSTALL_DIR'] + '/version.info' ) ;
+
+            result = result.replace( /[\r]/g, '' ) ;
+            result = result.replace( /[\n]/g, '' ) ;
+
+            mysqlInfo['Version'] = result ;
+            mysqlInfo['SdbUser'] = config['USER'] ;
+            mysqlInfo['Path']    = config['INSTALL_DIR'] ;
+         }
+      }
+   }
+   catch( e )
+   {
+   }
+
+   RET_JSON['MYSQL'] = mysqlInfo ;
+}
+
 // os info
 function _getOSInfo()
 {
@@ -550,9 +624,11 @@ function main()
    RET_JSON[HostName] = BUS_JSON[HostName] ; 
 
    PD_LOG( arguments, PDEVENT, FILE_NAME_CHECK_HOST, "Begin to check host[" + RET_JSON[IP] + "]"  ) ;   
- 
+
    // get local host info
    _getOMAInfo() ;
+   _getPostgresInfo() ;
+   _getMySQLInfo() ;
    _getOSInfo() ;
    _getCPUInfo() ;
    _getMemInfo() ;
