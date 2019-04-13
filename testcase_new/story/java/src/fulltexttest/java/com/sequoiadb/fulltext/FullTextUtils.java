@@ -8,6 +8,7 @@ import org.testng.Assert;
 
 import com.sequoiadb.base.*;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import org.bson.BSONObject;
 import org.elasticsearch.client.*;
@@ -208,7 +209,7 @@ public class FullTextUtils {
      */
     public static List< String > removeDuplicateItems(
             List< String > arrayList ) {
-        HashSet uniqueSet = new HashSet( arrayList );
+        HashSet<String> uniqueSet = new HashSet<String>( arrayList );
         arrayList.clear();
         arrayList.addAll( uniqueSet );
         return arrayList;
@@ -285,11 +286,31 @@ public class FullTextUtils {
         return isConsistency;
     }
 
+    private static boolean isNodeCLExist(List<Node> nodes, String csName, String clName) {
+        try {
+            for (Node node : nodes) {
+                node.connect().getCollectionSpace(csName).getCollection(clName);
+            }
+        } catch (BaseException e) {
+            if (-23 == e.getErrorCode()) {
+                return false;
+            }
+            throw e;
+        }
+        return true;
+    }
+    
     public static boolean isNodeRecordsConsistency( List< Node > nodes,
             String csName, String clName ) {
         if ( nodes.size() == 1 ) {
             return true;
         }
+        
+        // 判断所有节点是否已同步集合
+        if(!isNodeCLExist(nodes, csName, clName)) {
+            return false;
+        }
+        
         Sequoiadb firstNode = nodes.get( 0 ).connect();
         DBCollection cl1 = firstNode.getCollectionSpace( csName )
                 .getCollection( clName );

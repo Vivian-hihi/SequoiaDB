@@ -35,11 +35,10 @@ public class HashTableIndex11988 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         this.sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        CommLib commLib = new CommLib();
-        if ( commLib.isStandAlone( sdb ) ) {
+        if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
         }
-        this.groupNames = commLib.getDataGroupNames( sdb );
+        this.groupNames = CommLib.getDataGroupNames( sdb );
         if ( groupNames.size() < 2 ) {
             throw new SkipException( "Less than two groups!" );
         }
