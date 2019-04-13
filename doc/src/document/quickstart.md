@@ -234,155 +234,110 @@
 
 ## 操作环境准备 ##
 
-### 创建实例及数据库 ###
+- 使用 root 用户或者管理员用户登录主机
 
-1. 创建 SequoiaDB 实例
+- 查看端口是否被占用
 
-   以 sdbadmin 用户登陆 SequoiaDB 所在主机，使用如下命令创建一个 SequoiaDB 的单机环境，并启动节点
-
-   ```lang-javascript
-   $ sdb
-   Welcome to SequoiaDB shell!
-   help() for help, Ctrl+c or quit to exit
-   > var oma = new Oma("localhost", 11790)
-   Takes 0.004115s.
-   > oma.createData(11810, "/opt/sequoiadb/database/standalone/11810")
-   Takes 0.001889s.
-   > oma.startNode(11810)
-   Takes 13.195910s.
+   执行以下命令查看 11800 端口是否被占用：
+   
+   ```shell
+   $ netstat -anp | grep 11800
    ```
+   
+   SequoiaDB 默认需要的端口号为 11800、11810、11820、11830、11840，SequoiaSQL-MySQL 默认需要的端口号为 3306。请确保这些端口没有被占用。
 
-2. 创建 SequoiaSQL 实例
+   > **Note:**
+   > 
+   > * 如果需要修改创建节点的端口号，可在 tools/deploy/sequoiadb.conf 和 tools/deploy/mysql.conf 中修改配置。
+   > *
+   > * 如果需要部署 SequoiaDB 到多台机器，请确保配置了主机/ IP 的映射关系，详细见[配置主机名和主机名/ IP 映射关系](installation/system/system_requirement.md#软件要求)。
 
-- 以 sdbadmin 用户登陆 SequoiaSQL-PostgreSQL 所在主机，切换到 SequoiaSQL-PostgreSQL 安装目录
+- 使用 sdbadmin 用户登录主机
 
-  ```lang-javascript
-  $ cd /opt/sequoiasqloltp
-  ```
+- 快速部署
 
-- 创建实例，指定实例名为myinst，数据目录为 pg_data，出现 ok 表示实例创建成功
-
-   ```lang-javascript
-   $ sdb_sql_ctl addinst myinst -D pg_data/
-   Adding instance myinst ...
-   ok
-   ```
-
-- 启动实例进程
-
-   ```lang-javascript
-   $ sdb_sql_ctl start myinst
-   Starting instance myinst ...
-   ok (PID: 20502)
-   ```
-    
-- 查看实例状态
-    
-    ```lang-javascript
-   $ sdb_sql_ctl status
-   INSTANCE   PID      SVCNAME   PGDATA                        PGLOG                                   
-   myinst     20502    5432      /opt/sequoiasqloltp/pg_data   /opt/sequoiasqloltp/pg_data/myinst.log     
-   Total: 1; Run: 1
-   ```
-
-- 检查 SequoiaSQL 是否启动成功
-
-   ```lang-javascript
-   $ netstat -nap | grep 5432
-   tcp   0   0 127.0.0.1:5432     0.0.0.0:*         LISTEN     20502/postgres
-   unix  2   [ ACC ]   STREAM    LISTENING   40776754 20502/postgres     /tmp/.s.PGSQL.5432
-   ```
-
-- 创建 SequoiaSQL 的 database
-
-   ```lang-javascript
-   $ bin/createdb -p 5432 foo
-   ```
-
-### 配置 SequoiaSQL 与 SequoiaDB 连接 ###
-
-- 进入 SequoiaSQL shell 环境
-
-   ```lang-javascript
-   $ cd /opt/sequoiasqloltp
-   $ bin/psql -p 5432 foo
-   psql (9.3.4)
-   Type "help" for help.
-   foo=#
-   ```
-
-- 加载 SequoiaDB 连接驱动
-
-   ```lang-javascript
-   foo=# create extension sdb_fdw;
-   CREATE EXTENSION
-   ```
-  
-- 配置与SequoiaDB连接参数
-
-   ```lang-javascript
-   foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127.0.0.1', service '11810', user 'sdbadmin', password 'mypassword', preferedinstance 'A', transaction 'off');
-CREATE SERVER
+   ```shell
+   $ cd /opt/sequoiadb
+   $ ./bin/sdb -f tools/deploy/quickDeploy.js 
+   
+   ************ Deploy SequoiaDB ************************
+   Create catalog: ubuntu1604-yt:11800
+   Create coord:   ubuntu1604-yt:11810
+   Create data:    ubuntu1604-yt:11820
+   Create data:    ubuntu1604-yt:11830
+   Create data:    ubuntu1604-yt:11840
+   
+   ************ Deploy SequoiaSQL-MySQL *****************
+   Create instance: [name: myinst, port: 3306]
+   
+   ************ Deploy SequoiaSQL-PostgreSQL ************
+   This machine has not installed postgresql.
    ```
 
 ## 数据库操作 ##
 
 ### 使用 SequoiaSQL shell 进行 SQL 操作 ###
 
-- 使用 sdbadmin 用户登陆主机
+- 使用 sdbadmin 用户登录主机
 
-- 进入 SequoiaDB shell 环境并创建集合 foo.bar
+- 登录 MySQL shell
 
-   ```lang-javascript
-   $ cd /opt/sequoiadb
-   $ bin/sdb
-   Welcome to SequoiaDB shell!
-   help() for help, Ctrl+c or quit to exit
-   > db=new Sdb()
-   localhost:11810
-   Takes 0.117950s.
-   > db.createCS('foo').createCL('bar')
-   localhost:11810.foo.bar
-   Takes 0.298361s.
-   ```
-- 进入 SequoiaSQL shell 环境，创建外表
+ ```shell
+ $ export MYSQL_HOME=/opt/sequoiasql/mysql
+ $ ${MYSQL_HOME}/bin/mysql --defaults-file=${MYSQL_HOME}/database/3306/auto.cnf -S ${MYSQL_HOME}/database/3306/mysqld.sock -u root -p
+ Enter password:
+ ```
+ 
+- 创建数据库实例
 
-   ```lang-javascript
-   foo=# create foreign table test( id int, name text ) server sdb_server options ( collectionspace 'foo', collection 'bar' );
-CREATE FOREIGN TABLE
-   ```
+ ```lang-javascript
+ mysql> create database cs;
+ Query OK, 1 row affected (0.00 sec)
+
+ mysql> use cs;
+ Database changed
+ ```
+
+- 创建表
+
+ ```lang-javascript
+ mysql> create table cl(a int, b int, c text, primary key(a, b) ) ;
+ Query OK, 0 rows affected (0.66 sec)
+ ```
 
 - 使用 SQL 语句进行增删改查操作
 
-   ```lang-javascript
-   foo=# insert into test values(1, 'Tom');
-   INSERT 0 1
-   foo=# insert into test values(2, 'Jerry');
-   INSERT 0 1
-   foo=# select * from test;
-    id | name  
-   ----+-------
-     1 | Tom
-     2 | Jerry
-   (2 rows)
+ ```lang-javascript
+ mysql> insert into cl values(1, 101, "SequoiaDB test");
+ Query OK, 1 row affected (0.05 sec)
 
-   foo=# update test set name = 'Tim' where id = 1;
-   UPDATE 1
-   foo=# select * from test;
-    id | name  
-   ----+-------
-     1 | Tim
-     2 | Jerry
-   (2 rows)
+ mysql> insert into cl values(2, 102, "SequoiaDB test");
+ Query OK, 1 row affected (0.01 sec)
 
-   foo=# delete from test where name = 'Jerry';
-   DELETE 1
-   foo=# select * from test;
-    id | name 
-   ----+------
-     1 | Tim
-   (1 row)
-   ```
+ mysql> select * from cl order by b asc;
+ +---+-----+----------------+
+ | a | b   | c              |
+ +---+-----+----------------+
+ | 1 | 101 | SequoiaDB test |
+ | 2 | 102 | SequoiaDB test |
+ +---+-----+----------------+
+ 2 rows in set (0.00 sec)
+ 
+ mysql> update cl set c="My test" where a=1;
+ Query OK, 1 row affected (0.01 sec)
+ Rows matched: 1  Changed: 1  Warnings: 0
+
+ mysql> delete from cl where b=102;
+ Query OK, 1 row affected (0.02 sec)
+
+ mysql> select * from cl order by b asc;
+ +---+-----+---------+
+ | a | b   | c       |
+ +---+-----+---------+
+ | 1 | 101 | My test |
+ +---+-----+---------+
+ 1 row in set (0.00 sec)
+ ```
 
 ### 使用 SequoiaDB shell 进行数据库操作 ###
 
