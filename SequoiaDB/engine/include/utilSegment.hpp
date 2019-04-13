@@ -45,6 +45,7 @@
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
 #include "ossAtomic.hpp"
+#include "utilBitmap.hpp"  // _utilBitmap
 
 typedef UINT32 UTIL_OBJIDX ;
 #define UTIL_INVALID_OBJ_INDEX   (( UTIL_OBJIDX )( -1 ))
@@ -560,7 +561,7 @@ namespace engine
             // copy old _list content
             if ( _list )
             {
-               ossMemcpy( pListTmp, _list, sizeof( UTIL_OBJIDX ) * numOfObjects ) ;
+               ossMemcpy( pListTmp, _list, sizeof(UTIL_OBJIDX) * numOfObjects );
             }
 
             // initiate the newly allocated portion
@@ -621,7 +622,8 @@ namespace engine
    {
       INT32         rc       = SDB_OK ;
       BOOLEAN       bLatched = FALSE ;
-      UTIL_OBJIDX * pListTmp = NULL, * pUsedList = NULL ;
+      UTIL_OBJIDX * pListTmp = NULL ;
+      utilBitmap  * pUsedList= NULL ;
       UINT32        numOfObjects, maxObj, newSize, segInUse ;
       UINT32        freeSegNum = 0 ;
       UINT64        freeSize = 0 ;
@@ -651,28 +653,27 @@ namespace engine
          // find the max obj index in use
          if ( _begin > 0 )
          {
-            pUsedList = ( UTIL_OBJIDX * )SDB_OSS_MALLOC( sizeof( UTIL_OBJIDX ) *
-                                                         numOfObjects ) ;
+            pUsedList = SDB_OSS_NEW utilBitmap( numOfObjects ) ;
             if ( NULL == pUsedList )
             {
                rc = SDB_OOM ;
                goto error ;
             }
-            ossMemset( pUsedList, 0 , sizeof( UTIL_OBJIDX ) * numOfObjects ) ;
+            pUsedList->resetBitmap() ;
 
-            // for each free object in _list, mark its corresponding position in
-            // the newly constructed used list, pUsedList, with value -1,
-            // thus we get a list of all object indexes are currently in use
+            // for each free object in _list, mark its corresponding position
+            // as 1 in the newly constructed bitmap, pUsedList. Thus, we get
+            // a list of all object are currently in use (the bits remain as 0)
             for ( UINT32 i= _begin ; i < numOfObjects; i++ )
             {
-               pUsedList[ _list[i] ] = UTIL_INVALID_OBJ_INDEX ;
+               pUsedList->setBit( _list[i] ) ;
             }
             // then, starting from the end of the pUsedList, find the first
-            // element is not equal to -1, and its index is the max object
-            // index in use
+            // bit is equal to 0, and its position is the max object index
+            // in use
             for ( UINT32 i = numOfObjects - 1 ; i >= 0 ; i-- )
             {
-               if ( UTIL_INVALID_OBJ_INDEX != pUsedList[i] )
+               if ( ! pUsedList->testBit( i ) )
                {
                   maxObj = i ;
                   break ;
@@ -722,10 +723,10 @@ namespace engine
                {
                   for ( UINT32 i = 0, j = _begin ; i < newSize; i++ )
                   {
-                     if ( UTIL_INVALID_OBJ_INDEX == pUsedList[i] )
+                     if ( pUsedList->testBit( i ) )
                      {
-                         pListTmp[j] = i ;
-                         j++ ;
+                        pListTmp[j] = i ;
+                        j++ ;
                      }
                   }
                }
@@ -782,7 +783,7 @@ namespace engine
       }
       if ( NULL != pUsedList )
       {
-         SAFE_OSS_FREE( pUsedList ) ;
+         SDB_OSS_DEL pUsedList ;
       }
       if ( pFreeSegNum )
       {
