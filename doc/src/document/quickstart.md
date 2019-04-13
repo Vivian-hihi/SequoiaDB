@@ -271,7 +271,6 @@
   running. (PID: 1493)
   ```
 
-
 ## 操作环境准备 ##
 
 - 使用 root 用户或者管理员用户登录主机
@@ -350,11 +349,7 @@
  ```lang-javascript
  mysql> insert into cl values(1, 101, "SequoiaDB test");
  Query OK, 1 row affected (0.05 sec)
->>>>>>> .r40392
 
-<<<<<<< .mine
-  ----------------------------end install sequoiasql-mysql----------------------------
-=======
  mysql> insert into cl values(2, 102, "SequoiaDB test");
  Query OK, 1 row affected (0.01 sec)
 
@@ -392,25 +387,138 @@
   Welcome to SequoiaDB shell!
   help() for help, Ctrl+c or quit to exit
   >
->>>>>>> .r40392
   ```
 
-- 安装检查
-
-  切换到 sdbadmin 用户，使用如下命令如能正常查到 SequoiaDB 的版本信息，说明 SequoiaDB 安装成功。
+- 创建一个新的 sdb 连接
 
   ```lang-javascript
-  $ sequoiadb  --version
-  SequoiaDB shell version: 3.2
-  Release: 40381
-  2019-04-13-08.37.10
+  > db = new Sdb()
   ```
 
-  切换到 sdbadmin 用户，使用如下命令如能正常查到 sequoiasql-mysql 服务进程，说明 sequoiasql-mysql安装成功。
+- 创建集合空间 cs
 
   ```lang-javascript
-  $ service sequoiasql-mysql status
-  Status of service sequoiasql-mysql: 
-  running. (PID: 1493)
-  2019-04-13-08.37.10
+  > db.createCS("cs")
   ```
+
+- 创建集合 cl
+
+  ```lang-javascript
+  > db.cs.createCL("cl")
+  ```
+
+- 向集合 cs.cl 中写入记录
+
+  ```lang-javascript
+   > db.cs.cl.insert({id:1, name:"Tom"})
+   Takes 0.000679s.
+   > db.cs.cl.insert({id:2, name:"Jerry"})
+   Takes 0.000447s.
+  ```
+
+- 查询结果
+
+  ```lang-javascript
+  > db.cs.cl.find()
+  {
+    "_id": {
+      "$oid": "5a93bd4bc8ddfc8f28000001"
+    },
+    "id": 1,
+    "name": "Tom"
+  }
+  {
+    "_id": {
+      "$oid": "5a93bd52c8ddfc8f28000002"
+    },
+    "id": 2,
+    "name": "Jerry"
+  }
+  Return 2 row(s).
+  Takes 0.000742s.
+  ```
+
+- 修改记录并查询结果
+
+  ```lang-javascript
+  > db.cs.cl.update({$set:{name:"Tim"}}, {id:1})
+  Takes 0.001411s.
+  > db.cs.cl.find()
+  {
+    "_id": {
+      "$oid": "5a93bd4bc8ddfc8f28000001"
+    },
+    "id": 1,
+    "name": "Tim"
+  }
+  {
+    "_id": {
+      "$oid": "5a93bd52c8ddfc8f28000002"
+    },
+    "id": 2,
+    "name": "Jerry"
+  }
+  Return 2 row(s).
+  Takes 0.001261s.
+  ```
+
+- 删除记录并查询结果
+
+  ```
+  > db.cs.cl.remove({id:2})
+  Takes 0.001756s.
+  > db.cs.cl.find()
+  {
+    "_id": {
+      "$oid": "5a93bd4bc8ddfc8f28000001"
+    },
+    "id": 1,
+    "name": "Tim"
+  }
+  Return 1 row(s).
+  Takes 0.000702s.
+  ```
+
+- 查看帮助
+
+   ```lang-javascript
+   > help()
+   var db = new Sdb()                                 connect to database use default host 'localhost' and default port 11810
+   var db = new Sdb('localhost',11810)                connect to database use specified host and port
+   var db = new Sdb('ubuntu',11810,'','')             connect to database with username and password
+   var db = new SecureSdb()                           connect to database securely use default host 'localhost' and default port 11810
+   var db = new SecureSdb('localhost',11810)          connect to database securely use specified host and port
+   var db = new SecureSdb('ubuntu',11810,'','')       connect to database securely with username and password
+   var oma = new Oma()                                connect to om agent use default host 'localhost' and default port 11810
+   var oma = new Oma('localhost',11810)               connect to om agent use specified host and port
+   var oma = new Oma('ubuntu',11810,'','')            connect to om agent with username and password
+   help(<method>)                                     help on specified method, e.g. help('createCS')
+   oma.help()                                         help on om methods
+   db.help()                                          help on db methods
+   db.cs.help()                                       help on collection space cs
+   db.cs.cl                                           access collection cl on collection space cs
+   db.cs.cl.help()                                    help on collection cl
+   db.cs.cl.find()                                    list all records
+   db.cs.cl.find({a:1})                               list records where a=1
+   db.cs.cl.find().help()                             help on find methods
+   db.cs.cl.count().help()                            help on count methods
+   print(x), println(x)                               print out x
+   sleep(ms)                                          sleep macro seconds
+   traceFmt(<type>,<in>,<out>)                        format trace input(in) to output(out) by type
+   getErr(ret)                                        print error description for return code
+   getLastError()                                     get last error number
+   setLastError(<errno>)                              set last error number
+   getLastErrMsg()                                    get last error detail information
+   setLastErrMsg(<msg>)                               set last error detail information
+   getLastErrObj()                                    get last error object information
+   setLastErrObj(<obj>)                               set last error object information
+   showClass([className])                             show all class name or class's function name
+   forceGC()                                          force garbage collection of JS objects
+   jsonFormat(<pretty>)                               Set BSON output format.When out of memory
+                                                      error happen, we can use jsonFormat( false ) to
+                                                      disable BSON formatted output.
+   clear                                              clear the terminal screen
+   history -c                                         clear the history
+   quit                                               exit
+Takes 0.000419s.
+   ```
