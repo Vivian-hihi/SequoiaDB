@@ -1,33 +1,45 @@
-本入门教程使用 SequoiaDB 3.0 及 SequoiaSQL-PostgreSQL 3.0 在 Ubuntu 12.04 上搭建一个基础运行环境，以快速了解 SequoiaDB 及 SequoiaSQL 的基本功能 。
+本入门教程使用 SequoiaDB 3.2 及 SequoiaSQL-MySQL 3.2 在 Ubuntu 12.04 上搭建一个基础运行环境，以快速了解 SequoiaDB 及 SequoiaSQL 的基本功能 。
 
-##安装 SequoiaDB##
+##安装 SequoiaDB 及 SequoiaSQL-MySQL##
 安装过程需要使用操作系统 root 用户权限。
 
 ###安装介质准备###
-从 [SequoiaDB 官网](http://www.sequoiadb.com/cn/index.php?a=index&m=Download) 下载 SequoiaDB 3.0 及 SequoiaSQL-PostgreSQL 3.0 的安装包，并上传到目标主机上。
+从 [SequoiaDB 官网](http://www.sequoiadb.com/cn/index.php?a=index&m=Download) 下载 SequoiaDB 3.2 数据库安装包，并上传到目标主机上。
 
 ###安装步骤###
 
-- 以 root 用户登陆目标主机，解压 SequoiaDB 安装包 sequoiadb-3.0-linux_x86_64-installer.tar.gz，并给解压得到的 run 包增加可执行权限
+- 以 root 用户登陆目标主机，解压 SequoiaDB 安装包 sequoiadb-3.2-linux_x86_64.tar.gz，并给解压得到的 run 包增加可执行权限
 
   ```lang-javascript
-  $ tar zxvf sequoiadb-3.0-linux_x86_64-installer.tar.gz 
-  $ chmod u+x sequoiadb-3.0-linux_x86_64-installer.run
+  $ tar zxvf sequoiadb-3.2-linux_x86_64.tar.gz 
+  $ cd sequoiadb-3.2
+  $ chmod u+x sequoiadb-3.2-linux_x86_64-installer.run
+  $ chmod u+x sequoiasql-mysql-3.2-linux_x86_64-installer.run
+  $ chmod u+x setup.sh
   ```
-- 运行安装程序  
+- 运行安装脚本  
     
   ```lang-javascript
-  $ ./sequoiadb-3.0-linux_x86_64-installer.run --mode text --SMS false
+  $ ./setup.sh
   ```
 
-- 程序提示选择向导语言，输入2，选择中文
+- 程序提示选择安装SequoiaDB，默认是安装，输入N不安装
 
   ```
+  Install sequoiadb Y/N: 
+  ```
+
+- 程序提示开始安装SequoiaDB，选择向导语言，输入2，选择中文
+
+  ```
+  ----------------------------begin to install sequoiadb----------------------------
+  ./sequoiadb-3.2-linux_x86_64-installer.run --mode text
   Language Selection
+
   Please select the installation language
   [1] English - English
   [2] Simplified Chinese - 简体中文
-  Please choose an option [1] :2
+  Please choose an option [1] : 2
   ```
 
 - 显示安装协议，直接按回车键忽略阅读并同意协议
@@ -68,20 +80,20 @@
   请选择选项 [1] :
   ```
 
-- 询问是否强制安装，直接按回车键选择否：
-
-  ```
-  ------------------------------------------------------------
-  是否强制安装？强制安装时可能会强杀残留进程
-  是否强制安装 [y/N]:
-  ```
-
 - 输入安装路径后按回车（可直接按回车使用默认路径 /opt/sequoiadb ）
 
   ```
   ------------------------------------------------------------
   请指定 SequoiaDB Server 将会被安装到的目录
   安装目录 [/opt/sequoiadb]:
+  ```
+
+- 询问是否强制安装，直接按回车键选择否：
+
+  ```
+  ------------------------------------------------------------
+  是否强制安装？强制安装时可能会强杀残留进程
+  是否强制安装 [y/N]:
   ```
 
 - 提示输入用户名和用户组（默认创建 sdbadmin 用户和 sdbadmin_group 用户组），该用户名用于运行 SequoiaDB 服务，本次均直接按回车使用默认值
@@ -118,6 +130,15 @@
   Sequoiadb相关进程开机自启动 [Y/n]:
   ```
 
+- 询问是否安装 OM 服务，输入Y表示安装，默认不安装，按回车
+
+  ```
+  ----------------------------------------------------------------------------
+  
+  
+  是否安装OM服务 [y/N]: 
+  ```
+
 - 设置完成，询问是否继续安装，直接按回车选择是
 
   ```
@@ -135,65 +156,68 @@
   #########################################
   ------------------------------------------------------------
   安装程序已经完成安装 SequoiaDB Server 于你的电脑中.
+
+  ----------------------------end install sequoiadb----------------------------
   ```
 
-- 安装检查
+- 安装 SequoiaSQL，询问安装 sequoiasql-postgresql or sequoiasql-mysql，分别用 1 和 2 表示，默认是 1，输入 2 安装 sequoiasql-mysql
 
-  切换到 sdbadmin 用户，使用如下命令如能正常查到 SequoiaDB 的版本信息，说明安装成功。
-
-  ```lang-javascript
-  $ sequoiadb  --version
-  SequoiaDB version: 3.0
-  Release: 35669
-  2018-05-14-00.39.08
-  ```
-
-##安装 SequoiaSQL##
-
-- 以 root 用户登陆目标主机，解压 SequoiaSQL 安装包 sequoiasql-postgresql-3.0-x86_64-installer.tar.gz，并给解压得到的 run 包增加可执行权限
-
-  ```lang-javascript
-  $ tar zxvf sequoiasql-postgresql-3.0-x86_64-installer.tar.gz
-  $ chmod u+x sequoiasql-postgresql-3.0-x86_64-installer.run
-  ```
-
-- 运行安装程序  
-    
-  ```lang-javascript
-  $ ./sequoiasql-postgresql-3.0-x86_64-installer.run --mode text
-  ```
+ ```
+  Install sequoiasql-postgresql or sequoiasql-mysql, represented by 1 and 2, default:1, 1/2: 2
+ ```
 
 - 程序提示选择向导语言，输入2，选择中文
 
   ```
+  --------------------------begin to install sequoiasql-mysql-------------------------
+  ./sequoiasql-mysql-3.2-linux_x86_64-installer.run --mode text
   Language Selection
+  
   Please select the installation language
   [1] English - English
   [2] Simplified Chinese - 简体中文
-  Please choose an option [1] :2
+  Please choose an option [1] : 2
   ```
 
-- 输入安装路径后按回车（可直接按回车使用默认路径 /opt/sequoiasql/postgresql ）
+- 显示安装协议，直接按回车键忽略阅读并同意协议
 
-  ```
+  ``` 
   ----------------------------------------------------------------------------
   由BitRock InstallBuilder评估本所建立
   
-  欢迎来到 SequoiaSQL PostgreSQL Server 安装程序
+  欢迎来到 SequoiaSQL MySQL Server 安装程序
+  
+  ----------------------------------------------------------------------------
+  GNU 通用公共授权
+  第二版, 1991年6月
+  著作权所有 (C) 1989，1991 Free Software Foundation, Inc. 59 Temple Place, Suite 330, Boston, MA   02111-1307 USA.
+  允许每个人复制和发布本授权文件的完整副本，但不允许对它进行任何修改。
+  
+  [1] 同意以上协议: 了解更多的协议内容，可以在安装后查看协议文件
+  [2] 查看详细的协议内容
+  请选择一个选项 [1] : 
+  ```
 
-  ------------------------------------------------------------
-  请指定 SequoiaSQL PostgreSQL Server 将会被安装到的目录
-  安装目录 [/opt/sequoiasql/postgresql]:
+- 输入安装路径后按回车（可直接按回车使用默认路径 /opt/sequoiasql/mysql ）
+
+  ```
+  ----------------------------------------------------------------------------
+  请指定 SequoiaSQL MySQL Server 将会被安装到的目录
+  
+  安装目录 [/opt/sequoiasql/mysql]: 
   ```
 
 - 提示输入用户名和用户组（默认创建 sdbadmin 用户和 sdbadmin_group 用户组），该用户名用于运行 SequoiaSQL 服务，本次均直接按回车使用默认值
 
   ```
-  ------------------------------------------------------------
+  ----------------------------------------------------------------------------
   数据库管理用户配置
-  配置用于启动SequoiaSQL PostgreSQL的用户名、用户组和密码
-  用户名 [sdbadmin]:
-  用户组 [sdbadmin_group]:
+  
+  配置用于启动SequoiaSQL-MySql的用户名、用户组和密码
+  
+  用户名 [sdbadmin]: 
+  
+  用户组 [sdbadmin_group]: 
   ```
 
 - 提示输入该用户的密码和确认密码（默认密码为 sdbadmin ），本次均直接按回车使用默认值
@@ -206,31 +230,47 @@
 - 设置完成，询问是否继续安装，直接按回车选择是
 
   ```
-  ------------------------------------------------------------
-  设定现在已经准备将 SequoiaSQL PostgreSQL Server 安装到您的电脑.
+  ----------------------------------------------------------------------------
+  设定现在已经准备将 SequoiaSQL MySQL Server 安装到您的电脑.
+
   您确定要继续? [Y/n]: 
   ```
     
 - 安装完成
 
   ```
-  正在安装 SequoiaSQL PostgreSQL Server 于您的电脑中，请稍候。
-  安装中
-  0% ______________ 50% ______________ 100%
-  ########################################
+  ----------------------------------------------------------------------------
+  正在安装 SequoiaSQL MySQL Server 于您的电脑中，请稍候.
   
-  ------------------------------------------------------------
-  安装程序已经完成安装 SequoiaSQL PostgreSQL Server 于你的电脑中
+   安装中
+   0% ______________ 50% ______________ 100%
+   #########################################
+
+  ----------------------------------------------------------------------------
+  安装程序已经完成安装 SequoiaSQL MySQL Server 于你的电脑中.
+
+  ----------------------------end install sequoiasql-mysql----------------------------
   ```
 
 - 安装检查
 
-  切换到 sdbadmin 用户，使用如下命令如能正常查到 SequoiaSQL-PostgreSQL 的版本信息，说明安装成功。
+  切换到 sdbadmin 用户，使用如下命令如能正常查到 SequoiaDB 的版本信息，说明安装成功。
 
-  ```lang=java-script
-  $ sdb_sql_ctl --version
-  3.0
+  ```lang-javascript
+  $ sequoiadb  --version
+  SequoiaDB shell version: 3.2
+  Release: 40381
+  2019-04-13-08.37.10
   ```
+
+  切换到 sdbadmin 用户，使用如下命令如能正常查到 sequoiasql-mysql 的状态，说明安装成功。
+
+  ```lang-javascript
+  $ service sequoiasql-mysql status
+  Status of service sequoiasql-mysql: 
+  running. (PID: 1493)
+  ```
+
 
 ## 操作环境准备 ##
 
@@ -310,7 +350,11 @@
  ```lang-javascript
  mysql> insert into cl values(1, 101, "SequoiaDB test");
  Query OK, 1 row affected (0.05 sec)
+>>>>>>> .r40392
 
+<<<<<<< .mine
+  ----------------------------end install sequoiasql-mysql----------------------------
+=======
  mysql> insert into cl values(2, 102, "SequoiaDB test");
  Query OK, 1 row affected (0.01 sec)
 
@@ -348,138 +392,25 @@
   Welcome to SequoiaDB shell!
   help() for help, Ctrl+c or quit to exit
   >
+>>>>>>> .r40392
   ```
 
-- 创建一个新的 sdb 连接
+- 安装检查
+
+  切换到 sdbadmin 用户，使用如下命令如能正常查到 SequoiaDB 的版本信息，说明 SequoiaDB 安装成功。
 
   ```lang-javascript
-  > db = new Sdb()
+  $ sequoiadb  --version
+  SequoiaDB shell version: 3.2
+  Release: 40381
+  2019-04-13-08.37.10
   ```
 
-- 创建集合空间 cs
+  切换到 sdbadmin 用户，使用如下命令如能正常查到 sequoiasql-mysql 服务进程，说明 sequoiasql-mysql安装成功。
 
   ```lang-javascript
-  > db.createCS("cs")
+  $ service sequoiasql-mysql status
+  Status of service sequoiasql-mysql: 
+  running. (PID: 1493)
+  2019-04-13-08.37.10
   ```
-
-- 创建集合 cl
-
-  ```lang-javascript
-  > db.cs.createCL("cl")
-  ```
-
-- 向集合 cs.cl 中写入记录
-
-  ```lang-javascript
-   > db.cs.cl.insert({id:1, name:"Tom"})
-   Takes 0.000679s.
-   > db.cs.cl.insert({id:2, name:"Jerry"})
-   Takes 0.000447s.
-  ```
-
-- 查询结果
-
-  ```lang-javascript
-  > db.cs.cl.find()
-  {
-    "_id": {
-      "$oid": "5a93bd4bc8ddfc8f28000001"
-    },
-    "id": 1,
-    "name": "Tom"
-  }
-  {
-    "_id": {
-      "$oid": "5a93bd52c8ddfc8f28000002"
-    },
-    "id": 2,
-    "name": "Jerry"
-  }
-  Return 2 row(s).
-  Takes 0.000742s.
-  ```
-
-- 修改记录并查询结果
-
-  ```lang-javascript
-  > db.cs.cl.update({$set:{name:"Tim"}}, {id:1})
-  Takes 0.001411s.
-  > db.cs.cl.find()
-  {
-    "_id": {
-      "$oid": "5a93bd4bc8ddfc8f28000001"
-    },
-    "id": 1,
-    "name": "Tim"
-  }
-  {
-    "_id": {
-      "$oid": "5a93bd52c8ddfc8f28000002"
-    },
-    "id": 2,
-    "name": "Jerry"
-  }
-  Return 2 row(s).
-  Takes 0.001261s.
-  ```
-
-- 删除记录并查询结果
-
-  ```
-  > db.cs.cl.remove({id:2})
-  Takes 0.001756s.
-  > db.cs.cl.find()
-  {
-    "_id": {
-      "$oid": "5a93bd4bc8ddfc8f28000001"
-    },
-    "id": 1,
-    "name": "Tim"
-  }
-  Return 1 row(s).
-  Takes 0.000702s.
-  ```
-
-- 查看帮助
-
-   ```lang-javascript
-   > help()
-   var db = new Sdb()                                 connect to database use default host 'localhost' and default port 11810
-   var db = new Sdb('localhost',11810)                connect to database use specified host and port
-   var db = new Sdb('ubuntu',11810,'','')             connect to database with username and password
-   var db = new SecureSdb()                           connect to database securely use default host 'localhost' and default port 11810
-   var db = new SecureSdb('localhost',11810)          connect to database securely use specified host and port
-   var db = new SecureSdb('ubuntu',11810,'','')       connect to database securely with username and password
-   var oma = new Oma()                                connect to om agent use default host 'localhost' and default port 11810
-   var oma = new Oma('localhost',11810)               connect to om agent use specified host and port
-   var oma = new Oma('ubuntu',11810,'','')            connect to om agent with username and password
-   help(<method>)                                     help on specified method, e.g. help('createCS')
-   oma.help()                                         help on om methods
-   db.help()                                          help on db methods
-   db.cs.help()                                       help on collection space cs
-   db.cs.cl                                           access collection cl on collection space cs
-   db.cs.cl.help()                                    help on collection cl
-   db.cs.cl.find()                                    list all records
-   db.cs.cl.find({a:1})                               list records where a=1
-   db.cs.cl.find().help()                             help on find methods
-   db.cs.cl.count().help()                            help on count methods
-   print(x), println(x)                               print out x
-   sleep(ms)                                          sleep macro seconds
-   traceFmt(<type>,<in>,<out>)                        format trace input(in) to output(out) by type
-   getErr(ret)                                        print error description for return code
-   getLastError()                                     get last error number
-   setLastError(<errno>)                              set last error number
-   getLastErrMsg()                                    get last error detail information
-   setLastErrMsg(<msg>)                               set last error detail information
-   getLastErrObj()                                    get last error object information
-   setLastErrObj(<obj>)                               set last error object information
-   showClass([className])                             show all class name or class's function name
-   forceGC()                                          force garbage collection of JS objects
-   jsonFormat(<pretty>)                               Set BSON output format.When out of memory
-                                                      error happen, we can use jsonFormat( false ) to
-                                                      disable BSON formatted output.
-   clear                                              clear the terminal screen
-   history -c                                         clear the history
-   quit                                               exit
-Takes 0.000419s.
-   ```
