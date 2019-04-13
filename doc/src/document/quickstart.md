@@ -160,10 +160,10 @@
   ----------------------------end install sequoiadb----------------------------
   ```
 
-- 安装 SequoiaSQL，询问安装 sequoiasql-postgresql or sequoiasql-mysql，分别用 1 和 2 表示，默认是 1，输入 2 安装 sequoiasql-mysql
+- 安装 SequoiaSQL，询问安装 sequoiasql-mysql or sequoiasql-postgresql，分别用 1 和 2 表示，默认是 1，回车安装 sequoiasql-mysql
 
  ```
-  Install sequoiasql-postgresql or sequoiasql-mysql, represented by 1 and 2, default:1, 1/2: 2
+  Install sequoiasql-postgresql or sequoiasql-mysql, represented by 1 and 2, default:1, 1/2: 
  ```
 
 - 程序提示选择向导语言，输入2，选择中文
