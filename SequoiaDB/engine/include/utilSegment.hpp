@@ -50,6 +50,8 @@
 typedef UINT32 UTIL_OBJIDX ;
 #define UTIL_INVALID_OBJ_INDEX   (( UTIL_OBJIDX )( -1 ))
 
+#define UTIL_MAX_SEGMENT_NUM     (0x40000000)      // 1GB
+
 namespace engine
 {
 
@@ -270,39 +272,6 @@ namespace engine
          return pObj ;
       }
 
-      // round up to nearest power of 2
-      // input :
-      //     n  -- number to calculate
-      // output :
-      //     exponent -- exponent when round n up to the nearest power of 2
-      // return:
-      //   round up to nearest power of 2
-      UINT32 _nextPowerOf2( UINT32 n, UINT32 & exponent )
-      {
-         UINT32 result = 0 ;
-         BOOLEAN isPowerOf2 = FALSE ;
-         exponent = 0 ;
-         if ( ( n > 0 ) && ( ! ( n & ( n - 1 ) ) ) )
-         {
-            result = n ;
-            isPowerOf2 = TRUE ;
-         }
-         while ( n != 0 )
-         {
-            n >>= 1 ;
-            exponent ++ ;
-         }
-         if ( ! isPowerOf2 )
-         {
-            result = ( 1 << exponent ) ;
-         }
-         else
-         {
-            exponent -- ;
-         }
-         return result ;
-      }
-
    public :
       //
       // Description: initialization
@@ -321,9 +290,9 @@ namespace engine
       // Dependency : this function shall be called one time only, and before
       //              any other function of this class.
       //
-      INT32 init(  const UINT32 poolId,
-                   const UINT32 numberOfObjs,
-                   const UINT32 maxNumberOfObjs,
+      INT32 init(  UINT32 poolId,
+                   UINT32 numberOfObjs,
+                   UINT32 maxNumberOfObjs,
                    utilSegmentHandler *pHandler = NULL ) ;
 
       //
@@ -659,7 +628,6 @@ namespace engine
                rc = SDB_OOM ;
                goto error ;
             }
-            pUsedList->resetBitmap() ;
 
             // for each free object in _list, mark its corresponding position
             // as 1 in the newly constructed bitmap, pUsedList. Thus, we get
@@ -770,7 +738,7 @@ namespace engine
       }
       else
       {
-         SDB_ASSERT( ( _isInitialized && _list ),
+         SDB_ASSERT( _isInitialized,
                      "_utilSegmentPool has to be initialized." ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -801,13 +769,22 @@ namespace engine
    template < class T >
    INT32 _utilSegmentPool< T >::init
    (
-      const UINT32 poolId,
-      const UINT32 numberOfObjs,
-      const UINT32 maxNumberOfObjs,
+      UINT32 poolId,
+      UINT32 numberOfObjs,
+      UINT32 maxNumberOfObjs,
       utilSegmentHandler *pHandler
    )
    {
       INT32   rc           = SDB_OK ;
+
+      if ( numberOfObjs > UTIL_MAX_SEGMENT_NUM )
+      {
+         numberOfObjs = UTIL_MAX_SEGMENT_NUM ;
+      }
+      if ( maxNumberOfObjs > UTIL_MAX_SEGMENT_NUM )
+      {
+         maxNumberOfObjs = UTIL_MAX_SEGMENT_NUM ;
+      }
 
       if (    ( UTIL_INVALID_OBJ_INDEX != numberOfObjs )
            && ( UTIL_INVALID_OBJ_INDEX != maxNumberOfObjs )
@@ -817,7 +794,7 @@ namespace engine
            && ( numberOfObjs <= maxNumberOfObjs ) )
       {
          // round up numberOfObjs to the nearest power of 2
-         _delta        = _nextPowerOf2( numberOfObjs, _exponent ) ;
+         _delta        = ossNextPowerOf2( numberOfObjs, &_exponent ) ;
          _maxNumOfObjs = maxNumberOfObjs ;
          _poolId       = poolId ;
 
@@ -1178,6 +1155,7 @@ namespace engine
       private :
          // acquire operation proceed in round robin
          ossAtomic32 _round ;
+         UINT32      _poolNum ;
          _utilSegmentPool< T > _pool[ _SEGMENT_MGR_MAX_POOLS ] ;         
 
       private :
@@ -1214,25 +1192,37 @@ namespace engine
          }
 
       public  :
-         _utilSegmentManager() : _round( 0 ) {}
+         _utilSegmentManager() : _round( 0 )
+         {
+            _poolNum = 0 ;
+         }
          _utilSegmentManager( const UTIL_OBJIDX numberOfObjs,
                               const UTIL_OBJIDX maxNumberOfObjs )
          {
+            _poolNum = 0 ;
             init( numberOfObjs, maxNumberOfObjs ) ;
          }
 
          ~_utilSegmentManager() { fini(); } 
 
-         INT32 init( const UTIL_OBJIDX numberOfObjs,
-                     const UTIL_OBJIDX maxNumberOfObjs,
+         INT32 init( UTIL_OBJIDX numberOfObjs,
+                     UTIL_OBJIDX maxNumberOfObjs,
+                     UINT8 poolNum = _SEGMENT_MGR_MAX_POOLS,
                      utilSegmentHandler *pHandler = NULL )
          {
             INT32 rc = SDB_OK ;
-            for ( UINT32 i = 0; i < _SEGMENT_MGR_MAX_POOLS ; i++ )
+            _poolNum = ossNextPowerOf2( poolNum, NULL ) ;
+
+            if ( _poolNum > _SEGMENT_MGR_MAX_POOLS )
+            {
+               _poolNum = _SEGMENT_MGR_MAX_POOLS ;
+            }
+
+            for ( UINT32 i = 0 ; i < _poolNum ; i++ )
             {
                rc = _pool[ i ].init( i,
-                                     numberOfObjs    / _SEGMENT_MGR_MAX_POOLS,
-                                     maxNumberOfObjs / _SEGMENT_MGR_MAX_POOLS,
+                                     numberOfObjs    / _poolNum,
+                                     maxNumberOfObjs / _poolNum,
                                      pHandler ) ;
                if ( SDB_OK != rc )
                {
@@ -1246,7 +1236,7 @@ namespace engine
 
          void fini()
          {
-            for ( UINT32 i = 0; i < _SEGMENT_MGR_MAX_POOLS ; i++ )
+            for ( UINT32 i = 0; i < _poolNum ; i++ )
             {
                _pool[ i ].fini() ;
             }
@@ -1255,7 +1245,7 @@ namespace engine
          UINT32 getNumOfObjAllocated()
          {
             UINT32 objs = 0 ;
-            for ( UINT32 i = 0; i < _SEGMENT_MGR_MAX_POOLS ; i++ )
+            for ( UINT32 i = 0; i < _poolNum ; i++ )
             {
                objs += _pool[ i ].getNumOfObjAllocated() ;
             }
@@ -1314,14 +1304,14 @@ namespace engine
             do
             {
                retryCount++ ;
-               // pool = _round.inc() % _SEGMENT_MGR_MAX_POOLS ;
-               // the _SEGMENT_MGR_MAX_POOLS is power of 2
+               // pool = _round.inc() % _poolNum ;
+               // the _poolNum is power of 2
                // so modulo can be optimized
-               pool = _round.inc() & ( _SEGMENT_MGR_MAX_POOLS - 1 ) ;
+               pool = _round.inc() & ( _poolNum - 1 ) ;
                // switch to next pool if shrinking in progress
                while ( _pool[ pool ].shrinkInProgress() )
                {
-                  pool = _round.inc() & ( _SEGMENT_MGR_MAX_POOLS - 1 ) ;
+                  pool = _round.inc() & ( _poolNum - 1 ) ;
                } 
                rc = _pool[ pool ].acquire( idx, pT ) ;
                if ( SDB_OK == rc )
@@ -1329,7 +1319,7 @@ namespace engine
                   break ;
                }
             } while ( ( SDB_OSS_UP_TO_LIMIT == rc ) &&
-                      ( retryCount <= _SEGMENT_MGR_MAX_POOLS ) ) ;
+                      ( retryCount <= _poolNum ) ) ;
             return rc ;
          } 
 
@@ -1363,7 +1353,7 @@ namespace engine
             // proper scheduling algorithm to be implemented
             INT32 rc = SDB_OK ;
             UINT32 freeSegToKeep = 1 ;
-            for ( UINT32 i = 0; i < _SEGMENT_MGR_MAX_POOLS ; i++ )
+            for ( UINT32 i = 0; i < _poolNum ; i++ )
             {
                rc = _pool[ i ].shrink( freeSegToKeep ) ;
                if ( SDB_OK != rc )
@@ -1378,7 +1368,7 @@ namespace engine
 #ifdef _DEBUG
          _utilSegmentPool< T > * getPoolHandle( const UINT32 pool )
          {
-            return &( _pool[ pool % _SEGMENT_MGR_MAX_POOLS ] ) ;
+            return &( _pool[ pool % _poolNum ] ) ;
          }
 #endif
    } ;
