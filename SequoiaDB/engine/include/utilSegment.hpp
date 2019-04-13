@@ -65,9 +65,9 @@ namespace engine
          virtual ~_utilSegmentHandler() {}
 
       public:
-         virtual BOOLEAN   canAllocSegment( UINT64 size ) const = 0 ;
+         virtual BOOLEAN   canAllocSegment( UINT64 size ) = 0 ;
          virtual void      onAllocSegment( UINT64 size ) = 0 ;
-         virtual BOOLEAN   canReleaseSegment( UINT64 size ) const = 0 ;
+         virtual BOOLEAN   canReleaseSegment( UINT64 size ) = 0 ;
          virtual void      onReleaseSegment( UINT64 size ) = 0 ;
    } ;
    typedef _utilSegmentHandler utilSegmentHandler ;
