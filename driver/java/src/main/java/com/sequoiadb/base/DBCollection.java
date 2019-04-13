@@ -49,6 +49,11 @@ public class DBCollection {
     public static final int FLG_INSERT_RETURN_OID = 0x00000002;
 
     /**
+     *  The flag represent whether insert becomes update when hitting index key duplicate error.
+     */
+    public static final int FLG_INSERT_REPLACEONDUP = 0x00000004;
+
+    /**
      * The sharding key in update rule is not filtered,
      * when executing update or upsert.
      */
@@ -151,6 +156,9 @@ public class DBCollection {
      *                  <li>FLG_INSERT_CONTONDUP: if the record hit index key duplicate error,
      *                                            database will skip them and go on inserting.</li>
      *                  <li>FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.</li>
+     *                  <li>FLG_INSERT_REPLACEONDUP: if the record hit index key duplicate
+     *                                               error, database will replace the existing
+     *                                               record by the inserting new record.</li>
      *              </ul>
      * @return The result of inserting, can be the follow values:
      *              <ul>
@@ -225,6 +233,10 @@ public class DBCollection {
      *                                            database will skip them and go on inserting.</li>
      *                  <li>FLG_INSERT_RETURN_OID: return the value of "_id" field in the record.
      *                                             When set this flag, ensureOID() will be set to true.</li>
+     *                  <li>FLG_INSERT_REPLACEONDUP: if the record hit index key duplicate
+     *                                               error, database will replace the existing
+     *                                               record by the inserting new record and them
+     *                                               go on inserting.</li>
      *              </ul>
      * @return The result of inserting, can be the follow values:
      *          <ul>
@@ -277,6 +289,10 @@ public class DBCollection {
      *                  <li>0: default value</li>
      *                  <li>FLG_INSERT_CONTONDUP: if the record hit index key duplicate error,
      *                                            database will skip them and go on inserting.</li>
+     *                  <li>FLG_INSERT_REPLACEONDUP: if the record hit index key duplicate
+     *                                               error, database will replace the existing
+     *                                               record by the inserting new record and them
+     *                                               go on inserting.</li>
      *              </ul>
      * @throws BaseException If error happens.
      * @since 3.0.2
@@ -521,16 +537,24 @@ public class DBCollection {
      * Insert a bulk of bson objects into current collection.
      *
      * @param insertor The Bson object of insertor list, can't be null
-     * @param flag     available value is FLG_INSERT_CONTONDUP or 0.
-     *                 if flag = FLG_INSERT_CONTONDUP, bulkInsert will continue when Duplicate
-     *                 key exist.(the duplicate record will be ignored);
-     *                 if flag = 0, bulkInsert will interrupt when Duplicate key exist.
+     * @param flags The flag to control the behavior of inserting. The
+     *              value of flags default to be 0, and it can choose
+     *              the follow values:
+     *              <ul>
+     *                  <li>0: default value</li>
+     *                  <li>FLG_INSERT_CONTONDUP: if the record hit index key duplicate error,
+     *                                            database will skip them and go on inserting.</li>
+     *                  <li>FLG_INSERT_REPLACEONDUP: if the record hit index key duplicate
+     *                                               error, database will replace the existing
+     *                                               record by the inserting new record and them
+     *                                               go on inserting.</li>
+     *              </ul>
      * @throws BaseException If error happens.
-     * @deprecated use insert(List<BSONObject> insertor, int flag) instead
+     * @deprecated use insert(List<BSONObject> insertor, int flags) instead
      */
     @Deprecated
-    public void bulkInsert(List<BSONObject> insertor, int flag) throws BaseException {
-        insert(insertor, flag);
+    public void bulkInsert(List<BSONObject> insertor, int flags) throws BaseException {
+        insert(insertor, flags);
     }
 
     /**

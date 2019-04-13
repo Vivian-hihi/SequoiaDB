@@ -187,4 +187,18 @@ public class TestInsert extends SingleCSCLTestCase {
         assertEquals(recordCount, cl.getCount());
 
     }
+
+    @Test
+    public void testInsertFlags() {
+        // case 1:
+        BSONObject obj1 = new BasicBSONObject().append("a", 1).append("_id", 1);
+        BSONObject obj2 = new BasicBSONObject().append("a", 2).append("_id", 1);
+        cl.insert(obj1);
+        cl.insert(obj1, DBCollection.FLG_INSERT_CONTONDUP);
+        cl.insert(obj2, DBCollection.FLG_INSERT_REPLACEONDUP);
+//        cl.insert(obj1, DBCollection.FLG_INSERT_CONTONDUP | DBCollection.FLG_INSERT_REPLACEONDUP);
+
+
+    }
+
 }
