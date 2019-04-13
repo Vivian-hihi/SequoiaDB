@@ -1,18 +1,9 @@
 #!/bin/bash
 
-TYPE="ask"
+TYPE="unknown"
 INSTALL_PG=0
 INSTALL_DB=0
 INSTALL_MYSQL=0
-
-function err_para()
-{
-   local para_name=$1
-   local para_value=$2
-   echo "setup: unrecognized $para_name \"$para_value\"" >&2
-   echo 'Try "setup --help" for more information.'
-   exit 64
-}
 
 function install()
 {
@@ -37,11 +28,11 @@ function ask_user()
 
    while :
    do
-      read -p "Install sequoiasql-postgresql or sequoiasql-mysql, represented by 1 and 2, default:1, 1/2: " select
+      read -p "Install sequoiasql-mysql or sequoiasql-postgresql, represented by 1 and 2, default:1, 1/2: " select
       [ -z $select ] && select=1
       [[ "$select" == 1 || "$select" == 2 ]] && break
    done
-   [[ "$select" == 1 ]] && install "sequoiasql-postgresql" || install "sequoiasql-mysql"
+   [[ "$select" == 1 ]] && install "sequoiasql-mysql" || install "sequoiasql-postgresql"
 }
 
 function build_help()
@@ -93,6 +84,6 @@ do
 done
 
 case "$TYPE" in
-   ask)           ask_user; shift 1;;
+   unknown)           ask_user; shift 1;;
    *)             shift 1;;
 esac
