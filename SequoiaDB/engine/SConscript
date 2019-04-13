@@ -159,6 +159,8 @@ utilFiles = [
       "client/timestampValid.c",
       "util/csv2rawbson.cpp",
       "util/utilCommon.cpp",
+      "util/utilMemBlockPool.cpp",
+      "util/utilLightJobBase.cpp",
       "util/url.c",
       "util/utilBsonHash.cpp",
       "util/linenoise.cpp",

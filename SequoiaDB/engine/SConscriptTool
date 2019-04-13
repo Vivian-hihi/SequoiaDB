@@ -203,6 +203,8 @@ utilFiles = [
       "util/utilStr.cpp",
       "util/utilParam.cpp",
       "util/utilCommon.cpp",
+      "util/utilMemBlockPool.cpp",
+      "util/utilLightJobBase.cpp",
       "util/utilNodeOpr.cpp",
       "util/utilSdb.cpp",
       "util/csv2rawbson.cpp",
