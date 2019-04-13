@@ -3350,14 +3350,6 @@ namespace engine
          _incMergeSyncNum( 1 ) ;
       }
 
-      utilCachePage *pTmpPage = NULL ;
-      while ( hasPin && it != pageMap.end() )
-      {
-         pTmpPage = ( utilCachePage* )it->second ;
-         pTmpPage->unpin() ;
-         ++it ;
-      }
-
       PD_TRACE1( SDB__UTILCACHEUNIT__SYNCPAGES, PD_PACK_UINT( totalPages ) ) ;
       PD_TRACE_EXIT( SDB__UTILCACHEUNIT__SYNCPAGES ) ;
       return totalPages ;
