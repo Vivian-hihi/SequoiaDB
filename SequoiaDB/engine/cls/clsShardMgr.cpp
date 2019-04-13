@@ -3311,8 +3311,11 @@ namespace engine
             builder.append(CAT_ROLE_NAME, SDB_ROLE_CATALOG ) ;
             builder.append( FIELD_NAME_SECRETID, (INT32) 0 ) ;
             builder.append( CAT_VERSION_NAME, (INT32)1 ) ;
-            builder.append( CAT_PRIMARY_NAME,
-                            (INT32)primary->_id.columns.nodeID ) ;
+            if ( primary )
+            {
+               builder.append( CAT_PRIMARY_NAME,
+                               (INT32)primary->_id.columns.nodeID ) ;
+            }
 
             BSONArrayBuilder arrGroup( builder.subarrayStart( CAT_GROUP_NAME ) ) ;
 
