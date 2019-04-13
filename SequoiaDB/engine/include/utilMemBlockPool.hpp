@@ -47,7 +47,7 @@ namespace engine
 
    #define UTIL_MEM_BLOCK_POOL_DFT_MAX_SZ          ( 8589934592LL )  ///8GB
    #define UTIL_MEM_A_SMALL_BLOCK_SIZE             ( 4194304 )       ///4MB
-   #define UTIL_MEM_A_BIG_BLOCK_SIZE               ( 16777216 )      ///16MB
+   #define UTIL_MEM_A_BIG_BLOCK_SIZE               ( 4194304 )       ///4MB
    #define UTIL_MEM_A_BLOCK_SUBPOOL_NUM            ( 2 )
 
    /// Memory info:
