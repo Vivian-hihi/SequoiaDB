@@ -297,7 +297,7 @@
 
    ```shell
    $ cd /opt/sequoiadb
-   $ ./bin/sdb -f tools/deploy/quickDeploy.js 
+   $ ./tools/deploy/quickDeploy.sh
    
    ************ Deploy SequoiaDB ************************
    Create catalog: ubuntu1604-yt:11800
