@@ -53,17 +53,24 @@ namespace engine
    #define UTIL_LJOB_PRI_LOWEST           ( 20 )
 
    /*
+      UTIL_LIGHTJOB_DO_RESULT define
+   */
+   enum UTIL_LJOB_DO_RESULT
+   {
+      UTIL_LJOB_DO_FINISH,
+      UTIL_LJOB_DO_CONT
+   } ;
+
+   #define UTIL_LJOB_MIN_AVG_COST         ( 10 )         /// micro second
+   #define UTIL_LJOB_DFT_AVG_COST         ( 10000 )      /// micro second
+   #define UTIL_LJOB_MAX_AVG_COST         ( 10000000 )   /// micro second
+
+   /*
       _utilLightJob define
    */
    class _utilLightJob : public _utilPooledObject
    {
       public:
-         enum DO_RESULT
-         {
-            DO_FINISH,
-            DO_CONT
-         } ;
-
          _utilLightJob() {}
          virtual ~_utilLightJob() {}
 
@@ -72,93 +79,89 @@ namespace engine
 
       public:
          virtual const CHAR*     name() const = 0 ;
+         virtual UINT64          expectAvgCost() const ;
          virtual INT32           doit( IExecutor *pExe,
-                                       DO_RESULT &result ) = 0 ;
+                                       UTIL_LJOB_DO_RESULT &result ) = 0 ;
 
    } ;
    typedef _utilLightJob utilLightJob ;
+
+   /*
+      _utilLightJobInfo define
+   */
+   class _utilLightJobInfo
+   {
+      public:
+         _utilLightJobInfo() ;
+         _utilLightJobInfo( utilLightJob *pJob,
+                            BOOLEAN takeOver = TRUE,
+                            INT32 priority = UTIL_LJOB_PRI_MID ) ;
+         ~_utilLightJobInfo() ;
+
+         void     reset() ;
+
+         bool     operator< ( const _utilLightJobInfo &right ) const ;
+   
+         void     upPriority() ;
+   
+         void     downPriority() ;
+
+         INT32    doit( IExecutor *pExe, UTIL_LJOB_DO_RESULT &result ) ;
+         void     release() ;
+
+         UINT64   lastDoTime() const { return _lastDoTime ; }
+         UINT64   lastCost() const { return _lastCost ; }
+         UINT64   totalCost() const { return _totalCost ; }
+         UINT64   totalTimes() const { return _totalTimes ; }
+
+         FLOAT64  avgCost() const ;
+         UINT64   expectAvgCost() const ;
+
+         void     resetStat() ;
+
+         utilLightJob*  getJob() { return _pJob ; }
+
+      protected:
+         INT32    adjustPriority( INT32 priority ) ;
+
+      private:
+         utilLightJob   *_pJob ;
+         INT32          _priority ;
+         BOOLEAN        _takeOver ;
+
+         UINT64         _lastDoTime ;        // micro second
+         UINT64         _lastCost ;          // micro second
+         UINT64         _totalCost ;         // micro second
+         UINT64         _totalTimes ;
+   } ;
+   typedef _utilLightJobInfo utilLightJobInfo ;
 
    /*
       _utilLightJobMgr define
    */
    class _utilLightJobMgr : public SDBObject
    {
-      struct _priorityJob
-      {
-         public:
-            utilLightJob   *_pJob ;
-
-         private:
-            INT32          _priority ;
-            BOOLEAN        _takeOver ;
-
-         public:
-            _priorityJob( utilLightJob *pJob,
-                          BOOLEAN takeOver = TRUE,
-                          INT32 priority = UTIL_LJOB_PRI_MID )
-            {
-               _pJob = pJob ;
-               _takeOver = takeOver ;
-               _priority = adjustPriority( 0 - priority ) ;
-            }
-            _priorityJob()
-            {
-               _pJob = NULL ;
-               _takeOver = FALSE ;
-               _priority = UTIL_LJOB_PRI_MID ;
-            }
-
-            bool operator< ( const _priorityJob &right ) const
-            {
-               if ( _priority < right._priority )
-               {
-                  return true ;
-               }
-               return false ;
-            }
-
-            void upPriority()
-            {
-               _priority = adjustPriority( _priority + 1 ) ;
-            }
-
-            void downPriority()
-            {
-               _priority = adjustPriority( _priority - 1 ) ;
-            }
-
-            INT32 adjustPriority( INT32 priority )
-            {
-               if ( priority < UTIL_LJOB_PRI_HIGHEST )
-               {
-                  return UTIL_LJOB_PRI_HIGHEST ;
-               }
-               else if ( priority > UTIL_LJOB_PRI_LOWEST )
-               {
-                  return UTIL_LJOB_PRI_LOWEST ;
-               }
-               return priority ;
-            }
-      } ;
-      typedef _priorityJob priorityJob ;
-
       public:
          _utilLightJobMgr() ;
          ~_utilLightJobMgr() ;
 
       public:
+         virtual void   push( utilLightJob *pJob,
+                              BOOLEAN takeOver = TRUE,
+                              INT32 priority = UTIL_LJOB_PRI_MID ) ;
 
-         UINT32      size() ;
-         BOOLEAN     isEmpty() ;
+         virtual void   push( const utilLightJobInfo &job ) ;
 
-         void        push( utilLightJob *pJob,
-                           BOOLEAN takeOver = TRUE,
-                           INT32 priority = UTIL_LJOB_PRI_MID ) ;
 
-         BOOLEAN     pop( priorityJob &job, INT64 millisec ) ;
+      public:
+
+         UINT32         size() ;
+         BOOLEAN        isEmpty() ;
+
+         BOOLEAN        pop( utilLightJobInfo &job, INT64 millisec ) ;
 
       private:
-         ossPriorityQueue<priorityJob>          _queue ;
+         ossPriorityQueue<utilLightJobInfo>     _queue ;
 
    } ;
    typedef _utilLightJobMgr utilLightJobMgr ;

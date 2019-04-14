@@ -34,6 +34,7 @@
 *******************************************************************************/
 
 #include "utilLightJobBase.hpp"
+#include "ossUtil.hpp"
 #include "pd.hpp"
 
 namespace engine
@@ -79,6 +80,142 @@ namespace engine
       goto done ;
    }
 
+   UINT64 _utilLightJob::expectAvgCost() const
+   {
+      return UTIL_LJOB_DFT_AVG_COST ;
+   }
+
+   /*
+      _utilLightJobInfo implement
+   */
+   _utilLightJobInfo::_utilLightJobInfo()
+   {
+      reset() ;
+   }
+
+   _utilLightJobInfo::_utilLightJobInfo( utilLightJob *pJob,
+                                         BOOLEAN takeOver,
+                                         INT32 priority )
+   {
+      _pJob = pJob ;
+      _takeOver = takeOver ;
+      _priority = adjustPriority( 0 - priority ) ;
+
+      _lastDoTime = 0 ;
+      _lastCost = 0 ;
+      _totalCost = 0 ;
+      _totalTimes = 0 ;
+   }
+
+   _utilLightJobInfo::~_utilLightJobInfo()
+   {
+   }
+
+   void _utilLightJobInfo::reset()
+   {
+      _pJob = NULL ;
+      _takeOver = FALSE ;
+      _priority = UTIL_LJOB_PRI_MID ;
+
+      _lastDoTime = 0 ;
+      _lastCost = 0 ;
+      _totalCost = 0 ;
+      _totalTimes = 0 ;
+   }
+
+   bool _utilLightJobInfo::operator< ( const _utilLightJobInfo &right ) const
+   {
+      if ( _priority < right._priority )
+      {
+         return true ;
+      }
+      return false ;
+   }
+
+   void _utilLightJobInfo::upPriority()
+   {
+      _priority = adjustPriority( _priority + 1 ) ;
+   }
+   
+   void _utilLightJobInfo::downPriority()
+   {
+      _priority = adjustPriority( _priority - 1 ) ;
+   }
+
+   INT32 _utilLightJobInfo::adjustPriority( INT32 priority )
+   {
+      if ( priority < UTIL_LJOB_PRI_HIGHEST )
+      {
+         return UTIL_LJOB_PRI_HIGHEST ;
+      }
+      else if ( priority > UTIL_LJOB_PRI_LOWEST )
+      {
+         return UTIL_LJOB_PRI_LOWEST ;
+      }
+      return priority ;
+   }
+
+   void _utilLightJobInfo::release()
+   {
+      if ( _pJob && _takeOver )
+      {
+         SDB_OSS_DEL _pJob ;
+      }
+      _pJob = NULL ;
+      _takeOver = FALSE ;
+   }
+
+   INT32 _utilLightJobInfo::doit( IExecutor *pExe,
+                                  UTIL_LJOB_DO_RESULT &result )
+   {
+      INT32 rc = SDB_OK ;
+      result = UTIL_LJOB_DO_FINISH ;
+
+      if ( _pJob )
+      {
+         _lastDoTime = ossGetCurrentMicroseconds() ;
+
+         rc = _pJob->doit( pExe, result ) ;
+
+         UINT64 eTime = ossGetCurrentMicroseconds() ;
+
+         if ( eTime >= _lastDoTime )
+         {
+            _lastCost = eTime - _lastDoTime ;
+            _totalCost += _lastCost ;
+         }
+         ++_totalTimes ;
+      }
+
+      return rc ;
+   }
+
+   FLOAT64 _utilLightJobInfo::avgCost() const
+   {
+      if ( _totalTimes > 0 && _totalCost > 0 )
+      {
+         return (FLOAT64)_totalCost / _totalTimes ;
+      }
+      return 0.0 ;
+   }
+
+   UINT64 _utilLightJobInfo::expectAvgCost() const
+   {
+      if ( _pJob )
+      {
+         return _pJob->expectAvgCost() ;
+      }
+      return UTIL_LJOB_MIN_AVG_COST ;
+   }
+
+   void _utilLightJobInfo::resetStat()
+   {
+      _lastDoTime = 0 ;
+      _lastCost = 0 ;
+      _totalCost = 0 ;
+      _totalTimes = 0 ;
+   }
+
    /*
       _utilLightJobMgr define
    */
@@ -89,6 +226,12 @@ namespace engine
    _utilLightJobMgr::~_utilLightJobMgr()
    {
       SDB_ASSERT( isEmpty(), "Not empty" ) ;
+
+      utilLightJobInfo job ;
+      while( pop( job, 0 ) )
+      {
+         job.release() ;
+      }
    }
 
    UINT32 _utilLightJobMgr::size()
@@ -105,10 +248,15 @@ namespace engine
                                 BOOLEAN takeOver,
                                 INT32 priority )
    {
-      _queue.push( priorityJob( pJob, takeOver, priority ) ) ;
+      _queue.push( utilLightJobInfo( pJob, takeOver, priority ) ) ;
    }
 
-   BOOLEAN _utilLightJobMgr::pop( priorityJob &job, INT64 millisec )
+   void _utilLightJobMgr::push( const utilLightJobInfo &job )
+   {
+      _queue.push( job ) ;
+   }
+
+   BOOLEAN _utilLightJobMgr::pop( utilLightJobInfo &job, INT64 millisec )
    {
       BOOLEAN ret = FALSE ;
 

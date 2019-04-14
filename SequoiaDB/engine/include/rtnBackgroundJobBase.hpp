@@ -64,6 +64,7 @@ namespace engine
       RTN_JOB_CLS_STORAGE_CHECK  = 17, // storage check job
       RTN_JOB_OPT_PLAN_CLEAR     = 18, // opt plan clear job
       RTN_JOB_PAGEMAPPING        = 19, // page mapping job
+      PMD_JOB_LIGHTJOB           = 20, // light job exe
 
       RTN_JOB_UPDATESTRATEGY     = 20,
       RTN_JOB_STRATEGYOBSERVER   = 21,

@@ -40,7 +40,7 @@
 
 #pragma warning( disable: 4290 )
 #include "utilMemBlockPool.hpp"
-#include "ossMem.h"
+#include "ossMem.hpp"
 
 namespace engine
 {

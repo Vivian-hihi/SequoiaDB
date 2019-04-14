@@ -150,6 +150,7 @@ pmdFiles = [
 # pmd multiple thread model files.
 pmdMTFiles = [
       "pmd/pmdMemPool.cpp",
+      "pmd/pmdLightLobMgr.cpp",
       "pmd/pmdSyncMgr.cpp",
       "pmd/pmd.cpp",
       "pmd/pmdEDU.cpp",

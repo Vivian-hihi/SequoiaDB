@@ -89,6 +89,7 @@ pmdFiles = [
       "pmd/pmdLogArchiveMgr.cpp",
       "pmd/pmdCluster.cpp",
       "pmd/pmdMemPool.cpp",
+      "pmd/pmdLightLobMgr.cpp",
       "pmd/pmdSyncMgr.cpp",
       "pmd/pmdEnv.cpp",
       "pmd/pmdOptionsMgr.cpp",
