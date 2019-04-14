@@ -259,9 +259,11 @@ namespace engine
 
    void _utilLightJobMgr::push( utilLightJob *pJob,
                                 BOOLEAN takeOver,
-                                INT32 priority )
+                                INT32 priority,
+                                UINT64 expectAvgCost )
    {
-      _queue.push( utilLightJobInfo( pJob, takeOver, priority ) ) ;
+      _queue.push( utilLightJobInfo( pJob, takeOver, priority,
+                                     expectAvgCost ) ) ;
    }
 
    void _utilLightJobMgr::push( const utilLightJobInfo &job )
