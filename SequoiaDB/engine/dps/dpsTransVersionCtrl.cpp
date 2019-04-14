@@ -51,8 +51,8 @@ namespace engine
    string globIdxID::toString() const
    {
       std::stringstream ss ;
-      ss << "CSID:" << _csID << "CLID:" << _clID
-         << "IDXLID:" << _idxLID ;
+      ss << "CSID:" << _csID << ", CLID:" << _clID
+         << ", IDXLID:" << _idxLID ;
       return ss.str() ;
    }
 
@@ -988,10 +988,6 @@ namespace engine
    //   otherwise any popped error code
    // Dependency:
    //   caller must hold the tree latch in S
-   //   FIXME:
-   //   Is it possible to limit this interface to only be called in the tight
-   //   loop within one tree latch cycle, then we can fully trust and only 
-   //   use the iterator
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PREIDXTREE_LOCATE, "preIdxTree::locate" )
    INT32 preIdxTree::locate ( const BSONObj      &keyObj,
                               const dmsRecordID  &rid,
@@ -1514,6 +1510,9 @@ namespace engine
       _isDeleted     = FALSE ;
       _isDummyRecord = FALSE ;
       _ownnerTID     = 0 ;
+      _prev          = NULL ;
+      _next          = NULL ;
+      _isOnChain     = FALSE ;
    }
 
    oldVersionContainer::~oldVersionContainer()
@@ -1641,7 +1640,13 @@ namespace engine
       preIdxTree *pTree = NULL ;
       idxObjSet::iterator itSet ;
       idxLidMap::iterator itMap ;
-
+/* FIXME
+      // Do nothing if there is no record
+      if ( NULL == _recordPtr.get() )
+      {
+         return ;
+      }
+*/
       /// 1. release the tree node
       itSet = _oldIdx.begin() ;
       while( itSet != _oldIdx.end() )
@@ -1749,7 +1754,6 @@ namespace engine
       return _oldIdxLid.insert( idxLidMap::value_type( treePtr->getLID(),
                                                        treePtr ) ).second ;
    }
-
 
 }  // end of namespace
 

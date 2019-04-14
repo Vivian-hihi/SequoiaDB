@@ -572,8 +572,8 @@ namespace engine
 
       if ( !ixmIndexCB::validateKey ( index, isSys ) )
       {
-         PD_LOG_MSG ( PDERROR, "Index pattern is not valid" ) ;
          rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Index pattern is not valid, rc=%d", rc ) ;
          goto error ;
       }
 
@@ -839,8 +839,6 @@ namespace engine
 
       dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(),
                                      cb ) ;
-      callback.setIDInfo( _pDataSu->CSID(), context->mbID(),
-                          _pDataSu->logicalID() ) ;
 
       PD_TRACE2( SDB__DMSSTORAGEINDEX_DROPIDX2,
                  PD_PACK_INT(indexID),
@@ -952,6 +950,8 @@ namespace engine
                          "text index failed[ %d ]", rc ) ;
          }
 
+         callback.setIDInfo( _pDataSu->CSID(), context->mbID(),
+                             _pDataSu->logicalID(), context->mbStat() ) ;
          rc = callback.onDropIndex( context, &indexCB, cb ) ;
          if ( rc )
          {
@@ -1217,10 +1217,10 @@ namespace engine
                                 context->mbID(),
                                 context->clLID() ) ;
          dmsEventIdxItem idxItem ( indexName, indexLID, index ) ;
-         _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL, clItem,
-                                                 idxItem, cb, dpscb ) ;
+         _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL,
+                                                 clItem, idxItem, 
+                                                 cb, dpscb ) ;
       }
-
    done :
       if ( 0 != logRecSize )
       {
@@ -1232,6 +1232,7 @@ namespace engine
       }
       return rc ;
    error :
+
       releaseExtent ( metaExtentID, TRUE ) ;
       releaseExtent ( rootExtentID ) ;
       goto done ;
@@ -1477,22 +1478,40 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEINDEX__REBUILDINDEX, "_dmsStorageIndex::_rebuildIndex" )
    INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context,
                                           dmsExtentID indexExtentID,
                                           dmsExtentID indexLID,
                                           pmdEDUCB *cb, INT32 sortBufferSize,
                                           UINT16 indexType )
    {
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEINDEX__REBUILDINDEX );
+
       INT32 rc = SDB_OK ;
       dmsIndexBuilder* builder = NULL ;
 
       if ( sortBufferSize < 0 )
       {
-         PD_LOG ( PDERROR, "invalid index sort buffer size" ) ;
          rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "invalid index sort buffer size, rc=%d", rc ) ;
          goto error ;
       }
 
+      // invoke callback function
+      {
+         dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(),
+                                        cb ) ;
+         ixmIndexCB indexCB ( indexExtentID, this, context ) ;
+         callback.setIDInfo( _pDataSu->CSID(), context->mbID(),
+                             _pDataSu->logicalID(), context->mbStat() ) ;
+         rc = callback.onRebuildIndex( context, &indexCB, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rebuild failed to invoke callback, rc = %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
       if ( sortBufferSize > 0 && sortBufferSize < DMS_INDEX_SORT_BUFFER_MIN_SIZE )
       {
          sortBufferSize = DMS_INDEX_SORT_BUFFER_MIN_SIZE ;
@@ -1521,8 +1540,12 @@ namespace engine
       {
          dmsIndexBuilder::releaseInstance( builder ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEINDEX__REBUILDINDEX, rc );
       return rc ;
    error :
+      PD_LOG( PDERROR, "Failed to rebuild index[%d], rc = %d",
+              indexLID, rc ) ;
+
       goto done ;
    }
 
@@ -1645,7 +1668,7 @@ namespace engine
 
          for ( it = keySet.begin() ; it != keySet.end() ; ++it )
          {
-#if defined (_DEBUG)
+#ifdef _DEBUG
             PD_LOG ( PDDEBUG, "Insert key: %s", (*it).toString().c_str() ) ;
 #endif
             ixmKeyOwned ko ((*it)) ;

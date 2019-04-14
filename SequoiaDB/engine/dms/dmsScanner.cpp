@@ -443,7 +443,7 @@ namespace engine
       // set callback info
       _callback.setBaseInfo( _pTransCB, cb ) ;
       _callback.setIDInfo( _pSu->CSID(), _context->mbID(),
-                           _pSu->logicalID() ) ;
+                           _pSu->logicalID(), _context->mbStat() ) ;
 
       // send pre-load request
       if ( bPreLoadEnabled && DMS_INVALID_EXTENT != _extent->_nextExtent )
@@ -1607,7 +1607,7 @@ namespace engine
       /// set callback info
       _callback.setBaseInfo( _pTransCB, cb ) ;
       _callback.setIDInfo( _pSu->CSID(), _context->mbID(),
-                           _pSu->logicalID() ) ;
+                           _pSu->logicalID(), _context->mbStat() ) ;
       _callback.setIXScanner( _scanner ) ;
 
       // unset first run

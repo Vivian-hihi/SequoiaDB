@@ -122,21 +122,14 @@ namespace engine
                   dmsRecordID(lockId.extentID(), lockId.offset()),
                   "LockID is not the same" ) ;
 
-      /// when no old index
-      if ( dmsExtendDataReleaseCheck( pExtData ) )
-      {
-         oldVer->releaseRecord() ;
-      }
-      else
-      {
-         oldVer->setRecordDeleted() ;
+      /// only set record deleted, leave next X lock holder to delete
+      oldVer->setRecordDeleted() ;
 
-         PD_LOG( PDDEBUG, "Set old record for rid[%s] in memory to deleted",
-                 lockId.toString().c_str() ) ;
+      PD_LOG( PDDEBUG, "Set old record for rid[%s] in memory to deleted",
+              lockId.toString().c_str() ) ;
 
-         /// DOTO:XUJIANHUI
-         /// PUT the rid to backgroud task to recycle
-      }
+      /// DOTO:XUJIANHUI
+      /// PUT the rid to backgroud task to recycle
 
    done:
       return ;
@@ -169,6 +162,7 @@ namespace engine
       _latchedIdxLid = DMS_INVALID_EXTENT ;
       _latchedIdxMode = -1 ;
       _pScanner      = NULL ;
+      _mbStat     = NULL ;
 
       clearStatus() ;
    }
@@ -190,6 +184,7 @@ namespace engine
       _latchedIdxLid = DMS_INVALID_EXTENT ;
       _latchedIdxMode = -1 ;
       _pScanner      = NULL ;
+      _mbStat     = NULL ;
 
       clearStatus() ;
 
@@ -208,11 +203,13 @@ namespace engine
       _eduCB   = eduCB ;
    }
 
-   void dmsTransLockCallback::setIDInfo( INT32 csID, UINT16 clID, UINT32 csLID )
+   void dmsTransLockCallback::setIDInfo( INT32 csID, UINT16 clID, UINT32 csLID,
+                                         dmsMBStatInfo * mbStat )
    {
       _csID = csID ;
       _clID = clID ;
       _csLID = csLID ;
+      _mbStat = mbStat ;
    }
 
    void dmsTransLockCallback::setIXScanner( _rtnIXScanner *pScanner )
@@ -430,13 +427,20 @@ namespace engine
             }
 
             /// check the record whether is deleted
-            if ( _oldVer->isRecordDeleted() &&
-                 DPS_TRANSLOCK_X == requestLockMode )
+            if ( DPS_TRANSLOCK_X == requestLockMode )
             {
-               _oldVer->releaseRecord() ;
+               if( _oldVer->isRecordDeleted() )
+               {
+                  _oldVer->releaseRecord() ;
 
-               PD_LOG( PDDEBUG, "Delete old record for rid[%s] from memory",
-                       lockId.toString().c_str() ) ;
+                  PD_LOG( PDDEBUG, "Delete old record for rid[%s] from memory",
+                          lockId.toString().c_str() ) ;
+               }
+               if( _oldVer->isOnChain() )
+               {
+                  SDB_ASSERT( _mbStat, "mbStat is invalid " ) ;
+                  _mbStat->removeFromChain( _oldVer );
+               }
             }
 
             if ( _oldVer->isRecordNew() &&
@@ -511,6 +515,7 @@ namespace engine
    }
 
    // Description
+   // Dependency: Caller must hold the mbLcok
    INT32 dmsTransLockCallback::saveOldVersionRecord( const _dmsRecordRW *pRecordRW,
                                                      const dmsRecordID &rid,
                                                      const BSONObj &obj,
@@ -545,6 +550,8 @@ namespace engine
             {
                goto error ;
             }
+            // 3. hang the old version container to the linked list
+            _mbStat->addToChain( _oldVer ) ;
          }
       }
 
@@ -693,6 +700,40 @@ namespace engine
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 dmsTransLockCallback::onInsertIndex( _dmsMBContext *context,
+                                              const ixmIndexCB *indexCB,
+                                              BOOLEAN isUnique,
+                                              BOOLEAN isEnforce,
+                                              const ixmKey &key,
+                                              const dmsRecordID &rid,
+                                              _pmdEDUCB *cb,
+                                              utilInsertResult *insertResult )
+   {
+      INT32 rc = SDB_OK ;
+      preIdxTreePtr treePtr ;
+      _INSERT_CURSOR insertCursor = _INSERT_NONE ;
+
+      if ( !_transCB || !_transCB->isTransOn() )
+      {
+         goto done ;
+      }
+
+      rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
+                              isUnique, isEnforce, key.toBson(),
+                              rid, cb, insertResult ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      PD_LOG ( PDDEBUG, "onInsertIndex with rid(%d, %d) failed, rc=%d  ",
+               _transCB, rid._extent, rid._offset, rc ) ;
       goto done ;
    }
 
@@ -941,20 +982,157 @@ namespace engine
       return SDB_OK ;
    }
 
+   // when rebuild index, we need to build in memory old version index
+   // tree based on all old version record on the collection.
+   // Input:
+   //    context:  dms MB context
+   //    indexCB:  index control block
+   //    cb:  edu control block
+   // return:
+   //    rc:  
+   // Dependency:
+   //    The context and indexCB must be setup. 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSTRANSLOCKCALLBACK_ONREBUILDINDEX, "dmsTransLockCallback::onRebuildIndex" )
    INT32 dmsTransLockCallback::onRebuildIndex( _dmsMBContext *context,
-                                               const ixmIndexCB *indexCB,
-                                               _pmdEDUCB *cb )
-   {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
-   }
-
-   INT32 dmsTransLockCallback::onCreateIndex( _dmsMBContext *context,
                                               const ixmIndexCB *indexCB,
                                               _pmdEDUCB *cb )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32   rc         = SDB_OK ;
+      BOOLEAN lockedHere = FALSE ;
+      PD_TRACE_ENTRY( SDB_DMSTRANSLOCKCALLBACK_ONREBUILDINDEX ) ;
+
+      // Input parameter validation ASSERTS
+      SDB_ASSERT( context, "context is invalid " ) ;
+      SDB_ASSERT( indexCB, "indexCB is invalid " ) ;
+
+      // only setup the in memory old version tree for unique index
+      if ( _transCB && _transCB->getOldVCB() && indexCB->unique() )
+      {
+         oldVersionCB *pOldVCB = _transCB->getOldVCB() ;
+         globIdxID gid( _csID, _clID, indexCB->getLogicalID() ) ;
+         oldVersionContainer *oldVer = NULL ;
+         preIdxTreePtr treePtr ;
+
+         // take mbLock if not already held
+         // first take the mblock
+         if ( !context->isMBLock() )
+         {
+            rc = context->mbLock( SHARED ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Lock mb failed[%d]", rc ) ;
+               goto error ;
+            }
+            lockedHere = TRUE ;
+         }
+
+         // First delete and recreate in memory tree so we don't have left
+         // over nodes
+         pOldVCB->delIdxTree( gid, FALSE ) ;
+         rc = pOldVCB->getOrCreateIdxTree( gid, indexCB,
+                                          treePtr, FALSE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Recreate memory index tree(%s) "
+                    "failed, rc: %d", gid.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         PD_LOG( PDDEBUG, "RebuildIndex got memtree,gid(%s)",
+                       gid.toString().c_str() ) ;
+         // go through the old version link list and insert index to tree
+         oldVer = context->mbStat()->getChain() ;
+         while ( oldVer )
+         {
+            // skip deleted/dummy/new record
+            if ( !(oldVer->isRecordDeleted()) && !(oldVer->isRecordDummy())
+                  && !(oldVer->isRecordNew()) )
+            {
+               BSONObjSet  keySet ;
+               _DELETE_CURSOR deleteCursor = _DELETE_NONE ;
+               _oldVer = oldVer ;
+
+               // get the keyset
+               rc = indexCB->getKeysFromObject ( oldVer->getRecordObj(), 
+                                                 keySet ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to get keys from object %s",
+                           oldVer->getRecordObj().toString().c_str() ) ;
+                  goto error ;
+               }
+
+               // insert to the mem tree
+               for ( BSONObjSet::const_iterator cit = keySet.begin() ;
+                     cit != keySet.end() ;
+                     ++cit )
+               {
+                  rc = _checkDeleteIndex( treePtr,deleteCursor, indexCB,
+                                          indexCB->unique(), *cit, 
+                                          oldVer->getRecordID(), cb ) ;
+                  if ( rc )
+                  {
+                     PD_LOG ( PDERROR, "Failed to insert the key to  %s",
+                              oldVer->getRecordObj().toString().c_str() ) ;
+                     goto error ;
+                  }
+               }
+            }
+            oldVer = oldVer->getNext() ;
+         }  // while (oldVer)
+      }
+
+   done :
+      if ( lockedHere )
+      {
+         context->mbUnlock() ;
+      }
+
+      PD_TRACE_EXIT( SDB_DMSTRANSLOCKCALLBACK_ONREBUILDINDEX ) ;
+      return rc ;
+
+   error :
+      PD_LOG( PDERROR, "Rebuild index callback failed, lid=%d, rc=[%d]", 
+              indexCB->getLogicalID(), rc ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSTRANSLOCKCALLBACK_ONCREATEINDEX, "dmsTransLockCallback::onCreateIndex" )
+   INT32 dmsTransLockCallback::onCreateIndex( _dmsMBContext *context,
+                                               const ixmIndexCB *indexCB,
+                                               _pmdEDUCB *cb )
+   {
+      PD_TRACE_ENTRY( SDB_DMSTRANSLOCKCALLBACK_ONCREATEINDEX ) ;
+      INT32   rc         = SDB_OK ;
+
+      // create in memory tree
+      if ( _transCB && _transCB->getOldVCB() )
+      {
+         preIdxTreePtr treePtr ;
+         globIdxID gid( _csID, _clID, indexCB->getLogicalID() ) ;
+         oldVersionCB *pVerCB = _transCB->getOldVCB() ;
+
+#ifdef _DEBUG
+         SDB_ASSERT( !(pVerCB->getIdxTree(gid, FALSE).get()), 
+                     "Index tree already exist " ) ;
+#endif
+
+         rc = pVerCB->getOrCreateIdxTree( gid, indexCB,
+                                          treePtr, FALSE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Create memory index tree(%s) "
+                    "failed, rc: %d", gid.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+      }
+
+   done :
+      PD_TRACE_EXIT( SDB_DMSTRANSLOCKCALLBACK_ONCREATEINDEX ) ;
+      return rc ;
+   error :
+      goto done ;
    }
 
 }

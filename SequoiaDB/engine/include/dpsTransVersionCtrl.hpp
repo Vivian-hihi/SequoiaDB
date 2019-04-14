@@ -647,9 +647,11 @@ namespace engine
       // latch to protect the fields. Should hold it in X to initialize and 
       // destroy _memBlockPool, otherwise hold in S
       ossSpinSLatch       _oldVersionCBLatch ;
-      IDXID_TO_TREE_MAP   _idxTrees ;     // trees holding older version of indexes
+      IDXID_TO_TREE_MAP   _idxTrees ;     // in memory trees holding older 
+                                          // version of indexes
       memBlockPool        _memBlockPool ; // pool of memory blocks holding old 
                                           // version of records
+ 
    } ;
 
    /*
@@ -765,6 +767,14 @@ namespace engine
       const dpsIdxObj*     getIdxObj( SINT32 idxLID ) const ;
       BOOLEAN              isIdxObjExist( const dpsIdxObj &obj ) const ;
 
+      oldVersionContainer * getNext() { return _next ; }
+      oldVersionContainer * getPrev() { return _prev ; }
+      void setNext( oldVersionContainer * ptr ) { _next = ptr ; }
+      void setPrev( oldVersionContainer * ptr ) { _prev = ptr ; }
+      BOOLEAN isOnChain() { return _isOnChain ; }
+      void    setOnChain() { _isOnChain = TRUE ; }
+      void    unsetOnChain() { _isOnChain = FALSE ; }
+
    protected:
       // given an index object, insert into the idxObjSet. Return false
       // if the same index for the record already exist. In this case,
@@ -777,7 +787,7 @@ namespace engine
       UINT32            _ownnerTID ;
 
       BOOLEAN           _isDeleted ;
-      BOOLEAN           _isDummyRecord ;
+      BOOLEAN           _isDummyRecord ; // when not use rollback segment
       BOOLEAN           _isNewRecord ; // is this a newly created record or not
       // A set of index Lids (up to 64) associated to this record.
       // We use this to figure out if the idx was already stored in the tree
@@ -786,6 +796,9 @@ namespace engine
       idxLidMap         _oldIdxLid ; 
       // point to a set containing all key sets.
       idxObjSet         _oldIdx ;
+      oldVersionContainer * _prev ;
+      oldVersionContainer * _next ;
+      BOOLEAN               _isOnChain ;
    } ;
 
 }

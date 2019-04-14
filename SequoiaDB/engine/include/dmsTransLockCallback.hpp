@@ -45,6 +45,7 @@
 #include "dmsOprHandler.hpp"
 #include "dpsTransCB.hpp"
 #include "pmdEDU.hpp"
+#include "ixmKey.hpp"
 
 using namespace bson ;
 
@@ -56,6 +57,7 @@ namespace engine
    class oldVersionContainer ;
    class oldVersionCB ;
    class _rtnIXScanner ;
+   struct _dmsMBStatInfo ;
 
    // Class to implment lock call back funtions for DMS scanner
    class dmsTransLockCallback : public _dpsITransLockCallback,
@@ -73,7 +75,8 @@ namespace engine
 
       void     setBaseInfo( dpsTransCB *transCB, _pmdEDUCB *eduCB ) ;
 
-      void     setIDInfo( INT32 csID, UINT16 clID, UINT32 csLID ) ;
+      void     setIDInfo( INT32 csID, UINT16 clID, UINT32 csLID, 
+                          _dmsMBStatInfo* mbStat ) ;
 
       void     setIXScanner( _rtnIXScanner *pScanner ) ;
 
@@ -147,6 +150,15 @@ namespace engine
                                    const BSONObjSet &keySet,
                                    const dmsRecordID &rid,
                                    _pmdEDUCB* cb,
+                                   utilInsertResult *insertResult ) ;
+
+      virtual INT32 onInsertIndex( _dmsMBContext *context,
+                                   const ixmIndexCB *indexCB,
+                                   BOOLEAN isUnique,
+                                   BOOLEAN isEnforce,
+                                   const ixmKey &key,
+                                   const dmsRecordID &rid,
+                                   _pmdEDUCB *cb,
                                    utilInsertResult *insertResult ) ;
 
       virtual INT32 onUpdateIndex( _dmsMBContext *context,
@@ -225,7 +237,8 @@ namespace engine
       UINT16               _clID ;
       SINT32               _latchedIdxLid ; // which we are holding a latch on
       INT32                _latchedIdxMode ;
-      _rtnIXScanner        *_pScanner ;
+      _rtnIXScanner       *_pScanner ;
+      _dmsMBStatInfo      *_mbStat ;
 
       dmsTransRecordInfo   _recordInfo ;
 

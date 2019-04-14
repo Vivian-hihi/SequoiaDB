@@ -34,6 +34,7 @@
 #include "dmsStorageData.hpp"
 #include "dmsIndexBuilderImpl.hpp"
 #include "ixm.hpp"
+#include "dmsTransLockCallback.hpp"
 
 namespace engine
 {
@@ -334,6 +335,23 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      // Callback to validate in memory tree
+      {
+         dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(),
+                                        _eduCB ) ;
+         callback.setIDInfo( _suData->CSID(), _mbContext->mbID(),
+                             _suData->logicalID(), _mbContext->mbStat() ) ;
+
+         rc = callback.onInsertIndex( _mbContext, _indexCB, _indexCB->unique(),
+                                      _indexCB->enforced(),
+                                      key, rid, _eduCB, NULL ); 
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Insert index callback failed, rc: %d", rc ) ;
+            goto done ;
+         }
+      }
+
       rc = _suIndex->_indexInsert( _indexCB, key, rid, ordering, _eduCB, !_unique, _dropDups ) ;
       if ( SDB_OK != rc )
       {
@@ -353,7 +371,7 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to insert into index, rc: %d", rc ) ;
          }
       }
-
+   done:
       return rc ;
    }
 

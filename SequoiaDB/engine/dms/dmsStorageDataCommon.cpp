@@ -225,6 +225,31 @@ namespace engine
       PD_TRACE_EXIT ( SDB__MBATTR2STRING ) ;
    }
 
+   // disconnect the chain from _oldVerChain, but leave the elements
+   // chained. The elements will be deleted/unchained asynchronously
+   // this must be done under mbLatch(block read/write) and CL lock(block
+   // commit/rollback)
+   void _dmsMBStatInfo::disconnectChain() 
+   {
+      if ( _oldVerChain )
+      {
+         // unsert prev so that we know that the chain is not hanging off
+         // mbStat
+         _oldVerChain->setPrev( NULL ) ;
+         _oldVerChain = NULL ;
+      }
+   }
+
+   void _dmsMBStatInfo::removeAllFromChain() 
+   {
+      oldVersionContainer *oldVer = _oldVerChain ;
+      while ( NULL != oldVer )
+      {
+         removeFromChain( oldVer ) ;
+         oldVer = _oldVerChain ;
+      }
+   }
+
    /*
       _dmsMBContext implement
    */
@@ -1627,6 +1652,7 @@ namespace engine
       context->mbStat()->_totalRecords = 0 ;
       context->mbStat()->_totalDataLen = 0 ;
       context->mbStat()->_totalOrgDataLen = 0 ;
+      context->mbStat()->disconnectChain() ;
 
       _onCollectionTruncated( context ) ;
 
@@ -3261,7 +3287,8 @@ namespace engine
             if ( dpscb && isTransSupport() && !cb->isInRollback() )
             {
                dpsTransRetInfo lockConflict ;
-               callback.setIDInfo( CSID(), context->mbID(), _logicalCSID ) ;
+               callback.setIDInfo( CSID(), context->mbID(), _logicalCSID,
+                                   context->mbStat() ) ;
 
                rc = pTransCB->transLockTryX( cb, _logicalCSID,
                                              context->mbID(),
