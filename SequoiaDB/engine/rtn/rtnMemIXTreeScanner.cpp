@@ -593,7 +593,8 @@ namespace engine
       {
          _eof = TRUE ;
          _available = FALSE ;
-         goto done ;
+         rc = SDB_RTN_INDEX_NOTEXIST ;
+         goto error ;
       }
 
       if ( isReadonly() )
