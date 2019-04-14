@@ -56,10 +56,10 @@ private :
    mutable boost::mutex                            _mutex ;
    boost::condition_variable                       _cond ;
 public :
-   UINT32 size ()
+   UINT64 size ()
    {
       boost::mutex::scoped_lock lock ( _mutex ) ;
-      return (UINT32)_queue.size() ;
+      return (UINT64)_queue.size() ;
    }
    void push ( Data const& data )
    {

@@ -47,7 +47,7 @@ namespace engine
    #define PMD_LJOB_MIN_EXE_NUM              ( 1 )
    #define PMD_LJOB_DFT_MAX_EXE_NUM          ( 10 )
    #define PMD_LJOB_IDLE_TIMEOUT             ( 300 * OSS_ONE_SEC )
-   #define PMD_LJOB_PER_AGENT                ( 100 )
+   #define PMD_LJOB_PER_AGENT_POWER          ( 7 )       /// 2^7
 
    #define PMD_LJOB_EXE_TIME_SLICE           ( 1000 )    // ms
    #define PMD_LJOB_EXE_COUNT_SLICE          ( 1000 )
@@ -192,15 +192,28 @@ namespace engine
       {
          utilLightJobInfo &info = *it ;
 
-         /// when total time less than min time slice, shoud wait for next
-         /// to avoid dead loop
-         if ( info.totalTimes() < PMD_LJOB_EXE_COUNT_SLICE )
+         if ( info.totalCost() < UTIL_LJOB_MIN_AVG_COST * info.totalTimes() )
          {
-            _utilLightJobMgr::push( info ) ;
-            ++num ;
+            if ( info.totalTimes() < PMD_LJOB_EXE_COUNT_SLICE )
+            {
+               _utilLightJobMgr::push( info ) ;
+               ++num ;
+            }
+            else if ( (UINT64)( curTime - info.lastDoTime() ) >
+                      ( UTIL_LJOB_MIN_AVG_COST * info.totalTimes() ) << 2 )
+            {
+               info.resetStat() ;
+               _utilLightJobMgr::push( info ) ;
+               ++num ;
+            }
+            else
+            {
+               /// wait for next time
+               tmpJobVec.push_back( info ) ;
+               ++ignoreNum ;
+            }
          }
-         else if ( info.totalCost() >
-                   UTIL_LJOB_MIN_AVG_COST * info.totalTimes() )
+         else if ( size() <= ( _idleAgent << 4 ) )
          {
             info.resetStat() ;
             _utilLightJobMgr::push( info ) ;
@@ -208,10 +221,15 @@ namespace engine
          }
          else
          {
-            if ( curTime - info.lastDoTime() <
-                 ( UTIL_LJOB_MIN_AVG_COST * info.totalTimes() ) << 2 )
+            UINT64 expectTotalCost = info.expectAvgCost() * info.totalTimes() ;
+            if ( info.totalCost() > ( expectTotalCost << 4 ) )
             {
-               /// ignore it
+               if ( (UINT64)( curTime - info.lastDoTime() ) >=
+                    ( PMD_LJOB_CONTROL_INTERVAL << 1 ) )
+               {
+                  info.resetStat() ;
+               }
+               /// wait for next time
                tmpJobVec.push_back( info ) ;
                ++ignoreNum ;
             }
@@ -222,7 +240,6 @@ namespace engine
                ++num ;
             }
          }
-
          ++it ;
       }
       _pendingJobVec.clear() ;
@@ -241,7 +258,7 @@ namespace engine
 
    void _pmdLightJobMgr::checkLoad()
    {
-      UINT32 readyNum = size() ;
+      UINT64 readyNum = size() ;
 
       ossScopedLock lock( &_unitLatch ) ;
 
@@ -252,7 +269,7 @@ namespace engine
 
          /// start agent
          while ( _curAgent < PMD_LJOB_MIN_EXE_NUM ||
-                 ( readyNum / PMD_LJOB_PER_AGENT > _idleAgent &&
+                 ( ( readyNum >> PMD_LJOB_PER_AGENT_POWER ) > _idleAgent &&
                    _curAgent < _maxExeJob ) )
          {
             if ( SDB_OK == pmdStartLightJobExe( NULL, this,

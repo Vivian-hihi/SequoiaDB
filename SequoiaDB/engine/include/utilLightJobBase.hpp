@@ -75,11 +75,11 @@ namespace engine
          virtual ~_utilLightJob() {}
 
          INT32       submit( BOOLEAN takeOver = TRUE,
-                             INT32 priority = UTIL_LJOB_PRI_MID ) ;
+                             INT32 priority = UTIL_LJOB_PRI_MID,
+                             UINT64 expectAvgCost = UTIL_LJOB_DFT_AVG_COST ) ;
 
       public:
          virtual const CHAR*     name() const = 0 ;
-         virtual UINT64          expectAvgCost() const ;
          virtual INT32           doit( IExecutor *pExe,
                                        UTIL_LJOB_DO_RESULT &result ) = 0 ;
 
@@ -95,16 +95,17 @@ namespace engine
          _utilLightJobInfo() ;
          _utilLightJobInfo( utilLightJob *pJob,
                             BOOLEAN takeOver = TRUE,
-                            INT32 priority = UTIL_LJOB_PRI_MID ) ;
+                            INT32 priority = UTIL_LJOB_PRI_MID,
+                            UINT64 expectAvgCost = UTIL_LJOB_DFT_AVG_COST ) ;
          ~_utilLightJobInfo() ;
 
          void     reset() ;
 
          bool     operator< ( const _utilLightJobInfo &right ) const ;
-   
+
          void     upPriority() ;
-   
          void     downPriority() ;
+         void     restorePriority() ;
 
          INT32    doit( IExecutor *pExe, UTIL_LJOB_DO_RESULT &result ) ;
          void     release() ;
@@ -115,7 +116,7 @@ namespace engine
          UINT64   totalTimes() const { return _totalTimes ; }
 
          FLOAT64  avgCost() const ;
-         UINT64   expectAvgCost() const ;
+         UINT64   expectAvgCost() const { return _expectAvgCost ; }
 
          void     resetStat() ;
 
@@ -123,10 +124,13 @@ namespace engine
 
       protected:
          INT32    adjustPriority( INT32 priority ) ;
+         UINT64   adjustAvgCost( UINT64 avgCost ) ;
 
       private:
          utilLightJob   *_pJob ;
+         INT32          _orgPriority ;
          INT32          _priority ;
+         UINT64         _expectAvgCost  ;
          BOOLEAN        _takeOver ;
 
          UINT64         _lastDoTime ;        // micro second
@@ -155,7 +159,7 @@ namespace engine
 
       public:
 
-         UINT32         size() ;
+         UINT64         size() ;
          BOOLEAN        isEmpty() ;
 
          BOOLEAN        pop( utilLightJobInfo &job, INT64 millisec ) ;

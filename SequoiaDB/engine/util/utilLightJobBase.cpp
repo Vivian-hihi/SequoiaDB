@@ -43,13 +43,17 @@ namespace engine
    /*
       _utilLightJob implement
    */
-   INT32 _utilLightJob::submit( BOOLEAN takeOver, INT32 priority )
+   INT32 _utilLightJob::submit( BOOLEAN takeOver,
+                                INT32 priority,
+                                UINT64 expectAvgCost )
    {
       INT32 rc = SDB_OK ;
       _utilLightJob *pJob = this ;
       utilLightJobMgr *pMgr = utilGetGlobalJobMgr() ;
 
       SDB_ASSERT( pMgr, "Global job manager is NULL" ) ;
+      SDB_ASSERT( expectAvgCost < UTIL_LJOB_MAX_AVG_COST,
+                  "Expect avgCost is more than max" ) ;
 
       if ( !pMgr )
       {
@@ -60,7 +64,7 @@ namespace engine
 
       try
       {
-         pMgr->push( pJob, takeOver, priority ) ;
+         pMgr->push( pJob, takeOver, priority, expectAvgCost ) ;
          pJob = NULL ;
       }
       catch ( std::exception &e )
@@ -80,11 +84,6 @@ namespace engine
       goto done ;
    }
 
-   UINT64 _utilLightJob::expectAvgCost() const
-   {
-      return UTIL_LJOB_DFT_AVG_COST ;
-   }
-
    /*
       _utilLightJobInfo implement
    */
@@ -95,11 +94,14 @@ namespace engine
 
    _utilLightJobInfo::_utilLightJobInfo( utilLightJob *pJob,
                                          BOOLEAN takeOver,
-                                         INT32 priority )
+                                         INT32 priority,
+                                         UINT64 expectAvgCost )
    {
       _pJob = pJob ;
       _takeOver = takeOver ;
       _priority = adjustPriority( 0 - priority ) ;
+      _orgPriority = _priority ;
+      _expectAvgCost = adjustAvgCost( expectAvgCost ) ;
 
       _lastDoTime = 0 ;
       _lastCost = 0 ;
@@ -116,6 +118,8 @@ namespace engine
       _pJob = NULL ;
       _takeOver = FALSE ;
       _priority = UTIL_LJOB_PRI_MID ;
+      _orgPriority = UTIL_LJOB_PRI_MID ;
+      _expectAvgCost = UTIL_LJOB_DFT_AVG_COST ;
 
       _lastDoTime = 0 ;
       _lastCost = 0 ;
@@ -142,6 +146,11 @@ namespace engine
       _priority = adjustPriority( _priority - 1 ) ;
    }
 
+   void _utilLightJobInfo::restorePriority()
+   {
+      _priority = _orgPriority ;
+   }
+
    INT32 _utilLightJobInfo::adjustPriority( INT32 priority )
    {
       if ( priority < UTIL_LJOB_PRI_HIGHEST )
@@ -153,6 +162,19 @@ namespace engine
          return UTIL_LJOB_PRI_LOWEST ;
       }
       return priority ;
+   }
+
+   UINT64 _utilLightJobInfo::adjustAvgCost( UINT64 avgCost )
+   {
+      if ( avgCost < UTIL_LJOB_MIN_AVG_COST )
+      {
+         return UTIL_LJOB_MIN_AVG_COST ;
+      }
+      else if ( avgCost > UTIL_LJOB_MAX_AVG_COST )
+      {
+         return UTIL_LJOB_MAX_AVG_COST ;
+      }
+      return avgCost ;
    }
 
    void _utilLightJobInfo::release()
@@ -199,15 +221,6 @@ namespace engine
       return 0.0 ;
    }
 
-   UINT64 _utilLightJobInfo::expectAvgCost() const
-   {
-      if ( _pJob )
-      {
-         return _pJob->expectAvgCost() ;
-      }
-      return UTIL_LJOB_MIN_AVG_COST ;
-   }
-
    void _utilLightJobInfo::resetStat()
    {
       _lastDoTime = 0 ;
@@ -234,7 +247,7 @@ namespace engine
       }
    }
 
-   UINT32 _utilLightJobMgr::size()
+   UINT64 _utilLightJobMgr::size()
    {
       return _queue.size() ;
    }
