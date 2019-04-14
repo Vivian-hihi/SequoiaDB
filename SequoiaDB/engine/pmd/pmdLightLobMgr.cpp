@@ -114,9 +114,10 @@ namespace engine
 
    void _pmdLightJobMgr::push( utilLightJob *pJob,
                                BOOLEAN takeOver,
-                               INT32 priority )
+                               INT32 priority,
+                               UINT64 expectAvgCost )
    {
-      push( pJob, takeOver, priority ) ;
+      push( pJob, takeOver, priority, expectAvgCost ) ;
       _wakeUpEvent.signalAll() ;
 
       if ( FALSE == _startCtrlJob )
