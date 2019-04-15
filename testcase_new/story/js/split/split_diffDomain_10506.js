@@ -59,13 +59,13 @@ function main()
     
     try
     {
-        checkResult(coord, null, csName, clName, 100);
-        checkResult(rga_data, rgb_data, csName, clName, 100);
+        checkCoordResult(coord, csName, clName, 100);
+        checkDataResult(rga_data, rgb_data, csName, clName, 100);
         
         //再次插入数据
         insertData(db, csName, clName, 100);
-        checkResult(coord, null, csName, clName, 200);
-        checkResult(rga_data, rgb_data, csName, clName, 200);
+        checkCoordResult(coord, csName, clName, 200);
+        checkDataResult(rga_data, rgb_data, csName, clName, 200);
     }
     finally
     {
@@ -79,24 +79,23 @@ function main()
     db.dropDomain(domainName);
 }
 
-function checkResult( db1, db2, csName, clName, expCount )
+function checkCoordResult( db, csName, clName, expCount )
+{
+    var actCount = db.getCS(csName).getCL(clName).find().count();
+
+    if( Number(actCount) !== expCount )
+    {
+        throw buildException("checkResult()", null, "The number of queries received by connecting coord is incorrect", expCount, actCount);
+    }
+}
+
+function checkDataResult( db1, db2, csName, clName, expCount )
 {
     var actCount1 = db1.getCS(csName).getCL(clName).find().count();
-
-    if( db2 == undefined )
+    var actCount2 = db2.getCS(csName).getCL(clName).find().count();
+    var actCount = actCount1+actCount2;
+    if( actCount !== expCount )
     {
-        if( Number(actCount1) !== expCount )
-        {
-            throw buildException("checkResult()", null, "The number of queries received by connecting coord is incorrect", expCount, actCount1);
-        }
-    }
-    else
-    {
-        var actCount2 = db2.getCS(csName).getCL(clName).find().count();
-        var actCount = actCount1+actCount2;
-        if( actCount !== expCount )
-        {
-            throw buildException("checkResult()", null, "The number of queries received by connecting rga_data and rgb_data is incorrect actCount1 = " + actCount1 + " ,actCount2 = " + actCount2, expCount, actCount);
-        }
+        throw buildException("checkResult()", null, "The number of queries received by connecting rga_data and rgb_data is incorrect actCount1 = " + actCount1 + " ,actCount2 = " + actCount2, expCount, actCount);
     }
 }
