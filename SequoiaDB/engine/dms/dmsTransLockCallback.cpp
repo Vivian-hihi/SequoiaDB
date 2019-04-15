@@ -115,16 +115,24 @@ namespace engine
       INT32 rcTmp = SDB_OK ;
       dmsStorageUnit *su = NULL ;
       dmsMBContext *pContext = NULL ;
+      dmsMBStatInfo *mbStat = NULL ;
+      dmsTransLockCallback callback ;
 
       su = pDmsCB->suLock( _csID ) ;
       if ( su && su->LogicalCSID() == _csLID )
       {
-         su->data()->getMBContext( &pContext, _clID, _clLID,
-                                   _clLID, EXCLUSIVE ) ;
+         if ( SDB_OK == su->data()->getMBContext( &pContext, _clID, _clLID,
+                                                  _clLID, EXCLUSIVE ) )
+         {
+            mbStat = pContext->mbStat() ;
+         }
       }
 
+      callback.setBaseInfo( pTransCB, (_pmdEDUCB*)pExe ) ;
+      callback.setIDInfo( _csID, _clID, _csLID, _clLID, mbStat ) ;
       pTransCB->transLockTestX( (_pmdEDUCB*)pExe, _csLID,
-                                _clID, &_recordID ) ;
+                                _clID, &_recordID, NULL,
+                                &callback ) ;
       result = UTIL_LJOB_DO_FINISH ;
 
       if ( pContext )
@@ -1096,7 +1104,7 @@ namespace engine
       SDB_ASSERT( context, "context is invalid " ) ;
       SDB_ASSERT( indexCB, "indexCB is invalid " ) ;
 
-      if ( !_transCB || !_transCB->isTransOn() )
+      if ( _transCB && _transCB->isTransOn() )
       {
          oldVersionCB *pOldVCB = _transCB->getOldVCB() ;
          globIdxID gid( _csID, _clID, indexCB->getLogicalID() ) ;
