@@ -19,9 +19,8 @@ function main()
     var cursor = cl.find({a:{$all:[Regex("^W","i"),Regex("^s","i")]}});
     if(cursor.next()!=null)
     {
-        throw buildException("find()",null,"check record", "no data","have data");
+        throw buildException("find()",null,"check record", "no data","have data : " + cursor.current());
     }
-    cursor.close();
 
     commDropCL( db, csName, clName, true, true, "drop CL in the end" );
 }
