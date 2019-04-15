@@ -59,10 +59,10 @@ function main(){
 	}
 	println("createCL " + COMMCLNAME + " at ReplicaGroup:" + sourceGroup + " finished");
 	
-	//split ({a:0} {a:1000})
+	//split ({a:0} {a:5000})
 	try{
 		var tarGroupIndex=-1;
-		var stepId = 1000;
+		var stepId = 5000;
 		var partId = rownums/stepId;
 		var lowId = 0;
 		var highId = 0;
