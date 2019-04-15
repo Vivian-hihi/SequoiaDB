@@ -1683,6 +1683,21 @@ namespace engine
                                      pLRBHdr,
                                      pLRBHdr ? &(pLRBHdr->extData) : NULL ) ;
       }
+      // there is a scenario, using testX to clean up 'old version' hanging off
+      // LRB header. Release LRB header if it is possible when test opreation
+      // succeeded.
+      if ( ( DPS_TRANSLOCK_OP_MODE_TEST == opMode ) && ( SDB_OK == rc ) )
+      {
+         if (    ( NULL != pLRBHdr )
+              && ( NULL == pLRBHdr->ownerLRB )
+              && ( NULL == pLRBHdr->upgradeLRB )
+              && ( NULL == pLRBHdr->waiterLRB )
+              && ( pLRBHdr->extData.canRelease() ) )
+         {
+            _removeFromLRBHeaderList( _LockHdrBkt[bktIdx].lrbHdr, pLRBHdr ) ;
+            _releaseLRBHdr( pLRBHdr ) ;
+         }
+      }
 
       if ( bLatched )
       {

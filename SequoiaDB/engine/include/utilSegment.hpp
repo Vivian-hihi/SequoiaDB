@@ -50,7 +50,8 @@
 typedef UINT32 UTIL_OBJIDX ;
 #define UTIL_INVALID_OBJ_INDEX   (( UTIL_OBJIDX )( -1 ))
 
-#define UTIL_MAX_SEGMENT_NUM     (0x40000000)      // 1GB
+// 1GB
+#define UTIL_MAX_SEGMENT_NUM     (0x40000000)
 
 namespace engine
 {
@@ -1347,12 +1348,11 @@ namespace engine
             } 
          }
 
-         OSS_INLINE INT32 shrink()
+         OSS_INLINE INT32 shrink( UINT32 freeSegToKeep = 1 )
          {
             // REVISIT :
             // proper scheduling algorithm to be implemented
             INT32 rc = SDB_OK ;
-            UINT32 freeSegToKeep = 1 ;
             for ( UINT32 i = 0; i < _poolNum ; i++ )
             {
                rc = _pool[ i ].shrink( freeSegToKeep ) ;
