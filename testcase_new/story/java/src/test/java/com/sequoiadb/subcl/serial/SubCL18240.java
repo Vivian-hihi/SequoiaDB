@@ -30,7 +30,7 @@ public class SubCL18240 extends SdbTestBase {
     private final static String MAIN_CS_NAME = "main_cs_18240";
     private final static String SUB_CS_NAME  = "sub_cs_18240";
     private final static String CL_NAME_BASE = "cl_";
-    private final static int CL_NUM = 2000;
+    private final static int CL_NUM = 1000;
     private final static int RUN_TIMES = 1000;  // run times for insert and query
 
     @BeforeClass
@@ -72,7 +72,7 @@ public class SubCL18240 extends SdbTestBase {
         long tir = (long) info.get("TotalIndexRead");
         long expDiffValue = 4 * RUN_TIMES;
         long actDiffValue = Math.abs(tdr - tir);
-        System.out.println("TotalDataRead: " + tdr + ", TotalIndexRead: " + tir + ", actDiffValue: " + actDiffValue);
+//      System.out.println("TotalDataRead: " + tdr + ", TotalIndexRead: " + tir + ", actDiffValue: " + actDiffValue);
         if (actDiffValue < expDiffValue) {
             Assert.fail("Frequency table scanning"
                     + ", expect (TotalIndexRead - TotalDataRead) = " + expDiffValue
