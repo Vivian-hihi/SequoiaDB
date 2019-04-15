@@ -75,7 +75,8 @@ namespace engine
 
       void     setBaseInfo( dpsTransCB *transCB, _pmdEDUCB *eduCB ) ;
 
-      void     setIDInfo( INT32 csID, UINT16 clID, UINT32 csLID, 
+      void     setIDInfo( INT32 csID, UINT16 clID,
+                          UINT32 csLID, UINT32 clLID,
                           _dmsMBStatInfo* mbStat ) ;
 
       void     setIXScanner( _rtnIXScanner *pScanner ) ;
@@ -233,6 +234,7 @@ namespace engine
 
       /// status var
       UINT32               _csLID ;
+      UINT32               _clLID ;
       INT32                _csID ;
       UINT16               _clID ;
       SINT32               _latchedIdxLid ; // which we are holding a latch on

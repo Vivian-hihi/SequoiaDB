@@ -415,7 +415,9 @@ namespace engine
       }
 
       callback.setIDInfo( _su->data()->CSID(), mbContext->mbID(),
-                          _su->data()->logicalID(), mbContext->mbStat() ) ;
+                          _su->data()->logicalID(),
+                          mbContext->clLID(),
+                          mbContext->mbStat() ) ;
 
       clearFlagLoadLoad ( mbContext->mb() ) ;
       setFlagLoadBuild ( mbContext->mb() ) ;

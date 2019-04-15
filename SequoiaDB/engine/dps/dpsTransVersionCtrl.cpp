@@ -676,6 +676,11 @@ namespace engine
       pos = _tree.end() ;
    }
 
+   INDEX_TREE_CPOS preIdxTree::beginPos() const
+   {
+      return _tree.begin() ;
+   }
+
    const preIdxTreeNodeKey& preIdxTree::getNodeKey( INDEX_TREE_CPOS pos ) const
    {
       SDB_ASSERT( pos != _tree.end(), "Pos is invalid" ) ;
@@ -1503,8 +1508,11 @@ namespace engine
    /*
       oldVersionContainer implement
    */
-   oldVersionContainer::oldVersionContainer( const dmsRecordID &rid )
-   :_rid( rid )
+   oldVersionContainer::oldVersionContainer( const dmsRecordID &rid,
+                                             INT32 csID, UINT16 clID,
+                                             UINT32 csLID, UINT32 clLID )
+   :_csID( csID ), _clID( clID ), _csLID( csLID ), _clLID( clLID ),
+    _rid( rid )
    {
       _isNewRecord   = FALSE ;
       _isDeleted     = FALSE ;
@@ -1640,13 +1648,7 @@ namespace engine
       preIdxTree *pTree = NULL ;
       idxObjSet::iterator itSet ;
       idxLidMap::iterator itMap ;
-/* FIXME
-      // Do nothing if there is no record
-      if ( NULL == _recordPtr.get() )
-      {
-         return ;
-      }
-*/
+
       /// 1. release the tree node
       itSet = _oldIdx.begin() ;
       while( itSet != _oldIdx.end() )

@@ -418,10 +418,9 @@ namespace engine
          _lobLastLSN.init( ~0 ) ;
          _lobLastWriteTick       = 0 ;
          _lobIsCrash             = FALSE ;
-         // disconnect the chain, and leave asyn thread or next X lock holder
-         // to take them off chain and maybe physically free the lock/memory.
-         // We may consider removeAllFromChain() function if we want to do so.
-         disconnectChain() ;
+         // remove all the chain, and leave asyn thread or next X lock holder
+         // to physically free the lock/memory.
+         removeAllFromChain() ;
       }
 
       void updateLastLSN( UINT64 lsn, DMS_FILE_TYPE type )
@@ -491,6 +490,7 @@ namespace engine
 
       OSS_INLINE  void   addToChain( oldVersionContainer * oldVer )
       {
+         oldVer->setPrev( NULL ) ;
          oldVer->setNext( _oldVerChain ) ;
          if ( _oldVerChain )
          {
@@ -498,56 +498,39 @@ namespace engine
          }
          // add to beginning
          _oldVerChain = oldVer ;
-         // set prev to itself so we know this is head.  
-         oldVer->setPrev(oldVer) ;
+
          oldVer->setOnChain() ;
       }
 
-      // There are two case need to handle:
-      // 1. The chain is hanging off mbStat
-      // 2. The chain was already disconnected from mbStat after the 
-      //    collection was dropped/truncated or CS was dropped.
       OSS_INLINE void removeFromChain( oldVersionContainer * oldVer )
       {
-         // prev is not NULL, it could be anywhere of a connected chain or
-         // non-head of a disconnected chain
-         if ( NULL != oldVer->getPrev() )
-         {
-            // prev point to itself, this is beginning of a connected chain
-            if ( oldVer->getPrev() == oldVer )
-            {
-               _oldVerChain = oldVer->getNext() ;
-               // point prev to itself if it's not empty
-               if ( _oldVerChain )
-               {
-                  _oldVerChain->setPrev( _oldVerChain ) ;
-               }
-            }
-            else // oldVer is middle/end of either type of chain
-            {
-               oldVer->getPrev()->setNext( oldVer->getNext() ) ;
+         oldVersionContainer *prev = oldVer->getPrev() ;
+         oldVersionContainer *next = oldVer->getNext() ;
 
-               if ( oldVer->getNext() )
-               {
-                  oldVer->getNext()->setPrev( oldVer->getPrev() );
-               }
-            }
-            // else oldVer is tail, do nothing
-         }
-         else 
+         // prev is not NULL, it could be not the head of a connected chain
+         if ( prev )
          {
-            // oldVer is the first element of a disconnected chain
-            if ( oldVer->getNext() )
+            prev->setNext( next ) ;
+            if ( next )
             {
-               oldVer->getNext()->setPrev( NULL );
+               next->setPrev( prev ) ;
             }
          }
+         else
+         {
+            SDB_ASSERT( _oldVerChain == oldVer, "Not the same" ) ;
+            _oldVerChain = next ;
+
+            if ( next )
+            {
+               next->setPrev( NULL );
+            }
+         }
+
          oldVer->setPrev( NULL ) ;
          oldVer->setNext( NULL ) ;
          oldVer->unsetOnChain() ;
       }
-
-      void disconnectChain( ) ;
 
       void removeAllFromChain() ;
 

@@ -36,6 +36,8 @@
 #include "ixm.hpp"
 #include "dmsTransLockCallback.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    _dmsIndexBuilder::_dmsIndexBuilder( _dmsStorageIndex* indexSU,
@@ -306,7 +308,8 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _dmsIndexBuilder::_getKeySet( ossValuePtr recordDataPtr, BSONObjSet& keySet )
+   INT32 _dmsIndexBuilder::_getKeySet( ossValuePtr recordDataPtr,
+                                       BSONObjSet& keySet )
    {
       INT32 rc = SDB_OK ;
 
@@ -331,7 +334,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsIndexBuilder::_insertKey( const ixmKey &key, const dmsRecordID &rid, const Ordering& ordering )
+   INT32 _dmsIndexBuilder::_insertKey( const ixmKey &key,
+                                       const dmsRecordID &rid,
+                                       const Ordering& ordering )
    {
       INT32 rc = SDB_OK ;
 
@@ -340,7 +345,9 @@ namespace engine
          dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(),
                                         _eduCB ) ;
          callback.setIDInfo( _suData->CSID(), _mbContext->mbID(),
-                             _suData->logicalID(), _mbContext->mbStat() ) ;
+                             _suData->logicalID(),
+                             _mbContext->clLID(),
+                             _mbContext->mbStat() ) ;
 
          rc = callback.onInsertIndex( _mbContext, _indexCB, _indexCB->unique(),
                                       _indexCB->enforced(),
@@ -352,7 +359,8 @@ namespace engine
          }
       }
 
-      rc = _suIndex->_indexInsert( _indexCB, key, rid, ordering, _eduCB, !_unique, _dropDups ) ;
+      rc = _suIndex->_indexInsert( _indexCB, key, rid, ordering,
+                                   _eduCB, !_unique, _dropDups ) ;
       if ( SDB_OK != rc )
       {
          // during index rebuild, it's possible some other
@@ -375,7 +383,9 @@ namespace engine
       return rc ;
    }
 
-   INT32 _dmsIndexBuilder::_insertKey( ossValuePtr recordDataPtr, const dmsRecordID &rid, const Ordering& ordering )
+   INT32 _dmsIndexBuilder::_insertKey( ossValuePtr recordDataPtr,
+                                       const dmsRecordID &rid,
+                                       const Ordering& ordering )
    {
       BSONObjSet keySet ;
       BSONObjSet::iterator it ;

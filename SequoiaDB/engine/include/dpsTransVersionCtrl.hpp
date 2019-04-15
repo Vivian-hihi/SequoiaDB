@@ -448,6 +448,7 @@ namespace engine
       BOOLEAN           isPosValid( INDEX_TREE_CPOS pos ) const ;
 
       void              resetPos( INDEX_TREE_CPOS &pos ) const ;
+      INDEX_TREE_CPOS   beginPos() const ;
 
       // caller need to hold the latch otherwise the iterator can
       // change underneath
@@ -724,7 +725,9 @@ namespace engine
       friend class preIdxTree ;
 
    public:
-      oldVersionContainer( const dmsRecordID &rid ) ;
+      oldVersionContainer( const dmsRecordID &rid,
+                           INT32 csID, UINT16 clID,
+                           UINT32 csLID, UINT32 clLID ) ;
       ~oldVersionContainer() ;
 
       void* operator new ( size_t size, memBlockPool *pPool,
@@ -735,6 +738,11 @@ namespace engine
                              std::nothrow_t ) ;
 
       BOOLEAN              isRecordEmpty() const ;
+
+      INT32                getCSID() const { return _csID ; }
+      UINT16               getCLID() const { return _clID ; }
+      UINT32               getCSLID() const { return _csLID ; }
+      UINT32               getCLLID() const { return _clLID ; }
 
       const dmsRecordID&   getRecordID() const { return _rid ; }
       dpsOldRecordPtr      getRecordPtr() const { return _recordPtr ; }
@@ -771,7 +779,7 @@ namespace engine
       oldVersionContainer * getPrev() { return _prev ; }
       void setNext( oldVersionContainer * ptr ) { _next = ptr ; }
       void setPrev( oldVersionContainer * ptr ) { _prev = ptr ; }
-      BOOLEAN isOnChain() { return _isOnChain ; }
+      BOOLEAN isOnChain() const { return _isOnChain ; }
       void    setOnChain() { _isOnChain = TRUE ; }
       void    unsetOnChain() { _isOnChain = FALSE ; }
 
@@ -782,6 +790,10 @@ namespace engine
       BOOLEAN              insertIdx( const dpsIdxObj &i ) ;
 
    private:
+      INT32             _csID ;
+      UINT16            _clID ;
+      UINT32            _csLID ;
+      UINT32            _clLID ;
       dmsRecordID       _rid ;
       dpsOldRecordPtr   _recordPtr ;   // pointer to copy of old record
       UINT32            _ownnerTID ;

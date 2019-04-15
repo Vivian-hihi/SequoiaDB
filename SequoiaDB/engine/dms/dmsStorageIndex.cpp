@@ -951,7 +951,9 @@ namespace engine
          }
 
          callback.setIDInfo( _pDataSu->CSID(), context->mbID(),
-                             _pDataSu->logicalID(), context->mbStat() ) ;
+                             _pDataSu->logicalID(),
+                             context->clLID(),
+                             context->mbStat() ) ;
          rc = callback.onDropIndex( context, &indexCB, cb ) ;
          if ( rc )
          {
@@ -1503,7 +1505,9 @@ namespace engine
                                         cb ) ;
          ixmIndexCB indexCB ( indexExtentID, this, context ) ;
          callback.setIDInfo( _pDataSu->CSID(), context->mbID(),
-                             _pDataSu->logicalID(), context->mbStat() ) ;
+                             _pDataSu->logicalID(),
+                             context->clLID(),
+                             context->mbStat() ) ;
          rc = callback.onRebuildIndex( context, &indexCB, cb ) ;
          if ( rc )
          {
