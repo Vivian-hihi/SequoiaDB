@@ -84,13 +84,16 @@ function createDataGroups( db, hostName )
 
 function checkResult( cl, expObj )
 {
-    cursor = cl.find();
-    while(cursor.next() != null)
+    var actCount = 0; 
+    var cursor = cl.find();
+    while(cursor.next())
     {
         if( cursor.current().toObj()["a"] !== expObj["a"] )
         {
             throw buildException("checkResult()", null, "query data from coord2", expObj["a"], cursor.current().toObj()["a"]);
         }
+        actCount++;
     }
-    cursor.close();
+    if (actCount !== 1)
+        throw "number error, actCount is : " + actCount;
 }
