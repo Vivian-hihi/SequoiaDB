@@ -39,7 +39,7 @@ function build_help()
 {
    echo ""
    echo "Usage:"
-   echo "  --db         install sequoiadb"
+   echo "  --sdb        install sequoiadb"
    echo "  --pg         install sequoiasql-postgresql"
    echo "  --mysql      install sequoiasql-mysql"
 }
@@ -47,7 +47,7 @@ function build_help()
 #Parse command line parameters
 #test $# -eq 0 && { build_help && exit 64; }
 
-ARGS=`getopt -o h --long help,db,pg,mysql -n 'test' -- "$@"`
+ARGS=`getopt -o h --long help,sdb,pg,mysql -n 'test' -- "$@"`
 ret=$?
 test $ret -ne 0 && exit $ret
 
@@ -56,7 +56,7 @@ eval set -- "${ARGS}"
 while true
 do
    case "$1" in
-      --db )           INSTALL_BD=1
+      --sdb )           INSTALL_BD=1
                        TYPE="sequoiadb"
                        install $TYPE
                        shift
