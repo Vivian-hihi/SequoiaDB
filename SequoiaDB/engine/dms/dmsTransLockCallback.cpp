@@ -1245,12 +1245,15 @@ namespace engine
          globIdxID gid( _csID, _clID, indexCB->getLogicalID() ) ;
          oldVersionCB *pVerCB = _transCB->getOldVCB() ;
 
+/*
+
 #ifdef _DEBUG
          SDB_ASSERT( !(pVerCB->getIdxTree(gid, FALSE).get()), 
                      "Index tree already exist " ) ;
 #endif
 
-         rc = pVerCB->addIdxTree( gid, indexCB, treePtr, FALSE ) ;
+         rc = pVerCB->addIdxTree( gid, indexCB, treePtr, FALSE ) ;*/
+         rc = pVerCB->getOrCreateIdxTree( gid, indexCB, treePtr, FALSE ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Create memory index tree(%s) "
