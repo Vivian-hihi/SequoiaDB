@@ -131,7 +131,7 @@ function getTwoGroupSplit( db, csName, clName, splitArg1, splitArg2 )
       {
          if( snapShotCsName[i] == csName )
          {
-            group = snapShotCsGroup[i] ;
+            group = snapShotCsGroup[i].toString() ;
             break ;
          }
       }
