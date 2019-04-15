@@ -271,18 +271,7 @@ namespace engine
       _mbID          = DMS_INVALID_MBID ;
       _mbLockType    = -1 ;
       _resumeType    = -1 ;
-      _pSubContext   = NULL ;
       PD_TRACE_EXIT ( SDB__DMSMBCONTEXT__RESET ) ;
-   }
-
-   void _dmsMBContext::attachSubContext( _IContext *pContext )
-   {
-      _pSubContext = pContext ;
-   }
-
-   void _dmsMBContext::detachSubContext()
-   {
-      _pSubContext = NULL ;
    }
 
    string _dmsMBContext::toString() const
@@ -315,13 +304,7 @@ namespace engine
       _resumeType = _mbLockType ;
       if ( SHARED == _mbLockType || EXCLUSIVE == _mbLockType )
       {
-         INT32 rc1 = SDB_OK, rc2 = SDB_OK ;
-         if ( _pSubContext )
-         {
-            rc1 = _pSubContext->pause() ;
-         }
-         rc2 = mbUnlock() ;
-         rc = rc1 ? rc1 : rc2 ;
+         rc = mbUnlock() ;
       }
 
       PD_TRACE_EXITRC ( SDB__DMSMBCONTEXT_PAUSE, rc ) ;
@@ -338,10 +321,6 @@ namespace engine
          INT32 lockType = _resumeType ;
          _resumeType = -1 ;
          rc = mbLock( lockType ) ;
-         if ( SDB_OK == rc && _pSubContext )
-         {
-            rc = _pSubContext->resume() ;
-         }
       }
       PD_TRACE_EXITRC ( SDB__DMSMBCONTEXT_RESUME, rc ) ;
       return rc ;

@@ -562,9 +562,6 @@ namespace engine
          virtual ~_dmsMBContext() ;
          void _reset () ;
 
-         void  attachSubContext( _IContext *pContext ) ;
-         void  detachSubContext() ;
-
       public:
          virtual string toString () const ;
          virtual INT32  pause () ;
@@ -592,8 +589,6 @@ namespace engine
          UINT16            _mbID ;
          INT32             _mbLockType ;
          INT32             _resumeType ;
-
-         _IContext         *_pSubContext ;
    };
    typedef _dmsMBContext   dmsMBContext ;
 
