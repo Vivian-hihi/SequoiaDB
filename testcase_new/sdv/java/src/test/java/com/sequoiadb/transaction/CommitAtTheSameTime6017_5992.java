@@ -26,96 +26,88 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @version 1.00
  */
 
-public class CommitAtTheSameTime6017_5992 extends SdbConfTestBase{
+public class CommitAtTheSameTime6017_5992 extends SdbConfTestBase {
 	private String clName = "cl6017";
 	private Sequoiadb sdb = null;
 	private DBCollection cl = null;
 	private int threadNum = 100;
 	private int insertNum = 1000;
-	
+
 	@Override
-    protected void setNodeConf(){
-        dataConf.put("transactionon", true);
-    }
-	
+	protected void setNodeConf() {
+		dataConf.put("transactionon", true);
+	}
+
 	@BeforeClass
 	private void setup() {
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
 	}
-	
+
 	@Test
 	public void test() throws Exception {
 		ThreadExecutor es = new ThreadExecutor();
-		for(int i = 0 ; i < threadNum; i++){
-			es.addWorker(new Trans6017(clName, insertNum));
+		for (int i = 0; i < threadNum; i++) {
+			es.addWorker(new Trans6017());
 		}
-        es.run();
-        checkResult( threadNum*insertNum );
+		es.run();
+		checkResult(threadNum * insertNum);
 	}
-	
+
 	@AfterClass
 	private void teardown() {
 		sdb.getCollectionSpace(csName).dropCollection(clName);
 		sdb.close();
 	}
-	
-	private void checkResult(int expNum){
-		int i = 0;
+
+	private void checkResult(int expNum) {
+		int actCount = (int) cl.getCount();
+		int count = 0;
 		BSONObject orderBy = new BasicBSONObject();
 		orderBy.put("a", 1);
-		BSONObject sel = new BasicBSONObject();
-		BSONObject subSel = new BasicBSONObject();
-		subSel.put("$include", 0);
-		sel.put("_id",subSel);
-		DBCursor cur = cl.query(null, sel, orderBy, null);
+		DBCursor cur = cl.query(null, null, orderBy, null);
 		while (cur.hasNext()) {
-			for(int j = 0; j < threadNum; j++){
+			for (int j = 0; j < threadNum; j++) {
 				BSONObject obj = cur.getNext();
-				Assert.assertEquals(obj.get("a").toString(), String.valueOf(i), "insert data is wrong");
+				Assert.assertEquals((int) obj.get("a"), count, "insert data is wrong");
 			}
-            i++;
-        }
-		cur.close();
-		Assert.assertEquals(i*threadNum, expNum);
+			count++;
+		}
+		Assert.assertEquals(actCount, expNum);
 	}
-	
+
 	class Trans6017 {
 		private Sequoiadb db = null;
-		private String clName;
-		private int insertNum = 0;
-		
-		public Trans6017(String clName, int insertNum) {
-			this.clName = clName;
-			this.insertNum = insertNum;
-		}
-		
+
 		@ExecuteOrder(step = 1, desc = "连接数据库，开启事务")
-	    public void beginTrans() {
-	    	db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-	    	db.beginTransaction();
-	    }
-		
-		@ExecuteOrder(step = 2, desc = "插入数据")
-		public void insertData() {
-			DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-	    	insertData(cl, insertNum);
+		private void beginTrans() {
+			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			db.beginTransaction();
 		}
 
-	    @ExecuteOrder(step = 3, desc = "提交事务")
-	    public void commit() {
-	        db.commit();
-	        db.close();
-	    }
+		@ExecuteOrder(step = 2, desc = "插入数据")
+		private void insertData() {
+			DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+			insertData(cl);
+		}
 
-	    private void insertData(DBCollection cl, int recNum ) {
-	    	List<BSONObject> insertor = new ArrayList<>();
-	    	for(int i = 0 ; i < recNum ; i++){
-	    		BSONObject rec = new BasicBSONObject();
-	    		rec.put("a", i);
-	    		insertor.add(rec);
-	    	}
-	    	cl.insert(insertor);
-	    }
+		@ExecuteOrder(step = 3, desc = "提交事务")
+		private void commit() {
+			try {
+				db.commit();
+			} finally {
+				db.close();
+			}
+		}
+
+		private void insertData(DBCollection cl) {
+			List<BSONObject> insertor = new ArrayList<>();
+			for (int i = 0; i < insertNum; i++) {
+				BSONObject rec = new BasicBSONObject();
+				rec.put("a", i);
+				insertor.add(rec);
+			}
+			cl.insert(insertor);
+		}
 	}
 }

@@ -26,67 +26,70 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @version 1.00
  */
 
-public class RollBackAtTheSameTime6030 extends SdbConfTestBase{
+public class RollBackAtTheSameTime6030 extends SdbConfTestBase {
 	private String clName = "cl6030";
 	private Sequoiadb sdb = null;
 	private DBCollection cl = null;
 	private int threadNum = 100;
 	private int insertNum = 1000;
-	
+
 	@Override
-    protected void setNodeConf(){
-        dataConf.put("transactionon", true);
-        stdalnConf.put("transactionon", true);
-    }
-	
+	protected void setNodeConf() {
+		dataConf.put("transactionon", true);
+		stdalnConf.put("transactionon", true);
+	}
+
 	@BeforeClass
 	private void setup() {
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
 	}
-	
+
 	@Test
 	public void test() throws Exception {
 		ThreadExecutor es = new ThreadExecutor();
-		for(int i = 0 ; i < threadNum; i++){
-			Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			db.beginTransaction();
-			DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-	    	insertData(cl, insertNum);
-			es.addWorker(new Trans6030(db));
+		for (int i = 0; i < threadNum; i++) {
+			es.addWorker(new Trans6030());
 		}
-        es.run();
-        DBCursor cur = cl.query();
-        Assert.assertFalse(cur.hasNext(), "rollback failed and data still exists in the collection.");
+		es.run();
+		DBCursor cur = cl.query();
+		Assert.assertFalse(cur.hasNext(), "rollback failed and data still exists in the collection.");
 	}
-	
+
 	@AfterClass
 	private void teardown() {
 		sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
 		sdb.close();
 	}
-	
-	private void insertData(DBCollection cl, int recNum ) {
-    	List<BSONObject> insertor = new ArrayList<>();
-    	for(int i = 0 ; i < recNum ; i++){
-    		BSONObject rec = new BasicBSONObject();
-    		rec.put("a", i);
-    		insertor.add(rec);
-    	}
-    	cl.insert(insertor);
-    }
-	
-	class Trans6030{
+
+	private void insertData(DBCollection cl, int recNum) {
+		List<BSONObject> insertor = new ArrayList<>();
+		for (int i = 0; i < recNum; i++) {
+			BSONObject rec = new BasicBSONObject();
+			rec.put("a", i);
+			insertor.add(rec);
+		}
+		cl.insert(insertor);
+	}
+
+	class Trans6030 {
 		private Sequoiadb db = null;
-		public Trans6030(Sequoiadb db) {
-			this.db = db;
+
+		public Trans6030() {
+			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			db.beginTransaction();
+			DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+			insertData(cl, insertNum);
 		}
 
-	    @ExecuteOrder(step = 1, desc = "回滚事务")
-	    public void rollback() {
-	        db.rollback();
-	        db.close();
-	    }
+		@ExecuteOrder(step = 1, desc = "回滚事务")
+		public void rollback() {
+			try {
+				db.rollback();
+			} finally {
+				db.close();
+			}
+		}
 	}
-	
+
 }

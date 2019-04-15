@@ -21,109 +21,110 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @Date 2019.03.15
  * @version 1.00
  */
-public class UpdateAndDelete5999 extends SdbConfTestBase{
+public class UpdateAndDelete5999 extends SdbConfTestBase {
 	private String clName = "cl5999";
 	private Sequoiadb sdb = null;
+	private Sequoiadb db1 = null;
+	private Sequoiadb db2 = null;
 	private DBCollection cl = null;
 	private DBCollection cl1 = null;
 	private DBCollection cl2 = null;
 	private BSONObject del_matcher = new BasicBSONObject();
-	
+
 	@Override
-    protected void setNodeConf(){
-        dataConf.put("transactionon", true);
-    }
-	
+	protected void setNodeConf() {
+		dataConf.put("transactionon", true);
+	}
+
 	@BeforeClass
-    public void setup() {
+	public void setup() {
+		final int START = 0;
+		final int RECSUM = 100;
+		final int STRLENGTH = 10;
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
 		transactionUtils util = new transactionUtils();
-		//insertData(DBCollection cl,int start, int recSum, int strLength)
-		util.insertData(cl, 0, 100, 10);
-		del_matcher.put("_id", 10);
-		long count = cl.getCount(del_matcher);
-		Assert.assertEquals(count, 1, "Matching data does not exist");
+		util.insertData(cl, START, RECSUM, STRLENGTH);
 	}
-	
+
 	@Test
 	private void test() {
-		Sequoiadb db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		
+		db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		db1.beginTransaction();
 		db2.beginTransaction();
-		
+
 		cl1 = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-        cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-        
-        UpdateThread updateThread = new UpdateThread();
-        DeleteThread deleteThread = new DeleteThread();
-        
-        updateThread.start();
-        deleteThread.start();
-        
-        if (updateThread.isSuccess()&&!deleteThread.isSuccess()) {			
+		cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+
+		UpdateThread updateThread = new UpdateThread();
+		DeleteThread deleteThread = new DeleteThread();
+
+		updateThread.start();
+		deleteThread.start();
+
+		if (updateThread.isSuccess() && !deleteThread.isSuccess()) {
 			BaseException e = (BaseException) (deleteThread.getExceptions().get(0));
-			if (e.getErrorCode()!=-13) {
+			if (e.getErrorCode() != -13) {
 				Assert.fail("delete thread fail:" + deleteThread.getErrorMsg() + "  e:" + e.getErrorCode());
-			}				
+			}
 			checkUpdateResult();
-		} else if(!updateThread.isSuccess()&&deleteThread.isSuccess()){
+		} else if (!updateThread.isSuccess() && deleteThread.isSuccess()) {
 			BaseException e = (BaseException) (updateThread.getExceptions().get(0));
-			if (e.getErrorCode()!=-13) {
+			if (e.getErrorCode() != -13) {
 				Assert.fail("update thread fail:" + updateThread.getErrorMsg() + "  e:" + e.getErrorCode());
-			}				
+			}
 			checkDeleteResult();
-		} else if(updateThread.isSuccess()&&deleteThread.isSuccess()){
+		} else if (updateThread.isSuccess() && deleteThread.isSuccess()) {
 			checkUpdateResult();
 			checkDeleteResult();
-		}else {
+		} else {
 			Assert.fail("Unexpected results! updateThreadError:" + updateThread.getErrorMsg() + "deleteThreadError:"
 					+ deleteThread.getErrorMsg());
 		}
-        
-        db1.commit();
-        db2.commit();
-        
-        db1.close();
-        db2.close();
+
+		db1.commit();
+		db2.commit();
 	}
-	
+
 	@AfterClass
 	public void teardown() {
+		db1.close();
+		db2.close();
+
 		sdb.getCollectionSpace(csName).dropCollection(clName);
 		sdb.close();
 	}
-	
+
 	private class UpdateThread extends SdbThreadBase {
-        @Override
-        public void exec() throws BaseException {
-        	BSONObject matcher = new BasicBSONObject();
-        	BSONObject modifyObj = new BasicBSONObject();
-        	BSONObject modifier = new BasicBSONObject();
-        	matcher.put("age", 50);
-        	modifyObj.put("age", 5999);
-        	modifier.put("$set", modifyObj);
-            cl1.update(matcher, modifier, null);
-        }
-    }
-	
+		@Override
+		public void exec() throws BaseException {
+			BSONObject matcher = new BasicBSONObject();
+			BSONObject modifyObj = new BasicBSONObject();
+			BSONObject modifier = new BasicBSONObject();
+			matcher.put("age", 50);
+			modifyObj.put("age", 5999);
+			modifier.put("$set", modifyObj);
+			cl1.update(matcher, modifier, null);
+		}
+	}
+
 	private class DeleteThread extends SdbThreadBase {
-        @Override
-        public void exec() throws BaseException {
-            cl2.delete(del_matcher);
-        }
-    }
-	
-	private void checkUpdateResult(){
+		@Override
+		public void exec() throws BaseException {
+			del_matcher.put("_id", 10);
+			cl2.delete(del_matcher);
+		}
+	}
+
+	private void checkUpdateResult() {
 		BSONObject matcher = new BasicBSONObject();
 		matcher.put("age", 5999);
 		long actCount = cl.getCount(matcher);
 		Assert.assertEquals(actCount, 1, "Update data does not exist!");
 	}
-	
-	private void checkDeleteResult(){
+
+	private void checkDeleteResult() {
 		long count = cl.getCount(del_matcher);
 		Assert.assertEquals(count, 0, "Deleted data still exists!");
 	}
