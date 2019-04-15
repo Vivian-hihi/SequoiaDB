@@ -124,6 +124,15 @@ namespace engine
                                    _pmdEDUCB* cb,
                                    utilInsertResult *insertResult ) = 0 ;
 
+      virtual INT32 onInsertIndex( _dmsMBContext *context,
+                                   const ixmIndexCB *indexCB,
+                                   BOOLEAN isUnique,
+                                   BOOLEAN isEnforce,
+                                   const BSONObj &keyObj,
+                                   const dmsRecordID &rid,
+                                   _pmdEDUCB* cb,
+                                   utilInsertResult *insertResult ) = 0 ;
+
       virtual INT32 onUpdateIndex( _dmsMBContext *context,
                                    const ixmIndexCB *indexCB,
                                    BOOLEAN isUnique,

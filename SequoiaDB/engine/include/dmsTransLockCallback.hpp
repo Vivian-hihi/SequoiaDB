@@ -45,7 +45,6 @@
 #include "dmsOprHandler.hpp"
 #include "dpsTransCB.hpp"
 #include "pmdEDU.hpp"
-#include "ixmKey.hpp"
 
 using namespace bson ;
 
@@ -157,9 +156,9 @@ namespace engine
                                    const ixmIndexCB *indexCB,
                                    BOOLEAN isUnique,
                                    BOOLEAN isEnforce,
-                                   const ixmKey &key,
+                                   const BSONObj &keyObj,
                                    const dmsRecordID &rid,
-                                   _pmdEDUCB *cb,
+                                   _pmdEDUCB* cb,
                                    utilInsertResult *insertResult ) ;
 
       virtual INT32 onUpdateIndex( _dmsMBContext *context,

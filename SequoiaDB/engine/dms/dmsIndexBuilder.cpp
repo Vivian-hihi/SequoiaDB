@@ -346,12 +346,14 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       // Callback to validate in memory tree
-      if ( _pOprHandler )
+      if ( _pOprHandler && _indexCB->unique() )
       {
+         _bufBuilder.reset() ;
          rc = _pOprHandler->onInsertIndex( _mbContext, _indexCB,
                                            _indexCB->unique(),
                                            _indexCB->enforced(),
-                                           key, rid, _eduCB, NULL ) ;
+                                           key.toBson( &_bufBuilder ),
+                                           rid, _eduCB, NULL ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Insert index callback failed, rc: %d", rc ) ;

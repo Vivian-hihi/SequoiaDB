@@ -117,6 +117,7 @@ namespace engine
       dmsMBContext *pContext = NULL ;
       dmsMBStatInfo *mbStat = NULL ;
       dmsTransLockCallback callback ;
+      dpsTransRetInfo transRetInfo ;
 
       su = pDmsCB->suLock( _csID ) ;
       if ( su && su->LogicalCSID() == _csLID )
@@ -130,10 +131,17 @@ namespace engine
 
       callback.setBaseInfo( pTransCB, (_pmdEDUCB*)pExe ) ;
       callback.setIDInfo( _csID, _clID, _csLID, _clLID, mbStat ) ;
-      pTransCB->transLockTestX( (_pmdEDUCB*)pExe, _csLID,
-                                _clID, &_recordID, NULL,
-                                &callback ) ;
-      result = UTIL_LJOB_DO_FINISH ;
+      rcTmp = pTransCB->transLockTestX( (_pmdEDUCB*)pExe, _csLID,
+                                        _clID, &_recordID, &transRetInfo,
+                                        &callback ) ;
+      if ( SDB_OK == rcTmp || DPS_TRANSLOCK_X == transRetInfo._lockType )
+      {
+         result = UTIL_LJOB_DO_FINISH ;
+      }
+      else
+      {
+         result = UTIL_LJOB_DO_CONT ;
+      }
 
       if ( pContext )
       {
@@ -466,8 +474,11 @@ namespace engine
       // up old copy if the copy is not already there
       else if ( SDB_OK == irc )
       {
-         SDB_ASSERT( pExtData, "ExtData is invalid " ) ;
-         SDB_ASSERT( refCounter > 0, "Ref count must > 0" ) ;
+         if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
+         {
+            SDB_ASSERT( pExtData, "ExtData is invalid " ) ;
+            SDB_ASSERT( refCounter > 0, "Ref count must > 0" ) ;
+         }
 
          _recordInfo._refCount = refCounter ;
 
@@ -818,9 +829,9 @@ namespace engine
                                               const ixmIndexCB *indexCB,
                                               BOOLEAN isUnique,
                                               BOOLEAN isEnforce,
-                                              const ixmKey &key,
+                                              const BSONObj &keyObj,
                                               const dmsRecordID &rid,
-                                              _pmdEDUCB *cb,
+                                              _pmdEDUCB* cb,
                                               utilInsertResult *insertResult )
    {
       INT32 rc = SDB_OK ;
@@ -833,7 +844,7 @@ namespace engine
       }
 
       rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
-                              isUnique, isEnforce, key.toBson(),
+                              isUnique, isEnforce, keyObj,
                               rid, cb, insertResult ) ;
       if ( rc )
       {

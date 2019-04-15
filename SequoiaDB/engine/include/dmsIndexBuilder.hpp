@@ -94,6 +94,7 @@ namespace engine
       BOOLEAN            _unique ;
       BOOLEAN            _dropDups ;
       IDmsOprHandler     *_pOprHandler ;
+      bson::BufBuilder   _bufBuilder ;
 
    public:
       static _dmsIndexBuilder* createInstance( _dmsStorageIndex* indexSU,
