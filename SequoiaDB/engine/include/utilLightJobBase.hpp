@@ -147,7 +147,7 @@ namespace engine
    {
       public:
          _utilLightJobMgr() ;
-         ~_utilLightJobMgr() ;
+         virtual ~_utilLightJobMgr() ;
 
       public:
          virtual void   push( utilLightJob *pJob,
