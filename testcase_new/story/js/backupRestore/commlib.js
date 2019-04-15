@@ -36,13 +36,29 @@ function createBackupRestoreGroup( db, hosts )
       while ( isPortUsed( port ) ){
          port += 10 ;
       }
-      println( hostname )
-      println( port )
       rg.createNode( hostname, port, RSRVNODEDIR + port ) ;
       rg.start();
       port += 10 ;
    }
    rg.start();
+   
+   var totalLen = 12000 ;
+   var alreadyWait = 0 ;
+   do{
+      var group = db.getRG(backupandrestoreGroup).getDetail().next().toObj() ;
+      if ( group.PrimaryNode !== undefined )
+      {
+         break ;
+      }else{
+         sleep( 10 ) ;
+         alreadyWait += 1;
+      }
+      if ( alreadyWait > totalLen )
+      {
+         throw "wait select primary timeout"
+      }
+   } while ( true);
+   
 }
 
 function nodeInfo( groupName, hostName, svcName, dbPath )
@@ -597,11 +613,10 @@ function()
       var hosts = getAllHosts( this.groups ) ;
       createBackupRestoreGroup( db, hosts ) ;
       this.group = db.getRG( backupandrestoreGroup ).getDetail().next().toObj() ;
-      println( JSON.stringify( this.group) ) ;
       var primaryPos = this.group.PrimaryNode ;
       
       for ( var i = 0; i < this.group.Group.length; ++i){
-         if ( primaryPos = this.group.Group[i].NodeID )
+         if ( primaryPos == this.group.Group[i].NodeID )
          {
             var hostName = this.group.Group[i].HostName ;
             var svcName = this.group.Group[i].Service[0].Name ;
@@ -781,8 +796,6 @@ function()
   {
      var hostName = this.group.Group[i].HostName ; 
      var svcName = this.group.Group[i].Service[0].Name ; 
-     println( this.group.PrimaryNode ); 
-     println( this.group.Group[i].NodeID ) ;
      if ( this.group.PrimaryNode !== this.group.Group[i].NodeID )
      {
         try
