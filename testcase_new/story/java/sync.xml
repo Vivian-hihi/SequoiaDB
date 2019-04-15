@@ -33,6 +33,7 @@
          <package name="com.sequoiadb.alter"/>
          <package name="com.sequoiadb.sync"/>
          <package name="com.sequoiadb.dataconsistency"/>
+         <package name="com.sequoiadb.subcl.serial" />
       </packages>    
    </test>
 </suite>
