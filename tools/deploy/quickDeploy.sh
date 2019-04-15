@@ -4,7 +4,7 @@ function build_help()
 {
    echo ""
    echo "Usage:"
-   echo "  --sdb         deploy SequoiaDB"
+   echo "  --sdb        deploy SequoiaDB"
    echo "  --mysql      deploy SequoiaSQL-MySQL"
    echo "  --pg         deploy SequoiaSQL-PostgreSQL"
 }
