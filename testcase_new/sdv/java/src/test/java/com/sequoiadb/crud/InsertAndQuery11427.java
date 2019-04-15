@@ -69,17 +69,21 @@ public class InsertAndQuery11427 extends SdbTestBase{
 	}
 	
 	private class QueryThread extends SdbThreadBase {
+		private int count = 0 ;
 		@Override
         public void exec() {
         	try(Sequoiadb db = new Sequoiadb(coordUrl, "", "")){
         		DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-        		BSONObject matcher = (BSONObject) JSON.parse("{age:{$gt:10}}");
+        		BSONObject matcher = (BSONObject) JSON.parse("{age:{$gte:10}}");
         		BSONObject orderBy = (BSONObject) JSON.parse("{age:1}");
         		DBCursor queryCursor = cl.query(matcher, null, orderBy, null);
         		while(queryCursor.hasNext()){
         			queryCursor.getNext();
+        			count++;
         		}
-        		queryCursor.close();
+        		if(count < 90){
+        			Assert.fail("unexpected query result, expect returned num >= " + 90 + " , actual returned num : " + count);
+        		}
             }
         }
 	}
@@ -105,7 +109,6 @@ public class InsertAndQuery11427 extends SdbTestBase{
 		while(queryCursor.hasNext()){
 			actualData.add(queryCursor.getNext());
 		}
-		queryCursor.close();
-		Assert.assertEquals(expectData, actualData, "Insert data does not match expected results");
+		Assert.assertEquals(expectData, actualData);
 	}
 }
