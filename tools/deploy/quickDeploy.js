@@ -175,7 +175,7 @@ function getSequoiadbInstallInfo( hostName )
    var installInfo = {} ;
    try
    {
-      installInfo =  omaRemote.getOmaInstallInfo().toObj() ;
+      installInfo = omaRemote.getOmaInstallInfo().toObj() ;
    }
    catch( e )
    {
@@ -495,7 +495,6 @@ function createCatalog( nodesConf )
          {
             var rg = db.getCatalogRG() ;
             var node = rg.createNode( hostName, service, dbPath ) ;
-            node.start() ;
          }
          catch( e )
          {
@@ -504,6 +503,15 @@ function createCatalog( nodesConf )
                println( "Unexpected error[" + e + "] when creating catalog node: " + hostName + ":" + service + "!" ) ;
                throw e ;
             }
+         }
+         try
+         {
+            rg.getNode( hostName, service ).start() ;
+         }
+         catch( e )
+         {
+            println( "Unexpected error[" + e + "] when starting catalog node: " + hostName + ":" + service + "!" ) ;
+            throw e ;
          }
       }
 
@@ -673,6 +681,7 @@ function checkUser( dbType, installInfo )
       throw "ERROR" ;
    }
 }
+
 function deploySequoiadb()
 {
    println( "\n************ Deploy SequoiaDB ************************" ) ;
