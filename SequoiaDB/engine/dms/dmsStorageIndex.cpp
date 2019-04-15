@@ -1070,6 +1070,8 @@ namespace engine
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
       SDB_DPSCB *dropDps = NULL ;
       OID indexOID ;    // Used for dropping THIS index in case of error.
+      dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(), cb ) ;
+      IDmsOprHandler *pOprHandler = NULL ;
 
       SDB_ASSERT( context->isMBLock(), "Caller should hold mb lock" ) ;
       SDB_ASSERT( DMS_INVALID_EXTENT != metaExtentID,
@@ -1108,6 +1110,20 @@ namespace engine
          // calc the reserve size
          if ( dpscb )
          {
+            // invoke callback function
+            pOprHandler = &callback ;
+            callback.setIDInfo( _pDataSu->CSID(), context->mbID(),
+                                _pDataSu->logicalID(),
+                                context->clLID(),
+                                context->mbStat() ) ;
+            rc = callback.onCreateIndex( context, &indexCB, cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Create index failed to invoke callback, "
+                       "rc = %d", rc ) ;
+               goto error ;
+            }
+
             _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
                                    sizeof(fullName) ) ;
 
@@ -1178,7 +1194,8 @@ namespace engine
       // As the mb lock has been released, the rebuild implementation should use
       // the context and indexLID to check if it's processing the right index.
       rc = _rebuildIndex( context, metaExtentID, indexLID,
-                          cb, sortBufferSize, indexType );
+                          cb, sortBufferSize, indexType,
+                          pOprHandler );
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to build index[%s], rc = %d",
@@ -1484,8 +1501,10 @@ namespace engine
    INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context,
                                           dmsExtentID indexExtentID,
                                           dmsExtentID indexLID,
-                                          pmdEDUCB *cb, INT32 sortBufferSize,
-                                          UINT16 indexType )
+                                          pmdEDUCB *cb,
+                                          INT32 sortBufferSize,
+                                          UINT16 indexType,
+                                          IDmsOprHandler *pOprHandle )
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEINDEX__REBUILDINDEX );
 
@@ -1500,15 +1519,10 @@ namespace engine
       }
 
       // invoke callback function
+      if ( pOprHandle )
       {
-         dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(),
-                                        cb ) ;
          ixmIndexCB indexCB ( indexExtentID, this, context ) ;
-         callback.setIDInfo( _pDataSu->CSID(), context->mbID(),
-                             _pDataSu->logicalID(),
-                             context->clLID(),
-                             context->mbStat() ) ;
-         rc = callback.onRebuildIndex( context, &indexCB, cb ) ;
+         rc = pOprHandle->onRebuildIndex( context, &indexCB, cb ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Rebuild failed to invoke callback, rc = %d",
@@ -1516,14 +1530,16 @@ namespace engine
             goto error ;
          }
       }
-      if ( sortBufferSize > 0 && sortBufferSize < DMS_INDEX_SORT_BUFFER_MIN_SIZE )
+      if ( sortBufferSize > 0 &&
+           sortBufferSize < DMS_INDEX_SORT_BUFFER_MIN_SIZE )
       {
          sortBufferSize = DMS_INDEX_SORT_BUFFER_MIN_SIZE ;
       }
 
       builder = dmsIndexBuilder::createInstance( this, _pDataSu, context, cb,
                                                  indexExtentID, indexLID,
-                                                 sortBufferSize, indexType ) ;
+                                                 sortBufferSize, indexType,
+                                                 pOprHandle ) ;
       if ( NULL == builder )
       {
          PD_LOG ( PDERROR, "Failed to get index builder instance, sort buffer size: %d",

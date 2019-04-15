@@ -35,6 +35,7 @@
 #include "dmsStorageBase.hpp"
 #include "ixmKey.hpp"
 #include "dmsExtent.hpp"
+#include "dmsOprHandler.hpp"
 
 namespace engine
 {
@@ -56,6 +57,8 @@ namespace engine
                         dmsExtentID indexLogicID ) ;
       virtual ~_dmsIndexBuilder() ;
       INT32 build() ;
+
+      void  setOprHandler( IDmsOprHandler *pOprHander ) ;
 
    protected:
       virtual INT32 _build() = 0 ;
@@ -90,6 +93,7 @@ namespace engine
       const dmsExtent*   _extent ;
       BOOLEAN            _unique ;
       BOOLEAN            _dropDups ;
+      IDmsOprHandler     *_pOprHandler ;
 
    public:
       static _dmsIndexBuilder* createInstance( _dmsStorageIndex* indexSU,
@@ -99,7 +103,8 @@ namespace engine
                                                dmsExtentID indexExtentID,
                                                dmsExtentID indexLogicID,
                                                INT32 sortBufferSize,
-                                               UINT16 indexType ) ;
+                                               UINT16 indexType,
+                                               IDmsOprHandler *pOprHandler ) ;
 
       static void releaseInstance( _dmsIndexBuilder* builder ) ;
    } ;

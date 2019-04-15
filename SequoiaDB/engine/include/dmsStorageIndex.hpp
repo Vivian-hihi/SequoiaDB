@@ -171,7 +171,9 @@ namespace engine
          INT32    _rebuildIndex( _dmsMBContext *context,
                                  dmsExtentID indexExtentID,
                                  dmsExtentID indexLID, _pmdEDUCB *cb,
-                                 INT32 sortBufferSize, UINT16 indexType ) ;
+                                 INT32 sortBufferSize,
+                                 UINT16 indexType,
+                                 IDmsOprHandler *pOprHandle = NULL ) ;
 
          INT32    _indexInsert( _ixmIndexCB *indexCB,
                                  const _ixmKey &key, const dmsRecordID &rid,

@@ -671,6 +671,7 @@ namespace engine
                                                   utilInsertResult *insertResult )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
 
       // If there is an old verion of the index in our in memory tree, we
       // should not insert the index because the update/delete transaction
@@ -690,6 +691,13 @@ namespace engine
          if ( !treePtr.get() )
          {
             goto done ;
+         }
+
+         if ( _latchedIdxLid != indexCB->getLogicalID() ||
+              -1 == _latchedIdxMode )
+         {
+            treePtr->lockS() ;
+            locked = TRUE ;
          }
 
          if ( treePtr->isKeyExist( keyObj, idxValue ) )
@@ -728,6 +736,10 @@ namespace engine
       }
 
    done:
+      if ( locked )
+      {
+         treePtr->unlockS() ;
+      }
       return rc ;
    error:
       goto done ;

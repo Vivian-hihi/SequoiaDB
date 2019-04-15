@@ -34,7 +34,6 @@
 #include "dmsStorageData.hpp"
 #include "dmsIndexBuilderImpl.hpp"
 #include "ixm.hpp"
-#include "dmsTransLockCallback.hpp"
 
 using namespace bson ;
 
@@ -59,6 +58,7 @@ namespace engine
       _extent = NULL ;
       _unique = FALSE ;
       _dropDups = FALSE ;
+      _pOprHandler = NULL ;
    }
 
    _dmsIndexBuilder::~_dmsIndexBuilder()
@@ -71,6 +71,11 @@ namespace engine
          SDB_OSS_DEL( _indexCB ) ;
          _indexCB = NULL ;
       }
+   }
+
+   void _dmsIndexBuilder::setOprHandler( IDmsOprHandler *pOprHander )
+   {
+      _pOprHandler = pOprHander ;
    }
 
    INT32 _dmsIndexBuilder::_init()
@@ -341,17 +346,12 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       // Callback to validate in memory tree
+      if ( _pOprHandler )
       {
-         dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(),
-                                        _eduCB ) ;
-         callback.setIDInfo( _suData->CSID(), _mbContext->mbID(),
-                             _suData->logicalID(),
-                             _mbContext->clLID(),
-                             _mbContext->mbStat() ) ;
-
-         rc = callback.onInsertIndex( _mbContext, _indexCB, _indexCB->unique(),
-                                      _indexCB->enforced(),
-                                      key, rid, _eduCB, NULL ); 
+         rc = _pOprHandler->onInsertIndex( _mbContext, _indexCB,
+                                           _indexCB->unique(),
+                                           _indexCB->enforced(),
+                                           key, rid, _eduCB, NULL ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Insert index callback failed, rc: %d", rc ) ;
@@ -446,7 +446,8 @@ namespace engine
                                                        dmsExtentID indexExtentID,
                                                        dmsExtentID indexLogicID,
                                                        INT32 sortBufferSize,
-                                                       UINT16 indexType )
+                                                       UINT16 indexType,
+                                                       IDmsOprHandler *pOprHandler )
    {
       _dmsIndexBuilder* builder = NULL ;
 
@@ -495,6 +496,11 @@ namespace engine
             {
                PD_LOG ( PDERROR, "failed to allocate _dmsIndexSortingBuilder" ) ;
             }
+         }
+
+         if ( builder )
+         {
+            builder->setOprHandler( pOprHandler ) ;
          }
       }
 
