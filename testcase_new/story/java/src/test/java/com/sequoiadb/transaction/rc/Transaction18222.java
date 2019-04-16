@@ -1,11 +1,11 @@
 package com.sequoiadb.transaction.rc;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
@@ -29,7 +30,8 @@ public class Transaction18222 extends SdbTestBase {
     private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
     private DBCollection cl2 = null;
-    private BSONObject data = null;
+    private int startId = 0;
+    private int endId = 1000;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
@@ -37,17 +39,22 @@ public class Transaction18222 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        cl.createIndex("a", "{a:1}", false, false);
-        expDataList = new ArrayList<BSONObject>();
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip standalone");
+        }
+        List<String> groupNameList = CommLib.getDataGroupNames(sdb);
+        if (groupNameList.size() < 2) {
+            throw new SkipException("skip group size less than 2");
+        }
 
-        data = new BasicBSONObject();
-        data.put("_id", "insertID18222");
-        data.put("a", 1);
-        data.put("b", 1);
-        data.put("c", 13700000000L);
-        data.put("d", "customer transaction type data application.");
-        cl.insert(data);
+        BSONObject clOptions = new BasicBSONObject();
+        clOptions.put("ShardingKey", new BasicBSONObject("a", 1));
+        clOptions.put("ShardingType", "hash");
+        clOptions.put("AutoSplit", true);
+        cl = sdb.getCollectionSpace(csName).createCollection(clName, clOptions);
+        cl.createIndex("a", "{a:1, b:1}", false, false);
+
+        expDataList = TransUtils.insertRandomDatas(cl, startId, endId);
 
     }
 
@@ -59,10 +66,10 @@ public class Transaction18222 extends SdbTestBase {
         sdb2.beginTransaction();
 
         // query.remove R1
-        DBCursor tbCur = cl2.queryAndRemove(new BasicBSONObject("a", 1), null, null, null, 0, -1, 0);
+        DBCursor tbCur = cl2.queryAndRemove(null, null, new BasicBSONObject("a", 1), null, 0, -1, 0);
         try {
-            BSONObject actData = tbCur.getNext();
-            Assert.assertEquals(actData, data);
+            List<BSONObject> actList = TransUtils.getReadActList(tbCur);
+            Assert.assertEquals(actList, expDataList);
         } finally {
             if (tbCur != null) {
                 tbCur.close();
@@ -73,8 +80,6 @@ public class Transaction18222 extends SdbTestBase {
         sdb2.rollback();
 
         // no trans query
-        expDataList.clear();
-        expDataList.add(data);
         recordCur = cl.query(null, null, "{a:1}", "{'': null}");
         actDataList = TransUtils.getReadActList(recordCur);
         Assert.assertEquals(actDataList, expDataList);

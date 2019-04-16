@@ -1,6 +1,7 @@
 package com.sequoiadb.transaction.rc;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -146,6 +147,7 @@ public class Transaction17137B extends SdbTestBase {
 
     private class CRUDThread extends SdbThreadBase {
 
+        @Override
         public void exec() {
             DBCollection cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
             cl1.insert(rs2);
@@ -159,6 +161,7 @@ public class Transaction17137B extends SdbTestBase {
 
     private class IndexThread extends SdbThreadBase {
 
+        @Override
         public void exec() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 db.beginTransaction();
@@ -175,20 +178,41 @@ public class Transaction17137B extends SdbTestBase {
 
     private class QueryThread extends SdbThreadBase {
 
+        @Override
         public void exec() {
             DBCursor cur = null;
             try {
-                for (int i = 0; i < 10; i++) {
+                List<BSONObject> positiveRsList = new ArrayList<BSONObject>();
+                positiveRsList.addAll(rs1);
+                List<BSONObject> reversedRsList = new ArrayList<BSONObject>();
+                Collections.reverse(rs1);
+                reversedRsList.addAll(rs1);
+                Collections.reverse(rs1);
+                for (int i = 0; i < 5; i++) {
                     DBCollection dbcl = sdb2.getCollectionSpace(csName).getCollection(clName);
+
+                    // 正序查询
                     cur = dbcl.query(null, null, "{a :1}", "{'': null}");
                     List<BSONObject> actList = TransUtils.getReadActList(cur);
-                    Assert.assertEquals(actList, rs1, "select times: " + i);
+                    Assert.assertEquals(actList, positiveRsList, "select times: " + i);
+                    actList.clear();
+
+                    // 逆序查询
+                    cur = dbcl.query(null, null, "{a : -1}", "{'': null}");
+                    actList = TransUtils.getReadActList(cur);
+                    Assert.assertEquals(actList, reversedRsList, "select times: " + i);
                     actList.clear();
 
                     try {
+                        // 正序查询
                         cur = dbcl.query(null, null, "{a :1}", "{'': 'a'}");
                         actList = TransUtils.getReadActList(cur);
-                        Assert.assertEquals(actList, rs1, "select times: " + i);
+                        Assert.assertEquals(actList, positiveRsList, "select times: " + i);
+
+                        // 逆序查询
+                        cur = dbcl.query(null, null, "{a : -1}", "{'': 'a'}");
+                        actList = TransUtils.getReadActList(cur);
+                        Assert.assertEquals(actList, reversedRsList, "select times: " + i);
                     } catch (BaseException e) {
                         int actErrCode = e.getErrorCode();
                         if (actErrCode != -48 && actErrCode != -52 && actErrCode != -10) {
