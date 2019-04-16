@@ -128,6 +128,8 @@ namespace engine
 
          _optScanPath ( optPlanAllocator * pAllocator ) ;
 
+         _optScanPath ( const _optScanPath & path ) ;
+
          virtual ~_optScanPath () ;
 
          optScanPath & operator = ( const optScanPath & path ) ;

@@ -138,6 +138,15 @@ namespace engine
    {
    }
 
+   _optScanPath::_optScanPath ( const _optScanPath & path )
+   : _optPlanPath( NULL ),
+     _pScanNode( NULL ),
+     _sortRequired( FALSE )
+   {
+      setPath( path, TRUE ) ;
+   }
+
+
    _optScanPath::~_optScanPath ()
    {
    }
