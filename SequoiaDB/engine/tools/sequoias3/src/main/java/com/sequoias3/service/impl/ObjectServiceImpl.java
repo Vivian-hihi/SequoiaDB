@@ -530,6 +530,8 @@ public class ObjectServiceImpl implements ObjectService {
                 queryContext.setLastCommonPrefix(filter.getLastCommonPrefix());
                 listObjectsResult.setIsTruncated(true);
                 listObjectsResult.setNextContinueToken(queryContext.getToken());
+            }else {
+                contextManager.release(queryContext);
             }
 
             return listObjectsResult;

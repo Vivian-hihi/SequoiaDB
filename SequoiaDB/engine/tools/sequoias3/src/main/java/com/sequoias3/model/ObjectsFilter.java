@@ -94,6 +94,8 @@ public class ObjectsFilter {
                     if (key.compareTo(dir) < 0){
                         choice = KEY;
                     }
+                }else{
+                    choice = KEY;
                 }
             }
             if (choice == null){

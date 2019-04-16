@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(RestParamDefine.REST_S3)
 public class BucketDelimiterController {
-    private static final Logger logger = LoggerFactory.getLogger(BucketController.class);
+    private static final Logger logger = LoggerFactory.getLogger(BucketDelimiterController.class);
 
     @Autowired
     RestUtils restUtils;
@@ -32,7 +32,7 @@ public class BucketDelimiterController {
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
-        logger.info("bucket=" + bucketName + "@delimiter" + delimiterCon.getDelimiter());
+        logger.info("put delimiter. bucket=" + bucketName + "@delimiter=" + delimiterCon.getDelimiter());
 
         bucketDelimiterService.putBucketDelimiter(operator.getUserId(), bucketName, delimiterCon.getDelimiter());
     }

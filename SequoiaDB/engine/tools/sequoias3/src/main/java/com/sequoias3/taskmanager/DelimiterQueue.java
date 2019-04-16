@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -14,12 +14,13 @@ public class DelimiterQueue {
     private static final Logger logger = LoggerFactory.getLogger(DelimiterQueue.class);
     private Lock taskLock = new ReentrantLock();
 
-    private List<String> bucketList = new LinkedList<>();
+    private LinkedHashSet<String> bucketList = new LinkedHashSet();
 
     public void addBucketName(String bucketName){
         taskLock.lock();
         try{
             bucketList.add(bucketName);
+            logger.debug("add deleting bucketName={}, after queue.size={}", bucketName, bucketList.size());
         }finally {
             taskLock.unlock();
         }
@@ -29,8 +30,18 @@ public class DelimiterQueue {
         taskLock.lock();
         try {
             if (bucketList.size() > 0) {
-                String bucketName = bucketList.get(0);
-                bucketList.remove(0);
+                Iterator it = bucketList.iterator();
+                String bucketName;
+                if (it.hasNext()){
+                    bucketName = (String)(it.next());
+                    it.remove();
+                }else {
+                    return null;
+                }
+
+//                String bucketName = bucketList.(0);
+//                bucketList.remove(0);
+                logger.debug("get deleting bucketName={}, after queue.size={}", bucketName, bucketList.size());
                 return bucketName;
             } else {
                 return null;

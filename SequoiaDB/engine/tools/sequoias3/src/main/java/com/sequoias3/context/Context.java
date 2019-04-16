@@ -83,7 +83,7 @@ public class Context {
 
     public String toString(){
         return "context{" + "token:" +token + ", bucketId:" + bucketId +
-                ", prefix:" + prefix + ", delimiter;" + delimiter + ", startafter:" + startAfter +
-                "lastModified" + formatDate(lastModified) + "}";
+                ", prefix:" + prefix + ", delimiter:" + delimiter + ", startafter:" + startAfter +
+                ", lastModified" + formatDate(lastModified) + "}";
     }
 }

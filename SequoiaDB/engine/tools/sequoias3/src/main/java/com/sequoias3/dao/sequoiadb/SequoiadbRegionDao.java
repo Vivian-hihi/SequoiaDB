@@ -416,6 +416,26 @@ public class SequoiadbRegionDao implements RegionDao {
 
                 sdbBaseOperation.createIndex(sdb, csMetaName, clMetaName,
                             indexName, indexKey, true, true);
+
+                if (!isHistory){
+                    BSONObject indexKeyParent1 = new BasicBSONObject();
+                    String indexNameParent1 = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME + "_" + ObjectMeta.META_PARENTID1;
+                    indexKeyParent1.put(ObjectMeta.META_BUCKET_ID, 1);
+                    indexKeyParent1.put(ObjectMeta.META_PARENTID1,1);
+                    indexKeyParent1.put(ObjectMeta.META_KEY_NAME, 1);
+
+                    sdbBaseOperation.createIndex(sdb, csMetaName, clMetaName,
+                            indexNameParent1, indexKeyParent1, true, true);
+
+                    BSONObject indexKeyParent2 = new BasicBSONObject();
+                    String indexNameParent2 = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME + "_" + ObjectMeta.META_PARENTID2;
+                    indexKeyParent2.put(ObjectMeta.META_BUCKET_ID, 1);
+                    indexKeyParent2.put(ObjectMeta.META_PARENTID2,1);
+                    indexKeyParent2.put(ObjectMeta.META_KEY_NAME, 1);
+
+                    sdbBaseOperation.createIndex(sdb, csMetaName, clMetaName,
+                            indexNameParent2, indexKeyParent2, true, true);
+                }
             }
         }finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);
@@ -455,6 +475,13 @@ public class SequoiadbRegionDao implements RegionDao {
                     }
                 }
             }
+
+            BSONObject clOption = new BasicBSONObject();
+            BSONObject shardingKey = new BasicBSONObject(Dir.DIR_NAME, 1);
+            clOption.put("ShardingKey", shardingKey);
+            clOption.put("ShardingType", "hash");
+            clOption.put("ReplSize", -1);
+            clOption.put("AutoSplit", true);
 
             sdbBaseOperation.createCL(sdb, metaCsName, DaoCollectionDefine.OBJECT_DIR, null);
 

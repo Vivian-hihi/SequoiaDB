@@ -58,8 +58,8 @@ public class DelimiterClean {
                 region = regionDao.queryRegion(bucket.getRegion());
             }
             String metaCsName = regionDao.getMetaCurCSName(region);
-            if (bucket.getDelimiter1Status().equals(DelimiterStatus.DELETING.getName())
-                    || bucket.getDelimiter2Status().equals(DelimiterStatus.DELETING.getName())){
+            if ((bucket.getDelimiter1Status() != null && bucket.getDelimiter1Status().equals(DelimiterStatus.DELETING.getName()))
+                    || (bucket.getDelimiter2Status() != null && bucket.getDelimiter2Status().equals(DelimiterStatus.DELETING.getName()))){
                 ConnectionDao connectionDao = daoMgr.getConnectionDao();
                 transaction.begin(connectionDao);
                 try {
@@ -104,18 +104,18 @@ public class DelimiterClean {
                 }
             }
         }catch (Exception e){
-            logger.error("clean deleting bucket failed. bucketName:"+bucketName);
+            logger.error("clean deleting bucket failed. bucketName:"+bucketName, e);
         }
     }
 
     private void cleanDelimiter(ConnectionDao connectionDao, String metaCsName, Bucket bucket)
             throws S3ServerException {
         Integer delimiterFlag = null;
-        if (bucket.getDelimiter1Status().equals(DelimiterStatus.DELETING.getName())){
+        if (bucket.getDelimiter1Status() != null && bucket.getDelimiter1Status().equals(DelimiterStatus.DELETING.getName())){
             dirDao.delete(connectionDao, metaCsName, bucket.getBucketId(), bucket.getDelimiter1(), null);
             delimiterFlag = 1;
         }
-        if (bucket.getDelimiter2Status().equals(DelimiterStatus.DELETING.getName())){
+        if (bucket.getDelimiter2Status() != null && bucket.getDelimiter2Status().equals(DelimiterStatus.DELETING.getName())){
             dirDao.delete(connectionDao, metaCsName, bucket.getBucketId(), bucket.getDelimiter2(), null);
             delimiterFlag = 2;
         }
