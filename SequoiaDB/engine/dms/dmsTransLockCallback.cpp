@@ -286,8 +286,8 @@ namespace engine
                   dmsRecordID(lockId.extentID(), lockId.offset()),
                   "LockID is not the same" ) ;
 
-      /// when no old index
-      if ( oldVer && !oldVer->isIndexObjEmpty() )
+      /// release old record only if there is no old index
+      if ( oldVer && oldVer->isIndexObjEmpty() )
       {
          oldVer->releaseRecord() ;
       }
