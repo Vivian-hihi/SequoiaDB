@@ -260,6 +260,8 @@ public class BucketDelimiterServiceImpl implements BucketDelimiterService {
             }
 
             transaction.commit(connectionD);
+        }catch (S3ServerException e){
+            throw e;
         }catch (Exception e){
             transaction.rollback(connectionD);
             throw new S3ServerException(S3Error.BUCKET_DELIMITER_PUT_FAILED, "recover bucket delimiter failed.", e);
@@ -281,6 +283,8 @@ public class BucketDelimiterServiceImpl implements BucketDelimiterService {
                 result = new DelimiterConfiguration(bucket.getDelimiter2(), bucket.getDelimiter2Status());
             }
             return result;
+        }catch (S3ServerException e){
+            throw e;
         }catch (Exception e){
             throw new S3ServerException(S3Error.BUCKET_DELIMITER_GET_FAILED, "get delimiter fail", e);
         }
