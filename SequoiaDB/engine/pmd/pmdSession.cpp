@@ -100,7 +100,6 @@ namespace engine
          _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
          _pEDUCB->resetLsn() ;
-         _pEDUCB->updateTransConf() ;
 
          // recv msg
          rc = recvData( (CHAR*)&msgSize, sizeof(UINT32) ) ;
@@ -113,6 +112,8 @@ namespace engine
             }
             break ;
          }
+         /// update conf should here
+         _pEDUCB->updateTransConf() ;
 
          // if system info msg
          if ( msgSize == (UINT32)MSG_SYSTEM_INFO_LEN )

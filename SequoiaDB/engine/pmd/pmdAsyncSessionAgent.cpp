@@ -97,10 +97,11 @@ namespace engine
          }
          cb->resetInfo( EDU_INFO_ERROR ) ;
          cb->resetLsn() ;
-         cb->updateTransConf() ;
 
          if ( cb->waitEvent( event, OSS_ONE_SEC, TRUE ) )
          {
+            /// update trans should here
+            cb->updateTransConf() ;
             /// reset again to avoid set interrupt self
             if ( !cb->isDisconnected() )
             {

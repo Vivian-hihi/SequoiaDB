@@ -244,7 +244,6 @@ namespace engine
          _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
          _pEDUCB->resetLsn() ;
-         _pEDUCB->updateTransConf() ;
 
          rc = request.init() ;
          if ( rc )
@@ -322,6 +321,9 @@ namespace engine
 #endif
 
 #endif /* SDB_ENTERPRISE */
+
+         /// update trans conf should here
+         _pEDUCB->updateTransConf() ;
          // recv rest header
          rc = pAdptor->recvHeader( socket(), &request ) ;
          if ( rc )
