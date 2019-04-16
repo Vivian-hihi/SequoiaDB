@@ -42,7 +42,7 @@ Insert record or records into the current collection. If the current collection 
 
 * When the provided record does not have an "_id" field, the database will add one for it.
  
-* When inserting a single record, the available flag is：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP; When inserting multiple records, the available flag contains all flags.
+* In argument `flag`, SDB_INSERT_CONTONDUP and SDB_INSERT_REPLACEONDUP can not be use at the same time. In argument `options`, that is the same.
 
 ##RETURN VALUE##
 
