@@ -80,7 +80,7 @@ namespace engine
                               UTIL_MEM_A_BLOCK_SUBPOOL_NUM ;
       UINT32 bigBlockSize = UTIL_MEM_A_BIG_BLOCK_SIZE *
                             UTIL_MEM_A_BLOCK_SUBPOOL_NUM ;
-      UINT32 aBlockMaxSize = 0 ;
+      UINT64 aBlockMaxSize = 0 ;
 
       if ( 0 != _maxSize )
       {
