@@ -424,14 +424,6 @@ namespace engine
          goto error ;
       }
 
-      if ( flags & FLG_INSERT_CONTONDUP )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Single insert can't support flag "
-                        "SDB_INSERT_CONTONDUP" ) ;
-         goto error ;
-      }
-
       rc = _cl.insert( record, flags, &result ) ;
       if ( rc )
       {
