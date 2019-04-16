@@ -89,7 +89,7 @@ public class DelimiterUtils extends S3TestBase {
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
 		request.withDelimiter(delimiter);
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);
-		List<String> commonPrefixes = result.getCommonPrefixes();
+		List<String> commonPrefixes = result.getCommonPrefixes();		
 		Collections.sort(expKeyList);
 		Collections.sort(commonPrefixes);
 		Assert.assertEquals(commonPrefixes, expKeyList,
@@ -114,9 +114,9 @@ public class DelimiterUtils extends S3TestBase {
 	}
 
 	public static void updateDelimiterSuccessAgain(String bucketName, String delimiter, String accessKeyId) {
-		// cleanup task execution cycle is 60s.wait for 5s each time,
+		// cleanup task execution cycle is 60s.wait for 30s each time,
 		// max wait time is 30 min.
-		int eachSleepTime = 5000;
+		int eachSleepTime = 30000;
 		int maxSleepTime = 1800000;
 		int alreadySleepTime = 0;
 		int errCode = updateDelimiterAgain(bucketName, delimiter, accessKeyId);
