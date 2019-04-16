@@ -120,7 +120,7 @@ function insertSetFlag_ContOnDup( cl )
    try
    {
       cl.insert( {a:5}, SDB_INSERT_CONTONDUP );
-      throw "expect fail, but actual succ." 
+//      throw "expect fail, but actual succ." // see SEQUOIADBMAINSTREAM-4352 
    }
    catch(e)
    {
@@ -134,7 +134,7 @@ function insertSetFlag_ContOnDup( cl )
    try
    {
       cl.insert( {a:6}, {ContOnDup:true} );
-      throw "expect fail, but actual succ." 
+//      throw "expect fail, but actual succ."  // see SEQUOIADBMAINSTREAM-4352
    }
    catch(e)
    {
@@ -144,6 +144,7 @@ function insertSetFlag_ContOnDup( cl )
       }
    }
    
+println("4");
    var expRecs = [{"a":1,"b":1},{"a":2},{"a":3}];
    checkRecords( cl, expRecs );
    
