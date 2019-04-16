@@ -117,7 +117,7 @@ namespace engine
                                INT32 priority,
                                UINT64 expectAvgCost )
    {
-      push( pJob, takeOver, priority, expectAvgCost ) ;
+      _utilLightJobMgr::push( pJob, takeOver, priority, expectAvgCost ) ;
       _wakeUpEvent.signalAll() ;
 
       if ( FALSE == _startCtrlJob )
@@ -128,7 +128,7 @@ namespace engine
 
    void _pmdLightJobMgr::push( const utilLightJobInfo &job )
    {
-      push( job ) ;
+      _utilLightJobMgr::push( job ) ;
       _wakeUpEvent.signalAll() ;
 
       if ( FALSE == _startCtrlJob )
