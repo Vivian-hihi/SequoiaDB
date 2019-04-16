@@ -95,7 +95,7 @@ namespace engine
       {
          goto done ;
       }
-      aBlockMaxSize = _maxSize / 2 ;
+      aBlockMaxSize = _maxSize >> 2 ;
 
       /// when alloc or init failed, ignored
       _64BSeg = SDB_OSS_NEW _utilSegmentManager<element64B>() ;
