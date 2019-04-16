@@ -41,7 +41,7 @@ public class AlterReplSize12079 extends SdbTestBase {
     private Client esClient = null;
     private String fullIndexName = "fullIndex12079";
 
-    @BeforeClass()
+    @BeforeClass(enabled=false)
     public void setUp() {
         try {
         	sdb = new Sequoiadb(SdbTestBase.coordUrl,"","");
@@ -84,7 +84,7 @@ public class AlterReplSize12079 extends SdbTestBase {
 	}
     
     
-    @Test
+    @Test(enabled=false)
     public void test() {
         try {
 		    cl.createIndex(fullIndexName, "{'a':'text'}", false, false);
@@ -119,7 +119,7 @@ public class AlterReplSize12079 extends SdbTestBase {
 
     }
 
-    @AfterClass
+    @AfterClass(enabled=false)
     public void tearDown() {
         try {
             CollectionSpace commCS = sdb.getCollectionSpace(csName);
