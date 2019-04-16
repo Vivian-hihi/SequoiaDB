@@ -233,10 +233,11 @@ namespace engine
          }
          curTransID = sdbGetTransCB()->getTransID(
             *((DPS_TRANS_ID *)itr.value()) ) ;
-         PD_CHECK( curTransID == transID, SDB_DPS_CORRUPTED_LOG, error,
+         PD_CHECK( curTransID == DPS_TRANS_GET_ID( transID ),
+                   SDB_DPS_CORRUPTED_LOG, error,
                    PDERROR, "Failed to rollback(lsn=%llu, Log TransID:%llu, "
                    "Session TransID:%llu), the log is damaged",
-                   curLsnOffset, curTransID, transID ) ;
+                   curLsnOffset, curTransID, DPS_TRANS_GET_ID( transID ) ) ;
 
          // in cluster mode, when not primary, need add trans info to map
          if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) && !pmdIsPrimary() )
