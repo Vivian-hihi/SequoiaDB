@@ -258,6 +258,11 @@ namespace engine
 
          pPageMap = _mbPageInfo.nextNonEmpty( pos ) ;
       }
+
+      {
+         dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(), NULL ) ;
+         callback.onCSClosed( _pDataSu->CSID() ) ;
+      }
    }
 
    INT32 _dmsStorageIndex::_onFlushDirty( BOOLEAN force, BOOLEAN sync )

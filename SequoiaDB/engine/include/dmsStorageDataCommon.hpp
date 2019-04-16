@@ -557,7 +557,7 @@ namespace engine
    class _dmsMBContext : public _dmsContext
    {
       friend class _dmsStorageDataCommon ;
-      private:
+      protected:
          _dmsMBContext() ;
          virtual ~_dmsMBContext() ;
          void _reset () ;
@@ -580,7 +580,7 @@ namespace engine
          OSS_INLINE  UINT32 startLID() const { return _startLID ; }
          OSS_INLINE  INT32  mbLockType() const { return _mbLockType ; }
 
-      private:
+      protected:
          dmsMB             *_mb ;
          dmsMBStatInfo     *_mbStat ;
          ossSpinSLatch     *_latch ;

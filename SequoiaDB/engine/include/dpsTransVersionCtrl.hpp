@@ -641,6 +641,12 @@ namespace engine
       void              delIdxTree( const globIdxID &gid,
                                     BOOLEAN hasLock ) ;
 
+      void              clearIdxTreeByCSID( UINT32 csID,
+                                            BOOLEAN hasLock ) ;
+      void              clearIdxTreeByCLID( UINT32 csID,
+                                            UINT16 clID,
+                                            BOOLEAN hasLock ) ;
+
       memBlockPool*     getMemBlockPool() { return  &_memBlockPool ; }
 
    // private attributes

@@ -1623,6 +1623,11 @@ namespace engine
       context->mbStat()->_totalOrgDataLen = 0 ;
       context->mbStat()->removeAllFromChain() ;
 
+      {
+         dmsTransLockCallback callback( pmdGetKRCB()->getTransCB(), NULL ) ;
+         callback.onCLTruncated( CSID(), context->mbID() ) ;
+      }
+
       _onCollectionTruncated( context ) ;
 
    done :

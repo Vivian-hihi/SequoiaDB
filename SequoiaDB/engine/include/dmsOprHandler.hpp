@@ -84,6 +84,9 @@ namespace engine
 
    public:
 
+      virtual void  onCSClosed( INT32 csID ) = 0 ;
+      virtual void  onCLTruncated( INT32 csID, UINT16 clID ) = 0 ;
+
       virtual INT32 onCreateIndex( _dmsMBContext *context,
                                    const ixmIndexCB *indexCB,
                                    _pmdEDUCB *cb ) = 0 ;

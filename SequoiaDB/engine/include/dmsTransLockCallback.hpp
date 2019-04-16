@@ -111,6 +111,8 @@ namespace engine
                                       dpsLRBExtData *pExtData ) ;
 
    public:
+      virtual void  onCSClosed( INT32 csID ) ;
+      virtual void  onCLTruncated( INT32 csID, UINT16 clID ) ;
 
       virtual INT32 onCreateIndex( _dmsMBContext *context,
                                    const ixmIndexCB *indexCB,
@@ -119,6 +121,10 @@ namespace engine
       virtual INT32 onDropIndex( _dmsMBContext *context,
                                  const ixmIndexCB *indexCB,
                                  _pmdEDUCB *cb ) ;
+
+      virtual INT32 onTruncateIndex( _dmsMBContext *context,
+                                     const ixmIndexCB *indexCB,
+                                     _pmdEDUCB *cb ) ;
 
       virtual INT32 onRebuildIndex( _dmsMBContext *context,
                                     const ixmIndexCB *indexCB,

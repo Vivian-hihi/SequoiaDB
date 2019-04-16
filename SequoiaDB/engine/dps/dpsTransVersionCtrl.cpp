@@ -1505,6 +1505,85 @@ namespace engine
       PD_TRACE_EXIT ( SDB_OLDVERSIONCB_DELIDXTREE ) ;
    }
 
+   void oldVersionCB::clearIdxTreeByCSID( UINT32 csID, BOOLEAN hasLock )
+   {
+      preIdxTreePtr treePtr ;
+      IDXID_TO_TREE_MAP_IT it ;
+
+      if ( !hasLock )
+      {
+         latchX() ;
+      }
+
+      it = _idxTrees.begin() ;
+      while ( it != _idxTrees.end() )
+      {
+         if ( it->first._csID == csID )
+         {
+            treePtr = it->second ;
+
+            if ( treePtr.get() )
+            {
+               PD_LOG( PDDEBUG, "Has removed index tree[%s], Key:%s",
+                       it->first.toString().c_str(),
+                       treePtr->getKeyPattern().toString().c_str() ) ;
+
+               treePtr->clear() ;
+               treePtr->setDeleted() ;
+            }
+            _idxTrees.erase( it++ ) ;
+            continue ;
+         }
+         ++it ;
+      }
+
+      if ( !hasLock )
+      {
+         releaseX() ;
+      }
+   }
+
+   void oldVersionCB::clearIdxTreeByCLID( UINT32 csID,
+                                          UINT16 clID,
+                                          BOOLEAN hasLock )
+   {
+      preIdxTreePtr treePtr ;
+      IDXID_TO_TREE_MAP_IT it ;
+
+      if ( !hasLock )
+      {
+         latchX() ;
+      }
+
+      it = _idxTrees.begin() ;
+      while ( it != _idxTrees.end() )
+      {
+         if ( it->first._csID == csID &&
+              it->first._clID == clID )
+         {
+            treePtr = it->second ;
+
+            if ( treePtr.get() )
+            {
+               PD_LOG( PDDEBUG, "Has removed index tree[%s], Key:%s",
+                       it->first.toString().c_str(),
+                       treePtr->getKeyPattern().toString().c_str() ) ;
+
+               treePtr->clear() ;
+               treePtr->setDeleted() ;
+            }
+            _idxTrees.erase( it++ ) ;
+            continue ;
+         }
+         ++it ;
+      }
+
+      if ( !hasLock )
+      {
+         releaseX() ;
+      }
+   }
+
    /*
       oldVersionContainer implement
    */

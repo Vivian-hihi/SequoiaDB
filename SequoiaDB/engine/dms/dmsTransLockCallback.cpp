@@ -73,6 +73,74 @@ namespace engine
    typedef _dmsMemRecordRW dmsMemRecordRW ;
 
    /*
+      _dmsMBContextEx
+   */
+   class _dmsMBContextEx : public _dmsMBContext
+   {
+      public:
+         INT32    mbTryLockX()
+         {
+            INT32 rc = SDB_OK ;
+            if ( _mbLockType == EXCLUSIVE )
+            {
+               return SDB_OK ;
+            }
+            // already lock(type not same), need to unlock
+            if ( -1 != _mbLockType && SDB_OK != ( rc = pause() ) )
+            {
+               return rc ;
+            }
+            // check before lock
+            if ( !DMS_IS_MB_INUSE(_mb->_flag) )
+            {
+               return SDB_DMS_NOTEXIST ;
+            }
+            if ( _clLID != _mb->_logicalID )
+            {
+               if ( _startLID == _mbStat->_startLID &&
+                    DMS_MB_STATINFO_IS_TRUNCATED( _mbStat->_flag ) )
+               {
+                  return SDB_DMS_TRUNCATED ;
+               }
+               else
+               {
+                  return SDB_DMS_NOTEXIST ;
+               }
+            }
+
+            if ( !_latch->try_get() )
+            {
+               return SDB_DPS_TRANS_LOCK_INCOMPATIBLE ;
+            }
+
+            // check after lock
+            if ( !DMS_IS_MB_INUSE(_mb->_flag) )
+            {
+               ossUnlatch( _latch, (OSS_LATCH_MODE)EXCLUSIVE ) ;
+               return SDB_DMS_NOTEXIST ;
+            }
+            if ( _clLID != _mb->_logicalID )
+            {
+               if ( _startLID == _mbStat->_startLID &&
+                    DMS_MB_STATINFO_IS_TRUNCATED( _mbStat->_flag ) )
+               {
+                  ossUnlatch( _latch, (OSS_LATCH_MODE)EXCLUSIVE ) ;
+                  return SDB_DMS_TRUNCATED ;
+               }
+               else
+               {
+                  ossUnlatch( _latch, (OSS_LATCH_MODE)EXCLUSIVE ) ;
+                  return SDB_DMS_NOTEXIST ;
+               }
+            }
+            _mbLockType = EXCLUSIVE ;
+            _resumeType = -1 ;
+            return SDB_OK ;
+         }
+   } ;
+   typedef _dmsMBContextEx dmsMBContextEx ;
+
+   /*
       _dmsReleaseLockJob define and implement
    */
    class _dmsReleaseLockJob : public _utilLightJob
@@ -122,10 +190,19 @@ namespace engine
       su = pDmsCB->suLock( _csID ) ;
       if ( su && su->LogicalCSID() == _csLID )
       {
-         if ( SDB_OK == su->data()->getMBContext( &pContext, _clID, _clLID,
-                                                  _clLID, EXCLUSIVE ) )
+         if ( SDB_OK == su->data()->getMBContext( &pContext, _clID,
+                                                  _clLID, _clLID ) )
          {
-            mbStat = pContext->mbStat() ;
+            rcTmp = ((dmsMBContextEx*)pContext)->mbTryLockX() ;
+            if ( SDB_DPS_TRANS_LOCK_INCOMPATIBLE == rcTmp )
+            {
+               result = UTIL_LJOB_DO_CONT ;
+               goto done ;
+            }
+            else if ( SDB_OK == rcTmp )
+            {
+               mbStat = pContext->mbStat() ;
+            }
          }
       }
 
@@ -143,6 +220,7 @@ namespace engine
          result = UTIL_LJOB_DO_CONT ;
       }
 
+   done:
       if ( pContext )
       {
          su->data()->releaseMBContext( pContext ) ;
@@ -1245,15 +1323,12 @@ namespace engine
          globIdxID gid( _csID, _clID, indexCB->getLogicalID() ) ;
          oldVersionCB *pVerCB = _transCB->getOldVCB() ;
 
-/*
-
 #ifdef _DEBUG
          SDB_ASSERT( !(pVerCB->getIdxTree(gid, FALSE).get()), 
                      "Index tree already exist " ) ;
 #endif
 
-         rc = pVerCB->addIdxTree( gid, indexCB, treePtr, FALSE ) ;*/
-         rc = pVerCB->getOrCreateIdxTree( gid, indexCB, treePtr, FALSE ) ;
+         rc = pVerCB->addIdxTree( gid, indexCB, treePtr, FALSE ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Create memory index tree(%s) "
@@ -1267,6 +1342,24 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   void dmsTransLockCallback::onCSClosed( INT32 csID )
+   {
+      if ( _transCB && _transCB->getOldVCB() )
+      {
+         oldVersionCB *pOldVCB = _transCB->getOldVCB() ;
+         pOldVCB->clearIdxTreeByCSID( csID, FALSE ) ;
+      }
+   }
+
+   void dmsTransLockCallback::onCLTruncated( INT32 csID, UINT16 clID )
+   {
+      if ( _transCB && _transCB->getOldVCB() )
+      {
+         oldVersionCB *pOldVCB = _transCB->getOldVCB() ;
+         pOldVCB->clearIdxTreeByCLID( csID, clID, FALSE ) ;
+      }
    }
 
 }
