@@ -30,15 +30,25 @@ public class TransactiononIsFalse5990 extends SdbTestBase {
 	@BeforeClass
 	private void setup() {
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		if (CompressUtils.isStandAlone(sdb)){
-            throw new SkipException("is standalone skip testcase");
-        }
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
 	}
 
 	@Test
 	public void test() throws Exception {
-		sdb.beginTransaction();
+		try{
+			sdb.beginTransaction();
+		}catch(BaseException e){
+			if (CompressUtils.isStandAlone(sdb)){
+				//dpslocal配置参数默认为false,执行事务操作报-3错误，如dpslocal为true时，未开启事务进行事务操作会报-253，关于此参数的配置已手工验证
+				if(e.getErrorCode() == -253){
+					Assert.fail("check the default value of configuraion parameter 'dpslocal'");
+				}
+				Assert.assertEquals(e.getErrorCode(), -3, "unexpected error");
+				throw new SkipException("skip StandAlone");
+			}else{
+				throw e;
+			}
+		}
 		try {
 			BSONObject rec = new BasicBSONObject();
 			rec.put("_id", 5990);
