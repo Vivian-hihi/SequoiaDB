@@ -123,6 +123,7 @@ namespace engine
 
       INT32       init( UINT64 maxSize = UTIL_MEM_BLOCK_POOL_DFT_MAX_SZ ) ;
       void        fini() ;
+      void        shrink() ;
 
       UINT64      getTotalSize() ;
 

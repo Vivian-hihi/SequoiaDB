@@ -45,6 +45,8 @@
 namespace engine
 {
 
+   #define PMD_MEM_SHRINK_TIMER_INTERVAL        ( 60000 )   // ms
+
    /*
       _SDB_KRCB implement
    */
@@ -91,6 +93,10 @@ namespace engine
 
       // register config handler to option mgr
       _optioncb.setConfigHandler( this ) ;
+
+      _pLightJobMgr  = NULL ;
+      _pMemBlockPool = NULL ;
+      _timeCounter   = 0 ;
    }
 
    _SDB_KRCB::~_SDB_KRCB ()
@@ -309,6 +315,33 @@ namespace engine
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
 
+      _pMemBlockPool = SDB_OSS_NEW utilMemBlockPool() ;
+      if ( !_pMemBlockPool )
+      {
+         PD_LOG( PDERROR, "Alloc mem block pool failed" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      rc = _pMemBlockPool->init() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init mem block pool failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      utilSetGlobalMemPool( _pMemBlockPool ) ;
+
+      _pLightJobMgr = SDB_OSS_NEW pmdLightJobMgr() ;
+      if ( !_pLightJobMgr )
+      {
+         PD_LOG( PDERROR, "Alloc light job manager failed" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      utilSetGlobalJobMgr( _pLightJobMgr ) ;
+
       rc = _svcTaskMgr.init() ;
       if ( rc )
       {
@@ -479,6 +512,21 @@ namespace engine
 
       _svcTaskMgr.fini() ;
 
+      if ( _pLightJobMgr )
+      {
+         utilSetGlobalJobMgr( NULL ) ;
+         SDB_OSS_DEL _pLightJobMgr ;
+         _pLightJobMgr = NULL ;
+      }
+
+      if ( _pMemBlockPool )
+      {
+         _pMemBlockPool->fini() ;
+         utilSetGlobalMemPool( NULL ) ;
+         SDB_OSS_DEL _pMemBlockPool ;
+         _pMemBlockPool = NULL ;
+      }
+
       if ( !normalStop && _eduMgr.dumpAbnormalEDU() > 0 )
       {
          PD_LOG( PDSEVERE, "Stop all EDUs timeout, crashed." ) ;
@@ -487,6 +535,18 @@ namespace engine
 
       /// stop dead check
       _eduMgr.stopDeadCheck() ;
+   }
+
+   void _SDB_KRCB::onTimer( UINT32 interval )
+   {
+      _timeCounter += interval ;
+
+      if ( _pMemBlockPool &&
+           _timeCounter >= PMD_MEM_SHRINK_TIMER_INTERVAL )
+      {
+         _pMemBlockPool->shrink() ;
+         _timeCounter = 0 ;
+      }
    }
 
    void _SDB_KRCB::onConfigChange ( UINT32 changeID )

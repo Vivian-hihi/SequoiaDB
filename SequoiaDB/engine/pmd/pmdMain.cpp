@@ -329,6 +329,7 @@ namespace engine
       {
          ossSleepsecs ( 1 ) ;
          sdbGetPMDController()->onTimer( OSS_ONE_SEC ) ;
+         krcb->onTimer( OSS_ONE_SEC ) ;
       }
       rc = krcb->getShutdownCode() ;
 

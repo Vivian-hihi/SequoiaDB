@@ -216,6 +216,8 @@ namespace engine
 
    void _utilMemBlockPool::fini()
    {
+      SDB_ASSERT( 0 == _totalSize.fetch(), "Total size is not zero" ) ;
+
       if ( _64BSeg )
       {
          SDB_OSS_DEL _64BSeg ;
@@ -250,6 +252,38 @@ namespace engine
       {
          SDB_OSS_DEL _4KSeg ;
          _4KSeg = NULL ;
+      }
+   }
+
+   void _utilMemBlockPool::shrink()
+   {
+      if ( _64BSeg )
+      {
+         _64BSeg->shrink() ;
+      }
+      if ( _128BSeg )
+      {
+         _128BSeg->shrink() ;
+      }
+      if ( _256BSeg )
+      {
+         _256BSeg->shrink() ;
+      }
+      if ( _512BSeg )
+      {
+         _512BSeg->shrink() ;
+      }
+      if ( _1KSeg )
+      {
+         _1KSeg->shrink() ;
+      }
+      if ( _2KSeg )
+      {
+         _2KSeg->shrink() ;
+      }
+      if ( _4KSeg )
+      {
+         _4KSeg->shrink() ;
       }
    }
 

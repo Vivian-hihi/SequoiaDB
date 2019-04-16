@@ -54,6 +54,8 @@
 #include "pmdSyncMgr.hpp"
 #include "monCB.hpp"
 #include "schedTaskMgr.hpp"
+#include "utilMemBlockPool.hpp"
+#include "pmdLightJobMgr.hpp"
 
 namespace engine
 {
@@ -185,6 +187,8 @@ namespace engine
       void           callPrimaryChangeHandler( BOOLEAN primary,
                                                SDB_EVENT_OCCUR_TYPE type ) ;
 
+      void           onTimer( UINT32 interval ) ;
+
    private:
       IControlBlock                 *_arrayCBs[ SDB_CB_MAX ] ;
       void                          *_arrayOrgs[ SDB_CB_MAX ] ;
@@ -224,7 +228,12 @@ namespace engine
       monDBCB        _monDBCB ;
       schedTaskMgr   _svcTaskMgr ;
 
-      BOOLEAN        _keepSleep ;   // RESERVED FOR NOW, can be used to jump out sleep in the future
+      pmdLightJobMgr    *_pLightJobMgr ;
+      utilMemBlockPool  *_pMemBlockPool ;
+      UINT32            _timeCounter ;    /// ms
+
+      // RESERVED FOR NOW, can be used to jump out sleep in the future
+      BOOLEAN        _keepSleep ;
 
    public :
       pmdEDUMgr* getEDUMgr ()

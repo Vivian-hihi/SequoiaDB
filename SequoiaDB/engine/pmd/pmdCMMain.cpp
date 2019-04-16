@@ -279,6 +279,7 @@ namespace engine
       while ( PMD_IS_DB_UP() )
       {
          ossSleepsecs ( 1 ) ;
+         krcb->onTimer( OSS_ONE_SEC ) ;
       }
       rc = krcb->getShutdownCode() ;
 
