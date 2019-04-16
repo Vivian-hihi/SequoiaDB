@@ -122,10 +122,6 @@ namespace engine
                                  const ixmIndexCB *indexCB,
                                  _pmdEDUCB *cb ) ;
 
-      virtual INT32 onTruncateIndex( _dmsMBContext *context,
-                                     const ixmIndexCB *indexCB,
-                                     _pmdEDUCB *cb ) ;
-
       virtual INT32 onRebuildIndex( _dmsMBContext *context,
                                     const ixmIndexCB *indexCB,
                                     _pmdEDUCB *cb ) ;
