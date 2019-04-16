@@ -557,7 +557,7 @@ namespace engine
    class _dmsMBContext : public _dmsContext
    {
       friend class _dmsStorageDataCommon ;
-      protected:
+      private:
          _dmsMBContext() ;
          virtual ~_dmsMBContext() ;
          void _reset () ;
@@ -568,6 +568,7 @@ namespace engine
          virtual INT32  resume () ;
 
          OSS_INLINE INT32   mbLock( INT32 lockType ) ;
+         OSS_INLINE INT32   mbTryLock( INT32 lockType ) ;
          OSS_INLINE INT32   mbUnlock() ;
          OSS_INLINE BOOLEAN isMBLock( INT32 lockType ) const ;
          OSS_INLINE BOOLEAN isMBLock() const ;
@@ -580,7 +581,9 @@ namespace engine
          OSS_INLINE  UINT32 startLID() const { return _startLID ; }
          OSS_INLINE  INT32  mbLockType() const { return _mbLockType ; }
 
-      protected:
+      private:
+         OSS_INLINE INT32   _mbLock( INT32 lockType, BOOLEAN isTry ) ;
+      private:
          dmsMB             *_mb ;
          dmsMBStatInfo     *_mbStat ;
          ossSpinSLatch     *_latch ;
@@ -595,7 +598,7 @@ namespace engine
    /*
       _dmsMBContext OSS_INLINE functions
    */
-   OSS_INLINE INT32 _dmsMBContext::mbLock( INT32 lockType )
+   OSS_INLINE INT32 _dmsMBContext::_mbLock( INT32 lockType, BOOLEAN isTry )
    {
       INT32 rc = SDB_OK ;
       if ( SHARED != lockType && EXCLUSIVE != lockType )
@@ -628,7 +631,21 @@ namespace engine
             return SDB_DMS_NOTEXIST ;
          }
       }
-      ossLatch( _latch, (OSS_LATCH_MODE)lockType ) ;
+      if ( isTry )
+      {
+         BOOLEAN hasLock = FALSE ;
+         hasLock = ( SHARED == lockType ) ?
+                   _latch->try_get_shared() : _latch->try_get() ;
+         if ( !hasLock )
+         {
+            return SDB_TIMEOUT ;
+         }
+      }
+      else
+      {
+         ossLatch( _latch, (OSS_LATCH_MODE)lockType ) ;
+      }
+
       // check after lock
       if ( !DMS_IS_MB_INUSE(_mb->_flag) )
       {
@@ -652,6 +669,14 @@ namespace engine
       _mbLockType = lockType ;
       _resumeType = -1 ;
       return SDB_OK ;
+   }
+   OSS_INLINE INT32 _dmsMBContext::mbLock( INT32 lockType )
+   {
+      return _mbLock( lockType, FALSE ) ;
+   }
+   OSS_INLINE INT32 _dmsMBContext::mbTryLock( INT32 lockType )
+   {
+      return _mbLock( lockType, TRUE ) ;
    }
    OSS_INLINE INT32 _dmsMBContext::mbUnlock()
    {

@@ -73,74 +73,6 @@ namespace engine
    typedef _dmsMemRecordRW dmsMemRecordRW ;
 
    /*
-      _dmsMBContextEx
-   */
-   class _dmsMBContextEx : public _dmsMBContext
-   {
-      public:
-         INT32    mbTryLockX()
-         {
-            INT32 rc = SDB_OK ;
-            if ( _mbLockType == EXCLUSIVE )
-            {
-               return SDB_OK ;
-            }
-            // already lock(type not same), need to unlock
-            if ( -1 != _mbLockType && SDB_OK != ( rc = pause() ) )
-            {
-               return rc ;
-            }
-            // check before lock
-            if ( !DMS_IS_MB_INUSE(_mb->_flag) )
-            {
-               return SDB_DMS_NOTEXIST ;
-            }
-            if ( _clLID != _mb->_logicalID )
-            {
-               if ( _startLID == _mbStat->_startLID &&
-                    DMS_MB_STATINFO_IS_TRUNCATED( _mbStat->_flag ) )
-               {
-                  return SDB_DMS_TRUNCATED ;
-               }
-               else
-               {
-                  return SDB_DMS_NOTEXIST ;
-               }
-            }
-
-            if ( !_latch->try_get() )
-            {
-               return SDB_DPS_TRANS_LOCK_INCOMPATIBLE ;
-            }
-
-            // check after lock
-            if ( !DMS_IS_MB_INUSE(_mb->_flag) )
-            {
-               ossUnlatch( _latch, (OSS_LATCH_MODE)EXCLUSIVE ) ;
-               return SDB_DMS_NOTEXIST ;
-            }
-            if ( _clLID != _mb->_logicalID )
-            {
-               if ( _startLID == _mbStat->_startLID &&
-                    DMS_MB_STATINFO_IS_TRUNCATED( _mbStat->_flag ) )
-               {
-                  ossUnlatch( _latch, (OSS_LATCH_MODE)EXCLUSIVE ) ;
-                  return SDB_DMS_TRUNCATED ;
-               }
-               else
-               {
-                  ossUnlatch( _latch, (OSS_LATCH_MODE)EXCLUSIVE ) ;
-                  return SDB_DMS_NOTEXIST ;
-               }
-            }
-            _mbLockType = EXCLUSIVE ;
-            _resumeType = -1 ;
-            return SDB_OK ;
-         }
-   } ;
-   typedef _dmsMBContextEx dmsMBContextEx ;
-
-   /*
       _dmsReleaseLockJob define and implement
    */
    class _dmsReleaseLockJob : public _utilLightJob
@@ -193,8 +125,8 @@ namespace engine
          if ( SDB_OK == su->data()->getMBContext( &pContext, _clID,
                                                   _clLID, _clLID ) )
          {
-            rcTmp = ((dmsMBContextEx*)pContext)->mbTryLockX() ;
-            if ( SDB_DPS_TRANS_LOCK_INCOMPATIBLE == rcTmp )
+            rcTmp = pContext->mbTryLock( EXCLUSIVE ) ;
+            if ( SDB_TIMEOUT == rcTmp )
             {
                result = UTIL_LJOB_DO_CONT ;
                goto done ;
