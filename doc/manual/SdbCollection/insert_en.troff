@@ -66,9 +66,9 @@ the follow value:
 When the provided record does not have an "_id" field, the database will add one
 for it.
 .IP \[bu] 2
-When inserting a single record, the available flag
-is：SDB_INSERT_RETURN_ID、SDB_INSERT_REPLACEONDUP; When inserting multiple
-records, the available flag contains all flags.
+In argument \f[C]flag\f[], SDB_INSERT_CONTONDUP and SDB_INSERT_REPLACEONDUP can
+not be use at the same time.
+In argument \f[C]options\f[], that is the same.
 .SH RETURN VALUE
 .PP
 On success, the follow result will be returned:
