@@ -1556,6 +1556,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       EDUID eduID = PMD_INVALID_EDUID ;
+      DPS_LSN_OFFSET beginLSN = DPS_INVALID_LSN_OFFSET ;
       pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
       dpsTransCB *pTransCB = sdbGetTransCB() ;
       dpsTransLockManager *pLockMgr = pTransCB->getLockMgrHandle() ;
@@ -1610,11 +1611,21 @@ namespace engine
                       DPS_TRANS_GET_NODEID( _curTransInfo._transID ),
                       DPS_TRANS_GET_SN( _curTransInfo._transID ) ) ;
          builder.append( FIELD_NAME_TRANSACTION_ID, strTransID ) ;
+
+         /// nodeID(16bit) | TAG(8bit) | SN(40bit)
+         CHAR strTransIDSN[ 4 + 2 + 10 + 2 ] = { 0 } ;
+         ossSnprintf( strTransIDSN, sizeof( strTransIDSN ) - 1,
+                      "%010x",
+                      DPS_TRANS_GET_SN( _curTransInfo._transID ) ) ;
+         builder.append( FIELD_NAME_TRANSACTION_ID_SN, strTransIDSN ) ;
          builder.appendBool( FIELD_NAME_IS_ROLLBACK,
                              pTransCB->isRollback( _curTransInfo._transID ) ?
                              TRUE : FALSE ) ;
          builder.append( FIELD_NAME_TRANS_LSN_CUR,
                          (INT64)_curTransInfo._curTransLsn ) ;
+
+         beginLSN = pTransCB->getBeginLsn( _curTransInfo._transID ) ;
+         builder.append( FIELD_NAME_TRANS_LSN_BEGIN, (INT64)beginLSN ) ;
 
          /// waiter lock
          BSONObjBuilder subWaiter( builder.subobjStart(
