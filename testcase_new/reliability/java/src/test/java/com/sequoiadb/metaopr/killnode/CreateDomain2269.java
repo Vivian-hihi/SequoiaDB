@@ -1,18 +1,9 @@
 package com.sequoiadb.metaopr.killnode;
 
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.GroupWrapper;
-import com.sequoiadb.commlib.NodeWrapper;
-import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.KillNode;
-import com.sequoiadb.metaopr.diskfull.Utils ;
-import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
-import com.sequoiadb.task.TaskMgr;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
@@ -23,9 +14,19 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.fault.KillNode;
+import com.sequoiadb.metaopr.diskfull.Utils;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
 
 /**
  * @FileName seqDB-2269: 创建domain时catalog备节点异常重启
@@ -35,12 +36,10 @@ import java.util.List;
  */
 
 /*
- * 1、创建domian，构造脚本循环执行创建domain操作db.createDomain（） 
- * 2、创建domian时catalog备节点异常重启（如执行kill -9杀掉节点进程，构造节点异常重启） 
- * 3、查看domain创建结果和catalog备节点状态 
- * 4、节点启动成功后（查看节点进程存在） 
- * 5、再次创建domain，并指定该domain创建CS 
- * 6、查看domain创建结果（执行db.listDomain命令查看domain/CS信息是否和实际一致 
+ * 1、创建domian，构造脚本循环执行创建domain操作db.createDomain（）
+ * 2、创建domian时catalog备节点异常重启（如执行kill -9杀掉节点进程，构造节点异常重启）
+ * 3、查看domain创建结果和catalog备节点状态 4、节点启动成功后（查看节点进程存在） 5、再次创建domain，并指定该domain创建CS
+ * 6、查看domain创建结果（执行db.listDomain命令查看domain/CS信息是否和实际一致
  * 7、查看catalog主备节点是否存在该domain相关信息
  */
 
@@ -52,18 +51,18 @@ public class CreateDomain2269 extends SdbTestBase {
     private static final int DOMAIN_NUM = 1000;
     private List<String> groupNames = null;
 
-    @BeforeClass(enabled=false)
+    @BeforeClass
     public void setUp() {
         Sequoiadb db = null;
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            
+
             groupMgr = GroupMgr.getInstance();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
-            
+
             groupNames = groupMgr.getAllDataGroupName();
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
@@ -75,7 +74,7 @@ public class CreateDomain2269 extends SdbTestBase {
         }
     }
 
-    @Test(enabled=false)
+    @Test
     public void test() {
         Sequoiadb db = null;
         try {
@@ -88,14 +87,18 @@ public class CreateDomain2269 extends SdbTestBase {
             mgr.addTask(cTask);
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-            
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-            
+
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
+
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             createDomainAgain(db);
             operateOnDomain(db);
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
             checkListDomain(db);
             Utils.checkConsistency(groupMgr);
             runSuccess = true;
@@ -109,9 +112,11 @@ public class CreateDomain2269 extends SdbTestBase {
         }
     }
 
-    @AfterClass(enabled=false)
+    @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -126,7 +131,7 @@ public class CreateDomain2269 extends SdbTestBase {
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
     }
-    
+
     private class CreateDomainTask extends OperateTask {
         @Override
         public void exec() throws Exception {
@@ -153,7 +158,7 @@ public class CreateDomain2269 extends SdbTestBase {
             }
         }
     }
-    
+
     private void createDomainAgain(Sequoiadb db) {
         for (int i = 0; i < DOMAIN_NUM; i++) {
             try {
@@ -175,7 +180,7 @@ public class CreateDomain2269 extends SdbTestBase {
             }
         }
     }
-    
+
     private void operateOnDomain(Sequoiadb db) {
         for (int i = 0; i < DOMAIN_NUM; i++) {
             String csName = csNameBase + "_" + i;
@@ -186,21 +191,21 @@ public class CreateDomain2269 extends SdbTestBase {
             db.dropCollectionSpace(csName);
         }
     }
-    
+
     private void checkListDomain(Sequoiadb db) {
-        BSONObject orderBy = (BSONObject)JSON.parse("{ _id: 1 }");
+        BSONObject orderBy = (BSONObject) JSON.parse("{ _id: 1 }");
         DBCursor cursor = db.listDomains(null, null, orderBy, null);
         int i = 0;
         while (cursor.hasNext()) {
             BSONObject currDomain = cursor.getNext();
             // check Groups
             int expGroupNum = i % groupNames.size() + 1;
-            BasicBSONList actGroups = (BasicBSONList)currDomain.get("Groups");
+            BasicBSONList actGroups = (BasicBSONList) currDomain.get("Groups");
             int actGroupNum = actGroups.size();
             Assert.assertEquals(actGroupNum, expGroupNum, currDomain.get("Name") + ": groups count");
             // check AutoSplit
             boolean expAttr = (i % 2 == 0);
-            boolean actAttr = (boolean)currDomain.get("AutoSplit");
+            boolean actAttr = (boolean) currDomain.get("AutoSplit");
             Assert.assertEquals(actAttr, expAttr, currDomain.get("Name") + ": AutoSplit");
             i++;
         }
@@ -208,7 +213,7 @@ public class CreateDomain2269 extends SdbTestBase {
         Assert.assertEquals(domainCnt, DOMAIN_NUM, "domain count");
         cursor.close();
     }
-    
+
     private void dropDomain(Sequoiadb db) {
         for (int i = 0; i < DOMAIN_NUM; i++) {
             String domainName = domNameBase + "_" + i;
