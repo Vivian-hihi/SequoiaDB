@@ -737,13 +737,7 @@ namespace engine
             }
          }  // no enough free segs, _segList.size() > segInUse
       }
-      else
-      {
-         SDB_ASSERT( _isInitialized,
-                     "_utilSegmentPool has to be initialized." ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
+
    done:
       _maintaining.swap( 0 ) ;
       if ( bLatched )
