@@ -50,6 +50,7 @@
 #include "pd.hpp"
 #include "utilCompressor.hpp"
 #include "dmsTransLockCallback.hpp"
+#include "dmsLightJob.hpp"
 
 using namespace bson ;
 
@@ -3644,6 +3645,10 @@ namespace engine
             // need to dec count
             --( pExtent->_recCount ) ;
             --( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
+
+            /// start light job to delete the record async
+            dmsStartAsyncDeleteRecord( CSID(), context->mbID(), logicalID(),
+                                       context->clLID(), recordID ) ;
          }
 
          if ( !isDeleting )

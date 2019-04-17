@@ -64,6 +64,7 @@ namespace engine
                                     UTIL_LJOB_DO_RESULT &result )
    {
       static SDB_DMSCB  *pDmsCB = sdbGetDMSCB() ;
+      static dpsTransCB *pTransCB = sdbGetTransCB() ;
 
       INT32 rcTmp = SDB_OK ;
       dmsStorageUnit *su = NULL ;
@@ -101,6 +102,16 @@ namespace engine
          goto done ;
       }
 
+      /// Test Lock
+      rcTmp = pTransCB->transLockTestX( (pmdEDUCB*)pExe, _csLID,
+                                         _clID, &_rid ) ;
+      if ( rcTmp )
+      {
+         /// lock failed, wait next time
+         result = UTIL_LJOB_DO_CONT ;
+         goto done ;
+      }
+
       recordRW = su->data()->record2RW( _rid, _clID ) ;
       recordRW.setNothrow( TRUE ) ;
       pRecord = recordRW.readPtr<dmsRecord>() ;
@@ -111,13 +122,14 @@ namespace engine
          goto done ;
       }
 
-      if ( pRecord->isDeleting() )
+      if ( !pRecord->isDeleting() )
       {
          /// record not deleting
          result = UTIL_LJOB_DO_FINISH ;
          goto done ;
       }
 
+      /// delete record
       su->data()->deleteRecord( pContext, _rid, (ossValuePtr)pRecord,
                                 (pmdEDUCB*)pExe, NULL, NULL, NULL ) ;
       result = UTIL_LJOB_DO_FINISH ;
