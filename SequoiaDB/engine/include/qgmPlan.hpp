@@ -125,7 +125,8 @@ namespace engine
 
    protected:
 
-      INT32       _checkTransOperator( BOOLEAN dpsValid ) ;
+      INT32       _checkTransOperator( BOOLEAN dpsValid,
+                                       BOOLEAN autoCommit = FALSE ) ;
       INT32       _checkTransAutoCommit( BOOLEAN dpsValid, _pmdEDUCB *eduCB ) ;
 
    private:

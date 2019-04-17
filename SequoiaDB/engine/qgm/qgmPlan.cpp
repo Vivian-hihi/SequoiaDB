@@ -183,7 +183,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _qgmPlan::_checkTransOperator( BOOLEAN dpsValid )
+   INT32 _qgmPlan::_checkTransOperator( BOOLEAN dpsValid, BOOLEAN autoCommit )
    {
       INT32 rc = SDB_OK ;
 
@@ -191,14 +191,20 @@ namespace engine
            pmdGetDBRole() == SDB_ROLE_CATALOG )
       {
          rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
-         PD_LOG_MSG( PDERROR, "In sharding mode, couldn't execute "
-                     "transaction operation from local service" ) ;
+         if ( !autoCommit )
+         {
+            PD_LOG_MSG( PDERROR, "In sharding mode, couldn't execute "
+                        "transaction operation from local service" ) ;
+         }
       }
       else if ( !dpsValid )
       {
          rc = SDB_PERM ;
-         PD_LOG_MSG( PDERROR, "Couldn't execute transaction operation when "
-                     "dps log is off" ) ;
+         if ( !autoCommit )
+         {
+            PD_LOG_MSG( PDERROR, "Couldn't execute transaction operation when "
+                        "dps log is off" ) ;
+         }
       }
 
       return rc ;
@@ -212,10 +218,14 @@ namespace engine
       {
          if ( eduCB->getTransExecutor()->isTransAutoCommit() )
          {
-            rc = _checkTransOperator( dpsValid ) ;
+            rc = _checkTransOperator( dpsValid, TRUE ) ;
             if ( SDB_OK == rc )
             {
                rc = rtnTransBegin( eduCB, TRUE ) ;
+            }
+            else
+            {
+               rc = SDB_OK ;
             }
          }
       }
