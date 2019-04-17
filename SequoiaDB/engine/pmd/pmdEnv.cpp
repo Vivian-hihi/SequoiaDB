@@ -323,12 +323,11 @@ namespace engine
                   "prepare to freeze current thread", signum ) ;
 
          // fall into sleep and keep checking the sleep state change
-         while ( (TRUE == pmdGetOptionCB()->isSleepEnabled()) &&
-                 (TRUE == pmdGetKRCB()->getKeepSleep()))
-	 {
-            ossSleep(OSS_ONE_SEC) ;
-	 }
-
+         while ( pmdGetKRCB()->getKeepSleep() &&
+                 pmdGetOptionCB()->isSleepEnabled() )
+         {
+            ossSleep( OSS_ONE_SEC ) ;
+         }
       }
       else
       {
@@ -344,26 +343,39 @@ namespace engine
    void pmdSleepInstance()
    {
 #if defined( SDB_ENGINE )
-      PD_LOG ( PDEVENT, "prepare to freeze all threads" ) ;
+      if ( !pmdGetOptionCB()->isSleepEnabled() )
+      {
+         return ;
+      }
+
+      if ( !pmdGetKRCB()->getKeepSleep() )
+      {
+         PD_LOG ( PDEVENT, "prepare to freeze all threads" ) ;
+         pmdGetKRCB()->setKeepSleep( TRUE ) ;
+      }
+      else
+      {
+         PD_LOG ( PDEVENT, "prepare to unfreeze all threads" ) ;
+         pmdGetKRCB()->setKeepSleep( FALSE ) ;
+      }
 
       // get signal shiled here to prevent the current thread is interrupt
       // as this may cause dead latch if this interface is called inside a
       // signal handler since the EDU list latch will be hold here
-      ossSignalShield * pShield = new ossSignalShield() ; 
-      pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
-      pMgr->killByThreadID( OSS_FREEZE_SIGNAL_INTERNAL ) ;
-      // delete the shield and process any pending signal
-      delete pShield ;
-
-      // fall into sleep and keep checking the sleep state change
-      while ( (TRUE == pmdGetOptionCB()->isSleepEnabled()) &&
-              (TRUE == pmdGetKRCB()->getKeepSleep()))
       {
-         ossSleep(OSS_ONE_SEC) ;
+         ossSignalShield sigShield ;
+         sigShield.doNothing() ;
+         pmdEDUMgr *pMgr = pmdGetKRCB()->getEDUMgr() ;
+         pMgr->killByThreadID( OSS_FREEZE_SIGNAL_INTERNAL ) ;
       }
 
+      // fall into sleep and keep checking the sleep state change
+      while ( pmdGetKRCB()->getKeepSleep() &&
+              pmdGetOptionCB()->isSleepEnabled() )
+      {
+         ossSleep( OSS_ONE_SEC ) ;
+      }
 #endif
-      return ;
    }
 
    INT32 pmdEnableSignalEvent( const CHAR *filepath, PMD_ON_QUIT_FUNC pFunc,
