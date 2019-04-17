@@ -163,23 +163,14 @@ public class Transaction17116 extends SdbTestBase {
         newExp4.addAll(updateR4s);
         newExp4.addAll(updateR1s);
 
-        return new Object[][] { { "{a:1, b:1}", newExp1, oldExp1 }, { "{a:-1, b:1}", newExp2, oldExp2 },
-                { "{a:-1, b:-1}", newExp3, oldExp3 }, { "{a:1, b:-1}", newExp4, oldExp4 } };
+        return new Object[][] { { "{a:1, b:1}", newExp1, oldExp1 }/*, { "{a:-1, b:1}", newExp2, oldExp2 },
+                { "{a:-1, b:-1}", newExp3, oldExp3 }, { "{a:1, b:-1}", newExp4, oldExp4 }*/ };
     }
 
     @Test(dataProvider = "transaction17116")
     public void test(String indexKey, List<BSONObject> newExp, List<BSONObject> oldExp) {
-        List<BSONObject> insertRs = new ArrayList<BSONObject>();
-        for (int i = 0; i < 12000; i++) {
-            int a = i / 3000;
-            if (a < 3) {
-                insertRs.add((BSONObject) JSON.parse("{_id:" + i + ", a:" + a + ", b:" + i + "}"));
-            } else {
-                insertRs.add((BSONObject) JSON.parse("{_id:" + i + ", b:" + i + "}"));
-            }
-        }
         try {
-            Collections.shuffle(insertRs);
+            List<BSONObject> insertRs = TransUtils.getCompositeRecords(0, 2000, 0, 10);
             cl.createIndex("a", indexKey, false, false);
             cl.insert(insertRs);
 
@@ -187,7 +178,8 @@ public class Transaction17116 extends SdbTestBase {
             db1.beginTransaction();
             db2.beginTransaction();
 
-            ReadThread readThread = new ReadThread(indexKey, oldExp);
+            sortOldExp(indexKey, insertRs);
+            ReadThread readThread = new ReadThread(indexKey, insertRs);
             readThread.start();
 
             UpdateThread updateThread = new UpdateThread(indexKey, newExp);
@@ -262,6 +254,9 @@ public class Transaction17116 extends SdbTestBase {
                 // 事务1表扫描记录
                 cursor = cl1.query(null, null, indexKey, "{'':null}");
                 actList = TransUtils.getReadActList(cursor);
+                for (BSONObject bsonObject : actList) {
+                    System.out.println(bsonObject);
+                }
                 Assert.assertEquals(actList, newExp);
                 actList.clear();
 
@@ -308,6 +303,8 @@ public class Transaction17116 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
         if (!db2.isClosed()) {
             db2.close();
         }
@@ -317,6 +314,23 @@ public class Transaction17116 extends SdbTestBase {
         }
         if (!sdb.isClosed()) {
             sdb.close();
+        }
+    }
+    
+    private void sortOldExp(String indexKey, List<BSONObject> oldExp) {
+        BSONObject object = (BSONObject)JSON.parse(indexKey);
+        int a = (int) object.get("a");
+        int b = (int) object.get("b");
+        if (a == 1 && b == 1) {
+            TransUtils.sortCompositeRecords(oldExp, true);
+        }else if (a == 1 && b == -1) {
+            TransUtils.sortCompositeRecords(oldExp, false);
+        }else if (a == -1 && b == 1) {
+            TransUtils.sortCompositeRecords(oldExp, false);
+            Collections.reverse(oldExp);
+        }else if (a == -1 && b == -1) {
+            TransUtils.sortCompositeRecords(oldExp, true);
+            Collections.reverse(oldExp);
         }
     }
 }
