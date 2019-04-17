@@ -279,7 +279,7 @@
 
    执行以下命令查看 11800 端口是否被占用：
    
-   ```shell
+   ```lang-javascript
    $ netstat -anp | grep 11800
    ```
    
@@ -295,7 +295,7 @@
 
 - 快速部署
 
-   ```shell
+   ```lang-javascript
    $ cd /opt/sequoiadb
    $ ./tools/deploy/quickDeploy.sh
    
@@ -321,10 +321,8 @@
 
 - 登录 MySQL shell
 
- ```shell
- $ export MYSQL_HOME=/opt/sequoiasql/mysql
- $ ${MYSQL_HOME}/bin/mysql --defaults-file=${MYSQL_HOME}/database/3306/auto.cnf -S ${MYSQL_HOME}/database/3306/mysqld.sock -u root -p
- Enter password:
+ ```lang-javascript
+ $ /opt/sequoiasql/mysql/bin/mysql -S /opt/sequoiasql/mysql/database/myinst/mysqld.sock -u root
  ```
  
 - 创建数据库实例
