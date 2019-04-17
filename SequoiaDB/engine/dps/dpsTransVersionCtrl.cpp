@@ -1594,6 +1594,7 @@ namespace engine
     _rid( rid )
    {
       _isNewRecord   = FALSE ;
+      _isDiskDeleting= FALSE ;
       _isDeleted     = FALSE ;
       _isDummyRecord = FALSE ;
       _ownnerTID     = 0 ;
@@ -1753,6 +1754,7 @@ namespace engine
       /// 2. release the record
       _recordPtr = dpsOldRecordPtr() ;
       _isNewRecord = FALSE ;
+      _isDiskDeleting = FALSE ;
       _isDeleted = FALSE ;
       _isDummyRecord = FALSE ;
       _ownnerTID = 0 ;
@@ -1761,6 +1763,11 @@ namespace engine
    void oldVersionContainer::setRecordDeleted()
    {
       _isDeleted = TRUE ;
+   }
+
+   void oldVersionContainer::setDiskDeleting()
+   {
+      _isDiskDeleting = TRUE ;
    }
 
    void oldVersionContainer::setRecordNew()
@@ -1792,6 +1799,11 @@ namespace engine
    BOOLEAN oldVersionContainer::isRecordDeleted() const
    {
       return _isDeleted ;
+   }
+
+   BOOLEAN oldVersionContainer::isDiskDeleting() const
+   {
+      return _isDiskDeleting ;
    }
 
    // check if the index lid already exists in the set

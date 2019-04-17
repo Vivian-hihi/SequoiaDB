@@ -764,7 +764,10 @@ namespace engine
       void                 setRecordDeleted() ;
       BOOLEAN              isRecordDeleted() const ;
 
-      void                 setRecordNew() ;
+      void                 setDiskDeleting() ;
+      BOOLEAN              isDiskDeleting() const ;
+
+      void                 setRecordNew( UINT32 ownnerTID ) ;
       BOOLEAN              isRecordNew() const ;
 
       void                 setRecordDummy( UINT32 ownnerTID ) ;
@@ -804,6 +807,7 @@ namespace engine
       dpsOldRecordPtr   _recordPtr ;   // pointer to copy of old record
       UINT32            _ownnerTID ;
 
+      BOOLEAN           _isDiskDeleting ;
       BOOLEAN           _isDeleted ;
       BOOLEAN           _isDummyRecord ; // when not use rollback segment
       BOOLEAN           _isNewRecord ; // is this a newly created record or not
