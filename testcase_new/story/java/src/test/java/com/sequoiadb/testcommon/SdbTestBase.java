@@ -26,7 +26,7 @@ import org.testng.annotations.Optional ;
 import org.testng.annotations.Parameters ;
 
 import com.sequoiadb.base.ConfigOptions ;
-import com.sequoiadb.base.DBCursor ;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb ;
 import com.sequoiadb.exception.BaseException ;
 
@@ -66,7 +66,7 @@ public class SdbTestBase {
     private static AtomicInteger runCaseNum = new AtomicInteger( 0 ) ;
     private static AtomicBoolean isInit = new AtomicBoolean( false ) ;
     private static AtomicInteger initCount = new AtomicInteger( 0 ) ;
-    private static final int newIndexScanStep = 3 ;
+    private static final int newIndexScanStep = 100 ;
     private static final int timeOutLen = 60 ;
     private static final Map< String, BSONObject > group2Conf = new HashMap< String, BSONObject >() ;
     private static final Map< String, AtomicInteger > group2Count = new HashMap< String, AtomicInteger >() ;
