@@ -1373,9 +1373,12 @@ namespace engine
             pLRBHdr        = pLRBHdrNew ;
             pLRB           = pLRBNew ;
          }
-
+         else
+         {
+            pLRBHdr = NULL ;
+         }
          // job done
-         goto done;
+         goto done ;
       }
 #ifdef _DEBUG
       SDB_ASSERT( ( NULL != pLRBHdr ), "Invalid LRB Header" ) ;
