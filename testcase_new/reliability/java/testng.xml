@@ -31,8 +31,7 @@
             <package name="com.sequoiadb.metaopr.killnode" />
             <package name="com.sequoiadb.metaopr.networkfail.cl" />
             <package name="com.sequoiadb.metaopr.networkfail.cs" />
-            <!-- 问题单3930暂时屏蔽用例 -->
-            <!-- <package name="com.sequoiadb.metaopr.networkfail.domain" /> -->
+            <package name="com.sequoiadb.metaopr.networkfail.domain" />
             <package name="com.sequoiadb.metaopr.noderestart" />
             <package name="com.sequoiadb.autoincrement.killnode" />
             <!--lob用例先不跑，等代码检视后再跑。-->
