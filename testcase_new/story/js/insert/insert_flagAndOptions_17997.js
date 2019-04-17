@@ -117,35 +117,25 @@ function insertSetFlag_ContOnDup( cl )
    }
    
    // insert one doc, flag: SDB_INSERT_CONTONDUP
-   try
-   {
-      cl.insert( {a:5}, SDB_INSERT_CONTONDUP );
-//      throw "expect fail, but actual succ." // see SEQUOIADBMAINSTREAM-4352 
-   }
-   catch(e)
-   {
-      if( -6 !== e )
-      {
-         throw e;
-      }
-   }
+   cl.insert( {a:5}, SDB_INSERT_CONTONDUP );   
    
    // insert one doc, options：ContOnDup
+   cl.insert( {a:6}, {ContOnDup:true} );
+   
    try
    {
-      cl.insert( {a:6}, {ContOnDup:true} );
-//      throw "expect fail, but actual succ."  // see SEQUOIADBMAINSTREAM-4352
+      cl.insert( {a:1,b:1,c:4}, {ContOnDup:false} );
+      throw "expect fail, but actual succ." 
    }
    catch(e)
    {
-      if( -6 !== e )
+      if( -38 !== e )
       {
          throw e;
       }
    }
    
-println("4");
-   var expRecs = [{"a":1,"b":1},{"a":2},{"a":3}];
+   var expRecs = [{"a":1,"b":1},{"a":2},{"a":3},{"a":5},{"a":6}];
    checkRecords( cl, expRecs );
    
    cl.remove();
