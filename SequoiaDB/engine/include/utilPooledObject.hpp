@@ -89,7 +89,9 @@ namespace engine
 
       void operator delete ( void *p )
       {
-         SDB_OSS_FREE(p) ;
+         utilGetGlobalMemPool() ? 
+            utilGetGlobalMemPool()->release( p ) :
+            SDB_OSS_FREE( p ) ;
       }
 
       void operator delete[] ( void *p )
