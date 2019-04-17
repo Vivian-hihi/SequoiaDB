@@ -5,10 +5,8 @@
 ##Json格式##
 
 * **格式1**
-
-* 语法
-
-  *{ "$decimal": \<data\> }*
+	
+  语法 *{ "$decimal": \<data\> }*
 
   参数描述
 
@@ -18,9 +16,7 @@
 
 * **格式2**
 
-* 语法
-
-  *{ "$decimal": \<data\>, "$precision": [\<precision\>, \<scale\>] }*
+  语法 *{ "$decimal": \<data\>, "$precision": [\<precision\>, \<scale\>] }*
 
   参数描述
 
@@ -32,17 +28,7 @@
   
 ##函数格式##
 
-* 语法
-
-  *NumberDecimal( \<data\> [,\<precision\>, \<scale\>] )*
-
-  参数描述
-
-  | 参数名    | 参数类型 | 描述                 | 是否必填 |
-  | --------- | -------- | -------------------- | -------- |
-  | data      | 字符串   | 存储的数据内容。     | 是       |
-  | precision | 整数     | 总精度。             | 是       |
-  | scale     | 整数     | 小数位精度。         | 是       |
+无
 
 ##返回值##
 
@@ -63,5 +49,4 @@
 ```lang-javascript
 > db.foo.bar.insert( { a: { $decimal: "100.01" } } )
 > db.foo.bar.insert( { a: { $decimal: "100.01", $precision: [ 10, 2 ] } } )
-> db.foo.bar.insert( { a: NumberDecimal( 100.01, [ 10, 2 ] ) } )
 ```
