@@ -257,33 +257,49 @@ namespace engine
 
    void _utilMemBlockPool::shrink()
    {
+      UINT64 hasFreeSize = 0 ;
+      UINT32 freeSegNum = 0 ;
+
       if ( _64BSeg )
       {
-         _64BSeg->shrink() ;
+         _64BSeg->shrink( 1, &freeSegNum ) ;
+         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_64 ) ) ;
       }
       if ( _128BSeg )
       {
-         _128BSeg->shrink() ;
+         _128BSeg->shrink( 1, &freeSegNum ) ;
+         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_128 ) ) ;
       }
       if ( _256BSeg )
       {
-         _256BSeg->shrink() ;
+         _256BSeg->shrink( 1, &freeSegNum ) ;
+         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_256 ) ) ;
       }
       if ( _512BSeg )
       {
-         _512BSeg->shrink() ;
+         _512BSeg->shrink( 1, &freeSegNum ) ;
+         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_512 ) ) ;
       }
       if ( _1KSeg )
       {
-         _1KSeg->shrink() ;
+         _1KSeg->shrink( 0, &freeSegNum ) ;
+         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_1024 ) ) ;
       }
       if ( _2KSeg )
       {
-         _2KSeg->shrink() ;
+         _2KSeg->shrink( 0, &freeSegNum ) ;
+         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_2048 ) ) ;
       }
       if ( _4KSeg )
       {
-         _4KSeg->shrink() ;
+         _4KSeg->shrink( 0, &freeSegNum ) ;
+         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_4096 ) ) ;
+      }
+
+      if ( hasFreeSize > 0 )
+      {
+         PD_LOG( PDINFO, "Has freed %llu bytes pooled memory, Total:%llu",
+                 hasFreeSize, getTotalSize() ) ;
       }
    }
 

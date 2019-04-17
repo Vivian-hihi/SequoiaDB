@@ -45,7 +45,7 @@
 namespace engine
 {
 
-   #define PMD_MEM_SHRINK_TIMER_INTERVAL        ( 60000 )   // ms
+   #define PMD_MEM_SHRINK_TIMER_INTERVAL        ( 120000 )     // ms
 
    /*
       _SDB_KRCB implement

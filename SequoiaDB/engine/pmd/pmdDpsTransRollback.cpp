@@ -75,7 +75,7 @@ namespace engine
             {
                pTransCB->tryToShrinkLRBPools() ;
             }
-         } 
+         }
       }
       rc = SDB_OK ;
       return rc ;

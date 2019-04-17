@@ -750,7 +750,7 @@ namespace engine
       }
       if ( pFreeSegNum )
       {
-         *pFreeSegNum = freeSegNum ;
+         *pFreeSegNum += freeSegNum ;
       }
       return rc ;
    error:
@@ -1342,14 +1342,21 @@ namespace engine
             } 
          }
 
-         OSS_INLINE INT32 shrink( UINT32 freeSegToKeep = 1 )
+         OSS_INLINE INT32 shrink( UINT32 freeSegToKeep = 1,
+                                  UINT32 *pFreeSegNum = NULL )
          {
             // REVISIT :
             // proper scheduling algorithm to be implemented
             INT32 rc = SDB_OK ;
+
+            if ( pFreeSegNum )
+            {
+               *pFreeSegNum = 0 ;
+            }
+
             for ( UINT32 i = 0; i < _poolNum ; i++ )
             {
-               rc = _pool[ i ].shrink( freeSegToKeep ) ;
+               rc = _pool[ i ].shrink( freeSegToKeep, pFreeSegNum ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Failed to shrink pool:%u, rc:%d", i, rc ) ;

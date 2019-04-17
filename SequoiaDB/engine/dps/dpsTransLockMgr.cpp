@@ -219,8 +219,18 @@ namespace engine
    {
       if ( _pLRBMgr && _pLRBHdrMgr && _initialized )
       {
-         _pLRBMgr->shrink() ;
-         _pLRBHdrMgr->shrink() ;
+         UINT32 freeSegNum = 0 ;
+         _pLRBMgr->shrink( 1, &freeSegNum ) ;
+         if ( freeSegNum > 0 )
+         {
+            PD_LOG( PDINFO, "Has freed %u segments of LRB", freeSegNum ) ;
+         }
+         _pLRBHdrMgr->shrink( 1, &freeSegNum ) ;
+         if ( freeSegNum > 0 )
+         {
+            PD_LOG( PDINFO, "Has freed %u segments of LRBHeader",
+                    freeSegNum ) ;
+         }
       }
    }
 
