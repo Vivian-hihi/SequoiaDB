@@ -1770,9 +1770,10 @@ namespace engine
       _isDiskDeleting = TRUE ;
    }
 
-   void oldVersionContainer::setRecordNew()
+   void oldVersionContainer::setRecordNew( UINT32 ownnerTID )
    {
       _isNewRecord = TRUE ;
+      _ownnerTID = ownnerTID ;
    }
 
    BOOLEAN oldVersionContainer::isRecordNew() const
