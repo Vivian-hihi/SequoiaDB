@@ -61,9 +61,9 @@ namespace engine
       UTIL_LJOB_DO_CONT
    } ;
 
-   #define UTIL_LJOB_MIN_AVG_COST         ( 10 )         /// micro second
-   #define UTIL_LJOB_DFT_AVG_COST         ( 10000 )      /// micro second
-   #define UTIL_LJOB_MAX_AVG_COST         ( 10000000 )   /// micro second
+   #define UTIL_LJOB_MIN_AVG_COST         ( 60 )         /// micro second
+   #define UTIL_LJOB_DFT_AVG_COST         ( 60000 )      /// micro second
+   #define UTIL_LJOB_MAX_AVG_COST         ( 60000000 )   /// micro second
 
    /*
       _utilLightJob define
@@ -81,7 +81,8 @@ namespace engine
       public:
          virtual const CHAR*     name() const = 0 ;
          virtual INT32           doit( IExecutor *pExe,
-                                       UTIL_LJOB_DO_RESULT &result ) = 0 ;
+                                       UTIL_LJOB_DO_RESULT &result,
+                                       UINT64 &sleepTime ) = 0 ;
 
    } ;
    typedef _utilLightJob utilLightJob ;
@@ -115,6 +116,8 @@ namespace engine
          UINT64   totalCost() const { return _totalCost ; }
          UINT64   totalTimes() const { return _totalTimes ; }
 
+         UINT64   expectSleepTime() const { return _sleepTime ; }
+
          FLOAT64  avgCost() const ;
          UINT64   expectAvgCost() const { return _expectAvgCost ; }
 
@@ -137,6 +140,8 @@ namespace engine
          UINT64         _lastCost ;          // micro second
          UINT64         _totalCost ;         // micro second
          UINT64         _totalTimes ;
+
+         UINT64         _sleepTime ;
    } ;
    typedef _utilLightJobInfo utilLightJobInfo ;
 

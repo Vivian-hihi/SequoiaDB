@@ -107,6 +107,7 @@ namespace engine
       _lastCost = 0 ;
       _totalCost = 0 ;
       _totalTimes = 0 ;
+      _sleepTime = 0 ;
    }
 
    _utilLightJobInfo::~_utilLightJobInfo()
@@ -125,6 +126,7 @@ namespace engine
       _lastCost = 0 ;
       _totalCost = 0 ;
       _totalTimes = 0 ;
+      _sleepTime = 0 ;
    }
 
    bool _utilLightJobInfo::operator< ( const _utilLightJobInfo &right ) const
@@ -192,12 +194,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       result = UTIL_LJOB_DO_FINISH ;
+      _sleepTime = UTIL_LJOB_DFT_AVG_COST ;
 
       if ( _pJob )
       {
          _lastDoTime = ossGetCurrentMicroseconds() ;
 
-         rc = _pJob->doit( pExe, result ) ;
+         rc = _pJob->doit( pExe, result, _sleepTime ) ;
 
          UINT64 eTime = ossGetCurrentMicroseconds() ;
 

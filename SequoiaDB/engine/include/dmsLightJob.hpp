@@ -55,7 +55,8 @@ namespace engine
 
          virtual const CHAR*     name() const ;
          virtual INT32           doit( IExecutor *pExe,
-                                       UTIL_LJOB_DO_RESULT &result ) ;
+                                       UTIL_LJOB_DO_RESULT &result,
+                                       UINT64 &sleepTime ) ;
 
       protected:
          INT32             _csID ;

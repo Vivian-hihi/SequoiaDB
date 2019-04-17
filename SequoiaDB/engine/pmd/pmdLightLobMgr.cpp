@@ -42,15 +42,16 @@ namespace engine
    /*
       Global define
    */
-   #define PMD_LJOB_CONTROL_INTERVAL         ( 200 )     /// ms
-   #define PMD_LJOB_INTERVAL                 ( 1000 )    /// ms
+   #define PMD_LJOB_CONTROL_INTERVAL         ( 500 )     /// ms
+   #define PMD_LJOB_INTERVAL                 ( 2000 )    /// ms
    #define PMD_LJOB_MIN_EXE_NUM              ( 1 )
    #define PMD_LJOB_DFT_MAX_EXE_NUM          ( 10 )
    #define PMD_LJOB_IDLE_TIMEOUT             ( 300 * OSS_ONE_SEC )
-   #define PMD_LJOB_PER_AGENT_POWER          ( 7 )       /// 2^7
+   #define PMD_LJOB_PER_AGENT_POWER          ( 12 )      /// 2^12
+   #define PMD_LJOB_DISPATCH_TIME            ( 100 )     /// ms
 
    #define PMD_LJOB_EXE_TIME_SLICE           ( 1000 )    // ms
-   #define PMD_LJOB_EXE_COUNT_SLICE          ( 1000 )
+   #define PMD_LJOB_EXE_COUNT_SLICE          ( 10 )
 
    /*
       _pmdLightJobMgr implement
@@ -160,7 +161,7 @@ namespace engine
    {
       BOOLEAN hasJob = FALSE ;
 
-      if ( pop( job, 0 ) )
+      if ( pop( job, PMD_LJOB_DISPATCH_TIME ) )
       {
          hasJob = TRUE ;
          ossScopedLock lock( &_unitLatch ) ;
@@ -193,7 +194,15 @@ namespace engine
       {
          utilLightJobInfo &info = *it ;
 
-         if ( info.totalCost() < UTIL_LJOB_MIN_AVG_COST * info.totalTimes() )
+         if ( curTime < info.lastDoTime() + info.lastCost() +
+                        info.expectSleepTime() )
+         {
+            /// wait for next time
+            tmpJobVec.push_back( info ) ;
+            ++ignoreNum ;
+         }
+         else if ( info.totalCost() < UTIL_LJOB_MIN_AVG_COST *
+                                      info.totalTimes() )
          {
             if ( info.totalTimes() < PMD_LJOB_EXE_COUNT_SLICE )
             {
@@ -370,6 +379,10 @@ namespace engine
                   }
                   break ;
                }
+               else if ( job.expectSleepTime() > 0 )
+               {
+                  break ;
+               }
             }
 
             costTime += sliceTime ;
@@ -379,6 +392,7 @@ namespace engine
          }
          else
          {
+            timeout += PMD_LJOB_DISPATCH_TIME ;
             _pJobMgr->processPending() ;
 
             UINT64 bWaitTime = ossGetCurrentMilliseconds() ;

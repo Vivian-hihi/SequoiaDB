@@ -61,7 +61,8 @@ namespace engine
    }
 
    INT32 _dmsDeleteRecordJob::doit( IExecutor *pExe,
-                                    UTIL_LJOB_DO_RESULT &result )
+                                    UTIL_LJOB_DO_RESULT &result,
+                                    UINT64 &sleepTime )
    {
       static SDB_DMSCB  *pDmsCB = sdbGetDMSCB() ;
       static dpsTransCB *pTransCB = sdbGetTransCB() ;
@@ -71,6 +72,7 @@ namespace engine
       dmsMBContext *pContext = NULL ;
       dmsRecordRW recordRW ;
       const dmsRecord *pRecord = NULL ;
+      sleepTime = 1000000 ;   /// 1 second
 
       su = pDmsCB->suLock( _csID ) ;
       if ( !su || su->LogicalCSID() != _csLID )

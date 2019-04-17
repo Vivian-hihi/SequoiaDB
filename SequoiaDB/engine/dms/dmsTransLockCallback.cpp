@@ -95,7 +95,8 @@ namespace engine
             return "ReleaseLockJob" ;
          }
          virtual INT32           doit( IExecutor *pExe,
-                                       UTIL_LJOB_DO_RESULT &result ) ;
+                                       UTIL_LJOB_DO_RESULT &result,
+                                       UINT64 &sleepTime ) ;
 
       private:
          dmsRecordID             _recordID ;
@@ -107,7 +108,8 @@ namespace engine
    typedef _dmsReleaseLockJob dmsReleaseLockJob ;
 
    INT32 _dmsReleaseLockJob::doit( IExecutor *pExe,
-                                   UTIL_LJOB_DO_RESULT &result )
+                                   UTIL_LJOB_DO_RESULT &result,
+                                   UINT64 &sleepTime )
    {
       static dpsTransCB *pTransCB = sdbGetTransCB() ;
       static SDB_DMSCB  *pDmsCB = sdbGetDMSCB() ;
@@ -118,6 +120,7 @@ namespace engine
       dmsMBStatInfo *mbStat = NULL ;
       dmsTransLockCallback callback ;
       dpsTransRetInfo transRetInfo ;
+      sleepTime = UTIL_LJOB_DFT_AVG_COST ;
 
       su = pDmsCB->suLock( _csID ) ;
       if ( su && su->LogicalCSID() == _csLID )
