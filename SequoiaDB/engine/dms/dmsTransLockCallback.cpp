@@ -1165,10 +1165,10 @@ namespace engine
             rc = SDB_RTN_INDEX_NOTEXIST ;
             goto error ;
          }
-
+#ifdef _DEBUG
          PD_LOG( PDDEBUG, "RebuildIndex got memtree,gid(%s)",
                  gid.toString().c_str() ) ;
-
+#endif
          // go through the old version link list and insert index to tree
          oldVer = context->mbStat()->getChain() ;
          while ( oldVer )
@@ -1214,15 +1214,22 @@ namespace engine
                                           oldVer->getRecordID(), cb ) ;
                   if ( rc )
                   {
-                     PD_LOG ( PDERROR, "Failed to insert the key to  %s",
+                     PD_LOG ( PDERROR, "Failed to insert the key(%s) for obj(%s)",
+                              cit->toString().c_str(),
                               oldVer->getRecordObj().toString().c_str() ) ;
                      goto error ;
                   }
                }
+#ifdef _DEBUG
+               PD_LOG( PDDEBUG, "Inserted key to mem tree for obj(%s)",
+                       oldVer->getRecordObj().toString().c_str() ) ;
+#endif
             }
 
             oldVer = oldVer->getNext() ;
          }  // while (oldVer)
+         PD_LOG( PDDEBUG, "Rebuild index callback done successfully(%s)",
+                 gid.toString().c_str() ) ;
       }
 
    done :
@@ -1235,7 +1242,7 @@ namespace engine
       return rc ;
 
    error :
-      PD_LOG( PDERROR, "Rebuild index callback failed, lid=%d, rc=[%d]", 
+      PD_LOG( PDERROR, "Rebuild index callback failed, lid=%d, rc=%d", 
               indexCB->getLogicalID(), rc ) ;
       goto done ;
    }
@@ -1267,6 +1274,8 @@ namespace engine
                     "failed, rc: %d", gid.toString().c_str(), rc ) ;
             goto error ;
          }
+         PD_LOG( PDDEBUG, "Create index callback done successfully(%s)",
+                 gid.toString().c_str() ) ;
       }
 
    done :
