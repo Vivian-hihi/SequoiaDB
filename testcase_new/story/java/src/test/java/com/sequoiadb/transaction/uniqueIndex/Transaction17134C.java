@@ -23,14 +23,17 @@ import com.sequoiadb.transaction.TransUtils;
  * @date 2019年1月15日
  */
 @Test(groups = { "rc", "ru" })
-public class Transaction17134 extends SdbTestBase {
+public class Transaction17134C extends SdbTestBase {
 
-    private String clName = "transCL_17134";
+    private String clName = "transCL_17134C";
     private Sequoiadb sdb = null;
+    private Sequoiadb sdb1 = null;
+    private Sequoiadb sdb2 = null;
     private DBCollection cl = null;
+    private DBCollection cl1 = null;
+    private DBCollection cl2 = null;
     private BSONObject data = null;
     private BSONObject data2 = null;
-    private BSONObject modifier = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
     private List<BSONObject> actDataList = null;
@@ -55,30 +58,29 @@ public class Transaction17134 extends SdbTestBase {
         data2.put("d", "customer transaction type data application.");
         cl.insert(data2);
 
-        modifier = new BasicBSONObject();
-        BSONObject data3 = new BasicBSONObject();
-        data3.put("a", 3);
-        data3.put("b", 3);
-        data3.put("c", 13700000000L);
-        data3.put("d", "customer transaction type data application.");
-        modifier.put("$set", data3);
     }
 
-    // TODO:SEQUOIADBMAINSTREAM-4116
-    @Test(enabled = false)
+    @Test
     public void test() {
+        sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
+        cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+
+        sdb1.beginTransaction();
 
         // 1 update R1 to R3
-        sdb.beginTransaction();
-        cl.update(new BasicBSONObject("b", 1), modifier, null);
+        cl1.update("{b: 1}", "{$set:{a: 3}}", null);
 
         try {
             // 2 create unique index
-            cl.createIndex("a", "{a:1}", true, false);
+            cl2.createIndex("a", "{a:1}", true, false);
             Assert.fail("create index should be error");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
         }
+
+        sdb1.rollback();
 
         expDataList.clear();
         expDataList.add(data);
@@ -103,6 +105,12 @@ public class Transaction17134 extends SdbTestBase {
         }
         if (sdb != null) {
             sdb.close();
+        }
+        if (sdb1 != null) {
+            sdb1.close();
+        }
+        if (sdb2 != null) {
+            sdb2.close();
         }
     }
 
