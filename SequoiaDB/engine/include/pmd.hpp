@@ -401,7 +401,7 @@ namespace engine
          ossMemset( _hostName, 0, sizeof(_hostName) ) ;
          ossStrncpy ( _hostName, hostName, sizeof(_hostName) - 1 );
       }
-      BOOLEAN getKeepSleep()
+      BOOLEAN getKeepSleep() const
       {
          return _keepSleep ;
       }

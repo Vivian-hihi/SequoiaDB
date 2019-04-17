@@ -164,6 +164,34 @@ namespace engine
       return SDB_OK ;
    }
 
+   static void _dmsStartReleaseLockJob( const dpsTransLockId &lockId,
+                                        const oldVersionContainer *oldVer )
+   {
+      dmsReleaseLockJob *pJob = NULL ;
+      pJob = SDB_OSS_NEW dmsReleaseLockJob( lockId, oldVer ) ;
+      SDB_ASSERT( pJob, "Job is NULL" ) ;
+      if ( pJob )
+      {
+         INT32 rcTmp = pJob->submit( TRUE ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDWARNING, "Submit dmsReleaseLockJob(CSID:%u, CLID:%u, "
+                    "CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) failed, "
+                    "rc: %d", oldVer->getCSID(), oldVer->getCLID(),
+                    oldVer->getCSLID(), oldVer->getCLLID(),
+                    lockId.extentID(), lockId.offset(), rcTmp) ;
+         }
+      }
+      else
+      {
+         PD_LOG( PDWARNING, "Alloc dmsReleaseLockJob(CSID:%u, CLID:%u, "
+                 "CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) failed",
+                 oldVer->getCSID(), oldVer->getCLID(),
+                 oldVer->getCSLID(), oldVer->getCLLID(),
+                 lockId.extentID(), lockId.offset() ) ;
+      }
+   }
+
    /*
       Extend data function
    */
@@ -232,15 +260,7 @@ namespace engine
               lockId.toString().c_str() ) ;
 
       /// PUT the rid to backgroud task to recycle
-      /*{
-         dmsReleaseLockJob *pJob = NULL ;
-         pJob = SDB_OSS_NEW dmsReleaseLockJob( lockId, oldVer ) ;
-         SDB_ASSERT( pJob, "Job is NULL" ) ;
-         if ( pJob )
-         {
-            pJob->submit( TRUE ) ;
-         }
-      }*/
+      _dmsStartReleaseLockJob( lockId, oldVer ) ;
 
    done:
       return ;
