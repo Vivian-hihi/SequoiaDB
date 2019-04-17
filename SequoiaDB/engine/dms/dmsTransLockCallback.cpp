@@ -797,7 +797,7 @@ namespace engine
    {
       if ( _oldVer )
       {
-         _oldVer->setRecordNew() ;
+         _oldVer->setRecordNew( cb->getTID() ) ;
       }
       return SDB_OK ;
    }
