@@ -151,7 +151,7 @@ namespace engine
    void dmsStartAsyncDeleteRecord( INT32 csID, UINT16 clID,
                                    UINT32 csLID, UINT32 clLID,
                                    const dmsRecordID &rid )
-   {
+   {/*
       INT32 rc = SDB_OK ;
       dmsDeleteRecordJob *pJob = NULL ;
 
@@ -172,7 +172,7 @@ namespace engine
                     "rc: %d", csID, clID, csLID, clLID, rid._extent,
                     rid._extent, rc ) ;
          }
-      }
+      }*/
    }
 
 }
