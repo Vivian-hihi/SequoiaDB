@@ -1612,12 +1612,8 @@ namespace engine
                       DPS_TRANS_GET_SN( _curTransInfo._transID ) ) ;
          builder.append( FIELD_NAME_TRANSACTION_ID, strTransID ) ;
 
-         /// nodeID(16bit) | TAG(8bit) | SN(40bit)
-         CHAR strTransIDSN[ 4 + 2 + 10 + 2 ] = { 0 } ;
-         ossSnprintf( strTransIDSN, sizeof( strTransIDSN ) - 1,
-                      "%010x",
-                      DPS_TRANS_GET_SN( _curTransInfo._transID ) ) ;
-         builder.append( FIELD_NAME_TRANSACTION_ID_SN, strTransIDSN ) ;
+         builder.append( FIELD_NAME_TRANSACTION_ID_SN,
+                         (INT64)DPS_TRANS_GET_SN( _curTransInfo._transID ) ) ;
          builder.appendBool( FIELD_NAME_IS_ROLLBACK,
                              pTransCB->isRollback( _curTransInfo._transID ) ?
                              TRUE : FALSE ) ;

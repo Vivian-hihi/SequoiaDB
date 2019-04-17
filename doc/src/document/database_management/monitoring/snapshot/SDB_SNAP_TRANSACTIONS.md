@@ -23,8 +23,10 @@ SDB_SNAP_TRANSACTIONS
 | NodeName               | 字符串   | 节点名（"主机名:端口号"）                |
 | SessionID              | 长整型   | 会话 ID                                  |
 | TransactionID          | 字符串   | 事务 ID                                  |
+| TransactionIDSN        | 长整型   | 事务序列号                               |
 | IsRollback             | 布尔型   | 表示这个事务是否处于回滚中               |
 | CurrentTransLSN        | 长整型   | 事务当前的日志LSN                        |   
+| BeginTransLSN          | 长整型   | 事务开始的日志LSN                        |   
 | WaitLock               | BSON对象 | 正在等待的锁                             |
 | TransactionLocksNum    | 整型     | 事务已经获得的锁                         |
 | RelatedID              | 字符串   | 内部标示                                 |
