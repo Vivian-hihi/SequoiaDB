@@ -48,7 +48,7 @@ public class Testtransactiontimeout6003B extends SdbConfTestBase {
 		BSONObject configs = new BasicBSONObject();
 		BSONObject options = new BasicBSONObject();
 		configs.put("transactiontimeout", 5);
-		options.put("Role", "data");
+		options.put("Global", true);
 		sdb.updateConfig(configs, options);
 		checkConfig(options, 5);
 
@@ -65,7 +65,7 @@ public class Testtransactiontimeout6003B extends SdbConfTestBase {
 		BSONObject configs = new BasicBSONObject();
 		BSONObject options = new BasicBSONObject();
 		configs.put("transactiontimeout", 60);
-		options.put("Role", "data");
+		options.put("Global", true);
 		sdb.updateConfig(configs, options);
 
 		db1.close();
@@ -136,7 +136,7 @@ public class Testtransactiontimeout6003B extends SdbConfTestBase {
 			Assert.assertEquals(cursor.getNext().get("a").toString(), "1");
 		}
 		if (timeoutMillis < 5 * 1000 || timeoutMillis > 6 * 1000) {
-			Assert.fail("when transactiontimeout is 6(s), the actual time is " + timeoutMillis + "(ms).");
+			Assert.fail("when transactiontimeout is 5(s), the actual time is " + timeoutMillis + "(ms).");
 		}
 	}
 

@@ -51,7 +51,7 @@ public class Testtransactiontimeout6003A extends SdbConfTestBase {
 		BSONObject configs = new BasicBSONObject();
 		BSONObject options = new BasicBSONObject();
 		configs.put("transactiontimeout", lowBoundValue);
-		options.put("Role", "data");
+		options.put("Global", true);
 		sdb.updateConfig(configs, options);
 		checkConfig(options, lowBoundValue);
 
@@ -80,7 +80,7 @@ public class Testtransactiontimeout6003A extends SdbConfTestBase {
 		BSONObject configs = new BasicBSONObject();
 		BSONObject options = new BasicBSONObject();
 		configs.put("transactiontimeout", 60);
-		options.put("Role", "data");
+		options.put("Global", true);
 		sdb.updateConfig(configs, options);
 
 		db1.close();
