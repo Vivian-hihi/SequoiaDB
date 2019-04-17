@@ -31,13 +31,17 @@ var cataConf  = { diaglevel:diagLevel,
 var coordConf = { diaglevel:diagLevel,
                   diagnum:30,
                   logfilenum:40,
-                  diagpath:'/opt/sequoiadb/database/coord/[svcname]/diaglog'
+                  diagpath:'/opt/sequoiadb/database/coord/[svcname]/diaglog',
+                  transactionon:true,
+                  transisolation:1
                 };
 var dataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
                   diagnum:30,
                   logfilenum:40,
                   plancachelevel:3,
-                  diagpath:'/opt/sequoiadb/database/data/[svcname]/diaglog'
+                  diagpath:'/opt/sequoiadb/database/data/[svcname]/diaglog',
+                  transactionon:true,
+                  transisolation:1
                 };
                 

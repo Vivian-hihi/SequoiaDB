@@ -34,5 +34,7 @@ var nodeConf  = { diaglevel:diagLevel,
                   diagnum:30,
                   logfilenum:40,
                   plancachelevel:3,
-                  fap:fapValue
+                  fap:fapValue,
+                  transactionon:true,
+                  transisolation:1
                 };

@@ -40,12 +40,16 @@ var cataConf  = { diaglevel:diagLevel,
 var coordConf = { diaglevel:diagLevel,
                   diagnum:30,
                   logfilenum:40,
-                  fap:fapValue 
+                  fap:fapValue,
+                  transactionon:true,
+                  transisolation:1                   
                 };
 var dataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
                   diagnum:30,
                   logfilenum:40,
                   plancachelevel:3,
-                  fap:fapValue
+                  fap:fapValue,
+                  transactionon:true,
+                  transisolation:1 
                 };
