@@ -117,14 +117,17 @@ function insertSetFlag_ContOnDup( cl )
    }
    
    // insert one doc, flag: SDB_INSERT_CONTONDUP
-   cl.insert( {a:5}, SDB_INSERT_CONTONDUP );   
+   cl.insert( {a:1,b:1,c:4}, SDB_INSERT_CONTONDUP );   
+   cl.insert( {a:5}, SDB_INSERT_CONTONDUP );
    
    // insert one doc, options：ContOnDup
+   cl.insert( {a:1,b:1,c:5}, {ContOnDup:true} );
    cl.insert( {a:6}, {ContOnDup:true} );
    
+   cl.insert( {a:7}, {ContOnDup:false} );   
    try
    {
-      cl.insert( {a:1,b:1,c:4}, {ContOnDup:false} );
+      cl.insert( {a:1,b:1,c:7}, {ContOnDup:false} );
       throw "expect fail, but actual succ." 
    }
    catch(e)
@@ -135,7 +138,7 @@ function insertSetFlag_ContOnDup( cl )
       }
    }
    
-   var expRecs = [{"a":1,"b":1},{"a":2},{"a":3},{"a":5},{"a":6}];
+   var expRecs = [{"a":1,"b":1},{"a":2},{"a":3},{"a":5},{"a":6},{"a":7}];
    checkRecords( cl, expRecs );
    
    cl.remove();
