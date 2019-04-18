@@ -221,6 +221,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SET_NODEID nodes ;
+      DPS_TRANS_ID transID = cb->getTransID() ;
+
+      PD_LOG ( PDEVENT, "Begin to rollback transaction[ID:%04x%010x]...",
+               DPS_TRANS_GET_NODEID( transID ),
+               DPS_TRANS_GET_SN( transID ) ) ;
 
       _groupSession.getPropSite()->dumpTransNode( nodes ) ;
 
@@ -627,12 +632,12 @@ namespace engine
                                      rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
+      DPS_TRANS_ID curTransID = cb->getTransID() ;
 
       // add last op info
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,
                           "TransactionID: 0x%016x(%llu)",
-                          cb->getTransID(),
-                          cb->getTransID() ) ;
+                          curTransID, curTransID ) ;
 
       rc = _coord2PhaseCommit::execute( pMsg, cb, contextID, buf ) ;
       if ( rc )
@@ -642,6 +647,10 @@ namespace engine
 
       // complete, delete transaction
       _groupSession.getPropSite()->endTrans( cb ) ;
+
+      PD_LOG( PDINFO, "Execute commit(ID:%04x%010x)",
+              DPS_TRANS_GET_NODEID( curTransID ),
+              DPS_TRANS_GET_SN( curTransID ) ) ;
 
    done:
       return rc ;

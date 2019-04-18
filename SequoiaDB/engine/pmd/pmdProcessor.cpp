@@ -1879,7 +1879,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
       coordResource *pResource = pCoordCB->getResource() ;
-      DPS_TRANS_ID transID = eduCB()->getTransID() ;
 
       coordTransRollback rollbackOpr ;
       rc = rollbackOpr.init( pResource, eduCB() ) ;
@@ -1889,10 +1888,6 @@ namespace engine
                  rollbackOpr.getName(), rc ) ;
          goto error ;
       }
-
-      PD_LOG ( PDEVENT, "Begin to rollback transaction[ID:%04x%010x]...",
-               DPS_TRANS_GET_NODEID( transID ),
-               DPS_TRANS_GET_SN( transID ) ) ;
 
       rc = rollbackOpr.rollback( eduCB() ) ;
       if ( rc )
@@ -1911,7 +1906,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
       coordResource *pResource = pCoordCB->getResource() ;
-      DPS_TRANS_ID curTransID = eduCB()->getTransID() ;
 
       INT64 contextID = -1 ;
       MsgOpTransCommit commitMsg ;
@@ -1923,10 +1917,6 @@ namespace engine
                  commitOpr.getName(), rc ) ;
          goto error ;
       }
-
-      PD_LOG( PDINFO, "Execute commit(ID:%04x%010x)",
-              DPS_TRANS_GET_NODEID( curTransID ),
-              DPS_TRANS_GET_SN( curTransID ) ) ;
 
       commitMsg.header.messageLength = sizeof( MsgOpTransCommit ) ;
       commitMsg.header.opCode = MSG_BS_TRANS_COMMIT_REQ ;

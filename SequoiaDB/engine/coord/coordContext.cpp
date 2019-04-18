@@ -803,6 +803,7 @@ namespace engine
    INT32 _rtnContextCoord::_prepareSubCtxData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN waitAll = FALSE ;
 
       if ( _emptyContextMap.size() == 0 &&
            _prepareContextMap.size() == 0 )
@@ -814,10 +815,14 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Send request to empty nodes failed, rc: %d",
                    rc ) ;
 
-      rc = _getPrepareNodesData( cb, _requireExplicitSorting() ) ;
+      if ( _isModify || _requireExplicitSorting() )
+      {
+         waitAll = TRUE ;
+      }
+
+      rc = _getPrepareNodesData( cb, _isModify ) ;
       PD_RC_CHECK( rc, PDERROR, "Get data from prepare nodes failed, rc: %d",
                    rc ) ;
-
    done:
       return rc ;
    error:
