@@ -99,8 +99,6 @@ public class TestSplit10525C extends SdbTestBase{
             cursor.close();
             Assert.assertEquals(actual, this.insertRecods);
         } catch (BaseException e) {
-        	System.out.println("actual:" + actual);
-        	System.out.println("insertRecods:" + this.insertRecods);
             Assert.fail(e.getMessage());
         }
     }

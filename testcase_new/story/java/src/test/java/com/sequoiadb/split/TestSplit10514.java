@@ -37,8 +37,6 @@ public class TestSplit10514 extends SdbTestBase{
     @BeforeClass
     public void setUp() {
         try{
-            System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                    ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             // 跳过 standAlone 和数据组不足的环境
             SplitUtils2 util = new SplitUtils2();
@@ -192,8 +190,6 @@ public class TestSplit10514 extends SdbTestBase{
                     expected.add(this.insertRecods.get(i-1));
                 }
             }
-            System.out.println(actual);
-            System.out.println(expected);
             Assert.assertEquals(actual, expected);
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
@@ -247,8 +243,6 @@ public class TestSplit10514 extends SdbTestBase{
     @AfterClass
     public void tearDown() {
         try {
-            System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             if (this.cs.isCollectionExist(clName)) {
                 this.cs.dropCollection(clName);
             }
