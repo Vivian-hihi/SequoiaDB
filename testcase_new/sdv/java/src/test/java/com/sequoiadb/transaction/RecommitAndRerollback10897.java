@@ -66,8 +66,11 @@ public class RecommitAndRerollback10897 extends SdbConfTestBase {
 
 	@AfterClass
 	private void teardown() {
-		sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
-		sdb.close();
+		try{
+			sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
+		}finally{
+			sdb.close();
+		}
 	}
 
 	private void CheckResult(BSONObject record) {

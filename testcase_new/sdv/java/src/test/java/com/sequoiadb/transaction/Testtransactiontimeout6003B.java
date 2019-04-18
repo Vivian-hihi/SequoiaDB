@@ -62,16 +62,19 @@ public class Testtransactiontimeout6003B extends SdbConfTestBase {
 
 	@AfterClass
 	private void teardown() {
-		BSONObject configs = new BasicBSONObject();
-		BSONObject options = new BasicBSONObject();
-		configs.put("transactiontimeout", 60);
-		options.put("Global", true);
-		sdb.updateConfig(configs, options);
-
-		db1.close();
-		db2.close();
-		sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
-		sdb.close();
+		try{
+			BSONObject configs = new BasicBSONObject();
+			BSONObject options = new BasicBSONObject();
+			configs.put("transactiontimeout", 60);
+			options.put("Global", true);
+			sdb.updateConfig(configs, options);
+	
+			sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
+		}finally{
+			db1.close();
+			db2.close();
+			sdb.close();
+		}
 	}
 
 	class TransInsert6003B {

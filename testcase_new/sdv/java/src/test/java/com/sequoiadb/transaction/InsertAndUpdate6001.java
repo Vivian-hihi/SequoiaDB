@@ -54,10 +54,13 @@ public class InsertAndUpdate6001 extends SdbConfTestBase {
 
 	@AfterClass
 	private void teardown() {
-		db1.close();
-		db2.close();
-		sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
-		sdb.close();
+		try{
+			sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
+		}finally{
+			db1.close();
+			db2.close();
+			sdb.close();
+		}
 	}
 
 	class TransInsert6001 {

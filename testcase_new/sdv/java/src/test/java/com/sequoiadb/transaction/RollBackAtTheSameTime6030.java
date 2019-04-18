@@ -58,8 +58,11 @@ public class RollBackAtTheSameTime6030 extends SdbConfTestBase {
 
 	@AfterClass
 	private void teardown() {
-		sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
-		sdb.close();
+		try{
+			sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
+		}finally{
+			sdb.close();
+		}
 	}
 
 	private void insertData(DBCollection cl, int recNum) {

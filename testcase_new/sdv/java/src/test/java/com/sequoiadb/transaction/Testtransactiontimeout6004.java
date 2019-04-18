@@ -97,10 +97,13 @@ public class Testtransactiontimeout6004 extends SdbConfTestBase {
 
 	@AfterClass
 	private void teardown() {
-		// 恢复环境
-		BSONObject configs4 = new BasicBSONObject();
-		configs4.put("transactiontimeout", 60);
-		sdb.updateConfig(configs4, options);
-		sdb.close();
+		try{
+			// 恢复环境
+			BSONObject configs4 = new BasicBSONObject();
+			configs4.put("transactiontimeout", 60);
+			sdb.updateConfig(configs4, options);
+		}finally{
+			sdb.close();
+		}
 	}
 }

@@ -56,8 +56,11 @@ public class CommitAtTheSameTime6017_5992 extends SdbConfTestBase {
 
 	@AfterClass
 	private void teardown() {
-		sdb.getCollectionSpace(csName).dropCollection(clName);
-		sdb.close();
+		try{
+			sdb.getCollectionSpace(csName).dropCollection(clName);
+		}finally{
+			sdb.close();
+		}
 	}
 
 	private void checkResult(int expNum) {

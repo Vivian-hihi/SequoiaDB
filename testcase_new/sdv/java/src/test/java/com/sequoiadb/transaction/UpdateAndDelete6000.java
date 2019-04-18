@@ -87,11 +87,13 @@ public class UpdateAndDelete6000 extends SdbConfTestBase {
 
 	@AfterClass
 	public void teardown() {
-		db1.close();
-		db2.close();
-
-		sdb.getCollectionSpace(csName).dropCollection(clName);
-		sdb.close();
+		try{
+			sdb.getCollectionSpace(csName).dropCollection(clName);
+		}finally{
+			db1.close();
+			db2.close();
+			sdb.close();
+		}
 	}
 
 	private class UpdateThread extends SdbThreadBase {
