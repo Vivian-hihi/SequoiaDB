@@ -126,6 +126,7 @@ function()
    {
       this.db.getDomain( this.domainName ) ;
       this.db.dropDomain( this.domainName ) ;
+      this.db.removeRG( backupandrestoreGroup ) ;
    }
    catch( e )
    {

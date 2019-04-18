@@ -645,13 +645,17 @@ function ()
 {
    commDropCL( db, this.csName, this.clName, true, true, "Drop CL in the beginning" ) ;
    bakRemoveBackups( db, CHANGEDPREFIX, true ) ;
+   var flag = false ;
    try
    {
+      println(" drop " + backupandrestoreGroup ) ;
       db.getRG( backupandrestoreGroup ) ;
+      flag = true ;
       db.removeRG( backupandrestoreGroup ) ;
    }catch(e){
-      
+      if ( flag ) throw e ;
    }
+   
    println( "Clear the backup in the beginning" ) ;
    return this.init() ;
 }
