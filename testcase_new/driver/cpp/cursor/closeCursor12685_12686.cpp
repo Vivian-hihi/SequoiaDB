@@ -77,6 +77,14 @@ TEST_F( cursorTest12685, oprAfterClose12685 )
    rc = cursor.next( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
 
+   BSONObj obj1,obj2 ;
+   rc = cursor.next( obj1, false ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
+   
+   rc = cursor.current( obj2, false );
+   ASSERT_EQ( SDB_OK, rc ) << "fail to get next" ;
+   ASSERT_EQ ( obj1.getIntField("a"), obj2.getIntField("a")) ;
+   cout << obj1.toString() << endl;
    // close cursor
    rc = cursor.close() ;
    ASSERT_EQ( SDB_OK, rc ) << "fail close cursor" ;
