@@ -71,19 +71,16 @@ public class IndexKeyLengthLimit18049 extends SdbTestBase {
 	public void tearDown() {
 	}
 
-	private ArrayList<BSONObject> insertData(DBCollection dbcl, int recordNum, int length) {
-		ArrayList<BSONObject> insertRecords = new ArrayList<BSONObject>();
+	private ArrayList<BSONObject> insertData(DBCollection dbcl, int recordNum, int length) {		
 		ArrayList<BSONObject> insertRecord = new ArrayList<BSONObject>();
 		for (int i = 0; i < recordNum; i++) {
 			String keyValue = IndexUtils.getRandomString(length - i);
 			BSONObject obj = new BasicBSONObject();
 			obj.put("testa", keyValue);
 			obj.put("no", i);
-			insertRecord.add(obj);
-			insertRecords.add(obj);
+			insertRecord.add(obj);			
 		}
-		dbcl.insert(insertRecord);
-		insertRecord = null;
-		return insertRecords;
+		dbcl.insert(insertRecord);		
+		return insertRecord;
 	}
 }
