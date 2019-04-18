@@ -2023,4 +2023,22 @@
       <hidden>true</hidden>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_RECYCLE_RECORD</name>
+      <long>recyclerecord</long>
+      <description>
+        <en>Specify whether recycle deleting record asynchronous</en>
+        <cn>指定是否异步回收待删除的记录</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+        <en>Specify whether recycle deleting record asynchronous.</en>
+        <cn>指定是否异步回收待删除的记录。</cn>
+      </detail>
+      <default>true</default>
+      <hidden>true</hidden>
+   </opt>
 </optlist>
