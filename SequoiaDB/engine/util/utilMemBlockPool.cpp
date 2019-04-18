@@ -216,8 +216,6 @@ namespace engine
 
    void _utilMemBlockPool::fini()
    {
-      SDB_ASSERT( 0 == _totalSize.fetch(), "Total size is not zero" ) ;
-
       if ( _64BSeg )
       {
          SDB_OSS_DEL _64BSeg ;
