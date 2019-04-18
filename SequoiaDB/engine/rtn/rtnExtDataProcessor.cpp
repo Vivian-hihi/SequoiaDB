@@ -100,7 +100,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR_RESET, "_rtnExtDataProcessor::reset" )
-   void _rtnExtDataProcessor::reset( BOOLEAN resetMeta )
+   void _rtnExtDataProcessor::reset()
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_RESET ) ;
       _stat = RTN_EXT_PROCESSOR_INVALID ;
@@ -110,14 +110,10 @@ namespace engine
       _keySetNew.clear() ;
       _needOprRec = FALSE ;
       _freeSpace = 0 ;
-
-      if ( resetMeta )
-      {
-         _id = RTN_EXT_PROCESSOR_INVALID_ID ;
-         _meta.reset() ;
-         ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
-         ossMemset( _cappedCLName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
-      }
+      _id = RTN_EXT_PROCESSOR_INVALID_ID ;
+      _meta.reset() ;
+      ossMemset( _cappedCSName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
+      ossMemset( _cappedCLName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_RESET ) ;
    }
 
@@ -491,8 +487,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_DODROPP2 ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-
-      reset( FALSE ) ;
 
       rc = rtnDropCollectionSpaceP2( _cappedCSName, cb, dmsCB,
                                      dpsCB, TRUE ) ;
@@ -1102,6 +1096,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_CREATEPROCESSOR ) ;
       rtnExtDataProcessor *processorLocal = NULL ;
       INT32 foundID = RTN_EXT_PROCESSOR_INVALID_ID ;
+      ossRWMutex *mutex = NULL ;
+      BOOLEAN locked = FALSE ;
 
       ossScopedLock lock( &_mutex, EXCLUSIVE ) ;
 
@@ -1120,9 +1116,28 @@ namespace engine
          if ( !processorLocal &&
               ( RTN_EXT_PROCESSOR_INVALID == _processors[id].stat() ) )
          {
+            // Lock and check again
+            mutex = &_processorLocks[id] ;
+            rc = mutex->lock_w( OSS_ONE_SEC * 5 ) ;
+            PD_RC_CHECK( rc, PDERROR, "Lock processor failed[%d]", rc ) ;
+            if ( RTN_EXT_PROCESSOR_INVALID != _processors[id].stat() )
+            {
+               mutex->release_w() ;
+               continue ;
+            }
+            locked = TRUE ;
+
             foundID = id ;
             processorLocal = &_processors[foundID] ;
+            break ;
          }
+      }
+
+      if ( !processorLocal )
+      {
+         PD_LOG( PDERROR, "No slot for processor found" ) ;
+         rc = SDB_DMS_MAX_INDEX ;
+         goto error ;
       }
 
       rc = processorLocal->init( foundID, csName, clName,
@@ -1142,6 +1157,11 @@ namespace engine
       _number++ ;
 
    done:
+      if ( locked )
+      {
+         mutex->release_w() ;
+      }
+
       PD_TRACE_EXITRC( SDB__RTNEXTDATAPROCESSORMGR_CREATEPROCESSOR, rc ) ;
       return rc ;
    error:
@@ -1240,6 +1260,21 @@ namespace engine
                goto error ;
             }
 
+            // Double check after aquiring the lock. As when we are waiting for
+            // the lock, it may have been deleted by some drop operation.
+            if ( !processor->isOwnedBy( csName ) || !processor->isActive() )
+            {
+               if ( SHARED == lockType )
+               {
+                  mutex->release_r() ;
+               }
+               else
+               {
+                  mutex->release_w() ;
+               }
+               continue ;
+            }
+
             if ( locked )
             {
                lockedIDs.push_back( i ) ;
@@ -1312,6 +1347,22 @@ namespace engine
                goto error ;
             }
 
+            // Double check after aquiring the lock. As when we are waiting for
+            // the lock, it may have been deleted by some drop operation.
+            if ( !processor->isOwnedBy( csName, clName ) ||
+                 !processor->isActive() )
+            {
+               if ( SHARED == lockType )
+               {
+                  mutex->release_r() ;
+               }
+               else
+               {
+                  mutex->release_w() ;
+               }
+               continue ;
+            }
+
             if ( locked )
             {
                lockedIDs.push_back( i ) ;
@@ -1351,6 +1402,7 @@ namespace engine
                                                      rtnExtDataProcessor *&processor )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYIDX ) ;
+      rtnExtDataProcessor *processorLocal = NULL ;
 
       processor = NULL ;
 
@@ -1358,8 +1410,9 @@ namespace engine
 
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
-         if ( _processors[i].isOwnedBy( csName, clName, idxName )
-              && _processors[i].isActive() )
+         processorLocal = &_processors[i] ;
+         if ( processorLocal->isOwnedBy( csName, clName, idxName )
+              && processorLocal->isActive() )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1370,7 +1423,22 @@ namespace engine
             {
                mutex->lock_w() ;
             }
-            processor = &_processors[i]  ;
+            // Double check after aquiring the lock. As when we are waiting for
+            // the lock, it may have been deleted by some drop operation.
+            if ( !processorLocal->isOwnedBy( csName, clName, idxName ) ||
+                 !processorLocal->isActive() )
+            {
+               if ( SHARED == lockType )
+               {
+                  mutex->release_r() ;
+               }
+               else
+               {
+                  mutex->release_w() ;
+               }
+               continue ;
+            }
+            processor = processorLocal  ;
             break ;
          }
       }
