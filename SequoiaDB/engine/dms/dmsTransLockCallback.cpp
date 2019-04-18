@@ -220,6 +220,14 @@ namespace engine
                     oldVer->getCSLID(), oldVer->getCLLID(),
                     lockId.extentID(), lockId.offset(), rcTmp) ;
          }
+         else
+         {
+            PD_LOG( PDDEBUG, "Submit dmsReleaseLockJob(CSID:%u, CLID:%u, "
+                    "CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) succeed",
+                    oldVer->getCSID(), oldVer->getCLID(),
+                    oldVer->getCSLID(), oldVer->getCLLID(),
+                    lockId.extentID(), lockId.offset() ) ;
+         }
       }
       else
       {
