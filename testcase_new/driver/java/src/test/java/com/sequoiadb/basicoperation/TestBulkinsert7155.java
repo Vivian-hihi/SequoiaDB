@@ -9,7 +9,6 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONDecimal;
 import org.bson.types.BasicBSONList;
-import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -48,6 +47,32 @@ public class TestBulkinsert7155 extends SdbTestBase{
 		createCL();
 	}
 	
+	@Test
+	private void testBulkinsert(){
+		try{		
+			bulkInsert();
+			bulkInsertDuplicateKey();	
+			//TODO:bug:SEQUOIADBMAINSTREAM-1989
+			bulkInsertFlagError();
+		}catch(BaseException e){
+		   e.printStackTrace();
+		   Assert.assertTrue(false, e.getMessage());	
+		}
+	}
+	
+	@AfterClass(alwaysRun = true)
+	public void tearDown(){
+		try{
+			if(cs.isCollectionExist(clName)){
+				cs.dropCollection(clName);
+			}				
+		}catch(BaseException e){			
+			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+		}finally{
+			sdb.close();
+		}
+	}
+	
 	private void createCL(){
 		try{
 			if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)){
@@ -69,68 +94,69 @@ public class TestBulkinsert7155 extends SdbTestBase{
 	}
 	
 	/**
-	*test bulkInsert (List< BSONObject > insertor, int flag)��set flag=FLG_INSERT_CONTONDUP 
+	*test bulkInsert (List< BSONObject > insertor, int flag)
+	*set flag=FLG_INSERT_CONTONDUP 
 	*/
 	@SuppressWarnings("deprecation")
-	public void bulkInsert(){
+	private void bulkInsert(){
 		try{
 			List<BSONObject>list = new ArrayList<BSONObject>();			
-			long num = 2;			
-			for ( long i = 0; i < num; i++){				
-				BSONObject obj = new BasicBSONObject();
-				ObjectId id = new ObjectId();
-				obj.put("_id", id);
-				//insert the decimal type data
-				String str = "32345.067891234567890123456789" + i;
-				BSONDecimal decimal = new BSONDecimal(str);			
-				obj.put("decimal",decimal);
-				obj.put("no", i);				
-				obj.put("str", "test_" + String.valueOf(i));
-				//the numberlong type data
-				BSONObject numberlong = new BasicBSONObject();
-				numberlong.put("$numberLong","-9223372036854775808");			
-				obj.put("numlong",numberlong);
-				//the obj type
-				BSONObject subObj = new BasicBSONObject();
-				subObj.put("a",1+i);
-				obj.put("obj",subObj);
-				//the array type
-				BSONObject arr = new BasicBSONList();	
-				arr.put("0", (int) (Math.random() * 100));
-				arr.put("1","test");
-				arr.put("2",2.34);
-				obj.put("arr",arr);
-				obj.put("boolf",false);
-				//the data type 
-				Date now = new Date();
-				obj.put("date",now);
-				//the regex type
-				Pattern regex = Pattern.compile("^2001",Pattern.CASE_INSENSITIVE);
-				obj.put("binary", regex);			
-				list.add(obj);				
-			}
-			cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);			
+			BSONObject obj = new BasicBSONObject();
+			obj.put("_id", 7155);
+			//insert the decimal type data
+			String str = "32345.067891234567890123456789";
+			BSONDecimal decimal = new BSONDecimal(str);			
+			obj.put("decimal",decimal);
+			obj.put("no", 7155);				
+			obj.put("str", "test_" + String.valueOf(7155));
+			//the numberlong type data
+			BSONObject numberlong = new BasicBSONObject();
+			numberlong.put("$numberLong","-9223372036854775808");			
+			obj.put("numlong",numberlong);
+			//the obj type
+			BSONObject subObj = new BasicBSONObject();
+			subObj.put("a",7155);
+			obj.put("obj",subObj);
+			//the array type
+			BSONObject arr = new BasicBSONList();	
+			arr.put("0", (int) (Math.random() * 100));
+			arr.put("1","test");
+			arr.put("2",2.34);
+			obj.put("arr",arr);
+			obj.put("boolf",false);
+			//the data type 
+			Date now = new Date();
+			obj.put("date",now);
+			//the regex type
+			Pattern regex = Pattern.compile("^2001",Pattern.CASE_INSENSITIVE);
+			obj.put("binary", regex);			
+			list.add(obj);	
 			
-			//check the bulkInsert result
-			BSONObject tmp = new BasicBSONObject();
-	        DBCursor tmpCursor = cl.query(tmp, null, null, null);
-	        BasicBSONObject temp = null;
-	        List<BSONObject>listActDatas = new ArrayList<BSONObject>();
-	        while(tmpCursor.hasNext()){
-	            temp = (BasicBSONObject)tmpCursor.getNext();
-	            listActDatas.add(temp);
-	        }	        
-	        Assert.assertEquals(listActDatas.equals(list),true,"check datas are unequal\n"+"actDatas: "+listActDatas.toString());
+			cl.insert(list);
+			
+			List<BSONObject> sameIdlist = new ArrayList<BSONObject>();	
+			BSONObject obj2 = new BasicBSONObject();
+			obj2.put("_id", 7155);
+			obj2.put("test_flag_FLG_INSERT_CONTONDUP", 7155);
+			sameIdlist.add(obj2);
+			//insert again with flag FLG_INSERT_CONTONDUP
+			cl.bulkInsert(sameIdlist, DBCollection.FLG_INSERT_CONTONDUP);			
+			checkResult(list);
+			
+			//test flag FLG_INSERT_REPLACEONDUP
+			cl.bulkInsert(sameIdlist, DBCollection.FLG_INSERT_REPLACEONDUP);			
+			checkResult(sameIdlist);
 		}catch(BaseException e){
 			Assert.assertTrue(false,"bulkinsert fail "+e.getErrorCode()+e.getMessage());
 		}		
 	}
 	
 	/**
-	*test bulkInsert (List< BSONObject > insertor, int flag)��set flag=0 
+	*test bulkInsert (List< BSONObject > insertor, int flag)
+	*set flag=0 
 	*/
 	@SuppressWarnings("deprecation")
-	public void bulkInsertDuplicateKey(){
+	private void bulkInsertDuplicateKey(){
 		try{
 			List<BSONObject>list = new ArrayList<BSONObject>();		
 			for ( long i = 0; i < 2; i++){
@@ -146,20 +172,21 @@ public class TestBulkinsert7155 extends SdbTestBase{
 				cl.bulkInsert(list, 0);				
 				Assert.fail("bulkInsert will interrupt when Duplicate key exist");
 			}catch(BaseException e){
-				Assert.assertEquals(e.getErrorCode(),-38,e.getMessage());
+				Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
 			}			
 			long count = cl.getCount();
-			Assert.assertEquals(count,3,"the actDatas is :"+count);	 
+			Assert.assertEquals(count, 2, "the actDatas is :" + count);	 
 		}catch(BaseException e){
-			Assert.assertTrue(false,"bulkinsert fail "+e.getMessage());								
+			Assert.assertTrue(false,"bulkinsert fail "+ e.getMessage());								
 		}		
 	}
 	
 	/**
-	*test bulkInsert (List< BSONObject > insertor, int flag)��set flag=1/-1,ignore flag value 
+	*test bulkInsert (List< BSONObject > insertor, int flag)
+	*set flag=1/-1,ignore flag value 
 	*/
 	@SuppressWarnings("deprecation")
-	public void bulkInsertFlagError(){
+	private void bulkInsertFlagError(){
 		List<BSONObject>list = new ArrayList<BSONObject>();				
 		BSONObject obj = new BasicBSONObject();				
 		obj.put("no", 1);				
@@ -168,40 +195,27 @@ public class TestBulkinsert7155 extends SdbTestBase{
 			cl.bulkInsert(list, -1);
 			Assert.fail("when flag is -1,it should fail!");
 		}catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(), -6,"unexpected error code");	
+			Assert.assertEquals(e.getErrorCode(), -6, "unexpected error code");	
 		}
 		
 		try{
 			cl.bulkInsert(list, 1);				
 			long count = cl.getCount();
-			Assert.assertEquals(count,4,"the 3th insert actDatas is :"+count);
+			Assert.assertEquals(count, 3, "the 3th insert actDatas is :" + count);
 		}catch(BaseException e){
 			Assert.assertTrue(false,"bulkinsertFlag fail "+e.getMessage());	
 		}			
 	}
 	
-	@AfterClass(alwaysRun = true)
-	public void tearDown(){
-		try{
-			if(cs.isCollectionExist(clName)){
-				cs.dropCollection(clName);
-			}				
-			sdb.close();
-		}catch(BaseException e){			
-			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
-		}
+	private void checkResult(List<BSONObject> list){
+		//check the bulkInsert result
+        DBCursor tmpCursor = cl.query();
+        BasicBSONObject temp = null;
+        List<BSONObject>listActDatas = new ArrayList<BSONObject>();
+        while(tmpCursor.hasNext()){
+            temp = (BasicBSONObject)tmpCursor.getNext();
+            listActDatas.add(temp);
+        }	        
+        Assert.assertEquals(listActDatas.equals(list),true,"check datas are unequal\n"+"actDatas: "+listActDatas.toString());
 	}
-	
-	@Test
-	public void testBulkinsert(){
-		try{		
-			bulkInsert();
-			bulkInsertDuplicateKey();	
-			//TODO:bug:SEQUOIADBMAINSTREAM-1989
-			bulkInsertFlagError();
-		}catch(BaseException e){
-		   e.printStackTrace();
-		   Assert.assertTrue(false, e.getMessage());	
-		}
-	}	
 }

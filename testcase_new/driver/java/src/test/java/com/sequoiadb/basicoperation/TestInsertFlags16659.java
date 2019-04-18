@@ -40,7 +40,7 @@ public class TestInsertFlags16659 extends SdbTestBase{
     }
 	
     @Test
-	public void testInsert(){
+	private void testInsert(){
         BSONObject obj = new BasicBSONObject();
         ObjectId id = new ObjectId();
         obj.put(OID, id);
@@ -76,34 +76,43 @@ public class TestInsertFlags16659 extends SdbTestBase{
         BSONObject result2 = cl.insert(obj2, DBCollection.FLG_INSERT_RETURN_OID);
         Assert.assertEquals(result2.get(OID), id2);
         Assert.assertEquals(cl.getCount(obj2), 1);
-
-        // case 5: flag 值为数值 1,2
-        BSONObject obj3 = new BasicBSONObject().append("test1", 123);
-        cl.insert(obj3, 1);
-        Assert.assertEquals(cl.getCount(obj3), 1);        
-       
-        ObjectId id4 = new ObjectId();
-        BSONObject obj4 = new BasicBSONObject().append("test2", 123);       
-        obj4.put(OID, id4);
-        obj4.put("a", 1);
-        BSONObject result4 = cl.insert(obj4, 2);
-        Assert.assertEquals(result4.get(OID), id4);
-        Assert.assertEquals(cl.getCount(obj4), 1);       
         
-        // case 6: flag 值为非法值如：-1
-        BSONObject obj5 = new BasicBSONObject().append("test3", 123);
+        // case 5: flag 取值为 FLG_INSERT_REPLACEONDUP
+        BSONObject obj3 = obj;
+        obj3.put("appendField", "test16559");
+        cl.insert(obj3, DBCollection.FLG_INSERT_REPLACEONDUP);
+        Assert.assertEquals(cl.getCount(obj3), 1);
+
+        // case 6: flag 值为数值 1,2
+        BSONObject obj4 = new BasicBSONObject().append("test1", 123);
+        cl.insert(obj4, 1);
+        Assert.assertEquals(cl.getCount(obj4), 1);        
+       
+        ObjectId id5 = new ObjectId();
+        BSONObject obj5 = new BasicBSONObject().append("test2", 123);       
+        obj5.put(OID, id5);
+        obj5.put("a", 1);
+        BSONObject result5 = cl.insert(obj5, 2);
+        Assert.assertEquals(result5.get(OID), id5);
+        Assert.assertEquals(cl.getCount(obj5), 1);       
+        
+        // case 7: flag 值为非法值如：-1
+        BSONObject obj6 = new BasicBSONObject().append("test3", 123);
         try{
-        	cl.insert(obj5, -1);        	
+        	cl.insert(obj6, -1);        	
         	Assert.fail("Illegal flag insert failed!");
         }catch(BaseException e){        	
 			Assert.assertEquals(e.getErrorCode(), -6,e.getMessage());
 		}        
-        Assert.assertEquals(cl.getCount(obj5), 0);
+        Assert.assertEquals(cl.getCount(obj6), 0);
 	}
     
     @AfterClass
     private void tearDown(){
-		commcs.dropCollection(clName);
-		sdb.close();
+    	try{
+    		commcs.dropCollection(clName);
+    	}finally{
+    		sdb.close();
+    	}
 	}
 }
