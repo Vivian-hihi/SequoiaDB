@@ -637,6 +637,7 @@ namespace engine
          OSS_INLINE UINT32 getSvcMaxConcurrency() const { return _svcMaxConcurrency ; }
 
          OSS_INLINE BOOLEAN isSleepEnabled() const { return _enableSleep ; }
+         OSS_INLINE BOOLEAN recycleRecord() const { return _recycleRecord ; }
 
          std::string getOmAddr() const ;
 
@@ -739,6 +740,7 @@ namespace engine
          UINT32      _svcMaxConcurrency ;
          BOOLEAN     _preferedStrict ;
          BOOLEAN     _enableSleep ;
+         BOOLEAN     _recycleRecord ;
 
 #ifdef SDB_ENTERPRISE
 

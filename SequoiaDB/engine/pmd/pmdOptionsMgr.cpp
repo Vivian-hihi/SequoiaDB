@@ -1917,6 +1917,7 @@ done:
       _preferedStrict = FALSE ;
 
       _enableSleep = FALSE ;
+      _recycleRecord = TRUE ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -2303,6 +2304,9 @@ done:
       // --enablesleep
       rdxBooleanS( pEX, PMD_OPTION_SLEEP, _enableSleep, FALSE,
                    PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
+      // --recyclerecord
+      rdxBooleanS( pEX, PMD_OPTION_RECYCLE_RECORD, _recycleRecord, FALSE,
+                   PMD_CFG_CHANGE_RUN, TRUE, TRUE ) ;
 
       // end map
 
