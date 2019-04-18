@@ -64,6 +64,7 @@ namespace engine
 
       try
       {
+         pJob->_jobID = pMgr->allocID() ;
          pMgr->push( pJob, takeOver, priority, expectAvgCost ) ;
          pJob = NULL ;
       }
@@ -236,6 +237,7 @@ namespace engine
       _utilLightJobMgr define
    */
    _utilLightJobMgr::_utilLightJobMgr()
+   :_id( 1 )
    {
    }
 
@@ -247,6 +249,11 @@ namespace engine
       {
          job.release() ;
       }
+   }
+
+   UINT64 _utilLightJobMgr::allocID()
+   {
+      return _id.inc() ;
    }
 
    void _utilLightJobMgr::fini( IExecutor *pExe )

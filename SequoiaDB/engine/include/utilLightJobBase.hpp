@@ -71,18 +71,23 @@ namespace engine
    class _utilLightJob : public _utilPooledObject
    {
       public:
-         _utilLightJob() {}
+         _utilLightJob() { _jobID = 0 ; }
          virtual ~_utilLightJob() {}
 
          INT32       submit( BOOLEAN takeOver = TRUE,
                              INT32 priority = UTIL_LJOB_PRI_MID,
                              UINT64 expectAvgCost = UTIL_LJOB_DFT_AVG_COST ) ;
 
+         UINT64      getJobID() const { return _jobID ; }
+
       public:
          virtual const CHAR*     name() const = 0 ;
          virtual INT32           doit( IExecutor *pExe,
                                        UTIL_LJOB_DO_RESULT &result,
                                        UINT64 &sleepTime ) = 0 ;
+
+      private:
+         UINT64      _jobID ;
 
    } ;
    typedef _utilLightJob utilLightJob ;
@@ -170,9 +175,11 @@ namespace engine
          BOOLEAN        isEmpty() ;
 
          BOOLEAN        pop( utilLightJobInfo &job, INT64 millisec ) ;
+         UINT64         allocID() ;
 
       private:
          ossPriorityQueue<utilLightJobInfo>     _queue ;
+         ossAtomic64                            _id ;
 
    } ;
    typedef _utilLightJobMgr utilLightJobMgr ;
