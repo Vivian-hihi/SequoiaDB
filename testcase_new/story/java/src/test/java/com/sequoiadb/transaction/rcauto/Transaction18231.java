@@ -22,15 +22,16 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @testcase seqDB-18230:query and update操作失败自动回滚
+ * @testcase seqDB-18231:query and remove操作失败自动回滚
  * @date 2019-4-16
  * @author yinzhen
  *
  */
 @Test(groups = "rcauto")
-public class Transaction18230 extends SdbTestBase {
+public class Transaction18231 extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "cl18230";
+    private Sequoiadb db1;
+    private String clName = "cl18231";
     private DBCollection cl = null;
     private List<String> groupNames;
     private List<BSONObject> expList = new ArrayList<>();
@@ -52,6 +53,7 @@ public class Transaction18230 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);
@@ -63,33 +65,38 @@ public class Transaction18230 extends SdbTestBase {
 
     @Test
     public void test() {
+        db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        DBCollection cl1 = db1.getCollectionSpace(csName).getCollection(clName);
+
         // 集合使用分区表，插入的记录分布在多个组上
         cl.split(groupNames.get(0), groupNames.get(1), (BSONObject) JSON.parse("{b:50}"),
                 (BSONObject) JSON.parse("{b:200}"));
 
         // 在集合中创建正序的唯一索引，比如：a为唯一索引，并插入多条包含索引字段的记录R1s
-        cl.createIndex("idx18230", "{a:1, b:1}", true, false);
+        cl.createIndex("idx18231", "{a:-1, b:-1}", true, false);
         insertData();
 
-        // 再插入记录R2，索引字段值R2大于R1s
-        BSONObject record = (BSONObject) JSON.parse("{_id:250, a:250, b:250}");
-        cl.insert(record);
-        expList.add(record);
+        // 开启事务1，插入记录R2，索引字段值R1s大于R2
+        db1.beginTransaction();
+        BSONObject record = (BSONObject) JSON.parse("{_id:-10, a:-10, b:-10}");
+        expList.add(0, record);
+        cl1.insert(record);
 
-        DBCursor cursor = cl.query("", "", "{a:1, b:1}", "");
+        DBCursor cursor = cl1.query("", "", "{a:1, b:1}", "");
         List<BSONObject> actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, expList);
 
-        // 使用query and update批量更新记录R1s为R2s，过程中某条记录由于唯一索引键与R2冲突导致更新失败，更新操作走索引
-        // ERROR ：分区表不使用 sort 参数的话会导致回滚失败，普通表则不会
+        // 使用query and remove批量删除记录R1s及R2，删除操作走索引，等待死锁超时后，提交事务1
+        // ERROR：普通表阻塞后回滚，分区表不会回滚
         try {
-            cursor = cl.queryAndUpdate((BSONObject) JSON.parse("{$and:[{a:{$gte:0}},{a:{$lt:200}}]}"), null, null,
-                    (BSONObject) JSON.parse("{'':'idx18230'}"), (BSONObject) JSON.parse("{$inc:{a:100}}"), 0, -1, 0,
-                    true);
+            cursor = cl.queryAndRemove((BSONObject) JSON.parse("{$and:[{a:{$gte:-10}},{a:{$lt:200}}]}"), null, null,
+                    (BSONObject) JSON.parse("{'':'idx18231'}"), 0, -1, 0);
             actList = TransUtils.getReadActList(cursor);
             Assert.fail("Auto Rollback Error");
         } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -38);
+            Assert.assertEquals(e.getErrorCode(), -13);
+        } finally {
+            db1.commit();
         }
 
         cursor = cl.query("", "", "{a:1, b:1}", "");
@@ -99,12 +106,10 @@ public class Transaction18230 extends SdbTestBase {
 
     private void insertData() {
         List<BSONObject> records = new ArrayList<>();
-        for (int i = 0; i < 99; i++) {
+        for (int i = 0; i < 51; i++) {
             BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ", a:" + i + ", b:" + i + "}");
             records.add(record);
         }
-
-        records.add((BSONObject) JSON.parse("{_id:200, a:150, b:250}"));
         expList.addAll(records);
         Collections.shuffle(records);
         cl.insert(records);
