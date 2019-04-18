@@ -2294,30 +2294,19 @@ namespace engine
       // invoke call back function before release
       if( callback )
       {
-         // must release bkt latch before calling callback function.
-         // otherwise we could cause dead latch because we might acquire
-         // in memory idx tree latch under the cover
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
          callback->beforeLockRelease( lockId,
                                       pMyLRB->lockMode,
                                       pMyLRB->refCounter,
                                       pLRBHdr,
                                       pLRBHdr ? &(pLRBHdr->extData) :
                                                 NULL ) ;
-         _acquireOpLatch( bktIdx ) ;
-         bLatched = TRUE ;
       }
       else if ( pLRBHdr && pLRBHdr->extData._onLockReleaseFunc )
       {
-         _releaseOpLatch( bktIdx ) ;
-         bLatched = FALSE ;
          pLRBHdr->extData._onLockReleaseFunc( lockId,
                                               pMyLRB->lockMode,
                                               pMyLRB->refCounter,
                                               &(pLRBHdr->extData) ) ;
-         _acquireOpLatch( bktIdx ) ;
-         bLatched = TRUE ;
       }
 
       if ( 0 == pMyLRB->refCounter )
