@@ -46,8 +46,7 @@ public class IndexKeyLengthLimit18052 extends SdbTestBase {
 	}
 	
 	private String csName = "index_18052";
-	private String clName = "index_18052";
-	private AtomicInteger count =  new AtomicInteger(0);
+	private String clName = "index_18052";	
 	private AtomicInteger count1 =  new AtomicInteger(10);
 	
 	@BeforeClass
@@ -57,9 +56,8 @@ public class IndexKeyLengthLimit18052 extends SdbTestBase {
 	// create index then insert
 	@Test(dataProvider = "pagesizeProvider")
 	public void testIndexInAnyPageSize(int pageSize, int length){
-		try(Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");){
-			int no = count.getAndIncrement();
-			String subCSName = csName + "_" + no;			
+		try(Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");){			
+			String subCSName = csName + "_pagesize" + pageSize;			
 			DBCollection cl = IndexUtils.createCSAndCL( sdb, subCSName, clName, pageSize);
 			
 			cl.createIndex("testindex", "{'testa':1}", true, false);			

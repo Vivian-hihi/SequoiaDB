@@ -4,7 +4,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.annotations.BeforeClass;
@@ -49,9 +48,7 @@ public class IndexKeyLengthLimit18053 extends SdbTestBase {
 	}
 
 	private String csName = "index_18053";
-	private String clName = "index_18053";
-	private AtomicInteger count = new AtomicInteger(0);
-	private AtomicInteger count1 = new AtomicInteger(10);
+	private String clName = "index_18053";		
 
 	@BeforeClass
 	public void setUp() {
@@ -60,9 +57,8 @@ public class IndexKeyLengthLimit18053 extends SdbTestBase {
 	// create index then insert
 	@Test(dataProvider = "pagesizeProvider")
 	public void testIndexInAnyPageSize(int pageSize, int length1, int length2) {
-		try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
-			int no = count.getAndIncrement();
-			String subCSName = csName + "_" + no;
+		try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {			
+			String subCSName = csName + "_pagesize" + pageSize;
 			DBCollection cl = IndexUtils.createCSAndCL(sdb, subCSName, clName, pageSize);
 			cl.createIndex("testindex", "{'testa':1,'str':-1}", true, false);
 			insertData(cl, length1, length2, false);
@@ -77,9 +73,8 @@ public class IndexKeyLengthLimit18053 extends SdbTestBase {
 	// insert then create index
 	@Test(dataProvider = "pagesizeProvider")
 	public void testIndexInAnyPageSize1(int pageSize, int length1, int length2) {
-		try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
-			int no = count1.getAndIncrement();
-			String subCSName = csName + "_" + no;
+		try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {			
+			String subCSName = csName + "_ps" + pageSize;
 			DBCollection cl = IndexUtils.createCSAndCL(sdb, subCSName, clName, pageSize);
 			// the keyValue length exceeds maximum:maxlength + 1
 			insertData(cl, length1, length2, true);

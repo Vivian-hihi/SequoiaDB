@@ -4,7 +4,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.annotations.BeforeClass;
@@ -44,8 +43,7 @@ public class IndexKeyLengthLimit18049 extends SdbTestBase {
 	}
 
 	private String csName = "index_18049";
-	private String clName = "index_18049";
-	private AtomicInteger count = new AtomicInteger(0);
+	private String clName = "index_18049";	
 
 	@BeforeClass
 	public void setUp() {
@@ -53,9 +51,8 @@ public class IndexKeyLengthLimit18049 extends SdbTestBase {
 
 	@Test(dataProvider = "pagesizeProvider")
 	public void testIndexInAnyPageSize(int pageSize, int length) {
-		try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
-			int no = count.getAndIncrement();
-			String subCSName = csName + "_" + no;
+		try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {			
+			String subCSName = csName + "_pagesize" + pageSize;
 			DBCollection cl = IndexUtils.createCSAndCL(sdb, subCSName, clName, pageSize);
 
 			cl.createIndex("testindex", "{'testa':1}", false, false);

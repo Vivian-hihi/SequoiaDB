@@ -60,14 +60,15 @@ public class IndexUtils {
 	    Assert.assertEquals( count, expRecord.size() ) ;
 	}
 	
-	public static String getRandomString( int length){		
+	public static String getRandomString( int length){			
 		String str = "ABCDEFGHIJKLMNOPQRATUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^asssgggg!@#$";		
 		StringBuffer sbBuffer = new StringBuffer();	
 		//random generation 80-length string.
 		Random random = new Random();
-		StringBuffer subBuffer = new StringBuffer();	
-		for( int i = 0; i < str.length(); i++ ){
-			int number = random.nextInt(80);			
+		StringBuffer subBuffer = new StringBuffer();
+		int strLen = str.length();
+		for( int i = 0; i < strLen; i++ ){
+			int number = random.nextInt(strLen);			
 			subBuffer.append(str.charAt(number));
 		}
 		
@@ -78,9 +79,7 @@ public class IndexUtils {
 		}		
 		int subTimes = length%str.length();
 		if( subTimes != 0){
-			for( int i = 0; i < subTimes; i++ ){								
-				sbBuffer.append("a");				
-			}
+			sbBuffer.append( str.substring(0, subTimes) );			
 		}		
 		return sbBuffer.toString();		
 	}
