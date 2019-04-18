@@ -47,6 +47,7 @@
 #include "utilLightJobBase.hpp"
 #include "dmsCB.hpp"
 #include "dmsStorageUnit.hpp"
+#include "pmd.hpp"
 
 using namespace bson ;
 
@@ -87,6 +88,7 @@ namespace engine
             _clID = oldVer->getCLID() ;
             _csLID = oldVer->getCSLID() ;
             _clLID = oldVer->getCLLID() ;
+            _needDelete = oldVer->isDiskDeleting() ;
          }
          virtual ~_dmsReleaseLockJob() {}
 
@@ -104,6 +106,7 @@ namespace engine
          UINT16                  _clID ;
          UINT32                  _csLID ;
          UINT32                  _clLID ;
+         BOOLEAN                 _needDelete ;
    } ;
    typedef _dmsReleaseLockJob dmsReleaseLockJob ;
 
@@ -120,7 +123,8 @@ namespace engine
       dmsMBStatInfo *mbStat = NULL ;
       dmsTransLockCallback callback ;
       dpsTransRetInfo transRetInfo ;
-      sleepTime = UTIL_LJOB_DFT_AVG_COST ;
+      sleepTime = 2000000 ;
+      BOOLEAN needDelete = FALSE ;
 
       su = pDmsCB->suLock( _csID ) ;
       if ( su && su->LogicalCSID() == _csLID )
@@ -137,6 +141,7 @@ namespace engine
             else if ( SDB_OK == rcTmp )
             {
                mbStat = pContext->mbStat() ;
+               needDelete = _needDelete ;
             }
          }
       }
@@ -146,8 +151,39 @@ namespace engine
       rcTmp = pTransCB->transLockTestX( (_pmdEDUCB*)pExe, _csLID,
                                         _clID, &_recordID, &transRetInfo,
                                         &callback ) ;
-      if ( SDB_OK == rcTmp || DPS_TRANSLOCK_X == transRetInfo._lockType )
+      if ( SDB_OK == rcTmp )
       {
+         result = UTIL_LJOB_DO_FINISH ;
+
+         if ( needDelete && pmdGetOptionCB()->recycleRecord() )
+         {
+            dmsRecordRW recordRW ;
+            const dmsRecord *pRecord = NULL ;
+
+            recordRW = su->data()->record2RW( _recordID, _clID ) ;
+            recordRW.setNothrow( TRUE ) ;
+            pRecord = recordRW.readPtr<dmsRecord>() ;
+            if ( !pRecord || pRecord->getMyOffset() != _recordID._offset )
+            {
+               /// record not exist
+               goto done ;
+            }
+
+            if ( !pRecord->isDeleting() )
+            {
+               /// record not deleting
+               goto done ;
+            }
+
+            /// delete record
+            su->data()->deleteRecord( pContext, _recordID,
+                                      (ossValuePtr)pRecord,
+                                      (pmdEDUCB*)pExe, NULL, NULL, NULL ) ;
+         }
+      }
+      else if ( DPS_TRANSLOCK_X == transRetInfo._lockType )
+      {
+         /// other trans locked it, will clear
          result = UTIL_LJOB_DO_FINISH ;
       }
       else
@@ -221,7 +257,7 @@ namespace engine
       pOldVer = ( oldVersionContainer * )( pExtData->_data ) ;
       if ( pOldVer )
       {
-         delete pOldVer ;
+         SDB_OSS_DEL pOldVer ;
          pExtData->_data = 0 ;
       }
    }
@@ -527,11 +563,9 @@ namespace engine
                  DPS_TRANSLOCK_OP_MODE_TEST != opMode &&
                  !notTransOrRollback )
             {
-               memBlockPool *pPool = _transCB->getOldVCB()->getMemBlockPool() ;
                dmsRecordID rid( lockId.extentID(), lockId.offset() ) ;
-               _oldVer = new ( pPool, std::nothrow )
-                           oldVersionContainer( rid, _csID, _clID,
-                                                _csLID, _clLID ) ;
+               _oldVer = SDB_OSS_NEW oldVersionContainer( rid, _csID, _clID,
+                                                          _csLID, _clLID ) ;
                if ( !_oldVer )
                {
                   _result = SDB_OOM ;
@@ -677,7 +711,6 @@ namespace engine
          else
          {
             const dmsRecord *pRecord= pRecordRW->readPtr( 0 ) ;
-            memBlockPool *pPool = _transCB->getOldVCB()->getMemBlockPool() ;
 
             // 1. get to overflow record if needed
             if ( pRecord->isOvf() )
@@ -688,7 +721,7 @@ namespace engine
                pRecord = ovfRW.readPtr( 0 ) ;
             }
             // 2. save record
-            rc = _oldVer->saveRecord( pRecord, obj, ownnerTID, pPool ) ;
+            rc = _oldVer->saveRecord( pRecord, obj, ownnerTID ) ;
             if ( rc )
             {
                goto error ;
@@ -806,9 +839,16 @@ namespace engine
                                                const BSONObj &object,
                                                const dmsRecordID &rid,
                                                const _dmsRecordRW *pRecordRW,
+                                               BOOLEAN markDeleting,
                                                _pmdEDUCB* cb )
    {
-      return saveOldVersionRecord( pRecordRW, rid, object, cb->getTID() ) ;
+      INT32 rc = SDB_OK ;
+      rc = saveOldVersionRecord( pRecordRW, rid, object, cb->getTID() ) ;
+      if ( SDB_OK == rc && markDeleting && _oldVer )
+      {
+         _oldVer->setDiskDeleting() ;
+      }
+      return rc ;
    }
 
    INT32 dmsTransLockCallback::onUpdateRecord( _dmsMBContext *context,

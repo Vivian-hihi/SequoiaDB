@@ -136,6 +136,7 @@ namespace engine
                                     const BSONObj &object,
                                     const dmsRecordID &rid,
                                     const _dmsRecordRW *pRecordRW,
+                                    BOOLEAN markDeleting,
                                     _pmdEDUCB* cb ) ;
 
       virtual INT32 onUpdateRecord( _dmsMBContext *context,

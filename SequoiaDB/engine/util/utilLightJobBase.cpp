@@ -241,11 +241,24 @@ namespace engine
 
    _utilLightJobMgr::~_utilLightJobMgr()
    {
-      SDB_ASSERT( isEmpty(), "Not empty" ) ;
-
+      SDB_ASSERT( size() == 0, "Not empty" ) ;
       utilLightJobInfo job ;
       while( pop( job, 0 ) )
       {
+         job.release() ;
+      }
+   }
+
+   void _utilLightJobMgr::fini( IExecutor *pExe )
+   {
+      utilLightJobInfo job ;
+
+      UTIL_LJOB_DO_RESULT result = UTIL_LJOB_DO_FINISH ;
+      while( pop( job, 0 ) )
+      {
+         job.doit( pExe, result ) ;
+         SDB_ASSERT( result == UTIL_LJOB_DO_FINISH,
+                     "Not finished" ) ;
          job.release() ;
       }
    }

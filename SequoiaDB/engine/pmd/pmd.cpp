@@ -514,6 +514,7 @@ namespace engine
 
       if ( _pLightJobMgr )
       {
+         _pLightJobMgr->fini( _mainEDU ) ;
          utilSetGlobalJobMgr( NULL ) ;
          SDB_OSS_DEL _pLightJobMgr ;
          _pLightJobMgr = NULL ;

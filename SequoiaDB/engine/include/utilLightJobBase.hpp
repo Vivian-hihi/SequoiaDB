@@ -154,6 +154,8 @@ namespace engine
          _utilLightJobMgr() ;
          virtual ~_utilLightJobMgr() ;
 
+         void           fini( IExecutor *pExe ) ;
+
       public:
          virtual void   push( utilLightJob *pJob,
                               BOOLEAN takeOver = TRUE,
@@ -161,7 +163,6 @@ namespace engine
                               UINT64 expectAvgCost = UTIL_LJOB_DFT_AVG_COST ) ;
 
          virtual void   push( const utilLightJobInfo &job ) ;
-
 
       public:
 

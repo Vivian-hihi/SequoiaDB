@@ -56,346 +56,6 @@ namespace engine
       return ss.str() ;
    }
 
-   MEMBLOCKPOOL_TYPE dpsSize2MemType( UINT32 size )
-   {
-      if ( size <= 64 )
-      {
-         return MEMBLOCKPOOL_TYPE_64 ;
-      }
-      else if ( size <= 128 )
-      {
-         return MEMBLOCKPOOL_TYPE_128 ;
-      }
-      else if ( size <= 256 )
-      {
-         return MEMBLOCKPOOL_TYPE_256 ;
-      }
-      else if ( size <= 1024 )
-      {
-         return MEMBLOCKPOOL_TYPE_1024 ;
-      }
-      else if ( size <= 4096 )
-      {
-         return MEMBLOCKPOOL_TYPE_4096 ;
-      }
-
-      return MEMBLOCKPOOL_TYPE_DYN ;
-   }
-
-   #define DPS_MEM_ACQUIRE_MAX_TRY_LEVEL     ( 3 )
-
-   // memBlockPool default constructor, 
-   memBlockPool::memBlockPool()
-   : _numDynamicAlloc64B( 0 ),
-     _numDynamicAlloc128B( 0 ),
-     _numDynamicAlloc256B( 0 ),
-     _numDynamicAlloc1K( 0 ),
-     _numDynamicAlloc4K( 0 )
-   {
-      _64BSeg     = NULL ;
-      _128BSeg    = NULL ;
-      _256BSeg    = NULL ;
-      _1KSeg      = NULL ;
-      _4KSeg      = NULL ;
-   }
-
-   memBlockPool::~memBlockPool()
-   {
-      fini() ;
-   }
-
-   INT32 memBlockPool::init()
-   {
-      INT32 rc = SDB_OK ;
-
-      /// when alloc or init failed, ignored
-      _64BSeg = SDB_OSS_NEW _utilSegmentManager<element64B>() ;
-      if ( _64BSeg )
-      {
-         rc = _64BSeg->init( DEFAULT_SEG_SIZE_FOR_SMALL_REC,
-                             MAX_SEG_SIZE_FOR_SMALL_REC ) ;
-         if ( rc )
-         {
-            SDB_OSS_DEL _64BSeg ;
-            _64BSeg = NULL ;
-            rc = SDB_OK ;
-         }
-      }
-
-      _128BSeg = SDB_OSS_NEW _utilSegmentManager<element128B>() ;
-      if ( _128BSeg )
-      {
-         rc = _128BSeg->init( DEFAULT_SEG_SIZE_FOR_SMALL_REC,
-                              MAX_SEG_SIZE_FOR_SMALL_REC ) ;
-         if ( rc )
-         {
-            SDB_OSS_DEL _128BSeg ;
-            _128BSeg = NULL ;
-            rc = SDB_OK ;
-         }
-      }
-
-      _256BSeg = SDB_OSS_NEW _utilSegmentManager<element256B>() ;
-      if ( _256BSeg )
-      {
-         rc = _256BSeg->init( DEFAULT_SEG_SIZE_FOR_SMALL_REC,
-                              MAX_SEG_SIZE_FOR_SMALL_REC ) ;
-         if ( rc )
-         {
-            SDB_OSS_DEL _256BSeg ;
-            _256BSeg = NULL ;
-            rc = SDB_OK ;
-         }
-      }
-
-      _1KSeg = SDB_OSS_NEW _utilSegmentManager<element1K>() ;
-      if ( _1KSeg )
-      {
-         rc = _1KSeg->init( DEFAULT_SEG_SIZE_FOR_LARGE_REC,
-                            MAX_SEG_SIZE_FOR_LARGE_REC ) ;
-         if ( rc )
-         {
-            SDB_OSS_DEL _1KSeg ;
-            _1KSeg = NULL ;
-            rc = SDB_OK ;
-         }
-      }
-
-      _4KSeg = SDB_OSS_NEW _utilSegmentManager<element4K>() ;
-      if ( _4KSeg )
-      {
-         rc = _4KSeg->init( DEFAULT_SEG_SIZE_FOR_LARGE_REC,
-                            MAX_SEG_SIZE_FOR_LARGE_REC ) ;
-         if ( rc )
-         {
-            SDB_OSS_DEL _4KSeg ;
-            _4KSeg = NULL ;
-            rc = SDB_OK ;
-         }
-      }
-
-      return rc ;
-   }
-
-   void memBlockPool::fini()
-   {
-      if ( _64BSeg )
-      {
-         SDB_OSS_DEL _64BSeg ;
-         _64BSeg = NULL ;
-      }
-      if ( _128BSeg )
-      {
-         SDB_OSS_DEL _128BSeg ;
-         _128BSeg = NULL ;
-      }
-      if ( _256BSeg )
-      {
-         SDB_OSS_DEL _256BSeg ;
-         _256BSeg = NULL ;
-      }
-      if ( _1KSeg )
-      {
-         SDB_OSS_DEL _1KSeg ;
-         _1KSeg = NULL ;
-      }
-      if ( _4KSeg )
-      {
-         SDB_OSS_DEL _4KSeg ;
-         _4KSeg = NULL ;
-      }
-   }
-
-   // Description:
-   //   acquire memory block in proper pool based on the asked size.
-   //   if we runout of space, we will dynamically allocate space
-   // Input:
-   //   askSize: size to alloc
-   // Output:
-   //   memBlock: address of the pointer to the memory block
-   //   type:     pointer to where the memory was allocated
-   // Return code:
-   //   rc:  return SDB_OK if succeeded, otherwise error code
-   //
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_MEMBLOCKPOOL_ACQUIRE, "memBlockPool::acquire" )
-   INT32 memBlockPool::acquire( UINT32 askSize, CHAR * &memBlock )
-   {
-      PD_TRACE_ENTRY( SDB_MEMBLOCKPOOL_ACQUIRE ) ;
-      INT32  rc = SDB_OK ;
-      MEMBLOCKPOOL_TYPE type = MEMBLOCKPOOL_TYPE_MAX ;
-
-      UINT32 realSize = 0 ;
-      UINT32 realType = MEMBLOCKPOOL_TYPE_MAX ;
-      CHAR *ptr = NULL ;
-      UINT32 tryLevel = 0 ;
-
-      // input argument NOT NULL and NOT 0 check
-      SDB_ASSERT( askSize > 0, "Invalid arguments" ) ;
-
-      if ( 0 == askSize )
-      {
-         goto done ;
-      }
-
-      realSize = DPS_MEM_SIZE_2_REALSIZE( askSize ) ;
-      type = dpsSize2MemType( realSize ) ;
-
-      switch ( type )
-      {
-         case MEMBLOCKPOOL_TYPE_64 :
-            if ( _64BSeg && SDB_OK == _64BSeg->acquire( (element64B*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_64 ;
-               break ;
-            }
-            _numDynamicAlloc64B.inc() ;
-            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_128 :
-            if ( _128BSeg && SDB_OK == _128BSeg->acquire( (element128B*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_128 ;
-               break ;
-            }
-            _numDynamicAlloc128B.inc() ;
-            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_256 :
-            if ( _256BSeg && SDB_OK == _256BSeg->acquire( (element256B*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_256 ;
-               break ;
-            }
-            _numDynamicAlloc256B.inc() ;
-            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_1024 :
-            if ( _1KSeg && SDB_OK == _1KSeg->acquire( (element1K*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_1024 ;
-               break ;
-            }
-            _numDynamicAlloc1K.inc() ;
-            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_4096 :
-            if ( _4KSeg && SDB_OK == _4KSeg->acquire( (element4K*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_4096 ;
-               break ;
-            }
-            _numDynamicAlloc4K.inc() ;
-            if ( ++tryLevel >= DPS_MEM_ACQUIRE_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         default :
-            break ;
-      }
-
-      if ( !ptr )
-      {
-         ptr = (CHAR*)SDB_OSS_MALLOC( realSize ) ;
-         if ( !ptr )
-         {
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         realType = MEMBLOCKPOOL_TYPE_DYN ;
-      }
-
-      /// set type
-      *DPS_MEM_PTR_TYPEPTR( ptr ) = realType ;
-      /// set addr
-      *DPS_MEM_PTR_ADDRPTR( ptr ) = (UINT64)this ;
-      /// set user ptr
-      memBlock = DPS_MEM_PTR_2_USERPTR( ptr ) ;
-
-   done :
-      PD_TRACE3( SDB_MEMBLOCKPOOL_ACQUIRE,
-                 PD_PACK_UINT(askSize),
-                 PD_PACK_UINT(realSize),
-                 PD_PACK_UINT(realType) ) ;
-      PD_TRACE_EXITRC( SDB_MEMBLOCKPOOL_ACQUIRE, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // Description:
-   //   release memory block to proper pool based on the type
-   // Input:
-   //   memBlock: pointer to the memory block address
-   //
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_MEMBLOCKPOOL_RELEASE, "memBlockPool::release" )
-   void memBlockPool::release( CHAR * &memBlock )
-   {
-      PD_TRACE_ENTRY( SDB_MEMBLOCKPOOL_RELEASE );
-      INT32 rc = SDB_OK ;
-      UINT32 type = MEMBLOCKPOOL_TYPE_MAX ;
-      CHAR *ptr = NULL ;
-
-      SDB_ASSERT( ( NULL != memBlock ), "Invalid arguments" ) ;
-
-      if ( NULL == memBlock )
-      {
-         goto done ;
-      }
-
-      ptr = DPS_MEM_USERPTR_2_PTR( memBlock ) ;
-      type = *DPS_MEM_PTR_TYPEPTR( ptr ) ;
-
-      switch (type) 
-      {
-         case MEMBLOCKPOOL_TYPE_64 :
-            rc = _64BSeg->release( (element64B *)ptr ) ;
-            break ;
-         case MEMBLOCKPOOL_TYPE_128:
-            rc = _128BSeg->release( (element128B *)ptr ) ;
-            break ;
-         case MEMBLOCKPOOL_TYPE_256:
-            rc = _256BSeg->release( (element256B *)ptr) ;
-            break ;
-         case MEMBLOCKPOOL_TYPE_1024:
-            rc = _1KSeg->release( (element1K *)ptr ) ;
-            break ;
-         case MEMBLOCKPOOL_TYPE_4096:
-            rc = _4KSeg->release( (element4K *)ptr ) ;
-            break ;
-         case MEMBLOCKPOOL_TYPE_DYN :
-            SDB_OSS_FREE( ptr ) ;
-            break ;
-         default:
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Invalid type (%d)", type ) ;
-            SDB_ASSERT( FALSE, "Invalid arguments" ) ;
-            break ;
-      }
-
-      SDB_ASSERT( ( SDB_OK == rc ), "Sever error during release" ) ;
-
-      if ( SDB_OK == rc )
-      {
-         memBlock = NULL ;
-      }
-
-   done:
-      PD_TRACE_EXIT( SDB_MEMBLOCKPOOL_RELEASE ) ;
-   }
-
    /*
       dpsOldRecordPtr implement
    */
@@ -442,15 +102,9 @@ namespace engine
 
          if ( 1 == orgRef )
          {
-            CHAR *realPtr = DPS_MEM_USERPTR_2_PTR( _ptr ) ;
-            memBlockPool *pPool = NULL ;
-            pPool = ( memBlockPool* )*DPS_MEM_PTR_ADDRPTR( realPtr ) ;
-            SDB_ASSERT( pPool, "Memeory is invalid" ) ;
-
-            if ( pPool )
-            {
-               pPool->release( _ptr ) ;
-            }
+            utilGetGlobalMemPool() ? 
+               utilGetGlobalMemPool()->release( (void*&)_ptr ) :
+               SDB_OSS_FREE( (void*)_ptr ) ;
             _ptr = NULL ;
          }
       }
@@ -491,8 +145,7 @@ namespace engine
       return *this ;
    }
 
-   dpsOldRecordPtr dpsOldRecordPtr::alloc( memBlockPool *pPool,
-                                           UINT32 size )
+   dpsOldRecordPtr dpsOldRecordPtr::alloc( UINT32 size )
    {
       dpsOldRecordPtr recordPtr ;
 
@@ -501,7 +154,10 @@ namespace engine
          UINT32 realSZ = size + sizeof( INT32 ) ;
          CHAR *ptr = NULL ;
 
-         if ( SDB_OK == pPool->acquire( realSZ, ptr ) )
+         ptr = ( CHAR* )( utilGetGlobalMemPool() ?
+                              utilGetGlobalMemPool()->alloc( realSZ ) :
+                              SDB_OSS_MALLOC( realSZ ) ) ;
+         if ( ptr )
          {
             *(INT32*)ptr = 1 ;
             recordPtr._ptr = ptr ;
@@ -1320,35 +976,20 @@ namespace engine
 
    INT32 oldVersionCB::init()
    {
-      INT32 rc = SDB_OK ;
-
-      rc = _memBlockPool.init() ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Init mem pool failed, rc: %d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    void oldVersionCB::fini()
    {
       /// check tree nodes
-      /*
       IDXID_TO_TREE_MAP_IT it = _idxTrees.begin() ;
       while( it != _idxTrees.end() )
       {
          SDB_ASSERT( it->second->empty(), "Index tree should be empty" ) ;
          ++it ;
       }
-      */
-      _idxTrees.clear() ;
 
-      _memBlockPool.fini() ;
+      _idxTrees.clear() ;
    }
 
    // Create an in memory index tree and add to the map
@@ -1608,41 +1249,6 @@ namespace engine
       releaseRecord() ;
    }
 
-   void* oldVersionContainer::operator new( size_t size,
-                                            memBlockPool *pPool,
-                                            std::nothrow_t )
-   {
-      CHAR *p = NULL ;
-      SDB_ASSERT( pPool && size > 0, "Arg is invalid" ) ;
-
-      pPool->acquire( (UINT32)size, p ) ;
-
-      return (void*)p ;
-   }
-
-   void oldVersionContainer::operator delete ( void *p )
-   {
-      if ( p )
-      {
-         CHAR *realPtr = DPS_MEM_USERPTR_2_PTR( p ) ;
-         memBlockPool* pPool = NULL ;
-         pPool = (memBlockPool*)*DPS_MEM_PTR_ADDRPTR( realPtr ) ;
-         SDB_ASSERT( pPool, "Memeory is invalid" ) ;
-
-         if ( pPool )
-         {
-            pPool->release( (CHAR*&)p ) ;
-         }
-      }
-   }
-
-   void oldVersionContainer::operator delete ( void *p,
-                                               memBlockPool *pPool,
-                                               std::nothrow_t )
-   {
-      oldVersionContainer::operator delete( p ) ;
-   }
-
    BOOLEAN oldVersionContainer::isRecordEmpty() const
    {
       if ( _isDummyRecord || _isNewRecord || _recordPtr.get() )
@@ -1669,8 +1275,7 @@ namespace engine
 
    INT32 oldVersionContainer::saveRecord( const dmsRecord *pRecord,
                                           const BSONObj &obj,
-                                          UINT32 ownnerTID,
-                                          memBlockPool *pPool )
+                                          UINT32 ownnerTID )
    {
       INT32 rc = SDB_OK ;
       UINT32 recSize = 0 ;
@@ -1685,7 +1290,7 @@ namespace engine
       }
 
       recSize = DMS_RECORD_METADATA_SZ + obj.objsize() ;
-      _recordPtr = dpsOldRecordPtr::alloc( pPool, recSize ) ;
+      _recordPtr = dpsOldRecordPtr::alloc( recSize ) ;
       if ( !_recordPtr.get() )
       {
          PD_LOG( PDERROR, "Alloc memory(%u) failed, rc: %d",

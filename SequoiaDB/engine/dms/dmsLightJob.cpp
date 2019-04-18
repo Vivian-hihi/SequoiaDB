@@ -36,6 +36,7 @@
 #include "dmsLightJob.hpp"
 #include "dmsCB.hpp"
 #include "dmsStorageUnit.hpp"
+#include "pmd.hpp"
 
 namespace engine
 {
@@ -72,7 +73,7 @@ namespace engine
       dmsMBContext *pContext = NULL ;
       dmsRecordRW recordRW ;
       const dmsRecord *pRecord = NULL ;
-      sleepTime = 1000000 ;   /// 1 second
+      sleepTime = 60000000 ;   /// 60 second
 
       su = pDmsCB->suLock( _csID ) ;
       if ( !su || su->LogicalCSID() != _csLID )
@@ -151,28 +152,32 @@ namespace engine
    void dmsStartAsyncDeleteRecord( INT32 csID, UINT16 clID,
                                    UINT32 csLID, UINT32 clLID,
                                    const dmsRecordID &rid )
-   {/*
-      INT32 rc = SDB_OK ;
-      dmsDeleteRecordJob *pJob = NULL ;
+   {
+      if ( pmdGetOptionCB()->recycleRecord() )
+      {
+         INT32 rc = SDB_OK ;
+         dmsDeleteRecordJob *pJob = NULL ;
 
-      pJob = SDB_OSS_NEW dmsDeleteRecordJob( csID, clID, csLID, clLID, rid ) ;
-      if ( !pJob )
-      {
-         PD_LOG( PDWARNING, "Alloc dmsDeleteRecordJob(CSID:%u, CLID:%u, "
-                 "CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) failed",
-                 csID, clID, csLID, clLID, rid._extent, rid._extent ) ;
-      }
-      else
-      {
-         rc = pJob->submit( TRUE ) ;
-         if ( rc )
+         pJob = SDB_OSS_NEW dmsDeleteRecordJob( csID, clID, csLID,
+                                                clLID, rid ) ;
+         if ( !pJob )
          {
-            PD_LOG( PDWARNING, "Submit dmsDeleteRecordJob(CSID:%u, CLID:%u, "
-                    "CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) failed, "
-                    "rc: %d", csID, clID, csLID, clLID, rid._extent,
-                    rid._extent, rc ) ;
+            PD_LOG( PDWARNING, "Alloc dmsDeleteRecordJob(CSID:%u, CLID:%u, "
+                    "CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) failed",
+                    csID, clID, csLID, clLID, rid._extent, rid._extent ) ;
          }
-      }*/
+         else
+         {
+            rc = pJob->submit( TRUE ) ;
+            if ( rc )
+            {
+               PD_LOG( PDWARNING, "Submit dmsDeleteRecordJob(CSID:%u, CLID:%u, "
+                       "CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) failed, "
+                       "rc: %d", csID, clID, csLID, clLID, rid._extent,
+                       rid._extent, rc ) ;
+            }
+         }
+      }
    }
 
 }

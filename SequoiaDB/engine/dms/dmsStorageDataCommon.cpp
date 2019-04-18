@@ -3567,6 +3567,7 @@ namespace engine
                   {
                      rc = pHandler->onDeleteRecord( context, delObject,
                                                     recordID, &recordRW,
+                                                    markDeleting,
                                                     cb ) ;
                      if ( rc )
                      {
@@ -3645,10 +3646,6 @@ namespace engine
             // need to dec count
             --( pExtent->_recCount ) ;
             --( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
-
-            /// start light job to delete the record async
-            dmsStartAsyncDeleteRecord( CSID(), context->mbID(), logicalID(),
-                                       context->clLID(), recordID ) ;
          }
 
          if ( !isDeleting )
@@ -3712,6 +3709,12 @@ namespace engine
       if ( 0 != logRecSize )
       {
          pTransCB->releaseLogSpace( logRecSize, cb ) ;
+      }
+      if ( markDeleting && ( !inTrans || isDeleting ) )
+      {
+         /// start light job to delete the record async
+         dmsStartAsyncDeleteRecord( CSID(), context->mbID(), logicalID(),
+                                    context->clLID(), recordID ) ;
       }
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON_DELETERECORD, rc ) ;
       return rc ;

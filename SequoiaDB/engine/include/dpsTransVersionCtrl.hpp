@@ -45,7 +45,8 @@
 #include "ossAtomic.hpp"
 #include "ossLatch.hpp"
 #include "dmsRecord.hpp"
-#include "utilSegment.hpp"
+#include "utilMemBlockPool.hpp"
+#include "utilPooledObject.hpp"
 #include "clsCatalogAgent.hpp"
 #include "../bson/ordering.h"
 #include "ossMemPool.hpp"
@@ -60,34 +61,6 @@ namespace engine
    class dpsTransCB ;
    class dpsTransLRBHeader ;
    class oldVersionContainer ;
-
-   typedef  CHAR    element64B[64];
-   typedef  CHAR    element128B[128];
-   typedef  CHAR    element256B[256];
-   typedef  CHAR    element1K[1024];
-   typedef  CHAR    element4K[4096];
-
-   // FIXME: provide nub to update through config
-   // All these numbers should be power of 2
-   // default seg size for large record (1K/4K)
-   #define  DEFAULT_SEG_SIZE_FOR_LARGE_REC   (8192)
-   #define  MAX_SEG_SIZE_FOR_LARGE_REC       (DEFAULT_SEG_SIZE_FOR_LARGE_REC*64)
-   // default seg size for small record (16B/32B/128B)
-   #define  DEFAULT_SEG_SIZE_FOR_SMALL_REC   (DEFAULT_SEG_SIZE_FOR_LARGE_REC*8)
-   #define  MAX_SEG_SIZE_FOR_SMALL_REC       (MAX_SEG_SIZE_FOR_LARGE_REC*32)
-
-   enum MEMBLOCKPOOL_TYPE
-   {
-      MEMBLOCKPOOL_TYPE_DYN = 1,  // dynamically allocate space
-      MEMBLOCKPOOL_TYPE_64,       // allocate from 64B pool
-      MEMBLOCKPOOL_TYPE_128,
-      MEMBLOCKPOOL_TYPE_256,
-      MEMBLOCKPOOL_TYPE_1024,
-      MEMBLOCKPOOL_TYPE_4096,
-      MEMBLOCKPOOL_TYPE_MAX
-   } ;
-
-   MEMBLOCKPOOL_TYPE dpsSize2MemType( UINT32 size ) ;
 
    // globIdxID uniquely define an index globally
    class globIdxID : public SDBObject
@@ -140,67 +113,6 @@ namespace engine
       string toString() const ;
    } ;
 
-   /// Memory info:
-   /// | Type(4) | PoolAddr(8) | User Data |
-
-   #define DPS_MEM_SIZE_2_REALSIZE( sz ) \
-         ( (UINT32)sz + sizeof( UINT32 ) + sizeof( UINT64 ) )
-
-   #define DPS_MEM_PTR_2_USERPTR( ptr ) \
-         ( (CHAR*)(ptr) + sizeof(UINT32) + sizeof(UINT64) )
-
-   #define DPS_MEM_USERPTR_2_PTR( userPtr ) \
-         ( (CHAR*)(userPtr) - sizeof(UINT64) - sizeof(UINT32) )
-
-   #define DPS_MEM_PTR_TYPEPTR( ptr )  ( (UINT32*)(CHAR*)(ptr) )
-   #define DPS_MEM_PTR_ADDRPTR( ptr )  \
-         ( (UINT64*)((CHAR*)(ptr) + sizeof( UINT32 )) )
-
-   /** definition of memBlockPool
-    *  memBlockPool is a place holder for a set of memory pools based on 
-    *  the fixed size of element in the pool
-    **/
-   class memBlockPool : public SDBObject
-   {
-   // public interfaces:
-   public: 
-      // constructor 
-      // default one, might use db config
-      memBlockPool() ;
-
-      //memBlockPool( UINT32 size1, UINT32 size2, Uint32 size3,
-      //              UINT32 size4, UINT32 size5);
-
-      // destructor
-      ~memBlockPool() ;
-
-      INT32 init() ;
-      void  fini() ;
-
-      INT32 acquire( UINT32 askSize, CHAR * &memBlock ) ;
-
-      void  release( CHAR *&memBlock ) ;
-
-      // FIXME: provide interface to access monitor counters
-
-   // private attributes:
-   private:
-      _utilSegmentManager<element64B>  *_64BSeg; // mem segs with 64B element
-      _utilSegmentManager<element128B> *_128BSeg;// mem segs with 128B element
-      _utilSegmentManager<element256B> *_256BSeg;// mem segs with 256B element 
-      _utilSegmentManager<element1K>   *_1KSeg;  // mem segs with 1 KB element
-      _utilSegmentManager<element4K>   *_4KSeg;  // mem segs with 4 KB element
-
-      // counters for monitor
-
-      // how many times we dynamic alloc because we failed in each segment
-      ossAtomic32  _numDynamicAlloc64B ;
-      ossAtomic32  _numDynamicAlloc128B ;
-      ossAtomic32  _numDynamicAlloc256B ;
-      ossAtomic32  _numDynamicAlloc1K ;
-      ossAtomic32  _numDynamicAlloc4K ;
-   } ;
-
    /*
       dpsTransRecordPtr define
    */
@@ -219,7 +131,7 @@ namespace engine
          operator BOOLEAN () { return get() ? TRUE : FALSE ; }
          operator const CHAR* () { return get() ; }
 
-         static dpsOldRecordPtr alloc( memBlockPool *pPool, UINT32 size ) ;
+         static dpsOldRecordPtr alloc( UINT32 size ) ;
 
       public:
          CHAR*       get() ;
@@ -647,8 +559,6 @@ namespace engine
                                             UINT16 clID,
                                             BOOLEAN hasLock ) ;
 
-      memBlockPool*     getMemBlockPool() { return  &_memBlockPool ; }
-
    // private attributes
    private:
       // latch to protect the fields. Should hold it in X to initialize and 
@@ -656,8 +566,6 @@ namespace engine
       ossSpinSLatch       _oldVersionCBLatch ;
       IDXID_TO_TREE_MAP   _idxTrees ;     // in memory trees holding older 
                                           // version of indexes
-      memBlockPool        _memBlockPool ; // pool of memory blocks holding old 
-                                          // version of records
  
    } ;
 
@@ -726,7 +634,7 @@ namespace engine
 
    // Class to store all information for old version record/indexes. This 
    // container is currently hanging off LRBHdr
-   class oldVersionContainer : public SDBObject
+   class oldVersionContainer : public _utilPooledObject
    {
       friend class preIdxTree ;
 
@@ -735,13 +643,6 @@ namespace engine
                            INT32 csID, UINT16 clID,
                            UINT32 csLID, UINT32 clLID ) ;
       ~oldVersionContainer() ;
-
-      void* operator new ( size_t size, memBlockPool *pPool,
-                           std::nothrow_t ) ;
-
-      void operator delete ( void *p ) ;
-      void operator delete ( void *p, memBlockPool *pPool,
-                             std::nothrow_t ) ;
 
       BOOLEAN              isRecordEmpty() const ;
 
@@ -757,8 +658,7 @@ namespace engine
 
       INT32                saveRecord( const dmsRecord *pRecord,
                                        const BSONObj &obj,
-                                       UINT32 ownnerTID,
-                                       memBlockPool *pPool ) ;
+                                       UINT32 ownnerTID ) ;
       void                 releaseRecord() ;
 
       void                 setRecordDeleted() ;

@@ -43,7 +43,7 @@ namespace engine
       Global define
    */
    #define PMD_LJOB_CONTROL_INTERVAL         ( 500 )     /// ms
-   #define PMD_LJOB_INTERVAL                 ( 2000 )    /// ms
+   #define PMD_LJOB_INTERVAL                 ( 1000 )    /// ms
    #define PMD_LJOB_MIN_EXE_NUM              ( 1 )
    #define PMD_LJOB_DFT_MAX_EXE_NUM          ( 10 )
    #define PMD_LJOB_IDLE_TIMEOUT             ( 300 * OSS_ONE_SEC )
