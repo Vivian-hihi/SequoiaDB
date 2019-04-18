@@ -923,7 +923,8 @@ namespace engine
       }
 
       // Push the unselected positions in the end of selected positions
-      if ( !selectedPositions.empty() )
+      if ( !selectedPositions.empty() &&
+           !instanceOption.isPreferredStrict() )
       {
          UINT8 tmpPos = (UINT8)random ;
          for ( UINT32 i = 0 ; i < nodeCount ; i ++ )
