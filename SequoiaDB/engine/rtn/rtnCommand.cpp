@@ -1079,6 +1079,13 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__RTNCREATEINDEX_DOIT ) ;
       BOOLEAN isSys = FALSE ;
 
+      if ( cb->isTransaction() )
+      {
+         PD_LOG_MSG( PDERROR, "Create index in transaction is not supported" ) ;
+         rc = SDB_OPERATION_CONFLICT ;
+         goto error ;
+      }
+
       // Currently only support text index in cluster.
       if ( _textIdx && ( CMD_SPACE_SERVICE_SHARD != getFromService() ) )
       {

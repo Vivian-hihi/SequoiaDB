@@ -196,6 +196,8 @@ namespace engine
          */
          virtual BOOLEAN _flagRollbackCataBeforeData () { return FALSE ; }
 
+         virtual BOOLEAN _allowInTransaction() const { return TRUE ; } 
+
    } ;
    typedef _coordCMD2Phase coordCMD2Phase ;
 

@@ -121,6 +121,14 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to parse arguments for command[%s], "
                    "rc: %d", getName(), rc ) ;
 
+      if ( !_allowInTransaction() && cb->isTransaction() )
+      {
+         rc = SDB_OPERATION_CONFLICT ;
+         PD_LOG_MSG( PDERROR, "Operation(%s) in transaction is not supported",
+                     getName() ) ;
+         goto error ;
+      }
+
       /************************************************************************
        * Phase 1
        * 1. Generate P1 message to Catalog
