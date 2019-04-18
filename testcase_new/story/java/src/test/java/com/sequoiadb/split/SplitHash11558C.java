@@ -84,6 +84,7 @@ public class SplitHash11558C extends SdbTestBase {
                 BSONObject vDoc = new BasicBSONObject();
                 vDoc.put("a", validDataArr.get(j));
                 vDoc.put("b", "valid");
+                vDoc.put("c", j);
                 cl.insert(vDoc);
             }
 
@@ -208,7 +209,7 @@ public class SplitHash11558C extends SdbTestBase {
         validDataArr.add(a);
 
         ArrayList<Integer> arr = new ArrayList<>();
-        // validDataArr.add(arr); /jira-4299
+        validDataArr.add(arr);
 
         arr = new ArrayList<>();
         arr.add(1);
@@ -250,6 +251,7 @@ public class SplitHash11558C extends SdbTestBase {
                 doc.put("a", new BasicBSONObject("$all", validDataArr.get(i)));
             }
             doc.put("b", "valid");
+            doc.put("c", i);
             DBCursor rc = cl.query(doc, null, null, null);
             int num = 0;
             while (rc.hasNext()) {
