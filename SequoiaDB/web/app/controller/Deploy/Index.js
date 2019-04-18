@@ -2885,8 +2885,8 @@
                      dbValid.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
                   } ) ;
                   //pg不支持‘-’，如果名字带有‘-’修改为‘_’
-                  to = to.replace( '-', '_' ) ;
-                  var relationName = sprintf( '?_?_?', fromValid[0]['value'], to, dbValid[0]['value'] ) ;
+                  var from = fromValid[0]['value'].replace( '-', '_' ) ;
+                  var relationName = sprintf( '?_?_?', from, to, dbValid[0]['value'] ) ;
 
                   setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
                   setArrayItemValue( normalInput, 'name', 'DbName', { 'value': dbValid[0]['value'], 'valid': dbValid } ) ;
@@ -2933,7 +2933,7 @@
                   } ) ;
                   
                   //pg不支持‘-’，如果名字带有‘-’修改为‘_’
-                  to = to.replace( '-', '_' ) ;
+                  value = value.replace( '-', '_' ) ;
                   var relationName = sprintf( '?_?_?', value, to, dbValid[0]['value'] ) ;
 
                   setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
@@ -2960,7 +2960,7 @@
             if( type == 'pg-sdb' )
             {
                //pg不支持‘-’，如果名字带有‘-’修改为‘_’
-               to = to.replace( '-', '_' ) ;
+               from = from.replace( '-', '_' ) ;
                relationName = sprintf( '?_?_?', from, to, value ) ;
             }  
             else if( type == 'mysql-sdb' )
@@ -2984,7 +2984,7 @@
                var dbName = current['DbName'] ;
                
                //pg不支持‘-’，如果名字带有‘-’修改为‘_’
-               value = value.replace( '-', '_' ) ;
+               from = from.replace( '-', '_' ) ;
                relationName = sprintf( '?_?_?', from, value, dbName ) ;
             }  
             else if( type == 'mysql-sdb' )
@@ -3043,7 +3043,8 @@
                   dbValid.push( { 'key': dbInfo['datname'], 'value': dbInfo['datname'] } ) ;
                } ) ;
 
-               var relationName = sprintf( '?_?_?', fromValid[0]['value'], toValid[0]['value'], dbValid[0]['value'] ) ;
+               var from = fromValid[0]['value'].replace( '-', '_' ) ;
+               var relationName = sprintf( '?_?_?', from, toValid[0]['value'], dbValid[0]['value'] ) ;
 
                setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
                setArrayItemValue( normalInput, 'name', 'DbName', { 'value': dbValid[0]['value'], 'valid': dbValid } ) ;
