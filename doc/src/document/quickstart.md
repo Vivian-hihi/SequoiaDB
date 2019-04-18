@@ -288,7 +288,6 @@
    > **Note:**
    > 
    > * 如果需要修改创建节点的端口号，可在 tools/deploy/sequoiadb.conf 和 tools/deploy/mysql.conf 中修改配置。
-   > *
    > * 如果需要部署 SequoiaDB 到多台机器，请确保配置了主机/ IP 的映射关系，详细见[配置主机名和主机名/ IP 映射关系](installation/system/system_requirement.md#软件要求)。
 
 - 使用 sdbadmin 用户登录主机
@@ -393,31 +392,31 @@
   > db = new Sdb()
   ```
 
-- 创建集合空间 cs
+- 创建集合空间 foo
 
   ```lang-javascript
-  > db.createCS("cs")
+  > db.createCS( "foo" )
   ```
 
-- 创建集合 cl
+- 创建集合 bar
 
   ```lang-javascript
-  > db.cs.createCL("cl")
+  > db.foo.createCL( "bar" )
   ```
 
-- 向集合 cs.cl 中写入记录
+- 向集合 foo.bar 中写入记录
 
   ```lang-javascript
-   > db.cs.cl.insert({id:1, name:"Tom"})
+   > db.foo.bar.insert( { id:1, name: "Tom" } )
    Takes 0.000679s.
-   > db.cs.cl.insert({id:2, name:"Jerry"})
+   > db.foo.bar.insert( { id:2, name: "Jerry" } )
    Takes 0.000447s.
   ```
 
 - 查询结果
 
   ```lang-javascript
-  > db.cs.cl.find()
+  > db.foo.bar.find()
   {
     "_id": {
       "$oid": "5a93bd4bc8ddfc8f28000001"
@@ -439,9 +438,9 @@
 - 修改记录并查询结果
 
   ```lang-javascript
-  > db.cs.cl.update({$set:{name:"Tim"}}, {id:1})
+  > db.foo.bar.update( { $set: { name: "Tim" } }, { id: 1 } )
   Takes 0.001411s.
-  > db.cs.cl.find()
+  > db.foo.bar.find()
   {
     "_id": {
       "$oid": "5a93bd4bc8ddfc8f28000001"
@@ -463,9 +462,9 @@
 - 删除记录并查询结果
 
   ```
-  > db.cs.cl.remove({id:2})
+  > db.foo.bar.remove( { id:2 } )
   Takes 0.001756s.
-  > db.cs.cl.find()
+  > db.foo.bar.find()
   {
     "_id": {
       "$oid": "5a93bd4bc8ddfc8f28000001"
@@ -481,42 +480,22 @@
 
    ```lang-javascript
    > help()
-   var db = new Sdb()                                 connect to database use default host 'localhost' and default port 11810
-   var db = new Sdb('localhost',11810)                connect to database use specified host and port
-   var db = new Sdb('ubuntu',11810,'','')             connect to database with username and password
-   var db = new SecureSdb()                           connect to database securely use default host 'localhost' and default port 11810
-   var db = new SecureSdb('localhost',11810)          connect to database securely use specified host and port
-   var db = new SecureSdb('ubuntu',11810,'','')       connect to database securely with username and password
-   var oma = new Oma()                                connect to om agent use default host 'localhost' and default port 11810
-   var oma = new Oma('localhost',11810)               connect to om agent use specified host and port
-   var oma = new Oma('ubuntu',11810,'','')            connect to om agent with username and password
-   help(<method>)                                     help on specified method, e.g. help('createCS')
-   oma.help()                                         help on om methods
-   db.help()                                          help on db methods
-   db.cs.help()                                       help on collection space cs
-   db.cs.cl                                           access collection cl on collection space cs
-   db.cs.cl.help()                                    help on collection cl
-   db.cs.cl.find()                                    list all records
-   db.cs.cl.find({a:1})                               list records where a=1
-   db.cs.cl.find().help()                             help on find methods
-   db.cs.cl.count().help()                            help on count methods
-   print(x), println(x)                               print out x
-   sleep(ms)                                          sleep macro seconds
-   traceFmt(<type>,<in>,<out>)                        format trace input(in) to output(out) by type
-   getErr(ret)                                        print error description for return code
-   getLastError()                                     get last error number
-   setLastError(<errno>)                              set last error number
-   getLastErrMsg()                                    get last error detail information
-   setLastErrMsg(<msg>)                               set last error detail information
-   getLastErrObj()                                    get last error object information
-   setLastErrObj(<obj>)                               set last error object information
-   showClass([className])                             show all class name or class's function name
-   forceGC()                                          force garbage collection of JS objects
-   jsonFormat(<pretty>)                               Set BSON output format.When out of memory
-                                                      error happen, we can use jsonFormat( false ) to
-                                                      disable BSON formatted output.
-   clear                                              clear the terminal screen
-   history -c                                         clear the history
-   quit                                               exit
-Takes 0.000419s.
+      --Connect to database:
+      var db = new Sdb()                                 - Connect to database use default host
+                                                         'localhost' and default port 11810.
+      var db = new Sdb('localhost',11810)                - Connect to database use specified host and port.
+      var db = new Sdb('ubuntu',11810,'','')             - Connect to database with username and password.
+      var db = new SecureSdb()                           - Connect to database securely use default host
+                                                         'localhost' and default port 11810.
+      var db = new SecureSdb('localhost',11810)          - Connect to database securely use specified host and port.
+      var db = new SecureSdb('ubuntu',11810,'','')       - Connect to database securely with username and password.
+   
+      --Get help information:
+      help(<method>)                                     - Help on specified method, e.g. help('createCS').
+      db.help()                                          - Help on db methods.
+      db.<csname>.help()                                 - Help on collection space methods.
+      db.<csname>.<clname>.help()                        - Help on collection methods.
+      help('help')                                       - For more detail of help.
+      ...
+     
    ```
