@@ -22,13 +22,13 @@ function install()
 
 function ask_user()
 {
-   read -p "Install sequoiadb Y/N: " choice
+   read -p "Install sequoiadb Y/n: " choice
    [ -z $choice ] && choice="Y"
    [[ "$choice" == "Y" || "$choice" == "y" ]] && install "sequoiadb"
 
    while :
    do
-      read -p "Install sequoiasql-mysql or sequoiasql-postgresql, represented by 1 and 2, default:1, 1/2: " select
+      read -p "Install 1:sequoiasql-mysql or 2:sequoiasql-postgresql, [1]: " select
       [ -z $select ] && select=1
       [[ "$select" == 1 || "$select" == 2 ]] && break
    done
