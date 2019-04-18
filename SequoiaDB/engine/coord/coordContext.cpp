@@ -820,7 +820,7 @@ namespace engine
          waitAll = TRUE ;
       }
 
-      rc = _getPrepareNodesData( cb, _isModify ) ;
+      rc = _getPrepareNodesData( cb, waitAll ) ;
       PD_RC_CHECK( rc, PDERROR, "Get data from prepare nodes failed, rc: %d",
                    rc ) ;
    done:
