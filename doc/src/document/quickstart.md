@@ -15,6 +15,7 @@
   $ cd sequoiadb-3.2
   $ chmod u+x sequoiadb-3.2-linux_x86_64-installer.run
   $ chmod u+x sequoiasql-mysql-3.2-linux_x86_64-installer.run
+  $ chmod u+x sequoiasql-postgresql-3.2-x86_64-installer.run
   $ chmod u+x setup.sh
   ```
 - 运行安装脚本  
@@ -26,7 +27,7 @@
 - 程序提示选择安装SequoiaDB，默认是安装，输入N不安装
 
   ```
-  Install sequoiadb Y/N: 
+  Install sequoiadb Y/n: 
   ```
 
 - 程序提示开始安装SequoiaDB，选择向导语言，输入2，选择中文
@@ -160,10 +161,10 @@
   ----------------------------end install sequoiadb----------------------------
   ```
 
-- 安装 SequoiaSQL，询问安装 sequoiasql-mysql or sequoiasql-postgresql，分别用 1 和 2 表示，默认是 1，回车安装 sequoiasql-mysql
+- 安装 SequoiaSQL，询问安装 sequoiasql-mysql or [sequoiasql-postgresql](sql_engine/sequoiasql_pg/install/install_deploy.md)，分别用 1 和 2 表示，默认是 1，回车安装 sequoiasql-mysql
 
  ```
-  Install sequoiasql-postgresql or sequoiasql-mysql, represented by 1 and 2, default:1, 1/2: 
+  Install 1:sequoiasql-mysql or 2:sequoiasql-postgresql, [1]: 
  ```
 
 - 程序提示选择向导语言，输入2，选择中文
