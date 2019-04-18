@@ -2886,6 +2886,7 @@
                   } ) ;
                   //pg不支持‘-’，如果名字带有‘-’修改为‘_’
                   var from = fromValid[0]['value'].replace( '-', '_' ) ;
+                  to = to.replace( '-', '_' ) ;
                   var relationName = sprintf( '?_?_?', from, to, dbValid[0]['value'] ) ;
 
                   setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
@@ -2934,6 +2935,7 @@
                   
                   //pg不支持‘-’，如果名字带有‘-’修改为‘_’
                   value = value.replace( '-', '_' ) ;
+                  to    = to.replace( '-', '_' ) ;
                   var relationName = sprintf( '?_?_?', value, to, dbValid[0]['value'] ) ;
 
                   setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
@@ -2961,6 +2963,7 @@
             {
                //pg不支持‘-’，如果名字带有‘-’修改为‘_’
                from = from.replace( '-', '_' ) ;
+               to = to.replace( '-', '_' ) ;
                relationName = sprintf( '?_?_?', from, to, value ) ;
             }  
             else if( type == 'mysql-sdb' )
@@ -2985,7 +2988,8 @@
                
                //pg不支持‘-’，如果名字带有‘-’修改为‘_’
                from = from.replace( '-', '_' ) ;
-               relationName = sprintf( '?_?_?', from, value, dbName ) ;
+               var to = value.replace( '-', '_' ) ;
+               relationName = sprintf( '?_?_?', from, to, dbName ) ;
             }  
             else if( type == 'mysql-sdb' )
             {
@@ -3044,7 +3048,8 @@
                } ) ;
 
                var from = fromValid[0]['value'].replace( '-', '_' ) ;
-               var relationName = sprintf( '?_?_?', from, toValid[0]['value'], dbValid[0]['value'] ) ;
+               var to   = toValid[0]['value'].replace( '-', '_' ) ;
+               var relationName = sprintf( '?_?_?', from, to, dbValid[0]['value'] ) ;
 
                setArrayItemValue( normalInput, 'name', 'Name',   { 'value': relationName } ) ;
                setArrayItemValue( normalInput, 'name', 'DbName', { 'value': dbValid[0]['value'], 'valid': dbValid } ) ;
