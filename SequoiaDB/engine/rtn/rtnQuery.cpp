@@ -1064,7 +1064,7 @@ namespace engine
       }
       if ( planRuntime->hasPlan() )
       {
-         planRuntime->releasePlan() ;
+         planRuntime->reset() ;
       }
       if ( scanner )
       {

@@ -89,7 +89,7 @@ namespace engine
 
       // first release plan
       setQueryActivity( _hitEnd ) ;
-      _planRuntime.releasePlan() ;
+      _planRuntime.reset() ;
 
       // second release mb context
       if ( _mbContext && _su )
@@ -1592,7 +1592,7 @@ namespace engine
    _rtnContextSort::~_rtnContextSort()
    {
       setQueryActivity( _hitEnd ) ;
-      _planRuntime.releasePlan() ;
+      _planRuntime.reset() ;
       _numToSkip = 0 ;
       _numToReturn = 0 ;
    }

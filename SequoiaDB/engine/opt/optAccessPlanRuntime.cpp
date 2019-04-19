@@ -224,12 +224,13 @@ namespace engine
 
    void _optAccessPlanRuntime::reset ()
    {
+      // Delete match runtime before release the cached plan
       deleteMatchRuntime() ;
       deleteCLScanInfo() ;
+      releasePlan() ;
       _isNewPlan = FALSE ;
       _hasQueryActivity = FALSE ;
       _apm = NULL ;
-      releasePlan() ;
    }
 
    void _optAccessPlanRuntime::inheritRuntime ( _optAccessPlanRuntime *planRuntime )

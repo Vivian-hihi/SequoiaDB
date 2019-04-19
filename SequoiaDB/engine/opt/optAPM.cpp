@@ -578,6 +578,9 @@ namespace engine
 
    void _optCachedPlanActivity::clear ()
    {
+      // Lock the mutex to exclude setting query activities
+      ossScopedLock lock( &_latch ) ;
+
       _lastAccessTime = 0 ;
       _periodAccessCount = 0 ;
       _accessCount = 0 ;
@@ -590,6 +593,9 @@ namespace engine
    void _optCachedPlanActivity::setPlan ( optAccessPlan *pPlan,
                                           UINT64 timestamp )
    {
+      // Lock the mutex to exclude setting query activities
+      ossScopedLock lock( &_latch ) ;
+
       _pPlan = pPlan ;
       _lastAccessTime = timestamp ;
       _periodAccessCount = 0 ;
@@ -604,9 +610,14 @@ namespace engine
    {
       if ( !isEmpty() )
       {
-         /// The function is called by con-current, so need to mutex
+         /// The function is called by concurrent, so need to mutex
          /// each other
          ossScopedLock lock( &_latch ) ;
+
+         // Re-check if already removed from cached
+         if ( isEmpty() ) {
+            return ;
+         }
 
          _totalQueryTimeTick += queryActivity.getQueryTime() ;
          if ( queryActivity.getQueryTime() < _minQueryActivity.getQueryTime() ||

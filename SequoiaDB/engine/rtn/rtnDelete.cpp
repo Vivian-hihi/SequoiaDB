@@ -252,7 +252,7 @@ namespace engine
       {
          su->data()->releaseMBContext( mbContext ) ;
       }
-      planRuntime.releasePlan() ;
+      planRuntime.reset() ;
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
