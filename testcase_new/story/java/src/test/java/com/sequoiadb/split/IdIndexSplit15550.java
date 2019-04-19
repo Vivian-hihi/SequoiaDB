@@ -126,9 +126,8 @@ public class IdIndexSplit15550 extends SdbTestBase {
 				checkData(db,4500, "{sk:{$gte:500,$lt:5000}}", 4500, desGroup);
 				checkData(db, 500, "{sk:{$gte:0,$lt:500}}", 500, srcGroup);
 			}catch(BaseException e){
-				System.out.println("Split:"+e.getErrorCode());
-				if(e.getErrorCode()==-279){
-					System.out.println("Don't has id index!");
+				if(e.getErrorCode() != -279){
+				    throw e;
 				}
 			}finally {
 				if(db!=null){
@@ -150,7 +149,6 @@ public class IdIndexSplit15550 extends SdbTestBase {
 				cl = db.getCollectionSpace(csName).getCollection(clName);
 				cl.createIdIndex((BSONObject)JSON.parse("{SortBufferSize:128}"));
 			}catch(BaseException e){
-				System.out.println("Split:"+e.getErrorCode());
 				throw e;
 			}finally {
 				if(db!=null){

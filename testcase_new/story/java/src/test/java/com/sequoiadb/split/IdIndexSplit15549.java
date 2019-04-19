@@ -149,7 +149,6 @@ public class IdIndexSplit15549 extends SdbTestBase {
 				cl = db.getCollectionSpace(csName).getCollection(clName);
 				cl.split(srcGroup, desGroup, 90);
 			}catch(BaseException e){
-				System.out.println("Split:"+e.getErrorCode());
 				throw e;
 			}finally {
 				if(db!=null){
