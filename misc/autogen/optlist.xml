@@ -525,18 +525,18 @@
       <long>transactionon</long>
       <short>e</short>
       <description>
-         <en>Turn on transaction, default:false</en>
-         <cn>是否打开事务功能,默认为:false</cn>
+         <en>Turn on transaction, default:true</en>
+         <cn>是否打开事务功能,默认为:true</cn>
       </description>
       <reloadable>
          <en>Take effect after restart</en>
          <cn>重启生效</cn>
       </reloadable>
-      <default>false</default>
+      <default>true</default>
       <detail>
          <en>1. It specifies whether transaction turns on or not.<fig></fig>
-             2. If it is not specifed, the default value is false.</en>
-         <cn>1. 指定是否打开事务。<fig></fig>2. 如果不指定，则默认为false。</cn>
+             2. If it is not specifed, the default value is true.</en>
+         <cn>1. 指定是否打开事务。<fig></fig>2. 如果不指定，则默认为true。</cn>
       </detail>
       <typeofweb>boolean</typeofweb>
    </opt>
@@ -1724,8 +1724,8 @@
       <name>PMD_OPTION_PLAN_CACHE_LEVEL</name>
       <long>plancachelevel</long>
       <description>
-         <en>Specify the cache level of query plans, 0 for no cache, 1 for caching original query, 2 for caching normalized query, 3 for caching parameterized query, 4 for caching parameterized query with fuzzy-matched operators. Default is 3</en>
-         <cn>指定查询计划的缓存级别，0为不缓存，1为缓存原查询计划，2为缓存泛化后的查询计划，3为缓存参数化的查询计划，4为缓存参数化并带操作符模糊匹配的查询计划。默认是3。</cn>
+         <en>Specify the cache level of query plans, 0 for no cache, 1 for caching original query, 2 for caching normalized query, 3 for caching parameterized query, 4 for caching parameterized query with fuzzy-matched operators. Default is 0</en>
+         <cn>指定查询计划的缓存级别，0为不缓存，1为缓存原查询计划，2为缓存泛化后的查询计划，3为缓存参数化的查询计划，4为缓存参数化并带操作符模糊匹配的查询计划。默认是0。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -1736,7 +1736,7 @@
          <cn>下次查询生效</cn>
       </reloadstrategy>
       <detail>
-         <en>1. Specify the cache level of query plans. Value is 0/1/2/3/4. Default is 3.<fig></fig>
+         <en>1. Specify the cache level of query plans. Value is 0/1/2/3/4. Default is 0.<fig></fig>
            2. Value enumeration:<fig></fig>
              ● 0: No cache.<fig></fig>
              ● 1: Caching plan with original query.<fig></fig>
@@ -1744,7 +1744,7 @@
              ● 3: Caching plan with parameterized query.<fig></fig>
              ● 4: Caching plan with parameterized query and fuzzy-matched operators.
          </en>
-         <cn>1. 指定查询计划的缓存级别，默认是3。<fig></fig>
+         <cn>1. 指定查询计划的缓存级别，默认是0。<fig></fig>
            2. 取值列表：<fig></fig>
              ● 0: 不缓存查询计划。<fig></fig>
              ● 1: 缓存原查询计划。<fig></fig>
@@ -1754,7 +1754,7 @@
          </cn>
       </detail>
       <type>int</type>
-      <default>3</default>
+      <default>0</default>
       <hidden>false</hidden>
       <typeofweb>num</typeofweb>
    </opt>
@@ -2038,7 +2038,7 @@
         <en>Specify whether recycle deleting record asynchronous.</en>
         <cn>指定是否异步回收待删除的记录。</cn>
       </detail>
-      <default>true</default>
+      <default>false</default>
       <hidden>true</hidden>
    </opt>
 </optlist>
