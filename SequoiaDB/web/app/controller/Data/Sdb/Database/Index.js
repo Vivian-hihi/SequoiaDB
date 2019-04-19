@@ -2699,6 +2699,7 @@
                $scope.Components.Modal.title = $scope.autoLanguage( '索引信息' ) ;
                $scope.Components.Modal.noOK = true ;
                $scope.Components.Modal.isShow = true ;
+               $scope.Components.Modal.CloseText = $scope.autoLanguage( "关闭" ) ;
                $scope.Components.Modal.form = {
                   inputList: [
                      {

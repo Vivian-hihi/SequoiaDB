@@ -614,10 +614,10 @@
             SdbSwap.records2[recordIndex] = JSON.parse( SdbSwap.records[recordIndex] ) ;
          }
 
-         var _id = SdbSwap.records2[recordIndex]['_id']['$oid'] ;
+         var _id = SdbSwap.records2[recordIndex]['_id'] ;
 
          _IndexPublic.createRetryModel( $scope, null, function(){
-            var deletor = JSON.stringify( { '_id': { '$oid': _id } } ) ;
+            var deletor = JSON.stringify( { '_id': _id } ) ;
             var data = { 'cmd': 'delete', 'name': SdbSwap.fullName, 'deletor': deletor } ;
             SdbRest.DataOperation( data, {
                'success': function( json ){
