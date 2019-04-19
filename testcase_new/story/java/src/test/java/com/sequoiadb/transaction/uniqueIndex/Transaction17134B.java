@@ -78,7 +78,7 @@ public class Transaction17134B extends SdbTestBase {
             cl2.createIndex("a", "{a:1}", true, false);
             Assert.fail("create index should be error");
         } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
+            Assert.assertEquals(e.getErrorCode(), -334, e.getMessage());
         }
 
         sdb1.rollback();
