@@ -3914,7 +3914,9 @@ namespace engine
                                        dpscb ? pHandler : NULL ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to update record, rc: %d", rc ) ;
+               PD_LOG ( PDERROR, "Failed to update record from (%s) to (%s), "
+                        "rc: %d", obj.toString().c_str(),
+                        newobj.toString().c_str(), rc ) ;
                goto error ;
             }
 

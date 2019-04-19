@@ -1782,7 +1782,9 @@ namespace engine
          {
             rc = _indexInsert ( context, &indexCB, inputObj, rid, cb, !unique,
                                 dropDups, pOprHandle, insertResult ) ;
-            PD_RC_CHECK ( rc, PDERROR, "Failed to insert index, rc: %d", rc ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to insert object(%s) index(%s), "
+                          "rc: %d", inputObj.toString().c_str(),
+                          indexCB.getDef().toString().c_str(), rc ) ;
          }
       }
 
@@ -1915,7 +1917,9 @@ namespace engine
                rc = rootidx.unindex ( ko, rid, order, indexCB, found ) ;
                if ( rc )
                {
-                  PD_LOG ( PDERROR, "Failed to unindex, rc: %d", rc ) ;
+                  PD_LOG ( PDERROR, "Delete index key(%s) with rid(%d, %d) "
+                           "failed, rc: %d", (*itori).toString().c_str(),
+                           rid._extent, rid._offset, rc ) ;
                   goto error ;
                }
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
@@ -1948,7 +1952,9 @@ namespace engine
                      rc = SDB_OK ;
                      goto done ;
                   }
-                  PD_LOG ( PDERROR, "Failed to insert index, rc: %d", rc ) ;
+                  PD_LOG ( PDERROR, "Failed to insert index(%s) with "
+                           "rid(%d, %d), rc: %d", (*itnew).toString().c_str(),
+                           rid._extent, rid._offset, rc ) ;
                   goto error ;
                }
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
@@ -1968,7 +1974,9 @@ namespace engine
             rc = rootidx.unindex ( ko, rid, order, indexCB, found ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to unindex, rc: %d", rc ) ;
+               PD_LOG ( PDERROR, "Delete index key(%s) with rid(%d, %d) "
+                        "failed, rc: %d", (*itori).toString().c_str(),
+                        rid._extent, rid._offset, rc ) ;
                goto error ;
             }
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
@@ -2003,7 +2011,9 @@ namespace engine
                   rc = SDB_OK ;
                   goto done ;
                }
-               PD_LOG ( PDERROR, "Failed to insert index, rc: %d", rc ) ;
+               PD_LOG ( PDERROR, "Failed to insert index(%s) with "
+                        "rid(%d, %d), rc: %d", (*itnew).toString().c_str(),
+                        rid._extent, rid._offset, rc ) ;
                goto error ;
             }
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
@@ -2044,7 +2054,7 @@ namespace engine
          goto error ;
       }
 
-      for ( indexID=0; indexID<DMS_COLLECTION_MAX_INDEX; indexID++ )
+      for ( indexID=0; indexID < DMS_COLLECTION_MAX_INDEX; indexID++ )
       {
          if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
          {
@@ -2076,9 +2086,11 @@ namespace engine
          }
          else
          {
-            rc = _indexUpdate ( context, &indexCB, originalObj, newObj, rid, cb,
-                                isRollback, pOprHandle ) ;
-            PD_RC_CHECK ( rc, PDERROR, "Failed to update index, rc: %d", rc ) ;
+            rc = _indexUpdate ( context, &indexCB, originalObj, newObj,
+                                rid, cb, isRollback, pOprHandle ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to update obj(%s) index(%s), "
+                          "rc: %d", newObj.toString().c_str(),
+                          indexCB.getDef().toString().c_str(), rc ) ;
          }
       }
 
@@ -2241,7 +2253,9 @@ namespace engine
                                 rid, cb, pOprHandle ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to delete index, rc: %d", rc ) ;
+               PD_LOG ( PDERROR, "Failed to delete object(%s) index(%s), "
+                        "rc: %d", inputObj.toString().c_str(),
+                        indexCB.getDef().toString().c_str(), rc ) ;
                goto error ;
             }
          }
@@ -2307,7 +2321,8 @@ namespace engine
          rc = indexCB.truncate ( FALSE ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to truncate index, rc: %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to truncate index(%s), rc: %d",
+                     indexCB.getDef().toString().c_str(), rc ) ;
             goto error ;
          }
       }

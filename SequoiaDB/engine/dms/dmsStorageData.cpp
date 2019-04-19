@@ -275,7 +275,8 @@ namespace engine
             rollbackIndex = TRUE ;
             if ( rc )
             {
-               PD_LOG ( PDWARNING, "Failed to update index, rc: %d", rc ) ;
+               PD_LOG ( PDWARNING, "Failed to update object(%s) index, rc: %d",
+                        newObj.toString().c_str(), rc ) ;
                goto error ;
             }
          }

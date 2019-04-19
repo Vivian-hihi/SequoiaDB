@@ -815,8 +815,9 @@ namespace engine
                                             indexCB->keyPattern(),
                                             keyObj ) ;
             }
-            PD_LOG ( PDERROR, "Insert index key(%s) with rid(%d, %d) "
-                     "failed, rc: %d", keyObj.toString().c_str(),
+            PD_LOG ( PDERROR, "Insert index(%s) key(%s) with rid(%d, %d) "
+                     "failed, rc: %d", indexCB->getDef().toString().c_str(),
+                     keyObj.toString().c_str(),
                      rid._extent, rid._offset, rc ) ;
             goto error ;
          }
