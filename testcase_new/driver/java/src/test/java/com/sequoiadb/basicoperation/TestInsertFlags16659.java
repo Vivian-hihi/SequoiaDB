@@ -22,97 +22,103 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @version 1.00
  */
 
-public class TestInsertFlags16659 extends SdbTestBase{
+public class TestInsertFlags16659 extends SdbTestBase {
 	private Sequoiadb sdb;
 	private CollectionSpace commcs = null;
 	private DBCollection cl = null;
 	private String clName = "cl_16659";
-    private String coordAddr;
-    private String OID = "_id";
-    private String indexName = "index16659";
-    
-    @BeforeClass
-    private void setUp() {
-        this.coordAddr = SdbTestBase.coordUrl;
-        this.sdb = new Sequoiadb(this.coordAddr, "", "");
-        commcs =  sdb.getCollectionSpace(SdbTestBase.csName);
-        cl = commcs.createCollection(clName);
-    }
+	private String coordAddr;
+	private String OID = "_id";
+	private String indexName = "index16659";
 	
-    @Test
-	private void testInsert(){
-        BSONObject obj = new BasicBSONObject();
-        ObjectId id = new ObjectId();
-        obj.put(OID, id);
-        obj.put("str", "hello");
-        obj.put("int", 123);
-        obj.put("double", 1234.567);
-
-        // case 1: flag取值为0 (_id字段存在唯一索引)
-        cl.insert(obj, 0);
-        Assert.assertEquals(cl.getCount(obj), 1);
-
-        // case 2: 非_id字段创建唯一索引，存在重复记录，设置flag取值为0
-        BSONObject indexObj = (BSONObject) JSON.parse("{str:1}");
-        cl.createIndex(indexName, indexObj, true, true);
-        try{
-        	 cl.insert(obj, 0);
-        	 Assert.fail("expect fail but found success");
-		}catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(), -38,e.getMessage());
-		}
-        Assert.assertEquals(cl.getCount(obj), 1);
-        cl.dropIndex(indexName);
-        
-        // case 3: flag 取值为 FLG_INSERT_CONTONDUP
-        cl.insert(obj, DBCollection.FLG_INSERT_CONTONDUP);
-        Assert.assertEquals(cl.getCount(obj), 1);
-        
-        // case 4: flag 取值为 FLG_INSERT_RETURN_OID
-        ObjectId id2 = new ObjectId();
-        BSONObject obj2 = new BasicBSONObject();
-        obj2.put(OID, id2);
-        obj2.put("a", 1);
-        BSONObject result2 = cl.insert(obj2, DBCollection.FLG_INSERT_RETURN_OID);
-        Assert.assertEquals(result2.get(OID), id2);
-        Assert.assertEquals(cl.getCount(obj2), 1);
-        
-        // case 5: flag 取值为 FLG_INSERT_REPLACEONDUP
-        BSONObject obj3 = obj;
-        obj3.put("appendField", "test16559");
-        cl.insert(obj3, DBCollection.FLG_INSERT_REPLACEONDUP);
-        Assert.assertEquals(cl.getCount(obj3), 1);
-
-        // case 6: flag 值为数值 1,2
-        BSONObject obj4 = new BasicBSONObject().append("test1", 123);
-        cl.insert(obj4, 1);
-        Assert.assertEquals(cl.getCount(obj4), 1);        
-       
-        ObjectId id5 = new ObjectId();
-        BSONObject obj5 = new BasicBSONObject().append("test2", 123);       
-        obj5.put(OID, id5);
-        obj5.put("a", 1);
-        BSONObject result5 = cl.insert(obj5, 2);
-        Assert.assertEquals(result5.get(OID), id5);
-        Assert.assertEquals(cl.getCount(obj5), 1);       
-        
-        // case 7: flag 值为非法值如：-1
-        BSONObject obj6 = new BasicBSONObject().append("test3", 123);
-        try{
-        	cl.insert(obj6, -1);        	
-        	Assert.fail("Illegal flag insert failed!");
-        }catch(BaseException e){        	
-			Assert.assertEquals(e.getErrorCode(), -6,e.getMessage());
-		}        
-        Assert.assertEquals(cl.getCount(obj6), 0);
+	@BeforeClass
+	private void setUp() {
+		this.coordAddr = SdbTestBase.coordUrl;
+		this.sdb = new Sequoiadb(this.coordAddr, "", "");
+		commcs = sdb.getCollectionSpace(SdbTestBase.csName);
+		cl = commcs.createCollection(clName);
 	}
-    
-    @AfterClass
-    private void tearDown(){
-    	try{
-    		commcs.dropCollection(clName);
-    	}finally{
-    		sdb.close();
-    	}
+
+	@Test
+	private void testInsert() {
+		BSONObject obj = new BasicBSONObject();
+		ObjectId id = new ObjectId();
+		obj.put(OID, id);
+		obj.put("str", "hello");
+		obj.put("int", 123);
+		obj.put("double", 1234.567);
+
+		// case 1: flag取值为0 (_id字段存在唯一索引)
+		cl.insert(obj, 0);
+		Assert.assertEquals(cl.getCount(obj), 1);
+
+		// case 2: 非_id字段创建唯一索引，存在重复记录，设置flag取值为0
+		BSONObject indexObj = (BSONObject) JSON.parse("{str:1}");
+		cl.createIndex(indexName, indexObj, true, true);
+		try {
+			cl.insert(obj, 0);
+			Assert.fail("expect fail but found success");
+		} catch (BaseException e) {
+			Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
+		}
+		Assert.assertEquals(cl.getCount(obj), 1);
+		cl.dropIndex(indexName);
+
+		// case 3: flag 取值为 FLG_INSERT_CONTONDUP
+		cl.insert(obj, DBCollection.FLG_INSERT_CONTONDUP);
+		Assert.assertEquals(cl.getCount(obj), 1);
+
+		// case 4: flag 取值为 FLG_INSERT_RETURN_OID
+		ObjectId id2 = new ObjectId();
+		BSONObject obj2 = new BasicBSONObject();
+		obj2.put(OID, id2);
+		obj2.put("a", 1);
+		BSONObject result2 = cl.insert(obj2, DBCollection.FLG_INSERT_RETURN_OID);
+		Assert.assertEquals(result2.get(OID), id2);
+		Assert.assertEquals(cl.getCount(obj2), 1);
+
+		// case 5: flag 取值为
+		// FLG_INSERT_REPLACEONDUP,插入一条与obj的"_id"索引键冲突的记录,插入后原记录obj不存在
+		BSONObject obj3 = new BasicBSONObject();
+		obj3.put(OID, id);
+		obj3.put("str", "hello2");
+		obj3.put("int", 456);
+		obj3.put("double", 1234.999);
+		obj3.put("appendField", "test16559");
+		cl.insert(obj3, DBCollection.FLG_INSERT_REPLACEONDUP);
+		Assert.assertEquals(cl.getCount(obj3), 1);
+		Assert.assertEquals(cl.getCount(obj), 0);
+
+		// case 6: flag 值为数值 1,2
+		BSONObject obj4 = new BasicBSONObject().append("test1", 123);
+		cl.insert(obj4, 1);
+		Assert.assertEquals(cl.getCount(obj4), 1);
+
+		ObjectId id5 = new ObjectId();
+		BSONObject obj5 = new BasicBSONObject().append("test2", 123);
+		obj5.put(OID, id5);
+		obj5.put("a", 1);
+		BSONObject result5 = cl.insert(obj5, 2);
+		Assert.assertEquals(result5.get(OID), id5);
+		Assert.assertEquals(cl.getCount(obj5), 1);
+
+		// case 7: flag 值为非法值如：-1
+		BSONObject obj6 = new BasicBSONObject().append("test3", 123);
+		try {
+			cl.insert(obj6, -1);
+			Assert.fail("Illegal flag insert failed!");
+		} catch (BaseException e) {
+			Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
+		}
+		Assert.assertEquals(cl.getCount(obj6), 0);
+	}
+
+	@AfterClass
+	private void tearDown() {
+		try {
+			commcs.dropCollection(clName);
+		} finally {
+			sdb.close();
+		}
 	}
 }
