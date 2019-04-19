@@ -3142,7 +3142,8 @@
       } ;
 
       SdbSwap.RelationshipPromise.then( function( data ){
-         if( data['relationship'].length == 0 )
+         var isShowRelationTip = SdbFunction.LocalData( 'ShowRelationTip' ) ;
+         if( data['relationship'].length == 0 && isNull( isShowRelationTip ) )
          {
             var service1 = null ;
             var service2 = null ;
@@ -3162,6 +3163,7 @@
             } ) ;
             if( isString( service1) && isString( service2 ) )
             {
+               SdbFunction.LocalData( 'ShowRelationTip', true ) ;
                $scope.Components.Confirm.type = 2 ;
                $scope.Components.Confirm.context = $scope.autoLanguage( '是否创建SequoiaSQL服务和SequoiaDB服务的关联？' ) ;
                $scope.Components.Confirm.isShow = true ;
