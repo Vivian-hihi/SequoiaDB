@@ -214,16 +214,17 @@ namespace engine
          INT32 rcTmp = pJob->submit( TRUE ) ;
          if ( rcTmp )
          {
-            PD_LOG( PDWARNING, "Submit dmsReleaseLockJob(CSID:%u, CLID:%u, "
-                    "CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) failed, "
-                    "rc: %d", oldVer->getCSID(), oldVer->getCLID(),
-                    oldVer->getCSLID(), oldVer->getCLLID(),
+            PD_LOG( PDWARNING, "Submit dmsReleaseLockJob(ID:%llu, CSID:%u, "
+                    "CLID:%u, CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) "
+                    "failed, rc: %d", pJob->getJobID(), oldVer->getCSID(),
+                    oldVer->getCLID(), oldVer->getCSLID(), oldVer->getCLLID(),
                     lockId.extentID(), lockId.offset(), rcTmp) ;
          }
          else
          {
-            PD_LOG( PDDEBUG, "Submit dmsReleaseLockJob(CSID:%u, CLID:%u, "
-                    "CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) succeed",
+            PD_LOG( PDDEBUG, "Submit dmsReleaseLockJob(ID:%llu, CSID:%u, "
+                    "CLID:%u, CSLID:%u, CLLID:%u, ExtentID:%u, Offset:%u) "
+                    "succeed", pJob->getJobID(),
                     oldVer->getCSID(), oldVer->getCLID(),
                     oldVer->getCSLID(), oldVer->getCLLID(),
                     lockId.extentID(), lockId.offset() ) ;
@@ -297,14 +298,15 @@ namespace engine
       if ( oldVer && oldVer->isIndexObjEmpty() )
       {
          oldVer->releaseRecord() ;
+         PD_LOG( PDDEBUG, "Delete old record for rid[%s] from memory",
+                 lockId.toString().c_str() ) ;
       }
       else
       {
          oldVer->setRecordDeleted() ;
+         PD_LOG( PDDEBUG, "Set old record for rid[%s] in memory to deleted",
+                 lockId.toString().c_str() ) ;
       }
-
-      PD_LOG( PDDEBUG, "Set old record for rid[%s] in memory to deleted",
-              lockId.toString().c_str() ) ;
 
       /// PUT the rid to backgroud task to recycle
       _dmsStartReleaseLockJob( lockId, oldVer ) ;
