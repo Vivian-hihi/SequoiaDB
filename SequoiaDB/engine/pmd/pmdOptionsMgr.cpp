@@ -1860,7 +1860,7 @@ done:
       _dpslocal            = FALSE ;
       _traceOn             = FALSE ;
       _traceBufSz          = TRACE_DFT_BUFFER_SIZE ;
-      _transactionOn       = FALSE ;
+      _transactionOn       = TRUE ;
       _transIsolation      = DPS_TRANS_ISOLATION_DFT ;
       _transLockwait       = DPS_TRANS_LOCKWAIT_DFT ;
       _transAutoCommit     = DPS_TRANS_AUTOCOMMIT_DFT ;
@@ -1907,7 +1907,7 @@ done:
       _perfStat = FALSE ;
       _optCostThreshold = PMD_DFT_OPT_COST_THRESHOLD ;
       _enableMixCmp = PMD_DFT_ENABLE_MIX_CMP ;
-      _planCacheLevel = OPT_PLAN_NORMALIZED ;
+      _planCacheLevel = OPT_PLAN_NOCACHE ;
       _instanceID = PMD_DFT_INSTANCE_ID ;
       _maxconn = PMD_DFT_MAX_CONN ;
 
@@ -1917,7 +1917,7 @@ done:
       _preferedStrict = FALSE ;
 
       _enableSleep = FALSE ;
-      _recycleRecord = TRUE ;
+      _recycleRecord = FALSE ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -2100,7 +2100,7 @@ done:
                  TRACE_MAX_BUFFER_SIZE, TRUE ) ;
       // --transactionOn
       rdxBooleanS( pEX, PMD_OPTION_TRANSACTIONON, _transactionOn, FALSE,
-                   PMD_CFG_CHANGE_REBOOT, FALSE ) ;
+                   PMD_CFG_CHANGE_REBOOT, TRUE ) ;
       // --transactiontimeout
       rdxUInt( pEX, PMD_OPTION_TRANSTIMEOUT, _transTimeout, FALSE,
                PMD_CFG_CHANGE_RUN, DPS_TRANS_DFT_TIMEOUT, FALSE ) ;
@@ -2282,7 +2282,7 @@ done:
 
       // --optcachelevel
       rdxUInt( pEX, PMD_OPTION_PLAN_CACHE_LEVEL, _planCacheLevel, FALSE,
-               PMD_CFG_CHANGE_RUN, OPT_PLAN_NORMALIZED, FALSE ) ;
+               PMD_CFG_CHANGE_RUN, OPT_PLAN_NOCACHE, FALSE ) ;
       rdvMinMax( pEX, _planCacheLevel, OPT_PLAN_NOCACHE, OPT_PLAN_FUZZYOPTR,
                  TRUE ) ;
 
@@ -2306,7 +2306,7 @@ done:
                    PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
       // --recyclerecord
       rdxBooleanS( pEX, PMD_OPTION_RECYCLE_RECORD, _recycleRecord, FALSE,
-                   PMD_CFG_CHANGE_RUN, TRUE, TRUE ) ;
+                   PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
 
       // end map
 
