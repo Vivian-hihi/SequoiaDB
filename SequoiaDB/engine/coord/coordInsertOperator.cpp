@@ -327,6 +327,7 @@ namespace engine
          goto retry ;
       }
       else if ( cataPtr->hasAutoIncrement() &&
+                SDB_OK == cb->getTransRC() &&
                 _canRetry( count, rc, hasExplicitKey ) )
       {
          nokRC.clear() ;
