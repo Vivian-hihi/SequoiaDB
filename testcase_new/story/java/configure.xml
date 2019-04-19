@@ -29,7 +29,6 @@
       <packages>
          <package name="com.sequoiadb.transaction.rc" />
          <package name="com.sequoiadb.transaction.uniqueIndex" />
-         <package name="com.sequoiadb.transaction.metadata" />
       </packages>
    </test>
 
@@ -42,7 +41,7 @@
       <packages>
          <package name="com.sequoiadb.transaction.ru" />
          <package name="com.sequoiadb.transaction.uniqueIndex" />
-         <package name="com.sequoiadb.transaction.metadata" />
+         
       </packages>
    </test>
 
@@ -69,7 +68,7 @@
       </packages>
    </test>
    
-   <test name="rename" parallel="classes" thread-count="1">
+   <test name="rusync" parallel="classes" thread-count="1">
       <groups>
          <run>
             <include name="ru" />
@@ -77,6 +76,20 @@
       </groups>
       <packages>
          <package name="com.sequoiadb.transaction.rename" />
+         <!--split and transaction can't parallel -->
+         <package name="com.sequoiadb.transaction.metadata" />
+      </packages>
+   </test>
+   
+   <test name="rcsync" parallel="classes" thread-count="1">
+      <groups>
+         <run>
+            <include name="rc" />
+         </run>
+      </groups>
+      <packages>
+         <!--split and transaction can't parallel -->
+         <package name="com.sequoiadb.transaction.metadata" />
       </packages>
    </test>
    
