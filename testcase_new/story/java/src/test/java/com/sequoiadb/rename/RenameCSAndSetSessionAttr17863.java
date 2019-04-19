@@ -100,8 +100,14 @@ public class RenameCSAndSetSessionAttr17863 extends SdbTestBase {
 		String masterNodeName = rg.getMaster().getNodeName();
 		Assert.assertNotEquals(accessNodeBeforeRename, masterNodeName,
 				"accessNode is " + accessNodeBeforeRename + "  masterNode is " + masterNodeName);
-		Assert.assertEquals(accessNodeAfterRename, masterNodeName,
-				"accessNode is " + accessNodeAfterRename + "  masterNode is " + masterNodeName);
+
+		// if has sysnchronous rename CL, check the count records from slave
+		// node.
+		if (accessNodeAfterRename != masterNodeName) {
+			long getCount = sessionSdb.getCollectionSpace(newCSName).getCollection(clName).getCount();
+			Assert.assertEquals(getCount, recordNums, "accessNode is " + accessNodeAfterRename + "  masterNode is "
+					+ masterNodeName + " getCount is " + getCount);
+		}
 	}
 
 	@AfterClass
