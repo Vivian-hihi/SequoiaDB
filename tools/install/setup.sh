@@ -17,7 +17,7 @@ function install()
       test $? -ne 0 && { echo "ERROR: Fail to $file_run --mode text" >&2 && exit 1; }
    done
    echo "----------------------------end install $name----------------------------"
-   echo
+   echo 
 }
 
 function ask_user()
@@ -25,7 +25,18 @@ function ask_user()
    read -p "Install sequoiadb Y/n: " choice
    [ -z $choice ] && choice="Y"
    [[ "$choice" == "Y" || "$choice" == "y" ]] && install "sequoiadb"
-
+   
+   local file_exist=false
+   test -f "/etc/default/sequoiadb" && file_exist=true
+   if [ $file_exist == true ]; then
+      . "/etc/default/sequoiadb"
+      for file_run in ./sequoiasql-*.run;
+      do
+         cp $file_run $INSTALL_DIR/packet
+      done
+      chmod u+x $INSTALL_DIR/packet/sequoiasql-*.run
+   fi
+   
    while :
    do
       read -p "Install 1:sequoiasql-mysql or 2:sequoiasql-postgresql, [1]: " select
