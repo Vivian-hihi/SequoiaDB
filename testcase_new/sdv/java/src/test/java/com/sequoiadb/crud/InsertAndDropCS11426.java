@@ -27,8 +27,8 @@ import org.testng.annotations.Test;
 * @version 1.00
 */
 public class InsertAndDropCS11426 extends SdbTestBase {
-	final String CLNAME = "cl_11426";
-	final String CSNAME = "cs_11426";
+	private final String CLNAME = "cl_11426";
+	private final String CSNAME = "cs_11426";
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection dbcl;
@@ -36,6 +36,9 @@ public class InsertAndDropCS11426 extends SdbTestBase {
     @BeforeClass
     public void setup() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if( sdb.isCollectionSpaceExist(CSNAME)){
+			sdb.dropCollectionSpace(CSNAME);
+		}
         cs = sdb.createCollectionSpace(CSNAME);
         dbcl = cs.createCollection(CLNAME);
     }
@@ -51,16 +54,16 @@ public class InsertAndDropCS11426 extends SdbTestBase {
 
 		//drop cs fail is -147, repeat drop cs again
         int eachSleepTime = 1000;
-        int maxSleetTime = 20000;
+        int maxSleetTime = 30000;
    	 	int alreadySleepTime = 0;
    	 	int errorNo = 0;
    	 	do{
-   	 		errorNo = dropCS( sdb );
+   	 		errorNo = dropCS( sdb );   	 		
    	 		Thread.sleep(eachSleepTime);
    	 		alreadySleepTime += eachSleepTime;
    	 		if( alreadySleepTime > maxSleetTime )
    	 			Assert.fail("drop cs fail exceeds maximum waiting time:"+alreadySleepTime);
-   		 }while( errorNo == -147);
+   		 }while( errorNo == -147 || errorNo == -190);
         
         Assert.assertTrue(insertTask.isSuccess(), insertTask.getErrorMsg());
         
@@ -86,7 +89,7 @@ public class InsertAndDropCS11426 extends SdbTestBase {
     		}    		
     	}finally{
     		if (sdb != null) {
-                sdb.disconnect();
+                sdb.close();
             }
     	}
         
@@ -97,7 +100,7 @@ public class InsertAndDropCS11426 extends SdbTestBase {
     	 try{
          	sdb.dropCollectionSpace(CSNAME);  
          }catch (BaseException e) {  
-        	 errorNo = e.getErrorCode();            
+        	 errorNo = e.getErrorCode();         	
          }    	 
     	 return errorNo;    	 
     }
@@ -128,7 +131,7 @@ public class InsertAndDropCS11426 extends SdbTestBase {
                 }
             } finally {
                 if (db != null)
-                    db.disconnect();
+                    db.close();
             }
         }    
     } 
