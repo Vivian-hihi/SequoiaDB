@@ -14,7 +14,7 @@
 **主要特性：**
 
 - 完善事务隔离级别，支持RU(Read Uncommited)，RC(Read Committed)和RS(Read Stability)。
-- 支持会话级事务属性修属设置。
+- 支持会话级 事务隔离级别、事务超时、autocommit、autorollback 等。
 - 支持事务 autocommit 能力。
 - 会话读写分离属性支持严格模式，当为严格模式时只会在指定节点上进行读取。
 - 集合数据在线切分支持事务。
