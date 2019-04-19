@@ -97,6 +97,12 @@ typedef UINT32 DPS_LSN_VER ;
 #define DPS_TRANS_CLEAR_AUTOCOMMIT( id ) \
    OSS_BIT_CLEAR( id, DPS_TRANSID_AUTOCOMMIT_BIT )
 
+#define DPS_TRANS_IS_ROLLBACK( id ) \
+   OSS_BIT_TEST( id, DPS_TRANSID_ROLLBACKTAG_BIT )
+
+#define DPS_TRANS_SET_ROLLBACK( id ) \
+   OSS_BIT_SET( id, DPS_TRANSID_ROLLBACKTAG_BIT )
+
 
 #define DPS_TRANS_GET_NODEID( id )           ( (DPS_TRANS_ID)(id) >> 48 )
 #define DPS_TRANS_GET_SN( id )               ( (id) & DPS_TRANSID_SN_BIT )

@@ -122,6 +122,7 @@ utilFiles = [
       "util/utilPath.cpp",
       "util/utilCommon.cpp",
       "util/utilMemBlockPool.cpp",
+      "util/utilPooledAutoPtr.cpp",
       "util/utilLightJobBase.cpp",
       "util/utilNodeOpr.cpp",
       "client/bson/numbers.c",

@@ -42,11 +42,10 @@
 
 #include "dms.hpp"
 #include "ixm.hpp"
-#include "ossAtomic.hpp"
 #include "ossLatch.hpp"
 #include "dmsRecord.hpp"
-#include "utilMemBlockPool.hpp"
 #include "utilPooledObject.hpp"
+#include "utilPooledAutoPtr.hpp"
 #include "clsCatalogAgent.hpp"
 #include "../bson/ordering.h"
 #include "ossMemPool.hpp"
@@ -113,41 +112,7 @@ namespace engine
       string toString() const ;
    } ;
 
-   /*
-      dpsTransRecordPtr define
-   */
-   class dpsOldRecordPtr
-   {
-      public:
-         dpsOldRecordPtr() ;
-         dpsOldRecordPtr( const dpsOldRecordPtr &rhs ) ;
-         ~dpsOldRecordPtr() ;
-
-         dpsOldRecordPtr& operator= ( const dpsOldRecordPtr &rhs ) ;
-         bool operator! () const { return get() ? false : true ; }
-
-         operator bool () { return get() ? true : false ; }
-         operator CHAR* () { return get () ; }
-         operator BOOLEAN () { return get() ? TRUE : FALSE ; }
-         operator const CHAR* () { return get() ; }
-
-         static dpsOldRecordPtr alloc( UINT32 size ) ;
-
-      public:
-         CHAR*       get() ;
-         const CHAR* get() const ;
-         INT32       refCount() const ;
-         void        release() ;
-
-      private:
-         dpsOldRecordPtr( CHAR *ptr ) ;
-
-      protected:
-         INT32*      _refPtr() ;
-
-      private:
-         CHAR        *_ptr ;
-   } ;
+   typedef _utilPooledAutoPtr dpsOldRecordPtr ;
 
    /** definition of preIdxTreeNodeKey
     *  preIdxTreeNodeKey is the key for node in preIdxTree, it's child class
