@@ -513,7 +513,7 @@
                         $scope.TaskInfo['Progress'] = 100 ;
                         $scope.BarColor = 2 ;
                      }
-                     else if( $scope.DeployType == 'Module' &&
+                     else if( ( $scope.DeployType == 'Deploy' || $scope.DeployType == 'Module' ) &&
                               $scope.ModuleType == 'sequoiadb' &&
                               $scope.TaskInfo['TaskName'] == 'ADD_BUSINESS' &&
                               $scope.TaskInfo['ResultInfo'].length > 1 &&
