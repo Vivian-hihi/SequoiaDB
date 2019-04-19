@@ -187,6 +187,7 @@ namespace engine
       UINT32 retryTimes = 0 ;
       BOOLEAN doRollback = FALSE ;
       _clsReplayer replayer( TRUE ) ;
+      MAP_TRANS_PENDING_OBJ mapPendingObj ;
 
       cb->startRollback() ;
       curLsnOffset = cb->getCurTransLsn() ;
@@ -242,7 +243,9 @@ namespace engine
          // in cluster mode, when not primary, need add trans info to map
          if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) && !pmdIsPrimary() )
          {
-            sdbGetTransCB()->addTransInfo( transID, curLsnOffset ) ;
+            sdbGetTransCB()->addTransInfo( transID, curLsnOffset,
+                                           mapPendingObj ) ;
+            mapPendingObj.clear() ;
             rc = SDB_CLS_NOT_PRIMARY ;
             goto error ;
          }
@@ -264,8 +267,8 @@ namespace engine
 
             /// when rollback failed, need to retry some times.
             /// But all the way do it failed, need to restart the db
-            rc = replayer.rollback( ( dpsLogRecordHeader *)mb.offset(0),
-                                    cb ) ;
+            rc = replayer.rollbackTrans( ( dpsLogRecordHeader *)mb.offset(0),
+                                         cb, mapPendingObj ) ;
             if ( rc )
             {
                ++retryTimes ;
@@ -308,6 +311,16 @@ namespace engine
       sdbGetTransCB()->releaseRBLogSpace( cb ) ;
 
       cb->stopRollback() ;
+
+      if ( !mapPendingObj.empty() )
+      {
+         SDB_ASSERT( FALSE, "Transaction's pending object map is "
+                     "not empty" ) ;
+         PD_LOG( PDERROR, "Transaction(%04x%010x)'s pending objet map"
+                 " is not empty(size:%d)", DPS_TRANS_GET_NODEID( transID ),
+                 DPS_TRANS_GET_SN( transID ),
+                 mapPendingObj.size() ) ;
+      }
 
       if ( doRollback )
       {
@@ -354,7 +367,7 @@ namespace engine
          TRANS_MAP::iterator iterMap = pTransMap->begin();
          transID = iterMap->first ;
          rollbackID = pTransCB->getRollbackID( transID ) ;
-         curLsnOffset = iterMap->second ;
+         curLsnOffset = iterMap->second._lsn ;
          cb->setTransID( rollbackID ) ;
 
          PD_LOG( PDEVENT, "Begin to rollback transaction[ID:%04x%010x, "
@@ -430,8 +443,9 @@ namespace engine
 
                /// when rollback failed, need to retry some times.
                /// But all the way do it failed, need to restart the db
-               rc = replayer.rollback( ( dpsLogRecordHeader *)mb.offset(0),
-                                       cb ) ;
+               rc = replayer.rollbackTrans( ( dpsLogRecordHeader *)mb.offset(0),
+                                            cb,
+                                            iterMap->second._mapPendingObj ) ;
                if ( rc )
                {
                   ++retryTimes ;
@@ -454,11 +468,20 @@ namespace engine
                else
                {
                   retryTimes = 0 ;
-                  iterMap->second = curLsnOffset ;
+                  iterMap->second._lsn = curLsnOffset ;
                }
             }
          } /// while ( curLsnOffset != DPS_INVALID_LSN_OFFSET )
 
+         if ( !iterMap->second._mapPendingObj.empty() )
+         {
+            SDB_ASSERT( FALSE, "Transaction's pending object map is "
+                        "not empty" ) ;
+            PD_LOG( PDERROR, "Transaction(%04x%010x)'s pending objet map"
+                    " is not empty(size:%d)", DPS_TRANS_GET_NODEID( transID ),
+                    DPS_TRANS_GET_SN( transID ),
+                    iterMap->second._mapPendingObj.size() ) ;
+         }
          /// remove the transaction
          pTransMap->erase( iterMap ) ;
          PD_LOG( PDEVENT, "Rollback transaction(%04x%010x) finished "

@@ -48,6 +48,7 @@
 #include "rtnLob.hpp"
 #include "rtnAlter.hpp"
 #include "utilCompressor.hpp"
+#include "mthModifier.hpp"
 
 using namespace bson ;
 
@@ -1250,6 +1251,215 @@ namespace engine
                  tmpBuff, rc ) ;
       }
       PD_TRACE_EXITRC ( SDB__CLSREP_REPLAY, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsReplayer::rollbackTrans( const dpsLogRecordHeader *recordHeader,
+                                      _pmdEDUCB * eduCB,
+                                      MAP_TRANS_PENDING_OBJ &mapPendingObj )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != recordHeader, "head should not be NULL" ) ;
+      MAP_TRANS_PENDING_OBJ::iterator it ;
+      INT64 contextID = -1 ;
+
+      if ( !_dpsCB )
+      {
+         eduCB->insertLsn( recordHeader->_lsn, TRUE ) ;
+      }
+
+      if ( LOG_TYPE_DATA_INSERT == recordHeader->_type )
+      {
+         BSONObj obj ;
+         const CHAR *fullname = NULL ;
+         BSONElement idEle ;         
+
+         rc = dpsRecord2Insert( (const CHAR *)recordHeader,
+                                &fullname, obj ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         idEle = obj.getField( DMS_ID_KEY_NAME ) ;
+         if ( idEle.eoo() )
+         {
+            PD_LOG( PDWARNING, "replay: failed to parse"
+                    " oid from bson:[%s]",obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         {
+            BSONObjBuilder selectorBuilder ;
+            selectorBuilder.append( idEle ) ;
+            BSONObj selector = selectorBuilder.obj() ;
+            BSONObj hint = BSON(""<<IXM_ID_KEY_NAME) ;
+
+            it = mapPendingObj.find( selector ) ;
+            if ( it != mapPendingObj.end() )
+            {
+               if ( LOG_TYPE_DATA_DELETE != it->second._opType )
+               {
+                  selector = it->second._obj ;
+               }
+               else
+               {
+                  selector = BSONObj() ;
+               }
+               mapPendingObj.erase( it ) ;
+            }
+            /// delete disk
+            if ( !selector.isEmpty() )
+            {
+               rc = rtnDelete( fullname, selector, hint, 0, eduCB, _dmsCB,
+                               _dpsCB, 1 ) ;
+            }
+         }
+      }
+      else if ( LOG_TYPE_DATA_UPDATE == recordHeader->_type )
+      {
+         const CHAR *fullname = NULL ;
+         BSONObj oldMatch ;
+         BSONObj modifierObj ;  //old modifier
+         BSONObj newMatch ;     //new matcher
+         BSONObj newObj ;
+
+         dpsTransPendingKey tmpKey ;
+         dpsTransPendingValue tmpVal ;
+         BOOLEAN isTmpKeyExsit = FALSE ;
+
+         BSONObj hint = BSON(""<<IXM_ID_KEY_NAME) ;
+         rc = dpsRecord2Update( (const CHAR *)recordHeader,
+                                 &fullname,
+                                 oldMatch,
+                                 modifierObj,
+                                 newMatch,
+                                 newObj ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         if ( !modifierObj.isEmpty() )
+         {
+            it = mapPendingObj.find( newMatch ) ;
+            if ( it != mapPendingObj.end() )
+            {
+               tmpVal = it->second ;
+               isTmpKeyExsit = TRUE ;
+
+               mthModifier modifier ;
+               rc = modifier.loadPattern( modifierObj ) ;
+               PD_RC_CHECK( rc, PDERROR, "Load modify pattern(%s) failed, "
+                            "rc: %d", modifierObj.toString().c_str(), rc ) ;
+
+               rc = modifier.modify( it->first._obj, tmpKey._obj ) ;
+               PD_RC_CHECK( rc, PDERROR, "Modify obj(%s) by(%s) failed, "
+                            "rc: %d", it->first._obj.toString().c_str(),
+                            modifierObj.toString().c_str(), rc ) ;
+
+               mapPendingObj.erase( it ) ;
+
+               if ( LOG_TYPE_DATA_DELETE != tmpVal._opType )
+               {
+                  newMatch = tmpVal._obj ;
+                  modifierObj = BSON( "$replace" << tmpKey._obj ) ;
+               }
+            }
+            else
+            {
+               tmpVal._opType = LOG_TYPE_DATA_UPDATE ;
+               tmpVal._obj = newMatch.getOwned() ;
+            }
+
+            if ( LOG_TYPE_DATA_DELETE == tmpVal._opType )
+            {
+               rc = rtnInsert( fullname, tmpKey._obj, 1, 0, eduCB,
+                               _dmsCB, _dpsCB, 1 ) ;
+            }
+            else
+            {
+               rc = rtnUpdate( fullname, newMatch, modifierObj,
+                               hint, 0, eduCB, _dmsCB, _dpsCB, 1 ) ;
+            }
+            if ( SDB_IXM_DUP_KEY == rc )
+            {
+               if ( !isTmpKeyExsit )
+               {
+                  BSONObj curObj ;
+                  rtnContextBuf buffObj ;
+                  rc = rtnQuery( fullname, BSONObj(), newMatch, BSONObj(),
+                                 hint, 0, eduCB, 0, 1, _dmsCB, sdbGetRTNCB(),
+                                 contextID ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Query obj(%s) from %s failed, "
+                               "rc: %d", newMatch.toString().c_str(),
+                               fullname ) ;
+
+                  rc = rtnGetMore( contextID, 1, buffObj, eduCB,
+                                   sdbGetRTNCB() ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Query obj(%s) from %s failed, "
+                               "rc: %d", newMatch.toString().c_str(),
+                               fullname, rc ) ;
+
+                  /// get obj
+                  rc = buffObj.nextObj( curObj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Query obj(%s) from %s failed, "
+                               "rc: %d", newMatch.toString().c_str(),
+                               fullname, rc ) ;
+
+                  mthModifier modifier ;
+                  rc = modifier.loadPattern( modifierObj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Load modify pattern(%s) failed, "
+                               "rc: %d", modifierObj.toString().c_str(), rc ) ;
+
+                  rc = modifier.modify( curObj, tmpKey._obj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Modify obj(%s) by(%s) failed, "
+                               "rc: %d", curObj.toString().c_str(),
+                               modifierObj.toString().c_str(), rc ) ;
+               }
+
+               mapPendingObj[ tmpKey ] = tmpVal ;
+               rc = SDB_OK ;
+            }
+         }
+      }
+      else if ( LOG_TYPE_DATA_DELETE == recordHeader->_type )
+      {
+         BSONObj obj ;
+         const CHAR *fullname = NULL ;
+         rc = dpsRecord2Delete( (const CHAR *)recordHeader,
+                                &fullname,
+                                obj ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         rc = rtnInsert( fullname, obj, 1, 0, eduCB, _dmsCB, _dpsCB, 1 ) ;
+         if ( SDB_IXM_DUP_KEY == rc )
+         {
+            dpsTransPendingKey key( obj ) ;
+            dpsTransPendingValue val( key._obj, LOG_TYPE_DATA_DELETE ) ;
+            mapPendingObj[ key ] = val ;
+            rc = SDB_OK ;
+         }
+      }
+      else
+      {
+         rc = rollback( recordHeader, eduCB ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         sdbGetRTNCB()->contextDelete( contextID, eduCB ) ;
+      }
       return rc ;
    error:
       goto done ;

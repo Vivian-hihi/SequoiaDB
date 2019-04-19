@@ -45,6 +45,7 @@
 #include "dpsLogRecord.hpp"
 #include "rtnBackgroundJob.hpp"
 #include "utilCompressor.hpp"
+#include "ossMemPool.hpp"
 #include "../bson/bsonobj.h"
 
 using namespace bson ;
@@ -119,13 +120,12 @@ namespace engine
    } ;
    typedef _clsCLParallaInfo clsCLParallaInfo ;
 
-
    /*
       _clsReplayer define
    */
    class _clsReplayer : public SDBObject
    {
-      typedef map<utilCLUniqueID, clsCLParallaInfo>   MAP_CL_PARALLAINFO ;
+      typedef ossPoolMap<utilCLUniqueID, clsCLParallaInfo>  MAP_CL_PARALLAINFO ;
 
    public:
       _clsReplayer( BOOLEAN useDps = FALSE, BOOLEAN isReplSync = FALSE ) ;
@@ -170,6 +170,10 @@ namespace engine
                             UINT32 len,
                             const CHAR *data,
                             _pmdEDUCB *eduCB ) ;
+
+      INT32 rollbackTrans( const dpsLogRecordHeader *recordHeader,
+                           _pmdEDUCB *eduCB,
+                           MAP_TRANS_PENDING_OBJ &mapPendingObj ) ;
 
    protected:
       clsCLParallaInfo*    _getOrCreateInfo( utilCLUniqueID clUID ) ;

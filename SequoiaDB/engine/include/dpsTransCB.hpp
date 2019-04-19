@@ -52,6 +52,8 @@
 #include "ossEvent.hpp"
 #include "ossMemPool.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    class _pmdEDUCB ;
@@ -61,11 +63,87 @@ namespace engine
    class dpsTransLockManager ;
    class _dpsITransLockCallback ;
 
-   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_MAP ;
-   typedef ossPoolMap<DPS_TRANS_ID, _pmdEDUCB * >   TRANS_CB_MAP ;
-   typedef ossPoolMap<DPS_LSN_OFFSET, DPS_TRANS_ID> TRANS_LSN_ID_MAP ;
-   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_ID_LSN_MAP ;
-   typedef std::queue< EDUID >                      TRANS_EDU_LIST ;
+   /*
+      _dpsTransPendingKey define
+   */
+   struct _dpsTransPendingKey
+   {
+      BSONObj     _obj ;
+      _dpsTransPendingKey()
+      {
+      }
+      _dpsTransPendingKey( const BSONObj &obj )
+      {
+         _obj = obj.getOwned() ;
+      }
+      bool operator< ( const _dpsTransPendingKey &rhs ) const
+      {
+         /// compare id
+         BSONElement l, r ;
+         l = _obj.getField( DMS_ID_KEY_NAME ) ;
+         r = rhs._obj.getField( DMS_ID_KEY_NAME ) ;
+         return l.woCompare( l, FALSE ) < 0 ;
+      }
+      bool operator== ( const _dpsTransPendingKey &rhs ) const
+      {
+         /// compare id
+         BSONElement l, r ;
+         l = _obj.getField( DMS_ID_KEY_NAME ) ;
+         r = rhs._obj.getField( DMS_ID_KEY_NAME ) ;
+         return l.woCompare( l, FALSE ) == 0 ;
+      }
+   } ;
+   typedef _dpsTransPendingKey dpsTransPendingKey ;
+
+   /*
+      _dpsTransPendingValue define
+   */
+   struct _dpsTransPendingValue
+   {
+      BSONObj     _obj ;
+      INT32       _opType ;
+      _dpsTransPendingValue()
+      {
+         _opType = LOG_TYPE_DUMMY ;
+      }
+      _dpsTransPendingValue( const BSONObj &obj, INT32 opType )
+      {
+         _obj = obj.getOwned() ;
+         _opType = opType ;
+      }
+   } ;
+   typedef _dpsTransPendingValue dpsTransPendingValue ;
+
+   typedef ossPoolMap<dpsTransPendingKey,
+                      dpsTransPendingValue> MAP_TRANS_PENDING_OBJ ;
+
+   /*
+      _dpsTransBackInfo define
+   */
+   struct _dpsTransBackInfo
+   {
+      DPS_LSN_OFFSET             _lsn ;
+      MAP_TRANS_PENDING_OBJ      _mapPendingObj ;
+
+      _dpsTransBackInfo( DPS_LSN_OFFSET lsn = DPS_INVALID_LSN_OFFSET )
+      {
+         _lsn = lsn ;
+      }
+      _dpsTransBackInfo( DPS_LSN_OFFSET lsn,
+                         const MAP_TRANS_PENDING_OBJ &mapPendingObj )
+      {
+         _lsn = lsn ;
+         _mapPendingObj = mapPendingObj ;
+      }
+   } ;
+   typedef _dpsTransBackInfo dpsTransBackInfo ;
+
+   typedef ossPoolMap<DPS_TRANS_ID, dpsTransBackInfo> TRANS_MAP ;
+   typedef ossPoolMap<DPS_TRANS_ID, _pmdEDUCB * >     TRANS_CB_MAP ;
+   typedef ossPoolMap<DPS_LSN_OFFSET, DPS_TRANS_ID>   TRANS_LSN_ID_MAP ;
+   typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET>   TRANS_ID_LSN_MAP ;
+   typedef std::queue< EDUID >                        TRANS_EDU_LIST ;
+
 
    // LRB shrink opreation interval, 900 seconds
    #define DPS_TRANS_LRB_SHRINK_INTERVAL ( 900 )
@@ -116,7 +194,9 @@ namespace engine
       BOOLEAN isDoRollback() const { return _doRollback ; }
       INT32   waitRollback( UINT64 millicSec = -1 ) ;
 
-      void addTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset ) ;
+      void addTransInfo( DPS_TRANS_ID transID,
+                         DPS_LSN_OFFSET lsnOffset,
+                         const MAP_TRANS_PENDING_OBJ &mapPendingObj ) ;
       void updateTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset ) ;
 
       BOOLEAN  addTransCB( DPS_TRANS_ID transID, _pmdEDUCB *eduCB ) ;

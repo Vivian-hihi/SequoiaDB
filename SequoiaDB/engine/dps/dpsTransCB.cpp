@@ -365,14 +365,15 @@ namespace engine
    }
 
    void dpsTransCB::addTransInfo( DPS_TRANS_ID transID,
-                                  DPS_LSN_OFFSET lsnOffset )
+                                  DPS_LSN_OFFSET lsnOffset,
+                                  const MAP_TRANS_PENDING_OBJ &mapPendingObj )
    {
       transID = getTransID( transID );
       ossScopedLock _lock( &_MapMutex );
       if ( _TransMap.find( transID ) == _TransMap.end() )
       {
          // it is means transaction is synchronous by log if transID is exist
-         _TransMap[ transID ] = lsnOffset;
+         _TransMap[ transID ] = dpsTransBackInfo( lsnOffset, mapPendingObj ) ;
       }
    }
 
