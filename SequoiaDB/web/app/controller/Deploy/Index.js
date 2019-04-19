@@ -3152,7 +3152,7 @@
                {
                   service1 = info['BusinessName'] ;
                }
-               else if ( isNull( service2 ) && info['BusinessType'] == 'sequoiasql-mysql' || nfo['BusinessType'] == 'sequoiasql-postgresql' )
+               else if ( isNull( service2 ) && info['BusinessType'] == 'sequoiasql-mysql' || info['BusinessType'] == 'sequoiasql-postgresql' )
                {
                   service2 = info['BusinessName'] ;
                }
