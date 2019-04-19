@@ -3269,7 +3269,6 @@ namespace engine
                                              context->mbID(),
                                              &foundRID, &lockConflict,
                                              &callback ) ;
-               SDB_ASSERT( SDB_OK == rc, "Failed to get record-X-LOCK" );
                PD_RC_CHECK( rc, PDERROR, "Failed to insert the record, get "
                            "transaction-X-lock of record failed, "
                            "rc: %d"OSS_NEWLINE
