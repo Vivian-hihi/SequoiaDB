@@ -1344,7 +1344,7 @@ namespace engine
 
    INT32 _pmdDataProcessor::_onInterruptMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
    {
-      PD_LOG ( PDEVENT, "Session[%s, %lld] recieved interrupt msg",
+      PD_LOG ( PDINFO, "Session[%s, %lld] recieved interrupt msg",
                getSession()->sessionName(), eduCB()->getID() ) ;
 
       // delete all contextID, rollback transaction
@@ -1365,7 +1365,7 @@ namespace engine
 
    INT32 _pmdDataProcessor::_onInterruptSelfMsg()
    {
-      PD_LOG( PDEVENT, "Session[%s, %lld] recv interrupt self msg",
+      PD_LOG( PDINFO, "Session[%s, %lld] recv interrupt self msg",
               getSession()->sessionName(), eduCB()->getID() ) ;
       return SDB_OK ;
    }

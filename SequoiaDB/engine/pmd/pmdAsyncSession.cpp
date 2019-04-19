@@ -972,7 +972,7 @@ namespace engine
       }
       else if ( MSG_BS_INTERRUPTE == pMsg->opCode )
       {
-         PD_LOG ( PDEVENT, "Session[%s] recieved interrupt message",
+         PD_LOG ( PDINFO, "Session[%s] recieved interrupt message",
                   pSession->sessionName() ) ;
          pSession->eduCB()->interrupt() ;
          // For interrupt message, we have to continue in order to push the
@@ -980,7 +980,7 @@ namespace engine
       }
       else if ( MSG_BS_INTERRUPTE_SELF == pMsg->opCode )
       {
-         PD_LOG( PDEVENT, "Session[%s] recieved interrupt self message",
+         PD_LOG( PDINFO, "Session[%s] recieved interrupt self message",
                  pSession->sessionName() ) ;
          pSession->eduCB()->interrupt() ;
          goto done ;

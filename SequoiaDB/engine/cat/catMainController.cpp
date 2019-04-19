@@ -416,7 +416,7 @@ namespace engine
    INT32 catMainController::_processInterruptMsg( const NET_HANDLE & handle,
                                                   MsgHeader * header )
    {
-      PD_LOG( PDEVENT, "Recieve interrupt msg[handle: %u, tid: %u]",
+      PD_LOG( PDINFO, "Recieve interrupt msg[handle: %u, tid: %u]",
               handle, header->TID ) ;
       // release the ' handle + tid ' all context
       _delContext( handle, header->TID ) ;
