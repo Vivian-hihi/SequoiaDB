@@ -221,7 +221,8 @@ int optGenForSAC::_mergeConfig()
          _sacXmlList.push_back ( ele ) ;
       }
 
-      if ( optInfo.defttag.length() > 0 )
+      if ( optInfo.defttag.length() > 0 &&
+           _sacXmlList[index].defaultVal.length() == 0 )
       {
          _sacXmlList[index].defaultVal = optInfo.defttag ;
       }

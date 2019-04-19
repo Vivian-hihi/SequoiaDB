@@ -34,7 +34,7 @@
          <cn>诊断日志打印级别</cn>
       </WebName>
       <Type>int</Type>
-      <Default>3</Default>
+      <Default></Default>
       <Valid>0,1,2,3,4,5</Valid>
       <Display>select box</Display>
       <Level>0</Level>
@@ -46,7 +46,7 @@
          <cn>节点角色</cn>
       </WebName>
       <Type>string</Type>
-      <Default>standalone</Default>
+      <Default></Default>
       <Valid>standalone,catalog,coord,data</Valid>
       <Display>hidden</Display>
       <Level>0</Level>
@@ -82,7 +82,7 @@
          <cn>事务</cn>
       </WebName>
       <Type>bool</Type>
-      <Default>false</Default>
+      <Default>true</Default>
       <Valid>true,false</Valid>
       <Display>select box</Display>
       <Level>0</Level>
@@ -94,7 +94,7 @@
          <cn>实例模式</cn>
       </WebName>
       <Type>string</Type>
-      <Default>M</Default>
+      <Default></Default>
       <Valid>M,S,A,1,2,3,4,5,6,7</Valid>
       <Display>select box</Display>
       <Level>0</Level>
@@ -190,7 +190,7 @@
          <cn>选举权重</cn>
       </WebName>
       <Type>int</Type>
-      <Default>10</Default>
+      <Default></Default>
       <Valid>1-100</Valid>
       <Display>edit box</Display>
       <Level>1</Level>
@@ -202,7 +202,7 @@
          <cn>数据同步最大任务数</cn>
       </WebName>
       <Type>int</Type>
-      <Default>10</Default>
+      <Default></Default>
       <Valid>2-200</Valid>
       <Display>edit box</Display>
       <Level>1</Level>
@@ -214,7 +214,7 @@
          <cn>数据同步周期</cn>
       </WebName>
       <Type>int</Type>
-      <Default>10000</Default>
+      <Default></Default>
       <Valid>0-</Valid>
       <Display>edit box</Display>
       <Level>1</Level>
@@ -226,7 +226,7 @@
          <cn>数据同步触发记录数</cn>
       </WebName>
       <Type>int</Type>
-      <Default>0</Default>
+      <Default></Default>
       <Valid>0-</Valid>
       <Display>edit box</Display>
       <Level>1</Level>
@@ -238,7 +238,7 @@
          <cn>数据同步是否深度刷盘</cn>
       </WebName>
       <Type>bool</Type>
-      <Default>false</Default>
+      <Default></Default>
       <Valid>true,false</Valid>
       <Display>select box</Display>
       <Level>1</Level>
@@ -250,7 +250,7 @@
          <cn>开启复制日志归档</cn>
       </WebName>
       <Type>bool</Type>
-      <Default>false</Default>
+      <Default></Default>
       <Valid>true,false</Valid>
       <Display>select box</Display>
       <Level>1</Level>
@@ -262,7 +262,7 @@
          <cn>开启复制日志归档压缩</cn>
       </WebName>
       <Type>bool</Type>
-      <Default>true</Default>
+      <Default></Default>
       <Valid>true,false</Valid>
       <Display>select box</Display>
       <Level>1</Level>
@@ -286,7 +286,7 @@
          <cn>未归档超时时间</cn>
       </WebName>
       <Type>int</Type>
-      <Default>600</Default>
+      <Default></Default>
       <Valid>0-</Valid>
       <Display>edit box</Display>
       <Level>1</Level>
@@ -298,7 +298,7 @@
          <cn>归档日志文件的过期时间</cn>
       </WebName>
       <Type>int</Type>
-      <Default>240</Default>
+      <Default></Default>
       <Valid>0-</Valid>
       <Display>edit box</Display>
       <Level>1</Level>
@@ -310,7 +310,7 @@
          <cn>归档日志目录磁盘配额</cn>
       </WebName>
       <Type>int</Type>
-      <Default>10</Default>
+      <Default></Default>
       <Valid>0-</Valid>
       <Display>edit box</Display>
       <Level>1</Level>
@@ -418,7 +418,7 @@
          <cn>开启性能统计</cn>
       </WebName>
       <Type>bool</Type>
-      <Default>false</Default>
+      <Default></Default>
       <Valid>true,false</Valid>
       <Display>select box</Display>
       <Level>1</Level>
@@ -430,7 +430,7 @@
          <cn>查询的匹配模式</cn>
       </WebName>
       <Type>bool</Type>
-      <Default>false</Default>
+      <Default></Default>
       <Valid>true,false</Valid>
       <Display>select box</Display>
       <Level>1</Level>
