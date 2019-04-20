@@ -1953,7 +1953,7 @@ double sdb_decimal_to_double( const bson_decimal *decimal )
       goto error ;
    }
 
-   strValue = bson_malloc( size ) ;
+   strValue = bson_malloc( size + 1 ) ;
    if ( NULL == strValue )
    {
       rc = -2 ;
@@ -1966,6 +1966,7 @@ double sdb_decimal_to_double( const bson_decimal *decimal )
       goto error ;
    }
 
+   strValue[ size ] = '\0' ;
    d = atof( strValue ) ;
 
 done:
