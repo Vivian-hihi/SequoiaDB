@@ -1020,7 +1020,7 @@ namespace engine
                   else
                   {
                      PD_LOG( PDERROR, "Failed to find fullname in record" ) ;
-                     pCatAgent->lock_w() ;
+                     pCatAgent->release_w() ;
                      rc = SDB_SYS ;
                      goto error ;
                   }
