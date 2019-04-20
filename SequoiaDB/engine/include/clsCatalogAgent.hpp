@@ -223,8 +223,9 @@ namespace engine
          INT32             getGroupUpBound( UINT32 groupID,
                                             BSONObj &upBound ) const;
 
-         INT32             updateCatSet ( const BSONObj & catSet,
-                                          UINT32 groupID = 0 ) ;
+         INT32             updateCatSet ( const BSONObj &catSet,
+                                          UINT32 groupID = 0,
+                                          BOOLEAN allowUpdateID = TRUE ) ;
          BSONObj           toCataInfoBson () ;
          INT32             split ( const BSONObj &splitKey,
                                    const BSONObj &splitEndKey,

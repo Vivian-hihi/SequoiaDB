@@ -1607,7 +1607,9 @@ namespace engine
    // groupID [in]: the groupID we want to filter, 0 means all groups
    // note the catSet record should always be fetched from catalog collection
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCT_UDCATSET, "_clsCatalogSet::updateCatSet" )
-   INT32 _clsCatalogSet::updateCatSet( const BSONObj & catSet, UINT32 groupID )
+   INT32 _clsCatalogSet::updateCatSet( const BSONObj & catSet,
+                                       UINT32 groupID,
+                                       BOOLEAN allowUpdateID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSCT_UDCATSET ) ;
@@ -1642,20 +1644,23 @@ namespace engine
       }
 
       // update unique id
-      ele = catSet.getField( CAT_CL_UNIQUEID ) ;
-      if ( ele.eoo() )
+      if ( allowUpdateID )
       {
-         _clUniqueID = 0;
-      }
-      else if ( ele.type() != NumberLong )
-      {
-         // if type is not Number, something wrong
-         PD_RC_CHECK ( SDB_CAT_CORRUPTION, PDSEVERE,
-                       "Catalog [%s] type error", CAT_CL_UNIQUEID ) ;
-      }
-      else
-      {
-         _clUniqueID = (UINT64)ele.Long();
+         ele = catSet.getField( CAT_CL_UNIQUEID ) ;
+         if ( ele.eoo() )
+         {
+            _clUniqueID = 0;
+         }
+         else if ( ele.type() != NumberLong )
+         {
+            // if type is not Number, something wrong
+            PD_RC_CHECK ( SDB_CAT_CORRUPTION, PDSEVERE,
+                          "Catalog [%s] type error", CAT_CL_UNIQUEID ) ;
+         }
+         else
+         {
+            _clUniqueID = (UINT64)ele.Long();
+         }
       }
 
       // isMainCl
@@ -2648,11 +2653,13 @@ namespace engine
          /// add cata info to cache map
          catSet = collectionSet ( clName.c_str(), clUniqueID ) ;
          if ( catSet &&
-              ossStrcmp( clName.c_str(), catSet->name() ) != 0 )
+              ( ossStrcmp( clName.c_str(), catSet->name() ) != 0 ||
+                clUniqueID != catSet->clUniqueID() ) )
          {
             clear( clName.c_str() ) ;
             catSet = NULL ;
          }
+
          if ( !catSet )
          {
             catSet = _addCollectionSet ( clName.c_str(), clUniqueID ) ;
@@ -2665,7 +2672,7 @@ namespace engine
             goto error ;
          }
 
-         rc = catSet->updateCatSet ( catalog, groupID ) ;
+         rc = catSet->updateCatSet ( catalog, groupID, FALSE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Update catalogSet[%s] failed[rc:%d]",
