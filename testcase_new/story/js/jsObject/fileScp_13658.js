@@ -12,6 +12,7 @@ function main()
 	var dstFile = WORKDIR + '/sdblist'; 
 	var cmd = new Cmd();
 	
+	//TODO:这里似乎没有覆盖远程文件
 	println("\n---Begin to exec File.scp");
 	// expect success, if it fails, it will throw "~bash: ./sdblist: Text file busy"
 	File.scp( srcFile, dstFile );
