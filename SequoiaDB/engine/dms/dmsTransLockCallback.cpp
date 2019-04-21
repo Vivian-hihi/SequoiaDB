@@ -1268,6 +1268,7 @@ namespace engine
             {
                BSONObjSet  keySet ;
                _DELETE_CURSOR deleteCursor = _DELETE_NONE ;
+               _INSERT_CURSOR insertCursor = _INSERT_NONE ;
                _oldVer = oldVer ;
 
                // get the keyset
@@ -1285,6 +1286,16 @@ namespace engine
                      cit != keySet.end() ;
                      ++cit )
                {
+                  rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
+                                          indexCB->unique(),
+                                          indexCB->enforced(), *cit,
+                                          oldVer->getRecordID(), cb,
+                                          FALSE, NULL ) ;
+                  if ( rc )
+                  {
+                     goto error ;
+                  }
+
                   rc = _checkDeleteIndex( treePtr,deleteCursor, indexCB,
                                           indexCB->unique(), *cit, 
                                           oldVer->getRecordID(), cb ) ;
