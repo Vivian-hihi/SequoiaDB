@@ -110,6 +110,7 @@ public class SubCL101 extends SdbTestBase {
 		}
 	}
 
+	//TODO:这里似乎可以不需要使用传参，可以直接使用  RECORDS_NUM
 	private void insertData(DBCollection cl, int recordsNum) {
 		ArrayList<BSONObject> insertor = new ArrayList<BSONObject>();
 		for (int i = 0; i < recordsNum; i++) {
