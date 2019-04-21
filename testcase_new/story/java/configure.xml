@@ -93,13 +93,14 @@
       </packages>
    </test>
    
-   <test name="rcauto" parallel="classes" thread-count="1">
+   <test name="rcautosync" parallel="classes" thread-count="1">
       <groups>
          <run>
             <include name="rcauto" />
          </run>
       </groups>
       <packages>
+         <!--split and transaction can't parallel -->
          <package name="com.sequoiadb.transaction.rcauto" />
       </packages>
    </test>
