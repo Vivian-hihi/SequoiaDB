@@ -74,6 +74,7 @@ testFiles = [
    [ "./crud/queryOne12542.cpp" ],
    [ "./crud/queryAndRemove12544.cpp" ],
    [ "./crud/queryAndUpdate12543.cpp" ],
+   [ "./crud/autoincofsequence_16648.cpp" ],
    #[ "./crud/queryAndUpdateShardingKey12636.cpp" ],
    #[ "./crud/updateShardingKey12635.cpp" ],
    [ "./crud/crud12513.cpp" ],
@@ -135,7 +136,7 @@ testFiles = [
    [ "./misc/sync12237.cpp" ],
    [ "./misc/flushConf12476.cpp" ],
    [ "./misc/testConnectRepeatly12509.cpp" ],
-   [ "./misc/getLastAliveTime12655.cpp" ],
+   #[ "./misc/getLastAliveTime12655.cpp" ],
    [ "./misc/JSCompatible10969.cpp" ],
    [ "./misc/prepareMore11761.cpp" ],
    [ "./misc/bindata11734.cpp" ],
@@ -189,7 +190,8 @@ testFiles = [
    [ "./alter/altercl_15168.cpp" ],
    [ "./datatype/timestamptest_15861.cpp" ],
    [ "./paramVerify/snapshotTest15759.cpp" ],
-   [ "./lob/lobIsEof15671.cpp" ]
+   [ "./lob/lobIsEof15671.cpp" ],
+   [ "./sdb/errobj_17385.cpp"]
 ]
 
 def getFileName( filePath ):
