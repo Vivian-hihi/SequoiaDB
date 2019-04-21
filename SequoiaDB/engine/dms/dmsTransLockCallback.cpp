@@ -755,6 +755,7 @@ namespace engine
                                                   const BSONObj &keyObj,
                                                   const dmsRecordID &rid,
                                                   _pmdEDUCB *cb,
+                                                  BOOLEAN allowSelfDup,
                                                   utilInsertResult *insertResult )
    {
       INT32 rc = SDB_OK ;
@@ -799,7 +800,7 @@ namespace engine
             //   db.cs.c1.remove() // or delete { a:1, b:1 }
             //   db.cs.c1.insert({a:1, b:1}) ==> fails due to dupblicate key
             //
-            if ( idxValue.getOwnnerTID() == cb->getTID() )
+            if ( allowSelfDup && idxValue.getOwnnerTID() == cb->getTID() )
             {
                goto done ;
             }
@@ -896,7 +897,7 @@ namespace engine
       {
          rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
                                  isUnique, isEnforce, *cit,
-                                 rid, cb, insertResult ) ;
+                                 rid, cb, TRUE, insertResult ) ;
          if ( rc )
          {
             goto error ;
@@ -927,9 +928,10 @@ namespace engine
          goto done ;
       }
 
+      /// create index, don't allow self duplicate
       rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
                               isUnique, isEnforce, keyObj,
-                              rid, cb, insertResult ) ;
+                              rid, cb, FALSE, insertResult ) ;
       if ( rc )
       {
          goto error ;
@@ -1130,7 +1132,7 @@ namespace engine
             hasChanged = TRUE ;
             rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
                                     isUnique, isEnforce, *itnew,
-                                    rid, cb, NULL ) ;
+                                    rid, cb, TRUE, NULL ) ;
             if ( rc )
             {
                goto error ;
@@ -1144,7 +1146,7 @@ namespace engine
       {
          rc = _checkInsertIndex( treePtr, insertCursor, indexCB,
                                  isUnique, isEnforce, *itnew,
-                                 rid, cb, NULL ) ;
+                                 rid, cb, TRUE, NULL ) ;
          if ( rc )
          {
             goto error ;

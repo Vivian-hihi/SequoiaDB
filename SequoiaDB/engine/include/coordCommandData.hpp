@@ -932,8 +932,6 @@ namespace engine
          */
          virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
 
-         virtual BOOLEAN _allowInTransaction() const { return FALSE ; } 
-
       protected:
          string                  _indexName ;
    } ;

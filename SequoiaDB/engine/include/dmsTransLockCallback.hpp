@@ -195,6 +195,7 @@ namespace engine
                                        const BSONObj &keyObj,
                                        const dmsRecordID &rid,
                                        _pmdEDUCB* cb,
+                                       BOOLEAN allowSelfDup,
                                        utilInsertResult *insertResult ) ;
 
    enum _DELETE_CURSOR
