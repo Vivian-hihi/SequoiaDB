@@ -25,6 +25,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @review
  */
 
+// SDV 的用例似乎没有 rc 之类的分组跑用例，这里是否需要修改，其它用例也有此问题
 @Test(groups = "rc")
 public class Transaction6005 extends SdbTestBase {
     private Sequoiadb sdb;
@@ -77,12 +78,13 @@ public class Transaction6005 extends SdbTestBase {
         cl.createIndex(IDX_NAME, new BasicBSONObject("a", 1), true, true);
         try {
             cl.insert(insertor);
+            //TODO:这里应该要抛异常或者使用 assert.fail() 不然插入成功也会导致用例执行成功
         } catch (BaseException e) {
             if (-38 != e.getErrorCode()) {
                 throw e;
             }
         }
-        
+        // sdb.commit() 是否可以在 tearDown 处执行一次，否则用例跑失败，tearDown 也可能失败 报 -190
         sdb.commit();
 
         Assert.assertEquals(2, cl.getCount());
