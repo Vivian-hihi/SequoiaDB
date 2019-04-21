@@ -62,6 +62,15 @@ public class TimePrinterListener extends TestListenerAdapter {
     }
     
     @Override
+    public void onTestFailedButWithinSuccessPercentage(ITestResult itr){
+        super.onTestFailedButWithinSuccessPercentage(itr) ;
+        if ( isTransCase( itr.getMethod().getGroups()) ){
+            SdbTestBase.decCaseNum() ;
+        }
+    }
+    
+    
+    @Override
     public void onConfigurationSuccess(ITestResult itr) {
         super.onConfigurationSuccess(itr);
         if (itr.getMethod().isAfterClassConfiguration()) {
