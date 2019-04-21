@@ -117,7 +117,7 @@ public class IdIndex10209 extends SdbTestBase {
                 opt.put("ReplSize", 1);
                 csDB.getCollection(clName).alterCollection(opt);
             } catch (BaseException e) {
-                if (e.getErrorCode() != -147 && eCode != -190) {
+                if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
                     throw e;
                 }
             } finally {
