@@ -103,7 +103,7 @@ void replicaGroupTest::SetUpTestCase()
    }
    // create node
    bson_init( &option ) ;
-   bson_append_int( &option, "logfilenum", 1 ) ;
+   bson_append_int( &option, "logfilenum", 5 ) ;
    bson_finish( &option ) ;
 
    CHAR hostName[100] ;
@@ -168,7 +168,7 @@ void replicaGroupTest::SetUp()
    create_node_flag2 = FALSE ;
    // create node
    bson_init( &option ) ;
-   bson_append_int( &option, "logfilenum", 1 ) ;
+   bson_append_int( &option, "logfilenum", 5 ) ;
    bson_finish( &option ) ;
 
    CHAR hostName[100] ;
