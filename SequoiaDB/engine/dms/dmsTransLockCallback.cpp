@@ -623,9 +623,15 @@ namespace engine
                   PD_LOG( PDDEBUG, "Delete old record for rid[%s] from memory",
                           lockId.toString().c_str() ) ;
                }
-               if( _oldVer->isOnChain() )
+               /// In that sequence:
+               /// submit Job
+               /// ---------- truncate
+               /// ------------------- update - submit
+               /// ------------------------------------Job::doit
+               /// when the releaseLockJob::doit will occur
+               /// _oldVer->isOnChain(), but _mbStat is NULL
+               if( _oldVer->isOnChain() && _mbStat )
                {
-                  SDB_ASSERT( _mbStat, "mbStat is invalid " ) ;
                   _mbStat->removeFromChain( _oldVer ) ;
                }
             }
