@@ -71,8 +71,8 @@ public class Transaction18233 extends SdbTestBase {
     @Test
     public void test() {
         // 子表执行切分后，通过主表插入记录R1
-        subCL2.split(groupNames.get(1), groupNames.get(0), 50);
-        
+        // subCL2.split(groupNames.get(1), groupNames.get(0), 50);
+
         BSONObject record = (BSONObject) JSON.parse("{_id:0, a:0, b:0}");
         cl.insert(record);
         expList.add(record);

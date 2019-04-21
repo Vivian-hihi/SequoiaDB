@@ -69,8 +69,9 @@ public class Transaction18231 extends SdbTestBase {
         DBCollection cl1 = db1.getCollectionSpace(csName).getCollection(clName);
 
         // 集合使用分区表，插入的记录分布在多个组上
-        cl.split(groupNames.get(0), groupNames.get(1), (BSONObject) JSON.parse("{b:50}"),
-                (BSONObject) JSON.parse("{b:200}"));
+        // cl.split(groupNames.get(0), groupNames.get(1), (BSONObject)
+        // JSON.parse("{b:50}"),
+        // (BSONObject) JSON.parse("{b:200}"));
 
         // 在集合中创建正序的唯一索引，比如：a为唯一索引，并插入多条包含索引字段的记录R1s
         cl.createIndex("idx18231", "{a:-1, b:-1}", true, false);
