@@ -52,12 +52,12 @@ public class SdbTestBase {
     private static final String TRANSAUTOROLLBACK = "transautorollback" ;
     private static final String TRANSUSERBS = "transuserbs" ;
     private static final String NODENAME = "NodeName" ;
-    private static final String RU = "ru" ;
-    private static final String RC = "rc" ;
-    private static final String RCWAITLOCK = "rcwaitlock" ;
-    private static final String RS = "rs" ;
-    private static final String RCAUTO = "rcauto" ;
-    private static final String RCUSERBS = "rcuserbs" ;
+    public static final String RU = "ru" ;
+    public static final String RC = "rc" ;
+    public static final String RCWAITLOCK = "rcwaitlock" ;
+    public static final String RS = "rs" ;
+    public static final String RCAUTO = "rcauto" ;
+    public static final String RCUSERBS = "rcuserbs" ;
 
     private static ConfigOptions options = new ConfigOptions() ;
     private static String testGroup = "ru" ;
@@ -297,11 +297,12 @@ public class SdbTestBase {
             return ;
         }
         
-        while (runCaseNum.get() != 0 ) {
+        while (runCaseNum.get() > 0 ) {
             try {
                 synchronized(runCaseNum){
                     runCaseNum.wait( 50 ) ;
                 }
+                System.out.println( runCaseNum.get()) ;
             } catch ( InterruptedException e ) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

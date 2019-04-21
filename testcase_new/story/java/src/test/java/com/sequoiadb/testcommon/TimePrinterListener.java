@@ -6,6 +6,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.base.Sequoiadb;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays ;
 import java.util.Date;
 
 /**
@@ -13,28 +14,51 @@ import java.util.Date;
  */
 public class TimePrinterListener extends TestListenerAdapter {
 
+    private static String[] runGroups = {SdbTestBase.RC, SdbTestBase.RCAUTO,
+        SdbTestBase.RCUSERBS, SdbTestBase.RCWAITLOCK, SdbTestBase.RS, SdbTestBase.RU} ;
+    
+    private boolean isTransCase(String[] groups){
+        if ( groups == null || groups.length == 0 ){
+            return false ;
+        }
+        for ( int i = 0; i < runGroups.length; ++i){
+            if ( Arrays.asList( groups ).contains( runGroups[i] )){
+                return true ;
+            }
+        }
+        
+        return false ;
+    }
     @Override
     public void onTestStart(ITestResult itr){
         super.onTestStart( itr ) ;
-        SdbTestBase.incCaseNum() ;
+        if ( isTransCase( itr.getMethod().getGroups()) ){
+            SdbTestBase.incCaseNum() ;
+        }
     }
     
     @Override
     public void onTestSuccess(ITestResult itr){
         super.onTestSuccess( itr ) ;
-        SdbTestBase.decCaseNum() ;
+        if ( isTransCase( itr.getMethod().getGroups()) ){
+            SdbTestBase.decCaseNum() ;
+        }
     }
     
     @Override
     public void onTestFailure(ITestResult itr){
         super.onTestFailure( itr ) ;
-        SdbTestBase.decCaseNum() ;
+        if ( isTransCase( itr.getMethod().getGroups()) ){
+            SdbTestBase.decCaseNum() ;
+        }
     }
     
     @Override
     public void onTestSkipped(ITestResult itr){
         super.onTestFailure( itr ) ;
-        SdbTestBase.decCaseNum() ;
+        if ( isTransCase( itr.getMethod().getGroups()) ){
+            SdbTestBase.decCaseNum() ;
+        }
     }
     
     @Override
