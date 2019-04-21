@@ -126,12 +126,9 @@ public class SplitToDiffDataRG11901 extends SdbConfTestBase {
 		sdb.beginTransaction();
 		BSONObject data = new BasicBSONObject();
 		data.put("a", 10);
-		try {
-			cl.insert(data);
-			Assert.fail("insert data should fail! data is : { a : 10 } ");
-		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -253);
-		}
+      cl.insert(data);
+      insertRecords.add(data);
+      sdb.commit();
 		checkResult();
 	}
 
