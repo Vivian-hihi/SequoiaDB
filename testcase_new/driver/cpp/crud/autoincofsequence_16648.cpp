@@ -149,8 +149,8 @@ TEST_F( autoIncrement_16648, case16649 )
    field1Small = ret.getIntField("studentID") ;
    field2Small = ret.getIntField("innerID") ;
    
-   std::vector<CHAR*> fields ;
-   //rc = cl.dropAutoIncrement(fields) ;
+   std::vector<const CHAR*> fields ;
+   rc = cl.dropAutoIncrement(fields) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to dropAutoIncrement " ;
    
    doc = BSON( "a" << 2 );
@@ -166,7 +166,7 @@ TEST_F( autoIncrement_16648, case16649 )
    
    fields.push_back( (CHAR*)"studentID" ) ;
    fields.push_back( (CHAR*)"innerID" ) ;
-   //rc = cl.dropAutoIncrement( fields ) ; 
+   rc = cl.dropAutoIncrement( fields ) ; 
    ASSERT_EQ( SDB_OK, rc ) << "fail to dropAutoIncrement " << fields[0] << "," << fields[1] ;
    
    doc = BSON( "a" << 3 ) ;
