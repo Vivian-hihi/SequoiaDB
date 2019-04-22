@@ -34,25 +34,28 @@ public class SubCL61 extends SdbTestBase {
     private final static String SUBCL_NAME_1 = "scl_61_1";
     private final static String SUBCL_NAME_2 = "scl_61_2";
     private final static int RECORDS_NUM = 10000;
-    // TODO:注释是否需要写在代码的上方
-    private int subCL2Num = 0; // number of records num of subCL2 when subCL2 be dettach
+    // number of records num of subCL2 when subCL2 be dettach
+    private int subCL2Num = 0; 
 
     @BeforeClass
     private void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-
-        // TODO:这里用例应该没有要求跳过单组模式
-        if (CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)) {
-            throw new SkipException("The mode is standlone, " + "or only one group, skip the testCase.");
+        
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("The mode is standlone.");
         }
 
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         DBCollection mCL = cs.createCollection(MAINCL_NAME,
                 (BSONObject) JSON.parse("{IsMainCL:true, ShardingKey:{a:1}}"));
-        DBCollection sCL1 = cs.createCollection(SUBCL_NAME_1, (BSONObject) JSON.parse("{ShardingKey:{a:1}}"));
-        DBCollection sCL2 = cs.createCollection(SUBCL_NAME_2, (BSONObject) JSON.parse("{ShardingKey:{a:1}}"));
-        mCL.attachCollection(sCL1.getFullName(), (BSONObject) JSON.parse("{LowBound:{a:0}, UpBound:{a:1}}"));
-        mCL.attachCollection(sCL2.getFullName(), (BSONObject) JSON.parse("{LowBound:{a:1}, UpBound:{a:2}}"));
+        DBCollection sCL1 = cs.createCollection(SUBCL_NAME_1, 
+                (BSONObject) JSON.parse("{ShardingKey:{a:1}}"));
+        DBCollection sCL2 = cs.createCollection(SUBCL_NAME_2, 
+                (BSONObject) JSON.parse("{ShardingKey:{a:1}}"));
+        mCL.attachCollection(sCL1.getFullName(), 
+                (BSONObject) JSON.parse("{LowBound:{a:0}, UpBound:{a:1}}"));
+        mCL.attachCollection(sCL2.getFullName(), 
+                (BSONObject) JSON.parse("{LowBound:{a:1}, UpBound:{a:2}}"));
     }
 
     @Test
@@ -69,7 +72,6 @@ public class SubCL61 extends SdbTestBase {
         try {
             cs.dropCollection(MAINCL_NAME);
         } finally {
-            // TODO:这里应该不用判断可以直接 close 掉，如果 close 出问题那就说明有问题，其它用例也有这个问题
             if (sdb != null) {
                 sdb.close();
             }
@@ -106,7 +108,6 @@ public class SubCL61 extends SdbTestBase {
                 long cnt = mCL.getCount(cntOpt);
                 Assert.assertEquals(cnt, RECORDS_NUM);
             } finally {
-                // TODO:这里应该不用判断可以直接 close 掉，如果 close 出问题那就说明有问题，其它用例也有这个问题
                 if (db != null)
                     db.close();
             }
