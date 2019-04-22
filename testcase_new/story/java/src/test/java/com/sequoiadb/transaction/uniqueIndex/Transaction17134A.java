@@ -64,8 +64,7 @@ public class Transaction17134A extends SdbTestBase {
         modifier.put("$set", data3);
     }
 
-    // TODO:SEQUOIADBMAINSTREAM-4116
-    @Test(enabled = false)
+    @Test
     public void test() {
 
         // 1 update R1 to R3

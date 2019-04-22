@@ -61,8 +61,7 @@ public class Transaction17135C extends SdbTestBase {
 
     }
 
-    // TODO:SEQUOIADBMAINSTREAM-4118
-    @Test(enabled = false)
+    @Test
     public void test() {
 
         sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -73,7 +72,7 @@ public class Transaction17135C extends SdbTestBase {
         sdb1.beginTransaction();
 
         // 1 delete record R1
-        cl1.delete("{a:1}");
+        cl1.delete("{b:1}");
         try {
             // 2 create unique index
             cl2.createIndex("a", "{a:1}", true, false);
