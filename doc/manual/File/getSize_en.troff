@@ -43,14 +43,11 @@ file path
 T}@T{
 yes
 T}
+.pp
 .TE
-.RS
-.PP
 Note:
-.RE
-.RS
 .PP
-It can\[aq]t get the size of the binary file.
+	It can\[aq]t get the size of the binary file.
 .RE
 .SH RETURN VALUE
 .PP

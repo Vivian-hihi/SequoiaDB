@@ -94,14 +94,11 @@ set file permissions
 T}@T{
 not
 T}
+.pp
 .TE
-.RS
-.PP
 Note:
-.RE
-.RS
 .PP
-The specific format of parameters srcFile and dstFile are
+	The specific format of parameters srcFile and dstFile are
 "ip:sdbcmPort\@filepath",for example
 "192.168.20.71:11790\@/opt/trunk/test/test_one".
 .RE

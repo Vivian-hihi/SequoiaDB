@@ -35,9 +35,9 @@ The optional values of the 'mode' parameter are as follows：
 | SDB_FILE_SHAREREAD    | open the file in shared read  mode                                |
 | SDB_FILE_SHAREWROTE   | open the file in shared write mode                                |
 
-> Note：
+>Note：
 
-> These flags can be combined with bitwise OR operator( | ).
+>These flags can be combined with bitwise OR operator( | ).
 
 ##RETURN VALUE##
 

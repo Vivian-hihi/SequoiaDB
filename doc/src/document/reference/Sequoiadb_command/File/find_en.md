@@ -71,4 +71,4 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 {
   "pathname": "./bin/tmp"
 }
- ```
+```

@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-readContent \- Read file\[aq]s content into a FileContent object.
+readContent \- Read file's content into a FileContent object.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]File.readContent( [size] )\f[]\f[]

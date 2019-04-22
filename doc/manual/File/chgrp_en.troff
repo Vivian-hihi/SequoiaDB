@@ -94,7 +94,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Change the group of the file.
+Change the group of the file( The system has an user group named "sequoiadb" ).
 .IP
 .nf
 \f[C]

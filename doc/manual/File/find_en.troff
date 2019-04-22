@@ -217,5 +217,15 @@ Find a file;
 .fi
 .IP \[bu] 2
 Find a file and filter the result set
-.PP
-\f[C]lang\-javasript\ >\ File.find(\ {\ mode:\ "n",\ value:\ "tmp"\ },\ {\ $or:\ [\ {\ pathname:\ "./bin/tmp"\ },\ {\ pathname:\ "./database/41000/tmp"\ }\ ]\ }\ )\ {\ \ \ "pathname":\ "./database/41000/tmp"\ }\ {\ \ \ "pathname":\ "./bin/tmp"\ }\f[]
+.IP
+.nf
+\f[C]
+>\ File.find(\ {\ mode:\ "n",\ value:\ "tmp"\ },\ {\ $or:\ [\ {\ pathname:\ "./bin/tmp"\ },\ {\ pathname:\ "./database/41000/tmp"\ }\ ]\ }\ )
+{
+\ \ "pathname":\ "./database/41000/tmp"
+}
+{
+\ \ "pathname":\ "./bin/tmp"
+}
+\f[]
+.fi

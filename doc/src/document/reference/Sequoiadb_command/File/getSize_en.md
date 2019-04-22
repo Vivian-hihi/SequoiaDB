@@ -20,9 +20,9 @@ Get the size of the file.
 | -------- | ------ | ----------- | --------------- |
 | filename | string | file path   | yes             |
 
-> Note:
+>Note:
 
-> It can't get the size of the binary file.
+>It can't get the size of the binary file.
 
 ##RETURN VALUE##
 

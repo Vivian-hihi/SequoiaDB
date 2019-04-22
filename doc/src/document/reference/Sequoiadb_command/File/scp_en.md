@@ -23,9 +23,9 @@ Remote copy file.
 | replace | boolean  | false    | whether replace the source file | not             |
 | mode    | int      | 0644     | set file permissions            | not             |
 
-> Note:
+>Note:
 
-> The specific format of parameters srcFile and dstFile are "ip:sdbcmPort@filepath",for example "192.168.20.71:11790@/opt/trunk/test/test_one".
+>The specific format of parameters srcFile and dstFile are "ip:sdbcmPort@filepath",for example "192.168.20.71:11790@/opt/trunk/test/test_one".
 
 ##RETURN VALUE##
 
