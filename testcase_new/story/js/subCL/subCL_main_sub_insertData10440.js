@@ -1,136 +1,86 @@
-/************************************
-*@Description: 数据落在不同组上的不同子表中，批量插入数据
-*@author:      zengxianquan
-*@createDate:  2016.11.23
-*@testlinkCase: seqDB-10440
-**************************************/
+/***************************************************************************
+*@Description:    seqDB-10440:数据落在不同组上的不同子表中，批量插入数据
+*@author:   zengxianquan  2016.11.23
+*@modify:   huangxiaoni   2019.4.15
+****************************************************************************/
+
+main();
 function main()
 {
-   //check test environment before split
-   try
-	{
-	   //standalone can not split
-	   if( true == commIsStandalone( db ) )
-      {
-         println( "run mode is standalone" );
-         return;
-      }     
-      //less two groups,can not split
-      var allGroupName = getGroupName( db );       
-      if( 1 === allGroupName.length )
-      {
-         println("--least two groups");
-         return ;
-      }
-   }
-   catch( e )
+	if( true == commIsStandalone( db ) )
    {
-      throw e;
+      println( "---Is standalone." );
+      return;
+   } 
+   if ( commGetGroupsNum( db ) < 2 )
+   {
+      println("---Least two groups");
+      return ;
    }
+   db.setSessionAttr( { PreferedInstance: "M" } );
    
-   mainCL_Name = CHANGEDPREFIX + "_maincl" ;
-   subCL_Name1 = CHANGEDPREFIX + "_subcl1";
-   subCL_Name2 = CHANGEDPREFIX + "_subcl2";
+   mclName = "mcl_10440" ;
+   sclName1 = "scl_1_10440";
+   sclName2 = "scl_2_10440";
    
    //clean environment before test
-   commDropCL( db, COMMCSNAME, mainCL_Name, true, true, 
-                  "clean sub collection" ); 
-   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, 
-                  "clean sub collection" );
-   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, 
-                  "clean sub collection" ); 
-   //get all groups to groupsArray
-   db.setSessionAttr( { PreferedInstance: "M" } );
-   var groupsArray = commGetGroups(db, false, "", false, true, true );
-   //获取其中两个数据组的名字
-   var groupName1 = groupsArray[1][0].GroupName;
-   var groupName2 = groupsArray[2][0].GroupName;
-   //create maincl 
-   var mainCLOption = { ShardingKey:{"a":1}, ShardingType:"range", IsMainCL:true };
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, mainCL_Name, mainCLOption, true, true );
-   //create subcl
-   var subClOption1 = {Group:groupName1};
-   commCreateCLByOption( db, COMMCSNAME, subCL_Name1, subClOption1, true, true );
-   var subClOption2 = {Group:groupName2};
-   commCreateCLByOption( db, COMMCSNAME, subCL_Name2, subClOption2, true, true );
-   try
-   {
-      //attach subcl
-      dbcl.attachCL( COMMCSNAME + "." + subCL_Name1, { LowBound:{a:0},UpBound:{a:100} } ) ;
-      dbcl.attachCL( COMMCSNAME + "." + subCL_Name2, { LowBound:{a:100},UpBound:{a:200} } ) ;
-   }
-   catch( e )
-   {
-      throw buildException("main()",e,"attach subcl", "attach subcl success","attach subcl fail");
-   }
-
-   //插入数据
-   insertData(dbcl);
-   //检验数据的正确性
-   checkData( db, groupName1, groupName2, COMMCSNAME, subCL_Name1, subCL_Name2 );
+   commDropCL( db, COMMCSNAME, mclName, true, true, "clean main cl" ); 
+   commDropCL( db, COMMCSNAME, sclName1, true, true, "clean sub cl1" );
+   commDropCL( db, COMMCSNAME, sclName2, true, true, "clean sub cl2" ); 
    
-   //清除环境
-   try
-   {
-      db.getCS(COMMCSNAME).dropCL(mainCL_Name);
-   }
-   catch(e)
-   {
-      throw buildException("main()",e,"clean sub", "clean sub success","cleam sub fail");	
-   }
-}
+   //get all groups
+   var groups = commGetGroups(db, false, "", false, true, true );
+   var groupName1 = groups[1][0].GroupName;
+   var groupName2 = groups[2][0].GroupName;
+   
+   //create maincl 
+   println("\n---Begin to create cl.");
+   var mainCL = commCreateCLByOption( db, COMMCSNAME, mclName, { ShardingKey:{"a":1}, IsMainCL:true }, true, true );
+   commCreateCLByOption( db, COMMCSNAME, sclName1, {Group: groupName1 }, true, true );
+   commCreateCLByOption( db, COMMCSNAME, sclName2, {Group: groupName2 }, true, true );   
+   //attach subcl
+   println("\n---Begin to attach cl.");
+   mainCL.attachCL( COMMCSNAME + "." + sclName1, { LowBound:{a:0},UpBound:{a:100} } ) ;
+   mainCL.attachCL( COMMCSNAME + "." + sclName2, { LowBound:{a:100},UpBound:{a:200} } ) ;
 
-function insertData(dbcl)
-{
-   //构造数据
+   // insert
+   println("\n---Begin to insert.");
+   var recordsNum = 200;
    var doc = [];
-   for ( var i = 0; i < 200; i++ )
+   for ( var i = 0; i < recordsNum; i++ )
    {
-      for( var k = 0; k < 100; k++ )
-      {
-         doc.push({a:i,b:k,test:"testData"+k});
-      }
+      doc.push( {a: i} );
    }
-   //insert data to dbcl
-   try
+   mainCL.insert( doc );
+   
+   // check total count
+   println("\n---Begin to check results in main cl.");
+   var totalCnt = mainCL.count();
+   if( Number( totalCnt ) !== recordsNum ) 
    {
-      dbcl.insert(doc);
+      throw buildException( "main", null, "check results", recordsNum, totalCnt );
    }
-   catch(e)
+   
+   // check rg1 count
+   println("\n---Begin to check results in sub cl1.");
+   var rg1 = db.getRG( groupName1 ).getMaster().connect();
+   var expRG1Cnt = 100;
+   var actRG1Cnt = rg1.getCS( COMMCSNAME ).getCL( sclName1 ).count( {a:{$lt:100}} );
+   if( Number( actRG1Cnt ) !== expRG1Cnt ) 
    {
-      throw buildException("insertData()",e,"insert data", "insert data success","insert data fail");
-   }   
+      throw buildException( "main()", null, "check results", expRG1Cnt, actRG1Cnt );
+   }
+   
+   // check rg2 count
+   println("\n---Begin to check results in sub cl2.");
+   var rg2 = db.getRG( groupName2 ).getMaster().connect();
+   var expRG2Cnt = 100;
+   var actRG2Cnt = rg2.getCS( COMMCSNAME ).getCL( sclName2 ).count( {a:{$gte:100}} );
+   if( Number( actRG2Cnt ) !== expRG2Cnt ) 
+   {
+      throw buildException( "main", null, "check results", expRG2Cnt, actRG2Cnt );
+   }
+   
+   // clear environment
+   commDropCL( db, COMMCSNAME, mclName, true, false, "clean main cl" ); 
 }
-
-function checkData( db, groupName1, groupName2, csName, clName1, clName2 )
-{
-   //测试数据组中的数据是否与预测插入的数据是否一致
-   //实现步骤：把每个组中的数据取出来，分别检验每个组的数据与预期插入的数据是否一致。
-   var expectDataArray1 = [];
-   for ( var i = 0; i<100; i++ )
-   {
-      for( var k = 0; k < 100; k++ )
-      {
-         expectDataArray1.push({a:i,b:k,test:"testData"+k});
-      }
-   }
-   var rg = db.getRG(groupName1);
-   var dataStr = rg.getMaster();
-   var data1 = new Sdb(dataStr);
-   var realData1 = data1.getCS(COMMCSNAME).getCL(subCL_Name1).find().sort({a:1,b:1});
-   zxqCheckRec( realData1, expectDataArray1 );
-   var expectDataArray2 = [];
-   for ( var i = 100; i < 200; i++ )
-   {
-      for( var k = 0; k < 100; k++ )
-      {
-         expectDataArray2.push({a:i,b:k,test:"testData"+k});
-      }
-   }
-   var rg = db.getRG(groupName2);
-   var dataStr = rg.getMaster();
-   var data2 = new Sdb(dataStr);
-   var realData2 = data2.getCS(COMMCSNAME).getCL(subCL_Name2).find().sort({a:1,b:1});
-   zxqCheckRec( realData2, expectDataArray2 );   
-}
-main();
