@@ -121,17 +121,26 @@ function insertData( cl )
 
 function createDataGroups( db, hostName , groupNum )
 {
-    var dataGroupNames = [];
-    for( var i = 0; i < groupNum; i++ )
+    try
     {
-        var port = parseInt( RSRVPORTBEGIN )+( i*10 );
-        var rgName = "group10967_" + i;
-        var dataRG = db.createRG( rgName );
-        dataRG.createNode( hostName, port, RSRVNODEDIR+"data/"+port );
-        dataRG.start();
-        dataGroupNames.push( rgName );
+        var dataGroupNames = [];
+        for( var i = 0; i < groupNum; i++ )
+        {
+            var port = parseInt( RSRVPORTBEGIN )+( i*10 );
+            var rgName = "group10967_" + i;
+            dataGroupNames.push( rgName );
+            var dataRG = db.createRG( rgName );
+            dataRG.createNode( hostName, port, RSRVNODEDIR+"data/"+port );
+            dataRG.start();
+        }
+        return dataGroupNames;
     }
-    return dataGroupNames;
+    catch( e )
+    {
+        println("hostName: " + hostName + ", port : " + port + ", path: " + RSRVNODEDIR+"data/"+port );
+        removeDataRG( db, dataGroupNames );
+        throw e;
+    }
 }
 
 function removeDataRG( db, dataGroupNames )
