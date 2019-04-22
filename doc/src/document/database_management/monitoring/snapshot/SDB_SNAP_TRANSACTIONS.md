@@ -106,8 +106,10 @@ WaitLock 和 GetLocks 字段中锁对象的信息：
   "NodeName": "ubuntu1604-xjh:20000",
   "SessionID": 92,
   "TransactionID": "03e80000000002",
+  "TransactionIDSN": 2,
   "IsRollback": false,
   "CurrentTransLSN": -1,
+  "BeginTransLSN": -1,
   "WaitLock": {
     "CSID": 1,
     "CLID": 0,
