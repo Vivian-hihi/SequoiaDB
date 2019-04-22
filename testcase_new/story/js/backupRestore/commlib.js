@@ -37,7 +37,6 @@ function createBackupRestoreGroup( db, hosts )
          port += 10 ;
       }
       rg.createNode( hostname, port, RSRVNODEDIR + port ) ;
-      rg.start();
       port += 10 ;
    }
    rg.start();
