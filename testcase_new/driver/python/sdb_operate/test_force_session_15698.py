@@ -17,10 +17,10 @@ class TestForceSession15698(testlib.SdbTestBase):
          self.skipTest('run mode is standalone')
 		     
    def test_force_session_15698(self):
-      data_rg_name = "data15698"
+      self.data_rg_name = "data15698"
 	
       # create data rg
-      data_rg = self.db.create_replica_group(data_rg_name)
+      data_rg = self.db.create_replica_group(self.data_rg_name)
       
       # create and start node 
       data_hostname = self.db.get_replica_group_by_name("SYSCatalogGroup").get_master().get_hostname()
@@ -34,32 +34,38 @@ class TestForceSession15698(testlib.SdbTestBase):
       check_rg_master(data_rg)
       
 		# get sessionid
-      node_name = data_hostname + ":" + service_name;
+      node_name = data_hostname + ":" + service_name
       session_ids = self.get_session_snapshot(condition = {"NodeName" : node_name})
-      session_id = session_ids[0];
+      node = data_rg.get_master().connect()
+      
      		
       # force session without options
-      node = data_rg.get_master().connect()
-      node.force_session(session_id)		
-      		
-		# check session has been killed, timeout 60s
-      self.checkSession(session_id, condition = {"NodeName" : node_name});
-		
+      for session_id in session_ids:
+         try:
+            node.force_session(session_id)
+            # check session has been killed, timeout 60s
+            self.checkSession(session_id, condition = {"NodeName" : node_name})
+            break
+         except SDBBaseError as e:
+            self.assertEquals(e.code, -63)
+      
 		# force session with options
       node = data_rg.get_master().connect()
-      session_id = session_ids[1];
-      node.force_session(session_id, {"HostName" : data_hostname, "svcname" : service_name})		
-	
-    	# check session has been killed, timeout 60s
-      self.checkSession(session_id, condition = {"NodeName" : node_name});
-	
-      # drop data group
-      self.db.remove_replica_group(data_rg_name)
-      self.db.disconnect()
+      for session_id in session_ids:
+         try:
+            node.force_session(session_id, {"HostName" : data_hostname, "svcname" : service_name})
+    	      # check session has been killed, timeout 60s
+            self.checkSession(session_id, condition = {"NodeName" : node_name})
+            break
+         except SDBBaseError as e:
+            if e.code != -63 and e.code != -62:
+               self.assertFail(e.errcode)
 	
    def tearDown(self):
-      pass
-
+      # drop data group
+      self.db.remove_replica_group(self.data_rg_name)
+      self.db.disconnect()
+      
    def get_session_snapshot(self, **kwargs):
       session_ids = []
       cursor = self.db.get_snapshot(SDB_SNAP_SESSIONS, **kwargs)
