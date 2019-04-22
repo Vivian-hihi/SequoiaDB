@@ -54,7 +54,7 @@ public class InsertAndDropCS11426 extends SdbTestBase {
 
 		//drop cs fail is -147, repeat drop cs again
         int eachSleepTime = 1000;
-        int maxSleetTime = 30000;
+        int maxSleetTime = 60000;
    	 	int alreadySleepTime = 0;
    	 	int errorNo = 0;
    	 	do{
@@ -125,9 +125,9 @@ public class InsertAndDropCS11426 extends SdbTestBase {
     				obj.put("date",now);        			
         			cl.insert(obj);        			
         		}		              
-            } catch (BaseException e) {            	
-                if( e.getErrorCode() != -34 && e.getErrorCode() != -23&& e.getErrorCode() != -248 ){
-                	Assert.fail("insert fail!!");
+            } catch (BaseException e) {             	
+                if( e.getErrorCode() != -34 && e.getErrorCode() != -23&& e.getErrorCode() != -248 && e.getErrorCode() != -190&& e.getErrorCode() != -147){
+                	Assert.fail("insert fail!! e=" + e.getErrorCode() );
                 }
             } finally {
                 if (db != null)
