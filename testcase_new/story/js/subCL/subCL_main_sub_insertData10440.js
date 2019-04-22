@@ -7,7 +7,7 @@
 main();
 function main()
 {
-	if( true == commIsStandalone( db ) )
+   if( true == commIsStandalone( db ) )
    {
       println( "---Is standalone." );
       return;

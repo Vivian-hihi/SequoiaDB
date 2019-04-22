@@ -8,7 +8,7 @@
 main();
 function main()
 {
-	if( true == commIsStandalone( db ) )
+   if( true == commIsStandalone( db ) )
    {
       println( "---Is standalone." );
       return;
@@ -20,9 +20,9 @@ function main()
    }
    db.setSessionAttr( { PreferedInstance: "M" } );
    
-	var mclName  = "mcl_7499" ;
-	var sclName1 = "scl_7499_1" ;
-	var sclName2 = "scl_7499_2" ;
+   var mclName  = "mcl_7499" ;
+   var sclName1 = "scl_7499_1" ;
+   var sclName2 = "scl_7499_2" ;
    var groups = commGetGroups(db, false, "", false, true, true );
    var srcRG = groups[1][0].GroupName;
    var trgRG = groups[2][0].GroupName;
@@ -39,14 +39,14 @@ function main()
    var sOpt = { ShardingKey:{ a:1 }, ShardingType: "hash", ReplSize:0, Compressed:true, Group: srcRG };
    var subCL1 = commCreateCLByOption( db, COMMCSNAME, sclName1, sOpt, true, true );
    var subCL2 = commCreateCLByOption( db, COMMCSNAME, sclName2, sOpt, true, true ); 
-	var subCLs = [] ;
+   var subCLs = [] ;
    subCLs.push( subCL1 ) ;
    subCLs.push( subCL2 ) ;   
    // attach cl
    println("\n---Begin to attach cl.");
    mainCL.attachCL( COMMCSNAME + "." + sclName1, { LowBound:{a:0,b:1000},UpBound:{a:1000,b:0} } ) ;
    mainCL.attachCL( COMMCSNAME + "." + sclName2, { LowBound:{a:1000},UpBound:{a:2000} } ) ;
-	
+   
    // split
    println("\n---Begin to split.");
    subCL1.split( srcRG, trgRG, 50 );
@@ -60,9 +60,9 @@ function main()
       docs.push( {a: i} );
    }
    mainCL.insert( docs );
-	
+   
    // remove in sub cl1
-   println("\n---Begin to remove in sub cl1.");	
+   println("\n---Begin to remove in sub cl1.");   
    var rmNum = 1000;
    subCL1.remove( {a:{$lt: rmNum }} ) ;
    // check results
@@ -94,5 +94,5 @@ function main()
    }
    
    // clear env
-   commDropCL( db, COMMCSNAME, mclName,  true, false, "clean main cl" );	
+   commDropCL( db, COMMCSNAME, mclName,  true, false, "clean main cl" );   
 }

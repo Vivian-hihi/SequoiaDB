@@ -8,7 +8,7 @@
 main();
 function main()
 {
-	if( true == commIsStandalone( db ) )
+   if( true == commIsStandalone( db ) )
    {
       println( "---Is standalone." );
       return;
@@ -20,9 +20,9 @@ function main()
    }
    db.setSessionAttr( { PreferedInstance: "M" } );
    
-	var mclName  = "mcl_10442" ;
-	var sclName1 = "scl_10442_1" ;
-	var sclName2 = "scl_10442_2" ;
+   var mclName  = "mcl_10442" ;
+   var sclName1 = "scl_10442_1" ;
+   var sclName2 = "scl_10442_2" ;
    var groups = commGetGroups(db, false, "", false, true, true );
    var rgName = groups[1][0].GroupName;
       
@@ -46,7 +46,7 @@ function main()
    println("\n---Begin to attach cl.");
    mainCL.attachCL( COMMCSNAME + "." + sclName1, { LowBound:{a:0},   UpBound:{a:1000} } ) ;
    mainCL.attachCL( COMMCSNAME + "." + sclName2, { LowBound:{a:1000},UpBound:{a:2000} } ) ;
-	   
+      
    // insert   
    println("\n---Begin to insert.");
    var recordsNum = 2000;

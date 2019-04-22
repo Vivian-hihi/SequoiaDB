@@ -8,7 +8,7 @@
 main();
 function main()
 {
-	if( true == commIsStandalone( db ) )
+   if( true == commIsStandalone( db ) )
    {
       println( "---Is standalone." );
       return;
@@ -20,9 +20,9 @@ function main()
    }
    db.setSessionAttr( { PreferedInstance: "M" } );
    
-	var mclName  = "mcl_7496" ;
-	var sclName1 = "scl_7496_1" ;
-	var sclName2 = "scl_7496_2" ;
+   var mclName  = "mcl_7496" ;
+   var sclName1 = "scl_7496_1" ;
+   var sclName2 = "scl_7496_2" ;
    var groups = commGetGroups(db, false, "", false, true, true );
    var srcRG = groups[1][0].GroupName;
    var trgRG = groups[2][0].GroupName;
@@ -47,7 +47,7 @@ function main()
    println("\n---Begin to attach cl.");
    mainCL.attachCL( COMMCSNAME + "." + sclName1, { LowBound:{a:0},   UpBound:{a:1000} } ) ;
    mainCL.attachCL( COMMCSNAME + "." + sclName2, { LowBound:{a:1000},UpBound:{a:2000} } ) ;
-	  
+     
    // insert   
    println("\n---Begin to insert.");
    var recordsNum = 2000;
@@ -66,42 +66,42 @@ function main()
    // split
    println("\n---Begin to split.");
    subCL1.splitAsync( srcRG, trgRG, {Partition:500}, {Partition:1000} );
-   subCL2.splitAsync( srcRG, trgRG, {a:1500}, {a:2000} );	
-	sleep(2000);
-	
+   subCL2.splitAsync( srcRG, trgRG, {a:1500}, {a:2000} );   
+   sleep(2000);
+   
    // check min/maxValue
    println("\n---Begin to check results of main cl." ) ;
    var expMainCnt = recordsNum * insertTimes * 2;
-	var mainCnt = mainCL.count() ;
-	var maxValue1 = mainCL.find().sort( {a:1}  ).limit( 1 ).current().toObj()["a"] ;
-	var minValue1 = mainCL.find().sort( {a:-1} ).limit( 1 ).current().toObj()["a"] ;
-	if( maxValue1 !== 0 || minValue1 !== 2000 || Number(mainCnt) !== expMainCnt )
-	{
-	   throw buildException("", null, "[check result for mainCL]",
+   var mainCnt = mainCL.count() ;
+   var maxValue1 = mainCL.find().sort( {a:1}  ).limit( 1 ).current().toObj()["a"] ;
+   var minValue1 = mainCL.find().sort( {a:-1} ).limit( 1 ).current().toObj()["a"] ;
+   if( maxValue1 !== 0 || minValue1 !== 2000 || Number(mainCnt) !== expMainCnt )
+   {
+      throw buildException("", null, "[check result for mainCL]",
                      "[maxValue1: 0, minValue1: 2000, mainCnt: " + expMainCnt + "]", 
                      "[maxValue1: "+ maxValue1 +", minValue1: "+ minValue1 +", mainCnt: "+ Number( mainCnt ) +"]");
-	}
-	
+   }
+   
    println("\n---Begin to check results of sub cl1." ) ;
    var expSubCnt = recordsNum * insertTimes;
-	var subCnt1 = subCL1.count() ;
-	var maxValue1 = subCL1.find().sort( {a:1}  ).limit( 1 ).current().toObj()["a"] ;
-	var minValue1 = subCL1.find().sort( {a:-1} ).limit( 1 ).current().toObj()["a"] ;
-	if( maxValue1 !== 0 || minValue1 !== 1000 || Number(subCnt1) !== expSubCnt )
-	{
-	   throw buildException("", null, "[check result for subCL1]",
+   var subCnt1 = subCL1.count() ;
+   var maxValue1 = subCL1.find().sort( {a:1}  ).limit( 1 ).current().toObj()["a"] ;
+   var minValue1 = subCL1.find().sort( {a:-1} ).limit( 1 ).current().toObj()["a"] ;
+   if( maxValue1 !== 0 || minValue1 !== 1000 || Number(subCnt1) !== expSubCnt )
+   {
+      throw buildException("", null, "[check result for subCL1]",
                      "[maxValue1: 0, minValue1: 1000, subCnt1: "+ expSubCnt +"]", 
                      "[maxValue1: "+ maxValue1 +", minValue1: "+ minValue1 +", subCnt1: "+ Number( subCnt1 ) +"]");
-	}
-	
+   }
+   
    println("\n---Begin to check results of sub cl2." ) ;
-	var maxValue2 = subCL2.find().sort( {a:1}  ).limit( 1 ).current().toObj()["a"] ;
-	var minValue2 = subCL2.find().sort( {a:-1} ).limit( 1 ).current().toObj()["a"] ;
-	var subCnt2 = subCL2.count() ;
-	if( maxValue2 !== 1000 || minValue2 !== 2000 || Number(subCnt2) !== expSubCnt )
-	{
-	   throw buildException("", null, "[check result for subCL1]",
+   var maxValue2 = subCL2.find().sort( {a:1}  ).limit( 1 ).current().toObj()["a"] ;
+   var minValue2 = subCL2.find().sort( {a:-1} ).limit( 1 ).current().toObj()["a"] ;
+   var subCnt2 = subCL2.count() ;
+   if( maxValue2 !== 1000 || minValue2 !== 2000 || Number(subCnt2) !== expSubCnt )
+   {
+      throw buildException("", null, "[check result for subCL1]",
                      "[maxValue2: 0, minValue2: 200, subCnt2: "+ expSubCnt +"]", 
                      "[maxValue2: "+ maxValue2 +", minValue2: "+ minValue2 +", subCnt2: "+ Number( subCnt2 ) +"]");
-	}
+   }
 }
