@@ -20,6 +20,7 @@ function main()
     var subCL_Name2 = "subcl10967_2";
     var domain1 = "domain10967_1";
     var domain2 = "domain10967_2";
+    var logBackupPath = [];
     
     var coordGroup = commGetGroups( db, true, "", true, false, true );
     var nodeNum = eval(coordGroup[0].length -1);
@@ -51,7 +52,7 @@ function main()
         commCreateCS( db1, csName1, true, "db1 create cs", {"Domain":domain1} );
         var maincl = readyCL( db1, csName1, mainCL_Name, subCL_Name );
         insertData( maincl );
-        var newDataRGNames = createDataGroups( db1, hostname1 , 2 );
+        var newDataRGNames = createDataGroups( db1, hostname1 , 2, logBackupPath );
 
         //连接另一个coord节点分离子表1，删除该子表，创建相同子表
         println("------db2 detachCL");
@@ -61,6 +62,7 @@ function main()
         db2.getCS( csName1 ).dropCL(subCL_Name1);
         
         //创建域，指定新组
+        println("------create domain2");
         db2.createDomain( domain2, newDataRGNames );
         var cs2 = commCreateCS( db2, csName2, true, "db2 create cs", {"Domain":domain2} );
         cs2.createCL( subCL_Name1, {ShardingKey:{"b":1}, ShardingType:"hash", AutoSplit:true, ReplSize:0} );
@@ -72,6 +74,17 @@ function main()
         var expDataArr = getExpDataArr();
         checkData( maincl, expDataArr );
     }
+    catch ( e )
+    {
+        //将新建组日志备份到/tmp/ci/rsrvnodelog目录下
+        var backupDir = "/tmp/ci/rsrvnodelog/10967";
+        File.mkdir(backupDir);
+        for(var i = 0 ; i < logBackupPath.length ; i++)
+        {
+            File.scp( logBackupPath[i], backupDir + "/sdbdiag" + i + ".log" );
+        }  
+        throw e;
+    }
     finally
     {
         if(db1 != null)
@@ -82,14 +95,39 @@ function main()
         {
             db2.close();
         }
+        
+        //清理环境
+        commDropCS( db, csName1, true, "drop CS1 in the end" );
+        commDropCS( db, csName2, true, "drop CS2 in the end" );
+        if( newDataRGNames !== undefined )
+        {
+            removeDataRG( db, newDataRGNames );
+        }
+        try
+        {
+            db.dropDomain( domain1 );
+        }
+        catch( e )
+        {
+            //-214 : SDB_CAT_DOMAIN_EXIST
+            if(e != -214)
+            {
+                throw e;
+            }
+        }
+        
+        try
+        {
+            db.dropDomain( domain2 );
+        }
+        catch( e )
+        {
+            if(e !== -214)
+            {
+                throw e;
+            }
+        }
     }
-
-    //清除环境
-    commDropCS( db, csName1, true, "drop CS1 in the end" );
-    commDropCS( db, csName2, true, "drop CS2 in the end" );
-    removeDataRG( db, newDataRGNames );
-    db.dropDomain( domain1 );
-    db.dropDomain( domain2 );
 }
 
 function readyCL( db, csName, mainCL_Name, subCL_Name )
@@ -119,28 +157,47 @@ function insertData( cl )
     cl.insert(dataArray);
 }
 
-function createDataGroups( db, hostName , groupNum )
+function createDataGroups( db, hostName , groupNum, logBackupPath )
 {
-    try
+    var dataGroupNames = [];
+    for( var i = 0; i < groupNum; i++ )
     {
-        var dataGroupNames = [];
-        for( var i = 0; i < groupNum; i++ )
+        var rgName = "group10967_" + i;
+        dataGroupNames.push( rgName );
+        var dataRG = db.createRG( rgName );
+        
+        var port = parseInt( RSRVPORTBEGIN )+( i*10 );
+        var dataPath = RSRVNODEDIR+"data/"+port;
+        var checkSucc = false;
+        var times = 0;
+        var maxRetryTimes = 10;
+        do
         {
-            var port = parseInt( RSRVPORTBEGIN )+( i*10 );
-            var rgName = "group10967_" + i;
-            dataGroupNames.push( rgName );
-            var dataRG = db.createRG( rgName );
-            dataRG.createNode( hostName, port, RSRVNODEDIR+"data/"+port );
-            dataRG.start();
+            try
+            {
+                dataRG.createNode( hostName, port, dataPath, {diaglevel:5});
+                checkSucc = true;
+            }
+            catch( e )
+            {
+                //-145 :SDBCM_NODE_EXISTED  -290:SDB_DIR_NOT_EMPTY
+                if( e == -145 || e == -290 )
+                {
+                    port = port + 10;
+                    dataPath = RSRVNODEDIR+"data/"+port;
+                }
+                else
+                {
+                    throw "create node failed!  port = " + port + " dataPath = " + dataPath + " errorCode: " + e;
+                }
+                times++;
+            }
         }
-        return dataGroupNames;
+        while(!checkSucc && times < maxRetryTimes);
+        dataRG.start();
+        logBackupPath.push(hostName+":11790@"+dataPath+"/diaglog/sdbdiag.log");
     }
-    catch( e )
-    {
-        println("hostName: " + hostName + ", port : " + port + ", path: " + RSRVNODEDIR+"data/"+port );
-        removeDataRG( db, dataGroupNames );
-        throw e;
-    }
+    return dataGroupNames;
 }
 
 function removeDataRG( db, dataGroupNames )
