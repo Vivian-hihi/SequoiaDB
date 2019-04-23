@@ -1,4 +1,4 @@
-﻿sdbdmsdump（1.8 版本前名为 sdbinspt，1.8 版本后更名为 sdbdmsdump）是一个 SequoiaDB 数据库的数据文件检测工具。它可以检查数据库文件结构的正确性，并且给出结果报告。
+sdbdmsdump（1.8 版本前名为 sdbinspt，1.8 版本后更名为 sdbdmsdump）是一个 SequoiaDB 数据库的数据文件检测工具。它可以检查数据库文件结构的正确性，并且给出结果报告。
 
 ##权限需求##
 
@@ -31,6 +31,7 @@ sdbdmsdump 不需要与数据库连接。
 | --balance   |      | 开启 Lob 桶均衡性分析（true 或 false），默认值为 false，action 为 inspect 时有效 |
 | --meta      |      | 设定只操作元数据（true 或 false），默认值为 false |
 | --force     |      | 强制输出无效的 mb、delete list 与 index list 等（true 或 false），默认值为 false |
+| --repaire   | -r   | 修复数据库信息，示例 --repaire mb:Flag=0,Attr=1。支持的项目为：IndexPages(u), LID(u), Attr(u), IndexFreeSpace(u), DataPages(u), Flag(u), DataFreeSpace(u), LobPages(u), Records(u), IndexNum(u), CompressType(u), Lobs(u), CommitFlag(u), CommitLSN(u64), IdxCommitFlag(u), IdxCommitLSN(u64), LobCommitFlag(u), LobCommitLSN(u64)|
 
 ##用法##
 
