@@ -23,7 +23,6 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @review
  */
 
-@Test(groups = "rc")
 public class Transaction5998 extends SdbTestBase {
     private Sequoiadb sdb;
     private Sequoiadb db1;
@@ -75,7 +74,6 @@ public class Transaction5998 extends SdbTestBase {
         }
     }
 
-    // 关于内部类的命名问题，额，我记得上次你说命名要有意义，其它用例也可能有这个问题
     private class trans1 {
         private DBCollection cl;
 

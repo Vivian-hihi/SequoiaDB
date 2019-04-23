@@ -25,7 +25,6 @@ import com.sequoiadb.threadexecutor.annotation.ExpectBlock;
  * @review
  */
 
-@Test(groups = "rc")
 public class Transaction11200 extends SdbTestBase {
     private Sequoiadb sdb;
     private Sequoiadb db1;
