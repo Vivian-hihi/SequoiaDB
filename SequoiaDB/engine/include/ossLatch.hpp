@@ -57,6 +57,19 @@
 
 #include "ossAtomicBase.hpp"
 
+#if defined (_WINDOWS)
+  #define  OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX  0
+  #define  OSS_RWLATCHNS_USE_BOOST_MUTEX_WRAPPER 1
+#else
+  #define  OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX  1
+  #define  OSS_RWLATCHNS_USE_BOOST_MUTEX_WRAPPER 0
+#endif
+
+#if OSS_RWLATCHNS_USE_BOOST_MUTEX_WRAPPER
+  #include <boost/thread/condition.hpp>
+  #include <boost/thread/mutex.hpp>
+#endif
+
 typedef SINT32 ossLockType ;
 typedef volatile ossLockType ossLock ;
 #define OSS_LOCK_LOCKED   1
@@ -913,157 +926,218 @@ public :
 typedef class _ossScopedLock ossScopedLock;
 
 
-#if defined (_LINUX)
-
 //
-// FIFO queue simulation
+// Read and Write latch with starvation avoidance
 //
 class _ossTicket : public SDBObject
 {
 private :
-   UINT32 _QHead ;
-   UINT32 _QTail ;
+   UINT64 _QHead ;
+   UINT64 _QTail ;
+   UINT16 _QTailWrapped ;
+   UINT16 _QHeadWrapped ;
+   UINT32 _XCount ;
+#if OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX
    pthread_cond_t  _cond ;
    pthread_mutex_t _mutex ;
+#elif OSS_RWLATCHNS_USE_BOOST_MUTEX_WRAPPER 
+   boost::condition_variable _cond ;
+   boost::mutex _mutex ;
+#endif
+
+   OSS_INLINE BOOLEAN _isGreater
+   (
+      const UINT16 aHigh,
+      const UINT64 aLow,
+      const UINT16 bHigh,
+      const UINT64 bLow
+   )
+   {
+      if ( aHigh == bHigh )
+      {
+         return ( ( aLow > bLow ) ? TRUE : FALSE ) ;
+      }
+      if ( aHigh > bHigh )
+      {
+         return TRUE ;
+      }
+      // if ( aHigh < bHigh )
+      {
+         return FALSE ;
+      }
+   }
+
+
 public : 
    _ossTicket()
    {
+#if OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX
       pthread_mutex_init( & _mutex, NULL ) ;
       pthread_cond_init( & _cond, NULL ) ;
-      _QHead  = 0 ;
-      _QTail  = 0 ;
+#endif
+      _QHead   = 0 ;
+      _QTail   = 0 ;
+      _XCount  = 0 ;
+      _QTailWrapped  = 0 ;
+      _QHeadWrapped  = 0 ;
    }
 
    ~_ossTicket()
    {
+#if OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX
       pthread_cond_destroy( & _cond ) ;
       pthread_mutex_destroy( & _mutex ) ;
+#endif
    }
 
-   inline void lock()
+   OSS_INLINE void wait( const OSS_LATCH_MODE latchMode )
    {
-      UINT32 myTicket ;
+      UINT64  myTicket ;
+      UINT16  tailWrap ;
+      BOOLEAN ticketWrapped = FALSE ;
 
+#if OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX
       pthread_mutex_lock( & _mutex ) ;
-      myTicket = _QTail ++ ;
-      while ( ( myTicket != _QHead ) )
+#elif OSS_RWLATCHNS_USE_BOOST_MUTEX_WRAPPER 
+      boost::mutex::scoped_lock lock ( _mutex ) ;
+#endif
+
+      if ( EXCLUSIVE == latchMode )
       {
-         pthread_cond_wait( & _cond, & _mutex ) ;
-         if ( ( myTicket < _QHead ) )
+         _XCount++ ;
+      }
+
+      myTicket = _QTail ++ ;
+      if ( 0 == _QTail )
+      {
+         _QTailWrapped ++ ;
+      }
+
+      tailWrap = _QTailWrapped ;
+
+      if ( _QTailWrapped != _QHeadWrapped )
+      {
+         if ( _QTail >= 1 ) 
          {
-            // in case missed the ticket, get and wait on a new one.
-            myTicket = _QTail ++ ;
+            ticketWrapped = TRUE ;
+         }
+         if ( FALSE == ticketWrapped )
+         {
+            tailWrap = _QTailWrapped - 1 ;
          }
       }
+
+      while (    ( 0 != _XCount )
+              && _isGreater( tailWrap, myTicket, _QHeadWrapped, _QHead  ) )
+      {
+#if OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX
+         pthread_cond_wait( & _cond, & _mutex ) ;
+#elif OSS_RWLATCHNS_USE_BOOST_MUTEX_WRAPPER 
+         _cond.wait( lock ) ;
+#endif
+      }
+
+#if OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX
       pthread_mutex_unlock( & _mutex ) ;
+#endif
    }
 
-   inline void unlock()
+   OSS_INLINE void post( const OSS_LATCH_MODE latchMode )
    {
+#if OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX
       pthread_mutex_lock( & _mutex ) ;
-      _QHead ++ ;
+#elif OSS_RWLATCHNS_USE_BOOST_MUTEX_WRAPPER 
+      {
+         boost::mutex::scoped_lock lock ( _mutex ) ;
+#endif
+
+         _QHead ++ ;
+         if ( 0 == _QHead )
+         {
+            _QHeadWrapped ++ ;
+         }
+
+         if ( EXCLUSIVE == latchMode ) 
+         {
+         _XCount -- ;
+         }
+
+#if OSS_RWLATCHNS_USE_BOOST_MUTEX_WRAPPER 
+         _cond.notify_all() ;
+      }
+#elif OSS_RWLATCHNS_USE_POSIX_NATIVE_MUTEX
       pthread_cond_broadcast( & _cond ) ;
       pthread_mutex_unlock( & _mutex ) ;
+#endif
+
    }
 } ;
 
 
-//
-// Read and Write latch with X starvation avoidance
-//
 class _ossRWLatchNS: public SDBObject
 {
 private :
-   _ossTicket       _ticket ;
-   pthread_rwlock_t _rwlock ;
+   _ossSpinSLatch _latch ;
+   _ossTicket     _ticket ;
 
 public :
-   _ossRWLatchNS()
+   _ossRWLatchNS() {}
+
+   ~_ossRWLatchNS() {}
+
+   OSS_INLINE void get()
    {
-      SINT32 rc = pthread_rwlock_init( & _rwlock, NULL ) ;
-      SDB_ASSERT( 0 == rc, "init rwlock failed" ) ; 
+      _ticket.wait( EXCLUSIVE ) ;
+      _latch.get() ;
    }
 
-   ~_ossRWLatchNS()
+   OSS_INLINE void get_shared()
    {
-      SINT32 rc = pthread_rwlock_destroy( & _rwlock ) ;
-      SDB_ASSERT( 0 == rc, "destory rwlock failed" ) ; 
+      _ticket.wait( SHARED ) ;
+      _latch.get_shared() ;
    }
 
-   inline void get()
+   OSS_INLINE BOOLEAN try_get()
    {
-      SINT32 rc ;
-
-      _ticket.lock() ;
-      rc = pthread_rwlock_wrlock( & _rwlock ) ;
-      SDB_ASSERT( 0 == rc, "get write rwlock failed" ) ;
-   }
-
-   inline void get_shared()
-   {
-      SINT32 rc ;
-      _ticket.lock() ;
-      rc = pthread_rwlock_rdlock( & _rwlock ) ;
-      SDB_ASSERT( 0 == rc, "get read rwlock failed" ) ;
-   }
-
-   inline BOOLEAN try_get()
-   {
-      INT32 rc ;
-      _ticket.lock() ;
-      rc = pthread_rwlock_trywrlock( & _rwlock ) ;
-
-      if ( 0 == rc )
+      _ticket.wait( EXCLUSIVE ) ;
+      if ( _latch.try_get() )
       {
          return TRUE ;
       }
       else
       {
-         _ticket.unlock() ;
+         _ticket.post( EXCLUSIVE ) ;
          return FALSE ;
       }
    }
 
-   inline BOOLEAN try_get_shared()
+   OSS_INLINE BOOLEAN try_get_shared()
    {
-      SINT32 rc ;
-
-      _ticket.lock() ;
-      rc = pthread_rwlock_tryrdlock( & _rwlock ) ;
-
-      if ( 0 == rc )
+      _ticket.wait( SHARED ) ;
+      if ( _latch.try_get_shared() )
       {
          return TRUE ;
       }
       else
       {
-         _ticket.unlock() ;
+         _ticket.post( SHARED ) ;
          return FALSE ;
       }
    }
 
-   inline void release()
+   OSS_INLINE void release()
    {
-      SINT32 rc ;
-
-      rc = pthread_rwlock_unlock( & _rwlock ) ;
-      SDB_ASSERT( 0 == rc, "release write rwlock failed" ) ;
-
-      _ticket.unlock() ;
+      _latch.release() ;
+      _ticket.post( EXCLUSIVE ) ;
    }
 
-   inline void release_shared()
+   OSS_INLINE void release_shared()
    {
-      SINT32 rc ;
-
-      rc = pthread_rwlock_unlock( & _rwlock ) ;
-      SDB_ASSERT( 0 == rc, "release read rwlock failed" ) ;
-
-      _ticket.unlock() ;
+      _latch.release_shared() ;
+      _ticket.post( SHARED ) ;
    }
+
 } ;
-typedef class _ossRWLatchNS ossRWLatchNS;
-
-#endif
+typedef class _ossRWLatchNS ossRWLatchNS ;
 
 #endif //OSS_SPINLOCK_HPP_
