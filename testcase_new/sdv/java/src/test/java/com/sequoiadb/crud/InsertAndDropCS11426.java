@@ -68,7 +68,7 @@ public class InsertAndDropCS11426 extends SdbTestBase {
         Assert.assertTrue(insertTask.isSuccess(), insertTask.getErrorMsg());
         
         //check the result
-        Assert.assertFalse(sdb.isCollectionSpaceExist(CSNAME), "cs exist!!");
+        Assert.assertFalse(sdb.isCollectionSpaceExist(CSNAME), "cs exist!! drop cs error e:" + errorNo);
         //insert fail after drop cs 
         try{
         	dbcl.insert("{a:1}");
