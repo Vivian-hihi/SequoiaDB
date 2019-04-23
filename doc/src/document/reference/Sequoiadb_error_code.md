@@ -285,8 +285,8 @@
 | SDB_CAT_IMAGE_NOT_CONFIG | -285 | 集群未配置镜像 |
 | SDB_CAT_DUAL_WRITABLE | -286 | 本集群和镜像集群都为可写状态 |
 | SDB_CAT_CLUSTER_IS_READONLY | -287 | 集群为只读模式 |
-| SDB_RTN_QUERYMODIFY_SORT_NO_IDX | -288 | 在’查询并修改‘操作使用排序时必须使用索引 |
-| SDB_RTN_QUERYMODIFY_MULTI_NODES | -289 | ’查询并修改‘操作不能在多个节点或子表上执行skip和limit操作 |
+| SDB_RTN_QUERYMODIFY_SORT_NO_IDX | -288 | 在 “查询并修改” 操作使用排序时必须使用索引 |
+| SDB_RTN_QUERYMODIFY_MULTI_NODES | -289 | “查询并修改” 操作不能在多个节点或子表上执行skip和limit操作 |
 | SDB_DIR_NOT_EMPTY | -290 | 指定目录不为空 |
 | SDB_IXM_EXIST_COVERD_ONE | -291 | 已经存在一个可以处理本场景的索引 |
 | SDB_CAT_IMAGE_IS_CONFIGURED | -292 | 集群已配置镜像 |
@@ -329,8 +329,11 @@
 | SDB_DMS_REMAIN | -329 | 集合的UniqueID与残留的集合冲突 |
 | SDB_CAT_CS_UNIQUEID_EXCEEDED | -330 | 集合空间的UniqueID达到上限 |
 | SDB_CAT_CL_UNIQUEID_EXCEEDED | -331 | 集合的UniqueID达到上限 |
-| SDB_AUTOINCREMENT_FIELD_EXIST_OR_NESTED | -332 | 自增字段已存在或者存在嵌套 |
+| SDB_AUTOINCREMENT_FIELD_CONFLICT | -332 | 自增字段冲突 |
 | SDB_AUTOINCREMENT_FIELD_NOT_EXIST | -333 | 自增字段不存在 |
 | SDB_OPERATION_CONFLICT | -334 | 操作冲突 |
 | SDB_CAT_GLOBALID_EXCEEDED | -335 | GlobalID达到上限 |
 | SDB_DPS_INVALID_LOCK_UPGRADE_REQUEST | -336 | 非法锁升级请求 |
+| SDB_DMS_CS_RENAMING | -337 | 正在对集合空间改名 |
+| SDB_CLS_DATA_NOT_SYNC | -338 | 数据未同步 |
+| SDB_IXM_KEY_NOTNULL | -339 | 索引键的任意一个字段都不允许不存在或者为NULL |
