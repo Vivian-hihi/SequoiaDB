@@ -50,24 +50,32 @@ public class Transaction17117 extends SdbTestBase {
 
     @Test
     public void test() {
+        // 获取更新前逆序数据invInsertR1s
         List<BSONObject> insertR1s = new ArrayList<BSONObject>();
-        for (int i = 0; i < 15000; i++) {
-            insertR1s.add((BSONObject) JSON.parse("{_id:" + i + ", a:" + (i + 1) + ", b:" + (i + 2) + "}"));
-            // 获取更新前逆序数据invInsertR1s
-            invInsertR1s.add(
-                    (BSONObject) JSON.parse("{_id:" + (14999 - i) + ", a:" + (15000 - i) + ", b:" + (15001 - i) + "}"));
-            // 获取更新后正序数据posExpList
-            BSONObject updateR1 = (BSONObject) JSON
-                    .parse("{_id:" + (15000 + i) + ", a:" + (15001 + i) + ", b:" + (15002 + i) + "}");
-            posExpList.add(updateR1);
-            // 获取更新后逆序数据invExpList
-            updateR1 = (BSONObject) JSON
-                    .parse("{_id:" + (29999 - i) + ", a:" + (30000 - i) + ", b:" + (30001 - i) + "}");
-            invExpList.add(updateR1);
-        }
-        posInsertR1s.addAll(insertR1s);
-        Collections.shuffle(insertR1s);
+        insertR1s = TransUtils.getCompositeRecords(0, 2000, 0, 10);
         cl.insert(insertR1s);
+        TransUtils.sortCompositeRecords(insertR1s, true);
+        posInsertR1s.addAll(insertR1s);
+
+        TransUtils.sortCompositeRecords(insertR1s, false);
+        Collections.reverse(insertR1s);
+        invInsertR1s.addAll(insertR1s);
+
+        // 获取更新后正序数据posExpList
+        posExpList.addAll(posInsertR1s);
+        for (int i = 0; i < posExpList.size(); i++) {
+            BSONObject record = posExpList.get(i);
+            int id = (int) record.get("_id") + 15000;
+            int a = (int) record.get("a") + 15001;
+            int b = (int) record.get("b") - 10;
+            posExpList.set(i, (BSONObject) JSON.parse("{_id:" + id + ", a:" + a + ", b:" + b + "}"));
+        }
+        TransUtils.sortCompositeRecords(posExpList, true);
+
+        // 获取更新后逆序数据invExpList
+        invExpList.addAll(posExpList);
+        TransUtils.sortCompositeRecords(invExpList, false);
+        Collections.reverse(invExpList);
 
         db2.beginTransaction();
 
@@ -89,12 +97,12 @@ public class Transaction17117 extends SdbTestBase {
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
+        cursor = cl.query(null, null, "{a:1, b:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, posExpList);
 
         // 事务2表扫描记录、正序
-        cursor = cl2.query(null, null, "{a:1}", "{'':null}");
+        cursor = cl2.query(null, null, "{a:1, b:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, posExpList);
         actList.clear();
@@ -106,7 +114,7 @@ public class Transaction17117 extends SdbTestBase {
         actList.clear();
 
         // 事务2索引扫描记录、正序
-        cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
+        cursor = cl2.query(null, null, "{a:1, b:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, posExpList);
         actList.clear();
@@ -120,13 +128,13 @@ public class Transaction17117 extends SdbTestBase {
         db2.commit();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, "{a:1, b:1}", "{'':null}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, posExpList);
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
+        cursor = cl.query(null, null, "{a:1, b:1}", "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
         Assert.assertEquals(actList, posExpList);
 
@@ -140,26 +148,20 @@ public class Transaction17117 extends SdbTestBase {
         private ReadThread readThread = null;
 
         public UpdateThread(ReadThread readThread) {
-            // TODO Auto-generated constructor stub
             this.readThread = readThread;
         }
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             try {
                 db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 cl1 = db1.getCollectionSpace(csName).getCollection(clName);
                 db1.beginTransaction();
 
-                for (int i = 0; i < 15000; i++) {
-                    cl1.update("{a:" + (i + 1) + "}",
-                            "{$set:{_id:" + (15000 + i) + ", a:" + (15001 + i) + ", b:" + (15002 + i) + "}}",
-                            "{'':'a'}");
-                }
+                cl1.update("{$and:[{a:{$gte:0}},{a:{$lt:2000}}]}", "{$inc:{_id:15000, a:15001, b:-10}}", "{'':'a'}");
 
                 // 事务1表扫描记录、正序
-                cursor = cl1.query(null, null, "{a:1}", "{'':null}");
+                cursor = cl1.query(null, null, "{a:1, b:1}", "{'':null}");
                 actList = TransUtils.getReadActList(cursor);
                 Assert.assertEquals(actList, posExpList);
                 actList.clear();
@@ -171,7 +173,7 @@ public class Transaction17117 extends SdbTestBase {
                 actList.clear();
 
                 // 事务1走"a"索引扫描记录、正序
-                cursor = cl1.query(null, null, "{a:1}", "{'':'a'}");
+                cursor = cl1.query(null, null, "{a:1, b:1}", "{'':'a'}");
                 actList = TransUtils.getReadActList(cursor);
                 Assert.assertEquals(actList, posExpList);
                 actList.clear();
@@ -187,7 +189,7 @@ public class Transaction17117 extends SdbTestBase {
                 }
                 db1.commit();
             } catch (BaseException e) {
-                e.printStackTrace();
+                Assert.fail(e.getMessage());
             } finally {
                 cursor.close();
                 db1.close();
@@ -201,9 +203,8 @@ public class Transaction17117 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             // 事务2表扫描记录、正序
-            cursor = cl2.query(null, null, "{b:1}", "{'':null}");
+            cursor = cl2.query(null, null, "{a:1, b:1}", "{'':null}");
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, posInsertR1s);
             actList.clear();
@@ -215,7 +216,7 @@ public class Transaction17117 extends SdbTestBase {
             actList.clear();
 
             // 事务2走"a"索引扫描记录、正序
-            cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
+            cursor = cl2.query(null, null, "{a:1, b:1}", "{'':'a'}");
             actList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(actList, posInsertR1s);
             actList.clear();

@@ -45,149 +45,62 @@ public class Transaction17116 extends SdbTestBase {
 
     @DataProvider(name = "transaction17116")
     public Object[][] createIndex() {
-        List<BSONObject> insertR1s = new ArrayList<BSONObject>();
-        List<BSONObject> insertR2s = new ArrayList<BSONObject>();
-        List<BSONObject> insertR3s = new ArrayList<BSONObject>();
-        List<BSONObject> insertR4s = new ArrayList<BSONObject>();
-
-        // indexKey为"{a:1, b:1}"时，读老记录的预期结果
-        for (int i = 0; i < 12000; i++) {
-            if (i < 3000) {
-                insertR1s.add((BSONObject) JSON.parse("{_id:" + i + ", a:0, b:" + i + "}"));
-            } else if (3000 <= i && i < 6000) {
-                insertR2s.add((BSONObject) JSON.parse("{_id:" + i + ", a:1, b:" + i + "}"));
-            } else if (6000 <= i && i < 9000) {
-                insertR3s.add((BSONObject) JSON.parse("{_id:" + i + ", a:2, b:" + i + "}"));
-            } else if (9000 <= i && i < 12000) {
-                insertR4s.add((BSONObject) JSON.parse("{_id:" + i + ", b:" + i + "}"));
-            }
-        }
-        List<BSONObject> oldExp1 = new ArrayList<BSONObject>();
-        oldExp1.addAll(insertR4s);
-        oldExp1.addAll(insertR1s);
-        oldExp1.addAll(insertR2s);
-        oldExp1.addAll(insertR3s);
-
-        // indexKey为"{a:-1, b:1}"时，读老记录的预期结果
-        List<BSONObject> oldExp2 = new ArrayList<BSONObject>();
-        oldExp2.addAll(insertR3s);
-        oldExp2.addAll(insertR2s);
-        oldExp2.addAll(insertR1s);
-        oldExp2.addAll(insertR4s);
-
-        // indexKey为"{a:-1, b:-1}"时，读老记录的预期结果
-        insertR1s.clear();
-        insertR2s.clear();
-        insertR3s.clear();
-        insertR4s.clear();
-        for (int i = 11999; i >= 0; i--) {
-            if (i < 3000) {
-                insertR1s.add((BSONObject) JSON.parse("{_id:" + i + ", a:0, b:" + i + "}"));
-            } else if (3000 <= i && i < 6000) {
-                insertR2s.add((BSONObject) JSON.parse("{_id:" + i + ", a:1, b:" + i + "}"));
-            } else if (6000 <= i && i < 9000) {
-                insertR3s.add((BSONObject) JSON.parse("{_id:" + i + ", a:2, b:" + i + "}"));
-            } else if (9000 <= i && i < 12000) {
-                insertR4s.add((BSONObject) JSON.parse("{_id:" + i + ", b:" + i + "}"));
-            }
-        }
-        List<BSONObject> oldExp3 = new ArrayList<BSONObject>();
-        oldExp3.addAll(insertR3s);
-        oldExp3.addAll(insertR2s);
-        oldExp3.addAll(insertR1s);
-        oldExp3.addAll(insertR4s);
-
-        // indexKey为"{a:1, b:-1}"时，读老记录的预期结果
-        List<BSONObject> oldExp4 = new ArrayList<BSONObject>();
-        oldExp4.addAll(insertR4s);
-        oldExp4.addAll(insertR1s);
-        oldExp4.addAll(insertR2s);
-        oldExp4.addAll(insertR3s);
-
         List<BSONObject> updateR1s = new ArrayList<BSONObject>();
         List<BSONObject> updateR2s = new ArrayList<BSONObject>();
-        List<BSONObject> updateR3s = new ArrayList<BSONObject>();
-        List<BSONObject> updateR4s = new ArrayList<BSONObject>();
 
         // indexKey为"{a:1, b:1}"时，读更新后记录的预期结果
-        for (int i = 0; i < 12000; i++) {
-            if (i < 3000) {
-                updateR1s.add((BSONObject) JSON.parse("{_id:" + i + ", a:6, b:" + (i - 1) + "}"));
-            } else if (3000 <= i && i < 6000) {
-                updateR2s.add((BSONObject) JSON.parse("{_id:" + i + ", b:" + i + "}"));
-            } else if (6000 <= i && i < 9000) {
-                updateR3s.add((BSONObject) JSON.parse("{_id:" + i + ", a:4, b:" + i + "}"));
-            } else if (9000 <= i && i < 12000) {
-                updateR4s.add((BSONObject) JSON.parse("{_id:" + i + ", a:5, b:" + i + "}"));
-            }
+        for (int i = 1; i < 11; i++) {
+            updateR2s.add((BSONObject) JSON.parse("{_id:" + i + ", b:" + (i - 1) + "}"));
         }
+        updateR1s.add((BSONObject) JSON.parse("{_id:0, a:6, b:-1}"));
+        updateR1s.add((BSONObject) JSON.parse("{_id:11, a:4, b:2}"));
+        updateR1s.addAll(TransUtils.getCompositeRecords(3, 2000, 0, 10));
+        for (int i = 11000; i < 12000; i++) {
+            updateR1s.add((BSONObject) JSON.parse("{_id:" + i + ", a:" + i + ", b:5}"));
+        }
+        TransUtils.sortCompositeRecords(updateR1s, true);
         List<BSONObject> newExp1 = new ArrayList<BSONObject>();
         newExp1.addAll(updateR2s);
-        newExp1.addAll(updateR3s);
-        newExp1.addAll(updateR4s);
         newExp1.addAll(updateR1s);
 
         // indexKey为"{a:-1, b:1}"时，读更新后记录的预期结果
         List<BSONObject> newExp2 = new ArrayList<BSONObject>();
+        TransUtils.sortCompositeRecords(updateR1s, false);
+        Collections.reverse(updateR1s);
         newExp2.addAll(updateR1s);
-        newExp2.addAll(updateR4s);
-        newExp2.addAll(updateR3s);
         newExp2.addAll(updateR2s);
 
         // indexKey为"{a:-1, b:-1}"时，读更新后记录的预期结果
-        updateR1s.clear();
-        updateR2s.clear();
-        updateR3s.clear();
-        updateR4s.clear();
-        for (int i = 11999; 0 <= i; i--) {
-            if (i < 3000) {
-                updateR1s.add((BSONObject) JSON.parse("{_id:" + i + ", a:6, b:" + (i - 1) + "}"));
-            } else if (3000 <= i && i < 6000) {
-                updateR2s.add((BSONObject) JSON.parse("{_id:" + i + ", b:" + i + "}"));
-            } else if (6000 <= i && i < 9000) {
-                updateR3s.add((BSONObject) JSON.parse("{_id:" + i + ", a:4, b:" + i + "}"));
-            } else if (9000 <= i && i < 12000) {
-                updateR4s.add((BSONObject) JSON.parse("{_id:" + i + ", a:5, b:" + i + "}"));
-            }
-        }
+        TransUtils.sortCompositeRecords(updateR1s, true);
+        Collections.reverse(updateR1s);
+        Collections.reverse(updateR2s);
         List<BSONObject> newExp3 = new ArrayList<BSONObject>();
         newExp3.addAll(updateR1s);
-        newExp3.addAll(updateR4s);
-        newExp3.addAll(updateR3s);
         newExp3.addAll(updateR2s);
 
         // indexKey为"{a:1, b:-1}"时，读更新后记录的预期结果
         List<BSONObject> newExp4 = new ArrayList<BSONObject>();
+        TransUtils.sortCompositeRecords(updateR1s, false);
         newExp4.addAll(updateR2s);
-        newExp4.addAll(updateR3s);
-        newExp4.addAll(updateR4s);
         newExp4.addAll(updateR1s);
 
-        return new Object[][] { { "{a:1, b:1}", newExp1, oldExp1 }, { "{a:-1, b:1}", newExp2, oldExp2 },
-                { "{a:-1, b:-1}", newExp3, oldExp3 }, { "{a:1, b:-1}", newExp4, oldExp4 } };
+        return new Object[][] { { "{a:1, b:1}", newExp1 }, { "{a:-1, b:1}", newExp2 }, { "{a:-1, b:-1}", newExp3 },
+                { "{a:1, b:-1}", newExp4 } };
     }
 
     @Test(dataProvider = "transaction17116")
-    public void test(String indexKey, List<BSONObject> newExp, List<BSONObject> oldExp) {
-        List<BSONObject> insertRs = new ArrayList<BSONObject>();
-        for (int i = 0; i < 12000; i++) {
-            int a = i / 3000;
-            if (a < 3) {
-                insertRs.add((BSONObject) JSON.parse("{_id:" + i + ", a:" + a + ", b:" + i + "}"));
-            } else {
-                insertRs.add((BSONObject) JSON.parse("{_id:" + i + ", b:" + i + "}"));
-            }
-        }
+    public void test(String indexKey, List<BSONObject> newExp) {
         try {
-            Collections.shuffle(insertRs);
             cl.createIndex("a", indexKey, false, false);
+            List<BSONObject> insertRs = getData();
             cl.insert(insertRs);
 
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db1.beginTransaction();
             db2.beginTransaction();
 
-            ReadThread readThread = new ReadThread(indexKey, oldExp);
+            sortOldExp(indexKey, insertRs);
+            ReadThread readThread = new ReadThread(indexKey, insertRs);
             readThread.start();
 
             UpdateThread updateThread = new UpdateThread(indexKey, newExp);
@@ -226,8 +139,10 @@ public class Transaction17116 extends SdbTestBase {
             actList.clear();
             cursor.close();
         } catch (BaseException e) {
-            e.printStackTrace();
+            Assert.fail(e.getMessage());
         } finally {
+            db1.commit();
+            db2.commit();
             if (cl.isIndexExist("a")) {
                 cl.dropIndex("a");
             }
@@ -243,21 +158,19 @@ public class Transaction17116 extends SdbTestBase {
         private List<BSONObject> actList = new ArrayList<BSONObject>();
 
         public UpdateThread(String indexKey, List<BSONObject> newExp) {
-            // TODO Auto-generated constructor stub
             this.indexKey = indexKey;
             this.newExp = newExp;
         }
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             try {
                 cl1 = db1.getCollectionSpace(csName).getCollection(clName);
 
                 cl1.update("{a:0}", "{$inc:{a:6, b:-1}}", "{'':'a'}");
                 cl1.update("{a:1}", "{$unset:{a:1}}", "{'':'a'}");
                 cl1.update("{a:2}", "{$set:{a:4}}", "{'':'a'}");
-                cl1.update("{a:{$isnull:1}, b:{$gte: 9000, $lt: 12000}}", "{$set:{a:5}}", null);
+                cl1.update("{b:{$isnull:1}, a:{$gte: 9000, $lt: 12000}}", "{$set:{b:5}}", null);
 
                 // 事务1表扫描记录
                 cursor = cl1.query(null, null, indexKey, "{'':null}");
@@ -272,7 +185,7 @@ public class Transaction17116 extends SdbTestBase {
                 actList.clear();
                 cursor.close();
             } catch (BaseException e) {
-                e.printStackTrace();
+                Assert.fail(e.getMessage());
             }
         }
     }
@@ -284,14 +197,12 @@ public class Transaction17116 extends SdbTestBase {
         private List<BSONObject> oldExp = null;
 
         public ReadThread(String indexKey, List<BSONObject> oldExp) {
-            // TODO Auto-generated constructor stub
             this.indexKey = indexKey;
             this.oldExp = oldExp;
         }
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             // 事务2表扫描记录
             cursor = cl2.query(null, null, indexKey, "{'':null}");
             actList = TransUtils.getReadActList(cursor);
@@ -308,6 +219,8 @@ public class Transaction17116 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
         if (!db2.isClosed()) {
             db2.close();
         }
@@ -318,5 +231,30 @@ public class Transaction17116 extends SdbTestBase {
         if (!sdb.isClosed()) {
             sdb.close();
         }
+    }
+
+    private void sortOldExp(String indexKey, List<BSONObject> oldExp) {
+        BSONObject object = (BSONObject) JSON.parse(indexKey);
+        int a = (int) object.get("a");
+        int b = (int) object.get("b");
+        if (a == 1 && b == 1) {
+            TransUtils.sortCompositeRecords(oldExp, true);
+        } else if (a == 1 && b == -1) {
+            TransUtils.sortCompositeRecords(oldExp, false);
+        } else if (a == -1 && b == 1) {
+            TransUtils.sortCompositeRecords(oldExp, false);
+            Collections.reverse(oldExp);
+        } else if (a == -1 && b == -1) {
+            TransUtils.sortCompositeRecords(oldExp, true);
+            Collections.reverse(oldExp);
+        }
+    }
+
+    private List<BSONObject> getData() {
+        List<BSONObject> insertRs = TransUtils.getCompositeRecords(0, 2000, 0, 10);
+        for (int i = 11000; i < 12000; i++) {
+            insertRs.add((BSONObject) JSON.parse("{_id:" + i + ", a:" + i + "}"));
+        }
+        return insertRs;
     }
 }
