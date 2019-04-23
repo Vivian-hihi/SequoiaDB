@@ -470,11 +470,11 @@ public class ObjectServiceImpl implements ObjectService {
             if (parentIdName != null){
                 Long parentId = getParentId(metaCsName, bucket.getBucketId(), prefix, delimiter);
                 dbCursorDir = dirDao.queryDirList(metaCsName, bucket.getBucketId(),
-                        delimiter, prefix, startAfter);
+                        delimiter, prefix, newStartAfter);
                 if (parentId != null){
                     dbCursorKeys = metaDao.queryMetaListByParentId(metaCsName,
                             metaClName, bucket.getBucketId(), parentIdName, parentId,
-                            prefix, startAfter, null, false);
+                            prefix, newStartAfter, null, false);
                 }
 
                 filter = new ObjectsFilter(dbCursorDir, dbCursorKeys,
