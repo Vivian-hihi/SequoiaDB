@@ -7,12 +7,14 @@ package com.sequoiadb.transaction.rc;
  */
 import java.util.ArrayList;
 import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -114,6 +116,8 @@ public class Transaction17076B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
         if (!db1.isClosed()) {
             db1.close();
         }

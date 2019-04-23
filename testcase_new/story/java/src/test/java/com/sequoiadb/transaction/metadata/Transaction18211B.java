@@ -43,11 +43,10 @@ public class Transaction18211B extends SdbTestBase {
             throw new SkipException("groups less than 2");
         }
 
-        cl = sdb.getCollectionSpace(csName).createCollection(clName, (BSONObject) JSON
-                .parse("{Group:'" + groupNames.get(0) + "', ShardingKey:{b:1}, ShardingType:'range'}"));
+        cl = sdb.getCollectionSpace(csName).createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', AutoSplit: true}"));
         cl.createIndex("idx18211", "{a:1}", false, false);
         insertDatas(cl, 0, 10000);
-        cl.split(groupNames.get(0), groupNames.get(1), 50);
     }
 
     @AfterClass
@@ -131,4 +130,3 @@ public class Transaction18211B extends SdbTestBase {
         cl.insert(records);
     }
 }
-

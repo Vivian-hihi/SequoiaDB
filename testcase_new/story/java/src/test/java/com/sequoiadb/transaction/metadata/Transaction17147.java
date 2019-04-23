@@ -51,6 +51,8 @@ public class Transaction17147 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        sdb.commit();
+        db2.commit();
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);

@@ -77,7 +77,7 @@ public class RenameCS_16104B extends SdbTestBase {
                 RenameUtil.checkRenameCSResult(db, csName, newCSName, 1);
                 checkRecordNum(db, newCSName, clName, recordNum);
             } else {
-                Assert.fail("rename cl and split cl all failed");
+                Assert.fail("rename cl and trans cl all failed");
             }
         }
     }

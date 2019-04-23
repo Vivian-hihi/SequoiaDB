@@ -80,7 +80,7 @@ public class RenameCL_16092B extends SdbTestBase {
                 RenameUtil.checkRenameCLResult(db, csName, clName, newCLName);
                 checkRecordNum(db, newCLName, recordNum);
             } else {
-                Assert.fail("rename cl and split cl all failed");
+                Assert.fail("rename cl and trans cl all failed");
             }
         }
     }

@@ -99,6 +99,9 @@ public class Transaction16303 extends SdbTestBase {
             }
         } catch (BaseException e) {
             Assert.fail("Sequoiadb driver TestTransaction16303 testQuery error, error description:" + e.getMessage());
+        } finally {
+            sdb.commit();
+            sdb2.rollback();
         }
     }
 
@@ -138,6 +141,9 @@ public class Transaction16303 extends SdbTestBase {
         } catch (BaseException e) {
             Assert.fail(
                     "Sequoiadb driver TestTransaction16303 testQueryOne error, error description:" + e.getMessage());
+        } finally {
+            sdb.commit();
+            sdb2.rollback();
         }
     }
 

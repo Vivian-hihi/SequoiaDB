@@ -299,9 +299,9 @@ public class Transaction17361B extends SdbTestBase {
 
         } finally {
             // 关闭事务连接
-            sdb1.close();
-            sdb2.close();
-            sdb3.close();
+            sdb1.commit();
+            sdb2.commit();
+            sdb3.commit();
 
             // 删除索引
             if (cl.isIndexExist("a")) {

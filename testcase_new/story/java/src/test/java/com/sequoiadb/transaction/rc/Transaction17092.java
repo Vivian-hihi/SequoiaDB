@@ -51,7 +51,6 @@ public class Transaction17092 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-
         // 关闭所有游标
         sdb.closeAllCursors();
         db1.closeAllCursors();

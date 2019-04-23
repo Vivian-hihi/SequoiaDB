@@ -45,11 +45,10 @@ public class Transaction18214A extends SdbTestBase {
         }
 
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
-                (BSONObject) JSON.parse("{Group:'" + groupNames.get(0) + "', ShardingKey:{b:1}, ShardingType:'hash'}"));
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', AutoSplit: true}"));
         cl.createIndex("idx18214", "{a:1}", false, false);
         cl.insert((BSONObject) JSON.parse("{_id:1, a:1, b:1}"));
         cl.insert((BSONObject) JSON.parse("{_id:2, a:2, b:2}"));
-        cl.split(groupNames.get(0), groupNames.get(1), 50);
     }
 
     @AfterClass
@@ -111,17 +110,20 @@ public class Transaction18214A extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             Thread.sleep(1000);
-            db.beginTransaction();
-            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            DBLob lob = cl.createLob();
-            lob.write("test lob to test".getBytes());
-            lob.close();
-            ObjectId oid = new ObjectId();
-            DBLob lob2 = cl.createLob(oid);
-            lob2.close();
-            cl.removeLob(oid);
-            cl.truncateLob(lob.getID(), 12);
-            db.commit();
+            try {
+                db.beginTransaction();
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                DBLob lob = cl.createLob();
+                lob.write("test lob to test".getBytes());
+                lob.close();
+                ObjectId oid = new ObjectId();
+                DBLob lob2 = cl.createLob(oid);
+                lob2.close();
+                cl.removeLob(oid);
+                cl.truncateLob(lob.getID(), 12);
+            } finally {
+                db.commit();
+            }
         }
     }
 

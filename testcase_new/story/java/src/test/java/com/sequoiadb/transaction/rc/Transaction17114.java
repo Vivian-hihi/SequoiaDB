@@ -56,6 +56,14 @@ public class Transaction17114 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
+        db3.commit();
+        db4.commit();
+        db5.commit();
+        db6.commit();
+        db7.commit();
+
         if (!db1.isClosed()) {
             db1.close();
         }

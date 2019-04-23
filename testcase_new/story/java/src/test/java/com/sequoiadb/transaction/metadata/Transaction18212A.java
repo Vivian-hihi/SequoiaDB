@@ -74,12 +74,11 @@ public class Transaction18212A extends SdbTestBase {
     }
 
     private void createCL(String clName) {
-        DBCollection cl = sdb.getCollectionSpace(csName).createCollection(clName, (BSONObject) JSON
-                .parse("{Group:'" + groupNames.get(0) + "', ShardingKey:{b:1}, ShardingType:'range'}"));
+        DBCollection cl = sdb.getCollectionSpace(csName).createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', AutoSplit: true}"));
         cl.createIndex("idx18212", "{a:1}", false, false);
         cl.insert((BSONObject) JSON.parse("{_id:1, a:1, b:1}"));
         cl.insert((BSONObject) JSON.parse("{_id:2, a:2, b:2}"));
-        cl.split(groupNames.get(0), groupNames.get(1), 50);
     }
 
     private class OperatorTh extends SdbThreadBase {

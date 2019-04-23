@@ -80,6 +80,8 @@ public class Transaction16304 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        sdb.commit();
+        sdb2.commit();
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             if (cs.isCollectionExist(clName)) {

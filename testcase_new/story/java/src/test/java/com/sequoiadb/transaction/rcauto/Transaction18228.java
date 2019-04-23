@@ -46,8 +46,8 @@ public class Transaction18228 extends SdbTestBase {
         }
 
         groupNames = CommLib.getDataGroupNames(sdb);
-        cl = sdb.getCollectionSpace(csName).createCollection(clName, (BSONObject) JSON
-                .parse("{ShardingType:'range', ShardingKey:{b:1}, Group:'" + groupNames.get(0) + "'}"));
+        cl = sdb.getCollectionSpace(csName).createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', AutoSplit: true}"));
     }
 
     @AfterClass
@@ -63,11 +63,6 @@ public class Transaction18228 extends SdbTestBase {
 
     @Test
     public void test() {
-        // 集合使用分区表，插入的记录分布在多个组上
-        // cl.split(groupNames.get(0), groupNames.get(1), (BSONObject)
-        // JSON.parse("{b:100}"),
-        // (BSONObject) JSON.parse("{b:200}"));
-
         // 在集合中创建正序的唯一索引，比如：a为唯一索引，并插入多条包含索引字段的记录R1s
         cl.createIndex("idx18228", "{a:1, b:1}", true, false);
         insertData();

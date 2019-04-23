@@ -146,6 +146,7 @@ public class Transaction17945 extends SdbTestBase {
             } catch (Exception e) {
                 throw e;
             } finally {
+                db.commit();
                 db.close();
                 latch.countDown();
             }
@@ -185,6 +186,7 @@ public class Transaction17945 extends SdbTestBase {
             } catch (Exception e) {
                 throw e;
             } finally {
+                db.commit();
                 db.closeAllCursors();
                 db.close();
                 latch.countDown();

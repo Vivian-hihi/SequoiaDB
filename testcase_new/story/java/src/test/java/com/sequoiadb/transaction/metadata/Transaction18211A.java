@@ -43,15 +43,15 @@ public class Transaction18211A extends SdbTestBase {
             throw new SkipException("groups less than 2");
         }
 
-        cl = sdb.getCollectionSpace(csName).createCollection(clName, (BSONObject) JSON
-                .parse("{Group:'" + groupNames.get(0) + "', ShardingKey:{b:1}, ShardingType:'range'}"));
+        cl = sdb.getCollectionSpace(csName).createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', AutoSplit: true}"));
         cl.createIndex("idx18211", "{a:1}", false, false);
         insertDatas(cl, 0, 10000);
-        cl.split(groupNames.get(0), groupNames.get(1), 50);
     }
 
     @AfterClass
     public void tearDown() {
+        sdb.commit();
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);

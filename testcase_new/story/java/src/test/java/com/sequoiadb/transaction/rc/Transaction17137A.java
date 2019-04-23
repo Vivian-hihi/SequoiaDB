@@ -103,6 +103,9 @@ public class Transaction17137A extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        sdb1.commit();
+        sdb2.commit();
+
         if (sdb1 != null) {
             sdb1.close();
         }

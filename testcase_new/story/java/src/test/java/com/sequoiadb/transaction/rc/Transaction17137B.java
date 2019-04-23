@@ -103,6 +103,9 @@ public class Transaction17137B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        sdb1.commit();
+        sdb2.commit();
+
         if (sdb1 != null) {
             sdb1.close();
         }
@@ -163,7 +166,8 @@ public class Transaction17137B extends SdbTestBase {
 
         @Override
         public void exec() {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            try {
                 db.beginTransaction();
                 DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
                 for (int i = 0; i < 100; i++) {
@@ -171,7 +175,11 @@ public class Transaction17137B extends SdbTestBase {
                     dbcl.dropIndex("a");
                 }
                 dbcl.createIndex("a", "{a:1, b:-1}", false, false);
+            } finally {
                 db.commit();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }
