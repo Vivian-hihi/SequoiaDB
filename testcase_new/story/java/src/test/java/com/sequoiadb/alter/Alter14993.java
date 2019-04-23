@@ -1,5 +1,7 @@
 package com.sequoiadb.alter;
 
+import java.util.Arrays;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
@@ -11,6 +13,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
@@ -21,12 +24,12 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @Date 2019年3月11日
  */
 public class Alter14993 extends SdbTestBase {
-    
+
     private Sequoiadb sdb = null;
     private String clName = "cl_14993";
-    
+
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("skip StandAlone");
@@ -40,9 +43,9 @@ public class Alter14993 extends SdbTestBase {
         options.put("ReplSize", 1);
         sdb.getCollectionSpace(csName).createCollection(clName, options);
     }
-    
+
     @Test
-    public void test(){
+    public void test() {
         AlterCL alterCL = new AlterCL();
         SetAttributes setAttributes = new SetAttributes();
         EnableCompression enableCompression = new EnableCompression();
@@ -50,81 +53,118 @@ public class Alter14993 extends SdbTestBase {
         alterCL.start();
         setAttributes.start();
         enableCompression.start();
-        
-        Assert.assertTrue(alterCL.isSuccess(), alterCL.getErrorMsg());
-        Assert.assertTrue(setAttributes.isSuccess(), setAttributes.getErrorMsg());
-        Assert.assertTrue(enableCompression.isSuccess(), enableCompression.getErrorMsg());
-        
-        DBCursor snap = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, new BasicBSONObject("Name", csName + "." + clName), null, null);
-        BSONObject clOption = snap.getNext();
-        BSONObject shardingKey = (BSONObject) clOption.get("ShardingKey");
-        int compressionType = (int) clOption.get("CompressionType");
-        String compressionTypeDesc = (String)clOption.get("CompressionTypeDesc");
-        String strictDataMode = (String) clOption.get("AttributeDesc");
-        int replsize = (int) clOption.get("ReplSize");
-        snap.close();
-        
-        Assert.assertEquals(shardingKey, new BasicBSONObject("b", -1), "check ShardingKey");
-        Assert.assertEquals(compressionType, 1, "check CompressionType");
-        Assert.assertEquals(compressionTypeDesc, "lzw", "check CompressionTypeDesc");
-        Assert.assertEquals(strictDataMode, "Compressed | StrictDataMode", "check StrictDataMode");
-        Assert.assertEquals(replsize, -1, "check ReplSize");
+
+        boolean alterResult = alterCL.isSuccess();
+        boolean setAttrResult = setAttributes.isSuccess();
+        boolean enableResult = enableCompression.isSuccess();
+
+        if (!alterResult) {
+            Integer[] errnos = { -147, -190 };
+            BaseException error = (BaseException) alterCL.getExceptions().get(0);
+            if (!Arrays.asList(errnos).contains(error.getErrorCode())) {
+                Assert.fail(alterCL.getErrorMsg());
+            }
+        }
+
+        if (!setAttrResult) {
+            Integer[] errnos = { -147, -190 };
+            BaseException error = (BaseException) setAttributes.getExceptions().get(0);
+            if (!Arrays.asList(errnos).contains(error.getErrorCode())) {
+                Assert.fail(setAttributes.getErrorMsg());
+            }
+        }
+
+        if (!enableResult) {
+            Integer[] errnos = { -147, -190 };
+            BaseException error = (BaseException) enableCompression.getExceptions().get(0);
+            if (!Arrays.asList(errnos).contains(error.getErrorCode())) {
+                Assert.fail(enableCompression.getErrorMsg());
+            }
+        }
+
+        checkSnapshotResult(alterResult, setAttrResult, enableResult);
     }
-    
+
     @AfterClass
-    public void tearDown(){
+    public void tearDown() {
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if(sdb != null){
+        if (sdb != null) {
             sdb.close();
         }
     }
-    
-    public class AlterCL extends SdbThreadBase{
+
+    public class AlterCL extends SdbThreadBase {
 
         @Override
-        public void exec() throws Exception {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+        public void exec() throws BaseException {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                for (int i = 0; i < 5; i++) {
-                    cl.alterCollection(new BasicBSONObject("ShardingKey", new BasicBSONObject("b", -1)));
-                    cl.alterCollection(new BasicBSONObject("ShardingKey", new BasicBSONObject("c", 1)));
-                }
                 cl.alterCollection(new BasicBSONObject("ShardingKey", new BasicBSONObject("b", -1)));
             }
         }
     }
-    
-    public class SetAttributes extends SdbThreadBase{
+
+    public class SetAttributes extends SdbThreadBase {
 
         @Override
-        public void exec() throws Exception {
-            BSONObject options1 = new BasicBSONObject();
-            options1.put("StrictDataMode", true);
-            options1.put("ReplSize", -1);
-            BSONObject options2 = new BasicBSONObject();
-            options2.put("StrictDataMode", false);
-            options2.put("ReplSize", 1);
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+        public void exec() throws BaseException {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                BSONObject options = new BasicBSONObject();
+                options.put("StrictDataMode", true);
+                options.put("ReplSize", -1);
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                for (int i = 0; i < 5; i++) {
-                    cl.setAttributes(options1);
-                    cl.setAttributes(options2);
-                }
-                cl.setAttributes(options1);
+                cl.setAttributes(options);
             }
         }
     }
-    
-    public class EnableCompression extends SdbThreadBase{
-        
+
+    public class EnableCompression extends SdbThreadBase {
+
         @Override
-        public void exec() throws Exception {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")){
+        public void exec() throws BaseException {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 BSONObject options = new BasicBSONObject("CompressionType", "lzw");
                 cl.enableCompression(options);
             }
         }
     }
-}
 
+    private void checkSnapshotResult(boolean alterResult, boolean setAttrResult, boolean enableResult) {
+        DBCursor snap = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, new BasicBSONObject("Name", csName + "." + clName),
+                null, null);
+        BSONObject clOption = snap.getNext();
+        BSONObject shardingKey = (BSONObject) clOption.get("ShardingKey");
+        int compressionType = (int) clOption.get("CompressionType");
+        String compressionTypeDesc = (String) clOption.get("CompressionTypeDesc");
+        String strictDataMode = (String) clOption.get("AttributeDesc");
+        int replsize = (int) clOption.get("ReplSize");
+        snap.close();
+
+        if (alterResult) {
+            Assert.assertEquals(shardingKey, new BasicBSONObject("b", -1), "check ShardingKey");
+        } else {
+            Assert.assertEquals(shardingKey, new BasicBSONObject("a", 1), "check ShardingKey");
+        }
+
+        if (setAttrResult) {
+            Assert.assertEquals(compressionType, 1, "check CompressionType");
+            Assert.assertEquals(replsize, -1, "check ReplSize");
+            Assert.assertEquals(compressionTypeDesc, "lzw", "check CompressionTypeDesc");
+        } else {
+            Assert.assertEquals(compressionType, 0, "check CompressionType");
+            Assert.assertEquals(replsize, 1, "check ReplSize");
+            Assert.assertEquals(compressionTypeDesc, "snappy", "check CompressionTypeDesc");
+        }
+
+        if (enableResult && setAttrResult) {
+            Assert.assertEquals(strictDataMode, "Compressed | StrictDataMode", "check StrictDataMode");
+        } else if (enableResult && !setAttrResult) {
+            Assert.assertEquals(strictDataMode, "StrictDataMode", "check StrictDataMode");
+        } else {
+            Assert.assertEquals(strictDataMode, "", "check StrictDataMode");
+        }
+
+    }
+
+}
