@@ -88,10 +88,6 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
         int newInsertNums = 100000;
         while ( --doTimes > 0 ) {
             cl.createIndex( textIndexName, indexObj, false, false );
-            insertData( cl, 1000 );
-            FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
-                    textIndexName, ( int ) cl.getCount() );
-            FullTextUtils.checkConsistency( sdb, csName, clName );
 
             InsertThread insertThread = new InsertThread( newInsertNums );
             DropIndexThread dropIdxThread = new DropIndexThread();
