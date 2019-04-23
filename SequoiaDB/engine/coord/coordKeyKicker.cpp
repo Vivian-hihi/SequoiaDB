@@ -605,25 +605,27 @@ namespace engine
    {
       BSONObjIterator iterKey( boKey ) ;
       BOOLEAN isKey = FALSE ;
+      const CHAR *pUpdateKey = NULL ;
 
       while( iterKey.more() )
       {
          BSONElement beKey = iterKey.next();
          const CHAR *pKey = beKey.fieldName();
+         pUpdateKey = pField ;
 
-         while( *pKey == *pField && *pKey != '\0' )
+         while( *pKey == *pUpdateKey && *pKey != '\0' )
          {
             ++pKey ;
-            ++pField ;
+            ++pUpdateKey ;
          }
 
          // shardingkey_fieldName == updator_fieldName
          /// key: { a:1 }  field : { a:1 } or { "a.b":1 }
          /// key: { "a.b":1 } field: { a:1 } or { "a.b":1 } or
          ///                         { "a.b.c":1 }
-         if ( *pKey == *pField ||
-              ( '\0' == *pKey && '.' == *pField ) ||
-              ( '.' == *pKey && '\0' == *pField ) )
+         if ( *pKey == *pUpdateKey ||
+              ( '\0' == *pKey && '.' == *pUpdateKey ) ||
+              ( '.' == *pKey && '\0' == *pUpdateKey ) )
          {
             isKey = TRUE ;
             break ;
