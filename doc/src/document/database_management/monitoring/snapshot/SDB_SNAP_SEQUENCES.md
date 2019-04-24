@@ -30,7 +30,7 @@ SDB_SNAP_SEQUENCES
 
 > **Note:**
 >
-> 特殊地，CurrentValue在序列未使用时为StartValue，而不是 StartValue - Increment。
+> 序列未使用时，序列不存在当前值（CurrentValue）。使用前，CurrentValue 会显示为 StartValue，但该值无意义。
 
 ##示例##
 
