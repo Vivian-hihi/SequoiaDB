@@ -100,7 +100,6 @@ public class Transaction17196 extends SdbTestBase {
         Assert.assertTrue(actList.isEmpty());
 
         db2.commit();
-        db2.close();
     }
 
     @AfterClass
