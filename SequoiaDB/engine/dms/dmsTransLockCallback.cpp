@@ -1384,6 +1384,8 @@ namespace engine
       {
          oldVersionCB *pOldVCB = _transCB->getOldVCB() ;
          pOldVCB->clearIdxTreeByCSID( csID, FALSE ) ;
+         PD_LOG( PDDEBUG, "CS close callback done successfully(%d)",
+                 csID ) ;
       }
    }
 

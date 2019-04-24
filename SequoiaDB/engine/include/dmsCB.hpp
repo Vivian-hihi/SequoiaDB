@@ -153,7 +153,8 @@ namespace engine
       std::vector<SDB_DMS_CSCB*>          _tmpCscbVec ;
       std::vector<BYTE>                   _tmpCscbStatusVec ;
       std::vector<ossRWMutex*>            _latchVec ;
-      std::vector<dmsStorageUnitID>       _freeList ;
+      // use deque so we can operate on both ends
+      std::deque<dmsStorageUnitID>       _freeList ;
       // collection spaces mutex in create and drop operations
       std::vector< ossSpinRecursiveXLatch* >  _vecCSMutex ;
 

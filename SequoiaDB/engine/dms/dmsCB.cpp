@@ -275,10 +275,13 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      suID = _freeList.back() ;
+
+      // We get from front and return to back so that suID is not reused 
+      // immediately.
+      suID = _freeList.front() ;
       su->_setCSID( suID ) ;
       su->_setLogicalCSID( _logicalSUID++ ) ;
-      _freeList.pop_back() ;
+      _freeList.pop_front() ;
       _cscbNameMap[cscb->_name] = suID ;
       _cscbVec[suID] = cscb ;
       if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
