@@ -658,7 +658,7 @@ namespace engine
 #ifdef _DEBUG
          if ( _oldVer )
          {
-            PD_LOG( PDDEBUG, "Set oldVer[%u] for rid[%s] in memory",
+            PD_LOG( PDDEBUG, "Set oldVer[%x] for rid[%s] in memory",
                     _oldVer, lockId.toString().c_str() ) ;
          }
 #endif //_DEBUG
