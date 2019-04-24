@@ -238,6 +238,11 @@ namespace engine
       return _transConf ;
    }
 
+   const string& _clsShdSession::getSource() const
+   {
+      return _source ;
+   }
+
    void _clsShdSession::setDelayLogin( const clsIdentifyInfo &info )
    {
       _delayLogin = TRUE ;
@@ -247,6 +252,7 @@ namespace engine
       setIdentifyInfo( ip, port, info._tid, info._eduid ) ;
       _username = info._username ;
       _passwd = info._passwd ;
+      _source = info._source ;
       /// update audit mask
       setAuditConfig( info._auditMask, info._auditConfigMask ) ;
       /// update trans conf
@@ -293,9 +299,9 @@ namespace engine
          PD_AUDIT( AUDIT_ACCESS, _client.getUsername(), szTmpIP, (UINT16)port,
                    "LOGOUT", AUDIT_OBJ_SESSION, szTmpID, SDB_OK,
                    "User[UserName:%s, FromIP:%s, FromPort:%u, "
-                   "FromSession:%llu, FromTID:%u] logout succeed",
+                   "FromSession:%llu, FromTID:%u, Source:%s] logout succeed",
                    _client.getUsername(), szTmpIP, port,
-                   identifyEDUID(), identifyTID() ) ;
+                   identifyEDUID(), identifyTID(), _source.c_str() ) ;
       }
 
       _pmdAsyncSession::_onDetach () ;
@@ -1951,6 +1957,8 @@ namespace engine
          eduCB()->getTransExecutor()->copyFrom( _transConf ) ;
       }
 
+      eduCB()->setSource( _source.c_str() ) ;
+
       ossUnpack32From64( identifyID(), ip, port ) ;
       /// set detail name
       CHAR szTmpIP[ 50 ] = { 0 } ;
@@ -1965,9 +1973,10 @@ namespace engine
       ossSnprintf( szTmpID, sizeof(szTmpID) - 1, "%llu", eduID() ) ;
       PD_AUDIT_OP( AUDIT_ACCESS, MSG_AUTH_VERIFY_REQ, AUDIT_OBJ_SESSION,
                    szTmpID, SDB_OK, "User[UserName:%s, FromIP:%s, "
-                   "FromPort:%u, FromSession:%llu, FromTID:%u] "
+                   "FromPort:%u, FromSession:%llu, FromTID:%u, Source:%s] "
                    "login succeed", _client.getUsername(),
-                   szTmpIP, port, identifyEDUID(), identifyTID() ) ;
+                   szTmpIP, port, identifyEDUID(), identifyTID(),
+                   _source.c_str() ) ;
    }
 
    INT32 _clsShdSession::_onSessionInitReqMsg ( MsgHeader *msg )
@@ -2013,6 +2022,8 @@ namespace engine
             {
                BSONElement remoteIP = obj.getField( FIELD_NAME_REMOTE_IP ) ;
                BSONElement remotePort = obj.getField( FIELD_NAME_REMOTE_PORT ) ;
+
+               _source = obj.getField( FIELD_NAME_SOURCE ).str() ;
 
                if ( String == remoteIP.type() && NumberInt == remotePort.type() )
                {

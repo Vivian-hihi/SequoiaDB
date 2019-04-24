@@ -74,7 +74,7 @@ namespace engine
    /*
       CONST VALUE DEFINE
    */
-   #define PMD_EDU_NAME_LENGTH         ( 512 )
+   #define PMD_EDU_NAME_LENGTH         ( 127 )
    #define EDU_ERROR_BUFF_SIZE         ( 1024 )
 
    /*
@@ -250,11 +250,13 @@ namespace engine
       void        setUserInfo( const string &userName,
                                const string &password ) ;
       void        setName ( const CHAR *name ) ;
+      void        setSource( const CHAR *pSource ) ;
       void        setClientSock ( ossSocket *pSock ) { _pClientSock = pSock ; }
       ossSocket*  getClientSock () { return _pClientSock ; }
 
       BOOLEAN     isFromLocal() const { return _pClientSock ? TRUE : FALSE ; }
-      const CHAR* getName () ;
+      const CHAR* getName () const ;
+      const CHAR* getSource() const ;
       const CHAR* getUserName() const { return _userName.c_str() ; }
       const CHAR* getPassword() const { return _passWord.c_str() ; }
 
@@ -457,6 +459,7 @@ namespace engine
    #endif // _WINDOWS
 
       CHAR              _name[ PMD_EDU_NAME_LENGTH + 1 ] ;
+      CHAR              _source[ PMD_EDU_NAME_LENGTH + 1 ] ;
       ossSocket        *_pClientSock ;
 
       BOOLEAN                 _isDoRollback ;

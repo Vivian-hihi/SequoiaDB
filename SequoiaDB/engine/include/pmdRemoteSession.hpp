@@ -458,6 +458,7 @@ namespace engine
          const MAP_NODE2NET& getAllNodesMap() { return _mapNode2Net ; }
          const MAP_NODE2NET* getAddNodesMapPtr() { return &_mapNode2Net ; }
          UINT32   getAllNodeID( SET_NODEID &setNodes ) ;
+         UINT32   getAllNodeIDSize() const ;
 
          BOOLEAN  getNodeVer( UINT64 nodeID, UINT64 &ver ) const ;
          void     setNodeVer( UINT64 nodeID, UINT64 ver ) ;

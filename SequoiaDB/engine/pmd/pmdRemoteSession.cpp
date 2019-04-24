@@ -1450,6 +1450,11 @@ namespace engine
       return count ;
    }
 
+   UINT32 _pmdRemoteSessionSite::getAllNodeIDSize() const
+   {
+      return _mapNode2Net.size() ;
+   }
+
    BOOLEAN _pmdRemoteSessionSite::getNodeVer( UINT64 nodeID, UINT64 &ver ) const
    {
       MAP_NODE_2_VERSION::const_iterator it ;

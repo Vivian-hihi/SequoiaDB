@@ -2096,6 +2096,7 @@ namespace engine
          ob.append ( FIELD_NAME_STATUS, simple._eduStatus ) ;
          ob.append ( FIELD_NAME_TYPE, simple._eduType ) ;
          ob.append ( FIELD_NAME_EDUNAME, simple._eduName ) ;
+         ob.append ( FIELD_NAME_SOURCE, simple._source ) ;
          monAppendSessionIdentify( ob, simple._relatedNID,
                                    simple._relatedTID ) ;
 
@@ -2149,6 +2150,7 @@ namespace engine
          ob.append( FIELD_NAME_STATUS, full._eduStatus ) ;
          ob.append( FIELD_NAME_TYPE, full._eduType ) ;
          ob.append( FIELD_NAME_EDUNAME, full._eduName ) ;
+         ob.append( FIELD_NAME_SOURCE, full._source ) ;
          ob.append( FIELD_NAME_QUEUE_SIZE, full._queueSize ) ;
          ob.append( FIELD_NAME_PROCESS_EVENT_COUNT,
                     (SINT64)full._processEventCount ) ;

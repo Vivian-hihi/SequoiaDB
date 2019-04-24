@@ -102,6 +102,7 @@ namespace engine
       _writingID        = 0 ;
       _processEventCount= 0 ;
       ossMemset( _name, 0, sizeof( _name ) ) ;
+      ossMemset( _source, 0, sizeof( _source ) ) ;
       _threadHdl        = 0 ;
       _pSession         = NULL ;
       _pRemoteSite      = NULL ;
@@ -169,6 +170,7 @@ namespace engine
       }
       _processEventCount = 0 ;
       ossMemset( _name, 0, sizeof( _name ) ) ;
+      ossMemset( _source, 0, sizeof( _source ) ) ;
       _userName = "" ;
       _passWord = "" ;
       _isLocked = FALSE ;
@@ -240,9 +242,14 @@ namespace engine
       return ss.str() ;
    }
 
-   const CHAR* _pmdEDUCB::getName ()
+   const CHAR* _pmdEDUCB::getName () const
    {
       return _name ;
+   }
+
+   const CHAR* _pmdEDUCB::getSource() const
+   {
+      return _source ;
    }
 
    void _pmdEDUCB::attachSession( ISession *pSession )
@@ -319,6 +326,12 @@ namespace engine
    {
       ossStrncpy ( _name, name, PMD_EDU_NAME_LENGTH ) ;
       _name[PMD_EDU_NAME_LENGTH] = 0 ;
+   }
+
+   void _pmdEDUCB::setSource( const CHAR *pSource )
+   {
+      ossStrncpy( _source, pSource, PMD_EDU_NAME_LENGTH ) ;
+      _source[ PMD_EDU_NAME_LENGTH ] = 0 ;
    }
 
    CHAR *_pmdEDUCB::_getBuffInfo ( EDU_INFO_TYPE type, UINT32 & size )
@@ -971,15 +984,21 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB___PMDEDUCB_DUMPINFO );
       ossScopedLock _lock ( &_mutex, SHARED ) ;
-      ossMemset ( &simple._eduStatus, 0, MON_EDU_STATUS_SZ ) ;
-      ossMemset ( &simple._eduType, 0, MON_EDU_TYPE_SZ ) ;
-      ossMemset ( &simple._eduName, 0, MON_EDU_NAME_SZ ) ;
+      simple._eduStatus[0] = 0 ;
+      simple._eduType[0] = 0 ;
+      simple._eduName[0] = 0 ;
+      simple._source[0] = 0 ;
       simple._eduID = _eduID ;
       simple._tid = _tid ;
       ossStrncpy ( simple._eduStatus, getEDUStatusDesp(_status),
                    MON_EDU_STATUS_SZ ) ;
       ossStrncpy ( simple._eduType, getEDUName (_eduType), MON_EDU_TYPE_SZ ) ;
+      simple._eduType[ MON_EDU_TYPE_SZ ] = 0 ;
       ossStrncpy ( simple._eduName, _name, MON_EDU_NAME_SZ ) ;
+      simple._eduName[ MON_EDU_NAME_SZ ] = 0 ;
+      ossStrncpy ( simple._source, _source, MON_EDU_NAME_SZ ) ;
+      simple._source[ MON_EDU_NAME_SZ ] = 0 ;
+
       if ( _pSession )
       {
          simple._relatedNID = _pSession->identifyID() ;
@@ -999,17 +1018,23 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB___PMDEDUCB_DUMPINFO2 );
       ossScopedLock _lock ( &_mutex, SHARED ) ;
-      ossMemset ( &full._eduStatus, 0, MON_EDU_STATUS_SZ ) ;
-      ossMemset ( &full._eduType, 0, MON_EDU_TYPE_SZ ) ;
-      ossMemset ( &full._eduName, 0, MON_EDU_NAME_SZ ) ;
+      full._eduStatus[0] = 0 ;
+      full._eduType[0] = 0 ;
+      full._eduName[0] = 0 ;
+      full._source[0] = 0 ;
       full._eduID = _eduID ;
       full._tid = _tid ;
       full._processEventCount = _processEventCount ;
       full._queueSize = _queue.size() ;
       ossStrncpy ( full._eduStatus, getEDUStatusDesp(_status),
                    MON_EDU_STATUS_SZ ) ;
+      full._eduStatus[ MON_EDU_STATUS_SZ ] = 0 ;
       ossStrncpy ( full._eduType, getEDUName (_eduType), MON_EDU_TYPE_SZ ) ;
+      full._eduType[ MON_EDU_TYPE_SZ ] = 0 ;
       ossStrncpy ( full._eduName, _name, MON_EDU_NAME_SZ ) ;
+      full._eduName[ MON_EDU_NAME_SZ ] = 0 ;
+      ossStrncpy ( full._source, _source, MON_EDU_NAME_SZ ) ;
+      full._source[ MON_EDU_NAME_SZ ] = 0 ;
 
       full._monApplCB = _monApplCB ;
       full._threadHdl = _threadHdl ;

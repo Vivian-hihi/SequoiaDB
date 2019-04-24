@@ -1289,6 +1289,7 @@ namespace engine
          virtual void   _toBson( BSONObjBuilder &builder ) const ;
          virtual INT32  _checkTransConf( const _dpsTransConfItem *pTransConf ) ;
          virtual void   _updateTransConf( const _dpsTransConfItem *pTransConf ) ;
+         virtual void   _updateSource( const CHAR *pSource ) ;
 
       private:
          _pmdEDUCB      *_cb ;

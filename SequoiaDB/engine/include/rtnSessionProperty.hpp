@@ -244,6 +244,8 @@ namespace engine
 
          virtual INT32  _checkTransConf( const _dpsTransConfItem *pTransConf ) ;
          virtual void   _updateTransConf( const _dpsTransConfItem *pTransConf ) ;
+         virtual INT32  _checkSource( const CHAR *pSource ) ;
+         virtual void   _updateSource( const CHAR *pSource ) ;
 
       protected :
          rtnInstanceOption    _instanceOption ;

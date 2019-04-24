@@ -741,6 +741,7 @@ namespace engine
       BOOLEAN gotInstance = FALSE ;
       BOOLEAN gotOperationTimeout = FALSE ;
       dpsTransConfItem transConf ;
+      const CHAR *pSource = NULL ;
 
       BSONObjIterator iter( property ) ;
       while ( iter.more() )
@@ -864,11 +865,27 @@ namespace engine
             transConf.setTransAutoRollback( field.boolean() ? TRUE : FALSE,
                                             TRUE ) ;
          }
+         else if ( 0 == ossStrcasecmp( field.fieldName(), FIELD_NAME_SOURCE ) )
+         {
+            PD_CHECK( String == field.type(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not string",
+                      FIELD_NAME_SOURCE ) ;
+            pSource = field.valuestr() ;
+         }
          else
          {
             PD_LOG( PDERROR, "Option [%s] is not supported in session property",
                     field.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+      if ( pSource )
+      {
+         rc = _checkSource( pSource ) ;
+         if ( rc )
+         {
             goto error ;
          }
       }
@@ -899,6 +916,11 @@ namespace engine
          setOperationTimeout( operationTimeout ) ;
       }
 
+      if ( pSource )
+      {
+         _updateSource( pSource ) ;
+      }
+
    done :
       PD_TRACE_EXITRC( SDB__RTNSESSPROP__PARSEPROPV1, rc ) ;
       return rc ;
@@ -912,7 +934,16 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _rtnSessionProperty::_checkSource( const CHAR *pSource )
+   {
+      return SDB_OK ;
+   }
+
    void _rtnSessionProperty::_updateTransConf( const _dpsTransConfItem *pTransConf )
+   {
+   }
+
+   void _rtnSessionProperty::_updateSource( const CHAR *pSource )
    {
    }
 

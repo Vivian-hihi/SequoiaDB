@@ -59,7 +59,6 @@ namespace engine
      _pEDUCB( NULL ),
      _pSite( NULL )
    {
-      _transResult = 0 ;
    }
 
    _coordSessionPropSite::~_coordSessionPropSite()
@@ -130,6 +129,19 @@ namespace engine
    void _coordSessionPropSite::_toBson( BSONObjBuilder &builder ) const
    {
       _pEDUCB->getTransExecutor()->toBson( builder ) ;
+
+      if ( _pEDUCB->getSource() )
+      {
+         try
+         {
+            builder.append( FIELD_NAME_SOURCE, _pEDUCB->getSource() ) ;
+         }
+         catch( std::exception &e )
+         {
+            /// ignore
+            PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+         }
+      }
    }
 
    INT32 _coordSessionPropSite::_checkTransConf( const _dpsTransConfItem *pTransConf )
@@ -160,6 +172,11 @@ namespace engine
    void _coordSessionPropSite::_updateTransConf( const _dpsTransConfItem *pTransConf )
    {
       _pEDUCB->getTransExecutor()->updateByMask( *pTransConf ) ;
+   }
+
+   void _coordSessionPropSite::_updateSource( const CHAR *pSource )
+   {
+      _pEDUCB->setSource( pSource ) ;
    }
 
    BOOLEAN _coordSessionPropSite::isTransNode( const MsgRouteID &routeID ) const

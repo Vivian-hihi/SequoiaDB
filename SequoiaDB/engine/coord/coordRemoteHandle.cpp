@@ -324,6 +324,7 @@ namespace engine
          }
       }
 
+      builder.append( FIELD_NAME_SOURCE, cb->getSource() ) ;
       builder.append( SDB_AUTH_USER, cb->getUserName() ) ;
       builder.append( SDB_AUTH_PASSWD, cb->getPassword() ) ;
       builder.append( FIELD_NAME_HOST, pmdGetKRCB()->getHostName() ) ;

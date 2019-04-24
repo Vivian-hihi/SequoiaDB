@@ -3688,6 +3688,19 @@ error:
       if ( _cb )
       {
          _cb->getTransExecutor()->toBson( builder ) ;
+
+         if ( _cb->getSource() )
+         {
+            try
+            {
+               builder.append( FIELD_NAME_SOURCE, _cb->getSource() ) ;
+            }
+            catch( std::exception &e )
+            {
+               /// ignore
+               PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+            }
+         }
       }
    }
 
@@ -3721,6 +3734,14 @@ error:
       if ( _cb )
       {
          _cb->getTransExecutor()->updateByMask( *pTransConf ) ;
+      }
+   }
+
+   void _rtnLocalSessionProp::_updateSource( const CHAR *pSource )
+   {
+      if ( _cb )
+      {
+         _cb->setSource( pSource ) ;
       }
    }
 

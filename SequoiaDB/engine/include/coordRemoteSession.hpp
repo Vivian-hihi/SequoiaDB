@@ -124,6 +124,7 @@ namespace engine
 
          virtual INT32  _checkTransConf( const _dpsTransConfItem *pTransConf ) ;
          virtual void   _updateTransConf( const _dpsTransConfItem *pTransConf ) ;
+         virtual void   _updateSource( const CHAR *pSource ) ;
 
       private:
          void        setEduCB( _pmdEDUCB *cb ) ;
@@ -135,7 +136,6 @@ namespace engine
          pmdRemoteSessionSite *_pSite ;
 
          MAP_TRANS_NODES      _mapTransNodes ;
-         INT32                _transResult ;
    } ;
 
    typedef _coordSessionPropSite coordSessionPropSite ;
