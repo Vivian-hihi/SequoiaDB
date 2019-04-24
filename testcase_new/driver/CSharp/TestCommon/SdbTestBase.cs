@@ -16,7 +16,11 @@ namespace CSharp.TestCommon
     {
         public static String coordUrl;
         public static String csName;
-
+        public static String reservedDir = "/opt/sequoiadb/database";
+        public static String workDir = "/tmp/csharptest";
+        public static int reservedPortBegin = 26000;
+        public static int reservedPortEnd = 27000;
+        
         public static TestContext testContextInstance;
         public static Config config = null;
 
