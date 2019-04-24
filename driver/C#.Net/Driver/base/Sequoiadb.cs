@@ -1242,8 +1242,34 @@ namespace SequoiaDB
          *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
+         *  \deprecated Rename to "backup".
          */
         public void BackupOffline(BsonDocument options)
+        {
+            Backup(options);
+        }
+
+        /** \fn void Backup(BsonDocument options)
+         *  \brief Backup database.
+         *  \param options Contains a series of backup configuration infomations. 
+         *         Backup the whole cluster if null. The "options" contains 5 options as below. 
+         *         All the elements in options are optional. 
+         *         eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", 
+         *             "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
+         *         <ul>
+         *          <li>GroupName   : The replica groups which to be backuped
+         *          <li>Path        : The backup path, if not assign, use the backup path assigned in configuration file
+         *          <li>Name        : The name for the backup
+         *          <li>Description : The description for the backup
+         *          <li>EnsureInc   : Whether excute increment synchronization, default to be false
+         *          <li>OverWrite   : Whether overwrite the old backup file, default to be false
+         *         </ul>
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \deprecated Rename to "backup".
+         */
+        public void Backup(BsonDocument options)
         {
             // check argument
             if (options == null || options.ElementCount == 0)
