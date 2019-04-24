@@ -63,7 +63,34 @@
                "type": "select",
                "required": true,
                "value": allHostSelectList[0]['key'],
-               "valid": allHostSelectList
+               "valid": allHostSelectList,
+               "onChange": function( name, key, value ){
+                  var index2= 0 ;
+                  $.each( allHostSelectList, function( index, hostInfo ){
+                     if( hostInfo['key'] == key )
+                     {
+                        index2 = index ;
+                        return false ;
+                     }
+                  } ) ;
+                  var rootPath = allHostSelectList[index2]['Disk'][0]['Mount'] ;
+                  if( rootPath == '/' )
+                  {
+                     rootPath = '/opt/sequoiasql/postgresql' ;
+                  }
+                  else if( rootPath.indexOf( 'sequoiasql/postgresql' ) < 0 )
+                  {
+                     rootPath = catPath( rootPath, 'sequoiasql/postgresql' ) ;
+                  }
+                  $.each( $scope.AllForm['normal']['inputList'], function( index ){
+                     var name = $scope.AllForm['normal']['inputList'][index]['name'] ;
+                     if ( name == 'dbpath' )
+                     {
+                        var tmp = catPath( rootPath, 'database/5432' ) ;
+                        $scope.AllForm['normal']['inputList'][index]['value'] = tmp ;
+                     }
+                  } ) ;
+               }
             } ) ;
 
             $scope.AllForm['normal']['inputList'].splice( 1, 0, {
@@ -100,15 +127,24 @@
             } ) ;
          }
 
+         var rootPath = allHostSelectList[0]['Disk'][0]['Mount'] ;
+         if( rootPath == '/' )
+         {
+            rootPath = '/opt/sequoiasql/postgresql' ;
+         }
+         else if( rootPath.indexOf( 'sequoiasql/postgresql' ) < 0 )
+         {
+            rootPath = catPath( rootPath, 'sequoiasql/postgresql' ) ;
+         }
          $.each( $scope.AllForm['normal']['inputList'], function( index ){
             var name = $scope.AllForm['normal']['inputList'][index]['name'] ;
             if ( hasKey( buildConf[0], name ) )
             {
                var tmp = buildConf[0][name] ;
-
+               
                if ( name == 'dbpath' && isDeployPackage )
                {
-                  tmp = catPath( '/opt/sequoiasql/postgresql', tmp ) ;
+                  tmp = catPath( rootPath, 'database/5432' ) ;
                }
 
                $scope.AllForm['normal']['inputList'][index]['value'] = tmp ;
@@ -158,7 +194,7 @@
                   if( hostInfo['ClusterName'] == clusterName )
                   {
                      $.each( hostInfo['Packages'], function( packageIndex, packageInfo ){
-                        allHostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
+                        allHostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'], 'Disk': hostInfo['Disk'] } ) ;
                         if( packageInfo['Name'] == 'sequoiasql-postgresql' )
                         {
                            hostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;

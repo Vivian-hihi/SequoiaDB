@@ -62,7 +62,34 @@
                "type": "select",
                "required": true,
                "value": allHostSelectList[0]['key'],
-               "valid": allHostSelectList
+               "valid": allHostSelectList,
+               "onChange": function( name, key, value ){
+                  var index2= 0 ;
+                  $.each( allHostSelectList, function( index, hostInfo ){
+                     if( hostInfo['key'] == key )
+                     {
+                        index2 = index ;
+                        return false ;
+                     }
+                  } ) ;
+                  var rootPath = allHostSelectList[index2]['Disk'][0]['Mount'] ;
+                  if( rootPath == '/' )
+                  {
+                     rootPath = '/opt/sequoiasql/mysql' ;
+                  }
+                  else if( rootPath.indexOf( 'sequoiasql/mysql' ) < 0 )
+                  {
+                     rootPath = catPath( rootPath, 'sequoiasql/mysql' ) ;
+                  }
+                  $.each( $scope.Form1['inputList'], function( index ){
+                     var name = $scope.Form1['inputList'][index]['name'] ;
+                     if ( name == 'dbpath' )
+                     {
+                        var tmp = catPath( rootPath, 'database/3306' ) ;
+                        $scope.Form1['inputList'][index]['value'] = tmp ;
+                     }
+                  } ) ;
+               }
             } ) ;
 
             $scope.Form1['inputList'].splice( 1, 0, {
@@ -77,78 +104,81 @@
             } ) ;
 
             $scope.Form1['inputList'].splice( 2, 0, {
-               "name": "User",
-               "webName": $scope.autoLanguage( '用户名' ),
-               "type": "string",
-               "required": true,
-               "value": "root",
-               "valid": {
-                  "min": 1
-               }
-            } ) ;
-
-            $scope.Form1['inputList'].splice( 3, 0, {
-               "name": "Passwd",
-               "webName": $scope.autoLanguage( '密码' ),
-               "type": "password",
-               "required": true,
-               "value": "",
-               "valid": {
-                  "min": 1
-               }
-            } ) ;
-         }
-         $scope.Form1['inputList'].splice( isDeployPackage ? 4 : 1, 0, {
-            "name": "GrantType",
-            "webName": $scope.autoLanguage( '访问授权' ),
-            "type": "select",
-            "value": 'grant root',
-            "valid": [
-               { 'key': $scope.autoLanguage( 'root账号授权任意主机访问' ), 'value': 'grant root' },
-               { 'key': $scope.autoLanguage( '创建SAC访问的账号' ), 'value': 'create new user' },
-               { 'key': $scope.autoLanguage( '不设置授权' ), 'value': 'do nothing' }
-            ],
-            "onChange": function( name, key, value ){
-               if( value == 'create new user' )
-               {
-                  $scope.Form1['inputList'].splice( 2, 0, {
-                     "name": "AuthUser",
-                     "webName": $scope.autoLanguage( '账号' ),
+               "name": "SystemAdmin",
+               "webName": $scope.autoLanguage( '系统管理员' ),
+               "type": "group",
+               "child": [
+                  {
+                     "name": "User",
+                     "webName": $scope.autoLanguage( '用户名' ),
                      "type": "string",
                      "required": true,
-                     "value": '',
+                     "value": "root",
                      "valid": {
-                        "min": 1,
-                        "max": 127,
-                        "regex": '^[0-9a-zA-Z]+$'
+                        "min": 1
                      }
                   },
                   {
-                     "name": "AuthPasswd",
+                     "name": "Passwd",
                      "webName": $scope.autoLanguage( '密码' ),
                      "type": "password",
                      "required": true,
-                     "value": '',
+                     "value": "",
                      "valid": {
-                        "min" : 1
+                        "min": 1
                      }
-                  } ) ;
-               }
-               else if( $scope.Form1['inputList'][2]['name'] == 'AuthUser' )
+                  } 
+               ]
+            } ) ;
+         }
+
+         $scope.Form1['inputList'].splice( isDeployPackage ? 3 : 1, 0, {
+            "name": "DatabaseAuth",
+            "webName": $scope.autoLanguage( '新建数据库鉴权' ),
+            "type": "group",
+            "child": [
                {
-                  $scope.Form1['inputList'].splice( 2, 2 ) ;
+                  "name": "AuthUser",
+                  "webName": $scope.autoLanguage( '用户名' ),
+                  "type": "string",
+                  "required": true,
+                  "value": '',
+                  "valid": {
+                     "min": 1,
+                     "max": 127,
+                     "regex": '^[0-9a-zA-Z]+$'
+                  }
+               },
+               {
+                  "name": "AuthPasswd",
+                  "webName": $scope.autoLanguage( '密码' ),
+                  "type": "password",
+                  "required": true,
+                  "value": '',
+                  "valid": {
+                     "min" : 1
+                  }
                }
-            }
+            ]
          } ) ;
+
+         var rootPath = allHostSelectList[0]['Disk'][0]['Mount'] ;
+         if( rootPath == '/' )
+         {
+            rootPath = '/opt/sequoiasql/mysql' ;
+         }
+         else if( rootPath.indexOf( 'sequoiasql/mysql' ) < 0 )
+         {
+            rootPath = catPath( rootPath, 'sequoiasql/mysql' ) ;
+         }
          $.each( $scope.Form1['inputList'], function( index ){
             var name = $scope.Form1['inputList'][index]['name'] ;
             if ( hasKey( buildConf[0], name ) )
             {
                var tmp = buildConf[0][name] ;
-
                if ( name == 'dbpath' && isDeployPackage )
                {
-                  tmp = catPath( '/opt/sequoiasql/mysql', tmp ) ;
+                  tmp = catPath( rootPath, 'database/3306' ) ;
                }
 
                $scope.Form1['inputList'][index]['value'] = tmp ;
@@ -182,7 +212,7 @@
                   if( hostInfo['ClusterName'] == clusterName )
                   {
                      $.each( hostInfo['Packages'], function( packageIndex, packageInfo ){
-                        allHostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
+                        allHostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'], 'Disk': hostInfo['Disk'] } ) ;
                         if( packageInfo['Name'] == 'sequoiasql-mysql' )
                         {
                            hostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
@@ -258,15 +288,23 @@
             return false ;
          }
 
-         var filterDeployKey = [ 'InstallPath', 'User', 'Passwd' ] ;
+         var filterDeployKey = [ 'InstallPath', 'SystemAdmin' ] ;
 
          var formVal1 = $scope.Form1.getValue() ;
+
+         formVal1['GrantType'] = 'create new user' ;
+
          $.each( formVal1, function( key2, value ){
             if ( isDeployPackage == true && filterDeployKey.indexOf( key2 ) >= 0 )
             {
                return true ;
             }
-            if(  value.length > 0 || ( typeof( value ) == 'number' && isNaN( value ) == false ) )
+            if( key2 == 'DatabaseAuth' )
+            {
+               allFormVal['AuthUser'] = value['AuthUser'] ;
+               allFormVal['AuthPasswd'] = value['AuthPasswd'] ;
+            }
+            else if( value.length > 0 || ( typeof( value ) == 'number' && isNaN( value ) == false ) )
             {
                allFormVal[key2] = value ;
             }
@@ -286,7 +324,12 @@
 
          var formVal = $scope.Form1.getValue() ;
          $.each( formVal, function( key2, value ){
-            if(  value.length > 0 || ( typeof( value ) == 'number' && isNaN( value ) == false ) )
+            if( key2 == 'SystemAdmin' )
+            {
+               allFormVal['User'] = value['User'] ;
+               allFormVal['Passwd'] = value['Passwd'] ;
+            }
+            else if(  value.length > 0 || ( typeof( value ) == 'number' && isNaN( value ) == false ) )
             {
                allFormVal[key2] = value ;
             }
@@ -359,34 +402,13 @@
          } ) ;
          if( configure )
          {
-            if( configure['Config'][0]['GrantType'] == 'do nothing' )
+            if ( isDeployPackage )
             {
-               $scope.Components.Confirm.type = 2 ;
-               $scope.Components.Confirm.context = $scope.autoLanguage( '选择不设置授权添加服务后，需要手工设置授权，SAC才能正常访问服务数据，是否继续？' ) ;
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.okText = $scope.pAutoLanguage( '继续' ) ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
-                  if ( isDeployPackage )
-                  {
-                     deployPackage( configure ) ;
-                  }
-                  else
-                  {
-                     installMysql( configure ) ;
-                  }
-               }
+               deployPackage( configure ) ;
             }
             else
             {
-               if ( isDeployPackage )
-               {
-                  deployPackage( configure ) ;
-               }
-               else
-               {
-                  installMysql( configure ) ;
-               }
+               installMysql( configure ) ;
             }
          }
       }

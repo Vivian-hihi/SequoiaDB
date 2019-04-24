@@ -15,11 +15,11 @@
    <input ng-switch-when="port" type="text" class="form-control" spellcheck="false" ng-keypress="inputInfo.onKeypress($event)" ng-change="onChange(inputInfo)" ng-attr="{'data-desc':inputInfo.error}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-placeholder="inputInfo.placeholder" ng-model="inputInfo.value" ng-disabled="inputInfo.disabled">
    <textarea ng-switch-when="text" class="form-control" spellcheck="false" ng-attr="{'data-desc':inputInfo.error}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-placeholder="inputInfo.placeholder" rows="4" ng-model="inputInfo.value" ng-change="onChange(inputInfo)" ng-disabled="inputInfo.disabled"></textarea>
    <select class="form-control" ng-switch-when="select" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" ng-change="onChange(inputInfo)" ng-model="inputInfo.value" ng-options="selectList.value as selectList.key for selectList in inputInfo.valid" ng-disabled="inputInfo.disabled"></select>
-   <div style="padding:0 0 0 20px;" ng-switch-when="group">
+   <div style="padding:0 0 0 10px;" ng-switch-when="group">
       <table class="table" style="margin:10px 0 0 0;" ng-repeat="childInfo in inputInfo.child track by $index">
          <tbody>
             <tr>
-               <td style="width:120px;" ng-style="{true:{'vertical-align':'middle'},false:{'vertical-align':'top','padding-top':'8px'}}[childInfo.type!='list']">
+               <td ng-style="{true:{'vertical-align':'middle'},false:{'vertical-align':'top','padding-top':'8px'}}[childInfo.type!='list'];{width:Setting.KeyWidth}">
                   <label><span class="error" ng-if="childInfo.required == true">*</span> {{childInfo.webName}}</label> <i ng-if="childInfo.desc" class="fa fa-info-circle" ng-attr="{'data-desc':inputInfo.desc}"></i>
                </td>
                <td ng-eval="inputInfo=childInfo;" ng-include="'./app/template/Component/Form_child.html'"></td>

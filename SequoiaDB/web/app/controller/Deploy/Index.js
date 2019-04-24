@@ -12,15 +12,23 @@
       //默认选的cluster
       $scope.CurrentCluster = 0 ;
       //默认显示业务还是主机列表
-      $scope.CurrentPage = 'module' ;
+      $scope.CurrentPage = 'instance' ;
       //主机列表数量
       $scope.HostNum = 0 ;
       //主机列表
       SdbSwap.hostList = [] ;
+
       //业务列表数量
       $scope.ModuleNum = 0 ;
       //业务列表
       $scope.ModuleList = [] ;
+
+      //实例
+      $scope.InstanceNum = 0 ;
+      $scope.InstanceList = [] ;
+      //存储列表
+      $scope.StorageNum = 0 ;
+      $scope.StorageList = [] ;
       //业务集群模式数量
       SdbSwap.distributionNum = 0 ;
       //SDB业务数量
@@ -77,8 +85,83 @@
          } ) ;
       }
 
+      SdbSwap.generateModuleName = function( prefix ){
+         var num = 1 ;
+         var defaultName = '' ;
+         while( true )
+         {
+            var isFind = false ;
+            defaultName = sprintf( prefix + '?', num ) ;
+            $.each( $scope.ModuleList, function( index, moduleInfo ){
+               if( defaultName == moduleInfo['BusinessName'] )
+               {
+                  isFind = true ;
+                  return false ;
+               }
+            } ) ;
+            if( isFind == false )
+            {
+               $.each( $rootScope.OmTaskList, function( index, taskInfo ){
+                  if( taskInfo['Status'] != 4 && defaultName == taskInfo['Info']['BusinessName'] )
+                  {
+                     isFind = true ;
+                     return false ;
+                  }
+               } ) ;
+               if( isFind == false )
+               {
+                  break ;
+               }
+            }
+            ++num ;
+         }
+         return defaultName ;
+      }
+
+      //服务分类
+      function classifyModule()
+      {
+         var instanceList = [] ;
+         var storageList = [] ;
+         $.each( $scope.ModuleList, function( index, moduleInfo ){
+            if( moduleInfo['BusinessType'] == 'sequoiadb' )
+            {
+               moduleInfo['BusinessDesc'] = 'SequoiaDB' ;
+               storageList.push( moduleInfo ) ;
+            }
+            else
+            {
+               if( moduleInfo['BusinessType'] == 'sequoiasql-mysql' )
+               {
+                  moduleInfo['BusinessDesc'] = 'MySQL' ;
+               }
+               else if( moduleInfo['BusinessType'] == 'sequoiasql-postgresql' )
+               {
+                  moduleInfo['BusinessDesc'] = 'PostgreSQL' ;
+               }
+               instanceList.push( moduleInfo ) ;
+            }
+         } ) ;
+
+         $scope.InstanceNum = instanceList.length ;
+         $scope.InstanceList = [] ;
+
+         $scope.StorageNum = storageList.length ;
+         $scope.StorageList = [] ;
+
+         if( $scope.CurrentPage == 'instance' )
+         {
+            $scope.InstanceList = instanceList ;
+         }
+         else if( $scope.CurrentPage == 'storage' )
+         {
+            $scope.StorageList = storageList ;
+         }
+      }
+
       //计算每个服务的资源
-      var countModule_Host = function(){
+      function countModule_Host()
+      {
          $.each( $scope.ModuleList, function( index, moduleInfo ){
             if( isArray( moduleInfo['Location'] ) )
             {
@@ -119,7 +202,8 @@
       }
       
       //host_module_table是否已经存在该主机
-      var hostModuleTableIsExist = function( hostName ){
+      function hostModuleTableIsExist( hostName )
+      {
          var flag = -1 ;
          $.each( host_module_table, function( index, hostInfo ){
             if( hostInfo['HostName'] == hostName )
@@ -132,7 +216,8 @@
       }
 
       //SdbSwap.hostList是否存在该主机
-      var hostListIsExist = function( hostName ){
+      function hostListIsExist( hostName )
+      {
          var flag = -1 ;
          $.each( SdbSwap.hostList, function( index, hostInfo ){
             if( hostInfo['HostName'] == hostName )
@@ -145,7 +230,8 @@
       }
 
       //查询主机状态
-      var queryHostStatus = function(){
+      function queryHostStatus()
+      {
          var isFirstQueryHostStatus = true ;
          var queryHostList ;
          SdbRest.OmOperation( null, {
@@ -273,7 +359,8 @@
       }
 
       //获取sequoiadb的节点信息
-      var getNodesList = function( moduleIndex ){
+      function getNodesList( moduleIndex )
+      {
          if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
          {
             return ;
@@ -294,10 +381,11 @@
          }, {
             'showLoading': false
          } ) ;
-      } ;
+      }
 
       //获取sequoiadb服务信息
-      var getCollectionInfo = function( moduleIndex, clusterIndex ){
+      function getCollectionInfo( moduleIndex, clusterIndex )
+      {
          if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
          {
             return ;
@@ -382,7 +470,8 @@
       }
 
       //获取sequoiadb的错误节点信息
-      var getErrNodes = function( moduleIndex, clusterIndex ){
+      function getErrNodes( moduleIndex, clusterIndex )
+      {
          if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
          {
             return ;
@@ -427,39 +516,49 @@
          } ) ;
       }
 
+      function clusterIsExist( clusterList, type, clusterName )
+      {
+         var flag = 0 ;
+         var isFind = false ;
+         $.each( clusterList, function( index, clusterInfo ){
+            if( clusterInfo['ClusterName'] == clusterName && clusterInfo['type'] == type )
+            {
+               isFind = true ;
+               flag = clusterInfo['index'] ;
+               ++clusterList[index]['index'] ;
+               return false ;
+            }
+         } ) ;
+         if( isFind == false )
+         {
+            clusterList.push( { 'ClusterName': clusterName, 'type': type, 'index': 1 } ) ;
+         }
+         return flag ;
+      }
+
       //查询服务
       SdbSwap.queryModule = function(){
-         var ClusterList = [] ;
-         var clusterIsExist = function( clusterName ){
-            var flag = 0 ;
-            var isFind = false ;
-            $.each( ClusterList, function( index, clusterInfo ){
-               if( clusterInfo['ClusterName'] == clusterName )
-               {
-                  isFind = true ;
-                  flag = clusterInfo['index'] ;
-                  ++ClusterList[index]['index'] ;
-                  return false ;
-               }
-            } ) ;
-            if( isFind == false )
-            {
-               ClusterList.push( { 'ClusterName': clusterName, 'index': 1 } ) ;
-            }
-            return flag ;
-         }
+         var clusterList = [] ;
          var data = { 'cmd': 'query business' } ;
          SdbRest.OmOperation( data, {
             'success': function( moduleList ){
                SdbSwap.RelationshipPromise.resolve( 'moduleList', moduleList ) ;
                $scope.ModuleList = moduleList ;
+
+               classifyModule() ;
+
+               if( $scope.InstanceNum == 0 && $scope.StorageNum == 0 )
+               {
+                  $scope.CurrentPage = 'storage' ;
+               }
+
                host_module_table = [] ;
                autoQueryModuleIndex = [] ;
                //获取服务关联信息
                SdbSwap.getRelationship() ;
                $.each( $scope.ModuleList, function( index, moduleInfo ){
 
-                  var colorId = clusterIsExist( moduleInfo['ClusterName'] ) ;
+                  var colorId = clusterIsExist( clusterList, moduleInfo['BusinessType'] == 'sequoiadb' ? 1 : 2, moduleInfo['ClusterName'] ) ;
 
                   $scope.ModuleList[index]['Color'] = colorId ;
 
@@ -551,6 +650,7 @@
       //切换服务和主机
       $scope.SwitchPage = function( page ){
          $scope.CurrentPage = page ;
+         classifyModule() ;
          $scope.bindResize() ;
       }
 
@@ -626,7 +726,8 @@
       }
 
       //获取服务类型列表
-      var GetModuleType = function(){
+      function GetModuleType()
+      {
          var data = { 'cmd': 'list business type' } ;
          SdbRest.OmOperation( data, {
             'success': function( moduleType ){
@@ -647,7 +748,8 @@
       }
 
       //创建集群
-      var createCluster = function( clusterInfo, success ){
+      function createCluster( clusterInfo, success )
+      {
          var data = { 'cmd': 'create cluster', 'ClusterInfo': JSON.stringify( clusterInfo ) } ;
          SdbRest.OmOperation( data, {
             'success': function(){
@@ -822,7 +924,8 @@
       }
 
       //删除集群
-      var removeCluster = function( clusterIndex ){
+      function removeCluster( clusterIndex )
+      {
          var clusterName = $scope.ClusterList[clusterIndex]['ClusterName'] ;
          var data = { 'cmd': 'remove cluster', 'ClusterName': clusterName } ;
          SdbRest.OmOperation( data, {
@@ -984,7 +1087,7 @@
                'inputList': [
                   {
                      "name": 'moduleName',
-                     "webName": $scope.autoLanguage( '服务名' ),
+                     "webName": $scope.autoLanguage( '存储集群名' ),
                      "type": "string",
                      "required": true,
                      "value": "myService",
@@ -996,7 +1099,7 @@
                   },
                   {
                      "name": 'moduleType',
-                     "webName": $scope.autoLanguage( '服务类型' ),
+                     "webName": $scope.autoLanguage( '服务名' ),
                      "type": "select",
                      "value": 0,
                      "valid": []
@@ -1026,36 +1129,8 @@
                ]
             }
          ] ;
-         num = 1 ;
-         defaultName = '' ;
-         while( true )
-         {
-            var isFind = false ;
-            defaultName = sprintf( 'myService?', num ) ;
-            $.each( $scope.ModuleList, function( index, moduleInfo ){
-               if( defaultName == moduleInfo['BusinessName'] )
-               {
-                  isFind = true ;
-                  return false ;
-               }
-            } ) ;
-            if( isFind == false )
-            {
-               $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                  if( taskInfo['Status'] != 4 && defaultName == taskInfo['Info']['BusinessName'] )
-                  {
-                     isFind = true ;
-                     return false ;
-                  }
-               } ) ;
-               if( isFind == false )
-               {
-                  break ;
-               }
-            }
-            ++num ;
-         }
-         $scope.DeployModuleWindow['config'][1]['inputList'][0]['value'] = defaultName ;
+
+         $scope.DeployModuleWindow['config'][1]['inputList'][0]['value'] = SdbSwap.generateModuleName( 'SequoiaDB' ) ; ;
          $.each( SdbSwap.moduleType, function( index, typeInfo ){
             if( typeInfo['BusinessType'] == 'sequoiadb' )
             {
@@ -1137,7 +1212,8 @@
       }
 
       //设置资源授权
-      var setGrant = function( conf ){
+      function setGrant( conf )
+      {
          var data = { 'cmd': 'grant sysconf', 'name': conf['name'], 'privilege': conf['privilege'], 'clustername': conf['clustername'] } ;
          SdbRest.OmOperation( data, {
             'success': function(){
@@ -1162,7 +1238,8 @@
       }
 
       //打开 资源授权
-      var showResourceGrant = function(){
+      function showResourceGrant()
+      {
          $scope.ResourceGrantWindow['config'] = {
             'inputList': [
                {
@@ -1244,174 +1321,120 @@
       }
    } ) ;
 
-   //服务控制器
-   sacApp.controllerProvider.register( 'Deploy.Index.Module.Ctrl', function( $scope, $rootScope, $location, SdbFunction, SdbRest, SdbSignal, SdbSwap ){
+   //实例控制器
+   sacApp.controllerProvider.register( 'Deploy.Index.Instance.Ctrl', function( $scope, $rootScope, $location, SdbFunction, SdbRest, SdbSignal, SdbSwap ){
 
       $scope.UninstallTips = '' ;
-      //服务扩容 弹窗
-      $scope.ExtendWindow = {
+
+      //发现服务 弹窗
+      $scope.AppendModule = {
          'config': {},
          'callback': {}
       } ;
 
-      //打开 服务扩容 弹窗
-      var showExtendWindow = function(){
-         if( $scope.ClusterList.length > 0 && SdbSwap.distributionNum != 0 )
+      //打开 发现服务 弹窗
+      $scope.ShowAppendModule = function(){
+         if( $scope.ClusterList.length == 0 )
          {
-            $scope.ExtendWindow['config'] = {
-               inputList: [
-                  {
-                     "name": 'moduleName',
-                     "webName": $scope.autoLanguage( '服务名' ),
-                     "type": "select",
-                     "value": null,
-                     "valid": []
-                  }
-               ]
-            } ;
-            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-            $.each( $scope.ModuleList, function( index, moduleInfo ){
-               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb' && moduleInfo['DeployMod'] == 'distribution' )
-               {
-                  if( $scope.ExtendWindow['config']['inputList'][0]['value'] == null )
-                  {
-                     $scope.ExtendWindow['config']['inputList'][0]['value'] = index ;
-                  }
-                  $scope.ExtendWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
-               }
-            } ) ;
-            $scope.ExtendWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-               var isAllClear = $scope.ExtendWindow['config'].check() ;
-               if( isAllClear )
-               {
-                  var formVal = $scope.ExtendWindow['config'].getValue() ;
-                  $rootScope.tempData( 'Deploy', 'Model',       'Module' ) ;
-                  $rootScope.tempData( 'Deploy', 'Module',      'sequoiadb' ) ;
-                  $rootScope.tempData( 'Deploy', 'ModuleName',  $scope.ModuleList[ formVal['moduleName'] ]['BusinessName'] ) ;
-                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
-                  $rootScope.tempData( 'Deploy', 'DeployMod',   $scope.ModuleList[ formVal['moduleName'] ]['DeployMod'] ) ;
-                  SdbFunction.LocalData( 'SdbClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
-                  SdbFunction.LocalData( 'SdbModuleName',  $scope.ModuleList[ formVal['moduleName'] ]['BusinessName'] ) ;
-                  $location.path( '/Deploy/SDB-ExtendConf' ).search( { 'r': new Date().getTime() } ) ;
-               }
-               return isAllClear ;
-            } ) ;
-            $scope.ExtendWindow['callback']['SetTitle']( $scope.autoLanguage( '服务扩容' ) ) ;
-            $scope.ExtendWindow['callback']['SetIcon']( '' ) ;
-            $scope.ExtendWindow['callback']['Open']() ;
+            return ;
          }
-      }
-
-      //服务减容 弹窗
-      $scope.ShrinkWindow = {
-         'config': {},
-         'callback': {}
-      }
-
-      //打开 服务减容 弹窗
-      var showShrinkWindow = function(){
-         if( $scope.ClusterList.length > 0 && SdbSwap.distributionNum != 0 )
-         {
-            $scope.ShrinkWindow['config'] = {
-               inputList: [
-                  {
-                     "name": 'moduleName',
-                     "webName": $scope.autoLanguage( '服务名' ),
-                     "type": "select",
-                     "value": null,
-                     "valid": []
-                  }
-               ]
-            } ;
-            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-            $.each( $scope.ModuleList, function( index, moduleInfo ){
-               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb' && moduleInfo['DeployMod'] == 'distribution' )
+         $scope.AppendModule['config'] = {
+            inputList: [
                {
-                  if( $scope.ShrinkWindow['config']['inputList'][0]['value'] == null )
-                  {
-                     $scope.ShrinkWindow['config']['inputList'][0]['value'] = index ;
+                  "name": 'moduleName',
+                  "webName": $scope.autoLanguage( '存储集群名' ),
+                  "type": "string",
+                  "required": true,
+                  "value": "",
+                  "valid": {
+                     "min": 1,
+                     "max": 127,
+                     'regex': '^[0-9a-zA-Z_-]+$'
                   }
-                  $scope.ShrinkWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               },
+               {
+                  "name": 'moduleType',
+                  "webName": $scope.autoLanguage( '服务名' ),
+                  "type": "select",
+                  "value": 'spark',
+                  "valid": [
+                     { 'key': 'Spark', 'value': 'spark' },
+                     { 'key': 'Hdfs', 'value': 'hdfs' },
+                     { 'key': 'Yarn', 'value': 'yarn' }
+                  ],
+                  "onChange": function( name, key, value ){
+                     $scope.AppendModule['config']['inputList'][0]['value'] = SdbSwap.generateModuleName( key ) ; ;
+                  }
+               }
+            ]
+         } ;
+         
+         $scope.AppendModule['config']['inputList'][0]['value'] = SdbSwap.generateModuleName( 'Spark' ) ;
+         $scope.AppendModule['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.AppendModule['config'].check( function( formVal ){
+               var isFind = false ;
+               $.each( $scope.ModuleList, function( index, moduleInfo ){
+                  if( formVal['moduleName'] == moduleInfo['BusinessName'] )
+                  {
+                     isFind = true ;
+                     return false ;
+                  }
+               } ) ;
+               if( isFind == false )
+               {
+                  $.each( $rootScope.OmTaskList, function( index, taskInfo ){
+                     if( taskInfo['Status'] != 4 && formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
+                     {
+                        isFind = true ;
+                        return false ;
+                     }
+                  } ) ;
+               }
+               if( isFind == true )
+               {
+                  return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '存储集群名已经存在' ) } ]
+               }
+               else
+               {
+                  return [] ;
                }
             } ) ;
-            $scope.ShrinkWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-               var isAllClear = $scope.ShrinkWindow['config'].check() ;
-               if( isAllClear )
+            if( isAllClear )
+            {
+               $scope.AppendModule['callback']['Close']() ;
+               var formVal = $scope.AppendModule['config'].getValue() ;
+               if( formVal['moduleType'] == 'sequoiadb' )
                {
-                  var formVal = $scope.ShrinkWindow['config'].getValue() ;
-                  $rootScope.tempData( 'Deploy', 'Model',       'Module' ) ;
-                  $rootScope.tempData( 'Deploy', 'Module',      'sequoiadb' ) ;
-                  $rootScope.tempData( 'Deploy', 'ModuleName',  $scope.ModuleList[ formVal['moduleName'] ]['BusinessName'] ) ;
-                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
-                  $rootScope.tempData( 'Deploy', 'Shrink', true ) ;
-                  SdbFunction.LocalData( 'SdbModuleName',  $scope.ModuleList[ formVal['moduleName'] ]['BusinessName'] ) ;
-                  $location.path( '/Deploy/SDB-ShrinkConf' ).search( { 'r': new Date().getTime() } ) ;
+                  setTimeout( function(){
+                     showAppendSdb( formVal['moduleName'] ) ;
+                     $scope.$apply() ;
+                  } ) ;
                }
-               return isAllClear ;
-            } ) ;
-            $scope.ShrinkWindow['callback']['SetTitle']( $scope.autoLanguage( '服务减容' ) ) ;
-            $scope.ShrinkWindow['callback']['SetIcon']( '' ) ;
-            $scope.ShrinkWindow['callback']['Open']() ;
-         }
+               else
+               {
+                  setTimeout( function(){
+                     showAppendOtherModule( formVal['moduleName'], formVal['moduleType'] ) ;
+                     $scope.$apply() ;
+                  } ) ;
+               }
+            }
+            else
+            {
+               return false ;
+            }
+         } ) ;
+         $scope.AppendModule['callback']['SetTitle']( $scope.autoLanguage( '添加已有的存储集群' ) ) ;
+         $scope.AppendModule['callback']['SetIcon']( '' ) ;
+         $scope.AppendModule['callback']['Open']() ;
       }
 
-      //同步服务 弹窗
-      $scope.SyncWindow = {
-         'config': {},
-         'callback': {}
-      }
-
-      //打开 同步服务 弹窗
-      var showSyncWindow = function(){
-         if( SdbSwap.sdbModuleNum != 0 )
-         {
-            $scope.SyncWindow['config'] = {
-               inputList: [
-                  {
-                     "name": 'moduleName',
-                     "webName": $scope.autoLanguage( '服务名' ),
-                     "type": "select",
-                     "value": null,
-                     "valid": []
-                  }
-               ]
-            } ;
-            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-            $.each( $scope.ModuleList, function( index, moduleInfo ){
-               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb')
-               {
-                  if( $scope.SyncWindow['config']['inputList'][0]['value'] == null )
-                  {
-                     $scope.SyncWindow['config']['inputList'][0]['value'] = index ;
-                  }
-                  $scope.SyncWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
-               }
-            } ) ;
-            $scope.SyncWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-               var isAllClear = $scope.SyncWindow['config'].check() ;
-               if( isAllClear )
-               {
-                  var formVal = $scope.SyncWindow['config'].getValue() ;
-                  $rootScope.tempData( 'Deploy', 'ModuleName',  $scope.ModuleList[ formVal['moduleName'] ]['BusinessName'] ) ;
-                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
-                  $rootScope.tempData( 'Deploy', 'InstallPath', $scope.ClusterList[ $scope.CurrentCluster ]['InstallPath'] ) ;
-                  $location.path( '/Deploy/SDB-Sync' ).search( { 'r': new Date().getTime() } ) ;
-               }
-               return isAllClear ;
-            } ) ;
-            $scope.SyncWindow['callback']['SetTitle']( $scope.autoLanguage( '同步服务' ) ) ;
-            $scope.SyncWindow['callback']['SetIcon']( '' ) ;
-            $scope.SyncWindow['callback']['Open']() ;
-         }
-      }
-
-      //重启服务 弹窗
-      $scope.RestartWindow = {
+      //重启实例 弹窗
+      $scope.RestartInstanceWindow = {
          'config': {
             'inputList': [
                {
                   "name": 'moduleName',
-                  "webName": $scope.autoLanguage( '服务名' ),
+                  "webName": $scope.autoLanguage( '实例名' ),
                   "type": "select",
                   "value": null,
                   "valid": []
@@ -1421,7 +1444,8 @@
          'callback': {}
       }
 
-      function restartModule( clusterName, moduleName )
+      //重启实例
+      function restartInstance( clusterName, moduleName )
       {
          var data = { 'cmd': 'restart business', 'ClusterName': clusterName, 'BusinessName': moduleName } ;
          SdbRest.OmOperation( data, {
@@ -1433,55 +1457,55 @@
             }, 
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  restartModule( clusterName, moduleName ) ;
+                  restartInstance( clusterName, moduleName ) ;
                   return true ;
                } ) ;
             }
          } ) ;
       }
 
-      //打开 重启服务 弹窗
-      var showRestartWindow = function(){
-         if( $scope.ModuleNum > 0 )
+      //打开 重启实例 弹窗
+      $scope.ShowRestartInstance = function(){
+         if( $scope.InstanceNum == 0 )
          {
-            $scope.RestartWindow['config']['inputList'][0]['value'] = null ;
-            $scope.RestartWindow['config']['inputList'][0]['valid'] = [] ;
-
-            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-            $.each( $scope.ModuleList, function( index, moduleInfo ){
-               if( clusterName == moduleInfo['ClusterName'] &&
-                   ( moduleInfo['BusinessType'] == 'sequoiadb' ||
-                     moduleInfo['BusinessType'] == 'sequoiasql-postgresql' ||
-                     moduleInfo['BusinessType'] == 'sequoiasql-mysql' ) )
-               {
-                  if( $scope.RestartWindow['config']['inputList'][0]['value'] == null )
-                  {
-                     $scope.RestartWindow['config']['inputList'][0]['value'] = index ;
-                  }
-                  $scope.RestartWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
-               }
-            } ) ;
-
-            $scope.RestartWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-               var isAllClear = $scope.RestartWindow['config'].check() ;
-               if( isAllClear )
-               {
-                  var formVal = $scope.RestartWindow['config'].getValue() ;
-                  $scope.Components.Confirm.type = 2 ;
-                  $scope.Components.Confirm.context = $scope.autoLanguage( '该操作将重启该服务所有节点，是否确定继续？' ) ;
-                  $scope.Components.Confirm.isShow = true ;
-                  $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-                  $scope.Components.Confirm.ok = function(){
-                     restartModule( $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'], $scope.ModuleList[ formVal['moduleName'] ]['BusinessName'] ) ;
-                     $scope.Components.Confirm.isShow = false ;
-                  }
-               }
-               return isAllClear ;
-            } ) ;
-            $scope.RestartWindow['callback']['SetTitle']( $scope.autoLanguage( '重启服务' ) ) ;
-            $scope.RestartWindow['callback']['SetIcon']( '' ) ;
-            $scope.RestartWindow['callback']['Open']() ;
+            return ;
          }
+         $scope.RestartInstanceWindow['config']['inputList'][0]['value'] = null ;
+         $scope.RestartInstanceWindow['config']['inputList'][0]['valid'] = [] ;
+
+         var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+         $.each( $scope.InstanceList, function( index, moduleInfo ){
+            if( clusterName == moduleInfo['ClusterName'] &&
+                ( moduleInfo['BusinessType'] == 'sequoiasql-postgresql' ||
+                  moduleInfo['BusinessType'] == 'sequoiasql-mysql' ) )
+            {
+               if( $scope.RestartInstanceWindow['config']['inputList'][0]['value'] == null )
+               {
+                  $scope.RestartInstanceWindow['config']['inputList'][0]['value'] = index ;
+               }
+               $scope.RestartInstanceWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+            }
+         } ) ;
+
+         $scope.RestartInstanceWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.RestartInstanceWindow['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.RestartInstanceWindow['config'].getValue() ;
+               $scope.Components.Confirm.type = 2 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '该操作将重启该服务所有节点，是否确定继续？' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  restartInstance( $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'], $scope.InstanceList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $scope.Components.Confirm.isShow = false ;
+               }
+            }
+            return isAllClear ;
+         } ) ;
+         $scope.RestartInstanceWindow['callback']['SetTitle']( $scope.autoLanguage( '重启实例' ) ) ;
+         $scope.RestartInstanceWindow['callback']['SetIcon']( '' ) ;
+         $scope.RestartInstanceWindow['callback']['Open']() ;
       }
 
       //添加服务 弹窗
@@ -1490,7 +1514,7 @@
          'callback': {}
       } ;
 
-      //打开 添加服务 弹窗
+      //打开 创建实例 弹窗
       $scope.ShowInstallModule = function(){
          if( $scope.ClusterList.length > 0 )
          {
@@ -1509,7 +1533,7 @@
                inputList: [
                   {
                      "name": 'moduleName',
-                     "webName": $scope.autoLanguage( '服务名' ),
+                     "webName": $scope.autoLanguage( '实例名' ),
                      "type": "string",
                      "required": true,
                      "value": "",
@@ -1521,46 +1545,30 @@
                   },
                   {
                      "name": 'moduleType',
-                     "webName": $scope.autoLanguage( '服务类型' ),
+                     "webName": $scope.autoLanguage( '服务名' ),
                      "type": "select",
-                     "value": 0,
-                     "valid": []
+                     "value": null,
+                     "valid": [],
+                     "onChange": function( name, key, value ){
+                        $scope.InstallModule['config']['inputList'][0]['value'] = SdbSwap.generateModuleName( SdbSwap.moduleType[value]['BusinessDesc'] + 'Instance' ) ;
+                     }
                   }
                ]
             } ;
-            var num = 1 ;
-            var defaultName = '' ;
-            while( true )
-            {
-               var isFind = false ;
-               defaultName = sprintf( 'myService?', num ) ;
-               $.each( $scope.ModuleList, function( index, moduleInfo ){
-                  if( defaultName == moduleInfo['BusinessName'] )
-                  {
-                     isFind = true ;
-                     return false ;
-                  }
-               } ) ;
-               if( isFind == false )
-               {
-                  $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                     if( taskInfo['Status'] != 4 && defaultName == taskInfo['Info']['BusinessName'] )
-                     {
-                        isFind = true ;
-                        return false ;
-                     }
-                  } ) ;
-                  if( isFind == false )
-                  {
-                     break ;
-                  }
-               }
-               ++num ;
-            }
-            $scope.InstallModule['config']['inputList'][0]['value'] = defaultName ;
+            
             $.each( SdbSwap.moduleType, function( index, typeInfo ){
-               $scope.InstallModule['config']['inputList'][1]['valid'].push( { 'key': typeInfo['BusinessDesc'], 'value': index } ) ;
+               if( typeInfo['BusinessType'] != 'sequoiadb' )
+               {
+                  if( isNull( $scope.InstallModule['config']['inputList'][1]['value'] ) )
+                  {
+                     $scope.InstallModule['config']['inputList'][1]['value'] = index ;
+
+                     $scope.InstallModule['config']['inputList'][0]['value'] = SdbSwap.generateModuleName( typeInfo['BusinessDesc'] + 'Instance' ) ;
+                  }
+                  $scope.InstallModule['config']['inputList'][1]['valid'].push( { 'key': typeInfo['BusinessDesc'], 'value': index } ) ;
+               }
             } ) ;
+
             $scope.InstallModule['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
                var isAllClear = $scope.InstallModule['config'].check( function( formVal ){
                   var isFind = false ;
@@ -1597,12 +1605,9 @@
                   $rootScope.tempData( 'Deploy', 'Module', SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] ) ;
                   $rootScope.tempData( 'Deploy', 'ModuleName', formVal['moduleName'] ) ;
                   $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
-                  if( SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiadb' )
-                  {
-                     $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
-                  }
+
                   //当服务类型是postgresql时
-                  else if( SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql-postgresql' )
+                  if( SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql-postgresql' )
                   {
                      var checkSqlHost = 0 ;
                      $.each( SdbSwap.hostList, function( index, hostInfo ){
@@ -1616,14 +1621,6 @@
                            } ) ;
                         }
                      } ) ;
-                     /*if( checkSqlHost == 0 )
-                     {
-                        $scope.Components.Confirm.type = 3 ;
-                        $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL-PostgreSQL 服务需要主机已经部署 SequoiaSQL-PostgreSQL 包。' ) ;
-                        $scope.Components.Confirm.isShow = true ;
-                        $scope.Components.Confirm.noClose = true ;
-                     }
-                     else*/
                      {
                         var businessConf = {} ;
                         businessConf['ClusterName'] = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
@@ -1649,14 +1646,6 @@
                            } ) ;
                         }
                      } ) ;
-                     /*if( checkSqlHost == 0 )
-                     {
-                        $scope.Components.Confirm.type = 3 ;
-                        $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL-MySQL 服务需要主机已经部署 SequoiaSQL-MySQL 包。' ) ;
-                        $scope.Components.Confirm.isShow = true ;
-                        $scope.Components.Confirm.noClose = true ;
-                     }
-                     else*/
                      {
                         var businessConf = {} ;
                         businessConf['ClusterName'] = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
@@ -1671,315 +1660,18 @@
                }
                return isAllClear ;
             } ) ;
-            $scope.InstallModule['callback']['SetTitle']( $scope.autoLanguage( '创建服务' ) ) ;
+            $scope.InstallModule['callback']['SetTitle']( $scope.autoLanguage( '创建实例' ) ) ;
             $scope.InstallModule['callback']['SetIcon']( '' ) ;
             $scope.InstallModule['callback']['Open']() ;
          }
       }
 
-      //发现服务 弹窗
-      $scope.AppendModule = {
-         'config': {},
-         'callback': {}
-      } ;
-
-      //打开 发现服务 弹窗
-      $scope.ShowAppendModule = function(){
-         if( $scope.ClusterList.length > 0 )
+      //删除实例
+      function uninstallModule( index, isForce )
+      {
+         if( typeof( $scope.InstanceList[index]['AddtionType'] ) == 'undefined' || $scope.InstanceList[index]['AddtionType'] != 1 )
          {
-            $scope.AppendModule['config'] = {
-               inputList: [
-                  {
-                     "name": 'moduleName',
-                     "webName": $scope.autoLanguage( '服务名' ),
-                     "type": "string",
-                     "required": true,
-                     "value": "",
-                     "valid": {
-                        "min": 1,
-                        "max": 127,
-                        'regex': '^[0-9a-zA-Z_-]+$'
-                     }
-                  },
-                  {
-                     "name": 'moduleType',
-                     "webName": $scope.autoLanguage( '服务类型' ),
-                     "type": "select",
-                     "value": 'sequoiadb',
-                     "valid": [
-                        { 'key': 'SequoiaDB', 'value': 'sequoiadb' },
-                        { 'key': 'Spark', 'value': 'spark' },
-                        { 'key': 'Hdfs', 'value': 'hdfs' },
-                        { 'key': 'Yarn', 'value': 'yarn' }
-                     ]
-                  }
-               ]
-            } ;
-            var num = 1 ;
-            var defaultName = '' ;
-            while( true )
-            {
-               var isFind = false ;
-               defaultName = sprintf( 'myService?', num ) ;
-               $.each( $scope.ModuleList, function( index, moduleInfo ){
-                  if( defaultName == moduleInfo['BusinessName'] )
-                  {
-                     isFind = true ;
-                     return false ;
-                  }
-               } ) ;
-               if( isFind == false )
-               {
-                  $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                     if( taskInfo['Status'] != 4 && defaultName == taskInfo['Info']['BusinessName'] )
-                     {
-                        isFind = true ;
-                        return false ;
-                     }
-                  } ) ;
-                  if( isFind == false )
-                  {
-                     break ;
-                  }
-               }
-               ++num ;
-            }
-            $scope.AppendModule['config']['inputList'][0]['value'] = defaultName ;
-            $scope.AppendModule['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-               var isAllClear = $scope.AppendModule['config'].check( function( formVal ){
-                  var isFind = false ;
-                  $.each( $scope.ModuleList, function( index, moduleInfo ){
-                     if( formVal['moduleName'] == moduleInfo['BusinessName'] )
-                     {
-                        isFind = true ;
-                        return false ;
-                     }
-                  } ) ;
-                  if( isFind == false )
-                  {
-                     $.each( $rootScope.OmTaskList, function( index, taskInfo ){
-                        if( taskInfo['Status'] != 4 && formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
-                        {
-                           isFind = true ;
-                           return false ;
-                        }
-                     } ) ;
-                  }
-                  if( isFind == true )
-                  {
-                     return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '服务名已经存在' ) } ]
-                  }
-                  else
-                  {
-                     return [] ;
-                  }
-               } ) ;
-               if( isAllClear )
-               {
-                  $scope.AppendModule['callback']['Close']() ;
-                  var formVal = $scope.AppendModule['config'].getValue() ;
-                  if( formVal['moduleType'] == 'sequoiadb' )
-                  {
-                     setTimeout( function(){
-                        showAppendSdb( formVal['moduleName'] ) ;
-                        $scope.$apply() ;
-                     } ) ;
-                  }
-                  else
-                  {
-                     setTimeout( function(){
-                        showAppendOtherModule( formVal['moduleName'], formVal['moduleType'] ) ;
-                        $scope.$apply() ;
-                     } ) ;
-                  }
-               }
-               else
-               {
-                  return false ;
-               }
-            } ) ;
-            $scope.AppendModule['callback']['SetTitle']( $scope.autoLanguage( '发现服务' ) ) ;
-            $scope.AppendModule['callback']['SetIcon']( '' ) ;
-            $scope.AppendModule['callback']['Open']() ;
-         }
-      }
-
-      //从发现前往添加主机
-      var gotoAddHost = function( configure ){
-         $rootScope.tempData( 'Deploy', 'Model', 'Deploy' ) ;
-         $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
-         $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
-         $rootScope.tempData( 'Deploy', 'InstallPath', $scope.ClusterList[ $scope.CurrentCluster ]['InstallPath'] ) ;
-         $rootScope.tempData( 'Deploy', 'DiscoverConf', configure ) ;
-         $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } ) ;
-      }
-
-      //发现sdb 弹窗
-      $scope.AppendSdb = {
-         'config': {},
-         'callback': {}
-      }
-
-      //打开 发现sdb 弹窗
-      var showAppendSdb = function( moduleName ){
-         $scope.AppendSdb['config'] = {
-            inputList: [
-               {
-                  "name": 'HostName',
-                  "webName": $scope.autoLanguage( '地址' ),
-                  "type": "string",
-                  "required": true,
-                  "desc": $scope.autoLanguage( 'coord节点或standalone所在的主机名或者IP地址' ),
-                  "value": "",
-                  "valid": {
-                     "min": 1
-                  }
-               },
-               {
-                  "name": 'ServiceName',
-                  "webName": $scope.autoLanguage( '服务名' ),
-                  "type": "port",
-                  "required": true,
-                  "desc": $scope.autoLanguage( 'coord节点或standalone端口号' ),
-                  "value": '',
-                  "valid": {}
-               },
-               {
-                  "name": 'User',
-                  "webName": $scope.autoLanguage( '数据库用户名' ),
-                  "type": "string",
-                  "value": ""
-               },
-               {
-                  "name": 'Passwd',
-                  "webName": $scope.autoLanguage( '数据库密码' ),
-                  "type": "password",
-                  "value": ""
-               },
-               {
-                  "name": 'AgentService',
-                  "webName": $scope.autoLanguage( '代理端口' ),
-                  "type": "port",
-                  "value": '11790',
-                  "valid": {}
-               }
-            ]
-         }
-         $scope.AppendSdb['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-            var isAllClear = $scope.AppendSdb['config'].check() ;
-            if( isAllClear )
-            {
-               var formVal = $scope.AppendSdb['config'].getValue() ;
-               var configure = {} ;
-               configure['ClusterName']  = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-               configure['BusinessType'] = 'sequoiadb' ;
-               configure['BusinessName'] = moduleName ;
-               configure['BusinessInfo'] = formVal ;
-               discoverModule( configure ) ;
-            }
-            return isAllClear ;
-         } ) ;
-         $scope.AppendSdb['callback']['SetTitle']( 'SequoiaDB' ) ;
-         $scope.AppendSdb['callback']['SetIcon']( '' ) ;
-         $scope.AppendSdb['callback']['Open']() ;
-      }
-
-      //发现其他服务 弹窗
-      $scope.AppendOtherModule = {
-         'config': {},
-         'callback': {}
-      } ;
-
-      //打开 发现其他服务 弹窗
-      var showAppendOtherModule = function( moduleName, moduleType ){
-         $scope.AppendOtherModule['config'] = {
-            inputList: [
-               {
-                  "name": 'HostName',
-                  "webName": $scope.autoLanguage( '主机名' ),
-                  "type": "string",
-                  "required": true,
-                  "value": "",
-                  "valid": {
-                     "min": 1
-                  }
-               },
-               {
-                  "name": 'WebServicePort',
-                  "webName": $scope.autoLanguage( '服务名' ),
-                  "type": "port",
-                  "required": true,
-                  "value": '',
-                  "valid": {}
-               }
-            ]
-         } ;
-         $scope.AppendOtherModule['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-            var isAllClear = $scope.AppendOtherModule['config'].check() ;
-            if( isAllClear )
-            {
-               var formVal = $scope.AppendOtherModule['config'].getValue() ;
-               var configure = {} ;
-               configure['ClusterName']  = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-               configure['BusinessType'] = moduleType ;
-               configure['BusinessName'] = moduleName ;
-               configure['BusinessInfo'] = formVal ;
-               discoverModule( configure ) ;
-            }
-            return isAllClear ;
-         } ) ;
-         $scope.AppendOtherModule['callback']['SetTitle']( moduleType ) ;
-         $scope.AppendOtherModule['callback']['SetIcon']( '' ) ;
-         $scope.AppendOtherModule['callback']['Open']() ;
-      }
-
-      //发现服务
-      var discoverModule = function( configure ){
-         var data = { 'cmd': 'discover business', 'ConfigInfo': JSON.stringify( configure ) } ;
-         SdbRest.OmOperation( data, {
-            'success': function(){
-               if( configure['BusinessType'] == 'sequoiadb' )
-               {
-                  $rootScope.tempData( 'Deploy', 'ModuleName', configure['BusinessName'] ) ;
-                  $rootScope.tempData( 'Deploy', 'ClusterName', configure['ClusterName'] ) ;
-                  $location.path( '/Deploy/SDB-Discover' ).search( { 'r': new Date().getTime() }  ) ;
-               }
-               else
-               {
-                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
-               }
-            }, 
-            'failed': function( errorInfo ){
-               if( configure['BusinessType'] == 'sequoiadb' &&
-                   isArray( errorInfo['hosts'] ) &&
-                   errorInfo['hosts'].length > 0 )
-               {
-                  $scope.Components.Confirm.type = 3 ;
-                  $scope.Components.Confirm.context = $scope.autoLanguage( '发现SequoiaDB需要先在集群中添加该服务的所有主机。是否前往添加主机？' ) ;
-                  $scope.Components.Confirm.isShow = true ;
-                  $scope.Components.Confirm.okText = $scope.autoLanguage( '是' ) ;
-                  $scope.Components.Confirm.ok = function(){
-                     $rootScope.tempData( 'Deploy', 'DiscoverHostList', errorInfo['hosts'] ) ;
-                     gotoAddHost( configure ) ;
-                  }
-               }
-               else
-               {
-                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                     discoverModule( configure ) ;
-                     return true ;
-                  } ) ;
-               }
-               
-            }
-         } ) ;
-      }
-
-      //卸载服务
-      var uninstallModule = function( index, isForce ){
-         if( typeof( $scope.ModuleList[index]['AddtionType'] ) == 'undefined' || $scope.ModuleList[index]['AddtionType'] != 1 )
-         {
-            var data = { 'cmd': 'remove business', 'BusinessName': $scope.ModuleList[index]['BusinessName'], 'force': isForce } ;
+            var data = { 'cmd': 'remove business', 'BusinessName': $scope.InstanceList[index]['BusinessName'], 'force': isForce } ;
             SdbRest.OmOperation( data, {
                'success': function( taskInfo ){
                   $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
@@ -1997,7 +1689,7 @@
          }
          else
          {
-            var data = { 'cmd': 'undiscover business', 'ClusterName': $scope.ModuleList[index]['ClusterName'], 'BusinessName': $scope.ModuleList[index]['BusinessName'] } ;
+            var data = { 'cmd': 'undiscover business', 'ClusterName': $scope.InstanceList[index]['ClusterName'], 'BusinessName': $scope.InstanceList[index]['BusinessName'] } ;
             SdbRest.OmOperation( data, {
                'success': function(){
                   $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
@@ -2012,187 +1704,96 @@
          }
       }
 
-      //卸载服务 弹窗
-      $scope.UninstallModuleWindow = {
-         'config': {},
+      //删除实例 弹窗
+      $scope.RemoveInstanceWindow = {
+         'config': {
+            'inputList': [
+               {
+                  "name": 'moduleIndex',
+                  "webName": $scope.autoLanguage( '实例名' ),
+                  "type": "select",
+                  "value": null,
+                  "valid": []
+               },
+               {
+                  "name": 'force',
+                  "webName": $scope.autoLanguage( '删除所有数据' ),
+                  "type": "select",
+                  "value": false,
+                  "valid": [
+                     { 'key': $scope.autoLanguage( '否' ),  'value': false },
+                     { 'key': $scope.autoLanguage( '是' ),  'value': true  }
+                  ],
+                  "onChange": function( name, key, value ){
+                     if( value == true )
+                     {
+                        $scope.UninstallTips = $scope.autoLanguage( '提示：选择删除所有数据将无法恢复！' ) ;
+                     }
+                     else
+                     {
+                        $scope.UninstallTips = '' ;
+                     }
+                  }
+               }
+            ]
+         },
          'callback': {}
       } ;
 
-      //打开 卸载服务 弹窗
-      var showUninstallModule = function(){
-         if( $scope.ClusterList.length > 0 )
+      //打开 删除实例 弹窗
+      $scope.ShowUninstallInstance = function(){
+         if( $scope.ClusterList.length == 0 )
          {
-            if( $scope.ModuleNum == 0 )
-            {
-               $scope.Components.Confirm.type = 3 ;
-               $scope.Components.Confirm.context = $scope.autoLanguage( '已经没有服务了。' ) ;
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.noClose = true ;
-               return ;
-            }
-            $scope.UninstallTips = '' ;
-            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-            $scope.UninstallModuleWindow['config'] = {
-               'inputList': [
-                  {
-                     "name": 'moduleIndex',
-                     "webName": $scope.autoLanguage( '服务名' ),
-                     "type": "select",
-                     "value": null,
-                     "valid": []
-                  },
-                  {
-                     "name": 'force',
-                     "webName": $scope.autoLanguage( '删除所有数据' ),
-                     "type": "select",
-                     "value": false,
-                     "valid": [
-                        { 'key': $scope.autoLanguage( '否' ),  'value': false },
-                        { 'key': $scope.autoLanguage( '是' ),  'value': true  }
-                     ],
-                     "onChange": function( name, key, value ){
-                        if( value == true )
-                        {
-                           $scope.UninstallTips = $scope.autoLanguage( '提示：选择删除数据将清空该服务所有数据！' ) ;
-                        }
-                        else
-                        {
-                           $scope.UninstallTips = '' ;
-                        }
-                     }
-                  }
-               ]
-            }
-            $.each( $scope.ModuleList, function( index, moduleInfo ){
-               if( clusterName == moduleInfo['ClusterName'] )
-               {
-                  if( $scope.UninstallModuleWindow['config']['inputList'][0]['value'] == null )
-                  {
-                     $scope.UninstallModuleWindow['config']['inputList'][0]['value'] = index ;
-                  }
-                  $scope.UninstallModuleWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
-               }
-            } ) ;
-            $scope.UninstallModuleWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-               var isAllClear = $scope.UninstallModuleWindow['config'].check() ;
-               if( isAllClear )
-               {
-                  var formVal = $scope.UninstallModuleWindow['config'].getValue() ;
-                  if( formVal['force'] == true )
-                  {
-                     $scope.Components.Confirm.type = 2 ;
-                     $scope.Components.Confirm.context = $scope.autoLanguage( '该操作将删除该服务所有数据，是否确定继续？' ) ;
-                     $scope.Components.Confirm.isShow = true ;
-                     $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-                     $scope.Components.Confirm.ok = function(){
-                        uninstallModule( formVal['moduleIndex'], formVal['force'] ) ;
-                        $scope.Components.Confirm.isShow = false ;
-                     }
-                  }
-                  else
-                  {
-                     uninstallModule( formVal['moduleIndex'], formVal['force'] ) ;
-                  }
-               }
-               return isAllClear ;
-            } ) ;
-            $scope.UninstallModuleWindow['callback']['SetTitle']( $scope.autoLanguage( '卸载服务' ) ) ;
-            $scope.UninstallModuleWindow['callback']['Open']() ;
+            return ;
          }
-      }
+         if( $scope.ModuleNum == 0 )
+         {
+            $scope.Components.Confirm.type = 3 ;
+            $scope.Components.Confirm.context = $scope.autoLanguage( '已经没有实例了。' ) ;
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.noClose = true ;
+            return ;
+         }
+         $scope.UninstallTips = '' ;
+         var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
 
-
-      //解绑服务
-      var unbindModule = function( clusterName, businessName ){
-         var data = {
-            'cmd': 'unbind business', 'ClusterName': clusterName, 'BusinessName': businessName
-         } ;
-         SdbRest.OmOperation( data, {
-            'success': function(){
-               $scope.Components.Confirm.type = 4 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '服务：? 解绑成功。' ), businessName ) ;
-               $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.noClose = true ;
-               $scope.Components.Confirm.normalOK = true ;
-               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-               $scope.Components.Confirm.ok = function(){
-                  $scope.Components.Confirm.isShow = false ;
-                  $scope.Components.Confirm.noClose = false ;
-                  $scope.Components.Confirm.normalOK = false ;
-                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
+         $.each( $scope.InstanceList, function( index, moduleInfo ){
+            if( clusterName == moduleInfo['ClusterName'] )
+            {
+               if( isNull( $scope.RemoveInstanceWindow['config']['inputList'][0]['value'] ) )
+               {
+                  $scope.RemoveInstanceWindow['config']['inputList'][0]['value'] = index ;
                }
-            },
-            'failed': function( errorInfo ){
-               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  unbindModule( clusterName, businessName ) ;
-                  return true ;
-               } ) ;
+               $scope.RemoveInstanceWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
             }
          } ) ;
-      }
-
-      //解绑服务 弹窗
-      $scope.UnbindModuleWindow = {
-         'config': {},
-         'callback': {}
-      }
-
-      //打开 解绑服务 弹窗
-      var showUnbindModule = function(){
-         if( $scope.ClusterList.length > 0 && $scope.ModuleNum != 0 )
-         {
-            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-            $scope.UnbindModuleWindow['config'] = {
-               'inputList': [
-                  {
-                     "name": 'moduleIndex',
-                     "webName": $scope.autoLanguage( '服务名' ),
-                     "type": "select",
-                     "value": null,
-                     "valid": []
+         $scope.RemoveInstanceWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.RemoveInstanceWindow['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.RemoveInstanceWindow['config'].getValue() ;
+               if( formVal['force'] == true )
+               {
+                  $scope.Components.Confirm.type = 2 ;
+                  $scope.Components.Confirm.context = $scope.autoLanguage( '该操作将删除该实例所有数据，是否确定继续？' ) ;
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     uninstallModule( formVal['moduleIndex'], formVal['force'] ) ;
+                     $scope.Components.Confirm.isShow = false ;
                   }
-               ]
+               }
+               else
+               {
+                  uninstallModule( formVal['moduleIndex'], formVal['force'] ) ;
+               }
             }
-            $.each( $scope.ModuleList, function( index, moduleInfo ){
-               if( clusterName == moduleInfo['ClusterName'] )
-               {
-                  if( $scope.UnbindModuleWindow['config']['inputList'][0]['value'] == null )
-                  {
-                     $scope.UnbindModuleWindow['config']['inputList'][0]['value'] = index ;
-                  }
-                  $scope.UnbindModuleWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
-               }
-            } ) ;
-            $scope.UnbindModuleWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-               var isAllClear = $scope.UnbindModuleWindow['config'].check() ;
-               if( isAllClear )
-               {
-                  var formVal = $scope.UnbindModuleWindow['config'].getValue() ;
-                  var businessName = $scope.ModuleList[ formVal['moduleIndex'] ]['BusinessName'] ;
-                  var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-                  var businessType = $scope.ModuleList[ formVal['moduleIndex'] ]['BusinessType'] ;
-                  if( businessType == 'sequoiasql-mysql' )
-                  {
-                     $scope.Components.Confirm.type = 1 ;
-                     $scope.Components.Confirm.context = $scope.autoLanguage( '解绑服务将重启MySQL服务，是否继续？' ) ;
-                     $scope.Components.Confirm.isShow = true ;
-                     $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-                     $scope.Components.Confirm.ok = function(){
-                        $scope.Components.Confirm.isShow = false ;
-                        unbindModule( clusterName, businessName ) ;
-                     }
-                  }
-                  else
-                  {
-                     unbindModule( clusterName, businessName ) ;
-                  }
-               }
-               return isAllClear ;
-            } ) ;
-            $scope.UnbindModuleWindow['callback']['SetTitle']( $scope.autoLanguage( '解绑服务' ) ) ;
-            $scope.UnbindModuleWindow['callback']['Open']() ;
-         }
+            return isAllClear ;
+         } ) ;
+         $scope.RemoveInstanceWindow['callback']['SetTitle']( $scope.autoLanguage( '删除实例' ) ) ;
+         $scope.RemoveInstanceWindow['callback']['Open']() ;
       }
+
 
       //设置鉴权 弹窗
       $scope.SetAuthority = {
@@ -2407,110 +2008,6 @@
          $location.path( '/Deploy/SDB-ExtendConf' ).search( { 'r': new Date().getTime() } ) ;
       }
 
-      //添加服务下拉菜单
-      $scope.AddModuleDropdown = {
-         'config': [
-            { 'key': $scope.autoLanguage( '创建服务' ) },
-            { 'key': $scope.autoLanguage( '发现服务' ) }
-         ],
-         'OnClick': function( index ){
-            if( index == 0 )
-            {
-               $scope.ShowInstallModule() ;
-            }
-            else
-            {
-               $scope.ShowAppendModule() ;
-            }
-            $scope.AddModuleDropdown['callback']['Close']() ;
-         },
-         'callback': {}
-      }
-
-      //打开 添加服务下拉菜单
-      $scope.OpenAddModuleDropdown = function( event ){
-         if( $scope.ClusterList.length > 0 )
-         {
-            $scope.AddModuleDropdown['callback']['Open']( event.currentTarget ) ;
-         }
-      }
-
-      //删除服务下拉菜单
-      $scope.DeleteModuleDropdown = {
-         'config': [
-            { 'key': $scope.autoLanguage( '卸载服务' ) },
-            { 'key': $scope.autoLanguage( '解绑服务' ) }
-         ],
-         'OnClick': function( index ){
-            if( index == 0 )
-            {
-               showUninstallModule() ;
-            }
-            else
-            {
-               showUnbindModule() ;
-            }
-            $scope.DeleteModuleDropdown['callback']['Close']() ;
-         },
-         'callback': {}
-      }
-
-      //打开 删除服务下拉菜单
-      $scope.OpenDeleteModuleDropdown = function( event ){
-         if( $scope.ClusterList.length > 0 )
-         {
-            $scope.DeleteModuleDropdown['callback']['Open']( event.currentTarget ) ;
-         }
-      }
-
-      //修改服务下拉菜单
-      $scope.EditModuleDropdown = {
-         'config': [],
-         'OnClick': function( index ){
-            if( index == 0 )
-            {
-               showExtendWindow() ;
-            }
-            else if( index == 1 )
-            {
-               showShrinkWindow() ;
-            }
-            else if( index == 2 )
-            {
-               showSyncWindow() ;
-            }
-            else if( index == 3 )
-            {
-               showRestartWindow() ;
-            }
-            $scope.EditModuleDropdown['callback']['Close']() ;
-         },
-         'callback': {}
-      }
-
-      //打开 修改服务下拉菜单
-      $scope.OpenEditModuleDropdown = function( event ){
-         if( $scope.ClusterList.length > 0 )
-         {
-            $scope.EditModuleDropdown['config'] = [] ;
-            var disabled = false ;
-            var syncDisabled = false ;
-            if( SdbSwap.distributionNum == 0 )
-            {
-               disabled = true ;
-            }
-            if( SdbSwap.sdbModuleNum == 0 )
-            {
-               syncDisabled = true ;
-            }
-            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '服务扩容' ), 'disabled': disabled } ) ;
-            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '服务减容' ), 'disabled': disabled } ) ;
-            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '同步服务' ), 'disabled': syncDisabled } ) ;
-            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '重启服务' ), 'disabled': $scope.ModuleNum == 0 } ) ;
-            $scope.EditModuleDropdown['callback']['Open']( event.currentTarget ) ;
-         }
-      }
-
       //创建关联
       function createRelation( name, from, to, options )
       {
@@ -2525,7 +2022,7 @@
          SdbRest.OmOperation( data, {
             'success': function( result ){
                $scope.Components.Confirm.type = 4 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '创建关联成功：?' ), name ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '创建成功：?' ), name ) ;
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.noClose = true ;
                $scope.Components.Confirm.normalOK = true ;
@@ -2559,7 +2056,7 @@
          SdbRest.OmOperation( data, {
             'success': function(){
                $scope.Components.Confirm.type = 4 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '解除关联成功：?' ), name ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '移除成功：?' ), name ) ;
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.noClose = true ;
                $scope.Components.Confirm.normalOK = true ;
@@ -2631,13 +2128,13 @@
             createRelationDisabled = false ;
          }
          $scope.RelationDropdown['config'] = [] ;
-         $scope.RelationDropdown['config'].push( { 'key': $scope.autoLanguage( '创建关联' ), 'disabled': createRelationDisabled } ) ;
+         $scope.RelationDropdown['config'].push( { 'key': $scope.autoLanguage( '添加实例存储' ), 'disabled': createRelationDisabled } ) ;
 
          if( SdbSwap.relationshipList.length == 0 )
          {
             disabled = true ;
          }
-         $scope.RelationDropdown['config'].push( { 'key': $scope.autoLanguage( '解除关联' ), 'disabled': disabled } ) ;
+         $scope.RelationDropdown['config'].push( { 'key': $scope.autoLanguage( '移除实例存储' ), 'disabled': disabled } ) ;
          $scope.RelationDropdown['callback']['Open']( event.currentTarget ) ;
       }
 
@@ -2671,7 +2168,7 @@
                   },
                   {
                      "name": "From",
-                     "webName": $scope.autoLanguage( '关联服务名' ),
+                     "webName": $scope.autoLanguage( '实例' ),
                      "required": true,
                      "type": "select",
                      "value": '',
@@ -2679,7 +2176,7 @@
                   },
                   {
                      "name": 'DbName',
-                     "webName": $scope.autoLanguage( '关联服务的数据库' ),
+                     "webName": $scope.autoLanguage( '实例的数据库' ),
                      "type": "select",
                      "required": true,
                      "value": "",
@@ -2687,7 +2184,7 @@
                   },
                   {
                      "name": "To",
-                     "webName": $scope.autoLanguage( '被关联服务名' ),
+                     "webName": $scope.autoLanguage( '分布式存储' ),
                      "required": true,
                      "type": "select",
                      "value": '',
@@ -2784,7 +2281,7 @@
                   },
                   {
                      "name": "address",
-                     "webName": $scope.autoLanguage( '选择被关联节点' ),
+                     "webName": $scope.autoLanguage( '存储集群的节点' ),
                      "type": "multiple",
                      "required": true,
                      "value": [],
@@ -3016,13 +2513,13 @@
             }
          } ) ;
 
-         if ( pgsqlBusList.length > 0 )
-         {
-            typeValid.push( { 'key': $scope.autoLanguage( 'SequoiaSQL-PostgreSQL 关联 SequoiaDB' ), 'value': 'pg-sdb' } ) ;
-         }
          if ( mysqlBusList.length > 0 )
          {
-            typeValid.push( { 'key': $scope.autoLanguage( 'SequoiaSQL-MySQL 关联 SequoiaDB' ), 'value': 'mysql-sdb' } ) ;
+            typeValid.push( { 'key': $scope.autoLanguage( 'MySQL 关联 SequoiaDB' ), 'value': 'mysql-sdb' } ) ;
+         }
+         if ( pgsqlBusList.length > 0 )
+         {
+            typeValid.push( { 'key': $scope.autoLanguage( 'PostgreSQL 关联 SequoiaDB' ), 'value': 'pg-sdb' } ) ;
          }
 
          if ( typeValid[0]['value'] == 'pg-sdb' )
@@ -3137,7 +2634,7 @@
             return isAllClear ;
          } ) ;
 
-         $scope.CreateRelationWindow['callback']['SetTitle']( $scope.autoLanguage( '创建关联' ) ) ;
+         $scope.CreateRelationWindow['callback']['SetTitle']( $scope.autoLanguage( '添加实例存储' ) ) ;
          $scope.CreateRelationWindow['callback']['Open']() ;
       } ;
 
@@ -3195,13 +2692,24 @@
             var from = '' ;
             var to = '' ;
             $.each( $scope.ModuleList, function( index2, moduleInfo ){
+               var moduleType = moduleInfo['BusinessType'] ;
+
+               if ( moduleType == 'sequoiasql-mysql' )
+               {
+                  moduleType = 'mysql' ;
+               }
+               else if ( moduleType == 'sequoiasql-postgresql' )
+               {
+                  moduleType = 'postgresql' ;
+               }
+
                if( relationInfo['To'] == moduleInfo['BusinessName'] )
                {
-                  to = relationInfo['To'] + '  ( ' + moduleInfo['BusinessType'] + ' )' ;
+                  to = relationInfo['To'] + '  ( ' + moduleType + ' )' ;
                }
                if( relationInfo['From'] == moduleInfo['BusinessName'] )
                {
-                  from = relationInfo['From'] + '  ( ' + moduleInfo['BusinessType'] + ' )' ;
+                  from = relationInfo['From'] + '  ( ' + moduleType + ' )' ;
                }
             } ) ;
             
@@ -3226,14 +2734,14 @@
                },
                {
                   "name": "from",
-                  "webName": $scope.autoLanguage( '关联服务名' ),
+                  "webName": $scope.autoLanguage( '实例' ),
                   "type": "string",
                   "disabled": true,
                   "value": relationInfoList[0]['from']
                },
                {
                   "name": "to",
-                  "webName": $scope.autoLanguage( '被关联服务名' ),
+                  "webName": $scope.autoLanguage( '分布式存储' ),
                   "type": "string",
                   "disabled": true,
                   "value": relationInfoList[0]['to']
@@ -3251,10 +2759,1212 @@
             }
             return isAllClear ;
          } ) ;
-         $scope.RemoveRelationWindow['callback']['SetTitle']( $scope.autoLanguage( '解除关联' ) ) ;
+         $scope.RemoveRelationWindow['callback']['SetTitle']( $scope.autoLanguage( '移除实例存储' ) ) ;
          $scope.RemoveRelationWindow['callback']['Open']() ;
       }
       
+      //关联信息 弹窗
+      $scope.RelationshipWindow = {
+         'config': [],
+         'callback': {}
+      } ;
+
+      //打开 关联信息 弹窗
+      $scope.ShowRelationship = function( moduleName ){
+         $scope.RelationshipWindow['config'] = [] ;
+         $.each( SdbSwap.relationshipList, function( index, info ){
+            if( moduleName == info['From'] )
+            {
+               info['where'] = 'From' ;
+            }
+            else if( moduleName == info['To'] )
+            {
+               info['where'] = 'To' ;
+            }
+            else
+            {
+               return ;
+            }
+            $scope.RelationshipWindow['config'].push( info ) ;
+
+         } ) ;
+         $scope.RelationshipWindow['callback']['SetTitle']( $scope.autoLanguage( '关联信息' ) ) ;
+         $scope.RelationshipWindow['callback']['SetCloseButton']( $scope.autoLanguage( '关闭' ), function(){
+            $scope.RelationshipWindow['callback']['Close']() ;
+         } ) ;
+         $scope.RelationshipWindow['callback']['Open']() ;
+      }
+   } ) ;
+
+   //存储控制器
+   sacApp.controllerProvider.register( 'Deploy.Index.Storage.Ctrl', function( $scope, $rootScope, $location, SdbFunction, SdbRest, SdbSignal, SdbSwap ){
+
+      $scope.UninstallTips = '' ;
+      //服务扩容 弹窗
+      $scope.ExtendWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 服务扩容 弹窗
+      var showExtendWindow = function(){
+         if( $scope.ClusterList.length > 0 && SdbSwap.distributionNum != 0 )
+         {
+            $scope.ExtendWindow['config'] = {
+               inputList: [
+                  {
+                     "name": 'moduleName',
+                     "webName": $scope.autoLanguage( '存储集群名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  }
+               ]
+            } ;
+            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+            $.each( $scope.StorageList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb' && moduleInfo['DeployMod'] == 'distribution' )
+               {
+                  if( $scope.ExtendWindow['config']['inputList'][0]['value'] == null )
+                  {
+                     $scope.ExtendWindow['config']['inputList'][0]['value'] = index ;
+                  }
+                  $scope.ExtendWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               }
+            } ) ;
+            $scope.ExtendWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.ExtendWindow['config'].check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.ExtendWindow['config'].getValue() ;
+                  $rootScope.tempData( 'Deploy', 'Model',       'Module' ) ;
+                  $rootScope.tempData( 'Deploy', 'Module',      'sequoiadb' ) ;
+                  $rootScope.tempData( 'Deploy', 'ModuleName',  $scope.StorageList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'DeployMod',   $scope.StorageList[ formVal['moduleName'] ]['DeployMod'] ) ;
+                  SdbFunction.LocalData( 'SdbClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
+                  SdbFunction.LocalData( 'SdbModuleName',  $scope.StorageList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $location.path( '/Deploy/SDB-ExtendConf' ).search( { 'r': new Date().getTime() } ) ;
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.ExtendWindow['callback']['SetTitle']( $scope.autoLanguage( '存储集群扩容' ) ) ;
+            $scope.ExtendWindow['callback']['SetIcon']( '' ) ;
+            $scope.ExtendWindow['callback']['Open']() ;
+         }
+      }
+
+      //服务减容 弹窗
+      $scope.ShrinkWindow = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 服务减容 弹窗
+      var showShrinkWindow = function(){
+         if( $scope.ClusterList.length > 0 && SdbSwap.distributionNum != 0 )
+         {
+            $scope.ShrinkWindow['config'] = {
+               inputList: [
+                  {
+                     "name": 'moduleName',
+                     "webName": $scope.autoLanguage( '存储集群名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  }
+               ]
+            } ;
+            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+            $.each( $scope.StorageList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb' && moduleInfo['DeployMod'] == 'distribution' )
+               {
+                  if( $scope.ShrinkWindow['config']['inputList'][0]['value'] == null )
+                  {
+                     $scope.ShrinkWindow['config']['inputList'][0]['value'] = index ;
+                  }
+                  $scope.ShrinkWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               }
+            } ) ;
+            $scope.ShrinkWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.ShrinkWindow['config'].check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.ShrinkWindow['config'].getValue() ;
+                  $rootScope.tempData( 'Deploy', 'Model',       'Module' ) ;
+                  $rootScope.tempData( 'Deploy', 'Module',      'sequoiadb' ) ;
+                  $rootScope.tempData( 'Deploy', 'ModuleName',  $scope.StorageList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'Shrink', true ) ;
+                  SdbFunction.LocalData( 'SdbModuleName',  $scope.StorageList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $location.path( '/Deploy/SDB-ShrinkConf' ).search( { 'r': new Date().getTime() } ) ;
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.ShrinkWindow['callback']['SetTitle']( $scope.autoLanguage( '存储集群减容' ) ) ;
+            $scope.ShrinkWindow['callback']['SetIcon']( '' ) ;
+            $scope.ShrinkWindow['callback']['Open']() ;
+         }
+      }
+
+      //同步服务 弹窗
+      $scope.SyncWindow = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 同步服务 弹窗
+      var showSyncWindow = function(){
+         if( SdbSwap.sdbModuleNum != 0 )
+         {
+            $scope.SyncWindow['config'] = {
+               inputList: [
+                  {
+                     "name": 'moduleName',
+                     "webName": $scope.autoLanguage( '存储集群名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  }
+               ]
+            } ;
+            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+            $.each( $scope.StorageList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb')
+               {
+                  if( $scope.SyncWindow['config']['inputList'][0]['value'] == null )
+                  {
+                     $scope.SyncWindow['config']['inputList'][0]['value'] = index ;
+                  }
+                  $scope.SyncWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               }
+            } ) ;
+            $scope.SyncWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.SyncWindow['config'].check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.SyncWindow['config'].getValue() ;
+                  $rootScope.tempData( 'Deploy', 'ModuleName',  $scope.StorageList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'InstallPath', $scope.ClusterList[ $scope.CurrentCluster ]['InstallPath'] ) ;
+                  $location.path( '/Deploy/SDB-Sync' ).search( { 'r': new Date().getTime() } ) ;
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.SyncWindow['callback']['SetTitle']( $scope.autoLanguage( '同步配置' ) ) ;
+            $scope.SyncWindow['callback']['SetIcon']( '' ) ;
+            $scope.SyncWindow['callback']['Open']() ;
+         }
+      }
+
+      //重启服务 弹窗
+      $scope.RestartWindow = {
+         'config': {
+            'inputList': [
+               {
+                  "name": 'moduleName',
+                  "webName": $scope.autoLanguage( '存储集群名' ),
+                  "type": "select",
+                  "value": null,
+                  "valid": []
+               }
+            ]
+         },
+         'callback': {}
+      }
+
+      function restartModule( clusterName, moduleName )
+      {
+         var data = { 'cmd': 'restart business', 'ClusterName': clusterName, 'BusinessName': moduleName } ;
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
+               $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+               $location.path( '/Deploy/Task/Restart' ).search( { 'r': new Date().getTime() } ) ;
+            }, 
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  restartModule( clusterName, moduleName ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
+      }
+
+      //打开 重启服务 弹窗
+      var showRestartWindow = function(){
+         if( $scope.StorageNum == 0 )
+         {
+            return ;
+         }
+         $scope.RestartWindow['config']['inputList'][0]['value'] = null ;
+         $scope.RestartWindow['config']['inputList'][0]['valid'] = [] ;
+
+         var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+         $.each( $scope.StorageList, function( index, moduleInfo ){
+            if( clusterName == moduleInfo['ClusterName'] && moduleInfo['BusinessType'] == 'sequoiadb' )
+            {
+               if( $scope.RestartWindow['config']['inputList'][0]['value'] == null )
+               {
+                  $scope.RestartWindow['config']['inputList'][0]['value'] = index ;
+               }
+               $scope.RestartWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+            }
+         } ) ;
+
+         $scope.RestartWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.RestartWindow['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.RestartWindow['config'].getValue() ;
+               $scope.Components.Confirm.type = 2 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '该操作将重启所有节点，是否确定继续？' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  restartModule( $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'], $scope.StorageList[ formVal['moduleName'] ]['BusinessName'] ) ;
+                  $scope.Components.Confirm.isShow = false ;
+               }
+            }
+            return isAllClear ;
+         } ) ;
+         $scope.RestartWindow['callback']['SetTitle']( $scope.autoLanguage( '重启存储集群' ) ) ;
+         $scope.RestartWindow['callback']['SetIcon']( '' ) ;
+         $scope.RestartWindow['callback']['Open']() ;
+      }
+
+      //添加服务 弹窗
+      $scope.InstallModule = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 添加服务 弹窗
+      $scope.ShowInstallModule = function(){
+         if( $scope.ClusterList.length > 0 )
+         {
+            if( $scope.HostNum == 0 )
+            {
+               $scope.Components.Confirm.type = 3 ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '集群还没有安装主机。' ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '安装主机' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  SdbSignal.commit( 'addHost' ) ;
+               }
+               return ;
+            }
+            $scope.InstallModule['config'] = {
+               inputList: [
+                  {
+                     "name": 'moduleName',
+                     "webName": $scope.autoLanguage( '存储集群名' ),
+                     "type": "string",
+                     "required": true,
+                     "value": "",
+                     "valid": {
+                        "min": 1,
+                        "max": 127,
+                        'regex': '^[0-9a-zA-Z_-]+$'
+                     }
+                  },
+                  {
+                     "name": 'moduleType',
+                     "webName": $scope.autoLanguage( '服务名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  }
+               ]
+            } ;
+            $scope.InstallModule['config']['inputList'][0]['value'] = SdbSwap.generateModuleName( 'SequoiaDB' ) ;
+            $.each( SdbSwap.moduleType, function( index, typeInfo ){
+               if( typeInfo['BusinessType'] == 'sequoiasql-mysql' || typeInfo['BusinessType'] == 'sequoiasql-postgresql' )
+               {
+                  return true ;
+               }
+               if ( isNull( $scope.InstallModule['config']['inputList'][1]['value'] ) )
+               {
+                  $scope.InstallModule['config']['inputList'][1]['value'] = index ;
+               }
+               $scope.InstallModule['config']['inputList'][1]['valid'].push( { 'key': typeInfo['BusinessDesc'], 'value': index } ) ;
+            } ) ;
+            $scope.InstallModule['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.InstallModule['config'].check( function( formVal ){
+                  var isFind = false ;
+                  $.each( $scope.ModuleList, function( index, moduleInfo ){
+                     if( formVal['moduleName'] == moduleInfo['BusinessName'] )
+                     {
+                        isFind = true ;
+                        return false ;
+                     }
+                  } ) ;
+                  if( isFind == false )
+                  {
+                     $.each( $rootScope.OmTaskList, function( index, taskInfo ){
+                        if( taskInfo['Status'] != 4 && formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
+                        {
+                           isFind = true ;
+                           return false ;
+                        }
+                     } ) ;
+                  }
+                  if( isFind == true )
+                  {
+                     return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '服务名已经存在' ) } ]
+                  }
+                  else
+                  {
+                     return [] ;
+                  }
+               } ) ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.InstallModule['config'].getValue() ;
+                  $rootScope.tempData( 'Deploy', 'Model', 'Module' ) ;
+                  $rootScope.tempData( 'Deploy', 'Module', SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ModuleName', formVal['moduleName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
+                  if( SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiadb' )
+                  {
+                     $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
+                  }
+                  //当服务类型是postgresql时
+                  else if( SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql-postgresql' )
+                  {
+                     var checkSqlHost = 0 ;
+                     $.each( SdbSwap.hostList, function( index, hostInfo ){
+                        if( hostInfo['ClusterName'] == $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] )
+                        {
+                           $.each( hostInfo['Packages'], function( packIndex, packInfo ){
+                              if( packInfo['Name'] == 'sequoiasql-postgresql' )
+                              {
+                                 ++checkSqlHost ;
+                              }
+                           } ) ;
+                        }
+                     } ) ;
+                     /*if( checkSqlHost == 0 )
+                     {
+                        $scope.Components.Confirm.type = 3 ;
+                        $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL-PostgreSQL 服务需要主机已经部署 SequoiaSQL-PostgreSQL 包。' ) ;
+                        $scope.Components.Confirm.isShow = true ;
+                        $scope.Components.Confirm.noClose = true ;
+                     }
+                     else*/
+                     {
+                        var businessConf = {} ;
+                        businessConf['ClusterName'] = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+                        businessConf['BusinessName'] = formVal['moduleName'] ;
+                        businessConf['BusinessType'] = SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] ;
+                        businessConf['DeployMod'] = '' ;
+                        businessConf['Property'] = [] ;
+                        $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
+                        $location.path( '/Deploy/PostgreSQL-Mod' ).search( { 'r': new Date().getTime() } ) ;
+                     }
+                  }
+                  else if( SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql-mysql' )
+                  {
+                     var checkSqlHost = 0 ;
+                     $.each( SdbSwap.hostList, function( index, hostInfo ){
+                        if( hostInfo['ClusterName'] == $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] )
+                        {
+                           $.each( hostInfo['Packages'], function( packIndex, packInfo ){
+                              if( packInfo['Name'] == 'sequoiasql-mysql' )
+                              {
+                                 ++checkSqlHost ;
+                              }
+                           } ) ;
+                        }
+                     } ) ;
+                     /*if( checkSqlHost == 0 )
+                     {
+                        $scope.Components.Confirm.type = 3 ;
+                        $scope.Components.Confirm.context = $scope.autoLanguage( '创建 SequoiaSQL-MySQL 服务需要主机已经部署 SequoiaSQL-MySQL 包。' ) ;
+                        $scope.Components.Confirm.isShow = true ;
+                        $scope.Components.Confirm.noClose = true ;
+                     }
+                     else*/
+                     {
+                        var businessConf = {} ;
+                        businessConf['ClusterName'] = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+                        businessConf['BusinessName'] = formVal['moduleName'] ;
+                        businessConf['BusinessType'] = SdbSwap.moduleType[ formVal['moduleType'] ]['BusinessType'] ;
+                        businessConf['DeployMod'] = '' ;
+                        businessConf['Property'] = [] ;
+                        $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
+                        $location.path( '/Deploy/MySQL-Mod' ).search( { 'r': new Date().getTime() } ) ;
+                     }
+                  }
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.InstallModule['callback']['SetTitle']( $scope.autoLanguage( '创建存储集群' ) ) ;
+            $scope.InstallModule['callback']['SetIcon']( '' ) ;
+            $scope.InstallModule['callback']['Open']() ;
+         }
+      }
+
+      //发现服务 弹窗
+      $scope.AppendModule = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 发现服务 弹窗
+      $scope.ShowAppendModule = function(){
+         if( $scope.ClusterList.length == 0 )
+         {
+            return ;
+         }
+         $scope.AppendModule['config'] = {
+            inputList: [
+               {
+                  "name": 'moduleName',
+                  "webName": $scope.autoLanguage( '存储集群名' ),
+                  "type": "string",
+                  "required": true,
+                  "value": "",
+                  "valid": {
+                     "min": 1,
+                     "max": 127,
+                     'regex': '^[0-9a-zA-Z_-]+$'
+                  }
+               },
+               {
+                  "name": 'moduleType',
+                  "webName": $scope.autoLanguage( '服务名' ),
+                  "type": "select",
+                  "value": 'sequoiadb',
+                  "valid": [
+                     { 'key': 'SequoiaDB', 'value': 'sequoiadb' }
+                  ]
+               }
+            ]
+         } ;
+         
+         $scope.AppendModule['config']['inputList'][0]['value'] = SdbSwap.generateModuleName( 'SequoiaDB' ) ; ;
+         $scope.AppendModule['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.AppendModule['config'].check( function( formVal ){
+               var isFind = false ;
+               $.each( $scope.ModuleList, function( index, moduleInfo ){
+                  if( formVal['moduleName'] == moduleInfo['BusinessName'] )
+                  {
+                     isFind = true ;
+                     return false ;
+                  }
+               } ) ;
+               if( isFind == false )
+               {
+                  $.each( $rootScope.OmTaskList, function( index, taskInfo ){
+                     if( taskInfo['Status'] != 4 && formVal['moduleName'] == taskInfo['Info']['BusinessName'] )
+                     {
+                        isFind = true ;
+                        return false ;
+                     }
+                  } ) ;
+               }
+               if( isFind == true )
+               {
+                  return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '存储集群名已经存在' ) } ]
+               }
+               else
+               {
+                  return [] ;
+               }
+            } ) ;
+            if( isAllClear )
+            {
+               $scope.AppendModule['callback']['Close']() ;
+               var formVal = $scope.AppendModule['config'].getValue() ;
+               if( formVal['moduleType'] == 'sequoiadb' )
+               {
+                  setTimeout( function(){
+                     showAppendSdb( formVal['moduleName'] ) ;
+                     $scope.$apply() ;
+                  } ) ;
+               }
+               else
+               {
+                  setTimeout( function(){
+                     showAppendOtherModule( formVal['moduleName'], formVal['moduleType'] ) ;
+                     $scope.$apply() ;
+                  } ) ;
+               }
+            }
+            else
+            {
+               return false ;
+            }
+         } ) ;
+         $scope.AppendModule['callback']['SetTitle']( $scope.autoLanguage( '添加已有的存储集群' ) ) ;
+         $scope.AppendModule['callback']['SetIcon']( '' ) ;
+         $scope.AppendModule['callback']['Open']() ;
+      }
+
+      //从发现前往添加主机
+      var gotoAddHost = function( configure ){
+         $rootScope.tempData( 'Deploy', 'Model', 'Deploy' ) ;
+         $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+         $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
+         $rootScope.tempData( 'Deploy', 'InstallPath', $scope.ClusterList[ $scope.CurrentCluster ]['InstallPath'] ) ;
+         $rootScope.tempData( 'Deploy', 'DiscoverConf', configure ) ;
+         $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } ) ;
+      }
+
+      //发现sdb 弹窗
+      $scope.AppendSdb = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 发现sdb 弹窗
+      var showAppendSdb = function( moduleName ){
+         $scope.AppendSdb['config'] = {
+            inputList: [
+               {
+                  "name": 'HostName',
+                  "webName": $scope.autoLanguage( '地址' ),
+                  "type": "string",
+                  "required": true,
+                  "desc": $scope.autoLanguage( 'coord节点或standalone所在的主机名或者IP地址' ),
+                  "value": "",
+                  "valid": {
+                     "min": 1
+                  }
+               },
+               {
+                  "name": 'ServiceName',
+                  "webName": $scope.autoLanguage( '服务名' ),
+                  "type": "port",
+                  "required": true,
+                  "desc": $scope.autoLanguage( 'coord节点或standalone端口号' ),
+                  "value": '',
+                  "valid": {}
+               },
+               {
+                  "name": 'User',
+                  "webName": $scope.autoLanguage( '数据库用户名' ),
+                  "type": "string",
+                  "value": ""
+               },
+               {
+                  "name": 'Passwd',
+                  "webName": $scope.autoLanguage( '数据库密码' ),
+                  "type": "password",
+                  "value": ""
+               },
+               {
+                  "name": 'AgentService',
+                  "webName": $scope.autoLanguage( '代理端口' ),
+                  "type": "port",
+                  "value": '11790',
+                  "valid": {}
+               }
+            ]
+         }
+         $scope.AppendSdb['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.AppendSdb['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.AppendSdb['config'].getValue() ;
+               var configure = {} ;
+               configure['ClusterName']  = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+               configure['BusinessType'] = 'sequoiadb' ;
+               configure['BusinessName'] = moduleName ;
+               configure['BusinessInfo'] = formVal ;
+               discoverModule( configure ) ;
+            }
+            return isAllClear ;
+         } ) ;
+         $scope.AppendSdb['callback']['SetTitle']( 'SequoiaDB' ) ;
+         $scope.AppendSdb['callback']['SetIcon']( '' ) ;
+         $scope.AppendSdb['callback']['Open']() ;
+      }
+
+      //发现其他服务 弹窗
+      $scope.AppendOtherModule = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 发现其他服务 弹窗
+      var showAppendOtherModule = function( moduleName, moduleType ){
+         $scope.AppendOtherModule['config'] = {
+            inputList: [
+               {
+                  "name": 'HostName',
+                  "webName": $scope.autoLanguage( '主机名' ),
+                  "type": "string",
+                  "required": true,
+                  "value": "",
+                  "valid": {
+                     "min": 1
+                  }
+               },
+               {
+                  "name": 'WebServicePort',
+                  "webName": $scope.autoLanguage( '服务名' ),
+                  "type": "port",
+                  "required": true,
+                  "value": '',
+                  "valid": {}
+               }
+            ]
+         } ;
+         $scope.AppendOtherModule['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.AppendOtherModule['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.AppendOtherModule['config'].getValue() ;
+               var configure = {} ;
+               configure['ClusterName']  = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+               configure['BusinessType'] = moduleType ;
+               configure['BusinessName'] = moduleName ;
+               configure['BusinessInfo'] = formVal ;
+               discoverModule( configure ) ;
+            }
+            return isAllClear ;
+         } ) ;
+         $scope.AppendOtherModule['callback']['SetTitle']( moduleType ) ;
+         $scope.AppendOtherModule['callback']['SetIcon']( '' ) ;
+         $scope.AppendOtherModule['callback']['Open']() ;
+      }
+
+      //发现服务
+      var discoverModule = function( configure ){
+         var data = { 'cmd': 'discover business', 'ConfigInfo': JSON.stringify( configure ) } ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               if( configure['BusinessType'] == 'sequoiadb' )
+               {
+                  $rootScope.tempData( 'Deploy', 'ModuleName', configure['BusinessName'] ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', configure['ClusterName'] ) ;
+                  $location.path( '/Deploy/SDB-Discover' ).search( { 'r': new Date().getTime() }  ) ;
+               }
+               else
+               {
+                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
+               }
+            }, 
+            'failed': function( errorInfo ){
+               if( configure['BusinessType'] == 'sequoiadb' &&
+                   isArray( errorInfo['hosts'] ) &&
+                   errorInfo['hosts'].length > 0 )
+               {
+                  $scope.Components.Confirm.type = 3 ;
+                  $scope.Components.Confirm.context = $scope.autoLanguage( '发现SequoiaDB需要先在集群中添加该服务的所有主机。是否前往添加主机？' ) ;
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '是' ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     $rootScope.tempData( 'Deploy', 'DiscoverHostList', errorInfo['hosts'] ) ;
+                     gotoAddHost( configure ) ;
+                  }
+               }
+               else
+               {
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     discoverModule( configure ) ;
+                     return true ;
+                  } ) ;
+               }
+               
+            }
+         } ) ;
+      }
+
+      //卸载服务
+      var uninstallModule = function( index, isForce ){
+         if( typeof( $scope.StorageList[index]['AddtionType'] ) == 'undefined' || $scope.StorageList[index]['AddtionType'] != 1 )
+         {
+            var data = { 'cmd': 'remove business', 'BusinessName': $scope.StorageList[index]['BusinessName'], 'force': isForce } ;
+            SdbRest.OmOperation( data, {
+               'success': function( taskInfo ){
+                  $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
+                  $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+                  $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+                  $location.path( '/Deploy/Task/Module' ).search( { 'r': new Date().getTime() } ) ;
+               },
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     uninstallModule( index ) ;
+                     return true ;
+                  } ) ;
+               }
+            } ) ;
+         }
+         else
+         {
+            var data = { 'cmd': 'undiscover business', 'ClusterName': $scope.StorageList[index]['ClusterName'], 'BusinessName': $scope.StorageList[index]['BusinessName'] } ;
+            SdbRest.OmOperation( data, {
+               'success': function(){
+                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
+               },
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     uninstallModule( index ) ;
+                     return true ;
+                  } ) ;
+               }
+            } ) ;
+         }
+      }
+
+      //卸载服务 弹窗
+      $scope.UninstallModuleWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 卸载服务 弹窗
+      var showUninstallModule = function(){
+         if( $scope.ClusterList.length == 0 || $scope.StorageNum == 0 )
+         {
+            return ;
+         }
+         if( $scope.ModuleNum == 0 )
+         {
+            $scope.Components.Confirm.type = 3 ;
+            $scope.Components.Confirm.context = $scope.autoLanguage( '已经没有服务了。' ) ;
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.noClose = true ;
+            return ;
+         }
+         $scope.UninstallTips = '' ;
+         var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+         $scope.UninstallModuleWindow['config'] = {
+            'inputList': [
+               {
+                  "name": 'moduleIndex',
+                  "webName": $scope.autoLanguage( '存储集群名' ),
+                  "type": "select",
+                  "value": null,
+                  "valid": []
+               },
+               {
+                  "name": 'force',
+                  "webName": $scope.autoLanguage( '删除所有数据' ),
+                  "type": "select",
+                  "value": false,
+                  "valid": [
+                     { 'key': $scope.autoLanguage( '否' ),  'value': false },
+                     { 'key': $scope.autoLanguage( '是' ),  'value': true  }
+                  ],
+                  "onChange": function( name, key, value ){
+                     if( value == true )
+                     {
+                        $scope.UninstallTips = $scope.autoLanguage( '提示：选择删除所有数据将无法恢复！' ) ;
+                     }
+                     else
+                     {
+                        $scope.UninstallTips = '' ;
+                     }
+                  }
+               }
+            ]
+         }
+         $.each( $scope.StorageList, function( index, moduleInfo ){
+            if( clusterName == moduleInfo['ClusterName'] )
+            {
+               if( $scope.UninstallModuleWindow['config']['inputList'][0]['value'] == null )
+               {
+                  $scope.UninstallModuleWindow['config']['inputList'][0]['value'] = index ;
+               }
+               $scope.UninstallModuleWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+            }
+         } ) ;
+         $scope.UninstallModuleWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.UninstallModuleWindow['config'].check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.UninstallModuleWindow['config'].getValue() ;
+               if( formVal['force'] == true )
+               {
+                  $scope.Components.Confirm.type = 2 ;
+                  $scope.Components.Confirm.context = $scope.autoLanguage( '该操作将删除所有数据，是否确定继续？' ) ;
+                  $scope.Components.Confirm.isShow = true ;
+                  $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                  $scope.Components.Confirm.ok = function(){
+                     uninstallModule( formVal['moduleIndex'], formVal['force'] ) ;
+                     $scope.Components.Confirm.isShow = false ;
+                  }
+               }
+               else
+               {
+                  uninstallModule( formVal['moduleIndex'], formVal['force'] ) ;
+               }
+            }
+            return isAllClear ;
+         } ) ;
+         $scope.UninstallModuleWindow['callback']['SetTitle']( $scope.autoLanguage( '删除存储集群' ) ) ;
+         $scope.UninstallModuleWindow['callback']['Open']() ;
+      }
+
+      //解绑服务
+      var unbindModule = function( clusterName, businessName ){
+         var data = {
+            'cmd': 'unbind business', 'ClusterName': clusterName, 'BusinessName': businessName
+         } ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               $scope.Components.Confirm.type = 4 ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '服务：? 解绑成功。' ), businessName ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
+                  $scope.Components.Confirm.normalOK = false ;
+                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
+               }
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  unbindModule( clusterName, businessName ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
+      }
+
+      //解绑服务 弹窗
+      $scope.UnbindModuleWindow = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 解绑服务 弹窗
+      var showUnbindModule = function(){
+         if( $scope.ClusterList.length > 0 && $scope.ModuleNum != 0 )
+         {
+            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+            $scope.UnbindModuleWindow['config'] = {
+               'inputList': [
+                  {
+                     "name": 'moduleIndex',
+                     "webName": $scope.autoLanguage( '服务名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  }
+               ]
+            }
+            $.each( $scope.StorageList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] )
+               {
+                  if( $scope.UnbindModuleWindow['config']['inputList'][0]['value'] == null )
+                  {
+                     $scope.UnbindModuleWindow['config']['inputList'][0]['value'] = index ;
+                  }
+                  $scope.UnbindModuleWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               }
+            } ) ;
+            $scope.UnbindModuleWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.UnbindModuleWindow['config'].check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.UnbindModuleWindow['config'].getValue() ;
+                  var businessName = $scope.StorageList[ formVal['moduleIndex'] ]['BusinessName'] ;
+                  var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+                  var businessType = $scope.StorageList[ formVal['moduleIndex'] ]['BusinessType'] ;
+                  if( businessType == 'sequoiasql-mysql' )
+                  {
+                     $scope.Components.Confirm.type = 1 ;
+                     $scope.Components.Confirm.context = $scope.autoLanguage( '解绑服务将重启MySQL服务，是否继续？' ) ;
+                     $scope.Components.Confirm.isShow = true ;
+                     $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+                     $scope.Components.Confirm.ok = function(){
+                        $scope.Components.Confirm.isShow = false ;
+                        unbindModule( clusterName, businessName ) ;
+                     }
+                  }
+                  else
+                  {
+                     unbindModule( clusterName, businessName ) ;
+                  }
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.UnbindModuleWindow['callback']['SetTitle']( $scope.autoLanguage( '移除存储集群' ) ) ;
+            $scope.UnbindModuleWindow['callback']['Open']() ;
+         }
+      }
+
+      //设置鉴权 弹窗
+      $scope.SetAuthority = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //表单
+      var authorityform = {
+         'inputList': [
+            {
+               "name": "BusinessName",
+               "webName": $scope.autoLanguage( '服务名' ),
+               "type": "string",
+               "disabled": true,
+               "value": ''
+            },
+            {
+               "name": "User",
+               "webName": $scope.autoLanguage( '用户名' ),
+               "type": "string",
+               "required": true,
+               "value": "",
+               "valid": {
+                  "min": 1,
+                  "max": 127,
+                  "regex": '^[0-9a-zA-Z]+$'
+               }
+            },
+            {
+               "name": "Password",
+               "webName": $scope.autoLanguage( '密码' ),
+               "type": "password",
+               "value": ""
+            }
+         ]
+      } ;
+
+      //保存当前选中的服务名
+      var chooseBusinessName = '' ;
+      $scope.SaveBsName = function( businessName )
+      {
+         chooseBusinessName = businessName ;
+      }
+
+      //设置鉴权
+      var setAuthority = function( data, businessName, index ){
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               SdbSwap.queryAuth( businessName, index ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  setAuthority( data, businessName, index ) ;
+                  return true ;
+               } ) ;
+            }
+         }, {
+            'showLoading': true
+         } ) ;
+      }
+
+      //打开 设置鉴权 弹窗
+      $scope.ShowSetAuthority = function( businessName, index ){
+         if( typeof( businessName ) == 'undefined' )
+         {
+            businessName = chooseBusinessName ;
+            index = chooseBusinessIndex ;
+         }
+         
+         var user = '' ;
+         if( typeof( $scope.ModuleList[index]['authority'][0]['User'] ) != 'undefined' )
+         {
+            user = $scope.ModuleList[index]['authority'][0]['User'] ;
+         }
+
+         authorityform['inputList'][1]['value'] = '' ;
+         authorityform['inputList'][2]['value'] = '' ;
+
+         //关闭鉴权下拉菜单
+         $scope.AuthorityDropdown['callback']['Close']() ;
+
+         var form = authorityform ;
+         form['inputList'][0]['value'] = businessName ;
+         form['inputList'][1]['value'] = user ;
+         $scope.SetAuthority['config'] = form ;
+         $scope.SetAuthority['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = form.check() ;
+               if( isAllClear )
+               {
+                  var formVal = form.getValue() ;
+                  var data = {
+                     'cmd': 'set business authority',
+                     'BusinessName': businessName,
+                     'User': formVal['User'],
+                     'Passwd': formVal['Password']
+                  } ;
+                  setAuthority( data, businessName, index ) ;
+                  $scope.SetAuthority['callback']['Close']() ;
+               }
+         } ) ;
+         $scope.SetAuthority['callback']['SetTitle']( $scope.autoLanguage( '设置鉴权' ) ) ;
+         $scope.SetAuthority['callback']['SetIcon']( '' ) ;
+         $scope.SetAuthority['callback']['Open']() ;
+
+      }
+
+      //删除鉴权
+      $scope.DropAuthorityModel = function( businessName, index ){
+         if( typeof( businessName ) == 'undefined' )
+         {
+            businessName = chooseBusinessName ;
+            index = chooseBusinessIndex ;
+         }
+         //关闭下拉菜单
+         $scope.AuthorityDropdown['callback']['Close']() ;
+         $scope.Components.Confirm.isShow = true ;
+         $scope.Components.Confirm.type = 1 ;
+         $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+         $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+         $scope.Components.Confirm.title = $scope.autoLanguage( '要删除该服务的鉴权吗？' ) ;
+         $scope.Components.Confirm.context = $scope.autoLanguage( '服务名' ) + ': ' + businessName ;
+         $scope.Components.Confirm.ok = function(){
+            var data = {
+               'cmd': 'remove business authority',
+               'BusinessName': businessName
+            }
+            SdbRest.OmOperation( data, {
+               'success': function(){
+                  SdbSwap.queryAuth( businessName, index ) ;
+               },
+               'failed': function( errorInfo, retryRun ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     retryRun() ;
+                     return true ;
+                  } ) ;
+               }
+            }, {
+               'showLoading': true
+            } ) ;
+            return true ;
+         }
+      }
+
+      //鉴权下拉菜单
+      $scope.AuthorityDropdown = {
+         'config': [
+            { 'field': $scope.autoLanguage( '修改鉴权' ), 'value': "edit" },
+            { 'field': $scope.autoLanguage( '删除鉴权' ), 'value': "delete" }
+         ],
+         'callback': {}
+      } ;
+
+      //打开鉴权下拉菜单
+      $scope.OpenShowAuthorityDropdown = function( event, businessName, index ){
+         chooseBusinessName = businessName ;
+         chooseBusinessIndex = index ;
+         $scope.AuthorityDropdown['callback']['Open']( event.currentTarget ) ;
+      }
+
+      //判断类型
+      $scope.Typeof = function( value ){
+         return typeof( value ) ;
+      }
+
+      $scope.GotoExpansion = function(){
+         $location.path( '/Deploy/SDB-ExtendConf' ).search( { 'r': new Date().getTime() } ) ;
+      }
+
+      //添加服务下拉菜单
+      $scope.AddModuleDropdown = {
+         'config': [
+            { 'key': $scope.autoLanguage( '创建存储集群' ) },
+            { 'key': $scope.autoLanguage( '添加已有的存储集群' ) }
+         ],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               $scope.ShowInstallModule() ;
+            }
+            else
+            {
+               $scope.ShowAppendModule() ;
+            }
+            $scope.AddModuleDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开 添加服务下拉菜单
+      $scope.OpenAddModuleDropdown = function( event ){
+         if( $scope.ClusterList.length > 0 )
+         {
+            $scope.AddModuleDropdown['callback']['Open']( event.currentTarget ) ;
+         }
+      }
+
+      //删除服务下拉菜单
+      $scope.DeleteModuleDropdown = {
+         'config': [
+            { 'key': $scope.autoLanguage( '删除存储集群' ) },
+            { 'key': $scope.autoLanguage( '移除存储集群' ) }
+         ],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               showUninstallModule() ;
+            }
+            else
+            {
+               showUnbindModule() ;
+            }
+            $scope.DeleteModuleDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开 删除服务下拉菜单
+      $scope.OpenDeleteModuleDropdown = function( event ){
+         if( $scope.ClusterList.length > 0 )
+         {
+            $scope.DeleteModuleDropdown['callback']['Open']( event.currentTarget ) ;
+         }
+      }
+
+      //修改服务下拉菜单
+      $scope.EditModuleDropdown = {
+         'config': [],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               showExtendWindow() ;
+            }
+            else if( index == 1 )
+            {
+               showShrinkWindow() ;
+            }
+            else if( index == 2 )
+            {
+               showRestartWindow() ;
+            }
+            else if( index == 3 )
+            {
+               showSyncWindow() ;
+            }
+            $scope.EditModuleDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开 修改服务下拉菜单
+      $scope.OpenEditModuleDropdown = function( event ){
+         if( $scope.ClusterList.length > 0 )
+         {
+            $scope.EditModuleDropdown['config'] = [] ;
+            var disabled = false ;
+            var syncDisabled = false ;
+            if( SdbSwap.distributionNum == 0 )
+            {
+               disabled = true ;
+            }
+            if( SdbSwap.sdbModuleNum == 0 )
+            {
+               syncDisabled = true ;
+            }
+            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '扩容' ), 'disabled': disabled } ) ;
+            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '减容' ), 'disabled': disabled } ) ;
+            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '重启' ), 'disabled': $scope.ModuleNum == 0 } ) ;
+            $scope.EditModuleDropdown['config'].push( { 'key': $scope.autoLanguage( '同步配置' ), 'disabled': syncDisabled } ) ;
+            $scope.EditModuleDropdown['callback']['Open']( event.currentTarget ) ;
+         }
+      }
+    
       //关联信息 弹窗
       $scope.RelationshipWindow = {
          'config': [],

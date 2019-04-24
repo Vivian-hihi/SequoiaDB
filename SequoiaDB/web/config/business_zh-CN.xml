@@ -1,14 +1,14 @@
 <BusinessList type="array">
    <FILLER>
       <BusinessType>sequoiadb</BusinessType>
-      <BusinessDesc>SequoiaDB数据库</BusinessDesc>
-   </FILLER>
-   <FILLER>
-      <BusinessType>sequoiasql-postgresql</BusinessType>
-      <BusinessDesc>SequoiaSQL-PostgreSQL</BusinessDesc>
+      <BusinessDesc>SequoiaDB 数据库</BusinessDesc>
    </FILLER>
    <FILLER>
       <BusinessType>sequoiasql-mysql</BusinessType>
-      <BusinessDesc>SequoiaSQL-MySQL</BusinessDesc>
+      <BusinessDesc>MySQL</BusinessDesc>
+   </FILLER>
+   <FILLER>
+      <BusinessType>sequoiasql-postgresql</BusinessType>
+      <BusinessDesc>PostgreSQL</BusinessDesc>
    </FILLER>
 </BusinessList>

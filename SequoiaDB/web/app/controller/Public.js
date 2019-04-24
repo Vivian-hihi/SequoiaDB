@@ -6,17 +6,9 @@
       'sequoiasql-postgresql': 'pgsql',
       'sequoiasql-mysql': 'mysql'
    } ;
-   //导航标题列表
-   var navTitleName = {
-      'sequoiadb': 'SequoiaDB',
-      'sequoiasql-postgresql': 'SequoiaSQL-PostgreSQL',
-      'sequoiasql-mysql': 'SequoiaSQL-MySQL',
-      'hdfs': 'HDFS',
-      'yarn': 'YARN'
-   } ;
 
    //全局模板
-   sacApp.controller( 'Index.Ctrl', function( $scope, $window, $rootScope, $location, Tip, SdbFunction, Loading, SdbRest ){
+   sacApp.controller( 'Index.Ctrl', function( $scope, $window, $rootScope, $location, Tip, SdbFunction, Loading, SdbRest, SdbSignal ){
       //校验登录信息
       if( SdbFunction.LocalData( 'SdbUser' ) === null || SdbFunction.LocalData( 'SdbSessionID' ) === null )
 		{
@@ -174,6 +166,8 @@
                   window.Config[ key ] = value ;
                } ) ;
                window.Config['recv'] = true ;
+
+               SdbSignal.commit( 'sac_version', window.Config['Version'] ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -338,6 +332,16 @@
 
    //左边
    sacApp.controller( 'Index.Left.Ctrl', function( $scope, $rootScope, $location, SdbRest, SdbFunction ){
+
+      //导航标题列表
+      var navTitleName = {
+         'sequoiadb':               $scope.autoLanguage( '分布式存储' ),
+         'sequoiasql-postgresql':   $scope.autoLanguage( '数据库实例' ),
+         'sequoiasql-mysql':        $scope.autoLanguage( '数据库实例' ),
+         'hdfs': 'HDFS',
+         'yarn': 'YARN'
+      } ;
+
       $scope.showModuleIndex = -1 ;
       $scope.Left = {} ;
       $scope.Left.nav1 = { width: 80 } ;
@@ -752,11 +756,31 @@
       }
    } ) ;
    //底部
-   sacApp.controller( 'Index.Bottom.Ctrl', function( $scope, $interval, SdbRest ){
+   sacApp.controller( 'Index.Bottom.Ctrl', function( $scope, $interval, SdbRest, SdbSignal ){
       $scope.Bottom = {} ;
       //获取系统时间
       _IndexBottom.getSystemTime( $scope ) ;
       //获取系统状态
       _IndexBottom.checkPing( $scope, $interval, SdbRest ) ;
+
+      function setVersion( info )
+      {
+         var version = info['Major'] ;
+         version = version + '.' + info['Minor'] ;
+         if( info['Fix'] > 0 )
+         {
+            version = version + '.' + info['Fix'] ;
+         }
+         $scope.Bottom['version'] = version ;
+      }
+
+      SdbSignal.on( 'sac_version', function( info ){
+         setVersion( info ) ;
+      } ) ;
+
+      if( window.Config['recv'] == true )
+      {
+         setVersion( window.Config['Version'] ) ;
+      }
    } ) ;
 }());

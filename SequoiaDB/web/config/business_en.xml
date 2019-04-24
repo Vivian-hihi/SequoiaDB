@@ -4,11 +4,11 @@
       <BusinessDesc>SequoiaDB Database</BusinessDesc>
    </FILLER>
    <FILLER>
-      <BusinessType>sequoiasql-postgresql</BusinessType>
-      <BusinessDesc>SequoiaSQL-PostgreSQL</BusinessDesc>
+      <BusinessType>sequoiasql-mysql</BusinessType>
+      <BusinessDesc>MySQL</BusinessDesc>
    </FILLER>
    <FILLER>
-      <BusinessType>sequoiasql-mysql</BusinessType>
-      <BusinessDesc>SequoiaSQL-MySQL</BusinessDesc>
+      <BusinessType>sequoiasql-postgresql</BusinessType>
+      <BusinessDesc>PostgreSQL</BusinessDesc>
    </FILLER>
 </BusinessList>

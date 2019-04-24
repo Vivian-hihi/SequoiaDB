@@ -261,10 +261,10 @@
             inputList: [
                {
                   "name": 'moduleName',
-                  "webName": $scope.autoLanguage( '服务名' ),
+                  "webName": $scope.autoLanguage( '实例名' ),
                   "type": "string",
                   "required": true,
-                  "value": 'SequoiaSQL-MySQL_Service',
+                  "value": 'MySQLInstance',
                   "valid": {
                      "min": 1,
                      "max": 127,
@@ -273,15 +273,15 @@
                },
                {
                   "name": 'moduleType',
-                  "webName": $scope.autoLanguage( '服务类型' ),
+                  "webName": $scope.autoLanguage( '服务名' ),
                   "type": "select",
                   "value": 'sequoiasql-mysql',
                   "valid": [
-                     { 'key': 'SequoiaSQL-PostgreSQL', 'value': 'sequoiasql-postgresql' },
-                     { 'key': 'SequoiaSQL-MySQL', 'value': 'sequoiasql-mysql' }
+                     { 'key': 'PostgreSQL', 'value': 'sequoiasql-postgresql' },
+                     { 'key': 'MySQL', 'value': 'sequoiasql-mysql' }
                   ],
                   "onChange": function( name, key, value ){
-                      $scope.InstallModule['config']['inputList'][0]['value'] = key + '_service' ;
+                     $scope.InstallModule['config']['inputList'][0]['value'] = key + 'Instance' ;
                   }
                }
             ]
@@ -351,6 +351,8 @@
                   var errorNum = 0 ;
                   if( $scope.ModuleType == 'sequoiadb' )
                   {
+                     $scope.ModuleDesc = 'SequoiaDB' ;
+
                      $.each( $scope.TaskInfo['ResultInfo'], function( index, nodeInfo ){
                         if( nodeInfo['errno'] != 0 )
                         {
@@ -377,6 +379,15 @@
                   }
                   else if( $scope.ModuleType == 'zookeeper' || $scope.ModuleType == 'sequoiasql' || $scope.ModuleType == 'sequoiasql-postgresql' || $scope.ModuleType == 'sequoiasql-mysql' )
                   {
+                     if ( $scope.ModuleType == 'sequoiasql-mysql' )
+                     {
+                        $scope.ModuleDesc = 'MySQL' ;
+                     }
+                     else if ( $scope.ModuleType == 'sequoiasql-postgresql' )
+                     {
+                        $scope.ModuleDesc = 'PostgreSQL' ;
+                     }
+
                      $.each( $scope.TaskInfo['ResultInfo'], function( index, nodeInfo ){
                         if( nodeInfo['errno'] != 0 )
                         {
@@ -522,9 +533,9 @@
                      {
                         $timeout( function(){
                            $scope.Components.Confirm.type = 2 ;
-                           $scope.Components.Confirm.context = $scope.autoLanguage( '是否创建SequoiaSQL服务？' ) ;
+                           $scope.Components.Confirm.context = $scope.autoLanguage( '是否创建 SQL 实例？' ) ;
                            $scope.Components.Confirm.isShow = true ;
-                           $scope.Components.Confirm.okText = $scope.pAutoLanguage( '是' ) ;
+                           $scope.Components.Confirm.okText = $scope.autoLanguage( '是' ) ;
                            $scope.Components.Confirm.ok = function(){
                               $scope.Components.Confirm.isShow = false ;
                               ShowInstallModule() ;
