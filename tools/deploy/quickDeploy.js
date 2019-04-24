@@ -277,6 +277,8 @@ function getSqlConf( dbType, installedPath )
 
       // check line
       if ( aLine == "" ) continue ;
+      
+      if ( aLine.substr( 0,1 ) == "#" ) continue ;   // this line is a note
 
       var instanceConf = aLine.split( "," ) ;
       if ( instanceConf.length != 4 )
@@ -352,6 +354,8 @@ function getSequoiadbConf()
 
       // check line
       if ( aLine == "" ) continue ;
+      
+      if ( aLine.substr( 0,1 ) == "#" ) continue ;   // this line is a note
 
       var aNode = aLine.split( "," ) ;
       if ( aNode.length != 5 )
