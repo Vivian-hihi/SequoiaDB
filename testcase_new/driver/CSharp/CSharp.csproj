@@ -199,6 +199,25 @@
     <Compile Include="Bson\TestBsonArray14638.cs" />
     <Compile Include="Bson\TestBsonBinaryData14611.cs" />
     <Compile Include="Bson\TestObjectId14648.cs" />
+    <Compile Include="Monitor\TestGetList13623.cs" />
+    <Compile Include="Monitor\TestResetSnapshot14578.cs" />
+    <Compile Include="Monitor\TestSnapshot13622.cs" />
+    <Compile Include="Auth\TestAuth14567.cs" />
+    <Compile Include="Sql\TestSQL14580.cs" />
+    <Compile Include="Sdb\TestDBCursor14650.cs" />
+    <Compile Include="Index\TestIndex13649.cs" />
+    <Compile Include="Index\TestIndex14546.cs" />
+    <Compile Include="Index\TestIndex14547.cs" />
+    <Compile Include="Index\TestIndex14548.cs" />
+    <Compile Include="Aggregate\TestAggregate14549.cs" />
+    <Compile Include="Aggregate\TestAggregate14550.cs" />
+    <Compile Include="Sessionaccess\SessionAccess14186.cs" />
+    <Compile Include="Sessionaccess\SessionAccess14188.cs" />
+    <Compile Include="Sessionaccess\SessionAccess14182.cs" />
+    <Compile Include="Sessionaccess\SessionAccess14183.cs" />
+    <Compile Include="Sessionaccess\SessionAccess14184.cs" />
+    <Compile Include="Sessionaccess\SessionAccess14187.cs" />
+    <Compile Include="Sessionaccess\SessionAccessUtil.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
