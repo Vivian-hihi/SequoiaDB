@@ -3376,6 +3376,14 @@ namespace engine
 
       contextID = -1 ;
 
+      /// in transaction, can't do split
+      if ( cb->isTransaction() )
+      {
+         rc = SDB_OPERATION_INCOMPATIBLE ;
+         PD_LOG_MSG( PDERROR, "Can't do split in transaction" ) ;
+         goto error ;
+      }
+
       if ( cb->getRemoteSite() )
       {
          pmdRemoteSessionSite *pSite = NULL ;
