@@ -82,7 +82,7 @@ var Configs = ( function() {
       // register reboot configs
       // this.rebootConfigs.push( new ConfDesp( "diagpath", "path", "", "", null ) ) ; TODO: path can't specific
       // this.rebootConfigs.push( new ConfDesp( "auditpath", "path", "", "", null ) ) ;
-      this.rebootConfigs.push( new ConfDesp( "transactionon", "bool", "FALSE", "TRUE", 1234 ) ) ;
+      this.rebootConfigs.push( new ConfDesp( "transactionon", "bool", "TRUE", "FALSE", 1234 ) ) ;
       this.rebootConfigs.push( new ConfDesp( "numpreload", "int", 0, 10, "and" ) ) ;
       // this.rebootConfigs.push( new ConfDesp( "maxprefpool", "int", 0, 10, "or" ) ) ; TODO: affect maxsubquery
       this.rebootConfigs.push( new ConfDesp( "logbuffsize", "int", 1024, 2048, "Q" ) ) ;
