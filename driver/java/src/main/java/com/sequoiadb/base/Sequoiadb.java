@@ -1555,7 +1555,38 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * Backup the whole database or specified replica group.
+     * Backup database.
+     *
+     * @param options Contains a series of backup configuration infomations.
+     *                Backup the whole cluster if null. The "options" contains 5 options as below.
+     *                All the elements in options are optional.
+     *                eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup",
+     *                "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
+     *                <ul>
+     *                <li>GroupID     : The id(s) of replica group(s) which to be backuped
+     *                <li>GroupName   : The name(s) of replica group(s) which to be backuped
+     *                <li>Name        : The name for the backup
+     *                <li>Path        : The backup path, if not assign, use the backup path assigned in the configuration file,
+     *                the path support to use wildcard(%g/%G:group name, %h/%H:host name, %s/%S:service name).
+     *                e.g.  {Path:"/opt/sequoiadb/backup/%g"}
+     *                <li>isSubDir    : Whether the path specified by paramer "Path" is a subdirectory of
+     *                the path specified in the configuration file, default to be false
+     *                <li>Prefix      : The prefix of name for the backup, default to be null. e.g. {Prefix:"%g_bk_"}
+     *                <li>EnableDateDir : Whether turn on the feature which will create subdirectory named to
+     *                current date like "YYYY-MM-DD" automatically, default to be false
+     *                <li>Description : The description for the backup
+     *                <li>EnsureInc   : Whether turn on increment synchronization, default to be false
+     *                <li>OverWrite   : Whether overwrite the old backup file with the same name, default to be false
+     *                </ul>
+     * @throws BaseException If error happens.
+     * @deprecated Rename to "backup".
+     */
+    public void backupOffline(BSONObject options) throws BaseException {
+        backup(options);
+    }
+
+    /**
+     * Backup database.
      *
      * @param options Contains a series of backup configuration infomations.
      *                Backup the whole cluster if null. The "options" contains 5 options as below.
@@ -1580,7 +1611,7 @@ public class Sequoiadb implements Closeable {
      *                </ul>
      * @throws BaseException If error happens.
      */
-    public void backupOffline(BSONObject options) throws BaseException {
+    public void backup(BSONObject options) throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.BACKUP_OFFLINE, options);
         SdbReply response = requestAndResponse(request);
         throwIfError(response);
