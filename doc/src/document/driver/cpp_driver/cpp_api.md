@@ -80,7 +80,7 @@
 
 	* connect，可提供多个地址，接口随机选择一个有效的地址连接。
 	* createCollectionSpace，提供一个 BSONObject 的选项，使创建集合空间更加灵活。
-	* backupOffline，离线备份支持更多的选项。
+	* backup，备份支持更多的选项。
 	* createDomain，创建域。
 	* getDomain，获取域。
 	* dropDomain，删除域。

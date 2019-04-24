@@ -61,7 +61,7 @@
 
     ```lang-javascript
     > var datadb = new Sdb( "localhost", 20000 )
-    > datadb.backupOffline( { Path: "/tmp/sequoiadb_backup/20000" } )
+    > datadb.backup( { Path: "/tmp/sequoiadb_backup/20000" } )
     ```
 
   连接 coord 查看备份信息，listBackup 时需要指定 Path 参数，否则在默认路径下查找不到备份信息

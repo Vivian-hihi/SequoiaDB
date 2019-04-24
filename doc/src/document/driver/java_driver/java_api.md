@@ -119,7 +119,7 @@ None.
 
 	* isValid，判断当前连接是否有效。
 	* createCollectionSpace，提供一个 BSONObject 的选项，使创建集合空间更加灵活。
-	* backupOffline，离线备份支持更多的选项。
+	* backup，备份支持更多的选项。
 	* evalJS，执行javascript代码。
 	* createDomain，创建域。
 	* getDomain，获取域。

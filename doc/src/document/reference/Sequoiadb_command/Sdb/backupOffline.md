@@ -1,10 +1,10 @@
 ##名称##
 
-backupOffline - 备份数据库。
+backup - 备份数据库。
 
 ##语法##
 
-**db.backupOffline([options])**
+**db.backup([options])**
 
 ##类别##
 
@@ -81,7 +81,7 @@ Sdb
 
 ##错误##
 
-`backupOffline()`函数常见异常如下：
+`backup()`函数常见异常如下：
 
 | 错误码 | 错误类型 | 描述 | 解决方法 |
 | ------ | ----------------------- | --- | ------ |
@@ -105,7 +105,7 @@ v2.8.2及以上版本增加 `Compressed`、`CompressionType` 和 `BackupLog` 参
 1. 对数据库节点进行全量备份。
 
 	```lang-javascript
-	> db.backupOffline( { Name: "FullBackup1" } )
+	> db.backup( { Name: "FullBackup1" } )
 	> db.listBackup()
 	{
 		"Version": 2,

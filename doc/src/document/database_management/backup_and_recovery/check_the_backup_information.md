@@ -88,7 +88,7 @@
     ```lang-javascript
     $ /opt/sequoiadb/bin/sdb
     > var datadb = new Sdb( "localhost", 20000 )
-    > datadb.backupOffline( { Path: "/tmp/sequoiadb_backup/20000" } )
+    > datadb.backup( { Path: "/tmp/sequoiadb_backup/20000" } )
     ```
 
 2.  连接 coord 查看备份信息，需要指定 Path 参数

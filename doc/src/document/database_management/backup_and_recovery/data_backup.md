@@ -3,9 +3,9 @@
 *   全量备份：备份整个数据库的配置、数据和日志（可选）；
 *   增量备份：在上一个全量备份或增量备份的基础上备份新增的日志和配置；增量备份需要保证日志的连续性和一致性，如果日志不连续，或日志Hash校验不一致，则增量备份失败。因此，周期性的增量备份需要计算好日志和周期的关系，以防止日志覆写。
 
-##离线备份参数说明##
+##备份参数说明##
 
-使用 [Sdb.backupOffline()](reference/Sequoiadb_command/Sdb/backupOffline.md) 命令可以进行离线备份，以下是常用参数说明：
+使用 [Sdb.backup()](reference/Sequoiadb_command/Sdb/backup.md) 命令可以进行备份，以下是常用参数说明：
 
 | 参数        | 说明 |
 | ----------- | ---- |
@@ -28,7 +28,7 @@
 2.  执行全量备份命令
 
     ```lang-javascript
-    > db.backupOffline( { Name: "backupName", Description: "backup for all" } )
+    > db.backup( { Name: "backupName", Description: "backup for all" } )
     ```
 
 ##全量备份指定组的数据库##
@@ -43,7 +43,7 @@
 2.  执行全量备份命令
 
     ```lang-javascript
-    > db.backupOffline( { Name: "backupName", Description: "backup group1", GroupName: "group1" } )
+    > db.backup( { Name: "backupName", Description: "backup group1", GroupName: "group1" } )
     ```
 
 ##全量+增量备份指定节点的数据库##
@@ -58,13 +58,13 @@
 2.  执行全量备份命令
 
     ```lang-javascript
-    > dbdata.backupOffline( { Name: "backupName", Description: "backup data node" } )
+    > dbdata.backup( { Name: "backupName", Description: "backup data node" } )
     ```
 
 3.  后续可以定期执行增量备份命令
 
     ```lang-javascript
-    > dbdata.backupOffline( { Name: "backupName", Description: "increase backup data node", EnsureInc: true } )
+    > dbdata.backup( { Name: "backupName", Description: "increase backup data node", EnsureInc: true } )
     ```
 
 >   **Note:**
