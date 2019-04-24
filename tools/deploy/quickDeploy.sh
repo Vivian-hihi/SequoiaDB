@@ -65,7 +65,8 @@ fi
 
 #get this script path
 myPath=`dirname $0`
-if [[ ${dir_name:0:1} != "/" ]]; then
+
+if [[ ${myPath:0:1} != "/" ]]; then
    myPath=$(pwd)/$myPath  #relative path
 else
    myPath=$myPath         #absolute path
