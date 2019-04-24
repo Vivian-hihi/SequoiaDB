@@ -8756,8 +8756,12 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
-                                    bson *options )
+SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle, bson *options )
+{
+   return sdbBackup( cHandle, options ) ;
+}
+
+SDB_EXPORT INT32 sdbBackup ( sdbConnectionHandle cHandle, bson *options )
 {
    INT32 rc                      = SDB_OK ;
    SINT64 contextID              = 0 ;

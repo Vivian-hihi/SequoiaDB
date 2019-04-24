@@ -1459,7 +1459,7 @@ namespace sdbclient
       }
 
       // bakeup
-      INT32 backupOffline ( const bson::BSONObj &options) ;
+      INT32 backup ( const bson::BSONObj &options) ;
       INT32 listBackup ( _sdbCursor **cursor,
                          const bson::BSONObj &options,
                          const bson::BSONObj &condition = _sdbStaticObject,

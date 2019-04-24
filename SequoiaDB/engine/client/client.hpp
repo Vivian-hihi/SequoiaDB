@@ -4072,7 +4072,7 @@ namespace sdbclient
                             bson::BSONObj &errmsg ) = 0 ;
 
       // bakup
-      virtual INT32 backupOffline ( const bson::BSONObj &options) = 0 ;
+      virtual INT32 backup ( const bson::BSONObj &options) = 0 ;
       virtual INT32 listBackup ( _sdbCursor **cursor,
                               const bson::BSONObj &options,
                               const bson::BSONObj &condition = _sdbStaticObject,
@@ -5347,7 +5347,31 @@ namespace sdbclient
      }
 
       /** \fn INT32 backupOffline ( const bson::BSONObj &options)
-          \brief Backup the whole database or specifed replica group.
+          \brief Backup database.
+          \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
+
+              GroupID     : The id(s) of replica group(s) which to be backuped
+              GroupName   : The replica groups which to be backuped
+              Path        : The backup path, if not assign, use the backup path assigned in the configuration file,
+                            the path support to use wildcard(%g/%G:group name, %h/%H:host name, %s/%S:service name). e.g.  {Path:"/opt/sequoiadb/backup/%g"}
+              isSubDir    : Whether the path specified by paramer "Path" is a subdirectory of the path specified in the configuration file, default to be false
+              Name        : The name for the backup
+              Prefix      : The prefix of name for the backup, default to be null. e.g. {Prefix:"%g_bk_"}
+              EnableDateDir : Whether turn on the feature which will create subdirectory named to current date like "YYYY-MM-DD" automatically, default to be false
+              Description : The description for the backup
+              EnsureInc   : Whether excute increment synchronization, default to be false
+              OverWrite   : Whether overwrite the old backup file, default to be false
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+          \deprecated Rename to "backup".
+      */
+      INT32 backupOffline ( const bson::BSONObj &options)
+      {
+         return backup( options ) ;
+      }
+
+      /** \fn INT32 backup ( const bson::BSONObj &options)
+          \brief Backup database.
           \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
 
               GroupID     : The id(s) of replica group(s) which to be backuped
@@ -5364,12 +5388,13 @@ namespace sdbclient
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 backupOffline ( const bson::BSONObj &options)
+      INT32 backup ( const bson::BSONObj &options)
       {
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
-         return pSDB->backupOffline( options ) ;
+         return pSDB->backup( options ) ;
       }
+
 
       INT32 listBackup ( _sdbCursor **cursor,
                               const bson::BSONObj &options,

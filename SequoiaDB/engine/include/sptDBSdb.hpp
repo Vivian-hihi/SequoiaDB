@@ -170,9 +170,9 @@ namespace engine
                   _sptReturnVal &rval,
                   bson::BSONObj &detail ) ;
 
-      INT32 backupOffline( const _sptArguments &arg,
-                           _sptReturnVal &rval,
-                           bson::BSONObj &detail ) ;
+      INT32 backup( const _sptArguments &arg,
+                    _sptReturnVal &rval,
+                    bson::BSONObj &detail ) ;
 
       INT32 listBackup( const _sptArguments &arg,
                         _sptReturnVal &rval,

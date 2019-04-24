@@ -2350,7 +2350,7 @@ SDB_EXPORT INT32 sdbDetachCollection ( sdbCollectionHandle cHandle,
 
 /** \fn INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
                                  bson *options)
-    \brief Backup the whole database or specifed replica group.
+    \brief Backup database.
     \param [in] cHandle The connection handle
     \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["RGName1", "RGName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
 
@@ -2367,9 +2367,32 @@ SDB_EXPORT INT32 sdbDetachCollection ( sdbCollectionHandle cHandle,
         OverWrite   : Whether overwrite the old backup file, default to be false
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated Rename to "sdbBackup".
 */
 SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
                                     bson *options) ;
+
+/** \fn INT32 sdbBackup ( sdbConnectionHandle cHandle, bson *options)
+    \brief Backup database.
+    \param [in] cHandle The connection handle
+    \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["RGName1", "RGName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
+
+        GroupID     : The id(s) of replica group(s) which to be backuped
+        GroupName   : The replica groups which to be backuped
+        Path        : The backup path, if not assign, use the backup path assigned in the configuration file,
+                      the path support to use wildcard(%g/%G:group name, %h/%H:host name, %s/%S:service name). e.g.  {Path:"/opt/sequoiadb/backup/%g"}
+        isSubDir    : Whether the path specified by paramer "Path" is a subdirectory of the path specified in the configuration file, default to be false
+        Name        : The name for the backup
+        Prefix      : The prefix of name for the backup, default to be null. e.g. {Prefix:"%g_bk_"}
+        EnableDateDir : Whether turn on the feature which will create subdirectory named to current date like "YYYY-MM-DD" automatically, default to be false
+        Description : The description for the backup
+        EnsureInc   : Whether excute increment synchronization, default to be false
+        OverWrite   : Whether overwrite the old backup file, default to be false
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+    \deprecated Rename to "sdbBackup".
+*/
+SDB_EXPORT INT32 sdbBackup ( sdbConnectionHandle cHandle, bson *options) ;
 
 /** \fn INT32 sdbListBackup ( sdbConnectionHandle cHandle,
                               bson *options,

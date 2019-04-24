@@ -102,7 +102,7 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, removeProcedure )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, listProcedures )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, eval )
-   JS_MEMBER_FUNC_DEFINE( _sptDBSdb, backupOffline )
+   JS_MEMBER_FUNC_DEFINE( _sptDBSdb, backup )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, listBackup )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, removeBackup )
    JS_MEMBER_FUNC_DEFINE( _sptDBSdb, listTasks )
@@ -161,7 +161,8 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "removeProcedure", removeProcedure )
       JS_ADD_MEMBER_FUNC( "listProcedures", listProcedures )
       JS_ADD_MEMBER_FUNC( "eval", eval )
-      JS_ADD_MEMBER_FUNC( "backupOffline", backupOffline )
+      JS_ADD_MEMBER_FUNC( "backup", backup )
+      JS_ADD_MEMBER_FUNC( "backupOffline", backup )
       JS_ADD_MEMBER_FUNC( "listBackup", listBackup )
       JS_ADD_MEMBER_FUNC( "removeBackup", removeBackup )
       JS_ADD_MEMBER_FUNC( "listTasks", listTasks )
@@ -1704,9 +1705,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptDBSdb::backupOffline( const _sptArguments &arg,
-                                   _sptReturnVal &rval,
-                                   bson::BSONObj &detail )
+   INT32 _sptDBSdb::backup( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       BSONObj options ;
@@ -1716,10 +1717,10 @@ namespace engine
          detail = BSON( SPT_ERR << "Options must be obj" ) ;
          goto error ;
       }
-      rc = _sptSdb.backupOffline( options ) ;
+      rc = _sptSdb.backup( options ) ;
       if( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "Failed to backup offline" ) ;
+         detail = BSON( SPT_ERR << "Failed to backup" ) ;
          goto error ;
       }
    done:

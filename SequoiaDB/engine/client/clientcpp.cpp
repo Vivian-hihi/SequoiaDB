@@ -8397,10 +8397,9 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbImpl::backupOffline ( const bson::BSONObj &options )
+   INT32 _sdbImpl::backup ( const bson::BSONObj &options )
    {
-      return _runCommand( CMD_ADMIN_PREFIX CMD_NAME_BACKUP_OFFLINE,
-                          &options ) ;
+      return _runCommand( CMD_ADMIN_PREFIX CMD_NAME_BACKUP_OFFLINE, &options ) ;
    }
 
    INT32 _sdbImpl::listBackup ( _sdbCursor **cursor,
