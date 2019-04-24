@@ -1,5 +1,6 @@
 package com.sequoias3.testcommon.s3utils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.delimiter.DelimiterConfiguration;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestRest;
@@ -85,15 +87,27 @@ public class DelimiterUtils extends S3TestBase {
 	}
 
 	public static void listObjectsWithDelimiter(AmazonS3 s3Client, String bucketName, String delimiter,
-			List<String> expKeyList) {
+			List<String> expKeyList, List<String> matchContentsList) {
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
 		request.withDelimiter(delimiter);
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);
-		List<String> commonPrefixes = result.getCommonPrefixes();		
+		List<String> commonPrefixes = result.getCommonPrefixes();
 		Collections.sort(expKeyList);
 		Collections.sort(commonPrefixes);
 		Assert.assertEquals(commonPrefixes, expKeyList,
 				"actPrefixes:" + commonPrefixes.toString() + "\n ecpPrefixes:" + expKeyList.toString());
+		// objects do not match delimiter are displayed in contents,num is 10
+		List<String> actContentsList = new ArrayList<>();
+		List<S3ObjectSummary> objects = result.getObjectSummaries();
+		for (S3ObjectSummary os : objects) {
+			String key = os.getKey();
+			actContentsList.add(key);
+		}
+
+		// check the keyName
+		Collections.sort(actContentsList);
+		Collections.sort(matchContentsList);
+		Assert.assertEquals(actContentsList, matchContentsList, "actcontent:" + actContentsList.toString());
 	}
 
 	public static int updateDelimiterAgain(String bucketName, String delimiter, String accessKeyId) {
