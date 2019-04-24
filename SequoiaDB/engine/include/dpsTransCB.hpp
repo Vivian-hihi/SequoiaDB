@@ -148,6 +148,8 @@ namespace engine
    // LRB shrink opreation interval, 900 seconds
    #define DPS_TRANS_LRB_SHRINK_INTERVAL ( 900 )
 
+   // delta between runtime log and undo log due to TransRelatedLSN
+   #define DPS_TRANS_LOG_UNDO_DELTA  ( 12 )
    /*
       dpsTransCB define
    */

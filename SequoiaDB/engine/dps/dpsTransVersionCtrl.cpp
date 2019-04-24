@@ -173,7 +173,7 @@ namespace engine
    /*
       preIdxTree implement
    */
-   preIdxTree::preIdxTree( const UINT32 idxID, const ixmIndexCB *indexCB )
+   preIdxTree::preIdxTree( const SINT32 idxID, const ixmIndexCB *indexCB )
    {
       _isValid = TRUE ;
       _idxLID = idxID ;
@@ -460,17 +460,21 @@ namespace engine
       {
          if ( _isValid )
          {
-            PD_LOG( PDWARNING, "No found records in index tree with key[%s]",
+            PD_LOG( PDWARNING, 
+                    "Did not find records in index tree(%d) with key[%s]",
+                    _idxLID,
                     keyNode.toString().c_str() ) ;
+#ifdef _DEBUG
+            printTree() ;
+#endif
             SDB_ASSERT( ( 1 == numDeleted ),
                         "Delete record number must be 1" ) ;
-            printTree() ;
          }
       }
       else
       {
-         PD_LOG( PDDEBUG, "Has removed one record from index tree, "
-                 "Key[%s], Value[%s]", keyNode.toString().c_str(),
+         PD_LOG( PDDEBUG, "Has removed one record from index tree(%d), "
+                 "Key[%s], Value[%s]", _idxLID, keyNode.toString().c_str(),
                  tmpValue.toString().c_str() ) ;
       }
 

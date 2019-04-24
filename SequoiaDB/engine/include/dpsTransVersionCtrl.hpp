@@ -283,7 +283,7 @@ namespace engine
    // public interfaces:
    public: 
       // constructors & destructors
-      preIdxTree( const UINT32 idxID, const ixmIndexCB *indexCB ) ;
+      preIdxTree( const SINT32 idxID, const ixmIndexCB *indexCB ) ;
 
       // copy constructor
       preIdxTree( const preIdxTree &intree ) ;
@@ -302,7 +302,7 @@ namespace engine
       }
 
       // get index logic ID
-      UINT32 getLID() const
+      SINT32 getLID() const
       {
          return _idxLID ;
       }
@@ -432,7 +432,7 @@ namespace engine
    // private attributes:
    private:
       BOOLEAN              _isValid ;
-      UINT32               _idxLID ; // index logic id
+      SINT32               _idxLID ; // index logic id
       // Latching protocal
       // 1. preIdxTree latch must be held in X to insert/delete node in the tree
       //    oldVersionCB(_oldVersionCBLatch) need to be held in S before
@@ -545,7 +545,7 @@ namespace engine
          _idxLID = -1 ;
       }
 
-      dpsIdxObj( const BSONObj &key, INT32 idxLID )
+      dpsIdxObj( const BSONObj &key, SINT32 idxLID )
       :_idxLID( idxLID ), _idxObj( key.getOwned() )
       {
       }

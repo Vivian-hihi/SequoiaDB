@@ -952,6 +952,8 @@ namespace engine
    INT32 dpsTransCB::reservedLogSpace( UINT32 length, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      // undo log size has extra field, need to add the delta
+      UINT32 rblength = length + DPS_TRANS_LOG_UNDO_DELTA ;
 
       if ( !_isOn || ( cb && cb->isInRollback() ) )
       {
@@ -960,7 +962,7 @@ namespace engine
 
       {
          _reservedSpace.add( length ) ;
-         _reservedRBSpace.add( length ) ;
+         _reservedRBSpace.add( rblength ) ;
       }
 
       if ( remainLogSpace() == 0 )
@@ -982,11 +984,11 @@ namespace engine
 #endif
 
          rc = SDB_DPS_LOG_FILE_OUT_OF_SIZE ;
-         _reservedRBSpace.sub( length ) ;
+         _reservedRBSpace.sub( rblength ) ;
          _reservedSpace.sub( length ) ;
          goto error ;
       }
-      cb->addReservedSpace( length ) ;
+      cb->addReservedSpace( rblength ) ;
    done:
       return rc;
    error:
