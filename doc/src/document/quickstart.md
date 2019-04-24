@@ -272,7 +272,7 @@
   running. (PID: 1493)
   ```
 
-## 操作环境准备 ##
+## 部署 SequoiaDB 及 SequoiaSQL-MySQL ##
 
 - 使用 root 用户或者管理员用户登录主机
 
@@ -284,13 +284,13 @@
    $ netstat -anp | grep 11800
    ```
    
-   SequoiaDB 默认需要的端口号为 11800、11810、11820、11830、11840，SequoiaSQL-MySQL 默认需要的端口号为 3306。请确保这些端口没有被占用。
+   SequoiaDB 默认需要的端口号为 11800、11810、11820、11830、11840、18800，SequoiaSQL-MySQL 默认需要的端口号为 3306。请确保这些端口没有被占用。
 
    > **Note:**
    > 
    > * 如果需要修改创建节点的端口号，可在 tools/deploy/sequoiadb.conf 和 tools/deploy/mysql.conf 中修改配置。
-   > * 如果需要部署 SequoiaDB 到多台机器，请确保配置了主机/ IP 的映射关系，详细见[配置主机名和主机名/ IP 映射关系](installation/system/system_requirement.md#软件要求)。
-
+   > * 如果需要部署 SequoiaDB 到多台机器，请确保所有主机均已安装了 SequoiaDB，并配置了[主机/ IP 的映射关系](installation/system/system_requirement.md#软件要求)。
+   
 - 使用 sdbadmin 用户登录主机
 
 - 快速部署
@@ -308,11 +308,13 @@
    
    ************ Deploy SequoiaSQL-MySQL *****************
    Create instance: [name: myinst, port: 3306]
-   
-   ************ Deploy SequoiaSQL-PostgreSQL ************
-   This machine has not installed postgresql.
    ```
 
+   > **Note:**
+   > 
+   > * 如果安装 SequoiaDB 时，配置了 Cluster Manager Port 为非默认端口，执行 quickDeploy.sh 需加上 --cm 参数。多台主机需要确保每台主机上的 Cluster Manager 端口一致。
+   
+   
 ## 数据库操作 ##
 
 ### 使用 SequoiaSQL shell 进行 SQL 操作 ###
