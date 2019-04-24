@@ -32,7 +32,6 @@ public class Transaction18228 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl18228";
     private DBCollection cl = null;
-    private List<String> groupNames;
     private List<BSONObject> expList = new ArrayList<>();
 
     @BeforeClass
@@ -45,7 +44,6 @@ public class Transaction18228 extends SdbTestBase {
             throw new SkipException("less than two groups");
         }
 
-        groupNames = CommLib.getDataGroupNames(sdb);
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
                 (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', AutoSplit: true}"));
     }

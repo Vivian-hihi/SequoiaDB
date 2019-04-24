@@ -72,7 +72,8 @@ public class Transaction17130 extends SdbTestBase {
 
     @Test
     public void test1() {
-        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
+        Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        try {
             transDB.beginTransaction();
             DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
             // delete record R2
@@ -94,6 +95,11 @@ public class Transaction17130 extends SdbTestBase {
             actDataList.clear();
 
             transDB.rollback();
+        } finally {
+            transDB.commit();
+            if (transDB != null) {
+                transDB.close();
+            }
         }
 
         expDataList.clear();
@@ -114,7 +120,8 @@ public class Transaction17130 extends SdbTestBase {
 
     @Test
     public void test2() {
-        try (Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
+        Sequoiadb transDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        try {
             transDB.beginTransaction();
             DBCollection transCL = transDB.getCollectionSpace(csName).getCollection(clName);
             // delete record R2
@@ -136,6 +143,11 @@ public class Transaction17130 extends SdbTestBase {
             actDataList.clear();
 
             transDB.commit();
+        } finally {
+            transDB.commit();
+            if (transDB != null) {
+                transDB.close();
+            }
         }
 
         recordCur = cl.query(null, null, null, "{'': null}");

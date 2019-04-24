@@ -139,10 +139,10 @@ public class Transaction17185 extends SdbTestBase {
             List<BSONObject> expRecords1 = getExpRecords();
             List<BSONObject> expRecords2 = new ArrayList<>(expRecords1);
             Collections.reverse(expRecords2);
-            
+
             QueryThread positiveThread = new QueryThread(cl4, "{a:1}", "{'':'textIndex17185'}", expRecords1);
             positiveThread.start();
-            
+
             QueryThread reverseThread = new QueryThread(cl5, "{a:-1}", "{'':'textIndex17185'}", expRecords2);
             reverseThread.start();
 
@@ -152,23 +152,22 @@ public class Transaction17185 extends SdbTestBase {
 
             QueryThread reverseThread2 = new QueryThread(cl7, "{a:-1}", "{'':null}", expRecords2);
             reverseThread2.start();
-            
 
             Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
             Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
             Assert.assertTrue(deleteThread.isSuccess(), deleteThread.getErrorMsg());
             Assert.assertTrue(positiveThread.isSuccess(), positiveThread.getErrorMsg());
             Assert.assertTrue(reverseThread.isSuccess(), reverseThread.getErrorMsg());
-            
+
             Assert.assertTrue(positiveThread2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
             Assert.assertTrue(reverseThread2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
-            
+
             db1.commit();
             db2.commit();
             db3.commit();
             db4.commit();
             db5.commit();
-            
+
             Assert.assertTrue(positiveThread2.isSuccess(), positiveThread2.getErrorMsg());
             Assert.assertTrue(reverseThread2.isSuccess(), reverseThread2.getErrorMsg());
 
@@ -203,7 +202,7 @@ public class Transaction17185 extends SdbTestBase {
             System.out.println("结束事务，索引 " + indexKey + " --");
         }
     }
-    
+
     private void insertData() {
         List<BSONObject> records = new ArrayList<>();
         for (int i = 1; i <= 40000; i++) {
@@ -290,11 +289,11 @@ public class Transaction17185 extends SdbTestBase {
             latch.countDown();
         }
     }
-    
+
     private List<BSONObject> getExpRecords() {
         List<BSONObject> expRecords = new ArrayList<>();
-        for(int i = 20001; i <= 40000; i++) {
-            BSONObject record = (BSONObject)JSON.parse("{_id:"+i+", a:"+i+", b:"+i+"}");
+        for (int i = 20001; i <= 40000; i++) {
+            BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ", a:" + i + ", b:" + i + "}");
             expRecords.add(record);
         }
         return expRecords;

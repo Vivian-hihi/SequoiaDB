@@ -57,6 +57,10 @@ public class Transaction17211 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
+        db3.commit();
+
         // 关闭所有游标
         sdb.closeAllCursors();
         db1.closeAllCursors();

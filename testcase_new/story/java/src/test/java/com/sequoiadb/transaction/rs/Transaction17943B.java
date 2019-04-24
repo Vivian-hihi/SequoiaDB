@@ -144,9 +144,8 @@ public class Transaction17943B extends SdbTestBase {
                     }
                     Thread.sleep(1000);
                 }
-            } catch (Exception e) {
-                throw e;
             } finally {
+                db.commit();
                 db.close();
                 latch.countDown();
             }
@@ -165,7 +164,8 @@ public class Transaction17943B extends SdbTestBase {
 
                     // 开启查询事务
                     db.beginTransaction();
-                    String sql = "select sum(a) as sum from " + csName + "." + clName + " /*+use_index(textIndex17943B)*/";
+                    String sql = "select sum(a) as sum from " + csName + "." + clName
+                            + " /*+use_index(textIndex17943B)*/";
                     DBCursor cursor = null;
                     List<BSONObject> actNums = null;
                     try {
@@ -196,9 +196,8 @@ public class Transaction17943B extends SdbTestBase {
                     }
                     Thread.sleep(200);
                 }
-            } catch (Exception e) {
-                throw e;
             } finally {
+                db.commit();
                 db.closeAllCursors();
                 db.close();
                 latch.countDown();

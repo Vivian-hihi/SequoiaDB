@@ -14,11 +14,11 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -125,9 +125,6 @@ public class Transaction17153 extends SdbTestBase {
                 Assert.assertTrue(TransUtils.getReadActList(cursor).isEmpty());
 
                 db2.commit();
-            } catch (BaseException e) {
-                e.printStackTrace();
-                throw e;
             } finally {
                 db2.commit();
                 cursor.close();

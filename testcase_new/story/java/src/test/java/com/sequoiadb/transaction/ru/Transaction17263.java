@@ -140,8 +140,11 @@ public class Transaction17263 extends SdbTestBase {
         actDataList.clear();
     }
 
-    @AfterClass(enabled = false)
+    @AfterClass
     public void tearDown() {
+        sdb.commit();
+        sdb2.commit();
+
         sdb.getCollectionSpace(csName).dropCollection(clName);
         if (recordCur != null) {
             recordCur.close();

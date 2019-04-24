@@ -69,6 +69,8 @@ public class Transaction17121 extends SdbTestBase {
             Assert.fail("insert an existing record with an index,should be failed");
         } catch (BaseException e) {
             Assert.assertEquals(e.getErrorCode(), -38, e.getMessage());
+        } finally {
+            sdb.commit();
         }
 
         recordCur = cl.query(null, null, null, "{'': null}");

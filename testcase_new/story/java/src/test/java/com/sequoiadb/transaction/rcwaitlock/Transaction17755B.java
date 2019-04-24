@@ -146,7 +146,6 @@ public class Transaction17755B extends SdbTestBase {
             actList.clear();
 
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             Assert.fail();
         }

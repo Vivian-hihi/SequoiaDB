@@ -93,6 +93,8 @@ public class Transaction17135A extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        sdb1.commit();
+
         sdb.getCollectionSpace(csName).dropCollection(clName);
         if (recordCur != null) {
             recordCur.close();

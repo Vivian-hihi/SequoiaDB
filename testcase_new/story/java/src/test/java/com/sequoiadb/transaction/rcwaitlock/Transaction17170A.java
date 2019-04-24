@@ -122,7 +122,6 @@ public class Transaction17170A extends SdbTestBase {
             Assert.assertEquals(tableScanThread3.getExecResult(), -13);
 
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             Assert.fail();
         }

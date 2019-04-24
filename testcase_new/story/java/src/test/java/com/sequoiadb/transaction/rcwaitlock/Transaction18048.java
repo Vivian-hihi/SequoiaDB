@@ -38,44 +38,48 @@ public class Transaction18048 extends SdbTestBase {
     @Test(dataProvider = "provider_18048", invocationCount = 5)
     public void test(String clName) {
         Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        DBCollection cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        cl.createIndex("a", "{a:1}", false, false);
-        insertR1s = TransUtils.insertRandomDatas(cl, 0, 10000);
-
         Sequoiadb db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        DBCollection cl1 = db1.getCollectionSpace(csName).getCollection(clName);
-        db1.beginTransaction();
-        TransUtils.insertRandomDatas(cl1, 10000, 20000);
-        cl1.delete(null, "{'':'a'}");
-
-        Read read1 = new Read(clName, "{'':null}");
-        read1.start();
-        Assert.assertTrue(read1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
-
-        Read read2 = new Read(clName, "{'':'a'}");
-        read2.start();
-        Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
-
-        db1.rollback();
-        if (!read1.isSuccess() || !read2.isSuccess()) {
-            Assert.fail(read1.getErrorMsg() + read2.getErrorMsg());
-        }
         try {
-            Assert.assertEquals(read1.getExecResult(), insertR1s);
-            Assert.assertEquals(read2.getExecResult(), insertR1s);
-        } catch (Exception e) {
-            Assert.fail(e.getMessage());
-        }
+            DBCollection cl = sdb.getCollectionSpace(csName).createCollection(clName);
+            cl.createIndex("a", "{a:1}", false, false);
+            insertR1s = TransUtils.insertRandomDatas(cl, 0, 10000);
 
-        if (!db1.isClosed()) {
-            db1.close();
-        }
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
-        if (cs.isCollectionExist(clName)) {
-            cs.dropCollection(clName);
-        }
-        if (!sdb.isClosed()) {
-            sdb.close();
+            DBCollection cl1 = db1.getCollectionSpace(csName).getCollection(clName);
+            db1.beginTransaction();
+            TransUtils.insertRandomDatas(cl1, 10000, 20000);
+            cl1.delete(null, "{'':'a'}");
+
+            Read read1 = new Read(clName, "{'':null}");
+            read1.start();
+            Assert.assertTrue(read1.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
+
+            Read read2 = new Read(clName, "{'':'a'}");
+            read2.start();
+            Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
+
+            db1.rollback();
+            if (!read1.isSuccess() || !read2.isSuccess()) {
+                Assert.fail(read1.getErrorMsg() + read2.getErrorMsg());
+            }
+            try {
+                Assert.assertEquals(read1.getExecResult(), insertR1s);
+                Assert.assertEquals(read2.getExecResult(), insertR1s);
+            } catch (Exception e) {
+                Assert.fail(e.getMessage());
+            }
+
+        } finally {
+            db1.commit();
+            if (!db1.isClosed()) {
+                db1.close();
+            }
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
+            }
+            if (!sdb.isClosed()) {
+                sdb.close();
+            }
         }
     }
 
@@ -87,24 +91,26 @@ public class Transaction18048 extends SdbTestBase {
         private DBCursor cursor = null;
 
         public Read(String clName, String hint) {
-            // TODO Auto-generated constructor stub
             this.clName = clName;
             this.hint = hint;
         }
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            db.beginTransaction();
-            cl = db.getCollectionSpace(csName).getCollection(clName);
+            try {
+                db.beginTransaction();
+                cl = db.getCollectionSpace(csName).getCollection(clName);
 
-            cursor = cl.query(null, null, "{a : 1}", hint);
-            List<BSONObject> records = TransUtils.getReadActList(cursor);
-            setExecResult(records);
-            db.rollback();
-            cursor.close();
-            db.close();
+                cursor = cl.query(null, null, "{a : 1}", hint);
+                List<BSONObject> records = TransUtils.getReadActList(cursor);
+                setExecResult(records);
+                db.rollback();
+            } finally {
+                db.commit();
+                cursor.close();
+                db.close();
+            }
         }
     }
 }

@@ -155,9 +155,6 @@ public class Transaction17960 extends SdbTestBase {
                     }
                     Thread.sleep(1000);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
             } finally {
                 db.commit();
                 db.close();
@@ -213,9 +210,6 @@ public class Transaction17960 extends SdbTestBase {
                     }
                     Thread.sleep(1000);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
             } finally {
                 db.commit();
                 db.close();
@@ -267,9 +261,6 @@ public class Transaction17960 extends SdbTestBase {
                     }
                     Thread.sleep(200);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
             } finally {
                 db.commit();
                 db.closeAllCursors();
@@ -302,9 +293,6 @@ public class Transaction17960 extends SdbTestBase {
                     }
                     Thread.sleep(6000);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
             } finally {
                 db.commit();
                 db.close();

@@ -220,6 +220,10 @@ public class Transaction17835B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        sdb1.commit();
+        sdb2.commit();
+        sdb3.commit();
+
         if (recordCur != null) {
             recordCur.close();
         }

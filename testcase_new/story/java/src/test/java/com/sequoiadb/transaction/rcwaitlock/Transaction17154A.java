@@ -14,11 +14,11 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -28,7 +28,6 @@ public class Transaction17154A extends SdbTestBase {
     private String clName = "cl_17154A";
     private Sequoiadb sdb = null;
     private Sequoiadb db1 = null;
-    private Sequoiadb db2 = null;
     private DBCollection cl = null;
     private DBCollection cl1 = null;
     private DBCursor cursor = null;
@@ -38,7 +37,6 @@ public class Transaction17154A extends SdbTestBase {
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
@@ -49,7 +47,6 @@ public class Transaction17154A extends SdbTestBase {
     public void test() {
         // 开启事务1及事务2
         db1.beginTransaction();
-        db2.beginTransaction();
 
         // 事务1更新索引字段的值
         cl1.update(null, "{$set:{a:2}}", "{'':'a'}");
@@ -113,7 +110,6 @@ public class Transaction17154A extends SdbTestBase {
         private List<BSONObject> expScanList = new ArrayList<BSONObject>();
 
         public Read(String findConf, String hint, List<BSONObject> expScanList) {
-            // TODO Auto-generated constructor stub
             this.hint = hint;
             this.findConf = findConf;
             this.expScanList = expScanList;
@@ -122,7 +118,6 @@ public class Transaction17154A extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            // TODO Auto-generated method stub
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             cl = db.getCollectionSpace(csName).getCollection(clName);
@@ -145,9 +140,6 @@ public class Transaction17154A extends SdbTestBase {
                 Assert.assertEquals(TransUtils.getReadActList(cursor), expScanList);
 
                 db2.commit();
-            } catch (BaseException e) {
-                e.printStackTrace();
-                throw e;
             } finally {
                 db2.commit();
                 cursor.close();

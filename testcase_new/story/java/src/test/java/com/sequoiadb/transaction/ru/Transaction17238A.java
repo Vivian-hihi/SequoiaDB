@@ -51,6 +51,10 @@ public class Transaction17238A extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
+        db3.commit();
+
         if (!db1.isClosed()) {
             db1.close();
         }
@@ -69,6 +73,7 @@ public class Transaction17238A extends SdbTestBase {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void test() {
         // 开启并发事务

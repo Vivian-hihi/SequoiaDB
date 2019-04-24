@@ -32,7 +32,6 @@ public class Transaction18233 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl18233";
     private DBCollection cl = null;
-    private DBCollection subCL2;
     private List<String> groupNames;
     private List<BSONObject> expList = new ArrayList<>();
 
@@ -51,7 +50,7 @@ public class Transaction18233 extends SdbTestBase {
                 (BSONObject) JSON.parse("{ShardingType:'range', ShardingKey:{a:1}, IsMainCL:true}"));
         sdb.getCollectionSpace(csName).createCollection("subCL1",
                 (BSONObject) JSON.parse("{Group:'" + groupNames.get(0) + "'}"));
-        subCL2 = sdb.getCollectionSpace(csName).createCollection("subCL2",
+        sdb.getCollectionSpace(csName).createCollection("subCL2",
                 (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', AutoSplit: true}"));
         cl.attachCollection(csName + ".subCL1", (BSONObject) JSON.parse("{LowBound:{a:0}, UpBound:{a:1000}}"));
         cl.attachCollection(csName + ".subCL2", (BSONObject) JSON.parse("{LowBound:{a:1000}, UpBound:{a:2000}}"));

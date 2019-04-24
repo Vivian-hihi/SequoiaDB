@@ -46,6 +46,8 @@ public class Transaction17204 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        db1.commit();
+        db2.commit();
         if (!db1.isClosed()) {
             db1.close();
         }
