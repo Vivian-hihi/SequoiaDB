@@ -1200,7 +1200,7 @@ namespace engine
                  obj.objdata(), obj.objsize() ) ;
 
 #ifdef _DEBUG
-      PD_LOG ( PDDEBUG, "Saved old copy for rid(%d,%d) to oldVer(%d)",
+      PD_LOG ( PDDEBUG, "Saved old copy for rid(%d,%d) to oldVer(%x)",
                _rid._extent, _rid._offset, this ) ;
 #endif //_DEBUG
 
