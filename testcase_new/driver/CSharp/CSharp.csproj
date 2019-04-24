@@ -218,6 +218,10 @@
     <Compile Include="Sessionaccess\SessionAccess14184.cs" />
     <Compile Include="Sessionaccess\SessionAccess14187.cs" />
     <Compile Include="Sessionaccess\SessionAccessUtil.cs" />
+    <Compile Include="Transaction\TestTransaction14565.cs" />
+    <Compile Include="Transaction\TestTransaction14566.cs" />
+    <Compile Include="Backup\TestBackup14569.cs" />
+    <Compile Include="Backup\TestBackup14570.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
