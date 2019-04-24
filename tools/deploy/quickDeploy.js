@@ -280,11 +280,37 @@ function getSqlConf( dbType, installedPath )
       
       if ( aLine.substr( 0,1 ) == "#" ) continue ;   // this line is a note
 
+      // split line 
       var instanceConf = aLine.split( "," ) ;
-      if ( instanceConf.length != 4 )
+      var len = instanceConf.length ;
+      if ( len < 4 )
       {
          println( "Invalid configure file!" ) ;
          throw "ERROR" ;
+      }
+      if ( len > 4 )
+      {
+         var coordAddr = "" ;
+         for ( var i = 3; i < len ; i++ )
+         {
+            coordAddr += instanceConf[i] ;
+            if ( i != ( len - 1 ) )
+            {
+               coordAddr += "," ;
+            }
+         }
+         // check first char is '[', last char is ']'
+         if ( coordAddr.substr( 0, 1 ) != "[" || coordAddr.substr( -1, 1 ) != "]" )
+         {
+            println( "Invalid configure file!" ) ;
+            throw "ERROR" ;
+         }
+         // delete the '[' at the beginning of the line
+         coordAddr = coordAddr.replace( /(^\[)/, '' ) ;
+         // delete the ']' at the end of the line
+         coordAddr = coordAddr.replace( /(\]$)/, '' ) ;
+         instanceConf[3] = coordAddr ;
+         instanceConf.splice( 4, len - 4 ) ;
       }
       
       // replace installed path
@@ -826,10 +852,6 @@ function deployMysql( ignoreNotInstall )
 
       try
       {
-         // start instance
-         var command = sqlCtl + " start " + instanceName ;
-         cmd.run( command ) ;
-         
          // set coord address
          var coordSetting = "sequoiadb_conn_addr=\"" + coordAddr + "\"" ;
          var file = new File( databaseDir + "/auto.cnf" ) ;
@@ -841,6 +863,10 @@ function deployMysql( ignoreNotInstall )
          }
          file.seek( 0 ) ;
          file.write( content ) ;
+         
+         // restart instance to make the configuration take effect
+         var command = sqlCtl + " restart " + instanceName ;
+         cmd.run( command ) ;
       }
       catch( e )
       {
