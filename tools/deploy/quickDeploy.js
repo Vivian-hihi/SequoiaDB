@@ -4,12 +4,14 @@
 @input:        sdb:   Boolean
                mysql: Boolean
                pg:    Boolean
-               cmport: 11790
+               cm:    Number, default: 11790
 
-               eg: bin/sdb -f quickDeploy.js -e 'var sdb=true; var mysql=true'
+               eg: bin/sdb -f quickDeploy.js -e 'var sdb=true; var mysql=true; var cm=11790'
 
 @author:       Ting YU 2019-04-12   
 ****************************************************************/
+
+var USER_SET_DEPLOY = true ;
 
 // check parameter
 if ( typeof( sdb ) === "undefined" && 
@@ -19,6 +21,7 @@ if ( typeof( sdb ) === "undefined" &&
    var sdb = true ;
    var mysql = true ;
    var pg = true ;
+   USER_SET_DEPLOY = false ;
 }
 
 if ( typeof( sdb ) === "undefined" )
@@ -48,20 +51,20 @@ else if( pg.constructor !== Boolean )
    throw "Invalid para[pg], should be Boolean" ; 
 }
 
-if ( typeof( cmport ) === "undefined" )
+if ( typeof( cm ) === "undefined" )
 {
-   var cmport = 11790 ;
+   var cm = 11790 ;
 }
-else if( cmport.constructor !== Number )
+else if( cm.constructor !== Number )
 { 
-   throw "Invalid para[cmport], should be Number" ; 
+   throw "Invalid para[cm], should be Number" ; 
 }
 
 // set global variable
 var DEPLOY_SEQUOIADB  = sdb ;
 var DEPLOY_MYSQL      = mysql ;
 var DEPLOY_POSTGRESQL = pg ;
-var LOCAL_CM_PORT     = cmport ;
+var LOCAL_CM_PORT     = cm ;
 var TMP_COORD_SVC     = 18800 ;
 var MY_HOSTNAME       = System.getHostName() ;
 var TRANSACTION_CONF  = { transactionon: true, transautocommit: true } ;
@@ -71,17 +74,20 @@ main() ;
 
 function main() 
 {
+   var ignoreNotInstall = true ;
+   if ( USER_SET_DEPLOY ) ignoreNotInstall = false ;
+   
    if ( DEPLOY_SEQUOIADB )
    {
       deploySequoiadb() ;
    }
    if ( DEPLOY_MYSQL )
    {
-      deployMysql() ;
+      deployMysql( ignoreNotInstall ) ;
    }
    if ( DEPLOY_POSTGRESQL )
    {
-      deployPostgresql() ;
+      deployPostgresql( ignoreNotInstall ) ;
    }
 }
 
@@ -92,16 +98,19 @@ function main()
 //   "INSTALL_DIR": "/opt/sequoiasql/mysql",
 //   "MD5": "818cea64849dff4c1b572a6d6af5d757"
 // }
-function getSqlInstallInfo( dbType )
+function getSqlInstallInfo( dbType, ignoreNotInstall )
 {
    var systemFile = "" ;
+   var dbFullType = "" ;
    if ( dbType == "mysql" )
    {
       systemFile = "/etc/default/sequoiasql-mysql" ;
+      dbFullType = "SequoiaSQL-MySQL" ;
    }
    else if ( dbType == "postgresql" )
    {
       systemFile = "/etc/default/sequoiasql-postgresql" ;
+      dbFullType = "SequoiaSQL-PostgreSQL" ;
    }
    else
    {
@@ -117,8 +126,9 @@ function getSqlInstallInfo( dbType )
    {
       if ( e == -4 )
       {
-         println( "This machine has not installed " + dbType + "." ) ;
-         return ;
+         if ( ignoreNotInstall ) return ;
+         println( "ERROR: This machine has not installed " + dbFullType + "!" ) ;
+         throw "ERROR" ;
       }
       else
       {
@@ -158,7 +168,16 @@ function getSqlInstallInfo( dbType )
 // }
 function getSequoiadbInstallInfo( hostName )
 {
-   var oma = new Oma( MY_HOSTNAME, LOCAL_CM_PORT ) ;
+   try
+   {
+      var oma = new Oma( MY_HOSTNAME, LOCAL_CM_PORT ) ;
+   }
+   catch( e )
+   {
+       
+      println( "Unexpected error[" + e + "] when connecting cm[" + MY_HOSTNAME + ":" + LOCAL_CM_PORT + "]!" ) ;
+      throw e ;
+   }
 
    try
    {
@@ -181,8 +200,8 @@ function getSequoiadbInstallInfo( hostName )
    {
       if ( e == -4 )
       {
-         println( "This machine has not installed sequoiadb." ) ;
-         return ;
+         println( "ERROR: This machine has not installed SequoiaDB!" ) ;
+         throw "ERROR" ;
       }
       else
       {
@@ -742,18 +761,26 @@ function deploySequoiadb()
    removeTmpCoord() ;
 }
 
-function deployMysql() 
+function deployMysql( ignoreNotInstall ) 
 {
-   println( "\n************ Deploy SequoiaSQL-MySQL *****************" ) ;
+   if ( !ignoreNotInstall )
+   {
+      println( "\n************ Deploy SequoiaSQL-MySQL *****************" ) ;
+   }
    
    // check it has installation or not
-   var installInfo = getSqlInstallInfo( "mysql" ) ;
-   if ( installInfo == undefined )
+   var installInfo = getSqlInstallInfo( "mysql", ignoreNotInstall ) ;
+   if ( installInfo == undefined && ignoreNotInstall )
    {
       return ;
    }
    var installedPath = installInfo.INSTALL_DIR ;
 
+   if ( ignoreNotInstall )
+   {
+      println( "\n************ Deploy SequoiaSQL-MySQL *****************" ) ;
+   }
+   
    // check user
    checkUser( "mysql", installInfo ) ;
 
@@ -824,17 +851,25 @@ function deployMysql()
    }
 }
 
-function deployPostgresql() 
+function deployPostgresql( ignoreNotInstall ) 
 {
-   println( "\n************ Deploy SequoiaSQL-PostgreSQL ************" ) ;
+   if ( !ignoreNotInstall )
+   {
+      println( "\n************ Deploy SequoiaSQL-PostgreSQL ************" ) ;
+   }
    
    // check it has installation or not
-   var installInfo = getSqlInstallInfo( "postgresql" ) ;
-   if ( installInfo == undefined )
+   var installInfo = getSqlInstallInfo( "postgresql", ignoreNotInstall ) ;
+   if ( installInfo == undefined && ignoreNotInstall )
    {
       return ;
    }
    var installedPath = installInfo.INSTALL_DIR ;
+   
+   if ( ignoreNotInstall )
+   {
+      println( "\n************ Deploy SequoiaSQL-PostgreSQL ************" ) ;
+   }
 
    // check user
    checkUser( "postgresql", installInfo ) ;
