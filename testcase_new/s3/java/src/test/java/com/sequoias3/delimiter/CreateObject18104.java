@@ -64,11 +64,12 @@ public class CreateObject18104 extends S3TestBase {
 
 	@Test(dependsOnMethods = "testCreateObject")
 	public void testListObjectResult() {
-		List<String> expKeyList = new ArrayList<>();
+		List<String> expCommonPrefixList = new ArrayList<>();
 		for (int i = 0; i < keyNum; i++) {
-			expKeyList.add(keyName + "_" + i + "%");
+			expCommonPrefixList.add(keyName + "_" + i + "%");
 		}
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expKeyList);
+		List<String> expContextList = new ArrayList<>();
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommonPrefixList, expContextList);
 	}
 
 	@Test(dependsOnMethods = "testListObjectResult")
@@ -78,8 +79,9 @@ public class CreateObject18104 extends S3TestBase {
 			s3Client.deleteObject(bucketName, subKeyName);
 		}
 		// check the content of the create object
-		List<String> expKeyList = new ArrayList<>();
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expKeyList);
+		List<String> expCommprefixList = new ArrayList<>();
+		List<String> expContentList = new ArrayList<>();
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixList, expContentList);
 		runSuccess = true;
 
 	}

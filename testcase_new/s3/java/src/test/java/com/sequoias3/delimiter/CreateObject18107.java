@@ -43,24 +43,31 @@ public class CreateObject18107 extends S3TestBase {
 		DelimiterUtils.putBucketDelimiter(bucketName, firstDelimiter);
 		String firstContext = "testcreateObject18107";
 		s3Client.putObject(bucketName, keyName, firstContext);
-		List<String> expKeyList1 = new ArrayList<>();
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, firstDelimiter, expKeyList1);
+		List<String> expCommprefixList1 = new ArrayList<>();
+		List<String> expContentList1 = new ArrayList<>();
+		expContentList1.add(keyName);
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, firstDelimiter, expCommprefixList1,
+				expContentList1);
 
 		// second update delimiter, than put object with the same key
 		DelimiterUtils.updateDelimiterSuccessAgain(bucketName, secondDelimiter);
 		String secondContext = "testcreateObjectsecond18107";
 		s3Client.putObject(bucketName, keyName, secondContext);
-		List<String> expKeyList2 = new ArrayList<>();
-		expKeyList2.add("aa/bb/?");
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, secondDelimiter, expKeyList2);
+		List<String> expCommprefixList2 = new ArrayList<>();
+		expCommprefixList2.add("aa/bb/?");
+		List<String> expContentList2 = new ArrayList<>();
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, secondDelimiter, expCommprefixList2,
+				expContentList2);
 
 		// third update delimiter, than put object with the same key
 		DelimiterUtils.updateDelimiterSuccessAgain(bucketName, defaultDelimiter);
 		String thirdContext = "testcreateObjectthird18107";
 		s3Client.putObject(bucketName, keyName, thirdContext);
-		List<String> expKeyList3 = new ArrayList<>();
-		expKeyList3.add("aa/");
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, defaultDelimiter, expKeyList3);
+		List<String> expCommprefixList3 = new ArrayList<>();
+		expCommprefixList3.add("aa/");
+		List<String> expContentList3 = new ArrayList<>();
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, defaultDelimiter, expCommprefixList3,
+				expContentList3);
 
 		runSuccess = true;
 	}

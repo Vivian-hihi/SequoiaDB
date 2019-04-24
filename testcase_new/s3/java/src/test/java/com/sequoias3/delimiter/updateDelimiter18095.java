@@ -34,7 +34,7 @@ public class updateDelimiter18095 extends S3TestBase {
 		try {
 			DelimiterUtils.getDelimiter(bucketName);
 		} catch (AmazonS3Exception e) {
-			if (e.getStatusCode() != 500 && !e.getErrorCode().contains("GetBucketDelimiterFailed")) {
+			if (e.getStatusCode() != 404 && !e.getErrorCode().contains("NoSuchBucket")) {
 				Assert.fail("get delimiter fail! e=" + e.getErrorCode() + e.getStatusCode());
 			}
 		}

@@ -26,7 +26,7 @@ public class updateDelimiter18079 extends S3TestBase {
 	private String keyName = "/test/aa/object18079";
 	private int keyNums = 10;
 	private String delimiter = "%";
-	private List<String> expKeyList = new ArrayList<>();
+	private List<String> expCommprefixList = new ArrayList<>();
 	private AmazonS3 s3Client = null;
 
 	@BeforeClass
@@ -40,7 +40,7 @@ public class updateDelimiter18079 extends S3TestBase {
 			String subKeyName = keyName + "_" + i + "_%test.png";
 			s3Client.putObject(bucketName, subKeyName, "context18079" + i);
 			String matchDir = keyName + "_" + i + "_%";
-			expKeyList.add(matchDir);
+			expCommprefixList.add(matchDir);
 		}
 	}
 
@@ -49,7 +49,9 @@ public class updateDelimiter18079 extends S3TestBase {
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expKeyList);
+
+		List<String> expContentList = new ArrayList<>();
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixList, expContentList);
 		runSuccess = true;
 	}
 

@@ -56,7 +56,8 @@ public class CreateObject18102 extends S3TestBase {
 		checkCreateObjectReslut(bucketName);
 		List<String> expKeyList = new ArrayList<>();
 		expKeyList.add("aa/");
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, defaultDelimiter, expKeyList);
+		List<String> expContentList = new ArrayList<>();
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, defaultDelimiter, expKeyList, expContentList);
 		runSuccess = true;
 	}
 

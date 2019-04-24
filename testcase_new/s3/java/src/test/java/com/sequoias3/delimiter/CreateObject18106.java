@@ -55,7 +55,10 @@ public class CreateObject18106 extends S3TestBase {
 		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 
 		List<String> matchDelimiterKeyList = new ArrayList<>();
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, newDelimiter, matchDelimiterKeyList);
+		List<String> expContentList = new ArrayList<>();
+		expContentList.add(keyName);
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, newDelimiter, matchDelimiterKeyList,
+				expContentList);
 		runSuccess = true;
 	}
 

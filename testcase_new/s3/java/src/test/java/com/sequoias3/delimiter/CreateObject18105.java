@@ -70,7 +70,9 @@ public class CreateObject18105 extends S3TestBase {
 			String matchDelimiterKey = keyName + "_" + i + "_" + delimiter;
 			matchDelimiterKeyList.add(matchDelimiterKey);
 		}
-		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, matchDelimiterKeyList);
+
+		List<String> expContentList = new ArrayList<>();
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, matchDelimiterKeyList, expContentList);
 
 		deleteObjectAndBucket(keyNameList);
 		deleteRegionAndCheckResult();
