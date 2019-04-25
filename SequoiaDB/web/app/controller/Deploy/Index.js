@@ -655,7 +655,7 @@
       }
 
       //查询鉴权
-      SdbSwap.queryAuth = function( businessName, index ){
+      SdbSwap.queryAuth = function( businessName ){
          //查询鉴权
          var data = {
             'cmd': 'query business authority',
@@ -663,13 +663,24 @@
          }
          SdbRest.OmOperation( data, {
             'success': function( authorityResult ){
-               if( authorityResult.length > 0 )
+               var index = -1 ;
+               $.each( $scope.ModuleList, function( index2, info ){
+                  if( info['BusinessName'] == businessName )
+                  {
+                     index = index2 ;
+                     return false ;
+                  }
+               } ) ;
+               if( index >= 0 )
                {
-                  $scope.ModuleList[index]['authority'] = authorityResult ;
-               }
-               else
-               {
-                  $scope.ModuleList[index]['authority'] = [{}] ;
+                  if( authorityResult.length > 0 )
+                  {
+                     $scope.ModuleList[index]['authority'] = authorityResult ;
+                  }
+                  else
+                  {
+                     $scope.ModuleList[index]['authority'] = [{}] ;
+                  }
                }
             }
          }, {
@@ -706,7 +717,7 @@
 
                   if( moduleInfo['BusinessType'] == 'sequoiadb' || moduleInfo['BusinessType'] == 'sequoiasql-postgresql' || moduleInfo['BusinessType'] == 'sequoiasql-mysql' )
                   {
-                     SdbSwap.queryAuth( moduleInfo['BusinessName'], index2 ) ;
+                     SdbSwap.queryAuth( moduleInfo['BusinessName'] ) ;
                   }
                }
             } ) ;
@@ -1757,6 +1768,7 @@
          $scope.UninstallTips = '' ;
          var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
 
+         clearArray( $scope.RemoveInstanceWindow['config']['inputList'][0]['valid'] ) ;
          $.each( $scope.InstanceList, function( index, moduleInfo ){
             if( clusterName == moduleInfo['ClusterName'] )
             {
@@ -1840,14 +1852,14 @@
       }
 
       //设置鉴权
-      var setAuthority = function( data, businessName, index ){
+      var setAuthority = function( data, businessName ){
          SdbRest.OmOperation( data, {
             'success': function(){
-               SdbSwap.queryAuth( businessName, index ) ;
+               SdbSwap.queryAuth( businessName ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  setAuthority( data, businessName, index ) ;
+                  setAuthority( data, businessName ) ;
                   return true ;
                } ) ;
             }
@@ -1865,9 +1877,9 @@
          }
          
          var user = '' ;
-         if( typeof( $scope.ModuleList[index]['authority'][0]['User'] ) != 'undefined' )
+         if( typeof( $scope.InstanceList[index]['authority'][0]['User'] ) != 'undefined' )
          {
-            user = $scope.ModuleList[index]['authority'][0]['User'] ;
+            user = $scope.InstanceList[index]['authority'][0]['User'] ;
          }
 
          authorityform['inputList'][1]['value'] = '' ;
@@ -1891,7 +1903,7 @@
                      'User': formVal['User'],
                      'Passwd': formVal['Password']
                   } ;
-                  setAuthority( data, businessName, index ) ;
+                  setAuthority( data, businessName ) ;
                   $scope.SetAuthority['callback']['Close']() ;
                }
          } ) ;
@@ -1923,7 +1935,7 @@
             }
             SdbRest.OmOperation( data, {
                'success': function(){
-                  SdbSwap.queryAuth( businessName, index ) ;
+                  SdbSwap.queryAuth( businessName ) ;
                },
                'failed': function( errorInfo, retryRun ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -1990,7 +2002,7 @@
                   'BusinessName': businessName,
                   'DbName' : formVal['DbName']
                } ;
-               setAuthority( data, businessName, index ) ;
+               setAuthority( data, businessName ) ;
                $scope.SetDefaultDbWindow['callback']['Close']() ;
             }
          } ) ;
@@ -3738,14 +3750,14 @@
       }
 
       //设置鉴权
-      var setAuthority = function( data, businessName, index ){
+      var setAuthority = function( data, businessName ){
          SdbRest.OmOperation( data, {
             'success': function(){
-               SdbSwap.queryAuth( businessName, index ) ;
+               SdbSwap.queryAuth( businessName ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  setAuthority( data, businessName, index ) ;
+                  setAuthority( data, businessName ) ;
                   return true ;
                } ) ;
             }
@@ -3763,9 +3775,9 @@
          }
          
          var user = '' ;
-         if( typeof( $scope.ModuleList[index]['authority'][0]['User'] ) != 'undefined' )
+         if( typeof( $scope.StorageList[index]['authority'][0]['User'] ) != 'undefined' )
          {
-            user = $scope.ModuleList[index]['authority'][0]['User'] ;
+            user = $scope.StorageList[index]['authority'][0]['User'] ;
          }
 
          authorityform['inputList'][1]['value'] = '' ;
@@ -3789,7 +3801,7 @@
                      'User': formVal['User'],
                      'Passwd': formVal['Password']
                   } ;
-                  setAuthority( data, businessName, index ) ;
+                  setAuthority( data, businessName ) ;
                   $scope.SetAuthority['callback']['Close']() ;
                }
          } ) ;
@@ -3821,7 +3833,7 @@
             }
             SdbRest.OmOperation( data, {
                'success': function(){
-                  SdbSwap.queryAuth( businessName, index ) ;
+                  SdbSwap.queryAuth( businessName ) ;
                },
                'failed': function( errorInfo, retryRun ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){

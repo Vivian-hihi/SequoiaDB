@@ -292,8 +292,6 @@
 
          var formVal1 = $scope.Form1.getValue() ;
 
-         formVal1['GrantType'] = 'create new user' ;
-
          $.each( formVal1, function( key2, value ){
             if ( isDeployPackage == true && filterDeployKey.indexOf( key2 ) >= 0 )
             {
