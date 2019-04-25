@@ -514,7 +514,7 @@
                   }
                   else
                   {
-                     if ( ( isCompoundTask == false || isSecondTask == true ) && errorNum == 0 )
+                     if ( ( isCompoundTask == false || isSecondTask == true ) && errorNum == 0 && $scope.TaskInfo['TaskName'] == 'ADD_BUSINESS' )
                      {
                         SdbFunction.LocalData( 'ShowRelationTip', null ) ;
                      }
