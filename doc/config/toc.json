@@ -427,6 +427,12 @@
                      "en": "Install and Deploy"
                   },
                   {
+                     "id": 1556198260,
+                     "file": "upgrade",
+                     "cn": "手工升级指导",
+                     "en": "Upgrade guidance"
+                  },
+                  {
                      "id": 1521595283,
                      "file": "connection",
                      "cn": "使用",
