@@ -229,6 +229,7 @@
     <Compile Include="Cluster\TestClusterManage14577.cs" />
     <Compile Include="Cluster\TestConnect14575.cs" />
     <Compile Include="Cluster\TestConnect14576.cs" />
+    <Compile Include="Cluster\TestClusterManage14574.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
