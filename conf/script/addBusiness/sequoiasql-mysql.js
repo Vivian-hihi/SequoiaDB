@@ -191,9 +191,11 @@ function _execSql( PD_LOGGER, port, user, passwd, cmd, installPath, sql, databas
    return result['value'] ;
 }
 
-function _updateRoot( PD_LOGGER, port, cmd, installPath )
+function _updateRoot( PD_LOGGER, port, cmd, installPath, passwd )
 {
-   var str = 'flush privileges;update mysql.user set host = "%" where user = "root";flush privileges;' ;
+   passwd = _string_encode_by_create_user( passwd ) ;
+
+   var str = sprintf( 'flush privileges;update mysql.user set host = "%", authentication_string=password(?) where user = "root";flush privileges;', passwd ) ;
    var error = null ;
 
    try
@@ -337,38 +339,28 @@ function CreateInst( PD_LOGGER )
    resultInfo[FIELD_FLOW].push( sprintf( "Finish to create instance [?]",
                                          hostName ) ) ;
 
-   if( config[FIELD_GRANT_TYPE] == 'grant root' )
-   {
-      error = _updateRoot( PD_LOGGER, port, cmd, installPath ) ;
-      if ( error !== null )
-      {
-         PD_LOGGER.logTask( PDEVENT, cmd.getCommand() ) ;
-         resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
-         resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
-         resultInfo[FIELD_STATUS] = STATUS_FAIL ;
-         resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
-         resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
-         PD_LOGGER.logTask( PDERROR, error ) ;
-         return resultInfo ;
-      }
-   }
-   else if( config[FIELD_GRANT_TYPE] == 'create new user' )
-   {
-      var user = config[FIELD_AUTH_USER] ;
-      var passwd = config[FIELD_AUTH_PASSWD] ;
+   var user = config[FIELD_AUTH_USER] ;
+   var passwd = config[FIELD_AUTH_PASSWD] ;
 
-      error = _createUser( PD_LOGGER, port, cmd, installPath, user, passwd ) ;
-      if ( error !== null )
-      {
-         resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
-         resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
-         resultInfo[FIELD_STATUS] = STATUS_FAIL ;
-         resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
-         resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
-         PD_LOGGER.logTask( PDERROR, error ) ;
-         return resultInfo ;
-      }
+   if( user == 'root' )
+   {
+      error = _updateRoot( PD_LOGGER, port, cmd, installPath, passwd ) ;
    }
+   else
+   {
+      error = _createUser( PD_LOGGER, port, cmd, installPath, user, passwd ) ;
+   }
+   if ( error !== null )
+   {
+      resultInfo[FIELD_ERRNO]  = error.getErrCode() ;
+      resultInfo[FIELD_DETAIL] = getErr( error.getErrCode() ) ;
+      resultInfo[FIELD_STATUS] = STATUS_FAIL ;
+      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
+      resultInfo[FIELD_FLOW].push( error.getErrMsg() ) ;
+      PD_LOGGER.logTask( PDERROR, error ) ;
+      return resultInfo ;
+   }
+
 
    return resultInfo ;
 }

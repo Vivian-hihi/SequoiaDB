@@ -918,16 +918,13 @@ namespace engine
          {
             BSONElement ele = iter.next() ;
             BSONObj oneNode = ele.embeddedObject() ;
-            string grantType ;
+            string user = oneNode.getStringField(
+                                                OM_TASKINFO_FIELD_AUTH_USER ) ;
+            string passwd = oneNode.getStringField(
+                                                OM_TASKINFO_FIELD_AUTH_PASSWD );
 
-            grantType = oneNode.getStringField( OM_PUBLIC_FIELD_GRANT_TYPE ) ;
-            if ( OM_TASK_MANAGER_GRANT_TYPE_CREATE_USER == grantType )
+            if( !user.empty() )
             {
-               string user ;
-               string passwd ;
-
-               user = oneNode.getStringField( OM_TASKINFO_FIELD_AUTH_USER ) ;
-               passwd = oneNode.getStringField( OM_TASKINFO_FIELD_AUTH_PASSWD );
                rc = dbTool.upsertAuth( businessName, user, passwd ) ;
                if ( rc )
                {
