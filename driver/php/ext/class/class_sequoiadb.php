@@ -1891,14 +1891,14 @@ class SequoiaDB
     *    echo "Failed to connect database, error code: ".$err['errno'] ;
     *    return ;
     * }
-    * $err = $db -> backupOffline( array( 'Name' => 'myBackup_1' ) ) ;
+    * $err = $db -> backup( array( 'Name' => 'myBackup_1' ) ) ;
     * if( $err['errno'] != 0 ) {
-    *    echo "Failed to call backupOffline, error code: ".$err['errno'] ;
+    *    echo "Failed to call backup, error code: ".$err['errno'] ;
     *    return ;
     * }
     * @endcode
    */
-   public function backupOffline( array|string $options ){}
+   public function backup( array|string $options ){}
 
    /**
     * List the backups.

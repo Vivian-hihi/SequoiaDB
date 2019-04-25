@@ -2188,7 +2188,7 @@ error:
 }
 
 //backup
-PHP_METHOD( SequoiaDB, backupOffline )
+PHP_METHOD( SequoiaDB, backup )
 {
    INT32 rc = SDB_OK ;
    zval *pOptions = NULL ;

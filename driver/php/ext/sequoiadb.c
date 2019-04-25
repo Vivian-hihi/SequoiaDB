@@ -137,7 +137,7 @@ const zend_function_entry sdbFun[] = {
    PHP_ME( SequoiaDB, transactionCommit,     NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, transactionRollback,   NULL, ZEND_ACC_PUBLIC )
    //backup
-   PHP_ME( SequoiaDB, backupOffline,         NULL, ZEND_ACC_PUBLIC )
+   PHP_ME( SequoiaDB, backup,                NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, listBackup,            NULL, ZEND_ACC_PUBLIC )
    PHP_ME( SequoiaDB, removeBackup,          NULL, ZEND_ACC_PUBLIC )
    //task
@@ -167,6 +167,8 @@ const zend_function_entry sdbFun[] = {
                                    listDomain,       NULL, ZEND_ACC_PUBLIC )
    PHP_MALIAS( SequoiaDB, selectGroup,
                                      getGroup,       NULL, ZEND_ACC_PUBLIC )
+   PHP_MALIAS( SequoiaDB, backupOffline,
+                                       backup,       NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 

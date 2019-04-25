@@ -124,6 +124,15 @@ class SequoiaDB
     * @deprecated This function is deprecated, use the function getGroup() instead.
    */
    public function selectGroup( string $name ){}
+
+   /**
+    * Backup the whole database or specifed replica group.
+    *
+    * @see backup().
+    *
+    * @deprecated This function is deprecated, use the function backup() instead.
+   */
+   public function backupOffline( array|string $options ){}
 }
 
 /**

@@ -96,7 +96,7 @@ PHP_METHOD( SequoiaDB, transactionCommit ) ;
 PHP_METHOD( SequoiaDB, transactionRollback ) ;
 
 //backup
-PHP_METHOD( SequoiaDB, backupOffline ) ;
+PHP_METHOD( SequoiaDB, backup ) ;
 PHP_METHOD( SequoiaDB, listBackup ) ;
 PHP_METHOD( SequoiaDB, removeBackup ) ;
 
