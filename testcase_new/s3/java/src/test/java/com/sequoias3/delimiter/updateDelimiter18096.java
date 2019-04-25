@@ -50,8 +50,8 @@ public class updateDelimiter18096 extends S3TestBase {
 			DelimiterUtils.getDelimiter(bucketName, acessKeys[0]);
 			Assert.fail("exp fail but found success");
 		} catch (AmazonS3Exception e) {
-			// SEQUOIADBMAINSTREAM-4340
-			// Assert.assertEquals(e.getErrorCode(), "AccessDenied");
+			Assert.assertEquals(e.getErrorCode(), "AccessDenied",
+					"errorCode is " + e.getErrorCode() + "  statusCode:" + e.getStatusCode());
 		} finally {
 			if (s3ClientB != null) {
 				s3ClientB.shutdown();
