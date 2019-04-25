@@ -50,11 +50,11 @@ public class ListObjects18118 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				// for (int i = 0; i < keyList.length; i++) {
-				// String keyName = keyList[i];
-				// s3Client.deleteObject(bucketName, keyName);
-				// }
-				// s3Client.deleteBucket(bucketName);
+				for (int i = 0; i < keyList.length; i++) {
+					String keyName = keyList[i];
+					s3Client.deleteObject(bucketName, keyName);
+				}
+				s3Client.deleteBucket(bucketName);
 			}
 		} finally {
 			s3Client.shutdown();

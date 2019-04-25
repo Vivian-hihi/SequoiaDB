@@ -77,9 +77,8 @@ public class ListVersions18155 extends S3TestBase {
 		Collections.sort(matchPrefixList);
 		MultiValueMap<String, String> expVersions = new LinkedMultiValueMap<String, String>();
 
-		for (int i = 0; i < versionNum; i++) {
-			expVersions.add(keyNames[4], String.valueOf(i));
-			expVersions.add(keyNames[7], String.valueOf(i));
+		// expContent:"dir1_18155",the versionId is:2,1,0
+		for (int i = versionNum - 1; i >= 0; i--) {
 			expVersions.add(keyNames[8], String.valueOf(i));
 		}
 		// check
