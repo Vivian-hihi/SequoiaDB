@@ -929,7 +929,8 @@ namespace engine
       }
       else
       {
-         /// alread exist, do nothing
+         rc = SDB_IXM_EXIST ;
+         goto error ;
       }
 
       treePtr = ret.first->second ;
@@ -1031,7 +1032,6 @@ namespace engine
          PD_LOG( PDDEBUG, "Has removed index tree[%s], Key:%s",
                  gid.toString().c_str(),
                  treePtr->getKeyPattern().toString().c_str() ) ;
-         
          treePtr->clear() ;
          treePtr->setDeleted() ;
       }

@@ -132,7 +132,7 @@ namespace engine
          if ( SDB_OK == su->data()->getMBContext( &pContext, _clID,
                                                   _clLID, _clLID ) )
          {
-            rcTmp = pContext->mbTryLock( EXCLUSIVE ) ;
+            rcTmp = pContext->mbTryLock( EXCLUSIVE, TRUE ) ;
             if ( SDB_TIMEOUT == rcTmp )
             {
                result = UTIL_LJOB_DO_CONT ;
@@ -143,6 +143,15 @@ namespace engine
                mbStat = pContext->mbStat() ;
                needDelete = _needDelete ;
             }
+            else
+            {
+               SDB_ASSERT( FALSE, "Unknow error" ) ;
+            }
+         }
+         else
+         {
+            result = UTIL_LJOB_DO_CONT ;
+            goto done ;
          }
       }
 
