@@ -1110,7 +1110,7 @@
                   },
                   {
                      "name": 'moduleType',
-                     "webName": $scope.autoLanguage( '服务名' ),
+                     "webName": $scope.autoLanguage( '实例类型' ),
                      "type": "select",
                      "value": 0,
                      "valid": []
@@ -1191,7 +1191,7 @@
                }
                if( isFind == true )
                {
-                  rv.push( { 'name': 'moduleName', 'error': $scope.autoLanguage( '服务名已经存在' ) } ) ;
+                  rv.push( { 'name': 'moduleName', 'error': $scope.autoLanguage( '存储集群名已经存在' ) } ) ;
                }
                return rv ;
             } ) ;
@@ -1365,7 +1365,7 @@
                },
                {
                   "name": 'moduleType',
-                  "webName": $scope.autoLanguage( '服务名' ),
+                  "webName": $scope.autoLanguage( '实例类型' ),
                   "type": "select",
                   "value": 'spark',
                   "valid": [
@@ -1556,7 +1556,7 @@
                   },
                   {
                      "name": 'moduleType',
-                     "webName": $scope.autoLanguage( '服务名' ),
+                     "webName": $scope.autoLanguage( '实例类型' ),
                      "type": "select",
                      "value": null,
                      "valid": [],
@@ -1602,7 +1602,7 @@
                   }
                   if( isFind == true )
                   {
-                     return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '服务名已经存在' ) } ]
+                     return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '实例名已经存在' ) } ]
                   }
                   else
                   {
@@ -1818,7 +1818,7 @@
          'inputList': [
             {
                "name": "BusinessName",
-               "webName": $scope.autoLanguage( '服务名' ),
+               "webName": $scope.autoLanguage( '实例名' ),
                "type": "string",
                "disabled": true,
                "value": ''
@@ -1926,8 +1926,8 @@
          $scope.Components.Confirm.type = 1 ;
          $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
          $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-         $scope.Components.Confirm.title = $scope.autoLanguage( '要删除该服务的鉴权吗？' ) ;
-         $scope.Components.Confirm.context = $scope.autoLanguage( '服务名' ) + ': ' + businessName ;
+         $scope.Components.Confirm.title = $scope.autoLanguage( '要删除该实例的鉴权吗？' ) ;
+         $scope.Components.Confirm.context = $scope.autoLanguage( '实例名' ) + ': ' + businessName ;
          $scope.Components.Confirm.ok = function(){
             var data = {
                'cmd': 'remove business authority',
@@ -2654,29 +2654,25 @@
          var isShowRelationTip = SdbFunction.LocalData( 'ShowRelationTip' ) ;
          if( data['relationship'].length == 0 && isNull( isShowRelationTip ) )
          {
-            var service1 = null ;
-            var service2 = null ;
+            var serviceNum1 = 0 ;
+            var serviceNum2 = 0 ;
             $.each( data['moduleList'], function( index, info ){
-               if( isNull( service1 ) && info['BusinessType'] == 'sequoiadb' && info['DeployMod'] == 'distribution' )
+               if( info['BusinessType'] == 'sequoiadb' && info['DeployMod'] == 'distribution' )
                {
-                  service1 = info['BusinessName'] ;
+                  ++serviceNum1 ;
                }
-               else if ( isNull( service2 ) && info['BusinessType'] == 'sequoiasql-mysql' || info['BusinessType'] == 'sequoiasql-postgresql' )
+               else if( info['BusinessType'] == 'sequoiasql-mysql' || info['BusinessType'] == 'sequoiasql-postgresql' )
                {
-                  service2 = info['BusinessName'] ;
-               }
-               if( isString( service1) && isString( service2 ) )
-               {
-                  return false ;
+                  ++serviceNum2 ;
                }
             } ) ;
-            if( isString( service1) && isString( service2 ) )
+            if( serviceNum1 > 0 && serviceNum2 > 0 )
             {
                SdbFunction.LocalData( 'ShowRelationTip', true ) ;
                $scope.Components.Confirm.type = 2 ;
-               $scope.Components.Confirm.context = $scope.autoLanguage( '是否创建SequoiaSQL服务和SequoiaDB服务的关联？' ) ;
+               $scope.Components.Confirm.context = $scope.autoLanguage( '是否为实例添加分布式存储？' ) ;
                $scope.Components.Confirm.isShow = true ;
-               $scope.Components.Confirm.okText = $scope.pAutoLanguage( '是' ) ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '是' ) ;
                $scope.Components.Confirm.ok = function(){
                   $scope.Components.Confirm.isShow = false ;
                   $scope.OpenCreateRelation() ;
@@ -3083,7 +3079,7 @@
                   },
                   {
                      "name": 'moduleType',
-                     "webName": $scope.autoLanguage( '服务名' ),
+                     "webName": $scope.autoLanguage( '实例类型' ),
                      "type": "select",
                      "value": null,
                      "valid": []
@@ -3124,7 +3120,7 @@
                   }
                   if( isFind == true )
                   {
-                     return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '服务名已经存在' ) } ]
+                     return [ { 'name': 'moduleName', 'error': $scope.autoLanguage( '存储集群名已经存在' ) } ]
                   }
                   else
                   {
@@ -3246,7 +3242,7 @@
                },
                {
                   "name": 'moduleType',
-                  "webName": $scope.autoLanguage( '服务名' ),
+                  "webName": $scope.autoLanguage( '实例类型' ),
                   "type": "select",
                   "value": 'sequoiadb',
                   "valid": [
@@ -3657,7 +3653,7 @@
                'inputList': [
                   {
                      "name": 'moduleIndex',
-                     "webName": $scope.autoLanguage( '服务名' ),
+                     "webName": $scope.autoLanguage( '存储集群名' ),
                      "type": "select",
                      "value": null,
                      "valid": []
@@ -3716,7 +3712,7 @@
          'inputList': [
             {
                "name": "BusinessName",
-               "webName": $scope.autoLanguage( '服务名' ),
+               "webName": $scope.autoLanguage( '存储集群名' ),
                "type": "string",
                "disabled": true,
                "value": ''
@@ -3824,8 +3820,8 @@
          $scope.Components.Confirm.type = 1 ;
          $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
          $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
-         $scope.Components.Confirm.title = $scope.autoLanguage( '要删除该服务的鉴权吗？' ) ;
-         $scope.Components.Confirm.context = $scope.autoLanguage( '服务名' ) + ': ' + businessName ;
+         $scope.Components.Confirm.title = $scope.autoLanguage( '要删除该存储集群的鉴权吗？' ) ;
+         $scope.Components.Confirm.context = $scope.autoLanguage( '存储集群名' ) + ': ' + businessName ;
          $scope.Components.Confirm.ok = function(){
             var data = {
                'cmd': 'remove business authority',

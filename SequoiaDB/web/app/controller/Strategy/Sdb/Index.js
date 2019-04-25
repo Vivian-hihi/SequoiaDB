@@ -205,7 +205,7 @@
             },
             {
                "name": 'moduleName',
-               "webName": $scope.autoLanguage( '服务名' ),
+               "webName": $scope.autoLanguage( '存储集群名' ),
                "type": "string",
                "required": true,
                "value": moduleName,
@@ -263,7 +263,7 @@
             },
             {
                "name": 'moduleName',
-               "webName": $scope.autoLanguage( '服务名' ),
+               "webName": $scope.autoLanguage( '存储集群名' ),
                "type": "string",
                "required": true,
                "value": moduleName,

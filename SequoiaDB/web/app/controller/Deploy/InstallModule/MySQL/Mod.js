@@ -134,7 +134,7 @@
 
          $scope.Form1['inputList'].splice( isDeployPackage ? 3 : 1, 0, {
             "name": "DatabaseAuth",
-            "webName": $scope.autoLanguage( '新建数据库鉴权' ),
+            "webName": $scope.autoLanguage( '数据库鉴权' ),
             "type": "group",
             "child": [
                {

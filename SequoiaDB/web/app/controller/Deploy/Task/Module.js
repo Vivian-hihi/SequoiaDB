@@ -273,7 +273,7 @@
                },
                {
                   "name": 'moduleType',
-                  "webName": $scope.autoLanguage( '服务名' ),
+                  "webName": $scope.autoLanguage( '实例类型' ),
                   "type": "select",
                   "value": 'sequoiasql-mysql',
                   "valid": [
