@@ -10,6 +10,19 @@ namespace CSharp.Cluster
 {
     public class Common
     {
+         public static bool IsStandalone(Sequoiadb sdb)
+         {
+             try
+             {
+                sdb.ListReplicaGroups();
+             }
+             catch (BaseException e)
+             {
+                 if (e.ErrorCode == -159) // -159: The operation is for coord node only
+                     return true;
+          }
+             return false;
+         }
         public static List<string> getDataGroupNames(Sequoiadb sdb)
         {
             List<string> list = new List<string>();
