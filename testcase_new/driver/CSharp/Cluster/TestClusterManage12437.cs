@@ -82,7 +82,21 @@ namespace CSharp.Cluster
             rg = sdb.CreateReplicaGroup(rgName2);
             rg.Start();
             rg.AttachNode(hostName, port1, new BsonDocument("KeepData", true));
-            Sequoiadb localdb = rg.GetMaster().Connect("","");
+            Node master = null;
+            while (true)
+            {
+                try
+                {
+                    master = rg.GetMaster();
+                    break;
+                }
+                catch (BaseException e)
+                {
+                    Assert.AreEqual(-71, e.ErrorCode);
+                }
+
+            }
+            Sequoiadb localdb = master.Connect("", "");
             cs = localdb.GetCollecitonSpace(SdbTestBase.csName);
             cl = cs.GetCollection(clName);
             Assert.AreEqual(100, cl.GetCount(new BsonDocument()));
