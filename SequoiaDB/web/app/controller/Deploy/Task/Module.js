@@ -514,6 +514,11 @@
                   }
                   else
                   {
+                     if ( ( isCompoundTask == false || isSecondTask == true ) && errorNum == 0 )
+                     {
+                        SdbFunction.LocalData( 'ShowRelationTip', null ) ;
+                     }
+
                      if ( isSecondTask == false && isCompoundTask && errorNum == 0 )
                      {
                         $scope.BarColor = 0 ;
