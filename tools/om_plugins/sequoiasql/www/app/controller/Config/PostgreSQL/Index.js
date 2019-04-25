@@ -334,7 +334,7 @@
 
       $scope.RestartModule = function(){
          $scope.Components.Confirm.type = 2 ;
-         $scope.Components.Confirm.context = $scope.pAutoLanguage( '该操作将重启服务，是否确定继续？' ) ;
+         $scope.Components.Confirm.context = $scope.pAutoLanguage( '该操作将重启实例，是否确定继续？' ) ;
          $scope.Components.Confirm.isShow = true ;
          $scope.Components.Confirm.okText = $scope.pAutoLanguage( '确定' ) ;
          $scope.Components.Confirm.ok = function(){
