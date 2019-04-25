@@ -316,7 +316,7 @@ namespace engine
       {
          SDB_ASSERT( FALSE, "Transaction's pending object map is "
                      "not empty" ) ;
-         PD_LOG( PDERROR, "Transaction(%04x%010x)'s pending objet map"
+         PD_LOG( PDERROR, "Transaction(%04x%010x)'s pending object map"
                  " is not empty(size:%d)", DPS_TRANS_GET_NODEID( transID ),
                  DPS_TRANS_GET_SN( transID ),
                  mapPendingObj.size() ) ;
@@ -477,7 +477,7 @@ namespace engine
          {
             SDB_ASSERT( FALSE, "Transaction's pending object map is "
                         "not empty" ) ;
-            PD_LOG( PDERROR, "Transaction(%04x%010x)'s pending objet map"
+            PD_LOG( PDERROR, "Transaction(%04x%010x)'s pending object map"
                     " is not empty(size:%d)", DPS_TRANS_GET_NODEID( transID ),
                     DPS_TRANS_GET_SN( transID ),
                     iterMap->second._mapPendingObj.size() ) ;
