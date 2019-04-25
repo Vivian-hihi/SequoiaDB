@@ -1,4 +1,7 @@
 全文检索功能需要在 SequoiaDB 集群环境下使用，单机模式暂不支持。要使用全文检索功能，需要完成 Elasticsearch 集群、SequoiaDB 集群及搜索引擎适配器部署。
+
+由于在 Elasticsearch 中创建的索引的名字，是由集合的 Unique ID、原始索引名等元素组合而成，不同的 SequoiaDB 集群间这些值可能相同，因此建议每个 SequoiaDB 集群使用独立的 Elasticsearch 集群，不要混用，否则可能造成数据错误。
+
 ##软件安装
 
 ### SequoiaDB 及搜索引擎适配器安装
