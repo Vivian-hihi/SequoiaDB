@@ -222,6 +222,13 @@
     <Compile Include="Transaction\TestTransaction14566.cs" />
     <Compile Include="Backup\TestBackup14569.cs" />
     <Compile Include="Backup\TestBackup14570.cs" />
+    <Compile Include="Cluster\TestClusterManage12437.cs" />
+    <Compile Include="Cluster\TestClusterManage13646.cs" />
+    <Compile Include="Cluster\TestClusterManage14572.cs" />
+    <Compile Include="Cluster\TestClusterManage14573.cs" />
+    <Compile Include="Cluster\TestClusterManage14577.cs" />
+    <Compile Include="Cluster\TestConnect14575.cs" />
+    <Compile Include="Cluster\TestConnect14576.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
