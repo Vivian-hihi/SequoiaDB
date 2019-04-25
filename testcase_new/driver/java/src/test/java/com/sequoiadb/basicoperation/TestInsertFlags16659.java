@@ -78,15 +78,21 @@ public class TestInsertFlags16659 extends SdbTestBase {
 		Assert.assertEquals(cl.getCount(obj2), 1);
 
 		// case 5: flag 取值为
-		// FLG_INSERT_REPLACEONDUP,插入一条与obj的"_id"索引键冲突的记录,插入后原记录obj不存在
+		// FLG_INSERT_REPLACEONDUP,先插入一条不与obj冲突的记录，再插入一条与obj的"_id"索引键冲突的记录,插入后原记录obj不存在
 		BSONObject obj3 = new BasicBSONObject();
-		obj3.put(OID, id);
-		obj3.put("str", "hello2");
-		obj3.put("int", 456);
-		obj3.put("double", 1234.999);
-		obj3.put("appendField", "test16559");
-		cl.insert(obj3, DBCollection.FLG_INSERT_REPLACEONDUP);
+		obj3.put(OID, "123456");
+		obj3.put("str", "string");
+		cl.insert(obj3);
+		
+		BSONObject obj3_dup = new BasicBSONObject();
+		obj3_dup.put(OID, id);
+		obj3_dup.put("str", "hello2");
+		obj3_dup.put("int", 456);
+		obj3_dup.put("double", 1234.999);
+		obj3_dup.put("appendField", "test16559");
+		cl.insert(obj3_dup, DBCollection.FLG_INSERT_REPLACEONDUP);
 		Assert.assertEquals(cl.getCount(obj3), 1);
+		Assert.assertEquals(cl.getCount(obj3_dup), 1);
 		Assert.assertEquals(cl.getCount(obj), 0);
 
 		// case 6: flag 值为数值 1,2

@@ -81,43 +81,7 @@ public class TestBulkInsert11319 extends SdbTestBase {
 	 */
 	private void bulkInsertContOnDup() {
 		try {
-			List<BSONObject> list = new ArrayList<BSONObject>();
-			long num = 2;
-			for (long i = 0; i < num; i++) {
-				BSONObject obj = new BasicBSONObject();
-				ObjectId id = new ObjectId();
-				obj.put("_id", id);
-				// insert the decimal type data
-				String str = "32345.067891234567890123456789" + i;
-				BSONDecimal decimal = new BSONDecimal(str);
-				obj.put("decimal", decimal);
-				obj.put("no", i);
-				obj.put("str", "test_" + String.valueOf(i));
-				// the numberlong type data
-				BSONObject numberlong = new BasicBSONObject();
-				numberlong.put("$numberLong", "-9223372036854775808");
-				obj.put("numlong", numberlong);
-				// the obj type
-				BSONObject subObj = new BasicBSONObject();
-				subObj.put("a", 1 + i);
-				obj.put("obj", subObj);
-				// the array type
-				BSONObject arr = new BasicBSONList();
-				arr.put("0", (int) (Math.random() * 100));
-				arr.put("1", "test");
-				arr.put("2", 2.34);
-				obj.put("arr", arr);
-				obj.put("boolf", false);
-				// the data type
-				Date now = new Date();
-				obj.put("date", now);
-				// the regex type
-				Pattern regex = Pattern.compile("^2001", Pattern.CASE_INSENSITIVE);
-				obj.put("binary", regex);
-				list.add(obj);
-			}
-
-			cl.insert(list);
+			List<BSONObject> list = insertRecords();
 
 			// 准备新插入的list，覆盖部分索引记录冲突（如'_id'字段冲突）和全冲突的情况
 			List<BSONObject> partialConflictList = new ArrayList<BSONObject>();
@@ -171,43 +135,7 @@ public class TestBulkInsert11319 extends SdbTestBase {
 
 	private void bulkInsertReplaceOnDup() {
 		try {
-			List<BSONObject> list = new ArrayList<BSONObject>();
-			long num = 2;
-			for (long i = 0; i < num; i++) {
-				BSONObject obj = new BasicBSONObject();
-				ObjectId id = new ObjectId();
-				obj.put("_id", id);
-				// insert the decimal type data
-				String str = "32345.067891234567890123456789" + i;
-				BSONDecimal decimal = new BSONDecimal(str);
-				obj.put("decimal", decimal);
-				obj.put("no", i);
-				obj.put("str", "test_" + String.valueOf(i));
-				// the numberlong type data
-				BSONObject numberlong = new BasicBSONObject();
-				numberlong.put("$numberLong", "-9223372036854775808");
-				obj.put("numlong", numberlong);
-				// the obj type
-				BSONObject subObj = new BasicBSONObject();
-				subObj.put("a", 1 + i);
-				obj.put("obj", subObj);
-				// the array type
-				BSONObject arr = new BasicBSONList();
-				arr.put("0", (int) (Math.random() * 100));
-				arr.put("1", "test");
-				arr.put("2", 2.34);
-				obj.put("arr", arr);
-				obj.put("boolf", false);
-				// the data type
-				Date now = new Date();
-				obj.put("date", now);
-				// the regex type
-				Pattern regex = Pattern.compile("^2001", Pattern.CASE_INSENSITIVE);
-				obj.put("binary", regex);
-				list.add(obj);
-			}
-
-			cl.insert(list);
+			List<BSONObject> list = insertRecords();
 
 			// 准备新插入的list，覆盖部分索引记录冲突（如'_id'字段冲突）和全冲突的情况
 			List<BSONObject> partialConflictList = new ArrayList<BSONObject>();
@@ -346,5 +274,46 @@ public class TestBulkInsert11319 extends SdbTestBase {
 		}
 		Assert.assertEquals(listActDatas.equals(list), true,
 				"check datas are unequal\n" + "actDatas: " + listActDatas.toString());
+	}
+	
+	private List<BSONObject> insertRecords(){
+		List<BSONObject> list = new ArrayList<BSONObject>();
+		long num = 2;
+		for (long i = 0; i < num; i++) {
+			BSONObject obj = new BasicBSONObject();
+			ObjectId id = new ObjectId();
+			obj.put("_id", id);
+			// insert the decimal type data
+			String str = "32345.067891234567890123456789" + i;
+			BSONDecimal decimal = new BSONDecimal(str);
+			obj.put("decimal", decimal);
+			obj.put("no", i);
+			obj.put("str", "test_" + String.valueOf(i));
+			// the numberlong type data
+			BSONObject numberlong = new BasicBSONObject();
+			numberlong.put("$numberLong", "-9223372036854775808");
+			obj.put("numlong", numberlong);
+			// the obj type
+			BSONObject subObj = new BasicBSONObject();
+			subObj.put("a", 1 + i);
+			obj.put("obj", subObj);
+			// the array type
+			BSONObject arr = new BasicBSONList();
+			arr.put("0", (int) (Math.random() * 100));
+			arr.put("1", "test");
+			arr.put("2", 2.34);
+			obj.put("arr", arr);
+			obj.put("boolf", false);
+			// the data type
+			Date now = new Date();
+			obj.put("date", now);
+			// the regex type
+			Pattern regex = Pattern.compile("^2001", Pattern.CASE_INSENSITIVE);
+			obj.put("binary", regex);
+			list.add(obj);
+		}
+
+		cl.insert(list);
+		return list;
 	}
 }
