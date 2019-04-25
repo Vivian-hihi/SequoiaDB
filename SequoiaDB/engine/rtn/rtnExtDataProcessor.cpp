@@ -145,19 +145,19 @@ namespace engine
                                           const CHAR *idxName )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA ) ;
-      if ( csName && ( ossStrcmp( csName, _meta._csName.c_str() ) != 0 ) )
+      if ( csName && ( ossStrcmp( csName, _meta._csName ) != 0 ) )
       {
-         _meta._csName = csName ;
+         ossStrncpy( _meta._csName, csName, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
       }
 
-      if ( clName && ( ossStrcmp( clName, _meta._clName.c_str() ) != 0 ) )
+      if ( clName && ( ossStrcmp( clName, _meta._clName ) != 0 ) )
       {
-         _meta._clName = clName ;
+         ossStrncpy( _meta._clName, clName, DMS_COLLECTION_NAME_SZ + 1 ) ;
       }
 
-      if ( idxName && ( ossStrcmp( idxName, _meta._idxName.c_str() ) != 0 ) )
+      if ( idxName && ( ossStrcmp( idxName, _meta._idxName ) != 0 ) )
       {
-         _meta._idxName = idxName ;
+         ossStrncpy( _meta._idxName, idxName, IXM_INDEX_NAME_SIZE + 1 ) ;
       }
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_UPDATEMETA ) ;
    }
@@ -636,17 +636,17 @@ namespace engine
 
       SDB_ASSERT( csName, "CS name can not be NULL" ) ;
 
-      if ( 0 == ossStrcmp( csName, _meta._csName.c_str() ) )
+      if ( 0 == ossStrcmp( csName, _meta._csName ) )
       {
          result = TRUE ;
       }
 
-      if ( clName && 0 != ossStrcmp( clName, _meta._clName.c_str() ) && result )
+      if ( clName && 0 != ossStrcmp( clName, _meta._clName ) && result )
       {
          result = FALSE ;
       }
 
-      if ( idxName && 0 != ossStrcmp( idxName, _meta._idxName.c_str() )
+      if ( idxName && 0 != ossStrcmp( idxName, _meta._idxName )
            && result )
       {
          result = FALSE ;
@@ -658,7 +658,7 @@ namespace engine
 
    BOOLEAN _rtnExtDataProcessor::isOwnedByExt( const CHAR *targetName ) const
    {
-      return ( 0 == ossStrcmp( targetName, _meta._targetName.c_str() ) ) ;
+      return ( 0 == ossStrcmp( targetName, _meta._targetName ) ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSOR__PREPARERECORD, "_rtnExtDataProcessor::_prepareRecord" )
@@ -1222,6 +1222,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORSBYCS ) ;
 
+      UINT16 checkNum = 0 ;
       BOOLEAN locked = ( SHARED == lockType || EXCLUSIVE == lockType ) ;
       vector<INT32> lockedIDs ;
       rtnExtDataProcessor *processor = NULL ;
@@ -1236,7 +1237,7 @@ namespace engine
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
          processor = &_processors[i] ;
-         if ( processor->isOwnedBy( csName ) && processor->isActive() )
+         if ( processor->isActive() && processor->isOwnedBy( csName ) )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1281,6 +1282,10 @@ namespace engine
             }
             processors.push_back( processor ) ;
          }
+         if ( ++checkNum >= _number )
+         {
+            break ;
+         }
       }
 
    done:
@@ -1315,6 +1320,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORSBYCL ) ;
 
+      UINT16 checkNum = 0 ;
       BOOLEAN locked = ( SHARED == lockType || EXCLUSIVE == lockType ) ;
       vector<INT32> lockedIDs ;
       rtnExtDataProcessor *processor = NULL ;
@@ -1324,8 +1330,7 @@ namespace engine
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
          processor = &_processors[i] ;
-         if ( processor->isOwnedBy( csName, clName )
-              && processor->isActive() )
+         if ( processor->isActive() && processor->isOwnedBy( csName, clName ) )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1369,6 +1374,10 @@ namespace engine
             }
             processors.push_back( processor ) ;
          }
+         if ( ++checkNum >= _number )
+         {
+            break ;
+         }
       }
 
    done:
@@ -1402,6 +1411,7 @@ namespace engine
                                                      rtnExtDataProcessor *&processor )
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYIDX ) ;
+      UINT16 checkNum = 0 ;
       rtnExtDataProcessor *processorLocal = NULL ;
 
       processor = NULL ;
@@ -1411,8 +1421,8 @@ namespace engine
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
          processorLocal = &_processors[i] ;
-         if ( processorLocal->isOwnedBy( csName, clName, idxName )
-              && processorLocal->isActive() )
+         if ( processorLocal->isActive() &&
+              processorLocal->isOwnedBy( csName, clName, idxName ) )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1441,6 +1451,10 @@ namespace engine
             processor = processorLocal  ;
             break ;
          }
+         if ( ++checkNum >= _number )
+         {
+            break ;
+         }
       }
 
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYIDX ) ;
@@ -1454,14 +1468,15 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_GETPROCESSORBYEXTNAME ) ;
 
+      UINT16 checkNum = 0 ;
       processor = NULL  ;
 
       ossScopedLock lock( &_mutex, SHARED ) ;
 
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
-         if ( _processors[i].isOwnedByExt( extName )
-              && _processors[i].isActive() )
+         if ( _processors[i].isActive() &&
+              _processors[i].isOwnedByExt( extName ) )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1473,6 +1488,10 @@ namespace engine
                mutex->lock_w() ;
             }
             processor = &_processors[i] ;
+            break ;
+         }
+         if ( ++checkNum >= _number )
+         {
             break ;
          }
       }

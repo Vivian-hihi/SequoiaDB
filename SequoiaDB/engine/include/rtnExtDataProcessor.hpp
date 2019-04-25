@@ -54,14 +54,15 @@ namespace engine
    // Metadata of the processor.
    struct _rtnExtProcessorMeta
    {
-      string         _csName ;
-      string         _clName ;
-      string         _idxName ;
-      string         _targetName ;
-      BSONObj        _idxKeyDef ;
+      CHAR     _csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      CHAR     _clName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
+      CHAR     _idxName[ IXM_INDEX_NAME_SIZE + 1 ] ;
+      CHAR     _targetName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      BSONObj  _idxKeyDef ;
 
       _rtnExtProcessorMeta()
       {
+         reset() ;
       }
 
       ~_rtnExtProcessorMeta() {}
@@ -70,20 +71,25 @@ namespace engine
                   const CHAR *idxName, const CHAR *targetName,
                   const BSONObj &idxKeyDef )
       {
-         _csName = csName ;
-         _clName = clName ;
-         _idxName = idxName ;
-         _targetName = targetName ;
+         SDB_ASSERT( csName, "cs name is NULL" ) ;
+         SDB_ASSERT( clName, "cl name is NULL" ) ;
+         SDB_ASSERT( idxName, "index name is NULL" ) ;
+         SDB_ASSERT( targetName, "target name is NULL" ) ;
+
+         ossStrncpy( _csName, csName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+         ossStrncpy( _clName, clName, DMS_COLLECTION_NAME_SZ ) ;
+         ossStrncpy( _idxName, idxName, IXM_INDEX_NAME_SIZE ) ;
+         ossStrncpy( _targetName, targetName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
          _idxKeyDef = idxKeyDef.copy() ;
          return SDB_OK ;
       }
 
       void reset()
       {
-         _csName.clear() ;
-         _clName.clear() ;
-         _idxName.clear() ;
-         _targetName.clear() ;
+         ossMemset( _csName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
+         ossMemset( _clName, 0, DMS_COLLECTION_NAME_SZ + 1 ) ;
+         ossMemset( _idxName, 0, IXM_INDEX_NAME_SIZE + 1 ) ;
+         ossMemset( _targetName, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
          _idxKeyDef = BSONObj() ;
       }
    } ;
@@ -122,6 +128,11 @@ namespace engine
       INT32 active() ;
 
       BOOLEAN isActive() const ;
+
+      const rtnExtProcessorMeta* meta() const
+      {
+         return &_meta ;
+      }
 
       void updateMeta( const CHAR *csName, const CHAR *clName = NULL,
                        const CHAR *idxName = NULL ) ;
