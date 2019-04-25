@@ -11,6 +11,19 @@ namespace CSharp.TestCommon
 {
     public class Common
     {
+        public static bool IsStandalone(Sequoiadb sdb)
+        {
+            try
+            {
+             sdb.ListReplicaGroups();
+          }
+            catch (BaseException e)
+            {
+                if (e.ErrorCode == -159) // -159: The operation is for coord node only
+                    return true;
+         }
+            return false;
+      }
         public static int CompareBson(BsonDocument x, BsonDocument y)
         {
             return x.CompareTo(y);
@@ -20,15 +33,15 @@ namespace CSharp.TestCommon
         {
             try
             {
-			    sdb.ListReplicaGroups();
-		    }
+             sdb.ListReplicaGroups();
+          }
             catch (BaseException e)
             {
                 if (e.ErrorCode == -159) // -159: The operation is for coord node only
                     return true;
-			}
+         }
             return false;
-		}
+      }
 
         public static List<string> getDataGroupNames(Sequoiadb sdb)
         {
