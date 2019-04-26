@@ -70,11 +70,11 @@ public class Transaction17960 extends SdbTestBase {
             cl.createIndex("textIndex17960", indexKey, false, false);
 
             // 开启 4 个并发事务
-            UpdateThread updateThread1 = new UpdateThread(50, 0);
-            updateThread1.start();
+            UpdateThread updateThread = new UpdateThread(50, 0);
+            updateThread.start();
 
-            InsertDeleteThread insertUpdateThread1 = new InsertDeleteThread();
-            insertUpdateThread1.start();
+            InsertDeleteThread insertDeleteTh = new InsertDeleteThread();
+            insertDeleteTh.start();
 
             QueryThread queryThread = new QueryThread();
             queryThread.start();
@@ -84,8 +84,8 @@ public class Transaction17960 extends SdbTestBase {
 
             // 判断事务是否正确返回
             Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
-            Assert.assertTrue(updateThread1.isSuccess(), updateThread1.getErrorMsg());
-            Assert.assertTrue(insertUpdateThread1.isSuccess(), insertUpdateThread1.getErrorMsg());
+            Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
+            Assert.assertTrue(insertDeleteTh.isSuccess(), insertDeleteTh.getErrorMsg());
             Assert.assertTrue(dropIndexThread.isSuccess(), dropIndexThread.getErrorMsg());
 
             latch.await();
@@ -193,7 +193,8 @@ public class Transaction17960 extends SdbTestBase {
                         cl.delete("{b:" + cId + "}", "{'':'textIndex17960'}");
 
                     } catch (BaseException e) {
-                        if (e.getErrorCode() == -13) {
+                        if (e.getErrorCode() == -13 || e.getErrorCode() == -48 || e.getErrorCode() == -52
+                                || e.getErrorCode() == -10) {
                             db.rollback();
                             continue;
                         } else {
