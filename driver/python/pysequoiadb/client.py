@@ -1301,11 +1301,11 @@ class client(object):
         raise_if_error(rc, "Failed to backup offline")
 
     def backup_offline(self, options = None):
-    	"""
-    	Backup the whole database or specified replica group.
-    	Knowing the specific params to function backup
-    	"""
-     	backup(options)
+        """
+        Backup the whole database or specified replica group.
+        Knowing the specific params to function backup
+        """
+        backup(options)
 
     def list_backup(self, options, **kwargs):
         """List the backups.
