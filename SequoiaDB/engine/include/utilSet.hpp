@@ -39,9 +39,7 @@
 #include "oss.hpp"
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
-#include <set>
-
-using namespace std ;
+#include "ossMemPool.hpp"
 
 #define UTIL_SET_DEFAULT_STACK_SIZE          4
 
@@ -204,7 +202,7 @@ namespace engine
                _pSrc          = pSrc ;
                _pEleSize      = pEleSize ;
             }
-            iterator( typename set<T>::iterator it )
+            iterator( typename ossPoolSet<T>::iterator it )
             {
                _pData         = NULL ;
                _pSrc          = NULL ;
@@ -213,10 +211,10 @@ namespace engine
             }
 
          private:
-            T*                            _pData ;
-            T*                            _pSrc ;
-            UINT32*                       _pEleSize ;
-            typename set<T>::iterator     _it ;
+            T*                                  _pData ;
+            T*                                  _pSrc ;
+            UINT32*                             _pEleSize ;
+            typename ossPoolSet<T>::iterator    _it ;
       } ;
 
       class const_iterator
@@ -368,7 +366,7 @@ namespace engine
                _pSrc          = pSrc ;
                _pEleSize      = pEleSize ;
             }
-            const_iterator( typename set<T>::const_iterator it )
+            const_iterator( typename ossPoolSet<T>::const_iterator it )
             {
                _pData         = NULL ;
                _pSrc          = NULL ;
@@ -377,10 +375,10 @@ namespace engine
             }
 
          private:
-            const T*                      _pData ;
-            const T*                      _pSrc ;
-            const UINT32*                 _pEleSize ;
-            typename set<T>::const_iterator  _it ;
+            const T*                               _pData ;
+            const T*                               _pSrc ;
+            const UINT32*                          _pEleSize ;
+            typename ossPoolSet<T>::const_iterator _it ;
       } ;
 
    public:
@@ -537,7 +535,7 @@ namespace engine
 
          if ( _pSet )
          {
-            pair< typename set<T>::iterator, bool > tmp = _pSet->insert( val ) ;
+            pair< typename ossPoolSet<T>::iterator, bool > tmp = _pSet->insert( val ) ;
             return pair<iterator, BOOLEAN>( iterator( tmp.first ),
                                             tmp.second ? TRUE : FALSE ) ;
          }
@@ -704,7 +702,7 @@ namespace engine
       {
          if ( _pSet )
          {
-            pair< typename set<T>::iterator, typename set<T>::iterator > tmp =
+            pair< typename ossPoolSet<T>::iterator, typename ossPoolSet<T>::iterator > tmp =
                _pSet->equal_range( val ) ;
             return pair<iterator, iterator>( iterator( tmp.first ),
                                              iterator( tmp.second ) ) ;
@@ -747,7 +745,7 @@ namespace engine
             {
                /// copy data to stack
                _eleSize = 0 ;
-               typename set<T>::iterator it = _pSet->begin() ;
+               typename ossPoolSet<T>::iterator it = _pSet->begin() ;
                for ( ; it != _pSet->end() ; ++it )
                {
                   _staticBuf[ _eleSize++ ] = *it ;
@@ -790,7 +788,7 @@ namespace engine
 
          if ( !_pSet && size > stackSize )
          {
-            _pSet = new (std::nothrow) set<T> ;
+            _pSet = new (std::nothrow) ossPoolSet<T> ;
             if ( !_pSet )
             {
                rc = SDB_OOM ;
@@ -813,7 +811,7 @@ namespace engine
 
    private:
       T              _staticBuf[ stackSize ] ;
-      set<T>*        _pSet ;
+      ossPoolSet<T>* _pSet ;
       UINT32         _eleSize ;
 
    public:
