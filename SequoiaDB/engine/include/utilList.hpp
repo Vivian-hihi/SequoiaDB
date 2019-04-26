@@ -39,7 +39,7 @@
 #include "oss.hpp"
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
-#include <list>
+#include "ossMemPool.hpp"
 
 using namespace std ;
 
@@ -147,7 +147,7 @@ namespace engine
                _pEleSize      = pEleSize ;
             }
 
-            const_iterator ( const typename list<T>::iterator &it )
+            const_iterator ( const typename ossPoolList<T>::iterator &it )
             {
                _pData         = NULL ;
                _pSrc          = NULL ;
@@ -231,10 +231,10 @@ namespace engine
             }
 
          protected :
-            const T *                        _pData ;
-            const T *                        _pSrc ;
-            const UINT32 *                   _pEleSize ;
-            typename list<T>::iterator       _it ;
+            const T *                              _pData ;
+            const T *                              _pSrc ;
+            const UINT32 *                         _pEleSize ;
+            typename ossPoolList<T>::iterator      _it ;
       } ;
 
       class iterator : public const_iterator
@@ -309,7 +309,7 @@ namespace engine
             {
             }
 
-            iterator ( const typename list<T>::iterator &it )
+            iterator ( const typename ossPoolList<T>::iterator &it )
             : const_iterator( it )
             {
             }
@@ -462,7 +462,7 @@ namespace engine
          {
             if ( newSize > stackSize )
             {
-               _pList = new (std::nothrow) list<T>( newSize ) ;
+               _pList = new (std::nothrow) ossPoolList<T>( newSize ) ;
                if ( !_pList )
                {
                   rc = SDB_OOM ;
@@ -818,7 +818,7 @@ namespace engine
             {
                /// copy data to stack
                _eleSize = 0 ;
-               typename list<T>::iterator it = _pList->begin() ;
+               typename ossPoolList<T>::iterator it = _pList->begin() ;
                while( it != _pList->end() )
                {
                   _staticBuf[ _eleSize++ ] = *it ;
@@ -847,7 +847,7 @@ namespace engine
 
          if ( !_pList && size > stackSize )
          {
-            _pList = new (std::nothrow) list<T>() ;
+            _pList = new (std::nothrow) ossPoolList<T>() ;
             if ( !_pList )
             {
                rc = SDB_OOM ;
@@ -932,9 +932,9 @@ namespace engine
       }
 
    private:
-      T              _staticBuf[ stackSize ] ;
-      list<T>*       _pList ;
-      UINT32         _eleSize ;
+      T                 _staticBuf[ stackSize ] ;
+      ossPoolList<T>*   _pList ;
+      UINT32            _eleSize ;
    } ;
 }
 

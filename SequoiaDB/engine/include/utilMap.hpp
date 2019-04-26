@@ -40,13 +40,13 @@
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
 #include "pd.hpp"
-#include <map>
+#include "ossMemPool.hpp"
 #include <stdexcept>
-
-using namespace std ;
 
 #define UTIL_MAP_DEFAULT_STACK_SIZE          4
 #define UTIL_MAP_MAX_STACK_SIZE              64
+
+using namespace std ;
 
 namespace engine
 {
@@ -210,7 +210,7 @@ namespace engine
                _pSrc          = reinterpret_cast< const value_type* >( pSrc ) ;
                _pEleSize      = pEleSize ;
             }
-            iterator( typename map< Key, T >::iterator it )
+            iterator( typename ossPoolMap< Key, T >::iterator it )
             {
                _pData         = NULL ;
                _pSrc          = NULL ;
@@ -234,10 +234,10 @@ namespace engine
             }
 
          private:
-            value_type*                         _pData ;
-            const value_type*                   _pSrc ;
-            const UINT32*                       _pEleSize ;
-            typename map< Key, T >::iterator    _it ;
+            value_type*                               _pData ;
+            const value_type*                         _pSrc ;
+            const UINT32*                             _pEleSize ;
+            typename ossPoolMap< Key, T >::iterator   _it ;
       } ;
 
       class const_iterator
@@ -368,7 +368,7 @@ namespace engine
                _pSrc          = reinterpret_cast< const_value_type*>( pSrc ) ;
                _pEleSize      = pEleSize ;
             }
-            const_iterator( typename map< Key, T >::const_iterator it )
+            const_iterator( typename ossPoolMap< Key, T >::const_iterator it )
             {
                _pData         = NULL ;
                _pSrc          = NULL ;
@@ -391,10 +391,10 @@ namespace engine
             }
 
          private:
-            const_value_type*                      _pData ;
-            const_value_type*                      _pSrc ;
-            const UINT32*                          _pEleSize ;
-            typename map< Key, T >::const_iterator _it ;
+            const_value_type*                               _pData ;
+            const_value_type*                               _pSrc ;
+            const UINT32*                                   _pEleSize ;
+            typename ossPoolMap< Key, T >::const_iterator   _it ;
       } ;
 
    public:
@@ -545,7 +545,7 @@ namespace engine
 
          if ( _pMap )
          {
-            pair< typename map< Key, T >::iterator, bool > tmp = _pMap->insert( val ) ;
+            pair< typename ossPoolMap< Key, T >::iterator, bool > tmp = _pMap->insert( val ) ;
             return pair<iterator, BOOLEAN>( iterator( tmp.first ),
                                             tmp.second ? TRUE : FALSE ) ;
          }
@@ -774,7 +774,7 @@ namespace engine
       {
          if ( _pMap )
          {
-            pair< typename map< Key, T >::iterator, typename map< Key, T >::iterator > tmp =
+            pair< typename ossPoolMap< Key, T >::iterator, typename ossPoolMap< Key, T >::iterator > tmp =
                _pMap->equal_range( key ) ;
             return pair< iterator, iterator >( iterator( tmp.first ),
                                                iterator( tmp.second ) ) ;
@@ -809,7 +809,7 @@ namespace engine
       {
          if ( _pMap )
          {
-            pair< typename map< Key, T >::const_iterator, typename map< Key, T >::const_iterator > tmp =
+            pair< typename ossPoolMap< Key, T >::const_iterator, typename ossPoolMap< Key, T >::const_iterator > tmp =
                _pMap->equal_range( key ) ;
             return pair< const_iterator, const_iterator >( const_iterator( tmp.first ),
                                                            const_iterator( tmp.second ) ) ;
@@ -853,7 +853,7 @@ namespace engine
             {
                /// copy data to stack
                _eleSize = 0 ;
-               typename map< Key, T >::iterator it = _pMap->begin() ;
+               typename ossPoolMap< Key, T >::iterator it = _pMap->begin() ;
                for ( ; it != _pMap->end() ; ++it )
                {
                   _staticBuf[ _eleSize ].first = it->first ;
@@ -965,7 +965,7 @@ namespace engine
 
          if ( !_pMap && size > stackSize )
          {
-            _pMap = new (std::nothrow) map< Key, T >() ;
+            _pMap = new (std::nothrow) ossPoolMap< Key, T >() ;
             if ( !_pMap )
             {
                rc = SDB_OOM ;
@@ -988,7 +988,7 @@ namespace engine
 
    private:
       i_value_type            _staticBuf[ stackSize ] ;
-      map< Key, T >*          _pMap ;
+      ossPoolMap< Key, T >*   _pMap ;
       UINT32                  _eleSize ;
 
    } ;
