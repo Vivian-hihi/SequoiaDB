@@ -699,6 +699,9 @@
          <fileset dir="${srccode_dir}/tools" includes="deploy/**/*"/>
       </copy>
       <chmod file="${release_db_dir}/tools/deploy/quickDeploy.sh" perm="755" />
+      <chmod file="${release_db_dir}/tools/deploy/postgresql.conf" perm="666" />
+      <chmod file="${release_db_dir}/tools/deploy/mysql.conf" perm="666" />
+      <chmod file="${release_db_dir}/tools/deploy/sequoiadb.conf" perm="644" />
       <copy todir="${release_db_dir}/tools">
          <fileset dir="${srccode_dir}/tools" includes="expect/**/*"/>
       </copy>
