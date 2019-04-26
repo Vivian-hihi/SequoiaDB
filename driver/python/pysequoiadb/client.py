@@ -1305,7 +1305,7 @@ class client(object):
         Backup the whole database or specified replica group.
         Knowing the specific params to function backup
         """
-        backup(options)
+        self.backup(options)
 
     def list_backup(self, options, **kwargs):
         """List the backups.
