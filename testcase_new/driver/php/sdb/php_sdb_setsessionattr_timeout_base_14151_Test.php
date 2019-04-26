@@ -130,7 +130,15 @@ class setSessionAttr14151 extends PHPUnit_Framework_TestCase
          }
          
          echo "   Begin to dropCS in the end.\n"; 
-         $err = self::$db -> dropCS( self::$csName ); 
+         for( $i = 0; $i< 10; $i++)
+         {
+            $err = self::$db -> dropCS( self::$csName );
+            if($err['errno'] != -190 )
+            {
+               break;
+            }
+            sleep(1);
+         }
          if ( $err['errno'] != 0 )
          {
             throw new Exception("failed to drop cs, errno=".$err['errno']);
