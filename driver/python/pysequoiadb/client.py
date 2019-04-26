@@ -1300,7 +1300,7 @@ class client(object):
         rc = sdb.sdb_backup_offline(self._client, bson_options)
         raise_if_error(rc, "Failed to backup offline")
 
-    def backup_offline(self, options = None)
+    def backup_offline(self, options = None):
     	"""
     	Backup the whole database or specified replica group.
     	Knowing the specific params to function backup
