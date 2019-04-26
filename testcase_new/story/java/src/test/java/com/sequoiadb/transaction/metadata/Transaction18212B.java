@@ -75,7 +75,7 @@ public class Transaction18212B extends SdbTestBase {
 
     private void createCL(String clName) {
         DBCollection cl = sdb.getCollectionSpace(csName).createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', AutoSplit: true}"));
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit: true}"));
         cl.createIndex("idx18212", "{a:1}", false, false);
         cl.insert((BSONObject) JSON.parse("{_id:1, a:1, b:1}"));
         cl.insert((BSONObject) JSON.parse("{_id:2, a:2, b:2}"));
