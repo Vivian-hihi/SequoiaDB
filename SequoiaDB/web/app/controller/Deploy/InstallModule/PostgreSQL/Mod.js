@@ -395,7 +395,7 @@
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  deployPackage( packageInfo ) ;
+                  deployPackage( addBuzConfig ) ;
                   return true ;
                } ) ;
             }
