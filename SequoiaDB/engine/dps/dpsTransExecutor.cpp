@@ -500,14 +500,15 @@ namespace engine
       _transConfVer        = 1 ;
    }
 
-   void _dpsTransExecutor::updateTransConf( INT32 isolation,
-                                            UINT32 timeout,
-                                            BOOLEAN waitLock,
-                                            BOOLEAN autoCommit,
-                                            BOOLEAN autoRollback,
-                                            BOOLEAN useRBS )
+   BOOLEAN _dpsTransExecutor::updateTransConf( INT32 isolation,
+                                               UINT32 timeout,
+                                               BOOLEAN waitLock,
+                                               BOOLEAN autoCommit,
+                                               BOOLEAN autoRollback,
+                                               BOOLEAN useRBS )
    {
       UINT32 oldTransConfVer = _transConfVer ;
+      BOOLEAN updateAll = FALSE ;
 
       /// only timeout can update in transaction
       if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_TIMEOUT ) )
@@ -537,12 +538,14 @@ namespace engine
          {
             setUseRollbackSemgent( useRBS, FALSE ) ;
          }
+         updateAll = TRUE ;
       }
 
       if ( oldTransConfVer != _transConfVer )
       {
          _transConfVer = oldTransConfVer + 1 ;
       }
+      return updateAll ;
    }
 
    const _dpsTransExecutor::MAP_LSN_2_RECORD*

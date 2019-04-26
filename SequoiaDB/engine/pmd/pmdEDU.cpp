@@ -930,13 +930,15 @@ namespace engine
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
       if ( optCB->transactionOn() && _confChangeID != optCB->getChangeID() )
       {
-         _confChangeID = optCB->getChangeID() ;
-         _transExecutor.updateTransConf( optCB->transIsolation(),
-                                         optCB->transTimeout() * OSS_ONE_SEC,
-                                         optCB->transLockwait(),
-                                         optCB->transAutoCommit(),
-                                         optCB->transAutoRollback(),
-                                         optCB->transUseRBS() ) ;
+         if ( _transExecutor.updateTransConf( optCB->transIsolation(),
+                                              optCB->transTimeout() * OSS_ONE_SEC,
+                                              optCB->transLockwait(),
+                                              optCB->transAutoCommit(),
+                                              optCB->transAutoRollback(),
+                                              optCB->transUseRBS() ) )
+         {
+            _confChangeID = optCB->getChangeID() ;
+         }
       }
 #endif //SDB_ENGINE
    }

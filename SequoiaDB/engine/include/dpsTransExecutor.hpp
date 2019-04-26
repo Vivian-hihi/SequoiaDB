@@ -231,7 +231,7 @@ namespace engine
                                              BOOLEAN autoRollback,
                                              BOOLEAN useRBS ) ;
 
-         void                 updateTransConf( INT32 isolation,
+         BOOLEAN              updateTransConf( INT32 isolation,
                                                UINT32 timeout,
                                                BOOLEAN waitLock,
                                                BOOLEAN autoCommit,
