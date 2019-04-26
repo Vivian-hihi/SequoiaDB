@@ -1242,7 +1242,7 @@ namespace SequoiaDB
          *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
-         *  \deprecated Rename to "backup".
+         *  \deprecated Rename to "Backup".
          */
         public void BackupOffline(BsonDocument options)
         {
@@ -1267,7 +1267,6 @@ namespace SequoiaDB
          *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
-         *  \deprecated Rename to "backup".
          */
         public void Backup(BsonDocument options)
         {
