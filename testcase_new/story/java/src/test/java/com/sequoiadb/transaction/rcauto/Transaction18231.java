@@ -46,7 +46,7 @@ public class Transaction18231 extends SdbTestBase {
         }
 
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', AutoSplit: true}"));
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit: true}"));
     }
 
     @AfterClass
