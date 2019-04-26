@@ -59,7 +59,7 @@ namespace CSharp.Backup
             //backup
             try {
                 sdb.BackupOffline(option1);
-                sdb.BackupOffline(option2);
+                sdb.Backup(option2);
             } catch (BaseException e) {
                 Assert.Fail("backup failed, errMsg:" + e.Message);
             }
