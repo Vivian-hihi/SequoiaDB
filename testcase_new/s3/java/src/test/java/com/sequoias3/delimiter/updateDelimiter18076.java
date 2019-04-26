@@ -60,7 +60,7 @@ public class updateDelimiter18076 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				// CommLib.clearBucket(s3Client, bucketName);
+				CommLib.clearBucket(s3Client, bucketName);
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
