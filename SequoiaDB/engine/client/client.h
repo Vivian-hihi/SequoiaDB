@@ -2390,7 +2390,6 @@ SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
         OverWrite   : Whether overwrite the old backup file, default to be false
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
-    \deprecated Rename to "sdbBackup".
 */
 SDB_EXPORT INT32 sdbBackup ( sdbConnectionHandle cHandle, bson *options) ;
 
