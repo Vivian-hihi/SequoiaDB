@@ -52,7 +52,7 @@ public class TestResidualData extends S3TestBase{
             List<String> clNameList = cs.getCollectionNames();
             for(String csclName : clNameList){
                 String clname = csclName.substring(cs.getName().length()+1);
-                if(!clname.equals("S3_IDGenerator")){
+                if(!clname.equals("S3_IDGenerator")&&!clname.equals("S3_ObjectDir")&&!clname.equals("S3_Task")){
                 	clList.add(cs.getCollection(clname));
                 }
             }
