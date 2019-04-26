@@ -1110,7 +1110,7 @@
                   },
                   {
                      "name": 'moduleType',
-                     "webName": $scope.autoLanguage( '实例类型' ),
+                     "webName": $scope.autoLanguage( '类型' ),
                      "type": "select",
                      "value": 0,
                      "valid": []
@@ -1353,7 +1353,7 @@
             inputList: [
                {
                   "name": 'moduleName',
-                  "webName": $scope.autoLanguage( '存储集群名' ),
+                  "webName": $scope.autoLanguage( '实例名' ),
                   "type": "string",
                   "required": true,
                   "value": "",
@@ -3079,7 +3079,7 @@
                   },
                   {
                      "name": 'moduleType',
-                     "webName": $scope.autoLanguage( '实例类型' ),
+                     "webName": $scope.autoLanguage( '类型' ),
                      "type": "select",
                      "value": null,
                      "valid": []
@@ -3242,7 +3242,7 @@
                },
                {
                   "name": 'moduleType',
-                  "webName": $scope.autoLanguage( '实例类型' ),
+                  "webName": $scope.autoLanguage( '类型' ),
                   "type": "select",
                   "value": 'sequoiadb',
                   "valid": [

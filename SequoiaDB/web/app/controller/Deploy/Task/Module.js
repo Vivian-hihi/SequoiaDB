@@ -323,7 +323,7 @@
             }
             return isAllClear ;
          } ) ;
-         $scope.InstallModule['callback']['SetTitle']( $scope.autoLanguage( '创建服务' ) ) ;
+         $scope.InstallModule['callback']['SetTitle']( $scope.autoLanguage( '创建实例' ) ) ;
          $scope.InstallModule['callback']['SetIcon']( '' ) ;
          $scope.InstallModule['callback']['Open']() ;
       }
