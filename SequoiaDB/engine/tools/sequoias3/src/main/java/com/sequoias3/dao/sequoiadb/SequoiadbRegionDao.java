@@ -486,7 +486,7 @@ public class SequoiadbRegionDao implements RegionDao {
             sdbBaseOperation.createCL(sdb, metaCsName, DaoCollectionDefine.OBJECT_DIR, null);
 
             BSONObject indexKey = new BasicBSONObject();
-            String indexName = "dirIndex";
+            String indexName = Dir.DIR_INDEX;
             indexKey.put(Dir.DIR_BUCKETID, 1);
             indexKey.put(Dir.DIR_DELIMITER, 1);
             indexKey.put(Dir.DIR_NAME, 1);

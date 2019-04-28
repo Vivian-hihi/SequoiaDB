@@ -6,6 +6,8 @@ public class Dir {
     public static final String DIR_NAME        = "Name";
     public static final String DIR_ID          = "ID";
 
+    public static final String DIR_INDEX       = "dirIndex";
+
     private Long bucketId;
     private String delimiter;
     private String name;

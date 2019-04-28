@@ -102,6 +102,10 @@ public class SdbDirDao implements DirDao {
             if (forUpdate){
                 flag = DBQuery.FLG_QUERY_FOR_UPDATE;
             }
+
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Dir.DIR_INDEX);
+
             DBCursor cursor = cl.query(matcher, null, null, null, flag);
             if (cursor != null && cursor.hasNext()){
                 BSONObject record = cursor.getNext();
@@ -154,7 +158,10 @@ public class SdbDirDao implements DirDao {
                 matcher.put(Dir.DIR_NAME, nameMatcher);
             }
 
-            cursor = cl.query(matcher, null, null, null);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Dir.DIR_INDEX);
+
+            cursor = cl.query(matcher, null, null, hint);
             return new SdbQueryDbCursor(sdb, cursor);
         }catch (BaseException e){
             sdbBaseOperation.releaseDBCursor(cursor);
@@ -196,7 +203,10 @@ public class SdbDirDao implements DirDao {
                 matcher.put(Dir.DIR_DELIMITER, delimiter);
             }
 
-            cl.delete(matcher);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Dir.DIR_INDEX);
+
+            cl.delete(matcher, hint);
         }catch (BaseException e){
             if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
                     e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
