@@ -149,7 +149,10 @@ public class ObjectUtils extends S3TestBase {
 			if (objectName.startsWith(prefix)) {
 				int end = objectName.indexOf(delimiter, prefix.length());
 				if (end != -1) {
-					commPrefixes.add(objectName.substring(0, end + delimiter.length()));
+					String commPrefix = objectName.substring(0, end + delimiter.length());
+					if(!commPrefixes.contains(commPrefix)){
+						commPrefixes.add(commPrefix);
+					}
 				}
 			}
 		}
