@@ -59,7 +59,7 @@ public class Transaction17945 extends SdbTestBase {
 
     @DataProvider(name = "index")
     public Object[][] createIndex() {
-        return new Object[][] { { "{'b':1}" }, { "{'b':-1}" } };
+        return new Object[][] { { "{'b':1}" }/* , { "{'b':-1}" } */ };
     }
 
     @Test(dataProvider = "index")
@@ -79,9 +79,9 @@ public class Transaction17945 extends SdbTestBase {
             QueryThread queryThread = new QueryThread();
             queryThread.start();
 
-            Assert.assertTrue(queryThread.isSuccess());
-            Assert.assertTrue(updateThread1.isSuccess());
-            Assert.assertTrue(updateThread2.isSuccess());
+            Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
+            Assert.assertTrue(updateThread1.isSuccess(), updateThread1.getErrorMsg());
+            Assert.assertTrue(updateThread2.isSuccess(), updateThread2.getErrorMsg());
 
             latch.await();
         } catch (BaseException | InterruptedException e) {
@@ -117,7 +117,7 @@ public class Transaction17945 extends SdbTestBase {
         public void exec() throws Exception {
             try {
                 int count = 1;
-                int endCount = 600;
+                int endCount = 6;
                 while (true) {
                     int value = (int) (Math.random() * 100) + addNum;
 
@@ -143,8 +143,6 @@ public class Transaction17945 extends SdbTestBase {
                     }
                     Thread.sleep(1000);
                 }
-            } catch (Exception e) {
-                throw e;
             } finally {
                 db.commit();
                 db.close();
@@ -160,7 +158,7 @@ public class Transaction17945 extends SdbTestBase {
         public void exec() throws Exception {
             try {
                 int count = 1;
-                int endCount = 3000;
+                int endCount = 30;
                 while (true) {
 
                     // 开启查询事务
@@ -183,8 +181,6 @@ public class Transaction17945 extends SdbTestBase {
                     }
                     Thread.sleep(150);
                 }
-            } catch (Exception e) {
-                throw e;
             } finally {
                 db.commit();
                 db.closeAllCursors();
