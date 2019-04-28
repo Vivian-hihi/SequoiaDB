@@ -427,6 +427,8 @@ namespace engine
       dmsRecordID foundDeletedID  ;
       dmsRecordRW delRecordRW ;
       const dmsDeletedRecord* pRead = NULL ;
+      dpsTransCB *pTransCB          = pmdGetKRCB()->getTransCB() ;
+      dpsTransRetInfo retInfo ;
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST ) ;
       PD_TRACE1 ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST,
@@ -475,29 +477,54 @@ namespace engine
                // and got sufficient size for us
                if( pRead->isDeleted() && pRead->getSize() >= requiredSize )
                {
-                  if ( preRW.isEmpty() )
+                  if ( SDB_OK == pTransCB->transLockTestX( cb, _logicalCSID,
+                                                           context->mbID(),
+                                                           &foundDeletedID,
+                                                           &retInfo ) )
                   {
-                     // it's just the first one from delete list, let's get it
-                     context->mb()->_deleteList[j] = pRead->getNextRID() ;
+                     if ( preRW.isEmpty() )
+                     {
+                        // it's just the first one from delete list, let's get it
+                        context->mb()->_deleteList[j] = pRead->getNextRID() ;
+                     }
+                     else
+                     {
+                        dmsDeletedRecord *preWrite =
+                           preRW.writePtr<dmsDeletedRecord>() ;
+                        // we need to link the previous delete record to the next
+                        preWrite->setNextRID( pRead->getNextRID() ) ;
+                     }
+
+                     // change extent free space
+                     dmsExtRW rw = extent2RW( foundDeletedID._extent,
+                                              context->mbID() ) ;
+                     dmsExtent *pExtent = rw.writePtr<dmsExtent>() ;
+                     pExtent->_freeSpace -= pRead->getSize() ;
+                     context->mbStat()->_totalDataFreeSpace -= pRead->getSize() ;
+
+                     resultID = foundDeletedID ;
+                     rc = SDB_OK ;
+                     goto done ;
+                  }
+                  else if ( DPS_TRANSLOCK_X == retInfo._lockType &&
+                            dpsTransLockId( _logicalCSID,
+                                            context->mbID(),
+                                            NULL ) == retInfo._lockID )
+                  {
+                     context->pause() ;
+                     ossSleep( 10 ) ;
+                     rc = context->resume() ;
+                     if ( rc )
+                     {
+                        goto error ;
+                     }
+                     goto retry ;
                   }
                   else
                   {
-                     dmsDeletedRecord *preWrite =
-                        preRW.writePtr<dmsDeletedRecord>() ;
-                     // we need to link the previous delete record to the next
-                     preWrite->setNextRID( pRead->getNextRID() ) ;
+                     // can't increase i counter
+                     --i ;
                   }
-
-                  // change extent free space
-                  dmsExtRW rw = extent2RW( foundDeletedID._extent,
-                                           context->mbID() ) ;
-                  dmsExtent *pExtent = rw.writePtr<dmsExtent>() ;
-                  pExtent->_freeSpace -= pRead->getSize() ;
-                  context->mbStat()->_totalDataFreeSpace -= pRead->getSize() ;
-
-                  resultID = foundDeletedID ;
-                  rc = SDB_OK ;
-                  goto done ;
                }
 
                //for some reason this slot can't be reused, let's get to the next
