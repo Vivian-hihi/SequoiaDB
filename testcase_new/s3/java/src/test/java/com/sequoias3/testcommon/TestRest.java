@@ -36,7 +36,7 @@ public class TestRest extends S3TestBase {
 		factory.setConnectionRequestTimeout(10000);
 		factory.setConnectTimeout(10000);
 		factory.setBufferRequestBody(false);
-		factory.setReadTimeout(60000);
+		factory.setReadTimeout(180000);
 		rest = new RestTemplate(factory);
 	}
 
