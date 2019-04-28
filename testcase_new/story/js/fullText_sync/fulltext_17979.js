@@ -13,8 +13,7 @@ function main()
    var clName = COMMCLNAME + "_ES_17979";
    commDropCL(db, COMMCSNAME, clName, true, true);
    
-   var groups = commGetGroups( db );
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {'Group':groups[0][0]["GroupName"]});
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, clName );
    
    // 插入数据
    var records = new Array();
@@ -25,8 +24,21 @@ function main()
    dbcl.insert(records);
    
    // 重新选主
-   var rg = db.getRG(groups[0][0]["GroupName"]);
-   rg.reelect({Seconds:60});
+   var rg = db.getCatalogRG();
+   var masNode = rg.getMaster();
+   var nodeName = masNode.getHostName()+":"+masNode.getServiceName();
+   var obj = db.snapshot(13, {"NodeName":nodeName}).current().toObj();
+   var weight = obj["weight"];
+   db.updateConf({"weight":weight-2}, {"NodeName":nodeName});
+   
+   while (true){
+      println("masNode: " + masNode.getNodeDetail());
+      rg.reelect({Seconds:60});
+      println("REELECTING... " + rg.getMaster().getNodeDetail());
+      if (rg.getMaster().getNodeDetail() != masNode.getNodeDetail()){
+         break;
+      }
+   }
    
    commCreateIndex( dbcl, "fullIndex_17979", {b : "text"});
    checkFullSyncToES(COMMCSNAME, clName, "fullIndex_17979", 10000);
@@ -35,6 +47,7 @@ function main()
    var expResult = dbOperator.findFromCL(dbcl, null, null, {"_id" : 1});
    checkResult(expResult, actResult);
    
+   db.updateConf({"weight":weight}, {"NodeName":nodeName});
    commDropCL( db, COMMCSNAME, clName );
 }
 
