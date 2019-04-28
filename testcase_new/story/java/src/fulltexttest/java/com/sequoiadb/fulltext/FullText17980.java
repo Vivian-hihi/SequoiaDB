@@ -6,6 +6,7 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
+import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -47,10 +48,8 @@ public class FullText17980 extends SdbTestBase {
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text','d':'text','e':'text','f':'text'}", false,
                 false);
         List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, CLNAME, fullIdxName);
-
-        Thread.sleep((long) (Math.random() * 20000));
+        Assert.assertTrue(FullTextESUtils.isExistIndexInES(esClient, esIndexNames.get(0)));
         sdb.getCollectionSpace(csName).dropCollection(CLNAME);
-
         FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
     }
 
