@@ -6,6 +6,11 @@
 main();
 function main()
 {
+   if(commIsStandalone( db ))
+   {
+      println("Deploy is standalone");
+      return;
+   }
    var groups = commGetGroups(db);
    var hostName = groups[0][1].HostName;
    var svcname = groups[0][1].svcname;
