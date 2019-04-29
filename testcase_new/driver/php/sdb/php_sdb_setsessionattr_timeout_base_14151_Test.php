@@ -133,7 +133,7 @@ class setSessionAttr14151 extends PHPUnit_Framework_TestCase
          for( $i = 0; $i< 10; $i++)
          {
             $err = self::$db -> dropCS( self::$csName );
-            if($err['errno'] != -190 )
+            if($err['errno'] != -190 && $err['errno'] != -147)
             {
                break;
             }
