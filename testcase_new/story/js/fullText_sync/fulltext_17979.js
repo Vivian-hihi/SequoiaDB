@@ -29,13 +29,15 @@ function main()
    var nodeName = masNode.getHostName()+":"+masNode.getServiceName();
    var obj = db.snapshot(13, {"NodeName":nodeName}).current().toObj();
    var weight = obj["weight"];
-   db.updateConf({"weight":weight-2}, {"NodeName":nodeName});
+   db.updateConf({"weight":weight-5}, {"NodeName":nodeName});
    
+   var doTimes = 0;
    while (true){
       println("masNode: " + masNode.getNodeDetail());
       rg.reelect({Seconds:60});
       println("REELECTING... " + rg.getMaster().getNodeDetail());
-      if (rg.getMaster().getNodeDetail() != masNode.getNodeDetail()){
+      doTimes++;
+      if ((rg.getMaster().getNodeDetail() != masNode.getNodeDetail()) || doTimes > 10){
          break;
       }
    }
