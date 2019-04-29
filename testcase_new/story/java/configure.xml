@@ -105,5 +105,16 @@
       </packages>
    </test>
    
+   <test name="rcuserbs" parallel="classes" thread-count="5">
+      <groups>
+         <run>
+            <include name="rcuserbs" />
+         </run>
+      </groups>
+      <packages>
+         <package name="com.sequoiadb.transaction.rcuserbs" />
+      </packages>
+   </test>
+   
 </suite>
    
