@@ -100,7 +100,7 @@ public class Insert15966 extends SdbTestBase {
 					cl.insert(obj);
 				}
 			}catch(BaseException e){
-				if(e.getErrorCode()!=-321){
+				if(e.getErrorCode()!=-321 || e.getErrorCode()!=-190){
 					throw e;
 				}
 			}
