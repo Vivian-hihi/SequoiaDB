@@ -180,7 +180,8 @@ namespace replay
       ossStrcpy( tempTime, submitTime ) ;
       tempTime[TIME_LEN] = '\0' ;
 
-      p = ossStrchr( submitTime, ':' ) ;
+      //TODO: ubuntu compile error because of redefine strchr in cstring
+      p = ossStrchr( (CHAR *)submitTime, ':' ) ;
       if ( NULL == p )
       {
          rc = SDB_INVALIDARG ;
@@ -530,7 +531,7 @@ namespace replay
    }
 
    INT32 _ossFilterFiles( const string &dirPath, vector<string> &vecFiles,
-                              pcrecpp::RE &re, UINT32 deep )
+                          pcrecpp::RE &re, UINT32 deep )
    {
       INT32 rc = SDB_OK ;
 

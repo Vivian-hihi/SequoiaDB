@@ -79,7 +79,8 @@ namespace replay
                       "rc = %d" ) ;
       }
 
-      dotPos = ossStrchr( sourceFullName, '.' ) ;
+      //TODO: ubuntu compile error because of redefine strchr in cstring
+      dotPos = ossStrchr( ( CHAR *)sourceFullName, '.' ) ;
       if ( NULL == dotPos || dotPos == sourceFullName || dotPos + 1 == '\0' )
       {
          rc = SDB_INVALIDARG ;
@@ -101,7 +102,8 @@ namespace replay
       ossMemset( _sourceCLName, 0, sizeof(_sourceCLName) ) ;
       ossStrcpy( _sourceCLName, ++dotPos ) ;
 
-      dotPos = ossStrchr( targetFullName, '.' ) ;
+      //TODO: ubuntu compile error because of redefine strchr in cstring
+      dotPos = ossStrchr( (CHAR *)targetFullName, '.' ) ;
       if ( NULL == dotPos || dotPos == targetFullName || dotPos + 1 == '\0' )
       {
          rc = SDB_INVALIDARG ;
