@@ -34,8 +34,8 @@ public class ListObjectsWithDelimiter18127 extends S3TestBase {
 	private String prefix = "dir1?";
 	private String delimiter = "?";
 	private String startAfter = "dir0?";
-	private List<String> expresultList = new ArrayList<String>();
-	private List<String> checkResult = new ArrayList<String>();
+	private int maxKeys1 = 10;
+	private int maxKeys2 = 1;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
@@ -62,7 +62,7 @@ public class ListObjectsWithDelimiter18127 extends S3TestBase {
 		List<String> commprefixesResult = new ArrayList<>();
 		List<String> actContents = new ArrayList<>();
 		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName)
-						.withPrefix(prefix).withStartAfter(startAfter).withDelimiter(delimiter).withMaxKeys(10);
+						.withPrefix(prefix).withStartAfter(startAfter).withDelimiter(delimiter).withMaxKeys(maxKeys1);
 		ListObjectsV2Result result; 
 		
 		do{
@@ -77,8 +77,8 @@ public class ListObjectsWithDelimiter18127 extends S3TestBase {
 			req.setContinuationToken(nextContinuationToken);
 		}while(result.isTruncated());
 		
-		expresultList = ObjectUtils.getCommPrefixes(keyList, prefix, delimiter);
-		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList);
+		List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(keyList, prefix, delimiter);
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expCommonPrefixes);
 		
 		List<String> expContents = ObjectUtils.getKeys(keyList, prefix, delimiter);
 		Collections.sort(expContents);
@@ -86,28 +86,28 @@ public class ListObjectsWithDelimiter18127 extends S3TestBase {
 		
 		
 		//指定maxkeys小于匹配记录数
-		checkResult.addAll(expresultList);
-		checkResult.addAll(expContents);
-		
-		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName).withPrefix(prefix).withStartAfter(startAfter).withDelimiter(delimiter).withMaxKeys(1);
+		List<String> commprefixesResult2 = new ArrayList<>();
+		List<String> actContents2 = new ArrayList<>();
+		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName).withPrefix(prefix).withStartAfter(startAfter).withDelimiter(delimiter).withMaxKeys(maxKeys2);
 		ListObjectsV2Result result2 = null; 
-		List<String> actResultList = new ArrayList<>();
 		int returnedNum = 1;
-		for(int i = 0; i < checkResult.size(); i++ ){
+		do{
 			result2 = s3Client.listObjectsV2(req2);
-			actResultList.addAll(result2.getCommonPrefixes());
+			commprefixesResult2.addAll(result2.getCommonPrefixes());
 			List<S3ObjectSummary> objects = result2.getObjectSummaries();
 			for(S3ObjectSummary obj : objects)
 			{
-				actResultList.add(obj.getKey());
+				actContents2.add(obj.getKey());
 			}
-			Assert.assertEquals(actResultList.size(), returnedNum);
+			//判断maxKeys是否生效
+			Assert.assertEquals(commprefixesResult2.size() + actContents2.size(), returnedNum * maxKeys2);
 			String nextContinuationToken = result2.getNextContinuationToken();
 			req2.setContinuationToken(nextContinuationToken);
 			returnedNum++;
-		}
-		Assert.assertFalse(result2.isTruncated());
-		Assert.assertEquals(actResultList, checkResult);
+		}while(result2.isTruncated());
+		
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult2, expCommonPrefixes);
+		Assert.assertEquals(actContents2, expContents, " act contents : " + actContents2.toString() + " , exp contects : " + expContents.toString());
 		runSuccess =true;
 	}
 
