@@ -85,6 +85,8 @@ namespace engine
 
       BOOLEAN     _enableSparse ;
       BOOLEAN     _directIO ;
+      BOOLEAN     _replicaFullRecordOn ;
+      BOOLEAN     _replicaRecordTimeOn ;
       UINT32      _cacheMergeSize ;
       UINT32      _pageAllocTimeout ;
 
@@ -109,6 +111,8 @@ namespace engine
          _extentThreshold = 0 ;
          _enableSparse = FALSE ;
          _directIO = FALSE ;
+         _replicaFullRecordOn = FALSE ;
+         _replicaRecordTimeOn = FALSE ;
          _cacheMergeSize = 0 ;
          _pageAllocTimeout = 0 ;
 

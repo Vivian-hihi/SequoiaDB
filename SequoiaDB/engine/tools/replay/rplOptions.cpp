@@ -44,6 +44,8 @@ namespace replay
    #define RPL_OPTION_HELP              "help"
    #define RPL_OPTION_VERSION           "version"
    #define RPL_OPTION_HOST              "hostname"
+   #define RPL_OPTION_OUTPUT_CONF       "outputconf"
+   #define RPL_OPTION_INTERVAL_NUM      "intervalnum"
    #define RPL_OPTION_SVC               "svcname"
    #define RPL_OPTION_USER              "user"
    #define RPL_OPTION_PASSWD            "password"
@@ -68,6 +70,9 @@ namespace replay
 
    #define RPL_EXPLAIN_HELP             "print help information"
    #define RPL_EXPLAIN_VERSION          "print version"
+   #define RPL_EXPLAIN_OUTPUT_CONF      "output config file"
+   #define RPL_EXPLAIN_INTERVAL_NUM     "replay interval number, " \
+                                        "status will be commit once reach this interval"
    #define RPL_EXPLAIN_HOST             "sequoiadb hostname"
    #define RPL_EXPLAIN_SVC              "service name"
    #define RPL_EXPLAIN_USER             "username"
@@ -107,6 +112,8 @@ namespace replay
    #define _TYPE(T) utilOptType(T)
    #define _IMPLICIT_TYPE(T,V) implicit_value<T>(V)
 
+   #define RPL_DEFAULT_INTERVAL_NUM (1000)
+
    Options::Options()
    {
       _pathType = SDB_OSS_UNK;
@@ -122,6 +129,7 @@ namespace replay
       _isReplicaFile = FALSE;
       _cipherfile = DEFAULT_CIPHER;
       _updateWithShardingKey = TRUE;
+      _intervalNum = RPL_DEFAULT_INTERVAL_NUM;
    }
 
    Options::~Options()
@@ -135,6 +143,8 @@ namespace replay
       addOptions("General Options")
          (RPL_OPTION_HELP",h",       /* no arg */     RPL_EXPLAIN_HELP)
          (RPL_OPTION_VERSION",V",    /* no arg */     RPL_EXPLAIN_VERSION)
+         (RPL_OPTION_OUTPUT_CONF,   _TYPE(string),    RPL_EXPLAIN_OUTPUT_CONF)
+         (RPL_OPTION_INTERVAL_NUM,  _TYPE(UINT32),    RPL_EXPLAIN_INTERVAL_NUM)
          (RPL_OPTION_HOST,          _TYPE(string),    RPL_EXPLAIN_HOST)
          (RPL_OPTION_SVC,           _TYPE(string),    RPL_EXPLAIN_SVC)
          (RPL_OPTION_USER,          _TYPE(string),    RPL_EXPLAIN_USER)
@@ -305,6 +315,10 @@ namespace replay
       {
          _hostName = get<string>(RPL_OPTION_HOST);
       }
+      else if (has(RPL_OPTION_OUTPUT_CONF))
+      {
+         _outputConf = get<string>(RPL_OPTION_OUTPUT_CONF);
+      }
       else if (!_dump && !_dumpHeader && !_deflate && !_inflate)
       {
          std::cerr << "Missing argument: " << RPL_OPTION_HOST << std::endl;
@@ -325,7 +339,8 @@ namespace replay
             goto error;
          }
       }
-      else if (!_dump && !_dumpHeader && !_deflate && !_inflate)
+      else if (!has(RPL_OPTION_OUTPUT_CONF) && !_dump && !_dumpHeader
+               && !_deflate && !_inflate)
       {
          std::cerr << "Missing argument: " << RPL_OPTION_SVC << std::endl;
          rc = SDB_INVALIDARG;
@@ -517,7 +532,16 @@ namespace replay
          ossStrToBoolean(withShardingKey.c_str(), &_updateWithShardingKey);
       }
 
-   done: 
+      if (has(RPL_OPTION_INTERVAL_NUM))
+      {
+         _intervalNum = get<UINT32>(RPL_OPTION_INTERVAL_NUM);
+         if (0 == _intervalNum)
+         {
+            _intervalNum = RPL_DEFAULT_INTERVAL_NUM;
+         }
+      }
+
+   done:
       return rc;
    error:
       goto done;

@@ -33,6 +33,9 @@
 #define RPL_UTIL_HPP_
 
 #include "ossTypes.hpp"
+#include <string>
+
+using namespace std ;
 
 namespace replay
 {
@@ -59,6 +62,15 @@ namespace replay
    #define RPL_LOG_OP_POP              "pop"
 
    CHAR* getOPName(UINT16 type);
+
+   void getCurrentTime( string &timeStr ) ;
+
+   void getCurrentDate( string &dateStr ) ;
+
+   BOOLEAN isSameDay( UINT64 microSecondLeft, UINT64 microSecondRight ) ;
+
+   UINT64 replaceAndGetTime( UINT64 currentTime, INT32 newHour, INT32 newMinite,
+                             INT32 newSecond ) ;
 }
 
 #endif /* RPL_UTIL_HPP_ */

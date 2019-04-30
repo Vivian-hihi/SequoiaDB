@@ -355,6 +355,7 @@ namespace engine
       if ( DPS_DMP_OPT_FORMATTED & options )
       {
          dpsLogRecord::iterator itrTransID, itrTransLsn, itrTransRel ;
+         dpsLogRecord::iterator itrTime ;
 
          /* dump output looks like:
           * Version : 0x00000001(1)
@@ -378,6 +379,21 @@ namespace engine
          len += ossSnprintf ( outBuf + len, outSize - len,
                               " Length : %d"OSS_NEWLINE,
                               _head._length ) ;
+
+         itrTime = this->find( DPS_LOG_PUBLIC_TIME ) ;
+         if ( itrTime.valid() )
+         {
+            UINT64 microSeconds ;
+            ossTimestamp timestamp ;
+            CHAR timeStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+
+            microSeconds = *( UINT64 *) itrTime.value() ;
+            timestamp = ossMicrosecondsToTimestamp( microSeconds ) ;
+            ossTimestampToString( timestamp, timeStr ) ;
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " Time   : %s"OSS_NEWLINE,
+                                 timeStr ) ;
+         }
 
          itrTransID = this->find( DPS_LOG_PUBLIC_TRANSID ) ;
          itrTransLsn = this->find( DPS_LOG_PUBLIC_PRETRANS ) ;

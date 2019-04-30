@@ -1089,6 +1089,8 @@ namespace engine
       _storageInfo._extentThreshold = options->getExtendThreshold() << 20 ;
       _storageInfo._enableSparse = options->sparseFile() ;
       _storageInfo._directIO = options->useDirectIOInLob() ;
+      _storageInfo._replicaFullRecordOn = options->replicaFullRecordOn() ;
+      _storageInfo._replicaRecordTimeOn = options->replicaRecordTimeOn() ;
       _storageInfo._cacheMergeSize = options->getCacheMergeSize() ;
       _storageInfo._pageAllocTimeout = options->getPageAllocTimeout() ;
       _storageInfo._dataIsOK = pmdGetStartup().isOK() ;

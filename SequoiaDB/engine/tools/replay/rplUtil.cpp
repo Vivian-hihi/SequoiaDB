@@ -30,11 +30,103 @@
 
 *******************************************************************************/
 #include "rplUtil.hpp"
+#include "ossUtil.hpp"
 #include "dpsDef.hpp"
 #include "pd.hpp"
 
+using namespace std ;
+
 namespace replay
 {
+   void getCurrentTime( string &timeStr )
+   {
+      ossTimestamp Tm ;
+      CHAR szFormat[] = "%04d%02d%02d%02d%02d%02d" ;
+      CHAR szTimestmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+      struct tm tmpTm ;
+
+      ossGetCurrentTime( Tm ) ;
+      ossLocalTime( Tm.time, tmpTm ) ;
+
+      if ( Tm.microtm >= OSS_ONE_MILLION )
+      {
+         tmpTm.tm_sec ++ ;
+         Tm.microtm %= OSS_ONE_MILLION ;
+      }
+
+      ossSnprintf ( szTimestmpStr, sizeof( szTimestmpStr ),
+                    szFormat,
+                    tmpTm.tm_year + 1900,
+                    tmpTm.tm_mon + 1,
+                    tmpTm.tm_mday,
+                    tmpTm.tm_hour,
+                    tmpTm.tm_min,
+                    tmpTm.tm_sec ) ;
+
+      timeStr = szTimestmpStr ;
+   }
+
+   void getCurrentDate( string &dateStr )
+   {
+      ossTimestamp Tm ;
+      CHAR szFormat[] = "%04d%02d%02d" ;
+      CHAR szDatetmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+      struct tm tmpTm ;
+
+      ossGetCurrentTime( Tm ) ;
+      ossLocalTime( Tm.time, tmpTm ) ;
+
+      if ( Tm.microtm >= OSS_ONE_MILLION )
+      {
+         tmpTm.tm_sec ++ ;
+         Tm.microtm %= OSS_ONE_MILLION ;
+      }
+
+      ossSnprintf ( szDatetmpStr, sizeof( szDatetmpStr ),
+                    szFormat,
+                    tmpTm.tm_year + 1900,
+                    tmpTm.tm_mon + 1,
+                    tmpTm.tm_mday ) ;
+
+      dateStr = szDatetmpStr ;
+   }
+
+   BOOLEAN isSameDay( UINT64 microSecondLeft, UINT64 microSecondRight )
+   {
+      struct tm tmLeft ;
+      ossTimestamp ossTMLeft = ossMicrosecondsToTimestamp( microSecondLeft ) ;
+      ossLocalTime( ossTMLeft.time, tmLeft ) ;
+
+      struct tm tmRight ;
+      ossTimestamp ossTMRight = ossMicrosecondsToTimestamp( microSecondRight ) ;
+      ossLocalTime( ossTMRight.time, tmRight ) ;
+
+      if ( tmLeft.tm_year == tmRight.tm_year
+           && tmLeft.tm_mon == tmRight.tm_mon
+           && tmLeft.tm_mday == tmRight.tm_mday )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
+   UINT64 replaceAndGetTime( UINT64 currentTime, INT32 newHour, INT32 newMinite,
+                             INT32 newSecond )
+   {
+      struct tm tm ;
+      ossTimestamp ossTM = ossMicrosecondsToTimestamp( currentTime ) ;
+      ossLocalTime( ossTM.time, tm ) ;
+
+      tm.tm_hour = newHour ;
+      tm.tm_min = newMinite ;
+      tm.tm_sec = newSecond ;
+
+      ossTM.time = mktime( &tm ) ;
+
+      return ossTimestampToMicroseconds( ossTM ) ;
+   }
+
    CHAR* getOPName(UINT16 type)
    {
       switch(type)

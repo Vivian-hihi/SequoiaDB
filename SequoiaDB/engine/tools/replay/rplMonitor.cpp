@@ -30,10 +30,13 @@
 
 *******************************************************************************/
 #include "rplMonitor.hpp"
+#include "rplSdbOutputter.hpp"
 #include "rplUtil.hpp"
 #include "dpsLogFile.hpp"
+#include "../bson/bson.hpp"
 #include <sstream>
 
+using namespace bson ;
 using namespace engine;
 
 namespace replay
@@ -47,10 +50,19 @@ namespace replay
       _lastFileId = DPS_INVALID_LOG_FILE_ID;
       _lastFileTime = 0;
       _lastMovedFileTime = 0;
+      _outputType = RPL_OUTPUT_SEQUOIADB ;
+      _serial = 0 ;
+      _summitTime = 0 ;
+      _isLoadFromFile = FALSE ;
    }
 
    Monitor::~Monitor()
    {
+   }
+
+   void Monitor::setIsLoadFromFile( BOOLEAN isLoadFromFile )
+   {
+      _isLoadFromFile = isLoadFromFile ;
    }
 
    void Monitor::opCount(UINT16 type)
@@ -111,9 +123,32 @@ namespace replay
       _lastMovedFileTime = lastTime;
    }
 
+   void Monitor::setOutputType( const string &type )
+   {
+      _outputType = type ;
+   }
+
+   void Monitor::setSerial( UINT64 serial )
+   {
+      _serial = serial ;
+   }
+
+   void Monitor::setSubmitTime(UINT64 microSeconds )
+   {
+      _summitTime = microSeconds ;
+   }
+
+   void Monitor::setExtraInfo(BSONObj extraInfo)
+   {
+      _extraInfo = extraInfo.getOwned() ;
+   }
+
    string Monitor::dump()
    {
       stringstream ss;
+
+      ss << "OuputType: " << _outputType << std::endl ;
+      ss << "Serial: " << _serial << std::endl ;
 
       if (DPS_INVALID_LSN_OFFSET != _nextLSN)
       {

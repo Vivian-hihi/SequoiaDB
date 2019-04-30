@@ -52,7 +52,8 @@ namespace engine
       DPS_LOG_PUBLIC_PRETRANS = 203,
       DPS_LOG_PUBLIC_RELATED_TRANS = 204,    // only for rollback trans,
                                              // mapping to really trans lsn
-      DPS_LOG_PUBLIC_FIRSTTRANS = 205
+      DPS_LOG_PUBLIC_FIRSTTRANS = 205,
+      DPS_LOG_PUBLIC_TIME = 206
    } ;
 
 /// number in public can not be used in definition !

@@ -214,6 +214,20 @@ UINT64 ossGetCurrentMicroseconds()
    return ( (UINT64)current.time ) * 1000000L + current.microtm ;
 }
 
+UINT64 ossTimestampToMicroseconds( const ossTimestamp &timestamp )
+{
+   return ( (UINT64)timestamp.time ) * 1000000L + timestamp.microtm ;
+}
+
+ossTimestamp ossMicrosecondsToTimestamp( const UINT64 &microseconds )
+{
+   ossTimestamp timestamp ;
+   timestamp.time = microseconds / 1000000L ;
+   timestamp.microtm = microseconds % 1000000L ;
+
+   return timestamp ;
+}
+
 UINT64 ossGetCurrentMilliseconds()
 {
    return ossGetCurrentMicroseconds() / 1000L ;

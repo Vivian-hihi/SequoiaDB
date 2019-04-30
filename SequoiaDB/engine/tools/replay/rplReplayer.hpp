@@ -36,10 +36,12 @@
 #include "rplOptions.hpp"
 #include "rplFilter.hpp"
 #include "rplMonitor.hpp"
+#include "rplOutputter.hpp"
 #include "../client/client.hpp"
 #include "dpsArchiveFileMgr.hpp"
 #include "dpsLogFile.hpp"
 #include "ossFile.hpp"
+#include "rplMonitorStore.hpp"
 #include <string>
 #include <map>
 
@@ -66,10 +68,8 @@ namespace replay
       INT32 run();
 
    private:
-      INT32 _initStatus();
-      INT32 _readStatus();
-      INT32 _writeStatus();
-      INT32 _connectSdb();
+      INT32 _initMonitorStore( Monitor *monitor ) ;
+      INT32 _initOutputter();
       INT32 _replayFile();
       INT32 _replayDir();
       INT32 _isDpsLogFile(const string& path, BOOLEAN& isArchive,
@@ -111,6 +111,7 @@ namespace replay
       INT32 _rollbackPop(const CHAR* log);
       INT32 _deflateFile(const string& file);
       INT32 _inflateFile(const string& file);
+      INT32 _checkSubmit() ;
 
    private:
       string                     _tmpFile;
@@ -118,8 +119,9 @@ namespace replay
       Filter                     _filter;
       Monitor                    _monitor;
       engine::ossFile            _status;
+      rplMonitorStore*           _monitorStore;
       string                     _path;
-      sdbclient::sdb*            _sdb;
+      rplOutputter*              _outputter;
       engine::dpsArchiveFileMgr  _archiveFileMgr;
       CHAR*                      _buf;
       UINT32                     _bufSize;

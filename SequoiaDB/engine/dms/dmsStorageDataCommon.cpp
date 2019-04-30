@@ -3002,6 +3002,7 @@ namespace engine
       monAppCB * pMonAppCB          = cb ? cb->getMonAppCB() : NULL ;
       dpsMergeInfo info ;
       dpsLogRecord &logRecord       = info.getMergeBlock().record() ;
+      UINT64 microSeconds ;
       SDB_DPSCB *dropDps            = NULL ;
       // trans related
       DPS_TRANS_ID transID          = cb->getTransID() ;
@@ -3161,8 +3162,21 @@ namespace engine
          {
             _clFullName( context->mb()->_collectionName, fullName,
                          sizeof(fullName) ) ;
-            rc = dpsInsert2Record( fullName, insertObj, transID,
-                                   preTransLsn, relatedLsn, logRecord ) ;
+
+            // reserved log-size
+            if ( !_pStorageInfo->_replicaRecordTimeOn )
+            {
+               rc = dpsInsert2Record( fullName, insertObj, transID,
+                                      preTransLsn, relatedLsn, NULL,
+                                      logRecord ) ;
+            }
+            else
+            {
+               microSeconds = ossGetCurrentMicroseconds() ;
+               rc = dpsInsert2Record( fullName, insertObj, transID,
+                                      preTransLsn, relatedLsn, &microSeconds,
+                                      logRecord ) ;
+            }
             PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
             logRecSize = ossAlign4( logRecord.alignedLen() ) ;
@@ -3412,6 +3426,7 @@ namespace engine
       UINT32 logRecSize             = 0 ;
       dpsMergeInfo info ;
       dpsLogRecord &record          = info.getMergeBlock().record() ;
+      UINT64 microSeconds ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
       DPS_TRANS_ID transID          = cb->getTransID() ;
       DPS_LSN_OFFSET preLsn         = cb->getCurTransLsn() ;
@@ -3579,9 +3594,21 @@ namespace engine
 
                   _clFullName( context->mb()->_collectionName, fullName,
                                sizeof(fullName) ) ;
+
                   // reserved log-size
-                  rc = dpsDelete2Record( fullName, delObject, transID,
-                                         preLsn, relatedLSN, record ) ;
+                  if ( !_pStorageInfo->_replicaRecordTimeOn )
+                  {
+                     rc = dpsDelete2Record( fullName, delObject, transID,
+                                            preLsn, relatedLSN, NULL, record ) ;
+                  }
+                  else
+                  {
+                     microSeconds = ossGetCurrentMicroseconds() ;
+                     rc = dpsDelete2Record( fullName, delObject, transID,
+                                            preLsn, relatedLSN, &microSeconds,
+                                            record ) ;
+                  }
+
                   if ( SDB_OK != rc )
                   {
                      PD_LOG( PDERROR, "Failed to build record: %d",rc ) ;
@@ -3744,6 +3771,7 @@ namespace engine
       UINT32 logRecSize             = 0 ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
+      UINT64 microSeconds ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
       DPS_TRANS_ID transID = cb->getTransID() ;
@@ -3827,9 +3855,21 @@ namespace engine
 
             if ( dpscb )
             {
-               rc = modifier.modify ( obj, newobj, &oldMatch, &oldChg,
-                                      &newMatch, &newChg,
-                                      &oldShardingKey, &newShardingKey ) ;
+               if ( !_pStorageInfo->_replicaFullRecordOn )
+               {
+                  rc = modifier.modify ( obj, newobj, &oldMatch, &oldChg,
+                                         &newMatch, &newChg,
+                                         &oldShardingKey, &newShardingKey ) ;
+               }
+               else
+               {
+                  rc = modifier.modify ( obj, newobj, &oldMatch, NULL,
+                                         &newMatch, NULL,
+                                         &oldShardingKey, &newShardingKey ) ;
+                  oldChg = BSON( "$replace" << obj ) ;
+                  newChg = BSON( "$replace" << newobj ) ;
+               }
+
                if ( SDB_OK == rc && pHandler )
                {
                   rc = pHandler->onUpdateRecord( context, obj, newobj,
@@ -3882,12 +3922,26 @@ namespace engine
             {
                _clFullName( context->mb()->_collectionName, fullName,
                             sizeof(fullName) ) ;
+
                // reserved log-size
-               rc = dpsUpdate2Record( fullName,
-                                      oldMatch, oldChg, newMatch, newChg,
-                                      oldShardingKey, newShardingKey,
-                                      transID, preTransLsn,
-                                      relatedLSN, record ) ;
+               if ( !_pStorageInfo->_replicaRecordTimeOn )
+               {
+                  rc = dpsUpdate2Record( fullName,
+                                         oldMatch, oldChg, newMatch, newChg,
+                                         oldShardingKey, newShardingKey,
+                                         transID, preTransLsn,
+                                         relatedLSN, NULL, record ) ;
+               }
+               else
+               {
+                  microSeconds = ossGetCurrentMicroseconds() ;
+                  rc = dpsUpdate2Record( fullName,
+                                         oldMatch, oldChg, newMatch, newChg,
+                                         oldShardingKey, newShardingKey,
+                                         transID, preTransLsn,
+                                         relatedLSN, &microSeconds, record ) ;
+               }
+
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Failed to build record:%d", rc ) ;

@@ -72,7 +72,7 @@ namespace engine
        _reserved1( header._reserved1),
        _reserved2( header._reserved2 )
       {
-      
+
       }
 
       ~_dpsLogRecordHeader(){}

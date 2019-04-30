@@ -56,8 +56,8 @@ namespace engine
    //  su: storage unit, not really used except create a local indexCB.
    //    we can't rely on the indexCB to be valid for the life of the scan.
    //    the same. It could be NULL here.
-   //  cb: edu control block. When it's not NULL, it can be used to 
-   //    access monAppCB. 
+   //  cb: edu control block. When it's not NULL, it can be used to
+   //    access monAppCB.
    // Dependency:
    //    All input except su should not be NULL
    _rtnMemIXTreeScanner::_rtnMemIXTreeScanner ( ixmIndexCB *pIndexCB,
@@ -164,13 +164,13 @@ namespace engine
 
    // Description:
    //    In certain cases we need to change the scanner's current location
-   // to a given key and rid in the in memory tree. The cases include but 
+   // to a given key and rid in the in memory tree. The cases include but
    // not limited to: after insertion/deletion of indexes. We need both
    // key and rid because the key might not be unique. In case this is called
    // during first init time, the keyObj is a dummy key. We will endup get
    // whatever the first key based on the direction. Otherwise, we will use
    // a savedObj and savedRib
-   // 
+   //
    // Input:
    //    keyObj: BSONObj containing the key
    //    rid: record id
@@ -181,7 +181,7 @@ namespace engine
    //    error code from find/locate. Those are sever system error like memory or
    //    disk page error
    // Dependency:
-   //    Caller need to hold mbLatch 
+   //    Caller need to hold mbLatch
    //    Caller should hold the in memory tree latch.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNMEMIXTREESCAN_RELORID1, "_rtnMemIXTreeScanner::relocateRID" )
    INT32 _rtnMemIXTreeScanner::relocateRID ( const BSONObj &keyObj,
@@ -287,7 +287,7 @@ namespace engine
    //    for the next best match index in the in memory search tree.
    //    caller must make acquire the table lock before calling resumeScan
    //    and must release the table lock right after calling pauseScan
-   //   
+   //
    // Input:
    //    N/A
    // Output:
@@ -342,7 +342,7 @@ namespace engine
       {
          SDB_ASSERT( _treeLatchHeld, "tree latch should be held" ) ;
          // if the tree is empty, consider as EOC. We should check during each
-         // round because as soon as we pause, someone else can 
+         // round because as soon as we pause, someone else can
          // commit the deletion of certain keys.
          // make sure the current _memIdxTree is not the end
          if ( !_memIdxTree->isPosValid( _curIndexPos ) )
@@ -353,7 +353,7 @@ namespace engine
 
          // _savedRID/_savedObj should always be NULL
          // unless we have pauseScan(), resumeScan(), found the
-         // index structure is changed and we have called relocateRID(), 
+         // index structure is changed and we have called relocateRID(),
          // in that case _savedRID may not be NULL for readonly mode
 
          // in write mode, the possible NULL savedRID is that when the
@@ -447,7 +447,7 @@ namespace engine
                // get RID from iterator
                _savedRID = nodeKey.getRID() ;
                // RID saved in the in-memory tree should be valid
-               SDB_ASSERT( !_savedRID.isNull(), 
+               SDB_ASSERT( !_savedRID.isNull(),
                            "The RID from curIndexIter should not be NULL" ) ;
 
                if ( !_insert2Dup( _savedRID ) )
@@ -507,10 +507,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNMEMIXTREESCAN_PAUSESCAN ) ;
 
-      // do nothing if the in memory tree is not initialized or haven't done 
-      // first round or we don't have tree latch. There are special boundary 
-      // case in IXSec scan where we may call pause scan twice, the second 
-      // pause may become no op due to the treeLatch held condition. 
+      // do nothing if the in memory tree is not initialized or haven't done
+      // first round or we don't have tree latch. There are special boundary
+      // case in IXSec scan where we may call pause scan twice, the second
+      // pause may become no op due to the treeLatch held condition.
       if ( !_init || !_treeLatchHeld ||
            !_memIdxTree->isPosValid( _curIndexPos ) )
       {
@@ -551,7 +551,7 @@ namespace engine
    }
 
    // restoring the bson key and rid for the current index scan. This is done by
-   // comparing the _curIndexIter against a new find of iterator in the tree 
+   // comparing the _curIndexIter against a new find of iterator in the tree
    // with the saved keyObj+rid.
    // If so it means there's no change in this in memory tree, and we
    // can move on the from the current index rid. Otherwise we have to locate
@@ -607,7 +607,7 @@ namespace engine
       }
       _treeLatchHeld = TRUE ;
 
-      // haven't locate the rid in the tree yet, the first run of advance 
+      // haven't locate the rid in the tree yet, the first run of advance
       // will handle it
       if ( !_init || !_memIdxTree->isPosValid( _curIndexPos ) ||
            _savedObj.isEmpty() )
@@ -616,7 +616,7 @@ namespace engine
          goto done ;
       }
 
-      // if pause didn't save anything, we don't know where to 
+      // if pause didn't save anything, we don't know where to
       // start the scan. We will skip and do relocate
       // iterator is the same
       if ( _curIndexPos == _memIdxTree->find( &_savedObj, _savedRID ) &&

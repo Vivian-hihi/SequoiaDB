@@ -567,6 +567,36 @@ sdbRepairMain = [
       "tools/sdbrepair.cpp"
       ]
 
+pcreFiles = [
+     "pcre/pcre_byte_order.c",
+     "pcre/pcre_compile.c",
+     "pcre/pcre_config.c",
+     "pcre/pcre_dfa_exec.c",
+     "pcre/pcre_exec.c",
+     "pcre/pcre_fullinfo.c",
+     "pcre/pcre_get.c",
+     "pcre/pcre_globals.c",
+     "pcre/pcre_maketables.c",
+     "pcre/pcre_newline.c",
+     "pcre/pcre_ord2utf8.c",
+     "pcre/pcre_refcount.c",
+     "pcre/pcre_string_utils.c",
+     "pcre/pcre_study.c",
+     "pcre/pcre_tables.c",
+     "pcre/pcre_ucd.c",
+     "pcre/pcre_valid_utf8.c",
+     "pcre/pcre_version.c",
+     "pcre/pcre_xclass.c",
+     # pcre nodist
+     "pcre/pcre_chartables.c",
+     # pcre cpp
+     "pcre/pcrecpp.cc",
+     "pcre/pcre_scanner.cc",
+     "pcre/pcre_stringpiece.cc",
+     # pcre posix
+     "pcre/pcreposix.c"
+      ]
+
 sdbReplayFiles = [
       "tools/replay/sdbReplay.cpp",
       "tools/replay/rplOptions.cpp",
@@ -574,6 +604,13 @@ sdbReplayFiles = [
       "tools/replay/rplReplayer.cpp",
       "tools/replay/rplMonitor.cpp",
       "tools/replay/rplUtil.cpp",
+      "tools/replay/rplSdbOutputter.cpp",
+      "tools/replay/rplMonitorStore.cpp",
+      "tools/replay/rplDB2LoadOutputter.cpp",
+      "tools/replay/rplTableMapping.cpp",
+      "tools/replay/rplRecordWriter.cpp",
+      "tools/replay/rplField.cpp",
+      "tools/replay/rplConfParser.cpp"
       ]
 
 sdbSEAdptFiles = [
@@ -612,6 +649,9 @@ sdbPasswdFiles = [
       "tools/passwd/passwdOptions.cpp",
       "tools/passwd/sdbPasswd.cpp"
     ]
+
+#PCRE
+toolEnv.StaticLibrary('pcre', pcreFiles)
 #cls
 toolEnv.StaticLibrary('cls', clsFiles)
 #ixm
@@ -663,7 +703,7 @@ sdbexprt = toolEnv.Program("sdbexprt", exportFiles,
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbreplay = toolEnv.Program("sdbreplay", sdbReplayFiles,
-          LIBDEPS=["bson","oss","pd","util","clientcpp","dps","pmd"],
+          LIBDEPS=["bson","oss","pd","util","clientcpp","dps","pmd","pcre"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbload2 = toolEnv.Program("sdbload2", sdbLoadMain,

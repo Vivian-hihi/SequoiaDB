@@ -211,7 +211,7 @@ namespace engine
                                     INT32 &value,const INT32 &newValue,
                                     PMD_CFG_CHANGE changeLevel,
                                     BOOLEAN useDefault ) ;
-         void        _saveToMapString( const CHAR *pFieldName, 
+         void        _saveToMapString( const CHAR *pFieldName,
                                        CHAR *pValue, UINT32 len,
                                        const string &newValue,
                                        PMD_CFG_CHANGE changeLevel,
@@ -635,7 +635,8 @@ namespace engine
          OSS_INLINE UINT32 getMaxConn () const { return _maxconn ; }
          OSS_INLINE UINT32 getSvcSchedulerType() const { return _svcSchedulerType ; }
          OSS_INLINE UINT32 getSvcMaxConcurrency() const { return _svcMaxConcurrency ; }
-
+         OSS_INLINE BOOLEAN replicaFullRecordOn() const { return _replicaFullRecordOn ; }
+         OSS_INLINE BOOLEAN replicaRecordTimeOn() const { return _replicaRecordTimeOn ; }
          OSS_INLINE BOOLEAN isSleepEnabled() const { return _enableSleep ; }
          OSS_INLINE BOOLEAN recycleRecord() const { return _recycleRecord ; }
 
@@ -739,6 +740,8 @@ namespace engine
          UINT32      _svcSchedulerType ;
          UINT32      _svcMaxConcurrency ;
          BOOLEAN     _preferedStrict ;
+         BOOLEAN     _replicaFullRecordOn ;
+         BOOLEAN     _replicaRecordTimeOn ;
          BOOLEAN     _enableSleep ;
          BOOLEAN     _recycleRecord ;
 

@@ -2613,16 +2613,19 @@ namespace engine
       }
 
       {
-         BSONObjBuilder redoKBuilder ;
-         set<string>::iterator it = _keepKeys.begin() ;
-         while ( it != _keepKeys.end() )
+         if ( _keepKeys.size() > 0 )
          {
-            // make sure $keep is after $replace
-            redoKBuilder.append( *it, 1 ) ;
-            ++it ;
-         }
+            BSONObjBuilder redoKBuilder ;
+            set<string>::iterator it = _keepKeys.begin() ;
+            while ( it != _keepKeys.end() )
+            {
+               // make sure $keep is after $replace
+               redoKBuilder.append( *it, 1 ) ;
+               ++it ;
+            }
 
-         ADD_CHG_OBJECT( _dstChgBuilder, redoKBuilder.obj(), "$keep" ) ;
+            ADD_CHG_OBJECT( _dstChgBuilder, redoKBuilder.obj(), "$keep" ) ;
+         }
       }
 
       return SDB_OK  ;

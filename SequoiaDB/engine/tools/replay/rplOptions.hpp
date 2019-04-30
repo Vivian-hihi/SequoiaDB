@@ -57,6 +57,7 @@ namespace replay
       string  buildBackgroundCmd(INT32 argc, CHAR* argv[]);
 
    public:
+      OSS_INLINE const string& outputConf() const { return _outputConf; }
       OSS_INLINE const string& hostName() const { return _hostName; }
       OSS_INLINE const string& serviceName() const { return _serviceName; }
       OSS_INLINE const string& user() const { return _user; }
@@ -66,6 +67,7 @@ namespace replay
       OSS_INLINE const string& status() const { return _status; }
       OSS_INLINE const string& path() const { return _path; }
       OSS_INLINE SDB_OSS_FILETYPE pathType() const { return _pathType; }
+      OSS_INLINE UINT32 intervalNum() const { return _intervalNum; }
       OSS_INLINE BOOLEAN useSSL() const { return _useSSL; }
       OSS_INLINE const BSONObj& filter() const { return _filter; }
       OSS_INLINE BOOLEAN dump() const { return _dump; }
@@ -91,6 +93,7 @@ namespace replay
       string            _token;
       string            _status;
       string            _path;
+      string            _outputConf;
       SDB_OSS_FILETYPE  _pathType;
       BOOLEAN           _useSSL;
       BSONObj           _filter;
@@ -104,6 +107,7 @@ namespace replay
       BOOLEAN           _inflate;
       BOOLEAN           _isReplicaFile;
       BOOLEAN           _updateWithShardingKey;
+      UINT32            _intervalNum;
    };
 }
 

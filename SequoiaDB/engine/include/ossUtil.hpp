@@ -207,6 +207,8 @@ void ossGmtime ( time_t &Time, struct tm &TM ) ;
 void ossGetCurrentTime( ossTimestamp &TM ) ;
 
 UINT64 ossGetCurrentMicroseconds() ;
+UINT64 ossTimestampToMicroseconds( const ossTimestamp &timestamp ) ;
+ossTimestamp ossMicrosecondsToTimestamp( const UINT64 &microseconds ) ;
 UINT64 ossGetCurrentMilliseconds() ;
 
 SINT32 ossGetCPUUsage

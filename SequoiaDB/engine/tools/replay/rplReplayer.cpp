@@ -30,13 +30,15 @@
 
 *******************************************************************************/
 #include "rplReplayer.hpp"
+#include "rplSdbOutputter.hpp"
+#include "rplDB2LoadOutputter.hpp"
+#include "rplConfParser.hpp"
 #include "pd.hpp"
 #include "dpsArchiveFile.hpp"
 #include "dpsOp2Record.hpp"
 #include "oss.h"
 #include "ossEDU.hpp"
 #include "../bson/bsonobj.h"
-#include "utilJsonFile.hpp"
 #include "ixm.hpp"
 #include "dms.hpp"
 #include <sstream>
@@ -56,14 +58,6 @@ namespace replay
    #define RPL_DUMP_FIELD_WIDTH 8
 
    #define RPL_WATCH_INTERVAL (10 * 1000) // seconds
-
-   #define RPL_STATUS_INTERVAL (1000)
-
-   #define RPL_STATUS_NEXT_LSN               "nextLSN"
-   #define RPL_STATUS_NEXT_FILEID            "nextFileId"
-   #define RPL_STATUS_LAST_LSN               "lastLSN"
-   #define RPL_STATUS_LAST_FILEID            "lastFileId"
-   #define RPL_STATUS_LAST_MOVED_FILETIME    "lastMovedFileTime"
 
    #define RPL_DEFLATE_SUFFIX                ".deflate"
    #define RPL_INFLATE_SUFFIX                ".inflate"
@@ -109,18 +103,16 @@ namespace replay
    Replayer::Replayer()
    {
       _options = NULL;
-      _sdb = NULL;
       _buf = NULL;
+      _outputter = NULL ;
+      _monitorStore = NULL ;
       _bufSize = 0;
    }
 
    Replayer::~Replayer()
    {
-      if (NULL != _sdb)
-      {
-         _sdb->disconnect();
-         SAFE_OSS_DELETE(_sdb);
-      }
+      SAFE_OSS_DELETE( _outputter ) ;
+      SAFE_OSS_DELETE( _monitorStore ) ;
 
       if (!_tmpFile.empty())
       {
@@ -153,21 +145,25 @@ namespace replay
                  SDB_OSS_DIR == _options->pathType(),
                  "path can only be file or directory");
 
-      if (!_options->status().empty())
+      rc = _initMonitorStore( &_monitor ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init rplMonitorStore, rc = %d", rc ) ;
+
+      if ( !_options->dump() && !_options->dumpHeader() && !_options->deflate()
+           && !_options->inflate() )
       {
-         rc = _initStatus();
-         if (SDB_OK != rc)
+         rc = _initOutputter() ;
+         if ( SDB_OK != rc )
          {
-            PD_LOG(PDERROR, "Failed to init status, rc=%d", rc);
+            PD_LOG(PDERROR, "Failed to init outputter, rc=%d", rc);
             goto error;
          }
       }
-
-      rc = _connectSdb();
-      if (SDB_OK != rc)
+      else
       {
-         goto error;
+         // not output mode, not need to initial outputter.
       }
+
+      _monitorStore->captureOutputter( _outputter ) ;
 
       {
          stringstream ss;
@@ -223,14 +219,16 @@ namespace replay
       }
 
    done:
-      if (_status.isOpened())
+      if ( SDB_OK == rc )
       {
-         rc = _writeStatus();
+         // do not submit if error happens
+         rc = _monitorStore->submitAndSave() ;
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "Failed to write status, rc=%d", rc);
          }
       }
+
       if (!_options->inflate() && !_options->deflate())
       {
          PD_LOG(PDINFO, "Replay result:\n%s", _monitor.dump().c_str());
@@ -651,6 +649,7 @@ namespace replay
       dpsLogRecordHeader& logHeader = log.head();
       DPS_LSN_OFFSET currentLSN;
       INT64 i = 0;
+      INT64 doReplayCount = 0;
 
       SDB_ASSERT(startLSN <= endLSN, "invalid start LSN");
 
@@ -774,23 +773,16 @@ namespace replay
             }
          }
 
+         doReplayCount++;
          _monitor.setLastLSN(currentLSN);
          currentLSN += logHeader._length;
          _monitor.opCount(logHeader._type);
          _monitor.setNextLSN(currentLSN);
 
-         if (0 == i%RPL_STATUS_INTERVAL)
+         if (0 == doReplayCount%_options->intervalNum())
          {
-            if (_status.isOpened())
-            {
-               rc = _writeStatus();
-               if (SDB_OK != rc)
-               {
-                  PD_LOG(PDERROR, "Failed to write status, rc=%d",
-                         rc);
-                  goto error;
-               }
-            }
+            rc = _monitorStore->flushAndSave() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to save monitor, rc=%d", rc ) ;
          }
       }
 
@@ -846,10 +838,11 @@ namespace replay
       const CHAR* fullName = NULL;
       BSONObj obj;
       sdbCollection cl;
+      UINT64 microSeconds = 0;
 
       SDB_ASSERT(LOG_TYPE_DATA_INSERT == header._type, "not data insert log");
 
-      rc = dpsRecord2Insert(log, &fullName, obj);
+      rc = dpsRecord2Insert(log, &fullName, obj, &microSeconds);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record, lsn[%lld], rc=%d",
@@ -857,28 +850,13 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb->getCollection(fullName, cl);
+      rc = _outputter->insertRecord(fullName, header._lsn, obj, microSeconds);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
-                fullName, header._lsn, rc ) ;
-         goto error ;
-      }
-
-      rc = cl.insert(obj);
-      if (SDB_OK != rc)
-      {
-         if (SDB_IXM_DUP_KEY == rc)
-         {
-            /* If duplicate key was found, just skip. */
-            rc = SDB_OK;
-         }
-         else
-         {
-            PD_LOG(PDERROR, "Failed to insert record(%s), lsn[%lld], rc=%d",
-                   obj.toString(FALSE, TRUE).c_str(), header._lsn, rc);
-            goto error;
-         }
+         PD_LOG(PDERROR, "Failed to insert record(%s), cl(%s), lsn[%lld], "
+                "rc=%d", obj.toString(FALSE, TRUE).c_str(), fullName,
+                header._lsn, rc);
+         goto error;
       }
 
    done:
@@ -893,19 +871,19 @@ namespace replay
       const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
       sdbCollection cl;
       const CHAR *fullName = NULL;
-      BSONObj match;
-      BSONObj oldObj;
+      UINT64 microSeconds = 0;
+      BSONObj oldMatch;
+      BSONObj oldModifier;
       BSONObj newMatch;
-      BSONObj modifier;
+      BSONObj newModifier;
       BSONObj oldShardingKey ;
-      BSONObj hint = BSON( "" << "$id" );
 
       SDB_ASSERT(LOG_TYPE_DATA_UPDATE == header._type, "not data update log");
 
       rc = dpsRecord2Update(log, &fullName,
-                            match, oldObj,
-                            newMatch, modifier,
-                            &oldShardingKey );
+                            oldMatch, oldModifier,
+                            newMatch, newModifier,
+                            &oldShardingKey, NULL, &microSeconds);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc:%d",
@@ -913,29 +891,17 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb->getCollection(fullName, cl);
+      rc = _outputter->updateRecord(fullName, header._lsn, oldMatch,
+                                    newModifier, oldShardingKey, oldModifier,
+                                    microSeconds);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
-                fullName, header._lsn, rc ) ;
-         goto error ;
-      }
-
-      if (!oldShardingKey.isEmpty() && _options->updateWithShardingKey())
-      {
-         BSONObjBuilder builder ;
-         builder.appendElements(match) ;
-         builder.appendElements(oldShardingKey) ;
-         match = builder.obj() ;
-      }
-
-      rc = cl.update(modifier, match, hint, UPDATE_KEEP_SHARDINGKEY);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to update record[%s:%s], lsn[%lld], rc=%d",
-                modifier.toString(FALSE, TRUE).c_str(),
-                match.toString(FALSE, TRUE).c_str(), header._lsn, rc);
-         goto error ;
+         PD_LOG(PDERROR, "Failed to update record, match[%s], "
+                "modifier[%s], cl[%s], lsn[%lld], rc=%d",
+                oldMatch.toString(FALSE, TRUE).c_str(),
+                newModifier.toString(FALSE, TRUE).c_str(), fullName,
+                header._lsn, rc);
+         goto error;
       }
 
    done:
@@ -950,13 +916,12 @@ namespace replay
       const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
       sdbCollection cl;
       const CHAR *fullName = NULL;
-      BSONObj obj;
-      BSONObj condition;
-      BSONObj hint = BSON( "" << "$id" );
+      UINT64 microSeconds = 0;
+      BSONObj oldObj;
 
       SDB_ASSERT(LOG_TYPE_DATA_DELETE == header._type, "not data delete log");
 
-      rc = dpsRecord2Delete(log, &fullName, obj);
+      rc = dpsRecord2Delete(log, &fullName, oldObj, &microSeconds);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc=%d",
@@ -964,34 +929,12 @@ namespace replay
          goto error;
       }
 
-      {
-         BSONObjBuilder conditionBuilder;
-         BSONElement idEle = obj.getField( DMS_ID_KEY_NAME ) ;
-         if ( idEle.eoo() )
-         {
-            PD_LOG(PDWARNING, "Failed to parse oid from bson:[%s]",
-                   obj.toString().c_str());
-            rc = SDB_INVALIDARG;
-            goto error;
-         }
-
-         conditionBuilder.append( idEle ) ;
-         condition = conditionBuilder.obj() ;
-      }
-
-      rc = _sdb->getCollection(fullName, cl);
+      rc = _outputter->deleteRecord(fullName, header._lsn, oldObj, microSeconds);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d",
-                fullName, header._lsn, rc);
-         goto error;
-      }
-
-      rc = cl.del(condition, hint);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to delete record[%s], lsn[%lld], rc=%d",
-                obj.toString(FALSE, TRUE).c_str(), header._lsn, rc);
+         PD_LOG(PDERROR, "Failed to delete record[%s], cl(%s), lsn[%lld], "
+                "rc=%d", oldObj.toString(FALSE, TRUE).c_str(), fullName,
+                header._lsn, rc);
          goto error ;
       }
 
@@ -1018,20 +961,12 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb->getCollection(fullName, cl);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d",
-                fullName, header._lsn, rc);
-         goto error;
-      }
-
-      rc = cl.truncate();
+      rc = _outputter->truncateCL(fullName, header._lsn);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to truncate collection[%s], lsn[%lld], rc=%d",
                 fullName, header._lsn, rc);
-         goto error ;
+         goto error;
       }
 
    done:
@@ -1057,41 +992,12 @@ namespace replay
          goto error ;
       }
 
-      rc  = _sdb->getCollection( fullName, cl ) ;
-      if ( rc )
+      rc = _outputter->pop( fullName, header._lsn, logicalID, direction ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d",
+         PD_LOG( PDERROR, "Failed to do pop[logicalID:%lld,direction:%d] "
+                 "on collection[%s], lsn[%lld], rc=%d", logicalID, direction,
                  fullName, header._lsn, rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         BSONObjBuilder builder ;
-         builder.append( FIELD_NAME_LOGICAL_ID, logicalID ) ;
-         builder.append( FIELD_NAME_DIRECTION, direction ) ;
-         BSONObj option = builder.obj() ;
-
-         rc = cl.pop( option ) ;
-         if ( rc )
-         {
-            if ( SDB_INVALIDARG == rc )
-            {
-               rc = SDB_OK ;
-            }
-            else
-            {
-               PD_LOG( PDERROR, "Failed to do pop[option: %s] on collection[%s], "
-                       "lsn[%lld], rc=%d", option.toString().c_str(), fullName,
-                       header._lsn, rc);
-               goto error ;
-            }
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "unexpected exception: %s", e.what() ) ;
          goto error ;
       }
 
@@ -1282,6 +1188,9 @@ namespace replay
             break;
          }
 
+         rc = _checkSubmit() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check submit, rc = %d", rc ) ;
+
          if (!_isRunning)
          {
             rc = SDB_INTERRUPT;
@@ -1296,6 +1205,24 @@ namespace replay
       return rc;
    error:
       goto done;
+   }
+
+   INT32 Replayer::_checkSubmit()
+   {
+      INT32 rc = SDB_OK ;
+      if ( NULL != _outputter )
+      {
+         if ( _outputter->isNeedSubmit() )
+         {
+            rc = _monitorStore->submitAndSave() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to submit, rc = %d", rc ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 Replayer::_scanArchiveDir(UINT32& minFileId, UINT32& maxFileId)
@@ -1511,16 +1438,9 @@ namespace replay
 
          _monitor.setNextFileId(nextFileId);
          _monitor.setLastFileId(lastFileId);
-         if (_status.isOpened())
-         {
-            rc = _writeStatus();
-            if (SDB_OK != rc)
-            {
-               PD_LOG(PDERROR, "Failed to write status, rc=%d",
-                      rc);
-               goto error;
-            }
-         }
+         rc = _monitorStore->flushAndSave() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to save monitor, rc=%d", rc ) ;
+
          PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
 
          if (_monitor.getLastLSN() != DPS_INVALID_LSN_OFFSET &&
@@ -1624,6 +1544,9 @@ namespace replay
          {
             break;
          }
+
+         rc = _checkSubmit() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check submit, rc = %d", rc ) ;
 
          if (!_isRunning)
          {
@@ -1887,16 +1810,10 @@ namespace replay
             _monitor.setNextFileId(fileId);
          }
          _monitor.setLastFileId(fileId);
-         if (_status.isOpened())
-         {
-            rc = _writeStatus();
-            if (SDB_OK != rc)
-            {
-               PD_LOG(PDERROR, "Failed to write status, rc=%d",
-                      rc);
-               goto error;
-            }
-         }
+
+         rc = _monitorStore->flushAndSave() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to save monitor, rc=%d", rc ) ;
+
          PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
 
          if (_monitor.getLastLSN() != DPS_INVALID_LSN_OFFSET &&
@@ -2128,16 +2045,9 @@ namespace replay
          _monitor.setNextFileId((UINT32)i);
          _monitor.setLastFileId((UINT32)(i - 1));
          _monitor.setLastMovedFileTime(0);
-         if (_status.isOpened())
-         {
-            rc = _writeStatus();
-            if (SDB_OK != rc)
-            {
-               PD_LOG(PDERROR, "Failed to write status, rc=%d",
-                      rc);
-               goto error;
-            }
-         }
+
+         rc = _monitorStore->flushAndSave() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to save monitor, rc=%d", rc ) ;
 
          PD_LOG(PDEVENT, "Rollback archive log file[%s] successfully",
                 movedFilePath.c_str());
@@ -2169,6 +2079,7 @@ namespace replay
       dpsLogRecordHeader& logHeader = log.head();
       DPS_LSN_OFFSET currentLSN;
       INT64 i = 0;
+      INT64 doReplayCount = 0;
 
       SDB_ASSERT(startLSN >= endLSN, "invalid startLSN & endLSN");
 
@@ -2261,23 +2172,16 @@ namespace replay
             }
          }
 
+         doReplayCount++;
          _monitor.setNextLSN(currentLSN);
          currentLSN = logHeader._preLsn;
          _monitor.opCount(logHeader._type);
          _monitor.setLastLSN(currentLSN);
 
-         if (0 == i%RPL_STATUS_INTERVAL)
+         if (0 == doReplayCount%_options->intervalNum())
          {
-            if (_status.isOpened())
-            {
-               rc = _writeStatus();
-               if (SDB_OK != rc)
-               {
-                  PD_LOG(PDERROR, "Failed to write status, rc=%d",
-                         rc);
-                  goto error;
-               }
-            }
+            rc = _monitorStore->flushAndSave() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to save monitor, rc=%d", rc ) ;
          }
       }
 
@@ -2387,6 +2291,7 @@ namespace replay
       INT32 rc = SDB_OK;
       const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
       const CHAR* fullName = NULL;
+      UINT64 microSeconds = 0 ;
       BSONObj obj;
       BSONObj selector;
       BSONObj hint;
@@ -2394,7 +2299,7 @@ namespace replay
 
       SDB_ASSERT(LOG_TYPE_DATA_INSERT == header._type, "not data insert log");
 
-      rc = dpsRecord2Insert(log, &fullName, obj);
+      rc = dpsRecord2Insert(log, &fullName, obj, &microSeconds);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record, lsn[%lld], rc=%d",
@@ -2402,44 +2307,12 @@ namespace replay
          goto error;
       }
 
-      {
-         BSONElement idEle = obj.getField( DMS_ID_KEY_NAME ) ;
-         if ( idEle.eoo() )
-         {
-            PD_LOG(PDWARNING, "Failed to parse oid from bson:[%s]",
-                   obj.toString().c_str()) ;
-            rc = SDB_SYS;
-            goto error;
-         }
-
-         try
-         {
-            BSONObjBuilder selectorBuilder ;
-            selectorBuilder.append( idEle ) ;
-            selector = selectorBuilder.obj() ;
-            hint = BSON(""<<IXM_ID_KEY_NAME) ;
-         }
-         catch (std::exception& e)
-         {
-            rc = SDB_SYS;
-            PD_LOG(PDERROR, "Unexpected error happened: %s", e.what());
-            goto error;
-         }
-      }
-
-      rc = _sdb->getCollection(fullName, cl);
+      rc = _outputter->deleteRecord(fullName, header._lsn, obj, microSeconds);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
-                fullName, header._lsn, rc ) ;
-         goto error ;
-      }
-
-      rc = cl.del(selector, hint);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to rollback insert record(%s), lsn[%lld], rc=%d",
-                obj.toString(FALSE, TRUE).c_str(), header._lsn, rc);
+         PD_LOG(PDERROR, "Failed to rollback insert record(%s), cl(%s), "
+                "lsn[%lld], rc=%d", obj.toString(FALSE, TRUE).c_str(),
+                fullName, header._lsn, rc);
          goto error;
       }
 
@@ -2455,19 +2328,22 @@ namespace replay
       const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
       sdbCollection cl;
       const CHAR *fullName = NULL;
-      BSONObj match;
-      BSONObj oldObj;
+      UINT64 microSeconds = 0 ;
+      BSONObj oldMatch;
+      BSONObj oldModifier;
       BSONObj newMatch;
-      BSONObj modifier;
+      BSONObj newModifier;
+      BSONObj oldShardingKey ;
       BSONObj newShardingKey ;
-      BSONObj hint = BSON( "" << "$id" );
 
       SDB_ASSERT(LOG_TYPE_DATA_UPDATE == header._type, "not data update log");
 
       rc = dpsRecord2Update(log, &fullName,
-                            match, oldObj,
-                            newMatch, modifier,
-                            NULL, &newShardingKey );
+                            oldMatch, oldModifier,
+                            newMatch, newModifier,
+                            &oldShardingKey,
+                            &newShardingKey,
+                            &microSeconds);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc:%d",
@@ -2475,29 +2351,18 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb->getCollection(fullName, cl);
+      // roll back operation: exchange old and new
+      rc = _outputter->updateRecord(fullName, header._lsn, newMatch, oldModifier,
+                                    newShardingKey, newModifier,
+                                    microSeconds);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to get collection:%s, lsn[%lld], rc=%d",
-                fullName, header._lsn, rc ) ;
-         goto error ;
-      }
-
-      if (!newShardingKey.isEmpty() && _options->updateWithShardingKey())
-      {
-         BSONObjBuilder builder ;
-         builder.appendElements( newMatch ) ;
-         builder.appendElements( newShardingKey ) ;
-         newMatch = builder.obj() ;
-      }
-
-      rc = cl.update(oldObj, newMatch, hint, UPDATE_KEEP_SHARDINGKEY);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to rollback update record[%s:%s], lsn[%lld], rc=%d",
-                oldObj.toString(FALSE, TRUE).c_str(),
-                newMatch.toString(FALSE, TRUE).c_str(), header._lsn, rc);
-         goto error ;
+         PD_LOG(PDERROR, "Failed to rollback record, match[%s], "
+                "modifier[%s], cl[%s], lsn[%lld], rc=%d",
+                newMatch.toString(FALSE, TRUE).c_str(),
+                oldModifier.toString(FALSE, TRUE).c_str(), fullName,
+                header._lsn, rc);
+         goto error;
       }
 
    done:
@@ -2512,12 +2377,13 @@ namespace replay
       const dpsLogRecordHeader& header = *(const dpsLogRecordHeader*)log;
       sdbCollection cl;
       const CHAR *fullName = NULL;
+      UINT64 microSeconds = 0;
       BSONObj obj;
-      BSONObj hint = BSON( "" << "$id" );
+      BSONObj hint = BSON("" << "$id");
 
       SDB_ASSERT(LOG_TYPE_DATA_DELETE == header._type, "not data delete log");
 
-      rc = dpsRecord2Delete(log, &fullName, obj);
+      rc = dpsRecord2Delete(log, &fullName, obj, &microSeconds);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc=%d",
@@ -2525,28 +2391,13 @@ namespace replay
          goto error;
       }
 
-      rc = _sdb->getCollection(fullName, cl);
-      if (SDB_OK != rc)
+      rc = _outputter->insertRecord(fullName, header._lsn, obj, microSeconds);
+      if ( SDB_OK != rc )
       {
-         PD_LOG(PDERROR, "Failed to get collection: %s, lsn[%lld], rc=%d",
+         PD_LOG(PDERROR, "Failed to rollback delete record(%s), cl(%s), "
+                "lsn[%lld], rc=%d", obj.toString(FALSE, TRUE).c_str(),
                 fullName, header._lsn, rc);
          goto error;
-      }
-
-      rc = cl.insert(obj);
-      if (SDB_OK != rc)
-      {
-         if (SDB_IXM_DUP_KEY == rc)
-         {
-            /* If duplicate key was found, just skip. */
-            rc = SDB_OK;
-         }
-         else
-         {
-            PD_LOG(PDERROR, "Failed to rollback insert record(%s), lsn[%lld], rc=%d",
-                   obj.toString(FALSE, TRUE).c_str(), header._lsn, rc);
-            goto error;
-         }
       }
 
    done:
@@ -2619,249 +2470,120 @@ namespace replay
       std::cout << buf << "Rollback: true"  << std::endl;
    }
 
-   INT32 Replayer::_connectSdb()
+   INT32 Replayer::_initOutputter()
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
 
-      SDB_ASSERT(NULL == _sdb, "_sdb is not null");
-
-      if (_options->dump() ||
-          _options->dumpHeader() ||
-          _options->deflate() ||
-          _options->inflate())
+      if ( !_options->hostName().empty() )
       {
-         goto done;
-      }
+         rplSdbOutputter *tmpOutputter = SDB_OSS_NEW rplSdbOutputter(
+                                           _options->updateWithShardingKey() ) ;
+         if ( NULL == tmpOutputter )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Failed to new rplSdbOutputter: rc=%d", rc ) ;
+            goto error ;
+         }
+         rc = tmpOutputter->init( _options->hostName().c_str(),
+                                  _options->serviceName().c_str(),
+                                  _options->user().c_str(),
+                                  _options->password().c_str(),
+                                  _options->useSSL() ) ;
+         if ( SDB_OK != rc )
+         {
+            SAFE_OSS_DELETE( tmpOutputter ) ;
+            PD_LOG( PDERROR, "Failed to init rplSdbOutputter, rc = %d", rc) ;
+            goto error ;
+         }
 
-      _sdb = new(std::nothrow) sdbclient::sdb(_options->useSSL());
-      if (NULL == _sdb)
-      {
-         rc = SDB_OOM;
-         PD_LOG(PDERROR, "Failed to new sdbclient::sdb, rc=%d", rc);
-         goto error;
-      }
-
-      rc = _sdb->connect(_options->hostName().c_str(),
-                        _options->serviceName().c_str(),
-                        _options->user().c_str(),
-                        _options->password().c_str());
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to connect to sdb[%s:%s], rc=%d",
-                _options->hostName().c_str(),
-                _options->serviceName().c_str(),
-                rc);
-         goto error;
-      }
-
-   done:
-      return rc;
-   error:
-      SAFE_OSS_DELETE(_sdb);
-      goto done;
-   }
-
-   INT32 Replayer::_initStatus()
-   {
-      INT32 rc = SDB_OK;
-      string filePath;
-      UINT32 mode;
-      BOOLEAN exist = FALSE;
-
-      SDB_ASSERT(NULL != _options, "_options can't be NULL");
-
-      filePath = _options->status();
-      SDB_ASSERT(!filePath.empty(), "status file is empty");
-
-      rc = ossFile::exists(filePath, exist);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to check if file[%s] exists, rc=%d",
-                filePath.c_str(), rc);
-         goto error;
-      }
-
-      if (exist)
-      {
-         mode = OSS_READWRITE;
+         _outputter = tmpOutputter ;
       }
       else
       {
-         mode = OSS_CREATEONLY | OSS_READWRITE;
-      }
-
-      rc = _status.open(filePath, mode, OSS_DEFAULTFILE);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to open status file[%s], rc=%d",
-                filePath.c_str(), rc);
-         goto error;
-      }
-
-      rc = _readStatus();
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to read status, rc=%d", rc);
-         goto error;
-      }
-
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 Replayer::_readStatus()
-   {
-      INT32 rc = SDB_OK;
-      BSONObj data;
-      BSONElement ele;
-
-      SDB_ASSERT(_status.isOpened(), "_status is not opened");
-
-      rc = engine::utilJsonFile::read(_status, data);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "Failed to read json from status file[%s], rc=%d",
-                _status.getPath().c_str(), rc);
-         goto error;
-      }
-
-      ele = data.getField(RPL_STATUS_NEXT_LSN) ;
-      if (EOO != ele.type())
-      {
-         DPS_LSN_OFFSET nextLSN;
-
-         if (NumberLong != ele.type() && NumberInt != ele.type())
+         const string outputConf = _options->outputConf() ;
+         rplConfParser parser ;
+         rc = parser.init( outputConf.c_str() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse conf(%s), rc = %d",
+                      outputConf.c_str(), rc ) ;
+         if ( _monitor.isLoadFromFile() )
          {
-            rc = SDB_INVALIDARG;
-            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_NEXT_LSN);
-            goto error;
+            if ( _monitor.getOutputType() != parser.getType() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Should not run with outputType(%s) while last"
+                       " running outputType is %s, rc = %d. Clear the status "
+                       "file if you want to run another outputType",
+                       parser.getType().c_str(),
+                       _monitor.getOutputType().c_str(), rc ) ;
+               goto error ;
+            }
          }
-         nextLSN = (DPS_LSN_OFFSET)ele.numberLong();
-         if (nextLSN < 0)
+
+         if ( parser.getType() == RPL_OUTPUT_DB2LOAD )
+         {
+            rplDB2LoadOutputter *db2LoadOutputter = NULL ;
+            db2LoadOutputter = SDB_OSS_NEW rplDB2LoadOutputter( &_monitor ) ;
+            if ( NULL == db2LoadOutputter )
+            {
+               rc = SDB_OOM ;
+               PD_LOG( PDERROR, "Failed to new rplDB2LoadOutputter: rc=%d", rc ) ;
+               goto error ;
+            }
+
+            rc = db2LoadOutputter->init( outputConf.c_str() ) ;
+            if ( SDB_OK != rc )
+            {
+               SAFE_OSS_DELETE( db2LoadOutputter ) ;
+               PD_LOG( PDERROR, "Failed to init db2LoadOutputter, rc = %d", rc) ;
+               goto error ;
+            }
+
+            _outputter = db2LoadOutputter ;
+         }
+         else
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG(PDERROR, "Invalid value of field[%s]: %d",
-                   RPL_STATUS_NEXT_LSN, nextLSN);
-            goto error;
+            PD_LOG( PDERROR, "Unreconigzed outputType(%s), rc = %d",
+                    parser.getType().c_str(), rc ) ;
+            goto error ;
          }
 
-         _monitor.setNextLSN(nextLSN);
-      }
-
-      ele = data.getField(RPL_STATUS_LAST_LSN) ;
-      if (EOO != ele.type())
-      {
-         DPS_LSN_OFFSET lastLSN;
-
-         if (NumberLong != ele.type() && NumberInt != ele.type())
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_LAST_LSN);
-            goto error;
-         }
-         lastLSN = (DPS_LSN_OFFSET)ele.numberLong();
-         if (lastLSN < 0)
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG(PDERROR, "Invalid value of field[%s]: %d",
-                   RPL_STATUS_LAST_LSN, lastLSN);
-            goto error;
-         }
-
-         _monitor.setLastLSN(lastLSN);
-      }
-
-      ele = data.getField(RPL_STATUS_NEXT_FILEID);
-      if (EOO != ele.type())
-      {
-         UINT32 nextFileId;
-
-         if (NumberLong != ele.type() && NumberInt != ele.type())
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_NEXT_FILEID);
-            goto error;
-         }
-         nextFileId = (UINT32)ele.numberLong();
-         _monitor.setNextFileId(nextFileId);
-      }
-
-      ele = data.getField(RPL_STATUS_LAST_FILEID);
-      if (EOO != ele.type())
-      {
-         UINT32 lastFileId;
-
-         if (NumberLong != ele.type() && NumberInt != ele.type())
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_LAST_FILEID);
-            goto error;
-         }
-         lastFileId = (UINT32)ele.numberLong();
-         _monitor.setLastFileId(lastFileId);
-      }
-
-      ele = data.getField(RPL_STATUS_LAST_MOVED_FILETIME);
-      if (EOO != ele.type())
-      {
-         time_t lastMovedFileTime;
-
-         if (NumberLong != ele.type() && NumberInt != ele.type())
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG(PDERROR, "Invalid json field[%s]", RPL_STATUS_LAST_MOVED_FILETIME);
-            goto error;
-         }
-         lastMovedFileTime = (time_t)ele.numberLong();
-         _monitor.setLastMovedFileTime(lastMovedFileTime);
+         _monitor.setOutputType( parser.getType() ) ;
       }
 
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      SAFE_OSS_DELETE( _outputter ) ;
+      goto done ;
    }
 
-   INT32 Replayer::_writeStatus()
+   INT32 Replayer::_initMonitorStore( Monitor *monitor )
    {
-      INT32 rc = SDB_OK;
-      bson::BSONObjBuilder builder;
-      BSONObj data;
+      INT32 rc = SDB_OK ;
 
-      SDB_ASSERT(_status.isOpened(), "_status is not opened");
-
-      try
+      _monitorStore = SDB_OSS_NEW rplMonitorStore( monitor ) ;
+      if ( NULL == _monitorStore )
       {
-         builder.append(RPL_STATUS_NEXT_LSN, (INT64)_monitor.getNextLSN());
-         builder.append(RPL_STATUS_NEXT_FILEID, _monitor.getNextFileId());
-         builder.append(RPL_STATUS_LAST_LSN, (INT64)_monitor.getLastLSN());
-         builder.append(RPL_STATUS_LAST_FILEID, _monitor.getLastFileId());
-         builder.append(RPL_STATUS_LAST_MOVED_FILETIME,
-                        (INT64)_monitor.getLastMovedFileTime());
-         data = builder.obj();
-      }
-      catch (std::exception& e)
-      {
-         rc = SDB_SYS;
-         PD_LOG (PDERROR, "Failed to create BSON object: %s",
-                 e.what()) ;
-         goto error;
+         rc = SDB_OOM ;
+         PD_RC_CHECK( rc, PDERROR, "Failed new rplMonitorStore, rc = %d", rc ) ;
       }
 
-      rc = engine::utilJsonFile::write(_status, data);
-      if (SDB_OK != rc)
+      if ( !_options->status().empty() )
       {
-         PD_LOG(PDERROR, "Failed to write json to status file[%s], rc=%d",
-                _status.getPath().c_str(), rc);
-         goto error;
+         rc = _monitorStore->init( _options->status().c_str() ) ;
       }
+      else
+      {
+         rc = _monitorStore->init() ;
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed init rplMonitorStore, rc = %d", rc ) ;
 
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    INT32 Replayer::_deflateFile(const string& file)

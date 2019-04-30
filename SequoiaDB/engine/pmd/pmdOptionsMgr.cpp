@@ -470,7 +470,7 @@ namespace engine
       }
    }
 
-   void _pmdCfgExchange::_saveToMapString( const CHAR *pFieldName, 
+   void _pmdCfgExchange::_saveToMapString( const CHAR *pFieldName,
                                            CHAR *pValue, UINT32 len,
                                            const string &newValue,
                                            PMD_CFG_CHANGE changeLevel,
@@ -746,7 +746,7 @@ namespace engine
       MAP_K2V mapKeyField ;
       MAP_K2V mapColdKeyField ;
       BOOLEAN locked = FALSE ;
-      pmdCfgExchange ex( &mapKeyField, &mapColdKeyField, 
+      pmdCfgExchange ex( &mapKeyField, &mapColdKeyField,
                          userConfig, TRUE, PMD_CFG_STEP_CHG ) ;
 
       // save old cfg
@@ -1329,7 +1329,7 @@ done:
          }
          else
          {
-             _result = pEX->writeString( pFieldName, 
+             _result = pEX->writeString( pFieldName,
                                          itCold->second._value.c_str() ) ;
          }
          if ( _result )
@@ -1526,7 +1526,7 @@ done:
          }
          else
          {
-             _result = pEX->writeInt( pFieldName, 
+             _result = pEX->writeInt( pFieldName,
                                       ossAtoi( itCold->second._value.c_str() ) ) ;
          }
          if ( _result )
@@ -2300,6 +2300,14 @@ done:
       // --svcmaxconcurrency
       rdxUInt( pEX, PMD_OPTION_SVC_MAX_CONCURRENCY, _svcMaxConcurrency, FALSE,
                PMD_CFG_CHANGE_RUN, 100, FALSE ) ;
+
+      // --replicafullrecordon
+      rdxBooleanS( pEX, PMD_OPTION_REPLICA_FULL_RECORD_ON, _replicaFullRecordOn,
+                   FALSE, PMD_CFG_CHANGE_RUN, FALSE, FALSE ) ;
+
+      // --replicarecordtimeon
+      rdxBooleanS( pEX, PMD_OPTION_REPLICA_RECORD_TIME_ON, _replicaRecordTimeOn,
+                   FALSE, PMD_CFG_CHANGE_RUN, FALSE, FALSE ) ;
 
       // --enablesleep
       rdxBooleanS( pEX, PMD_OPTION_SLEEP, _enableSleep, FALSE,

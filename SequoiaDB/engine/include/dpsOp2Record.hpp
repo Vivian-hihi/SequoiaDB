@@ -48,17 +48,21 @@ using namespace bson ;
 
 namespace engine
 {
-   /// warning: any value can not be value-passed.
+   /// warning: any value can not be value-passed. and, the value's life scope
+   /// must be held until dpsLogRecord really copied
+   /// (the copy behavior is in _dmsStorageDataCommon::_logDPS)
    INT32 dpsInsert2Record( const CHAR *fullName,
                            const BSONObj &obj,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
+                           const UINT64 *microSeconds,
                            dpsLogRecord &record ) ;
 
    INT32 dpsRecord2Insert( const CHAR *logRecord,
                            const CHAR **fullName,
-                           BSONObj &obj ) ;
+                           BSONObj &obj,
+                           UINT64 *microSeconds = NULL ) ;
 
    INT32 dpsUpdate2Record( const CHAR *fullName,
                            const BSONObj &oldMatch,
@@ -70,6 +74,7 @@ namespace engine
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
+                           const UINT64 *microSeconds,
                            dpsLogRecord &record ) ;
 
    INT32 dpsRecord2Update( const CHAR *logRecord,
@@ -79,18 +84,21 @@ namespace engine
                            BSONObj &newMatch,
                            BSONObj &newObj,
                            BSONObj *oldShardingKey = NULL,
-                           BSONObj *newShardingKey = NULL ) ;
+                           BSONObj *newShardingKey = NULL,
+                           UINT64 *microSeconds = NULL ) ;
 
    INT32 dpsDelete2Record( const CHAR *fullName,
                            const BSONObj &oldObj,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
+                           const UINT64 *microSeconds,
                            dpsLogRecord &record ) ;
 
    INT32 dpsRecord2Delete( const CHAR *logRecord,
                            const CHAR **fullName,
-                           BSONObj &oldObj ) ;
+                           BSONObj &oldObj,
+                           UINT64 *microSeconds = NULL ) ;
 
    INT32 dpsPop2Record( const CHAR *fullName,
                         const dmsRecordID &firstRID,

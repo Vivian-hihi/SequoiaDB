@@ -91,6 +91,7 @@ namespace engine
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
+                           const UINT64 *microSeconds,
                            dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -122,6 +123,14 @@ namespace engine
          goto error ;
       }
 
+      if ( NULL != microSeconds )
+      {
+         rc = record.push( DPS_LOG_PUBLIC_TIME, sizeof( *microSeconds ),
+                           (CHAR *)microSeconds ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push time(%lld) to record, "
+                      "rc = %d", *microSeconds, rc ) ;
+      }
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_INSERT2RECORD, rc ) ;
@@ -133,7 +142,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB_DPS_INSERT2RECORD, "dpsRecord2Insert")
    INT32 dpsRecord2Insert( const CHAR *logRecord,
                            const CHAR **fullName,
-                           BSONObj &obj )
+                           BSONObj &obj,
+                           UINT64 *microSeconds )
    {
       PD_TRACE_ENTRY( SDB_DPS_INSERT2RECORD ) ;
       INT32 rc = SDB_OK ;
@@ -164,6 +174,16 @@ namespace engine
          goto error ;
       }
 
+      if ( NULL != microSeconds )
+      {
+         dpsLogRecord::iterator itrTime ;
+         itrTime = record.find( DPS_LOG_PUBLIC_TIME ) ;
+         if ( itrTime.valid() )
+         {
+            *microSeconds = *( UINT64 *) itrTime.value() ;
+         }
+      }
+
       *fullName = itrFullName.value() ;
       obj = BSONObj( itrObj.value() ) ;
       }
@@ -185,6 +205,7 @@ namespace engine
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
+                           const UINT64 *microSeconds,
                            dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -273,6 +294,14 @@ namespace engine
          }
       }
 
+      if ( NULL != microSeconds )
+      {
+         rc = record.push( DPS_LOG_PUBLIC_TIME, sizeof( *microSeconds ),
+                           (CHAR *)microSeconds ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push time(%lld) to record, "
+                      "rc = %d", *microSeconds, rc ) ;
+      }
+
       header._length = record.alignedLen() ;
 
    done:
@@ -290,7 +319,8 @@ namespace engine
                            BSONObj &newMatch,
                            BSONObj &newObj,
                            BSONObj *oldShardingKey,
-                           BSONObj *newShardingKey )
+                           BSONObj *newShardingKey,
+                           UINT64 *microSeconds )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2UPDATE ) ;
       SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
@@ -388,6 +418,16 @@ namespace engine
          }
       }
 
+      if ( NULL != microSeconds )
+      {
+         dpsLogRecord::iterator itrTime ;
+         itrTime = record.find( DPS_LOG_PUBLIC_TIME ) ;
+         if ( itrTime.valid() )
+         {
+            *microSeconds = *( UINT64 *) itrTime.value() ;
+         }
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2UPDATE, rc ) ;
       return rc ;
@@ -401,6 +441,7 @@ namespace engine
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
+                           const UINT64 *microSeconds,
                            dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -433,6 +474,14 @@ namespace engine
          goto error ;
       }
 
+      if ( NULL != microSeconds )
+      {
+         rc = record.push( DPS_LOG_PUBLIC_TIME, sizeof( *microSeconds ),
+                           (CHAR *)microSeconds ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push time(%lld) to record, "
+                      "rc = %d", *microSeconds, rc ) ;
+      }
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_DELETE2RECORD, rc ) ;
@@ -444,7 +493,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2DELETE, "dpsRecord2Delete" )
    INT32 dpsRecord2Delete( const CHAR *logRecord,
                            const CHAR **fullName,
-                           BSONObj &oldObj )
+                           BSONObj &oldObj,
+                           UINT64 *microSeconds )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2DELETE ) ;
       INT32 rc = SDB_OK ;
@@ -473,6 +523,16 @@ namespace engine
          PD_LOG( PDERROR, "Failed to find tag oldobj in record" ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      if ( NULL != microSeconds )
+      {
+         dpsLogRecord::iterator itrTime ;
+         itrTime = record.find( DPS_LOG_PUBLIC_TIME ) ;
+         if ( itrTime.valid() )
+         {
+            *microSeconds = *( UINT64 *) itrTime.value() ;
+         }
       }
 
       *fullName = itrFullName.value() ;
