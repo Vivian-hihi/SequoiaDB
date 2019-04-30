@@ -109,7 +109,10 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject matcher = new BasicBSONObject();
             matcher.put(Bucket.BUCKET_NAME, bucketName);
 
-            BSONObject queryResult = cl.queryOne(matcher,null,null,null,0);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Bucket.NAME_INDEX);
+
+            BSONObject queryResult = cl.queryOne(matcher,null,null,hint,0);
 
             if (null == queryResult) {
                 return null;
@@ -135,7 +138,10 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject matcher = new BasicBSONObject();
             matcher.put(Bucket.BUCKET_ID, bucketId);
 
-            BSONObject queryResult = cl.queryOne(matcher,null,null,null,0);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Bucket.ID_INDEX);
+
+            BSONObject queryResult = cl.queryOne(matcher,null,null,hint,0);
 
             if (null == queryResult) {
                 return null;
@@ -304,7 +310,10 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject setModifier = new BasicBSONObject();
             setModifier.put(DBParamDefine.MODIFY_SET, modifier);
 
-            cl.update(matcher, setModifier, null);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Bucket.NAME_INDEX);
+
+            cl.update(matcher, setModifier, hint);
             return;
         }catch (Exception e) {
             logger.error("updateBucket failed. errorMessage = " + e.getMessage(), e);
@@ -364,7 +373,11 @@ public class SequoiadbBucketDao implements BucketDao {
 
             BSONObject upSet = new BasicBSONObject();
             upSet.put(DBParamDefine.MODIFY_SET, update);
-            cl.update(matcher, upSet, null);
+
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Bucket.NAME_INDEX);
+
+            cl.update(matcher, upSet, hint);
         }catch (Exception e){
             logger.error("update bucket delimiter failed. bucketNme:{}", bucketName);
             throw e;
@@ -404,7 +417,10 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject unSet = new BasicBSONObject();
             unSet.put(DBParamDefine.MODIFY_UNSET, update);
 
-            cl.update(matcher, unSet, null);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Bucket.NAME_INDEX);
+
+            cl.update(matcher, unSet, hint);
         }catch (Exception e){
             logger.error("clear bucket delimiter:{} failed. bucketName:{}", delimiter, bucketName);
             throw e;
@@ -421,7 +437,10 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject matcher = new BasicBSONObject();
             matcher.put(Bucket.BUCKET_NAME, bucketName);
 
-            BSONObject queryResult = cl.queryOne(matcher,null,null,null,DBQuery.FLG_QUERY_FOR_UPDATE);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Bucket.NAME_INDEX);
+
+            BSONObject queryResult = cl.queryOne(matcher,null,null,hint, DBQuery.FLG_QUERY_FOR_UPDATE);
 
             if (null == queryResult) {
                 return null;

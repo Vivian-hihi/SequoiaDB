@@ -106,9 +106,8 @@ public class SdbDirDao implements DirDao {
             BSONObject hint = new BasicBSONObject();
             hint.put("", Dir.DIR_INDEX);
 
-            DBCursor cursor = cl.query(matcher, null, null, null, flag);
-            if (cursor != null && cursor.hasNext()){
-                BSONObject record = cursor.getNext();
+            BSONObject record = cl.queryOne(matcher, null, null, null, flag);
+            if (record != null){
                 Dir dir = new Dir(bucketId, delimiter, dirName, (long)record.get(Dir.DIR_ID));
                 return dir;
             }else{

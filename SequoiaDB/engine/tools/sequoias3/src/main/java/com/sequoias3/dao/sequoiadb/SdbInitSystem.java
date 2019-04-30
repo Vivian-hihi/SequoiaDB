@@ -103,22 +103,20 @@ public class SdbInitSystem {
             }
             DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
 
-            String IDIndexName = "idIndex";
-            if (!cl.isIndexExist(IDIndexName)) {
+            if (!cl.isIndexExist(Bucket.ID_INDEX)) {
                 BSONObject IDIndexKey = new BasicBSONObject();
                 IDIndexKey.put(Bucket.BUCKET_ID, 1);
                 sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.BUCKET_LIST_COLLECTION,
-                        IDIndexName, IDIndexKey, true, true);
+                        Bucket.ID_INDEX, IDIndexKey, true, true);
             }
 
-            String nameIndexName = "nameIndex";
-            if (!cl.isIndexExist(nameIndexName)) {
+            if (!cl.isIndexExist(Bucket.NAME_INDEX)) {
                 BSONObject nameIndexKey = new BasicBSONObject();
                 nameIndexKey.put(Bucket.BUCKET_NAME, 1);
                 sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.BUCKET_LIST_COLLECTION,
-                        nameIndexName, nameIndexKey, true, true);
+                        Bucket.NAME_INDEX, nameIndexKey, true, true);
             }
         } catch (Exception e){
             logger.error("create bucket cl failed.", e);

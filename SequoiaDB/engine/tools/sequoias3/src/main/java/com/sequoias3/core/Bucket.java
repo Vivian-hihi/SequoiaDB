@@ -22,6 +22,9 @@ public class Bucket {
     public static final String BUCKET_DELIMITER2MODTIME    = "Delimiter2ModTime";
     public static final String BUCKET_TASKID               = "TaskID";
 
+    public static final String NAME_INDEX = "nameIndex";
+    public static final String ID_INDEX   = "idIndex";
+
     @JsonIgnore
     private long    bucketId;
 
