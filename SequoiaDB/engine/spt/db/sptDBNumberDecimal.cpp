@@ -202,13 +202,13 @@ namespace engine
                                     BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "--Constructor methods for class NumberDecimal : " << endl ;
       ss << "   { \"$decimal\": <data> }   " << endl ;
       ss << "   { \"$decimal\": <data>, " << endl;
       ss << "     \"$precision\": [<precision>, <scale>] }   "
          << "-- Data type: high-precision number" << endl ;
-      ss << "--Static methods for class SdbDate : " << endl ;
-      ss << "--Instance methods for class SdbDate : " << endl ;
+      ss << "--Static methods for class NumberDecimal : " << endl ;
+      ss << "--Instance methods for class NumberDecimal : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

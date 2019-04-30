@@ -247,12 +247,12 @@ namespace engine
                             BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "--Constructor methods for class Regex : " << endl ;
       ss << "   { \"$regex\": <pattern>, \"$options\": <options> }   " << endl ;
       ss << "   Regex( <pattern>, <options> )                        "
          << "-- Regular expression" << endl ;
-      ss << "--Static methods for class SdbDate : " << endl ;
-      ss << "--Instance methods for class SdbDate : " << endl ;
+      ss << "--Static methods for class Regex : " << endl ;
+      ss << "--Instance methods for class Regex : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

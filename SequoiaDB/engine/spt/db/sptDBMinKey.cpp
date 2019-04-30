@@ -116,12 +116,12 @@ namespace engine
                              BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class SdbDate : " << endl ;
+      ss << "--Constructor methods for class MinKey : " << endl ;
       ss << "   { \"$MinKey\": 1 }   " << endl ;
       ss << "   MinKey()             "
          << "-- Data type: the minimum of all data types" << endl ;
-      ss << "--Static methods for class SdbDate : " << endl ;
-      ss << "--Instance methods for class SdbDate : " << endl ;
+      ss << "--Static methods for class MinKey : " << endl ;
+      ss << "--Instance methods for class MinKey : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
