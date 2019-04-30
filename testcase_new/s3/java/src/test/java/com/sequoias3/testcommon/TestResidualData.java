@@ -24,6 +24,7 @@ public class TestResidualData extends S3TestBase{
     Sequoiadb db = null;
 	int errorCount = 0;
     String printInfo = "";
+    String printDirInfo = "";
 
 	@BeforeClass
 	private void setUp() {}
@@ -38,10 +39,10 @@ public class TestResidualData extends S3TestBase{
         
         for(String csName : csNames){
         	if(csName.startsWith("S3_")){
-        		if(csName.contains("DataCS")){
-        			s3DataCSNames.add(csName);
-        		}else{
+        		if(csName.contains("Meta")){
         			s3CSNames.add(csName);
+        		}else{
+        			s3DataCSNames.add(csName);
         		}
         	}
         }
@@ -57,6 +58,7 @@ public class TestResidualData extends S3TestBase{
                 }
             }
             printResidualMetaData(cs, clList);
+            printObjectDirData(cs);
         }
         
         for(String csName : s3DataCSNames){
@@ -97,7 +99,6 @@ public class TestResidualData extends S3TestBase{
 		            printInfo+="===============end print " + cs.getName() +"."+ cl.getName() + " data==============\n";
 		        }
 		    }
-		    cursor.close();
         }finally{
         	if(cursor != null){
                 cursor.close();
@@ -119,9 +120,27 @@ public class TestResidualData extends S3TestBase{
 		            printInfo+="===============end print " + cs.getName() +"."+ cl.getName() + " data==============\n";
 		        }
 		    }
-		    cursor.close();
         }catch(BaseException e){
             Assert.assertEquals(e.getErrorCode(), SDBError.SDB_DMS_NOTEXIST.getErrorCode(), "getCollection ObjectDataList failed");
+        }finally{
+        	if(cursor != null){
+                cursor.close();
+            }
+        }
+	}
+	
+	private void printObjectDirData(CollectionSpace cs){
+		DBCollection cl = cs.getCollection("S3_ObjectDir");
+        DBCursor cursor = null;
+        try{
+	        cursor = cl.query();
+	        if(cursor.hasNext()) {
+	        	printDirInfo+="\n===============begin print " + cs.getName() +"."+ cl.getName() + " data============\n";
+	            while(cursor.hasNext()){
+	            	printDirInfo+=cursor.getNext().toString()+"\n";
+	            }
+	            printDirInfo+="===============end print " + cs.getName() +"."+ cl.getName() + " data==============\n";
+	        }
         }finally{
         	if(cursor != null){
                 cursor.close();
@@ -139,6 +158,17 @@ public class TestResidualData extends S3TestBase{
 	    BufferedWriter bw = new BufferedWriter(fw);
 	    bw.write(printInfo);
 	    bw.close();
+	    
+	    //打印日志表
+	    File file2 = new File(S3TestBase.installPath+"/tools/sequoias3/log/residualDirData.log");
+	    if(!file2.exists()) {
+	        file2.createNewFile();
+	    }
+	    
+	    FileWriter fw2 = new FileWriter(file2.getAbsoluteFile(),false);
+	    BufferedWriter bw2 = new BufferedWriter(fw2);
+	    bw2.write(printDirInfo);
+	    bw2.close();
 	    
 	    if(errorCount != 0){
 	        throw new Exception("There is data residue problem");
