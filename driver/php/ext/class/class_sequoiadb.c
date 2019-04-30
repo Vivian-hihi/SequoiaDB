@@ -2608,17 +2608,36 @@ error:
 PHP_METHOD( SequoiaDB, getSessionAttr )
 {
    INT32 rc = SDB_OK ;
-   zval *pThisObj = getThis() ;
+   BOOLEAN useCache = TRUE ;
+   zval *pUseCache  = NULL ;
+   zval *pThisObj   = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
    bson result ;
+
    bson_init( &result ) ;
+
    PHP_SET_ERRNO_OK( TRUE, pThisObj ) ;
+
+   if ( PHP_GET_PARAMETERS( "|z", &pUseCache ) == FAILURE )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = php_zval2Bool( pUseCache, &useCache TSRMLS_CC ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+
    PHP_READ_HANDLE( pThisObj,
                     connection,
                     sdbConnectionHandle,
                     SDB_HANDLE_NAME,
                     connectionDesc ) ;
-   rc = sdbGetSessionAttr( connection, &result ) ;
+
+   rc = sdbGetSessionAttrEx( connection, useCache, &result ) ;
+
 done:
    PHP_RETURN_AUTO_RECORD( TRUE,
                            pThisObj,

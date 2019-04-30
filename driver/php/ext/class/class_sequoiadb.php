@@ -2134,6 +2134,8 @@ class SequoiaDB
    /**
     * Get the attributes of the session.
     *
+    * @param $useCache a boolean argument. Whether to use cache.
+    *
     * @return Returns the result, default return array.
     *
     * @retval array   result
@@ -2151,7 +2153,7 @@ class SequoiaDB
     * var_dump( $result )
     * @endcode
    */
-   public function getSessionAttr(){}
+   public function getSessionAttr( boolean $useCache = TRUE ){}
 
    /**
     * Interrupte the session.
