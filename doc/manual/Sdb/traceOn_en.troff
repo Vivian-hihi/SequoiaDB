@@ -8,7 +8,8 @@
 traceOn \- Turn on the database engine program tracking.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.traceOn( <bufferSize>, [strComp], [strBreakPoint], [tids] )\f[]\f[]
+\f[B]\f[I]db.traceOn( <bufferSize>, [strComp], [strBreakPoint], [tids],
+[SdbTraceOption] )\f[]\f[]
 .SH CATEGORY
 .PP
 Sdb
@@ -106,6 +107,53 @@ T}@T{
 threads
 T}@T{
 T}
+T{
+5
+T}@T{
+SdbTraceOption
+T}@T{
+JSON Object
+T}@T{
+Use an object to
+T}@T{
+not
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+specify monitoring
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+parameters.
+For more
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+detial, please
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+reference to
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+SdbTraceOption
+T}@T{
+T}
 .TE
 .SH RETURN VALUE
 .PP
@@ -137,6 +185,8 @@ break point.
 .nf
 \f[C]
 >\ db.traceOn(\ 256,\ "cls,\ dms,\ mth",\ "_dmsTempSUMgr::init",\ 12712\ )
+or
+>\ db.traceOn(\ 256,\ new\ SdbTraceOption().components(\ "cls",\ dms",\ "mth"\ ).breakPoints(\ "_dmsTempSUMgr::init"\ ).tids(\ 12712\ )\ )
 \f[]
 .fi
 .IP \[bu] 2
@@ -145,6 +195,8 @@ Or turn on the database engine program tracking and specify multiple threads.
 .nf
 \f[C]
 >\ db.traceOn(\ 256,\ "cls,\ dms,\ mth",\ "_dmsTempSUMgr::init",\ [12712,\ 12713,\ 12714]\ )
+or
+>\ db.traceOn(\ 256,\ new\ SdbTraceOption().components(\ "cls",\ dms",\ "mth"\ ).breakPoints(\ "_dmsTempSUMgr::init"\ ).tids(\ [12712,\ 12713,\ 12714]\ )\ )
 \f[]
 .fi
 .IP \[bu] 2

@@ -4,7 +4,7 @@ traceOn -  Turn on the database engine program tracking.
 
 ##SYNOPSIS##
 
-***db.traceOn( \<bufferSize\>, [strComp], [strBreakPoint], [tids] )***
+***db.traceOn( \<bufferSize\>, [strComp], [strBreakPoint], [tids], [SdbTraceOption] )***
 
 ##CATEGORY##
 
@@ -16,12 +16,13 @@ Turn on the database engine program tracking.
 
 ##PARAMETERS##
 
-| Name 		    | Type   | Description                                       | Required or not |
-| ------------- | ------ | ------------------------------------------------- | --------------- |
-| bufferSize    | int    | The size of the tracked file we turn on. Uint: MB. Ranges: [1,1024] | requiresd |
-| strComp	    | string | The module we specified. Default to all modules.  | not 	       	   |
-| strBreakPoint | string | Breake point                                      | not 		       |
-| tids		    | array  | Specify one or multiple threads                   | not 		       |
+| Name 		     | Type   | Description                                       | Required or not |
+| -------------- | ------ | ------------------------------------------------- | --------------- |
+| bufferSize     | int    | The size of the tracked file we turn on. Uint: MB. Ranges: [1,1024] | requiresd |
+| strComp	     | string | The module we specified. Default to all modules.  | not 	       	   |
+| strBreakPoint  | string | Breake point                                      | not 		       |
+| tids		     | array  | Specify one or multiple threads                   | not 		       |
+| SdbTraceOption | JSON Object | Use an object to specify monitoring parameters. For more detial, please reference to [SdbTraceOption](reference/Sequoiadb_command/AuxiliaryObjects/SdbTraceOption.md) | not |
 
 ##RETURN VALUE##
 
@@ -31,7 +32,7 @@ On error, exception will be thrown.
 
 ##ERRORS##
 
-when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please  reference to [Troubleshooting](troubleshooting/general/general_guide.md).
+when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please reference to [Troubleshooting](troubleshooting/general/general_guide.md).
 
 ##EXAMPLES##
 
@@ -47,12 +48,16 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ```lang-javascript
 > db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", 12712 )
+or
+> db.traceOn( 256, new SdbTraceOption().components( "cls", dms", "mth" ).breakPoints( "_dmsTempSUMgr::init" ).tids( 12712 ) )
 ```
 
 * Or turn on the database engine program tracking and specify multiple threads.
 
 ```lang-javascript
 > db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", [12712, 12713, 12714] )
+or
+> db.traceOn( 256, new SdbTraceOption().components( "cls", dms", "mth" ).breakPoints( "_dmsTempSUMgr::init" ).tids( [12712, 12713, 12714] ) )
 ```
 
 * When the tracked module was blocked because of the breakpoint, you can use [traceResume()](reference/Sequoiadb_command/Sdb/traceResume.md) to wake up the module which was tracked and blocked. 

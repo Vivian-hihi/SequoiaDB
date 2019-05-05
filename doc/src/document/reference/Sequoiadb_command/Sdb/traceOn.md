@@ -1,6 +1,6 @@
 ##语法##
 
-***db.traceOn( \<bufferSize\>, [strComp], [strBreakPoint], [tids] )***
+***db.traceOn( \<bufferSize\>, [strComp], [strBreakPoint], [tids], [SdbTraceOption] )***
 
 ##类别##
 
@@ -12,12 +12,13 @@ Sdb
 
 ##参数##
 
-| 参数名 		| 参数类型 	| 描述 									                 | 是否必填 |
-| ------------- | --------- | ------------------------------------------------------ | --------	|
-| bufferSize 	| int 		| 开启追踪的文件大小，单位：兆字节，取值：[1,1024] 		 | 是 		|
-| strComp 		| string 	| 指定模块，默认为所有模块 				                 | 否 		|
-| strBreakPoint | string 	| 于函数处打断点进行跟踪。 				                 | 否 		|
-| tids			| array	    | 指定单个或多个线程tid			   		                 | 否 		|
+| 参数名 		 | 参数类型  | 描述 									        | 是否必填 |
+| -------------- | --------- | ------------------------------------------------ | -------- |
+| bufferSize 	 | int 	     | 开启追踪的文件大小，单位：兆字节，取值：[1,1024] | 是 	   |
+| strComp 		 | string    | 指定模块，默认为所有模块 				        | 否 	   |
+| strBreakPoint  | string    | 于函数处打断点进行跟踪。 				        | 否 	   |
+| tids			 | array     | 指定单个或多个线程tid			   		        | 否 	   |
+| SdbTraceOption | JSON 对象 | 使用一个对象来指定监控参数，使用方法请参考[SdbTraceOption](reference/Sequoiadb_command/AuxiliaryObjects/SdbTraceOption.md)| 否 |
 
 ##返回值##
 
@@ -42,11 +43,15 @@ Sdb
 
 	```lang-javascript
 	> db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", 12712 )
+    或者
+    > db.traceOn( 256, new SdbTraceOption().components( "cls", dms", "mth" ).breakPoints( "_dmsTempSUMgr::init" ).tids( 12712 ) )
 	```
   或者指定多个tid
 
     ```lang-javascript
 	> db.traceOn( 256, "cls, dms, mth", "_dmsTempSUMgr::init", [12712, 12713, 12714] )
+    或者
+    > db.traceOn( 256, new SdbTraceOption().components( "cls", dms", "mth" ).breakPoints( "_dmsTempSUMgr::init" ).tids( [12712, 12713, 12714] ) )
 	```
 
 * 当被跟踪的模块遇到断点被阻塞，如果想唤醒被跟踪的模块，具体可参考[traceResume()](reference/Sequoiadb_command/Sdb/traceResume.md)
