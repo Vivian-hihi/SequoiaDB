@@ -1371,7 +1371,7 @@ namespace engine
       evalBuilder << OPT_SEQ_SCAN_IO_COST << " * "
                   << _inputPages << " * ( "
                   << _pageSize << " / "
-                  << DMS_PAGE_SIZE_BASE << " ) " ;
+                  << DMS_PAGE_SIZE_BASE << " )" ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_IO_COST,
                                formBuilder.str().c_str(),
@@ -1390,7 +1390,7 @@ namespace engine
 
       evalBuilder << _inputRecords << " * ( "
                   << OPT_RECORD_CPU_COST << " + "
-                  << _mthCPUCost << " ) " ;
+                  << _mthCPUCost << " )" ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_CPU_COST,
                                formBuilder.str().c_str(),
@@ -2287,7 +2287,7 @@ namespace engine
                   << _idxReadPages << " + "
                   << _readPages << " ) * ( "
                   << _pageSize << " / "
-                  << DMS_PAGE_SIZE_BASE << " ) " ;
+                  << DMS_PAGE_SIZE_BASE << " )" ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_IO_COST,
                                formBuilder.str().c_str(),
@@ -2320,7 +2320,7 @@ namespace engine
                      OPT_FIELD_MTH_COST << " )" ;
          evalBuilder << _readRecords << " * ( " <<
                      OPT_RECORD_CPU_COST << " + " <<
-                     _mthCPUCost << " ) " ;
+                     _mthCPUCost << " )" ;
       }
       else
       {
