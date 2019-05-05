@@ -8,14 +8,14 @@
 
                eg: bin/sdb -f quickDeploy.js -e 'var sdb=true; var mysql=true; var cm=11790'
 
-@author:       Ting YU 2019-04-12   
+@author:       Ting YU 2019-04-12
 ****************************************************************/
 
 var USER_SET_DEPLOY = true ;
 
 // check parameter
-if ( typeof( sdb ) === "undefined" && 
-     typeof( mysql ) === "undefined" && 
+if ( typeof( sdb ) === "undefined" &&
+     typeof( mysql ) === "undefined" &&
      typeof( pg ) === "undefined" )
 {
    var sdb = true ;
@@ -29,8 +29,8 @@ if ( typeof( sdb ) === "undefined" )
    var sdb = false ;
 }
 else if( sdb.constructor !== Boolean )
-{ 
-   throw "Invalid para[sdb], should be Boolean" ; 
+{
+   throw "Invalid para[sdb], should be Boolean" ;
 }
 
 if ( typeof( mysql ) === "undefined" )
@@ -38,8 +38,8 @@ if ( typeof( mysql ) === "undefined" )
    var mysql = false ;
 }
 else if( mysql.constructor !== Boolean )
-{ 
-   throw "Invalid para[mysql], should be Boolean" ; 
+{
+   throw "Invalid para[mysql], should be Boolean" ;
 }
 
 if ( typeof( pg ) === "undefined" )
@@ -47,8 +47,8 @@ if ( typeof( pg ) === "undefined" )
    var pg = false ;
 }
 else if( pg.constructor !== Boolean )
-{ 
-   throw "Invalid para[pg], should be Boolean" ; 
+{
+   throw "Invalid para[pg], should be Boolean" ;
 }
 
 if ( typeof( cm ) === "undefined" )
@@ -56,8 +56,8 @@ if ( typeof( cm ) === "undefined" )
    var cm = 11790 ;
 }
 else if( cm.constructor !== Number )
-{ 
-   throw "Invalid para[cm], should be Number" ; 
+{
+   throw "Invalid para[cm], should be Number" ;
 }
 
 // set global variable
@@ -72,11 +72,11 @@ var TRANSACTION_CONF  = { transactionon: true, transautocommit: true } ;
 // run!
 main() ;
 
-function main() 
+function main()
 {
    var ignoreNotInstall = true ;
    if ( USER_SET_DEPLOY ) ignoreNotInstall = false ;
-   
+
    if ( DEPLOY_SEQUOIADB )
    {
       deploySequoiadb() ;
@@ -91,7 +91,7 @@ function main()
    }
 }
 
-// return obj: 
+// return obj:
 // {
 //   "VERSION": "3.2",
 //   "USER": "sdbadmin",
@@ -135,7 +135,7 @@ function getSqlInstallInfo( dbType, ignoreNotInstall )
          throw e ;
       }
    }
-   
+
    var infoObj = {} ;
    while( true )
    {
@@ -155,11 +155,11 @@ function getSqlInstallInfo( dbType, ignoreNotInstall )
       var conf = aLine.split( "=" ) ;
       infoObj[ conf[0] ] = conf[1] ;
    }
-   
+
    return infoObj ;
 }
 
-// return obj: 
+// return obj:
 // {
 //   "NAME": "sdbcm",
 //   "SDBADMIN_USER": "sdbadmin",
@@ -174,7 +174,7 @@ function getSequoiadbInstallInfo( hostName )
    }
    catch( e )
    {
-       
+
       println( "Unexpected error[" + e + "] when connecting cm[" + MY_HOSTNAME + ":" + LOCAL_CM_PORT + "]!" ) ;
       throw e ;
    }
@@ -186,11 +186,11 @@ function getSequoiadbInstallInfo( hostName )
    }
    catch( e )
    {
-       
+
       println( "Unexpected error[" + e + "] when connecting cm[" + hostName + ":" + cmPort + "]!" ) ;
       throw e ;
    }
-   
+
    var installInfo = {} ;
    try
    {
@@ -208,20 +208,20 @@ function getSequoiadbInstallInfo( hostName )
          throw e ;
       }
    }
-   
+
    return installInfo ;
 }
 
 function getSqlConf( dbType, installedPath )
 {
    var selfPath = getSelfPath() ;
-   
+
    var confFile = "" ;
-   if ( dbType == "mysql" ) 
+   if ( dbType == "mysql" )
    {
       confFile = "/mysql.conf" ;
    }
-   else if ( dbType == "postgresql" ) 
+   else if ( dbType == "postgresql" )
    {
       confFile = "/postgresql.conf" ;
    }
@@ -230,7 +230,7 @@ function getSqlConf( dbType, installedPath )
       println( "Invalid db type!" ) ;
       return ;
    }
-   
+
    var fileFullPath = selfPath + "/" + confFile ;
    try
    {
@@ -252,7 +252,7 @@ function getSqlConf( dbType, installedPath )
    // check first line     TODO try catche
    var headLine = file.readLine() ;
    headLine =  headLine.replace( /[\r\n]/g, "" ) ; // delete last line break
-   if ( headLine != "instanceName,port,databaseDir,coordAddr" ) 
+   if ( headLine != "instanceName,port,databaseDir,coordAddr" )
    {
       println( "Invalide configure file! first line: " + headLine ) ;
       throw "ERROR" ;
@@ -271,16 +271,16 @@ function getSqlConf( dbType, installedPath )
       catch( e )
       {
          if( e == -9 ) break ; // -9: Hit end of file
-         println( "Unexpected error[" + e + "] when read a line from configure file!" ) ; 
+         println( "Unexpected error[" + e + "] when read a line from configure file!" ) ;
          throw e ;
       }
 
       // check line
       if ( aLine == "" ) continue ;
-      
+
       if ( aLine.substr( 0,1 ) == "#" ) continue ;   // this line is a note
 
-      // split line 
+      // split line
       var instanceConf = aLine.split( "," ) ;
       var len = instanceConf.length ;
       if ( len < 4 )
@@ -312,26 +312,26 @@ function getSqlConf( dbType, installedPath )
          instanceConf[3] = coordAddr ;
          instanceConf.splice( 4, len - 4 ) ;
       }
-      
+
       // replace installed path
       instanceConf[2] = instanceConf[2].replace( /\[installPath\]/g, installedPath ) ;
-      
+
       // set coord address
       if ( instanceConf[3] == "-" )
       {
-         instanceConf[3] = getACoordAddr() ; 
+         instanceConf[3] = getACoordAddr() ;
       }
 
       allConf.push( instanceConf ) ;
    }
-   
+
    return allConf ;
 }
 
 function getACoordAddr()
 {
    var coordAddr = "" ;
-   
+
    var nodesConf = getSequoiadbConf() ;
    for ( var i in nodesConf )
    {
@@ -342,12 +342,17 @@ function getACoordAddr()
          break ;
       }
    }
-   
+
    return coordAddr ;
 }
 
-function getSequoiadbConf()
+function getSequoiadbConf( replaceInstallPath )
 {
+	if ( typeof( replaceInstallPath ) === "undefined" )
+	{
+	   replaceInstallPath = false ;
+	}
+
    var selfPath = getSelfPath() ;
    var fileFullPath = selfPath + "/sequoiadb.conf" ;
    var file = new File( fileFullPath, 0644, SDB_FILE_READONLY ) ;
@@ -355,7 +360,7 @@ function getSequoiadbConf()
    // check first line     TODO try catche
    var headLine = file.readLine() ;
    headLine =  headLine.replace( /[\r\n]/g, "" ) ; // delete last line break
-   if ( headLine != "role,groupName,hostName,service,dbPath" ) 
+   if ( headLine != "role,groupName,hostName,service,dbPath" )
    {
       println( "Invalide configure file! first line: " + headLine ) ;
       throw "ERROR" ;
@@ -380,7 +385,7 @@ function getSequoiadbConf()
 
       // check line
       if ( aLine == "" ) continue ;
-      
+
       if ( aLine.substr( 0,1 ) == "#" ) continue ;   // this line is a note
 
       var aNode = aLine.split( "," ) ;
@@ -392,24 +397,27 @@ function getSequoiadbConf()
 
       // replace 'localhost' to real hostname
       aNode[2] = aNode[2].replace( /localhost/g, MY_HOSTNAME ) ;
-      
+
       // replace installed path
-      var installedPath = getSequoiadbInstallInfo( aNode[2] ).INSTALL_DIR ;
-      aNode[4] = aNode[4].replace( /\[installPath\]/g, installedPath ) ;
+      if ( replaceInstallPath )
+      {
+      	var installedPath = getSequoiadbInstallInfo( aNode[2] ).INSTALL_DIR ;
+      	aNode[4] = aNode[4].replace( /\[installPath\]/g, installedPath ) ;
+      }
 
       nodesConf.push( aNode ) ;
    }
-   
+
    return nodesConf ;
 }
 
 function createTmpCoord()
 {
    var oma = new Oma( MY_HOSTNAME, LOCAL_CM_PORT ) ;
-   
+
    var service = TMP_COORD_SVC ;
    var installedPath = getSequoiadbInstallInfo( MY_HOSTNAME ).INSTALL_DIR ;
-   
+
    try
    {
       oma.createCoord( service, installedPath + "/database/coord/" + service ) ;
@@ -422,23 +430,23 @@ function createTmpCoord()
          throw e ;
       }
    }
-   
+
    oma.startNode( service ) ;
 }
 
 function checkCataPrimary( db )
 {
    var hasPrimary = false;
-   
-   for( var i = 0; i < 10*600; i++ )  //wait for cata group to select primary node 
-   {  
+
+   for( var i = 0; i < 10*600; i++ )  //wait for cata group to select primary node
+   {
       try
       {
          sleep( 100 ) ;
          var cataRG = db.getRG( "SYSCatalogGroup" ) ;
          hasPrimary = true ;
          break ;
-      } 
+      }
       catch(e)
       {
          if( e !== -71 )
@@ -448,61 +456,61 @@ function checkCataPrimary( db )
          }
       }
    }
-   
+
    if( hasPrimary === false )
    {
       println( "Fail to select primary node in group[SYSCatalogGroup] after 10 minute" ) ;
       return false ;
    }
-   
+
    return true ;
 }
 
 function checkeDataPrimary( db, groupName )
 {
    var hasPrimary = false ;
-   
-   for( var i = 0; i < 10*600; i++ )  //wait for data group to select primary node 
-   {  
+
+   for( var i = 0; i < 10*600; i++ )  //wait for data group to select primary node
+   {
       try
       {
-         sleep(100); 
-         db.getRG( groupName ).getMaster(); 
+         sleep(100);
+         db.getRG( groupName ).getMaster();
          hasPrimary = true;
-         break;       
-      } 
+         break;
+      }
       catch(e)
       {
-         if( e !== -71 ) 
+         if( e !== -71 )
          {
             println( "Unexpected error[" + e + "] when getting group[" + groupName + "]!" ) ;
             throw e;
          }
       }
    }
-   
+
    if( hasPrimary === false )
    {
       println( "Fail to select primary node in group[" + groupName + "] after 10 minute" ) ;
       return false ;
    }
-   
+
    return true ;
 }
 
 function addCataAddr2TmpCoord( cataHostName, cataSvc )
 {
    var oma = new Oma( MY_HOSTNAME, LOCAL_CM_PORT ) ;
-   
+
    var cataPort = parseInt( cataSvc ) + 3 ;
    var cataAddrSetting = cataHostName + ":" + cataPort ;
    oma.updateNodeConfigs( TMP_COORD_SVC, { catalogaddr: cataAddrSetting } ) ;
-   
+
    oma.stopNode( TMP_COORD_SVC ) ;
    oma.startNode( TMP_COORD_SVC ) ;
-   
+
    var db = new Sdb( MY_HOSTNAME, TMP_COORD_SVC ) ;
-   
+
    return db ;
 }
 
@@ -511,25 +519,25 @@ function createCatalog( nodesConf )
    if ( nodesConf.length == 0 ) return ;
 
    var db = new Sdb( MY_HOSTNAME, TMP_COORD_SVC ) ;
-   
+
    for ( var i in nodesConf )
    {
       var aNodeConf = nodesConf[i] ;
       var hostName = aNodeConf[2] ;
       var service = aNodeConf[3] ;
       var dbPath = aNodeConf[4] ;
-      
+
       if ( i == 0 )
       {
          try
          {
-            db.createCataRG( hostName, service, dbPath ) ; 
+            db.createCataRG( hostName, service, dbPath ) ;
          }
          catch( e )
          {
             if ( e == -145 || e == -200 ) // -145: already exists, ignore error
             {
-               db = addCataAddr2TmpCoord( hostName, service ) ; 
+               db = addCataAddr2TmpCoord( hostName, service ) ;
             }
             else
             {
@@ -566,7 +574,7 @@ function createCatalog( nodesConf )
 
       println( "Create catalog: " + hostName + ":" + service ) ;
    }
-   
+
    var rc = checkCataPrimary( db ) ;
    if ( !rc )
    {
@@ -578,9 +586,9 @@ function createCatalog( nodesConf )
 function createCoord( nodesConf )
 {
    if ( nodesConf.length == 0 ) return ;
-   
+
    var db = new Sdb( MY_HOSTNAME, TMP_COORD_SVC ) ;
-   
+
    try
    {
       db.createCoordRG() ;
@@ -593,14 +601,14 @@ function createCoord( nodesConf )
          throw e ;
       }
    }
-   
+
    for ( var i in nodesConf )
    {
       var aNodeConf = nodesConf[i] ;
       var hostName = aNodeConf[2] ;
       var service = aNodeConf[3] ;
       var dbPath = aNodeConf[4] ;
-      
+
       try
       {
          var rg = db.getCoordRG() ;
@@ -614,7 +622,7 @@ function createCoord( nodesConf )
             throw e ;
          }
       }
-      
+
       println( "Create coord:   " + hostName + ":" + service ) ;
    }
 
@@ -632,9 +640,9 @@ function createCoord( nodesConf )
 function createData( nodesConf )
 {
    if ( nodesConf.length == 0 ) return ;
-   
+
    var db = new Sdb( MY_HOSTNAME, TMP_COORD_SVC ) ;
-   
+
    for ( var i in nodesConf )
    {
       var aNodeConf = nodesConf[i] ;
@@ -642,7 +650,7 @@ function createData( nodesConf )
       var hostName = aNodeConf[2] ;
       var service = aNodeConf[3] ;
       var dbPath = aNodeConf[4] ;
-      
+
       try
       {
          var rg = db.getRG( groupName ) ;
@@ -672,15 +680,15 @@ function createData( nodesConf )
             throw e ;
          }
       }
-      
+
       println( "Create data:    " + hostName + ":" + service ) ;
    }
-   
+
    for ( var i in nodesConf )
    {
       var aNodeConf = nodesConf[i] ;
       var groupName = aNodeConf[1] ;
-      
+
       try
       {
          var rg = db.getRG( groupName ) ;
@@ -698,7 +706,7 @@ function removeTmpCoord()
 {
    var oma = new Oma( MY_HOSTNAME, LOCAL_CM_PORT ) ;
    var service = TMP_COORD_SVC ;
-   
+
    try
    {
       oma.removeCoord( service ) ;
@@ -720,9 +728,9 @@ function checkUser( dbType, installInfo )
    {
       var expUser = installInfo.USER ;
    }
-   
+
    var curUser = System.getUserEnv().toObj().USER ;
-   
+
    if ( expUser != curUser )
    {
       println( "You should execute this script by user[" + expUser + "], " +
@@ -734,22 +742,22 @@ function checkUser( dbType, installInfo )
 function deploySequoiadb()
 {
    println( "\n************ Deploy SequoiaDB ************************" ) ;
-   
+
    // check it has installation or not
    var installInfo = getSequoiadbInstallInfo( MY_HOSTNAME ) ;
    if ( installInfo == undefined )
    {
       throw "ERROR" ;
    }
-   
+
    // check user
    checkUser( "sequoiadb", installInfo ) ;
-   
+
    // get node configure
    var catalogConf = [] ;
    var coordConf = [] ;
    var dataConf = [] ;
-   var nodesConf = getSequoiadbConf() ;
+   var nodesConf = getSequoiadbConf( true ) ;
    for ( var i in nodesConf )
    {
       var aNodeConf = nodesConf[i] ;
@@ -772,7 +780,7 @@ function deploySequoiadb()
          throw "ERROR" ;
       }
    }
-   
+
    if ( catalogConf.length < 1 )
    {
       println( "SequoiaDB need at least 1 catalog!" ) ;
@@ -791,13 +799,13 @@ function deploySequoiadb()
    removeTmpCoord() ;
 }
 
-function deployMysql( ignoreNotInstall ) 
+function deployMysql( ignoreNotInstall )
 {
    if ( !ignoreNotInstall )
    {
       println( "\n************ Deploy SequoiaSQL-MySQL *****************" ) ;
    }
-   
+
    // check it has installation or not
    var installInfo = getSqlInstallInfo( "mysql", ignoreNotInstall ) ;
    if ( installInfo == undefined && ignoreNotInstall )
@@ -810,16 +818,16 @@ function deployMysql( ignoreNotInstall )
    {
       println( "\n************ Deploy SequoiaSQL-MySQL *****************" ) ;
    }
-   
+
    // check user
    checkUser( "mysql", installInfo ) ;
 
    var sqlCtl = installedPath + "/bin/sdb_sql_ctl" ;
    var cmd = new Cmd() ;
-   
+
    // get configure
    var allConf = getSqlConf( "mysql", installedPath ) ;
-   
+
    // create instance
    for ( var i in allConf )
    {
@@ -829,7 +837,7 @@ function deployMysql( ignoreNotInstall )
       var databaseDir = instanceConf[2] ;
       var coordAddr = instanceConf[3] ;
       var newInst = true ;
-      
+
       try
       {
          // add instance
@@ -863,31 +871,31 @@ function deployMysql( ignoreNotInstall )
          }
          file.seek( 0 ) ;
          file.write( content ) ;
-         
+
          // restart instance to make the configuration take effect
          var command = sqlCtl + " restart " + instanceName ;
          cmd.run( command ) ;
       }
       catch( e )
       {
-         if ( newInst ) 
+         if ( newInst )
          {
             println( cmd.getLastOut() ) ;
             throw e ;
          }
       }
-      
+
       println( "Create instance: [name: " + instanceName + ", port: " + port + "]" ) ;
    }
 }
 
-function deployPostgresql( ignoreNotInstall ) 
+function deployPostgresql( ignoreNotInstall )
 {
    if ( !ignoreNotInstall )
    {
       println( "\n************ Deploy SequoiaSQL-PostgreSQL ************" ) ;
    }
-   
+
    // check it has installation or not
    var installInfo = getSqlInstallInfo( "postgresql", ignoreNotInstall ) ;
    if ( installInfo == undefined && ignoreNotInstall )
@@ -895,7 +903,7 @@ function deployPostgresql( ignoreNotInstall )
       return ;
    }
    var installedPath = installInfo.INSTALL_DIR ;
-   
+
    if ( ignoreNotInstall )
    {
       println( "\n************ Deploy SequoiaSQL-PostgreSQL ************" ) ;
@@ -903,14 +911,14 @@ function deployPostgresql( ignoreNotInstall )
 
    // check user
    checkUser( "postgresql", installInfo ) ;
-   
+
    var sqlCtl = installedPath + "/bin/sdb_sql_ctl" ;
    var psql = installedPath + "/bin/psql" ;
    var cmd = new Cmd() ;
-   
+
    // get configure
    var allConf = getSqlConf( "postgresql", installedPath ) ;
-   
+
    // create instance
    var dbName = "foo" ;
    for ( var i in allConf )
@@ -921,7 +929,7 @@ function deployPostgresql( ignoreNotInstall )
       var databaseDir = instanceConf[2] ;
       var coordAddr = instanceConf[3] ;
       var newInst = true ;
-      
+
       try
       {
          // add instance
@@ -941,30 +949,30 @@ function deployPostgresql( ignoreNotInstall )
             throw e ;
          }
       }
-      
+
       try
       {
          // start instance
          var command = sqlCtl + " start " + instanceName ;
          cmd.run( command ) ;
-      
+
          // create db
          var command = sqlCtl + " createdb " + dbName + " " + instanceName ;
          cmd.run( command ) ;
-         
+
          // set coord address
          var envCmd = "export LD_LIBRARY_PATH=" + installedPath + "/lib; " ;
          var command = envCmd + psql + " -p " + port + " " + dbName + " -c \"create extension sdb_fdw\"" ;
          cmd.run( command ) ;
-         
-         var command = envCmd + psql + " -p " + port + " " + dbName 
-                              + " -c \"create server sdb_server foreign data wrapper sdb_fdw options(address '" 
+
+         var command = envCmd + psql + " -p " + port + " " + dbName
+                              + " -c \"create server sdb_server foreign data wrapper sdb_fdw options(address '"
                               + coordAddr + "', transaction 'off' );\"" ;
          cmd.run( command ) ;
       }
       catch( e )
       {
-         if ( newInst ) 
+         if ( newInst )
          {
             println( cmd.getLastOut() ) ;
             throw e ;
