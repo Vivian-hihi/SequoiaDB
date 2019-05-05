@@ -244,10 +244,10 @@ public class BucketDelimiterServiceImpl implements BucketDelimiterService {
                     recoverBucket.setDelimiter2ModTime(System.currentTimeMillis());
                 }
             }
-
             if (bucket.getDelimiter() == 2){
                 if (bucket.getDelimiter2Status().equals(DelimiterStatus.CREATING.getName())){
                     recoverBucket = new Bucket();
+                    recoverBucket.setDelimiter(1);
                     recoverBucket.setDelimiter2Status(DelimiterStatus.DELETING.getName());
                     recoverBucket.setDelimiter2ModTime(System.currentTimeMillis());
                     recoverBucket.setDelimiter1Status(DelimiterStatus.NORMAL.getName());
