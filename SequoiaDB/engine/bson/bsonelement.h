@@ -2,7 +2,7 @@
  * @file bsonelement.h
  * @brief CPP BSONElement Declarations
  */
- 
+
 /*    Copyright 2009 10gen Inc.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -135,7 +135,7 @@ namespace bson {
         BSONObj Obj()               const;
 
         /** populate v with the value of the element.  If type does not match, throw exception.
-            Useful in templates. 
+            Useful in templates.
             @see BSONObj::Vals().
         */
         void Val(Date_t& v)         const { v = Date(); }
@@ -591,10 +591,14 @@ namespace bson {
             return (double) *reinterpret_cast< const long long* >( value() );
         case NumberDecimal:
             {
+               int rc = 0 ;
                bsonDecimal decimal ;
                double tempValue = 0.0 ;
-               decimal.fromBsonValue( value() ) ;
-               decimal.toDouble( &tempValue ) ;
+               rc = decimal.fromBsonValue( value() ) ;
+               uassert( rc, "Failed to parse decimal from bson value",
+                        0 == rc ) ;
+               rc = decimal.toDouble( &tempValue ) ;
+               uassert( rc, "Failed to parse decimal to double", 0 == rc ) ;
                return tempValue ;
             }
         default:
@@ -614,10 +618,15 @@ namespace bson {
             return (int) _numberLong();
         case NumberDecimal:
             {
+               int rc = 0 ;
                bsonDecimal decimal ;
                int tempValue = 0 ;
-               decimal.fromBsonValue( value() ) ;
-               decimal.toInt( &tempValue ) ;
+               rc = decimal.fromBsonValue( value() ) ;
+               uassert( rc, "Failed to parse decimal from bson value",
+                        0 == rc ) ;
+               rc = decimal.toInt( &tempValue ) ;
+               uassert( rc, "Failed to parse decimal to int",
+                        0 == rc ) ;
                return tempValue ;
             }
         default:
@@ -637,10 +646,15 @@ namespace bson {
             return _numberLong();
         case NumberDecimal:
             {
+               int rc = 0 ;
                bsonDecimal decimal ;
                long long tempValue = 0 ;
-               decimal.fromBsonValue( value() ) ;
-               decimal.toLong( &tempValue ) ;
+               rc = decimal.fromBsonValue( value() ) ;
+               uassert( rc, "Failed to parse decimal from bson value",
+                        0 == rc) ;
+               rc = decimal.toLong( &tempValue ) ;
+               uassert( rc, "Failed to parse decimal to long",
+                        0 == rc) ;
                return tempValue ;
             }
         default:
@@ -649,19 +663,28 @@ namespace bson {
     }
 
     inline bsonDecimal BSONElement::numberDecimal() const {
+        int rc = 0 ;
         bsonDecimal decimal ;
         switch( type() ) {
         case NumberDouble:
-            decimal.fromDouble( _numberDouble() ) ;
+            rc = decimal.fromDouble( _numberDouble() ) ;
+            uassert( rc, "Failed to parse decimal from double",
+                     0 == rc ) ;
             break ;
         case NumberInt:
-            decimal.fromInt( _numberInt() ) ;
+            rc = decimal.fromInt( _numberInt() ) ;
+            uassert( rc, "Failed to parse decimal from int",
+                     0 == rc ) ;
             break ;
         case NumberLong:
-            decimal.fromLong( _numberLong() ) ;
+            rc = decimal.fromLong( _numberLong() ) ;
+            uassert( rc, "Failed to parse decimal from long",
+                     0 == rc ) ;
             break ;
         case NumberDecimal:
-            decimal.fromBsonValue( value() ) ;
+            rc = decimal.fromBsonValue( value() ) ;
+            uassert( rc, "Failed to parse decimal from bson value",
+                     0 == rc ) ;
             break ;
         default:
             break ;

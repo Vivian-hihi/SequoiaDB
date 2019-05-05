@@ -21,6 +21,8 @@
 #include "ossMem.h"
 #include "bsonDecimal.h"
 #include "common_decimal_fun.h"
+#include <string>
+#include <sstream>
 
 #ifdef SDB_ENGINE
 #include "pd.hpp"
@@ -29,11 +31,32 @@
       #include <assert.h>
       #define SDB_ASSERT(cond,str)  assert(cond)
    #else
-      #define SDB_ASSERT(cond,str)  
+      #define SDB_ASSERT(cond,str)
    #endif // _DEBUG
 #endif
 
 namespace bson {
+
+   class bsonDecimalException : public std::exception
+   {
+   public:
+      bsonDecimalException( INT32 error, const std::string &errorInfo )
+      {
+         std::ostringstream oss ;
+         oss << "rc=" << error << "," << errorInfo ;
+         _errorInfo = oss.str() ;
+      }
+
+      ~bsonDecimalException() throw() {}
+
+      virtual const CHAR *what() const throw()
+      {
+         return _errorInfo.c_str() ;
+      }
+
+   private:
+      std::string _errorInfo ;
+   } ;
 
    bsonDecimal::bsonDecimal()
    {
@@ -46,6 +69,11 @@ namespace bson {
       init() ;
       rc = sdb_decimal_copy( &( right._decimal ), &_decimal ) ;
       SDB_ASSERT( SDB_OK == rc , "out of memory" ) ;
+
+      if ( SDB_OK != rc )
+      {
+         throw bsonDecimalException( rc, "Construct bsonDecimal failed" ) ;
+      }
    }
 
    bsonDecimal::~bsonDecimal()
@@ -59,6 +87,11 @@ namespace bson {
       sdb_decimal_free( &_decimal ) ;
       rc = sdb_decimal_copy( &( right._decimal ), &_decimal ) ;
       SDB_ASSERT( SDB_OK == rc , "out of memory" ) ;
+
+      if ( SDB_OK != rc )
+      {
+         throw bsonDecimalException( rc, "bsonDecimal::operator= failed" ) ;
+      }
 
       return *this ;
    }
@@ -109,7 +142,7 @@ namespace bson {
       return sdb_decimal_from_int( value, &_decimal ) ;
    }
 
-   INT32 bsonDecimal::toInt( INT32 *value ) const 
+   INT32 bsonDecimal::toInt( INT32 *value ) const
    {
       if ( NULL == value )
       {
@@ -125,7 +158,7 @@ namespace bson {
       return sdb_decimal_from_long( value, &_decimal ) ;
    }
 
-   INT32 bsonDecimal::toLong( INT64 *value ) const 
+   INT32 bsonDecimal::toLong( INT64 *value ) const
    {
       if ( NULL == value )
       {
@@ -141,7 +174,7 @@ namespace bson {
       return sdb_decimal_from_double( value, &_decimal ) ;
    }
 
-   INT32 bsonDecimal::toDouble( FLOAT64 *value ) const 
+   INT32 bsonDecimal::toDouble( FLOAT64 *value ) const
    {
       if ( NULL == value )
       {
@@ -157,12 +190,11 @@ namespace bson {
       return sdb_decimal_from_str( value, &_decimal ) ;
    }
 
-   string bsonDecimal::toString() const 
+   INT32 bsonDecimal::toStringChecked( string &result ) const
    {
       INT32 rc       = SDB_OK ;
       CHAR *temp     = NULL ;
       INT32 size     = 0 ;
-      string result  = "" ;
 
       rc = sdb_decimal_to_str_get_len( &_decimal, &size ) ;
       if ( SDB_OK != rc )
@@ -189,19 +221,19 @@ namespace bson {
       {
          SDB_OSS_FREE( temp ) ;
       }
-      return result ;
+      return rc ;
+
    error:
       goto done ;
    }
 
-   string bsonDecimal::toJsonString()
+   INT32 bsonDecimal::toJsonStringChecked( string &result )
    {
       INT32 rc       = SDB_OK ;
       CHAR *temp     = NULL ;
       INT32 size     = 0 ;
-      string result  = "" ;
 
-      rc = sdb_decimal_to_jsonstr_len( _decimal.sign, _decimal.weight, 
+      rc = sdb_decimal_to_jsonstr_len( _decimal.sign, _decimal.weight,
                                        _decimal.dscale, _decimal.typemod,
                                        &size ) ;
       if ( SDB_OK != rc )
@@ -228,12 +260,27 @@ namespace bson {
       {
          SDB_OSS_FREE( temp ) ;
       }
-      return result ;
+      return rc ;
+
    error:
       goto done ;
    }
 
-   INT32 bsonDecimal::fromBsonValue( const CHAR *bsonValue ) 
+   string bsonDecimal::toString() const
+   {
+      string result ;
+      toStringChecked( result ) ;
+      return result ;
+   }
+
+   string bsonDecimal::toJsonString()
+   {
+      string result ;
+      toJsonStringChecked( result ) ;
+      return result ;
+   }
+
+   INT32 bsonDecimal::fromBsonValue( const CHAR *bsonValue )
    {
       return sdb_decimal_from_bsonvalue( bsonValue, &_decimal ) ;
    }
@@ -243,7 +290,7 @@ namespace bson {
       return sdb_decimal_cmp( &_decimal, &( right._decimal ) ) ;
    }
 
-   INT32 bsonDecimal::compare( int right ) const 
+   INT32 bsonDecimal::compare( int right ) const
    {
       INT32 rc = SDB_OK ;
       bsonDecimal decimal ;
@@ -281,7 +328,7 @@ namespace bson {
       {
          return rc ;
       }
-      
+
       return sdb_decimal_update_typemod( &_decimal, typemod ) ;
    }
 
@@ -294,7 +341,7 @@ namespace bson {
    {
       return sdb_decimal_mul( &_decimal, &right._decimal, &result._decimal ) ;
    }
-   
+
    INT32 bsonDecimal::div( const bsonDecimal &right, bsonDecimal &result )
    {
       return sdb_decimal_div( &_decimal, &right._decimal, &result._decimal ) ;
@@ -375,7 +422,7 @@ namespace bson {
       return sdb_decimal_get_typemod( &_decimal, precision, scale ) ;
    }
 
-   INT32 bsonDecimal::getPrecision() const 
+   INT32 bsonDecimal::getPrecision() const
    {
       INT32 rc        = SDB_OK ;
       INT32 precision = -1 ;

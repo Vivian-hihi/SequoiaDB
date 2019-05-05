@@ -646,22 +646,20 @@ namespace bson {
     inline string BSONElement::_numberDecimalStr() const
     {
         int rc = 0 ;
-        StringBuilder s;
         bsonDecimal decimal ;
+        string decStr ;
         if ( type() != NumberDecimal )
         {
             return "" ;
         }
 
         rc = decimal.fromBsonValue( value() ) ;
-        if ( 0 != rc )
-        {
-            return "" ;
-        }
+        uassert(rc, "Failed to parse decimal from bson value", SDB_OK == rc);
 
-        s << decimal.toJsonString() ;
+        rc = decimal.toJsonStringChecked( decStr ) ;
+        uassert(rc, "Failed to parse decimal to json string", SDB_OK == rc);
 
-        return s.str() ;
+        return decStr ;
     }
 
     inline string BSONElement::toString( bool includeFieldName, bool full )

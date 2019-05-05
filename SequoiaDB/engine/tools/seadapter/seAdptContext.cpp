@@ -601,7 +601,13 @@ namespace seadapter
             case NumberDecimal:
             {
                bsonDecimal number ;
-               number.fromBsonValue( idBuff ) ;
+               rc = number.fromBsonValue( idBuff ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to parse decimal from bson value:"
+                          "decimal=%s,rc=%d", number.toString().c_str(), rc ) ;
+                  goto error ;
+               }
                arrayBuilder.append( number ) ;
                break ;
             }

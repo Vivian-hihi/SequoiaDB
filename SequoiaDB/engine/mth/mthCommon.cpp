@@ -225,7 +225,13 @@ namespace engine
             string value ;
 
             decimal = e.numberDecimal() ;
-            value   = decimal.toString() ;
+            rc = decimal.toStringChecked( value ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed toStringChecked,rc=%d",rc ) ;
+               goto error ;
+            }
+
             rc      = us.append( value.c_str(), value.length() );
             if ( SDB_OK != rc )
             {
@@ -354,8 +360,20 @@ namespace engine
                   bsonDecimal original = e.Decimal() ;
                   bsonDecimal l_min ;
                   bsonDecimal l_max ;
-                  l_min.fromLong( OSS_SINT64_MIN ) ;
-                  l_max.fromLong( OSS_SINT64_MAX ) ;
+                  rc = l_min.fromLong( OSS_SINT64_MIN ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "Failed to parse decimal:rc=%d", rc ) ;
+                     goto error ;
+                  }
+
+                  rc = l_max.fromLong( OSS_SINT64_MAX ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "Failed to parse decimal:rc=%d", rc ) ;
+                     goto error ;
+                  }
+
                   if ( original.compare( l_min ) < 0 ||
                        original.compare( l_max ) > 0 )
                   {
@@ -448,7 +466,12 @@ namespace engine
          {
             INT32 i = 0 ;
             INT64 l = 0 ;
-            e.numberDecimal().toLong( &l) ;
+            rc = e.numberDecimal().toLong( &l) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to parse decimal:rc=%d", rc ) ;
+               goto error ;
+            }
             if ( l > OSS_SINT32_MAX_LL || l < OSS_SINT32_MIN_LL )
             {
                i = 0 ;
@@ -521,8 +544,20 @@ namespace engine
                   bsonDecimal original = e.Decimal() ;
                   bsonDecimal l_min ;
                   bsonDecimal l_max ;
-                  l_min.fromLong( OSS_SINT64_MIN ) ;
-                  l_max.fromLong( OSS_SINT64_MAX ) ;
+                  rc = l_min.fromLong( OSS_SINT64_MIN ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "Failed to parse decimal:rc=%d", rc ) ;
+                     goto error ;
+                  }
+
+                  rc = l_max.fromLong( OSS_SINT64_MAX ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "Failed to parse decimal:rc=%d", rc ) ;
+                     goto error ;
+                  }
+
                   if ( original.compare( l_min ) < 0 ||
                        original.compare( l_max ) > 0 )
                   {
@@ -659,7 +694,13 @@ namespace engine
          if ( Date == e.type() )
          {
             bsonDecimal decimal ;
-            decimal.fromLong( ( INT64 )( e.date().millis ) ) ;
+            rc = decimal.fromLong( ( INT64 )( e.date().millis ) ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to parse decimal:e=%s,rc=%d",
+                       e.String().c_str(), rc ) ;
+               goto error ;
+            }
             builder.append( fieldName, decimal ) ;
          }
          else if ( Timestamp == e.type() )
@@ -667,7 +708,13 @@ namespace engine
             bsonDecimal decimal ;
             INT64 l = ( INT64 )( e.timestampTime().millis ) ;
             l      += ( INT64 )( ( (INT32)(e.timestampInc()) ) / 1000 ) ;
-            decimal.fromLong( l ) ;
+            rc = decimal.fromLong( l ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to parse decimal:e=%s,rc=%d",
+                       e.String().c_str(), rc ) ;
+               goto error ;
+            }
             builder.append( fieldName, decimal ) ;
          }
          else if ( Bool == e.type() )
@@ -675,25 +722,52 @@ namespace engine
             bsonDecimal decimal ;
             INT64 v = e.Bool() ? 1 : 0 ;
 
-            decimal.fromLong( ( INT64 )v ) ;
+            rc = decimal.fromLong( ( INT64 )v ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to parse decimal:e=%s,rc=%d",
+                       e.String().c_str(), rc ) ;
+               goto error ;
+            }
             builder.append( fieldName, decimal ) ;
          }
          else if ( NumberLong == e.type() )
          {
             bsonDecimal decimal ;
-            decimal.fromLong( e.numberLong() ) ;
+            rc = decimal.fromLong( e.numberLong() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to parse decimal:e=%s,rc=%d",
+                       e.String().c_str(), rc ) ;
+               goto error ;
+            }
             builder.append( fieldName, decimal ) ;
          }
          else if ( String != e.type() )
          {
             bsonDecimal decimal ;
-            decimal.fromDouble( e.numberDouble() ) ;
+            rc = decimal.fromDouble( e.numberDouble() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to parse decimal:e=%s,rc=%d",
+                       e.String().c_str(), rc ) ;
+               goto error ;
+            }
             builder.append( fieldName, decimal ) ;
          }
          else
          {
             bsonDecimal decimal ;
-            decimal.fromString( e.String().c_str() ) ;
+            rc = decimal.fromString( e.String().c_str() ) ;
+            if ( SDB_OK != rc && SDB_INVALIDARG != rc )
+            {
+               PD_LOG( PDERROR, "Failed to parse decimal:e=%s,rc=%d",
+                       e.String().c_str(), rc ) ;
+               goto error ;
+            }
+
+            rc = SDB_OK ;
+            // SDB_OK or SDB_INVALIDARG(invalid string return the default value)
             builder.append( fieldName, decimal ) ;
          }
          break ;

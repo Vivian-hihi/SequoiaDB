@@ -56,7 +56,7 @@ namespace bson {
 
       void           setMax() ;
       BOOLEAN        isMax() ;
-      
+
       INT32          fromInt( INT32 value ) ;
       INT32          toInt( INT32 *value ) const ;
 
@@ -67,8 +67,10 @@ namespace bson {
       INT32          toDouble( FLOAT64 *value ) const ;
 
       INT32          fromString( const CHAR *value ) ;
-      string         toString() const ;
+      INT32          toStringChecked( string &result ) const ;
+      INT32          toJsonStringChecked( string &result ) ;
 
+      string         toString() const ;
       string         toJsonString() ;
 
       INT32          fromBsonValue( const CHAR *bsonValue ) ;
