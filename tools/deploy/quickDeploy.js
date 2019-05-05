@@ -401,8 +401,8 @@ function getSequoiadbConf( replaceInstallPath )
       // replace installed path
       if ( replaceInstallPath )
       {
-      	var installedPath = getSequoiadbInstallInfo( aNode[2] ).INSTALL_DIR ;
-      	aNode[4] = aNode[4].replace( /\[installPath\]/g, installedPath ) ;
+         var installedPath = getSequoiadbInstallInfo( aNode[2] ).INSTALL_DIR ;
+         aNode[4] = aNode[4].replace( /\[installPath\]/g, installedPath ) ;
       }
 
       nodesConf.push( aNode ) ;
