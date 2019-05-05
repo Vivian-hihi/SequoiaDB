@@ -321,7 +321,8 @@ sptFiles = [
       "spt/db/sptDBCount.cpp",
       "spt/db/sptDBOptionBase.cpp",
       "spt/db/sptDBSnapshotOption.cpp",
-      "spt/db/sptDBQueryOption.cpp"
+      "spt/db/sptDBQueryOption.cpp",
+      "spt/db/sptDBTraceOption.cpp"
       ]
 
 ssh2Files = [

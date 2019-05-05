@@ -1070,10 +1070,15 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
+      private:
+         INT32 _checkFunctionName( UINT64 functionNameId, const CHAR* funcName,
+                                   BOOLEAN &isMonitor ) ;
       protected :
          UINT32 _mask ;
-         std::vector<UINT32> _tid ;
-         std::vector<UINT64> _funcCode ;
+         std::vector<UINT32>  _tid ;
+         std::vector<UINT64>  _breakPoint ;
+         std::vector<UINT64>  _functionNameId ;
+         std::vector<INT32>   _threadType ;
          UINT32 _size ;
    };
 

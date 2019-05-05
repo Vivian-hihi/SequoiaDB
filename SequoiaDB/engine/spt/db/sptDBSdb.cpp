@@ -40,6 +40,7 @@
 #include "sptDBDomain.hpp"
 #include "sptDBOptionBase.hpp"
 #include "sptDBSnapshotOption.hpp"
+#include "sptDBTraceOption.hpp"
 #include "sptBsonobj.hpp"
 #include "ossSocket.hpp"
 #include "msgDef.hpp"
@@ -1241,6 +1242,8 @@ namespace engine
       string component ;
       string breakpoint ;
       vector< UINT32 > tidVec ;
+      string objectName ;
+      BSONObj optionObj ;
 
       rc = arg.getNative( 0, &bufferSize, SPT_NATIVE_INT32 ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -1253,66 +1256,87 @@ namespace engine
          detail = BSON( SPT_ERR << "BufferSize type must be number" ) ;
          goto error ;
       }
-      rc = arg.getString( 1, component ) ;
-      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+
+      if( !arg.isNull( 1 ) )
       {
-         detail = BSON( SPT_ERR << "Component must be string" ) ;
-         goto error ;
-      }
-      rc = arg.getString( 2, breakpoint ) ;
-      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
-      {
-         detail = BSON( SPT_ERR << "Breakpoint must be string" ) ;
-         goto error ;
+         objectName = arg.getUserObjClassName( 1 ) ;
       }
 
-      if( arg.argc() >= 4 )
+      if( SPT_TRACEOPTION_NAME == objectName )
       {
-         if( arg.isInt( 3 ) )
+         rc = arg.getBsonobj( 1, optionObj ) ;
+         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
          {
-            UINT32 tid = 0 ;
-            rc = arg.getNative( 3, &tid, SPT_NATIVE_INT32 ) ;
-            if( SDB_OK != rc )
-            {
-               detail = BSON( SPT_ERR << "Failed to get invalid tid" ) ;
-               goto error ;
-            }
-            tidVec.push_back( tid ) ;
-         }
-         else if( arg.isObject( 3 ) )
-         {
-            BSONObj tidObj ;
-            rc = arg.getBsonobj( 3, tidObj ) ;
-            if( SDB_OK != rc )
-            {
-               detail = BSON( SPT_ERR << "Failed to get invalid tid" ) ;
-               goto error ;
-            }
-            try
-            {
-               INT32 tmpTid = 0 ;
-               BSONObj::iterator itr( tidObj ) ;
-               while( itr.more() )
-               {
-                  itr.next().Val( tmpTid ) ;
-                  tidVec.push_back( static_cast< UINT32 >( tmpTid ) ) ;
-               }
-            }
-            catch( std::exception e )
-            {
-               rc = SDB_INVALIDARG ;
-               detail = BSON( SPT_ERR << "Failed to get tid array element" ) ;
-               goto error ;
-            }
-         }
-         else
-         {
-            detail = BSON( SPT_ERR << "Tid must be int or array type" ) ;
+            detail = BSON( SPT_ERR << "SdbTraceOption must be obj" ) ;
             goto error ;
          }
+         rc = _sptSdb.traceStart( bufferSize, optionObj ) ;
       }
-      rc = _sptSdb.traceStart( bufferSize, component.c_str(),
-                               breakpoint.c_str(), tidVec ) ;
+      else
+      {
+         rc = arg.getString( 1, component ) ;
+         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            detail = BSON( SPT_ERR << "Component must be string" ) ;
+            goto error ;
+         }
+         rc = arg.getString( 2, breakpoint ) ;
+         if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            detail = BSON( SPT_ERR << "Breakpoint must be string" ) ;
+            goto error ;
+         }
+
+         if( arg.argc() >= 4 )
+         {
+            if( arg.isInt( 3 ) )
+            {
+               UINT32 tid = 0 ;
+               rc = arg.getNative( 3, &tid, SPT_NATIVE_INT32 ) ;
+               if( SDB_OK != rc )
+               {
+                  detail = BSON( SPT_ERR << "Failed to get invalid tid" ) ;
+                  goto error ;
+               }
+               tidVec.push_back( tid ) ;
+            }
+            else if( arg.isObject( 3 ) )
+            {
+               BSONObj tidObj ;
+               rc = arg.getBsonobj( 3, tidObj ) ;
+               if( SDB_OK != rc )
+               {
+                  detail = BSON( SPT_ERR << "Failed to get invalid tid" ) ;
+                  goto error ;
+               }
+               try
+               {
+                  INT32 tmpTid = 0 ;
+                  BSONObj::iterator itr( tidObj ) ;
+                  while( itr.more() )
+                  {
+                     itr.next().Val( tmpTid ) ;
+                     tidVec.push_back( static_cast< UINT32 >( tmpTid ) ) ;
+                  }
+               }
+               catch( std::exception e )
+               {
+                  rc = SDB_INVALIDARG ;
+                  detail = BSON( SPT_ERR << "Failed to get tid array element" ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               detail = BSON( SPT_ERR << "Tid must be int or array type" ) ;
+               goto error ;
+            }
+         }
+
+         rc = _sptSdb.traceStart( bufferSize, component.c_str(),
+                                  breakpoint.c_str(), tidVec ) ;
+      }
+
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to start trace" ) ;

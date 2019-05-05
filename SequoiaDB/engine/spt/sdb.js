@@ -1231,3 +1231,278 @@ SdbQueryOption.prototype.remove = function() {
 }
 
 // end SdbQueryOption
+
+// SdbTraceOption
+
+SdbTraceOption.prototype.components = function()
+{
+   var argumentsSize = arguments.length ;
+   if( argumentsSize > 0 )
+   {
+      // the format that user specifies component parameter is like
+      // .components(["dms", "rtn"])
+      if( arguments[0] instanceof Array )
+      {
+         if( typeof( this._components ) == "undefined" )
+         {
+            this._components = arguments[0] ;
+         }
+         else
+         {
+            this._components = this._components.concat( arguments[0] ) ;
+         }
+      }
+      // the format that user specifies component parameter is like
+      // .components("dms", "rtn")
+      else
+      {
+         if( typeof( this._components ) == "undefined" )
+         {
+            this._components = [] ;
+         }
+         for (var i = 0; i < argumentsSize; i++)
+         {
+            this._components.push( arguments[i] );
+         }
+      }
+   }
+   return this ;
+}
+
+SdbTraceOption.prototype.breakPoints = function( breakPoints )
+{
+   var argumentsSize = arguments.length ;
+   if( argumentsSize > 0 )
+   {
+      if( arguments[0] instanceof Array )
+      {
+         if( typeof( this._breakPoints ) == "undefined" )
+         {
+            this._breakPoints = arguments[0] ;
+         }
+         else
+         {
+            this._breakPoints = this._breakPoints.concat( arguments[0] ) ;
+         }
+      }
+      else
+      {
+         if( typeof( this._breakPoints ) == "undefined" )
+         {
+            this._breakPoints = [] ;
+         }
+         for (var i = 0; i < argumentsSize; i++)
+         {
+            this._breakPoints.push( arguments[i] );
+         }
+      }
+   }
+   return this ;
+}
+
+SdbTraceOption.prototype.tids = function()
+{
+   var argumentsSize = arguments.length ;
+   if( argumentsSize > 0 )
+   {
+      if( arguments[0] instanceof Array )
+      {
+         if( typeof( this._tids ) == "undefined" )
+         {
+            this._tids = arguments[0] ;
+         }
+         else
+         {
+            this._tids = this._tids.concat( arguments[0] ) ;
+         }
+      }
+      else
+      {
+         if( typeof( this._tids ) == "undefined" )
+         {
+            this._tids = [] ;
+         }
+         for (var i = 0; i < argumentsSize; i++)
+         {
+            if( !isNaN( arguments[i] ) )
+            {
+               this._tids.push( arguments[i] );
+            }
+            else
+            {
+               throw "Tid field must be number or array";
+            }
+         }
+      }
+   }
+   return this ;
+}
+
+SdbTraceOption.prototype.functionNames = function()
+{
+   var argumentsSize = arguments.length ;
+   if( argumentsSize > 0 )
+   {
+      if( arguments[0] instanceof Array )
+      {
+         if( typeof( this._functionNames ) == "undefined" )
+         {
+            this._functionNames = arguments[0] ;
+         }
+         else
+         {
+            this._functionNames = this._functionNames.concat( arguments[0] ) ;
+         }
+      }
+      else
+      {
+         if( typeof( this._functionNames ) == "undefined" )
+         {
+            this._functionNames = [] ;
+         }
+         for (var i = 0; i < argumentsSize; i++)
+         {
+            this._functionNames.push( arguments[i] );
+         }
+      }
+   }
+   return this ;
+}
+
+SdbTraceOption.prototype.threadTypes = function()
+{
+   var argumentsSize = arguments.length ;
+   if( argumentsSize > 0 )
+   {
+      if( arguments[0] instanceof Array )
+      {
+         if( typeof( this._threadTypes ) == "undefined" )
+         {
+            this._threadTypes = arguments[0] ;
+         }
+         else
+         {
+            this._threadTypes = this._threadTypes.concat( arguments[0] ) ;
+         }
+      }
+      else
+      {
+         if( typeof( this._threadTypes ) == "undefined" )
+         {
+            this._threadTypes = [] ;
+         }
+         for (var i = 0; i < argumentsSize; i++)
+         {
+            this._threadTypes.push( arguments[i] );
+         }
+      }
+   }
+   return this ;
+}
+
+SdbTraceOption.prototype.toString = function()
+{
+   var componentsStr ;
+   var breakPointsStr ;
+   var tidsStr ;
+   var funcNamesStr ;
+   var threadTypesStr ;
+
+   // User doesn't specify component parameter
+   if( typeof( this._components ) == "undefined" )
+   {
+      componentsStr = "[ ]" ;
+   }
+   else
+   {
+      // the value that shell or engine returns
+      if( this._components[0] != "[" )
+      {
+         componentsStr = "[ "  + "\"" + this._components.join("\", \"") +
+                         "\"" + " ]" ;
+      }
+      // the value that fmp returns
+      else
+      {
+         componentsStr = this._components ;
+      }
+   }
+
+   if( typeof( this._breakPoints ) == "undefined" )
+   {
+      breakPointsStr = "[ ]" ;
+   }
+   else
+   {
+      if( this._breakPoints[0] != "[" )
+      {
+         breakPointsStr = "[ "  + "\"" + this._breakPoints.join("\", \"") +
+                          "\"" + " ]" ;
+      }
+      else
+      {
+         breakPointsStr = this._breakPoints ;
+      }
+   }
+
+   if( typeof( this._tids ) == "undefined" )
+   {
+      tidsStr = "[ ]" ;
+   }
+   else
+   {
+      if( this._tids[0] != "[" )
+      {
+         tidsStr = "[ "  + this._tids.join(", ") + " ]" ;
+      }
+      else
+      {
+         tidsStr = this._tids ;
+      }
+   }
+
+   if( typeof( this._functionNames ) == "undefined" )
+   {
+      funcNamesStr = "[ ]" ;
+   }
+   else
+   {
+      if( this._functionNames[0] != "[" )
+      {
+         funcNamesStr = "[ "  + "\"" + this._functionNames.join("\", \"") +
+                        "\"" + " ]" ;
+      }
+      else
+      {
+         funcNamesStr = this._functionNames ;
+      }
+   }
+
+   if( typeof( this._threadTypes ) == "undefined" )
+   {
+      threadTypesStr = "[ ]" ;
+   }
+   else
+   {
+      if( this._threadTypes[0] != "[" )
+      {
+         threadTypesStr = "[ "  + "\"" + this._threadTypes.join("\", \"") +
+                          "\"" + " ]" ;
+      }
+      else
+      {
+         threadTypesStr = this._threadTypes ;
+      }
+   }
+
+      return this.__className__ +
+             "(" +
+             "\"components\": " + componentsStr +
+             ", \"breakPoints\": " + breakPointsStr +
+             ", \"tids\": " + tidsStr +
+             ", \"functionNames\": " + funcNamesStr +
+             ", \"threadTypes\": " + threadTypesStr +
+             ")" ;
+}
+
+// end SdbTraceOption

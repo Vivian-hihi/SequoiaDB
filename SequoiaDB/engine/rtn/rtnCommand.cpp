@@ -2654,6 +2654,62 @@ error:
       return CMD_TRACE_START ;
    }
 
+   INT32 _rtnTraceStart::_checkFunctionName( UINT64 functionNameId,
+                                             const CHAR* funcName,
+                                             BOOLEAN &isMonitor )
+   {
+      INT32 rc     = SDB_OK ;
+      INT32 len    = 0 ;
+      CHAR  *pBuff = NULL ;
+      CHAR  *pTemp = NULL ;
+      const CHAR* fullFuncName = pdGetTraceFunction( functionNameId );
+
+      if ( !fullFuncName )
+      {
+         goto done ;
+      }
+      len = ossStrlen( fullFuncName ) ;
+      pBuff = (CHAR*)SDB_OSS_MALLOC( len + 1 ) ;
+      if ( NULL == pBuff )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ossStrncpy( pBuff, fullFuncName, len + 1 ) ;
+      ossStrtok( pBuff, ":", &pTemp ) ;
+
+      if( 0 == ossStrcmp( fullFuncName, funcName ) ||
+          0 == ossStrcmp( pBuff, funcName ) )
+      {
+         isMonitor = TRUE ;
+         goto done ;
+      }
+      else if( 0 == ossStrcmp( (++pTemp), funcName ) )
+      {
+         isMonitor = TRUE ;
+         goto done ;
+      }
+      else
+      {
+         isMonitor = FALSE ;
+      }
+
+   done:
+      if ( pBuff )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+         pBuff = NULL ;
+      }
+      if( pTemp )
+      {
+         pTemp = NULL ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTART_INIT, "_rtnTraceStart::init" )
    INT32 _rtnTraceStart::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                 const CHAR * pMatcherBuff, const CHAR * pSelectBuff,
@@ -2663,13 +2719,23 @@ error:
       PD_TRACE_ENTRY ( SDB__RTNTRACESTART_INIT ) ;
       try
       {
-         BSONObj arg ( pMatcherBuff );
-         BSONElement eleTID  = arg.getField ( FIELD_NAME_THREADS ) ;
-         BSONElement eleSize = arg.getField ( FIELD_NAME_SIZE ) ;
          UINT32 one = 1 ;
+         BSONObj arg ( pMatcherBuff );
+         pmdEPFactory &factory = pmdGetEPFactory() ;
+         BSONElement eleSize = arg.getField ( FIELD_NAME_SIZE ) ;
          BSONElement eleComp = arg.getField( FIELD_NAME_COMPONENTS );
-         BSONElement eleBreakPoint = arg.getField(FIELD_NAME_BREAKPOINTS);
-         //BSONElement elestrTids    = arg.getField(FIELD_NAME_MONITORTHREADS);
+         BSONElement eleBreakPoint = arg.getField( FIELD_NAME_BREAKPOINTS );
+         BSONElement eleTID = arg.getField ( FIELD_NAME_THREADS ) ;
+         BSONElement eleFunctionNames = arg.getField ( FIELD_NAME_FUNCTIONNAMES ) ;
+         BSONElement eleThreadTypes = arg.getField ( FIELD_NAME_THREADTYPES ) ;
+
+         // init buffsize
+         if ( eleSize.isNumber() )
+         {
+            _size = (UINT32)eleSize.numberLong() ;
+         }
+
+         // init components
          if ( eleComp.type() == Array )
          {
             _mask = 0 ;
@@ -2701,7 +2767,9 @@ error:
                } // while ( it.more() )
             }
          } // if ( eleComp.type() == Array )
+
 #if defined (SDB_ENGINE)
+         // init breakPoints
          if( eleBreakPoint.type() == Array )
          {
             BSONObjIterator it( eleBreakPoint.embeddedObject() );
@@ -2716,7 +2784,7 @@ error:
                      const CHAR *  funcName = pdGetTraceFunction( i );
                      if( 0 == ossStrcmp( funcName, eleStr ) )
                      {
-                        _funcCode.push_back ( i ) ;
+                        _breakPoint.push_back ( i ) ;
                         // do NOT break since we may have functions with
                         // duplicate names
                      } // if( 0 == ossStrcmp( funcName, eleStr ) )
@@ -2725,6 +2793,8 @@ error:
             } // while( it.more() )
          }
 #endif
+
+         // init tids
          if ( eleTID.type() == Array )
          {
             BSONObjIterator it ( eleTID.embeddedObject() ) ;
@@ -2736,11 +2806,71 @@ error:
                   UINT32 tid = (UINT32)ele.numberInt() ;
                   _tid.push_back ( tid ) ;
                }
-            } // while ( it.more () )
-         } // if ( eleTID.type() == Array )
-         if ( eleSize.isNumber() )
+            }
+         }
+
+         // init functionNames
+         if ( eleFunctionNames.type() == Array )
          {
-            _size = (UINT32)eleSize.numberLong() ;
+            BSONObjIterator it ( eleFunctionNames.embeddedObject() ) ;
+            while ( it.more () )
+            {
+               BSONElement ele = it.next() ;
+               if ( ele.type() == String )
+               {
+                  const char * eleStr = ele.valuestr();
+                  BOOLEAN isInValid = TRUE ;
+                  BOOLEAN isMonitor = FALSE ;
+                  for( UINT64 i = 0; i < pdGetTraceFunctionListNum(); i++ )
+                  {
+                     rc = _checkFunctionName( i, eleStr, isMonitor ) ;
+                     if( rc != SDB_OK )
+                     {
+                        goto error ;
+                     }
+                     if( isMonitor )
+                     {
+                        isInValid = FALSE ;
+                        _functionNameId.push_back ( i ) ;
+                        // do NOT break althought however we may have functions
+                        // with duplicate names
+                     }
+                  }
+                  if( isInValid )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     PD_LOG_MSG( PDERROR,
+                                 "The function name: %s is invalid", eleStr ) ;
+                     goto error ;
+                  }
+               }
+            }
+         }
+
+         // init threadTypes
+         if ( eleThreadTypes.type() == Array )
+         {
+            BSONObjIterator it ( eleThreadTypes.embeddedObject() ) ;
+            while ( it.more () )
+            {
+               BSONElement ele = it.next() ;
+               if ( ele.type() == String )
+               {
+                  const CHAR* eleStr = ele.valuestr() ;
+                  INT32 threadType = factory.name2Type( eleStr ) ;
+                  if( threadType >= 0 )
+                  {
+                     _threadType.push_back( threadType ) ;
+                  }
+                  else
+                  {
+                     rc = SDB_INVALIDARG ;
+                     PD_LOG_MSG( PDERROR,
+                                 "The thread type: %s is invalid", eleStr ) ;
+                     goto error ;
+                  }
+               }
+            }
          }
       }
       catch ( std::exception &e )
@@ -2756,8 +2886,6 @@ error:
       goto done ;
    }
 
-
-
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTART_DOIT, "_rtnTraceStart::doit" )
    INT32 _rtnTraceStart::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
@@ -2765,7 +2893,8 @@ error:
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNTRACESTART_DOIT ) ;
-      rc = sdbGetPDTraceCB()->start ( (UINT64)_size, _mask, &_funcCode, &_tid ) ;
+      rc = sdbGetPDTraceCB()->start ( (UINT64)_size, _mask, &_breakPoint, &_tid,
+                                      &_functionNameId, &_threadType ) ;
       PD_TRACE_EXITRC ( SDB__RTNTRACESTART_DOIT, rc ) ;
       return rc ;
    }

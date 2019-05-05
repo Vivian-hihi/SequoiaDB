@@ -1597,6 +1597,9 @@ namespace sdbclient
                         const CHAR* breakpoint = NULL,
                         const vector<UINT32> &tidVec = _sdbStaticUINT32Vec ) ;
 
+      INT32 traceStart( UINT32 traceBufferSize,
+                        const bson::BSONObj &options = _sdbStaticObject ) ;
+
       INT32 traceStop( const CHAR* dumpFileName ) ;
 
       INT32 traceResume() ;

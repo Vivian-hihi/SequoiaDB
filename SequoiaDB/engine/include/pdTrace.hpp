@@ -53,6 +53,8 @@
 
 #define PD_TRACE_MAX_BP_NUM                  10
 #define PD_TRACE_MAX_MONITORED_THREAD_NUM    10
+#define PD_TRACE_MAX_MONITORED_THREADTYPE_NUM    10
+#define PD_TRACE_MAX_MONITORED_FUNCTIONNAME_NUM    10
 
 /*
  * Slots and chunks
@@ -423,8 +425,10 @@ public:
 
    INT32          start ( UINT64 size,
                           UINT32 mask,
-                          std::vector<UINT64> *funcCode,
-                          std::vector<UINT32> *tids ) ;
+                          std::vector<UINT64> *breakPoint,
+                          std::vector<UINT32> *tids,
+                          std::vector<UINT64> *functionName,
+                          std::vector<INT32>  *threadType ) ;
 
    INT32          start ( UINT64 size, UINT32 mask ) ;
    INT32          start ( UINT64 size ) ; // size for trace buffer size on bytes
@@ -435,13 +439,19 @@ public:
 
    void           resumePausedEDUs() ;
    void           addPausedEDU( engine::IExecutor *cb ) ;
-   void           pause ( UINT64 funcCode ) ;
+   void           pause ( UINT64 breakPoint ) ;
 
    const UINT64*  getBPList() const { return _bpList ; }
    UINT32         getBPNum() const { return _numBP ; }
 
-   UINT32         getThreadFilterNum() const { return _nMonitoredNum ; }
+   UINT32         getThreadFilterNum() const { return _threadMonitoredNum ; }
    const UINT32*  getThreadFilterList() const { return _monitoredThreads ; }
+
+   UINT32         getThreadTypeNum() const { return _threadTypeMonitoredNum ; }
+   const INT32*   getThreadType() const { return _monitoredThreadTypes; }
+
+   UINT32         getFunctionNameNum() const { return _functionMonitoredNum ; }
+   const UINT32*  getFunctionName() const { return _monitoredFunctionNamesId; }
 
    BOOLEAN        isWrapped() ;
 
@@ -457,11 +467,54 @@ public:
    BOOLEAN        checkThread( UINT32 tid ) const
    {
       BOOLEAN result = FALSE ;
-      if ( _nMonitoredNum > 0 )
+      if ( _threadMonitoredNum > 0 )
       {
-         for ( UINT32 i = 0 ; i < _nMonitoredNum ; ++i )
+         for ( UINT32 i = 0 ; i < _threadMonitoredNum ; ++i )
          {
             if ( _monitoredThreads[ i ] == tid )
+            {
+               result = TRUE ;
+               break ;
+            }
+         }
+      }
+      else
+      {
+         result = TRUE ;
+      }
+      return result ;
+   }
+
+   BOOLEAN        checkThreadType( INT32 threadTypeId ) const
+   {
+      BOOLEAN result = FALSE ;
+      if ( _threadTypeMonitoredNum > 0 )
+      {
+         for ( UINT32 i = 0 ; i < _threadTypeMonitoredNum ; ++i )
+         {
+            if ( _monitoredThreadTypes[ i ] == threadTypeId )
+            {
+               result = TRUE ;
+               break ;
+            }
+         }
+      }
+      else
+      {
+         result = TRUE ;
+      }
+      return result ;
+   }
+
+   BOOLEAN        checkFunction( UINT64 functionId ) const
+   {
+      BOOLEAN result = FALSE ;
+      UINT32 code = ( UINT32 )( functionId & 0xFFFFFFFF ) ;
+      if ( _functionMonitoredNum > 0 )
+      {
+         for ( UINT32 i = 0 ; i < _functionMonitoredNum ; ++i )
+         {
+            if ( _monitoredFunctionNamesId[ i ] == code )
             {
                result = TRUE ;
                break ;
@@ -484,12 +537,15 @@ public:
    UINT64         getFreeSize() ;
 
 protected:
-   INT32          _addBreakPoint( UINT64 functionCode ) ;
+   INT32          _addBreakPoint( UINT64 breakPoint ) ;
    INT32          _addTidFilter( UINT32 tid ) ;
+   INT32          _addFunctionNameFilter( UINT64 functionId ) ;
+   INT32          _addThreadTypeFilter( INT32 threadTypeId ) ;
    void           _removeAllTidFilter() ;
+   void           _removeAllThreadTypeFilter() ;
+   void           _removeAllFunctionNameFilter() ;
    INT32          _appendFuncName( CHAR **ppBuffer, UINT32 &bufferSize,
                                    UINT32 &usedSize, UINT32 functionNameID ) ;
-
    void           _reset() ;
 
 private :
@@ -512,11 +568,15 @@ private :
    // number of sessions that currently writing into trace buffer
    ossAtomic32          _currentWriter ;
 
-   UINT32               _componentMask ;   // each bit represent one component
-   UINT8                _nMonitoredNum ;
-   UINT32               _monitoredThreads[ PD_TRACE_MAX_MONITORED_THREAD_NUM ] ;
-   UINT32               _numBP ;    // num of break points
-   UINT64               _bpList [ PD_TRACE_MAX_BP_NUM ] ; // break point list
+   UINT32   _componentMask ;   // each bit represent one component
+   UINT8    _threadMonitoredNum ;
+   UINT8    _functionMonitoredNum ;
+   UINT8    _threadTypeMonitoredNum ;
+   UINT32   _monitoredThreads[ PD_TRACE_MAX_MONITORED_THREAD_NUM ] ;
+   INT32    _monitoredThreadTypes[ PD_TRACE_MAX_MONITORED_THREADTYPE_NUM ] ;
+   UINT32   _monitoredFunctionNamesId[ PD_TRACE_MAX_MONITORED_FUNCTIONNAME_NUM] ;
+   UINT32   _numBP ;    // num of break points
+   UINT64   _bpList [ PD_TRACE_MAX_BP_NUM ] ; // break point list
 
 #if defined (SDB_ENGINE)
    ossSpinXLatch                 _pmdEDUCBLatch ;     // paused EDU latch

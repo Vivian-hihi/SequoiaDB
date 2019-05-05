@@ -9405,6 +9405,37 @@ do                                                            \
       goto done ;
    }
 
+   INT32 _sdbImpl::traceStart( UINT32 traceBufferSize,
+                               const bson::BSONObj &options )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj query ;
+
+      try
+      {
+         BSONObjBuilder queryBuilder ;
+         queryBuilder.append( FIELD_NAME_SIZE, traceBufferSize ) ;
+         queryBuilder.appendElementsUnique( options ) ;
+         query = queryBuilder.obj() ;
+      }
+      catch( std::exception )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      rc = _runCommand( CMD_ADMIN_PREFIX CMD_NAME_TRACE_START, &query ) ;
+      if( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+
+   }
+
    INT32 _sdbImpl::traceStop( const CHAR* dumpFileName )
    {
       INT32 rc = SDB_OK ;

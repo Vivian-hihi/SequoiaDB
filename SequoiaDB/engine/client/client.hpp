@@ -4199,6 +4199,9 @@ namespace sdbclient
                                 const CHAR* breakpoint = NULL,
                       const vector<UINT32> &tidVec = _sdbStaticUINT32Vec ) = 0 ;
 
+      virtual INT32 traceStart( UINT32 traceBufferSize,
+                                const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
       virtual INT32 traceStop( const CHAR* dumpFileName ) = 0 ;
 
       virtual INT32 traceResume() = 0 ;
@@ -6082,6 +6085,23 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pSDB->traceStart( traceBufferSize, component,
                                   breakpoint, tidVec ) ;
+      }
+
+      /** \fn INT32 traceStart(UINT32 traceBufferSize,
+                               const bson::BSONObj &options = _sdbStaticObject )
+          \brief Turn on the trace function of the database engine.
+          \param [in] traceBufferSize Trace file's size(MB), Value range:[1,1024].
+          \param [in] options includes component, breakPoint, tid, functionName
+                      and threadType
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 traceStart( UINT32 traceBufferSize,
+                        const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->traceStart( traceBufferSize, options ) ;
       }
 
       /** \fn INT32 traceStop(const CHAR* dumpFileName)

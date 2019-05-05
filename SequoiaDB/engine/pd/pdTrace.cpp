@@ -44,7 +44,7 @@
 #include "pmdDef.hpp"
 #include "pmdEDU.hpp"
 #include "pmdEDUMgr.hpp"
-#endif //SDB_ENGINE
+#endif // SDB_ENGINE
 
 #include <sstream>
 
@@ -75,16 +75,26 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
    hasStarted = TRUE ;
 
    /// double check
-   if ( !pdCB->isStarted() || !pdCB->checkMask( funcCode ) )
+   if ( !pdCB->isStarted() || ( !pdCB->checkMask( funcCode )
+        && !pdCB->checkFunction( funcCode ) ) )
    {
       goto done ;
    }
 
    {
       UINT32 tid = ossGetCurrentThreadID() ;
-      UINT32 code = (UINT32)funcCode & 0xFFFFFFFF ;
+      UINT32 code = (UINT32)(funcCode & 0xFFFFFFFF) ;
+      INT32 threadType = 0 ;
+#ifdef SDB_ENGINE
+      pmdEDUCB *educb = pmdGetThreadEDUCB() ;
+      if( !educb )
+      {
+         goto done ;
+      }
+      threadType = educb->getType() ;
+#endif // SDB_ENGINE
 
-      if ( !pdCB->checkThread( tid ) )
+      if ( !pdCB->checkThread( tid ) && !pdCB->checkThreadType( threadType ) )
       {
          goto done ;
       }
@@ -205,11 +215,11 @@ _pdTraceCB::_pdTraceCB()
    _ptr2 = NULL ;
    _size = 0 ;
    _pBuffer = NULL ;
-
    _traceStarted = FALSE ;
    _componentMask = 0xFFFFFFFF ;
-
-   _nMonitoredNum = 0 ;
+   _threadMonitoredNum = 0 ;
+   _threadTypeMonitoredNum = 0 ;
+   _functionMonitoredNum = 0 ;
    ossMemset( _monitoredThreads, 0, sizeof( _monitoredThreads ) ) ;
 
    _numBP = 0 ;
@@ -335,22 +345,30 @@ void _pdTraceCB::setMask( UINT32 mask )
 
 INT32 _pdTraceCB::start ( UINT64 size )
 {
-   return start ( size, 0xFFFFFFFF, NULL, NULL ) ;
+   return start ( size, 0xFFFFFFFF, NULL, NULL, NULL, NULL ) ;
 }
 
 INT32 _pdTraceCB::start ( UINT64 size, UINT32 mask )
 {
-   return start ( size, mask, NULL, NULL ) ;
+   return start ( size, mask, NULL, NULL, NULL, NULL ) ;
 }
 
 INT32 _pdTraceCB::start ( UINT64 size,
                           UINT32 mask,
-                          std::vector<UINT64> *funcCode,
-                          std::vector<UINT32> *tids )
+                          std::vector<UINT64> *breakPoint,
+                          std::vector<UINT32> *tids,
+                          std::vector<UINT64> *functionName,
+                          std::vector<INT32> *threadType )
 {
    INT32 rc = SDB_OK ;
    std::stringstream tidTextss ;
    std::stringstream funcTextss ;
+   std::stringstream functionNameTextss ;
+   std::stringstream threadTypeTextss ;
+
+#if defined (SDB_ENGINE)
+   pmdEPFactory &factory = pmdGetEPFactory() ;
+#endif //SDB_ENGINE
 
    while( !_metaOpr.compareAndSwap( 0, 1 ) )
    {
@@ -368,12 +386,12 @@ INT32 _pdTraceCB::start ( UINT64 size,
    _reset() ;
 
    // trace stop break
-   if ( funcCode && funcCode->size() > 0 )
+   if ( breakPoint && breakPoint->size() > 0 )
    {
       funcTextss << "[" ;
-      for ( UINT32 i = 0; i < funcCode->size() ; ++i )
+      for ( UINT32 i = 0; i < breakPoint->size() ; ++i )
       {
-         rc = _addBreakPoint ( (*funcCode)[i] ) ;
+         rc = _addBreakPoint ( (*breakPoint)[i] ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add break point, rc: %d", rc ) ;
@@ -384,7 +402,7 @@ INT32 _pdTraceCB::start ( UINT64 size,
          {
             funcTextss << ", " ;
          }
-         funcTextss << pdGetTraceFunction( (*funcCode)[i] ) ;
+         funcTextss << pdGetTraceFunction( (*breakPoint)[i] ) ;
       }
       funcTextss << "]" ;
    }
@@ -411,7 +429,59 @@ INT32 _pdTraceCB::start ( UINT64 size,
       tidTextss << "]" ;
    }
 
+   // trace functionName filter
+   if ( functionName && functionName->size() > 0 )
+   {
+      functionNameTextss << "[" ;
+      for ( UINT32 i = 0 ; i < functionName->size() ; ++i )
+      {
+        rc = _addFunctionNameFilter( (*functionName)[i] ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to add functionName filter, rc: %d", rc ) ;
+            _removeAllFunctionNameFilter() ;
+            goto error ;
+         }
+         if ( i > 0 )
+         {
+            functionNameTextss << ", " ;
+         }
+         functionNameTextss << pdGetTraceFunction( (*functionName)[i] ) ;
+      }
+      functionNameTextss << "]" ;
+   }
+
+   // trace threadType filter
+   if ( threadType && threadType->size() > 0 )
+   {
+      threadTypeTextss<< "[" ;
+      for ( UINT32 i = 0 ; i < threadType->size() ; ++i )
+      {
+         rc = _addThreadTypeFilter( (*threadType)[i] ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to add threadType filter, rc: %d", rc ) ;
+            _removeAllThreadTypeFilter() ;
+            goto error ;
+         }
+#if defined (SDB_ENGINE)
+         if ( i > 0 )
+         {
+            threadTypeTextss << ", " ;
+         }
+         threadTypeTextss << factory.type2Name( (*threadType)[i] ) ;
+#endif //SDB_ENGINE
+      }
+      threadTypeTextss << "]" ;
+   }
+
    _componentMask = mask ;
+
+   if( ( _componentMask == 0xFFFFFFFF ) && ( functionName->size() > 0 ) )
+   {
+      _componentMask = 0 ;
+   }
+
    size           = OSS_MAX ( size, TRACE_MIN_BUFFER_SIZE ) ;
    size           = OSS_MIN ( size, TRACE_MAX_BUFFER_SIZE ) ;
    size           *= ( 1024 * 1024 ) ;
@@ -419,8 +489,10 @@ INT32 _pdTraceCB::start ( UINT64 size,
 
    // start trace
    PD_LOG ( PDEVENT, "Trace starts, buffersize = %llu, mask = 0x%x, "
-            "funcCodes = %s, tids = %s", size, mask,
-            funcTextss.str().c_str(), tidTextss.str().c_str() ) ;
+            "funcCodes = %s, tids = %s, functionNames = %s, threadTypeS = %s ",
+            size, mask, funcTextss.str().c_str(), tidTextss.str().c_str(),
+            functionNameTextss.str().c_str(),
+            threadTypeTextss.str().c_str() ) ;
 
    _size = size ;
 
@@ -692,7 +764,7 @@ INT32 _pdTraceCB::_addTidFilter( UINT32 tid )
 {
    INT32 rc = SDB_OK ;
    // duplicate detection
-   for ( UINT32 i = 0; i < _nMonitoredNum ; ++i )
+   for ( UINT32 i = 0; i < _threadMonitoredNum ; ++i )
    {
       if ( tid == _monitoredThreads[i] )
       {
@@ -701,13 +773,67 @@ INT32 _pdTraceCB::_addTidFilter( UINT32 tid )
    }
    // here we need to insert the tid filter into list
    // first we have to make sure we still have enough room
-   if ( _nMonitoredNum >= PD_TRACE_MAX_MONITORED_THREAD_NUM )
+   if ( _threadMonitoredNum >= PD_TRACE_MAX_MONITORED_THREAD_NUM )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   _monitoredThreads[_nMonitoredNum] = tid ;
-   ++_nMonitoredNum ;
+   _monitoredThreads[_threadMonitoredNum] = tid ;
+   ++_threadMonitoredNum ;
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+INT32 _pdTraceCB::_addFunctionNameFilter( UINT64 functionId )
+{
+   INT32 rc = SDB_OK ;
+   // duplicate detection
+   for ( UINT32 i = 0; i < _functionMonitoredNum ; ++i )
+   {
+      if ( functionId == _monitoredFunctionNamesId[i] )
+      {
+         goto done ;
+      }
+   }
+   // here we need to insert the functionName filter into list
+   // first we have to make sure we still have enough room
+   if ( _functionMonitoredNum >= PD_TRACE_MAX_MONITORED_THREAD_NUM )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   _monitoredFunctionNamesId[_functionMonitoredNum] = functionId ;
+   ++_functionMonitoredNum ;
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+INT32 _pdTraceCB::_addThreadTypeFilter( INT32 threadTypeId )
+{
+   INT32 rc = SDB_OK ;
+   // duplicate detection
+   for ( UINT32 i = 0; i < _threadTypeMonitoredNum ; ++i )
+   {
+      if ( threadTypeId == _monitoredThreadTypes[i] )
+      {
+         goto done ;
+      }
+   }
+   // here we need to insert the threadType filter into list
+   // first we have to make sure we still have enough room
+   if ( _threadTypeMonitoredNum >= PD_TRACE_MAX_MONITORED_THREAD_NUM )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   _monitoredThreadTypes[_threadTypeMonitoredNum] = threadTypeId ;
+   ++_threadTypeMonitoredNum ;
 
 done :
    return rc ;
@@ -717,8 +843,21 @@ error :
 
 void _pdTraceCB::_removeAllTidFilter()
 {
-   _nMonitoredNum = 0 ;
+   _threadMonitoredNum = 0 ;
    ossMemset( &_monitoredThreads[0], 0, sizeof(_monitoredThreads) ) ;
+}
+
+void _pdTraceCB::_removeAllThreadTypeFilter()
+{
+   _threadTypeMonitoredNum = 0 ;
+   ossMemset( &_monitoredThreadTypes[0], 0, sizeof(_monitoredThreadTypes) ) ;
+}
+
+void _pdTraceCB::_removeAllFunctionNameFilter()
+{
+   _functionMonitoredNum = 0 ;
+   ossMemset( &_monitoredFunctionNamesId[0], 0,
+              sizeof(_monitoredFunctionNamesId) ) ;
 }
 
 void _pdTraceCB::_reset ()
@@ -737,6 +876,8 @@ void _pdTraceCB::_reset ()
    _componentMask = 0xFFFFFFFF ;
    removeAllBreakPoint() ;
    _removeAllTidFilter() ;
+   _removeAllThreadTypeFilter() ;
+   _removeAllFunctionNameFilter() ;
 
    _info1.reset() ;
    _info2.reset() ;
@@ -773,7 +914,7 @@ void _pdTraceCB::resumePausedEDUs ()
 #endif // SDB_ENGINE
 }
 
-void _pdTraceCB::pause( UINT64 funcCode )
+void _pdTraceCB::pause( UINT64 breakPoint )
 {
 #ifdef SDB_ENGINE
    pmdEDUCB *educb = pmdGetThreadEDUCB() ;
@@ -783,7 +924,7 @@ void _pdTraceCB::pause( UINT64 funcCode )
    for ( UINT32 i = 0 ; i < _numBP ; ++i )
    {
       // if the break point matches our current function code
-      if ( _bpList[i] == funcCode )
+      if ( _bpList[i] == breakPoint )
       {
          // put EDU into pause status
          addPausedEDU( educb ) ;
