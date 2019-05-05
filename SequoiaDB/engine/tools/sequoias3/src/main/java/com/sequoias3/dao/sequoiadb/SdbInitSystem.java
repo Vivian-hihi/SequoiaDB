@@ -224,6 +224,16 @@ public class SdbInitSystem {
                         DaoCollectionDefine.TASK_COLLECTION, null);
             }
 
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.TASK_COLLECTION);
+            if ( !cl.isIndexExist(TaskTable.TASK_INDEX)){
+                BSONObject indexKey = new BasicBSONObject();
+                indexKey.put(TaskTable.TASK_TYPE, 1);
+                indexKey.put(TaskTable.TASK_ID, 1);
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.TASK_COLLECTION, TaskTable.TASK_INDEX,
+                        indexKey, true, true);
+            }
+
         }catch (Exception e) {
             logger.error("create TaskTable failed.", e);
             throw e;

@@ -53,7 +53,10 @@ public class SdbTask implements TaskDao {
             matcher.put(TaskTable.TASK_TYPE, TaskTable.TASK_TYPE_DELIMITER);
             matcher.put(TaskTable.TASK_ID, taskId);
 
-            BSONObject result = cl.queryOne(matcher, null, null, null, DBQuery.FLG_QUERY_FOR_UPDATE);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", TaskTable.TASK_INDEX);
+
+            BSONObject result = cl.queryOne(matcher, null, null, hint, DBQuery.FLG_QUERY_FOR_UPDATE);
             Long id = null;
             if (result != null) {
                 id = (long) result.get(TaskTable.TASK_ID);
@@ -75,7 +78,10 @@ public class SdbTask implements TaskDao {
             matcher.put(TaskTable.TASK_TYPE, TaskTable.TASK_TYPE_DELIMITER);
             matcher.put(TaskTable.TASK_ID, taskId);
 
-            cl.delete(matcher);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", TaskTable.TASK_INDEX);
+
+            cl.delete(matcher, hint);
         }catch (Exception e){
             throw e;
         }
