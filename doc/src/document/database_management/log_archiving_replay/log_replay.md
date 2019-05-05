@@ -36,8 +36,8 @@
 |---|---|---|---|---|---|
 |help|h|打印帮助信息|-|-|
 |version|V|打印版本号|-|-|
-|hostname|-|SequoiaDB所在的主机名|string|-|dump和dumpheader为false时必填|
-|svcname|-|SequoiaDB的服务名（端口号）|string|-|dump和dumpheader为false时必填|
+|hostname|-|SequoiaDB所在的主机名|string|-|dump和dumpheader为false，且outputconf未设置时必填|
+|svcname|-|SequoiaDB的服务名（端口号）|string|-|dump和dumpheader为false，且outputconf未设置时时必填|
 |user|-|用户名|string|-|
 |password|-|密码|string|-|指定值则使用明文输入，不指定值则命令行提示输入
 |cipher|-|使用加密文件输入密码|bool|false|
@@ -45,6 +45,7 @@
 |cipherfile|-|加密文件|string|./passwd|
 |ssl|-|使用SSL连接|bool|false|
 |path|-|归档目录|string|-|必填，可以是文件或目录|
+|outputconf|-|输出格式的配置文件路径|string|-|用于配置回放工具的输出规则，当hostname设置时，该参数无效。详细说明参见下一小节|
 |filter|-|过滤条件|string(json)|-|
 |dump|-|只导出日志，不重放|bool|false|
 |dumpheader|-|只导出归档文件头，不重放|bool|false|
@@ -52,6 +53,7 @@
 |watch|-|持续监控归档目录并重放日志|bool|false|path为目录时有效|
 |daemon|-|在后台运行|bool|false|kill -15 \<pid>可以使后台进程正确退出|
 |status|-|指定状态文件|string|-|状态文件会存储重放的状态信息，首次指定时重放工具会生成该文件。重放工具退出后，通过指定状态文件可以从上次退出的地方继续重放。|
+|intervalnum|-|状态文件持久化间隔记录数|number|1000|每回放intervalnum条记录持久化一次状态文件|
 |type|-|指定日志类型|string|archive|取值为"archive"表示归档日志，取值为"replica"表示复制日志。|
 
 其中filter是json格式的字符串，可以指定过滤条件对日志进行过滤，过滤条件有：
@@ -73,24 +75,114 @@
 > 1. 命令选项watch在path指定为目录时有效；  
 > 2. dump或dumpheader为true不需要设置hostname和svcname。
 
+## outputconf 说明 ##
+outputconf是以 json 格式表示的，用于设置输出格式的配置文件。当前只支持一种输出类型：DB2LOAD。其具体参数有：
+
+|参数|描述|类型|说明|
+|----|----|----|----|
+|outputType|目标格式类型|string|当前只有一种类型：DB2LOAD|
+|outputDir|输出目录|string|-|
+|filePrefix|输出结果文件名的前缀|string|-|
+|submitTime|文件提交时间|string|格式：21:00 。21点提交一次正式文件|
+|tables|表映射关系|array[obj]|-|
+|tables.source|源表名|string|-|
+|tables.target|目标表名|string|-|
+|fields|字段映射关系|array[obj]|-|
+|fields.fieldType|字段类型|string|目前支持：ORIGINAL_TIME（复制日志生成时间）,AUTO_OP（操作标识串。I:insert, D:delete, B:before update, A:after update）,CONST_STRING（常量字符串）, MAPPING_STRING（映射原始记录中的字符串）|
+|fields.constValue|fieldType为CONST_STRING时使用，表示常量的值|string|-|
+|fields.source|源字段名|字符串|-|
+|fields.target|目标字段名|字符串|-|
+
+outputconf具体样例：
+
+```
+$cat output.conf
+{
+  outputType: "DB2LOAD",
+  outputDir: "/home/mount/sequoiadb/replay/output/",
+  filePrefix: "SDB_db1_1000",
+  submitTime: "21:00",
+  tables:
+  [
+   {
+     source: "cs.cl",
+     target: "dbName.tableName",
+     fields:
+     [
+       {
+         fieldType: "ORIGINAL_TIME"
+       },
+       {
+         fieldType: "CONST_STRING",
+         constValue: "0"
+       },
+       {
+         fieldType: "AUTO_OP"
+       },
+       {
+         source: "a",
+         target: "column1",
+         fieldType: "MAPPING_STRING"
+       },
+       {
+         source: "b",
+         target: "column2",
+         fieldType: "MAPPING_STRING"
+       },
+       {
+         source: "_id",
+         target: "column3",
+         fieldType: "MAPPING_STRING"
+       }
+     ]
+   }
+  ]
+}
+```
+
+上述配置下，生成的结果文件格式如下：
+
+```
+$cat SDB_db1_1000_dbName_tableName_0000000001_384_20190429.csv
+"2019-04-10 14.52.17.551928","0","D","a4","b4","5cad8cc8da342dfe37a40e84"
+"2019-04-10 14.52.17.553750","0","I","a1","b1111","5cac3850da342dfe37a40eee"
+"2019-04-10 14.52.17.553820","0","B","a1","b1111","5cac3850da342dfe37a40eee"
+"2019-04-10 14.52.17.553820","0","A","a1","b22","5cac3850da342dfe37a40eee"
+```
+
+>**Note:**
+>
+> 第一条为删除操作，删除记录{"_id": {"$oid": "5cad8cc8da342dfe37a40e84"}, "a": "a4", "b": "b4"}
+>
+> 第二条为插入操作，插入记录{"a": "a1", "b": "b1111"}
+>
+> 第三、四条为更新操作，更新前记录为：{"_id": {"$oid": "5cac3850da342dfe37a40eee"}, "a": "a1", "b": "b1111"}，更新后操作为：{"_id": {"$oid": "5cac3850da342dfe37a40eee"}, "a": "a1", "b": "b22"}
+>
+
 ##使用示例##
 
-1. 重放日志文件
+1. 重放日志文件，输出目标为 SequoiaDB（sdbserver1:11810）
 
   ```
   $./sdbreplay --hostname sdbserver1 --svcname 11810 --path /data/archivelog/archivelog.1
   ```
 
-2. 重放日志目录并且只重放某个集合的插入操作
+2. 重放日志目录并且只重放某个集合的插入操作，输出目标为 SequoiaDB（sdbserver1:11810）
 
   ```
   $./sdbreplay --hostname sdbserver1 --svcname 11810 --path /data/archivelog --filter '{ "CL": [ "foo.bar" ], "OP": ["insert"] }'
   ```
 
-3. 在后台持续监控归档目录并重放归档日志文件，同时记录状态
+3. 在后台持续监控归档目录并重放归档日志文件，同时记录状态，输出目标为 SequoiaDB（sdbserver1:11810）
 
   ```
   $./sdbreplay --hostname sdbserver1 --svcname 11810 --path /data/archivelog --watch true --daemon true --status 1.status
+  ```
+
+4. 根据配置文件重放归档目录下的文件
+
+  ```
+  $./sdbreplay --type archive --path /data/20000/archivelog/ --filter '{ "CL": [ "foo.bar" ], "OP": ["insert", "update", "delete"], "MinLSN":468 }' --outputconf ./replay/output.conf  --status ./replay/1.status --daemon true --watch true --intervalnum 10000
   ```
 
 ##错误##
