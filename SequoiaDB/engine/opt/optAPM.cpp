@@ -966,12 +966,15 @@ namespace engine
 
       if ( _cachedPlanCount.fetch() < _activityNum )
       {
-         UINT64 tmpEndIndex = _freeIndexEnd.fetch() ;
          // Get free activity from free index
          UINT64 freeActivityIndex = _freeIndexBegin.inc() ;
 
+#ifdef _DEBUG
+         // Do check in debug mode
+         UINT64 tmpEndIndex = _freeIndexEnd.fetch() ;
          SDB_ASSERT( freeActivityIndex < tmpEndIndex,
                      "AcitvityIndex must < tmpEndIndex" ) ;
+#endif
 
          activityID = _pFreeActivityIDs[ freeActivityIndex % _activityNum ] ;
       }
