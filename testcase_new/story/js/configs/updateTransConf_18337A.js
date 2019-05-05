@@ -24,8 +24,8 @@ function main()
       db.updateConf({"transisolation": 0}, {Global: false});
    }
    
-   var csName = "cs_18321";
-   var clName = "cl_18321";
+   var csName = "cs_18337A";
+   var clName = "cl_18337A";
    var r1 = {"_id": 1, "a": 1};
    var r2 = {"_id": 2, "a": 2}
    
