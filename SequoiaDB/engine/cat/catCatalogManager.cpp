@@ -228,6 +228,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_QUERYSPACEINFO ) ;
       const CHAR *csName = NULL ;
       utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
+      BOOLEAN includeSubCLGroup = FALSE ;
       BSONObj boSpace ;
       BOOLEAN isExist = FALSE ;
       vector< UINT32 > groups ;
@@ -246,6 +247,15 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s] or field[%s], "
                       "rc: %d", CAT_COLLECTION_SPACE_NAME,
                        CAT_CS_UNIQUEID, rc ) ;
+         rc = rtnGetBooleanElement( boQuery, CAT_INCLUDE_SUBCL,
+                                    includeSubCLGroup ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            includeSubCLGroup = TRUE ; // default is true
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      CAT_INCLUDE_SUBCL, rc ) ;
       }
       catch ( std::exception &e )
       {
@@ -278,7 +288,7 @@ namespace engine
       }
 
       // get collection space all groups
-      rc = catGetCSGroupsFromCLs( csName, _pEduCB, groups, TRUE ) ;
+      rc = catGetCSGroupsFromCLs( csName, _pEduCB, groups, includeSubCLGroup ) ;
       PD_RC_CHECK( rc, PDERROR, "Get collection space[%s] all groups failed, "
                    "rc: %d", csName, rc ) ;
 
