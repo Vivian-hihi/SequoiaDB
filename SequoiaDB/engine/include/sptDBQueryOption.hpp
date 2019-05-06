@@ -39,7 +39,7 @@ using namespace bson ;
 namespace engine
 {
    #define SPT_QUERYOPTION_NAME                "SdbQueryOption"
-   #define SPT_QUERYOPTION_OPTIONS_FIELD       "_options"  
+   #define SPT_QUERYOPTION_OPTIONS_FIELD       "_options"
 
    /*
       _sptDBQueryOption define
@@ -71,6 +71,9 @@ namespace engine
                                 _sptReturnVal &rval,
                                 bson::BSONObj &detail ) ;
 
+      static INT32 help( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail ) ;
    protected:
       static void _setReturnVal( const BSONObj &data,
                                  _sptReturnVal &rval ) ;

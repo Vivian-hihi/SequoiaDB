@@ -45,8 +45,6 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, start )
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getCommand )
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getInfo )
-   JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, memberHelp )
-   JS_STATIC_FUNC_DEFINE( _sptUsrCmd, staticHelp )
 
    JS_BEGIN_MAPPING( _sptUsrCmd, "Cmd" )
       JS_ADD_CONSTRUCT_FUNC( construct )
@@ -58,8 +56,6 @@ namespace engine
       JS_ADD_MEMBER_FUNC_WITHATTR( "_getCommand", getCommand, 0 )
       JS_ADD_MEMBER_FUNC_WITHATTR( "_getInfo", getInfo, 0 )
       JS_ADD_MEMBER_FUNC( "toString", toString )
-      JS_ADD_MEMBER_FUNC( "help", memberHelp )
-      JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_MAPPING_END()
 
 
@@ -303,51 +299,5 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrCmd::memberHelp( const _sptArguments & arg,
-                                 _sptReturnVal & rval,
-                                 BSONObj & detail )
-   {
-      stringstream ss ;
-      ss << "Cmd member functions:" << endl
-         << "   run( cmd, [args], [timeout], [useShell] )  " << endl
-         << "        timeout(ms), default 0: never timeout," << endl
-         << "        useShell 0/1, default 1" << endl
-         << "   start( cmd, [args], [useShell], [timeout] )  " << endl
-         << "          useShell 0/1, default 1" << endl
-         << "          timeout(ms), default 100" << endl
-         << "   getCommand()" << endl
-         << "   getLastRet()" << endl
-         << "   getLastOut()" << endl
-         << "   getInfo()" << endl
-         << "Remote Cmd functions:" << endl
-         << "   runJS( code )" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
-
-   INT32 _sptUsrCmd::staticHelp( const _sptArguments & arg,
-                                 _sptReturnVal & rval,
-                                 BSONObj & detail )
-   {
-      stringstream ss ;
-      ss << "Methods to access:" << endl
-         << " var cmd = new Cmd()" << endl
-         << " var cmd = remoteObj.getCmd()" << endl
-         << "Cmd member functions:" << endl
-         << "   run( cmd, [args], [timeout], [useShell] )  " << endl
-         << "        timeout(ms), default 0: never timeout," << endl
-         << "        useShell 0/1, default 1" << endl
-         << "   start( cmd, [args], [useShell], [timeout] )  " << endl
-         << "          useShell 0/1, default 1" << endl
-         << "          timeout(ms), default 100" << endl
-         << "   getCommand()" << endl
-         << "   getLastRet()" << endl
-         << "   getLastOut()" << endl
-		   << "   getInfo()" << endl
-         << "Remote Cmd member functions:" << endl
-         << "   runJS( code )" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
 }
 

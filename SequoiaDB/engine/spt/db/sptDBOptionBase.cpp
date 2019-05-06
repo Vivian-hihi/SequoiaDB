@@ -38,6 +38,7 @@ namespace engine
 {
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBOptionBase, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBOptionBase, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBOptionBase, help )
 
    JS_BEGIN_MAPPING( _sptDBOptionBase, SPT_OPTIONBASE_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
@@ -45,6 +46,7 @@ namespace engine
       JS_SET_CVT_TO_BSON_FUNC( _sptDBOptionBase::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBOptionBase::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBOptionBase::bsonToJSObj )
+      JS_ADD_STATIC_FUNC( "help", help )
    JS_MAPPING_END()
 
    _sptDBOptionBase::_sptDBOptionBase()
@@ -324,5 +326,23 @@ namespace engine
                                  SPT_PROP_ENUMERATE )->setValue( flags ) ;
    }
 
+   INT32 _sptDBOptionBase::help( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class SdbOptionBase : " << endl ;
+      ss << "   SdbOptionBase[.cond(<cond>)]" << endl ;
+      ss << "                [.sel(<sel>)]" << endl ;
+      ss << "                [.sort(<sort>)]" << endl ;
+      ss << "                [.options(<options>)]" << endl ;
+      ss << "                [.skip(<skipNum>)]" << endl ;
+      ss << "                [.limit(<retNum>)]   "
+         << "-- Create a SdbOptionBase object" << endl ;
+      ss << "--Static methods for class SdbOptionBase : " << endl ;
+      ss << "--Instance methods for class SdbOptionBase : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
 }
 

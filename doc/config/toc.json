@@ -2937,33 +2937,103 @@
                            "en": "toBase64Code()"
                         }
                      ]
-                  },				  
-				  {
+                  },
+                  {
+                     "id": 1557112069,
+                     "dir": "Cmd",
+                     "cn": "Cmd",
+                     "en": "Cmd",
+                     "contents": [
+                        {
+                           "id": 1557112070,
+                           "file": "Cmd",
+                           "cn": "Cmd()",
+                           "en": "Cmd()"
+                        },
+                        {
+                           "id": 1557112303,
+                           "file": "getCommand",
+                           "cn": "getCommand()",
+                           "en": "getCommand()"
+                        },
+                        {
+                           "id": 1557112309,
+                           "file": "getInfo",
+                           "cn": "getInfo()",
+                           "en": "getInfo()"
+                        },
+                        {
+                           "id": 1557112311,
+                           "file": "getLastOut",
+                           "cn": "getLastOut()",
+                           "en": "getLastOut()"
+                        },
+                        {
+                           "id": 1557112323,
+                           "file": "getLastRet",
+                           "cn": "getLastRet()",
+                           "en": "getLastRet()"
+                        },
+                        {
+                           "id": 1557112332,
+                           "file": "run",
+                           "cn": "run()",
+                           "en": "run()"
+                        },
+                        {
+                           "id": 1557112341,
+                           "file": "runJS",
+                           "cn": "runJS()",
+                           "en": "runJS()"
+                        },
+                        {
+                           "id": 1557112346,
+                           "file": "start",
+                           "cn": "start()",
+                           "en": "start()"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1557121265,
+                     "dir": "Remote",
+                     "cn": "Remote",
+                     "en": "Remote",
+                     "contents": [
+                        {
+                           "id": 1557121270,
+                           "file": "Remote",
+                           "cn": "Remote()",
+                           "en": "Remote()"
+                        }
+                     ]
+                  },
+                  {
                      "id": 1552489109,
                      "dir": "AuxiliaryObjects",
                      "cn": "辅助类型对象",
                      "en": "Auxiliary Objects",
                      "contents": [
-						{
-						   "id": 1552489119,
+                        {
+                           "id": 1552489119,
                            "file": "SdbSnapshotOption",
                            "cn": "SdbSnapshotOption",
                            "en": "SdbSnapshotOption"
-						},
+                        },
                         {
-						   "id": 1552489127,
+                           "id": 1552489127,
                            "file": "SdbQueryOption",
                            "cn": "SdbQueryOption",
                            "en": "SdbQueryOption"
-						},
-						{
-						   "id": 1557109995,
+                        },
+                        {
+                           "id": 1557109995,
                            "file": "SdbTraceOption",
                            "cn": "SdbTraceOption",
                            "en": "SdbTraceOption"
-						}
+                         }
                      ]
-                  },				  				  
+                  },
                   {
                      "id": 1440658402,
                      "dir": "SpecialObjects",

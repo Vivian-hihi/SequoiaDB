@@ -61,6 +61,9 @@ namespace engine
                                 _sptReturnVal &rval,
                                 bson::BSONObj &detail ) ;
 
+      static INT32 help( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail ) ;
    } ;
 
    typedef _sptDBSnapshotOption sptDBSnapshotOption ;
