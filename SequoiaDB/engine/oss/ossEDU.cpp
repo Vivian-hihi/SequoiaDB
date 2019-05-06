@@ -172,6 +172,8 @@ namespace  engine
                       ossGetCurrentProcessID(),
                       ossGetCurrentThreadID() ) ;
 
+         ossOneTimeOnly() ;
+
          trapFile.Open( fileName ) ;
 
          if ( trapFile.isValid() )
@@ -689,8 +691,6 @@ namespace  engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_OSSREGSIGHND );
       struct sigaction newact ;
-
-      engine::ossOneTimeOnly() ;
 
       sigemptyset ( &newact.sa_mask ) ;
       newact.sa_flags = 0 ;
