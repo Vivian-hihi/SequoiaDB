@@ -40,6 +40,7 @@ namespace engine
 
    JS_CONSTRUCT_FUNC_DEFINE( _sptDBTraceOption, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptDBTraceOption, destruct )
+   JS_STATIC_FUNC_DEFINE( _sptDBTraceOption, help )
 
    JS_BEGIN_MAPPING( _sptDBTraceOption, SPT_TRACEOPTION_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
@@ -47,6 +48,7 @@ namespace engine
       JS_SET_CVT_TO_BSON_FUNC( _sptDBTraceOption::cvtToBSON )
       JS_SET_JSOBJ_TO_BSON_FUNC( _sptDBTraceOption::fmpToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBTraceOption::bsonToJSObj )
+      JS_ADD_STATIC_FUNC( "help", help )
    JS_MAPPING_END()
 
    _sptDBTraceOption::_sptDBTraceOption()
@@ -291,6 +293,37 @@ namespace engine
       rval.addReturnValProperty( SPT_TRACEOPTION_THREADTYPES_FIELD,
                                  SPT_PROP_ENUMERATE )->setValue
                                  ( obj.toString( true, true) ) ;
+   }
+
+   INT32 _sptDBTraceOption::help( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class SdbTraceOption : " << endl ;
+      ss << "   SdbTraceOption[.components( <component1>"
+         << "[,component2...] )]" << endl ;
+      ss << "                 [.breakPoints( <breakPoint1>"
+         << "[,breakPoint2...] )]      " << endl ;
+      ss << "                 [.tids( <tid1>[,tid2...] )]            " << endl ;
+      ss << "                 [.functionNames( <functionName1>"
+         << "[,functionName2...] )]" << endl ;
+      ss << "                 [.threadTypes( <threadType1>"
+         << "[,threadType2...] )]  " << endl << endl ;
+      ss << "   SdbTraceOption[.components( [ <component1>"
+         << "[,component2...] ] )]" << endl ;
+      ss << "                 [.breakPoints( [ <breakPoint1>"
+         << "[,breakPoint2...] ] )]      " << endl ;
+      ss << "                 [.tids( [ <tid1>[,tid2...] ] )]" << endl ;
+      ss << "                 [.functionNames( [ <functionName1>"
+         << "[,functionName2...] ] )]" << endl ;
+      ss << "                 [.threadTypes( [ <threadType1>"
+         << "[,threadType2...] ] )]  " << endl ;
+      ss << "   -- Create a SdbTraceOption object" << endl ;
+      ss << "--Static methods for class SdbTraceOption : " << endl ;
+      ss << "--Instance methods for class SdbTraceOption : " << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
    }
 
 }
