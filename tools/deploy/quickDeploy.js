@@ -348,10 +348,10 @@ function getACoordAddr()
 
 function getSequoiadbConf( replaceInstallPath )
 {
-	if ( typeof( replaceInstallPath ) === "undefined" )
-	{
-	   replaceInstallPath = false ;
-	}
+   if ( typeof( replaceInstallPath ) === "undefined" )
+   {
+      replaceInstallPath = false ;
+   }
 
    var selfPath = getSelfPath() ;
    var fileFullPath = selfPath + "/sequoiadb.conf" ;
