@@ -2955,6 +2955,12 @@
                            "file": "SdbQueryOption",
                            "cn": "SdbQueryOption",
                            "en": "SdbQueryOption"
+						},
+						{
+						   "id": 1557109995,
+                           "file": "SdbTraceOption",
+                           "cn": "SdbTraceOption",
+                           "en": "SdbTraceOption"
 						}
                      ]
                   },				  				  
