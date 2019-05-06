@@ -1631,10 +1631,11 @@ error:
 PHP_METHOD( SequoiaCL, createIndex )
 {
    INT32 rc = SDB_OK ;
-   PHP_LONG indexNameLen  = 0 ;
+   INT32 argsNum          = ZEND_NUM_ARGS() ;
    INT32 sortBufferSize   = 64 ;
    BOOLEAN isUnique       = FALSE ;
    BOOLEAN isEnforced     = FALSE ;
+   PHP_LONG indexNameLen  = 0 ;
    CHAR *pIndexName       = NULL ;
    zval *pIndexDef        = NULL ;
    zval *pIsUnique        = NULL ;
@@ -1643,8 +1644,13 @@ PHP_METHOD( SequoiaCL, createIndex )
    zval *pThisObj         = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
    bson indexDef ;
+   bson options ;
+
    bson_init( &indexDef ) ;
+   bson_init( &options ) ;
+
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
+
    if ( PHP_GET_PARAMETERS( "zs|zzz",
                             &pIndexDef,
                             &pIndexName,
@@ -1656,43 +1662,73 @@ PHP_METHOD( SequoiaCL, createIndex )
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+
    rc = php_auto2Bson( pIndexDef, &indexDef TSRMLS_CC ) ;
    if( rc )
    {
       goto error ;
    }
-   rc = php_zval2Bool( pIsUnique, &isUnique TSRMLS_CC ) ;
-   if( rc )
+
+   if ( argsNum == 2 ||
+        ( argsNum == 3 && Z_TYPE_P( pIsUnique ) == IS_ARRAY ) )
    {
-      goto error ;
+      zval *pOptions = pIsUnique ;
+
+      rc = php_auto2Bson( pOptions, &options TSRMLS_CC ) ;
+      if( rc )
+      {
+         goto error ;
+      }
+
+      PHP_READ_HANDLE( pThisObj,
+                       cl,
+                       sdbCollectionHandle,
+                       SDB_CL_HANDLE_NAME,
+                       clDesc ) ;
+
+      rc = sdbCreateIndex2( cl, &indexDef, pIndexName, &options ) ;
    }
-   rc = php_zval2Bool( pIsEnforced, &isEnforced TSRMLS_CC ) ;
-   if( rc )
+   else
    {
-      goto error ;
+      rc = php_zval2Bool( pIsUnique, &isUnique TSRMLS_CC ) ;
+      if( rc )
+      {
+         goto error ;
+      }
+
+      rc = php_zval2Bool( pIsEnforced, &isEnforced TSRMLS_CC ) ;
+      if( rc )
+      {
+         goto error ;
+      }
+
+      rc = php_zval2Int( pSortBufferSize, &sortBufferSize TSRMLS_CC ) ;
+      if( rc )
+      {
+         goto error ;
+      }
+
+      PHP_READ_HANDLE( pThisObj,
+                       cl,
+                       sdbCollectionHandle,
+                       SDB_CL_HANDLE_NAME,
+                       clDesc ) ;
+
+      rc = sdbCreateIndex1( cl,
+                            &indexDef,
+                            pIndexName,
+                            isUnique,
+                            isEnforced,
+                            sortBufferSize ) ;
    }
-   rc = php_zval2Int( pSortBufferSize, &sortBufferSize TSRMLS_CC ) ;
-   if( rc )
-   {
-      goto error ;
-   }
-   PHP_READ_HANDLE( pThisObj,
-                    cl,
-                    sdbCollectionHandle,
-                    SDB_CL_HANDLE_NAME,
-                    clDesc ) ;
-   rc = sdbCreateIndex1( cl,
-                         &indexDef,
-                         pIndexName,
-                         isUnique,
-                         isEnforced,
-                         sortBufferSize ) ;
+
    if( rc )
    {
       goto error ;
    }
 done:
    PHP_RETURN_AUTO_ERROR( FALSE, pThisObj, rc ) ;
+   bson_destroy( &options ) ;
    bson_destroy( &indexDef ) ;
    return ;
 error:

@@ -1039,6 +1039,38 @@ class SequoiaCL
     *
     * @param $indexName the string argument. The index name.
     *
+    * @param $options an array or the string argument. The options are as below:
+    *                                  @code
+    *                                  Unique:         Whether the index elements are unique or not
+    *                                  Enforced:       Whether the index is enforced unique. This element is meaningful when Unique is true
+    *                                  NotNull:        Any field of index key should exist and cannot be null when NotNull is true
+    *                                  SortBufferSize: The size of sort buffer used when creating index. Unit is MB. Zero means don't use sort buffer
+    *                                  @endcode
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    *
+    * Example:
+    * @code
+    * $err = $cl -> createIndex( array( 'name' => 1, 'age' => -1 ), "myIndex", array( 'Unique' => true, 'NotNull' => true ) ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to create index, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
+   */
+   public function createIndex( array|string $indexDef, string $indexName, array|string $options ){}
+
+   /**
+    * Create the index in current collection.
+    *
+    * @param $indexDef an array or the string argument. The index element. e.g. array( 'name' => 1, 'age' => -1 )
+    *
+    * @param $indexName the string argument. The index name.
+    *
     * @param $isUnique a boolean argument. Whether the index elements are unique or not,default is false.
     *
     * @param $isEnforced a boolean argument. Whether the index is enforced unique This element is meaningful when isUnique is set to true.
