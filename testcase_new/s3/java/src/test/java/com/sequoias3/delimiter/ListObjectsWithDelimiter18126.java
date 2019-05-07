@@ -32,7 +32,7 @@ public class ListObjectsWithDelimiter18126 extends S3TestBase {
 	private String delimiter = "%";
 	private String startAfter = "%dir%dir2%";
 	private List<String> expresultList = new ArrayList<String>();
-	private int objectTotalNum = 3000;
+	private int objectTotalNum = 1000;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
