@@ -65,17 +65,14 @@ public class ListObjectsWithDelimiter18127 extends S3TestBase {
 						.withPrefix(prefix).withStartAfter(startAfter).withDelimiter(delimiter).withMaxKeys(maxKeys1);
 		ListObjectsV2Result result; 
 		
-		do{
-			result = s3Client.listObjectsV2(req);
-			commprefixesResult.addAll(result.getCommonPrefixes());
-			List<S3ObjectSummary> objects = result.getObjectSummaries();
-			for(S3ObjectSummary obj : objects)
-			{
-				actContents.add(obj.getKey());
-			}
-			String nextContinuationToken = result.getNextContinuationToken();
-			req.setContinuationToken(nextContinuationToken);
-		}while(result.isTruncated());
+		result = s3Client.listObjectsV2(req);
+		commprefixesResult = result.getCommonPrefixes();
+		List<S3ObjectSummary> objects = result.getObjectSummaries();
+		for(S3ObjectSummary obj : objects)
+		{
+			actContents.add(obj.getKey());
+		}
+		Assert.assertFalse(result.isTruncated(), " commprefixes : " + commprefixesResult.toString() + " contents : " + actContents.toString());
 		
 		List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(keyList, prefix, delimiter);
 		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expCommonPrefixes);
@@ -94,8 +91,8 @@ public class ListObjectsWithDelimiter18127 extends S3TestBase {
 		do{
 			result2 = s3Client.listObjectsV2(req2);
 			commprefixesResult2.addAll(result2.getCommonPrefixes());
-			List<S3ObjectSummary> objects = result2.getObjectSummaries();
-			for(S3ObjectSummary obj : objects)
+			List<S3ObjectSummary> objects2 = result2.getObjectSummaries();
+			for(S3ObjectSummary obj : objects2)
 			{
 				actContents2.add(obj.getKey());
 			}
