@@ -133,7 +133,7 @@ public class DelimiterUtils extends S3TestBase {
 		int eachSleepTime = 30000;
 		int maxSleepTime = 1800000;
 		int alreadySleepTime = 0;
-		int errCode = updateDelimiterAgain(bucketName, delimiter, accessKeyId);
+		int errCode = 0;
 		do {
 			errCode = updateDelimiterAgain(bucketName, delimiter, accessKeyId);
 			try {
