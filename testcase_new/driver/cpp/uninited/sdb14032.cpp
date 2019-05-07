@@ -196,7 +196,7 @@ TEST_F( sdb14032, opDb1 )
 
    // trace
    UINT32 traceBufSize = 256 ;
-   rc = db.traceStart( traceBufSize ) ;
+   rc = db.traceStart( traceBufSize, _sdbStaticObject ) ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "traceStart shouldn't be executed" ;
    rc = db.traceResume() ;
    EXPECT_EQ( SDB_NOT_CONNECTED, rc ) << "traceResume shouldn't be executed" ;
