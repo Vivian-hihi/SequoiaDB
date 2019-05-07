@@ -301,6 +301,8 @@ namespace engine
 
       void _nullCSUniqueIDCntDec() ;
 
+      void _registerHandler ( _IDmsEventHandler *pHandler) ;
+
    public:
       _SDB_DMSCB() ;
       virtual ~_SDB_DMSCB() ;

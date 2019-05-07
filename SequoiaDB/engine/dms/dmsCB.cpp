@@ -149,6 +149,13 @@ namespace engine
       {
          rc = _statSUMgr.init() ;
          PD_RC_CHECK( rc, PDERROR, "Failed to init stat cb, rc: %d", rc ) ;
+
+         // Register statistics SU manager
+         // which is not registered in loading phase
+         if ( _statSUMgr.initialized() )
+         {
+            _registerHandler( &_statSUMgr ) ;
+         }
       }
 
    done:
@@ -1810,6 +1817,9 @@ namespace engine
          dpsCB->writeData( info ) ;
       }
 
+      // statistics SU manager might not be initialized
+      // 1. during dmsCB initialization (will be registered later)
+      // 2. in CATALOG node
       if ( _statSUMgr.initialized() )
       {
          su->regEventHandler( &_statSUMgr ) ;
@@ -2726,6 +2736,25 @@ namespace engine
    {
       _nullCSUniqueIDCnt-- ;
    }
+
+   void _SDB_DMSCB::_registerHandler ( _IDmsEventHandler *pHandler)
+   {
+      ossScopedLock lock( &_mutex, SHARED ) ;
+
+      for ( CSCB_ITERATOR iter = _cscbVec.begin() ;
+            iter != _cscbVec.end();
+            ++ iter )
+      {
+         if ( NULL == (*iter) )
+         {
+            continue ;
+         }
+         _dmsStorageUnit * su = (*iter)->_su ;
+         SDB_ASSERT( su, "su is invalid" ) ;
+         su->regEventHandler( pHandler ) ;
+      }
+   }
+
 
    dmsTempSUMgr *_SDB_DMSCB::getTempSUMgr ()
    {
