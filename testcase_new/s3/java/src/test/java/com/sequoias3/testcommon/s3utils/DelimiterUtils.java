@@ -3,6 +3,7 @@ package com.sequoias3.testcommon.s3utils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import org.json.JSONObject;
 import org.json.XML;
@@ -156,5 +157,42 @@ public class DelimiterUtils extends S3TestBase {
 		amazonS3Exception.setErrorCode(subjsonBody.getString("Code"));
 		amazonS3Exception.setErrorMessage(subjsonBody.getString("Message"));
 		return amazonS3Exception;
+	}
+	
+	public static String[] getRandomKeyListWithDelimiter(String delimiter1, String delimiter2, int keyNum){
+		String[] keyNameList = new String[keyNum];
+		String str = "zxcvbnmlkjhgfdsaqwertyuiopQWERTYUIOPLKJHGFDSAZXCVBNM1234567890";
+		Random random = new Random();
+		int keyLength = 0;
+		for(int i = 0 ; i < keyNum; i++){
+			StringBuffer sb = new StringBuffer();
+			//设置key未添加delimiter时的长度为1-10
+			keyLength = random.nextInt(10) + 1;
+			//生成keyLength长度的随机字符串
+			for(int j = 0 ; j < keyLength; j++){
+				int number = random.nextInt(62);
+				sb.append(str.charAt(number));
+			}
+			
+			//在随机生成的字符串的任意位置插入delimiter1和delimiter2
+			if(delimiter1 != null){
+				insertDelimiter(sb, keyLength, delimiter1);
+			}
+			if(delimiter2 != null){
+				insertDelimiter(sb, keyLength, delimiter2);
+			}
+			keyNameList[i] = sb.toString();
+		}
+		return keyNameList;
+	}
+	
+	public static void insertDelimiter(StringBuffer sb, int keyLength, String delimiter){
+		Random random = new Random();
+		//随机插入delimiter次数：1-3次
+		int insertNum = random.nextInt(3) + 1;
+		for(int i = 0 ; i < insertNum; i++){
+			int offset = random.nextInt(keyLength+1);
+			sb.insert(offset, delimiter);
+		}
 	}
 }
