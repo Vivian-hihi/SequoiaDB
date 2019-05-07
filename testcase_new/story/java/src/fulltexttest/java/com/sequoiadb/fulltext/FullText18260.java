@@ -55,11 +55,7 @@ public class FullText18260 extends SdbTestBase {
         String cappedCLName = FullTextDBUtils.getCappedCLName(cl, fullIdxName);
         Assert.assertTrue(FullTextESUtils.isExistIndexInES(esClient, esIndexNames.get(0)));
         sdb.getCollectionSpace(csName).dropCollection(CLNAME);
-
         FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);
-        Assert.assertFalse(sdb.getCollectionSpace(csName).isCollectionExist(CLNAME));
-        Sequoiadb data = sdb.getReplicaGroup(groupName).getMaster().connect();
-        Assert.assertFalse(data.isCollectionSpaceExist(cappedCLName));
     }
 
     @AfterClass
