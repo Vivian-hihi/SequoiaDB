@@ -7258,7 +7258,7 @@ do                                                            \
       _errorBufSize = 0 ;
       _pResultBuf = NULL ;
       _resultBufSize = 0 ;
-      if ( SDB_OK != replyFlag && SDB_DMS_EOC != replyFlag)
+      if ( SDB_OK != replyFlag && SDB_DMS_EOC != replyFlag )
       {
          INT32 dataOff     = 0 ;
          INT32 dataSize    = 0 ;
@@ -7291,14 +7291,18 @@ do                                                            \
       {
          INT32 dataOff     = 0 ;
          INT32 dataSize    = 0 ;
+         MsgOpReply *pTmpReply = ( MsgOpReply* )( *ppBuffer ) ;
 
          dataOff = ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) ;
-         dataSize = ( ( MsgHeader* )( *ppBuffer ) )->messageLength - dataOff ;
+         dataSize = pTmpReply->header.messageLength - dataOff ;
          /// save result info
          if ( dataSize > 0 )
          {
             _pResultBuf = ( *ppBuffer ) + dataOff ;
             _resultBufSize = dataSize ;
+            /// should truncate the message size
+            pTmpReply->header.messageLength = sizeof(MsgOpReply) ;
+            pTmpReply->numReturned = 0 ;
          }
       }
 
