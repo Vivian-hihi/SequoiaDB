@@ -121,7 +121,7 @@ namespace engine
                  "Failed to allocate memory for indexCB" ) ;
 
       // sanity check, make sure we are on valid index
-      PD_CHECK ( _indexCB->isInitialized(), SDB_RTN_INDEX_NOTEXIST, error,
+      PD_CHECK ( _indexCB->isInitialized(), SDB_DMS_INVALID_INDEXCB, error,
                  PDERROR, "Index does not exist" ) ;
 
       PD_CHECK ( _indexCB->getFlag() == IXM_INDEX_FLAG_NORMAL,
@@ -547,7 +547,7 @@ namespace engine
       }
       if ( !_indexCB->isInitialized() )
       {
-         rc = SDB_RTN_INDEX_NOTEXIST ;
+         rc = SDB_DMS_INIT_INDEX ;
          goto done ;
       }
 
@@ -568,7 +568,7 @@ namespace engine
       if ( !_indexCB->isStillValid ( _indexOID ) ||
            _indexLID != _indexCB->getLogicalID() )
       {
-         rc = SDB_RTN_INDEX_NOTEXIST ;
+         rc = SDB_DMS_INVALID_INDEXCB ;
          goto done ;
       }
 

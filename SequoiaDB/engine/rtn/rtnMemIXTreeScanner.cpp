@@ -593,7 +593,7 @@ namespace engine
       {
          _eof = TRUE ;
          _available = FALSE ;
-         rc = SDB_RTN_INDEX_NOTEXIST ;
+         rc = SDB_DMS_INVALID_INDEXCB ;
          goto error ;
       }
 

@@ -1253,7 +1253,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Memory index tree(%s) is not exist",
                     gid.toString().c_str(), rc ) ;
-            rc = SDB_RTN_INDEX_NOTEXIST ;
+            rc = SDB_DMS_INVALID_INDEXCB ;
             goto error ;
          }
 #ifdef _DEBUG
