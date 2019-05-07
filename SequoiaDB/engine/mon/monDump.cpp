@@ -944,9 +944,9 @@ namespace engine
             ob.append ( IXM_DROPDUP_FIELD,
                         indexObj.getBoolField(IXM_DROPDUP_FIELD) ) ;
             ob.append ( IXM_ENFORCED_FIELD,
-                        indexObj[IXM_ENFORCED_FIELD].trueValue() ) ;
+                        indexObj.getBoolField(IXM_ENFORCED_FIELD) ) ;
             ob.append ( IXM_NOTNULL_FIELD,
-                        indexObj[IXM_NOTNULL_FIELD].trueValue() ) ;
+                        indexObj.getBoolField(IXM_NOTNULL_FIELD) ) ;
             BSONObj range = indexObj.getObjectField( IXM_2DRANGE_FIELD ) ;
             if ( !range.isEmpty() )
             {

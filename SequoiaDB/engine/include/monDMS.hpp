@@ -89,7 +89,7 @@ namespace engine
 
       OSS_INLINE BOOLEAN isUnique () const
       {
-         return _indexDef[IXM_UNIQUE_FIELD].trueValue() ;
+         return _indexDef.getBoolField( IXM_UNIQUE_FIELD ) ;
       }
 
       OSS_INLINE INT32 getIndexType( UINT16 &type ) const
