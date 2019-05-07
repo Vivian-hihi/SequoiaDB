@@ -1605,7 +1605,7 @@ namespace engine
       return ;
    }
 
-   UINT32 _mthMatchOpNode::_evalFuncCPUCost ()
+   UINT32 _mthMatchOpNode::_evalFuncCPUCost () const
    {
       if ( _funcList.empty() )
       {
@@ -1613,7 +1613,7 @@ namespace engine
       }
 
       UINT32 cpuCost = 0 ;
-      MTH_FUNC_LIST::iterator iter = _funcList.begin() ;
+      MTH_FUNC_LIST::const_iterator iter = _funcList.begin() ;
       while ( iter != _funcList.end() )
       {
          _mthMatchFunc *func = *iter ;
@@ -1656,7 +1656,7 @@ namespace engine
                                           UINT32 &cpuCost )
    {
 
-      if ( _addedToPred )
+      if ( isAddedToPred() )
       {
          _evalEstimation( NULL, selectivity, cpuCost ) ;
          // Already in the predicates, no need to be calculated
@@ -1674,7 +1674,7 @@ namespace engine
    {
       // Simply estimate
       selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST ;
+      cpuCost = _evalCPUCost() ;
    }
 
    INT32 _mthMatchOpNode::calcPredicate( rtnPredicateSet &predicateSet,
@@ -1751,12 +1751,10 @@ namespace engine
 
       if ( SDB_OK == _addPredicate ( predicateSet,
                                      rebuildName ? buf : fieldName,
-                                     paramList ) )
+                                     paramList ) &&
+           isTotalConverted() )
       {
-         if ( isTotalConverted() )
-         {
-            _addedToPred = TRUE ;
-         }
+         _addedToPred = TRUE ;
       }
 
    done:
@@ -2309,7 +2307,7 @@ namespace engine
 
    void _mthMatchOpNode::setDoneByPred ( BOOLEAN doneByPred )
    {
-      if ( doneByPred && _addedToPred )
+      if ( doneByPred && isAddedToPred() )
       {
          _doneByPred = TRUE ;
       }
@@ -2520,16 +2518,17 @@ namespace engine
       INT8 paramIndex = _paramIndex ;
       BOOLEAN addToParam = mthEnabledParameterized() ;
 
-      if ( NULL != paramList && !paramList->isEmpty() && _paramIndex > 0 )
+      if ( NULL != paramList && !paramList->isEmpty() && _paramIndex >= 0 )
       {
          toMatch = paramList->getParam( _paramIndex ) ;
          paramIndex = -1 ;
          addToParam = FALSE ;
       }
 
-      return predicateSet.addPredicate(
+      return predicateSet.addParamPredicate(
                   fieldName, toMatch, getBSONOpType(), _isUnderLogicNot,
-                  mthEnabledMixCmp(), addToParam, paramIndex, -1 ) ;
+                  mthEnabledMixCmp(), addToParam, paramIndex, -1,
+                  isTotalConverted() ? _evalCPUCost() : 0 ) ;
    }
 
    //*******************_mthMatchFuzzyOpNode  ******************
@@ -2720,12 +2719,12 @@ namespace engine
       INT32 opType = getBSONOpType() ;
       BOOLEAN addToParam = mthEnabledParameterized() ;
 
-      if ( NULL != paramList && !paramList->isEmpty() && _paramIndex > 0 )
+      if ( NULL != paramList && !paramList->isEmpty() && _paramIndex >= 0 )
       {
          toMatch = paramList->getParam( _paramIndex ) ;
          paramIndex = -1 ;
          fuzzyOpType = -1 ;
-         if ( _fuzzyOpType > 0 )
+         if ( _fuzzyOpType >= 0 )
          {
             if ( paramList->getParam( _fuzzyOpType ).booleanSafe() )
             {
@@ -2739,9 +2738,10 @@ namespace engine
          addToParam = FALSE ;
       }
 
-      return predicateSet.addPredicate(
+      return predicateSet.addParamPredicate(
                   fieldName, toMatch, opType, _isUnderLogicNot,
-                  mthEnabledMixCmp(), addToParam, paramIndex, fuzzyOpType ) ;
+                  mthEnabledMixCmp(), addToParam, paramIndex, fuzzyOpType,
+                  isTotalConverted() ? _evalCPUCost() : 0 ) ;
    }
 
    //*******************_mthMatchOpNodeET***********************
@@ -2843,9 +2843,9 @@ namespace engine
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
-      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+      cpuCost = _evalCPUCost() ;
 
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
       if ( _funcList.empty() && pCollectionStat )
       {
          selectivity = pCollectionStat->evalETOpterator( _fieldName.getFieldName() ,
@@ -2941,15 +2941,14 @@ namespace engine
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
-      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+      cpuCost = _evalCPUCost() ;
 
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
       if ( _funcList.empty() && pCollectionStat )
       {
          selectivity = pCollectionStat->evalETOpterator( _fieldName.getFieldName() ,
                                                          _toMatch ) ;
       }
-
       selectivity = 1.0 - selectivity ;
    }
 
@@ -3067,9 +3066,9 @@ namespace engine
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
-      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+      cpuCost = _evalCPUCost() ;
 
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
       if ( _funcList.empty() && pCollectionStat )
       {
          selectivity = pCollectionStat->evalLTOpterator(
@@ -3192,9 +3191,9 @@ namespace engine
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
-      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+      cpuCost = _evalCPUCost() ;
 
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
       if ( _funcList.empty() && pCollectionStat )
       {
          selectivity = pCollectionStat->evalGTOpterator(
@@ -3433,20 +3432,22 @@ namespace engine
       goto done ;
    }
 
+   UINT32 _mthMatchOpNodeIN::_evalCPUCost () const
+   {
+      if ( _valueSet.empty() && _regexVector.empty() )
+      {
+         return OPT_MTH_FIELD_EXTRACT_CPU_COST + OPT_MTH_OPTR_BASE_CPU_COST ;
+      }
+      return OPT_MTH_FIELD_EXTRACT_CPU_COST + OPT_MTH_OPTR_BASE_CPU_COST *
+             ( _valueSet.size() + _regexVector.size() ) ;
+   }
+
    void _mthMatchOpNodeIN::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
       selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-      if ( _valueSet.empty() && _regexVector.empty() )
-      {
-         cpuCost = OPT_MTH_OPTR_BASE_CPU_COST ;
-      }
-      else
-      {
-         cpuCost = OPT_MTH_OPTR_BASE_CPU_COST *
-                   ( _valueSet.size() + _regexVector.size() ) ;
-      }
+      cpuCost = _evalCPUCost() ;
    }
 
    //**************_mthMatchOpNodeNIN*****************************
@@ -4429,16 +4430,18 @@ namespace engine
       }
 
       selectivity = OPT_ROUND_SELECTIVITY( tempSelectivity ) ;
-      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + tempCPUCost ;
+      cpuCost = OPT_MTH_FIELD_EXTRACT_CPU_COST + OPT_MTH_OPTR_BASE_CPU_COST +
+                tempCPUCost ;
    }
 
    //**************_mthMatchOpNodeRegex*****************************
    _mthMatchOpNodeRegex::_mthMatchOpNodeRegex( _mthNodeAllocator *allocator,
                                                const mthNodeConfig *config )
-                        :_mthMatchOpNode( allocator, config )
+   : _mthMatchOpNode( allocator, config ),
+     _regex( NULL ),
+     _options( NULL ),
+     _isSimpleMatch( FALSE )
    {
-      _regex   = NULL ;
-      _options = NULL ;
    }
 
    _mthMatchOpNodeRegex::~_mthMatchOpNodeRegex()
@@ -4681,7 +4684,7 @@ namespace engine
                                                 UINT32 &cpuCost )
    {
       selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-      cpuCost = OPT_MTH_REGEX_CPU_COST ;
+      cpuCost = _evalCPUCost() ;
    }
 }
 

@@ -522,12 +522,17 @@ namespace engine
             return "" ;
          }
 
+         OSS_INLINE virtual UINT32 getMatchedFields () const
+         {
+            return 0 ;
+         }
+
          virtual optScanType getScanType () const = 0 ;
 
       protected :
-         void _preEvaluate ( const rtnQueryOptions &queryOptions,
-                             optAccessPlanHelper &planHelper,
-                             optCollectionStat *collectionStat ) ;
+         void _preEvaluate ( const rtnQueryOptions & queryOptions,
+                             optAccessPlanHelper & planHelper,
+                             optCollectionStat * collectionStat ) ;
 
          void _evalOutRecordSize () ;
 
@@ -794,6 +799,11 @@ namespace engine
          OSS_INLINE virtual double getPredSelectivity () const
          {
             return _predSelectivity ;
+         }
+
+         OSS_INLINE virtual UINT32 getMatchedFields () const
+         {
+            return _matchedFields ;
          }
 
       public :

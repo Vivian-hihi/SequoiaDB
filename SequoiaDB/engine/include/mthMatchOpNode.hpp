@@ -520,6 +520,11 @@ namespace engine
            _paramIndex = paramIndex ;
         }
 
+        OSS_INLINE BOOLEAN isAddedToPred () const
+        {
+           return _addedToPred ;
+        }
+
         virtual void setDoneByPred ( BOOLEAN doneByPred ) ;
 
       public:
@@ -544,7 +549,18 @@ namespace engine
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
 
-         UINT32 _evalFuncCPUCost () ;
+         OSS_INLINE virtual UINT32 _evalCPUCost () const
+         {
+            // CPU cost for a matcher
+            // 1. extract value from BSON
+            // 2. evaluate value against the operator
+            // 3. evaluate value against streaming functions
+            return OPT_MTH_FIELD_EXTRACT_CPU_COST +
+                   OPT_MTH_OPTR_BASE_CPU_COST +
+                   _evalFuncCPUCost();
+         }
+
+         UINT32 _evalFuncCPUCost () const ;
 
          OSS_INLINE virtual BOOLEAN _flagExpandRegex ()
          {
@@ -617,10 +633,12 @@ namespace engine
          INT32 _offset ;
          INT32 _len ;
 
-         INT8 _paramIndex ;
-
-         BOOLEAN _addedToPred ;
-         BOOLEAN _doneByPred ;
+         // Match operator already added to index predicates
+         BOOLEAN  _addedToPred ;
+         // Match operator already done by index predicates
+         BOOLEAN  _doneByPred ;
+         // Index to parameters
+         INT8     _paramIndex ;
    } ;
 
    // Type of fuzzy operators
@@ -937,6 +955,7 @@ namespace engine
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
+         virtual UINT32 _evalCPUCost () const ;
 
       protected:
          BOOLEAN _isMatch( const BSONElement &ele ) ;
@@ -1178,6 +1197,12 @@ namespace engine
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
 
+         OSS_INLINE virtual UINT32 _evalCPUCost () const
+         {
+            // Too trivial to go through sub-tree
+            return OPT_MTH_FIELD_EXTRACT_CPU_COST + OPT_MTH_OPTR_BASE_CPU_COST ;
+         }
+
       protected:
          _mthMatchTree *_subTree ;
    } ;
@@ -1217,6 +1242,11 @@ namespace engine
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
+
+         OSS_INLINE virtual UINT32 _evalCPUCost () const
+         {
+            return OPT_MTH_REGEX_CPU_COST ;
+         }
 
       private:
          pcrecpp::RE_Options _flags2options( const char* options ) ;

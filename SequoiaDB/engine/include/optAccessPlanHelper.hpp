@@ -152,9 +152,9 @@ namespace engine
             scanSelectivity = _scanSelectivity ;
          }
 
-         OSS_INLINE BOOLEAN isEstimated ()
+         OSS_INLINE BOOLEAN isPredEstimated ()
          {
-            return _isEstimated ;
+            return _isPredEstimated ;
          }
 
          INT32 normalizeQuery ( const BSONObj &query,
@@ -208,7 +208,7 @@ namespace engine
 
          /// Cost or selectivity estimations
          // Flag to indicate whether the cost and selectivity are estimated
-         BOOLEAN           _isEstimated ;
+         BOOLEAN           _isPredEstimated ;
          // Selectivity of the matcher
          double            _estSelectivity ;
          // The final selectivity of the predicates

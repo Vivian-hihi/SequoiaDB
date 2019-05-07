@@ -219,6 +219,12 @@ namespace engine
                                  OPT_MTH_DEFAULT_SELECTIVITY ) ;
          }
 
+         OSS_INLINE UINT32 getMatchedFields () const
+         {
+            return ( NULL != _pScanNode ) ? _pScanNode->getMatchedFields() :
+                                            0 ;
+         }
+
          OSS_INLINE const CHAR *getIndexName () const
          {
             return ( NULL != _pScanNode ) ? _pScanNode->getIndexName() : "" ;
@@ -255,6 +261,24 @@ namespace engine
          INT32 toBSONSearchPath ( BSONArrayBuilder & builder,
                                   BOOLEAN isUsed,
                                   BOOLEAN needEvaluate ) const ;
+
+         OSS_INLINE BOOLEAN isBetterPath ( const _optScanPath & otherPlan ) const
+         {
+            // If current plan is a candidate plan, and matched one of
+            // below case, make current plan a better plan
+            // 1. other plan is empty
+            // 2. other plan has more cost
+            // 3. other plan has the same cost but less matched fields
+            // 4. other plan has the same cost and matched fields, but is sort
+            //    required
+            return ( isCandidate() &&
+                     ( otherPlan.isEmpty() ||
+                       getEstTotalCost() < otherPlan.getEstTotalCost() ||
+                       ( getEstTotalCost() == otherPlan.getEstTotalCost() &&
+                         ( getMatchedFields() > otherPlan.getMatchedFields() ||
+                           ( getMatchedFields() == otherPlan.getMatchedFields() &&
+                             !isSortRequired() && otherPlan.isSortRequired() ) ) ) ) ) ;
+         }
 
       protected :
          INT32 _setScanNode ( optPlanNode * pNode ) ;

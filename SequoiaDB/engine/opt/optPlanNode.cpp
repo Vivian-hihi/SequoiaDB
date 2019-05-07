@@ -844,9 +844,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANNODE__PREEVAL, "_optScanNode::_preEvaluate" )
-   void _optScanNode::_preEvaluate ( const rtnQueryOptions &queryOptions,
-                                     optAccessPlanHelper &planHelper,
-                                     optCollectionStat *collectionStat )
+   void _optScanNode::_preEvaluate ( const rtnQueryOptions & queryOptions,
+                                     optAccessPlanHelper & planHelper,
+                                     optCollectionStat * collectionStat )
    {
       PD_TRACE_ENTRY( SDB_OPTSCANNODE__PREEVAL ) ;
 
@@ -862,7 +862,9 @@ namespace engine
       _pageSize = collectionStat->getPageSize() ;
       _inputNumFields = collectionStat->getAvgNumFields() ;
 
-      planHelper.getEstimation( collectionStat, _mthSelectivity, _mthCPUCost ) ;
+      if ( _needMatch ) {
+         planHelper.getEstimation( collectionStat, _mthSelectivity, _mthCPUCost ) ;
+      }
 
       if ( collectionStat->isValid() )
       {
@@ -1119,6 +1121,7 @@ namespace engine
          _needMatch = FALSE ;
       }
 
+      // TBSCAN is always candidate plan
       _isCandidate = TRUE ;
 
       PD_TRACE_EXIT( SDB_OPTTBSCAN_PREEVAL ) ;
@@ -1545,6 +1548,7 @@ namespace engine
       SDB_ASSERT( indexStat, "indexStat is invalid" ) ;
 
       _preEvaluate( queryOptions, planHelper, collectionStat ) ;
+
       _indexPages = indexStat->getIndexPages() ;
       _indexLevels = indexStat->getIndexLevels() ;
 
@@ -1793,6 +1797,7 @@ namespace engine
 
       double predSelectivity = 1.0 ;
       double scanSelectivity = 1.0 ;
+      UINT32 savedCPUCost = 0 ;
 
       BOOLEAN isEqual = TRUE ;
       const CHAR *pFirstField = NULL ;
@@ -1804,7 +1809,7 @@ namespace engine
       mthMatchTree *matcher = planHelper.getMatchTree() ;
       RTN_PREDICATE_MAP &predicates = planHelper.getPredicates() ;
 
-      if ( !planHelper.isEstimated() )
+      if ( !planHelper.isPredEstimated() )
       {
          // The matcher has not been estimated, which could not be used
          // to evaluate predicates
@@ -1901,6 +1906,8 @@ namespace engine
                stopIncluded &= curPredicate.maxInclusive() ;
             }
 
+            savedCPUCost += curPredicate.getSavedCPUCost() ;
+
             matchedFields ++ ;
          }
 
@@ -1960,7 +1967,11 @@ namespace engine
 
       _predSelectivity = OPT_ROUND_SELECTIVITY( predSelectivity ) ;
       _scanSelectivity = OPT_ROUND_SELECTIVITY( scanSelectivity ) ;
-      _predCPUCost = OPT_MTH_OPTR_BASE_CPU_COST * keyNum ;
+      _predCPUCost = OPT_OPTR_BASE_CPU_COST * keyNum ;
+
+      // Using predicates will save CPU cost for matcher
+      _mthCPUCost =
+            _mthCPUCost > savedCPUCost ? _mthCPUCost - savedCPUCost : 0 ;
 
       PD_TRACE_EXIT( SDB_OPTIXSCAN_EVALPREDEST ) ;
    }

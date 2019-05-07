@@ -478,7 +478,6 @@ namespace engine
 
       optCollectionStat collectionStat( su->getPageSize(), mbContext, statCache ) ;
 
-      UINT64 bestEstimateCost = OSS_UINT64_MAX ;
       optScanPath bestPath( &_planAllocator ) ;
 
       BOOLEAN sortedIdxRequired = _key.isSortedIdxRequired() ;
@@ -534,10 +533,8 @@ namespace engine
                      _addSearchPath( ixScanPath, planHelper ) ;
                   }
 
-                  if ( ixScanPath.isCandidate() &&
-                       ixScanPath.getEstTotalCost() < bestEstimateCost )
+                  if ( ixScanPath.isBetterPath( bestPath ) )
                   {
-                     bestEstimateCost = ixScanPath.getEstTotalCost() ;
                      bestPath.setPath( ixScanPath, TRUE ) ;
                   }
                }
@@ -585,10 +582,8 @@ namespace engine
                   _addSearchPath( ixScanPath, planHelper ) ;
                }
 
-               if ( ixScanPath.isCandidate() &&
-                    ixScanPath.getEstTotalCost() < bestEstimateCost )
+               if ( ixScanPath.isBetterPath( bestPath ) )
                {
-                  bestEstimateCost = ixScanPath.getEstTotalCost() ;
                   bestPath.setPath( ixScanPath, TRUE ) ;
                }
 
@@ -619,9 +614,8 @@ namespace engine
                   _addSearchPath( tbScanPath, planHelper ) ;
                }
 
-               if ( tbScanPath.getEstTotalCost() < bestEstimateCost )
+               if ( tbScanPath.isBetterPath( bestPath ) )
                {
-                  bestEstimateCost = tbScanPath.getEstTotalCost() ;
                   bestPath.setPath( tbScanPath, TRUE ) ;
                }
 
@@ -679,7 +673,6 @@ namespace engine
       UINT64 sortBufferSize = planHelper.getSortBufferSize() * 1024 * 1024 ;
       INT32 estCacheSize = planHelper.getOptCostThreshold() ;
 
-      UINT64 bestEstimateCost = OSS_UINT64_MAX ;
       dmsExtentID bestIdxExtID = DMS_INVALID_EXTENT ;
 
       optScanPath tbScanPath( &_planAllocator ), bestPath( &_planAllocator ) ;
@@ -760,10 +753,8 @@ namespace engine
                   _addSearchPath( ixScanPath, planHelper ) ;
                }
 
-               if ( ixScanPath.isCandidate() &&
-                    ixScanPath.getEstTotalCost() < bestEstimateCost )
+               if ( ixScanPath.isBetterPath(bestPath) )
                {
-                  bestEstimateCost = ixScanPath.getEstTotalCost() ;
                   bestPath.setPath( ixScanPath, TRUE ) ;
                   candidateCount ++ ;
                }
@@ -817,15 +808,13 @@ namespace engine
                _addSearchPath( ixScanPath, planHelper ) ;
             }
 
-            if ( ixScanPath.isCandidate() &&
-                 ixScanPath.getEstTotalCost() < bestEstimateCost )
+            if ( ixScanPath.isBetterPath( bestPath ) )
             {
-               bestEstimateCost = ixScanPath.getEstTotalCost() ;
                bestPath.setPath( ixScanPath, TRUE ) ;
                candidateCount ++ ;
 
-               // Needn't to evaluate all indexes in below cases:
-               // 1. got enough candidate plans
+               // Needn't to evaluate all indexes if we got enough
+               // candidate plans
                if ( candidateCount >= OPT_MAX_CANDIDATE_COUNT )
                {
                   break ;
@@ -860,9 +849,8 @@ namespace engine
       if ( ( ( OPT_PLAN_IDX_PREFERRED == priority &&
                DMS_INVALID_EXTENT == bestPath.getIndexExtID() ) ||
              OPT_PLAN_DEFAULT_PRIORITY == priority ) &&
-           tbScanPath.getEstTotalCost() < bestEstimateCost )
+           tbScanPath.isBetterPath( bestPath ) )
       {
-         bestEstimateCost = tbScanPath.getEstTotalCost() ;
          bestPath.setPath( tbScanPath, TRUE ) ;
       }
 

@@ -74,7 +74,7 @@ namespace engine
      _mthMatchConfigHolder( mthConfig ),
      _cacheLevel( cacheLevel ),
      _normalizer( getMatchConfigPtr() ),
-     _isEstimated( FALSE ),
+     _isPredEstimated( FALSE ),
      _estSelectivity( OPT_MTH_DEFAULT_SELECTIVITY ),
      _predSelectivity( OPT_MTH_DEFAULT_SELECTIVITY ),
      _scanSelectivity( OPT_MTH_DEFAULT_SELECTIVITY ),
@@ -108,7 +108,7 @@ namespace engine
       _mthMatchTreeHolder::setMatchTree( matchTree ) ;
       _predicateSet.clear() ;
 
-      _isEstimated         = FALSE ;
+      _isPredEstimated     = FALSE ;
       _estSelectivity      = OPT_MTH_DEFAULT_SELECTIVITY ;
       _predSelectivity     = OPT_MTH_DEFAULT_SELECTIVITY ;
       _scanSelectivity     = OPT_MTH_DEFAULT_SELECTIVITY ;
@@ -124,7 +124,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__OPTAPHELP_GETEST ) ;
 
-      if ( !_isEstimated )
+      if ( !_isPredEstimated )
       {
          _evalEstimation( pCollectionStat ) ;
       }
@@ -160,7 +160,7 @@ namespace engine
       _predSelectivity = OPT_ROUND_SELECTIVITY( predSelectivity ) ;
       _scanSelectivity = OPT_ROUND_SELECTIVITY( scanSelectivity ) ;
       _estCPUCost = tmpCPUCost ;
-      _isEstimated = TRUE ;
+      _isPredEstimated = TRUE ;
 
       PD_TRACE_EXIT( SDB__OPTAPHELP__EVALEST ) ;
    }

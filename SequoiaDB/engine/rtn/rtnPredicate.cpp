@@ -1129,6 +1129,10 @@ namespace engine
          }
       }
       finishOperation ( newKeySet, right ) ;
+
+      // Accumulate saved cpu costs
+      _savedCPUCost += right._savedCPUCost ;
+
       PD_TRACE_EXIT ( SDB_RTNPRED_OPEQU ) ;
       return *this ;
    }
@@ -1138,6 +1142,7 @@ namespace engine
       finishOperation(right._startStopKeys, right) ;
       _paramIndex = right._paramIndex ;
       _fuzzyIndex = right._fuzzyIndex ;
+      _savedCPUCost = right._savedCPUCost ;
       _isInitialized = right._isInitialized ;
       return *this ;
    }
@@ -1334,7 +1339,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_RTNPRED, "rtnPredicate::rtnPredicate" )
    rtnPredicate::rtnPredicate ( const BSONElement &e, INT32 opType,
                                 BOOLEAN isNot, BOOLEAN mixCmp,
-                                INT8 paramIndex, INT8 fuzzyIndex )
+                                INT8 paramIndex, INT8 fuzzyIndex,
+                                UINT32 savedCPUCost )
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_RTNPRED ) ;
 
@@ -1351,6 +1357,7 @@ namespace engine
 
       _paramIndex = paramIndex ;
       _fuzzyIndex = fuzzyIndex ;
+      _savedCPUCost = savedCPUCost ;
 
       if ( e.eoo() )
       {
@@ -2113,24 +2120,37 @@ namespace engine
       return *pRet ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_ADDPRED, "_rtnPredicateSet::addPredicate" )
-   INT32 _rtnPredicateSet::addPredicate ( const CHAR *fieldName,
-                                          const BSONElement &e,
-                                          INT32 opType, BOOLEAN isNot,
-                                          BOOLEAN mixCmp, BOOLEAN addToParam,
-                                          INT8 paramIndex, INT8 fuzzyIndex )
+   INT32 _rtnPredicateSet::addPredicate ( const CHAR * fieldName,
+                                          const BSONElement & e,
+                                          INT32 opType,
+                                          BOOLEAN isNot,
+                                          BOOLEAN mixCmp )
+   {
+      return addParamPredicate( fieldName, e, opType, isNot, mixCmp, FALSE,
+                                -1, -1, 0 ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_ADDPARAMPRED, "_rtnPredicateSet::addParamPredicate" )
+   INT32 _rtnPredicateSet::addParamPredicate ( const CHAR * fieldName,
+                                               const BSONElement & e,
+                                               INT32 opType,
+                                               BOOLEAN isNot,
+                                               BOOLEAN mixCmp,
+                                               BOOLEAN addToParam,
+                                               INT8 paramIndex,
+                                               INT8 fuzzyIndex,
+                                               UINT32 savedCPUCost )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__RTNPREDSET_ADDPRED ) ;
+
+      PD_TRACE_ENTRY( SDB__RTNPREDSET_ADDPARAMPRED ) ;
+
       std::pair< RTN_PREDICATE_MAP::iterator, BOOLEAN > ret ;
-      rtnPredicate pred ( e, opType, isNot, mixCmp, paramIndex, fuzzyIndex ) ;
-      if ( !pred.isInit() )
-      {
-         PD_LOG ( PDERROR, "Failed to add predicate %s: %s",
-                  fieldName, e.toString().c_str()) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
+      rtnPredicate pred ( e, opType, isNot, mixCmp, paramIndex, fuzzyIndex,
+                          savedCPUCost ) ;
+      PD_CHECK( pred.isInit(), SDB_INVALIDARG, error, PDERROR,
+                "Failed to init predicate %s: %s", fieldName,
+                e.toString().c_str()) ;
 
       ret = _predicates.insert( make_pair( fieldName, pred ) ) ;
       if ( !(ret.second) )
@@ -2154,8 +2174,9 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB__RTNPREDSET_ADDPRED, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNPREDSET_ADDPARAMPRED, rc ) ;
       return rc ;
+
    error :
       goto done ;
    }
@@ -3038,4 +3059,5 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__RTNPREDLISTITE_ADVANCE, rc ) ;
       return rc ;
    }
+
 }

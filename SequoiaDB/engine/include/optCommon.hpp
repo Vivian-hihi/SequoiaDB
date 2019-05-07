@@ -111,6 +111,9 @@ namespace engine
    // Base CPU cost to process a operator in matcher
    #define OPT_MTH_OPTR_BASE_CPU_COST        ( OPT_OPTR_BASE_CPU_COST )
 
+   // CPU cost to extract a field from BSON
+   #define OPT_MTH_FIELD_EXTRACT_CPU_COST    ( OPT_OPTR_BASE_CPU_COST * 2 )
+
    // CPU cost to process $regex in matcher
    #define OPT_MTH_REGEX_CPU_COST            ( OPT_MTH_OPTR_BASE_CPU_COST * 10 )
 

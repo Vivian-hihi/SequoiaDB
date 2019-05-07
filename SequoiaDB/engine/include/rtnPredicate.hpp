@@ -286,22 +286,26 @@ namespace engine
    class rtnPredicate : public SDBObject
    {
    private:
-      BOOLEAN _isInitialized ;
-      vector<BSONObj> _objData ;
-
       // _equalFlag == 1 means is equal operation
       INT8 _equalFlag ;
 
       // _allEqualFlag == 1 means all start-stop key-pairs are equal operation
       INT8 _allEqualFlag ;
 
+      INT8 _paramIndex ;
+      INT8 _fuzzyIndex ;
+
+      UINT32 _savedCPUCost ;
+
+      // Indicate whether predicate is initialized
+      BOOLEAN _isInitialized ;
+
       // Evaluate for optimizer
       BOOLEAN _evaluated ;
       BOOLEAN _allRange ;
       double _selectivity ;
 
-      INT8 _paramIndex ;
-      INT8 _fuzzyIndex ;
+      vector<BSONObj> _objData ;
 
       // this is used when creating new bsonobject in the class
       BSONObj addObj ( const BSONObj &o )
@@ -320,7 +324,8 @@ namespace engine
       rtnPredicate ( const BSONElement &e, INT32 opType, BOOLEAN isNot,
                      BOOLEAN mixCmp,
                      INT8 paramIndex = -1,
-                     INT8 fuzzyOptr = -1 ) ;
+                     INT8 fuzzyOptr = -1,
+                     UINT32 savedCPUCost = 0 ) ;
       ~rtnPredicate ()
       {
          _startStopKeys.clear() ;
@@ -447,6 +452,11 @@ namespace engine
          _selectivity = selectivity ;
       }
 
+      OSS_INLINE UINT32 getSavedCPUCost () const
+      {
+         return _savedCPUCost ;
+      }
+
       BOOLEAN bindParameters ( rtnParamList &parameters,
                                BOOLEAN markDone = TRUE ) ;
 
@@ -487,15 +497,20 @@ namespace engine
       RTN_PREDICATE_MAP &predicates() { return _predicates ; }
 
       INT32 addPredicate ( const CHAR *fieldName, const BSONElement &e,
-                           INT32 opType, BOOLEAN isNot, BOOLEAN mixCmp,
-                           BOOLEAN addToParam, INT8 paramIndex,
-                           INT8 fuzzyIndex ) ;
+                           INT32 opType, BOOLEAN isNot, BOOLEAN mixCmp ) ;
+      INT32 addParamPredicate ( const CHAR *fieldName, const BSONElement &e,
+                                INT32 opType, BOOLEAN isNot, BOOLEAN mixCmp,
+                                BOOLEAN addToParam, INT8 paramIndex,
+                                INT8 fuzzyIndex, UINT32 savedCPUCost ) ;
+
       UINT32 getSize () const { return _predicates.size() ; }
+
       void clear()
       {
          _predicates.clear() ;
          _paramPredicates.clear() ;
       }
+
       string toString() const ;
 
       BSONObj toBson() const ;
@@ -517,7 +532,7 @@ namespace engine
    // each index key on disk will be sent to matchesKey function to match
    class _rtnPredicateList : public SDBObject
    {
-   public :
+      public :
          _rtnPredicateList () ;
 
          virtual ~_rtnPredicateList () ;
@@ -635,6 +650,7 @@ namespace engine
       INT32 advancePastZeroed ( INT32 i ) ;
    } ;
    typedef class _rtnPredicateListIterator rtnPredicateListIterator ;
+
 }
 
 #endif

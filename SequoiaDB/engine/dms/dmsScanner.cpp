@@ -1051,13 +1051,11 @@ namespace engine
 
             rc = predicateSet.addPredicate( DMS_ID_KEY_NAME,
                                             boStartKey.firstElement(),
-                                            BSONObj::GTE, FALSE, FALSE, FALSE,
-                                            -1, -1 ) ;
+                                            BSONObj::GTE, FALSE, FALSE ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to add predicate, rc: %d", rc ) ;
             rc = predicateSet.addPredicate( DMS_ID_KEY_NAME,
                                             boStopKey.firstElement(),
-                                            BSONObj::LTE, FALSE, FALSE, FALSE,
-                                            -1, -1 ) ;
+                                            BSONObj::LTE, FALSE, FALSE ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to add predicate, rc: %d", rc ) ;
 
             predicate = predicateSet.predicate( DMS_ID_KEY_NAME ) ;
