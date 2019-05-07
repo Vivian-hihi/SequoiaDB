@@ -1,0 +1,94 @@
+package com.sequoias3.delimiter;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.DelimiterUtils;
+import com.sequoias3.testcommon.s3utils.ObjectUtils;
+
+/**
+ * test content:  带prefix、start-after、delimiter匹配查询对象元数据列表（多次查询） 
+ * testlink-case: seqDB-18126
+ * @author wangkexin
+ * @Date 2019.04.16
+ * @version 1.00
+ */
+
+public class ListObjectsWithDelimiter18126 extends S3TestBase {
+	private String bucketName = "bucket18126";
+	private String keyName = "%dir%dir";
+	private String prefix = "%dir%";
+	private String delimiter = "%";
+	private String startAfter = "%dir%dir2%";
+	private List<String> expresultList = new ArrayList<String>();
+	private int objectTotalNum = 3000;
+	private AmazonS3 s3Client = null;
+	private boolean runSuccess = false;
+
+	@BeforeClass
+	private void setUp() throws Exception {
+		s3Client = CommLib.buildS3Client();
+		//create bucket and set bucket version status
+		s3Client.createBucket(new CreateBucketRequest(bucketName));
+		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+		
+		//put multiple objects
+		for(int i = 0 ; i < objectTotalNum ; i++){
+			String currentKeyName = keyName+i+"%18126";
+			s3Client.putObject(bucketName, currentKeyName, "object_file18126");
+			String commprefix = currentKeyName.substring(0, currentKeyName.lastIndexOf(delimiter)+1);
+			expresultList.add(commprefix);
+		}
+		Collections.sort(expresultList);
+	}
+
+	@Test
+	public void testGetObjectList() throws Exception {
+		//将分隔符设置为% （默认为'/'）
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
+		
+		List<String> commprefixesResult = new ArrayList<>();
+		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName)
+						.withPrefix(prefix).withDelimiter(delimiter).withStartAfter(startAfter);
+		ListObjectsV2Result result; 
+		
+		do{
+			result = s3Client.listObjectsV2(req);
+			commprefixesResult.addAll(result.getCommonPrefixes());
+			String nextContinuationToken = result.getNextContinuationToken();
+			req.setContinuationToken(nextContinuationToken);
+		}while(result.isTruncated());
+		
+		//expresultList are stored after 'startAfter'    
+		//subList[int,int)
+		expresultList = expresultList.subList(expresultList.indexOf(startAfter) + 1 , expresultList.size());
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList);
+		runSuccess =true;
+	}
+
+	@AfterClass
+	private void tearDown() {
+		try{
+			if (runSuccess) {
+				CommLib.deleteAllObjectVersions(s3Client, bucketName);
+				s3Client.deleteBucket(bucketName);
+			}
+		} finally {
+			if (s3Client != null) {
+				s3Client.shutdown();
+			}
+		}
+	}
+}
