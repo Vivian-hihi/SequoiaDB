@@ -50,10 +50,7 @@ function main()
    checkResult(expResult, actResult);
    
    db.updateConf({"weight":weight}, {"NodeName":nodeName});
-   var esIndexNames = dbOperator.getESIndexNames(COMMCSNAME, clName, "fullIndex_17979");
    commDropCL( db, COMMCSNAME, clName );
-   //SEQUOIADBMAINSTREAM-3983
-   checkIndexNotExistInES(esIndexNames);
 }
 
 main();
