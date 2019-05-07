@@ -89,7 +89,10 @@ public class SequoiadbBucketDao implements BucketDao {
             BSONObject deleteBucket = new BasicBSONObject();
             deleteBucket.put(Bucket.BUCKET_NAME, bucketName);
 
-            cl.delete(deleteBucket);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", Bucket.NAME_INDEX);
+
+            cl.delete(deleteBucket, hint);
         }catch (Exception e) {
             logger.error("deleteBucket failed. errorMessage = " + e.getMessage(), e);
             throw e;
