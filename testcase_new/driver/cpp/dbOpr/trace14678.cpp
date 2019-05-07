@@ -34,7 +34,7 @@ TEST_F( traceTest14678, trace )
 
    // trace start
    UINT32 traceBufSize = 256 ;
-   rc = db.traceStart( traceBufSize ) ;
+   rc = db.traceStart( traceBufSize, _sdbStaticObject ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to traceStart" ;
 
    // check trace status
