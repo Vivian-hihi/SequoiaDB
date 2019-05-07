@@ -2984,7 +2984,7 @@ namespace sdbclient
 
       /** \fn INT32 renameCollection(const CHAR* oldName,
                                      const CHAR* newName,
-                                     const bson::BSONObj &options)
+                                     const bson::BSONObj &options )
           \brief Rename collection ( only support the standalone mode )
           \param [in] oldName The old name of collectionSpace.
           \param [in] newName The new name of collectionSpace.
@@ -5553,10 +5553,10 @@ namespace sdbclient
 
       /** \fn INT32 setSessionAttr ( const bson::BSONObj &options ) ;
           \brief Set the attributes of the session.
-          \param [in] options The options for setting session attributes. Can not be 
-                      NULL. While it's a empty options, the local session attributes 
-                      cache will be cleanup. Please reference 
-                      <a href="http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-302">here</a> 
+          \param [in] options The options for setting session attributes. Can not be
+                      NULL. While it's a empty options, the local session attributes
+                      cache will be cleanup. Please reference
+                      <a href="http://doc.sequoiadb.com/cn/SequoiaDB-cat_id-1432190808-edition_id-302">here</a>
                       for more detail.
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
@@ -6097,7 +6097,7 @@ namespace sdbclient
           \retval Others Operation Fail
       */
       INT32 traceStart( UINT32 traceBufferSize,
-                        const bson::BSONObj &options = _sdbStaticObject )
+                        const bson::BSONObj &options )
       {
          if( !pSDB )
             return SDB_NOT_CONNECTED ;
@@ -6156,7 +6156,7 @@ namespace sdbclient
 
       /** \fn INT32 renameCollectionSpace(const CHAR* oldName,
                                           const CHAR* newName,
-                                          const bson::BSONObj &options)
+                                          const bson::BSONObj &options )
           \brief Rename collectionSpace ( only support the standalone mode )
           \param [in] oldName The old name of collectionSpace.
           \param [in] newName The new name of collectionSpace.
