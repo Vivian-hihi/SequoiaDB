@@ -2985,7 +2985,7 @@ namespace sdbclient
       /** \fn INT32 renameCollection(const CHAR* oldName,
                                      const CHAR* newName,
                                      const bson::BSONObj &options )
-          \brief Rename collection ( only support the standalone mode )
+          \brief Rename collection
           \param [in] oldName The old name of collectionSpace.
           \param [in] newName The new name of collectionSpace.
           \param [in] options Reserved argument
@@ -6157,7 +6157,7 @@ namespace sdbclient
       /** \fn INT32 renameCollectionSpace(const CHAR* oldName,
                                           const CHAR* newName,
                                           const bson::BSONObj &options )
-          \brief Rename collectionSpace ( only support the standalone mode )
+          \brief Rename collectionSpace
           \param [in] oldName The old name of collectionSpace.
           \param [in] newName The new name of collectionSpace.
           \param [in] options Reserved argument
