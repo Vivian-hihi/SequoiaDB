@@ -19,7 +19,7 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
  * @Date 2019.04.10
  * @version 1.00
  */
-public class updateDelimiter18093 extends S3TestBase {
+public class UpdateDelimiter18093 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket18093";
 	private String keyName = "/test/aa/object18093";

@@ -21,7 +21,7 @@ import com.sequoias3.testcommon.s3utils.UserUtils;
  * @Date 2019.04.10
  * @version 1.00
  */
-public class updateDelimiter18096 extends S3TestBase {
+public class UpdateDelimiter18096 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String userNameA = "UserA18096";
 	private String userNameB = "UserB18096";

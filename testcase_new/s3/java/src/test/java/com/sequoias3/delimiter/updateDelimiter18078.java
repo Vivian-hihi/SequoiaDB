@@ -24,7 +24,7 @@ import com.sequoias3.testcommon.s3utils.RegionUtils;
  * @Date 2019.04.09
  * @version 1.00
  */
-public class updateDelimiter18078 extends S3TestBase {
+public class UpdateDelimiter18078 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket18078";
 	private String regionName = "region18078";

@@ -90,7 +90,6 @@ public class ListObjects18119 extends S3TestBase {
 			result = s3Client.listObjectsV2(request);
 			List<String> commonPrefixes = result.getCommonPrefixes();
 			matchDelimiterList.addAll(commonPrefixes);
-			System.out.println("--priefix=" + commonPrefixes.toString());
 
 			// objects do not match delimiter are displayed in contents,num is
 			// less than Maxkeys
