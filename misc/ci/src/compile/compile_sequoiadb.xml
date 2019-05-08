@@ -775,6 +775,7 @@
                  <property name="enterprise_str" value="" />
               </else>
             </if>
+            <chmod file="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}*installer.run" perm="755" />
             <tar destfile="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-installer.tar.gz" 
                  longfile="gnu" compression="gzip" 
                  basedir="${release_dir}" includes="sequoiadb-${sequoiadb_version}-${platform}*installer.run"/>
