@@ -1,6 +1,7 @@
 package com.sequoias3.service;
 
 import com.sequoias3.core.*;
+import com.sequoias3.dao.ConnectionDao;
 import com.sequoias3.dao.DataLob;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.model.GetResult;
@@ -46,7 +47,7 @@ public interface ObjectService {
                                     Integer maxKeys, String encodingType)
             throws S3ServerException;
 
-    long getObjectNumberByBucketId(Bucket bucket) throws S3ServerException;
+    Boolean isEmptyBucket(ConnectionDao connection, Bucket bucket) throws S3ServerException;
 
     void deleteObjectByBucket(Bucket bucket) throws S3ServerException;
 }

@@ -237,6 +237,8 @@ public class ObjectServiceImpl implements ObjectService {
                     }else{
                         throw e;
                     }
+                } catch (Exception e){
+                    throw e;
                 }
             }
             throw new S3ServerException(S3Error.OBJECT_NO_SUCH_KEY,
@@ -382,7 +384,7 @@ public class ObjectServiceImpl implements ObjectService {
                                 metaDao.removeMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
                                         objectName, versionId, null);
                                 Bucket newBucket = bucketDao.getBucketById(bucket.getBucketId());
-                                if (newBucket.getDelimiter() != bucket.getDelimiter()){
+                                if (newBucket != null && newBucket.getDelimiter() != bucket.getDelimiter()){
                                     deleteDirForObject(connection, metaCsName, metaClName, newBucket, objectName);
                                 }
                             }
@@ -674,7 +676,7 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public long getObjectNumberByBucketId(Bucket bucket) throws S3ServerException{
+    public Boolean isEmptyBucket(ConnectionDao connection, Bucket bucket) throws S3ServerException{
         try {
             Region region = null;
             if (bucket.getRegion() != null) {
@@ -685,9 +687,14 @@ public class ObjectServiceImpl implements ObjectService {
             String metaHisCsName = regionDao.getMetaHisCSName(region);
             String metaHisClName = regionDao.getMetaHisCLName(region);
 
-            long curCount = metaDao.getObjectNumber(metaCsName, metaClName, bucket.getBucketId());
-            long hisCount = metaDao.getObjectNumber(metaHisCsName, metaHisClName, bucket.getBucketId());
-            return curCount+hisCount;
+            if (null != metaDao.queryMetaByBucketId(connection, metaCsName, metaClName, bucket.getBucketId())) {
+                return false;
+            }
+            if (null != metaDao.queryMetaByBucketId(connection, metaHisCsName, metaHisClName, bucket.getBucketId())){
+                return false;
+            }
+
+            return true;
         }catch (S3ServerException e){
             throw e;
         }catch (Exception e){
@@ -759,7 +766,7 @@ public class ObjectServiceImpl implements ObjectService {
             throws S3ServerException{
         ConnectionDao connection = daoMgr.getConnectionDao();
         transaction.begin(connection);
-        logger.info("transaction begin. Key:{}", objectName);
+//        logger.info("transaction begin. Key:{}", objectName);
         try {
             ObjectMeta objectMeta = metaDao.queryForUpdate(connection, metaCsName,
                     metaClName, bucket.getBucketId(), objectName, null, null);
@@ -768,15 +775,18 @@ public class ObjectServiceImpl implements ObjectService {
                 metaDao.removeMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
                         objectName, null, null);
                 Bucket newBucket = bucketDao.getBucketById(bucket.getBucketId());
-                if (newBucket.getDelimiter() != bucket.getDelimiter()){
+                if (newBucket != null && newBucket.getDelimiter() != bucket.getDelimiter()){
                     deleteDirForObject(connection, metaCsName, metaClName, newBucket, objectName);
                 }
             }
-            logger.info("transaction commit. Key:{}", objectName);
+//            logger.info("transaction commit. Key:{}", objectName);
             transaction.commit(connection);
             return objectMeta;
-        }catch(Exception e){
-            logger.info("transaction rollback. Key:{}", objectName);
+        } catch (S3ServerException e){
+            transaction.rollback(connection);
+            throw e;
+        } catch(Exception e){
+//            logger.info("transaction rollback. Key:{}", objectName);
             transaction.rollback(connection);
             throw e;
         } finally {
@@ -808,7 +818,9 @@ public class ObjectServiceImpl implements ObjectService {
                     dataDao.deleteObjectDataByLobId(connection, dataCsName, dataClName, lobId);
                 }
             }
-        } catch (Exception e) {
+        } catch (S3ServerException e) {
+            throw e;
+        }catch (Exception e) {
             throw e;
         }finally {
             daoMgr.releaseConnectionDao(connection);
@@ -1114,6 +1126,9 @@ public class ObjectServiceImpl implements ObjectService {
                     metaDao.insertMeta(connection, metaCsName, metaClName, objectMeta,
                             false, region);
                     Bucket newBucket = bucketDao.getBucketById(bucketId);
+                    if (newBucket == null){
+                        throw new S3ServerException(S3Error.BUCKET_NOT_EXIST, "bucket is deleting.");
+                    }
                     if (bucket.getDelimiter() != newBucket.getDelimiter()) {
                         transaction.rollback(connection);
                         continue;

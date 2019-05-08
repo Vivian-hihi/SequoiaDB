@@ -35,7 +35,7 @@ public class SdbBaseOperation {
         try {
             logger.info("creating cs:csName={}", csName);
             sdb.createCollectionSpace(csName, options);
-            logger.info("creating cs success :clName={}.{}",csName);
+            logger.info("creating cs success :csName={}",csName);
             return DBParamDefine.CREATE_OK;
         }
         catch (BaseException e) {

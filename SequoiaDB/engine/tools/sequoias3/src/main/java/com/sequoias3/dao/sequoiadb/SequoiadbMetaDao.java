@@ -184,6 +184,44 @@ public class SequoiadbMetaDao implements MetaDao {
     }
 
     @Override
+    public ObjectMeta queryMetaByBucketId(ConnectionDao connection, String metaCsName, String metaClName,
+                                            long bucketId)
+            throws S3ServerException {
+        Sequoiadb sdb = null;
+        try {
+            if(connection != null){
+                sdb = ((SdbConnectionDao)connection).getConnection();
+            }else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+            }
+            CollectionSpace cs = sdb.getCollectionSpace(metaCsName);
+            DBCollection cl = cs.getCollection(metaClName);
+
+            BSONObject matcher = new BasicBSONObject();
+            matcher.put(ObjectMeta.META_BUCKET_ID, bucketId);
+
+            BSONObject queryResult = cl.queryOne(matcher, null, null, null, 0);
+            return convertBsonToMeta(queryResult);
+        }catch (BaseException e){
+            if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
+                    e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+                //no cs or cl ,return null
+                return null;
+            } else {
+                logger.error("query meta by name failed. error:"+e.getMessage());
+                throw e;
+            }
+        } catch (Exception e){
+            logger.error("query meta by name failed.");
+            throw e;
+        }finally {
+            if (connection == null) {
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            }
+        }
+    }
+
+    @Override
     public QueryDbCursor queryMetaByBucketForUpdate(ConnectionDao connection,
                                                     String metaCsName, String metaClName,
                                                     long bucketId, String prefix,

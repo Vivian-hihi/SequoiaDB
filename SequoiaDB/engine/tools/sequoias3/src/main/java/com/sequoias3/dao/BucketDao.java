@@ -10,7 +10,7 @@ import java.util.List;
 public interface BucketDao {
     void insertBucket(Bucket bucket) throws S3ServerException,ParseException;
 
-    void deleteBucket(String bucketName) throws S3ServerException;
+    void deleteBucket(ConnectionDao connection, String bucketName) throws S3ServerException;
 
     Bucket getBucketByName(String bucketName) throws S3ServerException;
 

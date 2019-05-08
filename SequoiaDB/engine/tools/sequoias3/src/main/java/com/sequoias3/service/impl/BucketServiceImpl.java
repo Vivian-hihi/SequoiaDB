@@ -47,6 +47,12 @@ public class BucketServiceImpl implements BucketService {
     @Autowired
     IDGeneratorDao idGeneratorDao;
 
+    @Autowired
+    DirDao dirDao;
+
+    @Autowired
+    TaskDao taskDao;
+
     @Override
     public void createBucket(long ownerID, String bucketName, String region) throws S3ServerException {
         int tryTime = DBParamDefine.DB_DUPLICATE_MAX_TIME;
@@ -132,13 +138,40 @@ public class BucketServiceImpl implements BucketService {
             Bucket bucket = getBucket(ownerID, bucketName);
 
             //is bucket empty
-            if (!isBucketEmpty(bucket)){
+            if (!objectService.isEmptyBucket(null, bucket)){
                 throw new S3ServerException(S3Error.BUCKET_NOT_EMPTY,
                         "The bucket you tried to delete is not empty. bucket name = "+bucketName);
             }
 
-            //delete bucket
-            bucketDao.deleteBucket(deleteName);
+            ConnectionDao connection = daoMgr.getConnectionDao();
+            transaction.begin(connection);
+            try {
+                //delete bucket
+                bucketDao.deleteBucket(connection, deleteName);
+
+                if (!objectService.isEmptyBucket(connection, bucket)){
+                    throw new S3ServerException(S3Error.BUCKET_NOT_EMPTY,
+                            "The bucket you tried to delete is not empty. bucket name = "+bucketName);
+                }
+
+                transaction.commit(connection);
+            } catch (S3ServerException e){
+                transaction.rollback(connection);
+                throw e;
+            } catch (Exception e){
+                transaction.rollback(connection);
+                throw e;
+            } finally {
+                daoMgr.releaseConnectionDao(connection);
+            }
+
+            //delete dir
+            String metaCSName = regionDao.getMetaCurCSName(regionDao.queryRegion(bucket.getRegion()));
+            dirDao.delete(null, metaCSName, bucket.getBucketId(), null, null);
+
+            if (bucket.getTaskID() != null){
+                taskDao.deleteTaskId(null, bucket.getTaskID());
+            }
         }catch (S3ServerException e) {
             throw e;
         }catch (Exception e){
@@ -188,13 +221,25 @@ public class BucketServiceImpl implements BucketService {
     @Override
     public void deleteBucketForce(Bucket bucket) throws S3ServerException {
         try {
-            while (!isBucketEmpty(bucket)) {
+            while (!objectService.isEmptyBucket(null, bucket)) {
                 //delete objects in the bucket
                 objectService.deleteObjectByBucket(bucket);
             }
 
             //delete bucket
-            bucketDao.deleteBucket(bucket.getBucketName());
+            bucketDao.deleteBucket(null, bucket.getBucketName());
+
+            while (!objectService.isEmptyBucket(null, bucket)) {
+                objectService.deleteObjectByBucket(bucket);
+            }
+
+            //delete dir
+            String metaCSName = regionDao.getMetaCurCSName(regionDao.queryRegion(bucket.getRegion()));
+            dirDao.delete(null, metaCSName, bucket.getBucketId(), null, null);
+
+            if (bucket.getTaskID() != null){
+                taskDao.deleteTaskId(null, bucket.getTaskID());
+            }
         }catch (S3ServerException e) {
             throw e;
         }catch (Exception e){
@@ -220,13 +265,6 @@ public class BucketServiceImpl implements BucketService {
 
     private Boolean isValidBucketName(String bucketName){
         if (bucketName.length() < 3 || bucketName.length() > 63){
-            return false;
-        }
-        return true;
-    }
-
-    public Boolean isBucketEmpty(Bucket bucket)throws S3ServerException {
-        if (objectService.getObjectNumberByBucketId(bucket) > 0){
             return false;
         }
         return true;

@@ -69,8 +69,13 @@ public class SdbTask implements TaskDao {
 
     @Override
     public void deleteTaskId(ConnectionDao connection, Long taskId) throws S3ServerException {
+        Sequoiadb sdb = null;
         try {
-            Sequoiadb sdb = ((SdbConnectionDao) connection).getConnection();
+            if (connection != null) {
+                sdb = ((SdbConnectionDao) connection).getConnection();
+            }else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+            }
             CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
             DBCollection cl = cs.getCollection(DaoCollectionDefine.TASK_COLLECTION);
 
@@ -84,6 +89,10 @@ public class SdbTask implements TaskDao {
             cl.delete(matcher, hint);
         }catch (Exception e){
             throw e;
+        }finally {
+            if (connection == null){
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            }
         }
     }
 }

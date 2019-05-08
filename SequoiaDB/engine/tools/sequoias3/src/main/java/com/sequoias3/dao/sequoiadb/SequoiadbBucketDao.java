@@ -79,10 +79,14 @@ public class SequoiadbBucketDao implements BucketDao {
     }
 
     @Override
-    public void deleteBucket(String bucketName) throws S3ServerException {
+    public void deleteBucket(ConnectionDao connection, String bucketName) throws S3ServerException {
         Sequoiadb sdb = null;
         try {
-            sdb = sdbDatasourceWrapper.getSequoiadb();
+            if (connection != null){
+                sdb = ((SdbConnectionDao)connection).getConnection();
+            }else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+            }
             CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
             DBCollection cl = cs.getCollection(DaoCollectionDefine.BUCKET_LIST_COLLECTION);
 
@@ -97,7 +101,9 @@ public class SequoiadbBucketDao implements BucketDao {
             logger.error("deleteBucket failed. errorMessage = " + e.getMessage(), e);
             throw e;
         }finally {
-            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            if (connection == null) {
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            }
         }
     }
 

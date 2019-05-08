@@ -22,6 +22,10 @@ public interface MetaDao {
                                      Boolean noVersionFlag)
             throws S3ServerException;
 
+    ObjectMeta queryMetaByBucketId(ConnectionDao connection, String metaCsName,
+                                   String metaClName, long bucketId)
+            throws S3ServerException;
+
     QueryDbCursor queryMetaByBucketForUpdate(ConnectionDao connectionDao, String metaCsName,
                                              String metaClName, long bucketId, String prefix,
                                              String startAfter, int limitNum )
