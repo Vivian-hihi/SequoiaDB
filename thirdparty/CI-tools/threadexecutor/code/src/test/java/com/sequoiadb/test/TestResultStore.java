@@ -1,12 +1,9 @@
 package com.sequoiadb.test;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.threadexecutor.ResultAnalyzer;
 import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -39,20 +36,6 @@ class TestResultCollector2 extends ResultStore {
     }
 }
 
-class MyResultAnalyzer extends ResultAnalyzer {
-    private static final Logger logger = LoggerFactory.getLogger(MyResultAnalyzer.class);
-
-    @Override
-    public void analyze() throws Exception {
-        List<ResultStore> resultList = getResultList();
-        for (ResultStore result : resultList) {
-            logger.info("retcode={}, errmsg={}", result.getRetCode(),
-                    result.getThrowable().getMessage());
-        }
-    }
-
-}
-
 public class TestResultStore {
     private static final Logger logger = LoggerFactory.getLogger(TestResultStore.class);
 
@@ -64,11 +47,9 @@ public class TestResultStore {
         es.addWorker(t1);
         es.addWorker(t2);
 
-        ResultAnalyzer analyzer = new MyResultAnalyzer();
-        analyzer.add(t1);
-        analyzer.add(t2);
-
         es.run();
-        analyzer.analyze();
+
+        logger.info("t1 result:code={}, e={}", t1.getRetCode(), t1.getThrowable().getMessage());
+        logger.info("t2 result:code={}, e={}", t2.getRetCode(), t2.getThrowable().getMessage());
     }
 }
