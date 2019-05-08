@@ -85,6 +85,9 @@ namespace engine
             {
                _groupSession.getPropSite()->beginTrans( cb, TRUE ) ;
             }
+
+            /// transaction should access with primary
+            options._primary = TRUE ;
          }
          else if ( cb->isTransaction() )
          {
