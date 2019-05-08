@@ -94,8 +94,9 @@ namespace CSharp.Sessionaccess
         
         //如果actNodeNames大小为1时，代表实际操作的节点只有一个，没有随机取值
         Assert.AreNotEqual(actNodeNames.Count(), 1, "When PreferedInstance is 'A', the actual node is unchanged, the node name is:" + actNodeNames[0]);
-        options.Add("PreferedInstanceMode", "random").Add("Timeout", -1L);
-        Assert.AreNotEqual(sdb.GetSessionAttr(),options);
+        //options.Add("PreferedInstanceMode", "random").Add("Timeout", -1L);
+        BsonDocument actSessionAttr = sdb.GetSessionAttr();
+        Assert.AreEqual("random", actSessionAttr.GetElement("PreferedInstanceMode").Value.ToString());
         }
 
         [TestCleanup()]
