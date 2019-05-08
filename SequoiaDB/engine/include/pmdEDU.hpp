@@ -114,7 +114,7 @@ namespace engine
       typedef ossPoolMap<CHAR*,UINT32> ALLOC_MAP ;
       typedef ALLOC_MAP::iterator            ALLOC_MAP_IT ;
 
-      typedef ossPoolSet<INT64>        SET_CONTEXT ;
+      typedef std::set<INT64>        SET_CONTEXT ;
 
    public:
          /*

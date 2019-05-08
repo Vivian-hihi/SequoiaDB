@@ -1523,8 +1523,8 @@ namespace engine
       {
          // for IN statement without isNot or if the element type is array
          // and we want equality match {c1:{$et:[1,2,3]}}
-         ossPoolSet<BSONElement, element_cmp_lt> vals ;
-         ossPoolSet<BSONElement,element_cmp_lt>::iterator iterSet ;
+         std::set<BSONElement, element_cmp_lt> vals ;
+         std::set<BSONElement,element_cmp_lt>::iterator iterSet ;
 
          RTN_PREDICATE_LIST regexes ;
          BSONObjIterator i ( e.embeddedObject() ) ;

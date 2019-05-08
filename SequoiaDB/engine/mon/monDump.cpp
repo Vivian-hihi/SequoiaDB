@@ -2158,7 +2158,7 @@ namespace engine
                                    full._relatedTID ) ;
          /// add contexts
          BSONArrayBuilder ba( ob.subarrayStart( FIELD_NAME_CONTEXTS ) ) ;
-         ossPoolSet<SINT64>::const_iterator itCtx ;
+         std::set<SINT64>::const_iterator itCtx ;
          for ( itCtx = full._eduContextList.begin() ;
                itCtx != full._eduContextList.end() ;
                ++itCtx )
