@@ -1,0 +1,72 @@
+package com.sequoiadb.test;
+
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.sequoiadb.threadexecutor.ResultAnalyzer;
+import com.sequoiadb.threadexecutor.ResultStore;
+import com.sequoiadb.threadexecutor.ThreadExecutor;
+import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
+
+class TestResultCollector1 extends ResultStore {
+    private static final Logger logger = LoggerFactory.getLogger(TestResultCollector1.class);
+
+    @ExecuteOrder(step = 1)
+    public void initData() {
+        try {
+            throw new Exception("error1");
+        }
+        catch (Exception e) {
+            saveResult(-1, e);
+        }
+    }
+}
+
+class TestResultCollector2 extends ResultStore {
+    private static final Logger logger = LoggerFactory.getLogger(TestResultCollector2.class);
+
+    @ExecuteOrder(step = 1)
+    public void remove() throws InterruptedException {
+        try {
+            throw new Exception("error2");
+        }
+        catch (Exception e) {
+            saveResult(-2, e);
+        }
+    }
+}
+
+class MyResultAnalyzer extends ResultAnalyzer {
+    private static final Logger logger = LoggerFactory.getLogger(MyResultAnalyzer.class);
+
+    @Override
+    public void analyze() throws Exception {
+        List<ResultStore> resultList = getResultList();
+        for (ResultStore result : resultList) {
+            logger.info("retcode={}, errmsg={}", result.getRetCode(),
+                    result.getThrowable().getMessage());
+        }
+    }
+
+}
+
+public class TestResultStore {
+    private static final Logger logger = LoggerFactory.getLogger(TestResultStore.class);
+
+    public static void main(String[] args) throws Exception {
+        ThreadExecutor es = new ThreadExecutor();
+        TestResultCollector1 t1 = new TestResultCollector1();
+        TestResultCollector2 t2 = new TestResultCollector2();
+        es.addWorker(t1);
+        es.addWorker(t2);
+
+        ResultAnalyzer analyzer = new MyResultAnalyzer();
+        analyzer.add(t1);
+        analyzer.add(t2);
+
+        es.run();
+        analyzer.analyze();
+    }
+}
