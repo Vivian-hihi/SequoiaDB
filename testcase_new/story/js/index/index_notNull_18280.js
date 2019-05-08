@@ -6,6 +6,12 @@
 main();
 function main()
 {
+   if( true == commIsStandalone( db ) )
+   {
+      println( "---Is standalone." );
+      return;
+   } 
+   
    var mclName = "mcl_18280";
    var sclName = "scl_18280";
    var mIdxName = "mIdx";
