@@ -421,6 +421,10 @@ namespace engine
          goto done ;
       }
 
+      // Update request ID before sending request
+      // Which may abandon response of the previous request
+      ++ _requestID ;
+
       _sendSyncReq() ;
    done:
       PD_TRACE_EXIT ( SDB__CLSDSTREPSN_HNDNTF );
