@@ -38,6 +38,7 @@
 *******************************************************************************/
 #include "seAdptIdxMetaMgr.hpp"
 #include "msgDef.hpp"
+#include "seAdptMgr.hpp"
 
 namespace seadapter
 {
@@ -646,14 +647,17 @@ namespace seadapter
          }
 
          {
-            // ES index name is in the format of cappedCLName_groupName.
+            // ES index name is in the format of [prefix]cappedCLName_groupName.
             const CHAR *dot = ossStrchr( meta.getCappedCLName(), '.' ) ;
             SDB_ASSERT( dot, "No dot found in the capped collection full name" ) ;
             const CHAR *cappedCLName = dot + 1 ;
+            const CHAR *idxPrefix = sdbGetSeAdptOptions()->getSEIdxPrefix() ;
             // From ES6.0, one index can contain only one type. So we need to append
             // the group name to the ES index name, to handle index data splited to
             // more than one group.
-            std::string esIdx = std::string(cappedCLName) + "_" + _typeName ;
+            std::string esIdx =
+                  (( 0 == ossStrlen(idxPrefix) ) ? "" : std::string(idxPrefix))
+                  +  std::string(cappedCLName) + "_" + _typeName ;
             // ES index names should be in lower case.
             std::transform( esIdx.begin(), esIdx.end(), esIdx.begin(), ::tolower ) ;
             meta.setESIdxName( esIdx.c_str() ) ;

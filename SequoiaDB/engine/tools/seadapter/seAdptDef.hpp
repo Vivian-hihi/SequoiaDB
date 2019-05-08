@@ -49,6 +49,7 @@ namespace seadapter
    #define SEADPT_DIAGLEVEL               "diaglevel"
    #define SEADPT_SE_HOST                 "searchenginehost"
    #define SEADPT_SE_PORT                 "searchengineport"
+   #define SEADPT_SE_IDXPREFIX            "idxprefix"
    #define SEADPT_BULK_BUFF_SIZE          "bulkbuffsize"
 
    #define SEADPT_DFT_TIMEOUT             10000
@@ -64,6 +65,7 @@ namespace seadapter
 
    #define SEADPT_MAX_IDX_NUM             64
    #define SEADPT_MAX_IDXNAME_SZ          255
+   #define SEADPT_MAX_IDXPREFIX_SZ        16
    #define SEADPT_MAX_TYPE_SZ             127
    #define SEADPT_MAX_ID_SZ               512
    #define SEADPT_COMMIT_ID               "SDBCOMMIT"
@@ -82,7 +84,6 @@ namespace seadapter
    #define SEADPT_OPERATOR_STR_EXIST     "$exists"
    #define SEADPT_OPERATOR_STR_INCLUDE   "$include"
 
-   #define SEADPT_FETCH_BATCH_SIZE       10000
    #define SEADPT_FETCH_MAX_SIZE         100000
    #define SEADPT_ES_ID_FILTER_PATH      "filter_path=_scroll_id,hits.hits._id"
    #define SEADPT_INVALID_LID            -1

@@ -51,6 +51,7 @@ using namespace engine ;
    ( SEADPT_DNODE_PORT, boost::program_options::value<string>(), "Data node service name or port" ) \
    ( SEADPT_SE_HOST, boost::program_options::value<string>(), "Search engine address" ) \
    ( SEADPT_SE_PORT, boost::program_options::value<string>(), "Search engine service name or port" ) \
+   ( PMD_COMMANDS_STRING (SEADPT_SE_IDXPREFIX, ",p"), boost::program_options::value<string>(), "Prefix of index names on search engine,default:none, valid value length:[1-16]") \
    ( SEADPT_BULK_BUFF_SIZE, boost::program_options::value<int>(), "Bulk operation buffer size,unit:MB,default:10,value range:[1-32]" ) \
    ( PMD_COMMANDS_STRING (PMD_OPTION_OPERATOR_TIMEOUT, ",t"), boost::program_options::value<int>(), "Rest operation timeout in millisecond,default:10000,value range[3000-3600000]" )
 
@@ -64,6 +65,7 @@ namespace seadapter
       ossMemset( _dbService, 0, sizeof( _dbService ) ) ;
       ossMemset( _seHost, 0, sizeof( _seHost ) ) ;
       ossMemset( _seService, 0, sizeof( _seService ) ) ;
+      ossMemset( _seIdxPrefix, 0, sizeof( _seIdxPrefix ) ) ;
       _diagLevel = PDWARNING ;
       _timeout = SEADPT_DFT_TIMEOUT ;
       _bulkBuffSize = SEADPT_DFT_BULKBUFF_SZ ;
@@ -83,10 +85,6 @@ namespace seadapter
          COMMANDS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
 
-      PMD_ADD_PARAM_OPTIONS_BEGIN( display )
-         COMMANDS_OPTIONS
-      PMD_ADD_PARAM_OPTIONS_END
-
       rc = utilReadCommandLine( argc, argv, all, vmFromCmd ) ;
       if ( rc )
       {
@@ -95,7 +93,7 @@ namespace seadapter
 
       if ( vmFromCmd.count( PMD_OPTION_HELP ) )
       {
-         std::cout << display << std::endl ;
+         std::cout << all << std::endl ;
          rc = SDB_PMD_HELP_ONLY ;
          goto done ;
       }
@@ -170,6 +168,14 @@ namespace seadapter
          goto error ;
       }
 
+      if ( !_validateIdxPrefix() )
+      {
+         rc = SDB_INVALIDARG;
+         std::cerr << "ERROR: Index prefix[" << _seIdxPrefix << "] is invalid["
+                   << rc << "]" << std::endl ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -208,6 +214,9 @@ namespace seadapter
                FALSE, PMD_CFG_CHANGE_RUN, SEADPT_DFT_BULKBUFF_SZ ) ;
       rdvMinMax( pEX, _bulkBuffSize, 1, 32, TRUE ) ;
 
+      rdxString( pEX, SEADPT_SE_IDXPREFIX, _seIdxPrefix, sizeof( _seIdxPrefix ),
+                 FALSE, PMD_CFG_CHANGE_FORBIDDEN, "" ) ;
+
       return getResult() ;
    }
 
@@ -245,6 +254,22 @@ namespace seadapter
    UINT32 _seAdptOptionsMgr::getBulkBuffSize() const
    {
       return _bulkBuffSize ;
+   }
+
+   // Index prefix can only contains english characters, numbers, and '_', and
+   // can not start with '_'.
+   BOOLEAN _seAdptOptionsMgr::_validateIdxPrefix() const
+   {
+      UINT8 i = 0 ;
+      UINT8 len =  ossStrlen( _seIdxPrefix ) ;
+      while ( i < len &&
+              ( std::isdigit( (UINT8)_seIdxPrefix[i] ) ||
+                std::isalpha( (UINT8)_seIdxPrefix[i] ) ||
+                '_' == _seIdxPrefix[i] ) )
+      {
+         ++i ;
+      }
+      return ( 0 == len ) || ( i == len && '_' != _seIdxPrefix[0] ) ;
    }
 }
 

@@ -40,6 +40,7 @@
 #define SEADPT_OPTIONSMGR_HPP__
 
 #include "pmdOptionsMgr.hpp"
+#include "seAdptDef.hpp"
 
 namespace seadapter
 {
@@ -59,12 +60,15 @@ namespace seadapter
       const CHAR* getDBService() const { return _dbService ; }
       const CHAR* getSEHost() const { return _seHost ; }
       const CHAR* getSEService() const { return _seService ; }
+      const CHAR* getSEIdxPrefix() const { return _seIdxPrefix ; }
       PDLEVEL     getDiagLevel() const ;
       INT32       getTimeout() const ;
       UINT32      getBulkBuffSize() const ;
 
    protected:
       virtual INT32 doDataExchange( engine::pmdCfgExchange *pEX ) ;
+
+      BOOLEAN _validateIdxPrefix() const ;
 
    private:
       CHAR     _cfgFileName[ OSS_MAX_PATHSIZE + 1 ] ;
@@ -73,6 +77,7 @@ namespace seadapter
       CHAR     _dbService[ OSS_MAX_SERVICENAME + 1 ] ;
       CHAR     _seHost[ OSS_MAX_PATHSIZE + 1 ] ;
       CHAR     _seService[ OSS_MAX_SERVICENAME + 1 ] ;
+      CHAR     _seIdxPrefix[ SEADPT_MAX_IDXPREFIX_SZ + 1 ] ;
       UINT16   _diagLevel ;
       INT32    _timeout ;
       UINT32   _bulkBuffSize ;
