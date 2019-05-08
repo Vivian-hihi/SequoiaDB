@@ -2,10 +2,10 @@ package com.sequoiadb.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.Test;
 
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-import com.sequoiadb.threadexecutor.annotation.ExpectBlock;
 
 class Trans1 {
     private static final Logger logger = LoggerFactory.getLogger(Trans1.class);
@@ -51,7 +51,8 @@ class Trans2 {
 public class Test4174 {
     private static final Logger logger = LoggerFactory.getLogger(Test4174.class);
 
-    public static void main(String[] args) throws Exception {
+    @Test
+    public void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor();
         es.addWorker(new Trans1());
         es.addWorker(new Trans2());

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.Test;
 
 import com.sequoiadb.threadexecutor.ResultAnalyzer;
 import com.sequoiadb.threadexecutor.ResultStore;
@@ -55,7 +56,8 @@ class MyResultAnalyzer extends ResultAnalyzer {
 public class TestResultStore {
     private static final Logger logger = LoggerFactory.getLogger(TestResultStore.class);
 
-    public static void main(String[] args) throws Exception {
+    @Test
+    public void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor();
         TestResultCollector1 t1 = new TestResultCollector1();
         TestResultCollector2 t2 = new TestResultCollector2();
