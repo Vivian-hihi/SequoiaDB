@@ -14,6 +14,9 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.utils.FullTextDBUtils;
+import com.sequoiadb.utils.FullTextESUtils;
+import com.sequoiadb.utils.FullTextUtils;
 
 /**
  * @Description seqDB-12020:hash切分表中创建全文索引并切分后再插入记录

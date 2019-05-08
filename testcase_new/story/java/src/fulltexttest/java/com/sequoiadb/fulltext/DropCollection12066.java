@@ -19,6 +19,9 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.utils.FullTextDBUtils;
+import com.sequoiadb.utils.FullTextESUtils;
+import com.sequoiadb.utils.FullTextUtils;
 
 /**
  * @Description seqDB-12066: 集合上存在全文索引，删除集合

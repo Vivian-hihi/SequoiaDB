@@ -5,10 +5,9 @@ import java.io.File;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
-
-import com.sequoiadb.fulltext.FullTextESUtils;
 import org.elasticsearch.client.Client;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.utils.FullTextESUtils;
 
 public class SdbTestBase {
     protected static String coordUrl;

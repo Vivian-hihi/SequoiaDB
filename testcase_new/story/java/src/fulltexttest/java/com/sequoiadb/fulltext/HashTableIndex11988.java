@@ -18,6 +18,9 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.utils.FullTextDBUtils;
+import com.sequoiadb.utils.FullTextESUtils;
+import com.sequoiadb.utils.FullTextUtils;
 
 /**
  * @Description seqDB-11988:hash切分表加入域使用自动切分，创建/删除全文索引

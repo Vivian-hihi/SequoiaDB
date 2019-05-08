@@ -1,4 +1,4 @@
-package com.sequoiadb.fulltext;
+package com.sequoiadb.utils;
 
 import java.util.ArrayList;
 import java.util.List;
