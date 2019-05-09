@@ -477,7 +477,8 @@ INT32 _pdTraceCB::start ( UINT64 size,
 
    _componentMask = mask ;
 
-   if( ( _componentMask == 0xFFFFFFFF ) && ( functionName->size() > 0 ) )
+   if ( _componentMask == 0xFFFFFFFF &&
+        functionName && functionName->size() > 0  )
    {
       _componentMask = 0 ;
    }
