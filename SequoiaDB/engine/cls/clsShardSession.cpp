@@ -3023,8 +3023,10 @@ namespace engine
       {
          boMatcher = BSONObj( pQuery ) ;
          rc = rtnGetObjElement( boMatcher, FIELD_NAME_INDEX, boIndex ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get object index, rc: %d",
-                      rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get object index, rc: %d", rc ) ;
+
+         rc = rtnConvertIndexDef( boIndex ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert index definition" ) ;
 
          if ( NULL != pHint )
          {

@@ -1000,31 +1000,11 @@ namespace engine
          goto error ;
       }
 
-      // message of old version, has "unique" field
-      // message since v3.2, has "Unique" and "unique" field
-      // but in engine, we just convert "Unique" to "unique"
-      if ( _index.hasField( IXM_UNIQUE_FIELD1 ) ||
-           _index.hasField( IXM_ENFORCED_FIELD1 ) )
+      rc = rtnConvertIndexDef( _index ) ;
+      if ( SDB_OK != rc )
       {
-         BSONObjBuilder builder ;
-         BSONObjIterator i( _index ) ;
-         while ( i.more() )
-         {
-            BSONElement e = i.next();
-            if ( 0 == ossStrcmp( e.fieldName(), IXM_ENFORCED_FIELD1 ) )
-            {
-               builder.append( IXM_ENFORCED_FIELD, e.trueValue() ) ;
-            }
-            else if ( 0 == ossStrcmp( e.fieldName(), IXM_UNIQUE_FIELD1 ) )
-            {
-               builder.append( IXM_UNIQUE_FIELD, e.trueValue() ) ;
-            }
-            else
-            {
-               builder.append( e ) ;
-            }
-         }
-         _index = builder.obj() ;
+         PD_LOG ( PDERROR, "Failed to convert index definition" ) ;
+         goto error ;
       }
 
       rc = _validateDef( _index ) ;

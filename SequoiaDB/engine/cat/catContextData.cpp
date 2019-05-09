@@ -2470,7 +2470,7 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR,
                          "Failed to get group list of cl[%s], rc: %d",
                          _targetName.c_str(), rc ) ;
-         }
+      }
       }
       catch( std::exception &e )
       {
@@ -3706,6 +3706,9 @@ namespace engine
                       "Failed to get field [%s], rc: %d",
                       FIELD_NAME_INDEX, rc ) ;
 
+         rc = rtnConvertIndexDef( _boIdx ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to convert index definition" ) ;
+
          rc = rtnGetSTDStringElement( _boIdx, IXM_FIELD_NAME_NAME, _idxName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get field [%s], rc: %d",
@@ -3832,4 +3835,4 @@ namespace engine
    error :
       goto done ;
    }
-}
+   }

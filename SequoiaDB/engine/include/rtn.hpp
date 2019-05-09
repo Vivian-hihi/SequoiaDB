@@ -640,6 +640,8 @@ namespace engine
    INT32 rtnCollectionsInSameSpace ( const CHAR *pCLNameA, UINT32 lengthA,
                                      const CHAR *pCLNameB, UINT32 lengthB,
                                      BOOLEAN &inSameSpace ) ;
+
+   INT32 rtnConvertIndexDef( BSONObj& indexDef ) ;
 }
 
 #endif

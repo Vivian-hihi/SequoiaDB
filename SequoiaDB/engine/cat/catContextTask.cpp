@@ -611,17 +611,12 @@ namespace engine
          rc = rtnGetBooleanElement ( _boIdx, IXM_UNIQUE_FIELD, _isUnique ) ;
          if ( SDB_FIELD_NOT_EXIST == rc )
          {
-            rc = rtnGetBooleanElement ( _boIdx, IXM_UNIQUE_FIELD1, _isUnique ) ;
-            if ( SDB_FIELD_NOT_EXIST == rc )
-            {
-               _isUnique = FALSE ;
-               rc = SDB_OK ;
-            }
+            _isUnique = FALSE ;
+            rc = SDB_OK ;
          }
          PD_RC_CHECK ( rc, PDWARNING,
-                       "Failed to get [%s] or [%s] for index [%s], rc: %d",
-                       IXM_UNIQUE_FIELD, IXM_UNIQUE_FIELD1,
-                       _boIdx.toString().c_str(), rc ) ;
+                       "Failed to get [%s] for index [%s], rc: %d",
+                       IXM_UNIQUE_FIELD, _boIdx.toString().c_str(), rc ) ;
       }
 
    done :

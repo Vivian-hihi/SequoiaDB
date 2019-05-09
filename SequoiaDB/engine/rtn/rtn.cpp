@@ -1394,7 +1394,7 @@ namespace engine
                              pCollectionFullName ;
       }
 
-      PD_TRACE2 ( SDB_RTNRESOLVECLNAL, 
+      PD_TRACE2 ( SDB_RTNRESOLVECLNAL,
                   PD_PACK_UINT ( lockType ),
                   PD_PACK_STRING ( strCollectionFullName ) );
 
@@ -1632,7 +1632,7 @@ namespace engine
    }
 
    // Note that Only delete and update are calling this interface
-   // In the future, if there are other cases, we should carefully 
+   // In the future, if there are other cases, we should carefully
    // review the usage and decide what scanner to initialize with.
    // For now, we directly invoke rtnDiskIXScanner as we won't use
    // in memory index which is from last committed value.
@@ -2194,5 +2194,58 @@ namespace engine
       }
    }
 
+   INT32 rtnConvertIndexDef( BSONObj& indexDef )
+   {
+      INT32 rc = SDB_OK ;
+
+      // 1. Message of old version, has "unique" field. Message since v3.2,
+      // has "Unique" and "unique" field. But in engine, we just convert
+      // "Unique" to "unique".
+      // 2. unique/enforced/NotNull value support number. But in engine, we
+      // convert { unique: 1 } => { unique: true } to prevent ambiguity.
+      try
+      {
+         BSONObjBuilder builder ;
+         BSONObjIterator i( indexDef ) ;
+         while ( i.more() )
+         {
+            BSONElement e = i.next();
+            // convert { Unique: true } => { unique: true }
+            if ( 0 == ossStrcmp( e.fieldName(), IXM_UNIQUE_FIELD1 ) )
+            {
+               builder.append( IXM_UNIQUE_FIELD, e.trueValue() ) ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(), IXM_ENFORCED_FIELD1 ) )
+            {
+               builder.append( IXM_ENFORCED_FIELD, e.trueValue() ) ;
+            }
+            // convert { unique: 1 } => { unique: true }
+            else if ( 0 == ossStrcmp( e.fieldName(), IXM_UNIQUE_FIELD ) )
+            {
+               builder.append( IXM_UNIQUE_FIELD, e.trueValue() ) ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(), IXM_ENFORCED_FIELD ) )
+            {
+               builder.append( IXM_ENFORCED_FIELD, e.trueValue() ) ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(), IXM_NOTNULL_FIELD ) )
+            {
+               builder.append( IXM_NOTNULL_FIELD, e.trueValue() ) ;
+            }
+            else
+            {
+               builder.append( e ) ;
+            }
+         }
+         indexDef = builder.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+      }
+
+      return rc ;
+   }
 }
 
