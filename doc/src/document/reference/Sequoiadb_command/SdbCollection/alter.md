@@ -57,12 +57,16 @@ Collection
         格式：`Partition : <分区数>`
 
         * 集合只能存在于一个数据组中
-    
+
     5. `AutoSplit` ( *Bool* )：标识新集合是否开启自动切分功能
 
         格式：`AutoSplit : true | false`
 
+        * 默认值是 false
         * 集合设置新的 hash 分区键后，可以使用该选项进行自动切分
+        * 不显式指定 AutoSplit 时，如果该集合从属于某个非系统域且修改前无分区键，该域的 AutoSplit 参数将作用于此次设置
+            * 集合之前有分区键，需要显式设置 AutoSplit 为 true 进行自动切分
+        * AutoSplit 只能作用于 hash 分区键上
 
     6. `EnsureShardingIndex` ( *Bool* )：标识是否创建分区索引
 
@@ -88,10 +92,10 @@ Collection
     10. `AutoIncrement` ( *Object* )：自增字段
 
         格式：`AutoIncrement : <option>`
-        
+
         * 自增字段可以修改的属性有CurrentValue, Increment, StartValue, MinValue, MaxValue, CacheSize, AcquireSize, Cycled, Generated。<br>属性具体功能请参考 [自增字段介绍](data_model/auto_increment.md)。
 
-	**Note:**
+    **Note:**
 
     * 各个选项的具体使用方式见 [db.collectionspace.createCL()](reference/Sequoiadb_command/SdbCS/createCL.md)。
     * 分区集合不能修改与分区相关的属性，如 ShardingKey、Partition 等。
@@ -99,7 +103,7 @@ Collection
 
 ##返回值##
 
-成功：无。  
+成功：无。
 
 失败：抛出异常。
 
@@ -123,14 +127,28 @@ v1.12及以上版本。
 
 1. 创建一个普通集合，然后将该集合修改为分区集合。
 
-	```lang-javascript
- 	> db.foo.createCL('bar')
- 	> db.foo.bar.alter( { ShardingKey: { a: 1 }, ShardingType: "hash" } )
-	```
+    ```lang-javascript
+    > db.foo.createCL('bar')
+    > db.foo.bar.alter( { ShardingKey: { a: 1 }, ShardingType: "hash" } )
+    ```
 
-2. 创建一个普通集合，然后将该集合修改为lzw压缩
+2. 创建一个普通集合，然后将该集合修改为分区集合，并且自动切分：
+
+    ```lang-javascript
+    > db.foo.createCL('bar')
+    > db.foo.bar.alter( { ShardingKey: { a: 1 }, ShardingType: "hash", AutoSplit: true } )
+    ```
+
+3. 创建一个普通集合，然后将该集合修改为lzw压缩
 
     ```lang-javascript
     > db.foo.createCL('bar')
     > db.foo.bar.alter( { CompressionType:'lzw' } )
+    ```
+
+4. 创建一个有自增字段的集合，修改其自增起始值
+
+    ```lang-javascript
+    > db.foo.createCL( 'bar', { AutoIncrement: { Field: "studentID" } } )
+    > db.foo.bar.alter( { AutoIncrement: { Field: "studentID", StartValue: 2017140000 } } )
     ```

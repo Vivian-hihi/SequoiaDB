@@ -44,27 +44,30 @@ Collection
 
         * 默认值是：4096
         * 集合只能存在于一个数据组中
-    
+
     4. `AutoSplit` ( *Bool* )：标识是否开启自动切分功能
 
         格式：`AutoSplit : true | false`
 
         * 默认值是 false
         * 集合设置新的 hash 分区键后，可以使用该选项进行自动切分
+        * 不显式指定 AutoSplit 时，如果该集合从属于某个非系统域且修改前无分区键，该域的 AutoSplit 参数将作用于此次设置
+            * 集合之前有分区键，需要显式设置 AutoSplit 为 true 进行自动切分
+        * AutoSplit 只能作用于 hash 分区键上
 
     5. `EnsureShardingIndex` ( *Bool* )：标识是否创建分区索引
 
         * 默认值是 true
 
-	**Note:**
+    *Note:**
 
     * 各个选项的具体使用方式见 [db.collectionspace.createCL()](reference/Sequoiadb_command/SdbCS/createCL.md)。
-	* 分区集合不能修改与分区相关的属性。
+    * 分区集合不能修改与分区相关的属性。
     * EnsureShardingIndex 和 AutoSplit 仅对当前该次操作生效，仅当修改分区属性，如 ShardingKey 等时有效
 
 ##返回值##
 
-成功：无。  
+成功：无。
 
 失败：抛出异常。
 
@@ -86,9 +89,16 @@ v2.10及以上版本。
 
 ##示例##
 
-1. 创建一个普通集合，然后将该集合修改为分区集合。
+1. 创建一个普通集合，然后将该集合修改为分区集合：
 
-	```lang-javascript
- 	> db.foo.createCL('bar')
- 	> db.foo.bar.enableSharding( { ShardingKey: { a: 1 }, ShardingType: "hash" } )
-	```
+    ```lang-javascript
+    > db.foo.createCL('bar')
+    > db.foo.bar.enableSharding( { ShardingKey: { a: 1 }, ShardingType: "hash" } )
+    ```
+
+2. 创建一个普通集合，然后将该集合修改为分区集合，并且自动切分：
+
+    ```lang-javascript
+    > db.foo.createCL('bar')
+    > db.foo.bar.enableSharding( { ShardingKey: { a: 1 }, ShardingType: "hash", AutoSplit: true } )
+    ```
