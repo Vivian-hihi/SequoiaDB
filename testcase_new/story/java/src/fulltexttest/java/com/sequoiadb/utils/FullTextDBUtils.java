@@ -32,12 +32,13 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static String getCappedCLName( DBCollection cl, String textIndexName ) {
-        String cappedCLName = "";
+    public static String getCappedName( Sequoiadb db, String csName, String clName, String textIndexName ) {
+        String cappedName = "";
+        DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
         DBCursor cur = cl.getIndex( textIndexName );
-        cappedCLName = (String) cur.getNext().get( "ExtDataName" );
+        cappedName = (String) cur.getNext().get( "ExtDataName" );
 
-        return cappedCLName;
+        return cappedName;
     }
 
     /**
@@ -52,14 +53,13 @@ public class FullTextDBUtils {
      * @Date 2018-11-15
      */
     public static List<DBCollection> getCappedCLs( Sequoiadb db, String csName, String clName, String textIndexName ) {
-        DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-        String cappedCLName = getCappedCLName( cl, textIndexName );
+        String cappedName = getCappedName( db, csName, clName, textIndexName );
         List<String> groupNames = getCLGroups( db, csName + "." + clName );
         // get each cappedCL from each group
         List<DBCollection> cappedCLs = new ArrayList<>();
         for ( String groupName : groupNames ) {
             DBCollection cappedCL = db.getReplicaGroup( groupName ).getMaster().connect()
-                    .getCollectionSpace( cappedCLName ).getCollection( cappedCLName );
+                    .getCollectionSpace( cappedName ).getCollection( cappedName );
             cappedCLs.add( cappedCL );
         }
         return cappedCLs;
@@ -78,14 +78,14 @@ public class FullTextDBUtils {
      */
     public static List<String> getESIndexNames( Sequoiadb db, String csName, String clName, String textIndexName ) {
         DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-        String cappedCLName = getCappedCLName( cl, textIndexName );
+        String cappedName = getCappedName( db, csName, clName, textIndexName );
 
         // get es index names
         List<String> esIndexNames = new ArrayList<>();
         List<String> groupNames = getCLGroups( db, csName + "." + clName );
 
         for ( String groupName : groupNames ) {
-            esIndexNames.add( cappedCLName.toLowerCase() + "_" + groupName );
+            esIndexNames.add( cappedName.toLowerCase() + "_" + groupName );
         }
 
         // if sharding cl, return all indices

@@ -25,7 +25,7 @@ public class FullTextUtils {
      * 检查DB端中普通表或分区表下的全文索引数据是否完全同步到ES端，总共分三层检查：
      *                                           1. 先检查文索引名是否都映射到ES端 
      *                                           2. 再检查ES端全文索引的总记录数是否正确
-     *                                           3. 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致
+     *                                           3. 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致
      * @param esClient
      * @param db
      * @param csName
@@ -61,7 +61,7 @@ public class FullTextUtils {
      * 检查DB端中主子表下的全文索引数据是否完全同步到ES端，总共分三层检查：
      *                                           1. 先检查子表的全文索引名是否都映射到ES端 
      *                                           2. 再检查ES端子表的全文索引总记录数是否正确
-     *                                           3. 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致
+     *                                           3. 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致
      * @param esClient
      * @param db
      * @param csName
@@ -177,7 +177,7 @@ public class FullTextUtils {
     }
 
     /**
-     * 检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致，
+     * 检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致，
      * 一个全文索引对应一个固定集合
      * @param esClient
      * @param esIndexNames
@@ -270,49 +270,99 @@ public class FullTextUtils {
     }
 
     /**
+     * 检查主备节点数据一致性
+     * @param db
+     * @param csName
+     * @param clName
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2019-05-09
+     */
+    public static void checkDataConsistency( Sequoiadb db, String csName,
+            String clName, String textIndexName ) {
+        List< String > groupNames = FullTextDBUtils.getCLGroups( db,
+                csName + "." + clName );
+        // in case of duplicate groupNames
+        groupNames = removeDuplicateItems( groupNames );
+        // get group Object
+        List<ReplicaGroup> groups = new ArrayList<>();
+        for ( String groupName: groupNames ) {
+            groups.add( db.getReplicaGroup( groupName ) );
+        }
+                
+        // check CL consistency
+        checkCLDataConsistency( groups, csName, clName );
+        // check cappedCL consistency
+        checkCappedCLDataConsistency( groups, csName, clName, textIndexName);
+    }
+    
+    /**
      * 检查主备节点的普通表、分区表数据一致性
-     * @param sdb
+     * @param db
      * @param csName
      * @param clName
      * @return void
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static void checkConsistency( Sequoiadb sdb, String csName,
-            String clName ) {
+    public static void checkCLDataConsistency( List<ReplicaGroup> groups, String csName,
+            String clName ) {            
         boolean isConsistency = false;
-        List< String > groups = FullTextDBUtils.getCLGroups( sdb,
-                csName + "." + clName );
-        groups = removeDuplicateItems( groups );
         for ( int i = 0; i < groups.size(); i++ ) {
-            List< Node > nodes = new ArrayList< Node >();
-            String groupName = groups.get( i );
-            List< String > nodeNames = CommLib.getNodeAddress( sdb, groupName );
+            Sequoiadb db = groups.get( i ).getSequoiadb();
+            String groupName = groups.get( i ).getGroupName();
+            List< String > nodeNames = CommLib.getNodeAddress( db, groupName );
+            List< Node > nodes = new ArrayList<  >();
             for ( String nodeName : nodeNames ) {
-                nodes.add(
-                        sdb.getReplicaGroup( groupName ).getNode( nodeName ) );
+                nodes.add(groups.get( i ).getNode( nodeName ) );                           
             }
             isConsistency = isConsistency( nodes, csName, clName );
-            Assert.assertTrue( isConsistency, "check inspect fail" );
+            Assert.assertTrue( isConsistency, "check cl consistency fail" );
+        }
+    }
+    
+    /**
+     * 检查主备节点的固定集合数据一致性
+     * @param db
+     * @param csName
+     * @param clName
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2019-05-09
+     */
+    public static void checkCappedCLDataConsistency( List<ReplicaGroup> groups, String csName, 
+            String clName, String textIndexName ) {
+        boolean isConsistency = false;
+        for ( int i = 0; i < groups.size(); i++ ) {
+            Sequoiadb db = groups.get( i ).getSequoiadb();
+            String groupName = groups.get( i ).getGroupName();
+            String cappedName = FullTextDBUtils.getCappedName(db, csName, clName, textIndexName);
+            List< String > nodeNames = CommLib.getNodeAddress( db, groupName );
+            List< Node > nodes = new ArrayList<  >();
+            for ( String nodeName : nodeNames ) {
+                nodes.add(groups.get( i ).getNode( nodeName ) );                           
+            }
+            isConsistency = isConsistency( nodes, cappedName, cappedName );
+            Assert.assertTrue( isConsistency, "check cappedcl consistency fail" );
         }
     }
 
     /**
      * 检查主备节点的主子表数据一致性
-     * @param sdb
+     * @param db
      * @param mainclFullName
      * @return void
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static void checkMainCLConsistency( Sequoiadb sdb,
-            String mainclFullName ) {
-        List< String > subclNames = FullTextDBUtils.getSubCLNames( sdb,
+    public static void checkMainCLDataConsistency( Sequoiadb db,
+            String mainclFullName, String textIndexName ) {
+        List< String > subclNames = FullTextDBUtils.getSubCLNames( db,
                 mainclFullName );
         for ( int i = 0; i < subclNames.size(); i++ ) {
             String subcsName = subclNames.get( i ).split( "\\." )[ 0 ];
             String subclName = subclNames.get( i ).split( "\\." )[ 1 ];
-            checkConsistency( sdb, subcsName, subclName );
+            checkDataConsistency( db, subcsName, subclName, textIndexName );
         }
     }
 

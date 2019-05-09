@@ -82,7 +82,8 @@ public class DropFullIndex14885 extends SdbTestBase {
         cursor.close();
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName14885, clName,
                 fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkConsistency( sdb, csName14885, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName14885, clName,
+                fullIndexName );
         FullTextDBUtils.dropFullTextIndex( this.cl, fullIndexName );
         FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
     }

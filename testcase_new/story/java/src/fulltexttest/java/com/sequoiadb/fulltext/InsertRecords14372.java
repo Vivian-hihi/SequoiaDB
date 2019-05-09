@@ -59,12 +59,14 @@ public class InsertRecords14372 extends SdbTestBase {
         this.insertData( FullTextUtils.INSERT_NUMS );// insert >128M
         FullTextUtils.checkFullSyncToES( esClient, sdb, SdbTestBase.csName,
                 this.clName, this.fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                this.fullIndexName );
         this.insertData( FullTextUtils.INSERT_NUMS ); // insert again
         FullTextUtils.checkFullSyncToES( esClient, sdb, SdbTestBase.csName,
                 this.clName, this.fullIndexName,
                 FullTextUtils.INSERT_NUMS * 2 );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                this.fullIndexName );
     }
 
     @AfterClass

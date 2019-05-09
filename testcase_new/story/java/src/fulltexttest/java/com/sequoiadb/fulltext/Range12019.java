@@ -102,7 +102,8 @@ public class Range12019 extends SdbTestBase {
         // check consistency
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {

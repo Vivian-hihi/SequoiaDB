@@ -110,7 +110,8 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
         // check consistency
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, ( int ) cl.getCount() );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
 
         // last time drop index
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );

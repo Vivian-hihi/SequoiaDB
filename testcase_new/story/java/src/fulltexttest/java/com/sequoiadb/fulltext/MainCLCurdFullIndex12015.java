@@ -105,20 +105,20 @@ public class MainCLCurdFullIndex12015 extends SdbTestBase {
         insertData( maincl, FullTextUtils.INSERT_NUMS );
         FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
                 mainCLName, textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkMainCLConsistency( sdb, csName + "." + mainCLName );
+        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
 
         // update, should change cl count
         update( maincl );
         insertData( maincl, 10000 );
         FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
                 mainCLName, textIndexName, FullTextUtils.INSERT_NUMS + 10000 );
-        FullTextUtils.checkMainCLConsistency( sdb, csName + "." + mainCLName );
+        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
 
         // delete
         remove( maincl );
         FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
                 mainCLName, textIndexName, ( int ) maincl.getCount() );
-        FullTextUtils.checkMainCLConsistency( sdb, csName + "." + mainCLName );
+        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
 
         System.out.println(
                 "check fulltext of maincl shardingkey and non-shardingkey success!" );

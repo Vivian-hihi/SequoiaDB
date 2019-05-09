@@ -69,7 +69,8 @@ public class RangeTableIndex11989 extends SdbTestBase {
                 false, false );
         FullTextUtils.checkFullSyncToES( esClient, sdb, SdbTestBase.csName,
                 this.clName, this.fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                this.fullIndexName );
         List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
                 SdbTestBase.csName, this.clName, this.fullIndexName );
         FullTextDBUtils.dropFullTextIndex( cl, fullIndexName );

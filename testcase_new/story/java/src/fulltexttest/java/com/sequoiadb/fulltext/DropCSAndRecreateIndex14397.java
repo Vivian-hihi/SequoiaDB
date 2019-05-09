@@ -87,7 +87,8 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase {
 
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
 
         FullTextDBUtils.dropCollectionSpace( sdb, csName );
 
@@ -105,7 +106,8 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase {
         // check consistencty
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, newInsertNums );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
 
         System.out.println(
                 "----------success check drop cs after index clear in ES----------" );
@@ -123,7 +125,8 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase {
 
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
 
         FullTextDBUtils.dropCollectionSpace( sdb, csName );
 
@@ -138,7 +141,8 @@ public class DropCSAndRecreateIndex14397 extends SdbTestBase {
         // check result after index recreate
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, newInsertNums );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
 
         System.out.println(
                 "----------success check drop cs while index processing to clear in ES----------" );

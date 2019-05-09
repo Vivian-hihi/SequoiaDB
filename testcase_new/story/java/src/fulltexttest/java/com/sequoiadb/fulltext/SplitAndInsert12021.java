@@ -70,7 +70,8 @@ public class SplitAndInsert12021 extends SdbTestBase {
         insertData();
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 fullTextIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                fullTextIndexName );
     }
 
     @AfterClass

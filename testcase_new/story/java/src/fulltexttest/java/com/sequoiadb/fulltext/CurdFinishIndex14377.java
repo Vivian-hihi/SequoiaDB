@@ -87,7 +87,8 @@ public class CurdFinishIndex14377 extends SdbTestBase {
         // check consistency before insert/update/delete
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
 
         // insert/update/delete
         insertData( cl, 100000 );
@@ -97,7 +98,8 @@ public class CurdFinishIndex14377 extends SdbTestBase {
         // check consistency after insert/update/delete
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, ( int ) cl.getCount() );
-        FullTextUtils.checkConsistency( sdb, csName, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {

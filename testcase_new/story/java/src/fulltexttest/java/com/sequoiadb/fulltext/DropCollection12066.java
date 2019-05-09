@@ -81,7 +81,8 @@ public class DropCollection12066 extends SdbTestBase {
         cursor.close();
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName12066, clName,
                 fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkConsistency( sdb, csName12066, clName );
+        FullTextUtils.checkDataConsistency( sdb, csName12066, clName,
+                fullIndexName );
         FullTextDBUtils.dropCollection( this.cs, clName );
         FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
     }

@@ -55,7 +55,7 @@ public class FullText18260 extends SdbTestBase {
                 false);
         insertData(cl, FullTextUtils.INSERT_NUMS);
         List<String> esIndexNames = FullTextDBUtils.getESIndexNames(sdb, csName, CLNAME, fullIdxName);
-        String cappedCLName = FullTextDBUtils.getCappedCLName(cl, fullIdxName);
+        String cappedCLName = FullTextDBUtils.getCappedName(sdb, csName, CLNAME, fullIdxName);
         Assert.assertTrue(FullTextESUtils.isExistIndexInES(esClient, esIndexNames.get(0)));
         sdb.getCollectionSpace(csName).dropCollection(CLNAME);
         FullTextUtils.checkIndexNotExistInES(esClient, esIndexNames);

@@ -112,7 +112,7 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase {
 
         FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
                 mainCLName, textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkMainCLConsistency( sdb, csName + "." + mainCLName );
+        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
         System.out.println(
                 "check fulltext of maincl shardingkey success when datas in one group!" );
 
@@ -131,7 +131,7 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase {
 
         FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
                 mainCLName, textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkMainCLConsistency( sdb, csName + "." + mainCLName );
+        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
         System.out.println(
                 "check fulltext of subcl shardingkey and non-shardingkey success when datas in one group!" );
 
@@ -149,7 +149,7 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase {
 
         FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
                 mainCLName, textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkMainCLConsistency( sdb, csName + "." + mainCLName );
+        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
         System.out.println(
                 "check fulltext of maincl shardingkey success when datas in more groups!" );
 
@@ -168,7 +168,7 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase {
 
         FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
                 mainCLName, textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkMainCLConsistency( sdb, csName + "." + mainCLName );
+        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
         System.out.println(
                 "check fulltext of subcl shardingkey and non-shardingkey success when datas in more groups!" );
 
