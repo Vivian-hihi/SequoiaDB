@@ -133,10 +133,10 @@ public class FullTextDBUtils {
     }
 
     /**
-     * 获取原始集合对应的数组名，原始集合可以是普通表、分区表
+     * 获取原始集合对应的数据组，原始集合可以是普通表、分区表
      * @param db
      * @param clFullName
-     * @return List<String> 返回所有数组名
+     * @return List<String> 返回所有数据组
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
