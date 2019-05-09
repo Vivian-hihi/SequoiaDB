@@ -88,7 +88,7 @@ namespace engine
          }
          OSS_INLINE void setSubCLFlag ()
          {
-            _subCLOFMainCL = true ;
+            _subCLOFMainCL = TRUE ;
          }
 
       protected :
@@ -216,9 +216,19 @@ namespace engine
                                     INT16 w ) ;
 
       protected :
-         ossPoolList< UINT64 >     _postTasks ;
-         BOOLEAN                 _subCLOFMainCL ;
+         // Helper functions
+         INT32 _checkAutoSplit ( const clsCatalogSet & cataSet,
+                                 const rtnCLShardingArgument & argument,
+                                 _pmdEDUCB * cb,
+                                 catCtxLockMgr & lockMgr ) ;
+
+      protected :
+         ossPoolList< UINT64 >   _postTasks ;
+
+         BOOLEAN                 _postAutoSplit ;
          rtnCLShardingArgument   _rollbackShardArgument ;
+
+         BOOLEAN                 _subCLOFMainCL ;
          autoIncFieldsList       _rollbackAutoIncFields ;
    } ;
 

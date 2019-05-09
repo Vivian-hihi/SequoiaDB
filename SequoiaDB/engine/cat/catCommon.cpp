@@ -931,6 +931,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info[%s], "
                       "rc: %d", domainObj.toString().c_str(), rc ) ;
       }
+      else
+      {
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s] from collection "
+                      "space [%s], rc: %d", CAT_DOMAIN_NAME, szSpace, rc ) ;
+      }
 
    done :
       PD_TRACE_EXITRC( SDB_CATGETSPLITGROUPS, rc ) ;

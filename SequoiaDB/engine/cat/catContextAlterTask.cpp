@@ -65,7 +65,8 @@ namespace engine
    _catCtxAlterCLTask::_catCtxAlterCLTask ( const string & collection,
                                             const rtnAlterTask * task )
    : _catCtxAlterTask( collection, task ),
-     _subCLOFMainCL(false)
+     _postAutoSplit( FALSE ),
+     _subCLOFMainCL( FALSE )
    {
    }
 
@@ -427,33 +428,9 @@ namespace engine
                    "Failed to [%s]: Could not enable sharding in main-collection",
                    _task->getActionName() ) ;
 
-         if ( argument.testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) &&
-              argument.isAutoSplit() )
-         {
-            // Should have sharding keys for auto split
-            PD_CHECK( !cataSet.getShardingKey().isEmpty() ||
-                      argument.testArgumentMask( UTIL_CL_SHDKEY_FIELD ),
-                      SDB_NO_SHARDINGKEY, error, PDERROR,
-                      "Failed to [%s]: should have sharding key",
-                      _task->getActionName() ) ;
-
-            // Should be hash sharding for auto split
-            if ( argument.testArgumentMask( UTIL_CL_SHDTYPE_FIELD ) )
-            {
-               // Altering to hash sharding
-               PD_CHECK( argument.isHashSharding(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                         "Failed to [%s]: enable AutoSplit should be hash sharding",
-                         _task->getActionName() ) ;
-            }
-            else
-            {
-               // Already hash sharding
-               PD_CHECK( cataSet.isHashSharding() || argument.isHashSharding(),
-                         SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                         "Failed to [%s]: enable AutoSplit should be hash sharding",
-                         _task->getActionName() ) ;
-            }
-         }
+         rc = _checkAutoSplit( cataSet, argument, cb, lockMgr ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to [%s]: Failed to check AutoSplit, "
+                      "rc: %d", _task->getActionName(), rc ) ;
 
          // Could be only executed on one group
          PD_CHECK( 1 == cataSet.groupCount(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
@@ -1633,14 +1610,13 @@ namespace engine
          }
          case RTN_ALTER_CL_ENABLE_SHARDING :
          {
-            if ( _task->testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) )
+            if ( _postAutoSplit )
             {
                const rtnCLEnableShardingTask * localTask =
                            dynamic_cast< const rtnCLEnableShardingTask * >( _task ) ;
                PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR, "Failed to get task" ) ;
 
-               if ( localTask->getShardingArgument().isAutoSplit() &&
-                    cataSet.groupCount() == 1 &&
+               if ( cataSet.groupCount() == 1 &&
                     cataSet.isHashSharding() )
                {
                   rc = _buildAutoHashSplit( cataSet, cb, pDmsCB, pDpsCB, w ) ;
@@ -1659,10 +1635,9 @@ namespace engine
                         dynamic_cast< const rtnCLSetAttributeTask * >( _task ) ;
             PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
                       "Failed to get task" ) ;
-            if ( _task->testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) )
+            if ( _postAutoSplit )
             {
-               if ( localTask->getShardingArgument().isAutoSplit() &&
-                    cataSet.groupCount() == 1 &&
+               if ( cataSet.groupCount() == 1 &&
                     cataSet.isHashSharding() )
                {
                   rc = _buildAutoHashSplit( cataSet, cb, pDmsCB, pDpsCB, w ) ;
@@ -1871,6 +1846,120 @@ namespace engine
 
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCLTASK__CHKAUTOSPLIT, "_catCtxAlterCLTask::_checkAutoSplit" )
+   INT32 _catCtxAlterCLTask::_checkAutoSplit ( const clsCatalogSet & cataSet,
+                                               const rtnCLShardingArgument & argument,
+                                               _pmdEDUCB * cb,
+                                               catCtxLockMgr & lockMgr )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATCTXALTERCLTASK__CHKAUTOSPLIT ) ;
+
+      BOOLEAN autoSplit = FALSE ;
+
+      if ( argument.testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) )
+      {
+         // AutoSplit is given explicitly
+         autoSplit = argument.isAutoSplit() ;
+      }
+      else if ( !cataSet.isSharding() && argument.isHashSharding() )
+      {
+         // AutoSplit is given explicitly and
+         // 1. collection is NOT sharding before
+         // 2. collection is NOT range sharding after
+         // then, check with domain, use the AutoSplit of domain setting
+
+         const CHAR * collection = cataSet.name() ;
+         CHAR szSpace [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ]  = {0} ;
+         CHAR szCollection [ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
+
+         BSONObj csObj ;
+         BOOLEAN csExist = FALSE ;
+
+         rc = rtnResolveCollectionName( collection, ossStrlen( collection ),
+                                        szSpace, DMS_COLLECTION_SPACE_NAME_SZ,
+                                        szCollection, DMS_COLLECTION_NAME_SZ ) ;
+         PD_RC_CHECK( rc, PDERROR, "Resolve collection name[%s] failed, rc: %d",
+                      collection, rc ) ;
+
+         rc = catCheckSpaceExist( szSpace, csExist, csObj, cb ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Check collection space[%s] exist failed, "
+                      "rc: %d", szSpace, rc ) ;
+         PD_CHECK( csExist, SDB_DMS_CS_NOTEXIST, error, PDWARNING,
+                   "Collection space[%s] is not exist", szSpace ) ;
+
+         // get domain name
+         const CHAR * domainName = NULL ;
+         rc = rtnGetStringElement( csObj, CAT_DOMAIN_NAME, &domainName ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            // SYSTEM domain is not auto split
+            autoSplit = FALSE ;
+            rc = SDB_OK ;
+         }
+         else if ( SDB_OK == rc )
+         {
+            // Check domain exist
+            BSONObj domainObj ;
+
+            rc = catGetAndLockDomain( domainName, domainObj, cb, &lockMgr,
+                                      SHARED ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get domain[%s] failed, rc: %d",
+                         domainName, rc ) ;
+
+            BSONElement split = domainObj.getField( CAT_DOMAIN_AUTO_SPLIT ) ;
+            if ( Bool == split.type() )
+            {
+               autoSplit = split.Bool() ;
+            }
+         }
+         else
+         {
+            PD_RC_CHECK( rc, PDERROR, "Failed to get field [%s] from collection "
+                         "space [%s], rc: %d", CAT_DOMAIN_NAME, szSpace, rc ) ;
+         }
+      }
+
+      if ( autoSplit )
+      {
+         // Should have sharding keys for auto split
+         PD_CHECK( !cataSet.getShardingKey().isEmpty() ||
+                   argument.testArgumentMask( UTIL_CL_SHDKEY_FIELD ),
+                   SDB_NO_SHARDINGKEY, error, PDERROR,
+                   "Failed to [%s]: should have sharding key",
+                   _task->getActionName() ) ;
+
+         // Should be hash sharding for auto split
+         if ( argument.testArgumentMask( UTIL_CL_SHDTYPE_FIELD ) )
+         {
+            // Altering to hash sharding
+            PD_CHECK( argument.isHashSharding(), SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                      "Failed to [%s]: enable AutoSplit should be hash sharding",
+                      _task->getActionName() ) ;
+         }
+         else
+         {
+            // Already hash sharding
+            PD_CHECK( cataSet.isHashSharding() || argument.isHashSharding(),
+                      SDB_OPTION_NOT_SUPPORT, error, PDERROR,
+                      "Failed to [%s]: enable AutoSplit should be hash sharding",
+                      _task->getActionName() ) ;
+         }
+
+         PD_LOG( PDDEBUG, "[%s] on collection [%s]: AutoSplit is set to TRUE",
+                 _task->getActionName(), cataSet.name() ) ;
+      }
+
+      _postAutoSplit = autoSplit ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATCTXALTERCLTASK__CHKAUTOSPLIT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXSEQUENCETASK_GETCLUNIQUEID, "_catCtxSequenceTask::getCLUniqueID" )
    INT32 _catCtxSequenceTask::getCLUniqueID(_pmdEDUCB *cb, utilCLUniqueID *clUniqueID)
