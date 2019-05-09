@@ -25,8 +25,19 @@ import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
 
+/**
+ * ES的公共类，涉及ES内部操作的方法放于此类
+ */
 public class FullTextESUtils {
 
+    /**
+     * 获取elasticsearch的连接
+     * @param esHostName
+     * @param port
+     * @return Client 返回连接
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
+     */
     @SuppressWarnings("resource")
     public static Client createTransportClient( String esHostName, int port ) {
         System.setProperty( "es.set.netty.runtime.available.processors",
@@ -44,8 +55,12 @@ public class FullTextESUtils {
     }
 
     /**
+     * 获取elasticsearch端的所有全文索引记录
      * @param esClient
      * @param esIndexName
+     * @return List< BSONObject > 返回记录
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static List< BSONObject > getAllRecordsFromES( Client esClient,
             String esIndexName ) {
@@ -80,8 +95,12 @@ public class FullTextESUtils {
     }
 
     /**
+     * 获取elasticsearch端全文索引的总记录数
      * @param esClient
      * @param esIndexName
+     * @return long 返回记录总数
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static long getCountFromES( Client esClient, String esIndexName ) {
         long count = 0;
@@ -94,8 +113,12 @@ public class FullTextESUtils {
     }
 
     /**
+     * 获取elasticsearch端的SDBCOMMITID值
      * @param esClient
      * @param esIndexName
+     * @return int 返回SDBCOMMITID值
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static int getCommitIDFromES( Client esClient, String esIndexName ) {
         int commitID = -1;
@@ -113,8 +136,12 @@ public class FullTextESUtils {
     }
 
     /**
+     * 判断elasticsearch端的全文索引名是否存在，用于检查在创建阶段索引名是否映射到elasticsearch端
      * @param esClient
      * @param esIndexName
+     * @return boolean 
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static boolean isExistIndexInES( Client esClient,
             String esIndexName ) {
@@ -154,8 +181,12 @@ public class FullTextESUtils {
     }
 
     /**
+     * 判断elasticsearch端的全文索引名是否被删除，用于清理阶段作环境检查
      * @param esClient
      * @param esIndexName
+     * @return boolean 
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static boolean isIndexDeletedInES( Client esClient,
             String esIndexName ) {
@@ -188,7 +219,11 @@ public class FullTextESUtils {
     }
 
     /**
+     * 判断elasticsearch端的所有全文索引数据是否已被删除
      * @param esClient
+     * @return boolean 
+     * @Author liuxiaoxuan
+     * @Date 2018-12-20
      */
     public static boolean isDeleteAllIndices( Client esClient ) {
         boolean isSuccess = false;
@@ -200,13 +235,15 @@ public class FullTextESUtils {
     }
 
     /**
+     * 打印elasticsearch端的所有全文索引名
      * @param esClient
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2018-12-20
      */
-    public static void getAllIndices( Client esClient ) {
+    public static void printAllIndices( Client esClient ) {
         ActionFuture< IndicesStatsResponse > isr = esClient.admin().indices()
                 .stats( new IndicesStatsRequest().all() );
-        IndicesAdminClient indicesAdminClient = esClient.admin().indices();
-        Map< String, IndexStats > indexStatsMap = isr.actionGet().getIndices();
         Set< String > sets = isr.actionGet().getIndices().keySet();
         System.out.println( "get all indieces in ES: " );
         for ( String set : sets ) {
@@ -215,11 +252,15 @@ public class FullTextESUtils {
     }
 
     /**
+     * 清理elasticsearch端的所有全文索引
      * @param esClient
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2018-12-20
      */
     public static void clearAllIndicesInES( Client esClient ) {
         if ( !FullTextESUtils.isDeleteAllIndices( esClient ) ) {
-            FullTextESUtils.getAllIndices( esClient );
+            FullTextESUtils.printAllIndices( esClient );
         }
     }
 }

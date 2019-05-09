@@ -18,11 +18,18 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 
+/**
+ * DB的公共类，涉及DB内部操作的方法放于此类
+ */
 public class FullTextDBUtils {
 
     /**
+     * 获取全文索引对应的固定集合名
      * @param cl
      * @param textIndexName
+     * @return String 返回固定集合名
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static String getCappedCLName( DBCollection cl, String textIndexName ) {
         String cappedCLName = "";
@@ -33,10 +40,14 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 获取原始集合下的所有固定集合对象，原始集合可以是普通表、分区表
      * @param db
      * @param csName
      * @param clName
      * @param textIndexName
+     * @return List<DBCollection> 返回所有固定集合对象
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static List<DBCollection> getCappedCLs( Sequoiadb db, String csName, String clName, String textIndexName ) {
         DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
@@ -53,10 +64,14 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 获取原始集合下的所有全文索引名，原始集合可以是普通表、分区表
      * @param db
      * @param csName
      * @param clName
      * @param textIndexName
+     * @return List<String> 返回所有全文索引名
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static List<String> getESIndexNames( Sequoiadb db, String csName, String clName, String textIndexName ) {
         DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
@@ -75,7 +90,11 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 获取固定集合的最大LogicalID
      * @param cappedCL
+     * @return int 返回最大_id值
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static int getLastLid( DBCollection cappedCL ) {
         long lastLogicalID = -1;
@@ -90,6 +109,7 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 获取原始集合下符合匹配条件的记录
      * @param cl
      * @param matcher
      * @param selector
@@ -97,6 +117,9 @@ public class FullTextDBUtils {
      * @param hint
      * @param skip
      * @param limit
+     * @return List<BSONObject> 返回记录
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static List<BSONObject> getRecordsFromCL( DBCollection cl, BSONObject matcher, BSONObject selector,
             BSONObject orderBy, BSONObject hint, long skip, long limit ) {
@@ -110,8 +133,12 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 获取原始集合对应的数组名，原始集合可以是普通表、分区表
      * @param db
      * @param clFullName
+     * @return List<String> 返回所有数组名
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static List<String> getCLGroups( Sequoiadb db, String clFullName ) {
         if ( CommLib.isStandAlone( db ) ) {
@@ -136,8 +163,12 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 获取主表下所有子表的表名
      * @param db
      * @param mainCLFullName
+     * @return List<String> 返回所有子表名
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static List<String> getSubCLNames( Sequoiadb db, String mainCLFullName ) {
         if ( CommLib.isStandAlone( db ) ) {
@@ -159,10 +190,12 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 删除全文索引，循环规避-147。该问题在bug#SEQUOIADBMAINSTAREM-3778跟踪，待问题解决后此方法可去除
      * @param cl
      * @param textIndexName
-     *            bug#SEQUOIADBMAINSTAREM-3778：drop full index will cause error
-     *            -147 sometimes
+     * @return void 
+     * @Author liuxiaoxuan
+     * @Date 2018-11-26         
      */
     public static void dropFullTextIndex( DBCollection cl, String textIndexName ) {
         int doTimes = 0;
@@ -192,10 +225,12 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 删除原始集合空间，循环规避-147。该问题在bug#SEQUOIADBMAINSTAREM-3778跟踪，待问题解决后此方法可去除
      * @param db
      * @param csName
-     *            bug#SEQUOIADBMAINSTAREM-3778：drop cs contains full index will
-     *            cause error -147 sometimes
+     * @return void 
+     * @Author liuxiaoxuan
+     * @Date 2018-11-26         
      */
     public static void dropCollectionSpace( Sequoiadb db, String csName ) {
         int doTimes = 0;
@@ -226,10 +261,12 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 删除原始集合，循环规避-147。该问题在bug#SEQUOIADBMAINSTAREM-3778跟踪，待问题解决后此方法可去除
      * @param cs
      * @param clName
-     *            bug#SEQUOIADBMAINSTAREM-3778：drop cl contains full index will
-     *            cause error -147 sometimes
+     * @return void 
+     * @Author liuxiaoxuan
+     * @Date 2018-11-26      
      */
     public static void dropCollection( CollectionSpace cs, String clName ) {
         int doTimes = 0;
@@ -260,7 +297,11 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 比较两个字符串的大小并重新排序
      * @param strs
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15      
      */
     public static void compare( List<String> strs ) {
         Collections.sort( strs, new Comparator() {
@@ -276,6 +317,14 @@ public class FullTextDBUtils {
         } );
     }
 
+    /**
+     * 判断是否主表
+     * @param sdb
+     * @param clFullName
+     * @return boolean 
+     * @Author yinzhen
+     * @Date 2018-12-21      
+     */
     public static boolean isMainCL( Sequoiadb sdb, String clFullName ) {
         DBCursor cursor = sdb.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + clFullName + "'}", null, null );
         Object isMainCL = cursor.getNext().get( "IsMainCL" );
@@ -287,11 +336,14 @@ public class FullTextDBUtils {
     }
 
     /**
-     * record example: {a: "clname0", b: "16 byte str...", c: "16 byte str...",
+     * 插入记录，如: {a: "clname0", b: "16 byte str...", c: "16 byte str...",
      * d: "32 byte str...", e: "32 byte str...", f: "128 byte str..."}
-     * 
+     *
      * @param cl
      * @param insertNum
+     * @return void
+     * @Author luweikang
+     * @Date 2019-05-08   
      */
     public static void insertData( DBCollection cl, int insertNum ) {
         String clName = cl.getName();

@@ -13,17 +13,28 @@ import com.sequoiadb.testcommon.CommLib;
 import org.bson.BSONObject;
 import org.elasticsearch.client.*;
 
+/**
+ * 全文索引的公共类，检查方法、其他与DB端和ES内部操作无关的方法均可放于此类
+ */
 public class FullTextUtils {
 
+    // 插入记录数，所有用例公用此变量
     public static final int INSERT_NUMS = 200000; // insert 20w datas
 
     /**
+     * 检查DB端中普通表或分区表下的全文索引数据是否完全同步到ES端，总共分三层检查：
+     *                                           1. 先检查文索引名是否都映射到ES端 
+     *                                           2. 再检查ES端全文索引的总记录数是否正确
+     *                                           3. 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致
      * @param esClient
      * @param db
      * @param csName
      * @param clName
      * @param textIndexName
      * @param expectCount
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static void checkFullSyncToES( Client esClient, Sequoiadb db,
             String csName, String clName, String textIndexName,
@@ -47,12 +58,19 @@ public class FullTextUtils {
     }
 
     /**
+     * 检查DB端中主子表下的全文索引数据是否完全同步到ES端，总共分三层检查：
+     *                                           1. 先检查子表的全文索引名是否都映射到ES端 
+     *                                           2. 再检查ES端子表的全文索引总记录数是否正确
+     *                                           3. 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致
      * @param esClient
      * @param db
      * @param csName
      * @param mainCLName
      * @param textIndexName
      * @param expectCount
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static void checkMainCLFullSyncToES( Client esClient, Sequoiadb db,
             String csName, String mainCLName, String textIndexName,
@@ -90,8 +108,12 @@ public class FullTextUtils {
     }
 
     /**
+     * 检查ES端全文索引是否已被清理
      * @param esClient
      * @param esIndexNames
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static void checkIndexNotExistInES( Client esClient,
             List< String > esIndexNames ) {
@@ -105,9 +127,14 @@ public class FullTextUtils {
     }
 
     /**
+     * 检查ES端全文索引总记录数是否正确，
+     * 若原始集合中包含多个全文索引，则总记录数为所有全文索引记录数的总和
      * @param esClient
      * @param esIndexNames
      * @param expectCount
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static void checkCountInES( Client esClient,
             List< String > esIndexNames, int expectCount ) {
@@ -150,9 +177,14 @@ public class FullTextUtils {
     }
 
     /**
+     * 检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致，
+     * 一个全文索引对应一个固定集合
      * @param esClient
      * @param esIndexNames
      * @param cappedCLs
+     * @return void
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static void checkLidInES( Client esClient,
             List< String > esIndexNames, List< DBCollection > cappedCLs ) {
@@ -205,7 +237,11 @@ public class FullTextUtils {
     }
 
     /**
+     * 数组元素去重
      * @param arrayList
+     * @return List< String >
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
      */
     public static List< String > removeDuplicateItems(
             List< String > arrayList ) {
@@ -216,7 +252,11 @@ public class FullTextUtils {
     }
 
     /**
+     * 获取随机字符串
      * @param length
+     * @return String
+     * @Author liuxiaoxuan
+     * @Date 2018-12-20
      */
     public static String getRandomString( int length ) {
         String base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()!";
@@ -229,6 +269,15 @@ public class FullTextUtils {
         return sb.toString();
     }
 
+    /**
+     * 检查主备节点的普通表、分区表数据一致性
+     * @param sdb
+     * @param csName
+     * @param clName
+     * @return void
+     * @Author yinzhen
+     * @Date 2018-12-21
+     */
     public static void checkConsistency( Sequoiadb sdb, String csName,
             String clName ) {
         boolean isConsistency = false;
@@ -248,6 +297,14 @@ public class FullTextUtils {
         }
     }
 
+    /**
+     * 检查主备节点的主子表数据一致性
+     * @param sdb
+     * @param mainclFullName
+     * @return void
+     * @Author yinzhen
+     * @Date 2018-12-21
+     */
     public static void checkMainCLConsistency( Sequoiadb sdb,
             String mainclFullName ) {
         List< String > subclNames = FullTextDBUtils.getSubCLNames( sdb,
@@ -259,6 +316,15 @@ public class FullTextUtils {
         }
     }
 
+    /**
+     * 判断主备节点的集合数据是否一致
+     * @param nodes
+     * @param csName
+     * @param clName
+     * @return boolean
+     * @Author yinzhen
+     * @Date 2018-12-21
+     */
     public static boolean isConsistency( List< Node > nodes, String csName,
             String clName ) {
         boolean isConsistency = false;
@@ -286,6 +352,15 @@ public class FullTextUtils {
         return isConsistency;
     }
 
+    /**
+     * 判断主备节点的集合是否存在
+     * @param nodes
+     * @param csName
+     * @param clName
+     * @return boolean
+     * @Author yinzhen
+     * @Date 2019-04-13
+     */
     private static boolean isNodeCLExist(List<Node> nodes, String csName, String clName) {
         try {
             for (Node node : nodes) {
@@ -300,6 +375,15 @@ public class FullTextUtils {
         return true;
     }
     
+    /**
+     * 判断主备节点的集合数据是否一致
+     * @param nodes
+     * @param csName
+     * @param clName
+     * @return boolean
+     * @Author yinzhen
+     * @Date 2018-12-21
+     */
     public static boolean isNodeRecordsConsistency( List< Node > nodes,
             String csName, String clName ) {
         if ( nodes.size() == 1 ) {
@@ -334,6 +418,14 @@ public class FullTextUtils {
         return true;
     }
 
+    /**
+     * 判断主备节点的集合数据是否一致
+     * @param cl1Cursor
+     * @param cl2Cursor
+     * @return boolean
+     * @Author yinzhen
+     * @Date 2018-12-21
+     */
     public static boolean isCLRecordsConsistency( DBCursor cl1Cursor,
             DBCursor cl2Cursor ) {
         try {
