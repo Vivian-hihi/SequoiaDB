@@ -619,6 +619,12 @@ namespace engine
 
    void _rtnContextDelMainCL::_clean( _pmdEDUCB *cb )
    {
+      if ( _lockDms )
+      {
+         pmdGetKRCB()->getDMSCB()->writeDown( cb ) ;
+         _lockDms = FALSE ;
+      }
+
       SUBCL_CONTEXT_LIST::iterator iter = _subContextList.begin();
       while( iter != _subContextList.end() )
       {
@@ -732,14 +738,10 @@ namespace engine
                                       DPS_LOG_INVALIDCATA_TYPE_CATA |
                                       DPS_LOG_INVALIDCATA_TYPE_PLAN ) ;
 
+      _clean( cb ) ;
       rc = SDB_DMS_EOC ;
 
    done:
-      if ( _lockDms )
-      {
-         pmdGetKRCB()->getDMSCB()->writeDown( cb ) ;
-         _lockDms = FALSE ;
-      }
       return rc ;
    error:
       goto done ;
