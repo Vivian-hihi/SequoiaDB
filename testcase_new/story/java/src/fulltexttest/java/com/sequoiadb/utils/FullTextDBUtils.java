@@ -25,6 +25,7 @@ public class FullTextDBUtils {
 
     /**
      * 获取全文索引对应的固定集合名
+     * 
      * @param cl
      * @param textIndexName
      * @return String 返回固定集合名
@@ -41,6 +42,7 @@ public class FullTextDBUtils {
 
     /**
      * 获取原始集合下的所有固定集合对象，原始集合可以是普通表、分区表
+     * 
      * @param db
      * @param csName
      * @param clName
@@ -65,6 +67,7 @@ public class FullTextDBUtils {
 
     /**
      * 获取原始集合下的所有全文索引名，原始集合可以是普通表、分区表
+     * 
      * @param db
      * @param csName
      * @param clName
@@ -91,6 +94,7 @@ public class FullTextDBUtils {
 
     /**
      * 获取固定集合的最大LogicalID
+     * 
      * @param cappedCL
      * @return int 返回最大_id值
      * @Author liuxiaoxuan
@@ -110,6 +114,7 @@ public class FullTextDBUtils {
 
     /**
      * 获取原始集合下符合匹配条件的记录
+     * 
      * @param cl
      * @param matcher
      * @param selector
@@ -134,6 +139,7 @@ public class FullTextDBUtils {
 
     /**
      * 获取原始集合对应的数据组，原始集合可以是普通表、分区表
+     * 
      * @param db
      * @param clFullName
      * @return List<String> 返回所有数据组
@@ -164,6 +170,7 @@ public class FullTextDBUtils {
 
     /**
      * 获取主表下所有子表的表名
+     * 
      * @param db
      * @param mainCLFullName
      * @return List<String> 返回所有子表名
@@ -191,11 +198,12 @@ public class FullTextDBUtils {
 
     /**
      * 删除全文索引，循环规避-147。该问题在bug#SEQUOIADBMAINSTAREM-3778跟踪，待问题解决后此方法可去除
+     * 
      * @param cl
      * @param textIndexName
-     * @return void 
+     * @return void
      * @Author liuxiaoxuan
-     * @Date 2018-11-26         
+     * @Date 2018-11-26
      */
     public static void dropFullTextIndex( DBCollection cl, String textIndexName ) {
         int doTimes = 0;
@@ -226,11 +234,12 @@ public class FullTextDBUtils {
 
     /**
      * 删除原始集合空间，循环规避-147。该问题在bug#SEQUOIADBMAINSTAREM-3778跟踪，待问题解决后此方法可去除
+     * 
      * @param db
      * @param csName
-     * @return void 
+     * @return void
      * @Author liuxiaoxuan
-     * @Date 2018-11-26         
+     * @Date 2018-11-26
      */
     public static void dropCollectionSpace( Sequoiadb db, String csName ) {
         int doTimes = 0;
@@ -262,11 +271,12 @@ public class FullTextDBUtils {
 
     /**
      * 删除原始集合，循环规避-147。该问题在bug#SEQUOIADBMAINSTAREM-3778跟踪，待问题解决后此方法可去除
+     * 
      * @param cs
      * @param clName
-     * @return void 
+     * @return void
      * @Author liuxiaoxuan
-     * @Date 2018-11-26      
+     * @Date 2018-11-26
      */
     public static void dropCollection( CollectionSpace cs, String clName ) {
         int doTimes = 0;
@@ -298,13 +308,14 @@ public class FullTextDBUtils {
 
     /**
      * 比较两个字符串的大小并重新排序
+     * 
      * @param strs
      * @return void
      * @Author liuxiaoxuan
-     * @Date 2018-11-15      
+     * @Date 2018-11-15
      */
     public static void compare( List<String> strs ) {
-        Collections.sort( strs, new Comparator() {
+        Collections.sort( strs, new Comparator<Object>() {
             @Override
             public int compare( Object o1, Object o2 ) {
                 String str1 = (String) o1;
@@ -319,11 +330,12 @@ public class FullTextDBUtils {
 
     /**
      * 判断是否主表
+     * 
      * @param sdb
      * @param clFullName
-     * @return boolean 
+     * @return boolean
      * @Author yinzhen
-     * @Date 2018-12-21      
+     * @Date 2018-12-21
      */
     public static boolean isMainCL( Sequoiadb sdb, String clFullName ) {
         DBCursor cursor = sdb.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + clFullName + "'}", null, null );
@@ -336,31 +348,47 @@ public class FullTextDBUtils {
     }
 
     /**
-     * 插入记录，如: {a: "clname0", b: "16 byte str...", c: "16 byte str...",
-     * d: "32 byte str...", e: "32 byte str...", f: "128 byte str..."}
+     * 默认插入20万条记录，如: {a: 0, b: "clname0", c: "32 byte str...", d:
+     * "64 byte str...", e: "128 byte str..."}
+     *
+     * @param cl
+     * @return List<BSONObject> 返回插入的记录集
+     * @Author luweikang
+     * @Date 2019-05-08
+     */
+    public static List<BSONObject> insertData( DBCollection cl ) {
+        return insertData( cl, 200000 );
+    }
+
+    /**
+     * 指定记录数插入记录，如: {a: 0, b: "clname0", c: "32 byte str...", d:
+     * "64 byte str...", e: "128 byte str..."}
      *
      * @param cl
      * @param insertNum
-     * @return void
+     * @return List<BSONObject> 返回插入的记录集
      * @Author luweikang
-     * @Date 2019-05-08   
+     * @Date 2019-05-08
      */
-    public static void insertData( DBCollection cl, int insertNum ) {
+    public static List<BSONObject> insertData( DBCollection cl, int insertNum ) {
         String clName = cl.getName();
-        List<BSONObject> insertObjs = new ArrayList<>();
+        List<BSONObject> insertObjs = new ArrayList<BSONObject>();
+        List<BSONObject> recordList = new ArrayList<BSONObject>();
         int insertTimes = 100;
         int insertRecordNum = insertNum / insertTimes;
+        String strC = FullTextUtils.getRandomString( 32 );
+        String strD = FullTextUtils.getRandomString( 64 );
+        String strE = FullTextUtils.getRandomString( 128 );
         for ( int i = 0; i < insertTimes; i++ ) {
             for ( int j = 0; j < insertRecordNum; j++ ) {
-                insertObjs.add( (BSONObject) JSON.parse(
-                        "{a: '" + clName + ( i * insertRecordNum + j ) + "', b: '" + FullTextUtils.getRandomString( 16 )
-                                + "', c: '" + FullTextUtils.getRandomString( 16 ) + "', d: '"
-                                + FullTextUtils.getRandomString( 32 ) + "', e: '" + FullTextUtils.getRandomString( 32 )
-                                + "', f: '" + FullTextUtils.getRandomString( 128 ) + "'}" ) );
+                int recordNum = i * insertRecordNum + j;
+                insertObjs.add( (BSONObject) JSON.parse( "{a: " + recordNum + ", b: '" + clName + recordNum + "', c: '"
+                        + strC + "', d: '" + strD + "', e: '" + strE + "'}" ) );
             }
             cl.insert( insertObjs, 0 );
+            recordList.addAll( insertObjs );
             insertObjs.clear();
         }
-
+        return recordList;
     }
 }
