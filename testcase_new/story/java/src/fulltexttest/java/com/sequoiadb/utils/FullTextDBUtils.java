@@ -391,4 +391,58 @@ public class FullTextDBUtils {
         }
         return recordList;
     }
+
+    /**
+     * 判断固定集合空间是否存在
+     * 
+     * @param db
+     * @param cappedCSName
+     * @param rgNames
+     * @return 如果固定集合空间存在则返回true, 否则返回false
+     * @throws InterruptedException
+     */
+    public static boolean isCappedCSExist( Sequoiadb db, String cappedCSName, List<String> rgNames )
+            throws InterruptedException {
+        boolean cappedCSExist = false;
+        for ( String rgName : rgNames ) {
+            if ( isCappedCSExist( db, cappedCSName, rgName ) ) {
+                cappedCSExist = true;
+                break;
+            }
+        }
+        return cappedCSExist;
+    }
+
+    /**
+     * 判断固定集合空间是否存在
+     * 
+     * @param db
+     * @param cappedCSName
+     * @param rgName
+     * @return 如果固定集合空间存在则返回true, 否则返回false
+     * @throws InterruptedException
+     */
+    public static boolean isCappedCSExist( Sequoiadb db, String cappedCSName, String rgName )
+            throws InterruptedException {
+        boolean cappedCSExist = true;
+        List<String> nodeList = CommLib.getNodeAddress( db, rgName );
+        for ( String nodeAddress : nodeList ) {
+            cappedCSExist = true;
+            try ( Sequoiadb nodeConn = new Sequoiadb( nodeAddress, "", "" ) ) {
+                for ( int i = 0; i < 600; i++ ) {
+                    if ( !nodeConn.isCollectionSpaceExist( cappedCSName ) ) {
+                        cappedCSExist = false;
+                        break;
+                    }
+                    Thread.sleep( 1000 );
+                }
+            }
+            if ( cappedCSExist ) {
+                break;
+            }
+        }
+        db.isCollectionSpaceExist( cappedCSName );
+        return cappedCSExist;
+
+    }
 }
