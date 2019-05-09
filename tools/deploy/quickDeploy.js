@@ -219,11 +219,11 @@ function getSqlConf( dbType, installedPath )
    var confFile = "" ;
    if ( dbType == "mysql" )
    {
-      confFile = "/mysql.conf" ;
+      confFile = "mysql.conf" ;
    }
    else if ( dbType == "postgresql" )
    {
-      confFile = "/postgresql.conf" ;
+      confFile = "postgresql.conf" ;
    }
    else
    {
@@ -285,10 +285,28 @@ function getSqlConf( dbType, installedPath )
       var len = instanceConf.length ;
       if ( len < 4 )
       {
-         println( "Invalid configure file!" ) ;
+         println( "Invalid configure file[" + confFile + "]!" ) ;
          throw "ERROR" ;
       }
-      if ( len > 4 )
+      else if ( len == 4 )
+      {
+         var coordAddr = instanceConf[3] ;
+         if ( coordAddr.substr( 0, 1 )  == "[" &&
+              coordAddr.substr( -1, 1 ) == "]" )
+         {
+            // delete the '[' at the beginning of the line
+            coordAddr = coordAddr.replace( /(^\[)/, '' ) ;
+            // delete the ']' at the end of the line
+            coordAddr = coordAddr.replace( /(\]$)/, '' ) ;
+            instanceConf[3] = coordAddr ;
+         }
+         if ( coordAddr == "" )
+         {
+            println( "Invalid configure file[" + confFile + "]!" ) ;
+            throw "ERROR" ;
+         }
+      }
+      else if ( len > 4 )
       {
          var coordAddr = "" ;
          for ( var i = 3; i < len ; i++ )
@@ -300,9 +318,10 @@ function getSqlConf( dbType, installedPath )
             }
          }
          // check first char is '[', last char is ']'
-         if ( coordAddr.substr( 0, 1 ) != "[" || coordAddr.substr( -1, 1 ) != "]" )
+         if ( coordAddr.substr( 0, 1 )  != "[" ||
+              coordAddr.substr( -1, 1 ) != "]" )
          {
-            println( "Invalid configure file!" ) ;
+            println( "Invalid configure file[" + confFile + "]!" ) ;
             throw "ERROR" ;
          }
          // delete the '[' at the beginning of the line
