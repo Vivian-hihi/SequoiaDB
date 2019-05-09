@@ -48,6 +48,16 @@ Modify the collection properties to enable sharding.
 .br
               EnsureShardingIndex:true|false
 .sp 2
+       \fBAutoSplit\fR
+.br
+              Assign to true to automatically split after enable
+              sharding. Collection should be hash sharding after
+              this alter update. If AutoSplit is not explicitly
+              given, it will use the AutoSplit setting of
+              collection's domain. Default is false.
+.br
+              AutoSplit:true|false
+.sp 2
 
 .sp 2
 \fBNote: \fR
@@ -70,3 +80,7 @@ db.foo.createCL('bar')
 Alter to partitioning collection.
 .sp 2
 db.foo.bar.enableSharding({ShardingKey:{a:1},ShardingType:"hash"})
+.sp 2
+Alter to partitioning collection and automatically split.
+.sp 2
+db.foo.bar.enableSharding({ShardingKey:{a:1},ShardingType:"hash",AutoSplit:true})
