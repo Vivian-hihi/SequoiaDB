@@ -124,22 +124,25 @@
          var instanceList = [] ;
          var storageList = [] ;
          $.each( $scope.ModuleList, function( index, moduleInfo ){
-            if( moduleInfo['BusinessType'] == 'sequoiadb' )
+            if( moduleInfo['ClusterName'] == $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] )
             {
-               moduleInfo['BusinessDesc'] = 'SequoiaDB' ;
-               storageList.push( moduleInfo ) ;
-            }
-            else
-            {
-               if( moduleInfo['BusinessType'] == 'sequoiasql-mysql' )
+               if( moduleInfo['BusinessType'] == 'sequoiadb' )
                {
-                  moduleInfo['BusinessDesc'] = 'MySQL' ;
+                  moduleInfo['BusinessDesc'] = 'SequoiaDB' ;
+                  storageList.push( moduleInfo ) ;
                }
-               else if( moduleInfo['BusinessType'] == 'sequoiasql-postgresql' )
+               else
                {
-                  moduleInfo['BusinessDesc'] = 'PostgreSQL' ;
+                  if( moduleInfo['BusinessType'] == 'sequoiasql-mysql' )
+                  {
+                     moduleInfo['BusinessDesc'] = 'MySQL' ;
+                  }
+                  else if( moduleInfo['BusinessType'] == 'sequoiasql-postgresql' )
+                  {
+                     moduleInfo['BusinessDesc'] = 'PostgreSQL' ;
+                  }
+                  instanceList.push( moduleInfo ) ;
                }
-               instanceList.push( moduleInfo ) ;
             }
          } ) ;
 
@@ -686,11 +689,21 @@
          }, {
             'showLoading': false
          } ) ;
+         
+         //更新主机数量
+         SdbSignal.on( 'updateHostNum', function( hostNum ){
+            $scope.HostNum = hostNum ;
+         } ) ;
       }
 
       //切换集群
       $scope.SwitchCluster = function( index ){
          $scope.CurrentCluster = index ;
+         classifyModule() ;
+         if( $scope.InstanceNum == 0 && $scope.StorageNum == 0 && $scope.CurrentPage == 'instance' )
+         {
+            $scope.CurrentPage = 'storage' ;
+         }
          if( $scope.ClusterList.length > 0 )
          {
             var clusterName = $scope.ClusterList[ index ]['ClusterName'] ;
@@ -731,6 +744,7 @@
                   ++$scope.HostNum ;
                }
             } ) ;
+            SdbSignal.commit( 'updateHostNum', $scope.HostNum ) ;
             SdbSignal.commit( 'updateHostTable', hostTableContent ) ;
          }
          $scope.bindResize() ;
@@ -2180,7 +2194,7 @@
                   },
                   {
                      "name": "From",
-                     "webName": $scope.autoLanguage( '实例' ),
+                     "webName": $scope.autoLanguage( '实例名' ),
                      "required": true,
                      "type": "select",
                      "value": '',
@@ -2742,7 +2756,7 @@
                },
                {
                   "name": "from",
-                  "webName": $scope.autoLanguage( '实例' ),
+                  "webName": $scope.autoLanguage( '实例名' ),
                   "type": "string",
                   "disabled": true,
                   "value": relationInfoList[0]['from']
@@ -4008,6 +4022,10 @@
 
    //主机控制器
    sacApp.controllerProvider.register( 'Deploy.Index.Host.Ctrl', function( $scope, $rootScope, $location, SdbRest, SdbSignal, SdbSwap, Loading ){
+      //更新主机数量
+      SdbSignal.on( 'updateHostNum', function( result ){
+         $scope.HostNum = result ;
+      } ) ;
 
       //主机表格
       $scope.HostListTable = {
@@ -4056,12 +4074,21 @@
          SdbRest.OmOperation( data, {
             'success': function( hostList ){
                SdbSwap.hostList = hostList ;
-               $scope.HostListTable['body'] = SdbSwap.hostList ;
                $.each( SdbSwap.hostList, function( index ){
                   SdbSwap.hostList[index]['Error'] = {} ;
                   SdbSwap.hostList[index]['Error']['Flag'] = 0 ;
                } ) ;
-               $scope.SwitchCluster( $scope.CurrentCluster ) ;
+               $scope.HostNum = 0 ;
+               var hostTableContent = [] ;
+               $.each( SdbSwap.hostList, function( index2, hostInfo ){
+                  if( hostInfo['ClusterName'] == $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] )
+                  {
+                     hostTableContent.push( hostInfo )
+                     ++$scope.HostNum ;
+                  }
+               } ) ;
+               SdbSignal.commit( 'updateHostNum', $scope.HostNum ) ;
+               $scope.HostListTable['body'] = hostTableContent ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -4449,7 +4476,7 @@
 
       //打开 编辑主机下拉菜单
       $scope.OpenEditHostDropdown = function( event ){
-         if( $scope.ClusterList.length > 0 )
+         if( $scope.ClusterList.length > 0 && $scope.HostNum > 0 )
          {
             $scope.EditHostDropdown['config'] = [] ;
             $scope.EditHostDropdown['config'].push( { 'key': $scope.autoLanguage( '部署包' ) } ) ;

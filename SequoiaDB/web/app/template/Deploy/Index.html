@@ -72,9 +72,9 @@
          </div>
          <div ng-container="{height:40}">
             <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length == 0]" ng-disabled="ClusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="ShowInstallModule()">{{autoLanguage("创建实例")}}</button>
-            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="ShowUninstallInstance()">{{autoLanguage("删除实例")}}</button>
-            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="ShowRestartInstance()">{{autoLanguage("重启实例")}}</button>
-            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenRelationDropdown($event)">{{autoLanguage("配置实例存储")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="ShowUninstallInstance()">{{autoLanguage("删除实例")}}</button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="ShowRestartInstance()">{{autoLanguage("重启实例")}}</button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenRelationDropdown($event)">{{autoLanguage("配置实例存储")}} <i class="fa fa-caret-down"></i></button>
          </div>
 
          <div style="padding-right:15px;overflow-y:auto;border:1px solid #ccc;padding:10px;position:relative;" ng-container="{offsetY:-40}">
@@ -198,7 +198,7 @@
                   <span>{{autoLanguage("操作。")}}</span>
                </div>
             </div>
-            <div class="data_empty" ng-show="ClusterList.length > 0 && ModuleNum == 0">
+            <div class="data_empty" ng-show="ClusterList.length > 0 && InstanceNum == 0">
                <div class="title">{{autoLanguage("当前没有实例")}}</div>
                <div class="tips">
                   <span>{{autoLanguage("使用")}}</span>
@@ -273,8 +273,8 @@
             </div>
             <div ng-container="{height:40}">
                <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length == 0]" ng-disabled="ClusterList.length==0" ng-click="OpenAddModuleDropdown($event)">{{autoLanguage("添加存储集群")}} <i class="fa fa-caret-down"></i></button>
-               <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-click="OpenDeleteModuleDropdown($event)">{{autoLanguage("删除存储集群")}} <i class="fa fa-caret-down"></i></button>
-               <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||ModuleNum==0]" ng-disabled="ClusterList.length==0||ModuleNum==0" ng-click="OpenEditModuleDropdown($event)">{{autoLanguage("存储集群操作")}} <i class="fa fa-caret-down"></i></button>
+               <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||StorageNum==0]" ng-disabled="ClusterList.length==0||StorageNum==0" ng-click="OpenDeleteModuleDropdown($event)">{{autoLanguage("删除存储集群")}} <i class="fa fa-caret-down"></i></button>
+               <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||StorageNum==0]" ng-disabled="ClusterList.length==0||StorageNum==0" ng-click="OpenEditModuleDropdown($event)">{{autoLanguage("存储集群操作")}} <i class="fa fa-caret-down"></i></button>
             </div>
    
             <div style="padding-right:15px;overflow-y:auto;border:1px solid #ccc;padding:10px;position:relative;" ng-container="{offsetY:-40}">
@@ -379,7 +379,7 @@
                      <span>{{autoLanguage("操作。")}}</span>
                   </div>
                </div>
-               <div class="data_empty" ng-show="ClusterList.length > 0 && ModuleNum == 0">
+               <div class="data_empty" ng-show="ClusterList.length > 0 && StorageNum == 0">
                   <div class="title">{{autoLanguage("当前没有存储集群")}}</div>
                   <div class="tips">
                      <span>{{autoLanguage("使用")}}</span>
@@ -425,10 +425,10 @@
          </div>
          <div ng-container="{height:40}">
             <button class="topBtn" ng-class="{0:'disabled'}[ClusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="ClusterList.length==0" ng-click="AddHost()">{{autoLanguage("添加主机")}}</button>
-            <button class="topBtn" ng-class="{0:'disabled'}[ClusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="ClusterList.length==0" ng-click="OpenRemoveHost($event)">{{autoLanguage("删除主机")}} <i class="fa fa-caret-down"></i></button>
-            <button class="topBtn" ng-class="{0:'disabled'}[ClusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="ClusterList.length==0" ng-click="OpenEditHostDropdown($event)">{{autoLanguage("主机操作")}} <i class="fa fa-caret-down"></i></button>
-            <button class="topBtn" ng-class="{0:'disabled'}[ClusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="ClusterList.length==0" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>
-            <button class="topBtn" ng-class="{0:'disabled'}[ClusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="ClusterList.length==0" ng-click="Unselect()">{{autoLanguage("反选")}}</button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||HostNum==0]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="ClusterList.length==0||HostNum==0" ng-click="OpenRemoveHost($event)">{{autoLanguage("删除主机")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||HostNum==0]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="ClusterList.length==0||HostNum==0" ng-click="OpenEditHostDropdown($event)">{{autoLanguage("主机操作")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||HostNum==0]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="ClusterList.length==0||HostNum==0" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||HostNum==0]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1160]" ng-disabled="ClusterList.length==0||HostNum==0" ng-click="Unselect()">{{autoLanguage("反选")}}</button>
          </div>
          <div ng-container="{offsetY:-40}" ng-table="HostListTable['options']" table-title="HostListTable['title']" table-content="hostInfo in HostListTable['body']" table-callback="HostListTable['callback']">
             <div class="Ellipsis" table-key="Check">

@@ -164,6 +164,10 @@ _IndexPublic.languageCtrl = function( $scope, text ){
 _IndexPublic.pLanguageCtrl = function( $scope, text ){
    var newText = text ;
    var type = localLocalData( 'SdbModuleType' ) ;
+   if( type == 'sequoiadb' )
+   {
+      return text ;
+   }
    if( $scope.Language == 'en' )
    {
       function setLanguage()
@@ -656,8 +660,8 @@ _Deploy.BuildSdbPgsqlStep = function( $scope, $location, action, deployModule ){
       stepList['step'] = 2 ;
       break ;
    }
-   stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'PostgreSQL-Mod') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Module'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '配置实例' ), 'click': function(){ _Deploy.GotoStep( $location, 'PostgreSQL-Mod') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '创建实例' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Module'  ) ; } } ) ;
    return stepList ;
 }
 
@@ -676,8 +680,8 @@ _Deploy.BuildSdbMysqlStep = function( $scope, $location, action, deployModule ){
       stepList['step'] = 2 ;
       break ;
    }
-   stepList['info'].push( { 'text': $scope.autoLanguage( '配置服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'MySQL-Mod') ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '安装服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Module'  ) ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '配置实例' ), 'click': function(){ _Deploy.GotoStep( $location, 'MySQL-Mod') ; } } ) ;
+   stepList['info'].push( { 'text': $scope.autoLanguage( '创建实例' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Module'  ) ; } } ) ;
    return stepList ;
 }
 

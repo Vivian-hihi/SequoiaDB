@@ -444,6 +444,7 @@
    "排序字段": "Sort",
    "配置": "Config",
    "配置服务": "Config Service",
+   "配置实例": "Config Instance",
    "配置项": "Config",
    "配置项必须有HostName和svcname": "Configuration items must have HostName and svcname",
    "配置信息": "Package Config",
