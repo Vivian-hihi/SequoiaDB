@@ -46,6 +46,8 @@ public class Transaction18235 extends SdbTestBase {
 
         cl = sdb.getCollectionSpace( csName ).createCollection( clName,
                 (BSONObject) JSON.parse( "{ShardingKey:{a:1}, ShardingType:'hash', AutoSplit: true}" ) );
+
+        cl.createIndex( "a", "{'a': 1, 'b': 1}", true, false );
     }
 
     @Test
@@ -71,11 +73,22 @@ public class Transaction18235 extends SdbTestBase {
         List<BSONObject> datas3 = TransUtils.getUpdateDatas( 2500, 3000, 3 );
 
         try {
-            cl1.createIndex( "a", "{a: 1}", true, false );
-            Assert.fail( "create unique index should be failed" );
+            cl1.update( null, "{$set: {b: 10000}}", null );
+            Assert.fail( "update records as duplicate records should be error" );
         } catch ( BaseException e ) {
             Assert.assertEquals( e.getErrorCode(), -38, e.getMessage() );
         }
+
+        TransUtils.insertDatas( cl1, 3000, 4000, 4 );
+        cl1.update( "{a: 4}", "{$set: {a: 4000}}", null );
+        cl1.delete( "{b:{$gte: 3000, $lt: 3500}}", null );
+        List<BSONObject> datas4 = TransUtils.getUpdateDatas( 3500, 4000, 4 );
+
+        TransUtils.insertDatas( cl1, 4000, 5000, 5 );
+        cl1.update( "{a: 5}", "{$set: {a: 5000}}", null );
+        cl1.delete( "{b:{$gte: 4000, $lt: 4500}}", null );
+        List<BSONObject> datas5 = TransUtils.getUpdateDatas( 4500, 5000, 5 );
+
         sdb1.commit();
 
         // 索引扫描记录
@@ -83,13 +96,20 @@ public class Transaction18235 extends SdbTestBase {
         expList.addAll( datas1 );
         expList.addAll( datas2 );
         expList.addAll( datas3 );
-        DBCursor cursor = cl.query( null, null, null, "{'':'a'}" );
+        expList.addAll( datas4 );
+        expList.addAll( datas5 );
+
+        // update不是原子操作,所以更新多条记录为相同记录时,第一条记录是更新成功的,第二条失败,
+        // 所以根据排序将更新成功的第一条记录手动修改并排放到预期记录末尾
+        expList.remove( 0 );
+        expList.add( (BSONObject) JSON.parse( "{'_id': 500, 'a': 1, 'b': 10000}" ) );
+        DBCursor cursor = cl.query( null, null, "{'b': 1}", "{'':'a'}" );
         List<BSONObject> actList = TransUtils.getReadActList( cursor );
         Assert.assertEquals( actList, expList );
         actList.clear();
 
         // 表扫描记录
-        cursor = cl.query( null, null, null, "{'':null}" );
+        cursor = cl.query( null, null, "{'b': 1}", "{'':null}" );
         actList = TransUtils.getReadActList( cursor );
         Assert.assertEquals( actList, expList );
         actList.clear();
