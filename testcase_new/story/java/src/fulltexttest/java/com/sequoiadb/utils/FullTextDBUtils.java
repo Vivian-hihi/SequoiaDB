@@ -347,19 +347,6 @@ public class FullTextDBUtils {
     }
 
     /**
-     * 默认插入20万条记录，如: {id: 0, a: "clname0", b: "8 byte str", c: "32 byte str...",
-     * d: "64 byte str...", e: "128 byte str..."}
-     *
-     * @param cl
-     * @return List<BSONObject> 返回插入的记录集
-     * @Author luweikang
-     * @Date 2019-05-08
-     */
-    public static List<BSONObject> insertData( DBCollection cl ) {
-        return insertData( cl, 200000 );
-    }
-
-    /**
      * 指定记录数插入记录，如: {id: 0, a: "clname0", b: "8 byte str", c: "32 byte str...",
      * d: "64 byte str...", e: "128 byte str..."}
      *
@@ -398,8 +385,10 @@ public class FullTextDBUtils {
      * @param db
      * @param cappedCSName
      * @param rgNames
-     * @return 如果固定集合空间存在则返回true, 否则返回false
+     * @return 如果固定集合空间存在则返回true, 否则返回false, 超过10分钟cs仍然存在则直接返回true,认为存在
      * @throws InterruptedException
+     * @Author luweikang
+     * @Date 2019-05-09
      */
     public static boolean isCappedCSExist( Sequoiadb db, String cappedCSName, List<String> rgNames )
             throws InterruptedException {
@@ -419,8 +408,10 @@ public class FullTextDBUtils {
      * @param db
      * @param cappedCSName
      * @param rgName
-     * @return 如果固定集合空间存在则返回true, 否则返回false
+     * @return 如果固定集合空间存在则返回true, 否则返回false, 超过10分钟cs仍然存在则直接返回true,认为存在
      * @throws InterruptedException
+     * @Author luweikang
+     * @Date 2019-05-09
      */
     public static boolean isCappedCSExist( Sequoiadb db, String cappedCSName, String rgName )
             throws InterruptedException {
@@ -438,11 +429,10 @@ public class FullTextDBUtils {
                 }
             }
             if ( cappedCSExist ) {
+                System.err.println( "capped cs is still on the rg: " + rgName + ", node: " + nodeAddress );
                 break;
             }
         }
-        db.isCollectionSpaceExist( cappedCSName );
         return cappedCSExist;
-
     }
 }
