@@ -37,6 +37,7 @@
 #include "ossPath.hpp"
 #include "ossUtil.hpp"
 #include "pcrecpp.h"
+#include "dms.hpp"
 #include <sstream>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
@@ -420,36 +421,36 @@ namespace replay
                                             const BSONObj &newModifier,
                                             const BSONObj &shardingKey,
                                             const BSONObj &oldModifier,
-                                            const UINT64 &opTimeMicroSecond )
+                                            const UINT64 &opTimeMicroSecond,
+                                            const UINT32 &logWriteMod )
    {
       INT32 rc = SDB_OK ;
       string strOut ;
       const CHAR *dbName = NULL ;
       const CHAR *tableName = NULL ;
-      BSONObj oldObj ;
-      BSONObj newObj ;
 
-      rc = _getRecordObj( oldModifier, oldObj ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed get record obj, rc = %d", rc ) ;
+      if ( DMS_LOG_WRITE_MOD_FULL != logWriteMod )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "LogWriteMod(%d) is invalid, rc = %d",
+                      logWriteMod, rc ) ;
+      }
 
       rc = _generateRecord( clFullName, RPL_DB2LOAD_OP_UPDATE_BEFORE,
-                            opTimeMicroSecond, oldObj, &dbName, &tableName,
+                            opTimeMicroSecond, oldModifier, &dbName, &tableName,
                             strOut ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to generate update record(%s), rc = %d",
-                   oldObj.toString().c_str(), rc ) ;
+                   oldModifier.toString().c_str(), rc ) ;
 
       rc = _recordWriter->writeRecord( dbName, tableName, lsn, strOut.c_str() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to write record(%s), rc = %d",
                    strOut.c_str(), rc ) ;
 
-      rc = _getRecordObj( newModifier, newObj ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed get record obj, rc = %d", rc ) ;
-
       rc = _generateRecord( clFullName, RPL_DB2LOAD_OP_UPDATE_AFTER,
-                            opTimeMicroSecond, newObj, &dbName, &tableName,
+                            opTimeMicroSecond, newModifier, &dbName, &tableName,
                             strOut ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to generate update record(%s), rc = %d",
-                   newObj.toString().c_str(), rc ) ;
+                   newModifier.toString().c_str(), rc ) ;
 
       rc = _recordWriter->writeRecord( dbName, tableName, lsn, strOut.c_str() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to write record(%s), rc = %d",

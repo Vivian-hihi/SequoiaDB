@@ -235,8 +235,7 @@ namespace engine
             pInfo->_enableSparse = optCB->sparseFile() ;
             pInfo->_cacheMergeSize = optCB->getCacheMergeSize() ;
             pInfo->_pageAllocTimeout = optCB->getPageAllocTimeout() ;
-            pInfo->_replicaFullRecordOn = optCB->replicaFullRecordOn() ;
-            pInfo->_replicaRecordTimeOn = optCB->replicaRecordTimeOn() ;
+            pInfo->_logWriteMod = optCB->logWriteMod() ;
 
             pCache->setAllocTimeout( pInfo->_pageAllocTimeout ) ;
             pCache->updateMerge( pInfo->_directIO, pInfo->_cacheMergeSize ) ;
@@ -285,7 +284,7 @@ namespace engine
          goto error ;
       }
 
-      // We get from front and return to back so that suID is not reused 
+      // We get from front and return to back so that suID is not reused
       // immediately.
       suID = _freeList.front() ;
       su->_setCSID( suID ) ;

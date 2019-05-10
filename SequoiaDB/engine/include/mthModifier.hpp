@@ -48,6 +48,7 @@
 #include "../bson/bsonobj.h"
 #include "mthCommon.hpp"
 #include "ixmIndexKey.hpp"
+#include "dms.hpp"
 
 using namespace bson ;
 
@@ -206,6 +207,8 @@ namespace engine
       ModType _parseModType ( const CHAR *field ) ;
       OSS_INLINE void _incModifierIndex( INT32 *modifierIndex ) ;
 
+      INT32 _parseFullRecord( const BSONObj &record ) ;
+
       template<class VType>
       INT32 _bitCalc ( ModType type, VType l, VType r, VType &out );
 
@@ -363,7 +366,8 @@ namespace engine
                           vector<INT64> *dollarList = NULL,
                           BOOLEAN ignoreTypeError = TRUE,
                           const BSONObj* shardingKey = NULL,
-                          BOOLEAN strictDataMode = FALSE ) ;
+                          BOOLEAN strictDataMode = FALSE,
+                          UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ) ;
       void modifierSort() ;
       INT32 modify ( const BSONObj &source, BSONObj &target,
                      BSONObj *srcID = NULL,

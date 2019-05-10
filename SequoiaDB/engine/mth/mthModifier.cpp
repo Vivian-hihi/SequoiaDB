@@ -2095,12 +2095,36 @@ namespace engine
                  _compareFieldNames2( _dollarList ) ) ;
    }
 
+   INT32 _mthModifier::_parseFullRecord( const BSONObj &record )
+   {
+      INT32 rc = SDB_OK ;
+      ModType type = REPLACE ;
+      _isReplace = TRUE ;
+      _isReplaceID = TRUE ;
+
+      BSONObjIterator iter( record ) ;
+      while ( iter.more () )
+      {
+         rc = _addModifier( iter.next(), type ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF_LDPTN, "_mthModifier::loadPattern" )
    INT32 _mthModifier::loadPattern ( const BSONObj &modifierPattern,
                                      vector<INT64> *dollarList,
                                      BOOLEAN ignoreTypeError,
                                      const BSONObj* shardingKey,
-                                     BOOLEAN strictDataMode )
+                                     BOOLEAN strictDataMode,
+                                     UINT32 logWriteMod )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF_LDPTN );
@@ -2110,49 +2134,58 @@ namespace engine
       _ignoreTypeError = ignoreTypeError ;
       _fieldCompare.setDollarList( _dollarList ) ;
 
-      BSONObjIterator i( _modifierPattern ) ;
-      while ( i.more() )
+      if ( DMS_LOG_WRITE_MOD_FULL == logWriteMod )
       {
-         rc = _parseElement(i.next() ) ;
-         if ( rc )
+         rc = _parseFullRecord( _modifierPattern ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse full record[%s], rc = %d",
+                      _modifierPattern.toString().c_str(), rc ) ;
+      }
+      else
+      {
+         BSONObjIterator i( _modifierPattern ) ;
+         while ( i.more() )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to parse match "
-                         "pattern[%s, pos: %d], rc: %d",
-                         modifierPattern.toString().c_str(), eleNum,
-                         rc ) ;
+            rc = _parseElement(i.next() ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG ( PDERROR, "Failed to parse match "
+                            "pattern[%s, pos: %d], rc: %d",
+                            modifierPattern.toString().c_str(), eleNum,
+                            rc ) ;
+               goto error ;
+            }
+            eleNum ++ ;
+         }
+
+         /// if has $keep, but not $replace, report error
+         if ( !_isReplace && _keepKeys.size() > 0 )
+         {
+            PD_LOG_MSG( PDERROR, "Operator $keep can only be used with "
+                        "$replace") ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
-         eleNum ++ ;
-      }
-
-      /// if has $keep, but not $replace, report error
-      if ( !_isReplace && _keepKeys.size() > 0 )
-      {
-         PD_LOG_MSG( PDERROR, "Operator $keep can only be used with "
-                     "$replace") ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else if ( _isReplace )
-      {
-         MODIFIER_VEC::iterator iter ;
-         if ( !_isReplaceID )
+         else if ( _isReplace )
          {
-            /// when not replace _id, keep the _id
-            _keepKeys.insert( DMS_ID_KEY_NAME ) ;
-         }
-
-         iter = _modifierElements.begin() ;
-         while ( iter != _modifierElements.end() )
-         {
-            BSONElement e = iter->_toModify ;
-            if ( _keepKeys.count( e.fieldName() ) > 0 )
+            MODIFIER_VEC::iterator iter ;
+            if ( !_isReplaceID )
             {
-               iter = _modifierElements.erase( iter ) ;
+               /// when not replace _id, keep the _id
+               _keepKeys.insert( DMS_ID_KEY_NAME ) ;
             }
-            else
+
+            iter = _modifierElements.begin() ;
+            while ( iter != _modifierElements.end() )
             {
-               iter++ ;
+               BSONElement e = iter->_toModify ;
+               if ( _keepKeys.count( e.fieldName() ) > 0 )
+               {
+                  iter = _modifierElements.erase( iter ) ;
+               }
+               else
+               {
+                  iter++ ;
+               }
             }
          }
       }

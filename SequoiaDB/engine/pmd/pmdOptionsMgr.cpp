@@ -63,6 +63,9 @@ using namespace bson ;
 namespace engine
 {
 
+   #define PMD_OPTION_LOG_WRITEMOD_INCREMENT_STR "increment"
+   #define PMD_OPTION_LOG_WRITEMOD_FULL_STR      "full"
+
    #define JUDGE_RC( rc ) if ( SDB_OK != rc ) { goto error ; }
    #define ISALLOWRUNCHANGE( level )   ( ( level == PMD_CFG_CHANGE_REBOOT || \
                                        level == PMD_CFG_CHANGE_FORBIDDEN ) ? \
@@ -101,6 +104,7 @@ namespace engine
    #define PMD_DFT_PREFINST_MODE       ( PREFER_INSTANCE_RANDOM_STR )
    #define PMD_DFT_INSTANCE_ID         ( NODE_INSTANCE_ID_UNKNOWN )
    #define PMD_DFT_MAX_CONN            (0)   // unlimited
+   #define PMD_DFT_LOGWRITEMOD         ( PMD_OPTION_LOG_WRITEMOD_INCREMENT_STR )
    /*
       _pmdCfgExchange implement
    */
@@ -1916,6 +1920,11 @@ done:
 
       _preferedStrict = FALSE ;
 
+      ossMemset( _logWriteModStr, 0, sizeof(_logWriteModStr) ) ;
+      _logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
+
+      _logTimeOn = FALSE ;
+
       _enableSleep = FALSE ;
       _recycleRecord = FALSE ;
 
@@ -2301,12 +2310,13 @@ done:
       rdxUInt( pEX, PMD_OPTION_SVC_MAX_CONCURRENCY, _svcMaxConcurrency, FALSE,
                PMD_CFG_CHANGE_RUN, 100, FALSE ) ;
 
-      // --replicafullrecordon
-      rdxBooleanS( pEX, PMD_OPTION_REPLICA_FULL_RECORD_ON, _replicaFullRecordOn,
-                   FALSE, PMD_CFG_CHANGE_RUN, FALSE, FALSE ) ;
+      // --logwritemod
+      rdxString( pEX, PMD_OPTION_LOGWRITEMOD, _logWriteModStr,
+                 sizeof( _logWriteModStr ), FALSE, PMD_CFG_CHANGE_RUN,
+                 PMD_DFT_LOGWRITEMOD, FALSE ) ;
 
-      // --replicarecordtimeon
-      rdxBooleanS( pEX, PMD_OPTION_REPLICA_RECORD_TIME_ON, _replicaRecordTimeOn,
+      // --logtimeon
+      rdxBooleanS( pEX, PMD_OPTION_LOG_TIME_ON, _logTimeOn,
                    FALSE, PMD_CFG_CHANGE_RUN, FALSE, FALSE ) ;
 
       // --enablesleep
@@ -2372,6 +2382,15 @@ done:
          _syncStrategy = CLS_SYNC_DTF_STRATEGY ;
       }
       _syncStrategyStr[0] = 0 ;
+
+      // logwritemod check
+      if ( SDB_OK != optString2LogMod( _logWriteModStr, _logWriteMod ) )
+      {
+         std::cerr << PMD_OPTION_LOGWRITEMOD << " value error, use default"
+                   << endl ;
+         _logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
+      }
+      _logWriteModStr[0] = 0 ;
 
       // audit mask check
       _auditMask = 0 ;
@@ -2731,6 +2750,9 @@ done:
 
       clsStrategy2String( _syncStrategy, _syncStrategyStr,
                           sizeof( _syncStrategyStr ) ) ;
+
+      optLogMod2String( _logWriteMod, _logWriteModStr,
+                        sizeof( _logWriteModStr ) ) ;
 
       return SDB_OK ;
    }
@@ -3171,6 +3193,57 @@ done:
          addr._service[ OSS_MAX_SERVICENAME ] = 0 ;
          _vecCat.push_back( addr ) ;
       }
+   }
+
+   INT32 optString2LogMod( const CHAR *str, UINT32 &value )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !str || !*str )
+      {
+         value = DMS_LOG_WRITE_MOD_INCREMENT ;
+      }
+      else
+      {
+         UINT32 len = ossStrlen( str ) ;
+         if ( 0 == ossStrncasecmp( str, PMD_OPTION_LOG_WRITEMOD_INCREMENT_STR, len ) &&
+              len == ossStrlen( PMD_OPTION_LOG_WRITEMOD_INCREMENT_STR ) )
+         {
+            value = DMS_LOG_WRITE_MOD_INCREMENT ;
+         }
+         else if ( 0 == ossStrncasecmp( str, PMD_OPTION_LOG_WRITEMOD_FULL_STR, len ) &&
+                   len == ossStrlen( PMD_OPTION_LOG_WRITEMOD_FULL_STR ) )
+         {
+            value = DMS_LOG_WRITE_MOD_FULL ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+         }
+      }
+
+      return rc ;
+   }
+
+   INT32 optLogMod2String( UINT32 value, CHAR *str, INT32 len )
+   {
+      INT32 rc = SDB_OK ;
+
+      switch ( value )
+      {
+         case DMS_LOG_WRITE_MOD_INCREMENT :
+            ossStrncpy( str, PMD_OPTION_LOG_WRITEMOD_INCREMENT_STR, len - 1 ) ;
+            break ;
+
+         case DMS_LOG_WRITE_MOD_FULL :
+            ossStrncpy( str, PMD_OPTION_LOG_WRITEMOD_FULL_STR, len -1 ) ;
+            break ;
+
+         default :
+            str[0] = 0 ;
+            rc = SDB_INVALIDARG ;
+      }
+      str[ len -1 ] = 0 ;
+      return rc ;
    }
 
 }

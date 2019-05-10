@@ -56,7 +56,6 @@ namespace engine
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
-                           const UINT64 *microSeconds,
                            dpsLogRecord &record ) ;
 
    INT32 dpsRecord2Insert( const CHAR *logRecord,
@@ -74,7 +73,7 @@ namespace engine
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
-                           const UINT64 *microSeconds,
+                           const UINT32 *writeMod,
                            dpsLogRecord &record ) ;
 
    INT32 dpsRecord2Update( const CHAR *logRecord,
@@ -85,14 +84,14 @@ namespace engine
                            BSONObj &newObj,
                            BSONObj *oldShardingKey = NULL,
                            BSONObj *newShardingKey = NULL,
-                           UINT64 *microSeconds = NULL ) ;
+                           UINT64 *microSeconds = NULL,
+                           UINT32 *writeMod = NULL ) ;
 
    INT32 dpsDelete2Record( const CHAR *fullName,
                            const BSONObj &oldObj,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
-                           const UINT64 *microSeconds,
                            dpsLogRecord &record ) ;
 
    INT32 dpsRecord2Delete( const CHAR *logRecord,

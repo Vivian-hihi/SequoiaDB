@@ -233,6 +233,7 @@ dpsFiles = [
       "dps/dpsArchiveFile.cpp",
       "dps/dpsArchiveFileMgr.cpp",
       "dps/dpsOp2Record.cpp",
+      "dps/dpsUtil.cpp"
       ]
 
 omagentFiles = [

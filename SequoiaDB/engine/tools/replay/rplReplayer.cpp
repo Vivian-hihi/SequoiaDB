@@ -877,13 +877,15 @@ namespace replay
       BSONObj newMatch;
       BSONObj newModifier;
       BSONObj oldShardingKey ;
+      UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
 
       SDB_ASSERT(LOG_TYPE_DATA_UPDATE == header._type, "not data update log");
 
       rc = dpsRecord2Update(log, &fullName,
                             oldMatch, oldModifier,
                             newMatch, newModifier,
-                            &oldShardingKey, NULL, &microSeconds);
+                            &oldShardingKey, NULL, &microSeconds,
+                            &logWriteMod);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc:%d",
@@ -893,7 +895,7 @@ namespace replay
 
       rc = _outputter->updateRecord(fullName, header._lsn, oldMatch,
                                     newModifier, oldShardingKey, oldModifier,
-                                    microSeconds);
+                                    microSeconds, logWriteMod);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to update record, match[%s], "
@@ -2335,6 +2337,7 @@ namespace replay
       BSONObj newModifier;
       BSONObj oldShardingKey ;
       BSONObj newShardingKey ;
+      UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
 
       SDB_ASSERT(LOG_TYPE_DATA_UPDATE == header._type, "not data update log");
 
@@ -2343,7 +2346,7 @@ namespace replay
                             newMatch, newModifier,
                             &oldShardingKey,
                             &newShardingKey,
-                            &microSeconds);
+                            &microSeconds, &logWriteMod);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc:%d",
@@ -2354,7 +2357,7 @@ namespace replay
       // roll back operation: exchange old and new
       rc = _outputter->updateRecord(fullName, header._lsn, newMatch, oldModifier,
                                     newShardingKey, newModifier,
-                                    microSeconds);
+                                    microSeconds, logWriteMod);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "Failed to rollback record, match[%s], "

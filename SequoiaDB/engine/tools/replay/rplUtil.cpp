@@ -174,7 +174,6 @@ namespace replay
       case LOG_TYPE_DATA_POP:
          return RPL_LOG_OP_POP;
       default:
-         SDB_ASSERT(FALSE, "unknown log type");
          return "unknown";
       }
    }

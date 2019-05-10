@@ -296,9 +296,11 @@ namespace engine
             BSONObj oldObj ;
             BSONObj newMatch ;
             BSONObj modifier ;   //new change obj
+            UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
             clParalla = TRUE ;
             rc = dpsRecord2Update( (CHAR *)recordHeader, &fullname,
-                                   match, oldObj, newMatch, modifier ) ;
+                                   match, oldObj, newMatch, modifier, NULL,
+                                   NULL, NULL, &logWriteMod ) ;
             if ( SDB_OK == rc &&
                  0 == match.woCompare( newMatch, BSONObj(), false ) )
             {
@@ -599,13 +601,14 @@ namespace engine
             BSONObj modifier ;   //new change obj
             const CHAR *fullname = NULL ;
             INT64 updateNum = 0 ;
+            UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
             BSONObj hint = BSON(""<<IXM_ID_KEY_NAME);
             rc = dpsRecord2Update( (CHAR *)recordHeader,
                                    &fullname,
                                    match,
                                    oldObj,
                                    newMatch,
-                                   modifier ) ;
+                                   modifier, NULL, NULL, NULL, &logWriteMod ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -615,7 +618,7 @@ namespace engine
             {
                rc = rtnUpdate( fullname, match, modifier,
                                hint, 0, eduCB, _dmsCB, _dpsCB, 1,
-                               &updateNum ) ;
+                               &updateNum, NULL, NULL, logWriteMod ) ;
             }
             if ( SDB_OK == rc )
             {
@@ -1275,7 +1278,7 @@ namespace engine
       {
          BSONObj obj ;
          const CHAR *fullname = NULL ;
-         BSONElement idEle ;         
+         BSONElement idEle ;
 
          rc = dpsRecord2Insert( (const CHAR *)recordHeader,
                                 &fullname, obj ) ;
@@ -1331,14 +1334,13 @@ namespace engine
          dpsTransPendingKey tmpKey ;
          dpsTransPendingValue tmpVal ;
          BOOLEAN isTmpKeyExsit = FALSE ;
+         UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
 
          BSONObj hint = BSON(""<<IXM_ID_KEY_NAME) ;
          rc = dpsRecord2Update( (const CHAR *)recordHeader,
-                                 &fullname,
-                                 oldMatch,
-                                 modifierObj,
-                                 newMatch,
-                                 newObj ) ;
+                                 &fullname, oldMatch, modifierObj,
+                                 newMatch, newObj, NULL, NULL, NULL,
+                                 &logWriteMod ) ;
          if ( rc )
          {
             goto error ;
@@ -1352,7 +1354,8 @@ namespace engine
                isTmpKeyExsit = TRUE ;
 
                mthModifier modifier ;
-               rc = modifier.loadPattern( modifierObj ) ;
+               rc = modifier.loadPattern( modifierObj, NULL, TRUE, NULL, FALSE,
+                                          logWriteMod ) ;
                PD_RC_CHECK( rc, PDERROR, "Load modify pattern(%s) failed, "
                             "rc: %d", modifierObj.toString().c_str(), rc ) ;
 
@@ -1367,6 +1370,7 @@ namespace engine
                {
                   newMatch = tmpVal._obj ;
                   modifierObj = BSON( "$replace" << tmpKey._obj ) ;
+                  logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
                }
             }
             else
@@ -1383,7 +1387,8 @@ namespace engine
             else
             {
                rc = rtnUpdate( fullname, newMatch, modifierObj,
-                               hint, 0, eduCB, _dmsCB, _dpsCB, 1 ) ;
+                               hint, 0, eduCB, _dmsCB, _dpsCB, 1,
+                               NULL, NULL, NULL, logWriteMod ) ;
             }
             if ( SDB_IXM_DUP_KEY == rc )
             {
@@ -1411,7 +1416,8 @@ namespace engine
                                fullname, rc ) ;
 
                   mthModifier modifier ;
-                  rc = modifier.loadPattern( modifierObj ) ;
+                  rc = modifier.loadPattern( modifierObj, NULL, TRUE, NULL,
+                                             FALSE, logWriteMod ) ;
                   PD_RC_CHECK( rc, PDERROR, "Load modify pattern(%s) failed, "
                                "rc: %d", modifierObj.toString().c_str(), rc ) ;
 
@@ -1522,17 +1528,19 @@ namespace engine
             BSONObj modifier ;  //old modifier
             BSONObj newMatch ;     //new matcher
             BSONObj newObj ;
+            UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ;
             BSONObj hint = BSON(""<<IXM_ID_KEY_NAME) ;
             rc = dpsRecord2Update( (const CHAR *)recordHeader,
                                     &fullname,
                                     oldMatch,
                                     modifier,
                                     newMatch,
-                                    newObj ) ;
+                                    newObj, NULL, NULL, NULL, &logWriteMod ) ;
             if ( !modifier.isEmpty() )
             {
                rc = rtnUpdate( fullname, newMatch, modifier,
-                               hint, 0, eduCB, _dmsCB, _dpsCB, 1 ) ;
+                               hint, 0, eduCB, _dmsCB, _dpsCB, 1, NULL, NULL,
+                               NULL, logWriteMod ) ;
             }
             break ;
          }

@@ -62,6 +62,7 @@ namespace engine
    #define PMD_MAX_ENUM_STR_LEN        ( 32 )
    #define PMD_MAX_LONG_STR_LEN        ( 256 )
    #define PMD_MAX_SHORT_STR_LEN       ( 32 )
+   #define PMD_MAX_LOGMOD_STR_LEN      ( 32 )
 
    enum PMD_CFG_STEP
    {
@@ -635,8 +636,8 @@ namespace engine
          OSS_INLINE UINT32 getMaxConn () const { return _maxconn ; }
          OSS_INLINE UINT32 getSvcSchedulerType() const { return _svcSchedulerType ; }
          OSS_INLINE UINT32 getSvcMaxConcurrency() const { return _svcMaxConcurrency ; }
-         OSS_INLINE BOOLEAN replicaFullRecordOn() const { return _replicaFullRecordOn ; }
-         OSS_INLINE BOOLEAN replicaRecordTimeOn() const { return _replicaRecordTimeOn ; }
+         OSS_INLINE UINT32 logWriteMod() const { return _logWriteMod ; }
+         OSS_INLINE BOOLEAN logTimeOn() const { return _logTimeOn ; }
          OSS_INLINE BOOLEAN isSleepEnabled() const { return _enableSleep ; }
          OSS_INLINE BOOLEAN recycleRecord() const { return _recycleRecord ; }
 
@@ -740,8 +741,9 @@ namespace engine
          UINT32      _svcSchedulerType ;
          UINT32      _svcMaxConcurrency ;
          BOOLEAN     _preferedStrict ;
-         BOOLEAN     _replicaFullRecordOn ;
-         BOOLEAN     _replicaRecordTimeOn ;
+         CHAR        _logWriteModStr[ PMD_MAX_LOGMOD_STR_LEN + 1 ] ;
+         UINT32      _logWriteMod ;
+         BOOLEAN     _logTimeOn ;
          BOOLEAN     _enableSleep ;
          BOOLEAN     _recycleRecord ;
 
@@ -764,6 +766,9 @@ namespace engine
    } ;
 
    typedef _pmdOptionsMgr pmdOptionsCB ;
+
+   INT32 optString2LogMod( const CHAR *str, UINT32 &value ) ;
+   INT32 optLogMod2String( UINT32 value, CHAR *str, INT32 len ) ;
 
 }
 

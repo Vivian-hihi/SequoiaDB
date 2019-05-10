@@ -2000,28 +2000,28 @@
    </opt>
    
    <opt>
-      <name>PMD_OPTION_REPLICA_FULL_RECORD_ON</name>
-      <long>replicafullrecordon</long>
+      <name>PMD_OPTION_LOGWRITEMOD</name>
+      <long>logwritemod</long>
       <description>
-        <en>Turn on replica log save full record, default false.</en>
-        <cn>开启复制日志保存全纪录功能，默认为false。</cn>
+        <en>Replica log write mod, value enumeration:increment,full, default:increment.</en>
+        <cn>复制日志写模式，取值：increment,full,默认为increment。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-        <en>Turn on replica log save full record, default false.</en>
-        <cn>开启复制日志保存全纪录功能，默认为false。未开启时，复制日志只记录必要字段信息；开启后，复制日志将记录完整的字段信息</cn>
+        <en>Replica log write mod, value enumeration:increment,full, default:increment.</en>
+        <cn>复制日志写模式，取值：increment,full,默认为increment。为increment时，复制日志只保存更新记录的增量信息；为full时，复制日志将保存更新记录的完整信息。</cn>
       </detail>
-      <default>false</default>
+      <default>increment</default>
       <hidden>false</hidden>
-      <typeofweb>boolean</typeofweb>
+      <typeofweb>str</typeofweb>
    </opt>
    
    <opt>
-      <name>PMD_OPTION_REPLICA_RECORD_TIME_ON</name>
-      <long>replicarecordtimeon</long>
+      <name>PMD_OPTION_LOG_TIME_ON</name>
+      <long>logtimeon</long>
       <description>
         <en>Turn on replica log save timestamp info, default false.</en>
         <cn>开启复制日志保存时间信息功能，默认为false。</cn>

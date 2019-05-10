@@ -465,7 +465,8 @@ dpsFiles = [
       "dps/dpsArchiveMgr.cpp",
       "dps/dpsArchiveInfo.cpp",
       "dps/dpsArchiveFile.cpp",
-      "dps/dpsArchiveFileMgr.cpp"
+      "dps/dpsArchiveFileMgr.cpp",
+      "dps/dpsUtil.cpp"
       ]
 
 omsvcFiles = [

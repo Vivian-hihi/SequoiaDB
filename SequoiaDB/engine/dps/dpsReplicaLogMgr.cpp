@@ -429,7 +429,7 @@ namespace engine
 
       // Update the max LR size as needed. Protected under _writeMutex
       _transCB->updateMaxLRSize( head._length, _lsn.offset ) ;
-                       
+
       // change global metadata
       _currentLsn = _lsn ;
       _lsn.offset += head._length ;

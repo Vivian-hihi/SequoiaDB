@@ -461,7 +461,8 @@ namespace engine
 
             dpsLogRecord::iterator itrFullName, itrOldM, itrOldO,
                                    itrNewM, itrNewO,
-                                   itrOldSK, itrNewSK ;
+                                   itrOldSK, itrNewSK,
+                                   itrWriteMod ;
             itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
@@ -475,6 +476,14 @@ namespace engine
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " FullName : %s"OSS_NEWLINE,
                                  itrFullName.value() ) ;
+
+            itrWriteMod = this->find( DPS_LOG_UPDATE_WRITEMOD ) ;
+            if ( itrWriteMod.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " WriteMod : %d"OSS_NEWLINE,
+                                    *(( UINT32 *)itrWriteMod.value()) ) ;
+            }
 
             itrOldM = this->find( DPS_LOG_UPDATE_OLDMATCH ) ;
             if ( !itrOldM.valid() )
@@ -523,13 +532,13 @@ namespace engine
                BSONObj newM( itrNewM.value() ) ;
                BSONObj newO( itrNewO.value() ) ;
                len += ossSnprintf ( outBuf + len, outSize - len,
-                                    " Orig id : %s"OSS_NEWLINE,
+                                    " Orig id: %s"OSS_NEWLINE,
                                     oldM.toString().c_str() ) ;
                len += ossSnprintf ( outBuf + len, outSize - len,
                                     " Orig   : %s"OSS_NEWLINE,
                                     oldO.toString().c_str() ) ;
                len += ossSnprintf ( outBuf + len, outSize - len,
-                                    " New id  : %s"OSS_NEWLINE,
+                                    " New id : %s"OSS_NEWLINE,
                                     newM.toString().c_str() ) ;
                len += ossSnprintf ( outBuf + len, outSize - len,
                                     " New    : %s"OSS_NEWLINE,
@@ -1519,5 +1528,17 @@ namespace engine
       PD_TRACE1 ( SDB__DPSLGRECD_DUMP, PD_PACK_UINT(len) );
       PD_TRACE_EXIT ( SDB__DPSLGRECD_DUMP );
       return len ;
+   }
+
+   void _dpsLogRecord::sampleTime()
+   {
+      _timeMicroSeconds = ossGetCurrentMicroseconds() ;
+   }
+
+   // used to log dps, so must return the pointer and keep the lifecycle until
+   // data is copied
+   UINT64* _dpsLogRecord::getTime()
+   {
+      return &_timeMicroSeconds ;
    }
 }

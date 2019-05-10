@@ -226,7 +226,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__MBATTR2STRING ) ;
    }
 
-   void _dmsMBStatInfo::removeAllFromChain() 
+   void _dmsMBStatInfo::removeAllFromChain()
    {
       oldVersionContainer *oldVer = _oldVerChain ;
       while ( NULL != oldVer )
@@ -2352,7 +2352,7 @@ namespace engine
                       "Failed to lock the collection, rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
-                      "   TID:    %u"OSS_NEWLINE 
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
                       "   Mode:   %s"OSS_NEWLINE,
                       rc,
@@ -2554,7 +2554,7 @@ namespace engine
                       "Failed to lock the collection, rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
-                      "   TID:    %u"OSS_NEWLINE 
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
                       "   Mode:   %s"OSS_NEWLINE,
                       rc,
@@ -2875,7 +2875,7 @@ namespace engine
                       "Failed to lock the collection, rc: %d"OSS_NEWLINE
                       "Conflict( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
-                      "   TID:    %u"OSS_NEWLINE 
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
                       "   Mode:   %s"OSS_NEWLINE,
                       rc,
@@ -3002,7 +3002,6 @@ namespace engine
       monAppCB * pMonAppCB          = cb ? cb->getMonAppCB() : NULL ;
       dpsMergeInfo info ;
       dpsLogRecord &logRecord       = info.getMergeBlock().record() ;
-      UINT64 microSeconds ;
       SDB_DPSCB *dropDps            = NULL ;
       // trans related
       DPS_TRANS_ID transID          = cb->getTransID() ;
@@ -3164,19 +3163,8 @@ namespace engine
                          sizeof(fullName) ) ;
 
             // reserved log-size
-            if ( !_pStorageInfo->_replicaRecordTimeOn )
-            {
-               rc = dpsInsert2Record( fullName, insertObj, transID,
-                                      preTransLsn, relatedLsn, NULL,
-                                      logRecord ) ;
-            }
-            else
-            {
-               microSeconds = ossGetCurrentMicroseconds() ;
-               rc = dpsInsert2Record( fullName, insertObj, transID,
-                                      preTransLsn, relatedLsn, &microSeconds,
-                                      logRecord ) ;
-            }
+            rc = dpsInsert2Record( fullName, insertObj, transID,
+                                   preTransLsn, relatedLsn, logRecord ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
             logRecSize = ossAlign4( logRecord.alignedLen() ) ;
@@ -3288,7 +3276,7 @@ namespace engine
                            "rc: %d"OSS_NEWLINE
                            "Conflict( representative ):"OSS_NEWLINE
                            "   EDUID:  %llu"OSS_NEWLINE
-                           "   TID:    %u"OSS_NEWLINE 
+                           "   TID:    %u"OSS_NEWLINE
                            "   LockId: %s"OSS_NEWLINE
                            "   Mode:   %s"OSS_NEWLINE,
                            rc,
@@ -3426,7 +3414,6 @@ namespace engine
       UINT32 logRecSize             = 0 ;
       dpsMergeInfo info ;
       dpsLogRecord &record          = info.getMergeBlock().record() ;
-      UINT64 microSeconds ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
       DPS_TRANS_ID transID          = cb->getTransID() ;
       DPS_LSN_OFFSET preLsn         = cb->getCurTransLsn() ;
@@ -3596,18 +3583,9 @@ namespace engine
                                sizeof(fullName) ) ;
 
                   // reserved log-size
-                  if ( !_pStorageInfo->_replicaRecordTimeOn )
-                  {
-                     rc = dpsDelete2Record( fullName, delObject, transID,
-                                            preLsn, relatedLSN, NULL, record ) ;
-                  }
-                  else
-                  {
-                     microSeconds = ossGetCurrentMicroseconds() ;
-                     rc = dpsDelete2Record( fullName, delObject, transID,
-                                            preLsn, relatedLSN, &microSeconds,
-                                            record ) ;
-                  }
+                  rc = dpsDelete2Record( fullName, delObject, transID,
+                                         preLsn, relatedLSN,
+                                         record ) ;
 
                   if ( SDB_OK != rc )
                   {
@@ -3771,7 +3749,8 @@ namespace engine
       UINT32 logRecSize             = 0 ;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
-      UINT64 microSeconds ;
+      UINT32 writeMod = DMS_LOG_WRITE_MOD_INCREMENT ;
+      UINT32 *pWriteMod = NULL ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
       DPS_TRANS_ID transID = cb->getTransID() ;
@@ -3855,19 +3834,26 @@ namespace engine
 
             if ( dpscb )
             {
-               if ( !_pStorageInfo->_replicaFullRecordOn )
+               if ( DMS_LOG_WRITE_MOD_INCREMENT
+                                      == _pStorageInfo->_logWriteMod )
                {
                   rc = modifier.modify ( obj, newobj, &oldMatch, &oldChg,
                                          &newMatch, &newChg,
                                          &oldShardingKey, &newShardingKey ) ;
+                  // set to NULL indicate do not write tag DPS_LOG_UPDATE_WRITEMOD
+                  pWriteMod = NULL ;
                }
                else
                {
+                  writeMod = DMS_LOG_WRITE_MOD_FULL ;
                   rc = modifier.modify ( obj, newobj, &oldMatch, NULL,
                                          &newMatch, NULL,
                                          &oldShardingKey, &newShardingKey ) ;
-                  oldChg = BSON( "$replace" << obj ) ;
-                  newChg = BSON( "$replace" << newobj ) ;
+                  // obj and newobj's life cycle is too short to log dps.
+                  oldChg = obj.copy() ;
+                  newChg = newobj.copy() ;
+                  // others write tag DPS_LOG_UPDATE_WRITEMOD
+                  pWriteMod = &writeMod ;
                }
 
                if ( SDB_OK == rc && pHandler )
@@ -3924,23 +3910,11 @@ namespace engine
                             sizeof(fullName) ) ;
 
                // reserved log-size
-               if ( !_pStorageInfo->_replicaRecordTimeOn )
-               {
-                  rc = dpsUpdate2Record( fullName,
-                                         oldMatch, oldChg, newMatch, newChg,
-                                         oldShardingKey, newShardingKey,
-                                         transID, preTransLsn,
-                                         relatedLSN, NULL, record ) ;
-               }
-               else
-               {
-                  microSeconds = ossGetCurrentMicroseconds() ;
-                  rc = dpsUpdate2Record( fullName,
-                                         oldMatch, oldChg, newMatch, newChg,
-                                         oldShardingKey, newShardingKey,
-                                         transID, preTransLsn,
-                                         relatedLSN, &microSeconds, record ) ;
-               }
+               rc = dpsUpdate2Record( fullName,
+                                      oldMatch, oldChg, newMatch, newChg,
+                                      oldShardingKey, newShardingKey,
+                                      transID, preTransLsn, relatedLSN,
+                                      pWriteMod, record ) ;
 
                if ( SDB_OK != rc )
                {

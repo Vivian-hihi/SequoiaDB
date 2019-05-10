@@ -46,6 +46,7 @@
 #include "dpsTrace.hpp"
 #include "dpsLogRecordDef.hpp"
 #include "pmd.hpp"
+#include "dpsUtil.hpp"
 
 namespace engine
 {
@@ -92,6 +93,7 @@ namespace engine
       }
       _syncInterval = optCB->getSyncInterval() ;
       _syncRecordNum = optCB->getSyncRecordNum() ;
+      dpsSetTimeonFlag( optCB->logTimeOn() ) ;
 
       pmdGetSyncMgr()->setLogAccess( this ) ;
       pmdGetSyncMgr()->setMainUnit( this ) ;
@@ -236,6 +238,7 @@ namespace engine
       _dpslocal = optCB->isDpsLocal() ;
       _syncInterval = optCB->getSyncInterval() ;
       _syncRecordNum = optCB->getSyncRecordNum() ;
+      dpsSetTimeonFlag( optCB->logTimeOn() ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGWRAPP_SEARCH, "_dpsLogWrapper::search" )
@@ -540,6 +543,7 @@ namespace engine
       {
          goto done;
       }
+
       rc = _buf.preparePages( info ) ;
       if ( rc )
       {

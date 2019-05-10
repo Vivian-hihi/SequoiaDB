@@ -126,20 +126,23 @@ namespace engine
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, INT64 *pUpdateNum = NULL,
                      INT32 *pInsertNum = NULL,
-                     const BSONObj *shardingKey = NULL ) ;
+                     const BSONObj *shardingKey = NULL,
+                     UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ) ;
 
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &matcher,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                      INT16 w = 1, INT64 *pUpdateNum = NULL,
                      INT32 *pInsertNum = NULL,
-                     const BSONObj *shardingKey = NULL ) ;
+                     const BSONObj *shardingKey = NULL,
+                     UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ) ;
 
    INT32 rtnUpdate ( rtnQueryOptions &options, const BSONObj &updator,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                      INT16 w = 1, INT64 *pUpdateNum = NULL,
                      INT32 *pInsertNum = NULL,
-                     const BSONObj *shardingKey = NULL ) ;
+                     const BSONObj *shardingKey = NULL,
+                     UINT32 logWriteMod = DMS_LOG_WRITE_MOD_INCREMENT ) ;
 
    INT32 rtnUpsertSet( const BSONElement& setOnInsert, BSONObj& target ) ;
 

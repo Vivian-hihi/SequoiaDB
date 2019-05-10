@@ -244,6 +244,9 @@ namespace engine
 
       void clear() ;
 
+      void sampleTime() ;
+      UINT64* getTime() ;
+
       OSS_INLINE dpsLogRecordHeader &head ()
       {
          return _head ;
@@ -262,6 +265,7 @@ namespace engine
       _dpsRecordEle _dataHeader[DPS_MERGE_BLOCK_MAX_DATA] ;
       UINT32 _write ;
       INT32  _result ;
+      UINT64 _timeMicroSeconds ;
    } ;
    typedef class _dpsLogRecord dpsLogRecord ;
 

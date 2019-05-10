@@ -40,9 +40,33 @@
 #include "dpsLogRecordDef.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
+#include "dpsUtil.hpp"
 
 namespace engine
 {
+   static INT32 checkAndAddTimeInfo( dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      UINT64 *timeMicroSeconds = NULL ;
+      if ( !dpsGetTimeonFlag() )
+      {
+         goto done ;
+      }
+
+      record.sampleTime() ;
+      timeMicroSeconds = record.getTime() ;
+
+      rc = record.push( DPS_LOG_PUBLIC_TIME, sizeof(*timeMicroSeconds),
+                        (CHAR *)timeMicroSeconds ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed push time(%lld), rc = %d",
+                   *timeMicroSeconds, rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /// warning: any value can not be value-passed.
    static INT32 dpsPushTran( const DPS_TRANS_ID &transID,
                              const DPS_LSN_OFFSET &preTransLsn,
@@ -91,7 +115,6 @@ namespace engine
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
-                           const UINT64 *microSeconds,
                            dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -123,13 +146,8 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL != microSeconds )
-      {
-         rc = record.push( DPS_LOG_PUBLIC_TIME, sizeof( *microSeconds ),
-                           (CHAR *)microSeconds ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to push time(%lld) to record, "
-                      "rc = %d", *microSeconds, rc ) ;
-      }
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
    done:
@@ -205,7 +223,7 @@ namespace engine
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
-                           const UINT64 *microSeconds,
+                           const UINT32 *writeMod,
                            dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -294,13 +312,16 @@ namespace engine
          }
       }
 
-      if ( NULL != microSeconds )
+      if ( NULL != writeMod )
       {
-         rc = record.push( DPS_LOG_PUBLIC_TIME, sizeof( *microSeconds ),
-                           (CHAR *)microSeconds ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to push time(%lld) to record, "
-                      "rc = %d", *microSeconds, rc ) ;
+         rc = record.push( DPS_LOG_UPDATE_WRITEMOD, sizeof(*writeMod),
+                           (CHAR *)writeMod ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push writeMod(%d) to record, "
+                      "rc = %d", *writeMod, rc ) ;
       }
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
 
@@ -320,7 +341,8 @@ namespace engine
                            BSONObj &newObj,
                            BSONObj *oldShardingKey,
                            BSONObj *newShardingKey,
-                           UINT64 *microSeconds )
+                           UINT64 *microSeconds,
+                           UINT32 *writeMod )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2UPDATE ) ;
       SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
@@ -428,6 +450,16 @@ namespace engine
          }
       }
 
+      if ( NULL != writeMod )
+      {
+         dpsLogRecord::iterator itrTime ;
+         itrTime = record.find( DPS_LOG_UPDATE_WRITEMOD ) ;
+         if ( itrTime.valid() )
+         {
+            *writeMod = *( UINT32 *) itrTime.value() ;
+         }
+      }
+
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2UPDATE, rc ) ;
       return rc ;
@@ -441,7 +473,6 @@ namespace engine
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
                            const DPS_LSN_OFFSET &relatedLSN,
-                           const UINT64 *microSeconds,
                            dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -474,13 +505,8 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL != microSeconds )
-      {
-         rc = record.push( DPS_LOG_PUBLIC_TIME, sizeof( *microSeconds ),
-                           (CHAR *)microSeconds ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to push time(%lld) to record, "
-                      "rc = %d", *microSeconds, rc ) ;
-      }
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
    done:
@@ -570,6 +596,9 @@ namespace engine
                         (CHAR *)( &direction ) ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to push Direction object to record, rc: %d", rc ) ;
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
 
@@ -687,6 +716,9 @@ namespace engine
          goto error ;
       }
 
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_CSCRT2RECORD, rc ) ;
@@ -793,6 +825,9 @@ namespace engine
          goto error ;
       }
 
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_CSDEL2RECORD, rc ) ;
@@ -865,6 +900,9 @@ namespace engine
          PD_LOG( PDERROR, "Failed to push new csname to record, rc: %d", rc ) ;
          goto error ;
       }
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
    done:
@@ -982,6 +1020,9 @@ namespace engine
                       "rc: %d", rc ) ;
       }
 
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_CLCRT2RECORD, rc ) ;
@@ -1083,6 +1124,9 @@ namespace engine
          goto error ;
       }
 
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_CLDEL2RECORD, rc ) ;
@@ -1153,6 +1197,9 @@ namespace engine
          PD_LOG( PDERROR, "Failed to push ix to record, rc: %d",rc ) ;
          goto error ;
       }
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
    done:
@@ -1234,6 +1281,9 @@ namespace engine
          PD_LOG( PDERROR, "Failed to push ix to record, rc: %d",rc ) ;
          goto error ;
       }
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
    done:
@@ -1329,6 +1379,9 @@ namespace engine
          goto error ;
       }
 
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_CLRENAME2RECORD, rc ) ;
@@ -1409,6 +1462,9 @@ namespace engine
          PD_LOG( PDERROR, "Failed to push fullname to record, rc: %d",rc ) ;
          goto error ;
       }
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
    done:
@@ -1520,6 +1576,9 @@ namespace engine
          goto error ;
       }
 
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_TRANSCOMMIT2RECORD, rc ) ;
@@ -1607,6 +1666,9 @@ namespace engine
             goto error ;
          }
       }
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
 
@@ -1786,6 +1848,9 @@ namespace engine
          PD_LOG( PDERROR, "Failed to push trans to record, rc: %d", rc ) ;
          goto error ;
       }
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
    done:
@@ -2052,6 +2117,9 @@ namespace engine
          PD_LOG( PDERROR, "Failed to push trans to record, rc: %d", rc ) ;
          goto error ;
       }
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
    done:
@@ -2321,6 +2389,9 @@ namespace engine
          goto error ;
       }
 
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_LOBRM2RECORD, rc ) ;
@@ -2475,6 +2546,9 @@ namespace engine
          goto error ;
       }
 
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_LOBTRUNCATE2RECORD, rc ) ;
@@ -2542,6 +2616,9 @@ namespace engine
                         alterObject.objdata() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to push alter object to record, "
                    "rc: %d", rc ) ;
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
 
@@ -2630,6 +2707,9 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to push cl info, rc: %d",
                    rc ) ;
+
+      rc = checkAndAddTimeInfo( record ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
       header._length = record.alignedLen() ;
 

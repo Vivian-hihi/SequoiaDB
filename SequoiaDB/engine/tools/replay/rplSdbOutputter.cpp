@@ -177,12 +177,23 @@ namespace replay
                                         const BSONObj &newModifier,
                                         const BSONObj &shardingKey,
                                         const BSONObj &oldModifier,
-                                        const UINT64 &opTimeMicroSecond )
+                                        const UINT64 &opTimeMicroSecond,
+                                        const UINT32 &logWriteMod )
    {
       INT32 rc = SDB_OK ;
       sdbCollection cl ;
       BSONObj match;
+      BSONObj modifier;
       BSONObj hint = BSON( "" << "$id" );
+
+      if ( DMS_LOG_WRITE_MOD_FULL == logWriteMod )
+      {
+         modifier = BSON( "$replace" << newModifier ) ;
+      }
+      else
+      {
+         modifier = newModifier ;
+      }
 
       if ( !shardingKey.isEmpty() && _updateWithShardingKey )
       {
@@ -200,12 +211,12 @@ namespace replay
          goto error ;
       }
 
-      rc = cl.update( newModifier, match, hint, UPDATE_KEEP_SHARDINGKEY ) ;
+      rc = cl.update( modifier, match, hint, UPDATE_KEEP_SHARDINGKEY ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to update record, match[%s], modifier[%s], "
                  "rc=%d", match.toString(FALSE, TRUE).c_str(),
-                 newModifier.toString(FALSE, TRUE).c_str(), rc ) ;
+                 modifier.toString(FALSE, TRUE).c_str(), rc ) ;
          goto error ;
       }
 
