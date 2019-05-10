@@ -77,7 +77,6 @@ public class FullTextDBUtils {
      * @Date 2018-11-15
      */
     public static List<String> getESIndexNames( Sequoiadb db, String csName, String clName, String textIndexName ) {
-        DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
         String cappedName = getCappedName( db, csName, clName, textIndexName );
 
         // get es index names

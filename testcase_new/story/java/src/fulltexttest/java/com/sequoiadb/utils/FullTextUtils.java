@@ -278,21 +278,11 @@ public class FullTextUtils {
      * @Date 2019-05-09
      */
     public static void checkDataConsistency( Sequoiadb db, String csName,
-            String clName, String textIndexName ) {
-        List< String > groupNames = FullTextDBUtils.getCLGroups( db,
-                csName + "." + clName );
-        // in case of duplicate groupNames
-        groupNames = removeDuplicateItems( groupNames );
-        // get group Object
-        List<ReplicaGroup> groups = new ArrayList<>();
-        for ( String groupName: groupNames ) {
-            groups.add( db.getReplicaGroup( groupName ) );
-        }
-                
+            String clName, String textIndexName ) {            
         // check CL consistency
-        checkCLDataConsistency( groups, csName, clName );
+        checkCLDataConsistency( db, csName, clName );
         // check cappedCL consistency
-        checkCappedCLDataConsistency( groups, csName, clName, textIndexName);
+        checkCappedCLDataConsistency( db, csName, clName, textIndexName);
     }
     
     /**
@@ -304,16 +294,20 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static void checkCLDataConsistency( List<ReplicaGroup> groups, String csName,
-            String clName ) {            
+    public static void checkCLDataConsistency( Sequoiadb db, String csName,
+            String clName ) {
         boolean isConsistency = false;
-        for ( int i = 0; i < groups.size(); i++ ) {
-            Sequoiadb db = groups.get( i ).getSequoiadb();
-            String groupName = groups.get( i ).getGroupName();
+        
+        List< String > groupNames = FullTextDBUtils.getCLGroups( db,
+                csName + "." + clName );
+        // in case of duplicate groupNames
+        groupNames = removeDuplicateItems( groupNames );
+        
+        for ( String groupName: groupNames ) {
             List< String > nodeNames = CommLib.getNodeAddress( db, groupName );
             List< Node > nodes = new ArrayList<  >();
             for ( String nodeName : nodeNames ) {
-                nodes.add(groups.get( i ).getNode( nodeName ) );                           
+                nodes.add(db.getReplicaGroup( groupName ) .getNode( nodeName ) );                           
             }
             isConsistency = isConsistency( nodes, csName, clName );
             Assert.assertTrue( isConsistency, "check cl consistency timeout" );
@@ -329,21 +323,24 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2019-05-09
      */
-    public static void checkCappedCLDataConsistency( List<ReplicaGroup> groups, String csName, 
+    public static void checkCappedCLDataConsistency( Sequoiadb db, String csName,
             String clName, String textIndexName ) {
         boolean isConsistency = false;
-        for ( int i = 0; i < groups.size(); i++ ) {
-            Sequoiadb db = groups.get( i ).getSequoiadb();
-            String groupName = groups.get( i ).getGroupName();
-            String cappedName = FullTextDBUtils.getCappedName(db, csName, clName, textIndexName);
+        
+        String cappedName = FullTextDBUtils.getCappedName(db, csName, clName, textIndexName);
+        List< String > groupNames = FullTextDBUtils.getCLGroups( db,
+                csName + "." + clName );
+        // in case of duplicate groupNames
+        groupNames = removeDuplicateItems( groupNames );
+        for ( String groupName: groupNames ) {
             List< String > nodeNames = CommLib.getNodeAddress( db, groupName );
             List< Node > nodes = new ArrayList<  >();
             for ( String nodeName : nodeNames ) {
-                nodes.add(groups.get( i ).getNode( nodeName ) );                           
+                nodes.add(db.getReplicaGroup( groupName ) .getNode( nodeName ) );                           
             }
             isConsistency = isConsistency( nodes, cappedName, cappedName );
             Assert.assertTrue( isConsistency, "check cappedcl consistency timeout" );
-        }
+        }      
     }
 
     /**
