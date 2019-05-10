@@ -352,14 +352,13 @@ public class FullTextDBUtils {
      *
      * @param cl
      * @param insertNum
-     * @return List<BSONObject> 返回插入的记录集
+     * @return 无返回
      * @Author luweikang
      * @Date 2019-05-08
      */
-    public static List<BSONObject> insertData( DBCollection cl, int insertNum ) {
+    public static void insertData( DBCollection cl, int insertNum ) {
         String clName = cl.getName();
         List<BSONObject> insertObjs = new ArrayList<BSONObject>();
-        List<BSONObject> recordList = new ArrayList<BSONObject>();
         int insertTimes = 100;
         int insertRecordNum = insertNum / insertTimes;
         String strB = FullTextUtils.getRandomString( 8 );
@@ -373,10 +372,8 @@ public class FullTextDBUtils {
                         + strB + "', c: '" + strC + "', d: '" + strD + "', e: '" + strE + "'}" ) );
             }
             cl.insert( insertObjs, 0 );
-            recordList.addAll( insertObjs );
             insertObjs.clear();
         }
-        return recordList;
     }
 
     /**
