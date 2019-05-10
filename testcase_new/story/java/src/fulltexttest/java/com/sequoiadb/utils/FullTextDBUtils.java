@@ -348,8 +348,8 @@ public class FullTextDBUtils {
     }
 
     /**
-     * 默认插入20万条记录，如: {a: 0, b: "clname0", c: "32 byte str...", d:
-     * "64 byte str...", e: "128 byte str..."}
+     * 默认插入20万条记录，如: {id: 0, a: "clname0", b: "8 byte str", c: "32 byte str...",
+     * d: "64 byte str...", e: "128 byte str..."}
      *
      * @param cl
      * @return List<BSONObject> 返回插入的记录集
@@ -361,8 +361,8 @@ public class FullTextDBUtils {
     }
 
     /**
-     * 指定记录数插入记录，如: {a: 0, b: "clname0", c: "32 byte str...", d:
-     * "64 byte str...", e: "128 byte str..."}
+     * 指定记录数插入记录，如: {id: 0, a: "clname0", b: "8 byte str", c: "32 byte str...",
+     * d: "64 byte str...", e: "128 byte str..."}
      *
      * @param cl
      * @param insertNum
@@ -376,14 +376,15 @@ public class FullTextDBUtils {
         List<BSONObject> recordList = new ArrayList<BSONObject>();
         int insertTimes = 100;
         int insertRecordNum = insertNum / insertTimes;
+        String strB = FullTextUtils.getRandomString( 8 );
         String strC = FullTextUtils.getRandomString( 32 );
         String strD = FullTextUtils.getRandomString( 64 );
         String strE = FullTextUtils.getRandomString( 128 );
         for ( int i = 0; i < insertTimes; i++ ) {
             for ( int j = 0; j < insertRecordNum; j++ ) {
                 int recordNum = i * insertRecordNum + j;
-                insertObjs.add( (BSONObject) JSON.parse( "{a: " + recordNum + ", b: '" + clName + recordNum + "', c: '"
-                        + strC + "', d: '" + strD + "', e: '" + strE + "'}" ) );
+                insertObjs.add( (BSONObject) JSON.parse( "{id: " + recordNum + ", a: '" + clName + "', b: '" + strB
+                        + recordNum + "', c: '" + strC + "', d: '" + strD + "', e: '" + strE + "'}" ) );
             }
             cl.insert( insertObjs, 0 );
             recordList.addAll( insertObjs );
