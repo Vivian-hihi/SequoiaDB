@@ -1,6 +1,6 @@
 以下操作均在PostgreSQL shell 环境下执行。
 
-##PostgreSQL与SequoiaDB建立关联##
+##连接PostgreSQL实例组件与存储引擎##
 
 1. 加载SequoiaDB连接驱动
 
@@ -28,20 +28,19 @@
 
 3. 关联SequoiaDB的集合空间与集合
 
-	```lang-javascript
-foo=# create foreign table test (name text, id numeric) server sdb_server options ( collectionspace 'foo', collection 'bar', decimal 'on' ) ;
-	```
+  ```lang-javascript
+  foo=# create foreign table test (name text, id numeric) server sdb_server options ( collectionspace 'foo', collection 'bar', decimal 'on' ) ;
+  ```
 
-	>**Note:**
-	>
-	> * 集合空间与集合必须已经存在于SequoiaDB，否则查询出错。
-	> * 如果需要对接SequoiaDB的decimal字段，则需要在options中指定 decimal 'on' 。
-	> * pushdownsort 设置是否下压排序条件到 SequoiaDB，默认为on，关闭为off。
-	> * pushdownlimit 设置是否下压 limit 和 offset 条件到 SequoiaDB，默认为on，关闭为off。
-	> * 开启 pushdownlimit 时，必须同时开启 pushdownsort ，否则可能会造成结果非预期的问题。
-	> * 默认情况下，表的字段映射到SequoiaDB中为小写字符，如果强制指定字段为大写字符，创建方式参考“注意事项1”。
-	> * 映射 SequoiaDB 的数组类型，创建方式参考“注意事项2”。
-	
+  >**Note:**
+  >
+  > * 集合空间与集合必须已经存在于SequoiaDB，否则查询出错。
+  > * 如果需要对接SequoiaDB的decimal字段，则需要在options中指定 decimal 'on' 。
+  > * pushdownsort 设置是否下压排序条件到 SequoiaDB，默认为on，关闭为off。
+  > * pushdownlimit 设置是否下压 limit 和 offset 条件到 SequoiaDB，默认为on，关闭为off。
+  > * 开启 pushdownlimit 时，必须同时开启 pushdownsort ，否则可能会造成结果非预期的问题。
+  > * 默认情况下，表的字段映射到SequoiaDB中为小写字符，如果强制指定字段为大写字符，创建方式参考“注意事项1”。
+  > * 映射 SequoiaDB 的数组类型，创建方式参考“注意事项2”。
 
 4. 更新表的统计信息
 
@@ -95,9 +94,9 @@ foo=# create foreign table test (name text, id numeric) server sdb_server option
 
 1. 数据类型的对应关系
 
-	| PostgreSQL	    | SequoiaDB        | 注意事项                                      |
+	| PostgreSQL	    | API        | 注意事项                                      |
 	| ----------------- | ---------------- | --------------------------------------------- |
-	| smallint	        | int              | 当SequoiaDB中的值超过smallint范围时会发生截断 |
+	| smallint	        | int              | 当API中的值超过smallint范围时会发生截断 |
 	| integer        	| int              |                                               |
 	| bigint        	| long             |                                               |
 	| serial           	| int              |                                               |
@@ -165,15 +164,15 @@ foo=# create foreign table test (name text, id numeric) server sdb_server option
 
 		```lang-diy
 		{
-  		"_id": {
-    		"$oid":"53a2de926b4715450a000001"
-  		},
-  		"name": [
-    		1,
-    		2,
-    		3
-    		],
-  		"id": 123
+      		"_id": {
+   	 		"$oid":"53a2de926b4715450a000001"
+      		},
+      		"name": [
+   	 		1,
+   	 		2,
+   	 		3
+   	 		],
+      		"id": 123
 		}
 		```
 

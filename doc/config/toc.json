@@ -365,8 +365,8 @@
             {
                "id": 1519627277,
                "dir": "sequoiasql_pg",
-               "cn": "Sequoiasql-pgsql",
-               "en": "Sequoiasql-pgsql",
+               "cn": "PostgreSQL实例组件",
+               "en": "PostgreSQL_instance",
                "contents": [
                   {
                      "id": 1519627741,
@@ -403,16 +403,16 @@
                   {
                      "id": 1519627744,
                      "file": "SQL_to_Sequoiadb_mapping",
-                     "cn": "SQL to SequoiaDB 映射表",
-                     "en": "Mapping Table from SQL to SequoiaDB"
+                     "cn": "SQL实例 与 JSON对象映射表",
+                     "en": "Mapping Table from SQL to JSON"
                   }
                ]
             },
             {
                "id": 1521595228,
                "dir": "sequoiasql_mysql",
-               "cn": "Sequoiasql-mysql",
-               "en": "Sequoiasql-mysql",
+               "cn": "MySQL实例组件",
+               "en": "MySQL_instance",
                "contents": [
                   {
                      "id": 1521595241,
@@ -1237,8 +1237,8 @@
             {
                "id": 1432190710,
                "dir": "spark",
-               "cn": "Spark",
-               "en": "Spark",
+               "cn": "Spark实例组件",
+               "en": "Spark_instance",
                "contents": [
                   {
                      "id": 1432190587,
@@ -1263,8 +1263,8 @@
             {
                "id": 1432190713,
                "dir": "postgresql",
-               "cn": "PostgreSQL",
-               "en": "PostgreSQL",
+               "cn": "PostgreSQL实例组件",
+               "en": "PostgreSQL_instance",
                "contents": [
                   {
                      "id": 1432190586,
@@ -1435,7 +1435,7 @@
             {
                "id": 1432190736,
                "dir": "java_driver",
-               "cn": "Java驱动",
+               "cn": "Java开发驱动",
                "en": "Java Driver",
                "contents": [
                   {
@@ -4005,14 +4005,14 @@
                   {
                      "id": 1501736518,
                      "file": "install_postgresql",
-                     "cn": "添加SequoiaSQL-PostgreSQL服务",
-                     "en": "Install SequoiaSQL-PostgreSQL"
+                     "cn": "PostgreSQL实例组件SAC数据操作",
+                     "en": "PostgreSQL instance in SAC"
                   },
                   {
                      "id": 1534834770,
                      "file": "install_mysql",
-                     "cn": "添加SequoiaSQL-MySQL服务",
-                     "en": "Install SequoiaSQL-MySQL"
+                     "cn": "MySQL实例组件SAC数据操作",
+                     "en": "MySQL instance in SAC"
                   },
                   {
                      "id": 1546587283,
@@ -4095,14 +4095,14 @@
                         {
                            "id": 1547704802,
                            "file": "relationship_pg",
-                           "cn": "SequoiaSQL-PostgreSQL",
-                           "en": "SequoiaSQL-PostgreSQL"
+                           "cn": "PostgreSQL实例组件",
+                           "en": "PostgreSQL_instance"
                         },
                         {
                            "id": 1547704803,
                            "file": "relationship_mysql",
-                           "cn": "SequoiaSQL-MySQL",
-                           "en": "SequoiaSQL-MySQL"
+                           "cn": "MySQL实例组件",
+                           "en": "MySQL_instance"
                         }
                      ]
                   }
@@ -4269,14 +4269,14 @@
                   {
                      "id": 1548829159,
                      "file": "mysql_configs",
-                     "cn": "SequoiaSQL-MySQL修改配置",
-                     "en": "SequoiaSQL-MySQL Configs"
+                     "cn": "MySQL实例修改配置",
+                     "en": "MySQL Configs"
                   },
                   {
                      "id": 1548829160,
                      "file": "postgresql_configs",
-                     "cn": "SequoiaSQL-PostgreSQL修改配置",
-                     "en": "SequoiaSQL-PostgreSQL Configs"
+                     "cn": "PostgreSQL实例修改配置",
+                     "en": "PostgreSQL Configs"
                   }
                ]
             },
@@ -4431,8 +4431,8 @@
             {
                "id": 1523182045,
                "dir": "postgresql_data",
-               "cn": "SequoiaSQL-PostgreSQL数据操作",
-               "en": "SequoiaSQL-PostgreSQL Data",
+               "cn": "PostgreSQL实例数据操作",
+               "en": "PostgreSQL Data",
                "contents": [
                   {
                      "id": 1520921810,
@@ -4457,8 +4457,8 @@
             {
                "id": 1534834766,
                "dir": "mysql_data",
-               "cn": "SequoiaSQL-MySQL数据操作",
-               "en": "SequoiaSQL-MySQL Data",
+               "cn": "MySQL实例数据操作",
+               "en": "MySQL Data",
                "contents": [
                   {
                      "id": 1534834767,

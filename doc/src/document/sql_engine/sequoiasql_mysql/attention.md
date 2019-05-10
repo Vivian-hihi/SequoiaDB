@@ -1,11 +1,11 @@
-##SequoiaSQL-MySQL使用注意事项##
+##MySQL实例组件使用注意事项##
 
 
 1. 不支持创建外键；
 
 2. 时间戳类型字段取值范围为：1902-01-01 00:00:00.000000 至 2037-12-31 23:59:59.999999；
 
-3. 索引键不超过3072字节。通过MySQL创建的索引，不可直接在SequoiaDB上对索引执行删除或修改操作；
+3. 索引键不超过3072字节。通过MySQL实例创建的索引，不可直接在SequoiaDB上对索引执行删除或修改操作；
 
 4. 复合唯一索引仅支持所有字段null值重复，不允许部分字段null值重复，例如：允许出现(null,null)和(null,null)重复值，但不允许出现(1,null)和(1,null)重复值；
 
@@ -13,7 +13,7 @@
 
 6. 不支持在BINARY、VARBINARY、TINYBLOB、BLOB、MEDIUMBLOB、LONGBLOB、JSON类型的字段上创建索引；
 
-7. 一个MySQL节点仅可与一个SequoiaDB集群对接，不支持跨多个SequoiaDB集群；
+7. 一个 MySQL 实例节点仅可与一个SequoiaDB集群对接，不支持跨多个SequoiaDB集群；
 
 8. 默认字符集为utf8mb4，不支持忽略大小写的字符比较规则，字符比较对大小写敏感；
 

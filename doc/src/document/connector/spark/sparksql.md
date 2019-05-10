@@ -1,14 +1,15 @@
-##从SparkSQL访问SequoiaDB##
+##从 SparkSQL 实例访问SequoiaDB数据库存储引擎##
 
 SparkSQL是Spark下处理结构化数据执行的模块，它提供了名为DataFrame的数据抽象工具，同时他还能作为分布式的SQL查询引擎。
 
-只要Spark的安装配置符合要求，通过SparkSQL访问SequoiaDB是很简单的。
+只要Spark的安装配置符合要求，通过SparkSQL实例访问SequoiaDB是很简单的。
 
 使用Spark API以及Spark自带的命令行工具spark-shell、spark-sql、beeline均可以通过SQL访问SequoiaDB。
 
 ##创建SequoiaDB表或视图##
 
 ###建表语句###
+
 在SparkSQL中创建SequoiaDB表的SQL语句如下
 
 ```lang-javascript
@@ -80,9 +81,9 @@ spark-sql> insert into table t2 select * from t1;
 
 如果两个表的schema相同，则不需指定列名，否则需要指定。
 
-##SequoiaDB与SparkSQL类型映射##
+##存储类型与SparkSQL实例类型映射##
 
-|SequoiaDB类型|SparkSQL类型|SQL类型|
+|存储引擎类型|SparkSQL 实例类型|SQL 实例类型|
 |---|---|---|
 |int32|IntegerType|int|
 |int64|LongType|bigint|
@@ -98,7 +99,7 @@ spark-sql> insert into table t2 select * from t1;
 |BSON(嵌套对象)|StructType|struct\<field:type,…>|
 |array|ArrayType|array\<type>|
 
-##SequoiaDB向SparkSQL类型转换的兼容性##
+##SequoiaDB存储引擎向SparkSQL实例类型转换的兼容性##
 
 Y表示兼容，N表示不兼容
 

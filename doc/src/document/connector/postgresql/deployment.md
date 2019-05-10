@@ -95,7 +95,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
  $ /opt/postgresql/bin/initdb -D /opt/postgresql/data
  ```
 
-##安装 SequoiaDB-PostgreSQL 插件##
+##安装 PostgreSQL 实例##
 
 1. 创建 PostgreSQL 的 lib 目录
 
@@ -131,7 +131,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
  从 SequoiaDB 安装后的 postgresql 目录（默认为/opt/sequoiadb/postgresql）中拷贝 sdb_fdw.so 文件到 PostgreSQL 的 lib 目录，并添加软链接。
 
  sdb_fdw.so 文件名如 sdb_fdw.so_2.2_23000 ，2.2 代表对应的 SequoiaDB 版本，23000 代表 Release 号。
-   
+
  ```lang-javascript
  $ cp -f /opt/sequoiadb/postgresql/sdb_fdw.so_2.2_23000 ${PGLIBDIR}
  $ cd ${PGLIBDIR}
@@ -154,7 +154,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
  module_pathname = '$libdir/sdb_fdw'
  relocatable = true
  ```
- 
+
  sdb_fdw--1.0.sql 脚本内容：
 
  ```
@@ -174,7 +174,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
  VALIDATOR sdb_fdw_validator;
  ```
 
-##部署 PostgreSQL##
+##部署 PostgreSQL实例组件##
 
 1. 修改 PostgreSQL 的日志配置，日志中增加打印时间信息、连接信息等
 
@@ -225,7 +225,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
  ```lang-javascript
  $ bin/postgres -D data/ >> logfile 2>&1 &
-  ```
+ ```
 
 4. 检查 PostgreSQL 是否启动成功
 

@@ -1,9 +1,9 @@
-##安装 SequoiaSQL MySQL ##
+##安装 MySQL 实例组件##
 
 ###安装前准备###
 
-- 使用 root 用户权限来安装 SequoiaSQL MySQL
-- 检查 SequoiaSQL MySQL 产品软件包是否与 SequoiaDB 版本一致 
+- 使用 root 用户权限来安装 MySQL实例组件
+- 检查 MySQL 实例组件产品软件包是否与 SequoiaDB 版本一致 
 - 如果需要图形界面模式安装，请确保 X Server 服务正在运行
 
 ###安装步骤###
@@ -17,7 +17,7 @@
 （3）步骤以命令行方式进行介绍，图形界面按照图像向导提示完成。
 
 - 运行安装程序  
-    
+  
   ```lang-javascript
   # ./sequoiasql-mysql-3.2-linux_x86_64-enterprise-installer.run --mode text
   ```
@@ -72,7 +72,7 @@
   设定现在已经准备将 SequoiaSQL MySQL Server 安装到您的电脑.
   您确定要继续? [Y/n]: 
   ```
-    
+  
 - 安装完成
 
   ```
@@ -85,14 +85,14 @@
   安装程序已经完成安装 SequoiaSQL MySQL Server 于你的电脑中.
   ```
 
-##部署SequoiaSQL MySQL##
+##部署 MySQL 实例组件##
 
 1. 切换用户和目录
 
    ```lang-javascript
     $ su - sdbadmin
     $ cd /opt/sequoiasql/mysql
-    ```
+   ```
 
 2. 添加实例
 
@@ -142,9 +142,9 @@
    ok
    ```
 
-##SequoiaSQL MySQL开机自启动##
+##MySQL 实例组件开机自启动##
 
-1. 安装 SequoiaSQL MySQL 时，会自动添加系统服务：sequoiasql-mysql。该服务在启动时，会自动拉起相关的实例。在实例进程异常退出时，也会自动拉起实例。
+1. 安装 MySQL 实例组件时，会自动添加系统服务：sequoiasql-mysql。该服务在启动时，会自动拉起相关的实例。在实例进程异常退出时，也会自动拉起实例。
 
    >**Note:**   
    >系统服务名为 sequoiasql-mysql[i]，i 为小于 50 的数值或者为空。

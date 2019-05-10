@@ -1,19 +1,11 @@
 ##概念##
 
-  SQL节点是系统提供SQL访问能力的逻辑节点，兼容所有标准SQL2003语法，并且完全兼容PostgreSQL语法。
-
-  SQL节点将接收的外部请求进行SQL解析，生成内部的执行计划，将执行计划下发至协调节点，并汇总协调节点的应答进行外部响应。
-
-  SQL节点支持水平伸缩，节点相互独立，一次外部请求只能在一个SQL节点内完成，因此，可以根据外部应用的压力来规划SQL节点的规模。
-
-  SQL节点需要进行一定的配置，才可以对接至指定的 DB 引擎。
+- SQL 实例是系统提供SQL访问能力的逻辑节点，可以直接配置 MySQL，PostgreSQL和SparkSQL 实例，实现不同 SQL 访问方式。
+- SQL 实例将接收的外部请求进行SQL解析，生成内部的执行计划，将执行计划下发至协调节点，并汇总协调节点的应答进行外部响应。
+- SQL 实例支持水平伸缩，实例互相独立，一次外部请求只能在一个 SQL 实例内完成。因此，可以根据外部应用的压力来规划SQL 实例的规模。
+- SQL 实例需要进行一定的配置，才可以对接至指定的数据库存储引擎。
 
 ##操作##
-
-  > **Note：**  
-  > 一、以下操作以SequoiaSQL-PostgreSQL为例，如需要对接SequoiaSQL-MySQL请参考[SequoiaSQL-MySQL引擎安装部署](sql_engine/sequoiasql_mysql/install_deploy.md)。  
-  > 二、在进行下列操作前，请确保 SequoiaSQL 已经安装，并将当前目录切换至 SequoiaSQL 安装的根目录。  
-  > 三、SQL节点的详细操作，请参考 [SequoiaSQL-PostgreSQL引擎安装部署](sql_engine/sequoiasql_pg/install/install_deploy.md)
 
 - 创建SQL节点
 

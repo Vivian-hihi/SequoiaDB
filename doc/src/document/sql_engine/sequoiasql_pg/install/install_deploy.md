@@ -1,23 +1,23 @@
-##安装 SequoiaSQL PostgreSQL ##
+##安装 PostgreSQL 实例组件##
 
 ###安装前准备###
 
-- 使用 root 用户权限来安装 SequoiaSQL PostgreSQL
-- 检查 SequoiaSQL PostgreSQL 产品软件包是否与 SequoiaDB 版本一致 
+- 使用 root 用户权限来安装 PostgreSQL 实例组件
+- 检查 PostgreSQL 实例组件产品软件包是否与 SequoiaDB 版本一致 
 - 如果需要图形界面模式安装，请确保 X Server 服务正在运行
 
 ###安装步骤###
 
 **说明：**
 
-（1）产品包名字以 sequoiasql-postgresql-2.8.1-x86_64-enterprise-installer.run 为例。
+（1）产品包名字以 sequoiasql-postgresql-3.2-x86_64-enterprise-installer.run 为例。
 
 （2）安装过程中若输入有误，可按ctrl+退格键进行删除。
 
 （3）步骤以命令行方式进行介绍，图形界面按照图像向导提示完成。
 
 - 运行安装程序  
-    
+  
   ```lang-javascript
   # ./sequoiasql-postgresql-3.2-x86_64-enterprise-installer.run --mode text
   ```
@@ -73,7 +73,7 @@
   设定现在已经准备将 SequoiaSQL PostgreSQL Server 安装到您的电脑.
   您确定要继续? [Y/n]: 
   ```
-    
+  
 - 安装完成
 
   ```
@@ -87,7 +87,7 @@
   安装程序已经完成安装 SequoiaSQL PostgreSQL Server 于你的电脑中.
   ```
 
-##部署 SequoiaSQL PostgreSQL ##
+##部署 PostgreSQL 实例组件 ##
 
 1. 切换用户和目录
 
@@ -134,15 +134,15 @@
    Starting instance myinst ...
    ok (PID: 28115)
    ```
-    
+   
     查看实例状态
-    
+   
     ```lang-javascript
    $ bin/sdb_sql_ctl status
    INSTANCE   PID        SVCNAME    PGDATA                                   PGLOG
    myinst     28115      5432       /opt/sequoiasql/postgresql/database/5432/ /opt/sequoiasql/postgresql/myinst.log
    Total: 1; Run: 1
-   ```
+    ```
 
 5. 检查 SequoiaSQL PostgreSQL 是否启动成功
 
@@ -164,9 +164,9 @@
    $ bin/psql -p 5432 foo
    ```
 
-##SequoiaSQL PostgreSQL 开机自启动##
+##PostgreSQL 实例组件开机自启动##
 
-1. 安装 SequoiaSQL PostgreSQL 时，会自动添加系统服务：sequoiasql-postgresql。该服务在启动时，会自动拉起相关的实例，在实例进程异常退出时，也会自动拉起实例。
+1. 安装 PostgreSQL 实例组件时，会自动添加系统服务：sequoiasql-postgresql。该服务在启动时，会自动拉起相关的实例，在实例进程异常退出时，也会自动拉起实例。
 
    >**Note:**   
    >系统服务名为 sequoiasql-postgresql[i]，i 为小于 50 的数值或者为空。在安装包执行结束时，会打印出该版本对应的服务名。
@@ -201,7 +201,7 @@
    $ bin/sdb_sql_ctl addtosvc myinst
    Adding instance myinst to service ...
    ok
-   ```   
+   ```
 
 4. 查看服务运行状态
 

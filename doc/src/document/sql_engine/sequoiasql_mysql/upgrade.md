@@ -1,13 +1,13 @@
-##SequoiaSQL-MySQL 手工升级指导##
+##MySQL 实例组件手工升级指导##
 
-假如升级前SequoiaSQL-MySQL中已添加端口号为3306，数据路径为/opt/sequoiasql/mysql/data3306的数据库实例，那么升级至版本3.2步骤如下：
+假如升级前 MySQL 实例组件中已添加端口号为3306，数据路径为/opt/sequoiasql/mysql/data3306的数据库实例，那么升级至版本3.2步骤如下：
 
 1. 卸载之前的mysql，保留数据目录
 
 2. 安装3.2版本的SequoiaSQL-MySQL
 
 3. 切换目录和用户
-  
+
   ```lang-javascript
   # cd /opt/sequoiasql/mysql
   # su sdbadmin
@@ -45,7 +45,6 @@
   ```
 
 9. 将之前安装路径下my.cnf端口号为3306的数据库实例的配置项合入data3306/auto.cnf
-
 10. 启动实例
 
   ```lang-javascript
