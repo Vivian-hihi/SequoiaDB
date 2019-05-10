@@ -139,12 +139,12 @@ public class FullTextUtils {
     public static void checkCountInES( Client esClient,
             List< String > esIndexNames, int expectCount ) {
         boolean isSync = false;
-        // int timeout = 600;
-        // int interval = 1; // interval 1s
+        int timeout = 3600; // timeout 1h
+        int interval = 1; // interval 1s
         int doTimes = 0;
         int actCount = 0;
 
-        while ( true ) {
+        while ( doTimes * interval < timeout ) {
             actCount = 0;
             // Add counts of all indices
             for ( String esIndexName : esIndexNames ) {
@@ -173,7 +173,7 @@ public class FullTextUtils {
         for ( String esIndexName : esIndexNames ) {
             msg += esIndexName + "/";
         }
-        Assert.assertTrue( isSync, "check " + msg + " count syn to es fail" );
+        Assert.assertTrue( isSync, "check " + msg + " count syn to es timeout" );
     }
 
     /**
@@ -189,8 +189,8 @@ public class FullTextUtils {
     public static void checkLidInES( Client esClient,
             List< String > esIndexNames, List< DBCollection > cappedCLs ) {
         boolean isSync = false;
-        // int timeout = 600;
-        // int interval = 1; // interval 1s
+        int timeout = 3600; // timeout 1h
+        int interval = 1; // interval 1s
         int doTimes;
 
         // get all lids from all groups
@@ -203,7 +203,7 @@ public class FullTextUtils {
         for ( int i = 0; i < esIndexNames.size(); i++ ) {
             doTimes = 0;
             Integer commitID = -10000;
-            while ( true ) {
+            while ( doTimes * interval < timeout ) {
                 commitID = FullTextESUtils.getCommitIDFromES( esClient,
                         esIndexNames.get( i ) );
                 if ( commitID.intValue() != lastLogicalIDs.get( i )
@@ -229,11 +229,10 @@ public class FullTextUtils {
                     }
                 }
             }
+            // print message while not finish sync
+            Assert.assertTrue( isSync,
+                    "check " + esIndexNames.get( i ).toString() + " lid syn to es timeout" );
         }
-
-        // print message while not finish sync
-        Assert.assertTrue( isSync,
-                "check " + esIndexNames.toString() + " lid syn to es fail" );
     }
 
     /**
@@ -317,7 +316,7 @@ public class FullTextUtils {
                 nodes.add(groups.get( i ).getNode( nodeName ) );                           
             }
             isConsistency = isConsistency( nodes, csName, clName );
-            Assert.assertTrue( isConsistency, "check cl consistency fail" );
+            Assert.assertTrue( isConsistency, "check cl consistency timeout" );
         }
     }
     
@@ -343,7 +342,7 @@ public class FullTextUtils {
                 nodes.add(groups.get( i ).getNode( nodeName ) );                           
             }
             isConsistency = isConsistency( nodes, cappedName, cappedName );
-            Assert.assertTrue( isConsistency, "check cappedcl consistency fail" );
+            Assert.assertTrue( isConsistency, "check cappedcl consistency timeout" );
         }
     }
 
