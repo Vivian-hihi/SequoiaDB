@@ -383,8 +383,8 @@ public class FullTextDBUtils {
         for ( int i = 0; i < insertTimes; i++ ) {
             for ( int j = 0; j < insertRecordNum; j++ ) {
                 int recordNum = i * insertRecordNum + j;
-                insertObjs.add( (BSONObject) JSON.parse( "{id: " + recordNum + ", a: '" + clName + "', b: '" + strB
-                        + recordNum + "', c: '" + strC + "', d: '" + strD + "', e: '" + strE + "'}" ) );
+                insertObjs.add( (BSONObject) JSON.parse( "{id: " + recordNum + ", a: '" + clName + recordNum + "', b: '"
+                        + strB + "', c: '" + strC + "', d: '" + strD + "', e: '" + strE + "'}" ) );
             }
             cl.insert( insertObjs, 0 );
             recordList.addAll( insertObjs );
