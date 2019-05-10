@@ -1216,10 +1216,10 @@ namespace engine
            pSubUnit->getUnitID() == getUnitID() )
       {
          dmsIndexStat *pIndexStat = (dmsIndexStat *)pSubUnit ;
-         const CHAR *pIndexName = pIndexStat->getIndexName() ;
-         INDEX_STAT_MAP::value_type idxStatValue( pIndexName, pIndexStat ) ;
+         dmsExtentID indexLID = pIndexStat->getIndexLogicalID() ;
+         INDEX_STAT_MAP::value_type idxStatValue( indexLID, pIndexStat ) ;
 
-         INDEX_STAT_ITERATOR iter = _indexStats.find( pIndexName ) ;
+         INDEX_STAT_ITERATOR iter = _indexStats.find( indexLID ) ;
          if ( iter != _indexStats.end() )
          {
             dmsIndexStat *pTempStat = iter->second ;
@@ -1276,16 +1276,16 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT_RMIDXSTAT, "_dmsCollectionStat::removeIndexStat" )
-   BOOLEAN _dmsCollectionStat::removeIndexStat ( const CHAR *pIndexName,
+   BOOLEAN _dmsCollectionStat::removeIndexStat ( dmsExtentID indexLID,
                                                  BOOLEAN findNewFieldStat )
    {
       BOOLEAN deleted = FALSE ;
 
       PD_TRACE_ENTRY( SDB_DMSCLSTAT_RMIDXSTAT ) ;
 
-      if ( pIndexName )
+      if ( DMS_INVALID_EXTENT != indexLID )
       {
-         INDEX_STAT_ITERATOR iter = _indexStats.find( pIndexName ) ;
+         INDEX_STAT_ITERATOR iter = _indexStats.find( indexLID ) ;
          if ( iter != _indexStats.end() )
          {
             dmsIndexStat *pDeletingStat = iter->second ;
@@ -1321,7 +1321,7 @@ namespace engine
 
       if ( pFieldName )
       {
-         INDEX_STAT_ITERATOR iter = _fieldStats.find( pFieldName ) ;
+         FIELD_STAT_ITERATOR iter = _fieldStats.find( pFieldName ) ;
          if ( iter != _fieldStats.end() )
          {
             dmsIndexStat *pDeletingStat = iter->second ;
@@ -1351,12 +1351,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT_GETIDXSTAT, "_dmsCollectionStat::getIndexStat" )
-   const dmsIndexStat * _dmsCollectionStat::getIndexStat ( const CHAR *pIndexName ) const
+   const dmsIndexStat * _dmsCollectionStat::getIndexStat ( dmsExtentID indexLID ) const
    {
       PD_TRACE_ENTRY( SDB_DMSCLSTAT_GETIDXSTAT ) ;
 
       const dmsIndexStat *pIndexStat = NULL ;
-      INDEX_STAT_CONST_ITERATOR iter = _indexStats.find( pIndexName ) ;
+      INDEX_STAT_CONST_ITERATOR iter = _indexStats.find( indexLID ) ;
 
       if ( iter != _indexStats.end() )
       {
@@ -1374,7 +1374,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DMSCLSTAT_GETFLDSTAT ) ;
 
       const dmsIndexStat *pFieldStat = NULL ;
-      INDEX_STAT_CONST_ITERATOR iter = _fieldStats.find( pFieldName ) ;
+      FIELD_STAT_CONST_ITERATOR iter = _fieldStats.find( pFieldName ) ;
 
       if ( iter != _fieldStats.end() )
       {
@@ -1448,8 +1448,8 @@ namespace engine
            pIndexStat->getNumKeys() > 0 )
       {
          const CHAR *pFirstField = pIndexStat->getFirstField() ;
-         INDEX_STAT_MAP::value_type fieldStatValue( pFirstField, pIndexStat ) ;
-         INDEX_STAT_ITERATOR iter = _fieldStats.find( pFirstField ) ;
+         FIELD_STAT_MAP::value_type fieldStatValue( pFirstField, pIndexStat ) ;
+         FIELD_STAT_ITERATOR iter = _fieldStats.find( pFirstField ) ;
          if ( iter != _fieldStats.end() )
          {
             dmsIndexStat *pTempStat = iter->second ;
@@ -1482,7 +1482,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DMSCLSTAT__RMFLDSTAT ) ;
 
       const CHAR *pFieldName = pDeletingStat->getFirstField() ;
-      INDEX_STAT_ITERATOR iterField = _fieldStats.find( pFieldName ) ;
+      FIELD_STAT_ITERATOR iterField = _fieldStats.find( pFieldName ) ;
 
       if ( iterField->second == pDeletingStat )
       {
@@ -1499,7 +1499,7 @@ namespace engine
 
       dmsIndexStat *pNewFieldStat = NULL ;
       const CHAR *pFieldName = pDeletingStat->getFirstField() ;
-      INDEX_STAT_ITERATOR iterField = _fieldStats.find( pFieldName ) ;
+      FIELD_STAT_ITERATOR iterField = _fieldStats.find( pFieldName ) ;
 
       if ( iterField != _fieldStats.end() && pDeletingStat == iterField->second )
       {
@@ -1529,7 +1529,7 @@ namespace engine
          _fieldStats.erase( iterField ) ;
          if ( pNewFieldStat )
          {
-            INDEX_STAT_MAP::value_type fieldStatValue(
+            FIELD_STAT_MAP::value_type fieldStatValue(
                   pNewFieldStat->getFirstField(), pNewFieldStat ) ;
             _fieldStats.insert( fieldStatValue ) ;
          }

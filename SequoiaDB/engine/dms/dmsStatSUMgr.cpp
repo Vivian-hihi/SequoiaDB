@@ -963,7 +963,7 @@ namespace engine
                      (dmsCollectionStat *)pCache->getCacheUnit( clItem._mbID ) ;
                if ( pCollectionStat )
                {
-                  needDelete = pCollectionStat->removeIndexStat( idxItem._pIXName, TRUE ) ;
+                  needDelete = pCollectionStat->removeIndexStat( idxItem._idxLID, TRUE ) ;
                }
             }
          }

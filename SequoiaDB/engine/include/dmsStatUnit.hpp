@@ -625,10 +625,13 @@ namespace engine
 
    typedef _dmsIndexStat dmsIndexStat ;
 
-   typedef _utilStringMap< dmsIndexStat * > INDEX_STAT_MAP ;
-
+   typedef _utilMap< dmsExtentID, dmsIndexStat * > INDEX_STAT_MAP ;
    typedef INDEX_STAT_MAP::iterator INDEX_STAT_ITERATOR ;
    typedef INDEX_STAT_MAP::const_iterator INDEX_STAT_CONST_ITERATOR ;
+
+   typedef _utilStringMap< dmsIndexStat * > FIELD_STAT_MAP ;
+   typedef FIELD_STAT_MAP::iterator FIELD_STAT_ITERATOR ;
+   typedef FIELD_STAT_MAP::const_iterator FIELD_STAT_CONST_ITERATOR ;
 
    /*
       _dmsCollectionStat define
@@ -728,7 +731,7 @@ namespace engine
 
          virtual void clearSubUnits () ;
 
-         const dmsIndexStat *getIndexStat ( const CHAR *pIndexName ) const ;
+         const dmsIndexStat *getIndexStat ( dmsExtentID indexLID ) const ;
 
          const dmsIndexStat *getFieldStat ( const CHAR *pFieldName ) const ;
 
@@ -738,7 +741,7 @@ namespace engine
             return addSubUnit( pIndexStat, ignoreCrtTime ) ;
          }
 
-         BOOLEAN removeIndexStat ( const CHAR *pIndexName,
+         BOOLEAN removeIndexStat ( dmsExtentID indexLID,
                                    BOOLEAN findNewFieldStat ) ;
 
          BOOLEAN removeFieldStat ( const CHAR *pFieldName,
@@ -777,7 +780,7 @@ namespace engine
          UINT32            _avgNumFields ;
 
          INDEX_STAT_MAP    _indexStats ;
-         INDEX_STAT_MAP    _fieldStats ;
+         FIELD_STAT_MAP    _fieldStats ;
    } ;
 
    typedef _dmsCollectionStat dmsCollectionStat ;

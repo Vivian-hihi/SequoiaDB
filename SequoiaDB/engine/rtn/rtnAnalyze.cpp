@@ -1073,7 +1073,7 @@ namespace engine
       SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
 
       const CHAR *pCLFullName = pMonCL->_name ;
-      const CHAR *pIXName = pMonIX->getIndexName() ;
+      dmsExtentID indexLID = pMonIX->_indexLID ;
 
       dmsCollectionStat *pCollectionStat = NULL ;
       dmsStatSUMgr *pStatSUMgr = dmsCB->getStatSUMgr() ;
@@ -1099,7 +1099,7 @@ namespace engine
       PD_CHECK( pCollectionStat, SDB_INVALIDARG, error, PDERROR,
                 "No statistics found for collection [%s]", pCLFullName ) ;
 
-      pCollectionStat->removeIndexStat( pIXName, TRUE ) ;
+      pCollectionStat->removeIndexStat( indexLID, TRUE ) ;
 
       rc = pStatSUMgr->loadIndexStats( pMonCS, pMonCL, pMonIX, pStatCache,
                                        cb, dmsCB, rtnCB ) ;

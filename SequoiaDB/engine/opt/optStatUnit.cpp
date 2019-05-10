@@ -490,7 +490,7 @@ namespace engine
                                   const ixmIndexCB &indexCB )
    : _optStatUnit( collectionStat.getTotalRecords( TRUE ) ),
      _collectionStat( collectionStat ),
-     _pIndexStat( collectionStat.getIndexStat( indexCB.getName() ) ),
+     _pIndexStat( collectionStat.getIndexStat( indexCB.getLogicalID() ) ),
      _keyPattern( indexCB.keyPattern() )
    {
       _keyPattern = _keyPattern.getOwned() ;

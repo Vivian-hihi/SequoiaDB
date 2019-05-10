@@ -271,16 +271,16 @@ namespace engine
             return _pCollectionStat ;
          }
 
-         OSS_INLINE const dmsIndexStat *getIndexStat ( const CHAR *pIndexName ) const
+         OSS_INLINE const dmsIndexStat *getIndexStat ( dmsExtentID indexLID ) const
          {
-            return ( _pCollectionStat && pIndexName ) ?
-                        _pCollectionStat->getIndexStat( pIndexName ) : NULL ;
+            return ( _pCollectionStat && DMS_INVALID_EXTENT != indexLID ) ?
+                   _pCollectionStat->getIndexStat( indexLID ) : NULL ;
          }
 
          OSS_INLINE const dmsIndexStat *getFieldStat ( const CHAR *pFieldName ) const
          {
             return ( _pCollectionStat && pFieldName ) ?
-                     _pCollectionStat->getFieldStat( pFieldName ) : NULL ;
+                   _pCollectionStat->getFieldStat( pFieldName ) : NULL ;
          }
 
          OSS_INLINE virtual UINT64 getTotalRecords ( BOOLEAN realTime = FALSE ) const

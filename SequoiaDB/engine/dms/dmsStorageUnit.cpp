@@ -894,7 +894,7 @@ namespace engine
       const CHAR *pCSName = pCollectionStat->getCSName() ;
       const CHAR *pCLName = pCollectionStat->getCLName() ;
       INDEX_STAT_MAP &indexStats = pCollectionStat->getIndexStats() ;
-      INDEX_STAT_MAP::iterator iterIdx ;
+      INDEX_STAT_ITERATOR iterIdx ;
 
       BOOLEAN needCheck =
             ( pCollectionStat->getMBID() != UTIL_SU_INVALID_UNITID ) ;
