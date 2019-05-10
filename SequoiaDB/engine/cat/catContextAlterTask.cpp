@@ -750,8 +750,10 @@ namespace engine
             _rollbackShardArgument.setArgumentMask(
                         localTask->getShardingArgument().getArgumentMask() ) ;
 
-            rc = _buildEnableShardFields( cataSet, localTask->getShardingArgument(),
-                                          attribute, setBuilder, unsetBuilder ) ;
+            rc = _buildEnableShardFields( cataSet,
+                                          localTask->getShardingArgument(),
+                                          _postAutoSplit, attribute, setBuilder,
+                                          unsetBuilder ) ;
             break ;
          }
          case RTN_ALTER_CL_DISABLE_SHARDING :
@@ -866,7 +868,7 @@ namespace engine
             if ( _rollbackShardArgument.isSharding() )
             {
                rc = _buildEnableShardFields( cataSet, _rollbackShardArgument,
-                                             attribute, setBuilder,
+                                             FALSE, attribute, setBuilder,
                                              unsetBuilder ) ;
             }
             else
@@ -888,7 +890,7 @@ namespace engine
                if ( _rollbackShardArgument.isSharding() )
                {
                   rc = _buildEnableShardFields( cataSet, _rollbackShardArgument,
-                                                attribute, setBuilder,
+                                                FALSE, attribute, setBuilder,
                                                 unsetBuilder ) ;
                }
                else
@@ -953,6 +955,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXALTERCLTASK__BLDENABLESHD, "_catCtxAlterCLTask::_buildEnableShardFields" )
    INT32 _catCtxAlterCLTask::_buildEnableShardFields ( clsCatalogSet & cataSet,
                                                        const rtnCLShardingArgument & argument,
+                                                       BOOLEAN postAutoSplit,
                                                        UINT32 & attribute,
                                                        BSONObjBuilder & setBuilder,
                                                        BSONObjBuilder & unsetBuilder )
@@ -964,7 +967,11 @@ namespace engine
       PD_CHECK( argument.isSharding(), SDB_NO_SHARDINGKEY, error, PDERROR,
                 "Failed to build sharding fields: no sharding key" ) ;
 
-      if ( argument.testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) )
+      if ( postAutoSplit )
+      {
+         setBuilder.appendBool( CAT_DOMAIN_AUTO_SPLIT, TRUE ) ;
+      }
+      else if ( argument.testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) )
       {
          setBuilder.appendBool( CAT_DOMAIN_AUTO_SPLIT, argument.isAutoSplit() ) ;
       }
@@ -1256,8 +1263,8 @@ namespace engine
          rc = _fillShardingArgument( cataSet, argument ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to fill sharding arguments, rc: %d", rc ) ;
 
-         rc = _buildEnableShardFields( cataSet, argument, attribute, setBuilder,
-                                       unsetBuilder ) ;
+         rc = _buildEnableShardFields( cataSet, argument, _postAutoSplit,
+                                       attribute, setBuilder, unsetBuilder ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build sharding fields, rc: %d", rc ) ;
       }
 

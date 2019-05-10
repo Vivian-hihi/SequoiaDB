@@ -150,6 +150,7 @@ namespace engine
 
          INT32 _buildEnableShardFields ( clsCatalogSet & cataSet,
                                          const rtnCLShardingArgument & argument,
+                                         BOOLEAN postAutoSplit,
                                          UINT32 & attribute,
                                          bson::BSONObjBuilder & setBuilder,
                                          bson::BSONObjBuilder & unsetBuilder ) ;
