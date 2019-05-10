@@ -30,7 +30,7 @@ import java.security.NoSuchAlgorithmException;
 public class SequoiadbDataDao implements DataDao {
     private static final Logger logger = LoggerFactory.getLogger(SequoiadbDataDao.class);
 
-    private static int ONCE_WRITE_BYTES  = 1024 * 1024;       //1MB
+    private static int ONCE_WRITE_BYTES  = 2 * 1024 * 1024;       //2MB
 
     @Autowired
     SdbDataSourceWrapper sdbDatasourceWrapper;
@@ -55,16 +55,17 @@ public class SequoiadbDataDao implements DataDao {
 
             byte[] buffer    = new byte[ONCE_WRITE_BYTES];
 
-            int size = data.read(buffer, 0, buffer.length);
-            while (size > 0){
-                //md5
-                MD5.update(buffer, 0, size);
+            int size = 0;
+            while (true){
+                if ((size = readAsMuchAsPossible(data, buffer, 0, buffer.length)) > 0) {
+                    //md5
+                    MD5.update(buffer, 0, size);
 
-                //write lob
-                dbLob.write(buffer, 0, size);
-
-                //get bytes
-                size = data.read(buffer, 0, buffer.length);
+                    //write lob
+                    dbLob.write(buffer, 0, size);
+                }else {
+                    break;
+                }
             }
 
             //record md5 lobId size
@@ -92,6 +93,34 @@ public class SequoiadbDataDao implements DataDao {
         }
     }
 
+    private int readAsMuchAsPossible(InputStream is, byte buf[], int offset, int length)
+            throws IOException{
+        if(offset < 0 || offset + length > buf.length){
+            throw new RuntimeException("bufferLength = "+buf.length
+                    +", offset=" + ", length=" + length);
+        }
+
+        if (length <= 0){
+            return 0;
+        }
+
+        int maxLength  = offset + length;
+        int realOffset = offset;
+        int tempLength = 0;
+        while (realOffset < maxLength && tempLength > -1){
+            tempLength = is.read(buf, realOffset, maxLength - realOffset);
+            if (tempLength > 0){
+                realOffset += tempLength;
+            }
+        }
+
+        if (realOffset > offset) {
+            return realOffset - offset;
+        }
+
+        return -1;
+    }
+
     private DBLob createLobWithCsCl(Sequoiadb sdb, String csName, String clName, Region region)
             throws S3ServerException{
         try {
@@ -104,23 +133,36 @@ public class SequoiadbDataDao implements DataDao {
                             "location not exist. csName="+csName+", clName="+clName);
                 }
 
-                BSONObject option = null;
-                String regionName = null;
+                BSONObject option   = null;
+                String regionName   = null;
+                String  domain      = null;
+                Integer lobPageSize = null;
+                Integer replSize    = null;
                 if (region != null){
-                    regionName = region.getName();
-                    if (region.getDataDomain() != null){
-                        option = new BasicBSONObject();
-                        option.put("Domain", region.getDataDomain());
-                    }
+                    regionName  = region.getName();
+                    domain      = region.getDataDomain();
+                    lobPageSize = region.getDataLobPageSize();
+                    replSize    = region.getDataReplSize();
+                }else {
+                    domain      = sdbConfig.getDataDomain();
+                    lobPageSize = sdbConfig.getDataLobPageSize();
+                    replSize    = sdbConfig.getDataReplSize();
                 }
 
                 if (!sdb.isCollectionSpaceExist(csName)) {
+                    option = new BasicBSONObject();
+                    if (domain != null) {
+                        option.put("Domain", domain);
+                    }
+                    if (lobPageSize != null) {
+                        option.put("LobPageSize", lobPageSize);
+                    }
                     if(DBParamDefine.CREATE_OK == sdbBaseOperation.createCS(sdb, csName, option)){
                         sequoiadbRegionSpaceDao.insertRegionCSList(csName, regionName);
                     }
                 }
 
-                BSONObject clOption = generateDataCLOption();
+                BSONObject clOption = generateDataCLOption(replSize);
                 sdbBaseOperation.createCL(sdb, csName, clName, clOption);
                 return createLob(sdb, csName, clName);
             } else {
@@ -130,14 +172,18 @@ public class SequoiadbDataDao implements DataDao {
         }
     }
 
-    private BSONObject generateDataCLOption(){
+    private BSONObject generateDataCLOption(Integer replSize){
         BSONObject clOption = new BasicBSONObject();
 
         BSONObject shardingKey = new BasicBSONObject("_id", 1);
         clOption.put("AutoIndexId", false);
         clOption.put("ShardingKey", shardingKey);
         clOption.put("ShardingType", "hash");
-        clOption.put("ReplSize", -1);
+        if (replSize != null){
+            clOption.put("ReplSize", replSize);
+        }else {
+            clOption.put("ReplSize", -1);
+        }
         clOption.put("AutoSplit", true);
 
         return clOption;

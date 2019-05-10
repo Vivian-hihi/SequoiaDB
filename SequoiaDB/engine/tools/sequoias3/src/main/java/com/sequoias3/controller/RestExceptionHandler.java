@@ -49,7 +49,8 @@ public class RestExceptionHandler {
             case OBJECT_INVALID_VERSION:
             case OBJECT_INVALID_RANGE:
             case REGION_INVALID_SHARDINGTYPE:
-//            case REGION_INVALID_LOCATION:
+            case REGION_INVALID_LOBPAGESIZE:
+            case REGION_INVALID_REPLSIZE:
             case REGION_LOCATION_NULL:
             case REGION_LOCATION_SAME:
             case REGION_LOCATION_SPLIT:
@@ -85,6 +86,8 @@ public class RestExceptionHandler {
             case REGION_CONFLICT_TYPE:
             case REGION_CONFLICT_DOMAIN:
             case REGION_CONFLICT_LOCATION:
+            case REGION_CONFLICT_LOBPAGESIZE:
+            case REGION_CONFLICT_REPLSIZE:
             case BUCKET_DELIMITER_NOT_STABLE:
                 status = HttpStatus.CONFLICT;
                 break;

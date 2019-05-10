@@ -13,6 +13,8 @@ public class Region {
     public static final String DATA_CS_SHARDINGTYPE = "DataCSShardingType";
     public static final String DATA_CL_SHARDINGTYPE = "DataCLShardingType";
     public static final String DATA_DOMAIN          = "DataDomain";
+    public static final String DATA_LOBPAGESIZE     = "DataLobPageSize";
+    public static final String DATA_REPLSIZE        = "DataReplSize";
     public static final String META_DOMAIN          = "MetaDomain";
     public static final String DATA_LOCATION        = "DataLocation";
     public static final String META_LOCATION        = "MetaLocation";
@@ -39,6 +41,12 @@ public class Region {
 
     @JsonProperty(DATA_DOMAIN)
     private String dataDomain;
+
+    @JsonProperty(DATA_LOBPAGESIZE)
+    private Integer dataLobPageSize;
+
+    @JsonProperty(DATA_REPLSIZE)
+    private Integer dataReplSize;
 
     @JsonProperty(META_DOMAIN)
     private String metaDomain;
@@ -78,6 +86,8 @@ public class Region {
         this.dataCSShardingType = region.getDataCSShardingType();
         this.dataCLShardingType = region.getDataCLShardingType();
         this.dataDomain         = region.getDataDomain();
+        this.dataLobPageSize    = region.getDataLobPageSize();
+        this.dataReplSize       = region.getDataReplSize();
         this.metaDomain         = region.getMetaDomain();
         this.dataLocation       = region.getDataLocation();
         this.metaLocation       = region.getMetaLocation();
@@ -129,6 +139,22 @@ public class Region {
 
     public String getDataDomain() {
         return dataDomain;
+    }
+
+    public void setDataLobPageSize(Integer dataLobPageSize) {
+        this.dataLobPageSize = dataLobPageSize;
+    }
+
+    public Integer getDataLobPageSize() {
+        return dataLobPageSize;
+    }
+
+    public void setDataReplSize(Integer dataReplSize) {
+        this.dataReplSize = dataReplSize;
+    }
+
+    public Integer getDataReplSize() {
+        return dataReplSize;
     }
 
     public void setMetaDomain(String metaDomain) {
@@ -218,6 +244,8 @@ public class Region {
         newRegion.put(Region.DATA_CS_SHARDINGTYPE, this.dataCSShardingType);
         newRegion.put(Region.DATA_CL_SHARDINGTYPE, this.dataCLShardingType);
         newRegion.put(Region.DATA_DOMAIN, this.dataDomain);
+        newRegion.put(Region.DATA_LOBPAGESIZE, this.dataLobPageSize);
+        newRegion.put(Region.DATA_REPLSIZE, this.dataReplSize);
         newRegion.put(Region.META_DOMAIN, this.metaDomain);
         newRegion.put(Region.DATA_LOCATION, this.dataLocation);
         newRegion.put(Region.META_LOCATION, this.metaLocation);

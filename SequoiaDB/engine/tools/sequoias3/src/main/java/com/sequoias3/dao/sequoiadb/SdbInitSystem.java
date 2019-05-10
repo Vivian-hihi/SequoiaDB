@@ -36,7 +36,12 @@ public class SdbInitSystem {
         try {
             sdb = sdbDatasourceWrapper.getSequoiadb();
             if(!sdb.isCollectionSpaceExist(config.getMetaCsName())){
-                sdbBaseOperation.createCS(sdb, config.getMetaCsName(), null);
+                BSONObject option = null;
+                if (config.getMetaDomain() != null) {
+                    option = new BasicBSONObject();
+                    option.put("Domain", config.getMetaDomain());
+                }
+                sdbBaseOperation.createCS(sdb, config.getMetaCsName(), option);
             }
         } catch (Exception e){
             logger.error("create system cs failed.", e);

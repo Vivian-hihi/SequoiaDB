@@ -35,6 +35,8 @@ public class BucketDelimiterController {
         logger.info("put delimiter. bucket=" + bucketName + "@delimiter=" + delimiterCon.getDelimiter());
 
         bucketDelimiterService.putBucketDelimiter(operator.getUserId(), bucketName, delimiterCon.getDelimiter());
+
+        logger.info("put delimiter success. bucket=" + bucketName + "@delimiter=" + delimiterCon.getDelimiter());
     }
 
     @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.DELIMITER,

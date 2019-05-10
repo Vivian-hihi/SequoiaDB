@@ -28,8 +28,24 @@ public class SequoiadbConfig {
         return meta.getCsName();
     }
 
+    public String getMetaDomain() {
+        return meta.getDomain();
+    }
+
     public String getDataCsName() {
         return data.getCsName();
+    }
+
+    public String getDataDomain() {
+        return data.getDomain();
+    }
+
+    public Integer getDataLobPageSize() {
+        return data.getLobPageSize();
+    }
+
+    public Integer getDataReplSize() {
+        return data.getReplSize();
     }
 
     public String getUrl() {

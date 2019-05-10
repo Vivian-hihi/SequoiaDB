@@ -122,11 +122,6 @@ public class SequoiadbBucketDao implements BucketDao {
             hint.put("", Bucket.NAME_INDEX);
 
             BSONObject queryResult = cl.queryOne(matcher,null,null,hint,0);
-
-            if (null == queryResult) {
-                return null;
-            }
-
             return convertBsonToBucket(queryResult);
         }catch (Exception e) {
             logger.error("getBucketByName failed. errorMessage = " + e.getMessage(), e);
@@ -151,11 +146,6 @@ public class SequoiadbBucketDao implements BucketDao {
             hint.put("", Bucket.ID_INDEX);
 
             BSONObject queryResult = cl.queryOne(matcher,null,null,hint,0);
-
-            if (null == queryResult) {
-                return null;
-            }
-
             return convertBsonToBucket(queryResult);
         }catch (Exception e) {
             logger.error("getBucketByName failed. errorMessage = " + e.getMessage(), e);
@@ -450,11 +440,6 @@ public class SequoiadbBucketDao implements BucketDao {
             hint.put("", Bucket.NAME_INDEX);
 
             BSONObject queryResult = cl.queryOne(matcher,null,null,hint, DBQuery.FLG_QUERY_FOR_UPDATE);
-
-            if (null == queryResult) {
-                return null;
-            }
-
             return convertBsonToBucket(queryResult);
         }catch (Exception e) {
             logger.error("getBucketByName failed. errorMessage = " + e.getMessage(), e);
@@ -463,6 +448,9 @@ public class SequoiadbBucketDao implements BucketDao {
     }
 
     private Bucket convertBsonToBucket(BSONObject bsonObject) {
+        if (null == bsonObject) {
+            return null;
+        }
         Bucket bucket = new Bucket();
         bucket.setBucketId((long)bsonObject.get(Bucket.BUCKET_ID));
         bucket.setBucketName(bsonObject.get(Bucket.BUCKET_NAME).toString());

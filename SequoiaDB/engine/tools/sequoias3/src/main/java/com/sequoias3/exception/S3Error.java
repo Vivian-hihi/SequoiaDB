@@ -5,11 +5,15 @@ public enum S3Error {
 
     //region error
     REGION_INVALID_REGIONNAME(-300, "InvalidRegionName", "Region name length must between 3 and 20, and cannot contain characters other than 'a-zA-Z0-9' and '-'."),
+    REGION_INVALID_LOBPAGESIZE(-301, "InvalidLobPageSize", "LobPageSize is invalid"),
     REGION_INVALID_SHARDINGTYPE(-302, "InvalidShardingType", "Invalid shardingtype"),
     REGION_INVALID_DOMAIN(-303, "InvalidDomain", "Domain not exist."),
     REGION_CONFLICT_TYPE(-305, "ConflictRegionType", "Conflict region type"),
     REGION_CONFLICT_DOMAIN(-306, "ConflictDomain", "Conflict domain"),
     REGION_CONFLICT_LOCATION(-307, "ConflictLocation", "Conflict location"),
+    REGION_CONFLICT_LOBPAGESIZE(-308, "ConflictLobPageSize", "Conflict LobPageSize"),
+    REGION_CONFLICT_REPLSIZE(-309, "ConflictReplSize", "Conflict ReplSize"),
+    REGION_INVALID_REPLSIZE(-310, "InvalidReplSize", "ReplSize is invalid"),
 
     REGION_NO_SUCH_REGION(-311, "NoSuchRegion", "No such region."),
     REGION_NOT_EMPTY(-312, "RegionNotEmpty", "Region is not empty."),

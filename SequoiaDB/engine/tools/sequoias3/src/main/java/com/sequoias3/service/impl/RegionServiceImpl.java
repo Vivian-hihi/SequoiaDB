@@ -76,14 +76,21 @@ public class RegionServiceImpl implements RegionService {
                             regionDao.detectLocation(connection, regionCon.getMetaCSLocation(), regionCon.getMetaCLLocation(), RegionParamDefine.LocationType.Meta);
                             regionDao.detectLocation(connection, regionCon.getMetaHisCSLocation(), regionCon.getMetaHisCLLocation(), RegionParamDefine.LocationType.MetaHis);
                         } else {
+                            checkPageSize(regionCon.getDataLobPageSize(), regionCon.getDataReplSize());
+                            regionDao.detectDomain(connection, regionCon.getDataDomain());
+                            regionDao.detectDomain(connection, regionCon.getMetaDomain());
                             if (null == regionCon.getDataCSShardingType()) {
                                 regionCon.setDataCSShardingType(DataShardingType.YEAR.getName());
                             }
                             if (null == regionCon.getDataCLShardingType()) {
                                 regionCon.setDataCLShardingType(DataShardingType.QUARTER.getName());
                             }
-                            regionDao.detectDomain(connection, regionCon.getDataDomain());
-                            regionDao.detectDomain(connection, regionCon.getMetaDomain());
+                            if (null == regionCon.getDataLobPageSize()) {
+                                regionCon.setDataLobPageSize(262144);
+                            }
+                            if (null == regionCon.getDataReplSize()){
+                                regionCon.setDataReplSize(-1);
+                            }
                         }
 
                         regionCon.setCreateTime(System.currentTimeMillis());
@@ -239,6 +246,16 @@ public class RegionServiceImpl implements RegionService {
             throw new S3ServerException(S3Error.REGION_CONFLICT_DOMAIN,
                     "can not modify MetaDomain");
         }
+        if (newRegion.getDataLobPageSize() != null
+                && newRegion.getDataLobPageSize() != oldRegion.getDataLobPageSize()) {
+            throw new S3ServerException(S3Error.REGION_CONFLICT_LOBPAGESIZE,
+                    "can not modify lobpagesize");
+        }
+        if (newRegion.getDataReplSize() != null
+                && newRegion.getDataReplSize() != oldRegion.getDataReplSize()) {
+            throw new S3ServerException(S3Error.REGION_CONFLICT_REPLSIZE,
+                    "can not modify replsize");
+        }
     }
 
     private void checkConflictLocation(Region newRegion, Region oldRegion)
@@ -279,6 +296,31 @@ public class RegionServiceImpl implements RegionService {
         }
     }
 
+    private void checkPageSize(Integer lobPageSize, Integer replSize) throws S3ServerException{
+        if (lobPageSize != null){
+            if (lobPageSize != 0
+                    && lobPageSize != 4096
+                    && lobPageSize != 8192
+                    && lobPageSize != 16384
+                    && lobPageSize != 32768
+                    && lobPageSize != 65536
+                    && lobPageSize != 131072
+                    && lobPageSize != 262144
+                    && lobPageSize != 524288){
+                throw new S3ServerException(S3Error.REGION_INVALID_LOBPAGESIZE,
+                        "lobpagesize must be one of 0，4096，8192，16384，32768，65536，131072，262144，524288.");
+            }
+        }
+
+        if (replSize != null){
+            if (replSize < -1
+                    || replSize > 7){
+                throw new S3ServerException(S3Error.REGION_INVALID_REPLSIZE,
+                        "replsize must be one of -1,0,1-7.");
+            }
+        }
+    }
+
     private int getConfigType(Region config) throws S3ServerException{
         Boolean isDynamicCon = false;
         Boolean isFixedCon   = false;
@@ -286,7 +328,9 @@ public class RegionServiceImpl implements RegionService {
         if (config.getDataDomain() != null
                 || config.getMetaDomain() != null
                 || config.getDataCSShardingType() != null
-                || config.getDataCLShardingType() != null){
+                || config.getDataCLShardingType() != null
+                || config.getDataLobPageSize() != null
+                || config.getDataReplSize() != null){
             isDynamicCon = true;
         }
 

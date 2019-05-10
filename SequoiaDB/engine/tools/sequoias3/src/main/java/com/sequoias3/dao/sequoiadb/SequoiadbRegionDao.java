@@ -518,6 +518,12 @@ public class SequoiadbRegionDao implements RegionDao {
         if (result.get(Region.DATA_DOMAIN) != null){
             region.setDataDomain(result.get(Region.DATA_DOMAIN).toString());
         }
+        if (result.get(Region.DATA_LOBPAGESIZE) != null){
+            region.setDataLobPageSize((Integer) result.get(Region.DATA_LOBPAGESIZE));
+        }
+        if (result.get(Region.DATA_REPLSIZE) != null){
+            region.setDataReplSize((Integer) result.get(Region.DATA_REPLSIZE));
+        }
         if (result.get(Region.DATA_LOCATION) != null){
             region.setDataLocation(result.get(Region.DATA_LOCATION).toString());
         }
