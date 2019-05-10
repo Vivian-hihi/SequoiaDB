@@ -15,7 +15,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
 import com.amazonaws.services.s3.model.VersionListing;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
@@ -56,9 +55,6 @@ public class ListVersions18157 extends S3TestBase {
 
 	@Test
 	private void testListVersions() throws Exception {
-		try (Sequoiadb db = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
-			db.analyze();
-		}
 		String keyMarker = keyNames[1];
 		String versionIdMarker = "1";
 		VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)

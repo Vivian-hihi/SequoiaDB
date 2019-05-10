@@ -8,7 +8,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
@@ -43,9 +42,6 @@ public class ListObjects18110 extends S3TestBase {
 			String subKeyName = keyName + "_" + i + "/aa/test.png";
 			s3Client.putObject(bucketName, subKeyName, "testcontext18109_" + i);
 			matchKeyList.add(keyName + "_" + i + "/");
-		}
-		try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");) {
-			sdb.analyze();
 		}
 
 		List<String> expContentList = new ArrayList<>();

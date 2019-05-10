@@ -65,6 +65,7 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		}
 	}
 
+	// http://jira:8080/browse/SEQUOIADBMAINSTREAM-4456
 	@Test(enabled = false)
 	private void test() throws Exception {
 		ThreadExecutor threadExec = new ThreadExecutor();
