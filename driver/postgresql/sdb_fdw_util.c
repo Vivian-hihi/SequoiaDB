@@ -42,6 +42,11 @@
 #include "utils/rel.h"
 #include "utils/timestamp.h"
 
+#include "oss.h"
+#include "ossUtil.h"
+
+
+
 /* Callback argument for ec_member_matches_indexcol */
 typedef struct
 {
@@ -1307,6 +1312,16 @@ int sdbSetConnectionPreference( sdbConnectionHandle hConnection, CHAR *preferenc
       isNeedSendReq = true ;
       sdbbson_append_int( &recordObj, FIELD_NAME_TIMEOUT, session_timeout ) ;
    }
+  
+   CHAR psource[20];  
+   ossSnprintf( psource, 20,"pg-%d",ossGetCurrentProcessID() ) ;
+   if ( NULL != psource && strlen( psource ) > 0 )
+	  {
+		 isNeedSendReq = true ;
+		 sdbbson_append_string( &recordObj, FIELD_NAME_SOURCE, psource ) ;
+	  }
+
+   
 
    rc = sdbbson_finish( &recordObj ) ;
    if ( rc != SDB_OK )
@@ -1334,7 +1349,7 @@ int sdbSetConnectionPreference( sdbConnectionHandle hConnection, CHAR *preferenc
       elog( DEBUG1, "do not set session attr" ) ;
    }
 
-   sdbbson_destroy( &recordObj ) ;
+   sdbbson_destroy( &recordObj ) ;  
    return rc ;
 }
 
