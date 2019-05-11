@@ -247,12 +247,12 @@ public class RegionServiceImpl implements RegionService {
                     "can not modify MetaDomain");
         }
         if (newRegion.getDataLobPageSize() != null
-                && newRegion.getDataLobPageSize() != oldRegion.getDataLobPageSize()) {
+                && newRegion.getDataLobPageSize().intValue() != oldRegion.getDataLobPageSize().intValue()) {
             throw new S3ServerException(S3Error.REGION_CONFLICT_LOBPAGESIZE,
-                    "can not modify lobpagesize");
+                    "can not modify lobpagesize，new lobpagesize:" + newRegion.getDataLobPageSize() + ", old lobpagesize:" + oldRegion.getDataLobPageSize());
         }
         if (newRegion.getDataReplSize() != null
-                && newRegion.getDataReplSize() != oldRegion.getDataReplSize()) {
+                && newRegion.getDataReplSize().intValue() != oldRegion.getDataReplSize().intValue()) {
             throw new S3ServerException(S3Error.REGION_CONFLICT_REPLSIZE,
                     "can not modify replsize");
         }
