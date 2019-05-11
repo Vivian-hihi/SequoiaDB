@@ -73,7 +73,7 @@ public class Transaction18235 extends SdbTestBase {
         List<BSONObject> datas3 = TransUtils.getUpdateDatas( 2500, 3000, 3 );
 
         try {
-            cl1.update( null, "{$set: {b: 10000}}", null );
+            cl1.update( "{a: 1}", "{$set: {b: 10000}}", "{'': null}" );
             Assert.fail( "update records as duplicate records should be error" );
         } catch ( BaseException e ) {
             Assert.assertEquals( e.getErrorCode(), -38, e.getMessage() );

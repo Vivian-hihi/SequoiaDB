@@ -41,19 +41,19 @@ public class Transaction17137B extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        expDataList = prepareData(recordNum);
-        rs1 = expDataList.subList(0, recordNum / 2);
-        rs2 = expDataList.subList(recordNum / 2, recordNum);
-        cl.insert(rs1);
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        cl = sdb.getCollectionSpace( csName ).createCollection( clName );
+        expDataList = prepareData( recordNum );
+        rs1 = expDataList.subList( 0, recordNum / 2 );
+        rs2 = expDataList.subList( recordNum / 2, recordNum );
+        cl.insert( rs1 );
 
     }
 
     @Test
     public void test() {
-        sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        sdb1 = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        sdb2 = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
 
         sdb1.beginTransaction();
         sdb2.beginTransaction();
@@ -67,36 +67,36 @@ public class Transaction17137B extends SdbTestBase {
         QueryThread queryThread = new QueryThread();
         queryThread.start();
 
-        Assert.assertTrue(crudThread.isSuccess(), crudThread.getErrorMsg());
-        Assert.assertTrue(indexThread.isSuccess(), indexThread.getErrorMsg());
-        Assert.assertTrue(queryThread.isSuccess(), queryThread.getErrorMsg());
+        Assert.assertTrue( crudThread.isSuccess(), crudThread.getErrorMsg() );
+        Assert.assertTrue( indexThread.isSuccess(), indexThread.getErrorMsg() );
+        Assert.assertTrue( queryThread.isSuccess(), queryThread.getErrorMsg() );
 
         sdb1.commit();
-        Assert.assertTrue(cl.isIndexExist("a"));
+        Assert.assertTrue( cl.isIndexExist( "a" ) );
 
         expDataList.clear();
         expDataList = expData();
 
-        recordCur = cl.query(null, "{'_id': {'$include': 0}}", null, "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
+        recordCur = cl.query( null, "{'_id': {'$include': 0}}", null, "{'': null}" );
+        actDataList = TransUtils.getReadActList( recordCur );
+        Assert.assertEquals( actDataList, expDataList );
         actDataList.clear();
 
-        recordCur = cl.query(null, "{'_id': {'$include': 0}}", null, "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
+        recordCur = cl.query( null, "{'_id': {'$include': 0}}", null, "{'': 'a'}" );
+        actDataList = TransUtils.getReadActList( recordCur );
+        Assert.assertEquals( actDataList, expDataList );
         actDataList.clear();
 
         sdb2.commit();
 
-        recordCur = cl.query(null, "{'_id': {'$include': 0}}", null, "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
+        recordCur = cl.query( null, "{'_id': {'$include': 0}}", null, "{'': null}" );
+        actDataList = TransUtils.getReadActList( recordCur );
+        Assert.assertEquals( actDataList, expDataList );
         actDataList.clear();
 
-        recordCur = cl.query(null, "{'_id': {'$include': 0}}", null, "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
+        recordCur = cl.query( null, "{'_id': {'$include': 0}}", null, "{'': 'a'}" );
+        actDataList = TransUtils.getReadActList( recordCur );
+        Assert.assertEquals( actDataList, expDataList );
         actDataList.clear();
 
     }
@@ -106,30 +106,30 @@ public class Transaction17137B extends SdbTestBase {
         sdb1.commit();
         sdb2.commit();
 
-        if (sdb1 != null) {
+        if ( sdb1 != null ) {
             sdb1.close();
         }
-        if (sdb2 != null) {
+        if ( sdb2 != null ) {
             sdb2.close();
         }
-        if (recordCur != null) {
+        if ( recordCur != null ) {
             recordCur.close();
         }
-        sdb.getCollectionSpace(csName).dropCollection(clName);
-        if (sdb != null) {
+        sdb.getCollectionSpace( csName ).dropCollection( clName );
+        if ( sdb != null ) {
             sdb.close();
         }
     }
 
-    private List<BSONObject> prepareData(int recordNum) {
+    private List<BSONObject> prepareData( int recordNum ) {
         List<BSONObject> dataList = new ArrayList<BSONObject>();
-        for (int i = 0; i < recordNum; i++) {
+        for ( int i = 0; i < recordNum; i++ ) {
             BSONObject data = new BasicBSONObject();
-            data.put("a", i);
-            data.put("b", "testTrans_17137_" + i);
-            data.put("c", 13700000000L);
-            data.put("d", "customer transaction type data application.");
-            dataList.add(data);
+            data.put( "a", i );
+            data.put( "b", "testTrans_17137_" + i );
+            data.put( "c", 13700000000L );
+            data.put( "d", "customer transaction type data application." );
+            dataList.add( data );
         }
         return dataList;
     }
@@ -137,13 +137,13 @@ public class Transaction17137B extends SdbTestBase {
     private List<BSONObject> expData() {
         List<BSONObject> dataList = new ArrayList<BSONObject>();
         BSONObject data = null;
-        for (int i = 0; i < recordNum / 2; i++) {
+        for ( int i = 0; i < recordNum / 2; i++ ) {
             data = new BasicBSONObject();
-            data.put("a", 1024);
-            data.put("b", "test_update_1024");
-            data.put("c", 13700000000L);
-            data.put("d", "customer transaction type data application.");
-            dataList.add(data);
+            data.put( "a", 1024 );
+            data.put( "b", "test_update_1024" );
+            data.put( "c", 13700000000L );
+            data.put( "d", "customer transaction type data application." );
+            dataList.add( data );
         }
         return dataList;
     }
@@ -152,13 +152,13 @@ public class Transaction17137B extends SdbTestBase {
 
         @Override
         public void exec() {
-            DBCollection cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
-            cl1.insert(rs2);
+            DBCollection cl1 = sdb1.getCollectionSpace( csName ).getCollection( clName );
+            cl1.insert( rs2 );
 
             String modifier = "{'$set':{ 'a': 1024, 'b': 'test_update_1024'}}";
-            cl1.update("{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", modifier, "{'': null}");
+            cl1.update( "{'a':{'$gte':0, '$lt': " + recordNum / 2 + "}}", modifier, "{'': null}" );
 
-            cl1.delete("{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}", "{'': null}");
+            cl1.delete( "{'a':{'$gte':" + recordNum / 2 + ", '$lt': " + recordNum + "}}", "{'': null}" );
         }
     }
 
@@ -166,18 +166,18 @@ public class Transaction17137B extends SdbTestBase {
 
         @Override
         public void exec() {
-            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             try {
                 db.beginTransaction();
-                DBCollection dbcl = db.getCollectionSpace(csName).getCollection(clName);
-                for (int i = 0; i < 100; i++) {
-                    dbcl.createIndex("a", "{a:1, b:-1}", false, false);
-                    dbcl.dropIndex("a");
+                DBCollection dbcl = db.getCollectionSpace( csName ).getCollection( clName );
+                for ( int i = 0; i < 100; i++ ) {
+                    dbcl.createIndex( "a", "{a:1, b:-1}", false, false );
+                    dbcl.dropIndex( "a" );
                 }
-                dbcl.createIndex("a", "{a:1, b:-1}", false, false);
+                dbcl.createIndex( "a", "{a:1, b:-1}", false, false );
             } finally {
                 db.commit();
-                if (db != null) {
+                if ( db != null ) {
                     db.close();
                 }
             }
@@ -191,46 +191,46 @@ public class Transaction17137B extends SdbTestBase {
             DBCursor cur = null;
             try {
                 List<BSONObject> positiveRsList = new ArrayList<BSONObject>();
-                positiveRsList.addAll(rs1);
+                positiveRsList.addAll( rs1 );
                 List<BSONObject> reversedRsList = new ArrayList<BSONObject>();
-                Collections.reverse(rs1);
-                reversedRsList.addAll(rs1);
-                Collections.reverse(rs1);
-                for (int i = 0; i < 5; i++) {
-                    DBCollection dbcl = sdb2.getCollectionSpace(csName).getCollection(clName);
+                Collections.reverse( rs1 );
+                reversedRsList.addAll( rs1 );
+                Collections.reverse( rs1 );
+                for ( int i = 0; i < 5; i++ ) {
+                    DBCollection dbcl = sdb2.getCollectionSpace( csName ).getCollection( clName );
 
                     // 正序查询
-                    cur = dbcl.query(null, null, "{a :1}", "{'': null}");
-                    List<BSONObject> actList = TransUtils.getReadActList(cur);
-                    Assert.assertEquals(actList, positiveRsList, "select times: " + i);
+                    cur = dbcl.query( null, null, "{a :1}", "{'': null}" );
+                    List<BSONObject> actList = TransUtils.getReadActList( cur );
+                    Assert.assertEquals( actList, positiveRsList, "select times: " + i );
                     actList.clear();
 
                     // 逆序查询
-                    cur = dbcl.query(null, null, "{a : -1}", "{'': null}");
-                    actList = TransUtils.getReadActList(cur);
-                    Assert.assertEquals(actList, reversedRsList, "select times: " + i);
+                    cur = dbcl.query( null, null, "{a : -1}", "{'': null}" );
+                    actList = TransUtils.getReadActList( cur );
+                    Assert.assertEquals( actList, reversedRsList, "select times: " + i );
                     actList.clear();
 
                     try {
                         // 正序查询
-                        cur = dbcl.query(null, null, "{a :1}", "{'': 'a'}");
-                        actList = TransUtils.getReadActList(cur);
-                        Assert.assertEquals(actList, positiveRsList, "select times: " + i);
+                        cur = dbcl.query( null, null, "{a :1}", "{'': 'a'}" );
+                        actList = TransUtils.getReadActList( cur );
+                        Assert.assertEquals( actList, positiveRsList, "select times: " + i );
 
                         // 逆序查询
-                        cur = dbcl.query(null, null, "{a : -1}", "{'': 'a'}");
-                        actList = TransUtils.getReadActList(cur);
-                        Assert.assertEquals(actList, reversedRsList, "select times: " + i);
-                    } catch (BaseException e) {
+                        cur = dbcl.query( null, null, "{a : -1}", "{'': 'a'}" );
+                        actList = TransUtils.getReadActList( cur );
+                        Assert.assertEquals( actList, reversedRsList, "select times: " + i );
+                    } catch ( BaseException e ) {
                         int actErrCode = e.getErrorCode();
-                        if (actErrCode != -48 && actErrCode != -52 && actErrCode != -10) {
+                        if ( actErrCode != -48 && actErrCode != -52 && actErrCode != -10 && actErrCode != -199 ) {
                             e.printStackTrace();
                             throw e;
                         }
                     }
                 }
             } finally {
-                if (cur != null) {
+                if ( cur != null ) {
                     cur.close();
                 }
             }
