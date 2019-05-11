@@ -418,6 +418,9 @@ public class FullTextDBUtils {
             cappedCSExist = true;
             try ( Sequoiadb nodeConn = new Sequoiadb( nodeAddress, "", "" ) ) {
                 for ( int i = 0; i < 600; i++ ) {
+                    if ( i % 60 == 0 ) {
+                        System.out.println( "check capped cs on " + nodeAddress + ", time: " + ( i / 60 ) + " min" );
+                    }
                     if ( !nodeConn.isCollectionSpaceExist( cappedCSName ) ) {
                         cappedCSExist = false;
                         break;
