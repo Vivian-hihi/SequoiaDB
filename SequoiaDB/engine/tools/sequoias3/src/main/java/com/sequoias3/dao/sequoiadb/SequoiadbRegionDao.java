@@ -55,6 +55,7 @@ public class SequoiadbRegionDao implements RegionDao {
             cl.insert(regionCon.toBson());
         }catch (BaseException e){
             if (e.getErrorType() == SDBError.SDB_IXM_DUP_KEY.name()) {
+                logger.info("Duplicate key. regionName:{}",regionCon.getName());
                 throw new S3ServerException(S3Error.DAO_DUPLICATE_KEY, "Duplicate key.");
             } else {
                 throw e;

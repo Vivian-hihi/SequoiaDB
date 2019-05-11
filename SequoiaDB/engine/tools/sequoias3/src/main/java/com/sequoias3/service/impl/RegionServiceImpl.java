@@ -69,37 +69,38 @@ public class RegionServiceImpl implements RegionService {
                         }
                     } else {
                         logger.info("add region. regionName:" + regionCon.getName());
+                        Region newRegion = new Region(regionCon);
                         if (RegionParamDefine.ConfigType.FixedType == configType) {
-                            checkLocation(regionCon);
-                            splitRegionLocation(regionCon);
-                            regionDao.detectLocation(connection, regionCon.getDataCSLocation(), regionCon.getDataCLLocation(), RegionParamDefine.LocationType.Data);
-                            regionDao.detectLocation(connection, regionCon.getMetaCSLocation(), regionCon.getMetaCLLocation(), RegionParamDefine.LocationType.Meta);
-                            regionDao.detectLocation(connection, regionCon.getMetaHisCSLocation(), regionCon.getMetaHisCLLocation(), RegionParamDefine.LocationType.MetaHis);
+                            checkLocation(newRegion);
+                            splitRegionLocation(newRegion);
+                            regionDao.detectLocation(connection, newRegion.getDataCSLocation(), newRegion.getDataCLLocation(), RegionParamDefine.LocationType.Data);
+                            regionDao.detectLocation(connection, newRegion.getMetaCSLocation(), newRegion.getMetaCLLocation(), RegionParamDefine.LocationType.Meta);
+                            regionDao.detectLocation(connection, newRegion.getMetaHisCSLocation(), newRegion.getMetaHisCLLocation(), RegionParamDefine.LocationType.MetaHis);
                         } else {
-                            checkPageSize(regionCon.getDataLobPageSize(), regionCon.getDataReplSize());
-                            regionDao.detectDomain(connection, regionCon.getDataDomain());
-                            regionDao.detectDomain(connection, regionCon.getMetaDomain());
-                            if (null == regionCon.getDataCSShardingType()) {
-                                regionCon.setDataCSShardingType(DataShardingType.YEAR.getName());
+                            checkPageSize(newRegion.getDataLobPageSize(), newRegion.getDataReplSize());
+                            regionDao.detectDomain(connection, newRegion.getDataDomain());
+                            regionDao.detectDomain(connection, newRegion.getMetaDomain());
+                            if (null == newRegion.getDataCSShardingType()) {
+                                newRegion.setDataCSShardingType(DataShardingType.YEAR.getName());
                             }
-                            if (null == regionCon.getDataCLShardingType()) {
-                                regionCon.setDataCLShardingType(DataShardingType.QUARTER.getName());
+                            if (null == newRegion.getDataCLShardingType()) {
+                                newRegion.setDataCLShardingType(DataShardingType.QUARTER.getName());
                             }
-                            if (null == regionCon.getDataLobPageSize()) {
-                                regionCon.setDataLobPageSize(262144);
+                            if (null == newRegion.getDataLobPageSize()) {
+                                newRegion.setDataLobPageSize(262144);
                             }
-                            if (null == regionCon.getDataReplSize()){
-                                regionCon.setDataReplSize(-1);
+                            if (null == newRegion.getDataReplSize()){
+                                newRegion.setDataReplSize(-1);
                             }
                         }
 
-                        regionCon.setCreateTime(System.currentTimeMillis());
-                        regionDao.insertRegion(connection, regionCon);
+                        newRegion.setCreateTime(System.currentTimeMillis());
+                        regionDao.insertRegion(connection, newRegion);
                         if (RegionParamDefine.ConfigType.FixedType != configType){
-                            regionDao.createMetaCSCL(regionCon, regionDao.getMetaCurCSName(regionCon), regionDao.getMetaCurCLName(regionCon), false);
-                            regionDao.createMetaCSCL(regionCon, regionDao.getMetaHisCSName(regionCon), regionDao.getMetaHisCLName(regionCon), true);
+                            regionDao.createMetaCSCL(newRegion, regionDao.getMetaCurCSName(newRegion), regionDao.getMetaCurCLName(regionCon), false);
+                            regionDao.createMetaCSCL(newRegion, regionDao.getMetaHisCSName(newRegion), regionDao.getMetaHisCLName(regionCon), true);
                         }
-                        regionDao.createDirCSCL(regionCon, regionDao.getMetaCurCSName(regionCon));
+                        regionDao.createDirCSCL(newRegion, regionDao.getMetaCurCSName(newRegion));
                     }
                     transaction.commit(connection);
                     return;
