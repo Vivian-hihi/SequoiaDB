@@ -113,7 +113,11 @@ public class Insert15966 extends SdbTestBase {
 			try(Sequoiadb sdb = new Sequoiadb(coordUrl, "", "");){
 				DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
 				cl.truncate();
-			}
+			}catch(BaseException e){
+    if(e.getErrorCode()!=-190){
+      throw e;
+    }
+   }
 		}
 	}
 }
