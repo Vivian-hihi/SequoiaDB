@@ -42,6 +42,9 @@
 #include "utils/rel.h"
 #include "utils/timestamp.h"
 
+#include "oss.h"
+#include "ossUtil.h"
+
 /* Callback argument for ec_member_matches_indexcol */
 typedef struct
 {
@@ -1237,15 +1240,13 @@ int sdbSetConnectionPreference( sdbConnectionHandle hConnection, CHAR *preferenc
 {
    int intPreferenece_instance = 0 ;
    int rc = 0 ;
-   bool isNeedSendReq = 0 ;
    CHAR index[SDB_MAX_KEY_COLUMN_LENGTH] ;
+   CHAR psource[20] ;
    sdbbson recordObj ;
    sdbbson_init( &recordObj ) ;
 
    if ( NULL != preference_instance && strlen( preference_instance ) > 0 )
    {
-      isNeedSendReq = true ;
-
       // multiple word seperated by ','
       if ( sdbIsPreferedList( preference_instance ) )
       {
@@ -1298,15 +1299,16 @@ int sdbSetConnectionPreference( sdbConnectionHandle hConnection, CHAR *preferenc
 
    if ( NULL != preference_instance_mode && strlen( preference_instance_mode ) > 0 )
    {
-      isNeedSendReq = true ;
       sdbbson_append_string( &recordObj, FIELD_NAME_PREFERED_INSTANCE_MODE, preference_instance_mode ) ;
    }
 
    if ( -1 != session_timeout )
    {
-      isNeedSendReq = true ;
       sdbbson_append_int( &recordObj, FIELD_NAME_TIMEOUT, session_timeout ) ;
    }
+
+   ossSnprintf( psource, sizeof( psource ), "pg-%d", ossGetCurrentProcessID() ) ;
+   sdbbson_append_string( &recordObj, FIELD_NAME_SOURCE, psource ) ;
 
    rc = sdbbson_finish( &recordObj ) ;
    if ( rc != SDB_OK )
@@ -1318,20 +1320,13 @@ int sdbSetConnectionPreference( sdbConnectionHandle hConnection, CHAR *preferenc
 
    sdbPrintBson( &recordObj, DEBUG1, "display session attr" ) ;
 
-   if ( isNeedSendReq )
+   elog( DEBUG1, "setting session attr" ) ;
+   rc = sdbSetSessionAttr( hConnection, &recordObj ) ;
+   if ( rc != SDB_OK )
    {
-      elog( DEBUG1, "setting session attr" ) ;
-      rc = sdbSetSessionAttr( hConnection, &recordObj ) ;
-      if ( rc != SDB_OK )
-      {
-         elog( WARNING, "set session attribute failed:rc = %d", rc ) ;
-         sdbbson_destroy( &recordObj ) ;
-         return rc ;
-      }
-   }
-   else
-   {
-      elog( DEBUG1, "do not set session attr" ) ;
+      elog( WARNING, "set session attribute failed:rc = %d", rc ) ;
+      sdbbson_destroy( &recordObj ) ;
+      return rc ;
    }
 
    sdbbson_destroy( &recordObj ) ;
