@@ -30,13 +30,19 @@ function main()
    // wait for change primary node
    while(true)
    {
-      var curCataMaster = db.getRG("SYSCatalogGroup").getMaster();
-      var curCataMasterNodeName = curCataMaster.getHostName() + ":" + curCataMaster.getServiceName();
-      // when change primary node, break
-      if(preCataMasterNodeName != curCataMasterNodeName) 
-      {
-         break;
-      }
+      try{
+         var curCataMaster = db.getRG("SYSCatalogGroup").getMaster();
+         var curCataMasterNodeName = curCataMaster.getHostName() + ":" + curCataMaster.getServiceName();
+         // when change primary node, break
+         if(preCataMasterNodeName != curCataMasterNodeName) 
+         {
+            break;
+         }
+      }catch(e){
+         if(-104 == e){
+            continue;
+         }
+      }   
    }
    
    // start node
