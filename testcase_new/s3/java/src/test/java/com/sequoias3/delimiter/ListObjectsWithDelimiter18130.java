@@ -18,8 +18,8 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: 带delimiter和maxkeys多次查询对象元数据列表
- * testlink-case: seqDB-18130
+ * test content: 带delimiter和maxkeys多次查询对象元数据列表 testlink-case: seqDB-18130
+ * 
  * @author wangkexin
  * @Date 2019.04.23
  * @version 1.00
@@ -27,9 +27,9 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 public class ListObjectsWithDelimiter18130 extends S3TestBase {
 	private String bucketName = "bucket18130";
-	private String[] objectNames = {"dir1?test18130_1", "dir1??dir2??/dir3/test18130_2", "dir1?test18130_3",
-					"dir1?dir2?aa?test18130_4", "dir1?dir2?aa?cc?test18130_5", "dir1?dir2?aa?dd?test18130_6",
-					"dir1?dir2?aa?ee?test18130_7", "dir1?dir2?aa?dd?cctest18130_8"};
+	private String[] objectNames = { "dir1?test18130_1", "dir1??dir2??/dir3/test18130_2", "dir1?test18130_3",
+			"dir1?dir2?aa?test18130_4", "dir1?dir2?aa?cc?test18130_5", "dir1?dir2?aa?dd?test18130_6",
+			"dir1?dir2?aa?ee?test18130_7", "dir1?dir2?aa?dd?cctest18130_8" };
 	private String delimiter = "tes";
 	private int maxkeys = 2;
 	private List<String> expresultList = new ArrayList<String>();
@@ -76,19 +76,19 @@ public class ListObjectsWithDelimiter18130 extends S3TestBase {
 			String nextContinuationToken = result.getNextContinuationToken();
 			req.setContinuationToken(nextContinuationToken);
 		} while (result.isTruncated());
-
+		// TODO:1、检查结果需要覆盖所有结果项，包括content项
 		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList);
 		runSuccess = true;
 	}
 
 	@AfterClass
 	private void tearDown() {
-		try{
+		try {
 			if (runSuccess) {
 				CommLib.deleteAllObjectVersions(s3Client, bucketName);
 				s3Client.deleteBucket(bucketName);
 			}
-		}finally{
+		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}

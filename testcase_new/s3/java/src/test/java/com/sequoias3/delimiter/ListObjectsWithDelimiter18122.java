@@ -20,6 +20,7 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 /**
  * test content: 带prefix、delimiter和和start-after查询对象元数据列表，不匹配start-after
  * testlink-case: seqDB-18122
+ * 
  * @author wangkexin
  * @Date 2019.04.16
  * @version 1.00
@@ -28,7 +29,8 @@ public class ListObjectsWithDelimiter18122 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket18122";
 	private String delimiter = "?";
-	private String[] objectNames = {"dir1?test18122_1", "dir1?Dir2?test18122_2", "?aa?bb?test18122_3", "?aa?cc?test18122_4"};
+	private String[] objectNames = { "dir1?test18122_1", "dir1?Dir2?test18122_2", "?aa?bb?test18122_3",
+			"?aa?cc?test18122_4" };
 	private File localPath = null;
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 20;
@@ -48,9 +50,10 @@ public class ListObjectsWithDelimiter18122 extends S3TestBase {
 
 		// 将分隔符设置为? （默认为'/'）
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+		// TODO:1、这个不是测试点，可以不用检查
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
-		for(int i = 0 ; i < objectNames.length ; i++){
+		for (int i = 0; i < objectNames.length; i++) {
 			s3Client.putObject(bucketName, objectNames[i], new File(filePath));
 		}
 	}

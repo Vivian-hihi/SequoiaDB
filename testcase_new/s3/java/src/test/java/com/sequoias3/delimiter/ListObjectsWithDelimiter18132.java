@@ -20,8 +20,8 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: 两次查询间隔时间超过上下文生命周期时间 
- * testlink-case: seqDB-18132
+ * test content: 两次查询间隔时间超过上下文生命周期时间 testlink-case: seqDB-18132
+ * 
  * @author wangkexin
  * @Date 2019.04.24
  * @version 1.00
@@ -49,6 +49,7 @@ public class ListObjectsWithDelimiter18132 extends S3TestBase {
 		}
 	}
 
+	// TODO:1、这个用例建议放到串行中运行
 	@Test(enabled = false)
 	public void testGetObjectList() throws Exception {
 		// 将分隔符设置为? （默认为'/'）
@@ -57,38 +58,40 @@ public class ListObjectsWithDelimiter18132 extends S3TestBase {
 
 		expresultList = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
 		Collections.sort(expresultList);
-		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withDelimiter(delimiter).withMaxKeys(maxkeys);
+		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withDelimiter(delimiter)
+				.withMaxKeys(maxkeys);
 		ListObjectsV2Result result;
 
 		result = s3Client.listObjectsV2(req);
 		List<String> commprefixesResult = result.getCommonPrefixes();
-		
-		//check result
-		List<String> tmpResultList = expresultList.subList( 0, maxkeys );
+
+		// check result
+		List<String> tmpResultList = expresultList.subList(0, maxkeys);
 		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, tmpResultList);
-				
+
 		Thread.sleep(3 * 60 * 1000);
-		//second query
+		// second query
 		String nextContinuationToken = result.getNextContinuationToken();
-		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName).withContinuationToken(nextContinuationToken);
-		try{
+		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName)
+				.withContinuationToken(nextContinuationToken);
+		try {
 			s3Client.listObjectsV2(req2);
 			Assert.fail("exp fail but found success");
-		}catch(AmazonS3Exception e) {
+		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getErrorCode(), "ListObjectsFailed");
 		}
-		
+
 		runSuccess = true;
 	}
 
 	@AfterClass
 	private void tearDown() {
-		try{
+		try {
 			if (runSuccess) {
 				CommLib.deleteAllObjectVersions(s3Client, bucketName);
 				s3Client.deleteBucket(bucketName);
 			}
-		}finally{
+		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}

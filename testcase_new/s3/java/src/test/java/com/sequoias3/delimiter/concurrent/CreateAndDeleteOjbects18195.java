@@ -114,7 +114,6 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		@ExecuteOrder(step = 2)
 		private void checkResult() throws Exception {
 			try {
-				// down file
 				String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
 				Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 			} finally {

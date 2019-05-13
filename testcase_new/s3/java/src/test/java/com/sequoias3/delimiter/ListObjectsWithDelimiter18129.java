@@ -18,8 +18,9 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content:  带prefix、delimiter查询设置continueation-token前后更新分隔符
- * testlink-case: seqDB-18129
+ * test content: 带prefix、delimiter查询设置continueation-token前后更新分隔符 testlink-case:
+ * seqDB-18129
+ * 
  * @author wangkexin
  * @Date 2019.04.23
  * @version 1.00
@@ -30,7 +31,7 @@ public class ListObjectsWithDelimiter18129 extends S3TestBase {
 	private List<String> keyList = new ArrayList<String>();
 	private String keyNamePrefix = "dir/dir";
 	private String prefix = "dir/";
-	private String delimiter[] = {"/","?"};
+	private String delimiter[] = { "/", "?" };
 	private String startAfter = "dir/dir/";
 	private int objectNum = 1200;
 	private List<String> expresultList1 = new ArrayList<String>();
@@ -53,11 +54,11 @@ public class ListObjectsWithDelimiter18129 extends S3TestBase {
 			s3Client.putObject(bucketName, currentKey, "object_file18129");
 			keyList.add(currentKey);
 		}
-		
+
 		String[] objectNames = new String[keyList.size()];
 		expresultList1 = ObjectUtils.getCommPrefixes(keyList.toArray(objectNames), prefix, delimiter[0]);
 		expresultList2 = ObjectUtils.getCommPrefixes(keyList.toArray(objectNames), prefix, delimiter[1]);
-		
+
 		Collections.sort(expresultList1);
 		Collections.sort(expresultList2);
 	}
@@ -65,43 +66,45 @@ public class ListObjectsWithDelimiter18129 extends S3TestBase {
 	@Test
 	public void testGetObjectList() throws Exception {
 		// First query
-		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName)
-						.withPrefix(prefix).withDelimiter(delimiter[0]).withStartAfter(startAfter);
+		// TODO:1、该用例不需要带startAfter条件
+		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withPrefix(prefix)
+				.withDelimiter(delimiter[0]).withStartAfter(startAfter);
 		ListObjectsV2Result result = s3Client.listObjectsV2(req);
 		List<String> commprefixesResult = result.getCommonPrefixes();
-		//取出expresultList1从startAfter开始的1000条commprefixes记录 
-		expresultList1 = expresultList1.subList( 0, objectOnceQueryNum );
-		ObjectUtils.checkListObjectsV2Commprefixes( commprefixesResult, expresultList1 );
-		
-		//将分隔符设置为? （默认为'/'）
+		// 取出expresultList1从startAfter开始的1000条commprefixes记录
+		expresultList1 = expresultList1.subList(0, objectOnceQueryNum);
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList1);
+
+		// 将分隔符设置为? （默认为'/'）
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter[1]);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter[1]);
-		
+
 		// Second query
 		List<String> commprefixesResult2 = new ArrayList<>();
 		String nextContinuationToken = result.getNextContinuationToken();
-		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName)
-				.withPrefix(prefix).withDelimiter(delimiter[1]).withStartAfter(startAfter).withContinuationToken(nextContinuationToken);
+		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName).withPrefix(prefix)
+				.withDelimiter(delimiter[1]).withStartAfter(startAfter).withContinuationToken(nextContinuationToken);
 		ListObjectsV2Result result2;
-		do{
+		do {
 			result2 = s3Client.listObjectsV2(req2);
 			commprefixesResult2.addAll(result2.getCommonPrefixes());
 			String nextContinuationToken2 = result2.getNextContinuationToken();
 			req2.setContinuationToken(nextContinuationToken2);
-		}while(result2.isTruncated());
+		} while (result2.isTruncated());
+		// TODO:2、比较结果需要覆盖所有的结果项，包括不匹配分隔符的项
 		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult2, expresultList2);
-		
-		runSuccess =true;
+
+		runSuccess = true;
 	}
 
 	@AfterClass
 	private void tearDown() {
-		try{
+		try {
 			if (runSuccess) {
 				CommLib.deleteAllObjectVersions(s3Client, bucketName);
 				s3Client.deleteBucket(bucketName);
 			}
-		}finally{
+		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}

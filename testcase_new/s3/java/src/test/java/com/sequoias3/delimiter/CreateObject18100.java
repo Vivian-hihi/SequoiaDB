@@ -22,8 +22,8 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: 设置分隔符，增加同名对象 
- * testlink-case: seqDB-18100
+ * test content: 设置分隔符，增加同名对象 testlink-case: seqDB-18100
+ * 
  * @author wangkexin
  * @Date 2019.04.13
  * @version 1.00
@@ -51,23 +51,23 @@ public class CreateObject18100 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath1, oldFileSize);
 		TestTools.LocalFile.createFile(filePath2, newFileSize);
-		
-		s3Client = CommLib.buildS3Client();			
-		CommLib.clearBucket(s3Client, bucketName);		
+
+		s3Client = CommLib.buildS3Client();
+		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
 	}
 
 	@Test
 	private void testCreateObject() throws Exception {
-		//将分隔符设置为// （默认为'/'）
+		// 将分隔符设置为// （默认为'/'）
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		
-		//重复上传同名对象，检查对象LastModified时间在 【第一次上传时间，第二次上传完成后时间】范围内
+
+		// 重复上传同名对象，检查对象LastModified时间在 【第一次上传时间，第二次上传完成后时间】范围内
 		s3Client.putObject(bucketName, keyName, new File(filePath1));
 		S3Object obj = s3Client.getObject(bucketName, keyName);
 		Date dataLowBound = obj.getObjectMetadata().getLastModified();
-		
+
 		s3Client.putObject(bucketName, keyName, new File(filePath2));
 		Date dataUpBound = new Date();
 		checkResult(filePath2, dataLowBound, dataUpBound);
@@ -87,26 +87,28 @@ public class CreateObject18100 extends S3TestBase {
 			}
 		}
 	}
-	
-	private void checkResult(String filePath, Date expDateLowBound, Date expDateUpBound) throws Exception{
+
+	private void checkResult(String filePath, Date expDateLowBound, Date expDateUpBound) throws Exception {
 		S3Object obj = s3Client.getObject(bucketName, keyName);
 		ObjectMetadata metadata = obj.getObjectMetadata();
 		Date actCreateDate = metadata.getLastModified();
-		if(actCreateDate.before(expDateLowBound) || actCreateDate.after(expDateUpBound)){
-			Assert.fail("create time is different! the actCreateDate is : " + actCreateDate.toString() + ",the expDate is in :[ " + expDateLowBound.toString() + " ~ " + expDateUpBound.toString() + " ]");
+		if (actCreateDate.before(expDateLowBound) || actCreateDate.after(expDateUpBound)) {
+			Assert.fail("create time is different! the actCreateDate is : " + actCreateDate.toString()
+					+ ",the expDate is in :[ " + expDateLowBound.toString() + " ~ " + expDateUpBound.toString() + " ]");
 		}
-		
-		S3ObjectInputStream s3is = obj.getObjectContent();		
-		String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),Thread.currentThread().getId());
-		ObjectUtils.inputStream2File(s3is,downloadPath);
+
+		S3ObjectInputStream s3is = obj.getObjectContent();
+		String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+				Thread.currentThread().getId());
+		ObjectUtils.inputStream2File(s3is, downloadPath);
 		s3is.close();
-        String actMd5 = TestTools.getMD5(downloadPath);
-        String expMd5 = TestTools.getMD5(filePath);
-        
+		String actMd5 = TestTools.getMD5(downloadPath);
+		String expMd5 = TestTools.getMD5(filePath);
+
 		Assert.assertEquals(obj.getKey(), keyName);
 		Assert.assertEquals(actMd5, expMd5);
-		
-		//通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验
+		// TODO:1、建议比较list的所有项结果
+		// 通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
 		request.withDelimiter(delimiter);
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);

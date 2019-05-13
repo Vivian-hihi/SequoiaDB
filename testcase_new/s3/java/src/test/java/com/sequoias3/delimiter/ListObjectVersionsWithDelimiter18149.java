@@ -1,6 +1,5 @@
 package com.sequoias3.delimiter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.testng.Assert;
@@ -20,8 +19,8 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 
 /**
- * test content: 指定不同格式分割符查询
- * testlink-case: seqDB-18149
+ * test content: 指定不同格式分割符查询 testlink-case: seqDB-18149
+ * 
  * @author wangkexin
  * @Date 2019.04.28
  * @version 1.00
@@ -38,53 +37,56 @@ public class ListObjectVersionsWithDelimiter18149 extends S3TestBase {
 	private String[] accessKeys = null;
 
 	@DataProvider(name = "delimitersProvider")
-	public Object[][] recordNumsProvider(){
+	public Object[][] recordNumsProvider() {
 		String ascii = new String();
-		for(int i = 0 ; i < 32 ; i ++){
-				ascii+=(char)i;
+		for (int i = 0; i < 32; i++) {
+			ascii += (char) i;
 		}
-		ascii+=(char)127;
-		
+		ascii += (char) 127;
+
 		return new Object[][] {
 				// test a : 包含 数字字符[0-9a-zA-Z]
-				new Object[] {"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"},
+				new Object[] { "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" },
 				// test b : 包含特殊字符
-				new Object[] {"!-_.*'()"},
-				// test c : 包含需要特殊处理的字符  SEQUOIADBMAINSTREAM-4392
-				//new Object[] {"&@:,$=+?;" + ascii + " "},
+				new Object[] { "!-_.*'()" },
+				// test c : 包含需要特殊处理的字符 SEQUOIADBMAINSTREAM-4392
+				// new Object[] {"&@:,$=+?;" + ascii + " "},
 				// test d : 包含不建议使用的字符
-				new Object[] {"\\^`><{}[]#%“~|"},
+				new Object[] { "\\^`><{}[]#%“~|" },
 				// test e : 包含中文字符
-				new Object[] {"测试分隔符"}
-		};
+				new Object[] { "测试分隔符" } };
 	}
-	
+
 	@BeforeClass
-	private void setUp() throws Exception {}
+	private void setUp() throws Exception {
+	}
 
 	@Test(dataProvider = "delimitersProvider")
 	private void testUpdateDelimiter(String newDelimiter) throws Exception {
+		// TODO:1、没有必要每个步骤都创建/删除用户和桶
 		CommLib.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
-		
+
 		objectNames = DelimiterUtils.getRandomKeyListWithDelimiter(oldDelimiter, newDelimiter, keyNum);
-		for(int i = 0 ; i < objectNames.length; i++){
+		for (int i = 0; i < objectNames.length; i++) {
 			s3Client.putObject(bucketName, objectNames[i], "test18149");
 		}
 
 		DelimiterUtils.putBucketDelimiter(bucketName, newDelimiter, accessKeys[0]);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, newDelimiter, accessKeys[0]);
-		
+
 		List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames, "", newDelimiter);
-		VersionListing versionList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(newDelimiter));
+		VersionListing versionList = s3Client
+				.listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(newDelimiter));
 		List<String> commonPrefixes = versionList.getCommonPrefixes();
 		ObjectUtils.checkListObjectsV2Commprefixes(commonPrefixes, expCommonPrefixes);
-		
+
 		List<S3VersionSummary> versions = versionList.getVersionSummaries();
 		Assert.assertEquals(versions.size(), 0);
 		runSuccess = true;
+		// TODO:2、runSuccess是清理环境判断用的，不要放到test里面
 		if (runSuccess) {
 			UserUtils.deleteUser(userName);
 		}
@@ -92,7 +94,7 @@ public class ListObjectVersionsWithDelimiter18149 extends S3TestBase {
 
 	@AfterClass
 	private void tearDown() throws Exception {
-		try{
+		try {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}

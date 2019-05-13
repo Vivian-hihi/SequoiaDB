@@ -18,8 +18,9 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: 指定nextContinuationToken匹配记录被删除，查询列表元数据 
- * testlink-case: seqDB-18131
+ * test content: 指定nextContinuationToken匹配记录被删除，查询列表元数据 testlink-case:
+ * seqDB-18131
+ * 
  * @author wangkexin
  * @Date 2019.04.23
  * @version 1.00
@@ -27,7 +28,7 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 public class ListObjectsWithDelimiter18131 extends S3TestBase {
 	private String bucketName = "bucket18131";
-	private String[] objectNames = {"dir1/test18131_1", "dir1/dir2/test18131_2", "dir/aa/test18131_3","test18131_4"};
+	private String[] objectNames = { "dir1/test18131_1", "dir1/dir2/test18131_2", "dir/aa/test18131_3", "test18131_4" };
 	private String delimiter = "test";
 	private int maxkeys = 2;
 	private List<String> expresultList = new ArrayList<String>();
@@ -59,38 +60,40 @@ public class ListObjectsWithDelimiter18131 extends S3TestBase {
 
 		result = s3Client.listObjectsV2(req);
 		commprefixesResult.addAll(result.getCommonPrefixes());
-		
-		//删除下一个匹配到的记录
+
+		// 删除下一个匹配到的记录
+		// TODO:1、用例中是要删除nextToken匹配的记录，可以通过获取匹配是哪条记录
 		String nextCommprefix = expresultList.get(2);
 		String tobeDeleteKey = "";
 		for (int i = 0; i < objectNames.length; i++) {
-			if(objectNames[i].startsWith(nextCommprefix)){
+			if (objectNames[i].startsWith(nextCommprefix)) {
 				tobeDeleteKey = objectNames[i];
 				expresultList.remove(2);
 				break;
 			}
 		}
 		s3Client.deleteObject(bucketName, tobeDeleteKey);
-		
+
 		String nextContinuationToken = result.getNextContinuationToken();
 		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName).withDelimiter(delimiter)
 				.withMaxKeys(maxkeys).withContinuationToken(nextContinuationToken);
 		ListObjectsV2Result result2 = s3Client.listObjectsV2(req2);
 		commprefixesResult.addAll(result2.getCommonPrefixes());
-		
-		//check result
+
+		// check result
+		// TODO:2、测试结果需要覆盖所有检查项
 		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList);
 		runSuccess = true;
 	}
 
 	@AfterClass
 	private void tearDown() {
-		try{
+		try {
 			if (runSuccess) {
 				CommLib.deleteAllObjectVersions(s3Client, bucketName);
 				s3Client.deleteBucket(bucketName);
 			}
-		}finally{
+		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}

@@ -20,8 +20,8 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: 禁用版本控制，设置分隔符新增对象
- * testlink-case: seqDB-18099
+ * test content: 禁用版本控制，设置分隔符新增对象 testlink-case: seqDB-18099
+ * 
  * @author wangkexin
  * @Date 2019.04.13
  * @version 1.00
@@ -45,18 +45,18 @@ public class CreateObject18099 extends S3TestBase {
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
-		s3Client = CommLib.buildS3Client();			
-		CommLib.clearBucket(s3Client, bucketName);		
+		s3Client = CommLib.buildS3Client();
+		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Suspended");
 	}
 
 	@Test
 	private void testCreateObject() throws Exception {
-		//将分隔符设置为* （默认为'/'）
+		// 将分隔符设置为* （默认为'/'）
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		
+
 		s3Client.putObject(bucketName, keyName, new File(filePath));
 		checkResult();
 		runSuccess = true;
@@ -75,21 +75,22 @@ public class CreateObject18099 extends S3TestBase {
 			}
 		}
 	}
-	
-	private void checkResult() throws Exception{
+
+	private void checkResult() throws Exception {
+		// TODO:1、检查对象内容建议调用公共方法，另外list建议检查所有项的结果
 		S3Object obj = s3Client.getObject(bucketName, keyName);
-		S3ObjectInputStream s3is = obj.getObjectContent();		
+		S3ObjectInputStream s3is = obj.getObjectContent();
 		String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
 				Thread.currentThread().getId());
-		ObjectUtils.inputStream2File(s3is,downloadPath);
+		ObjectUtils.inputStream2File(s3is, downloadPath);
 		s3is.close();
-        String actMd5 = TestTools.getMD5(downloadPath);
-        String expMd5 = TestTools.getMD5(filePath);
-        
+		String actMd5 = TestTools.getMD5(downloadPath);
+		String expMd5 = TestTools.getMD5(filePath);
+
 		Assert.assertEquals(obj.getKey(), keyName);
 		Assert.assertEquals(actMd5, expMd5);
-		
-		//通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验
+
+		// 通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
 		request.withDelimiter(delimiter);
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);

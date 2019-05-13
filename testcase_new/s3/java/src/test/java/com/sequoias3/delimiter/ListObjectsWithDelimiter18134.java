@@ -19,8 +19,8 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: 分隔符状态不可用，查询对象列表 
- * testlink-case: seqDB-18134
+ * test content: 分隔符状态不可用，查询对象列表 testlink-case: seqDB-18134
+ * 
  * @author wangkexin
  * @Date 2019.04.23
  * @version 1.00
@@ -56,45 +56,46 @@ public class ListObjectsWithDelimiter18134 extends S3TestBase {
 
 	@AfterClass
 	private void tearDown() {
-		try{
+		try {
 			if (runSuccess) {
 				CommLib.deleteAllObjectVersions(s3Client, bucketName);
 				s3Client.deleteBucket(bucketName);
 			}
-		}finally{
+		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}
 		}
 	}
-	
+
+	// TODO:1、类名加上Trans前缀是有特殊意义吗？
 	class TransUpdateDelimiter18134 {
 		@ExecuteOrder(step = 1, desc = "更新分隔符")
-		public void updateDelimiter(){
+		public void updateDelimiter() {
 			DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		}
-		
+
 		@ExecuteOrder(step = 3, desc = "检查分隔符更新结果")
-		public void checkResult() throws Exception{
+		public void checkResult() throws Exception {
 			DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 		}
 	}
-	
+
 	class TransListObjectsV218134 {
 		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withDelimiter(delimiter);
 		ListObjectsV2Result result = new ListObjectsV2Result();
-		
+
 		@ExecuteOrder(step = 1, desc = "使用新分隔符查询对象列表")
-		public void listObjectsV2(){
+		public void listObjectsV2() {
 			result = s3Client.listObjectsV2(req);
 		}
-		
+
 		@ExecuteOrder(step = 2, desc = "检查结果")
-		public void checkResult(){
-			//手工校验查询方式为元数据扫描方式
+		public void checkResult() {
+			// 手工校验查询方式为元数据扫描方式
 			List<String> commprefixesResult = result.getCommonPrefixes();
-			
-			//check result
+			// TODO:2、测试结果覆盖下所有检查项，包括content记录，这里建议覆盖对象在context的场景
+			// check result
 			expresultList = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
 			ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList);
 		}
