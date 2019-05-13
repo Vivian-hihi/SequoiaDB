@@ -118,7 +118,7 @@
 192.168.28.134 scm-test-ci-rhel2
 
 部署微服务机器
-192.168.28.138 scm-test-ci-ubun2
+192.168.28.138 scm-test-ci-ubun2 (clouddisk,virtualclouddisk)
 192.168.28.139 scm-test-ci-cent1（schedule,config）
 192.168.28.140 scm-test-ci-cent2（网关）
 192.168.28.141 scm-test-ci-rhel3（网关）
@@ -133,10 +133,4 @@
 新做一台suse12 sp2
 
 #DB ES环境
-192.168.28.143
-
-curl -XDELETE http://192.168.28.143:9200/_all
-
-    http://192.168.20.11/sequoiadb/trunk : 38718
-    http://192.168.20.11/sequoiadb/otherdb/postgres : 38675
-
+192.168.28.143 test-ci-cent10
