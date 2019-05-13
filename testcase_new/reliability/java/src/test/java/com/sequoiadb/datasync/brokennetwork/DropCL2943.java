@@ -50,6 +50,7 @@ public class DropCL2943 extends SdbTestBase {
     private static final int CL_NUM = 500;
     private GroupWrapper dataGroup = null;
     private String dataSlvHost = null;
+    private String safeUrl ;
 
     @BeforeClass
     public void setUp() {
@@ -71,8 +72,9 @@ public class DropCL2943 extends SdbTestBase {
             if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
                 throw new SkipException(cataGroup.getGroupName() + " reelect fail");
             }
-
-            db = new Sequoiadb(coordUrl, "", "");
+            
+            safeUrl = CommLib.getSafeCoordUrl(dataSlvHost) ;
+            db = new Sequoiadb(safeUrl, "", "");
             createCLs(db);
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
@@ -90,7 +92,7 @@ public class DropCL2943 extends SdbTestBase {
         try {
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlvHost, 1, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
-            String safeUrl = CommLib.getSafeCoordUrl(dataSlvHost);
+            
             DropCLTask dTask = new DropCLTask(safeUrl);
             mgr.addTask(dTask);
             mgr.execute();
