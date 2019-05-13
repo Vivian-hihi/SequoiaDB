@@ -397,6 +397,12 @@
                            "file": "develop",
                            "cn": "开发",
                            "en": "Develop"
+                        },
+                        {
+                           "id": 1557737448,
+                           "file": "uninstall",
+                           "cn": "卸载",
+                           "en": "Develop"
                         }
                      ]
                   },
@@ -449,6 +455,12 @@
                      "file": "attention",
                      "cn": "注意事项",
                      "en": "attention"
+                  },
+                  {
+                     "id": 1557737509,
+                     "file": "uninstall",
+                     "cn": "卸载",
+                     "en": "Develop"
                   }
                ]
             }            
