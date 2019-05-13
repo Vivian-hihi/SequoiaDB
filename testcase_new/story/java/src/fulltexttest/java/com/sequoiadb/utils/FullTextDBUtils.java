@@ -424,7 +424,8 @@ public class FullTextDBUtils {
                 }
             }
 
-            Assert.assertFalse( cappedCSExist, "capped cs is still on the rg: " + rgName + ", node: " + nodeAddress );
+            Assert.assertFalse( cappedCSExist,
+                    "capped cs '" + cappedCSName + "' is still on the rg: " + rgName + ", node: " + nodeAddress );
         }
     }
 }
