@@ -387,7 +387,7 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public static void isCappedCSExist( Sequoiadb db, String cappedCSName, List<String> rgNames )
+    public static void checkDropCappedCS( Sequoiadb db, String cappedCSName, List<String> rgNames )
             throws InterruptedException {
         for ( String rgName : rgNames ) {
             checkDropCappedCS( db, cappedCSName, rgName );
@@ -428,4 +428,5 @@ public class FullTextDBUtils {
                     "capped cs '" + cappedCSName + "' is still on the rg: " + rgName + ", node: " + nodeAddress );
         }
     }
+
 }
