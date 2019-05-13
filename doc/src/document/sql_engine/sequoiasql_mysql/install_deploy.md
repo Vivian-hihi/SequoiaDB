@@ -157,7 +157,7 @@
    ok
    ```
 
-2. 查看服务运行状态
+2. 使用 root 用户权限查看服务运行状态
 
    ```lang-javascript
    $ service sequoiasql-mysql status
@@ -165,7 +165,7 @@
      running. (PID: 20679)
    ```
 
-3. 停止服务
+3. 使用 root 用户权限停止服务
 
    ```lang-javascript
    $ service sequoiasql-mysql stop
@@ -173,7 +173,7 @@
      ok.
    ```
    
-4. 启动服务
+4. 使用 root 用户权限启动服务
 
    ```lang-javascript
    $ service sequoiasql-mysql start
