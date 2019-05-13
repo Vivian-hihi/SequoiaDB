@@ -377,40 +377,35 @@ public class FullTextDBUtils {
     }
 
     /**
-     * 判断固定集合空间是否存在
+     * 检查固定集合空间是已清除,每秒检查一次,检测时间最长为10分钟
      * 
      * @param db
      * @param cappedCSName
      * @param rgNames
-     * @return 如果固定集合空间存在则返回true, 否则返回false, 超过10分钟cs仍然存在则直接返回true,认为存在
+     * @return 无返回值
      * @throws InterruptedException
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public static boolean isCappedCSExist( Sequoiadb db, String cappedCSName, List<String> rgNames )
+    public static void isCappedCSExist( Sequoiadb db, String cappedCSName, List<String> rgNames )
             throws InterruptedException {
-        boolean cappedCSExist = false;
         for ( String rgName : rgNames ) {
-            if ( isCappedCSExist( db, cappedCSName, rgName ) ) {
-                cappedCSExist = true;
-                break;
-            }
+            checkDropCappedCS( db, cappedCSName, rgName );
         }
-        return cappedCSExist;
     }
 
     /**
-     * 判断固定集合空间是否存在
+     * 检查固定集合空间是已清除,每秒检查一次,检测时间最长为10分钟
      * 
      * @param db
      * @param cappedCSName
      * @param rgName
-     * @return 如果固定集合空间存在则返回true, 否则返回false, 超过10分钟cs仍然存在则直接返回true,认为存在
+     * @return 无返回值
      * @throws InterruptedException
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public static boolean isCappedCSExist( Sequoiadb db, String cappedCSName, String rgName )
+    public static void checkDropCappedCS( Sequoiadb db, String cappedCSName, String rgName )
             throws InterruptedException {
         boolean cappedCSExist = true;
         List<String> nodeList = CommLib.getNodeAddress( db, rgName );
@@ -428,11 +423,8 @@ public class FullTextDBUtils {
                     Thread.sleep( 1000 );
                 }
             }
-            if ( cappedCSExist ) {
-                System.err.println( "capped cs is still on the rg: " + rgName + ", node: " + nodeAddress );
-                break;
-            }
+
+            Assert.assertFalse( cappedCSExist, "capped cs is still on the rg: " + rgName + ", node: " + nodeAddress );
         }
-        return cappedCSExist;
     }
 }
