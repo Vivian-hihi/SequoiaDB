@@ -379,7 +379,7 @@ function getSequoiadbConf( replaceInstallPath )
    // check first line     TODO try catche
    var headLine = file.readLine() ;
    headLine =  headLine.replace( /[\r\n]/g, "" ) ; // delete last line break
-   if ( headLine != "role,groupName,hostName,service,dbPath" )
+   if ( headLine != "role,groupName,hostName,serviceName,dbPath" )
    {
       println( "Invalide configure file! first line: " + headLine ) ;
       throw "ERROR" ;
