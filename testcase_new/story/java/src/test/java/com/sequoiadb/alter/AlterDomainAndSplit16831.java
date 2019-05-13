@@ -53,9 +53,8 @@ public class AlterDomainAndSplit16831 extends SdbTestBase{
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("skip StandAlone");
         }
-        rgList = CommLib.getDataGroupNames(sdb);
-        if (rgList.size() <= 1) {
-            throw new SkipException("current environment less than tow groups ");
+        if (CommLib.OneGroupMode(sdb)) {
+            throw new SkipException("current environment less than two groups ");
         }
         if(sdb.isCollectionSpaceExist(localCSName)) {
             sdb.dropCollectionSpace(localCSName);
@@ -67,6 +66,7 @@ public class AlterDomainAndSplit16831 extends SdbTestBase{
     
     @Test
     public void test16831() {
+    	rgList = CommLib.getDataGroupNames(sdb);
         prepareCLAndDomain();
         
         AlterDomainThread domainThread = new AlterDomainThread();
