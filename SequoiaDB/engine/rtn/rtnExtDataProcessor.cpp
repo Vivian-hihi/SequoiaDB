@@ -1237,7 +1237,12 @@ namespace engine
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
          processor = &_processors[i] ;
-         if ( processor->isActive() && processor->isOwnedBy( csName ) )
+         if ( !processor->isActive() )
+         {
+            continue ;
+         }
+
+         if ( processor->isOwnedBy( csName ) )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1330,7 +1335,12 @@ namespace engine
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
          processor = &_processors[i] ;
-         if ( processor->isActive() && processor->isOwnedBy( csName, clName ) )
+         if ( !processor->isActive() )
+         {
+            continue ;
+         }
+
+         if ( processor->isOwnedBy( csName, clName ) )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1421,8 +1431,12 @@ namespace engine
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
          processorLocal = &_processors[i] ;
-         if ( processorLocal->isActive() &&
-              processorLocal->isOwnedBy( csName, clName, idxName ) )
+         if ( !processorLocal->isActive() )
+         {
+            continue ;
+         }
+
+         if ( processorLocal->isOwnedBy( csName, clName, idxName ) )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
@@ -1475,8 +1489,11 @@ namespace engine
 
       for ( INT32 i = 0; i < RTN_EXT_PROCESSOR_MAX_NUM; ++i )
       {
-         if ( _processors[i].isActive() &&
-              _processors[i].isOwnedByExt( extName ) )
+         if ( !_processors[i].isActive() )
+         {
+            continue ;
+         }
+         if ( _processors[i].isOwnedByExt( extName ) )
          {
             ossRWMutex *mutex = &_processorLocks[i] ;
             if ( SHARED == lockType )
