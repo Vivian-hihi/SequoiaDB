@@ -127,7 +127,8 @@ function getSqlInstallInfo( dbType, ignoreNotInstall )
       if ( e == -4 )
       {
          if ( ignoreNotInstall ) return ;
-         println( "ERROR: This machine has not installed " + dbFullType + "!" ) ;
+         println( "ERROR: This machine has not installed " +
+                  dbFullType + "!" ) ;
          throw "ERROR" ;
       }
       else
@@ -148,7 +149,8 @@ function getSqlInstallInfo( dbType, ignoreNotInstall )
       catch( e )
       {
          if( e == -9 ) break ; // -9: Hit end of file
-         println( "Unexpected error[" + e + "] when read a line from configure file!" ) ;
+         println( "Unexpected error[" + e + "] when read a line from " +
+                  "configure file!" ) ;
          throw e ;
       }
 
@@ -175,7 +177,8 @@ function getSequoiadbInstallInfo( hostName )
    catch( e )
    {
 
-      println( "Unexpected error[" + e + "] when connecting cm[" + MY_HOSTNAME + ":" + LOCAL_CM_PORT + "]!" ) ;
+      println( "Unexpected error[" + e + "] when connecting cm[" + MY_HOSTNAME +
+               ":" + LOCAL_CM_PORT + "]!" ) ;
       throw e ;
    }
 
@@ -187,7 +190,8 @@ function getSequoiadbInstallInfo( hostName )
    catch( e )
    {
 
-      println( "Unexpected error[" + e + "] when connecting cm[" + hostName + ":" + cmPort + "]!" ) ;
+      println( "Unexpected error[" + e + "] when connecting cm[" + hostName +
+               ":" + cmPort + "]!" ) ;
       throw e ;
    }
 
@@ -271,7 +275,8 @@ function getSqlConf( dbType, installedPath )
       catch( e )
       {
          if( e == -9 ) break ; // -9: Hit end of file
-         println( "Unexpected error[" + e + "] when read a line from configure file!" ) ;
+         println( "Unexpected error[" + e + "] when read a line from " +
+                  "configure file!" ) ;
          throw e ;
       }
 
@@ -333,7 +338,8 @@ function getSqlConf( dbType, installedPath )
       }
 
       // replace installed path
-      instanceConf[2] = instanceConf[2].replace( /\[installPath\]/g, installedPath ) ;
+      instanceConf[2] = instanceConf[2].replace( /\[installPath\]/g,
+                                                 installedPath ) ;
 
       // set coord address
       if ( instanceConf[3] == "-" )
@@ -398,7 +404,8 @@ function getSequoiadbConf( replaceInstallPath )
       catch( e )
       {
          if( e == -9 ) break ; // -9: Hit end of file
-         println( "Unexpected error[" + e + "] when read a line from configure file!" ) ;
+         println( "Unexpected error[" + e + "] when read a line from " +
+                  "configure file!" ) ;
          throw e ;
       }
 
@@ -445,7 +452,8 @@ function createTmpCoord()
    {
       if ( e != -145 )  // -145: already exists, ignore error
       {
-         println( "Unexpected error[" + e + "] when creating temp coord: localhost:" + service + "!" ) ;
+         println( "Unexpected error[" + e + "] when creating temp coord: " +
+                  "localhost:" + service + "!" ) ;
          throw e ;
       }
    }
@@ -457,7 +465,7 @@ function checkCataPrimary( db )
 {
    var hasPrimary = false;
 
-   for( var i = 0; i < 10*600; i++ )  //wait for cata group to select primary node
+   for( var i = 0; i < 10*600; i++ )//wait for cata group to select primary node
    {
       try
       {
@@ -470,7 +478,8 @@ function checkCataPrimary( db )
       {
          if( e !== -71 )
          {
-            println( "Unexpected error[" + e + "] when db.getRG( \"SYSCatalogGroup\" )!" ) ;
+            println( "Unexpected error[" + e + "] when " +
+                     "db.getRG( \"SYSCatalogGroup\" )!" ) ;
             throw e;
          }
       }
@@ -478,7 +487,8 @@ function checkCataPrimary( db )
 
    if( hasPrimary === false )
    {
-      println( "Fail to select primary node in group[SYSCatalogGroup] after 10 minute" ) ;
+      println( "Fail to select primary node in group[SYSCatalogGroup] " +
+               "after 10 minute" ) ;
       return false ;
    }
 
@@ -489,7 +499,7 @@ function checkeDataPrimary( db, groupName )
 {
    var hasPrimary = false ;
 
-   for( var i = 0; i < 10*600; i++ )  //wait for data group to select primary node
+   for( var i = 0; i < 10*600; i++ )//wait for data group to select primary node
    {
       try
       {
@@ -502,7 +512,8 @@ function checkeDataPrimary( db, groupName )
       {
          if( e !== -71 )
          {
-            println( "Unexpected error[" + e + "] when getting group[" + groupName + "]!" ) ;
+            println( "Unexpected error[" + e + "] when getting group[" +
+                     groupName + "]!" ) ;
             throw e;
          }
       }
@@ -510,7 +521,8 @@ function checkeDataPrimary( db, groupName )
 
    if( hasPrimary === false )
    {
-      println( "Fail to select primary node in group[" + groupName + "] after 10 minute" ) ;
+      println( "Fail to select primary node in group[" + groupName +
+               "] after 10 minute" ) ;
       return false ;
    }
 
@@ -560,7 +572,8 @@ function createCatalog( nodesConf )
             }
             else
             {
-               println( "Unexpected error[" + e + "] when creating catalog node: " + hostName + ":" + service + "!" ) ;
+               println( "Unexpected error[" + e + "] when creating catalog " +
+                        "node: " + hostName + ":" + service + "!" ) ;
                throw e ;
             }
          }
@@ -576,7 +589,8 @@ function createCatalog( nodesConf )
          {
             if ( e != -145 ) // -145: already exists, ignore error
             {
-               println( "Unexpected error[" + e + "] when creating catalog node: " + hostName + ":" + service + "!" ) ;
+               println( "Unexpected error[" + e + "] when creating catalog " +
+                         "node: " + hostName + ":" + service + "!" ) ;
                throw e ;
             }
          }
@@ -586,7 +600,8 @@ function createCatalog( nodesConf )
          }
          catch( e )
          {
-            println( "Unexpected error[" + e + "] when starting catalog node: " + hostName + ":" + service + "!" ) ;
+            println( "Unexpected error[" + e + "] when starting catalog node: "
+                     + hostName + ":" + service + "!" ) ;
             throw e ;
          }
       }
@@ -682,7 +697,8 @@ function createData( nodesConf )
          }
          else
          {
-            println( "Unexpected error[" + e + "] when get data group[" + groupName + "]!" ) ;
+            println( "Unexpected error[" + e + "] when get data group[" +
+                     groupName + "]!" ) ;
             throw e ;
          }
       }
@@ -695,7 +711,8 @@ function createData( nodesConf )
       {
          if ( e != -145 )
          {
-            println( "Unexpected error[" + e + "] when creating data node[" + hostName + ":" + service + "]!" ) ;
+            println( "Unexpected error[" + e + "] when creating data node[" +
+                     hostName + ":" + service + "]!" ) ;
             throw e ;
          }
       }
@@ -715,7 +732,8 @@ function createData( nodesConf )
       }
       catch( e )
       {
-         println( "Unexpected error[" + e + "] when starting data group[" + groupName + "]!" ) ;
+         println( "Unexpected error[" + e + "] when starting data group[" +
+                  groupName + "]!" ) ;
          throw e ;
       }
    }
@@ -732,7 +750,8 @@ function removeTmpCoord()
    }
    catch( e )
    {
-      println( "Unexpected error[" + e + "] when removing temp coord[localhost:" + service + "]!" ) ;
+      println( "Unexpected error[" + e + "] when removing temp coord[localhost:"
+               + service + "]!" ) ;
       throw e ;
    }
 }
@@ -860,7 +879,8 @@ function deployMysql( ignoreNotInstall )
       try
       {
          // add instance
-         var command = sqlCtl + " addinst "+ instanceName +" -D " + databaseDir + " -p " + port ;
+         var command = sqlCtl + " addinst "+ instanceName +" -D " +
+                       databaseDir + " -p " + port ;
          cmd.run( command ) ;
       }
       catch( e )
@@ -883,10 +903,11 @@ function deployMysql( ignoreNotInstall )
          var coordSetting = "sequoiadb_conn_addr=\"" + coordAddr + "\"" ;
          var file = new File( databaseDir + "/auto.cnf" ) ;
          var content = file.read() ;
-         content = content.replace( /sequoiadb_conn_addr=(.*)/g, coordSetting ) ;
+         content = content.replace( /sequoiadb_conn_addr=(.*)/g, coordSetting );
          if ( content.indexOf( "sequoiadb_conn_addr=" ) == -1 )
          {
-            content = content.replace( /\[mysqld\]/g, "[mysqld]\n" + coordSetting ) ;
+            content = content.replace( /\[mysqld\]/g,
+                                       "[mysqld]\n" + coordSetting ) ;
          }
          file.seek( 0 ) ;
          file.write( content ) ;
@@ -904,7 +925,8 @@ function deployMysql( ignoreNotInstall )
          }
       }
 
-      println( "Create instance: [name: " + instanceName + ", port: " + port + "]" ) ;
+      println( "Create instance: [name: " + instanceName + ", port: " + port +
+               "]" ) ;
    }
 }
 
@@ -952,7 +974,8 @@ function deployPostgresql( ignoreNotInstall )
       try
       {
          // add instance
-         var command = sqlCtl + " addinst "+ instanceName +" -D " + databaseDir + " -p " + port ;
+         var command = sqlCtl + " addinst "+ instanceName +" -D " + databaseDir
+                       + " -p " + port ;
          cmd.run( command ) ;
       }
       catch( e )
@@ -981,11 +1004,13 @@ function deployPostgresql( ignoreNotInstall )
 
          // set coord address
          var envCmd = "export LD_LIBRARY_PATH=" + installedPath + "/lib; " ;
-         var command = envCmd + psql + " -p " + port + " " + dbName + " -c \"create extension sdb_fdw\"" ;
+         var command = envCmd + psql + " -p " + port + " " + dbName +
+                       " -c \"create extension sdb_fdw\"" ;
          cmd.run( command ) ;
 
          var command = envCmd + psql + " -p " + port + " " + dbName
-                              + " -c \"create server sdb_server foreign data wrapper sdb_fdw options(address '"
+                              + " -c \"create server sdb_server foreign "
+                              + "data wrapper sdb_fdw options(address '"
                               + coordAddr + "', transaction 'off' );\"" ;
          cmd.run( command ) ;
       }
@@ -998,6 +1023,7 @@ function deployPostgresql( ignoreNotInstall )
          }
       }
 
-      println( "Create instance: [name: " + instanceName + ", port: " + port + "]" ) ;
+      println( "Create instance: [name: " + instanceName + ", port: " + port +
+               "]" ) ;
    }
 }
