@@ -181,7 +181,7 @@ public class SdbDirDao implements DirDao {
     }
 
     @Override
-    public void delete(ConnectionDao connection, String metaCsName, Long bucketId, String delimiter, Long dirID)
+    public void delete(ConnectionDao connection, String metaCsName, Long bucketId, String delimiter, String dirName)
             throws S3ServerException {
         Sequoiadb sdb = null;
         try{
@@ -195,8 +195,8 @@ public class SdbDirDao implements DirDao {
 
             BSONObject matcher = new BasicBSONObject();
             matcher.put(Dir.DIR_BUCKETID, bucketId);
-            if (dirID != null) {
-                matcher.put(Dir.DIR_ID, dirID);
+            if (dirName != null) {
+                matcher.put(Dir.DIR_NAME, dirName);
             }
             if (delimiter != null) {
                 matcher.put(Dir.DIR_DELIMITER, delimiter);

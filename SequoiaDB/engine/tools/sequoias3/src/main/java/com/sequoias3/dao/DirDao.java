@@ -17,6 +17,6 @@ public interface DirDao {
             throws S3ServerException;
 
     void delete(ConnectionDao connectionDao, String metaCsName, Long bucketId,
-                String delimiter, Long ID)
+                String delimiter, String dirName)
             throws S3ServerException;
 }

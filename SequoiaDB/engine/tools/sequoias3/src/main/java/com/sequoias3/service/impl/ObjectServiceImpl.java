@@ -451,7 +451,7 @@ public class ObjectServiceImpl implements ObjectService {
                 queryContext = contextManager.get(continueToken);
                 if (null == queryContext) {
                     throw new S3ServerException(S3Error.OBJECT_INVALID_TOKEN,
-                            "The continuation token provided is incorrect.");
+                            "The continuation token provided is incorrect.token:"+continueToken);
                 }
                 if (!IsContextMatch(queryContext, prefix, startAfter, delimiter)){
                     queryContext = null;
@@ -1070,10 +1070,10 @@ public class ObjectServiceImpl implements ObjectService {
                             bucket.getDelimiter1(), dirName, true);
                     if (dir != null) {
                         String parentIdName = ObjectMeta.META_PARENTID1;
-                        if(!metaDao.queryOneOtherMetaByParentId(connection, metaCsName, metaClName,
+                        if(!metaDao.queryOneOtherMetaByParentId(null, metaCsName, metaClName,
                                 bucket.getBucketId(), objectName, parentIdName, dir.getID())){
                             dirDao.delete(connection, metaCsName, dir.getBucketId(),
-                                    null, dir.getID());
+                                    bucket.getDelimiter1(), dirName);
                         }
                     }
                 }
@@ -1091,10 +1091,10 @@ public class ObjectServiceImpl implements ObjectService {
                             bucket.getDelimiter2(), dirName, true);
                     if (dir != null) {
                         String parentIdName = ObjectMeta.META_PARENTID2;
-                        if(!metaDao.queryOneOtherMetaByParentId(connection, metaCsName, metaClName,
+                        if(!metaDao.queryOneOtherMetaByParentId(null, metaCsName, metaClName,
                                 bucket.getBucketId(), objectName, parentIdName, dir.getID())){
                             dirDao.delete(connection, metaCsName, bucket.getBucketId(),
-                                    null, dir.getID());
+                                    bucket.getDelimiter2(), dirName);
                         }
                     }
                 }

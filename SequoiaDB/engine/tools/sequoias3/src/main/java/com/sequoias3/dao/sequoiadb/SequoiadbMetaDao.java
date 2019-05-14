@@ -391,8 +391,13 @@ public class SequoiadbMetaDao implements MetaDao {
                                           String metaClName, long bucketId, String objectName,
                                           String parentIdName, long parentId)
             throws S3ServerException {
+        Sequoiadb sdb = null;
         try {
-            Sequoiadb sdb = ((SdbConnectionDao)connection).getConnection();
+            if (connection != null) {
+                sdb = ((SdbConnectionDao) connection).getConnection();
+            }else {
+                sdb = sdbDatasourceWrapper.getSequoiadb();
+            }
             CollectionSpace cs = sdb.getCollectionSpace(metaCsName);
             DBCollection cl = cs.getCollection(metaClName);
 
@@ -422,6 +427,10 @@ public class SequoiadbMetaDao implements MetaDao {
         } catch (Exception e){
             logger.error("query one meta by parentId failed.");
             throw e;
+        } finally {
+            if (connection == null) {
+                sdbDatasourceWrapper.releaseSequoiadb(sdb);
+            }
         }
     }
 
