@@ -269,7 +269,9 @@ namespace seadapter
       {
          ++i ;
       }
-      return ( 0 == len ) || ( i == len && '_' != _seIdxPrefix[0] ) ;
+      return ( 0 == len ) ||
+             ( i == len && '_' != _seIdxPrefix[0] &&
+               0 != ossStrcasecmp( _seIdxPrefix, "sys" ) ) ;
    }
 }
 
