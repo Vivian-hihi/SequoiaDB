@@ -40,7 +40,7 @@ fusermount-fusermount.o: fusermount.c ../include/config.h \
  /usr/include/x86_64-linux-gnu/bits/uio.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl2.h /usr/include/pwd.h \
- /usr/include/paths.h /usr/include/mntent.h \
+ /usr/include/mntent.h /usr/include/paths.h \
  /usr/include/x86_64-linux-gnu/sys/wait.h /usr/include/signal.h \
  /usr/include/x86_64-linux-gnu/bits/signum.h \
  /usr/include/x86_64-linux-gnu/bits/siginfo.h \
@@ -197,9 +197,9 @@ fusermount-fusermount.o: fusermount.c ../include/config.h \
 
 /usr/include/pwd.h:
 
-/usr/include/paths.h:
-
 /usr/include/mntent.h:
+
+/usr/include/paths.h:
 
 /usr/include/x86_64-linux-gnu/sys/wait.h:
 

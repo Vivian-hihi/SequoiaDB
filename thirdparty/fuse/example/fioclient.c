@@ -117,6 +117,6 @@ int main(int argc, char **argv)
 	}
 
  usage:
-	fprintf(stderr, "%s", usage);
+	fprintf(stderr, usage);
 	return 1;
 }

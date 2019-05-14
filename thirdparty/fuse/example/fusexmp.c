@@ -1,12 +1,11 @@
 /*
   FUSE: Filesystem in Userspace
   Copyright (C) 2001-2007  Miklos Szeredi <miklos@szeredi.hu>
-  Copyright (C) 2011       Sebastian Pipping <sebastian@pipping.org>
 
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
 
-  gcc -Wall fusexmp.c `pkg-config fuse --cflags --libs` -o fusexmp
+  gcc -Wall `pkg-config fuse --cflags --libs` fusexmp.c -o fusexmp
 */
 
 #define FUSE_USE_VERSION 26
@@ -16,8 +15,8 @@
 #endif
 
 #ifdef linux
-/* For pread()/pwrite()/utimensat() */
-#define _XOPEN_SOURCE 700
+/* For pread()/pwrite() */
+#define _XOPEN_SOURCE 500
 #endif
 
 #include <fuse.h>
@@ -25,7 +24,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
 #include <sys/time.h>
@@ -213,19 +211,22 @@ static int xmp_truncate(const char *path, off_t size)
 	return 0;
 }
 
-#ifdef HAVE_UTIMENSAT
 static int xmp_utimens(const char *path, const struct timespec ts[2])
 {
 	int res;
+	struct timeval tv[2];
 
-	/* don't use utime/utimes since they follow symlinks */
-	res = utimensat(0, path, ts, AT_SYMLINK_NOFOLLOW);
+	tv[0].tv_sec = ts[0].tv_sec;
+	tv[0].tv_usec = ts[0].tv_nsec / 1000;
+	tv[1].tv_sec = ts[1].tv_sec;
+	tv[1].tv_usec = ts[1].tv_nsec / 1000;
+
+	res = utimes(path, tv);
 	if (res == -1)
 		return -errno;
 
 	return 0;
 }
-#endif
 
 static int xmp_open(const char *path, struct fuse_file_info *fi)
 {
@@ -310,29 +311,6 @@ static int xmp_fsync(const char *path, int isdatasync,
 	return 0;
 }
 
-#ifdef HAVE_POSIX_FALLOCATE
-static int xmp_fallocate(const char *path, int mode,
-			off_t offset, off_t length, struct fuse_file_info *fi)
-{
-	int fd;
-	int res;
-
-	(void) fi;
-
-	if (mode)
-		return -EOPNOTSUPP;
-
-	fd = open(path, O_WRONLY);
-	if (fd == -1)
-		return -errno;
-
-	res = -posix_fallocate(fd, offset, length);
-
-	close(fd);
-	return res;
-}
-#endif
-
 #ifdef HAVE_SETXATTR
 /* xattr operations are optional and can safely be left unimplemented */
 static int xmp_setxattr(const char *path, const char *name, const char *value,
@@ -385,18 +363,13 @@ static struct fuse_operations xmp_oper = {
 	.chmod		= xmp_chmod,
 	.chown		= xmp_chown,
 	.truncate	= xmp_truncate,
-#ifdef HAVE_UTIMENSAT
 	.utimens	= xmp_utimens,
-#endif
 	.open		= xmp_open,
 	.read		= xmp_read,
 	.write		= xmp_write,
 	.statfs		= xmp_statfs,
 	.release	= xmp_release,
 	.fsync		= xmp_fsync,
-#ifdef HAVE_POSIX_FALLOCATE
-	.fallocate	= xmp_fallocate,
-#endif
 #ifdef HAVE_SETXATTR
 	.setxattr	= xmp_setxattr,
 	.getxattr	= xmp_getxattr,

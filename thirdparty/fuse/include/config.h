@@ -1,5 +1,5 @@
 /* include/config.h.  Generated from config.h.in by configure.  */
-/* include/config.h.in.  Generated from configure.ac by autoheader.  */
+/* include/config.h.in.  Generated from configure.in by autoheader.  */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
@@ -19,14 +19,8 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
-/* Define to 1 if you have the `posix_fallocate' function. */
-#define HAVE_POSIX_FALLOCATE 1
-
 /* Define to 1 if you have the `setxattr' function. */
 #define HAVE_SETXATTR 1
-
-/* Define to 1 if you have the `splice' function. */
-#define HAVE_SPLICE 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -55,12 +49,6 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Define to 1 if you have the `utimensat' function. */
-#define HAVE_UTIMENSAT 1
-
-/* Define to 1 if you have the `vmsplice' function. */
-#define HAVE_VMSPLICE 1
-
 /* Define as const if the declaration of iconv() needs const. */
 #define ICONV_CONST 
 
@@ -84,7 +72,7 @@
 #define PACKAGE_NAME "fuse"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "fuse 2.9.4"
+#define PACKAGE_STRING "fuse 2.8.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "fuse"
@@ -93,10 +81,10 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.9.4"
+#define PACKAGE_VERSION "2.8.6"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "2.9.4"
+#define VERSION "2.8.6"

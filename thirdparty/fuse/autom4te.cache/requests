@@ -22,6 +22,7 @@
                         '/usr/share/aclocal-1.11/cond.m4',
                         '/usr/share/aclocal-1.11/depend.m4',
                         '/usr/share/aclocal-1.11/depout.m4',
+                        '/usr/share/aclocal-1.11/header.m4',
                         '/usr/share/aclocal-1.11/init.m4',
                         '/usr/share/aclocal-1.11/install-sh.m4',
                         '/usr/share/aclocal-1.11/lead-dot.m4',
@@ -41,7 +42,7 @@
                         'm4/ltsugar.m4',
                         'm4/ltversion.m4',
                         'm4/lt~obsolete.m4',
-                        'configure.ac'
+                        'configure.in'
                       ],
                       {
                         'AM_ENABLE_STATIC' => 1,
@@ -180,10 +181,11 @@
                         'LT_INIT' => 1,
                         'LT_SYS_DLOPEN_SELF' => 1,
                         'LT_AC_PROG_GCJ' => 1,
-                        '_LT_AC_PROG_CXXCPP' => 1,
                         'AM_DISABLE_STATIC' => 1,
                         'AM_DEP_TRACK' => 1,
+                        '_LT_AC_PROG_CXXCPP' => 1,
                         '_AC_PROG_LIBTOOL' => 1,
+                        'AM_CONFIG_HEADER' => 1,
                         '_AM_IF_OPTION' => 1,
                         'AC_PATH_TOOL_PREFIX' => 1,
                         'AC_LIBTOOL_F77' => 1,
@@ -249,7 +251,7 @@
                       [
                         '/usr/share/autoconf/autoconf/autoconf.m4f',
                         'aclocal.m4',
-                        'configure.ac'
+                        'configure.in'
                       ],
                       {
                         '_LT_AC_TAGCONFIG' => 1,

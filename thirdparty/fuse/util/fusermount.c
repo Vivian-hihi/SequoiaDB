@@ -6,8 +6,7 @@
   See the file COPYING.
 */
 /* This program does the mounting and unmounting of FUSE filesystems */
-
-#define _GNU_SOURCE /* for clone */
+#define _GNU_SOURCE
 #include <config.h>
 
 #include "mount_util.h"
@@ -20,7 +19,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
-#include <paths.h>
 #include <mntent.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -46,23 +44,10 @@
 #ifndef MS_PRIVATE
 #define MS_PRIVATE (1<<18)
 #endif
-
-#ifndef UMOUNT_DETACH
-#define UMOUNT_DETACH	0x00000002	/* Just detach from the tree */
-#endif
-#ifndef UMOUNT_NOFOLLOW
-#define UMOUNT_NOFOLLOW	0x00000008	/* Don't follow symlink on umount */
-#endif
-#ifndef UMOUNT_UNUSED
-#define UMOUNT_UNUSED	0x80000000	/* Flag guaranteed to be unused */
-#endif
-
 static const char *progname;
 
 static int user_allow_other = 0;
 static int mount_max = 1000;
-
-static int auto_unmount = 0;
 
 static const char *get_user_name(void)
 {
@@ -128,16 +113,8 @@ static int lock_umount(void)
 
 static void unlock_umount(int mtablock)
 {
-	if (mtablock >= 0) {
-		int res;
-
-		res = lockf(mtablock, F_ULOCK, 0);
-		if (res < 0) {
-			fprintf(stderr, "%s: error releasing lock: %s\n",
-				progname, strerror(errno));
-		}
-		close(mtablock);
-	}
+	lockf(mtablock, F_ULOCK, 0);
+	close(mtablock);
 }
 
 static int add_mount(const char *source, const char *mnt, const char *type,
@@ -260,7 +237,7 @@ static int check_is_mount_child(void *p)
 	}
 
 	count = 0;
-	while (getmntent(fp) != NULL)
+	while ((entp = getmntent(fp)) != NULL)
 		count++;
 	endmntent(fp);
 
@@ -347,7 +324,7 @@ static int check_is_mount(const char *last, const char *mnt)
 	return 0;
 }
 
-static int chdir_to_parent(char *copy, const char **lastp)
+static int chdir_to_parent(char *copy, const char **lastp, int *currdir_fd)
 {
 	char *tmp;
 	const char *parent;
@@ -372,6 +349,14 @@ static int chdir_to_parent(char *copy, const char **lastp)
 		parent = "/";
 	}
 
+	*currdir_fd = open(".", O_RDONLY);
+	if (*currdir_fd == -1) {
+		fprintf(stderr,
+			"%s: failed to open current directory: %s\n",
+			progname, strerror(errno));
+		return -1;
+	}
+
 	res = chdir(parent);
 	if (res == -1) {
 		fprintf(stderr, "%s: failed to chdir to %s: %s\n",
@@ -394,26 +379,12 @@ static int chdir_to_parent(char *copy, const char **lastp)
 	return 0;
 }
 
-/* Check whether the kernel supports UMOUNT_NOFOLLOW flag */
-static int umount_nofollow_support(void)
-{
-	int res = umount2("", UMOUNT_UNUSED);
-	if (res != -1 || errno != EINVAL)
-		return 0;
-
-	res = umount2("", UMOUNT_NOFOLLOW);
-	if (res != -1 || errno != ENOENT)
-		return 0;
-
-	return 1;
-}
-
 static int unmount_fuse_locked(const char *mnt, int quiet, int lazy)
 {
-	int res;
+	int currdir_fd = -1;
 	char *copy;
 	const char *last;
-	int umount_flags = lazy ? UMOUNT_DETACH : 0;
+	int res;
 
 	if (getuid() != 0) {
 		res = may_unmount(mnt, quiet);
@@ -427,35 +398,31 @@ static int unmount_fuse_locked(const char *mnt, int quiet, int lazy)
 		return -1;
 	}
 
-	res = chdir_to_parent(copy, &last);
+	res = chdir_to_parent(copy, &last, &currdir_fd);
 	if (res == -1)
 		goto out;
 
-	if (umount_nofollow_support()) {
-		umount_flags |= UMOUNT_NOFOLLOW;
-	} else {
-		res = check_is_mount(last, mnt);
-		if (res == -1)
-			goto out;
-	}
+	res = check_is_mount(last, mnt);
+	if (res == -1)
+		goto out;
 
-	res = umount2(last, umount_flags);
+	res = umount2(last, lazy ? 2 : 0);
 	if (res == -1 && !quiet) {
-		fprintf(stderr, "%s: failed to unmount %s: %s\n",
+		fprintf(stderr,
+			"%s: failed to unmount %s: %s\n",
 			progname, mnt, strerror(errno));
 	}
 
+	if (res == 0)
+		res = fuse_mnt_remove_mount(progname, mnt);
 out:
-	if (res == -1)
-		return -1;
-
-	res = chdir("/");
-	if (res == -1) {
-		fprintf(stderr, "%s: failed to chdir to '/'\n", progname);
-		return -1;
+	free(copy);
+	if (currdir_fd != -1) {
+		fchdir(currdir_fd);
+		close(currdir_fd);
 	}
 
-	return fuse_mnt_remove_mount(progname, mnt);
+	return res;
 }
 
 static int unmount_fuse(const char *mnt, int quiet, int lazy)
@@ -761,8 +728,6 @@ static int do_mount(const char *mnt, char **typep, mode_t rootmode,
 			blkdev = 1;
 		} else if (opt_eq(s, len, "nonempty")) {
 			check_empty = 0;
-		} else if (opt_eq(s, len, "auto_unmount")) {
-			auto_unmount = 1;
 		} else if (!begins_with(s, "fd=") &&
 			   !begins_with(s, "rootmode=") &&
 			   !begins_with(s, "user_id=") &&
@@ -810,7 +775,7 @@ static int do_mount(const char *mnt, char **typep, mode_t rootmode,
 	if (res == -1)
 		goto err;
 
-	sprintf(d, "fd=%i,rootmode=%o,user_id=%u,group_id=%u",
+	sprintf(d, "fd=%i,rootmode=%o,user_id=%i,group_id=%i",
 		fd, rootmode, getuid(), getgid());
 
 	if (check_empty &&
@@ -851,7 +816,7 @@ static int do_mount(const char *mnt, char **typep, mode_t rootmode,
 	}
 	if (res == -1 && errno == EINVAL) {
 		/* It could be an old version not supporting group_id */
-		sprintf(d, "fd=%i,rootmode=%o,user_id=%u",
+		sprintf(d, "fd=%i,rootmode=%o,user_id=%i",
 			fd, rootmode, getuid());
 		res = mount(source, mnt, type, flags, optbuf);
 	}
@@ -864,14 +829,15 @@ static int do_mount(const char *mnt, char **typep, mode_t rootmode,
 			fprintf(stderr, "%s: mount failed: %s\n", progname,
 				strerror(errno_save));
 		goto err;
+	} else {
+		*sourcep = source;
+		*typep = type;
+		*mnt_optsp = mnt_opts;
 	}
-	*sourcep = source;
-	*typep = type;
-	*mnt_optsp = mnt_opts;
 	free(fsname);
 	free(optbuf);
 
-	return 0;
+	return res;
 
 err:
 	free(fsname);
@@ -914,7 +880,8 @@ static int check_version(const char *dev)
 	return 0;
 }
 
-static int check_perm(const char **mntp, struct stat *stbuf, int *mountpoint_fd)
+static int check_perm(const char **mntp, struct stat *stbuf, int *currdir_fd,
+		      int *mountpoint_fd, int *isdir)
 {
 	int res;
 	const char *mnt = *mntp;
@@ -932,10 +899,24 @@ static int check_perm(const char **mntp, struct stat *stbuf, int *mountpoint_fd)
 		return 0;
 
 	if (S_ISDIR(stbuf->st_mode)) {
-		res = chdir(mnt);
+		*isdir = 1;
+		*currdir_fd = open(".", O_RDONLY);
+		if (*currdir_fd == -1) {
+			fprintf(stderr,
+				"%s: failed to open current directory: %s\n",
+				progname, strerror(errno));
+			return -1;
+		}
+		*mountpoint_fd = open(mnt, O_RDONLY);
+		if (*mountpoint_fd == -1) {
+			fprintf(stderr, "%s: failed to open %s: %s\n",
+				progname, mnt, strerror(errno));
+			return -1;
+		}
+		res = fchdir(*mountpoint_fd);
 		if (res == -1) {
 			fprintf(stderr,
-				"%s: failed to chdir to mountpoint: %s\n",
+				"%s: failed to fchdir to mountpoint: %s\n",
 				progname, strerror(errno));
 			return -1;
 		}
@@ -1059,7 +1040,9 @@ static int mount_fuse(const char *mnt, const char *opts)
 	char *source = NULL;
 	char *mnt_opts = NULL;
 	const char *real_mnt = mnt;
+	int currdir_fd = -1;
 	int mountpoint_fd = -1;
+	int isdir = 0;
 
 	fd = open_fuse_device(&dev);
 	if (fd == -1)
@@ -1072,13 +1055,15 @@ static int mount_fuse(const char *mnt, const char *opts)
 		int mount_count = count_fuse_fs();
 		if (mount_count >= mount_max) {
 			fprintf(stderr, "%s: too many FUSE filesystems mounted; mount_max=N can be set in /etc/fuse.conf\n", progname);
-			goto fail_close_fd;
+			close(fd);
+			return -1;
 		}
 	}
 
 	res = check_version(dev);
 	if (res != -1) {
-		res = check_perm(&real_mnt, &stbuf, &mountpoint_fd);
+		res = check_perm(&real_mnt, &stbuf, &currdir_fd,
+				 &mountpoint_fd, &isdir);
 		restore_privs();
 		if (res != -1)
 			res = do_mount(real_mnt, &type, stbuf.st_mode & S_IFMT,
@@ -1087,38 +1072,48 @@ static int mount_fuse(const char *mnt, const char *opts)
 	} else
 		restore_privs();
 
+	if (currdir_fd != -1) {
+		fchdir(currdir_fd);
+		close(currdir_fd);
+	}
 	if (mountpoint_fd != -1)
-		close(mountpoint_fd);
+		fcntl(mountpoint_fd, F_SETFD, FD_CLOEXEC);
 
-	if (res == -1)
-		goto fail_close_fd;
-
-	res = chdir("/");
 	if (res == -1) {
-		fprintf(stderr, "%s: failed to chdir to '/'\n", progname);
-		goto fail_close_fd;
+		close(fd);
+		if (mountpoint_fd != -1)
+			close(mountpoint_fd);
+		return -1;
 	}
 
 	if (geteuid() == 0) {
 		res = add_mount(source, mnt, type, mnt_opts);
 		if (res == -1) {
-			/* Can't clean up mount in a non-racy way */
-			goto fail_close_fd;
+			if (isdir && mountpoint_fd != -1) {
+				res = fchdir(mountpoint_fd);
+				if (res == -1) {
+					close(mountpoint_fd);
+					close(fd);
+					return -1;
+				}
+			}
+			umount2(real_mnt, 2); /* lazy umount */
+			if (mountpoint_fd != -1)
+				close(mountpoint_fd);
+			close(fd);
+			return -1;
 		}
 	}
 
-out_free:
+	if (mountpoint_fd != -1)
+		close(mountpoint_fd);
+
 	free(source);
 	free(type);
 	free(mnt_opts);
 	free(dev);
 
 	return fd;
-
-fail_close_fd:
-	close(fd);
-	fd = -1;
-	goto out_free;
 }
 
 static int send_fd(int sock_fd, int fd)
@@ -1180,7 +1175,6 @@ static void show_version(void)
 
 int main(int argc, char *argv[])
 {
-	sigset_t sigset;
 	int ch;
 	int fd;
 	int res;
@@ -1257,20 +1251,25 @@ int main(int argc, char *argv[])
 
 	drop_privs();
 	mnt = fuse_mnt_resolve_path(progname, origmnt);
-	if (mnt != NULL) {
-		res = chdir("/");
-		if (res == -1) {
-			fprintf(stderr, "%s: failed to chdir to '/'\n", progname);
-			exit(1);
-		}
-	}
 	restore_privs();
 	if (mnt == NULL)
 		exit(1);
 
 	umask(033);
-	if (unmount)
-		goto do_unmount;
+	if (unmount) {
+		if (geteuid() == 0)
+			res = unmount_fuse(mnt, quiet, lazy);
+		else {
+			res = umount2(mnt, lazy ? 2 : 0);
+			if (res == -1 && !quiet)
+				fprintf(stderr,
+					"%s: failed to unmount %s: %s\n",
+					progname, mnt, strerror(errno));
+		}
+		if (res == -1)
+			exit(1);
+		return 0;
+	}
 
 	commfd = getenv(FUSE_COMMFD_ENV);
 	if (commfd == NULL) {
@@ -1287,52 +1286,6 @@ int main(int argc, char *argv[])
 	res = send_fd(cfd, fd);
 	if (res == -1)
 		exit(1);
-	close(fd);
 
-	if (!auto_unmount)
-		return 0;
-
-	/* Become a daemon and wait for the parent to exit or die.
-	   ie For the control socket to get closed. 
-	   btw We don't want to use daemon() function here because
-	   it forks and messes with the file descriptors. */
-	setsid();
-	res = chdir("/");
-	if (res == -1) {
-		fprintf(stderr, "%s: failed to chdir to '/'\n", progname);
-		exit(1);
-	}
-
-	sigfillset(&sigset);
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
-
-	lazy  = 1;
-	quiet = 1;
-
-	while (1) {
-		unsigned char buf[16];
-		int n = recv(cfd, buf, sizeof(buf), 0);
-		if (!n)
-			break;
-
-		if (n < 0) {
-			if (errno == EINTR)
-				continue;
-			break;
-		}
-	}
-
-do_unmount:
-	if (geteuid() == 0)
-		res = unmount_fuse(mnt, quiet, lazy);
-	else {
-		res = umount2(mnt, lazy ? UMOUNT_DETACH : 0);
-		if (res == -1 && !quiet)
-			fprintf(stderr,
-				"%s: failed to unmount %s: %s\n",
-				progname, mnt, strerror(errno));
-	}
-	if (res == -1)
-		exit(1);
 	return 0;
 }

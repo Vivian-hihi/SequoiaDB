@@ -45,7 +45,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -54,12 +54,6 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES = fuse.pc
 CONFIG_CLEAN_VPATH_FILES =
-AM_V_GEN = $(am__v_GEN_$(V))
-am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
-am__v_GEN_0 = @echo "  GEN   " $@;
-AM_V_at = $(am__v_at_$(V))
-am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
-am__v_at_0 = @
 SOURCES =
 DIST_SOURCES =
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
@@ -146,13 +140,12 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run aclocal-1.11
+ACLOCAL = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run aclocal-1.11
 AMTAR = $${TAR-tar}
-AM_DEFAULT_VERBOSITY = 0
 AR = ar
-AUTOCONF = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run automake-1.11
+AUTOCONF = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run automake-1.11
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -188,7 +181,7 @@ LIPO =
 LN_S = ln -s
 LTLIBICONV = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 MOUNT_FUSE_PATH = /sbin
@@ -201,10 +194,10 @@ OTOOL64 =
 PACKAGE = fuse
 PACKAGE_BUGREPORT = 
 PACKAGE_NAME = fuse
-PACKAGE_STRING = fuse 2.9.4
+PACKAGE_STRING = fuse 2.8.6
 PACKAGE_TARNAME = fuse
 PACKAGE_URL = 
-PACKAGE_VERSION = 2.9.4
+PACKAGE_VERSION = 2.8.6
 PATH_SEPARATOR = :
 RANLIB = ranlib
 SED = /bin/sed
@@ -212,11 +205,11 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 UDEV_RULES_PATH = /etc/udev/rules.d
-VERSION = 2.9.4
-abs_builddir = /home/users/yuweixing/libfuse-fuse_2_9_4
-abs_srcdir = /home/users/yuweixing/libfuse-fuse_2_9_4
-abs_top_builddir = /home/users/yuweixing/libfuse-fuse_2_9_4
-abs_top_srcdir = /home/users/yuweixing/libfuse-fuse_2_9_4
+VERSION = 2.8.6
+abs_builddir = /home/users/yuweixing/libfuse-fuse_2_8_6
+abs_srcdir = /home/users/yuweixing/libfuse-fuse_2_8_6
+abs_top_builddir = /home/users/yuweixing/libfuse-fuse_2_8_6
+abs_top_srcdir = /home/users/yuweixing/libfuse-fuse_2_8_6
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -245,10 +238,10 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/install-sh
+install_sh = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
-libfuse_libs = -lrt -ldl  
+libfuse_libs = -pthread -lrt -ldl  
 localedir = ${datarootdir}/locale
 localstatedir = ${prefix}/var
 mandir = ${datarootdir}/man
@@ -273,12 +266,15 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = include lib util example doc
+SUBDIRS = include lib util example
 EXTRA_DIST = \
 	fuse.pc.in		\
 	README*			\
 	Filesystems		\
-	FAQ
+	FAQ			\
+	doc/how-fuse-works	\
+	doc/kernel.txt		\
+	doc/Doxyfile
 
 pkgconfig_DATA = fuse.pc
 all: all-recursive

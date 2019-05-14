@@ -1,4 +1,4 @@
-/* include/config.h.in.  Generated from configure.ac by autoheader.  */
+/* include/config.h.in.  Generated from configure.in by autoheader.  */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
@@ -18,14 +18,8 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define to 1 if you have the `posix_fallocate' function. */
-#undef HAVE_POSIX_FALLOCATE
-
 /* Define to 1 if you have the `setxattr' function. */
 #undef HAVE_SETXATTR
-
-/* Define to 1 if you have the `splice' function. */
-#undef HAVE_SPLICE
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -53,12 +47,6 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the `utimensat' function. */
-#undef HAVE_UTIMENSAT
-
-/* Define to 1 if you have the `vmsplice' function. */
-#undef HAVE_VMSPLICE
 
 /* Define as const if the declaration of iconv() needs const. */
 #undef ICONV_CONST

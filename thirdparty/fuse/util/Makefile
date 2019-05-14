@@ -43,7 +43,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -52,13 +52,9 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
-am_fusermount_OBJECTS = fusermount-fusermount.$(OBJEXT) \
-	fusermount-mount_util.$(OBJEXT)
+am_fusermount_OBJECTS = fusermount-fusermount.$(OBJEXT)
 fusermount_OBJECTS = $(am_fusermount_OBJECTS)
-fusermount_LDADD = $(LDADD)
-AM_V_lt = $(am__v_lt_$(V))
-am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
-am__v_lt_0 = --silent
+fusermount_DEPENDENCIES = ../lib/mount_util.lo
 am_mount_fuse_OBJECTS = mount.fuse.$(OBJEXT)
 mount_fuse_OBJECTS = $(am_mount_fuse_OBJECTS)
 mount_fuse_LDADD = $(LDADD)
@@ -66,36 +62,22 @@ am_ulockmgr_server_OBJECTS =  \
 	ulockmgr_server-ulockmgr_server.$(OBJEXT)
 ulockmgr_server_OBJECTS = $(am_ulockmgr_server_OBJECTS)
 ulockmgr_server_LDADD = $(LDADD)
-ulockmgr_server_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(AM_CFLAGS) $(CFLAGS) $(ulockmgr_server_LDFLAGS) $(LDFLAGS) \
-	-o $@
+ulockmgr_server_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(ulockmgr_server_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CFLAGS) $(CFLAGS)
-AM_V_CC = $(am__v_CC_$(V))
-am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
-am__v_CC_0 = @echo "  CC    " $@;
-AM_V_at = $(am__v_at_$(V))
-am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
-am__v_at_0 = @
+LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CCLD = $(am__v_CCLD_$(V))
-am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
-am__v_CCLD_0 = @echo "  CCLD  " $@;
-AM_V_GEN = $(am__v_GEN_$(V))
-am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
-am__v_GEN_0 = @echo "  GEN   " $@;
+LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 SOURCES = $(fusermount_SOURCES) $(mount_fuse_SOURCES) \
 	$(ulockmgr_server_SOURCES)
 DIST_SOURCES = $(fusermount_SOURCES) $(mount_fuse_SOURCES) \
@@ -103,13 +85,12 @@ DIST_SOURCES = $(fusermount_SOURCES) $(mount_fuse_SOURCES) \
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run aclocal-1.11
+ACLOCAL = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run aclocal-1.11
 AMTAR = $${TAR-tar}
-AM_DEFAULT_VERBOSITY = 0
 AR = ar
-AUTOCONF = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run automake-1.11
+AUTOCONF = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run automake-1.11
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -145,7 +126,7 @@ LIPO =
 LN_S = ln -s
 LTLIBICONV = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/missing --run makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 MOUNT_FUSE_PATH = /sbin
@@ -158,10 +139,10 @@ OTOOL64 =
 PACKAGE = fuse
 PACKAGE_BUGREPORT = 
 PACKAGE_NAME = fuse
-PACKAGE_STRING = fuse 2.9.4
+PACKAGE_STRING = fuse 2.8.6
 PACKAGE_TARNAME = fuse
 PACKAGE_URL = 
-PACKAGE_VERSION = 2.9.4
+PACKAGE_VERSION = 2.8.6
 PATH_SEPARATOR = :
 RANLIB = ranlib
 SED = /bin/sed
@@ -169,11 +150,11 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 UDEV_RULES_PATH = /etc/udev/rules.d
-VERSION = 2.9.4
-abs_builddir = /home/users/yuweixing/libfuse-fuse_2_9_4/util
-abs_srcdir = /home/users/yuweixing/libfuse-fuse_2_9_4/util
-abs_top_builddir = /home/users/yuweixing/libfuse-fuse_2_9_4
-abs_top_srcdir = /home/users/yuweixing/libfuse-fuse_2_9_4
+VERSION = 2.8.6
+abs_builddir = /home/users/yuweixing/libfuse-fuse_2_8_6/util
+abs_srcdir = /home/users/yuweixing/libfuse-fuse_2_8_6/util
+abs_top_builddir = /home/users/yuweixing/libfuse-fuse_2_8_6
+abs_top_srcdir = /home/users/yuweixing/libfuse-fuse_2_8_6
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -202,10 +183,10 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_9_4/install-sh
+install_sh = ${SHELL} /home/users/yuweixing/libfuse-fuse_2_8_6/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
-libfuse_libs = -lrt -ldl  
+libfuse_libs = -pthread -lrt -ldl  
 localedir = ${datarootdir}/locale
 localstatedir = ${prefix}/var
 mandir = ${datarootdir}/man
@@ -230,21 +211,15 @@ top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
 AM_CPPFLAGS = -D_FILE_OFFSET_BITS=64 
-
-# we re-use mount_util.c from the library, but do want to keep ourself
-# as stand-alone as possible. in order to make an out-of-source build
-# possible, we "generate" the file from its original location by
-# copying it over.
-fusermount_SOURCES = fusermount.c mount_util.c
-fusermount_CPPFLAGS = -I$(top_srcdir)/lib
-BUILT_SOURCES = mount_util.c
+fusermount_SOURCES = fusermount.c
+fusermount_LDADD = ../lib/mount_util.lo
+fusermount_CPPFLAGS = -I../lib
 mount_fuse_SOURCES = mount.fuse.c
 ulockmgr_server_SOURCES = ulockmgr_server.c
 ulockmgr_server_CPPFLAGS = -D_FILE_OFFSET_BITS=64 -D_REENTRANT 
 ulockmgr_server_LDFLAGS = -pthread
 EXTRA_DIST = udev.rules init_script
-all: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) all-am
+all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
@@ -332,13 +307,13 @@ clean-noinstPROGRAMS:
 	rm -f $$list
 fusermount$(EXEEXT): $(fusermount_OBJECTS) $(fusermount_DEPENDENCIES) $(EXTRA_fusermount_DEPENDENCIES) 
 	@rm -f fusermount$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(fusermount_OBJECTS) $(fusermount_LDADD) $(LIBS)
+	$(LINK) $(fusermount_OBJECTS) $(fusermount_LDADD) $(LIBS)
 mount.fuse$(EXEEXT): $(mount_fuse_OBJECTS) $(mount_fuse_DEPENDENCIES) $(EXTRA_mount_fuse_DEPENDENCIES) 
 	@rm -f mount.fuse$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(mount_fuse_OBJECTS) $(mount_fuse_LDADD) $(LIBS)
+	$(LINK) $(mount_fuse_OBJECTS) $(mount_fuse_LDADD) $(LIBS)
 ulockmgr_server$(EXEEXT): $(ulockmgr_server_OBJECTS) $(ulockmgr_server_DEPENDENCIES) $(EXTRA_ulockmgr_server_DEPENDENCIES) 
 	@rm -f ulockmgr_server$(EXEEXT)
-	$(AM_V_CCLD)$(ulockmgr_server_LINK) $(ulockmgr_server_OBJECTS) $(ulockmgr_server_LDADD) $(LIBS)
+	$(ulockmgr_server_LINK) $(ulockmgr_server_OBJECTS) $(ulockmgr_server_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -347,72 +322,57 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include ./$(DEPDIR)/fusermount-fusermount.Po
-include ./$(DEPDIR)/fusermount-mount_util.Po
 include ./$(DEPDIR)/mount.fuse.Po
 include ./$(DEPDIR)/ulockmgr_server-ulockmgr_server.Po
 
 .c.o:
-	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-#	$(AM_V_CC)source='$<' object='$@' libtool=no \
+	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+#	source='$<' object='$@' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(COMPILE) -c $<
+#	$(COMPILE) -c $<
 
 .c.obj:
-	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-#	$(AM_V_CC)source='$<' object='$@' libtool=no \
+	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+#	source='$<' object='$@' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(COMPILE) -c `$(CYGPATH_W) '$<'`
+#	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
 .c.lo:
-	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-#	$(AM_V_CC)source='$<' object='$@' libtool=yes \
+	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+#	source='$<' object='$@' libtool=yes \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(LTCOMPILE) -c -o $@ $<
+#	$(LTCOMPILE) -c -o $@ $<
 
 fusermount-fusermount.o: fusermount.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fusermount-fusermount.o -MD -MP -MF $(DEPDIR)/fusermount-fusermount.Tpo -c -o fusermount-fusermount.o `test -f 'fusermount.c' || echo '$(srcdir)/'`fusermount.c
-	$(AM_V_at)$(am__mv) $(DEPDIR)/fusermount-fusermount.Tpo $(DEPDIR)/fusermount-fusermount.Po
-#	$(AM_V_CC)source='fusermount.c' object='fusermount-fusermount.o' libtool=no \
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fusermount-fusermount.o -MD -MP -MF $(DEPDIR)/fusermount-fusermount.Tpo -c -o fusermount-fusermount.o `test -f 'fusermount.c' || echo '$(srcdir)/'`fusermount.c
+	$(am__mv) $(DEPDIR)/fusermount-fusermount.Tpo $(DEPDIR)/fusermount-fusermount.Po
+#	source='fusermount.c' object='fusermount-fusermount.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fusermount-fusermount.o `test -f 'fusermount.c' || echo '$(srcdir)/'`fusermount.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fusermount-fusermount.o `test -f 'fusermount.c' || echo '$(srcdir)/'`fusermount.c
 
 fusermount-fusermount.obj: fusermount.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fusermount-fusermount.obj -MD -MP -MF $(DEPDIR)/fusermount-fusermount.Tpo -c -o fusermount-fusermount.obj `if test -f 'fusermount.c'; then $(CYGPATH_W) 'fusermount.c'; else $(CYGPATH_W) '$(srcdir)/fusermount.c'; fi`
-	$(AM_V_at)$(am__mv) $(DEPDIR)/fusermount-fusermount.Tpo $(DEPDIR)/fusermount-fusermount.Po
-#	$(AM_V_CC)source='fusermount.c' object='fusermount-fusermount.obj' libtool=no \
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fusermount-fusermount.obj -MD -MP -MF $(DEPDIR)/fusermount-fusermount.Tpo -c -o fusermount-fusermount.obj `if test -f 'fusermount.c'; then $(CYGPATH_W) 'fusermount.c'; else $(CYGPATH_W) '$(srcdir)/fusermount.c'; fi`
+	$(am__mv) $(DEPDIR)/fusermount-fusermount.Tpo $(DEPDIR)/fusermount-fusermount.Po
+#	source='fusermount.c' object='fusermount-fusermount.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fusermount-fusermount.obj `if test -f 'fusermount.c'; then $(CYGPATH_W) 'fusermount.c'; else $(CYGPATH_W) '$(srcdir)/fusermount.c'; fi`
-
-fusermount-mount_util.o: mount_util.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fusermount-mount_util.o -MD -MP -MF $(DEPDIR)/fusermount-mount_util.Tpo -c -o fusermount-mount_util.o `test -f 'mount_util.c' || echo '$(srcdir)/'`mount_util.c
-	$(AM_V_at)$(am__mv) $(DEPDIR)/fusermount-mount_util.Tpo $(DEPDIR)/fusermount-mount_util.Po
-#	$(AM_V_CC)source='mount_util.c' object='fusermount-mount_util.o' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fusermount-mount_util.o `test -f 'mount_util.c' || echo '$(srcdir)/'`mount_util.c
-
-fusermount-mount_util.obj: mount_util.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT fusermount-mount_util.obj -MD -MP -MF $(DEPDIR)/fusermount-mount_util.Tpo -c -o fusermount-mount_util.obj `if test -f 'mount_util.c'; then $(CYGPATH_W) 'mount_util.c'; else $(CYGPATH_W) '$(srcdir)/mount_util.c'; fi`
-	$(AM_V_at)$(am__mv) $(DEPDIR)/fusermount-mount_util.Tpo $(DEPDIR)/fusermount-mount_util.Po
-#	$(AM_V_CC)source='mount_util.c' object='fusermount-mount_util.obj' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fusermount-mount_util.obj `if test -f 'mount_util.c'; then $(CYGPATH_W) 'mount_util.c'; else $(CYGPATH_W) '$(srcdir)/mount_util.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(fusermount_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o fusermount-fusermount.obj `if test -f 'fusermount.c'; then $(CYGPATH_W) 'fusermount.c'; else $(CYGPATH_W) '$(srcdir)/fusermount.c'; fi`
 
 ulockmgr_server-ulockmgr_server.o: ulockmgr_server.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ulockmgr_server_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ulockmgr_server-ulockmgr_server.o -MD -MP -MF $(DEPDIR)/ulockmgr_server-ulockmgr_server.Tpo -c -o ulockmgr_server-ulockmgr_server.o `test -f 'ulockmgr_server.c' || echo '$(srcdir)/'`ulockmgr_server.c
-	$(AM_V_at)$(am__mv) $(DEPDIR)/ulockmgr_server-ulockmgr_server.Tpo $(DEPDIR)/ulockmgr_server-ulockmgr_server.Po
-#	$(AM_V_CC)source='ulockmgr_server.c' object='ulockmgr_server-ulockmgr_server.o' libtool=no \
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ulockmgr_server_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ulockmgr_server-ulockmgr_server.o -MD -MP -MF $(DEPDIR)/ulockmgr_server-ulockmgr_server.Tpo -c -o ulockmgr_server-ulockmgr_server.o `test -f 'ulockmgr_server.c' || echo '$(srcdir)/'`ulockmgr_server.c
+	$(am__mv) $(DEPDIR)/ulockmgr_server-ulockmgr_server.Tpo $(DEPDIR)/ulockmgr_server-ulockmgr_server.Po
+#	source='ulockmgr_server.c' object='ulockmgr_server-ulockmgr_server.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ulockmgr_server_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ulockmgr_server-ulockmgr_server.o `test -f 'ulockmgr_server.c' || echo '$(srcdir)/'`ulockmgr_server.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ulockmgr_server_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ulockmgr_server-ulockmgr_server.o `test -f 'ulockmgr_server.c' || echo '$(srcdir)/'`ulockmgr_server.c
 
 ulockmgr_server-ulockmgr_server.obj: ulockmgr_server.c
-	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ulockmgr_server_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ulockmgr_server-ulockmgr_server.obj -MD -MP -MF $(DEPDIR)/ulockmgr_server-ulockmgr_server.Tpo -c -o ulockmgr_server-ulockmgr_server.obj `if test -f 'ulockmgr_server.c'; then $(CYGPATH_W) 'ulockmgr_server.c'; else $(CYGPATH_W) '$(srcdir)/ulockmgr_server.c'; fi`
-	$(AM_V_at)$(am__mv) $(DEPDIR)/ulockmgr_server-ulockmgr_server.Tpo $(DEPDIR)/ulockmgr_server-ulockmgr_server.Po
-#	$(AM_V_CC)source='ulockmgr_server.c' object='ulockmgr_server-ulockmgr_server.obj' libtool=no \
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ulockmgr_server_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ulockmgr_server-ulockmgr_server.obj -MD -MP -MF $(DEPDIR)/ulockmgr_server-ulockmgr_server.Tpo -c -o ulockmgr_server-ulockmgr_server.obj `if test -f 'ulockmgr_server.c'; then $(CYGPATH_W) 'ulockmgr_server.c'; else $(CYGPATH_W) '$(srcdir)/ulockmgr_server.c'; fi`
+	$(am__mv) $(DEPDIR)/ulockmgr_server-ulockmgr_server.Tpo $(DEPDIR)/ulockmgr_server-ulockmgr_server.Po
+#	source='ulockmgr_server.c' object='ulockmgr_server-ulockmgr_server.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ulockmgr_server_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ulockmgr_server-ulockmgr_server.obj `if test -f 'ulockmgr_server.c'; then $(CYGPATH_W) 'ulockmgr_server.c'; else $(CYGPATH_W) '$(srcdir)/ulockmgr_server.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ulockmgr_server_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ulockmgr_server-ulockmgr_server.obj `if test -f 'ulockmgr_server.c'; then $(CYGPATH_W) 'ulockmgr_server.c'; else $(CYGPATH_W) '$(srcdir)/ulockmgr_server.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -503,15 +463,13 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) check-am
+check: check-am
 all-am: Makefile $(PROGRAMS)
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) install-am
+install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -541,7 +499,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool \
@@ -614,7 +571,7 @@ ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-local
 
-.MAKE: all check install install-am install-exec-am install-strip
+.MAKE: install-am install-exec-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
 	clean-generic clean-libtool clean-noinstPROGRAMS ctags \
@@ -632,21 +589,19 @@ uninstall-am: uninstall-binPROGRAMS uninstall-local
 	tags uninstall uninstall-am uninstall-binPROGRAMS \
 	uninstall-local
 
-mount_util.c: $(top_srcdir)/lib/mount_util.c
-	@cp $(top_srcdir)/lib/mount_util.c .
 
 install-exec-hook:
 	-chmod u+s $(DESTDIR)$(bindir)/fusermount
 	@if test ! -e $(DESTDIR)/dev/fuse; then \
-		$(MKDIR_P) $(DESTDIR)/dev; \
+		$(mkdir_p) $(DESTDIR)/dev; \
 		echo "mknod $(DESTDIR)/dev/fuse -m 0666 c 10 229 || true"; \
 		mknod $(DESTDIR)/dev/fuse -m 0666 c 10 229 || true; \
 	fi
 
 install-exec-local:
-	$(MKDIR_P) $(DESTDIR)$(MOUNT_FUSE_PATH)
-	$(INSTALL_PROGRAM) $(builddir)/mount.fuse $(DESTDIR)$(MOUNT_FUSE_PATH)/mount.fuse
-	$(MKDIR_P) $(DESTDIR)$(INIT_D_PATH)
+	$(mkdir_p) $(DESTDIR)$(MOUNT_FUSE_PATH)
+	$(INSTALL_PROGRAM) $(srcdir)/mount.fuse $(DESTDIR)$(MOUNT_FUSE_PATH)/mount.fuse
+	$(mkdir_p) $(DESTDIR)$(INIT_D_PATH)
 	$(INSTALL_SCRIPT) $(srcdir)/init_script $(DESTDIR)$(INIT_D_PATH)/fuse
 	@if test -x /usr/sbin/update-rc.d; then \
 		echo "/usr/sbin/update-rc.d fuse start 34 S . start 41 0 6 . || true"; \
@@ -654,7 +609,7 @@ install-exec-local:
 	fi
 
 install-data-local:
-	$(MKDIR_P) $(DESTDIR)$(UDEV_RULES_PATH)
+	$(mkdir_p) $(DESTDIR)$(UDEV_RULES_PATH)
 	$(INSTALL_DATA) $(srcdir)/udev.rules $(DESTDIR)$(UDEV_RULES_PATH)/99-fuse.rules
 
 uninstall-local:
