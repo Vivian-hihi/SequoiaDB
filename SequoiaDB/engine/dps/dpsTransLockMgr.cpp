@@ -1035,6 +1035,17 @@ namespace engine
                   // wake up next waiter if owner list is empty
                   _wakeUp( pLRBNext->dpsTxExectr ) ;   
                }
+               else if ( FALSE == _checkWaiterLockModeWithOwners(
+                                      pLRBHdr->ownerLRB, pLRBNext->lockMode ) )
+               {
+                  // wake up next waiter if it is compatible with all owners :
+                  //  . A is holding U lock
+                  //  . B requests U and is in waiter queue
+                  //  . C requests S and is put in waiter queue
+                  //  B timed out, it shall try to wake up C if C is compatible
+                  //  with current owners.
+                  _wakeUp( pLRBNext->dpsTxExectr ) ;   
+               }
             }
          }
 
