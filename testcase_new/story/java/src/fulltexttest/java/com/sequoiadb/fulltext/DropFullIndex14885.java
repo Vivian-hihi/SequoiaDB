@@ -22,6 +22,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 /**
  * @Description seqDB-14885: 正在查询固定集合时删除全文索引
@@ -111,15 +112,15 @@ public class DropFullIndex14885 extends SdbTestBase {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 BSONObject record = ( BSONObject ) JSON
                         .parse( "{a: 'test_14885_" + i * j + "', b: '"
-                                + FullTextUtils.getRandomString( 32 )
+                                + StringUtils.getRandomString( 32 )
                                 + "', c: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', d: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', e: '"
-                                + FullTextUtils.getRandomString( 128 )
+                                + StringUtils.getRandomString( 128 )
                                 + "', f: '"
-                                + FullTextUtils.getRandomString( 128 ) + "'}" );
+                                + StringUtils.getRandomString( 128 ) + "'}" );
                 records.add( record );
             }
             this.cl.insert( records );

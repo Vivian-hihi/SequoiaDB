@@ -23,6 +23,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 import org.elasticsearch.client.*;
 
@@ -114,11 +115,11 @@ public class CurdProcessingIndex14374 extends SdbTestBase {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14374_"
                         + i * j + "', b: '"
-                        + FullTextUtils.getRandomString( 32 ) + "', c: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', d: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', e: '"
-                        + FullTextUtils.getRandomString( 128 ) + "', f: '"
-                        + FullTextUtils.getRandomString( 128 ) + "', g: "
+                        + StringUtils.getRandomString( 32 ) + "', c: '"
+                        + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '"
+                        + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "', g: "
                         + i * j + "}" ) );
             }
             cl.insert( insertObjs, 0 );

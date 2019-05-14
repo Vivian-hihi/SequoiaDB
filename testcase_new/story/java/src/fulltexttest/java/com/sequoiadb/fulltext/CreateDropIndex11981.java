@@ -21,6 +21,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 import org.elasticsearch.client.*;
 
@@ -137,11 +138,11 @@ public class CreateDropIndex11981 extends SdbTestBase {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_11981_"
                         + i * j + "', b: '"
-                        + FullTextUtils.getRandomString( 16 ) + "', c: '"
-                        + FullTextUtils.getRandomString( 16 ) + "', d: '"
-                        + FullTextUtils.getRandomString( 32 ) + "', e: '"
-                        + FullTextUtils.getRandomString( 32 ) + "', f: '"
-                        + FullTextUtils.getRandomString( 128 ) + "'}" ) );
+                        + StringUtils.getRandomString( 16 ) + "', c: '"
+                        + StringUtils.getRandomString( 16 ) + "', d: '"
+                        + StringUtils.getRandomString( 32 ) + "', e: '"
+                        + StringUtils.getRandomString( 32 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "'}" ) );
             }
             cl.insert( insertObjs, 0 );
             insertObjs.clear();

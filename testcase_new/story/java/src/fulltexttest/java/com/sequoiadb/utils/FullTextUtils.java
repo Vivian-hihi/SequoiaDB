@@ -251,24 +251,6 @@ public class FullTextUtils {
     }
 
     /**
-     * 获取随机字符串
-     * @param length
-     * @return String
-     * @Author liuxiaoxuan
-     * @Date 2018-12-20
-     */
-    public static String getRandomString( int length ) {
-        String base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()!";
-        StringBuffer sb = new StringBuffer();
-        for ( int i = 0; i < length; i++ ) {
-            char randomChar = base
-                    .charAt( new Random().nextInt( base.length() ) );
-            sb.append( randomChar );
-        }
-        return sb.toString();
-    }
-
-    /**
      * 检查主备节点数据一致性
      * @param db
      * @param csName

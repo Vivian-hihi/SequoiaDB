@@ -22,6 +22,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 import org.elasticsearch.client.*;
 
@@ -182,11 +183,11 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'testa " + i * j
                         + "', a0:" + "'test_11990 " + i * j + "', b: '"
-                        + FullTextUtils.getRandomString( 32 ) + "', c: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', d: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', e: '"
-                        + FullTextUtils.getRandomString( 128 ) + "', f: '"
-                        + FullTextUtils.getRandomString( 128 ) + "'}" ) );
+                        + StringUtils.getRandomString( 32 ) + "', c: '"
+                        + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '"
+                        + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "'}" ) );
             }
             cl.insert( insertObjs, 0 );
             insertObjs.clear();
@@ -199,20 +200,20 @@ public class MainCLCreateDropIndex11990 extends SdbTestBase {
             for ( int j = 0; j < insertNums / 2 / 100; j++ ) {
                 insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'testa " + i * j
                         + "', a0:" + "'test_11990 " + i * j + "', b: '"
-                        + FullTextUtils.getRandomString( 32 ) + "', c: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', d: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', e: '"
-                        + FullTextUtils.getRandomString( 128 ) + "', f: '"
-                        + FullTextUtils.getRandomString( 128 ) + "'}" ) );
+                        + StringUtils.getRandomString( 32 ) + "', c: '"
+                        + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '"
+                        + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "'}" ) );
             }
             for ( int j = 0; j < insertNums / 2 / 100; j++ ) {
                 insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'zzza " + i * j
                         + "', a0:" + "'test_11990 " + i * j + "', b: '"
-                        + FullTextUtils.getRandomString( 32 ) + "', c: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', d: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', e: '"
-                        + FullTextUtils.getRandomString( 128 ) + "', f: '"
-                        + FullTextUtils.getRandomString( 128 ) + "'}" ) );
+                        + StringUtils.getRandomString( 32 ) + "', c: '"
+                        + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '"
+                        + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "'}" ) );
             }
             cl.insert( insertObjs, 0 );
             insertObjs.clear();

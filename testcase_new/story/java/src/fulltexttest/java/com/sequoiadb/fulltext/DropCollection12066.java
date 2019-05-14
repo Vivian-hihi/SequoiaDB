@@ -22,6 +22,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 /**
  * @Description seqDB-12066: 集合上存在全文索引，删除集合
@@ -63,8 +64,15 @@ public class DropCollection12066 extends SdbTestBase {
         List< DBCollection > cappedCLs = FullTextDBUtils.getCappedCLs( sdb,
                 csName12066, clName, fullIndexName );
         DBCollection cappedCL = cappedCLs.get( 0 );
-        DBCursor cursor = cappedCL.query();
-        BSONObject bsonObject = cursor.getNext();
+        
+        // 固定集合的数据要多于1条
+        DBCursor cursor = null;
+        while ( 2 > cappedCL.getCount() ) {
+            System.out.println( "12066 cappedCL's count: " + cappedCL.getCount() );
+            
+        }     
+        cursor = cappedCL.query();        
+        BSONObject object = (BSONObject) cursor.getNext(); 
 
         // 多次执行删除集合的操作
         for ( int i = 0; i < 3; i++ ) {
@@ -78,7 +86,11 @@ public class DropCollection12066 extends SdbTestBase {
         // 关闭步骤2中的游标，再次删除集合
         List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
                 csName12066, clName, fullIndexName );
-        cursor.close();
+        
+        if(cursor != null) {
+            cursor.close();
+        }
+        
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName12066, clName,
                 fullIndexName, FullTextUtils.INSERT_NUMS );
         FullTextUtils.checkDataConsistency( sdb, csName12066, clName,
@@ -110,15 +122,15 @@ public class DropCollection12066 extends SdbTestBase {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 BSONObject record = ( BSONObject ) JSON
                         .parse( "{a: 'test_12066_" + i * j + "', b: '"
-                                + FullTextUtils.getRandomString( 32 )
+                                + StringUtils.getRandomString( 32 )
                                 + "', c: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', d: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', e: '"
-                                + FullTextUtils.getRandomString( 128 )
+                                + StringUtils.getRandomString( 128 )
                                 + "', f: '"
-                                + FullTextUtils.getRandomString( 128 ) + "'}" );
+                                + StringUtils.getRandomString( 128 ) + "'}" );
                 records.add( record );
             }
             this.cl.insert( records );

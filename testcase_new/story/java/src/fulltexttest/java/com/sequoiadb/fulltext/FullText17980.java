@@ -19,6 +19,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 /**
  * @testcase seqDB-17980:全量同步时，删除原始集合
@@ -66,9 +67,9 @@ public class FullText17980 extends SdbTestBase {
         for (int i = 0; i < 100; i++) {
             for (int j = 0; j < insertNums / 100; j++) {
                 BSONObject record = (BSONObject) JSON.parse("{a: 'test_17980_" + i * j + "', b: '"
-                        + FullTextUtils.getRandomString(32) + "', c: '" + FullTextUtils.getRandomString(64) + "', d: '"
-                        + FullTextUtils.getRandomString(64) + "', e: '" + FullTextUtils.getRandomString(128) + "', f: '"
-                        + FullTextUtils.getRandomString(128) + "'}");
+                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
+                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
+                        + StringUtils.getRandomString(128) + "'}");
                 records.add(record);
             }
             cl.insert(records);

@@ -21,6 +21,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 /**
  * @Description seqDB-11989:range切分表中创建/删除全文索引
@@ -101,15 +102,15 @@ public class RangeTableIndex11989 extends SdbTestBase {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 BSONObject record = ( BSONObject ) JSON
                         .parse( "{a: 'test_range11989_" + i * j + "', b: '"
-                                + FullTextUtils.getRandomString( 32 )
+                                + StringUtils.getRandomString( 32 )
                                 + "', c: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', d: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', e: '"
-                                + FullTextUtils.getRandomString( 128 )
+                                + StringUtils.getRandomString( 128 )
                                 + "', g: '"
-                                + FullTextUtils.getRandomString( 128 ) + "'}" );
+                                + StringUtils.getRandomString( 128 ) + "'}" );
                 records.add( record );
             }
             this.cl.insert( records );

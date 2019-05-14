@@ -21,6 +21,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 /**
  * @Description seqDB-14372:无存量数据，插入记录
@@ -97,15 +98,15 @@ public class InsertRecords14372 extends SdbTestBase {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 BSONObject record = ( BSONObject ) JSON
                         .parse( "{a: 'test_14372_" + i * j + "', b: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', c: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', d: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', e: '"
-                                + FullTextUtils.getRandomString( 128 )
+                                + StringUtils.getRandomString( 128 )
                                 + "', g: '"
-                                + FullTextUtils.getRandomString( 256 ) + "'}" );
+                                + StringUtils.getRandomString( 256 ) + "'}" );
                 records.add( record );
             }
             this.cl.insert( records );

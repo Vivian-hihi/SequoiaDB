@@ -17,6 +17,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 /**
  * @Description seqDB-12021: range切分表中创建全文索引并切分后再插入记录
@@ -94,15 +95,15 @@ public class SplitAndInsert12021 extends SdbTestBase {
             for ( int j = 0; j < FullTextUtils.INSERT_NUMS / 100; j++ ) {
                 BSONObject record = ( BSONObject ) JSON
                         .parse( "{a: 'test_hash12021_" + i * j + "', b: '"
-                                + FullTextUtils.getRandomString( 32 )
+                                + StringUtils.getRandomString( 32 )
                                 + "', c: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', d: '"
-                                + FullTextUtils.getRandomString( 64 )
+                                + StringUtils.getRandomString( 64 )
                                 + "', e: '"
-                                + FullTextUtils.getRandomString( 128 )
+                                + StringUtils.getRandomString( 128 )
                                 + "', f: '"
-                                + FullTextUtils.getRandomString( 128 ) + "'}" );
+                                + StringUtils.getRandomString( 128 ) + "'}" );
                 records.add( record );
             }
             this.cl.insert( records );

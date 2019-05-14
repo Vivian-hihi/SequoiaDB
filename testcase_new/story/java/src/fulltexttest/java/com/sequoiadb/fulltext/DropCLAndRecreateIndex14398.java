@@ -21,6 +21,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 import org.elasticsearch.client.*;
 
@@ -150,12 +151,12 @@ public class DropCLAndRecreateIndex14398 extends SdbTestBase {
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14398_"
-                        + FullTextUtils.getRandomString( 10 ) + "', b: '"
-                        + FullTextUtils.getRandomString( 32 ) + "', c: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', d: '"
-                        + FullTextUtils.getRandomString( 64 ) + "', e: '"
-                        + FullTextUtils.getRandomString( 128 ) + "', f: '"
-                        + FullTextUtils.getRandomString( 128 ) + "', g: "
+                        + StringUtils.getRandomString( 10 ) + "', b: '"
+                        + StringUtils.getRandomString( 32 ) + "', c: '"
+                        + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '"
+                        + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "', g: "
                         + i * j + "}" ) );
 
             }
