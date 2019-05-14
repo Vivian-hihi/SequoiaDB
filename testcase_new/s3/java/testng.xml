@@ -28,6 +28,7 @@
                <package name="com.sequoias3.head" />
                <package name="com.sequoias3.user" />
                <package name="com.sequoias3.delimiter" /> 
+               <package name="com.sequoias3.delimiter.concurrent" /> 
       </packages>
    </test> 
    
