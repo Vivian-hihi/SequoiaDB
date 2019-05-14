@@ -139,7 +139,7 @@ public class Transaction17960 extends SdbTestBase {
                         cl.update("{b:" + bid + "}", "{$inc:{a:" + value + "}}", "{'':'textIndex17960'}");
                     } catch (BaseException e) {
                         if (e.getErrorCode() == -13 || e.getErrorCode() == -48 || e.getErrorCode() == -52
-                                || e.getErrorCode() == -10) {
+                                || e.getErrorCode() == -10 || e.getErrorCode() ==-199) {
                             db.rollback();
                             continue;
                         } else {
@@ -194,7 +194,7 @@ public class Transaction17960 extends SdbTestBase {
 
                     } catch (BaseException e) {
                         if (e.getErrorCode() == -13 || e.getErrorCode() == -48 || e.getErrorCode() == -52
-                                || e.getErrorCode() == -10) {
+                                || e.getErrorCode() == -10|| e.getErrorCode() ==-199) {
                             db.rollback();
                             continue;
                         } else {
