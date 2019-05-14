@@ -20,7 +20,7 @@
 
    Descriptive Name = sequoiafs main entry.
 
-   When/how to use:  This program is used on sequoiafs. 
+   When/how to use:  This program is used on sequoiafs.
 
    Dependencies: N/A
 
@@ -62,6 +62,11 @@
 #include <sys/syscall.h>
 #include "fuse.h"
 #include "fuse_lowlevel.h"
+
+#ifndef SEQUOIAFS_SUPPORT_FUSE_VERSION
+/*SequoiaFS support libfuse version, 0x0286 means 2.8.6*/
+#define SEQUOIAFS_SUPPORT_FUSE_VERSION 0x0286
+#endif
 
 #endif
 
