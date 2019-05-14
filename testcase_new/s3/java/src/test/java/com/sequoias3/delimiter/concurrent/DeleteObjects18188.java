@@ -1,0 +1,142 @@
+package com.sequoias3.delimiter.concurrent;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.S3VersionSummary;
+import com.amazonaws.services.s3.model.VersionListing;
+import com.sequoiadb.threadexecutor.ThreadExecutor;
+import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.TestTools;
+import com.sequoias3.testcommon.s3utils.DelimiterUtils;
+
+/**
+ * test content: 开启版本控制，并发删除相同目录下不同对象 testlink-case: seqDB-18188
+ * 
+ * @author wangkexin
+ * @Date 2019.05.09
+ * @version 1.00
+ */
+
+public class DeleteObjects18188 extends S3TestBase {
+	private String bucketName = "bucket18188";
+	private String keyName = "dir1/dir2/test18188";
+	private String delimiter = "&";
+	private int objectNum = 2;
+	private AmazonS3 s3Client = null;
+	private int fileSize = 1024 * 10;
+	private List<String> keyNames = new ArrayList<>();
+	private File localPath = null;
+	private String filePath = null;
+	private boolean runSuccess = false;
+
+	@BeforeClass
+	private void setUp() throws Exception {
+		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+		TestTools.LocalFile.removeFile(localPath);
+		TestTools.LocalFile.createDir(localPath.toString());
+		TestTools.LocalFile.createFile(filePath, fileSize);
+
+		s3Client = CommLib.buildS3Client();
+		CommLib.clearBucket(s3Client, bucketName);
+		s3Client.createBucket(new CreateBucketRequest(bucketName));
+		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+	}
+
+	@Test
+	public void testGetObjectList() throws Exception {
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
+
+		// 上传多个对象，对象名中包含分隔符且分解目录相同
+		for (int i = 0; i < objectNum; i++) {
+			String currentKey = keyName + delimiter + "_" + i + ".txt";
+			s3Client.putObject(bucketName, currentKey, new File(filePath));
+			keyNames.add(currentKey);
+		}
+
+		ThreadExecutor es = new ThreadExecutor();
+		for (String key : keyNames) {
+			es.addWorker(new TransDeleteObject18188(key));
+		}
+		es.run();
+
+		// 查询对象列表对象已不存在
+		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
+		ListObjectsV2Result result = s3Client.listObjectsV2(request);
+		List<S3ObjectSummary> objects = result.getObjectSummaries();
+		Assert.assertEquals(objects.size(), 0);
+
+		// 查看对象版本列表存在对应删除标记对象
+		VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
+		Assert.assertEquals(vsList.getCommonPrefixes().size(), 0, vsList.getCommonPrefixes().toString());
+
+		// check Versions
+		List<String> actHistoryVersionList = new ArrayList<>();
+		List<S3VersionSummary> verList = vsList.getVersionSummaries();
+		for (int i = 0; i < verList.size() / 2; i++) {
+			actHistoryVersionList.add(verList.get(i).getKey());
+			Assert.assertEquals(verList.get(i).getVersionId(), "0");
+			Assert.assertFalse(verList.get(i).isDeleteMarker(),
+					"isDeleteMarker is wrong , key = " + verList.get(i).getKey());
+		}
+		Collections.sort(keyNames);
+		Assert.assertEquals(actHistoryVersionList, keyNames);
+
+		// check DeleteMarKers
+		List<String> actVersionList = new ArrayList<>();
+		for (int i = verList.size() / 2; i < verList.size(); i++) {
+			actVersionList.add(verList.get(i).getKey());
+			Assert.assertEquals(verList.get(i).getVersionId(), "1");
+			Assert.assertTrue(verList.get(i).isDeleteMarker(),
+					"isDeleteMarker is wrong , key = " + verList.get(i).getKey());
+		}
+		Collections.sort(keyNames);
+		Assert.assertEquals(actVersionList, keyNames);
+
+		runSuccess = true;
+	}
+
+	@AfterClass
+	private void tearDown() {
+		try {
+			if (runSuccess) {
+				CommLib.clearBucket(s3Client, bucketName);
+				TestTools.LocalFile.removeFile(localPath);
+			}
+		} finally {
+			if (s3Client != null) {
+				s3Client.shutdown();
+			}
+		}
+	}
+
+	class TransDeleteObject18188 {
+		private String keyName = "";
+
+		public TransDeleteObject18188(String deleteKeyName) {
+			this.keyName = deleteKeyName;
+		}
+
+		@ExecuteOrder(step = 1, desc = "删除对象")
+		public void DeleteObject() {
+			s3Client.deleteObject(bucketName, keyName);
+		}
+	}
+}
