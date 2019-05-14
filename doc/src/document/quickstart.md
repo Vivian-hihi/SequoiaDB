@@ -1,11 +1,18 @@
-本入门教程使用 SequoiaDB 3.2 及 MySQL实例组件3.2 在 Ubuntu 12.04 上搭建一个基础运行环境，以快速了解 SequoiaDB 及 MySQL实例组件的基本功能 。
+本入门教程使用 SequoiaDB 3.2 及 MySQL 实例组件3.2 在 Ubuntu 16.04 上搭建一个基础运行环境，以快速了解 SequoiaDB 及 MySQL 实例组件的基本功能 。
 
-##安装 SequoiaDB 及 MySQL实例组件##
+本教程会在单台机器上安装部署 SequoiaDB 和 SequoiaSQL-MySQL，SequoiaDB 部署为 3 个数据组单节点，SequoiaSQL-MySQL 部署为 1 个 SQL 实例。如果要部署集群在多台机器上，请参考[可视化安装](installation/deployment/visualization_installation.md)或者[命令行部署](installation/deployment/command_installation/cluster.md)。如果要部署独立模式，请参考[独立模式](installation/deployment/command_installation/standalone.md)。
 
-安装过程需要使用操作系统 root 用户权限。
+##安装 SequoiaDB 及 MySQL 实例组件##
 
-###安装介质准备###
-从 [SequoiaDB 官网](http://www.sequoiadb.com/cn/index.php?a=index&m=Download) 下载 SequoiaDB 3.2 数据库安装包，并上传到目标主机上。
+###安装前准备###
+
++ 从 [SequoiaDB 官网](http://www.sequoiadb.com/cn/index.php?a=index&m=Download) 下载 SequoiaDB 3.2 数据库安装包，并上传到目标主机上
+
++ 安装过程需要使用操作系统 root 用户权限
+
++ 确保系统满足[硬件和软件要求](installation/system/system_requirement.md)
+
++ 请确保所有主机都设置了[主机名](installation/system/system_requirement.md#软件要求)，并且都设置了[主机名/IP地址映射关系](installation/system/system_requirement.md#软件要求)
 
 ###安装步骤###
 
@@ -275,6 +282,8 @@
 
 ## 部署 SequoiaDB 及 MySQL 实例 ##
 
+SequoiaDB 部署方案为 3 个数据组单副本：1 个编目节点，1 个协调节点，3 个数据组，每个数据组上只有 1 个副本。如果需要部署 SequoiaDB 到多台机器上，请参考 [quickDeploy.sh 工具说明](database_management/tools/quickdeploy.md#在多台机器上部署)。SequoiaSQL-MySQL 部署 1 个 MySQL 实例。
+
 - 使用 root 用户或者管理员用户登录主机
 
 - 查看端口是否被占用
@@ -290,8 +299,7 @@
    > **Note:**
    > 
    > * 如果需要修改创建节点的端口号，可在 tools/deploy/sequoiadb.conf 和 tools/deploy/mysql.conf 中修改配置。
-   > * 如果需要部署 SequoiaDB 到多台机器，请确保所有主机均已安装了 SequoiaDB，并配置了[主机/ IP 的映射关系](installation/system/system_requirement.md#软件要求)。
-   
+
 - 使用 sdbadmin 用户登录主机
 
 - 快速部署
@@ -310,11 +318,6 @@
    ************ Deploy SequoiaSQL-MySQL *****************
    Create instance: [name: myinst, port: 3306]
    ```
-
-   > **Note:**
-   > 
-   > * 如果安装 SequoiaDB 时，配置了 Cluster Manager Port 为非默认端口，执行 quickDeploy.sh 需加上 --cm 参数。多台主机需要确保每台主机上的 Cluster Manager 端口一致。
-   
    
 ## 数据库操作 ##
 

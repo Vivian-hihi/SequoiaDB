@@ -681,6 +681,12 @@
                "en": "Database Tools",
                "contents": [
                   {
+                     "id": 1557810775,
+                     "file": "quickdeploy",
+                     "cn": "快速部署工具",
+                     "en": "Quick Deploy Tool"
+                  },
+                  {
                      "id": 1479195620,
                      "file": "sdbimprt",
                      "cn": "数据导入工具",
