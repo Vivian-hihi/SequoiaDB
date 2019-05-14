@@ -36,7 +36,7 @@
       </if>  
       <antcall target="change_limits"/>
       <antcall target="deploy"/> 
-      <antcall target="create_es_nodeconf"/>
+      <antcall target="ready_es_environment"/>
    </target>
    
    <target name="clear_cluster">
@@ -222,7 +222,20 @@
       </for>
    </target>
    
-   <target name="create_es_nodeconf">
+   <target name="ready_es_environment">
+      <!--clear es environment-->
+      <var name="IDXPREFIX" value="${TEST_TYPE}"/>
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="NORMALTEST"/>
+         <then>
+            <var name="IDXPREFIX" value="${TEST_TYPE}${DEPLOY_MODE}"/>
+         </then>
+      </if>
+      <var name="cmd" value="curl -XDELETE 'http://${ES_IP}:${ES_PORT}/${IDXPREFIX}'"/>
+      
+      <staf location="${ES_IP}" service="PROCESS"
+            request="START SHELL COMMAND ${cmd} WAIT 10m RETURNSTDERR"
+            throwBuildException="1"/>
       <staf location="${firsthost}" service="FS"
                   request="DELETE ENTRY ${INSTALL_DIR}/conf/sdbseadpter RECURSE CONFIRM"
                   throwBuildException=""/>
@@ -267,11 +280,11 @@
                   <mkdir dir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
                   <copy file="${INSTALL_DIR}/conf/samples/sdbseadapter.conf" todir="${INSTALL_DIR}/conf/sdbseadpter/${svcname}"/>
                   
-                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="datanodehost=" value="datanodehost=localhost"/>
-                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="datasvcname=" value="datasvcname=${svcname}"/>
-                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchenginehost=" value="searchenginehost=${ES_IP}"/>
-                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchengineport=" value="searchengineport=${ES_PORT}"/>
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchenginehost=localhost" value="searchenginehost=${ES_IP}"/>
+                  <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchengineport=9200" value="searchengineport=${ES_PORT}"/>
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="diaglevel=3" value="diaglevel=5"/>
+                  <!--replaceregexp file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" match="(.*)idxprefix=" replace="idxprefix=${IDXPREFIX}" byline="true"/-->
+                  <replaceregexp file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" match="(.*)datasvcname=" replace="datasvcname=${svcname}" byline="true"/>
                </sequential>
             </for>
             <!--copy to other host -->
@@ -300,7 +313,7 @@
                      <sequential>
                         <var name="svcname" unset="true"/>
                         <basename property="svcname" file="@{dirtype}"/>
-                        
+                        <!---p ${IDXPREFIX}-->
                         <staf location="@{testhost}" service="PROCESS"
                               request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbseadapter -c ${INSTALL_DIR}/conf/sdbseadpter/${svcname} &amp; WAIT 10m RETURNSTDERR"
                               throwBuildException="1"/>
