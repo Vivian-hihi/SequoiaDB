@@ -16,8 +16,8 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 
 /**
- * test content: 不开启版本控制，不带versionId删除对象 
- * testlink-case: seqDB-18170
+ * test content: 不开启版本控制，不带versionId删除对象 testlink-case: seqDB-18170
+ * 
  * @author wangkexin
  * @Date 2019.04.29
  * @version 1.00
@@ -49,9 +49,9 @@ public class DeleteObjectWithDelimiter18170 extends S3TestBase {
 	public void testDeleteObject() throws Exception {
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		
+
 		s3Client.deleteObject(bucketName, key);
-		//删除对象后手工查看目录表中对象对应目录也被删除
+		// 删除对象后手工查看目录表中对象对应目录也被删除
 		checkDeleteObjectResult(bucketName, key);
 		runSuccess = true;
 	}
@@ -60,7 +60,8 @@ public class DeleteObjectWithDelimiter18170 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				if(s3Client.doesObjectExist(bucketName, key)){
+				// TODO:1、这里没有必要判断对象是否存在，如果清理环境的时候对象还存在就是有问题，那就应该报错出来
+				if (s3Client.doesObjectExist(bucketName, key)) {
 					s3Client.deleteObject(bucketName, key);
 				}
 				s3Client.deleteBucket(bucketName);

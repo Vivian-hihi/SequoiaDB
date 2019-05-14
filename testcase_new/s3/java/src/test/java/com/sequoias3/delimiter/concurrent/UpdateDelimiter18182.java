@@ -79,6 +79,7 @@ public class UpdateDelimiter18182 extends S3TestBase {
 		}
 	}
 
+	// TODO:1、AB两个类重复，建议用一个类
 	class TransUpdateDelimiter18182A extends ResultStore {
 		private String delimiter = "";
 

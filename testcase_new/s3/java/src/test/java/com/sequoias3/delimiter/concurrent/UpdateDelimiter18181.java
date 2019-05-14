@@ -48,12 +48,13 @@ public class UpdateDelimiter18181 extends S3TestBase {
 	@Test
 	public void testGetObjectList() throws Exception {
 		ThreadExecutor es = new ThreadExecutor();
+		// TODO:1、线程名不要用t1和t2命名，建议给出有意义命名
 		TransUpdateDelimiter18181A t1 = new TransUpdateDelimiter18181A(delimiter1);
 		TransUpdateDelimiter18181B t2 = new TransUpdateDelimiter18181B(delimiter2);
 		es.addWorker(t1);
 		es.addWorker(t2);
 		es.run();
-
+		// TODO:2、描述下409错误码的含义
 		if (t1.getRetCode() == 0 && t2.getRetCode() == 409) {
 			checkResult(delimiter1);
 		} else if (t1.getRetCode() == 409 && t2.getRetCode() == 0) {
@@ -82,6 +83,7 @@ public class UpdateDelimiter18181 extends S3TestBase {
 		}
 	}
 
+	// TODO:2、AB两个类实现一致，代码重复，用一个类就行了
 	class TransUpdateDelimiter18181A extends ResultStore {
 		private String delimiter = "";
 

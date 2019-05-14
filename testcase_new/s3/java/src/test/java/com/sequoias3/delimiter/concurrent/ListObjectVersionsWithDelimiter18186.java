@@ -60,6 +60,7 @@ public class ListObjectVersionsWithDelimiter18186 extends S3TestBase {
 
 	@Test
 	public void testGetObjectList() throws Exception {
+		// TODO:1、预置条件可以放到setUp中，另外不需要检查结果
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
@@ -92,6 +93,7 @@ public class ListObjectVersionsWithDelimiter18186 extends S3TestBase {
 		}
 	}
 
+	// TODO:2、并发线程中执行步骤要和检查结果分开
 	class TransListObjectVersions18186 {
 		@ExecuteOrder(step = 1, desc = "不设置筛选条件查询对象版本列表")
 		public void ListObjectVersions() {

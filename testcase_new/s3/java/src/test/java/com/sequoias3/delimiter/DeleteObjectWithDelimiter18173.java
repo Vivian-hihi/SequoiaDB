@@ -1,6 +1,7 @@
 package com.sequoias3.delimiter;
 
 import java.io.File;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -15,8 +16,8 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content:  禁用版本控制，不带versionId删除对象
- * testlink-case: seqDB-18173
+ * test content: 禁用版本控制，不带versionId删除对象 testlink-case: seqDB-18173
+ * 
  * @author wangkexin
  * @Date 2019.04.29
  * @version 1.00
@@ -33,31 +34,33 @@ public class DeleteObjectWithDelimiter18173 extends S3TestBase {
 
 	@SuppressWarnings("deprecation")
 	@BeforeClass
-	private void setUp() throws Exception {	
+	private void setUp() throws Exception {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
-		s3Client = CommLib.buildS3Client();	
-		if( s3Client.doesBucketExist(bucketName)){
+		s3Client = CommLib.buildS3Client();
+		// TODO:1、这个可以直接用clearBucket的公共方法
+		if (s3Client.doesBucketExist(bucketName)) {
 			ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, key);
 			s3Client.deleteBucket(bucketName);
 		}
-		
-		s3Client.createBucket( bucketName );
+
+		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Suspended");
-		
+
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+		// TODO:2、非测试点，不用校验
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		s3Client.putObject( bucketName, key, new File(filePath));
+		s3Client.putObject(bucketName, key, new File(filePath));
 	}
 
 	@Test
 	public void testDeleteObject() throws Exception {
-		s3Client.deleteObject( bucketName, key );
-		checkDeleteObjectResult();	
+		s3Client.deleteObject(bucketName, key);
+		checkDeleteObjectResult();
 		runSuccess = true;
 	}
 
@@ -70,18 +73,18 @@ public class DeleteObjectWithDelimiter18173 extends S3TestBase {
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
-		    s3Client.shutdown();
+			s3Client.shutdown();
 		}
 	}
 
-	private void checkDeleteObjectResult() throws Exception {	
-		//检查删除结果，获取对象已不存在，查看对象对应目录还存在
+	private void checkDeleteObjectResult() throws Exception {
+		// 检查删除结果，获取对象已不存在，查看对象对应目录还存在
 		boolean isExistObject = s3Client.doesObjectExist(bucketName, key);
-		Assert.assertFalse(isExistObject,"the object should not exist!");	
+		Assert.assertFalse(isExistObject, "the object should not exist!");
 		try {
 			s3Client.getObject(bucketName, key);
 			Assert.fail("get not exist key must be fail !");
-		} catch (AmazonS3Exception e) {			
+		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getErrorCode(), "NoSuchKey");
 		}
 	}

@@ -82,6 +82,7 @@ public class UpdateDelimiter18180 extends S3TestBase {
 			try {
 				DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 			} catch (AmazonS3Exception e) {
+				// TODO:1、改成相同的分隔符是不修改执行返回成功吧，这里不应该有报错的
 				Assert.assertEquals(e.getErrorCode(), "DelimiterNotStable");
 			}
 		}

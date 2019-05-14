@@ -59,6 +59,7 @@ public class ListObjectWithDelimiter18185 extends S3TestBase {
 
 	@Test
 	public void testGetObjectList() throws Exception {
+		// TODO:1、预置条件放到setup中，另外预置条件不需要检查结果
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
@@ -92,6 +93,8 @@ public class ListObjectWithDelimiter18185 extends S3TestBase {
 		}
 	}
 
+	// TODO:2、线程中执行步骤和检查结果需要分两步操作，放在一起如果执行步骤出错超时就会跳过检查结果往下执行
+	// TODO:3、用例中是不带条件和带条件筛选，请参考用例实现
 	class TransListObjectWithDelimiter18185 {
 		@ExecuteOrder(step = 1, desc = "指定与桶分隔符不匹配的delimiter查询对象列表")
 		public void ListObject() {

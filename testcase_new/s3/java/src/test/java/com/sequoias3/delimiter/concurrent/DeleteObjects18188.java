@@ -83,6 +83,7 @@ public class DeleteObjects18188 extends S3TestBase {
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
 		Assert.assertEquals(objects.size(), 0);
 
+		// TODO:1、这里的检查结果应该是带新分隔符可以查询到删除标记对象映射目录，验证结果包括匹配commonprefix
 		// 查看对象版本列表存在对应删除标记对象
 		VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
 		Assert.assertEquals(vsList.getCommonPrefixes().size(), 0, vsList.getCommonPrefixes().toString());
@@ -117,7 +118,7 @@ public class DeleteObjects18188 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				CommLib.clearBucket(s3Client, bucketName);
+				// CommLib.clearBucket(s3Client, bucketName);
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {

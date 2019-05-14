@@ -51,6 +51,7 @@ public class CreateObject18183 extends S3TestBase {
 
 	@Test
 	public void testGetObjectList() throws Exception {
+		// TODO:1、不是用例测试点，建议放到setUp中，另外预置条件不用检查结果
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 

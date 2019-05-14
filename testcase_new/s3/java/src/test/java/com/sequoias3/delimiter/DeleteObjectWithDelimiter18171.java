@@ -13,8 +13,8 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 
 /**
- * test content: 不开启版本控制，不带versionId删除不存在的对象 
- * testlink-case: seqDB-18171
+ * test content: 不开启版本控制，不带versionId删除不存在的对象 testlink-case: seqDB-18171
+ * 
  * @author wangkexin
  * @Date 2019.04.29
  * @version 1.00
@@ -36,8 +36,8 @@ public class DeleteObjectWithDelimiter18171 extends S3TestBase {
 	public void testDeleteObject() throws Exception {
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		
-		//删除不存在的对象
+
+		// 删除不存在的对象
 		s3Client.deleteObject(bucketName, key);
 		checkDeleteObjectResult(bucketName, key);
 		runSuccess = true;
@@ -47,7 +47,8 @@ public class DeleteObjectWithDelimiter18171 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				if(s3Client.doesObjectExist(bucketName, key)){
+				// TODO:1、这个判断没有必要，可以去掉
+				if (s3Client.doesObjectExist(bucketName, key)) {
 					s3Client.deleteObject(bucketName, key);
 				}
 				s3Client.deleteBucket(bucketName);
@@ -57,6 +58,7 @@ public class DeleteObjectWithDelimiter18171 extends S3TestBase {
 		}
 	}
 
+	// TODO:2、这里建议检查下list，防止生成删除标记对象
 	private void checkDeleteObjectResult(String bucketName, String key) {
 		boolean isExistObject = s3Client.doesObjectExist(bucketName, key);
 		Assert.assertFalse(isExistObject, "the object should not exist!");
