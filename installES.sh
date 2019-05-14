@@ -53,7 +53,7 @@ function installESAdapter()
          exec_cmd "mkdir -p $runtest_path/conf/sdbseadapter/$arg"
          exec_cmd "cp $runtest_path/conf/samples/sdbseadapter.conf $runtest_path/conf/sdbseadapter/$arg"
          sed -i 's/datanodehost=.*/datanodehost=localhost/g'   $runtest_path/conf/sdbseadapter/$arg/sdbseadapter.conf
-         sed -i 's/datasvcname=.*/datasvcname='$arg'/g'   $runtest_path/conf/sdbseadapter/$arg/sdbseadapter.conf
+         sed -i 's/#\ datasvcname=.*/datasvcname='$arg'/g'   $runtest_path/conf/sdbseadapter/$arg/sdbseadapter.conf
          sed -i 's/searchenginehost=.*/searchenginehost=localhost/g'   $runtest_path/conf/sdbseadapter/$arg/sdbseadapter.conf
          sed -i 's/searchengineport=.*/searchengineport=9200/g'   $runtest_path/conf/sdbseadapter/$arg/sdbseadapter.conf
          sed -i 's/diaglevel=3*/diaglevel=5/g'   $runtest_path/conf/sdbseadapter/$arg/sdbseadapter.conf
