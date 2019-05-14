@@ -852,10 +852,15 @@
                            "type": "string"
                         },
                         {
-                           "name": "null",
-                           "webName": $scope.pAutoLanguage( "空" ),
-                           "type": "checkbox",
-                           "value": true
+                           "name": "indexType",
+                           "type": "select",
+                           "value": "null",
+                           "valid": [
+                              { "key": $scope.pAutoLanguage( "无索引" ), "value": "null" },
+                              { "key": $scope.pAutoLanguage( "主键" ), "value": "primary" },
+                              { "key": $scope.pAutoLanguage( "唯一索引" ), "value": "unique" },
+                              { "key": $scope.pAutoLanguage( "普通索引" ), "value": "index" }
+                           ]
                         },
                         {
                            "name": "unsigned",
@@ -864,16 +869,10 @@
                            "value": false
                         },
                         {
-                           "name": "primary",
-                           "webName": $scope.pAutoLanguage( "主键" ),
+                           "name": "null",
+                           "webName": $scope.pAutoLanguage( "空" ),
                            "type": "checkbox",
-                           "value": false
-                        },
-                        {
-                           "name": "unique",
-                           "webName": $scope.pAutoLanguage( "唯一" ),
-                           "type": "checkbox",
-                           "value": false
+                           "value": true
                         }
                      ]
                   ]
@@ -895,6 +894,10 @@
                var sql = sprintf( 'create table ? (', formVal1['tbName'] ) ;
                var primaryKey = formVal1['tbName'] ;
                var primaryKey2 = ' primary key (' ;
+               var indexName = ',index ' + formVal1['tbName'] ;
+               var indexCont = '(' ;
+               var uniqueName = ',unique index ' + formVal1['tbName'] ;
+               var uniqueCont = '(' ;
                $.each( formVal1['fields'], function( index, fieldInfo ){
                   var subSql = '' ;
                   if( index > 0 )
@@ -941,7 +944,7 @@
                         break ;
                      }
                   }
-                  if( fieldInfo['primary'] == true )
+                  if( fieldInfo['indexType'] == 'primary' )
                   {
                      //判断是否第一个主键
                      if( primaryKey2.length > 14 )
@@ -951,34 +954,53 @@
                      primaryKey += ( '_' + fieldInfo['name'] ) ;
                      primaryKey2 += fieldInfo['name'] ;
                   }
-                  if( fieldInfo['unique'] == true )
+                  else if( fieldInfo['indexType'] == 'unique' )
                   {
-                     subSql += 'UNIQUE ' ;
+                     if( uniqueCont.length > 1 )
+                     {
+                        uniqueCont += ',' ;
+                     }
+                     uniqueName += ( '_' + fieldInfo['name'] ) ;
+                     uniqueCont += fieldInfo['name'] ;
                   }
-                  if( fieldInfo['null'] == true && fieldInfo['primary'] == false )
+                  else if( fieldInfo['indexType'] == 'index' )
                   {
-                     subSql += 'NULL ' ;
+                     if( indexCont.length > 1 )
+                     {
+                        indexCont += ',' ;
+                     }
+                     indexName += ( '_' + fieldInfo['name'] ) ;
+                     indexCont += fieldInfo['name'] ;
+                  }
+                  if( fieldInfo['null'] == true && fieldInfo['indexType'] != 'primary' )
+                  {
+                     subSql += 'NULL' ;
                   }
                   else
                   {
-                     subSql += 'NOT NULL ' ;
+                     subSql += 'NOT NULL' ;
                   }
                   if( typeof( fieldInfo['default'] ) == 'string' )
                   {
-                     subSql += 'DEFAULT ' + sqlEscape( fieldInfo['default'] ) + ' ' ;
+                     subSql += ' DEFAULT ' + sqlEscape( fieldInfo['default'] ) + ' ' ;
                   }
                   sql += subSql ;
                } ) ;
                
-               //判断是否有主键
+               //判断是否有索引
                if( primaryKey2.length > 14 )
                {
-                  sql = sql + ',constraint ' + primaryKey + primaryKey2 + ') )' ;
+                  sql = sql + ',constraint ' + primaryKey + primaryKey2 + ')' ;
                }
-               else
+               if( indexCont.length > 1 )
                {
-                  sql += ')' ;
+                  sql = sql + indexName + indexCont + ')' ;
                }
+               if( uniqueCont.length > 1 )
+               {
+                  sql = sql + uniqueName + uniqueCont + ')' ;
+               }
+               sql += ' )' ;
 
                //添加引擎
                sql += ' engine = ' + formVal1['engine'] ;
