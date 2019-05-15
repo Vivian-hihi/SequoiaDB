@@ -19,23 +19,24 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
 /**
- * @Description seqDB-15799:无存量数据，插入记录
+ * @Description seqDB-15799:主表执行truncate清空记录
  * @author yinzhen
  * @date 2018/11/28
  */
 public class Fulltext15799 extends SdbTestBase {
     private Sequoiadb sdb;
     private DBCollection mainCL;
-    private String mainCLName = "truncateMainCollection15799";
+    private String mainCLName = "maincl15799";
     private String fullIndexName = "fullIndex15799";
     private Client esClient = null;
     private CollectionSpace cs = null;
-    private String slaveCLName1 = "slaveCL115799";
-    private String slaveCLName2 = "slaveCL215799";
+    private String subCLName1 = "subcl15799A";
+    private String subCLName2 = "subcl15799B";
 
     @BeforeClass
     public void setUp() {
@@ -57,11 +58,14 @@ public class Fulltext15799 extends SdbTestBase {
     @Test
     public void test() {
         // 创建主子表，子表覆盖：普通表、切分表
-        cs.createCollection(slaveCLName1);
-        cs.createCollection(slaveCLName2, (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash'}"));
-        mainCL.attachCollection(csName + "." + slaveCLName1,
+        ArrayList<String> groupNames = CommLib.getDataGroupNames(sdb);
+        cs.createCollection(subCLName1);
+        DBCollection cl = cs.createCollection(subCLName2,
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash',Group:'" + groupNames.get(0) + "'}"));
+        cl.split(groupNames.get(0), groupNames.get(1), 50);
+        mainCL.attachCollection(csName + "." + subCLName1,
                 (BSONObject) JSON.parse("{LowBound:{a:0}, UpBound:{a:114298}}"));
-        mainCL.attachCollection(csName + "." + slaveCLName2,
+        mainCL.attachCollection(csName + "." + subCLName2,
                 (BSONObject) JSON.parse("{LowBound:{a:114298}, UpBound:{a:200001}}"));
 
         // 创建全文索引，索引字段覆盖：子表分区键、子表普通字段
@@ -72,47 +76,25 @@ public class Fulltext15799 extends SdbTestBase {
         FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, fullIndexName,
                 FullTextUtils.INSERT_NUMS);
 
-        while (true) {
-            try {
-                mainCL.truncate();
-                // drop success
-                break;
-            } catch (BaseException e) {
-                if (-147 == e.getErrorCode()) {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e2) {
-                        e2.printStackTrace();
-                    }
-                    continue;
-                }
-            }
-        }
-
         try {
-            Thread.sleep(8000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            mainCL.truncate();
+            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, fullIndexName, 0);
+        } catch (BaseException e) {
+            if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
+                Assert.fail(e.getMessage());
+            }
+            FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, fullIndexName,
+                    FullTextUtils.INSERT_NUMS);
         }
-
-        FullTextUtils.checkMainCLFullSyncToES(esClient, sdb, csName, mainCLName, fullIndexName, 0);
 
     }
 
     @AfterClass
     public void tearDown() {
-        try {
-            CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-            cs.dropCollection(this.mainCLName);
-            cs.dropCollection(this.slaveCLName1);
-            cs.dropCollection(this.slaveCLName2);
-        } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -23, e.getMessage());
-        } finally {
-            if (sdb != null) {
-                sdb.close();
-            }
-        }
+        CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
+        FullTextDBUtils.dropCollection(cs, this.mainCLName);
+        FullTextDBUtils.dropCollection(cs, this.subCLName1);
+        FullTextDBUtils.dropCollection(cs, this.subCLName2);
     }
 
     private void insertData(int insertNums) {
