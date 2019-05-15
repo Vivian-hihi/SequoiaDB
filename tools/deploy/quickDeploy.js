@@ -296,20 +296,7 @@ function getSqlConf( dbType, installedPath )
       else if ( len == 4 )
       {
          var coordAddr = instanceConf[3] ;
-         if ( coordAddr.substr( 0, 1 )  == "[" &&
-              coordAddr.substr( -1, 1 ) == "]" )
-         {
-            // delete the '[' at the beginning of the line
-            coordAddr = coordAddr.replace( /(^\[)/, '' ) ;
-            // delete the ']' at the end of the line
-            coordAddr = coordAddr.replace( /(\]$)/, '' ) ;
-            instanceConf[3] = coordAddr ;
-         }
-         if ( coordAddr == "" )
-         {
-            println( "Invalid configure file[" + confFile + "]!" ) ;
-            throw "ERROR" ;
-         }
+         instanceConf[3] = checkAndFormatCoordAddr( coordAddr, confFile ) ;
       }
       else if ( len > 4 )
       {
@@ -322,18 +309,7 @@ function getSqlConf( dbType, installedPath )
                coordAddr += "," ;
             }
          }
-         // check first char is '[', last char is ']'
-         if ( coordAddr.substr( 0, 1 )  != "[" ||
-              coordAddr.substr( -1, 1 ) != "]" )
-         {
-            println( "Invalid configure file[" + confFile + "]!" ) ;
-            throw "ERROR" ;
-         }
-         // delete the '[' at the beginning of the line
-         coordAddr = coordAddr.replace( /(^\[)/, '' ) ;
-         // delete the ']' at the end of the line
-         coordAddr = coordAddr.replace( /(\]$)/, '' ) ;
-         instanceConf[3] = coordAddr ;
+         instanceConf[3] = checkAndFormatCoordAddr( coordAddr, confFile ) ;
          instanceConf.splice( 4, len - 4 ) ;
       }
 
@@ -351,6 +327,89 @@ function getSqlConf( dbType, installedPath )
    }
 
    return allConf ;
+}
+
+function checkAndFormatCoordAddr( coordAddrStr, confFile )
+{
+   if ( coordAddrStr == "-" )
+   {
+      return coordAddrStr ;
+   }
+
+   // valid format:
+   // localhost:50000 or [localhost:50000,localhost:11810]
+   var coords = coordAddrStr.split( "," ) ;
+   if ( coords.length == 1 )
+   {
+      if ( coordAddrStr.substr( 0, 1 )  == "[" &&
+           coordAddrStr.substr( -1, 1 ) == "]" )
+      {
+         // delete the '[' at the beginning of the line
+         coordAddrStr = coordAddrStr.replace( /(^\[)/, '' ) ;
+         // delete the ']' at the end of the line
+         coordAddrStr = coordAddrStr.replace( /(\]$)/, '' ) ;
+      }
+      var coordInfo = coordAddrStr.split( ':' ) ;
+      if ( coordInfo.length != 2 )
+      {
+         println( "Invalid configure file[" + confFile + "]!" ) ;
+         throw "ERROR" ;
+      }
+      var portStr = coordInfo[1] ;
+      if ( portStr == "" )
+      {
+         println( "Invalid configure file[" + confFile + "]!" ) ;
+         throw "ERROR" ;
+      }
+      var port = Number( portStr ) ;
+      if ( isNaN( port ) )
+      {
+         // it is not number
+         println( "Invalid configure file[" + confFile + "]!" ) ;
+         throw "ERROR" ;
+      }
+   }
+   else
+   {
+      // check first char is '[', last char is ']'
+      if ( coordAddrStr.substr( 0, 1 )  != "[" ||
+           coordAddrStr.substr( -1, 1 ) != "]" )
+      {
+         println( "Invalid configure file[" + confFile + "]!" ) ;
+         throw "ERROR" ;
+      }
+
+      // delete the '[' at the beginning of the line
+      coordAddrStr = coordAddrStr.replace( /(^\[)/, '' ) ;
+      // delete the ']' at the end of the line
+      coordAddrStr = coordAddrStr.replace( /(\]$)/, '' ) ;
+
+      var coordArr = coordAddrStr.split( ',' ) ;
+      for ( var i in coordArr )
+      {
+         var coordInfo = coordArr[i].split( ':' ) ;
+         if ( coordInfo.length != 2 )
+         {
+            println( "Invalid configure file[" + confFile + "]!" ) ;
+            throw "ERROR" ;
+         }
+         var portStr = coordInfo[1] ;
+         if ( portStr == "" )
+         {
+            println( "Invalid configure file[" + confFile + "]!" ) ;
+            throw "ERROR" ;
+         }
+         var port = Number( portStr ) ;
+         if ( isNaN( port ) )
+         {
+            // it is not number
+            println( "Invalid configure file[" + confFile + "]!" ) ;
+            throw "ERROR" ;
+         }
+      }
+   }
+
+   return coordAddrStr ;
 }
 
 function getACoordAddr()
@@ -918,11 +977,8 @@ function deployMysql( ignoreNotInstall )
       }
       catch( e )
       {
-         if ( newInst )
-         {
-            println( cmd.getLastOut() ) ;
-            throw e ;
-         }
+         println( cmd.getLastOut() ) ;
+         throw e ;
       }
 
       println( "Create instance: [name: " + instanceName + ", port: " + port +
@@ -1016,11 +1072,8 @@ function deployPostgresql( ignoreNotInstall )
       }
       catch( e )
       {
-         if ( newInst )
-         {
-            println( cmd.getLastOut() ) ;
-            throw e ;
-         }
+         println( cmd.getLastOut() ) ;
+         throw e ;
       }
 
       println( "Create instance: [name: " + instanceName + ", port: " + port +
