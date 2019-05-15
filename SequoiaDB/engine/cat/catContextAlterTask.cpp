@@ -967,11 +967,7 @@ namespace engine
       PD_CHECK( argument.isSharding(), SDB_NO_SHARDINGKEY, error, PDERROR,
                 "Failed to build sharding fields: no sharding key" ) ;
 
-      if ( postAutoSplit )
-      {
-         setBuilder.appendBool( CAT_DOMAIN_AUTO_SPLIT, TRUE ) ;
-      }
-      else if ( argument.testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) )
+      if ( argument.testArgumentMask( UTIL_CL_AUTOSPLIT_FIELD ) )
       {
          setBuilder.appendBool( CAT_DOMAIN_AUTO_SPLIT, argument.isAutoSplit() ) ;
       }
@@ -1870,11 +1866,22 @@ namespace engine
          // AutoSplit is given explicitly
          autoSplit = argument.isAutoSplit() ;
       }
-      else if ( !cataSet.isSharding() && argument.isHashSharding() )
+      else if ( cataSet.isAutoSplit() )
       {
-         // AutoSplit is given explicitly and
-         // 1. collection is NOT sharding before
-         // 2. collection is NOT range sharding after
+         // AutoSplit is specified already by collection itself
+         autoSplit = TRUE ;
+      }
+      else if ( !cataSet.hasAutoSplit() && argument.isHashSharding() &&
+                ( !cataSet.isSharding() ||
+                  cataSet.isHashSharding() ||
+                  ( cataSet.isRangeSharding() &&
+                    argument.testArgumentMask( UTIL_CL_SHDTYPE_FIELD ) ) ) )
+      {
+         // AutoSplit is NOT given explicitly by alter command and collection
+         // itself, in one of below cases:
+         // 1. collection is NOT sharding before, and is hash sharding after
+         // 2. collection is hash sharding before and after
+         // 3. collection is range sharding before, but is hash sharding after
          // then, check with domain, use the AutoSplit of domain setting
 
          const CHAR * collection = cataSet.name() ;

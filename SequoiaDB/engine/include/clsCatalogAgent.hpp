@@ -188,7 +188,7 @@ namespace engine
          UINT32            getW () const ;
          INT32             getHashPartition() const { return _partition ;}
          UINT32            getPartitionBit() const { return _square ; }
-         bool              ensureShardingIndex() const { return _ensureShardingIndex ; }
+         BOOLEAN           ensureShardingIndex() const { return _ensureShardingIndex ; }
          const CHAR        *name () const ;
          const string&     nameStr() const ;
          utilCLUniqueID    clUniqueID () const ;
@@ -201,6 +201,8 @@ namespace engine
          BOOLEAN           isWholeRange () const ;
          BOOLEAN           isSharding () const ;
          BOOLEAN           isIncludeShardingKey( const BSONObj &record ) const;
+         BOOLEAN           isAutoSplit () const ;
+         BOOLEAN           hasAutoSplit () const ;
 
          INT32             genKeyObj ( const BSONObj &obj, BSONObj &keyObj ) ;
          INT32             findItem ( const BSONObj & obj,
@@ -314,7 +316,9 @@ namespace engine
          UINT32            _w ;
          BSONObj           _shardingKey ;
          UINT16            _shardingType ;
-         bool              _ensureShardingIndex ;
+         // AutoSplit: -1 means no specified, 0 means FALSE, 1 means TRUE
+         INT16             _autoSplit ;
+         BOOLEAN           _ensureShardingIndex ;
          std::string       _name ;
          UINT64            _clUniqueID ;
 
@@ -347,7 +351,6 @@ namespace engine
          INT64             _maxSize ;
          INT64             _maxRecNum ;
          BOOLEAN           _overwrite ;
-
    };
    typedef class _clsCatalogSet clsCatalogSet ;
 

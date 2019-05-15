@@ -430,8 +430,9 @@ namespace engine
       _pKeyGen = NULL ;
       _isWholeRange = TRUE ;
       _groupCount = 0 ;
+      _autoSplit = -1 ;
       _shardingType = CLS_CA_SHARDINGTYPE_NONE ;
-      _ensureShardingIndex = true ;
+      _ensureShardingIndex = TRUE ;
       _partition = CAT_SHARDING_PARTITION_DEFAULT ;
       ossIsPowerOf2( _partition, &_square ) ;
       _attribute = 0 ;
@@ -604,6 +605,16 @@ namespace engine
       return isInclude ;
    }
 
+   BOOLEAN _clsCatalogSet::isAutoSplit () const
+   {
+      return _autoSplit == 1 ;
+   }
+
+   BOOLEAN _clsCatalogSet::hasAutoSplit () const
+   {
+      return _autoSplit != -1 ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__CLEAR, "_clsCatalogSet::_clear" )
    void _clsCatalogSet::_clear ()
    {
@@ -643,7 +654,7 @@ namespace engine
       _w = 1 ;
       _version = -1 ;
 
-      _shardingType = CLS_CA_SHARDINGTYPE_NONE;
+      _shardingType = CLS_CA_SHARDINGTYPE_NONE ;
       _shardingKey = BSONObj() ;
       _maxSize = 0 ;
       _maxRecNum = 0 ;
@@ -1829,7 +1840,7 @@ namespace engine
          ele = catSet.getField( CAT_ENSURE_SHDINDEX ) ;
          if ( ele.eoo() )
          {
-            _ensureShardingIndex = true ;
+            _ensureShardingIndex = TRUE ;
          }
          else if ( Bool != ele.type() )
          {
@@ -1841,6 +1852,24 @@ namespace engine
          else
          {
             _ensureShardingIndex = ele.boolean() ;
+         }
+
+         // AutoSplit
+         ele = catSet.getField( CAT_DOMAIN_AUTO_SPLIT ) ;
+         if ( ele.eoo() )
+         {
+            _autoSplit = -1 ;
+         }
+         else if ( Bool != ele.type() )
+         {
+            PD_LOG( PDERROR, "invalid type of ensureShardingIndex: %d",
+                    ele.type() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         else
+         {
+            _autoSplit = ele.boolean() ? 1 : 0 ;
          }
 
          /// register to sharding key site
