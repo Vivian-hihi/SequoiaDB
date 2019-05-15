@@ -328,7 +328,7 @@ SequoiaDB 部署方案为 3 个数据组单副本：1 个编目节点，1 个协
 - 登录 MySQL shell
 
  ```lang-javascript
- $ /opt/sequoiasql/mysql/bin/mysql -S /opt/sequoiasql/mysql/database/myinst/mysqld.sock -u root
+ $ /opt/sequoiasql/mysql/bin/mysql -S /opt/sequoiasql/mysql/database/3306/mysqld.sock -u root
  ```
 
 - 创建数据库实例
