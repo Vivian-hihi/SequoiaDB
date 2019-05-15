@@ -2,7 +2,6 @@ package com.sequoias3.delimiter.concurrent;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -16,7 +15,6 @@ import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -57,13 +55,11 @@ public class DeleteObjects18188 extends S3TestBase {
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		// 上传多个对象，对象名中包含分隔符且分解目录相同
 		for (int i = 0; i < objectNum; i++) {
 			String currentKey = keyName + delimiter + "_" + i + ".txt";
@@ -73,7 +69,7 @@ public class DeleteObjects18188 extends S3TestBase {
 
 		ThreadExecutor es = new ThreadExecutor();
 		for (String key : keyNames) {
-			es.addWorker(new TransDeleteObject18188(key));
+			es.addWorker(new ThreadDeleteObject18188(key));
 		}
 		es.run();
 
@@ -83,33 +79,13 @@ public class DeleteObjects18188 extends S3TestBase {
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
 		Assert.assertEquals(objects.size(), 0);
 
-		// TODO:1、这里的检查结果应该是带新分隔符可以查询到删除标记对象映射目录，验证结果包括匹配commonprefix
-		// 查看对象版本列表存在对应删除标记对象
-		VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
-		Assert.assertEquals(vsList.getCommonPrefixes().size(), 0, vsList.getCommonPrefixes().toString());
-
-		// check Versions
-		List<String> actHistoryVersionList = new ArrayList<>();
-		List<S3VersionSummary> verList = vsList.getVersionSummaries();
-		for (int i = 0; i < verList.size() / 2; i++) {
-			actHistoryVersionList.add(verList.get(i).getKey());
-			Assert.assertEquals(verList.get(i).getVersionId(), "0");
-			Assert.assertFalse(verList.get(i).isDeleteMarker(),
-					"isDeleteMarker is wrong , key = " + verList.get(i).getKey());
-		}
-		Collections.sort(keyNames);
-		Assert.assertEquals(actHistoryVersionList, keyNames);
-
-		// check DeleteMarKers
-		List<String> actVersionList = new ArrayList<>();
-		for (int i = verList.size() / 2; i < verList.size(); i++) {
-			actVersionList.add(verList.get(i).getKey());
-			Assert.assertEquals(verList.get(i).getVersionId(), "1");
-			Assert.assertTrue(verList.get(i).isDeleteMarker(),
-					"isDeleteMarker is wrong , key = " + verList.get(i).getKey());
-		}
-		Collections.sort(keyNames);
-		Assert.assertEquals(actVersionList, keyNames);
+		// 带分隔符查看版本列表，验证删除标记对象映射目录存在
+		VersionListing vsList = s3Client
+				.listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter));
+		List<String> expCommprefixes = new ArrayList<>();
+		expCommprefixes.add(keyName + delimiter);
+		Assert.assertEquals(vsList.getCommonPrefixes(), expCommprefixes);
+		Assert.assertEquals(vsList.getVersionSummaries().size(), 0);
 
 		runSuccess = true;
 	}
@@ -118,7 +94,7 @@ public class DeleteObjects18188 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				// CommLib.clearBucket(s3Client, bucketName);
+				CommLib.clearBucket(s3Client, bucketName);
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
@@ -128,10 +104,10 @@ public class DeleteObjects18188 extends S3TestBase {
 		}
 	}
 
-	class TransDeleteObject18188 {
+	class ThreadDeleteObject18188 {
 		private String keyName = "";
 
-		public TransDeleteObject18188(String deleteKeyName) {
+		public ThreadDeleteObject18188(String deleteKeyName) {
 			this.keyName = deleteKeyName;
 		}
 

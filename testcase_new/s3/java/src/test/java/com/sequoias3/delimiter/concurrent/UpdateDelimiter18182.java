@@ -48,17 +48,19 @@ public class UpdateDelimiter18182 extends S3TestBase {
 	@Test
 	public void testGetObjectList() throws Exception {
 		ThreadExecutor es = new ThreadExecutor();
-		TransUpdateDelimiter18182A t1 = new TransUpdateDelimiter18182A(delimiter1);
-		TransUpdateDelimiter18182B t2 = new TransUpdateDelimiter18182B(delimiter2);
-		es.addWorker(t1);
-		es.addWorker(t2);
+		ThreadUpdateDelimiter18182 updateDelimiterThread1 = new ThreadUpdateDelimiter18182(delimiter1);
+		ThreadUpdateDelimiter18182 updateDelimiterThread2 = new ThreadUpdateDelimiter18182(delimiter2);
+		es.addWorker(updateDelimiterThread1);
+		es.addWorker(updateDelimiterThread2);
 		es.run();
 
-		if (t1.getRetCode() == 0 && t2.getRetCode() == 0 || t1.getRetCode() == 409 && t2.getRetCode() == 0) {
+		// 409 表示当前分隔符状态不稳定 "DelimiterNotStable"
+		if (updateDelimiterThread1.getRetCode() == 0 && updateDelimiterThread2.getRetCode() == 0
+				|| updateDelimiterThread1.getRetCode() == 409 && updateDelimiterThread2.getRetCode() == 0) {
 			checkResult(delimiter2);
 		} else {
-			Assert.fail(
-					"unexpect result , t1.getRetCode()=" + t1.getRetCode() + ", t2.getRetCode()=" + t2.getRetCode());
+			Assert.fail("unexpect result , t1.getRetCode()=" + updateDelimiterThread1.getRetCode()
+					+ ", t2.getRetCode()=" + updateDelimiterThread2.getRetCode());
 		}
 		runSuccess = true;
 	}
@@ -79,28 +81,10 @@ public class UpdateDelimiter18182 extends S3TestBase {
 		}
 	}
 
-	// TODO:1、AB两个类重复，建议用一个类
-	class TransUpdateDelimiter18182A extends ResultStore {
+	class ThreadUpdateDelimiter18182 extends ResultStore {
 		private String delimiter = "";
 
-		public TransUpdateDelimiter18182A(String delimiter) {
-			this.delimiter = delimiter;
-		}
-
-		@ExecuteOrder(step = 1, desc = "更新分隔符")
-		public void updateDelimiter() {
-			try {
-				DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-			} catch (AmazonS3Exception e) {
-				saveResult(e.getStatusCode(), e);
-			}
-		}
-	}
-
-	class TransUpdateDelimiter18182B extends ResultStore {
-		private String delimiter = "";
-
-		public TransUpdateDelimiter18182B(String delimiter) {
+		public ThreadUpdateDelimiter18182(String delimiter) {
 			this.delimiter = delimiter;
 		}
 

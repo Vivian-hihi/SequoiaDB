@@ -2,6 +2,7 @@ package com.sequoias3.delimiter.concurrent;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.testng.Assert;
@@ -55,23 +56,21 @@ public class ListObjectWithDelimiter18185 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		// TODO:1、预置条件放到setup中，另外预置条件不需要检查结果
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		for (int i = 0; i < objectNum; i++) {
 			String currentKey = keyName + "_" + i + delimiter + "/test" + unMatchDelimiter + ".txt";
 			s3Client.putObject(bucketName, currentKey, new File(filePath));
 			keyNames.add(currentKey);
 		}
+		Collections.sort(keyNames);
 
 		ThreadExecutor es = new ThreadExecutor();
-		es.addWorker(new TransListObjectWithDelimiter18185());
-		es.addWorker(new TransListObjectWithPrefixAndDelimiter18185());
+		es.addWorker(new ThreadListObjectWithDelimiter18185());
+		es.addWorker(new ThreadListObjectWithPrefixAndDelimiter18185());
 		es.run();
 		runSuccess = true;
 	}
@@ -93,32 +92,42 @@ public class ListObjectWithDelimiter18185 extends S3TestBase {
 		}
 	}
 
-	// TODO:2、线程中执行步骤和检查结果需要分两步操作，放在一起如果执行步骤出错超时就会跳过检查结果往下执行
-	// TODO:3、用例中是不带条件和带条件筛选，请参考用例实现
-	class TransListObjectWithDelimiter18185 {
-		@ExecuteOrder(step = 1, desc = "指定与桶分隔符不匹配的delimiter查询对象列表")
-		public void ListObject() {
-			String[] objectNames = keyNames.toArray(new String[keyNames.size()]);
-			List<String> expCommprefixList = ObjectUtils.getCommPrefixes(objectNames, "", unMatchDelimiter);
-			ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url")
-					.withDelimiter(unMatchDelimiter);
-			ListObjectsV2Result result = s3Client.listObjectsV2(request);
-			List<String> commonPrefixes = result.getCommonPrefixes();
-			ObjectUtils.checkListObjectsV2Commprefixes(commonPrefixes, expCommprefixList);
+	class ThreadListObjectWithDelimiter18185 {
+		private ListObjectsV2Result result = new ListObjectsV2Result();
 
-			List<S3ObjectSummary> objects = result.getObjectSummaries();
-			Assert.assertEquals(objects.size(), 0);
+		@ExecuteOrder(step = 1, desc = "不设置筛选条件查询对象列表")
+		public void ListObject() {
+			ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName)
+					.withEncodingType("url");
+			result = s3Client.listObjectsV2(request);
+		}
+
+		@ExecuteOrder(step = 2, desc = "检查匹配结果")
+		public void checkResult() {
+			Assert.assertEquals(result.getCommonPrefixes().size(), 0);
+			List<S3ObjectSummary> contents = result.getObjectSummaries();
+			List<String> actKeys = new ArrayList<>();
+			for (S3ObjectSummary content : contents) {
+				actKeys.add(content.getKey());
+			}
+			Assert.assertEquals(actKeys, keyNames);
 		}
 	}
 
-	class TransListObjectWithPrefixAndDelimiter18185 {
+	class ThreadListObjectWithPrefixAndDelimiter18185 {
+		private ListObjectsV2Result result = new ListObjectsV2Result();
+		private String[] objectNames = keyNames.toArray(new String[keyNames.size()]);
+		private List<String> expCommprefixList = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
+
 		@ExecuteOrder(step = 1, desc = "指定prefix和delimiter查询对象列表")
 		public void ListObject() {
-			String[] objectNames = keyNames.toArray(new String[keyNames.size()]);
-			List<String> expCommprefixList = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
 			ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url")
 					.withPrefix(prefix).withDelimiter(delimiter);
-			ListObjectsV2Result result = s3Client.listObjectsV2(request);
+			result = s3Client.listObjectsV2(request);
+		}
+
+		@ExecuteOrder(step = 3, desc = "检查指定prefix和delimiter查询对象列表的匹配结果")
+		public void checkResult() {
 			List<String> commonPrefixes = result.getCommonPrefixes();
 			ObjectUtils.checkListObjectsV2Commprefixes(commonPrefixes, expCommprefixList);
 

@@ -47,17 +47,14 @@ public class CreateObject18183 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		// TODO:1、不是用例测试点，建议放到setUp中，另外预置条件不用检查结果
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		ThreadExecutor es = new ThreadExecutor();
 		for (int i = 0; i < threadNum; i++) {
-			es.addWorker(new TransPutObject18183());
+			es.addWorker(new ThreadPutObject18183());
 		}
 		es.run();
 		List<String> expCommprefixList = new ArrayList<>();
@@ -83,10 +80,18 @@ public class CreateObject18183 extends S3TestBase {
 		}
 	}
 
-	class TransPutObject18183 {
+	class ThreadPutObject18183 {
+		private AmazonS3 s3Client = CommLib.buildS3Client();
+
 		@ExecuteOrder(step = 1, desc = "上传对象")
 		public void putObject() {
-			s3Client.putObject(bucketName, keyName, new File(filePath));
+			try {
+				s3Client.putObject(bucketName, keyName, new File(filePath));
+			} finally {
+				if (s3Client != null) {
+					s3Client.shutdown();
+				}
+			}
 		}
 	}
 }

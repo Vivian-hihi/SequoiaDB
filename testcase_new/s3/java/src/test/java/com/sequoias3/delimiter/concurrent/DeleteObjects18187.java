@@ -52,14 +52,11 @@ public class DeleteObjects18187 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		// TODO:1、预置条件建议放到setUp里面
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		// 上传多个对象，对象名中包含分隔符且分解目录相同
 		for (int i = 0; i < objectNum; i++) {
 			String currentKey = keyName + delimiter + "_" + i + ".txt";
@@ -69,7 +66,7 @@ public class DeleteObjects18187 extends S3TestBase {
 
 		ThreadExecutor es = new ThreadExecutor();
 		for (String key : keyNames) {
-			es.addWorker(new TransDeleteObject18187(key));
+			es.addWorker(new ThreadDeleteObject18187(key));
 		}
 		es.run();
 
@@ -94,10 +91,10 @@ public class DeleteObjects18187 extends S3TestBase {
 		}
 	}
 
-	class TransDeleteObject18187 {
+	class ThreadDeleteObject18187 {
 		private String keyName = "";
 
-		public TransDeleteObject18187(String deleteKeyName) {
+		public ThreadDeleteObject18187(String deleteKeyName) {
 			this.keyName = deleteKeyName;
 		}
 

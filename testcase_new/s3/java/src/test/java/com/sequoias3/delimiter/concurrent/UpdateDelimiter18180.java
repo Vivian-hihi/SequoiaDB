@@ -2,13 +2,11 @@ package com.sequoias3.delimiter.concurrent;
 
 import java.util.List;
 
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
@@ -42,13 +40,15 @@ public class UpdateDelimiter18180 extends S3TestBase {
 		for (int i = 0; i < objectNames.length; i++) {
 			s3Client.putObject(bucketName, objectNames[i], "object_file18180");
 		}
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
 		ThreadExecutor es = new ThreadExecutor();
 		for (int i = 0; i < threadNum; i++) {
-			es.addWorker(new TransUpdateDelimiter18180());
+			es.addWorker(new ThreadUpdateDelimiter18180());
 		}
 		es.run();
 
@@ -76,15 +76,10 @@ public class UpdateDelimiter18180 extends S3TestBase {
 		}
 	}
 
-	class TransUpdateDelimiter18180 {
+	class ThreadUpdateDelimiter18180 {
 		@ExecuteOrder(step = 1, desc = "更新分隔符")
 		public void updateDelimiter() {
-			try {
-				DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-			} catch (AmazonS3Exception e) {
-				// TODO:1、改成相同的分隔符是不修改执行返回成功吧，这里不应该有报错的
-				Assert.assertEquals(e.getErrorCode(), "DelimiterNotStable");
-			}
+			DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		}
 	}
 }

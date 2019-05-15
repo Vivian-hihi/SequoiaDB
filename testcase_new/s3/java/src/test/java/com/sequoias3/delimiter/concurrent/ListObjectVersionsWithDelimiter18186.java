@@ -56,14 +56,11 @@ public class ListObjectVersionsWithDelimiter18186 extends S3TestBase {
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		// TODO:1、预置条件可以放到setUp中，另外不需要检查结果
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		for (int i = 0; i < objectNum; i++) {
 			String currentKey = keyName + "_" + i + delimiter + ".txt";
 			for (int j = 0; j < versionNum; j++) {
@@ -73,8 +70,8 @@ public class ListObjectVersionsWithDelimiter18186 extends S3TestBase {
 		}
 
 		ThreadExecutor es = new ThreadExecutor();
-		es.addWorker(new TransListObjectVersions18186());
-		es.addWorker(new TransListObjectVersionsWithDelimiter18186());
+		es.addWorker(new ThreadListObjectVersions18186());
+		es.addWorker(new ThreadListObjectVersionsWithDelimiter18186());
 		es.run();
 		runSuccess = true;
 	}
@@ -93,38 +90,48 @@ public class ListObjectVersionsWithDelimiter18186 extends S3TestBase {
 		}
 	}
 
-	// TODO:2、并发线程中执行步骤要和检查结果分开
-	class TransListObjectVersions18186 {
+	class ThreadListObjectVersions18186 {
+		private VersionListing vsList = new VersionListing();
+		private String[] objectNames = keyNames.toArray(new String[keyNames.size()]);
+
 		@ExecuteOrder(step = 1, desc = "不设置筛选条件查询对象版本列表")
 		public void ListObjectVersions() {
-			String[] objectNames = keyNames.toArray(new String[keyNames.size()]);
+			vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
+		}
+
+		@ExecuteOrder(step = 2, desc = "检查匹配结果")
+		public void checkResult() {
 			List<String> expCommprefixList = new ArrayList<>();
-			VersionListing vsList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName));
 			// expected versions result
-			MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+			MultiValueMap<String, String> expVersionsMap = new LinkedMultiValueMap<String, String>();
 			for (int i = 0; i < objectNames.length; i++) {
 				for (int j = versionNum - 1; j >= 0; j--) {
-					expMap.add(objectNames[i], String.valueOf(j));
+					expVersionsMap.add(objectNames[i], String.valueOf(j));
 				}
 			}
 
 			Assert.assertFalse(vsList.isTruncated(), "vsList.isTruncated() must be false");
-			ObjectUtils.checkListVSResults(vsList, expCommprefixList, expMap);
+			ObjectUtils.checkListVSResults(vsList, expCommprefixList, expVersionsMap);
 		}
 	}
 
-	class TransListObjectVersionsWithDelimiter18186 {
+	class ThreadListObjectVersionsWithDelimiter18186 {
+		private String[] objectNames = keyNames.toArray(new String[keyNames.size()]);
+		private VersionListing vsList = new VersionListing();
+
 		@ExecuteOrder(step = 1, desc = "指定delimiter查询对象版本列表")
 		public void ListObjectVersions() {
-			String[] objectNames = keyNames.toArray(new String[keyNames.size()]);
-			List<String> expCommprefixList = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
-			VersionListing vsList = s3Client
+			vsList = s3Client
 					.listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter));
+		}
 
+		@ExecuteOrder(step = 3, desc = "检查指定delimiter查询对象版本列表匹配结果")
+		public void checkResult() {
+			List<String> expCommprefixList = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
 			// expected versions result
-			MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+			MultiValueMap<String, String> expVersionsMap = new LinkedMultiValueMap<String, String>();
 			Assert.assertFalse(vsList.isTruncated(), "vsList.isTruncated() must be true");
-			ObjectUtils.checkListVSResults(vsList, expCommprefixList, expMap);
+			ObjectUtils.checkListVSResults(vsList, expCommprefixList, expVersionsMap);
 		}
 	}
 }

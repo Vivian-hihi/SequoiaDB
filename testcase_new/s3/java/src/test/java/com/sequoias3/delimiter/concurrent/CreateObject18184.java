@@ -49,18 +49,15 @@ public class CreateObject18184 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		// TODO:1、预置条件建议放到setUp中
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		ThreadExecutor es = new ThreadExecutor();
 		for (int i = 0; i < threadNum; i++) {
 			String currentKey = keyName + "_" + i + delimiter + ".txt";
-			es.addWorker(new PutObject18184(currentKey));
+			es.addWorker(new ThreadPutObject18184(currentKey));
 			keyNames.add(currentKey);
 		}
 		es.run();
@@ -89,11 +86,11 @@ public class CreateObject18184 extends S3TestBase {
 		}
 	}
 
-	class PutObject18184 {
+	class ThreadPutObject18184 {
 		private String keyName = "";
 		private AmazonS3 s3Client = CommLib.buildS3Client();
 
-		public PutObject18184(String keyName) {
+		public ThreadPutObject18184(String keyName) {
 			this.keyName = keyName;
 		}
 
