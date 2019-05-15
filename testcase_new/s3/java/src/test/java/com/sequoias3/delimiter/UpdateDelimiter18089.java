@@ -56,40 +56,38 @@ public class UpdateDelimiter18089 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
+		accessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
+
 	}
 
 	@Test(dataProvider = "delimitersProvider")
 	private void testUpdateDelimiter(String newDelimiter) throws Exception {
-		// TODO:1、用例中建议创建一次用户，没有必要每次都创建/新增用户，桶也可以考虑只创建一次
-		CommLib.clearUser(userName);
-		accessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
+		// 因为本用例为更新不同格式的分隔符，在短时间内频繁更新桶的分隔符会导致用例执行时间比较长，所以这里每次都新创建桶。
 		s3Client.createBucket(bucketName);
-		// TODO:2、创建对象建议加上用例ID，方便区分不同用例中的key
-		objectNames = DelimiterUtils.getRandomKeyListWithDelimiter(oldDelimiter, newDelimiter, keyNum);
+		objectNames = DelimiterUtils.getRandomKeyListWithDelimiter(oldDelimiter, newDelimiter, keyNum, "18089");
 		for (int i = 0; i < objectNames.length; i++) {
 			s3Client.putObject(bucketName, objectNames[i], "test18089");
 		}
 
-		// 更新分隔符为delimiter2并检查结果(这里通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验)
+		// 更新分隔符为newDelimiter并检查结果(这里通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验)
 		DelimiterUtils.putBucketDelimiter(bucketName, newDelimiter, accessKeys[0]);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, newDelimiter, accessKeys[0]);
 
 		List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames, "", newDelimiter);
 		List<String> expContents = new ArrayList<>();
 		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, newDelimiter, expCommonPrefixes, expContents);
+
+		CommLib.clearBucket(s3Client, bucketName);
 		runSuccess = true;
-		if (runSuccess) {
-			UserUtils.deleteUser(userName);
-		}
 	}
 
-	// TODO:3、tearDown中关闭连接只需要调用一次
 	@AfterClass
 	private void tearDown() throws Exception {
 		try {
-			if (s3Client != null) {
-				s3Client.shutdown();
+			if (runSuccess) {
+				UserUtils.deleteUser(userName);
 			}
 		} finally {
 			if (s3Client != null) {

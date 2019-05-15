@@ -59,17 +59,16 @@ public class ListObjectVersionsWithDelimiter18149 extends S3TestBase {
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
+		accessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
 
 	@Test(dataProvider = "delimitersProvider")
 	private void testUpdateDelimiter(String newDelimiter) throws Exception {
-		// TODO:1、没有必要每个步骤都创建/删除用户和桶
-		CommLib.clearUser(userName);
-		accessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
 
-		objectNames = DelimiterUtils.getRandomKeyListWithDelimiter(oldDelimiter, newDelimiter, keyNum);
+		objectNames = DelimiterUtils.getRandomKeyListWithDelimiter(oldDelimiter, newDelimiter, keyNum, "18149");
 		for (int i = 0; i < objectNames.length; i++) {
 			s3Client.putObject(bucketName, objectNames[i], "test18149");
 		}
@@ -85,18 +84,16 @@ public class ListObjectVersionsWithDelimiter18149 extends S3TestBase {
 
 		List<S3VersionSummary> versions = versionList.getVersionSummaries();
 		Assert.assertEquals(versions.size(), 0);
+
+		CommLib.clearBucket(s3Client, bucketName);
 		runSuccess = true;
-		// TODO:2、runSuccess是清理环境判断用的，不要放到test里面
-		if (runSuccess) {
-			UserUtils.deleteUser(userName);
-		}
 	}
 
 	@AfterClass
 	private void tearDown() throws Exception {
 		try {
-			if (s3Client != null) {
-				s3Client.shutdown();
+			if (runSuccess) {
+				UserUtils.deleteUser(userName);
 			}
 		} finally {
 			if (s3Client != null) {

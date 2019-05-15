@@ -30,24 +30,22 @@ public class UpdateDelimiter18090 extends S3TestBase {
 	private AmazonS3 s3Client = null;
 	private String[] accessKeys = null;
 
-	// TODO:1、建议补充相关测试项描述信息，另外对象数组命名和实际意义也不符
 	@DataProvider(name = "delimiterProvider")
-	public Object[][] recordNumsProvider() {
+	public Object[][] delimiterProvider() {
+		// 对象名覆盖单字符和多字符
 		return new Object[][] { { "a" }, { "aa" }, { "aaa" }, };
 	}
 
 	@BeforeClass
 	private void setUp() throws Exception {
+		CommLib.clearUser(userName);
+		accessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
 
 	@Test(dataProvider = "delimiterProvider")
 	private void testUpdateDelimiter(String newDelimiter) throws Exception {
-		// TODO:这里的用户和桶都没有必要重复创建和删除
-		CommLib.clearUser(userName);
-		accessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
-
 		for (int i = 0; i < objectNames.length; i++) {
 			s3Client.putObject(bucketName, objectNames[i], "test18084");
 		}
@@ -59,16 +57,21 @@ public class UpdateDelimiter18090 extends S3TestBase {
 		List<String> matchContentsList = ObjectUtils.getKeys(objectNames, "", newDelimiter);
 		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, newDelimiter, expCommonPrefixes,
 				matchContentsList);
+
+		CommLib.clearBucket(s3Client, bucketName);
 		runSuccess = true;
-		if (runSuccess) {
-			UserUtils.deleteUser(userName);
-		}
 	}
 
 	@AfterClass
 	private void tearDown() throws Exception {
-		if (s3Client != null) {
-			s3Client.shutdown();
+		try {
+			if (runSuccess) {
+				UserUtils.deleteUser(userName);
+			}
+		} finally {
+			if (s3Client != null) {
+				s3Client.shutdown();
+			}
 		}
 	}
 }

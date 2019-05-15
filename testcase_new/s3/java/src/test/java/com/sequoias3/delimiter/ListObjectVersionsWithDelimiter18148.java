@@ -1,10 +1,11 @@
 package com.sequoias3.delimiter;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -32,11 +33,11 @@ public class ListObjectVersionsWithDelimiter18148 extends S3TestBase {
 	private String bucketName = "bucket18148";
 	private String[] keyNames = { "dir1/test18148_1", "dir1/test18148_1", "dir1/test18148_1", "dir1/dir2/test18148_2",
 			"dir1/dir2/test18148_2", "dir1/dir2/test18148_2", "/dir/test/test18148_3", "test18148_4",
-			"dir1/test1/test18148_5", "dir/log", "dir/log", "dir/log", "dir1/log" };
+			"dir1/test1/test18148_5", "dir/log", "dir/log", "dir/log" };
 
-	private String[] multiVerKeys = { "dir1/test18148_1", "dir1/dir2/test18148_2", "dir/log" };
+	private String versionsKey = "dir/log";
 	private List<String> expCommPrefixes = new ArrayList<>();
-	private List<String> expVersionList = new ArrayList<String>();
+	private MultiValueMap<String, String> expVersionsMap = new LinkedMultiValueMap<String, String>();
 	private String delimiter = "tes";
 	private int versionNum = 3;
 	private AmazonS3 s3Client = null;
@@ -53,22 +54,22 @@ public class ListObjectVersionsWithDelimiter18148 extends S3TestBase {
 		for (String objectName : keyNames) {
 			s3Client.putObject(bucketName, objectName, "object_file18148");
 		}
+
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+
+		expCommPrefixes = ObjectUtils.getCommPrefixes(keyNames, "", delimiter);
+		for (int i = versionNum - 1; i >= 0; i--) {
+			expVersionsMap.add(versionsKey, String.valueOf(i));
+		}
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
+		// maxKeys 大于匹配记录数时一次返回对象版本列表的所有匹配结果，这里设置MaxResults为10
+		ListVersionsAtOnce(10, expCommPrefixes.size() + expVersionsMap.get(versionsKey).size());
 
-		expCommPrefixes = ObjectUtils.getCommPrefixes(keyNames, "", delimiter);
-		expVersionList = ObjectUtils.getKeys(keyNames, "", delimiter);
-		Collections.sort(expVersionList);
-		// maxKeys 大于匹配记录数
-		// TODO:1、常量10请给出具体定义和描述，另外这里看不到执行步骤，只有checkResult方法，建议区分；用例执行步骤和检测结果尽量简洁方便维护
-		checkResult(10, expCommPrefixes.size() + expVersionList.size());
-
-		// maxKeys 小于匹配记录数
-		checkResult(1, 1);
+		// maxKeys 小于匹配记录数时分多次返回对象版本列表的所有匹配结果，这里设置MaxResults为1
+		ListVersionsWithMultTimes(1);
 
 		runSuccess = true;
 	}
@@ -87,25 +88,44 @@ public class ListObjectVersionsWithDelimiter18148 extends S3TestBase {
 		}
 	}
 
-	private void checkResult(int maxResults, int expOnceReturnedNum) {
+	private void ListVersionsAtOnce(int maxResults, int expOnceReturnedNum) {
 		ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter)
 				.withMaxResults(maxResults);
+
 		VersionListing versionList = s3Client.listVersions(req);
 		List<String> commonPrefixes = new ArrayList<String>();
-		List<KeyAndVersionId> actVersionList = new ArrayList<KeyAndVersionId>();
+		int onceReturn = 0;
+		commonPrefixes.addAll(versionList.getCommonPrefixes());
+		onceReturn += versionList.getCommonPrefixes().size();
+		List<S3VersionSummary> verList = versionList.getVersionSummaries();
+
+		onceReturn += verList.size();
+		Assert.assertEquals(onceReturn, expOnceReturnedNum, "commonPrefixes : " + commonPrefixes.toString());
+		if (!versionList.isTruncated()) {
+			ObjectUtils.checkListVSResults(versionList, expCommPrefixes, expVersionsMap);
+		} else {
+			Assert.fail("vsList.isTruncated() must be false");
+		}
+	}
+
+	private void ListVersionsWithMultTimes(int maxResults) {
+		ListVersionsRequest req = new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter)
+				.withMaxResults(maxResults);
+
+		VersionListing versionList = s3Client.listVersions(req);
+		List<String> actCommonPrefixes = new ArrayList<String>();
+		MultiValueMap<String, String> actVersionsMap = new LinkedMultiValueMap<String, String>();
 		while (true) {
 			int onceReturn = 0;
-			commonPrefixes.addAll(versionList.getCommonPrefixes());
+			actCommonPrefixes.addAll(versionList.getCommonPrefixes());
 			onceReturn += versionList.getCommonPrefixes().size();
 			List<S3VersionSummary> verList = versionList.getVersionSummaries();
-			for (S3VersionSummary s3VersionSummary : verList) {
-				KeyAndVersionId obj = new KeyAndVersionId(s3VersionSummary.getKey(), s3VersionSummary.getVersionId());
-				actVersionList.add(obj);
+			for (S3VersionSummary versionSummary : verList) {
+				actVersionsMap.add(versionSummary.getKey(), versionSummary.getVersionId());
 			}
 
 			onceReturn += verList.size();
-			Assert.assertEquals(onceReturn, expOnceReturnedNum,
-					"commonPrefixes : " + commonPrefixes.toString() + ", versions : " + printList(actVersionList));
+			Assert.assertEquals(onceReturn, maxResults, "commonPrefixes : " + actCommonPrefixes.toString());
 			if (versionList.isTruncated()) {
 				versionList = s3Client.listNextBatchOfVersions(versionList);
 			} else {
@@ -113,42 +133,13 @@ public class ListObjectVersionsWithDelimiter18148 extends S3TestBase {
 			}
 		}
 
-		ObjectUtils.checkListObjectsV2Commprefixes(commonPrefixes, expCommPrefixes);
-
-		// check keys of versions
-		Assert.assertEquals(actVersionList.size(), expVersionList.size(),
-				" act result is : " + actVersionList.toString() + " , exp result is : " + expVersionList.toString());
-
-		int versionId = versionNum - 1;
-		List<String> expVersionId = Arrays.asList(multiVerKeys);
-		for (int i = 0; i < actVersionList.size(); i++) {
-			String currentKey = actVersionList.get(i).key;
-			String currentVersion = actVersionList.get(i).versionId;
-			Assert.assertEquals(currentKey, expVersionList.get(i));
-			if (expVersionId.contains(currentKey)) {
-				Assert.assertEquals(currentVersion, String.valueOf(versionId));
-				versionId--;
-			} else {
-				Assert.assertEquals(currentVersion, "0", " current key is : " + currentKey);
-			}
+		Assert.assertEquals(actCommonPrefixes, expCommPrefixes, "actCommonPrefixes = " + actCommonPrefixes.toString()
+				+ ",expCommonPrefixes = " + expCommPrefixes.toString());
+		Assert.assertEquals(actVersionsMap.size(), expVersionsMap.size(),
+				"actMap = " + actVersionsMap.toString() + ",expVersionsMap = " + expVersionsMap.toString());
+		for (Map.Entry<String, List<String>> entry : expVersionsMap.entrySet()) {
+			Assert.assertEquals(actVersionsMap.get(entry.getKey()), expVersionsMap.get(entry.getKey()),
+					"actMap = " + actVersionsMap.toString() + ",expVersionsMap = " + expVersionsMap.toString());
 		}
-	}
-
-	private class KeyAndVersionId {
-		private String key = "";
-		private String versionId = "";
-
-		public KeyAndVersionId(String key, String versionId) {
-			this.key = key;
-			this.versionId = versionId;
-		}
-	}
-
-	private String printList(List<KeyAndVersionId> versionList) {
-		String str = "";
-		for (KeyAndVersionId obj : versionList) {
-			str += "[key : " + obj.key + ", value : " + obj.versionId + "]";
-		}
-		return str;
 	}
 }

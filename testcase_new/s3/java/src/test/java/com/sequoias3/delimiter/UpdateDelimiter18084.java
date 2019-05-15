@@ -35,23 +35,21 @@ public class UpdateDelimiter18084 extends S3TestBase {
 
 	@DataProvider(name = "keyNumsProvider")
 	public Object[][] recordNumsProvider() {
-		// TODO:常量数据请给出描述信息和具体含义
+		// 对象记录数覆盖小于10条，10条，大于10条
 		return new Object[][] { { 5 }, { 10 }, { 15 }, };
 	}
 
 	@BeforeClass
 	private void setUp() throws Exception {
-	}
-
-	@Test(dataProvider = "keyNumsProvider")
-	private void testUpdateDelimiter(int keyNum) throws Exception {
-		// TODO:创建用户和桶没有必要每次操作都创建再删除
 		CommLib.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
-		// TODO:key名建议带上用例ID，如果出问题方便在日志中查看
-		keyList = DelimiterUtils.getRandomKeyListWithDelimiter(delimiter1, delimiter2, keyNum);
+	}
+
+	@Test(dataProvider = "keyNumsProvider")
+	private void testUpdateDelimiter(int keyNum) throws Exception {
+		keyList = DelimiterUtils.getRandomKeyListWithDelimiter(delimiter1, delimiter2, keyNum, "18084");
 		for (int i = 0; i < keyList.length; i++) {
 			s3Client.putObject(bucketName, keyList[i], "test18084");
 		}
@@ -63,16 +61,21 @@ public class UpdateDelimiter18084 extends S3TestBase {
 		List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(keyList, "", delimiter2);
 		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter2, expCommonPrefixes,
 				new ArrayList<String>());
+
+		CommLib.deleteAllObjects(s3Client, bucketName);
 		runSuccess = true;
-		if (runSuccess) {
-			UserUtils.deleteUser(userName);
-		}
 	}
 
 	@AfterClass
 	private void tearDown() throws Exception {
-		if (s3Client != null) {
-			s3Client.shutdown();
+		try {
+			if (runSuccess) {
+				UserUtils.deleteUser(userName);
+			}
+		} finally {
+			if (s3Client != null) {
+				s3Client.shutdown();
+			}
 		}
 	}
 }

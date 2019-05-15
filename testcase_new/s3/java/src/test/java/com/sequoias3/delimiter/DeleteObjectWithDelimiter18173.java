@@ -32,7 +32,6 @@ public class DeleteObjectWithDelimiter18173 extends S3TestBase {
 	private File localPath = null;
 	private String filePath = null;
 
-	@SuppressWarnings("deprecation")
 	@BeforeClass
 	private void setUp() throws Exception {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
@@ -42,18 +41,11 @@ public class DeleteObjectWithDelimiter18173 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		s3Client = CommLib.buildS3Client();
-		// TODO:1、这个可以直接用clearBucket的公共方法
-		if (s3Client.doesBucketExist(bucketName)) {
-			ObjectUtils.deleteObjectAllVersions(s3Client, bucketName, key);
-			s3Client.deleteBucket(bucketName);
-		}
-
+		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Suspended");
 
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		// TODO:2、非测试点，不用校验
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 		s3Client.putObject(bucketName, key, new File(filePath));
 	}
 

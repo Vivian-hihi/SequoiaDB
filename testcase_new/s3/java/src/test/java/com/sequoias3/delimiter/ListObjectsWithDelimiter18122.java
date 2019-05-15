@@ -50,8 +50,6 @@ public class ListObjectsWithDelimiter18122 extends S3TestBase {
 
 		// 将分隔符设置为? （默认为'/'）
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		// TODO:1、这个不是测试点，可以不用检查
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
 		for (int i = 0; i < objectNames.length; i++) {
 			s3Client.putObject(bucketName, objectNames[i], new File(filePath));

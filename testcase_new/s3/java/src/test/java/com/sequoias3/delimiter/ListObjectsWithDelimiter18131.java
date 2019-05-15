@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -12,6 +13,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
@@ -31,7 +33,7 @@ public class ListObjectsWithDelimiter18131 extends S3TestBase {
 	private String[] objectNames = { "dir1/test18131_1", "dir1/dir2/test18131_2", "dir/aa/test18131_3", "test18131_4" };
 	private String delimiter = "test";
 	private int maxkeys = 2;
-	private List<String> expresultList = new ArrayList<String>();
+	private List<String> expCommonprefixes = new ArrayList<String>();
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
@@ -51,8 +53,8 @@ public class ListObjectsWithDelimiter18131 extends S3TestBase {
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
-		expresultList = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
-		Collections.sort(expresultList);
+		expCommonprefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
+		Collections.sort(expCommonprefixes);
 		List<String> commprefixesResult = new ArrayList<>();
 		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withDelimiter(delimiter)
 				.withMaxKeys(maxkeys);
@@ -61,18 +63,10 @@ public class ListObjectsWithDelimiter18131 extends S3TestBase {
 		result = s3Client.listObjectsV2(req);
 		commprefixesResult.addAll(result.getCommonPrefixes());
 
-		// 删除下一个匹配到的记录
-		// TODO:1、用例中是要删除nextToken匹配的记录，可以通过获取匹配是哪条记录
-		String nextCommprefix = expresultList.get(2);
-		String tobeDeleteKey = "";
-		for (int i = 0; i < objectNames.length; i++) {
-			if (objectNames[i].startsWith(nextCommprefix)) {
-				tobeDeleteKey = objectNames[i];
-				expresultList.remove(2);
-				break;
-			}
-		}
+		// 删除下一个匹配到的记录对应的对象，并且将expCommonprefixes中对应的值删除
+		String tobeDeleteKey = getNextRecordKey(Integer.valueOf(maxkeys));
 		s3Client.deleteObject(bucketName, tobeDeleteKey);
+		expCommonprefixes.remove(maxkeys);
 
 		String nextContinuationToken = result.getNextContinuationToken();
 		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName).withDelimiter(delimiter)
@@ -80,9 +74,17 @@ public class ListObjectsWithDelimiter18131 extends S3TestBase {
 		ListObjectsV2Result result2 = s3Client.listObjectsV2(req2);
 		commprefixesResult.addAll(result2.getCommonPrefixes());
 
+		List<String> contentsResult = new ArrayList<>();
+		List<S3ObjectSummary> contents = result.getObjectSummaries();
+		for (S3ObjectSummary content : contents) {
+			contentsResult.add(content.getKey());
+		}
+
+		List<String> expContents = ObjectUtils.getKeys(objectNames, "", delimiter);
+
 		// check result
-		// TODO:2、测试结果需要覆盖所有检查项
-		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList);
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expCommonprefixes);
+		Assert.assertEquals(contentsResult, expContents);
 		runSuccess = true;
 	}
 
@@ -98,5 +100,19 @@ public class ListObjectsWithDelimiter18131 extends S3TestBase {
 				s3Client.shutdown();
 			}
 		}
+	}
+
+	private String getNextRecordKey(int deleteIndex) {
+		// 获取下次返回的commonprefix值
+		String nextCommprefix = expCommonprefixes.get(deleteIndex);
+		String nextRecordKey = "";
+		// 找到objectNames中与nextCommprefix对应的对象名
+		for (int i = 0; i < objectNames.length; i++) {
+			if (objectNames[i].startsWith(nextCommprefix)) {
+				nextRecordKey = objectNames[i];
+				break;
+			}
+		}
+		return nextRecordKey;
 	}
 }

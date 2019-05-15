@@ -93,7 +93,6 @@ public class CreateObject18097 extends S3TestBase {
 		Assert.assertEquals(obj.getKey(), keyName);
 		Assert.assertEquals(actMd5, expMd5);
 
-		// TODO:使用分隔符查询建议校验所有结果，包括commonprefix和content
 		// 通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
 		request.withDelimiter(delimiter);
@@ -101,5 +100,6 @@ public class CreateObject18097 extends S3TestBase {
 		List<String> commonPrefixes = result.getCommonPrefixes();
 		Assert.assertEquals(commonPrefixes.size(), 1);
 		Assert.assertEquals(commonPrefixes.get(0), expCommPerfix);
+		Assert.assertEquals(result.getObjectSummaries().size(), 0);
 	}
 }

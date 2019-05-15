@@ -1,9 +1,12 @@
 package com.sequoias3.delimiter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -12,7 +15,6 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -20,8 +22,8 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: 带前缀prefix和delimiter查询对象版本列表，匹配对象无对应目录
- * testlink-case: seqDB-18144
+ * test content: 带前缀prefix和delimiter查询对象版本列表，匹配对象无对应目录 testlink-case:seqDB-18144
+ * 
  * @author wangkexin
  * @Date 2019.05.05
  * @version 1.00
@@ -29,7 +31,10 @@ import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 public class ListObjectVersionsWithDelimiter18144 extends S3TestBase {
 	private String bucketName = "bucket18144";
-	private String[] keyName = {"dir1/test18144_1","dir1/Dir2/dir3/test18144_2","dir1/test18144_3","dir1/dir2/aa/test18144_4","testdir18144.txt"};
+	private String[] keyName = { "dir1/test18144_1", "dir1/Dir2/dir3/test18144_2", "dir1/test18144_3",
+			"dir1/dir2/aa/test18144_4", "testdir18144.txt" };
+	private List<String> versionsKeys = new ArrayList<String>(Arrays.asList("dir1/test18144_1",
+			"dir1/Dir2/dir3/test18144_2", "dir1/test18144_3", "dir1/dir2/aa/test18144_4"));
 	private String delimiter = "?";
 	private String prefix = "dir1";
 	private int versionNum = 3;
@@ -39,66 +44,52 @@ public class ListObjectVersionsWithDelimiter18144 extends S3TestBase {
 	@BeforeClass
 	private void setUp() throws Exception {
 		s3Client = CommLib.buildS3Client();
-		//create bucket and set bucket version status
+		// create bucket and set bucket version status
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
-		
+
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		
-		//put multiple objects
+
+		// put multiple objects
 		for (String objectName : keyName) {
-            for (int j = 0; j < versionNum; j++) {
-                s3Client.putObject(bucketName, objectName, "object_file18144");
-            }
-        }
+			for (int j = 0; j < versionNum; j++) {
+				s3Client.putObject(bucketName, objectName, "object_file18144");
+			}
+		}
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		//查看访问计划索引为目录索引
-		VersionListing versionList = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter).withPrefix(prefix));
-		List<String> commonPrefixes = versionList.getCommonPrefixes();
-		Assert.assertEquals(commonPrefixes.size(), 0);
-		
-		List<String> actVersionList = new ArrayList<>();
-		List<String> actVersionIdList = new ArrayList<>();
-		List<S3VersionSummary> verList = versionList.getVersionSummaries();
-		for(S3VersionSummary version : verList){
-			actVersionList.add(version.getKey());
-			actVersionIdList.add(version.getVersionId());
-			Assert.assertFalse(version.isDeleteMarker(), "isDeleteMarker is wrong , key = " + version.getKey());
-		}
-		
-		//check keys of versions
-		List<String> expVersionList =  new ArrayList<>();
-		for(int i = 0; i < versionNum ; i++){
-			expVersionList.addAll(ObjectUtils.getKeys(keyName, prefix, delimiter));
-		}
-		Collections.sort(expVersionList);
-		Assert.assertEquals(actVersionList, expVersionList);
-		
-		//check keys' versionid of versions
-		int keyNum = ObjectUtils.getKeys(keyName, prefix, delimiter).size();
-		List<String> expVersionIdList = new ArrayList<>();
-		for(int i = 0 ; i < keyNum ; i++){
-			for(int j = versionNum - 1 ; j >= 0 ; j--){
-				expVersionIdList.add(String.valueOf(j));
+		// 查看访问计划索引为目录索引
+		VersionListing versionList = s3Client.listVersions(
+				new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter).withPrefix(prefix));
+		List<String> expCommPrefixes = new ArrayList<>();
+
+		MultiValueMap<String, String> expVersionsMap = new LinkedMultiValueMap<String, String>();
+		Collections.sort(versionsKeys);
+		for (int i = 0; i < versionsKeys.size(); i++) {
+			for (int j = versionNum - 1; j >= 0; j--) {
+				expVersionsMap.add(versionsKeys.get(i), String.valueOf(j));
 			}
 		}
-		
-		Assert.assertEquals(actVersionIdList, expVersionIdList, "actVersionIdList : " + actVersionIdList.toString() + " , expVersionIdList : " + expVersionIdList.toString());
-		runSuccess =true;
+
+		if (!versionList.isTruncated()) {
+			ObjectUtils.checkListVSResults(versionList, expCommPrefixes, expVersionsMap);
+		} else {
+			Assert.fail("vsList.isTruncated() must be false");
+		}
+		runSuccess = true;
 	}
 
 	@AfterClass
 	private void tearDown() {
-		try{
+		try {
 			if (runSuccess) {
 				CommLib.deleteAllObjectVersions(s3Client, bucketName);
 				s3Client.deleteBucket(bucketName);
 			}
-		}finally{
+		} finally {
 			if (s3Client != null) {
 				s3Client.shutdown();
 			}

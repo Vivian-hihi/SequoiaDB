@@ -20,8 +20,9 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 
 /**
- * test content: 带prefix、delimiter和start-after匹配查询对象元数据列表
- * testlink-case: seqDB-18123
+ * test content: 带prefix、delimiter和start-after匹配查询对象元数据列表 testlink-case:
+ * seqDB-18123
+ * 
  * @author wangkexin
  * @Date 2019.04.16
  * @version 1.00
@@ -30,8 +31,9 @@ public class ListObjectsWithDelimiter18123 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket18123";
 	private String delimiter = "#";
-	private String[] objectNames = {"dir1#test18123_1","dir1#dir2#/#dir3#test18123_2","dir1#test18123_3",
-			"dir1#dir2#aa#test18123_4","dir1#dir2#aa#cc#test18123_5","dir1#dir2#aa#dd#test18123_6","dir1#testdir18123.txt"};
+	private String[] objectNames = { "dir1#test18123_1", "dir1#dir2#/#dir3#test18123_2", "dir1#test18123_3",
+			"dir1#dir2#aa#test18123_4", "dir1#dir2#aa#cc#test18123_5", "dir1#dir2#aa#dd#test18123_6",
+			"dir1#testdir18123.txt" };
 	private String perfix = "dir1";
 	private File localPath = null;
 	private AmazonS3 s3Client = null;
@@ -52,9 +54,8 @@ public class ListObjectsWithDelimiter18123 extends S3TestBase {
 
 		// 将分隔符设置为# （默认为'/'）
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
-		for(int i = 0 ; i < objectNames.length; i++){
+		for (int i = 0; i < objectNames.length; i++) {
 			s3Client.putObject(bucketName, objectNames[i], new File(filePath));
 		}
 	}
@@ -67,13 +68,13 @@ public class ListObjectsWithDelimiter18123 extends S3TestBase {
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
 		List<String> commonPrefixes = result.getCommonPrefixes();
-		
+
 		List<String> expCommonPrefixes = ObjectUtils.getCommPrefixes(objectNames, perfix, delimiter);
 		Collections.sort(expCommonPrefixes);
 		Collections.sort(commonPrefixes);
 		Assert.assertEquals(commonPrefixes, expCommonPrefixes);
 		Assert.assertEquals(objects.size(), 0);
-		
+
 		runSuccess = true;
 	}
 

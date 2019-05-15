@@ -1,8 +1,10 @@
 package com.sequoias3.delimiter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -11,6 +13,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoias3.testcommon.CommLib;
@@ -30,7 +33,9 @@ public class ListObjectsWithDelimiter18134 extends S3TestBase {
 	private String bucketName = "bucket18134";
 	private String[] objectNames = new String[100];
 	private String delimiter = "test";
-	private List<String> expresultList = new ArrayList<String>();
+	private List<String> expCommprefixes = new ArrayList<String>();
+	private List<String> expContents = new ArrayList<String>(
+			Arrays.asList("18134_1.txt", "18134_2.txt", "18134_3.txt"));
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
@@ -43,13 +48,17 @@ public class ListObjectsWithDelimiter18134 extends S3TestBase {
 			objectNames[i] = currentKey;
 			s3Client.putObject(bucketName, currentKey, "object_file18134");
 		}
+
+		for (String key : expContents) {
+			s3Client.putObject(bucketName, key, "object_file18134");
+		}
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
 		ThreadExecutor es = new ThreadExecutor();
-		es.addWorker(new TransListObjectsV218134());
-		es.addWorker(new TransUpdateDelimiter18134());
+		es.addWorker(new ListObjectsV218134());
+		es.addWorker(new UpdateDelimiter18134());
 		es.run();
 		runSuccess = true;
 	}
@@ -68,8 +77,7 @@ public class ListObjectsWithDelimiter18134 extends S3TestBase {
 		}
 	}
 
-	// TODO:1、类名加上Trans前缀是有特殊意义吗？
-	class TransUpdateDelimiter18134 {
+	class UpdateDelimiter18134 {
 		@ExecuteOrder(step = 1, desc = "更新分隔符")
 		public void updateDelimiter() {
 			DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
@@ -81,7 +89,7 @@ public class ListObjectsWithDelimiter18134 extends S3TestBase {
 		}
 	}
 
-	class TransListObjectsV218134 {
+	class ListObjectsV218134 {
 		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withDelimiter(delimiter);
 		ListObjectsV2Result result = new ListObjectsV2Result();
 
@@ -94,10 +102,16 @@ public class ListObjectsWithDelimiter18134 extends S3TestBase {
 		public void checkResult() {
 			// 手工校验查询方式为元数据扫描方式
 			List<String> commprefixesResult = result.getCommonPrefixes();
-			// TODO:2、测试结果覆盖下所有检查项，包括content记录，这里建议覆盖对象在context的场景
+			List<String> contentsResult = new ArrayList<>();
+			List<S3ObjectSummary> contents = result.getObjectSummaries();
+			for (S3ObjectSummary content : contents) {
+				contentsResult.add(content.getKey());
+			}
 			// check result
-			expresultList = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
-			ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList);
+			expCommprefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
+			ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expCommprefixes);
+			Assert.assertEquals(contentsResult, expContents,
+					"contentsResult :" + contentsResult.toString() + ", expContents :" + expContents.toString());
 		}
 	}
 }

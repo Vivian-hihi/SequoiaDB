@@ -1,9 +1,11 @@
 package com.sequoias3.delimiter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -12,6 +14,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
@@ -31,9 +34,11 @@ public class ListObjectsWithDelimiter18126 extends S3TestBase {
 	private String keyName = "%dir%dir";
 	private String prefix = "%dir%";
 	private String delimiter = "%";
-	private String startAfter = "%dir%dir2%";
-	private List<String> expresultList = new ArrayList<String>();
-	private int objectTotalNum = 1000;
+	private String startAfter = "%dir%dir10%";
+	private List<String> expCommprefixes = new ArrayList<String>();
+	private List<String> expContents = new ArrayList<String>(
+			Arrays.asList("%dir%test18126_1", "%dir%test18126_2", "%dir%test18126_3"));
+	private int objectTotalNum = 2000;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
@@ -49,9 +54,14 @@ public class ListObjectsWithDelimiter18126 extends S3TestBase {
 			String currentKeyName = keyName + i + "%18126";
 			s3Client.putObject(bucketName, currentKeyName, "object_file18126");
 			String commprefix = currentKeyName.substring(0, currentKeyName.lastIndexOf(delimiter) + 1);
-			expresultList.add(commprefix);
+			expCommprefixes.add(commprefix);
 		}
-		Collections.sort(expresultList);
+		Collections.sort(expCommprefixes);
+
+		// 再上传若干不匹配分隔符的对象
+		for (String key : expContents) {
+			s3Client.putObject(bucketName, key, "object_file18126");
+		}
 	}
 
 	@Test
@@ -61,22 +71,34 @@ public class ListObjectsWithDelimiter18126 extends S3TestBase {
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
 		List<String> commprefixesResult = new ArrayList<>();
+		List<String> contentsResult = new ArrayList<>();
 		ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withPrefix(prefix)
 				.withDelimiter(delimiter).withStartAfter(startAfter);
 		ListObjectsV2Result result;
-		// TODO:1、这里无法确认是否有用nexttoken标志去查询
+
+		int queryNum = 0;
 		do {
+			queryNum++;
 			result = s3Client.listObjectsV2(req);
 			commprefixesResult.addAll(result.getCommonPrefixes());
+			List<S3ObjectSummary> contents = result.getObjectSummaries();
+			for (S3ObjectSummary content : contents) {
+				contentsResult.add(content.getKey());
+			}
 			String nextContinuationToken = result.getNextContinuationToken();
 			req.setContinuationToken(nextContinuationToken);
 		} while (result.isTruncated());
 
+		// 保证多次查询，验证nextContinuationToken有效
+		Assert.assertEquals(queryNum, 2);
+
 		// expresultList are stored after 'startAfter'
 		// subList[int,int)
-		expresultList = expresultList.subList(expresultList.indexOf(startAfter) + 1, expresultList.size());
-		// TODO:2、比较结果需要验证所有项
-		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList);
+		expCommprefixes = expCommprefixes.subList(expCommprefixes.indexOf(startAfter) + 1, expCommprefixes.size());
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expCommprefixes);
+		Assert.assertEquals(contentsResult, expContents,
+				"contentsResult :" + contentsResult.toString() + ", expContents :" + expContents.toString());
+
 		runSuccess = true;
 	}
 

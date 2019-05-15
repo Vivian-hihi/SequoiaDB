@@ -43,13 +43,11 @@ public class DeleteObjectWithDelimiter18170 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		s3Client.putObject(bucketName, key, new File(filePath));
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testDeleteObject() throws Exception {
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		s3Client.deleteObject(bucketName, key);
 		// 删除对象后手工查看目录表中对象对应目录也被删除
 		checkDeleteObjectResult(bucketName, key);
@@ -60,10 +58,7 @@ public class DeleteObjectWithDelimiter18170 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				// TODO:1、这里没有必要判断对象是否存在，如果清理环境的时候对象还存在就是有问题，那就应该报错出来
-				if (s3Client.doesObjectExist(bucketName, key)) {
-					s3Client.deleteObject(bucketName, key);
-				}
+				s3Client.deleteObject(bucketName, key);
 				s3Client.deleteBucket(bucketName);
 				TestTools.LocalFile.removeFile(localPath);
 			}

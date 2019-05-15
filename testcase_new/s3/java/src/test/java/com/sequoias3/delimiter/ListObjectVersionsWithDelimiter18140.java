@@ -2,6 +2,7 @@ package com.sequoias3.delimiter;
 
 import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -48,21 +49,19 @@ public class ListObjectVersionsWithDelimiter18140 extends S3TestBase {
 		for (int i = 0; i < sameDirKeyName.length; i++) {
 			s3Client.putObject(bucketName, sameDirKeyName[i], "object_file18140");
 		}
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		// 将分隔符设置为?（默认为'/'）
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		// db端查看访问计划显示索引为目录表索引
 		VersionListing versionList = s3Client
 				.listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter));
 		List<String> commonPrefixes = versionList.getCommonPrefixes();
-		// TODO：1、检查结果需要覆盖所有项
-		List<String> expresultList = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
-		ObjectUtils.checkListObjectsV2Commprefixes(commonPrefixes, expresultList);
+
+		List<String> expCommprefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
+		ObjectUtils.checkListObjectsV2Commprefixes(commonPrefixes, expCommprefixes);
+		Assert.assertEquals(versionList.getVersionSummaries().size(), 0);
 		runSuccess = true;
 	}
 

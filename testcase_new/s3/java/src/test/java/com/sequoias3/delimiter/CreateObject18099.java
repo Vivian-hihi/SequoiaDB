@@ -11,8 +11,6 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
@@ -77,18 +75,8 @@ public class CreateObject18099 extends S3TestBase {
 	}
 
 	private void checkResult() throws Exception {
-		// TODO:1、检查对象内容建议调用公共方法，另外list建议检查所有项的结果
-		S3Object obj = s3Client.getObject(bucketName, keyName);
-		S3ObjectInputStream s3is = obj.getObjectContent();
-		String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
-				Thread.currentThread().getId());
-		ObjectUtils.inputStream2File(s3is, downloadPath);
-		s3is.close();
-		String actMd5 = TestTools.getMD5(downloadPath);
-		String expMd5 = TestTools.getMD5(filePath);
-
-		Assert.assertEquals(obj.getKey(), keyName);
-		Assert.assertEquals(actMd5, expMd5);
+		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 
 		// 通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
@@ -97,5 +85,6 @@ public class CreateObject18099 extends S3TestBase {
 		List<String> commonPrefixes = result.getCommonPrefixes();
 		Assert.assertEquals(commonPrefixes.size(), 1);
 		Assert.assertEquals(commonPrefixes.get(0), expCommPerfix);
+		Assert.assertEquals(result.getObjectSummaries().size(), 0);
 	}
 }

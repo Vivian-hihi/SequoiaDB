@@ -1,9 +1,11 @@
 package com.sequoias3.delimiter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -12,6 +14,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
@@ -34,8 +37,10 @@ public class ListObjectsWithDelimiter18128 extends S3TestBase {
 	private String delimiter = "?";
 	private String startAfter[] = { "dir1?dir10?", "dir2?dir3/dir100?" };
 	private int objectNum[] = { 1500, 500 };
-	private List<String> expresultList1 = new ArrayList<String>();
-	private List<String> expresultList2 = new ArrayList<String>();
+	private List<String> expCommonPrefixes1 = new ArrayList<String>();
+	private List<String> expCommonPrefixes2 = new ArrayList<String>();
+	private List<String> expContents = new ArrayList<String>(
+			Arrays.asList("dir2?test18128_1", "dir2?test18128_2", "dir2?test18128_3"));
 	private int objectOnceQueryNum = 1000;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -61,12 +66,17 @@ public class ListObjectsWithDelimiter18128 extends S3TestBase {
 			keyList.add(currentKey);
 		}
 
-		String[] objectNames = new String[keyList.size()];
-		expresultList1 = ObjectUtils.getCommPrefixes(keyList.toArray(objectNames), prefix[0], delimiter);
-		expresultList2 = ObjectUtils.getCommPrefixes(keyList.toArray(objectNames), prefix[1], delimiter);
+		// 再上传若干不匹配分隔符的对象
+		for (String key : expContents) {
+			s3Client.putObject(bucketName, key, "object_file18128");
+		}
 
-		Collections.sort(expresultList1);
-		Collections.sort(expresultList2);
+		String[] objectNames = new String[keyList.size()];
+		expCommonPrefixes1 = ObjectUtils.getCommPrefixes(keyList.toArray(objectNames), prefix[0], delimiter);
+		expCommonPrefixes2 = ObjectUtils.getCommPrefixes(keyList.toArray(objectNames), prefix[1], delimiter);
+
+		Collections.sort(expCommonPrefixes1);
+		Collections.sort(expCommonPrefixes2);
 	}
 
 	@Test
@@ -80,20 +90,28 @@ public class ListObjectsWithDelimiter18128 extends S3TestBase {
 				.withDelimiter(delimiter).withStartAfter(startAfter[0]);
 		ListObjectsV2Result result = s3Client.listObjectsV2(req);
 		List<String> commprefixesResult = result.getCommonPrefixes();
-		// 取出expresultList1从startAfter开始的1000条commprefixes记录
-		int startIndex = expresultList1.indexOf(startAfter[0]) + 1;
-		expresultList1 = expresultList1.subList(startIndex, startIndex + objectOnceQueryNum);
-		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expresultList1);
+		// 取出expCommonPrefixes1从startAfter开始的1000条commprefixes记录
+		int startIndex = expCommonPrefixes1.indexOf(startAfter[0]) + 1;
+		expCommonPrefixes1 = expCommonPrefixes1.subList(startIndex, startIndex + objectOnceQueryNum);
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult, expCommonPrefixes1);
+		Assert.assertEquals(result.getObjectSummaries().size(), 0);
 
 		// Second query
 		String nextContinuationToken = result.getNextContinuationToken();
 		ListObjectsV2Request req2 = new ListObjectsV2Request().withBucketName(bucketName).withPrefix(prefix[1])
 				.withDelimiter(delimiter).withStartAfter(startAfter[1]).withContinuationToken(nextContinuationToken);
 		ListObjectsV2Result result2 = s3Client.listObjectsV2(req2);
-		// TODO:1、第二次查询需要校验所有项结果，第一次查询没有匹配完成的记录，第二次查询如果不匹配当前delimiter，应该显示在version中
 		List<String> commprefixesResult2 = result2.getCommonPrefixes();
-		expresultList2 = expresultList2.subList(expresultList2.indexOf(startAfter[1]) + 1, expresultList2.size());
-		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult2, expresultList2);
+		List<String> contentsResult = new ArrayList<>();
+		List<S3ObjectSummary> contents = result2.getObjectSummaries();
+		for (S3ObjectSummary content : contents) {
+			contentsResult.add(content.getKey());
+		}
+		expCommonPrefixes2 = expCommonPrefixes2.subList(expCommonPrefixes2.indexOf(startAfter[1]) + 1,
+				expCommonPrefixes2.size());
+		ObjectUtils.checkListObjectsV2Commprefixes(commprefixesResult2, expCommonPrefixes2);
+		Assert.assertEquals(contentsResult, expContents,
+				"contentsResult :" + contentsResult.toString() + ", expContents :" + expContents.toString());
 
 		runSuccess = true;
 	}

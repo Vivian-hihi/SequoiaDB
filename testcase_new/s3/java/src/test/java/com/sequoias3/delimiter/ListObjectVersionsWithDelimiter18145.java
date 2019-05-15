@@ -2,6 +2,7 @@ package com.sequoias3.delimiter;
 
 import java.util.List;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -36,32 +37,22 @@ public class ListObjectVersionsWithDelimiter18145 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 		s3Client.createBucket(new CreateBucketRequest(bucketName));
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
-		// TODO:1、构造删除标记对象，不需要putObject，直接删除对象就可以
-		for (String objectName : keyName) {
-			s3Client.putObject(bucketName, objectName, "object_file18145");
-		}
 
 		// 制造删除标记对象
 		for (String objectName : keyName) {
 			s3Client.deleteObject(bucketName, objectName);
 		}
-		// 指定版本删除历史元数据表中不为删除标记的对象，使桶中只剩最新元数据表中的删除标记对象
-		for (String objectName : keyName) {
-			s3Client.deleteVersion(bucketName, objectName, "0");
-		}
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		VersionListing versionList = s3Client.listVersions(
 				new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter).withPrefix(prefix));
 		List<String> commonPrefixes = versionList.getCommonPrefixes();
 		List<String> expCommPrefixes = ObjectUtils.getCommPrefixes(keyName, "", delimiter);
-		// TODO:2、检查点覆盖所有检查项
 		ObjectUtils.checkListObjectsV2Commprefixes(commonPrefixes, expCommPrefixes);
+		Assert.assertEquals(versionList.getVersionSummaries().size(), 0);
 
 		runSuccess = true;
 	}

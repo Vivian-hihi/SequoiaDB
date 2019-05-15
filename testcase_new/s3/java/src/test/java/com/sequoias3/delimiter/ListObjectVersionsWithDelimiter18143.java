@@ -1,9 +1,12 @@
 package com.sequoias3.delimiter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -12,7 +15,6 @@ import org.testng.annotations.Test;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
-import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
@@ -32,6 +34,8 @@ public class ListObjectVersionsWithDelimiter18143 extends S3TestBase {
 	private String[] keyName = { "dir1/test18143_1", "dir1/?Dir2/?/dir3/test18143_2", "dir1/test18143_3",
 			"dir1/dir2/aa/test18143_4", "dir1/dir2/aa/cc/test18143_5", "dir1/dir2/aa/dd/test18143_6", "dir18143",
 			"testdir18143.txt" };
+	private List<String> versionsKeys = new ArrayList<String>(Arrays.asList("dir1/test18143_1", "dir1/test18143_3",
+			"dir1/dir2/aa/test18143_4", "dir1/dir2/aa/cc/test18143_5", "dir1/dir2/aa/dd/test18143_6", "dir18143"));
 	private String delimiter = "?";
 	private String prefix = "dir1";
 	private int versionNum = 4;
@@ -51,47 +55,28 @@ public class ListObjectVersionsWithDelimiter18143 extends S3TestBase {
 				s3Client.putObject(bucketName, objectName, "object_file18143");
 			}
 		}
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		VersionListing versionList = s3Client.listVersions(
 				new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter).withPrefix(prefix));
-		List<String> commonPrefixes = versionList.getCommonPrefixes();
 		List<String> expCommPrefixes = ObjectUtils.getCommPrefixes(keyName, prefix, delimiter);
-		ObjectUtils.checkListObjectsV2Commprefixes(commonPrefixes, expCommPrefixes);
-		// TODO:1、versionList和commprefix建议用公共比较方法
-		List<String> actVersionList = new ArrayList<>();
-		List<String> actVersionIdList = new ArrayList<>();
-		List<S3VersionSummary> verList = versionList.getVersionSummaries();
-		for (S3VersionSummary version : verList) {
-			actVersionList.add(version.getKey());
-			actVersionIdList.add(version.getVersionId());
-			Assert.assertFalse(version.isDeleteMarker(), "isDeleteMarker is wrong , key = " + version.getKey());
-		}
 
-		// check keys of versions
-		List<String> expVersionList = new ArrayList<>();
-		for (int i = 0; i < versionNum; i++) {
-			expVersionList.addAll(ObjectUtils.getKeys(keyName, prefix, delimiter));
-		}
-		Collections.sort(expVersionList);
-		Assert.assertEquals(actVersionList, expVersionList);
-
-		// check keys' versionid of versions
-		int keyNum = ObjectUtils.getKeys(keyName, prefix, delimiter).size();
-		List<String> expVersionIdList = new ArrayList<>();
-		for (int i = 0; i < keyNum; i++) {
+		MultiValueMap<String, String> expVersionsMap = new LinkedMultiValueMap<String, String>();
+		Collections.sort(versionsKeys);
+		for (int i = 0; i < versionsKeys.size(); i++) {
 			for (int j = versionNum - 1; j >= 0; j--) {
-				expVersionIdList.add(String.valueOf(j));
+				expVersionsMap.add(versionsKeys.get(i), String.valueOf(j));
 			}
 		}
 
-		Assert.assertEquals(actVersionIdList, expVersionIdList, "actVersionIdList : " + actVersionIdList.toString()
-				+ " , expVersionIdList : " + expVersionIdList.toString());
+		if (!versionList.isTruncated()) {
+			ObjectUtils.checkListVSResults(versionList, expCommPrefixes, expVersionsMap);
+		} else {
+			Assert.fail("vsList.isTruncated() must be false");
+		}
 		runSuccess = true;
 	}
 

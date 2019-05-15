@@ -35,8 +35,7 @@ public class ListObjectsWithDelimiter18124 extends S3TestBase {
 	private String[] objectNames = { "dir1#dir1#test18124_1", "dir2#dir2#test18124_2", "dir3#dir3#test18124_3",
 			"dir4#dir4#test18124_4", "test18124_5" };
 	private String expContents = "test18124_5";
-	// TODO:1、请定义变量为private类型
-	List<String> expCommonPrefixes = null;
+	private List<String> expCommonPrefixes = null;
 	private File localPath = null;
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 20;
@@ -67,22 +66,27 @@ public class ListObjectsWithDelimiter18124 extends S3TestBase {
 
 	@Test
 	private void testListObjects() throws Exception {
+		List<String> tmpCommonPrefixes = new ArrayList<>();
 		int objectNums = objectNames.length;
 		// test a: 指定位置为中间记录
+		tmpCommonPrefixes.add("dir4#");
 		int startAfterNoA = objectNums / 2;
-		listObjectsAndCheckResult(startAfterNoA);
+		listObjectsAndCheckResult(startAfterNoA, tmpCommonPrefixes);
 
 		// test b: 指定第一条记录
+		tmpCommonPrefixes.add("dir2#");
+		tmpCommonPrefixes.add("dir3#");
 		int startAfterNoB = 0;
-		listObjectsAndCheckResult(startAfterNoB);
+		listObjectsAndCheckResult(startAfterNoB, tmpCommonPrefixes);
 
 		// test c:指定最后一条记录
+		tmpCommonPrefixes.clear();
 		int startAfterNoC = objectNums - 1;
-		listObjectsAndCheckResult(startAfterNoC);
+		listObjectsAndCheckResult(startAfterNoC, tmpCommonPrefixes);
 
-		// test d: 指定匹配最后一条记录
+		// test d: 指定匹配最后一条记录，这里最后一条记录为contents中的记录，故commonprefixes返回结果为空
 		int startAfterNoD = objectNums - 2;
-		listObjectsAndCheckResult(startAfterNoD);
+		listObjectsAndCheckResult(startAfterNoD, tmpCommonPrefixes);
 
 		// test e: 指定匹配不到记录
 		String startAfter = "unmatched18124";
@@ -104,31 +108,25 @@ public class ListObjectsWithDelimiter18124 extends S3TestBase {
 		}
 	}
 
-	private void listObjectsAndCheckResult(int startAfterNo) throws IOException {
-		List<String> expkeyList = new ArrayList<>(expCommonPrefixes);
+	private void listObjectsAndCheckResult(int startAfterNo, List<String> commprefixes) throws IOException {
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url")
 				.withStartAfter(objectNames[startAfterNo]).withDelimiter(delimiter);
 		ListObjectsV2Result result;
 		result = s3Client.listObjectsV2(request);
 		List<String> actCommonPrefixes = result.getCommonPrefixes();
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
-		// TODO:1、这段校验结果的代码逻辑要优化下，建议直接按预期的结果去匹配实际结果，另外expkeyList也比较模糊，直接用commonprefixes
-		// check commonprefixes
-		if (startAfterNo < expkeyList.size()) {
-			for (int i = 0; i < startAfterNo + 1; i++) {
-				expkeyList.remove(0);
-				Assert.assertEquals(objects.get(0).getKey(), expContents);
-				Assert.assertEquals(objects.size(), 1);
-			}
+		// check contents
+		if (startAfterNo < expCommonPrefixes.size()) {
+			Assert.assertEquals(objects.get(0).getKey(), expContents);
+			Assert.assertEquals(objects.size(), 1);
 		} else {
 			// 如果指定startAfter为最后一条记录则返回结果为空
-			expkeyList.clear();
 			Assert.assertEquals(objects.size(), 0);
 		}
 
-		Collections.sort(expkeyList);
+		Collections.sort(commprefixes);
 		Collections.sort(actCommonPrefixes);
-		Assert.assertEquals(actCommonPrefixes, expkeyList);
+		Assert.assertEquals(actCommonPrefixes, commprefixes);
 	}
 
 	private void misMatchObject(String startAfter) {

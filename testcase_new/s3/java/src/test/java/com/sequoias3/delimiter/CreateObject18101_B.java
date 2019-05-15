@@ -64,25 +64,24 @@ public class CreateObject18101_B extends S3TestBase {
 		s3Client.putObject(bucketName, keyName, "testcontext18101");
 		expEtags.add(TestTools.getMD5("testcontext18101".getBytes()));
 		// 重复上传多次同名对象，检查对象最新LastModified时间在 【倒数第二次上传时间，最后上传完成后时间】范围内
-		for (int i = 0; i < putSameObjTimes; i++) {
+		for (int i = 0; i < putSameObjTimes - 1; i++) {
 			String currContent = "newtestcontext18101_" + i;
-			// TODO:1 、这里为啥要加个if-else判断，如果只是为了标记最后一次put对象的时间，可以在循环外面获取
-			if (i != putSameObjTimes - 1) {
-				s3Client.putObject(bucketName, keyName, currContent);
-			} else {
-				s3Client.putObject(bucketName, keyName, currContent);
-				dataUpBound = new Date();
-			}
+			s3Client.putObject(bucketName, keyName, currContent);
 			expEtags.add(TestTools.getMD5(currContent.getBytes()));
 		}
+
+		// 上传最后一个对象
+		String currContent = "newtestcontext18101_" + (putSameObjTimes - 1);
+		s3Client.putObject(bucketName, keyName, currContent);
+		dataUpBound = new Date();
+		expEtags.add(TestTools.getMD5(currContent.getBytes()));
 
 		S3Object obj = s3Client
 				.getObject(new GetObjectRequest(bucketName, keyName, String.valueOf(putSameObjTimes - 1)));
 		dataLowBound = obj.getObjectMetadata().getLastModified();
 
 		// 此时最后一次上传对象的versionid为putSameObjTimes
-		checkResult("newtestcontext18101_" + (putSameObjTimes - 1), dataLowBound, dataUpBound,
-				String.valueOf(putSameObjTimes));
+		checkResult(dataLowBound, dataUpBound, String.valueOf(putSameObjTimes));
 		runSuccess = true;
 	}
 
@@ -100,9 +99,7 @@ public class CreateObject18101_B extends S3TestBase {
 		}
 	}
 
-	// TODO:1、传入的expContent没有用到
-	private void checkResult(String expContent, Date expDateLowBound, Date expDateUpBound, String versionId)
-			throws Exception {
+	private void checkResult(Date expDateLowBound, Date expDateUpBound, String versionId) throws Exception {
 		// 检查最新上传对象创建时间
 		S3Object obj = s3Client.getObject(new GetObjectRequest(bucketName, keyName, versionId));
 		ObjectMetadata metadata = obj.getObjectMetadata();
@@ -111,7 +108,7 @@ public class CreateObject18101_B extends S3TestBase {
 			Assert.fail("create time is different! the actCreateDate is : " + actCreateDate.toString()
 					+ ",the expDate is in :[ " + expDateLowBound.toString() + " ~ " + expDateUpBound.toString() + " ]");
 		}
-		// TODO:2、这个检查点和下拉的检查点是重复的，另外list需要检查commprefix和version两项的 结果
+
 		// 检查桶中对象版本列表信息
 		checkObjList();
 
@@ -122,6 +119,7 @@ public class CreateObject18101_B extends S3TestBase {
 		List<String> commonPrefixes = result.getCommonPrefixes();
 		Assert.assertEquals(commonPrefixes.size(), 1);
 		Assert.assertEquals(commonPrefixes.get(0), expCommPerfix);
+		Assert.assertEquals(result.getObjectSummaries().size(), 0);
 	}
 
 	private void checkObjList() {

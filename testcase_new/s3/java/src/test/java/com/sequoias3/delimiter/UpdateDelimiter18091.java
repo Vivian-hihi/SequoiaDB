@@ -12,8 +12,8 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 
 /**
- * test content: 设置分隔符，指定桶不存在  
- * testlink-case: seqDB-18091
+ * test content: 设置分隔符，指定桶不存在 testlink-case: seqDB-18091
+ * 
  * @author wangkexin
  * @Date 2019.04.12
  * @version 1.00
@@ -30,12 +30,12 @@ public class UpdateDelimiter18091 extends S3TestBase {
 
 	@Test
 	private void testUpdateDelimiter() throws Exception {
-		try{
+		try {
 			DelimiterUtils.putBucketDelimiter(bucketName, newDelimiter);
 			Assert.fail("exp fail but found succ.");
-		}catch(AmazonS3Exception e){
+		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getErrorCode(), "NoSuchBucket");
-			
+
 		}
 	}
 

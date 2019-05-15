@@ -31,7 +31,9 @@ public class ListObjectVersionsWithDelimiter18139 extends S3TestBase {
 	private String bucketName = "bucket18139";
 	private String keyName = "dir";
 	private String delimiter = "?";
-	private String repeatedKeyName = "dir1?test18139";
+	private String repeatedKeyName1 = "dir1?test18139";
+	private String repeatedKeyName2 = "dir1test18139";
+	private int versionNum = 3;
 	private List<String> keyList = new ArrayList<String>();
 	private List<String> versions = new ArrayList<String>();
 	private int objectWithDelimiterNum = 150;
@@ -59,18 +61,18 @@ public class ListObjectVersionsWithDelimiter18139 extends S3TestBase {
 			s3Client.putObject(bucketName, currentKeyName, "object_file18139");
 			versions.add(currentKeyName);
 		}
-		// TODO:1、构造数据的时候需要包含分隔符的对象和不包含分隔符的对象都有覆盖到ab场景
-		// put object key = "dir1?test18139" twice again
-		s3Client.putObject(bucketName, repeatedKeyName, "object_file18139");
-		s3Client.putObject(bucketName, repeatedKeyName, "object_file18139");
+
+		// 使桶中存在包含分隔符的对象和不包含分隔符的对象都有多个版本(versionNum)的情况
+		for (int i = 0; i < versionNum - 1; i++) {
+			s3Client.putObject(bucketName, repeatedKeyName1, "object_file18139");
+			s3Client.putObject(bucketName, repeatedKeyName2, "object_file18139");
+			versions.add(repeatedKeyName2);
+		}
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 	}
 
 	@Test
 	public void testGetObjectList() throws Exception {
-		// 将分隔符设置为?（默认为'/'）
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-
 		// db端查看访问计划显示索引为目录表索引
 		VersionListing versionList = s3Client
 				.listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter));
@@ -82,15 +84,22 @@ public class ListObjectVersionsWithDelimiter18139 extends S3TestBase {
 
 		List<String> actVersionsKeyName = new ArrayList<String>();
 		List<S3VersionSummary> versionLists = versionList.getVersionSummaries();
+		List<String> versionId = new ArrayList<>();
 		for (S3VersionSummary s3VersionSummary : versionLists) {
 			actVersionsKeyName.add(s3VersionSummary.getKey());
-			Assert.assertEquals(s3VersionSummary.getVersionId(), "0");
+			if (s3VersionSummary.getKey().equals(repeatedKeyName2)) {
+				versionId.add(s3VersionSummary.getVersionId());
+			} else {
+				Assert.assertEquals(s3VersionSummary.getVersionId(), "0");
+			}
 		}
 
 		Collections.sort(versions);
 		Assert.assertEquals(actVersionsKeyName, versions, "the returned result by versions is wrong, act: "
 				+ actVersionsKeyName.toString() + ", exp: " + versions.toString());
 
+		List<String> expVersionIdList = getVersionIdList();
+		Assert.assertEquals(versionId, expVersionIdList);
 		runSuccess = true;
 	}
 
@@ -106,5 +115,13 @@ public class ListObjectVersionsWithDelimiter18139 extends S3TestBase {
 				s3Client.shutdown();
 			}
 		}
+	}
+
+	private List<String> getVersionIdList() {
+		List<String> versionIdList = new ArrayList<>();
+		for (int i = versionNum - 1; i > -1; i--) {
+			versionIdList.add(String.valueOf(i));
+		}
+		return versionIdList;
 	}
 }
