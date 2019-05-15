@@ -275,6 +275,7 @@ namespace engine
            SDB_LOB_MODE_WRITE == _mode &&
            0 == offset && len >= sizeof(_dmsLobMeta) )
       {
+         _rtnLobMetaCache newCache ;
          _rtnLobMetaCache* metaCache = NULL ;
          const _dmsLobMeta* meta = (const _dmsLobMeta*)data ;
          if ( meta->hasPiecesInfo() && len < DMS_LOB_META_LENGTH )
@@ -296,8 +297,6 @@ namespace engine
 
          if ( metaCache->needMerge() )
          {
-            _rtnLobMetaCache newCache ;
-
             rc = newCache.cache( *(metaCache->lobMeta()) ) ;
             if ( SDB_OK != rc )
             {
