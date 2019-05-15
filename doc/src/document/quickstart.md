@@ -1,6 +1,6 @@
 本入门教程使用 SequoiaDB 3.2 及 MySQL 实例组件3.2 在 Ubuntu 16.04 上搭建一个基础运行环境，以快速了解 SequoiaDB 及 MySQL 实例组件的基本功能 。
 
-本教程会在单台机器上安装部署 SequoiaDB 和 SequoiaSQL-MySQL，SequoiaDB 部署为 3 个数据组单节点，SequoiaSQL-MySQL 部署为 1 个 SQL 实例。如果要部署集群在多台机器上，请参考[可视化安装](installation/deployment/visualization_installation.md)或者[命令行部署](installation/deployment/command_installation/cluster.md)。如果要部署独立模式，请参考[独立模式](installation/deployment/command_installation/standalone.md)。
+SequoiaDB 可以选择部署在单台机器上，也可以部署在多台机器上。
 
 ##安装 SequoiaDB 及 MySQL 实例组件##
 
@@ -13,6 +13,8 @@
 + 确保系统满足[硬件和软件要求](installation/system/system_requirement.md)
 
 + 请确保所有主机都设置了[主机名](installation/system/system_requirement.md#软件要求)，并且都设置了[主机名/IP地址映射关系](installation/system/system_requirement.md#软件要求)
+
++ 如果要部署 SequoiaDB 到多台机器上，每台机器必须都安装 SequoiaDB
 
 ###安装步骤###
 
@@ -282,7 +284,11 @@
 
 ## 部署 SequoiaDB 及 MySQL 实例 ##
 
-SequoiaDB 部署方案为 3 个数据组单副本：1 个编目节点，1 个协调节点，3 个数据组，每个数据组上只有 1 个副本。如果需要部署 SequoiaDB 到多台机器上，请参考 [quickDeploy.sh 工具说明](database_management/tools/quickdeploy.md#在多台机器上部署)。SequoiaSQL-MySQL 部署 1 个 MySQL 实例。
+SequoiaDB 部署方案可以选择部署在单台机器上（1 机 3 组 1 节点），或者部署在多台机器上（3 机 3 组 3 节点）。SequoiaSQL-MySQL 在单台机器上创建 1 个 MySQL 实例。
+
+###1 机 3 组 1 节点###
+
+部署 SequoiaDB 到本机上，创建 3 个数据组，每个数据组单副本。在本机上创建一个MySQL实例。
 
 - 使用 root 用户或者管理员用户登录主机
 
@@ -295,29 +301,112 @@ SequoiaDB 部署方案为 3 个数据组单副本：1 个编目节点，1 个协
    ```
    
    SequoiaDB 默认需要的端口号为 11800、11810、11820、11830、11840、18800，MySQL 实例默认需要的端口号为 3306。请确保这些端口没有被占用。
-
-   > **Note:**
-   > 
-   > * 如果需要修改创建节点的端口号，可在 tools/deploy/sequoiadb.conf 和 tools/deploy/mysql.conf 中修改配置。
-
+   
 - 使用 sdbadmin 用户登录主机
 
 - 快速部署
 
    ```lang-javascript
-   $ cd /opt/sequoiadb
+   $ # 切换到 SequoiaDB 安装目录下
+   $ cd /opt/sequoiadb 
    $ ./tools/deploy/quickDeploy.sh
    
    ************ Deploy SequoiaDB ************************
-   Create catalog: ubuntu1604-yt:11800
-   Create coord:   ubuntu1604-yt:11810
-   Create data:    ubuntu1604-yt:11820
-   Create data:    ubuntu1604-yt:11830
-   Create data:    ubuntu1604-yt:11840
+   Create catalog: sdbserver1:11800
+   Create coord:   sdbserver1:11810
+   Create data:    sdbserver1:11820
+   Create data:    sdbserver1:11830
+   Create data:    sdbserver1:11840
    
    ************ Deploy SequoiaSQL-MySQL *****************
    Create instance: [name: myinst, port: 3306]
    ```
+   
+   > **Note:**
+   > 
+   > * 快速部署工具的使用与配置，具体请参考[quickDeploy.sh](database_management/tools/quickdeploy.md)
+   
+###3 机 3 组 3 节点###
+
+  部署 SequoiaDB 到 3 台机器上，主机名分别为 sdbserver1 / sdbserver2 / sdbserver3，创建 3 个数据组，每个数据组 3 副本。在 sdbserver1  上创建一个MySQL实例。
+
+- 使用 root 用户或者管理员用户登录主机
+
+- 查看端口是否被占用
+
+   在每台主机上执行以下命令查看 11800 端口是否被占用：
+   
+   ```lang-javascript
+   $ netstat -anp | grep 11800
+   ```
+   
+   SequoiaDB 需要的端口号为 11800、11810、11820、11830、11840、18800，MySQL 实例默认需要的端口号为 3306。请确保这些端口没有被占用。
+
+- 使用 sdbadmin 用户登录主机
+
+- 修改配置
+
+   修改第一台主机 sdbserver1 上的 配置文件 tools/deploy/sequoiadb.conf，如下 :
+
+   ```
+   role,groupName,hostName,serviceName,dbPath
+   
+   catalog,SYSCatalogGroup,sdbserver1,11800,[installPath]/database/catalog/11800
+   catalog,SYSCatalogGroup,sdbserver2,11800,[installPath]/database/catalog/11800
+   catalog,SYSCatalogGroup,sdbserver3,11800,[installPath]/database/catalog/11800
+   
+   coord,SYSCoord,sdbserver1,11810,[installPath]/database/coord/11810
+   coord,SYSCoord,sdbserver2,11810,[installPath]/database/coord/11810
+   coord,SYSCoord,sdbserver3,11810,[installPath]/database/coord/11810
+   
+   data,group1,sdbserver1,11820,[installPath]/database/data/11820
+   data,group1,sdbserver2,11820,[installPath]/database/data/11820
+   data,group1,sdbserver3,11820,[installPath]/database/data/11820
+   
+   data,group2,sdbserver1,11830,[installPath]/database/data/11830
+   data,group2,sdbserver2,11830,[installPath]/database/data/11830
+   data,group2,sdbserver3,11830,[installPath]/database/data/11830
+   
+   data,group3,sdbserver1,11840,[installPath]/database/data/11840
+   data,group3,sdbserver2,11840,[installPath]/database/data/11840
+   data,group3,sdbserver3,11840,[installPath]/database/data/11840
+   ```
+   
+   用户机器的主机名不是 sdbserver1 / sdbserver2 / sdbserver3 的，只需要替换上面的 sdbserver1 / sdbserver2 / sdbserver3 即可。
+   
+- 快速部署
+
+   在主机 sdbserver1 上执行快速部署工具
+
+   ```lang-javascript
+   $ # 切换到 SequoiaDB 安装目录下
+   $ cd /opt/sequoiadb
+   $ ./tools/deploy/quickDeploy.sh
+   
+   ************ Deploy SequoiaDB ************************
+   Create catalog: sdbserver1:11800
+   Create catalog: sdbserver2:11800
+   Create catalog: sdbserver3:11800
+   Create coord:   sdbserver1:11810
+   Create coord:   sdbserver2:11810
+   Create coord:   sdbserver3:11810
+   Create data:    sdbserver1:11820
+   Create data:    sdbserver2:11820
+   Create data:    sdbserver3:11820
+   Create data:    sdbserver1:11830
+   Create data:    sdbserver2:11830
+   Create data:    sdbserver3:11830
+   Create data:    sdbserver1:11840
+   Create data:    sdbserver2:11840
+   Create data:    sdbserver3:11840
+   
+   ************ Deploy SequoiaSQL-MySQL *****************
+   Create instance: [name: myinst, port: 3306]
+   ```
+   
+      > **Note:**
+   > 
+   > * 快速部署工具的使用与配置，具体请参考 [quickDeploy.sh](database_management/tools/quickdeploy.md)
    
 ## 数据库操作 ##
 
