@@ -64,8 +64,8 @@ Collection
 
         * 默认值是 false
         * 集合设置新的 hash 分区键后，可以使用该选项进行自动切分
-        * 不显式指定 AutoSplit 时，如果该集合从属于某个非系统域且修改前无分区键，该域的 AutoSplit 参数将作用于此次设置
-            * 集合之前有分区键，需要显式设置 AutoSplit 为 true 进行自动切分
+        * 不显式指定 AutoSplit 时，如果该集合修改前无指定 AutoSplit 且从属于某个非系统域，该域的 AutoSplit 参数将作用于此次设置
+            * 集合之前有指定 AutoSplit 为 false，需要显式设置 AutoSplit 为 true 进行自动切分
         * AutoSplit 只能作用于 hash 分区键上
 
     6. `EnsureShardingIndex` ( *Bool* )：标识是否创建分区索引
