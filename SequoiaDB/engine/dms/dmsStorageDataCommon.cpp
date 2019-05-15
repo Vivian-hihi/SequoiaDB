@@ -637,7 +637,7 @@ namespace engine
 
    BOOLEAN _dmsStorageDataCommon::isTransSupport() const
    {
-      if ( DMS_STORAGE_CAPPED == getStorageType() )
+      if ( DMS_STORAGE_CAPPED == getStorageType() || !_transSupport )
       {
          return FALSE ;
       }

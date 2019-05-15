@@ -450,6 +450,8 @@ namespace engine
             return _pStorageInfo->_type ;
          }
 
+         void                  setTransSupport( BOOLEAN supported ) ;
+
       private:
          /*
             Make these function internal
@@ -577,6 +579,8 @@ namespace engine
          dmsStorageInfo                *_pStorageInfo ;
          UINT32                        _pageSize ;    // cache, not use header
          UINT32                        _lobPageSize ; // cache, not use header
+
+         BOOLEAN                       _transSupport ;
 
       /// for persistence
       private:

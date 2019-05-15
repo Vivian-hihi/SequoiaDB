@@ -131,6 +131,8 @@ namespace engine
                       "rc: %d", DMS_STAT_SPACE_NAME, rc ) ;
       }
 
+      _su->data()->setTransSupport( FALSE ) ;
+
       _dmsCB->suUnlock( suID ) ;
       suID = DMS_INVALID_CS ;
 

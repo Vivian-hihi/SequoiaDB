@@ -349,8 +349,14 @@ namespace engine
       _waitLock = pExe->isTransWaitLock() ;
       _useRollbackSegment = pExe->useRollbackSegment() ;
 
+      /// When not support trans
+      if ( !_pSu->isTransSupport() )
+      {
+         _recordLock = DPS_TRANSLOCK_MAX ;
+         _selectForUpdate = FALSE ;
+      }
       /// When not in transaction
-      if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+      else if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
       {
          /// When not use trans lock
          if ( !pExe->useTransLock() )
@@ -1505,8 +1511,14 @@ namespace engine
       _waitLock = pExe->isTransWaitLock() ;
       _useRollbackSegment = pExe->useRollbackSegment() ;
 
+      /// when not support transaction
+      if ( !_pSu->isTransSupport() )
+      {
+         _recordLock = DPS_TRANSLOCK_MAX ;
+         _selectForUpdate = FALSE ;
+      }
       /// When not in transaction
-      if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
+      else if ( DPS_INVALID_TRANS_ID == cb->getTransID() )
       {
          /// When not use trans lock
          if ( !pExe->useTransLock() )

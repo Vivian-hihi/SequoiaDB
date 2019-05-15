@@ -365,6 +365,7 @@ namespace engine
       _segmentPagesSquare = 0 ;
       _pageSizeSquare     = 0 ;
       _isTempSU           = FALSE ;
+      _transSupport       = TRUE ;
       _blockScanSupport   = TRUE ;
       _pageSize           = 0 ;
       _lobPageSize        = 0 ;
@@ -409,6 +410,11 @@ namespace engine
    BOOLEAN _dmsStorageBase::isClosed() const
    {
       return _isClosed ;
+   }
+
+   void _dmsStorageBase::setTransSupport( BOOLEAN supported )
+   {
+      _transSupport = supported ;
    }
 
    void _dmsStorageBase::setSyncConfig( UINT32 syncInterval,
