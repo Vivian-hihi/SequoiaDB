@@ -247,8 +247,22 @@ public class DelimiterUtils extends S3TestBase {
 		return amazonS3Exception;
 	}
 
-	// TODO:这里生成随机key名的用意是啥，如果随机生成是否需要带上用例ID区分key名
-	public static String[] getRandomKeyListWithDelimiter(String delimiter1, String delimiter2, int keyNum) {
+	/**
+	 * get an array of random keys with specified delimiters.
+	 * 
+	 * @author wangkexin
+	 * @param delimiter1
+	 *            specify the delimiter
+	 * @param delimiter2
+	 *            specify another delimiter
+	 * @param keyNum
+	 *            number of keys in the returned array
+	 * @param testID
+	 *            specify the test id
+	 * @return An array containing random keys with specified delimiters.
+	 */
+	public static String[] getRandomKeyListWithDelimiter(String delimiter1, String delimiter2, int keyNum,
+			String testID) {
 		String[] keyNameList = new String[keyNum];
 		String str = "zxcvbnmlkjhgfdsaqwertyuiopQWERTYUIOPLKJHGFDSAZXCVBNM1234567890";
 		Random random = new Random();
@@ -265,23 +279,31 @@ public class DelimiterUtils extends S3TestBase {
 
 			// 在随机生成的字符串的任意位置插入delimiter1和delimiter2
 			if (delimiter1 != null) {
-				insertDelimiter(sb, keyLength, delimiter1);
+				insertDelimiter(sb, delimiter1);
 			}
 			if (delimiter2 != null) {
-				insertDelimiter(sb, keyLength, delimiter2);
+				insertDelimiter(sb, delimiter2);
 			}
-			keyNameList[i] = sb.toString();
+			keyNameList[i] = sb.toString() + "_" + testID;
 		}
 		return keyNameList;
 	}
 
-	// TODO:这个方法没有看出来insertDelimiter的意思
-	public static void insertDelimiter(StringBuffer sb, int keyLength, String delimiter) {
+	/**
+	 * insert delimiter in StringBuffer
+	 * 
+	 * @author wangkexin
+	 * @param StringBuffer
+	 *            specify the StringBuffer
+	 * @param delimiter
+	 *            specify the delimiter
+	 */
+	public static void insertDelimiter(StringBuffer sb, String delimiter) {
 		Random random = new Random();
 		// 随机插入delimiter次数：1-3次
 		int insertNum = random.nextInt(3) + 1;
 		for (int i = 0; i < insertNum; i++) {
-			int offset = random.nextInt(keyLength + 1);
+			int offset = random.nextInt(sb.length() + 1);
 			sb.insert(offset, delimiter);
 		}
 	}
