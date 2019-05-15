@@ -31,7 +31,7 @@ import org.elasticsearch.client.*;
  * @author liuxiaoxuan
  * @Date 2018.11.20
  */
-public class Hash12016 extends SdbTestBase {
+public class Fulltext12016 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;

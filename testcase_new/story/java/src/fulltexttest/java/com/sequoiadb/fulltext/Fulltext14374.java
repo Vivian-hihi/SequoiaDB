@@ -28,18 +28,20 @@ import com.sequoiadb.utils.StringUtils;
 import org.elasticsearch.client.*;
 
 /**
- * FileName: CreateDropSameIndex11995.java test content: 反复重建删除同一个全文索引
+ * FileName: CurdProcessingIndex14374.java test content:
+ * ES中无提交记录时，插入/修改/删除/查询集合中的记录
  * 
  * @author liuxiaoxuan
- * @Date 2018.11.20
+ * @Date 2018.11.21
  */
-public class CreateDropSameIndex11995 extends SdbTestBase {
+public class Fulltext14374 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
-    private String clName = "ES_11995";
+    private String clName = "ES_14374";
     private Client esClient = null;
+    private List< String > esIndexNames = null;
 
     @BeforeClass
     public void setUp() {
@@ -58,16 +60,20 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         FullTextDBUtils.dropCollection( cs, clName );
+        // check fulltext deleted
+        if ( esIndexNames != null ) {
+            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+        }
         sdb.close();
         esClient.close();
     }
 
     @Test
     public void test() {
-        // insert large datas
         insertData( cl, FullTextUtils.INSERT_NUMS );
 
-        String textIndexName = "fulltext11995";
+        // create fulltext
+        String textIndexName = "fulltext14374";
         BSONObject indexObj = new BasicBSONObject();
         indexObj.put( "a", "text" );
         indexObj.put( "b", "text" );
@@ -75,62 +81,46 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
         indexObj.put( "d", "text" );
         indexObj.put( "e", "text" );
         indexObj.put( "f", "text" );
-
-        List< String > esIndexNames = null;
-
-        // loop create and drop fulltext while processing origin data
-        int doTimes = 10;
-        while ( --doTimes > 0 ) {
-            cl.createIndex( textIndexName, indexObj, false, false );
-            esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
-                    textIndexName );
-            FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
-            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
-        }
-
-        // create and drop fulltext while processing cappedcl data
-        doTimes = 5;
-        int newInsertNums = 100000;
-        while ( --doTimes > 0 ) {
-            cl.createIndex( textIndexName, indexObj, false, false );
-
-            InsertThread insertThread = new InsertThread( newInsertNums );
-            DropIndexThread dropIdxThread = new DropIndexThread();
-            insertThread.start();
-            dropIdxThread.start();
-
-            Assert.assertTrue( insertThread.isSuccess(),
-                    insertThread.getErrorMsg() );
-            Assert.assertTrue( dropIdxThread.isSuccess(),
-                    dropIdxThread.getErrorMsg() );
-            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
-        }
-
-        // last time create index
+        indexObj.put( "g", "text" );
         cl.createIndex( textIndexName, indexObj, false, false );
-        // check consistency
+        esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
+                textIndexName );
+
+        // insert/update/delete while index processing origin cl data
+        InsertThread insertThread = new InsertThread();
+        UpdateThread updateThread = new UpdateThread();
+        RemoveThread removeThread = new RemoveThread();
+
+        insertThread.start();
+        updateThread.start();
+        removeThread.start();
+
+        Assert.assertTrue( insertThread.isSuccess(),
+                insertThread.getErrorMsg() );
+        Assert.assertTrue( updateThread.isSuccess(),
+                updateThread.getErrorMsg() );
+        Assert.assertTrue( removeThread.isSuccess(),
+                removeThread.getErrorMsg() );
+
+        // check consistency after insert/update/delete
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, ( int ) cl.getCount() );
         FullTextUtils.checkDataConsistency( sdb, csName, clName,
                 textIndexName );
-
-        // last time drop index
-        FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
-        // check fulltext deleted
-        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {
         List< BSONObject > insertObjs = new ArrayList<>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_11995_"
+                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14374_"
                         + i * j + "', b: '"
                         + StringUtils.getRandomString( 32 ) + "', c: '"
                         + StringUtils.getRandomString( 64 ) + "', d: '"
                         + StringUtils.getRandomString( 64 ) + "', e: '"
                         + StringUtils.getRandomString( 128 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "'}" ) );
+                        + StringUtils.getRandomString( 128 ) + "', g: "
+                        + i * j + "}" ) );
             }
             cl.insert( insertObjs, 0 );
             insertObjs.clear();
@@ -139,35 +129,55 @@ public class CreateDropSameIndex11995 extends SdbTestBase {
 
     private class InsertThread extends SdbThreadBase {
 
-        int insertNums = 0;
-
-        public InsertThread( int insertNums ) {
-            this.insertNums = insertNums;
-        }
-
         @Override
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
             db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             cl = db.getCollectionSpace( csName ).getCollection( clName );
-            // insert records in cappedCL
+            int insertNums = 100000;
             insertData( cl, insertNums );
             db.close();
         }
     }
 
-    private class DropIndexThread extends SdbThreadBase {
+    private class UpdateThread extends SdbThreadBase {
+
         @Override
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
             db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             cl = db.getCollectionSpace( csName ).getCollection( clName );
-            String textIndexName = "fulltext11995";
-            // drop fulltext
-            FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
-        }
 
+            BSONObject modifier = new BasicBSONObject();
+            BSONObject value = new BasicBSONObject();
+            BSONObject matcher = new BasicBSONObject();
+            BSONObject subMatcher = new BasicBSONObject();
+            value.put( "g", "-1" );
+            modifier.put( "$set", value );
+            subMatcher.put( "$lt", 100000 );
+            matcher.put( "g", subMatcher );
+            cl.update( matcher, modifier, null );
+            db.close();
+        }
+    }
+
+    private class RemoveThread extends SdbThreadBase {
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb db = null;
+            DBCollection cl = null;
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl = db.getCollectionSpace( csName ).getCollection( clName );
+
+            BSONObject matcher = new BasicBSONObject();
+            BSONObject subMatcher = new BasicBSONObject();
+            subMatcher.put( "$gt", 100000 );
+            matcher.put( "g", subMatcher );
+            cl.delete( matcher );
+            db.close();
+        }
     }
 }

@@ -27,7 +27,7 @@ import org.elasticsearch.client.*;
  * @author liuxiaoxuan
  * @Date 2018.11.27
  */
-public class MainCLCurdFullIndex12015 extends SdbTestBase {
+public class Fulltext12015 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;

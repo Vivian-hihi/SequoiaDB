@@ -32,7 +32,7 @@ import org.elasticsearch.client.*;
  * @author liuxiaoxuan
  * @Date 2018.11.27
  */
-public class MainCLCreateDropIndex11990 extends SdbTestBase {
+public class Fulltext11990 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;

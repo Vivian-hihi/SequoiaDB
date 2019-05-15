@@ -27,7 +27,7 @@ import com.sequoiadb.utils.StringUtils;
  * @author yinzhen
  *
  */
-public class FullText18260 extends SdbTestBase {
+public class Fulltext18260 extends SdbTestBase {
     private static final String CLNAME = "cl18260";
     private Sequoiadb sdb;
     private DBCollection cl;

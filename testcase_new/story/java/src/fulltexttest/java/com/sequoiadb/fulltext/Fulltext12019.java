@@ -26,17 +26,17 @@ import com.sequoiadb.utils.StringUtils;
 import org.elasticsearch.client.*;
 
 /**
- * FileName: Hash12018.java test content: 插入记录并执行hash切分再创建全文索引
+ * FileName: Range12019.java test content: 插入记录并执行range切分再创建全文索引
  * 
  * @author liuxiaoxuan
  * @Date 2018.11.20
  */
-public class Hash12018 extends SdbTestBase {
+public class Fulltext12019 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
-    private String clName = "ES_hash_12018";
+    private String clName = "ES_range_12019";
     private String srcGroupName = "";
     private String destGroupName = "";
 
@@ -57,13 +57,13 @@ public class Hash12018 extends SdbTestBase {
                     "current environment less than tow groups " );
         }
 
-        // create hash cl
+        // create range cl
         srcGroupName = groupsName.get( 0 );
         destGroupName = groupsName.get( 1 );
         cs = sdb.getCollectionSpace( csName );
         cl = cs.createCollection( clName,
-                ( BSONObject ) JSON
-                        .parse( "{ShardingKey:{a:1},ShardingType:'hash',Group:'"
+                ( BSONObject ) JSON.parse(
+                        "{ShardingKey:{a:1},ShardingType:'range',Group:'"
                                 + srcGroupName + "'}" ) );
     }
 
@@ -80,14 +80,14 @@ public class Hash12018 extends SdbTestBase {
 
     @Test
     public void test() {
-        // insert big datas
+        // insert large datas
         insertData( cl, FullTextUtils.INSERT_NUMS );
 
         // split
         cl.split( srcGroupName, destGroupName, 50 );
 
         // create fulltext, with shardingkey and non-shardingkey
-        String textIndexName = "fulltext12018";
+        String textIndexName = "fulltext12019";
         BSONObject indexObj = new BasicBSONObject();
         indexObj.put( "a", "text" );
         indexObj.put( "b", "text" );
@@ -112,7 +112,7 @@ public class Hash12018 extends SdbTestBase {
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 insertObjs.add( ( BSONObject ) JSON
-                        .parse( "{a: 'test_hash12018_" + i * j + "', b: '"
+                        .parse( "{a: 'test_range12019_" + i * j + "', b: '"
                                 + StringUtils.getRandomString( 32 )
                                 + "', c: '"
                                 + StringUtils.getRandomString( 64 )
@@ -123,6 +123,7 @@ public class Hash12018 extends SdbTestBase {
                                 + "', f: '"
                                 + StringUtils.getRandomString( 128 )
                                 + "'}" ) );
+
             }
             cl.insert( insertObjs, 0 );
             insertObjs.clear();

@@ -28,18 +28,18 @@ import com.sequoiadb.utils.StringUtils;
 import org.elasticsearch.client.*;
 
 /**
- * FileName: CurdProcessingIndex14374.java test content:
- * ES中无提交记录时，插入/修改/删除/查询集合中的记录
+ * FileName: CurdProcessingIndex14376.java test content:
+ * 正在处理固定集合中记录，插入/修改/删除/查询集合中的记录
  * 
  * @author liuxiaoxuan
  * @Date 2018.11.21
  */
-public class CurdProcessingIndex14374 extends SdbTestBase {
+public class Fulltext14376 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
-    private String clName = "ES_14374";
+    private String clName = "ES_14376";
     private Client esClient = null;
     private List< String > esIndexNames = null;
 
@@ -70,10 +70,8 @@ public class CurdProcessingIndex14374 extends SdbTestBase {
 
     @Test
     public void test() {
-        insertData( cl, FullTextUtils.INSERT_NUMS );
-
         // create fulltext
-        String textIndexName = "fulltext14374";
+        String textIndexName = "fulltext14376";
         BSONObject indexObj = new BasicBSONObject();
         indexObj.put( "a", "text" );
         indexObj.put( "b", "text" );
@@ -83,10 +81,13 @@ public class CurdProcessingIndex14374 extends SdbTestBase {
         indexObj.put( "f", "text" );
         indexObj.put( "g", "text" );
         cl.createIndex( textIndexName, indexObj, false, false );
+
         esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
                 textIndexName );
 
-        // insert/update/delete while index processing origin cl data
+        insertData( cl, FullTextUtils.INSERT_NUMS );
+
+        // insert/update/delete while index processing cappedcl data
         InsertThread insertThread = new InsertThread();
         UpdateThread updateThread = new UpdateThread();
         RemoveThread removeThread = new RemoveThread();
@@ -113,7 +114,7 @@ public class CurdProcessingIndex14374 extends SdbTestBase {
         List< BSONObject > insertObjs = new ArrayList<>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14374_"
+                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14376_"
                         + i * j + "', b: '"
                         + StringUtils.getRandomString( 32 ) + "', c: '"
                         + StringUtils.getRandomString( 64 ) + "', d: '"
@@ -180,4 +181,5 @@ public class CurdProcessingIndex14374 extends SdbTestBase {
             db.close();
         }
     }
+
 }

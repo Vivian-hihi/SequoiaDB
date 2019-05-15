@@ -25,16 +25,17 @@ import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
 
 /**
- * @Description seqDB-12065: 集合空间上存在全文索引，删除集合空间
+ * @Description seqDB-14885: 正在查询固定集合时删除全文索引
  * @author yinzhen
- * @date 2018/11/19
+ * @date 2018/11/20
  */
-public class DropCollectionSpace12065 extends SdbTestBase {
+public class Fulltext14885 extends SdbTestBase {
     private Sequoiadb sdb;
+    private CollectionSpace cs;
     private DBCollection cl;
-    private String csName12065 = "cs12065";
-    private String clName = "dropCollectionSpace12065";
-    private String fullIndexName = "fullIndex12065";
+    private String csName14885 = "cs14885";
+    private String clName = "dropCollection14885";
+    private String fullIndexName = "fullIndex14885";
     private Client esClient = null;
 
     @BeforeClass
@@ -44,7 +45,7 @@ public class DropCollectionSpace12065 extends SdbTestBase {
         if ( commLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
         }
-        CollectionSpace cs = sdb.createCollectionSpace( csName12065 );
+        this.cs = sdb.createCollectionSpace( csName14885 );
         this.cl = cs.createCollection( clName );
         esClient = FullTextESUtils.createTransportClient(
                 SdbTestBase.esHostName,
@@ -61,39 +62,40 @@ public class DropCollectionSpace12065 extends SdbTestBase {
 
         // 直连集合所在的数据节点主节点，使用游标的方式获取对应的固定集合中的一条记录
         List< DBCollection > cappedCLs = FullTextDBUtils.getCappedCLs( sdb,
-                csName12065, clName, fullIndexName );
+                csName14885, clName, fullIndexName );
         DBCollection cappedCL = cappedCLs.get( 0 );
         DBCursor cursor = cappedCL.query();
         BSONObject bsonObject = cursor.getNext();
 
-        // 多次执行删除集合空间的操作
+        // 多次执行删除全文索引的操作，检查结果
         for ( int i = 0; i < 3; i++ ) {
             try {
-                sdb.dropCollectionSpace( csName12065 );
-                Assert.fail( "drop cs need to return -147!" );
+                this.cl.dropIndex( fullIndexName );
+                Assert.fail( "drop textIndex need to return -147!" );
             } catch ( BaseException e ) {
                 Assert.assertEquals( e.getErrorCode(), -147, e.getMessage() );
             }
         }
 
-        // 关闭步骤2中打开的游标后，再次删除集合空间
+        // 关闭步骤2中的游标，再次删除集合
         List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
-                csName12065, clName, fullIndexName );
+                csName14885, clName, fullIndexName );
         cursor.close();
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName12065, clName,
+        FullTextUtils.checkFullSyncToES( esClient, sdb, csName14885, clName,
                 fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkDataConsistency( sdb, csName12065, clName,
+        FullTextUtils.checkDataConsistency( sdb, csName14885, clName,
                 fullIndexName );
-        FullTextDBUtils.dropCollectionSpace( sdb, csName12065 );
+        FullTextDBUtils.dropFullTextIndex( this.cl, fullIndexName );
         FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            FullTextDBUtils.dropCollectionSpace( sdb, csName12065 );
+            FullTextDBUtils.dropCollectionSpace( sdb, csName14885 );
         } catch ( BaseException e ) {
-            Assert.assertEquals( e.getErrorCode(), -34, e.getMessage() );
+            Assert.fail(
+                    e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
         } finally {
             if ( sdb != null ) {
                 sdb.close();
@@ -109,7 +111,7 @@ public class DropCollectionSpace12065 extends SdbTestBase {
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 BSONObject record = ( BSONObject ) JSON
-                        .parse( "{a: 'test_12065_" + i * j + "', b: '"
+                        .parse( "{a: 'test_14885_" + i * j + "', b: '"
                                 + StringUtils.getRandomString( 32 )
                                 + "', c: '"
                                 + StringUtils.getRandomString( 64 )
@@ -123,6 +125,24 @@ public class DropCollectionSpace12065 extends SdbTestBase {
             }
             this.cl.insert( records );
             records.clear();
+        }
+    }
+
+    public String getKeyStack( Exception e, Object classObj ) {
+        StringBuffer stackBuffer = new StringBuffer();
+        StackTraceElement[] stackElements = e.getStackTrace();
+        for ( int i = 0; i < stackElements.length; i++ ) {
+            if ( stackElements[ i ].toString()
+                    .contains( classObj.getClass().getName() ) ) {
+                stackBuffer.append( stackElements[ i ].toString() )
+                        .append( "\r\n" );
+            }
+        }
+        String str = stackBuffer.toString();
+        if ( str.length() >= 2 ) {
+            return str.substring( 0, str.length() - 2 );
+        } else {
+            return str;
         }
     }
 }

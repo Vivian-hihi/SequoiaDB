@@ -27,7 +27,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @author yinzhen
  * @date 2018/11/28
  */
-public class TruncateMainCollection15799 extends SdbTestBase {
+public class Fulltext15799 extends SdbTestBase {
     private Sequoiadb sdb;
     private DBCollection mainCL;
     private String mainCLName = "truncateMainCollection15799";

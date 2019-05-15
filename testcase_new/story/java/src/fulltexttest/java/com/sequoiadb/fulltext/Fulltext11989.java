@@ -14,7 +14,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
@@ -25,17 +24,16 @@ import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
 
 /**
- * @Description seqDB-12066: 集合上存在全文索引，删除集合
+ * @Description seqDB-11989:range切分表中创建/删除全文索引
  * @author yinzhen
- * @date 2018/11/20
+ * @date 2018/11/13
  */
-public class DropCollection12066 extends SdbTestBase {
+public class Fulltext11989 extends SdbTestBase {
     private Sequoiadb sdb;
-    private CollectionSpace cs;
     private DBCollection cl;
-    private String csName12066 = "cs12066";
-    private String clName = "dropCollection12066";
-    private String fullIndexName = "fullIndex12066";
+    private String clName = "rangeTableIndex11989";
+    private String fullIndexName = "fullIndex11989";
+    private List< String > groupNames;
     private Client esClient = null;
 
     @BeforeClass
@@ -45,8 +43,18 @@ public class DropCollection12066 extends SdbTestBase {
         if ( commLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
         }
-        this.cs = sdb.createCollectionSpace( csName12066 );
-        this.cl = cs.createCollection( clName );
+        this.groupNames = commLib.getDataGroupNames( sdb );
+        if ( groupNames.size() < 2 ) {
+            throw new SkipException( "Less than two groups!" );
+        }
+        CollectionSpace cs = sdb.getCollectionSpace( SdbTestBase.csName );
+        this.cl = cs.createCollection( clName,
+                ( BSONObject ) JSON.parse(
+                        "{ShardingKey:{a:1},ShardingType:'range',Group:'"
+                                + this.groupNames.get( 0 ) + "'}" ) );
+        this.cl.split( this.groupNames.get( 0 ), this.groupNames.get( 1 ),
+                ( BSONObject ) JSON.parse( "{a:'a0'}" ),
+                ( BSONObject ) JSON.parse( "{a:'a1000'}" ) );
         esClient = FullTextESUtils.createTransportClient(
                 SdbTestBase.esHostName,
                 Integer.parseInt( SdbTestBase.esServiceName ) );
@@ -54,55 +62,27 @@ public class DropCollection12066 extends SdbTestBase {
 
     @Test
     public void test() {
-        // 在集合上创建1个全文索引，并插入大量包含索引字段的数据
-        this.cl.createIndex( fullIndexName,
-                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}",
-                false, false );
         this.insertData( FullTextUtils.INSERT_NUMS );
 
-        // 直连主数据节点使用游标的方式获取固定集合中的一条记录
-        List< DBCollection > cappedCLs = FullTextDBUtils.getCappedCLs( sdb,
-                csName12066, clName, fullIndexName );
-        DBCollection cappedCL = cappedCLs.get( 0 );
-        
-        // 固定集合的数据要多于1条
-        DBCursor cursor = null;
-        while ( 2 > cappedCL.getCount() ) {
-            System.out.println( "12066 cappedCL's count: " + cappedCL.getCount() );
-            
-        }     
-        cursor = cappedCL.query();        
-        BSONObject object = (BSONObject) cursor.getNext(); 
-
-        // 多次执行删除集合的操作
-        for ( int i = 0; i < 3; i++ ) {
-            try {
-                cs.dropCollection( clName );
-                Assert.fail( "drop collection need to return -147!" );
-            } catch ( BaseException e ) {
-                Assert.assertEquals( e.getErrorCode(), -147, e.getMessage() );
-            }
-        }
-        // 关闭步骤2中的游标，再次删除集合
+        // 创建全文索引，索引字段覆盖：分区键和非分区键
+        this.cl.createIndex( fullIndexName,
+                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}",
+                false, false );
+        FullTextUtils.checkFullSyncToES( esClient, sdb, SdbTestBase.csName,
+                this.clName, this.fullIndexName, FullTextUtils.INSERT_NUMS );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                this.fullIndexName );
         List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
-                csName12066, clName, fullIndexName );
-        
-        if(cursor != null) {
-            cursor.close();
-        }
-        
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName12066, clName,
-                fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkDataConsistency( sdb, csName12066, clName,
-                fullIndexName );
-        FullTextDBUtils.dropCollection( this.cs, clName );
+                SdbTestBase.csName, this.clName, this.fullIndexName );
+        FullTextDBUtils.dropFullTextIndex( cl, fullIndexName );
         FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            FullTextDBUtils.dropCollectionSpace( sdb, csName12066 );
+            CollectionSpace cs = sdb.getCollectionSpace( csName );
+            FullTextDBUtils.dropCollection( cs, clName );
         } catch ( BaseException e ) {
             Assert.fail(
                     e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
@@ -121,7 +101,7 @@ public class DropCollection12066 extends SdbTestBase {
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 BSONObject record = ( BSONObject ) JSON
-                        .parse( "{a: 'test_12066_" + i * j + "', b: '"
+                        .parse( "{a: 'test_range11989_" + i * j + "', b: '"
                                 + StringUtils.getRandomString( 32 )
                                 + "', c: '"
                                 + StringUtils.getRandomString( 64 )
@@ -129,7 +109,7 @@ public class DropCollection12066 extends SdbTestBase {
                                 + StringUtils.getRandomString( 64 )
                                 + "', e: '"
                                 + StringUtils.getRandomString( 128 )
-                                + "', f: '"
+                                + "', g: '"
                                 + StringUtils.getRandomString( 128 ) + "'}" );
                 records.add( record );
             }

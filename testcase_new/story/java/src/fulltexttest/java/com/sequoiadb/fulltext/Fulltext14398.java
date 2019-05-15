@@ -26,18 +26,18 @@ import com.sequoiadb.utils.StringUtils;
 import org.elasticsearch.client.*;
 
 /**
- * FileName: CurdFinishIndex14377.java test content:
- * 已处理完固定集合中记录，插入/修改/删除/查询集合中的记录
+ * FileName: DropCLAndRecreateIndex14398.java test content: 集合空间删除后重建相同的全文索引
  * 
  * @author liuxiaoxuan
  * @Date 2018.11.21
  */
-public class CurdFinishIndex14377 extends SdbTestBase {
+public class Fulltext14398 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
-    private String clName = "ES_14377";
+    private String clName = "ES_cl_14398";
+
     private Client esClient = null;
     private List< String > esIndexNames = null;
 
@@ -69,7 +69,7 @@ public class CurdFinishIndex14377 extends SdbTestBase {
     @Test
     public void test() {
         // create fulltext
-        String textIndexName = "fulltext14377";
+        String textIndexName = "fulltext14398";
         BSONObject indexObj = new BasicBSONObject();
         indexObj.put( "a", "text" );
         indexObj.put( "b", "text" );
@@ -83,61 +83,86 @@ public class CurdFinishIndex14377 extends SdbTestBase {
         esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
                 textIndexName );
 
+        // check drop cl and recreate index after index clear in ES
         insertData( cl, FullTextUtils.INSERT_NUMS );
 
-        // check consistency before insert/update/delete
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
                 textIndexName, FullTextUtils.INSERT_NUMS );
         FullTextUtils.checkDataConsistency( sdb, csName, clName,
                 textIndexName );
 
-        // insert/update/delete
-        insertData( cl, 100000 );
-        updateData( cl );
-        removeData( cl );
+        FullTextDBUtils.dropCollection( cs, clName );
 
-        // check consistency after insert/update/delete
+        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+
+        // recreate after ES index clear
+        cl = cs.createCollection( clName );
+        cl.createIndex( textIndexName, indexObj, false, false );
+
+        // insert new datas
+        int newInsertNums = 210000;
+        insertData( cl, newInsertNums );
+
+        // check consistency
         FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
-                textIndexName, ( int ) cl.getCount() );
+                textIndexName, newInsertNums );
         FullTextUtils.checkDataConsistency( sdb, csName, clName,
                 textIndexName );
+
+        System.out.println(
+                "----------success check drop cl after index clear in ES----------" );
+
+        // check drop cl and recreate index while index processing to clear in
+        // ES
+        FullTextDBUtils.dropFullTextIndex( cl, textIndexName );// init env
+        cl.truncate();
+        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+        cl.createIndex( textIndexName, indexObj, false, false );
+
+        // init insert datas
+        insertData( cl, FullTextUtils.INSERT_NUMS );
+
+        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
+                textIndexName, FullTextUtils.INSERT_NUMS );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
+
+        FullTextDBUtils.dropCollection( cs, clName );
+
+        // recreate while index processing to clear
+        cl = cs.createCollection( clName );
+        cl.createIndex( textIndexName, indexObj, false, false );
+
+        // insert new datas
+        insertData( cl, newInsertNums );
+
+        // check consistency
+        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
+                textIndexName, newInsertNums );
+        FullTextUtils.checkDataConsistency( sdb, csName, clName,
+                textIndexName );
+
+        System.out.println(
+                "----------success check drop cl while index processing to clear in ES----------" );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {
         List< BSONObject > insertObjs = new ArrayList<>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14377_"
-                        + i * j + "', b: '"
+                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14398_"
+                        + StringUtils.getRandomString( 10 ) + "', b: '"
                         + StringUtils.getRandomString( 32 ) + "', c: '"
                         + StringUtils.getRandomString( 64 ) + "', d: '"
                         + StringUtils.getRandomString( 64 ) + "', e: '"
                         + StringUtils.getRandomString( 128 ) + "', f: '"
                         + StringUtils.getRandomString( 128 ) + "', g: "
                         + i * j + "}" ) );
+
             }
             cl.insert( insertObjs, 0 );
             insertObjs.clear();
         }
     }
 
-    public void updateData( DBCollection cl ) {
-        BSONObject modifier = new BasicBSONObject();
-        BSONObject value = new BasicBSONObject();
-        BSONObject matcher = new BasicBSONObject();
-        BSONObject subMatcher = new BasicBSONObject();
-        value.put( "g", "-1" );
-        modifier.put( "$set", value );
-        subMatcher.put( "$lt", 100000 );
-        matcher.put( "g", subMatcher );
-        cl.update( matcher, modifier, null );
-    }
-
-    public void removeData( DBCollection cl ) {
-        BSONObject matcher = new BasicBSONObject();
-        BSONObject subMatcher = new BasicBSONObject();
-        subMatcher.put( "$gt", 100000 );
-        matcher.put( "g", subMatcher );
-        cl.delete( matcher );
-    }
 }

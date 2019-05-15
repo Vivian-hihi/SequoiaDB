@@ -31,7 +31,7 @@ import org.elasticsearch.client.*;
  * @author liuxiaoxuan
  * @Date 2018.11.21
  */
-public class DropCSAndRecreateIndex14397 extends SdbTestBase {
+public class Fulltext14397 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;

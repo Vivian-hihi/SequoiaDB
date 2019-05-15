@@ -24,7 +24,7 @@ import com.sequoiadb.utils.StringUtils;
  * @author xiaoni Zhao
  * @date 2018/11/23
  */
-public class SplitAndInsert12020 extends SdbTestBase {
+public class Fulltext12020 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private DBCollection cl;
     private String clName = "ES_cl_12020";

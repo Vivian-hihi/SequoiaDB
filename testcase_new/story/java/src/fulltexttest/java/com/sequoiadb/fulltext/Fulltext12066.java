@@ -25,17 +25,17 @@ import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
 
 /**
- * @Description seqDB-14885: 正在查询固定集合时删除全文索引
+ * @Description seqDB-12066: 集合上存在全文索引，删除集合
  * @author yinzhen
  * @date 2018/11/20
  */
-public class DropFullIndex14885 extends SdbTestBase {
+public class Fulltext12066 extends SdbTestBase {
     private Sequoiadb sdb;
     private CollectionSpace cs;
     private DBCollection cl;
-    private String csName14885 = "cs14885";
-    private String clName = "dropCollection14885";
-    private String fullIndexName = "fullIndex14885";
+    private String csName12066 = "cs12066";
+    private String clName = "dropCollection12066";
+    private String fullIndexName = "fullIndex12066";
     private Client esClient = null;
 
     @BeforeClass
@@ -45,7 +45,7 @@ public class DropFullIndex14885 extends SdbTestBase {
         if ( commLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
         }
-        this.cs = sdb.createCollectionSpace( csName14885 );
+        this.cs = sdb.createCollectionSpace( csName12066 );
         this.cl = cs.createCollection( clName );
         esClient = FullTextESUtils.createTransportClient(
                 SdbTestBase.esHostName,
@@ -54,45 +54,55 @@ public class DropFullIndex14885 extends SdbTestBase {
 
     @Test
     public void test() {
-        // 在集合上创建1个全文索引，并插入包含索引字段的数据
+        // 在集合上创建1个全文索引，并插入大量包含索引字段的数据
         this.cl.createIndex( fullIndexName,
                 "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}",
                 false, false );
         this.insertData( FullTextUtils.INSERT_NUMS );
 
-        // 直连集合所在的数据节点主节点，使用游标的方式获取对应的固定集合中的一条记录
+        // 直连主数据节点使用游标的方式获取固定集合中的一条记录
         List< DBCollection > cappedCLs = FullTextDBUtils.getCappedCLs( sdb,
-                csName14885, clName, fullIndexName );
+                csName12066, clName, fullIndexName );
         DBCollection cappedCL = cappedCLs.get( 0 );
-        DBCursor cursor = cappedCL.query();
-        BSONObject bsonObject = cursor.getNext();
+        
+        // 固定集合的数据要多于1条
+        DBCursor cursor = null;
+        while ( 2 > cappedCL.getCount() ) {
+            System.out.println( "12066 cappedCL's count: " + cappedCL.getCount() );
+            
+        }     
+        cursor = cappedCL.query();        
+        BSONObject object = (BSONObject) cursor.getNext(); 
 
-        // 多次执行删除全文索引的操作，检查结果
+        // 多次执行删除集合的操作
         for ( int i = 0; i < 3; i++ ) {
             try {
-                this.cl.dropIndex( fullIndexName );
-                Assert.fail( "drop textIndex need to return -147!" );
+                cs.dropCollection( clName );
+                Assert.fail( "drop collection need to return -147!" );
             } catch ( BaseException e ) {
                 Assert.assertEquals( e.getErrorCode(), -147, e.getMessage() );
             }
         }
-
         // 关闭步骤2中的游标，再次删除集合
         List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
-                csName14885, clName, fullIndexName );
-        cursor.close();
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName14885, clName,
+                csName12066, clName, fullIndexName );
+        
+        if(cursor != null) {
+            cursor.close();
+        }
+        
+        FullTextUtils.checkFullSyncToES( esClient, sdb, csName12066, clName,
                 fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkDataConsistency( sdb, csName14885, clName,
+        FullTextUtils.checkDataConsistency( sdb, csName12066, clName,
                 fullIndexName );
-        FullTextDBUtils.dropFullTextIndex( this.cl, fullIndexName );
+        FullTextDBUtils.dropCollection( this.cs, clName );
         FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            FullTextDBUtils.dropCollectionSpace( sdb, csName14885 );
+            FullTextDBUtils.dropCollectionSpace( sdb, csName12066 );
         } catch ( BaseException e ) {
             Assert.fail(
                     e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
@@ -111,7 +121,7 @@ public class DropFullIndex14885 extends SdbTestBase {
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 BSONObject record = ( BSONObject ) JSON
-                        .parse( "{a: 'test_14885_" + i * j + "', b: '"
+                        .parse( "{a: 'test_12066_" + i * j + "', b: '"
                                 + StringUtils.getRandomString( 32 )
                                 + "', c: '"
                                 + StringUtils.getRandomString( 64 )

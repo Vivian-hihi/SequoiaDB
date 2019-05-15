@@ -26,17 +26,17 @@ import com.sequoiadb.utils.StringUtils;
 import org.elasticsearch.client.*;
 
 /**
- * FileName: Range12019.java test content: 插入记录并执行range切分再创建全文索引
+ * FileName: Range12017.java test content: 插入记录并创建全文索引再执行range切分
  * 
  * @author liuxiaoxuan
  * @Date 2018.11.20
  */
-public class Range12019 extends SdbTestBase {
+public class Fulltext12017 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
-    private String clName = "ES_range_12019";
+    private String clName = "ES_range_12017";
     private String srcGroupName = "";
     private String destGroupName = "";
 
@@ -80,14 +80,8 @@ public class Range12019 extends SdbTestBase {
 
     @Test
     public void test() {
-        // insert large datas
-        insertData( cl, FullTextUtils.INSERT_NUMS );
-
-        // split
-        cl.split( srcGroupName, destGroupName, 50 );
-
         // create fulltext, with shardingkey and non-shardingkey
-        String textIndexName = "fulltext12019";
+        String textIndexName = "fulltext12017";
         BSONObject indexObj = new BasicBSONObject();
         indexObj.put( "a", "text" );
         indexObj.put( "b", "text" );
@@ -96,6 +90,12 @@ public class Range12019 extends SdbTestBase {
         indexObj.put( "e", "text" );
         indexObj.put( "f", "text" );
         cl.createIndex( textIndexName, indexObj, false, false );
+
+        // insert large datas
+        insertData( cl, FullTextUtils.INSERT_NUMS );
+
+        // split
+        cl.split( srcGroupName, destGroupName, 50 );
 
         esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
                 textIndexName );
@@ -112,7 +112,7 @@ public class Range12019 extends SdbTestBase {
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
                 insertObjs.add( ( BSONObject ) JSON
-                        .parse( "{a: 'test_range12019_" + i * j + "', b: '"
+                        .parse( "{a: 'test_range12017_" + i * j + "', b: '"
                                 + StringUtils.getRandomString( 32 )
                                 + "', c: '"
                                 + StringUtils.getRandomString( 64 )
