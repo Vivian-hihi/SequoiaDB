@@ -49,18 +49,18 @@ function importData( csName, clName, imprtFile, cl )
    try
    {
      println( imprtOption );
-     var rc = cmd.run( imprtOption );
+     var rc = cmd.run( imprtOption ); //TODO:rc返回值没有用到
      throw buildException( "importData", null, "[sdbimprt results]", 
                         "expected thow exception", 
-                        "actual success" );
+                        "actual success" );  //TODO:为什么不使用rc返回的报错信息？
    }
    catch(e)
-   {
+   { //TODO: 这样写不合理吧？非预期的其他错误/异常不用抛出来吗？
    }
    cl.truncate();
    cmd.run( "rm -rf " + imprtFile );
    
-   
+   // TODO：另外，多个测试点建议分开写多个方法吧，如importDataER/importDataAR/importDataEA
    readyData( imprtFile, "c,dD1,YDexprtTestYDD2,YDexprtTest2YDD" );
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 

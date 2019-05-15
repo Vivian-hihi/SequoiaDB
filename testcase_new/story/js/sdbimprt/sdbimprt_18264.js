@@ -39,7 +39,7 @@ function readyData( imprtFile )
 }
 
 function importData( csName, clName, imprtFile, cl )
-{
+{//TODO:同18261
    println("\n---Begin to import data and check exec result.");
    
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
@@ -87,7 +87,7 @@ function testRunCommand(command)
    {
    }
    
-    //check import results
+    //check import results  //TODO:为什么注释掉了？没写原因。如果是bug需要附上问题单号
     /*
     var rcObj = rc.split("\n");
     var expParseRecords    = "parsed records: 0";
