@@ -289,7 +289,6 @@ Takes 0.010137s.
 |-s		                    | 禁止多线程模式	                     |
 |-o allow_other		        | 允许其他用户访问权限	                 |
 |-o allow_root		        | 允许root用户访问权限	                 |
-|-o auto_unmount		    | 进程终止后自动unmount文件系统	         |
 |-o nonempty         		| 允许mount在为非空文件夹上	             |
 |-o default-permissions		| 允许内核权限审查	                     |
 |-o fsname=NAME      		| 指定文件系统名称	                     |
@@ -309,32 +308,21 @@ Takes 0.010137s.
 |-o negative_timeout=T 		| 缓存删除文件名称的超时时间，默认0s	 |
 |-o attr_timeout=T     		| 缓存文件属性的超时时间，默认1s	     |
 |-o ac_attr_timeout=T   	| 自动设置缓存文件属性的超时时间，默认1s |
-|-o noforget           		| Inodes缓存永存	                     |
-|-o remember=T       		| 指定缓存inodes时间为T(默认0s)	         |
-|-o nopath            		| 非必要不提供文件路径	                 |
 |-o intr               		| 允许requests请求被中断	             |
 |-o intr_signal=NUM    		| 中断时发送的信号量（默认10）	         |
 |-o modules=Ml[:M2…]  		| 指定文件堆中的模块名称	             |
 |-o max_write=N       		| 指定write请求的最大size	             |
 |-o max_readahead=N  		| 指定最大readahead的size	             |
-|-o max_background=N  		| 指定backgroud的最大请求数	             |
-|-o congestion_threshold=N	| 指定内核congestion的阈值	             |
 |-o async_read         		| 异步IO读，默认为异步	                 |
 |-o sync_read          		| 同步IO读	                             |
 |-o atomic_o_trunc     		| 允许open+truncate的原子操作	         |
 |-o big_writes         		| 允许超过4KB页的写操作，最大32K	     |
 |-o no_remote_lock     		| 关闭远程文件锁	                     |
-|-o no_remote_flock    		| 关闭远程文件锁（BSD）	                 |
-|-o no_remote_posix_lock 	| 不允许删除文件锁（POSIX）	             |
-|-o [no_]splice_write    	| 利用splice写入到fuse设备中	         |
-|-o [no_]splice_move   		| 当splice到fuse设备时move数据	         |
-|-o [no_]splice_read        | 允许从fuse设备进行splice读取	         |
     
->**注意:**   
+>**说明:**   
 >1、sequoiafs对于fuse选项只需要关注allow_other、allow_root、large_read、max_read、max_write、big_writes等常见选项即可；   
 >2、需要指定allow_other时，需要在/etc/fuse.conf配置中写入对应的配置项，如在/etc/fuse.conf插入一行"user_allow_other"，其他类似，具体可以查看fuse的使用方法；  
 >3、初始化时最好带上参数-o big_writes和-o large_read, 指定大页读写以提升性能；   
->4、sequoiafs不支持splice_write、splice_move、splice_read选项。
 
 ###配置文件及日志路径规则###
 因为SequoiaFS在同一个节点可以挂载映射同一套DB或者不同套DB的同一个目标集合或者不同目标集合，所以在创建配置文件及指定日志路径时，建议参考以下规则进行配置，以防止出现配置文件互相干扰覆盖或者日志文件互相覆盖的情况。     
@@ -432,9 +420,6 @@ SequoiaFS现支持以下文件操作API：
 |           | const char *newpathname  |                                                                                                          |
 |chmod      | const char *pathname     | 更改文件权限                                                                                             |
 |           | mode_t mode              |
-
->**注意:**   
->open文件时，只支持指定单独的O_WRONLY或者O_RDONLY，不支持O_RDWR模式。
 
 
 ###API使用实例###

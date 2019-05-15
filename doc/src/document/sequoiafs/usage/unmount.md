@@ -13,4 +13,5 @@ $fusermount -u /opt/sequoiadb/mountpoint
 $ps -ef | grep sequoiafs
 $kill 程序PID
 ```
-注意：如果使用kill -9进行强杀进程，进程结束后会导致原mountpoint目录无法被linux文件系统正常访问的情况，为了避免这种情况，可以在sequoiafs初始化的时候，指定带上fuse选项-o auto_unmount。
+>Tips：  
+>如果使用kill -9进行强杀进程，进程结束后会导致原 mountpoint 目录无法被 linux 文件系统正常访问的情况，需要使用fusermount -u \<DIR\> 来进行 unmount 即可。
