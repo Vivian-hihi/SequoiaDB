@@ -272,7 +272,7 @@
   2019-04-13-08.37.10
   ```
 
-  切换到 sdbadmin 用户，使用如下命令如能正常查到 MySQL 实例的状态，说明安装成功。
+  切换到 root 用户，使用如下命令如能正常查到 sequoiasql-mysql 服务的状态，说明安装成功。
 
   ```lang-javascript
   $ service sequoiasql-mysql status
