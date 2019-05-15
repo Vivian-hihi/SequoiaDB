@@ -3916,6 +3916,7 @@ INT32 sequoiaFS::create(const CHAR *path,
    PD_LOG(PDDEBUG, "Called: create() successfully, Name:%s, Pid:%d", fileName, pid);
    lh->hLob = lob;
    lh->hSdb = db;
+   lh->oid = oid;
    lh->hSysFileMetaCL= sysFileMetaCL;
    lh->hSysDirMetaCL= sysDirMetaCL;
    fi->fh = (intptr_t)(uint64_t)((void *)lh);
