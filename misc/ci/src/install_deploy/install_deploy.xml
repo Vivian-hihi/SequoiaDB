@@ -391,7 +391,7 @@
       <if>
          <equals arg1="${TEST_TYPE}" arg2="LARGEDATATEST" />
          <then>
-            <var name="diagLevel" value="3"/>
+            <var name="diagLevel" value="5"/>
          </then>
       </if>
       <if>
