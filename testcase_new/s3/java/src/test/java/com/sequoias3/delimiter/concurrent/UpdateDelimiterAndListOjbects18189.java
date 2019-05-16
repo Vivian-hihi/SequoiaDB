@@ -87,6 +87,7 @@ public class UpdateDelimiterAndListOjbects18189 extends S3TestBase {
 
 	private class ListObjects {
 		private List<String> commonPrefixes;
+		// TODO ：建议增加private权限修饰符
 		List<S3ObjectSummary> objects;
 
 		@ExecuteOrder(step = 1)
@@ -103,6 +104,7 @@ public class UpdateDelimiterAndListOjbects18189 extends S3TestBase {
 		private void checkListVersions() {
 			List<String> expContentList = new ArrayList<>();
 			Collections.sort(matchKeyList);
+			// TODO ：建议省略排序步骤
 			Collections.sort(commonPrefixes);
 			Assert.assertEquals(commonPrefixes, matchKeyList,
 					"actPrefixes:" + commonPrefixes.toString() + "\n ecpPrefixes:" + matchKeyList.toString());
@@ -116,6 +118,7 @@ public class UpdateDelimiterAndListOjbects18189 extends S3TestBase {
 
 			// check the keyName
 			Collections.sort(actContentsList);
+			// TODO 同上
 			Collections.sort(expContentList);
 			Assert.assertEquals(actContentsList, expContentList, "actcontent:" + actContentsList.toString());
 		}

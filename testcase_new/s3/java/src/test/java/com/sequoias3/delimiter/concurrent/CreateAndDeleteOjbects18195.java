@@ -114,6 +114,7 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		@ExecuteOrder(step = 2)
 		private void checkResult() throws Exception {
 			try {
+				// TODO :建议用线程内定义的s3客户端s3Client1获取对象md5
 				String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
 				Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 			} finally {
@@ -133,6 +134,7 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		}
 
 		@ExecuteOrder(step = 1)
+		// TODO :建议改为deleteObject()
 		private void createObject() {
 			s3Client2.deleteObject(bucketName, keyName);
 		}
@@ -159,6 +161,7 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		int actVersionNum = versionSummary.size();
 		Assert.assertEquals(actVersionNum, existObjectNum);
 
+		// TODO ：本用例没有开启版本控制，所以versionid应为null
 		String expVersionId = "0";
 		String expFileMd5 = TestTools.getMD5(filePath);
 		for (int i = 0; i < actVersionNum; i++) {

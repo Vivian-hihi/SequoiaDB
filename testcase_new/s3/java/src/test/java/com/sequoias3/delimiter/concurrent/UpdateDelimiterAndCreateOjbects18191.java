@@ -89,6 +89,7 @@ public class UpdateDelimiterAndCreateOjbects18191 extends S3TestBase {
 	private class CreateObject {
 		private String keyName;
 		private AmazonS3 s3Client1 = CommLib.buildS3Client();
+		// TODO ：content中的用例编号有误
 		private String content = "testcontext18190";
 		private String expMd5 = TestTools.getMD5(content.getBytes());
 		private PutObjectResult object;
