@@ -258,8 +258,8 @@ namespace engine
       // lockMode is compatible with other owners
       BOOLEAN _checkWaiterLockModeWithOwners
       (
-         const dpsTransLRB *       lrbBegin,
-         const DPS_TRANSLOCK_TYPE  lockMode
+         const dpsTransLRB *  lrbBegin,
+         const dpsTransLRB *  pWaiterLRB
       ) ;
 
       // add a LRB at the end of the queue ( waiter or upgrade list )
@@ -306,7 +306,8 @@ namespace engine
          const DPS_TRANSLOCK_TYPE  lockMode,
          dpsTransLRB             * lrbBegin,
          dpsTransLRB *           & pLRBToInsert,
-         dpsTransLRB *           & pLRBIncompatible
+         dpsTransLRB *           & pLRBIncompatible,
+         dpsTransLRB             * pLRBOwner
       ) ;
 
       void _moveToEDULRBListTail

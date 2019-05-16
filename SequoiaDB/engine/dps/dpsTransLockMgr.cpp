@@ -437,9 +437,8 @@ namespace engine
    // Description: walk through the owner LRB list check if the input
    //              lockMode is compatible with other owners
    // Input:
-   //    lockMode -- lock mode to check ( waiter lock mode )
    //    lrbBegin -- the LRB in owner queue to start searching
-   //    ownerLrb -- owner LRB
+   //    pWaiterLRB -- waiter LRB
    // Output:
    //    none
    // Return:
@@ -449,22 +448,30 @@ namespace engine
    //
    BOOLEAN dpsTransLockManager::_checkWaiterLockModeWithOwners
    (
-      const dpsTransLRB *       lrbBegin,
-      const DPS_TRANSLOCK_TYPE  lockMode
+      const dpsTransLRB *  lrbBegin,
+      const dpsTransLRB *  pWaiterLRB
    )
    {
       dpsTransLRB *plrb = (dpsTransLRB *)lrbBegin ;
       BOOLEAN foundIncomp = FALSE ;
 
+      if ( ( NULL == pWaiterLRB ) || ( NULL == lrbBegin ) )
+      {
+         goto exit ;
+      }
+
       while ( plrb )
       {
-         if ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) 
+         if ( ( pWaiterLRB->dpsTxExectr != plrb->dpsTxExectr ) &&
+              ( ! dpsIsLockCompatible( plrb->lockMode, pWaiterLRB->lockMode )) )
          {
             foundIncomp = TRUE ;
             break ;
          }
          plrb = plrb->nextLRB ;
       }
+
+   exit :
       return foundIncomp ;
    }
 
@@ -675,6 +682,7 @@ namespace engine
    // Input:
    //    lockMode -- lock mode
    //    lrbBegin -- the first LRB pointer in the owner list
+   //    pLRBOwner -- owner LRB ( it could be NULL if it is not an owner yet )
    // Output:
    //    pLRBToInsert      -- the lrb which the new LRB shall be inserted after
    //    pLRBIncompatible  -- pointer of first incompatible LRB
@@ -686,7 +694,8 @@ namespace engine
       const DPS_TRANSLOCK_TYPE  lockMode, 
       dpsTransLRB             * lrbBegin,
       dpsTransLRB *           & pLRBToInsert,
-      dpsTransLRB *           & pLRBIncompatible
+      dpsTransLRB *           & pLRBIncompatible,
+      dpsTransLRB             * pLRBOwner
    )
    {
 #ifdef _DEBUG
@@ -716,8 +725,17 @@ namespace engine
          {
             if ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) )
             {
-               // save the address/pointer of first incompatible LRB
-               pLRBIncompatible = plrb ;
+               if ( NULL != pLRBOwner )
+               {
+                  if ( pLRBOwner->dpsTxExectr != plrb->dpsTxExectr )
+                  {
+                     pLRBIncompatible = plrb ;
+                  }
+               } 
+               else
+               {
+                  pLRBIncompatible = plrb ;
+               }
             }
          }
 
@@ -1036,7 +1054,7 @@ namespace engine
                   _wakeUp( pLRBNext->dpsTxExectr ) ;   
                }
                else if ( FALSE == _checkWaiterLockModeWithOwners(
-                                      pLRBHdr->ownerLRB, pLRBNext->lockMode ) )
+                                      pLRBHdr->ownerLRB, pLRBNext ) )
                {
                   // wake up next waiter if it is compatible with all owners :
                   //  . A is holding U lock
@@ -1436,7 +1454,8 @@ namespace engine
          _searchOwnerLRBListForInsertAndIncompatible( requestLockMode,
                                                       pLRBHdr->ownerLRB,
                                                       pLRBToInsert,
-                                                      pLRBIncompatible ) ;
+                                                      pLRBIncompatible,
+                                                      pLRBOwner ) ;
       }
 
       if ( pLRBOwner )
@@ -2342,8 +2361,7 @@ namespace engine
             // lookup owner list check if the waiter lockMode is compabile
             // with other owners
             foundIncomp = _checkWaiterLockModeWithOwners(
-                              pLRBHdr->ownerLRB,
-                              pWaiterLRB->lockMode ) ;
+                              pLRBHdr->ownerLRB, pWaiterLRB ) ;
          }
 
          // if the owner queue is empty ( after remove current owner ),
