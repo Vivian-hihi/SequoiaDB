@@ -54,9 +54,9 @@ $touch /opt/sequoiafs/conf/foo_bar/001/sequoiafs.conf
 通过-i或者--hosts进行指定远程DB节点（协调节点），一旦挂载之后，mountpoint目录下的所有文件的属性信息会存放在远程DB节点上的目录元数据集合及文件元数据集合中，而文件内容会以lob的形式存放在目标集合下。目录元数据集合和文件元数据集合可以分别通过-d(或--metadircollection)和-f（或--metafilecollection）在进行指定，也可以直接通过指定--autocreate默认生成，该例指定默认生成。
 
 ```lang-javascript
-$sequoiafs /opt/sequoiadb/mountpoint -i localhost:11810 -l foo.bar --autocreate -c /opt/sequoiafs/conf/foo_bar/001/ --diagpath  /opt/sequoiafs/log/foo_bar/001/ -o big_writes -o auto_unmount -o max_write=131072 -o max_read=131072
+$sequoiafs /opt/sequoiadb/mountpoint -i localhost:11810 -l foo.bar --autocreate -c /opt/sequoiafs/conf/foo_bar/001/ --diagpath  /opt/sequoiafs/log/foo_bar/001/ -o big_writes -o max_write=131072 -o max_read=131072
 ```
-这里除了SequoiaFS相关参数，还指定了FUSE的参数-o big_writes（开启大页写）和-o auto_unmount（强杀进程时自动unmount目录），具体参数详情可以参见[FUSE选项](sequoiafs/usage/mount.md#FUSE选项)。
+这里除了SequoiaFS相关参数，还指定了FUSE的参数-o big_writes（开启大页写），具体参数详情可以参见[FUSE选项](sequoiafs/usage/mount.md#FUSE选项)。
  
 
 ####4、查看挂载信息 ####
