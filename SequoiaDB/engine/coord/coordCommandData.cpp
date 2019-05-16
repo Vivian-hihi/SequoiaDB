@@ -1753,7 +1753,7 @@ namespace engine
       ignoreRC.insert( SDB_DMS_CS_NOTEXIST ) ;
 
       rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
-                        TRUE, &groupLst, &ignoreRC, NULL,
+                        FALSE, &groupLst, &ignoreRC, NULL,
                         &pCtxForData, pArgs->_pBuf ) ;
       if ( rc )
       {
