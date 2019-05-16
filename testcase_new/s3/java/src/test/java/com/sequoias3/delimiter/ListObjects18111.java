@@ -40,6 +40,7 @@ public class ListObjects18111 extends S3TestBase {
 	public void testCreateObject() throws Exception {
 		for (int i = 0; i < objectNums / 2; i++) {
 			String subKeyName = keyName + "_" + i + "/aa/test.png";
+			// TODO ：上传对象的内容中用例编号有误
 			s3Client.putObject(bucketName, subKeyName, "testcontext18109_" + i);
 			matchKeyList.add(keyName + "_" + i + "/");
 

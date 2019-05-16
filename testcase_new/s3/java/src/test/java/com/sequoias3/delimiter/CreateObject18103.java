@@ -51,6 +51,7 @@ public class CreateObject18103 extends S3TestBase {
 	@Test
 	public void test() throws Exception {
 		s3Client.putObject(bucketName, keyName, "firstContext18103");
+		// TODO :这里没有覆盖对象内容相同的情况
 		s3Client.putObject(bucketName, keyName, new File(filePath));
 
 		checkCreateObjectResult(bucketName);

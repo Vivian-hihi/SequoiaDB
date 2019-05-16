@@ -72,6 +72,8 @@ public class CreateObject18104 extends S3TestBase {
 		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommonPrefixList, expContextList);
 	}
 
+	// TODO
+	// :testDeleteObject()可以写成一个方法然后在testListObjectResult()里面直接调用吧，建议还是不要写太多Test
 	@Test(dependsOnMethods = "testListObjectResult")
 	public void testDeleteObject() throws Exception {
 		for (int i = 0; i < keyNum; i++) {

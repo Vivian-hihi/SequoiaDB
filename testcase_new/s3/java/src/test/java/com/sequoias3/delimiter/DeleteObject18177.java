@@ -46,6 +46,7 @@ public class DeleteObject18177 extends S3TestBase {
 	@Test
 	public void test() throws Exception {
 		String currentVersionId = "0";
+		// TODO :指定versionid删除，建议修改文本用例中此步骤的描述
 		s3Client.deleteVersion(bucketName, keyNameA, currentVersionId);
 
 		checkDeleteObjectReslut(keyNameB, currentVersionId);

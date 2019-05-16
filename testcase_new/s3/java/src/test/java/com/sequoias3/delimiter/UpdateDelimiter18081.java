@@ -40,8 +40,13 @@ public class UpdateDelimiter18081 extends S3TestBase {
 	@Test
 	public void testUpdateDelimiter() throws Exception {
 		DelimiterUtils.putBucketDelimiter(bucketName, curDelimiter);
+		// TODO
+		// :1.这里建议增加checkCurrentDelimiteInfo方法验证当前分隔符状态为Normal,是本场景验证的前提，可以与
+		// "当前分隔符状态不为Normal，分隔符重建任务正在进行中" 的场景做区分
 
+		// TODO :2.建议这里单独写一下更新分隔符的方法，验证更新失败，而不要用公共方法，不然无法验证更新是否失败
 		DelimiterUtils.updateDelimiterSuccessAgain(bucketName, newDelimiter);
+		// TODO :3.上面验证失败之后需要再次更新分隔符，这里建议使用公共方法
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, newDelimiter);
 
 		List<String> expCommprefixList = new ArrayList<>();

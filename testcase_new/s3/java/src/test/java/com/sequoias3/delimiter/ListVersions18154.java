@@ -59,6 +59,8 @@ public class ListVersions18154 extends S3TestBase {
 	private void testListVersions() throws Exception {
 
 		String prefix = "dir1";
+		// TODO
+		// ：这里定义的keyMarKer和versionIdMarker不能验证生效，在listVersions时不指定这两个参数返回的结果是和现在是相同的
 		String keyMarker = keyNames[0];
 		String versionIdMarker = "2";
 
@@ -77,6 +79,7 @@ public class ListVersions18154 extends S3TestBase {
 		Collections.sort(matchPrefixList);
 		MultiValueMap<String, String> expVersions = new LinkedMultiValueMap<String, String>();
 
+		// TODO ：此处备注有误，不存在对象"dir1_18155"
 		// expContent:"dir1_18155",the versionId is:2,1,0
 		for (int i = versionNum - 1; i >= 0; i--) {
 			expVersions.add(keyNames[8], String.valueOf(i));

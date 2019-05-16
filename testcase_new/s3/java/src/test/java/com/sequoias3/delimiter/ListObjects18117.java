@@ -46,6 +46,7 @@ public class ListObjects18117 extends S3TestBase {
 	public void testCreateObject() throws Exception {
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		putObjects();
+		// TODO :这里不需要清理缓存吧
 		try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
 			sdb.analyze();
 		}
@@ -71,16 +72,19 @@ public class ListObjects18117 extends S3TestBase {
 	private void putObjects() {
 		for (int i = 0; i < keyList.length; i++) {
 			String subKeyName = keyList[i];
+			// TODO :这里的用例编号有误
 			s3Client.putObject(bucketName, subKeyName, "testcontext18113_" + i);
 		}
 	}
 
 	private void listObjectsAndCheckResult() {
+		// TODO : 预期匹配的commonprefixes较多的话建议使用公共方法获得
 		List<String> matchPrefixList = new ArrayList<>();
 		matchPrefixList.add("dir1/test");
 		matchPrefixList.add("dir1/dir2/dir3/test");
 		matchPrefixList.add("dir1/dir2/aa/test");
 		matchPrefixList.add("dir1/dir2/aa/cc/test");
+		// TODO ：建议将这个定义放到比较前面或者放在定义actContentsList的地方一起定义比较好，这里离实际使用它的地方太远了
 		List<String> matchContentsList = new ArrayList<>();
 
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
@@ -88,10 +92,12 @@ public class ListObjects18117 extends S3TestBase {
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);
 		List<String> commonPrefixes = result.getCommonPrefixes();
 		Collections.sort(matchPrefixList);
+		// TODO :这里建议省略排序步骤哦
 		Collections.sort(commonPrefixes);
 		Assert.assertEquals(commonPrefixes, matchPrefixList,
 				"actPrefixes:" + commonPrefixes.toString() + "\n ecpPrefixes:" + matchPrefixList.toString());
 
+		// TODO :这里的num应为0
 		// objects do not match delimiter are displayed in contents,num is 10
 		List<String> actContentsList = new ArrayList<>();
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
@@ -101,7 +107,9 @@ public class ListObjects18117 extends S3TestBase {
 		}
 
 		// check the keyName
+		// TODO ：同上
 		Collections.sort(actContentsList);
+		// TODO ：同上，这是个空的list不需要排序
 		Collections.sort(matchContentsList);
 		Assert.assertEquals(actContentsList, matchContentsList);
 	}

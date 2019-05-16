@@ -48,6 +48,7 @@ public class ListObjects18114 extends S3TestBase {
 	public void testCreateObject() throws Exception {
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		putObjectsAndDeleteTagObjects();
+		// TODO :这里不需要清理缓存吧
 		try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
 			sdb.analyze();
 		}
@@ -95,6 +96,7 @@ public class ListObjects18114 extends S3TestBase {
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);
 		List<String> commonPrefixes = result.getCommonPrefixes();
 		Collections.sort(matchPrefixList);
+		// TODO :这里不需要排序
 		Collections.sort(commonPrefixes);
 		Assert.assertEquals(commonPrefixes, matchPrefixList,
 				"actPrefixes:" + commonPrefixes.toString() + "\n ecpPrefixes:" + matchPrefixList.toString());
@@ -109,6 +111,7 @@ public class ListObjects18114 extends S3TestBase {
 
 		// check the keyName
 		Collections.sort(actContentsList);
+		// TODO :这里也不需要排序
 		Collections.sort(matchContentsList);
 		Assert.assertEquals(actContentsList, matchContentsList,
 				"actContentsList:" + actContentsList.toString() + "matchContentList:" + matchContentsList.toString());

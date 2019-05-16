@@ -53,6 +53,7 @@ public class UpdateDelimiter18076 extends S3TestBase {
 	public void testUpdateDelimiter() throws Exception {
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
+		// TODO : 建议增加检测结果步骤：带新分隔符可以查询到普通对象和删除标记对象的映射目录
 		runSuccess = true;
 	}
 

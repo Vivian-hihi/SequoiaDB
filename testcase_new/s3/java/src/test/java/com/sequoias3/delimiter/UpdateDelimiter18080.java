@@ -23,6 +23,7 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 public class UpdateDelimiter18080 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket18080";
+	// TODO :keyName对应的用例编号有误
 	private String keyName = "aa%test/maa%/object18076";
 	private String delimiter = "/";
 	private AmazonS3 s3Client = null;
