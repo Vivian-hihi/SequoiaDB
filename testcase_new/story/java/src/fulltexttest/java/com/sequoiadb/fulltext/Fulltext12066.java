@@ -41,14 +41,12 @@ public class Fulltext12066 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         this.sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        CommLib commLib = new CommLib();
-        if ( commLib.isStandAlone( sdb ) ) {
+        if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
         }
         this.cs = sdb.createCollectionSpace( csName12066 );
         this.cl = cs.createCollection( clName );
-        esClient = FullTextESUtils.createTransportClient(
-                SdbTestBase.esHostName,
+        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
                 Integer.parseInt( SdbTestBase.esServiceName ) );
     }
 
@@ -56,23 +54,22 @@ public class Fulltext12066 extends SdbTestBase {
     public void test() {
         // 在集合上创建1个全文索引，并插入大量包含索引字段的数据
         this.cl.createIndex( fullIndexName,
-                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}",
-                false, false );
+                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}", false,
+                false );
         this.insertData( FullTextUtils.INSERT_NUMS );
 
         // 直连主数据节点使用游标的方式获取固定集合中的一条记录
-        List< DBCollection > cappedCLs = FullTextDBUtils.getCappedCLs( sdb,
-                csName12066, clName, fullIndexName );
+        List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs( cl, fullIndexName );
         DBCollection cappedCL = cappedCLs.get( 0 );
-        
+
         // 固定集合的数据要多于1条
         DBCursor cursor = null;
         while ( 2 > cappedCL.getCount() ) {
             System.out.println( "12066 cappedCL's count: " + cappedCL.getCount() );
-            
-        }     
-        cursor = cappedCL.query();        
-        BSONObject object = (BSONObject) cursor.getNext(); 
+
+        }
+        cursor = cappedCL.query();
+        BSONObject object = cursor.getNext();
 
         // 多次执行删除集合的操作
         for ( int i = 0; i < 3; i++ ) {
@@ -84,19 +81,16 @@ public class Fulltext12066 extends SdbTestBase {
             }
         }
         // 关闭步骤2中的游标，再次删除集合
-        List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
-                csName12066, clName, fullIndexName );
-        
-        if(cursor != null) {
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullIndexName );
+
+        if ( cursor != null ) {
             cursor.close();
         }
-        
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName12066, clName,
-                fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkDataConsistency( sdb, csName12066, clName,
-                fullIndexName );
+
+        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullIndexName ) );
         FullTextDBUtils.dropCollection( this.cs, clName );
-        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
     }
 
     @AfterClass
@@ -104,8 +98,7 @@ public class Fulltext12066 extends SdbTestBase {
         try {
             FullTextDBUtils.dropCollectionSpace( sdb, csName12066 );
         } catch ( BaseException e ) {
-            Assert.fail(
-                    e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
+            Assert.fail( e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
         } finally {
             if ( sdb != null ) {
                 sdb.close();
@@ -117,20 +110,13 @@ public class Fulltext12066 extends SdbTestBase {
     }
 
     public void insertData( int insertNums ) {
-        List< BSONObject > records = new ArrayList< BSONObject >();
+        List<BSONObject> records = new ArrayList<BSONObject>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                BSONObject record = ( BSONObject ) JSON
-                        .parse( "{a: 'test_12066_" + i * j + "', b: '"
-                                + StringUtils.getRandomString( 32 )
-                                + "', c: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', d: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', e: '"
-                                + StringUtils.getRandomString( 128 )
-                                + "', f: '"
-                                + StringUtils.getRandomString( 128 ) + "'}" );
+                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_12066_" + i * j + "', b: '"
+                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "'}" );
                 records.add( record );
             }
             this.cl.insert( records );
@@ -142,10 +128,8 @@ public class Fulltext12066 extends SdbTestBase {
         StringBuffer stackBuffer = new StringBuffer();
         StackTraceElement[] stackElements = e.getStackTrace();
         for ( int i = 0; i < stackElements.length; i++ ) {
-            if ( stackElements[ i ].toString()
-                    .contains( classObj.getClass().getName() ) ) {
-                stackBuffer.append( stackElements[ i ].toString() )
-                        .append( "\r\n" );
+            if ( stackElements[i].toString().contains( classObj.getClass().getName() ) ) {
+                stackBuffer.append( stackElements[i].toString() ).append( "\r\n" );
             }
         }
         String str = stackBuffer.toString();

@@ -34,40 +34,34 @@ public class Fulltext14372 extends SdbTestBase {
     private String clName = "insertRecords14372";
     private String fullIndexName = "fullIndex14372";
     private Client esClient = null;
-    private List< String > esIndexNames = null;
+    private List<String> esIndexNames = null;
 
     @BeforeClass
     public void setUp() {
         this.sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        CommLib commLib = new CommLib();
-        if ( commLib.isStandAlone( sdb ) ) {
+        if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
         }
         CollectionSpace cs = sdb.getCollectionSpace( SdbTestBase.csName );
         this.cl = cs.createCollection( clName );
-        esClient = FullTextESUtils.createTransportClient(
-                SdbTestBase.esHostName,
+        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
                 Integer.parseInt( SdbTestBase.esServiceName ) );
         this.cl.createIndex( fullIndexName,
-                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}",
-                false, false );
-        esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
-                fullIndexName );
+                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}", false,
+                false );
+        esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullIndexName );
     }
 
     @Test
     public void test() {
         this.insertData( FullTextUtils.INSERT_NUMS );// insert >128M
-        FullTextUtils.checkFullSyncToES( esClient, sdb, SdbTestBase.csName,
-                this.clName, this.fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkDataConsistency( sdb, csName, clName,
-                this.fullIndexName );
+        Assert.assertTrue(
+                FullTextUtils.isFullSyncToES( esClient, cl, this.fullIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, this.fullIndexName ) );
         this.insertData( FullTextUtils.INSERT_NUMS ); // insert again
-        FullTextUtils.checkFullSyncToES( esClient, sdb, SdbTestBase.csName,
-                this.clName, this.fullIndexName,
-                FullTextUtils.INSERT_NUMS * 2 );
-        FullTextUtils.checkDataConsistency( sdb, csName, clName,
-                this.fullIndexName );
+        Assert.assertTrue(
+                FullTextUtils.isFullSyncToES( esClient, cl, this.fullIndexName, FullTextUtils.INSERT_NUMS * 2 ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, this.fullIndexName ) );
     }
 
     @AfterClass
@@ -77,11 +71,10 @@ public class Fulltext14372 extends SdbTestBase {
             FullTextDBUtils.dropCollection( cs, clName );
             // check fulltext deleted
             if ( esIndexNames != null ) {
-                FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+                Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
             }
         } catch ( BaseException e ) {
-            Assert.fail(
-                    e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
+            Assert.fail( e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
         } finally {
             if ( sdb != null ) {
                 sdb.close();
@@ -93,20 +86,13 @@ public class Fulltext14372 extends SdbTestBase {
     }
 
     public void insertData( int insertNums ) {
-        List< BSONObject > records = new ArrayList< BSONObject >();
+        List<BSONObject> records = new ArrayList<BSONObject>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                BSONObject record = ( BSONObject ) JSON
-                        .parse( "{a: 'test_14372_" + i * j + "', b: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', c: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', d: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', e: '"
-                                + StringUtils.getRandomString( 128 )
-                                + "', g: '"
-                                + StringUtils.getRandomString( 256 ) + "'}" );
+                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_14372_" + i * j + "', b: '"
+                        + StringUtils.getRandomString( 64 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', g: '"
+                        + StringUtils.getRandomString( 256 ) + "'}" );
                 records.add( record );
             }
             this.cl.insert( records );
@@ -118,10 +104,8 @@ public class Fulltext14372 extends SdbTestBase {
         StringBuffer stackBuffer = new StringBuffer();
         StackTraceElement[] stackElements = e.getStackTrace();
         for ( int i = 0; i < stackElements.length; i++ ) {
-            if ( stackElements[ i ].toString()
-                    .contains( classObj.getClass().getName() ) ) {
-                stackBuffer.append( stackElements[ i ].toString() )
-                        .append( "\r\n" );
+            if ( stackElements[i].toString().contains( classObj.getClass().getName() ) ) {
+                stackBuffer.append( stackElements[i].toString() ).append( "\r\n" );
             }
         }
         String str = stackBuffer.toString();

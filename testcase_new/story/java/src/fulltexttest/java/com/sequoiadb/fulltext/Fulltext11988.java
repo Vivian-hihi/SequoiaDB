@@ -33,7 +33,7 @@ public class Fulltext11988 extends SdbTestBase {
     private DBCollection cl;
     private String clName = "hashTableIndex11988";
     private String fullIndexName = "fullIndex11988";
-    private List< String > groupNames;
+    private List<String> groupNames;
     private Client esClient = null;
 
     @BeforeClass
@@ -47,10 +47,9 @@ public class Fulltext11988 extends SdbTestBase {
             throw new SkipException( "Less than two groups!" );
         }
         CollectionSpace cs = sdb.getCollectionSpace( SdbTestBase.csName );
-        this.cl = cs.createCollection( clName, ( BSONObject ) JSON.parse(
-                "{ShardingKey:{a:1},ShardingType:'hash',AutoSplit:true}" ) );
-        esClient = FullTextESUtils.createTransportClient(
-                SdbTestBase.esHostName,
+        this.cl = cs.createCollection( clName,
+                (BSONObject) JSON.parse( "{ShardingKey:{a:1},ShardingType:'hash',AutoSplit:true}" ) );
+        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
                 Integer.parseInt( SdbTestBase.esServiceName ) );
     }
 
@@ -59,19 +58,15 @@ public class Fulltext11988 extends SdbTestBase {
         this.insertData( FullTextUtils.INSERT_NUMS );
 
         // 创建全文索引，索引字段覆盖：分区键和非分区键
-        this.cl.createIndex( fullIndexName,
-                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}",
-                false, false );
-        FullTextUtils.checkFullSyncToES( esClient, sdb, SdbTestBase.csName,
-                this.clName, this.fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkDataConsistency( sdb, csName, clName,
-                this.fullIndexName );
-        List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
-                SdbTestBase.csName, this.clName, this.fullIndexName );
+        String indexKey = "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}";
+        cl.createIndex( fullIndexName, indexKey, false, false );
+        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullIndexName ) );
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullIndexName );
 
         FullTextDBUtils.dropFullTextIndex( cl, fullIndexName );
 
-        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
     }
 
     @AfterClass
@@ -80,8 +75,7 @@ public class Fulltext11988 extends SdbTestBase {
             CollectionSpace cs = sdb.getCollectionSpace( csName );
             FullTextDBUtils.dropCollection( cs, clName );
         } catch ( BaseException e ) {
-            Assert.fail(
-                    e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
+            Assert.fail( e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
         } finally {
             if ( sdb != null ) {
                 sdb.close();
@@ -93,20 +87,13 @@ public class Fulltext11988 extends SdbTestBase {
     }
 
     public void insertData( int insertNums ) {
-        List< BSONObject > records = new ArrayList< BSONObject >();
+        List<BSONObject> records = new ArrayList<BSONObject>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                BSONObject record = ( BSONObject ) JSON
-                        .parse( "{a: 'test_hash11988_" + i * j + "', b: '"
-                                + StringUtils.getRandomString( 32 )
-                                + "', c: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', d: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', e: '"
-                                + StringUtils.getRandomString( 128 )
-                                + "', g: '"
-                                + StringUtils.getRandomString( 128 ) + "'}" );
+                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_hash11988_" + i * j + "', b: '"
+                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', g: '"
+                        + StringUtils.getRandomString( 128 ) + "'}" );
                 records.add( record );
             }
             this.cl.insert( records );
@@ -118,10 +105,8 @@ public class Fulltext11988 extends SdbTestBase {
         StringBuffer stackBuffer = new StringBuffer();
         StackTraceElement[] stackElements = e.getStackTrace();
         for ( int i = 0; i < stackElements.length; i++ ) {
-            if ( stackElements[ i ].toString()
-                    .contains( classObj.getClass().getName() ) ) {
-                stackBuffer.append( stackElements[ i ].toString() )
-                        .append( "\r\n" );
+            if ( stackElements[i].toString().contains( classObj.getClass().getName() ) ) {
+                stackBuffer.append( stackElements[i].toString() ).append( "\r\n" );
             }
         }
         String str = stackBuffer.toString();

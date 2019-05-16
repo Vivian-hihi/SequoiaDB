@@ -1,12 +1,13 @@
 package com.sequoiadb.fulltext;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
+import org.elasticsearch.client.Client;
+import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -15,15 +16,12 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
-
-import org.elasticsearch.client.*;
 
 /**
  * FileName: CreateDropIndex11981.java test content: 在非空集合中创建/删除全文索引
@@ -41,8 +39,7 @@ public class Fulltext11981 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName,
-                Integer.parseInt( esServiceName ) );
+        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "skip StandAlone" );
@@ -77,20 +74,17 @@ public class Fulltext11981 extends SdbTestBase {
         indexObj.put( "f", "text" );
         cl.createIndex( textIndexName, indexObj, false, false );
 
-        List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
-                csName, clName, textIndexName );
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
 
         // check consistency
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
-                textIndexName, insertNums1 );
-        FullTextUtils.checkDataConsistency( sdb, csName, clName,
-                textIndexName );
+        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, insertNums1 ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
 
         // drop fulltext
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
 
         // check fulltext deleted
-        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
 
         // insert > 32M, < 129M
         int insertNums2 = 100000; // new insert 10w
@@ -100,16 +94,14 @@ public class Fulltext11981 extends SdbTestBase {
         cl.createIndex( textIndexName, indexObj, false, false );
 
         // check consistency
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
-                textIndexName, insertNums1 + insertNums2 );
-        FullTextUtils.checkDataConsistency( sdb, csName, clName,
-                textIndexName );
+        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, insertNums1 ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
 
         // drop fulltext
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
 
         // check fulltext deleted
-        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
 
         // insert > 32M, and > 129M
         int insertNums3 = 300000; // new insert 30w
@@ -120,28 +112,24 @@ public class Fulltext11981 extends SdbTestBase {
         cl.createIndex( textIndexName, indexObj, false, false );
 
         // check consistency
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
-                textIndexName, insertNums1 + insertNums2 + insertNums3 );
-        FullTextUtils.checkDataConsistency( sdb, csName, clName,
-                textIndexName );
+        Assert.assertTrue(
+                FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, insertNums1 + insertNums2 + insertNums3 ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
 
         // drop fulltext
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
 
         // check fulltext deleted
-        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {
-        List< BSONObject > insertObjs = new ArrayList<>();
+        List<BSONObject> insertObjs = new ArrayList<>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_11981_"
-                        + i * j + "', b: '"
-                        + StringUtils.getRandomString( 16 ) + "', c: '"
-                        + StringUtils.getRandomString( 16 ) + "', d: '"
-                        + StringUtils.getRandomString( 32 ) + "', e: '"
-                        + StringUtils.getRandomString( 32 ) + "', f: '"
+                insertObjs.add( (BSONObject) JSON.parse( "{a: 'test_11981_" + i * j + "', b: '"
+                        + StringUtils.getRandomString( 16 ) + "', c: '" + StringUtils.getRandomString( 16 ) + "', d: '"
+                        + StringUtils.getRandomString( 32 ) + "', e: '" + StringUtils.getRandomString( 32 ) + "', f: '"
                         + StringUtils.getRandomString( 128 ) + "'}" ) );
             }
             cl.insert( insertObjs, 0 );

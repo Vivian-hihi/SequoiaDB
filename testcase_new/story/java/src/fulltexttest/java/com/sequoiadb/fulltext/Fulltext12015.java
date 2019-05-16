@@ -2,13 +2,17 @@ package com.sequoiadb.fulltext;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
+import org.elasticsearch.client.Client;
+import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
@@ -18,8 +22,6 @@ import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
-
-import org.elasticsearch.client.*;
 
 /**
  * FileName: MainCLCurdFullIndex12015.java test content: 主子表中插入/更新/删除包含全文索引字段的记录
@@ -37,12 +39,11 @@ public class Fulltext12015 extends SdbTestBase {
     private String subCLName2 = "ES_12015_subcl_2";
 
     private Client esClient = null;
-    List< String > esIndexNames = new ArrayList<>();
+    List<String> esIndexNames = new ArrayList<>();
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName,
-                Integer.parseInt( esServiceName ) );
+        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "skip StandAlone" );
@@ -50,11 +51,10 @@ public class Fulltext12015 extends SdbTestBase {
 
         // create maincl and subcls
         cs = sdb.getCollectionSpace( csName );
-        maincl = cs.createCollection( mainCLName, ( BSONObject ) JSON.parse(
-                "{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}" ) );
+        maincl = cs.createCollection( mainCLName,
+                (BSONObject) JSON.parse( "{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}" ) );
         cs.createCollection( subCLName1 );
-        cs.createCollection( subCLName2, ( BSONObject ) JSON
-                .parse( "{ShardingKey:{a0:1}, ShardingType:'hash'}" ) );
+        cs.createCollection( subCLName2, (BSONObject) JSON.parse( "{ShardingKey:{a0:1}, ShardingType:'hash'}" ) );
     }
 
     @AfterClass
@@ -64,7 +64,7 @@ public class Fulltext12015 extends SdbTestBase {
         FullTextDBUtils.dropCollection( cs, mainCLName );
         // check fulltext deleted
         if ( esIndexNames != null ) {
-            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
         }
         sdb.close();
         esClient.close();
@@ -73,10 +73,8 @@ public class Fulltext12015 extends SdbTestBase {
     @Test
     public void test() {
         // attach CL
-        BSONObject options1 = ( BSONObject ) JSON
-                .parse( "{LowBound:{a:'testa'}, UpBound:{a:'testa 999999'}}" );
-        BSONObject options2 = ( BSONObject ) JSON
-                .parse( "{LowBound:{a:'zzza'}, UpBound:{a:'zzza 999999'}}" );
+        BSONObject options1 = (BSONObject) JSON.parse( "{LowBound:{a:'testa'}, UpBound:{a:'testa 999999'}}" );
+        BSONObject options2 = (BSONObject) JSON.parse( "{LowBound:{a:'zzza'}, UpBound:{a:'zzza 999999'}}" );
         maincl.attachCollection( csName + "." + subCLName1, options1 );
         maincl.attachCollection( csName + "." + subCLName2, options2 );
 
@@ -93,58 +91,50 @@ public class Fulltext12015 extends SdbTestBase {
         maincl.createIndex( textIndexName, indexObj, false, false );
 
         // get esIndexNames of each subcl
-        List< String > subCLFullNames = FullTextDBUtils.getSubCLNames( sdb,
-                csName + "." + mainCLName );
+        List<String> subCLFullNames = FullTextDBUtils.getSubCLNames( sdb, csName + "." + mainCLName );
         for ( String subCLFullName : subCLFullNames ) {
-            String subCSName = subCLFullName.split( "\\." )[ 0 ];
-            String subCLName = subCLFullName.split( "\\." )[ 1 ];
-            esIndexNames.addAll( FullTextDBUtils.getESIndexNames( sdb,
-                    subCSName, subCLName, textIndexName ) );
+            String subCSName = subCLFullName.split( "\\." )[0];
+            String subCLName = subCLFullName.split( "\\." )[1];
+            DBCollection subCL = sdb.getCollectionSpace( subCSName ).getCollection( subCLName );
+            esIndexNames.addAll( FullTextDBUtils.getESIndexNames( subCL, textIndexName ) );
         }
 
         // insert
         insertData( maincl, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
-                mainCLName, textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
+        Assert.assertTrue(
+                FullTextUtils.isMainCLFullSyncToES( esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue( FullTextUtils.isMainCLDataConsistency( maincl, textIndexName ) );
 
         // update, should change cl count
         update( maincl );
         insertData( maincl, 10000 );
-        FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
-                mainCLName, textIndexName, FullTextUtils.INSERT_NUMS + 10000 );
-        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
+        Assert.assertTrue( FullTextUtils.isMainCLFullSyncToES( esClient, maincl, textIndexName,
+                FullTextUtils.INSERT_NUMS + 10000 ) );
+        Assert.assertTrue( FullTextUtils.isMainCLDataConsistency( maincl, textIndexName ) );
 
         // delete
         remove( maincl );
-        FullTextUtils.checkMainCLFullSyncToES( esClient, sdb, csName,
-                mainCLName, textIndexName, ( int ) maincl.getCount() );
-        FullTextUtils.checkMainCLDataConsistency( sdb, csName + "." + mainCLName, textIndexName );
+        Assert.assertTrue(
+                FullTextUtils.isMainCLFullSyncToES( esClient, maincl, textIndexName, (int) maincl.getCount() ) );
+        Assert.assertTrue( FullTextUtils.isMainCLDataConsistency( maincl, textIndexName ) );
 
-        System.out.println(
-                "check fulltext of maincl shardingkey and non-shardingkey success!" );
+        System.out.println( "check fulltext of maincl shardingkey and non-shardingkey success!" );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {
-        List< BSONObject > insertObjs = new ArrayList<>();
+        List<BSONObject> insertObjs = new ArrayList<>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 2 / 100; j++ ) {
-                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'testa " + i * j
-                        + "', a0:" + "'test_12051 " + i * j + "', b: '"
-                        + StringUtils.getRandomString( 32 ) + "', c: '"
-                        + StringUtils.getRandomString( 64 ) + "', d: '"
-                        + StringUtils.getRandomString( 64 ) + "', e: '"
-                        + StringUtils.getRandomString( 128 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "'}" ) );
+                insertObjs.add( (BSONObject) JSON.parse( "{a: 'testa " + i * j + "', a0:" + "'test_12051 " + i * j
+                        + "', b: '" + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 )
+                        + "', d: '" + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 )
+                        + "', f: '" + StringUtils.getRandomString( 128 ) + "'}" ) );
             }
             for ( int j = 0; j < insertNums / 2 / 100; j++ ) {
-                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'zzza " + i * j
-                        + "', a0:" + "'test_12051 " + i * j + "', b: '"
-                        + StringUtils.getRandomString( 32 ) + "', c: '"
-                        + StringUtils.getRandomString( 64 ) + "', d: '"
-                        + StringUtils.getRandomString( 64 ) + "', e: '"
-                        + StringUtils.getRandomString( 128 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "'}" ) );
+                insertObjs.add( (BSONObject) JSON.parse( "{a: 'zzza " + i * j + "', a0:" + "'test_12051 " + i * j
+                        + "', b: '" + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 )
+                        + "', d: '" + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 )
+                        + "', f: '" + StringUtils.getRandomString( 128 ) + "'}" ) );
             }
             cl.insert( insertObjs, 0 );
             insertObjs.clear();

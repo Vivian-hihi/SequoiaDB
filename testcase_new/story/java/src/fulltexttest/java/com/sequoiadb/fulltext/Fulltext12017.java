@@ -1,12 +1,13 @@
 package com.sequoiadb.fulltext;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
+import org.elasticsearch.client.Client;
+import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -15,15 +16,12 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
-
-import org.elasticsearch.client.*;
 
 /**
  * FileName: Range12017.java test content: 插入记录并创建全文索引再执行range切分
@@ -41,20 +39,18 @@ public class Fulltext12017 extends SdbTestBase {
     private String destGroupName = "";
 
     private Client esClient = null;
-    private List< String > esIndexNames = null;
+    private List<String> esIndexNames = null;
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName,
-                Integer.parseInt( esServiceName ) );
+        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "skip StandAlone" );
         }
-        ArrayList< String > groupsName = CommLib.getDataGroupNames( sdb );
+        ArrayList<String> groupsName = CommLib.getDataGroupNames( sdb );
         if ( groupsName.size() < 2 ) {
-            throw new SkipException(
-                    "current environment less than tow groups " );
+            throw new SkipException( "current environment less than tow groups " );
         }
 
         // create range cl
@@ -62,9 +58,7 @@ public class Fulltext12017 extends SdbTestBase {
         destGroupName = groupsName.get( 1 );
         cs = sdb.getCollectionSpace( csName );
         cl = cs.createCollection( clName,
-                ( BSONObject ) JSON.parse(
-                        "{ShardingKey:{a:1},ShardingType:'range',Group:'"
-                                + srcGroupName + "'}" ) );
+                (BSONObject) JSON.parse( "{ShardingKey:{a:1},ShardingType:'range',Group:'" + srcGroupName + "'}" ) );
     }
 
     @AfterClass
@@ -72,7 +66,7 @@ public class Fulltext12017 extends SdbTestBase {
         FullTextDBUtils.dropCollection( cs, clName );
         // check fulltext deleted
         if ( esIndexNames != null ) {
-            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
         }
         sdb.close();
         esClient.close();
@@ -97,32 +91,21 @@ public class Fulltext12017 extends SdbTestBase {
         // split
         cl.split( srcGroupName, destGroupName, 50 );
 
-        esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
-                textIndexName );
+        esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
 
         // check consistency
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
-                textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkDataConsistency( sdb, csName, clName,
-                textIndexName );
+        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {
-        List< BSONObject > insertObjs = new ArrayList<>();
+        List<BSONObject> insertObjs = new ArrayList<>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( ( BSONObject ) JSON
-                        .parse( "{a: 'test_range12017_" + i * j + "', b: '"
-                                + StringUtils.getRandomString( 32 )
-                                + "', c: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', d: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', e: '"
-                                + StringUtils.getRandomString( 128 )
-                                + "', f: '"
-                                + StringUtils.getRandomString( 128 )
-                                + "'}" ) );
+                insertObjs.add( (BSONObject) JSON.parse( "{a: 'test_range12017_" + i * j + "', b: '"
+                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "'}" ) );
 
             }
             cl.insert( insertObjs, 0 );

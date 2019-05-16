@@ -46,8 +46,7 @@ public class Fulltext12065 extends SdbTestBase {
         }
         CollectionSpace cs = sdb.createCollectionSpace( csName12065 );
         this.cl = cs.createCollection( clName );
-        esClient = FullTextESUtils.createTransportClient(
-                SdbTestBase.esHostName,
+        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
                 Integer.parseInt( SdbTestBase.esServiceName ) );
     }
 
@@ -55,13 +54,12 @@ public class Fulltext12065 extends SdbTestBase {
     public void test() {
         // 在集合上创建1个全文索引，并插入包含索引字段的数据
         this.cl.createIndex( fullIndexName,
-                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}",
-                false, false );
+                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}", false,
+                false );
         this.insertData( FullTextUtils.INSERT_NUMS );
 
         // 直连集合所在的数据节点主节点，使用游标的方式获取对应的固定集合中的一条记录
-        List< DBCollection > cappedCLs = FullTextDBUtils.getCappedCLs( sdb,
-                csName12065, clName, fullIndexName );
+        List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs( cl, fullIndexName );
         DBCollection cappedCL = cappedCLs.get( 0 );
         DBCursor cursor = cappedCL.query();
         BSONObject bsonObject = cursor.getNext();
@@ -77,15 +75,12 @@ public class Fulltext12065 extends SdbTestBase {
         }
 
         // 关闭步骤2中打开的游标后，再次删除集合空间
-        List< String > esIndexNames = FullTextDBUtils.getESIndexNames( sdb,
-                csName12065, clName, fullIndexName );
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullIndexName );
         cursor.close();
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName12065, clName,
-                fullIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkDataConsistency( sdb, csName12065, clName,
-                fullIndexName );
+        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullIndexName ) );
         FullTextDBUtils.dropCollectionSpace( sdb, csName12065 );
-        FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
     }
 
     @AfterClass
@@ -105,20 +100,13 @@ public class Fulltext12065 extends SdbTestBase {
     }
 
     public void insertData( int insertNums ) {
-        List< BSONObject > records = new ArrayList< BSONObject >();
+        List<BSONObject> records = new ArrayList<BSONObject>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                BSONObject record = ( BSONObject ) JSON
-                        .parse( "{a: 'test_12065_" + i * j + "', b: '"
-                                + StringUtils.getRandomString( 32 )
-                                + "', c: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', d: '"
-                                + StringUtils.getRandomString( 64 )
-                                + "', e: '"
-                                + StringUtils.getRandomString( 128 )
-                                + "', f: '"
-                                + StringUtils.getRandomString( 128 ) + "'}" );
+                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_12065_" + i * j + "', b: '"
+                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "'}" );
                 records.add( record );
             }
             this.cl.insert( records );

@@ -1,12 +1,13 @@
 package com.sequoiadb.fulltext;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
+import org.elasticsearch.client.Client;
+import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -15,15 +16,12 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
-
-import org.elasticsearch.client.*;
 
 /**
  * FileName: CurdFinishIndex14377.java test content:
@@ -39,12 +37,11 @@ public class Fulltext14377 extends SdbTestBase {
     private DBCollection cl = null;
     private String clName = "ES_14377";
     private Client esClient = null;
-    private List< String > esIndexNames = null;
+    private List<String> esIndexNames = null;
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName,
-                Integer.parseInt( esServiceName ) );
+        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "skip StandAlone" );
@@ -60,7 +57,7 @@ public class Fulltext14377 extends SdbTestBase {
         FullTextDBUtils.dropCollection( cs, clName );
         // check fulltext deleted
         if ( esIndexNames != null ) {
-            FullTextUtils.checkIndexNotExistInES( esClient, esIndexNames );
+            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
         }
         sdb.close();
         esClient.close();
@@ -80,16 +77,13 @@ public class Fulltext14377 extends SdbTestBase {
         indexObj.put( "g", "text" );
         cl.createIndex( textIndexName, indexObj, false, false );
 
-        esIndexNames = FullTextDBUtils.getESIndexNames( sdb, csName, clName,
-                textIndexName );
+        esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
 
         insertData( cl, FullTextUtils.INSERT_NUMS );
 
         // check consistency before insert/update/delete
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
-                textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.checkDataConsistency( sdb, csName, clName,
-                textIndexName );
+        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
 
         // insert/update/delete
         insertData( cl, 100000 );
@@ -97,24 +91,18 @@ public class Fulltext14377 extends SdbTestBase {
         removeData( cl );
 
         // check consistency after insert/update/delete
-        FullTextUtils.checkFullSyncToES( esClient, sdb, csName, clName,
-                textIndexName, ( int ) cl.getCount() );
-        FullTextUtils.checkDataConsistency( sdb, csName, clName,
-                textIndexName );
+        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, (int) cl.getCount() ) );
+        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {
-        List< BSONObject > insertObjs = new ArrayList<>();
+        List<BSONObject> insertObjs = new ArrayList<>();
         for ( int i = 0; i < 100; i++ ) {
             for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14377_"
-                        + i * j + "', b: '"
-                        + StringUtils.getRandomString( 32 ) + "', c: '"
-                        + StringUtils.getRandomString( 64 ) + "', d: '"
-                        + StringUtils.getRandomString( 64 ) + "', e: '"
-                        + StringUtils.getRandomString( 128 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "', g: "
-                        + i * j + "}" ) );
+                insertObjs.add( (BSONObject) JSON.parse( "{a: 'test_14377_" + i * j + "', b: '"
+                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "', g: " + i * j + "}" ) );
             }
             cl.insert( insertObjs, 0 );
             insertObjs.clear();
