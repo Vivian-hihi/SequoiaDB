@@ -94,7 +94,7 @@ public class Fulltext11981 extends SdbTestBase {
         cl.createIndex( textIndexName, indexObj, false, false );
 
         // check consistency
-        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, insertNums1 ) );
+        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, insertNums1 + insertNums2 ) );
         Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
 
         // drop fulltext

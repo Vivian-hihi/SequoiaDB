@@ -35,7 +35,7 @@ public class FullTextESUtils {
      * 
      * @param esHostName
      * @param port
-     * @return Client 返回连接
+     * @return Client 如果建连成功则返回连接，否则返回NULL
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
@@ -44,7 +44,7 @@ public class FullTextESUtils {
         System.setProperty( "es.set.netty.runtime.available.processors", "false" );
         Client client = null;
         try {
-            // default settings must be "Settings.EMPTY"
+            // 默认设置一定要设成 "Settings.EMPTY"
             client = new PreBuiltTransportClient( Settings.EMPTY )
                     .addTransportAddress( new TransportAddress( InetAddress.getByName( esHostName ), port ) );
         } catch ( Exception e ) {
@@ -58,7 +58,7 @@ public class FullTextESUtils {
      * 
      * @param esClient
      * @param esIndexName
-     * @return List< BSONObject > 返回记录
+     * @return List< BSONObject > 返回ES端的全文索引记录
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
@@ -75,15 +75,20 @@ public class FullTextESUtils {
             Set<String> keySet = sourceAsMap.keySet();
             BSONObject obj = new BasicBSONObject();
             for ( String string : keySet ) {
-                // remove keys about es cluster
-                for ( int i = 0; i < clusterIds.length; i++ ) {
-                    if ( string.contains( clusterIds[i] ) ) {
+                // 去掉SDBCOMMITID这条记录
+                boolean isSDBCOMMITID = false;
+                for ( String item:  clusterIds) {
+                    if ( string.contains( item ) ) {
+                        isSDBCOMMITID = true;
                         break;
-                    } else if ( i == clusterIds.length - 1 ) {
-                        obj.put( string, sourceAsMap.get( string ) );
-                        objs.add( obj );
-                    }
+                    } 
                 }
+                
+                if( !isSDBCOMMITID ) {
+                    obj.put( string, sourceAsMap.get( string ) );
+                    objs.add( obj );
+                }
+               
             }
         }
 
@@ -100,19 +105,17 @@ public class FullTextESUtils {
      * @Date 2018-11-15
      */
     public static long getCountFromES( Client esClient, String esIndexName ) {
-        long count = 0;
         SearchResponse response = esClient.prepareSearch( esIndexName ).setQuery( QueryBuilders.matchAllQuery() )
                 .setSearchType( SearchType.DFS_QUERY_THEN_FETCH ).setSize( 0 ).execute().actionGet();
-        count = response.getHits().totalHits;
-        return count;
+        return response.getHits().totalHits;
     }
 
     /**
-     * 获取elasticsearch端的SDBCOMMITID值
+     * 获取elasticsearch端的SDBCOMMIT记录下的逻辑ID值
      * 
      * @param esClient
      * @param esIndexName
-     * @return int 返回SDBCOMMITID值
+     * @return int 返回SDBCOMMIT._lid值
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
@@ -120,7 +123,8 @@ public class FullTextESUtils {
         int commitID = -1;
 
         SearchResponse response = esClient.prepareSearch( esIndexName )
-                .setQuery( QueryBuilders.matchQuery( "_id", "SDBCOMMIT" ) ).execute().actionGet();
+                .setQuery( QueryBuilders.matchQuery( "_id", "SDBCOMMIT" ) )
+                .execute().actionGet();
 
         for ( SearchHit searchHit : response.getHits() ) {
             Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
@@ -129,6 +133,32 @@ public class FullTextESUtils {
 
         return commitID;
     }
+
+    /**
+     * 获取elasticsearch端的SDBCOMMIT记录下的原始集合逻辑ID值
+     * 
+     * @param esClient
+     * @param esIndexName
+     * @return int 返回SDBCOMMIT._cllid值
+     * @Author liuxiaoxuan
+     * @Date 2019-05-16
+     */
+    public static int getCommitCLLIDFromES( Client esClient,
+            String esIndexName ) {
+        int commitCLLID = -1;
+
+        SearchResponse response = esClient.prepareSearch( esIndexName )
+                .setQuery( QueryBuilders.matchQuery( "_id", "SDBCOMMIT" ) )
+                .execute().actionGet();
+
+        for ( SearchHit searchHit : response.getHits() ) {
+            Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
+            commitCLLID = (int) sourceAsMap.get( "_cllid" );
+        }
+
+        return commitCLLID;
+    }
+
 
     /**
      * 判断elasticsearch端的全文索引名是否存在，用于检查在创建阶段索引名是否映射到elasticsearch端
@@ -198,7 +228,7 @@ public class FullTextESUtils {
 
             if ( expExist != existResponse.isExists() ) {
                 doTimes++;
-                // interval 1s each time
+                // 每次循环间隔1s
                 try {
                     Thread.sleep( interval * 1000 );
                 } catch ( InterruptedException e ) {

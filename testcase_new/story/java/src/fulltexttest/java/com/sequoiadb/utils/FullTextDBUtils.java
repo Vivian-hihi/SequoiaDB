@@ -27,7 +27,7 @@ public class FullTextDBUtils {
      * 
      * @param cl
      * @param textIndexName
-     * @return String 返回固定集合名
+     * @return String 返回固定集合名，如果不存在固定集合则返回NULL
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
@@ -52,7 +52,7 @@ public class FullTextDBUtils {
         Sequoiadb db = cl.getSequoiadb();
         String cappedName = getCappedName( cl, textIndexName );
         List<String> groupNames = getCLGroups( cl );
-        // get each cappedCL from each group
+        // 获取每个数据组主节点下的固定集合对象
         List<DBCollection> cappedCLs = new ArrayList<>();
         for ( String groupName : groupNames ) {
             DBCollection cappedCL = db.getReplicaGroup( groupName ).getMaster().connect()
@@ -74,7 +74,7 @@ public class FullTextDBUtils {
     public static List<String> getESIndexNames( DBCollection cl, String textIndexName ) {
         String cappedName = getCappedName( cl, textIndexName );
 
-        // get es index names
+        // 获取原始集合下的全文索引名
         List<String> esIndexNames = new ArrayList<>();
         List<String> groupNames = getCLGroups( cl );
 
@@ -82,7 +82,7 @@ public class FullTextDBUtils {
             esIndexNames.add( cappedName.toLowerCase() + "_" + groupName );
         }
 
-        // if sharding cl, return all indices
+        // 分区表包含多个全文索引
         return esIndexNames;
     }
 
@@ -90,7 +90,7 @@ public class FullTextDBUtils {
      * 获取固定集合的最大LogicalID
      * 
      * @param cappedCL
-     * @return int 返回最大_id值
+     * @return int 返回最大_id值，如果固定集合不存在记录则返回-1
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
@@ -113,21 +113,15 @@ public class FullTextDBUtils {
     /**
      * 获取原始集合下符合匹配条件的记录
      * 
-     * @param cl
-     * @param matcher
-     * @param selector
-     * @param orderBy
-     * @param hint
-     * @param skip
-     * @param limit
+     * @param cursor
      * @return List<BSONObject> 返回记录
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<BSONObject> getRecordsFromCL( DBCursor cur ) {
+    public static List<BSONObject> getRecordsFromCL( DBCursor cursor ) {
         List<BSONObject> objs = new ArrayList<BSONObject>();
-        while ( cur.hasNext() ) {
-            BSONObject obj = cur.getNext();
+        while ( cursor.hasNext() ) {
+            BSONObject obj = cursor.getNext();
             objs.add( obj );
         }
         return objs;
@@ -142,13 +136,14 @@ public class FullTextDBUtils {
      * @Date 2018-11-15
      */
     public static List<String> getCLGroups( DBCollection cl ) {
+        List<String> groupNames = new ArrayList<>();
         Sequoiadb db = cl.getSequoiadb();
         if ( CommLib.isStandAlone( db ) ) {
-            return new ArrayList<>();
+            return groupNames;
         }
-        List<String> groupNames = new ArrayList<>();
+        
         BSONObject matcher = new BasicBSONObject();
-        matcher.put( "Name", cl.getFullName() );
+        matcher.put( "Name", cl.getFullName() );    
         DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null );
         while ( cur.hasNext() ) {
             BasicBSONList bsonLists = (BasicBSONList) cur.getNext().get( "CataInfo" );
@@ -158,8 +153,20 @@ public class FullTextDBUtils {
             }
         }
 
+        // groupNames元素去重
         groupNames = FullTextUtils.removeDuplicateItems( groupNames );
-        compare( groupNames );
+        // groupNames数组元素排序
+        Collections.sort( groupNames, new Comparator<Object>() {
+            @Override
+            public int compare( Object o1, Object o2 ) {
+                String str1 = (String) o1;
+                String str2 = (String) o2;
+                if ( str1.compareToIgnoreCase( str2 ) < 0 ) {
+                    return -1;
+                }
+                return 1;
+            }
+        } );
 
         return groupNames;
     }
@@ -174,10 +181,11 @@ public class FullTextDBUtils {
      * @Date 2018-11-15
      */
     public static List<String> getSubCLNames( Sequoiadb db, String mainCLFullName ) {
-        if ( CommLib.isStandAlone( db ) ) {
-            return new ArrayList<>();
-        }
         List<String> subCLNames = new ArrayList<>();
+        if ( CommLib.isStandAlone( db ) ) {
+            return subCLNames;
+        }
+        
         BSONObject matcher = new BasicBSONObject();
         matcher.put( "Name", mainCLFullName );
         DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null );
@@ -202,11 +210,13 @@ public class FullTextDBUtils {
      * @Date 2018-11-26
      */
     public static void dropFullTextIndex( DBCollection cl, String textIndexName ) {
+        int timeout = 600;
         int doTimes = 0;
-        while ( true ) {
+        // 删除全文索引，如果报错-147则重试 10min
+        while ( doTimes < timeout ) {
             try {
                 cl.dropIndex( textIndexName );
-                // drop success
+                // 删除索引成功，则退出
                 break;
             } catch ( BaseException e ) {
                 doTimes++;
@@ -217,15 +227,23 @@ public class FullTextDBUtils {
                         e2.printStackTrace();
                     }
                     continue;
-                } else if ( -47 == e.getErrorCode() ) { // index not exists
+                } else if ( -47 == e.getErrorCode() ) { // 索引已不存在，退出
                     System.out.println( textIndexName + " is not exist" );
                     break;
+                } else {
+                    System.out.println( "drop " + textIndexName + "failed, detail: " + e.getMessage() );
+                    throw e;
                 }
 
-                Assert.assertEquals( e, -147, "drop " + textIndexName + "failed, detail: " + e.getMessage() );
             }
         }
-        System.out.println( textIndexName + " drop success,  drop times: " + doTimes );
+  
+        // 如果最后在超时时间内删除成功，则打印信息；否则再次删除索引，操作失败后直接抛异常  
+        if ( doTimes < timeout ) {
+            System.out.println( textIndexName + " drop success,  drop times: " + doTimes );
+        } else {
+            cl.dropIndex( textIndexName );
+        }
     }
 
     /**
@@ -238,11 +256,13 @@ public class FullTextDBUtils {
      * @Date 2018-11-26
      */
     public static void dropCollectionSpace( Sequoiadb db, String csName ) {
+        int timeout = 600;
         int doTimes = 0;
-        while ( true ) {
+        // 删除集合空间，如果报错-147则重试 10min
+        while ( doTimes < timeout ) {
             try {
                 db.dropCollectionSpace( csName );
-                // drop success
+                // 删除cs成功，则退出
                 break;
             } catch ( BaseException e ) {
                 doTimes++;
@@ -253,16 +273,23 @@ public class FullTextDBUtils {
                         e2.printStackTrace();
                     }
                     continue;
-                } else if ( -34 == e.getErrorCode() ) { // cs not exists
+                } else if ( -34 == e.getErrorCode() ) { // cs已不存在
                     System.out.println( csName + " is not exist" );
                     break;
+                } else {
+                    System.out.println( "drop " + csName + "failed, detail: " + e.getMessage() );
+                    throw e;
                 }
-
-                Assert.assertEquals( e, -147, "drop " + csName + "failed, detail: " + e.getMessage() );
+ 
             }
         }
-        System.out.println( csName + " drop success,  drop times: " + doTimes );
-
+        
+        // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常  
+        if ( doTimes < timeout ) {
+            System.out.println( csName + " drop success,  drop times: " + doTimes );
+        } else {
+            db.dropCollectionSpace( csName );
+        }
     }
 
     /**
@@ -275,11 +302,13 @@ public class FullTextDBUtils {
      * @Date 2018-11-26
      */
     public static void dropCollection( CollectionSpace cs, String clName ) {
+        int timeout = 600;
         int doTimes = 0;
-        while ( true ) {
+        // 删除集合，如果报错-147则重试 10min
+        while ( doTimes < timeout ) {
             try {
                 cs.dropCollection( clName );
-                // drop success
+                // 删除cl成功，则退出
                 break;
             } catch ( BaseException e ) {
                 doTimes++;
@@ -290,38 +319,23 @@ public class FullTextDBUtils {
                         e2.printStackTrace();
                     }
                     continue;
-                } else if ( -23 == e.getErrorCode() ) { // cl not exists
+                } else if ( -23 == e.getErrorCode() ) { // cl已不存在
                     System.out.println( clName + " is not exist" );
                     break;
+                } else {
+                    System.out.println( "drop " + clName + "failed, detail: " + e.getMessage() );
+                    throw e;
                 }
 
-                Assert.assertEquals( e, -147, "drop " + clName + "failed, detail: " + e.getMessage() );
             }
         }
-        System.out.println( clName + " drop success,  drop times: " + doTimes );
-
-    }
-
-    /**
-     * 比较两个字符串的大小并重新排序
-     * 
-     * @param strs
-     * @return void
-     * @Author liuxiaoxuan
-     * @Date 2018-11-15
-     */
-    public static void compare( List<String> strs ) {
-        Collections.sort( strs, new Comparator<Object>() {
-            @Override
-            public int compare( Object o1, Object o2 ) {
-                String str1 = (String) o1;
-                String str2 = (String) o2;
-                if ( str1.compareToIgnoreCase( str2 ) < 0 ) {
-                    return -1;
-                }
-                return 1;
-            }
-        } );
+        
+        // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常  
+        if ( doTimes < timeout ) {
+            System.out.println( clName + " drop success,  drop times: " + doTimes );
+        } else {
+            cs.dropCollection( clName );
+        }
     }
 
     /**
@@ -329,7 +343,7 @@ public class FullTextDBUtils {
      * 
      * @param sdb
      * @param clFullName
-     * @return boolean
+     * @return boolean 是主表则返回true，否则返回false
      * @Author yinzhen
      * @Date 2018-12-21
      */
@@ -349,7 +363,7 @@ public class FullTextDBUtils {
      *
      * @param cl
      * @param insertNum
-     * @return 无返回
+     * @return void
      * @Author luweikang
      * @Date 2019-05-08
      */
@@ -401,7 +415,7 @@ public class FullTextDBUtils {
      * 检查集合空间是存在,每秒检查一次,检测时间最长为5分钟
      * 
      * @param db
-     * @param csName
+     * @param cappedCSName
      * @param rgNames
      * @param expExist
      * @return boolean, cs存在返回true,否则返回false

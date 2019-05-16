@@ -3,6 +3,8 @@ package com.sequoiadb.utils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
 
 import org.bson.BSONObject;
 import org.elasticsearch.client.Client;
@@ -14,6 +16,7 @@ import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
+import org.elasticsearch.index.IndexNotFoundException;
 
 /**
  * 全文索引的公共类，检查方法、其他与DB端和ES内部操作无关的方法均可放于此类
@@ -27,13 +30,13 @@ public class FullTextUtils {
      * 检查DB端中普通表或分区表下的全文索引数据是否完全同步到ES端，总共分三层检查: 
      * 1.先检查文索引名是否都映射到ES端
      * 2.再检查ES端全文索引的总记录数是否正确 
-     * 3.最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致
+     * 3.最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致
      * 
      * @param esClient
      * @param cl
      * @param textIndexName
      * @param expectCount
-     * @return void
+     * @return boolean 如果ES端的全文索引完成同步则返回true，否则返回false
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
@@ -41,32 +44,37 @@ public class FullTextUtils {
         List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
         List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs( cl, textIndexName );
 
-        // check indexnames sync to ES
-        for ( String esIndexName : esIndexNames ) {
-            String msg = esIndexName + " is not exist";
-            Assert.assertTrue( FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ), msg );
+        // 检查ES端索引名是否存在
+        for ( String esIndexName : esIndexNames ) {            
+            if ( !FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ) ) {
+                System.out.println( esIndexName + " is not exist in ES"  );
+                return false;
+            }
         }
-
-        // check all indices sync to ES
-        boolean checkCount = isCountRightInES( esClient, esIndexNames, expectCount );
-        boolean checkLid = isLastLidInES( esClient, esIndexNames, cappedCLs );
-
-        return checkCount && checkLid;
-
+ 
+        // 检查索引数是否已完全同步到ES
+        if ( !isCountRightInES( esClient, esIndexNames, expectCount ) ) {
+            return false;
+        }
+        // 检查固定集合的最后一条lid是否等于ES端SDBCOMMIT._id
+        if ( !isLastLidInES( esClient, esIndexNames, cappedCLs ) ) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**
-     * 检查DB端中主子表下的全文索引数据是否完全同步到ES端，总共分三层检查： 1. 先检查子表的全文索引名是否都映射到ES端 2.
-     * 再检查ES端子表的全文索引总记录数是否正确 3.
-     * 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致
+     * 检查DB端中主子表下的全文索引数据是否完全同步到ES端，总共分三层检查： 
+     * 1. 先检查子表的全文索引名是否都映射到ES端 
+     * 2. 再检查ES端子表的全文索引总记录数是否正确 
+     * 3. 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致
      * 
      * @param esClient
-     * @param db
-     * @param csName
-     * @param mainCLName
+     * @param cl
      * @param textIndexName
      * @param expectCount
-     * @return void
+     * @return boolean 如果主子表在ES端的全文索引完成同步则返回true，否则返回false
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
@@ -75,7 +83,7 @@ public class FullTextUtils {
         Sequoiadb db = cl.getSequoiadb();
         List<String> subCLFullNames = FullTextDBUtils.getSubCLNames( db, cl.getFullName() );
 
-        // get all indexs from maincl
+        // 获取主表下所有子表的全文索引和固定集合对象
         List<String> esIndexNames = new ArrayList<String>();
         List<DBCollection> cappedCLs = new ArrayList<DBCollection>();
         for ( String subCLFullName : subCLFullNames ) {
@@ -85,21 +93,39 @@ public class FullTextUtils {
             esIndexNames.addAll( FullTextDBUtils.getESIndexNames( subCL, textIndexName ) );
             cappedCLs.addAll( FullTextDBUtils.getCappedCLs( subCL, textIndexName ) );
         }
+        // 索引数组元素去重
         esIndexNames = removeDuplicateItems( esIndexNames );
-        // sort esIndexNames
-        FullTextDBUtils.compare( esIndexNames );
+        // 索引数组元素排序
+        Collections.sort( esIndexNames, new Comparator<Object>() {
+            @Override
+            public int compare( Object o1, Object o2 ) {
+                String str1 = (String) o1;
+                String str2 = (String) o2;
+                if ( str1.compareToIgnoreCase( str2 ) < 0 ) {
+                    return -1;
+                }
+                return 1;
+            }
+        } );
 
-        // check indexnames sync to ES
-        for ( String esIndexName : esIndexNames ) {
-            String msg = esIndexName + " is not exist";
-            Assert.assertTrue( FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ), msg );
+        // 检查ES端索引名是否存在
+        for ( String esIndexName : esIndexNames ) {            
+            if ( !FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ) ) {
+                System.out.println( esIndexName + " is not exist in ES"  );
+                return false;
+            }
         }
-
-        // check all indices sync to ES
-        boolean checkCount = isCountRightInES( esClient, esIndexNames, expectCount );
-        boolean checkLid = isLastLidInES( esClient, esIndexNames, cappedCLs );
-
-        return checkCount && checkLid;
+ 
+        // 检查索引数是否已完全同步到ES
+        if ( !isCountRightInES( esClient, esIndexNames, expectCount ) ) {
+            return false;
+        }
+        // 检查固定集合的最后一条lid是否等于ES端SDBCOMMIT._id
+        if ( !isLastLidInES( esClient, esIndexNames, cappedCLs ) ) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**
@@ -108,25 +134,24 @@ public class FullTextUtils {
      * @param esClient
      * @param esIndexNames
      * @param expectCount
-     * @return void
+     * @return boolean 如果ES端的全文索引记录数正确则返回true，否则返回false
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
     public static boolean isCountRightInES( Client esClient, List<String> esIndexNames, int expectCount ) {
         boolean isSync = false;
-        int timeout = 3600; // timeout 1h
-        int interval = 1; // interval 1s
+        int timeout = 3600; // 超时 1h
+        int interval = 1; // 每次检测间隔时间1s
         int doTimes = 0;
         int actCount = 0;
 
         while ( doTimes * interval < timeout ) {
             actCount = 0;
-            // Add counts of all indices
+            // 所有索引的记录数总和
             for ( String esIndexName : esIndexNames ) {
                 actCount += ( FullTextESUtils.getCountFromES( esClient, esIndexName ) - 1 );
             }
 
-            // if expect count < act count, exit
             if ( actCount == expectCount ) {
                 isSync = true;
                 break;
@@ -141,40 +166,37 @@ public class FullTextUtils {
                 }
             }
         }
-        // print message while not finish sync
-        String msg = "";
-        for ( String esIndexName : esIndexNames ) {
-            msg += esIndexName + "/";
-        }
+        // 同步失败后，打印所有索引名
         if ( !isSync ) {
-            System.out.println( "check " + msg + " count syn to es timeout" );
+            System.out.println( "check " + esIndexNames.toString() + " count syn to es timeout" );
         }
         return isSync;
     }
 
     /**
      * 检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致， 一个全文索引对应一个固定集合
+     * 每个全文索引数组元素与每个固定集合对象数组元素一一对应
      * 
      * @param esClient
      * @param esIndexNames
      * @param cappedCLs
-     * @return void
+     * @return boolean  如果ES端的SDBCOMMIT._lid的值与对应固定集合最大一条lid的值一致则返回true，否则返回false
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
     public static boolean isLastLidInES( Client esClient, List<String> esIndexNames, List<DBCollection> cappedCLs ) {
         boolean isSync = false;
-        int timeout = 3600; // timeout 1h
-        int interval = 1; // interval 1s
+        int timeout = 3600; // 超时 1h
+        int interval = 1; // 每次检测间隔时间1s
         int doTimes;
 
-        // get all lids from all groups
+        // 获取每个数据组主节点下的固定集合最大一条lid
         List<Integer> lastLogicalIDs = new ArrayList<>();
         for ( DBCollection cappedCL : cappedCLs ) {
             lastLogicalIDs.add( FullTextDBUtils.getLastLid( cappedCL ) );
         }
 
-        // check out each fulltext
+        // 检查每个全文索引的SDBCOMMITID与对应固定集合的最大一条lid是否相同
         for ( int i = 0; i < esIndexNames.size(); i++ ) {
             doTimes = 0;
             Integer commitID = -10000;
@@ -199,7 +221,7 @@ public class FullTextUtils {
                     }
                 }
             }
-            // print message while not finish sync
+            // 如果最终没有完成同步则打屏
             if ( !isSync ) {
                 System.out.println( "check " + esIndexNames.get( i ).toString() + " lid syn to es timeout" );
                 break;
@@ -209,47 +231,122 @@ public class FullTextUtils {
     }
 
     /**
+     * 检查ES端全文索引是否已重建。当全文索引重建后，ES端SDBCOMMIT记录下的_cllid值会递增，因此重建后的索引_cllid值会比重建前的大
+     * 每个全文索引名对应一个_cllid，数组元素要严格按照一一映射
+     * 
+     * @param esClient
+     * @param esIndexNames
+     * @param preCLLids
+     * @return boolean  如果重建后的_cllid大于重建前的值则返回true，否则返回false
+     * @Author liuxiaoxuan
+     * @Date 2019-05-16
+     */
+    public static boolean isFulltextRebuild( Client esClient,
+            List< String > esIndexNames, List< Integer > preCLLids ) {
+        boolean isSync = false;
+        int timeout = 3600; // timeout 1h
+        int interval = 1; // interval 1s
+        int doTimes;
+
+        // 比较索引个数和cllid个数，如果数量不一致则直接退出
+        if ( esIndexNames.size() != preCLLids.size() ) {
+            System.out.println(
+                    "esIndexNames' size is not equal to cllids' size, esIndexNames: "
+                            + esIndexNames.size() + ", cllids: "
+                            + preCLLids.size() );
+            return false;
+        }
+
+        // 检查每个全文索引下的_cllid值有没有变化
+        for ( int i = 0; i < esIndexNames.size(); i++ ) {
+            doTimes = 0;
+            Integer curCLLID = -10000;
+            while ( doTimes * interval < timeout ) {
+                try {
+                    curCLLID = FullTextESUtils.getCommitCLLIDFromES( esClient,
+                            esIndexNames.get( i ) );
+                    if ( curCLLID <= preCLLids.get( i ) ) {
+                        isSync = false;
+                    } else {
+                        isSync = true;
+                    }
+
+                    if ( isSync ) {
+                        break;
+                    } else {
+                        doTimes++;
+                        System.out.println( "esIndexName: "
+                                + esIndexNames.get( i ).toString()
+                                + ", doTimes: " + doTimes + ", previousCLLid: "
+                                + preCLLids.get( i ) + ", currentCLLID: "
+                                + curCLLID );
+                        try {
+                            Thread.sleep( 1000 );
+                        } catch ( InterruptedException e2 ) {
+                            e2.printStackTrace();
+                        }
+                    }
+                } catch ( IndexNotFoundException e ) {
+                    doTimes++;
+                    System.out.println( "esIndexName: "
+                                + esIndexNames.get( i ).toString()
+                                + ", doTimes: " + doTimes + " is being truncated now" );
+                    try {
+                        Thread.sleep( 1000 );
+                    } catch ( InterruptedException e2 ) {
+                        e2.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        return isSync;
+    }
+    
+    /**
      * 数组元素去重
      * 
      * @param arrayList
-     * @return List< String >
+     * @return List< String > 返回新的无重复元素的数组
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
     public static List<String> removeDuplicateItems( List<String> arrayList ) {
-        HashSet<String> uniqueSet = new HashSet<String>( arrayList );
-        arrayList.clear();
-        arrayList.addAll( uniqueSet );
-        return arrayList;
+        List<String> newArrayList = arrayList;
+        HashSet<String> uniqueSet = new HashSet<String>( newArrayList );
+        newArrayList.clear();
+        newArrayList.addAll( uniqueSet );
+        return newArrayList;
     }
 
     /**
-     * 检查主备节点数据一致性
+     * 检查主备节点下原始集合和固定集合的数据一致性
      * 
-     * @param db
-     * @param csName
-     * @param clName
-     * @return void
+     * @param cl
+     * @param textIndexName
+     * @return boolean 如果主备节点数据一致则返回true，否则返回false
      * @Author liuxiaoxuan
      * @Date 2019-05-09
      */
     public static boolean isDataConsistency( DBCollection cl, String textIndexName ) {
-        // check CL consistency
-        boolean checkCL = isCLDataConsistency( cl );
-        // check cappedCL consistency
-        boolean checkCappedCL = isCappedCLDataConsistency( cl, textIndexName );
-
-        return checkCL && checkCappedCL;
-
+        // 检查主备节点原始集合的数据一致性
+        if ( !isCLDataConsistency( cl ) ){
+            return false;
+        }
+        if ( !isCappedCLDataConsistency( cl, textIndexName ) ){
+            return false;
+        }
+        
+        return true;
     }
 
     /**
-     * 检查主备节点的普通表、分区表数据一致性
-     * 
-     * @param db
-     * @param csName
-     * @param clName
-     * @return void
+     * 检查主备节点的普通表、分区表数据一致性：
+     * 1. 先校验主备节点原始集合记录数是否一致
+     * 2. 再检验主备节点原始集合每一条记录内容是否一致 
+     *
+     * @param cl
+     * @return boolean 如果主备节点原始集合的数据一致则返回true，否则返回false
      * @Author yinzhen
      * @Date 2018-12-21
      */
@@ -257,7 +354,7 @@ public class FullTextUtils {
         boolean isConsistency = false;
         Sequoiadb db = cl.getSequoiadb();
         List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
-        // in case of duplicate groupNames
+        // 防止数据组元素重复
         groupNames = removeDuplicateItems( groupNames );
 
         for ( String groupName : groupNames ) {
@@ -276,11 +373,12 @@ public class FullTextUtils {
 
     /**
      * 检查主备节点的固定集合数据一致性
+     * 1. 先校验主备节点固定集合记录数是否一致
+     * 2. 再检验主备节点固定集合每一条记录内容是否一致 
      * 
-     * @param db
-     * @param csName
-     * @param clName
-     * @return void
+     * @param cl
+     * @param textIndexName
+     * @return boolean 如果主备节点固定集合的数据一致则返回true，否则返回false
      * @Author liuxiaoxuan
      * @Date 2019-05-09
      */
@@ -289,7 +387,7 @@ public class FullTextUtils {
         Sequoiadb db = cl.getSequoiadb();
         String cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
         List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
-        // in case of duplicate groupNames
+        // 防止数据组元素重复
         groupNames = removeDuplicateItems( groupNames );
         for ( String groupName : groupNames ) {
             List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
@@ -307,11 +405,11 @@ public class FullTextUtils {
     }
 
     /**
-     * 检查主备节点的主子表数据一致性
+     * 检查主备节点主子表的原始集合和固定集合的数据一致性
      * 
-     * @param db
-     * @param mainclFullName
-     * @return void
+     * @param cl
+     * @param textIndexName
+     * @return boolean  如果主备节点主子表的数据一致则返回true，否则返回false
      * @Author yinzhen
      * @Date 2018-12-21
      */
@@ -337,7 +435,7 @@ public class FullTextUtils {
      * @param nodes
      * @param csName
      * @param clName
-     * @return boolean
+     * @return boolean 
      * @Author yinzhen
      * @Date 2018-12-21
      */
