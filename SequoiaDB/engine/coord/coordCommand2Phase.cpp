@@ -278,20 +278,19 @@ namespace engine
        * 2. Execute rollback on succeed Data Groups
        * Note: updates to Catalog will be rollback by kill context
        ************************************************************************/
-      // In some cases, cata context could be null, but suc group is not empty,
-      // eg: create cl failed in _doCommit() phase. We also need to rollback.
-      if ( pCoordCtxForCata )
+      // The command could be rollbacked in two conditions:
+      // 1. There are succeed Data Groups
+      // 2. There are Catalog context to rollback catalog
+      if ( !sucGroupLst.empty () && pCoordCtxForCata )
       {
-         // Rollback Catalog first
+         INT32 tmprc = SDB_OK ;
+
+         // Rollback Catalog first if needed
          if ( _flagRollbackCataBeforeData() && pCoordCtxForCata )
          {
             pRtncb->contextDelete ( pCoordCtxForCata->contextID(), cb ) ;
             pCoordCtxForCata = NULL ;
          }
-      }
-      if ( !sucGroupLst.empty () )
-      {
-         INT32 tmprc = SDB_OK ;
 
          // Generate rollback message to succeed Data Groups
          tmprc = _generateRollbackDataMsg( pMsg, cb, pArguments,
@@ -311,7 +310,6 @@ namespace engine
             }
             goto done ;
          }
-         cb->resetInterrupt() ;
          tmprc = _rollbackOnDataGroup( (MsgHeader*)pRollbackMsgBuf, cb,
                                        pArguments, sucGroupLst ) ;
          if ( SDB_OK != tmprc )
