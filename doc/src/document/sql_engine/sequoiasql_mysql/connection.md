@@ -187,7 +187,7 @@ comment [=] "sequoiadb:{table_options:{...}}"
 单独指定 "use_partition:false" 时，在配置项 sequoiadb_use_partition = ON 的情况下，也都只会创建普通非分区表。
 
 ```lang-javascipt
-create table cl3(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{use_partition:false}';
+ mysql> create table cl3(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{use_partition:false}';
 ```
 
 ##在线修改 DDL##
