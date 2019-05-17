@@ -217,6 +217,7 @@
                            predictCapacity() ;
                         }
                      } ) ;
+                     template['Property'][3]['value'] = $scope.HostList.length ;
                      $scope.ConfForm2 = { 'inputList': template['Property'] } ;
                   }
                   confForm['inputList'][0]['valid'].push( { 'key': template['WebName'], 'value': template['DeployMod'] } ) ;
@@ -291,6 +292,23 @@
          var grid = null ;
          var tempHostList = $.extend( true, [], $scope.HostList ) ;
          $scope.SwitchHostWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var oldCheckHostNum = 0 ;
+            $.each( tempHostList, function( index ){
+               if( tempHostList[index]['checked'] == true )
+               {
+                  ++ oldCheckHostNum ;
+               }
+            } ) ;
+            if( $scope.ConfForm2['inputList'][3]['value'] == $scope.HostList.length || $scope.ConfForm2['inputList'][3]['value'] == oldCheckHostNum )
+            {
+               $scope.ConfForm2['inputList'][3]['value'] = 0 ;
+               $.each( $scope.HostList, function( index ){
+                  if( $scope.HostList[index]['checked'] == true )
+                  {
+                     ++ $scope.ConfForm2['inputList'][3]['value'] ;
+                  }
+               } ) ;
+            }
             predictCapacity() ;
             return true ;
          } ) ;
