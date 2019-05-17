@@ -8,7 +8,6 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
-import org.testng.Assert;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
@@ -141,9 +140,9 @@ public class FullTextDBUtils {
         if ( CommLib.isStandAlone( db ) ) {
             return groupNames;
         }
-        
+
         BSONObject matcher = new BasicBSONObject();
-        matcher.put( "Name", cl.getFullName() );    
+        matcher.put( "Name", cl.getFullName() );
         DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null );
         while ( cur.hasNext() ) {
             BasicBSONList bsonLists = (BasicBSONList) cur.getNext().get( "CataInfo" );
@@ -185,7 +184,7 @@ public class FullTextDBUtils {
         if ( CommLib.isStandAlone( db ) ) {
             return subCLNames;
         }
-        
+
         BSONObject matcher = new BasicBSONObject();
         matcher.put( "Name", mainCLFullName );
         DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null );
@@ -237,8 +236,8 @@ public class FullTextDBUtils {
 
             }
         }
-  
-        // 如果最后在超时时间内删除成功，则打印信息；否则再次删除索引，操作失败后直接抛异常  
+
+        // 如果最后在超时时间内删除成功，则打印信息；否则再次删除索引，操作失败后直接抛异常
         if ( doTimes < timeout ) {
             System.out.println( textIndexName + " drop success,  drop times: " + doTimes );
         } else {
@@ -280,11 +279,11 @@ public class FullTextDBUtils {
                     System.out.println( "drop " + csName + "failed, detail: " + e.getMessage() );
                     throw e;
                 }
- 
+
             }
         }
-        
-        // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常  
+
+        // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常
         if ( doTimes < timeout ) {
             System.out.println( csName + " drop success,  drop times: " + doTimes );
         } else {
@@ -329,8 +328,8 @@ public class FullTextDBUtils {
 
             }
         }
-        
-        // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常  
+
+        // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常
         if ( doTimes < timeout ) {
             System.out.println( clName + " drop success,  drop times: " + doTimes );
         } else {
@@ -412,22 +411,49 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 检查集合空间是删除成功,每秒检查一次,检测时间最长为5分钟
+     * 
+     * @param db
+     * @param csName
+     * @return boolean, 删除成功返回true,否则返回false
+     * @throws InterruptedException
+     * @Author luweikang
+     * @Date 2019-05-09
+     */
+    public static boolean isDropSuccessCS( Sequoiadb db, String csName ) throws InterruptedException {
+        return !isExistCS( db, csName, false );
+    }
+
+    /**
+     * 检查集合空间是创建成功,每秒检查一次,检测时间最长为5分钟
+     * 
+     * @param db
+     * @param csName
+     * @return boolean, 创建成功返回true,否则返回false
+     * @throws InterruptedException
+     * @Author luweikang
+     * @Date 2019-05-09
+     */
+    public static boolean isCreateSuccessCS( Sequoiadb db, String csName ) throws InterruptedException {
+        return isExistCS( db, csName, true );
+    }
+
+    /**
      * 检查集合空间是存在,每秒检查一次,检测时间最长为5分钟
      * 
      * @param db
-     * @param cappedCSName
-     * @param rgNames
+     * @param csName
      * @param expExist
      * @return boolean, cs存在返回true,否则返回false
      * @throws InterruptedException
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public static boolean isExistCS( Sequoiadb db, String cappedCSName, List<String> rgNames, boolean expExist )
-            throws InterruptedException {
+    public static boolean isExistCS( Sequoiadb db, String csName, boolean expExist ) throws InterruptedException {
+        List<String> rgNames = CommLib.getDataGroupNames( db );
         boolean csExist = true;
         for ( String rgName : rgNames ) {
-            csExist = isExistCS( db, cappedCSName, rgName, expExist );
+            csExist = isExistCS( db, csName, rgName, expExist );
             if ( expExist != csExist ) {
                 break;
             }
