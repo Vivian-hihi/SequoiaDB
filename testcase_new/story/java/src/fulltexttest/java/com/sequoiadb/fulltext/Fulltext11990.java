@@ -108,7 +108,7 @@ public class Fulltext11990 extends SdbTestBase {
 
         // create fulltext of subcl shardingkey and non-shardingkey
         FullTextDBUtils.dropFullTextIndex( maincl, textIndexName );
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
 
         indexObj = new BasicBSONObject();
         indexObj.put( "a0", "text" );
@@ -126,7 +126,7 @@ public class Fulltext11990 extends SdbTestBase {
                 .println( "check fulltext of subcl shardingkey and non-shardingkey success when datas in one group!" );
 
         FullTextDBUtils.dropFullTextIndex( maincl, textIndexName );
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
         maincl.truncate();
 
         // insert more groups
@@ -144,7 +144,7 @@ public class Fulltext11990 extends SdbTestBase {
 
         // create fulltext of subcl shardingkey and non-shardingkey
         FullTextDBUtils.dropFullTextIndex( maincl, textIndexName );
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
 
         indexObj = new BasicBSONObject();
         indexObj.put( "a0", "text" );
@@ -162,7 +162,7 @@ public class Fulltext11990 extends SdbTestBase {
                 "check fulltext of subcl shardingkey and non-shardingkey success when datas in more groups!" );
 
         FullTextDBUtils.dropFullTextIndex( maincl, textIndexName );
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
     }
 
     public void insertDataOneGroup( DBCollection cl, int insertNums ) {

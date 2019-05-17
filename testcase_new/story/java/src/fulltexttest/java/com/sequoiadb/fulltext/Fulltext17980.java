@@ -52,9 +52,9 @@ public class Fulltext17980 extends SdbTestBase {
         cl.createIndex( fullIdxName, "{'a':'text','b':'text','c':'text','d':'text','e':'text','f':'text'}", false,
                 false );
         List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullIdxName );
-        Assert.assertTrue( FullTextESUtils.isIndexCreatedInES( esClient, esIndexNames.get( 0 ) ) );
+        Assert.assertTrue( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, true ) );
         sdb.getCollectionSpace( csName ).dropCollection( CLNAME );
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
     }
 
     @AfterClass

@@ -158,52 +158,25 @@ public class FullTextESUtils {
 
         return commitCLLID;
     }
-
-
+    
     /**
-     * 判断elasticsearch端的全文索引名是否存在，用于检查在创建阶段索引名是否映射到elasticsearch端
-     * 
-     * @param esClient
-     * @param esIndexName
-     * @return boolean 索引已在ES创建成功则返回true,否则返回false
-     * @Author liuxiaoxuan
-     * @Date 2018-11-15
-     */
-    public static boolean isIndexCreatedInES( Client esClient, String esIndexName ) {
-        return isExistIndexInES( esClient, esIndexName, true );
-    }
-
-    /**
-     * 判断elasticsearch端的全文索引名是否被删除，用于清理阶段作环境检查
-     * 
-     * @param esClient
-     * @param esIndexName
-     * @return boolean 索引已在ES创建删除则返回true,否则返回false
-     * @Author liuxiaoxuan
-     * @Date 2018-11-15
-     */
-    public static boolean isIndexDeletedInES( Client esClient, String esIndexName ) {
-        return !isExistIndexInES( esClient, esIndexName, false );
-    }
-
-    /**
-     * 判断elasticsearch端的全文索引名是否被删除，用于清理阶段作环境检查
+     * 获取多个elasticsearch端的SDBCOMMIT记录下的原始集合逻辑ID值
      * 
      * @param esClient
      * @param esIndexNames
-     * @return boolean 索引已在ES创建删除则返回true,否则返回false
+     * @return List < Integer > 返回每个全文索引的SDBCOMMIT._cllid值
      * @Author liuxiaoxuan
-     * @Date 2018-11-15
+     * @Date 2019-05-17
      */
-    public static boolean isIndexDeletedInES( Client esClient, List<String> esIndexNames ) {
-        boolean notExist = true;
+    public static List < Integer > getCommitCLLIDFromES( Client esClient,
+            List < String > esIndexNames ) {
+        List < Integer > commitCLLIDs = new ArrayList<>();
+
         for ( String esIndexName : esIndexNames ) {
-            notExist = isExistIndexInES( esClient, esIndexName, false );
-            if ( notExist ) {
-                break;
-            }
+            commitCLLIDs.add( getCommitCLLIDFromES( esClient, esIndexName ) );
         }
-        return !notExist;
+         
+        return commitCLLIDs;
     }
 
     /**
@@ -211,8 +184,8 @@ public class FullTextESUtils {
      * 
      * @param esClient
      * @param esIndexName
-     * @param expExist
-     * @return boolean 存在返回true, 否则返回false
+     * @param expExist 预期该索引是否存在
+     * @return boolean 如果预期存在则返回true，预期不存在则返回false
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
@@ -245,9 +218,29 @@ public class FullTextESUtils {
             }
         }
 
+        if( doTimes * interval == timeout ) {  System.out.println( esIndexName + " is mapping to ES timeout" );  }
         return existResponse.isExists();
     }
 
+    /**
+     * 判断elasticsearch端同一集合上对应的多个全文索引名是否存在
+     * 
+     * @param esClient
+     * @param esIndexNames
+     * @param expExist  预期该索引是否存在
+     * @return boolean 存在返回true, 否则返回false
+     * @Author liuxiaoxuan 如果预期存在则返回true，预期不存在则返回false
+     * @Date 2018-11-15
+     */
+    public static boolean isExistIndexInES( Client esClient, List < String > esIndexNames, boolean expExist ) {
+        for ( String esIndexName : esIndexNames ) {            
+            return isExistIndexInES( esClient, esIndexName, expExist );
+        }
+        
+        System.out.println("esIndexName is null");
+        return false;        
+    }
+    
     /**
      * 判断elasticsearch端的所有全文索引数据是否已被删除
      * 

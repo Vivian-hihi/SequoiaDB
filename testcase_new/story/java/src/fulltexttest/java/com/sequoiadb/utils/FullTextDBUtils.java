@@ -26,21 +26,22 @@ public class FullTextDBUtils {
      * 
      * @param cl
      * @param textIndexName
-     * @return String 返回固定集合名，如果不存在固定集合则返回NULL
+     * @return String 返回固定集合名，可以通过CL的属性"ExtDataName"获取。如果不存在固定集合则返回NULL
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
     public static String getCappedName( DBCollection cl, String textIndexName ) {
         String cappedName = null;
-        DBCursor cur = cl.getIndex( textIndexName );
-        cappedName = (String) cur.getNext().get( "ExtDataName" );
-
+        BSONObject indexInfos = cl.getIndexInfo( textIndexName );
+        if ( indexInfos != null) {
+            cappedName = (String) indexInfos.get( "ExtDataName" );
+        }
+        
         return cappedName;
     }
 
     /**
      * 获取原始集合下的所有固定集合对象，原始集合可以是普通表、分区表
-     * 
      * @param cl
      * @param textIndexName
      * @return List<DBCollection> 返回所有固定集合对象

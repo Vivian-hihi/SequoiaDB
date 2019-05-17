@@ -26,8 +26,9 @@ public class FullTextUtils {
     public static final int INSERT_NUMS = 200000; // insert 20w datas
 
     /**
-     * 检查DB端中普通表或分区表下的全文索引数据是否完全同步到ES端，总共分三层检查: 1.先检查文索引名是否都映射到ES端
-     * 2.再检查ES端全文索引的总记录数是否正确
+     * 检查DB端中普通表或分区表下的全文索引数据是否完全同步到ES端，总共分三层检查: 
+     * 1.先检查文索引名是否都映射到ES端
+     * 2.再检查ES端全文索引的总记录数是否正确 
      * 3.最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的SDBCOMMITID值一致
      * 
      * @param esClient
@@ -38,34 +39,35 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isFullSyncToES(Client esClient, DBCollection cl, String textIndexName, int expectCount) {
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, textIndexName);
-        List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs(cl, textIndexName);
+    public static boolean isFullSyncToES( Client esClient, DBCollection cl, String textIndexName, int expectCount ) {
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
+        List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs( cl, textIndexName );
 
         // 检查ES端索引名是否存在
-        for (String esIndexName : esIndexNames) {
-            if (!FullTextESUtils.isExistIndexInES(esClient, esIndexName, true)) {
-                System.out.println(esIndexName + " is not exist in ES");
+        for ( String esIndexName : esIndexNames ) {            
+            if ( !FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ) ) {
+                System.out.println( esIndexName + " is not exist in ES"  );
                 return false;
             }
         }
-
+ 
         // 检查索引数是否已完全同步到ES
-        if (!isCountRightInES(esClient, esIndexNames, expectCount)) {
+        if ( !isCountRightInES( esClient, esIndexNames, expectCount ) ) {
             return false;
         }
         // 检查固定集合的最后一条lid是否等于ES端SDBCOMMIT._id
-        if (!isLastLidInES(esClient, esIndexNames, cappedCLs)) {
+        if ( !isLastLidInES( esClient, esIndexNames, cappedCLs ) ) {
             return false;
         }
-
+        
         return true;
     }
 
     /**
-     * 检查DB端中主子表下的全文索引数据是否完全同步到ES端，总共分三层检查： 1. 先检查子表的全文索引名是否都映射到ES端 2.
-     * 再检查ES端子表的全文索引总记录数是否正确 3.
-     * 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致
+     * 检查DB端中主子表下的全文索引数据是否完全同步到ES端，总共分三层检查： 
+     * 1. 先检查子表的全文索引名是否都映射到ES端 
+     * 2. 再检查ES端子表的全文索引总记录数是否正确 
+     * 3. 最后检查DB端各个固定集合的最大一条LID记录是否与对应ES端全文索引的dbCOMMITID值一致
      * 
      * @param esClient
      * @param cl
@@ -75,53 +77,53 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isMainCLFullSyncToES(Client esClient, DBCollection cl, String textIndexName,
-            int expectCount) {
+    public static boolean isMainCLFullSyncToES( Client esClient, DBCollection cl, String textIndexName,
+            int expectCount ) {
         Sequoiadb db = cl.getSequoiadb();
-        List<String> subCLFullNames = FullTextDBUtils.getSubCLNames(db, cl.getFullName());
+        List<String> subCLFullNames = FullTextDBUtils.getSubCLNames( db, cl.getFullName() );
 
         // 获取主表下所有子表的全文索引和固定集合对象
         List<String> esIndexNames = new ArrayList<String>();
         List<DBCollection> cappedCLs = new ArrayList<DBCollection>();
-        for (String subCLFullName : subCLFullNames) {
-            String subCSName = subCLFullName.split("\\.")[0];
-            String subCLName = subCLFullName.split("\\.")[1];
-            DBCollection subCL = db.getCollectionSpace(subCSName).getCollection(subCLName);
-            esIndexNames.addAll(FullTextDBUtils.getESIndexNames(subCL, textIndexName));
-            cappedCLs.addAll(FullTextDBUtils.getCappedCLs(subCL, textIndexName));
+        for ( String subCLFullName : subCLFullNames ) {
+            String subCSName = subCLFullName.split( "\\." )[0];
+            String subCLName = subCLFullName.split( "\\." )[1];
+            DBCollection subCL = db.getCollectionSpace( subCSName ).getCollection( subCLName );
+            esIndexNames.addAll( FullTextDBUtils.getESIndexNames( subCL, textIndexName ) );
+            cappedCLs.addAll( FullTextDBUtils.getCappedCLs( subCL, textIndexName ) );
         }
         // 索引数组元素去重
-        esIndexNames = removeDuplicateItems(esIndexNames);
+        esIndexNames = removeDuplicateItems( esIndexNames );
         // 索引数组元素排序
-        Collections.sort(esIndexNames, new Comparator<Object>() {
+        Collections.sort( esIndexNames, new Comparator<Object>() {
             @Override
-            public int compare(Object o1, Object o2) {
+            public int compare( Object o1, Object o2 ) {
                 String str1 = (String) o1;
                 String str2 = (String) o2;
-                if (str1.compareToIgnoreCase(str2) < 0) {
+                if ( str1.compareToIgnoreCase( str2 ) < 0 ) {
                     return -1;
                 }
                 return 1;
             }
-        });
+        } );
 
         // 检查ES端索引名是否存在
-        for (String esIndexName : esIndexNames) {
-            if (!FullTextESUtils.isExistIndexInES(esClient, esIndexName, true)) {
-                System.out.println(esIndexName + " is not exist in ES");
+        for ( String esIndexName : esIndexNames ) {            
+            if ( !FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ) ) {
+                System.out.println( esIndexName + " is not exist in ES"  );
                 return false;
             }
         }
-
+ 
         // 检查索引数是否已完全同步到ES
-        if (!isCountRightInES(esClient, esIndexNames, expectCount)) {
+        if ( !isCountRightInES( esClient, esIndexNames, expectCount ) ) {
             return false;
         }
         // 检查固定集合的最后一条lid是否等于ES端SDBCOMMIT._id
-        if (!isLastLidInES(esClient, esIndexNames, cappedCLs)) {
+        if ( !isLastLidInES( esClient, esIndexNames, cappedCLs ) ) {
             return false;
         }
-
+        
         return true;
     }
 
@@ -135,37 +137,50 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isCountRightInES(Client esClient, List<String> esIndexNames, int expectCount) {
+    public static boolean isCountRightInES( Client esClient, List<String> esIndexNames, int expectCount )  {
         boolean isSync = false;
         int timeout = 3600; // 超时 1h
         int interval = 1; // 每次检测间隔时间1s
         int doTimes = 0;
         int actCount = 0;
 
-        while (doTimes * interval < timeout) {
-            actCount = 0;
-            // 所有索引的记录数总和
-            for (String esIndexName : esIndexNames) {
-                actCount += (FullTextESUtils.getCountFromES(esClient, esIndexName) - 1);
-            }
+        while ( doTimes * interval < timeout ) {
+            try{
+                actCount = 0;
+                // 所有索引的记录数总和
+                for ( String esIndexName : esIndexNames ) {
+                    actCount += ( FullTextESUtils.getCountFromES( esClient, esIndexName ) - 1 );
+                }
 
-            if (actCount == expectCount) {
-                isSync = true;
-                break;
-            } else {
+                if ( actCount == expectCount ) {
+                    isSync = true;
+                    break;
+                } else {
+                    doTimes++;
+                    System.out.println( "esIndexNames: " 
+                                + esIndexNames.toString() 
+                                + ", doTimes: " + doTimes + ", actCount: " + actCount + ", expectCount: " + expectCount );        
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch ( IndexNotFoundException e ) {
                 doTimes++;
-                System.out.println("esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes + ", actCount: "
-                        + actCount + ", expectCount: " + expectCount);
+                System.out.println( "esIndexNames: " 
+                            + esIndexNames.toString() 
+                            + ", doTimes: " + doTimes + " is being truncated now" );
                 try {
                     Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException e2) {
+                    e2.printStackTrace();
                 }
             }
         }
         // 同步失败后，打印所有索引名
-        if (!isSync) {
-            System.out.println("check " + esIndexNames.toString() + " count syn to es timeout");
+        if ( !isSync ) {
+            System.out.println( "check " + esIndexNames.toString() + " count syn to es timeout" );
         }
         return isSync;
     }
@@ -177,11 +192,11 @@ public class FullTextUtils {
      * @param esClient
      * @param esIndexNames
      * @param cappedCLs
-     * @return boolean 如果ES端的SDBCOMMIT._lid的值与对应固定集合最大一条lid的值一致则返回true，否则返回false
+     * @return boolean  如果ES端的SDBCOMMIT._lid的值与对应固定集合最大一条lid的值一致则返回true，否则返回false
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isLastLidInES(Client esClient, List<String> esIndexNames, List<DBCollection> cappedCLs) {
+    public static boolean isLastLidInES( Client esClient, List<String> esIndexNames, List<DBCollection> cappedCLs ) {
         boolean isSync = false;
         int timeout = 3600; // 超时 1h
         int interval = 1; // 每次检测间隔时间1s
@@ -189,38 +204,52 @@ public class FullTextUtils {
 
         // 获取每个数据组主节点下的固定集合最大一条lid
         List<Integer> lastLogicalIDs = new ArrayList<>();
-        for (DBCollection cappedCL : cappedCLs) {
-            lastLogicalIDs.add(FullTextDBUtils.getLastLid(cappedCL));
+        for ( DBCollection cappedCL : cappedCLs ) {
+            lastLogicalIDs.add( FullTextDBUtils.getLastLid( cappedCL ) );
         }
 
         // 检查每个全文索引的SDBCOMMITID与对应固定集合的最大一条lid是否相同
-        for (int i = 0; i < esIndexNames.size(); i++) {
+        for ( int i = 0; i < esIndexNames.size(); i++ ) {
             doTimes = 0;
-            Integer commitID = -10000;
-            while (doTimes * interval < timeout) {
-                commitID = FullTextESUtils.getCommitIDFromES(esClient, esIndexNames.get(i));
-                if (commitID.intValue() != lastLogicalIDs.get(i).intValue()) {
-                    isSync = false;
-                } else {
-                    isSync = true;
-                }
-
-                if (isSync) {
-                    break;
-                } else {
-                    doTimes++;
-                    System.out.println("esIndexName: " + esIndexNames.get(i).toString() + ", doTimes: " + doTimes
-                            + ", commitID: " + commitID + ", lastLogicalID: " + lastLogicalIDs.get(i).toString());
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            try{               
+                Integer commitID = -10000;
+                while ( doTimes * interval < timeout ) {
+                    commitID = FullTextESUtils.getCommitIDFromES( esClient, esIndexNames.get( i ) );
+                    if ( commitID.intValue() != lastLogicalIDs.get( i ).intValue() ) {
+                        isSync = false;
+                    } else {
+                        isSync = true;
                     }
+
+                    if ( isSync ) {
+                        break;
+                    } else {
+                        doTimes++;
+                        System.out.println( "esIndexName: " 
+                                    + esIndexNames.get( i ).toString() + ", doTimes: " + doTimes
+                                    + ", commitID: " + commitID + ", lastLogicalID: " 
+                                    + lastLogicalIDs.get( i ).toString() );
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } catch ( IndexNotFoundException e ) {
+                doTimes++;
+                System.out.println( "esIndexName: " 
+                            + esIndexNames.get( i ).toString()
+                            + ", doTimes: " + doTimes + " is being truncated now" );
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e2) {
+                    e2.printStackTrace();
                 }
             }
             // 如果最终没有完成同步则打屏
-            if (!isSync) {
-                System.out.println("check " + esIndexNames.get(i).toString() + " lid syn to es timeout");
+            if ( !isSync ) {
+                System.out.println( "check " + esIndexNames.get( i ).toString() + " lid syn to es timeout" );
                 break;
             }
         }
@@ -230,56 +259,65 @@ public class FullTextUtils {
     /**
      * 检查ES端全文索引是否已重建。当全文索引重建后，ES端SDBCOMMIT记录下的_cllid值会递增，因此重建后的索引_cllid值会比重建前的大
      * 每个全文索引名对应一个_cllid，数组元素要严格按照一一映射
+     * 通过 FullTextESUtils.getCommitCLLIDFromES ( esClient, esIndexNames ) 获取每个全文索引对应的SDBCOMMIT._cllid
      * 
-     * @param esClient
-     * @param esIndexNames
-     * @param preCLLids
-     * @return boolean 如果重建后的_cllid大于重建前的值则返回true，否则返回false
+     * @param esClient  es连接
+     * @param esIndexNames 多个全文索引名
+     * @param preCLLids 每个全文索引对应的SDBCOMMIT._cllid
+     * @return boolean  如果重建后的_cllid大于重建前的值则返回true，否则返回false
      * @Author liuxiaoxuan
      * @Date 2019-05-16
      */
-    public static boolean isFulltextRebuild(Client esClient, List<String> esIndexNames, List<Integer> preCLLids) {
+    public static boolean isFulltextRebuild( Client esClient,
+            List< String > esIndexNames, List< Integer > preCLLids ) {
         boolean isSync = false;
         int timeout = 3600; // timeout 1h
         int interval = 1; // interval 1s
         int doTimes;
 
         // 比较索引个数和cllid个数，如果数量不一致则直接退出
-        if (esIndexNames.size() != preCLLids.size()) {
-            System.out.println("esIndexNames' size is not equal to cllids' size, esIndexNames: " + esIndexNames.size()
-                    + ", cllids: " + preCLLids.size());
+        if ( esIndexNames.size() != preCLLids.size() ) {
+            System.out.println(
+                    "esIndexNames' size is not equal to cllids' size, esIndexNames: "
+                            + esIndexNames.size() + ", cllids: "
+                            + preCLLids.size() );
             return false;
         }
 
         // 检查每个全文索引下的_cllid值有没有变化
-        for (int i = 0; i < esIndexNames.size(); i++) {
+        for ( int i = 0; i < esIndexNames.size(); i++ ) {
             doTimes = 0;
             Integer curCLLID = -10000;
-            while (doTimes * interval < timeout) {
+            while ( doTimes * interval < timeout ) {
                 try {
-                    curCLLID = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexNames.get(i));
-                    if (curCLLID <= preCLLids.get(i)) {
+                    curCLLID = FullTextESUtils.getCommitCLLIDFromES( esClient,
+                            esIndexNames.get( i ) );
+                    if ( curCLLID <= preCLLids.get( i ) ) {
                         isSync = false;
                     } else {
                         isSync = true;
                     }
 
-                    if (isSync) {
+                    if ( isSync ) {
                         break;
                     } else {
                         doTimes++;
-                        System.out.println("esIndexName: " + esIndexNames.get(i).toString() + ", doTimes: " + doTimes
-                                + ", previousCLLid: " + preCLLids.get(i) + ", currentCLLID: " + curCLLID);
+                        System.out.println( "esIndexName: "
+                                + esIndexNames.get( i ).toString()
+                                + ", doTimes: " + doTimes + ", previousCLLid: "
+                                + preCLLids.get( i ) + ", currentCLLID: "
+                                + curCLLID );
                         try {
                             Thread.sleep(1000);
-                        } catch (InterruptedException e2) {
-                            e2.printStackTrace();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
                     }
-                } catch (IndexNotFoundException e) {
+                } catch ( IndexNotFoundException e ) {
                     doTimes++;
-                    System.out.println("esIndexName: " + esIndexNames.get(i).toString() + ", doTimes: " + doTimes
-                            + " is being truncated now");
+                    System.out.println( "esIndexName: "
+                                + esIndexNames.get( i ).toString()
+                                + ", doTimes: " + doTimes + " is being truncated now" );
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e2) {

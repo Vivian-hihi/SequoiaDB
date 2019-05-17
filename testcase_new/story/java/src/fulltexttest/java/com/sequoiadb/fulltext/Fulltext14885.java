@@ -80,7 +80,7 @@ public class Fulltext14885 extends SdbTestBase {
         Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
         Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullIndexName ) );
         FullTextDBUtils.dropFullTextIndex( this.cl, fullIndexName );
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
     }
 
     @AfterClass

@@ -57,7 +57,7 @@ public class Fulltext14398 extends SdbTestBase {
         FullTextDBUtils.dropCollection( cs, clName );
         // check fulltext deleted
         if ( esIndexNames != null ) {
-            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+            Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
         }
         sdb.close();
         esClient.close();
@@ -87,7 +87,7 @@ public class Fulltext14398 extends SdbTestBase {
 
         FullTextDBUtils.dropCollection( cs, clName );
 
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
 
         // recreate after ES index clear
         cl = cs.createCollection( clName );
@@ -107,7 +107,7 @@ public class Fulltext14398 extends SdbTestBase {
         // ES
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );// init env
         cl.truncate();
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
         cl.createIndex( textIndexName, indexObj, false, false );
 
         // init insert datas
