@@ -382,7 +382,7 @@ public class ObjectServiceImpl implements ObjectService {
                             }else {
                                 deleteDirForObject(connection, metaCsName, metaClName, bucket, objectName);
                                 metaDao.removeMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
-                                        objectName, versionId, null);
+                                        objectName, objectMeta.getVersionId(), null);
                                 Bucket newBucket = bucketDao.getBucketById(bucket.getBucketId());
                                 if (newBucket != null && newBucket.getDelimiter() != bucket.getDelimiter()){
                                     deleteDirForObject(connection, metaCsName, metaClName, newBucket, objectName);
@@ -401,7 +401,7 @@ public class ObjectServiceImpl implements ObjectService {
                             if (objectMeta2 != null){
                                 deleteObject = objectMeta2;
                                 metaDao.removeMeta(connection, metaHisCsName, metaHisClName, bucket.getBucketId(),
-                                        objectName, versionId, null);
+                                        objectName, objectMeta2.getVersionId(), null);
                             }
                         }
                         transaction.commit(connection);
