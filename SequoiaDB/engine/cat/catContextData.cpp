@@ -1547,13 +1547,12 @@ namespace engine
                rc = SDB_OPERATION_INCOMPATIBLE ;
                goto error ;
             }
-
-            // If the user create a collection on a Capped CS, without specify
-            // "Capped" for collection, it's also OK.
             if ( ( DMS_STORAGE_CAPPED == type ) && !_clInfo._capped )
             {
-               _clInfo._capped = TRUE ;
-               _fieldMask |= UTIL_CL_CAPPED_FIELD ;
+               PD_LOG( PDERROR, "Only capped colleciton can be created on "
+                       "Capped collection space" ) ;
+               rc = SDB_OPERATION_INCOMPATIBLE ;
+               goto error ;
             }
          }
       }

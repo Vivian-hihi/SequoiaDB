@@ -1610,7 +1610,7 @@ namespace engine
                                     isCompressed ) ;
          if ( SDB_FIELD_NOT_EXIST == rc )
          {
-            isCompressed = FALSE ;
+            isCompressed = TRUE ;
             rc = SDB_OK ;
          }
          else if ( rc )

@@ -4438,27 +4438,26 @@ namespace engine
                    "Collection name not set" ) ;
       }
 
-      if ( clInfo._isCompressed )
+      if ( clInfo._isCompressed &&
+           !( fieldMask & UTIL_CL_COMPRESSTYPE_FIELD ) )
       {
-         if ( 0 == ( fieldMask & UTIL_CL_COMPRESSTYPE_FIELD ) )
-         {
-            clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
-         }
-      }
-      else
-      {
-         PD_CHECK( UTIL_COMPRESSOR_INVALID == clInfo._compressorType,
-                   SDB_INVALIDARG, error, PDWARNING,
-                   "CompressionType can only be set when Compressed is true."
-                   ) ;
+         clInfo._compressorType = UTIL_COMPRESSOR_LZW ;
       }
 
-      // If "Capped" is not set as true, but Max is specified, set
-      // Capped as true. Later check it with the CS type outside.
-      if ( !clInfo._capped && clInfo._maxSize )
+      if ( !( fieldMask & UTIL_CL_COMPRESSED_FIELD ) &&
+           ( fieldMask & UTIL_CL_COMPRESSTYPE_FIELD ) )
       {
-         clInfo._capped = TRUE ;
-         fieldMask |= UTIL_CL_CAPPED_FIELD ;
+         clInfo._isCompressed = TRUE ;
+         fieldMask |= UTIL_CL_COMPRESSED_FIELD ;
+      }
+
+      if ( !clInfo._isCompressed &&
+           ( fieldMask & UTIL_CL_COMPRESSTYPE_FIELD ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "CompressionType can't be set when "
+                     "Compressed is false" ) ;
+         goto error ;
       }
 
       if ( clInfo._capped &&
@@ -4472,6 +4471,15 @@ namespace engine
       {
          clInfo._autoIndexId = FALSE ;
          fieldMask |= UTIL_CL_AUTOIDXID_FIELD ;
+      }
+
+      if ( !clInfo._capped &&
+           !( fieldMask & UTIL_CL_COMPRESSED_FIELD ) &&
+           !( fieldMask & UTIL_CL_COMPRESSTYPE_FIELD ) )
+      {
+         clInfo._isCompressed = TRUE ;
+         fieldMask |= UTIL_CL_COMPRESSED_FIELD ;
+         clInfo._compressorType = UTIL_COMPRESSOR_LZW ;
       }
 
       if ( clInfo._capped )
