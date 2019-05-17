@@ -38,7 +38,7 @@ function main(db)
       checkAlterResult( clName, "EnsureShardingIndex", ensureShardingIndex );   
       checkIdIndexResult( dbcl );    
       checkAlterResult( clName, "ReplSize", replSize );
-      checkAlterResult( clName, "AttributeDesc","StrictDataMode");     
+      checkAlterResult( clName, "AttributeDesc","Compressed | StrictDataMode");     
       
       //clean
       commDropCL( db, COMMCSNAME, clName, true, true,"clear collection in the beginning" ) ;       
