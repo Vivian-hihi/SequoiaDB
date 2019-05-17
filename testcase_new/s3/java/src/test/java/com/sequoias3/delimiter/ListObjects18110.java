@@ -55,12 +55,7 @@ public class ListObjects18110 extends S3TestBase {
 	private void tearDown() {
 		try {
 			if (runSuccess) {
-				for (int i = 0; i < objectNums; i++) {
-					String subKeyName = keyName + "_" + i + "/aa/test.png";
-					// specify versionId is "0"
-					s3Client.deleteVersion(bucketName, subKeyName, "0");
-				}
-				s3Client.deleteBucket(bucketName);
+				CommLib.clearBucket(s3Client, bucketName);
 			}
 		} finally {
 			s3Client.shutdown();
