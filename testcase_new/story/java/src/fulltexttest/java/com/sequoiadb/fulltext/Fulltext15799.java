@@ -56,7 +56,7 @@ public class Fulltext15799 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         // 创建主子表，子表覆盖：普通表、切分表
         ArrayList<String> groupNames = CommLib.getDataGroupNames( sdb );
         DBCollection subCL1 = cs.createCollection( subCLName1 );
@@ -70,8 +70,8 @@ public class Fulltext15799 extends SdbTestBase {
 
         // 创建全文索引，索引字段覆盖：子表分区键、子表普通字段
         this.mainCL.createIndex( fullIndexName, "{\"b\":\"text\", \"c\":\"text\"}", false, false );
-        List< String > esIndexNames01 = FullTextDBUtils.getESIndexNames( subCL1, fullIndexName );
-        List< String > esIndexNames02 = FullTextDBUtils.getESIndexNames( subCL2, fullIndexName );
+        List<String> esIndexNames01 = FullTextDBUtils.getESIndexNames( subCL1, fullIndexName );
+        List<String> esIndexNames02 = FullTextDBUtils.getESIndexNames( subCL2, fullIndexName );
 
         // 插入包含全文索引字段的记录
         this.insertData( FullTextUtils.INSERT_NUMS );
@@ -80,13 +80,13 @@ public class Fulltext15799 extends SdbTestBase {
 
         try {
             mainCL.truncate();
-            
-            List< Integer > preCLLids01 = new ArrayList<>();
-            List< Integer > preCLLids02 = new ArrayList<>();
-            for( String esIndexName : esIndexNames01 ) {
+
+            List<Integer> preCLLids01 = new ArrayList<>();
+            List<Integer> preCLLids02 = new ArrayList<>();
+            for ( String esIndexName : esIndexNames01 ) {
                 preCLLids01.add( FullTextESUtils.getCommitCLLIDFromES( esClient, esIndexName ) );
             }
-            for( String esIndexName : esIndexNames02 ) {
+            for ( String esIndexName : esIndexNames02 ) {
                 preCLLids02.add( FullTextESUtils.getCommitCLLIDFromES( esClient, esIndexName ) );
             }
             Assert.assertTrue( FullTextUtils.isFulltextRebuild( esClient, esIndexNames01, preCLLids01 ) );

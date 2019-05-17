@@ -65,7 +65,7 @@ public class Fulltext14374 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         insertData( cl, FullTextUtils.INSERT_NUMS );
 
         // create fulltext

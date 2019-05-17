@@ -53,7 +53,7 @@ public class Fulltext14372 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         this.insertData( FullTextUtils.INSERT_NUMS );// insert >128M
         Assert.assertTrue(
                 FullTextUtils.isFullSyncToES( esClient, cl, this.fullIndexName, FullTextUtils.INSERT_NUMS ) );

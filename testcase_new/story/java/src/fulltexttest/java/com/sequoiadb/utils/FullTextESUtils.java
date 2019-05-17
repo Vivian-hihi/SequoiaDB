@@ -59,15 +59,21 @@ public class FullTextESUtils {
      * @param esClient
      * @param esIndexName
      * @return List< BSONObject > 返回ES端的全文索引记录
+     * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<BSONObject> getAllRecordsFromES( Client esClient, String esIndexName ) {
+    public static List<BSONObject> getAllRecordsFromES( Client esClient, String esIndexName ) throws Exception {
         List<BSONObject> objs = new ArrayList<>();
 
-        SearchResponse response = esClient.prepareSearch( esIndexName ).setScroll( new TimeValue( 60000 ) )
-                .setSearchType( SearchType.DFS_QUERY_THEN_FETCH ).setQuery( QueryBuilders.matchAllQuery() )
-                .setSize( 100 ).execute().actionGet();
+        SearchResponse response = null;
+        try {
+            response = esClient.prepareSearch( esIndexName ).setScroll( new TimeValue( 60000 ) )
+                    .setSearchType( SearchType.DFS_QUERY_THEN_FETCH ).setQuery( QueryBuilders.matchAllQuery() )
+                    .setSize( 100 ).execute().actionGet();
+        } catch ( Exception e ) {
+            throw new Exception( e.getMessage(), e );
+        }
 
         String[] clusterIds = new String[] { "_lid", "_cluid", "_cllid", "_idxlid" };
         for ( SearchHit searchHit : response.getHits() ) {
@@ -77,18 +83,18 @@ public class FullTextESUtils {
             for ( String string : keySet ) {
                 // 去掉SDBCOMMITID这条记录
                 boolean isSDBCOMMITID = false;
-                for ( String item:  clusterIds) {
+                for ( String item : clusterIds ) {
                     if ( string.contains( item ) ) {
                         isSDBCOMMITID = true;
                         break;
-                    } 
+                    }
                 }
-                
-                if( !isSDBCOMMITID ) {
+
+                if ( !isSDBCOMMITID ) {
                     obj.put( string, sourceAsMap.get( string ) );
                     objs.add( obj );
                 }
-               
+
             }
         }
 
@@ -101,12 +107,18 @@ public class FullTextESUtils {
      * @param esClient
      * @param esIndexName
      * @return long 返回记录总数
+     * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static long getCountFromES( Client esClient, String esIndexName ) {
-        SearchResponse response = esClient.prepareSearch( esIndexName ).setQuery( QueryBuilders.matchAllQuery() )
-                .setSearchType( SearchType.DFS_QUERY_THEN_FETCH ).setSize( 0 ).execute().actionGet();
+    public static long getCountFromES( Client esClient, String esIndexName ) throws Exception {
+        SearchResponse response = null;
+        try {
+            response = esClient.prepareSearch( esIndexName ).setQuery( QueryBuilders.matchAllQuery() )
+                    .setSearchType( SearchType.DFS_QUERY_THEN_FETCH ).setSize( 0 ).execute().actionGet();
+        } catch ( Exception e ) {
+            throw new Exception( e.getMessage(), e );
+        }
         return response.getHits().totalHits;
     }
 
@@ -116,15 +128,20 @@ public class FullTextESUtils {
      * @param esClient
      * @param esIndexName
      * @return int 返回SDBCOMMIT._lid值
+     * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static int getCommitIDFromES( Client esClient, String esIndexName ) {
+    public static int getCommitIDFromES( Client esClient, String esIndexName ) throws Exception {
         int commitID = -1;
 
-        SearchResponse response = esClient.prepareSearch( esIndexName )
-                .setQuery( QueryBuilders.matchQuery( "_id", "SDBCOMMIT" ) )
-                .execute().actionGet();
+        SearchResponse response = null;
+        try {
+            response = esClient.prepareSearch( esIndexName ).setQuery( QueryBuilders.matchQuery( "_id", "SDBCOMMIT" ) )
+                    .execute().actionGet();
+        } catch ( Exception e ) {
+            throw new Exception( e.getMessage(), e );
+        }
 
         for ( SearchHit searchHit : response.getHits() ) {
             Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
@@ -140,16 +157,20 @@ public class FullTextESUtils {
      * @param esClient
      * @param esIndexName
      * @return int 返回SDBCOMMIT._cllid值
+     * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2019-05-16
      */
-    public static int getCommitCLLIDFromES( Client esClient,
-            String esIndexName ) {
+    public static int getCommitCLLIDFromES( Client esClient, String esIndexName ) throws Exception {
         int commitCLLID = -1;
 
-        SearchResponse response = esClient.prepareSearch( esIndexName )
-                .setQuery( QueryBuilders.matchQuery( "_id", "SDBCOMMIT" ) )
-                .execute().actionGet();
+        SearchResponse response = null;
+        try {
+            response = esClient.prepareSearch( esIndexName ).setQuery( QueryBuilders.matchQuery( "_id", "SDBCOMMIT" ) )
+                    .execute().actionGet();
+        } catch ( Exception e ) {
+            throw new Exception( e.getMessage(), e );
+        }
 
         for ( SearchHit searchHit : response.getHits() ) {
             Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
@@ -158,24 +179,24 @@ public class FullTextESUtils {
 
         return commitCLLID;
     }
-    
+
     /**
      * 获取多个elasticsearch端的SDBCOMMIT记录下的原始集合逻辑ID值
      * 
      * @param esClient
      * @param esIndexNames
      * @return List < Integer > 返回每个全文索引的SDBCOMMIT._cllid值
+     * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2019-05-17
      */
-    public static List < Integer > getCommitCLLIDFromES( Client esClient,
-            List < String > esIndexNames ) {
-        List < Integer > commitCLLIDs = new ArrayList<>();
+    public static List<Integer> getCommitCLLIDFromES( Client esClient, List<String> esIndexNames ) throws Exception {
+        List<Integer> commitCLLIDs = new ArrayList<>();
 
         for ( String esIndexName : esIndexNames ) {
             commitCLLIDs.add( getCommitCLLIDFromES( esClient, esIndexName ) );
         }
-         
+
         return commitCLLIDs;
     }
 
@@ -218,7 +239,9 @@ public class FullTextESUtils {
             }
         }
 
-        if( doTimes * interval == timeout ) {  System.out.println( esIndexName + " is mapping to ES timeout" );  }
+        if ( doTimes * interval == timeout ) {
+            System.out.println( esIndexName + " is mapping to ES timeout" );
+        }
         return existResponse.isExists();
     }
 
@@ -232,15 +255,15 @@ public class FullTextESUtils {
      * @Author liuxiaoxuan 如果预期存在则返回true，预期不存在则返回false
      * @Date 2018-11-15
      */
-    public static boolean isExistIndexInES( Client esClient, List < String > esIndexNames, boolean expExist ) {
-        for ( String esIndexName : esIndexNames ) {            
+    public static boolean isExistIndexInES( Client esClient, List<String> esIndexNames, boolean expExist ) {
+        for ( String esIndexName : esIndexNames ) {
             return isExistIndexInES( esClient, esIndexName, expExist );
         }
-        
-        System.out.println("esIndexName is null");
-        return false;        
+
+        System.out.println( "esIndexName is null" );
+        return false;
     }
-    
+
     /**
      * 判断elasticsearch端的所有全文索引数据是否已被删除
      * 

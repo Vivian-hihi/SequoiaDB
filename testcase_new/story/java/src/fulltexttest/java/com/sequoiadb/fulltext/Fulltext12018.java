@@ -73,7 +73,7 @@ public class Fulltext12018 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         // insert big datas
         insertData( cl, FullTextUtils.INSERT_NUMS );
 

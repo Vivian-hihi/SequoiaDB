@@ -65,7 +65,7 @@ public class Fulltext14376 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         // create fulltext
         String textIndexName = "fulltext14376";
         BSONObject indexObj = new BasicBSONObject();

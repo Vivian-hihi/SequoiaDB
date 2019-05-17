@@ -74,7 +74,7 @@ public class Fulltext12016 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         // create fulltext, with shardingkey and non-shardingkey
         BSONObject indexObj = new BasicBSONObject();
         indexObj.put( "a", "text" );

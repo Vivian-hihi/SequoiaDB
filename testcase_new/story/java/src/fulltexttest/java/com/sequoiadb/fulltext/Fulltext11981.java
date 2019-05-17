@@ -58,7 +58,7 @@ public class Fulltext11981 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         // insert < 32M
         int insertNums1 = 100000; // 10w
         insertData( cl, insertNums1 );

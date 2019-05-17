@@ -54,7 +54,7 @@ public class Fulltext11988 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         this.insertData( FullTextUtils.INSERT_NUMS );
 
         // 创建全文索引，索引字段覆盖：分区键和非分区键

@@ -57,7 +57,7 @@ public class Fulltext12021 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         cl.createIndex( fullTextIndexName,
                 (BSONObject) JSON.parse( "{a : 'text', b : 'text', c : 'text', d : 'text', e : 'text', f : 'text'}" ),
                 false, false );

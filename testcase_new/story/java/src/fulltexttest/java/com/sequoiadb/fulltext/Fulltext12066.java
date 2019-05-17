@@ -14,7 +14,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
@@ -51,7 +50,7 @@ public class Fulltext12066 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         // 在集合上创建1个全文索引，并插入大量包含索引字段的数据
         this.cl.createIndex( fullIndexName,
                 "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}", false,
@@ -63,13 +62,10 @@ public class Fulltext12066 extends SdbTestBase {
         DBCollection cappedCL = cappedCLs.get( 0 );
 
         // 固定集合的数据要多于1条
-        DBCursor cursor = null;
         while ( 2 > cappedCL.getCount() ) {
             System.out.println( "12066 cappedCL's count: " + cappedCL.getCount() );
 
         }
-        cursor = cappedCL.query();
-        BSONObject object = cursor.getNext();
 
         // 多次执行删除集合的操作
         for ( int i = 0; i < 3; i++ ) {
@@ -82,10 +78,6 @@ public class Fulltext12066 extends SdbTestBase {
         }
         // 关闭步骤2中的游标，再次删除集合
         List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullIndexName );
-
-        if ( cursor != null ) {
-            cursor.close();
-        }
 
         Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
         Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullIndexName ) );

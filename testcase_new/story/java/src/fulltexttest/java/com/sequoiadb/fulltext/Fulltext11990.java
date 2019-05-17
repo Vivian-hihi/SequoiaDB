@@ -75,7 +75,7 @@ public class Fulltext11990 extends SdbTestBase {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         // attach CL
         BSONObject options1 = (BSONObject) JSON.parse( "{LowBound:{a:'testa'}, UpBound:{a:'testa 999999'}}" );
         BSONObject options2 = (BSONObject) JSON.parse( "{LowBound:{a:'zzza'}, UpBound:{a:'zzza 999999'}}" );
