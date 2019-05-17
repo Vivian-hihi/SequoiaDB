@@ -30,18 +30,32 @@ function getSrcGroup( clName )
 	return srcGroupName;
 }
 
-function checkIdIndex( clName, AttributeDesc, csName )
+function checkIdIndex( clName, idIndexExist, csName )
 {
-	if( csName === undefined )
-	{
-	   csName = COMMCSNAME;	
-	}
-	var clFullName = csName + "." + clName;
-   var catalogInfo = db.snapshot( 8, {Name:clFullName} ).current().toObj();
-   if( catalogInfo.AttributeDesc !== AttributeDesc )
-   {
-      throw "IDINDEX_ERROR";	
-   }
+    if( csName === undefined )
+    {
+        csName = COMMCSNAME;
+    }
+    
+    if( idIndexExist )
+    {
+        db.getCS(csName).getCL(clName).getIndex("$id");
+    }
+    else
+    {
+        try
+        {
+            db.getCS(csName).getCL(clName).getIndex("$id");
+            throw "idIndexExist is false need error."
+        }catch( e )
+        {
+            //-47 : SDB_IXM_NOTEXIST
+            if( e !== -47 )
+            {
+                throw e;
+            }
+        }
+    }
 }
 
 function getDesGroup( groupNames, srcGroup )

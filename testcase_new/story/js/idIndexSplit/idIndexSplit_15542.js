@@ -29,7 +29,7 @@ function main ()
    	                              ShardingType:"range", AutoIndexId:false}, true, false, "create CL" );
    
    //check id index not existed
-   checkIdIndex( clName, "NoIDIndex" );
+   checkIdIndex( clName, false );
    
    //insert data
    for( var i=1; i<=50; i++ )

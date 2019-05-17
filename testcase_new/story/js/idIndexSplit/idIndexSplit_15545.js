@@ -30,7 +30,7 @@ function main()
    var dbcl = db.createCS( csName,{Domain:domName} ).createCL( clName,{ShardingKey:{a:1}, ShardingType:"hash",AutoIndexId:false,AutoSplit:true} )
 
    //check id index not existed;
-   checkIdIndex( clName, "NoIDIndex", csName);
+   checkIdIndex( clName, false, csName);
    
    //check catalog information
    checkCataInfo( clName, srcGroup, 2, csName );

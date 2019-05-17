@@ -40,7 +40,7 @@ function main()
    varCL.dropIdIndex();
    
    //check id index not existed
-   checkIdIndex( clName, "NoIDIndex" );
+   checkIdIndex( clName, false );
    
    //get srcGroup
    var srcGroup = getSrcGroup( clName );

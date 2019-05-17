@@ -26,7 +26,7 @@ function main()
    var varCL = commCreateCLByOption( db, COMMCSNAME, clName, {ShardingKey:{a:1}, ShardingType:"hash", AutoIndexId:false, ReplSize:2, Compressed:true, CompressionType:"lzw"}, true, false, "create CL" );
    
    //check id index not existed
-   checkIdIndex( clName, "Compressed | NoIDIndex" );
+   checkIdIndex( clName, false );
    
    //insert data
    for( var i=0; i<50; i++ )

@@ -30,7 +30,7 @@ function main()
    var dbcl = db.createCS( csName,{Domain:domName} ).createCL( clName,{ShardingKey:{a:1}, ShardingType:"hash",AutoIndexId:false} )
 	
    //check id index not existed;
-   checkIdIndex( clName, "NoIDIndex", csName ); 
+   checkIdIndex( clName, false, csName ); 
    
    //set CL attributes
    try

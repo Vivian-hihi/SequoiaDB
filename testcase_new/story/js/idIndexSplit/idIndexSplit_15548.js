@@ -73,11 +73,11 @@ function main()
    
    //alter CL AutoIndexId:true 
    varCL.alter( {AutoIndexId:true} );
-   checkIdIndex( clName, "" );
+   checkIdIndex( clName, true );
    
    //alter CL AutoIndexId:false
    varCL.alter( {AutoIndexId:false} );
-   checkIdIndex( clName, "NoIDIndex" );
+   checkIdIndex( clName, false );
 }
 
 main();
