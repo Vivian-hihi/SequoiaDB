@@ -254,12 +254,14 @@ namespace engine
          dpsTransLRBHeader *  & pLRBHdr
       ) ;
 
-      // walk through the owner LRB list check if the input
-      // lockMode is compatible with other owners
-      BOOLEAN _checkWaiterLockModeWithOwners
+      // walk through the LRB list check if the input
+      // lockMode is compatible with others, and find
+      // first incompatible
+      BOOLEAN _checkLockModeWithOthers
       (
          const dpsTransLRB *  lrbBegin,
-         const dpsTransLRB *  pWaiterLRB
+         const dpsTransLRB *  pLRBToBeChecked,
+         dpsTransLRB *     &  pLRBIncompatible
       ) ;
 
       // add a LRB at the end of the queue ( waiter or upgrade list )
@@ -290,7 +292,7 @@ namespace engine
       //  . the pointer of first incompatible LRB
       void _searchOwnerLRBList
       (
-         const EDUID               eduId,
+         const _dpsTransExecutor * dpsTxExectr,
          const DPS_TRANSLOCK_TYPE  lockMode,
          dpsTransLRB *             lrbBegin,
          dpsTransLRB *           & pLRBToInsert,
@@ -303,11 +305,11 @@ namespace engine
       //  . the pointer of first incompatible LRB
       void _searchOwnerLRBListForInsertAndIncompatible
       (
+         const _dpsTransExecutor * dpsTxExectr,
          const DPS_TRANSLOCK_TYPE  lockMode,
          dpsTransLRB             * lrbBegin,
          dpsTransLRB *           & pLRBToInsert,
-         dpsTransLRB *           & pLRBIncompatible,
-         dpsTransLRB             * pLRBOwner
+         dpsTransLRB *           & pLRBIncompatible
       ) ;
 
       void _moveToEDULRBListTail

@@ -225,6 +225,7 @@ namespace engine
          {
             PD_LOG( PDINFO, "Has freed %u segments of LRB", freeSegNum ) ;
          }
+         freeSegNum = 0 ;
          _pLRBHdrMgr->shrink( 1, &freeSegNum ) ;
          if ( freeSegNum > 0 )
          {
@@ -434,37 +435,42 @@ namespace engine
 
 
    //
-   // Description: walk through the owner LRB list check if the input
-   //              lockMode is compatible with other owners
+   // Description: walk through the LRB list check if the input
+   //              lockMode is compatible with others in the queue,
+   //              and find the first incompatible
    // Input:
-   //    lrbBegin -- the LRB in owner queue to start searching
-   //    pWaiterLRB -- waiter LRB
+   //    lrbBegin -- the LRB in the queue to start searching
+   //    pLRBTobeChecked -- the input LRB to be checked with others
    // Output:
-   //    none
+   //    pLRBIncompatible -- the first incompatible LRB
    // Return:
-   //    TRUE     -- if an incompatible one is found in owner list
-   //    FALS     -- compatible with owners
+   //    TRUE     -- if an incompatible one is found in the queue
+   //    FALSE    -- compatible with owners
    // Dependency:  the lock bucket latch shall be acquired
    //
-   BOOLEAN dpsTransLockManager::_checkWaiterLockModeWithOwners
+   BOOLEAN dpsTransLockManager::_checkLockModeWithOthers
    (
       const dpsTransLRB *  lrbBegin,
-      const dpsTransLRB *  pWaiterLRB
+      const dpsTransLRB *  pLRBTobeChecked,
+      dpsTransLRB *     &  pLRBIncompatible
    )
    {
       dpsTransLRB *plrb = (dpsTransLRB *)lrbBegin ;
       BOOLEAN foundIncomp = FALSE ;
 
-      if ( ( NULL == pWaiterLRB ) || ( NULL == lrbBegin ) )
+      pLRBIncompatible = NULL ;
+      if ( ( NULL == pLRBTobeChecked ) || ( NULL == lrbBegin ) )
       {
          goto exit ;
       }
 
       while ( plrb )
       {
-         if ( ( pWaiterLRB->dpsTxExectr != plrb->dpsTxExectr ) &&
-              ( ! dpsIsLockCompatible( plrb->lockMode, pWaiterLRB->lockMode )) )
+         if ( ( pLRBTobeChecked->dpsTxExectr != plrb->dpsTxExectr ) &&
+              ( ! dpsIsLockCompatible( plrb->lockMode,
+                                       pLRBTobeChecked->lockMode ) ) )
          {
+            pLRBIncompatible = plrb ;
             foundIncomp = TRUE ;
             break ;
          }
@@ -592,19 +598,19 @@ namespace engine
    //              . the pointer of last compatible and pointer of first
    //                incompatible LRB
    // Input:
-   //    eduId    -- edu Id
-   //    lockMode -- lock mode
-   //    lrbBegin -- the first LRB pointer in the owner list
+   //    dpsTxExectr -- pointer to _dpsTransExecutor
+   //    lockMode    -- lock mode
+   //    lrbBegin    -- the first LRB pointer in the owner list
    // Output:
    //    pLRBToInsert      -- the lrb which the new LRB shall be inserted after
    //    pLRBIncompatible  -- pointer of first incompatible LRB
-   //    pLRBOwner         -- the LRB owned by same eduId
+   //    pLRBOwner         -- the LRB owned by same dpsTxExectr ( eduId )
    // Return:     None
    // Dependency:  the lock bucket latch shall be acquired and
    //              all output parameters are initialized as NULL
    void dpsTransLockManager::_searchOwnerLRBList
    (
-      const EDUID               eduId,
+      const _dpsTransExecutor * dpsTxExectr,
       const DPS_TRANSLOCK_TYPE  lockMode, 
       dpsTransLRB             * lrbBegin,
       dpsTransLRB *           & pLRBToInsert,
@@ -626,8 +632,7 @@ namespace engine
          // check if this LRB owned by the requested EDU, i.e., owner LRB
          if ( NULL == pLRBOwner )
          { 
-            lrbEduid = plrb->dpsTxExectr->getEDUID() ;
-            if ( eduId == lrbEduid ) 
+            if ( dpsTxExectr == plrb->dpsTxExectr )
             {
                // save the pointer if the given eduId is found in the owner list
                pLRBOwner = plrb;
@@ -650,7 +655,7 @@ namespace engine
          // If not, remember the first incompatible one. 
          if ( NULL == pLRBIncompatible )
          {
-            if (    ( plrb != pLRBOwner )
+            if (    ( dpsTxExectr != plrb->dpsTxExectr )
                  && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
             {
                // save the address/pointer of first incompatible LRB
@@ -682,7 +687,7 @@ namespace engine
    // Input:
    //    lockMode -- lock mode
    //    lrbBegin -- the first LRB pointer in the owner list
-   //    pLRBOwner -- owner LRB ( it could be NULL if it is not an owner yet )
+   //    dpsTxExectr -- current requester _dpsTransExecutor pointer
    // Output:
    //    pLRBToInsert      -- the lrb which the new LRB shall be inserted after
    //    pLRBIncompatible  -- pointer of first incompatible LRB
@@ -691,11 +696,11 @@ namespace engine
    //              all output parameters are initialized as NULL
    void dpsTransLockManager::_searchOwnerLRBListForInsertAndIncompatible
    (
+      const _dpsTransExecutor * dpsTxExectr,
       const DPS_TRANSLOCK_TYPE  lockMode, 
       dpsTransLRB             * lrbBegin,
       dpsTransLRB *           & pLRBToInsert,
-      dpsTransLRB *           & pLRBIncompatible,
-      dpsTransLRB             * pLRBOwner
+      dpsTransLRB *           & pLRBIncompatible
    )
    {
 #ifdef _DEBUG
@@ -723,19 +728,10 @@ namespace engine
          // If not, remember the first incompatible one. 
          if ( NULL == pLRBIncompatible )
          {
-            if ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) )
+            if (    ( dpsTxExectr != plrb->dpsTxExectr )
+                 && ( ! dpsIsLockCompatible( plrb->lockMode, lockMode ) ) )
             {
-               if ( NULL != pLRBOwner )
-               {
-                  if ( pLRBOwner->dpsTxExectr != plrb->dpsTxExectr )
-                  {
-                     pLRBIncompatible = plrb ;
-                  }
-               } 
-               else
-               {
-                  pLRBIncompatible = plrb ;
-               }
+               pLRBIncompatible = plrb ;
             }
          }
 
@@ -948,6 +944,7 @@ namespace engine
 
       dpsTransLRB *pLRB = dpsTxExectr->getWaiterLRB() ;
       dpsTransLRB *pLRBNext = NULL;
+      dpsTransLRB *pLRBIncompatible = NULL ;
       dpsTransLRBHeader * pLRBHdr = NULL ;
 
 #ifdef _DEBUG
@@ -1053,8 +1050,9 @@ namespace engine
                   // wake up next waiter if owner list is empty
                   _wakeUp( pLRBNext->dpsTxExectr ) ;   
                }
-               else if ( FALSE == _checkWaiterLockModeWithOwners(
-                                      pLRBHdr->ownerLRB, pLRBNext ) )
+               else if ( FALSE == _checkLockModeWithOthers( pLRBHdr->ownerLRB,
+                                                            pLRBNext,
+                                                            pLRBIncompatible ) )
                {
                   // wake up next waiter if it is compatible with all owners :
                   //  . A is holding U lock
@@ -1432,8 +1430,8 @@ namespace engine
          //
          // pLRBToInsert     -- lrb to insert after
          // pLRBIncompatible -- lrb of first incompatible
-         // pLRBOwner        -- lrb owned by same EDUId
-         _searchOwnerLRBList( eduId,
+         // pLRBOwner        -- lrb owned by same EDU
+         _searchOwnerLRBList( dpsTxExectr,
                               requestLockMode,
                               pLRBHdr->ownerLRB,
                               pLRBToInsert,
@@ -1451,11 +1449,11 @@ namespace engine
          //
          // pLRBToInsert     -- lrb to insert after
          // pLRBIncompatible -- lrb of first incompatible
-         _searchOwnerLRBListForInsertAndIncompatible( requestLockMode,
+         _searchOwnerLRBListForInsertAndIncompatible( dpsTxExectr,
+                                                      requestLockMode,
                                                       pLRBHdr->ownerLRB,
                                                       pLRBToInsert,
-                                                      pLRBIncompatible,
-                                                      pLRBOwner ) ;
+                                                      pLRBIncompatible ) ;
       }
 
       if ( pLRBOwner )
@@ -1641,9 +1639,8 @@ namespace engine
             // a. if both upgrade and waiter list are empty
             // b. if it is doing retry-acquire after been woken up.( when input
             //    parameter, bktLatched, is true, means retry acquiring )
-            if (   (    ( ! pLRBHdr->upgradeLRB ) 
-                     && ( ! pLRBHdr->waiterLRB ) )
-                || ( bktLatched ) )
+            if (    ( ( ! pLRBHdr->upgradeLRB ) && ( ! pLRBHdr->waiterLRB ) )
+                 || ( bktLatched ) )
             {
                if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
                {
@@ -1670,6 +1667,42 @@ namespace engine
             }
             else
             {
+               // if the requested locked mode is compabile with all members
+               // in both upgrade and waiter list, then add it into owner list
+               if ( FALSE == _checkLockModeWithOthers( pLRBHdr->upgradeLRB, 
+                                                       pLRBNew,
+                                                       pLRBIncompatible ) )
+               {
+                  if ( FALSE == _checkLockModeWithOthers( pLRBHdr->waiterLRB,
+                                                          pLRBNew,
+                                                          pLRBIncompatible ) )
+                  {
+                     // add to owner list
+                     if ( DPS_TRANSLOCK_OP_MODE_TEST != opMode )
+                     {
+                        if ( pLRBToInsert )
+                        {
+                           _addToOwnerLRBList( pLRBToInsert, pLRBNew ) ;
+                        }
+                        else
+                        {
+                           _addToLRBListHead( pLRBHdr->ownerLRB, pLRBNew ) ;
+                        }
+
+                        // add the new LRB to EDU LRB list
+                        _addToEDULRBListTail( dpsTxExectr, pLRBNew, lockId ) ;
+
+                        // mark the new LRB is used
+                        bFreeLRB = FALSE ;
+                        pLRB     = pLRBNew ;
+                     }
+                     // job done
+                     goto done ;
+                  }
+               }
+
+               // if the requested lock mode is not compabile with all
+               // members in upgrade and waiter list, add it to waiter list
                if ( DPS_TRANSLOCK_OP_MODE_ACQUIRE == opMode )
                {
                   // add to the end of waiter list
@@ -1692,16 +1725,8 @@ namespace engine
                // construct the conflict lock info ( representative )
                if ( pdpsTxResInfo )
                {
-                  // pick first one from upgrade list or waiter list
-                  // as the conflict lock info
-                  if ( pLRBHdr->upgradeLRB )
-                  {
-                     pLRB = pLRBHdr->upgradeLRB;
-                  }
-                  else
-                  {
-                     pLRB = pLRBHdr->waiterLRB ;
-                  }
+                  pLRB = pLRBIncompatible ; 
+
                   pdpsTxResInfo->_lockID   = pLRBHdr->lockId ;
                   pdpsTxResInfo->_lockType = pLRB->lockMode ;
                   pdpsTxResInfo->_eduID    = pLRB->dpsTxExectr->getEDUID() ;
@@ -2210,6 +2235,7 @@ namespace engine
       dpsTransLRB *pMyLRB        = pOwnerLRB,
                   *lrbToRelease   = NULL ,
                   *pWaiterLRB    = NULL ;
+      dpsTransLRB *pLRBIncompatible = NULL ;
       dpsTransLRBHeader *pLRBHdr = NULL, 
                         *pLRBHdrToRelease = NULL;
       BOOLEAN bLatched = FALSE ;
@@ -2360,8 +2386,9 @@ namespace engine
          {
             // lookup owner list check if the waiter lockMode is compabile
             // with other owners
-            foundIncomp = _checkWaiterLockModeWithOwners(
-                              pLRBHdr->ownerLRB, pWaiterLRB ) ;
+            foundIncomp = _checkLockModeWithOthers( pLRBHdr->ownerLRB,
+                                                    pWaiterLRB,
+                                                    pLRBIncompatible ) ;
          }
 
          // if the owner queue is empty ( after remove current owner ),
