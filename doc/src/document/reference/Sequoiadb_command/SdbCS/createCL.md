@@ -47,11 +47,11 @@ Collection Space
 
         格式：`ReplSize: <num>`
 
-    5. `Compressed` ( *Bool* )：标识新集合是否开启数据压缩功能。默认为 false。
+    5. `Compressed` ( *Bool* )：标识新集合是否开启数据压缩功能。默认为 true。
 
         格式：`Compressed:true|false`
 
-    6. `CompressionType` ( *String* )：压缩算法类型。默认为 snappy 算法。其可选取值如下：
+    6. `CompressionType` ( *String* )：压缩算法类型。默认为 lzw 算法。其可选取值如下：
 
         * "snappy"：使用 snappy 算法压缩。
         * "lzw"：使用 lzw 算法压缩。
@@ -114,6 +114,8 @@ Collection Space
     * 使用 AutoSplit 参数时，若该集合不从属于某个域，集合将在系统域 SYSDOMAIN 上进行自动切分；
 
     * 不使用 AutoSplit 参数时，若该集合从属于某个域，该域的 AutoSplit 参数将作用于当前集合。
+    
+    * 压缩算法选择策略：snappy 压缩算法是以单条记录为单位进行压缩，记录内部的数据重复度直接影响到压缩率。因此，当记录内部数据重复度较高，如每条记录的字段名、字段值相似，使用 snappy 算法可获得良好的压缩性能。如果记录内部数据重复度很低，但记录间具有更高的相似性，如不同记录之间有相同的字段名，相近的字段值等，则使用 lzw 算法更优。
 
 ##返回值##
 
@@ -145,24 +147,23 @@ v1.0及以上版本。
 1. 在集合空间 foo 下创建集合 bar，不指定分区键。
 
     ```lang-javascript
-    > db.foo.createCL("bar")
+    > db.foo.createCL( "bar" )
     localhost:11810.foo.bar
     Takes 0.120450s.
     ```
 
-2. 在集合空间 foo 下创建集合 bar1。新集合若需要切分数据到其它复制组，将
-   使用 a 字段进行 hash 切分；新集合开启了数据压缩功能，使用默认的 snappy 算法压缩数据；写操作作用于新集合时，只需写入主节点即可返还。
+2. 在集合空间 foo 下创建集合 bar。该集合若需要切分数据到其它复制组，将
+   使用 age 字段进行 hash 切分；该集合默认开启了数据压缩功能，使用默认的 lzw 算法压缩数据；写操作作用于该集合时，只需写入主节点即可返回。
 
     ```lang-javascript
-    > db.foo.createCL("bar1",{ShardingKey:{age:1}, ShardingType:"hash", 
-                      Partition:4096, Compressed:true, ReplSize:1})
-    localhost:11810.foo.bar1
+    > db.foo.createCL( "bar",{ ShardingKey:{ age: 1 }, ShardingType: "hash", Partition: 4096, ReplSize: 1 } )
+    localhost:11810.foo.bar
     Takes 0.110319s.
     ```
 3. 在集合空间 foo 下创建集合 bar，开启严格数据类型模式。
 
     ```lang-javascript
-    > db.foo.createCL("bar", {StrictDataMode: true})
+    > db.foo.createCL( "bar", { StrictDataMode: true } )
     localhost:11810.foo.bar
     Takes 0.120450s.
     ```

@@ -52,12 +52,12 @@ belong to one and only one collection.
   
         Format: `ReplSize: <num>`
   
-    5. `Compressed` ( *Bool* ): Compress the collection or not, default to be false.
+    5. `Compressed` ( *Bool* ): Compress the collection or not, default to be true.
   
         Format: `Compressed:true|false`
       
     6. `CompressionType` ( *String* ): The algorithm for compressing, 
-                                       default to be "snappy", can be one of the follow:
+                                       default to be "lzw", can be one of the follow:
 
         * "snappy": use snappy algorithm to compress.
         * "lzw": use lzw algorithm to compress.
@@ -122,6 +122,8 @@ or not, default to be false.
        SYSDOMAIN, that is to say, a collection space can be
        distributed into any replica group if no specific group is
        given)
+       
+    *  Compression algorithm selection strategy: the snappy algorithm compresses data in units of a single record, and the internal data repeatability directly affects the compression ratio. Therefore, when the internal data of the record is relatively high in repetition, such as the field name and field value of a record are similar, the snappy algorithm can be used to obtain good compression performance. If the internal data of record is very low in repetition, but the records have higher similarity, such as different records with the same field name, similar field values, etc., lzw compression is better.
 
 ##RETURN VALUE##
 
@@ -148,32 +150,26 @@ more detail.
 Since v1.0.
 
 ##EXAMPLES##
-1. Create collection "bar" in collection space "foo" without shard key. If
-   the collection space "foo" doesn't exist, it will automatically
-   generate collection space "foo".
+1. Create collection "bar" in collection space "foo" without sharding key.
 
     ```lang-javascript
-    > db.foo.createCL("bar")
+    > db.foo.createCL( "bar" )
     localhost:11810.foo.bar
     Takes 0.1250s.
     ```
 
-2. Create a compressed normal collection "bar" in collection space "foo"
-   with the hash shard key "age" and in ascending order, using 65535
-   partitions with writeconcern 1.
+2. Create collection "bar" in collection space "foo". If the collection splits data into other replication groups, it will use the age field for hash segmentation. It has data compression enabled by default, using the default lzw algorithm.When a write operation is applied to the collection, it only needs to be written to the primary node to be returned.
 
     ```lang-javascript
-    > db.foo.createCL("bar",{ShardingKey:{age:1},ShardingType:"hash",
-      Partition:65535, ReplSize:1, Compressed:true, IsMainCL:false})
+    > db.foo.createCL( "bar", { ShardingKey:{ age: 1 }, ShardingType: "hash", 
+                                Partition: 4096, ReplSize: 1 } )
     localhost:11810.foo.bar
     Takes 0.32450s.
     ```
-3. Create collection "bar" in collection space "foo" with the StrictDataMode trun on.
-	If the collection space "foo" doesn't exist, it will automatically
-   generate collection space "foo".
+3. Create collection "bar" in collection space "foo" with the StrictDataMode turn on.
 
     ```lang-javascript
-    > db.foo.createCL("bar", { StrictDataMode: true})
+    > db.foo.createCL( "bar", { StrictDataMode: true } )
     localhost:11810.foo.bar
     Takes 0.1250s.
     ```
