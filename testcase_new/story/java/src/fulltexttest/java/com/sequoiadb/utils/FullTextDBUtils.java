@@ -420,7 +420,7 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public static boolean isDropSuccessCS( Sequoiadb db, String csName ) throws InterruptedException {
+    public static boolean isCSDropSuccess( Sequoiadb db, String csName ) throws InterruptedException {
         return !isExistCS( db, csName, false );
     }
 
@@ -434,7 +434,7 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public static boolean isCreateSuccessCS( Sequoiadb db, String csName ) throws InterruptedException {
+    public static boolean isCSCreateSuccess( Sequoiadb db, String csName ) throws InterruptedException {
         return isExistCS( db, csName, true );
     }
 
