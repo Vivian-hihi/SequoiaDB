@@ -507,8 +507,7 @@ namespace engine
                      rc = SDB_OK ;
                      goto done ;
                   }
-                  else if ( DPS_TRANSLOCK_X == retInfo._lockType &&
-                            dpsTransLockId( _logicalCSID,
+                  else if ( dpsTransLockId( _logicalCSID,
                                             context->mbID(),
                                             NULL ) == retInfo._lockID )
                   {
