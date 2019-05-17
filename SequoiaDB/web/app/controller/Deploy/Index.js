@@ -1691,6 +1691,112 @@
          }
       }
 
+      
+      //删除实例下拉菜单
+      $scope.DeleteInstanceDropdown = {
+         'config': [
+            { 'key': $scope.autoLanguage( '删除实例' ) },
+            { 'key': $scope.autoLanguage( '移除实例' ) }
+         ],
+         'OnClick': function( index ){
+            if( index == 0 )
+            {
+               showUninstallInstance() ;
+            }
+            else
+            {
+               showUnbindInstance() ;
+            }
+            $scope.DeleteInstanceDropdown['callback']['Close']() ;
+         },
+         'callback': {}
+      }
+
+      //打开 删除实例下拉菜单
+      $scope.OpenDeleteInstanceDropdown = function( event ){
+         if( $scope.ClusterList.length > 0 )
+         {
+            $scope.DeleteInstanceDropdown['callback']['Open']( event.currentTarget ) ;
+         }
+      }
+
+      //解绑实例
+      var unbindInstance = function( clusterName, businessName ){
+         var data = {
+            'cmd': 'unbind business', 'ClusterName': clusterName, 'BusinessName': businessName
+         } ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               $scope.Components.Confirm.type = 4 ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '实例：? 移除成功。' ), businessName ) ;
+               $scope.Components.Confirm.isShow = true ;
+               $scope.Components.Confirm.noClose = true ;
+               $scope.Components.Confirm.normalOK = true ;
+               $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+               $scope.Components.Confirm.ok = function(){
+                  $scope.Components.Confirm.isShow = false ;
+                  $scope.Components.Confirm.noClose = false ;
+                  $scope.Components.Confirm.normalOK = false ;
+                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
+               }
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  unbindInstance( clusterName, businessName ) ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
+      }
+
+      //解绑实例 弹窗
+      $scope.UnbindInstanceWindow = {
+         'config': {},
+         'callback': {}
+      }
+
+      //打开 解绑实例 弹窗
+      var showUnbindInstance = function(){
+         if( $scope.ClusterList.length > 0 && $scope.ModuleNum != 0 )
+         {
+            var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+            $scope.UnbindInstanceWindow['config'] = {
+               'inputList': [
+                  {
+                     "name": 'moduleIndex',
+                     "webName": $scope.autoLanguage( '实例名' ),
+                     "type": "select",
+                     "value": null,
+                     "valid": []
+                  }
+               ]
+            }
+            $.each( $scope.InstanceList, function( index, moduleInfo ){
+               if( clusterName == moduleInfo['ClusterName'] )
+               {
+                  if( $scope.UnbindInstanceWindow['config']['inputList'][0]['value'] == null )
+                  {
+                     $scope.UnbindInstanceWindow['config']['inputList'][0]['value'] = index ;
+                  }
+                  $scope.UnbindInstanceWindow['config']['inputList'][0]['valid'].push( { 'key': moduleInfo['BusinessName'], 'value': index } )
+               }
+            } ) ;
+            $scope.UnbindInstanceWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = $scope.UnbindInstanceWindow['config'].check() ;
+               if( isAllClear )
+               {
+                  var formVal = $scope.UnbindInstanceWindow['config'].getValue() ;
+                  var businessName = $scope.InstanceList[ formVal['moduleIndex'] ]['BusinessName'] ;
+                  var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
+                  unbindInstance( clusterName, businessName ) ;
+               }
+               return isAllClear ;
+            } ) ;
+            $scope.UnbindInstanceWindow['callback']['SetTitle']( $scope.autoLanguage( '移除实例' ) ) ;
+            $scope.UnbindInstanceWindow['callback']['Open']() ;
+         }
+      }
+
       //删除实例
       function uninstallModule( index, isForce )
       {
@@ -1766,7 +1872,7 @@
       } ;
 
       //打开 删除实例 弹窗
-      $scope.ShowUninstallInstance = function(){
+      var showUninstallInstance = function(){
          if( $scope.ClusterList.length == 0 )
          {
             return ;
@@ -3631,7 +3737,7 @@
          SdbRest.OmOperation( data, {
             'success': function(){
                $scope.Components.Confirm.type = 4 ;
-               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '服务：? 解绑成功。' ), businessName ) ;
+               $scope.Components.Confirm.context = sprintf( $scope.autoLanguage( '存储集群：? 移除成功。' ), businessName ) ;
                $scope.Components.Confirm.isShow = true ;
                $scope.Components.Confirm.noClose = true ;
                $scope.Components.Confirm.normalOK = true ;
@@ -3691,22 +3797,7 @@
                   var formVal = $scope.UnbindModuleWindow['config'].getValue() ;
                   var businessName = $scope.StorageList[ formVal['moduleIndex'] ]['BusinessName'] ;
                   var clusterName = $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ;
-                  var businessType = $scope.StorageList[ formVal['moduleIndex'] ]['BusinessType'] ;
-                  if( businessType == 'sequoiasql-mysql' )
-                  {
-                     $scope.Components.Confirm.type = 1 ;
-                     $scope.Components.Confirm.context = $scope.autoLanguage( '解绑服务将重启MySQL服务，是否继续？' ) ;
-                     $scope.Components.Confirm.isShow = true ;
-                     $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
-                     $scope.Components.Confirm.ok = function(){
-                        $scope.Components.Confirm.isShow = false ;
-                        unbindModule( clusterName, businessName ) ;
-                     }
-                  }
-                  else
-                  {
-                     unbindModule( clusterName, businessName ) ;
-                  }
+                  unbindModule( clusterName, businessName ) ;
                }
                return isAllClear ;
             } ) ;

@@ -61,8 +61,8 @@
                </tr>
             </table>
          </div>
-         <div ng-dropdown="config in DeleteModuleDropdown.config" dropdown-event="DeleteModuleDropdown.event" dropdown-callback="DeleteModuleDropdown.callback">
-            <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="DeleteModuleDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
+         <div ng-dropdown="config in DeleteInstanceDropdown.config" dropdown-event="DeleteInstanceDropdown.event" dropdown-callback="DeleteInstanceDropdown.callback">
+            <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="DeleteInstanceDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
          </div>
          <div ng-dropdown="config in EditModuleDropdown.config" dropdown-event="EditModuleDropdown.event" dropdown-callback="EditModuleDropdown.callback">
             <span class="Ellipsis" style="padding:8px 10px;display:block;" ng-click="EditModuleDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
@@ -70,9 +70,12 @@
          <div ng-dropdown="config in RelationDropdown.config" dropdown-event="RelationDropdown.event" dropdown-callback="RelationDropdown.callback">
             <span class="Ellipsis" style="padding:5px 10px;display:block;" ng-click="RelationDropdown.OnClick($index)">&nbsp;{{config.key}}</span>
          </div>
+         <div ng-windows="form as UnbindInstanceWindow.config" windows-callback="UnbindInstanceWindow.callback">
+            <div form-create para="form"></div>
+         </div>
          <div ng-container="{height:40}">
             <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length == 0]" ng-disabled="ClusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="ShowInstallModule()">{{autoLanguage("创建实例")}}</button>
-            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="ShowUninstallInstance()">{{autoLanguage("删除实例")}}</button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-click="OpenDeleteInstanceDropdown($event)">{{autoLanguage("删除实例")}} <i class="fa fa-caret-down"></i></button>
             <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="ShowRestartInstance()">{{autoLanguage("重启实例")}}</button>
             <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenRelationDropdown($event)">{{autoLanguage("配置实例存储")}} <i class="fa fa-caret-down"></i></button>
          </div>
