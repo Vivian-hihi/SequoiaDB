@@ -792,6 +792,7 @@
                   "webName":  $scope.pAutoLanguage( '字段结构' ),
                   "required": true,
                   "type": "list",
+                  "desc": $scope.pAutoLanguage( '如字段类型是set或enum时，请在“长度/值”的输入框填写枚举的值，用半角逗号(,)隔开。' ),
                   "valid": {
                      "min": 1
                   },
@@ -823,27 +824,34 @@
                               { "key": 'float', "value": "float" },
                               { "key": 'double', "value": "double" },
                               { "key": 'decimal', "value": "decimal" },
+                              { "key": 'bit', "value": "bit" },
                               { "key": 'date', "value": "date" },
                               { "key": 'datetime', "value": "datetime" },
                               { "key": 'timestamp', "value": "timestamp" },
+                              { "key": 'year', "value": "year" },
+                              { "key": 'time', "value": "time" },
                               { "key": 'char', "value": "char" },
                               { "key": 'varchar', "value": "varchar" },
                               { "key": 'text', "value": "text" },
+                              { "key": 'tinytext', "value": "tinytext" },
+                              { "key": 'mediumtext', "value": "mediumtext" },
+                              { "key": 'longtext', "value": "longtext" },
                               { "key": 'binary', "value": "binary" },
-                              { "key": 'blob', "value": "blob" }
+                              { "key": 'blob', "value": "blob" },
+                              { "key": 'tinyblob', "value": "tinyblob" },
+                              { "key": 'mediumblob', "value": "mediumblob" },
+                              { "key": 'longblob', "value": "longblob" },
+                              { "key": 'json', "value": "json" },
+                              { "key": 'set', "value": "set" },
+                              { "key": 'enum', "value": "enum" }
                            ]
                         },
                         {
                            "name": "length",
-                           "type": "double",
-                           "webName": $scope.pAutoLanguage( '长度' ),
-                           "placeholder": $scope.pAutoLanguage( "长度" ),
-                           "value": "",
-                           "valid": {
-                              "min": 0,
-                              "max": 4294967295,
-                              "empty": true
-                           }
+                           "type": "string",
+                           "webName": $scope.pAutoLanguage( "长度/值" ),
+                           "placeholder": $scope.pAutoLanguage( "长度/值" ),
+                           "value": ""
                         },
                         {
                            "name": "default",
@@ -885,7 +893,26 @@
          $scope.CreateTableWindow['callback']['SetTitle']( $scope.pAutoLanguage( '创建数据表' ) ) ;
          $scope.CreateTableWindow['callback']['SetIcon']( 'fa-plus' ) ;
          $scope.CreateTableWindow['callback']['SetOkButton']( $scope.pAutoLanguage( '确定' ), function(){
-            var isClear1 = $scope.CreateTableWindow['config']['Form1'].check() ;
+            var isClear1 = $scope.CreateTableWindow['config']['Form1'].check( function( formVal ){
+               var rv = [] ;
+               $.each( formVal['fields'], function( index, info ){
+                  if( info['type'] == 'enum' || info['type'] == 'set' )
+                  {
+                     if( info['length'].length == 0 )
+                     {
+                        rv.push( { 'name': 'fields', 'error': $scope.pAutoLanguage( '字段参数错误。' ) } ) ;
+                     }
+                  }
+                  else
+                  {
+                     if( ( info['length'].length > 0 &&  !( parseInt( info['length'] ) > 0 ) ) || ( info['length'] < 0 || info['length'] > 4294967295 ) )
+                     {
+                        rv.push( { 'name': 'fields', 'error': $scope.pAutoLanguage( '字段参数错误。' ) } ) ;
+                     }
+                  }
+               } ) ;
+               return rv ;
+            } ) ;
             var isClear2 = $scope.CreateTableWindow['config']['Form2'].check() ;
             if( isClear1 == true && isClear2 ==true )
             {
@@ -905,7 +932,7 @@
                      subSql += ', ' ;
                   }
                   subSql += fieldInfo['name'] + ' ' + fieldInfo['type'] ;
-                  if( isNaN( fieldInfo['length'] ) == false )
+                  if( fieldInfo['length'].length > 0 )
                   {
                      switch( fieldInfo['type'] )
                      {
@@ -914,8 +941,39 @@
                      case 'char':
                      case 'decimal':
                      case 'numeric':
+                     case 'int':
+                     case 'bit':
+                     case 'bigint':
+                     case 'tinyint':
+                     case 'smallint':
+                     case 'mediumint':
+                     case 'datetime':
+                     case 'timestamp':
+                     case 'time':
+                     case 'binary':
                         subSql += '(' + fieldInfo['length'] + ') ' ;
                         break ;
+                     case 'set':
+                     case 'enum':
+                        if( fieldInfo['length'].indexOf( ',' ) >= 0 )
+                        {
+                           var tmpArray = fieldInfo['length'].split( ',' ) ;
+                           var first = true ;
+                           subSql += '(' ;
+                           $.each( tmpArray, function( index, value ){
+                              if( !first )
+                              {
+                                 subSql += ',' ;
+                              }
+                              subSql = subSql + "'" + value + "'" ;
+                              first = false ;
+                           } ) ;
+                           subSql += ')' ;
+                        }
+                        else
+                        {
+                           subSql += '(\'' + fieldInfo['length'] + '\')' ;
+                        }
                      default:
                         subSql += ' ' ;
                         break ;

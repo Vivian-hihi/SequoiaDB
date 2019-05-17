@@ -92,6 +92,7 @@
                   "webName": $scope.pAutoLanguage( '字段' ),
                   "required": true,
                   "type": "list",
+                  "desc": $scope.pAutoLanguage( '如字段类型是set或enum时，请在“长度/值”的输入框填写枚举的值，用半角逗号(,)隔开。' ),
                   "child":[
                      [
                         {
@@ -120,27 +121,34 @@
                               { "key": 'float', "value": "float" },
                               { "key": 'double', "value": "double" },
                               { "key": 'decimal', "value": "decimal" },
+                              { "key": 'bit', "value": "bit" },
                               { "key": 'date', "value": "date" },
                               { "key": 'datetime', "value": "datetime" },
                               { "key": 'timestamp', "value": "timestamp" },
+                              { "key": 'year', "value": "year" },
+                              { "key": 'time', "value": "time" },
                               { "key": 'char', "value": "char" },
                               { "key": 'varchar', "value": "varchar" },
                               { "key": 'text', "value": "text" },
+                              { "key": 'tinytext', "value": "tinytext" },
+                              { "key": 'mediumtext', "value": "mediumtext" },
+                              { "key": 'longtext', "value": "longtext" },
                               { "key": 'binary', "value": "binary" },
-                              { "key": 'blob', "value": "blob" }
+                              { "key": 'blob', "value": "blob" },
+                              { "key": 'tinyblob', "value": "tinyblob" },
+                              { "key": 'mediumblob', "value": "mediumblob" },
+                              { "key": 'longblob', "value": "longblob" },
+                              { "key": 'json', "value": "json" },
+                              { "key": 'set', "value": "set" },
+                              { "key": 'enum', "value": "enum" }
                            ]
                         },
                         {
                            "name": "length",
-                           "webName": $scope.pAutoLanguage( "长度" ),
-                           "placeholder": $scope.pAutoLanguage( "长度" ),
-                           "type": "double",
-                           "value": "",
-                           "valid": {
-                              "min": 0,
-                              "max": 4294967295,
-                              "empty": true
-                           }
+                           "webName": $scope.pAutoLanguage( "长度/值" ),
+                           "placeholder": $scope.pAutoLanguage( "长度/值" ),
+                           "type": "string",
+                           "value": ""
                         },
                         {
                            "name": "default",
@@ -150,24 +158,43 @@
                            "valid": ""
                         },
                         {
-                           "name": "null",
-                           "webName": $scope.pAutoLanguage( "空" ),
-                           "type": "checkbox",
-                           "value": true
-                        },
-                        {
                            "name": "unsigned",
                            "webName": $scope.pAutoLanguage( "无符号" ),
                            "type": "checkbox",
                            "value": false
                         },
+                        {
+                           "name": "null",
+                           "webName": $scope.pAutoLanguage( "空" ),
+                           "type": "checkbox",
+                           "value": true
+                        }
                      ]
                   ]
                }
             ]
          } ;
          $scope.AddFieldWindow['callback']['SetOkButton']( $scope.pAutoLanguage('确定'), function(){
-            var isClear = $scope.AddFieldWindow['config'].check() ;
+            var isClear = $scope.AddFieldWindow['config'].check( function( formVal ){
+               var rv = [] ;
+               $.each( formVal['fields'], function( index, info ){
+                  if( info['type'] == 'enum' || info['type'] == 'set' )
+                  {
+                     if( info['length'].length == 0 )
+                     {
+                        rv.push( { 'name': 'fields', 'error': $scope.pAutoLanguage( '字段参数错误。' ) } ) ;
+                     }
+                  }
+                  else
+                  {
+                     if( ( info['length'].length > 0 &&  !( parseInt( info['length'] ) > 0 ) ) || ( info['length'] < 0 || info['length'] > 4294967295 ) )
+                     {
+                        rv.push( { 'name': 'fields', 'error': $scope.pAutoLanguage( '字段参数错误。' ) } ) ;
+                     }
+                  }
+               } ) ;
+               return rv ;
+            } ) ;
             if( isClear )
             {
                var value = $scope.AddFieldWindow['config'].getValue() ;
@@ -179,7 +206,7 @@
                      subSql += ', ' ;
                   }
                   subSql += 'ADD ' + fieldInfo['name'] + ' ' + fieldInfo['type'] ;
-                  if( isNaN( fieldInfo['length'] ) == false )
+                  if( fieldInfo['length'].length > 0 )
                   {
                      switch( fieldInfo['type'] )
                      {
@@ -188,8 +215,39 @@
                      case 'char':
                      case 'decimal':
                      case 'numeric':
+                     case 'int':
+                     case 'bit':
+                     case 'bigint':
+                     case 'tinyint':
+                     case 'smallint':
+                     case 'mediumint':
+                     case 'datetime':
+                     case 'timestamp':
+                     case 'time':
+                     case 'binary':
                         subSql += '(' + fieldInfo['length'] + ') ' ;
                         break ;
+                     case 'set':
+                     case 'enum':
+                        if( fieldInfo['length'].indexOf( ',' ) >= 0 )
+                        {
+                           var tmpArray = fieldInfo['length'].split( ',' ) ;
+                           var first = true ;
+                           subSql += '(' ;
+                           $.each( tmpArray, function( index, value ){
+                              if( !first )
+                              {
+                                 subSql += ',' ;
+                              }
+                              subSql = subSql + "'" + value + "'" ;
+                              first = false ;
+                           } ) ;
+                           subSql += ')' ;
+                        }
+                        else
+                        {
+                           subSql += '(\'' + fieldInfo['length'] + '\')' ;
+                        }
                      default:
                         subSql += ' ' ;
                         break ;
@@ -604,8 +662,8 @@
       } ;
 
       //打开 修改字段 弹窗
-      var showEditField= function( fieldName, type, length ){
-         if( length === null )
+      var showEditField= function( fieldName, type, length, columnType ){
+         if( length === null || type == 'set' || type == 'enum'  )
          {
             length = '' ;
          }
@@ -632,14 +690,26 @@
                      { "key": 'float', "value": "float" },
                      { "key": 'double', "value": "double" },
                      { "key": 'decimal', "value": "decimal" },
+                     { "key": 'bit', "value": "bit" },
                      { "key": 'date', "value": "date" },
                      { "key": 'datetime', "value": "datetime" },
                      { "key": 'timestamp', "value": "timestamp" },
+                     { "key": 'year', "value": "year" },
+                     { "key": 'time', "value": "time" },
                      { "key": 'char', "value": "char" },
                      { "key": 'varchar', "value": "varchar" },
                      { "key": 'text', "value": "text" },
+                     { "key": 'tinytext', "value": "tinytext" },
+                     { "key": 'mediumtext', "value": "mediumtext" },
+                     { "key": 'longtext', "value": "longtext" },
                      { "key": 'binary', "value": "binary" },
-                     { "key": 'blob', "value": "blob" }
+                     { "key": 'blob', "value": "blob" },
+                     { "key": 'tinyblob', "value": "tinyblob" },
+                     { "key": 'mediumblob', "value": "mediumblob" },
+                     { "key": 'longblob', "value": "longblob" },
+                     { "key": 'json', "value": "json" },
+                     { "key": 'set', "value": "set" },
+                     { "key": 'enum', "value": "enum" }
                   ]
                },
                {
@@ -654,14 +724,10 @@
                },
                {
                   "name": "length",
-                  "webName": $scope.pAutoLanguage( "长度" ),
-                  "type": "int",
-                  "value": length,
-                  "valid": {
-                     "min": 0,
-                     "max": 4294967295,
-                     "empty": true
-                  }
+                  "webName": $scope.pAutoLanguage( "长度/值" ),
+                  "type": "string",
+                  "desc": $scope.pAutoLanguage( '如字段类型是set或enum时，请在“长度/值”的输入框填写枚举的值，用半角逗号(,)隔开。' ),
+                  "value": length
                }
             ]
          }
@@ -671,12 +737,62 @@
             var isClear = $scope.EditFieldWindow['config'].check() ;
             if( isClear == true )
             {
+               var subSql = '' ;
                var formVal = $scope.EditFieldWindow['config'].getValue() ;
                var sql = sprintf( 'alter table ? change ? ? ?', SdbSwap.tbName, fieldName, formVal['fieldName'], formVal['newType'] ) ;
-               if( formVal['length'] > 0 )
+               if( formVal['length'].length > 0 )
                {
-                  sql += sprintf( '(?)', formVal['length'] ) ;
+                  switch( formVal['newType'] )
+                  {
+                  case 'varchar':
+                  case 'character':
+                  case 'char':
+                  case 'decimal':
+                  case 'numeric':
+                  case 'int':
+                  case 'bit':
+                  case 'bigint':
+                  case 'tinyint':
+                  case 'smallint':
+                  case 'mediumint':
+                  case 'datetime':
+                  case 'timestamp':
+                  case 'time':
+                  case 'binary':
+                     subSql += '(' + formVal['length'] + ') ' ;
+                     break ;
+                  case 'set':
+                  case 'enum':
+                     
+                     if( formVal['length'].indexOf( ',' ) >= 0 )
+                     {
+                        var tmpArray = formVal['length'].split( ',' ) ;
+                        var first = true ;
+                        subSql += '(' ;
+                        $.each( tmpArray, function( index, value ){
+                           if( !first )
+                           {
+                              subSql += ',' ;
+                           }
+                           subSql = subSql + "'" + value + "'" ;
+                           first = false ;
+                        } ) ;
+                        subSql += ')' ;
+                     }
+                     else
+                     {
+                        subSql += '(\'' + formVal['length'] + '\')' ;
+                     }
+                  default:
+                     subSql += ' ' ;
+                     break ;
+                  }
                }
+               else if( ( type == 'set' || type == 'enum' ) && ( formVal['newType'] == 'set' || formVal['newType'] == 'enum') )
+               {
+                  subSql = columnType.replace( type, '' ) ;
+               }
+               sql += subSql ;
                if( formVal['unsigned'] )
                {
                   switch( formVal['newType'] )
@@ -716,7 +832,7 @@
          $scope.EditFieldDropdown['OnClick'] = function( index ){
             if( index == 0 )
             {
-               showEditField( result['field'], result['type'], result['length'] ) ;
+               showEditField( result['field'], result['type'], result['length'], result['columnType'] ) ;
             }
             else if( index == 1 )
             {
@@ -773,8 +889,8 @@
       } ) ;
 
       //打开 编辑字段 下拉菜单
-      $scope.ShowEditFieldDropdown = function( event, fieldName, fieldType, fieldLength ){
-         SdbSignal.commit( 'ShowEditFieldDropdown', { 'event': event, 'field': fieldName, 'type': fieldType, 'length': fieldLength } ) ;
+      $scope.ShowEditFieldDropdown = function( event, fieldName, fieldType, fieldLength, columnType ){
+         SdbSignal.commit( 'ShowEditFieldDropdown', { 'event': event, 'field': fieldName, 'type': fieldType, 'length': fieldLength, 'columnType': columnType } ) ;
       }
 
       //打开 删除字段 弹窗

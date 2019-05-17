@@ -1355,7 +1355,7 @@
    } ) ;
 
    //表格
-   sacApp.controllerProvider.register( 'Data.MySQL.Data.Table.Ctrl', function( $scope, SdbFunction, SdbSwap, SdbSignal ){
+   sacApp.controllerProvider.register( 'Data.MySQL.Data.Table.Ctrl', function( $scope, $timeout, SdbFunction, SdbSwap, SdbSignal ){
       
       var isFirst = true ;
       //临时存查询结果，选择字段时使用
@@ -1440,11 +1440,13 @@
       } ) ;
 
       var initTable = function( callback ){
-         callback['SetToolPageButton']( 'first', firstPage ) ;
-         callback['SetToolPageButton']( 'previous', previousPage ) ;
-         callback['SetToolPageButton']( 'next', nextPage ) ;
-         callback['SetToolPageButton']( 'last', lastPage ) ;
-         callback['SetToolPageButton']( 'jump', gotoPage ) ;
+         $timeout( function(){
+            callback['SetToolPageButton']( 'first', firstPage ) ;
+            callback['SetToolPageButton']( 'previous', previousPage ) ;
+            callback['SetToolPageButton']( 'next', nextPage ) ;
+            callback['SetToolPageButton']( 'last', lastPage ) ;
+            callback['SetToolPageButton']( 'jump', gotoPage ) ;
+         }, 100 ) ;
       }
 
 
