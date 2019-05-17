@@ -31,7 +31,7 @@ public class DeleteObject18177 extends S3TestBase {
 	private String bucketName = "bucket18177";
 	private AmazonS3 s3Client = null;
 
-	@BeforeClass
+	@BeforeClass()
 	private void setUp() throws IOException {
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
@@ -46,7 +46,6 @@ public class DeleteObject18177 extends S3TestBase {
 	@Test
 	public void test() throws Exception {
 		String currentVersionId = "0";
-		// TODO :指定versionid删除，建议修改文本用例中此步骤的描述
 		s3Client.deleteVersion(bucketName, keyNameA, currentVersionId);
 
 		checkDeleteObjectReslut(keyNameB, currentVersionId);

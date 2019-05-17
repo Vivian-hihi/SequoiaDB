@@ -53,7 +53,7 @@ public class CreateObject18104 extends S3TestBase {
 	}
 
 	@Test(invocationCount = 1000, threadPoolSize = 50)
-	public void testCreateObject() throws Exception {
+	private void testCreateObject() throws Exception {
 		int num = count.getAndIncrement();
 		String subKeyName = keyName + "_" + num + "%aa%test.png";
 		s3Client.putObject(bucketName, subKeyName, new File(filePath));
@@ -63,7 +63,13 @@ public class CreateObject18104 extends S3TestBase {
 	}
 
 	@Test(dependsOnMethods = "testCreateObject")
-	public void testListObjectResult() {
+	private void testListObjectAndDeleteObject() throws Exception {
+		testListObject();
+		testDeleteObjectAndCheckResult();
+		runSuccess = true;
+	}
+
+	private void testListObject() {
 		List<String> expCommonPrefixList = new ArrayList<>();
 		for (int i = 0; i < keyNum; i++) {
 			expCommonPrefixList.add(keyName + "_" + i + "%");
@@ -72,10 +78,7 @@ public class CreateObject18104 extends S3TestBase {
 		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommonPrefixList, expContextList);
 	}
 
-	// TODO
-	// :testDeleteObject()可以写成一个方法然后在testListObjectResult()里面直接调用吧，建议还是不要写太多Test
-	@Test(dependsOnMethods = "testListObjectResult")
-	public void testDeleteObject() throws Exception {
+	private void testDeleteObjectAndCheckResult() throws Exception {
 		for (int i = 0; i < keyNum; i++) {
 			String subKeyName = keyName + "_" + i + "%aa%test.png";
 			s3Client.deleteObject(bucketName, subKeyName);
@@ -84,7 +87,6 @@ public class CreateObject18104 extends S3TestBase {
 		List<String> expCommprefixList = new ArrayList<>();
 		List<String> expContentList = new ArrayList<>();
 		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixList, expContentList);
-		runSuccess = true;
 
 	}
 

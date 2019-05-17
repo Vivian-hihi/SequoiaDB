@@ -8,7 +8,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
@@ -40,10 +39,6 @@ public class ListObjects18116 extends S3TestBase {
 	public void testCreateObject() throws Exception {
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		putObjects();
-		// TODO :这里不需要清理缓存吧
-		try (Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "")) {
-			sdb.analyze();
-		}
 		listObjectsAndCheckResult();
 		runSuccess = true;
 	}
@@ -66,13 +61,11 @@ public class ListObjects18116 extends S3TestBase {
 	private void putObjects() {
 		for (int i = 0; i < keyList.length; i++) {
 			String subKeyName = keyList[i];
-			// TODO :下方用例编号有误
-			s3Client.putObject(bucketName, subKeyName, "testcontext18115_" + i);
+			s3Client.putObject(bucketName, subKeyName, "testcontext18116_" + i);
 		}
 	}
 
 	private void listObjectsAndCheckResult() {
-		// TODO : 预期匹配的commonprefixes和contents较多的话建议使用公共方法获得
 		List<String> matchPrefixList = new ArrayList<>();
 		matchPrefixList.add("dir1/testa");
 		matchPrefixList.add("dir1.testa");
@@ -82,7 +75,6 @@ public class ListObjects18116 extends S3TestBase {
 		matchContentsList.add("dir1/test1_18116.png");
 		matchContentsList.add("dir1//dir2/dir3/test2_18116");
 		matchContentsList.add("testdir1.txt_18116");
-
 		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, matchPrefixList, matchContentsList);
 	}
 }

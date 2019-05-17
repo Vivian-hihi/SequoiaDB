@@ -41,26 +41,21 @@ public class ListObjects18119 extends S3TestBase {
 	@BeforeClass
 	private void setUp() throws IOException {
 		s3Client = CommLib.buildS3Client();
-		// TODO :1.建议这里添加清理桶的语句
+		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
 	}
 
-	// http://jira:8080/browse/SEQUOIADBMAINSTREAM-4386
-	// TODO :2.本问题单问题已修复，请在更新完用例后将用例放开
-	@Test(enabled = false)
+	@Test
 	public void testListObjects() throws Exception {
-		// TODO ：3.第一次更新分隔符的话直接使用putBucketDelimiter就可以了
-		DelimiterUtils.updateDelimiterSuccessAgain(bucketName, delimiter);
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		putObjects(keyNums);
 
 		// test a: match nums > maxkeys
 		int maxKeysA = 3;
 		listObjectsAndCheckResult(matchDelimiterKeyList, noMatchDelimiterKeyList, maxKeysA);
 
-		// TODO
-		// ：4.testb是验证delimiter满足对象记录数小于maxkeys，这里num应该是50，所以建议将maxKeysB赋值为大于50的值
 		// test b: match nums < maxkeys
-		int maxKeysB = 50;
+		int maxKeysB = 51;
 		listObjectsAndCheckResult(matchDelimiterKeyList, noMatchDelimiterKeyList, maxKeysB);
 
 		// test c: match nums = maxkeys
@@ -126,13 +121,9 @@ public class ListObjects18119 extends S3TestBase {
 
 		// check the commprefixList and contents
 		Collections.sort(expCommprefixLists);
-		// TODO ：7.这里排序建议省略
-		Collections.sort(matchDelimiterList);
 		Assert.assertEquals(matchDelimiterList, expCommprefixLists, "matchDelimiterList:"
 				+ matchDelimiterList.toString() + "\n commprefixList:" + expCommprefixLists.toString());
 		Collections.sort(expContentLists);
-		// TODO ：8.这里排序建议省略
-		Collections.sort(matchContentList);
 		Assert.assertEquals(matchContentList, expContentLists,
 				"matchContents:" + matchContentList.toString() + "\n contentList:" + expContentLists.toString());
 
@@ -143,8 +134,6 @@ public class ListObjects18119 extends S3TestBase {
 		for (int i = 0; i < objectNums; i++) {
 			if (i % 2 == 0) {
 				subKeyName = keyName + "/test" + "_" + i + "aa.png";
-				// TODO :9.调试完成后请将此输出语句去掉
-				System.out.println("---keyname=" + subKeyName);
 				matchDelimiterKeyList.add(keyName + "/test" + "_" + i + "a");
 			} else {
 				subKeyName = keyName + "_" + i;

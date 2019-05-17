@@ -84,13 +84,10 @@ public class ListObjects18113 extends S3TestBase {
 		ListObjectsV2Result result = s3Client.listObjectsV2(request);
 		List<String> commonPrefixes = result.getCommonPrefixes();
 		Collections.sort(matchPrefixList);
-		// TODO : 1.commonPrefixes不需要进行排序，s3返回的结果是经过排序的，如果和预期结果不符则证明有问题
-		Collections.sort(commonPrefixes);
 		Assert.assertEquals(commonPrefixes, matchPrefixList,
 				"actPrefixes:" + commonPrefixes.toString() + "\n ecpPrefixes:" + matchPrefixList.toString());
 
-		// TODO：2.这里的注释 num应该是2吧
-		// objects do not match delimiter are displayed in contents,num is 10
+		// objects do not match delimiter are displayed in contents,num is 2
 		List<String> actContentsList = new ArrayList<>();
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
 		for (S3ObjectSummary os : objects) {
@@ -99,8 +96,6 @@ public class ListObjects18113 extends S3TestBase {
 		}
 
 		// check the keyName
-		// TODO :3.contents中的结果也是排序过的，这里可以省略
-		Collections.sort(actContentsList);
 		Collections.sort(matchContentsList);
 		Assert.assertEquals(actContentsList, matchContentsList);
 	}
