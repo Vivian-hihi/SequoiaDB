@@ -163,18 +163,32 @@
 table_option:
 comment [=] "sequoiadb:{table_options:{...}}"
 ```
-table_options 为 json 格式，具体配置参数如下表:
+具体配置参数如下表:
 
-| 参数名 | 参数类型 | 描述 | 是否必填 |
+| 参数名 | 类型 | 描述 | 是否必填 |
 | ------ | --- | ------ | ------ |
 | table_options | json | 创建集合的相关参数。详见[SequoiaDB创建集合选项](reference/Sequoiadb_command/SdbCS/createCL.md)。| 否	|
+| use_partition | bool| 是否创建分区表, 取值 false 即创建非分区表，并过滤 table_options 中与分区相关的参数 | 否 |
 
- 示例：  
- 在SequoiaDB上创建分区键为“{a:1,b:-1}”，分区类型为范围分区的集合cl  
+ 示例1：  
+ 在SequoiaDB上创建分区键为“{a:1,b:-1}”，分区类型为范围分区的集合cl1  
 
  ```lang-javascript
- mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="sequoiadb:{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
+ mysql> create table cl1(a int, b int, c text) engine = SequoiaDB comment="sequoiadb:{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
+示例2：  
+使用 use_partition 显示指定创建非分区表时会过滤掉 table_options 中与分区相关的参数并且创建非分区表。
+
+```lang-javascript
+ mysql> create table cl2(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, CompressionType:"lzw", AutoSplit: true}, use_partition:false} ';
+```
+
+示例3：  
+单独指定 "use_partition:false" 时，在配置项 sequoiadb_use_partition = ON 的情况下，也都只会创建普通非分区表。
+
+```lang-javascipt
+create table cl3(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{use_partition:false}';
+```
 
 ##在线修改 DDL##
 
