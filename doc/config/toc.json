@@ -1807,6 +1807,12 @@
                            "en": "createRG()"
                         },
                         {
+                           "id": 1432290820,
+                           "file": "createSpareRG",
+                           "cn": "createSpareRG()",
+                           "en": "createSpareRG()"
+                        },
+                        {
                            "id": 1432190777,
                            "file": "createUsr",
                            "cn": "createUsr()",
@@ -1878,17 +1884,11 @@
                            "cn": "getCoordRG()",
                            "en": "getCoordRG()"
                         },
-						{
+                        {
                            "id": 1432290821,
                            "file": "getSpareRG",
                            "cn": "getSpareRG()",
                            "en": "getSpareRG()"
-                        },
-                        {
-                           "id": 1432290820,
-                           "file": "createSpareRG",
-                           "cn": "createSpareRG()",
-                           "en": "createSpareRG()"
                         },
                         {
                            "id": 1432190789,
