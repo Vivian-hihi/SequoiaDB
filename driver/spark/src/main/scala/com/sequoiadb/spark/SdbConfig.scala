@@ -16,9 +16,11 @@
 
 package com.sequoiadb.spark
 
+import java.io.File
 import com.sequoiadb.net.ConfigOptions
 import org.bson.BSONObject
 import org.bson.util.JSON
+import com.sequoiadb.util.{ SdbDecrypt, SdbDecryptUserInfo }
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -57,11 +59,29 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
     val collection: String = properties
         .getOrElse(SdbConfig.Collection, notFound(SdbConfig.Collection))
 
-    val username: String = properties
+    var username: String = properties
         .getOrElse(SdbConfig.Username, SdbConfig.DefaultUsername)
 
-    val password: String = properties
+    val passwordType: String = properties
+        .getOrElse(SdbConfig.PasswordType, SdbConfig.DefaultPasswordType)
+    if (passwordType != SdbConfig.PASSWORD_TYPE_FILE
+        && passwordType != SdbConfig.PASSWORD_TYPE_CLEARTEXT) {
+        invalidConfigValue(SdbConfig.PasswordType, passwordType)
+    }
+
+    val token: String = properties
+        .getOrElse(SdbConfig.Token, SdbConfig.DefaultToken)
+
+    var password: String = properties
         .getOrElse(SdbConfig.Password, SdbConfig.DefaultPassword)
+
+    if (passwordType == SdbConfig.PASSWORD_TYPE_FILE) {
+        val sdbDecrypt: SdbDecrypt = new SdbDecrypt()
+        val userInfo: SdbDecryptUserInfo = sdbDecrypt.parseCipherFile(username,
+            token, new File(password))
+        password = userInfo.getPasswd()
+        username = userInfo.getUserName()
+    }
 
     val samplingRatio: Double = properties.get(SdbConfig.SamplingRatio)
         .map(_.toDouble).getOrElse(SdbConfig.DefaultSamplingRatio)
@@ -167,11 +187,11 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
 
     private val preferredInstanceMode: PreferredInstanceMode = properties
         .getOrElse(SdbConfig.PreferredInstanceMode, SdbConfig.DefaultPreferredInstanceMode).toLowerCase match {
-        case SdbConfig.PREFERRED_INSTANCE_MODE_RANDOM => PreferredInstanceMode.Random
-        case SdbConfig.PREFERRED_INSTANCE_MODE_ORDERED => PreferredInstanceMode.Ordered
-        case s: String =>
-            invalidConfigValue(SdbConfig.PreferredInstanceMode, s)
-    }
+            case SdbConfig.PREFERRED_INSTANCE_MODE_RANDOM => PreferredInstanceMode.Random
+            case SdbConfig.PREFERRED_INSTANCE_MODE_ORDERED => PreferredInstanceMode.Ordered
+            case s: String =>
+                invalidConfigValue(SdbConfig.PreferredInstanceMode, s)
+        }
 
     private val preferredInstanceStrict: Boolean = properties.get(SdbConfig.PreferredInstanceStrict)
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultPreferredInstanceStrict)
@@ -303,6 +323,8 @@ object SdbConfig {
     val CollectionSpace = "collectionspace"
     val Collection = "collection"
     val Username = "username"
+    val PasswordType = "passwordtype"
+    val Token = "token"
     val Password = "password"
     val SamplingRatio = "samplingratio"
     val SamplingNum = "samplingnum"
@@ -348,6 +370,9 @@ object SdbConfig {
     val PARTITION_MODE_DATABLOCK = "datablock"
     val PARTITION_MODE_AUTO = "auto"
 
+    val PASSWORD_TYPE_CLEARTEXT = "cleartext"
+    val PASSWORD_TYPE_FILE = "file"
+
     val SCAN_TYPE_IXSCAN = "ixscan"
     val SCAN_TYPE_TBSCAN = "tbscan"
     val SCAN_TYPE_AUTO = "auto"
@@ -376,6 +401,7 @@ object SdbConfig {
         CollectionSpace,
         Collection,
         Username,
+        PasswordType,
         Password,
         SamplingRatio,
         SamplingNum,
@@ -407,18 +433,18 @@ object SdbConfig {
         ReplicaSize,
         CompressionType,
         AutoSplit,
-        Group
-    )
+        Group)
 
     val RequiredProperties = List(
         Host,
         CollectionSpace,
-        Collection
-    )
+        Collection)
 
     //  Default values
     val DefaultUsername = ""
     val DefaultPassword = ""
+    val DefaultPasswordType = PASSWORD_TYPE_CLEARTEXT
+    val DefaultToken = ""
     val DefaultSamplingRatio = 1.0
     val DefaultSamplingNum = 1000L
     val DefaultSamplingWithId = false
@@ -469,8 +495,8 @@ class SdbPreferredInstance(val instances: Array[String], val mode: PreferredInst
     for (instance <- instances) {
         instance.toUpperCase match {
             case SdbConfig.PREFERRED_INSTANCE_MASTER |
-                 SdbConfig.PREFERRED_INSTANCE_SLAVE |
-                 SdbConfig.PREFERRED_INSTANCE_ANY => if (_instanceTendency.isEmpty) {
+                SdbConfig.PREFERRED_INSTANCE_SLAVE |
+                SdbConfig.PREFERRED_INSTANCE_ANY => if (_instanceTendency.isEmpty) {
                 _instanceTendency = Option(instance.toUpperCase)
             }
             case s: String => {
