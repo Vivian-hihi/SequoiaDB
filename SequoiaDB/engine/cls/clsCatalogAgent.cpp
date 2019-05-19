@@ -654,6 +654,7 @@ namespace engine
       _w = 1 ;
       _version = -1 ;
 
+      _autoSplit = -1 ;
       _shardingType = CLS_CA_SHARDINGTYPE_NONE ;
       _shardingKey = BSONObj() ;
       _maxSize = 0 ;
@@ -2707,6 +2708,9 @@ namespace engine
             PD_LOG ( PDERROR, "Update catalogSet[%s] failed[rc:%d]",
                      clName.c_str(), rc ) ;
             clear( clName.c_str() ) ;
+            // catSet is gone by clear()
+            // go away without setting return pointer
+            goto error ;
          }
 
          if ( ppSet )

@@ -1915,6 +1915,15 @@ namespace engine
          _pCatAgent->lock_w () ;
          rc = _pCatAgent->updateCatalog ( 0, groupID, objList[0].objdata(),
                                           objList[0].objsize(), &catSet ) ;
+         // check rc first
+         if ( SDB_OK != rc )
+         {
+            // release lock before go away
+            _pCatAgent->release_w() ;
+            PD_LOG( PDERROR, "failed to update catalog:%d", rc ) ;
+            goto error ;
+         }
+         // get attributes from catalog set
          if ( catSet )
          {
             version = catSet->getVersion() ;
@@ -1931,11 +1940,6 @@ namespace engine
             }
          }
          _pCatAgent->release_w () ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to update catalog:%d", rc ) ;
-            goto error ;
-         }
 
          PD_LOG ( PDEVENT,
                   "Update catalog[name: %s, id: %llu, version:%u, type: %s, "
