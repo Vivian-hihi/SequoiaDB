@@ -42,6 +42,7 @@
 #include "clsCataHashMatcher.hpp"
 #include "utilBsonHash.hpp"
 #include "utilCommon.hpp"
+#include "utilSet.hpp"
 #include "ossMemPool.hpp"
 
 #include "../bson/lib/md5.hpp"
@@ -2820,7 +2821,7 @@ namespace engine
       ossPoolSet< string > mainCLList ;
       ossPoolSet< string >::iterator iterMain ;
       CAT_MAP_IT it = _mapCatalog.begin() ;
-      utilCLUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
+      _utilSet< utilCLUniqueID > deletingCSList ;
 
       if ( NULL == pMainCLs )
       {
@@ -2873,8 +2874,14 @@ namespace engine
                      pMainCLs->insert( strMainCL ) ;
                   }
                }
-
-               csUniqueID = utilGetCSUniqueID( curSet->clUniqueID() ) ;
+               // save CS unique ID for deleting
+               // there might be expired unique ID for the same cs name
+               utilCLUniqueID csUniqueID =
+                                 utilGetCSUniqueID( curSet->clUniqueID() ) ;
+               if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
+               {
+                  deletingCSList.insert( csUniqueID );
+               }
 
                tmpSet = curSet ;
                curSet = curSet->next () ;
@@ -2909,6 +2916,7 @@ namespace engine
          }
       }
 
+      // clear catalog caches for related main-collections
       iterMain = pMainCLs->begin() ;
       while ( iterMain != pMainCLs->end() )
       {
@@ -2916,18 +2924,25 @@ namespace engine
          ++iterMain ;
       }
 
-      if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
+      // clear ID map for deleting CS unique IDs
+      for ( _utilSet< utilCLUniqueID >::iterator iter = deletingCSList.begin() ;
+            iter != deletingCSList.end() ;
+            ++ iter )
       {
-         ID_CAT_MAP_IT it = _mapIDCatalog.begin() ;
-         while ( it != _mapIDCatalog.end() )
+         utilCLUniqueID csUniqueID = *iter ;
+         if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
          {
-            utilCSUniqueID curCSID = utilGetCSUniqueID( it->first ) ;
-            if ( curCSID == csUniqueID )
+            ID_CAT_MAP_IT it = _mapIDCatalog.begin() ;
+            while ( it != _mapIDCatalog.end() )
             {
-               _mapIDCatalog.erase(it++) ;
-               continue ;
+               utilCSUniqueID curCSID = utilGetCSUniqueID( it->first ) ;
+               if ( curCSID == csUniqueID )
+               {
+                  _mapIDCatalog.erase(it++) ;
+                  continue ;
+               }
+               it++ ;
             }
-            it++ ;
          }
       }
 
