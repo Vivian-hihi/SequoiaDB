@@ -127,7 +127,7 @@ namespace engine
          UINT64 getLastRecvTick() const { return _lastRecvTick ; }
          UINT64 getLastBeatTick() const { return _lastBeatTick ; }
 
-         UINT32 getMBPS() const { return _mbps ; }
+         UINT32 getIOPS() const { return _iops ; }
 
          void   syncLastBeatTick() ;
          void   makeStat( UINT64 curTick ) ;
@@ -173,8 +173,8 @@ namespace engine
          UINT64                           _msgid ;
 
          UINT64                           _lastStatTick ;
-         UINT64                           _srDataLen ;
-         UINT32                           _mbps ;     /// Byte/s
+         UINT64                           _totalIOTimes ;
+         UINT32                           _iops ;     /// times/s
 
    } ;
    typedef _netEventHandler netEventHandler ;

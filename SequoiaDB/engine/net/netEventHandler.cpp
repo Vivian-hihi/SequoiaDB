@@ -75,8 +75,8 @@ namespace engine
       _lastBeatTick  = pmdGetDBTick() ;
       _msgid         = 0 ;
 
-      _srDataLen     = 0 ;
-      _mbps          = 0 ;
+      _totalIOTimes  = 0 ;
+      _iops          = 0 ;
       _lastStatTick  = _lastSendTick ;
 
       /// attach
@@ -171,8 +171,8 @@ namespace engine
       if ( spanTime > 0 )
       {
          _lastStatTick = curTick ;
-         _mbps = _srDataLen / spanTime ;
-         _srDataLen = 0 ;
+         _iops = _totalIOTimes / spanTime ;
+         _totalIOTimes = 0 ;
       }
    }
 
@@ -467,7 +467,7 @@ namespace engine
 
       /// not care send suc or failed
       _lastSendTick = pmdGetDBTick() ;
-      _srDataLen += len ;
+      ++_totalIOTimes ;
 
       while ( send < len )
       {
@@ -635,8 +635,7 @@ namespace engine
          /// msg has only header
          if ( (UINT32)sizeof(_MsgHeader) == (UINT32)_header.messageLength )
          {
-            _srDataLen += sizeof(_MsgHeader) ;
-            if ( SDB_OK != _allocateBuf( sizeof(_MsgHeader) ))
+            if ( SDB_OK != _allocateBuf( sizeof(_MsgHeader) ) )
             {
                goto error_close ;
             }
@@ -666,7 +665,6 @@ namespace engine
       }
       else
       {
-         _srDataLen += _header.messageLength ;
          _evSuitPtr->getFrame()->handleMsg( shared_from_this() ) ;
          _state = NET_EVENT_HANDLER_STATE_HEADER ;
          asyncRead() ;

@@ -55,8 +55,8 @@ namespace engine
    #define NET_INNER_TIMER_INTERVAL       ( 2000 )
    #define NET_DUMMY_TIMER_INTERVAL       ( 2147483647 )
 
-   #define NET_MBPS_MIN_VALUE             ( 1048576 )    /// 1MB
-   #define NET_MBPS_THRESHOLD             ( 10485760 )   /// 10MB
+   #define NET_IOPS_MIN_VALUE             ( 500 )
+   #define NET_IOPS_THRESHOLD             ( 5000)
 
    /*
       _netInnerTimeHandle implement
@@ -674,7 +674,7 @@ namespace engine
 
       MULMAP_ROUTE_IT_PAIR pitr ;
       UINT32 sockNum = 0 ;
-      UINT32 minMBPS = 0 ;
+      UINT32 minIOPS = 0 ;
       OSS_LATCH_MODE mode = SHARED ;
       UINT32 retryTimes = 0 ;
 
@@ -689,24 +689,24 @@ namespace engine
             if ( 0 == sockNum )
             {
                eh = mitr->second ;
-               minMBPS = eh->getMBPS() ;
+               minIOPS = eh->getIOPS() ;
             }
-            else if ( mitr->second->getMBPS() < minMBPS )
+            else if ( mitr->second->getIOPS() < minIOPS )
             {
                eh = mitr->second ;
-               minMBPS = eh->getMBPS() ;
+               minIOPS = eh->getIOPS() ;
             }
 
             ++sockNum ;
 
-            if ( minMBPS <= NET_MBPS_MIN_VALUE ||
+            if ( minIOPS <= NET_IOPS_MIN_VALUE ||
                  ( _maxSockPerNode > 0 && sockNum >= _maxSockPerNode ) )
             {
                break ;
             }
          }
 
-         if ( sockNum > 0 && minMBPS <= NET_MBPS_THRESHOLD )
+         if ( sockNum > 0 && minIOPS <= NET_IOPS_THRESHOLD )
          {
             break ;
          }
