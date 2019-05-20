@@ -674,9 +674,10 @@ namespace engine
 
       MULMAP_ROUTE_IT_PAIR pitr ;
       UINT32 sockNum = 0 ;
-      UINT32 minIOPS = 0 ;
+      //UINT32 minIOPS = 0 ;
       OSS_LATCH_MODE mode = SHARED ;
       UINT32 retryTimes = 0 ;
+      UINT32 rand = ossRand() ;
 
       while( ++retryTimes <= 2 )
       {
@@ -686,7 +687,7 @@ namespace engine
          pitr = _route.equal_range( id.value ) ;
          for ( MULMAP_ROUTE_IT mitr = pitr.first ; mitr != pitr.second ; ++mitr )
          {
-            if ( 0 == sockNum )
+            /*if ( 0 == sockNum )
             {
                eh = mitr->second ;
                minIOPS = eh->getIOPS() ;
@@ -695,21 +696,38 @@ namespace engine
             {
                eh = mitr->second ;
                minIOPS = eh->getIOPS() ;
+            }*/
+
+            if ( MSG_ROUTE_SHARD_SERVCIE != id.columns.serviceID ||
+                 _maxSockPerNode <= 1 ||
+                 sockNum == rand % _maxSockPerNode )
+            {
+               eh = mitr->second ;
             }
 
             ++sockNum ;
 
+            /*
             if ( minIOPS <= NET_IOPS_MIN_VALUE ||
                  ( _maxSockPerNode > 0 && sockNum >= _maxSockPerNode ) )
             {
                break ;
-            }
+            }*/
          }
 
-         if ( sockNum > 0 && minIOPS <= NET_IOPS_THRESHOLD )
+         if ( MSG_ROUTE_SHARD_SERVCIE != id.columns.serviceID &&
+              eh.get() )
          {
             break ;
          }
+         else if ( sockNum > 0 && sockNum >= _maxSockPerNode )
+         {
+            break ;
+         }
+         /*if ( sockNum > 0 && minIOPS <= NET_IOPS_THRESHOLD )
+         {
+            break ;
+         }*/
          else if ( 1 == retryTimes )
          {
             /// need to swith the lock

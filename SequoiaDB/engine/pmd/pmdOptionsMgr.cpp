@@ -2333,6 +2333,7 @@ done:
       // --maxsocketpernode
       rdxUInt( pEX, PMD_OPTION_MAXSOCKET_PER_NODE, _maxSockPerNode, FALSE,
                PMD_CFG_CHANGE_RUN, 1, TRUE ) ;
+      rdvMinMax( pEX, _maxSockPerNode, 1, 100, TRUE ) ;
 
       // --maxsocketperthread
       rdxUInt( pEX, PMD_OPTION_MAXSOCKET_PER_THREAD, _maxSockPerThread, FALSE,
