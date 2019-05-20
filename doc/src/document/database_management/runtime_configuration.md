@@ -73,8 +73,8 @@
 |--transautocommit||boolean|在线生效|下一次事务中生效|是否开启自动事务提交，默认是false。只有当 transaction 开启时取值才会生效。|
 |--transautorollback||boolean|在线生效|下一次事务中生效|1.事务操作失败是否自动回滚该事务。默认为true。只有当 transaction 开启时取值才会生效。|
 |--transuserbs||boolean|在线生效|下一次事务中生效|事务操作是否使用回滚段。默认为true。只有当 transaction 开启时取值才会有效。|
-|--replicafullrecordon||boolean|在线生效||开启复制日志保存全纪录功能，默认为false。未开启时，复制日志只记录必要字段信息；开启后，复制日志将记录完整的字段信息|
-|--replicarecordtimeon||boolean|在线生效||开启复制日志保存时间信息功能，默认为false。|
+|--logwritemod||str|在线生效||复制日志写模式，取值：increment,full,默认为increment。为increment时，复制日志只保存更新记录的增量信息；为full时，复制日志将保存更新记录的完整信息。|
+|--logtimeon||boolean|在线生效||开启复制日志保存时间信息功能，默认为false。|
 
 >**Note:**  
 >1. 同步日志的总大小（logfilesz * logfilenum）决定了在同步过程中的容错能力。日志越大则进行全量恢复的可能性越小。  
