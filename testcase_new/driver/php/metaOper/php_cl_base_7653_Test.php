@@ -157,7 +157,7 @@ class TestCL03 extends PHPUnit_Framework_TestCase
          $expName1 = self::$csName .'.'. self::$clName1;
          $this -> assertEquals( $expName1, $clInfo1['Name'] );
          $this -> assertEquals( 1,  $clInfo1["Attribute"] );
-         $this -> assertEquals( "", $clInfo1["AttributeDesc"] );
+         $this -> assertEquals( "Compressed", $clInfo1["AttributeDesc"] );
          $this -> assertArrayNotHasKey( "ReplSize", $clInfo1 );
          
          //$clName2, $options = array( 'ReplSize' => 1 )
