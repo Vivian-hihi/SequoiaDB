@@ -48,12 +48,12 @@ function main()
    var subclOption3 = {Group:dataGroupNames[0], AutoIncrement:{Field:fieldNames[0], StartValue:-1,MinValue:-1}};
    subcl3 = commCreateCLByOption( db, subcsName, subclName3, subclOption3);
    
-   subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:1000}, {a0:2000} );
+   subcl1.split( dataGroupNames[0], dataGroupNames[1], {a0:10}, {a0:20} );
    subcl2.split( dataGroupNames[0], dataGroupNames[1], 50 );
    
-   maincl.attachCL( subclFullName1, {LowBound: {a1:1}, UpBound:{a1:2001}} );
-   maincl.attachCL( subclFullName2, {LowBound: {a1:2001}, UpBound:{a1:4001}} );
-   maincl.attachCL( subclFullName3, {LowBound: {a1:4001}, UpBound:{a1:6001}} );
+   maincl.attachCL( subclFullName1, {LowBound: {a1:1}, UpBound:{a1:21}} );
+   maincl.attachCL( subclFullName2, {LowBound: {a1:21}, UpBound:{a1:41}} );
+   maincl.attachCL( subclFullName3, {LowBound: {a1:41}, UpBound:{a1:61}} );
    
    var mainclID = getCLID(maincsName, mainclName);
    var mainclSequenceName1 = "SYS_" + mainclID + "_" + fieldNames[0] + "_SEQ";
@@ -66,7 +66,7 @@ function main()
    
    var doc = [];
    var expR = [];
-   for(var i=1; i<6001; i++)
+   for(var i=1; i<61; i++)
    {
       doc.push({a:sortField,a1:i,b:i});
       expR.push({a:sortField,a1:i,b:i,id1:i,id2:i});
@@ -78,7 +78,7 @@ function main()
    println("---check insert into maincl success");
    
    var doc = [];
-   for(var i=1; i<6001; i++)
+   for(var i=1; i<61; i++)
    {
       doc.push({a:sortField,a1:i,a0:i});
       expR.push({a:sortField,a1:i,a0:i,id1:(i-1)*10+1,});
