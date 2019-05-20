@@ -1,9 +1,6 @@
 #!/bin/bash
 
 TYPE="unknown"
-INSTALL_PG=0
-INSTALL_DB=0
-INSTALL_MYSQL=0
 
 function install()
 {
@@ -67,18 +64,15 @@ eval set -- "${ARGS}"
 while true
 do
    case "$1" in
-      --sdb )           INSTALL_BD=1
-                       TYPE="sequoiadb"
+      --sdb )          TYPE="sequoiadb"
                        install $TYPE
                        shift
                        ;;
-      --pg )           INSTALL_PG=1
-                       TYPE="sequoiasql-postgresql"
+      --pg )           TYPE="sequoiasql-postgresql"
                        install $TYPE
                        shift
                        ;;
-      --mysql )        INSTALL_MYSQL=1
-                       TYPE="sequoiasql-mysql"
+      --mysql )        TYPE="sequoiasql-mysql"
                        install $TYPE
                        shift
                        ;;
