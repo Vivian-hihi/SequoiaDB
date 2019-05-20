@@ -30,6 +30,7 @@ create <[temporary] table| temporary view> <tableName> [(schema)] using com.sequ
 |collectionspace|集合空间名称|string|-|是|
 |collection|集合名称（不包含集合空间名称）|string|-|是|
 |username|用户名|string|""|否|
+|passwordtype|密码类型，取值可以为"cleartext","file"。"cleartext"表示参数password为明文密码；"file"表示参数password为密码文件路径|string|"cleartext"|否|
 |password|用户名对应的密码|string|""|否|
 |samplingratio|schema采样率，取值(0, 1.0]|double|1.0|否|
 |samplingnum|schema采样数量（每个分区），取值大于0。|long|1000|否|
