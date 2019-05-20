@@ -106,16 +106,29 @@ namespace engine
 
    INT32 _netEventSuit::run()
    {
-      _active = TRUE ;
-      _attachEvent.signal() ;
-      _pFrame->onRunSuitStart( shared_from_this() ) ;
-      _asyncWait() ;
-      _ioservice.run() ;
-      _timer.cancel() ;
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         _active = TRUE ;
+         _attachEvent.signal() ;
+         _pFrame->onRunSuitStart( shared_from_this() ) ;
+         _asyncWait() ;
+         _ioservice.run() ;
+         _timer.cancel() ;
+      }
+      catch( std::exception &e )
+      {
+         if ( _active )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+         }
+      }
+
       _pFrame->onRunSuitStop( shared_from_this() ) ;
       _active = FALSE ;
-
-      return SDB_OK ;
+      return rc ;
    }
 
    void _netEventSuit::stop()

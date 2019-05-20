@@ -60,7 +60,8 @@ namespace engine
       public:
          OSS_INLINE void run( NET_START_THREAD_FUNC pFunc = NULL )
          {
-            _frame.run( pFunc ) ;
+            _frame.setNetStartThreadFunc( pFunc ) ;
+            _frame.run() ;
          }
 
          OSS_INLINE void stop()

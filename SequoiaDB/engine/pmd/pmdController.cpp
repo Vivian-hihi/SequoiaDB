@@ -589,6 +589,7 @@ namespace engine
       while( it != _mapMonNets.end() )
       {
          it->first->heartbeat( OSS_ONE_SEC, it->second ) ;
+         it->first->makeStat( OSS_ONE_SEC ) ;
          ++it ;
       }
    }

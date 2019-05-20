@@ -452,6 +452,10 @@ namespace engine
       pNetFrame = _pNetRtAgent->getFrame() ;
       /// register shard net agent to net monitor for catalog connections
       pNetFrame->setBeatInfo( pmdGetOptionCB()->getOprTimeout() ) ;
+      pNetFrame->setMaxSockPerNode( pmdGetOptionCB()->maxSockPerNode() ) ;
+      pNetFrame->setMaxSockPerThread( pmdGetOptionCB()->maxSockPerThread() ) ;
+      pNetFrame->setMaxThreadNum( pmdGetOptionCB()->maxSockThread() ) ;
+
       sdbGetPMDController()->registerNet( pNetFrame,
                                           MSG_ROUTE_CAT_SERVICE ) ;
 
@@ -524,8 +528,11 @@ namespace engine
    {
       if ( _pNetRtAgent )
       {
-         UINT32 opTimeout = pmdGetOptionCB()->getOprTimeout() ;
-         _pNetRtAgent->getFrame()->setBeatInfo( opTimeout ) ;
+         _netFrame *pNetFrame = _pNetRtAgent->getFrame() ;
+         pNetFrame->setBeatInfo( pmdGetOptionCB()->getOprTimeout() ) ;
+         pNetFrame->setMaxSockPerNode( pmdGetOptionCB()->maxSockPerNode() ) ;
+         pNetFrame->setMaxSockPerThread( pmdGetOptionCB()->maxSockPerThread() ) ;
+         pNetFrame->setMaxThreadNum( pmdGetOptionCB()->maxSockThread() ) ;
       }
    }
 

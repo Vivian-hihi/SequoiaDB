@@ -55,8 +55,8 @@ namespace engine
    #define NET_INNER_TIMER_INTERVAL       ( 2000 )
    #define NET_DUMMY_TIMER_INTERVAL       ( 2147483647 )
 
-   #define NET_MBPS_MIN_VALUE             ( 102400 )     /// 100KB
-   #define NET_MBPS_THRESHOLD             ( 5242880 )    /// 5MB
+   #define NET_MBPS_MIN_VALUE             ( 1048576 )    /// 1MB
+   #define NET_MBPS_THRESHOLD             ( 10485760 )   /// 10MB
 
    /*
       _netInnerTimeHandle implement
@@ -144,6 +144,9 @@ namespace engine
       _beatLastTick = pmdGetDBTick() ;
       _checkBeat = FALSE ;
 
+      _statInterval = NET_MAKE_STAT_INTERVAL ;
+      _statLastTick = 0 ;
+
       _maxSockPerNode = 1 ;
       _maxSockPerThread = 0 ;
       _maxThreadNum = 0 ;
@@ -172,7 +175,14 @@ namespace engine
 
    void _netFrame::setMaxThreadNum( UINT32 maxThreadNum )
    {
-      _maxThreadNum = maxThreadNum ;
+      if ( maxThreadNum >= 1 )
+      {
+         _maxThreadNum = maxThreadNum - 1 ;
+      }
+      else
+      {
+         _maxThreadNum = 0 ;
+      }
    }
 
    void _netFrame::onRunSuitStart( netEvSuitPtr evSuitPtr )
@@ -219,12 +229,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_RUN, "_netFrame::run" )
-   INT32 _netFrame::run( NET_START_THREAD_FUNC pFunc )
+   INT32 _netFrame::run()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_RUN ) ;
-
-      _pThreadFunc = pFunc ;
 
       /// start dummy timer
       rc = _innerTimeHandle.startDummyTimer() ;
@@ -274,31 +282,42 @@ namespace engine
       PD_TRACE_EXIT ( SDB__NETFRAME_STOP );
    }
 
+   void _netFrame::setNetStartThreadFunc( NET_START_THREAD_FUNC pFunc )
+   {
+      _pThreadFunc = pFunc ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_MAKESTAT, "_netFrame::makeStat" )
    void _netFrame::makeStat( UINT32 timeout )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_MAKESTAT ) ;
+      UINT64 span = pmdGetTickSpanTime( _statLastTick ) ;
       NET_EH eh ;
       NET_HANDLE handle = NET_INVALID_HANDLE ;
       MAP_EVENT_IT itr ;
-      UINT64 curTick = pmdGetDBTick() ;
 
-      while( TRUE )
+      if ( span >= _statInterval )
       {
-         _mtx.get_shared() ;
-         itr = _opposite.upper_bound( handle ) ;
-         if ( itr == _opposite.end() )
-         {
-            _mtx.release_shared() ;
-            break ;
-         }
-         eh = itr->second ;
-         handle = itr->first ;
-         _mtx.release_shared() ;
+         _statLastTick = pmdGetDBTick() ;
 
-         /// make stat
-         eh->makeStat( curTick ) ;
+         while( TRUE )
+         {
+            _mtx.get_shared() ;
+            itr = _opposite.upper_bound( handle ) ;
+            if ( itr == _opposite.end() )
+            {
+               _mtx.release_shared() ;
+               break ;
+            }
+            eh = itr->second ;
+            handle = itr->first ;
+            _mtx.release_shared() ;
+
+            /// make stat
+            eh->makeStat( _statLastTick ) ;
+         }
       }
+
       PD_TRACE_EXIT ( SDB__NETFRAME_MAKESTAT ) ;
    }
 
@@ -1344,15 +1363,15 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__GETEVSUIT, "_netFrame::_getEvSuit" )
    netEvSuitPtr _netFrame::_getEvSuit( BOOLEAN needLock )
    {
-      netEventSuit *pSuit = NULL ;
       netEvSuitPtr ptr = _mainSuitPtr ;
+      UINT32 minSockNum = ptr->getHandleNum() ;
       BOOLEAN hasLock = FALSE ;
       PD_TRACE_ENTRY ( SDB__NETFRAME__GETEVSUIT ) ;
 
-      if ( _pThreadFunc && _maxSockPerThread > 0 )
+      if ( _pThreadFunc && _maxSockPerThread > 0 &&
+           minSockNum >= _maxSockPerThread )
       {
          VEC_EVSUIT_IT itr ;
-         UINT32 minSockNum = ptr->getHandleNum() ;
          UINT32 curSockNum = 0 ;
 
          if ( needLock )
@@ -1380,22 +1399,22 @@ namespace engine
          }
 
          /// when all suit's socket is >= _maxSockPerThread
-         if ( 0 == _maxThreadNum || _vecEvSuit.size() < _maxThreadNum )
+         if ( _maxThreadNum > 0 && _vecEvSuit.size() < _maxThreadNum )
          {
             /// create new
-            pSuit = SDB_OSS_NEW netEventSuit( this ) ;
+            netEventSuit *pSuit = SDB_OSS_NEW netEventSuit( this ) ;
             if ( pSuit )
             {
+               netEvSuitPtr tmpPtr = netEvSuitPtr( pSuit ) ;
                /// start thread
-               INT32 rc = _pThreadFunc( pSuit ) ;
+               INT32 rc = _pThreadFunc( tmpPtr.get() ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Call _pThreadFunc failed, rc: %d", rc ) ;
                   goto done ;
                }
 
-               ptr = netEvSuitPtr( pSuit ) ;
-               pSuit = NULL ;
+               ptr = tmpPtr ;
                _vecEvSuit.push_back( ptr ) ;
             }
          }
@@ -1405,10 +1424,6 @@ namespace engine
       if ( hasLock )
       {
          _mtx.release() ;
-      }
-      if ( pSuit )
-      {
-         SDB_OSS_DEL pSuit ;
       }
       PD_TRACE_EXIT( SDB__NETFRAME__GETEVSUIT ) ;
       return ptr ;

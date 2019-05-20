@@ -465,6 +465,7 @@ namespace engine
          virtual ~_IIOService() {}
 
       public:
+         virtual INT32     run() = 0 ;
          virtual void      stop() = 0 ;
          virtual void      resetMon() = 0 ;
    } ;

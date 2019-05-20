@@ -201,6 +201,8 @@ namespace engine
       EDU_TYPE_SE_INDEX,
       EDU_TYPE_SE_AGENT,
 
+      EDU_TYPE_SUB_NET_AGENT,
+
       EDU_TYPE_UNKNOWN,
       EDU_TYPE_MAXIMUM = EDU_TYPE_UNKNOWN
    } ;

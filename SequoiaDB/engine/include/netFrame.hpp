@@ -90,6 +90,7 @@ namespace engine
    typedef _netInnerTimeHandle netInnerTimeHandle ;
 
    #define NET_HEARTBEAT_INTERVAL            ( 5000 )
+   #define NET_MAKE_STAT_INTERVAL            ( 5000 )
 
    /*
       _netFrame define
@@ -119,6 +120,7 @@ namespace engine
          ~_netFrame() ;
 
       public:
+         virtual INT32     run() ;
          virtual void      stop() ;
          virtual void      resetMon() ;
 
@@ -149,8 +151,6 @@ namespace engine
          static UINT32 getLocalAddress() ;
 
       public:
-         INT32    run( NET_START_THREAD_FUNC pFunc = NULL ) ;
-
          void     heartbeat( UINT32 interval, INT32 serviceType = -1 ) ;
 
          void     setBeatInfo( UINT32 beatTimeout,
@@ -225,6 +225,7 @@ namespace engine
          INT64 netOut() ;
 
          void  makeStat( UINT32 timeout ) ;
+         void  setNetStartThreadFunc( NET_START_THREAD_FUNC pFunc ) ;
 
       protected:
          netEvSuitPtr      _getEvSuit( BOOLEAN needLock ) ;
@@ -276,9 +277,11 @@ namespace engine
          netInnerTimeHandle               _innerTimeHandle ;
 
          /// communicate shedule config info
+         UINT32                           _statInterval ;
+         UINT64                           _statLastTick ;
          UINT32                           _maxSockPerNode ;    /// 0 for unlimited
          UINT32                           _maxSockPerThread ;  /// 0 for unlimited
-         UINT32                           _maxThreadNum ;      /// 0 for unlimited
+         UINT32                           _maxThreadNum ;
 
    } ;
 

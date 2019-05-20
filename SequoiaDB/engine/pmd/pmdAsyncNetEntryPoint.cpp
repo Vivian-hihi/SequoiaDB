@@ -33,6 +33,7 @@
 
 #include "pmdEDUMgr.hpp"
 #include "netRouteAgent.hpp"
+#include "pmd.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
@@ -40,14 +41,30 @@
 namespace engine
 {
 
+   #define PMD_SUB_NET_AGENT_WAITTIME        ( 5 * OSS_ONE_SEC )
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDNETCALLBACKFUNC, "pmdNetCallbackFunc" )
    INT32 pmdNetCallbackFunc( _netEventSuit *pSuit )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDNETCALLBACKFUNC ) ;
 
-      rc = SDB_SYS ;
-      goto error ;
+      pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+
+      rc = pEDUMgr->startEDU( EDU_TYPE_SUB_NET_AGENT,
+                              (void*)pSuit, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Start sub-net agent failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = pSuit->waitAttach( PMD_SUB_NET_AGENT_WAITTIME ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Wait sub-net agent running failed, rc: %d", rc ) ;
+         goto error ;
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB_PMDNETCALLBACKFUNC, rc );
@@ -105,6 +122,43 @@ namespace engine
       goto done;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDASYNCNETSUBEP, "pmdAsyncNetSubEntryPoint" )
+   INT32 pmdAsyncNetSubEntryPoint ( pmdEDUCB *cb, void *pData )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB_PMDASYNCNETSUBEP ) ;
+      pmdEDUMgr *pEDUMgr = cb->getEDUMgr () ;
+      _netEventSuit *pSuit = (_netEventSuit*)pData;
+
+      rc = pEDUMgr->activateEDU( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to active EDU[type:%d,ID:%lld]",
+                  cb->getType(), cb->getID() ) ;
+         goto error ;
+      }
+
+      //start run
+      PD_LOG ( PDEVENT, "Run %s[Type: %d] ...", getEDUName( cb->getType() ),
+               cb->getType() ) ;
+
+      rc = pSuit->run() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Run %s[Type: %d] failed, rc: %d",
+                  getEDUName( cb->getType() ), cb->getType(), rc ) ;
+         goto error ;
+      }
+      PD_LOG ( PDEVENT, "Stop %s[Type: %d]", getEDUName( cb->getType() ),
+               cb->getType() ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_PMDASYNCNETSUBEP, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /// Register
    PMD_DEFINE_ENTRYPOINT( EDU_TYPE_REPR, TRUE,
                           pmdAsyncNetEntryPoint,
@@ -137,6 +191,10 @@ namespace engine
    PMD_DEFINE_ENTRYPOINT( EDU_TYPE_SE_INDEXR, TRUE,
                           pmdAsyncNetEntryPoint,
                           "SeIndexerReader" ) ;
+
+   PMD_DEFINE_ENTRYPOINT( EDU_TYPE_SUB_NET_AGENT, FALSE,
+                          pmdAsyncNetSubEntryPoint,
+                          "SubNetAgent" ) ;
 
 }
 

@@ -1928,6 +1928,10 @@ done:
       _enableSleep = FALSE ;
       _recycleRecord = FALSE ;
 
+      _maxSockPerNode = 1 ;
+      _maxSockPerThread = 0 ;
+      _maxSockThread = 1 ;
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -2325,6 +2329,19 @@ done:
       // --recyclerecord
       rdxBooleanS( pEX, PMD_OPTION_RECYCLE_RECORD, _recycleRecord, FALSE,
                    PMD_CFG_CHANGE_RUN, FALSE, TRUE ) ;
+
+      // --maxsocketpernode
+      rdxUInt( pEX, PMD_OPTION_MAXSOCKET_PER_NODE, _maxSockPerNode, FALSE,
+               PMD_CFG_CHANGE_RUN, 1, TRUE ) ;
+
+      // --maxsocketperthread
+      rdxUInt( pEX, PMD_OPTION_MAXSOCKET_PER_THREAD, _maxSockPerThread, FALSE,
+               PMD_CFG_CHANGE_RUN, 0, TRUE ) ;
+
+      // --maxsocketthread
+      rdxUInt( pEX, PMD_OPTION_MAX_SOCKET_THREAD, _maxSockThread, FALSE,
+               PMD_CFG_CHANGE_RUN, 1, TRUE ) ;
+      rdvMinMax( pEX, _maxSockThread, 1, 100, TRUE ) ;
 
       // end map
 

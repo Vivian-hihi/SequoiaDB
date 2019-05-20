@@ -47,6 +47,7 @@
 #include "ossAtomic.hpp"
 #include "ossRWMutex.hpp"
 #include "ossEvent.hpp"
+#include "sdbInterface.hpp"
 #include <boost/asio/steady_timer.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
@@ -64,7 +65,7 @@ namespace engine
       _netEventSuit define
    */
    class _netEventSuit : public boost::enable_shared_from_this<_netEventSuit>,
-                         public SDBObject
+                         public _IIOService
    {
       public:
          typedef set<NET_HANDLE>                SET_HANDLE ;
@@ -84,10 +85,12 @@ namespace engine
 
          UINT32         getHandleNum() ;
 
-         INT32          run() ;
-         void           stop() ;
-
          INT32          waitAttach( INT64 millsec ) ;
+
+      public:
+         virtual INT32     run() ;
+         virtual void      stop() ;
+         virtual void      resetMon() {}
 
       protected:
          void           _asyncWait() ;
