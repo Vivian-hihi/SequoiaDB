@@ -71,7 +71,7 @@ public class Fulltext14372 extends SdbTestBase {
             FullTextDBUtils.dropCollection( cs, clName );
             // check fulltext deleted
             if ( esIndexNames != null ) {
-                Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
+                Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
             }
         } catch ( BaseException e ) {
             Assert.fail( e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );

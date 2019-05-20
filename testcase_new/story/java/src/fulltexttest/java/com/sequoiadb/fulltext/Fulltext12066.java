@@ -82,7 +82,7 @@ public class Fulltext12066 extends SdbTestBase {
         Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
         Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullIndexName ) );
         FullTextDBUtils.dropCollection( this.cs, clName );
-        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
     }
 
     @AfterClass

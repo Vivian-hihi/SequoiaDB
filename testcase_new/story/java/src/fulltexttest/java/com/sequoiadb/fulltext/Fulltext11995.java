@@ -80,7 +80,7 @@ public class Fulltext11995 extends SdbTestBase {
             cl.createIndex( textIndexName, indexObj, false, false );
             esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
             FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
-            Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
+            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
         }
 
         // create and drop fulltext while processing cappedcl data
@@ -96,7 +96,7 @@ public class Fulltext11995 extends SdbTestBase {
 
             Assert.assertTrue( insertThread.isSuccess(), insertThread.getErrorMsg() );
             Assert.assertTrue( dropIdxThread.isSuccess(), dropIdxThread.getErrorMsg() );
-            Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
+            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
         }
 
         // last time create index
@@ -108,7 +108,7 @@ public class Fulltext11995 extends SdbTestBase {
         // last time drop index
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
         // check fulltext deleted
-        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {

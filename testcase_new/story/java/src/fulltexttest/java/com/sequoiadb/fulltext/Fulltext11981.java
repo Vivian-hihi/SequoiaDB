@@ -84,7 +84,7 @@ public class Fulltext11981 extends SdbTestBase {
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
 
         // check fulltext deleted
-        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
 
         // insert > 32M, < 129M
         int insertNums2 = 100000; // new insert 10w
@@ -101,7 +101,7 @@ public class Fulltext11981 extends SdbTestBase {
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
 
         // check fulltext deleted
-        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
 
         // insert > 32M, and > 129M
         int insertNums3 = 300000; // new insert 30w
@@ -120,7 +120,7 @@ public class Fulltext11981 extends SdbTestBase {
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
 
         // check fulltext deleted
-        Assert.assertFalse( FullTextESUtils.isExistIndexInES( esClient, esIndexNames, false ) );
+        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {
