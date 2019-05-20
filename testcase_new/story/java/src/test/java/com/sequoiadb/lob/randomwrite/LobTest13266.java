@@ -1,92 +1,122 @@
 package com.sequoiadb.lob.randomwrite;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBLob;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.testcommon.SdbTestBase;
-import org.bson.BSONObject;
+import java.util.Arrays;
+
 import org.bson.types.ObjectId;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.assertByteArrayEqual;
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.getRandomBytes;
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBLob;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * Created by laojingtang on 17-12-1.
+ * FileName: LobTest13266.java test content:concurrent locking to the same range
+ * of data segments to write lob testlink case:seqDB-13266
+ * 
+ * @author laojingtang
+ * @Date 2017.12.1
+ * @version 1.00
+ * @update wuyan on 2019.5.20.
  */
 public class LobTest13266 extends SdbTestBase {
-    Sequoiadb db = null;
-    DBCollection dbcl = null;
-    CollectionSpace cs = null;
-    String csName;
-    String clName;
+	private String clName = "writelob13266";
+	private static Sequoiadb sdb = null;
+	private CollectionSpace cs = null;
+	private static DBCollection dbcl = null;
+	private static ObjectId oid = null;
+	private byte[] testLobBuff = null;
 
-    @BeforeClass
-    public void setupClass() {
-        csName = SdbTestBase.csName;
-        clName = "cl_" + this.getClass().getSimpleName();
-        db = new Sequoiadb(coordUrl, "", "");
-        cs = db.getCollectionSpace(csName);
+	@BeforeClass
+	public void setupClass() {
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);
+		String clOptions = "{ShardingKey:{no:1},ShardingType:'hash',Partition:1024," + "ReplSize:0,Compressed:true}";
+		dbcl = RandomWriteLobUtil.createCL(cs, clName, clOptions);
 
-        dbcl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
-    }
+		// put lob
+		int writeSize = 1024 * 200;
+		testLobBuff = RandomWriteLobUtil.getRandomBytes(writeSize);
+		oid = RandomWriteLobUtil.createAndWriteLob(dbcl, testLobBuff);
+	}
 
-    @AfterClass
-    public void afterClass() {
-        cs.dropCollection(clName);
-        db.close();
-    }
+	@Test
+	public void testLob13266() {
+		int offset = 10;
+		int rewriteLobSize = 1024 * 4;
+		byte[] writeBuff1 = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);
+		byte[] writeBuff2 = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);
 
-    /**
-     * 1、共享模式下，多个连接多线程并发如下操作:
-     * (1)打开已存在lob对象，seek指定偏移范围，执行lock锁定数据段，向锁定数据段写入lob
-     * 多个并发线程中锁定数据段范围相同，写入数据信息不相同
-     * 2、读取lob，检查操作结果
-     * 1、先加锁线程写lob成功，查询lob信息按指定位置写入数据，且写入数据信息正确（比较MD5值）
-     * 2、另一个线程加锁失败，返回对应错误信息
-     *
-     * @param lobsize
-     */
-    @Test(dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
-    public void testLob13266(int lobsize) throws InterruptedException {
-        final byte[] randomBytes = getRandomBytes(lobsize);
-        DBLob lob = dbcl.createLob();
-        final ObjectId oid = lob.getID();
-        lob.close();
+		LockAndRewriteLobTask lockAndRewriteLob1 = new LockAndRewriteLobTask(offset, writeBuff1);
+		LockAndRewriteLobTask lockAndRewriteLob2 = new LockAndRewriteLobTask(offset, writeBuff2);
 
-        DbLobWriteTask t1 = new DbLobWriteTask(csName, clName, oid, 10, randomBytes);
-        DbLobWriteTask t2 = new DbLobWriteTask(csName, clName, oid, 10, randomBytes);
+		lockAndRewriteLob1.start();
+		lockAndRewriteLob2.start();
 
-        t1.start();
-        t2.start();
-        t1.join();
-        t2.join();
+		if (lockAndRewriteLob1.isSuccess()) {
+			Assert.assertFalse(lockAndRewriteLob2.isSuccess(), lockAndRewriteLob2.getErrorMsg());
+			checkRewriteLobBuff(rewriteLobSize, offset, writeBuff1);
+		} else {
+			Assert.assertTrue(lockAndRewriteLob2.isSuccess(), lockAndRewriteLob2.getErrorMsg());
+			checkRewriteLobBuff(rewriteLobSize, offset, writeBuff2);
+		}
+	}
 
-        if (t1.isTaskSuccess()) {
-            if(!t2.isTaskSuccess()) {
-               Assert.assertEquals(t2.getSdbErrCode(), SDBError.SDB_LOB_LOCK_CONFLICTED.getErrorCode());
-            } 
-        } else {
-            Assert.assertEquals(t1.getSdbErrCode(), SDBError.SDB_LOB_LOCK_CONFLICTED.getErrorCode());
-        }
+	@AfterClass
+	public void afterClass() {
+		try {
+			if (cs.isCollectionExist(clName)) {
+				cs.dropCollection(clName);
+			}
+		} finally {
+			if (sdb != null) {
+				sdb.close();
+			}
+		}
+	}
 
-        lob = dbcl.openLob(oid);
-        byte[] actual = new byte[lobsize + 10];
-        lob.read(actual);
-        lob.close();
+	private class LockAndRewriteLobTask extends SdbThreadBase {
+		private int offset;
+		private byte[] rewriteLobBuff;
 
-        byte[] expect = randomBytes;
-        assertByteArrayEqual(Arrays.copyOfRange(actual, 10, actual.length), expect);
-    }
+		public LockAndRewriteLobTask(int offset, byte[] rewriteLobBuff) {
+			this.offset = offset;
+			this.rewriteLobBuff = rewriteLobBuff;
+		}
+
+		@Override
+		public void exec() throws Exception {
+			DBLob lob = null;
+			try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+				DBCollection cl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+				lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE);
+				lob.lockAndSeek(offset, rewriteLobBuff.length);
+				lob.write(rewriteLobBuff);
+				lob.close();
+			}
+		}
+	}
+
+	private void checkRewriteLobBuff(int rewriteLobSize, int offset, byte[] rewriteBuff) {
+		// check the rewrite lob
+		byte[] actBuff = RandomWriteLobUtil.seekAndReadLob(dbcl, oid, rewriteLobSize, offset);
+		RandomWriteLobUtil.assertByteArrayEqual(actBuff, rewriteBuff);
+
+		// check the all write lob
+		byte[] expBuff = RandomWriteLobUtil.appendBuff(testLobBuff, rewriteBuff, offset);
+		try (DBLob lob = dbcl.openLob(oid)) {
+			byte[] actAllLob = new byte[(int) lob.getSize()];
+			lob.read(actAllLob);
+			if (!Arrays.equals(actAllLob, expBuff)) {
+				RandomWriteLobUtil.writeLobAndExpectData2File(lob, expBuff);
+				Assert.fail("check actlob and expbuff different: oid=" + oid.toString());
+			}
+		}
+	}
 
 }
