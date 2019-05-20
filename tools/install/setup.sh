@@ -12,6 +12,28 @@ function install()
       chmod u+x $file_run
       $file_run --mode text
       test $? -ne 0 && { echo "ERROR: Fail to $file_run --mode text" >&2 && exit 1; }
+      local SETUP_CONF="/etc/default/setup.list"
+      test -f $SETUP_CONF || touch $SETUP_CONF
+      chmod 755 $SETUP_CONF
+      case $name in
+         "sequoiadb" )              . "/etc/default/sequoiadb"
+                                    sed -i '/\/etc\/default\/sequoiadb,\s*/d' $SETUP_CONF
+                                    echo '/etc/default/sequoiadb,'$MD5'' >> $SETUP_CONF
+                                    shift
+                                    ;;
+         "sequoiasql-mysql" )       file=`ls -l -t /etc/default/sequoiasql-mysq* | awk 'NR<2{print $NF}' | awk -F '/' '{print $4}'`
+                                    . "/etc/default/$file"
+                                    sed -i '/\/etc\/default\/'$file',\s*/d' $SETUP_CONF
+                                    echo '/etc/default/'$file','$MD5'' >> $SETUP_CONF
+                                    shift
+                                    ;;  
+         "sequoiasql-postgresql" )  file=`ls -l -t /etc/default/sequoiasql-postgresql* | awk 'NR<2{print $NF}' | awk -F '/' '{print $4}'`
+                                    . "/etc/default/$file"
+                                    sed -i '/\/etc\/default\/'$file',\s*/d' $SETUP_CONF
+                                    echo '/etc/default/'$file','$MD5'' >> $SETUP_CONF
+                                    shift
+                                    ;;  
+      esac
    done
    echo "----------------------------end install $name----------------------------"
    echo 
