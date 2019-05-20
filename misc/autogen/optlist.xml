@@ -1432,9 +1432,7 @@
       <name>PMD_OPTION_SYNC_INTERVAL</name>
       <long>syncinterval</long>
       <description>
-         <en>1. The interval time(unit:ms) of data-sync.<fig></fig>
-             2. The catalog node and om node, default:10000, value range(0, 60000].<fig></fig>
-             3. The other nodes, default:10000, 0 means disable data-sync by time, value range[0, 2^31 - 1].</en>
+         <en>The interval time(unit:ms) of data-sync, default:10000, 0 means disable data-sync by time, value range[0, 2^31 - 1]</en>
          <cn>1. 后台数据同步周期，单位毫秒。<fig></fig>
              2. 对于编目节点和om节点，默认值为10000，取值范围(0, 60000]<fig></fig>
              3. 对于其它类型的节点，默认值为10000，0表示不按周期触发数据同步，取值范围[0, 2^31 - 1]</cn>
@@ -1444,9 +1442,7 @@
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>1. The interval time(unit:ms) of data-sync.<fig></fig>
-             2. The catalog node and om node, default:10000, value range(0, 60000].<fig></fig>
-             3. The other nodes, default:10000, 0 means disable data-sync by time, value range[0, 2^31 - 1].</en>
+         <en>The interval times(unit:ms) of data-sync, default:10000, 0 means disable data-sync by time, value range[0, 2^31 - 1]</en>
          <cn>1. 后台数据同步周期，单位毫秒。<fig></fig>
              2. 对于编目节点和om节点，默认值为10000，取值范围(0, 60000]<fig></fig>
              3. 对于其它类型的节点，默认值为10000，0表示不按周期触发数据同步，取值范围[0, 2^31 - 1]</cn>
@@ -1460,9 +1456,7 @@
       <name>PMD_OPTION_SYNC_RECORDNUM</name>
       <long>syncrecordnum</long>
       <description>
-      	 <en>1. The trigger condition of record number of data-sync.<fig></fig>
-             2. The catalog node and om node, default:10, value range(0, 1000].<fig></fig>
-             3. The other nodes, default:0, 0 means disable data-sync by record, value range[0, 2^31 - 1].</en>
+         <en>The trigger condition of record number of data-sync, default:0, 0 means disable data-sync by record, value range[0, 2^31 - 1]</en>
          <cn>1. 后台数据同步触发记录数。<fig></fig>
              2. 对于编目节点和om节点，默认值为10，取值范围(0, 1000]<fig></fig>
              3. 对于其它类型的节点，默认值为0，0表示不按记录数触发数据同步，取值范围[0, 2^31 - 1]</cn>
@@ -1472,9 +1466,7 @@
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>1. The trigger condition of record number of data-sync.<fig></fig>
-             2. The catalog node and om node, default:10, value range(0, 1000].<fig></fig>
-             3. The other nodes, default:0, 0 means disable data-sync by record, value range[0, 2^31 - 1].</en>
+         <en>The trigger condition of record number of data-sync, default:0, 0 means disable data-sync by record, value range[0, 2^31 - 1]</en>
          <cn>1. 后台数据同步触发记录数。<fig></fig>
              2. 对于编目节点和om节点，默认值为10，取值范围(0, 1000]<fig></fig>
              3. 对于其它类型的节点，默认值为0，0表示不按记录数触发数据同步，取值范围[0, 2^31 - 1]</cn>
