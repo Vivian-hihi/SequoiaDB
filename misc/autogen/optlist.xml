@@ -2094,16 +2094,16 @@
       <name>PMD_OPTION_MAXSOCKET_PER_NODE</name>
       <long>maxsocketpernode</long>
       <description>
-        <en>The max number of socket between two nodes. 0 for unlimited, default is 1</en>
-        <cn>两个节点之前的最大连接数，0表示不限制，默认为1</cn>
+        <en>The max number of socket between two nodes. Value range:[1,100], default is 1</en>
+        <cn>两个节点之前的最大连接数，取值范围：[1,100]，默认为1</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-        <en>The max number of socket between two nodes. 0 for unlimited, default is 1.</en>
-        <cn>两个节点之前的最大连接数，0表示不限制，默认为1。</cn>
+        <en>The max number of socket between two nodes. Value range:[1,100], default is 1.</en>
+        <cn>两个节点之前的最大连接数，取值范围：[1,100]，默认为1。</cn>
       </detail>
       <type>int</type>
       <default>1</default>
@@ -2134,7 +2134,7 @@
       <name>PMD_OPTION_MAX_SOCKET_THREAD</name>
       <long>maxsocketthread</long>
       <description>
-        <en>The max number of the socket drive threads. range:[1,100], default is 1</en>
+        <en>The max number of the socket drive threads. Value range:[1,100], default is 1</en>
         <cn>通信最大驱动线程数，取值范围[1,100]，默认1</cn>
       </description>
       <reloadable>
@@ -2142,7 +2142,7 @@
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-        <en>The max number of the socket drive threads. range:[1,100], default is 1.</en>
+        <en>The max number of the socket drive threads. Value range:[1,100], default is 1.</en>
         <cn>通信最大驱动线程数，取值范围[1,100]，默认1。</cn>
       </detail>
       <type>int</type>
