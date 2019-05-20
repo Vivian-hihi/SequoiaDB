@@ -33,10 +33,10 @@ public class FullTextDBUtils {
     public static String getCappedName( DBCollection cl, String textIndexName ) {
         String cappedName = null;
         BSONObject indexInfos = cl.getIndexInfo( textIndexName );
-        if ( indexInfos != null) {
+        if ( indexInfos != null ) {
             cappedName = (String) indexInfos.get( "ExtDataName" );
         }
-        
+
         return cappedName;
     }
 
@@ -450,7 +450,7 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public static boolean isExistCS( Sequoiadb db, String csName, boolean expExist ) throws InterruptedException {
+    private static boolean isExistCS( Sequoiadb db, String csName, boolean expExist ) throws InterruptedException {
         List<String> rgNames = CommLib.getDataGroupNames( db );
         boolean csExist = true;
         for ( String rgName : rgNames ) {
@@ -474,7 +474,7 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public static boolean isExistCS( Sequoiadb db, String csName, String rgName, boolean expExist )
+    private static boolean isExistCS( Sequoiadb db, String csName, String rgName, boolean expExist )
             throws InterruptedException {
         boolean csExist = true;
         List<String> nodeList = CommLib.getNodeAddress( db, rgName );
