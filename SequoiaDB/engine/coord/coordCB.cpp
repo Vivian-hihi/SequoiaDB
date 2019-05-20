@@ -135,7 +135,14 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
+
       _pAgent->getFrame()->setBeatInfo( optCB->getOprTimeout() ) ;
+      _pAgent->getFrame()->setMaxSockPerNode(
+         optCB->maxSockPerNode() ) ;
+      _pAgent->getFrame()->setMaxSockPerThread(
+         optCB->maxSockPerThread() ) ;
+      _pAgent->getFrame()->setMaxThreadNum(
+         optCB->maxSockThread() ) ;
 
       // 2. init param
       rc = _resource.init( _pAgent, optCB ) ;
@@ -290,6 +297,12 @@ namespace engine
       {
          UINT32 oprtimeout = optCB->getOprTimeout() ;
          _pAgent->getFrame()->setBeatInfo( oprtimeout ) ;
+         _pAgent->getFrame()->setMaxSockPerNode(
+            optCB->maxSockPerNode() ) ;
+         _pAgent->getFrame()->setMaxSockPerThread(
+            optCB->maxSockPerThread() ) ;
+         _pAgent->getFrame()->setMaxThreadNum(
+            optCB->maxSockThread() ) ;
       }
 
       _sitePropMgr.setInstanceOption( optCB->getPrefInstStr(),
