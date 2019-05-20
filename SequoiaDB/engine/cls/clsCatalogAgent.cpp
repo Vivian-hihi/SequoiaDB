@@ -42,7 +42,6 @@
 #include "clsCataHashMatcher.hpp"
 #include "utilBsonHash.hpp"
 #include "utilCommon.hpp"
-#include "utilSet.hpp"
 #include "ossMemPool.hpp"
 
 #include "../bson/lib/md5.hpp"
@@ -2821,7 +2820,7 @@ namespace engine
       ossPoolSet< string > mainCLList ;
       ossPoolSet< string >::iterator iterMain ;
       CAT_MAP_IT it = _mapCatalog.begin() ;
-      _utilSet< utilCLUniqueID > deletingCSList ;
+      ossPoolSet< utilCLUniqueID > deletingCSList ;
 
       if ( NULL == pMainCLs )
       {
@@ -2925,7 +2924,7 @@ namespace engine
       }
 
       // clear ID map for deleting CS unique IDs
-      for ( _utilSet< utilCLUniqueID >::iterator iter = deletingCSList.begin() ;
+      for ( ossPoolSet< utilCLUniqueID >::iterator iter = deletingCSList.begin() ;
             iter != deletingCSList.end() ;
             ++ iter )
       {
