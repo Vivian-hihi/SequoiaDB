@@ -359,7 +359,7 @@ public class FullTextDBUtils {
 
     /**
      * 指定记录数插入记录，如: {id: 0, a: "clname", b: "8 byte str0", c: "32 byte str...",
-     * d: "64 byte str...", e: "128 byte str..."}
+     * d: "64 byte str..."}
      *
      * @param cl
      * @param insertNum
@@ -376,17 +376,15 @@ public class FullTextDBUtils {
         String strB = StringUtils.getRandomString( 8 );
         String strC = StringUtils.getRandomString( 32 );
         String strD = StringUtils.getRandomString( 64 );
-        String strE = StringUtils.getRandomString( 128 );
         for ( int i = 0; i < insertTimes; i++ ) {
             for ( int j = 0; j < insertRecordNum; j++ ) {
                 int recordNum = i * insertRecordNum + j;
                 BSONObject data = new BasicBSONObject();
-                data.put( "_id", recordNum );
+                data.put( "recordId", recordNum );
                 data.put( "a", clName );
                 data.put( "b", strB + recordNum );
                 data.put( "c", strC );
                 data.put( "d", strD );
-                data.put( "e", strE );
 
                 insertObjs.add( data );
             }
@@ -398,12 +396,11 @@ public class FullTextDBUtils {
         if ( residueNum != 0 ) {
             for ( int i = 0; i < residueNum; i++ ) {
                 BSONObject data = new BasicBSONObject();
-                data.put( "_id", recordNum + i );
+                data.put( "recordId", recordNum + i );
                 data.put( "a", clName );
                 data.put( "b", strB + recordNum + i );
                 data.put( "c", strC );
                 data.put( "d", strD );
-                data.put( "e", strE );
 
                 insertObjs.add( data );
             }
@@ -412,7 +409,7 @@ public class FullTextDBUtils {
     }
 
     /**
-     * 检查集合空间是删除成功,每秒检查一次,检测时间最长为5分钟
+     * 检查集合空间是否删除成功,每秒检查一次,检测时间最长为5分钟
      * 
      * @param db
      * @param csName
@@ -426,7 +423,7 @@ public class FullTextDBUtils {
     }
 
     /**
-     * 检查集合空间是创建成功,每秒检查一次,检测时间最长为5分钟
+     * 检查集合空间是否创建成功,每秒检查一次,检测时间最长为5分钟
      * 
      * @param db
      * @param csName
