@@ -27,7 +27,7 @@ class TestAlterCL15214(testlib.SdbTestBase):
       self.cl.alter(options = alter_opts1)
       
       # check attributes
-      expect_attributes1 = [{'AttributeDesc': '', 'ShardingKey': {'a':1}, 'ShardingType': 'hash', 'Partition': 128, 'EnsureShardingIndex': False, 'AutoSplit': True}];
+      expect_attributes1 = [{'AttributeDesc': 'Compressed', 'ShardingKey': {'a':1}, 'ShardingType': 'hash', 'Partition': 128, 'EnsureShardingIndex': False, 'AutoSplit': True, 'CompressionType':1, 'CompressionTypeDesc':'lzw'}];
       self.check_collection_attributes(expect_attributes1, condition = {'Name' : self.cs_name + '.' + self.cl_name})
       
       # alter compressed attributes
@@ -85,7 +85,7 @@ class TestAlterCL15214(testlib.SdbTestBase):
       newcl = self.cs.create_collection(newcl_name)
       
       # check new cl attributes before bulk alter
-      expect_bulk_attributes = [{'AttributeDesc': ""}]
+      expect_bulk_attributes = [{'AttributeDesc': "Compressed", "CompressionType": 1, "CompressionTypeDesc": "lzw"}]
       self.check_collection_attributes(expect_bulk_attributes, condition = {'Name' : self.cs_name + '.' + newcl_name})
 
       # bulk alter attributes, ignore exception
@@ -134,4 +134,3 @@ class TestAlterCL15214(testlib.SdbTestBase):
       act_attributes = get_sort_result(act_attributes)
       expect_attributes = get_sort_result(expect_attributes)
       self.assertEqual(act_attributes, expect_attributes)
-       
