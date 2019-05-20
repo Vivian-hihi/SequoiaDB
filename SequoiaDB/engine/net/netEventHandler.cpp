@@ -56,6 +56,7 @@ using namespace boost::asio::ip ;
 namespace engine
 {
    #define NET_SOCKET_SNDTIMEO         ( 2 )
+   #define NET_STAT_CLEAR_INTERVAL     ( 120 * OSS_ONE_SEC )
 
    _netEventHandler::_netEventHandler( netEvSuitPtr evSuitPtr,
                                        const NET_HANDLE &handle )
@@ -170,9 +171,13 @@ namespace engine
       UINT64 spanTime = pmdDBTickSpan2Time( curTick - _lastStatTick ) ;
       if ( spanTime > 0 )
       {
-         _lastStatTick = curTick ;
          _iops = _totalIOTimes / spanTime ;
-         _totalIOTimes = 0 ;
+
+         if ( spanTime >= NET_STAT_CLEAR_INTERVAL )
+         {
+            _lastStatTick = curTick ;
+            _totalIOTimes = 0 ;
+         }
       }
    }
 
