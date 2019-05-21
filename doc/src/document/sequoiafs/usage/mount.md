@@ -279,7 +279,11 @@ Takes 0.010137s.
 |--autocreate		   |    | 如果未显示指定文件和目录元数据集合全名，即未指定-d和-f，<br>则需要指定该选项进行自动生成 |       		   | 否       |
 |mountpoint	           | 	| 指定映射集合的目标挂载目录                                                             |       		   | 是       |
 
-首次启动时，其中-l collection参数和mountpoint是必须指定的，collection为需要映射的目标集合名称，为目标SequoiaDB节点中创建的集合，需要提前在DB中创建好。目标SequoiaDB节点可以通过-i或者--hosts进行指定，一旦挂载之后，mountpoint目录下的所有文件的属性信息会存放在目标SequoiaDB节点上的目录元数据集合及文件元数据集合中，而文件内容会以lob的形式存放在目标集合下。目录元数据集合和文件元数据分别可以通过-d(或--metadircollection)和-f（或--metafilecollection）在启动时进行指定，也可以直接通过指定--autocreate默认生成。
+首次启动时，其中-l collection参数和mountpoint是必须指定的，collection为需要映射的目标集合名称，为目标SequoiaDB节点中创建的集合，需要提前在DB中创建好。
+
+目标SequoiaDB节点可以通过-i或者--hosts进行指定，一旦挂载之后，mountpoint目录下的所有文件的属性信息会存放在目标SequoiaDB节点上的目录元数据集合及文件元数据集合中，文件内容会以lob的形式存放在目标集合下。
+
+目录元数据集合和文件元数据分别可以通过-d(或--metadircollection)和-f（或--metafilecollection）在启动时进行指定，也可以直接通过指定--autocreate默认生成。手工创建时，需要为目录元数据集合创建一个强一致唯一索引，索引字段为 {Name:1, Pid:1}。为文件元数据集合创建两个强一致唯一索引，索引字段分别为 {Name:1, Pid:1} 和 {LobOid:1}。
 
 ####FUSE选项####
 | 参数		                | 描述	
