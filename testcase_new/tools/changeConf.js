@@ -240,7 +240,7 @@ function checkNodeHealth()
    println( '---begin to check nodes health' );
    var db = new Sdb( hostname, svcname  );
    var hasErrorNode = false;
-   for(var i = 0; i < 600; i++ )
+   for(var i = 0; i < 6000; i++ )
    {
       hasErrorNode = false;
       var localNodes = db.snapshot( SDB_SNAP_HEALTH, new SdbSnapshotOption().sel({ServiceStatus:1,Status:1,NodeName:1}) ).toArray();
@@ -288,7 +288,7 @@ function checkOneGroupPrimary( db, groupName )
    var hasPrimary = false;
    
    // wait group to select primary for 60000ms
-   for(var i = 0; i < 600; i++ )
+   for(var i = 0; i < 6000; i++ )
    {  
       hasPrimary = false;
       // check primary at once
