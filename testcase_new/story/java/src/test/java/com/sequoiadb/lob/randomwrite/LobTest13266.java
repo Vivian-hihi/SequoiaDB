@@ -12,6 +12,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -31,6 +32,7 @@ public class LobTest13266 extends SdbTestBase {
 	private static DBCollection dbcl = null;
 	private static ObjectId oid = null;
 	private byte[] testLobBuff = null;
+	private int writeFailNum = 0;
 
 	@BeforeClass
 	public void setupClass() {
@@ -48,23 +50,23 @@ public class LobTest13266 extends SdbTestBase {
 	@Test
 	public void testLob13266() {
 		int offset = 10;
-		int rewriteLobSize = 1024 * 4;
+		int rewriteLobSize = 1024 * 100;
 		byte[] writeBuff1 = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);
 		byte[] writeBuff2 = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);
 
 		LockAndRewriteLobTask lockAndRewriteLob1 = new LockAndRewriteLobTask(offset, writeBuff1);
 		LockAndRewriteLobTask lockAndRewriteLob2 = new LockAndRewriteLobTask(offset, writeBuff2);
 
-		lockAndRewriteLob1.start();
-		lockAndRewriteLob2.start();
+		lockAndRewriteLob1.start(5);
+		lockAndRewriteLob2.start(5);
 
-		if (lockAndRewriteLob1.isSuccess()) {
-			Assert.assertFalse(lockAndRewriteLob2.isSuccess(), lockAndRewriteLob2.getErrorMsg());
-			checkRewriteLobBuff(rewriteLobSize, offset, writeBuff1);
-		} else {
-			Assert.assertTrue(lockAndRewriteLob2.isSuccess(), lockAndRewriteLob2.getErrorMsg());
-			checkRewriteLobBuff(rewriteLobSize, offset, writeBuff2);
-		}
+		Assert.assertTrue(lockAndRewriteLob1.isSuccess(), lockAndRewriteLob1.getErrorMsg());
+		Assert.assertTrue(lockAndRewriteLob2.isSuccess(), lockAndRewriteLob2.getErrorMsg());
+
+		// the concurrent operation has at least one locking fail,so the
+		// writeFailNum > 0
+		Assert.assertNotEquals(writeFailNum, 0, "at least one locking fail!" + writeFailNum);
+		checkRewriteLobBuff(rewriteLobSize, offset, writeBuff1, writeBuff2);
 	}
 
 	@AfterClass
@@ -91,24 +93,33 @@ public class LobTest13266 extends SdbTestBase {
 
 		@Override
 		public void exec() throws Exception {
-			DBLob lob = null;
 			try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
 				DBCollection cl = sdb.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-				lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE);
-				lob.lockAndSeek(offset, rewriteLobBuff.length);
-				lob.write(rewriteLobBuff);
-				lob.close();
+				try (DBLob lob = cl.openLob(oid, DBLob.SDB_LOB_WRITE)) {
+					lob.lockAndSeek(offset, rewriteLobBuff.length);
+					lob.write(rewriteLobBuff);
+				}
+			} catch (BaseException e) {
+				writeFailNum++;
+				if (-320 != e.getErrorCode()) {
+					throw e;
+				}
 			}
 		}
 	}
 
-	private void checkRewriteLobBuff(int rewriteLobSize, int offset, byte[] rewriteBuff) {
+	private void checkRewriteLobBuff(int rewriteLobSize, int offset, byte[] rewriteBuff1, byte[] rewriteBuff2) {
 		// check the rewrite lob
 		byte[] actBuff = RandomWriteLobUtil.seekAndReadLob(dbcl, oid, rewriteLobSize, offset);
-		RandomWriteLobUtil.assertByteArrayEqual(actBuff, rewriteBuff);
+		// It is expected that the buffer may be rewriteBuff1 1 or rewriteBuff12
+		byte[] expRewriteBuff = rewriteBuff1;
+		if (!Arrays.equals(actBuff, expRewriteBuff)) {
+			expRewriteBuff = rewriteBuff2;
+		}
+		RandomWriteLobUtil.assertByteArrayEqual(actBuff, expRewriteBuff);
 
 		// check the all write lob
-		byte[] expBuff = RandomWriteLobUtil.appendBuff(testLobBuff, rewriteBuff, offset);
+		byte[] expBuff = RandomWriteLobUtil.appendBuff(testLobBuff, expRewriteBuff, offset);
 		try (DBLob lob = dbcl.openLob(oid)) {
 			byte[] actAllLob = new byte[(int) lob.getSize()];
 			lob.read(actAllLob);
