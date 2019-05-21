@@ -114,8 +114,7 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		@ExecuteOrder(step = 2)
 		private void checkResult() throws Exception {
 			try {
-				// TODO :建议用线程内定义的s3客户端s3Client1获取对象md5
-				String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
+				String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client1, localPath, bucketName, keyName);
 				Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath));
 			} finally {
 				if (s3Client1 != null) {

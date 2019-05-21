@@ -69,12 +69,11 @@ public class ListVersions18160 extends S3TestBase {
 		Assert.assertTrue(vsList.isTruncated(), "vsList.isTruncated() must be true");
 		ObjectUtils.checkListVSResults(vsList, matchPrefixList, expVersions);
 
-		// delete the nextKeyMarker and the object of the nextKeyMarker
+		// delete the match object of the
+		// nextKeyMarker(eg:keyNames[6])
 		String nextKeyMarker = vsList.getNextKeyMarker();
 		String defalueVersionId = "0";
-		s3Client.deleteVersion(bucketName, nextKeyMarker, defalueVersionId);
-		// TODO :没有看懂这里删除keyNames[4]的意思
-		s3Client.deleteVersion(bucketName, keyNames[4], defalueVersionId);
+		s3Client.deleteVersion(bucketName, keyNames[6], defalueVersionId);
 
 		VersionListing vsList1 = s3Client.listVersions(new ListVersionsRequest().withBucketName(bucketName)
 				.withKeyMarker(nextKeyMarker).withDelimiter(delimiter));

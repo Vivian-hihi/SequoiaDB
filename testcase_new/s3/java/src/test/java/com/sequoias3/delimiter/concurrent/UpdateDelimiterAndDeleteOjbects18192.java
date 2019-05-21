@@ -99,9 +99,12 @@ public class UpdateDelimiterAndDeleteOjbects18192 extends S3TestBase {
 		}
 
 		@ExecuteOrder(step = 1)
-		// TODO ：这里方法应该是deleteObject()
-		private void createObject() {
+		private void deleteObject() {
 			s3Client.deleteObject(bucketName, keyName);
+		}
+
+		@ExecuteOrder(step = 2)
+		private void checkResult() {
 			// check the currentVersion object is not exist.
 			boolean isExistObject = s3Client.doesObjectExist(bucketName, keyName);
 			Assert.assertFalse(isExistObject, "the object should not exist! key=" + keyName);

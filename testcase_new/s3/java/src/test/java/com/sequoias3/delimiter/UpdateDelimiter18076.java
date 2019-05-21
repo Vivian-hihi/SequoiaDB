@@ -2,6 +2,8 @@ package com.sequoias3.delimiter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -23,8 +25,8 @@ import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 public class UpdateDelimiter18076 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket18076";
-	private String keyName = "aa%test/maa%/bb%/object18076";
-	private String deleteTagkeyName = "aa%delete/aa%/test%/object18076";
+	private String keyName = "test/maa%/bb%/object18076";
+	private String deleteTagkeyName = "delete/aa%/test%/object18076";
 	private String delimiter = "%";
 	private AmazonS3 s3Client = null;
 	private int fileSize = 1024 * 30;
@@ -53,7 +55,13 @@ public class UpdateDelimiter18076 extends S3TestBase {
 	public void testUpdateDelimiter() throws Exception {
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
-		// TODO : 建议增加检测结果步骤：带新分隔符可以查询到普通对象和删除标记对象的映射目录
+
+		List<String> expCommprefixList = new ArrayList<>();
+		expCommprefixList.add("test/maa%");
+		expCommprefixList.add("delete/aa%");
+		List<String> expContentList = new ArrayList<>();
+		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixList, expContentList);
+
 		runSuccess = true;
 	}
 

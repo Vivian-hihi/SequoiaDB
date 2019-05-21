@@ -35,7 +35,7 @@ public class ListVersions18154 extends S3TestBase {
 	private String delimiter = "test";
 	private AmazonS3 s3Client = null;
 	private int versionNum = 3;
-	private String[] keyNames = { "atest_18154", "dir1?test1_18154.png", "dir1??dir2??/dir3/test2_18154",
+	private String[] keyNames = { "dir1/atest_18154", "dir1?test1_18154.png", "dir1??dir2??/dir3/test2_18154",
 			"dir1?test3_18154", "dir1?dir2?aa?test4_18154", "/dir1/test_18154", "dir1?test5_18154",
 			"dir1?dir2?aa?dd?test6_18154", "dir1_18154", "testdir1.txt_18154" };
 
@@ -59,8 +59,6 @@ public class ListVersions18154 extends S3TestBase {
 	private void testListVersions() throws Exception {
 
 		String prefix = "dir1";
-		// TODO
-		// ：这里定义的keyMarKer和versionIdMarker不能验证生效，在listVersions时不指定这两个参数返回的结果是和现在是相同的
 		String keyMarker = keyNames[0];
 		String versionIdMarker = "2";
 
@@ -69,7 +67,7 @@ public class ListVersions18154 extends S3TestBase {
 				.listVersions(new ListVersionsRequest().withBucketName(bucketName).withDelimiter(delimiter)
 						.withPrefix(prefix).withKeyMarker(keyMarker).withVersionIdMarker(versionIdMarker));
 
-		// expected results
+		// expected results,no match "dir1/atest"
 		List<String> matchPrefixList = new ArrayList<>();
 		matchPrefixList.add("dir1?test");
 		matchPrefixList.add("dir1??dir2??/dir3/test");
@@ -79,12 +77,11 @@ public class ListVersions18154 extends S3TestBase {
 		Collections.sort(matchPrefixList);
 		MultiValueMap<String, String> expVersions = new LinkedMultiValueMap<String, String>();
 
-		// TODO ：此处备注有误，不存在对象"dir1_18155"
-		// expContent:"dir1_18155",the versionId is:2,1,0
+		// expContent:"dir1_18154",the versionId is:2,1,0
 		for (int i = versionNum - 1; i >= 0; i--) {
 			expVersions.add(keyNames[8], String.valueOf(i));
 		}
-		// check
+
 		Assert.assertEquals(vsList.isTruncated(), false, "vsList.isTruncated() must be false");
 		ObjectUtils.checkListVSResults(vsList, matchPrefixList, expVersions);
 

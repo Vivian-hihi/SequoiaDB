@@ -14,20 +14,20 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 
 /**
- * @Description seqDB-18079: the object name include old and new delimiter, than
- *              update the old delimiter to the new delimiter.
+ * @Description seqDB-18079: the object name include old delimiter, than update
+ *              the old delimiter to the new delimiter.
  * @author wuyan
  * @Date 2019.04.09
  * @version 1.00
  */
-// TODO :@Description中描述为对象名包含新旧分隔符，而文本用例中标题为对象名中包含旧分隔符，两边描述不一致
+
 public class UpdateDelimiter18079 extends S3TestBase {
 	private boolean runSuccess = false;
 	private String bucketName = "bucket18079";
 	private String keyName = "/test/aa/object18079";
 	private int keyNums = 10;
 	private String delimiter = "%";
-	private List<String> expCommprefixList = new ArrayList<>();
+	private List<String> expContentList = new ArrayList<>();
 	private AmazonS3 s3Client = null;
 
 	@BeforeClass
@@ -38,11 +38,9 @@ public class UpdateDelimiter18079 extends S3TestBase {
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 
 		for (int i = 0; i < keyNums; i++) {
-			// TODO :文本用例中标题以及步骤中指明上传对象名包含旧分隔符而不是新旧分隔符，请确认下文本用例是否需要修改
-			String subKeyName = keyName + "_" + i + "_%test.png";
+			String subKeyName = keyName + "_" + i + "_test.png";
 			s3Client.putObject(bucketName, subKeyName, "context18079" + i);
-			String matchDir = keyName + "_" + i + "_%";
-			expCommprefixList.add(matchDir);
+			expContentList.add(subKeyName);
 		}
 	}
 
@@ -52,7 +50,7 @@ public class UpdateDelimiter18079 extends S3TestBase {
 
 		DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
 
-		List<String> expContentList = new ArrayList<>();
+		List<String> expCommprefixList = new ArrayList<>();
 		DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixList, expContentList);
 		runSuccess = true;
 	}

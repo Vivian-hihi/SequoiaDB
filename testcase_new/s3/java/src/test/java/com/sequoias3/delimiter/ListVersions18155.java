@@ -78,10 +78,8 @@ public class ListVersions18155 extends S3TestBase {
 			expVersions1.add(keyNames[10], String.valueOf(i));
 		}
 		expVersions1.add(keyNames[5], String.valueOf(2));
-		// TODO :建议把下面两行代码写在定义expVersions1之前会更好理解，可读性更强一些
 		List<String> matchPrefixList1 = new ArrayList<>();
 		matchPrefixList1.add("dir1/dir2/xx?");
-
 		VersionListing vsList1 = listVersionWithContentsAndCheckResult(vsList, matchPrefixList1, expVersions1, true);
 
 		// third query
