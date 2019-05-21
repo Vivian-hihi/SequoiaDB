@@ -39,15 +39,15 @@ public class Fulltext12020 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
-        }
-        ArrayList<String> groupsName = CommLib.getDataGroupNames( sdb );
-        if ( groupsName.size() < 2 ) {
+        } 
+        if(CommLib.OneGroupMode(sdb)){
             throw new SkipException( "current environment less than tow groups " );
         }
+        
+        List<String> groupsName = CommLib.getDataGroupNames( sdb );
         srcGroup = groupsName.get( 0 );
         desGroup = groupsName.get( 1 );
 
@@ -64,7 +64,7 @@ public class Fulltext12020 extends SdbTestBase {
                 false, false );
         esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullTextIndexName );
         cl.split( srcGroup, desGroup, 50 );
-        insertData();
+        FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
         Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullTextIndexName, FullTextUtils.INSERT_NUMS ) );
         Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullTextIndexName ) );
     }
@@ -83,18 +83,4 @@ public class Fulltext12020 extends SdbTestBase {
         esClient.close();
     }
 
-    public void insertData() {
-        List<BSONObject> records = new ArrayList<BSONObject>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < FullTextUtils.INSERT_NUMS / 100; j++ ) {
-                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_hash12020_" + i * j + "', b: '"
-                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
-                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "'}" );
-                records.add( record );
-            }
-            this.cl.insert( records );
-            records.clear();
-        }
-    }
 }
