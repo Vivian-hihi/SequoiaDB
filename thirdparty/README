@@ -216,9 +216,11 @@ Linux64:
                 perl
 
         Boost 1.60.0:
+                chmod +x bootstrap.sh
+                chmod +x ./tools/build/src/engine/build.sh
                 ./bootstrap.sh --prefix=./
                 ./bjam link=static threading=multi variant=release address-model=64 toolset=gcc runtime-link=static cxxflags="-fPIC"
-                copy boost/stage/lib/* to boost/lib/linux64
+                cp ./stage/lib/* ./lib/linux64   /* copy boost/stage/lib/* to boost/lib/linux64 */
 
         SpiderMonkey 1.8.5:
                 export CFLAGS="-DJS_C_STRING_ARE_UTF8"
