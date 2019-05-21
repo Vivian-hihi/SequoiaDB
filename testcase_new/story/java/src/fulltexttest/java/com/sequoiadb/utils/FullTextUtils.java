@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.elasticsearch.client.Client;
-import org.testng.Assert;
+import org.elasticsearch.index.IndexNotFoundException;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -248,7 +248,6 @@ public class FullTextUtils {
      */
     public static boolean isFulltextRebuild( Client esClient, List<String> esIndexNames, List<Integer> preCLLids )
             throws Exception {
-        boolean isSync = false;
         int timeout = 3600; // timeout 1h
         int interval = 1; // interval 1s
         int doTimes;
@@ -262,38 +261,69 @@ public class FullTextUtils {
 
         // 检查每个全文索引下的_cllid值有没有变化
         for ( int i = 0; i < esIndexNames.size(); i++ ) {
-            doTimes = 0;
-            Integer curCLLID = -10000;
-            while ( doTimes * interval < timeout ) {
-                try {
-                    curCLLID = FullTextESUtils.getCommitCLLIDFromES( esClient, esIndexNames.get( i ) );
-                    if ( curCLLID <= preCLLids.get( i ) ) {
-                        isSync = false;
-                    } else {
-                        isSync = true;
-                    }
+            return isFulltextRebuild( esClient, esIndexNames.get( i ), preCLLids.get( i ) );
+        }
 
-                    if ( isSync ) {
-                        break;
-                    } else {
-                        doTimes++;
-                        System.out.println( "esIndexName: " + esIndexNames.get( i ).toString() + ", doTimes: " + doTimes
-                                + ", previousCLLid: " + preCLLids.get( i ) + ", currentCLLID: " + curCLLID );
-                        try {
-                            Thread.sleep( 1000 );
-                        } catch ( InterruptedException e ) {
-                            e.printStackTrace();
-                        }
-                    }
-                } catch ( Exception e ) {
+        return false;
+    }
+    
+    /**
+     * 检查ES端全文索引是否已重建。当全文索引重建后，ES端SDBCOMMIT记录下的_cllid值会递增，因此重建后的索引_cllid值会比重建前的大
+     * 通过 FullTextESUtils.getCommitCLLIDFromES ( esClient, esIndexName ) 获取单个全文索引对应的SDBCOMMIT._cllid
+     * 
+     * @param esClient  es连接
+     * @param esIndexName 全文索引名
+     * @param preCLLid 全文索引对应的SDBCOMMIT._cllid
+     * @return boolean  如果重建后的_cllid大于重建前的值则返回true，否则返回false
+     * @throws Exception 
+     * @Author liuxiaoxuan
+     * @Date 2019-05-16
+     */
+    public static boolean isFulltextRebuild( Client esClient, String esIndexName, int preCLLid )
+            throws Exception {
+        boolean isSync = false;
+        int timeout = 3600; // timeout 1h
+        int interval = 1; // interval 1s
+        int doTimes;
+
+        // 检查全文索引下的_cllid值有没有变化
+        doTimes = 0;
+        Integer curCLLID = -10000;
+        while ( doTimes * interval < timeout ) {
+            try {
+                curCLLID = FullTextESUtils.getCommitCLLIDFromES( esClient, esIndexName );
+                if ( curCLLID <= preCLLid ) {
+                    isSync = false;
+                } else {
+                    isSync = true;
+                }
+
+                if ( isSync ) {
+                    break;
+                } else {
                     doTimes++;
-                    System.out.println( "esIndexName: " + esIndexNames.get( i ).toString() + ", doTimes: " + doTimes
+                    System.out.println( "esIndexName: " + esIndexName + ", doTimes: " + doTimes
+                            + ", previousCLLid: " + preCLLid + ", currentCLLID: " + curCLLID );
+                    try {
+                        Thread.sleep( 1000 );
+                    } catch ( InterruptedException e ) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch ( Exception e ) {
+                Throwable ths = e.getCause();
+                if ( ths instanceof IndexNotFoundException ) {
+                    doTimes++;
+                    System.out.println( "esIndexName: " + esIndexName + ", doTimes: " + doTimes
                             + " is being truncated now" );
                     try {
                         Thread.sleep( 1000 );
                     } catch ( InterruptedException e2 ) {
                         e2.printStackTrace();
                     }
+                } else {
+                    System.out.println( "isFulltextRebuild exception: " + ths.getClass() );
+                    throw e;
                 }
             }
         }
@@ -390,7 +420,6 @@ public class FullTextUtils {
                 nodes.add( db.getReplicaGroup( groupName ).getNode( nodeName ) );
             }
             isConsistency = isConsistency( nodes, cappedName, cappedName );
-            Assert.assertTrue( isConsistency, "check cappedcl consistency timeout" );
             if ( !isConsistency ) {
                 break;
             }
