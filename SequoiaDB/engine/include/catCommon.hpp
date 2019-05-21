@@ -426,8 +426,7 @@ namespace engine
    /* Check and build Collection record */
    INT32 catCheckAndBuildCataRecord ( const BSONObj &boCollection,
                                       UINT32 &fieldMask,
-                                      catCollectionInfo &clInfo,
-                                      BOOLEAN needCLName ) ;
+                                      catCollectionInfo &clInfo ) ;
 
    INT32 catBuildInitRangeBound ( const BSONObj & shardingKey,
                                   const Ordering & order,

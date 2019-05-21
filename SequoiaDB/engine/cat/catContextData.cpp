@@ -1529,7 +1529,7 @@ namespace engine
       }
 
       // Build the new object
-      rc = catCheckAndBuildCataRecord( _boQuery, _fieldMask, _clInfo, TRUE ) ;
+      rc = catCheckAndBuildCataRecord( _boQuery, _fieldMask, _clInfo ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to check create collection obj [%s], rc: %d",
                    _boQuery.toString().c_str(), rc ) ;

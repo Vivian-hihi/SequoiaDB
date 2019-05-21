@@ -4040,8 +4040,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCHECKANDBUILDCATARECORD, "catCheckAndBuildCataRecord" )
    INT32 catCheckAndBuildCataRecord( const BSONObj &boCollection,
                                      UINT32 &fieldMask,
-                                     catCollectionInfo &clInfo,
-                                     BOOLEAN needCLName )
+                                     catCollectionInfo &clInfo )
    {
       INT32 rc = SDB_OK ;
 
@@ -4432,11 +4431,8 @@ namespace engine
                    "these arguments are legal only when sharding key is specified." ) ;
       }
 
-      if ( needCLName )
-      {
-         PD_CHECK( clInfo._pCLName, SDB_INVALIDARG, error, PDWARNING,
-                   "Collection name not set" ) ;
-      }
+      PD_CHECK( clInfo._pCLName, SDB_INVALIDARG, error, PDWARNING,
+                "Collection name not set" ) ;
 
       if ( clInfo._isCompressed &&
            !( fieldMask & UTIL_CL_COMPRESSTYPE_FIELD ) )
