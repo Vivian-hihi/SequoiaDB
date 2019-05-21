@@ -20,7 +20,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
-import com.sequoiadb.utils.StringUtils;
 
 /**
  * @Description seqDB-12020:hash切分表中创建全文索引并切分后再插入记录
@@ -35,6 +34,7 @@ public class Fulltext12020 extends SdbTestBase {
     private Client esClient = null;
     private String srcGroup = null;
     private String desGroup = null;
+    private List<String> cappedNames = null;
     private List<String> esIndexNames = null;
 
     @BeforeClass
@@ -42,11 +42,11 @@ public class Fulltext12020 extends SdbTestBase {
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
-        } 
-        if(CommLib.OneGroupMode(sdb)){
+        }
+        if ( CommLib.OneGroupMode( sdb ) ) {
             throw new SkipException( "current environment less than tow groups " );
         }
-        
+
         List<String> groupsName = CommLib.getDataGroupNames( sdb );
         srcGroup = groupsName.get( 0 );
         desGroup = groupsName.get( 1 );
@@ -62,11 +62,12 @@ public class Fulltext12020 extends SdbTestBase {
         cl.createIndex( fullTextIndexName,
                 (BSONObject) JSON.parse( "{a : 'text', b : 'text', c : 'text', d : 'text', e : 'text', f : 'text'}" ),
                 false, false );
+        cappedNames = new ArrayList<String>();
+        cappedNames.add( FullTextDBUtils.getCappedName( cl, fullTextIndexName ) );
         esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullTextIndexName );
         cl.split( srcGroup, desGroup, 50 );
-        FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
-        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullTextIndexName, FullTextUtils.INSERT_NUMS ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullTextIndexName ) );
+        FullTextDBUtils.insertData( cl, FullTextUtils.INSERT_NUMS );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullTextIndexName, FullTextUtils.INSERT_NUMS ) );
     }
 
     @AfterClass
@@ -77,7 +78,7 @@ public class Fulltext12020 extends SdbTestBase {
         }
         // check fulltext deleted
         if ( esIndexNames != null ) {
-            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
         }
         sdb.close();
         esClient.close();

@@ -39,86 +39,86 @@ public class Fulltext12065 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
+        this.sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "StandAlone environment!" );
         }
-        if (sdb.isCollectionSpaceExist(csName)) {
-            sdb.dropCollectionSpace(csName);
+        if ( sdb.isCollectionSpaceExist( csName ) ) {
+            sdb.dropCollectionSpace( csName );
         }
-        CollectionSpace cs = sdb.createCollectionSpace(csName);
-        this.cl = cs.createCollection(clName);
-        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
-                Integer.parseInt(SdbTestBase.esServiceName));
+        CollectionSpace cs = sdb.createCollectionSpace( csName );
+        this.cl = cs.createCollection( clName );
+        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
+                Integer.parseInt( SdbTestBase.esServiceName ) );
     }
 
     @Test
     public void test() throws Exception {
         // 在集合上创建1个全文索引，并插入包含索引字段的数据
-        this.cl.createIndex(fullIndexName,
+        this.cl.createIndex( fullIndexName,
                 "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}", false,
-                false);
-        this.insertData(FullTextUtils.INSERT_NUMS);
+                false );
+        this.insertData( FullTextUtils.INSERT_NUMS );
 
         // 直连集合所在的数据节点主节点，使用游标的方式获取对应的固定集合中的一条记录
-        List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs(cl, fullIndexName);
-        DBCollection cappedCL = cappedCLs.get(0);
+        List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs( cl, fullIndexName );
+        DBCollection cappedCL = cappedCLs.get( 0 );
         DBCursor cursor = cappedCL.query();
         cursor.getNext();
 
         // 多次执行删除集合空间的操作
-        if (cappedCL.getCount() > 2) {
-            for (int i = 0; i < 3; i++) {
+        if ( cappedCL.getCount() > 2 ) {
+            for ( int i = 0; i < 3; i++ ) {
                 try {
-                    sdb.dropCollectionSpace(csName);
-                    Assert.fail("drop cs need to return -147!");
-                } catch (BaseException e) {
-                    Assert.assertEquals(e.getErrorCode(), -147, e.getMessage());
+                    sdb.dropCollectionSpace( csName );
+                    Assert.fail( "drop cs need to return -147!" );
+                } catch ( BaseException e ) {
+                    Assert.assertEquals( e.getErrorCode(), -147, e.getMessage() );
                 }
             }
         }
 
         // 关闭步骤2中打开的游标后，再次删除集合空间
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, fullIndexName);
+        String cappedName = FullTextDBUtils.getCappedName( cl, fullIndexName );
+        String esIndexName = FullTextDBUtils.getESIndexName( cl, fullIndexName );
 
         // 关闭打开的游标
-        if (cursor != null) {
+        if ( cursor != null ) {
             cursor.close();
         }
 
-        Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS));
-        Assert.assertTrue(FullTextUtils.isDataConsistency(cl, fullIndexName));
-        FullTextDBUtils.dropCollectionSpace(sdb, csName);
-        Assert.assertTrue(FullTextESUtils.isIndexDeletedInES(esClient, esIndexNames));
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
+        FullTextDBUtils.dropCollectionSpace( sdb, csName );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            FullTextDBUtils.dropCollectionSpace(sdb, csName);
-        } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -34, e.getMessage());
+            FullTextDBUtils.dropCollectionSpace( sdb, csName );
+        } catch ( BaseException e ) {
+            Assert.assertEquals( e.getErrorCode(), -34, e.getMessage() );
         } finally {
-            if (sdb != null) {
+            if ( sdb != null ) {
                 sdb.close();
             }
-            if (esClient != null) {
+            if ( esClient != null ) {
                 esClient.close();
             }
         }
     }
 
-    public void insertData(int insertNums) {
+    public void insertData( int insertNums ) {
         List<BSONObject> records = new ArrayList<BSONObject>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
-                BSONObject record = (BSONObject) JSON.parse("{a: 'test_12065_" + i * j + "', b: '"
-                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
-                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
-                        + StringUtils.getRandomString(128) + "'}");
-                records.add(record);
+        for ( int i = 0; i < 100; i++ ) {
+            for ( int j = 0; j < insertNums / 100; j++ ) {
+                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_12065_" + i * j + "', b: '"
+                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
+                        + StringUtils.getRandomString( 128 ) + "'}" );
+                records.add( record );
             }
-            this.cl.insert(records);
+            this.cl.insert( records );
             records.clear();
         }
     }

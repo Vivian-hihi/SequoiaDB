@@ -37,7 +37,8 @@ public class Fulltext14398 extends SdbTestBase {
     private String clName = "ES_cl_14398";
 
     private Client esClient = null;
-    private List<String> esIndexNames = null;
+    private String cappedName = null;
+    private String esIndexName = null;
 
     @BeforeClass
     public void setUp() {
@@ -56,8 +57,8 @@ public class Fulltext14398 extends SdbTestBase {
     public void tearDown() {
         FullTextDBUtils.dropCollection( cs, clName );
         // check fulltext deleted
-        if ( esIndexNames != null ) {
-            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        if ( esIndexName != null ) {
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
         }
         sdb.close();
         esClient.close();
@@ -77,17 +78,17 @@ public class Fulltext14398 extends SdbTestBase {
         indexObj.put( "g", "text" );
         cl.createIndex( textIndexName, indexObj, false, false );
 
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
+        cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
+        esIndexName = FullTextDBUtils.getESIndexName( cl, textIndexName );
 
         // check drop cl and recreate index after index clear in ES
         insertData( cl, FullTextUtils.INSERT_NUMS );
 
-        FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS );
-        FullTextUtils.isDataConsistency( cl, textIndexName );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
 
         FullTextDBUtils.dropCollection( cs, clName );
 
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
 
         // recreate after ES index clear
         cl = cs.createCollection( clName );
@@ -98,8 +99,7 @@ public class Fulltext14398 extends SdbTestBase {
         insertData( cl, newInsertNums );
 
         // check consistency
-        FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, newInsertNums );
-        FullTextUtils.isDataConsistency( cl, textIndexName );
+        FullTextUtils.isIndexCreated( esClient, cl, textIndexName, newInsertNums );
 
         System.out.println( "----------success check drop cl after index clear in ES----------" );
 
@@ -107,14 +107,13 @@ public class Fulltext14398 extends SdbTestBase {
         // ES
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );// init env
         cl.truncate();
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
         cl.createIndex( textIndexName, indexObj, false, false );
 
         // init insert datas
         insertData( cl, FullTextUtils.INSERT_NUMS );
 
-        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
 
         FullTextDBUtils.dropCollection( cs, clName );
 
@@ -126,8 +125,7 @@ public class Fulltext14398 extends SdbTestBase {
         insertData( cl, newInsertNums );
 
         // check consistency
-        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, newInsertNums ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, newInsertNums ) );
 
         System.out.println( "----------success check drop cl while index processing to clear in ES----------" );
     }

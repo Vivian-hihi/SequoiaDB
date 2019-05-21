@@ -39,6 +39,7 @@ public class Fulltext12019 extends SdbTestBase {
     private String destGroupName = "";
 
     private Client esClient = null;
+    private List<String> cappedNames = null;
     private List<String> esIndexNames = null;
 
     @BeforeClass
@@ -66,7 +67,7 @@ public class Fulltext12019 extends SdbTestBase {
         FullTextDBUtils.dropCollection( cs, clName );
         // check fulltext deleted
         if ( esIndexNames != null ) {
-            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
         }
         sdb.close();
         esClient.close();
@@ -91,11 +92,12 @@ public class Fulltext12019 extends SdbTestBase {
         indexObj.put( "f", "text" );
         cl.createIndex( textIndexName, indexObj, false, false );
 
+        cappedNames = new ArrayList<String>();
+        cappedNames.add( FullTextDBUtils.getCappedName( cl, textIndexName ) );
         esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
 
         // check consistency
-        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {

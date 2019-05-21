@@ -34,7 +34,8 @@ public class Fulltext14372 extends SdbTestBase {
     private String clName = "insertRecords14372";
     private String fullIndexName = "fullIndex14372";
     private Client esClient = null;
-    private List<String> esIndexNames = null;
+    private String cappedName = null;
+    private String esIndexName = null;
 
     @BeforeClass
     public void setUp() {
@@ -49,19 +50,18 @@ public class Fulltext14372 extends SdbTestBase {
         this.cl.createIndex( fullIndexName,
                 "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}", false,
                 false );
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullIndexName );
+        cappedName = FullTextDBUtils.getCappedName( cl, fullIndexName );
+        esIndexName = FullTextDBUtils.getESIndexName( cl, fullIndexName );
     }
 
     @Test
     public void test() throws Exception {
         this.insertData( FullTextUtils.INSERT_NUMS );// insert >128M
         Assert.assertTrue(
-                FullTextUtils.isFullSyncToES( esClient, cl, this.fullIndexName, FullTextUtils.INSERT_NUMS ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, this.fullIndexName ) );
+                FullTextUtils.isIndexCreated( esClient, cl, this.fullIndexName, FullTextUtils.INSERT_NUMS ) );
         this.insertData( FullTextUtils.INSERT_NUMS ); // insert again
         Assert.assertTrue(
-                FullTextUtils.isFullSyncToES( esClient, cl, this.fullIndexName, FullTextUtils.INSERT_NUMS * 2 ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, this.fullIndexName ) );
+                FullTextUtils.isIndexCreated( esClient, cl, this.fullIndexName, FullTextUtils.INSERT_NUMS * 2 ) );
     }
 
     @AfterClass
@@ -70,8 +70,8 @@ public class Fulltext14372 extends SdbTestBase {
             CollectionSpace cs = sdb.getCollectionSpace( SdbTestBase.csName );
             FullTextDBUtils.dropCollection( cs, clName );
             // check fulltext deleted
-            if ( esIndexNames != null ) {
-                Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+            if ( esIndexName != null ) {
+                Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
             }
         } catch ( BaseException e ) {
             Assert.fail( e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );

@@ -37,6 +37,7 @@ public class Fulltext12015 extends SdbTestBase {
     private String mainCLName = "ES_12015_maincl";
     private String subCLName1 = "ES_12015_subcl_1";
     private String subCLName2 = "ES_12015_subcl_2";
+    String textIndexName = "fulltext12015";
 
     private Client esClient = null;
     List<String> esIndexNames = new ArrayList<>();
@@ -59,12 +60,13 @@ public class Fulltext12015 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        List<String> cappedNames = FullTextDBUtils.getESIndexNames( maincl, textIndexName );
         FullTextDBUtils.dropCollection( cs, subCLName1 );
         FullTextDBUtils.dropCollection( cs, subCLName2 );
         FullTextDBUtils.dropCollection( cs, mainCLName );
         // check fulltext deleted
         if ( esIndexNames != null ) {
-            Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
         }
         sdb.close();
         esClient.close();
@@ -79,7 +81,6 @@ public class Fulltext12015 extends SdbTestBase {
         maincl.attachCollection( csName + "." + subCLName2, options2 );
 
         // create fulltext of maincl shardingkey and non-shardingkey
-        String textIndexName = "fulltext12015";
         BSONObject indexObj = new BasicBSONObject();
         indexObj.put( "a", "text" );
         indexObj.put( "a0", "text" );
@@ -102,21 +103,18 @@ public class Fulltext12015 extends SdbTestBase {
         // insert
         insertData( maincl, FullTextUtils.INSERT_NUMS );
         Assert.assertTrue(
-                FullTextUtils.isMainCLFullSyncToES( esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS ) );
-        Assert.assertTrue( FullTextUtils.isMainCLDataConsistency( maincl, textIndexName ) );
+                FullTextUtils.isMainCLIndexCreated( esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS ) );
 
         // update, should change cl count
         update( maincl );
         insertData( maincl, 10000 );
-        Assert.assertTrue( FullTextUtils.isMainCLFullSyncToES( esClient, maincl, textIndexName,
+        Assert.assertTrue( FullTextUtils.isMainCLIndexCreated( esClient, maincl, textIndexName,
                 FullTextUtils.INSERT_NUMS + 10000 ) );
-        Assert.assertTrue( FullTextUtils.isMainCLDataConsistency( maincl, textIndexName ) );
 
         // delete
         remove( maincl );
         Assert.assertTrue(
-                FullTextUtils.isMainCLFullSyncToES( esClient, maincl, textIndexName, (int) maincl.getCount() ) );
-        Assert.assertTrue( FullTextUtils.isMainCLDataConsistency( maincl, textIndexName ) );
+                FullTextUtils.isMainCLIndexCreated( esClient, maincl, textIndexName, (int) maincl.getCount() ) );
 
         System.out.println( "check fulltext of maincl shardingkey and non-shardingkey success!" );
     }

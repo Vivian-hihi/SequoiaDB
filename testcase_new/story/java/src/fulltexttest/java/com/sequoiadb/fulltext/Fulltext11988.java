@@ -60,13 +60,14 @@ public class Fulltext11988 extends SdbTestBase {
         // 创建全文索引，索引字段覆盖：分区键和非分区键
         String indexKey = "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}";
         cl.createIndex( fullIndexName, indexKey, false, false );
-        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullIndexName ) );
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullIndexName );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
+
+        String cappedName = FullTextDBUtils.getCappedName( cl, fullIndexName );
+        String esIndexName = FullTextDBUtils.getESIndexName( cl, fullIndexName );
 
         FullTextDBUtils.dropFullTextIndex( cl, fullIndexName );
 
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
     }
 
     @AfterClass

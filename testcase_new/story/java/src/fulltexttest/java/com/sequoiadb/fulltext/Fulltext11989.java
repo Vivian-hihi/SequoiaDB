@@ -63,11 +63,12 @@ public class Fulltext11989 extends SdbTestBase {
         this.cl.createIndex( fullIndexName,
                 "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}", false,
                 false );
-        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, fullIndexName ) );
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullIndexName );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
+        String cappedName = FullTextDBUtils.getCappedName( cl, fullIndexName );
+
+        String esIndexName = FullTextDBUtils.getESIndexName( cl, fullIndexName );
         FullTextDBUtils.dropFullTextIndex( cl, fullIndexName );
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
     }
 
     @AfterClass

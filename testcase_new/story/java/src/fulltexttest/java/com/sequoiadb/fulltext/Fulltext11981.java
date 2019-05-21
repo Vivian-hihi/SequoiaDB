@@ -35,6 +35,7 @@ public class Fulltext11981 extends SdbTestBase {
     private CollectionSpace cs = null;
     private DBCollection cl = null;
     private String clName = "ES_11981";
+    private String cappedName = null;
     private Client esClient = null;
 
     @BeforeClass
@@ -74,17 +75,17 @@ public class Fulltext11981 extends SdbTestBase {
         indexObj.put( "f", "text" );
         cl.createIndex( textIndexName, indexObj, false, false );
 
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
+        String esIndexName = FullTextDBUtils.getESIndexName( cl, textIndexName );
 
         // check consistency
-        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, insertNums1 ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, insertNums1 ) );
+        cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
 
         // drop fulltext
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
 
         // check fulltext deleted
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
 
         // insert > 32M, < 129M
         int insertNums2 = 100000; // new insert 10w
@@ -94,14 +95,13 @@ public class Fulltext11981 extends SdbTestBase {
         cl.createIndex( textIndexName, indexObj, false, false );
 
         // check consistency
-        Assert.assertTrue( FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, insertNums1 + insertNums2 ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, insertNums1 + insertNums2 ) );
 
         // drop fulltext
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
 
         // check fulltext deleted
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
 
         // insert > 32M, and > 129M
         int insertNums3 = 300000; // new insert 30w
@@ -113,14 +113,13 @@ public class Fulltext11981 extends SdbTestBase {
 
         // check consistency
         Assert.assertTrue(
-                FullTextUtils.isFullSyncToES( esClient, cl, textIndexName, insertNums1 + insertNums2 + insertNums3 ) );
-        Assert.assertTrue( FullTextUtils.isDataConsistency( cl, textIndexName ) );
+                FullTextUtils.isIndexCreated( esClient, cl, textIndexName, insertNums1 + insertNums2 + insertNums3 ) );
 
         // drop fulltext
         FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
 
         // check fulltext deleted
-        Assert.assertTrue( FullTextESUtils.isIndexDeletedInES( esClient, esIndexNames ) );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
     }
 
     public void insertData( DBCollection cl, int insertNums ) {
