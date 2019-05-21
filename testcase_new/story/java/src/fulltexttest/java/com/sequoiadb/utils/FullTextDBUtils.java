@@ -63,6 +63,23 @@ public class FullTextDBUtils {
     }
 
     /**
+     * 指定索引名获取原始集合下的全文索引名，原始集合是普通表
+     * 
+     * @param cl
+     * @param textIndexName
+     * @return String 返回全文索引名
+     * @Author liuxiaoxuan
+     * @Date 2018-11-15
+     */
+    public static String getESIndexName( DBCollection cl, String textIndexName ) {
+
+        String cappedName = getCappedName( cl, textIndexName );
+        List<String> groupNames = getCLGroups( cl );
+
+        return cappedName.toLowerCase() + "_" + groupNames.get( 0 );
+    }
+
+    /**
      * 获取原始集合下的所有全文索引名，原始集合可以是普通表、分区表
      * 
      * @param cl

@@ -604,10 +604,9 @@ public class FullTextUtils {
      * @param cappedName
      * @return boolean 删除成功返回true,否则返回false
      */
-    public static boolean isIndexDeleted( Sequoiadb db, Client esClient, List<String> esIndexNames,
-            String cappedName ) {
+    public static boolean isIndexDeleted( Sequoiadb db, Client esClient, String esIndexName, String cappedName ) {
 
-        if ( new FullTextESUtils().isIndexDeletedInES( esClient, esIndexNames )
+        if ( new FullTextESUtils().isIndexDeletedInES( esClient, esIndexName )
                 && new FullTextDBUtils().isCSDropSuccess( db, cappedName ) ) {
             return true;
         } else {
