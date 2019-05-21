@@ -2,7 +2,6 @@ package com.sequoiadb.fulltextparallel;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -48,8 +47,8 @@ public class FullText15879 extends SdbTestBase {
     private String dstRgName;
     
     private Client esClient = null;
-    private List< String > esIndexNames;
-    private List<Integer> lids;
+    private String esIndexName;
+    private int lid;
     
 
     @BeforeClass
@@ -74,13 +73,13 @@ public class FullText15879 extends SdbTestBase {
         cl = cs.createCollection(CL_NAME, options); 
         cl.createIndex(IDX_NAME, IDX_KEY, false, false); 
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, IDX_NAME );
+        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
         
         FullTextDBUtils.insertData(cl, RECS_NUM); 
         
-        // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期        
-        Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, IDX_NAME, RECS_NUM)); 
-        lids = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexNames);
+        // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
+        lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
 
     @Test
@@ -93,28 +92,26 @@ public class FullText15879 extends SdbTestBase {
         es.run();
         
         // check results
-        if (threadSplit.getRetCode() == 0) {
-            Assert.assertTrue(FullTextUtils.isDataConsistency(cl, IDX_NAME)); 
-            if (threadTruncate.getRetCode() == 0) {
-                this.checkSplitResults(true, 0);
-            } else {
-                this.checkSplitResults(true, RECS_NUM);               
-            }
-        } 
-        else if (threadSplit.getRetCode() == -1) {
-            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexNames, lids));          
-            Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, IDX_NAME, 0));
-            Assert.assertTrue(FullTextUtils.isDataConsistency(cl, IDX_NAME));
-            this.checkSplitResults(false, 0);
+        int expRecsNum = 0;
+        if (threadTruncate.getRetCode() == 0) {
+            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
+        } else if (threadTruncate.getRetCode() != 0) {
+            expRecsNum = RECS_NUM;
         }
+        
+        int expRgNum = 0;
+        if (threadSplit.getRetCode() == 0) {
+            expRgNum = 2;
+        }
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, expRecsNum));                
+        Assert.assertEquals(FullTextDBUtils.getCLGroups(cl), expRgNum);
     }
 
     @AfterClass
     private void tearDown() throws InterruptedException {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextESUtils.isIndexDeletedInES(esClient,esIndexNames));
-            Assert.assertTrue(FullTextDBUtils.isCSDropSuccess(sdb, cappedCSName));
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -125,7 +122,7 @@ public class FullText15879 extends SdbTestBase {
         }
     }
 
-    private class ThreadTruncate extends ResultStore {        
+    private class ThreadTruncate extends ResultStore {
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {
             Thread.sleep(random.nextInt(1000));
@@ -155,39 +152,8 @@ public class FullText15879 extends SdbTestBase {
                 if (e.getErrorCode() != -321) {
                     throw e;
                 }
-                saveResult(-2, e);
+                saveResult(-1, e);
             }
-        }
-    }
-    
-    private void checkSplitResults(boolean splitSucc, int expectCnt) {
-        Sequoiadb srcDB = null;
-        Sequoiadb dstDB = null;
-        try {
-            srcDB = sdb.getReplicaGroup(srcRgName).getMaster().connect();  
-            dstDB = sdb.getReplicaGroup(dstRgName).getMaster().connect();             
-            DBCollection srcCL = srcDB.getCollectionSpace(SdbTestBase.csName)
-                    .getCollection(CL_NAME); 
-            long srcDataCnt = srcCL.getCount();            
-            if (splitSucc) {
-                DBCollection dstCL = dstDB.getCollectionSpace(SdbTestBase.csName)
-                        .getCollection(CL_NAME);
-                long dstDataCnt = dstCL.getCount();
-                Assert.assertEquals(srcDataCnt + dstDataCnt, expectCnt);
-            } else {
-                Assert.assertEquals(srcDataCnt, expectCnt);
-                try {
-                    srcDB.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME); 
-                    Assert.fail("expect fail but success.");
-                } catch (BaseException e) {
-                    if (e.getErrorCode() != -23 && e.getErrorCode() != -34) {
-                        Assert.fail("check results fail, when split fail.");
-                    }
-                }
-            }  
-        } finally {
-            if (srcDB != null) srcDB.close();
-            if (dstDB != null) dstDB.close();
         }
     }
 }

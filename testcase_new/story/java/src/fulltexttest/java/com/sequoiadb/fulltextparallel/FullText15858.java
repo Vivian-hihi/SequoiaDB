@@ -1,7 +1,6 @@
 package com.sequoiadb.fulltextparallel;
 
 import java.util.Date;
-import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -34,16 +33,16 @@ public class FullText15858 extends SdbTestBase {
     private final static String CL_NAME = "cl_es_15858";
     private final static String IDX_NAME = "idx_es_15858";
     private final static BSONObject IDX_KEY = new BasicBSONObject("a", "text");
-    private final static int INSERT_RECS_NUM = 20000;
+    private final static int RECS_NUM = 20000;
     
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
-    private List<Integer> lids;
+    private int lid;
     
     private Client esClient = null;
-    private List<String> esIndexNames;
+    private String esIndexName;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -58,14 +57,13 @@ public class FullText15858 extends SdbTestBase {
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, IDX_NAME ); 
+        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
 
-        FullTextDBUtils.insertData(cl, INSERT_RECS_NUM);
+        FullTextDBUtils.insertData(cl, RECS_NUM);
         
-        // 确保预置的数据同步到es完成，避免获取lids报索引不存在       
-        Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, 
-                IDX_NAME, INSERT_RECS_NUM));
-        lids = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexNames);
+        // 确保预置的数据同步到es完成，避免获取lids报索引不存在
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
+        lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
 
     @Test
@@ -80,20 +78,16 @@ public class FullText15858 extends SdbTestBase {
         long updCnt = cl.getCount();
         Assert.assertEquals(updCnt, 0);
         
-        // check es
-        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexNames, lids));
-        Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, IDX_NAME, 0));
-        
         // check consistency
-        Assert.assertTrue(FullTextUtils.isDataConsistency(cl, IDX_NAME));
+        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
     }
 
     @AfterClass
     private void tearDown() throws InterruptedException {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextESUtils.isIndexDeletedInES(esClient,esIndexNames));
-            Assert.assertTrue(FullTextDBUtils.isCSDropSuccess(sdb, cappedCSName));
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
         } finally {
             if (sdb != null) {
                 sdb.close();

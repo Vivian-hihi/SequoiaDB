@@ -1,7 +1,6 @@
 package com.sequoiadb.fulltextparallel;
 
 import java.util.Date;
-import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -34,7 +33,7 @@ public class FullText15857 extends SdbTestBase {
   private final static String IDX_NAME = "idx_es_15857";
   private final static BSONObject IDX_KEY = 
           (BSONObject) JSON.parse("{a:'text',b:'text',c:'text',d:'text'}");
-  private final static int INSERT_RECS_NUM = 50000;
+  private final static int RECS_NUM = 50000;
   
   private Sequoiadb sdb = null;
   private CollectionSpace cs;
@@ -42,7 +41,7 @@ public class FullText15857 extends SdbTestBase {
   private String cappedCSName;
   
   private Client esClient = null;
-  private List< String > esIndexNames;
+  private String esIndexName;
 
   @BeforeClass
   private void setUp() throws Exception {      
@@ -57,21 +56,21 @@ public class FullText15857 extends SdbTestBase {
       cl = cs.createCollection(CL_NAME);
       cl.createIndex(IDX_NAME, IDX_KEY, false, false);
       cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);      
-      esIndexNames = FullTextDBUtils.getESIndexNames( cl, IDX_NAME ); 
+      esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
       
-      FullTextDBUtils.insertData(cl, INSERT_RECS_NUM);
+      FullTextDBUtils.insertData(cl, RECS_NUM);
       
-      // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期        
-      Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, IDX_NAME, INSERT_RECS_NUM)); 
+      // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期 
+      Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
   }
 
   @Test
   private void test() throws Exception {      
       // matcher1
-      BSONObject obj1 = new BasicBSONObject("$lt", INSERT_RECS_NUM / 2);
+      BSONObject obj1 = new BasicBSONObject("$lt", RECS_NUM / 2);
       BSONObject matcher1 = new BasicBSONObject("recordId", obj1);       
       // matcher2
-      BSONObject obj2 = new BasicBSONObject("$gte", INSERT_RECS_NUM / 2);
+      BSONObject obj2 = new BasicBSONObject("$gte", RECS_NUM / 2);
       BSONObject matcher2 = new BasicBSONObject("recordId", obj2);  
       // thread
       ThreadExecutor es = new ThreadExecutor(); 
@@ -82,18 +81,15 @@ public class FullText15857 extends SdbTestBase {
       // check total count
       long updCnt = cl.getCount();
       Assert.assertEquals(updCnt, 0);
-      // check es 
-      Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, IDX_NAME, 0));
       // check consistency
-      Assert.assertTrue(FullTextUtils.isDataConsistency(cl, IDX_NAME));
+      Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
   }
 
   @AfterClass
   private void tearDown() throws InterruptedException {
       try {
           FullTextDBUtils.dropCollection(cs, CL_NAME);
-          Assert.assertTrue(FullTextESUtils.isIndexDeletedInES(esClient,esIndexNames));
-          Assert.assertTrue(FullTextDBUtils.isCSDropSuccess(sdb, cappedCSName));
+          Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
       } finally {
           if (sdb != null) {
               sdb.close();

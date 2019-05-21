@@ -1,7 +1,6 @@
 package com.sequoiadb.fulltextparallel;
 
 import java.util.Date;
-import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -44,7 +43,7 @@ public class FullText15856 extends SdbTestBase {
     private String cappedCSName;
     
     private Client esClient = null;
-    private List< String > esIndexNames;
+    private String esIndexName;
 
     @BeforeClass
     private void setUp() {        
@@ -59,7 +58,7 @@ public class FullText15856 extends SdbTestBase {
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);      
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, IDX_NAME ); 
+        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
         
         FullTextDBUtils.insertData(cl, RECS_NUM);  
     }
@@ -87,18 +86,15 @@ public class FullText15856 extends SdbTestBase {
         matcher.put("c", modVal2);
         long updCnt = cl.getCount(matcher);
         Assert.assertEquals(updCnt, RECS_NUM);
-        // check es  
-        Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, IDX_NAME, RECS_NUM));
         // check consistency
-        Assert.assertTrue(FullTextUtils.isDataConsistency(cl, IDX_NAME));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
     }
 
     @AfterClass
     private void tearDown() throws InterruptedException {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextESUtils.isIndexDeletedInES(esClient,esIndexNames));
-            Assert.assertTrue(FullTextDBUtils.isCSDropSuccess(sdb, cappedCSName));
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
         } finally {
             if (sdb != null) {
                 sdb.close();

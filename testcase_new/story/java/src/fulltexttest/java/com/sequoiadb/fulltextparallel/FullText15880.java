@@ -1,7 +1,6 @@
 package com.sequoiadb.fulltextparallel;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -44,8 +43,8 @@ public class FullText15880 extends SdbTestBase {
     private String cappedCSName;
     
     private Client esClient = null;
-    private List< String > esIndexNames;
-    private List<Integer> lids;
+    private String esIndexName;
+    private int lid;
     
 
     @BeforeClass
@@ -63,12 +62,11 @@ public class FullText15880 extends SdbTestBase {
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);       
         FullTextDBUtils.insertData(cl, RECS_NUM);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, IDX_NAME );
+        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
         
-        // 确保预置的数据同步到es完成，避免获取lids报索引不存在       
-        Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, 
-                IDX_NAME, RECS_NUM));
-        lids = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexNames);
+        // 确保预置的数据同步到es完成，避免获取lids报索引不存在
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
+        lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
 
     @Test
@@ -81,17 +79,15 @@ public class FullText15880 extends SdbTestBase {
         es.run();
         
         // check results
-        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexNames, lids));     
-        Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, IDX_NAME, 0));
-        Assert.assertTrue(FullTextUtils.isDataConsistency(cl, IDX_NAME));
+        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
     }
 
     @AfterClass
     private void tearDown() throws InterruptedException {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextESUtils.isIndexDeletedInES(esClient,esIndexNames));
-            Assert.assertTrue(FullTextDBUtils.isCSDropSuccess(sdb, cappedCSName));
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -102,7 +98,7 @@ public class FullText15880 extends SdbTestBase {
         }
     }
 
-    private class ThreadTruncate extends ResultStore {        
+    private class ThreadTruncate extends ResultStore {
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {
             Thread.sleep(random.nextInt(100));

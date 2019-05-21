@@ -1,12 +1,12 @@
 package com.sequoiadb.fulltextparallel;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
-import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -18,11 +18,11 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
-import com.sequoiadb.utils.FullTextUtils;
 
 /**
  * @FileName seqDB-18259:同一集合并发创建删除相同的普通索引
@@ -40,6 +40,7 @@ public class FullText18259 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
+    private List<String> rgNames;
     
     private Client esClient = null;
 
@@ -54,6 +55,7 @@ public class FullText18259 extends SdbTestBase {
 
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         cl = cs.createCollection(CL_NAME);
+        rgNames = FullTextDBUtils.getCLGroups(cl);
         FullTextDBUtils.insertData(cl, INSERT_RECS_NUM);
     }
 
@@ -69,8 +71,7 @@ public class FullText18259 extends SdbTestBase {
         // check index
         CommLib commlib = new CommLib();
         commlib.checkIndex(sdb, IDX_NAME, CL_NAME);
-        // check data
-        Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
+        commlib.compareNodeData(sdb, rgNames.get(0), IDX_NAME, CL_NAME, null);
     }
 
     @AfterClass
@@ -103,7 +104,7 @@ public class FullText18259 extends SdbTestBase {
         }
     }
 
-    private class ThreadDropIndex {
+    private class ThreadDropIndex extends ResultStore {
         private Random random = new Random();
         
         @ExecuteOrder(step = 1)

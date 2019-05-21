@@ -2,7 +2,6 @@ package com.sequoiadb.fulltextparallel;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -57,7 +56,7 @@ public class FullText15853 extends SdbTestBase {
     private ArrayList<ObjectId> lobIds2 = new ArrayList<>();
     
     private Client esClient = null;
-    private List< String > esIndexNames;
+    private String esIndexName;
     
 
     @BeforeClass
@@ -74,7 +73,7 @@ public class FullText15853 extends SdbTestBase {
         cl = cs.createCollection(CL_NAME);        
         cl.createIndex(FULLTEXT_IDX_NAME, FULLTEXT_IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, FULLTEXT_IDX_NAME);
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, FULLTEXT_IDX_NAME );
+        esIndexName  = FullTextDBUtils.getESIndexName(cl, FULLTEXT_IDX_NAME);
         
         FullTextDBUtils.insertData(cl, INSERT_RECS_NUM);
         
@@ -87,14 +86,12 @@ public class FullText15853 extends SdbTestBase {
             lobIds2.add(lobId);
         }
         
-        // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期        
-        Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient, cl, 
-                FULLTEXT_IDX_NAME, INSERT_RECS_NUM));    
+        // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, FULLTEXT_IDX_NAME, INSERT_RECS_NUM));    
     }
 
     @Test
     private void test() throws Exception {
-        // test and check the results of the test steps
         ThreadExecutor es = new ThreadExecutor(TIMEOUT);
         es.addWorker(new ThreadInsert());          
         es.addWorker(new ThreadDelete());        
@@ -108,17 +105,14 @@ public class FullText15853 extends SdbTestBase {
         es.addWorker(new ThreadDBSync());
         
         es.run();
-
-        // check results, FullSyncToES in ThreadFullTextSearch'step2( waitSync )
-        Assert.assertTrue(FullTextUtils.isDataConsistency(cl, FULLTEXT_IDX_NAME));
+        //分别在每个并发线程检查数据对应操作的数据正确性。在 ThreadFullTextSearch 线程 step2 检查数据一致性。
     }
 
     @AfterClass
     private void tearDown() throws InterruptedException {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextESUtils.isIndexDeletedInES(esClient,esIndexNames));
-            Assert.assertTrue(FullTextDBUtils.isCSDropSuccess(sdb, cappedCSName));
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -242,9 +236,9 @@ public class FullText15853 extends SdbTestBase {
         }
 
         @ExecuteOrder(step = 2, desc = "检查查询返回结果")
-        private void waitSync() throws Exception {  
-            Assert.assertTrue(FullTextUtils.isFullSyncToES(esClient2, cl2, 
-                    FULLTEXT_IDX_NAME, INSERT_RECS_NUM * 2 - INSERT_RECS_NUM / 2));
+        private void waitSync() throws Exception {
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient2, cl2, FULLTEXT_IDX_NAME, 
+                    INSERT_RECS_NUM * 2 - INSERT_RECS_NUM / 2));
         }
 
         @ExecuteOrder(step = 3, desc = "再次全文检索")
