@@ -222,7 +222,7 @@ public class FullTextESUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isIndexDeletedInES( Client esClient, String esIndexName ) {
+    public boolean isIndexDeletedInES( Client esClient, String esIndexName ) {
         return !isExistIndexInES( esClient, esIndexName, false );
     }
 
@@ -235,7 +235,7 @@ public class FullTextESUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isIndexDeletedInES( Client esClient, List<String> esIndexNames ) {
+    public boolean isIndexDeletedInES( Client esClient, List<String> esIndexNames ) {
         boolean notExist = true;
         for ( String esIndexName : esIndexNames ) {
             notExist = isExistIndexInES( esClient, esIndexName, false );

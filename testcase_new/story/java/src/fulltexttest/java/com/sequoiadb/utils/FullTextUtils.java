@@ -39,7 +39,7 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isFullSyncToES( Client esClient, DBCollection cl, String textIndexName, int expectCount )
+    private static boolean isFullSyncToES( Client esClient, DBCollection cl, String textIndexName, int expectCount )
             throws Exception {
         List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
         List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs( cl, textIndexName );
@@ -79,7 +79,7 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isMainCLFullSyncToES( Client esClient, DBCollection cl, String textIndexName,
+    private static boolean isMainCLFullSyncToES( Client esClient, DBCollection cl, String textIndexName,
             int expectCount ) throws Exception {
         Sequoiadb db = cl.getSequoiadb();
         List<String> subCLFullNames = FullTextDBUtils.getSubCLNames( db, cl.getFullName() );
@@ -326,7 +326,7 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2019-05-09
      */
-    public static boolean isDataConsistency( DBCollection cl, String textIndexName ) {
+    private static boolean isDataConsistency( DBCollection cl, String textIndexName ) {
         // 检查主备节点原始集合的数据一致性
         if ( !isCLDataConsistency( cl ) ) {
             return false;
@@ -346,7 +346,7 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isCLDataConsistency( DBCollection cl ) {
+    private static boolean isCLDataConsistency( DBCollection cl ) {
         boolean isConsistency = false;
         Sequoiadb db = cl.getSequoiadb();
         List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
@@ -407,7 +407,7 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isMainCLDataConsistency( DBCollection cl, String textIndexName ) {
+    private static boolean isMainCLDataConsistency( DBCollection cl, String textIndexName ) {
         boolean isConsistency = true;
         Sequoiadb db = cl.getSequoiadb();
         List<String> subclNames = FullTextDBUtils.getSubCLNames( db, cl.getFullName() );
@@ -557,5 +557,82 @@ public class FullTextUtils {
             cl2Cursor.close();
         }
         return true;
+    }
+
+    /**
+     * 检查全文索引是否创建,包括检查索引在es端是否被创建,固定集合空间是否被创建,数据是否同步
+     * @param db
+     * @param esClient
+     * @param indexName
+     * @return
+     * @throws Exception 
+     */
+    public static boolean isIndexCreated( Client esClient, DBCollection cl, String indexName, int expectCount )
+            throws Exception {
+
+        if ( isFullSyncToES( esClient, cl, indexName, expectCount ) && isDataConsistency( cl, indexName ) ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 检查主表全文索引是否创建,包括检查索引在es端是否被创建,固定集合空间是否被创建,数据是否同步
+     * @param db
+     * @param esClient
+     * @param indexName
+     * @return
+     * @throws Exception 
+     */
+    public static boolean isMainCLIndexCreated( Client esClient, DBCollection cl, String indexName, int expectCount )
+            throws Exception {
+
+        if ( isMainCLFullSyncToES( esClient, cl, indexName, expectCount )
+                && isMainCLDataConsistency( cl, indexName ) ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 检查全文索引是否删除,包括检查索引在es端是否被删除,固定集合空间是否被删除
+     * @param db
+     * @param esClient
+     * @param esIndexName
+     * @param cappedName
+     * @return boolean 删除成功返回true,否则返回false
+     */
+    public static boolean isIndexDeleted( Sequoiadb db, Client esClient, List<String> esIndexNames,
+            String cappedName ) {
+
+        if ( new FullTextESUtils().isIndexDeletedInES( esClient, esIndexNames )
+                && new FullTextDBUtils().isCSDropSuccess( db, cappedName ) ) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    /**
+     * 检查全文索引是否删除,包括检查索引在es端是否被删除,固定集合空间是否被删除
+     * @param db
+     * @param esClient
+     * @param esIndexName
+     * @param cappedNames
+     * @return boolean 删除成功返回true,否则返回false
+     */
+    public static boolean isIndexDeleted( Sequoiadb db, Client esClient, List<String> esIndexNames,
+            List<String> cappedNames ) {
+
+        if ( new FullTextESUtils().isIndexDeletedInES( esClient, esIndexNames )
+                && new FullTextDBUtils().isCSDropSuccess( db, cappedNames ) ) {
+            return true;
+        } else {
+            return false;
+        }
+
     }
 }

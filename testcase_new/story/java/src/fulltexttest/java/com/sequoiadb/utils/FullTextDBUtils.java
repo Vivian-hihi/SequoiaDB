@@ -418,8 +418,27 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public static boolean isCSDropSuccess( Sequoiadb db, String csName ) throws InterruptedException {
+    public boolean isCSDropSuccess( Sequoiadb db, String csName ) {
         return !isExistCS( db, csName, false );
+    }
+
+    /**
+     * 检查集合空间是否删除成功,每秒检查一次,检测时间最长为5分钟
+     * 
+     * @param db
+     * @param csNames
+     * @return boolean, 删除成功返回true,否则返回false
+     * @throws InterruptedException
+     * @Author luweikang
+     * @Date 2019-05-09
+     */
+    public boolean isCSDropSuccess( Sequoiadb db, List<String> csNames ) {
+        for ( String csName : csNames ) {
+            if ( !isCSDropSuccess( db, csName ) ) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -447,9 +466,9 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    private static boolean isExistCS( Sequoiadb db, String csName, boolean expExist ) throws InterruptedException {
+    private static boolean isExistCS( Sequoiadb db, String csName, boolean expExist ) {
         List<String> rgNames = CommLib.getDataGroupNames( db );
-        boolean csExist = true;
+        boolean csExist = false;
         for ( String rgName : rgNames ) {
             csExist = isExistCS( db, csName, rgName, expExist );
             if ( expExist != csExist ) {
@@ -471,9 +490,8 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    private static boolean isExistCS( Sequoiadb db, String csName, String rgName, boolean expExist )
-            throws InterruptedException {
-        boolean csExist = true;
+    private static boolean isExistCS( Sequoiadb db, String csName, String rgName, boolean expExist ) {
+        boolean csExist = false;
         List<String> nodeList = CommLib.getNodeAddress( db, rgName );
         for ( String nodeAddress : nodeList ) {
             try ( Sequoiadb nodeConn = new Sequoiadb( nodeAddress, "", "" ) ) {
@@ -485,7 +503,11 @@ public class FullTextDBUtils {
                     if ( expExist == csExist ) {
                         break;
                     }
-                    Thread.sleep( 1000 );
+                    try {
+                        Thread.sleep( 1000 );
+                    } catch ( InterruptedException e ) {
+                        e.printStackTrace();
+                    }
                 }
             }
             if ( csExist != expExist ) {
