@@ -1885,12 +1885,6 @@
                            "en": "getCoordRG()"
                         },
                         {
-                           "id": 1432290821,
-                           "file": "getSpareRG",
-                           "cn": "getSpareRG()",
-                           "en": "getSpareRG()"
-                        },
-                        {
                            "id": 1432190789,
                            "file": "getCS",
                            "cn": "getCS()",
@@ -1903,16 +1897,22 @@
                            "en": "getDomain()"
                         },
                         {
+                           "id": 1432190791,
+                           "file": "getRG",
+                           "cn": "getRG()",
+                           "en": "getRG()"
+                        },
+                        {
                            "id": 1516326561,
                            "file": "getSessionAttr",
                            "cn": "getSessionAttr()",
                            "en": "getSessionAttr()"
                         },
                         {
-                           "id": 1432190791,
-                           "file": "getRG",
-                           "cn": "getRG()",
-                           "en": "getRG()"
+                           "id": 1432290821,
+                           "file": "getSpareRG",
+                           "cn": "getSpareRG()",
+                           "en": "getSpareRG()"
                         },
                         {
                            "id": 1432190792,
