@@ -104,7 +104,7 @@ public class FullText15879 extends SdbTestBase {
             expRgNum = 2;
         }
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, expRecsNum));                
-        Assert.assertEquals(FullTextDBUtils.getCLGroups(cl), expRgNum);
+        Assert.assertEquals(FullTextDBUtils.getCLGroups(cl).size(), expRgNum);
     }
 
     @AfterClass

@@ -63,7 +63,7 @@ public class FullText15856 extends SdbTestBase {
         FullTextDBUtils.insertData(cl, RECS_NUM);  
     }
 
-    @Test(enabled = false) // jira-4475
+    @Test
     private void test() throws Exception {
         // modifier1
         String modVal1 = StringUtils.getRandomString( 16 );

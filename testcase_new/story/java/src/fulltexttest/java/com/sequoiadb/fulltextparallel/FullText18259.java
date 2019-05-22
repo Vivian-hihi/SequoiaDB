@@ -23,6 +23,7 @@ import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
+import com.vividsolutions.jts.util.Assert;
 
 /**
  * @FileName seqDB-18259:同一集合并发创建删除相同的普通索引
@@ -35,12 +36,11 @@ public class FullText18259 extends SdbTestBase {
     private final static String IDX_NAME = "cl_es_18259";
     private final static BSONObject IDX_KEY = 
             (BSONObject) JSON.parse("{a:1,b:-1,c:1,d:-1}");
-    private final static int INSERT_RECS_NUM = 50000;
+    private final static int RECS_NUM = 20000;
     
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
-    private List<String> rgNames;
     
     private Client esClient = null;
 
@@ -55,8 +55,7 @@ public class FullText18259 extends SdbTestBase {
 
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         cl = cs.createCollection(CL_NAME);
-        rgNames = FullTextDBUtils.getCLGroups(cl);
-        FullTextDBUtils.insertData(cl, INSERT_RECS_NUM);
+        FullTextDBUtils.insertData(cl, RECS_NUM);
     }
 
     @Test
@@ -71,7 +70,7 @@ public class FullText18259 extends SdbTestBase {
         // check index
         CommLib commlib = new CommLib();
         commlib.checkIndex(sdb, IDX_NAME, CL_NAME);
-        commlib.compareNodeData(sdb, rgNames.get(0), SdbTestBase.csName, CL_NAME, null);
+        this.checkData();
     }
 
     @AfterClass
@@ -119,6 +118,27 @@ public class FullText18259 extends SdbTestBase {
                 if (e.getErrorCode() != -47 && e.getErrorCode() != -147) {
                     throw e;
                 }
+            }
+        }
+    }
+    
+    private void checkData() {
+        List<String> rgNames = FullTextDBUtils.getCLGroups(cl);
+        for (String rgName : rgNames) {
+            Sequoiadb master = null;
+            Sequoiadb slave  = null;
+            master = sdb.getReplicaGroup(rgName).getMaster().connect();
+            slave  = sdb.getReplicaGroup(rgName).getSlave().connect();
+            try {
+                int mCnt = (int) master.getCollectionSpace(SdbTestBase.csName).
+                        getCollection(CL_NAME).getCount();
+                int sCnt = (int) slave.getCollectionSpace(SdbTestBase.csName).
+                        getCollection(CL_NAME).getCount();
+                Assert.equals(mCnt, RECS_NUM);
+                Assert.equals(sCnt, RECS_NUM);
+            } finally {
+                master.close();
+                slave.close();
             }
         }
     }
