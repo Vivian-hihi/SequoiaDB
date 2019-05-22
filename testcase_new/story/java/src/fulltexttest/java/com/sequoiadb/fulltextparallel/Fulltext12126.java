@@ -134,7 +134,7 @@ public class Fulltext12126 extends SdbTestBase {
                 Assert.assertTrue(
                         FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames.get(i), cappedCLNames.get(i)));
 
-                // 全文检索数据报错-52
+                // 全文检索数据报错-52、-6
                 try {
                     cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
                 } catch (BaseException e) {

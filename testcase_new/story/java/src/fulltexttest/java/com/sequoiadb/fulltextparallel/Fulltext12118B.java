@@ -154,6 +154,8 @@ public class Fulltext12118B extends SdbTestBase {
                 for (int j = 0; j < clNum; j++) {
                     DBCollection cl = cs.getCollection(clNames.get(j));
                     if (cl.isIndexExist(indexName)) {
+                        // 同步符合预期
+                        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
                         // 全文检索数据符合预期
                         DBCursor cursor = cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
                         int actualRecordNum = 0;
@@ -162,11 +164,9 @@ public class Fulltext12118B extends SdbTestBase {
                             actualRecordNum++;
                         }
                         Assert.assertEquals(actualRecordNum, insertNum);
-
-                        // 同步符合预期
-                        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
                         System.out.println("check cs:" + csNames.get(i) + " cl:" + clNames.get(j)
                                 + " data group consistency and sync to es success.");
+
                     } else {
                         // 只校验删除全文索引成功时，固定集合删除成功的逻辑；成功的逻辑在if分支已校验
                         if ((i + 1) * j + 1 <= cappedCLNames.size()) {
