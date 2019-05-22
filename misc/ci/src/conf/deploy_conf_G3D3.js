@@ -32,22 +32,22 @@ else
 
 var cataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
-                  diagnum:60,
+                  diagnum:30,
                   fap:fapValue,
-                  logfilenum:80,
+                  logfilenum:40,
                   transactionon:true
                 };
 var coordConf = { diaglevel:diagLevel,
-                  diagnum:60,
-                  logfilenum:80,
+                  diagnum:30,
+                  logfilenum:40,
                   fap:fapValue,
                   transactionon:true,
                   transisolation:1                  
                 };
 var dataConf  = { diaglevel:diagLevel,
                   sharingbreak:30000,
-                  diagnum:60,
-                  logfilenum:80,
+                  diagnum:30,
+                  logfilenum:40,
                   plancachelevel:3,
                   fap:fapValue,
                   transactionon:true,
