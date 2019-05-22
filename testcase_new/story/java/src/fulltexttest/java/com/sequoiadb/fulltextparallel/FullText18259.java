@@ -71,7 +71,7 @@ public class FullText18259 extends SdbTestBase {
         // check index
         CommLib commlib = new CommLib();
         commlib.checkIndex(sdb, IDX_NAME, CL_NAME);
-        commlib.compareNodeData(sdb, rgNames.get(0), IDX_NAME, CL_NAME, null);
+        commlib.compareNodeData(sdb, rgNames.get(0), SdbTestBase.csName, CL_NAME, null);
     }
 
     @AfterClass
