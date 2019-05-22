@@ -30,7 +30,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author zhaoyu
  * @Date 2019-05-13
  */
-
+//TODO：检视意见同 15796 用例
 public class Fulltext12126 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private List<String> csNames = new ArrayList<String>();

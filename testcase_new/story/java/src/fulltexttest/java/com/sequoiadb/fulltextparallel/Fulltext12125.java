@@ -30,7 +30,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author zhaoyu
  * @Date 2019-05-13
  */
-
+//TODO：其他检视意见同 15796 用例
 public class Fulltext12125 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private List<String> csNames = new ArrayList<String>();
@@ -108,7 +108,7 @@ public class Fulltext12125 extends SdbTestBase {
 
     @Test
     public void test() throws Exception
-
+        //TODO:这里换行可以删掉，另外 { 放在函数后面不需要换行，风格一致
     {
         // 执行并发测试
         te.run();

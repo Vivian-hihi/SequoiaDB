@@ -63,6 +63,7 @@ public class Fulltext15796 extends SdbTestBase {
         cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
         insertRecord(cl, insertNum);
 
+        //TODO:并发线程new和add建议放到test里面，这样可以直接在test看做了哪些并发操作，也方便在test直接跳转到对应线程类查询相关代码
         insert = new Insert();
         update = new Update();
         delete = new Delete();
@@ -77,7 +78,7 @@ public class Fulltext15796 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() {//TODO：在setUp创建索引的时候获取，teardown只需要调用dropCollection和isIndexDeleted
         String esIndexName = null;
         String cappedCLName = null;
         if (cs.isCollectionExist(clName)) {
@@ -90,7 +91,7 @@ public class Fulltext15796 extends SdbTestBase {
         if (esIndexName != null && cappedCLName != null) {
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         }
-        sdb.close();
+        sdb.close();//TODO:前面操作如果失败连接就会残留，建议将关闭sdb和esClient连接放到finally
         esClient.close();
     }
 
@@ -98,13 +99,13 @@ public class Fulltext15796 extends SdbTestBase {
     public void test() throws Exception {
         // 获取原始集合所在组及固定集合名，作为后续结果校验的输入
         String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
-        List<String> esIndexName = FullTextDBUtils.getESIndexNames(cl, indexName);
+        List<String> esIndexName = FullTextDBUtils.getESIndexNames(cl, indexName);//TODO:只有一个全文索引，建议用获取单个的接口，后面使用时也不需要list.get，即简洁也不会误以为有多个索引
         // 执行并发测试
-        te.run();
+        te.run();//TODO:线程调用放到并发里面，不然test里面看不出测试点
 
         // 如果集合未删除成功，那么校验集合中主备节点一致性,否则固定集合空间删除成功，ES端索引删除成功
         System.out.println("cl is exists:" + sdb.getCollectionSpace(csName).isCollectionExist(clName));
-        if (sdb.getCollectionSpace(csName).isCollectionExist(clName)) {
+        if (sdb.getCollectionSpace(csName).isCollectionExist(clName)) {//TODO：删除结果建议用线程返回值判断是不是更准确？
             Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, atomic.getAndIncrement()));
         } else {
             // 主备节点上固定集合空间删除成功
@@ -116,7 +117,7 @@ public class Fulltext15796 extends SdbTestBase {
     private class Insert {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         private DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-
+        
         @ExecuteOrder(step = 1, desc = "插入记录")
         public void insertRecord() {
             try {
@@ -135,7 +136,6 @@ public class Fulltext15796 extends SdbTestBase {
                 db.close();
             }
         }
-
     }
 
     private class Update {
@@ -167,7 +167,7 @@ public class Fulltext15796 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除所有记录")
         public void deleteRecord() {
             try {
-                System.out.println("start delete thread....");
+                System.out.println("start delete thread....");//TODO：此处建议加个时间信息会更好，如“System.out.println(new Date() + " begin " + this.getClass().getName().toString());”
                 for (int i = 0; i < insertNum * 2; i++) {
                     cl.delete("{id:" + i + "}", "{'':'id'}");
                     atomic.decrementAndGet();
@@ -178,7 +178,7 @@ public class Fulltext15796 extends SdbTestBase {
                     e.printStackTrace();
                     Assert.fail(e.getMessage());
                 }
-            } finally
+            } finally  //TODO:不需要换行，{也不需要换行。建议new db放到 try 后面会更好
 
             {
                 db.close();
