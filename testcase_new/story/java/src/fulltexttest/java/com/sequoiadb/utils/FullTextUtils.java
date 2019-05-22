@@ -261,7 +261,14 @@ public class FullTextUtils {
 
         // 检查每个全文索引下的_cllid值有没有变化
         for ( int i = 0; i < esIndexNames.size(); i++ ) {
-            return isFulltextRebuild( esClient, esIndexNames.get( i ), preCLLids.get( i ) );
+            boolean isSync = false;
+            isSync = isFulltextRebuild( esClient, esIndexNames.get( i ), preCLLids.get( i ) );
+            if ( !isSync ) {
+                return false;
+            }
+            if ( i == esIndexNames.size() - 1 ) {
+                return isSync;
+            }                
         }
 
         return false;
