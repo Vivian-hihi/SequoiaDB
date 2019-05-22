@@ -159,8 +159,10 @@ public class FullTextUtils {
                 break;
             } else {
                 doTimes++;
-                System.out.println( "esIndexNames: " + esIndexNames.toString() + ", doTimes: " + doTimes
-                        + ", actCount: " + actCount + ", expectCount: " + expectCount );
+                // System.out.println( "esIndexNames: " +
+                // esIndexNames.toString() + ", doTimes: " + doTimes
+                // + ", actCount: " + actCount + ", expectCount: " + expectCount
+                // );
                 try {
                     Thread.sleep( 1000 );
                 } catch ( InterruptedException e ) {
@@ -215,8 +217,10 @@ public class FullTextUtils {
                     break;
                 } else {
                     doTimes++;
-                    System.out.println( "esIndexName: " + esIndexNames.get( i ).toString() + ", doTimes: " + doTimes
-                            + ", commitID: " + commitID + ", lastLogicalID: " + lastLogicalIDs.get( i ).toString() );
+                    // System.out.println( "esIndexName: " + esIndexNames.get( i
+                    // ).toString() + ", doTimes: " + doTimes
+                    // + ", commitID: " + commitID + ", lastLogicalID: " +
+                    // lastLogicalIDs.get( i ).toString() );
                     try {
                         Thread.sleep( 1000 );
                     } catch ( InterruptedException e ) {
@@ -248,9 +252,9 @@ public class FullTextUtils {
      */
     public static boolean isFulltextRebuild( Client esClient, List<String> esIndexNames, List<Integer> preCLLids )
             throws Exception {
-        int timeout = 3600; // timeout 1h
-        int interval = 1; // interval 1s
-        int doTimes;
+        // int timeout = 3600; // timeout 1h
+        // int interval = 1; // interval 1s
+        // int doTimes;
 
         // 比较索引个数和cllid个数，如果数量不一致则直接退出
         if ( esIndexNames.size() != preCLLids.size() ) {
@@ -261,19 +265,12 @@ public class FullTextUtils {
 
         // 检查每个全文索引下的_cllid值有没有变化
         for ( int i = 0; i < esIndexNames.size(); i++ ) {
-            boolean isSync = false;
-            isSync = isFulltextRebuild( esClient, esIndexNames.get( i ), preCLLids.get( i ) );
-            if ( !isSync ) {
-                return false;
-            }
-            if ( i == esIndexNames.size() - 1 ) {
-                return isSync;
-            }                
+            return isFulltextRebuild( esClient, esIndexNames.get( i ), preCLLids.get( i ) );
         }
 
         return false;
     }
-    
+
     /**
      * 检查ES端全文索引是否已重建。当全文索引重建后，ES端SDBCOMMIT记录下的_cllid值会递增，因此重建后的索引_cllid值会比重建前的大
      * 通过 FullTextESUtils.getCommitCLLIDFromES ( esClient, esIndexName ) 获取单个全文索引对应的SDBCOMMIT._cllid
@@ -286,8 +283,7 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2019-05-16
      */
-    public static boolean isFulltextRebuild( Client esClient, String esIndexName, int preCLLid )
-            throws Exception {
+    public static boolean isFulltextRebuild( Client esClient, String esIndexName, int preCLLid ) throws Exception {
         boolean isSync = false;
         int timeout = 3600; // timeout 1h
         int interval = 1; // interval 1s
@@ -309,8 +305,9 @@ public class FullTextUtils {
                     break;
                 } else {
                     doTimes++;
-                    System.out.println( "esIndexName: " + esIndexName + ", doTimes: " + doTimes
-                            + ", previousCLLid: " + preCLLid + ", currentCLLID: " + curCLLID );
+                    // System.out.println( "esIndexName: " + esIndexName + ",
+                    // doTimes: " + doTimes + ", previousCLLid: "
+                    // + preCLLid + ", currentCLLID: " + curCLLID );
                     try {
                         Thread.sleep( 1000 );
                     } catch ( InterruptedException e ) {
@@ -321,8 +318,9 @@ public class FullTextUtils {
                 Throwable ths = e.getCause();
                 if ( ths instanceof IndexNotFoundException ) {
                     doTimes++;
-                    System.out.println( "esIndexName: " + esIndexName + ", doTimes: " + doTimes
-                            + " is being truncated now" );
+                    // System.out.println(
+                    // "esIndexName: " + esIndexName + ", doTimes: " + doTimes +
+                    // " is being truncated now" );
                     try {
                         Thread.sleep( 1000 );
                     } catch ( InterruptedException e2 ) {
@@ -383,7 +381,7 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    private static boolean isCLDataConsistency( DBCollection cl ) {
+    public static boolean isCLDataConsistency( DBCollection cl ) {
         boolean isConsistency = false;
         Sequoiadb db = cl.getSequoiadb();
         List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
