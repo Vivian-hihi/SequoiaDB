@@ -252,10 +252,6 @@ public class FullTextUtils {
      */
     public static boolean isFulltextRebuild( Client esClient, List<String> esIndexNames, List<Integer> preCLLids )
             throws Exception {
-        // int timeout = 3600; // timeout 1h
-        // int interval = 1; // interval 1s
-        // int doTimes;
-
         // 比较索引个数和cllid个数，如果数量不一致则直接退出
         if ( esIndexNames.size() != preCLLids.size() ) {
             System.out.println( "esIndexNames' size is not equal to cllids' size, esIndexNames: " + esIndexNames.size()
@@ -265,7 +261,14 @@ public class FullTextUtils {
 
         // 检查每个全文索引下的_cllid值有没有变化
         for ( int i = 0; i < esIndexNames.size(); i++ ) {
-            return isFulltextRebuild( esClient, esIndexNames.get( i ), preCLLids.get( i ) );
+            boolean isSync = false;
+            isSync = isFulltextRebuild( esClient, esIndexNames.get( i ), preCLLids.get( i ) );
+            if ( !isSync ) {
+                return false;
+            }
+            if ( i == esIndexNames.size() - 1 ) {
+                return isSync;
+            }
         }
 
         return false;
