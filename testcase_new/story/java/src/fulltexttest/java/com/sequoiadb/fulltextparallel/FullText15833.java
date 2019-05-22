@@ -1,4 +1,4 @@
-package com.sequoiadb.fulltext;
+package com.sequoiadb.fulltextparallel;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;

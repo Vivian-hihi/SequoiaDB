@@ -1,4 +1,4 @@
-package com.sequoiadb.fulltext;
+package com.sequoiadb.fulltextparallel;
 
 import org.elasticsearch.client.Client;
 import org.testng.Assert;
