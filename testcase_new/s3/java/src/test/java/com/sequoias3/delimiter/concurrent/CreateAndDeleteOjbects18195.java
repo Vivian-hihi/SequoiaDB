@@ -159,12 +159,12 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		int actVersionNum = versionSummary.size();
 		Assert.assertEquals(actVersionNum, existObjectNum);
 
-		// TODO ：本用例没有开启版本控制，所以versionid应为null
-		String expVersionId = "0";
+		String expVersionId = "null";
 		String expFileMd5 = TestTools.getMD5(filePath);
 		for (int i = 0; i < actVersionNum; i++) {
 			String keyName = versionSummary.get(i).getKey();
 			String versionId = versionSummary.get(i).getVersionId();
+			System.out.println("---versionID=" + versionId);
 			String etag = versionSummary.get(i).getETag();
 			boolean isDeleteMarker = versionSummary.get(i).isDeleteMarker();
 
