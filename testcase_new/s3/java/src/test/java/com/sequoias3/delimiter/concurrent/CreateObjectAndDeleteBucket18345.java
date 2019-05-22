@@ -39,7 +39,6 @@ public class CreateObjectAndDeleteBucket18345 extends S3TestBase {
 	private String delimiter = "?";
 	private int objectNum = 10;
 	private AmazonS3 s3Client = null;
-	private List<String> keyNames = new ArrayList<>();
 	private List<String> expKeyList = Collections.synchronizedList(new LinkedList<String>());
 
 	@BeforeClass
@@ -57,7 +56,6 @@ public class CreateObjectAndDeleteBucket18345 extends S3TestBase {
 		for (int i = 0; i < objectNum; i++) {
 			String subKeyName = keyName + "_" + i + delimiter + "test.png";
 			threadExec.addWorker(new CreateObject(subKeyName));
-			keyNames.add(subKeyName);
 		}
 		DeleteBucket deleteBucket = new DeleteBucket();
 		threadExec.addWorker(deleteBucket);
