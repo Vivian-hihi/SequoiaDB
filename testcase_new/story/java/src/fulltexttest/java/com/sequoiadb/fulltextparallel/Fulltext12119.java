@@ -8,7 +8,7 @@
  *  @version 1.00
  */
 package com.sequoiadb.fulltextparallel;
-
+//TODO:用例批注不需要符合规范
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,12 +81,12 @@ public class Fulltext12119 extends SdbTestBase {
             if ( null != thread ) {
                 thread.tearDown();
             }
-        }
+        } // TODO:直接在线程里面关闭连接
         db.close();
         esClient.close();
     }
 
-    @Test
+    @Test  //TODO：test步骤可以再梳理下，测试点“删除CS”前的准备工作都可以放到 setUp 里面
     public void test() throws Exception {
         // insert
         FullTextDBUtils.insertData( cl1, 10000 );
@@ -156,7 +156,7 @@ public class Fulltext12119 extends SdbTestBase {
         public void tearDown() {
             if ( null != db && !db.isClosed() ) {
                 db.close();
-            }
+            } // TODO:step1 try后面直接new db，不需要tear down
         }
     }
 }

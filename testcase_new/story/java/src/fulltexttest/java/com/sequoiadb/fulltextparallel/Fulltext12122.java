@@ -8,7 +8,7 @@
  *  @version 1.00
  */
 package com.sequoiadb.fulltextparallel;
-
+// TODO:用例批注不需要符合规范
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -110,7 +110,7 @@ public class Fulltext12122 extends SdbTestBase {
         esClient.close();
     }
 
-    @Test
+    @Test  //TODO:测试点需要梳理，并发前的操作可以放到 setUp
     public void test() throws Exception {
         // insert
         FullTextDBUtils.insertData( cl1, 10000 );
@@ -170,7 +170,7 @@ public class Fulltext12122 extends SdbTestBase {
         DBCursor cursor = cl1.query( matcher, null, null, null );
         int count = 0;
         while ( cursor.hasNext() ) {
-            BSONObject object = ( BSONObject ) cursor.getNext();
+            BSONObject object = ( BSONObject ) cursor.getNext();// TODO:未使用变量，不需要定义
             count++;
         }
         System.out.println( csName1 + "." + clName1 + "'s count: " + count );
@@ -244,7 +244,7 @@ public class Fulltext12122 extends SdbTestBase {
         }
     }
 
-    class CurdThread {
+    class CurdThread { // TODO:增删改建议分开写线程并发
         private Sequoiadb db = null;
         private DBCollection cl = null;
 
