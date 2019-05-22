@@ -1,0 +1,171 @@
+package com.sequoiadb.fulltext;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+import org.elasticsearch.client.Client;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ThreadExecutor;
+import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
+import com.sequoiadb.utils.FullTextDBUtils;
+import com.sequoiadb.utils.FullTextESUtils;
+import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
+
+/**
+ * @testcase seqDB-15798:增删改查与truncate并发
+ * @date 2019-4-22
+ * @author yinzhen
+ *
+ */
+public class FullText15798 extends SdbTestBase {
+    private static final String CLNAME = "cl15798";
+    private ThreadExecutor thExecutor = new ThreadExecutor(600000);
+    private Sequoiadb sdb;
+    private DBCollection cl;
+    private String fullIdxName = "idx15798";
+    private Client esClient;
+    private String esIndexName;
+    private String cappedCLName;
+    private int preCLLid;
+
+    @BeforeClass
+    public void setUp() throws Exception {
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("STANDALONE MODE");
+        }
+
+        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
+                Integer.parseInt(SdbTestBase.esServiceName));
+        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
+
+        insertData(cl, FullTextUtils.INSERT_NUMS);
+        cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text','d':'text','e':'text','f':'text'}", false,
+                false);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, FullTextUtils.INSERT_NUMS));
+
+        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
+        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
+    }
+
+    @Test
+    public void test() throws Exception {
+        thExecutor.addWorker(new OperatorData());
+        thExecutor.addWorker(new TruncateCL());
+
+        thExecutor.run();
+        thExecutor.display();
+    }
+
+    @AfterClass
+    public void tearDown() {
+        try {
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            cs.dropCollection(CLNAME);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
+        } finally {
+            sdb.close();
+        }
+    }
+
+    class OperatorData {
+        private Sequoiadb db;
+        private DBCollection cl;
+
+        private OperatorData() {
+            db = new Sequoiadb(coordUrl, "", "");
+            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+        }
+
+        @ExecuteOrder(step = 1, desc = "增删改查记录包含全文索引字段")
+        private void insertRecords() {
+            try {
+                insertData(cl, 10000);
+                cl.update("{a:'test_15798_1'}", "{$set:{b:'b_15798'}}", "{}");
+                cl.delete("{a:'test_15798_0'}");
+                cl.query();
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -321);
+            } finally {
+                db.close();
+            }
+        }
+    }
+
+    class TruncateCL {
+        private Sequoiadb db;
+        private DBCollection cl;
+
+        private TruncateCL() {
+            db = new Sequoiadb(coordUrl, "", "");
+            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+        }
+
+        @ExecuteOrder(step = 1, desc = "增删改查记录的同时，truncate 集合中的记录")
+        private void truncateCL() throws Exception {
+            while (cl.getCount() == 0) {
+                Thread.sleep(100);
+            }
+            preCLLid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
+
+            int count = 0;
+            while (count++ < 600) {
+                try {
+                    Thread.sleep(100);
+                    cl.truncate();
+                    System.out.println("truncate CL Times: " + count);
+                } catch (BaseException e) {
+                    if (e.getErrorCode() != -190 && e.getErrorCode() != -147) {
+                        Assert.fail(e.getMessage());
+                    }
+                    continue;
+                }
+                break;
+            }
+        }
+
+        @ExecuteOrder(step = 2, desc = "原始集合及固定集合中记录均被清空，主备节点数据一致")
+        private void checkData() throws Exception {
+            try {
+                Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, preCLLid));
+                Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 0));
+                List<BSONObject> actRecords = FullTextDBUtils.getRecordsFromCL(cl.query());
+                Assert.assertEquals(actRecords.size(), 0);
+                DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
+                actRecords = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
+                Assert.assertEquals(actRecords.size(), 0);
+            } finally {
+                db.close();
+            }
+        }
+    }
+
+    private void insertData(DBCollection cl, int insertNums) {
+        List<BSONObject> records = new ArrayList<BSONObject>();
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                BSONObject record = (BSONObject) JSON.parse("{a: 'test_15798_" + i * j + "', b: '"
+                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
+                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
+                        + StringUtils.getRandomString(128) + "'}");
+                records.add(record);
+            }
+            cl.insert(records);
+            records.clear();
+        }
+    }
+}
