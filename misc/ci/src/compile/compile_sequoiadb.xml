@@ -775,10 +775,12 @@
                  <property name="enterprise_str" value="" />
               </else>
             </if>
-            <chmod file="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}*installer.run" perm="755" />
-            <tar destfile="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-installer.tar.gz" 
-                 longfile="gnu" compression="gzip" 
-                 basedir="${release_dir}" includes="sequoiadb-${sequoiadb_version}-${platform}*installer.run"/>
+            <var name="run_package_name" value="sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-installer.run"/>
+            <chmod file="${release_dir}/${run_package_name}" perm="755" />
+            <var name="cmd" value="cd ${release_dir}; chown root:root ${run_package_name}; tar -zcvf sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-installer.tar.gz ${run_package_name};chown jenkins:jenkins ${run_package_name};"/>
+            <staf location="local" service="PROCESS"
+                  request="START SHELL COMMAND ${cmd}  WAIT 10m RETURNSTDERR"
+                  throwBuildException="1"/>
          </then>
       </if>
    </target>
