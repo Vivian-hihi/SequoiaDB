@@ -94,12 +94,6 @@ public class ListObjects18119 extends S3TestBase {
 			// objects do not match delimiter are displayed in contents,num is
 			// less than Maxkeys
 			List<S3ObjectSummary> objects = result.getObjectSummaries();
-			// TODO ：5.为什么只是判断objects的size，而不去判断commprefixes的size？
-			// 建议直接在最后比较结果集比较好，如果这里出错的话问题也不好定位，只能知道返回的contents中的条数不对，但不知道返回的具体记录是什么
-			if (objects.size() > maxKeys) {
-				Assert.fail("exceed the maximum number,  :" + objects.size());
-			}
-
 			List<String> queryKeyList = new ArrayList<>();
 			for (S3ObjectSummary os : objects) {
 				String key = os.getKey();
@@ -111,8 +105,6 @@ public class ListObjects18119 extends S3TestBase {
 			request.setContinuationToken(continuationToken);
 
 			int eachListNums = commonPrefixes.size() + queryKeyList.size();
-			// TODO
-			// :6.这里只是判断每次查询返回的结果是小于等于maxKeys的话，如果每次查询都只返回1条结果，而不是指定的maxKeys这样的情况就检测不到了
 			if (eachListNums > maxKeys) {
 				Assert.fail("list nums error! commonPrefixes: " + commonPrefixes.toString() + "  contents:"
 						+ queryKeyList.toString());

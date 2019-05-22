@@ -133,8 +133,7 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		}
 
 		@ExecuteOrder(step = 1)
-		// TODO :建议改为deleteObject()
-		private void createObject() {
+		private void deleteObject() {
 			s3Client2.deleteObject(bucketName, keyName);
 		}
 

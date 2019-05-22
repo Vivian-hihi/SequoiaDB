@@ -31,7 +31,7 @@ public class DeleteObject18177 extends S3TestBase {
 	private String bucketName = "bucket18177";
 	private AmazonS3 s3Client = null;
 
-	@BeforeClass()
+	@BeforeClass
 	private void setUp() throws IOException {
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
