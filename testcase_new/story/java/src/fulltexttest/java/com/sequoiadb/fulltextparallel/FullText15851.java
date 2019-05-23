@@ -31,9 +31,9 @@ import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
 
 /**
- * @description seqDB-15851:集合中存在全文索引，增删改/全文检索/查询记录/lob操作时创建/删除普通索引
- * @author huangxiaoni 2019.4.25
- * @modify
+ * @FileName seqDB-15851:集合中存在全文索引，增删改/全文检索/查询记录/lob操作时创建/删除普通索引
+ * @Author  huangxiaoni 
+ * @Date 2019.4.25
  */
 
 public class FullText15851 extends SdbTestBase {
@@ -319,7 +319,7 @@ public class FullText15851 extends SdbTestBase {
         }
         
         @ExecuteOrder(step = 1)
-        private void removeLob() {              
+        private void removeLob() {
             System.out.println(new Date() + " begin " + this.getClass().getName().toString());
             for (ObjectId lobId : lobIds1) {
                 cl2.removeLob(lobId);

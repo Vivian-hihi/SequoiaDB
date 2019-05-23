@@ -27,9 +27,9 @@ import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
 /**
- * @description seqDB-15875:truncate集合记录与删除集合并发
- * @author huangxiaoni 2019.5.14
- * @modify
+ * @FileName seqDB-15875:truncate集合记录与删除集合并发
+ * @Author huangxiaoni
+ * @Date 2019.5.14
  */
 
 public class FullText15875 extends SdbTestBase {

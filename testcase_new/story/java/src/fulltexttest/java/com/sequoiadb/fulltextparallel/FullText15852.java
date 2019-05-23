@@ -30,9 +30,9 @@ import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
 
 /**
- * @description seqDB-15852:集合中存在全文索引，增删改/全文检索/查询记录/lob操作时alter集合
- * @author huangxiaoni 2019.5.8
- * @modify
+ * @FileName seqDB-15852:集合中存在全文索引，增删改/全文检索/查询记录/lob操作时alter集合
+ * @Author huangxiaoni
+ * @Date 2019.5.8
  */
 
 public class FullText15852 extends SdbTestBase {

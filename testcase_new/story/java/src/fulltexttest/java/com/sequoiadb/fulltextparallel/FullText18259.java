@@ -27,7 +27,8 @@ import com.vividsolutions.jts.util.Assert;
 
 /**
  * @FileName seqDB-18259:同一集合并发创建删除相同的普通索引
- * @Author huangxiaoni 2019.5.9
+ * @Author
+ * @Date huangxiaoni 2019.5.9
  */
 
 public class FullText18259 extends SdbTestBase {

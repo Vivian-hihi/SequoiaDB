@@ -25,9 +25,9 @@ import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
 /**
- * @description seqDB-15880:truncate集合记录与阻塞sync并发
- * @author huangxiaoni 2019.5.14
- * @modify
+ * @FileName seqDB-15880:truncate集合记录与阻塞sync并发
+ * @Author huangxiaoni
+ * @Date 2019.5.14
  */
 
 public class FullText15880 extends SdbTestBase {

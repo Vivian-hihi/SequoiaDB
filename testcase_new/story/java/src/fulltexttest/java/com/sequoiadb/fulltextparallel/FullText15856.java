@@ -26,7 +26,8 @@ import com.sequoiadb.utils.StringUtils;
 
 /**
  * @FileName seqDB-15856:集合中存在全文索引，并发更新记录
- * @Author huangxiaoni 2019.5.8
+ * @Author huangxiaoni
+ * @Date 2019.5.8
  */
 
 public class FullText15856 extends SdbTestBase {
