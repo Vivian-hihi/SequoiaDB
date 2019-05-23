@@ -273,6 +273,20 @@ namespace engine
             return _scanPath.getSelectivity() ;
          }
 
+         OSS_INLINE virtual UINT32 getInputPages () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.getInputPages() ;
+         }
+
+         OSS_INLINE virtual UINT64 getInputRecords () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.getInputRecords() ;
+         }
+
          OSS_INLINE virtual const optScanPath &getScanPath () const
          {
             SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
@@ -286,6 +300,17 @@ namespace engine
          }
 
          virtual INT32 bindMatchRuntime ( mthMatchRuntime *matchRuntime ) = 0 ;
+
+         // Virtual functions for parameterized plans
+         OSS_INLINE virtual BOOLEAN isParamValid () const
+         {
+            return FALSE ;
+         }
+
+         OSS_INLINE virtual BOOLEAN isMainCLValid () const
+         {
+            return FALSE ;
+         }
 
       protected :
          OSS_INLINE virtual INT32 _toBSONInternal ( BSONObjBuilder &builder ) const
@@ -350,12 +375,6 @@ namespace engine
             }
          }
 
-         // Virtual functions for parameterized plans
-         OSS_INLINE virtual BOOLEAN isParamValid () const
-         {
-            return FALSE ;
-         }
-
          OSS_INLINE virtual BOOLEAN validateParameterized ( const _optAccessPlan &plan,
                                                             const BSONObj &parameters )
          {
@@ -393,8 +412,6 @@ namespace engine
                                      optAccessPlanHelper &planHelper,
                                      const CHAR *pIndexName,
                                      OPT_PLAN_PATH_PRIORITY priority,
-                                     UINT64 sortBufferSize,
-                                     INT32 estCacheSize,
                                      optScanPath &ixScanPath ) ;
 
          INT32 _estimateIxScanPlan ( dmsStorageUnit *su,
@@ -403,8 +420,6 @@ namespace engine
                                      optAccessPlanHelper &planHelper,
                                      const OID &indexOID,
                                      OPT_PLAN_PATH_PRIORITY priority,
-                                     UINT64 sortBufferSize,
-                                     INT32 estCacheSize,
                                      optScanPath &ixScanPath ) ;
 
          INT32 _estimateIxScanPlan ( dmsStorageUnit *su,
@@ -412,14 +427,10 @@ namespace engine
                                      optAccessPlanHelper &planHelper,
                                      dmsExtentID indexCBExtent,
                                      OPT_PLAN_PATH_PRIORITY priority,
-                                     UINT64 sortBufferSize,
-                                     INT32 estCacheSize,
                                      optScanPath &ixScanPath ) ;
 
          INT32 _estimateTbScanPlan ( optCollectionStat *collectionStat,
                                      optAccessPlanHelper &planHelper,
-                                     UINT64 sortBufferSize,
-                                     INT32 estCacheSize,
                                      optScanPath &tbScanPath ) ;
 
          INT32 _usePath ( dmsStorageUnit *su,
@@ -554,7 +565,7 @@ namespace engine
 
          OSS_INLINE virtual void setCachedBitmap () {}
 
-         OSS_INLINE BOOLEAN isMainCLValid () const
+         OSS_INLINE virtual BOOLEAN isMainCLValid () const
          {
             return _isMainCLValid ;
          }

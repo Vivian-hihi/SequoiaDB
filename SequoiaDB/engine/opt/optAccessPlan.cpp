@@ -281,8 +281,6 @@ namespace engine
                                                       optAccessPlanHelper &planHelper,
                                                       const CHAR *pIndexName,
                                                       OPT_PLAN_PATH_PRIORITY priority,
-                                                      UINT64 sortBufferSize,
-                                                      INT32 estCacheSize,
                                                       optScanPath &ixScanPath )
    {
       INT32 rc = SDB_OK ;
@@ -302,8 +300,7 @@ namespace engine
                    pIndexName, rc ) ;
 
       rc = _estimateIxScanPlan( su, collectionStat, planHelper, indexCBExtent,
-                                priority, sortBufferSize, estCacheSize,
-                                ixScanPath ) ;
+                                priority, ixScanPath ) ;
       if ( rc )
       {
          if ( SDB_OPTION_NOT_SUPPORT != rc )
@@ -329,8 +326,6 @@ namespace engine
                                                       optAccessPlanHelper &planHelper,
                                                       const OID &indexOID,
                                                       OPT_PLAN_PATH_PRIORITY priority,
-                                                      UINT64 sortBufferSize,
-                                                      INT32 estCacheSize,
                                                       optScanPath &ixScanPath )
    {
       INT32 rc = SDB_OK ;
@@ -348,8 +343,7 @@ namespace engine
                    indexOID.toString().c_str(), rc ) ;
 
       rc = _estimateIxScanPlan( su, collectionStat, planHelper, indexCBExtent,
-                                priority, sortBufferSize, estCacheSize,
-                                ixScanPath ) ;
+                                priority, ixScanPath ) ;
       if ( rc )
       {
          if ( SDB_OPTION_NOT_SUPPORT != rc )
@@ -374,8 +368,6 @@ namespace engine
                                                       optAccessPlanHelper &planHelper,
                                                       dmsExtentID indexCBExtent,
                                                       OPT_PLAN_PATH_PRIORITY priority,
-                                                      UINT64 sortBufferSize,
-                                                      INT32 estCacheSize,
                                                       optScanPath &ixScanPath )
    {
       INT32 rc = SDB_OK ;
@@ -408,8 +400,7 @@ namespace engine
 
          rc = ixScanPath.createIxScan( _key.getCLFullName(), indexCB,
                                        _key, planHelper, priority,
-                                       estCacheSize, collectionStat,
-                                       &indexStat ) ;
+                                       collectionStat, &indexStat ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to create index scan node, rc: %d", rc ) ;
       }
@@ -424,7 +415,7 @@ namespace engine
 
       if ( ixScanPath.isCandidate() )
       {
-         ixScanPath.evaluate( _key, sortBufferSize ) ;
+         ixScanPath.evaluate( _key, planHelper.getSortBufferSize() ) ;
       }
 
    done :
@@ -438,8 +429,6 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTGENACPLAN__ESTTBPLAN, "_optGeneralAccessPlan::_estimateTbScanPlan" )
    INT32 _optGeneralAccessPlan::_estimateTbScanPlan ( optCollectionStat *collectionStat,
                                                       optAccessPlanHelper &planHelper,
-                                                      UINT64 sortBufferSize,
-                                                      INT32 estCacheSize,
                                                       optScanPath &tbScanPath )
    {
       INT32 rc = SDB_OK ;
@@ -449,11 +438,11 @@ namespace engine
       SDB_ASSERT( collectionStat, "collection is invalid" ) ;
 
       rc = tbScanPath.createTbScan( _key.getCLFullName(), _key, planHelper,
-                                    estCacheSize, collectionStat ) ;
+                                    collectionStat ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to create index scan node, rc: %d", rc ) ;
 
-      tbScanPath.evaluate( _key, sortBufferSize ) ;
+      tbScanPath.evaluate( _key, planHelper.getSortBufferSize() ) ;
 
    done :
        PD_TRACE_EXITRC( SDB__OPTGENACPLAN__ESTTBPLAN, rc ) ;
@@ -473,10 +462,8 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTHINTPLANS ) ;
 
-      UINT64 sortBufferSize = planHelper.getSortBufferSize() * 1024 * 1024 ;
-      INT32 estCacheSize = planHelper.getOptCostThreshold() ;
-
-      optCollectionStat collectionStat( su->getPageSize(), mbContext, statCache ) ;
+      optCollectionStat collectionStat( su->getPageSize(), mbContext,
+                                        planHelper, statCache ) ;
 
       optScanPath bestPath( &_planAllocator ) ;
 
@@ -512,7 +499,6 @@ namespace engine
 
                   rc = _estimateIxScanPlan( su, mbContext, &collectionStat,
                                             planHelper, pIndexName, priority,
-                                            sortBufferSize, estCacheSize,
                                             ixScanPath ) ;
                   if ( SDB_OK != rc )
                   {
@@ -561,7 +547,6 @@ namespace engine
 
                rc = _estimateIxScanPlan( su, mbContext, &collectionStat,
                                          planHelper, indexOID, priority,
-                                         sortBufferSize, estCacheSize,
                                          ixScanPath ) ;
                if ( SDB_OK != rc )
                {
@@ -599,7 +584,6 @@ namespace engine
 
                // if we use null in the hint, we use tbscan
                rc = _estimateTbScanPlan( &collectionStat, planHelper,
-                                         sortBufferSize, estCacheSize,
                                          tbScanPath ) ;
                if ( SDB_OK != rc )
                {
@@ -670,15 +654,12 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTPLANS ) ;
 
-      UINT64 sortBufferSize = planHelper.getSortBufferSize() * 1024 * 1024 ;
-      INT32 estCacheSize = planHelper.getOptCostThreshold() ;
-
       dmsExtentID bestIdxExtID = DMS_INVALID_EXTENT ;
 
       optScanPath tbScanPath( &_planAllocator ), bestPath( &_planAllocator ) ;
 
       optCollectionStat collectionStat( su->getPageSize(), mbContext,
-                                        statCache ) ;
+                                        planHelper, statCache ) ;
       UINT32 candidateCount = 0 ;
 
       optScanType scanType = UNKNOWNSCAN ;
@@ -718,8 +699,7 @@ namespace engine
            priority == OPT_PLAN_DEFAULT_PRIORITY )
       {
          // Estimate table scan
-         rc = _estimateTbScanPlan( &collectionStat, planHelper,
-                                   sortBufferSize, estCacheSize, tbScanPath ) ;
+         rc = _estimateTbScanPlan( &collectionStat, planHelper, tbScanPath ) ;
          PD_RC_CHECK( rc, PDWARNING, "Failed to estimate table scan for "
                       "collection [%s], rc: %d", _key.getCLFullName(), rc ) ;
       }
@@ -735,7 +715,6 @@ namespace engine
 
             rc = _estimateIxScanPlan( su, mbContext, &collectionStat,
                                       planHelper, pIndexName, priority,
-                                      sortBufferSize, estCacheSize,
                                       ixScanPath ) ;
 
             if ( SDB_OK != rc )
@@ -789,8 +768,7 @@ namespace engine
             }
 
             rc = _estimateIxScanPlan( su, &collectionStat, planHelper,
-                                      indexCBExtent, priority, sortBufferSize,
-                                      estCacheSize, ixScanPath ) ;
+                                      indexCBExtent, priority, ixScanPath ) ;
             if ( SDB_OK != rc )
             {
                // Continue to evaluate the rest of indexes

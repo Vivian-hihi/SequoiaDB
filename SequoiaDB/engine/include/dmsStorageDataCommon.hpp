@@ -534,6 +534,11 @@ namespace engine
 
       void removeAllFromChain() ;
 
+      OSS_INLINE UINT32 getUsedPages ( UINT32 pageSize ) const
+      {
+         return _totalDataPages - _totalDataFreeSpace / pageSize ;
+      }
+
       _dmsMBStatInfo ()
       :_commitFlag( 0 ), _lastLSN( 0 ),
       _idxCommitFlag( 0 ), _idxLastLSN( 0 ),

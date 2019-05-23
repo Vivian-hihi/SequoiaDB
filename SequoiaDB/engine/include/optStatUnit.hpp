@@ -52,6 +52,7 @@ namespace engine
 {
 
    class _dmsMBContext ;
+   class _optAccessPlanHelper ;
 
    class _optCollectionStat ;
    typedef _optCollectionStat optCollectionStat ;
@@ -261,8 +262,9 @@ namespace engine
    {
       public :
          _optCollectionStat ( UINT32 pageSize,
-                              _dmsMBContext *mbContext,
-                              const dmsStatCache *statCache ) ;
+                              _dmsMBContext * mbContext,
+                              const _optAccessPlanHelper & helper,
+                              const dmsStatCache * statCache ) ;
 
          virtual ~_optCollectionStat () {}
 
@@ -347,8 +349,6 @@ namespace engine
             return ( isValid() ? _pCollectionStat->getCreateTime() : 0 ) ;
          }
 
-         INT32 initCurStat ( _dmsMBContext *mbContext ) ;
-
          double evalPredicateSet ( rtnPredicateSet &predicateSet,
                                    BOOLEAN mixCmp,
                                    double &scanSelectivity ) ;
@@ -386,12 +386,12 @@ namespace engine
             return _bestIndexStat ? _bestIndexStat->getIndexName() : NULL ;
          }
 
+      protected :
          OSS_INLINE void _setBestIndex ( const dmsIndexStat *pIndexStat )
          {
             _bestIndexStat = pIndexStat ;
          }
 
-      protected :
          double _evalKeyPair ( const BSONElement &startKey,
                                BOOLEAN startIncluded,
                                const BSONElement &stopKey,
@@ -413,6 +413,9 @@ namespace engine
                                   BOOLEAN stopIncluded ) const ;
 
          const dmsIndexStat *_getMatchedIndex ( rtnPredicateSet &predicates ) const ;
+
+         void _initStat ( _dmsMBContext *mbContext ) ;
+         void _checkExpired ( INT32 costThreshold ) ;
 
       protected :
          /* Init from dmsMBContext */
@@ -438,6 +441,12 @@ namespace engine
       return ( _pIndexStat && !realTime ) ?
              _pIndexStat->getIndexPages() : _collectionStat.getAvgIndexPages() ;
    }
+
+   /*
+      helper functions
+    */
+   BOOLEAN optCheckStatExpired ( UINT32 currentPages, UINT32 statPages,
+                                 UINT32 costThreshold ) ;
 
 }
 

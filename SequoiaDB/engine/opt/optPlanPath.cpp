@@ -161,7 +161,6 @@ namespace engine
    INT32 _optScanPath::createTbScan ( const CHAR * pCollection,
                                       const rtnQueryOptions & queryOptions,
                                       optAccessPlanHelper & planHelper,
-                                      INT32 estCacheSize,
                                       optCollectionStat * collectionStat )
    {
       INT32 rc = SDB_OK ;
@@ -180,7 +179,8 @@ namespace engine
       }
 
       pTbScan = new ( _pAllocator, std::nothrow )
-                      optTbScanNode( pCollection, estCacheSize ) ;
+                      optTbScanNode( pCollection,
+                                     planHelper.getOptCostThreshold() ) ;
       PD_CHECK( pTbScan, SDB_OOM, error, PDWARNING,
                 "Failed to allocate optTbScanNode" ) ;
 
@@ -204,7 +204,6 @@ namespace engine
                                       const rtnQueryOptions & queryOptions,
                                       optAccessPlanHelper & planHelper,
                                       OPT_PLAN_PATH_PRIORITY priority,
-                                      INT32 estCacheSize,
                                       optCollectionStat * collectionStat,
                                       optIndexStat * indexStat )
    {
@@ -225,7 +224,8 @@ namespace engine
       }
 
       pIdxScan = new ( _pAllocator, std::nothrow )
-                       optIxScanNode( pCollection, indexCB, estCacheSize ) ;
+                       optIxScanNode( pCollection, indexCB,
+                                      planHelper.getOptCostThreshold() ) ;
       PD_CHECK( pIdxScan, SDB_OOM, error, PDWARNING,
                 "Failed to allocate optIxScanNode" ) ;
 
@@ -1228,7 +1228,7 @@ namespace engine
                         builder.subobjStart( OPT_FIELD_OPTIONS ) ) ;
 
       optionBuilder.append( OPT_FIELD_SORT_BUFF_SIZE,
-                            getSortBufferSize() ) ;
+                            getSortBufferSizeMB() ) ;
       optionBuilder.append( OPT_FIELD_OPT_COST_THRESHOLD,
                             getOptCostThreshold() ) ;
 

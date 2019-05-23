@@ -152,7 +152,6 @@ namespace engine
          INT32 createTbScan ( const CHAR * pCollection,
                               const rtnQueryOptions & queryOptions,
                               optAccessPlanHelper & planHelper,
-                              INT32 estCacheSize,
                               optCollectionStat * collectionStat ) ;
 
          INT32 createIxScan ( const CHAR * pCollection,
@@ -160,7 +159,6 @@ namespace engine
                               const rtnQueryOptions & queryOptions,
                               optAccessPlanHelper & planHelper,
                               OPT_PLAN_PATH_PRIORITY priority,
-                              INT32 estCacheSize,
                               optCollectionStat * collectionStat,
                               optIndexStat * indexStat ) ;
 
@@ -234,6 +232,16 @@ namespace engine
          {
             return ( NULL != _pScanNode ) ? _pScanNode->getScanType() :
                                             UNKNOWNSCAN ;
+         }
+
+         OSS_INLINE UINT32 getInputPages () const
+         {
+            return ( NULL != _pScanNode ) ? _pScanNode->getInputPages() : 0 ;
+         }
+
+         OSS_INLINE UINT64 getInputRecords () const
+         {
+            return ( NULL != _pScanNode ) ? _pScanNode->getInputRecords() : 0 ;
          }
 
          INT32 evaluate ( const rtnQueryOptions & options,

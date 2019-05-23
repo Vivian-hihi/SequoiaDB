@@ -45,6 +45,7 @@
 #include "ixm.hpp"
 #include "ixmExtent.hpp"
 #include "optCommon.hpp"
+#include "optAccessPlanHelper.hpp"
 
 using namespace bson ;
 
@@ -592,8 +593,9 @@ namespace engine
       _optCollectionStat implement
     */
    _optCollectionStat::_optCollectionStat ( UINT32 pageSize,
-                                            _dmsMBContext *mbContext,
-                                            const dmsStatCache *statCache )
+                                            _dmsMBContext * mbContext,
+                                            const _optAccessPlanHelper & helper,
+                                            const dmsStatCache * statCache )
    : _optStatUnit( 0 ),
      _pageSize( pageSize ),
      _totalDataPages( 0 ),
@@ -610,21 +612,20 @@ namespace engine
       {
          // For statistics cache, mbID is ID of cache unit
          _pCollectionStat = (const dmsCollectionStat *)
-                            statCache->getCacheUnit( mbContext->mbID() ) ;
+                              statCache->getCacheUnit( mbContext->mbID() ) ;
       }
       SDB_ASSERT( NULL != mbContext, "mbContext is invalid" ) ;
-      initCurStat( mbContext ) ;
+      _initStat( mbContext ) ;
+      _checkExpired( helper.getOptCostThreshold() ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCLSTAT_INITCURSTAT, "_optCollectionStat::initCurStat" )
-   INT32 _optCollectionStat::initCurStat( _dmsMBContext *mbContext )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCLSTAT__INITSTAT, "_optCollectionStat::_initStat" )
+   void _optCollectionStat::_initStat( _dmsMBContext *mbContext )
    {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_OPTCLSTAT_INITCURSTAT ) ;
+      PD_TRACE_ENTRY( SDB_OPTCLSTAT__INITSTAT ) ;
 
       _totalRecords = mbContext->mbStat()->_totalRecords ;
-      _totalDataPages = mbContext->mbStat()->_totalDataPages ;
+      _totalDataPages = mbContext->mbStat()->getUsedPages( _pageSize ) ;
       _totalDataSize = mbContext->mbStat()->_totalOrgDataLen ;
 
       _numIndexes = mbContext->mb()->_numIndexes ;
@@ -637,8 +638,7 @@ namespace engine
          _avgIndexSize = OPT_ROUND_NUM( (UINT64)ceil( (double)_totalIndexSize / (double)_numIndexes ) ) ;
       }
 
-      PD_TRACE_EXITRC( SDB_OPTCLSTAT_INITCURSTAT, rc ) ;
-      return rc ;
+      PD_TRACE_EXIT( SDB_OPTCLSTAT__INITSTAT ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT_EVALPREDSET, "_optCollectionStat::evalPredicateSet" )
@@ -1320,6 +1320,23 @@ namespace engine
       return pBestIndexStat ;
    }
 
+   void _optCollectionStat::_checkExpired ( INT32 costThreshold )
+   {
+      if ( NULL != _pCollectionStat &&
+           optCheckStatExpired( _totalDataPages,
+                                _pCollectionStat->getTotalDataPages(),
+                                costThreshold ) )
+      {
+         // if the statistics is expired, ignore it
+         PD_LOG( PDDEBUG, "Statistics for collection [%s.%s] is expired, "
+                 "current pages [%d], statistics pages [%d], "
+                 "cost threshold [%d]", _pCollectionStat->getCSName(),
+                 _pCollectionStat->getCLName(), _totalDataPages,
+                 _pCollectionStat->getTotalDataPages(), costThreshold ) ;
+         _pCollectionStat = NULL ;
+      }
+   }
+
    /*
       Helper functions implement
     */
@@ -1348,4 +1365,31 @@ namespace engine
 
       return scalar ;
    }
+
+   BOOLEAN optCheckStatExpired ( UINT32 currentPages, UINT32 statPages,
+                                 UINT32 costThreshold )
+   {
+      if ( currentPages <= costThreshold && statPages <= costThreshold )
+      {
+         // both current and history number of pages are smaller than cost
+         // threshold, means the collection is small, always not expired
+         return FALSE ;
+      }
+      else if ( ( currentPages > costThreshold &&
+                  statPages <= costThreshold ) ||
+                ( currentPages <= costThreshold &&
+                  statPages > costThreshold ) )
+      {
+         // one of current or history number of pages are larger than
+         // cost threshold, will expire the history statistics
+         return TRUE ;
+      }
+
+
+      // if current number of pages are twice or 1/2 of history one,
+      // the history statistics is expired
+      return ( currentPages > ( statPages << 1 ) ||
+               currentPages < ( statPages >> 1 ) ) ;
+   }
+
 }

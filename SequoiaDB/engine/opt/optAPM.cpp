@@ -1091,7 +1091,7 @@ namespace engine
 
          if ( bucketNum != _planCache.getBucketNum() ||
               cacheLevel != _cacheLevel ||
-              sortBufferSize != getSortBufferSize() ||
+              sortBufferSize != getSortBufferSizeMB() ||
               optCostThreshold != getOptCostThreshold() ||
               enableMixCmp != mthEnabledMixCmp() )
          {
@@ -1711,7 +1711,6 @@ namespace engine
       SDB_ASSERT( mbContext, "mbContext is invalid" ) ;
 
       optGeneralAccessPlan *pPlan = NULL ;
-      optAccessPlan *pTmpPlan = NULL ;
 
       // Construct the plan key, but needn't to get owned at this stage
       optAccessPlanKey planKey( options, cacheLevel ) ;
@@ -1732,6 +1731,8 @@ namespace engine
       // If cache is initialized, try to get plan from cache first
       if ( needCache )
       {
+         optAccessPlan *pTmpPlan = NULL ;
+
          rc = _getCachedAccessPlan( planKey, &pTmpPlan ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get access plan, rc: %d", rc ) ;
          if ( pTmpPlan )
@@ -1741,6 +1742,32 @@ namespace engine
             {
                // Cast failed, release the temp plan
                pTmpPlan->release() ;
+            }
+            else if ( optCheckStatExpired(
+                        mbContext->mbStat()->getUsedPages( su->getPageSize() ),
+                        pPlan->getInputPages(),
+                        planHelper.getOptCostThreshold() ) )
+            {
+               dmsCachedPlanMgr *pCachedPlanMgr = su->getCachedPlanMgr() ;
+
+               // plan is expired
+               PD_LOG( PDDEBUG, "Plan [%s] is expired, current pages [%d], "
+                       "statistics pages [%d], cost threshold [%d]",
+                       pPlan->toString().c_str(),
+                       mbContext->mbStat()->_totalDataPages,
+                       pPlan->getInputPages(),
+                       planHelper.getOptCostThreshold() ) ;
+
+               // clear expired plan and flags
+               _planCache.removeCachedPlan( pPlan, SHARED ) ;
+               if ( NULL != pCachedPlanMgr )
+               {
+                  pCachedPlanMgr->clearParamInvalidBit( mbContext->mbID() ) ;
+               }
+
+               // release plan
+               pPlan->release() ;
+               pPlan = NULL ;
             }
          }
       }
@@ -1830,8 +1857,6 @@ namespace engine
       }
       else
       {
-         optMainCLAccessPlan *mainPlan = NULL ;
-
          // Construct the plan key for main-collection
          optAccessPlanKey planKey( options, cacheLevel ) ;
          planKey.setCLFullName( options.getMainCLName() ) ;
@@ -1849,8 +1874,36 @@ namespace engine
          rc = _getCachedAccessPlan( planKey, &pPlan ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get access plan, rc: %d", rc ) ;
 
+         // if plan is main-collection validated, check whether statistics
+         // for this sub-collection is expired
+         if ( NULL != pPlan && pPlan->isMainCLValid() &&
+              !pCachedPlanMgr->testParamInvalidBitmap( subCLMBID ) &&
+              optCheckStatExpired(
+                    mbContext->mbStat()->getUsedPages( su->getPageSize() ),
+                    pPlan->getInputPages(),
+                    planHelper.getOptCostThreshold() ) )
+         {
+            // plan is expired
+            PD_LOG( PDDEBUG, "Plan [%s] is expired, current pages [%d], "
+                    "statistics pages [%d], cost threshold [%d]",
+                    pPlan->toString().c_str(),
+                    mbContext->mbStat()->_totalDataPages,
+                    pPlan->getInputPages(),
+                    planHelper.getOptCostThreshold() ) ;
+
+            // clear expired plan and flags
+            _planCache.removeCachedPlan( pPlan, SHARED ) ;
+            pCachedPlanMgr->clearMainCLInvalidBit( subCLMBID ) ;
+
+            // release plan
+            pPlan->release() ;
+            pPlan = NULL ;
+         }
+
          if ( NULL == pPlan )
          {
+            optMainCLAccessPlan * mainPlan = NULL ;
+
             // Could not find the main-collection plan from cache, so create
             // the plan for sub-collection and bind it to the main-collection
             // plan
@@ -1866,7 +1919,8 @@ namespace engine
          }
          else
          {
-            mainPlan = dynamic_cast<optMainCLAccessPlan *>( pPlan ) ;
+            optMainCLAccessPlan * mainPlan =
+                              dynamic_cast<optMainCLAccessPlan *>( pPlan ) ;
             SDB_ASSERT( mainPlan, "mainPlan is invalid " ) ;
 
             if ( pCachedPlanMgr->testParamInvalidBitmap( subCLMBID ) ||

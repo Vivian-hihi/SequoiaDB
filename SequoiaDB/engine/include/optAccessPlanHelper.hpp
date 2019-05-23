@@ -96,9 +96,14 @@ namespace engine
             _config._sortBufferSize = sortBufferSize ;
          }
 
-         OSS_INLINE UINT32 getSortBufferSize () const
+         OSS_INLINE UINT32 getSortBufferSizeMB () const
          {
             return _config._sortBufferSize ;
+         }
+
+         OSS_INLINE UINT64 getSortBufferSize () const
+         {
+            return ( (UINT64)_config._sortBufferSize ) << 20 ;
          }
 
          OSS_INLINE void setOptCostThreshold ( INT32 optCostThreshold )
