@@ -19,7 +19,7 @@ Open a file or create a new file.
 | Name       | Type     | Default                               | Description        | Required or not |
 | ---------- | -------- | ------------------------------------- | ------------------ | -------- |
 | filepath   | string   | ---                                   | file path                      | yes      |
-| permission | int      | 0644                                  | set permissions to open files  | not      |
+| permission | int      | 0700                                  | set permissions to open files  | not      |
 | mode       | int      | SDB_FILE_READWRITE \| SDB_FILE_CREATE | set the way to open files      | not      |
 
 The optional values of the 'mode' parameter are as follows：
@@ -33,7 +33,7 @@ The optional values of the 'mode' parameter are as follows：
 | SDB_FILE_WRITEONLY    | open the file in write-only mode                                  |
 | SDB_FILE_READWRITE    | open the file in read-write mode                                  |
 | SDB_FILE_SHAREREAD    | open the file in shared read  mode                                |
-| SDB_FILE_SHAREWROTE   | open the file in shared write mode                                |
+| SDB_FILE_SHAREWRITE   | open the file in shared write mode                                |
 
 >Note：
 

@@ -15,7 +15,7 @@ File
 | 参数名     | 参数类型 | 默认值                                | 描述               | 是否必填 |
 | ---------- | -------- | ------------------------------------- | ------------------ | -------- |
 | filepath   | string   | 无                                    | 文件路径           | 是       |
-| permission | int      | 0644                                  | 设置打开文件的权限 | 否       |
+| permission | int      | 0700                                  | 设置打开文件的权限 | 否       |
 | mode       | int      | SDB_FILE_READWRITE \| SDB_FILE_CREATE | 设置文件打开的方式 | 否       |
 
 mode 参数的可选值如下表：
@@ -29,7 +29,7 @@ mode 参数的可选值如下表：
 | SDB_FILE_WRITEONLY    | 以只写的模式打开文件         |
 | SDB_FILE_READWRITE    | 以可读可写的模式打开文件     |
 | SDB_FILE_SHAREREAD    | 以共享读的模式打开文件       |
-| SDB_FILE_SHAREWROTE   | 以共享写的模式打开文件       |
+| SDB_FILE_SHAREWRITE   | 以共享写的模式打开文件       |
 
 > Note：
 

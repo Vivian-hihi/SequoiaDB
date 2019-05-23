@@ -54,7 +54,7 @@ permission
 T}@T{
 int
 T}@T{
-0644
+0700
 T}@T{
 set permissions to open
 T}@T{
@@ -192,7 +192,7 @@ T}
 T{
 8
 T}@T{
-SDB_FILE_SHAREWROTE
+SDB_FILE_SHAREWRITE
 T}@T{
 open the file in shared
 T}
