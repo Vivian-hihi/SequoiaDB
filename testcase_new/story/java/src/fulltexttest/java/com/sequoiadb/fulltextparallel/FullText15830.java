@@ -20,7 +20,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
-
+//TODO：其他检视意见同 15826 用例
 /**
  * @testcase seqDB-15830:创建全文索引与增删改记录并发
  * @date 2019-4-30
@@ -92,6 +92,7 @@ public class FullText15830 extends SdbTestBase {
                 cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
                         false, false);
                 esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
+                //TODO:跟CL并发有可能获取esIndexName正常，但获取esIndexName时CL被删，影响后面检查结果。建议在最后所有线程跑完了之后获取并检查原始集合、固定集合、ES端索引、主备节点是否残留
                 cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -23);

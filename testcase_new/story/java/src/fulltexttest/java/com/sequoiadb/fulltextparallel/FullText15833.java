@@ -19,9 +19,9 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
-
+//TODO：其他检视意见同 15826、15832 用例
 /**
- * @testcase seqDB-15833:创建全文索引与删除集合空间并发
+ * @testcase seqDB-15833:创建全文索引与删除集合空间并发 //TODO:标题跟文本用例不符
  * @date 2019-4-30
  * @author yinzhen
  *
@@ -79,7 +79,7 @@ public class FullText15833 extends SdbTestBase {
         }
     }
 
-    class CreateFullIdx {
+    class CreateFullIdx {// TODO:删除全文索引吧？类名和方法名改下
         private Sequoiadb db;
         private DBCollection cl;
 
@@ -93,7 +93,7 @@ public class FullText15833 extends SdbTestBase {
             try {
                 cl.dropIndex(fullIdxName);
             } catch (BaseException e) {
-                if (e.getErrorCode() != -248 && e.getErrorCode() != -23) {
+                if (e.getErrorCode() != -248 && e.getErrorCode() != -23) {//TODO:可能报 -34 吧？
                     Assert.fail(e.getMessage());
                 }
             }

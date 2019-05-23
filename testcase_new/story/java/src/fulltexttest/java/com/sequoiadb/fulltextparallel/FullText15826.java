@@ -26,7 +26,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @testcase seqDB-15826:删除全文索引与创建/删除普通索引并发
  * @date 2019-4-30
  * @author yinzhen
- *
+ *  //TODO:用例注释需要按规范填写字段 @FileName  @Author @Date .....
  */
 public class FullText15826 extends SdbTestBase {
     private static final String CLNAME = "cl15826";
@@ -50,7 +50,7 @@ public class FullText15826 extends SdbTestBase {
                 Integer.parseInt(SdbTestBase.esServiceName));
         groupName = CommLib.getDataGroupNames(sdb).get(0);
         cl = sdb.getCollectionSpace(csName).createCollection(CLNAME,
-                (BSONObject) JSON.parse("{Group:'" + groupName + "'}"));
+                (BSONObject) JSON.parse("{Group:'" + groupName + "'}"));//TODO：没切分不需要指定组吧？
         FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text'}", false, false);
     }
@@ -58,10 +58,10 @@ public class FullText15826 extends SdbTestBase {
     @Test
     public void test() throws Exception {
         thExecutor.addWorker(new DropFullIdx());
-        thExecutor.addWorker(new CreateIdx());
-
+        thExecutor.addWorker(new CreateIdx());//TODO：没有检查结果
+//TODO:缺少测试点，见文本用例： b.创建普通索引；c.删除普通索引；字段覆盖：重叠、不重叠。   即：创建和删除的普通索引的索引字段需要覆盖：跟全文索引键 重叠、不重叠
         thExecutor.run();
-        thExecutor.display();
+        thExecutor.display();//TODO：不需要，没配置log4j.properties，日志打印不出来
     }
 
     @AfterClass
@@ -87,9 +87,9 @@ public class FullText15826 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除全文索引")
         private void dropFullIdx() {
             esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
-            cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
+            cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);//TODO:这2步建议放到setUp，避免占用并发运行时间
             cl.dropIndex(fullIdxName);
-            Assert.assertFalse(cl.isIndexExist(fullIdxName));
+            Assert.assertFalse(cl.isIndexExist(fullIdxName));  //TODO：这个不需要判断，setp2已经判断了
         }
 
         @ExecuteOrder(step = 2, desc = "主备节点上索引信息及固定集合信息一致，ES同步的索引数据正确")
@@ -99,7 +99,7 @@ public class FullText15826 extends SdbTestBase {
                 Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
                 checkFullIdx();
             } finally {
-                db.close();
+                db.close();//TODO:连接建议另起一个方法关闭
             }
         }
     }

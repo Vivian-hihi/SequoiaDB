@@ -20,7 +20,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
-
+//TODO：其他检视意见同 15826 用例
 /**
  * @testcase seqDB-15832:删除全文索引与删除集合并发
  * @date 2019-4-30
@@ -58,7 +58,7 @@ public class FullText15832 extends SdbTestBase {
     @Test
     public void test() throws Exception {
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
-        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
+        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);//TODO:如上2行非测试，建议放到 setUp
 
         thExecutor.addWorker(new DropFullIdx());
         thExecutor.addWorker(new DropCL());
