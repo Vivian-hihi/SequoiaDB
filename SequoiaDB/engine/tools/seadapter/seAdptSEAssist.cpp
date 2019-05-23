@@ -111,6 +111,7 @@ namespace seadapter
 
       ossStrncpy( _index, index, SEADPT_MAX_IDXNAME_SZ + 1 ) ;
       ossStrncpy( _type, type, SEADPT_MAX_TYPE_SZ + 1 ) ;
+      _oprMon.reset() ;
 
    done:
       return rc ;
@@ -132,10 +133,18 @@ namespace seadapter
             PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[ %d ]" ) ;
 
             PD_LOG( PDDEBUG, "Index documents in bulk mode successfully. "
-                             "Document number[%u]. Total size[%u]",
-                    _bulkBuilder.getItemNum(), _bulkBuilder.getDataLen() ) ;
+                             "Document number[%u], size[%u]. Detail: insert[%u], "
+                             "update[%u], delete[%u], ignore[%u], total "
+                             "insert[%llu], total update[%llu], "
+                             "total delete[%llu], total ignore[%llu]",
+                    _bulkBuilder.getItemNum(), _bulkBuilder.getDataLen(),
+                    _oprMon._insertCount, _oprMon._updateCount,
+                    _oprMon._deleteCount, _oprMon._ignoreCount,
+                    _oprMon._totalInsertCount, _oprMon._totalUpdateCount,
+                    _oprMon._totalDeleteCount, _oprMon._totalIgnoreCount ) ;
 
             _bulkBuilder.reset() ;
+            _oprMon.reset() ;
          }
          else
          {
@@ -188,8 +197,16 @@ namespace seadapter
          rc = _esClient->bulk( _index, _type, _bulkBuilder.getData() ) ;
          PD_RC_CHECK( rc, PDERROR, "Bulk operation failed[%d]", rc ) ;
          PD_LOG( PDDEBUG, "Index documents in bulk mode successfully. "
-                          "Document number[%u]. Total size[%u]",
-                 _bulkBuilder.getItemNum(), _bulkBuilder.getDataLen() ) ;
+                          "Document number[%u], size[%u]. Detail: insert[%u], "
+                          "update[%u], delete[%u], ignore[%u], total "
+                          "insert[%llu], total update[%llu], "
+                          "total delete[%llu], total ignore[%llu]",
+                 _bulkBuilder.getItemNum(), _bulkBuilder.getDataLen(),
+                 _oprMon._insertCount, _oprMon._updateCount,
+                 _oprMon._deleteCount, _oprMon._ignoreCount,
+                 _oprMon._totalInsertCount, _oprMon._totalUpdateCount,
+                 _oprMon._totalDeleteCount, _oprMon._totalIgnoreCount ) ;
+         _oprMon.reset() ;
       }
 
    done:

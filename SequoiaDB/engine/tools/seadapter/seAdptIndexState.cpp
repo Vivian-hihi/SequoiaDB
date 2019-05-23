@@ -967,6 +967,7 @@ namespace seadapter
                rc = seAssist->bulkProcess( item ) ;
                PD_RC_CHECK( rc, PDERROR, "Bulk processing item failed[%d]",
                             rc ) ;
+               seAssist->oprMonitor()->monInsertCountInc() ;
             }
          }
 
@@ -1837,31 +1838,17 @@ namespace seadapter
 
       rc = _parseRecord( document, oprType, finalID, logicalID,
                          sourceObj, &finalIdNew ) ;
-      if ( rc )
+      if ( SDB_INVALIDARG == rc )
       {
-         if ( SDB_INVALIDARG == rc )
-         {
-            // Unsupport type, just ignore.
-            rc = SDB_OK ;
-            goto done ;
-         }
+         // Unsupport type, just ignore.
+         seAssist->oprMonitor()->monIgnoreCountInc() ;
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else if ( rc )
+      {
          PD_LOG( PDERROR, "Get id string and source object failed[%d]", rc ) ;
          goto error ;
-      }
-
-      if ( sourceObj.isEmpty() )
-      {
-         if ( RTN_EXT_INSERT == oprType )
-         {
-            // Nothing should be inserted.
-            goto done ;
-         }
-         else if ( RTN_EXT_UPDATE == oprType )
-         {
-            // If no index field of type string, the document should be
-            // removed. So we directly change it into delete.
-            oprType = RTN_EXT_DELETE ;
-         }
       }
 
       if ( finalID.size() > SEADPT_MAX_ID_SZ )
@@ -1869,7 +1856,22 @@ namespace seadapter
          PD_LOG( PDDEBUG, "Ignore document as actual id length[%d] "
                           "exceeds limit[%d]. id value: %s",
                  finalID.size(), SEADPT_MAX_ID_SZ, finalID.c_str() ) ;
+         seAssist->oprMonitor()->monIgnoreCountInc() ;
          goto done ;
+      }
+
+      if ( sourceObj.isEmpty() && ( RTN_EXT_INSERT == oprType ) )
+      {
+         // Nothing should be inserted.
+         seAssist->oprMonitor()->monIgnoreCountInc() ;
+         goto done ;
+      }
+
+      seAssist->oprMonitor()->monOprCountInc( oprType ) ;
+
+      if ( sourceObj.isEmpty() && RTN_EXT_UPDATE == oprType )
+      {
+         oprType = RTN_EXT_DELETE ;
       }
 
       switch ( oprType )

@@ -41,6 +41,7 @@
 
 #include "utilESBulkBuilder.hpp"
 #include "utilESClt.hpp"
+#include "seAdptOprMon.hpp"
 
 namespace seadapter
 {
@@ -78,12 +79,18 @@ namespace seadapter
                                const BSONObj &doc ) ;
       INT32 bulkFinish() ;
 
+      seAdptOprMon* oprMonitor()
+      {
+         return &_oprMon ;
+      }
+
    private:
       utilESClt *_esClient ;
       UINT32 _bulkBuffSz ;
       utilESBulkBuilder _bulkBuilder ;
       CHAR _index[ SEADPT_MAX_IDXNAME_SZ + 1 ] ;
       CHAR _type[ SEADPT_MAX_TYPE_SZ + 1 ] ;
+      seAdptOprMon _oprMon ;
    } ;
    typedef _seAdptSEAssist seAdptSEAssist ;
 }

@@ -4049,6 +4049,9 @@ error:
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNPOP_DOIT ) ;
 
+      PD_LOG( PDDEBUG, "Pop collection[%s]: LogicalID[%lld], Direction[%d]",
+              _fullName, _logicalID, (INT32)_direction ) ;
+
       rc = rtnPopCommand( _fullName, _logicalID, cb,
                           dmsCB, dpsCB, w, _direction ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to pop record from collection[%s], "
