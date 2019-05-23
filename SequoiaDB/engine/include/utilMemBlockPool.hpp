@@ -46,9 +46,12 @@ namespace engine
 {
 
    #define UTIL_MEM_BLOCK_POOL_DFT_MAX_SZ          ( 8589934592LL )  ///8GB
-   #define UTIL_MEM_A_SMALL_BLOCK_SIZE             ( 4194304 )       ///4MB
+   #define UTIL_MEM_A_SMALL_BLOCK_SIZE             ( 262144 )        ///256KB
+   #define UTIL_MEM_A_MID_BLOCK_SIZE               ( 2097152 )       ///2MB
    #define UTIL_MEM_A_BIG_BLOCK_SIZE               ( 4194304 )       ///4MB
-   #define UTIL_MEM_A_BLOCK_SUBPOOL_NUM            ( 2 )
+   #define UTIL_MEM_A_SMALL_BLOCK_SUBPOOL_NUM      ( 16 )
+   #define UTIL_MEM_A_MID_BLOCK_SUBPOOL_NUM        ( 4 )
+   #define UTIL_MEM_A_BIG_BLOCK_SUBPOOL_NUM        ( 2 )
 
    /// Memory info:
    /// | B-Eye(2) | Size(4) | Type(2) | User Data | E-Eye(2) |
@@ -96,6 +99,13 @@ namespace engine
     **/
    class _utilMemBlockPool : public SDBObject, public _utilSegmentHandler
    {
+      /*
+         Small: 16,   32,   64
+         Mid  : 128,  256,  512
+         Big  : 1024, 2048, 4096
+      */
+      typedef  CHAR    element16B[16] ;
+      typedef  CHAR    element32B[32] ;
       typedef  CHAR    element64B[64] ;
       typedef  CHAR    element128B[128] ;
       typedef  CHAR    element256B[256] ;
@@ -107,6 +117,8 @@ namespace engine
       enum MEMBLOCKPOOL_TYPE
       {
          MEMBLOCKPOOL_TYPE_DYN = 1,  // dynamically allocate space
+         MEMBLOCKPOOL_TYPE_16,
+         MEMBLOCKPOOL_TYPE_32,
          MEMBLOCKPOOL_TYPE_64,       // allocate from 64B pool
          MEMBLOCKPOOL_TYPE_128,
          MEMBLOCKPOOL_TYPE_256,
@@ -151,6 +163,8 @@ namespace engine
 
    // private attributes:
    private:
+      _utilSegmentManager<element16B>  *_16BSeg; // mem segs with 16B  element
+      _utilSegmentManager<element32B>  *_32BSeg; // mem segs with 32B  element
       _utilSegmentManager<element64B>  *_64BSeg; // mem segs with 64B  element
       _utilSegmentManager<element128B> *_128BSeg;// mem segs with 128B element
       _utilSegmentManager<element256B> *_256BSeg;// mem segs with 256B element
@@ -162,6 +176,8 @@ namespace engine
       // counters for monitor
 
       // how many times we dynamic alloc because we failed in each segment
+      ossAtomic64    _numDynamicAlloc16B ;
+      ossAtomic64    _numDynamicAlloc32B ;
       ossAtomic64    _numDynamicAlloc64B ;
       ossAtomic64    _numDynamicAlloc128B ;
       ossAtomic64    _numDynamicAlloc256B ;
