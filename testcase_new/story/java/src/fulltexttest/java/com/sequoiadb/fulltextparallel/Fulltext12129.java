@@ -1,6 +1,8 @@
 package com.sequoiadb.fulltextparallel;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -43,9 +45,8 @@ public class Fulltext12129 extends SdbTestBase {
     private String indexName = "fulltext12129";
     private Client esClient = null;
     private int insertNum = 20000;
-    private CreateFullIndexThread createFullIndex;
-    private DropFullIndexThread dropFullIndex;
     private ThreadExecutor te = new ThreadExecutor(600000);
+    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
     public void setUp() throws SchException {
@@ -64,7 +65,7 @@ public class Fulltext12129 extends SdbTestBase {
             String clName = clBasicName + "_" + i;
             clNames.add(clName);
         }
-
+        // 集合空间下一半集合用于创建全文索引，一半集合用于删除全文索引
         for (String csName : csNames) {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
@@ -76,42 +77,39 @@ public class Fulltext12129 extends SdbTestBase {
                 insertRecord(cl, insertNum);
                 if (i < clNum / 2) {
                     cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
-                    dropFullIndex = new DropFullIndexThread(csName, clNames.get(i));
-                    te.addWorker(dropFullIndex);
-                } else {
-                    createFullIndex = new CreateFullIndexThread(csName, clNames.get(i));
-                    te.addWorker(createFullIndex);
                 }
             }
         }
-
     }
 
     @AfterClass
     public void tearDown() {
-        List<String> esIndexNames = new ArrayList<String>();
-        List<String> cappedCLNames = new ArrayList<String>();
-        for (String csName : csNames) {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            for (String clName : clNames) {
-                DBCollection cl = cs.getCollection(clName);
-                if (cl.isIndexExist(indexName)) {
-                    String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
-                    esIndexNames.add(esIndexName);
-                    String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
-                    cappedCLNames.add(cappedCLName);
+        try {
+            List<String> esIndexNames = new ArrayList<String>();
+            List<String> cappedCLNames = new ArrayList<String>();
+            for (String csName : csNames) {
+                CollectionSpace cs = sdb.getCollectionSpace(csName);
+                for (String clName : clNames) {
+                    DBCollection cl = cs.getCollection(clName);
+                    if (cl.isIndexExist(indexName)) {
+                        String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+                        esIndexNames.add(esIndexName);
+                        String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
+                        cappedCLNames.add(cappedCLName);
+                    }
                 }
-            }
 
+            }
+            for (String csName : csNames) {
+                FullTextDBUtils.dropCollectionSpace(sdb, csName);
+            }
+            if (!esIndexNames.isEmpty() && !cappedCLNames.isEmpty()) {
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
+            }
+        } finally {
+            sdb.close();
+            esClient.close();
         }
-        for (String csName : csNames) {
-            FullTextDBUtils.dropCollectionSpace(sdb, csName);
-        }
-        if (!esIndexNames.isEmpty() && !cappedCLNames.isEmpty()) {
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
-        }
-        sdb.close();
-        esClient.close();
     }
 
     @Test
@@ -131,6 +129,15 @@ public class Fulltext12129 extends SdbTestBase {
         }
 
         // 执行并发测试
+        for (String csName : csNames) {
+            for (int i = 0; i < clNum; i++) {
+                if (i < clNum / 2) {
+                    te.addWorker(new DropFullIndexThread(csName, clNames.get(i)));
+                } else {
+                    te.addWorker(new CreateFullIndexThread(csName, clNames.get(i)));
+                }
+            }
+        }
         te.run();
 
         // 结果校验
@@ -195,10 +202,10 @@ public class Fulltext12129 extends SdbTestBase {
 
         @ExecuteOrder(step = 1, desc = "删除全文索引")
         public void dropFullIndex() {
-            System.out.println("start dropFullIndex thread....");
+            System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             cl.dropIndex(indexName);
-            System.out.println("end dropFullIndex thread....");
+            System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
         }
     }
 
@@ -215,10 +222,10 @@ public class Fulltext12129 extends SdbTestBase {
 
         @ExecuteOrder(step = 1, desc = "创建全文索引")
         public void createFullIndex() {
-            System.out.println("start createFullIndex thread....");
+            System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
-            System.out.println("end createFullIndex thread....");
+            System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
         }
 
     }

@@ -1,6 +1,8 @@
 package com.sequoiadb.fulltextparallel;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -20,6 +22,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.threadexecutor.exception.SchException;
@@ -32,7 +35,6 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author zhaoyu
  * @Date 2019-05-10
  */
-//TODO:问题同 15796 用例
 public class Fulltext15797 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
@@ -43,12 +45,9 @@ public class Fulltext15797 extends SdbTestBase {
     private Client esClient = null;
     private int insertNum = 30000;
     private AtomicInteger atomic = new AtomicInteger(insertNum);
-    private Insert insert;
-    private Update update;
-    private Delete delete;
-    private Query query;
-    private DropCS dropCS;
     private ThreadExecutor te = new ThreadExecutor(600000);
+    private DropCS dropCS = null;
+    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
     public void setUp() throws SchException {
@@ -68,34 +67,26 @@ public class Fulltext15797 extends SdbTestBase {
         cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
         insertRecord(cl, insertNum);
 
-        insert = new Insert();
-        update = new Update();
-        delete = new Delete();
-        query = new Query();
-        dropCS = new DropCS();
-
-        te.addWorker(insert);
-        te.addWorker(update);
-        te.addWorker(delete);
-        te.addWorker(query);
-        te.addWorker(dropCS);
     }
 
     @AfterClass
     public void tearDown() {
-        String esIndexName = null;
-        String cappedCLName = null;
-        if (sdb.isCollectionSpaceExist(csName)) {
-            DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-            esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
-            cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
+        try {
+            String esIndexName = null;
+            String cappedCLName = null;
+            if (sdb.isCollectionSpaceExist(csName)) {
+                DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+                esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+                cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
+            }
+            FullTextDBUtils.dropCollectionSpace(sdb, csName);
+            if (esIndexName != null && cappedCLName != null) {
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
+            }
+        } finally {
+            sdb.close();
+            esClient.close();
         }
-        FullTextDBUtils.dropCollectionSpace(sdb, csName);
-        if (esIndexName != null && cappedCLName != null) {
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
-        }
-        sdb.close();
-        esClient.close();
     }
 
     @Test
@@ -105,10 +96,16 @@ public class Fulltext15797 extends SdbTestBase {
         String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
 
         // 执行并发测试
+        te.addWorker(new Insert());
+        te.addWorker(new Update());
+        te.addWorker(new Delete());
+        te.addWorker(new Query());
+        dropCS = new DropCS();
+        te.addWorker(dropCS);
         te.run();
 
         // 如果集合未删除成功，那么校验集合中主备节点一致性,否则固定集合空间删除成功，ES端索引删除成功
-        if (sdb.getCollectionSpace(csName).isCollectionExist(clName)) {
+        if (dropCS.getRetCode() != 0) {
             cl.insert("{a:'insert',b:'insert'}");
             Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, atomic.incrementAndGet()));
         } else {
@@ -124,12 +121,12 @@ public class Fulltext15797 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "插入记录")
         public void insertRecord() {
             try {
-                System.out.println("start insert thread....");
+                System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
                 for (int i = insertNum; i < insertNum * 2; i++) {
                     cl.insert("{id:" + i + ",a:'fulltext15796" + i + "',b:'fulltext15796" + i + "'}");
                     atomic.incrementAndGet();
                 }
-                System.out.println("end insert thread....");
+                System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
             } catch (BaseException e) {
                 if (e.getErrorCode() != -23 && e.getErrorCode() != -248) {
                     e.printStackTrace();
@@ -149,9 +146,9 @@ public class Fulltext15797 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "更新所有记录")
         public void updateRecord() {
             try {
-                System.out.println("start update thread....");
+                System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
                 cl.update(null, "{$set:{b:'update_15796'}}", null);
-                System.out.println("end update thread....");
+                System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
             } catch (BaseException e) {
                 if (e.getErrorCode() != -23 && e.getErrorCode() != -248) {
                     e.printStackTrace();
@@ -171,12 +168,12 @@ public class Fulltext15797 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除所有记录")
         public void deleteRecord() {
             try {
-                System.out.println("start delete thread....");
+                System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
                 for (int i = 0; i < insertNum * 2; i++) {
                     cl.delete("{id:" + i + "}", "{'':'id'}");
                     atomic.decrementAndGet();
                 }
-                System.out.println("end delete thread....");
+                System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
             } catch (BaseException e) {
                 if (e.getErrorCode() != -23 && e.getErrorCode() != -248) {
                     e.printStackTrace();
@@ -198,13 +195,13 @@ public class Fulltext15797 extends SdbTestBase {
         public void deleteRecord() {
             DBCursor cursor = null;
             try {
-                System.out.println("start query thread....");
+                System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
                 cursor = cl.query("{'':{$Text:{query:{match_all:{}}}}}", "{a:1,b:1}", null, null);
                 while (cursor.hasNext()) {
                     cursor.getNext();
                 }
                 cursor.close();
-                System.out.println("end query thread....");
+                System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
             } catch (BaseException e) {
                 // 集合被删除报-23
                 // 集合正在被删除报-248
@@ -221,7 +218,7 @@ public class Fulltext15797 extends SdbTestBase {
         }
     }
 
-    private class DropCS {
+    private class DropCS extends ResultStore {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
         @ExecuteOrder(step = 1, desc = "删除集合")
@@ -232,14 +229,15 @@ public class Fulltext15797 extends SdbTestBase {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                System.out.println("start dropcs thread....");
+                System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
                 db.dropCollectionSpace(csName);
-                System.out.println("end dropcs thread....");
+                System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
             } catch (BaseException e) {
                 if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
                     e.printStackTrace();
                     Assert.fail(e.getMessage());
                 }
+                saveResult(1, e);
             } finally {
                 db.close();
             }

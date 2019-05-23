@@ -64,6 +64,7 @@ public class FullText12116 extends SdbTestBase {
 
         thExecutor.run();
         thExecutor.display();
+
     }
 
     @AfterClass

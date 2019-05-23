@@ -1,6 +1,8 @@
 package com.sequoiadb.fulltextparallel;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -41,8 +43,8 @@ public class Fulltext15871 extends SdbTestBase {
     private String indexName = "fulltext15871";
     private Client esClient = null;
     private int insertNum = 50000;
-    private DropCLThread dropCL;
     private ThreadExecutor te = new ThreadExecutor(600000);
+    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
     public void setUp() throws SchException {
@@ -61,7 +63,6 @@ public class Fulltext15871 extends SdbTestBase {
             String clName = clBasicName + "_" + i;
             clNames.add(clName);
         }
-
         for (String csName : csNames) {
             if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.dropCollectionSpace(csName);
@@ -72,11 +73,8 @@ public class Fulltext15871 extends SdbTestBase {
                 cl.createIndex("id", "{id:1}", false, false);
                 insertRecord(cl, insertNum);
                 cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
-                dropCL = new DropCLThread(csName, clName);
-                te.addWorker(dropCL);
             }
         }
-
     }
 
     @AfterClass
@@ -124,6 +122,11 @@ public class Fulltext15871 extends SdbTestBase {
         }
 
         // 执行并发测试
+        for (String csName : csNames) {
+            for (String clName : clNames) {
+                te.addWorker(new DropCLThread(csName, clName));
+            }
+        }
         te.run();
 
         // 结果校验
@@ -144,9 +147,9 @@ public class Fulltext15871 extends SdbTestBase {
 
         @ExecuteOrder(step = 1, desc = "删除集合")
         public void dropCLThread() {
-            System.out.println("start dropcl thread....");
+            System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
             db.getCollectionSpace(csName).dropCollection(clName);
-            System.out.println("end dropcl thread....");
+            System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
         }
 
     }
