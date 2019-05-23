@@ -483,7 +483,7 @@ namespace engine
       goto done ;
    }
 
-   // attempt to reserve numPages pages from smp, if no more pages can be
+   // attempt to reserve numPages pages from sme, if no more pages can be
    // found in existing pages, foundPage is set to DMS_INVALID_EXTENT
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSMEMGR_RSVPAGES, "_dmsSMEMgr::reservePages" )
    INT32 _dmsSMEMgr::reservePages ( UINT16 numPages, dmsExtentID &foundPage,
@@ -578,7 +578,7 @@ namespace engine
       INT32 rc             = SDB_OK ;
       UINT16 segmentPages  = (UINT16)_pStorageBase->segmentPages() ;
       UINT32 segmentPagesSqure = _pStorageBase->segmentPagesSquareRoot() ;
-      
+
       // the same with: DMS_MAX_PG / segmentPages
       UINT32 maxSegments   = DMS_MAX_PG >> segmentPagesSqure ;
       // the same with: start / segmentPages
