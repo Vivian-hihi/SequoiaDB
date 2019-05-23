@@ -63,7 +63,7 @@ namespace CSharp.Crud.Analyze
         [TestMethod]
         public void Test14260()
         {
-            if (skipTest) return;
+            if (skipTest) return;//TODO：上面已经return了，这里应该不需要再次return了吧？
             CheckScanTypeByExplain(cl, analyzeRec, "ixscan");
             CheckScanTypeByExplain(cl, nonAnalyzeRec, "ixscan");
             sdb.Analyze(new BsonDocument{ {"GroupName", analyzeGroup} });

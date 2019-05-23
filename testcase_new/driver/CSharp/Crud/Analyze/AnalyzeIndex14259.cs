@@ -53,6 +53,7 @@ namespace CSharp.Crud.Analyze
             for (int i = 0; i < nonAnalyzeIdxList.Count; ++i)
                 CheckScanTypeByExplain(cl, nonAnalyzeIdxList.ElementAt(i), "ixscan");
             const string clFullName = csName + "." + clName;
+            //TODO:参数未指定mode与文本用例不符
             sdb.Analyze(new BsonDocument{ {"Collection", clFullName}, {"Index", analyzeIdx} });
             CheckScanTypeByExplain(cl, analyzeIdx, "tbscan");
             for (int i = 0; i < nonAnalyzeIdxList.Count; ++i)

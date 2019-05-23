@@ -71,7 +71,7 @@ namespace CSharp.Bson
                 BsonDecimal decimal7 = new BsonDecimal("sdb", 5, 2);
                 Assert.Fail("expected failed!");
             }
-            catch (Exception e)
+            catch (Exception e)//TODO:需要使用具体的ArgumentException
             {
                 Console.WriteLine(e);
             }

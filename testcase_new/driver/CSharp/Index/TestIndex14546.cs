@@ -116,6 +116,7 @@ namespace CSharp.Index
             int count = 0;
             while (cur.Next() != null)
             {
+                //TODO:这里cur不为空是否可以考虑直接抛出异常
                 BsonDocument doc = cur.Current();
                 count++;
             }

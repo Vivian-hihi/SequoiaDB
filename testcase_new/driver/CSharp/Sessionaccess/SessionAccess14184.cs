@@ -54,7 +54,7 @@ namespace CSharp.Sessionaccess
             options.Add("ReplSize", 0);
             cl = cs.CreateCollection(clName, options);
             SessionAccessUtil.InsertRecords(cl);
-
+            //TODO:以下代码前面的空格不对，并且文本用例中的前提没有实现
         string[] expectPreferedInstance = new string[] { "M", "S" };
         for (int i = 0; i < 2; i++ )
         {
@@ -91,7 +91,7 @@ namespace CSharp.Sessionaccess
         	Assert.IsTrue(nodeNames.Contains(actNodeName),"The actual Node name is not expected: " + actNodeName);
         	actNodeNames.Add(actNodeName);
         }
-        
+        //TODO：此处actNodeNames的大小为20，这里是不是应该去重后再比较
         //如果actNodeNames大小为1时，代表实际操作的节点只有一个，没有随机取值
         Assert.AreNotEqual(actNodeNames.Count(), 1, "When PreferedInstance is 'A', the actual node is unchanged, the node name is:" + actNodeNames[0]);
         //options.Add("PreferedInstanceMode", "random").Add("Timeout", -1L);

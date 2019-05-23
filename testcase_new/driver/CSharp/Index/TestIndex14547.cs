@@ -105,6 +105,7 @@ namespace CSharp.Index
             Assert.IsFalse(cl.IsIndexExist(indexName));
             //指定所有参数 
             cl.CreateIndex(indexName, new BsonDocument("a", -1), true, true, 64);
+            //TODO:未执行getIndexes查看所有索引信息
             cur = cl.Explain(matcher, null, order, null, 0, -1, 0, new BsonDocument("Run", true));
             while (cur.Next() != null)
             {

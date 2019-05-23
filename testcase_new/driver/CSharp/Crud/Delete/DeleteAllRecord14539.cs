@@ -101,6 +101,7 @@ namespace CSharp.Crud.Delete
             }
             cl.BulkInsert(dataList, 0);
 
+            //TODO:lob类型的数据未插入到集合中
             //insert lob
             DBLob dblob = null;
             dblob = cl.CreateLob();

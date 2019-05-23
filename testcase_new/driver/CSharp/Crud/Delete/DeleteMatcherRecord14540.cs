@@ -47,6 +47,7 @@ namespace CSharp.Crud.Delete
                 mathcer.Add("str", "test1");
                 //matcher is String
                 cl.Delete(mathcer,null);
+                //TODO:下面三行是否可以考虑使用cl.Query(null, mathcer, null, null)代替，同下
                 DBQuery query = new DBQuery();
                 query.Matcher = mathcer;
                 cursor = cl.Query(query);

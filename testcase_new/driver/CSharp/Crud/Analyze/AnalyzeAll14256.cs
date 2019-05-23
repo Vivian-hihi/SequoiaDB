@@ -52,6 +52,7 @@ namespace CSharp.Crud.Analyze
         [TestMethod]
         public void Test14256()
         {
+            //TODO：clList未被赋值，不会进入到以下循环
             for (int i = 0; i < clList.Count; ++i)
             {
                 AnalyzeCommon.CheckScanTypeByExplain(clList.ElementAt(i), "ixscan");

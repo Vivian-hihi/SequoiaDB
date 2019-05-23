@@ -120,7 +120,7 @@ namespace CSharp.Backup
                 sdb.RemoveBackup(removeOption);
                 //check
                 DBCursor cursor = sdb.ListBackup(removeOption, null, null, null);
-                while (cursor.Next() !=null ) 
+                while (cursor.Next() !=null ) //TODO:cursor的查询条件是back1，不会进到这里面来
                 {
                     BsonDocument record = cursor.Current();
                     if (record.Contains("Name")) 

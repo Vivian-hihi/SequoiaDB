@@ -62,6 +62,7 @@ namespace CSharp.Bson
             cur.Close();
             Assert.AreEqual(1, count);
 
+            //TODO：以下非法值未覆盖全，还有使用ArguementException捕获异常
             try
             {
                 BsonDecimal decimal3 = new BsonDecimal("1", 0, -1);

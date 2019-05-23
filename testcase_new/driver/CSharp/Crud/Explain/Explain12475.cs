@@ -56,7 +56,7 @@ namespace CSharp.Crud.Explain
             skipRows = 2;
             retrunRows = 5;
 
-
+            //TODO:文本用例中flag覆盖不同值，这里未覆盖
             DBCursor cursor = cl.Explain(query, selector, orderBy, hint, skipRows, retrunRows, DBQuery.FLG_QUERY_FORCE_HINT, new BsonDocument().Add("Run", true));
             while (cursor.Next() != null)
             {
