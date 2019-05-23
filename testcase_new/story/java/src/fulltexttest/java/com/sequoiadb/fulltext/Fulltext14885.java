@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.BSONObject;
+import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
 import org.testng.Assert;
@@ -33,106 +34,122 @@ public class Fulltext14885 extends SdbTestBase {
     private Sequoiadb sdb;
     private CollectionSpace cs;
     private DBCollection cl;
+    private String csName14885 = "cs14885";
     private String clName = "dropCollection14885";
     private String fullIndexName = "fullIndex14885";
     private Client esClient = null;
+    private String esIndexName;
+    private String cappedCLName;
 
     @BeforeClass
     public void setUp() {
-        this.sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "StandAlone environment!" );
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("StandAlone environment!");
         }
-        this.cs = sdb.getCollectionSpace( csName );
-        this.cl = cs.createCollection( clName );
-        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
-                Integer.parseInt( SdbTestBase.esServiceName ) );
+        if (sdb.isCollectionSpaceExist(csName14885)) {
+            sdb.dropCollectionSpace(csName14885);
+        }
+
+        cs = sdb.createCollectionSpace(csName14885);
+        cl = cs.createCollection(clName);
+        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
+                Integer.parseInt(SdbTestBase.esServiceName));
     }
 
     @Test
     public void test() throws Exception {
         // 在集合上创建1个全文索引，并插入包含索引字段的数据
-        this.cl.createIndex( fullIndexName,
+        cl.createIndex(fullIndexName,
                 "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}", false,
-                false );
-        this.insertData( FullTextUtils.INSERT_NUMS );
+                false);
+        insertData(FullTextUtils.INSERT_NUMS);
 
-        // 直连主数据节点使用游标的方式获取固定集合中的一条记录
-        List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs( cl, fullIndexName );
-        DBCollection cappedCL = cappedCLs.get( 0 );
+        // 使用游标的方式获取对应的固定集合中的一条记录
+        DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIndexName).get(0);
         DBCursor cursor = cappedCL.query();
         cursor.getNext();
 
         // 多次执行删除全文索引的操作，检查结果
-        if ( cappedCL.getCount() > 2 ) {
-            for ( int i = 0; i < 3; i++ ) {
-                try {
-                    this.cl.dropIndex( fullIndexName );
-                    Assert.fail( "drop textIndex need to return -147!" );
-                } catch ( BaseException e ) {
-                    Assert.assertEquals( e.getErrorCode(), -147, e.getMessage() );
+        for (int i = 0; i < 10; i++) {
+            try {
+                cl.dropIndex(fullIndexName);
+                Assert.fail("drop textIndex need to return -147!");
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
+                    Assert.fail(e.getMessage());
                 }
             }
         }
 
-        // 关闭步骤2中的游标，再次删除集合
-        String cappedName = FullTextDBUtils.getCappedName( cl, fullIndexName );
-        String esIndexName = FullTextDBUtils.getESIndexName( cl, fullIndexName );
-
         // 关闭打开的游标
-        if ( cursor != null ) {
+        if (cursor != null) {
             cursor.close();
         }
 
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
-        FullTextDBUtils.dropFullTextIndex( this.cl, fullIndexName );
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        // 关闭步骤2中的游标，再次删除全文索引
+        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
+        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIndexName);
+        System.out.println("cappedCSName : " + cappedCLName + " esIndexNames " + esIndexName);
+
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS));
+        FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
+
+        // 校验是否有 context 残留
+        checkContext();
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         try {
-            FullTextDBUtils.dropCollection( cs, clName );
-        } catch ( BaseException e ) {
-            Assert.fail( e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
+            FullTextDBUtils.dropCollectionSpace(sdb, csName14885);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
     }
 
-    public void insertData( int insertNums ) {
+    public void insertData(int insertNums) {
         List<BSONObject> records = new ArrayList<BSONObject>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 100; j++ ) {
-                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_14885_" + i * j + "', b: '"
-                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
-                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "'}" );
-                records.add( record );
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                BSONObject record = (BSONObject) JSON.parse("{a: 'test_14885_" + i * j + "', b: '"
+                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
+                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
+                        + StringUtils.getRandomString(128) + "'}");
+                records.add(record);
             }
-            this.cl.insert( records );
+            cl.insert(records);
             records.clear();
         }
     }
 
-    public String getKeyStack( Exception e, Object classObj ) {
-        StringBuffer stackBuffer = new StringBuffer();
-        StackTraceElement[] stackElements = e.getStackTrace();
-        for ( int i = 0; i < stackElements.length; i++ ) {
-            if ( stackElements[i].toString().contains( classObj.getClass().getName() ) ) {
-                stackBuffer.append( stackElements[i].toString() ).append( "\r\n" );
+    private void checkContext() throws InterruptedException {
+        int count = 0;
+        out: while (count++ < 500) {
+            Thread.sleep(100);
+            DBCursor cursor2 = sdb.getSnapshot(0, "{}", "{}", "{}");
+            while (cursor2.hasNext()) {
+                BSONObject object = cursor2.getNext();
+                BasicBSONList list = (BasicBSONList) object.get("Contexts");
+                for (int i = 0; i < list.size(); i++) {
+                    BSONObject object2 = (BSONObject) list.get(i);
+                    String desc = (String) object2.get("Description");
+                    if (desc.indexOf(cappedCLName) != -1) {
+                        Assert.assertNotEquals(count, 500);
+                        continue out;
+                    }
+                }
             }
-        }
-        String str = stackBuffer.toString();
-        if ( str.length() >= 2 ) {
-            return str.substring( 0, str.length() - 2 );
-        } else {
-            return str;
+            break;
         }
     }
 }

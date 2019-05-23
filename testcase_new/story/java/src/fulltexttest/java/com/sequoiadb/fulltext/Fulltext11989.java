@@ -38,84 +38,73 @@ public class Fulltext11989 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        this.sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "StandAlone environment!" );
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("StandAlone environment!");
         }
-        this.groupNames = CommLib.getDataGroupNames( sdb );
-        if ( groupNames.size() < 2 ) {
-            throw new SkipException( "Less than two groups!" );
+        groupNames = CommLib.getDataGroupNames(sdb);
+        if (groupNames.size() < 2) {
+            throw new SkipException("Less than two groups!");
         }
-        CollectionSpace cs = sdb.getCollectionSpace( SdbTestBase.csName );
-        this.cl = cs.createCollection( clName, (BSONObject) JSON
-                .parse( "{ShardingKey:{a:1},ShardingType:'range',Group:'" + this.groupNames.get( 0 ) + "'}" ) );
-        this.cl.split( this.groupNames.get( 0 ), this.groupNames.get( 1 ), (BSONObject) JSON.parse( "{a:'a0'}" ),
-                (BSONObject) JSON.parse( "{a:'a1000'}" ) );
-        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
-                Integer.parseInt( SdbTestBase.esServiceName ) );
+
+        // 创建 range 切分表并切分
+        CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
+        cl = cs.createCollection(clName, (BSONObject) JSON
+                .parse("{ShardingKey:{a:1}, ShardingType:'range', Group:'" + groupNames.get(0) + "'}"));
+        cl.split(groupNames.get(0), groupNames.get(1), (BSONObject) JSON.parse("{a:'a0'}"),
+                (BSONObject) JSON.parse("{a:'a1000'}"));
+        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
+                Integer.parseInt(SdbTestBase.esServiceName));
     }
 
     @Test
     public void test() throws Exception {
-        this.insertData( FullTextUtils.INSERT_NUMS );
+        // 插入数据
+        FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
 
         // 创建全文索引，索引字段覆盖：分区键和非分区键
-        this.cl.createIndex( fullIndexName,
-                "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}", false,
-                false );
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
-        String cappedName = FullTextDBUtils.getCappedName( cl, fullIndexName );
+        cl.createIndex(fullIndexName, "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\"}",
+                false, false);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS));
+        DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIndexName).get(0);
+        Assert.assertFalse(cappedCL.query().hasNext());
 
-        String esIndexName = FullTextDBUtils.getESIndexName( cl, fullIndexName );
-        FullTextDBUtils.dropFullTextIndex( cl, fullIndexName );
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        String cappedName = FullTextDBUtils.getCappedName(cl, fullIndexName);
+        String esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
+        FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
+        Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            CollectionSpace cs = sdb.getCollectionSpace( csName );
-            FullTextDBUtils.dropCollection( cs, clName );
-        } catch ( BaseException e ) {
-            Assert.fail( e.getMessage() + "\r\n" + this.getKeyStack( e, this ) );
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            FullTextDBUtils.dropCollection(cs, clName);
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
     }
 
-    public void insertData( int insertNums ) {
+    public void insertData(int insertNums) {
         List<BSONObject> records = new ArrayList<BSONObject>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 100; j++ ) {
-                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_range11989_" + i * j + "', b: '"
-                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
-                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', g: '"
-                        + StringUtils.getRandomString( 128 ) + "'}" );
-                records.add( record );
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                BSONObject record = (BSONObject) JSON.parse("{a: 'test_range11989_" + i * j + "', b: '"
+                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
+                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', g: '"
+                        + StringUtils.getRandomString(128) + "'}");
+                records.add(record);
             }
-            this.cl.insert( records );
+            cl.insert(records);
             records.clear();
-        }
-    }
-
-    public String getKeyStack( Exception e, Object classObj ) {
-        StringBuffer stackBuffer = new StringBuffer();
-        StackTraceElement[] stackElements = e.getStackTrace();
-        for ( int i = 0; i < stackElements.length; i++ ) {
-            if ( stackElements[i].toString().contains( classObj.getClass().getName() ) ) {
-                stackBuffer.append( stackElements[i].toString() ).append( "\r\n" );
-            }
-        }
-        String str = stackBuffer.toString();
-        if ( str.length() >= 2 ) {
-            return str.substring( 0, str.length() - 2 );
-        } else {
-            return str;
         }
     }
 }
