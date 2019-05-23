@@ -13,6 +13,7 @@ import org.elasticsearch.index.IndexNotFoundException;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Node;
+import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
 
@@ -47,7 +48,7 @@ public class FullTextUtils {
         // 检查ES端索引名是否存在
         for ( String esIndexName : esIndexNames ) {
             if ( !FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ) ) {
-                System.out.println( esIndexName + " is not exist in ES" );
+                System.err.println( esIndexName + " is not exist in ES" );
                 return false;
             }
         }
@@ -112,7 +113,7 @@ public class FullTextUtils {
         // 检查ES端索引名是否存在
         for ( String esIndexName : esIndexNames ) {
             if ( !FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ) ) {
-                System.out.println( esIndexName + " is not exist in ES" );
+                System.err.println( esIndexName + " is not exist in ES" );
                 return false;
             }
         }
@@ -172,7 +173,7 @@ public class FullTextUtils {
         }
         // 同步失败后，打印所有索引名
         if ( !isSync ) {
-            System.out.println( "check " + esIndexNames.toString() + " count syn to es timeout" );
+            System.err.println( "check " + esIndexNames.toString() + " count syn to es timeout" );
         }
         return isSync;
     }
@@ -230,7 +231,7 @@ public class FullTextUtils {
             }
             // 如果最终没有完成同步则打屏
             if ( !isSync ) {
-                System.out.println( "check " + esIndexNames.get( i ).toString() + " lid syn to es timeout" );
+                System.err.println( "check " + esIndexNames.get( i ).toString() + " lid syn to es timeout" );
                 break;
             }
         }
@@ -254,7 +255,7 @@ public class FullTextUtils {
             throws Exception {
         // 比较索引个数和cllid个数，如果数量不一致则直接退出
         if ( esIndexNames.size() != preCLLids.size() ) {
-            System.out.println( "esIndexNames' size is not equal to cllids' size, esIndexNames: " + esIndexNames.size()
+            System.err.println( "esIndexNames' size is not equal to cllids' size, esIndexNames: " + esIndexNames.size()
                     + ", cllids: " + preCLLids.size() );
             return false;
         }
@@ -421,6 +422,11 @@ public class FullTextUtils {
         List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
         // 防止数据组元素重复
         groupNames = removeDuplicateItems( groupNames );
+
+        if ( !isNewCLConsistency( db, cl.getFullName(), groupNames ) ) {
+            return false;
+        }
+
         for ( String groupName : groupNames ) {
             List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
             List<Node> nodes = new ArrayList<>();
@@ -432,6 +438,64 @@ public class FullTextUtils {
                 break;
             }
         }
+        return isConsistency;
+    }
+
+    /**
+     * 检查主备节点固定集合UniqueID一致
+     * 
+     * @param db
+     * @param fullName
+     * @param groupNames
+     * @return boolean 如果主备节点固定集合UniqueID一致返回true,否则返回false
+     */
+    private static boolean isNewCLConsistency( Sequoiadb db, String clFullName, List<String> groupNames ) {
+
+        boolean isConsistency = false;
+        for ( String groupName : groupNames ) {
+            List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
+            ReplicaGroup rg = db.getReplicaGroup( groupName );
+            Sequoiadb masterNode = rg.getMaster().connect();
+            DBCursor cursor = masterNode.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
+                    "{UniqueID: ''}", null );
+            long uniqueID = 0;
+            if ( cursor.hasNext() ) {
+                uniqueID = (long) cursor.getNext().get( "UniqueID" );
+            }
+            cursor.close();
+            for ( String nodeName : nodeNames ) {
+                isConsistency = false;
+                Sequoiadb nodeConn = rg.getNode( nodeName ).connect();
+                DBCursor cur = null;
+                long checkUniqueID = 0;
+                for ( int i = 0; i < 300; i++ ) {
+                    cur = nodeConn.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
+                            "{UniqueID: ''}", null );
+                    if ( cur.hasNext() ) {
+                        checkUniqueID = (long) cur.getNext().get( "UniqueID" );
+                    }
+                    cur.close();
+                    if ( uniqueID == checkUniqueID ) {
+                        isConsistency = true;
+                        break;
+                    }
+                    try {
+                        Thread.sleep( 1000 );
+                    } catch ( InterruptedException e ) {
+                        e.printStackTrace();
+                    }
+                }
+                if ( !isConsistency ) {
+                    System.err.println( "Group [" + groupName + "] UniqueID is not the same, masterNode UniqueID: "
+                            + uniqueID + ", " + nodeNames + " UniqueID: " + checkUniqueID );
+                    break;
+                }
+            }
+            if ( !isConsistency ) {
+                break;
+            }
+        }
+
         return isConsistency;
     }
 
@@ -480,8 +544,9 @@ public class FullTextUtils {
                 return isConsistency;
             } else {
                 doTimes++;
-                System.out.println( "csName : " + csName + " clName: " + clName + " isConsistency : " + isConsistency
-                        + " , doTimes: " + doTimes );
+                // System.out.println( "csName : " + csName + " clName: " +
+                // clName + " isConsistency : " + isConsistency
+                // + " , doTimes: " + doTimes );
                 try {
                     Thread.sleep( 1000 );
                 } catch ( InterruptedException e ) {
@@ -511,7 +576,7 @@ public class FullTextUtils {
             isCLExists = false;
             for ( int i = 0; i < 300; i++ ) {
                 if ( node.connect().isCollectionSpaceExist( csName ) ) {
-                    if ( node.connect().isCollectionSpaceExist( csName ) ) {
+                    if ( node.connect().getCollectionSpace( csName ).isCollectionExist( clName ) ) {
                         isCLExists = true;
                         break;
                     } else {
@@ -556,7 +621,7 @@ public class FullTextUtils {
             Sequoiadb nextNode = nodes.get( i ).connect();
             DBCollection cl2 = nextNode.getCollectionSpace( csName ).getCollection( clName );
             if ( cl1.getCount() != cl2.getCount() ) {
-                System.out.println( "cl from " + nodes.get( 0 ).getNodeName() + "'s count: " + cl1.getCount()
+                System.err.println( "cl from " + nodes.get( 0 ).getNodeName() + "'s count: " + cl1.getCount()
                         + ", cl from " + nodes.get( i ).getNodeName() + "'s count: " + cl2.getCount() );
                 return false;
             }
@@ -584,7 +649,7 @@ public class FullTextUtils {
                 BSONObject cl1Record = cl1Cursor.getNext();
                 BSONObject cl2Record = cl2Cursor.getNext();
                 if ( !cl1Record.equals( cl2Record ) ) {
-                    System.out.println( "collection from first node's record : " + cl1Record.toString()
+                    System.err.println( "collection from first node's record : " + cl1Record.toString()
                             + "\n collection from anohter node's record : " + cl2Record.toString() );
                     return false;
                 }

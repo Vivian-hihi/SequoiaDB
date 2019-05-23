@@ -285,6 +285,10 @@ public class FullTextESUtils {
             }
         }
 
+        if ( !existResponse.isExists() ) {
+            System.err.println( "es client no such index: " + esIndexName );
+        }
+
         return existResponse.isExists();
     }
 

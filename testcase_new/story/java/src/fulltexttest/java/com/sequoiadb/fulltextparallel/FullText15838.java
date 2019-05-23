@@ -58,7 +58,7 @@ public class FullText15838 extends SdbTestBase {
         cs = sdb.getCollectionSpace( csName );
         BSONObject options = new BasicBSONObject();
         options.put( "ShardingType", "range" );
-        options.put( "ShardingKey", new BasicBSONObject( "a", 1 ) );
+        options.put( "ShardingKey", new BasicBSONObject( "recordId", 1 ) );
         options.put( "Group", sourceGruop );
         cl = cs.createCollection( clName, options );
     }

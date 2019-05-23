@@ -37,6 +37,10 @@ public class FullTextDBUtils {
             cappedName = (String) indexInfos.get( "ExtDataName" );
         }
 
+        if ( cappedName == null ) {
+            throw new BaseException( -52, "no such index: " + indexName );
+        }
+
         return cappedName;
     }
 
@@ -258,7 +262,7 @@ public class FullTextDBUtils {
 
         // 如果最后在超时时间内删除成功，则打印信息；否则再次删除索引，操作失败后直接抛异常
         if ( doTimes < timeout ) {
-            System.out.println( textIndexName + " drop success,  drop times: " + doTimes );
+            System.err.println( textIndexName + " drop success,  drop times: " + doTimes );
         } else {
             cl.dropIndex( textIndexName );
         }
@@ -304,7 +308,7 @@ public class FullTextDBUtils {
 
         // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常
         if ( doTimes < timeout ) {
-            System.out.println( csName + " drop success,  drop times: " + doTimes );
+            System.err.println( csName + " drop success,  drop times: " + doTimes );
         } else {
             db.dropCollectionSpace( csName );
         }
@@ -350,7 +354,7 @@ public class FullTextDBUtils {
 
         // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常
         if ( doTimes < timeout ) {
-            System.out.println( clName + " drop success,  drop times: " + doTimes );
+            System.err.println( clName + " drop success,  drop times: " + doTimes );
         } else {
             cs.dropCollection( clName );
         }
