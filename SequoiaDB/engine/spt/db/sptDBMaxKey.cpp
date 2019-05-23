@@ -116,7 +116,7 @@ namespace engine
    {
       stringstream ss ;
       ss << "--Constructor methods for class MaxKey : " << endl ;
-      ss << "   { \"$MaxKey\": 1 }   " << endl ;
+      ss << "   { \"$maxKey\": 1 }   " << endl ;
       ss << "   MaxKey()             "
          << "-- Data type: the maximum of all data types" << endl ;
       ss << "--Static methods for class MaxKey : " << endl ;

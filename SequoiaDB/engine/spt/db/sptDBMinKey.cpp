@@ -117,7 +117,7 @@ namespace engine
    {
       stringstream ss ;
       ss << "--Constructor methods for class MinKey : " << endl ;
-      ss << "   { \"$MinKey\": 1 }   " << endl ;
+      ss << "   { \"$minKey\": 1 }   " << endl ;
       ss << "   MinKey()             "
          << "-- Data type: the minimum of all data types" << endl ;
       ss << "--Static methods for class MinKey : " << endl ;
