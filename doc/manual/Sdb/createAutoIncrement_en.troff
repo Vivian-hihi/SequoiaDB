@@ -114,10 +114,11 @@ Sequence values are strictly incremented when set to 1 by AcquireSize.
 CacheSize and AcquireSize are performance\-related parameters that are
 recommended for careful modification.
 .IP "5." 3
-When a master subtable is used, only the master auto increment field takes
-effect, and the subtable auto increment field is invalid.
+When a main-collection is used, only the auto increment field on
+main-collection takes effect, and the auto increment field on sub-collection
+is invalid.
 .IP "6." 3
-if the client sets the value of the auto increment field, or modifies the
+If the client sets the value of the auto increment field, or modifies the
 property of the auto increment field during use, the field values may not be
 unique.
 If you want to ensure that the modified value is unique, it is recommended to
