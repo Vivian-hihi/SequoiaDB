@@ -398,7 +398,7 @@ public class FullTextUtils {
             for ( String nodeName : nodeNames ) {
                 nodes.add( db.getReplicaGroup( groupName ).getNode( nodeName ) );
             }
-            isConsistency = isConsistency( nodes, cl.getCSName(), cl.getName() );
+            isConsistency = isConsistency( db, groupName, cl.getCSName(), cl.getName() );
             if ( !isConsistency ) {
                 break;
             }
@@ -423,17 +423,13 @@ public class FullTextUtils {
         // 防止数据组元素重复
         groupNames = removeDuplicateItems( groupNames );
 
-        if ( !isNewCLConsistency( db, cl.getFullName(), groupNames ) ) {
-            return false;
-        }
-
         for ( String groupName : groupNames ) {
-            List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
-            List<Node> nodes = new ArrayList<>();
-            for ( String nodeName : nodeNames ) {
-                nodes.add( db.getReplicaGroup( groupName ).getNode( nodeName ) );
-            }
-            isConsistency = isConsistency( nodes, cappedName, cappedName );
+            // List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
+            // List<Node> nodes = new ArrayList<>();
+            // for ( String nodeName : nodeNames ) {
+            // nodes.add( db.getReplicaGroup( groupName ).getNode( nodeName ) );
+            // }
+            isConsistency = isConsistency( db, groupName, cappedName, cappedName );
             if ( !isConsistency ) {
                 break;
             }
@@ -449,49 +445,45 @@ public class FullTextUtils {
      * @param groupNames
      * @return boolean 如果主备节点固定集合UniqueID一致返回true,否则返回false
      */
-    private static boolean isNewCLConsistency( Sequoiadb db, String clFullName, List<String> groupNames ) {
+    private static boolean isNewCLConsistency( Sequoiadb db, String groupName, String csName, String clName ) {
 
+        String clFullName = csName + "." + clName;
         boolean isConsistency = false;
-        for ( String groupName : groupNames ) {
-            List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
-            ReplicaGroup rg = db.getReplicaGroup( groupName );
-            Sequoiadb masterNode = rg.getMaster().connect();
-            DBCursor cursor = masterNode.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
-                    "{UniqueID: ''}", null );
-            long uniqueID = 0;
-            if ( cursor.hasNext() ) {
-                uniqueID = (long) cursor.getNext().get( "UniqueID" );
-            }
-            cursor.close();
-            for ( String nodeName : nodeNames ) {
-                isConsistency = false;
-                Sequoiadb nodeConn = rg.getNode( nodeName ).connect();
-                DBCursor cur = null;
-                long checkUniqueID = 0;
-                for ( int i = 0; i < 300; i++ ) {
-                    cur = nodeConn.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
-                            "{UniqueID: ''}", null );
-                    if ( cur.hasNext() ) {
-                        checkUniqueID = (long) cur.getNext().get( "UniqueID" );
-                    }
-                    cur.close();
-                    if ( uniqueID == checkUniqueID ) {
-                        isConsistency = true;
-                        break;
-                    }
-                    try {
-                        Thread.sleep( 1000 );
-                    } catch ( InterruptedException e ) {
-                        e.printStackTrace();
-                    }
+        List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
+        ReplicaGroup rg = db.getReplicaGroup( groupName );
+        Sequoiadb masterNode = rg.getMaster().connect();
+        DBCursor cursor = masterNode.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
+                "{UniqueID: ''}", null );
+        long uniqueID = 0;
+        if ( cursor.hasNext() ) {
+            uniqueID = (long) cursor.getNext().get( "UniqueID" );
+        }
+        cursor.close();
+        for ( String nodeName : nodeNames ) {
+            isConsistency = false;
+            Sequoiadb nodeConn = rg.getNode( nodeName ).connect();
+            DBCursor cur = null;
+            long checkUniqueID = 0;
+            for ( int i = 0; i < 300; i++ ) {
+                cur = nodeConn.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
+                        "{UniqueID: ''}", null );
+                if ( cur.hasNext() ) {
+                    checkUniqueID = (long) cur.getNext().get( "UniqueID" );
                 }
-                if ( !isConsistency ) {
-                    System.err.println( "Group [" + groupName + "] UniqueID is not the same, masterNode UniqueID: "
-                            + uniqueID + ", " + nodeNames + " UniqueID: " + checkUniqueID );
+                cur.close();
+                if ( uniqueID == checkUniqueID ) {
+                    isConsistency = true;
                     break;
+                }
+                try {
+                    Thread.sleep( 1000 );
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
                 }
             }
             if ( !isConsistency ) {
+                System.err.println( "Group [" + groupName + "] UniqueID is not the same, masterNode UniqueID: "
+                        + uniqueID + ", " + nodeNames + " UniqueID: " + checkUniqueID );
                 break;
             }
         }
@@ -534,12 +526,12 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isConsistency( List<Node> nodes, String csName, String clName ) {
+    public static boolean isConsistency( Sequoiadb db, String groupName, String csName, String clName ) {
         boolean isConsistency = false;
         int doTimes = 0;
         int timeout = 600;
         while ( true ) {
-            isConsistency = isNodeRecordsConsistency( nodes, csName, clName );
+            isConsistency = isNodeRecordsConsistency( db, groupName, csName, clName );
             if ( isConsistency ) {
                 return isConsistency;
             } else {
@@ -561,41 +553,6 @@ public class FullTextUtils {
     }
 
     /**
-     * 判断主备节点的集合是否存在
-     * 
-     * @param nodes
-     * @param csName
-     * @param clName
-     * @return boolean
-     * @Author yinzhen
-     * @Date 2019-04-13
-     */
-    private static boolean isNodeCLExist( List<Node> nodes, String csName, String clName ) {
-        boolean isCLExists = false;
-        for ( Node node : nodes ) {
-            isCLExists = false;
-            for ( int i = 0; i < 300; i++ ) {
-                if ( node.connect().isCollectionSpaceExist( csName ) ) {
-                    if ( node.connect().getCollectionSpace( csName ).isCollectionExist( clName ) ) {
-                        isCLExists = true;
-                        break;
-                    } else {
-                        try {
-                            Thread.sleep( 1000 );
-                        } catch ( InterruptedException e ) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-            if ( !isCLExists ) {
-                break;
-            }
-        }
-        return isCLExists;
-    }
-
-    /**
      * 判断主备节点的集合数据是否一致
      * 
      * @param nodes
@@ -605,24 +562,27 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isNodeRecordsConsistency( List<Node> nodes, String csName, String clName ) {
-        if ( nodes.size() == 1 ) {
+    public static boolean isNodeRecordsConsistency( Sequoiadb db, String groupName, String csName, String clName ) {
+
+        List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
+        if ( nodeNames.size() == 1 ) {
             return true;
         }
 
         // 判断所有节点是否已同步集合
-        if ( !isNodeCLExist( nodes, csName, clName ) ) {
+        if ( !isNewCLConsistency( db, groupName, csName, clName ) ) {
             return false;
         }
 
-        Sequoiadb firstNode = nodes.get( 0 ).connect();
+        ReplicaGroup rg = db.getReplicaGroup( groupName );
+        Sequoiadb firstNode = rg.getNode( nodeNames.get( 0 ) ).connect();
         DBCollection cl1 = firstNode.getCollectionSpace( csName ).getCollection( clName );
-        for ( int i = 1; i < nodes.size(); i++ ) {
-            Sequoiadb nextNode = nodes.get( i ).connect();
+        for ( int i = 1; i < nodeNames.size(); i++ ) {
+            Sequoiadb nextNode = rg.getNode( nodeNames.get( i ) ).connect();
             DBCollection cl2 = nextNode.getCollectionSpace( csName ).getCollection( clName );
             if ( cl1.getCount() != cl2.getCount() ) {
-                System.err.println( "cl from " + nodes.get( 0 ).getNodeName() + "'s count: " + cl1.getCount()
-                        + ", cl from " + nodes.get( i ).getNodeName() + "'s count: " + cl2.getCount() );
+                System.err.println( "cl from " + nodeNames.get( 0 ) + "'s count: " + cl1.getCount() + ", cl from "
+                        + nodeNames.get( i ) + "'s count: " + cl2.getCount() );
                 return false;
             }
             DBCursor cl1Cursor = cl1.query( null, null, "{\"_id\":1}", null );
