@@ -26,7 +26,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author luweikang
  * @Date 2019年5月10日
  */
-public class FullText15845 extends SdbTestBase {
+public class FullText15845 extends SdbTestBase {//TODO:与 15877 用例重复
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
@@ -50,7 +50,7 @@ public class FullText15845 extends SdbTestBase {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() throws Exception {//TODO: 同 15838 用例检视意见
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -66,7 +66,7 @@ public class FullText15845 extends SdbTestBase {
 
         cappedName = FullTextDBUtils.getCappedName( cl, indexName );
         esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
-
+//TODO:以上步骤为并发前的预置条件，建议放到 setUp
         ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker( new DropIndexThread() );
         thread.addWorker( new TruncateThread() );

@@ -65,7 +65,7 @@ public class FullText15846 extends SdbTestBase {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() throws Exception {//TODO: 同 15838 用例检视意见
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -91,7 +91,7 @@ public class FullText15846 extends SdbTestBase {
         thread.run();
 
         Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
-
+      //TODO：lob相关操作貌似都没有做校验
     }
 
     @AfterClass
@@ -160,7 +160,7 @@ public class FullText15846 extends SdbTestBase {
                     cl.removeLob( lobId );
                 }
             } catch ( BaseException e ) {
-                e.printStackTrace();
+                e.printStackTrace();//TODO：不需要抛异常吗？
             }
         }
     }
@@ -178,7 +178,7 @@ public class FullText15846 extends SdbTestBase {
                     lob.read( data );
                 }
             } catch ( BaseException e ) {
-                e.printStackTrace();
+                e.printStackTrace();//TODO：不需要抛异常吗？
             }
         }
     }

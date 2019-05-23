@@ -52,7 +52,7 @@ public class FullText15841 extends SdbTestBase {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() throws Exception {//TODO: 同 15838 用例检视意见
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -60,9 +60,11 @@ public class FullText15841 extends SdbTestBase {
         thread.addWorker( new CreateIndexThread() );
         thread.addWorker( new TruncateThread() );
         thread.run();
-
+//TODO：创建索引可能成功可能失败，需要分情况检查结果
+//TODO：如果创建索引成功，检查结果前是不是要判断一下索引是否意见重建？FullTextUtils.isFulltextRebuild
+//TODO：如果truncate失败，需要校验记录数、索引、数据一致性
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
-
+        
         cappedName = FullTextDBUtils.getCappedName( cl, indexName );
         esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
     }
@@ -101,7 +103,7 @@ public class FullText15841 extends SdbTestBase {
         }
     }
 
-    private class TruncateThread {
+    private class TruncateThread {//TODO:truncate可能报-190或-147，请确认
 
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {

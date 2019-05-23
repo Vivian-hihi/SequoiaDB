@@ -53,7 +53,7 @@ public class FullText15840 extends SdbTestBase {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() throws Exception {//TODO: 同 15838 用例检视意见
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -106,7 +106,7 @@ public class FullText15840 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void queryData() throws InterruptedException {
             try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                Thread.sleep( 5500 + new Random().nextInt( 500 ) );
+                Thread.sleep( 5500 + new Random().nextInt( 500 ) );//TODO：建议循环查多次，每查询一次随机暂停 x 毫秒，可能会撞到创建索引不同的点
                 DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
                 DBCursor cur = cl.query( "{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'a': 1}",
                         "{'': '" + indexName + "'}" );

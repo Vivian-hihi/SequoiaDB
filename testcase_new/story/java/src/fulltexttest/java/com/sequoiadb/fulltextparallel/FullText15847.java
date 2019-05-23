@@ -57,7 +57,7 @@ public class FullText15847 extends SdbTestBase {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() throws Exception {//TODO: 同 15838 用例检视意见
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -116,7 +116,7 @@ public class FullText15847 extends SdbTestBase {
                 for ( int i = 0; i < 5; i++ ) {
                     cl.dropIndex( indexName );
                     cl.createIndex( indexName, indexObj, false, false );
-                }
+                }//TODO:文本用例预期结果删除全文索引可能报-147，请确认修改
             }
         }
     }
@@ -132,7 +132,7 @@ public class FullText15847 extends SdbTestBase {
                 String strC = StringUtils.getRandomString( 32 );
                 String strD = StringUtils.getRandomString( 64 );
                 int insertNum1 = insertNum + testInsertNum / 10;
-                for ( int i = 0; i < 10; i++ ) {
+                for ( int i = 0; i < 10; i++ ) {//TODO:插入是不是可以直接调公共方法？
                     for ( int j = insertNum; j < insertNum1; j++ ) {
                         int recordNum = i * ( testInsertNum / 10 ) + j;
                         insertObjs.add( (BSONObject) JSON.parse( "{recordId: " + recordNum + ", a: '" + clName

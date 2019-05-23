@@ -50,7 +50,7 @@ public class FullText15838 extends SdbTestBase {
             throw new SkipException( "skip StandAlone" );
         }
         List<String> groupNames = CommLib.getDataGroupNames( sdb );
-        if ( groupNames.size() < 2 ) {
+        if ( groupNames.size() < 2 ) {//TODO：建议用公共方法 CommLib.OneGroupMode
             throw new SkipException( "group less 2" );
         }
         sourceGruop = groupNames.get( 0 );
@@ -66,7 +66,7 @@ public class FullText15838 extends SdbTestBase {
     @Test
     public void test() throws Exception {
 
-        FullTextDBUtils.insertData( cl, insertNum );
+        FullTextDBUtils.insertData( cl, insertNum );//TODO：非测试点，预置条件，建议放到setUp
 
         ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker( new CreateIndexThread() );
@@ -78,8 +78,8 @@ public class FullText15838 extends SdbTestBase {
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
 
         String cappedName = FullTextDBUtils.getCappedName( cl, indexName );
-        cappedNames.add( cappedName );
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, indexName );
+        cappedNames.add( cappedName );// TODO：不需要list吧。另外，如果只有teardown里面用的话建议放到teardown获取。获取定义成成员变量号扩展~~
+        esIndexNames = FullTextDBUtils.getESIndexNames( cl, indexName );//TODO:只有一个索引，建议用获取单个的接口
 
     }
 
@@ -87,7 +87,7 @@ public class FullText15838 extends SdbTestBase {
     public void tearDown() {
         try {
             FullTextDBUtils.dropCollection( cs, clName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );//TODO：2个list都可以改为String
         } finally {
             if ( sdb != null ) {
                 sdb.close();
