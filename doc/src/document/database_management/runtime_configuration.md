@@ -21,7 +21,7 @@
 |--auditmask||str|在线生效|新连接生效|1. 指定审计日志打印掩码。SequoiaDB中审计日志类型有：ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,INSERT,DELETE,UPDATE,OTHER。<br/>             2. 如果不指定，则默认为"SYSTEM\|DDL\|DCL", ALL取值表示开启所有,NONE关闭全部。|
 |--role|-o|str|||1. 指定服务角色。SequoiaDB分别以data/coord/catalog/standalone代表：数据节点/协调节点/编目节点/单机。<br/>             2. 如果不指定则默认为单机。|
 |--catalogaddr|-t|str|||1. 指定编目节点的地址。配置形式为"hostname1:catalogname1,hostname2:catalogname2,..."。<br/>             2. 需要至少指定一个编目节点的地址。|
-|--logfilesz|-f|num|||1. 指定同步日志文件的大小。合法输入为64（MB）- 2048（MB）。<br/>             2. 如果不指定，则默认为64（MB）。|
+|--logfilesz|-f|num|||1. 指定同步日志文件的大小。合法输入为64（MB）- 2048（MB）。<br/>             2. 如果不指定，则默认为64（MB）。<br/>             3. 同步日志的总大小（logfilesz * logfilenum）决定了在同步过程中的容错能力。日志越大则进行全量恢复的可能性越小。|
 |--logfilenum|-n|num|||1. 指定同步日志文件的数量。<br/>              2. 如果不指定，则默认为20。|
 |--transactionon|-e|boolean|重启生效||1. 指定是否打开事务。2. 如果不指定，则默认为true。|
 |--transactiontimeout||num|在线生效||1. 事务锁等待超时时间（单位：秒）,默认为:60,取值范围[0,3600]|
@@ -77,8 +77,9 @@
 |--logtimeon||boolean|在线生效||开启复制日志保存时间信息功能，默认为false。|
 
 >**Note:**  
->1. 同步日志的总大小（logfilesz * logfilenum）决定了在同步过程中的容错能力。日志越大则进行全量恢复的可能性越小。  
->2. “生效类型”为空的配置不能进行在线修改。  
+>1. “生效类型”为在线生效的配置能进行在线修改，不需要重启就能生效。  
+>2. “生效类型”为重启生效的配置能进行在线修改，需要重启后生效。  
+>3. “生效类型”为空的配置不能进行在线修改。同步日志参数 logfilesz 和 logfilenum 虽然不能在线修改配置，但是可以通过特殊方式进行修改，请参考[同步日志](database_management/log_synchronization.md#a1)。  
 
 ##参数配置##
 SequoiaDB支持命令行方式及配置文件方式进行参数配置。
@@ -117,4 +118,4 @@ svcname=50000
 ###配置动态生效###
 使用 [updateConf()](reference/Sequoiadb_command/Sdb/updateConf.md) 以及 [deleteConf()](reference/Sequoiadb_command/Sdb/deleteConf.md) 在线修改配置。
 
-使用 [reloadConf()](reference/Sequoiadb_command/Sdb/reloadConf.md) 重新加载配置文件，并进行配置动态生效，只支持“动态生效”列为“在线生效”的配置项，其他配置项会被忽略。“生效策略”若无其他说明，则默认为立即生效。
+使用 [reloadConf()](reference/Sequoiadb_command/Sdb/reloadConf.md) 重新加载配置文件，并进行配置动态生效，只支持“生效类型”列为“在线生效”的配置项，其他配置项会被忽略。“生效策略”若无其他说明，则默认为立即生效。

@@ -29,6 +29,7 @@ typedef struct _optOtherInfoEle
    // note tags
    string first ;
    string second ;
+   string third ;
 } OPTION_OTHER_INFO_ELE ;
 
 class optGenForDoc : public optGeneratorBase

@@ -18,6 +18,8 @@ using namespace boost::property_tree ;
 #define XML_FIELD_NOTE                 "note"
 #define XML_FIELD_FIRST                "first"
 #define XML_FIELD_SECOND               "second"
+#define XML_FIELD_THIRD                "third"
+
 
 #define PTREE_GET_VALUE( tree, name, key, type, required, defVal ) \
 {\
@@ -164,6 +166,10 @@ int optGenForDoc::outputFile( int id, fileOutStream &fout, string &outputPath )
       {
          fout << ">2. " << otherInfo.second << "  " << endl ;
       }
+      if( !otherInfo.third.empty() )
+      {
+         fout << ">3. " << otherInfo.third << "  " << endl ;
+      }
    }
 
    fout << "\n" ;
@@ -263,6 +269,10 @@ int optGenForDoc::_loadOptOtherInfo()
                else if ( XML_FIELD_SECOND == v2.first )
                {
                   PTREE_GET_VALUE( v2, ele.second, _tmpLang, string, false, "" ) ;
+               }
+               else if ( XML_FIELD_THIRD == v2.first )
+               {
+                  PTREE_GET_VALUE( v2, ele.third, _tmpLang, string, false, "" ) ;
                }
             }
          }
