@@ -42,9 +42,6 @@ using namespace engine ;
 
 namespace replay
 {
-   extern const CHAR RPL_CONF_NAME_PREFIX[] ;
-   extern const CHAR RPL_CONF_SUBMIT_TIME[] ;
-
    class rplConfParser : public SDBObject
    {
    public:

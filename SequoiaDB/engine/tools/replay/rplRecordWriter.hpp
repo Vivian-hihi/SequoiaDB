@@ -72,7 +72,7 @@ namespace replay
    {
    public:
       rplRecordWriter( Monitor *monitor, const CHAR *outputDir,
-                       const CHAR *prefix ) ;
+                       const CHAR *prefix, const CHAR *suffix ) ;
       ~rplRecordWriter() ;
 
    public:
@@ -94,7 +94,8 @@ namespace replay
 
       Monitor *_monitor ;
       string _outputDir ;
-      string _prefix ;
+      string _prefixWithConnector ;
+      string _suffixWithConnector ;
    } ;
 }
 

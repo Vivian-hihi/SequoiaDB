@@ -33,6 +33,8 @@
 #include "rplField.hpp"
 #include "../bson/bson.hpp"
 #include "ossUtil.hpp"
+#include "rplConfDef.hpp"
+#include "rplUtil.hpp"
 #include <string>
 
 using namespace std ;
@@ -41,94 +43,23 @@ using namespace engine ;
 
 namespace replay
 {
-   const CHAR RPL_FIELD_TYPE_MAPPING_STRING[]      = "MAPPING_STRING" ;
-   const CHAR RPL_FIELD_TYPE_CONST_STRING[]        = "CONST_STRING" ;
-   const CHAR RPL_FIELD_TYPE_OUTPUT_TIME[]         = "OUTPUT_TIME" ;
-   const CHAR RPL_FIELD_TYPE_AUTO_OP[]             = "AUTO_OP";
-   const CHAR RPL_FIELD_TYPE_ORIGINAL_TIME[]       = "ORIGINAL_TIME";
-
-   rplMappingStrField::rplMappingStrField( const CHAR *sFieldName,
-                                           const CHAR *tFieldName )
+   rplConstStringField::rplConstStringField()
    {
-      _hasDefaultValue = FALSE ;
-      ossSnprintf( _sFieldName, MAX_FIELDNAME_LEN, "%s", sFieldName ) ;
-      ossSnprintf( _tFieldName, MAX_FIELDNAME_LEN, "%s", tFieldName ) ;
-   }
-
-   rplMappingStrField::rplMappingStrField( const CHAR *sFieldName,
-                                           const CHAR *tFieldName,
-                                           const CHAR *defaultValue )
-   {
-      _hasDefaultValue = TRUE ;
-      ossSnprintf( _sFieldName, MAX_FIELDNAME_LEN, "%s", sFieldName ) ;
-      ossSnprintf( _tFieldName, MAX_FIELDNAME_LEN, "%s", tFieldName ) ;
-      if ( NULL != defaultValue )
-      {
-         _defaultValue = defaultValue ;
-      }
-   }
-
-   rplMappingStrField::~rplMappingStrField()
-   {
-   }
-
-   EN_FieldType rplMappingStrField::getTargetType() const
-   {
-      return MAPPING_STRING ;
-   }
-
-   INT32 rplMappingStrField::getValue( const BSONObj &sRecord, string &value )
-   {
-      INT32 rc = SDB_OK ;
-      BSONElement ele = sRecord.getField( _sFieldName ) ;
-      if ( ele.type() != EOO )
-      {
-         if ( ele.type() == String )
-         {
-            value = ele.str() ;
-         }
-         else if ( ele.type() == jstOID )
-         {
-            OID oid = ele.OID() ;
-            value = oid.toString() ;
-         }
-         else
-         {
-            rc = SDB_INVALIDARG ;
-            PD_RC_CHECK( rc, PDERROR, "Invalid field type(%s:%d), rc = %d",
-                         _sFieldName, ele.type(), rc ) ;
-         }
-      }
-      else
-      {
-         if ( !_hasDefaultValue )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_RC_CHECK( rc, PDERROR, "Field(%s) is not exist, rc = %d",
-                         _sFieldName, rc ) ;
-         }
-
-         value = _defaultValue ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   rplConstStringField::rplConstStringField( const CHAR *constValue )
-   {
-      _value = constValue ;
    }
 
    rplConstStringField::~rplConstStringField()
    {
    }
 
-   EN_FieldType rplConstStringField::getTargetType() const
+   EN_FieldType rplConstStringField::getFieldType() const
    {
       return CONST_STRING ;
+   }
+
+   INT32 rplConstStringField::init( const BSONObj &fieldConf )
+   {
+      _value = fieldConf.getStringField( RPL_CONF_NAME_FIELD_CONSTVALUE ) ;
+      return SDB_OK ;
    }
 
    INT32 rplConstStringField::getValue( const BSONObj &sRecord, string &value )
@@ -145,7 +76,12 @@ namespace replay
    {
    }
 
-   EN_FieldType rplOutputTimeField::getTargetType() const
+   INT32 rplOutputTimeField::init( const BSONObj &fieldConf )
+   {
+      return SDB_OK ;
+   }
+
+   EN_FieldType rplOutputTimeField::getFieldType() const
    {
       return OUTPUT_TIME ;
    }
@@ -193,7 +129,12 @@ namespace replay
    {
    }
 
-   EN_FieldType rplOriginalTimeField::getTargetType() const
+   INT32 rplOriginalTimeField::init( const BSONObj &fieldConf )
+   {
+      return SDB_OK ;
+   }
+
+   EN_FieldType rplOriginalTimeField::getFieldType() const
    {
       return ORIGINAL_TIME ;
    }
@@ -212,7 +153,12 @@ namespace replay
    {
    }
 
-   EN_FieldType rplAutoOPField::getTargetType() const
+   INT32 rplAutoOPField::init( const BSONObj &fieldConf )
+   {
+      return SDB_OK ;
+   }
+
+   EN_FieldType rplAutoOPField::getFieldType() const
    {
       return AUTO_OP ;
    }
@@ -221,6 +167,314 @@ namespace replay
    {
       // should not call this function
       return SDB_INVALIDARG ;
+   }
+
+   rplMappingField::rplMappingField()
+   {
+   }
+
+   rplMappingField::~rplMappingField()
+   {
+   }
+
+   INT32 rplMappingField::init( const BSONObj &fieldConf )
+   {
+      INT32 rc = SDB_OK ;
+      //{ source: "fieldName", target: "columnName" }
+      const CHAR *sFieldName = fieldConf.getStringField( RPL_CONF_NAME_SOURCE ) ;
+      const CHAR *tFieldName = fieldConf.getStringField( RPL_CONF_NAME_TARGET ) ;
+      if ( '\0' == sFieldName[0] )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "Field(%s) can't be empty, rc = %d",
+                      RPL_CONF_NAME_SOURCE, rc ) ;
+      }
+
+      ossSnprintf( _sFieldName, sizeof(_sFieldName) - 1, "%s", sFieldName ) ;
+      ossSnprintf( _tFieldName, sizeof(_tFieldName) - 1, "%s", tFieldName ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   rplMappingStrField::rplMappingStrField()
+   {
+   }
+
+   rplMappingStrField::~rplMappingStrField()
+   {
+   }
+
+   INT32 rplMappingStrField::init( const BSONObj & fieldConf )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement defaultValueEle ;
+
+      rc = rplMappingField::init( fieldConf ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init rplMappingStrField, rc = %d",
+                   rc ) ;
+
+      defaultValueEle = fieldConf.getField( RPL_CONF_NAME_FIELD_DEFAULTVALUE ) ;
+      if ( defaultValueEle.type() == EOO )
+      {
+         _hasDefaultValue = FALSE ;
+      }
+      else
+      {
+         _hasDefaultValue = TRUE ;
+         _defaultValue = defaultValueEle.str() ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   EN_FieldType rplMappingStrField::getFieldType() const
+   {
+      return MAPPING_STRING ;
+   }
+
+   INT32 rplMappingStrField::getValue( const BSONObj &sRecord, string &value )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele = sRecord.getField( _sFieldName ) ;
+      if ( ele.type() != EOO )
+      {
+         if ( ele.type() == String )
+         {
+            value = ele.str() ;
+         }
+         else if ( ele.type() == jstOID )
+         {
+            OID oid = ele.OID() ;
+            value = oid.toString() ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_RC_CHECK( rc, PDERROR, "Invalid field type(%s:%d), rc = %d",
+                         _sFieldName, ele.type(), rc ) ;
+         }
+      }
+      else
+      {
+         if ( !_hasDefaultValue )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_RC_CHECK( rc, PDERROR, "Field(%s) is not exist, rc = %d",
+                         _sFieldName, rc ) ;
+         }
+
+         value = _defaultValue ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   rplIntField::rplIntField()
+   {
+   }
+
+   rplIntField::~rplIntField()
+   {
+   }
+
+   INT32 rplIntField::init( const BSONObj &fieldConf )
+   {
+      INT32 rc = SDB_OK ;
+      rc = rplMappingField::init( fieldConf ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init rplIntField, rc = %d",
+                   rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   EN_FieldType rplIntField::getFieldType() const
+   {
+      return MAPPING_INT ;
+   }
+
+   INT32 rplIntField::getValue( const BSONObj &sRecord, string &value )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      BSONElement ele = sRecord.getField( _sFieldName ) ;
+      if ( ele.type() != NumberInt )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "Invalid field type(%s:%d), rc = %d",
+                      _sFieldName, ele.type(), rc ) ;
+      }
+
+      ss << ele.numberInt() ;
+      value = ss.str() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   rplLongField::rplLongField()
+   {
+   }
+
+   rplLongField::~rplLongField()
+   {
+   }
+
+   INT32 rplLongField::init( const BSONObj &fieldConf )
+   {
+      INT32 rc = SDB_OK ;
+      rc = rplMappingField::init( fieldConf ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init rplLongField, rc = %d",
+                   rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   EN_FieldType rplLongField::getFieldType() const
+   {
+      return MAPPING_LONG ;
+   }
+
+   INT32 rplLongField::getValue( const BSONObj &sRecord, string &value )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      BSONElement ele = sRecord.getField( _sFieldName ) ;
+      if ( ele.type() != NumberLong && ele.type() != NumberInt )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "Invalid field type(%s:%d), rc = %d",
+                      _sFieldName, ele.type(), rc ) ;
+      }
+
+      ss << ele.numberLong() ;
+      value = ss.str() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   rplDecimalField::rplDecimalField()
+   {
+   }
+
+   rplDecimalField::~rplDecimalField()
+   {
+   }
+
+   INT32 rplDecimalField::init( const BSONObj &fieldConf )
+   {
+      INT32 rc = SDB_OK ;
+      rc = rplMappingField::init( fieldConf ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init rplDecimalField, rc = %d",
+                   rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   EN_FieldType rplDecimalField::getFieldType() const
+   {
+      return MAPPING_DECIMAL ;
+   }
+
+   INT32 rplDecimalField::getValue( const BSONObj &sRecord, string &value )
+   {
+      INT32 rc = SDB_OK ;
+      bsonDecimal decimal ;
+      BSONElement ele = sRecord.getField( _sFieldName ) ;
+      if ( !ele.isNumber() || ele.type() == NumberDouble )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "Invalid field type(%s:%d), rc = %d",
+                      _sFieldName, ele.type(), rc ) ;
+      }
+
+      if ( ele.type() == NumberDecimal )
+      {
+         decimal = ele.numberDecimal() ;
+         value = decimal.toString() ;
+      }
+      else
+      {
+         stringstream ss ;
+         ss << ele.numberLong() ;
+         value = ss.str() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   rplTimestampField::rplTimestampField()
+   {
+   }
+
+   rplTimestampField::~rplTimestampField()
+   {
+   }
+
+   INT32 rplTimestampField::init( const BSONObj &fieldConf )
+   {
+      INT32 rc = SDB_OK ;
+      rc = rplMappingField::init( fieldConf ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init rplTimestampField, rc = %d",
+                   rc ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   EN_FieldType rplTimestampField::getFieldType() const
+   {
+      return MAPPING_TIMESTAMP ;
+   }
+
+   INT32 rplTimestampField::getValue( const BSONObj &sRecord, string &value )
+   {
+      INT32 rc = SDB_OK ;
+      UINT64 ms = 0 ;
+      UINT32 inc = 0 ;
+      string timeStr ;
+      ossTimestamp timestamp ;
+      BSONElement ele = sRecord.getField( _sFieldName ) ;
+      if ( ele.type() != Timestamp )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "Invalid field type(%s:%d), rc = %d",
+                      _sFieldName, ele.type(), rc ) ;
+      }
+
+      ms = ( SINT64 )ele.timestampTime() ;
+      inc = ele.timestampInc() ;
+
+      timestamp = ossMicrosecondsToTimestamp( ms * 1000 + inc ) ;
+      rplTimestampToString( timestamp, timeStr ) ;
+      value = timeStr ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

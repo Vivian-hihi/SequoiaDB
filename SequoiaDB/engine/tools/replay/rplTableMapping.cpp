@@ -31,6 +31,7 @@
 *******************************************************************************/
 
 #include "rplTableMapping.hpp"
+#include "rplConfDef.hpp"
 #include "../bson/bson.hpp"
 #include "ossUtil.hpp"
 #include <string>
@@ -41,15 +42,6 @@ using namespace engine ;
 
 namespace replay
 {
-   const CHAR RPL_CONF_NAME_TABLES[] = "tables" ;
-   const CHAR RPL_CONF_NAME_SOURCE[] = "source" ;
-   const CHAR RPL_CONF_NAME_TARGET[] = "target" ;
-
-   const CHAR RPL_CONF_NAME_FIELDS[] = "fields" ;
-   const CHAR RPL_CONF_NAME_FIELD_TYPE[] = "fieldType" ;
-   const CHAR RPL_CONF_NAME_FIELD_DEFAULTVALUE[] = "defaultValue" ;
-   const CHAR RPL_CONF_NAME_FIELD_CONSTVALUE[] = "constValue" ;
-
    rplFieldMapping::rplFieldMapping()
    {
    }
@@ -137,6 +129,7 @@ namespace replay
       rplField *fieldInfo = NULL ;
       const CHAR *tFieldType = NULL ;
       BSONElement typeEle ;
+      BSONElement doubleQuoteEle ;
 
       typeEle = field.getField( RPL_CONF_NAME_FIELD_TYPE ) ;
       if ( typeEle.type() != String )
@@ -150,51 +143,38 @@ namespace replay
 
       if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_MAPPING_STRING ) == 0 )
       {
-         BSONElement defaultValueEle ;
-         //{ fieldType: "MAPPING_STRING", source: "fieldName", target: "columnName" }
-         const CHAR *sFieldName = field.getStringField( RPL_CONF_NAME_SOURCE ) ;
-         const CHAR *tFieldName = field.getStringField( RPL_CONF_NAME_TARGET ) ;
-         if ( '\0' == sFieldName[0] )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_RC_CHECK( rc, PDERROR, "Field(%s) can't be empty, rc = %d",
-                         RPL_CONF_NAME_SOURCE, rc ) ;
-         }
-
-         defaultValueEle = field.getField( RPL_CONF_NAME_FIELD_DEFAULTVALUE ) ;
-         if ( defaultValueEle.type() == EOO )
-         {
-            fieldInfo = SDB_OSS_NEW rplMappingStrField( sFieldName,
-                                                        tFieldName ) ;
-         }
-         else
-         {
-            fieldInfo = SDB_OSS_NEW rplMappingStrField(
-                                               sFieldName,
-                                               tFieldName,
-                                               defaultValueEle.str().c_str() ) ;
-         }
+         fieldInfo = SDB_OSS_NEW rplMappingStrField() ;
+      }
+      else if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_MAPPING_INT ) == 0 )
+      {
+         fieldInfo = SDB_OSS_NEW rplIntField() ;
+      }
+      else if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_MAPPING_LONG ) == 0 )
+      {
+         fieldInfo = SDB_OSS_NEW rplLongField() ;
+      }
+      else if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_MAPPING_DECIMAL ) == 0 )
+      {
+         fieldInfo = SDB_OSS_NEW rplDecimalField() ;
+      }
+      else if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_MAPPING_TIMESTAMP ) == 0 )
+      {
+         fieldInfo = SDB_OSS_NEW rplTimestampField() ;
       }
       else if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_CONST_STRING ) == 0 )
       {
-         //{ fieldType: "CONST_STRING", constValue:"const" }
-         const CHAR *constValue = field.getStringField(
-                                              RPL_CONF_NAME_FIELD_CONSTVALUE ) ;
-         fieldInfo = SDB_OSS_NEW rplConstStringField( constValue ) ;
+         fieldInfo = SDB_OSS_NEW rplConstStringField() ;
       }
       else if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_OUTPUT_TIME ) == 0 )
       {
-         //{ fieldType: "OUTPUT_TIME" }
          fieldInfo = SDB_OSS_NEW rplOutputTimeField() ;
       }
       else if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_ORIGINAL_TIME ) == 0 )
       {
-         //{ fieldType: "ORIGINAL_TIME" }
          fieldInfo = SDB_OSS_NEW rplOriginalTimeField() ;
       }
       else if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_AUTO_OP ) == 0 )
       {
-         //{ fieldType: "AUTO_OP" }
          fieldInfo = SDB_OSS_NEW rplAutoOPField() ;
       }
       else
@@ -208,6 +188,15 @@ namespace replay
       {
          rc = SDB_OOM ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create field, rc = %d", rc ) ;
+      }
+
+      rc = fieldInfo->init( field ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init fieldInfo, rc = %d", rc ) ;
+
+      doubleQuoteEle = field.getField( RPL_CONF_NMAE_FIELD_DOUBLEQUOTE ) ;
+      if ( doubleQuoteEle.isBoolean() )
+      {
+         fieldInfo->setIsNeedDoubleQuote( doubleQuoteEle.booleanSafe() ) ;
       }
 
       _fieldVector.push_back( fieldInfo ) ;

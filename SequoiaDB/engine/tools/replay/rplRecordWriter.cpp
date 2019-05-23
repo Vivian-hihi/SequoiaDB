@@ -166,16 +166,21 @@ namespace replay
    {
       INT32 rc = SDB_OK ;
       INT64 len = ossStrlen( record ) ;
+
+      if ( _size > 0 )
+      {
+         rc = _writer.writeN( SQL_FILE_NEWLINE, ossStrlen( SQL_FILE_NEWLINE ) ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to writeN record(%s), rc = %d",
+                      SQL_FILE_NEWLINE, rc ) ;
+
+         _size += ossStrlen( SQL_FILE_NEWLINE ) ;
+      }
+
       rc = _writer.writeN( record, len ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to writeN record(%s), rc = %d",
                    record, rc ) ;
 
-      rc = _writer.writeN( SQL_FILE_NEWLINE, ossStrlen( SQL_FILE_NEWLINE ) ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to writeN record(%s), rc = %d",
-                   SQL_FILE_NEWLINE, rc ) ;
-
       _size += len ;
-      _size += ossStrlen( SQL_FILE_NEWLINE ) ;
 
    done:
       return rc ;
@@ -235,10 +240,19 @@ namespace replay
    }
 
    rplRecordWriter::rplRecordWriter( Monitor *monitor, const CHAR *outputDir,
-                                     const CHAR *prefix )
+                                     const CHAR *prefix, const CHAR *suffix )
    {
       _outputDir = outputDir ;
-      _prefix = prefix ;
+      if ( prefix[0] != '\0' )
+      {
+         _prefixWithConnector = string(prefix) + "_" ;
+      }
+
+      if ( suffix[0] != '\0' )
+      {
+         _suffixWithConnector = string("_") + suffix ;
+      }
+
       _monitor = monitor ;
    }
 
@@ -398,11 +412,12 @@ namespace replay
             serial = 0 ;
          }
          _monitor->setSerial( serial ) ;
-
          getCurrentDate( dateStr ) ;
-         ossSnprintf( fileName, OSS_MAX_PATHSIZE, "%s_%s_%s_%010lld_%lld_%s.csv",
-                      _prefix.c_str(), dbName, tableName, serial, lsn,
-                      dateStr.c_str() ) ;
+
+         ossSnprintf( fileName, OSS_MAX_PATHSIZE,
+                      "%s%s_%s_%010lld_%lld_%s%s.csv",
+                      _prefixWithConnector.c_str(), dbName, tableName, serial,
+                      lsn, dateStr.c_str(), _suffixWithConnector.c_str() ) ;
 
          isNeedDelete = TRUE ;
          fileWriter = SDB_OSS_NEW rplFileWriter() ;
@@ -507,13 +522,12 @@ namespace replay
       {
          rplFileWriter *writer = iter->second ;
          rc = writer->flushAndClose() ;
-         // remove from map anyway
-         SAFE_OSS_DELETE( writer ) ;
-         _clWriters.erase( iter++ ) ;
-
          PD_RC_CHECK( rc, PDERROR, "Failed to commit and close file(%s), "
                       "rc = %d", writer->getTmpFileName(), rc ) ;
 
+         // remove from map anyway
+         SAFE_OSS_DELETE( writer ) ;
+         _clWriters.erase( iter++ ) ;
       }
 
    done:

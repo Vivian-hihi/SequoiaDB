@@ -89,15 +89,11 @@ namespace replay
       INT32 getExtraStatus( BSONObj &status ) ;
 
    private:
-      INT32 _removeTmpFile() ;
       INT32 _parseConf( const CHAR *confFile ) ;
       INT32 _generateRecord( const CHAR *clFullName, const CHAR *OP,
                              const UINT64 &opTimeMicroSecond,
                              const BSONObj &objIn, const CHAR **outDBName,
                              const CHAR **outTableName, string &strOut ) ;
-      INT32 _getRecordObj( const BSONObj &modifier, BSONObj &obj ) ;
-      void _timestampToString( ossTimestamp &timestamp,
-                               string &timeStr ) ;
       INT32 _parseSubmitTime( const CHAR *submitTime ) ;
 
    private:
@@ -106,7 +102,9 @@ namespace replay
       rplRecordWriter *_recordWriter ;
 
       string _prefix ;
+      string _suffix ;
       string _outputDir ;
+      string _delimiter ;
       INT32 _outputHour ;
       INT32 _outputMinute ;
    } ;

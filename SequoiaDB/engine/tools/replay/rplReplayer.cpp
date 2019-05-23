@@ -33,6 +33,7 @@
 #include "rplSdbOutputter.hpp"
 #include "rplDB2LoadOutputter.hpp"
 #include "rplConfParser.hpp"
+#include "rplConfDef.hpp"
 #include "pd.hpp"
 #include "dpsArchiveFile.hpp"
 #include "dpsOp2Record.hpp"

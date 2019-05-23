@@ -32,6 +32,7 @@
 
 #include "rplDB2LoadOutputter.hpp"
 #include "rplConfParser.hpp"
+#include "rplConfDef.hpp"
 #include "rplUtil.hpp"
 #include "ossFile.hpp"
 #include "ossPath.hpp"
@@ -50,9 +51,6 @@ namespace fs = boost::filesystem ;
 
 namespace replay
 {
-   const CHAR RPL_CONF_NAME_OUTPUT_DIR[] = "outputDir" ;
-
-   const CHAR RPL_OUTPUT_DB2LOAD[] = "DB2LOAD" ;
    const CHAR RPL_DB2LOAD_OP_INSERT[] = "I" ;
    const CHAR RPL_DB2LOAD_OP_DELETE[] = "D" ;
    const CHAR RPL_DB2LOAD_OP_UPDATE_BEFORE[] = "B" ;
@@ -69,6 +67,7 @@ namespace replay
       _recordWriter = NULL ;
       _outputHour = 21 ;
       _outputMinute = 0 ;
+      _delimiter = RPL_CONF_DEFAULT_DELIMITER ;
    }
 
    rplDB2LoadOutputter::~rplDB2LoadOutputter()
@@ -97,7 +96,8 @@ namespace replay
                    confFile, rc ) ;
 
       _recordWriter = SDB_OSS_NEW rplRecordWriter( _monitor, _outputDir.c_str(),
-                                                   _prefix.c_str() ) ;
+                                                   _prefix.c_str(),
+                                                   _suffix.c_str() ) ;
       if ( NULL == _recordWriter )
       {
          rc = SDB_OOM ;
@@ -134,13 +134,28 @@ namespace replay
       }
 
       conf = confParser.getConf() ;
-      _prefix = conf.getStringField( RPL_CONF_NAME_PREFIX ) ;
       _outputDir = conf.getStringField( RPL_CONF_NAME_OUTPUT_DIR ) ;
-      if ( _prefix.empty() || _outputDir.empty() )
+      if ( _outputDir.empty() )
       {
          rc = SDB_INVALIDARG ;
-         PD_RC_CHECK( rc, PDERROR, "Prefix(%s) or outputDir(%s) is empty, "
-                      "rc = %d", _prefix.c_str(), _outputDir.c_str(), rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "OutputDir(%s) is empty, rc = %d",
+                      _outputDir.c_str(), rc ) ;
+      }
+
+      _prefix = conf.getStringField( RPL_CONF_NAME_PREFIX ) ;
+      _suffix = conf.getStringField( RPL_CONF_NAME_SUFFIX ) ;
+      if ( _prefix.empty() && _suffix.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "Configure %s or %s must exist at least "
+                      "one configure, rc = %d", RPL_CONF_NAME_PREFIX,
+                      RPL_CONF_NAME_SUFFIX, rc ) ;
+      }
+
+      _delimiter = conf.getStringField( RPL_CONF_NAME_DELIMITER ) ;
+      if ( _delimiter.empty() )
+      {
+         _delimiter = RPL_CONF_DEFAULT_DELIMITER ;
       }
 
       submitTime = conf.getStringField( RPL_CONF_SUBMIT_TIME ) ;
@@ -210,30 +225,6 @@ namespace replay
       goto done ;
    }
 
-   INT32 rplDB2LoadOutputter::_removeTmpFile()
-   {
-      INT32 rc = SDB_OK ;
-      vector< string > vecFiles ;
-      vector< string >::iterator iter ;
-      string filter = _prefix + "*.tmp" ;
-
-      rc = ossFilterFiles( _outputDir, vecFiles, filter.c_str() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to find tmp files(%s) in path(%s),"
-                   " rc = %d", filter.c_str(), _outputDir.c_str(), rc ) ;
-
-      for ( iter = vecFiles.begin(); iter != vecFiles.end(); iter++ )
-      {
-         rc = ossDelete( iter->c_str() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to delete tmp file[%s], rc: %d",
-                      iter->c_str(), rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    string rplDB2LoadOutputter::getType()
    {
       return RPL_OUTPUT_DB2LOAD ;
@@ -264,34 +255,6 @@ namespace replay
       goto done ;
    }
 
-   void rplDB2LoadOutputter::_timestampToString( ossTimestamp &timestamp,
-                                                 string &timeStr )
-   {
-      CHAR szFormat[] = "%04d-%02d-%02d %02d.%02d.%02d.%06d" ;
-      CHAR szTimestmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
-      struct tm tmpTm ;
-
-      ossLocalTime( timestamp.time, tmpTm ) ;
-
-      if ( timestamp.microtm >= OSS_ONE_MILLION )
-      {
-         tmpTm.tm_sec ++ ;
-         timestamp.microtm %= OSS_ONE_MILLION ;
-      }
-
-      ossSnprintf ( szTimestmpStr, sizeof( szTimestmpStr ),
-                    szFormat,
-                    tmpTm.tm_year + 1900,
-                    tmpTm.tm_mon + 1,
-                    tmpTm.tm_mday,
-                    tmpTm.tm_hour,
-                    tmpTm.tm_min,
-                    tmpTm.tm_sec,
-                    timestamp.microtm ) ;
-
-      timeStr = szTimestmpStr ;
-   }
-
    INT32 rplDB2LoadOutputter::_generateRecord( const CHAR *clFullName,
                                                const CHAR *OP,
                                                const UINT64 &opTimeMicroSecond,
@@ -320,34 +283,51 @@ namespace replay
       {
          if ( iter != fieldVector->begin() )
          {
-            ss << "," ;
+            ss << _delimiter ;
          }
 
-         ss << "\"" ;
-
          rplField *info = *iter ;
-         if ( info->getTargetType() == AUTO_OP )
+
+         if ( info->isNeedDoubleQuote() )
+         {
+            ss << "\"" ;
+         }
+
+         if ( info->getFieldType() == AUTO_OP )
          {
             ss << OP ;
          }
-         else if ( info->getTargetType() == ORIGINAL_TIME )
+         else if ( info->getFieldType() == ORIGINAL_TIME )
          {
             string timeStr ;
             ossTimestamp timestamp = ossMicrosecondsToTimestamp(
                                                           opTimeMicroSecond ) ;
-            _timestampToString( timestamp, timeStr ) ;
+            rplTimestampToString( timestamp, timeStr ) ;
             ss << timeStr ;
          }
          else
          {
             string value ;
-            rc = info->getValue( objIn, value ) ;
+            try
+            {
+               rc = info->getValue( objIn, value ) ;
+            }
+            catch( std::exception& e )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "unexpected exception: %s", e.what() ) ;
+               goto error ;
+            }
+
             PD_RC_CHECK( rc, PDERROR, "Failed to get value(%s), rc = %d",
                          objIn.toString().c_str(), rc ) ;
             ss << value ;
          }
 
-         ss << "\"" ;
+         if ( info->isNeedDoubleQuote() )
+         {
+            ss << "\"" ;
+         }
 
          iter++ ;
       }
@@ -380,35 +360,6 @@ namespace replay
       rc = _recordWriter->writeRecord( dbName, tableName, lsn, strOut.c_str() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to write record(%s), rc = %d",
                    strOut.c_str(), rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 rplDB2LoadOutputter::_getRecordObj( const BSONObj &modifier,
-                                             BSONObj &obj )
-   {
-      INT32 rc = SDB_OK ;
-      BSONElement ele ;
-
-      ele = modifier.getField( "$replace" ) ;
-      if ( ele.type() != Object )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_RC_CHECK( rc, PDERROR, "modifier must be replace(%s), rc = %d",
-                      modifier.toString(FALSE, TRUE).c_str(), rc ) ;
-      }
-
-      if ( modifier.nFields() != 1 )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_RC_CHECK( rc, PDERROR, "modifier must be one field, rc = %d",
-                      modifier.toString(FALSE, TRUE).c_str(), rc ) ;
-      }
-
-      obj = ele.embeddedObject() ;
 
    done:
       return rc ;

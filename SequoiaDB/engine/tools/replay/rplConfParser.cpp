@@ -34,6 +34,7 @@
 #include "rplTableMapping.hpp"
 #include "ossFile.hpp"
 #include "utilJsonFile.hpp"
+#include "rplConfDef.hpp"
 #include "../bson/bson.hpp"
 #include "oss.hpp"
 #include <string>
@@ -44,10 +45,6 @@ using namespace engine ;
 
 namespace replay
 {
-   const CHAR RPL_CONF_OUTPUT_TYPE[] = "outputType" ;
-   const CHAR RPL_CONF_NAME_PREFIX[] = "filePrefix" ;
-   const CHAR RPL_CONF_SUBMIT_TIME[] = "submitTime" ;
-
    rplConfParser::rplConfParser()
    {
    }

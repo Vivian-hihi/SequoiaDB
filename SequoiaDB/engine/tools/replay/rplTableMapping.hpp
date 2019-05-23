@@ -46,15 +46,6 @@ namespace replay
    const INT32 MAX_CS_NAME_LEN = 255 ;
    const INT32 MAX_CL_NAME_LEN = 255 ;
 
-   extern const CHAR RPL_CONF_NAME_TABLES[] ;
-   extern const CHAR RPL_CONF_NAME_SOURCE[] ;
-   extern const CHAR RPL_CONF_NAME_TARGET[] ;
-   extern const CHAR RPL_CONF_NAME_FIELDS[] ;
-   extern const CHAR RPL_CONF_NAME_FIELD_TYPE[] ;
-
-   extern const CHAR RPL_CONF_NAME_FIELD_DEFAULTVALUE[] ;
-   extern const CHAR RPL_CONF_NAME_FIELD_CONSTVALUE[] ;
-
    /*{ tables:
        [
          {

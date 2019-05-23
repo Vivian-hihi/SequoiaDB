@@ -33,6 +33,7 @@
 #define RPL_UTIL_HPP_
 
 #include "ossTypes.hpp"
+#include "ossUtil.hpp"
 #include <string>
 
 using namespace std ;
@@ -71,6 +72,8 @@ namespace replay
 
    UINT64 replaceAndGetTime( UINT64 currentTime, INT32 newHour, INT32 newMinite,
                              INT32 newSecond ) ;
+
+   void rplTimestampToString( ossTimestamp &timestamp, string &timeStr ) ;
 }
 
 #endif /* RPL_UTIL_HPP_ */

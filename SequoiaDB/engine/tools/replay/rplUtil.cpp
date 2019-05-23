@@ -127,6 +127,33 @@ namespace replay
       return ossTimestampToMicroseconds( ossTM ) ;
    }
 
+   void rplTimestampToString( ossTimestamp &timestamp, string &timeStr )
+   {
+      CHAR szFormat[] = "%04d-%02d-%02d %02d.%02d.%02d.%06d" ;
+      CHAR szTimestmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+      struct tm tmpTm ;
+
+      ossLocalTime( timestamp.time, tmpTm ) ;
+
+      if ( timestamp.microtm >= OSS_ONE_MILLION )
+      {
+         tmpTm.tm_sec ++ ;
+         timestamp.microtm %= OSS_ONE_MILLION ;
+      }
+
+      ossSnprintf ( szTimestmpStr, sizeof( szTimestmpStr ),
+                    szFormat,
+                    tmpTm.tm_year + 1900,
+                    tmpTm.tm_mon + 1,
+                    tmpTm.tm_mday,
+                    tmpTm.tm_hour,
+                    tmpTm.tm_min,
+                    tmpTm.tm_sec,
+                    timestamp.microtm ) ;
+
+      timeStr = szTimestmpStr ;
+   }
+
    CHAR* getOPName(UINT16 type)
    {
       switch(type)
