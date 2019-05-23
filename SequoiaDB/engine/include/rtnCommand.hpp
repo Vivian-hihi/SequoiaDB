@@ -1071,8 +1071,8 @@ namespace engine
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
       private:
-         INT32 _checkFunctionName( UINT64 functionNameId, const CHAR* funcName,
-                                   BOOLEAN &isMonitor ) ;
+         void _checkFunctionName( UINT64 functionNameId, const CHAR* funcName,
+                                  BOOLEAN &isMonitor ) ;
       protected :
          UINT32 _mask ;
          std::vector<UINT32>  _tid ;

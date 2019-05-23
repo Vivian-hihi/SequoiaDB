@@ -1,5 +1,3 @@
-##SdbTraceOption##
-
 指定 traceOn 监控参数。
 
 包括指定模块、断点、线程号、函数以及线程类型等参数。
@@ -12,11 +10,11 @@
 </br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.functionNames( \<functionName1\> [,functionName2...] )]
 </br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.threadTypes( \<threadType1\> [,threadType2...] )]**
 
-**SdbTraceOption() [.components( [\<component1\>[,component2...]] )]
-</br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.breakPoints( [ \<breakPoint1\> [,breakPoint2...] ] )]
-</br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.tids( [ \<tid1\> [,tid2...] ] )]
-</br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.functionNames( [ \<functionName1\> [,functionName2...] ] )]
-</br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.threadTypes( [ \<threadType1\> [,threadType2...] ] )]**
+**SdbTraceOption() [.components( [ \<component1\>, \<component2\>, ... ] )]
+</br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.breakPoints( [ \<breakPoint1\>, \<breakPoint2\>, ... ] )]
+</br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[ .tids( [ \<tid1\>, \<tid2\>, ... ] )]
+</br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.functionNames( [ \<functionName1\>, \<functionName2\>, ... ] )]
+</br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.threadTypes( [ \<threadType1\>,  \<threadType2\>, ... ] )]**
 
 ##方法##
 
@@ -24,9 +22,9 @@
 
 模块方法
 
-| 参数名       | 参数类型	           | 描述	                  | 是否必填 |
-| ------------ | --------------------- | ------------------------ | -------- |
-| conponent    | string / string array | 指定模块，默认为所有模块 | 否       |
+| 参数名       | 参数类型              | 默认值   | 描述     | 是否必填 |
+| ------------ | --------------------- | -------- | -------- | -------- |
+| conponent    | string / string array | 所有模块 | 指定模块 | 否       |
 
 conponent 参数的可选值如下表：
 
@@ -62,33 +60,33 @@ conponent 参数的可选值如下表：
 
 断点方法
 
-| 参数名       | 参数类型	           | 描述	                  | 是否必填 |
-| ------------ | --------------------- | ------------------------ | -------- |
-| breakPoint   | string / string array | 于函数处打断点进行跟踪   | 否       |
+| 参数名       | 参数类型	           |  默认值   | 描述                    | 是否必填 |
+| ------------ | --------------------- | --------- | ----------------------- | -------- |
+| breakPoint   | string / string array | ---       |于函数处打断点进行跟踪   | 否       |
 
 ###tids(\<tid\>)###
 
 线程方法
 
-| 参数名       | 参数类型	           | 描述	                  | 是否必填 |
-| ------------ | --------------------- | ------------------------ | -------- |
-| tid          | string / string array | 指定线程                 | 否       |
+| 参数名       | 参数类型	           |  默认值  | 描述     | 是否必填 |
+| ------------ | --------------------- | -------- | -------- | -------- |
+| tid          | int / int array       | 所有线程 | 指定线程 | 否       |
 
 ###functionNames(\<functionName\>)###
 
 函数方法
 
-| 参数名       | 参数类型	           | 描述	                  | 是否必填 |
-| ------------ | --------------------- | ------------------------ | -------- |
-| functionName | string / string array | 指定函数名               | 否       |
+| 参数名       | 参数类型	           |  默认值   | 描述       | 是否必填 |
+| ------------ | --------------------- | --------- | ---------- | -------- |
+| functionName | string / string array | ---       | 指定函数名 | 否       |
 
 ###threadTypes(\<threadType\>)###
 
 线程类型方法
 
-| 参数名       | 参数类型	           | 描述	                  | 是否必填 |
-| ------------ | --------------------- | ------------------------ | -------- |
-| threadType   | string / string array | 指定线类型               | 否       |
+| 参数名       | 参数类型	           | 默认值   | 描述       | 是否必填 |
+| ------------ | --------------------- | -------- | ---------- | -------- |
+| threadType   | string / string array | ---      | 指定线类型 | 否       |
 
 threadType 参数的可选值详见[线程类型](database_management/EDU.md)
 

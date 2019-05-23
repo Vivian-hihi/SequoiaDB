@@ -10,6 +10,8 @@ traceOn \- Turn on the database engine program tracking.
 .PP
 \f[B]\f[I]db.traceOn( <bufferSize>, [strComp], [strBreakPoint], [tids],
 [SdbTraceOption] )\f[]\f[]
+.PP
+\f[B]\f[I]db.traceOn( <bufferSize>, [SdbTraceOption] )\f[]\f[]
 .SH CATEGORY
 .PP
 Sdb
@@ -20,13 +22,15 @@ Turn on the database engine program tracking.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -40,6 +44,8 @@ bufferSize
 T}@T{
 int
 T}@T{
+\-\-\-
+T}@T{
 The size of the tracked
 T}@T{
 requiresd
@@ -48,11 +54,13 @@ T{
 T}@T{
 T}@T{
 T}@T{
+T}@T{
 file we turn on.
 Uint:
 T}@T{
 T}
 T{
+T}@T{
 T}@T{
 T}@T{
 T}@T{
@@ -67,16 +75,11 @@ strComp
 T}@T{
 string
 T}@T{
+All modules
+T}@T{
 The module we specified.
 T}@T{
 not
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-Default to all modules.
-T}@T{
 T}
 T{
 3
@@ -84,6 +87,8 @@ T}@T{
 strBreakPoint
 T}@T{
 string
+T}@T{
+\-\-\-
 T}@T{
 Breake point
 T}@T{
@@ -96,11 +101,14 @@ tids
 T}@T{
 array
 T}@T{
+All tids
+T}@T{
 Specify one or multiple
 T}@T{
 not
 T}
 T{
+T}@T{
 T}@T{
 T}@T{
 T}@T{
@@ -114,6 +122,8 @@ SdbTraceOption
 T}@T{
 JSON Object
 T}@T{
+\-\-\-
+T}@T{
 Use an object to
 T}@T{
 not
@@ -122,10 +132,12 @@ T{
 T}@T{
 T}@T{
 T}@T{
+T}@T{
 specify monitoring
 T}@T{
 T}
 T{
+T}@T{
 T}@T{
 T}@T{
 T}@T{
@@ -137,6 +149,7 @@ T{
 T}@T{
 T}@T{
 T}@T{
+T}@T{
 detial, please
 T}@T{
 T}
@@ -144,10 +157,12 @@ T{
 T}@T{
 T}@T{
 T}@T{
+T}@T{
 reference to
 T}@T{
 T}
 T{
+T}@T{
 T}@T{
 T}@T{
 T}@T{

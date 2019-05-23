@@ -2645,61 +2645,25 @@ error:
       return CMD_TRACE_START ;
    }
 
-   INT32 _rtnTraceStart::_checkFunctionName( UINT64 functionNameId,
-                                             const CHAR* funcName,
-                                             BOOLEAN &isMonitor )
+   void _rtnTraceStart::_checkFunctionName( UINT64 functionNameId,
+                                            const CHAR* funcName,
+                                            BOOLEAN &isMonitor )
    {
-      INT32 rc     = SDB_OK ;
-      INT32 len    = 0 ;
-      CHAR  *pBuff = NULL ;
       CHAR  *pTemp = NULL ;
-      const CHAR* fullFuncName = pdGetTraceFunction( functionNameId );
+      CHAR* fullFuncName = const_cast<CHAR*>
+                           ( pdGetTraceFunction( functionNameId ) );
 
-      if ( !fullFuncName )
-      {
-         goto done ;
-      }
-      len = ossStrlen( fullFuncName ) ;
-      pBuff = (CHAR*)SDB_OSS_MALLOC( len + 1 ) ;
-      if ( NULL == pBuff )
-      {
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      ossStrncpy( pBuff, fullFuncName, len + 1 ) ;
-      ossStrtok( pBuff, ":", &pTemp ) ;
+      pTemp = ossStrstr( fullFuncName, funcName ) ;
 
-      if( 0 == ossStrcmp( fullFuncName, funcName ) ||
-          0 == ossStrcmp( pBuff, funcName ) )
+      if( pTemp != NULL )
       {
          isMonitor = TRUE ;
-         goto done ;
-      }
-      else if( 0 == ossStrcmp( (++pTemp), funcName ) )
-      {
-         isMonitor = TRUE ;
-         goto done ;
       }
       else
       {
          isMonitor = FALSE ;
       }
-
-   done:
-      if ( pBuff )
-      {
-         SDB_OSS_FREE( pBuff ) ;
-         pBuff = NULL ;
-      }
-      if( pTemp )
-      {
-         pTemp = NULL ;
-      }
-      return rc ;
-   error:
-      goto done ;
    }
-
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTART_INIT, "_rtnTraceStart::init" )
    INT32 _rtnTraceStart::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
@@ -2712,7 +2676,6 @@ error:
       {
          UINT32 one = 1 ;
          BSONObj arg ( pMatcherBuff );
-         pmdEPFactory &factory = pmdGetEPFactory() ;
          BSONElement eleSize = arg.getField ( FIELD_NAME_SIZE ) ;
          BSONElement eleComp = arg.getField( FIELD_NAME_COMPONENTS );
          BSONElement eleBreakPoint = arg.getField( FIELD_NAME_BREAKPOINTS );
@@ -2814,11 +2777,7 @@ error:
                   BOOLEAN isMonitor = FALSE ;
                   for( UINT64 i = 0; i < pdGetTraceFunctionListNum(); i++ )
                   {
-                     rc = _checkFunctionName( i, eleStr, isMonitor ) ;
-                     if( rc != SDB_OK )
-                     {
-                        goto error ;
-                     }
+                     _checkFunctionName( i, eleStr, isMonitor ) ;
                      if( isMonitor )
                      {
                         isInValid = FALSE ;
@@ -2841,6 +2800,7 @@ error:
          // init threadTypes
          if ( eleThreadTypes.type() == Array )
          {
+            pmdEPFactory &factory = pmdGetEPFactory() ;
             BSONObjIterator it ( eleThreadTypes.embeddedObject() ) ;
             while ( it.more () )
             {

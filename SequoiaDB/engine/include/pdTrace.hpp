@@ -439,7 +439,7 @@ public:
 
    void           resumePausedEDUs() ;
    void           addPausedEDU( engine::IExecutor *cb ) ;
-   void           pause ( UINT64 breakPoint ) ;
+   void           pause ( UINT64 funcCode ) ;
 
    const UINT64*  getBPList() const { return _bpList ; }
    UINT32         getBPNum() const { return _numBP ; }

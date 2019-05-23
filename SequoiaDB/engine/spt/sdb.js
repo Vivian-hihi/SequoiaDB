@@ -1243,6 +1243,10 @@ SdbTraceOption.prototype.components = function()
       // .components(["dms", "rtn"])
       if( arguments[0] instanceof Array )
       {
+         if( argumentsSize > 1 )
+         {
+            throw "Invalid components' parameters" ;
+         }
          if( typeof( this._components ) == "undefined" )
          {
             this._components = arguments[0] ;
@@ -1260,9 +1264,16 @@ SdbTraceOption.prototype.components = function()
          {
             this._components = [] ;
          }
-         for (var i = 0; i < argumentsSize; i++)
+         for ( var i = 0; i < argumentsSize; i++ )
          {
-            this._components.push( arguments[i] );
+            if( arguments[i] instanceof Array )
+            {
+               throw "Invalid components' parameters" ;
+            }
+            else
+            {
+               this._components.push( arguments[i] );
+            }
          }
       }
    }
@@ -1276,6 +1287,10 @@ SdbTraceOption.prototype.breakPoints = function( breakPoints )
    {
       if( arguments[0] instanceof Array )
       {
+         if( argumentsSize > 1 )
+         {
+            throw "Invalid breakPoints' parameters" ;
+         }
          if( typeof( this._breakPoints ) == "undefined" )
          {
             this._breakPoints = arguments[0] ;
@@ -1291,9 +1306,16 @@ SdbTraceOption.prototype.breakPoints = function( breakPoints )
          {
             this._breakPoints = [] ;
          }
-         for (var i = 0; i < argumentsSize; i++)
+         for ( var i = 0; i < argumentsSize; i++ )
          {
-            this._breakPoints.push( arguments[i] );
+            if( arguments[i] instanceof Array )
+            {
+               throw "Invalid breakPoints' parameters" ;
+            }
+            else
+            {
+               this._breakPoints.push( arguments[i] );
+            }
          }
       }
    }
@@ -1307,6 +1329,10 @@ SdbTraceOption.prototype.tids = function()
    {
       if( arguments[0] instanceof Array )
       {
+         if( argumentsSize > 1 )
+         {
+            throw "Invalid tids' parameters" ;
+         }
          if( typeof( this._tids ) == "undefined" )
          {
             this._tids = arguments[0] ;
@@ -1322,15 +1348,22 @@ SdbTraceOption.prototype.tids = function()
          {
             this._tids = [] ;
          }
-         for (var i = 0; i < argumentsSize; i++)
+         for ( var i = 0; i < argumentsSize; i++ )
          {
-            if( !isNaN( arguments[i] ) )
+            if( arguments[i] instanceof Array )
             {
-               this._tids.push( arguments[i] );
+               throw "Invalid tids' parameters" ;
             }
             else
             {
-               throw "Tid field must be number or array";
+               if( !isNaN( arguments[i] ) )
+               {
+                  this._tids.push( arguments[i] );
+               }
+               else
+               {
+                  throw "Tid field must be number or array";
+               }
             }
          }
       }
@@ -1345,6 +1378,10 @@ SdbTraceOption.prototype.functionNames = function()
    {
       if( arguments[0] instanceof Array )
       {
+         if( argumentsSize > 1 )
+         {
+            throw "Invalid functionNames' parameters" ;
+         }
          if( typeof( this._functionNames ) == "undefined" )
          {
             this._functionNames = arguments[0] ;
@@ -1360,9 +1397,16 @@ SdbTraceOption.prototype.functionNames = function()
          {
             this._functionNames = [] ;
          }
-         for (var i = 0; i < argumentsSize; i++)
+         for ( var i = 0; i < argumentsSize; i++ )
          {
-            this._functionNames.push( arguments[i] );
+            if( arguments[i] instanceof Array )
+            {
+               throw "Invalid functionNames' parameters" ;
+            }
+            else
+            {
+               this._functionNames.push( arguments[i] );
+            }
          }
       }
    }
@@ -1376,6 +1420,10 @@ SdbTraceOption.prototype.threadTypes = function()
    {
       if( arguments[0] instanceof Array )
       {
+         if( argumentsSize > 1 )
+         {
+            throw "Invalid threadTypes' parameters" ;
+         }
          if( typeof( this._threadTypes ) == "undefined" )
          {
             this._threadTypes = arguments[0] ;
@@ -1391,9 +1439,16 @@ SdbTraceOption.prototype.threadTypes = function()
          {
             this._threadTypes = [] ;
          }
-         for (var i = 0; i < argumentsSize; i++)
+         for ( var i = 0; i < argumentsSize; i++ )
          {
-            this._threadTypes.push( arguments[i] );
+            if( arguments[i] instanceof Array )
+            {
+               throw "Invalid threadTypes' parameters" ;
+            }
+            else
+            {
+               this._threadTypes.push( arguments[i] );
+            }
          }
       }
    }
@@ -1411,7 +1466,7 @@ SdbTraceOption.prototype.toString = function()
    // User doesn't specify component parameter
    if( typeof( this._components ) == "undefined" )
    {
-      componentsStr = "[ ]" ;
+      componentsStr = "[]" ;
    }
    else
    {
@@ -1430,7 +1485,7 @@ SdbTraceOption.prototype.toString = function()
 
    if( typeof( this._breakPoints ) == "undefined" )
    {
-      breakPointsStr = "[ ]" ;
+      breakPointsStr = "[]" ;
    }
    else
    {
@@ -1447,7 +1502,7 @@ SdbTraceOption.prototype.toString = function()
 
    if( typeof( this._tids ) == "undefined" )
    {
-      tidsStr = "[ ]" ;
+      tidsStr = "[]" ;
    }
    else
    {
@@ -1463,7 +1518,7 @@ SdbTraceOption.prototype.toString = function()
 
    if( typeof( this._functionNames ) == "undefined" )
    {
-      funcNamesStr = "[ ]" ;
+      funcNamesStr = "[]" ;
    }
    else
    {
@@ -1480,7 +1535,7 @@ SdbTraceOption.prototype.toString = function()
 
    if( typeof( this._threadTypes ) == "undefined" )
    {
-      threadTypesStr = "[ ]" ;
+      threadTypesStr = "[]" ;
    }
    else
    {

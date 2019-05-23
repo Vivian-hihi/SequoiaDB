@@ -915,7 +915,7 @@ void _pdTraceCB::resumePausedEDUs ()
 #endif // SDB_ENGINE
 }
 
-void _pdTraceCB::pause( UINT64 breakPoint )
+void _pdTraceCB::pause( UINT64 funcCode )
 {
 #ifdef SDB_ENGINE
    pmdEDUCB *educb = pmdGetThreadEDUCB() ;
@@ -925,7 +925,7 @@ void _pdTraceCB::pause( UINT64 breakPoint )
    for ( UINT32 i = 0 ; i < _numBP ; ++i )
    {
       // if the break point matches our current function code
-      if ( _bpList[i] == breakPoint )
+      if ( _bpList[i] == funcCode )
       {
          // put EDU into pause status
          addPausedEDU( educb ) ;

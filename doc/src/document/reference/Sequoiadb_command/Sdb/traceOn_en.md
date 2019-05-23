@@ -6,6 +6,8 @@ traceOn -  Turn on the database engine program tracking.
 
 ***db.traceOn( \<bufferSize\>, [strComp], [strBreakPoint], [tids], [SdbTraceOption] )***
 
+***db.traceOn( \<bufferSize\>, [SdbTraceOption] )***
+
 ##CATEGORY##
 
 Sdb
@@ -16,13 +18,13 @@ Turn on the database engine program tracking.
 
 ##PARAMETERS##
 
-| Name 		     | Type   | Description                                       | Required or not |
-| -------------- | ------ | ------------------------------------------------- | --------------- |
-| bufferSize     | int    | The size of the tracked file we turn on. Uint: MB. Ranges: [1,1024] | requiresd |
-| strComp	     | string | The module we specified. Default to all modules.  | not 	       	   |
-| strBreakPoint  | string | Breake point                                      | not 		       |
-| tids		     | array  | Specify one or multiple threads                   | not 		       |
-| SdbTraceOption | JSON Object | Use an object to specify monitoring parameters. For more detial, please reference to [SdbTraceOption](reference/Sequoiadb_command/AuxiliaryObjects/SdbTraceOption.md) | not |
+| Name | Type | Default | Description | Required or not |
+| ---- | ---- | ------- | ----------- | --------------- |
+| bufferSize     | int    | ---         | The size of the tracked file we turn on. Uint: MB. Ranges: [1,1024] | requiresd |
+| strComp        | string | All modules | The module we specified.        | not |
+| strBreakPoint  | string | ---         | Breake point                    | not |
+| tids           | array  | All tids    | Specify one or multiple threads | not |
+| SdbTraceOption | JSON Object | ---    | Use an object to specify monitoring parameters. For more detial, please reference to [SdbTraceOption](reference/Sequoiadb_command/AuxiliaryObjects/SdbTraceOption.md) | not |
 
 ##RETURN VALUE##
 

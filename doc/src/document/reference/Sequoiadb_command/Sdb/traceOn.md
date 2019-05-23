@@ -2,6 +2,8 @@
 
 ***db.traceOn( \<bufferSize\>, [strComp], [strBreakPoint], [tids], [SdbTraceOption] )***
 
+***db.traceOn( \<bufferSize\>, [SdbTraceOption] )***
+
 ##类别##
 
 Sdb
@@ -12,13 +14,13 @@ Sdb
 
 ##参数##
 
-| 参数名 		 | 参数类型  | 描述 									        | 是否必填 |
-| -------------- | --------- | ------------------------------------------------ | -------- |
-| bufferSize 	 | int 	     | 开启追踪的文件大小，单位：兆字节，取值：[1,1024] | 是 	   |
-| strComp 		 | string    | 指定模块，默认为所有模块 				        | 否 	   |
-| strBreakPoint  | string    | 于函数处打断点进行跟踪。 				        | 否 	   |
-| tids			 | array     | 指定单个或多个线程tid			   		        | 否 	   |
-| SdbTraceOption | JSON 对象 | 使用一个对象来指定监控参数，使用方法请参考[SdbTraceOption](reference/Sequoiadb_command/AuxiliaryObjects/SdbTraceOption.md)| 否 |
+| 参数名   | 参数类型 | 默认值  | 描述 | 是否必填 |
+| -------- | -------- | ------- | ---- | -------- |
+| bufferSize     | int       | ---      | 开启追踪的文件大小，单位：兆字节，取值：[1,1024] | 是 |
+| strComp        | string    | 所有模块 | 指定模块               | 否 |
+| strBreakPoint  | string    | ---      | 于函数处打断点进行跟踪 | 否 |
+| tids           | array     | 所有线程 | 指定单个或多个线程tid  | 否 |
+| SdbTraceOption | JSON 对象 | ---      | 使用一个对象来指定监控参数，使用方法请参考[SdbTraceOption](reference/Sequoiadb_command/AuxiliaryObjects/SdbTraceOption.md) | 否 |
 
 ##返回值##
 

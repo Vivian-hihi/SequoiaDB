@@ -115,11 +115,6 @@ namespace engine
                                        string &errMsg )
    {
       INT32 rc = SDB_OK ;
-      string components ;
-      string breakPoints ;
-      string tids ;
-      string functionNames ;
-      string threadTypes ;
       BSONObjBuilder retBuilder ;
       sptObjectPtr ptr ;
       bson::BSONObj tmpObj ;
@@ -272,27 +267,27 @@ namespace engine
       obj = data.getObjectField( FIELD_NAME_COMPONENTS ) ;
       rval.addReturnValProperty( SPT_TRACEOPTION_COMPONENTS_FIELD,
                                  SPT_PROP_ENUMERATE )->setValue
-                                 ( obj.toString( true, true) ) ;
+                                 ( obj.toString( true, true ) ) ;
 
       obj = data.getObjectField( FIELD_NAME_BREAKPOINTS ) ;
       rval.addReturnValProperty( SPT_TRACEOPTION_BREAKPOINTS_FIELD,
                                  SPT_PROP_ENUMERATE )->setValue
-                                 ( obj.toString( true, true) ) ;
+                                 ( obj.toString( true, true ) ) ;
 
       obj = data.getObjectField( FIELD_NAME_THREADS ) ;
       rval.addReturnValProperty( SPT_TRACEOPTION_TIDS_FIELD,
                                  SPT_PROP_ENUMERATE )->setValue
-                                 ( obj.toString( true, true) ) ;
+                                 ( obj.toString( true, true ) ) ;
 
       obj = data.getObjectField( FIELD_NAME_FUNCTIONNAMES ) ;
       rval.addReturnValProperty( SPT_TRACEOPTION_FUNCTIONNAMES_FIELD,
                                  SPT_PROP_ENUMERATE )->setValue
-                                 ( obj.toString( true, true) ) ;
+                                 ( obj.toString( true, true ) ) ;
 
       obj = data.getObjectField( FIELD_NAME_THREADTYPES ) ;
       rval.addReturnValProperty( SPT_TRACEOPTION_THREADTYPES_FIELD,
                                  SPT_PROP_ENUMERATE )->setValue
-                                 ( obj.toString( true, true) ) ;
+                                 ( obj.toString( true, true ) ) ;
    }
 
    INT32 _sptDBTraceOption::help( const _sptArguments &arg,
@@ -302,23 +297,23 @@ namespace engine
       stringstream ss ;
       ss << "--Constructor methods for class SdbTraceOption : " << endl ;
       ss << "   SdbTraceOption[.components( <component1>"
-         << "[,component2...] )]" << endl ;
+         << "[, component2, ... ] )]" << endl ;
       ss << "                 [.breakPoints( <breakPoint1>"
-         << "[,breakPoint2...] )]      " << endl ;
-      ss << "                 [.tids( <tid1>[,tid2...] )]            " << endl ;
+         << "[, breakPoint2, ... ] )]      " << endl ;
+      ss << "                 [.tids( <tid1>[, tid2, ... ] )]            " << endl ;
       ss << "                 [.functionNames( <functionName1>"
-         << "[,functionName2...] )]" << endl ;
+         << "[, functionName2, ... ] )]" << endl ;
       ss << "                 [.threadTypes( <threadType1>"
-         << "[,threadType2...] )]  " << endl << endl ;
+         << "[, threadType2, ... ] )]  " << endl << endl ;
       ss << "   SdbTraceOption[.components( [ <component1>"
-         << "[,component2...] ] )]" << endl ;
+         << ", <component2>, ... ] ] )]" << endl ;
       ss << "                 [.breakPoints( [ <breakPoint1>"
-         << "[,breakPoint2...] ] )]      " << endl ;
-      ss << "                 [.tids( [ <tid1>[,tid2...] ] )]" << endl ;
+         << ", <breakPoint2>, ... ] ] )]      " << endl ;
+      ss << "                 [.tids( [ <tid1>, <tid2>, ... ] ] )]" << endl ;
       ss << "                 [.functionNames( [ <functionName1>"
-         << "[,functionName2...] ] )]" << endl ;
+         << ", <functionName2>, ... ] ] )]" << endl ;
       ss << "                 [.threadTypes( [ <threadType1>"
-         << "[,threadType2...] ] )]  " << endl ;
+         << ", <threadType2>, ... ] ] )]  " << endl ;
       ss << "   -- Create a SdbTraceOption object" << endl ;
       ss << "--Static methods for class SdbTraceOption : " << endl ;
       ss << "--Instance methods for class SdbTraceOption : " << endl ;

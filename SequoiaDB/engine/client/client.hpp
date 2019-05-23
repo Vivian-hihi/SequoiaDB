@@ -6093,6 +6093,12 @@ namespace sdbclient
           \param [in] traceBufferSize Trace file's size(MB), Value range:[1,1024].
           \param [in] options includes component, breakPoint, tid, functionName
                       and threadType
+                      components: vector<string>,
+                      breakPoints: vector<string>,
+                      tids: vector<int>,
+                      functionNames: vector<string>,
+                      threadTypes: vector<string>
+                      ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
