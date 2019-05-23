@@ -209,7 +209,7 @@ namespace engine
                   }
                   else
                   {
-                     ixmIndexCB indexCB ( idxExtent, su->index(), NULL ) ;
+                     ixmIndexCB indexCB ( idxExtent, su->index(), mbContext ) ;
                      _indexName = indexCB.getName() ;
                      /// first set index flag to IXM_INDEX_FLAG_INVALID
                      if ( _indexObj.getBoolField( IXM_UNIQUE_FIELD ) )
@@ -235,7 +235,7 @@ namespace engine
                   }
                   else
                   {
-                     ixmIndexCB indexCB ( idxExtent, su->index(), NULL ) ;
+                     ixmIndexCB indexCB ( idxExtent, su->index(), mbContext ) ;
                      /// first set index flag to IXM_INDEX_FLAG_INVALID
                      if ( _indexObj.getBoolField( IXM_UNIQUE_FIELD ) )
                      {
