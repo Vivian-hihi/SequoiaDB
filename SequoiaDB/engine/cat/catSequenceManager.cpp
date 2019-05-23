@@ -270,10 +270,14 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR_ALTER_SEQ, "_catSequenceManager::alterSequence" )
    INT32 _catSequenceManager::alterSequence( const std::string& name,
                                              const BSONObj& options,
-                                             _pmdEDUCB* eduCB, INT16 w )
+                                             _pmdEDUCB* eduCB,
+                                             INT16 w,
+                                             bson::BSONObj * oldOptions,
+                                             UINT32 * alterMask )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
+      UINT32 fieldMask = UTIL_ARG_FIELD_EMPTY ;
       BOOLEAN changed = FALSE ;
       _catSequence* cache = NULL ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR_ALTER_SEQ ) ;
@@ -286,11 +290,13 @@ namespace engine
       CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
       if ( bucket.end() != iter )
       {
+         // found from cache
          cache = (*iter).second ;
          sequence.copyFrom( *cache ) ;
       }
       else
       {
+         // not found from cache, acquire from collection
          BSONObj seqObj ;
          rc = _findSequence( name, seqObj, eduCB ) ;
          if ( SDB_OK != rc )
@@ -309,7 +315,17 @@ namespace engine
          }
       }
 
-      rc = sequence.setOptions( options, FALSE, FALSE, &changed ) ;
+      if ( NULL != oldOptions )
+      {
+         // safe to be copied the old values under x-lock
+         rc = sequence.toBSONObj( *oldOptions, FALSE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to save old BSONObj for "
+                      "sequence[%s] before update, rc: %d",
+                      name.c_str(), rc ) ;
+      }
+
+      // update the sequence now
+      rc = sequence.setOptions( options, FALSE, FALSE, &fieldMask ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
@@ -317,7 +333,13 @@ namespace engine
          goto error ;
       }
 
-      if ( !changed )
+      if ( NULL != alterMask )
+      {
+         // update the alter mask if needed
+         *alterMask = fieldMask ;
+      }
+
+      if ( UTIL_ARG_FIELD_EMPTY == fieldMask )
       {
          // nothing changed
          goto done ;

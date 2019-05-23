@@ -5332,16 +5332,10 @@ namespace engine
       goto done ;
    }
 
-   BSONObj catBuildSequenceOptions( const BSONObj &autoIncOpt, utilSequenceID ID )
+   BSONObj catBuildSequenceOptions( const BSONObj &autoIncOpt,
+                                    utilSequenceID ID,
+                                    UINT32 fieldMask )
    {
-      static const CHAR* autoIncFieldArr[] = {
-         CAT_AUTOINC_FIELD,
-         CAT_AUTOINC_GENERATED,
-         CAT_AUTOINC_SEQ
-      } ;
-      static set<const CHAR*, cmp_str> autoIncFieldSet( autoIncFieldArr,
-         autoIncFieldArr + sizeof( autoIncFieldArr ) / sizeof( *autoIncFieldArr ) ) ;
-
       BSONObjBuilder seqOptBuilder ;
       BSONObjIterator iter( autoIncOpt ) ;
 
@@ -5349,16 +5343,49 @@ namespace engine
       {
          BSONElement ele = iter.next() ;
          const CHAR *fieldName = ele.fieldName() ;
-         if ( autoIncFieldSet.find( fieldName ) == autoIncFieldSet.end() )
+         if ( ossStrcmp( fieldName, CAT_AUTOINC_FIELD ) == 0 ||
+              ossStrcmp( fieldName, CAT_AUTOINC_GENERATED ) == 0 ||
+              ossStrcmp( fieldName, CAT_AUTOINC_SEQ ) == 0 )
          {
+            // ignored system fields
+            continue ;
+         }
+         else if ( UTIL_ARG_FIELD_ALL == fieldMask )
+         {
+            // all fields are needed
+            seqOptBuilder.append( ele ) ;
+         }
+         else if ( ( ossStrcmp( fieldName, CAT_SEQUENCE_INCREMENT ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_INCREMENT_FIELD ) ) ||
+                   ( ossStrcmp( fieldName, CAT_SEQUENCE_CURRENT_VALUE ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) ) ||
+                   ( ossStrcmp( fieldName, CAT_SEQUENCE_START_VALUE ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) ) ||
+                   ( ossStrcmp( fieldName, CAT_SEQUENCE_MIN_VALUE ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_MINVALUE_FIELD ) ) ||
+                   ( ossStrcmp( fieldName, CAT_SEQUENCE_MAX_VALUE ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_MAXVALUE_FIELD ) ) ||
+                   ( ossStrcmp( fieldName, CAT_SEQUENCE_CACHE_SIZE ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_CACHESIZE_FIELD ) ) ||
+                   ( ossStrcmp( fieldName, CAT_SEQUENCE_ACQUIRE_SIZE ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_ACQUIRESIZE_FIELD ) ) ||
+                   ( ossStrcmp( fieldName, CAT_SEQUENCE_CYCLED ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_CYCLED_FIELD ) ) ||
+                   ( ossStrcmp( fieldName, CAT_AUTOINC_GENERATED ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_GENERATED_FIELD ) ) )
+         {
+            // fields are specified
             seqOptBuilder.append( ele ) ;
          }
       }
+
       seqOptBuilder.append( CAT_SEQUENCE_INTERNAL, true ) ;
+
       if( ID != UTIL_SEQUENCEID_NULL )
       {
          seqOptBuilder.append( CAT_SEQUENCE_ID, (INT64)ID ) ;
       }
+
       return seqOptBuilder.obj() ;
    }
 }

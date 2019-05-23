@@ -41,6 +41,7 @@ namespace engine
 {
 
    #define UTIL_ARG_FIELD_EMPTY              ( 0x00000000 )
+   #define UTIL_ARG_FIELD_ALL                ( 0xFFFFFFFF )
 
    #define UTIL_CL_NAME_FIELD                ( 0x00000001 )
    #define UTIL_CL_SHDKEY_FIELD              ( 0x00000002 )

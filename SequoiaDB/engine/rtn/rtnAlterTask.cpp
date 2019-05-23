@@ -801,14 +801,32 @@ namespace engine
    /*
       _rtnCLAutoincrementFieldArgument implement
     */
-   _rtnCLAutoincFieldArgument::_rtnCLAutoincFieldArgument(const BSONObj & argument )
-   : _fieldName(NULL),
-     _seqName(NULL),
-     _ID(UTIL_SEQUENCEID_NULL),
-     _generated(NULL),
-     _argumentMask(0),
-     _argumentCount(0),
-     _argument(argument)
+   _rtnCLAutoincFieldArgument::_rtnCLAutoincFieldArgument ()
+   : _rtnAlterTaskArgument(),
+     _fieldName( NULL ),
+     _seqName( NULL ),
+     _ID( UTIL_SEQUENCEID_NULL ),
+     _generated( NULL )
+   {
+   }
+
+   _rtnCLAutoincFieldArgument::_rtnCLAutoincFieldArgument (
+                                                   const BSONObj & argument )
+   : _rtnAlterTaskArgument( argument ),
+     _fieldName( NULL ),
+     _seqName( NULL ),
+     _ID( UTIL_SEQUENCEID_NULL ),
+     _generated( NULL )
+   {
+   }
+
+   _rtnCLAutoincFieldArgument::_rtnCLAutoincFieldArgument (
+                                  const rtnCLAutoincFieldArgument & argument )
+   : _rtnAlterTaskArgument( argument ),
+     _fieldName( argument._fieldName ),
+     _seqName( argument._seqName ),
+     _ID( argument._ID ),
+     _generated( argument._generated )
    {
    }
 
@@ -819,10 +837,11 @@ namespace engine
    rtnCLAutoincFieldArgument & _rtnCLAutoincFieldArgument::operator = 
                               ( const rtnCLAutoincFieldArgument & argument )
    {
-      _fieldName = argument._fieldName;
-      _generated = argument._generated;
-      _argumentMask = argument._argumentMask;
-      _argumentCount = argument._argumentCount;
+      _rtnAlterTaskArgument::operator =( argument ) ;
+      _fieldName = argument._fieldName ;
+      _seqName = argument._seqName ;
+      _ID = argument._ID ;
+      _generated = argument._generated ;
       return ( *this ) ;
    }
 

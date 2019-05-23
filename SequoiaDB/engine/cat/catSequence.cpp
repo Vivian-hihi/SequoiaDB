@@ -33,6 +33,7 @@
 *******************************************************************************/
 #include "catSequence.hpp"
 #include "catGTSDef.hpp"
+#include "utilArguments.hpp"
 #include "utilStr.hpp"
 #include "utilMath.hpp"
 #include "pdTrace.hpp"
@@ -211,11 +212,11 @@ namespace engine
    INT32 _catSequence::setOptions( const BSONObj& options,
                                    BOOLEAN init,
                                    BOOLEAN withInternalField,
-                                   BOOLEAN* changed )
+                                   UINT32 * alterMask )
    {
       INT32 rc = SDB_OK ;
       BSONElement ele ;
-      BOOLEAN _changed = FALSE ;
+      UINT32 fieldMask = UTIL_ARG_FIELD_EMPTY ;
       utilSequenceID ID = UTIL_SEQUENCEID_NULL ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_SET_OPTIONS ) ;
 
@@ -234,7 +235,7 @@ namespace engine
          if ( this->increment() != (INT32) increment )
          {
             this->setIncrement( (INT32) increment ) ;
-            _changed = TRUE ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_INCREMENT_FIELD ) ;
          }
          if ( increment < 0 && init )
          {
@@ -261,7 +262,7 @@ namespace engine
          if ( this->startValue() != startValue )
          {
             this->setStartValue( startValue ) ;
-            _changed = TRUE ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) ;
             if ( init )
             {
                this->setCurrentValue( startValue ) ;
@@ -285,7 +286,7 @@ namespace engine
          if ( this->minValue() != minValue )
          {
             this->setMinValue( minValue ) ;
-            _changed = TRUE ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_MINVALUE_FIELD ) ;
          }
       }
       else if ( EOO != ele.type() )
@@ -304,7 +305,7 @@ namespace engine
          if ( this->maxValue() != maxValue )
          {
             this->setMaxValue( maxValue ) ;
-            _changed = TRUE ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_MAXVALUE_FIELD ) ;
          }
       }
       else if ( EOO != ele.type() )
@@ -339,7 +340,7 @@ namespace engine
             }
             this->setCurrentValue( currentValue ) ;
             this->setCachedValue( currentValue ) ;
-            _changed = TRUE ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) ;
          }
       }
       else if ( EOO != ele.type() )
@@ -365,7 +366,7 @@ namespace engine
          if ( this->cacheSize() != (INT32) cacheSize )
          {
             this->setCacheSize( (INT32) cacheSize ) ;
-            _changed = TRUE ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CACHESIZE_FIELD ) ;
          }
       }
       else if ( EOO != ele.type() )
@@ -391,7 +392,7 @@ namespace engine
          if ( this->acquireSize() != (INT32) acquireSize )
          {
             this->setAcquireSize( (INT32) acquireSize ) ;
-            _changed = TRUE ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_ACQUIRESIZE_FIELD ) ;
          }
       }
       else if ( EOO != ele.type() )
@@ -410,7 +411,7 @@ namespace engine
          if ( this->cycled() != (BOOLEAN) cycled )
          {
             this->setCycled( cycled ) ;
-            _changed = TRUE ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CYCLED_FIELD ) ;
          }
       }
       else if ( EOO != ele.type() )
@@ -429,7 +430,6 @@ namespace engine
          if ( this->initial() != (BOOLEAN) initial )
          {
             this->setInitial( initial ) ;
-            _changed = TRUE ;
          }
       }
       else if ( EOO != ele.type() )
@@ -472,7 +472,6 @@ namespace engine
             if ( this->oid() != oid )
             {
                this->setOID( oid ) ;
-               _changed = TRUE ;
             }
          }
          else if ( EOO != ele.type() )
@@ -491,7 +490,6 @@ namespace engine
             if ( this->ID() != ID )
             {
                this->setID( ID ) ;
-               _changed = TRUE ;
             }
          }
          else if ( EOO != ele.type() )
@@ -510,7 +508,6 @@ namespace engine
             if ( this->version() != version )
             {
                this->setVersion( version ) ;
-               _changed = TRUE ;
             }
          }
          else if ( EOO != ele.type() )
@@ -532,7 +529,6 @@ namespace engine
             if ( this->internal() != (BOOLEAN) internal )
             {
                this->setInternal( internal ) ;
-               _changed = TRUE ;
             }
          }
          else if ( EOO != ele.type() )
@@ -544,9 +540,9 @@ namespace engine
          }
       }
 
-      if ( NULL != changed )
+      if ( NULL != alterMask )
       {
-         *changed = _changed ;
+         *alterMask = fieldMask ;
       }
 
    done:

@@ -487,7 +487,8 @@ namespace engine
                                   _pmdEDUCB *cb,
                                   INT16 w ) ;
    BSONObj catBuildSequenceOptions( const BSONObj &autoIncOpt,
-                                    utilSequenceID ID = UTIL_SEQUENCEID_NULL ) ;
+                                    utilSequenceID ID = UTIL_SEQUENCEID_NULL,
+                                    UINT32 fieldMask = UTIL_ARG_FIELD_ALL ) ;
    INT32  catBuildCatalogAutoIncField( _pmdEDUCB *cb,
                                        catCollectionInfo &clInfo,
                                        const BSONObj &obj,

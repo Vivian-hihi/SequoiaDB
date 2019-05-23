@@ -465,69 +465,56 @@ namespace engine
    class _rtnCLAutoincFieldArgument;
    typedef class _rtnCLAutoincFieldArgument rtnCLAutoincFieldArgument;
    typedef std::vector<rtnCLAutoincFieldArgument*> autoIncFieldsList ;
-   class _rtnCLAutoincFieldArgument : public SDBObject
+   class _rtnCLAutoincFieldArgument : public SDBObject,
+                                      public _rtnAlterTaskArgument
    {
-      public:
-         _rtnCLAutoincFieldArgument(const bson::BSONObj & _argument );
-         ~_rtnCLAutoincFieldArgument();
-         rtnCLAutoincFieldArgument & operator = ( const rtnCLAutoincFieldArgument & argument ) ;
-         INT32 parseArgument () ;
+      public :
+         _rtnCLAutoincFieldArgument () ;
+         _rtnCLAutoincFieldArgument ( const bson::BSONObj & argument ) ;
+         _rtnCLAutoincFieldArgument (
+                                 const rtnCLAutoincFieldArgument & argument ) ;
+         virtual ~_rtnCLAutoincFieldArgument () ;
 
-         OSS_INLINE void setFieldName ( const CHAR* name )
+         rtnCLAutoincFieldArgument & operator = (
+                                 const rtnCLAutoincFieldArgument & argument ) ;
+
+         virtual INT32 parseArgument () ;
+
+         OSS_INLINE void setFieldName ( const CHAR * name )
          {
             _fieldName = name ;
          }
-         OSS_INLINE const CHAR* getFieldName () const
+
+         OSS_INLINE const CHAR * getFieldName () const
          {
             return _fieldName;
          }
-         OSS_INLINE const CHAR* getGenerated () const
+
+         OSS_INLINE const CHAR * getGenerated () const
          {
             return _generated ;
          }
-         OSS_INLINE const utilSequenceID getID () const
+
+         OSS_INLINE utilSequenceID getID () const
          {
             return _ID ;
          }
-         OSS_INLINE void setGenerated ( const CHAR* generated )
+
+         OSS_INLINE void setGenerated ( const CHAR * generated )
          {
             _generated = generated ;
          }
+
          OSS_INLINE void setID ( const utilSequenceID ID )
          {
             _ID = ID ;
          }
-         OSS_INLINE const BOOLEAN testArgumentMask ( UINT32 mask ) const
-         {
-            return OSS_BIT_TEST( _argumentMask, mask ) ? TRUE : FALSE ;
-         }
-         OSS_INLINE void setArgumentMask ( UINT32 fields )
-         {
-            OSS_BIT_SET( _argumentMask, fields ) ;
-         }
-         OSS_INLINE void parsedArgumentMask ( const UINT32 fields, 
-                                              const UINT32 count = 1 ) 
-         {
-            setArgumentMask( fields ) ;
-            _argumentCount += count ;
-         }
-         OSS_INLINE const UINT32 getArgumentCount () const
-         {
-            return _argumentCount ;
-         }
-         OSS_INLINE const bson::BSONObj getArgument () const
-         {
-            return _argument ;
-         }
 
       protected:
-         const CHAR*          _fieldName ;      // field name
-         const CHAR*          _seqName ;        // seq name
+         const CHAR *         _fieldName ;      // field name
+         const CHAR *         _seqName ;        // seq name
          utilSequenceID       _ID ;             // ID
-         const CHAR*          _generated ;      // generated
-         UINT32               _argumentMask ;
-         UINT32               _argumentCount ;
-         const bson::BSONObj  _argument ;
+         const CHAR *         _generated ;      // generated
    };
 
    /*

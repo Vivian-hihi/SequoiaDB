@@ -95,7 +95,8 @@ namespace engine
       void setID( utilGlobalID id ) ;
       INT32 toBSONObj( bson::BSONObj& obj, BOOLEAN forUpdate ) const ;
       void copyFrom( const _catSequence& other, BOOLEAN withInternalField = TRUE ) ;
-      INT32 setOptions( const bson::BSONObj& options, BOOLEAN init, BOOLEAN withInternalField, BOOLEAN* changed = NULL ) ;
+      INT32 setOptions( const bson::BSONObj& options, BOOLEAN init,
+                        BOOLEAN withInternalField, UINT32 * alterMask = NULL ) ;
       INT32 validate() const ;
 
    public:

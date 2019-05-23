@@ -2070,20 +2070,29 @@ namespace engine
       fldList = localTask->getAutoincFieldArgument() ;
       for( UINT32 i = 0 ; i < fldList.size() ; i++ )
       {
-         BSONObj seqOpt ;
-         string seqName ;
-         const CHAR *fieldName = NULL ;
-         fieldName = fldList[i]->getFieldName() ;
+         const CHAR *fieldName = fldList[i]->getFieldName() ;
          PD_CHECK( 0 != ossStrcmp( fieldName, "" ), SDB_SYS, error, PDERROR,
                    "Failed to get field name" ) ;
-         seqName = catGetSeqName4AutoIncFld( clUniqueID, fieldName ) ;
-         rc = pSeqMgr->getSequence( seqName, seqOpt, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get sequence[%s], rc: %d",
-                      seqName.c_str(), rc ) ;
-         _rollbackObj.push_back( seqOpt );
-         seqOpt = catBuildSequenceOptions( fldList[i]->getArgument() ) ;
-         rc = pSeqMgr->alterSequence( seqName, seqOpt, cb, w ) ;
+
+         string seqName = catGetSeqName4AutoIncFld( clUniqueID, fieldName ) ;
+         BSONObj seqOpt = catBuildSequenceOptions( fldList[i]->getArgument(),
+                                                   UTIL_SEQUENCEID_NULL,
+                                                   fldList[i]->getArgumentMask() ) ;
+
+         BSONObj oldOptions ;
+         UINT32 alterMask = UTIL_ARG_FIELD_EMPTY ;
+         rc = pSeqMgr->alterSequence( seqName, seqOpt, cb, w, &oldOptions,
+                                      &alterMask ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to alter sequence, rc: %d", rc ) ;
+
+         if ( UTIL_ARG_FIELD_EMPTY != alterMask )
+         {
+            // Some fields had been changed, let's save the old options in
+            // case of rollback
+            rtnCLAutoincFieldArgument rollbackArgument( oldOptions ) ;
+            rollbackArgument.setArgumentMask( alterMask ) ;
+            _rollbackObj.push_back( rollbackArgument ) ;
+         }
       }
 
    done :
@@ -2108,24 +2117,32 @@ namespace engine
       BSONObj seqOpt ;
       bson::BSONElement ele ;
       catSequenceManager *pSeqMgr ;
-      vector<BSONObj>& obj = getRollbackObj() ;
+      vector< rtnCLAutoincFieldArgument > & rollbackArgs = getRollbackObj() ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
       PD_CHECK( NULL != pSeqMgr, SDB_SYS, error, PDERROR, "Failed to get "
                 "sequence manager" ) ;
 
-      for( UINT32 i = 0 ; i < obj.size() ; i++ )
+      for( UINT32 i = 0 ; i < rollbackArgs.size() ; i++ )
       {
+         BSONObj argument = rollbackArgs[i].getArgument() ;
+
+         // get sequence name
          const CHAR *seqName = NULL ;
-         PD_CHECK( obj[i].hasField( FIELD_NAME_SEQUENCE_NAME ), SDB_SYS, error,
-                     PDERROR, "Failed to get field[%s]",
-                     obj[i].toString( false, false ).c_str() ) ;
-         ele = obj[i].getField( FIELD_NAME_SEQUENCE_NAME ) ;
+         PD_CHECK( argument.hasField( FIELD_NAME_SEQUENCE_NAME ),
+                   SDB_SYS, error, PDERROR, "Failed to get field[%s]",
+                   argument.toString( false, false ).c_str() ) ;
+         ele = argument.getField( FIELD_NAME_SEQUENCE_NAME ) ;
          PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
                   "Failed to get field [%s]", FIELD_NAME_SEQUENCE_NAME ) ;
          seqName = ele.valuestrsafe() ;
-         seqOpt = catBuildSequenceOptions( obj[i] ) ;
-         rc = pSeqMgr->alterSequence( seqName, seqOpt, cb, w ) ;
+
+         // build rollback object
+         seqOpt = catBuildSequenceOptions( argument, UTIL_SEQUENCEID_NULL,
+                                           rollbackArgs[i].getArgumentMask() ) ;
+
+         // only rollback what had been changed by alter mask
+         rc = pSeqMgr->alterSequence( seqName, seqOpt, cb, w, NULL, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to alter sequence[%s] when rollback, "
                       "rc: %d", seqName, rc ) ;
       }

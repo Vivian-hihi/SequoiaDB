@@ -283,7 +283,7 @@ namespace engine
                                         SDB_DMSCB *pDmsCB,
                                         SDB_DPSCB *pDpsCB,
                                         INT16 w ) ;
-      OSS_INLINE vector<BSONObj>&  getRollbackObj ()
+      OSS_INLINE vector< rtnCLAutoincFieldArgument > & getRollbackObj ()
       {
          return _rollbackObj ;
       }
@@ -291,7 +291,7 @@ namespace engine
       INT32 getCLUniqueID(_pmdEDUCB *cb, utilCLUniqueID *clUniqueID) ;
 
    protected:
-      std::vector<BSONObj> _rollbackObj ;
+      std::vector< rtnCLAutoincFieldArgument > _rollbackObj ;
 
    };
    typedef class _catCtxAlterSequenceTask catCtxAlterSequenceTask ;

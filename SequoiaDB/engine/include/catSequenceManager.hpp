@@ -81,7 +81,10 @@ namespace engine
       INT32 dropSequence( const std::string& name, _pmdEDUCB* eduCB, INT16 w ) ;
       INT32 alterSequence( const std::string& name,
                            const bson::BSONObj& options,
-                           _pmdEDUCB* eduCB, INT16 w ) ;
+                           _pmdEDUCB* eduCB,
+                           INT16 w,
+                           bson::BSONObj * oldOptions,
+                           UINT32 * alterMask ) ;
       INT32 acquireSequence( const std::string& name,
                              const utilSequenceID ID,
                              _catSequenceAcquirer& acquirer,
