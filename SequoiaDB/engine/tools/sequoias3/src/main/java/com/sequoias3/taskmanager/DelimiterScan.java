@@ -40,6 +40,7 @@ public class DelimiterScan {
     @Scheduled(initialDelay = 1000 * 10,fixedDelay = QUARTER_HOUR)
     public void delimiterScanner(){
         //deleting status
+        logger.debug("delimiter task scan.");
         try {
             List<Bucket> bucketList1 = bucketDao.getBucketListByDelimiterStatus(DelimiterStatus.DELETING, HALF_HOUR);
             if (bucketList1 != null){
@@ -48,7 +49,7 @@ public class DelimiterScan {
                 }
             }
         }catch (Exception e){
-            logger.error("scan deleting failed");
+            logger.error("scan deleting failed", e);
         }
 
         //tobedelete status
@@ -62,7 +63,7 @@ public class DelimiterScan {
                 }
             }
         }catch (Exception e){
-            logger.error("scan to be delete failed");
+            logger.error("scan to be delete failed", e);
         }
 
         //creating status
@@ -70,11 +71,12 @@ public class DelimiterScan {
             List<Bucket> bucketList3 = bucketDao.getBucketListByDelimiterStatus(DelimiterStatus.CREATING, HALF_HOUR);
             if (bucketList3 != null){
                 for (int i = 0; i < bucketList3.size(); i++){
+                    logger.info("find creating delimiter. bucketName:"+bucketList3.get(i).getBucketName());
                     checkCreatingDelimiter(bucketList3.get(i));
                 }
             }
         }catch (Exception e){
-            logger.error("scan creating failed");
+            logger.error("scan creating failed", e);
         }
     }
 
@@ -120,7 +122,7 @@ public class DelimiterScan {
             if (bucket.getTaskID() == curBucket.getTaskID()) {
                 //将未创建完的分隔符改为deleting
                 Bucket newBucket = null;
-                if (curBucket.getDelimiter1Status() == DelimiterStatus.CREATING.getName()) {
+                if (curBucket.getDelimiter1Status().equals(DelimiterStatus.CREATING.getName())) {
                     newBucket = new Bucket();
                     newBucket.setDelimiter(2);
                     newBucket.setDelimiter2Status(DelimiterStatus.NORMAL.getName());
@@ -128,7 +130,7 @@ public class DelimiterScan {
                     newBucket.setDelimiter1Status(DelimiterStatus.DELETING.getName());
                     newBucket.setDelimiter1ModTime(System.currentTimeMillis());
                 }
-                if (curBucket.getDelimiter2Status() == DelimiterStatus.CREATING.getName()) {
+                if (curBucket.getDelimiter2Status().equals(DelimiterStatus.CREATING.getName())) {
                     newBucket = new Bucket();
                     newBucket.setDelimiter(1);
                     newBucket.setDelimiter1Status(DelimiterStatus.NORMAL.getName());

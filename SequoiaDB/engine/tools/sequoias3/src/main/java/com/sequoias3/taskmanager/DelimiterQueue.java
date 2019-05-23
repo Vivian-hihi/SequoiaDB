@@ -20,7 +20,7 @@ public class DelimiterQueue {
         taskLock.lock();
         try{
             bucketList.add(bucketName);
-            logger.debug("add deleting bucketName={}, after queue.size={}", bucketName, bucketList.size());
+            logger.info("add deleting delimiter. bucketName={}, after queue.size={}", bucketName, bucketList.size());
         }finally {
             taskLock.unlock();
         }
@@ -41,7 +41,7 @@ public class DelimiterQueue {
 
 //                String bucketName = bucketList.(0);
 //                bucketList.remove(0);
-                logger.debug("get deleting bucketName={}, after queue.size={}", bucketName, bucketList.size());
+                logger.info("get deleting delimiter. bucketName={}, after queue.size={}", bucketName, bucketList.size());
                 return bucketName;
             } else {
                 return null;
