@@ -10,7 +10,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * @Description: seqDB-17300 :: 创建区域配置domain
+ * @Description:  seqDB-17333::并发更新相同区域（配置一致）
  * @author fanyu
  * @Date:2019年01月22日
  * @version:1.0
@@ -26,7 +26,7 @@ public class CreateSameRegionBySameType17333 extends S3TestBase {
       RegionUtils.deleteRegion(regionName);
 	}
 	
-	@Test(threadPoolSize = 3,invocationCount = 5)
+	@Test(threadPoolSize = 2,invocationCount = 2)
 	private void test() throws Exception {
 		//create region
 		Region region = new Region()

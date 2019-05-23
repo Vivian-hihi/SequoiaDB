@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * @Description: seqDB-17300 :: 创建区域配置domain
+ * @Description: seqDB-17332 :: 并发创建相同区域（配置不同）
  * @author fanyu
  * @Date:2019年01月22日
  * @version:1.0
@@ -49,8 +49,8 @@ public class CreateSameRegionByDiffType17332 extends S3TestBase {
 
 		CreateRegion cThread1 = new CreateRegion(hashMap1.get("dataCSShardingType"),hashMap1.get("dataCLShardingType"));
 		CreateRegion cThread2 = new CreateRegion(hashMap2.get("dataCSShardingType"),hashMap2.get("dataCLShardingType"));
-		cThread1.start(10);
-		cThread2.start(10);
+		cThread1.start(20);
+		cThread2.start(20);
 		Assert.assertEquals(cThread1.isSuccess(),true,cThread1.getErrorMsg());
 		Assert.assertEquals(cThread2.isSuccess(),true,cThread2.getErrorMsg());
 
