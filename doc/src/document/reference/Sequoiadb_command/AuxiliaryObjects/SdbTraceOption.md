@@ -112,7 +112,7 @@ threadType 参数的可选值详见[线程类型](database_management/EDU.md)
 
 	```lang-javascript
     > db = new Sdb( "localhost", 50000 )
-    > var option = new SdbTraceOption().component( "dms", "rtn" ).breakPoints( "_coordCMDEval::execute", "_dmsStorageUnit::insertRecord" ).tid( [ 15923, 35712 ] ).threadType( "RestListener", "LogWriter" ).functionName( "_coordCMDEval::execute", "_dmsStorageUnit::insertRecord" )
+    > var option = new SdbTraceOption().components( "dms", "rtn" ).breakPoints( "_coordCMDEval::execute", "_dmsStorageUnit::insertRecord" ).tids( [ 15923, 35712 ] ).threadTypes( "RestListener", "LogWriter" ).functionNames( "_coordCMDEval::execute", "_dmsStorageUnit::insertRecord" )
 	> db.traceOn( 1000, option )
 	```
 
@@ -120,7 +120,7 @@ threadType 参数的可选值详见[线程类型](database_management/EDU.md)
 
 	```lang-javascript
     > db = new Sdb( "localhost", 50000 )
-    > var option = new SdbTraceOption().component( [ "dms", "rtn" ] ).breakPoints( [ "_coordCMDEval::execute", "_dmsStorageUnit::insertRecord" ] ).tid( [ 15923, 35712 ] ).threadType( [ "RestListener", "LogWriter" ] ).functionName( [ "_coordCMDEval::execute", "_dmsStorageUnit::insertRecord" ] )
+    > var option = new SdbTraceOption().components( [ "dms", "rtn" ] ).breakPoints( [ "_coordCMDEval::execute", "_dmsStorageUnit::insertRecord" ] ).tids( [ 15923, 35712 ] ).threadTypes( [ "RestListener", "LogWriter" ] ).functionNames( [ "_coordCMDEval::execute", "_dmsStorageUnit::insertRecord" ] )
 	> db.traceOn( 1000, option )
 	```
 
@@ -128,7 +128,7 @@ threadType 参数的可选值详见[线程类型](database_management/EDU.md)
 
 	```lang-javascript
     > db = new Sdb( "localhost", 50000 )
-    > var option = new SdbTraceOption().component( [ "dms", "rtn" ] ).component( [ "dps", "cls" ].component( "pd" ) )
+    > var option = new SdbTraceOption().components( [ "dms", "rtn" ] ).components( [ "dps", "cls" ] ).components( "pd" )
 	> db.traceOn( 1000, option )
 	```
 
