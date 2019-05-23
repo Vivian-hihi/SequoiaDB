@@ -32,7 +32,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 
 public class IdIndexSplit15549 extends SdbTestBase {
-	private Sequoiadb commSdb = null;
+	private Sequoiadb sdb = null;
 	private String clName = "cl_15549";
 	private List<String> groupNames;
 	private String srcGroup;
@@ -40,26 +40,24 @@ public class IdIndexSplit15549 extends SdbTestBase {
 	
 	@BeforeClass
 	public void setUp(){
-		commSdb = new Sequoiadb(coordUrl,"","");
+	    sdb = new Sequoiadb(coordUrl,"","");
 		
-		//跳过standAlone和数据组不足的情况
 		CommLib commlib = new CommLib();
-		if(commlib.isStandAlone(commSdb)){
+		if(commlib.isStandAlone(sdb)){
 			throw new SkipException("StandAlone environment!");
 		}
 		
-		groupNames = commlib.getDataGroupNames(commSdb);
+		groupNames = commlib.getDataGroupNames(sdb);
 		if(groupNames.size()<2){
 			throw new SkipException("Current environment less than tow groups! ");
 		}
 		srcGroup = groupNames.get(0);
 		desGroup = groupNames.get(1);
 		
-		CollectionSpace cs = commSdb.getCollectionSpace(csName);
+		CollectionSpace cs = sdb.getCollectionSpace(csName);
 	    DBCollection cl = cs.createCollection(clName,(BSONObject)JSON
 				.parse("{ShardingKey:{sk:1},ShardingType:'range',Group:'" + srcGroup + "'}"));
 		
-		//写入待分的记录5000
 		insertData(cl);
 	}
 	
@@ -67,45 +65,50 @@ public class IdIndexSplit15549 extends SdbTestBase {
 	public void splitAndAlter(){
 		Sequoiadb db = null;
 		DBCollection cl = null;
+		DBCursor cursor = null;
 		try{
-			//启动切分线程
+            db = new Sequoiadb(coordUrl, "", "");
+            cl = db.getCollectionSpace(csName).getCollection(clName);
+            
 			Split splitThread = new Split();
 			splitThread.start();
 			
-			//修改AutoIndexId属性
-			db = new Sequoiadb(coordUrl, "", "");
-			for(int i=0;i<50;i++){
-				DBCursor cursor = db.listTasks((BSONObject)JSON.parse("{Name:\"" + csName + "." + clName + "\"}"), null, null, null);
+			int timeOut = 60;
+			int doTimes = 0;
+			while(doTimes < timeOut){
+				cursor = db.listTasks((BSONObject)JSON.parse("{Name:\"" + csName + "." + clName + "\"}"), null, null, null);
 				if(cursor.hasNext()){
-					cl = db.getCollectionSpace(csName).getCollection(clName);
 					try{
 						cl.alterCollection((BSONObject)JSON.parse("{AutoIndexId:false}"));
-						Assert.fail("alert_success_ERROR");
+						Assert.fail("Alter collection should not succeed!");
 					}catch(BaseException e){
-						if(e.getErrorCode()!=-334){
+						if(e.getErrorCode() != -334){
 							throw e;
+						}else{
+						    break;
 						}
 					}
-					break;
+				}else{
+				    doTimes++;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+				    continue;
 				}
 			}
 			
-			// 等待切分结束
 			if (!splitThread.isSuccess()) {
 				splitThread.getExceptions().get(0).printStackTrace();
 				Assert.fail(splitThread.getErrorMsg());
 			}
 			
-			// 查看索引
-			checkIndex(cl);
-			
-			// 校验源组和目标组的数据 
-			checkData(db, 4500, "{sk:{$gte:500,$lt:5000}}", 4500, desGroup);
-			checkData(db, 500, "{sk:{$gte:0,$lt:500}}", 500, srcGroup);
-			
+			checkData(4500, "{sk:{$gte:500,$lt:5000}}", desGroup);
+			checkData(500, "{sk:{$gte:0,$lt:500}}", srcGroup);
 		}catch(BaseException e){
-			e.printStackTrace();
-			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
+		    throw e;
 		}finally {
 			if (db != null) {
 				db.close();
@@ -115,14 +118,15 @@ public class IdIndexSplit15549 extends SdbTestBase {
 	
 	@AfterClass
 	public void tearDown() {
+	    CollectionSpace cs = null;
 		try {
-			CollectionSpace cs = commSdb.getCollectionSpace(csName);
+			cs = sdb.getCollectionSpace(csName);
 			cs.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
+			throw e;
 		} finally {
-			if (commSdb != null) {
-				commSdb.close();;
+			if (sdb != null) {
+			    sdb.close();;
 			}
 		}
 	}
@@ -158,39 +162,20 @@ public class IdIndexSplit15549 extends SdbTestBase {
 		}
 	}
 	
-	public void checkIndex(DBCollection cl) {
-		DBCursor dbc = null;
+	private void checkData(int expectedCount, String macher, String group) {
+		Sequoiadb dateDb = null;
+		DBCollection cl = null;
+		long count;
 		try {
-			dbc = commSdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:\"" + csName + "." + clName + "\"}", null, null);	
-			if(!(((String)dbc.getNext().get("AttributeDesc")).equals(""))){
-				throw new SkipException("id index may be deleted! ");
-			}
+		    dateDb = sdb.getReplicaGroup(group).getMaster().connect();
+			cl = dateDb.getCollectionSpace(csName).getCollection(clName);	
+			count = cl.getCount(macher);
+			Assert.assertEquals(count, expectedCount);
 		} catch (BaseException e) {
-			throw e;
+		    throw e;
 		} finally {
-			if (dbc != null) {
-				dbc.close();
-			}
-		}
-	}
-	
-	private void checkData(Sequoiadb db, int expectedCount, String macher, int expectTotalCount, String group) {
-		Sequoiadb desDataNode = null;
-		DBCollection desCL = null;
-		try {
-			desDataNode = db.getReplicaGroup(group).getMaster().connect();
-			desCL = desDataNode.getCollectionSpace(csName).getCollection(clName);	
-			long count = desCL.getCount(macher);
-            
-			String hostandport = desDataNode.getHost()+":"+desDataNode.getPort();
-			Assert.assertEquals(count, expectedCount, hostandport);// 目标组应当含有上述查询数据
-			Assert.assertEquals(desCL.getCount(), expectTotalCount, hostandport); // 目标组应当含有的数据量
-		} catch (BaseException e) {
-			e.printStackTrace();
-			Assert.fail(e.getMessage()+"\r\n"+SplitUtils.getKeyStack(e,this));
-		} finally {
-			if (desDataNode != null) {
-				desDataNode.close();
+			if (dateDb != null) {
+			    dateDb.close();
 			}
 		}
 	}
