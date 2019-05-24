@@ -54,7 +54,7 @@ public class Fulltext15799 extends SdbTestBase {
         }
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         mainCL = cs.createCollection(mainCLName,
-                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}"));
+                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true, ReplSize:0}"));
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
     }
