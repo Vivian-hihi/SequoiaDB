@@ -25,7 +25,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @Date 2019.03.15
  * @version 1.00
  */
-public class InsertAndQuery11427 extends SdbTestBase{
+public class InsertAndQuery11427 extends SdbTestBase{//TODO:没有按评审意见修改，请修改
 	private String clName = "cl11427";
 	private Sequoiadb sdb = null;
 	private DBCollection cl = null;
