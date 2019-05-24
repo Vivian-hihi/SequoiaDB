@@ -41,11 +41,10 @@ public class UpdateAndDelete6000 extends SdbConfTestBase {
 		final int RECSUM = 100;
 		final int STRLENGTH = 10;
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		TransactionUtils util = new TransactionUtils();
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
 
 		// insertData(DBCollection cl,int start, int recSum, int strLength)
-		util.insertData(cl, START, RECSUM, STRLENGTH);
+		TransactionUtils.insertData(cl, START, RECSUM, STRLENGTH);
 	}
 
 	@Test
@@ -102,8 +101,8 @@ public class UpdateAndDelete6000 extends SdbConfTestBase {
 			BSONObject matcher = new BasicBSONObject();
 			BSONObject modifyObj = new BasicBSONObject();
 			BSONObject modifier = new BasicBSONObject();
-			matcher.put("age", 50);
-			modifyObj.put("age", 6000);
+			matcher.put("a", 50);
+			modifyObj.put("a", 6000);
 			modifier.put("$set", modifyObj);
 			cl1.update(matcher, modifier, null);
 		}
@@ -118,7 +117,7 @@ public class UpdateAndDelete6000 extends SdbConfTestBase {
 
 	private void checkUpdateResult() {
 		BSONObject matcher = new BasicBSONObject();
-		matcher.put("age", 6000);
+		matcher.put("a", 6000);
 		long actCount = cl.getCount(matcher);
 		Assert.assertEquals(actCount, 1, "Update data does not exist!");
 	}

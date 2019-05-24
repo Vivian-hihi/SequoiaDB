@@ -15,10 +15,9 @@ public class TransactionUtils {
             List<BSONObject> recs = new ArrayList<BSONObject>();
             for(int i = start; i < recSum; i++){
                 BSONObject rec = new BasicBSONObject();
-                rec.put("_id", i);
-                rec.put("age", i);
-                rec.put("num", i);
-                rec.put("str", getRandomString(strLength));
+                rec.put("a", i);
+                rec.put("b", i);
+                rec.put("c", getRandomString(strLength));
                 recs.add(rec);
             }
            cl.insert(recs);

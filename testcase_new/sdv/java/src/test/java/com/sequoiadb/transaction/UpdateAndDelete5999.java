@@ -43,8 +43,7 @@ public class UpdateAndDelete5999 extends SdbConfTestBase {
 		final int STRLENGTH = 10;
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
-		TransactionUtils util = new TransactionUtils();
-		util.insertData(cl, START, RECSUM, STRLENGTH);
+		TransactionUtils.insertData(cl, START, RECSUM, STRLENGTH);
 	}
 
 	@Test
@@ -104,8 +103,8 @@ public class UpdateAndDelete5999 extends SdbConfTestBase {
 			BSONObject matcher = new BasicBSONObject();
 			BSONObject modifyObj = new BasicBSONObject();
 			BSONObject modifier = new BasicBSONObject();
-			matcher.put("age", 50);
-			modifyObj.put("age", 5999);
+			matcher.put("b", 50);
+			modifyObj.put("b", 5999);
 			modifier.put("$set", modifyObj);
 			cl1.update(matcher, modifier, null);
 		}
@@ -114,14 +113,14 @@ public class UpdateAndDelete5999 extends SdbConfTestBase {
 	private class DeleteThread extends SdbThreadBase {
 		@Override
 		public void exec() throws BaseException {
-			del_matcher.put("_id", 10);
+			del_matcher.put("a", 10);
 			cl2.delete(del_matcher);
 		}
 	}
 
 	private void checkUpdateResult() {
 		BSONObject matcher = new BasicBSONObject();
-		matcher.put("age", 5999);
+		matcher.put("b", 5999);
 		long actCount = cl.getCount(matcher);
 		Assert.assertEquals(actCount, 1, "Update data does not exist!");
 	}
