@@ -498,7 +498,7 @@
              3. The total size of synch log (logfilesz * logfilenum)determines the fault tolerance in the process of sync. If log is bigger, the possiblity of full sync is lower.</en>
          <cn>1. 指定同步日志文件的大小。合法输入为64（MB）- 2048（MB）。<fig></fig>
              2. 如果不指定，则默认为64（MB）。<fig></fig>
-             3. 同步日志的总大小（logfilesz * logfilenum）决定了在同步过程中的容错能力。日志越大则进行全量恢复的可能性越小。</cn>
+             3. 同步日志的总大小（logfilesz * logfilenum）决定了在同步过程中的容错能力，日志越大则触发全量同步的可能性越小。</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
