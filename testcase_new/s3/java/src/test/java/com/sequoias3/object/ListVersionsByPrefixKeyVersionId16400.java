@@ -1,7 +1,9 @@
 package com.sequoias3.object;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.ListVersionsRequest;
+import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
@@ -29,7 +31,7 @@ public class ListVersionsByPrefixKeyVersionId16400 extends S3TestBase {
     private boolean runSuccess2 = false;
     private String bucketName = "bucket16400";
     private String[] objectNames = {"dir16400$dir16400A$dir16400AB","dir16400$subdir16400A","dirsub16400A","dirsub16400B"};
-    private List<String> objectNameList = new ArrayList<String>();
+    private List<String> objectNameList = new ArrayList<>();
     private AmazonS3 s3Client = null;
     private int versionNum = 500;
 
@@ -40,8 +42,8 @@ public class ListVersionsByPrefixKeyVersionId16400 extends S3TestBase {
         s3Client.createBucket(bucketName);
         CommLib.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (String objectName : objectNames) {
-            objectNameList.add(objectName);
             for(int i = 0; i < versionNum; i++) {
+                objectNameList.add(objectName);
                 s3Client.putObject(bucketName, objectName,""+ UUID.randomUUID());
             }
         }
@@ -81,8 +83,9 @@ public class ListVersionsByPrefixKeyVersionId16400 extends S3TestBase {
         String prefix = "dir";
         int index = 0;
         String keyMarker = objectNames[index];
-        String versionIdMarker = "400";
+        String versionIdMarker = String.valueOf(versionNum);
         VersionListing vsList = null;
+        int count = 0;
         do {
             //list by prefix/keyMarker/versionIdMarker
             vsList = s3Client.listVersions( new ListVersionsRequest()
@@ -90,14 +93,15 @@ public class ListVersionsByPrefixKeyVersionId16400 extends S3TestBase {
                     .withPrefix(prefix)
                     .withKeyMarker(keyMarker)
                     .withVersionIdMarker(versionIdMarker));
+
             //check
-            MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
-            System.out.println();
-            for(int i = objectNameList.indexOf(keyMarker); i < objectNameList.indexOf(vsList.getNextKeyMarker());i++){
-                for(int j = versionNum - 1; j >= 0; j--){
-                    expMap.add(objectNames[i],String.valueOf(j));
+            MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+            for(int i = 0; i < vsList.getMaxKeys()/versionNum; i++) {
+                for (int j = versionNum - 1; j >= 0; j--, count++) {
+                    expMap.add(objectNameList.get(count), String.valueOf(j));
                 }
             }
+            ObjectUtils.checkListVSResults(vsList,new ArrayList<String>(),expMap);
             keyMarker = vsList.getNextKeyMarker();
             versionIdMarker = vsList.getNextVersionIdMarker();
         }while(vsList.isTruncated());
