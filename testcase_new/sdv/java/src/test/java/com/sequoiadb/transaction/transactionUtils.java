@@ -9,7 +9,7 @@ import org.bson.BasicBSONObject;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.exception.BaseException;
 
-public class transactionUtils {
+public class TransactionUtils {
     public void insertData(DBCollection cl,int start, int recSum, int strLength){
         try {
             List<BSONObject> recs = new ArrayList<BSONObject>();

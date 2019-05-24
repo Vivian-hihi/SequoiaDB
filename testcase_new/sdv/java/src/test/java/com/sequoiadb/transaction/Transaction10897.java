@@ -21,7 +21,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @version 1.00
  */
 
-public class RecommitAndRerollback10897 extends SdbConfTestBase {
+public class Transaction10897 extends SdbConfTestBase {
 	private String clName = "cl10897";
 	private Sequoiadb sdb = null;
 	private DBCollection cl = null;

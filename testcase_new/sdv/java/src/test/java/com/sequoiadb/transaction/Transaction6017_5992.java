@@ -26,7 +26,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @version 1.00
  */
 
-public class CommitAtTheSameTime6017_5992 extends SdbConfTestBase {
+public class Transaction6017_5992 extends SdbConfTestBase {
 	private String clName = "cl6017";
 	private Sequoiadb sdb = null;
 	private DBCollection cl = null;

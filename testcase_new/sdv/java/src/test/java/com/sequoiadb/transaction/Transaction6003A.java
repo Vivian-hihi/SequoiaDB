@@ -17,20 +17,22 @@ import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 /**
- * test content: 配置事务锁超时时间值合法校验_SD.transaction.014(由于设置事务锁等待超时时间值为3600s时间较长不适合将用例放到CI,故这里只测试设置为5s，看参数是否生效)
+ * test content: 配置事务锁超时时间值合法校验_SD.transaction.014
  * testlink-case: seqDB-6003
  * @author wangkexin
  * @Date 2019.04.08
  * @version 1.00
  */
 
-public class Testtransactiontimeout6003B extends SdbConfTestBase {
-	private String clName = "cl6003B";
+public class Transaction6003A extends SdbConfTestBase {
+	private String clName = "cl6003A";
 	private Sequoiadb sdb = null;
 	private Sequoiadb db1 = null;
 	private Sequoiadb db2 = null;
 	private DBCollection cl = null;
 	private long timeoutMillis = 0;
+	private int lowBoundValue = 0;
+	private int upBoundValue = 3600;
 
 	@Override
 	protected void setNodeConf() {
@@ -45,30 +47,43 @@ public class Testtransactiontimeout6003B extends SdbConfTestBase {
 
 	@Test
 	public void test() throws Exception {
+		// test transactiontimeout is 0
 		BSONObject configs = new BasicBSONObject();
 		BSONObject options = new BasicBSONObject();
-		configs.put("transactiontimeout", 5);
+		configs.put("transactiontimeout", lowBoundValue);
 		options.put("Global", true);
 		sdb.updateConfig(configs, options);
-		checkConfig(options, 5);
+		checkConfig(options, lowBoundValue);
 
 		ThreadExecutor es = new ThreadExecutor();
-		es.addWorker(new TransInsert6003B());
-		es.addWorker(new TransDelete6003B());
+		es.addWorker(new TransInsert6003A());
+		es.addWorker(new TransDelete6003A());
 		es.run();
-
 		CheckResult();
+
+		// test transactiontimeout is 3599
+		BSONObject configs2 = new BasicBSONObject();
+		configs2.put("transactiontimeout", upBoundValue - 1);
+		sdb.updateConfig(configs2, options);
+		checkConfig(options, upBoundValue - 1);
+
+		// test transactiontimeout is 3600
+		BSONObject configs3 = new BasicBSONObject();
+		configs3.put("transactiontimeout", upBoundValue);
+		sdb.updateConfig(configs3, options);
+		checkConfig(options, upBoundValue);
 	}
 
 	@AfterClass
 	private void teardown() {
 		try{
+			// 恢复环境
 			BSONObject configs = new BasicBSONObject();
 			BSONObject options = new BasicBSONObject();
 			configs.put("transactiontimeout", 60);
 			options.put("Global", true);
 			sdb.updateConfig(configs, options);
-	
+			
 			sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
 		}finally{
 			db1.close();
@@ -77,10 +92,10 @@ public class Testtransactiontimeout6003B extends SdbConfTestBase {
 		}
 	}
 
-	class TransInsert6003B {
+	class TransInsert6003A {
 		private DBCollection cl1 = null;
 
-		public TransInsert6003B() {
+		public TransInsert6003A() {
 			db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			db1.beginTransaction();
 			cl1 = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
@@ -99,10 +114,10 @@ public class Testtransactiontimeout6003B extends SdbConfTestBase {
 		}
 	}
 
-	class TransDelete6003B {
+	class TransDelete6003A {
 		private DBCollection cl2 = null;
 
-		public TransDelete6003B() {
+		public TransDelete6003A() {
 			db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			db2.beginTransaction();
 			cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
@@ -138,8 +153,8 @@ public class Testtransactiontimeout6003B extends SdbConfTestBase {
 		while (cursor.hasNext()) {
 			Assert.assertEquals(cursor.getNext().get("a").toString(), "1");
 		}
-		if (timeoutMillis < 5 * 1000 || timeoutMillis > 6 * 1000) {
-			Assert.fail("when transactiontimeout is 5(s), the actual time is " + timeoutMillis + "(ms).");
+		if (timeoutMillis > 1000) {
+			Assert.fail("when transactiontimeout is 0(s), the actual time is " + timeoutMillis + "(ms).");
 		}
 	}
 

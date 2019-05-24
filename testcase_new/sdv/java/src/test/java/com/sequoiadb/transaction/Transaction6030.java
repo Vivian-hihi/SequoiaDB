@@ -26,7 +26,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @version 1.00
  */
 
-public class RollBackAtTheSameTime6030 extends SdbConfTestBase {
+public class Transaction6030 extends SdbConfTestBase {
 	private String clName = "cl6030";
 	private Sequoiadb sdb = null;
 	private DBCollection cl = null;

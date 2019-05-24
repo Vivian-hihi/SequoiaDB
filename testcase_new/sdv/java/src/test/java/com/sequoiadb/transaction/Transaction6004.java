@@ -24,7 +24,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @version 1.00
  */
 
-public class Testtransactiontimeout6004 extends SdbConfTestBase {
+public class Transaction6004 extends SdbConfTestBase {
 	private Sequoiadb sdb = null;
 	private int expTransTimeout1 = 60;
 	private int expTransTimeout2 = 3600;
