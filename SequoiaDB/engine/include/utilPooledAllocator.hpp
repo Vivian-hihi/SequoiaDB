@@ -63,12 +63,11 @@ namespace engine
    class _utilTrunkAllocator
    {
       public:
-#pragma pack(4)
+
          struct _innerT
          {
             T        _t ;
          } ;
-#pragma pack()
 
          typedef _utilStackBitmap<cacheSize>       myBitmap ;
          typedef _innerT                           value_type ;
