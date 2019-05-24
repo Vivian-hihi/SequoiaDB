@@ -41,7 +41,7 @@ public class UpdateAndDelete6000 extends SdbConfTestBase {
 		final int RECSUM = 100;
 		final int STRLENGTH = 10;
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		transactionUtils util = new transactionUtils();
+		TransactionUtils util = new TransactionUtils();
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
 
 		// insertData(DBCollection cl,int start, int recSum, int strLength)
