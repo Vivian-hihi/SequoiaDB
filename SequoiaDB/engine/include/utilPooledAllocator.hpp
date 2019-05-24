@@ -180,12 +180,12 @@ namespace engine
    } ;
 
    /*
-      _utilAllocator define
+      _utilPooledAllocator define
    */
    template < typename T,
               UINT32 cacheSize = UTIL_ALLOCATE_DFT_CACHE_SIZE,
               UINT32 cacheNum = UTIL_ALLOCATE_DFT_CACHE_NUM >
-   class _utilAllocator : public std::allocator<T>
+   class _utilPooledAllocator : public std::allocator<T>
    {
       public:
          typedef _utilTrunkAllocator< T, cacheSize >           myCache ;
@@ -197,7 +197,7 @@ namespace engine
          typedef typename std::allocator<T>::const_reference   const_reference ;
 
       public:
-         _utilAllocator()
+         _utilPooledAllocator()
          {
             SDB_ASSERT( cacheSize <= UTIL_ALLOCATE_MAX_CACHE_SIZE,
                         "Invalid cacheSize" ) ;
@@ -205,18 +205,18 @@ namespace engine
                         "Invalid cacheNum" ) ;
          }
 
-         _utilAllocator( const _utilAllocator &rhs )
+         _utilPooledAllocator( const _utilPooledAllocator &rhs )
          {
          }
 
          template < typename _T,
                     UINT32 _cacheSize,
                     UINT32 _cacheNum >
-         _utilAllocator( const _utilAllocator<_T, _cacheSize, _cacheNum> &rhs )
+         _utilPooledAllocator( const _utilPooledAllocator<_T, _cacheSize, _cacheNum> &rhs )
          {
          }
 
-         ~_utilAllocator()
+         ~_utilPooledAllocator()
          {
          }
 
@@ -269,7 +269,7 @@ namespace engine
          struct rebind
          {
             // convert this type to allocator<_Other>
-            typedef _utilAllocator<_Other, _cacheSize, _cacheNum> other ;
+            typedef _utilPooledAllocator<_Other, _cacheSize, _cacheNum> other ;
          } ;
 
       private:
