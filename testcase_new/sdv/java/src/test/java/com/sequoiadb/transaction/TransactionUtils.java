@@ -10,7 +10,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.exception.BaseException;
 
 public class TransactionUtils {
-    public void insertData(DBCollection cl,int start, int recSum, int strLength){
+    public static void insertData(DBCollection cl,int start, int recSum, int strLength){
         try {
             List<BSONObject> recs = new ArrayList<BSONObject>();
             for(int i = start; i < recSum; i++){
@@ -27,7 +27,7 @@ public class TransactionUtils {
         }
     }
 
-    private String getRandomString(int length){
+    private static String getRandomString(int length){
         String base = "abc";
         Random random = new Random();
         StringBuffer sb = new StringBuffer();
