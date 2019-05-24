@@ -59,7 +59,6 @@ namespace engine
       _utilTrunkAllocator define
    */
    template < typename T,
-              UINT32 paddingSize = 0,
               UINT32 cacheSize = UTIL_ALLOCATE_DFT_CACHE_SIZE >
    class _utilTrunkAllocator
    {
@@ -68,14 +67,13 @@ namespace engine
          struct _innerT
          {
             T        _t ;
-            CHAR     _padding[ paddingSize ] ;
          } ;
 #pragma pack()
 
          typedef _utilStackBitmap<cacheSize>       myBitmap ;
-         typedef typename _innerT                  value_type ;
-         typedef typename _innerT*                 pointer ;
-         typedef typename const _innerT*           const_pointer ;
+         typedef _innerT                           value_type ;
+         typedef _innerT*                          pointer ;
+         typedef const _innerT*                    const_pointer ;
          typedef UINT32                            size_type ;
 
       public:
@@ -90,8 +88,8 @@ namespace engine
          {
          }
 
-         template < typename _T >
-         _utilTrunkAllocator( const _utilTrunkAllocator< _T > &rhs )
+         template < typename _T, UINT32 _cacheSize >
+         _utilTrunkAllocator( const _utilTrunkAllocator< _T, _cacheSize > &rhs )
          {
          }
 
@@ -105,12 +103,12 @@ namespace engine
             }
          }
 
-         pointer allocate( size_type sz )
+         pointer allocate( size_type count )
          {
             INT32 pos = -1 ;
             pointer ptr = NULL ;
 
-            if ( sz <= sizeof( value_type ) )
+            if ( 1 == count )
             {
                if ( !_ptr )
                {
@@ -128,22 +126,22 @@ namespace engine
                   ptr = _ptr + pos ;
                }
             }
-            else
-            {
-               SDB_ASSERT( FALSE, "Invalid sz" ) ;
-            }
 
             return ptr ;
          }
 
-         void deallocate( pointer ptr, size_type sz )
+         void deallocate( pointer ptr, size_type count )
          {
             UINT32 pos = _calcPos( ptr ) ;
+
 #ifdef _DEBUG
             SDB_ASSERT( in( ptr ), "Not in self" ) ;
             SDB_ASSERT( _bitmap.testBit( pos ), "Invalid bit" ) ;
 #endif // _DEBUG
-            _bitmap.clearBit( pos ) ;
+            for ( UINT32 i = 0 ; i < count ; ++i )
+            {
+               _bitmap.clearBit( pos + i ) ;
+            }
          }
 
          BOOLEAN in( const_pointer ptr ) const
@@ -174,7 +172,7 @@ namespace engine
       protected:
          UINT32 _calcPos( const_pointer ptr ) const
          {
-            return ( ptr - _ptr ) / sizeof( value_type ) ;
+            return ( ptr - _ptr ) ;
          }
 
       private:
@@ -186,19 +184,18 @@ namespace engine
       _utilAllocator define
    */
    template < typename T,
-              UINT32 paddingSize = 0,
               UINT32 cacheSize = UTIL_ALLOCATE_DFT_CACHE_SIZE,
               UINT32 cacheNum = UTIL_ALLOCATE_DFT_CACHE_NUM >
    class _utilAllocator : public std::allocator<T>
    {
       public:
-         typedef _utilTrunkAllocator< T, paddingSize, cacheSize > myCache ;
-         typedef UINT32                                           size_type ;
-         typedef typename std::allocator<T>::pointer              pointer ;
-         typedef typename std::allocator<T>::value_type           value_type ;
-         typedef typename std::allocator<T>::const_pointer        const_pointer ;
-         typedef typename std::allocator<T>::reference            reference ;
-         typedef typename std::allocator<T>::const_reference      const_reference ;
+         typedef _utilTrunkAllocator< T, cacheSize >           myCache ;
+         typedef UINT32                                        size_type ;
+         typedef typename std::allocator<T>::pointer           pointer ;
+         typedef typename std::allocator<T>::value_type        value_type ;
+         typedef typename std::allocator<T>::const_pointer     const_pointer ;
+         typedef typename std::allocator<T>::reference         reference ;
+         typedef typename std::allocator<T>::const_reference   const_reference ;
 
       public:
          _utilAllocator()
@@ -213,8 +210,10 @@ namespace engine
          {
          }
 
-         template < typename _T >
-         _utilAllocator( const _utilAllocator<_T> &rhs )
+         template < typename _T,
+                    UINT32 _cacheSize,
+                    UINT32 _cacheNum >
+         _utilAllocator( const _utilAllocator<_T, _cacheSize, _cacheNum> &rhs )
          {
          }
 
@@ -222,18 +221,22 @@ namespace engine
          {
          }
 
-         pointer allocate( size_type sz, const void* pHint = NULL )
+         pointer allocate( size_type count, const void* pHint = NULL )
          {
             pointer ptr = NULL ;
 
-            for ( UINT32 i = 0 ; i < cacheNum ; ++i )
+            if ( 1 == count )
             {
-               if ( NULL != ( ptr = (pointer)_cache[i].allocate( sz ) ) )
+               for ( UINT32 i = 0 ; i < cacheNum ; ++i )
                {
-                  return ptr ;
+                  if ( NULL != ( ptr = (pointer)_cache[i].allocate( count ) ) )
+                  {
+                     return ptr ;
+                  }
                }
             }
 
+            size_type sz = count * sizeof( value_type ) ;
             ptr = utilGetGlobalMemPool() ?
                      (pointer)utilGetGlobalMemPool()->alloc( sz ) :
                      (pointer)SDB_OSS_MALLOC( sz ) ;
@@ -241,13 +244,14 @@ namespace engine
             return ptr ;
          }
 
-         void deallocate( pointer ptr, size_type sz )
+         void deallocate( pointer ptr, size_type count )
          {
             for ( UINT32 i = 0 ; i < cacheNum ; ++i )
             {
-               if ( _cache[i].in( (myCache::const_pointer)ptr ) )
+               if ( _cache[i].in( (typename myCache::const_pointer)ptr ) )
                {
-                  _cache[i].deallocate( (myCache::pointer)ptr, sz ) ;
+                  _cache[i].deallocate( (typename myCache::pointer)ptr,
+                                        count ) ;
                   return ;
                }
             }
@@ -260,11 +264,13 @@ namespace engine
             }
          }
 
-         template < typename _Other >
+         template < typename _Other,
+                    UINT32 _cacheSize = cacheSize,
+                    UINT32 _cacheNum = cacheNum >
          struct rebind
          {
             // convert this type to allocator<_Other>
-            typedef _utilAllocator<_Other> other ;
+            typedef _utilAllocator<_Other, _cacheSize, _cacheNum> other ;
          } ;
 
       private:
