@@ -145,8 +145,7 @@ namespace engine
 
          BOOLEAN in( const_pointer ptr ) const
          {
-            if ( _ptr && ptr >= _ptr &&
-                 ptr < _ptr + ( cacheSize * sizeof( value_type ) ) )
+            if ( _ptr && ptr >= _ptr && ptr < _ptr + cacheSize ) )
             {
                return TRUE ;
             }
