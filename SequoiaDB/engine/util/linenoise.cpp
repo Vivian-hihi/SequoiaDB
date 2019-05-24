@@ -1983,22 +1983,22 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
               }
               switch ( c )
               {
-                 case 'A' : /* Up */
+                 case 'A' : /* [A -> Up */
                  {
                     linenoiseEditHistoryNext( &l, LINENOISE_HISTORY_PREV ) ;
                     break ;
                  }
-                 case 'B' : /* Down */
+                 case 'B' : /* [B -> Down */
                  {
                     linenoiseEditHistoryNext( &l, LINENOISE_HISTORY_NEXT ) ;
                     break ;
                  }
-                 case 'C' : /* Right */
+                 case 'C' : /* [C -> Right */
                  {
                     linenoiseEditMoveRight( &l ) ;
                     break ;
                  }
-                 case 'D' : /* Left */
+                 case 'D' : /* [D -> Left */
                  {
                     linenoiseEditMoveLeft( &l ) ;
                     break ;
@@ -2011,12 +2011,12 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
            {
               switch ( c )
               {
-                 case 'H' :
+                 case 'H' : /* OH -> HOME */
                  {
                     linenoiseEditMoveHome( &l ) ;
                     break ;
                  }
-                 case 'F' : /* End*/
+                 case 'F' : /* OF -> End */
                  {
                     linenoiseEditMoveEnd( &l ) ;
                     break ;
@@ -2031,17 +2031,17 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
               {
                   switch( escSeq[ 1 ] )
                   {
-                     case '1' : /* Home */
+                     case '1' : /* [1~ -> Home */
                      {
                          linenoiseEditMoveHome( &l ) ;
                          break ;
                      }
-                     case '3' : /* Delete */
+                     case '3' : /* [3~ -> Delete */
                      {
                          linenoiseEditDelete( &l ) ;
                          break ;
                      }
-                     case '4' : /* End */
+                     case '4' : /* [4~ -> End */
                      {
                          linenoiseEditMoveEnd( &l ) ;
                          break ;
