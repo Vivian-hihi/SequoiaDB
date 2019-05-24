@@ -471,7 +471,7 @@ public class FullTextUtils {
                     checkUniqueID = (long) cur.getNext().get( "UniqueID" );
                 }
                 cur.close();
-                if ( uniqueID == checkUniqueID ) {
+                if ( uniqueID != 0 && uniqueID == checkUniqueID ) {
                     isConsistency = true;
                     break;
                 }
