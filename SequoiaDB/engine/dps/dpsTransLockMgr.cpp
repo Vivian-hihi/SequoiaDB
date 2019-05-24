@@ -623,7 +623,6 @@ namespace engine
       SDB_ASSERT( ( NULL == pLRBIncompatible ), "Invalid pLRBIncompatible" ) ;
       SDB_ASSERT( ( NULL == pLRBOwner ),        "Invalid pLRBOwner" ) ;
 #endif
-      EDUID lrbEduid = 0 ;
       dpsTransLRB *plrb = lrbBegin, *plrbPrev = NULL;
       BOOLEAN foundIns = FALSE ;
 
