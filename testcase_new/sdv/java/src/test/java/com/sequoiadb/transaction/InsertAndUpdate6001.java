@@ -15,7 +15,7 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-
+//TODO：其他检视意见同 5999 用例
 /**
  * test content: 事务1中更新数据为事务2中插入数据_SD.transaction.012
  * testlink-case: seqDB-6001
@@ -23,7 +23,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.04.08
  * @version 1.00
  */
-
+//TODO:文本用例预期结果有问题，插入跟更新事务并发，插入不会失败，更新会超时，用例写得不够明确，请修改文本用例预期结果
 public class InsertAndUpdate6001 extends SdbConfTestBase {
 	private String clName = "cl6001";
 	private Sequoiadb sdb = null;
@@ -49,7 +49,7 @@ public class InsertAndUpdate6001 extends SdbConfTestBase {
 		es.addWorker(new TransUpdate6001());
 		es.run();
 
-		CheckResult();
+		CheckResult();//TODO:更新的记录没有校验，需要校验记录是不是有被更新
 	}
 
 	@AfterClass
@@ -58,8 +58,8 @@ public class InsertAndUpdate6001 extends SdbConfTestBase {
 			sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
 		}finally{
 			db1.close();
-			db2.close();
-			sdb.close();
+			db2.close();//TODO：在线程里面 new 在线程里面 close
+			sdb.close();//TODO:同上
 		}
 	}
 
@@ -75,7 +75,7 @@ public class InsertAndUpdate6001 extends SdbConfTestBase {
 		@ExecuteOrder(step = 1, desc = "插入数据")
 		public void Insert() {
 			BSONObject obj = new BasicBSONObject();
-			obj.put("a", 1);
+			obj.put("a", 1);//TODO:数据量搞大一些，不然撞不到点，建议1万条记录起
 			cl.insert(obj);
 		}
 
@@ -103,7 +103,7 @@ public class InsertAndUpdate6001 extends SdbConfTestBase {
 			modifyObj.put("a", 2);
 			modifier.put("$set", modifyObj);
 			try {
-				cl.update(matcher, modifier, null);
+				cl.update(matcher, modifier, null);//TODO:带条件更新所有记录
 				Assert.fail("exp fail but found succ.");
 			} catch (BaseException e) {
 				Assert.assertEquals(e.getErrorCode(), -13);

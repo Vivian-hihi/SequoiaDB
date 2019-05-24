@@ -13,7 +13,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
-
+//TODO：其他检视意见同 5999 用例
 /**
  * test content: 多个事务并发，同时更新/删除cl中不同记录并提交事务_SD.transaction.010
  * testlink-case: seqDB-6000
@@ -43,7 +43,7 @@ public class UpdateAndDelete6000 extends SdbConfTestBase {
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
 
-		// insertData(DBCollection cl,int start, int recSum, int strLength)
+		// insertData(DBCollection cl,int start, int recSum, int strLength)//TODO:注释不需要，无意义
 		TransactionUtils.insertData(cl, START, RECSUM, STRLENGTH);
 	}
 
@@ -101,8 +101,8 @@ public class UpdateAndDelete6000 extends SdbConfTestBase {
 			BSONObject matcher = new BasicBSONObject();
 			BSONObject modifyObj = new BasicBSONObject();
 			BSONObject modifier = new BasicBSONObject();
-			matcher.put("a", 50);
-			modifyObj.put("a", 6000);
+			matcher.put("b", 50);
+			modifyObj.put("b", 6000);
 			modifier.put("$set", modifyObj);
 			cl1.update(matcher, modifier, null);
 		}
@@ -117,7 +117,7 @@ public class UpdateAndDelete6000 extends SdbConfTestBase {
 
 	private void checkUpdateResult() {
 		BSONObject matcher = new BasicBSONObject();
-		matcher.put("a", 6000);
+		matcher.put("b", 6000);
 		long actCount = cl.getCount(matcher);
 		Assert.assertEquals(actCount, 1, "Update data does not exist!");
 	}

@@ -18,7 +18,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
-/**
+/** TODO:前2行用例名放到 @description seqDB-6030 多个事务并发.....。按规范来，不建议有各种不一样的风格
  * test content:  并发回滚事务，操作相同cl_SD.transaction.041 
  * testlink-case: seqDB-6030
  * @author wangkexin

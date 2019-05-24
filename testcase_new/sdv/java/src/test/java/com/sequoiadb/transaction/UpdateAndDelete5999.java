@@ -14,7 +14,7 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
-/**
+/**  TODO:前2行用例名放到 @description seqDB-5999 多个事务并发.....。按规范来，不建议有各种不一样的风格
  * test content: 多个事务并发，同时更新/删除cl中不同记录并提交事务_SD.transaction.010
  * testlink-case: seqDB-5999
  * @author wangkexin
@@ -37,19 +37,19 @@ public class UpdateAndDelete5999 extends SdbConfTestBase {
 	}
 
 	@BeforeClass
-	public void setup() {
+	public void setup() {//TODO:如下定义的常量命名，多个单词用“_”分开，不然全大写还简称字面上不好理解
 		final int START = 0;
 		final int RECSUM = 100;
 		final int STRLENGTH = 10;
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
-		TransactionUtils.insertData(cl, START, RECSUM, STRLENGTH);
+		TransactionUtils.insertData(cl, START, RECSUM, STRLENGTH);//TODO：公共方法就 5999 、 6000用例在用，删掉公共方法类吧
 	}
 
 	@Test
 	private void test() {
-		db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");//TODO：线程里面用的连接都放到线程内部吧，不建议放外面
+		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");//TODO:线程里面建连接、开启事务、事务操作、提交事务、关闭连接，分多个步骤进行
 		db1.beginTransaction();
 		db2.beginTransaction();
 

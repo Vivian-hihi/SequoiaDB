@@ -15,7 +15,7 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-
+//TODO：其他检视意见同  5999、6001 用例
 /**
  * test content: 事务1中删除数据为事务2中插入数据_SD.transaction.013
  * testlink-case: seqDB-6002
@@ -23,7 +23,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.04.08
  * @version 1.00
  */
-
+//TODO:文本用例预期结果有问题，插入跟删除事务并发，插入不会失败，删除会超时，文本用例写得不够明确，请修改文本用例预期结果
 public class InsertAndDelete6002 extends SdbConfTestBase {
 	private String clName = "cl6002";
 	private Sequoiadb sdb = null;
@@ -43,13 +43,13 @@ public class InsertAndDelete6002 extends SdbConfTestBase {
 	}
 
 	@Test
-	public void test() throws Exception {
+	public void test() throws Exception {//TODO:并发在事务做数据操作，数据量要大一些，不然并发可能撞不上，如删除记录完成后才开始插入记录，应该没什么影响
 		ThreadExecutor es = new ThreadExecutor();
 		es.addWorker(new TransInsert6002());
 		es.addWorker(new TransDelete6002());
 		es.run();
 
-		CheckResult();
+		CheckResult();//TODO：需要分情况校验结果，任何一个
 	}
 
 	@AfterClass

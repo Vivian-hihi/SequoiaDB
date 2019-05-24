@@ -16,7 +16,7 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 
-/**
+/**  TODO:前2行用例名放到 @description seqDB-6004 多个事务并发.....。按规范来，不建议有各种不一样的风格
  * test content: 配置事务锁超时时间值非法校验_SD.transaction.015(设置事务锁等待超时时间值为-1,a01,3601)
  * testlink-case: seqDB-6004
  * @author wangkexin
@@ -26,8 +26,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 public class Transaction6004 extends SdbConfTestBase {
 	private Sequoiadb sdb = null;
-	private int expTransTimeout1 = 60;
-	private int expTransTimeout2 = 3600;
+	private int expTransTimeout1 = 60;//TODO：在比对结果时定义
+	private int expTransTimeout2 = 3600;//TODO：在比对结果时定义
 	private BSONObject options = new BasicBSONObject();
 
 	@Override

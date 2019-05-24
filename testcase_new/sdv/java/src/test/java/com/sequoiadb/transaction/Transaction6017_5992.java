@@ -17,7 +17,7 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-
+//TODO：其他检视意见同 5999 用例
 /**
  * test content: 多个会话同时提交事务_SD.transaction.028、多个会话同时开启事务_SD.transaction.003 
  * testlink-case: seqDB-6017、seqDB-5992
@@ -25,7 +25,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @Date 2019.03.27
  * @version 1.00
  */
-
+//TODO: 5990 用例没有提交？
 public class Transaction6017_5992 extends SdbConfTestBase {
 	private String clName = "cl6017";
 	private Sequoiadb sdb = null;
@@ -79,7 +79,7 @@ public class Transaction6017_5992 extends SdbConfTestBase {
 		Assert.assertEquals(actCount, expNum);
 	}
 
-	class Trans6017 {
+	class Trans6017 {//TODO:测试点覆盖了6017/5992用例，类名要改下，测试点都在同一个类时类名可以不用加用例ID
 		private Sequoiadb db = null;
 
 		@ExecuteOrder(step = 1, desc = "连接数据库，开启事务")

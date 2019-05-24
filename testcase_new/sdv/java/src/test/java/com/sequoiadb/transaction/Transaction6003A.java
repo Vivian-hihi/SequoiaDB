@@ -15,7 +15,7 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-
+//TODO：其他检视意见同 5999、6001 用例
 /**
  * test content: 配置事务锁超时时间值合法校验_SD.transaction.014
  * testlink-case: seqDB-6003

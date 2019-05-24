@@ -15,7 +15,7 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-
+//TODO：其他检视意见同 5999 用例
 /**
  * test content: 配置事务锁超时时间值合法校验_SD.transaction.014(由于设置事务锁等待超时时间值为3600s时间较长不适合将用例放到CI,故这里只测试设置为5s，看参数是否生效)
  * testlink-case: seqDB-6003
