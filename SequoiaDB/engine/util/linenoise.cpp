@@ -1738,20 +1738,32 @@ int linenoiseReverseIncrementalSearch ( struct linenoiseState * l )
          case CTRL_N :
          case CTRL_R :
          {
-            search_dir = -1 ;
             if ( search_pos >= history_len )
             {
+               // restart
                search_pos = history_len - 1 ;
             }
+            else if ( search_pos > 0 )
+            {
+               // move next
+               search_pos -- ;
+            }
+            search_dir = -1 ;
             break ;
          }
          case CTRL_P :
          {
-            search_dir = 1 ;
             if ( search_pos < 0 )
             {
+               // restart
                search_pos = 0 ;
             }
+            else if ( search_pos < history_len - 1 )
+            {
+               // move previous
+               search_pos ++ ;
+            }
+            search_dir = 1 ;
             break ;
          }
          case CTRL_C :
@@ -1815,7 +1827,6 @@ int linenoiseReverseIncrementalSearch ( struct linenoiseState * l )
                new_char = 1 ;
                search_buf[ search_len ] = c ;
                search_buf[ ++search_len ] = 0 ;
-               search_pos = history_len - 1 ;
             }
             break ;
          }
@@ -1829,8 +1840,7 @@ int linenoiseReverseIncrementalSearch ( struct linenoiseState * l )
                search_pos >= 0 && search_pos < history_len ;
                search_pos += search_dir )
          {
-            if ( strstr( history[ search_pos ], search_buf ) &&
-                 ( new_char || strcmp( history[ search_pos ], l->buf ) != 0 ) )
+            if ( strstr( history[ search_pos ], search_buf ) )
             {
                has_match = 1 ;
                l->len = snprintf( l->buf, l->buflen, "%s",
