@@ -65,8 +65,7 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		}
 	}
 
-	// http://jira:8080/browse/SEQUOIADBMAINSTREAM-4456
-	@Test(enabled = false)
+	@Test
 	private void test() throws Exception {
 		ThreadExecutor threadExec = new ThreadExecutor();
 
@@ -164,7 +163,6 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		for (int i = 0; i < actVersionNum; i++) {
 			String keyName = versionSummary.get(i).getKey();
 			String versionId = versionSummary.get(i).getVersionId();
-			System.out.println("---versionID=" + versionId);
 			String etag = versionSummary.get(i).getETag();
 			boolean isDeleteMarker = versionSummary.get(i).isDeleteMarker();
 

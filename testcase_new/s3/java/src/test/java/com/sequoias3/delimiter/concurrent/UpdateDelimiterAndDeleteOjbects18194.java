@@ -47,8 +47,7 @@ public class UpdateDelimiterAndDeleteOjbects18194 extends S3TestBase {
 		}
 	}
 
-	// http://jira:8080/browse/SEQUOIADBMAINSTREAM-4456
-	@Test(enabled = false)
+	@Test
 	private void test() throws Exception {
 		ThreadExecutor threadExec = new ThreadExecutor();
 		UpdateDelimiter updateDelimiter = new UpdateDelimiter();
