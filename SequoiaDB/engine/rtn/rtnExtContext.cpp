@@ -172,19 +172,24 @@ namespace engine
                                               processor, TRUE );
          PD_RC_CHECK( rc, PDERROR, "Create external processor failed[%d]",
                       rc ) ;
-         _appendProcessor( processor );
 
          rc = processor->doRebuild( cb, dpscb ) ;
          PD_RC_CHECK( rc, PDERROR, "Rebuild of index failed[%d]", rc ) ;
          _rebuildDone = TRUE ;
 
          indexCB.setFlag( IXM_INDEX_FLAG_NORMAL ) ;
+         _appendProcessor( processor );
       }
 
    done:
       PD_TRACE_EXITRC( SDB__RTNEXTCRTIDXCTX_OPEN, rc ) ;
       return rc ;
    error:
+      if ( processor )
+      {
+         _processorMgr->destroyProcessor( processor ) ;
+         processor = NULL ;
+      }
       goto done ;
    }
 
@@ -531,9 +536,18 @@ namespace engine
             {
                rc = (*itr)->doUnload( cb ) ;
             }
-            PD_RC_CHECK( rc, PDERROR, "Processor drop operation failed[ %d ]",
-                         rc ) ;
-            _processorP1.push_back( *itr ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Processor drop operation failed[%d]", rc ) ;
+               if ( SDB_DMS_CS_NOTEXIST != rc )
+               {
+                  goto error ;
+               }
+            }
+            else
+            {
+               _processorP1.push_back( *itr ) ;
+            }
          }
       }
 

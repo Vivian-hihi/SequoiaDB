@@ -117,7 +117,7 @@ namespace engine
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSOR_RESET ) ;
    }
 
-   INT32 _rtnExtDataProcessor::getID()
+   INT32 _rtnExtDataProcessor::getID() const
    {
       return _id ;
    }
@@ -1544,6 +1544,38 @@ namespace engine
          }
       }
       PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_UNLOCKPROCESSORS ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSOR, "_rtnExtDataProcessorMgr::destroyProcessor" )
+   void
+   _rtnExtDataProcessorMgr::destroyProcessor( rtnExtDataProcessor *processor,
+                                              INT32 lockType )
+   {
+      PD_TRACE_ENTRY( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSOR ) ;
+      if ( processor )
+      {
+         INT32 id = processor->getID() ;
+         if ( id < 0 || id >= RTN_EXT_PROCESSOR_MAX_NUM )
+         {
+            PD_LOG( PDWARNING, "Invalid processor id[%d] for destroy", id ) ;
+            goto done ;
+         }
+
+         ossScopedLock _lock( &_mutex, EXCLUSIVE ) ;
+         processor->reset() ;
+         --_number ;
+         if ( SHARED == lockType )
+         {
+            _processorLocks[id].release_r() ;
+         }
+         else if ( EXCLUSIVE == lockType )
+         {
+            _processorLocks[id].release_w() ;
+         }
+      }
+   done:
+      PD_TRACE_EXIT( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSOR ) ;
+      return ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNEXTDATAPROCESSORMGR_DESTROYPROCESSORS, "_rtnExtDataProcessorMgr::destroyProcessors" )

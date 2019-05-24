@@ -951,8 +951,17 @@ namespace engine
                goto error ;
             }
             rc = extDataHandler->onDropTextIdx( indexCB.getExtDataName(), cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "External data process of dropping "
-                         "text index failed[ %d ]", rc ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "External process of dropping text index[%s]"
+                                "failed[%d]", indexCB.getName(), rc ) ;
+               // Only return error when the index is in normal state.
+               // Otherwise, meta of the index should always be deleted.
+               if ( IXM_INDEX_FLAG_NORMAL == indexCB.getFlag() )
+               {
+                  goto error ;
+               }
+            }
          }
 
          callback.setIDInfo( _pDataSu->CSID(), context->mbID(),
@@ -1242,7 +1251,7 @@ namespace engine
                                 context->clLID() ) ;
          dmsEventIdxItem idxItem ( indexName, indexLID, index ) ;
          _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL,
-                                                 clItem, idxItem, 
+                                                 clItem, idxItem,
                                                  cb, dpscb ) ;
       }
    done :

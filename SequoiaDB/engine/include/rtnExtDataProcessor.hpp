@@ -121,7 +121,7 @@ namespace engine
                   const BSONObj &idxKeyDef ) ;
       void  reset() ;
 
-      INT32 getID() ;
+      INT32 getID() const;
 
       rtnExtProcessorStat stat() const ;
 
@@ -222,6 +222,9 @@ namespace engine
                              BOOLEAN activate = TRUE ) ;
 
       INT32 activateProcessor( INT32 id, BOOLEAN inProtection ) ;
+
+      void destroyProcessor( rtnExtDataProcessor *processor,
+                             INT32 lockType = -1 ) ;
 
       void destroyProcessors( vector<rtnExtDataProcessor*> &processors,
                               INT32 lockType = -1 ) ;

@@ -699,8 +699,20 @@ namespace engine
                                 _dpsCB, 1, direction ) ;
             if ( SDB_INVALIDARG == rc )
             {
-               PD_LOG( PDINFO, "Logical id[ %lld ] is invalid when pop",
-                       logicalID ) ;
+               PD_LOG( PDERROR, "Logical id[%lld] is invalid when pop from "
+                       "collection[%s]", logicalID, fullName ) ;
+               rc = SDB_OK ;
+            }
+            else if ( SDB_DMS_CS_NOTEXIST == rc )
+            {
+               PD_LOG( PDERROR, "Collection space not exist when pop from "
+                       "collection[%s]", fullName ) ;
+               rc = SDB_OK ;
+            }
+            else if ( SDB_DMS_NOTEXIST == rc )
+            {
+               PD_LOG( PDERROR, "Collection[%s] not exist when pop",
+                       fullName ) ;
                rc = SDB_OK ;
             }
             break ;

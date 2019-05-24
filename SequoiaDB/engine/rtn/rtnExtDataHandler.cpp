@@ -176,9 +176,8 @@ namespace engine
    error:
       if ( processor )
       {
-         vector<rtnExtDataProcessor *> processors ;
-         processors.push_back( processor ) ;
-         _edpMgr->destroyProcessors( processors ) ;
+         _edpMgr->destroyProcessor( processor ) ;
+         processor = NULL ;
       }
       goto done ;
    }
