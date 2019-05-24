@@ -75,6 +75,7 @@ namespace engine
       protected :
          _utilBitmapBase ()
          : _size( 0 ),
+           _freeSize( 0 ),
            _bitmapSize( 0 ),
            _bitmap( NULL )
          {
@@ -83,6 +84,7 @@ namespace engine
          virtual ~_utilBitmapBase ()
          {
             _size = 0 ;
+            _freeSize = 0 ;
             _bitmapSize = 0 ;
             _bitmap = NULL ;
          }
@@ -94,8 +96,14 @@ namespace engine
             {
                UINT32 unitIndex = _calcUnitIndex( index ) ;
                UINT8 bitIndex = _calcBitIndex( index ) ;
-               OSS_BIT_SET( _bitmap[ unitIndex ],
-                            _utilBitmapIndex[ bitIndex ] ) ;
+
+               if ( ! OSS_BIT_TEST( _bitmap[ unitIndex ],
+                                    _utilBitmapIndex[ bitIndex ] ) )
+               {
+                  OSS_BIT_SET( _bitmap[ unitIndex ],
+                               _utilBitmapIndex[ bitIndex ] ) ;
+                  --_freeSize ;
+               }
             }
          }
 
@@ -105,8 +113,14 @@ namespace engine
             {
                UINT32 unitIndex = _calcUnitIndex( index ) ;
                UINT8 bitIndex = _calcBitIndex( index ) ;
-               OSS_BIT_CLEAR( _bitmap[ unitIndex ],
-                              _utilBitmapIndex[ bitIndex ] ) ;
+
+               if ( OSS_BIT_TEST( _bitmap[ unitIndex ],
+                                  _utilBitmapIndex[ bitIndex ] ) )
+               {
+                  OSS_BIT_CLEAR( _bitmap[ unitIndex ],
+                                 _utilBitmapIndex[ bitIndex ] ) ;
+                  ++_freeSize ;
+               }
             }
          }
 
@@ -128,6 +142,7 @@ namespace engine
             if ( NULL != _bitmap )
             {
                ossMemset( _bitmap, 0, _bitmapSize ) ;
+               _freeSize = _size ;
             }
          }
 
@@ -148,6 +163,8 @@ namespace engine
                lhsIdx ++ ;
                rhsIdx ++ ;
             }
+
+            _calcFreeSize() ;
          }
 
          OSS_INLINE BOOLEAN hasIntersaction ( const _utilBitmapBase & bitmap ) const
@@ -167,6 +184,81 @@ namespace engine
             return FALSE ;
          }
 
+         /*
+            -1 : for no found the position
+         */
+         OSS_INLINE INT32 nextFreeBitPos( UINT32 fromPos = 0 )
+         {
+            INT32 pos = -1 ;
+
+            if ( _freeSize > 0 )
+            {
+               while ( fromPos < _size )
+               {
+                  if ( 0 == ( fromPos & UTIL_BITMAP_UNIT_MODULO ) &&
+                       0xFF == _bitmap[ fromPos >> UTIL_BITMAP_UNIT_LOG2SIZE ] )
+                  {
+                     fromPos += UTIL_BITMAP_UNIT_SIZE ;
+                  }
+                  else if ( testBit( fromPos ) )
+                  {
+                     ++fromPos ;
+                  }
+                  else
+                  {
+                     pos = fromPos ;
+                     break ;
+                  }
+               }
+            }
+            return pos ;
+         }
+
+         /*
+            -1 : for no found the position
+         */
+         OSS_INLINE INT32 nextSetBitPos( UINT32 fromPos = 0 )
+         {
+            INT32 pos = -1 ;
+
+            if ( _freeSize < _size )
+            {
+               while ( fromPos < _size )
+               {
+                  if ( 0 == ( fromPos & UTIL_BITMAP_UNIT_MODULO ) &&
+                       0 == _bitmap[ fromPos >> UTIL_BITMAP_UNIT_LOG2SIZE ] )
+                  {
+                     fromPos += UTIL_BITMAP_UNIT_SIZE ;
+                  }
+                  else if ( !testBit( fromPos ) )
+                  {
+                     ++fromPos ;
+                  }
+                  else
+                  {
+                     pos = fromPos ;
+                     break ;
+                  }
+               }
+            }
+            return pos ;
+         }
+
+         OSS_INLINE UINT32 freeSize() const
+         {
+            return _freeSize ;
+         }
+
+         OSS_INLINE BOOLEAN isEmpty() const
+         {
+            return _freeSize >= _size ? TRUE : FALSE ;
+         }
+
+         OSS_INLINE BOOLEAN isFull() const
+         {
+            return ( 0 == _freeSize && _size > 0 ) ? TRUE : FALSE ;
+         }
+
       protected :
          OSS_INLINE UINT32 _calcUnitIndex ( UINT32 index ) const
          {
@@ -180,8 +272,32 @@ namespace engine
             return index & UTIL_BITMAP_UNIT_MODULO ;
          }
 
+         OSS_INLINE void  _calcFreeSize()
+         {
+            _freeSize = 0 ;
+            UINT32 beginPos = 0 ;
+            while ( beginPos < _size )
+            {
+               if ( 0 == ( beginPos & UTIL_BITMAP_UNIT_MODULO ) &&
+                    0 == _bitmap[ beginPos >> UTIL_BITMAP_UNIT_LOG2SIZE ] )
+               {
+                  beginPos += UTIL_BITMAP_UNIT_SIZE ;
+                  _freeSize += UTIL_BITMAP_UNIT_SIZE ;
+               }
+               else
+               {
+                  if ( !testBit( beginPos ) )
+                  {
+                     ++_freeSize ;
+                  }
+                  ++beginPos ;
+               }
+            }
+         }
+
       protected :
          UINT32   _size ;
+         UINT32   _freeSize ;
          UINT32   _bitmapSize ;
          UINT8 *  _bitmap ;
    } ;
@@ -251,8 +367,8 @@ namespace engine
          : _utilBitmapBase()
          {
             _size = SIZE ;
-            _bitmapSize = ( SIZE + UTIL_BITMAP_UNIT_MODULO ) /
-                          UTIL_BITMAP_UNIT_SIZE ;
+            _bitmapSize = ( SIZE + UTIL_BITMAP_UNIT_MODULO ) >>
+                          UTIL_BITMAP_UNIT_LOG2SIZE ;
             if ( _bitmapSize > 0 )
             {
                _bitmap = &( _bitmapBuf[0] ) ;
@@ -267,8 +383,8 @@ namespace engine
          }
 
       protected :
-         UINT8 _bitmapBuf[ ( SIZE + UTIL_BITMAP_UNIT_MODULO ) /
-                           UTIL_BITMAP_UNIT_SIZE ] ;
+         UINT8 _bitmapBuf[ ( SIZE + UTIL_BITMAP_UNIT_MODULO ) >>
+                           UTIL_BITMAP_UNIT_LOG2SIZE ] ;
    } ;
 
 }

@@ -1,0 +1,278 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2018 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+   Source File Name = utilPooledAllocator.hpp
+
+   Descriptive Name = Operating System Services Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of OSS component. This file contains functions for OSS operations.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          05/24/2019  XJH  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef UTIL_POOLED_ALLOCATOR_HPP__
+#define UTIL_POOLED_ALLOCATOR_HPP__
+
+#include "ossTypes.hpp"
+#include "utilBitmap.hpp"
+#include "utilMemBlockPool.hpp"
+#include "ossMem.hpp"
+#include "pd.hpp"
+
+#pragma warning( disable: 4200 )
+
+namespace engine
+{
+
+   #define UTIL_ALLOCATE_DFT_CACHE_SIZE         ( 64 )
+   #define UTIL_ALLOCATE_DFT_CACHE_NUM          ( 4 )
+
+   #define UTIL_ALLOCATE_MAX_CACHE_SIZE         ( 512 )
+   #define UTIL_ALLOCATE_MAX_CACHE_NUM          ( 16 )
+
+   /*
+      _utilTrunkAllocator define
+   */
+   template < typename T,
+              UINT32 paddingSize = 0,
+              UINT32 cacheSize = UTIL_ALLOCATE_DFT_CACHE_SIZE >
+   class _utilTrunkAllocator
+   {
+      public:
+#pragma pack(4)
+         struct _innerT
+         {
+            T        _t ;
+            CHAR     _padding[ paddingSize ] ;
+         } ;
+#pragma pack()
+
+         typedef _utilStackBitmap<cacheSize>       myBitmap ;
+         typedef typename _innerT                  value_type ;
+         typedef typename _innerT*                 pointer ;
+         typedef typename const _innerT*           const_pointer ;
+         typedef UINT32                            size_type ;
+
+      public:
+         _utilTrunkAllocator()
+         {
+            SDB_ASSERT( cacheSize <= UTIL_ALLOCATE_MAX_CACHE_SIZE,
+                        "Invalid cacheSize" ) ;
+            _ptr = NULL ;
+         }
+
+         _utilTrunkAllocator( const _utilTrunkAllocator &rhs )
+         {
+         }
+
+         template < typename _T >
+         _utilTrunkAllocator( const _utilTrunkAllocator< _T > &rhs )
+         {
+         }
+
+         ~_utilTrunkAllocator()
+         {
+            if ( _ptr )
+            {
+               utilGetGlobalMemPool() ?
+                  utilGetGlobalMemPool()->release( (void*&)_ptr ) :
+                  SDB_OSS_FREE( (void*)_ptr ) ;
+            }
+         }
+
+         pointer allocate( size_type sz )
+         {
+            INT32 pos = -1 ;
+            pointer ptr = NULL ;
+
+            if ( sz <= sizeof( value_type ) )
+            {
+               if ( !_ptr )
+               {
+                  UINT32 size = cacheSize * sizeof( value_type ) ;
+                  _ptr = utilGetGlobalMemPool() ?
+                           (pointer)utilGetGlobalMemPool()->alloc( size ) :
+                           (pointer)SDB_OSS_MALLOC( size ) ;
+               }
+               if ( _ptr && ( -1 != ( pos = _bitmap.nextFreeBitPos( 0 ) ) ) )
+               {
+#ifdef _DEBUG
+                  SDB_ASSERT( !_bitmap.testBit( pos ), "Invalid bit" ) ;
+#endif //_DEBUG
+                  _bitmap.setBit( pos ) ;
+                  ptr = _ptr + pos ;
+               }
+            }
+            else
+            {
+               SDB_ASSERT( FALSE, "Invalid sz" ) ;
+            }
+
+            return ptr ;
+         }
+
+         void deallocate( pointer ptr, size_type sz )
+         {
+            UINT32 pos = _calcPos( ptr ) ;
+#ifdef _DEBUG
+            SDB_ASSERT( in( ptr ), "Not in self" ) ;
+            SDB_ASSERT( _bitmap.testBit( pos ), "Invalid bit" ) ;
+#endif // _DEBUG
+            _bitmap.clearBit( pos ) ;
+         }
+
+         BOOLEAN in( const_pointer ptr ) const
+         {
+            if ( _ptr && ptr >= _ptr &&
+                 ptr < _ptr + ( cacheSize * sizeof( value_type ) ) )
+            {
+               return TRUE ;
+            }
+            return FALSE ;
+         }
+
+         BOOLEAN freeSize() const
+         {
+            return _bitmap.freeSize() ;
+         }
+
+         BOOLEAN isFull() const
+         {
+            return _bitmap.isFull() ;
+         }
+
+         BOOLEAN isEmpty() const
+         {
+            return _bitmap.isEmpty() ;
+         }
+
+      protected:
+         UINT32 _calcPos( const_pointer ptr ) const
+         {
+            return ( ptr - _ptr ) / sizeof( value_type ) ;
+         }
+
+      private:
+         pointer                    _ptr ;
+         myBitmap                   _bitmap ;
+   } ;
+
+   /*
+      _utilAllocator define
+   */
+   template < typename T,
+              UINT32 paddingSize = 0,
+              UINT32 cacheSize = UTIL_ALLOCATE_DFT_CACHE_SIZE,
+              UINT32 cacheNum = UTIL_ALLOCATE_DFT_CACHE_NUM >
+   class _utilAllocator : public std::allocator<T>
+   {
+      public:
+         typedef _utilTrunkAllocator< T, paddingSize, cacheSize > myCache ;
+         typedef UINT32                                           size_type ;
+         typedef typename std::allocator<T>::pointer              pointer ;
+         typedef typename std::allocator<T>::value_type           value_type ;
+         typedef typename std::allocator<T>::const_pointer        const_pointer ;
+         typedef typename std::allocator<T>::reference            reference ;
+         typedef typename std::allocator<T>::const_reference      const_reference ;
+
+      public:
+         _utilAllocator()
+         {
+            SDB_ASSERT( cacheSize <= UTIL_ALLOCATE_MAX_CACHE_SIZE,
+                        "Invalid cacheSize" ) ;
+            SDB_ASSERT( cacheNum <= UTIL_ALLOCATE_MAX_CACHE_NUM,
+                        "Invalid cacheNum" ) ;
+         }
+
+         _utilAllocator( const _utilAllocator &rhs )
+         {
+         }
+
+         template < typename _T >
+         _utilAllocator( const _utilAllocator<_T> &rhs )
+         {
+         }
+
+         ~_utilAllocator()
+         {
+         }
+
+         pointer allocate( size_type sz, const void* pHint = NULL )
+         {
+            pointer ptr = NULL ;
+
+            for ( UINT32 i = 0 ; i < cacheNum ; ++i )
+            {
+               if ( NULL != ( ptr = (pointer)_cache[i].allocate( sz ) ) )
+               {
+                  return ptr ;
+               }
+            }
+
+            ptr = utilGetGlobalMemPool() ?
+                     (pointer)utilGetGlobalMemPool()->alloc( sz ) :
+                     (pointer)SDB_OSS_MALLOC( sz ) ;
+
+            return ptr ;
+         }
+
+         void deallocate( pointer ptr, size_type sz )
+         {
+            for ( UINT32 i = 0 ; i < cacheNum ; ++i )
+            {
+               if ( _cache[i].in( (myCache::const_pointer)ptr ) )
+               {
+                  _cache[i].deallocate( (myCache::pointer)ptr, sz ) ;
+                  return ;
+               }
+            }
+
+            if ( ptr )
+            {
+               utilGetGlobalMemPool() ?
+                  utilGetGlobalMemPool()->release( (void*&)ptr ) :
+                  SDB_OSS_FREE( (void*)ptr ) ;
+            }
+         }
+
+         template < typename _Other >
+         struct rebind
+         {
+            // convert this type to allocator<_Other>
+            typedef _utilAllocator<_Other> other ;
+         } ;
+
+      private:
+         myCache                 _cache[ cacheNum ] ;
+
+   } ;
+
+}
+
+#endif // UTIL_POOLED_ALLOCATOR_HPP__
+
