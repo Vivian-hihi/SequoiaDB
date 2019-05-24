@@ -145,7 +145,7 @@ namespace engine
 
          BOOLEAN in( const_pointer ptr ) const
          {
-            if ( _ptr && ptr >= _ptr && ptr < _ptr + cacheSize ) )
+            if ( _ptr && ptr >= _ptr && ptr < _ptr + cacheSize )
             {
 #ifdef _DEBUG
                SDB_ASSERT( 0 == ( ( (CHAR*)ptr - (CHAR*)_ptr ) %
