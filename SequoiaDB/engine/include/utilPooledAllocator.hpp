@@ -147,6 +147,11 @@ namespace engine
          {
             if ( _ptr && ptr >= _ptr && ptr < _ptr + cacheSize ) )
             {
+#ifdef _DEBUG
+               SDB_ASSERT( 0 == ( ( (CHAR*)ptr - (CHAR*)_ptr ) %
+                                  sizeof(value_type) ),
+                           "Invalid ptr" ) ;
+#endif // _DEBUG
                return TRUE ;
             }
             return FALSE ;
