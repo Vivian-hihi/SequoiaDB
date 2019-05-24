@@ -21,7 +21,6 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-import com.sequoiadb.threadexecutor.exception.SchException;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
@@ -45,9 +44,11 @@ public class Fulltext15871 extends SdbTestBase {
     private int insertNum = 50000;
     private ThreadExecutor te = new ThreadExecutor(600000);
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+    private List<String> esIndexNames = new ArrayList<String>();
+    private List<String> cappedCLNames = new ArrayList<String>();
 
     @BeforeClass
-    public void setUp() throws SchException {
+    public void setUp() {
         esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (CommLib.isStandAlone(sdb)) {
@@ -73,54 +74,31 @@ public class Fulltext15871 extends SdbTestBase {
                 cl.createIndex("id", "{id:1}", false, false);
                 insertRecord(cl, insertNum);
                 cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
-            }
-        }
-    }
-
-    @AfterClass
-    public void tearDown() {
-        List<String> esIndexNames = new ArrayList<String>();
-        List<String> cappedCLNames = new ArrayList<String>();
-        for (String csName : csNames) {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            for (String clName : clNames) {
-                if (cs.isCollectionExist(clName)) {
-                    DBCollection cl = cs.getCollection(clName);
-                    String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
-                    esIndexNames.add(esIndexName);
-                    String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
-                    cappedCLNames.add(cappedCLName);
-                }
-            }
-
-        }
-        for (String csName : csNames) {
-            FullTextDBUtils.dropCollectionSpace(sdb, csName);
-        }
-        System.out.println("esIndexNames:" + esIndexNames + ",cappedCLNames:" + cappedCLNames);
-        if (!esIndexNames.isEmpty() && !cappedCLNames.isEmpty()) {
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
-        }
-        sdb.close();
-        esClient.close();
-    }
-
-    @Test
-    public void test() throws Exception {
-        // 获取原始集合所在组及固定集合名，作为后续结果校验的输入
-        List<String> cappedCLNames = new ArrayList<>();
-        List<String> esIndexNames = new ArrayList<>();
-        for (String csName : csNames) {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            for (int i = 0; i < clNum; i++) {
-                DBCollection cl = cs.getCollection(clNames.get(i));
                 String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
                 cappedCLNames.add(cappedCLName);
                 List<String> esIndexName = FullTextDBUtils.getESIndexNames(cl, indexName);
                 esIndexNames.addAll(esIndexName);
             }
         }
+    }
 
+    @AfterClass
+    public void tearDown() {
+        try {
+            for (String csName : csNames) {
+                FullTextDBUtils.dropCollectionSpace(sdb, csName);
+            }
+            if (!esIndexNames.isEmpty() && !cappedCLNames.isEmpty()) {
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
+            }
+        } finally {
+            sdb.close();
+            esClient.close();
+        }
+    }
+
+    @Test
+    public void test() throws Exception {
         // 执行并发测试
         for (String csName : csNames) {
             for (String clName : clNames) {
@@ -148,7 +126,11 @@ public class Fulltext15871 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除集合")
         public void dropCLThread() {
             System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
-            db.getCollectionSpace(csName).dropCollection(clName);
+            try {
+                db.getCollectionSpace(csName).dropCollection(clName);
+            } finally {
+                db.close();
+            }
             System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
         }
 

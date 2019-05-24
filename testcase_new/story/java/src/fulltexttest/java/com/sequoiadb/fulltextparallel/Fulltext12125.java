@@ -22,7 +22,6 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-import com.sequoiadb.threadexecutor.exception.SchException;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
@@ -47,7 +46,7 @@ public class Fulltext12125 extends SdbTestBase {
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
-    public void setUp() throws SchException {
+    public void setUp() {
         esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (CommLib.isStandAlone(sdb)) {
@@ -109,25 +108,46 @@ public class Fulltext12125 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        // 执行并发测试
+        // 执行并发测试并校验结果
         for (String csName : csNames) {
             for (String clName : clNames) {
                 te.addWorker(new CreateFullIndexThread(csName, clName));
             }
         }
         te.run();
+    }
 
-        // 结果校验
-        for (String csName : csNames) {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            for (String clName : clNames) {
-                DBCollection cl = cs.getCollection(clName);
+    private class CreateFullIndexThread {
+        private String csName = null;
+        private String clName = null;
 
+        public CreateFullIndexThread(String csName, String clName) {
+            super();
+            this.csName = csName;
+            this.clName = clName;
+        }
+
+        @ExecuteOrder(step = 1, desc = "创建全文索引")
+        public void createFullIndex() {
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
+            try {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
+            } finally {
+                db.close();
+            }
+            System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
+        }
+
+        @ExecuteOrder(step = 2, desc = "结果校验")
+        public void checkResult() {
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            Client es = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+            try {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 // 同步符合预期
-                Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
-                System.out.println(
-                        "check cs:" + csName + " cl:" + clName + " data group consistency and sync to es success.");
-
+                Assert.assertTrue(FullTextUtils.isIndexCreated(es, cl, indexName, insertNum));
                 // 全文检索数据符合预期
                 DBCursor cursor = cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
                 int actualRecordNum = 0;
@@ -141,33 +161,16 @@ public class Fulltext12125 extends SdbTestBase {
                 insertRecord(cl, insertNum);
 
                 // 同步符合预期
-                Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum * 2));
-                System.out.println("check cs:" + csName + " cl:" + clName
-                        + " data group consistency and sync to es success after insert.");
+                Assert.assertTrue(FullTextUtils.isIndexCreated(es, cl, indexName, insertNum * 2));
 
+            } catch (Exception e) {
+                e.printStackTrace();
+                Assert.fail(e.getMessage());
+            } finally {
+                db.close();
+                es.close();
             }
 
-        }
-
-    }
-
-    private class CreateFullIndexThread {
-        private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        private String csName = null;
-        private String clName = null;
-
-        public CreateFullIndexThread(String csName, String clName) {
-            super();
-            this.csName = csName;
-            this.clName = clName;
-        }
-
-        @ExecuteOrder(step = 1, desc = "创建全文索引")
-        public void createFullIndex() {
-            System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
-            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
-            System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
         }
 
     }

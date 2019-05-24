@@ -23,7 +23,6 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-import com.sequoiadb.threadexecutor.exception.SchException;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
@@ -49,7 +48,7 @@ public class Fulltext12118A extends SdbTestBase {
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
-    public void setUp() throws SchException {
+    public void setUp() {
         esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (CommLib.isStandAlone(sdb)) {
@@ -210,6 +209,8 @@ public class Fulltext12118A extends SdbTestBase {
                     e.printStackTrace();
                     Assert.fail(e.getMessage());
                 }
+            } finally {
+                db.close();
             }
 
             System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
@@ -238,6 +239,8 @@ public class Fulltext12118A extends SdbTestBase {
                     e.printStackTrace();
                     Assert.fail(e.getMessage());
                 }
+            } finally {
+                db.close();
             }
 
             System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));

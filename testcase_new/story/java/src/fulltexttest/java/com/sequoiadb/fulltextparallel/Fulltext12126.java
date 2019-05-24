@@ -22,7 +22,6 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-import com.sequoiadb.threadexecutor.exception.SchException;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
@@ -47,7 +46,7 @@ public class Fulltext12126 extends SdbTestBase {
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
-    public void setUp() throws SchException {
+    public void setUp() {
         esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (CommLib.isStandAlone(sdb)) {
@@ -109,56 +108,20 @@ public class Fulltext12126 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        // 获取固定集合名，作为后续预期结果校验的输入
-        List<String> cappedCLNames = new ArrayList<>();
-        List<String> esIndexNames = new ArrayList<>();
-        for (String csName : csNames) {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            for (String clName : clNames) {
-                DBCollection cl = cs.getCollection(clName);
-                String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
-                cappedCLNames.add(cappedCLName);
-                List<String> esIndexName = FullTextDBUtils.getESIndexNames(cl, indexName);
-                esIndexNames.addAll(esIndexName);
-            }
-        }
-
-        // 执行并发测试
+        // 执行并发测试及结果校验
         for (String csName : csNames) {
             for (String clName : clNames) {
                 te.addWorker(new DropFullIndexThread(csName, clName));
             }
         }
         te.run();
-
-        // 结果校验
-        for (String csName : csNames) {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            for (int i = 0; i < clNum; i++) {
-                DBCollection cl = cs.getCollection(clNames.get(i));
-
-                // 固定集合及ES端的全文索引已删除成功
-                Assert.assertTrue(
-                        FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames.get(i), cappedCLNames.get(i)));
-
-                // 全文检索数据报错-52、-6
-                try {
-                    cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
-                } catch (BaseException e) {
-                    if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
-                        Assert.fail(e.getMessage());
-                    }
-                }
-            }
-
-        }
-
     }
 
     private class DropFullIndexThread {
-        private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         private String csName = null;
         private String clName = null;
+        private String cappedCLName = null;
+        private String esIndexName = null;
 
         public DropFullIndexThread(String csName, String clName) {
             super();
@@ -169,9 +132,38 @@ public class Fulltext12126 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "创建全文索引")
         public void dropFullIndex() {
             System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
-            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            cl.dropIndex(indexName);
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            try {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
+                esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+                cl.dropIndex(indexName);
+            } finally {
+                db.close();
+            }
             System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
+        }
+
+        @ExecuteOrder(step = 2, desc = "结果校验")
+        public void checkResult() {
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            Client es = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+            try {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+
+                // 固定集合及ES端的全文索引已删除成功
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(db, es, esIndexName, cappedCLName));
+
+                // 全文检索数据报错-52、-6
+                cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
+                    Assert.fail(e.getMessage());
+                }
+            } finally {
+                db.close();
+                es.close();
+            }
         }
 
     }
