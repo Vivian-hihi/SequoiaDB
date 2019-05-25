@@ -1122,12 +1122,15 @@ public class ObjectServiceImpl implements ObjectService {
                 if (null == metaResult) {
                     objectMeta.setVersionId(0);
                     Bucket bucket = bucketDao.getBucketById(bucketId);
+                    if (bucket == null){
+                        throw new S3ServerException(S3Error.BUCKET_NOT_EXIST, "bucket is deleting before insert meta.");
+                    }
                     buildDirForObject(connection, metaCsName, bucket, objectName, objectMeta, region);
                     metaDao.insertMeta(connection, metaCsName, metaClName, objectMeta,
                             false, region);
                     Bucket newBucket = bucketDao.getBucketById(bucketId);
                     if (newBucket == null){
-                        throw new S3ServerException(S3Error.BUCKET_NOT_EXIST, "bucket is deleting.");
+                        throw new S3ServerException(S3Error.BUCKET_NOT_EXIST, "bucket is deleting after insert meta.");
                     }
                     if (bucket.getDelimiter() != newBucket.getDelimiter()) {
                         transaction.rollback(connection);
@@ -1156,7 +1159,7 @@ public class ObjectServiceImpl implements ObjectService {
                                     bucketId, objectName, null, true);
                             if (null != nullMeta) {
                                 metaDao.removeMeta(connection, metaHisCSName, metaHisClName, bucketId,
-                                        objectName, null, true);
+                                        objectName, nullMeta.getVersionId(), null);
                             }
                             deleteObject = nullMeta;
                         }
