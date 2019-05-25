@@ -366,6 +366,12 @@ public class FullTextUtils {
      * @Date 2019-05-09
      */
     private static boolean isDataConsistency( DBCollection cl, String textIndexName ) {
+
+        // 判断所有节点是否已同步集合
+        if ( !isCLConsistency( cl ) ) {
+            return false;
+        }
+
         // 检查主备节点原始集合的数据一致性
         if ( !isCLDataConsistency( cl ) ) {
             return false;
@@ -438,41 +444,46 @@ public class FullTextUtils {
     }
 
     /**
-     * 检查主备节点固定集合UniqueID一致
+     * 检查主备节点固定集合dataCommitLSN一致
      * 
-     * @param db
-     * @param fullName
-     * @param groupNames
-     * @return boolean 如果主备节点固定集合UniqueID一致返回true,否则返回false
+     * @param cl
+     * @return boolean 如果主备节点原始集合dataCommitLSN一致返回true,否则返回false
      */
-    private static boolean isNewCLConsistency( Sequoiadb db, String groupName, String csName, String clName ) {
+    private static boolean isCLConsistency( DBCollection cl ) {
 
-        String clFullName = csName + "." + clName;
+        Sequoiadb db = cl.getSequoiadb();
+        String clFullName = cl.getFullName();
         boolean isConsistency = false;
-        List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
-        ReplicaGroup rg = db.getReplicaGroup( groupName );
-        Sequoiadb masterNode = rg.getMaster().connect();
-        DBCursor cursor = masterNode.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
-                "{UniqueID: ''}", null );
-        long uniqueID = 0;
-        if ( cursor.hasNext() ) {
-            uniqueID = (long) cursor.getNext().get( "UniqueID" );
-        }
-        cursor.close();
-        for ( String nodeName : nodeNames ) {
-            isConsistency = false;
-            Sequoiadb nodeConn = rg.getNode( nodeName ).connect();
-            DBCursor cur = null;
-            long checkUniqueID = 0;
-            for ( int i = 0; i < 300; i++ ) {
-                cur = nodeConn.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
-                        "{UniqueID: ''}", null );
-                if ( cur.hasNext() ) {
-                    checkUniqueID = (long) cur.getNext().get( "UniqueID" );
+
+        List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
+        for ( String groupName : groupNames ) {
+            List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
+            ReplicaGroup rg = db.getReplicaGroup( groupName );
+            Sequoiadb masterNode = rg.getMaster().connect();
+
+            DBCursor cursor = null;
+            long dataCommitLSN = -2;
+            long indexCommitLSN = -2;
+            long lobCommitLSN = -2;
+            boolean dataCommitted = false;
+            boolean indexCommitted = false;
+            boolean lobCommitted = false;
+            for ( int i = 0; i < 600; i++ ) {
+                cursor = masterNode.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
+                        "{Details: ''}", null );
+                if ( cursor.hasNext() ) {
+                    @SuppressWarnings("unchecked")
+                    List<BSONObject> details = (List<BSONObject>) cursor.getNext().get( "Details" );
+                    dataCommitLSN = (long) details.get( 0 ).get( "DataCommitLSN" );
+                    indexCommitLSN = (long) details.get( 0 ).get( "IndexCommitLSN" );
+                    lobCommitLSN = (long) details.get( 0 ).get( "LobCommitLSN" );
+                    dataCommitted = (boolean) details.get( 0 ).get( "DataCommitted" );
+                    indexCommitted = (boolean) details.get( 0 ).get( "IndexCommitted" );
+                    lobCommitted = (boolean) details.get( 0 ).get( "LobCommitted" );
                 }
-                cur.close();
-                if ( uniqueID != 0 && uniqueID == checkUniqueID ) {
-                    isConsistency = true;
+                cursor.close();
+                if ( dataCommitLSN != -2 && indexCommitLSN != -2 && lobCommitLSN != -2 && dataCommitted
+                        && indexCommitted && lobCommitted ) {
                     break;
                 }
                 try {
@@ -481,10 +492,57 @@ public class FullTextUtils {
                     e.printStackTrace();
                 }
             }
-            if ( !isConsistency ) {
-                System.err.println( "Group [" + groupName + "] UniqueID is not the same, masterNode UniqueID: "
-                        + uniqueID + ", " + nodeNames + " UniqueID: " + checkUniqueID );
-                break;
+            if ( dataCommitLSN == -2 || indexCommitLSN == -2 || lobCommitLSN == -2 || !dataCommitted || !indexCommitted
+                    || !lobCommitted ) {
+                System.err.println( masterNode.getNodeName() + " can't not find cl snapshot: " + clFullName );
+                return false;
+            }
+
+            for ( String nodeName : nodeNames ) {
+                isConsistency = false;
+                Sequoiadb nodeConn = rg.getNode( nodeName ).connect();
+                DBCursor cur = null;
+                long checkdataCommitLSN = -2;
+                long checkindexCommitLSN = -2;
+                long checklobCommitLSN = -2;
+                boolean checkdataCommitted = false;
+                boolean checkindexCommitted = false;
+                boolean checklobCommitted = false;
+                for ( int i = 0; i < 600; i++ ) {
+                    cur = nodeConn.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
+                            "{Details: ''}", null );
+                    if ( cur.hasNext() ) {
+                        @SuppressWarnings("unchecked")
+                        List<BSONObject> details = (List<BSONObject>) cur.getNext().get( "Details" );
+                        checkdataCommitLSN = (long) details.get( 0 ).get( "DataCommitLSN" );
+                        checkindexCommitLSN = (long) details.get( 0 ).get( "IndexCommitLSN" );
+                        checklobCommitLSN = (long) details.get( 0 ).get( "LobCommitLSN" );
+                        checkdataCommitted = (boolean) details.get( 0 ).get( "DataCommitted" );
+                        checkindexCommitted = (boolean) details.get( 0 ).get( "IndexCommitted" );
+                        checklobCommitted = (boolean) details.get( 0 ).get( "LobCommitted" );
+                    }
+                    cur.close();
+
+                    if ( dataCommitLSN == checkdataCommitLSN && indexCommitLSN == checkindexCommitLSN
+                            && lobCommitLSN == checklobCommitLSN && checkdataCommitted && checkindexCommitted
+                            && checklobCommitted ) {
+                        isConsistency = true;
+                        break;
+                    }
+                    try {
+                        Thread.sleep( 1000 );
+                    } catch ( InterruptedException e ) {
+                        e.printStackTrace();
+                    }
+                }
+                if ( !isConsistency ) {
+                    System.err.println( "Group [" + groupName + "] snapshot is not the same, masterNode "
+                            + masterNode.getNodeName() + " DataCommitLSN: " + dataCommitLSN + ", IndexCommitLSN: "
+                            + indexCommitLSN + ", LobCommitLSN: " + lobCommitLSN + ", " + nodeName + " dataCommitLSN: "
+                            + checkdataCommitLSN + ", IndexCommitLSN: " + checkindexCommitLSN + ", LobCommitLSN: "
+                            + checklobCommitLSN );
+                    return false;
+                }
             }
         }
 
@@ -567,11 +625,6 @@ public class FullTextUtils {
         List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
         if ( nodeNames.size() == 1 ) {
             return true;
-        }
-
-        // 判断所有节点是否已同步集合
-        if ( !isNewCLConsistency( db, groupName, csName, clName ) ) {
-            return false;
         }
 
         ReplicaGroup rg = db.getReplicaGroup( groupName );
