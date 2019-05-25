@@ -3,5 +3,5 @@ SequoiaDB 支持创建MySQL实例，完全兼容MySQL语法和协议，用户可
 
 **SequoiaDB所支持的 MySQL 版本** 
 
-- MySQL 5.7.18+ 
+- MySQL 5.7.24+ 
 
