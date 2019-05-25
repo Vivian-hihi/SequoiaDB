@@ -59,7 +59,7 @@ public class FullText12120 extends SdbTestBase {
                 false);
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
         cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
-        
+
         insertData(cl, FullTextUtils.INSERT_NUMS);
         cl.insert("{a:'idx12120', b:'b12120'}");
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, FullTextUtils.INSERT_NUMS + 1));
