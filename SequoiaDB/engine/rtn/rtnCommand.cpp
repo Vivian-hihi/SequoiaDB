@@ -2649,11 +2649,8 @@ error:
                                             const CHAR* funcName,
                                             BOOLEAN &isMonitor )
    {
-      CHAR  *pTemp = NULL ;
-      CHAR* fullFuncName = const_cast<CHAR*>
-                           ( pdGetTraceFunction( functionNameId ) );
-
-      pTemp = ossStrstr( fullFuncName, funcName ) ;
+      const CHAR* fullFuncName = pdGetTraceFunction( functionNameId ) ;
+      const CHAR* pTemp = ossStrstr( fullFuncName, funcName ) ;
 
       if( pTemp != NULL )
       {

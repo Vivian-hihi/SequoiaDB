@@ -6091,14 +6091,18 @@ namespace sdbclient
                                const bson::BSONObj &options = _sdbStaticObject )
           \brief Turn on the trace function of the database engine.
           \param [in] traceBufferSize Trace file's size(MB), Value range:[1,1024].
-          \param [in] options includes component, breakPoint, tid, functionName
-                      and threadType
-                      components: vector<string>,
-                      breakPoints: vector<string>,
-                      tids: vector<int>,
-                      functionNames: vector<string>,
-                      threadTypes: vector<string>
-                      ...
+          \param [in] options The options for traceStart. The options are as below:
+
+              components: The components the user wants to monitor.
+                          eg: { "components": [ "dms", "rtn" ] }
+              breakPoints: The breakPoints the user wants to monitor.
+                           eg: { "breakPoints": [ "catGetOneObj", "_dmsStorageBase::sync" ] }
+              tids: The tids the user wants to monitor.
+                    eg: { "tids": [ 23456, 23457 ] }
+              functionNames: The functionNames the user wants to monitor.
+                             eg: { "functionNames": [ "_pmdEDUCB::resetInfo","isInterrupted" ] }
+              threadTypes: The threadTypes the user wants to monitor.
+                           eg: { "threadTypes": [ "TCPListener", "CoordNetwork" ] }
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
