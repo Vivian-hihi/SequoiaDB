@@ -24,7 +24,7 @@ import com.sequoiadb.transaction.TransUtils;
 @Test(groups = "ru")
 public class Transaction17210 extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "cl_17220";
+    private String clName = "cl_17210";
     private Sequoiadb db1;
     private Sequoiadb db2;
     private Sequoiadb db3;
