@@ -1,6 +1,32 @@
 {
    "contents": [
       {
+         "id": 1558957223,
+         "dir": "Manual",
+         "cn": "关于 SequoiaDB",
+         "en": "Manual",
+         "contents": [
+            {
+               "id": 1558957224,
+               "file": "sequoiadb_intro",
+               "cn": "产品概述",
+               "en": "Sequoiadb Intro"
+            },
+            {
+               "id": 1558957225,
+               "file": "overall_arch",
+               "cn": "整体架构",
+               "en": "Overall Arch"
+            },
+            {
+               "id": 1558957226,
+               "file": "features",
+               "cn": "核心特性",
+               "en": "Features"
+            }
+         ]
+      },
+      {
          "id": 1519612914,
          "file": "quickstart",
          "cn": "快速入门",
