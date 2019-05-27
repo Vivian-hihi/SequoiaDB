@@ -87,6 +87,8 @@ public class FullText12116 extends SdbTestBase {
     // 4.线程里自己创建的db连接自己关闭
     // 5.结果校验可以统一调用公共方法
     // 6.Assert.fail()，需要调用e.print，或者使用throw 抛出来
+    // 并发数建议10个吧，其他用例类似，针对同一个对象的并发，均建议10个或者以上吧
+    // 要覆盖一下插入，对应手工用例已修改，自动化用例需对应调整，其他用例类似
     class DropFullIdxTh1 {
         private Sequoiadb db;
         private Sequoiadb db2;

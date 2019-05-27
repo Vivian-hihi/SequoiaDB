@@ -32,6 +32,7 @@ import com.sequoiadb.utils.StringUtils;
  * @author yinzhen
  *
  */
+// TODO:其他检视意见同12116
 public class FullText12124 extends SdbTestBase {
     private static final String CLNAME = "cl12124";
     private ThreadExecutor thExecutor = new ThreadExecutor(600000);
@@ -107,6 +108,7 @@ public class FullText12124 extends SdbTestBase {
                 DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
                 DBCursor esCursor = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
                         "{'':'" + fullIdxName + "'}");
+                // TODO：考虑一下是否可以通过原子变量来校验ES端最终同步的记录？
                 Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
             } finally {
                 db.closeAllCursors();
@@ -164,6 +166,7 @@ public class FullText12124 extends SdbTestBase {
             cl = db.getCollectionSpace(csName).getCollection(CLNAME);
         }
 
+        // TODO：desc中的描述需要修改一下
         @ExecuteOrder(step = 1, desc = "创建普通索引，删除普通索引")
         private void deleteReocrds() {
             try {

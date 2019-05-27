@@ -31,6 +31,7 @@ import com.sequoiadb.utils.StringUtils;
  * @author yinzhen
  *
  */
+// TODO:检视意见同12116
 public class FullText12120 extends SdbTestBase {
     private static final String CLNAME = "cl12120";
     private ThreadExecutor thExecutor = new ThreadExecutor(600000);

@@ -82,6 +82,7 @@ public class FullText15798 extends SdbTestBase {
         }
     }
 
+    // TODO:这里建议增删改查记录分开线程实现吧；
     class OperatorData {
         private Sequoiadb db;
         private DBCollection cl;
@@ -97,8 +98,9 @@ public class FullText15798 extends SdbTestBase {
                 insertData(cl, 10000);
                 cl.update("{a:'test_15798_1'}", "{$set:{b:'b_15798'}}", "{}");
                 cl.delete("{a:'test_15798_0'}");
-                cl.query();
+                cl.query();// TODO:query要带全文检索，普通的查询覆盖不到全文索引的；如果有其他用例存在类似的问题，需要同步修改
             } catch (BaseException e) {
+                // TODO:同12116用例，需要抛异常或者打印错误信息
                 Assert.assertEquals(e.getErrorCode(), -321);
             } finally {
                 db.close();
