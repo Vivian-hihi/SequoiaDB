@@ -133,10 +133,14 @@ namespace engine
 
    void _netEventSuit::stop()
    {
-      if ( _active )
+      try
       {
-         _ioservice.stop() ;
          _active = FALSE ;
+         _ioservice.stop() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Stop occur exception: %s", e.what() ) ;
       }
    }
 
