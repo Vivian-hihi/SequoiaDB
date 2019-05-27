@@ -90,7 +90,7 @@ function truncateVerify( db, tableName, obj )
        var obj = {TotalRecords:0, TotalDataPages:0, TotalLobPages:0};
     }
     var snapShotInfoSet = getCLSnapShotInfo( db, tableName );
-    println( JSON.stringify(snapShotInfoSet));
+    //println( JSON.stringify(snapShotInfoSet));
     for (var i = 0; i < snapShotInfoSet.length; ++i)
     {  
        var snapshotOfCLPerNode = snapShotInfoSet[i];
