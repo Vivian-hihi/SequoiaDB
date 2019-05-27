@@ -735,11 +735,22 @@ namespace engine
                                             string & clName,
                                             BSONObj &outSelector )
    {
-      BSONObjBuilder builder ;
       clName = GTS_SEQUENCE_COLLECTION_NAME ;
       return SDB_OK ;
    }
 
+   /*
+      _coordCMDSnapshotSequencesIntr implement
+    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotSequencesIntr,
+                                      CMD_NAME_SNAPSHOT_SEQUENCES_INTR,
+                                      TRUE ) ;
+   _coordCMDSnapshotSequencesIntr::_coordCMDSnapshotSequencesIntr ()
+   {
+   }
+
+   _coordCMDSnapshotSequencesIntr::~_coordCMDSnapshotSequencesIntr ()
+   {
+   }
 
 }
-

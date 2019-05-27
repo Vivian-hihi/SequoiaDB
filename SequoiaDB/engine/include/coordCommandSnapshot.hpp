@@ -528,5 +528,17 @@ namespace engine
     } ;
     typedef _coordCMDSnapshotSequences coordCMDSnapshotSequences ;
 
+    /*
+       _coordCMDSnapshotSequencesIntr define
+     */
+    class _coordCMDSnapshotSequencesIntr : public _coordCMDSnapshotSequences
+    {
+       COORD_DECLARE_CMD_AUTO_REGISTER() ;
+       public:
+          _coordCMDSnapshotSequencesIntr () ;
+          virtual ~_coordCMDSnapshotSequencesIntr () ;
+    } ;
+    typedef _coordCMDSnapshotSequencesIntr coordCMDSnapshotSequencesIntr ;
+
 }
 #endif // COORD_COMMAND_SNAPSHOT_HPP__
