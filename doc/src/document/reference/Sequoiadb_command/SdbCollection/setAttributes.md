@@ -91,8 +91,9 @@ Collection
 
         格式：`AutoIncrement : <option>`
 
-        * option中须加上 Field 属性，以标记要修改的字段。
+        * option 中须加上 Field 属性，以标记要修改的字段。
         * 自增字段可以修改的属性有CurrentValue, Increment, StartValue, MinValue, MaxValue, CacheSize, AcquireSize, Cycled, Generated。<br>属性具体功能请参考 [自增字段介绍](data_model/auto_increment.md)。
+        * 修改属性后，字段值将可能不唯一。如需保证修改后值唯一，建议使用唯一索引。
 
     **Note:**
 
