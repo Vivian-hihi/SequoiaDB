@@ -129,6 +129,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDASYNCNETSUBEP ) ;
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr () ;
       _netEventSuit *pSuit = (_netEventSuit*)pData;
+      netEvSuitPtr suitPtr = pSuit->shared_from_this() ;
+      SDB_UNUSED( suitPtr ) ;
 
       rc = pEDUMgr->activateEDU( cb ) ;
       if ( SDB_OK != rc )
