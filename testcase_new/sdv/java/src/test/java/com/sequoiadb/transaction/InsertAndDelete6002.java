@@ -1,5 +1,8 @@
 package com.sequoiadb.transaction;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
@@ -15,21 +18,20 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-//TODO：其他检视意见同  5999、6001 用例
+
 /**
- * test content: 事务1中删除数据为事务2中插入数据_SD.transaction.013
- * testlink-case: seqDB-6002
+ * @description seqDB-6002:事务1中删除数据为事务2中插入数据_SD.transaction.013
  * @author wangkexin
- * @Date 2019.04.08
- * @version 1.00
+ * @date 2019.04.08
+ * @review
  */
-//TODO:文本用例预期结果有问题，插入跟删除事务并发，插入不会失败，删除会超时，文本用例写得不够明确，请修改文本用例预期结果
 public class InsertAndDelete6002 extends SdbConfTestBase {
 	private String clName = "cl6002";
 	private Sequoiadb sdb = null;
 	private Sequoiadb db1 = null;
 	private Sequoiadb db2 = null;
 	private DBCollection cl = null;
+	private int insertNum = 10000;
 
 	@Override
 	protected void setNodeConf() {
@@ -43,23 +45,26 @@ public class InsertAndDelete6002 extends SdbConfTestBase {
 	}
 
 	@Test
-	public void test() throws Exception {//TODO:并发在事务做数据操作，数据量要大一些，不然并发可能撞不上，如删除记录完成后才开始插入记录，应该没什么影响
+	public void test() throws Exception {
 		ThreadExecutor es = new ThreadExecutor();
 		es.addWorker(new TransInsert6002());
 		es.addWorker(new TransDelete6002());
 		es.run();
 
-		CheckResult();//TODO：需要分情况校验结果，任何一个
+		CheckResult();
 	}
 
 	@AfterClass
 	private void teardown() {
-		try{
+		try {
 			sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
-		}finally{
-			db1.close();
-			db2.close();
-			sdb.close();
+		} finally {
+			if (sdb != null)
+				sdb.close();
+			if (db1 != null)
+				db1.close();
+			if (db2 != null)
+				db2.close();
 		}
 	}
 
@@ -72,16 +77,29 @@ public class InsertAndDelete6002 extends SdbConfTestBase {
 			cl = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		}
 
-		@ExecuteOrder(step = 1, desc = "插入数据")
-		public void Insert() {
-			BSONObject obj = new BasicBSONObject();
-			obj.put("a", 1);
-			cl.insert(obj);
+		@ExecuteOrder(step = 1, desc = "开启事务")
+		private void beginTrans() {
+			db1.beginTransaction();
 		}
 
-		@ExecuteOrder(step = 3, desc = "提交事务")
+		@ExecuteOrder(step = 2, desc = "插入数据")
+		public void Insert() {
+			insertData();
+		}
+
+		@ExecuteOrder(step = 4, desc = "提交事务")
 		public void Commit() {
 			db1.commit();
+		}
+
+		private void insertData() {
+			List<BSONObject> recs = new ArrayList<BSONObject>();
+			for (int i = 0; i < insertNum; i++) {
+				BSONObject rec = new BasicBSONObject();
+				rec.put("a", i);
+				recs.add(rec);
+			}
+			cl.insert(recs);
 		}
 	}
 
@@ -94,10 +112,14 @@ public class InsertAndDelete6002 extends SdbConfTestBase {
 			cl = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		}
 
-		@ExecuteOrder(step = 2, desc = "删除数据")
+		@ExecuteOrder(step = 1)
+		private void beginTrans() {
+			db2.beginTransaction();
+		}
+
+		@ExecuteOrder(step = 3, desc = "删除数据")
 		public void Delete() {
 			BSONObject matcher = new BasicBSONObject();
-			matcher.put("a", 1);
 			try {
 				cl.delete(matcher);
 				Assert.fail("exp fail but found succ.");
@@ -106,19 +128,21 @@ public class InsertAndDelete6002 extends SdbConfTestBase {
 			}
 		}
 
-		@ExecuteOrder(step = 4, desc = "提交事务")
+		@ExecuteOrder(step = 5, desc = "提交事务")
 		public void Commit() {
 			db2.commit();
 		}
 	}
 
 	private void CheckResult() {
-		long expCount = 1;
+		int startValue = 0;
+		long expCount = insertNum;
 		long actCount = cl.getCount();
 		Assert.assertEquals(actCount, expCount);
 		DBCursor cursor = cl.query();
 		while (cursor.hasNext()) {
-			Assert.assertEquals(cursor.getNext().get("a").toString(), "1");
+			Assert.assertEquals(cursor.getNext().get("a").toString(), String.valueOf(startValue));
+			startValue++;
 		}
 	}
 }

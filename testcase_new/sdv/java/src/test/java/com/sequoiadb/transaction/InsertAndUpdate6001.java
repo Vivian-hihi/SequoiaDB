@@ -1,5 +1,8 @@
 package com.sequoiadb.transaction;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
@@ -15,21 +18,20 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-//TODO：其他检视意见同 5999 用例
+
 /**
- * test content: 事务1中更新数据为事务2中插入数据_SD.transaction.012
- * testlink-case: seqDB-6001
+ * @description seqDB-6001:事务1中更新数据为事务2中插入数据_SD.transaction.012
  * @author wangkexin
- * @Date 2019.04.08
- * @version 1.00
+ * @date 2019.04.08
+ * @review
  */
-//TODO:文本用例预期结果有问题，插入跟更新事务并发，插入不会失败，更新会超时，用例写得不够明确，请修改文本用例预期结果
 public class InsertAndUpdate6001 extends SdbConfTestBase {
 	private String clName = "cl6001";
 	private Sequoiadb sdb = null;
 	private Sequoiadb db1 = null;
 	private Sequoiadb db2 = null;
 	private DBCollection cl = null;
+	private int insertNum = 10000;
 
 	@Override
 	protected void setNodeConf() {
@@ -49,17 +51,20 @@ public class InsertAndUpdate6001 extends SdbConfTestBase {
 		es.addWorker(new TransUpdate6001());
 		es.run();
 
-		CheckResult();//TODO:更新的记录没有校验，需要校验记录是不是有被更新
+		CheckResult();
 	}
 
 	@AfterClass
 	private void teardown() {
-		try{
+		try {
 			sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
-		}finally{
-			db1.close();
-			db2.close();//TODO：在线程里面 new 在线程里面 close
-			sdb.close();//TODO:同上
+		} finally {
+			if (sdb != null)
+				sdb.close();
+			if (db1 != null)
+				db1.close();
+			if (db2 != null)
+				db2.close();
 		}
 	}
 
@@ -68,20 +73,32 @@ public class InsertAndUpdate6001 extends SdbConfTestBase {
 
 		public TransInsert6001() {
 			db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			db1.beginTransaction();
 			cl = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		}
 
-		@ExecuteOrder(step = 1, desc = "插入数据")
-		public void Insert() {
-			BSONObject obj = new BasicBSONObject();
-			obj.put("a", 1);//TODO:数据量搞大一些，不然撞不到点，建议1万条记录起
-			cl.insert(obj);
+		@ExecuteOrder(step = 1, desc = "开启事务")
+		private void beginTrans() {
+			db1.beginTransaction();
 		}
 
-		@ExecuteOrder(step = 3, desc = "提交事务")
+		@ExecuteOrder(step = 2, desc = "插入数据")
+		public void Insert() {
+			insertData();
+		}
+
+		@ExecuteOrder(step = 4, desc = "提交事务")
 		public void Commit() {
 			db1.commit();
+		}
+
+		private void insertData() {
+			List<BSONObject> recs = new ArrayList<BSONObject>();
+			for (int i = 0; i < insertNum; i++) {
+				BSONObject rec = new BasicBSONObject();
+				rec.put("a", i);
+				recs.add(rec);
+			}
+			cl.insert(recs);
 		}
 	}
 
@@ -90,39 +107,44 @@ public class InsertAndUpdate6001 extends SdbConfTestBase {
 
 		public TransUpdate6001() {
 			db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			db2.beginTransaction();
 			cl = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		}
 
-		@ExecuteOrder(step = 2, desc = "更新数据")
+		@ExecuteOrder(step = 1)
+		private void beginTrans() {
+			db2.beginTransaction();
+		}
+
+		@ExecuteOrder(step = 3, desc = "更新数据")
 		public void Update() {
-			BSONObject matcher = new BasicBSONObject();
-			matcher.put("a", 1);
 			BSONObject modifyObj = new BasicBSONObject();
 			BSONObject modifier = new BasicBSONObject();
-			modifyObj.put("a", 2);
-			modifier.put("$set", modifyObj);
+			modifyObj.put("a", 1);
+			modifier.put("$inc", modifyObj);
 			try {
-				cl.update(matcher, modifier, null);//TODO:带条件更新所有记录
+				// 将集合中所有记录a字段的值增加1
+				cl.update(null, modifier, null);
 				Assert.fail("exp fail but found succ.");
 			} catch (BaseException e) {
 				Assert.assertEquals(e.getErrorCode(), -13);
 			}
 		}
 
-		@ExecuteOrder(step = 4, desc = "提交事务")
+		@ExecuteOrder(step = 5, desc = "提交事务")
 		public void Commit() {
 			db2.commit();
 		}
 	}
 
 	private void CheckResult() {
-		long expCount = 1;
+		int startValue = 0;
+		long expCount = insertNum;
 		long actCount = cl.getCount();
 		Assert.assertEquals(actCount, expCount);
 		DBCursor cursor = cl.query();
 		while (cursor.hasNext()) {
-			Assert.assertEquals(cursor.getNext().get("a").toString(), "1");
+			Assert.assertEquals(cursor.getNext().get("a").toString(), String.valueOf(startValue));
+			startValue++;
 		}
 	}
 }

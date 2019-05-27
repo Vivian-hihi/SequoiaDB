@@ -1,5 +1,8 @@
 package com.sequoiadb.transaction;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
@@ -12,14 +15,15 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbThreadBase;
+import com.sequoiadb.threadexecutor.ResultStore;
+import com.sequoiadb.threadexecutor.ThreadExecutor;
+import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
-/**  TODO:前2行用例名放到 @description seqDB-5999 多个事务并发.....。按规范来，不建议有各种不一样的风格
- * test content: 多个事务并发，同时更新/删除cl中不同记录并提交事务_SD.transaction.010
- * testlink-case: seqDB-5999
+/**
+ * @description seqDB-5999:多个事务并发，同时更新/删除cl中不同记录并提交事务_SD.transaction.010
  * @author wangkexin
- * @Date 2019.03.15
- * @version 1.00
+ * @date 2019.03.15
+ * @review
  */
 public class UpdateAndDelete5999 extends SdbConfTestBase {
 	private String clName = "cl5999";
@@ -27,8 +31,6 @@ public class UpdateAndDelete5999 extends SdbConfTestBase {
 	private Sequoiadb db1 = null;
 	private Sequoiadb db2 = null;
 	private DBCollection cl = null;
-	private DBCollection cl1 = null;
-	private DBCollection cl2 = null;
 	private BSONObject del_matcher = new BasicBSONObject();
 
 	@Override
@@ -37,84 +39,121 @@ public class UpdateAndDelete5999 extends SdbConfTestBase {
 	}
 
 	@BeforeClass
-	public void setup() {//TODO:如下定义的常量命名，多个单词用“_”分开，不然全大写还简称字面上不好理解
-		final int START = 0;
-		final int RECSUM = 100;
-		final int STRLENGTH = 10;
+	public void setup() {
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cl = sdb.getCollectionSpace(SdbTestBase.csName).createCollection(clName);
-		TransactionUtils.insertData(cl, START, RECSUM, STRLENGTH);//TODO：公共方法就 5999 、 6000用例在用，删掉公共方法类吧
+		insertData(cl);
 	}
 
 	@Test
-	private void test() {
-		db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");//TODO：线程里面用的连接都放到线程内部吧，不建议放外面
-		db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");//TODO:线程里面建连接、开启事务、事务操作、提交事务、关闭连接，分多个步骤进行
-		db1.beginTransaction();
-		db2.beginTransaction();
-
-		cl1 = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-		cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
-
+	private void test() throws Exception {
+		ThreadExecutor threadExec = new ThreadExecutor();
 		UpdateThread updateThread = new UpdateThread();
 		DeleteThread deleteThread = new DeleteThread();
 
-		updateThread.start();
-		deleteThread.start();
+		threadExec.addWorker(updateThread);
+		threadExec.addWorker(deleteThread);
+		threadExec.run();
 
-		if (updateThread.isSuccess() && !deleteThread.isSuccess()) {
-			BaseException e = (BaseException) (deleteThread.getExceptions().get(0));
-			if (e.getErrorCode() != -13) {
-				Assert.fail("delete thread fail:" + deleteThread.getErrorMsg() + "  e:" + e.getErrorCode());
+		int updateErrorCode = updateThread.getRetCode();
+		int deleteErrorCode = deleteThread.getRetCode();
+		if (updateErrorCode == 0 && deleteErrorCode != 0) {
+			if (deleteErrorCode != -13) {
+				Assert.fail(
+						"delete thread fail:" + deleteThread.getThrowable().getMessage() + "  e:" + deleteErrorCode);
 			}
 			checkUpdateResult();
-		} else if (!updateThread.isSuccess() && deleteThread.isSuccess()) {
-			BaseException e = (BaseException) (updateThread.getExceptions().get(0));
-			if (e.getErrorCode() != -13) {
-				Assert.fail("update thread fail:" + updateThread.getErrorMsg() + "  e:" + e.getErrorCode());
+		} else if (updateErrorCode != 0 && deleteErrorCode == 0) {
+			if (updateErrorCode != -13) {
+				Assert.fail(
+						"update thread fail:" + updateThread.getThrowable().getMessage() + "  e:" + updateErrorCode);
 			}
 			checkDeleteResult();
-		} else if (updateThread.isSuccess() && deleteThread.isSuccess()) {
+		} else if (updateErrorCode == 0 && deleteErrorCode == 0) {
 			checkUpdateResult();
 			checkDeleteResult();
 		} else {
-			Assert.fail("Unexpected results! updateThreadError:" + updateThread.getErrorMsg() + "deleteThreadError:"
-					+ deleteThread.getErrorMsg());
+			Assert.fail("Unexpected results! updateThreadError:" + updateThread.getThrowable().getMessage()
+					+ "deleteThreadError:" + deleteThread.getThrowable().getMessage());
 		}
-
-		db1.commit();
-		db2.commit();
 	}
 
 	@AfterClass
 	public void teardown() {
-		try{
+		try {
 			sdb.getCollectionSpace(csName).dropCollection(clName);
-		}finally{
-			db1.close();
-			db2.close();
-			sdb.close();
+		} finally {
+			if (sdb != null)
+				sdb.close();
+			if (db1 != null)
+				db1.close();
+			if (db2 != null)
+				db2.close();
 		}
 	}
 
-	private class UpdateThread extends SdbThreadBase {
-		@Override
-		public void exec() throws BaseException {
-			BSONObject matcher = new BasicBSONObject();
-			BSONObject modifyObj = new BasicBSONObject();
-			BSONObject modifier = new BasicBSONObject();
-			matcher.put("b", 50);
-			modifyObj.put("b", 5999);
-			modifier.put("$set", modifyObj);
-			cl1.update(matcher, modifier, null);
+	private class UpdateThread extends ResultStore {
+		private BSONObject matcher = new BasicBSONObject();
+		private BSONObject modifyObj = new BasicBSONObject();
+		private BSONObject modifier = new BasicBSONObject();
+		private DBCollection cl1;
+
+		private UpdateThread() {
+			db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			cl1 = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+		}
+
+		@ExecuteOrder(step = 1)
+		private void beginTrans() {
+			db1.beginTransaction();
+		}
+
+		@ExecuteOrder(step = 3)
+		private void update() throws BaseException {
+			try {
+				matcher.put("b", 50);
+				modifyObj.put("b", 5999);
+				modifier.put("$set", modifyObj);
+				cl1.update(matcher, modifier, null);
+			} catch (BaseException e) {
+				int errCode = e.getErrorCode();
+				saveResult(errCode, e);
+			}
+		}
+
+		@ExecuteOrder(step = 4)
+		private void endTrans() {
+			db1.commit();
 		}
 	}
 
-	private class DeleteThread extends SdbThreadBase {
-		@Override
-		public void exec() throws BaseException {
-			del_matcher.put("a", 10);
-			cl2.delete(del_matcher);
+	private class DeleteThread extends ResultStore {
+		private DBCollection cl2;
+
+		private DeleteThread() {
+			db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+		}
+
+		@ExecuteOrder(step = 2)
+		private void beginTrans() {
+			db2.beginTransaction();
+		}
+
+		@ExecuteOrder(step = 3)
+		private void delete() {
+			try {
+				del_matcher.put("a", 10);
+				cl2.delete(del_matcher);
+			} catch (BaseException e) {
+				int errCode = e.getErrorCode();
+				saveResult(errCode, e);
+			}
+		}
+
+		@ExecuteOrder(step = 5)
+		private void endTrans() {
+			db2.commit();
 		}
 	}
 
@@ -128,5 +167,17 @@ public class UpdateAndDelete5999 extends SdbConfTestBase {
 	private void checkDeleteResult() {
 		long count = cl.getCount(del_matcher);
 		Assert.assertEquals(count, 0, "Deleted data still exists!");
+	}
+
+	private void insertData(DBCollection cl) {
+		List<BSONObject> recs = new ArrayList<BSONObject>();
+		for (int i = 0; i < 100; i++) {
+			BSONObject rec = new BasicBSONObject();
+			rec.put("a", i);
+			rec.put("b", i);
+			rec.put("c", "string5999");
+			recs.add(rec);
+		}
+		cl.insert(recs);
 	}
 }

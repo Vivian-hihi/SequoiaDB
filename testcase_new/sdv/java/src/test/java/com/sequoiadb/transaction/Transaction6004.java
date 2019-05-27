@@ -16,18 +16,15 @@ import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 
-/**  TODO:前2行用例名放到 @description seqDB-6004 多个事务并发.....。按规范来，不建议有各种不一样的风格
- * test content: 配置事务锁超时时间值非法校验_SD.transaction.015(设置事务锁等待超时时间值为-1,a01,3601)
- * testlink-case: seqDB-6004
+/**
+ * @description seqDB-6004:配置事务锁超时时间值非法校验_SD.transaction.015(设置事务锁等待超时时间值为-1,a01,3601)
  * @author wangkexin
- * @Date 2019.04.08
- * @version 1.00
+ * @date 2019.04.08
+ * @review
  */
 
 public class Transaction6004 extends SdbConfTestBase {
 	private Sequoiadb sdb = null;
-	private int expTransTimeout1 = 60;//TODO：在比对结果时定义
-	private int expTransTimeout2 = 3600;//TODO：在比对结果时定义
 	private BSONObject options = new BasicBSONObject();
 
 	@Override
@@ -61,9 +58,10 @@ public class Transaction6004 extends SdbConfTestBase {
 		selector.put("transactiontimeout", 1);
 
 		DBCursor cursor1 = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CONFIGS, options, selector, null);
+		int expTransTimeout = 60;
 		while (cursor1.hasNext()) {
 			int actValue = (int) cursor1.getNext().get("transactiontimeout");
-			Assert.assertEquals(actValue, expTransTimeout1);
+			Assert.assertEquals(actValue, expTransTimeout);
 		}
 
 		// test transactiontimeout is a01
@@ -78,9 +76,10 @@ public class Transaction6004 extends SdbConfTestBase {
 		}
 
 		DBCursor cursor2 = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CONFIGS, options, selector, null);
+		int expTransTimeout2 = 60;
 		while (cursor2.hasNext()) {
 			int actValue = (int) cursor2.getNext().get("transactiontimeout");
-			Assert.assertEquals(actValue, expTransTimeout1);
+			Assert.assertEquals(actValue, expTransTimeout2);
 		}
 
 		// test transactiontimeout is 3601
@@ -89,9 +88,10 @@ public class Transaction6004 extends SdbConfTestBase {
 		sdb.updateConfig(configs3, options);
 
 		DBCursor cursor3 = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CONFIGS, options, selector, null);
-		while (cursor2.hasNext()) {
+		int expTransTimeout3 = 3600;
+		while (cursor3.hasNext()) {
 			int actValue = (int) cursor3.getNext().get("transactiontimeout");
-			Assert.assertEquals(actValue, expTransTimeout2);
+			Assert.assertEquals(actValue, expTransTimeout3);
 		}
 	}
 

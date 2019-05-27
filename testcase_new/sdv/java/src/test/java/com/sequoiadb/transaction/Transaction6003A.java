@@ -15,13 +15,12 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-//TODO：其他检视意见同 5999、6001 用例
+
 /**
- * test content: 配置事务锁超时时间值合法校验_SD.transaction.014
- * testlink-case: seqDB-6003
+ * @description seqDB-6003:配置事务锁超时时间值合法校验_SD.transaction.014
  * @author wangkexin
- * @Date 2019.04.08
- * @version 1.00
+ * @date 2019.04.08
+ * @review
  */
 
 public class Transaction6003A extends SdbConfTestBase {
@@ -76,19 +75,22 @@ public class Transaction6003A extends SdbConfTestBase {
 
 	@AfterClass
 	private void teardown() {
-		try{
+		try {
 			// 恢复环境
 			BSONObject configs = new BasicBSONObject();
 			BSONObject options = new BasicBSONObject();
 			configs.put("transactiontimeout", 60);
 			options.put("Global", true);
 			sdb.updateConfig(configs, options);
-			
+
 			sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
-		}finally{
-			db1.close();
-			db2.close();
-			sdb.close();
+		} finally {
+			if (sdb != null)
+				sdb.close();
+			if (db1 != null)
+				db1.close();
+			if (db2 != null)
+				db2.close();
 		}
 	}
 
@@ -97,18 +99,22 @@ public class Transaction6003A extends SdbConfTestBase {
 
 		public TransInsert6003A() {
 			db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			db1.beginTransaction();
 			cl1 = db1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		}
 
-		@ExecuteOrder(step = 1, desc = "插入数据")
+		@ExecuteOrder(step = 1, desc = "开启事务")
+		private void beginTrans() {
+			db1.beginTransaction();
+		}
+
+		@ExecuteOrder(step = 2, desc = "插入数据")
 		public void Insert() {
 			BSONObject obj = new BasicBSONObject();
 			obj.put("a", 1);
 			cl1.insert(obj);
 		}
 
-		@ExecuteOrder(step = 3, desc = "提交事务")
+		@ExecuteOrder(step = 4, desc = "提交事务")
 		public void Commit() {
 			db1.commit();
 		}
@@ -119,11 +125,15 @@ public class Transaction6003A extends SdbConfTestBase {
 
 		public TransDelete6003A() {
 			db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			db2.beginTransaction();
 			cl2 = db2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		}
 
-		@ExecuteOrder(step = 2, desc = "删除数据")
+		@ExecuteOrder(step = 1, desc = "开启事务")
+		private void beginTrans() {
+			db2.beginTransaction();
+		}
+
+		@ExecuteOrder(step = 3, desc = "删除数据")
 		public void Delete() {
 			BSONObject matcher = new BasicBSONObject();
 			matcher.put("a", 1);
@@ -139,7 +149,7 @@ public class Transaction6003A extends SdbConfTestBase {
 			timeoutMillis = endtime - starttime;
 		}
 
-		@ExecuteOrder(step = 4, desc = "提交事务")
+		@ExecuteOrder(step = 5, desc = "提交事务")
 		public void Commit() {
 			db2.commit();
 		}
