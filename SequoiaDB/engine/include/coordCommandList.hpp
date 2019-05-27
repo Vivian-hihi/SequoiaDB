@@ -383,7 +383,7 @@ namespace engine
    /*
       _coordCMDListSequencesIntr define
    */
-   class _coordCMDListSequencesIntr : public _coordCMDListIntrBase
+   class _coordCMDListSequencesIntr : public _coordCMDListSequences
    {
       COORD_DECLARE_CMD_AUTO_REGISTER() ;
       public:
