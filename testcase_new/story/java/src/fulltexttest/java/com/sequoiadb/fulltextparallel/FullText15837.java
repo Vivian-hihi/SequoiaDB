@@ -25,6 +25,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author luweikang
  * @Date 2019年5月6日
  */
+// TODO:同15836
 public class FullText15837 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
@@ -39,53 +40,53 @@ public class FullText15837 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
 
-        cs = sdb.getCollectionSpace( csName );
-        cl = cs.createCollection( clName );
+        cs = sdb.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
     }
 
     @Test
     public void test() throws Exception {
 
-        FullTextDBUtils.insertData( cl, insertNum );
+        FullTextDBUtils.insertData(cl, insertNum);
 
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        indexObj.put( "b", "text" );
-        indexObj.put( "c", "text" );
-        indexObj.put( "d", "text" );
-        indexObj.put( "e", "text" );
-        cl.createIndex( indexName, indexObj, false, false );
+        indexObj.put("a", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
+        cl.createIndex(indexName, indexObj, false, false);
 
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
 
-        cappedName = FullTextDBUtils.getCappedName( cl, indexName );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
+        cappedName = FullTextDBUtils.getCappedName(cl, indexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
 
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker( new DropIndexThread() );
-        thread.addWorker( new SyncThread() );
+        thread.addWorker(new DropIndexThread());
+        thread.addWorker(new SyncThread());
         thread.run();
 
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
 
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            FullTextDBUtils.dropCollection( cs, clName );
-            FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName );
+            FullTextDBUtils.dropCollection(cs, clName);
+            FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName);
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -95,9 +96,9 @@ public class FullText15837 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void createIndex() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.dropIndex( indexName );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.dropIndex(indexName);
             }
         }
     }
@@ -106,8 +107,8 @@ public class FullText15837 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void syncData() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                db.sync( new BasicBSONObject( "Block", true ) );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                db.sync(new BasicBSONObject("Block", true));
             }
         }
     }

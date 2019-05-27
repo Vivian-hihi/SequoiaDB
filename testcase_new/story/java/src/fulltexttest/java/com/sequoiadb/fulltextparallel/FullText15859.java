@@ -34,15 +34,14 @@ public class FullText15859 extends SdbTestBase {
     private final static int THREAD_NUM = 2;
     private final static String CL_NAME = "cl_es_15859";
     private final static String IDX_NAME = "idx_es_15859";
-    private final static BSONObject IDX_KEY = 
-            (BSONObject) JSON.parse("{a:'text',b:'text',c:'text',d:'text'}");
+    private final static BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text',d:'text'}");
     private final static int RECS_NUM = 50000;
-    
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
-    
+
     private Client esClient = null;
     private String esIndexName;
 
@@ -59,10 +58,10 @@ public class FullText15859 extends SdbTestBase {
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
+        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
 
         FullTextDBUtils.insertData(cl, RECS_NUM);
-        
+
         // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
     }
@@ -75,7 +74,7 @@ public class FullText15859 extends SdbTestBase {
             es.addWorker(new ThreadQuery());
         }
         es.run();
-        
+
         // check consistency
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
     }
@@ -97,15 +96,14 @@ public class FullText15859 extends SdbTestBase {
 
     private class ThreadFullTextSearch {
         private int rcRecsNum = 0;
-        
+
         @ExecuteOrder(step = 1, desc = "全文检索")
         private void fullTextSearch() {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
-                BSONObject matcher = new BasicBSONObject("", new BasicBSONObject("$Text", 
-                        new BasicBSONObject("query", 
-                                new BasicBSONObject("match", 
-                                        new BasicBSONObject("a", CL_NAME)))));
+                // TODO :匹配条件不要强依赖公共方法里面具体的字段值，避免公共方法后续变动，影响用例的测试点；其他用例类似
+                BSONObject matcher = new BasicBSONObject("", new BasicBSONObject("$Text",
+                        new BasicBSONObject("query", new BasicBSONObject("match", new BasicBSONObject("a", CL_NAME)))));
                 BSONObject orderby = new BasicBSONObject("a", 1);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 DBCursor cursor = cl2.query(matcher, null, orderby, null);
@@ -125,10 +123,10 @@ public class FullText15859 extends SdbTestBase {
 
     private class ThreadQuery {
         private int rcRecsNum = 0;
-        
+
         @ExecuteOrder(step = 1, desc = "普通查询")
         private void fullTextSearch() {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 BSONObject matcher = new BasicBSONObject("a", new BasicBSONObject("$exists", 1));
                 BSONObject orderby = new BasicBSONObject("a", 1);

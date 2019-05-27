@@ -14,6 +14,7 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
+import org.elasticsearch.client.Client;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -33,7 +34,6 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
-import org.elasticsearch.client.*;
 
 public class Fulltext15844 extends SdbTestBase {
     private Sequoiadb db = null;
@@ -48,28 +48,28 @@ public class Fulltext15844 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName,
-                Integer.parseInt( esServiceName ) );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
 
-        db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( db ) ) {
-            throw new SkipException( "skip StandAlone" );
+        db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(db)) {
+            throw new SkipException("skip StandAlone");
         }
 
         // create cl
-        cs = db.getCollectionSpace( csName );
-        cl = cs.createCollection( clName );
+        cs = db.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
     }
 
     @AfterClass
     public void tearDown() {
-        if ( null != dropIndexThread ) {
+        if (null != dropIndexThread) {
             dropIndexThread.tearDown();
         }
-        if ( null != queryThread ) {
+        if (null != queryThread) {
             queryThread.tearDown();
         }
-        FullTextDBUtils.dropCollection( cs, clName );
+        FullTextDBUtils.dropCollection(cs, clName);
+        // TODO :放到finally里面关连接
         db.close();
         esClient.close();
     }
@@ -77,46 +77,44 @@ public class Fulltext15844 extends SdbTestBase {
     @Test
     public void test() throws Exception {
         // insert
-        FullTextDBUtils.insertData( cl, 10000 );
+        FullTextDBUtils.insertData(cl, 10000);
         // create fulltext
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        cl.createIndex( textIndexName, indexObj, false, false );
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl,
-                textIndexName, 10000 ) );
+        indexObj.put("a", "text");
+        cl.createIndex(textIndexName, indexObj, false, false);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, 10000));
 
         // get capped name
-        String cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
+        String cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
         // get es index name
-        List< String > esIndexNames = FullTextDBUtils.getESIndexNames( cl,
-                textIndexName );
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, textIndexName);
 
-        dropIndexThread = new DropTextIndexThread( csName, clName );
-        queryThread = new QueryThread( csName, clName );
+        dropIndexThread = new DropTextIndexThread(csName, clName);
+        queryThread = new QueryThread(csName, clName);
 
-        te.addWorker( dropIndexThread );
-        te.addWorker( queryThread );
+        te.addWorker(dropIndexThread);
+        te.addWorker(queryThread);
         // concurrent run
         te.run();
 
+        // TODO :查询如果要校验结果，放到线程里面去校验，这里拿到返回值，除了打印没什么用，去掉
         int errorcode = queryThread.getRetCode();
-        System.out.println( "test() errorcode:　" + errorcode );
+        System.out.println("test() errorcode:　" + errorcode);
 
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( db, esClient,
-                esIndexNames.get( 0 ), cappedName ) );
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esClient, esIndexNames.get(0), cappedName));
 
         // query after drop fulltext
+        // TODO :需要校验一下插入；
         DBCursor cursor = null;
         try {
-            BSONObject matcher = ( BSONObject ) JSON.parse(
-                    "{'':{'$Text':{'query':{'match':{'a' : 'fulltext15844_after_update'}}}}}" );
-            cursor = cl.query( matcher, null, null, null );
-            Assert.fail( "query should fail" );
-        } catch ( BaseException e ) {
-            Assert.assertEquals( e.getErrorCode(), -52,
-                    "actual exception: " + e.getErrorCode() );
+            BSONObject matcher = (BSONObject) JSON
+                    .parse("{'':{'$Text':{'query':{'match':{'a' : 'fulltext15844_after_update'}}}}}");
+            cursor = cl.query(matcher, null, null, null);
+            Assert.fail("query should fail");
+        } catch (BaseException e) {
+            Assert.assertEquals(e.getErrorCode(), -52, "actual exception: " + e.getErrorCode());
         } finally {
-            if ( cursor != null ) {
+            if (cursor != null) {
                 cursor.close();
             }
         }
@@ -126,20 +124,21 @@ public class Fulltext15844 extends SdbTestBase {
         private Sequoiadb db = null;
         private DBCollection cl = null;
 
-        public DropTextIndexThread( String csName, String clName ) {
-            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            cl = db.getCollectionSpace( csName ).getCollection( clName );
+        // TODO :不需要该构造函数
+        public DropTextIndexThread(String csName, String clName) {
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cl = db.getCollectionSpace(csName).getCollection(clName);
         }
 
         @ExecuteOrder(step = 1, desc = "删除全文索引")
         public void dropTextIndex() {
-            System.out.println(
-                    "--------------run DropTextIndexThread--------------" );
-            cl.dropIndex( textIndexName );
+            System.out.println("--------------run DropTextIndexThread--------------");
+            cl.dropIndex(textIndexName);
         }
 
+        // TODO :放到finally
         public void tearDown() {
-            if ( null != db && !db.isClosed() ) {
+            if (null != db && !db.isClosed()) {
                 db.close();
             }
         }
@@ -149,38 +148,41 @@ public class Fulltext15844 extends SdbTestBase {
         private Sequoiadb db = null;
         private DBCollection cl = null;
 
-        public QueryThread( String csName, String clName ) {
-            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            cl = db.getCollectionSpace( csName ).getCollection( clName );
+        // TODO :不需要该构造函数
+        public QueryThread(String csName, String clName) {
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cl = db.getCollectionSpace(csName).getCollection(clName);
         }
 
         @ExecuteOrder(step = 1, desc = "執行全文检索")
         public void query() {
-            System.out.println(
-                    "--------------run QueryThread insert--------------" );
+            System.out.println("--------------run QueryThread insert--------------");
             DBCursor cursor = null;
-            BSONObject matcher = ( BSONObject ) JSON.parse(
-                    "{'':{'$Text':{'query':{'match':{'a' : 'fulltext15844_after_update'}}}}}" );
+            // TODO :为什么要带匹配条件？这个条件一定有记录返回吗？
+            BSONObject matcher = (BSONObject) JSON
+                    .parse("{'':{'$Text':{'query':{'match':{'a' : 'fulltext15844_after_update'}}}}}");
             try {
-                cursor = cl.query( matcher, null, null, null );
+                cursor = cl.query(matcher, null, null, null);
+                // TODO :定义这个count的作用？
                 int count = 0;
-                while ( cursor.hasNext() ) {
-                    BSONObject object = ( BSONObject ) cursor.getNext();
+                while (cursor.hasNext()) {
+                    // TODO :定义的变量未使用；
+                    BSONObject object = (BSONObject) cursor.getNext();
                     count++;
                 }
-                System.out.println(
-                        csName + "." + clName + "'s count: " + count );
-            } catch ( BaseException e ) {
-                saveResult( e.getErrorCode(), e );
-                Assert.assertEquals( e.getErrorCode(), -52,
-                        "actual exception: " + e.getErrorCode() );
+                System.out.println(csName + "." + clName + "'s count: " + count);
+            } catch (BaseException e) {
+                saveResult(e.getErrorCode(), e);
+                // TODO :实际上这里应该还需要规避-6的错误；
+                Assert.assertEquals(e.getErrorCode(), -52, "actual exception: " + e.getErrorCode());
             } finally {
                 cursor.close();
             }
         }
 
+        // TODO :放到finally
         public void tearDown() {
-            if ( null != db && !db.isClosed() ) {
+            if (null != db && !db.isClosed()) {
                 db.close();
             }
         }

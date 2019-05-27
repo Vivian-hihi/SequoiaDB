@@ -34,20 +34,19 @@ public class FullText15856 extends SdbTestBase {
     private final static int TIMEOUT = 300000; // 5min
     private final static String CL_NAME = "cl_es_15856";
     private final static String IDX_NAME = "idx_es_15856";
-    private final static BSONObject IDX_KEY = 
-            (BSONObject) JSON.parse("{a:'text',b:'text',c:'text'}");
+    private final static BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text'}");
     private final static int RECS_NUM = 30000;
-    
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
-    
+
     private Client esClient = null;
     private String esIndexName;
 
     @BeforeClass
-    private void setUp() {        
+    private void setUp() {
         esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
@@ -58,30 +57,32 @@ public class FullText15856 extends SdbTestBase {
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
-        cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);      
-        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
-        
-        FullTextDBUtils.insertData(cl, RECS_NUM);  
+        cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
+
+        FullTextDBUtils.insertData(cl, RECS_NUM);
     }
 
     @Test
     private void test() throws Exception {
         // modifier1
-        String modVal1 = StringUtils.getRandomString( 16 );
+        String modVal1 = StringUtils.getRandomString(16);
         BSONObject obj1 = new BasicBSONObject("b", modVal1);
         BSONObject modifier1 = new BasicBSONObject("$set", obj1);
         // modifier2
-        String modVal2 = StringUtils.getRandomString( 32 );
+        String modVal2 = StringUtils.getRandomString(32);
         BSONObject obj2 = new BasicBSONObject("c", modVal2);
         BSONObject modifier2 = new BasicBSONObject("$set", obj2);
         // thread
-        ThreadExecutor es = new ThreadExecutor( TIMEOUT ); 
+        // TODO :单纯的数据操作并发，是否可以考虑增加并发数，其他用例类似
+        ThreadExecutor es = new ThreadExecutor(TIMEOUT);
         es.addWorker(new ThreadUpdate(modifier1));
         es.addWorker(new ThreadUpdate(modifier2));
         es.run();
-        
+
         // check results
         // check total count for update
+        // TODO :需要执行全文检索，不是普通查询
         BSONObject matcher = new BasicBSONObject();
         matcher.put("b", modVal1);
         matcher.put("c", modVal2);
@@ -108,16 +109,16 @@ public class FullText15856 extends SdbTestBase {
 
     private class ThreadUpdate {
         private BSONObject modifier;
-        
+
         private ThreadUpdate(BSONObject modifier) {
             this.modifier = modifier;
         }
-        
+
         @ExecuteOrder(step = 1)
         private void update() {
             System.out.println(new Date() + " " + this.getClass().getName().toString());
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);                
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 BSONObject matcher = new BasicBSONObject("a", new BasicBSONObject("$exists", 1));
                 BSONObject hint = new BasicBSONObject("", IDX_NAME);
                 cl2.update(matcher, modifier, hint);

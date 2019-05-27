@@ -28,20 +28,20 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author huangxiaoni
  * @Date 2019.5.8
  */
-
+// TODO :检视意见同15856
 public class FullText15858 extends SdbTestBase {
     private final static int THREAD_NUM = 5;
     private final static String CL_NAME = "cl_es_15858";
     private final static String IDX_NAME = "idx_es_15858";
     private final static BSONObject IDX_KEY = new BasicBSONObject("a", "text");
     private final static int RECS_NUM = 20000;
-    
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
     private int lid;
-    
+
     private Client esClient = null;
     private String esIndexName;
 
@@ -58,10 +58,10 @@ public class FullText15858 extends SdbTestBase {
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
+        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
 
         FullTextDBUtils.insertData(cl, RECS_NUM);
-        
+
         // 确保预置的数据同步到es完成，避免获取lids报索引不存在
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
         lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
@@ -78,8 +78,9 @@ public class FullText15858 extends SdbTestBase {
         // check total count
         long updCnt = cl.getCount();
         Assert.assertEquals(updCnt, 0);
-        
+
         // check consistency
+        // TODO :多次执行truncate操作，按照当前的公共方法，可能会导致该用例随机失败，修改公共方法后， 这里需要同步修改
         Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
     }
@@ -103,7 +104,7 @@ public class FullText15858 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void truncate() {
             System.out.println(new Date() + " " + this.getClass().getName().toString());
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 cl2.truncate();
             } catch (BaseException e) {
