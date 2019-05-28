@@ -11,7 +11,6 @@ var esOpr = new ESOperator();
 var dbOpr = new DBOperator();
 var CREATEINDEXSYNCOPERATION = 0;
 var DELETEINDEXSYNCOPERATION = 1;
-
 // create WORKDIR in local host
 commMakeDir( "localhost", WORKDIR );
 
@@ -52,7 +51,7 @@ function ESOperator()
       }
       catch(e)
       {
-          throw buildException("findFromES()", "find from es", str, "success","fail");
+          throw buildException("findFromES()", "find from es", str, "success",e);
       }
 
       return records; 
@@ -77,7 +76,7 @@ function ESOperator()
       }
       catch(e)
       {
-         throw buildException("countFromES()", "count from es", str, "success","fail");
+         throw buildException("countFromES()", "count from es", str, "success",e);
       }
 
       return count;
@@ -109,7 +108,7 @@ function ESOperator()
       }
       catch(e)
       {
-         throw buildException("getCommitIDFromES()", "get commitid from es", str, "success","fail");
+         throw buildException("getCommitIDFromES()", "get commitid from es", str, "success",e);
       }
 
       return commitID; 
@@ -132,11 +131,11 @@ function ESOperator()
       }
       catch(e)
       {
-         throw buildException("getCommitIDFromES()", "get commitid from es", str, "success","fail");
+         throw buildException("refreshFromES()", "refresh from es", str, "success",e);
       }
 
    }
-
+   
    /*****************************************************************
    * check if index is exist in elasticsearch      
    *****************************************************************/
@@ -175,7 +174,7 @@ function ESOperator()
          }
          catch(e)
          {
-            throw buildException("isExistIndexInES()", "check index name exist", str, "success","fail");
+            throw buildException("isExistIndexInES()", "check index name exist", str, "success",e);
          }
          
          // when judgeType is CREATEINDEXSYNCOPERATION: check index name in ES exists
@@ -251,7 +250,7 @@ function DBOperator()
    /*****************************************************************
    * get es index name, rule: 
    * cappedCLName: SYS_uniqueId_textIndexName  
-   * esIndexName:  sys_uniqueId_textIndexName_clGroupName							  
+   * esIndexName:  indexPrefix + sys_uniqueId_textIndexName_clGroupName							  
    *****************************************************************/
    this.getESIndexNames = function (csName, clName, textIndexName)
    {
@@ -267,7 +266,7 @@ function DBOperator()
       clGroupNames.sort();
       for(var i in clGroupNames)
       {
-         esIndexNames.push(cappedCLName.toLowerCase() + "_" + clGroupNames[i]);	
+         esIndexNames.push(FULLTEXTPREFIX + cappedCLName.toLowerCase() + "_" + clGroupNames[i]);	
       }
 	
       // if sharding cl, return all indices

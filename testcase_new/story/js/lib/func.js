@@ -21,6 +21,7 @@ if ( typeof(RSRVNODEDIR)   == "undefined" ) { RSRVNODEDIR   = "/opt/sequoiadb/da
 if ( typeof(WORKDIR)   == "undefined" ) { WORKDIR   = "/tmp/jstest"; }
 if ( typeof(ESHOSTNAME) == "undefined" ) { ESHOSTNAME = 'localhost'; }
 if ( typeof(ESSVCNAME) == "undefined" ) { ESSVCNAME = '9200'; }
+if ( typeof(FULLTEXTPREFIX) == "undefined" ) { FULLTEXTPREFIX = ''; }
 
 var COMMCSNAME = CHANGEDPREFIX + "_cs" ;
 var COMMCLNAME = CHANGEDPREFIX + "_cl" ;
@@ -1741,6 +1742,65 @@ function commMakeDir( host, dir )
         throw buildException( "commMakeDir", e, 
               "make dir " + dir + " in " + host, 0, e ) ;
     } 
+}
+
+function getPrefixNameFromES( suffixIndexName )
+{   
+   var prefix = ""; 
+   // get curl command
+   var str="curl -H " + HEADER + " -XGET " + HTTP + "/*" + suffixIndexName 
+                   + "' 2>/dev/null";
+                   
+   try 
+   {   
+      var info = cmd.run(str);
+      // to get full ESIndexName via suffix index name
+      var json = eval("(" + info + ")");
+      var fullESIndexName = ""; 
+      for(var key in json)
+      {   
+         fullESIndexName = key;
+         break;
+      }   
+      if(0 < fullESIndexName.length)
+      {   
+         var arr = fullESIndexName.split("_");
+         // to get prefix index name via full ESIndexName
+         prefix = arr[0];
+      }   
+      if(0 < prefix.length)
+      {   
+         // remove "sys" 
+         prefix = prefix.substring(0, prefix.length - 3); 
+      }   
+   }  
+   catch(e)
+   {
+      throw buildException("getPrefixNameFromES()", "get full prefix index name from es", str, "success", e);
+   }  
+      
+   return prefix;
+}  
+
+function getESIndexNames(csName, clName, textIndexName)
+{
+   // check cappedcl name is valid
+   var dbcl = db.getCS(csName).getCL(clName);
+   var cappedCLName = this.getCappedCLName(dbcl, textIndexName);
+
+   // get es index names
+   var esIndexNames = new Array();
+   var clGroupNames = commGetCLGroups(db, csName + "." + clName);
+   clGroupNames = removeDuplicateItems(clGroupNames);
+   // sort groupname, in order to mapping esIndexNames <-> cappedCLs
+   clGroupNames.sort();
+   for(var i in clGroupNames)
+   {
+      esIndexNames.push(FULLTEXTPREFIX + cappedCLName.toLowerCase() + "_" + clGroupNames[i]);	
+   }
+	
+   // if sharding cl, return all indices
+   return esIndexNames;
 }
 
 // common database connection
