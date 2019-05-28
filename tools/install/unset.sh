@@ -4,143 +4,125 @@ TYPE="unknown"
 CLEAN_PG=0
 CLEAN_DB=0
 CLEAN_MYSQL=0
+FORCE=false
+LOCAL=false
 
-function clean_db()
+function clean_by_dbtype()
 {
-   local install_dir=$1
-   local filter=$2
+   local name=$1
+   local installInfos=""
    
-   local datadir_list=`$install_dir/bin/sdblist -l | grep -v "Total"|awk 'NR>1{print $NF}'`
-   echo "begin to uninstall $name"
-   echo "$install_dir/uninstall --mode unattended"
-   `$install_dir/uninstall --mode unattended`
-   echo "ok"
-   for datadir in $datadir_list
+   if [ $LOCAL == true ];
+   then
+      installInfos=`find /etc/default -regex ".*$name[1-4][0-9]" -o -regex ".*$name[1-9]" -o -name "$name"`
+   else
+      installInfos=`cat /etc/default/sequoiadb-setup.list | grep "$name"`
+   fi
+   
+   for installInfo in $installInfos
    do
-      echo "rm -rf $datadir"
-      rm -rf $datadir
+      local file=`echo $installInfo |awk -F, '{print $1}'`
+      local md5=`echo $installInfo |awk -F, '{print $2}'`
+      [ -z $md5 ] && md5="xx"
+      
+      . $file
+      if [ $LOCAL == true -o $MD5 == $md5 ]; 
+      then
+         case $name in
+            "sequoiadb")
+                          clean_sdb $installInfo
+                          shift
+                          ;;
+            "sequoiasql-mysql" | "sequoiasql-postgresql")
+                          clean_sql $installInfo
+                          shift
+                          ;;
+            *)            echo "Internal error!"
+                          exit 64
+                          ;;
+         esac
+      fi
    done
-   echo "begin to clean install dir"
-   echo "rm -rf $install_dir"
-   rm -rf $install_dir
-   `sed -i '/'$filter'/d' /etc/default/setup.list`
-   echo "ok"
+}
+
+function clean_sdb()
+{
+   local installInfo=$1
+   local file=`echo $installInfo |awk -F, '{print $1}'`
+   
+   . $file
+   local filter=`echo $installInfo |awk -F / '{print $4}'`
+   if [ $FORCE == false ];then
+      read -p "clean $INSTALL_DIR $name Y/n: " choice
+   fi
+   
+   [ -z $choice ] && choice="Y"
+   if [[ "$choice" == "Y" || "$choice" == "y" ]];then
+      
+      local datadir_list=`$INSTALL_DIR/bin/sdblist -l | grep -v "Total"|awk 'NR>1{print $NF}'`
+      echo "begin to uninstall $name"
+      echo "$INSTALL_DIR/uninstall --mode unattended"
+      `$INSTALL_DIR/uninstall --mode unattended`
+      test $? -ne 0 && { echo "ERROR: Fail to $INSTALL_DIR/uninstall --mode unattended" >&2 && exit 1; }
+      
+      echo "ok"
+      for datadir in $datadir_list
+      do
+         echo "rm -rf $datadir"
+         rm -rf $datadir
+      done
+      echo "begin to clean install dir"
+      echo "rm -rf $INSTALL_DIR"
+      rm -rf $INSTALL_DIR
+      
+      `sed -i '/'$filter'/d' /etc/default/sequoiadb-setup.list`
+      echo "ok"
+   fi
    return 0
 }
 
 function clean_sql()
 {
-   local install_dir=$1
-   local filter=$2
-      
-   local datadir_list=`$install_dir/bin/sdb_sql_ctl listinst | grep -v "Total"|awk 'NR>1{print $2 " " $3}'`
-   echo "begin to uninstall $name"
-   echo "$install_dir/uninstall --mode unattended"
-   `$install_dir/uninstall --mode unattended`
-   echo "ok"
-   for datadir in $datadir_list
-   do
-      echo "rm -rf $datadir"
-      rm -rf $datadir
-   done
-   echo "begin to clean install dir"
-   echo "rm -rf $install_dir"
-   rm -rf $install_dir
-   `sed -i '/'$filter'/d' /etc/default/setup.list`
-   echo "ok"
-   return 0
-}
-
-function ask_user()
-{
-   local install_dir=$1
-   local name=$2
-   local filter=$3
-   read -p "clean $install_dir $name Y/n: " choice
+   local installInfo=$1
+   local file=`echo $installInfo |awk -F, '{print $1}'`
+   
+   . $file
+   local filter=`echo $installInfo |awk -F / '{print $4}'`
+   if [ $FORCE == false ];then
+      read -p "clean $INSTALL_DIR $name Y/n: " choice
+   fi 
+   
    [ -z $choice ] && choice="Y"
-   if [[ "$choice" == "Y" || "$choice" == "y" ]];
-   then
-      case $name in
-         "sequoiadb")
-                       echo "begin to clean db data"
-                       clean_db $install_dir $filter
-                       shift
-                       ;;
-         "sequoiasql-mysql" | "sequoiasql-postgresql")
-                       echo "begin to clean sql data"
-                       clean_sql $install_dir $filter
-                       shift
-                       ;;
-         *)            echo "Internal error!"
-                       exit 64
-                       ;;
-      esac
-   fi
-}
+   if [[ "$choice" == "Y" || "$choice" == "y" ]];then
 
-function clean_install()
-{
-   local name=$1
-   local install_dir=$2
-   local clean_all=$3
-   local filter=$4
-   
-   if [ $clean_all == true ]; 
-   then      
-      case $name in
-         "sequoiadb")
-                       echo "begin to clean data"
-                       clean_db $install_dir $filter
-                       shift
-                       ;;
-         "sequoiasql-mysql" | "sequoiasql-postgresql")
-                       clean_sql $install_dir $filter
-                       shift
-                       ;;
-         *)            echo "Internal error!"
-                       exit 64
-                       ;;
-      esac
+      local datadir_list=`$INSTALL_DIR/bin/sdb_sql_ctl listinst | grep -v "Total"|awk 'NR>1{print $2 " " $3}'`
+      echo "begin to uninstall $name"
+      echo "$INSTALL_DIR/uninstall --mode unattended"
+      `$INSTALL_DIR/uninstall --mode unattended`
+      test $? -ne 0 && { echo "ERROR: Fail to $INSTALL_DIR/uninstall --mode unattended" >&2 && exit 1; }
       
-   else
-      case $name in
-         "sequoiadb")
-                       ask_user $install_dir $name $filter
-                       shift
-                       ;;
-         "sequoiasql-mysql" | "sequoiasql-postgresql")
-                       ask_user $install_dir $name $filter
-                       shift
-                       ;;
-         *)            echo "Internal error!"
-                       exit 64
-                       ;;
-      esac
+      echo "ok"
+      for datadir in $datadir_list
+      do
+         echo "rm -rf $datadir"
+         rm -rf $datadir
+      done
+      echo "begin to clean install dir"
+      echo "rm -rf $INSTALL_DIR"
+      rm -rf $INSTALL_DIR
+      
+      `sed -i '/'$filter'/d' /etc/default/sequoiadb-setup.list`
+      echo "ok"
    fi
-   
-}
-
-function clean_install_by_name()
-{
-   local name=$1
-   local clean_all=$2
-   for installInfo in `cat /etc/default/setup.list | grep "$name"`
-   do
-      local file=`echo $installInfo |awk -F, '{print $1}'`
-      local md5=`echo $installInfo |awk -F, '{print $2}'`
-      local filter=`echo $installInfo |awk -F / '{print $4}'`
-      . $file
-      if [ $MD5 == $md5 ]; then
-         clean_install $name $INSTALL_DIR $clean_all $filter
-      fi
-   done
+      
+   return 0
 }
 
 function clean_all()
 {
-   clean_install_by_name "sequoiadb" true
-   clean_install_by_name "sequoiasql-mysql" true
-   clean_install_by_name "sequoiasql-postgresql" true
+   clean_by_dbtype "sequoiadb"
+   clean_by_dbtype "sequoiasql-mysql"
+   clean_by_dbtype "sequoiasql-postgresql"
 }
 
 function build_help()
@@ -150,12 +132,14 @@ function build_help()
    echo "  --sdb        clean sequoiadb"
    echo "  --pg         clean sequoiasql-postgresql"
    echo "  --mysql      clean sequoiasql-mysql"
+   echo "  --force      don't ask user when clean sdb, mysql or pg"
+   echo "  --local      clean up all local install and data"
 }
 
 #Parse command line parameters
 #test $# -eq 0 && { build_help && exit 64; }
 
-ARGS=`getopt -o h --long help,sdb,pg,mysql -n 'test' -- "$@"`
+ARGS=`getopt -o h --long help,sdb,pg,mysql,force,local -n 'test' -- "$@"`
 ret=$?
 test $ret -ne 0 && exit $ret
 
@@ -164,19 +148,22 @@ eval set -- "${ARGS}"
 while true
 do
    case "$1" in
-      --sdb )          INSTALL_DB=1
-                       TYPE="sequoiadb"
-                       clean_install_by_name $TYPE false
+      --sdb )          TYPE="sequoiadb"
+                       CLEAN_DB=1
                        shift
                        ;;
-      --pg )           INSTALL_PG=1
-                       TYPE="sequoiasql-postgresql"
-                       clean_install_by_name $TYPE false
+      --mysql )        TYPE="sequoiasql-mysql"
+                       CLEAN_MYSQL=1
                        shift
                        ;;
-      --mysql )        INSTALL_MYSQL=1
-                       TYPE="sequoiasql-mysql"
-                       clean_install_by_name $TYPE false
+      --pg )           TYPE="sequoiasql-postgresql"
+                       CLEAN_PG=1
+                       shift
+                       ;;
+      --force )        FORCE=true
+                       shift
+                       ;;
+      --local )        LOCAL=true
                        shift
                        ;;
       -h | --help )    build_help
@@ -190,6 +177,18 @@ do
                        ;;
    esac
 done
+
+if [ $CLEAN_DB -ne 0 ];then
+   clean_by_dbtype "sequoiadb"
+fi
+
+if [ $CLEAN_MYSQL -ne 0 ];then
+   clean_by_dbtype "sequoiasql-mysql"
+fi
+
+if [ $CLEAN_PG -ne 0 ];then
+   clean_by_dbtype "sequoiasql-postgresql"
+fi
 
 case "$TYPE" in
    unknown)             clean_all; shift 1;;

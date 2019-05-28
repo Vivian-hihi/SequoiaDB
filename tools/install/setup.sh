@@ -1,6 +1,7 @@
 #!/bin/bash
 
 TYPE="unknown"
+SETUP_CONF="/etc/default/sequoiadb-setup.list"
 
 function install()
 {
@@ -12,7 +13,6 @@ function install()
       chmod u+x $file_run
       $file_run --mode text
       test $? -ne 0 && { echo "ERROR: Fail to $file_run --mode text" >&2 && exit 1; }
-      local SETUP_CONF="/etc/default/setup.list"
       test -f $SETUP_CONF || touch $SETUP_CONF
       chmod 755 $SETUP_CONF
       case $name in
