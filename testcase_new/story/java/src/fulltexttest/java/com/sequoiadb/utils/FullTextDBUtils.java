@@ -83,7 +83,7 @@ public class FullTextDBUtils {
         String cappedName = getCappedName( cl, indexName );
         List< String > groupNames = getCLGroups( cl );
 
-        return FullTextUtils.getFulltextPrefix() + cappedName.toLowerCase()
+        return FullTextUtils.getFulltextPrefix().toLowerCase() + cappedName.toLowerCase()
                 + "_" + groupNames.get( 0 );
     }
 
@@ -105,7 +105,7 @@ public class FullTextDBUtils {
         List< String > groupNames = getCLGroups( cl );
 
         for ( String groupName : groupNames ) {
-            esIndexNames.add( FullTextUtils.getFulltextPrefix()
+            esIndexNames.add( FullTextUtils.getFulltextPrefix().toLowerCase()
                     + cappedName.toLowerCase() + "_" + groupName );
         }
 

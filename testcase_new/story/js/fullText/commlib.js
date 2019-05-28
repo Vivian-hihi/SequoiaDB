@@ -266,7 +266,7 @@ function DBOperator()
       clGroupNames.sort();
       for(var i in clGroupNames)
       {
-         esIndexNames.push(FULLTEXTPREFIX + cappedCLName.toLowerCase() + "_" + clGroupNames[i]);	
+         esIndexNames.push(FULLTEXTPREFIX.toLowerCase() + cappedCLName.toLowerCase() + "_" + clGroupNames[i]);	
       }
 	
       // if sharding cl, return all indices
