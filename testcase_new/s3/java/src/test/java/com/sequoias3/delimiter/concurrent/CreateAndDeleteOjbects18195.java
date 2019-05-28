@@ -91,6 +91,7 @@ public class CreateAndDeleteOjbects18195 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBucket(s3Client, bucketName);
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			s3Client.shutdown();
