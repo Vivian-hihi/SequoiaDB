@@ -31,7 +31,6 @@ import com.vividsolutions.jts.util.Assert;
  * @Date huangxiaoni 2019.5.9
  */
 
-// TODO :跟全文索引无关的用例移动到普通索引的目录下
 public class FullText18259 extends SdbTestBase {
     private final int THREAD_NUM = 5;
     private final String CL_NAME = "cl_es_18259";
@@ -70,6 +69,7 @@ public class FullText18259 extends SdbTestBase {
 
         // check index
         // TODO :需要校验只有1个线程执行成功
+        // TODO 没撞到点上结果有可能不确定，不校验成功的线程个数
         CommLib commlib = new CommLib();
         commlib.checkIndex(sdb, IDX_NAME, CL_NAME);
         this.checkData();

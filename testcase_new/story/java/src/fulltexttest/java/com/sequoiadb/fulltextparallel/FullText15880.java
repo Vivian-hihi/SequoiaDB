@@ -29,9 +29,10 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author huangxiaoni
  * @Date 2019.5.14
  */
-// TODO :建议创建自己的集合空间，sync指定集合空间刷盘，避免对其他用例的影响；
+
 public class FullText15880 extends SdbTestBase {
     private Random random = new Random();
+    private final String CS_NAME = "cs_es_15880";
     private final String CL_NAME = "cl_es_15880";
     private final String IDX_NAME = "idx_es_15880";
     private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
@@ -55,7 +56,7 @@ public class FullText15880 extends SdbTestBase {
             throw new SkipException("Skip standAlone mode");
         }
 
-        cs = sdb.getCollectionSpace(SdbTestBase.csName);
+        cs = sdb.createCollectionSpace(CS_NAME);
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         FullTextDBUtils.insertData(cl, RECS_NUM);
@@ -86,6 +87,7 @@ public class FullText15880 extends SdbTestBase {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
+            sdb.dropCollectionSpace(CS_NAME);
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -113,6 +115,9 @@ public class FullText15880 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void createIndex() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                BSONObject options = new BasicBSONObject();
+                options.put("CollectionSpace", CL_NAME);
+                options.put("Block", true);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 for (int i = 0; i < 3; i++) {
                     db.sync(new BasicBSONObject("Block", true));

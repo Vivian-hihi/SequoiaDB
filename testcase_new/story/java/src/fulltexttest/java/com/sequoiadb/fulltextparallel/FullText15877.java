@@ -1,7 +1,6 @@
 package com.sequoiadb.fulltextparallel;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -43,10 +42,10 @@ public class FullText15877 extends SdbTestBase {
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
-    private List<String> clRgNames;
 
     private Client esClient = null;
     private String esIndexName;
+    private int lid;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -61,14 +60,13 @@ public class FullText15877 extends SdbTestBase {
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        clRgNames = FullTextDBUtils.getCLGroups(cl);
-        System.out.println(this.getClass().getName() + " " + clRgNames);
         esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
 
         FullTextDBUtils.insertData(cl, RECS_NUM);
 
-        // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
+        // 确保预置的数据同步到es完成
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
+        lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
 
     @Test
@@ -81,18 +79,19 @@ public class FullText15877 extends SdbTestBase {
         es.run();
 
         // check results
-        if (threadDropIdx.getRetCode() == 0) {
+        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
+        
+        int cnt = (int) cl.getCount();
+        if (threadTruncate.getRetCode() == 0) {
+            Assert.assertEquals(cnt, 0);
+        } else if (threadTruncate.getRetCode() != 0) {
+            Assert.assertEquals(cnt, RECS_NUM);
+        }
+        
+        if ( threadDropIdx.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
-            long cnt = cl.getCount();
-            // TODO
-            // :下面这个判断为啥要嵌套到这里？是不是可以分开判断，另外truncate，需要判断一下索引是否重建了及db端、ES端记录数，其他用例类似，均需考虑db端及ES端的记录
-            if (threadTruncate.getRetCode() == 0) {
-                Assert.assertEquals(cnt, 0);
-            } else {
-                Assert.assertEquals(cnt, RECS_NUM);
-            }
-        } else if (threadDropIdx.getRetCode() != 0) {
-            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
+        } else if ( threadDropIdx.getRetCode() != 0) {
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, cnt));
         }
     }
 

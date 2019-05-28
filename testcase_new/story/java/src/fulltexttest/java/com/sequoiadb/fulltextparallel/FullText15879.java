@@ -75,7 +75,7 @@ public class FullText15879 extends SdbTestBase {
 
         FullTextDBUtils.insertData(cl, RECS_NUM);
 
-        // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
+        // 确保预置的数据同步到es完成
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
         lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
@@ -89,22 +89,25 @@ public class FullText15879 extends SdbTestBase {
         es.addWorker(threadSplit);
         es.run();
 
-        // check results
-        // TODO :线程的执行结果相互不影响，建议在线程中去校验每个线程的执行结果，这样逻辑上会更清晰
+        // check records
+        // TODO :线程的执行结果相互不影响，建议在线程中去校验每个线程的执行结果，这样逻辑上会更清晰 
+        // TODO 不影响，不修改
         int expRecsNum = 0;
         if (threadTruncate.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
         } else if (threadTruncate.getRetCode() != 0) {
             expRecsNum = RECS_NUM;
         }
-
-        // TODO :切分执行完后，需要校验切分后数据节点及ES端的全文索引数据
-        int expRgNum = 0;
-        if (threadSplit.getRetCode() == 0) {
-            expRgNum = 2;
-        }
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, expRecsNum));
-        Assert.assertEquals(FullTextDBUtils.getCLGroups(cl).size(), expRgNum);
+        Assert.assertEquals((int) cl.getCount(), expRecsNum);
+
+        // check cl after split
+        int actRgNum = FullTextDBUtils.getCLGroups(cl).size();
+        if (threadSplit.getRetCode() == 0) {
+            Assert.assertEquals(actRgNum, 2);
+        } else if (threadSplit.getRetCode() != 0) {
+            Assert.assertEquals(actRgNum, 2);
+        } 
     }
 
     @AfterClass

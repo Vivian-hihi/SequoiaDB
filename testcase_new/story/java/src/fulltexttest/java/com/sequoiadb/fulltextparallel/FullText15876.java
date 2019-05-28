@@ -1,7 +1,6 @@
 package com.sequoiadb.fulltextparallel;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -31,7 +30,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author huangxiaoni
  * @Date 2019.5.14
  */
-// TODO :truncate后索引重建，后续需统一修改
+
 public class FullText15876 extends SdbTestBase {
     private Random random = new Random();
     private final String CS_NAME = "cs_es_15876";
@@ -44,7 +43,6 @@ public class FullText15876 extends SdbTestBase {
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
-    private List<String> clRgNames;
 
     private Client esClient = null;
     private String esIndexName;
@@ -62,10 +60,6 @@ public class FullText15876 extends SdbTestBase {
         cs = sdb.createCollectionSpace(CS_NAME);
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
-        cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        // TODO :获取这个组只是为了打印？
-        clRgNames = FullTextDBUtils.getCLGroups(cl);
-        System.out.println(this.getClass().getName() + " " + clRgNames);
         esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
 
         FullTextDBUtils.insertData(cl, RECS_NUM);

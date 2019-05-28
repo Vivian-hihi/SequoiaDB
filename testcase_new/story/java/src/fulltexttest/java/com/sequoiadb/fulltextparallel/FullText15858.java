@@ -28,7 +28,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author huangxiaoni
  * @Date 2019.5.8
  */
-// TODO :检视意见同15856
+
 public class FullText15858 extends SdbTestBase {
     private final int THREAD_NUM = 5;
     private final String CL_NAME = "cl_es_15858";

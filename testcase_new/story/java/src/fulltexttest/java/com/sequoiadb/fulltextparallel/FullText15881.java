@@ -79,19 +79,20 @@ public class FullText15881 extends SdbTestBase {
         es.run();
 
         // check results
-        // TODO :线程之间相互没有影响，结果校验建议放到线程里面
-        int expNum = 0;
+        int cnt = (int) cl.getCount();
         if (threadTruncate.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
+            Assert.assertEquals(cnt, 0);
         } else if (threadTruncate.getRetCode() != 0) {
-            expNum = RECS_NUM;
-            if (threadAlterCL.getRetCode() == 0) {
-                this.checkAlterCLResults(true);
-            } else {
-                this.checkAlterCLResults(false);
-            }
+            Assert.assertEquals(cnt, RECS_NUM);
         }
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, expNum));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, cnt));
+
+        if (threadAlterCL.getRetCode() == 0) {
+            this.checkAlterCLResults(true);
+        } else if (threadAlterCL.getRetCode() != 0) {
+            this.checkAlterCLResults(false);
+        }
     }
 
     @AfterClass
