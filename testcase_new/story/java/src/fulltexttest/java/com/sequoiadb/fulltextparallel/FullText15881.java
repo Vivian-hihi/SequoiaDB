@@ -38,21 +38,19 @@ public class FullText15881 extends SdbTestBase {
     private final String IDX_NAME = "idx_es_15881";
     private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
     private final int RECS_NUM = 20000;
-    
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
-    
+
     private Client esClient = null;
     private String esIndexName;
     private int lid;
-    
 
     @BeforeClass
     private void setUp() throws Exception {
-        esClient = FullTextESUtils.createTransportClient(esHostName, 
-                Integer.parseInt(esServiceName));
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
         if (CommLib.isStandAlone(sdb)) {
@@ -60,12 +58,12 @@ public class FullText15881 extends SdbTestBase {
         }
 
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
-        cl = cs.createCollection(CL_NAME); 
-        cl.createIndex(IDX_NAME, IDX_KEY, false, false);       
+        cl = cs.createCollection(CL_NAME);
+        cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         FullTextDBUtils.insertData(cl, RECS_NUM);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
-        
+        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
+
         // 确保预置的数据同步到es完成，避免获取lids报索引不存在
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
         lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
@@ -79,8 +77,9 @@ public class FullText15881 extends SdbTestBase {
         es.addWorker(threadTruncate);
         es.addWorker(threadAlterCL);
         es.run();
-        
+
         // check results
+        // TODO :线程之间相互没有影响，结果校验建议放到线程里面
         int expNum = 0;
         if (threadTruncate.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
@@ -114,7 +113,7 @@ public class FullText15881 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {
             Thread.sleep(random.nextInt(30));
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl2.truncate();
@@ -125,19 +124,19 @@ public class FullText15881 extends SdbTestBase {
                 }
                 saveResult(-1, e);
             }
-        } 
+        }
     }
 
     private class ThreadAlterCL extends ResultStore {
         @ExecuteOrder(step = 1)
         private void alterCL() {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 BSONObject options = new BasicBSONObject();
                 options.put("ShardingType", "hash");
-                options.put("ShardingKey", new BasicBSONObject("a", 1));               
+                options.put("ShardingKey", new BasicBSONObject("a", 1));
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-                cl2.alterCollection(options);               
+                cl2.alterCollection(options);
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
             } catch (BaseException e) {
                 if (e.getErrorCode() != -147) {
@@ -147,11 +146,10 @@ public class FullText15881 extends SdbTestBase {
             }
         }
     }
-    
+
     private void checkAlterCLResults(boolean alterCLSucc) {
-        DBCursor cursor = sdb.getSnapshot(8, 
-                new BasicBSONObject("Name", cl.getFullName()), null, null);
-        BSONObject clInfo  = (BasicBSONObject) cursor.getCurrent();
+        DBCursor cursor = sdb.getSnapshot(8, new BasicBSONObject("Name", cl.getFullName()), null, null);
+        BSONObject clInfo = (BasicBSONObject) cursor.getCurrent();
         String srdType = clInfo.get("ShardingType").toString();
         if (alterCLSucc) {
             Assert.assertEquals(srdType, "hash");

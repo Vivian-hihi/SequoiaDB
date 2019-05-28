@@ -38,22 +38,20 @@ public class FullText15875 extends SdbTestBase {
     private final String IDX_NAME = "idx_es_15875";
     private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
     private final int RECS_NUM = 20000;
-    
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
     private List<String> clRgNames;
-    
+
     private Client esClient = null;
     private String esIndexName;
     private int lid;
-    
 
     @BeforeClass
     private void setUp() throws Exception {
-        esClient = FullTextESUtils.createTransportClient(esHostName, 
-                Integer.parseInt(esServiceName));
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
         if (CommLib.isStandAlone(sdb)) {
@@ -61,16 +59,17 @@ public class FullText15875 extends SdbTestBase {
         }
 
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
-        cl = cs.createCollection(CL_NAME); 
-        
-        cl.createIndex(IDX_NAME, IDX_KEY, false, false);         
+        cl = cs.createCollection(CL_NAME);
+
+        cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
+        // TODO :获取这个组只是为了打印？
         clRgNames = FullTextDBUtils.getCLGroups(cl);
         System.out.println(this.getClass().getName() + " " + clRgNames);
-        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
-        
+        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
+
         FullTextDBUtils.insertData(cl, RECS_NUM);
-        
+
         // 确保预置的数据同步到es完成，避免获取lids报索引不存在
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
         lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
@@ -80,11 +79,11 @@ public class FullText15875 extends SdbTestBase {
     private void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor();
         ThreadTruncate threadTruncate = new ThreadTruncate();
-        ThreadDropCL   threadDropCL   = new ThreadDropCL();
+        ThreadDropCL threadDropCL = new ThreadDropCL();
         es.addWorker(threadTruncate);
         es.addWorker(threadDropCL);
         es.run();
-        
+
         // check results
         if (threadDropCL.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
@@ -112,7 +111,7 @@ public class FullText15875 extends SdbTestBase {
     private class ThreadTruncate {
         @ExecuteOrder(step = 1)
         private void truncate() {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl2.truncate();
@@ -122,15 +121,15 @@ public class FullText15875 extends SdbTestBase {
                     throw e;
                 }
             }
-        } 
+        }
     }
 
     private class ThreadDropCL extends ResultStore {
         @ExecuteOrder(step = 1)
         private void alterCL() throws InterruptedException {
             Thread.sleep(random.nextInt(10));
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);           
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cs.dropCollection(CL_NAME);
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());

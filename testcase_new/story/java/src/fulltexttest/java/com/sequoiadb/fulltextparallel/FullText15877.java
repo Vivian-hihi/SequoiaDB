@@ -38,21 +38,19 @@ public class FullText15877 extends SdbTestBase {
     private final String IDX_NAME = "idx_es_15877";
     private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
     private final int RECS_NUM = 20000;
-    
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
     private List<String> clRgNames;
-    
+
     private Client esClient = null;
     private String esIndexName;
-    
 
     @BeforeClass
     private void setUp() throws Exception {
-        esClient = FullTextESUtils.createTransportClient(esHostName, 
-                Integer.parseInt(esServiceName));
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
         if (CommLib.isStandAlone(sdb)) {
@@ -61,14 +59,14 @@ public class FullText15877 extends SdbTestBase {
 
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         cl = cs.createCollection(CL_NAME);
-        cl.createIndex(IDX_NAME, IDX_KEY, false, false);          
+        cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
         clRgNames = FullTextDBUtils.getCLGroups(cl);
         System.out.println(this.getClass().getName() + " " + clRgNames);
-        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
-        
+        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
+
         FullTextDBUtils.insertData(cl, RECS_NUM);
-        
+
         // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
     }
@@ -81,18 +79,19 @@ public class FullText15877 extends SdbTestBase {
         es.addWorker(threadTruncate);
         es.addWorker(threadDropIdx);
         es.run();
-        
+
         // check results
         if (threadDropIdx.getRetCode() == 0) {
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));  
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
             long cnt = cl.getCount();
+            // TODO
+            // :下面这个判断为啥要嵌套到这里？是不是可以分开判断，另外truncate，需要判断一下索引是否重建了及db端、ES端记录数，其他用例类似，均需考虑db端及ES端的记录
             if (threadTruncate.getRetCode() == 0) {
                 Assert.assertEquals(cnt, 0);
             } else {
-                Assert.assertEquals(cnt, RECS_NUM); 
+                Assert.assertEquals(cnt, RECS_NUM);
             }
-        } 
-        else if (threadDropIdx.getRetCode() != 0) {
+        } else if (threadDropIdx.getRetCode() != 0) {
             Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
         }
     }
@@ -116,7 +115,7 @@ public class FullText15877 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {
             Thread.sleep(random.nextInt(50));
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl2.truncate();
@@ -127,25 +126,25 @@ public class FullText15877 extends SdbTestBase {
                 }
                 saveResult(-1, e);
             }
-        } 
+        }
     }
 
-    private class ThreadDropFullTextIndex extends ResultStore{        
+    private class ThreadDropFullTextIndex extends ResultStore {
         @ExecuteOrder(step = 1)
         private void dropIndex() {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl2.dropIndex(IDX_NAME);
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
             } catch (BaseException e) {
-                // -52 Index does not exist, maybe index rebuilding after truncate
-                if (e.getErrorCode() != -321 && e.getErrorCode() != -52 
-                        && e.getErrorCode() != -147) {
+                // -52 Index does not exist, maybe index rebuilding after
+                // truncate
+                if (e.getErrorCode() != -321 && e.getErrorCode() != -52 && e.getErrorCode() != -147) {
                     throw e;
                 }
                 saveResult(-1, e);
             }
         }
-    }  
+    }
 }
