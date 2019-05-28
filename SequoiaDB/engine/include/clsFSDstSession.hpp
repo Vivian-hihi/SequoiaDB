@@ -126,6 +126,11 @@ namespace engine
 
       protected:
          void           _disconnect() ;
+         INT32          _sendTo( const MsgRouteID &id,
+                                 MsgHeader *pMsg,
+                                 void *pBody = NULL,
+                                 UINT32 bodyLen = 0 ) ;
+
          void           _meta () ;
          void           _index() ;
          void           _notify( CLS_FS_NOTIFY_TYPE type ) ;
@@ -180,6 +185,10 @@ namespace engine
          UINT64               _lastOprLSN ;
          /// when we begin to get lob, we do not want to sync doc any more.
          BOOLEAN              _needMoreDoc ;
+
+      private:
+         MsgRouteID           _connID ;
+         NET_HANDLE           _connHandle ;
 
    };
 

@@ -139,7 +139,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETRTAG_LSTN );
-      _netRouteNode node ;
+
       CHAR host[ OSS_MAX_HOSTNAME + 1 ] = { 0 } ;
       CHAR service[ OSS_MAX_SERVICENAME + 1] = { 0 } ;
       rc = _route.route( id, host, OSS_MAX_HOSTNAME,
@@ -163,6 +163,12 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _netRouteAgent::syncConnect( const _MsgRouteID &id,
+                                      NET_HANDLE *pHandle )
+   {
+      return _frame.syncConnect( id, pHandle ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND, "_netRouteAgent::syncSend" )
@@ -247,51 +253,12 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSNDV, "_netRouteAgent::syncSendv" )
    INT32 _netRouteAgent::syncSendv( const _MsgRouteID &id,
                                     MsgHeader *header,
                                     const netIOVec &iov,
                                     NET_HANDLE *pHandle )
    {
-      PD_TRACE_ENTRY ( SDB__NETRTAG_SYNCSNDV ) ;
-      SDB_ASSERT( NULL != header, "should not be NULL" ) ;
-      INT32 rc = SDB_OK ;
-      rc = _frame.syncSendv( id, header, iov, pHandle ) ;
-      if ( SDB_OK == rc )
-      {
-         goto done ;
-      }
-      else if ( SDB_NET_NOT_CONNECT != rc )
-      {
-         goto error ;
-      }
-      else
-      {
-         CHAR host[ OSS_MAX_HOSTNAME + 1 ] = { 0 } ;
-         CHAR service[ OSS_MAX_SERVICENAME + 1] = { 0 } ;
-         rc = _route.route( id, host, OSS_MAX_HOSTNAME,
-                            service, OSS_MAX_SERVICENAME ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-         rc = _frame.syncConnect( host, service, id ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-
-         rc = _frame.syncSendv( id, header, iov, pHandle ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-      }
-   done:
-      PD_TRACE_EXITRC( SDB__NETRTAG_SYNCSNDV, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+      return _frame.syncSendv( id, header, iov, pHandle ) ;
    }
 
    INT32 _netRouteAgent::syncSendv( const NET_HANDLE & handle,

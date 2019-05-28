@@ -94,8 +94,10 @@ namespace engine
       _requestID = 0 ;
       _lastOprLSN = DPS_INVALID_LSN_OFFSET ;
       _needMoreDoc = TRUE ;
-
       _info._info.setNice( SCHED_NICE_MIN ) ;
+
+      _connID.value = MSG_INVALID_ROUTEID ;
+      _connHandle = NET_INVALID_HANDLE ;
    }
 
    _clsDataDstBaseSession::~_clsDataDstBaseSession ()
@@ -187,7 +189,7 @@ namespace engine
       MsgHeader msg ;
       _quit = TRUE ;
 
-      if ( _selector.src().value != MSG_INVALID_ROUTEID )
+      if ( MSG_INVALID_ROUTEID != _selector.src().value )
       {
          PD_LOG( PDEVENT, "Session[%s]: Disconnect the session with node[%s]",
                  sessionName(), routeID2String( _selector.src() ).c_str() ) ;
@@ -196,10 +198,79 @@ namespace engine
          msg.routeID.value = MSG_INVALID_ROUTEID ;
          msg.requestID = ++_requestID ;
          msg.opCode = MSG_BS_DISCONNECT ;
-         _agent->syncSend( _selector.src(), &msg ) ;
+         _sendTo( _selector.src(), &msg ) ;
       }
       PD_TRACE_EXIT ( SDB__CLSDATADBS__DISCONN );
       return ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__SENDTO, "_clsDataDstBaseSession::_sendTo" )
+   INT32 _clsDataDstBaseSession::_sendTo( const MsgRouteID &id,
+                                          MsgHeader *pMsg,
+                                          void *pBody,
+                                          UINT32 bodyLen )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSDATADBS__SENDTO ) ;
+
+      if ( MSG_INVALID_ROUTEID == id.value )
+      {
+         PD_LOG( PDWARNING, "Session[%s]: Route id is invalid",
+                 sessionName() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( _connID.value == id.value )
+      {
+         if ( !pBody )
+         {
+            rc = _agent->syncSend( _connHandle, (void*)pMsg) ;
+         }
+         else
+         {
+            rc = _agent->syncSend( _connHandle, pMsg, pBody, bodyLen ) ;
+         }
+
+         if ( SDB_OK == rc )
+         {
+            goto done ;
+         }
+         else if ( SDB_NET_INVALID_HANDLE == rc )
+         {
+            _connID.value = MSG_INVALID_ROUTEID ;
+            _connHandle = NET_INVALID_HANDLE ;
+         }
+      }
+
+      if ( NET_INVALID_HANDLE == _connHandle )
+      {
+         NET_HANDLE handle = NET_INVALID_HANDLE ;
+         if ( !pBody )
+         {
+            rc = _agent->syncSend( id, (void*)pMsg, &handle ) ;
+         }
+         else
+         {
+            rc = _agent->syncSend( id, pMsg, pBody, bodyLen, &handle ) ;
+         }
+         if ( SDB_OK == rc )
+         {
+            _connHandle = handle ;
+            _connID.value = id.value ;
+            goto done ;
+         }
+      }
+
+      PD_LOG( PDWARNING, "Session[%s]: Send message to node[%s] failed, "
+              "rc: %d", sessionName(),
+              routeID2String( _selector.src() ).c_str(), rc ) ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__CLSDATADBS__SENDTO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__META, "_clsDataDstBaseSession::_meta" )
@@ -237,9 +308,9 @@ namespace engine
          msg.header.messageLength = sizeof( MsgClsFSMetaReq ) +
                                     obj.objsize() ;
          // send the request to source
-         _agent->syncSend( _selector.src(),
-                           &( msg.header ), ( void * )obj.objdata(),
-                           obj.objsize() ) ;
+         _sendTo( _selector.src(),
+                  &( msg.header ), ( void * )obj.objdata(),
+                  obj.objsize() ) ;
          fullName.replace( pos, 1, 1, '.' ) ;
          _timeout = 0 ;
          _needMoreDoc = TRUE ;
@@ -268,7 +339,7 @@ namespace engine
       MsgClsFSIndexReq msg ;
       msg.header.TID = CLS_TID( _sessionID ) ;
       msg.header.requestID = ++_requestID ;
-      _agent->syncSend( _selector.src(), &msg ) ;
+      _sendTo( _selector.src(), &(msg.header) ) ;
       _timeout = 0 ;
       PD_TRACE_EXIT ( SDB__CLSDATADBS__INDEX );
       return ;
@@ -286,7 +357,7 @@ namespace engine
       msg.header.requestID = ++_requestID ;
       msg.packet = _packet ;
       msg.type = type ;
-      _agent->syncSend( _selector.src(), &msg ) ;
+      _sendTo( _selector.src(), &(msg.header) ) ;
       _timeout = 0 ;
       PD_TRACE_EXIT ( SDB__CLSDATADBS__NOTIFY );
       return ;
@@ -1528,7 +1599,7 @@ namespace engine
             disMsg.TID = CLS_TID( _sessionID ) ;
             disMsg.requestID = ++_requestID ;
             disMsg.opCode = MSG_BS_DISCONNECT ;
-            _agent->syncSend( lastID, &disMsg ) ;
+            _sendTo( lastID, &disMsg ) ;
          }
 
          BSONObj bodyObj ;
@@ -1538,9 +1609,9 @@ namespace engine
          {
             msg.header.messageLength += bodyObj.objsize() ;
             msg.header.requestID = ++_requestID ;
-            if ( SDB_OK == _agent->syncSend( src, &(msg.header),
-                                             (void*)bodyObj.objdata(),
-                                             (UINT32)bodyObj.objsize() ) )
+            if ( SDB_OK == _sendTo( src, &(msg.header),
+                                    (void*)bodyObj.objdata(),
+                                    (UINT32)bodyObj.objsize() ) )
             {
                /// send succeed, set _repeatCount = 0
                _repeatCount = 0 ;
@@ -1603,7 +1674,7 @@ namespace engine
       }
       msg.header.TID = CLS_TID( _sessionID ) ;
       msg.header.requestID = ++_requestID ;
-      _agent->syncSend( _selector.src(), &msg ) ;
+      _sendTo( _selector.src(), &(msg.header) ) ;
       _timeout = 0 ;
 
    done :
@@ -1790,7 +1861,7 @@ namespace engine
       msgReq.header.requestID = ++_requestID ;
       msgReq.endExpect = _expectLSN;
       msgReq.begin = begin;
-      _agent->syncSend( _selector.src(), &( msgReq.header ) ) ;
+      _sendTo( _selector.src(), &( msgReq.header ) ) ;
       _timeout = 0 ;
    }
 
@@ -2412,7 +2483,7 @@ namespace engine
             disMsg.TID = CLS_TID( _sessionID ) ;
             disMsg.requestID = ++_requestID ;
             disMsg.opCode = MSG_BS_DISCONNECT ;
-            _agent->syncSend( lastID, &disMsg ) ;
+            _sendTo( lastID, &disMsg ) ;
          }
 
          // validate
@@ -2422,7 +2493,7 @@ namespace engine
             // simply send the packet to source
             // note this function does not wait for response, callback function
             // will call handleBeginRes to take response
-            _agent->syncSend( src, &msg ) ;
+            _sendTo( src, &(msg.header) ) ;
             _timeout = 0 ;
          }
       }
@@ -2437,7 +2508,7 @@ namespace engine
       MsgClsFSLEnd msg ;
       msg.header.requestID = ++_requestID ;
       msg.header.TID = CLS_TID( _sessionID ) ;
-      _agent->syncSend( _selector.src(), &msg ) ;
+      _sendTo( _selector.src(), &(msg.header) ) ;
       _timeout = 0 ;
       PD_TRACE_EXIT ( SDB__CLSSPLDS__LEND );
    }
@@ -2562,7 +2633,7 @@ namespace engine
 
          msg.header.TID = CLS_TID( _sessionID ) ;
          msg.header.requestID = ++_requestID ;
-         _agent->syncSend( _selector.src(), &msg ) ;
+         _sendTo( _selector.src(), &(msg.header) ) ;
          _timeout = 0 ;
       }
       else if ( STEP_REMOVE == _step )

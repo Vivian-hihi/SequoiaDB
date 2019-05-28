@@ -565,7 +565,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNNCCONN, "_netFrame::syncConnect" )
    INT32 _netFrame::syncConnect( const CHAR *hostName,
                                  const CHAR *serviceName,
-                                 const _MsgRouteID &id )
+                                 const _MsgRouteID &id,
+                                 NET_HANDLE *pHandle )
    {
       SDB_ASSERT( NULL != hostName, "hostName should not be NULL" ) ;
       SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
@@ -597,6 +598,11 @@ namespace engine
          _route.insert( make_pair( eh->id().value, eh ) ) ;
          _mtx.release() ;
 
+         if ( pHandle )
+         {
+            *pHandle = eh->handle() ;
+         }
+
          // callback: handleConnect
          _handler->handleConnect( eh->handle(), id, TRUE ) ;
       }
@@ -606,6 +612,22 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _netFrame::syncConnect( const _MsgRouteID &id,
+                                 NET_HANDLE *pHandle )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR host[ OSS_MAX_HOSTNAME + 1 ] = { 0 } ;
+      CHAR service[ OSS_MAX_SERVICENAME + 1] = { 0 } ;
+
+      rc = _pRoute->route( id, host, OSS_MAX_HOSTNAME,
+                           service, OSS_MAX_SERVICENAME ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = syncConnect( host, service, id, pHandle ) ;
+      }
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNNCCONN2, "_netFrame::syncConnect" )

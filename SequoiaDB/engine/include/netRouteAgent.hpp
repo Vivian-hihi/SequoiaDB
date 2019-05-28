@@ -127,6 +127,9 @@ namespace engine
       public:
          INT32 listen( const _MsgRouteID &id ) ;
 
+         INT32 syncConnect( const _MsgRouteID &id,
+                            NET_HANDLE *pHandle = NULL ) ;
+
          INT32 syncSend( const _MsgRouteID &id,
                          void *header,
                          NET_HANDLE *pHandle = NULL ) ;

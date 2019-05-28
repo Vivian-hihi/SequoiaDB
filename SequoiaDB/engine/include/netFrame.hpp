@@ -167,7 +167,11 @@ namespace engine
          /// disconnect happens.
          INT32 syncConnect( const CHAR *hostName,
                             const CHAR *serviceName,
-                            const _MsgRouteID &id ) ;
+                            const _MsgRouteID &id,
+                            NET_HANDLE *pHandle = NULL ) ;
+
+         INT32 syncConnect( const _MsgRouteID &id,
+                            NET_HANDLE *pHandle = NULL ) ;
 
          INT32 syncConnect( NET_EH &eh ) ;
 
