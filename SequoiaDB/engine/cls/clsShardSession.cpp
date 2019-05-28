@@ -1790,7 +1790,7 @@ namespace engine
       {
          MsgOpTransBegin *pTransBegin = ( MsgOpTransBegin* )msg ;
          /// Old trans begin msg is only a MsgHeader
-         if ( msg->messageLength > sizeof( MsgHeader ) &&
+         if ( msg->messageLength > (INT32)sizeof( MsgHeader ) &&
               DPS_INVALID_TRANS_ID != pTransBegin->transID &&
               0 != DPS_TRANS_GET_NODEID( pTransBegin->transID ) )
          {
