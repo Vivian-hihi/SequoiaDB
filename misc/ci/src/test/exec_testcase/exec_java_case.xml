@@ -54,17 +54,6 @@
             </ant>
          </then>
          <else>
-            <if>
-               <and>
-                  <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
-                  <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
-               </and>
-               <then>
-                  <replace file="${testcase_dir}/sync.xml" 
-                           token="stop-all-when-occur-failure=&quot;false&quot;" 
-                           value="stop-all-when-occur-failure=&quot;true&quot;"/>
-               </then>
-            </if>
             <ant antfile="${testcase_dir}/../../tools/runtest_java.xml" target="exec_testcase">
                <property name="casedir" value="${testcase_dir}"/>
                <property name="testcasetype" value="${testcase_type}"/>

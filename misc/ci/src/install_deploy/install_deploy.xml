@@ -283,7 +283,7 @@
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchenginehost=localhost" value="searchenginehost=${ES_IP}"/>
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="searchengineport=9200" value="searchengineport=${ES_PORT}"/>
                   <replace file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" token="diaglevel=3" value="diaglevel=5"/>
-                  <!--replaceregexp file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" match="(.*)idxprefix=" replace="idxprefix=${IDXPREFIX}" byline="true"/-->
+                  <replaceregexp file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" match="(.*)idxprefix=" replace="idxprefix=${IDXPREFIX}" byline="true"/>
                   <replaceregexp file="${INSTALL_DIR}/conf/sdbseadpter/${svcname}/sdbseadapter.conf" match="(.*)datasvcname=" replace="datasvcname=${svcname}" byline="true"/>
                </sequential>
             </for>
@@ -313,9 +313,9 @@
                      <sequential>
                         <var name="svcname" unset="true"/>
                         <basename property="svcname" file="@{dirtype}"/>
-                        <!---p ${IDXPREFIX}-->
+
                         <staf location="@{testhost}" service="PROCESS"
-                              request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbseadapter -c ${INSTALL_DIR}/conf/sdbseadpter/${svcname} &amp; WAIT 10m RETURNSTDERR"
+                              request="START SHELL COMMAND ${INSTALL_DIR}/bin/sdbseadapter -c ${INSTALL_DIR}/conf/sdbseadpter/${svcname} -p ${IDXPREFIX} &amp; WAIT 10m RETURNSTDERR"
                               throwBuildException="1"/>
                      </sequential>
                   </for>
