@@ -38,29 +38,27 @@ public class FullText15879 extends SdbTestBase {
     private final String IDX_NAME = "idx_es_15879";
     private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
     private final int RECS_NUM = 20000;
-    
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
     private String srcRgName;
     private String dstRgName;
-    
+
     private Client esClient = null;
     private String esIndexName;
     private int lid;
-    
 
     @BeforeClass
     private void setUp() throws Exception {
-        esClient = FullTextESUtils.createTransportClient(esHostName, 
-                Integer.parseInt(esServiceName));
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
         if (CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)) {
             throw new SkipException("The mode is standlone, or only one group, skip the testCase.");
         }
-        
+
         ArrayList<String> rgNames = CommLib.getDataGroupNames(sdb);
         srcRgName = rgNames.get(0);
         dstRgName = rgNames.get(1);
@@ -70,13 +68,13 @@ public class FullText15879 extends SdbTestBase {
         options.put("ShardingType", "hash");
         options.put("ShardingKey", new BasicBSONObject("a", 1));
         options.put("Group", srcRgName);
-        cl = cs.createCollection(CL_NAME, options); 
-        cl.createIndex(IDX_NAME, IDX_KEY, false, false); 
+        cl = cs.createCollection(CL_NAME, options);
+        cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
-        
-        FullTextDBUtils.insertData(cl, RECS_NUM); 
-        
+        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
+
+        FullTextDBUtils.insertData(cl, RECS_NUM);
+
         // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
         lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
@@ -90,20 +88,22 @@ public class FullText15879 extends SdbTestBase {
         es.addWorker(threadTruncate);
         es.addWorker(threadSplit);
         es.run();
-        
+
         // check results
+        // TODO :线程的执行结果相互不影响，建议在线程中去校验每个线程的执行结果，这样逻辑上会更清晰
         int expRecsNum = 0;
         if (threadTruncate.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
         } else if (threadTruncate.getRetCode() != 0) {
             expRecsNum = RECS_NUM;
         }
-        
+
+        // TODO :切分执行完后，需要校验切分后数据节点及ES端的全文索引数据
         int expRgNum = 0;
         if (threadSplit.getRetCode() == 0) {
             expRgNum = 2;
         }
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, expRecsNum));                
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, expRecsNum));
         Assert.assertEquals(FullTextDBUtils.getCLGroups(cl).size(), expRgNum);
     }
 
@@ -126,7 +126,7 @@ public class FullText15879 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {
             Thread.sleep(random.nextInt(1000));
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl.truncate();
@@ -137,13 +137,13 @@ public class FullText15879 extends SdbTestBase {
                 }
                 saveResult(-1, e);
             }
-        } 
+        }
     }
 
     private class ThreadSplit extends ResultStore {
         @ExecuteOrder(step = 1)
         private void split() {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl.split(srcRgName, dstRgName, 50);

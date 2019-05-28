@@ -31,18 +31,18 @@ import com.vividsolutions.jts.util.Assert;
  * @Date huangxiaoni 2019.5.9
  */
 
+// TODO :跟全文索引无关的用例移动到普通索引的目录下
 public class FullText18259 extends SdbTestBase {
     private final int THREAD_NUM = 5;
     private final String CL_NAME = "cl_es_18259";
     private final String IDX_NAME = "cl_es_18259";
-    private final BSONObject IDX_KEY = 
-            (BSONObject) JSON.parse("{a:1,b:-1,c:1,d:-1}");
+    private final BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:1,b:-1,c:1,d:-1}");
     private final int RECS_NUM = 20000;
-    
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
-    
+
     private Client esClient = null;
 
     @BeforeClass
@@ -67,8 +67,9 @@ public class FullText18259 extends SdbTestBase {
             es.addWorker(new ThreadDropIndex());
         }
         es.run();
-        
+
         // check index
+        // TODO :需要校验只有1个线程执行成功
         CommLib commlib = new CommLib();
         commlib.checkIndex(sdb, IDX_NAME, CL_NAME);
         this.checkData();
@@ -91,7 +92,7 @@ public class FullText18259 extends SdbTestBase {
     private class ThreadCreateIndex {
         @ExecuteOrder(step = 1)
         private void createIndex() {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl2.createIndex(IDX_NAME, IDX_KEY, false, false);
@@ -106,11 +107,11 @@ public class FullText18259 extends SdbTestBase {
 
     private class ThreadDropIndex extends ResultStore {
         private Random random = new Random();
-        
+
         @ExecuteOrder(step = 1)
         private void dropIndex() throws InterruptedException {
-            Thread.sleep( random.nextInt(200) );
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            Thread.sleep(random.nextInt(200));
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl2.dropIndex(IDX_NAME);
@@ -122,19 +123,17 @@ public class FullText18259 extends SdbTestBase {
             }
         }
     }
-    
+
     private void checkData() {
         List<String> rgNames = FullTextDBUtils.getCLGroups(cl);
         for (String rgName : rgNames) {
             Sequoiadb master = null;
-            Sequoiadb slave  = null;
+            Sequoiadb slave = null;
             master = sdb.getReplicaGroup(rgName).getMaster().connect();
-            slave  = sdb.getReplicaGroup(rgName).getSlave().connect();
+            slave = sdb.getReplicaGroup(rgName).getSlave().connect();
             try {
-                int mCnt = (int) master.getCollectionSpace(SdbTestBase.csName).
-                        getCollection(CL_NAME).getCount();
-                int sCnt = (int) slave.getCollectionSpace(SdbTestBase.csName).
-                        getCollection(CL_NAME).getCount();
+                int mCnt = (int) master.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME).getCount();
+                int sCnt = (int) slave.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME).getCount();
                 Assert.equals(mCnt, RECS_NUM);
                 Assert.equals(sCnt, RECS_NUM);
             } finally {
