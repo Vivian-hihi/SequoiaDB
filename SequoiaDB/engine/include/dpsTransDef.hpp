@@ -92,7 +92,7 @@ namespace engine
    #define DPS_TRANS_LRB_INIT_DFT         ( 524288 )
    #define DPS_TRANS_LRB_TOTAL_DFT        ( 268435456 )
    #define DPS_TRANS_LRB_MIN              ( 65536 )
-   #define DPS_TRANS_LRB_MAX              ( 4294967295 )
+   #define DPS_TRANS_LRB_MAX              DPS_TRANS_LRB_TOTAL_DFT 
 
 }
 

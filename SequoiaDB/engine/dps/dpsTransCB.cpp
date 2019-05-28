@@ -112,7 +112,7 @@ namespace engine
          //   . allocate memory and under layer structures for the LRBs,
          //     LRB Headers, LRB Header Hash buckets
          rc = _transLockMgr->init( pmdGetOptionCB()->transLRBInit(),
-                                   pmdGetOptionCB()->transLRBTotal() ) ;
+                                   DPS_TRANS_LRB_TOTAL_DFT ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to initialize lock manager, rc: %d",

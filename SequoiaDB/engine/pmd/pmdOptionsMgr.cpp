@@ -1872,7 +1872,6 @@ done:
       _transUseRBS         = DPS_TRANS_USE_RBS_DFT ;
       _transTimeout        = DPS_TRANS_DFT_TIMEOUT ;
       _transLRBInit        = DPS_TRANS_LRB_INIT_DFT ;
-      _transLRBTotal       = DPS_TRANS_LRB_TOTAL_DFT ;
       _sharingBreakTime    = PMD_OPTION_BRK_TIME_DEFAULT ;
       _startShiftTime      = PMD_DFT_START_SHIFT_TIME ;
       _logBuffSize         = DPS_DFT_LOG_BUF_SZ ;
@@ -2139,11 +2138,6 @@ done:
       rdxUInt( pEX, PMD_OPTION_TRANS_LRB_INIT, _transLRBInit,FALSE,
                PMD_CFG_CHANGE_REBOOT, DPS_TRANS_LRB_INIT_DFT, FALSE ) ;
       rdvMinMax( pEX, _transLRBInit ,
-                 DPS_TRANS_LRB_MIN, DPS_TRANS_LRB_MAX, TRUE ) ;
-      // --translrbtotal
-      rdxUInt( pEX, PMD_OPTION_TRANS_LRB_TOTAL, _transLRBTotal, FALSE,
-               PMD_CFG_CHANGE_REBOOT, DPS_TRANS_LRB_TOTAL_DFT, FALSE ) ;
-      rdvMinMax( pEX, _transLRBTotal ,
                  DPS_TRANS_LRB_MIN, DPS_TRANS_LRB_MAX, TRUE ) ;
       // --sharingBreak
       rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE,
