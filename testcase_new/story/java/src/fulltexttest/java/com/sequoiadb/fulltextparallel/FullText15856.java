@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -31,6 +32,7 @@ import com.sequoiadb.utils.StringUtils;
  */
 
 public class FullText15856 extends SdbTestBase {
+    private final static int THREAD_NUM = 5;
     private final static int TIMEOUT = 300000; // 5min
     private final static String CL_NAME = "cl_es_15856";
     private final static String IDX_NAME = "idx_es_15856";
@@ -67,29 +69,29 @@ public class FullText15856 extends SdbTestBase {
     private void test() throws Exception {
         // modifier1
         String modVal1 = StringUtils.getRandomString(16);
-        BSONObject obj1 = new BasicBSONObject("b", modVal1);
-        BSONObject modifier1 = new BasicBSONObject("$set", obj1);
+        BSONObject modifier1 = new BasicBSONObject("$set", new BasicBSONObject("b", modVal1));
         // modifier2
         String modVal2 = StringUtils.getRandomString(32);
-        BSONObject obj2 = new BasicBSONObject("c", modVal2);
-        BSONObject modifier2 = new BasicBSONObject("$set", obj2);
+        BSONObject modifier2 = new BasicBSONObject("$set", new BasicBSONObject("c", modVal2));
         // thread
-        // TODO :单纯的数据操作并发，是否可以考虑增加并发数，其他用例类似
         ThreadExecutor es = new ThreadExecutor(TIMEOUT);
-        es.addWorker(new ThreadUpdate(modifier1));
-        es.addWorker(new ThreadUpdate(modifier2));
+        for (int i = 0; i < THREAD_NUM; i++) {
+            es.addWorker(new ThreadUpdate(modifier1));
+            es.addWorker(new ThreadUpdate(modifier2));
+        }
         es.run();
 
-        // check results
+        // check consistency
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
         // check total count for update
-        // TODO :需要执行全文检索，不是普通查询
         BSONObject matcher = new BasicBSONObject();
         matcher.put("b", modVal1);
         matcher.put("c", modVal2);
         long updCnt = cl.getCount(matcher);
         Assert.assertEquals(updCnt, RECS_NUM);
-        // check consistency
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
+        // check fullTextSearch
+        Assert.assertEquals(this.fullTextSearch(new BasicBSONObject("b", modVal1)), RECS_NUM);
+        Assert.assertEquals(this.fullTextSearch(new BasicBSONObject("c", modVal2)), RECS_NUM);
     }
 
     @AfterClass
@@ -124,5 +126,18 @@ public class FullText15856 extends SdbTestBase {
                 cl2.update(matcher, modifier, hint);
             }
         }
+    }
+    
+    private int fullTextSearch(BSONObject obj) {
+        int rcRecsNum = 0;
+        BSONObject matcher = new BasicBSONObject("", new BasicBSONObject("$Text",
+                new BasicBSONObject("query", 
+                        new BasicBSONObject("match", obj))));
+        DBCursor cursor = cl.query(matcher, null, null, null);
+        while (cursor.hasNext()) {
+            cursor.getNext();
+            rcRecsNum++;
+        }
+        return rcRecsNum;
     }
 }

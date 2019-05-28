@@ -102,6 +102,7 @@ public class FullText15859 extends SdbTestBase {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 // TODO :匹配条件不要强依赖公共方法里面具体的字段值，避免公共方法后续变动，影响用例的测试点；其他用例类似
+                // TODO :其他用例删除和更新有用到具体值做匹配条件，对具体值肯定会存在依赖，公共方法特别是记录内容本身就要谨慎修改，用例暂不修改
                 BSONObject matcher = new BasicBSONObject("", new BasicBSONObject("$Text",
                         new BasicBSONObject("query", new BasicBSONObject("match", new BasicBSONObject("a", CL_NAME)))));
                 BSONObject orderby = new BasicBSONObject("a", 1);

@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -30,6 +31,7 @@ import com.sequoiadb.utils.FullTextUtils;
  */
 // TODO :检视意见同15856
 public class FullText15857 extends SdbTestBase {
+    private final static int THREAD_NUM = 5;
     private final static String CL_NAME = "cl_es_15857";
     private final static String IDX_NAME = "idx_es_15857";
     private final static BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text',d:'text'}");
@@ -60,7 +62,7 @@ public class FullText15857 extends SdbTestBase {
 
         FullTextDBUtils.insertData(cl, RECS_NUM);
 
-        // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
+        // 确保预置的数据同步到es完成
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
     }
 
@@ -74,15 +76,23 @@ public class FullText15857 extends SdbTestBase {
         BSONObject matcher2 = new BasicBSONObject("recordId", obj2);
         // thread
         ThreadExecutor es = new ThreadExecutor();
-        es.addWorker(new ThreadDelete(matcher1));
-        es.addWorker(new ThreadDelete(matcher2));
+        for (int i = 0; i < THREAD_NUM; i++) {
+            es.addWorker(new ThreadDelete(matcher1));
+            es.addWorker(new ThreadDelete(matcher2));
+        }
         es.run();
 
+        // check consistency
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
         // check total count
         long updCnt = cl.getCount();
         Assert.assertEquals(updCnt, 0);
-        // check consistency
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
+        // check fullTextSearch
+        BSONObject matcher = new BasicBSONObject("", new BasicBSONObject("$Text",
+                new BasicBSONObject("query", 
+                        new BasicBSONObject("match_all", new BasicBSONObject()))));
+        DBCursor cursor = cl.query(matcher, null, null, null);
+        Assert.assertFalse(cursor.hasNext());
     }
 
     @AfterClass
