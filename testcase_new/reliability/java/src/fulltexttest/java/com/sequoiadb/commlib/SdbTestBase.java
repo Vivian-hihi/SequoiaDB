@@ -6,7 +6,9 @@ import com.sequoiadb.exception.ReliabilityException;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
+import com.sequoiadb.fulltext.FullTextUtils;
 
 import java.util.List;
 
@@ -25,14 +27,16 @@ public class SdbTestBase {
     public static String scriptDir;
     public static String esHostName;
     public static String esServiceName;
-    public static String esUrl;
 
     @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND",
-            "RSRVNODEDIR", "WORKDIR", "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD", "SCRIPTDIR", "ESHOSTNAME", "ESSVCNAME" })
+            "RSRVNODEDIR", "WORKDIR", "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD", "SCRIPTDIR", "ESHOSTNAME", "ESSVCNAME","FULLTEXTPREFIX" })
     @BeforeSuite
     public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME,
             int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR, String WORKDIR,
-            String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD, String SCRIPTDIR, String ESHOSTNAME, String ESSVCNAME) {
+            String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD, String SCRIPTDIR,
+            @Optional("false") String ESHOSTNAME,
+            @Optional("false") String ESSVCNAME,
+            @Optional("false") String FULLTEXTPREFIX) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         csName = COMMCSNAME;
@@ -48,7 +52,7 @@ public class SdbTestBase {
         Sequoiadb db = null;
         esHostName = ESHOSTNAME;
         esServiceName = ESSVCNAME;
-        esUrl = ESHOSTNAME + ":" + ESSVCNAME;
+        FullTextUtils.setFulltextPrefix( FULLTEXTPREFIX );
         try {
             db = new Sequoiadb(coordUrl, "", "");
             boolean ret = createCommonCS(db);

@@ -68,7 +68,7 @@ public class FullTextDBUtils {
           compare(groupNames);
 
           for(String groupName : groupNames) {
-              esIndexNames.add(cappedCLName.toLowerCase() + "_" + groupName);
+              esIndexNames.add( FullTextUtils.getFulltextPrefix().toLowerCase() + cappedCLName.toLowerCase() + "_" + groupName);
           }
 		     
           // if sharding cl, return all indices

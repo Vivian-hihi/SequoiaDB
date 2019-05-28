@@ -12,6 +12,18 @@ import org.elasticsearch.client.*;
 
 public class FullTextUtils {
 
+    private static String FULLTEXTPREFIX;
+    
+    // 初始化全文索引的前缀名作为全局变量
+    public static void setFulltextPrefix(final String fulltextPrefix) {
+        FullTextUtils.FULLTEXTPREFIX = fulltextPrefix;
+    }
+    
+    // 获取全文索引的前缀名
+    public static String getFulltextPrefix() {
+        return FullTextUtils.FULLTEXTPREFIX;
+    }
+
     /**
      * @param db
      * @param csName
