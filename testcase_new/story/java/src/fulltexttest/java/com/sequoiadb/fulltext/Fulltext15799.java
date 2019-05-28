@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
@@ -54,7 +53,7 @@ public class Fulltext15799 extends SdbTestBase {
         }
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         mainCL = cs.createCollection(mainCLName,
-                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true, ReplSize:0}"));
+                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}"));
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
     }
@@ -84,28 +83,19 @@ public class Fulltext15799 extends SdbTestBase {
         Assert.assertTrue(
                 FullTextUtils.isMainCLIndexCreated(esClient, mainCL, fullIndexName, FullTextUtils.INSERT_NUMS));
 
-        try {
-            List<Integer> preCLLids01 = new ArrayList<>();
-            List<Integer> preCLLids02 = new ArrayList<>();
-            for (String esIndexName : esIndexNames01) {
-                preCLLids01.add(FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName));
-            }
-            for (String esIndexName : esIndexNames02) {
-                preCLLids02.add(FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName));
-            }
-
-            mainCL.truncate();
-            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexNames01, preCLLids01));
-            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexNames02, preCLLids02));
-            Assert.assertTrue(FullTextUtils.isMainCLIndexCreated(esClient, mainCL, fullIndexName, 0));
-        } catch (BaseException e) {
-            if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
-                Assert.fail(e.getMessage());
-            }
-            Assert.assertTrue(
-                    FullTextUtils.isMainCLIndexCreated(esClient, mainCL, fullIndexName, FullTextUtils.INSERT_NUMS));
+        List<Integer> preCLLids01 = new ArrayList<>();
+        List<Integer> preCLLids02 = new ArrayList<>();
+        for (String esIndexName : esIndexNames01) {
+            preCLLids01.add(FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName));
+        }
+        for (String esIndexName : esIndexNames02) {
+            preCLLids02.add(FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName));
         }
 
+        mainCL.truncate();
+        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexNames01, preCLLids01));
+        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexNames02, preCLLids02));
+        Assert.assertTrue(FullTextUtils.isMainCLIndexCreated(esClient, mainCL, fullIndexName, 0));
     }
 
     @AfterClass
