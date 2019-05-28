@@ -39,6 +39,7 @@
 *******************************************************************************/
 #ifndef MTH_MATCHTREE_HPP_
 #define MTH_MATCHTREE_HPP_
+
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
@@ -49,6 +50,7 @@
 #include "mthMatchNormalizer.hpp"
 #include "rtnPredicate.hpp"
 #include <vector>
+#include <map>
 
 using namespace bson ;
 using namespace std ;
@@ -86,7 +88,7 @@ namespace engine
       EN_MATCH_OP_FUNC_TYPE   getMatchNodeType( const CHAR *opStr ) ;
 
    private:
-      typedef ossPoolMap< string, mthMatchOpMapping* > MTH_OPSTRMAP ;
+      typedef map< string, mthMatchOpMapping* >    MTH_OPSTRMAP ;
       MTH_OPSTRMAP _opstrMap ;
    } ;
 
