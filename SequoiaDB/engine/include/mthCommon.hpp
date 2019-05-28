@@ -41,9 +41,9 @@
 #include "core.hpp"
 #include <vector>
 #include "utilString.hpp"
-#include "ossMemPool.hpp"
 #include "utilStr.hpp"
 #include "../bson/bson.h"
+#include <map>
 
 using namespace bson ;
 
@@ -165,10 +165,10 @@ namespace engine
       INT32 getCastStr( BSONType type, string &name ) ;
 
    private:
-      typedef ossPoolMap< string, BSONType > MTH_CAST_NAME_MAP ;
+      typedef map< string, BSONType >        MTH_CAST_NAME_MAP ;
       MTH_CAST_NAME_MAP _castTransMap ;
 
-      typedef ossPoolMap< BSONType, string > MTH_CAST_TYPE_MAP ;
+      typedef map< BSONType, string >        MTH_CAST_TYPE_MAP ;
       MTH_CAST_TYPE_MAP _castTypeMap ;
    } ;
 
