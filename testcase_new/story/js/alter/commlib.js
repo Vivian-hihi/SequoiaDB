@@ -5,9 +5,10 @@
 *******************************************************************************/
 
 //inspect the alter field is success or not.
-function checkAlterResult(clName, fieldName, expFieldValue)
+function checkAlterResult(clName, fieldName, expFieldValue, csName)
 {
-   var clFullName = COMMCSNAME + "." + clName;   
+   if ( csName == undefined ) { csName = COMMCSNAME ; }
+   var clFullName = csName + "." + clName;   
    var cur = db.snapshot(8,{"Name":clFullName});
    var actualFieldValue = cur.current().toObj()[fieldName];
    
@@ -188,6 +189,99 @@ function dropDomain( db, dmName, ignoreNotExist, message )
       else
       {
       	throw buildException("drop domain",e,message,"dropDomain sucessfully","dropDomain fail");
+      }
+   }
+}
+
+/* *****************************************************************************
+@discription: insert data into cl
+@author: wangkexin
+@parameter
+    cl: the collection to be inserted
+    rownums: number of set data to be inserted
+***************************************************************************** */
+function insertData( cl, rownums )
+{
+    var record = [];
+    for( var i = 0; i < rownums; i++ )
+    {
+        record.push({a:i,b:i,c:"sequoiadb alter test"});
+    }
+    cl.insert(record);
+}
+
+/* *****************************************************************************
+@discription: check split result from source group and target group
+@author: wangkexin
+@parameter
+    csName: the split collection space
+    clName: the split collection
+    srcGroupName: source group name
+    tarGroupName: target group name
+    expDataNum: Total number of data expected to be returned 
+***************************************************************************** */
+function checkSplitResult( csName, clName, srcGroupName, tarGroupName, expDataNum )
+{
+   var actDataNum = 0;
+
+   var dataNode1 = new Sdb(db.getRG( srcGroupName ).getMaster());
+   var checkCL1 = dataNode1.getCS( csName ).getCL( clName );
+   var recordNum1 = checkCL1.count();
+   actDataNum = actDataNum + recordNum1;
+   dataNode1.close();
+
+   var dataNode2 = new Sdb(db.getRG( tarGroupName ).getMaster());
+   var checkCL2 = dataNode2.getCS( csName ).getCL( clName );
+   var recordNum2 = checkCL2.count();
+   
+   if(recordNum2 == 0)
+   {
+       throw "The number returned by target group is 0. srcRG :" + srcGroupName + ", tarRG :" + tarGroupName;
+   }
+   actDataNum = actDataNum + recordNum2;
+   dataNode2.close();
+
+   if( actDataNum !== expDataNum )
+   {
+      throw buildException("checkData", "check field", "total num is wrong", expDataNum, actDataNum);
+   }
+}
+
+/* *****************************************************************************
+@discription: check not split result from source group and target group
+@author: wangkexin
+@parameter
+    csName: the split collection space
+    clName: the split collection
+    srcGroupName: source group name
+    tarGroupName: target group name
+    expDataNum: Total number of data expected to be returned 
+***************************************************************************** */
+function checkNotSplitResult( csName, clName, srcGroupName, tarGroupName, expDataNum )
+{
+   var actDataNum = 0;
+
+   var dataNode = new Sdb(db.getRG( srcGroupName ).getMaster());
+   var checkCL = dataNode.getCS( csName ).getCL( clName );
+   actDataNum = actDataNum + checkCL.count();
+   if( actDataNum !== expDataNum )
+   {
+      throw buildException("checkData", "check field", "total num is wrong", expDataNum, actDataNum);
+   }
+   dataNode.close();
+   
+   var dataNode2 = new Sdb(db.getRG( tarGroupName ).getMaster());
+   try
+   {
+       //if not split, get collection from target group will fail.
+       dataNode2.getCS( csName ).getCL( clName );
+       throw "exp fail but found success."
+   }
+   catch ( e )
+   {
+      if( e !== -23)
+      {
+          throw "unexpected error: " + e;
       }
    }
 }

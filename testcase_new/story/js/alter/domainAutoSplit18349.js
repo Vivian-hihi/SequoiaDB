@@ -43,73 +43,23 @@ function main()
    var shardingKey = {a:1};
    var shardingType = "hash";
    cl_1.setAttributes({ShardingKey:shardingKey,ShardingType:shardingType}); 
-   checkAlterResult( csName, clName1, "ShardingKey", shardingKey ); 
-   checkAlterResult( csName, clName1, "ShardingType", shardingType ); 
+   checkAlterResult( clName1, "ShardingKey", shardingKey, csName ); 
+   checkAlterResult( clName1, "ShardingType", shardingType, csName ); 
 
    //test b: 执行enableSharding开启切分，设置shardingKey和shardingType，其中shardingType指定为range
    var shardingKey2 = {a:1};
    var shardingType2 = "range";
    cl_2.enableSharding({ShardingKey:shardingKey2,ShardingType:shardingType2}); 
-   checkAlterResult( csName, clName2, "ShardingKey", shardingKey2 ); 
-   checkAlterResult( csName, clName2, "ShardingType", shardingType2 ); 
+   checkAlterResult( clName2, "ShardingKey", shardingKey2, csName ); 
+   checkAlterResult( clName2, "ShardingType", shardingType2, csName ); 
 
-   for( i=0; i<5000; i++ )
-   {
-      cl_1.insert( {a:i, b:i, c:"sequoiadb test autosplit18349"} );
-      cl_2.insert( {a:i, b:i, c:"sequoiadb test autosplit18349"} );
-   }
-   checkData( csName, clName1, group1, group2, 5000 );
-   checkDataNotSplit( csName, clName2, group1, 5000 );
+   insertData( cl_1, 5000 );
+   insertData( cl_2, 5000 );
+   
+   checkSplitResult( csName, clName1, group1, group2, 5000 );
+   checkNotSplitResult( csName, clName2, group1, group2, 5000 );
 
    //clean
    commDropCS( db, csName, true, "clean cs" );
    dropDomain( db, domainName );
-}
-
-function checkAlterResult(csName, clName, fieldName, expFieldValue)
-{
-   var clFullName = csName + "." + clName;   
-   var cur = db.snapshot(8,{"Name":clFullName});
-   var actualFieldValue = cur.current().toObj()[fieldName];
-   
-   if (JSON.stringify(expFieldValue) !== JSON.stringify(actualFieldValue))
-   {
-      throw buildException("test fieldvalue1", "check field", "value is wrong", JSON.stringify(expFieldValue), JSON.stringify(actualFieldValue));
-   }
-}
-
-function checkData( csName, clName, groupName1, groupName2, expDataNum )
-{
-   var actDataNum = 0;
-
-   var dataNode1 = new Sdb(db.getRG( groupName1 ).getMaster());
-   var checkCL1 = dataNode1.getCS( csName ).getCL( clName );
-   var recordNum1 = checkCL1.count();
-   actDataNum = actDataNum + recordNum1;
-   dataNode1.close();
-
-   var dataNode2 = new Sdb(db.getRG( groupName2 ).getMaster());
-   var checkCL2 = dataNode2.getCS( csName ).getCL( clName );
-   var recordNum2 = checkCL2.count();
-   actDataNum = actDataNum + recordNum2;
-   dataNode2.close();
-
-   if( actDataNum !== expDataNum )
-   {
-      throw buildException("checkData", "check field", "total num is wrong", expDataNum, actDataNum);
-   }
-}
-
-function checkDataNotSplit( csName, clName, groupName, expDataNum )
-{
-   var actDataNum = 0;
-
-   var dataNode = new Sdb(db.getRG( groupName ).getMaster());
-   var checkCL = dataNode.getCS( csName ).getCL( clName );
-   actDataNum = actDataNum + checkCL.count();
-   if( actDataNum !== expDataNum )
-   {
-      throw buildException("checkData", "check field", "total num is wrong", expDataNum, actDataNum);
-   }
-   dataNode.close();
 }
