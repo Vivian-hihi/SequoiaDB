@@ -4,10 +4,12 @@ import java.io.File;
 
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.elasticsearch.client.Client;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.utils.FullTextESUtils;
+import com.sequoiadb.utils.FullTextUtils;
 
 public class SdbTestBase {
     protected static String coordUrl;
@@ -23,11 +25,13 @@ public class SdbTestBase {
     protected static String workDir;
 
     @Parameters({ "HOSTNAME", "SVCNAME", "ESHOSTNAME", "ESSVCNAME",
-            "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR",
-            "WORKDIR" })
+            "FULLTEXTPREFIX", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND",
+            "RSRVNODEDIR", "WORKDIR" })
     @BeforeSuite
     public static void initSuite( String HOSTNAME, String SVCNAME,
-            String ESHOSTNAME, String ESSVCNAME, String COMMCSNAME,
+            @Optional("false") String ESHOSTNAME,
+            @Optional("false") String ESSVCNAME,
+            @Optional("false") String FULLTEXTPREFIX, String COMMCSNAME,
             int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
             String WORKDIR ) {
         hostName = HOSTNAME;
@@ -40,6 +44,7 @@ public class SdbTestBase {
         reservedDir = RSRVNODEDIR;
         workDir = WORKDIR;
         coordUrl = HOSTNAME + ":" + SVCNAME;
+        FullTextUtils.setFulltextPrefix( FULLTEXTPREFIX );
 
         Sequoiadb db = null;
         Client esClient = null;

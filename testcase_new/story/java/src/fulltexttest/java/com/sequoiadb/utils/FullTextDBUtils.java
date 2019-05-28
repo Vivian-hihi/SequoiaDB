@@ -34,7 +34,7 @@ public class FullTextDBUtils {
         String cappedName = null;
         BSONObject indexInfos = cl.getIndexInfo( indexName );
         if ( indexInfos != null ) {
-            cappedName = (String) indexInfos.get( "ExtDataName" );
+            cappedName = ( String ) indexInfos.get( "ExtDataName" );
         }
 
         if ( cappedName == null ) {
@@ -53,15 +53,17 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<DBCollection> getCappedCLs( DBCollection cl, String textIndexName ) {
+    public static List< DBCollection > getCappedCLs( DBCollection cl,
+            String textIndexName ) {
         Sequoiadb db = cl.getSequoiadb();
         String cappedName = getCappedName( cl, textIndexName );
-        List<String> groupNames = getCLGroups( cl );
+        List< String > groupNames = getCLGroups( cl );
         // 获取每个数据组主节点下的固定集合对象
-        List<DBCollection> cappedCLs = new ArrayList<>();
+        List< DBCollection > cappedCLs = new ArrayList<>();
         for ( String groupName : groupNames ) {
-            DBCollection cappedCL = db.getReplicaGroup( groupName ).getMaster().connect()
-                    .getCollectionSpace( cappedName ).getCollection( cappedName );
+            DBCollection cappedCL = db.getReplicaGroup( groupName ).getMaster()
+                    .connect().getCollectionSpace( cappedName )
+                    .getCollection( cappedName );
             cappedCLs.add( cappedCL );
         }
         return cappedCLs;
@@ -79,9 +81,10 @@ public class FullTextDBUtils {
     public static String getESIndexName( DBCollection cl, String indexName ) {
 
         String cappedName = getCappedName( cl, indexName );
-        List<String> groupNames = getCLGroups( cl );
+        List< String > groupNames = getCLGroups( cl );
 
-        return cappedName.toLowerCase() + "_" + groupNames.get( 0 );
+        return FullTextUtils.getFulltextPrefix() + cappedName.toLowerCase()
+                + "_" + groupNames.get( 0 );
     }
 
     /**
@@ -93,15 +96,17 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<String> getESIndexNames( DBCollection cl, String indexName ) {
+    public static List< String > getESIndexNames( DBCollection cl,
+            String indexName ) {
         String cappedName = getCappedName( cl, indexName );
 
         // 获取原始集合下的全文索引名
-        List<String> esIndexNames = new ArrayList<>();
-        List<String> groupNames = getCLGroups( cl );
+        List< String > esIndexNames = new ArrayList<>();
+        List< String > groupNames = getCLGroups( cl );
 
         for ( String groupName : groupNames ) {
-            esIndexNames.add( cappedName.toLowerCase() + "_" + groupName );
+            esIndexNames.add( FullTextUtils.getFulltextPrefix()
+                    + cappedName.toLowerCase() + "_" + groupName );
         }
 
         // 分区表包含多个全文索引
@@ -122,14 +127,15 @@ public class FullTextDBUtils {
         BSONObject selectObject = new BasicBSONObject();
         sortObj.put( "_id", 1 );
         selectObject.put( "_id", 1 );
-        DBCursor cur = cappedCL.query( null, selectObject, sortObj, null, 0, -1 );
-        List<BSONObject> records = getRecordsFromCL( cur );
+        DBCursor cur = cappedCL.query( null, selectObject, sortObj, null, 0,
+                -1 );
+        List< BSONObject > records = getRecordsFromCL( cur );
         if ( records.size() > 0 ) {
             BSONObject lastMatch = records.get( records.size() - 1 );
-            lastLogicalID = (long) lastMatch.get( "_id" );
+            lastLogicalID = ( long ) lastMatch.get( "_id" );
         }
         cur.close();
-        return (int) lastLogicalID;
+        return ( int ) lastLogicalID;
     }
 
     /**
@@ -140,8 +146,8 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<BSONObject> getRecordsFromCL( DBCursor cursor ) {
-        List<BSONObject> objs = new ArrayList<BSONObject>();
+    public static List< BSONObject > getRecordsFromCL( DBCursor cursor ) {
+        List< BSONObject > objs = new ArrayList< BSONObject >();
         while ( cursor.hasNext() ) {
             BSONObject obj = cursor.getNext();
             objs.add( obj );
@@ -157,8 +163,8 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<String> getCLGroups( DBCollection cl ) {
-        List<String> groupNames = new ArrayList<>();
+    public static List< String > getCLGroups( DBCollection cl ) {
+        List< String > groupNames = new ArrayList<>();
         Sequoiadb db = cl.getSequoiadb();
         if ( CommLib.isStandAlone( db ) ) {
             return groupNames;
@@ -166,11 +172,13 @@ public class FullTextDBUtils {
 
         BSONObject matcher = new BasicBSONObject();
         matcher.put( "Name", cl.getFullName() );
-        DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null );
+        DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher,
+                null, null );
         while ( cur.hasNext() ) {
-            BasicBSONList bsonLists = (BasicBSONList) cur.getNext().get( "CataInfo" );
+            BasicBSONList bsonLists = ( BasicBSONList ) cur.getNext()
+                    .get( "CataInfo" );
             for ( int i = 0; i < bsonLists.size(); i++ ) {
-                BasicBSONObject obj = (BasicBSONObject) bsonLists.get( i );
+                BasicBSONObject obj = ( BasicBSONObject ) bsonLists.get( i );
                 groupNames.add( obj.getString( "GroupName" ) );
             }
         }
@@ -178,11 +186,11 @@ public class FullTextDBUtils {
         // groupNames元素去重
         groupNames = FullTextUtils.removeDuplicateItems( groupNames );
         // groupNames数组元素排序
-        Collections.sort( groupNames, new Comparator<Object>() {
+        Collections.sort( groupNames, new Comparator< Object >() {
             @Override
             public int compare( Object o1, Object o2 ) {
-                String str1 = (String) o1;
-                String str2 = (String) o2;
+                String str1 = ( String ) o1;
+                String str2 = ( String ) o2;
                 if ( str1.compareToIgnoreCase( str2 ) < 0 ) {
                     return -1;
                 }
@@ -202,19 +210,22 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<String> getSubCLNames( Sequoiadb db, String mainCLFullName ) {
-        List<String> subCLNames = new ArrayList<>();
+    public static List< String > getSubCLNames( Sequoiadb db,
+            String mainCLFullName ) {
+        List< String > subCLNames = new ArrayList<>();
         if ( CommLib.isStandAlone( db ) ) {
             return subCLNames;
         }
 
         BSONObject matcher = new BasicBSONObject();
         matcher.put( "Name", mainCLFullName );
-        DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null );
+        DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher,
+                null, null );
         while ( cur.hasNext() ) {
-            BasicBSONList bsonLists = (BasicBSONList) cur.getNext().get( "CataInfo" );
+            BasicBSONList bsonLists = ( BasicBSONList ) cur.getNext()
+                    .get( "CataInfo" );
             for ( int i = 0; i < bsonLists.size(); i++ ) {
-                BasicBSONObject obj = (BasicBSONObject) bsonLists.get( i );
+                BasicBSONObject obj = ( BasicBSONObject ) bsonLists.get( i );
                 subCLNames.add( obj.getString( "SubCLName" ) );
             }
         }
@@ -231,7 +242,8 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-26
      */
-    public static void dropFullTextIndex( DBCollection cl, String textIndexName ) {
+    public static void dropFullTextIndex( DBCollection cl,
+            String textIndexName ) {
         int timeout = 600;
         int doTimes = 0;
         // 删除全文索引，如果报错-147则重试 10min
@@ -253,7 +265,8 @@ public class FullTextDBUtils {
                     System.out.println( textIndexName + " is not exist" );
                     break;
                 } else {
-                    System.out.println( "drop " + textIndexName + "failed, detail: " + e.getMessage() );
+                    System.out.println( "drop " + textIndexName
+                            + "failed, detail: " + e.getMessage() );
                     throw e;
                 }
 
@@ -262,7 +275,8 @@ public class FullTextDBUtils {
 
         // 如果最后在超时时间内删除成功，则打印信息；否则再次删除索引，操作失败后直接抛异常
         if ( doTimes < timeout ) {
-            System.err.println( textIndexName + " drop success,  drop times: " + doTimes );
+            System.err.println(
+                    textIndexName + " drop success,  drop times: " + doTimes );
         } else {
             cl.dropIndex( textIndexName );
         }
@@ -299,7 +313,8 @@ public class FullTextDBUtils {
                     System.out.println( csName + " is not exist" );
                     break;
                 } else {
-                    System.out.println( "drop " + csName + "failed, detail: " + e.getMessage() );
+                    System.out.println( "drop " + csName + "failed, detail: "
+                            + e.getMessage() );
                     throw e;
                 }
 
@@ -308,7 +323,8 @@ public class FullTextDBUtils {
 
         // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常
         if ( doTimes < timeout ) {
-            System.err.println( csName + " drop success,  drop times: " + doTimes );
+            System.err.println(
+                    csName + " drop success,  drop times: " + doTimes );
         } else {
             db.dropCollectionSpace( csName );
         }
@@ -345,7 +361,8 @@ public class FullTextDBUtils {
                     System.out.println( clName + " is not exist" );
                     break;
                 } else {
-                    System.out.println( "drop " + clName + "failed, detail: " + e.getMessage() );
+                    System.out.println( "drop " + clName + "failed, detail: "
+                            + e.getMessage() );
                     throw e;
                 }
 
@@ -354,7 +371,8 @@ public class FullTextDBUtils {
 
         // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常
         if ( doTimes < timeout ) {
-            System.err.println( clName + " drop success,  drop times: " + doTimes );
+            System.err.println(
+                    clName + " drop success,  drop times: " + doTimes );
         } else {
             cs.dropCollection( clName );
         }
@@ -370,10 +388,11 @@ public class FullTextDBUtils {
      * @Date 2018-12-21
      */
     public static boolean isMainCL( Sequoiadb sdb, String clFullName ) {
-        DBCursor cursor = sdb.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + clFullName + "'}", null, null );
+        DBCursor cursor = sdb.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG,
+                "{'Name':'" + clFullName + "'}", null, null );
         Object isMainCL = cursor.getNext().get( "IsMainCL" );
         if ( isMainCL != null ) {
-            boolean isMain = (Boolean) isMainCL;
+            boolean isMain = ( Boolean ) isMainCL;
             return isMain;
         }
         return false;
@@ -391,7 +410,7 @@ public class FullTextDBUtils {
      */
     public static void insertData( DBCollection cl, int insertNum ) {
         String clName = cl.getName();
-        List<BSONObject> insertObjs = new ArrayList<BSONObject>();
+        List< BSONObject > insertObjs = new ArrayList< BSONObject >();
         int insertTimes = 100;
         int insertRecordNum = insertNum / insertTimes;
         int residueNum = insertNum % insertRecordNum;
@@ -454,7 +473,7 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public boolean isCSDropSuccess( Sequoiadb db, List<String> csNames ) {
+    public boolean isCSDropSuccess( Sequoiadb db, List< String > csNames ) {
         for ( String csName : csNames ) {
             if ( !isCSDropSuccess( db, csName ) ) {
                 return false;
@@ -490,7 +509,7 @@ public class FullTextDBUtils {
      * @Date 2019-05-09
      */
     private boolean isExistCS( Sequoiadb db, String csName, boolean expExist ) {
-        List<String> rgNames = CommLib.getDataGroupNames( db );
+        List< String > rgNames = CommLib.getDataGroupNames( db );
         boolean csExist = false;
         for ( String rgName : rgNames ) {
             csExist = isExistCS( db, csName, rgName, expExist );
@@ -513,11 +532,12 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    private boolean isExistCS( Sequoiadb db, String csName, String rgName, boolean expExist ) {
+    private boolean isExistCS( Sequoiadb db, String csName, String rgName,
+            boolean expExist ) {
         boolean csExist = false;
-        List<String> nodeList = CommLib.getNodeAddress( db, rgName );
+        List< String > nodeList = CommLib.getNodeAddress( db, rgName );
         for ( String nodeAddress : nodeList ) {
-            try ( Sequoiadb nodeConn = new Sequoiadb( nodeAddress, "", "" ) ) {
+            try ( Sequoiadb nodeConn = new Sequoiadb( nodeAddress, "", "" )) {
                 for ( int i = 0; i < 300; i++ ) {
                     csExist = nodeConn.isCollectionSpaceExist( csName );
                     if ( expExist == csExist ) {
@@ -531,8 +551,10 @@ public class FullTextDBUtils {
                 }
             }
             if ( csExist != expExist ) {
-                String msg = expExist ? "' is not on the rg: " : "' is still on the rg: ";
-                System.err.println( "cs '" + csName + msg + rgName + ", node: " + nodeAddress );
+                String msg = expExist ? "' is not on the rg: "
+                        : "' is still on the rg: ";
+                System.err.println( "cs '" + csName + msg + rgName + ", node: "
+                        + nodeAddress );
                 break;
             }
         }

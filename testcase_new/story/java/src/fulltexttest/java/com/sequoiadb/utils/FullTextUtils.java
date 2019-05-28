@@ -24,6 +24,17 @@ public class FullTextUtils {
 
     // 插入记录数，所有用例公用此变量
     public static final int INSERT_NUMS = 200000; // insert 20w datas
+    private static String FULLTEXTPREFIX;
+    
+    // 初始化全文索引的前缀名作为全局变量
+    public static void setFulltextPrefix(final String fulltextPrefix) {
+        FullTextUtils.FULLTEXTPREFIX = fulltextPrefix;
+    }
+    
+    // 获取全文索引的前缀名
+    public static String getFulltextPrefix() {
+        return FullTextUtils.FULLTEXTPREFIX;
+    }
 
     /**
      * 检查DB端中普通表或分区表下的全文索引数据是否完全同步到ES端，总共分三层检查: 
@@ -685,11 +696,8 @@ public class FullTextUtils {
     public static boolean isIndexCreated( Client esClient, DBCollection cl, String indexName, int expectCount )
             throws Exception {
 
-        if ( isFullSyncToES( esClient, cl, indexName, expectCount ) && isDataConsistency( cl, indexName ) ) {
-            return true;
-        } else {
-            return false;
-        }
+        return isFullSyncToES( esClient, cl, indexName, expectCount ) 
+                && isDataConsistency( cl, indexName );
     }
 
     /**
