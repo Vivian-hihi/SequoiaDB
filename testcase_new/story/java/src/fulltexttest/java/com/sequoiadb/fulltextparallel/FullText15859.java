@@ -31,11 +31,11 @@ import com.sequoiadb.utils.FullTextUtils;
  */
 
 public class FullText15859 extends SdbTestBase {
-    private final static int THREAD_NUM = 2;
-    private final static String CL_NAME = "cl_es_15859";
-    private final static String IDX_NAME = "idx_es_15859";
-    private final static BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text',d:'text'}");
-    private final static int RECS_NUM = 50000;
+    private final int THREAD_NUM = 2;
+    private final String CL_NAME = "cl_es_15859";
+    private final String IDX_NAME = "idx_es_15859";
+    private final BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text',d:'text'}");
+    private final int RECS_NUM = 50000;
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs;

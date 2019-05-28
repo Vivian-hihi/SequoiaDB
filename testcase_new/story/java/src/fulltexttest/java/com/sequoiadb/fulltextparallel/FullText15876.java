@@ -34,11 +34,11 @@ import com.sequoiadb.utils.FullTextUtils;
 
 public class FullText15876 extends SdbTestBase {
     private Random random = new Random();
-    private final static String CS_NAME = "cs_es_15876";
-    private final static String CL_NAME = "cl_es_15876";
-    private final static String IDX_NAME = "idx_es_15876";
-    private final static BSONObject IDX_KEY = new BasicBSONObject("a", "text");
-    private final static int RECS_NUM = 20000;
+    private final String CS_NAME = "cs_es_15876";
+    private final String CL_NAME = "cl_es_15876";
+    private final String IDX_NAME = "idx_es_15876";
+    private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
+    private final int RECS_NUM = 20000;
     
     private Sequoiadb sdb = null;
     private CollectionSpace cs;

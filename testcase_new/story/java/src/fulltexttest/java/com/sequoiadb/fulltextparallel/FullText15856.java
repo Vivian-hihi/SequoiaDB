@@ -32,12 +32,12 @@ import com.sequoiadb.utils.StringUtils;
  */
 
 public class FullText15856 extends SdbTestBase {
-    private final static int THREAD_NUM = 5;
-    private final static int TIMEOUT = 300000; // 5min
-    private final static String CL_NAME = "cl_es_15856";
-    private final static String IDX_NAME = "idx_es_15856";
-    private final static BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text'}");
-    private final static int RECS_NUM = 30000;
+    private final int THREAD_NUM = 5;
+    private final int TIMEOUT = 300000; // 5min
+    private final String CL_NAME = "cl_es_15856";
+    private final String IDX_NAME = "idx_es_15856";
+    private final BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text'}");
+    private final int RECS_NUM = 30000;
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs;

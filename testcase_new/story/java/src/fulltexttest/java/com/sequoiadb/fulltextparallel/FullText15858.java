@@ -30,11 +30,11 @@ import com.sequoiadb.utils.FullTextUtils;
  */
 // TODO :检视意见同15856
 public class FullText15858 extends SdbTestBase {
-    private final static int THREAD_NUM = 5;
-    private final static String CL_NAME = "cl_es_15858";
-    private final static String IDX_NAME = "idx_es_15858";
-    private final static BSONObject IDX_KEY = new BasicBSONObject("a", "text");
-    private final static int RECS_NUM = 20000;
+    private final int THREAD_NUM = 5;
+    private final String CL_NAME = "cl_es_15858";
+    private final String IDX_NAME = "idx_es_15858";
+    private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
+    private final int RECS_NUM = 20000;
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs;

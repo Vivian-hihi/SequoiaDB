@@ -36,15 +36,16 @@ import com.sequoiadb.utils.StringUtils;
  */
 
 public class FullText15852 extends SdbTestBase {
-    private final static int TIMEOUT = 300000; // 5min
+    private final int TIMEOUT = 300000; // 5min
     
-    private final static String CL_NAME = "cl_es_15852";
-    private final static String FULLTEXT_IDX_NAME = "idx_es_15852";
-    private final static BSONObject FULLTEXT_IDX_KEY = 
+    private final String CL_NAME = "cl_es_15852";
+    private final int INSERT_RECS_NUM = 20000;
+    private final int INSERT_BATCH_RECS_NUM = 20000;
+    private final int LOB_NUM = 20;
+
+    private final String FULLTEXT_IDX_NAME = "idx_es_15852";
+    private final BSONObject FULLTEXT_IDX_KEY = 
             (BSONObject) JSON.parse("{a:'text',b:'text',c:'text'}");
-    private final static int INSERT_RECS_NUM = 20000;
-    private final static int INSERT_BATCH_RECS_NUM = 20000;
-    private final static int LOB_NUM = 20;
     
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
@@ -261,7 +262,7 @@ public class FullText15852 extends SdbTestBase {
     }
 
     private class ThreadPutLob {
-        private final static int NEW_LOB_NUM = 10;
+        private final int NEW_LOB_NUM = 10;
         private ArrayList<ObjectId> lobIds3 = new ArrayList<>();
         private Sequoiadb db = null;
         private DBCollection cl2;
