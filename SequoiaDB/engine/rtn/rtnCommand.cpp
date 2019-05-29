@@ -2645,7 +2645,7 @@ error:
       return CMD_TRACE_START ;
    }
 
-   BOOLEAN _rtnTraceStart::_isFunctionNameValid( const CHAR* verifiedFuncName )
+   BOOLEAN _rtnTraceStart::_isFunctionNameInvalid( const CHAR* verifiedFuncName )
    {
       BOOLEAN isInvalid = TRUE ;
       for( UINT64 i = 0; i < pdGetTraceFunctionListNum(); i++ )
@@ -2792,7 +2792,7 @@ error:
                {
                   const CHAR* eleStr = ele.valuestr();
                   BOOLEAN isInvalid = TRUE ;
-                  isInvalid = _isFunctionNameValid( eleStr ) ;
+                  isInvalid = _isFunctionNameInvalid( eleStr ) ;
                   if( isInvalid )
                   {
                      rc = SDB_INVALIDARG ;
