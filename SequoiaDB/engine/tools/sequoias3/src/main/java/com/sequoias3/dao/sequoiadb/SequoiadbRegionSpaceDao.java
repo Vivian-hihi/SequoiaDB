@@ -79,7 +79,10 @@ public class SequoiadbRegionSpaceDao implements RegionSpaceDao {
             BSONObject orderBy = new BasicBSONObject();
             orderBy.put(RegionSpace.REGION_SPACE_NAME, 1);
 
-            cursor = cl.query(matcher, selector, orderBy, null);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            cursor = cl.query(matcher, selector, orderBy, hint);
             while (cursor.hasNext()){
                 BSONObject record = cursor.getNext();
                 regionSpaceList.add(record.get(RegionSpace.REGION_SPACE_NAME).toString());
@@ -118,7 +121,10 @@ public class SequoiadbRegionSpaceDao implements RegionSpaceDao {
             BSONObject matcher = new BasicBSONObject();
             matcher.put(RegionSpace.REGION_SPACE_REGIONNAME, regionName);
 
-            cl.delete(matcher);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            cl.delete(matcher, hint);
         }catch (Exception e){
             logger.error("deleteRegionCSList failed. error message:"+ e.getMessage());
             throw e;

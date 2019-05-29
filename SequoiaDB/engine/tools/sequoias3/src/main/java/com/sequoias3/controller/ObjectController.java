@@ -224,6 +224,7 @@ public class ObjectController {
                 bucketName, prefix, delimiter, startAfter,
                 maxKeys, continueToken, encodingType, fetchOwner);
 
+        logger.info("list objectsV2 success. bucketName={}",bucketName);
         return ResponseEntity.ok()
                 .body(result);
     }
@@ -249,7 +250,7 @@ public class ObjectController {
                                               @RequestParam(value = RestParamDefine.ListObjectVersionsPara.MAX_KEYS, required = false, defaultValue = "1000") Integer maxKeys)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
-        logger.debug("list versions. bucketName={}",bucketName);
+        logger.info("list versions. bucketName={}",bucketName);
 
         if (null != encodingType) {
             if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {
@@ -260,6 +261,7 @@ public class ObjectController {
         ListVersionsResult result = objectService.listVersions(operator.getUserId(),
                 bucketName, prefix, delimiter, keyMarker, versionIdMarker, maxKeys, encodingType);
 
+        logger.info("list versions success. bucketName={}",bucketName);
         return ResponseEntity.ok()
                 .body(result);
     }
@@ -273,7 +275,7 @@ public class ObjectController {
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
         String objectName = restUtils.getObjectNameByURI(httpServletRequest.getRequestURI());
-        logger.debug("head object. bucketName={}, objectName={}", bucketName, objectName);
+        logger.info("head object. bucketName={}, objectName={}", bucketName, objectName);
 
         Map<String,String> requestHeaders = new HashMap<>();
         Enumeration headerNames = httpServletRequest.getHeaderNames();
@@ -308,6 +310,8 @@ public class ObjectController {
         }finally {
             objectService.releaseGetResult(result);
         }
+
+        logger.info("head object success. bucketName={}, objectName={}", bucketName, objectName);
     }
 
     private Long convertVersionId(String versionId)

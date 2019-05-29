@@ -85,6 +85,7 @@ public class SequoiadbMetaDao implements MetaDao {
         }
     }
 
+    //query meta list by bucketid, prefix, startafter, versionid from cur meta and his meta
     @Override
     public QueryDbCursor queryMetaByBucket(String metaCsName, String metaClName, long bucketId,
                                            String prefix, String startAfter, Long specifiedVId,
@@ -143,6 +144,7 @@ public class SequoiadbMetaDao implements MetaDao {
         }
     }
 
+    //query one meta by object name and version id from cur meta or his meta
     @Override
     public ObjectMeta queryMetaByObjectName(String metaCsName, String metaClName,
                                             long bucketId, String objectName,
@@ -183,6 +185,7 @@ public class SequoiadbMetaDao implements MetaDao {
         }
     }
 
+    //query one meta with bucketId from cur meta or his meta, for isempty bucket
     @Override
     public ObjectMeta queryMetaByBucketId(ConnectionDao connection, String metaCsName, String metaClName,
                                             long bucketId)
@@ -200,7 +203,10 @@ public class SequoiadbMetaDao implements MetaDao {
             BSONObject matcher = new BasicBSONObject();
             matcher.put(ObjectMeta.META_BUCKET_ID, bucketId);
 
-            BSONObject queryResult = cl.queryOne(matcher, null, null, null, 0);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            BSONObject queryResult = cl.queryOne(matcher, null, null, hint, 0);
             return convertBsonToMeta(queryResult);
         }catch (BaseException e){
             if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
@@ -221,6 +227,7 @@ public class SequoiadbMetaDao implements MetaDao {
         }
     }
 
+    //query metalist with bucketId from cur meta, for update delimiter
     @Override
     public QueryDbCursor queryMetaByBucketForUpdate(ConnectionDao connection,
                                                     String metaCsName, String metaClName,
@@ -255,8 +262,11 @@ public class SequoiadbMetaDao implements MetaDao {
             orderBy.put(ObjectMeta.META_KEY_NAME, 1);
             orderBy.put(ObjectMeta.META_VERSION_ID, -1);
 
-            dbCursor = cl.query(matcher, selector, orderBy,null, 0, limitNum, DBQuery.FLG_QUERY_FOR_UPDATE);
-            return new SdbQueryDbCursor(sdb, dbCursor);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            dbCursor = cl.query(matcher, selector, orderBy, hint, 0, limitNum, DBQuery.FLG_QUERY_FOR_UPDATE);
+            return new SdbQueryDbCursor(null, dbCursor);
         }catch (BaseException e){
             sdbBaseOperation.releaseDBCursor(dbCursor);
             if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
@@ -386,6 +396,7 @@ public class SequoiadbMetaDao implements MetaDao {
         }
     }
 
+    //query one other meta by parentId1 or parentId2
     @Override
     public Boolean queryOneOtherMetaByParentId(ConnectionDao connection, String metaCsName,
                                           String metaClName, long bucketId, String objectName,
@@ -409,7 +420,10 @@ public class SequoiadbMetaDao implements MetaDao {
             keyMatcher.put(DBParamDefine.NOT_EQUAL, objectName);
             matcher.put(ObjectMeta.META_KEY_NAME, keyMatcher);
 
-            BSONObject result = cl.queryOne(matcher, null, null,null, 0);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            BSONObject result = cl.queryOne(matcher, null, null, hint, 0);
             if (result != null){
                 return true;
             }else {
@@ -434,6 +448,7 @@ public class SequoiadbMetaDao implements MetaDao {
         }
     }
 
+    // query one meta and get U lock from cur meta or his meta
     @Override
     public ObjectMeta queryForUpdate(ConnectionDao connection, String metaCsName, String metaClName,
                                      long bucketId, String objectName, Long versionId, Boolean noVersionFlag)
@@ -456,7 +471,10 @@ public class SequoiadbMetaDao implements MetaDao {
             BSONObject order = new BasicBSONObject();
             order.put(ObjectMeta.META_VERSION_ID, -1);
 
-            BSONObject queryResult = cl.queryOne(matcher, null, order, null, DBQuery.FLG_QUERY_FOR_UPDATE);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            BSONObject queryResult = cl.queryOne(matcher, null, order, hint, DBQuery.FLG_QUERY_FOR_UPDATE);
             return convertBsonToMeta(queryResult);
         }catch (BaseException e){
             if (e.getErrorCode() == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode() ||
@@ -473,6 +491,7 @@ public class SequoiadbMetaDao implements MetaDao {
         }
     }
 
+    // update meta in cur meta by bucketId and object name
     @Override
     public void updateMeta(ConnectionDao connection, String metaCsName, String metaClName, long bucketId,
                            String objectName, Long versionId, ObjectMeta objectMeta)
@@ -493,13 +512,17 @@ public class SequoiadbMetaDao implements MetaDao {
             BSONObject setUpdate = new BasicBSONObject();
             setUpdate.put(DBParamDefine.MODIFY_SET, updateData);
 
-            cl.update(matcher, setUpdate, null);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            cl.update(matcher, setUpdate, hint);
         } catch (Exception e){
             logger.error("update meta failed. error:"+e.getMessage());
             throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error.", e);
         }
     }
 
+    // update object parentId in cur meta, for update delimiter
     @Override
     public void updateMetaParentId(ConnectionDao connection, String metaCsName, String metaClName,
                                    long bucketId, String objectName, String parentIdName, long parentId)
@@ -518,13 +541,17 @@ public class SequoiadbMetaDao implements MetaDao {
             BSONObject setUpdate = new BasicBSONObject();
             setUpdate.put(DBParamDefine.MODIFY_SET, updateData);
 
-            cl.update(matcher, setUpdate, null);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            cl.update(matcher, setUpdate, hint);
         } catch (Exception e){
             logger.error("update meta failed. error:"+e.getMessage());
             throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error.", e);
         }
     }
 
+    // remove meta from cur meta or his meta by BucketId+Key or by BucketId+Key+VersionId
     @Override
     public void removeMeta(ConnectionDao connection, String metaCsName, String metaClName, long bucketId,
                            String objectName, Long versionId, Boolean noVersionFlag)
@@ -544,7 +571,10 @@ public class SequoiadbMetaDao implements MetaDao {
                 matcher.put(ObjectMeta.META_NO_VERSION_FLAG, noVersionFlag);
             }
 
-            cl.delete(matcher);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            cl.delete(matcher, hint);
         } catch (Exception e){
             logger.error("remove meta failed. error:"+e.getMessage());
             throw new S3ServerException(S3Error.DAO_DB_ERROR, "db error.", e);

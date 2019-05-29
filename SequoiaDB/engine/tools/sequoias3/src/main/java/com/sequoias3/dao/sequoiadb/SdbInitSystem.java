@@ -174,6 +174,7 @@ public class SdbInitSystem {
             String indexName = "regionSpaceIndex";
             if (!cl.isIndexExist(indexName)) {
                 BSONObject indexKey = new BasicBSONObject();
+                indexKey.put(RegionSpace.REGION_SPACE_REGIONNAME, 1);
                 indexKey.put(RegionSpace.REGION_SPACE_NAME, 1);
                 sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
                         DaoCollectionDefine.REGION_SPACE_LIST,

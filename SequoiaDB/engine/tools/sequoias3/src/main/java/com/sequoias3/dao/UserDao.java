@@ -17,6 +17,4 @@ public interface UserDao {
     User getUserByAccessKeyID(String accessKeyID) throws S3ServerException;
 
     Owner getOwnerByUserID(long userId) throws S3ServerException;
-
-    long getMaxID() throws S3ServerException;
 }

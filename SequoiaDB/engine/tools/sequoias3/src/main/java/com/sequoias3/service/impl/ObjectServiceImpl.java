@@ -376,7 +376,7 @@ public class ObjectServiceImpl implements ObjectService {
                                 objectMeta1.setParentId1(objectMeta.getParentId1());
                                 objectMeta1.setParentId2(objectMeta.getParentId2());
                                 metaDao.updateMeta(connection, metaCsName, metaClName, bucket.getBucketId(),
-                                        objectName, versionId, objectMeta1);
+                                        objectName, null, objectMeta1);
                                 metaDao.removeMeta(connection, metaHisCsName, metaHisClName, bucket.getBucketId(),
                                         objectName, objectMeta1.getVersionId(), null);
                             }else {
@@ -824,6 +824,7 @@ public class ObjectServiceImpl implements ObjectService {
             throw e;
         }finally {
             daoMgr.releaseConnectionDao(connection);
+            metaDao.releaseQueryDbCursor(queryDbCursor);
         }
     }
 

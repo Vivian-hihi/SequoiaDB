@@ -86,7 +86,10 @@ public class SequoiadbRegionDao implements RegionDao {
             BSONObject setUpdate = new BasicBSONObject();
             setUpdate.put(DBParamDefine.MODIFY_SET, updateData);
 
-            cl.update(matcher, setUpdate, null);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            cl.update(matcher, setUpdate, hint);
         }catch (Exception e){
             logger.error("update region config failed. error:"+e.getMessage());
             throw e;
@@ -180,42 +183,48 @@ public class SequoiadbRegionDao implements RegionDao {
                 }
             }
 
-            if (locationType != RegionParamDefine.LocationType.Data) {
-                Boolean findIndex = false;
-                DBCollection cl = cs.getCollection(CLName);
-                DBCursor cursor = cl.getIndexes();
-                while (cursor.hasNext()) {
-                    BSONObject record = cursor.getNext();
-                    BSONObject indexDef = (BSONObject) record.get("IndexDef");
-                    BSONObject key = (BSONObject) indexDef.get("key");
-                    Boolean unique = (Boolean) indexDef.get("unique");
-                    Boolean enforced = (Boolean) indexDef.get("enforced");
-                    if (key.containsField(ObjectMeta.META_KEY_NAME)
-                            && key.containsField(ObjectMeta.META_BUCKET_ID)
-                            && (locationType == RegionParamDefine.LocationType.Meta
-                                || key.containsField(ObjectMeta.META_VERSION_ID))
-                            && unique == true
-                            && enforced == true) {
-                        findIndex = true;
-                        break;
-                    }
-                }
-                cursor.close();
-
-                if (findIndex == false) {
+            DBCollection cl = cs.getCollection(CLName);
+            if (locationType == RegionParamDefine.LocationType.Meta){
+                if ( !cl.isIndexExist(ObjectMeta.INDEX_CUR_KEY)){
                     BSONObject indexKey = new BasicBSONObject();
-                    String indexName = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME;
                     indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
                     indexKey.put(ObjectMeta.META_KEY_NAME, 1);
-                    if (locationType == RegionParamDefine.LocationType.MetaHis) {
-                        indexKey.put(ObjectMeta.META_VERSION_ID, 1);
-                        indexName = indexName + "_" + ObjectMeta.META_VERSION_ID;
-                    }
                     sdbBaseOperation.createIndex(sdb, CSName, CLName,
-                            indexName, indexKey, true, true);
+                            ObjectMeta.INDEX_CUR_KEY, indexKey, true, true);
+                }
+
+                if (!cl.isIndexExist(ObjectMeta.INDEX_CUR_PARENTID1)){
+                    BSONObject indexKeyParent1 = new BasicBSONObject();
+                    indexKeyParent1.put(ObjectMeta.META_BUCKET_ID, 1);
+                    indexKeyParent1.put(ObjectMeta.META_PARENTID1,1);
+                    indexKeyParent1.put(ObjectMeta.META_KEY_NAME, 1);
+
+                    sdbBaseOperation.createIndex(sdb, CSName, CLName,
+                            ObjectMeta.INDEX_CUR_PARENTID1, indexKeyParent1, true, true);
+                }
+
+                if (!cl.isIndexExist(ObjectMeta.INDEX_CUR_PARENTID2)){
+                    BSONObject indexKeyParent2 = new BasicBSONObject();
+                    indexKeyParent2.put(ObjectMeta.META_BUCKET_ID, 1);
+                    indexKeyParent2.put(ObjectMeta.META_PARENTID2,1);
+                    indexKeyParent2.put(ObjectMeta.META_KEY_NAME, 1);
+
+                    sdbBaseOperation.createIndex(sdb, CSName, CLName,
+                            ObjectMeta.INDEX_CUR_PARENTID2, indexKeyParent2, true, true);
                 }
             }
 
+            if (locationType == RegionParamDefine.LocationType.MetaHis){
+                if (!cl.isIndexExist(ObjectMeta.INDEX_HIS_KEY)){
+                    BSONObject indexKey = new BasicBSONObject();
+                    indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
+                    indexKey.put(ObjectMeta.META_KEY_NAME, 1);
+                    indexKey.put(ObjectMeta.META_VERSION_ID, 1);
+
+                    sdbBaseOperation.createIndex(sdb, CSName, CLName,
+                            ObjectMeta.INDEX_HIS_KEY, indexKey, true, true);
+                }
+            }
         }catch (BaseException e){
             throw e;
         }
@@ -232,7 +241,10 @@ public class SequoiadbRegionDao implements RegionDao {
             BSONObject matcher = new BasicBSONObject();
             matcher.put(Region.REGION_NAME, regionName);
 
-            cl.delete(matcher);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            cl.delete(matcher, hint);
         }catch (BaseException e){
             if (e.getErrorCode() == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
                 return;
@@ -256,7 +268,10 @@ public class SequoiadbRegionDao implements RegionDao {
             BSONObject matcher = new BasicBSONObject();
             matcher.put(Region.REGION_NAME, regionName);
 
-            BSONObject queryResult = cl.queryOne(matcher, null, null, null, DBQuery.FLG_QUERY_FOR_UPDATE);
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+
+            BSONObject queryResult = cl.queryOne(matcher, null, null, hint, DBQuery.FLG_QUERY_FOR_UPDATE);
             if (null == queryResult){
                 return null;
             }
@@ -407,12 +422,12 @@ public class SequoiadbRegionDao implements RegionDao {
                 sdbBaseOperation.createCL(sdb, csMetaName, clMetaName, option);
 
                 BSONObject indexKey = new BasicBSONObject();
-                String indexName = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME;
+                String indexName = ObjectMeta.INDEX_CUR_KEY;
                 indexKey.put(ObjectMeta.META_BUCKET_ID, 1);
                 indexKey.put(ObjectMeta.META_KEY_NAME, 1);
                 if (isHistory) {
                     indexKey.put(ObjectMeta.META_VERSION_ID, 1);
-                    indexName = indexName + "_" + ObjectMeta.META_VERSION_ID;
+                    indexName = ObjectMeta.INDEX_HIS_KEY;
                 }
 
                 sdbBaseOperation.createIndex(sdb, csMetaName, clMetaName,
@@ -420,22 +435,20 @@ public class SequoiadbRegionDao implements RegionDao {
 
                 if (!isHistory){
                     BSONObject indexKeyParent1 = new BasicBSONObject();
-                    String indexNameParent1 = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME + "_" + ObjectMeta.META_PARENTID1;
                     indexKeyParent1.put(ObjectMeta.META_BUCKET_ID, 1);
                     indexKeyParent1.put(ObjectMeta.META_PARENTID1,1);
                     indexKeyParent1.put(ObjectMeta.META_KEY_NAME, 1);
 
                     sdbBaseOperation.createIndex(sdb, csMetaName, clMetaName,
-                            indexNameParent1, indexKeyParent1, true, true);
+                            ObjectMeta.INDEX_CUR_PARENTID1, indexKeyParent1, true, true);
 
                     BSONObject indexKeyParent2 = new BasicBSONObject();
-                    String indexNameParent2 = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME + "_" + ObjectMeta.META_PARENTID2;
                     indexKeyParent2.put(ObjectMeta.META_BUCKET_ID, 1);
                     indexKeyParent2.put(ObjectMeta.META_PARENTID2,1);
                     indexKeyParent2.put(ObjectMeta.META_KEY_NAME, 1);
 
                     sdbBaseOperation.createIndex(sdb, csMetaName, clMetaName,
-                            indexNameParent2, indexKeyParent2, true, true);
+                            ObjectMeta.INDEX_CUR_PARENTID2, indexKeyParent2, true, true);
                 }
             }
         }finally {

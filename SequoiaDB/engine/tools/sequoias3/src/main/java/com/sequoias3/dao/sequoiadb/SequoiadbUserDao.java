@@ -177,33 +177,6 @@ public class SequoiadbUserDao implements UserDao {
         }
     }
 
-    @Override
-    public long getMaxID() throws S3ServerException {
-        Sequoiadb sdb = null;
-        try {
-            sdb = sdbDatasourceWrapper.getSequoiadb();
-            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
-            DBCollection cl = cs.getCollection(DaoCollectionDefine.USER_LIST_COLLECTION);
-
-            BSONObject selector = new BasicBSONObject();
-            selector.put(User.JSON_KEY_USERID, "");
-            BSONObject orderBy = new BasicBSONObject();
-            orderBy.put(User.JSON_KEY_USERID, -1);
-            BSONObject queryResult = cl.queryOne(null, selector, orderBy, null, 0);
-
-            if (null != queryResult) {
-                return (long) (queryResult.get(User.JSON_KEY_USERID));
-            } else {
-                return 0L;
-            }
-        } catch (BaseException e) {
-            logger.error("getMaxID failed. errorMessage = " + e.getMessage(), e);
-            throw e;
-        } finally {
-            sdbDatasourceWrapper.releaseSequoiadb(sdb);
-        }
-    }
-
     private User convertBsonToUser(BSONObject bsonObject) {
         User user = new User();
         if (bsonObject.containsField(User.JSON_KEY_USERNAME)) {

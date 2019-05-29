@@ -28,6 +28,11 @@ public class ObjectMeta {
 
     public static final String NULL_VERSION_ID          = "null";
 
+    public static final String INDEX_CUR_KEY            = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME;
+    public static final String INDEX_HIS_KEY            = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME + "_" + ObjectMeta.META_VERSION_ID;
+    public static final String INDEX_CUR_PARENTID1      = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME + "_" + ObjectMeta.META_PARENTID1;
+    public static final String INDEX_CUR_PARENTID2      = ObjectMeta.META_BUCKET_ID + "_" + ObjectMeta.META_KEY_NAME + "_" + ObjectMeta.META_PARENTID2;
+
     private String key;
     private long bucketId;
     private String csName;

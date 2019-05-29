@@ -43,7 +43,10 @@ public class SdbIDGenerator implements IDGeneratorDao {
             update.put(IDGenerator.ID_ID, 1);
             BSONObject updateId = new BasicBSONObject();
             updateId.put(DBParamDefine.INCREASE, update);
-            DBCursor cursor = cl.queryAndUpdate(matcher, null, null, null,
+
+            BSONObject hint = new BasicBSONObject();
+            hint.put("", "");
+            DBCursor cursor = cl.queryAndUpdate(matcher, null, null, hint,
                     updateId, 0, 1, 0, true);
             if (cursor.hasNext()){
                 BSONObject record = cursor.getNext();

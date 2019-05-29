@@ -133,6 +133,9 @@ public class BucketDelimiterServiceImpl implements BucketDelimiterService {
             taskDao.insertTaskId(connectionA, taskId);
             // commit
             transaction.commit(connectionA);
+            logger.info("create a task of update bucket delimiter." +
+                            " bucketName={}, bucketId={}, taskId={}",
+                    bucketName, bucket.getBucketId(), taskId);
         }catch (S3ServerException e){
             transaction.rollback(connectionA);
             throw e;

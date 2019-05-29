@@ -111,6 +111,8 @@ public class BucketServiceImpl implements BucketService {
                 bucket.setDelimiter1Status(DelimiterStatus.NORMAL.getName());
                 bucket.setRegion(region);
                 bucketDao.insertBucket(bucket);
+                logger.info("create bucket success. bucket name={}, bucketId={}",
+                        bucketName, bucket.getBucketId());
                 return;
             }catch (S3ServerException e) {
                 logger.warn("Create bucket failed. bucket name = {}, error = {}", bucketName, e.getError().getErrIndex());
