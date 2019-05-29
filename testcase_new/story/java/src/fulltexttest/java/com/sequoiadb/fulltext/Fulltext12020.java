@@ -65,7 +65,7 @@ public class Fulltext12020 extends SdbTestBase {
         cappedNames = new ArrayList<String>();
         cappedNames.add( FullTextDBUtils.getCappedName( cl, fullTextIndexName ) );
         esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullTextIndexName );
-        cl.split( srcGroup, desGroup, 50 );
+        cl.split( srcGroup, desGroup, 50 );// TODO 建议补充检查原始集合切分结果，如切分后集合数据组个数、数据总数
         FullTextDBUtils.insertData( cl, FullTextUtils.INSERT_NUMS );
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullTextIndexName, FullTextUtils.INSERT_NUMS ) );
     }
@@ -73,14 +73,14 @@ public class Fulltext12020 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         CollectionSpace cs = sdb.getCollectionSpace( csName );
-        if ( cs.isCollectionExist( clName ) ) {
+        if ( cs.isCollectionExist( clName ) ) {// TODO 前面没有删表的操作不需要判断吧？
             FullTextDBUtils.dropCollection( cs, clName );
         }
         // check fulltext deleted
-        if ( esIndexNames != null ) {
+        if ( esIndexNames != null ) {// TODO 不用判断为null
             Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
         }
-        sdb.close();
+        sdb.close(); // TODO 关闭sdb和esClient连接需要放到finally，如果teardown前面步骤失败连接可能残留
         esClient.close();
     }
 

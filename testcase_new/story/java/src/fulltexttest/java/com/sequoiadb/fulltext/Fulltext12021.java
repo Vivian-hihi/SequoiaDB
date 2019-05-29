@@ -26,7 +26,8 @@ import com.sequoiadb.utils.FullTextUtils;
  * @author xiaoni Zhao
  * @date 2018/11/23
  */
-public class Fulltext12021 extends SdbTestBase {
+
+public class Fulltext12021 extends SdbTestBase {// TODO 其他检视意见同 12020 用例
     private Sequoiadb sdb = null;
     private DBCollection cl;
     private String clName = "ES_cl_12021";
@@ -58,7 +59,7 @@ public class Fulltext12021 extends SdbTestBase {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() throws Exception {// TOTO range切分表建议补充检查： 集合被切分到目标组，且源组和目标组数据正确（range表源组和目标组数据很明确）
         cl.createIndex( fullTextIndexName,
                 (BSONObject) JSON.parse( "{a : 'text', b : 'text', c : 'text', d : 'text', e : 'text', f : 'text'}" ),
                 false, false );
