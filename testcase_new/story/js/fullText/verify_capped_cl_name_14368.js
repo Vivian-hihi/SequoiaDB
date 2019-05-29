@@ -68,22 +68,22 @@ function main()
    //检查ES端的全文索引名字映射关系为固定集合名_组名
    var esOperator = new ESOperator();
    var groups = commGetCLGroups( db, COMMCSNAME + "." + clName );
-   var esIndexName1 = cappedCLName.toLowerCase() + "_" + groups[0];
+   var esIndexName1 = FULLTEXTPREFIX.toLowerCase() + cappedCLName.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName1);
    var groups = commGetCLGroups( db, csName + "." + clName );
-   var esIndexName2 = cappedCLName1.toLowerCase() + "_" + groups[0];
+   var esIndexName2 = FULLTEXTPREFIX.toLowerCase() + cappedCLName1.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName2);
    var groups = commGetCLGroups( db, csName + "." + clName + "_2" );
-   var esIndexName3 = cappedCLName2.toLowerCase() + "_" + groups[0];
+   var esIndexName3 = FULLTEXTPREFIX.toLowerCase() + cappedCLName2.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName3);
    var groups = commGetCLGroups( db, csName + "." + clName + "_3" );
-   var esIndexName4 = cappedCLName3.toLowerCase() + "_" + groups[0];
+   var esIndexName4 = FULLTEXTPREFIX.toLowerCase() +  cappedCLName3.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName4);
    var groups = commGetCLGroups( db, csName + "." + clName + "_4_1" );
-   var esIndexName5 = cappedSubCLName1.toLowerCase() + "_" + groups[0];
+   var esIndexName5 = FULLTEXTPREFIX.toLowerCase() + cappedSubCLName1.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName5);
    var groups = commGetCLGroups( db, csName + "." + clName + "_4_2" );
-   var esIndexName6 = cappedSubCLName2.toLowerCase() + "_" + groups[0];
+   var esIndexName6 = FULLTEXTPREFIX.toLowerCase() +  cappedSubCLName2.toLowerCase() + "_" + groups[0];
    esOperator.isExistIndexInES(esIndexName6);
    
    commDropCL(db, COMMCSNAME, clName, true, true);

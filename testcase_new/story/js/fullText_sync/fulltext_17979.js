@@ -3,6 +3,8 @@
 @Modify list :
               2019-4-26  YinZhen  Create
 ****************************************************************************/
+
+import( "../fullText/commlib.js" ) ;
 function main()
 {
    if(commIsStandalone( db )){

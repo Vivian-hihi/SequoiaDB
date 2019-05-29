@@ -4,6 +4,8 @@
 *@createdate:  2018.11.10
 *@testlinkCase: seqDB-16535
 **************************************/
+
+import( "../fullText/commlib.js" ) ;
 function main()
 {
    if(commIsStandalone(db))  {   return ;   }  
