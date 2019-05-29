@@ -64,7 +64,7 @@ public class FullText15881 extends SdbTestBase {
         esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
     }
 
-    @Test
+    @Test(enabled = false) // bug: SEQUOIADBMAINSTREAM-4533
     private void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor();
         ThreadTruncate threadTruncate = new ThreadTruncate();
