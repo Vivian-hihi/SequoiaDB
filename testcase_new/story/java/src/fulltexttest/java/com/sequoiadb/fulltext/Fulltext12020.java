@@ -1,8 +1,10 @@
 package com.sequoiadb.fulltext;
-
-import java.util.ArrayList;
+/**
+ * @Description seqDB-12020:hash切分表中创建全文索引并切分后再插入记录
+ * @author xiaoni Zhao
+ * @date 2018/11/23
+ */
 import java.util.List;
-
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
@@ -11,7 +13,6 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
@@ -20,12 +21,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
-
-/**
- * @Description seqDB-12020:hash切分表中创建全文索引并切分后再插入记录
- * @author xiaoni Zhao
- * @date 2018/11/23
- */
 public class Fulltext12020 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private DBCollection cl;
@@ -34,8 +29,8 @@ public class Fulltext12020 extends SdbTestBase {
     private Client esClient = null;
     private String srcGroup = null;
     private String desGroup = null;
-    private List<String> cappedNames = null;
-    private List<String> esIndexNames = null;
+    private String cappedName = null;
+    private String esIndexName = null;
 
     @BeforeClass
     public void setUp() {
@@ -59,29 +54,49 @@ public class Fulltext12020 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        cl.createIndex( fullTextIndexName,
-                (BSONObject) JSON.parse( "{a : 'text', b : 'text', c : 'text', d : 'text', e : 'text', f : 'text'}" ),
-                false, false );
-        cappedNames = new ArrayList<String>();
-        cappedNames.add( FullTextDBUtils.getCappedName( cl, fullTextIndexName ) );
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullTextIndexName );
-        cl.split( srcGroup, desGroup, 50 );// TODO 建议补充检查原始集合切分结果，如切分后集合数据组个数、数据总数
+        cl.createIndex( fullTextIndexName, 
+                (BSONObject) JSON.parse( "{a : 'text', b : 'text', c : 'text', d : 'text'}" ), false, false );
+        cappedName = FullTextDBUtils.getCappedName( cl, fullTextIndexName );
+        esIndexName = FullTextDBUtils.getESIndexName( cl, fullTextIndexName );
+        cl.split( srcGroup, desGroup, 50 );
         FullTextDBUtils.insertData( cl, FullTextUtils.INSERT_NUMS );
+        int desCount = getData(desGroup);
+        int srcCount = getData(srcGroup);
+        if(FullTextDBUtils.getCLGroups(cl).size() != 2 || (desCount+srcCount) != FullTextUtils.INSERT_NUMS){
+            Assert.fail("split failed!");
+        }
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullTextIndexName, FullTextUtils.INSERT_NUMS ) );
     }
-
+    
+    public int getData(String group){
+        Sequoiadb dataDb = null;
+        DBCollection cl = null;
+        int count = 0;
+        try{
+            dataDb = sdb.getReplicaGroup(group).getMaster().connect();
+            cl = dataDb.getCollectionSpace(csName).getCollection(clName);
+            count = (int)cl.getCount();
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally {
+            if( !dataDb.isClosed()){
+                dataDb.close();
+            }
+        }
+        return count;
+    }
+    
     @AfterClass
     public void tearDown() {
-        CollectionSpace cs = sdb.getCollectionSpace( csName );
-        if ( cs.isCollectionExist( clName ) ) {// TODO 前面没有删表的操作不需要判断吧？
+        try{
+            CollectionSpace cs = sdb.getCollectionSpace( csName );
             FullTextDBUtils.dropCollection( cs, clName );
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally {
+            sdb.close(); 
+            esClient.close();
         }
-        // check fulltext deleted
-        if ( esIndexNames != null ) {// TODO 不用判断为null
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
-        }
-        sdb.close(); // TODO 关闭sdb和esClient连接需要放到finally，如果teardown前面步骤失败连接可能残留
-        esClient.close();
     }
-
 }

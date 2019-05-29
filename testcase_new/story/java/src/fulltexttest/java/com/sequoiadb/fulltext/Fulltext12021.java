@@ -1,8 +1,10 @@
 package com.sequoiadb.fulltext;
-
-import java.util.ArrayList;
+/**
+ * @Description seqDB-12021: range切分表中创建全文索引并切分后再插入记录
+ * @author xiaoni Zhao
+ * @date 2018/11/23
+ */
 import java.util.List;
-
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
@@ -11,7 +13,6 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
@@ -21,13 +22,7 @@ import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
-/**
- * @Description seqDB-12021: range切分表中创建全文索引并切分后再插入记录
- * @author xiaoni Zhao
- * @date 2018/11/23
- */
-
-public class Fulltext12021 extends SdbTestBase {// TODO 其他检视意见同 12020 用例
+public class Fulltext12021 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private DBCollection cl;
     private String clName = "ES_cl_12021";
@@ -35,8 +30,8 @@ public class Fulltext12021 extends SdbTestBase {// TODO 其他检视意见同 12
     private Client esClient = null;
     private String srcGroup = null;
     private String desGroup = null;
-    private List<String> cappedNames = null;
-    private List<String> esIndexNames = null;
+    private String cappedName = null;
+    private String esIndexName = null;
 
     @BeforeClass
     public void setUp() {
@@ -53,7 +48,7 @@ public class Fulltext12021 extends SdbTestBase {// TODO 其他检视意见同 12
         desGroup = groupsName.get( 1 );
 
         cl = sdb.getCollectionSpace( csName ).createCollection( clName,
-                (BSONObject) JSON.parse( "{ShardingType:'range', ShardingKey:{a:1}, Group:'" + srcGroup + "'}" ) );
+                (BSONObject) JSON.parse( "{ShardingType:'range', ShardingKey:{recordId:1, a:1}, Group:'" + srcGroup + "'}" ) );
         esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
                 Integer.parseInt( SdbTestBase.esServiceName ) );
     }
@@ -61,29 +56,45 @@ public class Fulltext12021 extends SdbTestBase {// TODO 其他检视意见同 12
     @Test
     public void test() throws Exception {// TOTO range切分表建议补充检查： 集合被切分到目标组，且源组和目标组数据正确（range表源组和目标组数据很明确）
         cl.createIndex( fullTextIndexName,
-                (BSONObject) JSON.parse( "{a : 'text', b : 'text', c : 'text', d : 'text', e : 'text', f : 'text'}" ),
-                false, false );
-        cappedNames = new ArrayList<String>();
-        cappedNames.add( FullTextDBUtils.getCappedName( cl, fullTextIndexName ) );
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, fullTextIndexName );
-        cl.split( srcGroup, desGroup, (BSONObject) JSON.parse( "{a : 'test_hash12021_0'}" ),
-                (BSONObject) JSON.parse( "{a : 'test_hash12021_1000'}" ) );
+                (BSONObject) JSON.parse( "{a : 'text', b : 'text', c : 'text', d : 'text'}" ),false, false );
+        cappedName = FullTextDBUtils.getCappedName( cl, fullTextIndexName ) ;
+        esIndexName = FullTextDBUtils.getESIndexName( cl, fullTextIndexName );
+        cl.split( srcGroup, desGroup, (BSONObject)JSON.parse("{recordId:0}"), (BSONObject)JSON.parse("{recordId:10}"));
         FullTextDBUtils.insertData( cl, FullTextUtils.INSERT_NUMS );
+        checkData(desGroup, "{recordId:{$gte:0,$lt:10}}", 10);
+        checkData(srcGroup, "{recordId:{$gte:"+10+",$lt:"+FullTextUtils.INSERT_NUMS+"}}", (FullTextUtils.INSERT_NUMS-10));
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullTextIndexName, FullTextUtils.INSERT_NUMS ) );
+    }
+    
+    public void checkData(String group, String matcher, int expectedCount){
+        Sequoiadb dataDb = null;
+        DBCollection cl = null;
+        long count;
+        try{
+            dataDb = sdb.getReplicaGroup(group).getMaster().connect();
+            cl = dataDb.getCollectionSpace(csName).getCollection(clName);
+            count = cl.getCount(matcher);
+            Assert.assertEquals(count, expectedCount);
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally {
+            if( !dataDb.isClosed()){
+                dataDb.close();
+            }
+        }
     }
 
     @AfterClass
     public void tearDown() {
-        CollectionSpace cs = sdb.getCollectionSpace( csName );
-        if ( cs.isCollectionExist( clName ) ) {
+        try{
+            CollectionSpace cs = sdb.getCollectionSpace( csName );
             FullTextDBUtils.dropCollection( cs, clName );
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally {
+            sdb.close(); 
+            esClient.close();
         }
-        // check fulltext deleted
-        if ( esIndexNames != null ) {
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
-        }
-        sdb.close();
-        esClient.close();
     }
-
 }
