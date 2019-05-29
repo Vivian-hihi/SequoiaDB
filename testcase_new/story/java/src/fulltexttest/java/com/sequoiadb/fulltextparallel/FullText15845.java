@@ -15,6 +15,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
@@ -26,7 +27,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author luweikang
  * @Date 2019年5月10日
  */
-public class FullText15845 extends SdbTestBase {//TODO:与 15877 用例重复
+public class FullText15845 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
@@ -39,7 +40,7 @@ public class FullText15845 extends SdbTestBase {//TODO:与 15877 用例重复
     private int insertNum = 100000;
 
     @BeforeClass
-    public void setUp() {
+    public void setUp() throws Exception {
         esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
@@ -47,10 +48,6 @@ public class FullText15845 extends SdbTestBase {//TODO:与 15877 用例重复
         }
         cs = sdb.getCollectionSpace( csName );
         cl = cs.createCollection( clName );
-    }
-
-    @Test
-    public void test() throws Exception {//TODO: 同 15838 用例检视意见
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -63,19 +60,24 @@ public class FullText15845 extends SdbTestBase {//TODO:与 15877 用例重复
         cl.createIndex( indexName, indexObj, false, false );
 
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
-
         cappedName = FullTextDBUtils.getCappedName( cl, indexName );
         esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
-//TODO:以上步骤为并发前的预置条件，建议放到 setUp
+    }
+
+    @Test
+    public void test() throws Exception {
+
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker( new DropIndexThread() );
+        DropIndexThread dropIndexThread = new DropIndexThread();
+        thread.addWorker( dropIndexThread );
         thread.addWorker( new TruncateThread() );
         thread.run();
 
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
-
         Assert.assertEquals( cl.getCount(), 0, "cl be truncate, should no record." );
-
+        if ( dropIndexThread.getRetCode() != 0 ) {
+            cl.dropIndex( indexName );
+        }
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
     }
 
     @AfterClass
@@ -93,16 +95,16 @@ public class FullText15845 extends SdbTestBase {//TODO:与 15877 用例重复
         }
     }
 
-    private class DropIndexThread {
+    private class DropIndexThread extends ResultStore {
 
         @ExecuteOrder(step = 1)
-        private void createIndex() {
+        private void dropIndex() {
             try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
                 DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
                 cl.dropIndex( indexName );
             } catch ( BaseException e ) {
-                e.printStackTrace();
                 Assert.assertEquals( e.getErrorCode(), -321, e.getMessage() );
+                saveResult( e.getErrorCode(), e );
             }
         }
     }

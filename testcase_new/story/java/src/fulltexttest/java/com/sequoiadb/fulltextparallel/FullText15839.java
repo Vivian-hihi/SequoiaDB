@@ -43,7 +43,7 @@ public class FullText15839 extends SdbTestBase {
     private int insertNum = 100000;
 
     @BeforeClass
-    public void setUp() {
+    public void setUp() throws Exception {
         esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
@@ -61,10 +61,6 @@ public class FullText15839 extends SdbTestBase {
         options.put( "ShardingKey", new BasicBSONObject( "recordId", 1 ) );
         options.put( "Group", sourceGruop );
         cl = cs.createCollection( clName, options );
-    }
-
-    @Test
-    public void test() throws Exception {
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -80,7 +76,11 @@ public class FullText15839 extends SdbTestBase {
 
         cappedName = FullTextDBUtils.getCappedName( cl, indexName );
         esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
-//TODO:以上步骤均为并发前的准备工作，建议放到 setUp
+    }
+
+    @Test
+    public void test() throws Exception {
+
         ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker( new DropIndexThread() );
         thread.addWorker( new SplitThread() );

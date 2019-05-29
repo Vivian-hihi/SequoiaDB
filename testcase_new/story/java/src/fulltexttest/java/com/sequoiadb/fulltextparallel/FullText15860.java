@@ -48,51 +48,54 @@ public class FullText15860 extends SdbTestBase {
     private List<ObjectId> lobTruncateList = new ArrayList<ObjectId>();
     private List<ObjectId> lobRemoveList = new ArrayList<ObjectId>();
     private List<ObjectId> lobReadList = new ArrayList<ObjectId>();
+    private List<ObjectId> lobPutList = new ArrayList<ObjectId>();
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
+        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "skip StandAlone" );
         }
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
+        cs = sdb.getCollectionSpace( csName );
+        cl = cs.createCollection( clName );
 
-        List<ObjectId> lobList = writeLob(cl, 100);
-        lobTruncateList.addAll(lobList.subList(0, 49));
-        lobRemoveList.addAll(lobList.subList(50, 69));
-        lobReadList.addAll(lobList.subList(70, 99));
+        List<ObjectId> lobList = writeLob( cl, 100 );
+        lobTruncateList.addAll( lobList.subList( 0, 50 ) );
+        lobRemoveList.addAll( lobList.subList( 50, 70 ) );
+        lobReadList.addAll( lobList.subList( 70, 100 ) );
     }
 
     @Test
     public void test() throws Exception {
 
-        FullTextDBUtils.insertData(cl, insertNum);
+        FullTextDBUtils.insertData( cl, insertNum );
 
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put("a", "text");
-        indexObj.put("b", "text");
-        indexObj.put("c", "text");
-        indexObj.put("d", "text");
-        indexObj.put("e", "text");
-        cl.createIndex(indexName, indexObj, false, false);
+        indexObj.put( "a", "text" );
+        indexObj.put( "b", "text" );
+        indexObj.put( "c", "text" );
+        indexObj.put( "d", "text" );
+        indexObj.put( "e", "text" );
+        cl.createIndex( indexName, indexObj, false, false );
 
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
 
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker(new QueryByTextIndexThread());
-        thread.addWorker(new InsertThread());
-        thread.addWorker(new UpdateThread());
-        thread.addWorker(new DeleteThread());
-        thread.addWorker(new TruncateThread());
-        thread.addWorker(new TruncateLobThread());
-        thread.addWorker(new PutLobThread());
-        thread.addWorker(new RemoveLobThread());
-        thread.addWorker(new GetLoBThread());
+        thread.addWorker( new QueryByTextIndexThread() );
+        thread.addWorker( new InsertThread() );
+        thread.addWorker( new UpdateThread() );
+        thread.addWorker( new DeleteThread() );
+        thread.addWorker( new TruncateThread() );
+        thread.addWorker( new TruncateLobThread() );
+        thread.addWorker( new PutLobThread() );
+        thread.addWorker( new RemoveLobThread() );
+        thread.addWorker( new GetLoBThread() );
         thread.run();
 
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, 0));
+        Assert.assertTrue( FullTextUtils.isCLDataConsistency( cl ) );
+        // Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl,
+        // indexName, 0 ) );
 
         // TODO:插入记录及lob、全文检索，检查集合做基本操作功能正确
     }
@@ -100,12 +103,12 @@ public class FullText15860 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            FullTextDBUtils.dropCollection(cs, clName);
+            FullTextDBUtils.dropCollection( cs, clName );
         } finally {
-            if (sdb != null) {
+            if ( sdb != null ) {
                 sdb.close();
             }
-            if (esClient != null) {
+            if ( esClient != null ) {
                 esClient.close();
             }
         }
@@ -115,25 +118,26 @@ public class FullText15860 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void insert() throws InterruptedException {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
                 List<BSONObject> insertObjs = new ArrayList<BSONObject>();
-                String strB = StringUtils.getRandomString(8);
-                String strC = StringUtils.getRandomString(32);
-                String strD = StringUtils.getRandomString(64);
-                String strE = StringUtils.getRandomString(128);
+                String strB = StringUtils.getRandomString( 8 );
+                String strC = StringUtils.getRandomString( 32 );
+                String strD = StringUtils.getRandomString( 64 );
+                String strE = StringUtils.getRandomString( 128 );
                 int insertNum1 = insertNum + 1000;
-                for (int i = 0; i < 10; i++) {
-                    for (int j = insertNum; j < insertNum1; j++) {
+                for ( int i = 0; i < 10; i++ ) {
+                    for ( int j = insertNum; j < insertNum1; j++ ) {
                         int recordNum = i * 1000 + j;
-                        insertObjs.add((BSONObject) JSON.parse("{id: " + recordNum + ", a: '" + clName + recordNum
-                                + "', b: '" + strB + "', c: '" + strC + "', d: '" + strD + "', e: '" + strE + "'}"));
+                        insertObjs.add( (BSONObject) JSON
+                                .parse( "{recordId: " + recordNum + ", a: '" + clName + recordNum + "', b: '" + strB
+                                        + "', c: '" + strC + "', d: '" + strD + "', e: '" + strE + "'}" ) );
                     }
-                    cl.insert(insertObjs, 0);
+                    cl.insert( insertObjs, 0 );
                     insertObjs.clear();
                 }
-            } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+            } catch ( BaseException e ) {
+                Assert.assertEquals( e.getErrorCode(), -321, e.getMessage() );
             }
         }
     }
@@ -142,11 +146,11 @@ public class FullText15860 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void update() throws InterruptedException {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                cl.update("{a: {$gte: 0, $lt: " + (insertNum / 2) + "}}", "{$set: {b: 'text'}}", null);
-            } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+                cl.update( "{recordId: {$gte: 0, $lt: " + ( insertNum / 2 ) + "}}", "{$set: {b: 'text'}}", null );
+            } catch ( BaseException e ) {
+                Assert.assertEquals( e.getErrorCode(), -321, e.getMessage() );
             }
         }
     }
@@ -155,11 +159,11 @@ public class FullText15860 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void delete() throws InterruptedException {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                cl.delete("{a: {$gte: " + (insertNum / 2) + ", $lt: " + insertNum + "}}");
-            } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+                cl.delete( "{recordId: {$gte: " + ( insertNum / 2 ) + ", $lt: " + insertNum + "}}" );
+            } catch ( BaseException e ) {
+                Assert.assertEquals( e.getErrorCode(), -321, e.getMessage() );
             }
         }
     }
@@ -168,13 +172,13 @@ public class FullText15860 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
                 cl.truncate();
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
+            } catch ( BaseException e ) {
+                if ( e.getErrorCode() != -147 && e.getErrorCode() != -190 ) {
                     e.printStackTrace();
-                    Assert.fail(e.getMessage());
+                    Assert.fail( e.getMessage() );
                 }
             }
         }
@@ -184,20 +188,20 @@ public class FullText15860 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void queryData() throws InterruptedException {
-            for (int i = 0; i < 10; i++) {
-                try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                    Thread.sleep(5500 + new Random().nextInt(500));
-                    DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                    DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'a': 1}",
-                            "{'': '" + indexName + "'}");
-                    if (cur.hasNext()) {
+            for ( int i = 0; i < 10; i++ ) {
+                try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                    Thread.sleep( 5500 + new Random().nextInt( 500 ) );
+                    DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+                    DBCursor cur = cl.query( "{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                            "{'': '" + indexName + "'}" );
+                    if ( cur.hasNext() ) {
                         cur.getNext();
                     }
                     cur.close();
-                } catch (BaseException e) {
-                    if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
+                } catch ( BaseException e ) {
+                    if ( e.getErrorCode() != -6 && e.getErrorCode() != -52 ) {
                         e.printStackTrace();
-                        Assert.fail(e.getMessage());
+                        Assert.fail( e.getMessage() );
                     }
                 }
             }
@@ -208,16 +212,16 @@ public class FullText15860 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void truncateLob() throws InterruptedException {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                Thread.sleep(1000 + new Random().nextInt(100));
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                for (ObjectId lobId : lobTruncateList) {
-                    cl.truncateLob(lobId, lobSize);
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                Thread.sleep( 1000 + new Random().nextInt( 100 ) );
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+                for ( ObjectId lobId : lobTruncateList ) {
+                    cl.truncateLob( lobId, lobSize );
                 }
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -4 && e.getErrorCode() != -321) {
+            } catch ( BaseException e ) {
+                if ( e.getErrorCode() != -4 && e.getErrorCode() != -321 ) {
                     e.printStackTrace();
-                    Assert.fail(e.getMessage());
+                    Assert.fail( e.getMessage() );
                 }
             }
         }
@@ -227,10 +231,10 @@ public class FullText15860 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void putLob() throws InterruptedException {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                Thread.sleep(1000 + new Random().nextInt(100));
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                writeLob(cl, 100);
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                Thread.sleep( 1000 + new Random().nextInt( 100 ) );
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+                lobPutList.addAll( writeLob( cl, 100 ) );
             }
         }
     }
@@ -239,16 +243,16 @@ public class FullText15860 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void removeLob() throws InterruptedException {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                Thread.sleep(1000 + new Random().nextInt(100));
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                for (ObjectId lobId : lobRemoveList) {
-                    cl.removeLob(lobId);
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                Thread.sleep( 1000 + new Random().nextInt( 100 ) );
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+                for ( ObjectId lobId : lobRemoveList ) {
+                    cl.removeLob( lobId );
                 }
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -4 && e.getErrorCode() != -321) {
+            } catch ( BaseException e ) {
+                if ( e.getErrorCode() != -4 && e.getErrorCode() != -321 ) {
                     e.printStackTrace();
-                    Assert.fail(e.getMessage());
+                    Assert.fail( e.getMessage() );
                 }
             }
         }
@@ -258,34 +262,34 @@ public class FullText15860 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void getLob() throws InterruptedException {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                Thread.sleep(1000 + new Random().nextInt(100));
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                for (ObjectId lobId : lobReadList) {
-                    DBLob lob = cl.openLob(lobId);
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                Thread.sleep( 1000 + new Random().nextInt( 100 ) );
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+                for ( ObjectId lobId : lobReadList ) {
+                    DBLob lob = cl.openLob( lobId );
                     byte[] data = new byte[(int) lobSize];
-                    lob.read(data);
+                    lob.read( data );
                 }
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -4 && e.getErrorCode() != -321) {
+            } catch ( BaseException e ) {
+                if ( e.getErrorCode() != -4 && e.getErrorCode() != -321 ) {
                     e.printStackTrace();
-                    Assert.fail(e.getMessage());
+                    Assert.fail( e.getMessage() );
                 }
             }
         }
     }
 
-    private List<ObjectId> writeLob(DBCollection cl, int lobNum) {
+    private List<ObjectId> writeLob( DBCollection cl, int lobNum ) {
 
         List<ObjectId> lobIdList = new ArrayList<ObjectId>();
         byte[] data = new byte[(int) lobSize];
-        new Random().nextBytes(data);
+        new Random().nextBytes( data );
 
-        for (int i = 0; i < lobNum; i++) {
+        for ( int i = 0; i < lobNum; i++ ) {
             DBLob lob = cl.createLob();
-            lob.write(data);
+            lob.write( data );
             lob.close();
-            lobIdList.add(lob.getID());
+            lobIdList.add( lob.getID() );
         }
 
         return lobIdList;

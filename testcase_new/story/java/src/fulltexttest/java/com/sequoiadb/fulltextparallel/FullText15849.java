@@ -42,7 +42,7 @@ public class FullText15849 extends SdbTestBase {
     private int insertNum = 50000;
 
     @BeforeClass
-    public void setUp() {
+    public void setUp() throws Exception {
         esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
@@ -50,10 +50,6 @@ public class FullText15849 extends SdbTestBase {
         }
         cs = sdb.getCollectionSpace( csName );
         cl = cs.createCollection( clName );
-    }
-
-    @Test
-    public void test() throws Exception {//TODO: 同 15838 用例检视意见
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -66,9 +62,12 @@ public class FullText15849 extends SdbTestBase {
         cl.createIndex( indexName, indexObj, false, false );
 
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
-
         cappedName = FullTextDBUtils.getCappedName( cl, indexName );
         esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
+    }
+
+    @Test
+    public void test() throws Exception {
 
         ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker( new DropCLThread() );
@@ -112,20 +111,20 @@ public class FullText15849 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void queryData() throws InterruptedException {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                Thread.sleep( 5500 + new Random().nextInt( 500 ) );//TODO：建议循环查多次，每查询一次随机暂停 x 毫秒，可能会撞到创建索引不同的点
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                DBCursor cur = cl.query( "{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'a': 1}",
-                        "{'': '" + indexName + "'}" );
-                if ( cur.hasNext() ) {
-                    BSONObject record = cur.getNext();
-                    System.out.println( record );//TODO：不需要每条记录都打印出来吧？记录多会刷屏
-                }
-                cur.close();
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -6 && e.getErrorCode() != -52 && e.getErrorCode() != -23 ) {
-                    e.printStackTrace();
-                    Assert.fail( e.getMessage() );
+            for ( int i = 0; i < 10; i++ ) {
+                try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                    Thread.sleep( 1000 + new Random().nextInt( 500 ) );
+                    DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+                    DBCursor cur = cl.query( "{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'a': 1}",
+                            "{'': '" + indexName + "'}" );
+                    if ( cur.hasNext() ) {
+                        cur.getNext();
+                    }
+                    cur.close();
+                } catch ( BaseException e ) {
+                    if ( e.getErrorCode() != -6 && e.getErrorCode() != -52 && e.getErrorCode() != -23 ) {
+                        throw e;
+                    }
                 }
             }
         }

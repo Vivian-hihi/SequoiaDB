@@ -1,6 +1,8 @@
 package com.sequoiadb.fulltextparallel;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -16,6 +18,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -47,9 +50,10 @@ public class FullText15846 extends SdbTestBase {
     private List<ObjectId> lobTruncateList = new ArrayList<ObjectId>();
     private List<ObjectId> lobRemoveList = new ArrayList<ObjectId>();
     private List<ObjectId> lobReadList = new ArrayList<ObjectId>();
+    private List<ObjectId> lobPutList = new ArrayList<ObjectId>();
 
     @BeforeClass
-    public void setUp() {
+    public void setUp() throws Exception {
         esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
@@ -59,13 +63,9 @@ public class FullText15846 extends SdbTestBase {
         cl = cs.createCollection( clName );
 
         List<ObjectId> lobList = writeLob( cl, 100 );
-        lobTruncateList.addAll( lobList.subList( 0, 49 ) );
-        lobRemoveList.addAll( lobList.subList( 50, 69 ) );
-        lobReadList.addAll( lobList.subList( 70, 99 ) );
-    }
-
-    @Test
-    public void test() throws Exception {//TODO: 同 15838 用例检视意见
+        lobTruncateList.addAll( lobList.subList( 0, 50 ) );
+        lobRemoveList.addAll( lobList.subList( 50, 70 ) );
+        lobReadList.addAll( lobList.subList( 70, 100 ) );
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -78,6 +78,10 @@ public class FullText15846 extends SdbTestBase {
         cl.createIndex( indexName, indexObj, false, false );
 
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
+    }
+
+    @Test
+    public void test() throws Exception {
 
         cappedName = FullTextDBUtils.getCappedName( cl, indexName );
         esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
@@ -91,7 +95,8 @@ public class FullText15846 extends SdbTestBase {
         thread.run();
 
         Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
-      //TODO：lob相关操作貌似都没有做校验
+
+        checkLobResult();
     }
 
     @AfterClass
@@ -144,7 +149,7 @@ public class FullText15846 extends SdbTestBase {
             try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
                 Thread.sleep( 1000 + new Random().nextInt( 100 ) );
                 DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                writeLob( cl, 100 );
+                lobPutList.addAll( writeLob( cl, 100 ) );
             }
         }
     }
@@ -159,8 +164,6 @@ public class FullText15846 extends SdbTestBase {
                 for ( ObjectId lobId : lobRemoveList ) {
                     cl.removeLob( lobId );
                 }
-            } catch ( BaseException e ) {
-                e.printStackTrace();//TODO：不需要抛异常吗？
             }
         }
     }
@@ -177,8 +180,6 @@ public class FullText15846 extends SdbTestBase {
                     byte[] data = new byte[(int) lobSize];
                     lob.read( data );
                 }
-            } catch ( BaseException e ) {
-                e.printStackTrace();//TODO：不需要抛异常吗？
             }
         }
     }
@@ -197,6 +198,39 @@ public class FullText15846 extends SdbTestBase {
         }
 
         return lobIdList;
+    }
+
+    private void checkLobResult() {
+        List<ObjectId> expLobIdList = new ArrayList<ObjectId>();
+        expLobIdList.addAll( lobTruncateList );
+        expLobIdList.addAll( lobReadList );
+        expLobIdList.addAll( lobPutList );
+
+        List<ObjectId> actLobIdList = new ArrayList<ObjectId>();
+        DBCursor lobCur = cl.listLobs();
+        while ( lobCur.hasNext() ) {
+            actLobIdList.add( (ObjectId) lobCur.getNext().get( "Oid" ) );
+        }
+
+        sortLobIdList( expLobIdList );
+        sortLobIdList( actLobIdList );
+
+        Assert.assertEquals( actLobIdList.toString(), expLobIdList.toString() );
+    }
+
+    private void sortLobIdList( List<ObjectId> lobIdList ) {
+
+        Collections.sort( lobIdList, new Comparator<ObjectId>() {
+            @Override
+            public int compare( ObjectId obj1, ObjectId obj2 ) {
+                String str1 = obj1.toString();
+                String str2 = obj2.toString();
+                if ( str1.compareToIgnoreCase( str2 ) < 0 ) {
+                    return -1;
+                }
+                return 1;
+            }
+        } );
     }
 
 }

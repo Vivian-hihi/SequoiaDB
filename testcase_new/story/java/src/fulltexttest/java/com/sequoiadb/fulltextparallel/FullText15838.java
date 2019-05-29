@@ -1,5 +1,6 @@
 package com.sequoiadb.fulltextparallel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -36,8 +37,6 @@ public class FullText15838 extends SdbTestBase {
     private String clName = "es_15838";
     private Client esClient = null;
     private String indexName = "fulltextIndex15838";
-    private List<String> cappedNames = null;
-    private List<String> esIndexNames = null;
     private String sourceGruop = null;
     private String targetGruop = null;
     private int insertNum = 100000;
@@ -50,7 +49,7 @@ public class FullText15838 extends SdbTestBase {
             throw new SkipException( "skip StandAlone" );
         }
         List<String> groupNames = CommLib.getDataGroupNames( sdb );
-        if ( groupNames.size() < 2 ) {//TODO：建议用公共方法 CommLib.OneGroupMode
+        if ( groupNames.size() < 2 ) {
             throw new SkipException( "group less 2" );
         }
         sourceGruop = groupNames.get( 0 );
@@ -61,12 +60,12 @@ public class FullText15838 extends SdbTestBase {
         options.put( "ShardingKey", new BasicBSONObject( "recordId", 1 ) );
         options.put( "Group", sourceGruop );
         cl = cs.createCollection( clName, options );
+
+        FullTextDBUtils.insertData( cl, insertNum );
     }
 
     @Test
     public void test() throws Exception {
-
-        FullTextDBUtils.insertData( cl, insertNum );//TODO：非测试点，预置条件，建议放到setUp
 
         ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker( new CreateIndexThread() );
@@ -76,18 +75,16 @@ public class FullText15838 extends SdbTestBase {
         checkSplitResult();
 
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
-
-        String cappedName = FullTextDBUtils.getCappedName( cl, indexName );
-        cappedNames.add( cappedName );// TODO：不需要list吧。另外，如果只有teardown里面用的话建议放到teardown获取。获取定义成成员变量号扩展~~
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, indexName );//TODO:只有一个索引，建议用获取单个的接口
-
     }
 
     @AfterClass
     public void tearDown() {
         try {
+            List<String> cappedNames = new ArrayList<String>();
+            cappedNames.add( FullTextDBUtils.getCappedName( cl, indexName ) );
+            List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, indexName );
             FullTextDBUtils.dropCollection( cs, clName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );//TODO：2个list都可以改为String
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
         } finally {
             if ( sdb != null ) {
                 sdb.close();

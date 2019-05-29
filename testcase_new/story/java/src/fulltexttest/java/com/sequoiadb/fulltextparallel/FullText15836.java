@@ -39,30 +39,30 @@ public class FullText15836 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
+        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "skip StandAlone" );
         }
 
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
+        cs = sdb.getCollectionSpace( csName );
+        cl = cs.createCollection( clName );
+
+        FullTextDBUtils.insertData( cl, insertNum );
     }
 
     @Test
     public void test() throws Exception {
 
-        FullTextDBUtils.insertData(cl, insertNum);
-
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker(new CreateIndexThread());
-        thread.addWorker(new SyncThread());
+        thread.addWorker( new CreateIndexThread() );
+        thread.addWorker( new SyncThread() );
         thread.run();
 
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
 
-        cappedName = FullTextDBUtils.getCappedName(cl, indexName);
-        esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+        cappedName = FullTextDBUtils.getCappedName( cl, indexName );
+        esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
 
         // TODO:需要校验集合的插入及全文检索功能
     }
@@ -70,13 +70,13 @@ public class FullText15836 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
-            FullTextDBUtils.dropCollection(cs, clName);
-            FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName);
+            FullTextDBUtils.dropCollection( cs, clName );
+            FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName );
         } finally {
-            if (sdb != null) {
+            if ( sdb != null ) {
                 sdb.close();
             }
-            if (esClient != null) {
+            if ( esClient != null ) {
                 esClient.close();
             }
         }
@@ -86,15 +86,15 @@ public class FullText15836 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void createIndex() {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
                 BSONObject indexObj = new BasicBSONObject();
-                indexObj.put("a", "text");
-                indexObj.put("b", "text");
-                indexObj.put("c", "text");
-                indexObj.put("d", "text");
-                indexObj.put("e", "text");
-                cl.createIndex(indexName, indexObj, false, false);
+                indexObj.put( "a", "text" );
+                indexObj.put( "b", "text" );
+                indexObj.put( "c", "text" );
+                indexObj.put( "d", "text" );
+                indexObj.put( "e", "text" );
+                cl.createIndex( indexName, indexObj, false, false );
             }
         }
     }
@@ -103,8 +103,8 @@ public class FullText15836 extends SdbTestBase {
         // TODO:这里建议自己创建集合空间，只对自己创建的cs进行刷盘，整体刷盘，不确定会不会影响其他用例
         @ExecuteOrder(step = 1)
         private void syncData() {
-            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                db.sync(new BasicBSONObject("Block", true));
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                db.sync( new BasicBSONObject( "Block", true ) );
             }
         }
     }

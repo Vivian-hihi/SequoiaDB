@@ -17,6 +17,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
@@ -36,8 +37,7 @@ public class FullText15841 extends SdbTestBase {
     private String clName = "es_15841";
     private Client esClient = null;
     private String indexName = "fulltextIndex15841";
-    private String cappedName = null;
-    private String esIndexName = null;
+    private BSONObject indexObj = null;
     private int insertNum = 100000;
 
     @BeforeClass
@@ -49,29 +49,42 @@ public class FullText15841 extends SdbTestBase {
         }
         cs = sdb.getCollectionSpace( csName );
         cl = cs.createCollection( clName );
-    }
-
-    @Test
-    public void test() throws Exception {//TODO: 同 15838 用例检视意见
 
         FullTextDBUtils.insertData( cl, insertNum );
 
+        indexObj = new BasicBSONObject();
+        indexObj.put( "a", "text" );
+        indexObj.put( "b", "text" );
+        indexObj.put( "c", "text" );
+        indexObj.put( "d", "text" );
+        indexObj.put( "e", "text" );
+    }
+
+    @Test
+    public void test() throws Exception {
+
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker( new CreateIndexThread() );
-        thread.addWorker( new TruncateThread() );
+        CreateIndexThread createIndexThread = new CreateIndexThread();
+        TruncateThread truncateThread = new TruncateThread();
+        thread.addWorker( createIndexThread );
+        thread.addWorker( truncateThread );
         thread.run();
-//TODO：创建索引可能成功可能失败，需要分情况检查结果
-//TODO：如果创建索引成功，检查结果前是不是要判断一下索引是否意见重建？FullTextUtils.isFulltextRebuild
-//TODO：如果truncate失败，需要校验记录数、索引、数据一致性
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
-        
-        cappedName = FullTextDBUtils.getCappedName( cl, indexName );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
+        if ( createIndexThread.getRetCode() != 0 ) {
+            cl.createIndex( indexName, indexObj, false, false );
+        }
+        if ( truncateThread.getRetCode() == 0 ) {
+            Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, 0 ) );
+        } else {
+            Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
+        }
+
     }
 
     @AfterClass
     public void tearDown() {
         try {
+            String cappedName = FullTextDBUtils.getCappedName( cl, indexName );
+            String esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
             FullTextDBUtils.dropCollection( cs, clName );
             Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
         } finally {
@@ -84,26 +97,23 @@ public class FullText15841 extends SdbTestBase {
         }
     }
 
-    private class CreateIndexThread {
+    private class CreateIndexThread extends ResultStore {
 
         @ExecuteOrder(step = 1)
         private void createIndex() {
             try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
                 DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                BSONObject indexObj = new BasicBSONObject();
-                indexObj.put( "a", "text" );
-                indexObj.put( "b", "text" );
-                indexObj.put( "c", "text" );
-                indexObj.put( "d", "text" );
-                indexObj.put( "e", "text" );
                 cl.createIndex( indexName, indexObj, false, false );
             } catch ( BaseException e ) {
-                Assert.assertEquals( e.getErrorCode(), -321, e.getMessage() );
+                if ( e.getErrorCode() != -321 ) {
+                    throw e;
+                }
+                saveResult( -1, e );
             }
         }
     }
 
-    private class TruncateThread {//TODO:truncate可能报-190或-147，请确认
+    private class TruncateThread extends ResultStore {
 
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {
@@ -111,6 +121,9 @@ public class FullText15841 extends SdbTestBase {
                 Thread.sleep( 1000 + new Random().nextInt( 100 ) );
                 DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
                 cl.truncate();
+            } catch ( BaseException e ) {
+                e.printStackTrace();
+                saveResult( -1, e );
             }
         }
     }

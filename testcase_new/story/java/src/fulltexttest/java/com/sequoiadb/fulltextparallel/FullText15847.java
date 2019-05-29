@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -46,7 +47,7 @@ public class FullText15847 extends SdbTestBase {
     private int deleteNum = insertNum / 2;
 
     @BeforeClass
-    public void setUp() {
+    public void setUp() throws Exception {
         esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
@@ -54,10 +55,6 @@ public class FullText15847 extends SdbTestBase {
         }
         cs = sdb.getCollectionSpace( csName );
         cl = cs.createCollection( clName );
-    }
-
-    @Test
-    public void test() throws Exception {//TODO: 同 15838 用例检视意见
 
         FullTextDBUtils.insertData( cl, insertNum );
 
@@ -70,6 +67,10 @@ public class FullText15847 extends SdbTestBase {
         cl.createIndex( indexName, indexObj, false, false );
 
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
+    }
+
+    @Test
+    public void test() throws Exception {//
 
         ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker( new TextIndexThread() );
@@ -116,7 +117,11 @@ public class FullText15847 extends SdbTestBase {
                 for ( int i = 0; i < 5; i++ ) {
                     cl.dropIndex( indexName );
                     cl.createIndex( indexName, indexObj, false, false );
-                }//TODO:文本用例预期结果删除全文索引可能报-147，请确认修改
+                }
+            } catch ( BaseException e ) {
+                if ( e.getErrorCode() != -147 && e.getErrorCode() != -190 ) {
+                    throw e;
+                }
             }
         }
     }
@@ -132,7 +137,7 @@ public class FullText15847 extends SdbTestBase {
                 String strC = StringUtils.getRandomString( 32 );
                 String strD = StringUtils.getRandomString( 64 );
                 int insertNum1 = insertNum + testInsertNum / 10;
-                for ( int i = 0; i < 10; i++ ) {//TODO:插入是不是可以直接调公共方法？
+                for ( int i = 0; i < 10; i++ ) {
                     for ( int j = insertNum; j < insertNum1; j++ ) {
                         int recordNum = i * ( testInsertNum / 10 ) + j;
                         insertObjs.add( (BSONObject) JSON.parse( "{recordId: " + recordNum + ", a: '" + clName
