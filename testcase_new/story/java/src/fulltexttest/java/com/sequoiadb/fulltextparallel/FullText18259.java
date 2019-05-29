@@ -97,7 +97,7 @@ public class FullText18259 extends SdbTestBase {
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl2.createIndex(IDX_NAME, IDX_KEY, false, false);
             } catch (BaseException e) {
-                if (e.getErrorCode() != -247 && e.getErrorCode() != -199) {
+                if (e.getErrorCode() != -247 && e.getErrorCode() != -199 && e.getErrorCode() != -43) {
                     throw e;
                 }
             }
