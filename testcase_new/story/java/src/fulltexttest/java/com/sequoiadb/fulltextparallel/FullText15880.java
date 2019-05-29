@@ -55,6 +55,11 @@ public class FullText15880 extends SdbTestBase {
             throw new SkipException("Skip standAlone mode");
         }
 
+
+        if (sdb.isCollectionSpaceExist(CS_NAME)) {
+            // 清理后重新创建，避免前一次跑的结果对其有影响
+            sdb.dropCollectionSpace(CS_NAME);
+        }
         cs = sdb.createCollectionSpace(CS_NAME);
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
@@ -111,7 +116,7 @@ public class FullText15880 extends SdbTestBase {
         private void sync() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 BSONObject options = new BasicBSONObject();
-                options.put("CollectionSpace", CL_NAME);
+                options.put("CollectionSpace", CS_NAME);
                 options.put("Block", true);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 for (int i = 0; i < 3; i++) {
