@@ -58,8 +58,7 @@ public class FullText15853 extends SdbTestBase {
     private ArrayList<ObjectId> lobIds2 = new ArrayList<>();
     
     private Client esClient = null;
-    private String esIndexName;
-    
+    private String esIndexName;    
 
     @BeforeClass
     private void setUp() throws Exception {

@@ -56,6 +56,10 @@ public class FullText15876 extends SdbTestBase {
             throw new SkipException("Skip standAlone mode");
         }
 
+        if (sdb.isCollectionSpaceExist(CS_NAME)) {
+            // 清理后重新创建，避免前一次跑的结果对其有影响
+            sdb.dropCollectionSpace(CS_NAME);
+        }
         cs = sdb.createCollectionSpace(CS_NAME);
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
@@ -130,7 +134,7 @@ public class FullText15876 extends SdbTestBase {
                 db.dropCollectionSpace(CS_NAME);
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
             } catch (BaseException e) {
-                if (e.getErrorCode() != -147) {
+                if (e.getErrorCode() != -147 && e.getErrorCode() != -190 && e.getErrorCode() != -321) {
                     throw e;
                 }
                 saveResult(-1, e);

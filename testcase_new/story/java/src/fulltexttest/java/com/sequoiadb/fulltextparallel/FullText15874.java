@@ -47,8 +47,7 @@ public class FullText15874 extends SdbTestBase {
     private String cappedCSName;
     
     private Client esClient = null;
-    private String esIndexName;
-    
+    private String esIndexName;    
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -62,7 +61,7 @@ public class FullText15874 extends SdbTestBase {
 
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         cl = cs.createCollection(CL_NAME);
-        cl.createIndex(IDX_NAME, IDX_KEY, false, false);  
+        cl.createIndex(IDX_NAME, IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
         esIndexName  = FullTextDBUtils.getESIndexName(cl, IDX_NAME); 
         

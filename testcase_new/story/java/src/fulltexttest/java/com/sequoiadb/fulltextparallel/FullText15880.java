@@ -55,7 +55,6 @@ public class FullText15880 extends SdbTestBase {
             throw new SkipException("Skip standAlone mode");
         }
 
-
         if (sdb.isCollectionSpaceExist(CS_NAME)) {
             // 清理后重新创建，避免前一次跑的结果对其有影响
             sdb.dropCollectionSpace(CS_NAME);
