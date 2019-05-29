@@ -1,15 +1,8 @@
-/**
- * Copyright (c) 2019, SequoiaDB Ltd.
- * File Fulltext12122.java
- * 部分集合上存在全文索引，多个集合同时执行增删改/truncate/lob操作
- *
- *  @author liuxiaoxuan
- * Date:2019年5月10日上午11:33:44
- *  @version 1.00
- */
 package com.sequoiadb.fulltextparallel;
-// TODO:用例批注不需要符合规范
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -36,31 +29,22 @@ import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
-
 import org.elasticsearch.client.*;
 
+/**
+ * @FileName seqDB-12122:部分集合上存在全文索引，多个集合同时执行增删改/truncate/lob操作
+ * @Author
+ * @Date liuxiaoxuan 2019.5.10
+ */
 public class Fulltext12122 extends SdbTestBase {
     private Sequoiadb db = null;
-    private CollectionSpace cs1 = null;
-    private CollectionSpace cs2 = null;
-    private DBCollection cl1 = null;
-    private DBCollection cl2 = null;
-    private DBCollection cl3 = null;
-    private DBCollection cl4 = null;
-
-    private String csName1 = "cs12122_01";
-    private String csName2 = "cs12122_02";
-    private String clName1 = "ES_12122_cl1_01";
-    private String clName2 = "ES_12122_cl1_02";
-    private String clName3 = "ES_12122_cl2_01";
-    private String clName4 = "ES_12122_cl2_02";
-
+    private List< CollectionSpace > css = new ArrayList<>();
+    private List< DBCollection > cls = new ArrayList<>();
+    private List< String > csNames = new ArrayList<>();
+    private List< String > clNames = new ArrayList<>();
     private String textIndexName = "fulltext12122";
     private Client esClient = null;
     ThreadExecutor te = new ThreadExecutor();
-    List< TruncateThread > truncateThreads = new ArrayList<>();
-    List< LobThread > lobThreads = new ArrayList<>();
-    List< CurdThread > curdThreads = new ArrayList<>();
 
     @BeforeClass
     public void setUp() {
@@ -72,154 +56,136 @@ public class Fulltext12122 extends SdbTestBase {
             throw new SkipException( "skip StandAlone" );
         }
 
-        // create cl
-        if ( db.isCollectionSpaceExist( csName1 ) ) {
-            db.dropCollectionSpace( csName1 );
+        // 创建集合空间和集合，总共两个集合空间，每个集合空间对应2个集合
+        for ( int i = 0; i < 2; i++ ) {
+            csNames.add( "cs12122_" + i );
+            if ( db.isCollectionSpaceExist( csNames.get( i ) ) ) {
+                db.dropCollectionSpace( csNames.get( i ) );
+            }
+            css.add( db.createCollectionSpace( csNames.get( i ) ) );
         }
-        if ( db.isCollectionSpaceExist( csName2 ) ) {
-            db.dropCollectionSpace( csName2 );
+        for ( int i = 0; i < 4; i++ ) {
+            clNames.add( "12122_cl_" + i );
+            cls.add( css.get( i % 2 ).createCollection( clNames.get( i ) ) );
         }
-        cs1 = db.createCollectionSpace( csName1 );
-        cs2 = db.createCollectionSpace( csName2 );
-        createCollections();
+
+        // 插入数据并创建全文索引
+        for ( DBCollection cl : cls ) {
+            FullTextDBUtils.insertData( cl, 10000 );
+        }
+
+        BSONObject indexObj = new BasicBSONObject();
+        indexObj.put( "a", "text" );
+        cls.get( 0 ).createIndex( textIndexName, indexObj, false, false );
+        cls.get( 1 ).createIndex( textIndexName, indexObj, false, false );
     }
 
     @AfterClass
     public void tearDown() {
-        for ( CurdThread thread : curdThreads ) {
-            if ( null != thread ) {
-                thread.tearDown();
-            }
+        for ( String csName : csNames ) {
+            db.dropCollectionSpace( csName );
         }
-
-        for ( LobThread thread : lobThreads ) {
-            if ( null != thread ) {
-                thread.tearDown();
-            }
+        if ( db != null ) {
+            db.close();
         }
-
-        for ( TruncateThread thread : truncateThreads ) {
-            if ( null != thread ) {
-                thread.tearDown();
-            }
+        if ( esClient != null ) {
+            esClient.close();
         }
-
-        db.dropCollectionSpace( csName1 );
-        db.dropCollectionSpace( csName2 );
-        db.close();
-        esClient.close();
     }
 
-    @Test  //TODO:测试点需要梳理，并发前的操作可以放到 setUp
+    @Test
     public void test() throws Exception {
-        // insert
-        FullTextDBUtils.insertData( cl1, 10000 );
-        FullTextDBUtils.insertData( cl2, 10000 );
-        FullTextDBUtils.insertData( cl3, 10000 );
-        FullTextDBUtils.insertData( cl4, 10000 );
-        // create fulltext
-        BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        cl1.createIndex( textIndexName, indexObj, false, false );
-        cl3.createIndex( textIndexName, indexObj, false, false );
-        
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl1,
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 0 ),
                 textIndexName, 10000 ) );
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl3,
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 1 ),
                 textIndexName, 10000 ) );
 
-        // truncate cl
-        truncateThreads.add( new TruncateThread( csName1, clName1 ) );
-        truncateThreads.add( new TruncateThread( csName2, clName4 ) );
-        lobThreads.add( new LobThread( csName1, clName1 ) );
-        lobThreads.add( new LobThread( csName2, clName4 ) );
-        curdThreads.add( new CurdThread( csName1, clName1 ) );
-        curdThreads.add( new CurdThread( csName1, clName2 ) );
-        curdThreads.add( new CurdThread( csName2, clName3 ) );
-        curdThreads.add( new CurdThread( csName2, clName4 ) );
+        te.addWorker(
+                new TruncateThread( csNames.get( 0 ), clNames.get( 0 ) ) );
+        te.addWorker(
+                new TruncateThread( csNames.get( 1 ), clNames.get( 3 ) ) );
+        te.addWorker( new LobThread( csNames.get( 0 ), clNames.get( 0 ) ) );
+        te.addWorker( new LobThread( csNames.get( 1 ), clNames.get( 3 ) ) );
+        te.addWorker( new CurdThread( csNames.get( 0 ), clNames.get( 0 ) ) );
+        te.addWorker( new CurdThread( csNames.get( 1 ), clNames.get( 1 ) ) );
+        te.addWorker( new CurdThread( csNames.get( 0 ), clNames.get( 2 ) ) );
+        te.addWorker( new CurdThread( csNames.get( 1 ), clNames.get( 3 ) ) );
 
-        for ( TruncateThread thread : truncateThreads ) {
-            te.addWorker( thread );
-        }
-        for ( LobThread thread : lobThreads ) {
-            te.addWorker( thread );
-        }
-        for ( CurdThread thread : curdThreads ) {
-            te.addWorker( thread );
-        }
-
-        // concurrent run
         te.run();
 
         Assert.assertTrue( FullTextUtils.isFulltextRebuild( esClient,
-                cl1, textIndexName ) );
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl1,
-                textIndexName, ( int ) cl1.getCount() ) );
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl3,
-                textIndexName, ( int ) cl3.getCount() ) );
+                cls.get( 0 ), textIndexName ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 0 ),
+                textIndexName, ( int ) cls.get( 0 ).getCount() ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 1 ),
+                textIndexName, ( int ) cls.get( 1 ).getCount() ) );
 
-        // query
-        BSONObject matcher = ( BSONObject ) JSON.parse(
-                "{'':{'$Text':{'query':{'match':{'a' : 'cs12122_01'}}}}}" );
-        DBCursor cursor = cl1.query( matcher, null, null, null );
+        // 全文检索
+        BSONObject matcher = ( BSONObject ) JSON
+                .parse( "{'':{'$Text':{'query':{'match_all':{}}}}}" );
+        DBCursor cursor = cls.get( 1 ).query( matcher, null, null, null );
         int count = 0;
         while ( cursor.hasNext() ) {
-            BSONObject object = ( BSONObject ) cursor.getNext();// TODO:未使用变量，不需要定义
+            cursor.getNext();
             count++;
         }
-        System.out.println( csName1 + "." + clName1 + "'s count: " + count );
-    }
-
-    public void createCollections() {
-        cl1 = cs1.createCollection( clName1 );
-        cl2 = cs1.createCollection( clName2 );
-        cl3 = cs2.createCollection( clName3 );
-        cl4 = cs2.createCollection( clName4 );
+        Assert.assertEquals( count, ( int ) cls.get( 1 ).getCount() );
     }
 
     class TruncateThread {
-        private Sequoiadb db = null;
-        private DBCollection cl = null;
+        private String csName;
+        private String clName;
 
         public TruncateThread( String csName, String clName ) {
-            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            cl = db.getCollectionSpace( csName ).getCollection( clName );
+            this.csName = csName;
+            this.clName = clName;
         }
 
         @ExecuteOrder(step = 1, desc = "清空原始集合")
         public void truncate() {
-            try {
+            System.out.println(
+                    this.getClass().getName().toString() + " begin at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
+            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "",
+                    "" )) {
+                DBCollection cl = sdb.getCollectionSpace( csName )
+                        .getCollection( clName );
                 cl.truncate();
             } catch ( BaseException e ) {
-                boolean isExpectedErr = false;
-                if ( -321 == e.getErrorCode() || -190 == e.getErrorCode() ) {
-                    isExpectedErr = true;
+                if ( -321 != e.getErrorCode() && -190 != e.getErrorCode() ) {
+                    Assert.fail( "actual exception: " + e.getErrorCode() );
                 }
-                Assert.assertTrue( isExpectedErr,
-                        "actual exception: " + e.getErrorCode() );
+            } finally {
+                System.out.println(
+                        this.getClass().getName().toString() + " end at:"
+                                + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                        .format( new Date() ) );
             }
         }
 
-        public void tearDown() {
-            if ( null != db && !db.isClosed() ) {
-                db.close();
-            }
-        }
     }
 
     class LobThread {
-        private Sequoiadb db = null;
-        private DBCollection cl = null;
+        private String csName;
+        private String clName;
 
         public LobThread( String csName, String clName ) {
-            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            cl = db.getCollectionSpace( csName ).getCollection( clName );
+            this.csName = csName;
+            this.clName = clName;
         }
 
         @ExecuteOrder(step = 1, desc = "插入lob")
         public void createLob() {
+            System.out.println(
+                    this.getClass().getName().toString() + " begin at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
             DBLob lob = null;
-            try {
+            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "",
+                    "" )) {
+                DBCollection cl = sdb.getCollectionSpace( csName )
+                        .getCollection( clName );
                 String lobStringBuff = StringUtils
                         .getRandomString( new Random().nextInt( 1024 ) );
                 lob = cl.createLob();
@@ -228,29 +194,29 @@ public class Fulltext12122 extends SdbTestBase {
                 if ( lob != null ) {
                     lob.close();
                 }
-            }
-        }
-
-        public void tearDown() {
-            if ( null != db && !db.isClosed() ) {
-                db.close();
+                System.out.println(
+                        this.getClass().getName().toString() + " end at:"
+                                + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                        .format( new Date() ) );
             }
         }
     }
 
-    class CurdThread { // TODO:增删改建议分开写线程并发
-        private Sequoiadb db = null;
+    class CurdThread {
+        private Sequoiadb sdb = null;
         private DBCollection cl = null;
 
         public CurdThread( String csName, String clName ) {
-            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            cl = db.getCollectionSpace( csName ).getCollection( clName );
+            sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl = sdb.getCollectionSpace( csName ).getCollection( clName );
         }
 
         @ExecuteOrder(step = 1, desc = "插入记录")
         public void insert() {
             System.out.println(
-                    "--------------run CurdThread insert--------------" );
+                    this.getClass().getName().toString() + " insert begin at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
             List< BSONObject > insertObjs = new ArrayList< BSONObject >();
             int insertRecordNum = 10000;
             String strA = StringUtils.getRandomString( 64 );
@@ -262,19 +228,23 @@ public class Fulltext12122 extends SdbTestBase {
             try {
                 cl.insert( insertObjs, 0 );
             } catch ( BaseException e ) {
-                boolean isExpectedErr = false;
-                if ( -321 == e.getErrorCode() || -190 == e.getErrorCode() ) {
-                    isExpectedErr = true;
+                if ( -321 != e.getErrorCode() && -190 != e.getErrorCode() ) {
+                    Assert.fail( "actual exception: " + e.getErrorCode() );
                 }
-                Assert.assertTrue( isExpectedErr,
-                        "actual exception: " + e.getErrorCode() );
+            } finally {
+                System.out.println(
+                        this.getClass().getName().toString() + " insert end at:"
+                                + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                        .format( new Date() ) );
             }
         }
 
         @ExecuteOrder(step = 1, desc = "更新记录")
         public void update() {
             System.out.println(
-                    "--------------run CurdThread update--------------" );
+                    this.getClass().getName().toString() + " udpate begin at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
             BSONObject modifier = new BasicBSONObject();
             BSONObject value = new BasicBSONObject();
             BSONObject matcher = new BasicBSONObject();
@@ -287,19 +257,23 @@ public class Fulltext12122 extends SdbTestBase {
             try {
                 cl.update( matcher, modifier, null );
             } catch ( BaseException e ) {
-                boolean isExpectedErr = false;
-                if ( -321 == e.getErrorCode() || -190 == e.getErrorCode() ) {
-                    isExpectedErr = true;
+                if ( -321 != e.getErrorCode() && -190 != e.getErrorCode() ) {
+                    Assert.fail( "actual exception: " + e.getErrorCode() );
                 }
-                Assert.assertTrue( isExpectedErr,
-                        "actual exception: " + e.getErrorCode() );
+            } finally {
+                System.out.println(
+                        this.getClass().getName().toString() + " udpate end at:"
+                                + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                        .format( new Date() ) );
             }
         }
 
         @ExecuteOrder(step = 1, desc = "删除记录")
         public void delete() {
             System.out.println(
-                    "--------------run CurdThread delete--------------" );
+                    this.getClass().getName().toString() + " delete begin at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
             BSONObject matcher = new BasicBSONObject();
             BSONObject subMatcher = new BasicBSONObject();
             subMatcher.put( "$gt", 5000 );
@@ -308,18 +282,21 @@ public class Fulltext12122 extends SdbTestBase {
             try {
                 cl.delete( matcher );
             } catch ( BaseException e ) {
-                boolean isExpectedErr = false;
-                if ( -321 == e.getErrorCode() || -190 == e.getErrorCode() ) {
-                    isExpectedErr = true;
+                if ( -321 != e.getErrorCode() && -190 != e.getErrorCode() ) {
+                    Assert.fail( "actual exception: " + e.getErrorCode() );
                 }
-                Assert.assertTrue( isExpectedErr,
-                        "actual exception: " + e.getErrorCode() );
+            } finally {
+                System.out.println(
+                        this.getClass().getName().toString() + " delete end at:"
+                                + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                        .format( new Date() ) );
             }
         }
 
+        @ExecuteOrder(step = 2, desc = "清理环境")
         public void tearDown() {
-            if ( null != db && !db.isClosed() ) {
-                db.close();
+            if ( sdb != null ) {
+                sdb.close();
             }
         }
     }

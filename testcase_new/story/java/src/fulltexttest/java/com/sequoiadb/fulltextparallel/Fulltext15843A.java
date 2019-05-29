@@ -1,6 +1,7 @@
 package com.sequoiadb.fulltextparallel;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -27,18 +28,20 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
+import com.sequoiadb.utils.StringUtils;
 
 /**
- * @FileName seqDB-15844:删除全文索引与全文检索并发
- * @Author
- * @Date liuxiaoxuan 2019.5.10
+ * FileName Fulltext15843A.java test content: 在ES正在同步原始集合中的记录时，删除全文索引与增删改记录并发
+ * 
+ * @author liuxiaoxuan
+ * @Date 2019.05.10
  */
-public class Fulltext15844 extends SdbTestBase {
+public class Fulltext15843A extends SdbTestBase {
     private Sequoiadb db = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
-    private String clName = "ES_15844";
-    private String textIndexName = "fulltext15844";
+    private String clName = "ES_15843_A";
+    private String textIndexName = "fulltext15843A";
     private Client esClient = null;
     ThreadExecutor te = new ThreadExecutor();
 
@@ -54,7 +57,7 @@ public class Fulltext15844 extends SdbTestBase {
 
         cs = db.getCollectionSpace( csName );
         cl = cs.createCollection( clName );
-        FullTextDBUtils.insertData( cl, 10000 );
+        FullTextDBUtils.insertData( cl, 100000 );
 
         BSONObject indexObj = new BasicBSONObject();
         indexObj.put( "a", "text" );
@@ -74,15 +77,12 @@ public class Fulltext15844 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl,
-                textIndexName, 10000 ) );
-
         String cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
         List< String > esIndexNames = FullTextDBUtils.getESIndexNames( cl,
                 textIndexName );
 
         te.addWorker( new DropTextIndexThread() );
-        te.addWorker( new QueryThread() );
+        te.addWorker( new CurdThread() );
 
         te.run();
 
@@ -91,6 +91,7 @@ public class Fulltext15844 extends SdbTestBase {
 
         FullTextDBUtils.insertData( cl, 100 );
 
+        // 删除全文索引后，执行全文检索报错
         DBCursor cursor = null;
         try {
             BSONObject matcher = ( BSONObject ) JSON
@@ -127,42 +128,80 @@ public class Fulltext15844 extends SdbTestBase {
                                 + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
                                         .format( new Date() ) );
             }
-
         }
     }
 
-    class QueryThread {
+    class CurdThread {
+        private Sequoiadb sdb = null;
+        private DBCollection cl = null;
 
-        @ExecuteOrder(step = 1, desc = "執行全文检索")
-        public void query() {
+        public CurdThread() {
+            sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl = sdb.getCollectionSpace( csName ).getCollection( clName );
+        }
+
+        @ExecuteOrder(step = 1, desc = "往原始集合插入数据")
+        public void insert() {
             System.out.println(
-                    this.getClass().getName().toString() + " begin at:"
+                    this.getClass().getName().toString() + " insert begin at:"
                             + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
                                     .format( new Date() ) );
-            DBCursor cursor = null;
-            BSONObject matcher = ( BSONObject ) JSON
-                    .parse( "{'':{'$Text':{'query':{'match_all':{}}}}}" );
-            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "",
-                    "" )) {
-                cursor = cl.query( matcher, null, null, null );
-                int count = 0;
-                while ( cursor.hasNext() ) {
-                    cursor.getNext();
-                    count++;
-                }
-                Assert.assertEquals( count, ( int ) cl.getCount() );
-            } catch ( BaseException e ) {
-                if ( -6 != e.getErrorCode() && -52 != e.getErrorCode() ) {
-                    Assert.fail( "actual exception: " + e.getErrorCode() );
-                }
-            } finally {
-                if ( cursor != null ) {
-                    cursor.close();
-                }
-                System.out.println(
-                        this.getClass().getName().toString() + " end at:"
-                                + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
-                                        .format( new Date() ) );
+            List< BSONObject > insertObjs = new ArrayList< BSONObject >();
+            int insertRecordNum = 10000;
+            String strA = StringUtils.getRandomString( 64 );
+            for ( int i = 0; i < insertRecordNum; i++ ) {
+                insertObjs.add( ( BSONObject ) JSON.parse( "{ a: '" + strA
+                        + "', b: 'new_insert_15843_" + i + "'}" ) );
+            }
+            cl.insert( insertObjs, 0 );
+            System.out.println(
+                    this.getClass().getName().toString() + " insert end at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
+        }
+
+        @ExecuteOrder(step = 1, desc = "更新全文索引记录")
+        public void update() {
+            System.out.println(
+                    this.getClass().getName().toString() + " update begin at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
+            BSONObject modifier = new BasicBSONObject();
+            BSONObject value = new BasicBSONObject();
+            BSONObject matcher = new BasicBSONObject();
+            BSONObject subMatcher = new BasicBSONObject();
+            value.put( "a", "fulltext15843_after_update" );
+            modifier.put( "$set", value );
+            subMatcher.put( "$lt", 500 );
+            matcher.put( "id", subMatcher );
+            cl.update( matcher, modifier, null );
+            System.out.println(
+                    this.getClass().getName().toString() + " update end at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
+        }
+
+        @ExecuteOrder(step = 1, desc = "删除全文索引记录")
+        public void delete() {
+            System.out.println(
+                    this.getClass().getName().toString() + " delete begin at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
+            BSONObject matcher = new BasicBSONObject();
+            BSONObject subMatcher = new BasicBSONObject();
+            subMatcher.put( "$gt", 5000 );
+            matcher.put( "id", subMatcher );
+            cl.delete( matcher );
+            System.out.println(
+                    this.getClass().getName().toString() + " delete end at:"
+                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
+                                    .format( new Date() ) );
+        }
+
+        @ExecuteOrder(step = 2, desc = "清理环境")
+        public void tearDown() {
+            if ( sdb != null ) {
+                sdb.close();
             }
         }
     }
