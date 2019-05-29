@@ -2645,21 +2645,42 @@ error:
       return CMD_TRACE_START ;
    }
 
-   void _rtnTraceStart::_checkFunctionName( UINT64 functionNameId,
-                                            const CHAR* funcName,
-                                            BOOLEAN &isMonitor )
+   BOOLEAN _rtnTraceStart::_isFunctionNameValid( const CHAR* verifiedFuncName )
    {
-      const CHAR* fullFuncName = pdGetTraceFunction( functionNameId ) ;
-      const CHAR* pTemp = ossStrstr( fullFuncName, funcName ) ;
+      BOOLEAN isInvalid = TRUE ;
+      for( UINT64 i = 0; i < pdGetTraceFunctionListNum(); i++ )
+      {
+         const CHAR* fullFuncName = pdGetTraceFunction( i ) ;
+         const CHAR* pTemp = ossStrchr( fullFuncName, ':' ) ;
 
-      if( pTemp != NULL )
-      {
-         isMonitor = TRUE ;
+         // eg: fullFuncName = "_authCB::authenticate"
+         // first case: verifiedFuncName = "authenticate"
+         if( pTemp != NULL )
+         {
+            // pTemp = "::authenticate"
+            ++pTemp ;
+            ++pTemp ;
+            if( 0 == ossStrcmp( pTemp, verifiedFuncName ) )
+            {
+               isInvalid = FALSE ;
+               _functionNameId.push_back ( i ) ;
+               // do NOT break althought however we may have functions
+               // with duplicate names
+               continue ;
+            }
+         }
+
+         // second case: verifiedFuncName = "_authCB::authenticate"
+         if( 0 == ossStrcmp( fullFuncName, verifiedFuncName ) )
+         {
+            isInvalid = FALSE ;
+            _functionNameId.push_back ( i ) ;
+            // do NOT break althought however we may have functions
+            // with duplicate names
+         }
       }
-      else
-      {
-         isMonitor = FALSE ;
-      }
+
+      return isInvalid ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTART_INIT, "_rtnTraceStart::init" )
@@ -2769,21 +2790,10 @@ error:
                BSONElement ele = it.next() ;
                if ( ele.type() == String )
                {
-                  const char * eleStr = ele.valuestr();
-                  BOOLEAN isInValid = TRUE ;
-                  BOOLEAN isMonitor = FALSE ;
-                  for( UINT64 i = 0; i < pdGetTraceFunctionListNum(); i++ )
-                  {
-                     _checkFunctionName( i, eleStr, isMonitor ) ;
-                     if( isMonitor )
-                     {
-                        isInValid = FALSE ;
-                        _functionNameId.push_back ( i ) ;
-                        // do NOT break althought however we may have functions
-                        // with duplicate names
-                     }
-                  }
-                  if( isInValid )
+                  const CHAR* eleStr = ele.valuestr();
+                  BOOLEAN isInvalid = TRUE ;
+                  isInvalid = _isFunctionNameValid( eleStr ) ;
+                  if( isInvalid )
                   {
                      rc = SDB_INVALIDARG ;
                      PD_LOG_MSG( PDERROR,
