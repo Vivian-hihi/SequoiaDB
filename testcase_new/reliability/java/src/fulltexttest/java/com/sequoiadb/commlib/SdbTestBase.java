@@ -34,9 +34,9 @@ public class SdbTestBase {
     public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME,
             int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR, String WORKDIR,
             String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD, String SCRIPTDIR,
-            @Optional("false") String ESHOSTNAME,
-            @Optional("false") String ESSVCNAME,
-            @Optional("false") String FULLTEXTPREFIX) {
+            @Optional("localhost") String ESHOSTNAME,
+            @Optional("9300") String ESSVCNAME,
+            @Optional("") String FULLTEXTPREFIX) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         csName = COMMCSNAME;

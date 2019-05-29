@@ -29,9 +29,9 @@ public class SdbTestBase {
             "RSRVNODEDIR", "WORKDIR" })
     @BeforeSuite
     public static void initSuite( String HOSTNAME, String SVCNAME,
-            @Optional("false") String ESHOSTNAME,
-            @Optional("false") String ESSVCNAME,
-            @Optional("false") String FULLTEXTPREFIX, String COMMCSNAME,
+            @Optional("localhost") String ESHOSTNAME,
+            @Optional("9300") String ESSVCNAME,
+            @Optional("") String FULLTEXTPREFIX, String COMMCSNAME,
             int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR,
             String WORKDIR ) {
         hostName = HOSTNAME;

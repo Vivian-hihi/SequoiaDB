@@ -127,12 +127,6 @@ public class Fulltext12122 extends SdbTestBase {
                 textIndexName, 10000 ) );
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl3,
                 textIndexName, 10000 ) );
-        
-        // get _cllid from ES before truncate
-        String esIndexNames1 = FullTextDBUtils.getESIndexName( cl1,
-                textIndexName );
-        int preCLLid1 = FullTextESUtils.getCommitCLLIDFromES( esClient,
-                esIndexNames1 );
 
         // truncate cl
         truncateThreads.add( new TruncateThread( csName1, clName1 ) );
@@ -158,7 +152,7 @@ public class Fulltext12122 extends SdbTestBase {
         te.run();
 
         Assert.assertTrue( FullTextUtils.isFulltextRebuild( esClient,
-                esIndexNames1, preCLLid1 ) );
+                cl1, textIndexName ) );
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl1,
                 textIndexName, ( int ) cl1.getCount() ) );
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl3,
