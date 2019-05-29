@@ -24,7 +24,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Date 2019-4-30
  */
 public class FullText15826 extends SdbTestBase {
-    private String CLNAME = "cl15826";
+    private String clName = "cl15826";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx15826";
@@ -41,7 +41,7 @@ public class FullText15826 extends SdbTestBase {
 
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
-        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
         FullTextDBUtils.insertData(cl, 20000);
 
         // 创建索引
@@ -74,7 +74,7 @@ public class FullText15826 extends SdbTestBase {
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            cs.dropCollection(CLNAME);
+            cs.dropCollection(clName);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
             if (sdb != null) {
@@ -92,7 +92,7 @@ public class FullText15826 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.dropIndex(fullIdxName);
             } finally {
                 if (db != null) {
@@ -116,7 +116,7 @@ public class FullText15826 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 Assert.assertFalse(cl.isIndexExist(idxName));
                 cl.createIndex(idxName, option, false, false);
                 Assert.assertTrue(cl.isIndexExist(idxName));
@@ -141,7 +141,7 @@ public class FullText15826 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 Assert.assertTrue(cl.isIndexExist(idxName));
                 cl.dropIndex(idxName);
                 Assert.assertFalse(cl.isIndexExist(idxName));

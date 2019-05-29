@@ -27,7 +27,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Date 2019-4-30
  */
 public class FullText12128 extends SdbTestBase {
-    private String CLNAME = "cl12128";
+    private String clName = "cl12128";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx12128";
@@ -45,7 +45,7 @@ public class FullText12128 extends SdbTestBase {
 
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
-        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
                 false);
 
@@ -65,15 +65,15 @@ public class FullText12128 extends SdbTestBase {
 
         // 集合删除成功
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
-        Assert.assertFalse(sdb.getCollectionSpace(csName).isCollectionExist(CLNAME));
+        Assert.assertFalse(sdb.getCollectionSpace(csName).isCollectionExist(clName));
     }
 
     @AfterClass
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            if (cs.isCollectionExist(CLNAME)) {
-                cs.dropCollection(CLNAME);
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
             }
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
@@ -92,7 +92,7 @@ public class FullText12128 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                db.getCollectionSpace(csName).dropCollection(CLNAME);
+                db.getCollectionSpace(csName).dropCollection(clName);
                 atoint.incrementAndGet();
             } catch (BaseException e) {
                 if (e.getErrorCode() != -23 && e.getErrorCode() != -147) {

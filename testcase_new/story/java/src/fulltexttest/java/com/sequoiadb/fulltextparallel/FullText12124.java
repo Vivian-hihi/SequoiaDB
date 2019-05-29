@@ -31,7 +31,7 @@ import com.sequoiadb.utils.StringUtils;
  * @Date 2019-4-28
  */
 public class FullText12124 extends SdbTestBase {
-    private String CLNAME = "cl12124";
+    private String clName = "cl12124";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx12124";
@@ -48,7 +48,7 @@ public class FullText12124 extends SdbTestBase {
 
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
-        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
         insertData(cl, 20000);
     }
 
@@ -66,7 +66,7 @@ public class FullText12124 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, (int) cl.getCount()));
         Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
-            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(CLNAME);
+            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
             DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
             DBCursor esCursor = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
                     "{'':'" + fullIdxName + "'}");
@@ -82,7 +82,7 @@ public class FullText12124 extends SdbTestBase {
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            cs.dropCollection(CLNAME);
+            cs.dropCollection(clName);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
             if (sdb != null) {
@@ -100,7 +100,7 @@ public class FullText12124 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
                         false, false);
                 esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
@@ -119,7 +119,7 @@ public class FullText12124 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 insertData(cl, 10000);
             } finally {
                 if (db != null) {
@@ -135,7 +135,7 @@ public class FullText12124 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.update("{a:'test_12124_0'}", "{$set:{b:'b_12124'}}", "{'':'" + fullIdxName + "'}");
             } finally {
                 if (db != null) {
@@ -151,7 +151,7 @@ public class FullText12124 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.delete("{a:'test_12124_2'}", "{'':'" + fullIdxName + "'}");
             } finally {
                 if (db != null) {

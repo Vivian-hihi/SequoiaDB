@@ -24,7 +24,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Date 2019-4-30
  */
 public class FullText15831 extends SdbTestBase {
-    private String CLNAME = "cl15831";
+    private String clName = "cl15831";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx15831";
@@ -46,7 +46,7 @@ public class FullText15831 extends SdbTestBase {
         if (sdb.isCollectionSpaceExist(csName)) {
             sdb.dropCollectionSpace(csName);
         }
-        cl = sdb.createCollectionSpace(csName).createCollection(CLNAME);
+        cl = sdb.createCollectionSpace(csName).createCollection(clName);
         FullTextDBUtils.insertData(cl, 20000);
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
                 false);
@@ -95,7 +95,7 @@ public class FullText15831 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
                         false, false);
             } catch (BaseException e) {

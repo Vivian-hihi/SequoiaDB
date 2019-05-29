@@ -25,7 +25,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Date 2019-4-30
  */
 public class FullText15832 extends SdbTestBase {
-    private String CLNAME = "cl15832";
+    private String clName = "cl15832";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx15832";
@@ -43,7 +43,7 @@ public class FullText15832 extends SdbTestBase {
         // 创建全文索引
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
-        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
         FullTextDBUtils.insertData(cl, 20000);
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
                 false);
@@ -62,7 +62,7 @@ public class FullText15832 extends SdbTestBase {
         thExecutor.run();
 
         // 原始集合及固定集合均被删除成功，ES上全文索引删除成功，主备节点数据一致，无数据文件残留
-        Assert.assertFalse(sdb.getCollectionSpace(csName).isCollectionExist(CLNAME));
+        Assert.assertFalse(sdb.getCollectionSpace(csName).isCollectionExist(clName));
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
     }
 
@@ -70,8 +70,8 @@ public class FullText15832 extends SdbTestBase {
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            if (cs.isCollectionExist(CLNAME)) {
-                cs.dropCollection(CLNAME);
+            if (cs.isCollectionExist(clName)) {
+                cs.dropCollection(clName);
             }
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
@@ -90,7 +90,7 @@ public class FullText15832 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.dropIndex(fullIdxName);
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -23);
@@ -108,7 +108,7 @@ public class FullText15832 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                db.getCollectionSpace(csName).dropCollection(CLNAME);
+                db.getCollectionSpace(csName).dropCollection(clName);
             } finally {
                 if (db != null) {
                     db.close();

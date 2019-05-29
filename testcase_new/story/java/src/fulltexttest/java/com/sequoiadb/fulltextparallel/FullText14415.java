@@ -25,7 +25,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Date 2019-4-22
  */
 public class FullText14415 extends SdbTestBase {
-    private String CLNAME = "cl14415";
+    private String clName = "cl14415";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx14415";
@@ -42,7 +42,7 @@ public class FullText14415 extends SdbTestBase {
 
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
-        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
         FullTextDBUtils.insertData(cl, 20000);
         cl.createIndex("idx1", "{'d':1, 'e':1}", false, false);
         cl.createIndex("idx2", "{'a':1, 'b':1}", false, false);
@@ -65,7 +65,7 @@ public class FullText14415 extends SdbTestBase {
         // 普通索引查询及全文检索
         Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
-            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(CLNAME);
+            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
             DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
             DBCursor esCursor = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
                     "{'':'" + fullIdxName + "'}");
@@ -83,7 +83,7 @@ public class FullText14415 extends SdbTestBase {
             Assert.assertEquals(cl.getCount(), 21000);
             Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 21000));
 
-            DBCollection cl3 = db3.getCollectionSpace(csName).getCollection(CLNAME);
+            DBCollection cl3 = db3.getCollectionSpace(csName).getCollection(clName);
             DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
             DBCursor esCursor = cl3.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
                     "{'':'" + fullIdxName + "'}");
@@ -99,7 +99,7 @@ public class FullText14415 extends SdbTestBase {
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            cs.dropCollection(CLNAME);
+            cs.dropCollection(clName);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
             if (sdb != null) {
@@ -117,7 +117,7 @@ public class FullText14415 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text'}", false, false);
                 esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
                 cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
@@ -143,7 +143,7 @@ public class FullText14415 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 Assert.assertFalse(cl.isIndexExist(idxName));
                 cl.createIndex(idxName, option, false, false);
                 Assert.assertTrue(cl.isIndexExist(idxName));
@@ -167,7 +167,7 @@ public class FullText14415 extends SdbTestBase {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 Assert.assertTrue(cl.isIndexExist(idxName));
                 cl.dropIndex(idxName);
                 Assert.assertFalse(cl.isIndexExist(idxName));
