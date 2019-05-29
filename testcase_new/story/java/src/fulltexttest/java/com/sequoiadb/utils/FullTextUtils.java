@@ -25,12 +25,12 @@ public class FullTextUtils {
     // 插入记录数，所有用例公用此变量
     public static final int INSERT_NUMS = 200000; // insert 20w datas
     private static String FULLTEXTPREFIX;
-    
+
     // 初始化全文索引的前缀名作为全局变量
-    public static void setFulltextPrefix(final String fulltextPrefix) {
+    public static void setFulltextPrefix( final String fulltextPrefix ) {
         FullTextUtils.FULLTEXTPREFIX = fulltextPrefix;
     }
-    
+
     // 获取全文索引的前缀名
     public static String getFulltextPrefix() {
         return FullTextUtils.FULLTEXTPREFIX;
@@ -250,59 +250,98 @@ public class FullTextUtils {
     }
 
     /**
-     * 检查ES端全文索引是否已重建。当全文索引重建后，ES端SDBCOMMIT记录下的_cllid值会递增，因此重建后的索引_cllid值会比重建前的大
-     * 每个全文索引名对应一个_cllid，数组元素要严格按照一一映射
-     * 通过 FullTextESUtils.getCommitCLLIDFromES ( esClient, esIndexNames ) 获取每个全文索引对应的SDBCOMMIT._cllid
+     * ES端的cllid与原始集合的LogicalID一致,通过原始集合的LogicalID作为预期结果来判断全文索引是否重建
+     * 检查原始集合内的多个全文索引
      * 
      * @param esClient  es连接
-     * @param esIndexNames 多个全文索引名
-     * @param preCLLids 每个全文索引对应的SDBCOMMIT._cllid
-     * @return boolean  如果重建后的_cllid大于重建前的值则返回true，否则返回false
+     * @param cl 原始集合
+     * @param indexNames 多个原始集合索引名
+     * @return boolean  如果原始集合LogicalID与ES端全文索引_cllid一致则返回true，否则返回false
      * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2019-05-16
      */
-    public static boolean isFulltextRebuild( Client esClient, List<String> esIndexNames, List<Integer> preCLLids )
+    @SuppressWarnings("unused")
+    private static boolean isFulltextRebuild( Client esClient, DBCollection cl, List<String> indexNames )
             throws Exception {
-        // 比较索引个数和cllid个数，如果数量不一致则直接退出
-        if ( esIndexNames.size() != preCLLids.size() ) {
-            System.err.println( "esIndexNames' size is not equal to cllids' size, esIndexNames: " + esIndexNames.size()
-                    + ", cllids: " + preCLLids.size() );
-            return false;
-        }
-
         // 检查每个全文索引下的_cllid值有没有变化
-        for ( int i = 0; i < esIndexNames.size(); i++ ) {
-            boolean isSync = false;
-            isSync = isFulltextRebuild( esClient, esIndexNames.get( i ), preCLLids.get( i ) );
-            if ( !isSync ) {
-                return false;
-            }
-            if ( i == esIndexNames.size() - 1 ) {
-                return isSync;
+        boolean isSync = false;
+        for ( String indexName : indexNames ) {
+            List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, indexName );
+            for ( String esIndexName : esIndexNames ) {
+                isSync = false;
+                isSync = isLogicalIDEqualCLLid( esClient, cl, esIndexName );
+                if ( !isSync ) {
+                    return isSync;
+                }
             }
         }
-
-        return false;
+        return isSync;
     }
 
     /**
-     * 检查ES端全文索引是否已重建。当全文索引重建后，ES端SDBCOMMIT记录下的_cllid值会递增，因此重建后的索引_cllid值会比重建前的大
-     * 通过 FullTextESUtils.getCommitCLLIDFromES ( esClient, esIndexName ) 获取单个全文索引对应的SDBCOMMIT._cllid
+     * ES端的cllid与原始集合的LogicalID一致,通过原始集合的LogicalID作为预期结果来判断全文索引是否重建
+     * 检查原始集合内的多个全文索引
      * 
      * @param esClient  es连接
-     * @param esIndexName 全文索引名
-     * @param preCLLid 全文索引对应的SDBCOMMIT._cllid
-     * @return boolean  如果重建后的_cllid大于重建前的值则返回true，否则返回false
+     * @param cl 原始集合
+     * @param indexName 原始集合索引名
+     * @return boolean  如果原始集合LogicalID与ES端全文索引_cllid一致则返回true，否则返回false
      * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2019-05-16
      */
-    public static boolean isFulltextRebuild( Client esClient, String esIndexName, int preCLLid ) throws Exception {
+    public static boolean isFulltextRebuild( Client esClient, DBCollection cl, String indexName ) throws Exception {
+        // 检查每个全文索引下的_cllid值有没有变化
         boolean isSync = false;
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, indexName );
+        for ( String esIndexName : esIndexNames ) {
+            isSync = false;
+            isSync = isLogicalIDEqualCLLid( esClient, cl, esIndexName );
+            if ( !isSync ) {
+                return isSync;
+            }
+        }
+        return isSync;
+    }
+
+    /**
+     * ES端的cllid与原始集合的LogicalID一致,通过原始集合的LogicalID作为预期结果来判断全文索引是否重建
+     * 通过 FullTextESUtils.getCommitCLLIDFromES ( esClient, esIndexNames ) 获取每个全文索引对应的SDBCOMMIT._cllid
+     * 
+     * @param esClient  es连接
+     * @param cl 原始集合
+     * @param esIndexName ES端全文索引名
+     * @return boolean  如果原始集合LogicalID与ES端全文索引_cllid一致则返回true，否则返回false
+     * @throws Exception 
+     * @Author liuxiaoxuan
+     * @Date 2019-05-16
+     */
+    private static boolean isLogicalIDEqualCLLid( Client esClient, DBCollection cl, String esIndexName )
+            throws Exception {
+        boolean isSync = false;
+        int preCLLid = -1;
         int timeout = 3600; // timeout 1h
         int interval = 1; // interval 1s
         int doTimes;
+
+        Sequoiadb db = cl.getSequoiadb();
+        String[] strList = esIndexName.split( "_" );
+        String groupName = strList[strList.length - 1];
+        Sequoiadb masterNode = db.getReplicaGroup( groupName ).getMaster().connect();
+        DBCursor snapCur = masterNode.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name: '" + cl.getFullName() + "'}",
+                null, null );
+        if ( snapCur.hasNext() ) {
+            @SuppressWarnings("unchecked")
+            List<BSONObject> details = (List<BSONObject>) snapCur.getNext().get( "Details" );
+            preCLLid = (int) details.get( 0 ).get( "LogicalID" );
+            snapCur.close();
+        } else {
+            System.err.println(
+                    cl.getFullName() + " SDB_SNAP_COLLECTIONS was not found in the " + masterNode.getNodeName() );
+            snapCur.close();
+            return false;
+        }
 
         // 检查全文索引下的_cllid值有没有变化
         doTimes = 0;
@@ -310,19 +349,18 @@ public class FullTextUtils {
         while ( doTimes * interval < timeout ) {
             try {
                 curCLLID = FullTextESUtils.getCommitCLLIDFromES( esClient, esIndexName );
-                if ( curCLLID <= preCLLid ) {
-                    isSync = false;
-                } else {
+                if ( curCLLID == preCLLid ) {
                     isSync = true;
+                } else {
+                    isSync = false;
                 }
 
                 if ( isSync ) {
                     break;
                 } else {
                     doTimes++;
-                    // System.out.println( "esIndexName: " + esIndexName + ",
-                    // doTimes: " + doTimes + ", previousCLLid: "
-                    // + preCLLid + ", currentCLLID: " + curCLLID );
+                    System.out.println( "esIndexName: " + esIndexName + ",doTimes: " + doTimes + ", previousCLLid: "
+                            + preCLLid + ", currentCLLID: " + curCLLID );
                     try {
                         Thread.sleep( 1000 );
                     } catch ( InterruptedException e ) {
@@ -333,9 +371,8 @@ public class FullTextUtils {
                 Throwable ths = e.getCause();
                 if ( ths instanceof IndexNotFoundException ) {
                     doTimes++;
-                    // System.out.println(
-                    // "esIndexName: " + esIndexName + ", doTimes: " + doTimes +
-                    // " is being truncated now" );
+                    System.out.println(
+                            "esIndexName: " + esIndexName + ", doTimes: " + doTimes + " is being truncated now" );
                     try {
                         Thread.sleep( 1000 );
                     } catch ( InterruptedException e2 ) {
@@ -383,6 +420,11 @@ public class FullTextUtils {
             return false;
         }
 
+        // 检查索引信息
+        if ( !isIndexConsistency( cl, textIndexName ) ) {
+            return false;
+        }
+
         // 检查主备节点原始集合的数据一致性
         if ( !isCLDataConsistency( cl ) ) {
             return false;
@@ -392,6 +434,53 @@ public class FullTextUtils {
         }
 
         return true;
+    }
+
+    /**
+     * 检查主备节点索引信息一致
+     * 
+     * @param cl
+     * @param indexName
+     * @return
+     */
+    private static boolean isIndexConsistency( DBCollection cl, String indexName ) {
+
+        Sequoiadb db = cl.getSequoiadb();
+        String csName = cl.getCSName();
+        String clName = cl.getName();
+        boolean isConsistency = false;
+
+        List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
+        for ( String groupName : groupNames ) {
+            isConsistency = false;
+            List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
+            ReplicaGroup rg = db.getReplicaGroup( groupName );
+            Sequoiadb masterNode = rg.getMaster().connect();
+            DBCollection masterCL = masterNode.getCollectionSpace( csName ).getCollection( clName );
+            if ( !masterCL.isIndexExist( indexName ) ) {
+                System.err.println( masterNode.getNodeName() + " index: " + indexName + " is not exist" );
+                return false;
+            }
+            BSONObject indexInfo = masterCL.getIndexInfo( indexName );
+
+            for ( String nodeName : nodeNames ) {
+                Sequoiadb nodeConn = rg.getNode( nodeName ).connect();
+                DBCollection nodeCL = nodeConn.getCollectionSpace( csName ).getCollection( clName );
+                if ( !nodeCL.isIndexExist( indexName ) ) {
+                    System.err.println( nodeName + " index: " + indexName + " is not exist" );
+                    return false;
+                }
+                BSONObject checkIndexInfo = nodeCL.getIndexInfo( indexName );
+                if ( !indexInfo.equals( checkIndexInfo ) ) {
+                    System.err.println( "The index info is different, masterNode " + masterNode.getNodeName() + ": "
+                            + indexInfo + ", " + nodeName + ": " + checkIndexInfo );
+                    return false;
+                }
+            }
+            isConsistency = true;
+        }
+
+        return isConsistency;
     }
 
     /**
@@ -455,7 +544,7 @@ public class FullTextUtils {
     }
 
     /**
-     * 检查主备节点固定集合dataCommitLSN一致
+     * 检查主备节点集合dataCommitLSN一致
      * 
      * @param cl
      * @return boolean 如果主备节点原始集合dataCommitLSN一致返回true,否则返回false
@@ -696,8 +785,7 @@ public class FullTextUtils {
     public static boolean isIndexCreated( Client esClient, DBCollection cl, String indexName, int expectCount )
             throws Exception {
 
-        return isFullSyncToES( esClient, cl, indexName, expectCount ) 
-                && isDataConsistency( cl, indexName );
+        return isFullSyncToES( esClient, cl, indexName, expectCount ) && isDataConsistency( cl, indexName );
     }
 
     /**
