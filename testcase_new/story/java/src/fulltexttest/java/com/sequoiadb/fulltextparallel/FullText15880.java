@@ -98,7 +98,7 @@ public class FullText15880 extends SdbTestBase {
         private void truncate() throws InterruptedException {
             Thread.sleep(random.nextInt(100));
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+                DBCollection cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl2.truncate();
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
@@ -108,14 +108,14 @@ public class FullText15880 extends SdbTestBase {
 
     private class ThreadDBSync {
         @ExecuteOrder(step = 1)
-        private void createIndex() {
+        private void sync() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 BSONObject options = new BasicBSONObject();
                 options.put("CollectionSpace", CL_NAME);
                 options.put("Block", true);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 for (int i = 0; i < 3; i++) {
-                    db.sync(new BasicBSONObject("Block", true));
+                    db.sync(options);
                 }
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
             }

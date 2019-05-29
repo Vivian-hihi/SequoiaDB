@@ -39,7 +39,8 @@ import com.sequoiadb.utils.StringUtils;
 public class FullText15853 extends SdbTestBase {
     private final int TIMEOUT = 300000; // 5min
     private Random random = new Random();
-    
+
+    private final String CS_NAME = "cs_es_15853";
     private final String CL_NAME = "cl_es_15853";
     private final int INSERT_RECS_NUM = 20000;
     private final int INSERT_BATCH_RECS_NUM = 20000;
@@ -70,8 +71,8 @@ public class FullText15853 extends SdbTestBase {
             throw new SkipException("Skip standAlone mode");
         }
 
-        cs = sdb.getCollectionSpace(SdbTestBase.csName);
-        cl = cs.createCollection(CL_NAME);        
+        cs = sdb.createCollectionSpace(CS_NAME);
+        cl = cs.createCollection(CL_NAME);
         cl.createIndex(FULLTEXT_IDX_NAME, FULLTEXT_IDX_KEY, false, false);
         cappedCSName = FullTextDBUtils.getCappedName(cl, FULLTEXT_IDX_NAME);
         esIndexName  = FullTextDBUtils.getESIndexName(cl, FULLTEXT_IDX_NAME);
@@ -128,7 +129,7 @@ public class FullText15853 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void insert() {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);                
+                DBCollection cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);                
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 insertRecords(cl2);                
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
@@ -142,7 +143,7 @@ public class FullText15853 extends SdbTestBase {
         
         private ThreadDelete() {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
         }
         
         @ExecuteOrder(step = 1, desc = "删除数据")
@@ -175,7 +176,7 @@ public class FullText15853 extends SdbTestBase {
         
         private ThreadUpdate() {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
         }
         
         @ExecuteOrder(step = 1, desc = "更新记录")
@@ -210,7 +211,7 @@ public class FullText15853 extends SdbTestBase {
         
         private ThreadFullTextSearch() {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
             esClient2 = FullTextESUtils.createTransportClient(esHostName, 
                     Integer.parseInt(esServiceName));
         }
@@ -271,7 +272,7 @@ public class FullText15853 extends SdbTestBase {
         
         private ThreadPutLob() {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
         }
         
         @ExecuteOrder(step = 1)
@@ -312,7 +313,7 @@ public class FullText15853 extends SdbTestBase {
         
         private ThreadRemoveLob() {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
         }
         
         @ExecuteOrder(step = 1)
@@ -348,7 +349,7 @@ public class FullText15853 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void getLob() {
             try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+                DBCollection cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 for (ObjectId lobId : lobIds2) {
                     DBLob lob = cl2.openLob(lobId);
@@ -363,12 +364,15 @@ public class FullText15853 extends SdbTestBase {
 
     private class ThreadDBSync {
         @ExecuteOrder(step = 1)
-        private void createIndex() throws InterruptedException {
+        private void sync() throws InterruptedException {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             try {
+                BSONObject options = new BasicBSONObject();
+                options.put("CollectionSpace", CL_NAME);
+                options.put("Block", true);
                 System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 for (int i = 0; i < 20; i++) {
-                    db.sync(new BasicBSONObject("Block", true));
+                    db.sync(options);
                     Thread.sleep(random.nextInt(100));
                 }                
                 System.out.println(new Date() + " end   " + this.getClass().getName().toString());
