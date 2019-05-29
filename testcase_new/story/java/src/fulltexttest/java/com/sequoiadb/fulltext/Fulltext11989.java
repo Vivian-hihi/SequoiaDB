@@ -1,6 +1,5 @@
 package com.sequoiadb.fulltext;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -15,13 +14,11 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
-import com.sequoiadb.utils.StringUtils;
 
 /**
  * @Description seqDB-11989:range切分表中创建/删除全文索引
@@ -35,6 +32,8 @@ public class Fulltext11989 extends SdbTestBase {
     private String fullIndexName = "fullIndex11989";
     private List<String> groupNames;
     private Client esClient = null;
+    private String cappedName;
+    private String esIndexName;
 
     @BeforeClass
     public void setUp() {
@@ -43,8 +42,8 @@ public class Fulltext11989 extends SdbTestBase {
             throw new SkipException("StandAlone environment!");
         }
         groupNames = CommLib.getDataGroupNames(sdb);
-        if (groupNames.size() < 2) { // TODO 用公共方法CommLib.OneGroupMode
-            throw new SkipException("Less than two groups!");
+        if (CommLib.OneGroupMode(sdb)) {
+            throw new SkipException("ONE GROUP MODE");
         }
 
         // 创建 range 切分表并切分
@@ -70,8 +69,8 @@ public class Fulltext11989 extends SdbTestBase {
         Assert.assertFalse(cappedCL.query().hasNext());
 
         // 删除全文索引
-        String cappedName = FullTextDBUtils.getCappedName(cl, fullIndexName);
-        String esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
+        cappedName = FullTextDBUtils.getCappedName(cl, fullIndexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
         FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
@@ -81,9 +80,8 @@ public class Fulltext11989 extends SdbTestBase {
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            FullTextDBUtils.dropCollection(cs, clName);// TODO drop后需要检查索引是否有残留，所有用例都要加的
-        } catch (BaseException e) {
-            Assert.fail(e.getMessage());// TODO 不需要catch
+            FullTextDBUtils.dropCollection(cs, clName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -91,21 +89,6 @@ public class Fulltext11989 extends SdbTestBase {
             if (esClient != null) {
                 esClient.close();
             }
-        }
-    }
-
-    public void insertData(int insertNums) {// TODO:没有用到的方法，可以删除
-        List<BSONObject> records = new ArrayList<BSONObject>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
-                BSONObject record = (BSONObject) JSON.parse("{a: 'test_range11989_" + i * j + "', b: '"
-                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
-                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', g: '"
-                        + StringUtils.getRandomString(128) + "'}");
-                records.add(record);
-            }
-            cl.insert(records);
-            records.clear();
         }
     }
 }

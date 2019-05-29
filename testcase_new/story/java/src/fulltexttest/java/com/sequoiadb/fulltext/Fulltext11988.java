@@ -14,7 +14,6 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
@@ -33,6 +32,10 @@ public class Fulltext11988 extends SdbTestBase {
     private String fullIndexName = "fullIndex11988";
     private List<String> groupNames;
     private Client esClient = null;
+    private String csName = "cs11988";
+    private String doMainName = "doMain11988";
+    private String esIndexName;
+    private String cappedCLName;
 
     @BeforeClass
     public void setUp() {
@@ -41,21 +44,21 @@ public class Fulltext11988 extends SdbTestBase {
             throw new SkipException("StandAlone environment!");
         }
         groupNames = CommLib.getDataGroupNames(sdb);
-        if (groupNames.size() < 2) { // TODO 用公共方法CommLib.OneGroupMode
-            throw new SkipException("Less than two groups!");
+        if (CommLib.OneGroupMode(sdb)) {
+            throw new SkipException("ONE GROUP MODE");
+        }
+
+        if (sdb.isCollectionSpaceExist(csName)) {
+            sdb.dropCollectionSpace(csName);
+        }
+        if (sdb.isDomainExist(doMainName)) {
+            sdb.dropDomain(doMainName);
         }
 
         // hash切分表加入域使用自动切分
-        if (sdb.isCollectionSpaceExist("cs11988")) {
-            sdb.dropCollectionSpace("cs11988");
-        }
-        if (sdb.isDomainExist("doMain11988")) {
-            sdb.dropDomain("doMain11988");
-        }
-
-        sdb.createDomain("doMain11988",
+        sdb.createDomain(doMainName,
                 (BSONObject) JSON.parse("{Groups:['" + groupNames.get(0) + "', '" + groupNames.get(1) + "']}"));
-        CollectionSpace cs = sdb.createCollectionSpace("cs11988", (BSONObject) JSON.parse("{Domain:'doMain11988'}"));
+        CollectionSpace cs = sdb.createCollectionSpace(csName, (BSONObject) JSON.parse("{Domain:'doMain11988'}"));
         cl = cs.createCollection(clName,
                 (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'hash', AutoSplit:true}"));
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
@@ -70,21 +73,20 @@ public class Fulltext11988 extends SdbTestBase {
         String indexKey = "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}";
         cl.createIndex(fullIndexName, indexKey, false, false);
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS));
+        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
+        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIndexName);
 
         // 删除索引
-        String cappedName = FullTextDBUtils.getCappedName(cl, fullIndexName);
-        String esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
         FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
-        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
     }
 
     @AfterClass
-    public void tearDown() {// TODO drop后需要检查索引是否有残留，所有用例都要加的
+    public void tearDown() {
         try {
-            FullTextDBUtils.dropCollectionSpace(sdb, "cs11988");// TODO csName要用变量
-            sdb.dropDomain("doMain11988");// TODO domainName要用变量
-        } catch (BaseException e) {
-            Assert.fail(e.getMessage());// TODO 不需要catch
+            FullTextDBUtils.dropCollectionSpace(sdb, csName);
+            sdb.dropDomain(doMainName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
             if (sdb != null) {
                 sdb.close();

@@ -1,11 +1,7 @@
 package com.sequoiadb.fulltext;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
-import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -23,7 +19,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
-import com.sequoiadb.utils.StringUtils;
 
 /**
  * @Description seqDB-14885: 正在查询固定集合时删除全文索引
@@ -63,7 +58,8 @@ public class Fulltext14885 extends SdbTestBase {
         cl.createIndex(fullIndexName,
                 "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"f\":\"text\"}", false,
                 false);
-        insertData(FullTextUtils.INSERT_NUMS);
+        FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS));
 
         // 使用游标的方式获取对应的固定集合中的一条记录
         DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIndexName).get(0);
@@ -77,7 +73,7 @@ public class Fulltext14885 extends SdbTestBase {
                 Assert.fail("drop textIndex need to return -147!");
             } catch (BaseException e) {
                 if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
-                    Assert.fail(e.getMessage());
+                    throw e;
                 }
             }
         }
@@ -92,7 +88,6 @@ public class Fulltext14885 extends SdbTestBase {
         cappedCLName = FullTextDBUtils.getCappedName(cl, fullIndexName);
         System.out.println("cappedCSName : " + cappedCLName + " esIndexNames " + esIndexName);
 
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS));
         FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
 
@@ -105,8 +100,6 @@ public class Fulltext14885 extends SdbTestBase {
         try {
             FullTextDBUtils.dropCollectionSpace(sdb, csName14885);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
-        } catch (BaseException e) {
-            Assert.fail(e.getMessage());
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -114,21 +107,6 @@ public class Fulltext14885 extends SdbTestBase {
             if (esClient != null) {
                 esClient.close();
             }
-        }
-    }
-
-    public void insertData(int insertNums) {
-        List<BSONObject> records = new ArrayList<BSONObject>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
-                BSONObject record = (BSONObject) JSON.parse("{a: 'test_14885_" + i * j + "', b: '"
-                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
-                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
-                        + StringUtils.getRandomString(128) + "'}");
-                records.add(record);
-            }
-            cl.insert(records);
-            records.clear();
         }
     }
 
