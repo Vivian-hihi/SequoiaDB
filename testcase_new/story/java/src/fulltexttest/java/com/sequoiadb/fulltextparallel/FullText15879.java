@@ -48,7 +48,6 @@ public class FullText15879 extends SdbTestBase {
 
     private Client esClient = null;
     private String esIndexName;
-    private int lid;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -77,7 +76,6 @@ public class FullText15879 extends SdbTestBase {
 
         // 确保预置的数据同步到es完成
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
-        lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
 
     @Test
@@ -91,10 +89,10 @@ public class FullText15879 extends SdbTestBase {
 
         // check records
         // TODO :线程的执行结果相互不影响，建议在线程中去校验每个线程的执行结果，这样逻辑上会更清晰 
-        // TODO 不影响，不修改
+        // TODO 有每个线程分开校验，逻辑很简单，暂不修改
         int expRecsNum = 0;
         if (threadTruncate.getRetCode() == 0) {
-            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
+            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
         } else if (threadTruncate.getRetCode() != 0) {
             expRecsNum = RECS_NUM;
         }

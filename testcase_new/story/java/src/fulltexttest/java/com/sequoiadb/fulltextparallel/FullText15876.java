@@ -46,7 +46,6 @@ public class FullText15876 extends SdbTestBase {
 
     private Client esClient = null;
     private String esIndexName;
-    private int lid;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -60,13 +59,10 @@ public class FullText15876 extends SdbTestBase {
         cs = sdb.createCollectionSpace(CS_NAME);
         cl = cs.createCollection(CL_NAME);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
+        cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
         esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
 
         FullTextDBUtils.insertData(cl, RECS_NUM);
-
-        // 确保预置的数据同步到es完成，避免获取lids报索引不存在
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
-        lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
 
     @Test
@@ -82,7 +78,7 @@ public class FullText15876 extends SdbTestBase {
         if (threadDropCS.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
         } else {
-            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
+            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
             Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
         }
     }

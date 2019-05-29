@@ -40,7 +40,6 @@ public class FullText15858 extends SdbTestBase {
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
-    private int lid;
 
     private Client esClient = null;
     private String esIndexName;
@@ -64,7 +63,6 @@ public class FullText15858 extends SdbTestBase {
 
         // 确保预置的数据同步到es完成，避免获取lids报索引不存在
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
-        lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
 
     @Test
@@ -82,7 +80,7 @@ public class FullText15858 extends SdbTestBase {
         // check consistency
         // TODO :多次执行truncate操作，按照当前的公共方法，可能会导致该用例随机失败，修改公共方法后， 这里需要同步修改
         // TODO ：公共方法还未提交，待公共方法提交后修改
-        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
+        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
     }
 

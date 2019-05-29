@@ -48,7 +48,6 @@ public class FullText15874 extends SdbTestBase {
     
     private Client esClient = null;
     private String esIndexName;
-    private int lid;
     
 
     @BeforeClass
@@ -71,7 +70,6 @@ public class FullText15874 extends SdbTestBase {
         
         // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, INIT_RECS_NUM));
-        lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
 
     @Test
@@ -87,7 +85,7 @@ public class FullText15874 extends SdbTestBase {
         
         // check results
         if (threadTruncate.getRetCode() == 0) {
-            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
+            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
         } 
         int cnt = (int) cl.getCount();
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, cnt));
