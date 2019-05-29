@@ -69,7 +69,7 @@ public class FullText18259 extends SdbTestBase {
 
         // check index
         // TODO :需要校验只有1个线程执行成功
-        // TODO 没撞到点上结果有可能不确定，不校验成功的线程个数
+        // TODO 没撞到点上结果有可能不确定，不校验成功的线程个数。待检视意见完成后再将此用例提到普通索引目录。
         CommLib commlib = new CommLib();
         commlib.checkIndex(sdb, IDX_NAME, CL_NAME);
         this.checkData();
