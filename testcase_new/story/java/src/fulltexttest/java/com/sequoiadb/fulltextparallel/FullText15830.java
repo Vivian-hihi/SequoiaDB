@@ -20,7 +20,7 @@ import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
 /**
- * @FileName seqDB-15830:创建全文索引与增删改记录并发
+ * @FileName seqDB-15830:创建全文索引与删除集合并发
  * @Author yinzhen
  * @Date 2019-4-30
  */
