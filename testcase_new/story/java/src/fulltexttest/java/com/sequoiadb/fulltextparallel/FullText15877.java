@@ -45,7 +45,6 @@ public class FullText15877 extends SdbTestBase {
 
     private Client esClient = null;
     private String esIndexName;
-    private int lid;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -66,7 +65,6 @@ public class FullText15877 extends SdbTestBase {
 
         // 确保预置的数据同步到es完成
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
-        lid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
     }
 
     @Test
@@ -78,9 +76,7 @@ public class FullText15877 extends SdbTestBase {
         es.addWorker(threadDropIdx);
         es.run();
 
-        // check results
-        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, lid));
-        
+        // check results        
         int cnt = (int) cl.getCount();
         if (threadTruncate.getRetCode() == 0) {
             Assert.assertEquals(cnt, 0);
@@ -91,6 +87,10 @@ public class FullText15877 extends SdbTestBase {
         if ( threadDropIdx.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
         } else if ( threadDropIdx.getRetCode() != 0) {
+            // dropIdx失败且truncate成功，需要检查索引重建
+            if (threadTruncate.getRetCode() == 0) {
+                Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
+            }
             Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, cnt));
         }
     }
