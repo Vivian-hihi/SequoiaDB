@@ -20,14 +20,12 @@ import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
 /**
- * @testcase seqDB-14415:增删改查与truncate并发
- * @date 2019-4-22
- * @author yinzhen
- *
+ * @FileName seqDB-14415:创建全文索引与创建/删除普通索引并发
+ * @Author yinzhen
+ * @Date 2019-4-22
  */
 public class FullText14415 extends SdbTestBase {
-    private static final String CLNAME = "cl14415";
-    private ThreadExecutor thExecutor = new ThreadExecutor(600000);
+    private String CLNAME = "cl14415";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx14415";
@@ -45,16 +43,56 @@ public class FullText14415 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
-        FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
+        FullTextDBUtils.insertData(cl, 20000);
+        cl.createIndex("idx1", "{'d':1, 'e':1}", false, false);
+        cl.createIndex("idx2", "{'a':1, 'b':1}", false, false);
     }
 
     @Test
     public void test() throws Exception {
+        ThreadExecutor thExecutor = new ThreadExecutor(600000);
         thExecutor.addWorker(new CreateFullIdx());
-        thExecutor.addWorker(new CreateIdx());
+        thExecutor.addWorker(new CreateIdx("idx3", "{'d':1, 'f':1}"));
+        thExecutor.addWorker(new CreateIdx("idx4", "{'b':1, 'c':1}"));
+        thExecutor.addWorker(new DropIdx("idx1"));
+        thExecutor.addWorker(new DropIdx("idx2"));
 
         thExecutor.run();
-        thExecutor.display();
+
+        // 主备节点上索引信息及固定集合信息一致，ES同步的索引数据正确
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
+
+        // 普通索引查询及全文检索
+        Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        try {
+            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(CLNAME);
+            DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
+            DBCursor esCursor = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
+                    "{'':'" + fullIdxName + "'}");
+            Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
+        } finally {
+            if (db2 != null) {
+                db2.close();
+            }
+        }
+
+        // 在db端执行插入、全文检索
+        Sequoiadb db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        try {
+            FullTextDBUtils.insertData(cl, 1000);
+            Assert.assertEquals(cl.getCount(), 21000);
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 21000));
+
+            DBCollection cl3 = db3.getCollectionSpace(csName).getCollection(CLNAME);
+            DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
+            DBCursor esCursor = cl3.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
+                    "{'':'" + fullIdxName + "'}");
+            Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
+        } finally {
+            if (db3 != null) {
+                db3.close();
+            }
+        }
     }
 
     @AfterClass
@@ -64,72 +102,79 @@ public class FullText14415 extends SdbTestBase {
             cs.dropCollection(CLNAME);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
-            sdb.close();
-        }
-    }
-
-    class CreateFullIdx {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private CreateFullIdx() {
-            db = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-        }
-
-        @ExecuteOrder(step = 1, desc = "创建全文索引")
-        private void createFullIdx() {
-            cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text'}", false, false);
-            esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
-            cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
-            Assert.assertTrue(cl.isIndexExist(fullIdxName));
-        }
-
-        @ExecuteOrder(step = 2, desc = "主备节点上索引信息及固定集合信息一致，ES同步的索引数据正确")
-        private void checkRecords() throws Exception {
-            try {
-                Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, FullTextUtils.INSERT_NUMS));
-            } finally {
-                db.close();
+            if (sdb != null) {
+                sdb.close();
+            }
+            if (esClient != null) {
+                esClient.close();
             }
         }
     }
 
-    class CreateIdx {
-        private Sequoiadb db;
-        private Sequoiadb db2;
-        private DBCollection cl;
-        private DBCollection cl2;
+    private class CreateFullIdx {
+        @ExecuteOrder(step = 1, desc = "创建全文索引")
+        private void createFullIdx() {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text'}", false, false);
+                esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
+                cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
+        }
+    }
 
-        private CreateIdx() {
-            db = new Sequoiadb(coordUrl, "", "");
-            db2 = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-            cl2 = db2.getCollectionSpace(csName).getCollection(CLNAME);
+    private class CreateIdx {
+        private String idxName;
+        private String option;
+
+        private CreateIdx(String idxName, String option) {
+            this.idxName = idxName;
+            this.option = option;
         }
 
         @ExecuteOrder(step = 1, desc = "创建普通索引，删除普通索引")
-        private void operatorIdx() {
-            cl.createIndex("idx1", "{'d':1, 'e':1}", false, false);
-            cl.createIndex("idx2", "{'c':1, 'd':1}", false, false);
-            Assert.assertTrue(cl.isIndexExist("idx1"));
-            Assert.assertTrue(cl.isIndexExist("idx2"));
-            cl.dropIndex("idx1");
-            cl.dropIndex("idx2");
-            Assert.assertFalse(cl.isIndexExist("idx1"));
-            Assert.assertFalse(cl.isIndexExist("idx2"));
+        private void createIdx() {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                Assert.assertFalse(cl.isIndexExist(idxName));
+                cl.createIndex(idxName, option, false, false);
+                Assert.assertTrue(cl.isIndexExist(idxName));
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
+        }
+    }
+
+    private class DropIdx {
+        private String idxName;
+
+        private DropIdx(String idxName) {
+            this.idxName = idxName;
         }
 
-        @ExecuteOrder(step = 3, desc = "普通索引查询及全文检索")
-        private void queryAndCheck() {
+        @ExecuteOrder(step = 1, desc = "创建普通索引，删除普通索引")
+        private void dropIdx() {
+            Sequoiadb db = null;
             try {
-                DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
-                DBCursor esCursor = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
-                        "{'':'" + fullIdxName + "'}");
-                Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                Assert.assertTrue(cl.isIndexExist(idxName));
+                cl.dropIndex(idxName);
+                Assert.assertFalse(cl.isIndexExist(idxName));
             } finally {
-                db.closeAllCursors();
-                db.close();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }

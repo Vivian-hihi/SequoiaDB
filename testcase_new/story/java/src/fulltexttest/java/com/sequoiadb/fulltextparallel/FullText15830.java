@@ -1,7 +1,5 @@
 package com.sequoiadb.fulltextparallel;
 
-import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -20,46 +18,55 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
-//TODO：其他检视意见同 15826 用例
+
 /**
- * @testcase seqDB-15830:创建全文索引与增删改记录并发
- * @date 2019-4-30
- * @author yinzhen
- *
+ * @FileName seqDB-15830:创建全文索引与增删改记录并发
+ * @Author yinzhen
+ * @Date 2019-4-30
  */
 public class FullText15830 extends SdbTestBase {
-    private static final String CLNAME = "cl15830";
-    private ThreadExecutor thExecutor = new ThreadExecutor(600000);
+    private String CLNAME = "cl15830";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx15830";
     private Client esClient;
-    private String groupName;
     private String cappedCLName;
     private String esIndexName;
 
     @BeforeClass
-    public void setUp() {
+    public void setUp() throws Exception {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("STANDALONE MODE");
         }
 
+        // 创建全文索引
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
-        groupName = CommLib.getDataGroupNames(sdb).get(0);
-        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME,
-                (BSONObject) JSON.parse("{Group:'" + groupName + "'}"));
-        FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
+        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
+        FullTextDBUtils.insertData(cl, 20000);
+        cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
+                false);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
+
+        // 获取固定集合和ES索引名
+        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
+        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
+        cl.dropIndex(fullIdxName);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
     }
 
     @Test
     public void test() throws Exception {
+        ThreadExecutor thExecutor = new ThreadExecutor(600000);
         thExecutor.addWorker(new CreateFullIdx());
         thExecutor.addWorker(new DropCL());
 
         thExecutor.run();
-        thExecutor.display();
+
+        // 原始集合及固定集合均被删除成功，ES上全文索引删除成功，主备节点数据一致，无数据文件残留
+        Assert.assertFalse(sdb.getCollectionSpace(csName).isCollectionExist(CLNAME));
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
     }
 
     @AfterClass
@@ -69,62 +76,47 @@ public class FullText15830 extends SdbTestBase {
             if (cs.isCollectionExist(CLNAME)) {
                 cs.dropCollection(CLNAME);
             }
-            if (cappedCLName != null && esIndexName != null) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
-            }
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
-            sdb.close();
+            if (sdb != null) {
+                sdb.close();
+            }
+            if (esClient != null) {
+                esClient.close();
+            }
         }
     }
 
-    class CreateFullIdx {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private CreateFullIdx() {
-            db = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-        }
-
+    private class CreateFullIdx {
         @ExecuteOrder(step = 1, desc = "创建全文索引")
         private void createFullIdx() {
+            Sequoiadb db = null;
             try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
                 cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
                         false, false);
-                esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
-                //TODO:跟CL并发有可能获取esIndexName正常，但获取esIndexName时CL被删，影响后面检查结果。建议在最后所有线程跑完了之后获取并检查原始集合、固定集合、ES端索引、主备节点是否残留
-                cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -23);
-            }
-        }
-
-        @ExecuteOrder(step = 2, desc = "原始集合及固定集合均被删除成功，ES上全文索引删除成功，主备节点数据一致，无数据文件残留")
-        private void checkRecords() throws InterruptedException {
-            try {
-                Assert.assertFalse(db.getCollectionSpace(csName).isCollectionExist(CLNAME));
-                if (cappedCLName != null && esIndexName != null) {
-                    Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
-                }
             } finally {
-                db.close();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }
 
-    class DropCL {
-        private Sequoiadb db;
-
-        private DropCL() {
-            db = new Sequoiadb(coordUrl, "", "");
-        }
-
+    private class DropCL {
         @ExecuteOrder(step = 1, desc = "删除集合")
         private void dropCL() {
+            Sequoiadb db = null;
             try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 db.getCollectionSpace(csName).dropCollection(CLNAME);
             } finally {
-                db.close();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }

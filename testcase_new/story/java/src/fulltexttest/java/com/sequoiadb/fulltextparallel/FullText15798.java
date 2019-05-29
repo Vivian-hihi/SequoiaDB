@@ -26,21 +26,18 @@ import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
 
 /**
- * @testcase seqDB-15798:增删改查与truncate并发
- * @date 2019-4-22
- * @author yinzhen
- *
+ * @FileName seqDB-15798:增删改查与truncate并发
+ * @Author yinzhen
+ * @Date 2019-4-22
  */
 public class FullText15798 extends SdbTestBase {
-    private static final String CLNAME = "cl15798";
-    private ThreadExecutor thExecutor = new ThreadExecutor(600000);
-    private Sequoiadb sdb;
+    private String CLNAME = "cl15798";
     private DBCollection cl;
+    private Sequoiadb sdb;
     private String fullIdxName = "idx15798";
     private Client esClient;
     private String esIndexName;
     private String cappedCLName;
-    private int preCLLid;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -53,10 +50,10 @@ public class FullText15798 extends SdbTestBase {
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
 
-        insertData(cl, FullTextUtils.INSERT_NUMS);
+        insertData(cl, 20000);
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text','d':'text','e':'text','f':'text'}", false,
                 false);
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, FullTextUtils.INSERT_NUMS));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
 
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
         cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
@@ -64,11 +61,23 @@ public class FullText15798 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        thExecutor.addWorker(new OperatorData());
+        ThreadExecutor thExecutor = new ThreadExecutor(600000);
         thExecutor.addWorker(new TruncateCL());
+        thExecutor.addWorker(new InsertData());
+        thExecutor.addWorker(new UpdateData());
+        thExecutor.addWorker(new DeleteData());
+        thExecutor.addWorker(new QueryData());
 
         thExecutor.run();
-        thExecutor.display();
+
+        // 原始集合及固定集合中记录均被清空，主备节点数据一致
+        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, fullIdxName));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 0));
+        List<BSONObject> actRecords = FullTextDBUtils.getRecordsFromCL(cl.query());
+        Assert.assertEquals(actRecords.size(), 0);
+        DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
+        actRecords = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
+        Assert.assertEquals(actRecords.size(), 0);
     }
 
     @AfterClass
@@ -78,80 +87,115 @@ public class FullText15798 extends SdbTestBase {
             cs.dropCollection(CLNAME);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
-            sdb.close();
+            if (sdb != null) {
+                sdb.close();
+            }
+            if (esClient != null) {
+                esClient.close();
+            }
         }
     }
 
-    // TODO:这里建议增删改查记录分开线程实现吧；
-    class OperatorData {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private OperatorData() {
-            db = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-        }
-
+    private class InsertData {
         @ExecuteOrder(step = 1, desc = "增删改查记录包含全文索引字段")
         private void insertRecords() {
+            Sequoiadb db = null;
             try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
                 insertData(cl, 10000);
-                cl.update("{a:'test_15798_1'}", "{$set:{b:'b_15798'}}", "{}");
-                cl.delete("{a:'test_15798_0'}");
-                cl.query();// TODO:query要带全文检索，普通的查询覆盖不到全文索引的；如果有其他用例存在类似的问题，需要同步修改
             } catch (BaseException e) {
-                // TODO:同12116用例，需要抛异常或者打印错误信息
-                Assert.assertEquals(e.getErrorCode(), -321);
+                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
             } finally {
-                db.close();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }
 
-    class TruncateCL {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private TruncateCL() {
-            db = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+    private class UpdateData {
+        @ExecuteOrder(step = 1, desc = "增删改查记录包含全文索引字段")
+        private void updateRecords() {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                cl.update("{a:'test_15798_1'}", "{$set:{b:'b_15798'}}", "{}");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
         }
+    }
 
+    private class DeleteData {
+        @ExecuteOrder(step = 1, desc = "增删改查记录包含全文索引字段")
+        private void deleteRecords() {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                cl.delete("{a:'test_15798_0'}");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
+        }
+    }
+
+    private class QueryData {
+        @ExecuteOrder(step = 1, desc = "增删改查记录包含全文索引字段")
+        private void queryRecords() {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                cl.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{}", "{'':'" + fullIdxName + "'}");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
+        }
+    }
+
+    private class TruncateCL {
         @ExecuteOrder(step = 1, desc = "增删改查记录的同时，truncate 集合中的记录")
         private void truncateCL() throws Exception {
-            while (cl.getCount() == 0) {
-                Thread.sleep(100);
-            }
-            preCLLid = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
-
-            int count = 0;
-            while (count++ < 600) {
-                try {
-                    Thread.sleep(100);
-                    cl.truncate();
-                    System.out.println("truncate CL Times: " + count);
-                } catch (BaseException e) {
-                    if (e.getErrorCode() != -190 && e.getErrorCode() != -147) {
-                        Assert.fail(e.getMessage());
-                    }
-                    continue;
-                }
-                break;
-            }
-        }
-
-        @ExecuteOrder(step = 2, desc = "原始集合及固定集合中记录均被清空，主备节点数据一致")
-        private void checkData() throws Exception {
+            Sequoiadb db = null;
             try {
-                Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, esIndexName, preCLLid));
-                Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 0));
-                List<BSONObject> actRecords = FullTextDBUtils.getRecordsFromCL(cl.query());
-                Assert.assertEquals(actRecords.size(), 0);
-                DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
-                actRecords = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
-                Assert.assertEquals(actRecords.size(), 0);
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                while (cl.getCount() == 0) {
+                    Thread.sleep(100);
+                }
+
+                int count = 0;
+                while (count++ < 600) {
+                    try {
+                        Thread.sleep(100);
+                        cl.truncate();
+                    } catch (BaseException e) {
+                        if (e.getErrorCode() != -190 && e.getErrorCode() != -147) {
+                            throw e;
+                        }
+                        continue;
+                    }
+                    break;
+                }
             } finally {
-                db.close();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }

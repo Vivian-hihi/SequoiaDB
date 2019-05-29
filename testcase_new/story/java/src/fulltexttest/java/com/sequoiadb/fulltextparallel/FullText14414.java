@@ -1,9 +1,7 @@
 package com.sequoiadb.fulltextparallel;
 
-import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.elasticsearch.client.Client;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -24,21 +22,19 @@ import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
 /**
- * @testcase seqDB-14414:同一集合并发创建删除相同的全文索引
- * @date 2019-4-28
- * @author yinzhen
- *
+ * @FileName seqDB-14414:同一集合并发创建删除相同的全文索引
+ * @Author yinzhen
+ * @Date 2019-4-28
  */
 public class FullText14414 extends SdbTestBase {
-    private static final String CLNAME = "cl14414";
-    private ThreadExecutor thExecutor = new ThreadExecutor(600000);
+    private String CLNAME = "cl14414";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx14414";
     private Client esClient;
-    private String groupName;
     private String cappedCLName;
     private String esIndexName;
+    private AtomicInteger atoint = new AtomicInteger(0);
 
     @BeforeClass
     public void setUp() {
@@ -49,20 +45,22 @@ public class FullText14414 extends SdbTestBase {
 
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
-        groupName = CommLib.getDataGroupNames(sdb).get(0);
-        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME,
-                (BSONObject) JSON.parse("{Group:'" + groupName + "'}"));
-        FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
+        cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
+        FullTextDBUtils.insertData(cl, 20000);
     }
 
     @Test
     public void test() throws Exception {
-        thExecutor.addWorker(new CreateFullIdxTh1());
-        thExecutor.addWorker(new CreateFullIdxTh2());
-        thExecutor.addWorker(new CreateFullIdxTh2());
-
+        ThreadExecutor thExecutor = new ThreadExecutor(600000);
+        for (int i = 0; i < 10; i++) {
+            thExecutor.addWorker(new CreateAndDropIdx());
+        }
         thExecutor.run();
-        thExecutor.display();
+        Assert.assertEquals(atoint.get(), 1);
+
+        // 主备节点上索引信息一致，固定集合、索引信息、ES端数据一致
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
+        Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
     }
 
     @AfterClass
@@ -72,85 +70,35 @@ public class FullText14414 extends SdbTestBase {
             cs.dropCollection(CLNAME);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
-            sdb.close();
-        }
-    }
-
-    class CreateFullIdxTh1 {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private CreateFullIdxTh1() {
-            db = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-        }
-
-        @ExecuteOrder(step = 1, desc = "多线程创建删除同一个全文索引")
-        private void createFullIdx() {
-            try {
-                cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
-                        false, false);
-                esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
-                cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
-                cl.dropIndex(fullIdxName);
-            } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -42);
+            if (sdb != null) {
+                sdb.close();
             }
-        }
-
-        @ExecuteOrder(step = 2, desc = "主备节点上索引信息一致，固定集合、索引信息、ES端数据一致")
-        private void checkRecords() throws InterruptedException {
-            try {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
-                Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
-                checkFullIdx();
-            } finally {
-                db.closeAllCursors();
-                db.close();
+            if (esClient != null) {
+                esClient.close();
             }
         }
     }
 
-    class CreateFullIdxTh2 {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private CreateFullIdxTh2() {
-            db = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-        }
-
+    private class CreateAndDropIdx {
         @ExecuteOrder(step = 1, desc = "多线程创建删除同一个全文索引")
         private void createFullIdx() {
+            Sequoiadb db = null;
             try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
                 cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
                         false, false);
+
                 cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
                 esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
                 cl.dropIndex(fullIdxName);
+                atoint.incrementAndGet();
             } catch (BaseException e) {
                 Assert.assertEquals(e.getErrorCode(), -42);
             } finally {
-                db.close();
-            }
-        }
-    }
-
-    private void checkFullIdx() throws InterruptedException {
-        List<String> nodeAddrs = CommLib.getNodeAddress(sdb, groupName);
-        for (String nodeAddr : nodeAddrs) {
-            Sequoiadb data = null;
-            try {
-                data = new Sequoiadb(nodeAddr, "", "");
-                DBCollection cl = data.getCollectionSpace(csName).getCollection(CLNAME);
-                int doTimes = 0;
-                while (cl.isIndexExist(fullIdxName)) {
-                    doTimes++;
-                    Thread.sleep(100);
-                    Assert.assertNotEquals(doTimes, 600);
+                if (db != null) {
+                    db.close();
                 }
-            } finally {
-                data.close();
             }
         }
     }

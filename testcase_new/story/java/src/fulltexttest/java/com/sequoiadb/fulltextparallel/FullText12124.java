@@ -16,7 +16,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -27,15 +26,12 @@ import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
 
 /**
- * @testcase seqDB-12124:创建全文索引与增删改记录并发
- * @date 2019-4-28
- * @author yinzhen
- *
+ * @FileName seqDB-12124:创建全文索引与增删改记录并发
+ * @Author yinzhen
+ * @Date 2019-4-28
  */
-// TODO:其他检视意见同12116
 public class FullText12124 extends SdbTestBase {
-    private static final String CLNAME = "cl12124";
-    private ThreadExecutor thExecutor = new ThreadExecutor(600000);
+    private String CLNAME = "cl12124";
     private Sequoiadb sdb;
     private DBCollection cl;
     private String fullIdxName = "idx12124";
@@ -53,18 +49,33 @@ public class FullText12124 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(CLNAME);
-        insertData(cl, FullTextUtils.INSERT_NUMS);
+        insertData(cl, 20000);
     }
 
     @Test
     public void test() throws Exception {
+        ThreadExecutor thExecutor = new ThreadExecutor(600000);
         thExecutor.addWorker(new CreateFullIdx());
         thExecutor.addWorker(new InsertData());
         thExecutor.addWorker(new UpdateData());
         thExecutor.addWorker(new DeleteData());
 
         thExecutor.run();
-        thExecutor.display();
+
+        // 原集合、固定集合中记录正确且主备节点数据一致，ES中最终同步的记录正确
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, (int) cl.getCount()));
+        Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        try {
+            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(CLNAME);
+            DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
+            DBCursor esCursor = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
+                    "{'':'" + fullIdxName + "'}");
+            Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
+        } finally {
+            if (db2 != null) {
+                db2.close();
+            }
+        }
     }
 
     @AfterClass
@@ -74,105 +85,78 @@ public class FullText12124 extends SdbTestBase {
             cs.dropCollection(CLNAME);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
-            sdb.close();
+            if (sdb != null) {
+                sdb.close();
+            }
+            if (esClient != null) {
+                esClient.close();
+            }
         }
     }
 
-    class CreateFullIdx {
-        private Sequoiadb db;
-        private Sequoiadb db2;
-        private DBCollection cl;
-        private DBCollection cl2;
-
-        private CreateFullIdx() {
-            db = new Sequoiadb(coordUrl, "", "");
-            db2 = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-            cl2 = db2.getCollectionSpace(csName).getCollection(CLNAME);
-        }
-
+    private class CreateFullIdx {
         @ExecuteOrder(step = 1, desc = "创建全文索引")
         private void createFullIdx() {
-            cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
-                    false);
-            esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
-            cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
-            Assert.assertTrue(cl.isIndexExist(fullIdxName));
-        }
-
-        @ExecuteOrder(step = 2, desc = "原集合、固定集合中记录正确且主备节点数据一致，ES中最终同步的记录正确")
-        private void checkRecords() throws BaseException, Exception {
+            Sequoiadb db = null;
             try {
-                Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, (int) cl.getCount()));
-
-                DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
-                DBCursor esCursor = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
-                        "{'':'" + fullIdxName + "'}");
-                // TODO：考虑一下是否可以通过原子变量来校验ES端最终同步的记录？
-                Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
+                cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
+                        false, false);
+                esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
+                cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
             } finally {
-                db.closeAllCursors();
-                db2.closeAllCursors();
-                db.close();
-                db2.close();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }
 
-    class InsertData {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private InsertData() {
-            db = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-        }
-
+    private class InsertData {
         @ExecuteOrder(step = 1, desc = "插入包含全文索引字段的记录")
         private void insertRecords() {
+            Sequoiadb db = null;
             try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
                 insertData(cl, 10000);
             } finally {
-                db.close();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }
 
-    class UpdateData {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private UpdateData() {
-            db = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-        }
-
+    private class UpdateData {
         @ExecuteOrder(step = 1, desc = "更新包含全文索引字段的记录")
         private void updateRecords() {
+            Sequoiadb db = null;
             try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
                 cl.update("{a:'test_12124_0'}", "{$set:{b:'b_12124'}}", "{'':'" + fullIdxName + "'}");
             } finally {
-                db.close();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }
 
-    class DeleteData {
-        private Sequoiadb db;
-        private DBCollection cl;
-
-        private DeleteData() {
-            db = new Sequoiadb(coordUrl, "", "");
-            cl = db.getCollectionSpace(csName).getCollection(CLNAME);
-        }
-
-        // TODO：desc中的描述需要修改一下
-        @ExecuteOrder(step = 1, desc = "创建普通索引，删除普通索引")
+    private class DeleteData {
+        @ExecuteOrder(step = 1, desc = "删除包含全文索引字段的记录")
         private void deleteReocrds() {
+            Sequoiadb db = null;
             try {
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(CLNAME);
                 cl.delete("{a:'test_12124_2'}", "{'':'" + fullIdxName + "'}");
             } finally {
-                db.close();
+                if (db != null) {
+                    db.close();
+                }
             }
         }
     }
