@@ -43,7 +43,7 @@ public class Fulltext11989 extends SdbTestBase {
             throw new SkipException("StandAlone environment!");
         }
         groupNames = CommLib.getDataGroupNames(sdb);
-        if (groupNames.size() < 2) {
+        if (groupNames.size() < 2) { // TODO 用公共方法CommLib.OneGroupMode
             throw new SkipException("Less than two groups!");
         }
 
@@ -62,13 +62,14 @@ public class Fulltext11989 extends SdbTestBase {
         // 插入数据
         FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
 
-        // 创建全文索引，索引字段覆盖：分区键和非分区键
+        // 创建全文索引，索引字段覆盖：非分区键、分区键
         cl.createIndex(fullIndexName, "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\"}",
                 false, false);
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS));
         DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIndexName).get(0);
         Assert.assertFalse(cappedCL.query().hasNext());
 
+        // 删除全文索引
         String cappedName = FullTextDBUtils.getCappedName(cl, fullIndexName);
         String esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
         FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
@@ -80,9 +81,9 @@ public class Fulltext11989 extends SdbTestBase {
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
-            FullTextDBUtils.dropCollection(cs, clName);
+            FullTextDBUtils.dropCollection(cs, clName);// TODO drop后需要检查索引是否有残留，所有用例都要加的
         } catch (BaseException e) {
-            Assert.fail(e.getMessage());
+            Assert.fail(e.getMessage());// TODO 不需要catch
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -93,7 +94,7 @@ public class Fulltext11989 extends SdbTestBase {
         }
     }
 
-    public void insertData(int insertNums) {
+    public void insertData(int insertNums) {// TODO:没有用到的方法，可以删除
         List<BSONObject> records = new ArrayList<BSONObject>();
         for (int i = 0; i < 100; i++) {
             for (int j = 0; j < insertNums / 100; j++) {
