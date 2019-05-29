@@ -19,6 +19,8 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
@@ -35,16 +37,20 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 public class Insert15975 extends SdbTestBase {
+    private Sequoiadb sdb = null;
 	private String clName = "cl_15975";
     private GroupMgr groupMgr = null;
-    private DBCollection scl = null;
     private int cacheSize = 1;
     private int acquireSize = 1;
     private List<String> coordNodes = null;
     
 	@BeforeClass
     public void setUp() {
-		try(Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+	    sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+	    sdb.getCollectionSpace(csName).createCollection(clName,(BSONObject)
+	            JSON.parse("{AutoIncrement:{Field:'id',CacheSize:" + cacheSize 
+	                + ",AcquireSize:"+acquireSize+"}}"));
+		try{
 			groupMgr = GroupMgr.getInstance();
 			if (!groupMgr.checkBusiness()) {
 	            throw new SkipException("checkBusiness failed");
@@ -54,25 +60,19 @@ public class Insert15975 extends SdbTestBase {
 			if (coordNodes.size() < 2) {
 				throw new SkipException("skip one coordNode");
 			}
-			
-			scl = sdb.getCollectionSpace(csName).createCollection(clName,(BSONObject) JSON.parse("{AutoIncrement:{Field:'id',CacheSize:" + cacheSize + ",AcquireSize:"+acquireSize+"}}"));
 		}catch (ReliabilityException e) {
 			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
                     + Utils.getKeyStack(e, this));
 		}
 	}
 	
-	@AfterClass
-    public void tearDown() {
-		Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		sdb.getCollectionSpace(csName).dropCollection(clName);
-		sdb.close();
-	}
-	
 	@Test
     public void test() {
 		Sequoiadb db = null;
+		DBCollection cl = null;
 		try {
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cl = db.getCollectionSpace(csName).getCollection(clName);
 			GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
 			NodeWrapper cataMaster = cataGroup.getMaster();
 			FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataMaster.hostName(), cataMaster.svcName(), 1);
@@ -84,17 +84,13 @@ public class Insert15975 extends SdbTestBase {
 	        mgr.addTask(faultTask);
 	        mgr.execute();
 	        
-	        // faultTask.start(); 
 	        Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 	        if (!groupMgr.checkBusinessWithLSN(600)) {
 	        	Assert.fail("checkBusinessWithLSN() occurs timeout"); 
 	        }
-	        db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-	        DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 	        checkCatalogConsistency(cataGroup);
 	        insertData(cl, 100);
             
-	        //check records count
 			long count = (long) cl.getCount();
 			if(count < 100){
 				Assert.fail("records count error!");
@@ -108,26 +104,36 @@ public class Insert15975 extends SdbTestBase {
 				db.close();
 			}
         }
-        
 	}
 	
+    @AfterClass
+    public void tearDown() {
+        CollectionSpace cs = sdb.getCollectionSpace(csName);;
+        if(cs.isCollectionExist(clName)){
+            cs.dropCollection(clName);
+        }
+        if (!sdb.isClosed()) {
+            sdb.close();
+        }
+    }
+    
 	private class InsertTask extends OperateTask {
 		private String coordNode;
 		public InsertTask(String coordNode) {
-			super();
 			this.coordNode = coordNode;
 		}
 		
 		@Override
         public void exec() throws Exception {
             Sequoiadb db = null;
+            DBCollection cl = null;
             try {
                 db = new Sequoiadb(coordNode, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl = db.getCollectionSpace(csName).getCollection(clName);
                 for(int i=0; i< 10000; i++){
         			BSONObject obj = (BSONObject) JSON.parse("{a:" + i + "}");
         			cl.insert(obj);
-        		}
+        		    }
                 }catch (BaseException e){
                 	e.printStackTrace();
             } finally {
