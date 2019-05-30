@@ -171,6 +171,8 @@ namespace replay
 
    rplMappingField::rplMappingField()
    {
+      _hasDefaultValue = FALSE ;
+      _defaultValue = "" ;
    }
 
    rplMappingField::~rplMappingField()
@@ -180,6 +182,8 @@ namespace replay
    INT32 rplMappingField::init( const BSONObj &fieldConf )
    {
       INT32 rc = SDB_OK ;
+      BSONElement defaultValueEle ;
+
       //{ source: "fieldName", target: "columnName" }
       const CHAR *sFieldName = fieldConf.getStringField( RPL_CONF_NAME_SOURCE ) ;
       const CHAR *tFieldName = fieldConf.getStringField( RPL_CONF_NAME_TARGET ) ;
@@ -192,6 +196,44 @@ namespace replay
 
       ossSnprintf( _sFieldName, sizeof(_sFieldName) - 1, "%s", sFieldName ) ;
       ossSnprintf( _tFieldName, sizeof(_tFieldName) - 1, "%s", tFieldName ) ;
+
+      defaultValueEle = fieldConf.getField( RPL_CONF_NAME_FIELD_DEFAULTVALUE ) ;
+      if ( defaultValueEle.type() == EOO )
+      {
+         _hasDefaultValue = FALSE ;
+      }
+      else
+      {
+         _hasDefaultValue = TRUE ;
+         _defaultValue = defaultValueEle.str() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 rplMappingField::getValue( const BSONObj &sRecord, string &value )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele = sRecord.getField( _sFieldName ) ;
+      if ( ele.type() == EOO )
+      {
+         if ( !_hasDefaultValue )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_RC_CHECK( rc, PDERROR, "Invalid field type(%s:%d), rc = %d",
+                         _sFieldName, ele.type(), rc ) ;
+         }
+
+         value = _defaultValue ;
+      }
+      else
+      {
+         rc = _getValue( ele, value ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get value, rc = %d", rc ) ;
+      }
 
    done:
       return rc ;
@@ -210,22 +252,10 @@ namespace replay
    INT32 rplMappingStrField::init( const BSONObj & fieldConf )
    {
       INT32 rc = SDB_OK ;
-      BSONElement defaultValueEle ;
-
       rc = rplMappingField::init( fieldConf ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init rplMappingStrField, rc = %d",
                    rc ) ;
 
-      defaultValueEle = fieldConf.getField( RPL_CONF_NAME_FIELD_DEFAULTVALUE ) ;
-      if ( defaultValueEle.type() == EOO )
-      {
-         _hasDefaultValue = FALSE ;
-      }
-      else
-      {
-         _hasDefaultValue = TRUE ;
-         _defaultValue = defaultValueEle.str() ;
-      }
    done:
       return rc ;
    error:
@@ -237,38 +267,23 @@ namespace replay
       return MAPPING_STRING ;
    }
 
-   INT32 rplMappingStrField::getValue( const BSONObj &sRecord, string &value )
+   INT32 rplMappingStrField::_getValue( const BSONElement &ele, string &value )
    {
       INT32 rc = SDB_OK ;
-      BSONElement ele = sRecord.getField( _sFieldName ) ;
-      if ( ele.type() != EOO )
+      if ( ele.type() == String )
       {
-         if ( ele.type() == String )
-         {
-            value = ele.str() ;
-         }
-         else if ( ele.type() == jstOID )
-         {
-            OID oid = ele.OID() ;
-            value = oid.toString() ;
-         }
-         else
-         {
-            rc = SDB_INVALIDARG ;
-            PD_RC_CHECK( rc, PDERROR, "Invalid field type(%s:%d), rc = %d",
-                         _sFieldName, ele.type(), rc ) ;
-         }
+         value = ele.str() ;
+      }
+      else if ( ele.type() == jstOID )
+      {
+         OID oid = ele.OID() ;
+         value = oid.toString() ;
       }
       else
       {
-         if ( !_hasDefaultValue )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_RC_CHECK( rc, PDERROR, "Field(%s) is not exist, rc = %d",
-                         _sFieldName, rc ) ;
-         }
-
-         value = _defaultValue ;
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "Invalid field type(%s:%d), rc = %d",
+                      _sFieldName, ele.type(), rc ) ;
       }
 
    done:
@@ -302,11 +317,10 @@ namespace replay
       return MAPPING_INT ;
    }
 
-   INT32 rplIntField::getValue( const BSONObj &sRecord, string &value )
+   INT32 rplIntField::_getValue( const BSONElement &ele, string &value )
    {
       INT32 rc = SDB_OK ;
       stringstream ss ;
-      BSONElement ele = sRecord.getField( _sFieldName ) ;
       if ( ele.type() != NumberInt )
       {
          rc = SDB_INVALIDARG ;
@@ -348,11 +362,10 @@ namespace replay
       return MAPPING_LONG ;
    }
 
-   INT32 rplLongField::getValue( const BSONObj &sRecord, string &value )
+   INT32 rplLongField::_getValue( const BSONElement &ele, string &value )
    {
       INT32 rc = SDB_OK ;
       stringstream ss ;
-      BSONElement ele = sRecord.getField( _sFieldName ) ;
       if ( ele.type() != NumberLong && ele.type() != NumberInt )
       {
          rc = SDB_INVALIDARG ;
@@ -394,11 +407,10 @@ namespace replay
       return MAPPING_DECIMAL ;
    }
 
-   INT32 rplDecimalField::getValue( const BSONObj &sRecord, string &value )
+   INT32 rplDecimalField::_getValue( const BSONElement &ele, string &value )
    {
       INT32 rc = SDB_OK ;
       bsonDecimal decimal ;
-      BSONElement ele = sRecord.getField( _sFieldName ) ;
       if ( !ele.isNumber() || ele.type() == NumberDouble )
       {
          rc = SDB_INVALIDARG ;
@@ -449,14 +461,13 @@ namespace replay
       return MAPPING_TIMESTAMP ;
    }
 
-   INT32 rplTimestampField::getValue( const BSONObj &sRecord, string &value )
+   INT32 rplTimestampField::_getValue( const BSONElement &ele, string &value )
    {
       INT32 rc = SDB_OK ;
       UINT64 ms = 0 ;
       UINT32 inc = 0 ;
       string timeStr ;
       ossTimestamp timestamp ;
-      BSONElement ele = sRecord.getField( _sFieldName ) ;
       if ( ele.type() != Timestamp )
       {
          rc = SDB_INVALIDARG ;

@@ -38,6 +38,7 @@
 #include <map>
 
 using namespace std ;
+using namespace bson;
 using namespace engine ;
 
 namespace replay
@@ -152,10 +153,16 @@ namespace replay
 
    public:
       virtual INT32 init( const BSONObj &fieldConf ) ;
+      INT32 getValue( const BSONObj &sRecord, string &value ) ;
+
+   protected:
+      virtual INT32 _getValue( const BSONElement &ele, string &value ) = 0 ;
 
    protected:
       CHAR _sFieldName[ MAX_FIELDNAME_LEN + 1 ] ;
       CHAR _tFieldName[ MAX_FIELDNAME_LEN + 1 ] ;
+      BOOLEAN _hasDefaultValue ;
+      string _defaultValue ;
    } ;
 
    class rplMappingStrField : public rplMappingField
@@ -167,11 +174,7 @@ namespace replay
    public:
       INT32 init( const BSONObj &fieldConf ) ;
       EN_FieldType getFieldType() const ;
-      INT32 getValue( const BSONObj &sRecord, string &value ) ;
-
-   private:
-      BOOLEAN _hasDefaultValue ;
-      string _defaultValue ;
+      INT32 _getValue( const BSONElement &ele, string &value ) ;
    } ;
 
    class rplIntField : public rplMappingField
@@ -183,7 +186,7 @@ namespace replay
    public:
       INT32 init( const BSONObj &fieldConf ) ;
       EN_FieldType getFieldType() const ;
-      INT32 getValue( const BSONObj &sRecord, string &value ) ;
+      INT32 _getValue( const BSONElement &ele, string &value ) ;
    } ;
 
    class rplLongField : public rplMappingField
@@ -195,7 +198,7 @@ namespace replay
    public:
       INT32 init( const BSONObj &fieldConf ) ;
       EN_FieldType getFieldType() const ;
-      INT32 getValue( const BSONObj &sRecord, string &value ) ;
+      INT32 _getValue( const BSONElement &ele, string &value ) ;
    } ;
 
    class rplDecimalField : public rplMappingField
@@ -207,7 +210,7 @@ namespace replay
    public:
       INT32 init( const BSONObj &fieldConf ) ;
       EN_FieldType getFieldType() const ;
-      INT32 getValue( const BSONObj &sRecord, string &value ) ;
+      INT32 _getValue( const BSONElement &ele, string &value ) ;
    } ;
 
    class rplTimestampField : public rplMappingField
@@ -219,7 +222,7 @@ namespace replay
    public:
       INT32 init( const BSONObj &fieldConf ) ;
       EN_FieldType getFieldType() const ;
-      INT32 getValue( const BSONObj &sRecord, string &value ) ;
+      INT32 _getValue( const BSONElement &ele, string &value ) ;
    } ;
 }
 
