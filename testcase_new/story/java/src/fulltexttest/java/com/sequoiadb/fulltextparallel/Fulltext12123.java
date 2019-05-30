@@ -43,7 +43,7 @@ public class Fulltext12123 extends SdbTestBase {
     private String indexName = "fulltext12123";
     private Client esClient = null;
     private int insertNum = 20000;
-    private ThreadExecutor te = new ThreadExecutor(600000);
+    private ThreadExecutor te = new ThreadExecutor(3600000);
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass

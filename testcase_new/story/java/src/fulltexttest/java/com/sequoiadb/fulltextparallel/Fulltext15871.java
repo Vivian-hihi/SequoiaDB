@@ -42,7 +42,7 @@ public class Fulltext15871 extends SdbTestBase {
     private String indexName = "fulltext15871";
     private Client esClient = null;
     private int insertNum = 50000;
-    private ThreadExecutor te = new ThreadExecutor(600000);
+    private ThreadExecutor te = new ThreadExecutor(3600000);
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
     private List<String> esIndexNames = new ArrayList<String>();
     private List<String> cappedCLNames = new ArrayList<String>();

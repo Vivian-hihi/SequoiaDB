@@ -48,7 +48,7 @@ public class Fulltext15872 extends SdbTestBase {
     private String indexName = "fulltext15872";
     private Client esClient = null;
     private int insertNum = 20000;
-    private ThreadExecutor te = new ThreadExecutor(600000);
+    private ThreadExecutor te = new ThreadExecutor(3600000);
     // 统计各集合中的记录数，map的key为集合名、value为集合中的记录数
     private Map<String, AtomicInteger> insertNumInCLMap = new HashMap<String, AtomicInteger>();
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");

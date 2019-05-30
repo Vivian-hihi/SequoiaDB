@@ -44,7 +44,7 @@ public class Fulltext15796 extends SdbTestBase {
     private Client esClient = null;
     private int insertNum = 30000;
     private AtomicInteger atomic = new AtomicInteger(insertNum);
-    private ThreadExecutor te = new ThreadExecutor(600000);
+    private ThreadExecutor te = new ThreadExecutor(3600000);
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
