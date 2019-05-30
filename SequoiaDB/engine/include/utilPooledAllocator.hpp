@@ -49,7 +49,7 @@
 namespace engine
 {
 
-   #define UTIL_ALLOCATE_DFT_CACHE_SIZE         ( 64 )
+   #define UTIL_ALLOCATE_DFT_CACHE_SIZE         ( 8 )
    #define UTIL_ALLOCATE_DFT_CACHE_NUM          ( 4 )
 
    #define UTIL_ALLOCATE_MAX_CACHE_SIZE         ( 512 )
@@ -96,6 +96,9 @@ namespace engine
          {
             if ( _ptr )
             {
+#ifdef _DEBUG
+               SDB_ASSERT( _bitmap.isEmpty(), "Bit map is not empty" ) ;
+#endif //_DEBUG
                utilGetGlobalMemPool() ?
                   utilGetGlobalMemPool()->release( (void*&)_ptr ) :
                   SDB_OSS_FREE( (void*)_ptr ) ;
