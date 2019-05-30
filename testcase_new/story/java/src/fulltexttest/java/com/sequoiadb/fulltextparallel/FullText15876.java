@@ -80,10 +80,17 @@ public class FullText15876 extends SdbTestBase {
 
         // check results
         if (threadDropCS.getRetCode() == 0) {
+            Assert.assertFalse(sdb.isCollectionSpaceExist(CS_NAME));
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
-        } else {
-            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
-            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
+        } else if (threadDropCS.getRetCode() != 0) {
+            int cnt = (int) cl.getCount();
+            if (threadTruncate.getRetCode() == 0 ) {
+                Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
+                Assert.assertEquals(cnt, 0);
+            } else if (threadTruncate.getRetCode() != 0 ) {
+                Assert.assertEquals(cnt, RECS_NUM);
+            }
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, cnt));
         }
     }
 
@@ -108,7 +115,7 @@ public class FullText15876 extends SdbTestBase {
         }
     }
 
-    private class ThreadTruncate {
+    private class ThreadTruncate extends ResultStore {
         @ExecuteOrder(step = 1)
         private void truncate() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
@@ -121,6 +128,7 @@ public class FullText15876 extends SdbTestBase {
                         && e.getErrorCode() != -147) {
                     throw e;
                 }
+                saveResult(-1, e);
             }
         }
     }
