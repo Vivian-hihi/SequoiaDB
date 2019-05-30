@@ -67,7 +67,7 @@ public class FullText15838 extends SdbTestBase {
     @Test
     public void test() throws Exception {
 
-        ThreadExecutor thread = new ThreadExecutor();
+        ThreadExecutor thread = new ThreadExecutor( 600000 );
         thread.addWorker( new CreateIndexThread() );
         thread.addWorker( new SplitThread() );
         thread.run();

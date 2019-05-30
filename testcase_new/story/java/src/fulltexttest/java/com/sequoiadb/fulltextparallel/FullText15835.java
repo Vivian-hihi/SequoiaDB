@@ -68,7 +68,7 @@ public class FullText15835 extends SdbTestBase {
         cappedName = FullTextDBUtils.getCappedName( cl, indexName );
         esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
 
-        ThreadExecutor thread = new ThreadExecutor();
+        ThreadExecutor thread = new ThreadExecutor( 600000 );
         thread.addWorker( new DropIndexThread() );
         thread.addWorker( new AlterTableThread() );
         thread.run();

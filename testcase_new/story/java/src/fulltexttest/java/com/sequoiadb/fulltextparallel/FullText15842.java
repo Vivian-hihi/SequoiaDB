@@ -70,7 +70,7 @@ public class FullText15842 extends SdbTestBase {
     @Test
     public void test() throws Exception {
 
-        ThreadExecutor thread = new ThreadExecutor();
+        ThreadExecutor thread = new ThreadExecutor( 600000 );
         thread.addWorker( new CreateIndexThread() );
         thread.addWorker( new TruncateLobThread() );
         thread.addWorker( new PutLobThread() );

@@ -30,6 +30,7 @@ public class FullText15836 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
+    private String csName = "cs_15836";
     private String clName = "es_15836";
     private Client esClient = null;
     private String indexName = "fulltextIndex15836";

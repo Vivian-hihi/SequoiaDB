@@ -501,7 +501,7 @@ public class FullTextUtils {
             }
             isConsistency = isConsistency( db, groupName, cl.getCSName(), cl.getName() );
             if ( !isConsistency ) {
-                break;
+                throw new Exception( cl.getCSName() + " is not consistency in the " + groupName );
             }
         }
         return isConsistency;
@@ -681,8 +681,7 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isConsistency( Sequoiadb db, String groupName, String csName, String clName )
-            throws Exception {
+    public static boolean isConsistency( Sequoiadb db, String groupName, String csName, String clName ) {
         boolean isConsistency = false;
         int doTimes = 0;
         int timeout = 600;
@@ -719,8 +718,7 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isNodeRecordsConsistency( Sequoiadb db, String groupName, String csName, String clName )
-            throws Exception {
+    public static boolean isNodeRecordsConsistency( Sequoiadb db, String groupName, String csName, String clName ) {
 
         List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
         if ( nodeNames.size() == 1 ) {
@@ -734,8 +732,9 @@ public class FullTextUtils {
             Sequoiadb nextNode = rg.getNode( nodeNames.get( i ) ).connect();
             DBCollection cl2 = nextNode.getCollectionSpace( csName ).getCollection( clName );
             if ( cl1.getCount() != cl2.getCount() ) {
-                throw new Exception( cl1.getFullName() + " from " + nodeNames.get( 0 ) + "'s count: " + cl1.getCount()
+                System.err.println( cl1.getFullName() + " from " + nodeNames.get( 0 ) + "'s count: " + cl1.getCount()
                         + ", cl from " + nodeNames.get( i ) + "'s count: " + cl2.getCount() );
+                return false;
             }
             DBCursor cl1Cursor = cl1.query( null, null, "{\"_id\":1}", null );
             DBCursor cl2Cursor = cl2.query( null, null, "{\"_id\":1}", null );
@@ -756,15 +755,16 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isCLRecordsConsistency( DBCursor cl1Cursor, DBCursor cl2Cursor ) throws Exception {
+    public static boolean isCLRecordsConsistency( DBCursor cl1Cursor, DBCursor cl2Cursor ) {
         try {
             while ( cl1Cursor.hasNext() && cl2Cursor.hasNext() ) {
                 BSONObject cl1Record = cl1Cursor.getNext();
                 BSONObject cl2Record = cl2Cursor.getNext();
                 if ( !cl1Record.equals( cl2Record ) ) {
-                    throw new Exception(
+                    System.out.println(
                             "compare record failed, collection from first node's record : " + cl1Record.toString()
                                     + "\n collection from anohter node's record : " + cl2Record.toString() );
+                    return false;
                 }
             }
         } finally {

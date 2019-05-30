@@ -52,10 +52,10 @@ public class FullText15834 extends SdbTestBase {
         FullTextDBUtils.insertData( cl, insertNum );
     }
 
-    @Test
+    @Test(enabled = false)
     public void test() throws Exception {
 
-        ThreadExecutor thread = new ThreadExecutor();
+        ThreadExecutor thread = new ThreadExecutor( 600000 );
         thread.addWorker( new CreateIndexThread() );
         thread.addWorker( new AlterTableThread() );
         thread.run();
@@ -67,7 +67,9 @@ public class FullText15834 extends SdbTestBase {
 
         checkSnapshotResult();
 
-        // TODO:需要校验集合的插入及全文索引功能正常，对应的手工用例已修改；
+        FullTextDBUtils.insertData( cl, insertNum );
+
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum * 2 ) );
 
     }
 
@@ -109,10 +111,10 @@ public class FullText15834 extends SdbTestBase {
         private void alterTable() {
             try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
                 DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                // TODO:alter成自动切分表吧，其他用例也做类似的调整；
                 BSONObject options = new BasicBSONObject();
                 options.put( "ShardingType", "hash" );
-                options.put( "ShardingKey", new BasicBSONObject( "a", 1 ) );
+                options.put( "ShardingKey", new BasicBSONObject( "recordId", 1 ) );
+                options.put( "AutoSplit", true );
                 cl.alterCollection( options );
             }
         }
@@ -127,6 +129,6 @@ public class FullText15834 extends SdbTestBase {
         snap.close();
 
         Assert.assertEquals( shardingType, "hash" );
-        Assert.assertEquals( shardingKey, new BasicBSONObject( "a", 1 ) );
+        Assert.assertEquals( shardingKey, new BasicBSONObject( "recordId", 1 ) );
     }
 }
