@@ -100,7 +100,7 @@ public class FullText15846 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
             FullTextDBUtils.dropCollection( cs, clName );
             Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );

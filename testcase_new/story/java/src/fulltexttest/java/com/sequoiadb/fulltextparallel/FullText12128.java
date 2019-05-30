@@ -34,53 +34,53 @@ public class FullText12128 extends SdbTestBase {
     private String cappedCLName;
     private String esIndexName;
     private Client esClient;
-    private AtomicInteger atoint = new AtomicInteger(0);
+    private AtomicInteger atoint = new AtomicInteger( 0 );
 
     @BeforeClass
     public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("STANDALONE MODE");
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "STANDALONE MODE" );
         }
 
-        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
-                Integer.parseInt(SdbTestBase.esServiceName));
-        cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
-                false);
+        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
+                Integer.parseInt( SdbTestBase.esServiceName ) );
+        cl = sdb.getCollectionSpace( csName ).createCollection( clName );
+        cl.createIndex( fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
+                false );
 
-        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
-        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
-        FullTextDBUtils.insertData(cl, 20000);
+        esIndexName = FullTextDBUtils.getESIndexName( cl, fullIdxName );
+        cappedCLName = FullTextDBUtils.getCappedName( cl, fullIdxName );
+        FullTextDBUtils.insertData( cl, 20000 );
     }
 
     @Test
     public void test() throws Exception {
-        ThreadExecutor thExecutor = new ThreadExecutor(600000);
-        for (int i = 0; i < 10; i++) {
-            thExecutor.addWorker(new DropCL());
+        ThreadExecutor thExecutor = new ThreadExecutor( 600000 );
+        for ( int i = 0; i < 10; i++ ) {
+            thExecutor.addWorker( new DropCL() );
         }
         thExecutor.run();
-        Assert.assertEquals(atoint.get(), 1);
+        Assert.assertEquals( atoint.get(), 1 );
 
         // 集合删除成功
-        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
-        Assert.assertFalse(sdb.getCollectionSpace(csName).isCollectionExist(clName));
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCLName ) );
+        Assert.assertFalse( sdb.getCollectionSpace( csName ).isCollectionExist( clName ) );
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
-            if (cs.isCollectionExist(clName)) {
-                cs.dropCollection(clName);
+            CollectionSpace cs = sdb.getCollectionSpace( csName );
+            if ( cs.isCollectionExist( clName ) ) {
+                cs.dropCollection( clName );
             }
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCLName ) );
         } finally {
-            if (sdb != null) {
+            if ( sdb != null ) {
                 sdb.close();
             }
-            if (esClient != null) {
+            if ( esClient != null ) {
                 esClient.close();
             }
         }
@@ -91,15 +91,15 @@ public class FullText12128 extends SdbTestBase {
         private void dropFullIdx() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb(coordUrl, "", "");
-                db.getCollectionSpace(csName).dropCollection(clName);
+                db = new Sequoiadb( coordUrl, "", "" );
+                db.getCollectionSpace( csName ).dropCollection( clName );
                 atoint.incrementAndGet();
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -23 && e.getErrorCode() != -147) {
+            } catch ( BaseException e ) {
+                if ( e.getErrorCode() != -23 && e.getErrorCode() != -147 ) {
                     throw e;
                 }
             } finally {
-                if (db != null) {
+                if ( db != null ) {
                     db.close();
                 }
             }

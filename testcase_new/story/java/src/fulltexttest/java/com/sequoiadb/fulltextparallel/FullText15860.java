@@ -101,9 +101,12 @@ public class FullText15860 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
+            String esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
+            String cappedName = FullTextDBUtils.getCappedName( cl, indexName );
             FullTextDBUtils.dropCollection( cs, clName );
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
         } finally {
             if ( sdb != null ) {
                 sdb.close();

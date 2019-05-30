@@ -437,11 +437,12 @@ public class FullTextDBUtils {
      * @param db
      * @param csName
      * @return boolean, 删除成功返回true,否则返回false
+     * @throws Exception 
      * @throws InterruptedException
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public boolean isCSDropSuccess( Sequoiadb db, String csName ) {
+    public boolean isCSDropSuccess( Sequoiadb db, String csName ) throws Exception {
         return !isExistCS( db, csName, false );
     }
 
@@ -451,11 +452,12 @@ public class FullTextDBUtils {
      * @param db
      * @param csNames
      * @return boolean, 删除成功返回true,否则返回false
+     * @throws Exception 
      * @throws InterruptedException
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public boolean isCSDropSuccess( Sequoiadb db, List<String> csNames ) {
+    public boolean isCSDropSuccess( Sequoiadb db, List<String> csNames ) throws Exception {
         for ( String csName : csNames ) {
             if ( !isCSDropSuccess( db, csName ) ) {
                 return false;
@@ -486,11 +488,12 @@ public class FullTextDBUtils {
      * @param csName
      * @param expExist
      * @return boolean, cs存在返回true,否则返回false
+     * @throws Exception 
      * @throws InterruptedException
      * @Author luweikang
      * @Date 2019-05-09
      */
-    private boolean isExistCS( Sequoiadb db, String csName, boolean expExist ) {
+    private boolean isExistCS( Sequoiadb db, String csName, boolean expExist ) throws Exception {
         List<String> rgNames = CommLib.getDataGroupNames( db );
         boolean csExist = false;
         for ( String rgName : rgNames ) {
@@ -510,11 +513,12 @@ public class FullTextDBUtils {
      * @param rgName
      * @param expExist
      * @return boolean, cs存在返回true,否则返回false
+     * @throws Exception 
      * @throws InterruptedException
      * @Author luweikang
      * @Date 2019-05-09
      */
-    private boolean isExistCS( Sequoiadb db, String csName, String rgName, boolean expExist ) {
+    private boolean isExistCS( Sequoiadb db, String csName, String rgName, boolean expExist ) throws Exception {
         boolean csExist = false;
         List<String> nodeList = CommLib.getNodeAddress( db, rgName );
         for ( String nodeAddress : nodeList ) {
@@ -533,8 +537,7 @@ public class FullTextDBUtils {
             }
             if ( csExist != expExist ) {
                 String msg = expExist ? "' is not on the rg: " : "' is still on the rg: ";
-                System.err.println( "cs '" + csName + msg + rgName + ", node: " + nodeAddress );
-                break;
+                throw new Exception( "cs '" + csName + msg + rgName + ", node: " + nodeAddress );
             }
         }
         return csExist;

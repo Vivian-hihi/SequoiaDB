@@ -55,7 +55,7 @@ public class Fulltext14397 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         FullTextDBUtils.dropCollectionSpace( sdb, csName );
         // check fulltext deleted
         if ( esIndexName != null ) {

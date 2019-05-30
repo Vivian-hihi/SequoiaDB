@@ -59,7 +59,7 @@ public class Fulltext12015 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         List<String> cappedNames = FullTextDBUtils.getESIndexNames( maincl, textIndexName );
         FullTextDBUtils.dropCollection( cs, subCLName1 );
         FullTextDBUtils.dropCollection( cs, subCLName2 );

@@ -42,54 +42,54 @@ public class Fulltext15871 extends SdbTestBase {
     private String indexName = "fulltext15871";
     private Client esClient = null;
     private int insertNum = 50000;
-    private ThreadExecutor te = new ThreadExecutor(3600000);
-    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+    private ThreadExecutor te = new ThreadExecutor( 3600000 );
+    private SimpleDateFormat df = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.S" );
     private List<String> esIndexNames = new ArrayList<String>();
     private List<String> cappedCLNames = new ArrayList<String>();
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
+        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "skip StandAlone" );
         }
 
-        for (int i = 0; i < csNum; i++) {
+        for ( int i = 0; i < csNum; i++ ) {
             String csName = csBasicName + "_" + i;
-            csNames.add(csName);
+            csNames.add( csName );
         }
 
-        for (int i = 0; i < clNum; i++) {
+        for ( int i = 0; i < clNum; i++ ) {
             String clName = clBasicName + "_" + i;
-            clNames.add(clName);
+            clNames.add( clName );
         }
-        for (String csName : csNames) {
-            if (sdb.isCollectionSpaceExist(csName)) {
-                sdb.dropCollectionSpace(csName);
+        for ( String csName : csNames ) {
+            if ( sdb.isCollectionSpaceExist( csName ) ) {
+                sdb.dropCollectionSpace( csName );
             }
-            CollectionSpace cs = sdb.createCollectionSpace(csName);
-            for (String clName : clNames) {
-                DBCollection cl = cs.createCollection(clName);
-                cl.createIndex("id", "{id:1}", false, false);
-                insertRecord(cl, insertNum);
-                cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
-                String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
-                cappedCLNames.add(cappedCLName);
-                List<String> esIndexName = FullTextDBUtils.getESIndexNames(cl, indexName);
-                esIndexNames.addAll(esIndexName);
+            CollectionSpace cs = sdb.createCollectionSpace( csName );
+            for ( String clName : clNames ) {
+                DBCollection cl = cs.createCollection( clName );
+                cl.createIndex( "id", "{id:1}", false, false );
+                insertRecord( cl, insertNum );
+                cl.createIndex( indexName, "{a:'text',b:'text'}", false, false );
+                String cappedCLName = FullTextDBUtils.getCappedName( cl, indexName );
+                cappedCLNames.add( cappedCLName );
+                List<String> esIndexName = FullTextDBUtils.getESIndexNames( cl, indexName );
+                esIndexNames.addAll( esIndexName );
             }
         }
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
-            for (String csName : csNames) {
-                FullTextDBUtils.dropCollectionSpace(sdb, csName);
+            for ( String csName : csNames ) {
+                FullTextDBUtils.dropCollectionSpace( sdb, csName );
             }
-            if (!esIndexNames.isEmpty() && !cappedCLNames.isEmpty()) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
+            if ( !esIndexNames.isEmpty() && !cappedCLNames.isEmpty() ) {
+                Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedCLNames ) );
             }
         } finally {
             sdb.close();
@@ -100,24 +100,24 @@ public class Fulltext15871 extends SdbTestBase {
     @Test
     public void test() throws Exception {
         // 执行并发测试
-        for (String csName : csNames) {
-            for (String clName : clNames) {
-                te.addWorker(new DropCLThread(csName, clName));
+        for ( String csName : csNames ) {
+            for ( String clName : clNames ) {
+                te.addWorker( new DropCLThread( csName, clName ) );
             }
         }
         te.run();
 
         // 结果校验
-        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedCLNames ) );
 
     }
 
     private class DropCLThread {
-        private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        private Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         private String csName = null;
         private String clName = null;
 
-        public DropCLThread(String csName, String clName) {
+        public DropCLThread( String csName, String clName ) {
             super();
             this.csName = csName;
             this.clName = clName;
@@ -125,26 +125,26 @@ public class Fulltext15871 extends SdbTestBase {
 
         @ExecuteOrder(step = 1, desc = "删除集合")
         public void dropCLThread() {
-            System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
+            System.out.println( this.getClass().getName().toString() + " start at:" + df.format( new Date() ) );
             try {
-                db.getCollectionSpace(csName).dropCollection(clName);
+                db.getCollectionSpace( csName ).dropCollection( clName );
             } finally {
                 db.close();
             }
-            System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
+            System.out.println( this.getClass().getName().toString() + " stop at:" + df.format( new Date() ) );
         }
 
     }
 
-    public void insertRecord(DBCollection cl, int insertNums) {
+    public void insertRecord( DBCollection cl, int insertNums ) {
         List<BSONObject> insertObjs = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
+        for ( int i = 0; i < 100; i++ ) {
+            for ( int j = 0; j < insertNums / 100; j++ ) {
                 int k = i * 100 + j;
-                insertObjs.add((BSONObject) JSON.parse("{id:" + k + ",a: 'test_11981_" + i * 100 + j
-                        + "', b: 'test_11981_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa " + i * 100 + j + "'}"));
+                insertObjs.add( (BSONObject) JSON.parse( "{id:" + k + ",a: 'test_11981_" + i * 100 + j
+                        + "', b: 'test_11981_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa " + i * 100 + j + "'}" ) );
             }
-            cl.insert(insertObjs, 0);
+            cl.insert( insertObjs, 0 );
             insertObjs.clear();
         }
     }

@@ -38,59 +38,59 @@ public class Fulltext14372 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("StandAlone environment!");
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "StandAlone environment!" );
         }
-        CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-        cl = cs.createCollection(clName);
-        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
-                Integer.parseInt(SdbTestBase.esServiceName));
-        cl.createIndex(fullIndexName,
+        CollectionSpace cs = sdb.getCollectionSpace( SdbTestBase.csName );
+        cl = cs.createCollection( clName );
+        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
+                Integer.parseInt( SdbTestBase.esServiceName ) );
+        cl.createIndex( fullIndexName,
                 "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}", false,
-                false);
-        cappedName = FullTextDBUtils.getCappedName(cl, fullIndexName);
-        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
+                false );
+        cappedName = FullTextDBUtils.getCappedName( cl, fullIndexName );
+        esIndexName = FullTextDBUtils.getESIndexName( cl, fullIndexName );
     }
 
     @Test
     public void test() throws Exception {
-        insertData(FullTextUtils.INSERT_NUMS);// insert >128M
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS));
-        insertData(FullTextUtils.INSERT_NUMS); // insert again
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS * 2));
+        insertData( FullTextUtils.INSERT_NUMS );// insert >128M
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
+        insertData( FullTextUtils.INSERT_NUMS ); // insert again
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS * 2 ) );
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
-            CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
-            FullTextDBUtils.dropCollection(cs, clName);
+            CollectionSpace cs = sdb.getCollectionSpace( SdbTestBase.csName );
+            FullTextDBUtils.dropCollection( cs, clName );
             // check fulltext deleted
-            if (esIndexName != null) {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
+            if ( esIndexName != null ) {
+                Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
             }
         } finally {
-            if (sdb != null) {
+            if ( sdb != null ) {
                 sdb.close();
             }
-            if (esClient != null) {
+            if ( esClient != null ) {
                 esClient.close();
             }
         }
     }
 
-    private void insertData(int insertNums) {
+    private void insertData( int insertNums ) {
         List<BSONObject> records = new ArrayList<BSONObject>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
-                BSONObject record = (BSONObject) JSON.parse("{a: 'test_14372_" + i * j + "', b: '"
-                        + StringUtils.getRandomString(64) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
-                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', g: '"
-                        + StringUtils.getRandomString(256) + "'}");
-                records.add(record);
+        for ( int i = 0; i < 100; i++ ) {
+            for ( int j = 0; j < insertNums / 100; j++ ) {
+                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_14372_" + i * j + "', b: '"
+                        + StringUtils.getRandomString( 64 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
+                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', g: '"
+                        + StringUtils.getRandomString( 256 ) + "'}" );
+                records.add( record );
             }
-            cl.insert(records);
+            cl.insert( records );
             records.clear();
         }
     }

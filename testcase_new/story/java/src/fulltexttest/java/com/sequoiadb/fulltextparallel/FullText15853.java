@@ -47,83 +47,81 @@ public class FullText15853 extends SdbTestBase {
     private final int LOB_NUM = 20;
 
     private final String FULLTEXT_IDX_NAME = "idx_es_15853";
-    private final BSONObject FULLTEXT_IDX_KEY = 
-            (BSONObject) JSON.parse("{a:'text',b:'text',c:'text'}");
-    
+    private final BSONObject FULLTEXT_IDX_KEY = (BSONObject) JSON.parse( "{a:'text',b:'text',c:'text'}" );
+
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
     private String cappedCSName;
     private ArrayList<ObjectId> lobIds1 = new ArrayList<>();
     private ArrayList<ObjectId> lobIds2 = new ArrayList<>();
-    
+
     private Client esClient = null;
-    private String esIndexName;    
+    private String esIndexName;
 
     @BeforeClass
     private void setUp() throws Exception {
-        esClient = FullTextESUtils.createTransportClient(esHostName, 
-                Integer.parseInt(esServiceName));
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
 
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("Skip standAlone mode");
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "Skip standAlone mode" );
         }
 
-        if (sdb.isCollectionSpaceExist(CS_NAME)) {
+        if ( sdb.isCollectionSpaceExist( CS_NAME ) ) {
             // 清理后重新创建，避免前一次跑的结果对其有影响
-            sdb.dropCollectionSpace(CS_NAME);
+            sdb.dropCollectionSpace( CS_NAME );
         }
-        cs = sdb.createCollectionSpace(CS_NAME);
-        cl = cs.createCollection(CL_NAME);
-        cl.createIndex(FULLTEXT_IDX_NAME, FULLTEXT_IDX_KEY, false, false);
-        cappedCSName = FullTextDBUtils.getCappedName(cl, FULLTEXT_IDX_NAME);
-        esIndexName  = FullTextDBUtils.getESIndexName(cl, FULLTEXT_IDX_NAME);
-        
-        FullTextDBUtils.insertData(cl, INSERT_RECS_NUM);
-        
-        for (int i = 0; i < LOB_NUM; i++) {
+        cs = sdb.createCollectionSpace( CS_NAME );
+        cl = cs.createCollection( CL_NAME );
+        cl.createIndex( FULLTEXT_IDX_NAME, FULLTEXT_IDX_KEY, false, false );
+        cappedCSName = FullTextDBUtils.getCappedName( cl, FULLTEXT_IDX_NAME );
+        esIndexName = FullTextDBUtils.getESIndexName( cl, FULLTEXT_IDX_NAME );
+
+        FullTextDBUtils.insertData( cl, INSERT_RECS_NUM );
+
+        for ( int i = 0; i < LOB_NUM; i++ ) {
             ObjectId lobId = createLob( cl );
-            lobIds1.add(lobId);
+            lobIds1.add( lobId );
         }
-        for (int i = 0; i < LOB_NUM; i++) {
+        for ( int i = 0; i < LOB_NUM; i++ ) {
             ObjectId lobId = createLob( cl );
-            lobIds2.add(lobId);
+            lobIds2.add( lobId );
         }
-        
+
         // 确保预置的数据同步到es完成，避免test中查询的数据未同步完成导致非预期
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, FULLTEXT_IDX_NAME, INSERT_RECS_NUM));    
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, FULLTEXT_IDX_NAME, INSERT_RECS_NUM ) );
     }
 
     @Test
     private void test() throws Exception {
-        ThreadExecutor es = new ThreadExecutor(TIMEOUT);
-        es.addWorker(new ThreadInsert());          
-        es.addWorker(new ThreadDelete());        
-        es.addWorker(new ThreadUpdate()); 
-        es.addWorker(new ThreadFullTextSearch()); 
+        ThreadExecutor es = new ThreadExecutor( TIMEOUT );
+        es.addWorker( new ThreadInsert() );
+        es.addWorker( new ThreadDelete() );
+        es.addWorker( new ThreadUpdate() );
+        es.addWorker( new ThreadFullTextSearch() );
 
-        es.addWorker(new ThreadPutLob()); 
-        es.addWorker(new ThreadRemoveLob()); 
-        es.addWorker(new ThreadGetLob()); 
-        
-        es.addWorker(new ThreadDBSync());
-        
+        es.addWorker( new ThreadPutLob() );
+        es.addWorker( new ThreadRemoveLob() );
+        es.addWorker( new ThreadGetLob() );
+
+        es.addWorker( new ThreadDBSync() );
+
         es.run();
-        //分别在每个并发线程检查数据对应操作的数据正确性。在 ThreadFullTextSearch 线程 step2 检查数据一致性。
+        // 分别在每个并发线程检查数据对应操作的数据正确性。在 ThreadFullTextSearch 线程 step2 检查数据一致性。
     }
 
     @AfterClass
-    private void tearDown() throws InterruptedException {
+    private void tearDown() throws Exception {
         try {
-            FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
-            sdb.dropCollectionSpace(CS_NAME);
+            FullTextDBUtils.dropCollection( cs, CL_NAME );
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCSName ) );
+            sdb.dropCollectionSpace( CS_NAME );
         } finally {
-            if (sdb != null) {
+            if ( sdb != null ) {
                 sdb.close();
             }
-            if (esClient != null) {
+            if ( esClient != null ) {
                 esClient.close();
             }
         }
@@ -132,44 +130,43 @@ public class FullText15853 extends SdbTestBase {
     private class ThreadInsert {
         @ExecuteOrder(step = 1)
         private void insert() {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);                
-                System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-                insertRecords(cl2);                
-                System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                DBCollection cl2 = db.getCollectionSpace( CS_NAME ).getCollection( CL_NAME );
+                System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+                insertRecords( cl2 );
+                System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
             }
         }
     }
-    
+
     private class ThreadDelete {
         private Sequoiadb db = null;
         private DBCollection cl2;
-        
+
         private ThreadDelete() {
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl2 = db.getCollectionSpace( CS_NAME ).getCollection( CL_NAME );
         }
-        
+
         @ExecuteOrder(step = 1, desc = "删除数据")
         private void delete() {
-            BSONObject matcher = new BasicBSONObject("recordId", 
-                    new BasicBSONObject("$gte", INSERT_RECS_NUM / 2));                 
-            System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-            cl2.delete(matcher);                
-            System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            BSONObject matcher = new BasicBSONObject( "recordId", new BasicBSONObject( "$gte", INSERT_RECS_NUM / 2 ) );
+            System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+            cl2.delete( matcher );
+            System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
         }
-        
+
         @ExecuteOrder(step = 3, desc = "校验删除后的记录数")
         private void checkResults() {
-            BSONObject matcher = new BasicBSONObject("recordId", 
-                    new BasicBSONObject("$lt", INSERT_RECS_NUM / 2)); 
-            long cnt = cl2.getCount(matcher);
-            Assert.assertEquals(cnt, INSERT_RECS_NUM * 2 - INSERT_RECS_NUM / 2);
+            BSONObject matcher = new BasicBSONObject( "recordId", new BasicBSONObject( "$lt", INSERT_RECS_NUM / 2 ) );
+            long cnt = cl2.getCount( matcher );
+            Assert.assertEquals( cnt, INSERT_RECS_NUM * 2 - INSERT_RECS_NUM / 2 );
         }
-        
+
         @ExecuteOrder(step = 4, desc = "关闭连接")
         private void closeDB() {
-            if (db != null) db.close();
+            if ( db != null )
+                db.close();
         }
     }
 
@@ -177,33 +174,33 @@ public class FullText15853 extends SdbTestBase {
         private String upVal = StringUtils.getRandomString( 16 );
         private Sequoiadb db = null;
         private DBCollection cl2;
-        
+
         private ThreadUpdate() {
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl2 = db.getCollectionSpace( CS_NAME ).getCollection( CL_NAME );
         }
-        
+
         @ExecuteOrder(step = 1, desc = "更新记录")
         private void update() {
-            BSONObject matcher = new BasicBSONObject("c", new BasicBSONObject("$exists", 1));
-            BSONObject modifier = new BasicBSONObject("$set", 
-                    new BasicBSONObject("b", upVal));
-            BSONObject hint = new BasicBSONObject("", FULLTEXT_IDX_NAME);                
-            System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-            cl2.update(matcher, modifier, hint);                
-            System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            BSONObject matcher = new BasicBSONObject( "c", new BasicBSONObject( "$exists", 1 ) );
+            BSONObject modifier = new BasicBSONObject( "$set", new BasicBSONObject( "b", upVal ) );
+            BSONObject hint = new BasicBSONObject( "", FULLTEXT_IDX_NAME );
+            System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+            cl2.update( matcher, modifier, hint );
+            System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
         }
-        
+
         @ExecuteOrder(step = 3, desc = "校验更新后的记录数")
         private void checkResults() {
-            BSONObject matcher = new BasicBSONObject("b", upVal); 
-            long cnt = cl2.getCount(matcher);
-            Assert.assertEquals(cnt, INSERT_RECS_NUM / 2);
+            BSONObject matcher = new BasicBSONObject( "b", upVal );
+            long cnt = cl2.getCount( matcher );
+            Assert.assertEquals( cnt, INSERT_RECS_NUM / 2 );
         }
-        
+
         @ExecuteOrder(step = 4, desc = "关闭连接")
         private void closeDB() {
-            if (db != null) db.close();
+            if ( db != null )
+                db.close();
         }
     }
 
@@ -212,52 +209,49 @@ public class FullText15853 extends SdbTestBase {
         private DBCollection cl2;
         private Client esClient2 = null;
         private BSONObject matcher;
-        
+
         private ThreadFullTextSearch() {
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
-            esClient2 = FullTextESUtils.createTransportClient(esHostName, 
-                    Integer.parseInt(esServiceName));
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl2 = db.getCollectionSpace( CS_NAME ).getCollection( CL_NAME );
+            esClient2 = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
         }
-        
+
         @ExecuteOrder(step = 1, desc = "全文检索")
         private void fullTextSearch() {
-            matcher = new BasicBSONObject("", new BasicBSONObject("$Text", 
-                    new BasicBSONObject("query", 
-                            new BasicBSONObject("match", 
-                                    new BasicBSONObject("a", CL_NAME)))));
-//            System.out.println(matcher);                
-            System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-            DBCursor cursor = cl2.query(matcher, null, null, null);
+            matcher = new BasicBSONObject( "", new BasicBSONObject( "$Text", new BasicBSONObject( "query",
+                    new BasicBSONObject( "match", new BasicBSONObject( "a", CL_NAME ) ) ) ) );
+            // System.out.println(matcher);
+            System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+            DBCursor cursor = cl2.query( matcher, null, null, null );
             int rcRecsNum = 0;
-            while (cursor.hasNext()) {
+            while ( cursor.hasNext() ) {
                 cursor.getNext();
                 rcRecsNum++;
-            }                
-            if (rcRecsNum < INSERT_RECS_NUM / 2) {
-                Assert.fail("expect records numer less, rcRecsNum: " + rcRecsNum + 
-                        ", expect num: " + INSERT_RECS_NUM / 2);
-            }                
-            System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            }
+            if ( rcRecsNum < INSERT_RECS_NUM / 2 ) {
+                Assert.fail(
+                        "expect records numer less, rcRecsNum: " + rcRecsNum + ", expect num: " + INSERT_RECS_NUM / 2 );
+            }
+            System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
         }
 
         @ExecuteOrder(step = 2, desc = "检查查询返回结果")
         private void waitSync() throws Exception {
-            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient2, cl2, FULLTEXT_IDX_NAME, 
-                    INSERT_RECS_NUM * 2 - INSERT_RECS_NUM / 2));
+            Assert.assertTrue( FullTextUtils.isIndexCreated( esClient2, cl2, FULLTEXT_IDX_NAME,
+                    INSERT_RECS_NUM * 2 - INSERT_RECS_NUM / 2 ) );
         }
 
         @ExecuteOrder(step = 3, desc = "再次全文检索")
-        private void queryAgain() throws InterruptedException {  
+        private void queryAgain() throws InterruptedException {
             int rcRecsNum = 0;
-            DBCursor cursor = cl2.query(matcher, null, null, null);
-            while (cursor.hasNext()) {
+            DBCursor cursor = cl2.query( matcher, null, null, null );
+            while ( cursor.hasNext() ) {
                 cursor.getNext();
                 rcRecsNum++;
-            }            
-            Assert.assertEquals(rcRecsNum, INSERT_RECS_NUM / 2 );
+            }
+            Assert.assertEquals( rcRecsNum, INSERT_RECS_NUM / 2 );
         }
-        
+
         @ExecuteOrder(step = 4, desc = "关闭连接")
         private void closeDB() {
             try {
@@ -273,95 +267,97 @@ public class FullText15853 extends SdbTestBase {
         private ArrayList<ObjectId> lobIds3 = new ArrayList<>();
         private Sequoiadb db = null;
         private DBCollection cl2;
-        
+
         private ThreadPutLob() {
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl2 = db.getCollectionSpace( CS_NAME ).getCollection( CL_NAME );
         }
-        
+
         @ExecuteOrder(step = 1)
-        private void pubLob() {                
-            System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-            for (int i = 0; i < NEW_LOB_NUM; i++) {
+        private void pubLob() {
+            System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+            for ( int i = 0; i < NEW_LOB_NUM; i++ ) {
                 ObjectId id = createLob( cl2 );
-                lobIds3.add(id);
-            }                
-            System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+                lobIds3.add( id );
+            }
+            System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
         }
-        
+
         @ExecuteOrder(step = 2, desc = "检查新增lob")
         private void checkResults() {
             DBCursor cursor = cl2.listLobs();
             int rcLobNum = 0;
-            while (cursor.hasNext()) {
+            while ( cursor.hasNext() ) {
                 cursor.getNext();
                 rcLobNum++;
             }
-            Assert.assertEquals(rcLobNum, LOB_NUM + NEW_LOB_NUM);
+            Assert.assertEquals( rcLobNum, LOB_NUM + NEW_LOB_NUM );
 
-            for (ObjectId lobId : lobIds3) {
-                DBLob lob = cl2.openLob(lobId);
+            for ( ObjectId lobId : lobIds3 ) {
+                DBLob lob = cl2.openLob( lobId );
                 lob.close();
-            }            
+            }
         }
-        
+
         @ExecuteOrder(step = 3, desc = "关闭连接")
         private void closeDB() {
-            if (db != null) db.close();
+            if ( db != null )
+                db.close();
         }
     }
 
     private class ThreadRemoveLob {
         private Sequoiadb db = null;
         private DBCollection cl2;
-        
+
         private ThreadRemoveLob() {
-            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
+            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            cl2 = db.getCollectionSpace( CS_NAME ).getCollection( CL_NAME );
         }
-        
+
         @ExecuteOrder(step = 1)
-        private void removeLob() {                
-            System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-            for (ObjectId lobId : lobIds1) {
-                cl2.removeLob(lobId);
-            }                
-            System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+        private void removeLob() {
+            System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+            for ( ObjectId lobId : lobIds1 ) {
+                cl2.removeLob( lobId );
+            }
+            System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
         }
-        
+
         @ExecuteOrder(step = 2, desc = "检查删除后的lob")
         private void checkResults() {
-            for (ObjectId lobId : lobIds1) {
+            for ( ObjectId lobId : lobIds1 ) {
                 try {
-                    cl2.openLob(lobId);
-                    Assert.fail("expect fail but succ.");
-                } catch (BaseException e) {
-                    if (e.getErrorCode() != -4) {
+                    cl2.openLob( lobId );
+                    Assert.fail( "expect fail but succ." );
+                } catch ( BaseException e ) {
+                    if ( e.getErrorCode() != -4 ) {
                         throw e;
                     }
                 }
             }
         }
-        
+
         @ExecuteOrder(step = 3, desc = "关闭连接")
         private void closeDB() {
-            if (db != null) db.close();
+            if ( db != null )
+                db.close();
         }
     }
 
     private class ThreadGetLob {
         @ExecuteOrder(step = 1)
         private void getLob() {
-            try(Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                DBCollection cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
-                System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-                for (ObjectId lobId : lobIds2) {
-                    DBLob lob = cl2.openLob(lobId);
+            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
+                DBCollection cl2 = db.getCollectionSpace( CS_NAME ).getCollection( CL_NAME );
+                System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+                for ( ObjectId lobId : lobIds2 ) {
+                    DBLob lob = cl2.openLob( lobId );
                     ObjectId id = lob.getID();
                     lob.close();
-                    Assert.assertEquals(id, lobId);
+                    Assert.assertEquals( id, lobId );
                 }
-                System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+                System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
             }
         }
     }
@@ -369,51 +365,51 @@ public class FullText15853 extends SdbTestBase {
     private class ThreadDBSync {
         @ExecuteOrder(step = 1)
         private void sync() throws InterruptedException {
-            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             try {
                 BSONObject options = new BasicBSONObject();
-                options.put("CollectionSpace", CS_NAME);
-                options.put("Block", true);
-                System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-                for (int i = 0; i < 20; i++) {
-                    db.sync(options);
-                    Thread.sleep(random.nextInt(100));
-                }                
-                System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+                options.put( "CollectionSpace", CS_NAME );
+                options.put( "Block", true );
+                System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+                for ( int i = 0; i < 20; i++ ) {
+                    db.sync( options );
+                    Thread.sleep( random.nextInt( 100 ) );
+                }
+                System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
             } finally {
                 db.close();
             }
         }
     }
-    
-    private void insertRecords(DBCollection cl) {
+
+    private void insertRecords( DBCollection cl ) {
         int num = -1;
-        for (int k = 0; k < INSERT_RECS_NUM; k += INSERT_BATCH_RECS_NUM) {
+        for ( int k = 0; k < INSERT_RECS_NUM; k += INSERT_BATCH_RECS_NUM ) {
             ArrayList<BSONObject> insertor = new ArrayList<>();
-            for (int i = 0 + k; i < INSERT_BATCH_RECS_NUM + k; i++) {
+            for ( int i = 0 + k; i < INSERT_BATCH_RECS_NUM + k; i++ ) {
                 BSONObject bsonObj = new BasicBSONObject();
-                bsonObj.put("recordId", num);
-                bsonObj.put("a", StringUtils.getRandomString( 16 ));
-                bsonObj.put("b", StringUtils.getRandomString( 32 ));
-                insertor.add(bsonObj);
+                bsonObj.put( "recordId", num );
+                bsonObj.put( "a", StringUtils.getRandomString( 16 ) );
+                bsonObj.put( "b", StringUtils.getRandomString( 32 ) );
+                insertor.add( bsonObj );
                 num--;
             }
-            cl.insert(insertor);
+            cl.insert( insertor );
         }
     }
-    
-    private ObjectId createLob(DBCollection cl) {
+
+    private ObjectId createLob( DBCollection cl ) {
         DBLob lob = null;
         ObjectId id = null;
-        try {    
-            String lobStringBuff = StringUtils.getRandomString(1024);
+        try {
+            String lobStringBuff = StringUtils.getRandomString( 1024 );
             lob = cl.createLob();
-            lob.write(lobStringBuff.getBytes());
-            id = lob.getID(); 
-        } finally{
-            if (lob != null){
-                lob.close();              
-            } 
+            lob.write( lobStringBuff.getBytes() );
+            id = lob.getID();
+        } finally {
+            if ( lob != null ) {
+                lob.close();
+            }
         }
         return id;
     }

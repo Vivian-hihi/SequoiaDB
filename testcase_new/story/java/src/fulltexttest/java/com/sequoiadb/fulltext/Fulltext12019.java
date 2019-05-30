@@ -63,7 +63,7 @@ public class Fulltext12019 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         FullTextDBUtils.dropCollection( cs, clName );
         // check fulltext deleted
         if ( esIndexNames != null ) {

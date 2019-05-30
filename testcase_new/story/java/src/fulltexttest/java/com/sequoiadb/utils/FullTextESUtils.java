@@ -206,10 +206,11 @@ public class FullTextESUtils {
      * @param esClient
      * @param esIndexName
      * @return boolean 索引已在ES创建成功则返回true,否则返回false
+     * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isIndexCreatedInES( Client esClient, String esIndexName ) {
+    public static boolean isIndexCreatedInES( Client esClient, String esIndexName ) throws Exception {
         return isExistIndexInES( esClient, esIndexName, true );
     }
 
@@ -219,10 +220,11 @@ public class FullTextESUtils {
      * @param esClient
      * @param esIndexName
      * @return boolean 索引已在ES创建删除则返回true,否则返回false
+     * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public boolean isIndexDeletedInES( Client esClient, String esIndexName ) {
+    public boolean isIndexDeletedInES( Client esClient, String esIndexName ) throws Exception {
         return !isExistIndexInES( esClient, esIndexName, false );
     }
 
@@ -232,10 +234,11 @@ public class FullTextESUtils {
      * @param esClient
      * @param esIndexNames
      * @return boolean 索引已在ES创建删除则返回true,否则返回false
+     * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public boolean isIndexDeletedInES( Client esClient, List<String> esIndexNames ) {
+    public boolean isIndexDeletedInES( Client esClient, List<String> esIndexNames ) throws Exception {
         boolean notExist = true;
         for ( String esIndexName : esIndexNames ) {
             notExist = isExistIndexInES( esClient, esIndexName, false );
@@ -253,18 +256,23 @@ public class FullTextESUtils {
      * @param esIndexName
      * @param expExist
      * @return boolean 存在返回true, 否则返回false
+     * @throws Exception 
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isExistIndexInES( Client esClient, String esIndexName, boolean expExist ) {
+    public static boolean isExistIndexInES( Client esClient, String esIndexName, boolean expExist ) throws Exception {
         int timeout = 600; // 超时时间600s
         int doTimes = 0;
         int interval = 1;
 
         IndicesExistsResponse existResponse = null;
         while ( doTimes * interval < timeout ) {
-            existResponse = esClient.admin().indices().exists( new IndicesExistsRequest().indices( esIndexName ) )
-                    .actionGet();
+            try {
+                existResponse = esClient.admin().indices().exists( new IndicesExistsRequest().indices( esIndexName ) )
+                        .actionGet();
+            } catch ( Exception e ) {
+                throw new Exception( e.getMessage(), e );
+            }
 
             if ( expExist != existResponse.isExists() ) {
                 doTimes++;
@@ -285,8 +293,9 @@ public class FullTextESUtils {
             }
         }
 
-        if ( !existResponse.isExists() && expExist ) {
-            System.err.println( "es client no such index: " + esIndexName );
+        if ( existResponse.isExists() != expExist ) {
+            String msg = expExist ? "es client no such index: " : "index is still in the es: ";
+            throw new Exception( msg + esIndexName );
         }
 
         return existResponse.isExists();

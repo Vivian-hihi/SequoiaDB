@@ -84,7 +84,7 @@ public class FullText15842 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
             String cappedName = FullTextDBUtils.getCappedName( cl, indexName );
             String esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );

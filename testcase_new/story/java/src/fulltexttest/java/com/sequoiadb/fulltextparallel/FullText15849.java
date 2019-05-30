@@ -81,7 +81,7 @@ public class FullText15849 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
             if ( sdb.getCollectionSpace( csName ).isCollectionExist( clName ) ) {
                 FullTextDBUtils.dropCollection( cs, clName );

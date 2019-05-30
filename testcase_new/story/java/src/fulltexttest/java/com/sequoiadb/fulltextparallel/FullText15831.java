@@ -35,55 +35,55 @@ public class FullText15831 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() throws Exception {
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("STANDALONE MODE");
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "STANDALONE MODE" );
         }
 
         // 创建全文索引
-        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
-                Integer.parseInt(SdbTestBase.esServiceName));
-        if (sdb.isCollectionSpaceExist(csName)) {
-            sdb.dropCollectionSpace(csName);
+        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
+                Integer.parseInt( SdbTestBase.esServiceName ) );
+        if ( sdb.isCollectionSpaceExist( csName ) ) {
+            sdb.dropCollectionSpace( csName );
         }
-        cl = sdb.createCollectionSpace(csName).createCollection(clName);
-        FullTextDBUtils.insertData(cl, 20000);
-        cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
-                false);
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
+        cl = sdb.createCollectionSpace( csName ).createCollection( clName );
+        FullTextDBUtils.insertData( cl, 20000 );
+        cl.createIndex( fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
+                false );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIdxName, 20000 ) );
 
         // 获取固定集合和ES索引名
-        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
-        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
-        cl.dropIndex(fullIdxName);
-        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
+        esIndexName = FullTextDBUtils.getESIndexName( cl, fullIdxName );
+        cappedCLName = FullTextDBUtils.getCappedName( cl, fullIdxName );
+        cl.dropIndex( fullIdxName );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCLName ) );
     }
 
     @Test
     public void test() throws Exception {
-        ThreadExecutor thExecutor = new ThreadExecutor(600000);
-        thExecutor.addWorker(new CreateFullIdx());
-        thExecutor.addWorker(new DropCS());
+        ThreadExecutor thExecutor = new ThreadExecutor( 600000 );
+        thExecutor.addWorker( new CreateFullIdx() );
+        thExecutor.addWorker( new DropCS() );
 
         thExecutor.run();
 
         // 原始集合空间及固定集合均被删除成功，ES上全文索引删除成功，主备节点数据一致，无数据文件残留
-        Assert.assertFalse(sdb.isCollectionSpaceExist(csName));
-        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
+        Assert.assertFalse( sdb.isCollectionSpaceExist( csName ) );
+        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCLName ) );
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
-            if (sdb.isCollectionSpaceExist(csName)) {
-                sdb.dropCollectionSpace(csName);
+            if ( sdb.isCollectionSpaceExist( csName ) ) {
+                sdb.dropCollectionSpace( csName );
             }
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCLName ) );
         } finally {
-            if (sdb != null) {
+            if ( sdb != null ) {
                 sdb.close();
             }
-            if (esClient != null) {
+            if ( esClient != null ) {
                 esClient.close();
             }
         }
@@ -94,16 +94,16 @@ public class FullText15831 extends SdbTestBase {
         private void createFullIdx() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
-                        false, false);
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -248 && e.getErrorCode() != -23 && e.getErrorCode() != -34) {
+                db = new Sequoiadb( coordUrl, "", "" );
+                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+                cl.createIndex( fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
+                        false, false );
+            } catch ( BaseException e ) {
+                if ( e.getErrorCode() != -248 && e.getErrorCode() != -23 && e.getErrorCode() != -34 ) {
                     throw e;
                 }
             } finally {
-                if (db != null) {
+                if ( db != null ) {
                     db.close();
                 }
             }
@@ -115,10 +115,10 @@ public class FullText15831 extends SdbTestBase {
         private void dropCS() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb(coordUrl, "", "");
-                db.dropCollectionSpace(csName);
+                db = new Sequoiadb( coordUrl, "", "" );
+                db.dropCollectionSpace( csName );
             } finally {
-                if (db != null) {
+                if ( db != null ) {
                     db.close();
                 }
             }

@@ -78,7 +78,7 @@ public class FullText15838 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
             List<String> cappedNames = new ArrayList<String>();
             cappedNames.add( FullTextDBUtils.getCappedName( cl, indexName ) );
