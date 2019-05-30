@@ -46,37 +46,37 @@ public class Fulltext12118B extends SdbTestBase {
     private String indexName = "fulltext12118B";
     private Client esClient = null;
     private int insertNum = 20000;
-    private ThreadExecutor te = new ThreadExecutor( 3600000 );
-    private SimpleDateFormat df = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.S" );
+    private ThreadExecutor te = new ThreadExecutor(3600000);
+    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
-        for ( int i = 0; i < csNum; i++ ) {
+        for (int i = 0; i < csNum; i++) {
             String csName = csBasicName + "_" + i;
-            csNames.add( csName );
+            csNames.add(csName);
         }
 
-        for ( int i = 0; i < clNum; i++ ) {
+        for (int i = 0; i < clNum; i++) {
             String clName = clBasicName + "_" + i;
-            clNames.add( clName );
+            clNames.add(clName);
         }
         // 每个集合空间下一半集合用于删除全文索引，一半集合用于创建全文索引
-        for ( String csName : csNames ) {
-            if ( sdb.isCollectionSpaceExist( csName ) ) {
-                sdb.dropCollectionSpace( csName );
+        for (String csName : csNames) {
+            if (sdb.isCollectionSpaceExist(csName)) {
+                sdb.dropCollectionSpace(csName);
             }
-            CollectionSpace cs = sdb.createCollectionSpace( csName );
-            for ( int i = 0; i < clNum; i++ ) {
-                DBCollection cl = cs.createCollection( clNames.get( i ) );
-                cl.createIndex( "id", "{id:1}", false, false );
-                insertRecord( cl, insertNum );
-                if ( i < clNum / 2 ) {
-                    cl.createIndex( indexName, "{a:'text',b:'text'}", false, false );
+            CollectionSpace cs = sdb.createCollectionSpace(csName);
+            for (int i = 0; i < clNum; i++) {
+                DBCollection cl = cs.createCollection(clNames.get(i));
+                cl.createIndex("id", "{id:1}", false, false);
+                insertRecord(cl, insertNum);
+                if (i < clNum / 2) {
+                    cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
                 }
             }
         }
@@ -87,25 +87,25 @@ public class Fulltext12118B extends SdbTestBase {
         try {
             List<String> esIndexNames = new ArrayList<String>();
             List<String> cappedCLNames = new ArrayList<String>();
-            for ( String csName : csNames ) {
-                CollectionSpace cs = sdb.getCollectionSpace( csName );
-                for ( String clName : clNames ) {
-                    DBCollection cl = cs.getCollection( clName );
-                    if ( cl.isIndexExist( indexName ) ) {
-                        String esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
-                        esIndexNames.add( esIndexName );
-                        String cappedCLName = FullTextDBUtils.getCappedName( cl, indexName );
-                        cappedCLNames.add( cappedCLName );
+            for (String csName : csNames) {
+                CollectionSpace cs = sdb.getCollectionSpace(csName);
+                for (String clName : clNames) {
+                    DBCollection cl = cs.getCollection(clName);
+                    if (cl.isIndexExist(indexName)) {
+                        String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+                        esIndexNames.add(esIndexName);
+                        String cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
+                        cappedCLNames.add(cappedCLName);
                     }
                 }
 
             }
-            csNames.add( csCreateName );
-            for ( String csName : csNames ) {
-                FullTextDBUtils.dropCollectionSpace( sdb, csName );
+            csNames.add(csCreateName);
+            for (String csName : csNames) {
+                FullTextDBUtils.dropCollectionSpace(sdb, csName);
             }
-            if ( !esIndexNames.isEmpty() && !cappedCLNames.isEmpty() ) {
-                Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedCLNames ) );
+            if (!esIndexNames.isEmpty() && !cappedCLNames.isEmpty()) {
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
             }
         } finally {
             sdb.close();
@@ -117,16 +117,16 @@ public class Fulltext12118B extends SdbTestBase {
     @Test
     public void test() throws Exception {
         // 执行并发测试,集合空间下的集合一半用于创建全文索引、一半用于删除全文索引
-        for ( String csName : csNames ) {
-            for ( int i = 0; i < clNum; i++ ) {
-                if ( i < clNum / 2 ) {
-                    te.addWorker( new DropFullIndexThread( csName, clNames.get( i ) ) );
+        for (String csName : csNames) {
+            for (int i = 0; i < clNum; i++) {
+                if (i < clNum / 2) {
+                    te.addWorker(new DropFullIndexThread(csName, clNames.get(i)));
                 } else {
-                    te.addWorker( new CreateFullIndexThread( csName, clNames.get( i ) ) );
+                    te.addWorker(new CreateFullIndexThread(csName, clNames.get(i)));
                 }
             }
         }
-        te.addWorker( new CreateCS() );
+        te.addWorker(new CreateCS());
         te.run();
 
     }
@@ -137,7 +137,7 @@ public class Fulltext12118B extends SdbTestBase {
         private String cappedCLName = null;
         private String esIndexName = null;
 
-        public DropFullIndexThread( String csName, String clName ) {
+        public DropFullIndexThread(String csName, String clName) {
             super();
             this.csName = csName;
             this.clName = clName;
@@ -145,56 +145,56 @@ public class Fulltext12118B extends SdbTestBase {
 
         @ExecuteOrder(step = 1, desc = "删除全文索引")
         public void dropFullIndex() {
-            Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            System.out.println( this.getClass().getName().toString() + " start at:" + df.format( new Date() ) );
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
             try {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cappedCLName = FullTextDBUtils.getCappedName( cl, indexName );
-                esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
-                cl.dropIndex( indexName );
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -34 && e.getErrorCode() != -23 && e.getErrorCode() != -248 ) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
+                esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+                cl.dropIndex(indexName);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -34 && e.getErrorCode() != -23 && e.getErrorCode() != -248) {
                     e.printStackTrace();
-                    Assert.fail( e.getMessage() );
+                    Assert.fail(e.getMessage());
                 }
-                saveResult( e.getErrorCode(), e );
+                saveResult(e.getErrorCode(), e);
             } finally {
                 db.close();
             }
-            System.out.println( this.getClass().getName().toString() + " stop at:" + df.format( new Date() ) );
+            System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
         }
 
         @ExecuteOrder(step = 2, desc = "结果校验")
         public void checkResult() {
-            Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            Client es = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            Client es = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
             try {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                if ( getRetCode() == 0 ) {
-                    Assert.assertTrue( FullTextUtils.isIndexDeleted( db, es, esIndexName, cappedCLName ) );
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                if (getRetCode() == 0) {
+                    Assert.assertTrue(FullTextUtils.isIndexDeleted(db, es, esIndexName, cappedCLName));
                     // 全文检索数据报错-52、-6
                     try {
-                        cl.query( "{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null );
-                    } catch ( BaseException e ) {
-                        if ( e.getErrorCode() != -6 && e.getErrorCode() != -52 ) {
-                            Assert.fail( e.getMessage() );
+                        cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
+                    } catch (BaseException e) {
+                        if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
+                            Assert.fail(e.getMessage());
                         }
                     }
                 } else {
                     // 同步符合预期
-                    Assert.assertTrue( FullTextUtils.isIndexCreated( es, cl, indexName, insertNum ) );
+                    Assert.assertTrue(FullTextUtils.isIndexCreated(es, cl, indexName, insertNum));
                     // 全文检索数据符合预期
-                    DBCursor cursor = cl.query( "{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null );
+                    DBCursor cursor = cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
                     int actualRecordNum = 0;
-                    while ( cursor.hasNext() ) {
+                    while (cursor.hasNext()) {
                         cursor.getNext();
                         actualRecordNum++;
                     }
-                    Assert.assertEquals( actualRecordNum, insertNum );
+                    Assert.assertEquals(actualRecordNum, insertNum);
                 }
-            } catch ( Exception e ) {
+            } catch (Exception e) {
                 e.printStackTrace();
-                Assert.fail( e.getMessage() );
+                Assert.fail(e.getMessage());
             } finally {
                 db.close();
                 es.close();
@@ -206,7 +206,7 @@ public class Fulltext12118B extends SdbTestBase {
         private String csName = null;
         private String clName = null;
 
-        public CreateFullIndexThread( String csName, String clName ) {
+        public CreateFullIndexThread(String csName, String clName) {
             super();
             this.csName = csName;
             this.clName = clName;
@@ -214,47 +214,47 @@ public class Fulltext12118B extends SdbTestBase {
 
         @ExecuteOrder(step = 1, desc = "创建全文索引")
         public void createFullIndex() {
-            Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            System.out.println( this.getClass().getName().toString() + " start at:" + df.format( new Date() ) );
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
             try {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.createIndex( indexName, "{a:'text',b:'text'}", false, false );
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -34 && e.getErrorCode() != -23 && e.getErrorCode() != -248 ) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -34 && e.getErrorCode() != -23 && e.getErrorCode() != -248) {
                     e.printStackTrace();
-                    Assert.fail( e.getMessage() );
+                    Assert.fail(e.getMessage());
                 }
-                saveResult( e.getErrorCode(), e );
+                saveResult(e.getErrorCode(), e);
             } finally {
                 db.close();
             }
-            System.out.println( this.getClass().getName().toString() + " stop at:" + df.format( new Date() ) );
+            System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
         }
 
         @ExecuteOrder(step = 2, desc = "结果校验")
         public void checkResult() {
-            Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            Client es = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            Client es = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
             try {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                if ( getRetCode() == 0 ) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                if (getRetCode() == 0) {
                     // 同步符合预期
-                    Assert.assertTrue( FullTextUtils.isIndexCreated( es, cl, indexName, insertNum ) );
+                    Assert.assertTrue(FullTextUtils.isIndexCreated(es, cl, indexName, insertNum));
                     // 全文检索数据符合预期
-                    DBCursor cursor = cl.query( "{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null );
+                    DBCursor cursor = cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
                     int actualRecordNum = 0;
-                    while ( cursor.hasNext() ) {
+                    while (cursor.hasNext()) {
                         cursor.getNext();
                         actualRecordNum++;
                     }
-                    Assert.assertEquals( actualRecordNum, insertNum );
+                    Assert.assertEquals(actualRecordNum, insertNum);
 
                 } else {
-                    Assert.assertFalse( cl.isIndexExist( indexName ) );
+                    Assert.assertFalse(cl.isIndexExist(indexName));
                 }
-            } catch ( Exception e ) {
+            } catch (Exception e) {
                 e.printStackTrace();
-                Assert.fail( e.getMessage() );
+                Assert.fail(e.getMessage());
             } finally {
                 db.close();
                 es.close();
@@ -268,19 +268,19 @@ public class Fulltext12118B extends SdbTestBase {
 
         @ExecuteOrder(step = 1, desc = "创建集合空间、集合、全文索引、插入记录")
         public void createCS() {
-            Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             try {
-                System.out.println( this.getClass().getName().toString() + " start at:" + df.format( new Date() ) );
-                if ( db.isCollectionSpaceExist( csCreateName ) ) {
-                    db.dropCollectionSpace( csCreateName );
+                System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
+                if (db.isCollectionSpaceExist(csCreateName)) {
+                    db.dropCollectionSpace(csCreateName);
                 }
-                CollectionSpace cs = db.createCollectionSpace( csCreateName );
-                for ( String clName : clNames ) {
-                    DBCollection cl = cs.createCollection( clName );
-                    cl.createIndex( indexName, "{a:'text',b:'text'}", false, false );
-                    insertRecord( cl, insertNum );
+                CollectionSpace cs = db.createCollectionSpace(csCreateName);
+                for (String clName : clNames) {
+                    DBCollection cl = cs.createCollection(clName);
+                    cl.createIndex(indexName, "{a:'text',b:'text'}", false, false);
+                    insertRecord(cl, insertNum);
                 }
-                System.out.println( this.getClass().getName().toString() + " stop at:" + df.format( new Date() ) );
+                System.out.println(this.getClass().getName().toString() + " stop at:" + df.format(new Date()));
             } finally {
                 db.close();
             }
@@ -288,27 +288,27 @@ public class Fulltext12118B extends SdbTestBase {
 
         @ExecuteOrder(step = 2, desc = "结果校验")
         public void checkResult() {
-            Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            Client es = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            Client es = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
             try {
-                CollectionSpace cs = db.getCollectionSpace( csCreateName );
-                for ( String clName : clNames ) {
-                    DBCollection cl = cs.getCollection( clName );
+                CollectionSpace cs = db.getCollectionSpace(csCreateName);
+                for (String clName : clNames) {
+                    DBCollection cl = cs.getCollection(clName);
                     // 同步符合预期
-                    Assert.assertTrue( FullTextUtils.isIndexCreated( es, cl, indexName, insertNum ) );
+                    Assert.assertTrue(FullTextUtils.isIndexCreated(es, cl, indexName, insertNum));
                     // 全文检索数据符合预期
-                    DBCursor cursor = cl.query( "{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null );
+                    DBCursor cursor = cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
                     int actualRecordNum = 0;
-                    while ( cursor.hasNext() ) {
+                    while (cursor.hasNext()) {
                         cursor.getNext();
                         actualRecordNum++;
                     }
-                    Assert.assertEquals( actualRecordNum, insertNum );
+                    Assert.assertEquals(actualRecordNum, insertNum);
 
                 }
-            } catch ( Exception e ) {
+            } catch (Exception e) {
                 e.printStackTrace();
-                Assert.fail( e.getMessage() );
+                Assert.fail(e.getMessage());
             } finally {
                 db.close();
                 es.close();
@@ -317,16 +317,16 @@ public class Fulltext12118B extends SdbTestBase {
 
     }
 
-    public void insertRecord( DBCollection cl, int insertNums ) {
+    public void insertRecord(DBCollection cl, int insertNums) {
         List<BSONObject> insertObjs = new ArrayList<>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 100; j++ ) {
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
                 int k = i * 100 + j;
-                insertObjs.add( (BSONObject) JSON.parse( "{id:" + k + ",a: 'test_11981_" + i * 100 + j
+                insertObjs.add((BSONObject) JSON.parse("{id:" + k + ",a: 'test_11981_" + i * 100 + j
                         + "', b: 'test_11981_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa " + i * 100 + j
-                        + "',c:'text'}" ) );
+                        + "',c:'text'}"));
             }
-            cl.insert( insertObjs, 0 );
+            cl.insert(insertObjs, 0);
             insertObjs.clear();
         }
     }

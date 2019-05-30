@@ -36,7 +36,7 @@ public class FullText15879 extends SdbTestBase {
     private Random random = new Random();
     private final String CL_NAME = "cl_es_15879";
     private final String IDX_NAME = "idx_es_15879";
-    private final BSONObject IDX_KEY = new BasicBSONObject( "a", "text" );
+    private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
     private final int RECS_NUM = 20000;
 
     private Sequoiadb sdb = null;
@@ -51,31 +51,31 @@ public class FullText15879 extends SdbTestBase {
 
     @BeforeClass
     private void setUp() throws Exception {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
-        if ( CommLib.isStandAlone( sdb ) || CommLib.OneGroupMode( sdb ) ) {
-            throw new SkipException( "The mode is standlone, or only one group, skip the testCase." );
+        if (CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)) {
+            throw new SkipException("The mode is standlone, or only one group, skip the testCase.");
         }
 
-        ArrayList<String> rgNames = CommLib.getDataGroupNames( sdb );
-        srcRgName = rgNames.get( 0 );
-        dstRgName = rgNames.get( 1 );
+        ArrayList<String> rgNames = CommLib.getDataGroupNames(sdb);
+        srcRgName = rgNames.get(0);
+        dstRgName = rgNames.get(1);
 
-        cs = sdb.getCollectionSpace( SdbTestBase.csName );
+        cs = sdb.getCollectionSpace(SdbTestBase.csName);
         BSONObject options = new BasicBSONObject();
-        options.put( "ShardingType", "hash" );
-        options.put( "ShardingKey", new BasicBSONObject( "a", 1 ) );
-        options.put( "Group", srcRgName );
-        cl = cs.createCollection( CL_NAME, options );
-        cl.createIndex( IDX_NAME, IDX_KEY, false, false );
-        cappedCSName = FullTextDBUtils.getCappedName( cl, IDX_NAME );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, IDX_NAME );
+        options.put("ShardingType", "hash");
+        options.put("ShardingKey", new BasicBSONObject("a", 1));
+        options.put("Group", srcRgName);
+        cl = cs.createCollection(CL_NAME, options);
+        cl.createIndex(IDX_NAME, IDX_KEY, false, false);
+        cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
 
-        FullTextDBUtils.insertData( cl, RECS_NUM );
+        FullTextDBUtils.insertData(cl, RECS_NUM);
 
         // 确保预置的数据同步到es完成
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, IDX_NAME, RECS_NUM ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
     }
 
     @Test
@@ -83,41 +83,41 @@ public class FullText15879 extends SdbTestBase {
         ThreadExecutor es = new ThreadExecutor();
         ThreadTruncate threadTruncate = new ThreadTruncate();
         ThreadSplit threadSplit = new ThreadSplit();
-        es.addWorker( threadTruncate );
-        es.addWorker( threadSplit );
+        es.addWorker(threadTruncate);
+        es.addWorker(threadSplit);
         es.run();
 
         // check records
         // TODO :线程的执行结果相互不影响，建议在线程中去校验每个线程的执行结果，这样逻辑上会更清晰
         // TODO 有每个线程分开校验，逻辑很简单，暂不修改
         int expRecsNum = 0;
-        if ( threadTruncate.getRetCode() == 0 ) {
-            Assert.assertTrue( FullTextUtils.isFulltextRebuild( esClient, cl, IDX_NAME ) );
-        } else if ( threadTruncate.getRetCode() != 0 ) {
+        if (threadTruncate.getRetCode() == 0) {
+            Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
+        } else if (threadTruncate.getRetCode() != 0) {
             expRecsNum = RECS_NUM;
         }
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, IDX_NAME, expRecsNum ) );
-        Assert.assertEquals( (int) cl.getCount(), expRecsNum );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, expRecsNum));
+        Assert.assertEquals((int) cl.getCount(), expRecsNum);
 
         // check cl after split
-        int actRgNum = FullTextDBUtils.getCLGroups( cl ).size();
-        if ( threadSplit.getRetCode() == 0 ) {
-            Assert.assertEquals( actRgNum, 2 );
-        } else if ( threadSplit.getRetCode() != 0 ) {
-            Assert.assertEquals( actRgNum, 2 );
+        int actRgNum = FullTextDBUtils.getCLGroups(cl).size();
+        if (threadSplit.getRetCode() == 0) {
+            Assert.assertEquals(actRgNum, 2);
+        } else if (threadSplit.getRetCode() != 0) {
+            Assert.assertEquals(actRgNum, 2);
         }
     }
 
     @AfterClass
     private void tearDown() throws Exception {
         try {
-            FullTextDBUtils.dropCollection( cs, CL_NAME );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCSName ) );
+            FullTextDBUtils.dropCollection(cs, CL_NAME);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -126,17 +126,17 @@ public class FullText15879 extends SdbTestBase {
     private class ThreadTruncate extends ResultStore {
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {
-            Thread.sleep( random.nextInt( 1000 ) );
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( SdbTestBase.csName ).getCollection( CL_NAME );
-                System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+            Thread.sleep(random.nextInt(1000));
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+                System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl.truncate();
-                System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -190 && e.getErrorCode() != -147 ) {
+                System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -190 && e.getErrorCode() != -147) {
                     throw e;
                 }
-                saveResult( -1, e );
+                saveResult(-1, e);
             }
         }
     }
@@ -144,16 +144,16 @@ public class FullText15879 extends SdbTestBase {
     private class ThreadSplit extends ResultStore {
         @ExecuteOrder(step = 1)
         private void split() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( SdbTestBase.csName ).getCollection( CL_NAME );
-                System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
-                cl.split( srcRgName, dstRgName, 50 );
-                System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -321 ) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+                System.out.println(new Date() + " begin " + this.getClass().getName().toString());
+                cl.split(srcRgName, dstRgName, 50);
+                System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321) {
                     throw e;
                 }
-                saveResult( -1, e );
+                saveResult(-1, e);
             }
         }
     }

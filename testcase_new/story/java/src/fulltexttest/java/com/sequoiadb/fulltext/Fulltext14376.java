@@ -43,23 +43,23 @@ public class Fulltext14376 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
 
         // create cl
-        cs = sdb.getCollectionSpace( csName );
-        cl = cs.createCollection( clName );
+        cs = sdb.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
     }
 
     @AfterClass
     public void tearDown() throws Exception {
-        FullTextDBUtils.dropCollection( cs, clName );
+        FullTextDBUtils.dropCollection(cs, clName);
         // check fulltext deleted
-        if ( esIndexName != null ) {
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        if (esIndexName != null) {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         }
         sdb.close();
         esClient.close();
@@ -70,19 +70,19 @@ public class Fulltext14376 extends SdbTestBase {
         // create fulltext
         String textIndexName = "fulltext14376";
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        indexObj.put( "b", "text" );
-        indexObj.put( "c", "text" );
-        indexObj.put( "d", "text" );
-        indexObj.put( "e", "text" );
-        indexObj.put( "f", "text" );
-        indexObj.put( "g", "text" );
-        cl.createIndex( textIndexName, indexObj, false, false );
+        indexObj.put("a", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
+        indexObj.put("f", "text");
+        indexObj.put("g", "text");
+        cl.createIndex(textIndexName, indexObj, false, false);
 
-        cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, textIndexName );
+        cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, textIndexName);
 
-        insertData( cl, FullTextUtils.INSERT_NUMS );
+        insertData(cl, FullTextUtils.INSERT_NUMS);
 
         // insert/update/delete while index processing cappedcl data
         InsertThread insertThread = new InsertThread();
@@ -93,24 +93,24 @@ public class Fulltext14376 extends SdbTestBase {
         updateThread.start();
         removeThread.start();
 
-        Assert.assertTrue( insertThread.isSuccess(), insertThread.getErrorMsg() );
-        Assert.assertTrue( updateThread.isSuccess(), updateThread.getErrorMsg() );
-        Assert.assertTrue( removeThread.isSuccess(), removeThread.getErrorMsg() );
+        Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
+        Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
+        Assert.assertTrue(removeThread.isSuccess(), removeThread.getErrorMsg());
 
         // check consistency after insert/update/delete
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, (int) cl.getCount() ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, (int) cl.getCount()));
     }
 
-    public void insertData( DBCollection cl, int insertNums ) {
+    public void insertData(DBCollection cl, int insertNums) {
         List<BSONObject> insertObjs = new ArrayList<>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( (BSONObject) JSON.parse( "{a: 'test_14376_" + i * j + "', b: '"
-                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
-                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "', g: " + i * j + "}" ) );
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                insertObjs.add((BSONObject) JSON.parse("{a: 'test_14376_" + i * j + "', b: '"
+                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
+                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
+                        + StringUtils.getRandomString(128) + "', g: " + i * j + "}"));
             }
-            cl.insert( insertObjs, 0 );
+            cl.insert(insertObjs, 0);
             insertObjs.clear();
         }
     }
@@ -121,10 +121,10 @@ public class Fulltext14376 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
-            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            cl = db.getCollectionSpace( csName ).getCollection( clName );
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cl = db.getCollectionSpace(csName).getCollection(clName);
             int insertNums = 100000;
-            insertData( cl, insertNums );
+            insertData(cl, insertNums);
             db.close();
         }
     }
@@ -135,18 +135,18 @@ public class Fulltext14376 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
-            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            cl = db.getCollectionSpace( csName ).getCollection( clName );
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cl = db.getCollectionSpace(csName).getCollection(clName);
 
             BSONObject modifier = new BasicBSONObject();
             BSONObject value = new BasicBSONObject();
             BSONObject matcher = new BasicBSONObject();
             BSONObject subMatcher = new BasicBSONObject();
-            value.put( "g", "-1" );
-            modifier.put( "$set", value );
-            subMatcher.put( "$lt", 100000 );
-            matcher.put( "g", subMatcher );
-            cl.update( matcher, modifier, null );
+            value.put("g", "-1");
+            modifier.put("$set", value);
+            subMatcher.put("$lt", 100000);
+            matcher.put("g", subMatcher);
+            cl.update(matcher, modifier, null);
             db.close();
         }
     }
@@ -157,14 +157,14 @@ public class Fulltext14376 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             DBCollection cl = null;
-            db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            cl = db.getCollectionSpace( csName ).getCollection( clName );
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            cl = db.getCollectionSpace(csName).getCollection(clName);
 
             BSONObject matcher = new BasicBSONObject();
             BSONObject subMatcher = new BasicBSONObject();
-            subMatcher.put( "$gt", 100000 );
-            matcher.put( "g", subMatcher );
-            cl.delete( matcher );
+            subMatcher.put("$gt", 100000);
+            matcher.put("g", subMatcher);
+            cl.delete(matcher);
             db.close();
         }
     }

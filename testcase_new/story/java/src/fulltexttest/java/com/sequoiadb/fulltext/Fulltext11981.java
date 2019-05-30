@@ -40,20 +40,20 @@ public class Fulltext11981 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
 
         // create cl
-        cs = sdb.getCollectionSpace( csName );
-        cl = cs.createCollection( clName );
+        cs = sdb.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
     }
 
     @AfterClass
     public void tearDown() {
-        FullTextDBUtils.dropCollection( cs, clName );
+        FullTextDBUtils.dropCollection(cs, clName);
         sdb.close();
         esClient.close();
     }
@@ -62,76 +62,76 @@ public class Fulltext11981 extends SdbTestBase {
     public void test() throws Exception {
         // insert < 32M
         int insertNums1 = 100000; // 10w
-        insertData( cl, insertNums1 );
+        insertData(cl, insertNums1);
 
         // create fulltext
         String textIndexName = "fulltext11981";
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        indexObj.put( "b", "text" );
-        indexObj.put( "c", "text" );
-        indexObj.put( "d", "text" );
-        indexObj.put( "e", "text" );
-        indexObj.put( "f", "text" );
-        cl.createIndex( textIndexName, indexObj, false, false );
+        indexObj.put("a", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
+        indexObj.put("f", "text");
+        cl.createIndex(textIndexName, indexObj, false, false);
 
-        String esIndexName = FullTextDBUtils.getESIndexName( cl, textIndexName );
+        String esIndexName = FullTextDBUtils.getESIndexName(cl, textIndexName);
 
         // check consistency
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, insertNums1 ) );
-        cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, insertNums1));
+        cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
 
         // drop fulltext
-        FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
+        FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
         // check fulltext deleted
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
 
         // insert > 32M, < 129M
         int insertNums2 = 100000; // new insert 10w
-        insertData( cl, insertNums2 );
+        insertData(cl, insertNums2);
 
         // create fulltext
-        cl.createIndex( textIndexName, indexObj, false, false );
+        cl.createIndex(textIndexName, indexObj, false, false);
 
         // check consistency
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, insertNums1 + insertNums2 ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, insertNums1 + insertNums2));
 
         // drop fulltext
-        FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
+        FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
         // check fulltext deleted
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
 
         // insert > 32M, and > 129M
         int insertNums3 = 300000; // new insert 30w
 
-        insertData( cl, insertNums3 );
+        insertData(cl, insertNums3);
 
         // create fulltext
-        cl.createIndex( textIndexName, indexObj, false, false );
+        cl.createIndex(textIndexName, indexObj, false, false);
 
         // check consistency
         Assert.assertTrue(
-                FullTextUtils.isIndexCreated( esClient, cl, textIndexName, insertNums1 + insertNums2 + insertNums3 ) );
+                FullTextUtils.isIndexCreated(esClient, cl, textIndexName, insertNums1 + insertNums2 + insertNums3));
 
         // drop fulltext
-        FullTextDBUtils.dropFullTextIndex( cl, textIndexName );
+        FullTextDBUtils.dropFullTextIndex(cl, textIndexName);
 
         // check fulltext deleted
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
     }
 
-    public void insertData( DBCollection cl, int insertNums ) {
+    public void insertData(DBCollection cl, int insertNums) {
         List<BSONObject> insertObjs = new ArrayList<>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( (BSONObject) JSON.parse( "{a: 'test_11981_" + i * j + "', b: '"
-                        + StringUtils.getRandomString( 16 ) + "', c: '" + StringUtils.getRandomString( 16 ) + "', d: '"
-                        + StringUtils.getRandomString( 32 ) + "', e: '" + StringUtils.getRandomString( 32 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "'}" ) );
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                insertObjs.add((BSONObject) JSON.parse("{a: 'test_11981_" + i * j + "', b: '"
+                        + StringUtils.getRandomString(16) + "', c: '" + StringUtils.getRandomString(16) + "', d: '"
+                        + StringUtils.getRandomString(32) + "', e: '" + StringUtils.getRandomString(32) + "', f: '"
+                        + StringUtils.getRandomString(128) + "'}"));
             }
-            cl.insert( insertObjs, 0 );
+            cl.insert(insertObjs, 0);
             insertObjs.clear();
         }
     }

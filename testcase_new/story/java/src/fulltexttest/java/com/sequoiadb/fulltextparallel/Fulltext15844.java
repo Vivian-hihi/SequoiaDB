@@ -44,65 +44,60 @@ public class Fulltext15844 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName,
-                Integer.parseInt( esServiceName ) );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
 
-        db = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( db ) ) {
-            throw new SkipException( "skip StandAlone" );
+        db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(db)) {
+            throw new SkipException("skip StandAlone");
         }
 
-        cs = db.getCollectionSpace( csName );
-        cl = cs.createCollection( clName );
-        FullTextDBUtils.insertData( cl, 10000 );
+        cs = db.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
+        FullTextDBUtils.insertData(cl, 10000);
 
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        cl.createIndex( textIndexName, indexObj, false, false );
+        indexObj.put("a", "text");
+        cl.createIndex(textIndexName, indexObj, false, false);
     }
 
     @AfterClass
     public void tearDown() {
-        FullTextDBUtils.dropCollection( cs, clName );
-        if ( db != null ) {
+        FullTextDBUtils.dropCollection(cs, clName);
+        if (db != null) {
             db.close();
         }
-        if ( esClient != null ) {
+        if (esClient != null) {
             esClient.close();
         }
     }
 
     @Test
     public void test() throws Exception {
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl,
-                textIndexName, 10000 ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, 10000));
 
-        String cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
-        List< String > esIndexNames = FullTextDBUtils.getESIndexNames( cl,
-                textIndexName );
+        String cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, textIndexName);
 
-        te.addWorker( new DropTextIndexThread() );
-        te.addWorker( new QueryThread() );
+        te.addWorker(new DropTextIndexThread());
+        te.addWorker(new QueryThread());
 
         te.run();
 
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( db, esClient,
-                esIndexNames.get( 0 ), cappedName ) );
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esClient, esIndexNames.get(0), cappedName));
 
-        FullTextDBUtils.insertData( cl, 100 );
+        FullTextDBUtils.insertData(cl, 100);
 
         DBCursor cursor = null;
         try {
-            BSONObject matcher = ( BSONObject ) JSON
-                    .parse( "{'':{'$Text':{'query':{'match_all':{}}}}}" );
-            cursor = cl.query( matcher, null, null, null );
-            Assert.fail( "query should fail" );
-        } catch ( BaseException e ) {
-            if ( -6 != e.getErrorCode() && -52 != e.getErrorCode() ) {
-                Assert.fail( "actual exception: " + e.getErrorCode() );
+            BSONObject matcher = (BSONObject) JSON.parse("{'':{'$Text':{'query':{'match_all':{}}}}}");
+            cursor = cl.query(matcher, null, null, null);
+            Assert.fail("query should fail");
+        } catch (BaseException e) {
+            if (-6 != e.getErrorCode() && -52 != e.getErrorCode()) {
+                Assert.fail("actual exception: " + e.getErrorCode());
             }
         } finally {
-            if ( cursor != null ) {
+            if (cursor != null) {
                 cursor.close();
             }
         }
@@ -112,20 +107,14 @@ public class Fulltext15844 extends SdbTestBase {
 
         @ExecuteOrder(step = 1, desc = "删除全文索引")
         public void dropTextIndex() {
-            System.out.println(
-                    this.getClass().getName().toString() + " begin at:"
-                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
-                                    .format( new Date() ) );
-            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "",
-                    "" )) {
-                DBCollection cl = sdb.getCollectionSpace( csName )
-                        .getCollection( clName );
-                cl.dropIndex( textIndexName );
+            System.out.println(this.getClass().getName().toString() + " begin at:"
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+                cl.dropIndex(textIndexName);
             } finally {
-                System.out.println(
-                        this.getClass().getName().toString() + " end at:"
-                                + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
-                                        .format( new Date() ) );
+                System.out.println(this.getClass().getName().toString() + " end at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
 
         }
@@ -135,34 +124,28 @@ public class Fulltext15844 extends SdbTestBase {
 
         @ExecuteOrder(step = 1, desc = "執行全文检索")
         public void query() {
-            System.out.println(
-                    this.getClass().getName().toString() + " begin at:"
-                            + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
-                                    .format( new Date() ) );
+            System.out.println(this.getClass().getName().toString() + " begin at:"
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             DBCursor cursor = null;
-            BSONObject matcher = ( BSONObject ) JSON
-                    .parse( "{'':{'$Text':{'query':{'match_all':{}}}}}" );
-            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "",
-                    "" )) {
-                cursor = cl.query( matcher, null, null, null );
+            BSONObject matcher = (BSONObject) JSON.parse("{'':{'$Text':{'query':{'match_all':{}}}}}");
+            try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                cursor = cl.query(matcher, null, null, null);
                 int count = 0;
-                while ( cursor.hasNext() ) {
+                while (cursor.hasNext()) {
                     cursor.getNext();
                     count++;
                 }
-                Assert.assertEquals( count, ( int ) cl.getCount() );
-            } catch ( BaseException e ) {
-                if ( -6 != e.getErrorCode() && -52 != e.getErrorCode() ) {
-                    Assert.fail( "actual exception: " + e.getErrorCode() );
+                Assert.assertEquals(count, (int) cl.getCount());
+            } catch (BaseException e) {
+                if (-6 != e.getErrorCode() && -52 != e.getErrorCode()) {
+                    Assert.fail("actual exception: " + e.getErrorCode());
                 }
             } finally {
-                if ( cursor != null ) {
+                if (cursor != null) {
                     cursor.close();
                 }
-                System.out.println(
-                        this.getClass().getName().toString() + " end at:"
-                                + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
-                                        .format( new Date() ) );
+                System.out.println(this.getClass().getName().toString() + " end at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }

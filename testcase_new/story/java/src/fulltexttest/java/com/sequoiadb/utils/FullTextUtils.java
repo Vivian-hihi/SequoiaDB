@@ -27,7 +27,7 @@ public class FullTextUtils {
     private static String FULLTEXTPREFIX;
 
     // 初始化全文索引的前缀名作为全局变量
-    public static void setFulltextPrefix( final String fulltextPrefix ) {
+    public static void setFulltextPrefix(final String fulltextPrefix) {
         FullTextUtils.FULLTEXTPREFIX = fulltextPrefix;
     }
 
@@ -51,25 +51,25 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    private static boolean isFullSyncToES( Client esClient, DBCollection cl, String textIndexName, int expectCount )
+    private static boolean isFullSyncToES(Client esClient, DBCollection cl, String textIndexName, int expectCount)
             throws Exception {
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
-        List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs( cl, textIndexName );
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, textIndexName);
+        List<DBCollection> cappedCLs = FullTextDBUtils.getCappedCLs(cl, textIndexName);
 
         // 检查ES端索引名是否存在
-        for ( String esIndexName : esIndexNames ) {
-            if ( !FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ) ) {
-                throw new Exception( cl.getFullName() + " fullIndex: " + esIndexName + " is not exist in ES" );
+        for (String esIndexName : esIndexNames) {
+            if (!FullTextESUtils.isExistIndexInES(esClient, esIndexName, true)) {
+                throw new Exception(cl.getFullName() + " fullIndex: " + esIndexName + " is not exist in ES");
             }
         }
 
         // 检查索引数是否已完全同步到ES
-        if ( !isCountRightInES( esClient, esIndexNames, expectCount ) ) {
-            throw new Exception( cl.getFullName() + " fulltext: " + esIndexNames + " are not all sync to es" );
+        if (!isCountRightInES(esClient, esIndexNames, expectCount)) {
+            throw new Exception(cl.getFullName() + " fulltext: " + esIndexNames + " are not all sync to es");
         }
         // 检查固定集合的最后一条lid是否等于ES端SDBCOMMIT._id
-        if ( !isLastLidInES( esClient, esIndexNames, cappedCLs ) ) {
-            throw new Exception( cl.getFullName() + " cappedCL last record lid unequal to es SDBCOMMIT._id" );
+        if (!isLastLidInES(esClient, esIndexNames, cappedCLs)) {
+            throw new Exception(cl.getFullName() + " cappedCL last record lid unequal to es SDBCOMMIT._id");
         }
 
         return true;
@@ -90,49 +90,49 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    private static boolean isMainCLFullSyncToES( Client esClient, DBCollection cl, String textIndexName,
-            int expectCount ) throws Exception {
+    private static boolean isMainCLFullSyncToES(Client esClient, DBCollection cl, String textIndexName, int expectCount)
+            throws Exception {
         Sequoiadb db = cl.getSequoiadb();
-        List<String> subCLFullNames = FullTextDBUtils.getSubCLNames( db, cl.getFullName() );
+        List<String> subCLFullNames = FullTextDBUtils.getSubCLNames(db, cl.getFullName());
 
         // 获取主表下所有子表的全文索引和固定集合对象
         List<String> esIndexNames = new ArrayList<String>();
         List<DBCollection> cappedCLs = new ArrayList<DBCollection>();
-        for ( String subCLFullName : subCLFullNames ) {
-            String subCSName = subCLFullName.split( "\\." )[0];
-            String subCLName = subCLFullName.split( "\\." )[1];
-            DBCollection subCL = db.getCollectionSpace( subCSName ).getCollection( subCLName );
-            esIndexNames.addAll( FullTextDBUtils.getESIndexNames( subCL, textIndexName ) );
-            cappedCLs.addAll( FullTextDBUtils.getCappedCLs( subCL, textIndexName ) );
+        for (String subCLFullName : subCLFullNames) {
+            String subCSName = subCLFullName.split("\\.")[0];
+            String subCLName = subCLFullName.split("\\.")[1];
+            DBCollection subCL = db.getCollectionSpace(subCSName).getCollection(subCLName);
+            esIndexNames.addAll(FullTextDBUtils.getESIndexNames(subCL, textIndexName));
+            cappedCLs.addAll(FullTextDBUtils.getCappedCLs(subCL, textIndexName));
         }
         // 索引数组元素去重
-        esIndexNames = removeDuplicateItems( esIndexNames );
+        esIndexNames = removeDuplicateItems(esIndexNames);
         // 索引数组元素排序
-        Collections.sort( esIndexNames, new Comparator<Object>() {
+        Collections.sort(esIndexNames, new Comparator<Object>() {
             @Override
-            public int compare( Object o1, Object o2 ) {
+            public int compare(Object o1, Object o2) {
                 String str1 = (String) o1;
                 String str2 = (String) o2;
-                if ( str1.compareToIgnoreCase( str2 ) < 0 ) {
+                if (str1.compareToIgnoreCase(str2) < 0) {
                     return -1;
                 }
                 return 1;
             }
-        } );
+        });
 
         // 检查ES端索引名是否存在
-        for ( String esIndexName : esIndexNames ) {
-            if ( !FullTextESUtils.isExistIndexInES( esClient, esIndexName, true ) ) {
-                throw new Exception( esIndexName + " is not exist in ES" );
+        for (String esIndexName : esIndexNames) {
+            if (!FullTextESUtils.isExistIndexInES(esClient, esIndexName, true)) {
+                throw new Exception(esIndexName + " is not exist in ES");
             }
         }
 
         // 检查索引数是否已完全同步到ES
-        if ( !isCountRightInES( esClient, esIndexNames, expectCount ) ) {
+        if (!isCountRightInES(esClient, esIndexNames, expectCount)) {
             return false;
         }
         // 检查固定集合的最后一条lid是否等于ES端SDBCOMMIT._id
-        if ( !isLastLidInES( esClient, esIndexNames, cappedCLs ) ) {
+        if (!isLastLidInES(esClient, esIndexNames, cappedCLs)) {
             return false;
         }
 
@@ -149,7 +149,7 @@ public class FullTextUtils {
     * @Author liuxiaoxuan
     * @Date 2018-11-15
     */
-    public static boolean isCountRightInES( Client esClient, List<String> esIndexNames, int expectCount )
+    public static boolean isCountRightInES(Client esClient, List<String> esIndexNames, int expectCount)
             throws Exception {
         boolean isSync = false;
         int timeout = 3600; // 超时 1h
@@ -157,14 +157,14 @@ public class FullTextUtils {
         int doTimes = 0;
         int actCount = 0;
 
-        while ( doTimes * interval < timeout ) {
+        while (doTimes * interval < timeout) {
             actCount = 0;
             // 所有索引的记录数总和
-            for ( String esIndexName : esIndexNames ) {
-                actCount += ( FullTextESUtils.getCountFromES( esClient, esIndexName ) - 1 );
+            for (String esIndexName : esIndexNames) {
+                actCount += ( FullTextESUtils.getCountFromES(esClient, esIndexName) - 1 );
             }
 
-            if ( actCount == expectCount ) {
+            if (actCount == expectCount) {
                 isSync = true;
                 break;
             } else {
@@ -174,15 +174,15 @@ public class FullTextUtils {
                 // + ", actCount: " + actCount + ", expectCount: " + expectCount
                 // );
                 try {
-                    Thread.sleep( 1000 );
-                } catch ( InterruptedException e ) {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         }
         // 同步失败后，打印所有索引名
-        if ( !isSync ) {
-            System.err.println( "check " + esIndexNames.toString() + " count syn to es timeout" );
+        if (!isSync) {
+            System.err.println("check " + esIndexNames.toString() + " count syn to es timeout");
         }
         return isSync;
     }
@@ -198,7 +198,7 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static boolean isLastLidInES( Client esClient, List<String> esIndexNames, List<DBCollection> cappedCLs )
+    public static boolean isLastLidInES(Client esClient, List<String> esIndexNames, List<DBCollection> cappedCLs)
             throws Exception {
         boolean isSync = false;
         int timeout = 3600; // 超时 1h
@@ -207,23 +207,23 @@ public class FullTextUtils {
 
         // 获取每个数据组主节点下的固定集合最大一条lid
         List<Integer> lastLogicalIDs = new ArrayList<>();
-        for ( DBCollection cappedCL : cappedCLs ) {
-            lastLogicalIDs.add( FullTextDBUtils.getLastLid( cappedCL ) );
+        for (DBCollection cappedCL : cappedCLs) {
+            lastLogicalIDs.add(FullTextDBUtils.getLastLid(cappedCL));
         }
 
         // 检查每个全文索引的SDBCOMMITID与对应固定集合的最大一条lid是否相同
-        for ( int i = 0; i < esIndexNames.size(); i++ ) {
+        for (int i = 0; i < esIndexNames.size(); i++) {
             doTimes = 0;
             Integer commitID = -10000;
-            while ( doTimes * interval < timeout ) {
-                commitID = FullTextESUtils.getCommitIDFromES( esClient, esIndexNames.get( i ) );
-                if ( commitID.intValue() != lastLogicalIDs.get( i ).intValue() ) {
+            while (doTimes * interval < timeout) {
+                commitID = FullTextESUtils.getCommitIDFromES(esClient, esIndexNames.get(i));
+                if (commitID.intValue() != lastLogicalIDs.get(i).intValue()) {
                     isSync = false;
                 } else {
                     isSync = true;
                 }
 
-                if ( isSync ) {
+                if (isSync) {
                     break;
                 } else {
                     doTimes++;
@@ -232,15 +232,15 @@ public class FullTextUtils {
                     // + ", commitID: " + commitID + ", lastLogicalID: " +
                     // lastLogicalIDs.get( i ).toString() );
                     try {
-                        Thread.sleep( 1000 );
-                    } catch ( InterruptedException e ) {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
             }
             // 如果最终没有完成同步则打屏
-            if ( !isSync ) {
-                System.err.println( "check " + esIndexNames.get( i ).toString() + " lid syn to es timeout" );
+            if (!isSync) {
+                System.err.println("check " + esIndexNames.get(i).toString() + " lid syn to es timeout");
                 break;
             }
         }
@@ -261,13 +261,13 @@ public class FullTextUtils {
      */
     // 目前集合不支持创建多个全文索引,暂时屏蔽该方法,避免调用错误
     @SuppressWarnings("unused")
-    private static boolean isFulltextRebuild( Client esClient, DBCollection cl, List<String> indexNames )
+    private static boolean isFulltextRebuild(Client esClient, DBCollection cl, List<String> indexNames)
             throws Exception {
         // 检查每个全文索引下的_cllid值有没有变化
-        for ( String indexName : indexNames ) {
-            List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, indexName );
-            for ( String esIndexName : esIndexNames ) {
-                if ( !isLogicalIDEqualCLLid( esClient, cl, esIndexName ) ) {
+        for (String indexName : indexNames) {
+            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, indexName);
+            for (String esIndexName : esIndexNames) {
+                if (!isLogicalIDEqualCLLid(esClient, cl, esIndexName)) {
                     return false;
                 }
             }
@@ -287,11 +287,11 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2019-05-16
      */
-    public static boolean isFulltextRebuild( Client esClient, DBCollection cl, String indexName ) throws Exception {
+    public static boolean isFulltextRebuild(Client esClient, DBCollection cl, String indexName) throws Exception {
         // 检查每个全文索引下的_cllid值有没有变化
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, indexName );
-        for ( String esIndexName : esIndexNames ) {
-            if ( !isLogicalIDEqualCLLid( esClient, cl, esIndexName ) ) {
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, indexName);
+        for (String esIndexName : esIndexNames) {
+            if (!isLogicalIDEqualCLLid(esClient, cl, esIndexName)) {
                 return false;
             }
         }
@@ -310,7 +310,7 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2019-05-16
      */
-    private static boolean isLogicalIDEqualCLLid( Client esClient, DBCollection cl, String esIndexName )
+    private static boolean isLogicalIDEqualCLLid(Client esClient, DBCollection cl, String esIndexName)
             throws Exception {
         boolean isSync = false;
         int preCLLid = -1;
@@ -319,35 +319,35 @@ public class FullTextUtils {
         int doTimes;
 
         Sequoiadb db = cl.getSequoiadb();
-        String[] strList = esIndexName.split( "_" );
+        String[] strList = esIndexName.split("_");
         String groupName = strList[strList.length - 1];
-        Sequoiadb masterNode = db.getReplicaGroup( groupName ).getMaster().connect();
-        DBCursor snapCur = masterNode.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name: '" + cl.getFullName() + "'}",
-                null, null );
-        if ( snapCur.hasNext() ) {
+        Sequoiadb masterNode = db.getReplicaGroup(groupName).getMaster().connect();
+        DBCursor snapCur = masterNode.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name: '" + cl.getFullName() + "'}",
+                null, null);
+        if (snapCur.hasNext()) {
             @SuppressWarnings("unchecked")
-            List<BSONObject> details = (List<BSONObject>) snapCur.getNext().get( "Details" );
-            preCLLid = (int) details.get( 0 ).get( "LogicalID" );
+            List<BSONObject> details = (List<BSONObject>) snapCur.getNext().get("Details");
+            preCLLid = (int) details.get(0).get("LogicalID");
             snapCur.close();
         } else {
             snapCur.close();
             throw new Exception(
-                    cl.getFullName() + " SDB_SNAP_COLLECTIONS was not found in the " + masterNode.getNodeName() );
+                    cl.getFullName() + " SDB_SNAP_COLLECTIONS was not found in the " + masterNode.getNodeName());
         }
 
         // 检查全文索引下的_cllid值有没有变化
         doTimes = 0;
         Integer curCLLID = -10000;
-        while ( doTimes * interval < timeout ) {
+        while (doTimes * interval < timeout) {
             try {
-                curCLLID = FullTextESUtils.getCommitCLLIDFromES( esClient, esIndexName );
-                if ( curCLLID == preCLLid ) {
+                curCLLID = FullTextESUtils.getCommitCLLIDFromES(esClient, esIndexName);
+                if (curCLLID == preCLLid) {
                     isSync = true;
                 } else {
                     isSync = false;
                 }
 
-                if ( isSync ) {
+                if (isSync) {
                     break;
                 } else {
                     doTimes++;
@@ -355,25 +355,25 @@ public class FullTextUtils {
                     // ",doTimes: " + doTimes + ", previousCLLid: "
                     // + preCLLid + ", currentCLLID: " + curCLLID );
                     try {
-                        Thread.sleep( 1000 );
-                    } catch ( InterruptedException e ) {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-            } catch ( Exception e ) {
+            } catch (Exception e) {
                 Throwable ths = e.getCause();
-                if ( ths instanceof IndexNotFoundException ) {
+                if (ths instanceof IndexNotFoundException) {
                     doTimes++;
                     // System.out.println(
                     // "esIndexName: " + esIndexName + ", doTimes: " + doTimes +
                     // " is being truncated now" );
                     try {
-                        Thread.sleep( 1000 );
-                    } catch ( InterruptedException e2 ) {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e2) {
                         e2.printStackTrace();
                     }
                 } else {
-                    System.out.println( "isFulltextRebuild exception: " + ths.getClass() );
+                    System.out.println("isFulltextRebuild exception: " + ths.getClass());
                     throw e;
                 }
             }
@@ -390,11 +390,11 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<String> removeDuplicateItems( List<String> arrayList ) {
+    public static List<String> removeDuplicateItems(List<String> arrayList) {
         List<String> newArrayList = arrayList;
-        HashSet<String> uniqueSet = new HashSet<String>( newArrayList );
+        HashSet<String> uniqueSet = new HashSet<String>(newArrayList);
         newArrayList.clear();
-        newArrayList.addAll( uniqueSet );
+        newArrayList.addAll(uniqueSet);
         return newArrayList;
     }
 
@@ -408,23 +408,23 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2019-05-09
      */
-    private static boolean isDataConsistency( DBCollection cl, String textIndexName ) throws Exception {
+    private static boolean isDataConsistency(DBCollection cl, String textIndexName) throws Exception {
 
         // 判断所有节点是否已同步集合
-        if ( !isCLConsistency( cl ) ) {
+        if (!isCLConsistency(cl)) {
             return false;
         }
 
         // 检查索引信息
-        if ( !isIndexConsistency( cl, textIndexName ) ) {
+        if (!isIndexConsistency(cl, textIndexName)) {
             return false;
         }
 
         // 检查主备节点原始集合的数据一致性
-        if ( !isCLDataConsistency( cl ) ) {
+        if (!isCLDataConsistency(cl)) {
             return false;
         }
-        if ( !isCappedCLDataConsistency( cl, textIndexName ) ) {
+        if (!isCappedCLDataConsistency(cl, textIndexName)) {
             return false;
         }
 
@@ -439,36 +439,36 @@ public class FullTextUtils {
      * @return
      * @throws Exception 
      */
-    private static boolean isIndexConsistency( DBCollection cl, String indexName ) throws Exception {
+    private static boolean isIndexConsistency(DBCollection cl, String indexName) throws Exception {
 
         Sequoiadb db = cl.getSequoiadb();
         String csName = cl.getCSName();
         String clName = cl.getName();
         boolean isConsistency = false;
 
-        List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
-        for ( String groupName : groupNames ) {
+        List<String> groupNames = FullTextDBUtils.getCLGroups(cl);
+        for (String groupName : groupNames) {
             isConsistency = false;
-            List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
-            ReplicaGroup rg = db.getReplicaGroup( groupName );
+            List<String> nodeNames = CommLib.getNodeAddress(db, groupName);
+            ReplicaGroup rg = db.getReplicaGroup(groupName);
             Sequoiadb masterNode = rg.getMaster().connect();
-            DBCollection masterCL = masterNode.getCollectionSpace( csName ).getCollection( clName );
-            if ( !masterCL.isIndexExist( indexName ) ) {
+            DBCollection masterCL = masterNode.getCollectionSpace(csName).getCollection(clName);
+            if (!masterCL.isIndexExist(indexName)) {
                 throw new Exception(
-                        cl.getFullName() + " " + masterNode.getNodeName() + " index: " + indexName + " is not exist" );
+                        cl.getFullName() + " " + masterNode.getNodeName() + " index: " + indexName + " is not exist");
             }
-            BSONObject indexInfo = masterCL.getIndexInfo( indexName );
+            BSONObject indexInfo = masterCL.getIndexInfo(indexName);
 
-            for ( String nodeName : nodeNames ) {
-                Sequoiadb nodeConn = rg.getNode( nodeName ).connect();
-                DBCollection nodeCL = nodeConn.getCollectionSpace( csName ).getCollection( clName );
-                if ( !nodeCL.isIndexExist( indexName ) ) {
-                    throw new Exception( cl.getFullName() + " " + nodeName + " index: " + indexName + " is not exist" );
+            for (String nodeName : nodeNames) {
+                Sequoiadb nodeConn = rg.getNode(nodeName).connect();
+                DBCollection nodeCL = nodeConn.getCollectionSpace(csName).getCollection(clName);
+                if (!nodeCL.isIndexExist(indexName)) {
+                    throw new Exception(cl.getFullName() + " " + nodeName + " index: " + indexName + " is not exist");
                 }
-                BSONObject checkIndexInfo = nodeCL.getIndexInfo( indexName );
-                if ( !indexInfo.equals( checkIndexInfo ) ) {
-                    throw new Exception( cl.getFullName() + " the index info is different, masterNode "
-                            + masterNode.getNodeName() + ": " + indexInfo + ", " + nodeName + ": " + checkIndexInfo );
+                BSONObject checkIndexInfo = nodeCL.getIndexInfo(indexName);
+                if (!indexInfo.equals(checkIndexInfo)) {
+                    throw new Exception(cl.getFullName() + " the index info is different, masterNode "
+                            + masterNode.getNodeName() + ": " + indexInfo + ", " + nodeName + ": " + checkIndexInfo);
                 }
             }
             isConsistency = true;
@@ -486,22 +486,22 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isCLDataConsistency( DBCollection cl ) throws Exception {
+    public static boolean isCLDataConsistency(DBCollection cl) throws Exception {
         boolean isConsistency = false;
         Sequoiadb db = cl.getSequoiadb();
-        List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
+        List<String> groupNames = FullTextDBUtils.getCLGroups(cl);
         // 防止数据组元素重复
-        groupNames = removeDuplicateItems( groupNames );
+        groupNames = removeDuplicateItems(groupNames);
 
-        for ( String groupName : groupNames ) {
-            List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
+        for (String groupName : groupNames) {
+            List<String> nodeNames = CommLib.getNodeAddress(db, groupName);
             List<Node> nodes = new ArrayList<>();
-            for ( String nodeName : nodeNames ) {
-                nodes.add( db.getReplicaGroup( groupName ).getNode( nodeName ) );
+            for (String nodeName : nodeNames) {
+                nodes.add(db.getReplicaGroup(groupName).getNode(nodeName));
             }
-            isConsistency = isConsistency( db, groupName, cl.getCSName(), cl.getName() );
-            if ( !isConsistency ) {
-                throw new Exception( cl.getCSName() + " is not consistency in the " + groupName );
+            isConsistency = isConsistency(db, groupName, cl.getCSName(), cl.getName());
+            if (!isConsistency) {
+                throw new Exception(cl.getCSName() + " is not consistency in the " + groupName);
             }
         }
         return isConsistency;
@@ -517,22 +517,22 @@ public class FullTextUtils {
      * @Author liuxiaoxuan
      * @Date 2019-05-09
      */
-    public static boolean isCappedCLDataConsistency( DBCollection cl, String textIndexName ) throws Exception {
+    public static boolean isCappedCLDataConsistency(DBCollection cl, String textIndexName) throws Exception {
         boolean isConsistency = false;
         Sequoiadb db = cl.getSequoiadb();
-        String cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
-        List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
+        String cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
+        List<String> groupNames = FullTextDBUtils.getCLGroups(cl);
         // 防止数据组元素重复
-        groupNames = removeDuplicateItems( groupNames );
+        groupNames = removeDuplicateItems(groupNames);
 
-        for ( String groupName : groupNames ) {
+        for (String groupName : groupNames) {
             // List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
             // List<Node> nodes = new ArrayList<>();
             // for ( String nodeName : nodeNames ) {
             // nodes.add( db.getReplicaGroup( groupName ).getNode( nodeName ) );
             // }
-            isConsistency = isConsistency( db, groupName, cappedName, cappedName );
-            if ( !isConsistency ) {
+            isConsistency = isConsistency(db, groupName, cappedName, cappedName);
+            if (!isConsistency) {
                 break;
             }
         }
@@ -546,16 +546,16 @@ public class FullTextUtils {
      * @return boolean 如果主备节点原始集合dataCommitLSN一致返回true,否则返回false
      * @throws Exception 
      */
-    private static boolean isCLConsistency( DBCollection cl ) throws Exception {
+    private static boolean isCLConsistency(DBCollection cl) throws Exception {
 
         Sequoiadb db = cl.getSequoiadb();
         String clFullName = cl.getFullName();
         boolean isConsistency = false;
 
-        List<String> groupNames = FullTextDBUtils.getCLGroups( cl );
-        for ( String groupName : groupNames ) {
-            List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
-            ReplicaGroup rg = db.getReplicaGroup( groupName );
+        List<String> groupNames = FullTextDBUtils.getCLGroups(cl);
+        for (String groupName : groupNames) {
+            List<String> nodeNames = CommLib.getNodeAddress(db, groupName);
+            ReplicaGroup rg = db.getReplicaGroup(groupName);
             Sequoiadb masterNode = rg.getMaster().connect();
 
             DBCursor cursor = null;
@@ -565,38 +565,38 @@ public class FullTextUtils {
             boolean dataCommitted = false;
             boolean indexCommitted = false;
             boolean lobCommitted = false;
-            for ( int i = 0; i < 600; i++ ) {
-                cursor = masterNode.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
-                        "{Details: ''}", null );
-                if ( cursor.hasNext() ) {
+            for (int i = 0; i < 600; i++) {
+                cursor = masterNode.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
+                        "{Details: ''}", null);
+                if (cursor.hasNext()) {
                     @SuppressWarnings("unchecked")
-                    List<BSONObject> details = (List<BSONObject>) cursor.getNext().get( "Details" );
-                    dataCommitLSN = (long) details.get( 0 ).get( "DataCommitLSN" );
-                    indexCommitLSN = (long) details.get( 0 ).get( "IndexCommitLSN" );
-                    lobCommitLSN = (long) details.get( 0 ).get( "LobCommitLSN" );
-                    dataCommitted = (boolean) details.get( 0 ).get( "DataCommitted" );
-                    indexCommitted = (boolean) details.get( 0 ).get( "IndexCommitted" );
-                    lobCommitted = (boolean) details.get( 0 ).get( "LobCommitted" );
+                    List<BSONObject> details = (List<BSONObject>) cursor.getNext().get("Details");
+                    dataCommitLSN = (long) details.get(0).get("DataCommitLSN");
+                    indexCommitLSN = (long) details.get(0).get("IndexCommitLSN");
+                    lobCommitLSN = (long) details.get(0).get("LobCommitLSN");
+                    dataCommitted = (boolean) details.get(0).get("DataCommitted");
+                    indexCommitted = (boolean) details.get(0).get("IndexCommitted");
+                    lobCommitted = (boolean) details.get(0).get("LobCommitted");
                 }
                 cursor.close();
-                if ( dataCommitLSN != -2 && indexCommitLSN != -2 && lobCommitLSN != -2 && dataCommitted
-                        && indexCommitted && lobCommitted ) {
+                if (dataCommitLSN != -2 && indexCommitLSN != -2 && lobCommitLSN != -2 && dataCommitted && indexCommitted
+                        && lobCommitted) {
                     break;
                 }
                 try {
-                    Thread.sleep( 1000 );
-                } catch ( InterruptedException e ) {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-            if ( dataCommitLSN == -2 || indexCommitLSN == -2 || lobCommitLSN == -2 || !dataCommitted || !indexCommitted
-                    || !lobCommitted ) {
-                throw new Exception( masterNode.getNodeName() + " can't not find cl snapshot: " + clFullName );
+            if (dataCommitLSN == -2 || indexCommitLSN == -2 || lobCommitLSN == -2 || !dataCommitted || !indexCommitted
+                    || !lobCommitted) {
+                throw new Exception(masterNode.getNodeName() + " can't not find cl snapshot: " + clFullName);
             }
 
-            for ( String nodeName : nodeNames ) {
+            for (String nodeName : nodeNames) {
                 isConsistency = false;
-                Sequoiadb nodeConn = rg.getNode( nodeName ).connect();
+                Sequoiadb nodeConn = rg.getNode(nodeName).connect();
                 DBCursor cur = null;
                 long checkdataCommitLSN = -2;
                 long checkindexCommitLSN = -2;
@@ -604,39 +604,39 @@ public class FullTextUtils {
                 boolean checkdataCommitted = false;
                 boolean checkindexCommitted = false;
                 boolean checklobCommitted = false;
-                for ( int i = 0; i < 600; i++ ) {
-                    cur = nodeConn.getSnapshot( Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
-                            "{Details: ''}", null );
-                    if ( cur.hasNext() ) {
+                for (int i = 0; i < 600; i++) {
+                    cur = nodeConn.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
+                            "{Details: ''}", null);
+                    if (cur.hasNext()) {
                         @SuppressWarnings("unchecked")
-                        List<BSONObject> details = (List<BSONObject>) cur.getNext().get( "Details" );
-                        checkdataCommitLSN = (long) details.get( 0 ).get( "DataCommitLSN" );
-                        checkindexCommitLSN = (long) details.get( 0 ).get( "IndexCommitLSN" );
-                        checklobCommitLSN = (long) details.get( 0 ).get( "LobCommitLSN" );
-                        checkdataCommitted = (boolean) details.get( 0 ).get( "DataCommitted" );
-                        checkindexCommitted = (boolean) details.get( 0 ).get( "IndexCommitted" );
-                        checklobCommitted = (boolean) details.get( 0 ).get( "LobCommitted" );
+                        List<BSONObject> details = (List<BSONObject>) cur.getNext().get("Details");
+                        checkdataCommitLSN = (long) details.get(0).get("DataCommitLSN");
+                        checkindexCommitLSN = (long) details.get(0).get("IndexCommitLSN");
+                        checklobCommitLSN = (long) details.get(0).get("LobCommitLSN");
+                        checkdataCommitted = (boolean) details.get(0).get("DataCommitted");
+                        checkindexCommitted = (boolean) details.get(0).get("IndexCommitted");
+                        checklobCommitted = (boolean) details.get(0).get("LobCommitted");
                     }
                     cur.close();
 
-                    if ( dataCommitLSN == checkdataCommitLSN && indexCommitLSN == checkindexCommitLSN
+                    if (dataCommitLSN == checkdataCommitLSN && indexCommitLSN == checkindexCommitLSN
                             && lobCommitLSN == checklobCommitLSN && checkdataCommitted && checkindexCommitted
-                            && checklobCommitted ) {
+                            && checklobCommitted) {
                         isConsistency = true;
                         break;
                     }
                     try {
-                        Thread.sleep( 1000 );
-                    } catch ( InterruptedException e ) {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                if ( !isConsistency ) {
-                    throw new Exception( cl.getFullName() + " Group [" + groupName
+                if (!isConsistency) {
+                    throw new Exception(cl.getFullName() + " Group [" + groupName
                             + "] snapshot is not the same, masterNode " + masterNode.getNodeName() + " DataCommitLSN: "
                             + dataCommitLSN + ", IndexCommitLSN: " + indexCommitLSN + ", LobCommitLSN: " + lobCommitLSN
                             + ", " + nodeName + " dataCommitLSN: " + checkdataCommitLSN + ", IndexCommitLSN: "
-                            + checkindexCommitLSN + ", LobCommitLSN: " + checklobCommitLSN );
+                            + checkindexCommitLSN + ", LobCommitLSN: " + checklobCommitLSN);
                 }
             }
         }
@@ -654,16 +654,16 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    private static boolean isMainCLDataConsistency( DBCollection cl, String textIndexName ) throws Exception {
+    private static boolean isMainCLDataConsistency(DBCollection cl, String textIndexName) throws Exception {
         boolean isConsistency = true;
         Sequoiadb db = cl.getSequoiadb();
-        List<String> subclNames = FullTextDBUtils.getSubCLNames( db, cl.getFullName() );
-        for ( int i = 0; i < subclNames.size(); i++ ) {
-            String subcsName = subclNames.get( i ).split( "\\." )[0];
-            String subclName = subclNames.get( i ).split( "\\." )[1];
-            DBCollection subCL = db.getCollectionSpace( subcsName ).getCollection( subclName );
-            isConsistency = isDataConsistency( subCL, textIndexName );
-            if ( !isConsistency ) {
+        List<String> subclNames = FullTextDBUtils.getSubCLNames(db, cl.getFullName());
+        for (int i = 0; i < subclNames.size(); i++) {
+            String subcsName = subclNames.get(i).split("\\.")[0];
+            String subclName = subclNames.get(i).split("\\.")[1];
+            DBCollection subCL = db.getCollectionSpace(subcsName).getCollection(subclName);
+            isConsistency = isDataConsistency(subCL, textIndexName);
+            if (!isConsistency) {
                 break;
             }
         }
@@ -681,13 +681,13 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isConsistency( Sequoiadb db, String groupName, String csName, String clName ) {
+    public static boolean isConsistency(Sequoiadb db, String groupName, String csName, String clName) {
         boolean isConsistency = false;
         int doTimes = 0;
         int timeout = 600;
-        while ( true ) {
-            isConsistency = isNodeRecordsConsistency( db, groupName, csName, clName );
-            if ( isConsistency ) {
+        while (true) {
+            isConsistency = isNodeRecordsConsistency(db, groupName, csName, clName);
+            if (isConsistency) {
                 return isConsistency;
             } else {
                 doTimes++;
@@ -695,12 +695,12 @@ public class FullTextUtils {
                 // clName + " isConsistency : " + isConsistency
                 // + " , doTimes: " + doTimes );
                 try {
-                    Thread.sleep( 1000 );
-                } catch ( InterruptedException e ) {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-            if ( doTimes >= timeout ) {
+            if (doTimes >= timeout) {
                 break;
             }
         }
@@ -718,27 +718,27 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isNodeRecordsConsistency( Sequoiadb db, String groupName, String csName, String clName ) {
+    public static boolean isNodeRecordsConsistency(Sequoiadb db, String groupName, String csName, String clName) {
 
-        List<String> nodeNames = CommLib.getNodeAddress( db, groupName );
-        if ( nodeNames.size() == 1 ) {
+        List<String> nodeNames = CommLib.getNodeAddress(db, groupName);
+        if (nodeNames.size() == 1) {
             return true;
         }
 
-        ReplicaGroup rg = db.getReplicaGroup( groupName );
-        Sequoiadb firstNode = rg.getNode( nodeNames.get( 0 ) ).connect();
-        DBCollection cl1 = firstNode.getCollectionSpace( csName ).getCollection( clName );
-        for ( int i = 1; i < nodeNames.size(); i++ ) {
-            Sequoiadb nextNode = rg.getNode( nodeNames.get( i ) ).connect();
-            DBCollection cl2 = nextNode.getCollectionSpace( csName ).getCollection( clName );
-            if ( cl1.getCount() != cl2.getCount() ) {
-                System.err.println( cl1.getFullName() + " from " + nodeNames.get( 0 ) + "'s count: " + cl1.getCount()
-                        + ", cl from " + nodeNames.get( i ) + "'s count: " + cl2.getCount() );
+        ReplicaGroup rg = db.getReplicaGroup(groupName);
+        Sequoiadb firstNode = rg.getNode(nodeNames.get(0)).connect();
+        DBCollection cl1 = firstNode.getCollectionSpace(csName).getCollection(clName);
+        for (int i = 1; i < nodeNames.size(); i++) {
+            Sequoiadb nextNode = rg.getNode(nodeNames.get(i)).connect();
+            DBCollection cl2 = nextNode.getCollectionSpace(csName).getCollection(clName);
+            if (cl1.getCount() != cl2.getCount()) {
+                System.err.println(cl1.getFullName() + " from " + nodeNames.get(0) + "'s count: " + cl1.getCount()
+                        + ", cl from " + nodeNames.get(i) + "'s count: " + cl2.getCount());
                 return false;
             }
-            DBCursor cl1Cursor = cl1.query( null, null, "{\"_id\":1}", null );
-            DBCursor cl2Cursor = cl2.query( null, null, "{\"_id\":1}", null );
-            if ( !isCLRecordsConsistency( cl1Cursor, cl2Cursor ) ) {
+            DBCursor cl1Cursor = cl1.query(null, null, "{\"_id\":1}", null);
+            DBCursor cl2Cursor = cl2.query(null, null, "{\"_id\":1}", null);
+            if (!isCLRecordsConsistency(cl1Cursor, cl2Cursor)) {
                 return false;
             }
         }
@@ -755,15 +755,15 @@ public class FullTextUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isCLRecordsConsistency( DBCursor cl1Cursor, DBCursor cl2Cursor ) {
+    public static boolean isCLRecordsConsistency(DBCursor cl1Cursor, DBCursor cl2Cursor) {
         try {
-            while ( cl1Cursor.hasNext() && cl2Cursor.hasNext() ) {
+            while (cl1Cursor.hasNext() && cl2Cursor.hasNext()) {
                 BSONObject cl1Record = cl1Cursor.getNext();
                 BSONObject cl2Record = cl2Cursor.getNext();
-                if ( !cl1Record.equals( cl2Record ) ) {
+                if (!cl1Record.equals(cl2Record)) {
                     System.out.println(
                             "compare record failed, collection from first node's record : " + cl1Record.toString()
-                                    + "\n collection from anohter node's record : " + cl2Record.toString() );
+                                    + "\n collection from anohter node's record : " + cl2Record.toString());
                     return false;
                 }
             }
@@ -782,10 +782,10 @@ public class FullTextUtils {
      * @return
      * @throws Exception 
      */
-    public static boolean isIndexCreated( Client esClient, DBCollection cl, String indexName, int expectCount )
+    public static boolean isIndexCreated(Client esClient, DBCollection cl, String indexName, int expectCount)
             throws Exception {
 
-        return isFullSyncToES( esClient, cl, indexName, expectCount ) && isDataConsistency( cl, indexName );
+        return isFullSyncToES(esClient, cl, indexName, expectCount) && isDataConsistency(cl, indexName);
     }
 
     /**
@@ -796,11 +796,10 @@ public class FullTextUtils {
      * @return
      * @throws Exception 
      */
-    public static boolean isMainCLIndexCreated( Client esClient, DBCollection cl, String indexName, int expectCount )
+    public static boolean isMainCLIndexCreated(Client esClient, DBCollection cl, String indexName, int expectCount)
             throws Exception {
 
-        if ( isMainCLFullSyncToES( esClient, cl, indexName, expectCount )
-                && isMainCLDataConsistency( cl, indexName ) ) {
+        if (isMainCLFullSyncToES(esClient, cl, indexName, expectCount) && isMainCLDataConsistency(cl, indexName)) {
             return true;
         } else {
             return false;
@@ -816,11 +815,11 @@ public class FullTextUtils {
      * @return boolean 删除成功返回true,否则返回false
      * @throws Exception 
      */
-    public static boolean isIndexDeleted( Sequoiadb db, Client esClient, String esIndexName, String cappedName )
+    public static boolean isIndexDeleted(Sequoiadb db, Client esClient, String esIndexName, String cappedName)
             throws Exception {
 
-        if ( new FullTextESUtils().isIndexDeletedInES( esClient, esIndexName )
-                && new FullTextDBUtils().isCSDropSuccess( db, cappedName ) ) {
+        if (new FullTextESUtils().isIndexDeletedInES(esClient, esIndexName)
+                && new FullTextDBUtils().isCSDropSuccess(db, cappedName)) {
             return true;
         } else {
             return false;
@@ -837,11 +836,11 @@ public class FullTextUtils {
      * @return boolean 删除成功返回true,否则返回false
      * @throws Exception 
      */
-    public static boolean isIndexDeleted( Sequoiadb db, Client esClient, List<String> esIndexNames,
-            List<String> cappedNames ) throws Exception {
+    public static boolean isIndexDeleted(Sequoiadb db, Client esClient, List<String> esIndexNames,
+            List<String> cappedNames) throws Exception {
 
-        if ( new FullTextESUtils().isIndexDeletedInES( esClient, esIndexNames )
-                && new FullTextDBUtils().isCSDropSuccess( db, cappedNames ) ) {
+        if (new FullTextESUtils().isIndexDeletedInES(esClient, esIndexNames)
+                && new FullTextDBUtils().isCSDropSuccess(db, cappedNames)) {
             return true;
         } else {
             return false;

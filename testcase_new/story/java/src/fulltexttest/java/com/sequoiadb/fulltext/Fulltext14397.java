@@ -43,23 +43,23 @@ public class Fulltext14397 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
 
         // create cl
-        cs = sdb.createCollectionSpace( this.csName );
-        cl = cs.createCollection( clName );
+        cs = sdb.createCollectionSpace(this.csName);
+        cl = cs.createCollection(clName);
     }
 
     @AfterClass
     public void tearDown() throws Exception {
-        FullTextDBUtils.dropCollectionSpace( sdb, csName );
+        FullTextDBUtils.dropCollectionSpace(sdb, csName);
         // check fulltext deleted
-        if ( esIndexName != null ) {
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        if (esIndexName != null) {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         }
         sdb.close();
         esClient.close();
@@ -70,80 +70,80 @@ public class Fulltext14397 extends SdbTestBase {
         // create fulltext
         String textIndexName = "fulltext14397";
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        indexObj.put( "b", "text" );
-        indexObj.put( "c", "text" );
-        indexObj.put( "d", "text" );
-        indexObj.put( "e", "text" );
-        indexObj.put( "f", "text" );
-        cl.createIndex( textIndexName, indexObj, false, false );
+        indexObj.put("a", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
+        indexObj.put("f", "text");
+        cl.createIndex(textIndexName, indexObj, false, false);
 
-        cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, textIndexName );
+        cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, textIndexName);
 
         // check drop cs and recreate index after index clear in ES
-        insertData( cl, FullTextUtils.INSERT_NUMS );
+        insertData(cl, FullTextUtils.INSERT_NUMS);
 
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS));
 
-        FullTextDBUtils.dropCollectionSpace( sdb, csName );
+        FullTextDBUtils.dropCollectionSpace(sdb, csName);
 
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
 
         // recreate after ES index clear
-        cs = sdb.createCollectionSpace( this.csName );
-        cl = cs.createCollection( clName );
-        cl.createIndex( textIndexName, indexObj, false, false );
+        cs = sdb.createCollectionSpace(this.csName);
+        cl = cs.createCollection(clName);
+        cl.createIndex(textIndexName, indexObj, false, false);
 
         // insert new datas
         int newInsertNums = 210000;
-        insertData( cl, newInsertNums );
+        insertData(cl, newInsertNums);
 
         // check consistencty
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, newInsertNums ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, newInsertNums));
 
-        System.out.println( "----------success check drop cs after index clear in ES----------" );
+        System.out.println("----------success check drop cs after index clear in ES----------");
 
         // check drop cs and recreate index while index processing to clear in
         // ES
-        FullTextDBUtils.dropFullTextIndex( cl, textIndexName );// init env
+        FullTextDBUtils.dropFullTextIndex(cl, textIndexName);// init env
         cl.truncate();
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
 
-        cl.createIndex( textIndexName, indexObj, false, false );
+        cl.createIndex(textIndexName, indexObj, false, false);
 
         // init insert datas
-        insertData( cl, FullTextUtils.INSERT_NUMS );
+        insertData(cl, FullTextUtils.INSERT_NUMS);
 
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS));
 
-        FullTextDBUtils.dropCollectionSpace( sdb, csName );
+        FullTextDBUtils.dropCollectionSpace(sdb, csName);
 
         // recreate cs and index while index processing to clear in ES
-        cs = sdb.createCollectionSpace( this.csName );
-        cl = cs.createCollection( clName );
-        cl.createIndex( textIndexName, indexObj, false, false );
+        cs = sdb.createCollectionSpace(this.csName);
+        cl = cs.createCollection(clName);
+        cl.createIndex(textIndexName, indexObj, false, false);
 
         // insert new datas
-        insertData( cl, newInsertNums );
+        insertData(cl, newInsertNums);
 
         // check result after index recreate
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, newInsertNums ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, newInsertNums));
 
-        System.out.println( "----------success check drop cs while index processing to clear in ES----------" );
+        System.out.println("----------success check drop cs while index processing to clear in ES----------");
     }
 
-    public void insertData( DBCollection cl, int insertNums ) {
+    public void insertData(DBCollection cl, int insertNums) {
         List<BSONObject> insertObjs = new ArrayList<>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( (BSONObject) JSON.parse( "{a: 'test_14397_" + StringUtils.getRandomString( 10 )
-                        + "', b: '" + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 )
-                        + "', d: '" + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 )
-                        + "', f: '" + StringUtils.getRandomString( 128 ) + "'}" ) );
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                insertObjs.add((BSONObject) JSON.parse("{a: 'test_14397_" + StringUtils.getRandomString(10) + "', b: '"
+                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
+                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
+                        + StringUtils.getRandomString(128) + "'}"));
 
             }
-            cl.insert( insertObjs, 0 );
+            cl.insert(insertObjs, 0);
             insertObjs.clear();
         }
     }

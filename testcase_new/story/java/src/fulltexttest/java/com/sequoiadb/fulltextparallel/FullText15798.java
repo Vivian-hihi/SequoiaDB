@@ -41,56 +41,56 @@ public class FullText15798 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() throws Exception {
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "STANDALONE MODE" );
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("STANDALONE MODE");
         }
 
-        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
-                Integer.parseInt( SdbTestBase.esServiceName ) );
-        cl = sdb.getCollectionSpace( csName ).createCollection( clName );
+        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
+                Integer.parseInt(SdbTestBase.esServiceName));
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
 
-        insertData( cl, 20000 );
-        cl.createIndex( fullIdxName, "{'a':'text','b':'text','c':'text','d':'text','e':'text','f':'text'}", false,
-                false );
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIdxName, 20000 ) );
+        insertData(cl, 20000);
+        cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text','d':'text','e':'text','f':'text'}", false,
+                false);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
 
-        esIndexName = FullTextDBUtils.getESIndexName( cl, fullIdxName );
-        cappedCLName = FullTextDBUtils.getCappedName( cl, fullIdxName );
+        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
+        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
     }
 
     @Test
     public void test() throws Exception {
-        ThreadExecutor thExecutor = new ThreadExecutor( 600000 );
-        thExecutor.addWorker( new TruncateCL() );
-        thExecutor.addWorker( new InsertData() );
-        thExecutor.addWorker( new UpdateData() );
-        thExecutor.addWorker( new DeleteData() );
-        thExecutor.addWorker( new QueryData() );
+        ThreadExecutor thExecutor = new ThreadExecutor(600000);
+        thExecutor.addWorker(new TruncateCL());
+        thExecutor.addWorker(new InsertData());
+        thExecutor.addWorker(new UpdateData());
+        thExecutor.addWorker(new DeleteData());
+        thExecutor.addWorker(new QueryData());
 
         thExecutor.run();
 
         // 原始集合及固定集合中记录均被清空，主备节点数据一致
-        Assert.assertTrue( FullTextUtils.isFulltextRebuild( esClient, cl, fullIdxName ) );
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIdxName, 0 ) );
-        List<BSONObject> actRecords = FullTextDBUtils.getRecordsFromCL( cl.query() );
-        Assert.assertEquals( actRecords.size(), 0 );
-        DBCollection cappedCL = FullTextDBUtils.getCappedCLs( cl, fullIdxName ).get( 0 );
-        actRecords = FullTextDBUtils.getRecordsFromCL( cappedCL.query() );
-        Assert.assertEquals( actRecords.size(), 0 );
+        Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, fullIdxName));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 0));
+        List<BSONObject> actRecords = FullTextDBUtils.getRecordsFromCL(cl.query());
+        Assert.assertEquals(actRecords.size(), 0);
+        DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
+        actRecords = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
+        Assert.assertEquals(actRecords.size(), 0);
     }
 
     @AfterClass
     public void tearDown() throws Exception {
         try {
-            CollectionSpace cs = sdb.getCollectionSpace( csName );
-            cs.dropCollection( clName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCLName ) );
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            cs.dropCollection(clName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -101,13 +101,13 @@ public class FullText15798 extends SdbTestBase {
         private void insertRecords() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                insertData( cl, 10000 );
-            } catch ( BaseException e ) {
-                Assert.assertEquals( e.getErrorCode(), -321, e.getMessage() );
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                insertData(cl, 10000);
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
             } finally {
-                if ( db != null ) {
+                if (db != null) {
                     db.close();
                 }
             }
@@ -119,13 +119,13 @@ public class FullText15798 extends SdbTestBase {
         private void updateRecords() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.update( "{a:'test_15798_1'}", "{$set:{b:'b_15798'}}", "{}" );
-            } catch ( BaseException e ) {
-                Assert.assertEquals( e.getErrorCode(), -321, e.getMessage() );
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.update("{a:'test_15798_1'}", "{$set:{b:'b_15798'}}", "{}");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
             } finally {
-                if ( db != null ) {
+                if (db != null) {
                     db.close();
                 }
             }
@@ -137,13 +137,13 @@ public class FullText15798 extends SdbTestBase {
         private void deleteRecords() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.delete( "{a:'test_15798_0'}" );
-            } catch ( BaseException e ) {
-                Assert.assertEquals( e.getErrorCode(), -321, e.getMessage() );
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.delete("{a:'test_15798_0'}");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
             } finally {
-                if ( db != null ) {
+                if (db != null) {
                     db.close();
                 }
             }
@@ -155,13 +155,13 @@ public class FullText15798 extends SdbTestBase {
         private void queryRecords() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.query( "{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{}", "{'':'" + fullIdxName + "'}" );
-            } catch ( BaseException e ) {
-                Assert.assertEquals( e.getErrorCode(), -321, e.getMessage() );
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{}", "{'':'" + fullIdxName + "'}");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
             } finally {
-                if ( db != null ) {
+                if (db != null) {
                     db.close();
                 }
             }
@@ -173,19 +173,19 @@ public class FullText15798 extends SdbTestBase {
         private void truncateCL() throws Exception {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                while ( cl.getCount() == 0 ) {
-                    Thread.sleep( 100 );
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                while (cl.getCount() == 0) {
+                    Thread.sleep(100);
                 }
 
                 int count = 0;
-                while ( count++ < 600 ) {
+                while (count++ < 600) {
                     try {
-                        Thread.sleep( 100 );
+                        Thread.sleep(100);
                         cl.truncate();
-                    } catch ( BaseException e ) {
-                        if ( e.getErrorCode() != -190 && e.getErrorCode() != -147 ) {
+                    } catch (BaseException e) {
+                        if (e.getErrorCode() != -190 && e.getErrorCode() != -147) {
                             throw e;
                         }
                         continue;
@@ -193,24 +193,24 @@ public class FullText15798 extends SdbTestBase {
                     break;
                 }
             } finally {
-                if ( db != null ) {
+                if (db != null) {
                     db.close();
                 }
             }
         }
     }
 
-    private void insertData( DBCollection cl, int insertNums ) {
+    private void insertData(DBCollection cl, int insertNums) {
         List<BSONObject> records = new ArrayList<BSONObject>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 100; j++ ) {
-                BSONObject record = (BSONObject) JSON.parse( "{a: 'test_15798_" + i * j + "', b: '"
-                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
-                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "'}" );
-                records.add( record );
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                BSONObject record = (BSONObject) JSON.parse("{a: 'test_15798_" + i * j + "', b: '"
+                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
+                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
+                        + StringUtils.getRandomString(128) + "'}");
+                records.add(record);
             }
-            cl.insert( records );
+            cl.insert(records);
             records.clear();
         }
     }

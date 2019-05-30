@@ -41,40 +41,40 @@ public class FullText15840 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
-        cs = sdb.getCollectionSpace( csName );
-        cl = cs.createCollection( clName );
+        cs = sdb.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
 
-        FullTextDBUtils.insertData( cl, insertNum );
+        FullTextDBUtils.insertData(cl, insertNum);
     }
 
     @Test
     public void test() throws Exception {
 
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker( new CreateIndexThread() );
-        thread.addWorker( new QueryByTextIndexThread() );
+        thread.addWorker(new CreateIndexThread());
+        thread.addWorker(new QueryByTextIndexThread());
         thread.run();
 
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
     }
 
     @AfterClass
     public void tearDown() throws Exception {
         try {
-            String cappedName = FullTextDBUtils.getCappedName( cl, indexName );
-            String esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
-            FullTextDBUtils.dropCollection( cs, clName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+            String cappedName = FullTextDBUtils.getCappedName(cl, indexName);
+            String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+            FullTextDBUtils.dropCollection(cs, clName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -84,15 +84,15 @@ public class FullText15840 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void createIndex() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 BSONObject indexObj = new BasicBSONObject();
-                indexObj.put( "a", "text" );
-                indexObj.put( "b", "text" );
-                indexObj.put( "c", "text" );
-                indexObj.put( "d", "text" );
-                indexObj.put( "e", "text" );
-                cl.createIndex( indexName, indexObj, false, false );
+                indexObj.put("a", "text");
+                indexObj.put("b", "text");
+                indexObj.put("c", "text");
+                indexObj.put("d", "text");
+                indexObj.put("e", "text");
+                cl.createIndex(indexName, indexObj, false, false);
             }
         }
     }
@@ -101,22 +101,22 @@ public class FullText15840 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void queryData() throws InterruptedException {
-            for ( int i = 0; i < 10; i++ ) {
-                try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                    DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                    DBCursor cur = cl.query( "{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'a': 1}",
-                            "{'': '" + indexName + "'}" );
-                    if ( cur.hasNext() ) {
+            for (int i = 0; i < 10; i++) {
+                try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                    DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                    DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'a': 1}",
+                            "{'': '" + indexName + "'}");
+                    if (cur.hasNext()) {
                         BSONObject record = cur.getNext();
-                        System.out.println( record );
+                        System.out.println(record);
                     }
                     cur.close();
-                } catch ( BaseException e ) {
-                    if ( e.getErrorCode() != -6 && e.getErrorCode() != -52 ) {
-                        Assert.fail( e.getMessage() );
+                } catch (BaseException e) {
+                    if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
+                        Assert.fail(e.getMessage());
                     }
                 }
-                Thread.sleep( 1000 + new Random().nextInt( 500 ) );
+                Thread.sleep(1000 + new Random().nextInt(500));
             }
         }
     }

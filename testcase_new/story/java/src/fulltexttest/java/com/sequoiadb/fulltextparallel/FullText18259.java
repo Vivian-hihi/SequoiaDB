@@ -143,8 +143,8 @@ public class FullText18259 extends SdbTestBase {
                         Thread.sleep(100);
                         retryTimes++;
                     }
-                    System.out.println(CL_NAME + " check timeout, mCnt:" + mCnt + ", sCnt:" + sCnt 
-                            + ", expCnt:" + RECS_NUM);
+                    System.out.println(
+                            CL_NAME + " check timeout, mCnt:" + mCnt + ", sCnt:" + sCnt + ", expCnt:" + RECS_NUM);
                 }
             } finally {
                 master.close();

@@ -43,33 +43,33 @@ public class Fulltext11990 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
-        ArrayList<String> groupsName = CommLib.getDataGroupNames( sdb );
-        if ( groupsName.size() < 2 ) {
-            throw new SkipException( "current environment less than tow groups " );
+        ArrayList<String> groupsName = CommLib.getDataGroupNames(sdb);
+        if (groupsName.size() < 2) {
+            throw new SkipException("current environment less than tow groups ");
         }
 
-        srcGroupName = groupsName.get( 0 );
-        destGroupName = groupsName.get( 1 );
+        srcGroupName = groupsName.get(0);
+        destGroupName = groupsName.get(1);
         // create maincl and subcls
-        cs = sdb.getCollectionSpace( csName );
-        maincl = cs.createCollection( mainCLName,
-                (BSONObject) JSON.parse( "{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}" ) );
-        cs.createCollection( subCLName1 );
-        DBCollection subcl = cs.createCollection( subCLName2,
-                (BSONObject) JSON.parse( "{ShardingKey:{a0:1}, ShardingType:'hash', Group:'" + srcGroupName + "'}" ) );
-        subcl.split( srcGroupName, destGroupName, 50 );
+        cs = sdb.getCollectionSpace(csName);
+        maincl = cs.createCollection(mainCLName,
+                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'range', IsMainCL:true}"));
+        cs.createCollection(subCLName1);
+        DBCollection subcl = cs.createCollection(subCLName2,
+                (BSONObject) JSON.parse("{ShardingKey:{a0:1}, ShardingType:'hash', Group:'" + srcGroupName + "'}"));
+        subcl.split(srcGroupName, destGroupName, 50);
     }
 
     @AfterClass
     public void tearDown() {
-        FullTextDBUtils.dropCollection( cs, subCLName1 );
-        FullTextDBUtils.dropCollection( cs, subCLName2 );
-        FullTextDBUtils.dropCollection( cs, mainCLName );
+        FullTextDBUtils.dropCollection(cs, subCLName1);
+        FullTextDBUtils.dropCollection(cs, subCLName2);
+        FullTextDBUtils.dropCollection(cs, mainCLName);
         sdb.close();
         esClient.close();
     }
@@ -77,123 +77,122 @@ public class Fulltext11990 extends SdbTestBase {
     @Test
     public void test() throws Exception {
         // attach CL
-        BSONObject options1 = (BSONObject) JSON.parse( "{LowBound:{a:'testa'}, UpBound:{a:'testa 999999'}}" );
-        BSONObject options2 = (BSONObject) JSON.parse( "{LowBound:{a:'zzza'}, UpBound:{a:'zzza 999999'}}" );
-        maincl.attachCollection( csName + "." + subCLName1, options1 );
-        maincl.attachCollection( csName + "." + subCLName2, options2 );
+        BSONObject options1 = (BSONObject) JSON.parse("{LowBound:{a:'testa'}, UpBound:{a:'testa 999999'}}");
+        BSONObject options2 = (BSONObject) JSON.parse("{LowBound:{a:'zzza'}, UpBound:{a:'zzza 999999'}}");
+        maincl.attachCollection(csName + "." + subCLName1, options1);
+        maincl.attachCollection(csName + "." + subCLName2, options2);
 
         // insert one group
-        insertDataOneGroup( maincl, FullTextUtils.INSERT_NUMS );
+        insertDataOneGroup(maincl, FullTextUtils.INSERT_NUMS);
 
         // create fulltext of maincl shardingkey
         String textIndexName = "fulltext11990";
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        maincl.createIndex( textIndexName, indexObj, false, false );
+        indexObj.put("a", "text");
+        maincl.createIndex(textIndexName, indexObj, false, false);
 
         // get esIndexNames of each subcl
-        List<String> subCLFullNames = FullTextDBUtils.getSubCLNames( sdb, csName + "." + mainCLName );
+        List<String> subCLFullNames = FullTextDBUtils.getSubCLNames(sdb, csName + "." + mainCLName);
         List<String> esIndexNames = new ArrayList<>();
         List<String> cappedCLNames = new ArrayList<>();
-        for ( String subCLFullName : subCLFullNames ) {
-            String subCSName = subCLFullName.split( "\\." )[0];
-            String subCLName = subCLFullName.split( "\\." )[1];
-            DBCollection subCL = sdb.getCollectionSpace( subCSName ).getCollection( subCLName );
-            esIndexNames.addAll( FullTextDBUtils.getESIndexNames( subCL, textIndexName ) );
-            String cappedCLName = FullTextDBUtils.getCappedName( subCL, textIndexName );
-            cappedCLNames.add( cappedCLName );
+        for (String subCLFullName : subCLFullNames) {
+            String subCSName = subCLFullName.split("\\.")[0];
+            String subCLName = subCLFullName.split("\\.")[1];
+            DBCollection subCL = sdb.getCollectionSpace(subCSName).getCollection(subCLName);
+            esIndexNames.addAll(FullTextDBUtils.getESIndexNames(subCL, textIndexName));
+            String cappedCLName = FullTextDBUtils.getCappedName(subCL, textIndexName);
+            cappedCLNames.add(cappedCLName);
         }
 
         Assert.assertTrue(
-                FullTextUtils.isMainCLIndexCreated( esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS ) );
-        System.out.println( "check fulltext of maincl shardingkey success when datas in one group!" );
+                FullTextUtils.isMainCLIndexCreated(esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS));
+        System.out.println("check fulltext of maincl shardingkey success when datas in one group!");
 
         // create fulltext of subcl shardingkey and non-shardingkey
-        FullTextDBUtils.dropFullTextIndex( maincl, textIndexName );
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedCLNames ) );
+        FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
 
         indexObj = new BasicBSONObject();
-        indexObj.put( "a0", "text" );
-        indexObj.put( "b", "text" );
-        indexObj.put( "c", "text" );
-        indexObj.put( "d", "text" );
-        indexObj.put( "e", "text" );
-        indexObj.put( "f", "text" );
-        maincl.createIndex( textIndexName, indexObj, false, false );
+        indexObj.put("a0", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
+        indexObj.put("f", "text");
+        maincl.createIndex(textIndexName, indexObj, false, false);
 
         Assert.assertTrue(
-                FullTextUtils.isMainCLIndexCreated( esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS ) );
-        System.out
-                .println( "check fulltext of subcl shardingkey and non-shardingkey success when datas in one group!" );
+                FullTextUtils.isMainCLIndexCreated(esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS));
+        System.out.println("check fulltext of subcl shardingkey and non-shardingkey success when datas in one group!");
 
-        FullTextDBUtils.dropFullTextIndex( maincl, textIndexName );
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedCLNames ) );
+        FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
         maincl.truncate();
 
         // insert more groups
-        insertDataMoreGroups( maincl, FullTextUtils.INSERT_NUMS );
+        insertDataMoreGroups(maincl, FullTextUtils.INSERT_NUMS);
 
         // create fulltext of maincl shardingkey
         indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        maincl.createIndex( textIndexName, indexObj, false, false );
+        indexObj.put("a", "text");
+        maincl.createIndex(textIndexName, indexObj, false, false);
 
         Assert.assertTrue(
-                FullTextUtils.isMainCLIndexCreated( esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS ) );
-        System.out.println( "check fulltext of maincl shardingkey success when datas in more groups!" );
+                FullTextUtils.isMainCLIndexCreated(esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS));
+        System.out.println("check fulltext of maincl shardingkey success when datas in more groups!");
 
         // create fulltext of subcl shardingkey and non-shardingkey
-        FullTextDBUtils.dropFullTextIndex( maincl, textIndexName );
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedCLNames ) );
+        FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
 
         indexObj = new BasicBSONObject();
-        indexObj.put( "a0", "text" );
-        indexObj.put( "b", "text" );
-        indexObj.put( "c", "text" );
-        indexObj.put( "d", "text" );
-        indexObj.put( "e", "text" );
-        indexObj.put( "f", "text" );
-        maincl.createIndex( textIndexName, indexObj, false, false );
+        indexObj.put("a0", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
+        indexObj.put("f", "text");
+        maincl.createIndex(textIndexName, indexObj, false, false);
 
         Assert.assertTrue(
-                FullTextUtils.isMainCLIndexCreated( esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS ) );
-        System.out.println(
-                "check fulltext of subcl shardingkey and non-shardingkey success when datas in more groups!" );
+                FullTextUtils.isMainCLIndexCreated(esClient, maincl, textIndexName, FullTextUtils.INSERT_NUMS));
+        System.out
+                .println("check fulltext of subcl shardingkey and non-shardingkey success when datas in more groups!");
 
-        FullTextDBUtils.dropFullTextIndex( maincl, textIndexName );
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedCLNames ) );
+        FullTextDBUtils.dropFullTextIndex(maincl, textIndexName);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCLNames));
     }
 
-    public void insertDataOneGroup( DBCollection cl, int insertNums ) {
+    public void insertDataOneGroup(DBCollection cl, int insertNums) {
         List<BSONObject> insertObjs = new ArrayList<>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( (BSONObject) JSON.parse( "{a: 'testa " + i * j + "', a0:" + "'test_11990 " + i * j
-                        + "', b: '" + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 )
-                        + "', d: '" + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 )
-                        + "', f: '" + StringUtils.getRandomString( 128 ) + "'}" ) );
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                insertObjs.add((BSONObject) JSON.parse("{a: 'testa " + i * j + "', a0:" + "'test_11990 " + i * j
+                        + "', b: '" + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64)
+                        + "', d: '" + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128)
+                        + "', f: '" + StringUtils.getRandomString(128) + "'}"));
             }
-            cl.insert( insertObjs, 0 );
+            cl.insert(insertObjs, 0);
             insertObjs.clear();
         }
     }
 
-    public void insertDataMoreGroups( DBCollection cl, int insertNums ) {
+    public void insertDataMoreGroups(DBCollection cl, int insertNums) {
         List<BSONObject> insertObjs = new ArrayList<>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 2 / 100; j++ ) {
-                insertObjs.add( (BSONObject) JSON.parse( "{a: 'testa " + i * j + "', a0:" + "'test_11990 " + i * j
-                        + "', b: '" + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 )
-                        + "', d: '" + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 )
-                        + "', f: '" + StringUtils.getRandomString( 128 ) + "'}" ) );
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 2 / 100; j++) {
+                insertObjs.add((BSONObject) JSON.parse("{a: 'testa " + i * j + "', a0:" + "'test_11990 " + i * j
+                        + "', b: '" + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64)
+                        + "', d: '" + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128)
+                        + "', f: '" + StringUtils.getRandomString(128) + "'}"));
             }
-            for ( int j = 0; j < insertNums / 2 / 100; j++ ) {
-                insertObjs.add( (BSONObject) JSON.parse( "{a: 'zzza " + i * j + "', a0:" + "'test_11990 " + i * j
-                        + "', b: '" + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 )
-                        + "', d: '" + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 )
-                        + "', f: '" + StringUtils.getRandomString( 128 ) + "'}" ) );
+            for (int j = 0; j < insertNums / 2 / 100; j++) {
+                insertObjs.add((BSONObject) JSON.parse("{a: 'zzza " + i * j + "', a0:" + "'test_11990 " + i * j
+                        + "', b: '" + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64)
+                        + "', d: '" + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128)
+                        + "', f: '" + StringUtils.getRandomString(128) + "'}"));
             }
-            cl.insert( insertObjs, 0 );
+            cl.insert(insertObjs, 0);
             insertObjs.clear();
         }
     }

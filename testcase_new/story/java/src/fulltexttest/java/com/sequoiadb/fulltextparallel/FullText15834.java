@@ -40,49 +40,49 @@ public class FullText15834 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
 
-        cs = sdb.getCollectionSpace( csName );
-        cl = cs.createCollection( clName );
+        cs = sdb.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
 
-        FullTextDBUtils.insertData( cl, insertNum );
+        FullTextDBUtils.insertData(cl, insertNum);
     }
 
     @Test(enabled = false)
     public void test() throws Exception {
 
-        ThreadExecutor thread = new ThreadExecutor( 600000 );
-        thread.addWorker( new CreateIndexThread() );
-        thread.addWorker( new AlterTableThread() );
+        ThreadExecutor thread = new ThreadExecutor(600000);
+        thread.addWorker(new CreateIndexThread());
+        thread.addWorker(new AlterTableThread());
         thread.run();
 
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
 
-        cappedName = FullTextDBUtils.getCappedName( cl, indexName );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
+        cappedName = FullTextDBUtils.getCappedName(cl, indexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
 
         checkSnapshotResult();
 
-        FullTextDBUtils.insertData( cl, insertNum );
+        FullTextDBUtils.insertData(cl, insertNum);
 
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum * 2 ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum * 2));
 
     }
 
     @AfterClass
     public void tearDown() throws Exception {
         try {
-            FullTextDBUtils.dropCollection( cs, clName );
-            FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName );
+            FullTextDBUtils.dropCollection(cs, clName);
+            FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName);
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -92,15 +92,15 @@ public class FullText15834 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void createIndex() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 BSONObject indexObj = new BasicBSONObject();
-                indexObj.put( "a", "text" );
-                indexObj.put( "b", "text" );
-                indexObj.put( "c", "text" );
-                indexObj.put( "d", "text" );
-                indexObj.put( "e", "text" );
-                cl.createIndex( indexName, indexObj, false, false );
+                indexObj.put("a", "text");
+                indexObj.put("b", "text");
+                indexObj.put("c", "text");
+                indexObj.put("d", "text");
+                indexObj.put("e", "text");
+                cl.createIndex(indexName, indexObj, false, false);
             }
         }
     }
@@ -109,26 +109,26 @@ public class FullText15834 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void alterTable() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 BSONObject options = new BasicBSONObject();
-                options.put( "ShardingType", "hash" );
-                options.put( "ShardingKey", new BasicBSONObject( "recordId", 1 ) );
-                options.put( "AutoSplit", true );
-                cl.alterCollection( options );
+                options.put("ShardingType", "hash");
+                options.put("ShardingKey", new BasicBSONObject("recordId", 1));
+                options.put("AutoSplit", true);
+                cl.alterCollection(options);
             }
         }
     }
 
     private void checkSnapshotResult() {
-        DBCursor snap = sdb.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG,
-                new BasicBSONObject( "Name", csName + "." + clName ), null, null );
+        DBCursor snap = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, new BasicBSONObject("Name", csName + "." + clName),
+                null, null);
         BSONObject clOption = snap.getNext();
-        String shardingType = (String) clOption.get( "ShardingType" );
-        BSONObject shardingKey = (BSONObject) clOption.get( "ShardingKey" );
+        String shardingType = (String) clOption.get("ShardingType");
+        BSONObject shardingKey = (BSONObject) clOption.get("ShardingKey");
         snap.close();
 
-        Assert.assertEquals( shardingType, "hash" );
-        Assert.assertEquals( shardingKey, new BasicBSONObject( "recordId", 1 ) );
+        Assert.assertEquals(shardingType, "hash");
+        Assert.assertEquals(shardingKey, new BasicBSONObject("recordId", 1));
     }
 }

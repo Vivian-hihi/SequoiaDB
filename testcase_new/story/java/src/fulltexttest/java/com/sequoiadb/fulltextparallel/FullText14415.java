@@ -35,61 +35,61 @@ public class FullText14415 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "STANDALONE MODE" );
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("STANDALONE MODE");
         }
 
-        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
-                Integer.parseInt( SdbTestBase.esServiceName ) );
-        cl = sdb.getCollectionSpace( csName ).createCollection( clName );
-        FullTextDBUtils.insertData( cl, 20000 );
-        cl.createIndex( "idx1", "{'d':1, 'e':1}", false, false );
-        cl.createIndex( "idx2", "{'a':1, 'b':1}", false, false );
+        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
+                Integer.parseInt(SdbTestBase.esServiceName));
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        FullTextDBUtils.insertData(cl, 20000);
+        cl.createIndex("idx1", "{'d':1, 'e':1}", false, false);
+        cl.createIndex("idx2", "{'a':1, 'b':1}", false, false);
     }
 
     @Test
     public void test() throws Exception {
-        ThreadExecutor thExecutor = new ThreadExecutor( 600000 );
-        thExecutor.addWorker( new CreateFullIdx() );
-        thExecutor.addWorker( new CreateIdx( "idx3", "{'d':1, 'f':1}" ) );
-        thExecutor.addWorker( new CreateIdx( "idx4", "{'b':1, 'c':1}" ) );
-        thExecutor.addWorker( new DropIdx( "idx1" ) );
-        thExecutor.addWorker( new DropIdx( "idx2" ) );
+        ThreadExecutor thExecutor = new ThreadExecutor(600000);
+        thExecutor.addWorker(new CreateFullIdx());
+        thExecutor.addWorker(new CreateIdx("idx3", "{'d':1, 'f':1}"));
+        thExecutor.addWorker(new CreateIdx("idx4", "{'b':1, 'c':1}"));
+        thExecutor.addWorker(new DropIdx("idx1"));
+        thExecutor.addWorker(new DropIdx("idx2"));
 
         thExecutor.run();
 
         // 主备节点上索引信息及固定集合信息一致，ES同步的索引数据正确
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIdxName, 20000 ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
 
         // 普通索引查询及全文检索
-        Sequoiadb db2 = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
-            DBCollection cl2 = db2.getCollectionSpace( csName ).getCollection( clName );
-            DBCursor dbCursor = cl.query( "{}", "{}", "{_id:1}", "{}" );
-            DBCursor esCursor = cl2.query( "{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
-                    "{'':'" + fullIdxName + "'}" );
-            Assert.assertTrue( FullTextUtils.isCLRecordsConsistency( dbCursor, esCursor ) );
+            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
+            DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
+            DBCursor esCursor = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
+                    "{'':'" + fullIdxName + "'}");
+            Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
         } finally {
-            if ( db2 != null ) {
+            if (db2 != null) {
                 db2.close();
             }
         }
 
         // 在db端执行插入、全文检索
-        Sequoiadb db3 = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        Sequoiadb db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
-            FullTextDBUtils.insertData( cl, 1000 );
-            Assert.assertEquals( cl.getCount(), 21000 );
-            Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIdxName, 21000 ) );
+            FullTextDBUtils.insertData(cl, 1000);
+            Assert.assertEquals(cl.getCount(), 21000);
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 21000));
 
-            DBCollection cl3 = db3.getCollectionSpace( csName ).getCollection( clName );
-            DBCursor dbCursor = cl.query( "{}", "{}", "{_id:1}", "{}" );
-            DBCursor esCursor = cl3.query( "{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
-                    "{'':'" + fullIdxName + "'}" );
-            Assert.assertTrue( FullTextUtils.isCLRecordsConsistency( dbCursor, esCursor ) );
+            DBCollection cl3 = db3.getCollectionSpace(csName).getCollection(clName);
+            DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
+            DBCursor esCursor = cl3.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
+                    "{'':'" + fullIdxName + "'}");
+            Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
         } finally {
-            if ( db3 != null ) {
+            if (db3 != null) {
                 db3.close();
             }
         }
@@ -98,14 +98,14 @@ public class FullText14415 extends SdbTestBase {
     @AfterClass
     public void tearDown() throws Exception {
         try {
-            CollectionSpace cs = sdb.getCollectionSpace( csName );
-            cs.dropCollection( clName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCLName ) );
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            cs.dropCollection(clName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -116,13 +116,13 @@ public class FullText14415 extends SdbTestBase {
         private void createFullIdx() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.createIndex( fullIdxName, "{'a':'text','b':'text','c':'text'}", false, false );
-                esIndexName = FullTextDBUtils.getESIndexName( cl, fullIdxName );
-                cappedCLName = FullTextDBUtils.getCappedName( cl, fullIdxName );
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text'}", false, false);
+                esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
+                cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
             } finally {
-                if ( db != null ) {
+                if (db != null) {
                     db.close();
                 }
             }
@@ -133,7 +133,7 @@ public class FullText14415 extends SdbTestBase {
         private String idxName;
         private String option;
 
-        private CreateIdx( String idxName, String option ) {
+        private CreateIdx(String idxName, String option) {
             this.idxName = idxName;
             this.option = option;
         }
@@ -142,13 +142,13 @@ public class FullText14415 extends SdbTestBase {
         private void createIdx() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                Assert.assertFalse( cl.isIndexExist( idxName ) );
-                cl.createIndex( idxName, option, false, false );
-                Assert.assertTrue( cl.isIndexExist( idxName ) );
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                Assert.assertFalse(cl.isIndexExist(idxName));
+                cl.createIndex(idxName, option, false, false);
+                Assert.assertTrue(cl.isIndexExist(idxName));
             } finally {
-                if ( db != null ) {
+                if (db != null) {
                     db.close();
                 }
             }
@@ -158,7 +158,7 @@ public class FullText14415 extends SdbTestBase {
     private class DropIdx {
         private String idxName;
 
-        private DropIdx( String idxName ) {
+        private DropIdx(String idxName) {
             this.idxName = idxName;
         }
 
@@ -166,13 +166,13 @@ public class FullText14415 extends SdbTestBase {
         private void dropIdx() {
             Sequoiadb db = null;
             try {
-                db = new Sequoiadb( coordUrl, "", "" );
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                Assert.assertTrue( cl.isIndexExist( idxName ) );
-                cl.dropIndex( idxName );
-                Assert.assertFalse( cl.isIndexExist( idxName ) );
+                db = new Sequoiadb(coordUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                Assert.assertTrue(cl.isIndexExist(idxName));
+                cl.dropIndex(idxName);
+                Assert.assertFalse(cl.isIndexExist(idxName));
             } finally {
-                if ( db != null ) {
+                if (db != null) {
                     db.close();
                 }
             }

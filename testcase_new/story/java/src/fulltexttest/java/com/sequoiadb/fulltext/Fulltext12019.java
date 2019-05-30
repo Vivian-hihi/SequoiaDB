@@ -44,30 +44,30 @@ public class Fulltext12019 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
-        ArrayList<String> groupsName = CommLib.getDataGroupNames( sdb );
-        if ( groupsName.size() < 2 ) {
-            throw new SkipException( "current environment less than tow groups " );
+        ArrayList<String> groupsName = CommLib.getDataGroupNames(sdb);
+        if (groupsName.size() < 2) {
+            throw new SkipException("current environment less than tow groups ");
         }
 
         // create range cl
-        srcGroupName = groupsName.get( 0 );
-        destGroupName = groupsName.get( 1 );
-        cs = sdb.getCollectionSpace( csName );
-        cl = cs.createCollection( clName,
-                (BSONObject) JSON.parse( "{ShardingKey:{a:1},ShardingType:'range',Group:'" + srcGroupName + "'}" ) );
+        srcGroupName = groupsName.get(0);
+        destGroupName = groupsName.get(1);
+        cs = sdb.getCollectionSpace(csName);
+        cl = cs.createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'range',Group:'" + srcGroupName + "'}"));
     }
 
     @AfterClass
     public void tearDown() throws Exception {
-        FullTextDBUtils.dropCollection( cs, clName );
+        FullTextDBUtils.dropCollection(cs, clName);
         // check fulltext deleted
-        if ( esIndexNames != null ) {
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
+        if (esIndexNames != null) {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedNames));
         }
         sdb.close();
         esClient.close();
@@ -76,41 +76,41 @@ public class Fulltext12019 extends SdbTestBase {
     @Test
     public void test() throws Exception {
         // insert large datas
-        insertData( cl, FullTextUtils.INSERT_NUMS );
+        insertData(cl, FullTextUtils.INSERT_NUMS);
 
         // split
-        cl.split( srcGroupName, destGroupName, 50 );
+        cl.split(srcGroupName, destGroupName, 50);
 
         // create fulltext, with shardingkey and non-shardingkey
         String textIndexName = "fulltext12019";
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        indexObj.put( "b", "text" );
-        indexObj.put( "c", "text" );
-        indexObj.put( "d", "text" );
-        indexObj.put( "e", "text" );
-        indexObj.put( "f", "text" );
-        cl.createIndex( textIndexName, indexObj, false, false );
+        indexObj.put("a", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
+        indexObj.put("f", "text");
+        cl.createIndex(textIndexName, indexObj, false, false);
 
         cappedNames = new ArrayList<String>();
-        cappedNames.add( FullTextDBUtils.getCappedName( cl, textIndexName ) );
-        esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
+        cappedNames.add(FullTextDBUtils.getCappedName(cl, textIndexName));
+        esIndexNames = FullTextDBUtils.getESIndexNames(cl, textIndexName);
 
         // check consistency
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS));
     }
 
-    public void insertData( DBCollection cl, int insertNums ) {
+    public void insertData(DBCollection cl, int insertNums) {
         List<BSONObject> insertObjs = new ArrayList<>();
-        for ( int i = 0; i < 100; i++ ) {
-            for ( int j = 0; j < insertNums / 100; j++ ) {
-                insertObjs.add( (BSONObject) JSON.parse( "{a: 'test_range12019_" + i * j + "', b: '"
-                        + StringUtils.getRandomString( 32 ) + "', c: '" + StringUtils.getRandomString( 64 ) + "', d: '"
-                        + StringUtils.getRandomString( 64 ) + "', e: '" + StringUtils.getRandomString( 128 ) + "', f: '"
-                        + StringUtils.getRandomString( 128 ) + "'}" ) );
+        for (int i = 0; i < 100; i++) {
+            for (int j = 0; j < insertNums / 100; j++) {
+                insertObjs.add((BSONObject) JSON.parse("{a: 'test_range12019_" + i * j + "', b: '"
+                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
+                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
+                        + StringUtils.getRandomString(128) + "'}"));
 
             }
-            cl.insert( insertObjs, 0 );
+            cl.insert(insertObjs, 0);
             insertObjs.clear();
         }
     }

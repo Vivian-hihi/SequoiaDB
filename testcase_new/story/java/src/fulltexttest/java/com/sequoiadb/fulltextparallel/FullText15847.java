@@ -48,55 +48,54 @@ public class FullText15847 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() throws Exception {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
-        cs = sdb.getCollectionSpace( csName );
-        cl = cs.createCollection( clName );
+        cs = sdb.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
 
-        FullTextDBUtils.insertData( cl, insertNum );
+        FullTextDBUtils.insertData(cl, insertNum);
 
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        indexObj.put( "b", "text" );
-        indexObj.put( "c", "text" );
-        indexObj.put( "d", "text" );
-        indexObj.put( "e", "text" );
-        cl.createIndex( indexName, indexObj, false, false );
+        indexObj.put("a", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
+        cl.createIndex(indexName, indexObj, false, false);
 
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
     }
 
     @Test
     public void test() throws Exception {//
 
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker( new TextIndexThread() );
-        thread.addWorker( new InsertThread() );
-        thread.addWorker( new UpdateThread() );
-        thread.addWorker( new DeleteThread() );
+        thread.addWorker(new TextIndexThread());
+        thread.addWorker(new InsertThread());
+        thread.addWorker(new UpdateThread());
+        thread.addWorker(new DeleteThread());
         thread.run();
 
-        Assert.assertTrue(
-                FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum - deleteNum + testInsertNum ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum - deleteNum + testInsertNum));
 
-        cappedName = FullTextDBUtils.getCappedName( cl, indexName );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
+        cappedName = FullTextDBUtils.getCappedName(cl, indexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
 
     }
 
     @AfterClass
     public void tearDown() throws Exception {
         try {
-            FullTextDBUtils.dropCollection( cs, clName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+            FullTextDBUtils.dropCollection(cs, clName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -107,19 +106,19 @@ public class FullText15847 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void createIndex() {
             BSONObject indexObj = new BasicBSONObject();
-            indexObj.put( "a", "text" );
-            indexObj.put( "b", "text" );
-            indexObj.put( "c", "text" );
-            indexObj.put( "d", "text" );
-            indexObj.put( "e", "text" );
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                for ( int i = 0; i < 5; i++ ) {
-                    cl.dropIndex( indexName );
-                    cl.createIndex( indexName, indexObj, false, false );
+            indexObj.put("a", "text");
+            indexObj.put("b", "text");
+            indexObj.put("c", "text");
+            indexObj.put("d", "text");
+            indexObj.put("e", "text");
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                for (int i = 0; i < 5; i++) {
+                    cl.dropIndex(indexName);
+                    cl.createIndex(indexName, indexObj, false, false);
                 }
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -147 && e.getErrorCode() != -190 ) {
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
                     throw e;
                 }
             }
@@ -130,20 +129,20 @@ public class FullText15847 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void insert() throws InterruptedException {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 List<BSONObject> insertObjs = new ArrayList<BSONObject>();
-                String strB = StringUtils.getRandomString( 8 );
-                String strC = StringUtils.getRandomString( 32 );
-                String strD = StringUtils.getRandomString( 64 );
+                String strB = StringUtils.getRandomString(8);
+                String strC = StringUtils.getRandomString(32);
+                String strD = StringUtils.getRandomString(64);
                 int insertNum1 = insertNum + testInsertNum / 10;
-                for ( int i = 0; i < 10; i++ ) {
-                    for ( int j = insertNum; j < insertNum1; j++ ) {
+                for (int i = 0; i < 10; i++) {
+                    for (int j = insertNum; j < insertNum1; j++) {
                         int recordNum = i * ( testInsertNum / 10 ) + j;
-                        insertObjs.add( (BSONObject) JSON.parse( "{recordId: " + recordNum + ", a: '" + clName
-                                + recordNum + "', b: '" + strB + "', c: '" + strC + "', d: '" + strD + "'}" ) );
+                        insertObjs.add((BSONObject) JSON.parse("{recordId: " + recordNum + ", a: '" + clName + recordNum
+                                + "', b: '" + strB + "', c: '" + strC + "', d: '" + strD + "'}"));
                     }
-                    cl.insert( insertObjs, 0 );
+                    cl.insert(insertObjs, 0);
                     insertObjs.clear();
                 }
             }
@@ -154,9 +153,9 @@ public class FullText15847 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void update() throws InterruptedException {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.update( "{recordId: {$gte: 0, $lt: " + updateNum + "}}", "{$set: {b: 'text'}}", null );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.update("{recordId: {$gte: 0, $lt: " + updateNum + "}}", "{$set: {b: 'text'}}", null);
             }
         }
     }
@@ -165,9 +164,9 @@ public class FullText15847 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void delete() throws InterruptedException {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.delete( "{recordId: {$gte: " + deleteNum + ", $lt: " + insertNum + "}}" );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.delete("{recordId: {$gte: " + deleteNum + ", $lt: " + insertNum + "}}");
             }
         }
     }

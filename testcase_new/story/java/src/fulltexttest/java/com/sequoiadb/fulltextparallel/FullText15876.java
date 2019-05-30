@@ -36,7 +36,7 @@ public class FullText15876 extends SdbTestBase {
     private final String CS_NAME = "cs_es_15876";
     private final String CL_NAME = "cl_es_15876";
     private final String IDX_NAME = "idx_es_15876";
-    private final BSONObject IDX_KEY = new BasicBSONObject( "a", "text" );
+    private final BSONObject IDX_KEY = new BasicBSONObject("a", "text");
     private final int RECS_NUM = 20000;
 
     private Sequoiadb sdb = null;
@@ -49,24 +49,24 @@ public class FullText15876 extends SdbTestBase {
 
     @BeforeClass
     private void setUp() throws Exception {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "Skip standAlone mode" );
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("Skip standAlone mode");
         }
 
-        if ( sdb.isCollectionSpaceExist( CS_NAME ) ) {
+        if (sdb.isCollectionSpaceExist(CS_NAME)) {
             // 清理后重新创建，避免前一次跑的结果对其有影响
-            sdb.dropCollectionSpace( CS_NAME );
+            sdb.dropCollectionSpace(CS_NAME);
         }
-        cs = sdb.createCollectionSpace( CS_NAME );
-        cl = cs.createCollection( CL_NAME );
-        cl.createIndex( IDX_NAME, IDX_KEY, false, false );
-        cappedCSName = FullTextDBUtils.getCappedName( cl, IDX_NAME );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, IDX_NAME );
+        cs = sdb.createCollectionSpace(CS_NAME);
+        cl = cs.createCollection(CL_NAME);
+        cl.createIndex(IDX_NAME, IDX_KEY, false, false);
+        cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
 
-        FullTextDBUtils.insertData( cl, RECS_NUM );
+        FullTextDBUtils.insertData(cl, RECS_NUM);
     }
 
     @Test
@@ -74,23 +74,23 @@ public class FullText15876 extends SdbTestBase {
         ThreadExecutor es = new ThreadExecutor();
         ThreadTruncate threadTruncate = new ThreadTruncate();
         ThreadDropCS threadDropCS = new ThreadDropCS();
-        es.addWorker( threadTruncate );
-        es.addWorker( threadDropCS );
+        es.addWorker(threadTruncate);
+        es.addWorker(threadDropCS);
         es.run();
 
         // check results
-        if ( threadDropCS.getRetCode() == 0 ) {
-            Assert.assertFalse( sdb.isCollectionSpaceExist( CS_NAME ) );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCSName ) );
-        } else if ( threadDropCS.getRetCode() != 0 ) {
+        if (threadDropCS.getRetCode() == 0) {
+            Assert.assertFalse(sdb.isCollectionSpaceExist(CS_NAME));
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
+        } else if (threadDropCS.getRetCode() != 0) {
             int cnt = (int) cl.getCount();
-            if ( threadTruncate.getRetCode() == 0 ) {
-                Assert.assertTrue( FullTextUtils.isFulltextRebuild( esClient, cl, IDX_NAME ) );
-                Assert.assertEquals( cnt, 0 );
-            } else if ( threadTruncate.getRetCode() != 0 ) {
-                Assert.assertEquals( cnt, RECS_NUM );
+            if (threadTruncate.getRetCode() == 0) {
+                Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
+                Assert.assertEquals(cnt, 0);
+            } else if (threadTruncate.getRetCode() != 0) {
+                Assert.assertEquals(cnt, RECS_NUM);
             }
-            Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, IDX_NAME, cnt ) );
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, cnt));
         }
     }
 
@@ -98,18 +98,18 @@ public class FullText15876 extends SdbTestBase {
     private void tearDown() throws Exception {
         try {
             try {
-                sdb.dropCollectionSpace( CS_NAME );
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -34 ) {
+                sdb.dropCollectionSpace(CS_NAME);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -34) {
                     throw e;
                 }
             }
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCSName ) );
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -118,17 +118,17 @@ public class FullText15876 extends SdbTestBase {
     private class ThreadTruncate extends ResultStore {
         @ExecuteOrder(step = 1)
         private void truncate() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl2 = db.getCollectionSpace( CS_NAME ).getCollection( CL_NAME );
-                System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl2 = db.getCollectionSpace(CS_NAME).getCollection(CL_NAME);
+                System.out.println(new Date() + " begin " + this.getClass().getName().toString());
                 cl2.truncate();
-                System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -23 && e.getErrorCode() != -248 && e.getErrorCode() != -190
-                        && e.getErrorCode() != -147 ) {
+                System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -23 && e.getErrorCode() != -248 && e.getErrorCode() != -190
+                        && e.getErrorCode() != -147) {
                     throw e;
                 }
-                saveResult( -1, e );
+                saveResult(-1, e);
             }
         }
     }
@@ -136,16 +136,16 @@ public class FullText15876 extends SdbTestBase {
     private class ThreadDropCS extends ResultStore {
         @ExecuteOrder(step = 1)
         private void dropCS() throws InterruptedException {
-            Thread.sleep( random.nextInt( 10 ) );
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                System.out.println( new Date() + " begin " + this.getClass().getName().toString() );
-                db.dropCollectionSpace( CS_NAME );
-                System.out.println( new Date() + " end   " + this.getClass().getName().toString() );
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -147 && e.getErrorCode() != -190 && e.getErrorCode() != -321 ) {
+            Thread.sleep(random.nextInt(10));
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                System.out.println(new Date() + " begin " + this.getClass().getName().toString());
+                db.dropCollectionSpace(CS_NAME);
+                System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -147 && e.getErrorCode() != -190 && e.getErrorCode() != -321) {
                     throw e;
                 }
-                saveResult( -1, e );
+                saveResult(-1, e);
             }
         }
     }

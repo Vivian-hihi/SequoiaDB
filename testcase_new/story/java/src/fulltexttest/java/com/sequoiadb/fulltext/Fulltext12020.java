@@ -38,42 +38,42 @@ public class Fulltext12020 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "StandAlone environment!" );
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("StandAlone environment!");
         }
-        if ( CommLib.OneGroupMode( sdb ) ) {
-            throw new SkipException( "current environment less than tow groups " );
+        if (CommLib.OneGroupMode(sdb)) {
+            throw new SkipException("current environment less than tow groups ");
         }
 
-        List<String> groupsName = CommLib.getDataGroupNames( sdb );
-        srcGroup = groupsName.get( 0 );
-        desGroup = groupsName.get( 1 );
+        List<String> groupsName = CommLib.getDataGroupNames(sdb);
+        srcGroup = groupsName.get(0);
+        desGroup = groupsName.get(1);
 
-        cl = sdb.getCollectionSpace( csName ).createCollection( clName,
-                (BSONObject) JSON.parse( "{ShardingType:'hash', ShardingKey:{a:1}, Group:'" + srcGroup + "'}" ) );
-        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
-                Integer.parseInt( SdbTestBase.esServiceName ) );
+        cl = sdb.getCollectionSpace(csName).createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingType:'hash', ShardingKey:{a:1}, Group:'" + srcGroup + "'}"));
+        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
+                Integer.parseInt(SdbTestBase.esServiceName));
     }
 
     @Test
     public void test() throws Exception {
-        cl.createIndex( fullTextIndexName,
-                (BSONObject) JSON.parse( "{a : 'text', b : 'text', c : 'text', d : 'text'}" ), false, false );
-        cappedName = FullTextDBUtils.getCappedName( cl, fullTextIndexName );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, fullTextIndexName );
-        cl.split( srcGroup, desGroup, 50 );
-        FullTextDBUtils.insertData( cl, FullTextUtils.INSERT_NUMS );
-        Assert.assertEquals( FullTextDBUtils.getCLGroups( cl ).size(), 2 );
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullTextIndexName, FullTextUtils.INSERT_NUMS ) );
+        cl.createIndex(fullTextIndexName, (BSONObject) JSON.parse("{a : 'text', b : 'text', c : 'text', d : 'text'}"),
+                false, false);
+        cappedName = FullTextDBUtils.getCappedName(cl, fullTextIndexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, fullTextIndexName);
+        cl.split(srcGroup, desGroup, 50);
+        FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
+        Assert.assertEquals(FullTextDBUtils.getCLGroups(cl).size(), 2);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullTextIndexName, FullTextUtils.INSERT_NUMS));
     }
 
     @AfterClass
     public void tearDown() throws Exception {
         try {
-            CollectionSpace cs = sdb.getCollectionSpace( csName );
-            FullTextDBUtils.dropCollection( cs, clName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            FullTextDBUtils.dropCollection(cs, clName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         } finally {
             sdb.close();
             esClient.close();

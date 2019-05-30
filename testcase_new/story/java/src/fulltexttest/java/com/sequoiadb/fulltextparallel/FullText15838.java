@@ -43,53 +43,53 @@ public class FullText15838 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
-        List<String> groupNames = CommLib.getDataGroupNames( sdb );
-        if ( groupNames.size() < 2 ) {
-            throw new SkipException( "group less 2" );
+        List<String> groupNames = CommLib.getDataGroupNames(sdb);
+        if (groupNames.size() < 2) {
+            throw new SkipException("group less 2");
         }
-        sourceGruop = groupNames.get( 0 );
-        targetGruop = groupNames.get( 1 );
-        cs = sdb.getCollectionSpace( csName );
+        sourceGruop = groupNames.get(0);
+        targetGruop = groupNames.get(1);
+        cs = sdb.getCollectionSpace(csName);
         BSONObject options = new BasicBSONObject();
-        options.put( "ShardingType", "range" );
-        options.put( "ShardingKey", new BasicBSONObject( "recordId", 1 ) );
-        options.put( "Group", sourceGruop );
-        cl = cs.createCollection( clName, options );
+        options.put("ShardingType", "range");
+        options.put("ShardingKey", new BasicBSONObject("recordId", 1));
+        options.put("Group", sourceGruop);
+        cl = cs.createCollection(clName, options);
 
-        FullTextDBUtils.insertData( cl, insertNum );
+        FullTextDBUtils.insertData(cl, insertNum);
     }
 
     @Test
     public void test() throws Exception {
 
-        ThreadExecutor thread = new ThreadExecutor( 600000 );
-        thread.addWorker( new CreateIndexThread() );
-        thread.addWorker( new SplitThread() );
+        ThreadExecutor thread = new ThreadExecutor(600000);
+        thread.addWorker(new CreateIndexThread());
+        thread.addWorker(new SplitThread());
         thread.run();
 
         checkSplitResult();
 
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
     }
 
     @AfterClass
     public void tearDown() throws Exception {
         try {
             List<String> cappedNames = new ArrayList<String>();
-            cappedNames.add( FullTextDBUtils.getCappedName( cl, indexName ) );
-            List<String> esIndexNames = FullTextDBUtils.getESIndexNames( cl, indexName );
-            FullTextDBUtils.dropCollection( cs, clName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexNames, cappedNames ) );
+            cappedNames.add(FullTextDBUtils.getCappedName(cl, indexName));
+            List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, indexName);
+            FullTextDBUtils.dropCollection(cs, clName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedNames));
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -99,15 +99,15 @@ public class FullText15838 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void createIndex() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 BSONObject indexObj = new BasicBSONObject();
-                indexObj.put( "a", "text" );
-                indexObj.put( "b", "text" );
-                indexObj.put( "c", "text" );
-                indexObj.put( "d", "text" );
-                indexObj.put( "e", "text" );
-                cl.createIndex( indexName, indexObj, false, false );
+                indexObj.put("a", "text");
+                indexObj.put("b", "text");
+                indexObj.put("c", "text");
+                indexObj.put("d", "text");
+                indexObj.put("e", "text");
+                cl.createIndex(indexName, indexObj, false, false);
             }
         }
     }
@@ -116,23 +116,23 @@ public class FullText15838 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void splitTable() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.split( sourceGruop, targetGruop, 50 );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.split(sourceGruop, targetGruop, 50);
             }
         }
     }
 
     private void checkSplitResult() {
-        ReplicaGroup sourceRG = sdb.getReplicaGroup( sourceGruop );
-        ReplicaGroup targetRG = sdb.getReplicaGroup( targetGruop );
+        ReplicaGroup sourceRG = sdb.getReplicaGroup(sourceGruop);
+        ReplicaGroup targetRG = sdb.getReplicaGroup(targetGruop);
         Sequoiadb sdb1 = sourceRG.getMaster().connect();
         Sequoiadb sdb2 = targetRG.getMaster().connect();
-        DBCollection cl1 = sdb1.getCollectionSpace( csName ).getCollection( clName );
-        DBCollection cl2 = sdb2.getCollectionSpace( csName ).getCollection( clName );
+        DBCollection cl1 = sdb1.getCollectionSpace(csName).getCollection(clName);
+        DBCollection cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
 
-        Assert.assertEquals( cl1.getCount(), insertNum / 2 );
-        Assert.assertEquals( cl2.getCount(), insertNum / 2 );
+        Assert.assertEquals(cl1.getCount(), insertNum / 2);
+        Assert.assertEquals(cl2.getCount(), insertNum / 2);
     }
 
 }

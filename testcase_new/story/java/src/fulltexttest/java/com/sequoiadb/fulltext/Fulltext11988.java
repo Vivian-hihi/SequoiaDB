@@ -39,59 +39,59 @@ public class Fulltext11988 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "StandAlone environment!" );
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("StandAlone environment!");
         }
-        groupNames = CommLib.getDataGroupNames( sdb );
-        if ( CommLib.OneGroupMode( sdb ) ) {
-            throw new SkipException( "ONE GROUP MODE" );
+        groupNames = CommLib.getDataGroupNames(sdb);
+        if (CommLib.OneGroupMode(sdb)) {
+            throw new SkipException("ONE GROUP MODE");
         }
 
-        if ( sdb.isCollectionSpaceExist( csName ) ) {
-            sdb.dropCollectionSpace( csName );
+        if (sdb.isCollectionSpaceExist(csName)) {
+            sdb.dropCollectionSpace(csName);
         }
-        if ( sdb.isDomainExist( doMainName ) ) {
-            sdb.dropDomain( doMainName );
+        if (sdb.isDomainExist(doMainName)) {
+            sdb.dropDomain(doMainName);
         }
 
         // hash切分表加入域使用自动切分
-        sdb.createDomain( doMainName,
-                (BSONObject) JSON.parse( "{Groups:['" + groupNames.get( 0 ) + "', '" + groupNames.get( 1 ) + "']}" ) );
-        CollectionSpace cs = sdb.createCollectionSpace( csName, (BSONObject) JSON.parse( "{Domain:'doMain11988'}" ) );
-        cl = cs.createCollection( clName,
-                (BSONObject) JSON.parse( "{ShardingKey:{a:1}, ShardingType:'hash', AutoSplit:true}" ) );
-        esClient = FullTextESUtils.createTransportClient( SdbTestBase.esHostName,
-                Integer.parseInt( SdbTestBase.esServiceName ) );
+        sdb.createDomain(doMainName,
+                (BSONObject) JSON.parse("{Groups:['" + groupNames.get(0) + "', '" + groupNames.get(1) + "']}"));
+        CollectionSpace cs = sdb.createCollectionSpace(csName, (BSONObject) JSON.parse("{Domain:'doMain11988'}"));
+        cl = cs.createCollection(clName,
+                (BSONObject) JSON.parse("{ShardingKey:{a:1}, ShardingType:'hash', AutoSplit:true}"));
+        esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
+                Integer.parseInt(SdbTestBase.esServiceName));
     }
 
     @Test
     public void test() throws Exception {
-        FullTextDBUtils.insertData( cl, FullTextUtils.INSERT_NUMS );
+        FullTextDBUtils.insertData(cl, FullTextUtils.INSERT_NUMS);
 
         // 创建全文索引，索引字段覆盖：分区键、非分区键
         String indexKey = "{\"a\":\"text\",\"b\":\"text\",\"c\":\"text\",\"d\":\"text\",\"e\":\"text\",\"g\":\"text\"}";
-        cl.createIndex( fullIndexName, indexKey, false, false );
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS ) );
-        esIndexName = FullTextDBUtils.getESIndexName( cl, fullIndexName );
-        cappedCLName = FullTextDBUtils.getCappedName( cl, fullIndexName );
+        cl.createIndex(fullIndexName, indexKey, false, false);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIndexName, FullTextUtils.INSERT_NUMS));
+        esIndexName = FullTextDBUtils.getESIndexName(cl, fullIndexName);
+        cappedCLName = FullTextDBUtils.getCappedName(cl, fullIndexName);
 
         // 删除索引
-        FullTextDBUtils.dropFullTextIndex( cl, fullIndexName );
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCLName ) );
+        FullTextDBUtils.dropFullTextIndex(cl, fullIndexName);
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
     }
 
     @AfterClass
     public void tearDown() throws Exception {
         try {
-            FullTextDBUtils.dropCollectionSpace( sdb, csName );
-            sdb.dropDomain( doMainName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedCLName ) );
+            FullTextDBUtils.dropCollectionSpace(sdb, csName);
+            sdb.dropDomain(doMainName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }

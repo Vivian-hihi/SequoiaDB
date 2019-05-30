@@ -42,22 +42,22 @@ public class FullText15841 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient( esHostName, Integer.parseInt( esServiceName ) );
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        if ( CommLib.isStandAlone( sdb ) ) {
-            throw new SkipException( "skip StandAlone" );
+        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (CommLib.isStandAlone(sdb)) {
+            throw new SkipException("skip StandAlone");
         }
-        cs = sdb.getCollectionSpace( csName );
-        cl = cs.createCollection( clName );
+        cs = sdb.getCollectionSpace(csName);
+        cl = cs.createCollection(clName);
 
-        FullTextDBUtils.insertData( cl, insertNum );
+        FullTextDBUtils.insertData(cl, insertNum);
 
         indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        indexObj.put( "b", "text" );
-        indexObj.put( "c", "text" );
-        indexObj.put( "d", "text" );
-        indexObj.put( "e", "text" );
+        indexObj.put("a", "text");
+        indexObj.put("b", "text");
+        indexObj.put("c", "text");
+        indexObj.put("d", "text");
+        indexObj.put("e", "text");
     }
 
     @Test
@@ -66,16 +66,16 @@ public class FullText15841 extends SdbTestBase {
         ThreadExecutor thread = new ThreadExecutor();
         CreateIndexThread createIndexThread = new CreateIndexThread();
         TruncateThread truncateThread = new TruncateThread();
-        thread.addWorker( createIndexThread );
-        thread.addWorker( truncateThread );
+        thread.addWorker(createIndexThread);
+        thread.addWorker(truncateThread);
         thread.run();
-        if ( createIndexThread.getRetCode() != 0 ) {
-            cl.createIndex( indexName, indexObj, false, false );
+        if (createIndexThread.getRetCode() != 0) {
+            cl.createIndex(indexName, indexObj, false, false);
         }
-        if ( truncateThread.getRetCode() == 0 ) {
-            Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, 0 ) );
+        if (truncateThread.getRetCode() == 0) {
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, 0));
         } else {
-            Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, indexName, insertNum ) );
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
         }
 
     }
@@ -83,15 +83,15 @@ public class FullText15841 extends SdbTestBase {
     @AfterClass
     public void tearDown() throws Exception {
         try {
-            String cappedName = FullTextDBUtils.getCappedName( cl, indexName );
-            String esIndexName = FullTextDBUtils.getESIndexName( cl, indexName );
-            FullTextDBUtils.dropCollection( cs, clName );
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
+            String cappedName = FullTextDBUtils.getCappedName(cl, indexName);
+            String esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
+            FullTextDBUtils.dropCollection(cs, clName);
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         } finally {
-            if ( sdb != null ) {
+            if (sdb != null) {
                 sdb.close();
             }
-            if ( esClient != null ) {
+            if (esClient != null) {
                 esClient.close();
             }
         }
@@ -101,14 +101,14 @@ public class FullText15841 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void createIndex() {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
-                cl.createIndex( indexName, indexObj, false, false );
-            } catch ( BaseException e ) {
-                if ( e.getErrorCode() != -321 ) {
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                cl.createIndex(indexName, indexObj, false, false);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -321) {
                     throw e;
                 }
-                saveResult( -1, e );
+                saveResult(-1, e);
             }
         }
     }
@@ -117,13 +117,13 @@ public class FullText15841 extends SdbTestBase {
 
         @ExecuteOrder(step = 1)
         private void truncate() throws InterruptedException {
-            try ( Sequoiadb db = new Sequoiadb( SdbTestBase.coordUrl, "", "" ) ) {
-                Thread.sleep( 1000 + new Random().nextInt( 100 ) );
-                DBCollection cl = db.getCollectionSpace( csName ).getCollection( clName );
+            try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+                Thread.sleep(1000 + new Random().nextInt(100));
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.truncate();
-            } catch ( BaseException e ) {
+            } catch (BaseException e) {
                 e.printStackTrace();
-                saveResult( -1, e );
+                saveResult(-1, e);
             }
         }
     }
