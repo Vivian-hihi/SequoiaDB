@@ -619,9 +619,13 @@ public class FullTextUtils {
                     }
                     cur.close();
 
-                    if (dataCommitLSN == checkdataCommitLSN && indexCommitLSN == checkindexCommitLSN
-                            && lobCommitLSN == checklobCommitLSN && checkdataCommitted && checkindexCommitted
-                            && checklobCommitted) {
+                    // TODO SEQUOIADBMAINSTREAM-4533 主节点 IndexCommitLSN 小于备节点
+                    // if (dataCommitLSN == checkdataCommitLSN && indexCommitLSN
+                    // == checkindexCommitLSN
+                    // && lobCommitLSN == checklobCommitLSN &&
+                    // checkdataCommitted && checkindexCommitted
+                    // && checklobCommitted) {
+                    if (checkdataCommitted && checkindexCommitted && checklobCommitted) {
                         isConsistency = true;
                         break;
                     }
