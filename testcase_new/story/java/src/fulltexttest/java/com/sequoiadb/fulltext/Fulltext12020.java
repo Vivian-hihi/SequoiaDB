@@ -64,11 +64,11 @@ public class Fulltext12020 extends SdbTestBase {
         int srcCount = getData(srcGroup);
         if(FullTextDBUtils.getCLGroups(cl).size() != 2 || (desCount+srcCount) != FullTextUtils.INSERT_NUMS){
             Assert.fail("split failed!");
-        }
+        } // TODO if里面的判断可以直接用assert.assertEquals，这里用assert.fail不合适，失败不指定哪个语句失败也不知道预期和实际结果是怎么的
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl, fullTextIndexName, FullTextUtils.INSERT_NUMS ) );
     }
     
-    public int getData(String group){
+    public int getData(String group){// TODO 直接cl.count就可以了，默认就是在主节点读的
         Sequoiadb dataDb = null;
         DBCollection cl = null;
         int count = 0;
@@ -77,7 +77,7 @@ public class Fulltext12020 extends SdbTestBase {
             cl = dataDb.getCollectionSpace(csName).getCollection(clName);
             count = (int)cl.getCount();
         }catch(Exception e){
-            e.printStackTrace();
+            e.printStackTrace();// TODO 这种写法慎用，貌似没有场景不需要抛异常的
         }finally {
             if( !dataDb.isClosed()){
                 dataDb.close();
@@ -93,7 +93,7 @@ public class Fulltext12020 extends SdbTestBase {
             FullTextDBUtils.dropCollection( cs, clName );
             Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
         }catch(Exception e){
-            e.printStackTrace();
+            e.printStackTrace();// TODO 这种写法慎用，貌似没有场景不需要抛异常的
         }finally {
             sdb.close(); 
             esClient.close();

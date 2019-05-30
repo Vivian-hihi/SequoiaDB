@@ -34,7 +34,7 @@ public class Fulltext12021 extends SdbTestBase {
     private String esIndexName = null;
 
     @BeforeClass
-    public void setUp() {
+    public void setUp() {// TODO 同 12020
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
