@@ -1,59 +1,37 @@
-// insert record.
-// normal case.
-try
+/******************************************************************************
+*@Description : seqDB-12131:插入数据为特殊字符
+                seqDB-12132:插入数据为多层嵌套对象
+                seqDB-12137:插入记录值为中文字符                
+*@Author      : 2019-5-29  wuyan modify
+******************************************************************************/
+main();
+function main()
 {
-   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true, "drop cl in the beginning" ) ;
-}
-catch(e)
-{
-   println( "unexpected err happened when clear cs:" + e ) ;
-   throw e ;
-}
-
-try{
-var claSize = new RSize( COMMCSNAME );
-var varCS = commCreateCS( db, COMMCSNAME, true, "create CS in the beginning" );
-var varCL = varCS.createCL(COMMCLNAME,{ReplSize:claSize.ReplSize(),Compressed:true});
-}catch( e ){
-   throw e ;	
-}
- var insert_string = {"!@#%^&":"&*()?><"} ; 
-
-try
-{
-   varCL.insert(insert_string) ;
-}
-catch ( e )
-{
-   println( "failed to insert record, rc= " + e ) ;
-   throw e ;
+     var clName = "insert12131";
+     var cl = readyCL( clName );
+     
+     var expRecords = insertRecords( cl);     
+     var actRecords = cl.find().sort({no:1}); 
+     checkRec( actRecords, expRecords );
+     
+     cleanCL( clName );   	
 }
 
-
-try
+function insertRecords( cl)
 {
-   if (varCL.count() != 1)
-      throw "number error";
-   robj = varCL.find().next().toObj() ;
-   if (!compareObj(insert_string, robj))
-      throw "compare failed";
-}
-catch ( e )
-{
-   println( "failed to read record, rc= " + e ) ;
-   throw e ;
-}
-// rc = rc.toArray();
-// if( 1 != rc.length ){
-//    throw -1 ; 	
-// } 
-
-try
-{
-   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true, "drop cl in the end" ) ;
-}
-catch ( e )
-{
-   println( "failed to drop cs, rc= " + e ) ;
-   throw e ;
+   println("---begin to insert records.");
+   //test testcase-12131:插入数据为特殊字符
+   var insertObj1 = {"no":0,"!@#%^&":"&*()?><"};    
+   //test testcase-12132:插入数据为多层嵌套对象 
+   var objValue = {"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":100}}}}}}}}}};
+   //test testcase-12137:插入数据为中文字符
+   var insertObj2 = {"no":2,name:"赵钱孙李陈"}; ;
+   
+   var doc = [];
+   doc.push(insertObj1);
+   doc.push({"no": 1, obj: objValue});
+   doc.push(insertObj2);
+   cl.insert(doc);
+     
+   return doc;
 }
