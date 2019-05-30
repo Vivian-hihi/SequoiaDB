@@ -34,7 +34,7 @@ public class Fulltext12021 extends SdbTestBase {
     private String esIndexName = null;
 
     @BeforeClass
-    public void setUp() {// TODO 同 12020
+    public void setUp() {
         sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
         if ( CommLib.isStandAlone( sdb ) ) {
             throw new SkipException( "StandAlone environment!" );
@@ -54,7 +54,7 @@ public class Fulltext12021 extends SdbTestBase {
     }
 
     @Test
-    public void test() throws Exception {// TOTO range切分表建议补充检查： 集合被切分到目标组，且源组和目标组数据正确（range表源组和目标组数据很明确）
+    public void test() throws Exception {
         cl.createIndex( fullTextIndexName,
                 (BSONObject) JSON.parse( "{a : 'text', b : 'text', c : 'text', d : 'text'}" ),false, false );
         cappedName = FullTextDBUtils.getCappedName( cl, fullTextIndexName ) ;
@@ -75,12 +75,8 @@ public class Fulltext12021 extends SdbTestBase {
             cl = dataDb.getCollectionSpace(csName).getCollection(clName);
             count = cl.getCount(matcher);
             Assert.assertEquals(count, expectedCount);
-        }catch(Exception e){
-            e.printStackTrace();
         }finally {
-            if( !dataDb.isClosed()){
-                dataDb.close();
-            }
+            dataDb.close();
         }
     }
 
@@ -90,8 +86,6 @@ public class Fulltext12021 extends SdbTestBase {
             CollectionSpace cs = sdb.getCollectionSpace( csName );
             FullTextDBUtils.dropCollection( cs, clName );
             Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient, esIndexName, cappedName ) );
-        }catch(Exception e){
-            e.printStackTrace();
         }finally {
             sdb.close(); 
             esClient.close();
