@@ -191,9 +191,7 @@ public class FullText15874 extends SdbTestBase {
                             cursor.getNext();
                         }
                     } catch (BaseException e) {
-                        // -52 Index does not exist, maybe index rebuilding
-                        // after truncate
-                        if (e.getErrorCode() != -321 && e.getErrorCode() != -52) {
+                        if (e.getErrorCode() != -321 && e.getErrorCode() != -52 && e.getErrorCode() != -6) {
                             throw e;
                         }
                         Thread.sleep(random.nextInt(50));
