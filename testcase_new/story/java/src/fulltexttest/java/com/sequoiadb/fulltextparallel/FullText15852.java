@@ -36,7 +36,7 @@ import com.sequoiadb.utils.StringUtils;
  */
 
 public class FullText15852 extends SdbTestBase {
-    private final int TIMEOUT = 300000; // 5min
+    private final int TIMEOUT = 600000;
     
     private final String CL_NAME = "cl_es_15852";
     private final int INSERT_RECS_NUM = 20000;

@@ -33,7 +33,7 @@ import com.sequoiadb.utils.StringUtils;
 
 public class FullText15856 extends SdbTestBase {
     private final int THREAD_NUM = 5;
-    private final int TIMEOUT = 300000; // 5min
+    private final int TIMEOUT = 600000;
     private final String CL_NAME = "cl_es_15856";
     private final String IDX_NAME = "idx_es_15856";
     private final BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:'text',b:'text',c:'text'}");

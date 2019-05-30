@@ -107,7 +107,7 @@ public class FullText15858 extends SdbTestBase {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
                 cl2.truncate();
             } catch (BaseException e) {
-                if (e.getErrorCode() != -321) {
+                if (e.getErrorCode() != -321 && e.getErrorCode() != -190) {
                     throw e;
                 }
             }

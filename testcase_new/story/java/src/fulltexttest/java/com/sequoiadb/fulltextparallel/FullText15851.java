@@ -37,7 +37,7 @@ import com.sequoiadb.utils.StringUtils;
  */
 
 public class FullText15851 extends SdbTestBase {
-    private final int TIMEOUT = 300000; // 5min
+    private final int TIMEOUT = 600000;
     private Random random = new Random();
     
     private final String CL_NAME = "cl_es_15851";

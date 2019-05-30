@@ -29,7 +29,7 @@ import com.sequoiadb.utils.FullTextUtils;
  */
 
 public class FullText15855 extends SdbTestBase {
-    private final int TIMEOUT = 300000; // 5min
+    private final int TIMEOUT = 600000;
     private final int THREAD_NUM = 2;
     private final String CL_NAME = "cl_es_15855";
     private final String IDX_NAME = "idx_es_15855";
