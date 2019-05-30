@@ -85,6 +85,7 @@ public class FullText15874 extends SdbTestBase {
         // check results
         if (threadTruncate.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
+            System.out.println(this.getClass().getName() + " rebuild fulltext finished.");
         } 
         int cnt = (int) cl.getCount();
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, cnt));

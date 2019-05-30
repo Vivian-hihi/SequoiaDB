@@ -118,6 +118,7 @@ public class FullText15853 extends SdbTestBase {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
+            sdb.dropCollectionSpace(CS_NAME);
         } finally {
             if (sdb != null) {
                 sdb.close();

@@ -23,7 +23,6 @@ import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
-import com.vividsolutions.jts.util.Assert;
 
 /**
  * @FileName seqDB-18259:同一集合并发创建删除相同的普通索引
@@ -124,18 +123,29 @@ public class FullText18259 extends SdbTestBase {
         }
     }
 
-    private void checkData() {
+    private void checkData() throws InterruptedException {
         List<String> rgNames = FullTextDBUtils.getCLGroups(cl);
         for (String rgName : rgNames) {
-            Sequoiadb master = null;
-            Sequoiadb slave = null;
-            master = sdb.getReplicaGroup(rgName).getMaster().connect();
-            slave = sdb.getReplicaGroup(rgName).getSlave().connect();
+            Sequoiadb master = sdb.getReplicaGroup(rgName).getMaster().connect();
+            Sequoiadb slave = sdb.getReplicaGroup(rgName).getSlave().connect();
+            DBCollection mcl = master.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+            DBCollection scl = slave.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+            int mCnt;
+            int sCnt;
             try {
-                int mCnt = (int) master.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME).getCount();
-                int sCnt = (int) slave.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME).getCount();
-                Assert.equals(mCnt, RECS_NUM);
-                Assert.equals(sCnt, RECS_NUM);
+                int retryTimes = 0;
+                while (retryTimes >= 600) {
+                    mCnt = (int) mcl.getCount();
+                    sCnt = (int) scl.getCount();
+                    if (mCnt == sCnt && mCnt == RECS_NUM) {
+                        break;
+                    } else {
+                        Thread.sleep(100);
+                        retryTimes++;
+                    }
+                    System.out.println(CL_NAME + " check timeout, mCnt:" + mCnt + ", sCnt:" + sCnt 
+                            + ", expCnt:" + RECS_NUM);
+                }
             } finally {
                 master.close();
                 slave.close();
