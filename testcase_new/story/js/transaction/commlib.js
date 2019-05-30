@@ -4,6 +4,8 @@
    2014-4-1 YiBang Ruan  Init
 ***************************************************************************** */
 
+import ( "../lib/fulltext_commlib.js" );
+
 var CREATEINDEXSYNCOPERATION = 0;
 var DELETEINDEXSYNCOPERATION = 1;
 

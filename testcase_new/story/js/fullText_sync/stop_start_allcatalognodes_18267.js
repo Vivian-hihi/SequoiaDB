@@ -5,7 +5,6 @@
 *@testlinkCase: seqDB-18267
 **************************************/
 
-import( "../fullText/commlib.js" ) ;
 function main()
 {
    if(commIsStandalone(db))  {   return ;   } 
