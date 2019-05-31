@@ -2,6 +2,7 @@ package com.sequoiadb.fulltextparallel;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -49,14 +50,14 @@ public class FullText15854 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
-    private String cappedCSName;
+    private List<String> cappedCSNames = new ArrayList<String>();
     private String srcRgName;
     private String dstRgName;
     private ArrayList<ObjectId> lobIds1 = new ArrayList<>();
     private ArrayList<ObjectId> lobIds2 = new ArrayList<>();
 
     private Client esClient = null;
-    private String esIndexName;
+    private List<String> esIndexNames;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -78,8 +79,8 @@ public class FullText15854 extends SdbTestBase {
         options.put("Group", srcRgName);
         cl = cs.createCollection(CL_NAME, options);
         cl.createIndex(FULLTEXT_IDX_NAME, FULLTEXT_IDX_KEY, false, false);
-        cappedCSName = FullTextDBUtils.getCappedName(cl, FULLTEXT_IDX_NAME);
-        esIndexName = FullTextDBUtils.getESIndexName(cl, FULLTEXT_IDX_NAME);
+        cappedCSNames.add(FullTextDBUtils.getCappedName( cl, FULLTEXT_IDX_NAME ));
+        esIndexNames = FullTextDBUtils.getESIndexNames( cl, FULLTEXT_IDX_NAME );
 
         FullTextDBUtils.insertData(cl, INSERT_RECS_NUM);
 
@@ -118,7 +119,7 @@ public class FullText15854 extends SdbTestBase {
     private void tearDown() throws Exception {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCSNames));
         } finally {
             if (sdb != null) {
                 sdb.close();
@@ -377,6 +378,8 @@ public class FullText15854 extends SdbTestBase {
             System.out.println(new Date() + " begin " + this.getClass().getName().toString());
             cl2.split(srcRgName, dstRgName, 50);
             System.out.println(new Date() + " end   " + this.getClass().getName().toString());
+            // 切分后源组和目标组均有全文索引
+            esIndexNames = FullTextDBUtils.getESIndexNames( cl, FULLTEXT_IDX_NAME );
         }
 
         @ExecuteOrder(step = 3, desc = "校验切分后的数据")

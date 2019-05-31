@@ -2,6 +2,7 @@ package com.sequoiadb.fulltextparallel;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
@@ -42,12 +43,12 @@ public class FullText15879 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private CollectionSpace cs;
     private DBCollection cl;
-    private String cappedCSName;
+    private List<String> cappedCSNames = new ArrayList<String>();
     private String srcRgName;
     private String dstRgName;
 
     private Client esClient = null;
-    private String esIndexName;
+    private List<String> esIndexNames;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -69,8 +70,8 @@ public class FullText15879 extends SdbTestBase {
         options.put("Group", srcRgName);
         cl = cs.createCollection(CL_NAME, options);
         cl.createIndex(IDX_NAME, IDX_KEY, false, false);
-        cappedCSName = FullTextDBUtils.getCappedName(cl, IDX_NAME);
-        esIndexName = FullTextDBUtils.getESIndexName(cl, IDX_NAME);
+        cappedCSNames.add(FullTextDBUtils.getCappedName( cl, IDX_NAME ));
+        esIndexNames = FullTextDBUtils.getESIndexNames( cl, IDX_NAME );
 
         FullTextDBUtils.insertData(cl, RECS_NUM);
 
@@ -87,9 +88,6 @@ public class FullText15879 extends SdbTestBase {
         es.addWorker(threadSplit);
         es.run();
 
-        // check records
-        // TODO :线程的执行结果相互不影响，建议在线程中去校验每个线程的执行结果，这样逻辑上会更清晰
-        // TODO 有每个线程分开校验，逻辑很简单，暂不修改
         int expRecsNum = 0;
         if (threadTruncate.getRetCode() == 0) {
             Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cl, IDX_NAME));
@@ -103,6 +101,8 @@ public class FullText15879 extends SdbTestBase {
         int actRgNum = FullTextDBUtils.getCLGroups(cl).size();
         if (threadSplit.getRetCode() == 0) {
             Assert.assertEquals(actRgNum, 2);
+            // 切分后源组和目标组均有全文索引
+            esIndexNames = FullTextDBUtils.getESIndexNames( cl, IDX_NAME );
         } else if (threadSplit.getRetCode() != 0) {
             Assert.assertEquals(actRgNum, 2);
         }
@@ -112,7 +112,7 @@ public class FullText15879 extends SdbTestBase {
     private void tearDown() throws Exception {
         try {
             FullTextDBUtils.dropCollection(cs, CL_NAME);
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCSName));
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedCSNames));
         } finally {
             if (sdb != null) {
                 sdb.close();
