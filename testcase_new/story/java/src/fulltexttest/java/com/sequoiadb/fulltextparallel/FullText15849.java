@@ -73,8 +73,9 @@ public class FullText15849 extends SdbTestBase {
         thread.addWorker(new DropCLThread());
         thread.addWorker(new QueryByTextIndexThread());
         thread.run();
-// TODO assert message里面 already单词拼错了。另外，message提示信息跟失败时的场景信息不符，应该提示如"expect cl not exist."
-        Assert.assertFalse(sdb.getCollectionSpace(csName).isCollectionExist(clName), "cl arealy drop.");
+        // TODO assert message里面
+        // already单词拼错了。另外，message提示信息跟失败时的场景信息不符，应该提示如"expect cl not exist."
+        Assert.assertFalse(sdb.getCollectionSpace(csName).isCollectionExist(clName));
 
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
 
@@ -117,7 +118,7 @@ public class FullText15849 extends SdbTestBase {
                     DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                     DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'a': 1}",
                             "{'': '" + indexName + "'}");
-                    if (cur.hasNext()) {// TOTO 要用 while
+                    while (cur.hasNext()) {
                         cur.getNext();
                     }
                     cur.close();

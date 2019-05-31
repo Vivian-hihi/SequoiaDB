@@ -106,9 +106,8 @@ public class FullText15840 extends SdbTestBase {
                     DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                     DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'a': 1}",
                             "{'': '" + indexName + "'}");
-                    if (cur.hasNext()) {
-                        BSONObject record = cur.getNext();
-                        System.out.println(record);// TODO 正常情况下不能打印记录，记录多会刷屏
+                    while (cur.hasNext()) {
+                        cur.getNext();
                     }
                     cur.close();
                 } catch (BaseException e) {

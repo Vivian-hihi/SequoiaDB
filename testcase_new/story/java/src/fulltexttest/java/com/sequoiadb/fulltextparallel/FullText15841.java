@@ -72,7 +72,7 @@ public class FullText15841 extends SdbTestBase {
             cl.createIndex(indexName, indexObj, false, false);
         }
         if (truncateThread.getRetCode() == 0) {
-            // TODO 需要检查索引是否重建
+            FullTextUtils.isFulltextRebuild(esClient, cl, indexName);
             Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, 0));
         } else {
             Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
@@ -122,7 +122,8 @@ public class FullText15841 extends SdbTestBase {
                 cl.truncate();
             } catch (BaseException e) {
                 e.printStackTrace();
-                saveResult(-1, e); // TODO truncate会失败吗？catch没有抛异常。如果失败需要捕获预期错误码。
+                saveResult(-1, e); // TODO
+                                   // truncate会失败吗？catch没有抛异常。如果失败需要捕获预期错误码。
             }
         }
     }

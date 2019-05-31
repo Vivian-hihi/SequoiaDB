@@ -121,7 +121,7 @@ public class FullText15848 extends SdbTestBase {
                     DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                     DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'a': 1}",
                             "{'': '" + indexName + "'}");
-                    if (cur.hasNext()) {// TODO 用 while，所有用例全文检索公共问题，不一一备注，请一并修改。
+                    while (cur.hasNext()) {
                         cur.getNext();
                     }
                     cur.close();

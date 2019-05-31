@@ -48,6 +48,9 @@ public class FullText15850 extends SdbTestBase {// TOTO 检视意见同 15849 �
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("skip StandAlone");
         }
+        if (sdb.isCollectionSpaceExist(csName)) {
+            sdb.dropCollectionSpace(csName);
+        }
         cs = sdb.createCollectionSpace(csName);
         cl = cs.createCollection(clName);
 

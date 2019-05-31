@@ -46,7 +46,10 @@ public class FullText15836 extends SdbTestBase {
             throw new SkipException("skip StandAlone");
         }
 
-        cs = sdb.getCollectionSpace(csName);
+        if (sdb.isCollectionSpaceExist(csName)) {
+            sdb.dropCollectionSpace(csName);
+        }
+        cs = sdb.createCollectionSpace(csName);
         cl = cs.createCollection(clName);
 
         FullTextDBUtils.insertData(cl, insertNum);
