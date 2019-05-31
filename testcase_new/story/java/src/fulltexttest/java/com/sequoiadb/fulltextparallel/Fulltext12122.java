@@ -84,6 +84,7 @@ public class Fulltext12122 extends SdbTestBase {
         for (String csName : csNames) {
             db.dropCollectionSpace(csName);
         }
+// TODO 关闭db/es连接需要放到finally里面，否则如果前面如删除cs失败了连接可能残留。所有用例公共问题，请一并修改
         if (db != null) {
             db.close();
         }
@@ -107,7 +108,7 @@ public class Fulltext12122 extends SdbTestBase {
         te.addWorker(new CurdThread(csNames.get(1), clNames.get(3)));
 
         te.run();
-
+// TODO truncate可能成功或失败，只有truncate成功才需要rebuild吧？
         Assert.assertTrue(FullTextUtils.isFulltextRebuild(esClient, cls.get(0), textIndexName));
         Assert.assertTrue(
                 FullTextUtils.isIndexCreated(esClient, cls.get(0), textIndexName, (int) cls.get(0).getCount()));
