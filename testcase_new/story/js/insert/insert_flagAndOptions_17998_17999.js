@@ -17,7 +17,7 @@ function main()
    
    // key not conflict
    var recsArray = [{c:1},{a:2,c:2},{a:3,b:3,c:3}];
-   keyNotConflict( cl, recsArray );//TODO :用例没有覆盖option格式为：{ReplaceOnDup: true}的情况 //TODO: 这里是测flag，在18003有覆盖
+   keyNotConflict( cl, recsArray );
    var expRecs = [{"c":1},{"a":1,"b":1},{"a":2,"c":2},{"a":3,"b":3,"c":3}];
    checkRecords( cl, expRecs );
    

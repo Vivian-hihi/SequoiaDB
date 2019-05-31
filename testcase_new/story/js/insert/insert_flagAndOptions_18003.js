@@ -57,7 +57,7 @@ function setOptions_RC_false( cl )
    var recsArray = [{a:1,b:1,c:3},{a:3}];
    try
    {
-      cl.insert( recsArray, {ReturnOID:false,ContOnDup:false} );//TODO :这里只能说明ContOnDup生效了，但是因为报错无法得知ReturnOID是否生效，建议再设置一组数据不冲突的情况检测ReturnOID参数是否生效 //TODO:请往上看，2个都为true的情况
+      cl.insert( recsArray, {ReturnOID:false,ContOnDup:false} );
       throw "expect fail, but actual succ." 
    }
    catch(e)
@@ -82,7 +82,7 @@ function setOptions_RR_false( cl )
    var recsArray = [{a:1,b:1,c:4},{a:2}];
    try
    {
-      cl.insert( recsArray, {ReturnOID:false,ReplaceOnDup:false} );//TODO :与上一个方法相同，未检测ReturnOID是否生效，也可以测试一组{ReturnOID:false,ReplaceOnDup:true}的数据//TODO：同上
+      cl.insert( recsArray, {ReturnOID:false,ReplaceOnDup:false} );
       throw "expect fail, but actual succ." 
    }
    catch(e)

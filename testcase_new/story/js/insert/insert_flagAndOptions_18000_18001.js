@@ -12,13 +12,13 @@ function main()
    var clName = "insertFlag_18000";
    var idxName = "idx";   
    var cl = readyCL( clName );
-   cl.createIndex( idxName, {a:1, b:1}, true, true );//TODO :建议这里使用公共方法创建索引commCreateIndex //TODO: 不需要
+   cl.createIndex( idxName, {a:1, b:1}, true, true );
    cl.insert( {a:1,b:1} );
    
    // key not conflict
    println("\n---Begin to insert, key not conflict");
    var recsArray = [{c:1},{a:2,c:1},{a:2,b:1,c:1}];
-   cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );//TODO :用例没有覆盖option格式为：{ReplaceOnDup: true}的情况 //TODO:有覆盖，见18003
+   cl.insert( recsArray, SDB_INSERT_REPLACEONDUP );
    var expRecs = [{"c":1},{"a":1,"b":1},{"a":2,"c":1},{"a":2,"b":1,"c":1}];
    checkRecords( cl, expRecs );
    
@@ -59,8 +59,7 @@ function keyConflict( cl, recsArray )
    {
       try
       {
-         cl.insert( recsArray[i] );//TODO :单插数据冲突已经在用例17999中覆盖了，这里可以不用再重复测试了吧 
-                                  //TODO: 1.没有设置flag,17999有设flag;2.文本用例有写了先插入冲突的记录检查是否报错，再设置flag插入，避免数据准备错误，非测试点。
+         cl.insert( recsArray[i] );
          throw "expect fail, but actual succ."
       }
       catch(e)

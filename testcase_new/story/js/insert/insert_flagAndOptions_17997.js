@@ -32,7 +32,7 @@ function insertNotSetFlag( cl )
    try
    {
       cl.insert( {a:1,c:1} );
-      throw "expect fail, but actual succ."  //TODO :建议使用buildException抛出异常，定位问题时可以更清晰，如果觉得太繁琐也可不用 //TODO：不需要
+      throw "expect fail, but actual succ."
    }
    catch(e)
    {
@@ -152,7 +152,7 @@ function checkRecords( cl, recs )
    {
       rcRecs.push( tmpRecs.toObj() );
    }   
-   //TODO :建议这里将rc游标关闭  //TODO: 不需要，游标遍历完会自动关闭。
+   
    var expRecs = JSON.stringify( recs );
    var actRecs = JSON.stringify( rcRecs );
    if( expRecs !== actRecs )
