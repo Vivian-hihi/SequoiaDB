@@ -56,7 +56,7 @@ public class Fulltext14397 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         FullTextDBUtils.dropCollectionSpace( sdb, csName );
         // 检查全文索引是否残留
         if ( esIndexName != null ) {
