@@ -2353,11 +2353,17 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       INT32  indexID               = 0 ;
       BOOLEAN found                = FALSE ;
+      BOOLEAN hasLocked            = FALSE ;
 
       SDB_ASSERT ( indexName, "index name can't be NULL" ) ;
 
-      rc = context->mbLock( SHARED ) ;
-      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      if ( !context->isMBLock() )
+      {
+         rc = context->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+
+         hasLocked = TRUE ;
+      }
 
       for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
       {
@@ -2382,6 +2388,10 @@ namespace engine
       }
 
    done :
+      if ( hasLocked )
+      {
+         context->mbUnlock() ;
+      }
       return rc ;
    error :
       goto done ;
@@ -2394,9 +2404,15 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       INT32  indexID               = 0 ;
       BOOLEAN found                = FALSE ;
+      BOOLEAN hasLocked            = FALSE ;
 
-      rc = context->mbLock( SHARED ) ;
-      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      if ( !context->isMBLock() )
+      {
+         rc = context->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+
+         hasLocked = TRUE ;
+      }
 
       for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
       {
@@ -2422,6 +2438,10 @@ namespace engine
       }
 
    done :
+      if ( hasLocked )
+      {
+         context->mbUnlock() ;
+      }
       return rc ;
    error :
       goto done ;
@@ -2432,6 +2452,7 @@ namespace engine
                                              dmsExtentID &indexExtent )
    {
       INT32 rc                      = SDB_OK ;
+      BOOLEAN hasLocked             = FALSE ;
 
       if ( indexID >= DMS_COLLECTION_MAX_INDEX )
       {
@@ -2439,8 +2460,12 @@ namespace engine
          goto error ;
       }
 
-      rc = context->mbLock( SHARED ) ;
-      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      if ( !context->isMBLock() )
+      {
+         rc = context->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+         hasLocked = FALSE ;
+      }
 
       if ( context->mb()->_indexExtent[indexID] == DMS_INVALID_EXTENT )
       {
@@ -2450,6 +2475,10 @@ namespace engine
       indexExtent = context->mb()->_indexExtent[indexID] ;
 
    done:
+      if ( hasLocked )
+      {
+         context->mbUnlock() ;
+      }
       return rc ;
    error:
       goto done ;
