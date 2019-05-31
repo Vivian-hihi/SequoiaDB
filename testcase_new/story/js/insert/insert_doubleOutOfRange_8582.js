@@ -1,0 +1,23 @@
+/******************************************************************************
+*@Description : seqDB-8582:插入超出double类型表示范围的数据并读取                   
+*@Author      : 2019-5-29  wuyan modify
+******************************************************************************/
+main();
+function main()
+{
+     var clName = "insert8582";
+     var cl = readyCL( clName );
+     
+     var obj = [ { "a":1.7E+310 }, { "a":-1.7E+310 }, { "a":"test" } ];
+     cl.insert( obj );
+     
+     var expRecords = [ { "a":Infinity }, { "a":-Infinity }, { "a":"test" } ]     
+     var actRecords = cl.find();      
+     checkRec( actRecords, expRecords );
+          
+     cleanCL( clName );   	
+}     
+
+
+
+
