@@ -2379,7 +2379,7 @@ namespace engine
 
 #else
 
-   PD_TRACE_EXITRC( SDB__SDB_DMSCB_RENAMECSP1, rc ) ;
+   PD_TRACE_EXITRC( SDB__SDB_DMSCB_RENAMECSP1C, rc ) ;
    return rc ;
 
 #endif
