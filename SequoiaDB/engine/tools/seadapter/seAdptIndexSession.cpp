@@ -155,7 +155,7 @@ namespace seadapter
       // manager may try to start a new thread again. So these checks are about
       // to avoid starting multiple indexers for on index.
       rc = _imContext->metaLock( EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Lock index meta in EXCLUSIVE mode failed[%s]",
+      PD_RC_CHECK( rc, PDERROR, "Lock index meta in EXCLUSIVE mode failed[%d]",
                    rc ) ;
       meta = _imContext->meta() ;
       if ( SEADPT_IM_STAT_PENDING != meta->getStat() )
