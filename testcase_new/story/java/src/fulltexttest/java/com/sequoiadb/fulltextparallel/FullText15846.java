@@ -93,7 +93,8 @@ public class FullText15846 extends SdbTestBase {
         thread.addWorker(new RemoveLobThread());
         thread.addWorker(new GetLoBThread());
         thread.run();
-
+        // TODO 删除索引可能失败，需要根据DropIndexThread返回结果分别校验。
+        // TOTO 另外，多跑几遍确认truncate是否会失败，并根据返回结果分别校验。
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
 
         checkLobResult();

@@ -108,7 +108,7 @@ public class FullText15840 extends SdbTestBase {
                             "{'': '" + indexName + "'}");
                     if (cur.hasNext()) {
                         BSONObject record = cur.getNext();
-                        System.out.println(record);
+                        System.out.println(record);// TODO 正常情况下不能打印记录，记录多会刷屏
                     }
                     cur.close();
                 } catch (BaseException e) {

@@ -29,8 +29,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author luweikang
  * @Date 2019年5月10日
  */
-public class FullText15850 extends SdbTestBase {
-
+public class FullText15850 extends SdbTestBase {// TOTO 检视意见同 15849 用例
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;

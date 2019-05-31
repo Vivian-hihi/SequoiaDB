@@ -75,6 +75,7 @@ public class FullText15845 extends SdbTestBase {
 
         Assert.assertEquals(cl.getCount(), 0, "cl be truncate, should no record.");
         if (dropIndexThread.getRetCode() != 0) {
+            // TODO 再次删除前需要做一次完整的结果校验。如删除索引可能失败，此时索引或数据有问题不做校验测不出问题。
             cl.dropIndex(indexName);
         }
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));

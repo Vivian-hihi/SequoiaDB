@@ -76,7 +76,7 @@ public class Fulltext15844 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, 10000));
 
         String cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, textIndexName);
+        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, textIndexName);// TODO 建议用 string
 
         te.addWorker(new DropTextIndexThread());
         te.addWorker(new QueryThread());

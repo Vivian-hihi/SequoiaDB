@@ -70,8 +70,7 @@ public class FullText15847 extends SdbTestBase {
     }
 
     @Test
-    public void test() throws Exception {//
-
+    public void test() throws Exception {
         ThreadExecutor thread = new ThreadExecutor();
         thread.addWorker(new TextIndexThread());
         thread.addWorker(new InsertThread());
@@ -83,7 +82,8 @@ public class FullText15847 extends SdbTestBase {
 
         cappedName = FullTextDBUtils.getCappedName(cl, indexName);
         esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
-
+// TODO cappedName和esIndexName需要在setUp创建索引后获取，否则有可能在TextIndexThread索引被删除成功但是创建失败会获取不到。
+// TODO 另外，校验结果需要根据TextIndexThread索引删除/创建成功分别校验，因为最终索引有可能删除成功创建失败或最终创建成功，结果会不一样。
     }
 
     @AfterClass
@@ -104,7 +104,7 @@ public class FullText15847 extends SdbTestBase {
     private class TextIndexThread {
 
         @ExecuteOrder(step = 1)
-        private void createIndex() {
+        private void createIndex() {// TODO 方法名跟实际操作不符（删除、创建索引）
             BSONObject indexObj = new BasicBSONObject();
             indexObj.put("a", "text");
             indexObj.put("b", "text");
