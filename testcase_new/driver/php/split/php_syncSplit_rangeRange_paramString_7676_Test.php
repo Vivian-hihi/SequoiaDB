@@ -110,6 +110,11 @@ class SyncSplitOper04 extends BaseOperator
       $this -> commDropCL( $csName, $clName, $ignoreNotExist );
    }
    
+   function dropCS( $csName, $ignoreNotExist )
+   {
+      $this -> commDropCS( $csName, $ignoreNotExist );
+   }
+   
 }
 
 class TestSyncSplit04 extends PHPUnit_Framework_TestCase
@@ -249,6 +254,10 @@ class TestSyncSplit04 extends PHPUnit_Framework_TestCase
       echo "\n---Begin to drop cl in the end.\n";
       
       self::$dbh -> dropCL( self::$csName, self::$clName, false );
+      $errno = self::$dbh -> getErrno();
+      $this -> assertEquals( 0, $errno );
+      
+      self::$dbh -> dropCS( self::$csName, false );
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( 0, $errno );
    }
