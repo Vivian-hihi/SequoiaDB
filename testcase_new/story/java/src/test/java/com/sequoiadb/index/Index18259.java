@@ -1,4 +1,4 @@
-package com.sequoiadb.fulltextparallel;
+package com.sequoiadb.index;
 
 import java.util.Date;
 import java.util.List;
@@ -6,7 +6,6 @@ import java.util.Random;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
-import org.elasticsearch.client.Client;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -21,8 +20,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
-import com.sequoiadb.utils.FullTextDBUtils;
-import com.sequoiadb.utils.FullTextESUtils;
 
 /**
  * @FileName seqDB-18259:同一集合并发创建删除相同的普通索引
@@ -30,7 +27,7 @@ import com.sequoiadb.utils.FullTextESUtils;
  * @Date huangxiaoni 2019.5.9
  */
 
-public class FullText18259 extends SdbTestBase {
+public class Index18259 extends SdbTestBase {
     private final int THREAD_NUM = 5;
     private final String CL_NAME = "cl_es_18259";
     private final String IDX_NAME = "cl_es_18259";
@@ -41,11 +38,8 @@ public class FullText18259 extends SdbTestBase {
     private CollectionSpace cs;
     private DBCollection cl;
 
-    private Client esClient = null;
-
     @BeforeClass
     private void setUp() {
-        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
         if (CommLib.isStandAlone(sdb)) {
@@ -54,7 +48,7 @@ public class FullText18259 extends SdbTestBase {
 
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         cl = cs.createCollection(CL_NAME);
-        FullTextDBUtils.insertData(cl, RECS_NUM);
+        IndexUtils.insertData(cl, RECS_NUM, 16);
     }
 
     @Test
@@ -66,9 +60,6 @@ public class FullText18259 extends SdbTestBase {
         }
         es.run();
 
-        // check index
-        // TODO :需要校验只有1个线程执行成功
-        // TODO 没撞到点上结果有可能不确定，不校验成功的线程个数。待检视意见完成后再将此用例提到普通索引目录。
         CommLib commlib = new CommLib();
         commlib.checkIndex(sdb, IDX_NAME, CL_NAME);
         this.checkData();
@@ -81,9 +72,6 @@ public class FullText18259 extends SdbTestBase {
         } finally {
             if (sdb != null) {
                 sdb.close();
-            }
-            if (esClient != null) {
-                esClient.close();
             }
         }
     }
@@ -124,7 +112,7 @@ public class FullText18259 extends SdbTestBase {
     }
 
     private void checkData() throws InterruptedException {
-        List<String> rgNames = FullTextDBUtils.getCLGroups(cl);
+        List<String> rgNames = CommLib.getCLGroups(cl);
         for (String rgName : rgNames) {
             Sequoiadb master = sdb.getReplicaGroup(rgName).getMaster().connect();
             Sequoiadb slave = sdb.getReplicaGroup(rgName).getSlave().connect();
@@ -143,8 +131,8 @@ public class FullText18259 extends SdbTestBase {
                         Thread.sleep(100);
                         retryTimes++;
                     }
-                    System.out.println(
-                            CL_NAME + " check timeout, mCnt:" + mCnt + ", sCnt:" + sCnt + ", expCnt:" + RECS_NUM);
+                    System.out.println(CL_NAME + " check timeout, mCnt:" + mCnt + ", sCnt:" + sCnt 
+                            + ", expCnt:" + RECS_NUM);
                 }
             } finally {
                 master.close();
