@@ -286,12 +286,18 @@ public class FullText15860 extends SdbTestBase {
         List<ObjectId> lobIdList = new ArrayList<ObjectId>();
         byte[] data = new byte[(int) lobSize];
         new Random().nextBytes(data);
+        try {
 
-        for (int i = 0; i < lobNum; i++) {
-            DBLob lob = cl.createLob();
-            lob.write(data);
-            lob.close();
-            lobIdList.add(lob.getID());
+            for (int i = 0; i < lobNum; i++) {
+                DBLob lob = cl.createLob();
+                lob.write(data);
+                lob.close();
+                lobIdList.add(lob.getID());
+            }
+        } catch (BaseException e) {
+            if (e.getErrorCode() != -321) {
+                throw e;
+            }
         }
 
         return lobIdList;
