@@ -670,7 +670,7 @@ public class FullTextUtils {
                     // isConsistency = true;
                     // break;
                     // }
-                    if (completeLSN >= checkCompleteLSN) {
+                    if (completeLSN <= checkCompleteLSN) {
                         isConsistency = true;
                         break;
                     }
