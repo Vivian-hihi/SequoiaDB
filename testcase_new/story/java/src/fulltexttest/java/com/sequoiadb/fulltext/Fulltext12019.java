@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -24,7 +25,7 @@ import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
 
 /**
- * FileName: Range12019.java test content: 插入记录并执行range切分再创建全文索引
+ * FileName: Fulltext12019.java test content: 插入记录并执行range切分再创建全文索引
  * 
  * @author liuxiaoxuan
  * @Date 2018.11.20
@@ -39,78 +40,113 @@ public class Fulltext12019 extends SdbTestBase {
     private String destGroupName = "";
 
     private Client esClient = null;
-    private List<String> cappedNames = null;
-    private List<String> esIndexNames = null;
+    private List< String > cappedNames = null;
+    private List< String > esIndexNames = null;
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
-        }
-        ArrayList<String> groupsName = CommLib.getDataGroupNames(sdb);
-        if (groupsName.size() < 2) {
-            throw new SkipException("current environment less than tow groups ");
+        esClient = FullTextESUtils.createTransportClient( esHostName,
+                Integer.parseInt( esServiceName ) );
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "skip StandAlone" );
         }
 
-        // create range cl
-        srcGroupName = groupsName.get(0);
-        destGroupName = groupsName.get(1);
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'range',Group:'" + srcGroupName + "'}"));
+        if ( !CommLib.OneGroupMode( sdb ) ) {
+            throw new SkipException(
+                    "current environment less than tow groups " );
+        }
+
+        ArrayList< String > groupsName = CommLib.getDataGroupNames( sdb );
+        srcGroupName = groupsName.get( 0 );
+        destGroupName = groupsName.get( 1 );
+        cs = sdb.getCollectionSpace( csName );
+        cl = cs.createCollection( clName,
+                ( BSONObject ) JSON.parse(
+                        "{ShardingKey:{a:1},ShardingType:'range',Group:'"
+                                + srcGroupName + "'}" ) );
     }
 
     @AfterClass
-    public void tearDown() throws Exception {
-        FullTextDBUtils.dropCollection(cs, clName);
-        // check fulltext deleted
-        if (esIndexNames != null) {
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames, cappedNames));
+    public void tearDown() {
+        FullTextDBUtils.dropCollection( cs, clName );
+        // 检查全文索引是否残留
+        if ( esIndexNames != null ) {
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient,
+                    esIndexNames, cappedNames ) );
         }
-        sdb.close();
-        esClient.close();
+        if ( sdb != null ) {
+            sdb.close();
+        }
+        if ( esClient != null ) {
+            esClient.close();
+        }
     }
 
     @Test
     public void test() throws Exception {
-        // insert large datas
-        insertData(cl, FullTextUtils.INSERT_NUMS);
+        insertData( cl, FullTextUtils.INSERT_NUMS );
 
-        // split
-        cl.split(srcGroupName, destGroupName, 50);
+        cl.split( srcGroupName, destGroupName, 50 );
 
-        // create fulltext, with shardingkey and non-shardingkey
+        // 创建全文索引，包含分区键和非分区键
         String textIndexName = "fulltext12019";
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put("a", "text");
-        indexObj.put("b", "text");
-        indexObj.put("c", "text");
-        indexObj.put("d", "text");
-        indexObj.put("e", "text");
-        indexObj.put("f", "text");
-        cl.createIndex(textIndexName, indexObj, false, false);
+        indexObj.put( "a", "text" );
+        indexObj.put( "b", "text" );
+        indexObj.put( "c", "text" );
+        indexObj.put( "d", "text" );
+        indexObj.put( "e", "text" );
+        indexObj.put( "f", "text" );
+        cl.createIndex( textIndexName, indexObj, false, false );
 
-        cappedNames = new ArrayList<String>();
-        cappedNames.add(FullTextDBUtils.getCappedName(cl, textIndexName));
-        esIndexNames = FullTextDBUtils.getESIndexNames(cl, textIndexName);
+        cappedNames = new ArrayList< String >();
+        cappedNames.add( FullTextDBUtils.getCappedName( cl, textIndexName ) );
+        esIndexNames = FullTextDBUtils.getESIndexNames( cl, textIndexName );
 
-        // check consistency
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS));
+        // 检查ES端索引数据是否完成同步，主备节点上主表的原始集合、固定集合数据是否一致
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl,
+                textIndexName, FullTextUtils.INSERT_NUMS ) );
+
+        // 分别检查源组、目标组对应的全文索引同步数据是否正确
+        Node srcMaster = sdb.getReplicaGroup( srcGroupName ).getMaster();
+        Node destMaster = sdb.getReplicaGroup( destGroupName ).getMaster();
+        String srcESIndexName = "";
+        String destESIndexName = "";
+        for ( String esIndexName : esIndexNames ) {
+            if ( esIndexName.contains( srcGroupName ) ) {
+                srcESIndexName = esIndexName;
+            }
+            if ( esIndexName.contains( destGroupName ) ) {
+                destESIndexName = esIndexName;
+            }
+        }
+        DBCollection srcCL = srcMaster.connect().getCollectionSpace( csName )
+                .getCollection( clName );
+        DBCollection destCL = destMaster.connect().getCollectionSpace( csName )
+                .getCollection( clName );
+        Assert.assertEquals(
+                FullTextESUtils.getCountFromES( esClient, srcESIndexName ),
+                srcCL.getCount() );
+        Assert.assertEquals(
+                FullTextESUtils.getCountFromES( esClient, destESIndexName ),
+                destCL.getCount() );
     }
 
-    public void insertData(DBCollection cl, int insertNums) {
-        List<BSONObject> insertObjs = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
-                insertObjs.add((BSONObject) JSON.parse("{a: 'test_range12019_" + i * j + "', b: '"
-                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
-                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
-                        + StringUtils.getRandomString(128) + "'}"));
+    private void insertData( DBCollection cl, int insertNums ) {
+        List< BSONObject > insertObjs = new ArrayList<>();
+        for ( int i = 0; i < 100; i++ ) {
+            for ( int j = 0; j < insertNums / 100; j++ ) {
+                insertObjs.add( ( BSONObject ) JSON
+                        .parse( "{a: 'test_range12019_" + i * j + "', b: '"
+                                + StringUtils.getRandomString( 32 ) + "', c: '"
+                                + StringUtils.getRandomString( 64 ) + "', d: '"
+                                + StringUtils.getRandomString( 64 ) + "', e: '"
+                                + StringUtils.getRandomString( 128 ) + "', f: '"
+                                + StringUtils.getRandomString( 128 ) + "'}" ) );
 
             }
-            cl.insert(insertObjs, 0);
+            cl.insert( insertObjs, 0 );
             insertObjs.clear();
         }
     }

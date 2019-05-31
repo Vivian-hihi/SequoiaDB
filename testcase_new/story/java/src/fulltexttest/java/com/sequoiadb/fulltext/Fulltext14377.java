@@ -24,8 +24,7 @@ import com.sequoiadb.utils.FullTextUtils;
 import com.sequoiadb.utils.StringUtils;
 
 /**
- * FileName: CurdFinishIndex14377.java test content:
- * 已处理完固定集合中记录，插入/修改/删除/查询集合中的记录
+ * FileName: Fulltext14377.java test content: 已处理完固定集合中记录，插入/修改/删除/查询集合中的记录
  * 
  * @author liuxiaoxuan
  * @Date 2018.11.21
@@ -42,90 +41,93 @@ public class Fulltext14377 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
-        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        if (CommLib.isStandAlone(sdb)) {
-            throw new SkipException("skip StandAlone");
+        esClient = FullTextESUtils.createTransportClient( esHostName,
+                Integer.parseInt( esServiceName ) );
+        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        if ( CommLib.isStandAlone( sdb ) ) {
+            throw new SkipException( "skip StandAlone" );
         }
 
-        // create cl
-        cs = sdb.getCollectionSpace(csName);
-        cl = cs.createCollection(clName);
+        cs = sdb.getCollectionSpace( csName );
+        cl = cs.createCollection( clName );
     }
 
     @AfterClass
-    public void tearDown() throws Exception {
-        FullTextDBUtils.dropCollection(cs, clName);
-        // check fulltext deleted
-        if (esIndexName != null) {
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
+    public void tearDown() {
+        FullTextDBUtils.dropCollection( cs, clName );
+        // 检查全文索引是否残留
+        if ( esIndexName != null ) {
+            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient,
+                    esIndexName, cappedName ) );
         }
-        sdb.close();
-        esClient.close();
+        if ( sdb != null ) {
+            sdb.close();
+        }
+        if ( esClient != null ) {
+            esClient.close();
+        }
     }
 
     @Test
     public void test() throws Exception {
-        // create fulltext
         String textIndexName = "fulltext14377";
         BSONObject indexObj = new BasicBSONObject();
-        indexObj.put("a", "text");
-        indexObj.put("b", "text");
-        indexObj.put("c", "text");
-        indexObj.put("d", "text");
-        indexObj.put("e", "text");
-        indexObj.put("f", "text");
-        indexObj.put("g", "text");
-        cl.createIndex(textIndexName, indexObj, false, false);
+        indexObj.put( "a", "text" );
+        indexObj.put( "b", "text" );
+        indexObj.put( "c", "text" );
+        indexObj.put( "d", "text" );
+        indexObj.put( "e", "text" );
+        indexObj.put( "f", "text" );
+        indexObj.put( "g", "text" );
+        cl.createIndex( textIndexName, indexObj, false, false );
 
-        cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
-        esIndexName = FullTextDBUtils.getESIndexName(cl, textIndexName);
+        cappedName = FullTextDBUtils.getCappedName( cl, textIndexName );
+        esIndexName = FullTextDBUtils.getESIndexName( cl, textIndexName );
 
-        insertData(cl, FullTextUtils.INSERT_NUMS);
+        insertData( cl, FullTextUtils.INSERT_NUMS );
 
-        // check consistency before insert/update/delete
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, FullTextUtils.INSERT_NUMS));
+        // 检查ES端索引数据是否完成同步，主备节点上主表的原始集合、固定集合数据是否一致
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl,
+                textIndexName, FullTextUtils.INSERT_NUMS ) );
 
-        // insert/update/delete
-        insertData(cl, 100000);
-        updateData(cl);
-        removeData(cl);
+        // 增删改
+        insertData( cl, 100000 );
+        updateData( cl );
+        removeData( cl );
 
-        // check consistency after insert/update/delete
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, (int) cl.getCount()));
+        // 检查ES端索引数据是否完成同步，主备节点上主表的原始集合、固定集合数据是否一致
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cl,
+                textIndexName, ( int ) cl.getCount() ) );
     }
 
-    public void insertData(DBCollection cl, int insertNums) {
-        List<BSONObject> insertObjs = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < insertNums / 100; j++) {
-                insertObjs.add((BSONObject) JSON.parse("{a: 'test_14377_" + i * j + "', b: '"
-                        + StringUtils.getRandomString(32) + "', c: '" + StringUtils.getRandomString(64) + "', d: '"
-                        + StringUtils.getRandomString(64) + "', e: '" + StringUtils.getRandomString(128) + "', f: '"
-                        + StringUtils.getRandomString(128) + "', g: " + i * j + "}"));
+    private void insertData( DBCollection cl, int insertNums ) {
+        List< BSONObject > insertObjs = new ArrayList<>();
+        for ( int i = 0; i < 100; i++ ) {
+            for ( int j = 0; j < insertNums / 100; j++ ) {
+                insertObjs.add( ( BSONObject ) JSON.parse( "{a: 'test_14377_"
+                        + i * j + "', b: '" + StringUtils.getRandomString( 32 )
+                        + "', c: '" + StringUtils.getRandomString( 64 )
+                        + "', d: '" + StringUtils.getRandomString( 64 )
+                        + "', e: '" + StringUtils.getRandomString( 128 )
+                        + "', f: '" + StringUtils.getRandomString( 128 )
+                        + "', g: " + i * j + "}" ) );
             }
-            cl.insert(insertObjs, 0);
+            cl.insert( insertObjs, 0 );
             insertObjs.clear();
         }
     }
 
-    public void updateData(DBCollection cl) {
-        BSONObject modifier = new BasicBSONObject();
-        BSONObject value = new BasicBSONObject();
-        BSONObject matcher = new BasicBSONObject();
-        BSONObject subMatcher = new BasicBSONObject();
-        value.put("g", "-1");
-        modifier.put("$set", value);
-        subMatcher.put("$lt", 100000);
-        matcher.put("g", subMatcher);
-        cl.update(matcher, modifier, null);
+    private void updateData( DBCollection cl ) {
+        BSONObject modifier = new BasicBSONObject( "$set",
+                new BasicBSONObject( "g", "-1" ) );
+        BSONObject matcher = new BasicBSONObject( "g",
+                new BasicBSONObject( "$lt", 100000 ) );
+        cl.update( matcher, modifier, null );
     }
 
-    public void removeData(DBCollection cl) {
-        BSONObject matcher = new BasicBSONObject();
-        BSONObject subMatcher = new BasicBSONObject();
-        subMatcher.put("$gt", 100000);
-        matcher.put("g", subMatcher);
-        cl.delete(matcher);
+    private void removeData( DBCollection cl ) {
+        BSONObject matcher = new BasicBSONObject( "g",
+                new BasicBSONObject( "$gt", 100000 ) );
+        cl.delete( matcher );
     }
 }
