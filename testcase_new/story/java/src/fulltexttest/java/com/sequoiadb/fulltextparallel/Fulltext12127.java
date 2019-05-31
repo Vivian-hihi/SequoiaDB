@@ -78,15 +78,18 @@ public class Fulltext12127 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        for (String csName : csNames) {
-            db.dropCollectionSpace(csName);
-        }
-        if (db != null) {
-            db.close();
-        }
-        if (esClient != null) {
-            esClient.close();
-        }
+        try {
+            for (String csName : csNames) {
+                db.dropCollectionSpace(csName);
+            }
+        }finally {
+            if (db != null) {
+                db.close();
+            }
+            if (esClient != null) {
+                esClient.close();
+            }
+        }  
     }
 
     @Test

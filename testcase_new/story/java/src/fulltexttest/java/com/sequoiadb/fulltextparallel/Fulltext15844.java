@@ -62,13 +62,16 @@ public class Fulltext15844 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        FullTextDBUtils.dropCollection(cs, clName);
-        if (db != null) {
-            db.close();
-        }
-        if (esClient != null) {
-            esClient.close();
-        }
+        try {
+            FullTextDBUtils.dropCollection(cs, clName);
+        } catch ( Exception e ) {
+            if (db != null) {
+                db.close();
+            }
+            if (esClient != null) {
+                esClient.close();
+            }
+        }   
     }
 
     @Test
@@ -76,14 +79,14 @@ public class Fulltext15844 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, textIndexName, 10000));
 
         String cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
-        List<String> esIndexNames = FullTextDBUtils.getESIndexNames(cl, textIndexName);// TODO 建议用 string
+        String esIndexName = FullTextDBUtils.getESIndexName(cl, textIndexName);
 
         te.addWorker(new DropTextIndexThread());
         te.addWorker(new QueryThread());
 
         te.run();
 
-        Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esClient, esIndexNames.get(0), cappedName));
+        Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esClient, esIndexName, cappedName));
 
         FullTextDBUtils.insertData(cl, 100);
 

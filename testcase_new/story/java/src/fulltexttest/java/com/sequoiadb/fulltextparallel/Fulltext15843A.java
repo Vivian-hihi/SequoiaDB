@@ -65,13 +65,16 @@ public class Fulltext15843A extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        FullTextDBUtils.dropCollection(cs, clName);
-        if (db != null) {
-            db.close();
-        }
-        if (esClient != null) {
-            esClient.close();
-        }
+        try {
+            FullTextDBUtils.dropCollection(cs, clName);
+        } catch ( Exception e ) {
+            if (db != null) {
+                db.close();
+            }
+            if (esClient != null) {
+                esClient.close();
+            }
+        }     
     }
 
     @Test
