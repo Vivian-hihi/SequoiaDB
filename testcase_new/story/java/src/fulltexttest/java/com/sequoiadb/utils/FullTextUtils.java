@@ -559,28 +559,48 @@ public class FullTextUtils {
             Sequoiadb masterNode = rg.getMaster().connect();
 
             DBCursor cursor = null;
-            long dataCommitLSN = -2;
-            long indexCommitLSN = -2;
-            long lobCommitLSN = -2;
-            boolean dataCommitted = false;
-            boolean indexCommitted = false;
-            boolean lobCommitted = false;
+            // long dataCommitLSN = -2;
+            // long indexCommitLSN = -2;
+            // long lobCommitLSN = -2;
+            // boolean dataCommitted = false;
+            // boolean indexCommitted = false;
+            // boolean lobCommitted = false;
+            long completeLSN = -2;
             for (int i = 0; i < 600; i++) {
-                cursor = masterNode.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
-                        "{Details: ''}", null);
+                // cursor =
+                // masterNode.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS,
+                // "{Name:'" + clFullName + "'}",
+                // "{Details: ''}", null);
+                // if (cursor.hasNext()) {
+                // @SuppressWarnings("unchecked")
+                // List<BSONObject> details = (List<BSONObject>)
+                // cursor.getNext().get("Details");
+                // dataCommitLSN = (long) details.get(0).get("DataCommitLSN");
+                // indexCommitLSN = (long) details.get(0).get("IndexCommitLSN");
+                // lobCommitLSN = (long) details.get(0).get("LobCommitLSN");
+                // dataCommitted = (boolean)
+                // details.get(0).get("DataCommitted");
+                // indexCommitted = (boolean)
+                // details.get(0).get("IndexCommitted");
+                // lobCommitted = (boolean) details.get(0).get("LobCommitted");
+                // }
+                // cursor.close();
+                // if (dataCommitLSN != -2 && indexCommitLSN != -2 &&
+                // lobCommitLSN != -2 && dataCommitted && indexCommitted
+                // && lobCommitted) {
+                // break;
+                // }
+                cursor = masterNode.getSnapshot(Sequoiadb.SDB_SNAP_SYSTEM, null, "{CompleteLSN: ''}", null);
                 if (cursor.hasNext()) {
-                    @SuppressWarnings("unchecked")
-                    List<BSONObject> details = (List<BSONObject>) cursor.getNext().get("Details");
-                    dataCommitLSN = (long) details.get(0).get("DataCommitLSN");
-                    indexCommitLSN = (long) details.get(0).get("IndexCommitLSN");
-                    lobCommitLSN = (long) details.get(0).get("LobCommitLSN");
-                    dataCommitted = (boolean) details.get(0).get("DataCommitted");
-                    indexCommitted = (boolean) details.get(0).get("IndexCommitted");
-                    lobCommitted = (boolean) details.get(0).get("LobCommitted");
+                    completeLSN = (long) cursor.getNext().get("CompleteLSN");
                 }
                 cursor.close();
-                if (dataCommitLSN != -2 && indexCommitLSN != -2 && lobCommitLSN != -2 && dataCommitted && indexCommitted
-                        && lobCommitted) {
+                // if (dataCommitLSN != -2 && indexCommitLSN != -2 &&
+                // lobCommitLSN != -2 && dataCommitted && indexCommitted
+                // && lobCommitted) {
+                // break;
+                // }
+                if (completeLSN != -2) {
                     break;
                 }
                 try {
@@ -589,33 +609,53 @@ public class FullTextUtils {
                     e.printStackTrace();
                 }
             }
-            if (dataCommitLSN == -2 || indexCommitLSN == -2 || lobCommitLSN == -2 || !dataCommitted || !indexCommitted
-                    || !lobCommitted) {
-                throw new Exception(masterNode.getNodeName() + " can't not find cl snapshot: " + clFullName);
+            // if (dataCommitLSN == -2 || indexCommitLSN == -2 || lobCommitLSN
+            // == -2 || !dataCommitted || !indexCommitted
+            // || !lobCommitted) {
+            // throw new Exception(masterNode.getNodeName() + " can't not find
+            // cl snapshot: " + clFullName);
+            // }
+            if (completeLSN == -2) {
+                throw new Exception(masterNode.getNodeName() + " can't not find system snapshot");
             }
 
             for (String nodeName : nodeNames) {
                 isConsistency = false;
                 Sequoiadb nodeConn = rg.getNode(nodeName).connect();
                 DBCursor cur = null;
-                long checkdataCommitLSN = -2;
-                long checkindexCommitLSN = -2;
-                long checklobCommitLSN = -2;
-                boolean checkdataCommitted = false;
-                boolean checkindexCommitted = false;
-                boolean checklobCommitted = false;
+                // long checkdataCommitLSN = -2;
+                // long checkindexCommitLSN = -2;
+                // long checklobCommitLSN = -2;
+                // boolean checkdataCommitted = false;
+                // boolean checkindexCommitted = false;
+                // boolean checklobCommitted = false;
+                long checkCompleteLSN = -2;
                 for (int i = 0; i < 600; i++) {
-                    cur = nodeConn.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS, "{Name:'" + clFullName + "'}",
-                            "{Details: ''}", null);
+                    // cur =
+                    // nodeConn.getSnapshot(Sequoiadb.SDB_SNAP_COLLECTIONS,
+                    // "{Name:'" + clFullName + "'}",
+                    // "{Details: ''}", null);
+                    // if (cur.hasNext()) {
+                    // @SuppressWarnings("unchecked")
+                    // List<BSONObject> details = (List<BSONObject>)
+                    // cur.getNext().get("Details");
+                    // checkdataCommitLSN = (long)
+                    // details.get(0).get("DataCommitLSN");
+                    // checkindexCommitLSN = (long)
+                    // details.get(0).get("IndexCommitLSN");
+                    // checklobCommitLSN = (long)
+                    // details.get(0).get("LobCommitLSN");
+                    // checkdataCommitted = (boolean)
+                    // details.get(0).get("DataCommitted");
+                    // checkindexCommitted = (boolean)
+                    // details.get(0).get("IndexCommitted");
+                    // checklobCommitted = (boolean)
+                    // details.get(0).get("LobCommitted");
+                    // }
+                    // cur.close();
+                    cur = nodeConn.getSnapshot(Sequoiadb.SDB_SNAP_SYSTEM, null, "{CompleteLSN: ''}", null);
                     if (cur.hasNext()) {
-                        @SuppressWarnings("unchecked")
-                        List<BSONObject> details = (List<BSONObject>) cur.getNext().get("Details");
-                        checkdataCommitLSN = (long) details.get(0).get("DataCommitLSN");
-                        checkindexCommitLSN = (long) details.get(0).get("IndexCommitLSN");
-                        checklobCommitLSN = (long) details.get(0).get("LobCommitLSN");
-                        checkdataCommitted = (boolean) details.get(0).get("DataCommitted");
-                        checkindexCommitted = (boolean) details.get(0).get("IndexCommitted");
-                        checklobCommitted = (boolean) details.get(0).get("LobCommitted");
+                        checkCompleteLSN = (long) cur.getNext().get("CompleteLSN");
                     }
                     cur.close();
 
@@ -625,7 +665,12 @@ public class FullTextUtils {
                     // && lobCommitLSN == checklobCommitLSN &&
                     // checkdataCommitted && checkindexCommitted
                     // && checklobCommitted) {
-                    if (checkdataCommitted && checkindexCommitted && checklobCommitted) {
+                    // if (checkdataCommitted && checkindexCommitted &&
+                    // checklobCommitted) {
+                    // isConsistency = true;
+                    // break;
+                    // }
+                    if (completeLSN >= checkCompleteLSN) {
                         isConsistency = true;
                         break;
                     }
@@ -636,11 +681,19 @@ public class FullTextUtils {
                     }
                 }
                 if (!isConsistency) {
-                    throw new Exception(cl.getFullName() + " Group [" + groupName
-                            + "] snapshot is not the same, masterNode " + masterNode.getNodeName() + " DataCommitLSN: "
-                            + dataCommitLSN + ", IndexCommitLSN: " + indexCommitLSN + ", LobCommitLSN: " + lobCommitLSN
-                            + ", " + nodeName + " dataCommitLSN: " + checkdataCommitLSN + ", IndexCommitLSN: "
-                            + checkindexCommitLSN + ", LobCommitLSN: " + checklobCommitLSN);
+                    // throw new Exception(cl.getFullName() + " Group [" +
+                    // groupName
+                    // + "] snapshot is not the same, masterNode " +
+                    // masterNode.getNodeName() + " DataCommitLSN: "
+                    // + dataCommitLSN + ", IndexCommitLSN: " + indexCommitLSN +
+                    // ", LobCommitLSN: " + lobCommitLSN
+                    // + ", " + nodeName + " dataCommitLSN: " +
+                    // checkdataCommitLSN + ", IndexCommitLSN: "
+                    // + checkindexCommitLSN + ", LobCommitLSN: " +
+                    // checklobCommitLSN);
+                    throw new Exception("Group [" + groupName + "] node system snapshot is not the same, masterNode "
+                            + masterNode.getNodeName() + " CompleteLSN: " + completeLSN + ", " + nodeName
+                            + " CompleteLSN: " + checkCompleteLSN);
                 }
             }
         }

@@ -30,15 +30,15 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static String getCappedName( DBCollection cl, String indexName ) {
+    public static String getCappedName(DBCollection cl, String indexName) {
         String cappedName = null;
-        BSONObject indexInfos = cl.getIndexInfo( indexName );
-        if ( indexInfos != null ) {
-            cappedName = (String) indexInfos.get( "ExtDataName" );
+        BSONObject indexInfos = cl.getIndexInfo(indexName);
+        if (indexInfos != null) {
+            cappedName = (String) indexInfos.get("ExtDataName");
         }
 
-        if ( cappedName == null ) {
-            throw new BaseException( -52, "no such index: " + indexName );
+        if (cappedName == null) {
+            throw new BaseException(-52, "no such index: " + indexName);
         }
 
         return cappedName;
@@ -53,16 +53,16 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<DBCollection> getCappedCLs( DBCollection cl, String textIndexName ) {
+    public static List<DBCollection> getCappedCLs(DBCollection cl, String textIndexName) {
         Sequoiadb db = cl.getSequoiadb();
-        String cappedName = getCappedName( cl, textIndexName );
-        List<String> groupNames = getCLGroups( cl );
+        String cappedName = getCappedName(cl, textIndexName);
+        List<String> groupNames = getCLGroups(cl);
         // 获取每个数据组主节点下的固定集合对象
         List<DBCollection> cappedCLs = new ArrayList<>();
-        for ( String groupName : groupNames ) {
-            DBCollection cappedCL = db.getReplicaGroup( groupName ).getMaster().connect()
-                    .getCollectionSpace( cappedName ).getCollection( cappedName );
-            cappedCLs.add( cappedCL );
+        for (String groupName : groupNames) {
+            DBCollection cappedCL = db.getReplicaGroup(groupName).getMaster().connect().getCollectionSpace(cappedName)
+                    .getCollection(cappedName);
+            cappedCLs.add(cappedCL);
         }
         return cappedCLs;
     }
@@ -76,12 +76,12 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static String getESIndexName( DBCollection cl, String indexName ) {
+    public static String getESIndexName(DBCollection cl, String indexName) {
 
-        String cappedName = getCappedName( cl, indexName );
-        List<String> groupNames = getCLGroups( cl );
+        String cappedName = getCappedName(cl, indexName);
+        List<String> groupNames = getCLGroups(cl);
 
-        return FullTextUtils.getFulltextPrefix().toLowerCase() + cappedName.toLowerCase() + "_" + groupNames.get( 0 );
+        return FullTextUtils.getFulltextPrefix().toLowerCase() + cappedName.toLowerCase() + "_" + groupNames.get(0);
     }
 
     /**
@@ -93,16 +93,16 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<String> getESIndexNames( DBCollection cl, String indexName ) {
-        String cappedName = getCappedName( cl, indexName );
+    public static List<String> getESIndexNames(DBCollection cl, String indexName) {
+        String cappedName = getCappedName(cl, indexName);
 
         // 获取原始集合下的全文索引名
         List<String> esIndexNames = new ArrayList<>();
-        List<String> groupNames = getCLGroups( cl );
+        List<String> groupNames = getCLGroups(cl);
 
-        for ( String groupName : groupNames ) {
-            esIndexNames.add(
-                    FullTextUtils.getFulltextPrefix().toLowerCase() + cappedName.toLowerCase() + "_" + groupName );
+        for (String groupName : groupNames) {
+            esIndexNames
+                    .add(FullTextUtils.getFulltextPrefix().toLowerCase() + cappedName.toLowerCase() + "_" + groupName);
         }
 
         // 分区表包含多个全文索引
@@ -117,17 +117,17 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static int getLastLid( DBCollection cappedCL ) {
+    public static int getLastLid(DBCollection cappedCL) {
         long lastLogicalID = -1;
         BSONObject sortObj = new BasicBSONObject();
         BSONObject selectObject = new BasicBSONObject();
-        sortObj.put( "_id", 1 );
-        selectObject.put( "_id", 1 );
-        DBCursor cur = cappedCL.query( null, selectObject, sortObj, null, 0, -1 );
-        List<BSONObject> records = getRecordsFromCL( cur );
-        if ( records.size() > 0 ) {
-            BSONObject lastMatch = records.get( records.size() - 1 );
-            lastLogicalID = (long) lastMatch.get( "_id" );
+        sortObj.put("_id", 1);
+        selectObject.put("_id", 1);
+        DBCursor cur = cappedCL.query(null, selectObject, sortObj, null, 0, -1);
+        List<BSONObject> records = getRecordsFromCL(cur);
+        if (records.size() > 0) {
+            BSONObject lastMatch = records.get(records.size() - 1);
+            lastLogicalID = (long) lastMatch.get("_id");
         }
         cur.close();
         return (int) lastLogicalID;
@@ -141,11 +141,11 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<BSONObject> getRecordsFromCL( DBCursor cursor ) {
+    public static List<BSONObject> getRecordsFromCL(DBCursor cursor) {
         List<BSONObject> objs = new ArrayList<BSONObject>();
-        while ( cursor.hasNext() ) {
+        while (cursor.hasNext()) {
             BSONObject obj = cursor.getNext();
-            objs.add( obj );
+            objs.add(obj);
         }
         return objs;
     }
@@ -158,38 +158,38 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<String> getCLGroups( DBCollection cl ) {
+    public static List<String> getCLGroups(DBCollection cl) {
         List<String> groupNames = new ArrayList<>();
         Sequoiadb db = cl.getSequoiadb();
-        if ( CommLib.isStandAlone( db ) ) {
+        if (CommLib.isStandAlone(db)) {
             return groupNames;
         }
 
         BSONObject matcher = new BasicBSONObject();
-        matcher.put( "Name", cl.getFullName() );
-        DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null );
-        while ( cur.hasNext() ) {
-            BasicBSONList bsonLists = (BasicBSONList) cur.getNext().get( "CataInfo" );
-            for ( int i = 0; i < bsonLists.size(); i++ ) {
-                BasicBSONObject obj = (BasicBSONObject) bsonLists.get( i );
-                groupNames.add( obj.getString( "GroupName" ) );
+        matcher.put("Name", cl.getFullName());
+        DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null);
+        while (cur.hasNext()) {
+            BasicBSONList bsonLists = (BasicBSONList) cur.getNext().get("CataInfo");
+            for (int i = 0; i < bsonLists.size(); i++) {
+                BasicBSONObject obj = (BasicBSONObject) bsonLists.get(i);
+                groupNames.add(obj.getString("GroupName"));
             }
         }
 
         // groupNames元素去重
-        groupNames = FullTextUtils.removeDuplicateItems( groupNames );
+        groupNames = FullTextUtils.removeDuplicateItems(groupNames);
         // groupNames数组元素排序
-        Collections.sort( groupNames, new Comparator<Object>() {
+        Collections.sort(groupNames, new Comparator<Object>() {
             @Override
-            public int compare( Object o1, Object o2 ) {
+            public int compare(Object o1, Object o2) {
                 String str1 = (String) o1;
                 String str2 = (String) o2;
-                if ( str1.compareToIgnoreCase( str2 ) < 0 ) {
+                if (str1.compareToIgnoreCase(str2) < 0) {
                     return -1;
                 }
                 return 1;
             }
-        } );
+        });
 
         return groupNames;
     }
@@ -203,20 +203,20 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-15
      */
-    public static List<String> getSubCLNames( Sequoiadb db, String mainCLFullName ) {
+    public static List<String> getSubCLNames(Sequoiadb db, String mainCLFullName) {
         List<String> subCLNames = new ArrayList<>();
-        if ( CommLib.isStandAlone( db ) ) {
+        if (CommLib.isStandAlone(db)) {
             return subCLNames;
         }
 
         BSONObject matcher = new BasicBSONObject();
-        matcher.put( "Name", mainCLFullName );
-        DBCursor cur = db.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null );
-        while ( cur.hasNext() ) {
-            BasicBSONList bsonLists = (BasicBSONList) cur.getNext().get( "CataInfo" );
-            for ( int i = 0; i < bsonLists.size(); i++ ) {
-                BasicBSONObject obj = (BasicBSONObject) bsonLists.get( i );
-                subCLNames.add( obj.getString( "SubCLName" ) );
+        matcher.put("Name", mainCLFullName);
+        DBCursor cur = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, matcher, null, null);
+        while (cur.hasNext()) {
+            BasicBSONList bsonLists = (BasicBSONList) cur.getNext().get("CataInfo");
+            for (int i = 0; i < bsonLists.size(); i++) {
+                BasicBSONObject obj = (BasicBSONObject) bsonLists.get(i);
+                subCLNames.add(obj.getString("SubCLName"));
             }
         }
 
@@ -232,29 +232,29 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-26
      */
-    public static void dropFullTextIndex( DBCollection cl, String textIndexName ) {
+    public static void dropFullTextIndex(DBCollection cl, String textIndexName) {
         int timeout = 600;
         int doTimes = 0;
         // 删除全文索引，如果报错-147则重试 10min
-        while ( doTimes < timeout ) {
+        while (doTimes < timeout) {
             try {
-                cl.dropIndex( textIndexName );
+                cl.dropIndex(textIndexName);
                 // 删除索引成功，则退出
                 break;
-            } catch ( BaseException e ) {
+            } catch (BaseException e) {
                 doTimes++;
-                if ( -147 == e.getErrorCode() ) {
+                if (-147 == e.getErrorCode()) {
                     try {
-                        Thread.sleep( 1000 );
-                    } catch ( InterruptedException e2 ) {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e2) {
                         e2.printStackTrace();
                     }
                     continue;
-                } else if ( -47 == e.getErrorCode() ) { // 索引已不存在，退出
+                } else if (-47 == e.getErrorCode()) { // 索引已不存在，退出
                     // System.out.println( textIndexName + " is not exist" );
                     break;
                 } else {
-                    System.out.println( "drop " + textIndexName + "failed, detail: " + e.getMessage() );
+                    System.out.println("drop " + textIndexName + "failed, detail: " + e.getMessage());
                     throw e;
                 }
 
@@ -262,10 +262,15 @@ public class FullTextDBUtils {
         }
 
         // 如果最后在超时时间内删除成功，则打印信息；否则再次删除索引，操作失败后直接抛异常
-        if ( doTimes < timeout ) {
-            System.err.println( textIndexName + " drop success, drop times: " + doTimes );
-        } else {
-            cl.dropIndex( textIndexName );
+        // if (doTimes < timeout) {
+        // System.err.println(textIndexName + " drop success, drop times: " +
+        // doTimes);
+        // } else {
+        // cl.dropIndex(textIndexName);
+        // }
+
+        if (doTimes >= timeout) {
+            cl.dropIndex(textIndexName);
         }
     }
 
@@ -278,29 +283,29 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-26
      */
-    public static void dropCollectionSpace( Sequoiadb db, String csName ) {
+    public static void dropCollectionSpace(Sequoiadb db, String csName) {
         int timeout = 600;
         int doTimes = 0;
         // 删除集合空间，如果报错-147则重试 10min
-        while ( doTimes < timeout ) {
+        while (doTimes < timeout) {
             try {
-                db.dropCollectionSpace( csName );
+                db.dropCollectionSpace(csName);
                 // 删除cs成功，则退出
                 break;
-            } catch ( BaseException e ) {
+            } catch (BaseException e) {
                 doTimes++;
-                if ( -147 == e.getErrorCode() ) {
+                if (-147 == e.getErrorCode()) {
                     try {
-                        Thread.sleep( 1000 );
-                    } catch ( InterruptedException e2 ) {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e2) {
                         e2.printStackTrace();
                     }
                     continue;
-                } else if ( -34 == e.getErrorCode() ) { // cs已不存在
+                } else if (-34 == e.getErrorCode()) { // cs已不存在
                     // System.out.println( csName + " is not exist" );
                     break;
                 } else {
-                    System.out.println( "drop " + csName + "failed, detail: " + e.getMessage() );
+                    System.out.println("drop " + csName + "failed, detail: " + e.getMessage());
                     throw e;
                 }
 
@@ -308,10 +313,14 @@ public class FullTextDBUtils {
         }
 
         // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常
-        if ( doTimes < timeout ) {
-            System.err.println( csName + " drop success,  drop times: " + doTimes );
-        } else {
-            db.dropCollectionSpace( csName );
+        // if (doTimes < timeout) {
+        // System.err.println(csName + " drop success, drop times: " + doTimes);
+        // } else {
+        // db.dropCollectionSpace(csName);
+        // }
+
+        if (doTimes >= timeout) {
+            db.dropCollectionSpace(csName);
         }
     }
 
@@ -324,29 +333,29 @@ public class FullTextDBUtils {
      * @Author liuxiaoxuan
      * @Date 2018-11-26
      */
-    public static void dropCollection( CollectionSpace cs, String clName ) {
+    public static void dropCollection(CollectionSpace cs, String clName) {
         int timeout = 600;
         int doTimes = 0;
         // 删除集合，如果报错-147则重试 10min
-        while ( doTimes < timeout ) {
+        while (doTimes < timeout) {
             try {
-                cs.dropCollection( clName );
+                cs.dropCollection(clName);
                 // 删除cl成功，则退出
                 break;
-            } catch ( BaseException e ) {
+            } catch (BaseException e) {
                 doTimes++;
-                if ( -147 == e.getErrorCode() ) {
+                if (-147 == e.getErrorCode()) {
                     try {
-                        Thread.sleep( 1000 );
-                    } catch ( InterruptedException e2 ) {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e2) {
                         e2.printStackTrace();
                     }
                     continue;
-                } else if ( -23 == e.getErrorCode() ) { // cl已不存在
-                    System.out.println( clName + " is not exist" );
+                } else if (-23 == e.getErrorCode()) { // cl已不存在
+                    // System.out.println(clName + " is not exist");
                     break;
                 } else {
-                    System.out.println( "drop " + clName + "failed, detail: " + e.getMessage() );
+                    System.out.println("drop " + clName + "failed, detail: " + e.getMessage());
                     throw e;
                 }
 
@@ -354,10 +363,14 @@ public class FullTextDBUtils {
         }
 
         // 如果最后在超时时间内删除成功，则打印信息；否则再次删除cs，操作失败后直接抛异常
-        if ( doTimes < timeout ) {
-            System.err.println( clName + " drop success,  drop times: " + doTimes );
-        } else {
-            cs.dropCollection( clName );
+        // if (doTimes < timeout) {
+        // System.err.println(clName + " drop success, drop times: " + doTimes);
+        // } else {
+        // cs.dropCollection(clName);
+        // }
+
+        if (doTimes >= timeout) {
+            cs.dropCollection(clName);
         }
     }
 
@@ -370,10 +383,10 @@ public class FullTextDBUtils {
      * @Author yinzhen
      * @Date 2018-12-21
      */
-    public static boolean isMainCL( Sequoiadb sdb, String clFullName ) {
-        DBCursor cursor = sdb.getSnapshot( Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + clFullName + "'}", null, null );
-        Object isMainCL = cursor.getNext().get( "IsMainCL" );
-        if ( isMainCL != null ) {
+    public static boolean isMainCL(Sequoiadb sdb, String clFullName) {
+        DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{'Name':'" + clFullName + "'}", null, null);
+        Object isMainCL = cursor.getNext().get("IsMainCL");
+        if (isMainCL != null) {
             boolean isMain = (Boolean) isMainCL;
             return isMain;
         }
@@ -390,44 +403,44 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-08
      */
-    public static void insertData( DBCollection cl, int insertNum ) {
+    public static void insertData(DBCollection cl, int insertNum) {
         String clName = cl.getName();
         List<BSONObject> insertObjs = new ArrayList<BSONObject>();
         int insertTimes = 100;
         int insertRecordNum = insertNum / insertTimes;
         int residueNum = insertNum % insertRecordNum;
-        String strB = StringUtils.getRandomString( 8 );
-        String strC = StringUtils.getRandomString( 32 );
-        String strD = StringUtils.getRandomString( 64 );
-        for ( int i = 0; i < insertTimes; i++ ) {
-            for ( int j = 0; j < insertRecordNum; j++ ) {
+        String strB = StringUtils.getRandomString(8);
+        String strC = StringUtils.getRandomString(32);
+        String strD = StringUtils.getRandomString(64);
+        for (int i = 0; i < insertTimes; i++) {
+            for (int j = 0; j < insertRecordNum; j++) {
                 int recordNum = i * insertRecordNum + j;
                 BSONObject data = new BasicBSONObject();
-                data.put( "recordId", recordNum );
-                data.put( "a", clName );
-                data.put( "b", strB + recordNum );
-                data.put( "c", strC );
-                data.put( "d", strD );
+                data.put("recordId", recordNum);
+                data.put("a", clName);
+                data.put("b", strB + recordNum);
+                data.put("c", strC);
+                data.put("d", strD);
 
-                insertObjs.add( data );
+                insertObjs.add(data);
             }
-            cl.insert( insertObjs, 0 );
+            cl.insert(insertObjs, 0);
             insertObjs.clear();
         }
 
         int recordNum = insertTimes * insertRecordNum;
-        if ( residueNum != 0 ) {
-            for ( int i = 0; i < residueNum; i++ ) {
+        if (residueNum != 0) {
+            for (int i = 0; i < residueNum; i++) {
                 BSONObject data = new BasicBSONObject();
-                data.put( "recordId", recordNum + i );
-                data.put( "a", clName );
-                data.put( "b", strB + recordNum + i );
-                data.put( "c", strC );
-                data.put( "d", strD );
+                data.put("recordId", recordNum + i);
+                data.put("a", clName);
+                data.put("b", strB + recordNum + i);
+                data.put("c", strC);
+                data.put("d", strD);
 
-                insertObjs.add( data );
+                insertObjs.add(data);
             }
-            cl.insert( insertObjs );
+            cl.insert(insertObjs);
         }
     }
 
@@ -442,8 +455,8 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public boolean isCSDropSuccess( Sequoiadb db, String csName ) throws Exception {
-        return !isExistCS( db, csName, false );
+    public boolean isCSDropSuccess(Sequoiadb db, String csName) throws Exception {
+        return !isExistCS(db, csName, false);
     }
 
     /**
@@ -457,9 +470,9 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    public boolean isCSDropSuccess( Sequoiadb db, List<String> csNames ) throws Exception {
-        for ( String csName : csNames ) {
-            if ( !isCSDropSuccess( db, csName ) ) {
+    public boolean isCSDropSuccess(Sequoiadb db, List<String> csNames) throws Exception {
+        for (String csName : csNames) {
+            if (!isCSDropSuccess(db, csName)) {
                 return false;
             }
         }
@@ -493,12 +506,12 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    private boolean isExistCS( Sequoiadb db, String csName, boolean expExist ) throws Exception {
-        List<String> rgNames = CommLib.getDataGroupNames( db );
+    private boolean isExistCS(Sequoiadb db, String csName, boolean expExist) throws Exception {
+        List<String> rgNames = CommLib.getDataGroupNames(db);
         boolean csExist = false;
-        for ( String rgName : rgNames ) {
-            csExist = isExistCS( db, csName, rgName, expExist );
-            if ( expExist != csExist ) {
+        for (String rgName : rgNames) {
+            csExist = isExistCS(db, csName, rgName, expExist);
+            if (expExist != csExist) {
                 break;
             }
         }
@@ -518,26 +531,26 @@ public class FullTextDBUtils {
      * @Author luweikang
      * @Date 2019-05-09
      */
-    private boolean isExistCS( Sequoiadb db, String csName, String rgName, boolean expExist ) throws Exception {
+    private boolean isExistCS(Sequoiadb db, String csName, String rgName, boolean expExist) throws Exception {
         boolean csExist = false;
-        List<String> nodeList = CommLib.getNodeAddress( db, rgName );
-        for ( String nodeAddress : nodeList ) {
-            try ( Sequoiadb nodeConn = new Sequoiadb( nodeAddress, "", "" ) ) {
-                for ( int i = 0; i < 300; i++ ) {
-                    csExist = nodeConn.isCollectionSpaceExist( csName );
-                    if ( expExist == csExist ) {
+        List<String> nodeList = CommLib.getNodeAddress(db, rgName);
+        for (String nodeAddress : nodeList) {
+            try (Sequoiadb nodeConn = new Sequoiadb(nodeAddress, "", "")) {
+                for (int i = 0; i < 300; i++) {
+                    csExist = nodeConn.isCollectionSpaceExist(csName);
+                    if (expExist == csExist) {
                         break;
                     }
                     try {
-                        Thread.sleep( 1000 );
-                    } catch ( InterruptedException e ) {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
             }
-            if ( csExist != expExist ) {
+            if (csExist != expExist) {
                 String msg = expExist ? "' is not on the rg: " : "' is still on the rg: ";
-                throw new Exception( "cs '" + csName + msg + rgName + ", node: " + nodeAddress );
+                throw new Exception("cs '" + csName + msg + rgName + ", node: " + nodeAddress);
             }
         }
         return csExist;
