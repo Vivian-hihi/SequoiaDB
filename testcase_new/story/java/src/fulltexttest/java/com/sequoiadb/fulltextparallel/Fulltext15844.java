@@ -2,7 +2,6 @@ package com.sequoiadb.fulltextparallel;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -64,14 +63,14 @@ public class Fulltext15844 extends SdbTestBase {
     public void tearDown() {
         try {
             FullTextDBUtils.dropCollection(cs, clName);
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             if (db != null) {
                 db.close();
             }
             if (esClient != null) {
                 esClient.close();
             }
-        }   
+        }
     }
 
     @Test
