@@ -16,7 +16,7 @@
 
     Range 分区键的格式类似于索引键，为一个 JSON 对象。JSON 对象中每一个字段对应分区键的字段，数值为 1 或者 -1，代表正向或逆向排序。
 
-	```lang-diy
+	```lang-json
 	{
 	  ShardingKey: { <字段1>: <1|-1>, [<字段2>: <1|-1>, ...] },
 	  ShardingType: "range"
@@ -27,7 +27,7 @@
 
     Hash 分区的 ShardingKey 组成方式与 Range 分区方式相同（但字段的正向/逆向不起作用）。Partition 的值必须是 2 的幂，范围在[ 2^3 , 2^20 ]，默认为 4096。
 
-	```lang-diy
+	```lang-json
 	{
 	  ShardingKey: { <字段1>: <1|-1>, [<字段2>: <1|-1>, ...] },
 	  ShardingType: "hash",
@@ -39,7 +39,7 @@
 
 -   一个包含两个字段，分别为正向和逆向排序的 Range 分区键如下：
 
-	```lang-diy
+	```lang-json
 	{
 	  ShardingKey: { Field1: 1, Field2: -1 },
 	  ShardingType: "range"
@@ -48,7 +48,7 @@
 
 -   Hash 分区键
 
-	```lang-diy
+	```lang-json
 	{
 	  ShardingKey: { Field1: 1, Field2: -1 },
 	  ShardingType: "hash",

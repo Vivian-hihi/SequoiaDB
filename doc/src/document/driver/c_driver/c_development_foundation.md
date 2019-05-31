@@ -6,7 +6,7 @@
 
 * 数据库连接（Connecting）编写完整客户端文件 connect.c 演示连接到数据库。文件必须包含“client.h”头文件。
 
-  ```lang-javascript
+  ```lang-c
   #include &lt;stdio.h>  
   #include "client.h"
 
@@ -57,7 +57,7 @@
 
   在 Linux 下，可以如下编译及链接动态链接库文件 libsdbc.so。
 
-  ```lang-javascript
+  ```lang-bash
   $ gcc -o connect connect.c -I /< PATH >/sdbdriver/include -lsdbc -L /< PATH >/sdbdriver/lib
   $ ./connect localhost 11810 "" ""
   connect success!
@@ -71,7 +71,7 @@
 
   以下创建了一个名字为“foo”的集合空间和一个名字为“bar”的集合，集合空间内的集合的数据页大小为4k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。
 
-  ```lang-javascript
+  ```lang-c
   // 首先，定义集合空间、集合句柄。
   sdbCSHandle collectionspace       = 0 ;
   sdbConnectionHandle connection    = 0 ;
@@ -89,7 +89,7 @@
 
   SequoiaDB 存储数据采用 BSON 的格式，BSON 是一种类似 JSON 的二进制对象。保存数据库中的数据，首先必须创建 bson 对象。下面会将{name:"Tom",age:24}插入到集合中。
 
-  ```lang-javascript
+  ```lang-c
   // 首先，我们需要创建一个插入的 bson 对象。
   INT32 rc = SDB_OK ;
   bson obj ;
@@ -107,7 +107,7 @@
 
   查询操作需要一个游标句柄存放查询的结果到本地。要获得查询的结果需要使用游标操作。本例使用了游标操作的 sdbNext 接口，表示从查询结果中取到一条记录。此示例中没有设置查询条件，筛选条件，排序情况，及仅使用默认索引。
 
-  ```lang-javascript
+  ```lang-c
   // 定义一个游标句柄
   sdbCursorHandle cursor = 0 ;
   ...
@@ -128,7 +128,7 @@
 
   此处，我们在集合句柄 collection 指定的集合中创建一个以“name”为升序，“age”为降序的索引。
 
-  ```lang-javascript
+  ```lang-c
   #define INDEX_NAME "index"
   ...
   // 首先创建一 bson 对象包含将要创建的索引的信息
@@ -147,7 +147,7 @@
 
   此处，我们在集合句柄 collection 指定的集合中更新记录。因为没有指定数据匹配规则，所以此示例将更新集合中所有的集合。
 
-  ```lang-javascript
+  ```lang-c
   // 先创建一个包含更新规则的 bson 对象
   bson_init( &rule ) ;
   bson_append_start_object ( &rule, "$set" ) ;
@@ -171,7 +171,7 @@
 
   分区组操作包括创建分区组（sdbCreateReplicaGroup），得到分区组句柄（sdbGetReplicaGroup），启动分区组（sdbStartReplicaGroup），停止分区组（sdbStopReplicaGroup）等。以下为分区组操作示例性的例子。真正的应用应包括错误检测等。
 
-  ```lang-javascript
+  ```lang-c
   // 定义一个分区组句柄
   sdbReplicaGroupHandle rg = 0 ;
   ...
@@ -189,7 +189,7 @@
 
   数据节点操作包括创建数据节点（sdbCreateNode），得到主数据节点（sdbGetNodeMaster），得到从数据节点（sdbGetNodeSlave），启动数据节点（sdbStartNode），停止数据节点（sdbStopNode）等。以下为数据节点操作示例性的例子。真正的应用应包括错误检测等。
 
-  ```lang-javascript
+  ```lang-c
   // 定义一个数据节点句柄
   sdbNodeHandle masternode   = 0 ;
   sdbNodeHandle slavenode    = 0 ;

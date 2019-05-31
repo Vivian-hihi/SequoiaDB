@@ -12,7 +12,7 @@
 
 每一个分区区间为左闭右开规则，也就是包含大于等于低边界，且小于高边界的区域。例如：
 
-```lang-diy
+```lang-json
 { LowBound: { "": 10 }, UpBound: { "": 20 } }
 ```
 
@@ -24,7 +24,7 @@
 
 当分区键包含多个字段时，其匹配规则为第一字段首先匹配，如果坐落于边界值则匹配下一字段。例如：
 
-```lang-diy
+```lang-json
 { LowBound: { "": 10, "": 5 }, UpBound: { "": 20, "": 1 } }
 ```
 
@@ -38,16 +38,16 @@
 
 一个存在于两个分区组的典型分区区间如下：
 
-```lang-diy
+```lang-json
 [
-      { "GroupID": 1000,
-        "LowBound": { "": MinKey, "": MaxKey },
-        "UpBound": { "": 10, "": 5 }
-      },
-      { "GroupID": 1001,
-        "LowBound": { "": 10, "": 5 },
-        "UpBound": { "": MaxKey, "": MinKey }
-      }
+   { "GroupID": 1000,
+     "LowBound": { "": MinKey, "": MaxKey },
+     "UpBound": { "": 10, "": 5 }
+   },
+   { "GroupID": 1001,
+     "LowBound": { "": 10, "": 5 },
+     "UpBound": { "": MaxKey, "": MinKey }
+   }
 ]
 ```
 

@@ -34,7 +34,7 @@
      
      - 运行安装包，加上升级参数 --upgrade
 
-         ```lang-javascript
+         ```lang-bash
          $ ./sequoiadb-2.2-linux_x86_64-enterprise-installer.run --upgrade true
          ```
 	

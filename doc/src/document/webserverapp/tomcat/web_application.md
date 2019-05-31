@@ -2,7 +2,7 @@
 
 2.重启tomcat使web应用加载成功
 
-```lang-javascript
+```lang-bash
 #/usr/local/apache-tomcat-7.0.68/bin/shutdown.sh
 #/usr/local/apache-tomcat-7.0.68/bin/startup.sh
 ```

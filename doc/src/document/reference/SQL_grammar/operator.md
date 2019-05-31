@@ -40,7 +40,7 @@
 
    * 集合 foo.bar 中原始记录。
 
-   ```
+   ```lang-json
    { a: 1 }
    { a: null }
    { b: 1 }

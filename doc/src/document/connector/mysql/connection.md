@@ -3,43 +3,43 @@
 
 1. 登录MySQL shell
 
- ```lang-javascript
+ ```lang-bash
  # mysql -u root -p
  ```
 
 2. 加载SequoiaDB插件
 
- ```lang-javascript
+ ```lang-sql
  mysql> install plugin sequoiadb soname 'ha_sequoiadb.so';
  ```
 
 3. 查询存储引擎
 
- ```lang-javascript
+ ```lang-sql
  mysql> show storage engines;
  ```
 当显示出现以下记录时，说明SequoiaDB插件安装成功
 
- ```lang-javascript
+ ```lang-sql
  | SequoiaDB | YES | SequoiaDB storage engine | YES | NO | NO |
  ```
 
 4. 创建数据库实例
 
- ```lang-javascript
+ ```lang-sql
  mysql> create database cs;
  mysql> use cs;
  ```
 
 5. 创建表
 
- ```lang-javascript
+ ```lang-sql
  mysql> create table cl(a int, c text) engine = SequoiaDB comment="{cl_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
 
 6. 数据操作
 
- ```lang-javascript
+ ```lang-sql
  mysql> insert into cl values(1, "SequoiaDB test");
  mysql> select * from cl;
  ```
@@ -50,7 +50,7 @@
    默认的SequoiaDB连接地址为“localhost:11810”，可以通过以下两种方式修改该地址：  
    (1)修改配置文件/etc/my.cnf，在[mysqld]下添加如下配置：  
 
- ```lang-javascript
+ ```lang-ini
  sequoiadb_conn_addr=192.168.20.37:11810,192.168.20.38:11810
  ```
 
@@ -58,7 +58,7 @@
 
    (2)通过MySQL shell修改  
 
- ```lang-javascript
+ ```lang-sql
  mysql> SET GLOBAL sequoiadb_conn_addr='192.168.20.37:11810,192.168.20.38:11810';
  ```
 
@@ -66,7 +66,7 @@
  
  配置完成后，可以通过以下命令查看配置结果
 
- ```lang-javascript
+ ```lang-sql
  mysql> show variables like 'sequoiadb%';
  ```
  
@@ -80,6 +80,6 @@
  示例：  
  在SequoiaDB上创建分区键为“{a:1,b:-1}”，分区类型为范围分区的集合cl  
 
- ```lang-javascript
+ ```lang-sql
  mysql> create table cl(a int, b int, c text) engine = SequoiaDB comment="{cl_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```

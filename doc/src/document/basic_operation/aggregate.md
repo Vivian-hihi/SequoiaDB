@@ -17,7 +17,7 @@
 
 假设原始数据为：
 
-```
+```lang-json
 { name: "张三", income: 10000, age: 31, city: "北京" }
 { name: "李四", income: 25000, age: 28, city: "上海" }
 { name: "王五", income: 15000, age: 32, city: "上海" }
@@ -26,7 +26,7 @@
 
 经过子操作$match后，数据为：
 
-```
+```lang-json
 { name: "张三", income: 10000, age: 31, city: "北京" }
 { name: "王五", income: 15000, age: 32, city: "上海" }
 { name: "赵六", income: 30000, age: 40, city: "北京" }
@@ -34,7 +34,7 @@
 
 经过子操作$group后，最终结果为：
 
-```
+```lang-json
 { income: 15000, city: "上海" }
 { income: 20000, city: "北京" }
 ```

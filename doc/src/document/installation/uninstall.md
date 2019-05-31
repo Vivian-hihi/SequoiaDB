@@ -5,14 +5,14 @@
 
 - 执行如下命令卸载 SequoiaDB 软件
 
-  ```lang-javascript
+  ```lang-bash
   $ /opt/sequoiadb/uninstall
   ```
 
 - 回退系统配置参数  
   1. 删除配置文件 /etc/security/limits.conf 中的如下配置参数：  
     
-     ```
+     ```lang-ini
      ?  <#domain>     <type>    <item>     <value>  
      ?  *               soft        core         0
      ?  *               soft        data         unlimited
@@ -22,7 +22,7 @@
      ```
   2. 删除配置文件 /etc/sysctl.conf 中的如下配置参数：
 
-     ```
+     ```lang-ini
      vm.swappiness = 0
      vm.dirty_ratio = 100
      vm.dirty_background_ratio = 10

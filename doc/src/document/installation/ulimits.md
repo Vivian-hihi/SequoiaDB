@@ -5,7 +5,7 @@
 
 配置安装目录下的 conf/limits.conf 文件，修改后需[重启服务](database_management/sdbcm.md)才能生效。  
 
-```
+```lang-ini
 core_file_size=0
 data_seg_size=-1
 file_size=-1
@@ -37,7 +37,7 @@ open_files=60000
 
    如果 conf/limits.conf 配置的值大于当前用户的 hard limit，则会报错。这时需提高 hard limit，或者使用 -i 参数。
 
-   ```lang-javascript
+   ```lang-bash
    $ ./bin/sdbstart -p 11810
    Error: Failed to set ulimit[open files] to [60000]
    Error: start sequoiadb will set ulimit by file[conf/limits.conf], if you want to set ulimit by current terminal, please use parameter '-i'.
@@ -51,7 +51,7 @@ open_files=60000
 
 查看数据库进程的ulimit
 
-```lang-javascript
+```lang-bash
 $ cd /opt/sequoiadb
 $
 $ ./bin/sdblist

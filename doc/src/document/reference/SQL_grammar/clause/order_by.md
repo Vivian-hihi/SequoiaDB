@@ -16,7 +16,7 @@
 
    * 集合 foo.bar 中原始记录。
 
-   ```
+   ```lang-json
    { emp_no: 1, dept_no: 1 }
    { emp_no: 2, dept_no: 1 }
    { emp_no: 3, dept_no: 2 }

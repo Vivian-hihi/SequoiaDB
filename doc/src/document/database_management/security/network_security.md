@@ -18,7 +18,7 @@ SequoiaDB 通过配置可以支持 SSL。SequoiaDB 客户端和 SequoiaDB 实例
 
 参考如下：
 
-```
+```lang-ini
 sequoiadb --usessl=true
 ```
 

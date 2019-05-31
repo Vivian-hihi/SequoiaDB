@@ -95,18 +95,18 @@ sdblobtool 是一款用于管理 SequoiaDB 集合大对象的工具。
 
 1.  将集合 foo.bar 中的大对象导出至本地文件 mylob 中。
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdblobtool --operation export --hostname hostname1 --svcname 11810 --collection foo.bar --file /opt/mylob
     ```
 
 2.  将本地文件 mylob 中的大对象导入至集合 foo.bar 中，当遇到已存在的大对象时直接跳过。
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdblobtool --operation import --hostname hostname1 --svcname 11810 --collection foo.bar --file /opt/mylob --ignorefe
     ```
 
 3.  将集合中的大对象复制到另一个集合中。
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdblobtool --operation migration --hostname hostname1 --svcname 11810 --collection foo.bar --dsthost hostname2 --dstservice 11810 --dstcollection foo.bar
     ```

@@ -20,7 +20,7 @@
 
    * 集合 foo.bar 中记录如下。
 
-   ```
+   ```lang-json
    { "dept_no": 1, "name": "tom", "emp_no": 10001 }
    { "dept_no": 1, "name": "james", "emp_no": 10002 }
    { "dept_no": 1, "name": "lily", "emp_no": 10003 }

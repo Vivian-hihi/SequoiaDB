@@ -95,7 +95,7 @@ Detail 选项为 false 时，将会展示普通的访问计划。
 
 *   普通表的访问计划
 
-```
+```lang-json
 {
   "Name": "foo.bar",
   "ScanType": "ixscan",
@@ -135,7 +135,7 @@ Detail 选项为 false 时，将会展示普通的访问计划。
 
 *   垂直分区的访问计划
 
-```
+```lang-json
 {
   "NodeName": "hostname:11830",
   "GroupName": "group",
@@ -182,7 +182,7 @@ Detail 选项为 false 时，将会展示普通的访问计划。
 
 *   协调节点上的虚拟访问计划，即匹配符不能命中任何分区
 
-```
+```lang-json
 {
   "NodeName": "hostname:11810",
   "GroupName": "SYSCoord",

@@ -60,7 +60,7 @@
 
 4.  通过终端登入相应分区组的数据节点，执行数据恢复。
 
-    ```lang-javascript
+    ```lang-bash
     sdbadmin@hostname1:/opt/sequoiadb> bin/sdbrestore -p database/11820/bakfile -n test_bk
     Check sequoiadb(11820) is not running...OK
     Begin to clean dps logs...
@@ -79,7 +79,7 @@
 
 5.  到数据节点目录检查文件是否恢复。
 
-    ```lang-javascript
+    ```lang-bash
     sdbadmin@hostname1:/ opt/sequoiadb /database/11820> ls -l
     total 299156
     drwxr-xr-x 2 sdbadmin sdbadmin      4096 Nov 13 16:06 bakfile
@@ -105,7 +105,7 @@
 
 2.  通过终端登入相应的节点，执行数据恢复。
 
-    ```lang-javascript
+    ```lang-bash
     sdbadmin@hostname1:/opt/sequoiadb> bin/sdbrestore -p database/11820/bakfile -n test_bk -s true --isSelf false --dbpath /backupdata/11820 --svcname 11820
     Check sequoiadb(11820) is not running...OK
     Begin to clean dps logs...
@@ -124,7 +124,7 @@
 
 5.  到目录检查文件是否恢复。
 
-    ```lang-javascript
+    ```lang-bash
     sdbadmin@hostname1:/backupdata/node1> ls -l
     total 299156
     drwxr-xr-x 2 sdbadmin sdbadmin      4096 Nov 13 16:06 bakfile

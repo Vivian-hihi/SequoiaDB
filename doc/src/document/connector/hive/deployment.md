@@ -18,7 +18,7 @@
 
 3. 修改 Hive 安装目录下的 bin/hive-site.xml 文件（如果不存在，可拷贝 $HIVE_HOME/conf/hive-default.xml.template为 hive-site.xml 文件），增加如下属性：
 
-```lang-diy
+```lang-xml
 <property>
   <name>hive.aux.jars.path</name>
   <value>file://<HIVE_home>/lib/hive-sequoiadb-{version}.jar,file://<HIVE_HOME>/lib/sequoiadb.jar</value>

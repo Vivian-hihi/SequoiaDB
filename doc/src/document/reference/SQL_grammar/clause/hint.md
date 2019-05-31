@@ -76,7 +76,7 @@ hint有多种不同类型：
 
    * 数据库中集合 foo.bar1, foo.bar2, foo.bar3 的情况如下。
 
-   ```
+   ```lang-json
    // foo.bar1包含索引 "idx_bar1_a"，该索引以 "a" 字段升序排序，其记录如下：
    { "a": 0 }
    { "a": 1 }

@@ -35,7 +35,7 @@
 
  **2.** 在该文件的[PHP]配置段中新增如下行：
 
- ```
+ ```lang-ini
  extension=<PATH>/libsdbphp-x.x.x.so
  ```
 
@@ -45,19 +45,19 @@
 
  **4.** 重新启动apache2服务；
 
- ```
+ ```lang-bash
  $ service apache2 restart（SUSE/Redhat/Ubuntu） 或  service httpd restart（CentOS）
  ```
 
  **5.** 编写包含如下内容PHP测试脚本，保存为test.php文件，并放在apache的Web服务目录下；
 
- ```
+ ```lang-php
  <?php phpinfo(); ?>
  ```
 
  **6.** 通过浏览器打开如下网址
 
- ```
+ ```lang-http
  http://<IP>/test.php
  ```
 

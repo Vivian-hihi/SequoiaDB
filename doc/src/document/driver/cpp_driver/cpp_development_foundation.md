@@ -4,7 +4,7 @@
 
 * 连接数据库：connect.cpp 演示如何连接到数据库。文件应当包含“client.hpp”头文件及使用命名空间 sdbclient。
 
-  ```lang-javascript
+  ```lang-c++
   #include &lt;iostream&gt;
   #include "client.hpp"
 
@@ -59,7 +59,7 @@
 
   在 Linux下，可以如下编译及链接动态链接库文件 libsdbcpp.so:
 
-  ```lang-javascript
+  ```lang-bash
   $ g++ -o connect connect.cpp -I &lt;PATH&gt;/sdbdriver/include -lsdbcpp -L &lt;PATH&gt;/sdbdriver/lib  
   执行结果如下：
   $ ./connect localhost 11810 "" ""
@@ -75,20 +75,20 @@
 
   首先，定义集合空间，集合对象。
 
-  ```lang-javascript
+  ```lang-c++
   sdbCollectionSpace collectionspace ;
   sdbCollection collection ;
   ```
   
   创建集合空间"foo"
   
-  ```lang-javascript
+  ```lang-c++
   rc = connection.createCollectionSpace ( "foo", SDB_PAGESIZE_4K, collectionspace ) ;
   ```
 
   在新建立的集合空间中创建集合"bar"
 
-  ```lang-javascript
+  ```lang-c++
   rc = collectionspace.createCollection ( "bar", collection ) ;
   ```
 
@@ -102,14 +102,14 @@
 
   首先，需要创建一个插入的 bson 对象。
 
-  ```lang-javascript
+  ```lang-c++
   BSONObj obj ;
   obj = BSON ( "name" << "tom" << "age" << 24 ) ;
   ```
 
   接着，把此 bson 对象插入集合中
  
-  ```lang-javascript
+  ```lang-c++
   collection.insert ( obj ) ;
   ```
 
@@ -119,19 +119,19 @@
 
   定义一个游标对象
 
-  ```lang-javascript
+  ```lang-c++
   sdbCursor cursor ;
   ```
 
   查询所有记录，并把查询结果放在游标对象中
 
-  ```lang-javascript
+  ```lang-c++
   collection.query ( cursor ) ;
   ```
 
   从游标中显示所有记录
 
-  ```lang-javascript
+  ```lang-c++
   while( !( rc=cursor.next( obj ) ) )
   {
       cout << obj.toString() << endl ;
@@ -142,20 +142,20 @@
 
 * 创建索引：index
 
-  ```lang-javascript
+  ```lang-c++
   # define INDEX_NAME "index"
   ```
 
   首先创建一 BSONObj 对象包含将要创建的索引的信息
 
-  ```lang-javascript
+  ```lang-c++
   BSONObj obj ;
   obj = BSON ( "name" << 1 << "age" << -1 ) ;
   ```
 
   创建一个以"name"为升序，"age"为降序的索引
 
-  ```lang-javascript
+  ```lang-c++
   collection.createIndex ( obj, INDEX_NAME, FALSE, FALSE ) ;
   ```
 
@@ -165,19 +165,19 @@
 
   先创建一个包含更新规则的 BSONObj 对象
 
-  ```lang-javascript
+  ```lang-c++
   BSONObj rule = BSON ( "$set" << BSON ( "age" << 19 ) ) ;
   ```
 
   打印出更新规则
 
-  ```lang-javascript
+  ```lang-c++
   cout << rule.toString() << endl ;
   ```
 
   更新记录
 
-  ```lang-javascript
+  ```lang-c++
   collection.update( rule ) ;
   ```
 
@@ -193,37 +193,37 @@
 
   定义一个分区组实例
 
-  ```lang-javascript
+  ```lang-c++
   sdbReplicaGroup rg  ;
   ```
 
   定义创建节点需要使用的配置项，此处定义一个空的配置项，表示使用默认配置
 
-  ```lang-javascript
+  ```lang-c++
   BSONObj conf ;
   ```
 
   先建立一个编目分区组
 
-  ```lang-javascript
+  ```lang-c++
   connection.createCataReplicaGroup ( "ubuntu-dev1", "30000", "/opt/sequoiadb/database/catalog/30000", conf ) ;
   ```
 
   创建数据分区组
 
-  ```lang-javascript
+  ```lang-c++
   connection.createRG ( "dataGroup1", rg ) ;
   ```
 
   创建第一个数据节点
 
-  ```lang-javascript
+  ```lang-c++
   rg.createNode ( "ubuntu-dev1", "40000", "/opt/sequoiadb/database/data/40000", conf ) ;
   ```
 
   启动分区组
 
-  ```lang-javascript
+  ```lang-c++
   rg.start () ;
   ```
 
@@ -235,19 +235,19 @@
 
   定义一个数据节点实例
 
-  ```lang-javascript
+  ```lang-c++
   sdbNode masternode ;
   sdbNode slavenode ;
   ```
 
   获取主数据节点
 
-  ```lang-javascript
+  ```lang-c++
   rg.getMaster( masternode ) ;
   ```
 
   获取从数据节点
 
-  ```lang-javascript
+  ```lang-c++
   rg.getSlave( slavenode ) ;
   ```

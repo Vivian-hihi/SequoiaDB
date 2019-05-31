@@ -38,7 +38,7 @@ SequoiaDB安装用户信息为：sdbadmin:sdbadmin_group。
 当前工作目录为sdbadmin的Home目录：/home/users/sdbadmin。  
 存在/opt/sequoiadb/bin/test/a.js文件，其内容如下：
 
-```lang-javascript
+```lang-bash
 sdbadmin@ubuntu-dev1:~$ pwd
 /home/users/sdbadmin
 sdbadmin@ubuntu-dev1:~$ cat /opt/sequoiadb/bin/test/a.js
@@ -49,7 +49,7 @@ println( 'selfPath:' + getSelfPath() ) ;
 
 启动 sdb shell:
 
-```lang-javascript
+```lang-bash
 sdbadmin@ubuntu-dev1:~$ /opt/sequoiadb/bin/sdb
 Welcome to SequoiaDB shell!
 help() for help, Ctrl+c or quit to exit

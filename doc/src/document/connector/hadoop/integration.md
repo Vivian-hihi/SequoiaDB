@@ -8,7 +8,7 @@
 
 运行
 
-```
+```lang-bash
 $ hadoop classpath
 ```
 
@@ -60,7 +60,7 @@ sequoiadb.out.bulknum：指定每次向输出源 SequoiaDB 写入的记录条数
 
 （1）下面是读取 HDFS 文件，处理后写入到 SequoiaDB 中去：
 
-```lang-javascript
+```lang-java
 public class HdfsSequoiadbMR {
     static class MobileMapper extends  Mapper<LongWritable,Text,Text,IntWritable>{
         private static final IntWritable ONE=new IntWritable(1);
@@ -123,7 +123,7 @@ public class HdfsSequoiadbMR {
 
 （2） 读取 SequoiaDB 中数据处理后写入到 HDFS 中。
 
-```lang-javascript
+```lang-java
 public class SequoiadbHdfsMR {
     static class ProvinceMapper extends Mapper<Object, BSONWritable,IntWritable,IntWritable>{
         private static final IntWritable ONE=new IntWritable(1);
@@ -186,7 +186,7 @@ public class SequoiadbHdfsMR {
 
 **配置信息：**
 
-```lang-diy
+```lang-xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
   <property>

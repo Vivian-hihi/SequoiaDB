@@ -9,32 +9,32 @@
 
   2.使用root用户，将tomcat安装包放在/opt目录下，并解压安装包
 
-```lang-javascript
+```lang-bash
 #tar -zxvf apache-tomcat-7.0.68.tar.gz
 ```
 将解压后的文件拷贝到/usr/local下
 
-```lang-javascript
+```lang-bash
 #cp -R /opt/apache-tomcat-7.0.68 /usr/local/
 ```
 
   3.打开/usr/local/apache-tomcat-7.0.68/bin/catalina.sh文件，增加如下配置项配置内存大小（根据项目实际需求进行修改）： 
 
-```lang-javascript
+```lang-bash
 #vim /usr/local/apache-tomcat-7.0.68/bin/catalina.sh
 ```
-```
+```lang-ini
 JAVA_OPTS="-server -Xms800m -Xmx800m -XX:PermSize=64M -XX:MaxNewSize=256m -XX:MaxPermSize=128m -Djava.awt.headless=true"
 ```
 
   4.查看tomcat端口是否被占用（默认是8080）
 
-```lang-javascript
+```lang-bash
 #netstat -lnpt | grep 8080
 ```
 如果端口被占用，可修改/usr/local/apache-tomcat-7.0.68/conf/server.xml文件的port参数的值，如下：
 
- ```
+ ```lang-xml
 <Connector port="8080" protocol="HTTP/1.1"
                connectionTimeout="20000"
                redirectPort="8443" />
@@ -43,7 +43,7 @@ JAVA_OPTS="-server -Xms800m -Xmx800m -XX:PermSize=64M -XX:MaxNewSize=256m -XX:Ma
 
   5.启动tomcat服务器
 
-```lang-javascript
+```lang-bash
 #/usr/local/apache-tomcat-7.0.68/bin/startup.sh
 ```
 

@@ -117,7 +117,7 @@
 
 手工查看备份信息直接通过终端登入指定机器，并进入到相应的备份目录中，执行 ```ls -l```
 
-```lang-javascript
+```lang-bash
 sdbadmin@hostname1:/opt/sequoiadb/database/11820/bakfile> ls -l
 total 37328
 -rw-r----- 1 sdbadmin sdbadmin  38157784 Nov 13 16:06 test_bk.1

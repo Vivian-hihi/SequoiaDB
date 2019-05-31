@@ -22,7 +22,7 @@ IXSCAN 的推演公式将展示以下信息：
 
 **示例**
 
-```
+```lang-json
 "ScanNode": {
   "IndexPages": 49,
   "IndexLevels": 1,

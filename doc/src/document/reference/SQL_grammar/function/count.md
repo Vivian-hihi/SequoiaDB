@@ -20,7 +20,7 @@
 ##示例##
    * 集合foo.bar中记录如下。
 
-   ```
+   ```lang-json
    { "name": "tom", "age": 10 }
    { "name": "sam", "age": 11 }
    { "name": "james", "age": 13 }

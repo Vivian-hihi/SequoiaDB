@@ -107,7 +107,7 @@ v2.9及以上版本。
 
         3) 使用 sdb 执行 test.js 文件
 
-        ```lang-javascript
+        ```lang-bash
         $ ./sdb -f test.js 
         defined in funcDef.js
         ```
@@ -137,7 +137,7 @@ v2.9及以上版本。
 
         3) 使用 sdb 执行 test.js 文件
 
-        ```lang-javascript
+        ```lang-bash
         $ ./sdb -f test.js
         defined in userDef.js
         ```

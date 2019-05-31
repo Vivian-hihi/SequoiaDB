@@ -8,7 +8,7 @@
 
 + **登录 MySQL shell**
 
- ```lang-javascript
+ ```lang-bash
  $ export MYSQL_HOME=/opt/sequoiasql/mysql
  $ ${MYSQL_HOME}/bin/mysql --defaults-file=${MYSQL_HOME}/database/3306/auto.cnf -S ${MYSQL_HOME}/database/3306/mysqld.sock -u root -p
  ```
@@ -19,7 +19,7 @@
    
    (1)通过bin/sdb_sql_ctl指定实例名修改
 
- ```lang-javascript
+ ```lang-bash
     # bin/sdb_sql_ctl chconf myinst --sdb-conn-addr=192.168.20.37:11810,192.168.20.38:11810
  ```
 
@@ -27,21 +27,21 @@
 
 + **创建数据库实例**
 
- ```lang-javascript
+ ```lang-sql
  mysql> create database cs;
  mysql> use cs;
  ```
 
 + **创建表**
 
- ```lang-javascript
+ ```lang-sql
  mysql> create table cl(a int, b int, c text, primary key(a, b) ) ;
  mysql> create table cl1(a int, b int, unique index idx_a(a) ) ;
  ```
 
 + **基本数据操作**
 
- ```lang-javascript
+ ```lang-sql
  mysql> insert into cl values(1, 101, "SequoiaDB test");
  mysql> insert into cl values(2, 102, "SequoiaDB test");
  mysql> insert into cl1 values(1, 99);
@@ -55,7 +55,7 @@
 
    使用非索引字段（"c"）执行查询时，访问计划信息如下：
 
- ```lang-javascript
+ ```lang-sql
  mysql> explain select * from cl where c="test";
  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+---------------------------------------------------------------+
  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                                                         |
@@ -68,7 +68,7 @@
 
    对“c”字段创建索引并执行相同查询时将会使用该索引，具体访问计划信息如下：
 
- ```lang-javascript
+ ```lang-sql
  mysql> alter table cl add index idx_c(c(20));
  Query OK, 0 rows affected (0.03 sec)
  Records: 0  Duplicates: 0  Warnings: 0
@@ -85,7 +85,7 @@
 
 + **存储过程**
 
- ```lang-javascript
+ ```lang-sql
  mysql> delimiter //
  mysql> create procedure delete_match()
      -> begin
@@ -97,7 +97,7 @@
 
 + **视图**
 
- ```lang-javascript
+ ```lang-sql
  mysql> create view
      -> v1
      -> as select
@@ -136,13 +136,13 @@
 
    (1)使用工具sdb_sql_ctl修改配置
 
- ```lang-javascript
+ ```lang-bash
  $ bin/sdb_sql_ctl chconf myinst --sdb-use-partition=OFF
  ```
 
    (2)修改实例数据目录下的配置文件auto.cnf，在[mysqld]下添加/更改对应配置项。示例：
 
- ```lang-javascript
+ ```lang-ini
  sequoiadb_use_partition=OFF
  ```
 
@@ -150,7 +150,7 @@
 
    (3)通过MySQL命令行修改，示例：
 
- ```lang-javascript
+ ```lang-sql
  mysql> SET GLOBAL sequoiadb_use_partition=OFF;
  ```
 
@@ -174,20 +174,20 @@ comment [=] "sequoiadb:{table_options:{...}}"
  示例1：  
  在SequoiaDB上创建分区键为“{a:1,b:-1}”，分区类型为范围分区的集合cl1  
 
- ```lang-javascript
+ ```lang-sql
  mysql> create table cl1(a int, b int, c text) engine = SequoiaDB comment="sequoiadb:{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
 示例2：  
 使用 use_partition 显示指定创建非分区表时会过滤掉 table_options 中与分区相关的参数并且创建非分区表。
 
-```lang-javascript
+```lang-sql
  mysql> create table cl2(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, CompressionType:"lzw", AutoSplit: true}, use_partition:false} ';
 ```
 
 示例3：  
 单独指定 "use_partition:false" 时，在配置项 sequoiadb_use_partition = ON 的情况下，也都只会创建普通非分区表。
 
-```lang-javascipt
+```lang-sql
  mysql> create table cl3(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{use_partition:false}';
 ```
 
@@ -195,7 +195,7 @@ comment [=] "sequoiadb:{table_options:{...}}"
 
 MySQL实例组件支持大多数 DDL 的在线修改。在线修改支持原表中（INPLACE）修改表属性，并且允许并发的 DML。可以通过 ALGORITHM 参数控制 ALTER TABLE 语句修改 DDL 时使用的算法。当 ALGORITHM = INPLACE 时，可以在线地修改表属性，而 ALGORITHM = COPY 时，则会把原表内容拷贝到新表，性能会下降。不指定 ALGORITHM 时会自动选择算法。如需在线修改 DDL，一般建议显式地指定 ALGORITHM = INPLACE。例子：
 
- ```lang-javascript
+ ```lang-sql
  mysql> alter table cl add index id_idx(id) algorithm=inplace;
  ```
 

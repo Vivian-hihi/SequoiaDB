@@ -18,7 +18,7 @@
 
 - 运行安装程序  
   
-  ```lang-javascript
+  ```lang-bash
   # ./sequoiasql-postgresql-3.2-x86_64-enterprise-installer.run --mode text
   ```
 
@@ -91,7 +91,7 @@
 
 1. 切换用户和目录
 
-   ```lang-javascript
+   ```lang-bash
    $ su - sdbadmin
    $ cd /opt/sequoiasql/postgresql
    ```
@@ -100,7 +100,7 @@
 
    SequoiaSQL PostgreSQL 默认启动端口为5432,检查端口是否被占用。(检查操作建议使用 root 用户操作，只有检查端口需要 root 权限，其余操作还是需要在 sdbadmin 用户下操作)
 
-   ```lang-javascript
+   ```lang-bash
    $ netstat -nap | grep 5432
    ```
 
@@ -108,19 +108,19 @@
 
    指定实例名为myinst，该实例名映射相应的数据目录和日志路径，用户可以根据自己需要指定不同的实例名。
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl addinst myinst -D database/5432/
    ```
 
    若端口号5432被占用，用户可以使用-p参数指定实例端口号：
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl addinst myinst -D database/5442/ -p 5442
    ```
 
    查看实例：
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl listinst
    NAME       PGDATA                                       PGLOG
    myinst     /opt/sequoiasql/postgresql/database/5432/    /opt/sequoiasql/postgresql/myinst.log
@@ -129,7 +129,7 @@
 
 4. 启动实例进程
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl start myinst
    Starting instance myinst ...
    ok (PID: 28115)
@@ -137,7 +137,7 @@
    
     查看实例状态
    
-    ```lang-javascript
+    ```lang-bash
    $ bin/sdb_sql_ctl status
    INSTANCE   PID        SVCNAME    PGDATA                                   PGLOG
    myinst     28115      5432       /opt/sequoiasql/postgresql/database/5432/ /opt/sequoiasql/postgresql/myinst.log
@@ -146,7 +146,7 @@
 
 5. 检查 SequoiaSQL PostgreSQL 是否启动成功
 
-   ```lang-javascript
+   ```lang-bash
    $ netstat -nap | grep 5432
    tcp   0   0 127.0.0.1:5432     0.0.0.0:*         LISTEN     28115/postgres
    unix  2   [ ACC ]   STREAM    LISTENING   40776754 28115/postgres     /tmp/.s.PGSQL.5432
@@ -154,13 +154,13 @@
 
 6. 创建 SequoiaSQL PostgreSQL 的 database
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl createdb foo myinst
    ```
 
    进入 SequoiaSQL PostgreSQL shell 环境
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/psql -p 5432 foo
    ```
 
@@ -173,7 +173,7 @@
 
    当添加一个新实例时，会自动加入 service 的管理中。
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl addinst myinst -D database/5432/
    Adding instance myinst ...
    ok
@@ -181,7 +181,7 @@
 
 2. 如果不想实例纳入服务的管理：
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl delfromsvc myinst
    Deleting instance myinst from service ...
    ok
@@ -189,7 +189,7 @@
    
    或者在添加实例的时候指定参数--addtosvc：
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl addinst myinst -D database/5432/ --addtosvc=false
    Adding instance myinst ...
    ok
@@ -197,7 +197,7 @@
 
 3. 添加实例到服务
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl addtosvc myinst
    Adding instance myinst to service ...
    ok
@@ -205,7 +205,7 @@
 
 4. 查看服务运行状态
 
-   ```lang-javascript
+   ```lang-bash
    $ service sequoiasql-postgresql status
    Status of service sequoiasql-postgresql: 
    running. (PID: 14756)
@@ -213,13 +213,13 @@
 
 5. 启停服务
 
-   ```lang-javascript
+   ```lang-bash
    $ service sequoiasql-postgresql stop
    Stoping service sequoiasql-postgresql ...
    ok.
    ```
    
-   ```lang-javascript
+   ```lang-bash
    $ service sequoiasql-postgresql start
    Starting service sequoiasql-postgresql ...
    ok. (PID: 4822)

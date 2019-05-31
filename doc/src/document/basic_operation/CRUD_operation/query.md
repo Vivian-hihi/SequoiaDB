@@ -17,7 +17,7 @@ find() 方法是查询集合中记录的主要方法
 
 现集合中有如下一条记录：
 
-```lang-diy
+```lang-json
 {
   "_id": 1,
   "name":
@@ -169,7 +169,7 @@ find() 方法是查询集合中记录的主要方法
 
 -   使用游标控制 find() 返回的记录
 
-    ```lang-diy
+    ```lang-javascript
     db.foo.bar.find().current()   //返回当前游标指向的记录
     db.foo.bar.find().next()      //返回当前游标指向的下一条记录
     db.foo.bar.find().close()     //关闭当前游标，当前游标不再可用

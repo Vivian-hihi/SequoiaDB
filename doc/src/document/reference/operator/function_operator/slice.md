@@ -1,6 +1,6 @@
 ##语法##
 
-```
+```lang-json
 { <字段名>: { $slice: <值> } }
 ```
 
@@ -12,13 +12,13 @@
 
 从第一个元素开始选取，其中 value 指要取的元素个数：
 
-```
+```lang-javascript
 find({},{<fieldName>:{<$slice:Value>}})
 ```
 
 或者，从某个元素开始选取数个元素，其中 value1 指从第几个元素开始取值（value1 取 0 表示为第一个元素），value2 指要取的元素个数：
 
-```
+```lang-javascript
 find({},{<fieldName>:{<$slice:[value1,value2]>}})
 ```
 

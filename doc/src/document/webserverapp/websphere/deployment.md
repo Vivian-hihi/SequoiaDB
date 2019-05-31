@@ -13,7 +13,7 @@
 
 1. 解压并安装
 
-   ```lang-javascript
+   ```lang-bash
 suse113-1:~ # cd /opt/web/packet/
 suse113-1:/opt/web/packet # tar -xzvf was.cd.70011.trial.base.opt.linux.ia32.tar.gz
 suse113-1:/opt/web/packet # cd WAS/

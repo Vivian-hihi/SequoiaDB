@@ -41,7 +41,7 @@
 
    * 集合 foo.bar 中原始记录。
 
-   ```
+   ```lang-json
    { age: 10 }
    { age: 10, name: "Tom" }
    ```

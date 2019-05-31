@@ -38,7 +38,7 @@ The user and user group of SequoiaDB is: sdbadmin:sdbadmin_group.
 Current work path is in sdbadmin's Home Path: /home/users/sdbadmin.  
 We have file "/opt/sequoiadb/bin/test/a.js" with the contents:
 
-```lang-javascript
+```lang-bash
 sdbadmin@ubuntu-dev1:~$ pwd
 /home/users/sdbadmin
 sdbadmin@ubuntu-dev1:~$ cat /opt/sequoiadb/bin/test/a.js
@@ -49,7 +49,7 @@ println( 'selfPath:' + getSelfPath() ) ;
 
 Start sdb shell:
 
-```lang-javascript
+```lang-bash
 sdbadmin@ubuntu-dev1:~$ /opt/sequoiadb/bin/sdb
 Welcome to SequoiaDB shell!
 help() for help, Ctrl+c or quit to exit

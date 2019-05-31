@@ -18,7 +18,7 @@ right outer join 会从右边的集合(collection2_name)那里返回所有的记
 
    * 集合 foo.persons 中记录如下：
 
-   ```
+   ```lang-json
    { "Id_P": 1, "LastName": "Adams", "FirstName": "John", "Address": "Oxford Street", "City": "London" }
    { "Id_P": 2, "LastName": "Bush", "FirstName": "George", "Address": "Fifth Avenue", "City": "New York" }
    { "Id_P": 3, "LastName": "Carter", "FirstName": "Thomas", "Address": "Changan Street", "City": "Beijing" }
@@ -26,7 +26,7 @@ right outer join 会从右边的集合(collection2_name)那里返回所有的记
 
    * 集合 foo.orders 中记录如下：
 
-   ```
+   ```lang-json
    { "Id_O": 1, "OrderNo": 77895, "Id_P": 3 }
    { "Id_O": 2, "OrderNo": 44678, "Id_P": 3 }
    { "Id_O": 3, "OrderNo": 22456, "Id_P": 1 }

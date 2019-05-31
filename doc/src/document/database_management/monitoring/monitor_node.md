@@ -44,7 +44,7 @@
 
 用户可以使用 Shell 脚本监控，例如“monitor_insert.sh”：
 
-```
+```lang-bash
 #!/bin/bash
 ~/sequoiadb/bin/sdb "db=new Sdb('hostname1',11810); \
                      db.getRG('foo').getNode('hostname2',11820).connect().snapshot(SDB_SNAP_DATABASE)" \
@@ -53,7 +53,7 @@
 
 运行结果：
 
-```
+```lang-bash
 $ ./monitor_insert.sh
 "TotalInsert": 0,
 ```

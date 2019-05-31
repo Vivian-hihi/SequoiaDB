@@ -1,6 +1,6 @@
 启动 Hive Shell 命令行窗口，执行如下命令创建表；
 
-```lang-javascript
+```lang-sql
 hive> create external table sdb_tab(id INT, name STRING, value DOUBLE) stored by "com.sequoiadb.hive.SdbHiveStorageHandler" tblproperties("sdb.address" = "localhost:11810");
 
 OK

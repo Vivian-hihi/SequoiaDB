@@ -24,20 +24,20 @@ sdbpasswd 不需要与数据库连接。
 
 1. 增加用户 sdbadmin，并指定密码为 sdbadmin
 
- ```lang-javascript
+ ```lang-bash
  $ sdbpasswd --adduser sdbadmin --password sdbadmin
  ```
 
 2. 增加用户 sdbadmin，并使用命令行提示的方式输入密码
 
- ```lang-javascript
+ ```lang-bash
  $ sdbpasswd --adduser sdbadmin --password
  password:
  ```
 
 3. 增加用户 sdbadmin，且通过 @ 符区分从属于不同集群的用户
 
- ```lang-javascript
+ ```lang-bash
  $ sdbpasswd --adduser sdbadmin@db1 --password 123456
  $ sdbpasswd --adduser sdbadmin@db2 --password 654321
  ```
@@ -47,19 +47,19 @@ sdbpasswd 不需要与数据库连接。
 
 4. 增加用户 sdbadmin，指定密码为 sdbadmin，并指定加密口令为 sequoiadb
 
- ```lang-javascript
+ ```lang-bash
  $ sdbpasswd --adduser sdbadmin --password sdbadmin --token sequoiadb
  ```
 
 5. 增加用户 sdbadmin，指定密码为 sdbadmin，并指定加密文件位置
 
- ```lang-javascript
+ ```lang-bash
  $ sdbpasswd --adduser sdbadmin --password sdbadmin --file ./cipher
  ```
 
 6. 删除用户 sdbadmin@db1
 
- ```lang-javascript
+ ```lang-bash
  $ sdbpasswd --removeuser sdbadmin@db1
  ```
  > Note:
@@ -89,42 +89,42 @@ sdbpasswd 不需要与数据库连接。
 
 ####sdbexprt:####
 
- ```lang-javascript
+ ```lang-bash
  $ sdbexprt -s localhost -p 11810 --type csv --file foo.bar.csv --fields field1,fieldNotExist,field3 -c foo -l bar --user sdbadmin --cipher true --token sequoiadb --cipherfile ./passwd
  ```
 
 ####sdbimprt:####
 
- ```lang-javascript
+ ```lang-bash
  $ sdbimprt -s localhost -p 11810 -c foo -l bar --file foo.bar.csv --type csv --headerline true --fields='c int,d string' --user sdbadmin --cipher true --token sequoiadb --cipherfile ./passwd
  ```
 
 ####sdbreplay:####
 
- ```lang-javascript
+ ```lang-bash
  $ sdbreplay --hostname localhost --svcname 11810 --path 20000/archivelog/archivelog.0 --user sdbadmin --cipher true --token sequoiadb --cipherfile ./passwd
  ```
 
 ####sdbtop:####
 
- ```lang-javascript
+ ```lang-bash
  $ sdbtop -i localhost -s 11810 --usrname sdbadmin --cipher true --token sequoiadb --cipherfile ./passwd
  ```
 
 ####sdblobtool:####
 
- ```lang-javascript
+ ```lang-bash
  $ sdblobtool --operation export --hostname localhost --svcname 50000 --collection foo.bar --file /opt/mylob --usrname sdbadmin --cipher true --token sequoiadb --cipherfile ./passwd
  ```
 
 ####sdbinspect####
 
- ```lang-javascript
+ ```lang-bash
  $ sdbinspect -d localhost:50000 -o item.bin --auth sdbadmin --cipher true --token sequoiadb --cipherfile ./passwd
  ```
 
 ####Sequoiasql-pgsql####
 
- ```lang-javascript
+ ```lang-bash
  foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127.0.0.1', service '11810', user 'sdbUserName', cipher 'on', token 'sequoiadb', cipherfile '/opt/sequoiadb/passwd', preferedinstance 'A', transaction 'off');
  ```

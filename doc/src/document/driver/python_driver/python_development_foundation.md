@@ -12,7 +12,7 @@
 
   以下是connect.py演示如何连接到数据库。
   
-  ```lang-javascript
+  ```lang-python
   import pysequoiadb
   from pysequoiadb import client
 
@@ -37,7 +37,7 @@
 
   以下创建了一个名字为“foo”的集合空间和一个名字为“bar”的集合，集合空间内的集合的数据页大小为16k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。
   
-  ```lang-javascript
+  ```lang-python
   # connect to db
   db = client("localhost", 11810)
   
@@ -51,7 +51,7 @@
 
 * 插入数据（insert）
 
-  ```lang-javascript
+  ```lang-python
   # creat dict object
   record = {"name":"Tom", "age":24}
   oid = cl.insert ( record ) ;
@@ -61,7 +61,7 @@
   
 * 查询（query）
 
-  ```lang-javascript
+  ```lang-python
   import pysequoiadb
   from pysequoiadb import client
   from pysequoiadb.error import SDBEndOfCursor
@@ -81,7 +81,7 @@
 
 * 索引（index）
 
-  ```lang-javascript
+  ```lang-python
   index_name = "index_name"
   idx = OrderedDict([('name', 1), ('age', -1)])
   cl.create_index ( idx, index_name, False, False ) ;
@@ -91,7 +91,7 @@
   
 * 更新（update）
 
-  ```lang-javascript
+  ```lang-python
   rule = {"$set":{ "age":19}}
   print rule
   cl.update( rule )
@@ -107,7 +107,7 @@
 
   以下仅作为示例，真正的应用应包括错误检测等。
 
-  ```lang-javascript
+  ```lang-python
   rg = db.create_replica_group ("group1")
   
   config = {}
@@ -124,7 +124,7 @@
   
   以下为数据节点操作示例性的例子。真正的应用应包括错误检测等。
   
-  ```lang-javascript
+  ```lang-python
   # 获取数据组group
   rg = db.get_replica_group_by_name("group1")
   

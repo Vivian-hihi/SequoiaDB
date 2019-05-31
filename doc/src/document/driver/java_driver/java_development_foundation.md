@@ -4,7 +4,7 @@
 
 * 连接数据库：Connecting 如下是一个连接数据库，并列出所有集合信息的一个例子：
 
-  ```lang-javascript
+  ```lang-java
   package com.sequoiadb.samples;
   import com.sequoiadb.base.DBCursor;
   import com.sequoiadb.base.Sequoiadb;
@@ -39,7 +39,7 @@
 
 * 插入数据
 
-  ```lang-javascript
+  ```lang-java
   String connString = "192.168.1.2:11810";
   try {
         Sequoiadb sdb = new Sequoiadb(connString, "", "");
@@ -61,7 +61,7 @@
 
 * 查询数据
 
-  ```lang-javascript
+  ```lang-java
   // 定义一个游标对象
   DBCursor cursor;
   BSONObject queryCondition = new BasicBSONObject();
@@ -89,7 +89,7 @@
 
 * 创建分区组
 
-  ```lang-javascript
+  ```lang-java
   String connString = "192.168.1.2:11810";
   try {
         Sequoiadb sdb = new Sequoiadb(connString, "", "");
@@ -109,7 +109,7 @@
 
 * 在分区组增加节点
 
-  ```lang-javascript
+  ```lang-java
   String connString = "192.168.1.2:11810";
   try {
         Sequoiadb sdb = new Sequoiadb(connString,"","");

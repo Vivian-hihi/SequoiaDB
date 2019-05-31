@@ -1,6 +1,6 @@
 ##语法##
 
-```
+```lang-json
 { <字段名1>: { $elemMatchOne: <表达式1> }, <字段名2>: { $elemMatchOne: <表达式2> }, ... }
 ```
 

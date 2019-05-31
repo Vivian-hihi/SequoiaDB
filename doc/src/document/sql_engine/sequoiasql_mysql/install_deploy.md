@@ -18,7 +18,7 @@
 
 - 运行安装程序  
   
-  ```lang-javascript
+  ```lang-bash
   # ./sequoiasql-mysql-3.2-linux_x86_64-enterprise-installer.run --mode text
   ```
 
@@ -89,7 +89,7 @@
 
 1. 切换用户和目录
 
-   ```lang-javascript
+   ```lang-bash
     $ su - sdbadmin
     $ cd /opt/sequoiasql/mysql
    ```
@@ -98,19 +98,19 @@
 
    指定实例名为myinst，该实例名映射相应的数据目录和日志路径，用户可以根据自己需要指定不同的实例名，实例默认端口号为3306。
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl addinst myinst -D database/3306/
    ```
 
    若端口号3306被占用，用户可以使用-p参数指定实例端口号：
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl addinst myinst -D database/3316/ -p 3316
    ```
 
    查看实例：
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl listinst
    NAME      SQLDATA                                  SQLLOG
    myinst     /opt/sequoiasql/mysql/database/3306/    /opt/sequoiasql/mysql/myinst.log
@@ -119,7 +119,7 @@
 
 3. 启动实例
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl start myinst
    Starting instance myinst ...
    ok (PID: 25174)
@@ -127,7 +127,7 @@
 
 4. 查看实例状态
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl status
    INSTANCE   PID        SVCNAME    SQLDATA                                 SQLLOG            
    myinst     25174      3306       /opt/sequoiasql/mysql/database/3306/    /opt/sequoiasql/mysql/myinst.log        
@@ -136,7 +136,7 @@
 
 5. 停止实例
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl stop myinst
    Stoping instance myinst (PID: 25174) ...
    ok
@@ -151,7 +151,7 @@
 
    当添加一个新实例时，会自动加入 service 的管理中。
 
-   ```lang-javascript
+   ```lang-bash
    $ bin/sdb_sql_ctl addinst myinst -D database/3306/
    Adding instance myinst ...
    ok
@@ -159,7 +159,7 @@
 
 2. 使用 root 用户权限查看服务运行状态
 
-   ```lang-javascript
+   ```lang-bash
    $ service sequoiasql-mysql status
      Status of service sequoiasql-mysql: 
      running. (PID: 20679)
@@ -167,7 +167,7 @@
 
 3. 使用 root 用户权限停止服务
 
-   ```lang-javascript
+   ```lang-bash
    $ service sequoiasql-mysql stop
      Stoping service sequoiasql-mysql ...
      ok.
@@ -175,7 +175,7 @@
    
 4. 使用 root 用户权限启动服务
 
-   ```lang-javascript
+   ```lang-bash
    $ service sequoiasql-mysql start
      Starting service sequoiasql-mysql ...
      ok. (PID: 20860)

@@ -38,17 +38,17 @@
   - 对于SUSE:
      1. 使用 root 权限登陆，执行 hostname sdbserver1 （sdbserver1为主机名称，可根据需要修改。）；
          
-         ```lang-javascript
+         ```lang-bash
          $ hostname sdbserver1
          ```
      2. 打开 /etc/HOSTNAME 文件；
          
-         ```lang-javascript  
+         ```lang-bash  
          $ vi /etc/HOSTNAME
          ```
      3. 修改文件内容，配置为主机名称 sdbserver1 （主机名称）；
      
-         ``` 
+         ```lang-ini
          sdbserver1
          ```
      4. 按 : wq 保存退出；  
@@ -56,24 +56,24 @@
   - 对于 RedHat：
      1. 使用 root 权限登陆，执行 hostname sdbserver1 （sdbserver1为主机名称，可根据需要修改。）；
          
-         ```lang-javascript
+         ```lang-bash
          $ hostname sdbserver1
          ```
      2. RedHat7 以下的系统，打开 /etc/sysconfig/network 文件；  
              
-         ```lang-javascript
+         ```lang-bash
          $ vi /etc/sysconfig/network
          ```
 
          如果是 RedHat7 系统，则打开 /etc/hostname 文件：    
              
-         ```lang-javascript
+         ```lang-bash
          $ vi /etc/hostname
          ```
 
      3. 将 HOSTNAME 一行修改为 HOSTNAME = sdbserver1 （其中sdbserver1 为新主机名）；
 
-         ```
+         ```lang-ini
          HOSTNAME = sdbserver1 
          ``` 
      4. 按 : wq 保存退出；
@@ -81,17 +81,17 @@
   - 对于 Ubuntu：
      1. 使用 root 权限登陆，执行 hostname sdbserver1 （sdbserver1为主机名称，可根据需要修改。）；
          
-         ```lang-javascript
+         ```lang-bash
              $ hostname sdbserver1
              ```
      2. 打开 /etc/hostname 文件；
          
-         ```lang-javascript
+         ```lang-bash
          $ vi /etc/hostname
          ```
      3. 修改文件内容，配置为主机名称: sdbserver1
         
-         ```
+         ```lang-ini
          sdbserver1
          ```
      4. 按 : wq 保存退出；
@@ -99,7 +99,7 @@
 - **验证方法**  
   执行 hostname 命令，确认打印信息是否为 “sdbserver1”
 
-  ```lang-javascript
+  ```lang-bash
   $ hostname
   ```
 
@@ -109,12 +109,12 @@
 
   	1. 使用 root 权限，打开 /etc/hosts 文件 
    
-     	```lang-javascript
+     	```lang-bash
      	$ vi /etc/hosts
      	```
   	2. 修改 /etc/hosts ，将服务器节点的主机名与IP映射关系配置到该文件中  
 
-     	```
+     	```lang-ini
      	192.168.20.200 sdbserver1  
      	192.168.20.201 sdbserver2  
      	192.168.20.202 sdbserver3
@@ -125,12 +125,12 @@
 - **验证方法**
   1. ping sdbserver1（本机主机名） 可以 ping 通 
      
-     ```lang-javascript
+     ```lang-bash
      $ ping sdbserver1
      ```
   2. ping sdbserver2（远端主机名） 可以 ping 通
 
-     ```lang-javascript
+     ```lang-bash
      $ ping sdbserver2
      ```
 
@@ -142,7 +142,7 @@
 
      	执行如下命令
          
-         ```lang-javascript
+         ```lang-bash
          $ SuSEfirewall2 stop
          $ chkconfig SuSEfirewall2_init off
          $ chkconfig SuSEfirewall2_setup off
@@ -152,7 +152,7 @@
      
 		执行如下命令    
 
-         ```lang-javascript
+         ```lang-bash
          $ service iptables stop
          $ chkconfig iptables off
          ```
@@ -160,7 +160,7 @@
 
      	执行如下命令
 
-         ```lang-javascript
+         ```lang-bash
          $ ufw disable
          ```
 
@@ -168,19 +168,19 @@
 
   - 对于 SUSE
 
-     ```lang-javascript
+     ```lang-bash
      $ chkconfig -list | grep fire
      ``` 
 
   - 对于 RedHat:
      
-     ```lang-javascript
+     ```lang-bash
      $ service iptables status
      ``` 
 
   - 对于 Ubuntu:
      
-     ```lang-javascript
+     ```lang-bash
      $ ufw status
      ``` 
 

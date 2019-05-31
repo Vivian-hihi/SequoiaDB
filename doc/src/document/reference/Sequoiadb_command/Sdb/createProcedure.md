@@ -31,7 +31,7 @@
 
 * 函数参数
 
-  ```
+  ```lang-bash
   native type of JS
   ```
 

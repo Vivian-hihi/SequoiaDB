@@ -50,7 +50,7 @@ v1.0及以上版本。
 
 假设集合 collection 包含如下格式的记录：
 
-```
+```lang-json
 {
   no:1000,
   score:80,

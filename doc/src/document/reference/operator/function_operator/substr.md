@@ -1,6 +1,6 @@
 ##语法##
 
-```
+```lang-json
 { <字段名>: { $substr: <值> } }
 ```
 
@@ -10,13 +10,13 @@
 
 ##格式##
 
-```
+```lang-javascript
 find({},{<fieldName>:{<$substr:[Pos,Len]>}})
 ```
 * Pos 代表从字符串返回子串的起始下标，当Pos为负数时代表从字符串末尾倒数的位置。例如-2代表从字符串倒数第二个字符开始截取子串。
 * Len 代表截取的长度。
 
-```
+```lang-javascript
 find({},{<fieldName>:{<$substr:Value>}})
 ```
 * 当 Value 大于等于0时，表示返回从下标 0 开始,长度为Value的子串。

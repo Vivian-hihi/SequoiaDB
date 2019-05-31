@@ -6,7 +6,7 @@
 
 * 连接数据库
 
-  ```lang-javascript
+  ```lang-php
   //创建 SequoiaDB 对象
   $db = new SequoiaDB();
   //连接数据库
@@ -22,7 +22,7 @@
 
 * 选择集合空间
 
-  ```lang-javascript
+  ```lang-php
   //选择名称为"foo"的集合空间，如果不存在则自动创建
   //返回 SequoiaCS 对象
   $cs = $db -> selectCS( "foo" );
@@ -35,7 +35,7 @@
 
 * 选择集合
 
-  ```lang-javascript
+  ```lang-php
   //选择名称为"bar"的集合，如果不存在，则自动创建
   //返回 SequoiaCollection 对象
   $cl = $cs -> selectCollection( "bar" );
@@ -48,7 +48,7 @@
 
 * 插入
 
-  ```lang-javascript
+  ```lang-php
   //json方式插入
   $arr = $cl -> insert( "{test:1}" );
   //检测结果
@@ -68,7 +68,7 @@
 
 * 查询
 
-  ```lang-javascript
+  ```lang-php
   //查询集合中的所有记录
   //返回 SequoiaCursor 对象
   $cursor = $cl -> find();
@@ -81,7 +81,7 @@
 
 * 更新
 
-  ```lang-javascript
+  ```lang-php
   //修改集合中的多有记录，把字段 test 的值修改为0
   $arr = $cl -> update( '{$set:{test:0}}' );
   //检测结果
@@ -93,7 +93,7 @@
 
 * 删除
 
-  ```lang-javascript
+  ```lang-php
   //删除集合中的所有记录
   $arr = $cl -> remove();
   //检测结果
@@ -107,7 +107,7 @@
 
 * 选择组
 
-  ```lang-javascript
+  ```lang-php
   //选择名称为"group"的组，如果不存在，则自动创建
   //返回 SequoiaGroup 对象
   $group = $db -> selectGroup("db1");
@@ -120,7 +120,7 @@
 
 * 启动分区组
 
-  ```lang-javascript
+  ```lang-php
   //启动分区组，首次会自动激活
   //返回操作信息
   $arr = $group -> start();
@@ -133,7 +133,7 @@
 
 * 选择节点
 
-  ```lang-javascript
+  ```lang-php
   //获取名称为"node"的节点
   //返回 SequoiaNode 对象
   $node = $group -> getNode( 'hostname1:11820' );

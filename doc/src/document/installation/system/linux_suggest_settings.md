@@ -44,7 +44,7 @@
 - **调整内核参数**
   1. 使用下列命令输出当前 vm 配置，并将其归档保存：
 
-     ```lang-javascript
+     ```lang-bash
      $ cat /proc/sys/vm/swappiness
      $ cat /proc/sys/vm/dirty_ratio
      $ cat /proc/sys/vm/dirty_background_ratio
@@ -56,7 +56,7 @@
      ```
   2. 添加下列参数至 /etc/sysctl.conf 文件调整内核参数：
 
-     ```
+     ```lang-ini
      vm.swappiness = 0
      vm.dirty_ratio = 100
      vm.dirty_background_ratio = 40
@@ -78,18 +78,18 @@
 - **关闭transparent_hugepage**
   1. 编辑/etc/rc.local，在第一行 “#!/bin/sh” 的下一行添加如下两行内容：
 
-     ```
+     ```lang-bash
      echo never > /sys/kernel/mm/transparent_hugepage/enabled
      echo never > /sys/kernel/mm/transparent_hugepage/defrag
      ```
   2. 执行如下命令，使配置生效：
 	    
-     ```lang-javascript
+     ```lang-bash
      $ source /etc/rc.local
      ```
   3. 检查是否成功关闭transparent_hugepage。分别执行如下两条命令，输出结果中都有 “[never]” 则表示成功关闭了transparent_hugepage，如果是 “never” 并且有 “[always]” 或者 “[madvise]” 则关闭失败：
 
-     ```lang-javascript
+     ```lang-bash
      $ cat /sys/kernel/mm/transparent_hugepage/enabled
      $ cat /sys/kernel/mm/transparent_hugepage/defrag
      ```
@@ -111,7 +111,7 @@
 
 				以root权限编辑 /etc/grub.conf ，找到"kernel"引导行，该行类似如下（不同的版本内容略有差异，但开头有“kernel /vmlinuz-”）：  
 
-             	```
+             	```lang-bash
              	kernel /vmlinuz-2.6.32-358.el6.x86_64 ro root=/dev/mapper/vg_centos64001-lv_root rd_NO_LUKS rd_LVM_LV=vg_centos64001/lv_root rd_NO_MD rd_LVM_LV=vg_centos64001/lv_swap crashkernel=128M LANG=zh_CN.UTF-8  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
              	```
 
@@ -121,7 +121,7 @@
 
          		以root权限编辑 /boot/grub/grub.cfg ，找到"linux"引导行，该行类似如下（不同版本内容略有差异，但开头有“linux   /boot/vmlinuz-”）：
 
-             	```
+             	```lang-bash
              	linux   /boot/vmlinuz-3.2.0-31-generic root=UUID=92191cd8-3690-4cd4-9f42-95d392c9d828 ro
              	```
 
@@ -131,7 +131,7 @@
 
     2. 验证NUMA是否成功关闭，shell执行如下命令：
     
-		```lang-javascript
+		```lang-bash
      	$ numastat
      	```
 

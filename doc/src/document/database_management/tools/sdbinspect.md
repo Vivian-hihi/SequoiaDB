@@ -32,19 +32,19 @@ sdbinspect 需要与数据库协调节点（Coord 节点）连接。
 
 1.  在下面的例子，sdbinspect 检查协调节点 hostname1:11810 下的全部集群（5次），并将中间文件结果输出到 item.bin 中，同时会解析 item.bin 文件，把文本结果按（默认的）group 划分，输出到 item.bin.report 文件中。
 
-    ```lang-javascript
+    ```lang-bash
     $ sdbinspect -d hostname1:11810 -o item.bin
     ```
 
 2.  在下面的例子，sdbinspect 检查协调节点 hostname1:11810 下的全部集群中的集合空间 sports（3次），并将中间文件结果输出到 item.bin 中，同时会解析 item.bin 文件，把文本结果按 collection 划分，输出到
 item.bin.report 文件中。
 
-    ```lang-javascript
+    ```lang-bash
     $ sdbinspect -d hostname1:11810 -o item.bin -c sports -w collection -t 3
     ```
 
 3.  在下面的例子，sdbinspect 检查协调节点 hostname1:11810 下的 group1 集群中的名为 sports 的集合空间，名为 item 的集合（5次），并将中间文件结果输出到 inspect.bin 中，同时会解析 inspect.bin 文件，把文本结果按（默认的）group 划分，输出到 inspect.bin.report 文件中。
 
-    ```lang-javascript
+    ```lang-bash
     $ sdbinspect -d hostname1:11810 -g group1 -c sports -l item
     ```

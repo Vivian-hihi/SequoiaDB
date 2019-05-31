@@ -4,13 +4,13 @@
 
     编辑 /opt/postgresql/data/postgresql.conf 文件，将
 
-    ```lang-javascript
+    ```lang-ini
     listen_addresses = 'localhost'
     ```
 
     改为：
 
-    ```lang-javascript
+    ```lang-ini
     listen_addresses = '0.0.0.0'
     ```
 
@@ -18,14 +18,14 @@
 
     编辑 /opt/postgresql/data/pg_hba.conf 文件，将
 
-    ```lang-javascript
+    ```lang-ini
     # IPv4 local connections:
     host  all  all  127.0.0.1/32  trust
     ```
 
     改为：
 
-    ```lang-javascript
+    ```lang-ini
     # IPv4 local connections:
     host  all  all  127.0.0.1/32  trust
     host  all  all  0.0.0.0/0  trust
@@ -33,14 +33,14 @@
 
 3. 重启 PostgreSQL
 
-    ```lang-javascript
+    ```lang-bash
     $ bin/pg_ctl stop -s -D pg_data/ -m fast
     $ bin/postgres -D pg_data/ >> logfile 2>&1 &
     ```
 
 ##JDBC连接程序##
 
-```lang-javascript
+```lang-java
 package com.sequoiadb.sample;
 import java.sql.*;
 

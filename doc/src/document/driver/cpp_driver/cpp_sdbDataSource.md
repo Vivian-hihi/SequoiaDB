@@ -8,7 +8,7 @@ C++ 驱动的连接池提供给用户一个快速获取连接实例的途径。
 
 ##例子##
 
-```lang-javascript
+```lang-c++
 #include "common.hpp" // by default, this file is in /opt/sequoiadb/samples/CPP
 #include "sdbDataSourceComm.hpp"
 #include "sdbDataSource.hpp"

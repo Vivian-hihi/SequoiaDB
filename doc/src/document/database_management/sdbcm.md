@@ -7,13 +7,13 @@
 
 1.  启动服务
 
-    ```lang-javascript
+    ```lang-bash
     $ service sdbcm start
     ```
 
 2.  停止服务
 
-    ```lang-javascript
+    ```lang-bash
     $ service sdbcm stop
     ```
 
@@ -23,17 +23,17 @@
 
 3.  查看服务状态，系统提示“sdbcm is running”表示服务正在运行
 
-    ```lang-javascript
+    ```lang-bash
     $ service sdbcm status
     ```
 
 4.  重启服务
 
-    ```lang-javascript
+    ```lang-bash
     $ service sdbcm restart
     ```
 
-    ```lang-javascript
+    ```lang-bash
     $ service sdbcm restart all-nodes
     ``` 
 
@@ -43,14 +43,14 @@
     
 5.  强制重新加载
 
-    ```lang-javascript
+    ```lang-bash
     $ service sdbcm force-reload
     ```
 
     >**Note:**  
     > 只重启cm。
 
-    ```lang-javascript
+    ```lang-bash
     $ service sdbcm force-reload all-nodes
     ```
 

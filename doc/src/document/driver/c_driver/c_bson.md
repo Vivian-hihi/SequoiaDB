@@ -18,7 +18,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
 
 * 创建一个简单的 BSON 对象{age:20}。
 
-  ```lang-javascript
+  ```lang-c
   bson obj;
   bson_init( &obj );
   bson_append_int( &obj, "age", 20 );
@@ -38,7 +38,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
 
 * 创建一个复杂的 BSON 对象
 
-  ```lang-javascript
+  ```lang-c
   /* 创建一个包含{name:"tom",colors:["red","blue","green"], address: {city:"Toronto", province: "Ontario"}}的对象 */
   bson *newobj = bson_create ();
   bson_append_string ( newobj, "name", "tom" );
@@ -69,7 +69,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
 
 * 可以使用 bson_print 方法来打印 BSON 内容。也可以使用 bson_iterator 来遍历 BSON 的所有字段内容。要遍历 BSON，首先要初始化 bson_iterator，然后使用 bson_iterator_next 遍历 BSON 每一个元素。
 
-  ```lang-javascript
+  ```lang-c
   bson newobj;
   bson_iterator i;
   bson_type type;
@@ -101,7 +101,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
 
 * 对于每个 bson_iterator，使用 bson_iterator_type 函数可以得到其类型，使用 bson_iterator_string 等函数可以得到其相对应类型的数值。
 
-  ```lang-javascript
+  ```lang-c
   bson newobj;
   bson_iterator i;
   bson_type type;
@@ -131,7 +131,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
 
   例如想得到 name 元素名可以这样使用：
 
-  ```lang-javascript
+  ```lang-c
   bson newobj;
   bson_iterator i;
   bson_type type;
@@ -154,7 +154,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
 
 * 读取数组元素或嵌套对象，因为“address”是一个嵌套对象，需要特殊遍历。首先得到 address 值，再初始化一个新的 BSON 迭代器：
 
-  ```lang-javascript
+  ```lang-c
   bson newobj;
   bson_iterator i;
   bson_iterator sub;

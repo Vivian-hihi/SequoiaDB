@@ -2,7 +2,7 @@
 
 2. 执行如下命令卸载 PostgreSQL 实例组件
 
-  ```lang-javascript
+  ```lang-bash
   $ /opt/sequoiasql/postgresql/uninstall
   ```
 >**Note:**  

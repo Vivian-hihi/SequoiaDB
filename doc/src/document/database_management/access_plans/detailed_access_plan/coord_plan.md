@@ -24,7 +24,7 @@
 
 **示例**
 
-```
+```lang-json
 {
   "NodeName": "hostname:11810",
   "GroupName": "SYSCoord",

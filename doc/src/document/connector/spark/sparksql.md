@@ -12,7 +12,7 @@ SparkSQL是Spark下处理结构化数据执行的模块，它提供了名为Data
 
 在SparkSQL中创建SequoiaDB表的SQL语句如下
 
-```lang-javascript
+```lang-sql
 create <[temporary] table| temporary view> <tableName> [(schema)] using com.sequoiadb.spark options (<option>, <option>, ...)
 ```
 
@@ -58,25 +58,25 @@ create <[temporary] table| temporary view> <tableName> [(schema)] using com.sequ
 
 假设集合名为“test.data”，协调节点在 serverX 和 serverY 上，以下指令可以在spark-sql执行，并创建一个表来对应SequoiaDB的Collection（集合）：
 
-```lang-javascript
+```lang-sql
 spark-sql> create table datatable(c1 string, c2 int, c3 int) using com.sequoiadb.spark options(host 'serverX:11810,serverY:11810', collectionspace 'test', collection 'data');
 ```
 
 也可以不指定schema，由连接器自动生成：
 
-```lang-javascript
+```lang-sql
 spark-sql> create table datatable using com.sequoiadb.spark options(host 'serverX:11810,serverY:11810', collectionspace 'test', collection 'data');
 ```
 
 创建表或视图之后就可以在表上执行SQL语句。以下query 查询可被用于统计表中的记录数
 
-```lang-javascript
+```lang-sql
 spark-sql> select * from datatable;
 ```
 
 也可以从SequoiaDB的一个表向另一个插入数据：
 
-```lang-javascript
+```lang-sql
 spark-sql> insert into table t2 select * from t1;
 ```
 

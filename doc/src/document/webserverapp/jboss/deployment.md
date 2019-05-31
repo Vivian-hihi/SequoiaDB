@@ -24,19 +24,19 @@
 2. 配置JDK环境变量
 
 
- ```lang-javascript
+ ```lang-bash
  $ vim /etc/profile
  ```
  增加如下配置项
 
- ```
+ ```lang-ini
    export JAVA_HOME=/usr/java/jdk1.7.0_67
    export CLASSPATH=${JAVA_HOME}/lib:${JAVA_HOME}/jre/lib
    export PATH=${JAVA_HOME}/bin:${PATH}
  ```
  使环境变量生效
 
- ```lang-javascript
+ ```lang-bash
  $ source /etc/profile
  ```
 
@@ -44,7 +44,7 @@
 
  1. 将安装包解压到/opt目录下，并修改名字为jboss
 
-      ```lang-javascript 
+      ```lang-bash 
       $ unzip jboss-as-7.1.1.Final.zip -d /opt
       $ mv JBoss-7.1.1.Final jboss
       ```
@@ -55,25 +55,25 @@
 
    2. 修改standlone.conf配置文件
 
-      ```lang-javascript
+      ```lang-bash
       $ cd /opt/jboss/bin
       $ vim standalone.conf
       ```
      设置JAVA_HOME的值（根据实际配置）
 
-     ```
+     ```lang-ini
      JAVA_HOME=/usr/java/jdk1.7.0_67
      ```
 
    3. 修改standlone.xml配置文件
 
-     ```lang-javascript
+     ```lang-bash
      $ cd /opt/jboss/standalone/configuration/
      $ vim standalone.xml
      ```
      将所有的127.0.0.1修改成本机IP，该实例的IP是192.168.31.8，在vim的命令行模式下输入
 
-     ```
+     ```lang-bash
      :%s/127.0.0.1/192.168.31.8/g		
      ```
     > **Note:**
@@ -84,7 +84,7 @@
 
         进入bin目录执行standalone\.sh
 
-       ```lang-javascript
+       ```lang-bash
        $ cd /opt/jboss/bin
        $ ./standalone.sh
        ```
@@ -97,7 +97,7 @@
 
     进入bin目录执行add-user.sh
 
-    ```lang-javascript
+    ```lang-bash
     $ cd /opt/jboss/bin
     ./add-user.sh
     ```

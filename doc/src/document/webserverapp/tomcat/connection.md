@@ -2,7 +2,7 @@
 
   2.配置JNDI,在/usr/local/apache-tomcat-7.0.68/conf/context.xml文件中新增内容如下：
 
-```
+```lang-xml
 <Resource 
          name="jdbc/pg"
          auth="Container"
@@ -31,7 +31,7 @@
 
  3.重启tomcat使配置参数生效
 
-```lang-javascript
+```lang-bash
 #/usr/local/apache-tomcat-7.0.68/bin/shutdown.sh
 #/usr/local/apache-tomcat-7.0.68/bin/startup.sh
 ```

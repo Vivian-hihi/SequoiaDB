@@ -2,7 +2,7 @@ sdbsupport 是用于收集 SequoiaDB 相关信息的工具，位于目录 /opt/s
 
 使用此工具需要先为 sdbsupport.sh 赋执行权限：
 
-```lang-javascript
+```lang-bash
 $ chmod 755 sdbsupport.sh
 ```
 
@@ -53,43 +53,43 @@ $ chmod 755 sdbsupport.sh
 
 1.  获取参数信息。
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdbsupport.sh --help
     ```
 
 2.  收集本机的数据信息。（包括配置、日志、硬件、操作系统及快照信息）
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdbsupport.sh
     ```
 
 3.  收集整个数据库集群信息
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdbsupport.sh --all
     ```
 
 4.  收集指定主机信息。
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdbsupport.sh -s hostname1
     ```
 
 5.  收集指定主机指定端口信息。
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdbsupport.sh -s hostname1 -p 11810
     ```
 
 6.  收集操作系统信息。
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdbsupport.sh --osinfo
     ```
 
 7.  收集特定主机特定端口的日志信息及快照信息。
 
-    ```lang-javascript
+    ```lang-bash
     $ ./sdbsupport.sh -s hostname1 -p 11810 --snapshot --log
     ```
 
@@ -106,7 +106,7 @@ $ chmod 755 sdbsupport.sh
 >
 >   数据库集群内的机器，如果没有配置信任关系，在收集时，需要输入密码，如：
 >
->   ```lang-javascript
+>   ```lang-bash
 >   $ /opt/sequoiadb/tools/sdbsupport/sdbsupport.sh -s hostname2
 >   ************************************Sdbsupport***************************
 >   *This program run mode will collect all configuration and
@@ -122,7 +122,7 @@ $ chmod 755 sdbsupport.sh
 >
 >   此时需要输入 hostname2 机器，sdbadmin 用户的密码，然后“Enter”
 >
->   ```lang-javascript
+>   ```lang-bash
 >   correct password for hostname2
 >   Begin to Collect information...
 >   success to collect information from hostname2

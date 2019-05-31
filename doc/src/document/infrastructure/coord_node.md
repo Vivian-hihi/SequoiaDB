@@ -120,25 +120,25 @@ SequoiaDB 中有两类协调节点：
 
 1. 创建协调节点配置目录，其中11810为协调节点的服务端口，可根据需要配置；
 
-  ```lang-javascript
+  ```lang-bash
   $ mkdir -p /opt/sequoiadb/conf/local/11810
   ```
 
 2. 拷贝协调节点样例配置文件；
 
-  ```lang-javascript
-  $cp /opt/sequoiadb/conf/samples/sdb.conf.coord /opt/sequoiadb/conf/local/11810/sdb.conf
+  ```lang-bash
+  $ cp /opt/sequoiadb/conf/samples/sdb.conf.coord /opt/sequoiadb/conf/local/11810/sdb.conf
   ```
 
 3. 修改配置文件；
 
-  ```lang-javascript
+  ```lang-bash
   $ vi /opt/sequoiadb/conf/local/11810/sdb.conf
   ```
 
   修改内容
 
-  ```
+  ```lang-ini
   # database path dbpath=/opt/sequoiadb/database/coord
   ```
 
@@ -146,14 +146,14 @@ SequoiaDB 中有两类协调节点：
 
   将如下行：
 
-  ```
+  ```lang-ini
   # catalog addr(hostname1:servicename1,hostname2:servicename2,...)
   # catalogaddr=
   ```
 
   修改为:
 
-  ```
+  ```lang-ini
   # catalog addr(hostname1:servicename1,hostname2:servicename2,...)
   catalogaddr=sdbserver1:11803,sdbserver2:11803,sdbserver3:11803
   ```
@@ -164,13 +164,13 @@ SequoiaDB 中有两类协调节点：
 
 5. 创建数据文件存放路径，路径为上一步骤配置的路径；
 
-  ```lang-javascript
+  ```lang-bash
   $ mkdir -p /opt/sequoiadb/database/coord
   ```
 
 6. 启动协调节点进程。
 
-  ```lang-javascript
+  ```lang-bash
   $ /opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/
   ```
 

@@ -4,7 +4,7 @@
 
 在使用 CSharp 驱动的相关 API 之前，你必须在源代码中添加如下的 using 申明：
 
-```lang-javascript
+```lang-c#
 using SequoiaDB;
 using SequoiaDB.Bson;
 ```
@@ -15,7 +15,7 @@ using SequoiaDB.Bson;
 
   若数据库没有创建用户，则可以匿名连接到数据库：
 
-  ```lang-javascript
+  ```lang-c#
   string addr = "127.0.0.1:11810";
   Sequoiadb sdb = new Sequoiadb(addr);
   try
@@ -35,7 +35,7 @@ using SequoiaDB.Bson;
 
   否则，连接的时候必须指定用户名和密码：
 
-  ```lang-javascript
+  ```lang-c#
   string addr = "127.0.0.1:11810";
   Sequoiadb sdb = new Sequoiadb(addr);
   try
@@ -57,7 +57,7 @@ using SequoiaDB.Bson;
 
 * 断开与数据库连接
 
-  ```lang-javascript
+  ```lang-c#
   // do not forget to disconnect from sdb
   sdb.Disconnect();
   ```
@@ -66,7 +66,7 @@ using SequoiaDB.Bson;
 
   根据名字，得到对应的 CollectionSpace，如果不存在，则创建：
 
-  ```lang-javascript
+  ```lang-c#
   // create collectionspace, if collectionspace exists get it
   string csName = "TestCS";
   CollectionSpace cs = sdb.GetCollecitonSpace(csName);
@@ -77,7 +77,7 @@ using SequoiaDB.Bson;
 
   根据名字，得到对应的 Collection，如果不存在，则创建：
 
-  ```lang-javascript
+  ```lang-c#
   // create collection, if collection exists get it
   string clName = "TestCL";
   DBCollection dbc = cs.GetCollection(clName);
@@ -90,7 +90,7 @@ using SequoiaDB.Bson;
 
   创建需要插入的数据 BsonDocument 并插入：
 
-  ```lang-javascript
+  ```lang-c#
   BsonDocument insertor = new BsonDocument();
   string date = DateTime.Now.ToString();
   insertor.Add("operation", "Insert");
@@ -100,7 +100,7 @@ using SequoiaDB.Bson;
 
   当然，BsonDocument 中还可以嵌套 BsonDocument 对象；而且你还可以直接 new 一个完整的 BsonDocument，而不需要通过 Add 方法：
 
-  ```lang-javascript
+  ```lang-c#
   BsonDocumentinsertor = new BsonDocument
   {
        {"FirstName","John"},
@@ -128,7 +128,7 @@ using SequoiaDB.Bson;
 
   插入多条数据：
 
-  ```lang-javascript
+  ```lang-c#
   //bulkinsert
   List< BsonDocument > insertor=new List < BsonDocument > ();
   for(int i=0;i<10;i++)
@@ -145,7 +145,7 @@ using SequoiaDB.Bson;
 
   创建索引：
 
-  ```lang-javascript
+  ```lang-c#
   //createindexkey,indexonattribute'Id'byASC(1)/DESC(-1)
   BsonDocument key = new BsonDocument();
   key.Add("id", 1);
@@ -157,7 +157,7 @@ using SequoiaDB.Bson;
 
   删除索引：
 
-  ```lang-javascript
+  ```lang-c#
   string name = "index name";
   dbc.DropIndex(name);
   ```
@@ -166,14 +166,14 @@ using SequoiaDB.Bson;
 
   进行查询操作，需要使用游标对查询结果进行遍历，而且可以先得到当前 Collection 的索引，如果不为空，可作为制定访问计划（hint）用于查询：
 
-  ```lang-javascript
+  ```lang-c#
   DBCursor icursor = dbc.GetIndex(name);
   BsonDocument index = icursor.Current();
   ```
 
   构建相应的 BsonDocument 对象用于查询，包括：查询匹配规则（matcher，包含相应的查询条件），域选择（selector），排序规则（orderBy，增序或降序），制定访问计划（hint），跳过记录个数（0），返回记录个数（-1：返回所有数据）。查询后，得到对应的 Cursor，用于遍历查询得到的结果：
 
-  ```lang-javascript
+  ```lang-c#
   BsonDocument matcher = new BsonDocument();
   BsonDocument conditon = new BsonDocument();
   conditon.Add("$gte", 0);
@@ -194,7 +194,7 @@ using SequoiaDB.Bson;
 
   使用 DBCursor 游标进行遍历：
 
-  ```lang-javascript
+  ```lang-c#
   while (cursor.Next() != null)
   Console.WriteLine(cursor.Current());
   ```
@@ -203,7 +203,7 @@ using SequoiaDB.Bson;
 
   构建相应的 BsonDocument 对象，用于设置删除的条件：
 
-  ```lang-javascript
+  ```lang-c#
   //createthedeletecondition
   BsonDocument drop = new BsonDocument();
   drop.Add("Last Name", "Smith");
@@ -215,7 +215,7 @@ using SequoiaDB.Bson;
 
   构建相应的 BsonDocument 对象，用于设置更新条件，你还可以创建 DBQuery 对象封装所有的查询或更新规则：
 
-  ```lang-javascript
+  ```lang-c#
   DBQuery query = new DBQuery();
   BsonDocument updater = new BsonDocument();
   BsonDocument matcher = new BsonDocument();
@@ -230,6 +230,6 @@ using SequoiaDB.Bson;
 
   更新操作，如果没有满足 matcher 的条件，则插入此记录：
 
-  ```lang-javascript
+  ```lang-c#
   dbc.Upsert(query);
   ```

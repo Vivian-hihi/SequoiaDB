@@ -38,6 +38,6 @@ sdbdmsdump 不需要与数据库连接。
 
 在下面的例子，sdbdmsdump 在当前目录下检测，并格式化输出所有集合空间与集合的数据与索引至 output.txt 文件。
 
-```lang-javascript
+```lang-bash
 $ sdbdmsdump -d . -o output.txt -v true -a all -t true -i true -b true -p true
 ```

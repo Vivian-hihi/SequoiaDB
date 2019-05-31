@@ -13,14 +13,14 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
 2. 创建安装目录
 
- ```lang-javascript
+ ```lang-bash
  # mkdir -p /opt/postgresql
  # chown -R sdbadmin:sdbadmin_group /opt/postgresql
  ```
 
 3. 解压安装包
 
- ```lang-javascript
+ ```lang-bash
  # cp postgresql-9.3.4.tar.gz /opt
  # cd /opt
  # tar -zxvf postgresql-9.3.4.tar.gz
@@ -28,7 +28,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
 4. 源码编译配置
 
- ```lang-javascript
+ ```lang-bash
  # su - sdbadmin
  $ cd /opt/postgresql-9.3.4/
  $ ./configure --prefix=/opt/postgresql
@@ -36,7 +36,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
 5. 源码编译
 
- ```lang-javascript
+ ```lang-bash
  $ make
  ```
 当编译出现“All of PostgreSQL successfully made. Ready to install.”，说明编译成功。
@@ -59,7 +59,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
 6. 源码安装 
 
- ```lang-javascript
+ ```lang-bash
  $ make install
  ```
 当出现“PostgreSQL installation complete.”，说明 PostgreSQL 相关的可执行文件、头文件和库文件已经成功安装于预定的目录。
@@ -79,19 +79,19 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
 8. 使环境变量生效
 
- ```lang-javascript
+ ```lang-bash
  $ source ~/.bash_profile
  ```
 
 9. 创建 PostgreSQL 的数据目录
 
- ```lang-javascript
+ ```lang-bash
  $ mkdir /opt/postgresql/data
  ```
 
 10. 初始化数据目录(该操作只能操作一次)
 
- ```lang-javascript
+ ```lang-bash
  $ /opt/postgresql/bin/initdb -D /opt/postgresql/data
  ```
 
@@ -101,14 +101,14 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
  获取 PostgreSQL 的 libdir 路径
 
- ```lang-javascript
+ ```lang-bash
  $ cd /opt/postgresql
  $ PGLIBDIR=$(bin/pg_config --libdir)
  ```
 
  如果显示的 libdir 目录不存在，则创建该目录：
 
- ```lang-javascript
+ ```lang-bash
  $ mkdir -p ${PGLIBDIR}
  ```
 
@@ -116,13 +116,13 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
  获取 PostgreSQL 的 sharedir 路径
 
- ```lang-javascript
+ ```lang-bash
  $ PGSHAREDIR=$(bin/pg_config --sharedir)
  ```
 
  检查 sharedir 目录下是否存在 extension 目录，若不存在，则创建该目录：
 
- ```lang-javascript
+ ```lang-bash
  $ mkdir -p ${PGSHAREDIR}/extension
  ```
 
@@ -132,7 +132,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
  sdb_fdw.so 文件名如 sdb_fdw.so_2.2_23000 ，2.2 代表对应的 SequoiaDB 版本，23000 代表 Release 号。
 
- ```lang-javascript
+ ```lang-bash
  $ cp -f /opt/sequoiadb/postgresql/sdb_fdw.so_2.2_23000 ${PGLIBDIR}
  $ cd ${PGLIBDIR}
  $ ln -s sdb_fdw.so_2.2_23000 sdb_fdw.so
@@ -140,14 +140,14 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
 4. 将 sdb_fdw.control 和 sdb_fdw--1.0.sql 脚本拷贝到 extension 目录中：
 
- ```lang-javascript
+ ```lang-bash
  $ cp -f /opt/sequoiadb/postgresql/sdb_fdw.control ${PGSHAREDIR}/extension/
  $ cp -f /opt/sequoiadb/postgresql/sdb_fdw--1.0.sql ${PGSHAREDIR}/extension/
  ```
 
  sdb_fdw.control 脚本内容：
 
- ```
+ ```lang-ini
  # sdb_fdw extension
  comment = 'foreign data wrapper for SequoiaDB access'
  default_version = '1.0'
@@ -157,7 +157,7 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
  sdb_fdw--1.0.sql 脚本内容：
 
- ```
+ ```lang-ini
  /* contrib/sdb_fdw/sdb_fdw--1.0.sql */
  -- complain if script is sourced in psql, rather than via CREATE EXTENSION
  \echo Use "CREATE EXTENSION sdb_fdw" to load this file. \quit
@@ -178,32 +178,32 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
 1. 修改 PostgreSQL 的日志配置，日志中增加打印时间信息、连接信息等
 
- ```lang-javascript
+ ```lang-bash
  $ cd /opt/postgresql
  $ vi data/postgresql.conf
  ```
 
  打印连接信息
 
- ```
+ ```lang-ini
  log_connections = on
  ```
 
  打印断连信息
 
- ```
+ ```lang-ini
  log_disconnections = on 
  ```
 
  日志中打印时间，进程id，客户端地址信息
 
- ```
+ ```lang-ini
  log_line_prefix = '%m %p %r'
  ```
 
  出现错误时，断开当前连接
 
- ```
+ ```lang-ini
  exit_on_error = on
  ```
 
@@ -211,25 +211,25 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
  PostgreSQL 默认启动端口为”5432”,检查端口是否被占用(检查操作建议使用 root 用户操作，只有检查端口需要 root 权限，其余操作还是需要在 sdbadmin 用户下操作)
 
- ```lang-javascript
+ ```lang-bash
  # netstat -nap | grep 5432
  ```
 
  如果5432端口被占用或者希望修改 PostgreSQL 的启动端口，可继续修改/opt/postgresql/data/postgresql.conf文件。如把启动端口改为11700。
 
- ```lang-javascript
+ ```lang-ini
 	port = 11700
  ```
 
 3. 启动 PostgreSQL 服务进程（需要使用 sdbadmin 用户执行以下命令）
 
- ```lang-javascript
+ ```lang-bash
  $ bin/postgres -D data/ >> logfile 2>&1 &
  ```
 
 4. 检查 PostgreSQL 是否启动成功
 
- ```lang-javascript
+ ```lang-bash
  # netstat -nap | grep 5432
  tcp   0   0 127.0.0.1:5432     0.0.0.0:*         LISTEN     20502/postgres
  unix  2   [ ACC ]   STREAM    LISTENING   40776754 20502/postgres     /tmp/.s.PGSQL.5432
@@ -237,12 +237,12 @@ PostgreSQL 运行用户：sdbadmin:sdbadmin_group
 
 5. 创建 PostgreSQL 的 database
 
- ```lang-javascript
+ ```lang-bash
  $ bin/createdb -p 5432 foo
  ```
 
 6. 运行 PostgreSQL shell 命令行客户端
 
- ```lang-javascript
+ ```lang-bash
  $ bin/psql -p 5432 foo
  ```

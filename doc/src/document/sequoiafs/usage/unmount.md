@@ -3,13 +3,13 @@
 
 ####1、fusermount卸载####
 
-```lang-javascript
+```lang-bash
 $fusermount -u /opt/sequoiadb/mountpoint
 ```
 ####2、kill进程####
 
 
-```lang-javascript
+```lang-bash
 $ps -ef | grep sequoiafs
 $kill 程序PID
 ```

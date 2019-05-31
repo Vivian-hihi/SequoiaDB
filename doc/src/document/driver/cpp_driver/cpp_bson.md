@@ -26,7 +26,7 @@
 
 * 使用 BSONObject，BSONObjBuilder 建立对象
 
-  ```lang-javascript
+  ```lang-c++
   #include "client.hpp"
 
   using namespace bson ;
@@ -42,7 +42,7 @@
 
   另外，可以使用数据流的方法建立 BSONObj 对象。
 
-  ```lang-javascript
+  ```lang-c++
   BSONObj obj ;
   BSONObjBuilder b ;
   b << "name" << "sam" << "age" << "24" ;
@@ -53,7 +53,7 @@
 
   C++ BSON 中定义还定义了一个 BSON 的宏，可以用它来快速地建立 BSONObj 对象。
 
-  ```lang-javascript
+  ```lang-c++
   BSONObj obj ;
   // int
   obj = BSON( "a" << 1 ) ;
@@ -78,7 +78,7 @@
 
   此外，可以使用 fromjson.hpp 中的 fromjson() 将 json 字符串转换成 BSONObj 对象。
 
-  ```lang-javascript
+  ```lang-c++
   string s("{name:\"sam\"}") ;
   fromjson ( s, obj ) ;
   或者

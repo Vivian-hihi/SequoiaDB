@@ -16,13 +16,13 @@
 
   使用 lib 目录下的 libsdbc.so 动态库，gcc 编译参数形式如：
 
-  ```lang-javascript
+  ```lang-bash
   $ gcc testClient.c -o testClientC -I < PATH >/sdbdriver/include -L < PATH >/sdbdriver/lib -lsdbc
   ```
 
   其中：PATH 为 sdbdriver 放置路径；运行程序时，用户需要将 LD_LIBRARY_PATH 路径指定为包含 libsdbc.so 动态库的路径。
 
-  ```lang-javascript
+  ```lang-bash
   $ export LD_LIBRARY_PATH=< PATH >/sdbdriver/lib
   ```
 
@@ -30,7 +30,7 @@
   >
   >如果运行程序时会出现错误提示：
   >
-  >```lang-javascript
+  >```lang-bash
   >error while loading shared libraries: libsdbc.so: cannot open shared object file: No such file or directory
   >```
 
@@ -40,7 +40,7 @@
 
   使用 lib 目录下的 libstaticsdbc.a 静态库，gcc 编译参数形式如：
 
-  ```lang-javascript
+  ```lang-bash
   $ gcc testClient.c -o testClientC -I < PATH >/sdbdriver/include –L < PATH >/sdbdriver/lib/ -lstaticsdbc -lm -lpthread -ldl 
   ```
 

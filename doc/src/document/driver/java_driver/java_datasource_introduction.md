@@ -9,7 +9,7 @@ Java 驱动的连接池提供给用户一个快速获取连接实例的途径。
 详情请查看相关 [Java API](api/java/html/index.html) 介绍。
 
 ##例子##
-```lang-javascript
+```lang-java
 package com.sequoiadb.samples;
 
 import java.util.ArrayList;

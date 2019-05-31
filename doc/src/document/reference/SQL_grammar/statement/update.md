@@ -20,7 +20,7 @@
 
    * 集合 foo.bar 中原始记录。
 
-   ```
+   ```lang-json
    { age: 1 }
    { age: 2 }
    ```

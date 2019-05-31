@@ -4,13 +4,13 @@
 
 1. 加载SequoiaDB连接驱动
 
-	```lang-javascript
+	```lang-sql
 	foo=# create extension sdb_fdw;
 	```
 
 2. 配置与SequoiaDB连接参数
 
-	```lang-javascript
+	```lang-sql
 	foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127.0.0.1', service '11810', user 'sdbUserName', password 'sdbPassword', preferedinstance 'A', transaction 'off');
 	```
 
@@ -28,7 +28,7 @@
 
 3. 关联SequoiaDB的集合空间与集合
 
-  ```lang-javascript
+  ```lang-sql
   foo=# create foreign table test (name text, id numeric) server sdb_server options ( collectionspace 'foo', collection 'bar', decimal 'on' ) ;
   ```
 
@@ -44,49 +44,49 @@
 
 4. 更新表的统计信息
 
-	```lang-javascript
+	```lang-sql
 	foo=# analyze test;
 	```
 
 5. 查询
 
-	```lang-javascript
+	```lang-sql
 	foo=# select * from test;
 	```
 
 6. 写入数据
 
-	```lang-javascript
+	```lang-sql
 	foo=# insert into test values('one',3);
 	```
 
 7. 更改数据
 
-	```lang-javascript
+	```lang-sql
 	foo=# update test set id=9 where name='one';
 	```
 
 8. 查看所有的表(show tables;)
 
-	```lang-javascript
+	```lang-sql
 	foo=# \d
 	```
 
 9. 查看表的描述信息
 
-	```lang-javascript
+	```lang-sql
 	foo=# \d test
 	```
 
 10. 删除表的映射关系
 
-	```lang-javascript
+	```lang-sql
 	foo=# drop foreign table test;
 	```
 
 11. 退出PostgreSQL shell环境
 
-	```lang-javascript
+	```lang-sql
 	foo=# \q
 	```
 
@@ -125,7 +125,7 @@
 
 		假设SequoiaDB 中存在名为 FOO 的集合空间，BAR 的集合，在PostgreSQL中建立相应的映射表：
 
-		```lang-javascript
+		```lang-sql
 		foo=# create foreign table sdb_upcase_cs_cl (name text) server sdb_server options ( collectionspace 'FOO', collection 'BAR' ) ;
 		```
 
@@ -133,7 +133,7 @@
 
 		假设SequoiaDB 中存在名为foo的集合空间，bar的集合，而且保存的数据为：
 
-		```lang-diy
+		```lang-json
 		{
 		  "_id": {
 		    "$oid":"53a2a0e100e75e2c53000006"
@@ -144,13 +144,13 @@
 
 		在PostgreSQL中建立相应的映射表：
 
-		```lang-javascript
+		```lang-sql
 		foo=# create foreign table sdb_upcase_field ("NAME" text) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;
 		```
 
 		执行查询命令：
 
-		```lang-javascript
+		```lang-sql
 		foo=# select * from sdb_upcase_field;
 		NAME
 		------
@@ -162,7 +162,7 @@
 
 		假设SequoiaDB中存在foo集合空间，bar集合，保存记录为：
 
-		```lang-diy
+		```lang-json
 		{
       		"_id": {
    	 		"$oid":"53a2de926b4715450a000001"
@@ -178,13 +178,13 @@
 
 		在 PostgreSQL 中建立相应的映射表：
 
-		```lang-javascript
+		```lang-sql
 		foo=# create foreign table bartest (name int[], id int) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;
 		```
 
 		执行查询命令：
 
-		```lang-javascript
+		```lang-sql
 		foo=# select * from bartest;
 		name    | id
 		--------+-----
@@ -195,7 +195,7 @@
 
 		如果 PostgreSQL 连接的 SequoiaDB 协调节点重启，在查询时报错：
 
-		```lang-diy
+		```lang-sql
 		ERROR: Unable to get collection "foo.bar", rc = -15
 		HINT: Make sure the collectionspace and collection exist on the remote database
 		```
@@ -204,13 +204,13 @@
 
 		退出 PostgreSQL shell
 
-		```lang-javascript
+		```lang-sql
 		foo=# \q
 		```
 
 		重新进入 PostgreSQL shell
 
-		```lang-javascript
+		```lang-bash
 		$ bin/psql -p 5432 foo
 		```
 
@@ -218,7 +218,7 @@
 
 1. 查看 pg_shell 中默认的配置：
 
-	```lang-javascript
+	```lang-ini
 	foo=#\set
 	AUTOCOMMIT = 'on'
 	PROMPT1 = '%/%R%# '
@@ -234,7 +234,7 @@
 
 2. 调整 pg_shell 查询时，每次获取记录数
 
-	```lang-javascript
+	```lang-ini
 	foo=#\set FETCH_COUNT 100
 	```
 
@@ -245,13 +245,13 @@
 
 3. 修改配置文件，调整 pg shell 查询时，每次获取记录数
 
-	```lang-javascript
+	```lang-bash
 	$ /opt/postgresql/bin/pg_config --sysconfdir
 	```
 
 	结果为：
 
-	```lang-javascript
+	```lang-bash
 	$ /opt/postgresql/etc
 	```
 
@@ -259,13 +259,13 @@
 	>
 	> 如果显示目录不存在，自己手动创建即可。
 
-	```lang-javascript
+	```lang-bash
 	$ mkdir -p /opt/postgresql/etc
 	```
 
 	将需要修改的参数写入配置文件中(需重启psql使配置生效)：
 
-	```lang-javascript
+	```lang-bash
 	$ echo "\\set FETCH_COUNT 100" >> /opt/postgresql/etc
 	```
 
@@ -273,13 +273,13 @@
 
 	编辑 /opt/postgresql/data/postgresql.conf 文件，将
 
-	```lang-javascript
+	```lang-ini
 	client_min_messages = notice
 	```
 
 	改为：
 
-	```lang-javascript
+	```lang-ini
 	client_min_messages = debug1
 	```
 
@@ -287,12 +287,12 @@
 
 	编辑 /opt/postgresql/data/postgresql.conf 文件，将
 
-	```lang-javascript
+	```lang-ini
 	log_min_messages = warning
 	```
 
 	改为：
 
-	```lang-javascript
+	```lang-ini
 	log_min_messages = debug1
 	```

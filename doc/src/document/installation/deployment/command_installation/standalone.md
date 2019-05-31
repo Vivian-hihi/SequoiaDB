@@ -19,13 +19,13 @@
 
 1. 切换到 sdbadmin 用户
 
-  ```lang-javascript
+  ```lang-bash
   $ su - sdbadmin
   ```
 
 2. 启动 SequoiaDB Shell 控制台（下文以默认安装路径 /opt/sequoiadb 为例）
 
-  ```lang-javascript
+  ```lang-bash
   $ /opt/sequoiadb/bin/sdb
   ```
 

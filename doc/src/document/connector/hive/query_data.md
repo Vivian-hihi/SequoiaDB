@@ -1,6 +1,6 @@
 ## 查询数据##
 
-```lang-javascript
+```lang-sql
 hive> select * from new_tab;
 OK
 0       false   0.0     ALGERIA

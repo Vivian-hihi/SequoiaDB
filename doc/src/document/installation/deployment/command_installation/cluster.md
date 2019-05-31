@@ -31,24 +31,24 @@
 - 步骤一：检查 SequoiaDB 的配置服务状态
   1. 在每台数据库服务器上检查 SequoiaDB 配置服务状态：
 
-     ```lang-javascript
+     ```lang-bash
      # service sdbcm status
      ```
   2. 确认系统提示“sdbcm is running”表示服务正在运行，否则请执行如下命令重新配置服务程序：
 
-     ```lang-javascript
+     ```lang-bash
      # service sdbcm start
      ```
 
 - 步骤二：启动一个临时协调节点（该节点只是为了创建其它节点而临时使用，安装完毕后需要删除该节点）
   1. 切换到 sdbadmin 用户
 
-     ```lang-javascript
+     ```lang-bash
      # su - sdbadmin
      ```
   2. 在任意一台数据库服务器上（以下步骤都只需要在这台服务器上操作），启动 SequoiaDB Shell 控制台
 
-     ```lang-javascript
+     ```lang-bash
      $ /opt/sequoiadb/bin/sdb
      ```
   3. 连接到本地的集群管理服务进程 sdbcm

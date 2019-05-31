@@ -14,7 +14,7 @@
 
 age字段值加一
 
-```
+```lang-javascript
 age + 1
 ```
 
@@ -39,7 +39,7 @@ age + 1
 
 *  age字段大于11
 
-   ```
+   ```lang-javascript
    age > 11
    ```
 
@@ -57,7 +57,7 @@ age + 1
    ```
 *  age字段大于等于11，且name为Harry
 
-   ```
+   ```lang-javascript
    age >= 11 AND name = 'Harry'
    ```
   

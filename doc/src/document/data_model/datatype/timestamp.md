@@ -8,7 +8,7 @@ SequoiaDB 中的时间戳使用 YYYY-MM-DD-HH.mm.ss.ffffff 的形式存取，在
 
 时间戳的表达形式如下：
 
-```
+```lang-json
 { "$timestamp" : "<YYYY-MM-DD-HH.mm.ss.ffffff>" }
 ```
 
@@ -18,6 +18,6 @@ SequoiaDB 中的时间戳使用 YYYY-MM-DD-HH.mm.ss.ffffff 的形式存取，在
 
 ##示例##
 
-```
+```lang-json
 { "createTime" : { "$timestamp" : "2012-05-12-13.15.21.241523" } }
 ```

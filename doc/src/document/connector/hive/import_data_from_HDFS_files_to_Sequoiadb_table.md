@@ -1,6 +1,6 @@
 ##从 HDFS 文件中导入数据到 SequoiaDB 表##
 
-```lang-javascript
+```lang-sql
 hive> insert overwrite table sdb_tab select * from hdfs_tab;
 
 Total MapReduce jobs = 1

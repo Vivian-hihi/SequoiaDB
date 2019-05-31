@@ -35,7 +35,7 @@
 
 **示例**
 
-```
+```lang-json
 {
   "NodeName": "hostname:11820",
   "GroupName": "group",

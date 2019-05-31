@@ -35,7 +35,7 @@
 
 2. 使用 root 用户权限运行安装程序
     
-  ```lang-javascript
+  ```lang-bash
   # ./sequoiadb-2.0-linux-x86_64-installer.run --mode text --SMS false
   ```
 

@@ -109,7 +109,7 @@ Since v2.9
 
         3) Use sdb to run test.js 
 
-        ```lang-javascript
+        ```lang-bash
         $ ./sdb -f test.js 
         defined in funcDef.js
         ```
@@ -139,7 +139,7 @@ Since v2.9
 
         3) Use sdb to run test.js
 
-        ```lang-javascript
+        ```lang-bash
         $ ./sdb -f test.js 
         defined in userDef.js
         ```
