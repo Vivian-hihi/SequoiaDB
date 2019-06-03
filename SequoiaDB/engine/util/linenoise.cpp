@@ -176,6 +176,28 @@ struct linenoiseState
     bool remove_col;   /* Whether the refresh operation is remove colour or not */
 };
 
+typedef int ( *CharacterDispatchRoutine ) ( struct linenoiseState *, char ) ;
+
+struct CharacterDispatch
+{
+   unsigned int len ;                    // length of the chars list
+   const char *chars ;                   // chars to test
+   CharacterDispatchRoutine *dispatch ;  // array of routines to call
+} ;
+
+static int doDispatch( struct linenoiseState *l, char c, CharacterDispatch &dispatchTable )
+{
+   int ret = 0 ;
+   for ( unsigned int i = 0 ; i < dispatchTable.len ; ++i )
+   {
+      if ( dispatchTable.chars[i] == c )
+      {
+         ret = dispatchTable.dispatch[i] ( l, c ) ;
+      }
+   }
+   return ret ;
+}
+
 enum KEY_ACTION
 {
    KEY_NULL = 0,       /* NULL */
@@ -361,6 +383,17 @@ void setEchoOff()
 void setEchoChar(char c)
 {
    echoChar = c;
+}
+
+int readPack( struct linenoiseState *l, char *c )
+{
+   int nread ;
+#ifdef _WIN32
+   nread = win32read( c ) ;
+#else
+   nread = read( l->ifd ,c ,1 ) ;
+#endif
+   return nread ;
 }
 
 int linenoiseHistoryAdd(const char *line);
@@ -709,11 +742,7 @@ static int completeLine(struct linenoiseState *ls)
 
         while(!stop)
         {
-#ifdef _WIN32
-            nread = win32read(&c);
-#else
-            nread = read(ls->ifd,&c,1);
-#endif
+            nread = readPack( ls, &c ) ;
             if (nread <= 0)
             {
                 freeCompletions(&lc);
@@ -1536,6 +1565,50 @@ void linenoiseEditMoveRight(struct linenoiseState *l)
     PD_TRACE_EXIT ( SDB_LNEDITMOVERIGHT );
 }
 
+/* Move cursor to the last word. */
+PD_TRACE_DECLARE_FUNCTION ( SDB_LNEDITMOVELASTWORD, "linenoiseEditMoveLastWord" )
+void linenoiseEditMoveLastWord( struct linenoiseState *l )
+{
+   PD_TRACE_ENTRY ( SDB_LNEDITMOVELASTWORD ) ;
+	char * buf = l->buf ;
+	if ( l->pos > 0 && ( isalpha( buf[l->pos] ) || isdigit( buf[l->pos] ) ) && ( ( !isalpha( buf[l->pos-1] ) && !isdigit( buf[l->pos-1] ) ) ) )
+	{
+		l->pos-- ;
+	}
+	while ( l->pos > 0 && ( !isalpha( buf[l->pos] ) && !isdigit( buf[l->pos] ) ) )
+	{
+        l->pos-- ;
+	}
+   while ( l->pos > 0 && ( ( isalpha( buf[l->pos] ) || isdigit( buf[l->pos] ) ) ) )
+   {
+      l->pos-- ;
+   }
+   if ( l->pos != 0 )
+	{
+		l->pos++ ;
+	}
+   refreshLine( l ) ;
+   PD_TRACE_EXIT ( SDB_LNEDITMOVELASTWORD ) ;
+}
+
+/* Move cursor to the next word. */
+PD_TRACE_DECLARE_FUNCTION ( SDB_LNEDITMOVENEXTWORD, "linenoiseEditMoveNextWord" )
+void linenoiseEditMoveNextWord( struct linenoiseState *l )
+{
+   PD_TRACE_ENTRY ( SDB_LNEDITMOVENEXTWORD) ;
+	char * buf = l->buf ;
+	while ( l->pos != l->len && ( !isalpha( buf[l->pos] ) && !isdigit( buf[l->pos] ) ) )
+	{
+        l->pos++ ;
+	}
+   while ( l->pos != l->len && ( ( isalpha( buf[l->pos] ) || isdigit( buf[l->pos] ) ) ) )
+   {
+      l->pos++ ;
+   }
+   refreshLine( l ) ;
+   PD_TRACE_EXIT ( SDB_LNEDITMOVENEXTWORD ) ;
+}
+
 /* Move cursor to the start of the line. */
 PD_TRACE_DECLARE_FUNCTION ( SDB_LNEDITMOVEHOME, "linenoiseEditMoveHome" )
 void linenoiseEditMoveHome(struct linenoiseState *l)
@@ -1561,6 +1634,7 @@ void linenoiseEditMoveEnd(struct linenoiseState *l)
     }
     PD_TRACE_EXIT ( SDB_LNEDITMOVEEND );
 }
+
 
 /* Substitute the currently edited line with the next or previous history
  * entry as specified by 'dir'. */
@@ -1706,11 +1780,7 @@ int linenoiseReverseIncrementalSearch ( struct linenoiseState * l )
       int new_char = 0 ;
       int nread = 0 ;
 
-#ifdef _WIN32
-      nread = win32read( &c ) ;
-#else
-      nread = read( l->ifd, &c, 1) ;
-#endif
+      nread = readPack( l, &c ) ;
       if ( nread <= 0 )
       {
          l->pos = l->len = snprintf( l->buf, l->buflen, "%s", buf ) ;
@@ -1870,6 +1940,166 @@ int linenoiseReverseIncrementalSearch ( struct linenoiseState * l )
    return 0 ;
 }
 
+// ESC [ 1 ; 5 C
+static int ctrlRightArrowKeyRoutine( struct linenoiseState *l, char c )
+{
+   linenoiseEditMoveNextWord( l ) ;
+   return 0 ;
+}
+
+// ESC [ 1 ; 5 D
+static int ctrlLeftArrowKeyRoutine( struct linenoiseState *l, char c )
+{
+   linenoiseEditMoveLastWord( l ) ;
+   return 0 ;
+}
+
+// ESC [ 1 ; 5 <more stuff>
+static CharacterDispatchRoutine escLeftBracket1Semicolon3or5Routines[] = {
+        ctrlRightArrowKeyRoutine, ctrlLeftArrowKeyRoutine
+} ;
+ 
+static CharacterDispatch escLeftBracket1Semicolon3or5Dispatch = {
+        2, "CD", escLeftBracket1Semicolon3or5Routines
+} ;
+
+// ESC [ 1 ; <more stuff>
+static int escLeftBracket1Semicolon5Routine( struct linenoiseState *l, char c )
+{
+   int nread  = readPack( l, &c ) ;
+   return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket1Semicolon3or5Dispatch ) ;
+}
+ 
+static CharacterDispatchRoutine escLeftBracket1SemicolonRoutines[] = {
+   escLeftBracket1Semicolon5Routine
+} ;
+ 
+static CharacterDispatch escLeftBracket1SemicolonDispatch = {
+   1, "5", escLeftBracket1SemicolonRoutines
+} ;
+
+// ESC O H ( or ESC [ 1 ~ )
+static int homeKeyRoutine( struct linenoiseState *l, char c )
+{ 
+   linenoiseEditMoveHome( l ) ;
+   return 0 ;
+}
+
+// ESC O F ( or ESC [ 4 ~ )
+static int endKeyRoutine(struct linenoiseState *l, char c)
+{
+   linenoiseEditMoveEnd( l ) ;
+   return 0 ;
+}
+
+// Handle ESC O <more stuff>
+static CharacterDispatchRoutine escORoutines[] = {
+   homeKeyRoutine,   endKeyRoutine
+} ;
+ 
+static CharacterDispatch escODispatch = { 2, "HF", escORoutines } ;
+
+// ESC [ 3 ~
+static int deleteKeyRoutine( struct linenoiseState *l, char c )
+{
+   linenoiseEditDelete( l ) ;
+   return 0 ;
+}
+
+// ESC [ 1 <more stuff>
+static int escLeftBracket1SemicolonRoutine( struct linenoiseState *l, char c )
+{
+   int nread  = readPack( l, &c ) ;
+   return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket1SemicolonDispatch ) ;
+}
+
+static CharacterDispatchRoutine escLeftBracket1Routines[] = {
+        homeKeyRoutine, escLeftBracket1SemicolonRoutine
+} ;
+
+static CharacterDispatch escLeftBracket1Dispatch = { 2, "~;", escLeftBracket1Routines } ;
+
+// ESC [ 3 <more stuff>
+static CharacterDispatchRoutine escLeftBracket3Routines[] = { deleteKeyRoutine } ;
+static CharacterDispatch escLeftBracket3Dispatch = { 1, "~", escLeftBracket3Routines } ;
+
+// ESC [ 4 <more stuff>
+static CharacterDispatchRoutine escLeftBracket4Routines[] = { endKeyRoutine } ;
+static CharacterDispatch escLeftBracket4Dispatch = { 1, "~", escLeftBracket4Routines } ;
+
+// ESC [ A
+static int upArrowKeyRoutine( struct linenoiseState *l, char c )
+{
+   linenoiseEditHistoryNext( l, LINENOISE_HISTORY_PREV ) ;
+   return 0;
+}
+
+// ESC [ B
+static int downArrowKeyRoutine( struct linenoiseState *l, char c )
+{
+   linenoiseEditHistoryNext( l, LINENOISE_HISTORY_NEXT ) ;
+   return 0 ;
+}
+
+// ESC [ C
+static int rightArrowKeyRoutine( struct linenoiseState *l, char c )
+{
+   linenoiseEditMoveRight( l ) ;
+   return 0 ;
+}
+
+// ESC [ D
+static int leftArrowKeyRoutine( struct linenoiseState *l, char c )
+{
+   linenoiseEditMoveLeft( l ) ;
+   return 0 ;
+}
+
+// ESC [ <digit> 
+static int escLeftBracket1Routine( struct linenoiseState *l, char c )
+{
+   int nread  = readPack( l, &c ) ;
+   return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket1Dispatch ) ;
+}
+
+static int escLeftBracket3Routine( struct linenoiseState *l, char c )
+{
+   int nread  = readPack( l, &c ) ;
+   return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket3Dispatch ) ;
+}
+
+static int escLeftBracket4Routine( struct linenoiseState *l, char c )
+{
+   int nread  = readPack( l, &c ) ;
+   return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket4Dispatch ) ;
+}
+
+// Handle ESC [ <more stuff>
+static CharacterDispatchRoutine escLeftBracketRoutines[] = {
+   upArrowKeyRoutine,      downArrowKeyRoutine,      rightArrowKeyRoutine,
+   leftArrowKeyRoutine,    escLeftBracket1Routine,   escLeftBracket3Routine, 
+   escLeftBracket4Routine
+} ;
+
+static CharacterDispatch escLeftBracketDispatch = { 7, "ABCD134", escLeftBracketRoutines } ;
+
+// ESC dispatch
+static int escLeftBracketRoutine( struct linenoiseState *l, char c )
+{
+   int nread  = readPack( l, &c ) ;
+   return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracketDispatch ) ;
+}
+
+static int escORoutine( struct linenoiseState *l, char c )
+{
+   int nread  = readPack( l, &c ) ;
+   return nread <= 0 ? -1 : doDispatch( l, c, escODispatch ) ;
+}
+
+// Handle ESC [ or O
+static CharacterDispatchRoutine escRoutines[] = { escLeftBracketRoutine, escORoutine } ;
+static CharacterDispatch escDispatch = { 2, "[O", escRoutines } ;
+
 /* This function is the core of the line editing capability of linenoise.
  * It expects 'fd' to be already in "raw mode" so that every key pressed
  * will be returned ASAP to read().
@@ -1910,8 +2140,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
     l.buflen--; /* Make sure there is always space for the nulterm */
 
     // for escape sequence
-    int escIdx = 0 ;
-    char escSeq [ 3 ] = { 0 } ;
+    bool escIdx = false ;
 
     /* The latest history entry is always our current buffer, that
      * initially is just an empty string. */
@@ -1936,12 +2165,8 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
         char c = KEY_NULL ;
         int nread ;
         char buf[10] = {0} ;
-
-#ifdef _WIN32
-        nread = win32read(&c);
-#else
-        nread = read(l.ifd,&c,1);
-#endif
+        
+        nread = readPack( &l, &c ) ;
         if (nread <= 0)
         {
             ret = l.len;
@@ -1951,108 +2176,17 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
         // handle escape sequence
         // 1. [~0 ...
         // 2. OA ...
-        switch ( escIdx )
+        
+        if( escIdx )
         {
-           case 1 :
-           {
-              switch ( c )
-              {
-                 case '[' :
-                 {
-                    escSeq[ 0 ] = c ;
-                    escIdx = 2 ;
-                    continue ;
-                 }
-                 case 'O' :
-                 {
-                    escSeq[ 0 ] = c ;
-                    escIdx = 3 ;
-                    continue ;
-                 }
-              }
-              escIdx = 0 ;
-              break ;
-           }
-           case 2 :
-           {
-              if ( c >= '0' && c <= '9' )
-              {
-                 escSeq[ 1 ] = c ;
-                 escIdx = 4 ;
-                 continue ;
-              }
-              switch ( c )
-              {
-                 case 'A' : /* [A -> Up */
-                 {
-                    linenoiseEditHistoryNext( &l, LINENOISE_HISTORY_PREV ) ;
-                    break ;
-                 }
-                 case 'B' : /* [B -> Down */
-                 {
-                    linenoiseEditHistoryNext( &l, LINENOISE_HISTORY_NEXT ) ;
-                    break ;
-                 }
-                 case 'C' : /* [C -> Right */
-                 {
-                    linenoiseEditMoveRight( &l ) ;
-                    break ;
-                 }
-                 case 'D' : /* [D -> Left */
-                 {
-                    linenoiseEditMoveLeft( &l ) ;
-                    break ;
-                 }
-              }
-              escIdx = 0 ;
-              continue ;
-           }
-           case 3 :
-           {
-              switch ( c )
-              {
-                 case 'H' : /* OH -> HOME */
-                 {
-                    linenoiseEditMoveHome( &l ) ;
-                    break ;
-                 }
-                 case 'F' : /* OF -> End */
-                 {
-                    linenoiseEditMoveEnd( &l ) ;
-                    break ;
-                 }
-              }
-              escIdx = 0 ;
-              continue ;
-           }
-           case 4 :
-           {
-              if ( c == '~' )
-              {
-                  switch( escSeq[ 1 ] )
-                  {
-                     case '1' : /* [1~ -> Home */
-                     {
-                         linenoiseEditMoveHome( &l ) ;
-                         break ;
-                     }
-                     case '3' : /* [3~ -> Delete */
-                     {
-                         linenoiseEditDelete( &l ) ;
-                         break ;
-                     }
-                     case '4' : /* [4~ -> End */
-                     {
-                         linenoiseEditMoveEnd( &l ) ;
-                         break ;
-                     }
-                  }
-              }
-              escIdx = 0 ;
-              continue ;
-           }
-           default :
-              break ;
+            int r = doDispatch( &l, c, escDispatch ) ;
+            if ( r == -1 )
+            {
+                ret = l.len ;
+                goto error ;
+            }
+            escIdx = false ;
+            continue ;
         }
 
         /* Only autocomplete when the callback is set. It returns < 0 when
@@ -2150,7 +2284,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
             linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
             break;
         case ESC:    /* escape sequence */
-            escIdx = 1 ;
+            escIdx = true ;
             break ;
         case CTRL_U: /* Ctrl+u, delete the whole line. */
             buf[0] = '\0';
