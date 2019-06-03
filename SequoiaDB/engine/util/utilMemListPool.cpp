@@ -136,7 +136,9 @@ namespace engine
          {
             _pEvent->onOutOfCache( _blockSize, _cachedSize ) ;
          }
-         ptr = utilPoolAlloc( _canAllocBlockSize( size ) ? _blockSize : size ) ;
+         ptr = utilPoolAlloc( _canAllocBlockSize( size ) ?
+                              ( _blockSize - UTIL_MEM_TOTAL_FILL_LEN ) :
+                              size ) ;
       }
 
       return ptr ;
@@ -147,7 +149,8 @@ namespace engine
       if ( !p ) return ;
 
 #ifdef _DEBUG
-      SDB_ASSERT( utilPoolGetPtrSize( p ) == _blockSize, "Invalid size" ) ;
+      SDB_ASSERT( utilPoolGetPtrSize( p ) + UTIL_MEM_TOTAL_FILL_LEN ==
+                  _blockSize, "Invalid size" ) ;
 #endif //_DEBUG
 
       if ( _canCacheBlock() )
@@ -352,7 +355,7 @@ namespace engine
          goto done ;
       }
 
-      ossNextPowerOf2( size, &square ) ;
+      ossNextPowerOf2( size + UTIL_MEM_TOTAL_FILL_LEN, &square ) ;
       index = (INT32)square - UTIL_MEM_LIST_BASE_EXPONENT ;
 
       if ( -1 == index )
@@ -431,6 +434,7 @@ namespace engine
       if ( utilPoolPtrCheck( ptr, &oldSize ) )
       {
          UINT32 square = 0 ;
+         oldSize += UTIL_MEM_TOTAL_FILL_LEN ;
 
          if ( ossIsPowerOf2( oldSize, &square ) &&
               square >= UTIL_MEM_LIST_BASE_EXPONENT &&
