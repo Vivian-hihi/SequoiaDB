@@ -72,7 +72,7 @@ public class FullText15833 extends SdbTestBase {
     public void tearDown() throws Exception {
         try {
             if (sdb.isCollectionSpaceExist(csName)) {
-                sdb.dropCollectionSpace(csName);
+                FullTextDBUtils.dropCollectionSpace(sdb, csName);
             }
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedCLName));
         } finally {
