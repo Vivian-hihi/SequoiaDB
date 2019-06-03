@@ -3,14 +3,10 @@ package com.sequoias3.testcommon;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
-
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 import org.testng.Assert;
@@ -19,7 +15,6 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -76,7 +71,7 @@ public class S3TestBase {
         File workDirFile = new File(workDir);
         if (!workDirFile.exists()) {
             workDirFile.mkdir();
-        }        
+        }
        
         AmazonS3 s3Client = null;
         try{
@@ -112,7 +107,6 @@ public class S3TestBase {
     public static void finiSuite() throws Exception {
         try {
             getClusterInfo();
-            trans_snapshot();
             sdbConfTestBase.closeTransaction(hostName, serviceName);
         } finally {
             stopS3();
@@ -260,28 +254,6 @@ public class S3TestBase {
         catch( InterruptedException | IOException e ){
             e.printStackTrace();
             Assert.fail( "fail to stop s3" );
-        }
-    }
-
-    //transactions snapshot
-    private static void trans_snapshot(){
-        Sequoiadb db = null;
-        DBCursor cursor = null;
-        try{
-            db =  new Sequoiadb(coordUrl, "", "");
-            cursor =  db.getSnapshot(9,"","","");
-            System.out.println("===============begin print transaction snapshot============");
-            while(cursor.hasNext()){
-                System.out.println(cursor.getNext().toString());
-            }
-            System.out.println("===============end print transaction snapshot==============");
-        } finally {
-            if(cursor != null){
-                cursor.close();
-            }
-            if(db != null){
-                db.close();
-            }
         }
     }
 }

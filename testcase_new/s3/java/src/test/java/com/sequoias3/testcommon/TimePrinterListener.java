@@ -1,8 +1,9 @@
 package com.sequoias3.testcommon;
 
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
-
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -11,20 +12,26 @@ import java.util.Date;
  * Created by laojingtang on 17-11-23.
  */
 public class TimePrinterListener extends TestListenerAdapter {
+    private static final String errorCode = "DBError";
 
     @Override
     public void onConfigurationSuccess(ITestResult itr) {
         super.onConfigurationSuccess(itr);
         if (itr.getMethod().isAfterClassConfiguration()) {
-            printEndTime(itr);            
+            printEndTime(itr);
         }
     }
 
     @Override
     public void onConfigurationFailure(ITestResult itr) {
         super.onConfigurationFailure(itr);
+        Throwable throwable = itr.getThrowable();
+        if (throwable != null && throwable.getMessage().contains(errorCode)) {
+            System.out.println(getCurTimeStr() + " " + itr.getTestClass().getRealClass().getName() +
+                    ":transaction snapshot:" + transSnapshot());
+        }
         if (itr.getMethod().isAfterClassConfiguration()) {
-            printEndTime(itr);    
+            printEndTime(itr);
         }
     }
 
@@ -32,7 +39,7 @@ public class TimePrinterListener extends TestListenerAdapter {
     public void onConfigurationSkip(ITestResult itr) {
         super.onConfigurationSkip(itr);
         if (itr.getMethod().isAfterClassConfiguration()) {
-            printEndTime(itr);           
+            printEndTime(itr);
         }
     }
 
@@ -40,7 +47,17 @@ public class TimePrinterListener extends TestListenerAdapter {
     public void beforeConfiguration(ITestResult tr) {
         super.beforeConfiguration(tr);
         if (tr.getMethod().isBeforeClassConfiguration()) {
-            printBeginTime(tr);           
+            printBeginTime(tr);
+        }
+    }
+
+    @Override
+    public void onTestFailure(ITestResult tr) {
+        super.onTestFailure(tr);
+        Throwable throwable = tr.getThrowable();
+        if (throwable != null && throwable.getMessage().contains(errorCode)) {
+            System.out.println(getCurTimeStr() + " " + tr.getTestClass().getRealClass().getName() +
+                    ":transaction snapshot:" + transSnapshot());
         }
     }
 
@@ -58,6 +75,32 @@ public class TimePrinterListener extends TestListenerAdapter {
 
     private String getCurTimeStr() {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date());
-    }    
-    
+    }
+
+    //transactions snapshot
+    private static String transSnapshot() {
+        Sequoiadb db = null;
+        DBCursor cursor = null;
+        StringBuilder builder = new StringBuilder();
+        builder.append("[");
+        try {
+            db = new Sequoiadb(S3TestBase.getDefaultCoordUrl(), "", "");
+            cursor = db.getSnapshot(9, "", "", "");
+            while (cursor.hasNext()) {
+                builder.append(cursor.getNext().toString() + ",\n");
+            }
+        } catch (Exception e) {
+            System.out.println("snapshot 9 failed,coord = " + S3TestBase.getDefaultCoordUrl());
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (db != null) {
+                db.close();
+            }
+        }
+        builder.append("]");
+        return builder.toString();
+    }
 }
