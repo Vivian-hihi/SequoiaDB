@@ -2645,9 +2645,9 @@ error:
       return CMD_TRACE_START ;
    }
 
-   BOOLEAN _rtnTraceStart::_isFunctionNameInvalid( const CHAR* verifiedFuncName )
+   BOOLEAN _rtnTraceStart::_isFunctionNameValid( const CHAR* verifiedFuncName )
    {
-      BOOLEAN isInvalid = TRUE ;
+      BOOLEAN isValid = FALSE ;
       for( UINT64 i = 0; i < pdGetTraceFunctionListNum(); i++ )
       {
          const CHAR* fullFuncName = pdGetTraceFunction( i ) ;
@@ -2662,7 +2662,7 @@ error:
             ++pTemp ;
             if( 0 == ossStrcmp( pTemp, verifiedFuncName ) )
             {
-               isInvalid = FALSE ;
+               isValid = TRUE ;
                _functionNameId.push_back ( i ) ;
                // do NOT break althought however we may have functions
                // with duplicate names
@@ -2673,14 +2673,14 @@ error:
          // second case: verifiedFuncName = "_authCB::authenticate"
          if( 0 == ossStrcmp( fullFuncName, verifiedFuncName ) )
          {
-            isInvalid = FALSE ;
+            isValid = TRUE ;
             _functionNameId.push_back ( i ) ;
             // do NOT break althought however we may have functions
             // with duplicate names
          }
       }
 
-      return isInvalid ;
+      return isValid ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNTRACESTART_INIT, "_rtnTraceStart::init" )
@@ -2791,9 +2791,9 @@ error:
                if ( ele.type() == String )
                {
                   const CHAR* eleStr = ele.valuestr();
-                  BOOLEAN isInvalid = TRUE ;
-                  isInvalid = _isFunctionNameInvalid( eleStr ) ;
-                  if( isInvalid )
+                  BOOLEAN isValid = FALSE ;
+                  isValid = _isFunctionNameValid( eleStr ) ;
+                  if( !isValid )
                   {
                      rc = SDB_INVALIDARG ;
                      PD_LOG_MSG( PDERROR,

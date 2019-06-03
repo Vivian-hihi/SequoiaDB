@@ -1071,7 +1071,7 @@ namespace engine
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
       private:
-         BOOLEAN _isFunctionNameInvalid( const CHAR* verifiedFuncName ) ;
+         BOOLEAN _isFunctionNameValid( const CHAR* verifiedFuncName ) ;
       protected :
          UINT32 _mask ;
          std::vector<UINT32>  _tid ;
