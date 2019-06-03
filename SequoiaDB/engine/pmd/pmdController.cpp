@@ -43,6 +43,7 @@
 #include "ossDynamicLoad.hpp"
 #include "pmdModuleLoader.hpp"
 #include "ossProc.hpp"
+#include "utilMemListPool.hpp"
 
 namespace engine
 {
@@ -100,6 +101,8 @@ namespace engine
       pmdOptionsCB *pOptCB = pmdGetOptionCB() ;
       UINT16 port = 0 ;
       CHAR fapModuleName[ FAP_MODULE_NAME_SIZE + 1 ] = { 0 } ;
+
+      utilSetMaxTCSize( (UINT64)pmdGetOptionCB()->maxTCSize() << 10 ) ;
 
       if ( pOptCB->hasField( FAP_OPTION_NAME ) )
       {
@@ -297,6 +300,10 @@ namespace engine
       pmdGetKRCB()->getSyncMgr()->setSyncDeep(
          pmdGetOptionCB()->isSyncDeep() ) ;
 
+      pmdGetKRCB()->getMemBlockPool()->setMaxSize(
+         (UINT64)( pmdGetOptionCB()->memPoolSize() ) << 20 ) ;
+
+      utilSetMaxTCSize( (UINT64)pmdGetOptionCB()->maxTCSize() << 10 ) ;
    }
 
    void _pmdController::registerCB( SDB_ROLE dbrole )

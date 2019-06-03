@@ -1931,6 +1931,9 @@ done:
       _maxSockPerThread = 0 ;
       _maxSockThread = 1 ;
 
+      _maxTCSize = 0 ;
+      _memPoolSize = 0 ;
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -2337,6 +2340,15 @@ done:
       rdxUInt( pEX, PMD_OPTION_MAX_SOCKET_THREAD, _maxSockThread, FALSE,
                PMD_CFG_CHANGE_RUN, 1, TRUE ) ;
       rdvMinMax( pEX, _maxSockThread, 1, 100, TRUE ) ;
+
+      // --tcmaxsize
+      rdxUInt( pEX, PMD_OPTION_TC_MAX_SIZE, _maxTCSize, FALSE,
+               PMD_CFG_CHANGE_RUN, 2048, TRUE ) ;
+      rdvMinMax( pEX, _maxTCSize, 0, 65536, TRUE ) ;
+
+      // --mempoolsize
+      rdxUInt( pEX, PMD_OPTION_MEMPOOL_SIZE, _memPoolSize, FALSE,
+               PMD_CFG_CHANGE_RUN, 8192, TRUE ) ;
 
       // end map
 

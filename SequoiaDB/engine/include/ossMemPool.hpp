@@ -38,7 +38,16 @@
 *******************************************************************************/
 #ifndef OSSMEMPOOL_HPP_
 #define OSSMEMPOOL_HPP_
-#include <boost/pool/pool_alloc.hpp>
+
+#define SDB_USE_UTIL_ALLOCATOR
+//#define SDB_USE_BOOST_ALLOCATOR
+
+#ifdef SDB_USE_BOOST_ALLOCATOR
+   #include <boost/pool/pool_alloc.hpp>
+#elif defined( SDB_USE_UTIL_ALLOCATOR )
+   #include "utilPooledAllocator.hpp"
+#endif
+
 #include <map>
 #include <set>
 #include <list>
@@ -49,7 +58,14 @@
  */
 template<typename T>
 struct ossPoolAllocator {
-    typedef boost::fast_pool_allocator<T> Type;
+
+#ifdef SDB_USE_BOOST_ALLOCATOR
+    typedef boost::fast_pool_allocator<T>       Type ;
+#elif defined (SDB_USE_UTIL_ALLOCATOR)
+    typedef engine::_utilPooledAllocator<T>     Type ;
+#else
+    typedef std::allocator<T>                   Type ;
+#endif
 };
 
 /*
@@ -64,7 +80,7 @@ struct ossPoolAllocator {
  * Map utilizing memory pool
  */
 template < typename K, typename V, class Compare = std::less<K> >
-class ossPoolMap : public std::map<K, V, Compare, boost::fast_pool_allocator<std::pair<const K, V> > >{
+class ossPoolMap : public std::map<K, V, Compare, typename ossPoolAllocator<std::pair<const K, V> >::Type >{
   /**
    * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
    * DO NOT USE THIS CLASS IN POLYMORPHISM
@@ -75,7 +91,7 @@ class ossPoolMap : public std::map<K, V, Compare, boost::fast_pool_allocator<std
  * Set utilizing memory pool
  */
 template < typename K, class Compare = std::less<K> >
-class ossPoolSet : public std::set<K, Compare, boost::fast_pool_allocator<K> >{
+class ossPoolSet : public std::set<K, Compare, typename ossPoolAllocator<K>::Type >{
   /**
    * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
    * DO NOT USE THIS CLASS IN POLYMORPHISM
@@ -86,7 +102,7 @@ class ossPoolSet : public std::set<K, Compare, boost::fast_pool_allocator<K> >{
  * List utilizing memory pool
  */
 template < typename K >
-class ossPoolList : public std::list<K, boost::fast_pool_allocator<K> > {
+class ossPoolList : public std::list<K, typename ossPoolAllocator<K>::Type > {
   /**
    * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
    * DO NOT USE THIS CLASS IN POLYMORPHISM

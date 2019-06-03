@@ -205,6 +205,7 @@ utilFiles = [
       "util/utilParam.cpp",
       "util/utilCommon.cpp",
       "util/utilMemBlockPool.cpp",
+      "util/utilMemListPool.cpp",
       "util/utilPooledAutoPtr.cpp",
       "util/utilLightJobBase.cpp",
       "util/utilNodeOpr.cpp",

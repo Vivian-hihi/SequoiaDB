@@ -50,9 +50,6 @@
 typedef UINT32 UTIL_OBJIDX ;
 #define UTIL_INVALID_OBJ_INDEX   (( UTIL_OBJIDX )( -1 ))
 
-// 1GB
-#define UTIL_MAX_SEGMENT_NUM     (0x40000000)
-
 namespace engine
 {
 
@@ -68,8 +65,10 @@ namespace engine
       public:
          virtual BOOLEAN   canAllocSegment( UINT64 size ) = 0 ;
          virtual void      onAllocSegment( UINT64 size ) = 0 ;
-         virtual BOOLEAN   canReleaseSegment( UINT64 size ) = 0 ;
-         virtual void      onReleaseSegment( UINT64 size ) = 0 ;
+         virtual void      onReleaseSegment( UINT64 freedSize ) = 0 ;
+         virtual BOOLEAN   canShrink( UINT32 blockSize,
+                                      UINT64 totalSize,
+                                      UINT64 usedSize ) = 0 ;
    } ;
    typedef _utilSegmentHandler utilSegmentHandler ;
 
@@ -125,6 +124,7 @@ namespace engine
    #define _SEGMENT_OBJ_INDEX_MASK     ( ( UINT32 ) 0x0FFFFFFF )
    #define _SEGMENT_OBJ_POOL_MASK      ( ( UINT32 ) 0xF0000000 )
    #define _SEGMENT_OBJ_POOLID_SHIFT   ( 28 )
+   #define _SEGMENT_OBJ_MAX_NUM        ( _SEGMENT_OBJ_INDEX_MASK + 1 )
 
    #define _SEGMENT_OBJ_EYE_CATCHER    ( ( UINT16 ) 0xBEEF )
    #define _SEGMENT_OBJ_FLAG_ACQUIRED  ( ( UINT16 ) 0x5555 )
@@ -156,7 +156,7 @@ namespace engine
    template < class T >
    class _utilSegmentPool : public SDBObject
    {
-   private :
+   public :
       struct _objX : public SDBObject
       {
          UINT16      _eyeCatcher ;
@@ -171,6 +171,7 @@ namespace engine
          }
       } ;
 
+   private :
       UTIL_OBJIDX *  _list  ;         // a list/array of obj indices
       UINT32         _begin ;         // the position in list where acquire from
       UINT32         _delta ;         // number of objects in a segment
@@ -201,6 +202,20 @@ namespace engine
                            { }
 
       ~_utilSegmentPool() ;
+
+      void  setMaxObjects( UINT32 maxNumberOfObjs )
+      {
+         _maxNumOfObjs = maxNumberOfObjs ;
+
+         if ( _maxNumOfObjs > _SEGMENT_OBJ_MAX_NUM )
+         {
+            _maxNumOfObjs = _SEGMENT_OBJ_MAX_NUM ;
+         }
+         else if ( _maxNumOfObjs > 0 && _maxNumOfObjs < _delta )
+         {
+            _maxNumOfObjs = _delta ;
+         }
+      }
 
    private :
       //
@@ -482,7 +497,7 @@ namespace engine
 
             if ( _pHandler )
             {
-               _pHandler->onReleaseSegment( (UINT64)_delta * sizeof( T ) ) ;
+               _pHandler->onReleaseSegment( (UINT64)_delta * sizeof( _objX ) ) ;
             }
          }
          _segList.clear() ;
@@ -596,7 +611,6 @@ namespace engine
       utilBitmap  * pUsedList= NULL ;
       UINT32        numOfObjects, maxObj, newSize, segInUse ;
       UINT32        freeSegNum = 0 ;
-      UINT64        freeSize = 0 ;
 
 #ifdef _DEBUG
       SDB_ASSERT( _isInitialized,
@@ -605,17 +619,29 @@ namespace engine
 
       _latch.get() ;
       bLatched = TRUE ;
+
+      numOfObjects = _numOfObjs.peek() ;
+
       // this flag is checked without latching
       _maintaining.swap( 1 ) ;
-      if ( _isInitialized && ( NULL != _list ) )
+      if ( _isInitialized && ( NULL != _list ) && numOfObjects > 0 )
       {
-         numOfObjects = _numOfObjs.peek() ;
          maxObj       = 0 ;
 
          // if 85% of objects in pool are in use, implies the system might be
          // busy. Likely a new segment might be added in soon.
          FLOAT64 ratio = _begin / numOfObjects ;
-         if ( ratio >= UTIL_SEGMENT_OBJ_IN_USE_RATIO_THRESHOLD )
+
+         if ( _pHandler )
+         {
+            if ( !_pHandler->canShrink( sizeof( T ),
+                                        (UINT64)numOfObjects * sizeof ( _objX ),
+                                        (UINT64)_begin * sizeof ( _objX ) ) )
+            {
+               goto done ;
+            }
+         }
+         else if ( ratio >= UTIL_SEGMENT_OBJ_IN_USE_RATIO_THRESHOLD )
          {
             goto done ;
          }
@@ -657,21 +683,18 @@ namespace engine
          }
  
          // calculate the highest segment in use by max obj index
-         segInUse  = ( maxObj >> _exponent ) + 1 + freeSegToKeep ;
+         if ( maxObj > 0 )
+         {
+            segInUse  = ( maxObj >> _exponent ) + 1 + freeSegToKeep ;
+         }
+         else
+         {
+            segInUse = 0 + freeSegToKeep ;
+         }
 
          // if there are enough segments to be freed
          if ( _segList.size() > segInUse )
          {
-            freeSegNum = _segList.size() - segInUse ;
-            freeSize = ( (UINT64)freeSegNum << _exponent ) * sizeof( T ) ;
-
-            if ( _pHandler &&
-                 !_pHandler->canReleaseSegment( freeSize ) )
-            {
-               /// can't release
-               goto done ;
-            }
-
             // calculate new size
             newSize = ( segInUse << _exponent ) ;
             // allocate _list with new size
@@ -720,14 +743,19 @@ namespace engine
                _list = pListTmp ;
 
                // free the segments
-               for ( UINT32 i = _segList.size() - 1; i >= segInUse; i-- )
+               for ( INT32 i = (INT32)_segList.size() - 1 ;
+                     i >= (INT32)segInUse ;
+                     --i )
                {
                   SDB_OSS_DEL [] ( _segList[i] ) ;
                   _segList.pop_back() ;
+                  ++freeSegNum ;
                }
 
                if ( _pHandler )
                {
+                  UINT64 freeSize = ( (UINT64)freeSegNum << _exponent ) *
+                                    sizeof( _objX ) ;
                   _pHandler->onReleaseSegment( freeSize ) ;
                }
             }  // if pListTemp is allocated
@@ -757,7 +785,6 @@ namespace engine
       goto done ;
    }
 
-
    // Initialization
    //   numberOfObjs     -- number of objects in a segment
    //   maxNumberOfObjs  -- max number of objects 
@@ -772,28 +799,24 @@ namespace engine
    {
       INT32   rc           = SDB_OK ;
 
-      if ( numberOfObjs > UTIL_MAX_SEGMENT_NUM )
+      if ( numberOfObjs > _SEGMENT_OBJ_MAX_NUM )
       {
-         numberOfObjs = UTIL_MAX_SEGMENT_NUM ;
+         numberOfObjs = _SEGMENT_OBJ_MAX_NUM ;
       }
-      if ( maxNumberOfObjs > UTIL_MAX_SEGMENT_NUM )
+      if ( maxNumberOfObjs > _SEGMENT_OBJ_MAX_NUM )
       {
-         maxNumberOfObjs = UTIL_MAX_SEGMENT_NUM ;
+         maxNumberOfObjs = _SEGMENT_OBJ_MAX_NUM ;
       }
 
-      if (    ( UTIL_INVALID_OBJ_INDEX != numberOfObjs )
-           && ( UTIL_INVALID_OBJ_INDEX != maxNumberOfObjs )
-           && ( _SEGMENT_OBJ_INDEX_MASK >= maxNumberOfObjs )
-           && ( _SEGMENT_MGR_MAX_POOLS > poolId ) 
-           && ( 0 != maxNumberOfObjs )
-           && ( numberOfObjs <= maxNumberOfObjs ) )
+      if (    ( numberOfObjs > 0 )
+           && ( poolId < _SEGMENT_MGR_MAX_POOLS ) )
       {
          // round up numberOfObjs to the nearest power of 2
          _delta        = ossNextPowerOf2( numberOfObjs, &_exponent ) ;
          _maxNumOfObjs = maxNumberOfObjs ;
          _poolId       = poolId ;
 
-         if ( _maxNumOfObjs < _delta )
+         if ( _maxNumOfObjs > 0 && _maxNumOfObjs < _delta )
          {
             _maxNumOfObjs = _delta ;
          }
@@ -886,11 +909,12 @@ namespace engine
                goto error ;
             }
             else if ( _pHandler &&
-                      !_pHandler->canAllocSegment( _delta * sizeof( T ) ) )
+                      !_pHandler->canAllocSegment( (UINT64)_delta *
+                                                   sizeof( _objX ) ) )
             {
                rc = SDB_OSS_UP_TO_LIMIT ;
                PD_LOG( PDWARNING, "Can't alloc segment[%d * %d] by handler",
-                       _delta, sizeof( T ) ) ;
+                       _delta, sizeof( _objX ) ) ;
                goto error ;
             }
 
@@ -915,7 +939,7 @@ namespace engine
 
             if ( _pHandler )
             {
-               _pHandler->onAllocSegment( _delta * sizeof( T ) ) ;
+               _pHandler->onAllocSegment( (UINT64)_delta * sizeof( _objX ) ) ;
             }
          }
 
@@ -1154,29 +1178,14 @@ namespace engine
          _utilSegmentPool< T > _pool[ _SEGMENT_MGR_MAX_POOLS ] ;         
 
       private :
-         // the _objX must be defined same as the inner private class _objX
-         // inside _utilSegmentPool
-         struct _objX : public SDBObject
-         {
-            UINT16      _eyeCatcher ;
-            UINT16      _flag ;
-            UTIL_OBJIDX _index ;
-            T           _obj ;
-            _objX()
-            {
-               _eyeCatcher = _SEGMENT_OBJ_EYE_CATCHER ;
-               _flag       = _SEGMENT_OBJ_FLAG_RELEASED ;
-               _index      = UTIL_INVALID_OBJ_INDEX ;
-            }
-         } ;
-
          // internal / helper function to get the poolId an object belongs to
          OSS_INLINE UINT32 _getPoolIdByAddr( const T * pT )
          {
             UINT32 poolId = UTIL_INVALID_OBJ_INDEX ;
             if ( NULL != pT )
             {
-               const _objX * p = ( _objX * )_GET_OBJX_ADDRESS( pT ) ;
+               const _utilSegmentPool< T >::_objX * p =
+                  ( const _utilSegmentPool< T >::_objX * )_GET_OBJX_ADDRESS( pT ) ;
                if ( p && ( _SEGMENT_OBJ_EYE_CATCHER == p->_eyeCatcher ) )
                {
                   // unpack poolId from _objX-> _index
@@ -1191,8 +1200,7 @@ namespace engine
          {
             _poolNum = 0 ;
          }
-         _utilSegmentManager( const UTIL_OBJIDX numberOfObjs,
-                              const UTIL_OBJIDX maxNumberOfObjs )
+         _utilSegmentManager( UINT64 numberOfObjs, UINT64 maxNumberOfObjs )
          {
             _poolNum = 0 ;
             init( numberOfObjs, maxNumberOfObjs ) ;
@@ -1200,12 +1208,13 @@ namespace engine
 
          ~_utilSegmentManager() { fini(); } 
 
-         INT32 init( UTIL_OBJIDX numberOfObjs,
-                     UTIL_OBJIDX maxNumberOfObjs,
+         INT32 init( UINT64 numberOfObjs,
+                     UINT64 maxNumberOfObjs,
                      UINT8 poolNum = _SEGMENT_MGR_MAX_POOLS,
                      utilSegmentHandler *pHandler = NULL )
          {
             INT32 rc = SDB_OK ;
+            UINT64 poolMaxObjs = 0 ;
             _poolNum = ossNextPowerOf2( poolNum, NULL ) ;
 
             if ( _poolNum > _SEGMENT_MGR_MAX_POOLS )
@@ -1213,11 +1222,17 @@ namespace engine
                _poolNum = _SEGMENT_MGR_MAX_POOLS ;
             }
 
+            poolMaxObjs = maxNumberOfObjs / _poolNum ;
+            if ( poolMaxObjs > _SEGMENT_OBJ_MAX_NUM )
+            {
+               poolMaxObjs = _SEGMENT_OBJ_MAX_NUM ;
+            }
+
             for ( UINT32 i = 0 ; i < _poolNum ; i++ )
             {
                rc = _pool[ i ].init( i,
                                      numberOfObjs    / _poolNum,
-                                     maxNumberOfObjs / _poolNum,
+                                     poolMaxObjs,
                                      pHandler ) ;
                if ( SDB_OK != rc )
                {
@@ -1227,6 +1242,20 @@ namespace engine
                }
             }
             return rc ;
+         }
+
+         void setMaxObjects( UINT64 maxNumberOfObjs )
+         {
+            UINT64 poolMaxObjs = maxNumberOfObjs / _poolNum ;
+            if ( poolMaxObjs > _SEGMENT_OBJ_MAX_NUM )
+            {
+               poolMaxObjs = _SEGMENT_OBJ_MAX_NUM ;
+            }
+
+            for ( UINT32 i = 0 ; i < _poolNum ; i++ )
+            {
+               _pool[ i ].setMaxObjects( poolMaxObjs ) ;
+            }
          }
 
          void fini()

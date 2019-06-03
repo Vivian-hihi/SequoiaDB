@@ -248,6 +248,10 @@ namespace engine
       {
          return &_syncMgr ;
       }
+      utilMemBlockPool *getMemBlockPool()
+      {
+         return _pMemBlockPool ;
+      }
       CHAR *getGroupName ( CHAR *pBuffer, UINT32 size ) const
       {
          if ( !pBuffer || 0 == size )

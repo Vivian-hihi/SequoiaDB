@@ -42,6 +42,7 @@
 #include "pmdEDUMgr.hpp"
 #include "ossEDU.hpp"
 #include "oss.hpp"
+#include "utilMemListPool.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -1976,6 +1977,9 @@ namespace engine
       cb->setThreadHdl( tHdl ) ;
       cb->setTID( tid ) ;
 
+      utilThreadPoolAssist _thdPoolAssit ;
+      SDB_UNUSED( _thdPoolAssit ) ;
+
       try
       {
          // register TLS, this must happen at very beginning of each thread
@@ -2149,6 +2153,8 @@ namespace engine
                     "Name: %s] to thread pool", ossGetCurrentThreadID(),
                     myEDUID, getEDUName( eduType ), eduName ) ;
          }
+
+         utilClearThreadMemPool() ;
       }
 
       /// Call the thread exit hook function to release thread local variables

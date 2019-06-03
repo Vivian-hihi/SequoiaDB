@@ -58,18 +58,14 @@ namespace engine
       // regular new
       void * operator new ( size_t size ) throw ( const char * )
       {
-         void *p = utilGetGlobalMemPool() ? 
-                     utilGetGlobalMemPool()->alloc( size ) :
-                     SDB_OSS_MALLOC( size ) ;
+         void *p = utilPoolAlloc( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
 
       void * operator new[] ( size_t size ) throw ( const char * )
       {
-         void *p = utilGetGlobalMemPool() ?
-                     utilGetGlobalMemPool()->alloc( size ) :
-                     SDB_OSS_MALLOC( size ) ;
+         void *p = utilPoolAlloc( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
@@ -89,16 +85,12 @@ namespace engine
 
       void operator delete ( void *p )
       {
-         utilGetGlobalMemPool() ? 
-            utilGetGlobalMemPool()->release( p ) :
-            SDB_OSS_FREE( p ) ;
+         utilPoolRelease( p ) ;
       }
 
       void operator delete[] ( void *p )
       {
-         utilGetGlobalMemPool() ? 
-            utilGetGlobalMemPool()->release( p ) :
-            SDB_OSS_FREE( p ) ;
+         utilPoolRelease( p ) ;
       }
 
       // placement delete (no-op)
@@ -114,9 +106,7 @@ namespace engine
       void * operator new ( size_t size, const CHAR *pFile, UINT32 line )
             throw ( const char * )
       {
-         void *p = utilGetGlobalMemPool() ?
-                     utilGetGlobalMemPool()->alloc( size ) :
-                     SDB_OSS_MALLOC3( size, pFile, line ) ;
+         void *p = utilPoolAlloc( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
@@ -124,87 +114,65 @@ namespace engine
       void * operator new[] ( size_t size, const CHAR *pFile, UINT32 line )
             throw ( const char * )
       {
-         void *p = utilGetGlobalMemPool() ?
-                     utilGetGlobalMemPool()->alloc( size ) :
-                     SDB_OSS_MALLOC3( size, pFile, line ) ;
+         void *p = utilPoolAlloc( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
 
       void operator delete ( void *p, const CHAR *pFile, UINT32 line )
       {
-         utilGetGlobalMemPool() ?
-            utilGetGlobalMemPool()->release( p ) :
-            SDB_OSS_FREE(p) ;
+         utilPoolRelease( p ) ;
       }
 
       void operator delete[] ( void *p, const CHAR *pFile, UINT32 line )
       {
-         utilGetGlobalMemPool() ?
-            utilGetGlobalMemPool()->release( p ) :
-            SDB_OSS_FREE(p) ;
+         utilPoolRelease( p ) ;
       }
 
       // no throw
       void * operator new ( size_t size, const std::nothrow_t & )
       {
-         return utilGetGlobalMemPool() ?
-                  utilGetGlobalMemPool()->alloc( size ) :
-                  SDB_OSS_MALLOC(size) ;
+         return utilPoolAlloc(size) ;
       }
 
       void * operator new[] ( size_t size, const std::nothrow_t & )
       {
-         return utilGetGlobalMemPool() ?
-                  utilGetGlobalMemPool()->alloc( size ) :
-                  SDB_OSS_MALLOC(size) ;
+         return utilPoolAlloc(size) ;
       }
 
       void operator delete ( void *p, const std::nothrow_t & )
       {
-         utilGetGlobalMemPool() ?
-            utilGetGlobalMemPool()->release( p ) :
-            SDB_OSS_FREE(p) ;
+         utilPoolRelease(p) ;
       }
 
       void operator delete[] ( void *p, const std::nothrow_t & )
       {
-         utilGetGlobalMemPool() ?
-            utilGetGlobalMemPool()->release( p ) :
-            SDB_OSS_FREE(p) ;
+         utilPoolRelease(p) ;
       }
 
       // no throw with line number
       void * operator new ( size_t size, const CHAR *pFile,
                             UINT32 line, const std::nothrow_t & )
       {
-         return utilGetGlobalMemPool() ?
-                  utilGetGlobalMemPool()->alloc( size ) :
-                  SDB_OSS_MALLOC3(size, pFile, line ) ;
+         return utilPoolAlloc( size ) ;
       }
 
       void * operator new[] ( size_t size, const CHAR *pFile,
                               UINT32 line, const std::nothrow_t & )
       {
-         return utilGetGlobalMemPool() ?
-                  utilGetGlobalMemPool()->alloc( size ) :
-                  SDB_OSS_MALLOC3(size, pFile, line ) ;
+         return utilPoolAlloc( size ) ;
       }
 
       void operator delete ( void *p, const CHAR *pFile,
                              UINT32 line, const std::nothrow_t & )
       {
-         utilGetGlobalMemPool() ?
-            utilGetGlobalMemPool()->release( p ) :
-            SDB_OSS_FREE(p) ;
+         utilPoolRelease(p) ;
       }
 
       void operator delete[] ( void *p, const CHAR *pFile,
                                UINT32 line, const std::nothrow_t & )
       {
-         utilGetGlobalMemPool() ?
-            utilGetGlobalMemPool()->release( p ) :
-            SDB_OSS_FREE(p) ;
+         utilPoolRelease(p) ;
       }
    } ;
    typedef class _utilPooledObject utilPooledObject ;

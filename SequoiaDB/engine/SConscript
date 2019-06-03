@@ -161,6 +161,7 @@ utilFiles = [
       "util/csv2rawbson.cpp",
       "util/utilCommon.cpp",
       "util/utilMemBlockPool.cpp",
+      "util/utilMemListPool.cpp",
       "util/utilPooledAutoPtr.cpp",
       "util/utilLightJobBase.cpp",
       "util/url.c",

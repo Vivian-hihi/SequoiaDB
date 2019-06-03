@@ -323,7 +323,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _pMemBlockPool->init() ;
+      rc = _pMemBlockPool->init( (UINT64)_optioncb.memPoolSize() << 20 ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Init mem block pool failed, rc: %d", rc ) ;

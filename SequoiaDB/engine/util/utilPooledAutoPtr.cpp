@@ -99,10 +99,8 @@ namespace engine
       {
          UINT32 realSZ = size + sizeof( INT32 ) ;
          CHAR *ptr = NULL ;
-      
-         ptr = ( CHAR* )( utilGetGlobalMemPool() ?
-                              utilGetGlobalMemPool()->alloc( realSZ ) :
-                              SDB_OSS_MALLOC( realSZ ) ) ;
+
+         ptr = ( CHAR* )utilPoolAlloc( realSZ ) ;
          if ( ptr )
          {
             *(INT32*)ptr = 1 ;
@@ -140,9 +138,7 @@ namespace engine
          SDB_ASSERT( orgRef >= 1, "Ref is invlaid" ) ;
          if ( 1 == orgRef )
          {
-            utilGetGlobalMemPool() ? 
-               utilGetGlobalMemPool()->release( (void*&)_ptr ) :
-               SDB_OSS_FREE( (void*)_ptr ) ;
+            utilPoolRelease( (void*&)_ptr ) ;
             _ptr = NULL ;
          }
       }

@@ -476,6 +476,7 @@
 #define FIELD_NAME_TRANS_AUTOCOMMIT          "TransAutoCommit"
 #define FIELD_NAME_TRANS_AUTOROLLBACK        "TransAutoRollback"
 #define FIELD_NAME_LAST_GENERATE_ID          "LastGenerateID"
+#define FIELD_NAME_MEMPOOL_SIZE              "MemPoolSize"
 
 /// strategy field begin
 #define FIELD_NAME_NICE                      "Nice"

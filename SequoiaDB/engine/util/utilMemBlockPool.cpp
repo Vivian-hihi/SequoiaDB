@@ -43,14 +43,13 @@
 namespace engine
 {
 
-   #define UTIL_MEM_ALLOC_MAX_TRY_LEVEL         ( 3 )
+   #define UTIL_MEM_ALLOC_MAX_TRY_LEVEL         ( 2 )
 
    /*
       _utilMemBlockPool implement
    */
    _utilMemBlockPool::_utilMemBlockPool()
-   :_numDynamicAlloc16B( 0 ),
-    _numDynamicAlloc32B( 0 ),
+   :_numDynamicAlloc32B( 0 ),
     _numDynamicAlloc64B( 0 ),
     _numDynamicAlloc128B( 0 ),
     _numDynamicAlloc256B( 0 ),
@@ -58,10 +57,10 @@ namespace engine
     _numDynamicAlloc1K( 0 ),
     _numDynamicAlloc2K( 0 ),
     _numDynamicAlloc4K( 0 ),
+    _numDynamicAlloc8K( 0 ),
     _maxSize( 0 ),
     _totalSize( 0 )
    {
-      _16BSeg = NULL ;
       _32BSeg = NULL ;
       _64BSeg = NULL ;
       _128BSeg = NULL ;
@@ -70,11 +69,72 @@ namespace engine
       _1KSeg = NULL ;
       _2KSeg = NULL ;
       _4KSeg = NULL ;
+      _8KSeg = NULL ;
    }
 
    _utilMemBlockPool::~_utilMemBlockPool()
    {
       fini() ;
+   }
+
+   void _utilMemBlockPool::setMaxSize( UINT64 maxSize )
+   {
+      _maxSize = maxSize ;
+      UINT64 aBlockMaxSize = _maxSize >> 3 ;
+
+      if ( _32BSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_32 ) ;
+         _32BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
+      }
+
+      if ( _64BSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_64 ) ;
+         _64BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
+      }
+
+      if ( _128BSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_128 ) ;
+         _128BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
+      }
+   
+      if ( _256BSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_256 ) ;
+         _256BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
+      }
+
+      if ( _512BSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_512 ) ;
+         _512BSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
+      }
+
+      if ( _1KSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_1024 ) ;
+         _1KSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
+      }
+
+      if ( _2KSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_2048 ) ;
+         _2KSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
+      }
+
+      if ( _4KSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_4096 ) ;
+         _4KSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
+      }
+
+      if ( _8KSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_8192 ) ;
+         _8KSeg->setMaxObjects( aBlockMaxSize / typeSize ) ;
+      }
    }
 
    INT32 _utilMemBlockPool::init( UINT64 maxSize )
@@ -88,38 +148,11 @@ namespace engine
                             UTIL_MEM_A_BIG_BLOCK_SUBPOOL_NUM ;
       UINT64 aBlockMaxSize = 0 ;
 
-      if ( 0 != _maxSize )
-      {
-         rc = SDB_INVALIDARG ;
-      }
-      else
-      {
-         _maxSize = maxSize ;
-      }
+      _maxSize = maxSize ;
 
-      if ( 0 == _maxSize )
-      {
-         goto done ;
-      }
-      aBlockMaxSize = _maxSize >> 2 ;
+      aBlockMaxSize = _maxSize >> 3 ;
 
       /// when alloc or init failed, ignored
-      _16BSeg = SDB_OSS_NEW _utilSegmentManager<element16B>() ;
-      if ( _16BSeg )
-      {
-         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_16 ) ;
-         rc = _16BSeg->init( smallBlockSize / typeSize,
-                             aBlockMaxSize / typeSize,
-                             UTIL_MEM_A_SMALL_BLOCK_SUBPOOL_NUM,
-                             this ) ;
-         if ( rc )
-         {
-            SDB_OSS_DEL _16BSeg ;
-            _16BSeg = NULL ;
-            rc = SDB_OK ;
-         }
-      }
-
       _32BSeg = SDB_OSS_NEW _utilSegmentManager<element32B>() ;
       if ( _32BSeg )
       {
@@ -156,9 +189,9 @@ namespace engine
       if ( _128BSeg )
       {
          UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_128 ) ;
-         rc = _128BSeg->init( midBlockSize / typeSize,
+         rc = _128BSeg->init( smallBlockSize / typeSize,
                               aBlockMaxSize / typeSize,
-                              UTIL_MEM_A_MID_BLOCK_SUBPOOL_NUM,
+                              UTIL_MEM_A_SMALL_BLOCK_SUBPOOL_NUM,
                               this ) ;
          if ( rc )
          {
@@ -204,9 +237,9 @@ namespace engine
       if ( _1KSeg )
       {
          UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_1024 ) ;
-         rc = _1KSeg->init( bigBlockSize / typeSize,
+         rc = _1KSeg->init( midBlockSize / typeSize,
                             aBlockMaxSize / typeSize,
-                            UTIL_MEM_A_BIG_BLOCK_SUBPOOL_NUM,
+                            UTIL_MEM_A_MID_BLOCK_SUBPOOL_NUM,
                             this ) ;
          if ( rc )
          {
@@ -248,17 +281,28 @@ namespace engine
          }
       }
 
+      _8KSeg = SDB_OSS_NEW _utilSegmentManager<element8K>() ;
+      if ( _8KSeg )
+      {
+         UINT32 typeSize = _type2Size( MEMBLOCKPOOL_TYPE_8192 ) ;
+         rc = _8KSeg->init( bigBlockSize / typeSize,
+                            aBlockMaxSize / typeSize,
+                            UTIL_MEM_A_BIG_BLOCK_SUBPOOL_NUM,
+                            this ) ;
+         if ( rc )
+         {
+            SDB_OSS_DEL _8KSeg ;
+            _8KSeg = NULL ;
+            rc = SDB_OK ;
+         }
+      }
+
    done:
       return rc ;
    }
 
    void _utilMemBlockPool::fini()
    {
-      if ( _16BSeg )
-      {
-         SDB_OSS_DEL _16BSeg ;
-         _16BSeg = NULL ;
-      }
       if ( _32BSeg )
       {
          SDB_OSS_DEL _32BSeg ;
@@ -299,6 +343,11 @@ namespace engine
          SDB_OSS_DEL _4KSeg ;
          _4KSeg = NULL ;
       }
+      if ( _8KSeg )
+      {
+         SDB_OSS_DEL _8KSeg ;
+         _4KSeg = NULL ;
+      }
    }
 
    void _utilMemBlockPool::shrink()
@@ -306,34 +355,35 @@ namespace engine
       UINT64 hasFreeSize = 0 ;
       UINT32 freeSegNum = 0 ;
 
-      if ( _16BSeg )
+      BOOLEAN isFull = FALSE ;
+      if ( 0 == _maxSize || _totalSize.fetch() >= _maxSize )
       {
-         _16BSeg->shrink( 1, &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_16 ) ) ;
+         isFull = TRUE ;
       }
+
       if ( _32BSeg )
       {
-         _32BSeg->shrink( 1, &freeSegNum ) ;
+         _32BSeg->shrink( ( isFull ? 0 : 1 ), &freeSegNum ) ;
          hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_32 ) ) ;
       }
       if ( _64BSeg )
       {
-         _64BSeg->shrink( 1, &freeSegNum ) ;
+         _64BSeg->shrink( ( isFull? 0 : 1 ), &freeSegNum ) ;
          hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_64 ) ) ;
       }
       if ( _128BSeg )
       {
-         _128BSeg->shrink( 1, &freeSegNum ) ;
+         _128BSeg->shrink( ( isFull ? 0 : 1 ), &freeSegNum ) ;
          hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_128 ) ) ;
       }
       if ( _256BSeg )
       {
-         _256BSeg->shrink( 1, &freeSegNum ) ;
+         _256BSeg->shrink( ( isFull ? 0 : 1 ), &freeSegNum ) ;
          hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_256 ) ) ;
       }
       if ( _512BSeg )
       {
-         _512BSeg->shrink( 1, &freeSegNum ) ;
+         _512BSeg->shrink( ( isFull ? 0 : 1 ), &freeSegNum ) ;
          hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_512 ) ) ;
       }
       if ( _1KSeg )
@@ -351,6 +401,11 @@ namespace engine
          _4KSeg->shrink( 0, &freeSegNum ) ;
          hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_4096 ) ) ;
       }
+      if ( _8KSeg )
+      {
+         _8KSeg->shrink( 0, &freeSegNum ) ;
+         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_8192 ) ) ;
+      }
 
       if ( hasFreeSize > 0 )
       {
@@ -367,86 +422,87 @@ namespace engine
    _utilMemBlockPool::MEMBLOCKPOOL_TYPE
       _utilMemBlockPool::_size2MemType( UINT32 size, ossAtomic64 **ppCount )
    {
-      if ( size <= 16 )
-      {
-         *ppCount = &_numDynamicAlloc16B ;
-         return MEMBLOCKPOOL_TYPE_16 ;
-      }
-      else if ( size <= 32 )
+      if ( size <= UTIL_MEM_ELEMENT_32 )
       {
          *ppCount = &_numDynamicAlloc32B ;
          return MEMBLOCKPOOL_TYPE_32 ;
       }
-      else if ( size <= 64 )
+      else if ( size <= UTIL_MEM_ELEMENT_64 )
       {
          *ppCount = &_numDynamicAlloc64B ;
          return MEMBLOCKPOOL_TYPE_64 ;
       }
-      else if ( size <= 128 )
+      else if ( size <= UTIL_MEM_ELEMENT_128 )
       {
          *ppCount = &_numDynamicAlloc128B ;
          return MEMBLOCKPOOL_TYPE_128 ;
       }
-      else if ( size <= 256 )
+      else if ( size <= UTIL_MEM_ELEMENT_256 )
       {
          *ppCount = &_numDynamicAlloc256B ;
          return MEMBLOCKPOOL_TYPE_256 ;
       }
-      else if ( size <= 512 )
+      else if ( size <= UTIL_MEM_ELEMENT_512 )
       {
          *ppCount = &_numDynamicAlloc512B ;
          return MEMBLOCKPOOL_TYPE_512 ;
       }
-      else if ( size <= 1024 )
+      else if ( size <= UTIL_MEM_ELEMENT_1024 )
       {
          *ppCount = &_numDynamicAlloc1K ;
          return MEMBLOCKPOOL_TYPE_1024 ;
       }
-      else if ( size <= 2048 )
+      else if ( size <= UTIL_MEM_ELEMENT_2048 )
       {
          *ppCount = &_numDynamicAlloc2K ;
          return MEMBLOCKPOOL_TYPE_2048 ;
       }
-      else if ( size <= 4096 )
+      else if ( size <= UTIL_MEM_ELEMENT_4096 )
       {
          *ppCount = &_numDynamicAlloc4K ;
          return MEMBLOCKPOOL_TYPE_4096 ;
       }
+      else if ( size <= UTIL_MEM_ELEMENT_8192 )
+      {
+         *ppCount = &_numDynamicAlloc8K ;
+         return MEMBLOCKPOOL_TYPE_8192 ;
+      }
+
       return MEMBLOCKPOOL_TYPE_DYN ;
    }
 
-   UINT32 _utilMemBlockPool::_type2Size( MEMBLOCKPOOL_TYPE type ) const
+   UINT32 _utilMemBlockPool::_type2Size( MEMBLOCKPOOL_TYPE type )
    {
       UINT32 size = 0 ;
 
       switch ( type )
       {
-         case MEMBLOCKPOOL_TYPE_16 :
-            size = 16 ;
-            break ;
          case MEMBLOCKPOOL_TYPE_32 :
-            size = 32 ;
+            size = UTIL_MEM_ELEMENT_32 ;
             break ;
          case MEMBLOCKPOOL_TYPE_64 :
-            size = 64 ;
+            size = UTIL_MEM_ELEMENT_64 ;
             break ;
          case MEMBLOCKPOOL_TYPE_128 :
-            size = 128 ;
+            size = UTIL_MEM_ELEMENT_128 ;
             break ;
          case MEMBLOCKPOOL_TYPE_256 :
-            size = 256 ;
+            size = UTIL_MEM_ELEMENT_256 ;
             break ;
          case MEMBLOCKPOOL_TYPE_512 :
-            size = 512 ;
+            size = UTIL_MEM_ELEMENT_512 ;
             break ;
          case MEMBLOCKPOOL_TYPE_1024 :
-            size = 1024 ;
+            size = UTIL_MEM_ELEMENT_1024 ;
             break ;
          case MEMBLOCKPOOL_TYPE_2048 :
-            size = 2048 ;
+            size = UTIL_MEM_ELEMENT_2048 ;
             break ;
          case MEMBLOCKPOOL_TYPE_4096 :
-            size = 4096 ;
+            size = UTIL_MEM_ELEMENT_4096 ;
+            break ;
+         case MEMBLOCKPOOL_TYPE_8192 :
+            size = UTIL_MEM_ELEMENT_8192 ;
             break ;
          default :
             break ;
@@ -472,109 +528,112 @@ namespace engine
       realSize = UTIL_MEM_SIZE_2_REALSIZE( size ) ;
       type = _size2MemType( realSize, &pNum ) ;
 
-      switch ( type )
+      if ( _maxSize > 0 )
       {
-         case MEMBLOCKPOOL_TYPE_16 :
-            if ( _16BSeg && SDB_OK == _16BSeg->acquire( (element16B*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_16 ;
+         switch ( type )
+         {
+            case MEMBLOCKPOOL_TYPE_32 :
+               if ( _32BSeg && SDB_OK == _32BSeg->acquire( (element32B*&)ptr ) )
+               {
+                  realType = MEMBLOCKPOOL_TYPE_32 ;
+                  break ;
+               }
+               if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
+               {
+                  break ;
+               }
+               /// don't break
+            case MEMBLOCKPOOL_TYPE_64 :
+               if ( _64BSeg && SDB_OK == _64BSeg->acquire( (element64B*&)ptr ) )
+               {
+                  realType = MEMBLOCKPOOL_TYPE_64 ;
+                  break ;
+               }
+               if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
+               {
+                  break ;
+               }
+               /// don't break
+            case MEMBLOCKPOOL_TYPE_128 :
+               if ( _128BSeg && SDB_OK == _128BSeg->acquire( (element128B*&)ptr ) )
+               {
+                  realType = MEMBLOCKPOOL_TYPE_128 ;
+                  break ;
+               }
+               if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
+               {
+                  break ;
+               }
+               /// don't break
+            case MEMBLOCKPOOL_TYPE_256 :
+               if ( _256BSeg && SDB_OK == _256BSeg->acquire( (element256B*&)ptr ) )
+               {
+                  realType = MEMBLOCKPOOL_TYPE_256 ;
+                  break ;
+               }
+               if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
+               {
+                  break ;
+               }
+               /// don't break
+            case MEMBLOCKPOOL_TYPE_512 :
+               if ( _512BSeg && SDB_OK == _512BSeg->acquire( (element512B*&)ptr ) )
+               {
+                  realType = MEMBLOCKPOOL_TYPE_512 ;
+                  break ;
+               }
+               if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
+               {
+                  break ;
+               }
+               /// don't break
+            case MEMBLOCKPOOL_TYPE_1024 :
+               if ( _1KSeg && SDB_OK == _1KSeg->acquire( (element1K*&)ptr ) )
+               {
+                  realType = MEMBLOCKPOOL_TYPE_1024 ;
+                  break ;
+               }
+               if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
+               {
+                  break ;
+               }
+               /// don't break
+            case MEMBLOCKPOOL_TYPE_2048 :
+               if ( _2KSeg && SDB_OK == _2KSeg->acquire( (element2K*&)ptr ) )
+               {
+                  realType = MEMBLOCKPOOL_TYPE_2048 ;
+                  break ;
+               }
+               if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
+               {
+                  break ;
+               }
+               /// don't break
+            case MEMBLOCKPOOL_TYPE_4096 :
+               if ( _4KSeg && SDB_OK == _4KSeg->acquire( (element4K*&)ptr ) )
+               {
+                  realType = MEMBLOCKPOOL_TYPE_4096 ;
+                  break ;
+               }
+               if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
+               {
+                  break ;
+               }
+               /// don't break
+            case MEMBLOCKPOOL_TYPE_8192 :
+               if ( _8KSeg && SDB_OK == _8KSeg->acquire( (element8K*&)ptr ) )
+               {
+                  realType = MEMBLOCKPOOL_TYPE_8192 ;
+                  break ;
+               }
+               if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
+               {
+                  break ;
+               }
+               /// don't break
+            default :
                break ;
-            }
-            if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_32 :
-            if ( _32BSeg && SDB_OK == _32BSeg->acquire( (element32B*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_32 ;
-               break ;
-            }
-            if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_64 :
-            if ( _64BSeg && SDB_OK == _64BSeg->acquire( (element64B*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_64 ;
-               break ;
-            }
-            if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_128 :
-            if ( _128BSeg && SDB_OK == _128BSeg->acquire( (element128B*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_128 ;
-               break ;
-            }
-            if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_256 :
-            if ( _256BSeg && SDB_OK == _256BSeg->acquire( (element256B*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_256 ;
-               break ;
-            }
-            if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_512 :
-            if ( _512BSeg && SDB_OK == _512BSeg->acquire( (element512B*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_512 ;
-               break ;
-            }
-            if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_1024 :
-            if ( _1KSeg && SDB_OK == _1KSeg->acquire( (element1K*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_1024 ;
-               break ;
-            }
-            if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_2048 :
-            if ( _2KSeg && SDB_OK == _2KSeg->acquire( (element2K*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_2048 ;
-               break ;
-            }
-            if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         case MEMBLOCKPOOL_TYPE_4096 :
-            if ( _4KSeg && SDB_OK == _4KSeg->acquire( (element4K*&)ptr ) )
-            {
-               realType = MEMBLOCKPOOL_TYPE_4096 ;
-               break ;
-            }
-            if ( ++tryLevel >= UTIL_MEM_ALLOC_MAX_TRY_LEVEL )
-            {
-               break ;
-            }
-            /// don't break
-         default :
-            break ;
+         }
       }
 
       if ( !ptr )
@@ -618,7 +677,7 @@ namespace engine
 
    BOOLEAN _utilMemBlockPool::_checkAndExtract( const CHAR *ptr,
                                                 UINT32 *pUserSize,
-                                                UINT16 *pType ) const
+                                                UINT16 *pType )
    {
       BOOLEAN valid = TRUE ;
 
@@ -744,9 +803,6 @@ namespace engine
 
       switch (type) 
       {
-         case MEMBLOCKPOOL_TYPE_16 :
-            rc = _16BSeg->release( (element16B *)realPtr ) ;
-            break ;
          case MEMBLOCKPOOL_TYPE_32 :
             rc = _32BSeg->release( (element32B *)realPtr ) ;
             break ;
@@ -770,6 +826,9 @@ namespace engine
             break ;
          case MEMBLOCKPOOL_TYPE_4096:
             rc = _4KSeg->release( (element4K *)realPtr ) ;
+            break ;
+         case MEMBLOCKPOOL_TYPE_8192:
+            rc = _8KSeg->release( (element8K *)realPtr ) ;
             break ;
          case MEMBLOCKPOOL_TYPE_DYN :
             SDB_OSS_FREE( realPtr ) ;
@@ -806,19 +865,34 @@ namespace engine
       _totalSize.add( size ) ;
    }
 
-   BOOLEAN _utilMemBlockPool::canReleaseSegment( UINT64 size )
-   {
-      return TRUE ;
-   }
-
    void _utilMemBlockPool::onReleaseSegment( UINT64 size )
    {
       _totalSize.sub( size ) ;
    }
 
+   BOOLEAN _utilMemBlockPool::canShrink( UINT32 blockSize,
+                                         UINT64 totalSize,
+                                         UINT64 usedSize )
+   {
+      if ( 0 == _maxSize || _totalSize.fetch() >= _maxSize )
+      {
+         return TRUE ;
+      }
+      else if ( totalSize > 0 )
+      {
+         FLOAT64 ratio = (FLOAT64)usedSize / totalSize ;
+         if ( ratio < UTIL_SEGMENT_OBJ_IN_USE_RATIO_THRESHOLD )
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
+   }
+
    /*
       Global var
    */
+   static _utilMemBlockPool  g_dynamicPool ;
    static _utilMemBlockPool* g_pMemPool = NULL ;
 
    utilMemBlockPool* utilGetGlobalMemPool()
@@ -842,6 +916,43 @@ namespace engine
       {
          SDB_ASSERT( FALSE, "Mempool is already valid" ) ;
       }
+   }
+
+   BOOLEAN utilPoolPtrCheck( void *ptr, UINT32 *pUserSize )
+   {
+      if ( ptr )
+      {
+         void *pRealPtr = UTIL_MEM_USERPTR_2_PTR( ptr ) ;
+         return _utilMemBlockPool::_checkAndExtract( ( const CHAR* )pRealPtr,
+                                                     pUserSize,
+                                                     NULL ) ;
+      }
+      return FALSE ;
+   }
+
+   UINT32 utilPoolGetPtrSize( void *ptr )
+   {
+      UINT32 size = 0 ;
+      utilPoolPtrCheck( ptr, &size ) ;
+      return size ;
+   }
+
+   void* utilPoolAlloc( UINT32 size )
+   {
+      return g_pMemPool ? g_pMemPool->alloc( size ) :
+                          g_dynamicPool.alloc( size ) ;
+   }
+
+   void* utilPoolRealloc( void* ptr, UINT32 size )
+   {
+      return g_pMemPool ? g_pMemPool->realloc( ptr, size ) :
+                          g_dynamicPool.realloc( ptr, size ) ;
+   }
+
+   void utilPoolRelease( void*& ptr )
+   {
+      g_pMemPool ? g_pMemPool->release( ptr ) :
+                   g_dynamicPool.release( ptr ) ;
    }
 
 }

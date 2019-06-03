@@ -62,6 +62,7 @@
 #include "pmdEnv.hpp"
 #include "utilEnvCheck.hpp"
 #include "pmdStartupHistoryLogger.hpp"
+#include "utilMemListPool.hpp"
 #include "msgDef.h"
 
 using namespace bson ;
@@ -2154,6 +2155,7 @@ namespace engine
          ob.append( FIELD_NAME_QUEUE_SIZE, full._queueSize ) ;
          ob.append( FIELD_NAME_PROCESS_EVENT_COUNT,
                     (SINT64)full._processEventCount ) ;
+         ob.append( FIELD_NAME_MEMPOOL_SIZE, (INT32)utilThreadMemPoolSize() ) ;
          monAppendSessionIdentify( ob, full._relatedNID,
                                    full._relatedTID ) ;
          /// add contexts
@@ -2790,6 +2792,9 @@ namespace engine
          monDBDumpNetInfo( ob ) ;
 
          sdbGetClsCB()->dumpSchedInfo( ob ) ;
+
+         ob.append ( FIELD_NAME_MEMPOOL_SIZE,
+                     (INT64)krcb->getMemBlockPool()->getTotalSize() ) ;
 
          obj = ob.obj () ;
       }

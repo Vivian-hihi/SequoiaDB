@@ -642,6 +642,8 @@ namespace engine
          OSS_INLINE UINT32 maxSockPerNode() const { return _maxSockPerNode ; }
          OSS_INLINE UINT32 maxSockPerThread() const { return _maxSockPerThread ; }
          OSS_INLINE UINT32 maxSockThread() const { return _maxSockThread ; }
+         OSS_INLINE UINT32 maxTCSize() const { return _maxTCSize ; }
+         OSS_INLINE UINT32 memPoolSize() const { return _memPoolSize ; }
 
          std::string getOmAddr() const ;
 
@@ -750,6 +752,8 @@ namespace engine
          UINT32      _maxSockPerNode ;
          UINT32      _maxSockPerThread ;
          UINT32      _maxSockThread ;
+         UINT32      _maxTCSize ;
+         UINT32      _memPoolSize ;
 
 #ifdef SDB_ENTERPRISE
 
