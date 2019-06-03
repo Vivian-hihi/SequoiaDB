@@ -2129,4 +2129,44 @@
       <hidden>true</hidden>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_TC_MAX_SIZE</name>
+      <long>tcmaxsize</long>
+      <description>
+        <en>The max cache size(KB) for each thread allocator. Value range:[0,65536], default is 2048.</en>
+        <cn>线程分配器的最大缓存大小，单位：KB。取值范围：[0,65536]，默认为2048</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+        <en>The max cache size(KB) for each thread allocator. Value range:[0,65536], default is 2048.</en>
+        <cn>线程分配器的最大缓存大小，单位：KB。取值范围：[0,65536]，默认为2048。</cn>
+      </detail>
+      <type>int</type>
+      <default>2048</default>
+      <hidden>true</hidden>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_MEMPOOL_SIZE</name>
+      <long>mempoolsize</long>
+      <description>
+        <en>The max size(MB) for memory pool. Default is 8192.</en>
+        <cn>全局内存池大小，单位：MB。默认为8192</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <detail>
+        <en>The max size(MB) for memory pool. Default is 8192.</en>
+        <cn>全局内存池大小，单位：MB。默认为8192。</cn>
+      </detail>
+      <type>int</type>
+      <default>8192</default>
+      <hidden>true</hidden>
+   </opt>
+
 </optlist>
