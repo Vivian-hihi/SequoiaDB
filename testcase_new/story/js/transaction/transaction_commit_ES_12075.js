@@ -44,6 +44,7 @@ function main()
    
    actResult.sort(compare("content"));
    expResult.sort(compare("content"));
+   print("actResult: " + JSON.stringify(actResult) + " \nexpResult: " + JSON.stringify(expResult));
    checkResult(expResult, actResult);
    println("===full index field insert success===");
    
