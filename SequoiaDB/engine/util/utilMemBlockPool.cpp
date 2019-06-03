@@ -345,7 +345,7 @@ namespace engine
       if ( _8KSeg )
       {
          SDB_OSS_DEL _8KSeg ;
-         _4KSeg = NULL ;
+         _8KSeg = NULL ;
       }
    }
 
