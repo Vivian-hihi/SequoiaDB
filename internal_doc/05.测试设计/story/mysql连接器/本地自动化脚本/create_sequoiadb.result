@@ -1,0 +1,571 @@
+create database test_option;
+use test_option;
+set global sequoiadb_use_partition=off;
+create table t1(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:false} ';
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:false} '
+create table t2(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:false} ';
+show create table t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:false} '
+create table t3(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}, use_partition:false} ';
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}, use_partition:false} '
+create table t4(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:false} ';
+show create table t4;
+Table	Create Table
+t4	CREATE TABLE `t4` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:false} '
+create table t5(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} ';
+show create table t5;
+Table	Create Table
+t5	CREATE TABLE `t5` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} '
+create table t6(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:true} ';
+show create table t6;
+Table	Create Table
+t6	CREATE TABLE `t6` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:true} '
+create table t7(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{}, use_partition:true} ';
+show create table t7;
+Table	Create Table
+t7	CREATE TABLE `t7` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{}, use_partition:true} '
+create table t8(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}, use_partition:true} ';
+ERROR HY000: Got error 40006 from storage engine
+create table t8(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} ';
+ERROR HY000: Got error 40177 from storage engine
+create table t8(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t8;
+Table	Create Table
+t8	CREATE TABLE `t8` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t9(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} ';
+show create table t9;
+Table	Create Table
+t9	CREATE TABLE `t9` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} '
+create table t10(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}} ';
+show create table t10;
+Table	Create Table
+t10	CREATE TABLE `t10` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}} '
+create table t11(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{}} ';
+show create table t11;
+Table	Create Table
+t11	CREATE TABLE `t11` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{}} '
+create table t12(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}} ';
+ERROR HY000: Got error 40006 from storage engine
+create table t12(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} ';
+ERROR HY000: Got error 40177 from storage engine
+create table t12(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t12;
+Table	Create Table
+t12	CREATE TABLE `t12` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t13(a int, b int, primary key(a), unique key(b)) engine=sequoiadb ;
+show create table t13;
+Table	Create Table
+t13	CREATE TABLE `t13` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+set global sequoiadb_use_partition=on;
+create table t14(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:false} ';
+show create table t14;
+Table	Create Table
+t14	CREATE TABLE `t14` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:false} '
+create table t15(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:false} ';
+show create table t15;
+Table	Create Table
+t15	CREATE TABLE `t15` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:false} '
+create table t16(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}, use_partition:false} ';
+show create table t16;
+Table	Create Table
+t16	CREATE TABLE `t16` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}, use_partition:false} '
+create table t17(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:false} ';
+show create table t17;
+Table	Create Table
+t17	CREATE TABLE `t17` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:false} '
+create table t18(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} ';
+show create table t18;
+Table	Create Table
+t18	CREATE TABLE `t18` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} '
+create table t19(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:true} ';
+show create table t19;
+Table	Create Table
+t19	CREATE TABLE `t19` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:true} '
+create table t20(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{}, use_partition:true} ';
+show create table t20;
+Table	Create Table
+t20	CREATE TABLE `t20` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{}, use_partition:true} '
+create table t21(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}, use_partition:true} ';
+ERROR HY000: Got error 40006 from storage engine
+create table t21(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} ';
+ERROR HY000: Got error 40177 from storage engine
+create table t21(a int, b int, primary key(a), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t21;
+Table	Create Table
+t21	CREATE TABLE `t21` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `a` (`a`,`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t22(a int, b int, c int, primary key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t22;
+Table	Create Table
+t22	CREATE TABLE `t22` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `a` (`a`,`c`),
+  UNIQUE KEY `a_2` (`a`,`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t23(a int, b int, c int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t23;
+Table	Create Table
+t23	CREATE TABLE `t23` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t24(a int, b int, c int, primary key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t24;
+Table	Create Table
+t24	CREATE TABLE `t24` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `a` (`a`,`b`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t25(a int, b int, c int, primary key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t25;
+Table	Create Table
+t25	CREATE TABLE `t25` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t26(a int, b int, unique key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t26;
+Table	Create Table
+t26	CREATE TABLE `t26` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t27(a int, b int, c int, unique key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t27;
+Table	Create Table
+t27	CREATE TABLE `t27` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`),
+  UNIQUE KEY `a_2` (`a`,`c`),
+  UNIQUE KEY `a_3` (`a`,`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t28(a int, b int, c int, unique key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t28;
+Table	Create Table
+t28	CREATE TABLE `t28` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t29(a int, b int, c int, unique key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t29;
+Table	Create Table
+t29	CREATE TABLE `t29` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`),
+  UNIQUE KEY `a_2` (`a`,`b`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t30(a int, b int, c int, key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t30;
+Table	Create Table
+t30	CREATE TABLE `t30` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  KEY `a` (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t31(a int, b int, c int, key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t31;
+Table	Create Table
+t31	CREATE TABLE `t31` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  KEY `a` (`a`),
+  KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t32(a int, b int, c int) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+show create table t32;
+Table	Create Table
+t32	CREATE TABLE `t32` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} '
+create table t33(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} ';
+show create table t33;
+Table	Create Table
+t33	CREATE TABLE `t33` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} '
+create table t34(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}} ';
+show create table t34;
+Table	Create Table
+t34	CREATE TABLE `t34` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}} '
+create table t35(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{}} ';
+show create table t35;
+Table	Create Table
+t35	CREATE TABLE `t35` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{}} '
+create table t36(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}} ';
+ERROR HY000: Got error 40006 from storage engine
+create table t36(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} ';
+ERROR HY000: Got error 40177 from storage engine
+create table t36(a int, b int, primary key(a), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t36;
+Table	Create Table
+t36	CREATE TABLE `t36` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `a` (`a`,`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t37(a int, b int, c int, primary key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t37;
+Table	Create Table
+t37	CREATE TABLE `t37` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `a` (`a`,`c`),
+  UNIQUE KEY `a_2` (`a`,`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t38(a int, b int, c int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t38;
+Table	Create Table
+t38	CREATE TABLE `t38` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t39(a int, b int, c int, primary key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t39;
+Table	Create Table
+t39	CREATE TABLE `t39` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `a` (`a`,`b`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t40(a int, b int, c int, primary key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t40;
+Table	Create Table
+t40	CREATE TABLE `t40` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t41(a int, b int, unique key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t41;
+Table	Create Table
+t41	CREATE TABLE `t41` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t42(a int, b int, c int, unique key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t42;
+Table	Create Table
+t42	CREATE TABLE `t42` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`),
+  UNIQUE KEY `a_2` (`a`,`c`),
+  UNIQUE KEY `a_3` (`a`,`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t43(a int, b int, c int, unique key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t43;
+Table	Create Table
+t43	CREATE TABLE `t43` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t44(a int, b int, c int, unique key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t44;
+Table	Create Table
+t44	CREATE TABLE `t44` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`),
+  UNIQUE KEY `a_2` (`a`,`b`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t45(a int, b int, c int, key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t45;
+Table	Create Table
+t45	CREATE TABLE `t45` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  KEY `a` (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t46(a int, b int, c int, key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t46;
+Table	Create Table
+t46	CREATE TABLE `t46` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  KEY `a` (`a`),
+  KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t47(a int, b int, c int) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+show create table t47;
+Table	Create Table
+t47	CREATE TABLE `t47` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} '
+create table t48(a int, b int, primary key(a), unique key(a,b)) engine=sequoiadb;
+show create table t48;
+Table	Create Table
+t48	CREATE TABLE `t48` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `a` (`a`,`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t49(a int, b int, c int, primary key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb;
+show create table t49;
+Table	Create Table
+t49	CREATE TABLE `t49` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `a` (`a`,`c`),
+  UNIQUE KEY `a_2` (`a`,`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t50(a int, b int, c int, primary key(a), unique key(b)) engine=sequoiadb;
+show create table t50;
+Table	Create Table
+t50	CREATE TABLE `t50` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t51(a int, b int, c int, primary key(a), unique key(a,b), unique key(b)) engine=sequoiadb;
+show create table t51;
+Table	Create Table
+t51	CREATE TABLE `t51` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  UNIQUE KEY `a` (`a`,`b`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t52(a int, b int, c int, primary key(a), key(b)) engine=sequoiadb;
+show create table t52;
+Table	Create Table
+t52	CREATE TABLE `t52` (
+  `a` int(11) NOT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  PRIMARY KEY (`a`),
+  KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t53(a int, b int, unique key(a)) engine=sequoiadb;
+show create table t53;
+Table	Create Table
+t53	CREATE TABLE `t53` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t54(a int, b int, c int, unique key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb;
+show create table t54;
+Table	Create Table
+t54	CREATE TABLE `t54` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`),
+  UNIQUE KEY `a_2` (`a`,`c`),
+  UNIQUE KEY `a_3` (`a`,`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t55(a int, b int, c int, unique key(a), unique key(b)) engine=sequoiadb;
+show create table t55;
+Table	Create Table
+t55	CREATE TABLE `t55` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t56(a int, b int, c int, unique key(a), unique key(a,b), unique key(b)) engine=sequoiadb;
+show create table t56;
+Table	Create Table
+t56	CREATE TABLE `t56` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  UNIQUE KEY `a` (`a`),
+  UNIQUE KEY `a_2` (`a`,`b`),
+  UNIQUE KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t57(a int, b int, c int, key(a)) engine=sequoiadb;
+show create table t57;
+Table	Create Table
+t57	CREATE TABLE `t57` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  KEY `a` (`a`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t58(a int, b int, c int, key(a), key(b)) engine=sequoiadb;
+show create table t58;
+Table	Create Table
+t58	CREATE TABLE `t58` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL,
+  KEY `a` (`a`),
+  KEY `b` (`b`)
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+create table t59(a int, b int, c int) engine=sequoiadb;
+show create table t59;
+Table	Create Table
+t59	CREATE TABLE `t59` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(11) DEFAULT NULL,
+  `c` int(11) DEFAULT NULL
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
+a=[{"t1":true},{"t2":true},{"t3":true},{"t4":true},{"t5":true},{"t6":true},{"t7":true},{"t8":true},{"t9":true},{"t10":true},{"t11":true},{"t12":true},{"t13":true},{"t14":true},{"t15":true},{"t16":true},{"t17":true},{"t18":true},{"t19":true},{"t20":true},{"t21":true},{"t22":true},{"t23":true},{"t24":true},{"t25":true},{"t26":true},{"t27":true},{"t28":true},{"t29":true},{"t30":true},{"t31":true},{"t32":true},{"t33":true},{"t34":true},{"t35":true},{"t36":true},{"t37":true},{"t38":true},{"t39":true},{"t40":true},{"t41":true},{"t42":true},{"t43":true},{"t44":true},{"t45":true},{"t46":true},{"t47":true},{"t48":true},{"t49":true},{"t50":true},{"t51":true},{"t52":true},{"t53":true},{"t54":true},{"t55":true},{"t56":true},{"t57":true},{"t58":true},{"t59":true}]
+drop database test_option;
