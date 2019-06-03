@@ -3853,192 +3853,182 @@
                   {
                      "id": 1559282734,
                      "dir": "monitoring",
-                     "cn": "监控",
-                     "en": "Monitoring",
+                     "cn": "监控视图",
+                     "en": "Monitoring view",
                      "contents": [
                         {
-                           "id": 1559282767,
-                           "dir": "snapshot",
-                           "cn": "快照",
-                           "en": "Snapshot",
-                           "contents": [
-                              {
-                                 "id": 1559282868,
-                                 "file": "snapshot",
-                                 "cn": "快照类型",
-                                 "en": "Snapshot Types"
-                              },
-                              {
-                                 "id": 1559282883,
-                                 "file": "SDB_SNAP_CONTEXTS",
-                                 "cn": "上下文快照",
-                                 "en": "SDB_SNAP_CONTEXTS"
-                              },
-                              {
-                                 "id": 1559282895,
-                                 "file": "SDB_SNAP_CONTEXTS_CURRENT",
-                                 "cn": "当前上下文快照",
-                                 "en": "SDB_SNAP_CONTEXTS_CURRENT"
-                              },
-                              {
-                                 "id": 1559282908,
-                                 "file": "SDB_SNAP_SESSIONS",
-                                 "cn": "会话快照",
-                                 "en": "SDB_SNAP_SESSIONS"
-                              },
-                              {
-                                 "id": 1559282920,
-                                 "file": "SDB_SNAP_SESSIONS_CURRENT",
-                                 "cn": "当前会话快照",
-                                 "en": "SDB_SNAP_SESSIONS_CURRENT"
-                              },
-                              {
-                                 "id": 1559282936,
-                                 "file": "SDB_SNAP_COLLECTIONS",
-                                 "cn": "集合快照",
-                                 "en": "SDB_SNAP_COLLECTIONS"
-                              },
-                              {
-                                 "id": 1559282937,
-                                 "file": "SDB_SNAP_COLLECTIONSPACES",
-                                 "cn": "集合空间快照",
-                                 "en": "SDB_SNAP_COLLECTIONSPACES"
-                              },
-                              {
-                                 "id": 1559282938,
-                                 "file": "SDB_SNAP_DATABASE",
-                                 "cn": "数据库快照",
-                                 "en": "SDB_SNAP_DATABASE"
-                              },
-                              {
-                                 "id": 1559282939,
-                                 "file": "SDB_SNAP_SYSTEM",
-                                 "cn": "操作系统快照",
-                                 "en": "SDB_SNAP_SYSTEM"
-                              },
-                              {
-                                 "id": 1559282940,
-                                 "file": "SDB_SNAP_CATALOG",
-                                 "cn": "编目信息快照",
-                                 "en": "SDB_SNAP_CATALOG"
-                              },
-                              {
-                                 "id": 1559282941,
-                                 "file": "SDB_SNAP_TRANSACTIONS",
-                                 "cn": "事务快照",
-                                 "en": "SDB_SNAP_TRANSACTIONS"
-                              },
-                              {
-                                 "id": 1559282942,
-                                 "file": "SDB_SNAP_TRANSACTIONS_CURRENT",
-                                 "cn": "当前事务快照",
-                                 "en": "SDB_SNAP_TRANSACTIONS_CURRENT"
-                              },
-                              {
-                                 "id": 1559282943,
-                                 "file": "SDB_SNAP_ACCESSPLANS",
-                                 "cn": "访问计划缓存快照",
-                                 "en": "SDB_SNAP_ACCESSPLANS"
-                              },
-                              {
-                                 "id": 1559282944,
-                                 "file": "SDB_SNAP_HEALTH",
-                                 "cn": "节点健康检测快照",
-                                 "en": "SDB_SNAP_HEALTH"
-                              },
-                              {
-                                 "id": 1559282945,
-                                 "file": "SDB_SNAP_CONFIGS",
-                                 "cn": "配置快照",
-                                 "en": "SDB_SNAP_CONFIGS"
-                              },
-                              {
-                                 "id": 1559282946,
-                                 "file": "SDB_SNAP_SEQUENCES",
-                                 "cn": "序列快照",
-                                 "en": "SDB_SNAP_SEQUENCES"
-                              }
-                           ]
+                           "id": 1559546719,
+                           "file": "overview",
+                           "cn": "概述",
+                           "en": "Overview"
                         },
                         {
-                           "id": 1559282947,
-                           "dir": "list",
-                           "cn": "列表",
-                           "en": "List",
-                           "contents": [
-                              {
-                                 "id": 1559282948,
-                                 "file": "list",
-                                 "cn": "列表类型",
-                                 "en": "List Types"
-                              },
-                              {
-                                 "id": 1559282949,
-                                 "file": "SDB_LIST_CONTEXTS",
-                                 "cn": "上下文列表",
-                                 "en": "SDB_LIST_CONTEXTS"
-                              },
-                              {
-                                 "id": 1559282950,
-                                 "file": "SDB_LIST_CONTEXTS_CURRENT",
-                                 "cn": "当前上下文列表",
-                                 "en": "SDB_LIST_CONTEXTS_CURRENT"
-                              },
-                              {
-                                 "id": 1559282951,
-                                 "file": "SDB_LIST_SESSIONS",
-                                 "cn": "会话列表",
-                                 "en": "SDB_LIST_SESSIONS"
-                              },
-                              {
-                                 "id": 1559282952,
-                                 "file": "SDB_LIST_SESSIONS_CURRENT",
-                                 "cn": "当前会话列表",
-                                 "en": "SDB_LIST_SESSIONS_CURRENT"
-                              },
-                              {
-                                 "id": 1559282953,
-                                 "file": "SDB_LIST_COLLECTIONS",
-                                 "cn": "集合列表",
-                                 "en": "SDB_LIST_COLLECTIONS"
-                              },
-                              {
-                                 "id": 1559282954,
-                                 "file": "SDB_LIST_COLLECTIONSPACES",
-                                 "cn": "集合空间列表",
-                                 "en": "SDB_LIST_COLLECTIONSPACES"
-                              },
-                              {
-                                 "id": 1559282955,
-                                 "file": "SDB_LIST_STORAGEUNITS",
-                                 "cn": "存储单元列表",
-                                 "en": "SDB_LIST_STORAGEUNITS"
-                              },
-                              {
-                                 "id": 1559282956,
-                                 "file": "SDB_LIST_GROUPS",
-                                 "cn": "分区组列表",
-                                 "en": "SDB_LIST_GROUPS"
-                              },
-                              {
-                                 "id": 1559282957,
-                                 "file": "SDB_LIST_TRANSACTIONS",
-                                 "cn": "事务列表",
-                                 "en": "SDB_LIST_TRANSACTIONS"
-                              },
-                              {
-                                 "id": 1559282958,
-                                 "file": "SDB_LIST_TRANSACTIONS_CURRENT",
-                                 "cn": "当前事务列表",
-                                 "en": "SDB_LIST_TRANSACTIONS_CURRENT"
-                              },
-                              {
-                                 "id": 1559282959,
-                                 "file": "SDB_LIST_SEQUENCES",
-                                 "cn": "序列列表",
-                                 "en": "SDB_LIST_SEQUENCES"
-                              }
-                           ]
+                           "id": 1559282868,
+                           "file": "snapshot",
+                           "cn": "快照类型",
+                           "en": "Snapshot Types"
+                        },
+                        {
+                           "id": 1559282883,
+                           "file": "SDB_SNAP_CONTEXTS",
+                           "cn": "上下文快照",
+                           "en": "SDB_SNAP_CONTEXTS"
+                        },
+                        {
+                           "id": 1559282895,
+                           "file": "SDB_SNAP_CONTEXTS_CURRENT",
+                           "cn": "当前上下文快照",
+                           "en": "SDB_SNAP_CONTEXTS_CURRENT"
+                        },
+                        {
+                           "id": 1559282908,
+                           "file": "SDB_SNAP_SESSIONS",
+                           "cn": "会话快照",
+                           "en": "SDB_SNAP_SESSIONS"
+                        },
+                        {
+                           "id": 1559282920,
+                           "file": "SDB_SNAP_SESSIONS_CURRENT",
+                           "cn": "当前会话快照",
+                           "en": "SDB_SNAP_SESSIONS_CURRENT"
+                        },
+                        {
+                           "id": 1559282936,
+                           "file": "SDB_SNAP_COLLECTIONS",
+                           "cn": "集合快照",
+                           "en": "SDB_SNAP_COLLECTIONS"
+                        },
+                        {
+                           "id": 1559282937,
+                           "file": "SDB_SNAP_COLLECTIONSPACES",
+                           "cn": "集合空间快照",
+                           "en": "SDB_SNAP_COLLECTIONSPACES"
+                        },
+                        {
+                           "id": 1559282938,
+                           "file": "SDB_SNAP_DATABASE",
+                           "cn": "数据库快照",
+                           "en": "SDB_SNAP_DATABASE"
+                        },
+                        {
+                           "id": 1559282939,
+                           "file": "SDB_SNAP_SYSTEM",
+                           "cn": "操作系统快照",
+                           "en": "SDB_SNAP_SYSTEM"
+                        },
+                        {
+                           "id": 1559282940,
+                           "file": "SDB_SNAP_CATALOG",
+                           "cn": "编目信息快照",
+                           "en": "SDB_SNAP_CATALOG"
+                        },
+                        {
+                           "id": 1559282941,
+                           "file": "SDB_SNAP_TRANSACTIONS",
+                           "cn": "事务快照",
+                           "en": "SDB_SNAP_TRANSACTIONS"
+                        },
+                        {
+                           "id": 1559282942,
+                           "file": "SDB_SNAP_TRANSACTIONS_CURRENT",
+                           "cn": "当前事务快照",
+                           "en": "SDB_SNAP_TRANSACTIONS_CURRENT"
+                        },
+                        {
+                           "id": 1559282943,
+                           "file": "SDB_SNAP_ACCESSPLANS",
+                           "cn": "访问计划缓存快照",
+                           "en": "SDB_SNAP_ACCESSPLANS"
+                        },
+                        {
+                           "id": 1559282944,
+                           "file": "SDB_SNAP_HEALTH",
+                           "cn": "节点健康检测快照",
+                           "en": "SDB_SNAP_HEALTH"
+                        },
+                        {
+                           "id": 1559282945,
+                           "file": "SDB_SNAP_CONFIGS",
+                           "cn": "配置快照",
+                           "en": "SDB_SNAP_CONFIGS"
+                        },
+                        {
+                           "id": 1559282946,
+                           "file": "SDB_SNAP_SEQUENCES",
+                           "cn": "序列快照",
+                           "en": "SDB_SNAP_SEQUENCES"
+                        },
+                        {
+                           "id": 1559282948,
+                           "file": "list",
+                           "cn": "列表类型",
+                           "en": "List Types"
+                        },
+                        {
+                           "id": 1559282949,
+                           "file": "SDB_LIST_CONTEXTS",
+                           "cn": "上下文列表",
+                           "en": "SDB_LIST_CONTEXTS"
+                        },
+                        {
+                           "id": 1559282950,
+                           "file": "SDB_LIST_CONTEXTS_CURRENT",
+                           "cn": "当前上下文列表",
+                           "en": "SDB_LIST_CONTEXTS_CURRENT"
+                        },
+                        {
+                           "id": 1559282951,
+                           "file": "SDB_LIST_SESSIONS",
+                           "cn": "会话列表",
+                           "en": "SDB_LIST_SESSIONS"
+                        },
+                        {
+                           "id": 1559282952,
+                           "file": "SDB_LIST_SESSIONS_CURRENT",
+                           "cn": "当前会话列表",
+                           "en": "SDB_LIST_SESSIONS_CURRENT"
+                        },
+                        {
+                           "id": 1559282953,
+                           "file": "SDB_LIST_COLLECTIONS",
+                           "cn": "集合列表",
+                           "en": "SDB_LIST_COLLECTIONS"
+                        },
+                        {
+                           "id": 1559282954,
+                           "file": "SDB_LIST_COLLECTIONSPACES",
+                           "cn": "集合空间列表",
+                           "en": "SDB_LIST_COLLECTIONSPACES"
+                        },
+                        {
+                           "id": 1559282955,
+                           "file": "SDB_LIST_STORAGEUNITS",
+                           "cn": "存储单元列表",
+                           "en": "SDB_LIST_STORAGEUNITS"
+                        },
+                        {
+                           "id": 1559282956,
+                           "file": "SDB_LIST_GROUPS",
+                           "cn": "分区组列表",
+                           "en": "SDB_LIST_GROUPS"
+                        },
+                        {
+                           "id": 1559282957,
+                           "file": "SDB_LIST_TRANSACTIONS",
+                           "cn": "事务列表",
+                           "en": "SDB_LIST_TRANSACTIONS"
+                        },
+                        {
+                           "id": 1559282958,
+                           "file": "SDB_LIST_TRANSACTIONS_CURRENT",
+                           "cn": "当前事务列表",
+                           "en": "SDB_LIST_TRANSACTIONS_CURRENT"
+                        },
+                        {
+                           "id": 1559282959,
+                           "file": "SDB_LIST_SEQUENCES",
+                           "cn": "序列列表",
+                           "en": "SDB_LIST_SEQUENCES"
                         }
                      ]
                   },
