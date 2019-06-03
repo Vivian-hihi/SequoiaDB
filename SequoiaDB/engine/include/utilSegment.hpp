@@ -1184,8 +1184,8 @@ namespace engine
             UINT32 poolId = UTIL_INVALID_OBJ_INDEX ;
             if ( NULL != pT )
             {
-               const _utilSegmentPool< typename T >::_objX * p =
-                  ( const _utilSegmentPool< typename T >::_objX * )_GET_OBJX_ADDRESS( pT ) ;
+               typename _utilSegmentPool< T >::_objX * p =
+                  ( typename _utilSegmentPool< T >::_objX * )_GET_OBJX_ADDRESS( pT ) ;
                if ( p && ( _SEGMENT_OBJ_EYE_CATCHER == p->_eyeCatcher ) )
                {
                   // unpack poolId from _objX-> _index
