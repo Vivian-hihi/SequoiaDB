@@ -45,7 +45,6 @@ public class Fulltext12118A extends SdbTestBase {
     private Client esClient = null;
     private int insertNum = 20000;
     private ThreadExecutor te = new ThreadExecutor(3600000);
-    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
     public void setUp() {
@@ -173,9 +172,9 @@ public class Fulltext12118A extends SdbTestBase {
                                 + " data group consistency and sync to es success.");
                     } else {
                         // 只校验删除全文索引成功时，固定集合删除成功的逻辑；成功的逻辑在if分支已校验
-                        if (( i + 1 ) * j + 1 <= cappedCLNames.size()) {
-                            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient,
-                                    esIndexNames.get(( i + 1 ) * j), cappedCLNames.get(( i + 1 ) * j)));
+                        if ((i + 1) * j + 1 <= cappedCLNames.size()) {
+                            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexNames.get((i + 1) * j),
+                                    cappedCLNames.get((i + 1) * j)));
                             System.out.println(
                                     "check capped cl in cs:" + csNames.get(i) + " cl:" + clNames.get(j) + " success.");
 
@@ -191,6 +190,7 @@ public class Fulltext12118A extends SdbTestBase {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         private String csName = null;
         private String clName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public DropFullIndexThread(String csName, String clName) {
             super();
@@ -221,6 +221,7 @@ public class Fulltext12118A extends SdbTestBase {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         private String csName = null;
         private String clName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public CreateFullIndexThread(String csName, String clName) {
             super();
@@ -250,6 +251,7 @@ public class Fulltext12118A extends SdbTestBase {
 
     private class CreateCS {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         @ExecuteOrder(step = 1, desc = "创建集合空间、集合、全文索引、插入记录")
         public void createCS() {

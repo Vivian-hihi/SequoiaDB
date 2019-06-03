@@ -43,7 +43,6 @@ public class Fulltext12125 extends SdbTestBase {
     private Client esClient = null;
     private int insertNum = 50000;
     private ThreadExecutor te = new ThreadExecutor(3600000);
-    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
     public void setUp() {
@@ -120,6 +119,7 @@ public class Fulltext12125 extends SdbTestBase {
     private class CreateFullIndexThread {
         private String csName = null;
         private String clName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public CreateFullIndexThread(String csName, String clName) {
             super();

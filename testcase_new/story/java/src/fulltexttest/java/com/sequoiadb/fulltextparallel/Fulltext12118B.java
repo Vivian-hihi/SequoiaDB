@@ -47,7 +47,6 @@ public class Fulltext12118B extends SdbTestBase {
     private Client esClient = null;
     private int insertNum = 20000;
     private ThreadExecutor te = new ThreadExecutor(3600000);
-    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
     public void setUp() {
@@ -136,6 +135,7 @@ public class Fulltext12118B extends SdbTestBase {
         private String clName = null;
         private String cappedCLName = null;
         private String esIndexName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public DropFullIndexThread(String csName, String clName) {
             super();
@@ -205,6 +205,7 @@ public class Fulltext12118B extends SdbTestBase {
     private class CreateFullIndexThread extends ResultStore {
         private String csName = null;
         private String clName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public CreateFullIndexThread(String csName, String clName) {
             super();
@@ -265,6 +266,7 @@ public class Fulltext12118B extends SdbTestBase {
     }
 
     private class CreateCS extends ResultStore {
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         @ExecuteOrder(step = 1, desc = "创建集合空间、集合、全文索引、插入记录")
         public void createCS() {

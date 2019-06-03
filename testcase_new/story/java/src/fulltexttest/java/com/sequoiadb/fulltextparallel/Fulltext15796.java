@@ -45,7 +45,6 @@ public class Fulltext15796 extends SdbTestBase {
     private int insertNum = 30000;
     private AtomicInteger atomic = new AtomicInteger(insertNum);
     private ThreadExecutor te = new ThreadExecutor(3600000);
-    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
     @BeforeClass
     public void setUp() {
@@ -98,6 +97,7 @@ public class Fulltext15796 extends SdbTestBase {
 
     private class Insert {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         @ExecuteOrder(step = 1, desc = "插入记录")
         public void insertRecord() {
@@ -123,6 +123,7 @@ public class Fulltext15796 extends SdbTestBase {
 
     private class Update {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         @ExecuteOrder(step = 1, desc = "更新所有记录")
         public void updateRecord() {
@@ -146,6 +147,7 @@ public class Fulltext15796 extends SdbTestBase {
 
     private class Delete {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         @ExecuteOrder(step = 1, desc = "删除所有记录")
         public void deleteRecord() {
@@ -171,6 +173,7 @@ public class Fulltext15796 extends SdbTestBase {
 
     private class Query {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         @ExecuteOrder(step = 1, desc = "全文检索全部记录")
         public void queryRecord() {
@@ -206,6 +209,7 @@ public class Fulltext15796 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除集合")
         public void dropCL() {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
             try {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);

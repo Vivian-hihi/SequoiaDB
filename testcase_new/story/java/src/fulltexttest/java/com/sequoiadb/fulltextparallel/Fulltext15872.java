@@ -51,7 +51,6 @@ public class Fulltext15872 extends SdbTestBase {
     private ThreadExecutor te = new ThreadExecutor(3600000);
     // 统计各集合中的记录数，map的key为集合名、value为集合中的记录数
     private Map<String, AtomicInteger> insertNumInCLMap = new HashMap<String, AtomicInteger>();
-    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
     private List<String> esIndexNames = new ArrayList<String>();
     private List<String> cappedCLNames = new ArrayList<String>();
 
@@ -170,6 +169,7 @@ public class Fulltext15872 extends SdbTestBase {
         private String clName = null;
         private String cappedCLName = null;
         private String esIndexName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public DropFullIndexThread(String csName, String clName) {
             super();
@@ -235,6 +235,7 @@ public class Fulltext15872 extends SdbTestBase {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         private String csName = null;
         private String clName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public CreateFullIndexThread(String csName, String clName) {
             super();
@@ -261,6 +262,7 @@ public class Fulltext15872 extends SdbTestBase {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         private String csName = null;
         private String clName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public InsertThread(String csName, String clName) {
             super();
@@ -290,6 +292,7 @@ public class Fulltext15872 extends SdbTestBase {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         private String csName = null;
         private String clName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public UpdateThread(String csName, String clName) {
             super();
@@ -315,6 +318,7 @@ public class Fulltext15872 extends SdbTestBase {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         private String csName = null;
         private String clName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public DeleteThread(String csName, String clName) {
             super();
@@ -344,6 +348,7 @@ public class Fulltext15872 extends SdbTestBase {
         private Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         private String csName = null;
         private String clName = null;
+        private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
         public QueryThread(String csName, String clName) {
             super();
