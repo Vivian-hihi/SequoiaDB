@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -68,13 +69,28 @@ public class FullText15836 extends SdbTestBase {
         cappedName = FullTextDBUtils.getCappedName(cl, indexName);
         esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
 
-        // TODO:需要校验集合的插入及全文检索功能
+        FullTextDBUtils.insertData(cl, 10000);
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum + 10000));
+
+        int recordNum = 0;
+        DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                "{'': '" + indexName + "'}");
+        while (cur.hasNext()) {
+            cur.getNext();
+            recordNum++;
+        }
+        cur.close();
+
+        Assert.assertEquals(recordNum, insertNum + 10000, "use fulltext index search record");
     }
 
     @AfterClass
     public void tearDown() throws Exception {
         try {
             FullTextDBUtils.dropCollection(cs, clName);
+            if (sdb.isCollectionSpaceExist(csName)) {
+                sdb.dropCollectionSpace(csName);
+            }
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         } finally {
             if (sdb != null) {
@@ -104,11 +120,13 @@ public class FullText15836 extends SdbTestBase {
     }
 
     private class SyncThread {
-        // TODO:这里建议自己创建集合空间，只对自己创建的cs进行刷盘，整体刷盘，不确定会不会影响其他用例
         @ExecuteOrder(step = 1)
         private void syncData() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                db.sync(new BasicBSONObject("Block", true));
+                BSONObject options = new BasicBSONObject();
+                options.put("Block", true);
+                options.put("CollectionSpace", csName);
+                db.sync(options);
             }
         }
     }

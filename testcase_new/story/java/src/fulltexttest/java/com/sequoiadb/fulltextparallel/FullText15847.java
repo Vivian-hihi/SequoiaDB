@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
@@ -45,6 +46,7 @@ public class FullText15847 extends SdbTestBase {
     private int testInsertNum = 10000;
     private int updateNum = insertNum / 2;
     private int deleteNum = insertNum / 2;
+    private boolean indexExist = true;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -67,6 +69,8 @@ public class FullText15847 extends SdbTestBase {
         cl.createIndex(indexName, indexObj, false, false);
 
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
+        cappedName = FullTextDBUtils.getCappedName(cl, indexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
     }
 
     @Test
@@ -78,12 +82,38 @@ public class FullText15847 extends SdbTestBase {
         thread.addWorker(new DeleteThread());
         thread.run();
 
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum - deleteNum + testInsertNum));
+        if (indexExist) {
+            Assert.assertTrue(
+                    FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum - deleteNum + testInsertNum));
+            int recordNum = 0;
+            DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                    "{'': '" + indexName + "'}");
+            while (cur.hasNext()) {
+                cur.getNext();
+                recordNum++;
+            }
+            cur.close();
 
-        cappedName = FullTextDBUtils.getCappedName(cl, indexName);
-        esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
-// TODO cappedName和esIndexName需要在setUp创建索引后获取，否则有可能在TextIndexThread索引被删除成功但是创建失败会获取不到。
-// TODO 另外，校验结果需要根据TextIndexThread索引删除/创建成功分别校验，因为最终索引有可能删除成功创建失败或最终创建成功，结果会不一样。
+            Assert.assertEquals(recordNum, updateNum + testInsertNum, "use fulltext index search record");
+        } else {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
+            DBCursor cur = null;
+            try {
+                cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                        "{'': '" + indexName + "'}");
+                if (cur.hasNext()) {
+                    cur.getNext();
+                }
+                Assert.fail("use not exist fulltext search should be failed!");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -52, e.getMessage());
+            } finally {
+                if (cur != null) {
+                    cur.close();
+                }
+            }
+        }
+
     }
 
     @AfterClass
@@ -104,7 +134,7 @@ public class FullText15847 extends SdbTestBase {
     private class TextIndexThread {
 
         @ExecuteOrder(step = 1)
-        private void createIndex() {// TODO 方法名跟实际操作不符（删除、创建索引）
+        private void createAndDropIndex() {
             BSONObject indexObj = new BasicBSONObject();
             indexObj.put("a", "text");
             indexObj.put("b", "text");
@@ -115,7 +145,9 @@ public class FullText15847 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 for (int i = 0; i < 5; i++) {
                     cl.dropIndex(indexName);
+                    indexExist = false;
                     cl.createIndex(indexName, indexObj, false, false);
+                    indexExist = true;
                 }
             } catch (BaseException e) {
                 if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {

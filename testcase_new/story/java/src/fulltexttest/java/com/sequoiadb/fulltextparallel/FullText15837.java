@@ -11,7 +11,9 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -25,12 +27,12 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author luweikang
  * @Date 2019年5月6日
  */
-// TODO:同15836
 public class FullText15837 extends SdbTestBase {
 
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
+    private String csName = "cs_15837";
     private String clName = "es_15837";
     private Client esClient = null;
     private String indexName = "fulltextIndex15837";
@@ -46,7 +48,10 @@ public class FullText15837 extends SdbTestBase {
             throw new SkipException("skip StandAlone");
         }
 
-        cs = sdb.getCollectionSpace(csName);
+        if (sdb.isCollectionSpaceExist(csName)) {
+            sdb.dropCollectionSpace(csName);
+        }
+        cs = sdb.createCollectionSpace(csName);
         cl = cs.createCollection(clName);
 
         FullTextDBUtils.insertData(cl, insertNum);
@@ -75,12 +80,34 @@ public class FullText15837 extends SdbTestBase {
 
         Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
 
+        FullTextDBUtils.insertData(cl, 10000);
+
+        Assert.assertEquals(cl.getCount(), insertNum + 10000);
+
+        DBCursor cur = null;
+        try {
+            cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                    "{'': '" + indexName + "'}");
+            if (cur.hasNext()) {
+                cur.getNext();
+            }
+            Assert.fail("use not exist fulltext search should be failed!");
+        } catch (BaseException e) {
+            Assert.assertEquals(e.getErrorCode(), -52, e.getMessage());
+        } finally {
+            if (cur != null) {
+                cur.close();
+            }
+        }
     }
 
     @AfterClass
     public void tearDown() throws Exception {
         try {
             FullTextDBUtils.dropCollection(cs, clName);
+            if (sdb.isCollectionSpaceExist(csName)) {
+                sdb.dropCollectionSpace(csName);
+            }
             Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
         } finally {
             if (sdb != null) {
@@ -108,7 +135,10 @@ public class FullText15837 extends SdbTestBase {
         @ExecuteOrder(step = 1)
         private void syncData() {
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
-                db.sync(new BasicBSONObject("Block", true));
+                BSONObject options = new BasicBSONObject();
+                options.put("Block", true);
+                options.put("CollectionSpace", csName);
+                db.sync(options);
             }
         }
     }

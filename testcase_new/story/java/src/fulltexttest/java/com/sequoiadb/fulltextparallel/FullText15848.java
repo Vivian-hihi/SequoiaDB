@@ -96,7 +96,7 @@ public class FullText15848 extends SdbTestBase {
     private class TextIndexThread {
 
         @ExecuteOrder(step = 1)
-        private void createIndex() {// TODO 方法名跟操作不符（删除、创建索引）
+        private void dropAndCreateIndex() {
             BSONObject indexObj = new BasicBSONObject();
             indexObj.put("a", "text");
             indexObj.put("b", "text");

@@ -196,7 +196,7 @@ public class FullText15860 extends SdbTestBase {
                     DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                     DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
                             "{'': '" + indexName + "'}");
-                    if (cur.hasNext()) {
+                    while (cur.hasNext()) {
                         cur.getNext();
                     }
                     cur.close();

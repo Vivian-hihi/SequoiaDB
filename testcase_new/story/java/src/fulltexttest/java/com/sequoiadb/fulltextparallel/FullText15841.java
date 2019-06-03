@@ -121,9 +121,10 @@ public class FullText15841 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.truncate();
             } catch (BaseException e) {
-                e.printStackTrace();
-                saveResult(-1, e); // TODO
-                                   // truncate会失败吗？catch没有抛异常。如果失败需要捕获预期错误码。
+                if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
+                    throw e;
+                }
+                saveResult(-1, e);
             }
         }
     }

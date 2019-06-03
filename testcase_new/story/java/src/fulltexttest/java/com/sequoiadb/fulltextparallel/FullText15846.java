@@ -24,6 +24,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
@@ -78,24 +79,51 @@ public class FullText15846 extends SdbTestBase {
         cl.createIndex(indexName, indexObj, false, false);
 
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
+        cappedName = FullTextDBUtils.getCappedName(cl, indexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
     }
 
     @Test
     public void test() throws Exception {
 
-        cappedName = FullTextDBUtils.getCappedName(cl, indexName);
-        esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
-
+        DropIndexThread dropIndex = new DropIndexThread();
         ThreadExecutor thread = new ThreadExecutor();
-        thread.addWorker(new DropIndexThread());
+        thread.addWorker(dropIndex);
         thread.addWorker(new TruncateLobThread());
         thread.addWorker(new PutLobThread());
         thread.addWorker(new RemoveLobThread());
         thread.addWorker(new GetLoBThread());
         thread.run();
-        // TODO 删除索引可能失败，需要根据DropIndexThread返回结果分别校验。
-        // TOTO 另外，多跑几遍确认truncate是否会失败，并根据返回结果分别校验。
-        Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
+        if (dropIndex.getRetCode() == 0) {
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(sdb, esClient, esIndexName, cappedName));
+            DBCursor cur = null;
+            try {
+                cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                        "{'': '" + indexName + "'}");
+                if (cur.hasNext()) {
+                    cur.getNext();
+                }
+                Assert.fail("use not exist fulltext search should be failed!");
+            } catch (BaseException e) {
+                Assert.assertEquals(e.getErrorCode(), -52, e.getMessage());
+            } finally {
+                if (cur != null) {
+                    cur.close();
+                }
+            }
+        } else {
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum));
+            int recordNum = 0;
+            DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                    "{'': '" + indexName + "'}");
+            while (cur.hasNext()) {
+                cur.getNext();
+                recordNum++;
+            }
+            cur.close();
+
+            Assert.assertEquals(recordNum, insertNum, "use fulltext index search record");
+        }
 
         checkLobResult();
     }
@@ -115,7 +143,7 @@ public class FullText15846 extends SdbTestBase {
         }
     }
 
-    private class DropIndexThread {
+    private class DropIndexThread extends ResultStore {
 
         @ExecuteOrder(step = 1)
         private void createIndex() {
@@ -125,6 +153,10 @@ public class FullText15846 extends SdbTestBase {
             } catch (BaseException e) {
                 e.printStackTrace();
                 Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+                if (e.getErrorCode() != -321) {
+                    throw e;
+                }
+                saveResult(-1, e);
             }
         }
     }
