@@ -53,6 +53,7 @@
 #include "monCB.hpp"
 #include "monEDU.hpp"
 #include "utilUniqueID.hpp"
+#include "utilMemListPool.hpp"
 #include "ossMemPool.hpp"
 
 #if defined ( SDB_ENGINE )
@@ -511,6 +512,7 @@ namespace engine
       UINT32                  _buffSize ;
 
       SET_CONTEXT             _contextList ;
+      utilMemListPool         _memPool ;
 
    };
    typedef class _pmdEDUCB pmdEDUCB ;

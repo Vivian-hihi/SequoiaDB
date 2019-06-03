@@ -2153,8 +2153,7 @@ namespace engine
          ob.append( FIELD_NAME_EDUNAME, full._eduName ) ;
          ob.append( FIELD_NAME_SOURCE, full._source ) ;
          ob.append( FIELD_NAME_QUEUE_SIZE, full._queueSize ) ;
-         ob.append( FIELD_NAME_PROCESS_EVENT_COUNT,
-                    (SINT64)full._processEventCount ) ;
+         ob.append( FIELD_NAME_PROCESS_EVENT_COUNT, (INT32)full._memPoolSize ) ;
          ob.append( FIELD_NAME_MEMPOOL_SIZE, (INT32)utilThreadMemPoolSize() ) ;
          monAppendSessionIdentify( ob, full._relatedNID,
                                    full._relatedTID ) ;

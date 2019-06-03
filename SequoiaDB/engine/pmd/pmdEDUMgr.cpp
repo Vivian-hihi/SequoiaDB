@@ -1977,7 +1977,7 @@ namespace engine
       cb->setThreadHdl( tHdl ) ;
       cb->setTID( tid ) ;
 
-      utilThreadPoolAssist _thdPoolAssit ;
+      utilThreadPoolAssist _thdPoolAssit( &(cb->_memPool) ) ;
       SDB_UNUSED( _thdPoolAssit ) ;
 
       try

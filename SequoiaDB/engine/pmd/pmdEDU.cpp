@@ -226,6 +226,7 @@ namespace engine
       SDB_ASSERT( _totalCatchSize == 0 , "Catch size is error" ) ;
       SDB_ASSERT( _totalMemSize == 0, "Memory size is error" ) ;
 
+      _memPool.clear() ;
    }
 
    string _pmdEDUCB::toString() const
@@ -1028,6 +1029,7 @@ namespace engine
       full._tid = _tid ;
       full._processEventCount = _processEventCount ;
       full._queueSize = _queue.size() ;
+      full._memPoolSize = _memPool.getCacheSize() ;
       ossStrncpy ( full._eduStatus, getEDUStatusDesp(_status),
                    MON_EDU_STATUS_SZ ) ;
       full._eduStatus[ MON_EDU_STATUS_SZ ] = 0 ;

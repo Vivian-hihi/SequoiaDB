@@ -97,6 +97,7 @@ namespace engine
       UINT64   _eduID ;
       UINT32   _tid ;
       UINT32   _queueSize ;
+      UINT32   _memPoolSize ;
       UINT64   _processEventCount ;
       CHAR     _eduStatus[MON_EDU_STATUS_SZ+1] ;
       CHAR     _eduType[MON_EDU_TYPE_SZ+1] ;
@@ -123,6 +124,7 @@ namespace engine
          _eduID = 0 ;
          _tid = 0 ;
          _queueSize = 0 ;
+         _memPoolSize = 0 ;
          _processEventCount = 0 ;
          _relatedNID = 0 ;
          _relatedTID = 0 ;
@@ -136,6 +138,7 @@ namespace engine
          _eduID          = rhs._eduID ;
          _tid            = rhs._tid ;
          _queueSize      = rhs._queueSize ;
+         _memPoolSize    = rhs._memPoolSize ;
          _processEventCount = rhs._processEventCount ;
          ossStrcpy( _eduStatus, rhs._eduStatus ) ;
          ossStrcpy( _eduType, rhs._eduType ) ;

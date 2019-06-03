@@ -219,6 +219,8 @@ namespace engine
    _utilMemListPool::_utilMemListPool()
    :_cachedSize( 0 )
    {
+      _hasInit = FALSE ;
+
       SDB_ASSERT( sizeof( _arrayList ) / sizeof( utilMemListItem* ) ==
                   UTIL_MEM_POOL_LIST_NUM + 1,
                   "Invalid arrayList size" ) ;
@@ -228,7 +230,11 @@ namespace engine
    _utilMemListPool::~_utilMemListPool()
    {
       clear() ;
+      fini() ;
+   }
 
+   void _utilMemListPool::fini()
+   {
       for ( UINT32 i = 0 ; i < UTIL_MEM_POOL_LIST_NUM ; ++i )
       {
          if ( _arrayList[ i ] )
@@ -237,12 +243,19 @@ namespace engine
             _arrayList[ i ] = NULL ;
          }
       }
+      _hasInit = FALSE ;
+      _cachedSize = 0 ;
    }
 
    INT32 _utilMemListPool::init()
    {
       INT32 rc = SDB_OK ;
       UINT32 blockSize = 0 ;
+
+      if ( _hasInit )
+      {
+         goto done ;
+      }
 
       for ( UINT32 i = 0 ; i < UTIL_MEM_POOL_LIST_NUM ; ++i )
       {
@@ -259,9 +272,12 @@ namespace engine
          }
       }
 
+      _hasInit = TRUE ;
+
    done:
       return rc ;
    error:
+      fini() ;
       goto done ;
    }
 
@@ -528,11 +544,12 @@ namespace engine
    /*
       _utilThreadPoolAssist implement
    */
-   _utilThreadPoolAssist::_utilThreadPoolAssist()
+   _utilThreadPoolAssist::_utilThreadPoolAssist( utilMemListPool *pPool )
    {
-      if ( SDB_OK == _pool.init() )
+      _pPool = pPool ;
+      if ( _pPool && SDB_OK == _pPool->init() )
       {
-         utilSetThreadMemPool( &_pool ) ;
+         utilSetThreadMemPool( _pPool ) ;
          _hasReg = TRUE ;
       }
       else

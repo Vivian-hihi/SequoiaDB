@@ -142,7 +142,10 @@ namespace engine
          _utilMemListPool() ;
          ~_utilMemListPool() ;
 
-         INT32 init() ;
+         INT32    init() ;
+         void     fini() ;
+
+         BOOLEAN  isInit() const { return _hasInit ; }
 
       public:
          virtual void      onReleaseCache( UINT64 size ) ;
@@ -164,6 +167,7 @@ namespace engine
 
       private:
          UINT64            _cachedSize ;
+         BOOLEAN           _hasInit ;
          utilMemListItem*  _arrayList[ UTIL_MEM_POOL_LIST_NUM + 1 ] ;
    } ;
    typedef _utilMemListPool utilMemListPool ;
@@ -185,11 +189,11 @@ namespace engine
    class _utilThreadPoolAssist
    {
       public:
-         _utilThreadPoolAssist() ;
+         _utilThreadPoolAssist( utilMemListPool *pPool ) ;
          ~_utilThreadPoolAssist() ;
 
       private:
-         utilMemListPool      _pool ;
+         utilMemListPool      *_pPool ;
          BOOLEAN              _hasReg ;
    } ;
    typedef _utilThreadPoolAssist utilThreadPoolAssist ;
