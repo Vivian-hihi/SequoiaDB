@@ -105,7 +105,7 @@ namespace engine
       CHAR     _source[MON_EDU_NAME_SZ+1] ;
       UINT64   _relatedNID ;
       UINT32   _relatedTID ;
-      std::set<SINT64> _eduContextList ;
+      ossPoolSet<SINT64> _eduContextList ;
 
       monAppCB _monApplCB ;
 

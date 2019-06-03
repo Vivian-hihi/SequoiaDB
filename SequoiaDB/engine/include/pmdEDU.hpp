@@ -112,10 +112,10 @@ namespace engine
       typedef std::multimap<UINT32,CHAR*>    CATCH_MAP ;
       typedef CATCH_MAP::iterator            CATCH_MAP_IT ;
 
-      typedef ossPoolMap<CHAR*,UINT32> ALLOC_MAP ;
+      typedef ossPoolMap<CHAR*,UINT32>       ALLOC_MAP ;
       typedef ALLOC_MAP::iterator            ALLOC_MAP_IT ;
 
-      typedef std::set<INT64>        SET_CONTEXT ;
+      typedef ossPoolSet<INT64>              SET_CONTEXT ;
 
    public:
          /*

@@ -64,7 +64,7 @@ namespace engine
       SCANNER_TYPE_MAX
    } ;
 
-   typedef std::set<dmsRecordID>           SET_RECORDID ;
+   typedef ossPoolSet<dmsRecordID>           SET_RECORDID ;
 
    /*
       _rtnScannerSharedInfo define
