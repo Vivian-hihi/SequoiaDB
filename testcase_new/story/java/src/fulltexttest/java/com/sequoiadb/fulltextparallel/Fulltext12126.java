@@ -20,6 +20,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
@@ -117,7 +118,7 @@ public class Fulltext12126 extends SdbTestBase {
         te.run();
     }
 
-    private class DropFullIndexThread {
+    private class DropFullIndexThread extends ResultStore {
         private String csName = null;
         private String clName = null;
         private String cappedCLName = null;
@@ -129,7 +130,7 @@ public class Fulltext12126 extends SdbTestBase {
             this.clName = clName;
         }
 
-        @ExecuteOrder(step = 1, desc = "创建全文索引")
+        @ExecuteOrder(step = 1, desc = "删除全文索引")
         public void dropFullIndex() {
             System.out.println(this.getClass().getName().toString() + " start at:" + df.format(new Date()));
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -138,6 +139,11 @@ public class Fulltext12126 extends SdbTestBase {
                 cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
                 esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
                 cl.dropIndex(indexName);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
+                    throw e;
+                }
+                saveResult(e.getErrorCode(), e);
             } finally {
                 db.close();
             }
@@ -148,22 +154,28 @@ public class Fulltext12126 extends SdbTestBase {
         public void checkResult() throws Exception {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Client es = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             try {
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                if (getRetCode() == 0) {
+                    try {
+                        // 固定集合及ES端的全文索引已删除成功
+                        Assert.assertTrue(FullTextUtils.isIndexDeleted(db, es, esIndexName, cappedCLName));
 
-                // 固定集合及ES端的全文索引已删除成功
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(db, es, esIndexName, cappedCLName));
-
-                // 全文检索数据报错-52、-6
-                cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
-                    Assert.fail(e.getMessage());
+                        // 全文检索数据报错-52、-6
+                        cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
+                    } catch (BaseException e) {
+                        if (e.getErrorCode() != -6 && e.getErrorCode() != -52) {
+                            Assert.fail(e.getMessage());
+                        }
+                    }
+                } else {
+                    Assert.assertTrue(FullTextUtils.isIndexCreated(es, cl, esIndexName, insertNum));
                 }
             } finally {
                 db.close();
                 es.close();
             }
+
         }
 
     }

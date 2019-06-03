@@ -21,6 +21,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
@@ -126,7 +127,7 @@ public class Fulltext12129 extends SdbTestBase {
         te.run();
     }
 
-    private class DropFullIndexThread {
+    private class DropFullIndexThread extends ResultStore {
         private String csName = null;
         private String clName = null;
         private String cappedCLName = null;
@@ -147,6 +148,11 @@ public class Fulltext12129 extends SdbTestBase {
                 cappedCLName = FullTextDBUtils.getCappedName(cl, indexName);
                 esIndexName = FullTextDBUtils.getESIndexName(cl, indexName);
                 cl.dropIndex(indexName);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -147 && e.getErrorCode() != -190) {
+                    throw e;
+                }
+                saveResult(e.getErrorCode(), e);
             } finally {
                 db.close();
             }
@@ -157,20 +163,27 @@ public class Fulltext12129 extends SdbTestBase {
         public void checkResult() throws Exception {
             Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Client es = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
+            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             try {
-                Assert.assertTrue(FullTextUtils.isIndexDeleted(db, es, esIndexName, cappedCLName));
+                if (getRetCode() == 0) {
+                    try {
+                        Assert.assertTrue(FullTextUtils.isIndexDeleted(db, es, esIndexName, cappedCLName));
 
-                // 全文检索数据报错-52
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -52 && e.getErrorCode() != -6) {
-                    Assert.fail(e.getMessage());
+                        // 全文检索数据报错-52
+                        cl.query("{'':{'$Text':{query:{match_all:{}}}}}", "{a:1,c:1}", null, null);
+                    } catch (BaseException e) {
+                        if (e.getErrorCode() != -52 && e.getErrorCode() != -6) {
+                            Assert.fail(e.getMessage());
+                        }
+                    }
+                } else {
+                    Assert.assertTrue(FullTextUtils.isIndexCreated(es, cl, esIndexName, insertNum));
                 }
+
             } finally {
-                db.close();
-                es.close();
+
             }
+
         }
     }
 
