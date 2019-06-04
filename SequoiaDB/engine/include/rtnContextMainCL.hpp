@@ -102,7 +102,7 @@ namespace engine
    public:
       _rtnContextMainCL( INT64 contextID, UINT64 eduID ) ;
       ~_rtnContextMainCL();
-      virtual std::string      name() const ;
+      virtual const CHAR*      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
 
@@ -180,7 +180,7 @@ namespace engine
 
          virtual ~_rtnContextMainCLExplain () ;
 
-         string name () const ;
+         const CHAR* name () const ;
          RTN_CONTEXT_TYPE getType () const ;
          _dmsStorageUnit* getSU () { return NULL ; }
 

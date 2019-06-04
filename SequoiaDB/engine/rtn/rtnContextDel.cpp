@@ -81,7 +81,7 @@ namespace engine
       _clean( cb );
    }
 
-   std::string _rtnContextDelCS::name() const
+   const CHAR* _rtnContextDelCS::name() const
    {
       return "DELCS" ;
    }
@@ -420,7 +420,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   std::string _rtnContextDelCL::name() const
+   const CHAR* _rtnContextDelCL::name() const
    {
       return "DELCL" ;
    }
@@ -636,7 +636,7 @@ namespace engine
       }
    }
 
-   std::string _rtnContextDelMainCL::name() const
+   const CHAR* _rtnContextDelMainCL::name() const
    {
       return "DELMAINCL" ;
    }
@@ -795,7 +795,7 @@ namespace engine
       _releaseLock( cb ) ;
    }
 
-   std::string _rtnContextRenameCS::name() const
+   const CHAR* _rtnContextRenameCS::name() const
    {
       return "RENAMECS" ;
    }
@@ -1109,7 +1109,7 @@ namespace engine
       _releaseLock( cb ) ;
    }
 
-   std::string _rtnContextRenameCL::name() const
+   const CHAR* _rtnContextRenameCL::name() const
    {
       return "RENAMECL" ;
    }
@@ -1382,7 +1382,7 @@ namespace engine
       }
    }
 
-   std::string _rtnContextRenameMainCL::name() const
+   const CHAR* _rtnContextRenameMainCL::name() const
    {
       return "RENAMEMAINCL" ;
    }

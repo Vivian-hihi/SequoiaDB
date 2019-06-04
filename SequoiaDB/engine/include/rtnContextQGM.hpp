@@ -56,7 +56,7 @@ namespace engine
          virtual ~_rtnContextQGM () ;
 
       public:
-         virtual std::string      name() const ;
+         virtual const CHAR*      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () { return NULL ; }
 
@@ -81,7 +81,7 @@ namespace engine
       virtual ~_rtnContextQgmSort() ;
 
    public:
-      virtual std::string      name() const ;
+      virtual const CHAR*      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const ;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
 

@@ -127,7 +127,7 @@ namespace engine
       goto done ;
    }
 
-   std::string _omContextTransfer::name() const
+   const CHAR* _omContextTransfer::name() const
    {
       return "OM_TRANSFER" ;
    }

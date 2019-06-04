@@ -862,7 +862,8 @@ namespace engine
          {
             return NULL ;
          }
-         SDB_ASSERT( ctx->name() == info->name, "name is wrong" ) ;
+         SDB_ASSERT( 0 == ossStrcmp( ctx->name(), info->name.c_str() ),
+                     "name is wrong" ) ;
          SDB_ASSERT( ctx->getType() == info->type, "type is wrong" ) ;
          return ctx ;
       }

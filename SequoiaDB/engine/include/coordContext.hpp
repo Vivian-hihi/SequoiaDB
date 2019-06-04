@@ -142,7 +142,7 @@ namespace engine
          virtual BOOLEAN   needRollback() const { return _isModify ; }
 
       public:
-         virtual std::string      name() const ;
+         virtual const CHAR*      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
 
          OSS_INLINE BOOLEAN requireOrder () const ;
@@ -224,7 +224,7 @@ namespace engine
 
          virtual ~_rtnContextCoordExplain () ;
 
-         std::string name () const ;
+         const CHAR* name () const ;
 
          RTN_CONTEXT_TYPE getType () const ;
 

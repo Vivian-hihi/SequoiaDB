@@ -334,7 +334,7 @@ namespace engine
       }
    }
 
-   std::string _rtnContextLob::name() const
+   const CHAR* _rtnContextLob::name() const
    {
       return "LOB" ;
    }
@@ -386,7 +386,7 @@ namespace engine
       return _pFetcher ;
    }
 
-   std::string _rtnContextLobFetcher::name() const
+   const CHAR* _rtnContextLobFetcher::name() const
    {
       return "LOB_FETCHER" ;
    }

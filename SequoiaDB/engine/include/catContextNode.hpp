@@ -88,7 +88,7 @@ namespace engine
 
       virtual ~_catCtxActiveGrp () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_ACTIVE_GROUP" ;
       }
@@ -121,7 +121,7 @@ namespace engine
 
       virtual ~_catCtxShutdownGrp () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_SHUTDOWN_GROUP" ;
       }
@@ -154,7 +154,7 @@ namespace engine
 
       virtual ~_catCtxRemoveGrp () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_REMOVE_GROUP" ;
       }
@@ -187,7 +187,7 @@ namespace engine
 
       virtual ~_catCtxCreateNode () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_CREATE_NODE" ;
       }
@@ -243,7 +243,7 @@ namespace engine
 
       virtual ~_catCtxRemoveNode () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_REMOVE_NODE" ;
       }

@@ -62,7 +62,7 @@ namespace engine
    public:
       _rtnContextDelCS( SINT64 contextID, UINT64 eduID ) ;
       ~_rtnContextDelCS();
-      virtual std::string      name() const ;
+      virtual const CHAR*      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
       virtual BOOLEAN          isWrite() const { return TRUE ; }
@@ -103,7 +103,7 @@ namespace engine
    public:
       _rtnContextDelCL( SINT64 contextID, UINT64 eduID );
       ~_rtnContextDelCL();
-      virtual std::string      name() const ;
+      virtual const CHAR*      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
       virtual BOOLEAN          isWrite() const { return TRUE ; }
@@ -149,7 +149,7 @@ namespace engine
    public:
       _rtnContextDelMainCL( SINT64 contextID, UINT64 eduID );
       ~_rtnContextDelMainCL();
-      virtual std::string      name() const ;
+      virtual const CHAR*      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
       virtual BOOLEAN          isWrite() const { return TRUE ; }
@@ -193,7 +193,7 @@ namespace engine
    public:
       _rtnContextRenameCS( SINT64 contextID, UINT64 eduID ) ;
       ~_rtnContextRenameCS();
-      virtual std::string      name() const ;
+      virtual const CHAR*      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
       virtual BOOLEAN          isWrite() const { return TRUE ; }
@@ -234,7 +234,7 @@ namespace engine
    public:
       _rtnContextRenameCL( SINT64 contextID, UINT64 eduID ) ;
       ~_rtnContextRenameCL();
-      virtual std::string      name() const ;
+      virtual const CHAR*      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
       virtual BOOLEAN          isWrite() const { return TRUE ; }
@@ -276,7 +276,7 @@ namespace engine
    public:
       _rtnContextRenameMainCL( SINT64 contextID, UINT64 eduID );
       ~_rtnContextRenameMainCL();
-      virtual std::string      name() const ;
+      virtual const CHAR*      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
       virtual BOOLEAN          isWrite() const { return TRUE ; }

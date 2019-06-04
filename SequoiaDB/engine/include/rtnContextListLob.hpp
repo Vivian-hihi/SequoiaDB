@@ -48,7 +48,7 @@ namespace engine
       virtual ~_rtnContextListLob() ;
 
    public:
-      virtual std::string      name() const { return "LIST_LOB" ; } ;
+      virtual const CHAR*      name() const { return "LIST_LOB" ; } ;
       virtual RTN_CONTEXT_TYPE getType() const { return RTN_CONTEXT_LIST_LOB ; }
       virtual _dmsStorageUnit*  getSU () ;
 

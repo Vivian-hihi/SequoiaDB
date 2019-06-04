@@ -78,7 +78,7 @@ namespace engine
       _ownnedFetch = ownned ;
    }
 
-   std::string _rtnContextDump::name() const
+   const CHAR* _rtnContextDump::name() const
    {
       return "DUMP" ;
    }

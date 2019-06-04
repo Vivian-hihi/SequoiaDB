@@ -64,7 +64,7 @@ namespace engine
       }
    }
 
-   std::string _rtnContextQGM::name() const
+   const CHAR* _rtnContextQGM::name() const
    {
       return "QGM" ;
    }
@@ -180,7 +180,7 @@ namespace engine
       _qp = NULL ;
    }
 
-   std::string _rtnContextQgmSort::name() const
+   const CHAR* _rtnContextQgmSort::name() const
    {
       return "QGMSORT" ;
    }

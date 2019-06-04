@@ -71,7 +71,7 @@ namespace engine
       }
    }
 
-   std::string _rtnContextTS::name() const
+   const CHAR* _rtnContextTS::name() const
    {
       return "TS" ;
    }

@@ -182,7 +182,7 @@ namespace engine
       virtual ~_rtnContextExplain () ;
 
    public :
-      OSS_INLINE virtual string name () const
+      OSS_INLINE virtual const CHAR* name () const
       {
          return "EXPLAIN" ;
       }

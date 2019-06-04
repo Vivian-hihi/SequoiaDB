@@ -214,7 +214,7 @@ namespace engine
       _deleteSubContexts() ;
    }
 
-   std::string _rtnContextMainCL::name() const
+   const CHAR* _rtnContextMainCL::name() const
    {
       return "MAINCL" ;
    }
@@ -783,7 +783,7 @@ namespace engine
    {
    }
 
-   string _rtnContextMainCLExplain::name () const
+   const CHAR* _rtnContextMainCLExplain::name () const
    {
       return "MAINCL_EXPLAIN" ;
    }

@@ -109,7 +109,7 @@ namespace engine
          _rtnContextAlterCS ( SINT64 contextID, UINT64 eduID ) ;
          ~_rtnContextAlterCS () ;
 
-         OSS_INLINE virtual std::string name () const
+         OSS_INLINE virtual const CHAR* name () const
          {
             return "ALTERCS" ;
          }
@@ -146,7 +146,7 @@ namespace engine
          _rtnContextAlterCL ( SINT64 contextID, UINT64 eduID ) ;
          ~_rtnContextAlterCL () ;
 
-         OSS_INLINE virtual std::string name () const
+         OSS_INLINE virtual const CHAR* name () const
          {
             return "ALTERCL" ;
          }

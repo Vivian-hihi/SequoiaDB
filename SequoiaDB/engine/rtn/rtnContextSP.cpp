@@ -60,7 +60,7 @@ namespace engine
       SAFE_OSS_DELETE( _sp ) ;
    }
 
-   std::string _rtnContextSP::name() const
+   const CHAR* _rtnContextSP::name() const
    {
       return "SP" ;
    }

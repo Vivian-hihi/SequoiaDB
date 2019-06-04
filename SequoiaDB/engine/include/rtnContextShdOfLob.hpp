@@ -55,7 +55,7 @@ namespace engine
       virtual ~_rtnContextShdOfLob() ;
 
    public:
-      virtual std::string      name() const { return "SHARD_OF_LOB" ; };
+      virtual const CHAR*      name() const { return "SHARD_OF_LOB" ; };
       virtual RTN_CONTEXT_TYPE getType() const { return RTN_CONTEXT_SHARD_OF_LOB ; }
       virtual _dmsStorageUnit*  getSU () ;
 

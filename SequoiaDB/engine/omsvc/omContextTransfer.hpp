@@ -54,7 +54,7 @@ namespace engine
 
          INT32 open( omSdbConnector *conn, MsgHeader *reply ) ;
       public:
-         virtual std::string      name() const ;
+         virtual const CHAR*      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () ;
 

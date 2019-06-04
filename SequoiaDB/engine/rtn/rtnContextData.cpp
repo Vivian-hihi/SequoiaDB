@@ -110,7 +110,7 @@ namespace engine
       }
    }
 
-   std::string _rtnContextData::name() const
+   const CHAR* _rtnContextData::name() const
    {
       return "DATA" ;
    }
@@ -1166,7 +1166,7 @@ namespace engine
       _vecContext.clear () ;
    }
 
-   std::string _rtnContextParaData::name() const
+   const CHAR* _rtnContextParaData::name() const
    {
       return "PARADATA" ;
    }
@@ -1597,7 +1597,7 @@ namespace engine
       _numToReturn = 0 ;
    }
 
-   std::string _rtnContextSort::name() const
+   const CHAR* _rtnContextSort::name() const
    {
       return "SORT" ;
    }
@@ -1938,7 +1938,7 @@ namespace engine
       }
    }
 
-   std::string _rtnContextTemp::name() const
+   const CHAR* _rtnContextTemp::name() const
    {
       return "TEMP" ;
    }

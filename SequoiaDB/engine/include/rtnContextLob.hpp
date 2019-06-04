@@ -55,9 +55,9 @@ namespace engine
       virtual ~_rtnContextLob() ;
 
    public:
-      virtual std::string      name() const ;
-      virtual RTN_CONTEXT_TYPE getType() const { return RTN_CONTEXT_LOB ; }
-      virtual _dmsStorageUnit*  getSU () ;
+      virtual const CHAR*        name() const ;
+      virtual RTN_CONTEXT_TYPE   getType() const { return RTN_CONTEXT_LOB ; }
+      virtual _dmsStorageUnit*   getSU () ;
 
    public:
       /*
@@ -128,7 +128,7 @@ namespace engine
          _rtnLobFetcher*   getLobFetcher() ;
 
       public:
-         virtual std::string      name() const ;
+         virtual const CHAR*      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () ;
 

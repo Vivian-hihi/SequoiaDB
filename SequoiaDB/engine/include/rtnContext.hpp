@@ -336,7 +336,7 @@ namespace engine
          }
 
       public:
-         virtual std::string      name() const = 0 ;
+         virtual const CHAR*      name() const = 0 ;
          virtual RTN_CONTEXT_TYPE getType () const = 0 ;
          virtual _dmsStorageUnit* getSU () = 0 ;
          virtual BOOLEAN          isWrite() const { return FALSE ; }

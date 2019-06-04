@@ -162,7 +162,7 @@ namespace engine
 
       virtual ~_catCtxDropCS () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_DROP_CS" ;
       }
@@ -212,7 +212,7 @@ namespace engine
 
          virtual ~_catCtxRenameCS () ;
 
-         virtual std::string name () const
+         virtual const CHAR* name () const
          {
             return "CAT_RENAME_CS" ;
          }
@@ -248,7 +248,7 @@ namespace engine
 
          virtual ~_catCtxAlterCS () ;
 
-         virtual std::string name () const
+         virtual const CHAR* name () const
          {
             return "CAT_ALTER_CS" ;
          }
@@ -283,7 +283,7 @@ namespace engine
 
       virtual ~_catCtxCreateCL () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_CREATE_CL" ;
       }
@@ -354,7 +354,7 @@ namespace engine
 
       virtual ~_catCtxDropCL () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_DROP_CL" ;
       }
@@ -400,7 +400,7 @@ namespace engine
 
          virtual ~_catCtxRenameCL () ;
 
-         virtual std::string name () const
+         virtual const CHAR* name () const
          {
             return "CAT_RENAME_CL" ;
          }
@@ -434,7 +434,7 @@ namespace engine
 
       virtual ~_catCtxAlterCL () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_ALTER_CL" ;
       }
@@ -497,7 +497,7 @@ namespace engine
 
       virtual ~_catCtxLinkCL () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_LINK_CL" ;
       }
@@ -537,7 +537,7 @@ namespace engine
 
       virtual ~_catCtxUnlinkCL () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_UNLINK_CL" ;
       }
@@ -577,7 +577,7 @@ namespace engine
 
       virtual ~_catCtxCreateIdx () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_CREATE_IDX" ;
       }
@@ -609,7 +609,7 @@ namespace engine
 
       virtual ~_catCtxDropIdx () ;
 
-      virtual std::string name() const
+      virtual const CHAR* name() const
       {
          return "CAT_DROP_IDX" ;
       }

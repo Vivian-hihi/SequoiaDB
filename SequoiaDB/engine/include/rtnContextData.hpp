@@ -95,7 +95,7 @@ namespace engine
          }
 
       public:
-         virtual std::string      name() const ;
+         virtual const CHAR*      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () { return _su ; }
          virtual BOOLEAN          isWrite() const ;
@@ -197,7 +197,7 @@ namespace engine
                              INT32 direction = 1 ) ;
 
       public:
-         virtual std::string      name() const ;
+         virtual const CHAR*      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
 
       protected:
@@ -236,7 +236,7 @@ namespace engine
          virtual ~_rtnContextTemp ();
 
       public:
-         virtual std::string      name() const ;
+         virtual const CHAR*      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
 
    } ;

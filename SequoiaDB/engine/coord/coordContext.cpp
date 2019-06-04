@@ -256,7 +256,7 @@ namespace engine
       _prepareContextMap.clear() ;
    }
 
-   std::string _rtnContextCoord::name() const
+   const CHAR* _rtnContextCoord::name() const
    {
       return "COORD" ;
    }
@@ -1201,7 +1201,7 @@ namespace engine
    {
    }
 
-   std::string _rtnContextCoordExplain::name () const
+   const CHAR* _rtnContextCoordExplain::name () const
    {
       return "COORD_EXPLAIN" ;
    }
