@@ -38,10 +38,10 @@ public class Transaction18310 extends SdbTestBase {
 
     @Test
     public void test() {
-        latch = new CountDownLatch(10);
+        latch = new CountDownLatch(5);
 
         List<CreateAndDropCLTh> thList = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 5; i++) {
             CreateAndDropCLTh th = new CreateAndDropCLTh("cl18310_" + i);
             thList.add(th);
             th.start();
@@ -85,7 +85,7 @@ public class Transaction18310 extends SdbTestBase {
 
                     // 删除集合
                     cs.dropCollection(clName);
-                    if (++doTimes == 200) {
+                    if (++doTimes == 30) {
                         System.out.println("CLNAME: " + clName + " doTimes: " + doTimes);
                         break;
                     }

@@ -48,10 +48,10 @@ public class Transaction18308 extends SdbTestBase {
 
     @Test
     public void test() {
-        latch = new CountDownLatch(10);
+        latch = new CountDownLatch(5);
 
         List<CreateAndDropCSTh> thList = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             CreateAndDropCSTh th = new CreateAndDropCSTh("cs18308_" + i);
             thList.add(th);
             th.start();
@@ -94,7 +94,7 @@ public class Transaction18308 extends SdbTestBase {
 
                     // 删除集合空间
                     db.dropCollectionSpace(csName);
-                    if (++doTimes == 200) {
+                    if (++doTimes == 30) {
                         System.out.println("CSNAME: " + csName + " doTimes: " + doTimes);
                         break;
                     }
