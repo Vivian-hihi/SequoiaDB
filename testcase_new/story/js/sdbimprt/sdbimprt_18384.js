@@ -1,5 +1,5 @@
 /************************************************************************
-*@Description:       导入时指定linepriority 为true
+*@Description:       导入时指定linepriority 为false
                      1、指定记录分隔符-r包含字符串分隔符-a执行导出再导入，检查结果
                      2、指定记录分隔符-r包含字段分隔符-e执行导出再导入，检查结果
                      3、指定字符串分隔符-a包含字段分隔符-e执行导出再导入，检查结果
@@ -22,8 +22,8 @@ function main()
       var doc = [{ c: 1,d : "exprtTest"}, { c: 2,d : "exprtTest2"}];
       var cl = readyCL( csName, clName );
       
-      var imprtFile = tmpFileDir +"18261.csv";
-      var exprtFile = tmpFileDir +"18261.csv";
+      var imprtFile = tmpFileDir +"18384.csv";
+      var exprtFile = tmpFileDir +"18384.csv";
       exportImportDataRContainA( csName, clName, imprtFile, exprtFile , cl, doc);
       exportImportDataRContainE( csName, clName, imprtFile, exprtFile , cl, doc);
       exportImportDataAContainE( csName, clName, imprtFile, exprtFile , cl, doc);
@@ -84,7 +84,7 @@ function exportImportDataRContainA( csName, clName, imprtFile, exprtFile, cl, do
    readyData( imprtFile, "cDd,Y1DYexprtTestY,Y2DYexprtTest2Y,Y" );
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 
-                     +" --type csv -r ',Y' -a 'Y' -e 'D' --headerline true --fields='c int,d string' --linepriority true"
+                     +" --type csv -r ',Y' -a 'Y' -e 'D' --headerline true --fields='c int,d string' --linepriority false"
                      +" --file "+ imprtFile;
    println( imprtOption );
    try{
@@ -119,7 +119,7 @@ function exportImportDataRContainE( csName, clName, imprtFile, exprtFile, cl, do
    //导入
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 
-                     +" --type csv -r ',Y' -e 'Y' --headerline true --fields='c int,d string' --linepriority true"
+                     +" --type csv -r ',Y' -e 'Y' --headerline true --fields='c int,d string' --linepriority false"
                      +" --file "+ exprtFile;
    println( imprtOption );
    testRunCommand(imprtOption);
@@ -143,7 +143,7 @@ function exportImportDataAContainE( csName, clName, imprtFile, exprtFile, cl, do
    //导入
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 
-                     +" --type csv -a ',Y'  -e 'Y' --headerline true --fields='c int,d string' --linepriority true"
+                     +" --type csv -a ',Y'  -e 'Y' --headerline true --fields='c int,d string' --linepriority false"
                      +" --file "+ exprtFile;
    println( imprtOption );
    testRunCommand(imprtOption);
@@ -168,7 +168,7 @@ function exportImportDataAContainA( csName, clName, imprtFile, exprtFile, cl, do
    /*
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 
-                     +" --type csv -a ',Y'  -r 'Y' --headerline true --fields='c int,d string' --linepriority true"
+                     +" --type csv -a ',Y'  -r 'Y' --headerline true --fields='c int,d string' --linepriority false"
                      +" --file "+ exprtFile;
    println( imprtOption );
    testRunCommand(imprtOption);
@@ -193,7 +193,7 @@ function exportImportDataEContainR( csName, clName, imprtFile, exprtFile, cl, do
    /*
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 
-                     +" --type csv -e ',Y'  -r 'Y' --headerline true --fields='c int,d string' --linepriority true"
+                     +" --type csv -e ',Y'  -r 'Y' --headerline true --fields='c int,d string' --linepriority false"
                      +" --file "+ exprtFile;
    println( imprtOption );
    testRunCommand(imprtOption);
@@ -237,7 +237,7 @@ function exportImportDataEContainA( csName, clName, imprtFile, exprtFile, cl, do
    readyData( imprtFile, "cDd,Y1DYexprtTestY,Y2DYexprtTest2Y,Y" );
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 
-                     +" --type csv -e ',Y"  -a 'Y' --headerline true --fields='c int,d string' --linepriority true"
+                     +" --type csv -e ',Y"  -a 'Y' --headerline true --fields='c int,d string' --linepriority false"
                      +" --file "+ imprtFile;
    println( imprtOption );
    try{
