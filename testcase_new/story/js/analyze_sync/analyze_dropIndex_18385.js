@@ -21,7 +21,7 @@ function main()
    
    var clName = "cl18385";
    var indexName = "index18385";
-   var hostName = COORDHOSTNAME;
+   var hostName = getHostName();
    var svcName = Number(RSRVPORTBEGIN);
    var dataPath = RSRVNODEDIR + svcName ;
    
@@ -74,5 +74,11 @@ function main()
       catch( e ){}
       db.removeRG(groupName);
    }
+}
 
+function getHostName()
+{
+   var groupArray = commGetGroups(db);
+   var hostName = groupArray[0][1].HostName;
+   return hostName;
 }
