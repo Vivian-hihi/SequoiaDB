@@ -69,18 +69,21 @@ public class Fulltext12019 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() throws Exception {
-        FullTextDBUtils.dropCollection( cs, clName );
-        // 检查全文索引是否残留
-        if ( esIndexNames != null ) {
-            Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient,
-                    esIndexNames, cappedNames ) );
-        }
-        if ( sdb != null ) {
-            sdb.close();
-        }
-        if ( esClient != null ) {
-            esClient.close();
-        }
+        try {
+            FullTextDBUtils.dropCollection( cs, clName );
+            // 检查全文索引是否残留
+            if ( esIndexNames != null ) {
+                Assert.assertTrue( FullTextUtils.isIndexDeleted( sdb, esClient,
+                        esIndexNames, cappedNames ) );
+            } 
+        } finally {
+            if ( sdb != null ) {
+                sdb.close();
+            }
+            if ( esClient != null ) {
+                esClient.close();
+            }
+        } 
     }
 
     @Test

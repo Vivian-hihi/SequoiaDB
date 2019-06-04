@@ -40,10 +40,7 @@ import org.elasticsearch.client.*;
 public class Fulltext12122 extends SdbTestBase {
     private final int TIMEOUT = 600000;
     private Sequoiadb db = null;
-    private List< CollectionSpace > css = new ArrayList<>();
     private List< DBCollection > cls = new ArrayList<>();
-    private List< String > csNames = new ArrayList<>();
-    private List< String > clNames = new ArrayList<>();
     private String textIndexName = "fulltext12122";
     private Client esClient = null;
     ThreadExecutor te = new ThreadExecutor( TIMEOUT );
@@ -58,34 +55,32 @@ public class Fulltext12122 extends SdbTestBase {
             throw new SkipException( "skip StandAlone" );
         }
 
-        // 创建集合空间和集合，总共两个集合空间，每个集合空间对应2个集合
-        for ( int i = 0; i < 2; i++ ) {
-            csNames.add( "cs12122_" + i );
-            if ( db.isCollectionSpaceExist( csNames.get( i ) ) ) {
-                db.dropCollectionSpace( csNames.get( i ) );
+         // 创建集合空间和集合，总共两个集合空间，每个集合空间对应2个集合
+        for ( int csNo = 0; csNo < 2; csNo++ ) {
+            String csName = "cs12122_" + csNo;
+            if ( db.isCollectionSpaceExist( csName ) ) {
+                db.dropCollectionSpace( csName );
             }
-            css.add( db.createCollectionSpace( csNames.get( i ) ) );
+            CollectionSpace cs = db.createCollectionSpace( csName );
+            for ( int clNo = 0; clNo < 2; clNo++ ) {
+                String clName = "12122_cl_" + clNo;
+                DBCollection cl = cs.createCollection( clName );
+                FullTextDBUtils.insertData( cl, 10000 );
+                if ( clNo % 2 > 0 ) {
+                    BSONObject indexObj = new BasicBSONObject();
+                    indexObj.put( "a", "text" );
+                    cl.createIndex( textIndexName, indexObj, false, false );
+                }
+                cls.add( cl );
+            }
         }
-        for ( int i = 0; i < 4; i++ ) {
-            clNames.add( "12122_cl_" + i );
-            cls.add( css.get( i % 2 ).createCollection( clNames.get( i ) ) );
-        }
-
-        // 插入数据并创建全文索引
-        for ( DBCollection cl : cls ) {
-            FullTextDBUtils.insertData( cl, 10000 );
-        }
-
-        BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        cls.get( 0 ).createIndex( textIndexName, indexObj, false, false );
-        cls.get( 1 ).createIndex( textIndexName, indexObj, false, false );
     }
 
     @AfterClass
     public void tearDown() {
         try {
-            for ( String csName : csNames ) {
+            for ( int csNo = 0; csNo < 2; csNo++ ) {
+                String csName = "cs12127_" + csNo;
                 FullTextDBUtils.dropCollectionSpace( db, csName );
             }
         } finally {
@@ -100,36 +95,46 @@ public class Fulltext12122 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 0 ),
-                textIndexName, 10000 ) );
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 1 ),
                 textIndexName, 10000 ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 3 ),
+                textIndexName, 10000 ) );
 
-        TruncateThread truncateThread = new TruncateThread( csNames.get( 0 ),
-                clNames.get( 0 ) );
-        te.addWorker( truncateThread );
-        te.addWorker(
-                new TruncateThread( csNames.get( 1 ), clNames.get( 3 ) ) );
-        te.addWorker( new LobThread( csNames.get( 0 ), clNames.get( 0 ) ) );
-        te.addWorker( new LobThread( csNames.get( 1 ), clNames.get( 3 ) ) );
-        te.addWorker( new CurdThread( csNames.get( 0 ), clNames.get( 0 ) ) );
-        te.addWorker( new CurdThread( csNames.get( 1 ), clNames.get( 1 ) ) );
-        te.addWorker( new CurdThread( csNames.get( 0 ), clNames.get( 2 ) ) );
-        te.addWorker( new CurdThread( csNames.get( 1 ), clNames.get( 3 ) ) );
+        List< TruncateThread > truncateThreads = new ArrayList<>();
+        for ( int csNo = 0; csNo < 2; csNo++ ) {
+            String csName = "cs12122_" + csNo;
+            for ( int clNo = 0; clNo < 2; clNo++ ) {
+                String clName = "12122_cl_" + clNo;
+                if ( clNo % 2 > 0 ) {
+                    // truncate集合，且集合存在全文索引
+                    TruncateThread truncateThread = new TruncateThread( csName,
+                            clName );
+                    truncateThreads.add( truncateThread );
+                }
+                te.addWorker( new LobThread( csName, clName ) );
+                te.addWorker( new InsertThread( csName, clName ) );
+                te.addWorker( new UpdateThread( csName, clName ) );
+                te.addWorker( new DeleteThread( csName, clName ) );
+            }
+        }
 
         te.run();
+
         // 当truncate成功后，检查全文索引是否有重建
-        if ( 0 == truncateThread.getRetCode() ) {
-            Assert.assertTrue( FullTextUtils.isFulltextRebuild( esClient,
-                    cls.get( 0 ), textIndexName ) );
+        for ( int i = 0; i < truncateThreads.size(); i++ ) {
+            if ( 0 == truncateThreads.get( i ).getRetCode() ) {
+                Assert.assertTrue( FullTextUtils.isFulltextRebuild( esClient,
+                        cls.get( i * 2 + 1 ), textIndexName ) );
+            }
         }
+
         // 检查最终ES端全文索引是否完成同步、原始集合和固定集合主备数据是否一致
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 0 ),
-                textIndexName, ( int ) cls.get( 0 ).getCount() ) );
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 1 ),
                 textIndexName, ( int ) cls.get( 1 ).getCount() ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 3 ),
+                textIndexName, ( int ) cls.get( 3 ).getCount() ) );
 
-        // 全文检索
+        // 全文检索结果正确
         BSONObject matcher = ( BSONObject ) JSON
                 .parse( "{'':{'$Text':{'query':{'match_all':{}}}}}" );
         DBCursor cursor = cls.get( 1 ).query( matcher, null, null, null );
@@ -220,35 +225,33 @@ public class Fulltext12122 extends SdbTestBase {
         }
     }
 
-    class CurdThread {
-        private Sequoiadb sdb = null;
-        private DBCollection cl = null;
+    class InsertThread {
+        String csName = null;
+        String clName = null;
 
-        public CurdThread( String csName, String clName ) {
-            sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-            cl = sdb.getCollectionSpace( csName ).getCollection( clName );
+        public InsertThread( String csName, String clName ) {
+            this.csName = csName;
+            this.clName = clName;
         }
 
-        @ExecuteOrder(step = 1, desc = "插入记录")
+        @ExecuteOrder(step = 1, desc = "往原始集合插入数据")
         public void insert() {
             System.out.println(
                     this.getClass().getName().toString() + " insert begin at:"
                             + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
                                     .format( new Date() ) );
-            List< BSONObject > insertObjs = new ArrayList< BSONObject >();
-            int insertRecordNum = 10000;
-            String strA = StringUtils.getRandomString( 64 );
-            for ( int i = 0; i < insertRecordNum; i++ ) {
-                insertObjs.add( ( BSONObject ) JSON.parse( "{ a: '" + strA
-                        + "', b: 'new_insert_12122_" + i + "'}" ) );
-            }
-
-            try {
-                cl.insert( insertObjs, 0 );
-            } catch ( BaseException e ) {
-                if ( -321 != e.getErrorCode() && -190 != e.getErrorCode() ) {
-                    Assert.fail( "actual exception: " + e.getErrorCode() );
+            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "",
+                    "" )) {
+                DBCollection cl = sdb.getCollectionSpace( csName )
+                        .getCollection( clName );
+                List< BSONObject > insertObjs = new ArrayList< BSONObject >();
+                int insertRecordNum = 10000;
+                String strA = StringUtils.getRandomString( 64 );
+                for ( int i = 0; i < insertRecordNum; i++ ) {
+                    insertObjs.add( ( BSONObject ) JSON.parse( "{ a: '" + strA
+                            + "', b: 'new_insert_12122_" + i + "'}" ) );
                 }
+                cl.insert( insertObjs, 0 );
             } finally {
                 System.out.println(
                         this.getClass().getName().toString() + " insert end at:"
@@ -256,34 +259,49 @@ public class Fulltext12122 extends SdbTestBase {
                                         .format( new Date() ) );
             }
         }
+    }
+
+    class UpdateThread {
+        String csName = null;
+        String clName = null;
+
+        public UpdateThread( String csName, String clName ) {
+            this.csName = csName;
+            this.clName = clName;
+        }
 
         @ExecuteOrder(step = 1, desc = "更新记录")
         public void update() {
             System.out.println(
-                    this.getClass().getName().toString() + " udpate begin at:"
+                    this.getClass().getName().toString() + " update begin at:"
                             + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
                                     .format( new Date() ) );
-            BSONObject modifier = new BasicBSONObject();
-            BSONObject value = new BasicBSONObject();
-            BSONObject matcher = new BasicBSONObject();
-            BSONObject subMatcher = new BasicBSONObject();
-            value.put( "a", "12122_after_update" );
-            modifier.put( "$set", value );
-            subMatcher.put( "$lt", 2000 );
-            matcher.put( "id", subMatcher );
-
-            try {
+            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "",
+                    "" )) {
+                DBCollection cl = sdb.getCollectionSpace( csName )
+                        .getCollection( clName );
+                BSONObject modifier = new BasicBSONObject( "$set",
+                        new BasicBSONObject( "a",
+                                "fulltext12122_after_update" ) );
+                BSONObject matcher = new BasicBSONObject( "id",
+                        new BasicBSONObject( "$lt", 2000 ) );
                 cl.update( matcher, modifier, null );
-            } catch ( BaseException e ) {
-                if ( -321 != e.getErrorCode() && -190 != e.getErrorCode() ) {
-                    Assert.fail( "actual exception: " + e.getErrorCode() );
-                }
             } finally {
                 System.out.println(
-                        this.getClass().getName().toString() + " udpate end at:"
+                        this.getClass().getName().toString() + " update end at:"
                                 + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
                                         .format( new Date() ) );
             }
+        }
+    }
+
+    class DeleteThread {
+        String csName = null;
+        String clName = null;
+
+        public DeleteThread( String csName, String clName ) {
+            this.csName = csName;
+            this.clName = clName;
         }
 
         @ExecuteOrder(step = 1, desc = "删除记录")
@@ -292,17 +310,13 @@ public class Fulltext12122 extends SdbTestBase {
                     this.getClass().getName().toString() + " delete begin at:"
                             + new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" )
                                     .format( new Date() ) );
-            BSONObject matcher = new BasicBSONObject();
-            BSONObject subMatcher = new BasicBSONObject();
-            subMatcher.put( "$gt", 5000 );
-            matcher.put( "id", subMatcher );
-
-            try {
+            try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "",
+                    "" )) {
+                DBCollection cl = sdb.getCollectionSpace( csName )
+                        .getCollection( clName );
+                BSONObject matcher = new BasicBSONObject( "id",
+                        new BasicBSONObject( "$gt", 5000 ) );
                 cl.delete( matcher );
-            } catch ( BaseException e ) {
-                if ( -321 != e.getErrorCode() && -190 != e.getErrorCode() ) {
-                    Assert.fail( "actual exception: " + e.getErrorCode() );
-                }
             } finally {
                 System.out.println(
                         this.getClass().getName().toString() + " delete end at:"
@@ -310,12 +324,6 @@ public class Fulltext12122 extends SdbTestBase {
                                         .format( new Date() ) );
             }
         }
-
-        @ExecuteOrder(step = 2, desc = "清理环境")
-        public void tearDown() {
-            if ( sdb != null ) {
-                sdb.close();
-            }
-        }
     }
+
 }

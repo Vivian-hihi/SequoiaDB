@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -14,9 +15,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.threadexecutor.ResultStore;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 import com.sequoiadb.utils.FullTextDBUtils;
@@ -32,10 +36,7 @@ import org.elasticsearch.client.*;
 public class Fulltext12119 extends SdbTestBase {
     private final int TIMEOUT = 600000;
     private Sequoiadb db = null;
-    private List< CollectionSpace > css = new ArrayList<>();
     private List< DBCollection > cls = new ArrayList<>();
-    private List< String > csNames = new ArrayList<>();
-    private List< String > clNames = new ArrayList<>();
     private String textIndexName = "fulltext12119";
     private Client esClient = null;
     ThreadExecutor te = new ThreadExecutor( TIMEOUT );
@@ -51,27 +52,24 @@ public class Fulltext12119 extends SdbTestBase {
         }
 
         // 创建集合空间和集合，总共两个集合空间，每个集合空间对应2个集合
-        for ( int i = 0; i < 2; i++ ) {
-            csNames.add( "cs12119_" + i );
-            if ( db.isCollectionSpaceExist( csNames.get( i ) ) ) {
-                db.dropCollectionSpace( csNames.get( i ) );
+        for ( int csNo = 0; csNo < 2; csNo++ ) {
+            String csName = "cs12119_" + csNo;
+            if ( db.isCollectionSpaceExist( csName ) ) {
+                db.dropCollectionSpace( csName );
             }
-            css.add( db.createCollectionSpace( csNames.get( i ) ) );
+            CollectionSpace cs = db.createCollectionSpace( csName );
+            for ( int clNo = 0; clNo < 2; clNo++ ) {
+                String clName = "12119_cl_" + clNo;
+                DBCollection cl = cs.createCollection( clName );
+                FullTextDBUtils.insertData( cl, 10000 );
+                if ( clNo % 2 > 0 ) {
+                    BSONObject indexObj = new BasicBSONObject();
+                    indexObj.put( "a", "text" );
+                    cl.createIndex( textIndexName, indexObj, false, false );
+                }
+                cls.add( cl );
+            }
         }
-        for ( int i = 0; i < 4; i++ ) {
-            clNames.add( "12119_cl_" + i );
-            cls.add( css.get( i % 2 ).createCollection( clNames.get( i ) ) );
-        }
-
-        // 插入数据并创建全文索引
-        for ( DBCollection cl : cls ) {
-            FullTextDBUtils.insertData( cl, 10000 );
-        }
-
-        BSONObject indexObj = new BasicBSONObject();
-        indexObj.put( "a", "text" );
-        cls.get( 0 ).createIndex( textIndexName, indexObj, false, false );
-        cls.get( 1 ).createIndex( textIndexName, indexObj, false, false );
     }
 
     @AfterClass
@@ -86,33 +84,61 @@ public class Fulltext12119 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 0 ),
-                textIndexName, 10000 ) );
         Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 1 ),
                 textIndexName, 10000 ) );
+        Assert.assertTrue( FullTextUtils.isIndexCreated( esClient, cls.get( 3 ),
+                textIndexName, 10000 ) );
 
-        String cappedName1 = FullTextDBUtils.getCappedName( cls.get( 0 ),
-                textIndexName );
-        String cappedName2 = FullTextDBUtils.getCappedName( cls.get( 1 ),
-                textIndexName );
-        List< String > esIndexNames1 = FullTextDBUtils
-                .getESIndexNames( cls.get( 0 ), textIndexName );
-        List< String > esIndexNames2 = FullTextDBUtils
-                .getESIndexNames( cls.get( 1 ), textIndexName );
+        List< String > cappedNames = new ArrayList<>();
+        List< String > esIndexNames = new ArrayList<>();
+        cappedNames.add(
+                FullTextDBUtils.getCappedName( cls.get( 1 ), textIndexName ) );
+        cappedNames.add(
+                FullTextDBUtils.getCappedName( cls.get( 3 ), textIndexName ) );
+        esIndexNames.add(
+                FullTextDBUtils.getESIndexName( cls.get( 1 ), textIndexName ) );
+        esIndexNames.add(
+                FullTextDBUtils.getESIndexName( cls.get( 3 ), textIndexName ) );
 
-        for ( String csName : csNames ) {
-            te.addWorker( new DropCSThread( csName ) );
+        List< DropCSThread > dropCSThreads = new ArrayList<>();
+        for ( int csNo = 0; csNo < 2; csNo++ ) {
+            String csName = "cs12119_" + csNo;
+            DropCSThread dropCSThread = new DropCSThread( csName );
+            te.addWorker( dropCSThread );
+            dropCSThreads.add( dropCSThread );
         }
 
         te.run();
 
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( db, esClient,
-                esIndexNames1.get( 0 ), cappedName1 ) );
-        Assert.assertTrue( FullTextUtils.isIndexDeleted( db, esClient,
-                esIndexNames2.get( 0 ), cappedName2 ) );
+        for ( int i = 0; i < dropCSThreads.size(); i++ ) {
+            if ( 0 != dropCSThreads.get( i ).getRetCode() ) {
+                // 删除集合空间失败，全文索引仍然存在
+                DBCollection cl = cls.get( i * 2 + 1 );
+                BSONObject matcher = ( BSONObject ) JSON
+                        .parse( "{'':{'$Text':{'query':{'match_all':{}}}}}" );
+                DBCursor cursor = cl.query( matcher, null, null, null );
+
+                try {
+                    cursor = cl.query( matcher, null, null, null );
+                    Assert.fail( "query should fail" );
+                } catch ( BaseException e ) {
+                    if ( -6 != e.getErrorCode() && -52 != e.getErrorCode() ) {
+                        Assert.fail( "actual exception: " + e.getErrorCode() );
+                    }
+                } finally {
+                    if ( cursor != null ) {
+                        cursor.close();
+                    }
+                }
+            } else {
+                // 删除集合空间成功，全文索引被删除
+                Assert.assertTrue( FullTextUtils.isIndexDeleted( db, esClient,
+                        esIndexNames.get( i ), cappedNames.get( i ) ) );
+            }
+        }
     }
 
-    class DropCSThread {
+    class DropCSThread extends ResultStore {
         private String csName = null;
 
         public DropCSThread( String csName ) {
@@ -128,6 +154,11 @@ public class Fulltext12119 extends SdbTestBase {
             try ( Sequoiadb sdb = new Sequoiadb( SdbTestBase.coordUrl, "",
                     "" )) {
                 sdb.dropCollectionSpace( csName );
+            } catch ( BaseException e ) {
+                if ( -147 != e.getErrorCode() ) {
+                    Assert.fail( "actual exception: " + e.getErrorCode() );
+                }
+                saveResult( e.getErrorCode(), e );
             } finally {
                 System.out.println(
                         this.getClass().getName().toString() + " end at:"
