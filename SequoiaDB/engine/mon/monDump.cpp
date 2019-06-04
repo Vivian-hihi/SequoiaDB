@@ -1110,6 +1110,30 @@ namespace engine
                thdArr.append( thdList[ i ] ) ;
             }
             thdArr.done() ;
+
+#if defined (SDB_ENGINE)
+            pmdEPFactory &factory = pmdGetEPFactory() ;
+            BSONArrayBuilder threadTypeArr( builder.subarrayStart
+                                            ( FIELD_NAME_THREADTYPES ) ) ;
+            const INT32 *threadTypeList = traceCB->getThreadType() ;
+            INT32 threadTypeNum = traceCB->getThreadTypeNum() ;
+            for( INT32 i = 0; i < threadTypeNum; ++i )
+            {
+               threadTypeArr.append( factory.type2Name( threadTypeList[ i ] ) ) ;
+            }
+            threadTypeArr.done() ;
+#endif
+
+            BSONArrayBuilder functionNameArr( builder.subarrayStart
+                                             ( FIELD_NAME_FUNCTIONNAMES ) ) ;
+            const UINT32 *functionNameList = traceCB->getFunctionName() ;
+            UINT32 functionNameNum = traceCB->getFunctionNameNum() ;
+            for( UINT32 i = 0; i < functionNameNum; ++i )
+            {
+               functionNameArr.append( pdGetTraceFunction
+                                       ( functionNameList[ i ] ) ) ;
+            }
+            functionNameArr.done() ;
          }
          obj = builder.obj() ;
          rc = context->monAppend( obj ) ;
