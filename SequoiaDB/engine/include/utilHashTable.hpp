@@ -41,6 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
+#include "utilPooledObject.hpp"
 #include "ossRWMutex.hpp"
 #include "../bson/bson.h"
 
@@ -59,7 +60,7 @@ namespace engine
    /*
       _utilHashTableListItem define
     */
-   class _utilHashTableListItem : public SDBObject
+   class _utilHashTableListItem : public _utilPooledObject
    {
       public :
          _utilHashTableListItem ()
