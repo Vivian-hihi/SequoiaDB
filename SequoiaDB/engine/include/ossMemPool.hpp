@@ -127,8 +127,8 @@ class ossPoolVector : public std::vector< T, typename ossPoolAllocator<char>::Ty
    public:
       ossPoolVector() {}
 
-      ossPoolVector( size_type count )
-      : std::vector<T,typename ossPoolAllocator<char>::Type>( count )
+      ossPoolVector( size_type count, const T& value = T() )
+      : std::vector<T,typename ossPoolAllocator<char>::Type>( count, value )
       {}
 
       template< typename InputIt >
