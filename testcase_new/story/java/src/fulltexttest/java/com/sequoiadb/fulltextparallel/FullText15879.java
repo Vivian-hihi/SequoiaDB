@@ -104,7 +104,7 @@ public class FullText15879 extends SdbTestBase {
             // 切分后源组和目标组均有全文索引
             esIndexNames = FullTextDBUtils.getESIndexNames( cl, IDX_NAME );
         } else if (threadSplit.getRetCode() != 0) {
-            Assert.assertEquals(actRgNum, 2);
+            Assert.assertEquals(actRgNum, 1);
         }
     }
 
