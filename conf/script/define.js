@@ -380,6 +380,9 @@ var FIELD_DESCRIPTION2                     = "description" ;
 var FIELD_SEQUOIADB_CONN_ADDR              = "sequoiadb_conn_addr" ;
 var FIELD_SEQUOIADB_USER                   = "sequoiadb_user" ;
 var FIELD_SEQUOIADB_PASSWORD               = "sequoiadb_password" ;
+var FIELD_INSTALL_DIR                      = INSTALL_DIR ;
+var FIELD_INSTNAME                         = "INSTNAME" ;
+var FIELD_SQLDATA                          = "SQLDATA" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;
