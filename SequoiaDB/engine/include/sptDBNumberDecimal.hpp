@@ -32,6 +32,7 @@
 #ifndef SPT_DB_NUMBERDECIMAL_HPP
 #define SPT_DB_NUMBERDECIMAL_HPP
 #include "sptApi.hpp"
+
 namespace engine
 {
    class _sptDBNumberDecimal : public SDBObject
@@ -58,6 +59,10 @@ namespace engine
    private:
       static INT32 _getDecimalPrecision( const CHAR *precisionStr,
                                          INT32 *precision, INT32 *scale ) ;
+      static INT32 _checkParameters( const bson::StringData& strDecimal,
+                                     INT32 precision, INT32 scale,
+                                     BOOLEAN isPrecisionNull,
+                                     bson::BSONObj &detail ) ;
    } ;
    typedef _sptDBNumberDecimal sptDBNumberDecimal ;
 }

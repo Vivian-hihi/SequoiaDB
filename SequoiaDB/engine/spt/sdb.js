@@ -1093,6 +1093,46 @@ NumberLong.prototype.valueOf = function() {
 
 // end NumberLong
 
+// NumberDecimal
+if ( !NumberDecimal.prototype )
+   NumberDecimal.prototype = {}
+
+NumberDecimal.prototype.valueOf = function() {
+   var decimalNumber = this._decimal ;
+
+   if ( typeof( this._decimal ) == "string" )
+   {
+      if( isNaN( this._decimal) )
+      {
+         throw "Decimal data must be number or numeric string" ;
+      }
+      decimalNumber = parseInt(this._decimal) ;
+   }
+
+   return decimalNumber ;
+}
+
+NumberDecimal.prototype.toString = function() {
+   var decimalNumber = this._decimal ;
+   var precision = "";
+
+   if( typeof( this._precision ) != "undefined" )
+   {
+      if( 0 == this._precision.length )
+      {
+         precision = "" ;
+      }
+      else
+      {
+         precision = ", [" + this._precision +"]" ;
+      }
+   }
+
+   return "NumberDecimal( " + decimalNumber + precision + " )" ;
+}
+
+// end NumberDecimal
+
 // SdbDate
 if ( !SdbDate.prototype )
    SdbDate.prototype = {}
