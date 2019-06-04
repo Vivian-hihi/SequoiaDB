@@ -35,8 +35,7 @@
 #ifndef MTH_NODEPOOL_HPP_
 #define MTH_NODEPOOL_HPP_
 
-#include <set>
-using namespace std;
+#include "ossMemPool.hpp"
 
 #define MTH_NODE_POOL_DEFAULT_SZ 4 
 
@@ -66,7 +65,7 @@ namespace engine
          INT32 rc = SDB_OK ;
          if ( !_staticIdleSet.empty() )
          {
-            typename set<TYPE*>::iterator iter = _staticIdleSet.begin() ;
+            typename ossPoolSet<TYPE*>::iterator iter = _staticIdleSet.begin() ;
             tp = *iter ;
             _staticIdleSet.erase( iter ) ;
          }
@@ -108,7 +107,7 @@ namespace engine
 
       void clear()
       {
-         typename set<TYPE*>::iterator iter = _dynamic.begin() ;
+         typename ossPoolSet<TYPE*>::iterator iter = _dynamic.begin() ;
          for ( ; iter != _dynamic.end(); ++iter )
          {
             SDB_OSS_DEL *iter ;
@@ -120,9 +119,9 @@ namespace engine
       }
 
    private:
-      TYPE _static[ nodeSize ] ;
-      set<TYPE*> _staticIdleSet ;
-      set<TYPE*> _dynamic ;
+      TYPE                 _static[ nodeSize ] ;
+      ossPoolSet<TYPE*>    _staticIdleSet ;
+      ossPoolSet<TYPE*>    _dynamic ;
    } ;
 }
 
