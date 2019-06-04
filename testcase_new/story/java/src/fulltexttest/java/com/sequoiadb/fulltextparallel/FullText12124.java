@@ -30,7 +30,6 @@ import com.sequoiadb.utils.StringUtils;
  * @Author yinzhen
  * @Date 2019-4-28
  */
-// TODO :同12116
 public class FullText12124 extends SdbTestBase {
     private String clName = "cl12124";
     private Sequoiadb sdb;
@@ -39,6 +38,7 @@ public class FullText12124 extends SdbTestBase {
     private Client esClient;
     private String esIndexName;
     private String cappedCLName;
+    private int insertNum = 20000;
 
     @BeforeClass
     public void setUp() {
@@ -50,7 +50,7 @@ public class FullText12124 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        insertData(cl, 20000);
+        insertData(cl, insertNum);
     }
 
     @Test
@@ -65,6 +65,8 @@ public class FullText12124 extends SdbTestBase {
 
         // 原集合、固定集合中记录正确且主备节点数据一致，ES中最终同步的记录正确
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, (int) cl.getCount()));
+
+        // Java 驱动，一个连接只有一个收缓存区和一个发缓存区，收发需要加锁，因此需要定义两个连接
         Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
             DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);

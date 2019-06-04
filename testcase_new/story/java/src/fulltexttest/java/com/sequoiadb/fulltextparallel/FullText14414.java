@@ -35,6 +35,7 @@ public class FullText14414 extends SdbTestBase {
     private String cappedCLName;
     private String esIndexName;
     private AtomicInteger atoint = new AtomicInteger(0);
+    private int insertNum = 20000;
 
     @BeforeClass
     public void setUp() {
@@ -46,7 +47,7 @@ public class FullText14414 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        FullTextDBUtils.insertData(cl, 20000);
+        FullTextDBUtils.insertData(cl, insertNum);
     }
 
     @Test

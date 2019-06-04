@@ -12,7 +12,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -22,9 +21,8 @@ import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
-//TODO :用例名称与实际不符
 /**
- * @FileName seqDB-12120:并发删除同一条记录
+ * @FileName seqDB-12120:并发更新同一条记录
  * @Author yinzhen
  * @Date 2019-4-28
  */
@@ -36,6 +34,7 @@ public class FullText12120 extends SdbTestBase {
     private Client esClient;
     private String esIndexName;
     private String cappedCLName;
+    private int insertNum = 20000;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -54,7 +53,7 @@ public class FullText12120 extends SdbTestBase {
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
         cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
 
-        FullTextDBUtils.insertData(cl, 20000);
+        FullTextDBUtils.insertData(cl, insertNum);
         cl.insert("{a:'idx12120', b:'b12120'}");
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20001));
     }
@@ -72,35 +71,6 @@ public class FullText12120 extends SdbTestBase {
         DBCollection cappedCL = FullTextDBUtils.getCappedCLs(cl, fullIdxName).get(0);
         List<BSONObject> records = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
         Assert.assertEquals(records.get(0).get("Type"), 3);
-
-        // TODO :后续的校验应该都不需要了
-        Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        try {
-            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-            DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
-            DBCursor esCursor = cl2.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
-                    "{'':'" + fullIdxName + "'}");
-            Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
-        } finally {
-            if (db2 != null) {
-                db2.close();
-            }
-        }
-
-        // 在db端执行全文检索
-        Sequoiadb db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        try {
-            DBCollection cl3 = db3.getCollectionSpace(csName).getCollection(clName);
-            Assert.assertEquals(cl3.getCount("{a:'a12120'}"), 1);
-            DBCursor dbCursor = cl.query("{a:'a12120'}", "{}", "{_id:1}", "{}");
-            DBCursor esCursor = cl3.query("{'':{'$Text':{'query':{'match':{'a':'a12120'}}}}}", "{}", "{_id:1}",
-                    "{'':'" + fullIdxName + "'}");
-            Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
-        } finally {
-            if (db3 != null) {
-                db3.close();
-            }
-        }
     }
 
     @AfterClass

@@ -32,6 +32,7 @@ public class FullText14415 extends SdbTestBase {
     private Client esClient;
     private String esIndexName;
     private String cappedCLName;
+    private int insertNum = 20000;
 
     @BeforeClass
     public void setUp() {
@@ -43,7 +44,7 @@ public class FullText14415 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        FullTextDBUtils.insertData(cl, 20000);
+        FullTextDBUtils.insertData(cl, insertNum);
         cl.createIndex("idx1", "{'d':1, 'e':1}", false, false);
         cl.createIndex("idx2", "{'a':1, 'b':1}", false, false);
     }
@@ -60,9 +61,10 @@ public class FullText14415 extends SdbTestBase {
         thExecutor.run();
 
         // 主备节点上索引信息及固定集合信息一致，ES同步的索引数据正确
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, insertNum));
 
         // 普通索引查询及全文检索
+        // Java 驱动，一个连接只有一个收缓存区和一个发缓存区，收发需要加锁，因此需要定义两个连接
         Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
             DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
@@ -77,20 +79,20 @@ public class FullText14415 extends SdbTestBase {
         }
 
         // 在db端执行插入、全文检索
-        Sequoiadb db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
             FullTextDBUtils.insertData(cl, 1000);
             Assert.assertEquals(cl.getCount(), 21000);
             Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 21000));
 
-            DBCollection cl3 = db3.getCollectionSpace(csName).getCollection(clName);
+            DBCollection cl3 = db2.getCollectionSpace(csName).getCollection(clName);
             DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
             DBCursor esCursor = cl3.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
                     "{'':'" + fullIdxName + "'}");
             Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
         } finally {
-            if (db3 != null) {
-                db3.close();
+            if (db2 != null) {
+                db2.close();
             }
         }
     }

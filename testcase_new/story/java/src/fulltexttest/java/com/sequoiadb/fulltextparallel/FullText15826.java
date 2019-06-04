@@ -31,6 +31,7 @@ public class FullText15826 extends SdbTestBase {
     private Client esClient;
     private String cappedCLName;
     private String esIndexName;
+    private int insertNum = 20000;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -42,13 +43,13 @@ public class FullText15826 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        FullTextDBUtils.insertData(cl, 20000);
+        FullTextDBUtils.insertData(cl, insertNum);
 
         // 创建索引
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text'}", false, false);
         cl.createIndex("idx1", "{'a':1, 'b':1}", false, false);
         cl.createIndex("idx2", "{'e':1, 'f':1}", false, false);
-        FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000);
+        FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, insertNum);
 
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
         cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);

@@ -32,6 +32,7 @@ public class FullText15830 extends SdbTestBase {
     private Client esClient;
     private String cappedCLName;
     private String esIndexName;
+    private int insertNum = 20000;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -44,10 +45,10 @@ public class FullText15830 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        FullTextDBUtils.insertData(cl, 20000);
+        FullTextDBUtils.insertData(cl, insertNum);
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
                 false);
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, insertNum));
 
         // 获取固定集合和ES索引名
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
@@ -97,7 +98,9 @@ public class FullText15830 extends SdbTestBase {
                 cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}",
                         false, false);
             } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -23);
+                if (e.getErrorCode() != -23) {
+                    throw e;
+                }
             } finally {
                 if (db != null) {
                     db.close();

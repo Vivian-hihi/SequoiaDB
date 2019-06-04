@@ -38,6 +38,7 @@ public class FullText15798 extends SdbTestBase {
     private Client esClient;
     private String esIndexName;
     private String cappedCLName;
+    private int insertNum = 20000;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -50,10 +51,10 @@ public class FullText15798 extends SdbTestBase {
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
 
-        insertData(cl, 20000);
+        insertData(cl, insertNum);
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text','d':'text','e':'text','f':'text'}", false,
                 false);
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, insertNum));
 
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
         cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
@@ -105,8 +106,9 @@ public class FullText15798 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 insertData(cl, 10000);
             } catch (BaseException e) {
-                // TODO :这种方式打不出栈信息
-                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+                if (e.getErrorCode() != -321) {
+                    throw e;
+                }
             } finally {
                 if (db != null) {
                     db.close();
@@ -124,7 +126,9 @@ public class FullText15798 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.update("{a:'test_15798_1'}", "{$set:{b:'b_15798'}}", "{}");
             } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+                if (e.getErrorCode() != -321) {
+                    throw e;
+                }
             } finally {
                 if (db != null) {
                     db.close();
@@ -142,7 +146,9 @@ public class FullText15798 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.delete("{a:'test_15798_0'}");
             } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+                if (e.getErrorCode() != -321) {
+                    throw e;
+                }
             } finally {
                 if (db != null) {
                     db.close();
@@ -160,7 +166,9 @@ public class FullText15798 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 cl.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{}", "{'':'" + fullIdxName + "'}");
             } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
+                if (e.getErrorCode() != -321) {
+                    throw e;
+                }
             } finally {
                 if (db != null) {
                     db.close();

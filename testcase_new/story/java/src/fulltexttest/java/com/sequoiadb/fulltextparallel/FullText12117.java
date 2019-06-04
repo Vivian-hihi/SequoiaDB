@@ -22,9 +22,8 @@ import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
-//TODO :用例标题写错了
 /**
- * @FileName seqDB-12117:并发删除同一条记录
+ * @FileName seqDB-12117:同一集合并发创建不同的全文索引
  * @Author yinzhen
  * @Date 2019-4-28
  */
@@ -37,6 +36,7 @@ public class FullText12117 extends SdbTestBase {
     private String esIndexName;
     private String cappedCLName;
     private AtomicInteger atoint = new AtomicInteger(0);
+    private int insertNum = 20000;
 
     @BeforeClass
     public void setUp() {
@@ -48,8 +48,7 @@ public class FullText12117 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
-        // TODO :记录数建议定义为一个变量，因为用例中多处有使用到
-        FullTextDBUtils.insertData(cl, 20000);
+        FullTextDBUtils.insertData(cl, insertNum);
     }
 
     @Test
@@ -64,7 +63,9 @@ public class FullText12117 extends SdbTestBase {
         // 主备节点上索引信息及固定集合中数据正确且一致，ES上同步的索引数据正确，全文检索结果正确
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
         cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
-        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
+        Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, insertNum));
+
+        // Java 驱动，一个连接只有一个收缓存区和一个发缓存区，收发需要加锁，因此需要定义两个连接
         Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
             DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
@@ -79,20 +80,20 @@ public class FullText12117 extends SdbTestBase {
         }
 
         // 在db端执行插入、全文检索
-        Sequoiadb db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
             FullTextDBUtils.insertData(cl, 1000);
-            Assert.assertEquals(cl.getCount(), 21000);
-            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 21000));
+            Assert.assertEquals(cl.getCount(), insertNum + 1000);
+            Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, insertNum + 1000));
 
-            DBCollection cl3 = db3.getCollectionSpace(csName).getCollection(clName);
+            DBCollection cl3 = db2.getCollectionSpace(csName).getCollection(clName);
             DBCursor dbCursor = cl.query("{}", "{}", "{_id:1}", "{}");
             DBCursor esCursor = cl3.query("{'':{'$Text':{'query':{'match_all':{}}}}}", "{}", "{_id:1}",
                     "{'':'" + fullIdxName + "'}");
             Assert.assertTrue(FullTextUtils.isCLRecordsConsistency(dbCursor, esCursor));
         } finally {
-            if (db3 != null) {
-                db3.close();
+            if (db2 != null) {
+                db2.close();
             }
         }
     }
@@ -126,8 +127,9 @@ public class FullText12117 extends SdbTestBase {
                 fullIdxName = idxName;
                 atoint.incrementAndGet();
             } catch (BaseException e) {
-                // TODO :需要打印栈信息
-                Assert.assertEquals(e.getErrorCode(), -42);
+                if (e.getErrorCode() != -42) {
+                    throw e;
+                }
             } finally {
                 if (db != null) {
                     db.close();

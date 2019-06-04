@@ -38,6 +38,7 @@ public class FullText15825 extends SdbTestBase {
     private String cappedCLName;
     private String esIndexName;
     private AtomicInteger atoint = new AtomicInteger(0);
+    private int insertNum = 20000;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -51,10 +52,10 @@ public class FullText15825 extends SdbTestBase {
         groupName = CommLib.getDataGroupNames(sdb).get(0);
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
                 (BSONObject) JSON.parse("{Group:'" + groupName + "'}"));
-        FullTextDBUtils.insertData(cl, 20000);
+        FullTextDBUtils.insertData(cl, insertNum);
         cl.createIndex(fullIdxName, "{'a':'text','b':'text','c':'text', 'd':'text', 'e':'text', 'f':'text'}", false,
                 false);
-        FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000);
+        FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, insertNum);
         esIndexName = FullTextDBUtils.getESIndexName(cl, fullIdxName);
         cappedCLName = FullTextDBUtils.getCappedName(cl, fullIdxName);
     }
@@ -100,7 +101,9 @@ public class FullText15825 extends SdbTestBase {
                 cl.dropIndex(fullIdxName);
                 atoint.incrementAndGet();
             } catch (BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -47);
+                if (e.getErrorCode() != -47) {
+                    throw e;
+                }
             } finally {
                 if (db != null) {
                     db.close();
