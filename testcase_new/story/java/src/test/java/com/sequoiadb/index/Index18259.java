@@ -29,8 +29,8 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 public class Index18259 extends SdbTestBase {
     private final int THREAD_NUM = 5;
-    private final String CL_NAME = "cl_es_18259";
-    private final String IDX_NAME = "cl_es_18259";
+    private final String CL_NAME = "cl_18259";
+    private final String IDX_NAME = "cl_18259";
     private final BSONObject IDX_KEY = (BSONObject) JSON.parse("{a:1,b:-1,c:1,d:-1}");
     private final int RECS_NUM = 20000;
 
@@ -114,13 +114,18 @@ public class Index18259 extends SdbTestBase {
     private void checkData() throws InterruptedException {
         List<String> rgNames = CommLib.getCLGroups(cl);
         for (String rgName : rgNames) {
-            Sequoiadb master = sdb.getReplicaGroup(rgName).getMaster().connect();
-            Sequoiadb slave = sdb.getReplicaGroup(rgName).getSlave().connect();
-            DBCollection mcl = master.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
-            DBCollection scl = slave.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+            Sequoiadb master = null;
+            Sequoiadb slave = null;
             int mCnt;
             int sCnt;
             try {
+                master = sdb.getReplicaGroup(rgName).getMaster().connect();
+                slave = sdb.getReplicaGroup(rgName).getSlave().connect();
+                DBCollection mcl = master.getCollectionSpace(SdbTestBase.csName)
+                        .getCollection(CL_NAME);
+                DBCollection scl = slave.getCollectionSpace(SdbTestBase.csName)
+                        .getCollection(CL_NAME);
+                
                 int retryTimes = 0;
                 while (retryTimes >= 600) {
                     mCnt = (int) mcl.getCount();
@@ -134,9 +139,13 @@ public class Index18259 extends SdbTestBase {
                     System.out.println(CL_NAME + " check timeout, mCnt:" + mCnt + ", sCnt:" + sCnt 
                             + ", expCnt:" + RECS_NUM);
                 }
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -23 && e.getErrorCode() != -34) {
+                    throw e;
+                }
             } finally {
-                master.close();
-                slave.close();
+                if (master != null) master.close();
+                if (slave != null) slave.close();
             }
         }
     }
