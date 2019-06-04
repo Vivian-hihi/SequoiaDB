@@ -26,7 +26,7 @@ function main()
    var groups = commGetGroups(db, false, "", false, true, true );
    var srcRG = groups[1][0].GroupName;
    var trgRG = groups[2][0].GroupName;
-      
+   
    commDropCL( db, COMMCSNAME, mclName, true, true, "clean main cl" );
    commDropCL( db, COMMCSNAME, sclName1, true, true, "clean sub cl1" );
    commDropCL( db, COMMCSNAME, sclName2, true, true, "clean sub cl2" );
@@ -106,4 +106,6 @@ function main()
                      "[maxValue2: 0, minValue2: 200, subCnt2: "+ expSubCnt +"]", 
                      "[maxValue2: "+ maxValue2 +", minValue2: "+ minValue2 +", subCnt2: "+ Number( subCnt2 ) +"]");
    }
+   
+   commDropCL( db, COMMCSNAME, mclName, true, false, "clean main cl in the end" );
 }

@@ -25,7 +25,7 @@ function main()
    var sclName2 = "scl_10442_2" ;
    var groups = commGetGroups(db, false, "", false, true, true );
    var rgName = groups[1][0].GroupName;
-      
+
    commDropCL( db, COMMCSNAME, mclName, true, true, "clean main cl" );
    commDropCL( db, COMMCSNAME, sclName1, true, true, "clean sub cl1" );
    commDropCL( db, COMMCSNAME, sclName2, true, true, "clean sub cl2" );
@@ -94,4 +94,7 @@ function main()
    {
       throw buildException( "main()", null, "check subCL1 count in rg", expCnt, cnt );
    }
+   
+   
+   commDropCL( db, COMMCSNAME, mclName, true, true, "clean main cl in the end" );
 }
