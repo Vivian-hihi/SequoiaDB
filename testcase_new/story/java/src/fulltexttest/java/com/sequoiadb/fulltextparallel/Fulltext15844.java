@@ -65,7 +65,7 @@ public class Fulltext15844 extends SdbTestBase {
     public void tearDown() {
         try {
             FullTextDBUtils.dropCollection( cs, clName );
-        } catch ( Exception e ) {
+        } finally {
             if ( db != null ) {
                 db.close();
             }
