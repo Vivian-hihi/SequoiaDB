@@ -51,9 +51,9 @@ public class Fulltext11990 extends SdbTestBase {
             throw new SkipException( "skip StandAlone" );
         }
 
-        if ( !CommLib.OneGroupMode( sdb ) ) {
+        if ( CommLib.OneGroupMode( sdb ) ) {
             throw new SkipException(
-                    "current environment less than tow groups " );
+                    "current environment less than two groups " );
         }
 
         ArrayList< String > groupsName = CommLib.getDataGroupNames( sdb );

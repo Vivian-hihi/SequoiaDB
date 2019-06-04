@@ -47,9 +47,10 @@ public class Fulltext15799 extends SdbTestBase {
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("StandAlone environment!");
         }
-        ArrayList<String> groupsName = CommLib.getDataGroupNames(sdb);
-        if (groupsName.size() < 2) {
-            throw new SkipException("Current environment less than tow groups");
+        
+        if ( CommLib.OneGroupMode( sdb ) ) {
+            throw new SkipException(
+                    "current environment less than two groups " );
         }
         cs = sdb.getCollectionSpace(SdbTestBase.csName);
         mainCL = cs.createCollection(mainCLName,
