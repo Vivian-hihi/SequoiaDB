@@ -1,0 +1,56 @@
+/****************************************************
+@description: seqDB-4512:createCS，覆盖options:LobPageSize有效字符和边界
+@author:
+              2019-6-4 wuyan init
+****************************************************/
+main();
+function main()
+{   
+   var csName = CHANGEDPREFIX + "cs4512";   
+   var lobPageSizes = [ 0, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288 ];
+   
+   for ( var i = 0 ; i < lobPageSizes.length; i++ )
+   {
+      var lobPageSize = lobPageSizes[i];     
+      commDropCS( db, csName, true, "clear cs in the beging." );
+      createCSAndCheckResult( csName, lobPageSize );
+      commDropCS( db, csName, false, "clear cs in the ending." );      
+   }   
+}
+
+function createCSAndCheckResult( csName, lobPageSize )
+{
+   println("\n---Begin to createCS. lobPageSize =" + lobPageSize );   
+   
+   var options = { LobPageSize : lobPageSize };
+   //create cs;
+   var dbcs = db.createCS( csName, options );
+   
+   //create cl in the cs
+	var clName = "cl4510";
+	dbcs.createCL( clName );
+	
+	//check the options
+	var cursor = db.snapshot( 5, { Name : csName});
+   var actPageSize = 0;
+	while (cursor.next())
+	{
+	   var curInfo = cursor.current();
+	   actPageSize = curInfo.toObj().LobPageSize;
+	}
+	
+	var expPageSize = lobPageSize;
+	if( lobPageSize == 0 )
+	{
+	   //0即为默认值262144
+	   expPageSize = 262144;	   
+	}
+	
+	if ( Number(expPageSize) !== Number(actPageSize) )
+	{
+	   throw buildException("check lobPageSize","","","lobPageSize:" + expPageSize,"actPageSize:" + actPageSize);
+	}	
+	
+	
+}
+
