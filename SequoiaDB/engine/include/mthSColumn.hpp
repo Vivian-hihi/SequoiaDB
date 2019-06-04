@@ -38,6 +38,7 @@
 #include "mthSAction.hpp"
 #include "utilArray.hpp"
 #include "mthSAttribute.hpp"
+#include "utilPooledObject.hpp"
 
 #define MTH_SCOLUMN_STATIC_NAME_BUF_LEN 32 
 
@@ -47,7 +48,7 @@ namespace engine
    typedef _utilArray< _mthSColumn * > MTH_S_COLUMNS ;
    typedef _utilArray< _mthSAction * > MTH_S_ACTIONS ;
 
-   class _mthSColumn : public SDBObject
+   class _mthSColumn : public _utilPooledObject
    {
    public:
       _mthSColumn() ;

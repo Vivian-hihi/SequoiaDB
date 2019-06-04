@@ -50,6 +50,7 @@
 #include "mthSelector.hpp"
 #include "rtnContextBuff.hpp"
 #include "rtnQueryOptions.hpp"
+#include "utilPooledObject.hpp"
 #include <string>
 
 using namespace bson ;
@@ -136,7 +137,7 @@ namespace engine
    /*
       _rtnPrefWatcher define
    */
-   class _rtnPrefWatcher : public SDBObject
+   class _rtnPrefWatcher : public _utilPooledObject
    {
       public:
          _rtnPrefWatcher () :_prefNum(0), _needWait(FALSE) {}
@@ -177,7 +178,7 @@ namespace engine
    } ;
    typedef _rtnPrefWatcher rtnPrefWatcher ;
 
-   class _rtnContextStoreBuf: public SDBObject
+   class _rtnContextStoreBuf: public _utilPooledObject
    {
    public:
       _rtnContextStoreBuf() ;
@@ -247,7 +248,7 @@ namespace engine
    /*
       _rtnContextBase define
    */
-   class _rtnContextBase : public SDBObject
+   class _rtnContextBase : public _utilPooledObject
    {
       friend class _rtnContextParaData ;
       friend class _rtnExplainBase ;

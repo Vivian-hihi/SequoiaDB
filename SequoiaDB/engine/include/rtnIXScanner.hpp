@@ -43,6 +43,7 @@
 #include "dms.hpp"
 #include "ixm.hpp"
 #include "monCB.hpp"
+#include "utilPooledObject.hpp"
 #include "rtnPredicate.hpp"
 #include "ossMemPool.hpp"
 #include "../bson/ordering.h"
@@ -106,7 +107,7 @@ namespace engine
       _rtnIXScanner define
       This is a super class for all index scanners to inherit from
    */
-   class _rtnIXScanner : public SDBObject
+   class _rtnIXScanner : public _utilPooledObject
    {
    public:
       _rtnIXScanner( ixmIndexCB *pIndexCB,
