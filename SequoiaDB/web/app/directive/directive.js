@@ -774,7 +774,7 @@
                         scope.closeModal() ;
                      }
                   }
-
+                  
                   scope.close = function(){
                      if( typeof( scope.data.close ) == 'function' )
                      {
@@ -4962,6 +4962,7 @@
              table-content  必填 []    表格的内容
              table-key      必填 ""    列名，对应table-title的key
              table-if       选填       用在body的列中，某些情况下代替ng-if
+             table-style    选填       跟ng-style不同，用于修改td的样式
              table-callback 可选 {}    只要空对象就行，指令会把回调函数传回来
                                        GetPageData( 指定第几页 )
                                        GetAllData()
@@ -5667,25 +5668,51 @@
                                        newAutoHtml = newAutoHtml.replace( /table-switch/g, 'ng-switch' ) ;
                                        col = $compile( newAutoHtml )( childScope ) ;
                                     }
-                                    var td = angular.element( '<td></td>' ).attr( 'table-key', tableKey ) ; ;
-                                    if( typeof( widthList[tableKey] ) != 'undefined' )
+
+                                    var tableStyle = $( col ).attr( 'table-style' );
+
+                                    var td = angular.element( '<td></td>' ).attr( 'table-key', tableKey );
+
+                                    if ( isUndefined( tableStyle ) == false )
+                                    {
+                                       $( col ).removeAttr( 'table-style' );
+                                       $( td ).attr( 'ng-style', tableStyle );
+                                       td = $compile( $( td ).prop( 'outerHTML' ) )( childScope );
+                                    }
+                                    else
+                                    {
+                                       tableStyle = '';
+                                    }
+
+                                    if ( isUndefined( widthList[tableKey] ) == false )
                                     {
                                        td.css( { 'width': widthList[tableKey] } ) ;
                                     }
+
                                     $animate.enter( col, td, null ) ;
                                     tr.append( td ) ;
 
                                     //创建用来调整宽度的td
+                                    var td2;
                                     if( scope.table['options']['trim'] && index2 < titleLength - 1 )
                                     {
-                                       var td2 = $compile( '<td ng-mousedown="mouseDown($event)"></td>' )( scope ).addClass( 'trim' ).attr( 'table-key', tableKey ) ;
-                                       tr.append( td2 ) ;
+                                       td2 = angular.element( '<td></td>' ).addClass( 'trim' ).attr( 'ng-mousedown', 'mouseDown($event)' );
                                     }
                                     else
                                     {
-                                       var td2 = angular.element( '<td></td>' ).addClass( 'trimLast' ).attr( 'table-key', tableKey ) ;
-                                       tr.append( td2 ) ;
+                                       td2 = angular.element( '<td></td>' ).addClass( 'trimLast' ) ;
                                     }
+
+                                    td2.attr( 'table-key', tableKey )
+
+                                    if ( ( scope.table['options']['trim'] && index2 < titleLength - 1 ) || isUndefined( tableStyle ) == false )
+                                    {
+                                       $( td2 ).attr( 'ng-style', tableStyle );
+                                       td2 = $compile( $( td2 ).prop( 'outerHTML' ) )( childScope );
+                                    }
+
+                                    tr.append( td2 );
+
                                     ++index2 ;
                                     if( hasAuto == false || index2 >= titleLength )
                                     {
