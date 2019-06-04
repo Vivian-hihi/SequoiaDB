@@ -51,6 +51,8 @@
 #include <map>
 #include <set>
 #include <list>
+#include <string>
+#include <vector>
 
 /*
  * Memory pool ideal for allocation of objects one chunk at a time, such as
@@ -108,6 +110,37 @@ class ossPoolList : public std::list<K, typename ossPoolAllocator<K>::Type > {
    * DO NOT USE THIS CLASS IN POLYMORPHISM
    */
 };
+
+/*
+ * String
+ */
+typedef std::basic_string< char, std::char_traits<char>,
+                           typename ossPoolAllocator<char>::Type > ossPoolString ;
+
+/*
+ * Vector
+ */
+template< typename T >
+class ossPoolVector : public std::vector< T, typename ossPoolAllocator<char>::Type > {
+   typedef typename std::vector<T,typename ossPoolAllocator<char>::Type>::size_type    size_type ;
+
+   public:
+      ossPoolVector() {}
+
+      ossPoolVector( size_type count )
+      : std::vector<T,typename ossPoolAllocator<char>::Type>( count )
+      {}
+
+      template< typename InputIt >
+      ossPoolVector( InputIt first, InputIt last )
+      : std::vector<T,typename ossPoolAllocator<char>::Type>( first, last )
+      {}
+   /**
+    * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
+    * DO NOT USE THIS CLASS IN POLYMORPHISM
+    */
+} ;
+
 #endif
 
 
