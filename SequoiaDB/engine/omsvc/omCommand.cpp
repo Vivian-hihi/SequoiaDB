@@ -11111,7 +11111,8 @@ namespace engine
          goto error ;
       }
 
-      if ( 0 == coordNum && 0 == standaloneNum )
+      if ( 0 == coordNum && 0 == standaloneNum &&
+           OM_BUSINESS_SEQUOIADB == _businessType )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "failed to add business, "
@@ -11121,7 +11122,8 @@ namespace engine
          goto error ;
       }
 
-      if ( 0 == catalogNum && 0 == standaloneNum )
+      if ( 0 == catalogNum && 0 == standaloneNum &&
+           OM_BUSINESS_SEQUOIADB == _businessType )
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "failed to add business, "
@@ -11148,13 +11150,18 @@ namespace engine
       omDatabaseTool dbTool( _cb ) ;
       omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
 
-      _generateRequest( addressList, request ) ;
+      rc = _generateRequest( addressList, request ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to generate agent request, rc=%d", rc ) ;
+         goto error ;
+      }
 
       rc = taskTool.notifyAgentMsg( CMD_ADMIN_PREFIX OM_SYNC_BUSINESS_CONF_REQ,
                                     request, errDetail, result ) ;
       if ( rc )
       {
-         _errorMsg.setError( TRUE, "failed to notify agent,detail:%s,rc=%d",
+         _errorMsg.setError( TRUE, "Agent exec failed, detail: %s, rc=%d",
                              errDetail.c_str(), rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -11183,15 +11190,17 @@ namespace engine
       goto done ;
    }
 
-   void omSyncBusinessConfigureCommand::_generateRequest(
+   INT32 omSyncBusinessConfigureCommand::_generateRequest(
                                        vector<simpleAddressInfo> &addressList,
                                        BSONObj &request )
    {
+      INT32 rc = SDB_OK ;
       string authUser ;
       string authPwd ;
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
       vector<simpleAddressInfo>::iterator iter ;
+      omDatabaseTool dbTool( _cb ) ;
 
       _getBusinessAuth( _businessName, authUser, authPwd ) ;
 
@@ -11205,9 +11214,24 @@ namespace engine
       for ( iter = addressList.begin(); iter != addressList.end(); ++iter )
       {
          BSONObjBuilder addressBuilder ;
+         string installPath ;
+
+         if( FALSE == dbTool.getHostPackagePath( iter->hostName, _businessType,
+                                                 installPath ) )
+         {
+            rc = SDB_SYS ;
+            _errorMsg.setError( TRUE, "Install path not found: "
+                                      "name=%s, host=%s, type=%s",
+                                _businessName.c_str(), iter->hostName.c_str(),
+                                _businessType.c_str() ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
 
          addressBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, iter->hostName ) ;
-         addressBuilder.append( OM_CONF_DETAIL_SVCNAME, iter->port ) ;
+         addressBuilder.append( OM_CONFIGURE_FIELD_SVCNAME, iter->port ) ;
+         addressBuilder.append( OM_CONFIGURE_FIELD_INSTALLPATH, installPath ) ;
+
          arrayBuilder.append( addressBuilder.obj() ) ;
       }
 
@@ -11223,6 +11247,11 @@ namespace engine
       }
 
       request = builder.obj() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    IMPLEMENT_OMREST_CMD_AUTO_REGISTER( omGrantSysConfigureCommand ) ;

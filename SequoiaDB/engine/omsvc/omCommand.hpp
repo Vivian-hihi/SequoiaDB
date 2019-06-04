@@ -1802,11 +1802,10 @@ namespace engine
       INT32 _syncBusinessConfig( omRestTool &restTool,
                                  vector<simpleAddressInfo> &addressList ) ;
 
-      void _generateRequest( vector<simpleAddressInfo> &addressList,
-                             BSONObj &request ) ;
+      INT32 _generateRequest( vector<simpleAddressInfo> &addressList,
+                              BSONObj &request ) ;
 
    private:
-
       string _clusterName ;
       string _businessName ;
       string _businessType ;
