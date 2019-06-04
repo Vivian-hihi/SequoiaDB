@@ -33,13 +33,14 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Date liuxiaoxuan 2019.5.10
  */
 public class Fulltext15844 extends SdbTestBase {
+    private final int TIMEOUT = 600000;
     private Sequoiadb db = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
     private String clName = "ES_15844";
     private String textIndexName = "fulltext15844";
     private Client esClient = null;
-    ThreadExecutor te = new ThreadExecutor();
+    ThreadExecutor te = new ThreadExecutor( TIMEOUT );
 
     @BeforeClass
     public void setUp() {

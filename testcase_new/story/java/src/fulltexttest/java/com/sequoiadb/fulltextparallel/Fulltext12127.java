@@ -34,6 +34,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Date liuxiaoxuan 2019.5.10
  */
 public class Fulltext12127 extends SdbTestBase {
+    private final int TIMEOUT = 600000;
     private Sequoiadb db = null;
     private List< CollectionSpace > css = new ArrayList<>();
     private List< DBCollection > cls = new ArrayList<>();
@@ -41,7 +42,7 @@ public class Fulltext12127 extends SdbTestBase {
     private List< String > clNames = new ArrayList<>();
     private String textIndexName = "fulltext12127";
     private Client esClient = null;
-    ThreadExecutor te = new ThreadExecutor();
+    ThreadExecutor te = new ThreadExecutor( TIMEOUT );
 
     @BeforeClass
     public void setUp() {
