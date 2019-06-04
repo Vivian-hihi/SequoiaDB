@@ -18,12 +18,18 @@ function main()
       
       var imprtFile = tmpFileDir +"18264.csv";
       readyData( imprtFile );
-      importData( csName, clName, imprtFile , cl);
+      importDataER( csName, clName, imprtFile , cl);
+      importDataAR( csName, clName, imprtFile , cl);
+      importDataEA( csName, clName, imprtFile , cl);
       cleanCL( csName, clName );
    }
    catch(e)
    {
       throw e;
+   }
+   finally
+   {
+      cmd.run( "rm -rf " + imprtFile );
    }
 }
 
@@ -38,10 +44,8 @@ function readyData( imprtFile )
    file.close();
 }
 
-function importData( csName, clName, imprtFile, cl )
-{//TODO:同18261
-   println("\n---Begin to import data and check exec result.");
-   
+function importDataER( csName, clName, imprtFile, cl )
+{
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 
                      +" --type csv -e 'Y' -r 'Y' --headerline true --fields='c int,d string'"
@@ -50,7 +54,10 @@ function importData( csName, clName, imprtFile, cl )
    testRunCommand(imprtOption);
    checkCLData( cl );
    cl.truncate();
-   
+}
+
+function importDataAR( csName, clName, imprtFile, cl )
+{
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 
                      +" --type csv -a 'Y' -r 'Y' --headerline true --fields='c int,d string'"
@@ -59,7 +66,10 @@ function importData( csName, clName, imprtFile, cl )
    testRunCommand(imprtOption);
    checkCLData( cl );
    cl.truncate();
-   
+}
+
+function importDataEA( csName, clName, imprtFile, cl )
+{
    var imprtOption = installDir +"bin/sdbimprt -s "+ COORDHOSTNAME +" -p "+ COORDSVCNAME 
                      +" -c "+ csName +" -l "+ clName 
                      +" --type csv -e 'Y' -a 'Y' --headerline true --fields='c int,d string'"
@@ -68,15 +78,11 @@ function importData( csName, clName, imprtFile, cl )
    testRunCommand(imprtOption);
    checkCLData( cl );
    cl.truncate();
-   
-   // clean tmpRec
-   cmd.run( "rm -rf " + imprtFile );
 }
 
 function testRunCommand(command)
 {
    println( command );
-   
    try{
      cmd.run( command );
      throw buildException( "importData", null, "[sdbimprt results]", 
@@ -85,21 +91,14 @@ function testRunCommand(command)
    }
    catch(e)
    {
+      if( e !== 127 )
+      {
+        throw buildException( "importData", null, "[sdbimprt results]", 
+                           "expected thow exception", 
+                           "actual success" );
+      }
    }
    
-    //check import results  //TODO:为什么注释掉了？没写原因。如果是bug需要附上问题单号
-    /*
-    var rcObj = rc.split("\n");
-    var expParseRecords    = "parsed records: 0";
-    var expImportedRecords = "imported records: 0";
-    var actParseRecords    = rcObj[0];
-    var actImportedRecords = rcObj[4];
-    if( expParseRecords !== actParseRecords || expImportedRecords !== actImportedRecords )
-    {
-        throw buildException( "importData", null, "[sdbimprt results]", 
-                        "["+ expParseRecords +", "+ expImportedRecords +"]", 
-                        "["+ actParseRecords +", "+ actImportedRecords +"]" );
-    }*/
 }
 
 function checkCLData( cl )
