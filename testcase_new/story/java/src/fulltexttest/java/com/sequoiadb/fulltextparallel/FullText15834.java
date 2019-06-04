@@ -42,6 +42,7 @@ public class FullText15834 extends SdbTestBase {
     public void setUp() {
         esClient = FullTextESUtils.createTransportClient(esHostName, Integer.parseInt(esServiceName));
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        // TODO :用例需要屏蔽单组模式，否则切分会报错，15835类似
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("skip StandAlone");
         }
@@ -52,6 +53,7 @@ public class FullText15834 extends SdbTestBase {
         FullTextDBUtils.insertData(cl, insertNum);
     }
 
+    // TODO :用例为啥被屏蔽了？
     @Test(enabled = false)
     public void test() throws Exception {
 
@@ -71,6 +73,7 @@ public class FullText15834 extends SdbTestBase {
 
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, indexName, insertNum * 2));
 
+        // TODO :需要校验全文检索功能正确，切分需要校验一下ES端每个分区上的查询出来的记录与普通查询出来的记录相同，15835类似
     }
 
     @AfterClass
