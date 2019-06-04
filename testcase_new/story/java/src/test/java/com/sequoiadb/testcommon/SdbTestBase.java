@@ -288,13 +288,18 @@ public class SdbTestBase {
         if ( initCount.get() == 0 ) {
             return;
         }
-
+        
+        int totalSleepLen = 0 ;
         while ( runCaseNum.get() > 0 ) {
             try {
                 synchronized ( runCaseNum ) {
                     runCaseNum.wait( 50 );
                 }
-                System.out.println( runCaseNum.get() );
+                totalSleepLen += 50 ;
+                if ( totalSleepLen == 60000 ){
+                    System.out.println(runCaseNum.get() + " use cases are running!") ;
+                    totalSleepLen = 0 ;
+                }
             } catch ( InterruptedException e ) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
