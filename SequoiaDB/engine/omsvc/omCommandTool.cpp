@@ -1778,7 +1778,8 @@ namespace engine
                   }
                }
             }
-            else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == businessType )
+            else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == businessType ||
+                      OM_BUSINESS_SEQUOIASQL_MYSQL == businessType )
             {
                BSONObj nodes = result.getObjectField(
                                                    OM_CONFIGURE_FIELD_CONFIG ) ;
@@ -2655,6 +2656,49 @@ namespace engine
       if ( rc )
       {
          isExist = FALSE ;
+      }
+
+      return isExist ;
+   }
+
+   BOOLEAN omDatabaseTool::getHostPackagePath( const string &hostName,
+                                               const string &packageName,
+                                               string &installPath )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = TRUE ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj hostInfo ;
+
+      matcher = BSON( OM_HOST_FIELD_NAME << hostName <<
+                      OM_HOST_FIELD_PACKAGES"."OM_HOST_FIELD_PACKAGENAME <<
+                            packageName ) ;
+
+      rc = _getOneHostInfo( matcher, selector, hostInfo ) ;
+      if ( rc )
+      {
+         isExist = FALSE ;
+      }
+
+      if ( TRUE == isExist )
+      {
+         BSONObj packages = hostInfo.getObjectField( OM_HOST_FIELD_PACKAGES ) ;
+         BSONObjIterator iter( packages ) ;
+
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj onePkg = ele.embeddedObject() ;
+            string name = onePkg.getStringField( OM_HOST_FIELD_PACKAGENAME ) ;
+            string path = onePkg.getStringField( OM_HOST_FIELD_INSTALLPATH ) ;
+
+            if( name == packageName )
+            {
+               installPath = path ;
+               break ;
+            }
+         }
       }
 
       return isExist ;

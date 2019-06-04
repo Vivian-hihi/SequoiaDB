@@ -293,10 +293,23 @@ namespace engine
                                                                         ++iter )
          {
             string hostName ;
+            string installPath ;
             BSONObj configInfo ;
 
             hostName = iter->getStringField( OM_CONFIGURE_FIELD_HOSTNAME ) ;
             configInfo = iter->getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
+
+            if( FALSE == dbTool.getHostPackagePath( hostName, businessType,
+                                                    installPath ) )
+            {
+               rc = SDB_SYS ;
+               _errorMsg.setError( TRUE, "Install path not found: "
+                                         "name=%s, host=%s, type=%s",
+                                   _fromBuzName.c_str(), hostName.c_str(),
+                                   businessType.c_str() ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
 
             {
                BSONObjIterator configIter( configInfo ) ;
@@ -320,6 +333,8 @@ namespace engine
 
                      nodeInfoBuilder.appendElements( nodeInfo ) ;
                   }
+
+                  nodeInfoBuilder.append( OM_BSON_INSTALL_PATH, installPath ) ;
 
                   configBuilder.append( nodeInfoBuilder.obj() ) ;
                }
@@ -644,11 +659,24 @@ namespace engine
          for ( iter = fromBuzConfig.begin(); iter != fromBuzConfig.end();
                                                                         ++iter )
          {
+            string installPath ;
             string hostName ;
             BSONObj configInfo ;
 
             hostName = iter->getStringField( OM_CONFIGURE_FIELD_HOSTNAME ) ;
             configInfo = iter->getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
+
+            if( FALSE == dbTool.getHostPackagePath( hostName, businessType,
+                                                    installPath ) )
+            {
+               rc = SDB_SYS ;
+               _errorMsg.setError( TRUE, "Install path not found: "
+                                         "name=%s, host=%s, type=%s",
+                                   _fromBuzName.c_str(), hostName.c_str(),
+                                   businessType.c_str() ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
 
             {
                BSONObjIterator configIter( configInfo ) ;
@@ -672,6 +700,8 @@ namespace engine
 
                      nodeInfoBuilder.appendElements( nodeInfo ) ;
                   }
+
+                  nodeInfoBuilder.append( OM_BSON_INSTALL_PATH, installPath ) ;
 
                   configBuilder.append( nodeInfoBuilder.obj() ) ;
                }

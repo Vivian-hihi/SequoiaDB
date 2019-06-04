@@ -247,6 +247,10 @@ namespace engine
                                         const string &clusterName ) ;
       BOOLEAN isHostHasPackage( const string &hostName,
                                 const string &packageName ) ;
+      BOOLEAN getHostPackagePath( const string &hostName,
+                                  const string &packageName,
+                                  string &installPath ) ;
+
       INT32 removeHost( const string &address,
                         const string &clusterName ) ;
 
