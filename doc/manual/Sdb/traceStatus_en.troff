@@ -29,6 +29,14 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
+Turn on the database engine program tracking.
+.IP
+.nf
+\f[C]
+>\ db.traceOn(\ 100,\ new\ SdbTraceOption().components(\ "dms"\ ).functionNames(\ "_dmsStorageUnit::insertRecord"\ ).threadTypes(\ "RestListener"\ )\ )
+\f[]
+.fi
+.IP \[bu] 2
 View the tracking status of the current program.
 .IP
 .nf
@@ -37,40 +45,20 @@ View the tracking status of the current program.
 {
 \ \ "TraceStarted":\ true,
 \ \ "Wrapped":\ false,
-\ \ "Size":\ 524288,
-\ \ "Mask":\ 
-\ \ [
-\ \ "auth",
-\ \ "bps",
-\ \ "cat",
-\ \ "cls",
-\ \ "dps",
-\ \ "mig",
-\ \ "msg",
-\ \ "net",
-\ \ "oss",
-\ \ "pd",
-\ \ "rtn",
-\ \ "sql",
-\ \ "tools",
-\ \ "bar",
-\ \ "client",
-\ \ "coord",
-\ \ "dms",
-\ \ "ixm",
-\ \ "mon",
-\ \ "mth",
-\ \ "opt",
-\ \ "pmd",
-\ \ "rest",
-\ \ "spt",
-\ \ "util",
-\ \ "aggr",
-\ \ "spd",
-\ \ "qgm"
+\ \ "Size":\ 104857600,
+\ \ "FreeSize":\ 104857600,
+\ \ "PadSize":\ 0,
+\ \ "Mask":\ [
+\ \ \ \ "dms"
 \ \ ],
 \ \ "BreakPoint":\ [],
 \ \ "Threads":\ [],
+\ \ "ThreadTypes":\ [
+\ \ \ \ "RestListener"
+\ \ ],
+\ \ "FunctionNames":\ [
+\ \ \ \ "_dmsStorageUnit::insertRecord"
+\ \ ]
 }
 \f[]
 .fi

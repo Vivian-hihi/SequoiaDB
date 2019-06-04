@@ -25,46 +25,32 @@ Sdb
 
 ##示例##
 
+* 开启数据库引擎程序跟踪的功能
+
+   ```lang-javascript
+   > db.traceOn( 100, new SdbTraceOption().components( "dms" ).functionNames( "_dmsStorageUnit::insertRecord" ).threadTypes( "RestListener" ) )
+   ```
+
 * 查看当前程序跟踪的状态：
 
-	```lang-javascript
-	> db.traceStatus()
-	{
-	  "TraceStarted": true,
-	  "Wrapped": false,
-	  "Size": 524288,
-	  "Mask": 
-	  [
-		"auth",
-		"bps",
-		"cat",
-		"cls",
-		"dps",
-		"mig",
-		"msg",
-		"net",
-		"oss",
-		"pd",
-		"rtn",
-		"sql",
-		"tools",
-		"bar",
-		"client",
-		"coord",
-		"dms",
-		"ixm",
-		"mon",
-		"mth",
-		"opt",
-		"pmd",
-		"rest",
-		"spt",
-		"util",
-		"aggr",
-		"spd",
-		"qgm"
-	  ],
-	  "BreakPoint": [],
-      "Threads": [],
-	}
-	```
+   ```lang-javascript
+   > db.traceStatus()
+{
+  "TraceStarted": true,
+  "Wrapped": false,
+  "Size": 104857600,
+  "FreeSize": 104857600,
+  "PadSize": 0,
+  "Mask": [
+    "dms"
+  ],
+  "BreakPoint": [],
+  "Threads": [],
+  "ThreadTypes": [
+    "RestListener"
+  ],
+  "FunctionNames": [
+    "_dmsStorageUnit::insertRecord"
+  ]
+}
+   ```
