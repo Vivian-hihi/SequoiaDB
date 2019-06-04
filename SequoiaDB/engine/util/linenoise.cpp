@@ -1570,23 +1570,23 @@ PD_TRACE_DECLARE_FUNCTION ( SDB_LNEDITMOVELASTWORD, "linenoiseEditMoveLastWord" 
 void linenoiseEditMoveLastWord( struct linenoiseState *l )
 {
    PD_TRACE_ENTRY ( SDB_LNEDITMOVELASTWORD ) ;
-	char * buf = l->buf ;
-	if ( l->pos > 0 && ( isalpha( buf[l->pos] ) || isdigit( buf[l->pos] ) ) && ( ( !isalpha( buf[l->pos-1] ) && !isdigit( buf[l->pos-1] ) ) ) )
-	{
-		l->pos-- ;
-	}
-	while ( l->pos > 0 && ( !isalpha( buf[l->pos] ) && !isdigit( buf[l->pos] ) ) )
-	{
-        l->pos-- ;
-	}
-   while ( l->pos > 0 && ( ( isalpha( buf[l->pos] ) || isdigit( buf[l->pos] ) ) ) )
+   char * buf = l->buf ;
+   if ( l->pos > 0 && isalnum( buf[l->pos] ) && ( ( !isalnum( buf[l->pos-1] ) ) ) )
+   {
+      l->pos-- ;
+   }
+   while ( l->pos > 0 && !isalnum( buf[l->pos] ) )
+   {
+      l->pos-- ;
+   }
+   while ( l->pos > 0 && isalnum( buf[l->pos] ) )
    {
       l->pos-- ;
    }
    if ( l->pos != 0 )
-	{
-		l->pos++ ;
-	}
+   {
+      l->pos++ ;
+   }
    refreshLine( l ) ;
    PD_TRACE_EXIT ( SDB_LNEDITMOVELASTWORD ) ;
 }
@@ -1596,12 +1596,12 @@ PD_TRACE_DECLARE_FUNCTION ( SDB_LNEDITMOVENEXTWORD, "linenoiseEditMoveNextWord" 
 void linenoiseEditMoveNextWord( struct linenoiseState *l )
 {
    PD_TRACE_ENTRY ( SDB_LNEDITMOVENEXTWORD) ;
-	char * buf = l->buf ;
-	while ( l->pos != l->len && ( !isalpha( buf[l->pos] ) && !isdigit( buf[l->pos] ) ) )
-	{
-        l->pos++ ;
-	}
-   while ( l->pos != l->len && ( ( isalpha( buf[l->pos] ) || isdigit( buf[l->pos] ) ) ) )
+   char * buf = l->buf ;
+   while ( l->pos != l->len && !isalnum( buf[l->pos] ) )
+   {
+      l->pos++ ;
+   }
+   while ( l->pos != l->len && isalnum( buf[l->pos] ) )
    {
       l->pos++ ;
    }
@@ -1634,7 +1634,6 @@ void linenoiseEditMoveEnd(struct linenoiseState *l)
     }
     PD_TRACE_EXIT ( SDB_LNEDITMOVEEND );
 }
-
 
 /* Substitute the currently edited line with the next or previous history
  * entry as specified by 'dir'. */
@@ -1958,7 +1957,7 @@ static int ctrlLeftArrowKeyRoutine( struct linenoiseState *l, char c )
 static CharacterDispatchRoutine escLeftBracket1Semicolon3or5Routines[] = {
         ctrlRightArrowKeyRoutine, ctrlLeftArrowKeyRoutine
 } ;
- 
+
 static CharacterDispatch escLeftBracket1Semicolon3or5Dispatch = {
         2, "CD", escLeftBracket1Semicolon3or5Routines
 } ;
@@ -1969,24 +1968,24 @@ static int escLeftBracket1Semicolon5Routine( struct linenoiseState *l, char c )
    int nread  = readPack( l, &c ) ;
    return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket1Semicolon3or5Dispatch ) ;
 }
- 
+
 static CharacterDispatchRoutine escLeftBracket1SemicolonRoutines[] = {
    escLeftBracket1Semicolon5Routine
 } ;
- 
+
 static CharacterDispatch escLeftBracket1SemicolonDispatch = {
    1, "5", escLeftBracket1SemicolonRoutines
 } ;
 
 // ESC O H ( or ESC [ 1 ~ )
 static int homeKeyRoutine( struct linenoiseState *l, char c )
-{ 
+{
    linenoiseEditMoveHome( l ) ;
    return 0 ;
 }
 
 // ESC O F ( or ESC [ 4 ~ )
-static int endKeyRoutine(struct linenoiseState *l, char c)
+static int endKeyRoutine( struct linenoiseState *l, char c )
 {
    linenoiseEditMoveEnd( l ) ;
    return 0 ;
@@ -1996,7 +1995,7 @@ static int endKeyRoutine(struct linenoiseState *l, char c)
 static CharacterDispatchRoutine escORoutines[] = {
    homeKeyRoutine,   endKeyRoutine
 } ;
- 
+
 static CharacterDispatch escODispatch = { 2, "HF", escORoutines } ;
 
 // ESC [ 3 ~
@@ -2076,8 +2075,12 @@ static int escLeftBracket4Routine( struct linenoiseState *l, char c )
 
 // Handle ESC [ <more stuff>
 static CharacterDispatchRoutine escLeftBracketRoutines[] = {
-   upArrowKeyRoutine,      downArrowKeyRoutine,      rightArrowKeyRoutine,
-   leftArrowKeyRoutine,    escLeftBracket1Routine,   escLeftBracket3Routine, 
+   upArrowKeyRoutine,
+   downArrowKeyRoutine,
+   rightArrowKeyRoutine,
+   leftArrowKeyRoutine,
+   escLeftBracket1Routine,
+   escLeftBracket3Routine,
    escLeftBracket4Routine
 } ;
 
@@ -2140,7 +2143,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
     l.buflen--; /* Make sure there is always space for the nulterm */
 
     // for escape sequence
-    bool escIdx = false ;
+    bool insideEseSeq = false ;
 
     /* The latest history entry is always our current buffer, that
      * initially is just an empty string. */
@@ -2177,7 +2180,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
         // 1. [~0 ...
         // 2. OA ...
         
-        if( escIdx )
+        if( insideEseSeq )
         {
             int r = doDispatch( &l, c, escDispatch ) ;
             if ( r == -1 )
@@ -2185,7 +2188,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
                 ret = l.len ;
                 goto error ;
             }
-            escIdx = false ;
+            insideEseSeq = false ;
             continue ;
         }
 
@@ -2284,7 +2287,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
             linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
             break;
         case ESC:    /* escape sequence */
-            escIdx = true ;
+            insideEseSeq = true ;
             break ;
         case CTRL_U: /* Ctrl+u, delete the whole line. */
             buf[0] = '\0';
@@ -2327,7 +2330,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
            else if ( res == -2 )
            {
               // escape
-              escIdx = 1 ;
+              insideEseSeq = 1 ;
            }
            break ;
         }
