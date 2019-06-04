@@ -75,6 +75,7 @@ public class FullText15856 extends SdbTestBase {
         BSONObject modifier2 = new BasicBSONObject("$set", new BasicBSONObject("c", modVal2));
         // thread
         ThreadExecutor es = new ThreadExecutor(TIMEOUT);
+        // TODO :多个线程做更新，匹配条件需不同，否则，指定线程数没有意义，15857类似
         for (int i = 0; i < THREAD_NUM; i++) {
             es.addWorker(new ThreadUpdate(modifier1));
             es.addWorker(new ThreadUpdate(modifier2));
