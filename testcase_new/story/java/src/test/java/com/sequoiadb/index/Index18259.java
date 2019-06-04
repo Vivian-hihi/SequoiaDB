@@ -117,17 +117,26 @@ public class Index18259 extends SdbTestBase {
             Sequoiadb master = null;
             Sequoiadb slave = null;
             int mCnt;
-            int sCnt;
-            try {
-                master = sdb.getReplicaGroup(rgName).getMaster().connect();
-                slave = sdb.getReplicaGroup(rgName).getSlave().connect();
-                DBCollection mcl = master.getCollectionSpace(SdbTestBase.csName)
-                        .getCollection(CL_NAME);
-                DBCollection scl = slave.getCollectionSpace(SdbTestBase.csName)
-                        .getCollection(CL_NAME);
-                
+            int sCnt;    
+            try {            
                 int retryTimes = 0;
                 while (retryTimes >= 600) {
+                    DBCollection mcl;
+                    DBCollection scl;
+                    try {
+                        master = sdb.getReplicaGroup(rgName).getMaster().connect();
+                        slave = sdb.getReplicaGroup(rgName).getSlave().connect();
+                        mcl = master.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+                        scl = slave.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
+                    } catch (BaseException e) {
+                        if (e.getErrorCode() != -23 && e.getErrorCode() != -34) {
+                            throw e;
+                        } else {
+                            Thread.sleep(100);
+                            retryTimes++;
+                            continue;
+                        }
+                    } 
                     mCnt = (int) mcl.getCount();
                     sCnt = (int) scl.getCount();
                     if (mCnt == sCnt && mCnt == RECS_NUM) {
@@ -137,11 +146,7 @@ public class Index18259 extends SdbTestBase {
                         retryTimes++;
                     }
                     System.out.println(CL_NAME + " check timeout, mCnt:" + mCnt + ", sCnt:" + sCnt 
-                            + ", expCnt:" + RECS_NUM);
-                }
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -23 && e.getErrorCode() != -34) {
-                    throw e;
+                        + ", expCnt:" + RECS_NUM);
                 }
             } finally {
                 if (master != null) master.close();
