@@ -12,7 +12,7 @@ namespace CSharp.Bson
 
     /**
      * description:  
-     *                   ToString()；ToGuid ()；ToGuid (GuidRepresentation guidRepresentation)----需要确认如何验证？
+     *                   ToString()；ToGuid ()；ToGuid (GuidRepresentation guidRepresentation)----需要确认如何验证？//TODO：这个注释要删掉，文档中有这个接口，应该是对外接口吧，是否需要验证？
      * testcase:         14611
      * author:      chensiqin
      * date:        2019/03/11

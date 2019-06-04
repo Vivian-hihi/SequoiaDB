@@ -79,7 +79,7 @@ namespace CSharp.Transaction
             finally
             {
                 sdb.TransactionCommit();
-                BsonDocument matcher = new BsonDocument();
+                BsonDocument matcher = new BsonDocument();//TODO:这里放在finally里面应该不太合理，因为如果try失败了，下面的比较结果就不对了
                 matcher.Add("number", new BsonDocument("$gte", 10));
                 Assert.AreEqual(96, cl.GetCount(matcher));
                 matcher = new BsonDocument();

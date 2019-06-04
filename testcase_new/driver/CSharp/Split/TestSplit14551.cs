@@ -130,7 +130,7 @@ namespace CSharp.Split
             }
             lob.Write(buf);
             lob.Close();
-            InsertedLobId.Add(id);
+            InsertedLobId.Add(id);//TODO:只插入了一个lob，应该可以不用再存到List里面了吧？
             cl.BulkInsert(list, SDBConst.FLG_INSERT_CONTONDUP);
 
         }

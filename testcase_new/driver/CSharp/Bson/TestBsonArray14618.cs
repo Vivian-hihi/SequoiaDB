@@ -101,8 +101,8 @@ namespace CSharp.Bson
                 .Add("arr7", new BsonArray(longList))
                 .Add("arr8", new BsonArray(objectIdList))
                 .Add("arr9", new BsonArray(stringList))
-                .Add("arr10", new BsonArray(docList))
-                .Add("arr11", new BsonArray(arr))
+                .Add("arr10", new BsonArray(docList))//TODO:这个类型是BSONDocument类型的，文档中没有这个接口，少了个BsonArray(IEnumerable values)类型的接口
+                .Add("arr11", new BsonArray(arr))//TODO:这里应该验证的是capacity，这个类型是BSONDocument类型的，文档中没有这个接口
                 .Add("arr12", new BsonArray().Add(doc.GetElement("test").Value))
                 .Add("arr13", new BsonArray().AddRange(boolList))
                 .Add("arr14", new BsonArray().AddRange(bsonValueList))

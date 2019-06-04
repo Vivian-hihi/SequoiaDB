@@ -36,7 +36,7 @@ namespace CSharp.Meta
         {
             try
             {
-                sdb.DropDomain("domain14559");
+                sdb.DropDomain("domain14559");//TODO:这里要加throw
             }
             catch (BaseException e)
             {

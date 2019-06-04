@@ -82,7 +82,7 @@ namespace CSharp.Backup
                 //check
                 DBCursor cursor = sdb.ListBackup(null, null, null, null);
                 while (cursor.Next() != null)
-                {
+                {//TODO：这里如果cursor不等于null可以直接抛错吧？下面的finally应该也不需要了
                     BsonDocument record = cursor.Current();
                     if (record.Contains("Name"))
                     {

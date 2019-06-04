@@ -78,7 +78,7 @@ namespace CSharp.Bson
             {
                 count++;
                 BsonDocument doc = cur.Current();
-                Assert.AreEqual(record.ToString(), doc.ToString());
+                Assert.AreEqual(record.ToString(), doc.ToString());//TODO:这里和下面两行的比较是一样的，只比较一次应该就可以了
                 Assert.AreEqual("{ \"$decimal\" : \""+expected1+"\" }", doc.GetElement("decimal1").Value.ToString());
                 Assert.AreEqual("{ \"$decimal\" : \"" + expected2 + "\" }", doc.GetElement("decimal2").Value.ToString());
 

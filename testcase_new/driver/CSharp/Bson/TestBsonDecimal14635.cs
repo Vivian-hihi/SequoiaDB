@@ -97,7 +97,7 @@ namespace CSharp.Bson
                 doc.Remove("_id");
                 Assert.AreEqual(1, doc.ElementCount);
                 BsonElement elem = doc.First();
-                BsonDocument expDoc = new BsonDocument(elem.Name, new BsonDecimal(elem.Name));
+                BsonDocument expDoc = new BsonDocument(elem.Name, new BsonDecimal(elem.Name)) ;
                 Assert.AreEqual(expDoc, doc);
             }
         }

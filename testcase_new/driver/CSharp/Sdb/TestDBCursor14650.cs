@@ -18,7 +18,7 @@ namespace CSharp.Sdb
      * date:         2019/03/29
     */
 
-    [TestClass]
+    [TestClass]//TODO:文本用例中步骤动作有两步，期望结果应该也分为两步吧？期望结果中的游标是我们自己关闭的，不是自动关闭
     public class TestDBCursor14650
     {
         private Sequoiadb sdb = null;

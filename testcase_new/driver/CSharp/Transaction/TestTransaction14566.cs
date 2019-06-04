@@ -84,7 +84,7 @@ namespace CSharp.Transaction
             }
             finally
             {
-                sdb.TransactionRollback();
+                sdb.TransactionRollback();//TODO:同14565放在finally里面不合适
                 Assert.AreEqual(0, cl.GetCount(null));
             }
         }

@@ -66,7 +66,7 @@ namespace CSharp.Meta
 
             try
             {
-                localcs.DisableCapped();
+                localcs.DisableCapped();//TODO:这行下面加Assert
             }
             catch (BaseException e)
             {
@@ -90,7 +90,7 @@ namespace CSharp.Meta
                 cur = sdb.GetSnapshot(8, matcher, null, null);
                 Assert.IsNotNull(cur.Next());
                 actual = cur.Current();
-                long expectSize = 1024 * 1024 * 1024;
+                long expectSize = 1024 * 1024 * 1024;//TODO:添加单位转换备注
                 Assert.AreEqual(expectSize + "", actual.GetElement("Size").Value.ToString());
                 Assert.AreEqual(expected.GetElement("Max").Value.ToString(), actual.GetElement("Max").Value.ToString());
                 Assert.AreEqual("NoIDIndex | Capped", actual.GetElement("AttributeDesc").Value.ToString());

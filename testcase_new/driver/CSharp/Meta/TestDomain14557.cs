@@ -54,7 +54,7 @@ namespace CSharp.Meta
             //check domain name and other attributes
             BsonDocument expected = new BsonDocument();
             expected.Add("Name", domainName);
-            //CheckDomainInfo(expected);
+            //CheckDomainInfo(expected);//TODO:这里屏蔽了？是有问题吗？是否需要贴上问题单号？
 
             sdb.DropDomain(domainName);
             BsonArray arr = new BsonArray();

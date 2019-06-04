@@ -97,7 +97,7 @@ namespace CSharp.Meta
 
             try
             {
-                sdb.GetCollecitonSpace(csName1);
+                sdb.GetCollecitonSpace(csName1);//TODO:加throw
             }
             catch (BaseException e)
             {

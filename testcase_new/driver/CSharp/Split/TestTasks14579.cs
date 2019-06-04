@@ -88,7 +88,7 @@ namespace CSharp.Split
             taskId = cl.SplitAsync(dataGroupNames[0], dataGroupNames[1], splitCondition, splitEndCondition);
             tasks = new List<long>();
             tasks.Add(taskId);
-            //ListTasks 无参
+            //ListTasks 无参//TODO:这里要还有一种情况就是split已经执行完了，这种情况是否需要考虑
             DBCursor cur = sdb.ListTasks(null, null, null, null);
             int count = 0;
             while (cur.Next() != null)
@@ -120,7 +120,7 @@ namespace CSharp.Split
 
             try
             {
-                sdb.CancelTask(taskId, true);
+                sdb.CancelTask(taskId, true);//TODO:这行下面应该加个Assert
             }
             catch (BaseException e)
             {
