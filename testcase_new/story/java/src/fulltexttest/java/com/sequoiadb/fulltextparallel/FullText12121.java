@@ -71,6 +71,7 @@ public class FullText12121 extends SdbTestBase {
         List<BSONObject> records = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
         Assert.assertEquals(records.get(0).get("Type"), 2);
 
+        // TODO :后续的校验都可以不需要了
         // es中数据与原集合数据一致
         Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {

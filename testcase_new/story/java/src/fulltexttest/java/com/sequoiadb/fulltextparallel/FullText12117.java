@@ -22,6 +22,7 @@ import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
+//TODO :用例标题写错了
 /**
  * @FileName seqDB-12117:并发删除同一条记录
  * @Author yinzhen
@@ -47,6 +48,7 @@ public class FullText12117 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        // TODO :记录数建议定义为一个变量，因为用例中多处有使用到
         FullTextDBUtils.insertData(cl, 20000);
     }
 
@@ -124,6 +126,7 @@ public class FullText12117 extends SdbTestBase {
                 fullIdxName = idxName;
                 atoint.incrementAndGet();
             } catch (BaseException e) {
+                // TODO :需要打印栈信息
                 Assert.assertEquals(e.getErrorCode(), -42);
             } finally {
                 if (db != null) {

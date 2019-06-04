@@ -105,6 +105,7 @@ public class FullText15798 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 insertData(cl, 10000);
             } catch (BaseException e) {
+                // TODO :这种方式打不出栈信息
                 Assert.assertEquals(e.getErrorCode(), -321, e.getMessage());
             } finally {
                 if (db != null) {

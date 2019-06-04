@@ -30,6 +30,7 @@ import com.sequoiadb.utils.StringUtils;
  * @Author yinzhen
  * @Date 2019-4-28
  */
+// TODO :同12116
 public class FullText12124 extends SdbTestBase {
     private String clName = "cl12124";
     private Sequoiadb sdb;

@@ -47,6 +47,7 @@ public class FullText12116 extends SdbTestBase {
         esClient = FullTextESUtils.createTransportClient(SdbTestBase.esHostName,
                 Integer.parseInt(SdbTestBase.esServiceName));
         cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        // TODO :记录数建议定义为一个变量，因为用例中多处有使用到，其他用例类似
         FullTextDBUtils.insertData(cl, 20000);
     }
 
@@ -66,6 +67,7 @@ public class FullText12116 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, fullIdxName, 20000));
 
         // ES端的数据正确
+        // TODO :需要加注释，为啥定义了2个连接，其他用例类似
         Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
             DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
@@ -80,6 +82,7 @@ public class FullText12116 extends SdbTestBase {
         }
 
         // 在db端执行插入、全文检索
+        // TODO :这里应该是可以沿用db2吧，其他用例类似
         Sequoiadb db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
             FullTextDBUtils.insertData(cl, 1000);
@@ -125,6 +128,7 @@ public class FullText12116 extends SdbTestBase {
                         false, false);
                 atoint.incrementAndGet();
             } catch (BaseException e) {
+                // TODO :使用了assert，失败时需要将栈信息打印出来，其他用例需同步修改
                 Assert.assertEquals(e.getErrorCode(), -42);
             } finally {
                 if (db != null) {

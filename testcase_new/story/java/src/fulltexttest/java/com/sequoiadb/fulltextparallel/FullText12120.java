@@ -22,6 +22,7 @@ import com.sequoiadb.utils.FullTextDBUtils;
 import com.sequoiadb.utils.FullTextESUtils;
 import com.sequoiadb.utils.FullTextUtils;
 
+//TODO :用例名称与实际不符
 /**
  * @FileName seqDB-12120:并发删除同一条记录
  * @Author yinzhen
@@ -72,6 +73,7 @@ public class FullText12120 extends SdbTestBase {
         List<BSONObject> records = FullTextDBUtils.getRecordsFromCL(cappedCL.query());
         Assert.assertEquals(records.get(0).get("Type"), 3);
 
+        // TODO :后续的校验应该都不需要了
         Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
             DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
