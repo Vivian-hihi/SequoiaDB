@@ -39,7 +39,7 @@
 #define UTIL_POOLED_OBJECT_HPP__
 
 #pragma warning( disable: 4290 )
-#include "utilMemBlockPool.hpp"
+#include "utilMemListPool.hpp"
 #include "ossMem.hpp"
 
 namespace engine
@@ -58,14 +58,14 @@ namespace engine
       // regular new
       void * operator new ( size_t size ) throw ( const char * )
       {
-         void *p = utilPoolAlloc( size ) ;
+         void *p = utilThreadAlloc( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
 
       void * operator new[] ( size_t size ) throw ( const char * )
       {
-         void *p = utilPoolAlloc( size ) ;
+         void *p = utilThreadAlloc( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
@@ -85,12 +85,12 @@ namespace engine
 
       void operator delete ( void *p )
       {
-         utilPoolRelease( p ) ;
+         utilThreadRelease( p ) ;
       }
 
       void operator delete[] ( void *p )
       {
-         utilPoolRelease( p ) ;
+         utilThreadRelease( p ) ;
       }
 
       // placement delete (no-op)
@@ -106,7 +106,7 @@ namespace engine
       void * operator new ( size_t size, const CHAR *pFile, UINT32 line )
             throw ( const char * )
       {
-         void *p = utilPoolAlloc( size ) ;
+         void *p = utilThreadAlloc( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
@@ -114,65 +114,65 @@ namespace engine
       void * operator new[] ( size_t size, const CHAR *pFile, UINT32 line )
             throw ( const char * )
       {
-         void *p = utilPoolAlloc( size ) ;
+         void *p = utilThreadAlloc( size ) ;
          if ( !p ) throw "allocation failure" ;
          return p ;
       }
 
       void operator delete ( void *p, const CHAR *pFile, UINT32 line )
       {
-         utilPoolRelease( p ) ;
+         utilThreadRelease( p ) ;
       }
 
       void operator delete[] ( void *p, const CHAR *pFile, UINT32 line )
       {
-         utilPoolRelease( p ) ;
+         utilThreadRelease( p ) ;
       }
 
       // no throw
       void * operator new ( size_t size, const std::nothrow_t & )
       {
-         return utilPoolAlloc(size) ;
+         return utilThreadAlloc(size) ;
       }
 
       void * operator new[] ( size_t size, const std::nothrow_t & )
       {
-         return utilPoolAlloc(size) ;
+         return utilThreadAlloc(size) ;
       }
 
       void operator delete ( void *p, const std::nothrow_t & )
       {
-         utilPoolRelease(p) ;
+         utilThreadRelease(p) ;
       }
 
       void operator delete[] ( void *p, const std::nothrow_t & )
       {
-         utilPoolRelease(p) ;
+         utilThreadRelease(p) ;
       }
 
       // no throw with line number
       void * operator new ( size_t size, const CHAR *pFile,
                             UINT32 line, const std::nothrow_t & )
       {
-         return utilPoolAlloc( size ) ;
+         return utilThreadAlloc( size ) ;
       }
 
       void * operator new[] ( size_t size, const CHAR *pFile,
                               UINT32 line, const std::nothrow_t & )
       {
-         return utilPoolAlloc( size ) ;
+         return utilThreadAlloc( size ) ;
       }
 
       void operator delete ( void *p, const CHAR *pFile,
                              UINT32 line, const std::nothrow_t & )
       {
-         utilPoolRelease(p) ;
+         utilThreadRelease(p) ;
       }
 
       void operator delete[] ( void *p, const CHAR *pFile,
                                UINT32 line, const std::nothrow_t & )
       {
-         utilPoolRelease(p) ;
+         utilThreadRelease(p) ;
       }
    } ;
    typedef class _utilPooledObject utilPooledObject ;
