@@ -24,15 +24,15 @@ function main()
    expRecs = [ recs[1],recs[4],recs[5],recs[7] ];
    checkRec( rc, expRecs );
    
-   matchValue = -9223372036854775808;
+   matchValue = { "$numberLong" : "-9223372036854775808" };
    rc = cl.find({key:{"$gte":matchValue}});
    expRecs = [ recs[0],recs[1],recs[2],recs[3],recs[4],recs[5],recs[7],recs[8],recs[10] ];
    checkRec( rc, expRecs );
    
-   /* matchValue = 9223372036854775807;
+   matchValue = { "$numberLong" : "9223372036854775807" };
    rc = cl.find({key:{"$gte":matchValue}});
    expRecs = [ recs[4],recs[7] ];
-   checkRec( rc, expRecs ); */
+   checkRec( rc, expRecs );
    
    matchValue = -1.7e+308;
    rc = cl.find({key:{"$gte":matchValue}});
