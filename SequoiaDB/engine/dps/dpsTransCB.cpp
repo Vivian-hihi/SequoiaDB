@@ -205,6 +205,8 @@ namespace engine
          _oldVCB = NULL ;
       }
 
+      clearTransInfo() ;
+
       return SDB_OK ;
    }
 
@@ -353,13 +355,13 @@ namespace engine
          goto done ;
       }
 
-      if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) &&
+      /*if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) &&
            pmdIsPrimary() )
       {
          // in primary, transaction-info save in EDUCB
          goto done ;
       }
-      else
+      else*/
       {
          transID = getTransID( transID ) ;
          TRANS_MAP::iterator it ;
