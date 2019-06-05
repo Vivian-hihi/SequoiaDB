@@ -627,7 +627,7 @@ namespace engine
       /// set node id
       for ( cit = pNodeMap->begin() ; cit != pNodeMap->end() ; ++cit )
       {
-         pCommitPreMsg->nodes[ i ] = cit->second.value ;
+         pCommitPreMsg->nodes[ i++ ] = cit->second.value ;
       }
 
       *pMsg = ( CHAR* )pCommitPreMsg ;
