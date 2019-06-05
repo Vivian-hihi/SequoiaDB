@@ -1053,7 +1053,7 @@ namespace engine
              }
 
              itr = this->find( DPS_LOG_TSCOMMIT_NODE_NUM ) ;
-             if ( itr.value() )
+             if ( itr.valid() )
              {
                 nodeNum = *(UINT32 *)itr.value() ;
                 len += ossSnprintf( outBuf + len, outSize - len,
