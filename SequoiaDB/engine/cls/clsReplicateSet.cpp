@@ -253,6 +253,8 @@ namespace engine
          PD_LOG( PDEVENT, "Wait repl bucket empty completed" ) ;
       }
 
+      pmdSetPrimary( FALSE ) ;
+
       return SDB_OK ;
    }
 

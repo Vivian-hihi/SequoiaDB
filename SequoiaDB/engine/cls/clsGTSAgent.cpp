@@ -334,7 +334,7 @@ namespace engine
             continue ;
          }
          break ;
-      } while( !pTransCB->isDoRollback() ) ;
+      } while( !cb->isForced() && !pTransCB->isDoRollback() ) ;
 
    done:
       return rc ;

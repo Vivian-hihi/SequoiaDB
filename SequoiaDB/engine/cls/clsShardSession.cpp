@@ -377,7 +377,7 @@ namespace engine
             {
                goto rollback ;
             }
-         } while( pmdIsPrimary() ) ;
+         } while( !eduCB()->isForced() && pmdIsPrimary() ) ;
       }
 
    rollback:
