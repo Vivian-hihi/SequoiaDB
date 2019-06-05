@@ -37,11 +37,11 @@
       //创建步骤条
       if( discoverConf != null )
       {
-         $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         $scope.stepList = _Deploy.BuildDiscoverStep( $scope, $location, $scope['Url']['Action'], deplpyModule ) ;
       }
       else if( syncConf != null )
       {
-         $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         $scope.stepList = _Deploy.BuildSyncStep( $scope, $location, $scope['Url']['Action'], deplpyModule ) ;
       }
       else
       {

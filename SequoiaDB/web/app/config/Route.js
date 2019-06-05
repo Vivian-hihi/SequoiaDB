@@ -356,6 +356,12 @@
            resolve: resolveFun( [ './app/controller/Deploy/DiscoverModule/Sdb/Index.js' ] )
         }
       },
+      { path: '/Deploy/MYSQL-Discover',
+        options: {
+           templateUrl: './app/template/Deploy/DiscoverModule/MySQL/Index.html',
+           resolve: resolveFun( [ './app/controller/Deploy/DiscoverModule/MySQL/Index.js' ] )
+        }
+      },
       { path: '/Deploy/SDB-Sync',
         options: {
            templateUrl: './app/template/Deploy/SyncModule/Sdb/Index.html',

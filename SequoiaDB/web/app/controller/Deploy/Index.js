@@ -1518,8 +1518,8 @@
                   "type": "select",
                   "value": 'mysql',
                   "valid": [
-                     { 'key': 'MySQL', 'value': 'mysql' },
-                     { 'key': 'PostgreSQL', 'value': 'postgresql' }
+                     { 'key': 'MySQL', 'value': 'sequoiasql-mysql' },
+                     { 'key': 'PostgreSQL', 'value': 'sequoiasql-postgresql' }
                   ]
                },
                {
@@ -1573,7 +1573,7 @@
             return;
          }
 
-         $scope.AppendInstance['config']['inputList'][0]['value'] = 'mysql';
+         $scope.AppendInstance['config']['inputList'][0]['value'] = 'sequoiasql-mysql';
          $scope.AppendInstance['config']['inputList'][1]['value'] = '';
          $scope.AppendInstance['config']['inputList'][2]['value'] = '';
          $scope.AppendInstance['config']['inputList'][3]['value'] = '';
@@ -1598,27 +1598,50 @@
          $scope.AppendInstance['callback']['Open']();
       }
 
+      //从发现前往添加主机
+      function gotoAddHost( configure )
+      {
+         $rootScope.tempData( 'Deploy', 'ModuleHostName', configure['BusinessInfo']['HostName'] );
+         $rootScope.tempData( 'Deploy', 'ModulePort', configure['BusinessInfo']['ServiceName'] );
+
+         $rootScope.tempData( 'Deploy', 'Model', 'Deploy' );
+         $rootScope.tempData( 'Deploy', 'Module', configure['BusinessType'] );
+         $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[$scope.CurrentCluster]['ClusterName'] );
+         $rootScope.tempData( 'Deploy', 'InstallPath', $scope.ClusterList[$scope.CurrentCluster]['InstallPath'] );
+         $rootScope.tempData( 'Deploy', 'DiscoverConf', configure );
+         $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } );
+      }
+
       //发现实例
       function discoverInstance( configure )
       {
          var data = { 'cmd': 'discover business', 'ConfigInfo': JSON.stringify( configure ) };
          SdbRest.OmOperation( data, {
             'success': function () {
-               if ( configure['BusinessType'] == 'sequoiadb' ) {
-                  $rootScope.tempData( 'Deploy', 'ModuleName', configure['BusinessName'] );
+               if ( configure['BusinessType'] == 'sequoiasql-mysql' )
+               {
+                  var hostName = configure['BusinessInfo']['HostName'] ;
+
+                  $.each( SdbSwap.hostList, function( index, info ){
+                     if( hostName == info['IP'] )
+                     {
+                        hostName = info['HostName'] ;
+                        return false ;
+                     }
+                  } ) ;
+
+                  $rootScope.tempData( 'Deploy', 'ModuleName', '' );
+                  $rootScope.tempData( 'Deploy', 'ModuleHostName', hostName );
+                  $rootScope.tempData( 'Deploy', 'ModulePort', configure['BusinessInfo']['ServiceName'] );
                   $rootScope.tempData( 'Deploy', 'ClusterName', configure['ClusterName'] );
-                  $location.path( '/Deploy/SDB-Discover' ).search( { 'r': new Date().getTime() } );
-               }
-               else {
-                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } );
+                  $location.path( '/Deploy/MYSQL-Discover' ).search( { 'r': new Date().getTime() } );
                }
             },
             'failed': function ( errorInfo ) {
-               if ( configure['BusinessType'] == 'sequoiadb' &&
-                   isArray( errorInfo['hosts'] ) &&
-                   errorInfo['hosts'].length > 0 ) {
+               if ( isArray( errorInfo['hosts'] ) && errorInfo['hosts'].length > 0 )
+               {
                   $scope.Components.Confirm.type = 3;
-                  $scope.Components.Confirm.context = $scope.autoLanguage( '发现SequoiaDB需要先在集群中添加该服务的所有主机。是否前往添加主机？' );
+                  $scope.Components.Confirm.context = $scope.autoLanguage( '需要先在集群中添加该示例的主机。是否前往添加主机？' );
                   $scope.Components.Confirm.isShow = true;
                   $scope.Components.Confirm.okText = $scope.autoLanguage( '是' );
                   $scope.Components.Confirm.ok = function () {
@@ -1667,7 +1690,7 @@
       $scope.InstallModule = {
          'config': {},
          'callback': {}
-      } ;
+      };
 
       //打开 创建实例 弹窗
       function showInstallInstance()
@@ -3553,9 +3576,10 @@
       }
 
       //从发现前往添加主机
-      var gotoAddHost = function( configure ){
+      function gotoAddHost( configure )
+      {
          $rootScope.tempData( 'Deploy', 'Model', 'Deploy' ) ;
-         $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+         $rootScope.tempData( 'Deploy', 'Module', configure['BusinessType'] );
          $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[ $scope.CurrentCluster ]['ClusterName'] ) ;
          $rootScope.tempData( 'Deploy', 'InstallPath', $scope.ClusterList[ $scope.CurrentCluster ]['InstallPath'] ) ;
          $rootScope.tempData( 'Deploy', 'DiscoverConf', configure ) ;
@@ -3649,9 +3673,7 @@
                }
             }, 
             'failed': function( errorInfo ){
-               if( configure['BusinessType'] == 'sequoiadb' &&
-                   isArray( errorInfo['hosts'] ) &&
-                   errorInfo['hosts'].length > 0 )
+               if( configure['BusinessType'] == 'sequoiadb' && isArray( errorInfo['hosts'] ) && errorInfo['hosts'].length > 0 )
                {
                   $scope.Components.Confirm.type = 3 ;
                   $scope.Components.Confirm.context = $scope.autoLanguage( '发现SequoiaDB需要先在集群中添加该服务的所有主机。是否前往添加主机？' ) ;

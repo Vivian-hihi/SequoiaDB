@@ -17,7 +17,7 @@
       //如果从安装主机进来的，有步骤条
       if( $scope.SyncConf != null )
       {
-         $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         $scope.stepList = _Deploy.BuildSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
       }
 
       //同步状态

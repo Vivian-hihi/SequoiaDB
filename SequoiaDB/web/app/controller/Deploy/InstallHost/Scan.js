@@ -6,9 +6,9 @@
    sacApp.controllerProvider.register( 'Deploy.Scan.Ctrl', function( $scope, $compile, $location, $rootScope, SdbRest ){
 
       //初始化
-      var scanHostTmp        = $rootScope.tempData( 'Deploy', 'ScanHost' ) ;
-      var successNum         = 0 ;
-      var hostList        = scanHostTmp == null ? [] : scanHostTmp ;
+      var scanHostTmp   = $rootScope.tempData( 'Deploy', 'ScanHost' ) ;
+      var successNum    = 0 ;
+      var hostList      = scanHostTmp == null ? [] : scanHostTmp ;
       $scope.checkedHostNum  = 0 ;
       //主机列表表格
       $scope.HostListTable = {
@@ -123,7 +123,7 @@
 
       if( discoverConf != null )
       {
-         $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         $scope.stepList = _Deploy.BuildDiscoverStep( $scope, $location, $scope['Url']['Action'], deplpyModule ) ;
          var discoverHostList  = $rootScope.tempData( 'Deploy', 'DiscoverHostList' ) ;
          $.each( discoverHostList, function( index, value ){
             if( $scope.ScanForm['inputList'][0]['value'] == '' )
@@ -138,7 +138,7 @@
       }
       else if( syncConf != null )
       {
-         $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         $scope.stepList = _Deploy.BuildSyncStep( $scope, $location, $scope['Url']['Action'], deplpyModule ) ;
          var syncConf  = $rootScope.tempData( 'Deploy', 'SyncConf' ) ;
          $.each( syncConf, function( index, value ){
             if( $scope.ScanForm['inputList'][0]['value'] == '' )

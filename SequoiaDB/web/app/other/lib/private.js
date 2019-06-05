@@ -568,7 +568,7 @@ _Deploy.BuildSdbExtStep = function( $scope, $location, action, deployModule ){
 }
 
 //生成安装主机-发现服务步骤图
-_Deploy.BuildSdbDiscoverStep = function( $scope, $location, action, deployModule ){
+_Deploy.BuildDiscoverStep = function( $scope, $location, action, deployModule ){
    var stepList = {
       'step': 0,
       'info': [] 
@@ -586,18 +586,27 @@ _Deploy.BuildSdbDiscoverStep = function( $scope, $location, action, deployModule
       stepList['step'] = 3 ;
       break ;
    case 'SDB-Discover':
+   case 'MYSQL-Discover':
       stepList['step'] = 4 ;
       break ;
    }
    stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost') ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Host' ) ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '发现服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Discover'  ) ; } } ) ;
+
+   if( deployModule == 'sequoiadb' )
+   {
+      stepList['info'].push( { 'text': $scope.autoLanguage( '发现服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Discover'  ) ; } } ) ;
+   }
+   else if( deployModule == 'sequoiasql-mysql' )
+   {
+      stepList['info'].push( { 'text': $scope.autoLanguage( '发现服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'MYSQL-Discover'  ) ; } } ) ;
+   }
    return stepList ;
 }
 
 //生成安装主机-同步服务步骤图
-_Deploy.BuildSdbSyncStep = function( $scope, $location, action, deployModule ){
+_Deploy.BuildSyncStep = function( $scope, $location, action, deployModule ){
    var stepList = {
       'step': 0,
       'info': [] 
@@ -621,7 +630,11 @@ _Deploy.BuildSdbSyncStep = function( $scope, $location, action, deployModule ){
    stepList['info'].push( { 'text': $scope.autoLanguage( '扫描主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'ScanHost') ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '检查主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'AddHost' ) ; } } ) ;
    stepList['info'].push( { 'text': $scope.autoLanguage( '安装主机' ), 'click': function(){ _Deploy.GotoStep( $location, 'Task/Host' ) ; } } ) ;
-   stepList['info'].push( { 'text': $scope.autoLanguage( '同步服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Sync'  ) ; } } ) ;
+
+   if( deployModule == 'sequoiadb' )
+   {
+      stepList['info'].push( { 'text': $scope.autoLanguage( '同步服务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Sync'  ) ; } } ) ;
+   }
    return stepList ;
 }
 

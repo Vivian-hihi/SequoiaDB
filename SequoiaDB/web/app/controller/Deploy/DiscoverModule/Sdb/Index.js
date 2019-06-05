@@ -17,7 +17,7 @@
       //如果从安装主机进来的，有步骤条
       if( $scope.DiscoverConf != null )
       {
-         $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
+         $scope.stepList = _Deploy.BuildDiscoverStep( $scope, $location, $scope['Url']['Action'], 'sequoiadb' ) ;
       }
 
       //获取业务配置

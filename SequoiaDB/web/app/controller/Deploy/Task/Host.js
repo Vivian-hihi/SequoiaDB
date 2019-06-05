@@ -55,11 +55,11 @@
       {
          if( discoverConf != null )
          {
-            $scope.stepList = _Deploy.BuildSdbDiscoverStep( $scope, $location, $scope['Url']['Method'], 'sequoiadb' ) ;
+            $scope.stepList = _Deploy.BuildDiscoverStep( $scope, $location, $scope['Url']['Method'], $scope.ModuleType ) ;
          }
          else if( syncConf != null )
          {
-            $scope.stepList = _Deploy.BuildSdbSyncStep( $scope, $location, $scope['Url']['Method'], 'sequoiadb' ) ;
+            $scope.stepList = _Deploy.BuildSyncStep( $scope, $location, $scope['Url']['Method'], $scope.ModuleType ) ;
          }
          else if( $scope.DeployType == 'Package' )
          {
@@ -100,8 +100,26 @@
             SdbRest.OmOperation( data, {
                'success': function(){
                   $rootScope.tempData( 'Deploy', 'ModuleName', discoverConf['BusinessName'] ) ;
-                  $rootScope.tempData( 'Deploy', 'ClusterName', discoverConf['ClusterName'] ) ;
-                  $location.path( '/Deploy/SDB-Discover' ).search( { 'r': new Date().getTime() }  ) ;
+                  $rootScope.tempData( 'Deploy', 'ClusterName', discoverConf['ClusterName'] );
+                  if ( $scope.ModuleType == 'sequoiadb' )
+                  {
+                     $location.path( '/Deploy/SDB-Discover' ).search( { 'r': new Date().getTime() } );
+                  }
+                  else if ( $scope.ModuleType == 'sequoiasql-mysql' )
+                  {
+                     var hostName = $rootScope.tempData( 'Deploy', 'ModuleHostName' ) ;
+
+                     $.each( $scope.TaskInfo['ResultInfo'], function( index, info ){
+                        if( hostName == info['IP'] )
+                        {
+                           hostName = info['HostName'] ;
+                           return false ;
+                        }
+                     } ) ;
+
+                     $rootScope.tempData( 'Deploy', 'ModuleHostName', hostName ) ;
+                     $location.path( '/Deploy/MYSQL-Discover' ).search( { 'r': new Date().getTime() } );
+                  }
                }, 
                'failed': function( errorInfo ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
