@@ -1,5 +1,6 @@
 package com.sequoiadb.fulltextparallel;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.bson.BSONObject;
@@ -29,7 +30,7 @@ import com.sequoiadb.utils.FullTextUtils;
  * @Author huangxiaoni
  * @Date 2019.5.8
  */
-// TODO :检视意见同15856
+
 public class FullText15857 extends SdbTestBase {
     private final int THREAD_NUM = 5;
     private final String CL_NAME = "cl_es_15857";
@@ -68,25 +69,30 @@ public class FullText15857 extends SdbTestBase {
 
     @Test
     private void test() throws Exception {
-        // matcher1
-        BSONObject obj1 = new BasicBSONObject("$lt", RECS_NUM / 2);
-        BSONObject matcher1 = new BasicBSONObject("recordId", obj1);
-        // matcher2
-        BSONObject obj2 = new BasicBSONObject("$gte", RECS_NUM / 2);
-        BSONObject matcher2 = new BasicBSONObject("recordId", obj2);
-        // thread
         ThreadExecutor es = new ThreadExecutor();
         for (int i = 0; i < THREAD_NUM; i++) {
-            es.addWorker(new ThreadDelete(matcher1));
-            es.addWorker(new ThreadDelete(matcher2));
+            int batchRecsNum = RECS_NUM/THREAD_NUM;
+            BSONObject obj1 = new BasicBSONObject("recordId", 
+                    new BasicBSONObject("$gte", batchRecsNum * i));
+            BSONObject obj2 = new BasicBSONObject("recordId", 
+                    new BasicBSONObject("$lt",  batchRecsNum * (i + 1)));
+            
+            ArrayList<BSONObject> and = new ArrayList<>();
+            and.add(obj1);
+            and.add(obj2);
+            
+            BSONObject matcher = new BasicBSONObject("$and", and);
+            es.addWorker(new ThreadDelete(matcher));
         }
         es.run();
 
         // check consistency
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, 0));
+        
         // check total count
         long updCnt = cl.getCount();
         Assert.assertEquals(updCnt, 0);
+        
         // check fullTextSearch
         BSONObject matcher = new BasicBSONObject("", new BasicBSONObject("$Text",
                 new BasicBSONObject("query", new BasicBSONObject("match_all", new BasicBSONObject()))));

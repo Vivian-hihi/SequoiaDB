@@ -67,32 +67,31 @@ public class FullText15856 extends SdbTestBase {
 
     @Test
     private void test() throws Exception {
-        // modifier1
-        String modVal1 = StringUtils.getRandomString(16);
-        BSONObject modifier1 = new BasicBSONObject("$set", new BasicBSONObject("b", modVal1));
-        // modifier2
-        String modVal2 = StringUtils.getRandomString(32);
-        BSONObject modifier2 = new BasicBSONObject("$set", new BasicBSONObject("c", modVal2));
-        // thread
-        ThreadExecutor es = new ThreadExecutor(TIMEOUT);
-        // TODO :多个线程做更新，匹配条件需不同，否则，指定线程数没有意义，15857类似
+        String modVal = StringUtils.getRandomString(16);
+        ThreadExecutor es = new ThreadExecutor(TIMEOUT);        
         for (int i = 0; i < THREAD_NUM; i++) {
-            es.addWorker(new ThreadUpdate(modifier1));
-            es.addWorker(new ThreadUpdate(modifier2));
+            BSONObject modifier = new BasicBSONObject("$set", new BasicBSONObject("b", modVal + i));
+            es.addWorker(new ThreadUpdate(modifier));
         }
         es.run();
 
         // check consistency
         Assert.assertTrue(FullTextUtils.isIndexCreated(esClient, cl, IDX_NAME, RECS_NUM));
-        // check total count for update
-        BSONObject matcher = new BasicBSONObject();
-        matcher.put("b", modVal1);
-        matcher.put("c", modVal2);
-        long updCnt = cl.getCount(matcher);
-        Assert.assertEquals(updCnt, RECS_NUM);
-        // check fullTextSearch
-        Assert.assertEquals(this.fullTextSearch(new BasicBSONObject("b", modVal1)), RECS_NUM);
-        Assert.assertEquals(this.fullTextSearch(new BasicBSONObject("c", modVal2)), RECS_NUM);
+        
+        // check update records
+        boolean flag = false;
+        for (int i = 0; i < THREAD_NUM; i++) {
+            int updCnt = (int) cl.getCount(new BasicBSONObject("b", modVal + i));
+            if (updCnt == RECS_NUM) {
+                flag = true;
+                // fullTextSearch
+                Assert.assertEquals(this.fullTextSearch(
+                        new BasicBSONObject("b", modVal + i)), RECS_NUM);
+            } else {
+                Assert.assertEquals(updCnt, 0);
+            }
+        }
+        Assert.assertTrue(flag);        
     }
 
     @AfterClass
