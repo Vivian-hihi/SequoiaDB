@@ -53,6 +53,7 @@ function main()
 
       cl.split(srcRGName, tarRGName, {a : condition}, {a : endcondition});
       println("begin to check");
+      //TODO:1、这里比较结果可以直接count带条件匹配，没有必要在验证切分的具体结果；而且这里的预期数据强依赖插入数据方式，这种依赖不建议提取公共方法
       var srcDataArr = getExpDataArr( 3000, dataNum );
       var tarDataArr = getExpDataArr( 0, 3000 );
       checkData(csName, clName, srcRGName, srcDataArr);

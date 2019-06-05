@@ -52,6 +52,7 @@ function main()
       var endcondition = 3000;
 
       cl.split(srcRGName, tarRGName, {a : condition}, {a : endcondition});
+      //TODO:这里主要验证组名校验，建议测试切分结果直接直连源和目标节点带条件查询比较count数，连coord比较count数
       println("begin to check");
       var srcDataArr = getExpDataArr( 3000, dataNum );
       var tarDataArr = getExpDataArr( 0, 3000 );

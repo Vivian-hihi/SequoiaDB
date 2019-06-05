@@ -62,6 +62,7 @@ function createDataGroup( rgName, hostName )
    }
    while(!checkSucc && times < maxRetryTimes);
    dataRG.start();
+   //TODO:这里的logBackupPath是源节点diaglog日志路径，建议修改变量名；另外11790建议改成变量CMSVCNAME
    logBackupPath = hostName+":11790@"+dataPath+"/diaglog/sdbdiag.log";
    return logBackupPath;
 }

@@ -37,7 +37,7 @@ function main()
    //drop cl
    commDropCL( db, csName, clName, true, true, "drop cl in the end" ) ;
 }
-
+//TODO:1、这里构造数据时建议子字段至少2个以上
 function insertData ( cl )
 {
    var dataArray = new Array();
