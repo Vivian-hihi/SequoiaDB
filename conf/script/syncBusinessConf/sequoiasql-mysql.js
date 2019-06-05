@@ -235,7 +235,7 @@ function _syncConfig( PD_LOGGER )
       throw error ;
    }
 
-   if ( installPath.length == 0 )
+   if ( typeof( installPath ) != 'string' || installPath.length == 0 )
    {
       installPath = _getInstallPath( oma ) ;
    }
