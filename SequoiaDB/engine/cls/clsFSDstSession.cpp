@@ -242,6 +242,11 @@ namespace engine
             _connHandle = NET_INVALID_HANDLE ;
          }
       }
+      else
+      {
+         _connHandle = NET_INVALID_HANDLE ;
+         _connID.value = MSG_INVALID_ROUTEID ;
+      }
 
       if ( NET_INVALID_HANDLE == _connHandle )
       {
