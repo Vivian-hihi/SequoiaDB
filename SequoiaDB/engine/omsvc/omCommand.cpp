@@ -8361,44 +8361,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 omDiscoverBusinessCommand::_checkSequoiasqlCFG( BSONObj &buzInfo )
-   {
-      INT32 rc = SDB_OK ;
-      string hostName ;
-      string serviceName ;
-      string dbName ;
-      string user ;
-      string passwd ;
-      string installPath ;
-
-      hostName    = buzInfo.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-      serviceName = buzInfo.getStringField( OM_BSON_FIELD_SVCNAME ) ;
-      installPath = buzInfo.getStringField( OM_BSON_FIELD_INSTALL_PATH ) ;
-      dbName      = buzInfo.getStringField( OM_REST_DBNAME ) ;
-      user        = buzInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
-      passwd      = buzInfo.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
-      if ( hostName.empty() || serviceName.empty() || dbName.empty() ||
-           user.empty() || passwd.empty() || installPath.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "Sequoiasql's info is invalid:%s=%s,"
-                                   "%s=%s,%s=%s,%s=%s,%s=%s or %s is empty",
-                             OM_BSON_FIELD_HOST_NAME, hostName.c_str(),
-                             OM_BSON_FIELD_SVCNAME, serviceName.c_str(),
-                             OM_REST_DBNAME, dbName.c_str(),
-                             OM_BSON_FIELD_HOST_USER, user.c_str(),
-                             OM_BSON_FIELD_INSTALL_PATH, installPath.c_str(),
-                             OM_BSON_FIELD_HOST_PASSWD ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omDiscoverBusinessCommand::_checkSequoiaDBCFG( BSONObj &buzInfo )
    {
       INT32 rc = SDB_OK ;
@@ -8438,6 +8400,67 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDiscoverBusinessCommand::_checkMySQLCFG( BSONObj &buzInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string hostName ;
+      string svcname ;
+      string user ;
+      string passwd ;
+
+      hostName = buzInfo.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+      if ( hostName.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is empty",
+                             OM_BSON_FIELD_HOST_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      svcname = buzInfo.getStringField( OM_BSON_FIELD_SVCNAME ) ;
+      if ( svcname.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is empty",
+                             OM_BSON_FIELD_SVCNAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = _checkHostPort( hostName, svcname ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "failed to check host used port, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      user = buzInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
+      if ( user.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is empty",
+                             OM_BSON_FIELD_HOST_USER ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      passwd = buzInfo.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
+      if ( passwd.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is empty",
+                             OM_BSON_FIELD_HOST_PASSWD ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDiscoverBusinessCommand::_checkBusinssCFG( BSONObj &configInfo )
    {
       INT32 rc = SDB_OK ;
@@ -8461,15 +8484,6 @@ namespace engine
          goto error ;
       }
 
-      _businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
-      if ( _businessName.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "failed to get business name:rc=%d", rc ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
       _businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       if ( _businessType.empty() )
       {
@@ -8479,13 +8493,25 @@ namespace engine
          goto error ;
       }
 
-      if ( TRUE == dbTool.isBusinessExist( _businessName ) )
+      if( OM_BUSINESS_SEQUOIASQL_MYSQL != _businessType )
       {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "business already exist,name:%s",
-                             _businessName.c_str() ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
+         _businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+         if ( _businessName.empty() )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "failed to get business name:rc=%d", rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         if ( TRUE == dbTool.isBusinessExist( _businessName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "business already exist,name:%s",
+                                _businessName.c_str() ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
       }
 
       if( dbTool.hasTaskRunning() )
@@ -8523,9 +8549,9 @@ namespace engine
                goto error ;
             }
          }
-         else if ( OM_BUSINESS_SEQUOIASQL == _businessType )
+         else if ( OM_BUSINESS_SEQUOIADB == _businessType )
          {
-            rc = _checkSequoiasqlCFG( buzInfo ) ;
+            rc = _checkSequoiaDBCFG( buzInfo ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "check %s BusinessInfo failed:rc=%d",
@@ -8533,9 +8559,9 @@ namespace engine
                goto error ;
             }
          }
-         else if ( OM_BUSINESS_SEQUOIADB == _businessType )
+         else if ( OM_BUSINESS_SEQUOIASQL_MYSQL == _businessType )
          {
-            rc = _checkSequoiaDBCFG( buzInfo ) ;
+            rc = _checkMySQLCFG( buzInfo ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "check %s BusinessInfo failed:rc=%d",
@@ -8590,10 +8616,12 @@ namespace engine
                                                      const string &agentService,
                                                      BSONObj &request )
    {
+      string installPath ;
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
       BSONObjBuilder addressBuilder ;
       vector<simpleAddressInfo>::iterator iter ;
+      omDatabaseTool dbTool( _cb ) ;
 
       builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, _clusterName ) ;
       builder.append( OM_BUSINESS_FIELD_NAME, _businessName ) ;
@@ -8607,6 +8635,10 @@ namespace engine
       if ( FALSE == agentService.empty() )
       {
          addressBuilder.append( OM_BSON_FIELD_AGENT_PORT, agentService ) ;
+      }
+      if( dbTool.getHostPackagePath( hostName, _businessType, installPath ) )
+      {
+         addressBuilder.append( OM_BSON_INSTALL_PATH, installPath ) ;
       }
 
       arrayBuilder.append( addressBuilder.obj() ) ;
@@ -8881,6 +8913,134 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDiscoverBusinessCommand::_syncMySQL( omRestTool &restTool,
+                                                const BSONObj &buzInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string hostName ;
+      string svcname ;
+      string authUser ;
+      string authPwd ;
+      string agentService ;
+      string errDetail ;
+      BSONObj request ;
+      BSONObj result ;
+      omDatabaseTool dbTool( _cb ) ;
+      omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
+
+      hostName = buzInfo.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+      svcname  = buzInfo.getStringField( OM_BSON_FIELD_SVCNAME ) ;
+      authUser = buzInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
+      authPwd  = buzInfo.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
+      agentService = buzInfo.getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
+
+      {
+         //try to replace the hostName with om SYSHOST table data
+         string address = hostName ;
+
+         rc = dbTool.getHostNameByAddress( address, hostName ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_RECORD_NOTEXIST == rc )
+            {
+               rc = SDB_OK ;
+            }
+            else
+            {
+               _errorMsg.setError( TRUE, "failed to get host name,rc=%d", rc ) ;
+               PD_LOG( PDERROR, _errorMsg.getError() ) ;
+               goto error ;
+            }
+         }
+      }
+
+      if ( FALSE == dbTool.isHostExistOfCluster( hostName, _clusterName ) )
+      {
+         BSONObjBuilder missHost ;
+         BSONArrayBuilder hostsArray ;
+
+         hostsArray.append( hostName ) ;
+         missHost.append( OM_BUSINESS_RES_HOSTS, hostsArray.arr() ) ;
+         restTool.appendResponeMsg( missHost.obj() ) ;
+
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "Failed to add instance, missing host,"
+                                   " host=%s", hostName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      _generateRequest( hostName, svcname, authUser, authPwd, agentService,
+                        request ) ;
+
+      rc = taskTool.notifyAgentMsg( CMD_ADMIN_PREFIX OM_SYNC_BUSINESS_CONF_REQ,
+                                    request, errDetail, result ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to notify agent,detail:%s,rc=%d",
+                             errDetail.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      {
+         BSONObj hostInfoList ;
+
+         hostInfoList = result.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
+         {
+            BSONObjIterator iter( hostInfoList ) ;
+            while ( iter.more() )
+            {
+               BSONElement ele = iter.next() ;
+               BSONObj tmpConfig = ele.embeddedObject() ;
+
+               _businessName = tmpConfig.getStringField(
+                                                      OM_BSON_BUSINESS_NAME ) ;
+               break ;
+            }
+         }
+      }
+
+      if ( _businessName.empty() )
+      {
+         rc = SDB_SYS ;
+         _errorMsg.setError( TRUE, "The Invalid instance name is empty" ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      if ( TRUE == dbTool.isBusinessExist( _businessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business already exist, name:%s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = dbTool.upsertAuth( _businessName, authUser, authPwd ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to add business auth,rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = dbTool.addNodeConfigOfBusiness( _clusterName, _businessName,
+                                           _businessType, result ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to add business config,rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDiscoverBusinessCommand::_syncBusiness( omRestTool &restTool,
                                                    BSONObj &configInfo )
    {
@@ -8891,20 +9051,6 @@ namespace engine
            OM_BUSINESS_YARN  == _businessType )
       {
          string deployMod = "" ;
-         BSONObj filter = BSON( OM_BSON_BUSINESS_INFO << "" ) ;
-         BSONObj buzInfo = configInfo.filterFieldsUndotted( filter, TRUE ) ;
-
-         rc = _storeBusinessInfo( OM_BUSINESS_ADDTYPE_DISCOVERY, deployMod,
-                                  buzInfo ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "failed to store business info:rc=%d", rc ) ;
-            goto error ;
-         }
-      }
-      else if ( OM_BUSINESS_SEQUOIASQL == _businessType )
-      {
-         string deployMod = OM_SEQUOIASQL_DEPLOY_OLAP ;
          BSONObj filter = BSON( OM_BSON_BUSINESS_INFO << "" ) ;
          BSONObj buzInfo = configInfo.filterFieldsUndotted( filter, TRUE ) ;
 
@@ -8935,7 +9081,32 @@ namespace engine
          rc = _syncSequoiaDB( restTool, buzInfo ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "failed to sync business info:rc=%d", rc ) ;
+            PD_LOG( PDERROR, "failed to sync business info: type=%s, rc=%d",
+                    _businessType.c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      else if ( OM_BUSINESS_SEQUOIASQL_MYSQL == _businessType )
+      {
+         BSONObj buzInfo ;
+         BSONElement ele = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
+
+         if ( Object != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorMsg.setError( TRUE, "invalid argument:field=%s,rc=%d",
+                                OM_BSON_BUSINESS_INFO, rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         buzInfo = ele.embeddedObject() ;
+
+         rc = _syncMySQL( restTool, buzInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to sync business info: type=%s, rc=%d",
+                    _businessType.c_str(), rc ) ;
             goto error ;
          }
       }
