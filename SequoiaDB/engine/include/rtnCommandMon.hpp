@@ -78,6 +78,10 @@ namespace engine
          virtual UINT32  _addInfoMask() const ;
          virtual BSONObj _getOptObj() const ;
 
+      protected :
+         // help functions
+         BSONObj _getObjectFromHint ( const CHAR * fieldName ) const ;
+
       protected:
          INT64                _numToReturn ;
          INT64                _numToSkip ;

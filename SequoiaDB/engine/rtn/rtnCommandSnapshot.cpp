@@ -1022,31 +1022,7 @@ namespace engine
 
    BSONObj _rtnSnapshotConfigs::_getOptObj() const
    {
-      BSONObj obj ;
-
-      try
-      {
-         BSONElement elem ;
-         BSONObj hintObj( _hintBuff ) ;
-         BSONObjIterator itr( hintObj ) ;
-         while ( itr.more() )
-         {
-            elem = itr.next() ;
-            if ( Object == elem.type() &&
-                 0 == ossStrcasecmp( elem.fieldName(),
-                                     "$"FIELD_NAME_OPTIONS ) )
-            {
-               obj = elem.embeddedObject() ;
-               break ;
-            }
-         }
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-      }
-
-      return obj ;
+      return _getObjectFromHint( "$"FIELD_NAME_OPTIONS ) ;
    }
 
    const CHAR* _rtnSnapshotConfigs::getIntrCMDName()
@@ -1078,6 +1054,11 @@ namespace engine
    UINT32 _rtnSnapshotConfigsInner::_addInfoMask() const
    {
       return MON_MASK_NODE_NAME ;
+   }
+
+   BSONObj _rtnSnapshotConfigsInner::_getOptObj() const
+   {
+      return _getObjectFromHint( "$"FIELD_NAME_OPTIONS ) ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotVCLSessionInfoInner)

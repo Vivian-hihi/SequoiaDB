@@ -92,6 +92,34 @@ namespace engine
       return BSONObj() ;
    }
 
+   BSONObj _rtnMonInnerBase::_getObjectFromHint ( const CHAR * fieldName ) const
+   {
+      BSONObj obj ;
+
+      try
+      {
+         BSONElement elem ;
+         BSONObj hintObj( _hintBuff ) ;
+         BSONObjIterator itr( hintObj ) ;
+         while ( itr.more() )
+         {
+            elem = itr.next() ;
+            if ( Object == elem.type() &&
+                 0 == ossStrcasecmp( elem.fieldName(), fieldName ) )
+            {
+               obj = elem.embeddedObject() ;
+               break ;
+            }
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+      }
+
+      return obj ;
+   }
+
    INT32 _rtnMonInnerBase::_createFetch( _pmdEDUCB *cb,
                                          rtnFetchBase **ppFetch )
    {
