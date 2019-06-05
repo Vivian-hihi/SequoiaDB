@@ -597,7 +597,6 @@ namespace engine
                                             pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      SET_ROUTEID setID ;
       UINT32 msgLen = 0 ;
       MsgOpTransCommitPre *pCommitPreMsg = NULL ;
       UINT32 i = 0 ;
@@ -623,7 +622,7 @@ namespace engine
       pCommitPreMsg->header.routeID.value = MSG_INVALID_ROUTEID ;
       pCommitPreMsg->header.requestID = 0 ;
       pCommitPreMsg->header.TID = cb->getTID() ;
-      pCommitPreMsg->nodeNum = setID.size() ;
+      pCommitPreMsg->nodeNum = pNodeMap->size() ;
 
       /// set node id
       for ( cit = pNodeMap->begin() ; cit != pNodeMap->end() ; ++cit )
