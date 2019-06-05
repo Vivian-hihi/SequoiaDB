@@ -841,6 +841,7 @@ namespace engine
 
    void _pmdEDUCB::setTransID( UINT64 transID )
    {
+#if defined ( SDB_ENGINE )
       if ( DPS_INVALID_TRANS_ID == _curTransID &&
            DPS_INVALID_TRANS_ID != transID )
       {
@@ -853,6 +854,7 @@ namespace engine
          /// end trans
          _transStatus = DPS_TRANS_UNKNOWN ;
       }
+#endif //SDB_ENGINE
       _curTransID = transID ;
    }
 
