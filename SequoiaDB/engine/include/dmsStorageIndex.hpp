@@ -175,11 +175,11 @@ namespace engine
                                  UINT16 indexType,
                                  IDmsOprHandler *pOprHandle = NULL ) ;
 
-         INT32    _indexInsert( _ixmIndexCB *indexCB,
-                                 const _ixmKey &key, const dmsRecordID &rid,
-                                 const Ordering& order,
-                                 _pmdEDUCB *cb, BOOLEAN dupAllowed,
-                                 BOOLEAN dropDups ) ;
+         INT32    _indexInsert( _dmsMBContext *context, _ixmIndexCB *indexCB,
+                                const _ixmKey &key, const dmsRecordID &rid,
+                                const Ordering& order,
+                                _pmdEDUCB *cb, BOOLEAN dupAllowed,
+                                BOOLEAN dropDups ) ;
 
          INT32    _indexInsert ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &inputObj, const dmsRecordID &rid,

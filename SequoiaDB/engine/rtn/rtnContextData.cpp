@@ -705,6 +705,7 @@ namespace engine
                goto error ;
             }
             // increase counter
+            DMS_MBSTAT_ONCE_INC( pMonAppCB, _mbContext, MON_SELECT, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
             // decrease numToReturn
             if ( _numToReturn > 0 )
@@ -906,6 +907,7 @@ namespace engine
                   goto error ;
                }
                // increase counter
+               DMS_MBSTAT_ONCE_INC( pMonAppCB, _mbContext, MON_SELECT, 1 ) ;
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
             }
             else

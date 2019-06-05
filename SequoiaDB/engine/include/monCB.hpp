@@ -143,6 +143,266 @@ namespace engine
    } ;
 
    /*
+      _monRuntimeCB define
+    */
+   class _monCRUDCB : public SDBObject
+   {
+      public :
+         _monCRUDCB ()
+         : totalDataRead( 0 ),
+           totalIndexRead( 0 ),
+           totalLobRead( 0 ),
+           totalDataWrite( 0 ),
+           totalIndexWrite( 0 ),
+           totalLobWrite( 0 ),
+           totalUpdate( 0 ),
+           totalDelete( 0 ),
+           totalInsert( 0 ),
+           totalSelect( 0 ),
+           totalRead( 0 ),
+           totalWrite( 0 )
+         {
+         }
+
+         _monCRUDCB ( const _monCRUDCB & monCB )
+         : totalDataRead( monCB.totalDataRead ),
+           totalIndexRead( monCB.totalIndexRead ),
+           totalLobRead( monCB.totalIndexRead ),
+           totalDataWrite( monCB.totalDataWrite ),
+           totalIndexWrite( monCB.totalIndexWrite ),
+           totalLobWrite( monCB.totalIndexWrite ),
+           totalUpdate( monCB.totalUpdate ),
+           totalDelete( monCB.totalDelete ),
+           totalInsert( monCB.totalInsert ),
+           totalSelect( monCB.totalSelect ),
+           totalRead( monCB.totalRead ),
+           totalWrite( monCB.totalWrite )
+         {
+         }
+
+         ~_monCRUDCB ()
+         {
+         }
+
+      public :
+         _monCRUDCB & operator = ( const _monCRUDCB & monCB )
+         {
+            set( monCB );
+            return ( *this ) ;
+         }
+
+         OSS_INLINE void reset ()
+         {
+            totalDataRead = 0 ;
+            totalIndexRead = 0 ;
+            totalLobRead = 0 ;
+            totalDataWrite = 0 ;
+            totalIndexWrite = 0 ;
+            totalLobWrite = 0 ;
+            totalUpdate = 0 ;
+            totalDelete = 0 ;
+            totalInsert = 0 ;
+            totalSelect = 0 ;
+            totalRead = 0 ;
+            totalWrite = 0 ;
+         }
+
+         OSS_INLINE void resetOnce ()
+         {
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalDataRead ), 0 ) ;
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalIndexRead ), 0 ) ;
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalLobRead ), 0 ) ;
+
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalDataWrite ), 0 ) ;
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalIndexWrite ), 0 ) ;
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalLobWrite ), 0 ) ;
+
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalUpdate ), 0 ) ;
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalDelete ), 0 ) ;
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalInsert ), 0 ) ;
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalSelect ), 0 ) ;
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalRead ), 0 ) ;
+            ossAtomicExchange64( OSS_ONCE_UINT64_PTR( totalWrite ), 0 ) ;
+         }
+
+         OSS_INLINE void set ( const _monCRUDCB & monCB )
+         {
+            totalDataRead = monCB.totalDataRead ;
+            totalIndexRead = monCB.totalIndexRead ;
+            totalLobRead = monCB.totalLobRead ;
+
+            totalDataWrite = monCB.totalDataWrite ;
+            totalIndexWrite = monCB.totalIndexWrite ;
+            totalLobWrite = monCB.totalLobWrite ;
+
+            totalUpdate = monCB.totalUpdate ;
+            totalDelete = monCB.totalDelete ;
+            totalInsert = monCB.totalInsert ;
+            totalSelect = monCB.totalSelect ;
+            totalRead = monCB.totalRead ;
+            totalWrite = monCB.totalWrite ;
+         }
+
+         OSS_INLINE void setFromOnce ( const _monCRUDCB & monCB )
+         {
+            totalDataRead = OSS_ONCE_UINT64_GET( monCB.totalDataRead ) ;
+            totalIndexRead = OSS_ONCE_UINT64_GET( monCB.totalIndexRead ) ;
+            totalLobRead = OSS_ONCE_UINT64_GET( monCB.totalLobRead ) ;
+            totalDataWrite = OSS_ONCE_UINT64_GET( monCB.totalDataWrite ) ;
+            totalIndexWrite = OSS_ONCE_UINT64_GET( monCB.totalIndexWrite ) ;
+            totalLobWrite = OSS_ONCE_UINT64_GET( monCB.totalLobWrite ) ;
+            totalUpdate = OSS_ONCE_UINT64_GET( monCB.totalUpdate ) ;
+            totalDelete = OSS_ONCE_UINT64_GET( monCB.totalDelete ) ;
+            totalInsert = OSS_ONCE_UINT64_GET( monCB.totalInsert ) ;
+            totalSelect = OSS_ONCE_UINT64_GET( monCB.totalSelect ) ;
+            totalRead = OSS_ONCE_UINT64_GET( monCB.totalRead ) ;
+            totalWrite = OSS_ONCE_UINT64_GET( monCB.totalWrite ) ;
+         }
+
+         BOOLEAN increase ( MON_OPERATION_TYPES op, UINT64 delta = 1 )
+         {
+            switch ( op )
+            {
+               case MON_DATA_READ :
+                  totalDataRead += delta ;
+                  return TRUE ;
+               case MON_INDEX_READ :
+                  totalIndexRead += delta ;
+                  return TRUE ;
+               case MON_LOB_READ :
+                  totalLobRead += delta ;
+                  return TRUE ;
+               case MON_DATA_WRITE :
+                  totalDataWrite += delta ;
+                  return TRUE ;
+               case MON_INDEX_WRITE :
+                  totalIndexWrite += delta ;
+                  return TRUE ;
+               case MON_LOB_WRITE :
+                  totalLobWrite += delta ;
+                  return TRUE ;
+               case MON_UPDATE :
+                  totalUpdate += delta ;
+                  totalWrite += delta ;
+                  return TRUE ;
+               case MON_DELETE :
+                  totalDelete += delta ;
+                  totalWrite += delta ;
+                  return TRUE ;
+               case MON_INSERT :
+                  totalInsert += delta ;
+                  totalWrite += delta ;
+                  return TRUE ;
+               case MON_SELECT :
+                  totalSelect += delta ;
+                  return TRUE ;
+               case MON_READ :
+                  totalRead += delta ;
+                  return TRUE ;
+               default :
+                  break ;
+            }
+            return FALSE ;
+         }
+
+         BOOLEAN increaseOnce ( MON_OPERATION_TYPES op, UINT64 delta = 1 )
+         {
+            switch ( op )
+            {
+               case MON_DATA_READ :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalDataRead ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_INDEX_READ :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalIndexRead ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_LOB_READ :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalLobRead ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_DATA_WRITE :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalDataWrite ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_INDEX_WRITE :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalIndexWrite ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_LOB_WRITE :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalLobWrite ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_UPDATE :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalUpdate ),
+                                    delta ) ;
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalWrite ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_DELETE :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalDelete ),
+                                    delta ) ;
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalWrite ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_INSERT :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalInsert ),
+                                    delta ) ;
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalWrite ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_SELECT :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalSelect ),
+                                    delta ) ;
+                  return TRUE ;
+               case MON_READ :
+                  ossFetchAndAdd64( OSS_ONCE_UINT64_PTR( totalRead ),
+                                    delta ) ;
+                  return TRUE ;
+               default :
+                  break ;
+            }
+            return FALSE ;
+         }
+
+         void increaseDelta ( const _monCRUDCB & startCB,
+                              const _monCRUDCB & endCB )
+         {
+            totalDataRead += ( endCB.totalDataRead - startCB.totalDataRead ) ;
+            totalIndexRead += ( endCB.totalIndexRead - startCB.totalIndexRead ) ;
+            totalLobRead += ( endCB.totalLobRead - startCB.totalLobRead ) ;
+
+            totalDataWrite += ( endCB.totalDataWrite - startCB.totalDataWrite ) ;
+            totalIndexWrite += ( endCB.totalIndexWrite - startCB.totalIndexWrite ) ;
+            totalLobWrite += ( endCB.totalLobWrite - startCB.totalLobWrite ) ;
+
+            totalUpdate += ( endCB.totalUpdate - startCB.totalUpdate ) ;
+            totalDelete += ( endCB.totalDelete - startCB.totalDelete ) ;
+            totalInsert += ( endCB.totalInsert - startCB.totalInsert ) ;
+            totalSelect += ( endCB.totalSelect - startCB.totalSelect ) ;
+            totalRead += ( endCB.totalRead - startCB.totalRead ) ;
+            totalWrite += ( endCB.totalWrite - startCB.totalWrite ) ;
+         }
+
+      public :
+         UINT64 totalDataRead ;
+         UINT64 totalIndexRead ;
+         UINT64 totalLobRead ;
+         UINT64 totalDataWrite ;
+         UINT64 totalIndexWrite ;
+         UINT64 totalLobWrite ;
+
+         UINT64 totalUpdate ;
+         UINT64 totalDelete ;
+         UINT64 totalInsert ;
+         UINT64 totalSelect ;
+         UINT64 totalRead ;
+         UINT64 totalWrite ;
+   } ;
+
+   typedef class _monCRUDCB monCRUDCB ;
+
+   /*
       _monDBCB define
    */
    class _monDBCB : public SDBObject
@@ -407,26 +667,13 @@ namespace engine
    /*
       _monAppCB define
    */
-   class _monAppCB : public SDBObject
+   class _monAppCB : public _monCRUDCB
    {
    private:
       monSvcTaskInfo    *_taskInfo ;
 
    public :
       monDBCB           *mondbcb ;
-
-      UINT64 totalDataRead ;
-      UINT64 totalIndexRead ;
-      UINT64 totalLobRead ;
-      UINT64 totalDataWrite ;
-      UINT64 totalIndexWrite ;
-      UINT64 totalLobWrite ;
-
-      UINT64 totalUpdate ;
-      UINT64 totalDelete ;
-      UINT64 totalInsert ;
-      UINT64 totalSelect ;  // total records into result set
-      UINT64 totalRead ;    // total records readed from disk
 
       ossTickDelta   totalReadTime ;
       ossTickDelta   totalWriteTime ;
@@ -461,57 +708,8 @@ namespace engine
 
       void monOperationCountInc( MON_OPERATION_TYPES op, UINT64 delta = 1 )
       {
-         switch ( op )
-         {
-            case MON_DATA_READ :
-               totalDataRead += delta ;
-               break ;
-
-            case MON_INDEX_READ :
-               totalIndexRead += delta ;
-               break ;
-
-            case MON_LOB_READ :
-               totalLobRead += delta ;
-               break ;
-
-            case MON_DATA_WRITE :
-               totalDataWrite += delta ;
-               break ;
-
-            case MON_INDEX_WRITE :
-               totalIndexWrite += delta ;
-               break ;
-
-            case MON_LOB_WRITE :
-               totalLobWrite += delta ;
-               break ;
-
-            case MON_UPDATE :
-               totalUpdate += delta ;
-               break ;
-
-            case MON_DELETE :
-               totalDelete += delta ;
-               break ;
-
-            case MON_INSERT :
-               totalInsert += delta ;
-               break ;
-
-            case MON_SELECT :
-               totalSelect += delta ;
-               break ;
-
-            case MON_READ :
-               totalRead += delta ;
-               break ;
-
-            default:
-               break ;
-         }
+         _monCRUDCB::increase( op, delta ) ;
          mondbcb->monOperationCountInc( op, delta ) ;
-
          if ( _taskInfo )
          {
             _taskInfo->monOperationCountInc( op, delta ) ;
@@ -540,6 +738,7 @@ namespace engine
       void saveLastOpDetail( const CHAR *format, ... ) ;
 
    } ;
+
    typedef _monAppCB  monAppCB ;
 
    /*

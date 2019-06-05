@@ -231,18 +231,7 @@ namespace engine
 
    void _monAppCB::reset()
    {
-      totalDataRead = 0 ;
-      totalIndexRead = 0 ;
-      totalLobRead   = 0 ;
-      totalDataWrite = 0 ;
-      totalIndexWrite = 0 ;
-      totalLobWrite   = 0 ;
-
-      totalUpdate = 0 ;
-      totalDelete = 0 ;
-      totalInsert = 0 ;
-      totalSelect = 0 ;
-      totalRead  = 0 ;
+      _monCRUDCB::reset() ;
 
       totalReadTime.clear() ;
       totalWriteTime.clear() ;

@@ -145,6 +145,16 @@
                                                 TotalLobPages:\"$Details.$[0].TotalLobPages\",\
                                                 TotalDataFreeSpace:\"$Details.$[0].TotalDataFreeSpace\",\
                                                 TotalIndexFreeSpace:\"$Details.$[0].TotalIndexFreeSpace\",\
+                                                TotalDataRead:\"$Details.$[0].TotalDataRead\",\
+                                                TotalIndexRead:\"$Details.$[0].TotalIndexRead\",\
+                                                TotalDataWrite:\"$Details.$[0].TotalDataWrite\",\
+                                                TotalIndexWrite:\"$Details.$[0].TotalIndexWrite\",\
+                                                TotalUpdate:\"$Details.$[0].TotalUpdate\",\
+                                                TotalDelete:\"$Details.$[0].TotalDelete\",\
+                                                TotalInsert:\"$Details.$[0].TotalInsert\",\
+                                                TotalSelect:\"$Details.$[0].TotalSelect\",\
+                                                TotalRead:\"$Details.$[0].TotalRead\",\
+                                                TotalWrite:\"$Details.$[0].TotalWrite\",\
                                                 NodeName:\"$Details.$[0].NodeName\"\
                                                 }\
                                        }\n\
@@ -155,7 +165,10 @@
                                                 Details:{ID:1,LogicalID:1,Sequence:1,\
                                                          Indexes:1,Status:1,TotalRecords:1,TotalDataPages:1,\
                                                          TotalIndexPages:1,TotalLobPages:1,TotalDataFreeSpace:1,\
-                                                         TotalIndexFreeSpace:1,NodeName:1}\
+                                                         TotalIndexFreeSpace:1,TotalDataRead:1,TotalIndexRead:1,\
+                                                         TotalDataWrite:1,TotalIndexWrite:1,TotalUpdate:1,\
+                                                         TotalDelete:1,TotalInsert:1,TotalSelect:1,TotalRead:1,\
+                                                         TotalWrite:1,NodeName:1}\
                                                 }\
                                        }\n\
                                        {$group:{\

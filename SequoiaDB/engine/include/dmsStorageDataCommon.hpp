@@ -50,6 +50,7 @@
 #include "ossMemPool.hpp"
 #include "utilInsertResult.hpp"
 #include "dmsOprHandler.hpp"
+#include "monCB.hpp"
 
 using namespace bson ;
 
@@ -390,6 +391,9 @@ namespace engine
       //    key for even old versions. Otherwise rollback could fail. 
       oldVersionContainer *_oldVerChain ;
 
+      // runtime CRUD statistics monitor
+      monCRUDCB _curdCB ;
+
       void reset()
       {
          _totalRecords           = 0 ;
@@ -421,6 +425,7 @@ namespace engine
          // remove all the chain, and leave asyn thread or next X lock holder
          // to physically free the lock/memory.
          removeAllFromChain() ;
+         _curdCB.reset() ;
       }
 
       void updateLastLSN( UINT64 lsn, DMS_FILE_TYPE type )
@@ -1006,7 +1011,7 @@ namespace engine
          /*
             Caller must hold the mbContext
          */
-         virtual INT32 extractData( const dmsMBContext *mbContext,
+         virtual INT32 extractData( dmsMBContext *mbContext,
                                     const dmsRecordRW &recordRW,
                                     _pmdEDUCB *cb,
                                     dmsRecordData &recordData ) = 0 ;
@@ -1506,6 +1511,23 @@ namespace engine
    BOOLEAN  dmsIsRecordIDValid( const BSONElement &oidEle,
                                 BOOLEAN allowEOO,
                                 const CHAR **pErrStr = NULL ) ;
+
+   /// curd statistics function
+#define DMS_MBSTAT_ONCE_INC( _monAppCB_, _mbContext_, op, delta )             \
+   {                                                                          \
+      if ( NULL != _monAppCB_ && NULL != _mbContext_ )                        \
+      {                                                                       \
+         _mbContext_->mbStat()->_curdCB.increaseOnce( ( op ), ( delta ) ) ;   \
+      }                                                                       \
+   }
+
+#define DMS_MBSTAT_INC( _monAppCB_, _mbContext_, op, delta )                  \
+   {                                                                          \
+      if ( NULL != _monAppCB_ && NULL != _mbContext_ )                        \
+      {                                                                       \
+         _mbContext_->mbStat()->_curdCB.increase( ( op ), ( delta ) ) ;       \
+      }                                                                       \
+   }
 
 }
 

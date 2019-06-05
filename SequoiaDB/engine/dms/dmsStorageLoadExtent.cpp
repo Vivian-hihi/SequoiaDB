@@ -491,6 +491,7 @@ namespace engine
                BSONObj obj ( recordData.data() ) ;
                // when we get here, that means we have a new record
                // to add to index
+               DMS_MBSTAT_INC( pMonAppCB, mbContext, MON_DATA_WRITE, 1 ) ;
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
 
                // attempt to insert into the index

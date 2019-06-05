@@ -1695,6 +1695,7 @@ namespace engine
       dmsRecordData recordData ;
       dmsRecordID waitUnlockRID ;
       BOOLEAN ignoredLock     = FALSE ;
+      UINT64 indexRead        = 0 ;
 
       PD_TRACE_ENTRY ( SDB__DMSIXSECSCAN_ADVANCE );
 
@@ -1718,6 +1719,11 @@ namespace engine
          _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
                                       &_curRID, &_callback ) ;
          _hasLockedRecord = FALSE ;
+      }
+
+      if ( NULL != cb->getMonAppCB() )
+      {
+         indexRead = cb->getMonAppCB()->totalIndexRead ;
       }
 
       _hasLockedRecord = FALSE ;
@@ -2091,6 +2097,11 @@ namespace engine
       goto error ;
 
    done:
+      if ( NULL != cb->getMonAppCB() )
+      {
+         DMS_MBSTAT_ONCE_INC( cb->getMonAppCB(), _context, MON_INDEX_READ,
+                              cb->getMonAppCB()->totalIndexRead - indexRead ) ;
+      }
       if ( waitUnlockRID.isValid() )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(),

@@ -3309,6 +3309,7 @@ namespace engine
 
          hasInsert = TRUE ;
          // update totalInsert monitor counter
+         DMS_MBSTAT_INC( pMonAppCB, context, MON_INSERT, 1 ) ;
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INSERT, 1 ) ;
          _incWriteRecord() ;
 
@@ -3655,6 +3656,7 @@ namespace engine
          if ( !isDeleting )
          {
             // increase conter
+            DMS_MBSTAT_INC( pMonAppCB, context, MON_DELETE, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DELETE, 1 ) ;
             _incWriteRecord() ;
          }
@@ -3961,6 +3963,7 @@ namespace engine
          }
 
          // increase update counter
+         DMS_MBSTAT_INC( pMonAppCB, context, MON_UPDATE, 1 ) ;
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_UPDATE, 1 ) ;
          _incWriteRecord() ;
       }

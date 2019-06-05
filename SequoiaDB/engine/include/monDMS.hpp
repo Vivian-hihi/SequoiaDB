@@ -49,6 +49,8 @@
 #include <set>
 #include <vector>
 #include "ossMemPool.hpp"
+#include "monCB.hpp"
+
 using namespace std ;
 using namespace bson ;
 
@@ -173,7 +175,10 @@ namespace engine
       BOOLEAN _idxIsValid ;
       BOOLEAN _lobIsValid ;
 
+      monCRUDCB _curdCB ;
+
       _detailedInfo ()
+      : _curdCB()
       {
          _numIndexes          = 0 ;
          _blockID             = 0 ;

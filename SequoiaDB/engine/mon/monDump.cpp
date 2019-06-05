@@ -2443,6 +2443,28 @@ namespace engine
             sub.appendBool ( FIELD_NAME_IDX_COMMITTED, detail._idxIsValid ) ;
             sub.appendBool ( FIELD_NAME_LOB_COMMITTED, detail._lobIsValid ) ;
 
+            /// CRUD statistics
+            sub.append( FIELD_NAME_TOTALDATAREAD,
+                        (INT64)detail._curdCB.totalDataRead ) ;
+            sub.append( FIELD_NAME_TOTALINDEXREAD,
+                        (SINT64)detail._curdCB.totalIndexRead ) ;
+            sub.append( FIELD_NAME_TOTALDATAWRITE,
+                        (SINT64)detail._curdCB.totalDataWrite ) ;
+            sub.append( FIELD_NAME_TOTALINDEXWRITE,
+                        (SINT64)detail._curdCB.totalIndexWrite ) ;
+            sub.append( FIELD_NAME_TOTALUPDATE,
+                        (SINT64)detail._curdCB.totalUpdate ) ;
+            sub.append( FIELD_NAME_TOTALDELETE,
+                        (SINT64)detail._curdCB.totalDelete ) ;
+            sub.append( FIELD_NAME_TOTALINSERT,
+                        (SINT64)detail._curdCB.totalInsert ) ;
+            sub.append( FIELD_NAME_TOTALSELECT,
+                        (SINT64)detail._curdCB.totalSelect ) ;
+            sub.append( FIELD_NAME_TOTALREAD,
+                        (SINT64)detail._curdCB.totalRead ) ;
+            sub.append( FIELD_NAME_TOTALWRITE,
+                        (SINT64)detail._curdCB.totalWrite ) ;
+
             sub.done() ;
          }
          ba.done() ;

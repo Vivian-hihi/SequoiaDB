@@ -331,5 +331,25 @@ enum SDB_SHELL_RETURN_CODE
 #define SDB_RETURNCODE_ERROR   SDB_SRC_ERROR
 #define SDB_RETURNCODE_SYSTEM  SDB_SRC_SYS
 
+#define OSS_ONCE_INT32_PTR( x )     ( (volatile INT32 *)( &( x ) ) )
+#define OSS_ONCE_INT32_REF( x )     ( *( OSS_ONCE_INT32_PTR( x ) ) )
+#define OSS_ONCE_INT32_SET( x, v )  ( { OSS_ONCE_INT32_REF( x ) = ( v ) ; } )
+#define OSS_ONCE_INT32_GET( x )     ( OSS_ONCE_INT32_REF( x ) )
+
+#define OSS_ONCE_INT64_PTR( x )     ( (volatile INT64 *)( &( x ) ) )
+#define OSS_ONCE_INT64_REF( x )     ( *( OSS_ONCE_INT64_PTR( x ) ) )
+#define OSS_ONCE_INT64_SET( x, v )  ( { OSS_ONCE_INT64_REF( x ) = ( v ) ; } )
+#define OSS_ONCE_INT64_GET( x )     ( OSS_ONCE_INT64_REF( x ) )
+
+#define OSS_ONCE_UINT32_PTR( x )    ( (volatile UINT32 *)( &( x ) ) )
+#define OSS_ONCE_UINT32_REF( x )    ( *( OSS_ONCE_UINT32_PTR( x ) ) )
+#define OSS_ONCE_UINT32_SET( x, v ) ( { OSS_ONCE_UINT32_REF( x ) = ( v ) ; } )
+#define OSS_ONCE_UINT32_GET( x )    ( OSS_ONCE_UINT32_REF( x ) )
+
+#define OSS_ONCE_UINT64_PTR( x )    ( (volatile UINT64 *)( &( x ) ) )
+#define OSS_ONCE_UINT64_REF( x )    ( *( OSS_ONCE_UINT64_PTR( x ) ) )
+#define OSS_ONCE_UINT64_SET( x, v ) ( { OSS_ONCE_UINT64_REF( x ) = ( v ) ; } )
+#define OSS_ONCE_UINT64_GET( x )    ( OSS_ONCE_UINT64_REF( x ) )
+
 #endif /* OSSTYPES_H_ */
 

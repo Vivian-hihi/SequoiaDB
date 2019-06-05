@@ -284,6 +284,7 @@ namespace engine
          if ( pRecord->isOvf() )
          {
             ovfRID = pRecord->getOvfRID() ;
+            DMS_MBSTAT_INC( pMonAppCB, context, MON_DATA_READ, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
             ovfExtRW = extent2RW( ovfRID._extent, context->mbID() ) ;
             ovfRW = record2RW( ovfRID, context->mbID() ) ;
@@ -295,6 +296,7 @@ namespace engine
          if ( dmsRecordSize <= pRecord->getSize() )
          {
             pRecord->setData( newRecordData ) ;
+            DMS_MBSTAT_INC( pMonAppCB, context, MON_DATA_WRITE, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
 
             if ( ovfRID.isValid() )
@@ -312,6 +314,7 @@ namespace engine
          else if ( pOvfRecord && dmsRecordSize <= pOvfRecord->getSize() )
          {
             pOvfRecord->setData( newRecordData ) ;
+            DMS_MBSTAT_INC( pMonAppCB, context, MON_DATA_WRITE, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
             /// sub the remove data info
             context->mbStat()->_totalDataLen -= recordData.orgLen() ;
@@ -824,6 +827,7 @@ namespace engine
       pRecord->setPrevOffset( DMS_INVALID_OFFSET ) ;
 
       // increase write counter
+      DMS_MBSTAT_INC( pMonAppCB, context, MON_DATA_WRITE, 1 ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
 
       // no need to change offset
@@ -932,6 +936,7 @@ namespace engine
          }
       }
       //increase data write counter
+      DMS_MBSTAT_INC( pMonAppCB, context, MON_DATA_WRITE, 1 ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
 
       rc = _saveDeletedRecord( context->mb(), rid, 0 ) ;
@@ -993,7 +998,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_EXTRACTDATA, "_dmsStorageData::extractData" )
-   INT32 _dmsStorageData::extractData( const dmsMBContext *mbContext,
+   INT32 _dmsStorageData::extractData( dmsMBContext *mbContext,
                                        const dmsRecordRW &recordRW,
                                        _pmdEDUCB *cb,
                                        dmsRecordData &recordData )
@@ -1028,6 +1033,7 @@ namespace engine
             goto error ;
          }
          SDB_ASSERT( pRecord->isOvt(), "Record must be ovt" ) ;
+         DMS_MBSTAT_ONCE_INC( pMonAppCB, mbContext, MON_DATA_READ, 1 ) ;
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
       }
 
@@ -1059,6 +1065,8 @@ namespace engine
          recordData.setData( pUncompressData, unCompressDataLen,
                              UTIL_COMPRESSOR_INVALID, FALSE ) ;
       }
+      DMS_MBSTAT_ONCE_INC( pMonAppCB, mbContext, MON_DATA_READ, 1 ) ;
+      DMS_MBSTAT_ONCE_INC( pMonAppCB, mbContext, MON_READ, 1 ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
 
