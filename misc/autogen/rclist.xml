@@ -2722,5 +2722,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_RTN_EXIST_INDOUBT_TRANS</name>
+         <description>
+            <en>Exists in-doubt transaction</en>
+            <cn>存在未确认事务</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
