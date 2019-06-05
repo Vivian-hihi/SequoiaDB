@@ -178,7 +178,7 @@
     <Compile Include="Bson\TestBsonMaxKey14604.cs" />
     <Compile Include="Bson\TestBsonMaxKey14605.cs" />
     <Compile Include="Bson\TestBsonMaxKey14606.cs" />
-    <Compile Include="Bson\TestBsonMaxKey14609.cs" />
+    <Compile Include="Bson\TestBsonMinKey14609.cs" />
     <Compile Include="Bson\TestBsonMinKey14607.cs" />
     <Compile Include="Bson\TestBsonMinKey14608.cs" />
     <Compile Include="Bson\TestBsonMaxKey14637.cs" />
