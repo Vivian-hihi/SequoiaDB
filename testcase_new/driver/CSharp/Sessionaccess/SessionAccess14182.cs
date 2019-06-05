@@ -76,10 +76,7 @@ namespace CSharp.Sessionaccess
             {
                 cs.DropCollection(clName);
             }
-            if (sdb.IsReplicaGroupExist(rgName))
-            {
-                sdb.RemoveReplicaGroup(rgName);
-            }
+            sdb.RemoveReplicaGroup(rgName);
             if (sdb != null)
             {
                 sdb.Disconnect();

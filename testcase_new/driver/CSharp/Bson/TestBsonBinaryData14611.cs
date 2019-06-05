@@ -12,7 +12,7 @@ namespace CSharp.Bson
 
     /**
      * description:  
-     *                   ToString()；ToGuid ()；ToGuid (GuidRepresentation guidRepresentation)----需要确认如何验证？//TODO：这个注释要删掉，文档中有这个接口，应该是对外接口吧，是否需要验证？
+     *                   ToString()；ToGuid ()；ToGuid (GuidRepresentation guidRepresentation)
      * testcase:         14611
      * author:      chensiqin
      * date:        2019/03/11
@@ -50,6 +50,7 @@ namespace CSharp.Bson
             Assert.AreEqual(guid, binary5.ToGuid());
             Assert.AreEqual(guid, binary6.ToGuid());
             Assert.AreEqual(binary3.ToGuid(), binary4.ToGuid());
+            Assert.AreEqual(binary3.ToGuid(), binary3.ToGuid(GuidRepresentation.CSharpLegacy));
         }
 
         [TestCleanup()]

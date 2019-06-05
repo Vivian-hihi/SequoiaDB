@@ -65,8 +65,8 @@ namespace CSharp.Crud.Analyze
                 AnalyzeCommon.CheckScanTypeByExplain(analyzeClList.ElementAt(i), "ixscan");
             for (int i = 0; i < nonAnalyzeClList.Count; ++i)
                 AnalyzeCommon.CheckScanTypeByExplain(nonAnalyzeClList.ElementAt(i), "ixscan");
-            //TODO:这里未指定参数mode的值，与文本用例不符
-            sdb.Analyze(new BsonDocument("CollectionSpace", analyzeCsName));
+            
+            sdb.Analyze(new BsonDocument("CollectionSpace", analyzeCsName).Add("Mode", 2));
             for (int i = 0; i < analyzeClList.Count; ++i)
                 AnalyzeCommon.CheckScanTypeByExplain(analyzeClList.ElementAt(i), "tbscan");
             for (int i = 0; i < nonAnalyzeClList.Count; ++i)

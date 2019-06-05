@@ -35,7 +35,7 @@ namespace CSharp.Sessionaccess
             sdb = new Sequoiadb(SdbTestBase.coordUrl);
             sdb.Connect();
         }
-        //TODO:此用例的文本用例需要修改，步骤序号乱了
+
         [TestMethod]
         public void Test14187()
         {

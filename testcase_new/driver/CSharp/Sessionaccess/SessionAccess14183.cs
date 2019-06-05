@@ -83,8 +83,6 @@ namespace CSharp.Sessionaccess
             Assert.AreEqual(slaveNodeName, actualNodeName);
 
             BsonDocument actSessionAttr = sdb.GetSessionAttr();
-            expSessionAttr.Remove("Timeout");
-            expSessionAttr.Add("Timeout", 20000L);//TODO:这两行跟前面设置超时时间为20000L一样，应该不用重新设置了吧？
             Assert.AreEqual(actSessionAttr.GetElement("PreferedInstance").Value, expSessionAttr.GetElement("PreferedInstance").Value);
             Assert.AreEqual(actSessionAttr.GetElement("Timeout").Value, expSessionAttr.GetElement("Timeout").Value);
         }

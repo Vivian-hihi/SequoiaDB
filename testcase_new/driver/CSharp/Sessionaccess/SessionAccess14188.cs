@@ -124,7 +124,7 @@ namespace CSharp.Sessionaccess
             BsonDocument attachOption = new BsonDocument();
             BsonDocument attachLowObj = new BsonDocument();
             BsonDocument attachUpObj = new BsonDocument();
-            attachOption.Add("a", 1);//TODO:这里应该是attachLowObj.Add("a",1)吧？
+            attachLowObj.Add("a", 1);
             attachOption.Add("LowBound", attachLowObj);
             attachUpObj.Add("a", 100);
             attachOption.Add("UpBound", attachUpObj);

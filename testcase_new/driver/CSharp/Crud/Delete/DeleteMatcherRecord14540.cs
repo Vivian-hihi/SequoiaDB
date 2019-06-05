@@ -47,10 +47,7 @@ namespace CSharp.Crud.Delete
                 mathcer.Add("str", "test1");
                 //matcher is String
                 cl.Delete(mathcer,null);
-                //TODO:下面三行是否可以考虑使用cl.Query(null, mathcer, null, null)代替，同下
-                DBQuery query = new DBQuery();
-                query.Matcher = mathcer;
-                cursor = cl.Query(query);
+                cursor = cl.Query(mathcer, null, null, null);
                 Assert.IsNull(cursor.Next(), "Delete(mathcer,null) not success, query not null");
                 Assert.AreEqual(6, cl.GetCount(null));
                 cursor.Close();
@@ -59,19 +56,15 @@ namespace CSharp.Crud.Delete
                 int[] arrValue = { 1, 2, 3, 4, 5 };
                 mathcer = new BsonDocument();
                 mathcer.Add("arr", new BsonArray(arrValue));
-                query = new DBQuery();
-                query.Matcher = mathcer;
                 cl.Delete(mathcer, null);
-                cursor = cl.Query(query);
+                cursor = cl.Query(mathcer, null, null, null);
                 Assert.IsNull(cursor.Next(), "Delete mathcer arr not success, query not null");
                 Assert.AreEqual(5, cl.GetCount(null));
                 cursor.Close();
 
                 //matcher is nest
                 cl.Delete(nestDoc, null);
-                query = new DBQuery();
-                query.Matcher = nestDoc;
-                cursor = cl.Query(query);
+                cursor = cl.Query(mathcer, null, null, null);
                 Assert.IsNull(cursor.Next(), "Delete mathcer nest type not success, query not null");
                 Assert.AreEqual(4, cl.GetCount(null));
                 cursor.Close();

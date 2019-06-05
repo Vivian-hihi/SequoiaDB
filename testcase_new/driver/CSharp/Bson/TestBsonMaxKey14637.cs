@@ -55,7 +55,7 @@ namespace CSharp.Bson
             while (cur.Next() != null)
             {
                 BsonDocument doc = cur.Current();
-                //doc.GetElement("value1").Value//TODO:这里可以删掉
+
                 Assert.AreEqual(bsonMaxKey, doc.GetElement("maxKey").Value);
                 Assert.AreEqual(bsonMaxKey.ToString(), doc.GetElement("maxKey").Value.ToString());
 

@@ -62,8 +62,6 @@ namespace CSharp.Sessionaccess
             BsonDocument doc = sdb.GetSessionAttr();
             Assert.AreEqual("M", doc.GetElement("PreferedInstance").Value.ToString());
 
-            //TODO:下面的步骤中少了第2步或者第4步
-
             BsonDocument options = new BsonDocument()
                                      .Add("PreferedInstance", "S");
             sdb.SetSessionAttr(options);
