@@ -627,10 +627,16 @@ namespace engine
       if ( _isInitialized && ( NULL != _list ) && numOfObjects > 0 )
       {
          maxObj       = 0 ;
+         FLOAT64 ratio= 0.0 ;
+
+         if ( _begin > 0 && 1 == _segList.size() )
+         {
+            goto done ;
+         }
 
          // if 85% of objects in pool are in use, implies the system might be
          // busy. Likely a new segment might be added in soon.
-         FLOAT64 ratio = _begin / numOfObjects ;
+         ratio = (FLOAT64)_begin / numOfObjects ;
 
          if ( _pHandler )
          {
@@ -683,13 +689,13 @@ namespace engine
          }
  
          // calculate the highest segment in use by max obj index
-         if ( maxObj > 0 )
+         if ( _begin > 0 )
          {
             segInUse  = ( maxObj >> _exponent ) + 1 + freeSegToKeep ;
          }
          else
          {
-            segInUse = 0 + freeSegToKeep ;
+            segInUse = freeSegToKeep ;
          }
 
          // if there are enough segments to be freed
@@ -697,9 +703,19 @@ namespace engine
          {
             // calculate new size
             newSize = ( segInUse << _exponent ) ;
-            // allocate _list with new size
-            pListTmp = ( UTIL_OBJIDX * )SDB_OSS_MALLOC( sizeof( UTIL_OBJIDX ) *
-                                                        newSize ) ;
+
+            if ( newSize > 0 )
+            {
+               // allocate _list with new size
+               pListTmp = ( UTIL_OBJIDX * )SDB_OSS_MALLOC( sizeof( UTIL_OBJIDX ) *
+                                                           newSize ) ;
+               if ( !pListTmp )
+               {
+                  rc = SDB_OOM ;
+                  goto error ;
+               }
+            }
+
             if ( NULL != pListTmp )
             {
                // 
@@ -732,36 +748,32 @@ namespace engine
                      pListTmp[i] = i ;
                   }
                }
+            }
 
-               // set _numOfObjs to new size
-               _numOfObjs.swap( newSize ) ;
+            // set _numOfObjs to new size
+            _numOfObjs.swap( newSize ) ;
 
-               // discard old _list
-               SAFE_OSS_FREE( _list ) ;
+            // discard old _list
+            SAFE_OSS_FREE( _list ) ;
 
-               // assign _list with new allocation, pListTmp
-               _list = pListTmp ;
+            // assign _list with new allocation, pListTmp
+            _list = pListTmp ;
 
-               // free the segments
-               for ( INT32 i = (INT32)_segList.size() - 1 ;
-                     i >= (INT32)segInUse ;
-                     --i )
-               {
-                  SDB_OSS_DEL [] ( _segList[i] ) ;
-                  _segList.pop_back() ;
-                  ++freeSegNum ;
-               }
-
-               if ( _pHandler )
-               {
-                  UINT64 freeSize = ( (UINT64)freeSegNum << _exponent ) *
-                                    sizeof( _objX ) ;
-                  _pHandler->onReleaseSegment( freeSize ) ;
-               }
-            }  // if pListTemp is allocated
-            else
+            // free the segments
+            for ( INT32 i = (INT32)_segList.size() - 1 ;
+                  i >= (INT32)segInUse ;
+                  --i )
             {
-               rc = SDB_OOM ;
+               SDB_OSS_DEL [] ( _segList[i] ) ;
+               _segList.pop_back() ;
+               ++freeSegNum ;
+            }
+
+            if ( _pHandler )
+            {
+               UINT64 freeSize = ( (UINT64)freeSegNum << _exponent ) *
+                                 sizeof( _objX ) ;
+               _pHandler->onReleaseSegment( freeSize ) ;
             }
          }  // no enough free segs, _segList.size() > segInUse
       }
