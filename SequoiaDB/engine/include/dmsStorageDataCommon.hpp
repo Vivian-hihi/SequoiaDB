@@ -392,7 +392,7 @@ namespace engine
       oldVersionContainer *_oldVerChain ;
 
       // runtime CRUD statistics monitor
-      monCRUDCB _curdCB ;
+      monCRUDCB _crudCB ;
 
       void reset()
       {
@@ -425,7 +425,7 @@ namespace engine
          // remove all the chain, and leave asyn thread or next X lock holder
          // to physically free the lock/memory.
          removeAllFromChain() ;
-         _curdCB.reset() ;
+         _crudCB.reset() ;
       }
 
       void updateLastLSN( UINT64 lsn, DMS_FILE_TYPE type )
@@ -1512,12 +1512,12 @@ namespace engine
                                 BOOLEAN allowEOO,
                                 const CHAR **pErrStr = NULL ) ;
 
-   /// curd statistics function
+   /// crud statistics function
 #define DMS_MBSTAT_ONCE_INC( _monAppCB_, _mbContext_, op, delta )             \
    {                                                                          \
       if ( NULL != _monAppCB_ && NULL != _mbContext_ )                        \
       {                                                                       \
-         _mbContext_->mbStat()->_curdCB.increaseOnce( ( op ), ( delta ) ) ;   \
+         _mbContext_->mbStat()->_crudCB.increaseOnce( ( op ), ( delta ) ) ;   \
       }                                                                       \
    }
 
@@ -1525,7 +1525,7 @@ namespace engine
    {                                                                          \
       if ( NULL != _monAppCB_ && NULL != _mbContext_ )                        \
       {                                                                       \
-         _mbContext_->mbStat()->_curdCB.increase( ( op ), ( delta ) ) ;       \
+         _mbContext_->mbStat()->_crudCB.increase( ( op ), ( delta ) ) ;       \
       }                                                                       \
    }
 

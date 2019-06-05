@@ -3128,7 +3128,7 @@ namespace engine
          info._idxIsValid = mbStat->_idxCommitFlag.peek() ? TRUE : FALSE ;
          info._lobIsValid = mbStat->_lobCommitFlag.peek() ? TRUE : FALSE ;
 
-         info._curdCB.setFromOnce( mbStat->_curdCB ) ;
+         info._crudCB.setFromOnce( mbStat->_crudCB ) ;
 
          if ( !_pLobSu->isOpened() )
          {

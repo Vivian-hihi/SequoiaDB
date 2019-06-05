@@ -175,10 +175,10 @@ namespace engine
       BOOLEAN _idxIsValid ;
       BOOLEAN _lobIsValid ;
 
-      monCRUDCB _curdCB ;
+      monCRUDCB _crudCB ;
 
       _detailedInfo ()
-      : _curdCB()
+      : _crudCB()
       {
          _numIndexes          = 0 ;
          _blockID             = 0 ;

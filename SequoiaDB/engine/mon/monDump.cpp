@@ -2445,25 +2445,25 @@ namespace engine
 
             /// CRUD statistics
             sub.append( FIELD_NAME_TOTALDATAREAD,
-                        (INT64)detail._curdCB.totalDataRead ) ;
+                        (INT64)detail._crudCB.totalDataRead ) ;
             sub.append( FIELD_NAME_TOTALINDEXREAD,
-                        (SINT64)detail._curdCB.totalIndexRead ) ;
+                        (SINT64)detail._crudCB.totalIndexRead ) ;
             sub.append( FIELD_NAME_TOTALDATAWRITE,
-                        (SINT64)detail._curdCB.totalDataWrite ) ;
+                        (SINT64)detail._crudCB.totalDataWrite ) ;
             sub.append( FIELD_NAME_TOTALINDEXWRITE,
-                        (SINT64)detail._curdCB.totalIndexWrite ) ;
+                        (SINT64)detail._crudCB.totalIndexWrite ) ;
             sub.append( FIELD_NAME_TOTALUPDATE,
-                        (SINT64)detail._curdCB.totalUpdate ) ;
+                        (SINT64)detail._crudCB.totalUpdate ) ;
             sub.append( FIELD_NAME_TOTALDELETE,
-                        (SINT64)detail._curdCB.totalDelete ) ;
+                        (SINT64)detail._crudCB.totalDelete ) ;
             sub.append( FIELD_NAME_TOTALINSERT,
-                        (SINT64)detail._curdCB.totalInsert ) ;
+                        (SINT64)detail._crudCB.totalInsert ) ;
             sub.append( FIELD_NAME_TOTALSELECT,
-                        (SINT64)detail._curdCB.totalSelect ) ;
+                        (SINT64)detail._crudCB.totalSelect ) ;
             sub.append( FIELD_NAME_TOTALREAD,
-                        (SINT64)detail._curdCB.totalRead ) ;
+                        (SINT64)detail._crudCB.totalRead ) ;
             sub.append( FIELD_NAME_TOTALWRITE,
-                        (SINT64)detail._curdCB.totalWrite ) ;
+                        (SINT64)detail._crudCB.totalWrite ) ;
 
             sub.done() ;
          }

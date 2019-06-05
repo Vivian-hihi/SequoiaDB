@@ -1721,7 +1721,7 @@ namespace engine
          _hasLockedRecord = FALSE ;
       }
 
-      if ( NULL != cb->getMonAppCB() )
+      if ( NULL != cb && NULL != cb->getMonAppCB() )
       {
          indexRead = cb->getMonAppCB()->totalIndexRead ;
       }
@@ -2097,7 +2097,7 @@ namespace engine
       goto error ;
 
    done:
-      if ( NULL != cb->getMonAppCB() )
+      if ( NULL != cb && NULL != cb->getMonAppCB() )
       {
          DMS_MBSTAT_ONCE_INC( cb->getMonAppCB(), _context, MON_INDEX_READ,
                               cb->getMonAppCB()->totalIndexRead - indexRead ) ;
