@@ -20,7 +20,7 @@ namespace CSharp.Bson
     */
 
     [TestClass]
-    public class TestBsonMaxKey14609//TODO:这里是Minkey的校验，文件名写的是Maxkey
+    public class TestBsonMinKey14609
     {
         [TestInitialize()]
         public void SetUp()
