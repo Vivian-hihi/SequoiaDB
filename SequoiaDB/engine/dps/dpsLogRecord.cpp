@@ -1040,7 +1040,7 @@ namespace engine
              if ( itr.valid() )
              {
                len += ossSnprintf( outBuf + len, outSize - len,
-                                   " FirstLSN : 0x%08lx",
+                                   " FirstLSN : 0x%08lx"OSS_NEWLINE,
                                    *((DPS_LSN_OFFSET *)itr.value()) ) ;
              }
 
@@ -1048,7 +1048,7 @@ namespace engine
              if ( itr.valid() )
              {
                 len += ossSnprintf( outBuf + len, outSize - len,
-                                    " IsPreCommit : %d",
+                                    " IsPreCommit : %d"OSS_NEWLINE,
                                     *((UINT8 *)itr.value()) ) ;
              }
 
@@ -1057,7 +1057,7 @@ namespace engine
              {
                 nodeNum = *(UINT32 *)itr.value() ;
                 len += ossSnprintf( outBuf + len, outSize - len,
-                                    " NodeNum : %u",
+                                    " NodeNum : %u"OSS_NEWLINE,
                                     nodeNum ) ;
              }
 
@@ -1091,7 +1091,7 @@ namespace engine
                 strNodes += " ]" ;
 
                 len += ossSnprintf( outBuf + len, outSize - len,
-                                    " Nodes   : %s",
+                                    " Nodes   : %s"OSS_NEWLINE,
                                     strNodes.c_str() ) ;
              }
              break ;
