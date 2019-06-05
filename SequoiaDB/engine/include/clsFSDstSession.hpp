@@ -93,6 +93,34 @@ namespace engine
    class _clsDataDstBaseSession : public _pmdAsyncSession
    {
       DECLARE_OBJ_MSG_MAP()
+
+      struct _clMetaData
+      {
+         string csName ;
+         string clName ;
+         DMS_STORAGE_TYPE csType ;
+         utilCLUniqueID clUniqueID ;
+         UINT32 pageSize ;
+         UINT32 attributes ;
+         INT32  lobPageSize ;
+         UTIL_COMPRESSOR_TYPE compType ;
+         BSONObj extOptions ;
+         const CHAR *dictionary ;
+         UINT32 dictSize ;
+
+         _clMetaData()
+         {
+            csType = DMS_STORAGE_NORMAL ;
+            clUniqueID = UTIL_UNIQUEID_NULL ;
+            pageSize = DMS_INVALID_PAGESIZE ;
+            attributes = 0 ;
+            lobPageSize = DMS_INVALID_PAGESIZE ;
+            compType = UTIL_COMPRESSOR_INVALID ;
+            dictionary = NULL ;
+            dictSize = 0 ;
+         }
+      } ;
+
       public:
          _clsDataDstBaseSession ( UINT64 sessionID, _netRouteAgent *agent ) ;
          virtual ~_clsDataDstBaseSession () ;
@@ -102,6 +130,9 @@ namespace engine
          virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
          virtual void    onRecieve ( const NET_HANDLE netHandle,
                                      MsgHeader * msg ) ;
+
+      protected:
+         virtual INT32 _onMetaDone( const _clMetaData &meta ) ;
 
       protected:
          virtual void   _begin () = 0 ;
@@ -144,16 +175,7 @@ namespace engine
                                const MsgLobTuple *&tuple,
                                const CHAR *&data ) ;
 
-         INT32          _extractMeta( const CHAR *objdata,
-                                      string &cs,
-                                      string &collection,
-                                      utilCLUniqueID &clUniqueID,
-                                      UINT32 &pageSize,
-                                      UINT32 &attributes,
-                                      INT32 &lobPageSize,
-                                      DMS_STORAGE_TYPE &csType,
-                                      UTIL_COMPRESSOR_TYPE &compType,
-                                      BSONObj &extOptions ) ;
+         INT32         _extractMeta( const CHAR *objdata, _clMetaData &meta ) ;
 
          INT32          _extractIndex( const CHAR *objdata,
                                        vector<BSONObj> &index,
@@ -230,6 +252,8 @@ namespace engine
    protected:
       virtual void      _onAttach () ;
       virtual void      _onDetach () ;
+      virtual INT32     _onMetaDone( const _clMetaData &meta ) ;
+
    protected:
       void              _pullTransLog ( DPS_LSN &begin ) ;
       INT32             _extractBeginRspBody( const BSONObj &bodyObj ) ;

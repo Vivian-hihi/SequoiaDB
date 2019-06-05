@@ -1612,7 +1612,6 @@ namespace engine
                              context->mbID() ) ;
          dictExt = dictRW.writePtr<dmsDictExtent>() ;
          _releaseSpace( context->mb()->_dictExtentID, dictExt->_blockSize ) ;
-         dictExt->_flag = DMS_EXTENT_FLAG_FREED ;
          context->mb()->_dictExtentID = DMS_INVALID_EXTENT ;
          context->mb()->_dictVersion = 0 ;
       }
@@ -4188,44 +4187,65 @@ namespace engine
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACOMMON_RMCOMPRESSOR ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_DICTPERSIST, "_dmsStorageDataCommon::dictPersist" )
-   INT32 _dmsStorageDataCommon::dictPersist( UINT16 mbID, UINT32 clLID, UINT32 startLID,
-                                             const CHAR *dict, UINT32 dictLen )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_LOADDICTIONARY, "_dmsStorageDataCommon::loadDictionary" )
+   INT32 _dmsStorageDataCommon::loadDictionary( dmsMBContext *context,
+                                                const CHAR *dictionary,
+                                                UINT32 dictLen, BOOLEAN force )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON_DICTPERSIST ) ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON_LOADDICTIONARY ) ;
+
+      dmsExtRW extRW ;
+      dmsMB *mb = context->mb() ;
       dmsExtentID dictExtID = DMS_INVALID_EXTENT ;
       dmsDictExtent *dictExtent = NULL ;
-      dmsMBContext *context = NULL ;
-      dmsCompressorEntry *compressorEntry = &_compressorEntry[ mbID ] ;
-      dmsExtRW extRW ;
+      dmsCompressorEntry *compressorEntry =
+         &_compressorEntry[ context->mbID() ] ;
 
-      /* Number of pages to store the dictionary, including the extent header.*/
+      SDB_ASSERT( context, "MB context is NULL" ) ;
+      SDB_ASSERT( dictionary && dictLen > 0, "Dictionary is NULL" ) ;
+
+      // Calculate number of pages to store the dictionary, including the extent
+      // header.
       UINT32 pageNum = ( sizeof( dmsDictExtent ) + dictLen +
                          ( pageSize() - 1 ) ) / pageSize() ;
 
-      rc = getMBContext( &context, mbID, clLID, startLID, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
+      if ( !context->isMBLock( EXCLUSIVE ) )
+      {
+         PD_LOG( PDERROR, "MB context must be locked in EXCLUSIVE mode" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
-      if ( !dmsAccessAndFlagCompatiblity( context->mb()->_flag,
+      if ( !dmsAccessAndFlagCompatiblity( mb->_flag,
                                           DMS_ACCESS_TYPE_CRT_DICT ) )
       {
-         PD_LOG( PDERROR, "Incompatible collection mode: %d",
-                 context->mb()->_flag ) ;
+         PD_LOG( PDERROR, "Incompatible collection mode: %d", mb->_flag ) ;
          rc = SDB_DMS_INCOMPATIBLE_MODE ;
          goto error ;
       }
 
-      if ( !OSS_BIT_TEST( context->mb()->_attributes,
-                          DMS_MB_ATTR_COMPRESSED ) ||
-           UTIL_COMPRESSOR_LZW != context->mb()->_compressorType ||
-           DMS_INVALID_EXTENT != context->mb()->_dictExtentID )
+      if ( !OSS_BIT_TEST( mb->_attributes, DMS_MB_ATTR_COMPRESSED ) )
       {
-         PD_LOG( PDERROR, "Some system error occurs[MBID:%u, Attribute:%u"
-                 "CompressorType:%u, DictExtentID:%d]", mbID,
-                 context->mb()->_attributes, context->mb()->_compressorType,
-                 context->mb()->_dictExtentID ) ;
-         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Compression is not enabled for collection[%s]",
+                 mb->_collectionName ) ;
+         rc = SDB_OPERATION_INCOMPATIBLE ;
+         goto error ;
+      }
+
+      if ( UTIL_COMPRESSOR_LZW != mb->_compressorType )
+      {
+         PD_LOG( PDERROR, "Compression type of collection[%s] is not lzw",
+                 mb->_collectionName ) ;
+         rc = SDB_OPERATION_INCOMPATIBLE ;
+         goto error ;
+      }
+
+      if ( DMS_INVALID_EXTENT != mb->_dictExtentID && !force )
+      {
+         PD_LOG( PDERROR, "Collection[%s] has valid compression dictionary and "
+                 "force load is false", mb->_collectionName ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -4246,9 +4266,9 @@ namespace engine
          goto error ;
       }
 
-      /// Init
+      // Copy dictionary into extent, and flush to disk.
       dictExtent->init( pageNum, context->mbID() ) ;
-      dictExtent->setDict( dict, dictLen ) ;
+      dictExtent->setDict( dictionary, dictLen ) ;
       for ( INT32 i = 0; i < 3; i++ )
       {
          rc = flushPages( dictExtID, pageNum, TRUE ) ;
@@ -4260,40 +4280,153 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to flush dictionary. It will be "
                    "created and flushed again next time" ) ;
 
-      /*
-       * Set the dictionary extent id in mb only after the dictionary has been
-       * successfully flushed to disk.
-       */
-      context->mb()->_dictExtentID = dictExtID ;
-      context->mb()->_dictVersion = UTIL_LZW_DICT_VERSION ;
+      // Release the old dictionary in force mode.
+      if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
+      {
+         dmsExtRW oldDictRW ;
+         dmsDictExtent *dictExt = NULL ;
+         // Remove the current compressor and release the dictionary.
+         _rmCompressor( context ) ;
+         oldDictRW = extent2RW( mb->_dictExtentID, context->mbID() ) ;
+         dictExt = oldDictRW.writePtr<dmsDictExtent>() ;
+         _releaseSpace( mb->_dictExtentID, dictExt->_blockSize ) ;
+      }
+
+      // Set the dictionary extent id in mb only after the dictionary has been
+      // successfully flushed to disk.
+      mb->_dictExtentID = dictExtID ;
+      mb->_dictVersion = UTIL_LZW_DICT_VERSION ;
 
       /// Make sure the dict persist
       flushMME( isSyncDeep() ) ;
 
       {
-         UTIL_COMPRESSOR_TYPE type  = (UTIL_COMPRESSOR_TYPE)
-                                   ( context->mb()->_compressorType ) ;
+         UTIL_COMPRESSOR_TYPE type  =
+               (UTIL_COMPRESSOR_TYPE)mb->_compressorType ;
          dmsCompressorGuard guard( compressorEntry, EXCLUSIVE ) ;
          compressorEntry->setCompressor( getCompressorByType( type ) ) ;
          compressorEntry->setDictionary(
             (const utilDictHandle)( beginFixedAddr( dictExtID, pageNum ) +
                                     DMS_DICTEXTENT_HEADER_SZ ) ) ;
-         compressorEntry->setFlags( context->mb()->_compressFlags ) ;
       }
 
    done:
-      if ( context )
-      {
-         releaseMBContext( context ) ;
-      }
-
-      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACOMMON_DICTPERSIST, rc ) ;
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACOMMON_LOADDICTIONARY, rc ) ;
       return rc ;
    error:
       if ( DMS_INVALID_EXTENT != dictExtID )
       {
-         _freeExtent( dictExtID, mbID ) ;
+         _freeExtent( dictExtID, context->mbID() ) ;
       }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_GETDICTIONARY, "_dmsStorageDataCommon::getDictionary" )
+   BOOLEAN _dmsStorageDataCommon::getDictionary( dmsMBContext *context,
+                                                 const CHAR *&dictionary,
+                                                 UINT32 &dictLen )
+   {
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON_GETDICTIONARY ) ;
+      BOOLEAN found = FALSE ;
+      dmsMB *mb = NULL ;
+
+      if ( !context->isMBLock( SHARED ) )
+      {
+         PD_LOG( PDERROR, "MB context must be locked in SHARED mode" ) ;
+         goto error ;
+      }
+
+      mb = context->mb() ;
+      dictionary = NULL ;
+      dictLen = 0 ;
+
+      if ( DMS_INVALID_EXTENT != mb->_dictExtentID )
+      {
+         dmsExtRW dictRW = extent2RW( mb->_dictExtentID, context->mbID() ) ;
+         const dmsDictExtent *dictExt = dictRW.readPtr<dmsDictExtent>() ;
+         dictionary = (CHAR *)dictExt + DMS_DICTEXTENT_HEADER_SZ ;
+         dictLen = ( dictExt->_blockSize << pageSizeSquareRoot() ) -
+                   DMS_DICTEXTENT_HEADER_SZ ;
+         found = TRUE ;
+      }
+
+   done:
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATACOMMON_GETDICTIONARY ) ;
+      return found ;
+   error:
+      goto done ;
+   }
+
+   INT32 _dmsStorageData::extractData( dmsMBContext *mbContext,
+                                       dmsRecordRW &recordRW,
+                                       _pmdEDUCB *cb,
+                                       dmsRecordData &recordData )
+   {
+      INT32 rc                = SDB_OK ;
+      monAppCB * pMonAppCB    = cb ? cb->getMonAppCB() : NULL ;
+      const dmsRecord *pRecord= recordRW.readPtr( 0 ) ;
+
+      recordData.reset() ;
+
+      if ( !mbContext->isMBLock() )
+      {
+         PD_LOG( PDERROR, "MB Context must be locked" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      /// if ovf, need to get the ovt's data
+      if ( pRecord->isOvf() )
+      {
+         dmsRecordID ovfRID = pRecord->getOvfRID() ;
+         dmsRecordRW ovfRW = record2RW( ovfRID, mbContext->mbID() ) ;
+         // Inherit no-throw property
+         ovfRW.setNothrow( recordRW.isNothrow() ) ;
+         pRecord = ovfRW.readPtr( 0 ) ;
+         if ( NULL == pRecord )
+         {
+            rc = pdGetLastError() ? pdGetLastError() : SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to get record from address[%d.%d]",
+                    ovfRID._extent, ovfRID._offset ) ;
+            goto error ;
+         }
+         SDB_ASSERT( pRecord->isOvt(), "Record must be ovt" ) ;
+         DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
+      }
+
+      recordData.setData( pRecord->getData(), pRecord->getDataLength(),
+                          FALSE, TRUE ) ;
+
+      if ( pRecord->isCompressed() )
+      {
+         const CHAR *pUncompressData = NULL ;
+         INT32 unCompressDataLen = 0 ;
+         rc = dmsUncompress( cb, &_compressorEntry[ mbContext->mbID() ],
+                             pRecord->getData(), pRecord->getDataLength(),
+                             &pUncompressData, &unCompressDataLen ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to uncompress data, rc: %d", rc ) ;
+            goto error ;
+         }
+         /// check the length
+         if ( unCompressDataLen != *(INT32*)pUncompressData )
+         {
+            PD_LOG( PDERROR, "Uncompress data length[%d] is not unmatch "
+                    "real length[%d]", unCompressDataLen,
+                    *(INT32*)pUncompressData ) ;
+            rc = SDB_CORRUPTED_RECORD ;
+            goto error ;
+         }
+         recordData.setData( pUncompressData, unCompressDataLen,
+                             FALSE, FALSE ) ;
+      }
+      DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
+      DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

@@ -386,9 +386,9 @@ namespace engine
       // Use a double linked list to holding all oldVer for the collection
       // By doing this we can:
       // 1. Retrieve the statistic data easily
-      // 2. Quickly rebuild in memory index tree using the oldVer of the 
+      // 2. Quickly rebuild in memory index tree using the oldVer of the
       //    collection. Online create index need this to guarantee no dup
-      //    key for even old versions. Otherwise rollback could fail. 
+      //    key for even old versions. Otherwise rollback could fail.
       oldVersionContainer *_oldVerChain ;
 
       // runtime CRUD statistics monitor
@@ -1003,9 +1003,12 @@ namespace engine
                        _pmdEDUCB *cb,
                        BOOLEAN dataOwned = FALSE ) ;
 
-         /* Create the compressor, and set the dictionry for it. */
-         INT32 dictPersist( UINT16 mbID, UINT32 clLID, UINT32 startLID,
-                            const CHAR *dict, UINT32 dictLen ) ;
+         INT32 loadDictionary( dmsMBContext *context, const CHAR *dictionary,
+                               UINT32 dictLen, BOOLEAN force ) ;
+
+         BOOLEAN getDictionary( dmsMBContext *context, const CHAR *&dictionary,
+                                UINT32 &dictLen ) ;
+
          OSS_INLINE _dmsCompressorEntry *getCompressorEntry( UINT16 mbID ) ;
 
          /*

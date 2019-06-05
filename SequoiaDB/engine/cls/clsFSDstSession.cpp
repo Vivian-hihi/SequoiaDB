@@ -181,6 +181,11 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSDATADBS_ONRECV );
    }
 
+   INT32 _clsDataDstBaseSession::_onMetaDone( const _clMetaData &meta )
+   {
+      return SDB_OK ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__DISCONN, "_clsDataDstBaseSession::_disconnect" )
    void _clsDataDstBaseSession::_disconnect ()
    {
@@ -515,15 +520,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__EXTMETA, "_clsDataDstBaseSession::_extractMeta" )
    INT32 _clsDataDstBaseSession::_extractMeta( const CHAR *objdata,
-                                               string &cs,
-                                               string &collection,
-                                               utilCLUniqueID &clUniqueID,
-                                               UINT32 &pageSize,
-                                               UINT32 &attributes,
-                                               INT32 &lobPageSize,
-                                               DMS_STORAGE_TYPE &csType,
-                                               UTIL_COMPRESSOR_TYPE &compType,
-                                               BSONObj &extOptions )
+                                               _clMetaData &meta )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDATADBS__EXTMETA );
@@ -540,6 +537,7 @@ namespace engine
          BSONElement typeEle ;
          BSONElement extOptEle ;
          BSONElement csEle ;
+         BSONElement dictEle ;
 
          csEle = obj.getField( CLS_FS_CS_NAME ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta data: %s", sessionName(),
@@ -548,21 +546,21 @@ namespace engine
          {
             goto error ;
          }
-         cs = csEle.String() ;
+         meta.csName = csEle.String() ;
 
          collecionEle = obj.getField( CLS_FS_COLLECTION_NAME ) ;
          if ( collecionEle.eoo() || String != collecionEle.type() )
          {
             goto error ;
          }
-         collection = collecionEle.String() ;
+         meta.clName = collecionEle.String() ;
 
          uniqueIDEle = obj.getField( CLS_FS_COLLECTION_UNIQUEID ) ;
          if ( !uniqueIDEle.eoo() )
          {
             if ( NumberLong == uniqueIDEle.type() )
             {
-               clUniqueID = (UINT64)uniqueIDEle.numberLong() ;
+               meta.clUniqueID = (UINT64)uniqueIDEle.numberLong() ;
             }
             else
             {
@@ -580,16 +578,16 @@ namespace engine
          {
             goto error ;
          }
-         pageSize = pageEle.Int() ;
+         meta.pageSize = pageEle.Int() ;
 
          attri = ele.embeddedObject().getField( CLS_FS_ATTRIBUTES ) ;
          if ( attri.eoo() || !attri.isNumber() )
          {
-            attributes = 0 ;
+            meta.attributes = 0 ;
          }
          else
          {
-            attributes = attri.Number() ;
+            meta.attributes = attri.Number() ;
          }
 
          compressorType = ele.embeddedObject().getField( CLS_FS_COMP_TYPE );
@@ -597,12 +595,12 @@ namespace engine
          {
             goto error ;
          }
-         compType = (UTIL_COMPRESSOR_TYPE)compressorType.Int() ;
+         meta.compType = (UTIL_COMPRESSOR_TYPE)compressorType.Int() ;
 
          extOptEle = ele.embeddedObject().getField( CLS_FS_EXT_OPTION ) ;
          if ( Object == extOptEle.type() )
          {
-            extOptions = extOptEle.Obj() ;
+            meta.extOptions = extOptEle.Obj() ;
          }
 
          lobPageEle =  ele.embeddedObject().getField( CLS_FS_LOB_PAGE_SIZE ) ;
@@ -612,12 +610,12 @@ namespace engine
          }
          else if ( NumberInt == lobPageEle.type() )
          {
-            lobPageSize = lobPageEle.numberInt() ;
+            meta.lobPageSize = lobPageEle.numberInt() ;
          }
          else
          {
             /// forward-compatible -- yunwu
-            lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+            meta.lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
          }
 
          typeEle = ele.embeddedObject().getField( CLS_FS_CS_TYPE ) ;
@@ -630,7 +628,7 @@ namespace engine
             if (  typeEle.numberInt() >= DMS_STORAGE_NORMAL &&
                   typeEle.numberInt() < DMS_STORAGE_DUMMY )
             {
-               csType = (DMS_STORAGE_TYPE)( typeEle.numberInt() ) ;
+               meta.csType = (DMS_STORAGE_TYPE)( typeEle.numberInt() ) ;
             }
             else
             {
@@ -639,7 +637,20 @@ namespace engine
          }
          else
          {
-            csType= DMS_STORAGE_NORMAL ;
+            meta.csType= DMS_STORAGE_NORMAL ;
+         }
+
+         dictEle = ele.embeddedObject().getField( CLS_FS_COMP_DICT ) ;
+         if ( !dictEle.eoo() )
+         {
+            INT32 dictSize = 0 ;
+            if ( BinData != dictEle.type() )
+            {
+               goto error ;
+            }
+
+            meta.dictionary = dictEle.binData( dictSize ) ;
+            meta.dictSize = dictSize ;
          }
       }
       catch ( std::exception &e )
@@ -753,28 +764,12 @@ namespace engine
       try
       {
          INT32 rc = SDB_OK ;
-         string cs ;
-         string collection ;
-         utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ;
-         utilCSUniqueID csUniqueID = UTIL_UNIQUEID_NULL ;
-         UINT32 pageSize = 0 ;
-         UINT32 attributes = 0 ;
-         UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
-         BSONObj extOptions ;
          CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = { 0 } ;
          CHAR *objdata = ( CHAR *)( &( msg->header ) ) +
                                     sizeof( MsgClsFSMetaRes ) ;
-         INT32 lobPageSize = 0 ;
-         DMS_STORAGE_TYPE csType = DMS_STORAGE_NORMAL ;
+         _clMetaData meta ;
          // extract the meta response
-         if ( SDB_OK != _extractMeta( objdata,
-                                      cs, collection, clUniqueID,
-                                      pageSize,
-                                      attributes,
-                                      lobPageSize,
-                                      csType,
-                                      compType,
-                                      extOptions ) )
+         if ( SDB_OK != _extractMeta( objdata, meta ) )
          {
             _disconnect() ;
             goto done ;
@@ -782,7 +777,7 @@ namespace engine
 
          // join space + collection to a full collection name
          ossSnprintf( fullName, DMS_COLLECTION_FULL_NAME_SZ,
-                      "%s.%s", cs.c_str(), collection.c_str() ) ;
+                      "%s.%s", meta.csName.c_str(), meta.clName.c_str() ) ;
          // sanity check to make sure we are on the right collection
          if ( 0 != _fullNames.at( _current ).compare( fullName ) )
          {
@@ -795,17 +790,14 @@ namespace engine
          PD_LOG( PDEVENT, "Session[%s]: Begin to sync collection[%s]",
                  sessionName(), fullName ) ;
 
-         // get cs unique id
-         csUniqueID = utilGetCSUniqueID( clUniqueID ) ;
-
          // create local cs and collection
-         rc = _replayer.replayCrtCS( cs.c_str(), csUniqueID,
-                                     pageSize, lobPageSize,
-                                     csType, eduCB() ) ;
-         rc = _replayer.replayCrtCollection( fullName, clUniqueID,
-                                             attributes, eduCB(), compType,
-                                             ( extOptions.isEmpty() ?
-                                               NULL : &extOptions ) ) ;
+         rc = _replayer.replayCrtCS( meta.csName.c_str(), utilGetCSUniqueID( meta.clUniqueID ),
+                                     meta.pageSize, meta.lobPageSize,
+                                     meta.csType, eduCB() ) ;
+         rc = _replayer.replayCrtCollection( fullName, meta.clUniqueID,
+                                             meta.attributes, eduCB(), meta.compType,
+                                             ( meta.extOptions.isEmpty() ?
+                                               NULL : &meta.extOptions ) ) ;
          if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
          {
             PD_LOG( PDERROR, "Session[%s]: Failed to create collection"
@@ -813,6 +805,8 @@ namespace engine
             _disconnect() ;
             goto done ;
          }
+
+         _onMetaDone( meta ) ;
       }
       catch ( std::exception &e )
       {
@@ -1796,6 +1790,24 @@ namespace engine
 
       _disconnect() ;
       PD_TRACE_EXIT ( SDB__CLSFSDS__ONDETACH );
+   }
+
+   INT32 _clsFSDstSession::_onMetaDone( const _clMetaData &meta )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( meta.dictionary && meta.dictSize > 0 )
+      {
+         rc = rtnLoadCollectionDict( (meta.csName + "." + meta.clName).c_str(),
+                                     meta.dictionary, meta.dictSize ) ;
+         PD_RC_CHECK( rc, PDERROR, "Load dictionary for collection[%s] "
+                      "failed: %d", meta.clName.c_str(), rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    BOOLEAN _clsFSDstSession::_onNotify( MsgClsFSNotifyRes *pMsg )
