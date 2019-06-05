@@ -9,6 +9,7 @@ $LIST_CS
 ##字段信息##
 
 | 字段名 | 类型   | 描述       |
+| ----- | ----- | ----- |
 | CLUniqueHWM | 长整型 | 集合空间最近创建的集合的UniqueID |
 | Collection | 数组 | 包含集合的信息 |
 | LogicalID | 字符串 | 集合空间逻辑 ID，为递增顺序 |
