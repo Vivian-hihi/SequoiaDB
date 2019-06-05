@@ -40,6 +40,7 @@
 #include "coordUtil.hpp"
 #include "rtnCommandDef.hpp"
 #include "rtn.hpp"
+#include "utilMemListPool.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -238,7 +239,11 @@ namespace engine
       }
 
       cb->startRollback() ;
-      rc = releaseTransSession( nodes, cb ) ;
+
+      if ( DPS_TRANS_DOING == cb->getTransStatus() )
+      {
+         rc = releaseTransSession( nodes, cb ) ;
+      }
 
    done:
       _groupSession.getPropSite()->endTrans( cb ) ;
@@ -433,6 +438,9 @@ namespace engine
          goto error ;
       }
 
+      /// set trans status
+      cb->setTransStatus( DPS_TRANS_WAIT_COMMIT ) ;
+
    done:
       if ( pMsgReq )
       {
@@ -588,22 +596,55 @@ namespace engine
                                             INT32 *pMsgSize,
                                             pmdEDUCB *cb )
    {
-      _phase1Msg.header.messageLength = sizeof( _phase1Msg ) ;
-      _phase1Msg.header.opCode = MSG_BS_TRANS_COMMITPRE_REQ ;
-      _phase1Msg.header.routeID.value = MSG_INVALID_ROUTEID ;
-      _phase1Msg.header.requestID = 0 ;
-      _phase1Msg.header.TID = cb->getTID() ;
+      INT32 rc = SDB_OK ;
+      SET_ROUTEID setID ;
+      UINT32 msgLen = 0 ;
+      MsgOpTransCommitPre *pCommitPreMsg = NULL ;
+      UINT32 i = 0 ;
 
-      *pMsg = ( CHAR* )&_phase1Msg ;
-      *pMsgSize = _phase1Msg.header.messageLength ;
+      _coordSessionPropSite::MAP_TRANS_NODES_CIT cit ;
+      const _coordSessionPropSite::MAP_TRANS_NODES *pNodeMap = NULL ;
 
-      return SDB_OK ;
+      /// dump trans nodes
+      pNodeMap = _groupSession.getPropSite()->getTransNodeMap() ;
+      msgLen = sizeof( MsgOpTransCommitPre ) +
+               pNodeMap->size() * sizeof( UINT64 ) ;
+
+      pCommitPreMsg = ( MsgOpTransCommitPre* )utilThreadAlloc( msgLen ) ;
+      if ( !pCommitPreMsg )
+      {
+         PD_LOG( PDERROR, "Alloc memory failed(Size:%u)", msgLen ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      pCommitPreMsg->header.messageLength = msgLen ;
+      pCommitPreMsg->header.opCode = MSG_BS_TRANS_COMMITPRE_REQ ;
+      pCommitPreMsg->header.routeID.value = MSG_INVALID_ROUTEID ;
+      pCommitPreMsg->header.requestID = 0 ;
+      pCommitPreMsg->header.TID = cb->getTID() ;
+      pCommitPreMsg->nodeNum = setID.size() ;
+
+      /// set node id
+      for ( cit = pNodeMap->begin() ; cit != pNodeMap->end() ; ++cit )
+      {
+         pCommitPreMsg->nodes[ i ] = cit->second.value ;
+      }
+
+      *pMsg = ( CHAR* )pCommitPreMsg ;
+      *pMsgSize = msgLen ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _coordTransCommit::releasePhase1Msg( CHAR *pMsg,
                                              INT32 msgSize,
                                              pmdEDUCB *cb )
    {
+      utilThreadRelease( (void*&)pMsg ) ;
    }
 
    INT32 _coordTransCommit::buildPhase2Msg( const CHAR *pReceiveBuffer,
@@ -611,7 +652,7 @@ namespace engine
                                             INT32 *pMsgSize,
                                             pmdEDUCB *cb )
    {
-      _phase2Msg.header.messageLength = sizeof( _phase1Msg ) ;
+      _phase2Msg.header.messageLength = sizeof( _phase2Msg ) ;
       _phase2Msg.header.opCode = MSG_BS_TRANS_COMMIT_REQ ;
       _phase2Msg.header.routeID.value = MSG_INVALID_ROUTEID ;
       _phase2Msg.header.requestID = 0 ;

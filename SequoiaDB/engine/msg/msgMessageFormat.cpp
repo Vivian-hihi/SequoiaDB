@@ -112,8 +112,9 @@ const CHAR* msgType2String( MSG_TYPE msgType, BOOLEAN isCommand )
       case MSG_BS_TRANS_BEGIN_REQ :
          return "BEGIN" ;
       case MSG_BS_TRANS_COMMIT_REQ :
-      case MSG_BS_TRANS_COMMITPRE_REQ :
          return "COMMIT" ;
+      case MSG_BS_TRANS_COMMITPRE_REQ :
+         return "PRE-COMMIT" ;
       case MSG_BS_TRANS_ROLLBACK_REQ :
          return "ROLLBACK" ;
       case MSG_BS_AGGREGATE_REQ :

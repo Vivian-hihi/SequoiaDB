@@ -136,6 +136,7 @@ namespace engine
 #if defined ( SDB_ENGINE )
       _relatedTransLSN  = DPS_INVALID_LSN_OFFSET ;
       _transRC          = SDB_OK ;
+      _transStatus      = DPS_TRANS_UNKNOWN ;
 
       _curRequestID     = 1 ;
       _confChangeID     = 0 ;
@@ -840,6 +841,18 @@ namespace engine
 
    void _pmdEDUCB::setTransID( UINT64 transID )
    {
+      if ( DPS_INVALID_TRANS_ID == _curTransID &&
+           DPS_INVALID_TRANS_ID != transID )
+      {
+         /// begin trans
+         _transStatus = DPS_TRANS_DOING ;
+         _transRC = SDB_OK ;
+      }
+      else if ( DPS_INVALID_TRANS_ID == transID )
+      {
+         /// end trans
+         _transStatus = DPS_TRANS_UNKNOWN ;
+      }
       _curTransID = transID ;
    }
 
@@ -1064,6 +1077,7 @@ namespace engine
       _relatedTransLSN = DPS_INVALID_LSN_OFFSET ;
       _curTransLSN = DPS_INVALID_LSN_OFFSET ;
       _transRC = SDB_OK ;
+      _transStatus = DPS_TRANS_UNKNOWN ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
       if ( pTransCB )
       {

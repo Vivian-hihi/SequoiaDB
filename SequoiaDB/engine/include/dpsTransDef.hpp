@@ -69,6 +69,19 @@ namespace engine
       DPS_TRANSLOCK_OP_MODE_TEST
    } ;
 
+   /*
+      DPS_TRANS_STATUS define
+   */
+   enum DPS_TRANS_STATUS
+   {
+      DPS_TRANS_DOING         = 1,
+      DPS_TRANS_WAIT_COMMIT   = 3,
+      DPS_TRANS_COMMIT        = 4,
+      DPS_TRANS_ROLLBACK      = 6,
+
+      DPS_TRANS_UNKNOWN       = 99
+   } ;
+
    #define DPS_TRANS_ISOLATION_DFT        TRANS_ISOLATION_RU
    #define DPS_TRANS_DFT_TIMEOUT          (60)  /* 1 minute */
    #define DPS_TRANS_LOCKWAIT_DFT         FALSE
@@ -93,6 +106,19 @@ namespace engine
    #define DPS_TRANS_LRB_TOTAL_DFT        ( 268435456 )
    #define DPS_TRANS_LRB_MIN              ( 65536 )
    #define DPS_TRANS_LRB_MAX              DPS_TRANS_LRB_TOTAL_DFT 
+
+   /*
+      _dpsTransEvent define
+   */
+   class _dpsTransEvent
+   {
+      public:
+         _dpsTransEvent() {}
+         virtual ~_dpsTransEvent() {}
+
+         virtual INT32  onRollbackAll() = 0 ;
+   } ;
+   typedef _dpsTransEvent dpsTransEvent ;
 
 }
 

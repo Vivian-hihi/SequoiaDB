@@ -281,7 +281,6 @@ namespace engine
 
          /// set trans id
          cb->setTransID( transID ) ;
-         cb->setTransRC( SDB_OK ) ;
 
          _mapTransNodes.clear() ;
 

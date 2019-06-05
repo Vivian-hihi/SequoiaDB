@@ -62,7 +62,7 @@ namespace engine
       UINT32 _length;
 
    public:
-      _dpsMessageBlock( UINT32 size );
+      _dpsMessageBlock( UINT32 size = DPS_MSG_BLOCK_DEF_LEN );
       _dpsMessageBlock( const _dpsMessageBlock &mb ) ;
       _dpsMessageBlock &operator=(const _dpsMessageBlock &mb ) ;
       ~_dpsMessageBlock();

@@ -41,6 +41,7 @@
 #include "ossEvent.hpp"
 #include "ossLatch.hpp"
 #include "clsCatalogAgent.hpp"
+#include "clsGTSAgent.hpp"
 #include "sdbInterface.hpp"
 #include "clsDCMgr.hpp"
 #include "monDMS.hpp"
@@ -197,6 +198,7 @@ namespace engine
          nodeMgrAgent* getNodeMgrAgent () ;
          clsFreezingWindow *getFreezingWindow() ;
          clsDCMgr* getDCMgr() ;
+         clsGTSAgent* getGTSAgent() ;
 
          INT32 getAndLockCataSet( const CHAR *name,
                                   clsCatalogSet **ppSet,
@@ -296,6 +298,7 @@ namespace engine
          INT32 _onHandleClose( NET_HANDLE handle, MsgHeader* msg ) ;
          INT32 _onAuthReqMsg( NET_HANDLE handle, MsgHeader * msg ) ;
          INT32 _onTextIdxInfoReqMsg( NET_HANDLE handle, MsgHeader * msg ) ;
+         INT32 _onTransCheckReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
          INT32 _buildTextIdxObj( const monCSSimple *csInfo,
                                  const monCLSimple *clInfo,
                                  const monIndex *idxInfo,
@@ -313,6 +316,7 @@ namespace engine
          _clsNodeMgrAgent              *_pNodeMgrAgent ;
          clsFreezingWindow             *_pFreezingWindow ;
          clsDCMgr                      *_pDCMgr ;
+         clsGTSAgent                   *_pGTSAgent ;
          ossSpinXLatch                 _catLatch ;
          MAP_CAT_EVENT                 _mapSyncCatEvent ;
          MAP_CLID_EVENT                _mapSyncCLIDEvent ;

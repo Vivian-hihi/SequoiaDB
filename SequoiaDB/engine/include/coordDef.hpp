@@ -87,7 +87,7 @@ namespace engine
    typedef ossPoolMap< UINT64, MsgHeader*>            ROUTE_REPLY_MAP ;
    typedef ossPoolMap< UINT32, netIOVec>              GROUP_2_IOVEC ;
    typedef ossPoolSet< INT32 >                        SET_RC ;
-   typedef ossPoolSet< UINT64 >                       SET_ROUTEID ;
+   typedef SET_UINT64                                 SET_ROUTEID ;
 
    typedef ossPoolMap< UINT32, UINT32>                CoordGroupList ;
    typedef clsNodeItem                                CoordNodeInfo ;

@@ -46,6 +46,7 @@
 #include "utilCompressor.hpp"
 #include "pmdStartup.hpp"
 #include "clsCommand.hpp"
+#include "dpsOp2Record.hpp"
 
 using namespace bson ;
 
@@ -276,7 +277,7 @@ namespace engine
             _pRtnCB->contextDelete ( contextID, NULL ) ;
          }
 
-         INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
+         INT32 rcTmp = _rollbackTrans( NULL, 0 ) ;
          if ( rcTmp)
          {
             PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
@@ -306,6 +307,107 @@ namespace engine
 
       _pmdAsyncSession::_onDetach () ;
       PD_TRACE_EXIT ( SDB__CLSSHDSESS__ONDETACH ) ;
+   }
+
+   INT32 _clsShdSession::_rollbackTrans( BOOLEAN *pHasRollback,
+                                         UINT32 timeout )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( DPS_TRANS_WAIT_COMMIT == _pEDUCB->getTransStatus() &&
+           DPS_INVALID_LSN_OFFSET != _pEDUCB->getCurTransLsn() )
+      {
+         DPS_LSN lsn ;
+         _dpsMessageBlock mb ;
+         lsn.offset = _pEDUCB->getCurTransLsn() ;
+         clsGTSAgent *pGTSAgent = _pShdMgr->getGTSAgent() ;
+         DPS_TRANS_STATUS status = DPS_TRANS_UNKNOWN ;
+
+         DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
+         DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
+         DPS_LSN_OFFSET firstTransLsn = DPS_INVALID_LSN_OFFSET ;
+         UINT8 isPre = 0 ;
+         UINT32 nodeNum = 0 ;
+         const UINT64 *pNodes = NULL ;
+         UINT32 timeCounter = 0 ;
+
+         /// load lsn
+         rc = _pDpsCB->search( lsn, &mb ) ;
+         SDB_ASSERT( SDB_OK == rc, "Search lsn is error" ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Search lsn(%llu) failed, rc: %d",
+                    lsn.offset, rc ) ;
+            goto rollback ;
+         }
+
+         rc = dpsRecord2TransCommit( mb.offset( 0 ), transID, preTransLsn,
+                                     firstTransLsn, isPre, nodeNum,
+                                     &pNodes ) ;
+         SDB_ASSERT( SDB_OK == rc && isPre != 0 && nodeNum > 0,
+                     "Invalid log" ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Log is invalid" ) ;
+            goto rollback ;
+         }
+
+         do
+         {
+            rc = pGTSAgent->checkTransStatus( _pEDUCB->getTransID(),
+                                              nodeNum, pNodes,
+                                              _pEDUCB, status ) ;
+            if ( rc )
+            {
+               ossSleep( OSS_ONE_SEC ) ;
+               timeCounter += OSS_ONE_SEC ;
+
+               if ( timeout > 0 && timeCounter > timeout )
+               {
+                  goto error ;
+               }
+               continue ;
+            }
+
+            if ( DPS_TRANS_COMMIT == status )
+            {
+               goto commit ;
+            }
+            else
+            {
+               goto rollback ;
+            }
+         } while( pmdIsPrimary() ) ;
+      }
+
+   rollback:
+      if ( pHasRollback )
+      {
+         *pHasRollback = TRUE ;
+      }
+      rc = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      goto done ;
+
+   commit:
+      if ( pHasRollback )
+      {
+         *pHasRollback = FALSE ;
+      }
+      rc = rtnTransCommit( _pEDUCB, _pDpsCB ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      goto done ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__DFMSGFUNC, "_clsShdSession::_defaultMsgFunc" )
@@ -493,6 +595,7 @@ namespace engine
                break;
 
             case MSG_BS_TRANS_COMMITPRE_REQ:
+               isNeedRollback = TRUE ;
                rc = _onTransCommitPreMsg( handle, msg );
                break;
 
@@ -590,6 +693,14 @@ namespace engine
                }
             }
          }
+         else if ( SDB_RTN_EXIST_INDOUBT_TRANS == rc )
+         {
+            _rollbackTrans() ;
+            if ( DPS_TRANS_WAIT_COMMIT != eduCB()->getTransStatus() )
+            {
+               continue ;
+            }
+         }
 
          if ( SDB_CLS_DATA_NODE_CAT_VER_OLD == rc )
          {
@@ -636,13 +747,16 @@ namespace engine
          BOOLEAN hasRollbacked = FALSE ;
 
          /// when coord catalog info is old, can't rollback, coord will retry
-         if ( inTrans && ( isAutoCommit ||
-              ( isNeedRollback && SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
-                _pEDUCB->getTransExecutor()->isTransAutoRollback() ) ) )
+         if ( inTrans &&
+              ( isAutoCommit ||
+                ( isNeedRollback && SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
+                  _pEDUCB->getTransExecutor()->isTransAutoRollback() )
+               )
+             )
          {
             PD_LOG ( PDDEBUG, "Rolling back operation(op=%d, rc=%d) on data",
                      opCode, rc ) ;
-            INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
+            INT32 rcTmp = _rollbackTrans() ;
             if ( rcTmp )
             {
                PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
@@ -1770,7 +1884,7 @@ namespace engine
             _pRtnCB->contextDelete ( contextID, NULL ) ;
          }
 
-         INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB );
+         INT32 rcTmp = _rollbackTrans();
          if ( rcTmp )
          {
             PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
@@ -1784,30 +1898,42 @@ namespace engine
    INT32 _clsShdSession::_onTransBeginMsg( NET_HANDLE handle, MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
+      MsgOpTransBegin *pTransBegin = ( MsgOpTransBegin* )msg ;
+
+      if ( DPS_TRANS_WAIT_COMMIT == eduCB()->getTransStatus() )
+      {
+         rc = SDB_RTN_EXIST_INDOUBT_TRANS ;
+         goto error ;
+      }
 
       rc = _checkPrimaryStatus() ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// Old trans begin msg is only a MsgHeader
+      if ( msg->messageLength > (INT32)sizeof( MsgHeader ) &&
+           DPS_INVALID_TRANS_ID != pTransBegin->transID &&
+           0 != DPS_TRANS_GET_NODEID( pTransBegin->transID ) )
+      {
+         rc = rtnTransBegin( _pEDUCB, FALSE, pTransBegin->transID ) ;
+      }
+      else
+      {
+         rc = rtnTransBegin( _pEDUCB ) ;
+      }
+
       if ( SDB_OK == rc )
       {
-         MsgOpTransBegin *pTransBegin = ( MsgOpTransBegin* )msg ;
-         /// Old trans begin msg is only a MsgHeader
-         if ( msg->messageLength > (INT32)sizeof( MsgHeader ) &&
-              DPS_INVALID_TRANS_ID != pTransBegin->transID &&
-              0 != DPS_TRANS_GET_NODEID( pTransBegin->transID ) )
-         {
-            rc = rtnTransBegin( _pEDUCB, FALSE, pTransBegin->transID ) ;
-         }
-         else
-         {
-            rc = rtnTransBegin( _pEDUCB ) ;
-         }
-
-         if ( SDB_OK == rc )
-         {
-            /// unset all trans context
-            rtnUnsetTransContext( eduCB(), _pRtnCB ) ;
-         }
+         /// unset all trans context
+         rtnUnsetTransContext( eduCB(), _pRtnCB ) ;
       }
+
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _clsShdSession::_onTransCommitMsg( NET_HANDLE handle, MsgHeader *msg )
@@ -1825,7 +1951,7 @@ namespace engine
                           "TransactionID: 0x%016x(%llu)",
                           eduCB()->getTransID(),
                           eduCB()->getTransID() ) ;
-      return rtnTransCommit( _pEDUCB, _pDpsCB );
+      return rtnTransCommit( _pEDUCB, _pDpsCB ) ;
    }
 
    INT32 _clsShdSession::_onTransRollbackMsg( NET_HANDLE handle, MsgHeader *msg )
@@ -1839,17 +1965,44 @@ namespace engine
                           "TransactionID: 0x%016x(%llu)",
                           eduCB()->getTransID(),
                           eduCB()->getTransID() ) ;
-      return rtnTransRollback( _pEDUCB, _pDpsCB ) ;
+      return _rollbackTrans() ;
    }
 
    INT32 _clsShdSession::_onTransCommitPreMsg( NET_HANDLE handle,
                                                MsgHeader *msg )
    {
+      INT32 rc = SDB_OK ;
+      MsgOpTransCommitPre *pCommitPreMsg = ( MsgOpTransCommitPre* )msg ;
+
+      if ( !_pReplSet->primaryIsMe() )
+      {
+         rc = SDB_CLS_NOT_PRIMARY ;
+         goto error ;
+      }
       if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
       {
-         return SDB_DPS_TRANS_NO_TRANS ;
+         rc = SDB_DPS_TRANS_NO_TRANS ;
+         goto error ;
       }
-      return SDB_OK ;
+      // add last op info
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_COMMITPRE_REQ,
+                          "TransactionID: 0x%016x(%llu)",
+                          eduCB()->getTransID(),
+                          eduCB()->getTransID() ) ;
+
+      rc = rtnTransPreCommit( _pEDUCB, pCommitPreMsg->nodeNum,
+                              pCommitPreMsg->nodes, _pDpsCB ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      _pEDUCB->setTransStatus( DPS_TRANS_WAIT_COMMIT ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _clsShdSession::_checkTransAutoCommit( const MsgHeader *msg )
@@ -2060,7 +2213,7 @@ namespace engine
 
    INT32 _clsShdSession::_onTransStopEvnt( pmdEDUEvent *event )
    {
-      INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
+      INT32 rcTmp = _rollbackTrans() ;
       if ( rcTmp )
       {
          PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
@@ -4486,6 +4639,11 @@ namespace engine
          rc = SDB_CAT_CLUSTER_IS_READONLY ;
          goto error ;
       }
+      else if ( DPS_TRANS_WAIT_COMMIT == _pEDUCB->getTransStatus() )
+      {
+         rc = SDB_RTN_EXIST_INDOUBT_TRANS ;
+         goto error ;
+      }
 
       rc = _checkPrimaryStatus() ;
       if ( SDB_OK != rc )
@@ -4575,6 +4733,12 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to check status of repl-set:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( DPS_TRANS_WAIT_COMMIT == eduCB()->getTransStatus() )
+      {
+         rc = SDB_RTN_EXIST_INDOUBT_TRANS ;
          goto error ;
       }
 

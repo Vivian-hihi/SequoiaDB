@@ -41,10 +41,14 @@
 
 namespace engine
 {
+   #define PMD_CLEAR_HISTRANS_INTERVAL          ( 60 )
+
    INT32 pmdDpsTransRollbackEntryPoint( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK ;
       UINT64 timeCount = 0 ;
+      dpsTransCB * pTransCB = pmdGetKRCB()->getTransCB() ;
+      SDB_DPSCB *pDpsCB = pmdGetKRCB()->getDPSCB() ;
 
       while( !cb->isDisconnected() )
       {
@@ -60,6 +64,10 @@ namespace engine
             }
             else if ( PMD_EDU_EVENT_ACTIVE == event._eventType )
             {
+               if ( pTransCB->getEventHandler() )
+               {
+                  pTransCB->getEventHandler()->onRollbackAll() ;
+               }
                rc = rtnTransRollbackAll( cb );
             }
             pmdEduEventRelase( event, cb ) ;
@@ -70,10 +78,17 @@ namespace engine
          if (    ( 0 == ( timeCount % DPS_TRANS_LRB_SHRINK_INTERVAL ) ) 
               && ( ! PMD_IS_DB_DOWN() ) )
          {
-            dpsTransCB * pTransCB = pmdGetKRCB()->getTransCB() ;
             if ( pTransCB )
             {
                pTransCB->tryToShrinkLRBPools() ;
+            }
+         }
+
+         if ( 0 == timeCount % PMD_CLEAR_HISTRANS_INTERVAL )
+         {
+            if ( pTransCB && pDpsCB )
+            {
+               pTransCB->clearOutDateHisTrans( pDpsCB->getCurrentLsn().offset ) ;
             }
          }
       }

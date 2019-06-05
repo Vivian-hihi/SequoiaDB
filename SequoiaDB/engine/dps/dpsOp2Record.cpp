@@ -1509,7 +1509,12 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2TRANSCOMMIT, "dpsRecord2TransCommit" )
    INT32 dpsRecord2TransCommit( const CHAR *logRecord,
-                                DPS_TRANS_ID &transID )
+                                DPS_TRANS_ID &transID,
+                                DPS_LSN_OFFSET &preTransLsn,
+                                DPS_LSN_OFFSET &firstTransLsn,
+                                UINT8 &isPre,
+                                UINT32 &nodeNum,
+                                const UINT64 **ppNodes )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2TRANSCOMMIT ) ;
       INT32 rc = SDB_OK ;
@@ -1523,15 +1528,78 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrID = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
-      if ( !itrID.valid() )
-      {
-         PD_LOG( PDERROR, "Failed to find tag transid in record" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
+         dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
+         if ( !itr.valid() )
+         {
+            PD_LOG( PDERROR, "Failed to find tag transid in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
 
-      transID = *((DPS_TRANS_ID *)itrID.value()) ;
+         transID = *((DPS_TRANS_ID *)itr.value()) ;
+
+         itr = record.find( DPS_LOG_PUBLIC_PRETRANS ) ;
+         if ( itr.valid() )
+         {
+            preTransLsn = *(DPS_LSN_OFFSET*)itr.value() ;
+         }
+         else
+         {
+            preTransLsn = DPS_INVALID_LSN_OFFSET ;
+         }
+
+         itr = record.find( DPS_LOG_PUBLIC_FIRSTTRANS ) ;
+         if ( itr.valid() )
+         {
+            firstTransLsn = *(DPS_LSN_OFFSET*)itr.value() ;
+         }
+         else
+         {
+            firstTransLsn = DPS_INVALID_LSN_OFFSET ;
+         }
+
+         itr = record.find( DPS_LOG_TSCOMMIT_IS_PRE ) ;
+         if ( itr.valid() )
+         {
+            isPre = *(UINT8*)itr.value() ;
+         }
+         else
+         {
+            isPre = 0 ;
+         }
+
+         if ( isPre )
+         {
+            itr = record.find( DPS_LOG_TSCOMMIT_NODE_NUM ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "Failed to find tag node num in record" ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            nodeNum = *(UINT32*)itr.value() ;
+
+            if ( nodeNum > 0 )
+            {
+               itr = record.find( DPS_LOG_TSCOMMIT_NODES ) ;
+               if ( !itr.valid() )
+               {
+                  PD_LOG( PDERROR, "Failed to find tag nodes in record" ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+               *ppNodes = (const UINT64*)itr.value() ;
+            }
+            else
+            {
+               *ppNodes = NULL ;
+            }
+         }
+         else
+         {
+            nodeNum = 0 ;
+            *ppNodes = NULL ;
+         }
       }
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2TRANSCOMMIT, rc ) ;
@@ -1544,6 +1612,9 @@ namespace engine
    INT32 dpsTransCommit2Record( const DPS_TRANS_ID &transID,
                                 const DPS_LSN_OFFSET &preTransLsn,
                                 const DPS_LSN_OFFSET &firstTransLsn,
+                                const UINT8 *pIsPre,
+                                const UINT32 *pNodeNum,
+                                const UINT64 *pNodes,
                                 dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_TRANSCOMMIT2RECORD ) ;
@@ -1576,6 +1647,42 @@ namespace engine
          goto error ;
       }
 
+      if ( pIsPre && *pIsPre != 0 )
+      {
+         if ( !pNodeNum || !pNodes )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         rc = record.push( DPS_LOG_TSCOMMIT_IS_PRE,
+                           sizeof( UINT8 ),
+                           (const CHAR*)pIsPre ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
+         rc = record.push( DPS_LOG_TSCOMMIT_NODE_NUM,
+                           sizeof( UINT32 ),
+                           ( const CHAR* )pNodeNum ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+
+         if ( *pNodeNum > 0 )
+         {
+            rc = record.push( DPS_LOG_TSCOMMIT_NODES,
+                              sizeof( UINT64 ) * ( *pNodeNum ),
+                              ( const CHAR* )pNodes ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+         }
+      }
+
       rc = checkAndAddTimeInfo( record ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add time info, rc = %d", rc ) ;
 
@@ -1585,7 +1692,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-
    }
 
 /*

@@ -42,6 +42,7 @@
 #include "ossUtil.hpp"
 #include "ossMem.h"
 #include "dpsLogRecordDef.hpp"
+#include "ossMemPool.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 
@@ -1021,9 +1022,11 @@ namespace engine
          }
          case LOG_TYPE_TS_COMMIT:
          {
+            UINT32 nodeNum = 0 ;
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "COMMIT", LOG_TYPE_TS_COMMIT ) ;
+            dpsLogRecord::iterator itr ;
              if ( !itrTransID.valid() )
              {
                len += ossSnprintf ( outBuf + len, outSize - len,
@@ -1031,6 +1034,65 @@ namespace engine
                                     "Failed to find transid in record" ) ;
                 PD_LOG( PDERROR, "Failed to find transid in record" ) ;
                 goto done ;
+             }
+
+             itr = this->find( DPS_LOG_PUBLIC_FIRSTTRANS ) ;
+             if ( itr.valid() )
+             {
+               len += ossSnprintf( outBuf + len, outSize - len,
+                                   " FirstLSN : 0x%08lx",
+                                   *((DPS_LSN_OFFSET *)itr.value()) ) ;
+             }
+
+             itr = this->find( DPS_LOG_TSCOMMIT_IS_PRE ) ;
+             if ( itr.valid() )
+             {
+                len += ossSnprintf( outBuf + len, outSize - len,
+                                    " IsPreCommit : %d",
+                                    *((UINT8 *)itr.value()) ) ;
+             }
+
+             itr = this->find( DPS_LOG_TSCOMMIT_NODE_NUM ) ;
+             if ( itr.value() )
+             {
+                nodeNum = *(UINT32 *)itr.value() ;
+                len += ossSnprintf( outBuf + len, outSize - len,
+                                    " NodeNum : %u",
+                                    nodeNum ) ;
+             }
+
+             itr = this->find( DPS_LOG_TSCOMMIT_NODES ) ;
+             if ( nodeNum > 0 && itr.valid() )
+             {
+                CHAR tmpNodeStr[ 20 ] = { 0 } ;
+                MsgRouteID nodeID ;
+                ossPoolString strNodes = "[ " ;
+                const UINT64 *pNodes = ( const UINT64* )itr.value() ;
+                for ( UINT32 i = 0 ; i < nodeNum ; ++i )
+                {
+                   nodeID.value = pNodes[ i ] ;
+                   if ( 0 != i )
+                   {
+                     ossSnprintf( tmpNodeStr, sizeof( tmpNodeStr ) - 1,
+                                  ", (%u,%u)",
+                                  nodeID.columns.groupID,
+                                  nodeID.columns.nodeID ) ;
+                   }
+                   else
+                   {
+                      ossSnprintf( tmpNodeStr, sizeof( tmpNodeStr ) - 1,
+                                   "(%u,%u)",
+                                   nodeID.columns.groupID,
+                                   nodeID.columns.nodeID ) ;
+                   }
+
+                   strNodes += tmpNodeStr ;
+                }
+                strNodes += " ]" ;
+
+                len += ossSnprintf( outBuf + len, outSize - len,
+                                    " Nodes   : %s",
+                                    strNodes.c_str() ) ;
              }
              break ;
          }
@@ -1507,13 +1569,13 @@ namespace engine
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " TransPreLSN : 0x%08lx"OSS_NEWLINE,
-                                 *((DPS_TRANS_ID *)itrTransLsn.value()) ) ;
+                                 *((DPS_LSN_OFFSET *)itrTransLsn.value()) ) ;
          }
          if ( itrTransRel.valid() )
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " TransRelatedLSN : 0x%08lx"OSS_NEWLINE,
-                                 *((DPS_TRANS_ID *)itrTransRel.value()) ) ;
+                                 *((DPS_LSN_OFFSET *)itrTransRel.value()) ) ;
          }
       }
 

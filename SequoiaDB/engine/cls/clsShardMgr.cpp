@@ -374,6 +374,7 @@ namespace engine
       ON_MSG ( MSG_COM_REMOTE_DISC, _onHandleClose )
       ON_MSG ( MSG_AUTH_VERIFY_REQ, _onAuthReqMsg )
       ON_MSG ( MSG_SEADPT_UPDATE_IDXINFO_REQ, _onTextIdxInfoReqMsg )
+      ON_MSG ( MSG_CLS_TRANS_CHECK_REQ, _onTransCheckReqMsg )
    END_OBJ_MSG_MAP()
 
    _clsShardMgr::_clsShardMgr ( _netRouteAgent *rtAgent )
@@ -385,6 +386,7 @@ namespace engine
       _pNodeMgrAgent = NULL ;
       _pFreezingWindow = NULL ;
       _pDCMgr = NULL ;
+      _pGTSAgent = NULL ;
 
       _catVerion = 0 ;
       _nodeID.value = 0 ;
@@ -402,6 +404,7 @@ namespace engine
       SAFE_DELETE ( _pNodeMgrAgent ) ;
       SAFE_DELETE ( _pFreezingWindow ) ;
       SAFE_DELETE ( _pDCMgr ) ;
+      SAFE_DELETE ( _pGTSAgent ) ;
 
       //release event
       MAP_CAT_EVENT_IT it = _mapSyncCatEvent.begin () ;
@@ -490,12 +493,18 @@ namespace engine
       SAFE_NEW_GOTO_ERROR  ( _pNodeMgrAgent, _clsNodeMgrAgent ) ;
       SAFE_NEW_GOTO_ERROR  ( _pFreezingWindow, _clsFreezingWindow ) ;
       SAFE_NEW_GOTO_ERROR  ( _pDCMgr, _clsDCMgr ) ;
+      SAFE_NEW_GOTO_ERROR1 ( _pGTSAgent, _clsGTSAgent, this ) ;
 
       rc = _pDCMgr->initialize() ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Init datacenter manager failed, rc: %d", rc ) ;
          goto error ;
+      }
+
+      if ( pmdGetKRCB()->getTransCB() )
+      {
+         pmdGetKRCB()->getTransCB()->setEventHandler( _pGTSAgent ) ;
       }
 
    done:
@@ -521,6 +530,12 @@ namespace engine
       {
          sdbGetPMDController()->unregNet( _pNetRtAgent->getFrame() ) ;
       }
+
+      if ( pmdGetKRCB()->getTransCB() )
+      {
+         pmdGetKRCB()->getTransCB()->setEventHandler( NULL ) ;
+      }
+
       return SDB_OK ;
    }
 
@@ -612,6 +627,11 @@ namespace engine
    clsDCMgr* _clsShardMgr::getDCMgr()
    {
       return _pDCMgr ;
+   }
+
+   clsGTSAgent* _clsShardMgr::getGTSAgent()
+   {
+      return _pGTSAgent ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCSND, "_clsShardMgr::syncSend" )
@@ -2829,6 +2849,55 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _clsShardMgr::_onTransCheckReqMsg( NET_HANDLE handle, MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      dpsTransCB *transCB = krcb->getTransCB() ;
+      replCB *pReplCB = krcb->getClsCB()->getReplCB() ;
+      BSONObj retObj ;
+      MsgOpReply reply ;
+
+      reply.header.opCode = MAKE_REPLY_TYPE( msg->opCode ) ;
+      reply.header.messageLength = sizeof( MsgOpReply ) ;
+      reply.header.requestID = msg->requestID ;
+      reply.header.routeID.value = MSG_INVALID_ROUTEID ;
+      reply.header.TID = msg->TID ;
+      reply.contextID = -1 ;
+
+      /// check primary
+      if ( !pReplCB->primaryIsMe() )
+      {
+         reply.startFrom = pReplCB->getPrimary().columns.nodeID ;
+         reply.flags = SDB_CLS_NOT_PRIMARY ;
+
+         retObj = utilGetErrorBson( reply.flags, NULL, NULL ) ;
+      }
+      else
+      {
+         reply.flags = SDB_OK ;
+         MsgClsTransCheckReq *pReq = ( MsgClsTransCheckReq* )msg ;
+         INT32 status = transCB->checkTransStatus( pReq->transID ) ;
+
+         retObj = BSON( FIELD_NAME_TRANSACTION_ID << (INT64)pReq->transID <<
+                        FIELD_NAME_STATUS << status ) ;
+      }
+
+      reply.header.messageLength += retObj.objsize() ;
+      reply.numReturned = 1 ;
+
+      /// send reply
+      rc = _pNetRtAgent->syncSend( handle, (MsgHeader*)&reply,
+                                   (void*)retObj.objdata(),
+                                   retObj.objsize() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Send reply failed, rc: %d", rc ) ;
+      }
+
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONTEXTIDXINFOREQMSG, "_clsShardMgr::_onTextIdxInfoReqMsg" )

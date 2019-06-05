@@ -70,8 +70,6 @@ using namespace std ;
 namespace engine
 {
 
-   typedef ossPoolMap<UINT32, MsgRouteID>  DpsTransNodeMap ;
-
    /*
       CONST VALUE DEFINE
    */
@@ -379,6 +377,8 @@ namespace engine
       BOOLEAN  isInRollback() const { return _isDoRollback ; }
       void     setTransRC( INT32 rc ) { _transRC = rc ; }
       INT32    getTransRC() const { return _transRC ; }
+      void     setTransStatus( INT32 status ) { _transStatus = status ; }
+      INT32    getTransStatus() const { return _transStatus ; }
       void     clearTransInfo() ;
 
       void     dumpTransInfo( monTransInfo &transInfo ) ;
@@ -475,6 +475,7 @@ namespace engine
       // transaction related variables
       DPS_LSN_OFFSET          _relatedTransLSN ;
       INT32                   _transRC ;
+      INT32                   _transStatus ;
 
       pmdTransExecutor        _transExecutor ;
       UINT32                  _confChangeID ;

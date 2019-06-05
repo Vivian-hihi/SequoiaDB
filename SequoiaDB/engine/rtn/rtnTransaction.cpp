@@ -99,6 +99,62 @@ namespace engine
       goto done ;
    }
 
+   INT32 rtnTransPreCommit( _pmdEDUCB *cb, UINT32 nodeNum,
+                            const UINT64 *pNodes,
+                            SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      DPS_TRANS_ID curTransID = DPS_INVALID_TRANS_ID ;
+      DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
+      DPS_LSN_OFFSET firstTransLsn = DPS_INVALID_LSN_OFFSET ;
+      UINT8 isPre = 1 ;
+
+      dpsMergeInfo info ;
+      dpsLogRecord &record = info.getMergeBlock().record() ;
+
+      curTransID = cb->getTransID() ;
+      preTransLsn = cb->getCurTransLsn() ;
+
+      if ( curTransID == DPS_INVALID_TRANS_ID ||
+           preTransLsn == DPS_INVALID_LSN_OFFSET )
+      {
+         goto done ;
+      }
+
+      if ( !dpsCB )
+      {
+         goto done ;
+      }
+
+      firstTransLsn = sdbGetTransCB()->getBeginLsn( curTransID ) ;
+      SDB_ASSERT( firstTransLsn != DPS_INVALID_LSN_OFFSET,
+                  "First transaction lsn can't be invalid" ) ;
+
+      PD_LOG( PDINFO, "Execute pre-commit(ID:%04x%010x, LastLsn=%llu)",
+              DPS_TRANS_GET_NODEID( curTransID ),
+              DPS_TRANS_GET_SN( curTransID ),
+              preTransLsn ) ;
+
+      rc = dpsTransCommit2Record( curTransID, preTransLsn, firstTransLsn,
+                                  &isPre, &nodeNum, pNodes, record ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to build pre-commit log:%d",rc ) ;
+         goto error ;
+      }
+
+      info.setInfoEx( ~0, DMS_INVALID_CLID, DMS_INVALID_EXTENT, cb ) ;
+      rc = dpsCB->prepare( info ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to insert record into "
+                   "log(rc=%d)", rc ) ;
+      dpsCB->writeData( info ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSCOMMIT, "rtnTransCommit" )
    INT32 rtnTransCommit( _pmdEDUCB * cb, SDB_DPSCB *dpsCB )
    {
@@ -141,7 +197,7 @@ namespace engine
               preTransLsn ) ;
 
       rc = dpsTransCommit2Record( curTransID, preTransLsn, firstTransLsn,
-                                  record ) ;
+                                  NULL, NULL, NULL, record ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to build commit log:%d",rc ) ;
@@ -244,6 +300,7 @@ namespace engine
          if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) && !pmdIsPrimary() )
          {
             sdbGetTransCB()->addTransInfo( transID, curLsnOffset,
+                                           cb->getTransStatus(),
                                            mapPendingObj ) ;
             mapPendingObj.clear() ;
             rc = SDB_CLS_NOT_PRIMARY ;
@@ -482,6 +539,9 @@ namespace engine
                     DPS_TRANS_GET_SN( transID ),
                     iterMap->second._mapPendingObj.size() ) ;
          }
+         /// add his trans
+         pTransCB->addHisTrans( transID, DPS_TRANS_ROLLBACK,
+                                iterMap->second._lsn ) ;
          /// remove the transaction
          pTransMap->erase( iterMap ) ;
          PD_LOG( PDEVENT, "Rollback transaction(%04x%010x) finished "

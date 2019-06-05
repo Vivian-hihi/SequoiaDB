@@ -209,7 +209,6 @@ namespace engine
                                             rtnContextBuf *buf ) ;
 
       private:
-         MsgOpTransCommitPre              _phase1Msg ;
          MsgOpTransCommit                 _phase2Msg ;
          
    } ;

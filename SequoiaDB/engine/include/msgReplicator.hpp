@@ -547,6 +547,32 @@ const UINT32 MSG_SERVICE_MAX = 64 ;
       }
    } ;
    typedef _MsgClsNodeStatusNotify MsgClsNodeStatusNotify ;
+
+   class _MsgClsTransCheckReq : public SDBObject
+   {
+      public:
+         _MsgHeader header ;
+         UINT64     transID ;
+         UINT32     reserved[8] ;
+
+         _MsgClsTransCheckReq()
+         {
+            header.messageLength = sizeof( _MsgClsTransCheckReq ) ;
+            header.opCode = MSG_CLS_TRANS_CHECK_REQ ;
+            header.routeID.value = MSG_INVALID_ROUTEID ;
+            header.TID = 0 ;
+            header.requestID = 0 ;
+            transID = 0 ;
+            ossMemset( reserved, 0, sizeof( reserved ) ) ;
+         }
+   } ;
+   typedef _MsgClsTransCheckReq MsgClsTransCheckReq ;
+
+   /*
+      MsgOpReply + BSON( { TransID:xxx, Status:xxx } )
+   */
+   typedef MsgOpReply MsgClsTransCheckRes ;
+
 }
 
 #pragma pack()

@@ -42,6 +42,8 @@
 #define SDB_USE_UTIL_ALLOCATOR
 //#define SDB_USE_BOOST_ALLOCATOR
 
+#include "ossTypes.h"
+
 #ifdef SDB_USE_BOOST_ALLOCATOR
    #include <boost/pool/pool_alloc.hpp>
 #elif defined( SDB_USE_UTIL_ALLOCATOR )
@@ -100,6 +102,9 @@ class ossPoolSet : public std::set<K, Compare, typename ossPoolAllocator<K>::Typ
    */
 };
 
+typedef ossPoolSet<UINT64>             SET_UINT64 ;
+typedef ossPoolSet<UINT32>             SET_UINT32 ;
+
 /*
  * List utilizing memory pool
  */
@@ -140,6 +145,9 @@ class ossPoolVector : public std::vector< T, typename ossPoolAllocator<char>::Ty
     * DO NOT USE THIS CLASS IN POLYMORPHISM
     */
 } ;
+
+typedef ossPoolVector<UINT64>             VEC_UINT64 ;
+typedef ossPoolVector<UINT32>             VEC_UINT32 ;
 
 #endif
 

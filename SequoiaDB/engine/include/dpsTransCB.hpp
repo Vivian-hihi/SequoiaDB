@@ -123,16 +123,21 @@ namespace engine
    struct _dpsTransBackInfo
    {
       DPS_LSN_OFFSET             _lsn ;
+      INT32                      _status ;
       MAP_TRANS_PENDING_OBJ      _mapPendingObj ;
 
-      _dpsTransBackInfo( DPS_LSN_OFFSET lsn = DPS_INVALID_LSN_OFFSET )
+      _dpsTransBackInfo( DPS_LSN_OFFSET lsn = DPS_INVALID_LSN_OFFSET,
+                         INT32 status = DPS_TRANS_DOING )
       {
          _lsn = lsn ;
+         _status = status ;
       }
       _dpsTransBackInfo( DPS_LSN_OFFSET lsn,
-                         const MAP_TRANS_PENDING_OBJ &mapPendingObj )
+                         const MAP_TRANS_PENDING_OBJ &mapPendingObj,
+                         INT32 status = DPS_TRANS_DOING )
       {
          _lsn = lsn ;
+         _status = status ;
          _mapPendingObj = mapPendingObj ;
       }
    } ;
@@ -144,6 +149,24 @@ namespace engine
    typedef ossPoolMap<DPS_TRANS_ID, DPS_LSN_OFFSET>   TRANS_ID_LSN_MAP ;
    typedef std::queue< EDUID >                        TRANS_EDU_LIST ;
 
+   /*
+      _dpsHisTransStatus define
+   */
+   struct _dpsHisTransStatus
+   {
+      INT32             _status ;
+      DPS_LSN_OFFSET    _lsn ;
+
+      _dpsHisTransStatus( INT32 status = DPS_TRANS_COMMIT,
+                          DPS_LSN_OFFSET lsn = DPS_INVALID_LSN_OFFSET )
+      {
+         _status = status ;
+         _lsn = lsn ;
+      }
+   } ;
+   typedef _dpsHisTransStatus dpsHisTransStatus ;
+
+   typedef ossPoolMap<DPS_TRANS_ID, dpsHisTransStatus>   TRANS_ID_2_STATUS ;
 
    // LRB shrink opreation interval, 900 seconds
    #define DPS_TRANS_LRB_SHRINK_INTERVAL ( 900 )
@@ -175,6 +198,9 @@ namespace engine
       virtual void   onPrimaryChange( BOOLEAN primary,
                                       SDB_EVENT_OCCUR_TYPE occurType ) ;
 
+      void           setEventHandler( dpsTransEvent *pEventHandler ) ;
+      dpsTransEvent* getEventHandler() ;
+
       /*
       *TransactionID:
       +---------------+-----------+-----------+
@@ -198,8 +224,11 @@ namespace engine
 
       void addTransInfo( DPS_TRANS_ID transID,
                          DPS_LSN_OFFSET lsnOffset,
+                         INT32 status,
                          const MAP_TRANS_PENDING_OBJ &mapPendingObj ) ;
-      void updateTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset ) ;
+      void updateTransInfo( DPS_TRANS_ID transID,
+                            DPS_LSN_OFFSET lsnOffset,
+                            INT32 status ) ;
 
       BOOLEAN  addTransCB( DPS_TRANS_ID transID, _pmdEDUCB *eduCB ) ;
       void     delTransCB( DPS_TRANS_ID transID ) ;
@@ -208,18 +237,26 @@ namespace engine
       void     termAllTrans() ;
       TRANS_MAP *getTransMap() ;
 
-      void clearTransInfo() ;
+      void     addHisTrans( DPS_TRANS_ID transID,
+                            INT32 status,
+                            DPS_LSN_OFFSET lsn ) ;
+      void     delHisTrans( DPS_TRANS_ID transID ) ;
+      void     clearHisTrans() ;
+      void     clearOutDateHisTrans( DPS_LSN_OFFSET lsn ) ;
+      INT32    checkTransStatus( DPS_TRANS_ID transID ) ;
 
-      void saveTransInfoFromLog( const dpsLogRecord &record ) ;
-      BOOLEAN rollbackTransInfoFromLog( const dpsLogRecord &record ) ;
+      void     clearTransInfo() ;
 
-      void addBeginLsn( DPS_LSN_OFFSET beginLsn, DPS_TRANS_ID transID ) ;
-      void delBeginLsn( DPS_TRANS_ID transID ) ;
+      void     saveTransInfoFromLog( const dpsLogRecord &record ) ;
+      BOOLEAN  rollbackTransInfoFromLog( const dpsLogRecord &record ) ;
+
+      void           addBeginLsn( DPS_LSN_OFFSET beginLsn, DPS_TRANS_ID transID ) ;
+      void           delBeginLsn( DPS_TRANS_ID transID ) ;
       DPS_LSN_OFFSET getBeginLsn( DPS_TRANS_ID transID ) ;
       DPS_LSN_OFFSET getOldestBeginLsn() ;
 
-      BOOLEAN isNeedSyncTrans() ;
-      void setIsNeedSyncTrans( BOOLEAN isNeed ) ;
+      BOOLEAN  isNeedSyncTrans() ;
+      void     setIsNeedSyncTrans( BOOLEAN isNeed ) ;
 
       INT32 syncTransInfoFromLocal( DPS_LSN_OFFSET beginLsn ) ;
 
@@ -357,20 +394,27 @@ namespace engine
       void   printCounters() ;
 
    private:
-
-   private:
       DPS_TRANS_ID      _TransIDH16 ;
       ossAtomic64       _TransIDL48Cur ;
+
       ossSpinXLatch     _MapMutex ;
       TRANS_MAP         _TransMap ;
+
       ossSpinXLatch     _CBMapMutex ;
       TRANS_CB_MAP      _cbMap ;
+
       BOOLEAN           _isOn ;
       BOOLEAN           _doRollback ;
       ossEvent          _rollbackEvent ;
+
       ossSpinXLatch     _lsnMapMutex ;
       TRANS_LSN_ID_MAP  _beginLsnIdMap ;
       TRANS_ID_LSN_MAP  _idBeginLsnMap ;
+
+      ossSpinXLatch     _hisMutex ;
+      TRANS_ID_2_STATUS _hisTransStatus ;
+      TRANS_LSN_ID_MAP  _hisLsnTrans ;
+
       BOOLEAN           _isNeedSyncTrans ;
       ossSpinXLatch     _maxFileSizeMutex ;
       UINT64            _logFileTotalSize ;
@@ -394,6 +438,8 @@ namespace engine
       dpsTransLockManager  *_transLockMgr ;
       oldVersionCB         *_oldVCB ;  // control block holding old(last committed)
                                        // version of record and index key value
+
+      dpsTransEvent        *_pEventHandler ;
 
    } ;
 
