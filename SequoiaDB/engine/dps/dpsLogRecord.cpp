@@ -1064,7 +1064,7 @@ namespace engine
              itr = this->find( DPS_LOG_TSCOMMIT_NODES ) ;
              if ( nodeNum > 0 && itr.valid() )
              {
-                CHAR tmpNodeStr[ 20 ] = { 0 } ;
+                CHAR tmpNodeStr[ 30 ] = { 0 } ;
                 MsgRouteID nodeID ;
                 ossPoolString strNodes = "[ " ;
                 const UINT64 *pNodes = ( const UINT64* )itr.value() ;
