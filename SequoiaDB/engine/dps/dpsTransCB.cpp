@@ -261,7 +261,6 @@ namespace engine
 
    void dpsTransCB::setEventHandler( dpsTransEvent *pEventHandler )
    {
-      SDB_ASSERT( !_pEventHandler, "Not NULL" ) ;
       _pEventHandler = pEventHandler ;
    }
 
