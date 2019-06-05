@@ -44,6 +44,16 @@ $SNAPSHOT_CL
 | Details.DataCommitted   | 布尔型     | 集合数据文件当前是否有效提交 |
 | Details.IndexCommitted  | 布尔型     | 集合索引文件当前是否有效提交 |
 | Details.LobCommitted    | 布尔型     | 集合大对象文件当前是否有效提交 |
+| Details.TotalDataRead   | 长整型 | 集合数据读请求 |
+| Details.TotalIndexRead  | 长整型 | 集合索引读请求 |
+| Details.TotalDataWrite  | 长整型 | 集合数据写请求 |
+| Details.TotalIndexWrite | 长整型 | 集合索引写请求 |
+| Details.TotalUpdate     | 长整型 | 集合更新记录数量 |
+| Details.TotalDelete     | 长整型 | 集合删除记录数量 |
+| Details.TotalInsert     | 长整型 | 集合插入记录数量 |
+| Details.TotalSelect     | 长整型 | 集合选择记录数量 |
+| Details.TotalRead       | 长整型 | 集合读取记录数量 |
+| Details.TotalWrite      | 长整型 | 集合写入记录数量 |
 
 ##协调节点字段信息##
 
@@ -63,6 +73,16 @@ $SNAPSHOT_CL
 | Details.Group.TotalLobPages       | 整型          | 集合的大对象页总数                                       |
 | Details.Group.TotalDataFreeSpace  | 长整型        | 集合的数据空闲空间（单位：字节）                        |
 | Details.Group.TotalIndexFreeSpace | 长整型        | 集合的索引空闲空间（单位：字节）                        |
+| Details.TotalDataRead   | 长整型 | 集合数据读请求 |
+| Details.TotalIndexRead  | 长整型 | 集合索引读请求 |
+| Details.TotalDataWrite  | 长整型 | 集合数据写请求 |
+| Details.TotalIndexWrite | 长整型 | 集合索引写请求 |
+| Details.TotalUpdate     | 长整型 | 集合更新记录数量 |
+| Details.TotalDelete     | 长整型 | 集合删除记录数量 |
+| Details.TotalInsert     | 长整型 | 集合插入记录数量 |
+| Details.TotalSelect     | 长整型 | 集合选择记录数量 |
+| Details.TotalRead       | 长整型 | 集合读取记录数量 |
+| Details.TotalWrite      | 长整型 | 集合写入记录数量 |
 | Details.Group.NodeName            | 字符串        | 节点名（主机名 + 端口）                                 |
 
 ##示例##
