@@ -73,7 +73,7 @@ namespace engine
       if( arg.argc() < 1 )
       {
          rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "Only need one argument" ) ;
+         detail = BSON( SPT_ERR << "Need at least one argument" ) ;
          goto error ;
       }
 
