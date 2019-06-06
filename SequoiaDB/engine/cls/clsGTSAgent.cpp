@@ -243,8 +243,8 @@ namespace engine
          else if ( rc )
          {
             PD_LOG( PDERROR, "Check trans(%04x%010x) by group(%u) failed, "
-                    "rc: %d", DPS_TRANS_GET_NODEID( cb->getTransID() ),
-                    DPS_TRANS_GET_SN( cb->getTransID() ), group, rc ) ;
+                    "rc: %d", DPS_TRANS_GET_NODEID( transID ),
+                    DPS_TRANS_GET_SN( transID ), group, rc ) ;
             goto error ;
          }
          else if ( 1 == pReply->numReturned &&
@@ -258,8 +258,8 @@ namespace engine
                status = ( DPS_TRANS_STATUS )e.numberInt() ;
 
                PD_LOG( PDEVENT, "Check trans(%04x%010x) by group(%u) succeed("
-                       "Status:%u)", DPS_TRANS_GET_NODEID( cb->getTransID() ),
-                       DPS_TRANS_GET_SN( cb->getTransID() ), group,
+                       "Status:%u)", DPS_TRANS_GET_NODEID( transID ),
+                       DPS_TRANS_GET_SN( transID ), group,
                        status ) ;
             }
             catch( std::exception &e )
