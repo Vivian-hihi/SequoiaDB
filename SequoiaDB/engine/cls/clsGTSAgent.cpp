@@ -74,10 +74,14 @@ namespace engine
 
       DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
       TRANS_MAP *pTransMap = pTransCB->getTransMap() ;
+      TRANS_MAP tmpTransMap ;
       TRANS_MAP::iterator it ;
 
-      it = pTransMap->begin() ;
-      while ( it != pTransMap->end() )
+      // to avoid erase iterator and insert in the same map
+      pTransCB->cloneTransMap( tmpTransMap ) ;
+
+      it = tmpTransMap.begin() ;
+      while ( it != tmpTransMap.end() )
       {
          DPS_TRANS_STATUS status = DPS_TRANS_UNKNOWN ;
          transID = it->first ;
@@ -98,14 +102,15 @@ namespace engine
                {
                   pTransCB->addHisTrans( transID, DPS_TRANS_COMMIT,
                                          transInfo._lsn ) ;
-                  pTransMap->erase( it++ ) ;
+                  pTransMap->erase( transID ) ;
+                  tmpTransMap.erase( it++ ) ;
                   continue ;
                }
             }
          }
          ++it ;
       }
- 
+
       return SDB_OK ;
    }
 
@@ -156,7 +161,7 @@ namespace engine
       /// has rollback
       if ( hasRollback )
       {
-         status = DPS_TRANS_ROLLBACK ;         
+         status = DPS_TRANS_ROLLBACK ;
       }
       else if ( hasCommit )
       {
@@ -269,7 +274,7 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-   
+
          /// quit
          break ;
       }

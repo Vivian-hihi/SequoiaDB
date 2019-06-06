@@ -407,6 +407,7 @@ namespace engine
       dpsTransCB *pTransCB = sdbGetTransCB() ;
       SDB_DPSCB *pDpsCB = sdbGetDPSCB() ;
       TRANS_MAP *pTransMap = pTransCB->getTransMap();
+      TRANS_MAP tmpTransMap ;
       DPS_LSN dpsLsn;
       DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
       DPS_TRANS_ID rollbackID = DPS_INVALID_TRANS_ID ;
@@ -415,14 +416,15 @@ namespace engine
       _clsReplayer replayer( TRUE );
       _dpsMessageBlock mb( DPS_MSG_BLOCK_DEF_LEN ) ;
 
+      pTransCB->cloneTransMap( tmpTransMap ) ;
       cb->startRollback() ;
 
       PD_LOG ( PDEVENT, "Begin to rollback all unfinished transactions[%d]...",
-               pTransMap->size() ) ;
+               tmpTransMap.size() ) ;
 
-      while ( pTransMap->size() != 0 )
+      while ( tmpTransMap.size() != 0 )
       {
-         TRANS_MAP::iterator iterMap = pTransMap->begin();
+         TRANS_MAP::iterator iterMap = tmpTransMap.begin();
          transID = iterMap->first ;
          rollbackID = pTransCB->getRollbackID( transID ) ;
          curLsnOffset = iterMap->second._lsn ;
@@ -544,11 +546,12 @@ namespace engine
          pTransCB->addHisTrans( transID, DPS_TRANS_ROLLBACK,
                                 iterMap->second._lsn ) ;
          /// remove the transaction
-         pTransMap->erase( iterMap ) ;
+         pTransMap->erase( iterMap->first ) ;
+         tmpTransMap.erase(iterMap ) ;
          PD_LOG( PDEVENT, "Rollback transaction(%04x%010x) finished "
                  "with rc[%d]", DPS_TRANS_GET_NODEID( transID ),
                  DPS_TRANS_GET_SN( transID ), rc ) ;
-      } /// while ( pTransMap->size() != 0 )
+      } /// while ( tmpTransMap.size() != 0 )
 
    done:
       // clear all lsn mapping

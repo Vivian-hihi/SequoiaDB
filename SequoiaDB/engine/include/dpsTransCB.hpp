@@ -236,6 +236,7 @@ namespace engine
       UINT32   getTransCBSize() ;
       void     termAllTrans() ;
       TRANS_MAP *getTransMap() ;
+      void cloneTransMap( TRANS_MAP &result ) ;
 
       void     addHisTrans( DPS_TRANS_ID transID,
                             INT32 status,
@@ -302,7 +303,7 @@ namespace engine
       // release collection-lock: also release the space-lock
       void transLockRelease( _pmdEDUCB *eduCB, UINT32 logicCSID,
                              UINT16 collectionID = DMS_INVALID_MBID,
-                             const dmsRecordID *recordID = NULL, 
+                             const dmsRecordID *recordID = NULL,
                              _dpsITransLockCallback *callback = NULL ) ;
 
       void transLockReleaseAll( _pmdEDUCB *eduCB,
@@ -428,11 +429,11 @@ namespace engine
       UINT64            _maxLRLSN2 ;
       // The _reservedRBspace and _reservedSpace are incremented by the size of
       // LR at runtime before writting LR. Once LR is written, _reservedSpace
-      // is released. 
+      // is released.
       // each transaction also track total log space it reserves
       // for rollback. The space is released during commit or rollback.
       // _reservedRBSpace holds the sum of such space from all transactions
-      ossAtomic64       _reservedRBSpace ; 
+      ossAtomic64       _reservedRBSpace ;
       ossAtomic64       _reservedSpace ;
 
       dpsTransLockManager  *_transLockMgr ;
