@@ -109,6 +109,7 @@ public class UpdateRegion17308 extends S3TestBase{
             if (runSuccess) {
                 CommLib.clearBucket(s3Client, bucketName);
                 RegionUtils.deleteRegion(regionName);
+                RegionUtils.dropDomain(domainName);
             }
         }finally {
             if(s3Client != null){
