@@ -120,7 +120,7 @@ namespace CSharp.Meta
                 cur = sdb.GetSnapshot(8, matcher, null, null);
                 Assert.IsNotNull(cur.Next());
                 actual = cur.Current();
-                long expectSize = 1024 * 1024 * 1024;//TODO:添加单位转换备注
+                long expectSize = 1024 * 1024 * 1024;//固定集合的Size单位默认是M，因此此处需要做单位转换
                 Assert.AreEqual(expectSize+"", actual.GetElement("Size").Value.ToString());
                 Assert.AreEqual(expected.GetElement("Max").Value.ToString(), actual.GetElement("Max").Value.ToString());
                 Assert.AreEqual(expected.GetElement("OverWrite").Value.ToString(), actual.GetElement("OverWrite").Value.ToString());

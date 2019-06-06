@@ -48,22 +48,19 @@ namespace CSharp.Meta
             {
                 return;
             }
+            if (sdb.IsDomainExist(domainName))
+            {
+                sdb.DropDomain(domainName);
+            }
 
             BsonDocument option = new BsonDocument();
-            sdb.CreateDomain(domainName, option);
-            //check domain name and other attributes
-            BsonDocument expected = new BsonDocument();
-            expected.Add("Name", domainName);
-            //CheckDomainInfo(expected);//TODO:这里屏蔽了？是有问题吗？是否需要贴上问题单号？
-
-            sdb.DropDomain(domainName);
             BsonArray arr = new BsonArray();
             arr.Add(dataGroupNames[0]);
             option.Add("Groups", arr);
             option.Add("AutoSplit", true);
             sdb.CreateDomain(domainName, option);
             //check domain name and other attributes
-            expected = new BsonDocument();
+            BsonDocument expected = new BsonDocument();
             expected.Add("Name", domainName);
             expected.Add("Groups", arr);
             expected.Add("AutoSplit", true);
@@ -113,6 +110,7 @@ namespace CSharp.Meta
                 Assert.IsNotNull(cur.Next());
                 BsonDocument obj = cur.Current();
                 //check name group autosplit
+                Console.WriteLine(expected.ToString());
                 Assert.AreEqual(expected.GetElement("Name").Value, obj.GetElement("Name").Value);
                 Assert.AreEqual(expected.GetElement("AutoSplit").Value, obj.GetElement("AutoSplit").Value);
                 BsonArray arr = (BsonArray)obj.GetElement("Groups").Value;

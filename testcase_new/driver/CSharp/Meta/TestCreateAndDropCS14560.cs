@@ -97,7 +97,8 @@ namespace CSharp.Meta
 
             try
             {
-                sdb.GetCollecitonSpace(csName1);//TODO:加throw
+                sdb.GetCollecitonSpace(csName1);
+                Assert.Fail("expected thow BaseException but success!");
             }
             catch (BaseException e)
             {
@@ -107,6 +108,7 @@ namespace CSharp.Meta
             try
             {
                 sdb.CreateCollectionSpace(csName7, 131072);
+                Assert.Fail("expected thow BaseException but success!");
             }
             catch (BaseException e)
             {

@@ -36,7 +36,8 @@ namespace CSharp.Meta
         {
             try
             {
-                sdb.DropDomain("domain14559");//TODO:这里要加throw
+                sdb.DropDomain("domain14559");
+                Assert.Fail("expected thow BaseException but success!");
             }
             catch (BaseException e)
             {
@@ -46,6 +47,7 @@ namespace CSharp.Meta
             try
             {
                 sdb.DropCollectionSpace("csName14559");
+                Assert.Fail("expected thow BaseException but success!");
             }
             catch (BaseException e)
             {

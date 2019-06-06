@@ -66,7 +66,8 @@ namespace CSharp.Meta
 
             try
             {
-                localcs.DisableCapped();//TODO:这行下面加Assert
+                localcs.DisableCapped();
+                Assert.Fail("expected thow BaseException but success!");
             }
             catch (BaseException e)
             {

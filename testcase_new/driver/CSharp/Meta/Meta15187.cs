@@ -61,7 +61,8 @@ namespace CSharp.Meta
             option.Add("AutoSplit", true);
             try
             {
-                domain.SetAttributes(option);//TODO:下面一行加Assert
+                domain.SetAttributes(option);
+                Assert.Fail("expected thow BaseException but success!");
             }
             catch (BaseException e)
             {
