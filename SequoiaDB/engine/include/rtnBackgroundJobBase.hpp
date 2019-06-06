@@ -108,14 +108,21 @@ namespace engine
                           RTN_JOB_MUTEX_TYPE type = RTN_JOB_MUTEX_STOP_CONT ,
                           EDUID *pEDUID = NULL,
                           BOOLEAN returnResult = FALSE ) ;
+         // it is safe to clear because fini is the last procedure
+         // and do not have any other thread then.
+         void fini()
+         {
+            _mapJobs.clear() ;
+            _mapResult.clear() ;
+         }
 
       protected:
          INT32 _stopJob ( EDUID eduID ) ;
          INT32 _removeJob ( EDUID eduID, INT32 result = SDB_OK ) ;
 
       private:
-         ossPoolMap<EDUID, _rtnBaseJob*>  _mapJobs ;
-         ossPoolMap<EDUID, INT32>         _mapResult ;
+         ossPoolMap<EDUID, _rtnBaseJob*>      _mapJobs ;
+         ossPoolMap<EDUID, INT32>             _mapResult ;
          ossSpinSLatch                        _latch ;
          ossSpinSLatch                        _latchRemove ;
          pmdEDUMgr                            *_eduMgr ;

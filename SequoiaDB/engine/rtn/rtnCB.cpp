@@ -136,6 +136,9 @@ namespace engine
          sdbGetDMSCB()->setIxmKeySorterCreator( NULL ) ;
       }
 
+      rtnJobMgr* jobMgr = rtnGetJobMgr() ;
+      jobMgr->fini() ;
+
       return SDB_OK ;
    }
 
