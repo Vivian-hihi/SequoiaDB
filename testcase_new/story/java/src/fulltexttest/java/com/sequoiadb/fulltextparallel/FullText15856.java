@@ -16,6 +16,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.threadexecutor.ThreadExecutor;
@@ -32,7 +33,7 @@ import com.sequoiadb.utils.StringUtils;
  */
 
 public class FullText15856 extends SdbTestBase {
-    private final int THREAD_NUM = 5;
+    private final int THREAD_NUM = 10;
     private final int TIMEOUT = 600000;
     private final String CL_NAME = "cl_es_15856";
     private final String IDX_NAME = "idx_es_15856";
@@ -124,6 +125,10 @@ public class FullText15856 extends SdbTestBase {
                 BSONObject matcher = new BasicBSONObject("a", new BasicBSONObject("$exists", 1));
                 BSONObject hint = new BasicBSONObject("", IDX_NAME);
                 cl2.update(matcher, modifier, hint);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -13) {
+                    throw e;
+                }
             }
         }
     }
