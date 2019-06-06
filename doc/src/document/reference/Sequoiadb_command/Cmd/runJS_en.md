@@ -1,10 +1,12 @@
 ##NAME##
 
-runJS - Execute the JavaScript code.
+runJS - Execute the JavaScript code remotely.
 
 ##SYNOPSIS##
 
 ***runJS( \<code\> )***
+
+> **Note:** runJS() should be called by remote cmd obj
 
 ##CATEGORY##
 
@@ -12,7 +14,7 @@ Cmd
 
 ##DESCRIPTION##
 
-Execute the JavaScript code.
+Execute the JavaScript code remotely.
 
 ##PARAMETERS##
 
@@ -39,9 +41,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 > var cmd = remoteObj.getCmd()
 ```
 
-* Execute the JavaScript code.
-
-> **Note:** runJS() should be called by remote cmd obj
+* Execute the JavaScript code remotely.
 
 ```lang-javascript
 > cmd.runJS( "1+2*3" )

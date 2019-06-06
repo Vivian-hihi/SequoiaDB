@@ -2,7 +2,7 @@
 
 ***var cmd = new Cmd()***
 
-***var cmd = remoteObj.getCmd()***
+***var cmd = [remoteObj](reference/Sequoiadb_command/Remote/Remote.md).getCmd()***
 
 ##类别##
 
@@ -35,7 +35,7 @@ Cmd
   > var cmd = new Cmd()
   ```
 
-* 新建一个远程 Command 对象 （建立远程连接详细可参考[远程连接](reference/Sequoiadb_command/Remote/Remote.md)）。
+* 新建一个远程 Command 对象 
 
   ```lang-javascript
   > var remoteObj = new Remote( "192.168.20.71", 11790 )

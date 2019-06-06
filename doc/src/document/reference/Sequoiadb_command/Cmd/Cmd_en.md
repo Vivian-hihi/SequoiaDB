@@ -4,7 +4,7 @@ new - Create a Command object.
 
 ##SYNOPSIS##
 
-***var cmd = new Cmd() / var cmd =  remoteObj.getCmd()***
+***var cmd = new Cmd() / var cmd =  [remoteObj](reference/Sequoiadb_command/Remote/Remote.md).getCmd()***
 
 ##CATEGORY##
 
@@ -36,7 +36,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 > var cmd = new Cmd()
 ```
 
-* Create a remote Command object.(For more detial on establishing a remote connection,please reference to [Remote](reference/Sequoiadb_command/Remote/Remote.md))
+* Create a remote Command object.
 
 ```lang-javascript
 > var remoteObj = new Remote( "192.168.20.71", 11790 )

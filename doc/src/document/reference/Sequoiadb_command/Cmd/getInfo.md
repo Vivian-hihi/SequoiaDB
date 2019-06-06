@@ -38,10 +38,10 @@ Cmd
 
   ```lang-javascript
   > cmd.getInfo()
-{
-  "type": "Cmd",
-  "hostname": "192.168.20.71",
-  "svcname": "11790",
-  "isRemote": true
-}
+  {
+      "type": "Cmd",
+      "hostname": "192.168.20.71",
+      "svcname": "11790",
+      "isRemote": true
+  }
   ```

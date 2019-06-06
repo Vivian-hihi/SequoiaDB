@@ -14,7 +14,7 @@ run \- Execute the command.
 Cmd
 .SH DESCRIPTION
 .PP
-Execute the command.
+Execute the Shell command.
 .SH PARAMETERS
 .PP
 .TS
@@ -43,7 +43,7 @@ string
 T}@T{
 \-\-\-
 T}@T{
-command name
+Shell command name
 T}@T{
 yes
 T}
@@ -54,7 +54,7 @@ args
 T}@T{
 string
 T}@T{
-\-\-\-
+NULL
 T}@T{
 command parameter
 T}@T{

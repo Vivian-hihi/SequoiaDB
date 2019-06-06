@@ -37,8 +37,7 @@ Create a Command object.
 \f[]
 .fi
 .IP \[bu] 2
-Create a remote Command object.(For more detial on establishing a remote
-connection,please reference to Remote)
+Create a remote Command object.
 .IP
 .nf
 \f[C]

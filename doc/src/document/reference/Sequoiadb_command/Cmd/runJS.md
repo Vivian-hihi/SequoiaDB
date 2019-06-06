@@ -8,7 +8,9 @@ Cmd
 
 ##描述##
 
-执行 JavaScript 代码。
+远程执行 JavaScript 代码。
+
+> **Note:** runJS() 必须被远程 Command 对象调用
 
 ##参数##
 
@@ -37,8 +39,6 @@ Cmd
   ```
 
 * 执行 JavaScript 代码。
-
-  > **Note:** runJS() 必须被远程 Command 对象调用
 
   ```lang-javascript
   > cmd.runJS( "1+2*3" )
