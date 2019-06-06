@@ -141,6 +141,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DPSLGRECD_LOADROWBODY ) ;
       INT32 rc = SDB_OK ;
 
+      const CHAR * rowData = NULL ;
+      UINT32 dataLen = 0 ;
+
       PD_CHECK( _head._length >= sizeof( dpsLogRecordHeader) &&
                 _head._length <= DPS_RECORD_MAX_LEN,
                 SDB_DPS_CORRUPTED_LOG, error, PDERROR,
@@ -161,7 +164,21 @@ namespace engine
       // Complete element must contain 5 bytes at least: TAG(1) + Valuesize(4).
       // TLV must end with 0(1 byte).
       // So totalSize - 5 to avoid read the invalid bytes
-      rc = loadBody( iter.value(), iter.len() - DPS_RECORD_ELE_HEADER_LEN ) ;
+      rowData = iter.value() ;
+      dataLen = iter.len() - DPS_RECORD_ELE_HEADER_LEN ;
+
+      if ( 0 != _write )
+      {
+         for ( UINT32 i = 0; i < _write; i++ )
+         {
+            _data[i] = NULL ;
+            _dataHeader[i].tag = DPS_INVALID_TAG ;
+            _dataHeader[i].len = 0 ;
+         }
+         _write = 0 ;
+      }
+
+      rc = loadBody( rowData, dataLen ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse row-record(rc=%d)!", rc ) ;
       }
 
