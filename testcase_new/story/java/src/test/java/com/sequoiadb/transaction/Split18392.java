@@ -24,6 +24,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.transaction.Split10537.Split;
 
 public class Split18392 extends SdbTestBase {
     private Sequoiadb sdb = null;
@@ -58,10 +59,11 @@ public class Split18392 extends SdbTestBase {
             db.beginTransaction();
             insertData(cl);
             cl.split(srcGroup, desGroup, 50);
+            Assert.fail("Split should not success!");
         }catch(BaseException e){
             Assert.assertEquals(e.getErrorCode(), -315, e.getMessage());
         }finally {
-            db.commit();
+            db.rollback();
         }
         checkSplit(cl);
     }
@@ -99,6 +101,6 @@ public class Split18392 extends SdbTestBase {
        groupNames.clear();
        groupNames.addAll(set);
        Assert.assertEquals(groupNames.size(), 1);
-       Assert.assertEquals(cl.getCount(), 200000);
+       Assert.assertEquals(cl.getCount(), 100000);
     }
 }
