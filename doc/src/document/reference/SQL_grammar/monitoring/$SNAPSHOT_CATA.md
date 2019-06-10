@@ -1,10 +1,10 @@
 ##描述##
 
-编目信息快照 SNAPSHOT_CATA 列出当前数据库中所有集合的编目信息，每个集合一条记录。
+编目信息快照 $SNAPSHOT_CATA 列出当前数据库中所有集合的编目信息，每个集合一条记录。
 
 ##标示##
 
-SNAPSHOT_CATA
+$SNAPSHOT_CATA
 
 >   **Note:**
 >
@@ -37,4 +37,35 @@ SNAPSHOT_CATA
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_CATA" )
+{
+  "Attribute": 1,
+  "AttributeDesc": "Compressed",
+  "CataInfo": [
+    {
+      "ID": 1,
+      "SubCLName": "year2015.month01",
+      "LowBound": {
+        "a": 0
+      },
+      "UpBound": {
+        "a": 100
+      }
+    }
+  ],
+  "CompressionType": 1,
+  "CompressionTypeDesc": "lzw",
+  "EnsureShardingIndex": true,
+  "IsMainCL": true,
+  "Name": "newmaincs.newmaincl",
+  "ShardingKey": {
+    "a": 1
+  },
+  "ShardingType": "range",
+  "UniqueID": 502511173633,
+  "Version": 6,
+  "_id": {
+    "$oid": "5cf08d3007c2e1754b77ba97"
+  }
+}
+...
 ```

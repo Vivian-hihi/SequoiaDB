@@ -1,10 +1,10 @@
 ##描述##
 
-集合空间快照 SNAPSHOT_CS 列出当前数据库节点中所有的集合空间，每个集合空间为一条记录。
+集合空间快照 $SNAPSHOT_CS 列出当前数据库节点中所有的集合空间，每个集合空间为一条记录。
 
 ##标示##
 
-SNAPSHOT_CS
+$SNAPSHOT_CS
 
 ##字段信息##
 
@@ -68,5 +68,42 @@ SNAPSHOT_CS
 ##示例##
 
 ```lang-javascript
-> db.exec( select * form $SNAPSHOT_CS )
+> db.exec( "select * from $SNAPSHOT_CS" )
+{
+  "NodeName": "u1604-ljh:42000",
+  "GroupName": "db2",
+  "Name": "year2015",
+  "UniqueID": 124,
+  "Collection": [
+    {
+      "Name": "year2015.month01",
+      "UniqueID": 532575944705
+    }
+  ],
+  "PageSize": 65536,
+  "LobPageSize": 262144,
+  "MaxCapacitySize": 26388279066624,
+  "MaxDataCapSize": 8796093022208,
+  "MaxIndexCapSize": 8796093022208,
+  "MaxLobCapSize": 8796093022208,
+  "NumCollections": 1,
+  "TotalRecords": 1,
+  "TotalSize": 306315264,
+  "FreeSize": 267714380,
+  "TotalDataSize": 155254784,
+  "FreeDataSize": 133627820,
+  "TotalIndexSize": 151060480,
+  "FreeIndexSize": 134086560,
+  "TotalLobSize": 0,
+  "FreeLobSize": 0,
+  "DataCommitLSN": 2484829780,
+  "IndexCommitLSN": 2435883264,
+  "LobCommitLSN": 0,
+  "DataCommitted": true,
+  "IndexCommitted": true,
+  "LobCommitted": true,
+  "DirtyPage": 0,
+  "Type": 0
+}
+...
 ```

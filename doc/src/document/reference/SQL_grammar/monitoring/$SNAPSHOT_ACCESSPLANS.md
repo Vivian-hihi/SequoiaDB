@@ -1,12 +1,12 @@
 ##描述##
 
-访问计划缓存快照 SNAPSHOT_ACCESSPLANS 列出数据库中缓存的访问计划的信息。
+访问计划缓存快照 $SNAPSHOT_ACCESSPLANS 列出数据库中缓存的访问计划的信息。
 
 每一个数据节点上每个缓存的访问计划为一条记录。
 
 ##标示##
 
-SNAPSHOT_ACCESSPLANS
+$SNAPSHOT_ACCESSPLANS
 
 ###字段信息###
 
@@ -71,4 +71,65 @@ SNAPSHOT_ACCESSPLANS
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_ACCESSPLANS" )
+{
+  "NodeName": "u1604-ljh:30000",
+  "GroupName": "SYSCatalogGroup",
+  "Collection": "SYSCAT.SYSTASKS",
+  "CollectionSpace": "SYSCAT",
+  "ScanType": "tbscan",
+  "IndexName": "",
+  "UseExtSort": false,
+  "CacheLevel": "OPT_PLAN_ORIGINAL",
+  "Query": {
+    "TaskType": 0,
+    "Name": "local_test_cs.local_test_sub2",
+    "Target": "db1",
+    "Source": "db2",
+    "SplitValue": {
+      "b": 8000
+    }
+  },
+  "Sort": {},
+  "Hint": {},
+  "SortedIndexRequired": false,
+  "HashCode": 377049080,
+  "Score": 3.125000000000001e-12,
+  "RefCount": 1,
+  "AccessCount": 1,
+  "TotalQueryTime": 0,
+  "AvgQueryTime": 0,
+  "MaxTimeSpentQuery": {
+    "ContextID": 76605,
+    "QueryType": "SELECT",
+    "StartTimestamp": "2019-05-31-10.28.45.584948",
+    "QueryTimeSpent": 0,
+    "ExecuteTimeSpent": 0,
+    "Selector": {},
+    "Skip": 0,
+    "Return": -1,
+    "Flag": 0,
+    "DataRead": 1,
+    "IndexRead": 0,
+    "GetMores": 1,
+    "ReturnNum": 1,
+    "HitEnd": true
+  },
+  "MinTimeSpentQuery": {
+    "ContextID": 76605,
+    "QueryType": "SELECT",
+    "StartTimestamp": "2019-05-31-10.28.45.584948",
+    "QueryTimeSpent": 0,
+    "ExecuteTimeSpent": 0,
+    "Selector": {},
+    "Skip": 0,
+    "Return": -1,
+    "Flag": 0,
+    "DataRead": 1,
+    "IndexRead": 0,
+    "GetMores": 1,
+    "ReturnNum": 1,
+    "HitEnd": true
+  }
+}
+...
 ```

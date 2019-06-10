@@ -1,10 +1,10 @@
 ##描述##
 
-会话快照 SNAPSHOT_SESSIONS 列出当前数据库节点中所有的用户与系统会话，每一个会话为一条记录。
+会话快照 $SNAPSHOT_SESSIONS 列出当前数据库节点中所有的用户与系统会话，每一个会话为一条记录。
 
 ##标示##
 
-SNAPSHOT_SESSIONS
+$SNAPSHOT_SESSIONS
 
 ##字段信息##
 
@@ -46,4 +46,39 @@ SNAPSHOT_SESSIONS
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_SESSION" )
+{
+  "NodeName": "hostname:42000",
+  "SessionID": 183,
+  "TID": 4024,
+  "Status": "Idle",
+  "Type": "Unknow",
+  "Name": "",
+  "Source": "",
+  "QueueSize": 0,
+  "ProcessEventCount": 0,
+  "RelatedID": "c0a8143ea41000000fb8",
+  "Contexts": [],
+  "TotalDataRead": 0,
+  "TotalIndexRead": 0,
+  "TotalDataWrite": 0,
+  "TotalIndexWrite": 0,
+  "TotalUpdate": 0,
+  "TotalDelete": 0,
+  "TotalInsert": 0,
+  "TotalSelect": 0,
+  "TotalRead": 0,
+  "TotalReadTime": 0,
+  "TotalWriteTime": 0,
+  "ReadTimeSpent": 0,
+  "WriteTimeSpent": 0,
+  "ConnectTimestamp": "1970-01-01-08.00.00.000000",
+  "ResetTimestamp": "2019-06-03-14.34.57.118778",
+  "LastOpType": "UNKNOW",
+  "LastOpBegin": "--",
+  "LastOpEnd": "--",
+  "LastOpInfo": "",
+  "UserCPU": 0.01,
+  "SysCPU": 0
+}
+...
 ```

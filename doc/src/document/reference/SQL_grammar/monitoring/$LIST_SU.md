@@ -1,10 +1,14 @@
 ##描述##
 
-存储单元列表 LIST_SU 列出当前数据库节点的全部存储单元信息。
+存储单元列表 $LIST_SU 列出当前数据库节点的全部存储单元信息。
 
 ##标示##
 
-LIST_SU
+$LIST_SU
+
+>   **Note:**
+>
+>   只能在数据节点和编目节点执行。
 
 ##字段信息##
 
@@ -26,4 +30,31 @@ LIST_SU
 
 ```lang-javascript
 > db.exec( "select * from $LIST_SU" )
+{
+  "NodeName": "hostname:30000",
+  "Name": "SYSAUTH",
+  "UniqueID": 0,
+  "ID": 5,
+  "LogicalID": 5,
+  "PageSize": 65536,
+  "LobPageSize": 262144,
+  "Sequence": 1,
+  "NumCollections": 1,
+  "CollectionHWM": 1,
+  "Size": 306315264
+}
+{
+  "NodeName": "hostname:30000",
+  "Name": "SYSCAT",
+  "UniqueID": 0,
+  "ID": 1,
+  "LogicalID": 1,
+  "PageSize": 65536,
+  "LobPageSize": 262144,
+  "Sequence": 1,
+  "NumCollections": 6,
+  "CollectionHWM": 6,
+  "Size": 306315264
+}
+...
 ```

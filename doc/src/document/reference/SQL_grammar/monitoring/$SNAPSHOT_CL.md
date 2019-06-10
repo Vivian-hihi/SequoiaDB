@@ -1,10 +1,10 @@
 ##描述##
 
-集合快照 SNAPSHOT_CL 列出当前数据库节点中所有的非临时集合（协调节点中列出用户集合），每个集合为一条记录。
+集合快照 $SNAPSHOT_CL 列出当前数据库节点中所有的非临时集合（协调节点中列出用户集合），每个集合为一条记录。
 
 ##标示##
 
-SNAPSHOT_CL
+$SNAPSHOT_CL
 
 ##字段信息##
 
@@ -69,4 +69,41 @@ SNAPSHOT_CL
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_CS" )
+{
+  "NodeName": "u1604-ljh:20000",
+  "GroupName": "db1",
+  "Name": "foo",
+  "UniqueID": 575,
+  "Collection": [
+    {
+      "Name": "foo.bar2",
+      "UniqueID": 2469606195203
+    }
+  ],
+  "PageSize": 65536,
+  "LobPageSize": 262144,
+  "MaxCapacitySize": 26388279066624,
+  "MaxDataCapSize": 8796093022208,
+  "MaxIndexCapSize": 8796093022208,
+  "MaxLobCapSize": 8796093022208,
+  "NumCollections": 1,
+  "TotalRecords": 0,
+  "TotalSize": 306315264,
+  "FreeSize": 267780075,
+  "TotalDataSize": 155254784,
+  "FreeDataSize": 133627904,
+  "TotalIndexSize": 151060480,
+  "FreeIndexSize": 134152171,
+  "TotalLobSize": 0,
+  "FreeLobSize": 0,
+  "DataCommitLSN": 1050290908,
+  "IndexCommitLSN": 1050290908,
+  "LobCommitLSN": 0,
+  "DataCommitted": true,
+  "IndexCommitted": true,
+  "LobCommitted": true,
+  "DirtyPage": 0,
+  "Type": 0
+}
+...
 ```

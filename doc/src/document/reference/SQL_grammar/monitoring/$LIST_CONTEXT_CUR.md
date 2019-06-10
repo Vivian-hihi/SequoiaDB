@@ -1,6 +1,6 @@
 ##描述##
 
-当前上下文列表 LIST_CONTEXT_CUR 列出数据库节点中，当前连接所对应的会话中的上下文。
+当前上下文列表 $LIST_CONTEXT_CUR 列出数据库节点中，当前连接所对应的会话中的上下文。
 
 如果当前连接在协调节点上，将会返回当前会话通过协调节点连接各个数据节点或者编目节点的上下文，每个数据节点或者编目节点连接产生一条记录；如果当前连接在数据节点或者编目节点上，将会返回一条记录。每个记录中的 Contexts 数组字段中包含当前会话中所有的上下文。
 
@@ -10,7 +10,7 @@
 
 ##标示##
 
-LIST_CONTEXT_CUR
+$LIST_CONTEXT_CUR
 
 ##字段信息##
 
@@ -25,4 +25,29 @@ LIST_CONTEXT_CUR
 
 ```lang-javascript
 > db.exec( "select * from $LIST_CONTEXT_CUR" )
+{
+  "NodeName": "hostname:30000",
+  "SessionID": 21,
+  "TotalCount": 1,
+  "Contexts": [
+    143353
+  ]
+}
+{
+  "NodeName": "hostname:30010",
+  "SessionID": 20,
+  "TotalCount": 1,
+  "Contexts": [
+    13196
+  ]
+}
+{
+  "NodeName": "hostname:30020",
+  "SessionID": 19,
+  "TotalCount": 1,
+  "Contexts": [
+    13189
+  ]
+}
+...
 ```

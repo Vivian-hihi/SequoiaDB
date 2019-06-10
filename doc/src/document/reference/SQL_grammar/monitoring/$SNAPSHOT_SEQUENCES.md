@@ -1,10 +1,10 @@
 ##描述##
 
-序列快照 SNAPSHOT_SEQUENCES 列出当前数据库中所有序列的属性信息，每个序列一条记录。
+序列快照 $SNAPSHOT_SEQUENCES 列出当前数据库中所有序列的属性信息，每个序列一条记录。
 
 ##标示##
 
-SNAPSHOT_SEQUENCES
+$SNAPSHOT_SEQUENCES
 
 >   **Note:**
 >
@@ -36,4 +36,25 @@ SNAPSHOT_SEQUENCES
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_SEQUENCES" )
+{
+  "AcquireSize": 1000,
+  "CacheSize": 1000,
+  "CurrentValue": 6000,
+  "Cycled": false,
+  "ID": 168,
+  "Increment": 1,
+  "Initial": false,
+  "Internal": true,
+  "MaxValue": {
+    "$numberLong": "9223372036854775807"
+  },
+  "MinValue": 1,
+  "Name": "SYS_2469606195201_studentID_SEQ",
+  "StartValue": 5000,
+  "Version": 0,
+  "_id": {
+    "$oid": "5cf4bec907c2e1754b77c5f3"
+  }
+}
+...
 ```

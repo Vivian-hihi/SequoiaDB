@@ -1,6 +1,6 @@
 ##描述##
 
-上下文列表 LIST_CONTEXT 列出当前数据库节点中所有的会话所对应的上下文。
+上下文列表 $LIST_CONTEXT 列出当前数据库节点中所有的会话所对应的上下文。
 
 每一个会话为一条记录，如果一个会话中包括一个或一个以上的上下文时，其 Contexts 数组字段对每个上下文产生一个对象。
 
@@ -10,7 +10,7 @@
 
 ##标示##
 
-LIST_CONTEXT
+$LIST_CONTEXT
 
 ##字段信息##
 
@@ -25,4 +25,29 @@ LIST_CONTEXT
 
 ```lang-javascript
 > db.exec( "select * from $LIST_CONTEXT" )
+{
+  "NodeName": "hostname:30000",
+  "SessionID": 21,
+  "TotalCount": 1,
+  "Contexts": [
+    143353
+  ]
+}
+{
+  "NodeName": "hostname:30010",
+  "SessionID": 20,
+  "TotalCount": 1,
+  "Contexts": [
+    13196
+  ]
+}
+{
+  "NodeName": "hostname:30020",
+  "SessionID": 19,
+  "TotalCount": 1,
+  "Contexts": [
+    13189
+  ]
+}
+...
 ```

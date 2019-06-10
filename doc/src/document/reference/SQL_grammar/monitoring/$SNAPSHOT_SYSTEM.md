@@ -1,10 +1,10 @@
 ##描述##
 
-操作系统快照 SNAPSHOT_SYSTEM 列出当前数据库节点所在操作系统中主要的状态与性能监控参数，输出一条记录。
+操作系统快照 $SNAPSHOT_SYSTEM 列出当前数据库节点所在操作系统中主要的状态与性能监控参数，输出一条记录。
 
 ##标示##
 
-SNAPSHOT_SYSTEM
+$SNAPSHOT_SYSTEM
 
 ##非协调节点字段信息##
 
@@ -74,5 +74,59 @@ SNAPSHOT_SYSTEM
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_SYSTEM" )
+{
+  "NodeName": "u1604-ljh:42000",
+  "HostName": "u1604-ljh",
+  "ServiceName": "42000",
+  "GroupName": "db2",
+  "IsPrimary": true,
+  "ServiceStatus": true,
+  "Status": "Normal",
+  "BeginLSN": {
+    "Offset": 2013265920,
+    "Version": 1
+  },
+  "CurrentLSN": {
+    "Offset": 3314225876,
+    "Version": 1
+  },
+  "CommittedLSN": {
+    "Offset": 3314225876,
+    "Version": 1
+  },
+  "CompleteLSN": 3314226020,
+  "LSNQueSize": 0,
+  "TransInfo": {
+    "TotalCount": 1,
+    "BeginLSN": 3314225744
+  },
+  "NodeID": [
+    1001,
+    1003
+  ],
+  "CPU": {
+    "User": 53323.86,
+    "Sys": 55738.17,
+    "Idle": 3999129.94,
+    "Other": 3124.02
+  },
+  "Memory": {
+    "LoadPercent": 94,
+    "TotalRAM": 6257471488,
+    "FreeRAM": 340115456,
+    "TotalSwap": 1022357504,
+    "FreeSwap": 732004352,
+    "TotalVirtual": 7279828992,
+    "FreeVirtual": 1072119808
+  },
+  "Disk": {
+    "Name": "/dev/mapper/vgdata-lvdata1",
+    "DatabasePath": "/opt/test/42000/",
+    "LoadPercent": 34,
+    "TotalSpace": 211139878912,
+    "FreeSpace": 138432401408
+  }
+}
+...
 ```
 

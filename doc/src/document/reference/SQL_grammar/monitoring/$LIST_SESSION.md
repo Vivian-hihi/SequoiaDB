@@ -1,10 +1,10 @@
 ##描述##
 
-会话列表 LIST_SESSION 列出当前数据库节点中所有的用户与系统会话，每一个会话为一条记录。
+会话列表 $LIST_SESSION 列出当前数据库节点中所有的用户与系统会话，每一个会话为一条记录。
 
 ##标示##
 
-LIST_SESSION
+$LIST_SESSION
 
 ##字段信息##
 
@@ -22,4 +22,25 @@ LIST_SESSION
 
 ```lang-javascript
 > db.exec( "select * from $LIST_SESSION" )
+{
+  "NodeName": "u1604-ljh:41000",
+  "SessionID": 4,
+  "TID": 23272,
+  "Status": "Waiting",
+  "Type": "DpsRollback",
+  "Name": "",
+  "Source": "",
+  "RelatedID": "c0a8143ea02800005ae8"
+}
+{
+  "NodeName": "u1604-ljh:41000",
+  "SessionID": 5,
+  "TID": 23273,
+  "Status": "Running",
+  "Type": "Task",
+  "Name": "PAGEMAPPING-JOB-D",
+  "Source": "",
+  "RelatedID": "c0a8143ea02800005ae9"
+}
+...
 ```

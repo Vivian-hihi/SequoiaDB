@@ -1,10 +1,10 @@
 ##描述##
 
-数据库快照 SNAPSHOT_DB 列出当前数据库节点中主要的状态与性能监控参数，输出一条记录。
+数据库快照 $SNAPSHOT_DB 列出当前数据库节点中主要的状态与性能监控参数，输出一条记录。
 
 ##标示##
 
-SNAPSHOT_DB
+$SNAPSHOT_DB
 
 ##非协调节点字段信息##
 
@@ -125,4 +125,92 @@ SNAPSHOT_DB
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_DB" )
+{
+  "NodeName": "u1604-ljh:41000",
+  "HostName": "u1604-ljh",
+  "ServiceName": "41000",
+  "GroupName": "db2",
+  "IsPrimary": false,
+  "ServiceStatus": true,
+  "Status": "Normal",
+  "BeginLSN": {
+    "Offset": 2013265920,
+    "Version": 1
+  },
+  "CurrentLSN": {
+    "Offset": 3314225876,
+    "Version": 1
+  },
+  "CommittedLSN": {
+    "Offset": 3314225876,
+    "Version": 1
+  },
+  "CompleteLSN": 3314226020,
+  "LSNQueSize": 0,
+  "TransInfo": {
+    "TotalCount": 1,
+    "BeginLSN": 3314225744
+  },
+  "NodeID": [
+    1001,
+    1002
+  ],
+  "Version": {
+    "Major": 3,
+    "Minor": 2,
+    "Fix": 1,
+    "Release": 41325,
+    "Build": "2019-05-30-15.48.53(Debug)"
+  },
+  "CurrentActiveSessions": 19,
+  "CurrentIdleSessions": 12,
+  "CurrentSystemSessions": 12,
+  "CurrentTaskSessions": 5,
+  "CurrentContexts": 1,
+  "ReceivedEvents": 1122566,
+  "Role": "data",
+  "Disk": {
+    "DatabasePath": "/opt/test/41000/",
+    "LoadPercent": 34,
+    "TotalSpace": 211139878912,
+    "FreeSpace": 138432405504
+  },
+  "TotalNumConnects": 0,
+  "TotalDataRead": 182083,
+  "TotalIndexRead": 445888,
+  "TotalDataWrite": 611764,
+  "TotalIndexWrite": 943444,
+  "TotalUpdate": 14502,
+  "TotalDelete": 95970,
+  "TotalInsert": 501098,
+  "ReplUpdate": 14502,
+  "ReplDelete": 95968,
+  "ReplInsert": 501098,
+  "TotalSelect": 2164,
+  "TotalRead": 181154,
+  "TotalReadTime": 0,
+  "TotalWriteTime": 0,
+  "ActivateTimestamp": "2019-05-31-09.38.06.394521",
+  "ResetTimestamp": "2019-05-31-09.38.06.394521",
+  "UserCPU": "274.790000",
+  "SysCPU": "430.920000",
+  "freeLogSpace": 956610128,
+  "vsize": 2412945408,
+  "rss": 88946,
+  "fault": 116,
+  "TotalMapped": 956825600,
+  "svcNetIn": 1054928,
+  "svcNetOut": 6801875,
+  "shardNetIn": 3580367,
+  "shardNetOut": 2284882,
+  "replNetIn": 3413945536,
+  "replNetOut": 99794796,
+  "SchdlrType": 0,
+  "SchdlrTypeDesp": "NONE",
+  "Run": 1,
+  "Wait": 0,
+  "SchdlrMgrEvtNum": 0,
+  "SchdlrTimes": 0
+}
+...
 ```

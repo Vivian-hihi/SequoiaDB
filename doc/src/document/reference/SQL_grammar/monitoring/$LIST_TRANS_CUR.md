@@ -1,8 +1,8 @@
 ##描述##
 
-事务快照 SNAPSHOT_TRANS 列出数据库中正在进行的事务信息。
+事务快照 $LIST_TRANS_CUR 列出当前会话在数据库中正在进行的事务信息。
 
-每一个数据节点上正在进行的每一个事务为一条记录。
+当前会话在每一个数据节点上正在进行的事务为一条记录。（一般每个会话在每个数据节点上只有一个事务记录）
 
 >   **Note:**
 >
@@ -14,27 +14,25 @@
 
 ##标示##
 
-SNAPSHOT_TRANS
+$LIST_TRANS_CUR
 
 ###字段信息###
 
 | 字段名                 | 类型     | 描述                                     |
 | ---------------------- | -------- | ---------------------------------------- |
-| NodeName               | 字符串   | 节点名（"主机名:端口号"）                |
+| NodeName               | 字符串   | 节点名（主机名：端口号：ID）             |
+| GroupName              | 字符串   | 数据组名                                 |
 | SessionID              | 长整型   | 会话 ID                                  |
 | TransactionID          | 字符串   | 事务 ID                                  |
-| TransactionIDSN        | 长整型   | 事务序列号                               |
 | IsRollback             | 布尔型   | 表示这个事务是否处于回滚中               |
 | CurrentTransLSN        | 长整型   | 事务当前的日志LSN                        |   
-| BeginTransLSN          | 长整型   | 事务开始的日志LSN                        |   
 | WaitLock               | BSON对象 | 正在等待的锁                             |
 | TransactionLocksNum    | 整型     | 事务已经获得的锁                         |
 | RelatedID              | 字符串   | 内部标示                                 |
-| GotLocks               | BSON数组 | 事务已经获得的锁列表                     |
 
 ###锁对象信息###
 
-WaitLock 和 GetLocks 字段中锁对象的信息：
+WaitLock 字段中锁对象的信息：
 
 | 字段名       | 类型 | 描述                     |
 | ------------ | ---- | ------------------------ |
@@ -43,7 +41,6 @@ WaitLock 和 GetLocks 字段中锁对象的信息：
 | ExtentID     | 整型 | 锁对象所在记录的 ID      |
 | Offset       | 整型 | 锁对象所在记录的偏移量   |
 | Mode         | 字符串 | 锁的类型，对应有"IS","IX","S","U"和"X" |
-| Count        | 整型 | 锁计数器(只在GetLocks中存在) |
 | Duration     | 整型 | 锁的持有或等待时间，单位：毫秒 |
 
 ###锁对象的描述###
@@ -60,5 +57,18 @@ WaitLock 和 GetLocks 字段中锁对象的信息：
 ##示例##
 
 ```lang-javascript
-> db.exec( "select * from $SNAPSHOT_TRANS" )
+> db.exec( "select * from $LIST_TRANS_CUR" )
+{
+  "NodeName": "u1604-ljh:42000",
+  "GroupName": "db2",
+  "SessionID": 20,
+  "TransactionID": "00040000000003",
+  "TransactionIDSN": 3,
+  "IsRollback": false,
+  "CurrentTransLSN": 3314225744,
+  "BeginTransLSN": 3314225744,
+  "WaitLock": {},
+  "TransactionLocksNum": 3,
+  "RelatedID": "c0a8143ec35000005f33"
+}
 ```

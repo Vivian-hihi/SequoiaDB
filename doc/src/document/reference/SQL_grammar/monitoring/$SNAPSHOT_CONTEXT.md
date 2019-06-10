@@ -1,6 +1,6 @@
 ##描述##
 
-上下文快照 SNAPSHOT_CONTEXTS 列出当前数据库节点中所有的会话所对应的上下文。
+上下文快照 $SNAPSHOT_CONTEXTS 列出当前数据库节点中所有的会话所对应的上下文。
 
 每一个会话为一条记录，如果一个会话中包括一个或一个以上的上下文时，其 Contexts 数组字段对每个上下文产生一个对象。 
 >   **Note:**
@@ -9,7 +9,7 @@
 
 ##标示##
 
-SNAPSHOT_CONTEXTS
+$SNAPSHOT_CONTEXTS
 
 ##字段信息###
 
@@ -29,4 +29,35 @@ SNAPSHOT_CONTEXTS
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_CONTEXT" )
+{
+  "NodeName": "hostname:30000",
+  "SessionID": 29,
+  "Contexts": [
+    {
+      "ContextID": 143397,
+      "Type": "DUMP",
+      "Description": "IsOpened:1,IsTrans:0,HitEnd:0,BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2019-06-03-14.47.17.144611"
+    }
+  ]
+}
+{
+  "NodeName": "hostname:30010",
+  "SessionID": 25,
+  "Contexts": [
+    {
+      "ContextID": 13203,
+      "Type": "DUMP",
+      "Description": "IsOpened:1,IsTrans:0,HitEnd:0,BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2019-06-03-14.47.17.144643"
+    }
+  ]
+}
+...
 ```

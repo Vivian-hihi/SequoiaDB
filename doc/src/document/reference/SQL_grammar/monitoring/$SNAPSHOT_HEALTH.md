@@ -1,12 +1,12 @@
 ##描述##
 
-节点健康检测快照 SNAPSHOT_HEALTH 列出数据库中所有节点的健康信息。
+节点健康检测快照 $SNAPSHOT_HEALTH 列出数据库中所有节点的健康信息。
 
 每一个节点上的健康检测信息为一条记录。
 
 ##标示##
 
-SNAPSHOT_HEALTH
+$SNAPSHOT_HEALTH
 
 ###字段信息###
 
@@ -65,4 +65,67 @@ SNAPSHOT_HEALTH
 ```lang-javascript
 > db=new Sdb( 'localhost: 20000' )
 > db.exec( "select * from $SNAPSHOT_HEALTH" )
+{
+  "NodeName": "u1604-ljh:20000",
+  "IsPrimary": true,
+  "ServiceStatus": true,
+  "Status": "Normal",
+  "BeginLSN": {
+    "Offset": 0,
+    "Version": 1
+  },
+  "CurrentLSN": {
+    "Offset": 1050290908,
+    "Version": 1
+  },
+  "CommittedLSN": {
+    "Offset": 1050290908,
+    "Version": 1
+  },
+  "CompleteLSN": 1050290984,
+  "LSNQueSize": 0,
+  "NodeID": [
+    1000,
+    1000
+  ],
+  "DataStatus": "Normal",
+  "SyncControl": false,
+  "Ulimit": {
+    "CoreFileSize": 0,
+    "VirtualMemory": -1,
+    "OpenFiles": 1024,
+    "NumProc": 23711,
+    "FileSize": -1
+  },
+  "ResetTimestamp": "2019-05-31-09.37.59.316262",
+  "ErrNum": {
+    "SDB_OOM": 0,
+    "SDB_NOSPC": 0,
+    "SDB_TOO_MANY_OPEN_FD": 0
+  },
+  "Memory": {
+    "LoadPercent": 11,
+    "TotalRAM": 6257471488,
+    "RssSize": 701349888,
+    "LoadPercentVM": 0,
+    "VMLimit": -1,
+    "VMSize": 2491211776
+  },
+  "Disk": {
+    "Name": "/dev/mapper/vgdata-lvdata1",
+    "LoadPercent": 34,
+    "TotalSpace": 211139878912,
+    "FreeSpace": 138432405504
+  },
+  "FileDesp": {
+    "LoadPercent": 4,
+    "TotalNum": 1024,
+    "FreeNum": 973
+  },
+  "StartHistory": [
+    "2019-05-31-09.37.59.581769"
+  ],
+  "AbnormalHistory": [],
+  "DiffLSNWithPrimary": 0
+}
 ```

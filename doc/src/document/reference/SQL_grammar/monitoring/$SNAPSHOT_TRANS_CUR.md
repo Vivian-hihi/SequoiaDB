@@ -1,6 +1,6 @@
 ##描述##
 
-事务快照 SNAPSHOT_TRANS_CUR 列出当前会话在数据库中正在进行的事务信息。
+事务快照 $SNAPSHOT_TRANS_CUR 列出当前会话在数据库中正在进行的事务信息。
 
 当前会话在每一个数据节点上正在进行的事务为一条记录。（一般每个会话在每个数据节点上只有一个事务记录）
 
@@ -14,7 +14,7 @@
 
 ##标示##
 
-SNAPSHOT_TRANS_CUR
+$SNAPSHOT_TRANS_CUR
 
 ###字段信息###
 
@@ -61,4 +61,45 @@ WaitLock 和 GetLocks 字段中锁对象的信息：
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_TRANS_CUR" )
+{
+  "NodeName": "u1604-ljh:42000",
+  "SessionID": 20,
+  "TransactionID": "00040000000003",
+  "TransactionIDSN": 3,
+  "IsRollback": false,
+  "CurrentTransLSN": 3314225876,
+  "BeginTransLSN": 3314225744,
+  "WaitLock": {},
+  "TransactionLocksNum": 3,
+  "RelatedID": "c0a8143ec35000005f33",
+  "GotLocks": [
+    {
+      "CSID": 906,
+      "CLID": 0,
+      "ExtentID": 9,
+      "Offset": 128,
+      "Mode": "X",
+      "Count": 2,
+      "Duration": 888435
+    },
+    {
+      "CSID": 906,
+      "CLID": 0,
+      "ExtentID": -1,
+      "Offset": -1,
+      "Mode": "IX",
+      "Count": 2,
+      "Duration": 888436
+    },
+    {
+      "CSID": 906,
+      "CLID": 65535,
+      "ExtentID": -1,
+      "Offset": -1,
+      "Mode": "IS",
+      "Count": 2,
+      "Duration": 888436
+    }
+  ]
+}
 ```

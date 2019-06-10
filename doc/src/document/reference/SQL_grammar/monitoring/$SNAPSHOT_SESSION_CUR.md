@@ -1,12 +1,12 @@
 ##描述##
 
-当前会话快照 SNAPSHOT_SESSIONS_CUR 列出数据库节点中的当前用户会话记录。
+当前会话快照 $SNAPSHOT_SESSIONS_CUR 列出数据库节点中的当前用户会话记录。
 
 如果当前连接在协调节点上，将会返回当前会话通过协调节点连接各个数据节点或者编目节点的会话，每个数据节点或者编目节点连接产生一条记录；如果当前连接在数据节点或者编目节点上，将会返回一条记录。
 
 ##标示##
 
-SNAPSHOT_SESSIONS_CUR
+$SNAPSHOT_SESSIONS_CUR
 
 ##字段信息##
 | 字段名            | 类型          | 描述                                               |
@@ -47,4 +47,41 @@ SNAPSHOT_SESSIONS_CUR
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_SESSION_CUR" )
+{
+  "NodeName": "hostname:41000",
+  "SessionID": 28,
+  "TID": 23512,
+  "Status": "Running",
+  "Type": "ShardAgent",
+  "Name": "Type:Shard,NetID:1,R-TID:24371,R-IP:192.168.20.62,R-Port:50000",
+  "Source": "",
+  "QueueSize": 0,
+  "ProcessEventCount": 27,
+  "RelatedID": "c0a8143ec35000005f33",
+  "Contexts": [
+    13579
+  ],
+  "TotalDataRead": 0,
+  "TotalIndexRead": 0,
+  "TotalDataWrite": 0,
+  "TotalIndexWrite": 0,
+  "TotalUpdate": 0,
+  "TotalDelete": 0,
+  "TotalInsert": 0,
+  "TotalSelect": 0,
+  "TotalRead": 0,
+  "TotalReadTime": 0,
+  "TotalWriteTime": 0,
+  "ReadTimeSpent": 60,
+  "WriteTimeSpent": 0,
+  "ConnectTimestamp": "2019-06-03-14.36.25.093610",
+  "ResetTimestamp": "2019-06-03-14.36.25.093609",
+  "LastOpType": "COMMAND",
+  "LastOpBegin": "2019-06-03-14.50.01.460452",
+  "LastOpEnd": "--",
+  "LastOpInfo": "Command:$SNAPSHOT_SESSION_CUR, Collection:, Match:{}, Selector:{}, OrderBy:{}, Hint:{}, Skip:0, Limit:-1, Flag:0x00000200(512)",
+  "UserCPU": 9.24,
+  "SysCPU": 2
+}
+...
 ```

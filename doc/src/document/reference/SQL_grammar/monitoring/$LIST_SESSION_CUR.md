@@ -1,12 +1,12 @@
 ##描述##
 
-当前会话列表 LIST_SESSION_CUR 列出数据库节点中的当前用户会话。
+当前会话列表 $LIST_SESSION_CUR 列出数据库节点中的当前用户会话。
 
 如果当前连接在协调节点上，将会返回当前会话通过协调节点连接各个数据节点或者编目节点的会话，每个数据节点或者编目节点连接产生一条记录；如果当前连接在数据节点或者编目节点上，将会返回一条记录。
 
 ##标示##
 
-SDB_LIST_SESSION_CUR
+$LIST_SESSION_CUR
 
 ##字段信息##
 
@@ -24,4 +24,25 @@ SDB_LIST_SESSION_CUR
 
 ```lang-javascript
 > db.exec( "select * from $LIST_SESSION_CUR" )
+{
+  "NodeName": "hostname:30000",
+  "SessionID": 29,
+  "TID": 22121,
+  "Status": "Running",
+  "Type": "ShardAgent",
+  "Name": "Type:Shard,NetID:5,R-TID:24371,R-IP:192.168.20.62,R-Port:50000",
+  "Source": "",
+  "RelatedID": "c0a8143ec35000005f33"
+}
+{
+  "NodeName": "hostname:30010",
+  "SessionID": 25,
+  "TID": 22596,
+  "Status": "Running",
+  "Type": "ShardAgent",
+  "Name": "Type:Shard,NetID:1,R-TID:24371,R-IP:192.168.20.62,R-Port:50000",
+  "Source": "",
+  "RelatedID": "c0a8143ec35000005f33"
+}
+...
 ```
