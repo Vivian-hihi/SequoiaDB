@@ -31,6 +31,7 @@ namespace CSharp.Split
         private List<string> dataGroupNames = new List<string>();
         List<BsonDocument> list = new List<BsonDocument>();
         private List<ObjectId> InsertedLobId = new List<ObjectId>();// 记录所有已插入的LOBID字串
+        private ObjectId id;
 
         [TestInitialize()]
         public void SetUp()
@@ -70,7 +71,7 @@ namespace CSharp.Split
             CheckLob();
             CheckCoord();
             CheckDataGroup();
-            cl.RemoveLob(InsertedLobId[0]);
+            cl.RemoveLob(id);
             cs.DropCollection(clName);
         }
 
@@ -89,7 +90,7 @@ namespace CSharp.Split
                 BsonDocument doc = cur.Current();
                 Console.WriteLine(doc.ToString());
                 Console.WriteLine(doc.GetElement("Oid").Value.ToString());
-                Assert.AreEqual(InsertedLobId[0].ToString(), doc.GetElement("Oid").Value.ToString());
+                Assert.AreEqual(id.ToString(), doc.GetElement("Oid").Value.ToString());
             }
         }
 
@@ -122,7 +123,7 @@ namespace CSharp.Split
             }
             
             DBLob lob = cl.CreateLob();
-            ObjectId id = lob.GetID();
+            id = lob.GetID();
             byte[] buf = new byte[100];
             for (int i = 0; i < 100; i++)
             {
@@ -130,7 +131,6 @@ namespace CSharp.Split
             }
             lob.Write(buf);
             lob.Close();
-            InsertedLobId.Add(id);//TODO:只插入了一个lob，应该可以不用再存到List里面了吧？
             cl.BulkInsert(list, SDBConst.FLG_INSERT_CONTONDUP);
 
         }

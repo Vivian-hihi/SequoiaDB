@@ -82,14 +82,7 @@ namespace CSharp.Auth
             }
             //删除鉴权用户
             localdb.RemoveUser(username, passwd);
-            try
-            {
-                localdb.Connect();//TODO:这行下面也需要Assert
-            }
-            catch (BaseException e)
-            {
-                Assert.Fail("excepet localdb.Connect() ok. but : " + e);
-            }
+            localdb.Connect();
         }
 
         [TestCleanup()]

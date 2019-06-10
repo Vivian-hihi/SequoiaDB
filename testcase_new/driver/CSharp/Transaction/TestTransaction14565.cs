@@ -71,20 +71,17 @@ namespace CSharp.Transaction
                 matcher = new BsonDocument();
                 matcher.Add("number", new BsonDocument("$lt", 5));
                 cl.Delete(matcher, null);
-            }
-            catch (BaseException e)
-            {
-                Assert.Fail(e.Message);
-            }
-            finally
-            {
                 sdb.TransactionCommit();
-                BsonDocument matcher = new BsonDocument();//TODO:这里放在finally里面应该不太合理，因为如果try失败了，下面的比较结果就不对了
+                matcher = new BsonDocument();
                 matcher.Add("number", new BsonDocument("$gte", 10));
                 Assert.AreEqual(96, cl.GetCount(matcher));
                 matcher = new BsonDocument();
                 matcher.Add("number", new BsonDocument("$lt", 10));
                 Assert.AreEqual(0, cl.GetCount(matcher));
+            }
+            catch (BaseException e)
+            {
+                Assert.Fail(e.Message);
             }
         }
 

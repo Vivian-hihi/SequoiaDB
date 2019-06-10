@@ -54,49 +54,50 @@ namespace CSharp.Sessionaccess
             options.Add("ReplSize", 0);
             cl = cs.CreateCollection(clName, options);
             SessionAccessUtil.InsertRecords(cl);
-            //TODO:以下代码前面的空格不对，并且文本用例中的前提没有实现
-        string[] expectPreferedInstance = new string[] { "M", "S" };
-        for (int i = 0; i < 2; i++ )
-        {
-            string s = expectPreferedInstance[i];
-            options = new BsonDocument("PreferedInstance", s);
-            sdb.SetSessionAttr(options);
-            String hostName = SessionAccessUtil.GetActualDataNodeName(cl);
-            if (s.Equals("M"))
+            
+            string[] expectPreferedInstance = new string[] { "M", "S" };
+            for (int i = 0; i < 2; i++)
             {
-                Assert.IsTrue(SessionAccessUtil.IsMaster(sdb, rgName, hostName), "the actual data node name is: " + hostName + ",the current option is " + options.ToString());
+                string s = expectPreferedInstance[i];
+                options = new BsonDocument("PreferedInstance", s);
+                sdb.SetSessionAttr(options);
+                String hostName = SessionAccessUtil.GetActualDataNodeName(cl);
+                if (s.Equals("M"))
+                {
+                    Assert.IsTrue(SessionAccessUtil.IsMaster(sdb, rgName, hostName), "the actual data node name is: " + hostName + ",the current option is " + options.ToString());
+                }
+                else if (s.Equals("S"))
+                {
+                    Assert.IsFalse(SessionAccessUtil.IsMaster(sdb, rgName, hostName), "the actual data node name is: " + hostName + ",the current option is " + options.ToString());
+                }
+                options.Add("PreferedInstanceMode", "random").Add("Timeout", -1L);
+                BsonDocument act = sdb.GetSessionAttr();
+                Assert.AreEqual(act.GetElement("PreferedInstance").Value, options.GetElement("PreferedInstance").Value);
+                Assert.AreEqual(act.GetElement("PreferedInstanceMode").Value, options.GetElement("PreferedInstanceMode").Value);
+                Assert.AreEqual(act.GetElement("Timeout").Value, options.GetElement("Timeout").Value);
             }
-            else if (s.Equals("S"))
+
+            List<string> nodeNames = new List<string>();
+            for (int i = 0; i < nodes.Count(); i++)
             {
-                Assert.IsFalse(SessionAccessUtil.IsMaster(sdb, rgName, hostName), "the actual data node name is: " + hostName + ",the current option is " + options.ToString());
+                BsonDocument node = nodes[i];
+                nodeNames.Add(node.GetElement("nodeName").Value.ToString());
             }
-            options.Add("PreferedInstanceMode", "random").Add("Timeout", -1L);
-            BsonDocument act = sdb.GetSessionAttr();
-            Assert.AreEqual(act.GetElement("PreferedInstance").Value, options.GetElement("PreferedInstance").Value);
-            Assert.AreEqual(act.GetElement("PreferedInstanceMode").Value, options.GetElement("PreferedInstanceMode").Value);
-            Assert.AreEqual(act.GetElement("Timeout").Value, options.GetElement("Timeout").Value);
-        }
-        
-        List<string> nodeNames = new List<string>();
-        for (int i=0 ; i< nodes.Count(); i++) {
-        	BsonDocument node = nodes[i];
-        	nodeNames.Add(node.GetElement("nodeName").Value.ToString());
-        }
-        //设置PreferedInstance为'A'
-        options = new BsonDocument("PreferedInstance", "A");
-        List<string> actNodeNames = new List<string>();
-        for(int i = 0 ; i < 20 ; i++){
-        	sdb.SetSessionAttr(options);
-        	String actNodeName = SessionAccessUtil.GetActualDataNodeName(cl);
-        	Assert.IsTrue(nodeNames.Contains(actNodeName),"The actual Node name is not expected: " + actNodeName);
-        	actNodeNames.Add(actNodeName);
-        }
-        //TODO：此处actNodeNames的大小为20，这里是不是应该去重后再比较
-        //如果actNodeNames大小为1时，代表实际操作的节点只有一个，没有随机取值
-        Assert.AreNotEqual(actNodeNames.Count(), 1, "When PreferedInstance is 'A', the actual node is unchanged, the node name is:" + actNodeNames[0]);
-        //options.Add("PreferedInstanceMode", "random").Add("Timeout", -1L);
-        BsonDocument actSessionAttr = sdb.GetSessionAttr();
-        Assert.AreEqual("random", actSessionAttr.GetElement("PreferedInstanceMode").Value.ToString());
+            //设置PreferedInstance为'A'
+            options = new BsonDocument("PreferedInstance", "A");
+            List<string> actNodeNames = new List<string>();
+            for (int i = 0; i < 20; i++)
+            {
+                sdb.SetSessionAttr(options);
+                String actNodeName = SessionAccessUtil.GetActualDataNodeName(cl);
+                Assert.IsTrue(nodeNames.Contains(actNodeName), "The actual Node name is not expected: " + actNodeName);
+                actNodeNames.Add(actNodeName);
+            }
+            //如果actNodeNames大小为1时，代表实际操作的节点只有一个，没有随机取值
+            Assert.AreNotEqual(actNodeNames.Count(), 1, "When PreferedInstance is 'A', the actual node is unchanged, the node name is:" + actNodeNames[0]);
+            //options.Add("PreferedInstanceMode", "random").Add("Timeout", -1L);
+            BsonDocument actSessionAttr = sdb.GetSessionAttr();
+            Assert.AreEqual("random", actSessionAttr.GetElement("PreferedInstanceMode").Value.ToString());
         }
 
         [TestCleanup()]

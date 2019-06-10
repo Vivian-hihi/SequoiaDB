@@ -76,16 +76,12 @@ namespace CSharp.Transaction
                 Assert.AreEqual(5, cl.GetCount(matcher));
                 cl.Delete(matcher, null);
                 Assert.AreEqual(95, cl.GetCount(null));
-                
+                sdb.TransactionRollback();
+                Assert.AreEqual(0, cl.GetCount(null));
             }
             catch (Exception e)
             {
                 Assert.Fail(e.Message);
-            }
-            finally
-            {
-                sdb.TransactionRollback();//TODO:同14565放在finally里面不合适
-                Assert.AreEqual(0, cl.GetCount(null));
             }
         }
 

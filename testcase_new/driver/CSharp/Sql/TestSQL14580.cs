@@ -91,12 +91,9 @@ namespace CSharp.Sql
             int k = 0;
             while (cur.Next() != null)
             {
-                actual.Add(cur.Current());//TODO:这里actual没有用到
                 Assert.AreEqual(expectedList[k++].ToString(), cur.Current().ToString());
             }
             cur.Close();
-            
-            //Assert.AreEqual(expectedList.Equals(actual), actual);
 
             sql = "update " + localCSName + "." + clName + " set age=30 where age < 5";
             sdb.ExecUpdate(sql);

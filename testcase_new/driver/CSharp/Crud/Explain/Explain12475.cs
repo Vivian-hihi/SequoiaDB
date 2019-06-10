@@ -42,6 +42,14 @@ namespace CSharp.Crud.Explain
             cl = cs.CreateCollection(clName);
             cl.CreateIndex("ageIndex", key, true, true);
             List<BsonDocument> insertRecords = InsertDatas(20);
+            CheckExplainWithFlag(DBQuery.FLG_QUERY_FORCE_HINT);
+            CheckExplainWithFlag(DBQuery.FLG_QUERY_PARALLED);
+            CheckExplainWithFlag(DBQuery.FLG_QUERY_WITH_RETURNDATA);
+        }
+
+        public void CheckExplainWithFlag(int flag)
+        {
+            
             BsonDocument query = new BsonDocument();
             BsonDocument selector = new BsonDocument();
             BsonDocument orderBy = new BsonDocument();
@@ -56,16 +64,15 @@ namespace CSharp.Crud.Explain
             skipRows = 2;
             retrunRows = 5;
 
-            //TODO:文本用例中flag覆盖不同值，这里未覆盖
-            DBCursor cursor = cl.Explain(query, selector, orderBy, hint, skipRows, retrunRows, DBQuery.FLG_QUERY_FORCE_HINT, new BsonDocument().Add("Run", true));
+            DBCursor cursor = cl.Explain(query, selector, orderBy, hint, skipRows, retrunRows, flag, new BsonDocument().Add("Run", true));
             while (cursor.Next() != null)
             {
-                BsonDocument doc =  cursor.Current();
+                BsonDocument doc = cursor.Current();
                 Assert.AreEqual("ixscan", doc.GetValue("ScanType"));
                 Assert.AreEqual(5, doc.GetValue("ReturnNum"));
                 Assert.AreEqual("ageIndex", doc.GetValue("IndexName"));
                 Assert.AreEqual("{ \"$and\" : [{ \"sub\" : { \"$et\" : \"test\" } }] }", doc.GetValue("Query").ToString());
-               
+
             }
             cursor.Close();
         }
