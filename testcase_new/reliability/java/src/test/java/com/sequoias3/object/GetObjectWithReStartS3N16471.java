@@ -1,0 +1,119 @@
+package com.sequoias3.object;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.S3Object;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
+import com.sequoias3.commlibs3.CommLibS3;
+import com.sequoias3.commlibs3.S3TestBase;
+import com.sequoias3.commlibs3.TestTools;
+import com.sequoias3.commlibs3.s3utils.ObjectUtils;
+import com.sequoias3.commlibs3.s3utils.S3NodeRestart;
+import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+/**
+ * @author fanyu
+ * @version 1.00
+ * @Description seqDB-16470 ::开启版本控制，删除对象过程中SequiaS3Client端异常
+ * @Date 2019.01.17
+ */
+public class GetObjectWithReStartS3N16471 extends S3TestBase {
+    private boolean runSuccess = false;
+    private String bucketName = "bucket16466";
+    private String objectNameBase = "aa/bb/object16466";
+    private List<String> objectNames = new ArrayList<String>();
+    private List<String> objectNameList = new CopyOnWriteArrayList<String>();
+    private AmazonS3 s3Client = null;
+    private int fileSize = 1024 * 1;
+    private int objectNums = 1024;
+    private File localPath = null;
+    private String filePath = null;
+
+    @BeforeClass
+    private void setUp() throws IOException {
+        localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
+        filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
+
+        TestTools.LocalFile.removeFile(localPath);
+        TestTools.LocalFile.createDir(localPath.toString());
+        TestTools.LocalFile.createFile(filePath, fileSize);
+        s3Client = CommLibS3.buildS3Client();
+        CommLibS3.clearBucket(s3Client, bucketName);
+        s3Client.createBucket(bucketName);
+        for (int i = 0; i < objectNums; i++) {
+            String objectName = objectNameBase + "_" + i + "_" + TestTools.getRandomString(1);
+            objectNames.add(objectName);
+            s3Client.putObject(bucketName, objectName, new File(filePath));
+        }
+    }
+
+    @Test
+    private void test() throws Exception {
+        FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 1, 10);
+        TaskMgr mgr = new TaskMgr(faultMakeTask);
+        for (int i = 0; i < objectNums; i++) {
+            mgr.addTask(new GetObject(objectNames.get(i)));
+        }
+        mgr.execute();
+        mgr.isAllSuccess();
+        List<Exception> eList = mgr.getExceptions();
+        for (Exception e : eList) {
+            if (!e.getMessage().contains("Unable to execute HTTP request")) {
+                throw e;
+            }
+        }
+        s3Client = CommLibS3.buildS3Client();
+        //get again
+        objectNames.removeAll(objectNameList);
+        for (String objectName : objectNames) {
+            getObjectAndCheck(objectName);
+        }
+        runSuccess = true;
+    }
+
+    @AfterClass
+    private void tearDown() {
+        try {
+            if (runSuccess) {
+                CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
+            }
+        } finally {
+            s3Client.shutdown();
+        }
+    }
+
+    private class GetObject extends OperateTask {
+        private String key = null;
+
+        public GetObject(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public void exec() throws Exception {
+            getObjectAndCheck(this.key);
+            objectNameList.add(key);
+        }
+    }
+
+    private void getObjectAndCheck(String objectName) throws Exception {
+        S3Object obj = s3Client.getObject(bucketName, objectName);
+        Assert.assertEquals(obj.getKey(), objectName);
+        String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+                Thread.currentThread().getId());
+        ObjectUtils.inputStream2File(obj.getObjectContent(), downloadPath);
+        Assert.assertEquals(TestTools.getMD5(downloadPath), TestTools.getMD5(filePath));
+    }
+}
