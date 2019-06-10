@@ -112,8 +112,16 @@ namespace engine
          // and do not have any other thread then.
          void fini()
          {
+            ossPoolMap<EDUID, _rtnBaseJob*> dummyJobs ;
+            ossPoolMap<EDUID, INT32> dummyResult ;
+
             _mapJobs.clear() ;
+            // force to release memory
+            _mapJobs.swap( dummyJobs ) ;
+
             _mapResult.clear() ;
+            // force to release memory
+            _mapResult.swap( dummyResult ) ;
          }
 
       protected:
