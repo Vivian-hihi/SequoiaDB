@@ -11,11 +11,70 @@
     
    <artifactId>sequoiadb-testcases-reliability-java</artifactId>
    <packaging>jar</packaging>
-   <dependencies>
+  
+   <properties>
+     <commons-logging.version>1.2</commons-logging.version>
+      <aws-java-sdk-s3.version>1.11.343</aws-java-sdk-s3.version>
+      <json.version>20171018</json.version>
+      <jackson-dataformat-xml.version>2.9.8</jackson-dataformat-xml.version>
+      <spring-web.version>5.1.4.RELEASE</spring-web.version>
+      <spring-boot-version>1.5.14.RELEASE</spring-boot-version>
+	</properties>
+
+
+  <dependencies>
       <dependency>
          <groupId>com.jcraft</groupId>
          <artifactId>jsch</artifactId>
          <version>0.1.54</version>
+      </dependency>
+	  
+	   <dependency>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter</artifactId>
+         <version>${spring-boot-version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
+         <version>${commons-logging.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-web</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>ch.qos.logback</groupId>
+               <artifactId>logback-classic</artifactId>
+            </exclusion>
+         </exclusions>
+         <version>${spring-boot-version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>com.amazonaws</groupId>
+         <artifactId>aws-java-sdk-s3</artifactId>
+         <version>${aws-java-sdk-s3.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.json</groupId>
+         <artifactId>json</artifactId>
+         <version>${json.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-web</artifactId>
+         <version>${spring-web.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>com.fasterxml.jackson.dataformat</groupId>
+         <artifactId>jackson-dataformat-xml</artifactId>
+         <version>${jackson-dataformat-xml.version}</version>
       </dependency>
   </dependencies>
 
