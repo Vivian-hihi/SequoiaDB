@@ -102,7 +102,7 @@ Create instance: [name: myinst, port: 5432]
 
 + 部署到三台机器上，主机名分别为 sdbserver1 / sdbserver2 / sdbserver3，请确保这三台主机都[安装](installation/deployment/command_installation/installation.md)了 SequoiaDB
 + 1 个协调节点组，每台机器上有一个协调节点
-+ 1 个协调节点组，每台机器上有一个编目节点
++ 1 个编目节点组，每台机器上有一个编目节点
 + 3 个数据节点组，组名分别为 group1 / group2 / group3，每个数据组有 3 个数据节点
 + 节点数据目录为安装路径下的 database 目录
 
