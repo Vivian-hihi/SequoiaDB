@@ -113,6 +113,20 @@ namespace engine
 
    void _dpsLogRecord::clear()
    {
+      _clearTags() ;
+
+      if ( DPS_INVALID_LSN_OFFSET != _head._lsn )
+      {
+         _head.clear() ;
+      }
+
+      _result = SDB_OK ;
+
+      return ;
+   }
+
+   void _dpsLogRecord::_clearTags ()
+   {
       if ( 0 != _write )
       {
          for ( UINT32 i = 0; i < _write; i++ )
@@ -124,15 +138,6 @@ namespace engine
 
          _write = 0 ;
       }
-
-      if ( DPS_INVALID_LSN_OFFSET != _head._lsn )
-      {
-         _head.clear() ;
-      }
-
-      _result = SDB_OK ;
-
-      return ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_LOADROWBODY, "_dpsLogRecord::loadRowBody" )
@@ -167,16 +172,9 @@ namespace engine
       rowData = iter.value() ;
       dataLen = iter.len() - DPS_RECORD_ELE_HEADER_LEN ;
 
-      if ( 0 != _write )
-      {
-         for ( UINT32 i = 0; i < _write; i++ )
-         {
-            _data[i] = NULL ;
-            _dataHeader[i].tag = DPS_INVALID_TAG ;
-            _dataHeader[i].len = 0 ;
-         }
-         _write = 0 ;
-      }
+      // Tags were based on DPS_LOG_ROW_ROWDATA
+      // Let's clear them and reload from beginning
+      _clearTags() ;
 
       rc = loadBody( rowData, dataLen ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse row-record(rc=%d)!", rc ) ;

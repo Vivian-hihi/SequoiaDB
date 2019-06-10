@@ -259,6 +259,9 @@ namespace engine
 
       _dpsLogRecord &operator=(const _dpsLogRecord &) ;
 
+   protected :
+      void _clearTags () ;
+
    private:
       dpsLogRecordHeader _head ;
       const CHAR *_data[DPS_MERGE_BLOCK_MAX_DATA] ;
