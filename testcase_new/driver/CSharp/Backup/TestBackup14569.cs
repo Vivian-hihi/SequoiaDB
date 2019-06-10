@@ -83,9 +83,9 @@ namespace CSharp.Backup
 
             BsonDocument orderBy = new BsonDocument();
             orderBy.Add("GroupName", -1);
-
+            DBCursor cursor = null;
             try {
-                DBCursor cursor = sdb.ListBackup(listOption, matcher, selector, orderBy);
+                cursor = sdb.ListBackup(listOption, matcher, selector, orderBy);
                 while (cursor.Next() != null) 
                 {
                     BsonDocument record = cursor.Current();
@@ -114,26 +114,12 @@ namespace CSharp.Backup
             //remove backup
             BsonDocument removeOption = new BsonDocument();
             removeOption.Add("Name", backupName1);
-            removeOption.Add("Path", path);
 
-            try {
-                sdb.RemoveBackup(removeOption);
-                //check
-                DBCursor cursor = sdb.ListBackup(removeOption, null, null, null);
-                while (cursor.Next() !=null ) //TODO:cursor的查询条件是back1，不会进到这里面来
-                {
-                    BsonDocument record = cursor.Current();
-                    if (record.Contains("Name")) 
-                    {
-                        string actualBackupName = record.GetElement("Name").Value.ToString();
-                        Assert.AreNotEqual(actualBackupName, backupName1);
-                        Assert.AreEqual(actualBackupName, backupName2);
-                    }
-                }
-            } catch (BaseException e) {
-                if (e.ErrorCode != -264)
-                    Assert.Fail("remove backup failed, errMsg:" + e.Message);
-            }
+            sdb.RemoveBackup(removeOption);
+
+            cursor = sdb.ListBackup(removeOption, null, null, null);
+            Assert.IsNull(cursor.Next());
+
         }
 
         [TestCleanup()]

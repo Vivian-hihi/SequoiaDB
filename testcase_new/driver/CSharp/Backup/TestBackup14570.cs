@@ -81,15 +81,7 @@ namespace CSharp.Backup
                 sdb.RemoveBackup(null);
                 //check
                 DBCursor cursor = sdb.ListBackup(null, null, null, null);
-                while (cursor.Next() != null)
-                {//TODO：这里如果cursor不等于null可以直接抛错吧？下面的finally应该也不需要了
-                    BsonDocument record = cursor.Current();
-                    if (record.Contains("Name"))
-                    {
-                        string actualBackupName = record.GetElement("Name").Value.ToString();
-                        Assert.AreNotEqual(backupName, actualBackupName);
-                    }
-                }
+                Assert.IsNull(cursor.Next());
             }
             catch (BaseException e)
             {
