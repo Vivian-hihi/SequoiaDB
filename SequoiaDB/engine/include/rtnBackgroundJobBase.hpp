@@ -117,11 +117,11 @@ namespace engine
 
             _mapJobs.clear() ;
             // force to release memory
-            _mapJobs.swap( dummyJobs ) ;
+            dummyJobs.swap( _mapJobs ) ;
 
             _mapResult.clear() ;
             // force to release memory
-            _mapResult.swap( dummyResult ) ;
+            dummyResult.swap( _mapResult ) ;
          }
 
       protected:
