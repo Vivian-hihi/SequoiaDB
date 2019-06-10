@@ -57,4 +57,5 @@ function main()
    checkIndexNotExistInES(esIndexNames);
 }
 
-main();
+// Jira 4575 暂时屏蔽此用例
+// main();
