@@ -938,6 +938,10 @@ namespace engine
       SAFE_OSS_DELETE( _pShardAdapter ) ;
       SAFE_OSS_DELETE( _pContainerMgr ) ;
 
+      _mapTaskQuery.clear() ;
+      _mapTaskID.clear() ;
+      _vecInnerSessionParam.clear() ;
+
       PD_TRACE_EXIT ( SDB__CLSMGR_FINAL );
       return SDB_OK ;
    }
