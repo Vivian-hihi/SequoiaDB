@@ -35,6 +35,7 @@ const SDB_SNAP_TRANSACTIONS_CURRENT= 10 ;
 const SDB_SNAP_ACCESSPLANS         = 11 ;
 const SDB_SNAP_HEALTH              = 12 ;
 const SDB_SNAP_CONFIGS             = 13 ;
+const SDB_SNAP_SVCTASKS            = 14 ;
 const SDB_SNAP_SEQUENCES           = 15 ;
 
 const SDB_LIST_CONTEXTS            = 0 ;
@@ -50,7 +51,10 @@ const SDB_LIST_DOMAINS             = 9 ;
 const SDB_LIST_TASKS               = 10 ;
 const SDB_LIST_TRANSACTIONS        = 11 ;
 const SDB_LIST_TRANSACTIONS_CURRENT = 12 ;
+const SDB_LIST_SVCTASKS            = 14 ;
 const SDB_LIST_SEQUENCES           = 15 ;
+const SDB_LIST_USERS               = 16 ;
+const SDB_LIST_BACKUPS             = 17 ;
 
 const SDB_INSERT_CONTONDUP         = 1 ;
 const SDB_INSERT_RETURN_ID         = 2 ; // only available when inserting only one document
