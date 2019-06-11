@@ -57,7 +57,7 @@ namespace engine
 #define SHD_SESSION_TIMEOUT         (60)
 #define SHD_INTERRUPT_CHECKPOINT    (10)
 #define SHD_NOTPRIMARY_WAITTIME     (15000)     //ms
-#define SHD_TRANSROLLBACK_WAITTIME  (600000)    //ms
+#define SHD_TRANSROLLBACK_WAITTIME  (60000)     //ms
 #define SHD_WAITTIME_INTERVAL       (200)       //ms
 
    BEGIN_OBJ_MSG_MAP( _clsShdSession, _pmdAsyncSession )
@@ -4753,6 +4753,14 @@ namespace engine
       {
          rc = SDB_RTN_EXIST_INDOUBT_TRANS ;
          goto error ;
+      }
+      else if ( eduCB()->isTransaction() )
+      {
+         rc = _checkRollbackStatus() ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
       rc = _pFreezingWindow->waitForOpr( name, eduCB(),
