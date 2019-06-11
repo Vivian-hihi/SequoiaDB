@@ -3,6 +3,9 @@ package com.sequoias3.delimiter;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
@@ -23,9 +26,9 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
+ * @Description seqDB-18198 :: 增加对象过程中db端节点异常
  * @author fanyu
  * @version 1.00
- * @Description seqDB-18198 :: 增加对象过程中db端节点异常
  * @Date 2019.05.23
  */
 public class PutObjectWithKillCoord18198 extends S3TestBase {
@@ -40,6 +43,8 @@ public class PutObjectWithKillCoord18198 extends S3TestBase {
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
     private File localPath = null;
+    private GroupMgr groupMgr = null;
+    private GroupWrapper coordGroup = null;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -48,6 +53,9 @@ public class PutObjectWithKillCoord18198 extends S3TestBase {
         TestTools.LocalFile.createDir(localPath.toString());
         filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
         TestTools.LocalFile.createFile(filePath);
+        groupMgr = GroupMgr.getInstance();
+        coordGroup = groupMgr.getGroupByName("SYSCoord");
+
         s3Client = CommLibS3.buildS3Client();
         CommLibS3.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
@@ -61,8 +69,11 @@ public class PutObjectWithKillCoord18198 extends S3TestBase {
     @Test
     public void test() throws Exception {
         //kill coord
-        FaultMakeTask faultTask = KillNode.getFaultMakeTask(S3TestBase.hostName, S3TestBase.serviceName, 0);
-        TaskMgr mgr = new TaskMgr(faultTask);
+        TaskMgr mgr = new TaskMgr();
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 2);
+            mgr.addTask(faultTask);
+        }
         for (int i = 0; i < objectNums; i++) {
             mgr.addTask(new PutObject(objectNames.get(i)));
         }
@@ -106,8 +117,7 @@ public class PutObjectWithKillCoord18198 extends S3TestBase {
                 s3Client.putObject(bucketName, this.objectName, new File(filePath));
                 objectNameList.add(this.objectName);
             } catch (AmazonS3Exception e) {
-                e.printStackTrace();
-                if (e.getStatusCode() != 500) {
+                if (e.getStatusCode() != 500 && !e.getMessage().contains("Unable to execute HTTP request")) {
                     throw e;
                 }
             }

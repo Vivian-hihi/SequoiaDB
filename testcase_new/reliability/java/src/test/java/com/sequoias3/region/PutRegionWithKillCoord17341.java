@@ -2,15 +2,17 @@ package com.sequoias3.region;
 
 
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.S3TestBase;
+import com.sequoias3.commlibs3.s3utils.RegionUtils;
 import com.sequoias3.commlibs3.s3utils.bean.GetRegionResult;
 import com.sequoias3.commlibs3.s3utils.bean.Region;
-import com.sequoias3.commlibs3.s3utils.RegionUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -38,9 +40,14 @@ public class PutRegionWithKillCoord17341 extends S3TestBase {
     private String dataCLShardingType = "month";
     private List<String> regionNames = new ArrayList<String>();
     private List<String> regionNameList = new CopyOnWriteArrayList<String>();
+    private GroupMgr groupMgr = null;
+    private GroupWrapper coordGroup = null;
 
     @BeforeClass
     private void setUp() throws Exception {
+        groupMgr = GroupMgr.getInstance();
+        coordGroup = groupMgr.getGroupByName("SYSCoord");
+
         for (int i = 0; i < regionNum; i++) {
             RegionUtils.deleteRegion(regionNameBase + i);
             regionNames.add(regionNameBase + i);
@@ -50,28 +57,26 @@ public class PutRegionWithKillCoord17341 extends S3TestBase {
     @Test
     public void test() throws Exception {
         //put region when kill coord
-        FaultMakeTask faultTask = KillNode.getFaultMakeTask(SdbTestBase.hostName, SdbTestBase.serviceName, 1);
-        TaskMgr mgr = new TaskMgr(faultTask);
+        TaskMgr mgr = new TaskMgr();
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 2);
+            mgr.addTask(faultTask);
+        }
         for (int i = 0; i < regionNum; i++) {
             mgr.addTask(new PutRegion(regionNames.get(i)));
         }
         mgr.execute();
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-        System.out.println("regionNameList = " + regionNameList.size());
-
         //put region again
         regionNames.removeAll(regionNameList);
-
         for (String regionName : regionNames) {
             Region region = new Region().withDataCSShardingType(dataCSShardingType)
                     .withDataCLShardingType(dataCLShardingType)
                     .withName(regionName);
             RegionUtils.putRegion(region);
         }
-
         int index = new Random().nextInt(regionNum);
         String regionName = regionNameBase + index;
-        System.out.println("regionName = " + regionName);
         GetRegionResult result = RegionUtils.getRegion(regionName);
         Assert.assertEquals(result.getBuckets().size(), 0, result.getBuckets().toString());
         Region region = result.getRegion();

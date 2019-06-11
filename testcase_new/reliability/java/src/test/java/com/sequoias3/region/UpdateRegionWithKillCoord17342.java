@@ -6,16 +6,18 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
-import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
+import com.sequoias3.commlibs3.s3utils.RegionUtils;
 import com.sequoias3.commlibs3.s3utils.bean.GetRegionResult;
 import com.sequoias3.commlibs3.s3utils.bean.Region;
-import com.sequoias3.commlibs3.s3utils.RegionUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -49,9 +51,14 @@ public class UpdateRegionWithKillCoord17342 extends S3TestBase {
     private String objectName = "object17432";
     private List<String> regionNames = new ArrayList<String>();
     private List<String> regionNameList = new CopyOnWriteArrayList<String>();
+    private GroupMgr groupMgr = null;
+    private GroupWrapper coordGroup = null;
 
     @BeforeClass
     private void setUp() throws Exception {
+        groupMgr = GroupMgr.getInstance();
+        coordGroup = groupMgr.getGroupByName("SYSCoord");
+
         s3Client = CommLibS3.buildS3Client();
         CommLibS3.clearBucket(s3Client,bucketName);
         for (int i = 0; i < regionNum; i++) {
@@ -67,8 +74,12 @@ public class UpdateRegionWithKillCoord17342 extends S3TestBase {
     @Test
     public void test() throws Exception {
         //put region when kill coord
-        FaultMakeTask faultTask = KillNode.getFaultMakeTask(SdbTestBase.hostName, SdbTestBase.serviceName, 2);
-        TaskMgr mgr = new TaskMgr(faultTask);
+        TaskMgr mgr = new TaskMgr();
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 2);
+            mgr.addTask(faultTask);
+        }
+
         for (int i = 0; i < regionNum; i++) {
             mgr.addTask(new PutRegion(regionNames.get(i),updateDataCSShardingType,updateDataCLShardingType));
         }

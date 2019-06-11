@@ -5,6 +5,9 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
 import com.amazonaws.services.s3.model.VersionListing;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
@@ -36,9 +39,14 @@ public class ListVersionsWithKillCoord16467 extends S3TestBase {
     private String objectName = "object16467";
     private AmazonS3 s3Client = null;
     private int versionNum = 2000;
+    private GroupMgr groupMgr = null;
+    private GroupWrapper coordGroup = null;
 
     @BeforeClass
-    private void setUp() throws IOException {
+    private void setUp() throws IOException, ReliabilityException {
+        groupMgr = GroupMgr.getInstance();
+        coordGroup = groupMgr.getGroupByName("SYSCoord");
+
         s3Client = CommLibS3.buildS3Client();
         CommLibS3.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
@@ -51,8 +59,11 @@ public class ListVersionsWithKillCoord16467 extends S3TestBase {
     @Test
     public void test() throws ReliabilityException, IOException {
         //kill coord when list objects
-        FaultMakeTask faultTask = KillNode.getFaultMakeTask(S3TestBase.hostName, S3TestBase.serviceName, 3);
-        TaskMgr mgr = new TaskMgr(faultTask);
+        TaskMgr mgr = new TaskMgr();
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 2);
+            mgr.addTask(faultTask);
+        }
         ListVersions listTask = new ListVersions();
         mgr.addTask(listTask);
         mgr.execute();

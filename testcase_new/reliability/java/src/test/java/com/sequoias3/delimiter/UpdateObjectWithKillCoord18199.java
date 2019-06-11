@@ -6,6 +6,9 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
 import com.amazonaws.services.s3.model.VersionListing;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
@@ -44,6 +47,8 @@ public class UpdateObjectWithKillCoord18199 extends S3TestBase {
     private int versionNum = 1000;
     private AtomicInteger count = new AtomicInteger(0);
     private File localPath = null;
+    private GroupMgr groupMgr = null;
+    private GroupWrapper coordGroup = null;
 
     @BeforeClass
     private void setUp() throws Exception {
@@ -52,6 +57,9 @@ public class UpdateObjectWithKillCoord18199 extends S3TestBase {
         TestTools.LocalFile.createDir(localPath.toString());
         filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
         TestTools.LocalFile.createFile(filePath);
+        groupMgr = GroupMgr.getInstance();
+        coordGroup = groupMgr.getGroupByName("SYSCoord");
+
         s3Client = CommLibS3.buildS3Client();
         CommLibS3.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
@@ -63,8 +71,11 @@ public class UpdateObjectWithKillCoord18199 extends S3TestBase {
     @Test
     public void test() throws Exception {
         //kill coord
-        FaultMakeTask faultTask = KillNode.getFaultMakeTask(S3TestBase.hostName, S3TestBase.serviceName, 0);
-        TaskMgr mgr = new TaskMgr(faultTask);
+        TaskMgr mgr = new TaskMgr();
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 2);
+            mgr.addTask(faultTask);
+        }
         for (int i = 0; i < versionNum; i++) {
             mgr.addTask(new PutObject(objectName));
         }

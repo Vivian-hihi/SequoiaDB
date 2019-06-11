@@ -5,6 +5,9 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
@@ -36,18 +39,21 @@ public class ListObjectsWithKillCoord16466 extends S3TestBase {
     private List<String> objectNames = new ArrayList<String>();
     private AmazonS3 s3Client = null;
     private int fileSize = 1024 * 1;
-    private int objectNums = 100;
+    private int objectNums = 1000;
     private File localPath = null;
     private String filePath = null;
+    private GroupMgr groupMgr = null;
+    private GroupWrapper coordGroup = null;
 
     @BeforeClass
-    private void setUp() throws IOException {
+    private void setUp() throws IOException, ReliabilityException {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
         filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
-
         TestTools.LocalFile.removeFile(localPath);
         TestTools.LocalFile.createDir(localPath.toString());
         TestTools.LocalFile.createFile(filePath, fileSize);
+        groupMgr = GroupMgr.getInstance();
+        coordGroup = groupMgr.getGroupByName("SYSCoord");
         s3Client = CommLibS3.buildS3Client();
         CommLibS3.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
@@ -61,8 +67,11 @@ public class ListObjectsWithKillCoord16466 extends S3TestBase {
     @Test
     public void test() throws ReliabilityException, IOException {
         //kill coord when list objects
-        FaultMakeTask faultTask = KillNode.getFaultMakeTask(S3TestBase.hostName, S3TestBase.serviceName, 2);
-        TaskMgr mgr = new TaskMgr(faultTask);
+        TaskMgr mgr = new TaskMgr();
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 2);
+            mgr.addTask(faultTask);
+        }
         ListObject listTask = new ListObject();
         mgr.addTask(listTask);
         mgr.execute();
