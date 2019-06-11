@@ -218,7 +218,11 @@ namespace engine
 
    DPS_TRANS_ID dpsTransCB::allocTransID( BOOLEAN isAutoCommit )
    {
-      DPS_TRANS_ID temp = _TransIDL48Cur.inc() ;
+      DPS_TRANS_ID temp = 0 ;
+
+      do {
+         temp = _TransIDL48Cur.inc() ;
+      } while( 0 == temp ) ;
 
       temp = DPS_TRANS_GET_SN( temp ) | _TransIDH16 |
              DPS_TRANSID_FIRSTOP_BIT ;
