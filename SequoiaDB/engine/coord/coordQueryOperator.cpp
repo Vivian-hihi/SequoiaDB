@@ -692,6 +692,12 @@ namespace engine
       {
          return TRUE ;
       }
+      else if ( 0 == ossStrcmp( CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT,
+                                pQueryMsg->name ) )
+      {
+         // special case for "$get count"
+         return TRUE ;
+      }
       return FALSE ;
    }
 
