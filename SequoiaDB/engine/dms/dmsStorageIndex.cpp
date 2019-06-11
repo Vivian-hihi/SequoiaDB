@@ -951,6 +951,11 @@ namespace engine
                goto error ;
             }
             rc = extDataHandler->onDropTextIdx( indexCB.getExtDataName(), cb ) ;
+            if ( SDB_DMS_CS_NOTEXIST == rc )
+            {
+               // if capped cs doesn't exist, we just ignor error
+               rc = SDB_OK ;
+            }
             if ( rc )
             {
                PD_LOG( PDERROR, "External process of dropping text index[%s]"

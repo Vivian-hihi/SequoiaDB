@@ -399,6 +399,11 @@ namespace engine
          }
 
          rc = extHandler->onDelCL( _su->CSName(), _clShortName, cb ) ;
+         if ( SDB_DMS_CS_NOTEXIST == rc )
+         {
+            // if capped cs doesn't exist, we just ignor error
+            rc = SDB_OK ;
+         }
          PD_RC_CHECK( rc, PDERROR, "External operation on delete cl failed, "
                       "rc: %d", rc ) ;
       }

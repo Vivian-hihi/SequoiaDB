@@ -2009,6 +2009,11 @@ namespace engine
       if ( extHandler )
       {
          rc = extHandler->onDelCS( pCSCB->_name, cb, removeFile ) ;
+         if ( SDB_DMS_CS_NOTEXIST == rc )
+         {
+            // if capped cs doesn't exist, we just ignor error
+            rc = SDB_OK ;
+         }
          if ( rc )
          {
             // If external operation failed, we should resume by cancel the

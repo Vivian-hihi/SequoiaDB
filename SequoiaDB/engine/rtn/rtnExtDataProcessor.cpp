@@ -567,8 +567,8 @@ namespace engine
       }
 
       rc = _prepareCSAndCL( _cappedCSName, _cappedCLName, cb, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s.%s ] "
-                   "failed[ %d ]", _cappedCSName, _cappedCLName, rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create capped collection[ %s ] "
+                   "failed[ %d ]", _cappedCLName, rc ) ;
 
    done:
       if ( DMS_INVALID_SUID != suID )
