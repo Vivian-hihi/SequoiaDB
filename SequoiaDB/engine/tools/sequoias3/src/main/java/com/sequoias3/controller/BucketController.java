@@ -23,7 +23,6 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping(RestParamDefine.REST_S3)
 public class BucketController {
     private static final Logger logger = LoggerFactory.getLogger(BucketController.class);
 
@@ -35,7 +34,7 @@ public class BucketController {
 
     @PutMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity putBucket(@PathVariable("bucketname") String bucketName,
-                                    @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                    @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                     HttpServletRequest httpServletRequest)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
@@ -50,7 +49,7 @@ public class BucketController {
     }
 
     @GetMapping(value="", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity listBuckets( @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+    public ResponseEntity listBuckets( @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
@@ -61,7 +60,7 @@ public class BucketController {
 
     @DeleteMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteBucket(@PathVariable("bucketname") String bucketName,
-                               @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+                               @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
@@ -72,7 +71,7 @@ public class BucketController {
 
     @RequestMapping(method = RequestMethod.HEAD, value = "/{bucketName:.+}")
     public ResponseEntity headBucket(@PathVariable("bucketName") String bucketName,
-                               @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+                               @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
         logger.info("head bucket. bucketName={}, operator={}", bucketName, operator.getUserName());
@@ -87,7 +86,7 @@ public class BucketController {
     }
 
     @RequestMapping(method = RequestMethod.HEAD, value = "")
-    public ResponseEntity headNone(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+    public ResponseEntity headNone(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException {
         restUtils.getOperatorByAuthorization(authorization);
 

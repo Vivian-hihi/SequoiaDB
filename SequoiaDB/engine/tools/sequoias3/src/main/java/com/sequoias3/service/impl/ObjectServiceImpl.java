@@ -73,7 +73,8 @@ public class ObjectServiceImpl implements ObjectService {
     @Override
     public PutDeleteResult putObject(long ownerID, String bucketName, String objectName,
                                      String contentMD5, Map<String, String> headers,
-                                     Map<String, String> xMeta, InputStream inputStream)
+                                     Map<String, String> xMeta, InputStream inputStream,
+                                     Long contentLength)
             throws S3ServerException {
         //check key length
         if (objectName.length() > RestParamDefine.KEY_LENGTH){
@@ -116,6 +117,12 @@ public class ObjectServiceImpl implements ObjectService {
                     throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
                             "The Content-MD5 you specified does not match what we received.");
                 }
+            }
+
+            if (contentLength != null && insertResult.getSize() != contentLength){
+                throw new S3ServerException(S3Error.OBJECT_INCOMPLETE_BODY,
+                        "content length is " + contentLength +
+                                " and receive " + insertResult.getSize() + " bytes");
             }
 
             VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
@@ -542,6 +549,95 @@ public class ObjectServiceImpl implements ObjectService {
             throw e;
         } catch (Exception e){
             contextManager.release(queryContext);
+            throw new S3ServerException(S3Error.OBJECT_LIST_FAILED, "error message:"+e.getMessage(), e);
+        }finally {
+            metaDao.releaseQueryDbCursor(dbCursorDir);
+            metaDao.releaseQueryDbCursor(dbCursorKeys);
+        }
+    }
+
+    @Override
+    public ListObjectsResultV1 listObjectsV1(long ownerID, String bucketName, String prefix, String delimiter, String startAfter, Integer maxKeys, String encodingType)
+            throws S3ServerException {
+        QueryDbCursor dbCursorKeys = null;
+        QueryDbCursor dbCursorDir = null;
+        try {
+            Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+            Region region = null;
+            if (bucket.getRegion() != null) {
+                region = regionDao.queryRegion(bucket.getRegion());
+            }
+            ListObjectsResultV1 listObjectsResult = new ListObjectsResultV1(bucketName, maxKeys,
+                    encodingType, prefix, startAfter, delimiter);
+
+            String metaCsName = regionDao.getMetaCurCSName(region);
+            String metaClName = regionDao.getMetaCurCLName(region);
+
+            Owner owner = userDao.getOwnerByUserID(ownerID);
+            int count = 0;
+            int maxNumber = Math.min(maxKeys, RestParamDefine.MAX_KEYS_DEFAULT);
+
+            String parentIdName = getParentName(delimiter, bucket);
+            ObjectsFilter filter;
+            if (parentIdName != null){
+                Long parentId = getParentId(metaCsName, bucket.getBucketId(), prefix, delimiter);
+                dbCursorDir = dirDao.queryDirList(metaCsName, bucket.getBucketId(),
+                        delimiter, prefix, startAfter);
+                if (parentId != null){
+                    dbCursorKeys = metaDao.queryMetaListByParentId(metaCsName,
+                            metaClName, bucket.getBucketId(), parentIdName, parentId,
+                            prefix, startAfter, null, false);
+                }
+
+                filter = new ObjectsFilter(dbCursorDir, dbCursorKeys,
+                        prefix, delimiter, startAfter, encodingType, FilterRecord.FILTER_DIR);
+            }else {
+                dbCursorKeys = metaDao.queryMetaByBucket(metaCsName, metaClName,
+                        bucket.getBucketId(), prefix, startAfter,
+                        null, false);
+
+                if (null == delimiter){
+                    filter = new ObjectsFilter(null, dbCursorKeys,
+                            prefix, delimiter, startAfter, encodingType, FilterRecord.FILTER_NO_DELIMITER);
+                }else {
+                    filter = new ObjectsFilter(null, dbCursorKeys,
+                            prefix, delimiter, startAfter, encodingType, FilterRecord.FILTER_DELIMITER);
+                }
+            }
+
+            LinkedHashSet<Content> contentList = listObjectsResult.getContentList();
+            LinkedHashSet<CommonPrefix> commonPrefixesList = listObjectsResult.getCommonPrefixList();
+            FilterRecord matcher;
+            while ((matcher =  filter.getNextRecord()) != null){
+                if (matcher.getRecordType() == FilterRecord.COMMONPREFIX){
+                    if (!commonPrefixesList.contains(matcher.getCommonPrefix())) {
+                        commonPrefixesList.add(matcher.getCommonPrefix());
+                        count++;
+                    }
+                }else if (matcher.getRecordType() == FilterRecord.CONTENT){
+                    matcher.getContent().setOwner(owner);
+                    contentList.add(matcher.getContent());
+                    count++;
+                }
+
+                if (count >= maxNumber){
+                    break;
+                }
+            }
+
+            if (filter.hasNext()){
+                listObjectsResult.setIsTruncated(true);
+                if (matcher.getRecordType() == FilterRecord.COMMONPREFIX){
+                    listObjectsResult.setNextMarker(matcher.getCommonPrefix().getPrefix());
+                }else if (matcher.getRecordType() == FilterRecord.CONTENT){
+                    listObjectsResult.setNextMarker(matcher.getContent().getKey());
+                }
+            }
+
+            return listObjectsResult;
+        } catch (S3ServerException e){
+            throw e;
+        } catch (Exception e){
             throw new S3ServerException(S3Error.OBJECT_LIST_FAILED, "error message:"+e.getMessage(), e);
         }finally {
             metaDao.releaseQueryDbCursor(dbCursorDir);

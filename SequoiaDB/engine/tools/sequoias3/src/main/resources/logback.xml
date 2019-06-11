@@ -29,6 +29,7 @@
         <appender-ref ref="FILE"/>
         <appender-ref ref="stdout"/>
     </root>
+    <!--<logger name="org.apache.http" level="DEBUG"/>-->
     <!--<root level="DEBUG">-->
         <!--<appender-ref ref="FILE"/>-->
         <!--<appender-ref ref="stdout"/>-->

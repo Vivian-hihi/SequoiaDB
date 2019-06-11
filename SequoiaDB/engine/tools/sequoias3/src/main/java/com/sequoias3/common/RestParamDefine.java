@@ -21,6 +21,15 @@ public class RestParamDefine {
         public static final String FORCE                   = "Force";
     }
 
+    public static class RegionPara{
+        public static final String CREATE_REGION           = "Action=CreateRegion";
+        public static final String GET_REGION              = "Action=GetRegion";
+        public static final String HEAD_REGION             = "Action=HeadRegion";
+        public static final String DELETE_REGION           = "Action=DeleteRegion";
+        public static final String REGION_NAME             = "RegionName";
+        public static final String LIST_REGIONS            = "Action=ListRegions";
+    }
+
     public static class ListObjectsPara{
         public static final String LIST_TYPE2              = "list-type=2";
         public static final String PREFIX                  = "prefix";
@@ -30,6 +39,14 @@ public class RestParamDefine {
         public static final String MAX_KEYS                = "max-keys";
         public static final String ENCODING_TYPE           = "encoding-type";
         public static final String FETCH_OWNER             = "fetch-owner";
+    }
+
+    public static class ListObjectsV1Para{
+        public static final String PREFIX                  = "prefix";
+        public static final String DELIMITER               = "delimiter";
+        public static final String MARKER                  = "marker";
+        public static final String MAX_KEYS                = "max-keys";
+        public static final String ENCODING_TYPE           = "encoding-type";
     }
 
     public static class ListObjectVersionsPara{
@@ -106,6 +123,7 @@ public class RestParamDefine {
     public static final int X_AMZ_META_LENGTH       = 2*1024;
 
     public static final String REST_CREDENTIAL      = "Credential=";
+    public static final String REST_AWS             = "AWS";
 
     public static final String REST_DELIMITER       = "/";
     public static final String REST_S3              = "/s3";

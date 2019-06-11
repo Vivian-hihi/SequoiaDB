@@ -11,7 +11,6 @@ import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,9 +28,9 @@ public class RegionController {
     @Autowired
     RegionService regionService;
 
-    @PutMapping(value = "/{region:.+}", produces = MediaType.APPLICATION_XML_VALUE)
-    public void putRegion(@PathVariable("region") String regionName,
-                          @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+    @PostMapping(params = RestParamDefine.RegionPara.CREATE_REGION, produces = MediaType.APPLICATION_XML_VALUE)
+    public void putRegion(@RequestParam(RestParamDefine.RegionPara.REGION_NAME) String regionName,
+                          @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                           @RequestBody(required = false) Region regionCon)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
@@ -52,8 +51,8 @@ public class RegionController {
         regionService.putRegion(regionCon);
     }
 
-    @GetMapping(value = "", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity ListRegions(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+    @PostMapping(params = RestParamDefine.RegionPara.LIST_REGIONS, produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity ListRegions(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
         restUtils.getOperatorByAuthorization(authorization);
 
@@ -63,9 +62,9 @@ public class RegionController {
                 .body(regionService.ListRegions());
     }
 
-    @GetMapping(value = "{regionName:.+}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity GetRegion(@PathVariable("regionName") String regionName,
-                          @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+    @PostMapping(params = RestParamDefine.RegionPara.GET_REGION, produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity GetRegion(@RequestParam(RestParamDefine.RegionPara.REGION_NAME) String regionName,
+                                    @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
@@ -81,9 +80,9 @@ public class RegionController {
                 .body(regionService.getRegion(regionName.toLowerCase()));
     }
 
-    @RequestMapping(method = RequestMethod.HEAD, value = "{region:.+}")
-    public void headRegion(@PathVariable("region") String regionName,
-                          @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+    @PostMapping(params = RestParamDefine.RegionPara.HEAD_REGION, produces = MediaType.APPLICATION_XML_VALUE)
+    public void headRegion(@RequestParam(RestParamDefine.RegionPara.REGION_NAME) String regionName,
+                           @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
@@ -93,31 +92,15 @@ public class RegionController {
                             ",role=" + operator.getRole());
         }
 
-        logger.info("put region. regionName:{}", regionName);
+        logger.info("head region. regionName:{}", regionName);
 
         regionService.headRegion(regionName.toLowerCase());
     }
 
-    @RequestMapping(method = RequestMethod.HEAD, value = "")
-    public ResponseEntity headRegionNone(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
-            throws S3ServerException{
-        User operator = restUtils.getOperatorByAuthorization(authorization);
-
-        if (!operator.getRole().equals(UserParamDefine.ROLE_ADMIN)) {
-            throw new S3ServerException(S3Error.INVALID_ADMINISTRATOR,
-                    "not an admin user. operator = " + operator.getUserName() +
-                            ",role=" + operator.getRole());
-        }
-
-        logger.error("Method not allowed. head none bucket.");
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .build();
-    }
-
-    @DeleteMapping(value = "{region:.+}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity DeleteRegion(@PathVariable("region") String regionName,
-                             @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
-            throws S3ServerException{
+    @PostMapping(params = RestParamDefine.RegionPara.DELETE_REGION, produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity DeleteRegion(@RequestParam(RestParamDefine.RegionPara.REGION_NAME) String regionName,
+                                       @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
+    throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
         if (!operator.getRole().equals(UserParamDefine.ROLE_ADMIN)) {

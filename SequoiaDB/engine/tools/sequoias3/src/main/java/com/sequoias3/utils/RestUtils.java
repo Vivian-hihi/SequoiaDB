@@ -1,6 +1,8 @@
 package com.sequoias3.utils;
 
+import com.sequoias3.common.InitAdminUserDefine;
 import com.sequoias3.common.RestParamDefine;
+import com.sequoias3.config.AuthorizationConfig;
 import com.sequoias3.core.Range;
 import com.sequoias3.core.User;
 import com.sequoias3.dao.UserDao;
@@ -21,19 +23,43 @@ public class RestUtils {
     @Autowired
     UserDao userDao;
 
+    @Autowired
+    AuthorizationConfig authConfig;
+
     public User getOperatorByAuthorization(String authorization) throws S3ServerException {
         //       1.get access key id
         String accessKeyId = null;
-        int beginIndex = authorization.indexOf(RestParamDefine.REST_CREDENTIAL);
-        if (-1 == beginIndex) {
-            throw new S3ServerException(S3Error.NO_CREDENTIALS, "no credentials. authorization = " + authorization);
-        }
+        if (authConfig.isCheck()) {
+            if (authorization == null){
+                throw new S3ServerException(S3Error.INVALID_AUTHORIZATION, "authorization is null");
+            }
 
-        int endIndex = authorization.indexOf(RestParamDefine.REST_DELIMITER, beginIndex);
-        if (endIndex != -1) {
-            accessKeyId = authorization.substring(beginIndex + RestParamDefine.REST_CREDENTIAL.length(), endIndex);
-        } else {
-            accessKeyId = authorization.substring(beginIndex + RestParamDefine.REST_CREDENTIAL.length());
+            int beginIndex = authorization.indexOf(RestParamDefine.REST_CREDENTIAL);
+            if (-1 != beginIndex) {
+                int endIndex = authorization.indexOf(RestParamDefine.REST_DELIMITER, beginIndex);
+                if (endIndex != -1) {
+                    accessKeyId = authorization.substring(beginIndex + RestParamDefine.REST_CREDENTIAL.length(), endIndex);
+                } else {
+                    throw new S3ServerException(S3Error.INVALID_AUTHORIZATION, "authorization is invalid. authorization="+authorization);
+                }
+            }else {
+                int beginIndexV2 = authorization.indexOf(RestParamDefine.REST_AWS);
+                if (-1 == beginIndexV2){
+                    throw new S3ServerException(S3Error.INVALID_AUTHORIZATION, "authorization is invalid. authorization = " + authorization);
+                }
+
+                String accessKeys = authorization.substring(beginIndexV2+RestParamDefine.REST_AWS.length());
+
+                String[] keys = accessKeys.split(":");
+
+                if (keys.length < 2){
+                    throw new S3ServerException(S3Error.INVALID_AUTHORIZATION, "no aws accesskeyId. authorization:"+authorization);
+                }
+
+                accessKeyId = keys[0].trim();
+            }
+        }else {
+            return userDao.getUserByName(InitAdminUserDefine.ADMIN_NAME);
         }
 
         //       2.check access key
@@ -56,12 +82,7 @@ public class RestUtils {
             throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
         }
 
-        int beginS3 = decodeUrl.indexOf(RestParamDefine.REST_S3, 0);
-        if (beginS3 == -1) {
-            throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
-        }
-
-        int beginObject = decodeUrl.indexOf(RestParamDefine.REST_DELIMITER, beginS3+RestParamDefine.REST_S3.length()+1);
+        int beginObject = decodeUrl.indexOf(RestParamDefine.REST_DELIMITER, 1);
         if (beginObject == -1) {
             throw new S3ServerException(S3Error.OBJECT_INVALID_KEY, "Invalid key. url = " + url);
         }

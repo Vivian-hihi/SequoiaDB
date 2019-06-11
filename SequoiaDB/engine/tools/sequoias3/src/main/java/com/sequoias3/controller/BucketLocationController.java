@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(RestParamDefine.REST_S3)
 public class BucketLocationController {
     private static final Logger logger = LoggerFactory.getLogger(BucketLocationController.class);
 
@@ -25,7 +24,7 @@ public class BucketLocationController {
 
     @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.LOCATION, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity getBucketLocation(@PathVariable("bucketname") String bucketName,
-                                            @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+                                            @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
 

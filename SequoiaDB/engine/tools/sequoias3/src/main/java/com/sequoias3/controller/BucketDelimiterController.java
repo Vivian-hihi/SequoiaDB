@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(RestParamDefine.REST_S3)
 public class BucketDelimiterController {
     private static final Logger logger = LoggerFactory.getLogger(BucketDelimiterController.class);
 
@@ -27,7 +26,7 @@ public class BucketDelimiterController {
     @PutMapping(value = "/{bucketname:.+}", params = RestParamDefine.DELIMITER,
             produces = MediaType.APPLICATION_XML_VALUE)
     public void putBucketDelimiter(@PathVariable("bucketname") String bucketName,
-                                     @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                     @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                      @RequestBody DelimiterConfiguration delimiterCon)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
@@ -42,7 +41,7 @@ public class BucketDelimiterController {
     @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.DELIMITER,
             produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity getBucketDelimiter(@PathVariable("bucketname") String bucketName,
-                                             @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+                                             @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
 

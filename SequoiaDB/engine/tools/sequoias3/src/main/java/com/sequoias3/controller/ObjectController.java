@@ -4,10 +4,7 @@ import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.core.*;
 import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
-import com.sequoias3.model.GetResult;
-import com.sequoias3.model.ListObjectsResult;
-import com.sequoias3.model.ListVersionsResult;
-import com.sequoias3.model.PutDeleteResult;
+import com.sequoias3.model.*;
 import com.sequoias3.service.ObjectService;
 import com.sequoias3.utils.RestUtils;
 import org.slf4j.Logger;
@@ -18,15 +15,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 @RestController
-@RequestMapping(RestParamDefine.REST_S3)
 public class ObjectController {
     private final Logger logger = LoggerFactory.getLogger(ObjectController.class);
 
@@ -38,7 +34,7 @@ public class ObjectController {
 
     @PutMapping(value="/{bucketname:.+}/**", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity putObject(@PathVariable("bucketname") String bucketName,
-                                    @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                    @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                     @RequestHeader(name = RestParamDefine.PutObjectHeader.CONTENT_MD5, required = false) String contentMD5,
                                     HttpServletRequest httpServletRequest)
             throws S3ServerException, IOException {
@@ -58,19 +54,32 @@ public class ObjectController {
                 requestHeaders.put(name, httpServletRequest.getHeader(name));
             }
         }
-        ServletInputStream body = httpServletRequest.getInputStream();
+
+        InputStream body = null;
+        Long realContenLength = null;
+        if (httpServletRequest.getHeader("x-amz-decoded-content-length") != null){
+            body = new S3InputStreamReaderChunk(httpServletRequest.getInputStream());
+            realContenLength = Long.parseLong(httpServletRequest.getHeader("x-amz-decoded-content-length"));
+        }else {
+            body = httpServletRequest.getInputStream();
+            if (httpServletRequest.getHeader("content-length") != null) {
+                realContenLength = Long.parseLong(httpServletRequest.getHeader("content-length"));
+            }
+        }
+
         PutDeleteResult result = objectService.putObject(operator.getUserId(),
                 bucketName,
                 objectName,
                 contentMD5,
                 requestHeaders,
                 xMeta,
-                body);
+                body,
+                realContenLength);
 
         HttpHeaders headers = new HttpHeaders();
         if (result.geteTag() != null){
             headers.add(RestParamDefine.PutObjectResultHeader.ETAG,
-                    result.geteTag());
+                    "\""+result.geteTag()+"\"");
         }
         if (result.getVersionId() != null){
             headers.add(RestParamDefine.PutObjectResultHeader.VERSION_ID,
@@ -85,7 +94,7 @@ public class ObjectController {
 
     @GetMapping(value="/{bucketname:.+}/**", produces = MediaType.APPLICATION_XML_VALUE )
     public void getObject(@PathVariable("bucketname") String bucketName,
-                                    @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                    @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                     @RequestParam(value = RestParamDefine.VERSION_ID, required = false) String versionId,
                                     HttpServletRequest httpServletRequest,
                                     HttpServletResponse response)
@@ -146,7 +155,7 @@ public class ObjectController {
 
     @DeleteMapping(value = "/{bucketname:.+}/**", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteObject(@PathVariable("bucketname") String bucketName,
-                                       @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                       @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                        HttpServletRequest httpServletRequest)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
@@ -173,7 +182,7 @@ public class ObjectController {
 
     @DeleteMapping(value = "/{bucketname:.+}/**", params = RestParamDefine.VERSION_ID, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity deleteObjectByVersionId(@PathVariable("bucketname") String bucketName,
-                                                  @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                                  @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                                   @RequestParam(RestParamDefine.VERSION_ID) String versionId,
                                                   HttpServletRequest httpServletRequest)
             throws S3ServerException{
@@ -202,7 +211,7 @@ public class ObjectController {
     @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.ListObjectsPara.LIST_TYPE2,
             produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity listObjectsV2(@PathVariable("bucketname") String bucketName,
-                                        @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                        @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                         @RequestParam(value = RestParamDefine.ListObjectsPara.PREFIX, required = false) String prefix,
                                         @RequestParam(value = RestParamDefine.ListObjectsPara.DELIMITER, required = false) String delimiter,
                                         @RequestParam(value = RestParamDefine.ListObjectsPara.START_AFTER, required = false) String startAfter,
@@ -230,18 +239,34 @@ public class ObjectController {
     }
 
     @GetMapping(value = "/{bucketname:.+}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity listObjectsV1(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+    public ResponseEntity listObjectsV1(@PathVariable("bucketname") String bucketName,
+                                        @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,@RequestParam(value = RestParamDefine.ListObjectsPara.PREFIX, required = false) String prefix,
+                                        @RequestParam(value = RestParamDefine.ListObjectsV1Para.DELIMITER, required = false) String delimiter,
+                                        @RequestParam(value = RestParamDefine.ListObjectsV1Para.MARKER, required = false) String startAfter,
+                                        @RequestParam(value = RestParamDefine.ListObjectsV1Para.MAX_KEYS, required = false, defaultValue = "1000") Integer maxKeys,
+                                        @RequestParam(value = RestParamDefine.ListObjectsV1Para.ENCODING_TYPE, required = false) String encodingType)
             throws S3ServerException{
-        restUtils.getOperatorByAuthorization(authorization);
-        logger.debug("list objectsV1.");
+        User operator = restUtils.getOperatorByAuthorization(authorization);
+        logger.info("list objectsV1 with delimiter={}, marker={}, maxkeys={}, encodingtype={}", delimiter, startAfter, maxKeys, encodingType);
 
-        throw new S3ServerException(S3Error.BUCKET_NO_LIST_OBJECTS_V1,
-                "not support list objects v1");
+        if (null != encodingType) {
+            if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {
+                throw new S3ServerException(S3Error.OBJECT_INVALID_ENCODING_TYPE, "encoding type must be url");
+            }
+        }
+
+        ListObjectsResultV1 result = objectService.listObjectsV1(operator.getUserId(),
+                bucketName, prefix, delimiter, startAfter,
+                maxKeys, encodingType);
+
+        logger.info("list objectsV1 success. bucketName={}",bucketName);
+        return ResponseEntity.ok()
+                .body(result);
     }
 
     @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONS, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity listObjectsVersions(@PathVariable("bucketname") String bucketName,
-                                              @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                              @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                               @RequestParam(value = RestParamDefine.ListObjectVersionsPara.PREFIX, required = false) String prefix,
                                               @RequestParam(value = RestParamDefine.ListObjectVersionsPara.DELIMITER, required = false) String delimiter,
                                               @RequestParam(value = RestParamDefine.ListObjectVersionsPara.KEY_MARKER, required = false) String keyMarker,
@@ -268,7 +293,7 @@ public class ObjectController {
 
     @RequestMapping(method = RequestMethod.HEAD, value="/{bucketname:.+}/**")
     public void headObject(@PathVariable("bucketname") String bucketName,
-                                     @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                     @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                      @RequestParam(value = RestParamDefine.VERSION_ID, required = false) String versionId,
                                      HttpServletRequest httpServletRequest,
                                      HttpServletResponse response)
@@ -342,7 +367,7 @@ public class ObjectController {
 
     private void buildHeadersForGetObject(ObjectMeta objectMeta, Map<String, String> requestParas,
                                           Range range, HttpServletResponse response){
-        response.addHeader(RestParamDefine.GetObjectResHeader.ETAG, objectMeta.geteTag());
+        response.addHeader(RestParamDefine.GetObjectResHeader.ETAG, "\""+objectMeta.geteTag()+"\"");
         response.addDateHeader(RestParamDefine.GetObjectResHeader.LAST_MODIFIED, objectMeta.getLastModified());
         if (objectMeta.getNoVersionFlag()) {
             response.addHeader(RestParamDefine.GetObjectResHeader.VERSION_ID, "null");

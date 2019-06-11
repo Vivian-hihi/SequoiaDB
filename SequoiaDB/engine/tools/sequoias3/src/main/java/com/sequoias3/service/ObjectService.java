@@ -4,20 +4,17 @@ import com.sequoias3.core.*;
 import com.sequoias3.dao.ConnectionDao;
 import com.sequoias3.dao.DataLob;
 import com.sequoias3.exception.S3ServerException;
-import com.sequoias3.model.GetResult;
-import com.sequoias3.model.ListObjectsResult;
-import com.sequoias3.model.ListVersionsResult;
-import com.sequoias3.model.PutDeleteResult;
+import com.sequoias3.model.*;
 
 import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.util.Map;
 
 public interface ObjectService {
     PutDeleteResult putObject(long ownerID, String bucketName, String objectName,
                               String contentMD5, Map<String, String> requestHeaders,
-                              Map<String, String> xMeta, InputStream inputStream)
+                              Map<String, String> xMeta, InputStream inputStream,
+                              Long contentLength)
             throws S3ServerException;
 
     GetResult getObject(long ownerID, String bucketName, String objectName,
@@ -40,6 +37,11 @@ public interface ObjectService {
     ListObjectsResult listObjects(long ownerID, String bucketName, String prefix,
                                   String delimiter, String startAfter, Integer maxKeys,
                                   String continueToken, String encodingType, Boolean fetchOwner)
+            throws S3ServerException;
+
+    ListObjectsResultV1 listObjectsV1(long ownerID, String bucketName, String prefix,
+                                      String delimiter, String startAfter, Integer maxKeys,
+                                      String encodingType)
             throws S3ServerException;
 
     ListVersionsResult listVersions(long ownerID, String bucketName, String prefix,

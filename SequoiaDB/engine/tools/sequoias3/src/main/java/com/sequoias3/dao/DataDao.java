@@ -6,7 +6,6 @@ import com.sequoias3.exception.S3ServerException;
 import org.bson.types.ObjectId;
 
 import java.io.InputStream;
-import java.util.Date;
 
 public interface DataDao {
     DataAttr insertObjectData(String csName, String clName, InputStream data, Region region) throws S3ServerException;

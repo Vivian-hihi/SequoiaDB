@@ -54,14 +54,14 @@ public enum S3Error {
     BUCKET_DELIMITER_NOT_STABLE(-508, "DelimiterNotStable", "Delimiter is not stable now, please try again later."),
 
     BUCKET_NOT_EXIST(-510, "NoSuchBucket", "The specified bucket does not exist."),
-    BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The specified bucket Name is not valid."),
+    BUCKET_INVALID_BUCKETNAME(-511, "InvalidBucketName", "The specified bucket name is invalid."),
     BUCKET_ALREADY_EXIST(-512, "BucketAlreadyExists", "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again."),
     BUCKET_ALREADY_OWNED_BY_YOU(-513, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it."),
     BUCKET_NOT_EMPTY(-514, "BucketNotEmpty", "The bucket you tried to delete is not empty."),
     BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
     BUCKET_INVALID_VERSIONING_STATUS(-516, "InvalidVersioningStatus", "The versioning status is invalid."),
     BUCKET_INVALID_LOCATION(-517, "InvalidLocation", "The location is invalid."),
-    BUCKET_NO_LIST_OBJECTS_V1(-518, "InvalidRequest", "Please use list objects V2 request instead of list objects V1."),
+//    BUCKET_NO_LIST_OBJECTS_V1(-518, "InvalidRequest", "Please use list objects V2 request instead of list objects V1."),
 
     //object
     OBJECT_WRITE_fAILED(-600, "WriteObjectFailed", "Put object failed."),
@@ -84,6 +84,7 @@ public enum S3Error {
     OBJECT_NO_SUCH_VERSION(-621, "NoSuchVersion", "The specified version does not exist."),
     OBJECT_INVALID_VERSION(-622, "InvalidArgument", "Invalid version id specified"),
     OBJECT_INVALID_RANGE(-623, "InvalidArgument", "Invalid range."),
+    OBJECT_INCOMPLETE_BODY(-624, "IncompleteBody", "You did not provide the number bytes specified by the Content-Length HTTP header."),
 
     OBJECT_IF_MODIFIED_SINCE_FAILED(-631, "NotModified", "If-Modified-Since not match"),
     OBJECT_IF_UNMODIFIED_SINCE_FAILED(-632, "PreconditionFailed ", "If-Unmodified-Since not match"),
@@ -93,10 +94,11 @@ public enum S3Error {
 
     //authorization
     INVALID_ADMINISTRATOR(-701, "AccessDenied", "Non-admin users cannot do this operator."),
-    INVALID_ACCESSKEYID(-702, "InvalidAccessKeyId", "Invalid accessKeyId."),
+    INVALID_ACCESSKEYID(-702, "InvalidAccessKeyId", "The AWS access key ID you provided does not exist in our records."),
     SIGNATURE_NOT_MATCH(-703, "SignatureDoesNotMatch", "Signature does not match."),
     ACCESS_DENIED(-704, "AccessDenied", "Access Denied."),
     NO_CREDENTIALS(-705, "CredentialsNotSupported", "This request does not support credentials."),
+    INVALID_AUTHORIZATION(-707, "AuthorizationHeaderMalformed", "The authorization header you provided is invalid."),
 
     // User
     USER_NOT_EXIST(-800, "NoSuchUser", "User not exist."),

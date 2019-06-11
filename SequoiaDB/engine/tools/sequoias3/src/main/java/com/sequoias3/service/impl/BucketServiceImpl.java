@@ -72,8 +72,12 @@ public class BucketServiceImpl implements BucketService {
                 Bucket result = bucketDao.getBucketByName(newBucketName);
                 if (null != result){
                     if (result.getOwnerId() == ownerID){
-                        throw new S3ServerException(S3Error.BUCKET_ALREADY_OWNED_BY_YOU,
-                                "Bucket already owned you. bucket name="+bucketName);
+                        if (bucketConfig.getAllowreput()){
+                            return;
+                        }else {
+                            throw new S3ServerException(S3Error.BUCKET_ALREADY_OWNED_BY_YOU,
+                                    "Bucket already owned you. bucket name=" + bucketName);
+                        }
                     }else {
                         throw new S3ServerException(S3Error.BUCKET_ALREADY_EXIST,
                                 "Bucket already exist. bucket name="+bucketName);

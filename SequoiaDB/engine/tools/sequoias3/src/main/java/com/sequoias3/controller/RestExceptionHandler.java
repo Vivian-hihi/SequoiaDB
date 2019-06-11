@@ -35,7 +35,6 @@ public class RestExceptionHandler {
             case INVALID_ARGUMENT:
             case USER_CREATE_NAME_INVALID:
             case USER_CREATE_ROLE_INVALID:
-            case NO_CREDENTIALS:
             case BUCKET_INVALID_BUCKETNAME:
             case BUCKET_TOO_MANY_BUCKETS:
             case BUCKET_INVALID_VERSIONING_STATUS:
@@ -57,7 +56,6 @@ public class RestExceptionHandler {
             case REGION_LOCATION_EXIST:
             case REGION_INVALID_DOMAIN:
             case REGION_INVALID_REGIONNAME:
-            case BUCKET_NO_LIST_OBJECTS_V1:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:
@@ -65,6 +63,8 @@ public class RestExceptionHandler {
             case USER_DELETE_INIT_ADMIN:
             case SIGNATURE_NOT_MATCH:
             case ACCESS_DENIED:
+            case NO_CREDENTIALS:
+            case INVALID_AUTHORIZATION:
                 status = HttpStatus.FORBIDDEN;
                 break;
             case USER_NOT_EXIST:

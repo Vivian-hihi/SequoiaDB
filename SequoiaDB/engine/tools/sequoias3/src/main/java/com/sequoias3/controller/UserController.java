@@ -27,7 +27,7 @@ public class UserController {
 
     @PostMapping(params = RestParamDefine.UserPara.CREATE_USER, produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity createUser(@RequestParam(value = RestParamDefine.UserPara.ROLE, required = false) String role,
-                                     @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                     @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                      @RequestParam(RestParamDefine.UserPara.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
@@ -43,7 +43,7 @@ public class UserController {
     }
 
     @PostMapping(params = RestParamDefine.UserPara.CREATE_ACCESSKEY, produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity createAccessKey(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+    public ResponseEntity createAccessKey(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                           @RequestParam(RestParamDefine.UserPara.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
@@ -59,7 +59,7 @@ public class UserController {
     }
 
     @PostMapping(params = RestParamDefine.UserPara.GET_ACCESSKEY, produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity getAccessKey(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+    public ResponseEntity getAccessKey(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                        @RequestParam(RestParamDefine.UserPara.USER_NAME) String username)
             throws S3ServerException {
         User adminUser = restUtils.getOperatorByAuthorization(authorization);
@@ -75,7 +75,7 @@ public class UserController {
     }
 
     @PostMapping(params = RestParamDefine.UserPara.DELETE_USER, produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity deleteUser(@RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+    public ResponseEntity deleteUser(@RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                      @RequestParam(RestParamDefine.UserPara.USER_NAME) String username,
                                      @RequestParam(value = RestParamDefine.UserPara.FORCE, required = false) String force)
             throws S3ServerException {

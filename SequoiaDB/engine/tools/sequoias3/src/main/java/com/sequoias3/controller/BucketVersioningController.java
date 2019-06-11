@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 @RestController
-@RequestMapping(RestParamDefine.REST_S3)
 public class BucketVersioningController {
     private static final Logger logger = LoggerFactory.getLogger(BucketVersioningController.class);
 
@@ -35,7 +34,7 @@ public class BucketVersioningController {
     @PutMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONING,
             produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity putBucketVersioning(@PathVariable("bucketname") String bucketName,
-                                      @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization,
+                                      @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization,
                                       HttpServletRequest httpServletRequest)
             throws S3ServerException {
         User operator = restUtils.getOperatorByAuthorization(authorization);
@@ -52,7 +51,7 @@ public class BucketVersioningController {
     @GetMapping(value = "/{bucketname:.+}", params = RestParamDefine.VERSIONING,
             produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity getBucketVersioning(@PathVariable("bucketname") String bucketName,
-                                              @RequestHeader(RestParamDefine.AUTHORIZATION) String authorization)
+                                              @RequestHeader(value = RestParamDefine.AUTHORIZATION, required = false) String authorization)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
 
