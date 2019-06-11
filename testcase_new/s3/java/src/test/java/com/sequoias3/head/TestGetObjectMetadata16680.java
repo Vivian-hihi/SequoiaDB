@@ -77,8 +77,8 @@ public class TestGetObjectMetadata16680 extends S3TestBase {
 	
 	@Test(dataProvider = "rangeProvider")
 	public void testGetObjectMetadata(String start, String end, int size) throws Exception {
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/" + bucketName + "/" + keyName);
-		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/" + bucketName + "/" + keyName);
+		request.setHeader("Authorization", "Credential=" + accessKeys[0] + "/");
 		request.setHeader("Range", "bytes=" + start + "-" + end);
 		if(!start.equals("") && Integer.parseInt(start)> fileSize){
 			try {
@@ -114,7 +114,7 @@ public class TestGetObjectMetadata16680 extends S3TestBase {
 	private void getRespAndcheckMetadata(HttpHead request, int expSize) throws Exception {
 		client = RestClient.createHttpClient();
 		CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-		Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), expEtag);
+		Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+expEtag + "\"");
 		Assert.assertEquals(resp.getFirstHeader("Content-Length").getValue(), String.valueOf(expSize));
 	}
 }

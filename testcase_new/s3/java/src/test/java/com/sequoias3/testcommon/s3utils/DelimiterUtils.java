@@ -59,8 +59,9 @@ public class DelimiterUtils extends S3TestBase {
 		delimiterConfig.setDelimiter(delimiter);
 		TestRest rest = new TestRest(type);
 		try {
-			ResponseEntity<?> response = rest.setApi("/s3/" + bucketName + "/?delimiter-config")
-					.setRequestMethod(HttpMethod.PUT).setRequestHeaders(UserCommDefind.authorization, accessKeyId)
+			ResponseEntity<?> response = rest.setApi(bucketName + "/?delimiter-config")
+					.setRequestMethod(HttpMethod.PUT)
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
 					.setRequestBody(delimiterConfig).setResponseType(String.class).exec();
 			int status = response.getStatusCodeValue();
 			if (status != 200) {
@@ -89,8 +90,9 @@ public class DelimiterUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		DelimiterConfiguration result;
 		try {
-			resp = rest.setApi("/s3/" + bucketName + "/?delimiter-config")
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId).setRequestMethod(HttpMethod.GET)
+			resp = rest.setApi(bucketName + "/?delimiter-config")
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.GET)
 					.setResponseType(String.class).exec();
 			String xmlBody = resp.getBody().toString();
 			JSONObject jsonBody = XML.toJSONObject(xmlBody);

@@ -53,8 +53,8 @@ public class TestGetObjectMetadata16684  extends S3TestBase{
 		Date date = new Date();
 		
 		//指定versionId对象在指定时间未修改
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName+"?versionId="+versionId);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName+"?versionId="+versionId);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Modified-Since", HeadUtils.getModifiedGMTDate(date ,1));
 	    client = RestClient.createHttpClient();
 	    try{

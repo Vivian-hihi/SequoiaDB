@@ -34,7 +34,7 @@ public class CommLib {
 		AmazonS3 s3Client = null;
 		AWSCredentials credentials = new BasicAWSCredentials(ACCESS_KEY,SECRET_KEY);
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				S3TestBase.s3ClientUrl + "/s3", clientRegion);
+				S3TestBase.s3ClientUrl, clientRegion);
 		ClientConfiguration config = new ClientConfiguration();
 		config.setUseExpectContinue(false);
 		config.setSocketTimeout(300000);

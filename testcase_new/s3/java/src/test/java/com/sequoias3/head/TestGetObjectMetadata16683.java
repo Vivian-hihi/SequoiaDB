@@ -52,8 +52,8 @@ public class TestGetObjectMetadata16683  extends S3TestBase{
 		String etagV2 = resultV2.getETag();
 		
 		//设置Etag值和指定versionID对应值不一致
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName+"?versionId="+versionIdV1);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName+"?versionId="+versionIdV1);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Match", etagV2);
 	    client = RestClient.createHttpClient();
 	    try{

@@ -105,8 +105,8 @@ public class CreateBucket15908 extends S3TestBase {
 	}
 
 	private void createBucket(String bucketNameList) throws Exception {
-		HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/s3/" + bucketNameList);
-		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
+		HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/" + bucketNameList);
+		request.setHeader("Authorization", "Credential=" + accessKeys[0] + "/");
 		client = RestClient.createHttpClient();
 		RestClient.sendRequest(client, request);
 	}

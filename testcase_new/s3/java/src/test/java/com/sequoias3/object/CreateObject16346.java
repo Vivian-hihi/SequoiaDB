@@ -66,9 +66,9 @@ public class CreateObject16346 extends S3TestBase{
 		String expires = getGMTDate(currdate);
 		
 		
-		HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/" + keyName);
+		HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/"+bucketName+"/" + keyName);
 		//RequestHeaders:
-	    request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST");
+	    request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST" + "/");
 	    request.setHeader("Content-Encoding", content_encoding);
 	    request.setHeader("Content-Type", content_type);
 	    request.setHeader("Content-MD5", Md5Utils.md5AsBase64(content.getBytes()));

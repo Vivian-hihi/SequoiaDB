@@ -64,14 +64,14 @@ public class TestGetObjectMetadata16705  extends S3TestBase{
 		Date actDate = metadata.getLastModified();
 		
 		//匹配If-None-Match，不匹配If-Modified-Since
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-None-Match", historyEtag);
 	    request.setHeader("If-Modified-Since", HeadUtils.getModifiedGMTDate(actDate, 1));
 	    
 	    client = RestClient.createHttpClient();
 	    CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), currEtag);
+    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+currEtag+"\"");
     	Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), currVersion);
     	runSuccess = true;
 	}

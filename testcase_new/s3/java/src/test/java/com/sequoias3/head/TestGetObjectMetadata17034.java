@@ -55,8 +55,8 @@ public class TestGetObjectMetadata17034  extends S3TestBase{
 		ObjectMetadata metadata = s3Client.getObjectMetadata(new GetObjectMetadataRequest(bucketName, keyName, versionId));
 		Date modifiedSince = metadata.getLastModified();
 		
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName+"?versionId="+versionId);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName+"?versionId="+versionId);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Modified-Since", HeadUtils.getGMTDate(modifiedSince));
 	    client = RestClient.createHttpClient();
 	    try{

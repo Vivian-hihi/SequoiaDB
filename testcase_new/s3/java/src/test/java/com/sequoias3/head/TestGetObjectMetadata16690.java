@@ -60,8 +60,8 @@ public class TestGetObjectMetadata16690 extends S3TestBase {
 		String versionid = result.getVersionId();
 		String etag = result.getETag();
 
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/" + bucketName + "/" + keyName+"?versionId="+versionid);
-		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/" + bucketName + "/" + keyName+"?versionId="+versionid);
+		request.setHeader("Authorization", "Credential=" + accessKeys[0] + "/");
 
 		//指定range超过边界值,右边界
 		int leftBoundary = fileSize - 10;
@@ -70,14 +70,14 @@ public class TestGetObjectMetadata16690 extends S3TestBase {
 		request.setHeader("Range", "bytes=" + String.valueOf(leftBoundary) + "-" + String.valueOf(rightBoundary));
 		client = RestClient.createHttpClient();
 		CloseableHttpResponse resp1 = RestClient.sendRequest(client, request);
-		Assert.assertEquals(resp1.getFirstHeader("ETag").getValue(), etag);
+		Assert.assertEquals(resp1.getFirstHeader("ETag").getValue(), "\""+etag+"\"");
 		Assert.assertEquals(resp1.getFirstHeader("Content-Length").getValue(), String.valueOf((fileSize - 1) - leftBoundary + 1));
 		
 		//指定range超过边界值,左边界
 		request.setHeader("Range", "bytes=-" + String.valueOf(fileSize+1));
 		client = RestClient.createHttpClient();
 		CloseableHttpResponse resp2 = RestClient.sendRequest(client, request);
-		Assert.assertEquals(resp2.getFirstHeader("ETag").getValue(), etag);
+		Assert.assertEquals(resp2.getFirstHeader("ETag").getValue(), "\""+etag+"\"");
 		Assert.assertEquals(resp2.getFirstHeader("Content-Length").getValue(), String.valueOf(fileSize));
 		
 		

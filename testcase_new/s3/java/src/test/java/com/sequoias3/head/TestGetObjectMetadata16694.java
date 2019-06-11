@@ -61,8 +61,8 @@ public class TestGetObjectMetadata16694  extends S3TestBase{
 		
 		
 		//指定ifUnModifiedSince条件查询对象 ，指定时间后该对象已修改
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-UnModified-Since", HeadUtils.getModifiedGMTDate(modifiedDate, -1));
 	    client = RestClient.createHttpClient();
 	    try{
@@ -73,12 +73,12 @@ public class TestGetObjectMetadata16694  extends S3TestBase{
 		}
 	    
 	    //指定ifUnModifiedSince条件查询对象 ，指定时间后该对象未修改 
-	    request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+	    request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-UnModified-Since", HeadUtils.getModifiedGMTDate(modifiedDate, 1));
 	    client = RestClient.createHttpClient();
 	    CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), expEtag);
+    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+expEtag+"\"");
     	Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), versionid);
     	runSuccess = true;
 	}

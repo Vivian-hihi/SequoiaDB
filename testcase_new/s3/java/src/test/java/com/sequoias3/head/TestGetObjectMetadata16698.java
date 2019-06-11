@@ -56,8 +56,8 @@ public class TestGetObjectMetadata16698  extends S3TestBase{
 		Date date = new Date();
 		
 		//ifUnModifiedSince指定为时间A，时间A后该对象未修改；ifNoneMatch指定为该对象当前版本的Etag值（匹配不到对象）
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Unmodified-Since", HeadUtils.getModifiedGMTDate(date, 1));
 	    request.setHeader("If-None-Match", etag);
 	    

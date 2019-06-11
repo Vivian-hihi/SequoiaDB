@@ -52,8 +52,8 @@ public class HeadObject16696  extends S3TestBase{
 		
 		//mismatch etagV1
 		s3Client.deleteVersion( bucketName, key, versionidV1 );		
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+key);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+key);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Match", etagV1);
 	    request.setHeader("If-None-Match", etagV2);
 	    try{

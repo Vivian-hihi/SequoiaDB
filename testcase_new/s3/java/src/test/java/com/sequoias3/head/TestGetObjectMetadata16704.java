@@ -65,14 +65,14 @@ public class TestGetObjectMetadata16704  extends S3TestBase{
 		String expversionid = currResult.getVersionId();
 		
 		//指定ifNoneMatch和ifModifiedSince条件查询对象 
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Modified-Since", HeadUtils.getModifiedGMTDate(historyDate, -1));
 	    request.setHeader("If-None-Match", historyEtag);
 	    
 	    client = RestClient.createHttpClient();
 	    CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), expEtag);
+    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+expEtag+"\"");
     	Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), expversionid);
     	runSuccess = true;
 	}

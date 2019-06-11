@@ -62,8 +62,8 @@ public class TestGetObjectMetadata16703  extends S3TestBase{
 		Date actDate = metadata.getLastModified();
 		
 		//匹配If-Unmodified-Since不匹配If-Match
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Match", historyEtag);
 	    request.setHeader("If-Unmodified-Since", HeadUtils.getModifiedGMTDate(actDate, 1));
 	    

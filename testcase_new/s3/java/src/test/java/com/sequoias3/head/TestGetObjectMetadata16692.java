@@ -53,8 +53,8 @@ public class TestGetObjectMetadata16692 extends S3TestBase {
 		String etagV3 = resultV3.getETag();
 		String versionidV3 = resultV3.getVersionId();
 
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/" + bucketName + "/" + keyName+"?versionId="+versionidV3);
-		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/" + bucketName + "/" + keyName+"?versionId="+versionidV3);
+		request.setHeader("Authorization", "Credential=" + accessKeys[0] + "/");
 
 		//设置Etag值为当前版本对象的Etag值（v3版本）
 		request.setHeader("If-None-Match", etagV3);
@@ -67,14 +67,14 @@ public class TestGetObjectMetadata16692 extends S3TestBase {
 		}
 		
 		
-		request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/" + bucketName + "/" + keyName+"?versionId="+versionidV3);
-		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
+		request = new HttpHead(S3TestBase.s3ClientUrl + "/" + bucketName + "/" + keyName+"?versionId="+versionidV3);
+		request.setHeader("Authorization", "Credential=" + accessKeys[0] + "/");
 		//设置Etag值不为当前版本对象的Etag值（v2版本）
 		request.setHeader("If-None-Match", etagV2);
 		client = RestClient.createHttpClient();
 		CloseableHttpResponse resp = RestClient.sendRequest(client, request);
 			
-		Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), etagV3);
+		Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+etagV3+"\"");
 		Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), versionidV3);
 		runSuccess = true;
 	}

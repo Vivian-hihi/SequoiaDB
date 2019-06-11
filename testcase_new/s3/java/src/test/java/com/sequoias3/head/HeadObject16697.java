@@ -54,13 +54,13 @@ public class HeadObject16697  extends S3TestBase{
 		Date date = result.getLastModified();
 		String unmodifiedTime = getDateByRfc( date );
 		
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+S3TestBase.enableVerBucketName+"/"+key);
-	    request.setHeader("Authorization", "Credential="+S3TestBase.s3AccessKeyId);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+S3TestBase.enableVerBucketName+"/"+key);
+	    request.setHeader("Authorization", "Credential="+S3TestBase.s3AccessKeyId + "/");
 	    request.setHeader("If-Unmodified-Since", unmodifiedTime);
 	    request.setHeader("If-None-Match", etagV1);
 	    client = RestClient.createHttpClient();
 	    CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-	    Assert.assertEquals(resp.getFirstHeader("Etag").getValue(), etagV3);
+	    Assert.assertEquals(resp.getFirstHeader("Etag").getValue(), "\""+etagV3 + "\"");
 	    Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), "2");	    
     	runSuccess = true;
 	}

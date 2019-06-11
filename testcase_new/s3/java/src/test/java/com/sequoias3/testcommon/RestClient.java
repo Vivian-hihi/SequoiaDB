@@ -210,7 +210,7 @@ public final class RestClient {
 
     public static void createBucket() throws Exception{
         HttpPut request = new HttpPut(S3TestBase.s3ClientUrl + "/testbucket_.1001");
-        request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST");
+        request.setHeader("Authorization", "Credential=ABCDEFGHIJKLMNOPQRST" + "/");
         client = createHttpClient();
         CloseableHttpResponse resp = RestClient.sendRequest(client, request);
         String respStr = EntityUtils.toString(resp.getEntity(), "utf-8");

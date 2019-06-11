@@ -52,15 +52,15 @@ public class TestGetObjectMetadata16691 extends S3TestBase {
 		String etag = result.getETag();
 		String versionid = result.getVersionId();
 
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/" + bucketName + "/" + keyName+"?versionId="+versionid);
-		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/" + bucketName + "/" + keyName+"?versionId="+versionid);
+		request.setHeader("Authorization", "Credential=" + accessKeys[0] + "/");
 
 		//设置Etag值为当前版本对象的Etag值（v3版本）
 		request.setHeader("If-Match", etag);
 		client = RestClient.createHttpClient();
 		CloseableHttpResponse resp = RestClient.sendRequest(client, request);
 			
-		Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), etag);
+		Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+etag+"\"");
 		Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), versionid);
 		runSuccess = true;
 	}

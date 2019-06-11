@@ -43,9 +43,11 @@ public class RegionUtils extends S3TestBase {
 		TestRest rest = new TestRest(type);
 		ResponseEntity<?> resp;
 		try {
-			resp = rest.setApi("/region/" + region.getName())
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId).setRequestBody(region)
-					.setRequestMethod(HttpMethod.PUT).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=CreateRegion&RegionName=" + region.getName())
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestBody(region)
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class).exec();
 			int status = resp.getStatusCodeValue();
 			if (status != 200) {
 				System.out.println("put region failed,region = " + region.toString());
@@ -64,9 +66,11 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		boolean isDelete = false;
 		try {
-			resp = rest.setApi("/region/" + regionName)
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId)
-					.setRequestMethod(HttpMethod.DELETE).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=DeleteRegion&RegionName=" + regionName)
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class)
+					.exec();
 			if (resp.getStatusCodeValue() == 204) {
 				isDelete = true;
 			}
@@ -85,9 +89,11 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		GetRegionResult result;
 		try {
-			resp = rest.setApi("/region/" + regionName)
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId)
-					.setRequestMethod(HttpMethod.GET).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=GetRegion&RegionName=" + regionName)
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class)
+					.exec();
 			String xmlBody = resp.getBody().toString();
 			result = stringToObject(xmlBody);
 		} catch (HttpClientErrorException e) {
@@ -105,9 +111,11 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		boolean doesExist = false;
 		try {
-			resp = rest.setApi("/region/" + regionName)
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId)
-					.setRequestMethod(HttpMethod.HEAD).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=HeadRegion&RegionName=" + regionName)
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class)
+					.exec();
 			if (resp.getStatusCodeValue() == 200) {
 				doesExist = true;
 			}
@@ -127,8 +135,11 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		List<String> listResult;
 		try {
-			resp = rest.setApi("/region").setRequestHeaders(UserCommDefind.authorization, accessKeyId)
-					.setRequestMethod(HttpMethod.GET).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=ListRegions")
+					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class)
+					.exec();
 			String xmlBody = resp.getBody().toString();
 			JSONObject jsonBody = XML.toJSONObject(xmlBody);
 			JSONObject regions = jsonBody.getJSONObject("ListAllRegionsResult");

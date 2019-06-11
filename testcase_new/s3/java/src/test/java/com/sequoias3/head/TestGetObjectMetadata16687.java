@@ -60,8 +60,8 @@ public class TestGetObjectMetadata16687 extends S3TestBase {
 		String expEtag = result.getETag();
 		String versionid = result.getVersionId();
 
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/" + bucketName + "/" + keyName+"?versionId="+versionid);
-		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/" + bucketName + "/" + keyName+"?versionId="+versionid);
+		request.setHeader("Authorization", "Credential=" + accessKeys[0] + "/");
 
 		// 指定range为中间范围1k-99k
 		int leftBoundary = 1 * 1024;
@@ -70,7 +70,7 @@ public class TestGetObjectMetadata16687 extends S3TestBase {
 		client = RestClient.createHttpClient();
 		CloseableHttpResponse resp = RestClient.sendRequest(client, request);
 			
-		Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), expEtag);
+		Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+expEtag +"\"");
 		Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), versionid);
 		Assert.assertEquals(resp.getFirstHeader("Content-Range").getValue(), "bytes "+leftBoundary+"-"+rightBoundary+"/"+fileSize);
 		Assert.assertEquals(resp.getFirstHeader("Content-Length").getValue(), String.valueOf(rightBoundary - leftBoundary + 1));

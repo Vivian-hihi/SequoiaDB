@@ -62,14 +62,14 @@ public class TestGetObjectMetadata16701  extends S3TestBase{
 		Date actDate = metadata.getLastModified();
 		
 		//ifUnModifiedSince指定为时间A，时间A后该对象未修改；ifMatch指定为该对象当前版本的Etag值 
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Unmodified-Since", HeadUtils.getModifiedGMTDate(actDate, 1));
 	    request.setHeader("If-Match", etag);
 	    
 	    client = RestClient.createHttpClient();
 	    CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), etag);
+    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+etag+"\"");
     	Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), versionid);
     	runSuccess = true;
 	}

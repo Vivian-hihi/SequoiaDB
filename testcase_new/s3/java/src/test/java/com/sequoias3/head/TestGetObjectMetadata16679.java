@@ -60,8 +60,8 @@ public class TestGetObjectMetadata16679  extends S3TestBase{
 		String etagV1 = resultV1.getETag();
 		String etagV2 = resultV2.getETag();
 		
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Match", etagV1);
 	    client = RestClient.createHttpClient();
 	    try{
@@ -74,7 +74,7 @@ public class TestGetObjectMetadata16679  extends S3TestBase{
 	    request.setHeader("If-Match", etagV2);
 	    client = RestClient.createHttpClient();
     	CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), etagV2);
+    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\"" + etagV2 + "\"");
     	Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), expVersionId);
     	Assert.assertEquals(resp.getFirstHeader("Content-Length").getValue(), String.valueOf((content+"v2").length()));
     	

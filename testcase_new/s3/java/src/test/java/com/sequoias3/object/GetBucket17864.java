@@ -64,8 +64,8 @@ public class GetBucket17864 extends S3TestBase {
 	}
 
 	private void getBucket(String bucketName) throws Exception {
-		HttpGet request = new HttpGet(S3TestBase.s3ClientUrl + "/s3/" + bucketName);
-		request.setHeader("Authorization", "Credential=" + accessKeys[0]);
+		HttpGet request = new HttpGet(S3TestBase.s3ClientUrl + "/" + bucketName);
+		request.setHeader("Authorization", "Credential=" + accessKeys[0] + "/");
 		client = RestClient.createHttpClient();
 		RestClient.sendRequest(client, request);
 	}

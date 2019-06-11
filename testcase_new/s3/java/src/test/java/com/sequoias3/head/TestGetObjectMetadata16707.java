@@ -66,8 +66,8 @@ public class TestGetObjectMetadata16707  extends S3TestBase{
 		Date currDate = metadata.getLastModified();
 		 
 		//指定ifNoneMatch/ifMatch/ifModifiedSince/ifNoneModifiedSince条件查询对象
-		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/s3/"+bucketName+"/"+keyName+"?versionId=" + versionidV2);
-	    request.setHeader("Authorization", "Credential="+accessKeys[0]);
+		HttpHead request = new HttpHead(S3TestBase.s3ClientUrl + "/"+bucketName+"/"+keyName+"?versionId=" + versionidV2);
+	    request.setHeader("Authorization", "Credential="+accessKeys[0] + "/");
 	    request.setHeader("If-Match", etagV2);
 	    request.setHeader("If-None-Match", etagV3);
 	    request.setHeader("If-Modified-Since", HeadUtils.getModifiedGMTDate(currDate, -1));
@@ -75,7 +75,7 @@ public class TestGetObjectMetadata16707  extends S3TestBase{
 	    
 	    client = RestClient.createHttpClient();
 	    CloseableHttpResponse resp = RestClient.sendRequest(client, request);
-    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), etagV2);
+    	Assert.assertEquals(resp.getFirstHeader("ETag").getValue(), "\""+etagV2+"\"");
     	Assert.assertEquals(resp.getFirstHeader("x-amz-version-id").getValue(), versionidV2);
     	runSuccess = true;
 	}
