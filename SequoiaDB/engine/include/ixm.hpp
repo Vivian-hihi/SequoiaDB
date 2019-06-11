@@ -249,7 +249,7 @@ namespace engine
          {
             _infoObj = BSONObj( ((const CHAR*)_extent) +
                                 IXM_INDEX_CB_EXTENT_METADATA_SIZE ) ;
-                  }
+         }
          catch ( std::exception &e )
          {
             PD_LOG ( PDERROR, "Failed to load info obj for index: %s",
