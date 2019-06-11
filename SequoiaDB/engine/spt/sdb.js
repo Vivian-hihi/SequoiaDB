@@ -924,7 +924,7 @@ Sdb.prototype.listCollections = function() {
 }
 
 Sdb.prototype.listSequences = function() {
-   return this.list( SDB_LIST_COLLECTIONS ) ;
+   return this.list( SDB_LIST_SEQUENCES ) ;
 }
 
 Sdb.prototype.listReplicaGroups = function() {
