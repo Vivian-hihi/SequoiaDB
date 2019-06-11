@@ -2016,7 +2016,6 @@ namespace engine
       cb->setTID( tid ) ;
 
       pmdThreadPoolAssist _thdPoolAssit() ;
-      SDB_UNUSED( _thdPoolAssit ) ;
       cb._pMemPool = _thdPoolAssit.getRegisterMemPool() ;
 
       try
