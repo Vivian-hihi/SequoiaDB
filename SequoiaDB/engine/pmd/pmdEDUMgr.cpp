@@ -2016,7 +2016,7 @@ namespace engine
       cb->setTID( tid ) ;
 
       pmdThreadPoolAssist _thdPoolAssit() ;
-      cb._pMemPool = _thdPoolAssit.getRegisterMemPool() ;
+      cb->_pMemPool = _thdPoolAssit.getRegisterMemPool() ;
 
       try
       {
