@@ -1,74 +1,151 @@
 package com.sequoiadb.lob.randomwrite;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBLob;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.testcommon.SdbTestBase;
+import java.util.Arrays;
+
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import com.sequoiadb.testcommon.CommLib;
-import java.util.List;
-import java.util.logging.Logger;
-import org.testng.SkipException;
 
-import static com.sequoiadb.lob.randomwrite.RandomWriteLobUtil.*;
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.DBLob;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
-/**
- * Created by laojingtang on 17-12-1.
+/*
+ * @FileName seqDB-13252: 加锁写入过程中删除lob 
+ * @Author wuyan modify
+ * @Date 2019-06-11
+ * @Version 1.00
  */
 public class TestLob13252 extends SdbTestBase {
-    Logger log = Logger.getLogger(LobTest13237.class.getName());
-    Sequoiadb db = null;
-    DBCollection dbcl = null;
-    CollectionSpace cs = null;
-    String csName;
-    String clName;
+	private String clName = "writelob13252";
+	private int lobSize = 1024 * 1024 * 5;
+	private Sequoiadb sdb = null;
+	private CollectionSpace cs = null;
+	private DBCollection cl = null;
+	private ObjectId lobOid = null;
+	private byte[] lobData = null;
 
-    @BeforeClass
-    public void setupClass() {
-        csName = SdbTestBase.csName;
-        clName = "cl_" + this.getClass().getSimpleName();
-        db = new Sequoiadb(coordUrl, "", "");
-        cs = db.getCollectionSpace(csName);
+	@BeforeClass
+	public void setup() {
+		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		// create cs cl
+		cs = sdb.getCollectionSpace(SdbTestBase.csName);
+		BSONObject clOpt = (BSONObject) JSON.parse("{ShardingKey:{a:1},ShardingType:'hash'}");
+		cl = cs.createCollection(clName, clOpt);
 
-        dbcl = cs.createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{\"_id\":1},ShardingType:\"hash\"}"));
-    }
+		// write lob
+		lobData = RandomWriteLobUtil.getRandomBytes(lobSize);
+		lobOid = RandomWriteLobUtil.createAndWriteLob(cl, lobData);
+	}
 
-    @AfterClass
-    public void afterClass() {
-        cs.dropCollection(clName);
-        db.close();
-    }
+	@Test()
+	public void testLob13252() {
+		int offset = 1024 * 1024 * 1;
+		int rewriteLobSize = 1024 * 1024 * 3;
+		byte[] lockAndRewriteBuff = RandomWriteLobUtil.getRandomBytes(rewriteLobSize);
+		LockAndRewriteLobTask lockAndRewriteLob = new LockAndRewriteLobTask(offset, lockAndRewriteBuff);
+		RemoveLobTask removeLob = new RemoveLobTask();
+		lockAndRewriteLob.start();
+		removeLob.start();
 
-    /**
-     * 1、打开已存在lob对象
-     * 2、多次执行锁定（lockAndSeek）、写lob操作，其中锁定数据段范围相同
-     * 3、读取lob数据，检查lob数据操作结果
-     * 1、写入lob成功，读取lob信息和实际插入信息一致（比较MD5值）；
-     * 2、list查询lob
-     * size信息正确
-     *
-     * @param lobsize
-     */
-    @Test(dataProvider = "lobSizeDataProvider", dataProviderClass = RandomWriteLobUtil.LobSizedataProvider.class)
-    public void testLob13248(int lobsize) {
-        ObjectId id = createEmptyLob(dbcl);
+		if (lockAndRewriteLob.isSuccess()) {
+			if (!removeLob.isSuccess()) {
+				Assert.assertTrue(!removeLob.isSuccess(), removeLob.getErrorMsg());
+				BaseException e = (BaseException) (removeLob.getExceptions().get(0));
+				if (-320 != e.getErrorCode() && -317 != e.getErrorCode()) {
+					Assert.fail("removeLob must fail:" + e.getErrorCode() + " " + removeLob.getErrorMsg());
+				}
 
-        byte[] bytes = getRandomBytes(lobsize);
-        DBLob lob = dbcl.openLob(id, DBLob.SDB_LOB_WRITE);
-        lob.lock(0, lobsize);
-        lob.lock(0, lobsize);
-        lob.lock(0, lobsize);
-        lob.write(bytes);
-        lob.close();
+				readLobAndcheckWriteResult(cl, lobOid, lobData, lockAndRewriteBuff, offset);
+			} else {
+				// can't determine the status of the server, and maybe all
+				// operations are sucessfull,
+				Assert.assertTrue(removeLob.isSuccess());
+				// check the remove result
+				DBCursor listCursor1 = cl.listLobs();
+				Assert.assertEquals(listCursor1.hasNext(), false, "list lob not null");
+				listCursor1.close();
+			}
+		} else if (!lockAndRewriteLob.isSuccess()) {
+			Assert.assertTrue(removeLob.isSuccess(), removeLob.getErrorMsg());
+			BaseException e = (BaseException) (lockAndRewriteLob.getExceptions().get(0));
+			if (-268 != e.getErrorCode() && -4 != e.getErrorCode()) {
+				Assert.fail("lockAndRewriteLob must fail:" + e.getErrorCode() + " " + removeLob.getErrorMsg());
+			}
+			// check the remove result
+			DBCursor listCursor1 = cl.listLobs();
+			Assert.assertEquals(listCursor1.hasNext(), false, "list lob not null");
+			listCursor1.close();
+		} else {
+			Assert.fail("unexpected result! lockAndRewriteLob:" + lockAndRewriteLob.isSuccess() + " removeLob: "
+					+ removeLob.isSuccess());
+		}
 
-        assertByteArrayEqual(readLob(dbcl, id), bytes);
-    }
+	}
+
+	@AfterClass
+	public void tearDown() {
+		cs.dropCollection(clName);
+		sdb.close();
+	}
+
+	private class LockAndRewriteLobTask extends SdbThreadBase {
+		private int offset;
+		private byte[] rewriteLobBuff;
+
+		public LockAndRewriteLobTask(int offset, byte[] rewriteLobBuff) {
+			this.offset = offset;
+			this.rewriteLobBuff = rewriteLobBuff;
+		}
+
+		@Override
+		public void exec() throws Exception {
+			DBLob lob = null;
+			try (Sequoiadb sdb1 = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+				DBCollection cl1 = sdb1.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+				lob = cl1.openLob(lobOid, DBLob.SDB_LOB_WRITE);
+				lob.lockAndSeek(offset, rewriteLobBuff.length);
+				lob.write(rewriteLobBuff);
+				lob.close();
+			}
+		}
+	}
+
+	private class RemoveLobTask extends SdbThreadBase {
+		@Override
+		public void exec() throws Exception {
+			try (Sequoiadb sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");) {
+				DBCollection cl2 = sdb2.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+				cl2.removeLob(lobOid);
+			}
+		}
+	}
+
+	private void readLobAndcheckWriteResult(DBCollection cl, ObjectId oid, byte[] lobBuff, byte[] rewriteBuff,
+			int offset) {
+		// check the rewrite lob
+		byte[] actBuff = RandomWriteLobUtil.seekAndReadLob(cl, oid, rewriteBuff.length, offset);
+		RandomWriteLobUtil.assertByteArrayEqual(actBuff, rewriteBuff);
+
+		// check the all write lob
+		byte[] expBuff = RandomWriteLobUtil.appendBuff(lobBuff, rewriteBuff, offset);
+		try (DBLob lob = cl.openLob(oid)) {
+			byte[] actAllLob = new byte[(int) lob.getSize()];
+			lob.read(actAllLob);
+			if (!Arrays.equals(actAllLob, expBuff)) {
+				RandomWriteLobUtil.writeLobAndExpectData2File(lob, expBuff);
+				Assert.fail("check actlob and expbuff different: oid=" + oid.toString());
+			}
+		}
+	}
 
 }
