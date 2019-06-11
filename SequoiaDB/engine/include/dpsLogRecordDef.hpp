@@ -146,8 +146,8 @@ namespace engine
       DPS_LOG_TSCOMMIT_ATTR      = 4
    } ;
 
-   #define DPS_TS_COMMIT_ATTR_SND            ( 1 )
-   #define DPS_TS_COMMIT_ATTR_PRE            ( 2 )
+   #define DPS_TS_COMMIT_ATTR_PRE            ( 1 )
+   #define DPS_TS_COMMIT_ATTR_SND            ( 2 )
 
    #define DPS_TS_COMMIT_ATTR_SND_STR        "Snd-Commit"
    #define DPS_TS_COMMIT_ATTR_PRE_STR        "Pre-Commit"
