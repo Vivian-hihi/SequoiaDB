@@ -61,6 +61,44 @@ namespace engine
    #define PMD_STOP_MIN_TIMEOUT              ( 60000 )   /// 1 min
 
    /*
+      _pmdThreadPoolAssist define
+   */
+   class _pmdThreadPoolAssist
+   {
+      public:
+         _pmdThreadPoolAssist()
+         {
+            if ( SDB_OK == _memPool.init() )
+            {
+               utilSetThreadMemPool( &_memPool ) ;
+               _hasReg = TRUE ;
+            }
+            else
+            {
+               _hasReg = FALSE ;
+            }
+         }
+
+         ~_pmdThreadPoolAssist()
+         {
+            if ( _hasReg )
+            {
+               utilSetThreadMemPool( NULL ) ;
+            }
+         }
+
+         utilMemListPool* getRegisterMemPool()
+         {
+            return _hasReg ? &_memPool : NULL ;
+         }
+
+      private:
+         utilMemListPool      _memPool ;
+         BOOLEAN              _hasReg ;
+   } ;
+   typedef _pmdThreadPoolAssist pmdThreadPoolAssist ;
+
+   /*
       _pmdEDUMgr implement
    */
    _pmdEDUMgr::_pmdEDUMgr() :
@@ -1977,8 +2015,9 @@ namespace engine
       cb->setThreadHdl( tHdl ) ;
       cb->setTID( tid ) ;
 
-      utilThreadPoolAssist _thdPoolAssit( &(cb->_memPool) ) ;
+      pmdThreadPoolAssist _thdPoolAssit() ;
       SDB_UNUSED( _thdPoolAssit ) ;
+      cb._pMemPool = _thdPoolAssit.getRegisterMemPool() ;
 
       try
       {

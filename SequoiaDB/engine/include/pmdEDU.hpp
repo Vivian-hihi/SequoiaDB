@@ -513,7 +513,7 @@ namespace engine
       UINT32                  _buffSize ;
 
       SET_CONTEXT             _contextList ;
-      utilMemListPool         _memPool ;
+      utilMemListPool         *_pMemPool ;
 
    };
    typedef class _pmdEDUCB pmdEDUCB ;

@@ -148,6 +148,7 @@ namespace engine
          ossMemset( _pErrorBuff, 0, EDU_ERROR_BUFF_SIZE + 1 ) ;
       }
 
+      _pMemPool = NULL ;
    }
 
    _pmdEDUCB::~_pmdEDUCB ()
@@ -159,6 +160,8 @@ namespace engine
       }
 
       clear() ;
+
+      _pMemPool = NULL ;
    }
 
    void _pmdEDUCB::clear()
@@ -227,7 +230,10 @@ namespace engine
       SDB_ASSERT( _totalCatchSize == 0 , "Catch size is error" ) ;
       SDB_ASSERT( _totalMemSize == 0, "Memory size is error" ) ;
 
-      _memPool.clear() ;
+      if ( _pMemPool )
+      {
+         _pMemPool->clear() ;
+      }
    }
 
    string _pmdEDUCB::toString() const
@@ -1044,7 +1050,14 @@ namespace engine
       full._tid = _tid ;
       full._processEventCount = _processEventCount ;
       full._queueSize = _queue.size() ;
-      full._memPoolSize = _memPool.getCacheSize() ;
+      if ( _pMemPool )
+      {
+         full._memPoolSize = _pMemPool->getCacheSize() ;
+      }
+      else
+      {
+         full._memPoolSize = 0 ;
+      }
       ossStrncpy ( full._eduStatus, getEDUStatusDesp(_status),
                    MON_EDU_STATUS_SZ ) ;
       full._eduStatus[ MON_EDU_STATUS_SZ ] = 0 ;

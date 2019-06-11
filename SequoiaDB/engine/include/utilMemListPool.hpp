@@ -183,21 +183,6 @@ namespace engine
    void*       utilThreadRealloc( void* ptr, UINT32 size ) ;
    void        utilThreadRelease( void*& ptr ) ;
 
-   /*
-      _utilThreadPoolAssist define
-   */
-   class _utilThreadPoolAssist
-   {
-      public:
-         _utilThreadPoolAssist( utilMemListPool *pPool ) ;
-         ~_utilThreadPoolAssist() ;
-
-      private:
-         utilMemListPool      *_pPool ;
-         BOOLEAN              _hasReg ;
-   } ;
-   typedef _utilThreadPoolAssist utilThreadPoolAssist ;
-
 }
 
 #endif //UTIL_MEM_LIST_POOL_HPP__

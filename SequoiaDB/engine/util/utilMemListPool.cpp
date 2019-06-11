@@ -541,30 +541,5 @@ namespace engine
       }
    }
 
-   /*
-      _utilThreadPoolAssist implement
-   */
-   _utilThreadPoolAssist::_utilThreadPoolAssist( utilMemListPool *pPool )
-   {
-      _pPool = pPool ;
-      if ( _pPool && SDB_OK == _pPool->init() )
-      {
-         utilSetThreadMemPool( _pPool ) ;
-         _hasReg = TRUE ;
-      }
-      else
-      {
-         _hasReg = FALSE ;
-      }
-   }
-
-   _utilThreadPoolAssist::~_utilThreadPoolAssist()
-   {
-      if ( _hasReg )
-      {
-         utilSetThreadMemPool( NULL ) ;
-      }
-   }
-
 }
 
