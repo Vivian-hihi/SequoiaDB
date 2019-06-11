@@ -154,6 +154,13 @@ namespace engine
       cb->setTransStatus( DPS_TRANS_WAIT_COMMIT ) ;
 
    done:
+      if ( cb )
+      {
+         if ( SDB_OK == rc && dpsCB )
+         {
+            rc = dpsCB->completeOpr( cb, w ) ;
+         }
+      }
       return rc ;
    error:
       goto done ;
