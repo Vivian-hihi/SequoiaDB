@@ -537,6 +537,10 @@ namespace engine
          dmsStatCache *getStatCache () ;
          dmsCachedPlanMgr *getCachedPlanMgr () ;
 
+      public :
+         // transaction helper functions
+         void fixTransMBStat () ;
+
       private:
          INT32 _createStorageObjs() ;
          INT32 _getTypeFromFile( const CHAR *dataPath,

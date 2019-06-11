@@ -2923,6 +2923,33 @@ namespace engine
       }
    }
 
+   void _SDB_DMSCB::fixTransMBStats ()
+   {
+      MON_CS_SIM_LIST monCSList ;
+      dumpInfo( monCSList, TRUE, FALSE, FALSE ) ;
+      for ( MON_CS_SIM_LIST::const_iterator csIter = monCSList.begin() ;
+            csIter != monCSList.end() ;
+            csIter ++ )
+      {
+         INT32 rc = SDB_OK ;
+         dmsStorageUnit * su = NULL ;
+         const monCSSimple & monCS = (*csIter) ;
+         dmsEventSUItem suItem( monCS._name, monCS._suID, monCS._logicalID ) ;
+
+         rc = verifySUAndLock( &suItem, &su, SHARED, OSS_ONE_SEC ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDDEBUG, "Failed to get storage unit [%s], rc: %d",
+                    monCS._name, rc ) ;
+            continue ;
+         }
+
+         su->fixTransMBStat() ;
+
+         suUnlock( monCS._suID, SHARED ) ;
+      }
+   }
+
    /*
       _dmsCSMutexScope implement
    */

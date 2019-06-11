@@ -590,6 +590,9 @@ namespace engine
       } /// while ( tmpTransMap.size() != 0 )
 
    done:
+      // clear transaction metablock statistics
+      sdbGetDMSCB()->fixTransMBStats() ;
+
       // clear all lsn mapping
       cb->getTransExecutor()->clearRecordMap() ;
       pTransCB->transLockReleaseAll( cb ) ;

@@ -461,6 +461,8 @@ namespace engine
 
       void  aquireCSMutex( const CHAR *pCSName ) ;
       void  releaseCSMutex( const CHAR *pCSName ) ;
+
+      void fixTransMBStats () ;
    } ;
    typedef class _SDB_DMSCB SDB_DMSCB ;
 

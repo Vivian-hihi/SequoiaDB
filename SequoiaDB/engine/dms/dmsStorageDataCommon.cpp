@@ -4383,10 +4383,15 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON__INCMBSTAT ) ;
 
-      dpsTransCB * transCB = sdbGetTransCB() ;
-
+      // update meta-block statistics
       ++ ( mbStat->_totalRecords ) ;
-      if ( cb->isTransaction() && !transCB->isDoRollback() )
+
+      // update meta-block statistics for transaction
+      if ( cb->isInRollback() )
+      {
+         // do nothing
+      }
+      else if ( cb->isTransaction() )
       {
          cb->getTransExecutor()->incMBTotalRecords(
                            clUniqueID, &( mbStat->_transTotalRecords ), 1 ) ;
@@ -4409,12 +4414,15 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON__DECMBSTAT ) ;
 
-      dpsTransCB * transCB = sdbGetTransCB() ;
-
       // update meta-block statistics
       -- ( mbStat->_totalRecords ) ;
+
       // update meta-block statistics for transaction
-      if ( cb->isTransaction() && !transCB->isDoRollback() )
+      if ( cb->isInRollback() )
+      {
+         // do nothing
+      }
+      else if ( cb->isTransaction() )
       {
          cb->getTransExecutor()->decMBTotalRecords(
                         clUniqueID, &( mbStat->_transTotalRecords ), 1 ) ;
