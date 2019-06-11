@@ -216,20 +216,20 @@ namespace engine
          if ( SDB_CLS_NOT_PRIMARY == rc )
          {
             INT32 rcTmp = SDB_OK ;
-            rcTmp = _pShardMgr->updatePrimaryByReply( pRecvMsg ) ;
+            rcTmp = _pShardMgr->updatePrimaryByReply( pRecvMsg, group ) ;
 
             if ( SDB_NET_CANNOT_CONNECT == rcTmp )
             {
                /// the node is crashed, sleep some seconds
-               PD_LOG( PDWARNING, "Catalog group primary node is crashed "
+               PD_LOG( PDWARNING, "Group(%d) primary node is crashed "
                        "but other nodes not aware, sleep %d seconds",
-                       NET_NODE_FAULTUP_MIN_TIME ) ;
+                       group, NET_NODE_FAULTUP_MIN_TIME ) ;
                ossSleep( NET_NODE_FAULTUP_MIN_TIME * OSS_ONE_SEC ) ;
             }
 
             if ( rcTmp )
             {
-               _pShardMgr->updateCatGroup( OSS_ONE_SEC ) ;
+               _pShardMgr->syncUpdateGroupInfo( group, CLS_SHARD_TIMEOUT ) ;
             }
 
             SDB_OSS_FREE( ( CHAR* )pRecvMsg ) ;

@@ -1344,7 +1344,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_UPPRM_BYREPLY, "_clsShardMgr::updatePrimaryByReply" )
-   INT32 _clsShardMgr::updatePrimaryByReply( MsgHeader *pMsg )
+   INT32 _clsShardMgr::updatePrimaryByReply( MsgHeader *pMsg, UINT32 groupID )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_UPPRM_BYREPLY ) ;
       INT32 rc = MSG_GET_INNER_REPLY_RC( pMsg ) ;
@@ -1357,27 +1357,47 @@ namespace engine
          INT32 preStat = NET_NODE_STAT_NORMAL ;
          NodeID primaryNode ;
          primaryNode.columns.nodeID = startFrom ;
-         primaryNode.columns.groupID = CATALOG_GROUPID ;
-         primaryNode.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
-
-         _shardLatch.get_shared() ;
-         rc = _cataGrpItem.updatePrimary( primaryNode, TRUE, &preStat ) ;
-         if ( NET_NODE_STAT_NORMAL != preStat )
+         primaryNode.columns.groupID = groupID ;
+         if ( CATALOG_GROUPID == groupID )
          {
-            _cataGrpItem.cancelPrimary() ;
-            rc = SDB_NET_CANNOT_CONNECT ;
+            primaryNode.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+
+            _shardLatch.get_shared() ;
+            rc = _cataGrpItem.updatePrimary( primaryNode, TRUE, &preStat ) ;
+            if ( NET_NODE_STAT_NORMAL != preStat )
+            {
+               _cataGrpItem.cancelPrimary() ;
+               rc = SDB_NET_CANNOT_CONNECT ;
+            }
+            _shardLatch.release_shared() ;
          }
-         _shardLatch.release_shared() ;
+         else
+         {
+            primaryNode.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
+
+            clsGroupItem *pGroupItem = NULL ;
+            rc = getAndLockGroupItem( groupID, &pGroupItem, FALSE ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = pGroupItem->updatePrimary( primaryNode, TRUE, &preStat ) ;
+               if ( NET_NODE_STAT_NORMAL != preStat )
+               {
+                  pGroupItem->cancelPrimary() ;
+                  rc = SDB_NET_CANNOT_CONNECT ;
+               }
+               unlockGroupItem( pGroupItem ) ;
+            }
+         }
 
          if ( NET_NODE_STAT_NORMAL != preStat )
          {
-            PD_LOG( PDWARNING, "Catalog group primary node[%d] is crashed",
-                    startFrom ) ;
+            PD_LOG( PDWARNING, "Group(%d) primary node[%d] is crashed",
+                    groupID, startFrom ) ;
          }
          else if ( SDB_OK == rc )
          {
-            PD_LOG( PDEVENT, "Update catalog group primary node to [%d] "
-                    "by reply message", startFrom ) ;
+            PD_LOG( PDEVENT, "Update group(%d) primary node to [%d] "
+                    "by reply message", groupID, startFrom ) ;
          }
       }
 

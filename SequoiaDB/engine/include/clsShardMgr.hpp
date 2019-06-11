@@ -234,7 +234,8 @@ namespace engine
                           INT64 millisec = CLS_SHARD_TIMEOUT ) ;
          INT32  updatePrimary ( const NodeID & id , BOOLEAN primary ) ;
          INT32  updateCatGroup ( INT64 millsec = 0 ) ;
-         INT32  updatePrimaryByReply( MsgHeader *pMsg ) ;
+         INT32  updatePrimaryByReply( MsgHeader *pMsg,
+                                      UINT32 groupID = CATALOG_GROUPID ) ;
 
          INT32 syncUpdateCatalog ( const CHAR *pCollectionName,
                                    INT64 millsec = CLS_SHARD_TIMEOUT ) ;
