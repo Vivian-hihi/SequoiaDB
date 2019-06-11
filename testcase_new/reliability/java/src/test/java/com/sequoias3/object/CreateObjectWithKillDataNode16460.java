@@ -17,6 +17,7 @@ import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
+import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.ObjectUtils;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
@@ -38,7 +39,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @Date 2019.01.09
  * @version 1.00
  */
-public class CreateObjectWithKillDataNode16460 extends SdbTestBase {
+public class CreateObjectWithKillDataNode16460 extends S3TestBase {
 	private GroupMgr groupMgr = null;
 	private String userName = "user16460";
 	private String bucketName = "bucket16460";
@@ -49,6 +50,7 @@ public class CreateObjectWithKillDataNode16460 extends SdbTestBase {
 	private LinkedBlockingQueue<SaveMd5> md5 = new LinkedBlockingQueue<SaveMd5>();	
 	private String dataGroupName = null;
 	private File localPath = null;
+	//TODO:单词写错了
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -60,6 +62,7 @@ public class CreateObjectWithKillDataNode16460 extends SdbTestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		
 		groupMgr = GroupMgr.getInstance();
+		//TODO:可以不用检查
 		if (!groupMgr.checkBusiness()) {
 			throw new SkipException("checkBusiness failed");
 		}
@@ -70,12 +73,13 @@ public class CreateObjectWithKillDataNode16460 extends SdbTestBase {
 		s3Client.createBucket(bucketName);
 	}
 
+	//TODO:与文本用例步骤有点不符
 	@Test
 	public void testCreateObject() throws Exception {
 		try {
 			GroupWrapper dataGroup = groupMgr.getGroupByName(dataGroupName);
 			NodeWrapper priNode = dataGroup.getMaster();
-
+			//TODO:需要强杀集群中所有的主节点
 			FaultMakeTask faultTask = KillNode.getFaultMakeTask(priNode.hostName(), priNode.svcName(), 1);
 			TaskMgr mgr = new TaskMgr(faultTask);
 			
@@ -86,9 +90,11 @@ public class CreateObjectWithKillDataNode16460 extends SdbTestBase {
 
 			// check whether the cluster is normal and lsn consistency ,the
 			// longest waiting time is 600S
+			//TODO:可以不用检查
 			Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
 			checkCurrentObjectResult();
 		} catch (ReliabilityException e) {
+			//TODO：非预期异常可以抛出去
 			e.printStackTrace();
 			Assert.fail(e.getMessage());
 		}
@@ -103,6 +109,7 @@ public class CreateObjectWithKillDataNode16460 extends SdbTestBase {
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} catch (BaseException e) {
+			//TODO:不要捕获异常，抛出去
 			Assert.fail("clean up failed:" + e.getMessage());
 		} finally {
 			if (s3Client != null) {
@@ -127,6 +134,7 @@ public class CreateObjectWithKillDataNode16460 extends SdbTestBase {
 					keyNames.add(currentName);
 				}
 			}catch(AmazonServiceException e){
+				//TODO:线程内不要使用Assert.assertEquals，建议非预期异常抛出去
 				Assert.assertEquals(e.getErrorCode(), "GetDBConnectFail");
 			}finally {
 				if (s3Client != null) {
@@ -135,7 +143,8 @@ public class CreateObjectWithKillDataNode16460 extends SdbTestBase {
 			}
 		}
 	}
-	
+
+	//TODO:检视意见同用例CreateObjectWithKillDataNode16459
 	private void checkCurrentObjectResult() throws Exception {
 		Assert.assertEquals(keyNames.size(), 100, "keyNames size is wrong! ");
 		for(int i = 0 ; i < 100; i++){

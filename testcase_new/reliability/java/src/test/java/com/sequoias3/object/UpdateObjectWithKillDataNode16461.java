@@ -16,6 +16,7 @@ import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
+import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.ObjectUtils;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
@@ -34,7 +35,7 @@ import java.io.File;
  * @Date 2019.01.09
  * @version 1.00
  */
-public class UpdateObjectWithKillDataNode16461 extends SdbTestBase {
+public class UpdateObjectWithKillDataNode16461 extends S3TestBase {
 	private GroupMgr groupMgr = null;
 	private String userName = "user16461";
 	private String bucketName = "bucket16461";
@@ -44,6 +45,7 @@ public class UpdateObjectWithKillDataNode16461 extends SdbTestBase {
 	private String newContext = "newcontent16461";
 	private String dataGroupName = null;
 	private File localPath = null;
+	//TODO:单词写错了
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -55,6 +57,7 @@ public class UpdateObjectWithKillDataNode16461 extends SdbTestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		
 		groupMgr = GroupMgr.getInstance();
+		//TODO:可以不用检查
 		if (!groupMgr.checkBusiness()) {
 			throw new SkipException("checkBusiness failed");
 		}
@@ -63,16 +66,20 @@ public class UpdateObjectWithKillDataNode16461 extends SdbTestBase {
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
 		s3Client.createBucket(bucketName);
+		//TODO:"Enabled"建议使用亚马逊的枚举值
 		CommLibS3.setBucketVersioning(s3Client, bucketName, "Enabled");
+		//TODO:建议创建多个对象，并发对对象内容进行更新，一个对象可能测不到点
 		s3Client.putObject(bucketName, keyName, oldContext);
 	}
 
+	//TODO:测试步骤与文本用例有点不相符，异常恢复后，需要对更新成功的对象进行检查（历史版本和当前版本），
+	// 对于更新失败的对象的需要重新更新，然后进行检查
 	@Test
 	public void testUpdateObject() throws Exception {
 		try {
 			GroupWrapper dataGroup = groupMgr.getGroupByName(dataGroupName);
 			NodeWrapper priNode = dataGroup.getMaster();
-
+            //TODO:需要强杀集群中所有数据主节点
 			FaultMakeTask faultTask = KillNode.getFaultMakeTask(priNode.hostName(), priNode.svcName(), 1);
 			TaskMgr mgr = new TaskMgr(faultTask);
 			
@@ -83,6 +90,7 @@ public class UpdateObjectWithKillDataNode16461 extends SdbTestBase {
 
 			// check whether the cluster is normal and lsn consistency ,the
 			// longest waiting time is 600S
+			//TODO:可以不用检查
 			Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
 
 			checkCurrentObjectResult();
@@ -101,6 +109,7 @@ public class UpdateObjectWithKillDataNode16461 extends SdbTestBase {
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} catch (BaseException e) {
+			//TODO:非预期异常抛出去，不要使用Assert.fail()
 			Assert.fail("clean up failed:" + e.getMessage());
 		} finally {
 			if (s3Client != null) {
@@ -118,6 +127,7 @@ public class UpdateObjectWithKillDataNode16461 extends SdbTestBase {
 					s3Client.putObject(bucketName, keyName, newContext);
 				}
 			}catch(AmazonServiceException e){
+				//TODO:线程内对异常进行处理，不要使用Assert.assertEquals，非预期异常建议抛出去
 				Assert.assertEquals(e.getErrorCode(), "GetDBConnectFail");
 			} finally {
 				if (s3Client != null) {

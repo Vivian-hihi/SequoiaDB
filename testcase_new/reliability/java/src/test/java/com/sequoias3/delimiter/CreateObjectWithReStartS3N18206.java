@@ -27,7 +27,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * test content: 创建对象过程中s3节点异常 testlink-case: seqDB-18206
- * 
  * @author wangkexin
  * @Date 2019.05.23
  * @version 1.00
@@ -41,8 +40,10 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 	private List<String> objectNames = new ArrayList<String>();
 	private List<String> putObjectNameList = new CopyOnWriteArrayList<String>();
 	private String roleName = "normal";
+	//TODO:单词写错了
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
+	//TODO:建议定义成局部变量
 	private File localPath = null;
 	private boolean runSuccess = false;
 
@@ -63,6 +64,7 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 		FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 1, 10);
 		TaskMgr mgr = new TaskMgr(faultMakeTask);
 		for (int i = 0; i < objectNums; i++) {
+			//TODO:"content18206"使用多次，可以定义成一个成员变量
 			mgr.addTask(new PutObject(objectNames.get(i), "content18206" + i));
 		}
 		mgr.execute();
@@ -120,6 +122,8 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 		List<String> remainObjects = new ArrayList<String>();
 		remainObjects.addAll(objectNames);
 		remainObjects.removeAll(putObjectNameList);
+		//TODO：建议创建s3Client连接移到 test()方法中，因为 putRemainVersionsAgain()，
+		// checkRandomObjMd5()都有用到该连接，移到test方法中，比较清晰一点
 		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
 		for (String objectName : remainObjects) {
 			int index = objectNames.indexOf(objectName);

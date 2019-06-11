@@ -47,6 +47,7 @@ public class CreateObjectWithKillDataNode16459 extends S3TestBase {
 	private LinkedBlockingQueue<SaveMd5> md5 = new LinkedBlockingQueue<SaveMd5>();	
 	private String dataGroupName = null;
 	private File localPath = null;
+	//TODO:单词写错了
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -58,6 +59,7 @@ public class CreateObjectWithKillDataNode16459 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		
 		groupMgr = GroupMgr.getInstance();
+		//TODO:可以不用检查
 		if (!groupMgr.checkBusiness()) {
 			throw new SkipException("checkBusiness failed");
 		}
@@ -66,12 +68,14 @@ public class CreateObjectWithKillDataNode16459 extends S3TestBase {
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
 		s3Client.createBucket(bucketName);
+		//TODO："Enabled"建议使用亚马逊的枚举值
 		CommLibS3.setBucketVersioning(s3Client, bucketName, "Enabled");
 	}
 
 	@Test
 	public void testCreateObject() throws Exception {
 		try {
+			//TODO:需要强杀集群中所有的数据主节点
 			GroupWrapper dataGroup = groupMgr.getGroupByName(dataGroupName);
 			NodeWrapper priNode = dataGroup.getMaster();
 
@@ -85,9 +89,11 @@ public class CreateObjectWithKillDataNode16459 extends S3TestBase {
 
 			// check whether the cluster is normal and lsn consistency ,the
 			// longest waiting time is 600S
+			//TODO: 可以不用检查
 			Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
 			checkCurrentObjectResult();
 		} catch (ReliabilityException e) {
+			//TODO:将异常抛出去，不要捕获
 			e.printStackTrace();
 			Assert.fail(e.getMessage());
 		}
@@ -102,6 +108,7 @@ public class CreateObjectWithKillDataNode16459 extends S3TestBase {
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} catch (BaseException e) {
+			//TODO:将异常抛出去，不要捕获
 			Assert.fail("clean up failed:" + e.getMessage());
 		} finally {
 			if (s3Client != null) {
@@ -126,6 +133,7 @@ public class CreateObjectWithKillDataNode16459 extends S3TestBase {
 					keyNames.add(currentName);
 				}
 			} catch(AmazonServiceException e){
+				//TODO:非预期异常，需要抛出去,线程内最好不要使用Assert.assertEquals
 				Assert.assertEquals(e.getErrorCode(), "GetDBConnectFail");
 			}finally {
 				if (s3Client != null) {
@@ -134,7 +142,8 @@ public class CreateObjectWithKillDataNode16459 extends S3TestBase {
 			}
 		}
 	}
-	
+
+	//TODO:需要检查异常前成功创建的对象和异常后创建对象后再进行检查
 	private void checkCurrentObjectResult() throws Exception {
 		Assert.assertEquals(keyNames.size(), 100, "keyNames size is wrong! ");
 		for(int i = 0 ; i < 100; i++){
@@ -150,12 +159,14 @@ public class CreateObjectWithKillDataNode16459 extends S3TestBase {
 		        String actMd5 = TestTools.getMD5(downloadPath);
 		        String expMd5 = getMd5ByKeyName(currentKeyName);
 				Assert.assertEquals(actMd5, expMd5, "etag is wrong , key name is:" + currentKeyName);
+			//TODO: 非预期异常，需要抛出去
 			}catch(AmazonS3Exception e){
 				System.out.println(currentKeyName);
 			}
 		}
 	}
-	
+
+	//TODO:以下代码getMd5ByKeyName(String keyName)和 SaveMd5是不是使用一个Map就可以实现了，而且创建对象的只是单线程，不要用
 	private String getMd5ByKeyName(String keyName){
 		Iterator<SaveMd5> iterator = md5.iterator();
 		boolean found = false;
@@ -179,7 +190,7 @@ public class CreateObjectWithKillDataNode16459 extends S3TestBase {
 	private class SaveMd5{
 		private String keyName;
 		private String md5;
-		
+		//TODO:etag没有用到
 		public SaveMd5(String keyName, String etag, String md5){
 			this.keyName = keyName;
 			this.md5 = md5;

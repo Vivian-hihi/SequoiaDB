@@ -31,6 +31,7 @@ public class DeleteObjectWithReStartS3N18201 extends S3TestBase {
 	private String delimiter = "?";
 	private String roleName = "normal";
 	private String context = "content18201";
+	//TODO:单词写错了
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -42,12 +43,14 @@ public class DeleteObjectWithReStartS3N18201 extends S3TestBase {
 		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
 		CommLibS3.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
+		//TODO:该用例是测试删除对象，不需要开启版本控制
 		CommLibS3.setBucketVersioning(s3Client, bucketName, "Enabled");
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, acessKeys[0]);
-
+        //TODO:需要创建多个对象，只有一个对象，可能测不到点
 		s3Client.putObject(bucketName, keyName, context);
 	}
 
+	//TODO:不符合用例文本，异常后没有检查，异常后没有再次进行删除
 	@Test
 	public void testCreateRegion() throws Exception {
 		FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 1, 10);

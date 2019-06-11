@@ -49,8 +49,10 @@ public class ListObjectWithKillCoord18203 extends S3TestBase {
 	private File localPath = null;
 	private String filePath = null;
 	private String roleName = "normal";
+	//TODO:建议以下两个变量放在 listVersionsAndCheck()方法里面
 	private List<String> expCommprefixes = new ArrayList<>();
 	private MultiValueMap<String, String> expMap = new LinkedMultiValueMap<String, String>();
+	//TODO:单词写错了
 	private String[] acessKeys = null;
 	private boolean runSuccess = false;
 
@@ -69,7 +71,7 @@ public class ListObjectWithKillCoord18203 extends S3TestBase {
 		s3Client.createBucket(bucketName);
 		CommLibS3.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, acessKeys[0]);
-
+        //TODO:建议对象名需要有不包含delimiter，但包含prefixes
 		for (int i = 0; i < objectNums; i++) {
 			String currObjectName = objectName + "_" + i + delimiter + "test.txt";
 			for (int v = 0; v < versionNum; v++) {
@@ -77,13 +79,14 @@ public class ListObjectWithKillCoord18203 extends S3TestBase {
 			}
 			objectNames[i] = currObjectName;
 		}
-
+        //TODO: 建议可以在listVersionsAndCheck()方法里面进行赋值，再与实际结果进行比较
 		expCommprefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
 	}
 
 	@Test
 	public void test() throws ReliabilityException, IOException {
 		// kill coord when list object versions
+		//TODO:需要强杀集群中所有的coord节点
 		FaultMakeTask faultTask = KillNode.getFaultMakeTask(SdbTestBase.hostName, SdbTestBase.serviceName, 1);
 		TaskMgr mgr = new TaskMgr(faultTask);
 		ListObject listTask = new ListObject();
@@ -113,6 +116,7 @@ public class ListObjectWithKillCoord18203 extends S3TestBase {
 			try {
 				listVersionsAndCheck();
 			} catch (AmazonS3Exception e) {
+				//TODO:建议非预期异常抛出去，不要使用Assert.assertEquals
 				Assert.assertEquals(e.getErrorCode(), "GetDBConnectFail");
 			}
 		}

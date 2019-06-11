@@ -44,6 +44,7 @@ public class GetRegionWithKillDataNode17343 extends S3TestBase {
 	private void setUp() throws Exception {
 		s3Client = CommLibS3.buildS3Client();
 		groupMgr = GroupMgr.getInstance();
+		//TODO:可以不用检测
 		if (!groupMgr.checkBusiness()) {
 			throw new SkipException("checkBusiness failed");
 		}
@@ -63,10 +64,9 @@ public class GetRegionWithKillDataNode17343 extends S3TestBase {
         region.withName(regionName)
         .withDataDomain(dataDomain)
         .withMetaDomain(metaDomain)
-        .withDataCSShardingType("quarter")
+        .withDataCSShardingType("quarter")  //TODO:"quarter"和"month"多处使用，建议使用变量
         .withDataCLShardingType("month");
         RegionUtils.putRegion(region);
-        
 		s3Client.createBucket(new CreateBucketRequest(bucketName, regionName.toLowerCase()));
 	}
 
@@ -75,10 +75,10 @@ public class GetRegionWithKillDataNode17343 extends S3TestBase {
 		try {
 			GroupWrapper dataGroup = groupMgr.getGroupByName(dataGroupName);
 			NodeWrapper priNode = dataGroup.getMaster();
-
+            //TODO:需要强杀集群中所有的主节点
 			FaultMakeTask faultTask = KillNode.getFaultMakeTask(priNode.hostName(), priNode.svcName(), 1);
 			TaskMgr mgr = new TaskMgr(faultTask);
-			
+			//TODO：文本用例中是并发获取区域，请跟写文本用例的人确认一下
 			GetRegionTask gTask = new GetRegionTask();
 			mgr.addTask(gTask);
 			mgr.execute();
@@ -86,11 +86,13 @@ public class GetRegionWithKillDataNode17343 extends S3TestBase {
 
 			// check whether the cluster is normal and lsn consistency ,the
 			// longest waiting time is 600S
+			//TODO:可以不用检测
 			Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
 
 			GetRegionResult result = RegionUtils.getRegion(regionName);
 			checkRegion(result);
 		} catch (ReliabilityException e) {
+			//TODO：非预期异常抛出去，不要进行捕获
 			e.printStackTrace();
 			Assert.fail(e.getMessage());
 		}
@@ -107,6 +109,7 @@ public class GetRegionWithKillDataNode17343 extends S3TestBase {
 				RegionUtils.deleteRegion(regionName);
 			}
 		} catch (BaseException e) {
+			//TODO：非预期异常抛出去，不要进行捕获
 			Assert.fail("clean up failed:" + e.getMessage());
 		} finally {
 			if (s3Client != null) {
@@ -124,6 +127,7 @@ public class GetRegionWithKillDataNode17343 extends S3TestBase {
 					checkRegion(result);
 				}
 			}catch(AmazonServiceException e){
+				//TODO：线程内对异常的处理，尽量不要使用Assert.assertEquals，可以将异常抛出去
 				Assert.assertEquals(e.getErrorCode(), "GetDBConnectFail");
 			} 
 		}

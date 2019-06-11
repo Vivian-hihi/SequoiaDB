@@ -138,7 +138,6 @@ public class UpdateRegionWithStopS3N17346 extends S3TestBase {
                 RegionUtils.putRegion(region);
                 regionNameList.add(this.regionName);
             } catch (Exception e) {
-                System.out.println("msg = " + e.getMessage());
                 if (!e.getMessage().contains("I/O error on PUT request")) {
                     throw e;
                 }

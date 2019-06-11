@@ -39,11 +39,13 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 	private String delimiter = "#";
 	private String objectName = "object18205" + delimiter + "test.png";
 	private List<String> contents = new ArrayList<String>();
+	//TODO:建议使用ConcurrentHashMap
 	private Map<String, String> versionAndmd5Map = Collections.synchronizedMap(new HashMap<String, String>());
 	private List<String> putObjectContentList = new CopyOnWriteArrayList<String>();
 	private String roleName = "normal";
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
+	//TODO：只有checkRandomObjMd5() 方法用到，建议定义成局部变量，用完后删除
 	private File localPath = null;
 	private boolean runSuccess = false;
 
@@ -55,7 +57,6 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 		s3Client.createBucket(bucketName);
 		CommLibS3.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
 		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, acessKeys[0]);
-
 		for (int i = 0; i < objectVersionNums; i++) {
 			contents.add("content18205" + i);
 		}
@@ -80,7 +81,6 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 		// 继续上传对象A
 		putRemainVersionsAgain();
 		checkRandomObjMd5();
-
 		runSuccess = true;
 	}
 
@@ -127,6 +127,8 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 		List<String> remainObjectContents = new ArrayList<String>();
 		remainObjectContents.addAll(contents);
 		remainObjectContents.removeAll(putObjectContentList);
+		//TODO：建议创建s3Client连接移到 test()方法中，因为 putRemainVersionsAgain()，
+		// checkRandomObjMd5()都有用到该连接，移到test方法中，比较清晰一点
 		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
 		for (String content : remainObjectContents) {
 			PutObjectResult result = s3Client.putObject(bucketName, objectName, content);
@@ -135,12 +137,12 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 	}
 
 	private void checkRandomObjMd5() throws Exception {
+		//TODO：个人觉得检查一下当前版本和随机挑一个历史版本进行检查，更加严谨一点
 		int version = new Random().nextInt(objectVersionNums);
 		localPath = new File(SdbTestBase.workDir + File.separator + TestTools.getClassName());
 		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, objectName,
 				String.valueOf(version));
 		String expEtag = versionAndmd5Map.get(String.valueOf(version));
 		Assert.assertEquals(downfileMd5, expEtag, "keyName = " + objectName + ", versionid = " + version);
-
 	}
 }

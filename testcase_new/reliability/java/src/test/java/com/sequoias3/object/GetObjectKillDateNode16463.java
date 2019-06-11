@@ -43,6 +43,7 @@ public class GetObjectKillDateNode16463 extends S3TestBase {
 	private String context = "content16463";
 	private String dataGroupName = null;
 	private File localPath = null;
+	//TODO:单词写错了
 	private String[] acessKeys = null;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -54,6 +55,7 @@ public class GetObjectKillDateNode16463 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		
 		groupMgr = GroupMgr.getInstance();
+		//TODO:可以不用检查
 		if (!groupMgr.checkBusiness()) {
 			throw new SkipException("checkBusiness failed");
 		}
@@ -62,15 +64,17 @@ public class GetObjectKillDateNode16463 extends S3TestBase {
 		acessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
 		s3Client.createBucket(bucketName);
+		//TODO:建议创建多个对象，并发过程中获取不同的对象
 		s3Client.putObject(bucketName, keyName, context);
 	}
 
+    //TODO:与文本用例不相符，缺乏异常恢复后重新的获取对象的流程
 	@Test
 	public void testGetObject() throws Exception {
 		try {
 			GroupWrapper dataGroup = groupMgr.getGroupByName(dataGroupName);
 			NodeWrapper priNode = dataGroup.getMaster();
-
+			//TODO:需要强杀集群中所有主节点
 			FaultMakeTask faultTask = KillNode.getFaultMakeTask(priNode.hostName(), priNode.svcName(), 1);
 			TaskMgr mgr = new TaskMgr(faultTask);
 			
@@ -81,9 +85,11 @@ public class GetObjectKillDateNode16463 extends S3TestBase {
 
 			// check whether the cluster is normal and lsn consistency ,the
 			// longest waiting time is 600S
+			//TODO:可以不用检查
 			Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
 
 		} catch (ReliabilityException e) {
+			//TODO:非预期异常，不要进行捕获，抛出去
 			e.printStackTrace();
 			Assert.fail(e.getMessage());
 		}
@@ -98,6 +104,7 @@ public class GetObjectKillDateNode16463 extends S3TestBase {
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} catch (BaseException e) {
+			//TODO:非预期异常抛出去，不要使用Assert.fail()
 			Assert.fail("clean up failed:" + e.getMessage());
 		} finally {
 			if (s3Client != null) {
@@ -124,6 +131,7 @@ public class GetObjectKillDateNode16463 extends S3TestBase {
 					Assert.assertEquals(actMd5, expMd5, "etag is wrong ");
 				}
 			}catch(AmazonServiceException e){
+				//TODO:线程内对异常进行处理，不要使用Assert.assertEquals，非预期异常建议抛出去
 				Assert.assertEquals(e.getErrorCode(), "GetDBConnectFail");
 			} finally {
 				if (s3Client != null) {

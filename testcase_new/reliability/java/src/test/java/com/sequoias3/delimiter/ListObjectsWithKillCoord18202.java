@@ -43,8 +43,11 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 	private File localPath = null;
 	private String filePath = null;
 	private String roleName = "normal";
+	//TODO:以下两个变量放在listObjectsAndCheck()里面是不是更好一点，
+	// 而且expCommprefixes不需要重新 new ArrayList<>()，ObjectUtils.getCommPrefixes返回的是list
 	private List<String> expCommprefixes = new ArrayList<>();
 	private List<String> matchContentsList = new ArrayList<>();
+	//TODO:单词写错了
 	private String[] acessKeys = null;
 	private boolean runSuccess = false;
 
@@ -68,13 +71,14 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 			s3Client.putObject(bucketName, currObjectName, new File(filePath));
 			objectNames[i] = currObjectName;
 		}
-
+		//TODO: 建议matchContentsList里面有内容，测试全面一点
 		expCommprefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
 	}
 
 	@Test
 	public void test() throws ReliabilityException, IOException {
 		// kill coord when list objects
+		//TODO:需要强杀集群中所有的coord节点
 		FaultMakeTask faultTask = KillNode.getFaultMakeTask(SdbTestBase.hostName, SdbTestBase.serviceName, 1);
 		TaskMgr mgr = new TaskMgr(faultTask);
 		ListObject listTask = new ListObject();
@@ -104,6 +108,7 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 			try {
 				listObjectsAndCheck();
 			} catch (AmazonS3Exception e) {
+				//TODO:线程里面不要用Assert.assertEquals，建议将非预期异常抛出去
 				Assert.assertEquals(e.getErrorCode(), "GetDBConnectFail");
 			}
 		}

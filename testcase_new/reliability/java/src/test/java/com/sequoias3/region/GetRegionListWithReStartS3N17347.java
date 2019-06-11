@@ -42,6 +42,7 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 	private List<String> regionNames = new ArrayList<>();
 	private int regionNum = 10000;
 	private int bucketNum = 80;
+	//TODO：个人觉得s3用例中尽量不要自己创建db连接，创建和删除CS、CL可以使用公共方法
 	private static Sequoiadb sdb = null;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
@@ -50,12 +51,9 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 	private void setUp() throws Exception {
 		s3Client = CommLibS3.buildS3Client();
 		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
-
 		clearBuckets();
-
 		for (int i = 0; i < regionNum; i++) {
 			String currRegionName = regionName + "-" + i;
 			regionNames.add(currRegionName.toLowerCase());
@@ -63,7 +61,6 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 				RegionUtils.deleteRegion(currRegionName);
 			}
 		}
-
 		// create regions
 		for (int i = 0; i < regionNum; i++) {
 			Region region = new Region();
@@ -101,12 +98,14 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				clearBuckets();
+				//TODO：建议使用公共方法
 				sdb.dropCollectionSpace(metaCSName);
 				sdb.dropCollectionSpace(dataCSName);
 				deleteRegions(regionNames);
 				sdb.close();
 			}
 		} catch (BaseException e) {
+			//TODO：非预期异常抛出去，不要进行捕获
 			Assert.fail("clean up failed:" + e.getMessage());
 		} finally {
 			if (s3Client != null) {
@@ -125,6 +124,8 @@ public class GetRegionListWithReStartS3N17347 extends S3TestBase {
 	}
 
 	private void checkListResult(List<String> actRegions) {
+		//TODO:为什么要先判断actRegions有没有重复？可以先判断预期大小和实际大小是否一致,
+		// 再使用regionNames和actRegion进行比较
 		Set<String> unRepeatRegionNames = new HashSet<>();
 		for (String regionName : actRegions) {
 			boolean isRepeat = unRepeatRegionNames.add(regionName);

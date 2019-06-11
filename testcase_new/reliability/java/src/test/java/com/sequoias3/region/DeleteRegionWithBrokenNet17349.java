@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
  * @Date 2019.01.29
  * @version 1.00
  */
+//TODO:文本用例标题和文本用例步骤有点不相符，请重新确认一下
 public class DeleteRegionWithBrokenNet17349 extends S3TestBase {
 	private GroupMgr groupMgr = null;
 	private String regionName = "beijing17349";
@@ -31,6 +32,7 @@ public class DeleteRegionWithBrokenNet17349 extends S3TestBase {
 	@BeforeClass
 	private void setUp() throws Exception {
 		groupMgr = GroupMgr.getInstance();
+		//TODO:可以不用检查
 		if (!groupMgr.checkBusiness()) {
 			throw new SkipException("checkBusiness failed");
 		}
@@ -40,7 +42,6 @@ public class DeleteRegionWithBrokenNet17349 extends S3TestBase {
 			if(RegionUtils.headRegion(currRegionName)){
 				RegionUtils.deleteRegion(currRegionName);
 			}
-			
 			Region region = new Region();
 		    region.withName(currRegionName);
 		    RegionUtils.putRegion(region);

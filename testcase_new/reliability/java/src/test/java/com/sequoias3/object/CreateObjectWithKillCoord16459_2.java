@@ -16,6 +16,7 @@ import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
+import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.ObjectUtils;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
@@ -38,7 +39,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @Date 2019.01.09
  * @version 1.00
  */
-public class CreateObjectWithKillCoord16459_2 extends SdbTestBase {
+//TODO:请跟写文本用例的人确认一下db端节点异常是不是只要测试一种场景就可以了
+public class CreateObjectWithKillCoord16459_2 extends S3TestBase {
 	private GroupMgr groupMgr = null;
 	private String userName = "user16459";
 	private String bucketName = "bucket16459";
