@@ -343,6 +343,7 @@ namespace engine
 
    void _dpsTransExecutor::clearAll()
    {
+      _clearMBStats() ;
       clearWaiterInfo() ;
       clearLastLRB() ;
       clearLock() ;
@@ -626,5 +627,83 @@ namespace engine
       _reservedLogSpace = 0 ;
    }
 
-}
+   void _dpsTransExecutor::commitMBStats ()
+   {
+      for ( TRANS_MB_STAT_MAP_IT iter = _transMBStatMap.begin() ;
+            iter != _transMBStatMap.end() ;
+            ++ iter )
+      {
+         iter->second.commit() ;
+      }
+      _clearMBStats() ;
+   }
 
+   void _dpsTransExecutor::rollbackMBStats ()
+   {
+      for ( TRANS_MB_STAT_MAP_IT iter = _transMBStatMap.begin() ;
+            iter != _transMBStatMap.end() ;
+            ++ iter )
+      {
+         iter->second.rollback() ;
+      }
+      _clearMBStats() ;
+   }
+
+   void _dpsTransExecutor::_clearMBStats ()
+   {
+      _transMBStatMap.clear() ;
+   }
+
+   void _dpsTransExecutor::_initMBStat ( utilCLUniqueID clUniqueID,
+                                         ossAtomic64 * totalRecords,
+                                         UINT64 incDelta,
+                                         UINT64 decDelta )
+   {
+      SDB_ASSERT( NULL != totalRecords, "total records should not be NULL" ) ;
+      dpsTransMBStat stat( totalRecords, incDelta, decDelta ) ;
+       _transMBStatMap.insert( std::make_pair( clUniqueID, stat ) ) ;
+   }
+
+   void _dpsTransExecutor::incMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                               ossAtomic64 * totalRecords,
+                                               UINT64 delta )
+   {
+      TRANS_MB_STAT_MAP_IT iter = _transMBStatMap.find( clUniqueID ) ;
+      if ( iter == _transMBStatMap.end() )
+      {
+         _initMBStat( clUniqueID, totalRecords, delta, 0 ) ;
+      }
+      else
+      {
+         iter->second.increase( delta ) ;
+      }
+   }
+
+   void _dpsTransExecutor::decMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                               ossAtomic64 * totalRecords,
+                                               UINT64 delta )
+   {
+      TRANS_MB_STAT_MAP_IT iter = _transMBStatMap.find( clUniqueID ) ;
+      if ( iter == _transMBStatMap.end() )
+      {
+         _initMBStat( clUniqueID, totalRecords, 0, delta ) ;
+      }
+      else
+      {
+         iter->second.decrease( delta ) ;
+      }
+   }
+
+   BOOLEAN _dpsTransExecutor::getMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                                  UINT64 & totalRecords ) const
+   {
+      TRANS_MB_STAT_MAP_CIT citer = _transMBStatMap.find( clUniqueID ) ;
+      if ( citer != _transMBStatMap.end() )
+      {
+         totalRecords = citer->second.getTotalRecords() ;
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+}

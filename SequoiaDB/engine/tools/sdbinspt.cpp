@@ -2434,6 +2434,7 @@ void inspectCollectionData( OSSFILE &file, UINT32 pageSize, UINT16 id,
       gMBStat._totalDataPages += pExtent->_blockSize ;
       gMBStat._totalDataFreeSpace += pExtent->_freeSpace ;
       gMBStat._totalRecords += pExtent->_recCount ;
+      gMBStat._transTotalRecords.add( pExtent->_recCount ) ;
 
       if ( pExpBuffer )
       {

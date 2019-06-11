@@ -393,6 +393,7 @@ namespace engine
                                                          const dmsRecordData &recordData )
    {
       ++( mbStat._totalRecords ) ;
+      mbStat._transTotalRecords.inc() ;
       mbStat._totalDataFreeSpace -= totalSize ;
       mbStat._totalOrgDataLen += totalSize ;
       mbStat._totalDataLen += totalSize ;

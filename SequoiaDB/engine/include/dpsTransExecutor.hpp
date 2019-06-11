@@ -128,6 +128,107 @@ namespace engine
    typedef _dpsTransConfItem dpsTransConfItem ;
 
    /*
+      _dpsTransMBStat define
+    */
+   class _dpsTransMBStat : public SDBObject
+   {
+      protected :
+         _dpsTransMBStat ()
+         : _totalRecords(),
+           _incDelta( 0 ),
+           _decDelta( 0 )
+         {
+         }
+
+      public :
+         _dpsTransMBStat ( ossAtomic64 * totalRecords,
+                           UINT64 incDelta,
+                           UINT64 decDelta )
+         : _totalRecords( totalRecords ),
+           _incDelta( incDelta ),
+           _decDelta( decDelta )
+         {
+         }
+
+         _dpsTransMBStat ( const _dpsTransMBStat & stat )
+         : _totalRecords( stat._totalRecords ),
+           _incDelta( stat._incDelta ),
+           _decDelta( stat._decDelta )
+         {
+            SDB_ASSERT( NULL != _totalRecords,
+                        "atomic total records should not be NULL" ) ;
+         }
+
+         ~_dpsTransMBStat ()
+         {
+         }
+
+      public :
+         _dpsTransMBStat & operator = ( const _dpsTransMBStat & stat )
+         {
+            SDB_ASSERT( NULL != stat._totalRecords,
+                        "atomic total records should not be NULL" ) ;
+            _totalRecords = stat._totalRecords ;
+            _incDelta = stat._incDelta ;
+            _decDelta = stat._decDelta ;
+            return ( *this ) ;
+         }
+
+      public :
+         OSS_INLINE void increase ( UINT64 delta )
+         {
+            _incDelta += delta ;
+         }
+
+         OSS_INLINE void decrease ( UINT64 delta )
+         {
+            _decDelta += delta ;
+         }
+
+         OSS_INLINE UINT64 getTotalRecords () const
+         {
+            SDB_ASSERT( NULL != _totalRecords,
+                        "atomic total records should not be NULL" ) ;
+            if ( _incDelta > _decDelta )
+            {
+               return ( _incDelta - _decDelta ) + _totalRecords->fetch() ;
+            }
+            else if ( _incDelta < _decDelta )
+            {
+               return _totalRecords->fetch() - ( _decDelta - _incDelta ) ;
+            }
+            return _totalRecords->fetch() ;
+         }
+
+         OSS_INLINE void commit ()
+         {
+            SDB_ASSERT( NULL != _totalRecords,
+                        "atomic total records should not be NULL" ) ;
+            if ( _incDelta > _decDelta )
+            {
+               _totalRecords->add( _incDelta - _decDelta ) ;
+            }
+            else if ( _incDelta < _decDelta )
+            {
+               _totalRecords->sub( _decDelta - _incDelta ) ;
+            }
+         }
+
+         OSS_INLINE void rollback ()
+         {
+            SDB_ASSERT( NULL != _totalRecords,
+                        "atomic total records should not be NULL" ) ;
+         }
+
+      protected :
+         ossAtomic64 * _totalRecords ;
+         UINT64        _incDelta ;
+         UINT64        _decDelta ;
+   } ;
+
+   typedef class _dpsTransMBStat dpsTransMBStat ;
+
+   /*
       _dpsTransExecutor define
    */
    class _dpsTransExecutor : public _dpsTransConfItem
@@ -168,6 +269,10 @@ namespace engine
       typedef ossPoolMap<DPS_LSN_OFFSET,dmsRecordID>     MAP_LSN_2_RECORD ;
       typedef MAP_LSN_2_RECORD::iterator                 MAP_LSN_2_RECORD_IT ;
       typedef MAP_LSN_2_RECORD::const_iterator           MAP_LSN_2_RECORD_CIT ;
+
+      typedef ossPoolMap< utilCLUniqueID, dpsTransMBStat >  TRANS_MB_STAT_MAP ;
+      typedef TRANS_MB_STAT_MAP::iterator                   TRANS_MB_STAT_MAP_IT ;
+      typedef TRANS_MB_STAT_MAP::const_iterator             TRANS_MB_STAT_MAP_CIT ;
 
       friend class _pmdEDUCB ;
 
@@ -223,6 +328,18 @@ namespace engine
          BOOLEAN                    isRecordMapEmpty() const ;
          UINT32                     getRecordMapSize() const ;
 
+         void commitMBStats () ;
+         void rollbackMBStats () ;
+
+         void incMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                  ossAtomic64 * totalRecords,
+                                  UINT64 delta ) ;
+         void decMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                  ossAtomic64 * totalRecords,
+                                  UINT64 delta ) ;
+         BOOLEAN getMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                     UINT64 & totalRecords ) const ;
+
       protected:
          void                 initTransConf( INT32 isolation,
                                              UINT32 timeout,
@@ -243,7 +360,13 @@ namespace engine
          UINT64   getReservedSpace() const ;
 
          void     resetLogSpace() ;
-     
+
+         void _clearMBStats () ;
+         void _initMBStat ( utilCLUniqueID clUniqueID,
+                            ossAtomic64 * totalRecords,
+                            UINT64 incDelta,
+                            UINT64 decDelta ) ;
+
       public:
          /*
             Interface
@@ -266,6 +389,9 @@ namespace engine
             LSN to record info
          */
          MAP_LSN_2_RECORD        _mapLSN2Record ;
+
+         // record counts of collection during transaction
+         TRANS_MB_STAT_MAP _transMBStatMap ;
 
       private:
          BOOLEAN                 _useTransLock ;

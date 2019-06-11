@@ -391,6 +391,9 @@ namespace engine
       //    key for even old versions. Otherwise rollback could fail.
       oldVersionContainer *_oldVerChain ;
 
+      // total record count for transaction
+      ossAtomic64 _transTotalRecords ;
+
       // runtime CRUD statistics monitor
       monCRUDCB _crudCB ;
 
@@ -425,6 +428,7 @@ namespace engine
          // remove all the chain, and leave asyn thread or next X lock holder
          // to physically free the lock/memory.
          removeAllFromChain() ;
+         _transTotalRecords.init( 0 ) ;
          _crudCB.reset() ;
       }
 
@@ -546,10 +550,14 @@ namespace engine
       }
 
       _dmsMBStatInfo ()
-      :_commitFlag( 0 ), _lastLSN( 0 ),
-      _idxCommitFlag( 0 ), _idxLastLSN( 0 ),
-      _lobCommitFlag( 0 ), _lobLastLSN( 0 ),
-      _oldVerChain( NULL )
+      : _commitFlag( 0 ),
+        _lastLSN( 0 ),
+        _idxCommitFlag( 0 ),
+        _idxLastLSN( 0 ),
+        _lobCommitFlag( 0 ),
+        _lobLastLSN( 0 ),
+        _oldVerChain( NULL ),
+        _transTotalRecords( 0 )
       {
          reset() ;
       }
@@ -1161,6 +1169,13 @@ namespace engine
 
          INT32 _freeExtent ( dmsExtentID extentID, INT32 collectionID ) ;
          INT32 _freeExtent ( dmsMBContext *context, dmsExtentID extentID ) ;
+
+         void _increaseMBStat ( utilCLUniqueID clUniqueID,
+                                dmsMBStatInfo * mbStat,
+                                _pmdEDUCB * cb ) ;
+         void _decreaseMBStat ( utilCLUniqueID clUniqueID,
+                                dmsMBStatInfo * mbStat,
+                                _pmdEDUCB * cb ) ;
 
       private:
          void               _initializeMME () ;

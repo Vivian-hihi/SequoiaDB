@@ -837,7 +837,8 @@ namespace engine
          dmsOffset   offset      = extent->_lastRecordOffset ;
          // finally add the record into list
          extent->_recCount++ ;
-         ++( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
+         _increaseMBStat( context->mb()->_clUniqueID,
+                          &( _mbStatInfo[ context->mbID() ] ), cb ) ;
          // if there is last record in the extent
          if ( DMS_INVALID_OFFSET != offset )
          {
@@ -932,7 +933,8 @@ namespace engine
          if ( decCount )
          {
             --(pExtent->_recCount) ;
-            --( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
+            _decreaseMBStat( context->mb()->_clUniqueID,
+                             &( _mbStatInfo[ context->mbID() ] ), cb ) ;
          }
       }
       //increase data write counter

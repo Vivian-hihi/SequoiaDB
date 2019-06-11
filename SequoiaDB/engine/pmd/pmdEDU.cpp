@@ -1105,6 +1105,24 @@ namespace engine
       return ( DPS_INVALID_TRANS_ID != _curTransID ) ? TRUE : FALSE ;
    }
 
+   BOOLEAN _pmdEDUCB::isTransRU () const
+   {
+      return isTransaction() &&
+             _transExecutor.getTransIsolation() == TRANS_ISOLATION_RU ;
+   }
+
+   BOOLEAN _pmdEDUCB::isTransRC () const
+   {
+      return isTransaction() &&
+             _transExecutor.getTransIsolation() == TRANS_ISOLATION_RC ;
+   }
+
+   BOOLEAN _pmdEDUCB::isTransRS () const
+   {
+      return isTransaction() &&
+             _transExecutor.getTransIsolation() == TRANS_ISOLATION_RS ;
+   }
+
    BOOLEAN _pmdEDUCB::isAutoCommitTrans() const
    {
       return DPS_TRANS_IS_AUTOCOMMIT( _curTransID ) ? TRUE : FALSE ;

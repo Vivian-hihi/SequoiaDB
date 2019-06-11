@@ -47,6 +47,7 @@
 #include "dmsStorageLob.hpp"
 #include "pmdStartup.hpp"
 #include "dmsStorageDataFactory.hpp"
+#include "dmsTransContext.hpp"
 
 namespace engine
 {
@@ -1913,7 +1914,50 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to lock dms mb context[%s], rc: %d",
                       context->toString().c_str(), rc ) ;
       }
-      recordNum = context->mbStat()->_totalRecords ;
+      if ( cb->isTransRC() || cb->isTransRS() )
+      {
+         // NOTE: actually for RC only
+         // for RS should consider locking the whole table or need MVCC,
+         // this may cause unmatched results between count() and find() with
+         // deleting from other transactions ( phantom read ? )
+         dpsTransCB * transCB = pmdGetKRCB()->getTransCB() ;
+         dmsTBTransContext txContext( context, DMS_ACCESS_TYPE_QUERY ) ;
+         dpsTransRetInfo lockConflict ;
+
+         // try to lock IS for collection
+         // we will release mbcontext later, so keep a transaction lock to
+         // avoid dropping collection
+         INT32 tmpRC = transCB->transLockGetIS( cb, LogicalCSID(),
+                                                context->mbID(), &txContext,
+                                                &lockConflict ) ;
+         if ( SDB_OK != tmpRC )
+         {
+            // NOTE: won't happen
+            PD_LOG ( PDWARNING,
+                     "Failed to get CS/CL lock, rc: %d"OSS_NEWLINE
+                     "Conflict ( representative ):"OSS_NEWLINE
+                     "   EDUID:  %llu"OSS_NEWLINE
+                     "   TID:    %u"OSS_NEWLINE
+                     "   LockId: %s"OSS_NEWLINE
+                     "   Mode:   %s"OSS_NEWLINE,
+                     tmpRC,
+                     lockConflict._eduID,
+                     lockConflict._tid,
+                     lockConflict._lockID.toString().c_str(),
+                     lockModeToString( lockConflict._lockType ) ) ;
+         }
+         if ( !cb->getTransExecutor()->getMBTotalRecords(
+                                                context->mb()->_clUniqueID,
+                                                (UINT64 &)recordNum ) )
+         {
+            recordNum =
+                  (INT64)context->mbStat()->_transTotalRecords.fetch() ;
+         }
+      }
+      else
+      {
+         recordNum = context->mbStat()->_totalRecords ;
+      }
 
    done :
       if ( getContext && context )

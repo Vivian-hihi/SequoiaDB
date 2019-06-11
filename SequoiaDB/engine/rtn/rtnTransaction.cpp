@@ -187,6 +187,11 @@ namespace engine
            preTransLsn == DPS_INVALID_LSN_OFFSET )
       {
          cb->setTransStatus( DPS_TRANS_COMMIT ) ;
+
+         // make sure to commit meta-block statistics
+         // NOTE: actually it is empty
+         cb->getTransExecutor()->commitMBStats() ;
+
          sdbGetTransCB()->delTransCB( curTransID ) ;
          cb->setTransID( DPS_INVALID_TRANS_ID ) ;
          // release all transactions lock
@@ -231,6 +236,11 @@ namespace engine
       dpsCB->writeData( info ) ;
 
       cb->setTransStatus( DPS_TRANS_COMMIT ) ;
+
+      // commit meta-block statistics
+      // SHOULD commit this before release TX locks
+      // the mbstat can be protected by TX locks
+      cb->getTransExecutor()->commitMBStats() ;
 
       sdbGetTransCB()->delTransCB( curTransID ) ;
       cb->setTransID( DPS_INVALID_TRANS_ID ) ;
@@ -379,6 +389,10 @@ namespace engine
    done:
       // complete the transaction whether success or not,
       // this avoid infinite recursion when rollback failed
+
+      // rollback meta-block statistics
+      cb->getTransExecutor()->rollbackMBStats() ;
+
       sdbGetTransCB()->delTransCB( transID ) ;
       cb->setTransID( DPS_INVALID_TRANS_ID ) ;
       cb->setCurTransLsn( DPS_INVALID_LSN_OFFSET ) ;

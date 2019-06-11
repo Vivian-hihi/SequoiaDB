@@ -886,6 +886,7 @@ namespace engine
                                 _dmsMME->_mbList[i]._clUniqueID ) ;
 
             _mbStatInfo[i]._totalRecords = _dmsMME->_mbList[i]._totalRecords ;
+            _mbStatInfo[i]._transTotalRecords.init( _dmsMME->_mbList[i]._totalRecords ) ;
             _mbStatInfo[i]._totalDataPages =
                _dmsMME->_mbList[i]._totalDataPages ;
             _mbStatInfo[i]._totalIndexPages =
@@ -1619,6 +1620,7 @@ namespace engine
       context->mbStat()->_totalDataFreeSpace = 0 ;
       context->mbStat()->_totalDataPages = 0 ;
       context->mbStat()->_totalRecords = 0 ;
+      context->mbStat()->_transTotalRecords.init( 0 ) ;
       context->mbStat()->_totalDataLen = 0 ;
       context->mbStat()->_totalOrgDataLen = 0 ;
       context->mbStat()->removeAllFromChain() ;
@@ -3233,7 +3235,8 @@ namespace engine
             pRecord->unsetDeleting() ;
 
             ++( pWRExtent->_recCount ) ;
-            ++( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
+            _increaseMBStat( context->mb()->_clUniqueID,
+                             &( _mbStatInfo[ context->mbID() ] ), cb ) ;
          }
          else
          {
@@ -3649,7 +3652,8 @@ namespace engine
             pRecord->setDeleting() ;
             // need to dec count
             --( pExtent->_recCount ) ;
-            --( _mbStatInfo[ context->mbID() ]._totalRecords ) ;
+            _decreaseMBStat( context->mb()->_clUniqueID,
+                             &( _mbStatInfo[ context->mbID() ] ), cb ) ;
          }
 
          if ( !isDeleting )
@@ -4367,6 +4371,60 @@ namespace engine
          pRecord = ovfRW.readPtr() ;
       }
       return pRecord->getDataLength() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON__INCMBSTAT, "_dmsStorageDataCommon::_increaseMBStat" )
+   void _dmsStorageDataCommon::_increaseMBStat ( utilCLUniqueID clUniqueID,
+                                                 dmsMBStatInfo * mbStat,
+                                                 _pmdEDUCB * cb )
+   {
+      SDB_ASSERT( NULL != mbStat, "mb stat should not be NULL" ) ;
+      SDB_ASSERT( NULL != cb, "EDUCB should not be NULL" ) ;
+
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON__INCMBSTAT ) ;
+
+      dpsTransCB * transCB = sdbGetTransCB() ;
+
+      ++ ( mbStat->_totalRecords ) ;
+      if ( cb->isTransaction() && !transCB->isDoRollback() )
+      {
+         cb->getTransExecutor()->incMBTotalRecords(
+                           clUniqueID, &( mbStat->_transTotalRecords ), 1 ) ;
+      }
+      else
+      {
+         mbStat->_transTotalRecords.inc() ;
+      }
+
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATACOMMON__INCMBSTAT ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON__DECMBSTAT, "_dmsStorageDataCommon::_decreaseMBStat" )
+   void _dmsStorageDataCommon::_decreaseMBStat ( utilCLUniqueID clUniqueID,
+                                                 dmsMBStatInfo * mbStat,
+                                                 _pmdEDUCB * cb )
+   {
+      SDB_ASSERT( NULL != mbStat, "mb stat should not be NULL" ) ;
+      SDB_ASSERT( NULL != cb, "EDUCB should not be NULL" ) ;
+
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON__DECMBSTAT ) ;
+
+      dpsTransCB * transCB = sdbGetTransCB() ;
+
+      // update meta-block statistics
+      -- ( mbStat->_totalRecords ) ;
+      // update meta-block statistics for transaction
+      if ( cb->isTransaction() && !transCB->isDoRollback() )
+      {
+         cb->getTransExecutor()->decMBTotalRecords(
+                        clUniqueID, &( mbStat->_transTotalRecords ), 1 ) ;
+      }
+      else
+      {
+         mbStat->_transTotalRecords.dec() ;
+      }
+
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATACOMMON__DECMBSTAT ) ;
    }
 
    /*

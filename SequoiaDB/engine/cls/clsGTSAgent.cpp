@@ -389,6 +389,10 @@ namespace engine
 
       curLsn = cb->getCurTransLsn() ;
 
+      // make sure to commit meta-block statistics
+      // NOTE: actually it is empty
+      cb->getTransExecutor()->commitMBStats() ;
+
       cb->setTransID( DPS_INVALID_TRANS_ID ) ;
       cb->setCurTransLsn( DPS_INVALID_LSN_OFFSET ) ;
       // clear all lsn mapping
@@ -405,6 +409,3 @@ namespace engine
    }
 
 }
-
-
-

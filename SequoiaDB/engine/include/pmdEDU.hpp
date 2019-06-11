@@ -371,6 +371,9 @@ namespace engine
       }
       DPS_LSN_OFFSET getRelatedTransLSN() const { return _relatedTransLSN ; }
       BOOLEAN  isTransaction() const ;
+      BOOLEAN  isTransRU () const ;
+      BOOLEAN  isTransRC () const ;
+      BOOLEAN  isTransRS () const ;
       BOOLEAN  isAutoCommitTrans() const ;
       void     startRollback() { _isDoRollback = TRUE ; }
       void     stopRollback() { _isDoRollback = FALSE ; }
@@ -483,7 +486,7 @@ namespace engine
    #endif // SDB_ENGINE
 
       /*
-         Interace members
+         Interface members
       */
       EDUID                   _eduID ;
       UINT32                  _tid ;
