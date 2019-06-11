@@ -1512,7 +1512,7 @@ namespace engine
                                 DPS_TRANS_ID &transID,
                                 DPS_LSN_OFFSET &preTransLsn,
                                 DPS_LSN_OFFSET &firstTransLsn,
-                                UINT8 &isPre,
+                                UINT8  &attr,
                                 UINT32 &nodeNum,
                                 const UINT64 **ppNodes )
    {
@@ -1558,17 +1558,17 @@ namespace engine
             firstTransLsn = DPS_INVALID_LSN_OFFSET ;
          }
 
-         itr = record.find( DPS_LOG_TSCOMMIT_IS_PRE ) ;
+         itr = record.find( DPS_LOG_TSCOMMIT_ATTR ) ;
          if ( itr.valid() )
          {
-            isPre = *(UINT8*)itr.value() ;
+            attr = *(UINT8*)itr.value() ;
          }
          else
          {
-            isPre = 0 ;
+            attr = 0 ;
          }
 
-         if ( isPre )
+         if ( DPS_TS_COMMIT_ATTR_PRE == attr )
          {
             itr = record.find( DPS_LOG_TSCOMMIT_NODE_NUM ) ;
             if ( !itr.valid() )
@@ -1608,11 +1608,30 @@ namespace engine
       goto done ;
    }
 
+   const CHAR* dpsTSCommitAttr2String( UINT8 attr )
+   {
+      const CHAR *pAttr = "Unknown" ;
+
+      switch ( attr )
+      {
+         case DPS_TS_COMMIT_ATTR_PRE :
+            pAttr = DPS_TS_COMMIT_ATTR_PRE_STR ;
+            break ;
+         case DPS_TS_COMMIT_ATTR_SND :
+            pAttr = DPS_TS_COMMIT_ATTR_SND_STR ;
+            break ;
+         default :
+            break ;         
+      }
+
+      return pAttr ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_TRANSCOMMIT2RECORD, "dpsTransCommit2Record" )
    INT32 dpsTransCommit2Record( const DPS_TRANS_ID &transID,
                                 const DPS_LSN_OFFSET &preTransLsn,
                                 const DPS_LSN_OFFSET &firstTransLsn,
-                                const UINT8 *pIsPre,
+                                const UINT8  &attr,
                                 const UINT32 *pNodeNum,
                                 const UINT64 *pNodes,
                                 dpsLogRecord &record )
@@ -1647,38 +1666,41 @@ namespace engine
          goto error ;
       }
 
-      if ( pIsPre && *pIsPre != 0 )
+      if ( 0 != attr )
       {
-         if ( !pNodeNum || !pNodes )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         rc = record.push( DPS_LOG_TSCOMMIT_IS_PRE,
+         rc = record.push( DPS_LOG_TSCOMMIT_ATTR,
                            sizeof( UINT8 ),
-                           (const CHAR*)pIsPre ) ;
+                           (const CHAR*)&attr ) ;
          if ( rc )
          {
             goto error ;
          }
 
-         rc = record.push( DPS_LOG_TSCOMMIT_NODE_NUM,
-                           sizeof( UINT32 ),
-                           ( const CHAR* )pNodeNum ) ;
-         if ( rc )
+         if ( DPS_TS_COMMIT_ATTR_PRE == attr )
          {
-            goto error ;
-         }
+            if ( !pNodeNum || !pNodes )
+            {
+               rc = SDB_SYS ;
+               goto error ;
+            }
 
-         if ( *pNodeNum > 0 )
-         {
-            rc = record.push( DPS_LOG_TSCOMMIT_NODES,
-                              sizeof( UINT64 ) * ( *pNodeNum ),
-                              ( const CHAR* )pNodes ) ;
+            rc = record.push( DPS_LOG_TSCOMMIT_NODE_NUM,
+                              sizeof( UINT32 ),
+                              ( const CHAR* )pNodeNum ) ;
             if ( rc )
             {
                goto error ;
+            }
+
+            if ( *pNodeNum > 0 )
+            {
+               rc = record.push( DPS_LOG_TSCOMMIT_NODES,
+                                 sizeof( UINT64 ) * ( *pNodeNum ),
+                                 ( const CHAR* )pNodes ) ;
+               if ( rc )
+               {
+                  goto error ;
+               }
             }
          }
       }

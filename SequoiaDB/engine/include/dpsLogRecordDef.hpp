@@ -141,10 +141,16 @@ namespace engine
 
    enum DPS_LOG_TS_COMMIT
    {
-      DPS_LOG_TSCOMMIT_IS_PRE    = 1,
       DPS_LOG_TSCOMMIT_NODE_NUM  = 2,
-      DPS_LOG_TSCOMMIT_NODES     = 3
+      DPS_LOG_TSCOMMIT_NODES     = 3,
+      DPS_LOG_TSCOMMIT_ATTR      = 4
    } ;
+
+   #define DPS_TS_COMMIT_ATTR_SND            ( 1 )
+   #define DPS_TS_COMMIT_ATTR_PRE            ( 2 )
+
+   #define DPS_TS_COMMIT_ATTR_SND_STR        "Snd-Commit"
+   #define DPS_TS_COMMIT_ATTR_PRE_STR        "Pre-Commit"
 
    enum DPS_LOG_TS_ROLLBACK
    {

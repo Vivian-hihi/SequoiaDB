@@ -101,13 +101,14 @@ namespace engine
 
    INT32 rtnTransPreCommit( _pmdEDUCB *cb, UINT32 nodeNum,
                             const UINT64 *pNodes,
+                            INT16 w,
                             SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       DPS_TRANS_ID curTransID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET firstTransLsn = DPS_INVALID_LSN_OFFSET ;
-      UINT8 isPre = 1 ;
+      UINT8 attr = DPS_TS_COMMIT_ATTR_PRE ;
 
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
@@ -136,7 +137,7 @@ namespace engine
               preTransLsn ) ;
 
       rc = dpsTransCommit2Record( curTransID, preTransLsn, firstTransLsn,
-                                  &isPre, &nodeNum, pNodes, record ) ;
+                                  attr, &nodeNum, pNodes, record ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to build pre-commit log:%d",rc ) ;
@@ -150,6 +151,8 @@ namespace engine
                    "log(rc=%d)", rc ) ;
       dpsCB->writeData( info ) ;
 
+      cb->setTransStatus( DPS_TRANS_WAIT_COMMIT ) ;
+
    done:
       return rc ;
    error:
@@ -162,6 +165,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNTRANSCOMMIT ) ;
       SDB_ASSERT( cb, "cb can't be null" ) ;
       INT32 rc = SDB_OK ;
+      UINT8 attr = 0 ;
 
       DPS_TRANS_ID curTransID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
@@ -175,6 +179,7 @@ namespace engine
       if ( curTransID == DPS_INVALID_TRANS_ID ||
            preTransLsn == DPS_INVALID_LSN_OFFSET )
       {
+         cb->setTransStatus( DPS_TRANS_COMMIT ) ;
          sdbGetTransCB()->delTransCB( curTransID ) ;
          cb->setTransID( DPS_INVALID_TRANS_ID ) ;
          // release all transactions lock
@@ -188,6 +193,12 @@ namespace engine
       {
          goto done ;
       }
+
+      if ( DPS_TRANS_WAIT_COMMIT == cb->getTransStatus() )
+      {
+         attr = DPS_TS_COMMIT_ATTR_SND ;
+      }
+
       firstTransLsn = sdbGetTransCB()->getBeginLsn( curTransID ) ;
       SDB_ASSERT( firstTransLsn != DPS_INVALID_LSN_OFFSET,
                   "First transaction lsn can't be invalid" ) ;
@@ -198,7 +209,7 @@ namespace engine
               preTransLsn ) ;
 
       rc = dpsTransCommit2Record( curTransID, preTransLsn, firstTransLsn,
-                                  NULL, NULL, NULL, record ) ;
+                                  attr, NULL, NULL, record ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to build commit log:%d",rc ) ;
@@ -206,10 +217,13 @@ namespace engine
       }
 
       info.setInfoEx( ~0, DMS_INVALID_CLID, DMS_INVALID_EXTENT, cb ) ;
+      info.enableTrans() ;
       rc = dpsCB->prepare( info ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to insert record into "
                    "log(rc=%d)", rc ) ;
       dpsCB->writeData( info ) ;
+
+      cb->setTransStatus( DPS_TRANS_COMMIT ) ;
 
       sdbGetTransCB()->delTransCB( curTransID ) ;
       cb->setTransID( DPS_INVALID_TRANS_ID ) ;
@@ -267,6 +281,7 @@ namespace engine
       doRollback = TRUE ;
 
       cb->setTransID( rollbackID ) ;
+      cb->setTransStatus( DPS_TRANS_ROLLBACK ) ;
 
       // read the log and rollback one by one
       while ( curLsnOffset != DPS_INVALID_LSN_OFFSET )

@@ -236,7 +236,7 @@ namespace engine
       UINT32   getTransCBSize() ;
       void     termAllTrans() ;
       TRANS_MAP *getTransMap() ;
-      void cloneTransMap( TRANS_MAP &result ) ;
+      void     cloneTransMap( TRANS_MAP &result ) ;
 
       void     addHisTrans( DPS_TRANS_ID transID,
                             INT32 status,

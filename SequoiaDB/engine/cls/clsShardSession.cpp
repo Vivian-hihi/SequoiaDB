@@ -47,6 +47,7 @@
 #include "pmdStartup.hpp"
 #include "clsCommand.hpp"
 #include "dpsOp2Record.hpp"
+#include "dpsLogRecordDef.hpp"
 
 using namespace bson ;
 
@@ -326,7 +327,7 @@ namespace engine
          DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
          DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
          DPS_LSN_OFFSET firstTransLsn = DPS_INVALID_LSN_OFFSET ;
-         UINT8 isPre = 0 ;
+         UINT8 attr = 0 ;
          UINT32 nodeNum = 0 ;
          const UINT64 *pNodes = NULL ;
          UINT32 timeCounter = 0 ;
@@ -342,9 +343,11 @@ namespace engine
          }
 
          rc = dpsRecord2TransCommit( mb.offset( 0 ), transID, preTransLsn,
-                                     firstTransLsn, isPre, nodeNum,
+                                     firstTransLsn, attr, nodeNum,
                                      &pNodes ) ;
-         SDB_ASSERT( SDB_OK == rc && isPre != 0 && nodeNum > 0,
+         SDB_ASSERT( SDB_OK == rc &&
+                     DPS_TS_COMMIT_ATTR_PRE == attr &&
+                     nodeNum > 0,
                      "Invalid log" ) ;
          if ( rc )
          {
@@ -377,7 +380,7 @@ namespace engine
             {
                goto rollback ;
             }
-         } while( !eduCB()->isForced() && pmdIsPrimary() ) ;
+         } while( pmdIsPrimary() ) ;
       }
 
    rollback:
@@ -1972,7 +1975,11 @@ namespace engine
                                                MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
+      pmdOptionsCB *optCB = pmdGetOptionCB() ;
       MsgOpTransCommitPre *pCommitPreMsg = ( MsgOpTransCommitPre* )msg ;
+
+      INT16 replSize = optCB->transReplSize() ;
+      INT16 w = 0 ;
 
       if ( !_pReplSet->primaryIsMe() )
       {
@@ -1984,20 +1991,26 @@ namespace engine
          rc = SDB_DPS_TRANS_NO_TRANS ;
          goto error ;
       }
+
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_COMMITPRE_REQ,
                           "TransactionID: 0x%016x(%llu)",
                           eduCB()->getTransID(),
                           eduCB()->getTransID() ) ;
 
+      rc = _calculateW( &replSize, NULL, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to calculate w, rc: %d", rc ) ;
+         goto error ;
+      }
+
       rc = rtnTransPreCommit( _pEDUCB, pCommitPreMsg->nodeNum,
-                              pCommitPreMsg->nodes, _pDpsCB ) ;
+                              pCommitPreMsg->nodes, w, _pDpsCB ) ;
       if ( rc )
       {
          goto error ;
       }
-
-      _pEDUCB->setTransStatus( DPS_TRANS_WAIT_COMMIT ) ;
 
    done:
       return rc ;

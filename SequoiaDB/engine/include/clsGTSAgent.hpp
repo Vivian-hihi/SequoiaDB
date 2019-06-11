@@ -80,7 +80,8 @@ namespace engine
                                             DPS_TRANS_STATUS &status ) ;
 
          INT32       _commitTrans( DPS_TRANS_ID transID,
-                                   DPS_LSN_OFFSET lastLsn ) ;
+                                   DPS_LSN_OFFSET lastLsn,
+                                   DPS_LSN_OFFSET &curLsn ) ;
 
       private:
          _clsShardMgr         *_pShardMgr ;

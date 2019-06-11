@@ -1934,6 +1934,8 @@ done:
       _maxTCSize = 0 ;
       _memPoolSize = 0 ;
 
+      _transReplSize = -1 ;
+
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL
@@ -2349,6 +2351,11 @@ done:
       // --mempoolsize
       rdxUInt( pEX, PMD_OPTION_MEMPOOL_SIZE, _memPoolSize, FALSE,
                PMD_CFG_CHANGE_RUN, 8192, TRUE ) ;
+
+      // --transreplsize
+      rdxInt( pEX, PMD_OPTION_TRANS_REPLSIZE, _transReplSize, FALSE,
+              PMD_CFG_CHANGE_RUN, -1, TRUE ) ;
+      rdvMinMax( pEX, _transReplSize, -1, CLS_REPLSET_MAX_NODE_SIZE ) ;
 
       // end map
 

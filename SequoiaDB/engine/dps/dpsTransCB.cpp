@@ -103,6 +103,8 @@ namespace engine
       // isolation level (TRANS_ISOLATION_RC)
       if( _isOn )
       {
+         _TransIDL48Cur.init( ossRand() ) ;
+
          _transLockMgr = SDB_OSS_NEW dpsTransLockManager() ;
          if ( !_transLockMgr )
          {
@@ -347,22 +349,22 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB_DPSTRANSCB_SVTRANSINFO ) ;
 
-      dpsHisTransStatus hisStatus ;
-
       if ( DPS_INVALID_TRANS_ID == transID ||
            sdbGetDPSCB()->isInRestore() )
       {
          goto done ;
       }
 
-      /*if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) &&
+      if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) &&
            pmdIsPrimary() )
       {
          // in primary, transaction-info save in EDUCB
          goto done ;
       }
-      else*/
+      else
       {
+         DPS_LSN_OFFSET lastLsn = DPS_INVALID_LSN_OFFSET ;
+
          transID = getTransID( transID ) ;
          TRANS_MAP::iterator it ;
 
@@ -375,8 +377,7 @@ namespace engine
             // invalid-lsn means the transaction is complete
             if ( it != _TransMap.end() )
             {
-               hisStatus._status = status ;
-               hisStatus._lsn = it->second._lsn ;
+               lastLsn = it->second._lsn ;
                _TransMap.erase( it ) ;
             }
          }
@@ -392,12 +393,12 @@ namespace engine
                _TransMap[ transID ] = dpsTransBackInfo( lsnOffset, status ) ;
             }
          }
-      }
 
-      /// add to his trans
-      if ( DPS_INVALID_LSN_OFFSET != hisStatus._lsn )
-      {
-         addHisTrans( transID, hisStatus._status, hisStatus._lsn ) ;
+         /// add to his trans
+         if ( DPS_INVALID_LSN_OFFSET != lastLsn )
+         {
+            addHisTrans( transID, status, lastLsn ) ;
+         }
       }
 
    done:
@@ -410,14 +411,24 @@ namespace engine
                                   INT32 status,
                                   const MAP_TRANS_PENDING_OBJ &mapPendingObj )
    {
-      transID = getTransID( transID );
-      ossScopedLock _lock( &_MapMutex );
-      if ( _TransMap.find( transID ) == _TransMap.end() )
+      TRANS_MAP::iterator it ;
+      transID = getTransID( transID ) ;
+
+      ossScopedLock _lock( &_MapMutex ) ;
+
+      it = _TransMap.find( transID ) ;
+      if ( it == _TransMap.end() )
       {
          // it is means transaction is synchronous by log if transID is exist
          _TransMap[ transID ] = dpsTransBackInfo( lsnOffset,
                                                   mapPendingObj,
                                                   status ) ;
+      }
+      else
+      {
+         it->second._lsn = lsnOffset ;
+         it->second._status = status ;
+         it->second._mapPendingObj = mapPendingObj ;
       }
    }
 
@@ -439,12 +450,30 @@ namespace engine
    void dpsTransCB::delTransCB( DPS_TRANS_ID transID )
    {
       PD_TRACE_ENTRY( SDB_DPSTRANSCB_DELTRANSCB ) ;
+
+      DPS_LSN_OFFSET lastLsn = DPS_INVALID_LSN_OFFSET ;
+      INT32 status = DPS_TRANS_DOING ;
+
       {
-         transID = getTransID( transID );
+         TRANS_CB_MAP::iterator it ;
+         transID = getTransID( transID ) ;
+
          ossScopedLock _lock( &_CBMapMutex ) ;
-         _cbMap.erase( transID );
+         it = _cbMap.find( transID ) ;
+         if ( it != _cbMap.end() )
+         {
+            lastLsn = it->second->getCurTransLsn() ;
+            status = it->second->getTransStatus() ;
+            _cbMap.erase( it ) ;
+         }
       }
-      PD_TRACE_EXIT ( SDB_DPSTRANSCB_DELTRANSCB );
+
+      if ( DPS_INVALID_LSN_OFFSET != lastLsn )
+      {
+         addHisTrans( transID, status, lastLsn ) ;
+      }
+
+      PD_TRACE_EXIT ( SDB_DPSTRANSCB_DELTRANSCB ) ;
    }
 
    void dpsTransCB::dumpTransEDUList( TRANS_EDU_LIST & eduList )
@@ -517,6 +546,8 @@ namespace engine
          if ( LOG_TYPE_TS_COMMIT == record.head()._type )
          {
             DPS_LSN_OFFSET firstLsn = DPS_INVALID_LSN_OFFSET ;
+            UINT8 attr = 0 ;
+
             itr = record.find( DPS_LOG_PUBLIC_FIRSTTRANS ) ;
 
             if ( DPS_INVALID_LSN_OFFSET == lsnOffset ||
@@ -529,11 +560,17 @@ namespace engine
             }
             firstLsn = *( ( DPS_LSN_OFFSET*)itr.value() ) ;
 
-            itr = record.find( DPS_LOG_TSCOMMIT_IS_PRE ) ;
-            if ( !itr.valid() || 0 != *(UINT8*)itr.value() )
+            itr = record.find( DPS_LOG_TSCOMMIT_ATTR ) ;
+            if ( itr.valid() )
+            {
+               attr = *(UINT8*)itr.value() ;
+            }
+
+            if ( DPS_TS_COMMIT_ATTR_PRE != attr )
             {
                addBeginLsn( firstLsn, transID ) ;
-               transStatus = DPS_TRANS_WAIT_COMMIT ;
+               transStatus = DPS_TS_COMMIT_ATTR_SND == attr ?
+                             DPS_TRANS_WAIT_COMMIT : DPS_TRANS_DOING ;
                delHisTrans( transID ) ;
             }
          }
@@ -604,8 +641,9 @@ namespace engine
          }
          else if ( LOG_TYPE_TS_COMMIT == record.head()._type )
          {
-            itr = record.find( DPS_LOG_TSCOMMIT_IS_PRE ) ;
-            if ( !itr.valid() || 0 == *(UINT8*)itr.value() )
+            itr = record.find( DPS_LOG_TSCOMMIT_ATTR ) ;
+            if ( !itr.valid() ||
+                 DPS_TS_COMMIT_ATTR_PRE != *(UINT8*)itr.value() )
             {
                lsnOffset = DPS_INVALID_LSN_OFFSET ;
                transStatus = DPS_TRANS_COMMIT ;
@@ -673,18 +711,21 @@ namespace engine
    {
       TRANS_LSN_ID_MAP::iterator it ;
 
-      ossScopedLock lock( &_hisMutex ) ;
-
-      it = _hisLsnTrans.begin() ;
-      while( it != _hisLsnTrans.end() )
+      if ( DPS_INVALID_LSN_OFFSET != lsn )
       {
-         if ( it->first < lsn )
+         ossScopedLock lock( &_hisMutex ) ;
+
+         it = _hisLsnTrans.begin() ;
+         while( it != _hisLsnTrans.end() )
          {
-            _hisTransStatus.erase( it->second ) ;
-            _hisLsnTrans.erase( it++ ) ;
-            continue ;
+            if ( it->first < lsn )
+            {
+               _hisTransStatus.erase( it->second ) ;
+               _hisLsnTrans.erase( it++ ) ;
+               continue ;
+            }
+            break ;
          }
-         break ;
       }
    }
 
@@ -693,6 +734,16 @@ namespace engine
       /// first check in-line trans, then check history trans
       INT32 transStatus = DPS_TRANS_UNKNOWN ;
       transID = DPS_TRANS_GET_ID( transID ) ;
+
+      {
+         ossScopedLock _lock( &_CBMapMutex ) ;
+         TRANS_CB_MAP::iterator it = _cbMap.find( transID ) ;
+         if ( it != _cbMap.end() )
+         {
+            transStatus = it->second->getTransStatus() ;
+            goto done ;
+         }
+      }
 
       {
          ossScopedLock _lock( &_MapMutex ) ;

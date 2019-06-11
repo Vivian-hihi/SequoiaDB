@@ -75,9 +75,9 @@ namespace engine
    enum DPS_TRANS_STATUS
    {
       DPS_TRANS_DOING         = 1,
-      DPS_TRANS_WAIT_COMMIT   = 3,
-      DPS_TRANS_COMMIT        = 4,
-      DPS_TRANS_ROLLBACK      = 6,
+      DPS_TRANS_WAIT_COMMIT   = 2,
+      DPS_TRANS_COMMIT        = 3,
+      DPS_TRANS_ROLLBACK      = 4,
 
       DPS_TRANS_UNKNOWN       = 99
    } ;

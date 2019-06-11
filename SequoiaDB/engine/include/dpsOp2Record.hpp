@@ -190,10 +190,12 @@ namespace engine
    INT32 dpsRecord2CLTrunc( const CHAR *logRecord,
                             const CHAR **fullName ) ;
 
+   const CHAR*  dpsTSCommitAttr2String ( UINT8 attr ) ;
+
    INT32 dpsTransCommit2Record( const DPS_TRANS_ID &transID,
                                 const DPS_LSN_OFFSET &preTransLsn,
                                 const DPS_LSN_OFFSET &firstTransLsn,
-                                const UINT8 *pIsPre,
+                                const UINT8  &attr,
                                 const UINT32 *pNodeNum,
                                 const UINT64 *pNodes,
                                 dpsLogRecord &record ) ;
@@ -202,7 +204,7 @@ namespace engine
                                 DPS_TRANS_ID &transID,
                                 DPS_LSN_OFFSET &preTransLsn,
                                 DPS_LSN_OFFSET &firstTransLsn,
-                                UINT8 &isPre,
+                                UINT8  &attr,
                                 UINT32 &nodeNum,
                                 const UINT64 **ppNodes
                                 ) ;

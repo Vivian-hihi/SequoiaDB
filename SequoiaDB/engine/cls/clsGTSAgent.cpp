@@ -45,6 +45,7 @@
 #include "dpsLogWrapper.hpp"
 #include "dpsOp2Record.hpp"
 #include "dms.hpp"
+#include "dpsLogRecordDef.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -97,7 +98,7 @@ namespace engine
             rc = _syncCheckTransStatus( transID, transInfo._lsn, status ) ;
             if ( SDB_OK == rc && DPS_TRANS_COMMIT == status )
             {
-               rc = _commitTrans( transID, transInfo._lsn ) ;
+               rc = _commitTrans( transID, transInfo._lsn, transInfo._lsn ) ;
                if ( SDB_OK == rc )
                {
                   pTransCB->addHisTrans( transID, DPS_TRANS_COMMIT,
@@ -125,7 +126,6 @@ namespace engine
 
       BOOLEAN hasCommit = FALSE ;
       BOOLEAN hasRollback = FALSE ;
-      BOOLEAN hasUnknown = FALSE ;
 
       for ( UINT32 i = 0 ; i < nodeNum; ++i )
       {
@@ -151,7 +151,7 @@ namespace engine
                hasRollback = TRUE ;
                break ;
             case DPS_TRANS_UNKNOWN :
-               hasUnknown = TRUE ;
+               /// ignore unknown
                break ;
             default :
                break ;
@@ -167,13 +167,9 @@ namespace engine
       {
          status = DPS_TRANS_COMMIT ;
       }
-      else if ( !hasUnknown )
-      {
-         status = DPS_TRANS_COMMIT ;
-      }
       else
       {
-         status = DPS_TRANS_ROLLBACK ;
+         status = DPS_TRANS_COMMIT ;
       }
 
    done:
@@ -305,7 +301,7 @@ namespace engine
       DPS_TRANS_ID recordTransID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET firstLsn = DPS_INVALID_LSN_OFFSET ;
-      UINT8 isPre = 0 ;
+      UINT8 attr = 0 ;
       UINT32 nodeNum = 0 ;
       const UINT64 *pNodes = NULL ;
 
@@ -320,9 +316,11 @@ namespace engine
       }
 
       rc = dpsRecord2TransCommit( mb.offset( 0 ), recordTransID, preTransLsn,
-                                  firstLsn, isPre, nodeNum,
+                                  firstLsn, attr, nodeNum,
                                   &pNodes ) ;
-      SDB_ASSERT( SDB_OK == rc && isPre != 0 && nodeNum > 0,
+      SDB_ASSERT( SDB_OK == rc &&
+                  attr == DPS_TS_COMMIT_ATTR_PRE &&
+                  nodeNum > 0,
                   "Invalid log" ) ;
       if ( rc )
       {
@@ -339,7 +337,7 @@ namespace engine
             continue ;
          }
          break ;
-      } while( !cb->isForced() && !pTransCB->isDoRollback() ) ;
+      } while( pTransCB->isDoRollback() ) ;
 
    done:
       return rc ;
@@ -348,12 +346,14 @@ namespace engine
    }
 
    INT32 _clsGTSAgent::_commitTrans( DPS_TRANS_ID transID,
-                                     DPS_LSN_OFFSET lastLsn )
+                                     DPS_LSN_OFFSET lastLsn,
+                                     DPS_LSN_OFFSET &curLsn )
    {
       INT32 rc = SDB_OK ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       SDB_DPSCB *pDpsCB = pmdGetKRCB()->getDPSCB() ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
+      UINT8 attr = DPS_TS_COMMIT_ATTR_SND ;
 
       DPS_LSN_OFFSET firstLsn = DPS_INVALID_LSN_OFFSET ;
 
@@ -373,7 +373,7 @@ namespace engine
               lastLsn ) ;
 
       rc = dpsTransCommit2Record( transID, lastLsn, firstLsn,
-                                  NULL, NULL, NULL, record ) ;
+                                  attr, NULL, NULL, record ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to build commit log:%d",rc ) ;
@@ -381,10 +381,13 @@ namespace engine
       }
 
       info.setInfoEx( ~0, DMS_INVALID_CLID, DMS_INVALID_EXTENT, cb ) ;
+      info.enableTrans() ;
       rc = pDpsCB->prepare( info ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to insert record into "
                    "log(rc=%d)", rc ) ;
       pDpsCB->writeData( info ) ;
+
+      curLsn = cb->getCurTransLsn() ;
 
       cb->setTransID( DPS_INVALID_TRANS_ID ) ;
       cb->setCurTransLsn( DPS_INVALID_LSN_OFFSET ) ;

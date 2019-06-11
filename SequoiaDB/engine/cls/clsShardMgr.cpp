@@ -502,7 +502,8 @@ namespace engine
          goto error ;
       }
 
-      if ( pmdGetKRCB()->getTransCB() )
+      if ( pmdGetKRCB()->getTransCB() &&
+           SDB_ROLE_DATA == pmdGetKRCB()->getDBRole() )
       {
          pmdGetKRCB()->getTransCB()->setEventHandler( _pGTSAgent ) ;
       }
@@ -531,7 +532,8 @@ namespace engine
          sdbGetPMDController()->unregNet( _pNetRtAgent->getFrame() ) ;
       }
 
-      if ( pmdGetKRCB()->getTransCB() )
+      if ( pmdGetKRCB()->getTransCB() &&
+           SDB_ROLE_DATA == pmdGetKRCB()->getDBRole() )
       {
          pmdGetKRCB()->getTransCB()->setEventHandler( NULL ) ;
       }

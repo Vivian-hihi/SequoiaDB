@@ -644,6 +644,7 @@ namespace engine
          OSS_INLINE UINT32 maxSockThread() const { return _maxSockThread ; }
          OSS_INLINE UINT32 maxTCSize() const { return _maxTCSize ; }
          OSS_INLINE UINT32 memPoolSize() const { return _memPoolSize ; }
+         OSS_INLINE INT32  transReplSize() const { return _transReplSize ; }
 
          std::string getOmAddr() const ;
 
@@ -754,6 +755,7 @@ namespace engine
          UINT32      _maxSockThread ;
          UINT32      _maxTCSize ;
          UINT32      _memPoolSize ;
+         INT32       _transReplSize ;
 
 #ifdef SDB_ENTERPRISE
 

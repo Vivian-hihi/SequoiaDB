@@ -83,29 +83,27 @@ namespace engine
    public:
       INT32 init() ;
 
-      void clear() ;
+      void  clear() ;
 
       INT32 handleInput( const MsgHeader *header ) ;
 
-      void handleTimeout( const UINT32 &millisec ) ;
+      void  handleTimeout( const UINT32 &millisec ) ;
 
       INT32 active() ;
 
-      void force( const INT32 &id,
-                  UINT32 mills = 0 ) ;
-
+      void  force( const INT32 &id, UINT32 mills = 0 ) ;
 
    private:
-      vector<_clsVoteStatus *> _status ;
-      _netRouteAgent *_agent ;
-      _clsVoteStatus *_current ;
-      _clsGroupInfo *_groupInfo ;
-      UINT8 _shadowWeight ;
-      UINT32 _forceMillis ;
+      vector<_clsVoteStatus *>   _status ;
+      _netRouteAgent             *_agent ;
+      _clsVoteStatus             *_current ;
+      _clsGroupInfo              *_groupInfo ;
+      UINT8                      _shadowWeight ;
+      UINT32                     _forceMillis ;
    } ;
 
    typedef class _clsVoteMachine clsVoteMachine ;
 }
 
-#endif
+#endif // CLSVOTEMACHINE_HPP_
 

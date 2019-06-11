@@ -253,7 +253,7 @@ namespace engine
          PD_LOG( PDEVENT, "Wait repl bucket empty completed" ) ;
       }
 
-      pmdSetPrimary( FALSE ) ;
+      _vote.force( CLS_ELECTION_STATUS_SEC ) ;
 
       return SDB_OK ;
    }

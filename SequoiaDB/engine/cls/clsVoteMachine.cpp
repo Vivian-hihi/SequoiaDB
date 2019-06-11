@@ -47,7 +47,7 @@
 namespace engine
 {
    #define CLS_VOTE_REGISGER_STATUS( status, rc ) \
-           {\
+           do {\
               _clsVoteStatus *s = SDB_OSS_NEW status( _groupInfo,\
                                                       _agent ) ;\
               if ( NULL == s ) \
@@ -58,15 +58,15 @@ namespace engine
                  goto error ;\
               }\
               _status.push_back( s ) ;\
-           }
+           } while( 0 )
 
-   #define CLS_VOTE_FIRST_STATUS 0
+   #define CLS_VOTE_FIRST_STATUS             ( 0 )
 
    #define CLS_VOTE_ACTIVE_STATUS( next ) \
-           {\
+           do { \
               SDB_ASSERT( next < (INT32)_status.size() &&\
-                     0 <= next,\
-                     "valid: 0 <= status < status.size()" ) ;\
+                          0 <= next,\
+                          "valid: 0 <= status < status.size()" ) ;\
               INT32 now = CLS_INVALID_VOTE_ID ;\
               INT32 nextStatus = next ;\
               _clsVoteStatus *prevVS = _current ; \
@@ -91,8 +91,7 @@ namespace engine
               {\
                  _forceMillis = 0 ;\
               }\
-           }
-
+           } while ( 0 )
 
    _clsVoteMachine::_clsVoteMachine( _clsGroupInfo *info,
                                      _netRouteAgent *agent )
@@ -116,12 +115,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSVTMH_INIT ) ;
       /// according to cls_ELECTION_STATUS
-      CLS_VOTE_REGISGER_STATUS( _clsVSSilence, rc )
-      CLS_VOTE_REGISGER_STATUS( _clsVSSecondary, rc )
-      CLS_VOTE_REGISGER_STATUS( _clsVSVote, rc )
-      CLS_VOTE_REGISGER_STATUS( _clsVSAnnounce, rc )
-      CLS_VOTE_REGISGER_STATUS( _clsVSPrimary, rc )
-      CLS_VOTE_ACTIVE_STATUS( CLS_VOTE_FIRST_STATUS )
+      CLS_VOTE_REGISGER_STATUS( _clsVSSilence, rc ) ;
+      CLS_VOTE_REGISGER_STATUS( _clsVSSecondary, rc ) ;
+      CLS_VOTE_REGISGER_STATUS( _clsVSVote, rc ) ;
+      CLS_VOTE_REGISGER_STATUS( _clsVSAnnounce, rc ) ;
+      CLS_VOTE_REGISGER_STATUS( _clsVSPrimary, rc ) ;
+
+      CLS_VOTE_ACTIVE_STATUS( CLS_VOTE_FIRST_STATUS ) ;
    done:
       PD_TRACE_EXITRC ( SDB__CLSVTMH_INIT, rc ) ;
       return rc ;
@@ -164,7 +164,7 @@ namespace engine
          {
             goto error ;
          }
-         CLS_VOTE_ACTIVE_STATUS( next )
+         CLS_VOTE_ACTIVE_STATUS( next ) ;
       }
    done:
       PD_TRACE_EXITRC ( SDB__CLSVTMH_HDINPUT, rc ) ;
@@ -196,7 +196,7 @@ namespace engine
       {
          INT32 next = CLS_INVALID_VOTE_ID ;
          _current->handleTimeout( millisec, next ) ;
-         CLS_VOTE_ACTIVE_STATUS( next )
+         CLS_VOTE_ACTIVE_STATUS( next ) ;
          goto done ;
       }
    done :
@@ -205,11 +205,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_FORCE, "_clsVoteMachine::force" )
-   void _clsVoteMachine::force( const INT32 &id,
-                                UINT32 millis )
+   void _clsVoteMachine::force( const INT32 &id, UINT32 millis )
    {
       PD_TRACE_ENTRY ( SDB__CLSVTMH_FORCE ) ;
-      CLS_VOTE_ACTIVE_STATUS( id )
+      CLS_VOTE_ACTIVE_STATUS( id ) ;
       if ( 0 < millis )
       {
          _forceMillis = millis ;

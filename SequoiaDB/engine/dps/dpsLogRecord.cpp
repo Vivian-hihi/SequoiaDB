@@ -43,6 +43,7 @@
 #include "ossMem.h"
 #include "dpsLogRecordDef.hpp"
 #include "ossMemPool.hpp"
+#include "dpsOp2Record.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 
@@ -1059,12 +1060,13 @@ namespace engine
                                    *((DPS_LSN_OFFSET *)itr.value()) ) ;
              }
 
-             itr = this->find( DPS_LOG_TSCOMMIT_IS_PRE ) ;
+             itr = this->find( DPS_LOG_TSCOMMIT_ATTR ) ;
              if ( itr.valid() )
              {
+                UINT8 attr = *((UINT8 *)itr.value()) ;
                 len += ossSnprintf( outBuf + len, outSize - len,
-                                    " IsPreCommit : %d"OSS_NEWLINE,
-                                    *((UINT8 *)itr.value()) ) ;
+                                    " Attr    : %d(%s)"OSS_NEWLINE,
+                                    attr, dpsTSCommitAttr2String( attr ) ) ;
              }
 
              itr = this->find( DPS_LOG_TSCOMMIT_NODE_NUM ) ;

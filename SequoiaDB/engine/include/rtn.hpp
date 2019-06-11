@@ -523,7 +523,8 @@ namespace engine
                         BOOLEAN isAutoCommit = FALSE,
                         DPS_TRANS_ID specID = DPS_INVALID_TRANS_ID ) ;
    INT32 rtnTransPreCommit( _pmdEDUCB *cb, UINT32 nodeNum,
-                            const UINT64 *pNodes, SDB_DPSCB *dpsCB ) ;
+                            const UINT64 *pNodes, INT16 w,
+                            SDB_DPSCB *dpsCB ) ;
    INT32 rtnTransCommit( _pmdEDUCB *cb, SDB_DPSCB *dpsCB );
    INT32 rtnTransRollback( _pmdEDUCB * cb, SDB_DPSCB *dpsCB );
    INT32 rtnTransRollbackAll( _pmdEDUCB * cb );
