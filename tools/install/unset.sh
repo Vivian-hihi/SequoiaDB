@@ -52,7 +52,8 @@ function clean_sdb()
    local file=`echo $installInfo |awk -F, '{print $1}'`
    
    . $file
-   #filter: the config file under /etc/default, eg: sequoiadb
+   #local=true: filter record the config file under /etc/default, eg: "sequoiadb"
+   #local=false: filter record the installed config file and md5 in the /etc/default/sequoiadb-setup.list, eg: "sequoiadb,md5"
    local filter=`echo $installInfo |awk -F / '{print $4}'`
    if [ $FORCE == false ];then
       read -p "clean $INSTALL_DIR $name Y/n: " choice
@@ -89,7 +90,8 @@ function clean_sql()
    local file=`echo $installInfo |awk -F, '{print $1}'`
    
    . $file
-   #filter: the config file under /etc/default, eg: sequoiasql-mysql
+   #local=true: filter record the config file under /etc/default, eg: "sequoiasql-mysql"
+   #local=false: filter record the installed config file and md5 in the /etc/default/sequoiadb-setup.list, eg: "sequoiasql-mysql,md5"
    local filter=`echo $installInfo |awk -F / '{print $4}'`
    if [ $FORCE == false ];then
       read -p "clean $INSTALL_DIR $name Y/n: " choice
