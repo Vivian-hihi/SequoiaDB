@@ -101,10 +101,16 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBSTOP_RESVARG );
 
-      rc = utilReadCommandLine( argc, argv, all, vm, FALSE ) ;
+      rc = utilReadCommandLine2( argc, argv, all, vm, FALSE ) ;
       if ( rc )
       {
          std::cout << "Read command line failed: " << rc << endl ;
+         goto error ;
+      }
+      if( 0 == vm.size() && 1 < argc )
+      {
+         std::cout << "Invalid option: --" << endl ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
