@@ -1935,6 +1935,7 @@ done:
       _memPoolSize = 0 ;
 
       _transReplSize = -1 ;
+      _transRCCount = DPS_TRANS_RCCOUNT_DFT ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -2356,6 +2357,10 @@ done:
       rdxInt( pEX, PMD_OPTION_TRANS_REPLSIZE, _transReplSize, FALSE,
               PMD_CFG_CHANGE_RUN, -1, TRUE ) ;
       rdvMinMax( pEX, _transReplSize, -1, CLS_REPLSET_MAX_NODE_SIZE ) ;
+
+      // --transrccount
+      rdxBooleanS( pEX, PMD_OPTION_TRANS_RCCOUNT, _transRCCount, FALSE,
+                   PMD_CFG_CHANGE_RUN, DPS_TRANS_RCCOUNT_DFT, FALSE ) ;
 
       // end map
 

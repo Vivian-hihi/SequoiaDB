@@ -2005,7 +2005,30 @@
       <hidden>true</hidden>
       <typeofweb>num</typeofweb>
    </opt>
-   
+
+   <opt>
+      <name>PMD_OPTION_TRANS_RCCOUNT</name>
+      <long>transrccount</long>
+      <description>
+         <en>Whether to use RC count for count() query during transaction. Default is true.</en>
+         <cn>是否使用读已提交来处理 count() 查询。默认为 true。</cn>
+      </description>
+      <reloadable>
+         <en>Take effect immediately</en>
+         <cn>在线生效</cn>
+      </reloadable>
+      <reloadstrategy>
+         <en>takes effect upon next transaction</en>
+         <cn>下一次事务中生效</cn>
+      </reloadstrategy>
+      <detail>
+         <en>Whether to use RC count for count() query during transaction. Default is true. Take effect when transaction is on, and transaction isolation is RC or RS.</en>
+         <cn>是否使用读已提交来处理 count() 查询。默认为 true。只有当 transaction 开启时，且隔离级别为读已提交 RC 或者读稳定性 RS，取值才会有效。</cn>
+      </detail>
+      <default>true</default>
+      <typeofweb>boolean</typeofweb>
+   </opt>
+
    <opt>
       <name>PMD_OPTION_LOGWRITEMOD</name>
       <long>logwritemod</long>
@@ -2025,7 +2048,7 @@
       <hidden>false</hidden>
       <typeofweb>str</typeofweb>
    </opt>
-   
+
    <opt>
       <name>PMD_OPTION_LOG_TIME_ON</name>
       <long>logtimeon</long>

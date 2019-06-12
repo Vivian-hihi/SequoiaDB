@@ -88,6 +88,7 @@ namespace engine
    #define DPS_TRANS_AUTOCOMMIT_DFT       FALSE
    #define DPS_TRANS_AUTOROLLBACK_DFT     TRUE
    #define DPS_TRANS_USE_RBS_DFT          TRUE
+   #define DPS_TRANS_RCCOUNT_DFT          TRUE
 
    /*
       TRANS CONFIG MASK
@@ -98,6 +99,7 @@ namespace engine
    #define TRANS_CONF_MASK_USERBS            0x00000008
    #define TRANS_CONF_MASK_AUTOCOMMIT        0x00000010
    #define TRANS_CONF_MASK_AUTOROLLBACK      0x00000020
+   #define TRANS_CONF_MASK_RCCOUNT           0x00000040
 
    /*
       TRANS LRB AND LRB HEADER

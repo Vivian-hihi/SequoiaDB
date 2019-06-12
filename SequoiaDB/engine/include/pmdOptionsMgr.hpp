@@ -645,6 +645,7 @@ namespace engine
          OSS_INLINE UINT32 maxTCSize() const { return _maxTCSize ; }
          OSS_INLINE UINT32 memPoolSize() const { return _memPoolSize ; }
          OSS_INLINE INT32  transReplSize() const { return _transReplSize ; }
+         OSS_INLINE BOOLEAN transRCCount() const { return _transRCCount ; }
 
          std::string getOmAddr() const ;
 
@@ -756,6 +757,7 @@ namespace engine
          UINT32      _maxTCSize ;
          UINT32      _memPoolSize ;
          INT32       _transReplSize ;
+         BOOLEAN     _transRCCount ;
 
 #ifdef SDB_ENTERPRISE
 

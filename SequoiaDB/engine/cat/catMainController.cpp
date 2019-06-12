@@ -98,6 +98,8 @@ namespace engine
 
       /// not use rollback segment
       _pEDUCB->getTransExecutor()->setUseRollbackSemgent( FALSE, TRUE ) ;
+      /// we don't need to use RC count on catalog ( since only one thread )
+      _pEDUCB->getTransExecutor()->setTransRCCount( FALSE, TRUE ) ;
 
       if ( _pCatCB )
       {

@@ -67,6 +67,7 @@ namespace engine
       _useRollbackSegment = TRUE ;
       _transAutoCommit  = FALSE ;
       _transAutoRollback= TRUE ;
+      _transRCCount     = DPS_TRANS_RCCOUNT_DFT ;
       _transConfMask    = 0 ;
       _transConfVer     = 1 ;
    }
@@ -109,6 +110,11 @@ namespace engine
    BOOLEAN _dpsTransConfItem::isTransAutoRollback() const
    {
       return _transAutoRollback ;
+   }
+
+   BOOLEAN _dpsTransConfItem::isTransRCCount () const
+   {
+      return _transRCCount ;
    }
 
    UINT32 _dpsTransConfItem::getTransConfMask() const
@@ -207,6 +213,20 @@ namespace engine
       }
    }
 
+   void _dpsTransConfItem::setTransRCCount ( BOOLEAN rcCount,
+                                             BOOLEAN enableMask )
+   {
+      if ( _transRCCount != rcCount )
+      {
+         _transRCCount = rcCount ;
+         ++_transConfVer ;
+      }
+      if ( enableMask )
+      {
+         _transConfMask |= TRANS_CONF_MASK_RCCOUNT ;
+      }
+   }
+
    void _dpsTransConfItem::updateByMask( const _dpsTransConfItem &rhs )
    {
       UINT32 rhsMask = rhs.getTransConfMask() ;
@@ -236,6 +256,10 @@ namespace engine
       {
          setTransWaitLock( rhs.isTransWaitLock(), TRUE ) ;
       }
+      if ( rhsMask & TRANS_CONF_MASK_RCCOUNT )
+      {
+         setTransRCCount( rhs.isTransRCCount(), TRUE ) ;
+      }
 
       if ( oldTransConfVer != _transConfVer )
       {
@@ -260,6 +284,7 @@ namespace engine
          builder.appendBool( FIELD_NAME_TRANS_AUTOCOMMIT, _transAutoCommit ) ;
          builder.appendBool( FIELD_NAME_TRANS_AUTOROLLBACK,
                              _transAutoRollback ) ;
+         builder.appendBool( FIELD_NAME_TRANS_RCCOUNT, _transRCCount ) ;
       }
       catch ( std::exception &e )
       {
@@ -308,6 +333,11 @@ namespace engine
                                       FIELD_NAME_TRANS_AUTOROLLBACK ) )
             {
                setTransAutoRollback( e.booleanSafe(), TRUE ) ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(),
+                                      FIELD_NAME_TRANS_RCCOUNT ) )
+            {
+               setTransRCCount( e.booleanSafe(), TRUE ) ;
             }
          }
       }
@@ -486,7 +516,8 @@ namespace engine
                                           BOOLEAN waitLock,
                                           BOOLEAN autoCommit,
                                           BOOLEAN autoRollback,
-                                          BOOLEAN useRBS )
+                                          BOOLEAN useRBS,
+                                          BOOLEAN rcCount )
    {
       _transConfMask = 0 ;
 
@@ -496,6 +527,7 @@ namespace engine
       setTransAutoCommit( autoCommit, FALSE ) ;
       setTransAutoRollback( autoRollback, FALSE ) ;
       setUseRollbackSemgent( useRBS, FALSE ) ;
+      setTransRCCount( rcCount, FALSE ) ;
 
       _useTransLock        = TRUE ;
       _transConfVer        = 1 ;
@@ -506,7 +538,8 @@ namespace engine
                                                BOOLEAN waitLock,
                                                BOOLEAN autoCommit,
                                                BOOLEAN autoRollback,
-                                               BOOLEAN useRBS )
+                                               BOOLEAN useRBS,
+                                               BOOLEAN rcCount )
    {
       UINT32 oldTransConfVer = _transConfVer ;
       BOOLEAN updateAll = FALSE ;
@@ -527,17 +560,21 @@ namespace engine
          {
             setTransWaitLock( waitLock, FALSE ) ;
          }
-         if ( !OSS_BIT_TEST ( _transAutoCommit, TRANS_CONF_MASK_AUTOCOMMIT ) )
+         if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_AUTOCOMMIT ) )
          {
             setTransAutoCommit( autoCommit, FALSE ) ;
          }
-         if ( !OSS_BIT_TEST ( _transAutoRollback, TRANS_CONF_MASK_AUTOROLLBACK ) )
+         if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_AUTOROLLBACK ) )
          {
             setTransAutoRollback( autoRollback, FALSE ) ;
          }
          if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_USERBS ) )
          {
             setUseRollbackSemgent( useRBS, FALSE ) ;
+         }
+         if ( !OSS_BIT_TEST( _transConfMask, TRANS_CONF_MASK_RCCOUNT ) )
+         {
+            setTransRCCount( rcCount, FALSE ) ;
          }
          updateAll = TRUE ;
       }

@@ -941,7 +941,8 @@ namespace engine
                                        optCB->transLockwait(),
                                        optCB->transAutoCommit(),
                                        optCB->transAutoRollback(),
-                                       optCB->transUseRBS() ) ;
+                                       optCB->transUseRBS(),
+                                       optCB->transRCCount() ) ;
       }
 #endif //SDB_ENGINE
    }
@@ -957,7 +958,8 @@ namespace engine
                                               optCB->transLockwait(),
                                               optCB->transAutoCommit(),
                                               optCB->transAutoRollback(),
-                                              optCB->transUseRBS() ) )
+                                              optCB->transUseRBS(),
+                                              optCB->transRCCount() ) )
          {
             _confChangeID = optCB->getChangeID() ;
          }

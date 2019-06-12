@@ -833,7 +833,7 @@ namespace engine
                                        FIELD_NAME_TRANS_WAITLOCK ) )
          {
             PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
-                      PDERROR, "Field[%s] is not number",
+                      PDERROR, "Field[%s] is not boolean",
                       FIELD_NAME_TRANS_WAITLOCK ) ;
             transConf.setTransWaitLock( field.boolean() ? TRUE : FALSE,
                                         TRUE ) ;
@@ -842,7 +842,7 @@ namespace engine
                                        FIELD_NAME_TRANS_USE_RBS ) )
          {
             PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
-                      PDERROR, "Field[%s] is not number",
+                      PDERROR, "Field[%s] is not boolean",
                       FIELD_NAME_TRANS_USE_RBS ) ;
             transConf.setUseRollbackSemgent( field.boolean() ? TRUE : FALSE,
                                              TRUE ) ;
@@ -851,7 +851,7 @@ namespace engine
                                        FIELD_NAME_TRANS_AUTOCOMMIT ) )
          {
             PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
-                      PDERROR, "Field[%s] is not number",
+                      PDERROR, "Field[%s] is not boolean",
                       FIELD_NAME_TRANS_AUTOCOMMIT ) ;
             transConf.setTransAutoCommit( field.boolean() ? TRUE : FALSE,
                                           TRUE ) ;
@@ -860,10 +860,20 @@ namespace engine
                                        FIELD_NAME_TRANS_AUTOROLLBACK ) )
          {
             PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
-                      PDERROR, "Field[%s] is not number",
+                      PDERROR, "Field[%s] is not boolean",
                       FIELD_NAME_TRANS_AUTOROLLBACK ) ;
             transConf.setTransAutoRollback( field.boolean() ? TRUE : FALSE,
                                             TRUE ) ;
+         }
+         else if ( 0 == ossStrcasecmp( field.fieldName(),
+                                       FIELD_NAME_TRANS_RCCOUNT ) )
+         {
+            PD_CHECK( field.isBoolean(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not boolean",
+                      FIELD_NAME_TRANS_RCCOUNT ) ;
+            transConf.setTransRCCount( field.boolean() ? TRUE : FALSE,
+                                       TRUE ) ;
+
          }
          else if ( 0 == ossStrcasecmp( field.fieldName(), FIELD_NAME_SOURCE ) )
          {

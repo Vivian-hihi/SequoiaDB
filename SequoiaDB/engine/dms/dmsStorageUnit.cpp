@@ -1914,7 +1914,8 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to lock dms mb context[%s], rc: %d",
                       context->toString().c_str(), rc ) ;
       }
-      if ( cb->isTransRC() || cb->isTransRS() )
+      if ( ( cb->isTransRC() || cb->isTransRS() ) &&
+           cb->getTransExecutor()->isTransRCCount() )
       {
          // NOTE: actually for RC only
          // for RS should consider locking the whole table or need MVCC,

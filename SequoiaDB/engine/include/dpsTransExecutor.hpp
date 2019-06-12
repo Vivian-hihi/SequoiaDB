@@ -82,6 +82,7 @@ namespace engine
          BOOLEAN              useRollbackSegment() const ;
          BOOLEAN              isTransAutoCommit() const ;
          BOOLEAN              isTransAutoRollback() const ;
+         BOOLEAN              isTransRCCount () const ;
 
          UINT32               getTransConfMask() const ;
          UINT32               getTransConfVer() const ;
@@ -98,6 +99,8 @@ namespace engine
                                                   BOOLEAN enableMask = TRUE ) ;
          void                 setTransAutoRollback( BOOLEAN autoRollback,
                                                     BOOLEAN enableMask = TRUE ) ;
+         void                 setTransRCCount ( BOOLEAN rcCount,
+                                                BOOLEAN enableMask = TRUE ) ;
 
          void                 reset() ;
          void                 resetConfMask() ;
@@ -120,6 +123,8 @@ namespace engine
          BOOLEAN                 _transAutoCommit ;
          // when transaction operator failed, wether rollback auto
          BOOLEAN                 _transAutoRollback ;
+
+         BOOLEAN                 _transRCCount ;
 
          UINT32                  _transConfMask ;
          UINT32                  _transConfVer ;
@@ -346,14 +351,16 @@ namespace engine
                                              BOOLEAN waitLock,
                                              BOOLEAN autoCommit,
                                              BOOLEAN autoRollback,
-                                             BOOLEAN useRBS ) ;
+                                             BOOLEAN useRBS,
+                                             BOOLEAN rcCount ) ;
 
          BOOLEAN              updateTransConf( INT32 isolation,
                                                UINT32 timeout,
                                                BOOLEAN waitLock,
                                                BOOLEAN autoCommit,
                                                BOOLEAN autoRollback,
-                                               BOOLEAN useRBS ) ;
+                                               BOOLEAN useRBS,
+                                               BOOLEAN rcCount ) ;
 
          void     addReservedSpace( const UINT64 len ) ;
 
