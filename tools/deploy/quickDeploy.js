@@ -962,7 +962,8 @@ function deployMysql( ignoreNotInstall )
          var coordSetting = "sequoiadb_conn_addr=\"" + coordAddr + "\"" ;
          var file = new File( databaseDir + "/auto.cnf" ) ;
          var content = file.read() ;
-         content = content.replace( /sequoiadb_conn_addr=(.*)/g, coordSetting );
+         content = content.replace( /sequoiadb_conn_addr=(.*)/g, coordSetting ) ;
+         content = content.replace( /#sequoiadb_conn_addr/g, "sequoiadb_conn_addr" ) ;
          if ( content.indexOf( "sequoiadb_conn_addr=" ) == -1 )
          {
             content = content.replace( /\[mysqld\]/g,
