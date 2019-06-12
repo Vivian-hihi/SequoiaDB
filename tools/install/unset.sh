@@ -14,13 +14,12 @@ function clean_by_dbtype()
    
    if [ $LOCAL == true ];
    then
-      #installInfos: record the installed config file in the /etc/default, eg: "/etc/default/sequoiadb"
       installInfos=`find /etc/default -regex ".*$name[1-4][0-9]" -o -regex ".*$name[1-9]" -o -name "$name"`
    else
-      #installInfos: record the installed config file and md5 in the /etc/default/sequoiadb-setup.list, eg: "/etc/default/sequoiadb,md5"
       installInfos=`cat /etc/default/sequoiadb-setup.list | grep "$name"`
    fi
-   #installInfo: the file contents,eg: VERSION=XXX USER=XXX INSTALL_DIR=XXX MD5=XXX
+   #local=true: installInfo record the installed config file in the /etc/default, eg: "/etc/default/sequoiadb"
+   #local=false: installInfo record the installed config file and md5 in the /etc/default/sequoiadb-setup.list, eg: "/etc/default/sequoiadb,md5"
    for installInfo in $installInfos
    do
       local file=`echo $installInfo |awk -F, '{print $1}'`
