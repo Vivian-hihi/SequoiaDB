@@ -17,6 +17,7 @@ function main()
    var dataRGArr = [];
    var csNames = ["cs_4484_a","cs_4484_b","cs_4484_c"];
    var domainNames = ["a", "123-test-中文。~!@#%^&*()_+-=\][|,/<>?~·！@#￥%……&*~!-%^*()_-+=|\/<'?*[];:/#（）——+《》{}|【】、，。~_127B","testAutoSplit"];
+  //TODO:1、这个和排除独立模式是重复的
    if( groupsArray.length < 1 )
    {
       println("--least one groups");
@@ -27,6 +28,7 @@ function main()
    {
        dataRGArr.push(groupsArray[i][0].GroupName);
    }
+   //TODO:2、清理环境操作建议放在前面
    //clean environment before test
    dropCSAndDomain ( csNames, domainNames );
    
@@ -73,7 +75,7 @@ function main()
    
    dropCSAndDomain ( csNames, domainNames );
 }
-
+//TODO:3、使用listDomains校验domain创建结果，如果domain不存在listDomains不会报错，只有获取游标报错
 function checkDomain( domain, datagroups, autosplit )
 {
    var actGroups = [];

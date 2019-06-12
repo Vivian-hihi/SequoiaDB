@@ -46,6 +46,7 @@ function main()
    checkGroup( clNames[1], groupName );
    
    //检测 IsMainCL
+   //TODO:1、这里只是验证IsMainCL属性值，建议补充主表名边界值验证，补充cl可用（插入数据）
    var optionObj = {ShardingKey:{a:1},ShardingType:"range",IsMainCL:true};
    commCreateCLByOption( db, csName, clNames[2], optionObj, true );
    
