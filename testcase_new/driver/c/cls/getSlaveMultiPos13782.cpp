@@ -297,6 +297,14 @@ TEST_F( getSlaveMultiPos13782, threeNodes )
    ASSERT_EQ( SDB_OK, rc ) << "fail to stop node" ;
    sdbNodeHandle newMaster ;
    const CHAR* newMasterSvc ;
+   
+   // check master node is exist or not 
+   while( ( rc = sdbGetNodeMaster( rg, &newMaster ) ) == SDB_RTN_NO_PRIMARY_FOUND )
+   {
+      sleep( 1 ) ;
+      sdbReleaseNode( newMaster ) ;
+   }        
+   // check change master
    while( TRUE )
    {
       rc = sdbGetNodeMaster( rg, &newMaster ) ;
