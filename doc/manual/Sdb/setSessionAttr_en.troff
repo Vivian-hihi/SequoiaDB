@@ -123,6 +123,13 @@ Set session attributes.
               session.
 .br
               "TransAutoRollback" : true
+.br
+       \fBTransRCCount\fR
+.br
+              Specify whether to use RC count for count() query
+              during transaction.
+.br
+              "TransRCCount" : true
 .SH "Examples"
 
 .sp 2

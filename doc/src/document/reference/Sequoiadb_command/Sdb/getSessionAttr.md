@@ -19,7 +19,8 @@ Json 对象，表示会话属性，字段信息如下：
 | TransLockWait  | 会话事务在RC隔离级别下是否需要等锁。 |
 | TransUseRBS    | 会话事务是否使用回滚段。             |
 | TransAutoCommit| 会话事务是否支持自动事务提交。       |
-| TransAutoRollback| 会话事务在操作失败时是否自动回滚。 |
+| TransAutoRollback | 会话事务在操作失败时是否自动回滚。 |
+| TransRCCount | 会话事务是否使用读已提交来处理 count() 查询。 |
 
 >   **Note:**
 >

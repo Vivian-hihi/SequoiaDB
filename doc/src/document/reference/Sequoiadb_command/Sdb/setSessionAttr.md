@@ -23,7 +23,8 @@
 | TransLockWait  | 会话事务在RC隔离级别下是否需要等锁。 | ```TransLockWait : true``` |
 | TransUseRBS    | 会话事务是否使用回滚段。             | ```TransUseRBS : true``` |
 | TransAutoCommit| 会话事务是否支持自动事务提交。       | ```TransAutoCommit : true``` |
-| TransAutoRollback| 会话事务在操作失败时是否自动回滚。 | ```TransAutoRollback : true``` |
+| TransAutoRollback | 会话事务在操作失败时是否自动回滚。 | ```TransAutoRollback : true``` |
+| TransRCCount | 会话事务是否使用读已提交来处理 count() 查询。 | ```TransRCCount : true ``` |
 
 >   **Note:**
 >
