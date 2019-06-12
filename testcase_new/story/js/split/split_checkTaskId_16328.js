@@ -24,7 +24,7 @@ function main(db)
          
       var targetGroupNums = 2;
       var groupsInfo = getSplitGroups( COMMCSNAME, clName, targetGroupNums );
-      var taskId = splitCL( COMMCSNAME, clName );      
+      var taskId = splitCL( COMMCSNAME, clName, groupsInfo);      
       
       println("---Begin to check result ");
 	  checkTaskId( taskId );
@@ -38,15 +38,13 @@ function main(db)
    }   
 }
 
-function splitCL( csName, clName )
+function splitCL( csName, clName, groupsInfo )
 {
    try
    {
       println("---Begin to splitAsync"); 
       var dbcl = db.getCS( csName ).getCL( clName );             
       var percent = 90;
-      var targetGroupNums = 2;
-      var groupsInfo = getSplitGroups( COMMCSNAME, clName, targetGroupNums );
       var srcGroupName = groupsInfo[0].GroupName;
       var dstGroupName = groupsInfo[1].GroupName;      
       var taskId = dbcl.splitAsync(srcGroupName, dstGroupName, percent); 
@@ -83,20 +81,20 @@ function checkSplitResult( csName, clName, expRecordNums, groupsInfo )
 	  //waiting for split 
       var sleepInteval=10;
       var sleepDuration=0;
-      var maxSleepDuration=30000;
+      var maxSleepDuration=120000;
 	  
       while( (db.listTasks({ "Name": csName + "."+ clName }).next() !== undefined ) && sleepDuration < maxSleepDuration )
       {        
          sleep( sleepInteval );
          sleepDuration += sleepInteval;                       
       }
-	  
+      
 	  //check the record nums      
       var dbcl = db.getCS( csName ).getCL( clName );
       var count = dbcl.count();      
-      if( count != expRecordNums  )
+      if( count != expRecordNums )
       {
-         throw buildException("check datas", null, "check the new cl record nums",
+         throw buildException("check datas", null, "check the new cl record nums, sleepDuration : " + sleepDuration,
 									expRecordNums, count);
       }   
        
