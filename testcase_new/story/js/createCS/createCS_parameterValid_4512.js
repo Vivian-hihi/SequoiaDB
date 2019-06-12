@@ -27,7 +27,7 @@ function createCSAndCheckResult( csName, lobPageSize )
    var dbcs = db.createCS( csName, options );
    
    //create cl in the cs
-	var clName = "cl4510";
+	var clName = "cl4512";
 	dbcs.createCL( clName );
 	
 	//check the options
@@ -37,6 +37,7 @@ function createCSAndCheckResult( csName, lobPageSize )
 	{
 	   var curInfo = cursor.current();
 	   actPageSize = curInfo.toObj().LobPageSize;
+	   println("---snapshotInfo: \n" + curInfo);
 	}
 	
 	var expPageSize = lobPageSize;
