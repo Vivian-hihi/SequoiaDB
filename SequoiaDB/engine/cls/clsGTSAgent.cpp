@@ -46,6 +46,7 @@
 #include "dpsOp2Record.hpp"
 #include "dms.hpp"
 #include "dpsLogRecordDef.hpp"
+#include "dpsUtil.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -253,10 +254,10 @@ namespace engine
                BSONElement e = obj.getField( FIELD_NAME_STATUS ) ;
                status = ( DPS_TRANS_STATUS )e.numberInt() ;
 
-               PD_LOG( PDEVENT, "Check trans(%04x%010x) by group(%u) succeed("
-                       "Status:%u)", DPS_TRANS_GET_NODEID( transID ),
+               PD_LOG( PDEVENT, "Check trans(%04x%010x) by group(%u) succeed["
+                       "Status:%s(%d)]", DPS_TRANS_GET_NODEID( transID ),
                        DPS_TRANS_GET_SN( transID ), group,
-                       status ) ;
+                       dpsTransStatusToString( status ), status ) ;
             }
             catch( std::exception &e )
             {

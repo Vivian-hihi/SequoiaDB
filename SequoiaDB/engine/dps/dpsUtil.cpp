@@ -38,6 +38,7 @@
 *******************************************************************************/
 
 #include "dpsUtil.hpp"
+#include "dpsTransDef.hpp"
 
 namespace engine
 {
@@ -52,6 +53,29 @@ namespace engine
    {
       return g_TimeonFlag ;
    }
-}
 
+   const CHAR* dpsTransStatusToString( INT32 status )
+   {
+      const CHAR *pStr = "Unknown" ;
+      switch ( status )
+      {
+         case DPS_TRANS_DOING :
+            pStr = "Doing" ;
+            break ;
+         case DPS_TRANS_WAIT_COMMIT :
+            pStr = "WaitCommit" ;
+            break ;
+         case DPS_TRANS_COMMIT :
+            pStr = "Commited" ;
+            break ;
+         case DPS_TRANS_ROLLBACK :
+            pStr = "Rollbacked" ;
+            break ;
+         default :
+            break ;
+      }
+      return pStr ;
+   }
+
+}
 

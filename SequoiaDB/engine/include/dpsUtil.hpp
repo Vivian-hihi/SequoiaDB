@@ -46,6 +46,8 @@ namespace engine
 {
    void dpsSetTimeonFlag( BOOLEAN flag ) ;
    BOOLEAN dpsGetTimeonFlag() ;
+
+   const CHAR* dpsTransStatusToString( INT32 status ) ;
 }
 
 #endif // DPSUTIL_HPP_
