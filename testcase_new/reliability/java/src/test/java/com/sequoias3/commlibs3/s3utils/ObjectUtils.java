@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+
 public class ObjectUtils extends S3TestBase {
 
 	/**
@@ -22,6 +23,7 @@ public class ObjectUtils extends S3TestBase {
 	 * @param s3Client
 	 * @param localPath
 	 * @param bucketName
+	 * @param keyName
 	 * @return md5
 	 */
 	public static String getMd5OfObject(AmazonS3 s3Client, File localPath, String bucketName, String key)
@@ -35,6 +37,7 @@ public class ObjectUtils extends S3TestBase {
 	 * @param s3Client
 	 * @param localPath
 	 * @param bucketName
+	 * @param keyName
 	 * @param versionId
 	 * @return md5
 	 */
@@ -115,17 +118,17 @@ public class ObjectUtils extends S3TestBase {
 		Collections.sort(expCommonPrefixes);
 		List<String> actCommonPrefixes = vsList.getCommonPrefixes();
 		Assert.assertEquals(actCommonPrefixes, expCommonPrefixes, "actCommonPrefixes = " + actCommonPrefixes.toString()
-				+ "\nexpCommonPrefixes = " + expCommonPrefixes.toString());
+				+ ",expCommonPrefixes = " + expCommonPrefixes.toString());
 		List<S3VersionSummary> vsSummaryList = vsList.getVersionSummaries();
 		MultiValueMap<String, String> actMap = new LinkedMultiValueMap<String, String>();
 		for (S3VersionSummary versionSummary : vsSummaryList) {
 			actMap.add(versionSummary.getKey(), versionSummary.getVersionId());
 		}
 		Assert.assertEquals(actMap.size(), expMap.size(),
-				"\nactMap = " + actMap.toString() + "\nexpMap = " + expMap.toString());
+				"actMap = " + actMap.toString() + ",expMap = " + expMap.toString());
 		for (Map.Entry<String, List<String>> entry : expMap.entrySet()) {
 			Assert.assertEquals(actMap.get(entry.getKey()), expMap.get(entry.getKey()),
-					"\nactMap = " + actMap.toString() + "\nexpMap = " + expMap.toString());
+					"actMap = " + actMap.toString() + ",expMap = " + expMap.toString());
 		}
 	}
 

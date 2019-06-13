@@ -22,13 +22,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+
 /**
  * @Description delimiter function common class
  * @author wuyan
  * @Date 2019.04.12
  * @version 1.00
  */
-public class DelimiterUtils extends S3TestBase{
+public class DelimiterUtils extends S3TestBase {
 	private static MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
 
 	/**
@@ -57,8 +58,9 @@ public class DelimiterUtils extends S3TestBase{
 		delimiterConfig.setDelimiter(delimiter);
 		TestRest rest = new TestRest(type);
 		try {
-			ResponseEntity<?> response = rest.setApi("/s3/" + bucketName + "/?delimiter-config")
-					.setRequestMethod(HttpMethod.PUT).setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId)
+			ResponseEntity<?> response = rest.setApi(bucketName + "/?delimiter-config")
+					.setRequestMethod(HttpMethod.PUT)
+					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
 					.setRequestBody(delimiterConfig).setResponseType(String.class).exec();
 			int status = response.getStatusCodeValue();
 			if (status != 200) {
@@ -77,8 +79,8 @@ public class DelimiterUtils extends S3TestBase{
 	 * get delimiter info of bucket *
 	 * 
 	 * @author wuyan
+	 * @param delimieter
 	 * @param accessKeyId
-	 * @paramdelimiter
 	 *            the oprater user accessKeyId,default user is administrator
 	 * @return the delimiter result info of the getDelimiter operation
 	 */
@@ -87,8 +89,9 @@ public class DelimiterUtils extends S3TestBase{
 		ResponseEntity<?> resp;
 		DelimiterConfiguration result;
 		try {
-			resp = rest.setApi("/s3/" + bucketName + "/?delimiter-config")
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId).setRequestMethod(HttpMethod.GET)
+			resp = rest.setApi(bucketName + "/?delimiter-config")
+					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.GET)
 					.setResponseType(String.class).exec();
 			String xmlBody = resp.getBody().toString();
 			JSONObject jsonBody = XML.toJSONObject(xmlBody);
@@ -291,6 +294,7 @@ public class DelimiterUtils extends S3TestBase{
 	 * insert delimiter in StringBuffer
 	 * 
 	 * @author wangkexin
+	 * @param StringBuffer
 	 *            specify the StringBuffer
 	 * @param delimiter
 	 *            specify the delimiter

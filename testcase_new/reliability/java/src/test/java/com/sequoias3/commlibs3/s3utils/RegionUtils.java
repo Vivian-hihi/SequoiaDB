@@ -6,7 +6,6 @@ import com.amazonaws.util.DateUtils;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestRest;
 import com.sequoias3.commlibs3.s3utils.bean.GetRegionResult;
@@ -21,8 +20,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.HttpStatusCodeException;
+import org.testng.Assert;
 import org.testng.SkipException;
 
 import java.text.SimpleDateFormat;
@@ -35,7 +33,6 @@ public class RegionUtils extends S3TestBase {
 	private static String pregix = "S3_";
 	private static SimpleDateFormat yearFm = new SimpleDateFormat("yyyy");
 	private static SimpleDateFormat monthFm = new SimpleDateFormat("MM");
-//	private final static XmlMapper xmlMapper =  new XmlMapper();
 
 	public static void putRegion(Region region) throws Exception {
 		putRegion(region,S3TestBase.s3AccessKeyId);
@@ -45,16 +42,16 @@ public class RegionUtils extends S3TestBase {
 		TestRest rest = new TestRest(type);
 		ResponseEntity<?> resp;
 		try {
-			resp = rest.setApi("/region/" + region.getName())
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId).setRequestBody(region)
-					.setRequestMethod(HttpMethod.PUT).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=CreateRegion&RegionName=" + region.getName())
+					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestBody(region)
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class).exec();
 			int status = resp.getStatusCodeValue();
 			if (status != 200) {
 				System.out.println("put region failed,region = " + region.toString());
 			}
 		} catch (HttpClientErrorException e) {
-			throw httpToAmazon(e);
-		}catch (HttpServerErrorException e) {
 			throw httpToAmazon(e);
 		}
 	}
@@ -68,9 +65,11 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		boolean isDelete = false;
 		try {
-			resp = rest.setApi("/region/" + regionName)
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId)
-					.setRequestMethod(HttpMethod.DELETE).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=DeleteRegion&RegionName=" + regionName)
+					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class)
+					.exec();
 			if (resp.getStatusCodeValue() == 204) {
 				isDelete = true;
 			}
@@ -89,16 +88,14 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		GetRegionResult result;
 		try {
-			resp = rest.setApi("/region/" + regionName)
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId)
-					.setRequestMethod(HttpMethod.GET).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=GetRegion&RegionName=" + regionName)
+					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class)
+					.exec();
 			String xmlBody = resp.getBody().toString();
 			result = stringToObject(xmlBody);
-//			result = xmlMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-//					.readValue(xmlBody,GetRegionResult.class);
 		} catch (HttpClientErrorException e) {
-			throw httpToAmazon(e);
-		}catch (HttpServerErrorException e){
 			throw httpToAmazon(e);
 		}
 		return result;
@@ -113,9 +110,11 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		boolean doesExist = false;
 		try {
-			resp = rest.setApi("/region/" + regionName)
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId)
-					.setRequestMethod(HttpMethod.HEAD).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=HeadRegion&RegionName=" + regionName)
+					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class)
+					.exec();
 			if (resp.getStatusCodeValue() == 200) {
 				doesExist = true;
 			}
@@ -135,8 +134,11 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		List<String> listResult;
 		try {
-			resp = rest.setApi("/region").setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId)
-					.setRequestMethod(HttpMethod.GET).setResponseType(String.class).exec();
+			resp = rest.setApi("/region/?Action=ListRegions")
+					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestMethod(HttpMethod.POST)
+					.setResponseType(String.class)
+					.exec();
 			String xmlBody = resp.getBody().toString();
 			JSONObject jsonBody = XML.toJSONObject(xmlBody);
 			JSONObject regions = jsonBody.getJSONObject("ListAllRegionsResult");
@@ -195,7 +197,7 @@ public class RegionUtils extends S3TestBase {
 		return result;
 	}
 
-	private static AmazonS3Exception httpToAmazon(HttpStatusCodeException e) {
+	private static AmazonS3Exception httpToAmazon(HttpClientErrorException e) {
 		AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
 		amazonS3Exception.setStatusCode(e.getStatusCode().value());
 		JSONObject jsonBody = XML.toJSONObject(e.getResponseBodyAsString());		
@@ -212,7 +214,7 @@ public class RegionUtils extends S3TestBase {
 	}
 
 	public static void createCSAndCL(String csName, String[] clNames) {
-		try( Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){
+		try( Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "") ){
 			if (sdb.isCollectionSpaceExist(csName)) {
 				sdb.dropCollectionSpace(csName);
 			}
@@ -224,7 +226,7 @@ public class RegionUtils extends S3TestBase {
 	}
 	
 	public static void dropCS(String[] csNames) {
-		try( Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "") ){			
+		try( Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "") ){			
 			for (int i = 0; i < csNames.length; i++) {
 				if (sdb.isCollectionSpaceExist(csNames[i])) {
 					sdb.dropCollectionSpace(csNames[i]);
@@ -266,7 +268,7 @@ public class RegionUtils extends S3TestBase {
 		Sequoiadb db = null;
 		List<String> clNames;
 		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			db = new Sequoiadb(S3TestBase.coordUrl, "", "");
 			clNames = db.getCollectionSpace(csName).getCollectionNames();
 		}finally {
 			if(db != null){
@@ -276,32 +278,24 @@ public class RegionUtils extends S3TestBase {
 		return clNames.contains(csName+"." + clName);
 	}
 
-	public static List<String> getDomainNames() {
-		Sequoiadb sdb = null;
-		DBCursor cursor = null;
-		List<String> domainNames = new ArrayList<>();
-		try {
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			cursor = sdb.listDomains(null, null, null, null);
-			while (cursor.hasNext()) {
-				String name = (String) cursor.getNext().get("Name");
-				domainNames.add(name);
-			}
-		} finally {
-			if (null != cursor) {
-				cursor.close();
-			}
-			if (null != sdb) {
-				sdb.close();
+	public static boolean doesCSExist(String csName){
+		Sequoiadb db = null;
+		boolean flag;
+		try{
+			db = new Sequoiadb(S3TestBase.coordUrl, "", "");
+			flag = db.isCollectionSpaceExist(csName);
+		}finally {
+			if(db != null){
+				db.close();
 			}
 		}
-		return domainNames;
+		return flag;
 	}
 
 	public static void createDomain(String domainName) {
 		Sequoiadb sdb = null;
 		try {
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 			if(!sdb.isDomainExist(domainName)) {
 				List<String> groupList = sdb.getReplicaGroupNames();
 				groupList.remove("SYSCatalogGroup");
@@ -328,18 +322,20 @@ public class RegionUtils extends S3TestBase {
 		}
 	}
 
-	public static void dropDomain(String domainName){
-		Sequoiadb sdb = null;
-		try {
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+	public static void dropDomain(String domainName){		
+		try ( Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "") ){			
 			if(sdb.isDomainExist(domainName)){
 				sdb.dropDomain(domainName);
 			}
-		} finally {
-			if (null != sdb) {
-				sdb.close();
+		} 
+	}
+	
+	public static void dropCS(String csName){		
+		try( Sequoiadb sdb = new Sequoiadb(S3TestBase.coordUrl, "", "") ) {			
+			if(sdb.isCollectionSpaceExist(csName)){
+				sdb.dropCollectionSpace(csName);
 			}
-		}
+		} 
 	}
 
 	public static int getRecordNum(String csName,String clName){
@@ -347,7 +343,7 @@ public class RegionUtils extends S3TestBase {
 		int count = 0;
 		DBCursor cursor;
 		try {
-			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			sdb = new Sequoiadb(S3TestBase.coordUrl, "", "");
 			cursor = sdb.getCollectionSpace(csName).getCollection(clName).listLobs();
 			while (cursor.hasNext()){
 				cursor.getNext();
@@ -359,5 +355,26 @@ public class RegionUtils extends S3TestBase {
 			}
 		}
 		return count;
+	}
+	
+	public static void checkRegionWithLocation(String regionName, String metaLocation, String metaHisLocation, String dataLocation) throws Exception {
+		GetRegionResult result = RegionUtils.getRegion(regionName);
+		Region regionInfo = result.getRegion();
+		Assert.assertEquals(regionInfo.getMetaLocation(), metaLocation);
+		Assert.assertEquals(regionInfo.getMetaHisLocation(), metaHisLocation);
+		Assert.assertEquals(regionInfo.getDataLocation(), dataLocation);
+	}
+	
+	public static void checkRegionWithShardingType(String regionName, String clShardingType,String csShardingType) throws Exception {
+		GetRegionResult result = RegionUtils.getRegion(regionName);
+		Region regionInfo = result.getRegion();
+		Assert.assertEquals(regionInfo.getDataCLShardingType(), clShardingType);
+		// get the region infor to take the default value
+		Assert.assertEquals(regionInfo.getDataCSShardingType(), csShardingType);
+		Assert.assertEquals(regionInfo.getMetaDomain(), "");
+		Assert.assertEquals(regionInfo.getDataDomain(), "");
+		Assert.assertEquals(regionInfo.getMetaLocation(), "");
+		Assert.assertEquals(regionInfo.getMetaHisLocation(), "");
+		Assert.assertEquals(regionInfo.getDataLocation(), "");
 	}
 }

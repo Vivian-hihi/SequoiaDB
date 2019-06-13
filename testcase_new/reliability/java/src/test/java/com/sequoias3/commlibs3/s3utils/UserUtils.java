@@ -1,6 +1,5 @@
 package com.sequoias3.commlibs3.s3utils;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestRest;
 import org.json.JSONObject;
@@ -15,7 +14,6 @@ public class UserUtils extends S3TestBase {
     public final static String SECRET_ACCESS_KEY = "SecretAccessKey";
     public final static String AUTHORIZATION = "Authorization";
     public final static String AUTH_VAL_PRE = "Credential=";
-    private final static XmlMapper xmlMapper =  new XmlMapper();
 
     public static String[] createUser(String name, String type) throws HttpClientErrorException {
         JSONObject userJson =  createUser(name, type, S3TestBase.s3AccessKeyId);
@@ -29,7 +27,7 @@ public class UserUtils extends S3TestBase {
         TestRest rest = new TestRest();
         ResponseEntity<?> response = rest.setApi("/users/?Action=CreateUser&UserName=" + name + "&Role=" + type)
                 .setRequestMethod(HttpMethod.POST)
-                .setRequestHeaders(AUTHORIZATION, accessKeyId)
+                .setRequestHeaders(AUTHORIZATION, accessKeyId + "/")
                 .setResponseType(String.class).exec();
         String body = response.getBody().toString();
         return XML.toJSONObject(body);
@@ -47,7 +45,7 @@ public class UserUtils extends S3TestBase {
         TestRest rest = new TestRest();
         ResponseEntity<?> response = rest.setApi("/users/?Action=DeleteUser&UserName=" + name + "&Force=" + force)
                 .setRequestMethod(HttpMethod.POST)
-                .setRequestHeaders(AUTHORIZATION, accessKeyId)
+                .setRequestHeaders(AUTHORIZATION, accessKeyId + "/")
                 .setResponseType(String.class).exec();
         return response.getHeaders().toString();
     }
@@ -56,7 +54,7 @@ public class UserUtils extends S3TestBase {
         TestRest rest = new TestRest();
         ResponseEntity<?> response = rest.setApi("/users/?Action=CreateAccessKey&UserName=" + name)
                 .setRequestMethod(HttpMethod.POST)
-                .setRequestHeaders(AUTHORIZATION, accessKeyId)
+                .setRequestHeaders(AUTHORIZATION, accessKeyId + "/")
                 .setResponseType(String.class).exec();
         String body = response.getBody().toString();
         return XML.toJSONObject(body);
@@ -65,7 +63,7 @@ public class UserUtils extends S3TestBase {
     public static JSONObject getUser(String name, String accessKeyId) throws HttpClientErrorException {
         TestRest rest = new TestRest();
         ResponseEntity<?> response = rest.setApi("/users/?Action=GetAccessKey&UserName=" + name).setRequestMethod(HttpMethod.POST)
-                .setRequestHeaders(AUTHORIZATION, accessKeyId)
+                .setRequestHeaders(AUTHORIZATION, accessKeyId + "/")
                 .setResponseType(String.class).exec();
         String body = response.getBody().toString();
         return  XML.toJSONObject(body);

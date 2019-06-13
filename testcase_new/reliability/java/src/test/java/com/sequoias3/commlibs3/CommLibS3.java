@@ -20,33 +20,34 @@ public class CommLibS3 {
 	private static String AWS_ACCESS_KEY = "ABCDEFGHIJKLMNOPQRST";
 	private static String AWS_SECRET_KEY = "abcdefghijklmnopqrstuvwxyz0123456789ABCD";
 	private static String clientRegion = "us-east-1";
-	
+
 	/**
 	 * build S3 client by admin
-	 * @param
+	 * @param sdb
 	 * @return s3Client
 	 */
 	public static AmazonS3 buildS3Client(){
 		return buildS3Client(AWS_ACCESS_KEY,AWS_SECRET_KEY);
 	}
-	
+
 	public static AmazonS3 buildS3Client(String ACCESS_KEY,String SECRET_KEY){
 		AmazonS3 s3Client = null;
 		AWSCredentials credentials = new BasicAWSCredentials(ACCESS_KEY,SECRET_KEY);
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
-				 S3TestBase.s3ClientUrl+ "/s3", clientRegion);
+				S3TestBase.s3ClientUrl, clientRegion);
 		ClientConfiguration config = new ClientConfiguration();
 		config.setUseExpectContinue(false);
+		config.setSocketTimeout(300000);
 		s3Client = AmazonS3ClientBuilder.standard()
 				.withEndpointConfiguration(endpointConfiguration)
 				.withClientConfiguration(config)
 				.withChunkedEncodingDisabled(true)
 				.withPathStyleAccessEnabled(true)
 				.withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
-		return s3Client;		
+		return s3Client;
 	}
-	
-	public static AmazonS3 buildS3ClientWithVersion(){
+
+	/*public static AmazonS3 buildS3ClientWithVersion(){
 		AmazonS3 s3Client = null;
 		AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY,AWS_SECRET_KEY);
 		AwsClientBuilder.EndpointConfiguration endpointConfiguration = new AwsClientBuilder.EndpointConfiguration(
@@ -57,87 +58,87 @@ public class CommLibS3 {
 				.withEndpointConfiguration(endpointConfiguration)
 				.withCredentials(new AWSStaticCredentialsProvider(credentials))
 				.build();
-		return s3Client;		
-	}
-	
+		return s3Client;
+	}*/
+
 	/**
 	 * set the bucket versioning status
 	 * @param s3Client
-	 * @param bucketName 
+	 * @param bucketName
 	 * @param status:"null","Suspended","Enable"
-	 */	
+	 */
 	public static void setBucketVersioning( AmazonS3 s3Client, String bucketName,String status){
 		BucketVersioningConfiguration configuration =
- 				new BucketVersioningConfiguration().withStatus(status);
- 		SetBucketVersioningConfigurationRequest setBucketVersioningConfigurationRequest =
- 				new SetBucketVersioningConfigurationRequest(bucketName, configuration);		
- 		s3Client.setBucketVersioningConfiguration(setBucketVersioningConfigurationRequest);
+				new BucketVersioningConfiguration().withStatus(status);
+		SetBucketVersioningConfigurationRequest setBucketVersioningConfigurationRequest =
+				new SetBucketVersioningConfigurationRequest(bucketName, configuration);
+		s3Client.setBucketVersioningConfiguration(setBucketVersioningConfigurationRequest);
 	}
-	
+
 	/**
 	 * delete one bucket by bucketName
-	 * @param s3Client,bucketName 
-	 */	
+	 * @param s3Client,bucketName
+	 */
 	@SuppressWarnings("deprecation")
 	public static void clearBucket( AmazonS3 s3Client, String bucketName ){
 		if(s3Client.doesBucketExist(bucketName)){
 			String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
-			if( bucketVerStatus == "null"){
+			if( bucketVerStatus == "Off"){
 				deleteAllObjects(s3Client, bucketName);
 			}else{
-				deleteAllObjectVersions( s3Client, bucketName );;	
+				deleteAllObjectVersions( s3Client, bucketName );;
 			}
-			s3Client.deleteBucket(bucketName);	
-		}		 
+			s3Client.deleteBucket(bucketName);
+		}
 	}
-	
+
 	/**
-	* delete all object from the bucket
-	* @param s3Client
-	* @param bucketName	
-	*/
+	 * delete all object from the bucket
+	 * @param s3Client
+	 * @param bucketName
+	 */
 	public static void deleteAllObjects( AmazonS3 s3Client,String bucketName ){
 		ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName)
 				.withEncodingType("url");
 		ListObjectsV2Result result;
 		do{
-			result = s3Client.listObjectsV2(request);			
+			result = s3Client.listObjectsV2(request);
 			Iterator<S3ObjectSummary> objIter = result.getObjectSummaries().iterator();
-		    while( objIter.hasNext()){
-		    	S3ObjectSummary vs = objIter.next();		    	
-		    	s3Client.deleteObject(bucketName,vs.getKey());		    	
-		    }
-		    String continuationToken = result.getNextContinuationToken();
+			while( objIter.hasNext()){
+				S3ObjectSummary vs = objIter.next();
+				s3Client.deleteObject(bucketName,vs.getKey());
+			}
+			String continuationToken = result.getNextContinuationToken();
 			request.setContinuationToken(continuationToken);
 		}while( result.isTruncated() );
 	}
 
-	    
+
 	/**
-	* delete all object versions(required for versioned buckets)
-	* @param s3Client
-	* @param bucketName	
-	*/
+	 * delete all object versions(required for versioned buckets)
+	 * @param s3Client
+	 * @param bucketName
+	 */
 	public static void deleteAllObjectVersions( AmazonS3 s3Client,String bucketName ){
 		VersionListing versionList = s3Client.listVersions(new ListVersionsRequest()
-					.withBucketName(bucketName));		
-		while (true) {		
+				.withBucketName(bucketName));
+		while (true) {
 			Iterator<S3VersionSummary> versionIter = versionList.getVersionSummaries()
-					.iterator();			
-			while (versionIter.hasNext()) {			
-				S3VersionSummary vs = versionIter.next();							
+					.iterator();
+			while (versionIter.hasNext()) {
+				S3VersionSummary vs = versionIter.next();
 				s3Client.deleteVersion(bucketName, vs.getKey(), vs.getVersionId());
 			}
-				
+
 			if( versionList.isTruncated()){
-				versionList = s3Client.listNextBatchOfVersions(versionList);			
+				versionList = s3Client.listNextBatchOfVersions(versionList);
 			}else{
 				break;
 			}
-		}		
+		}
 	}
-	
-		
+
+
 	/**
 	 * delete all buckets
 	 * @param s3Client
@@ -149,7 +150,7 @@ public class CommLibS3 {
 				String bucketName = buckets.get(i).getName();
 				deleteAllObjects( s3Client, bucketName );
 				deleteAllObjectVersions( s3Client, bucketName );
-				s3Client.deleteBucket(bucketName);			
+				s3Client.deleteBucket(bucketName);
 			}
 		}
 	}
@@ -158,7 +159,7 @@ public class CommLibS3 {
 		try {
 			UserUtils.deleteUser(userName);
 		} catch (HttpClientErrorException e) {
-			if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
+			if (e.getStatusCode() != (HttpStatus.NOT_FOUND)) {
 				Assert.fail(e.getMessage());
 			}
 		}
