@@ -40,6 +40,8 @@
             <package name="com.sequoiadb.cappedCL.killnode" />
             <package name="com.sequoiadb.cappedCL.restartnode" />
             <package name="com.sequoiadb.rename" />
+            <package name="com.sequoiadb.fulltext.killnode" />
+            <package name="com.sequoiadb.fulltext.restartnode" />
         </packages>
     </test>
     
@@ -50,11 +52,5 @@
           <package name="com.sequoiadb.datasync.restartnode" />
       </packages>
     </test>
-   <test name="fulltext">
-      <packages>
-         <package name="com.sequoiadb.fulltext.killnode" />
-         <package name="com.sequoiadb.fulltext.restartnode" />
-      </packages>    
-   </test>
 </suite>
    
