@@ -6,6 +6,8 @@
 
    <parameter name="HOSTNAME"       value="${HOSTNAME}" />
    <parameter name="SVCNAME"        value="${SVCNAME}" />
+   <parameter name="ESHOSTNAME"       value="${ESHOSTNAME}" />
+   <parameter name="ESSVCNAME"        value="${ESSVCNAME}" />
    <parameter name="CHANGEDPREFIX" value="story_java_test" />
    <parameter name="RSRVPORTBEGIN" value="26000" />
    <parameter name="RSRVPORTEND" value="27000" />
