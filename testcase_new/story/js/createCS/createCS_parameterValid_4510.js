@@ -3,7 +3,7 @@
 @author:
               2019-6-4 wuyan init
 ****************************************************/
-main();
+//main();
 function main()
 {   
    var csName = CHANGEDPREFIX + "cs4510";   
@@ -27,29 +27,29 @@ function createCSAndCheckResult( csName, pageSize )
    var dbcs = db.createCS( csName, options );
    
    //create cl in the cs
-	var clName = "cl4510";
-	dbcs.createCL( clName );
-	
-	//check the options
-	var cursor = db.snapshot( 5, { Name : csName});
+   var clName = "cl4510";
+   dbcs.createCL( clName );
+   
+   //check the options
+   var cursor = db.snapshot( 5, { Name : csName});
    var actPageSize = 0;
-	while (cursor.next())
-	{
-	   var curInfo = cursor.current();
-	   actPageSize = curInfo.toObj().PageSize;
-	}
-	
-	var expPageSize = pageSize;
-	if( pageSize == 0 )
-	{
-	   expPageSize = 65536;	   
-	}
-	
-	if ( Number(expPageSize) !== Number(actPageSize) )
-	{
-	   throw buildException("check pageSize","","","pageSize:" + expPageSize,"actPageSize:" + actPageSize);
-	}	
-	
-	
+   while (cursor.next())
+   {
+      var curInfo = cursor.current();
+      actPageSize = curInfo.toObj().PageSize;
+   }
+   
+   var expPageSize = pageSize;
+   if( pageSize == 0 )
+   {
+      expPageSize = 65536;      
+   }
+   
+   if ( Number(expPageSize) !== Number(actPageSize) )
+   {
+      throw buildException("check pageSize","","","pageSize:" + expPageSize,"actPageSize:" + actPageSize);
+   }   
+   
+   
 }
 

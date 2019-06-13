@@ -3,7 +3,7 @@
 @author:
               2019-6-4 wuyan init
 ****************************************************/
-main();
+//main();
 function main()
 {   
    var csName = CHANGEDPREFIX + "cs4512";   
@@ -27,31 +27,31 @@ function createCSAndCheckResult( csName, lobPageSize )
    var dbcs = db.createCS( csName, options );
    
    //create cl in the cs
-	var clName = "cl4512";
-	dbcs.createCL( clName );
-	
-	//check the options
-	var cursor = db.snapshot( 5, { Name : csName});
+   var clName = "cl4512";
+   dbcs.createCL( clName );
+   
+   //check the options
+   var cursor = db.snapshot( 5, { Name : csName});
    var actPageSize = 0;
-	while (cursor.next())
-	{
-	   var curInfo = cursor.current();
-	   actPageSize = curInfo.toObj().LobPageSize;
-	   println("---snapshotInfo: \n" + curInfo);
-	}
-	
-	var expPageSize = lobPageSize;
-	if( lobPageSize == 0 )
-	{
-	   //0即为默认值262144
-	   expPageSize = 262144;	   
-	}
-	
-	if ( Number(expPageSize) !== Number(actPageSize) )
-	{
-	   throw buildException("check lobPageSize","","","lobPageSize:" + expPageSize,"actPageSize:" + actPageSize);
-	}	
-	
-	
+   while (cursor.next())
+   {
+      var curInfo = cursor.current();
+      actPageSize = curInfo.toObj().LobPageSize;
+      println("---snapshotInfo: \n" + curInfo);
+   }
+   
+   var expPageSize = lobPageSize;
+   if( lobPageSize == 0 )
+   {
+      //0即为默认值262144
+      expPageSize = 262144;      
+   }
+   
+   if ( Number(expPageSize) !== Number(actPageSize) )
+   {
+      throw buildException("check lobPageSize","","","lobPageSize:" + expPageSize,"actPageSize:" + actPageSize);
+   }   
+   
+   
 }
 
