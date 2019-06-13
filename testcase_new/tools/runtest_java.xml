@@ -242,13 +242,6 @@
                      <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
                         <arg line="${cmd}" />
                      </exec>
-
-                     <var name="cmd" value=" -f pom_fulltext.xml surefire-report:report -DxmlFileName=@{xmlname} -Dsdbdriver=@{sdbdriver} -DthreadexecutorDir=${CI_WORK_DIR}/testcase/tools -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DSCRIPTDIR=${CI_WORK_DIR}/testcase/reliability/java/script -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname} -DFULLTEXTPREFIX=${IDXPREFIX}"/>
-                     <echo message="cmd : ${cmd} in dir ${casedir}"/>
-                     <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
-                        <arg line="${cmd}" />
-                        <env key="JAVA_HOME" path="/opt/jdk1.8.0_152" />
-                     </exec>
                   </then>
                </if>
             </sequential>
@@ -282,18 +275,6 @@
                </exec>
             </else>
          </if> 
-         
-         <if>
-            <available file="${casedir}/pom_fulltext.xml" type="file"/>
-            <then>
-               <echo message="cmd : mvn -f pom_fulltext.xml ${cmd} in dir ${casedir}"/>
-               <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
-                  <arg line=" -f pom_fulltext.xml ${cmd}" />
-                  <env key="JAVA_HOME" path="/opt/jdk1.8.0_152" />
-               </exec>
-
-            </then>
-         </if>
 
       </sequential>
    </macrodef>
@@ -312,18 +293,6 @@
          <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true" >
             <arg line="${cmd}" />
          </exec>
-         
-         <if>
-            <available file="${casedir}/pom_fulltext.xml" type="file"/>
-            <then>
-               <echo message="cmd : mvn -f pom_fulltext.xml ${cmd} in dir ${casedir}"/>
-               <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
-                  <arg line=" -f pom_fulltext.xml ${cmd}" />
-                  <env key="JAVA_HOME" path="/opt/jdk1.8.0_152" />
-               </exec>
-
-            </then>
-         </if>
       </sequential>
    </macrodef>
 
