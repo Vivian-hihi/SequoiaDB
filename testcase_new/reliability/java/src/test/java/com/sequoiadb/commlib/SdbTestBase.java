@@ -1,14 +1,17 @@
 package com.sequoiadb.commlib;
 
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.ReliabilityException;
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 
-import java.util.List;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.fulltext.FullTextUtils;
 
 public class SdbTestBase {
     public static String coordUrl;
@@ -23,13 +26,16 @@ public class SdbTestBase {
     public static String remoteUser;
     public static String remotePwd;
     public static String scriptDir;
+    public static String esHostName;
+    public static String esServiceName;
 
-    @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND",
-            "RSRVNODEDIR", "WORKDIR", "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD", "SCRIPTDIR" })
+    @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR",
+            "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD", "SCRIPTDIR", "ESHOSTNAME", "ESSVCNAME", "FULLTEXTPREFIX" })
     @BeforeSuite
-    public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME,
-            int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR, String WORKDIR,
-            String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD, String SCRIPTDIR) {
+    public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
+            String RSRVNODEDIR, String WORKDIR, String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD,
+            String SCRIPTDIR, @Optional("localhost") String ESHOSTNAME, @Optional("9200") String ESSVCNAME,
+            @Optional("") String FULLTEXTPREFIX) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         csName = COMMCSNAME;
@@ -42,6 +48,10 @@ public class SdbTestBase {
         remoteUser = REMOTEUSER;
         remotePwd = REMOTEPASSWD;
         scriptDir = SCRIPTDIR;
+        esHostName = ESHOSTNAME;
+        esServiceName = ESSVCNAME;
+        FullTextUtils.setFulltextPrefix(FULLTEXTPREFIX);
+
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(coordUrl, "", "");
@@ -49,11 +59,9 @@ public class SdbTestBase {
             Assert.assertTrue(ret);
             createWorkDir();
             createReserveDir();
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.fail("connect " + coordUrl + ": " + e.getErrorCode());
-        }
-        finally {
+        } finally {
             if (db != null) {
                 db.close();
             }
@@ -69,13 +77,11 @@ public class SdbTestBase {
                 try {
                     ssh.exec("mkdir -p " + SdbTestBase.reservedDir);
                     ssh.exec("chown " + SdbTestBase.remoteUser + " " + SdbTestBase.reservedDir);
-                }
-                finally {
+                } finally {
                     ssh.disconnect();
                 }
             }
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             Assert.fail(e.getMessage());
             e.printStackTrace();
         }
@@ -89,13 +95,11 @@ public class SdbTestBase {
                 Ssh ssh = new Ssh(host, "root", SdbTestBase.rootPwd);
                 try {
                     ssh.exec("mkdir -p " + SdbTestBase.workDir);
-                }
-                finally {
+                } finally {
                     ssh.disconnect();
                 }
             }
-        }
-        catch (ReliabilityException e) {
+        } catch (ReliabilityException e) {
             Assert.fail(e.getMessage());
             e.printStackTrace();
         }
@@ -110,11 +114,9 @@ public class SdbTestBase {
             if (db.isCollectionSpaceExist(csName)) {
                 db.dropCollectionSpace(csName);
             }
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             if (db != null) {
                 db.close();
             }
@@ -128,10 +130,8 @@ public class SdbTestBase {
                 sdb.dropCollectionSpace(csName);
             }
             sdb.createCollectionSpace(csName);
-        }
-        catch (BaseException e) {
-            System.out.printf("create CollectionSpace %s failed, errMsg:%s\n", csName,
-                    e.getMessage());
+        } catch (BaseException e) {
+            System.out.printf("create CollectionSpace %s failed, errMsg:%s\n", csName, e.getMessage());
             isCreateSuccess = false;
         }
         return isCreateSuccess;

@@ -1,18 +1,19 @@
 package com.sequoiadb.commlib;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
+import org.testng.Assert;
+
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.types.BasicBSONList;
-import org.testng.Assert;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class CommLib {
 
@@ -24,11 +25,10 @@ public class CommLib {
      * @param sdb
      * @return true/false, true is standalone, false is cluster
      */
-    public boolean isStandAlone(Sequoiadb sdb) {
+    public static boolean isStandAlone(Sequoiadb sdb) {
         try {
             sdb.listReplicaGroups();
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (e.getErrorCode() == -159) { // -159:The operation is for coord
                                             // node only
                 // System.out.printf("The mode is standalone.");
@@ -58,14 +58,13 @@ public class CommLib {
      * @param sdb
      * @return dataGroupNames
      */
-    public ArrayList<String> getDataGroupNames(Sequoiadb sdb) {
+    public static ArrayList<String> getDataGroupNames(Sequoiadb sdb) {
         ArrayList<String> dataGroupNames = new ArrayList<String>();
         try {
             dataGroupNames = sdb.getReplicaGroupNames();
             dataGroupNames.remove("SYSCatalogGroup");
             dataGroupNames.remove("SYSCoord");
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.fail("Failed to get dataGroupsName. ErrorMsg:\n" + e.getMessage());
         }
         return dataGroupNames;
@@ -78,7 +77,7 @@ public class CommLib {
      * @param rgName
      * @return nodeAddrs, eg.[host1:11840, host2:11850]
      */
-    public List<String> getNodeAddress(Sequoiadb sdb, String rgName) {
+    public static List<String> getNodeAddress(Sequoiadb sdb, String rgName) {
         List<String> nodeAddrs = new ArrayList<String>();
         try {
             ReplicaGroup tmpArray = sdb.getReplicaGroup(rgName);
@@ -94,8 +93,7 @@ public class CommLib {
                 nodeAddrs.add(hostName + ":" + svcName);
             }
             // System.out.println(rgName + " address: " + nodeAddrs.toString());
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.fail("Failed to get groupAdrr. ErrorMsg:\n" + e.getMessage());
         }
         return nodeAddrs;
@@ -113,8 +111,7 @@ public class CommLib {
         try {
             String nodeName = sdb.getReplicaGroup("SYSCATALOG").getMaster().getNodeName();
             cataDB = new Sequoiadb(nodeName, "", "");
-            DBCollection dmDB = cataDB.getCollectionSpace("SYSCAT")
-                    .getCollection("SYSCOLLECTIONSPACES");
+            DBCollection dmDB = cataDB.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONSPACES");
 
             BSONObject sel = new BasicBSONObject();
             BSONObject subSel = new BasicBSONObject();
@@ -122,11 +119,10 @@ public class CommLib {
             sel.put("Name", subSel);
             DBCursor cursor = dmDB.query(null, sel, null, null);
             while (cursor.hasNext()) {
-                BSONObject tmpInfo = (BSONObject) cursor.getNext();
+                BSONObject tmpInfo = cursor.getNext();
                 csInfoOfCata.add(tmpInfo);
             }
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.fail("Failed to get cs info of catalog. ErrorMsg:\n" + e.getMessage());
         }
         return csInfoOfCata;
@@ -151,10 +147,8 @@ public class CommLib {
             String csName = "SYSCAT";
             String clName = "SYSDOMAINS";
             CommLib.compareNodeData(sdb, rgName, csName, clName, matcher);
-        }
-        catch (BaseException e) {
-            Assert.fail(
-                    "Failed to check the results of SYSCatalogGroup. ErrorMsg:\n" + e.getMessage());
+        } catch (BaseException e) {
+            Assert.fail("Failed to check the results of SYSCatalogGroup. ErrorMsg:\n" + e.getMessage());
         }
     }
 
@@ -177,10 +171,8 @@ public class CommLib {
             String sysCsName = "SYSCAT";
             String sysClName = "SYSCOLLECTIONSPACES";
             CommLib.compareNodeData(sdb, rgName, sysCsName, sysClName, matcher);
-        }
-        catch (BaseException e) {
-            Assert.fail(
-                    "Failed to check the results of SYSCatalogGroup. ErrorMsg:\n" + e.getMessage());
+        } catch (BaseException e) {
+            Assert.fail("Failed to check the results of SYSCatalogGroup. ErrorMsg:\n" + e.getMessage());
         }
     }
 
@@ -203,10 +195,8 @@ public class CommLib {
             String sysCSName = "SYSCAT";
             String sysCLName = "SYSCOLLECTIONS";
             CommLib.compareNodeData(sdb, rgName, sysCSName, sysCLName, matcher);
-        }
-        catch (BaseException e) {
-            Assert.fail(
-                    "Failed to check the results of SYSCatalogGroup. ErrorMsg:\n" + e.getMessage());
+        } catch (BaseException e) {
+            Assert.fail("Failed to check the results of SYSCatalogGroup. ErrorMsg:\n" + e.getMessage());
         }
     }
 
@@ -243,7 +233,7 @@ public class CommLib {
                         // get the data for each node
                         ArrayList<BSONObject> oneNodeData = new ArrayList<BSONObject>();
                         while (cursor.hasNext()) {
-                            BSONObject clList = (BSONObject) cursor.getNext();
+                            BSONObject clList = cursor.getNext();
                             if (clList.get("Name").toString().indexOf(clName) >= 0) {
                                 oneNodeData.add(clList);
                             }
@@ -258,27 +248,23 @@ public class CommLib {
                             if (allNodeData.get(j).equals(allNodeData.get(j - 1))) {
                                 checkSucc = true;
                                 break;
-                            }
-                            else if (++failCnt < maxCnt) {
+                            } else if (++failCnt < maxCnt) {
                                 try {
                                     Thread.sleep(10);
-                                }
-                                catch (InterruptedException e) {
+                                } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
                                 break;
                             }
                             Assert.assertEquals(allNodeData.get(j), allNodeData.get(j - 1),
-                                    "The group is SYSCatalogGroup, " + nodeAddrs.get(j) + " and "
-                                            + nodeAddrs.get(j - 1) + " is not consistent.");
+                                    "The group is SYSCatalogGroup, " + nodeAddrs.get(j) + " and " + nodeAddrs.get(j - 1)
+                                            + " is not consistent.");
                         }
                         dataDB.closeAllCursors();
                     }
-                }
-                while (!checkSucc && failCnt < maxCnt);
+                } while (!checkSucc && failCnt < maxCnt);
             }
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             e.printStackTrace();
             Assert.fail("Failed to check the results of dataRG. ErrorMsg:\n" + e.getMessage());
         }
@@ -299,8 +285,7 @@ public class CommLib {
             boolean rc = CommLib.this.compareDataAndCata(sdb, csName, clName);
             Assert.assertTrue(rc);
 
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.fail(e.getMessage());
         }
     }
@@ -341,12 +326,11 @@ public class CommLib {
                             Sequoiadb dataDB = new Sequoiadb(nodeAddrs.get(j), "", "");
                             String tmpCSName = name.split("\\.")[0];
                             String tmpCLName = name.split("\\.")[1];
-                            DBCursor cur = dataDB.getCollectionSpace(tmpCSName)
-                                    .getCollection(tmpCLName).getIndexes();
+                            DBCursor cur = dataDB.getCollectionSpace(tmpCSName).getCollection(tmpCLName).getIndexes();
                             // get the data for each node
                             ArrayList<BSONObject> oneNodeData = new ArrayList<BSONObject>();
                             while (cur.hasNext()) {
-                                BSONObject idxList = (BSONObject) cur.getNext();
+                                BSONObject idxList = cur.getNext();
                                 oneNodeData.add(idxList);
                             }
                             cur.close();
@@ -359,29 +343,24 @@ public class CommLib {
                                 if (!allNodeData.get(j).equals(allNodeData.get(j - 1))) {
                                     checkSucc = true;
                                     break;
-                                }
-                                else if (++failCnt < maxCnt) {
+                                } else if (++failCnt < maxCnt) {
                                     try {
                                         Thread.sleep(10);
-                                    }
-                                    catch (InterruptedException e) {
+                                    } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
                                     break;
                                 }
                                 Assert.assertEquals(allNodeData.get(j), allNodeData.get(j - 1),
-                                        "The group is " + groupName + ", " + nodeAddrs.get(j)
-                                                + " and " + nodeAddrs.get(j - 1)
-                                                + " is not consistent.");
+                                        "The group is " + groupName + ", " + nodeAddrs.get(j) + " and "
+                                                + nodeAddrs.get(j - 1) + " is not consistent.");
                             }
                             dataDB.closeAllCursors();
                         }
-                    }
-                    while (!checkSucc && failCnt < maxCnt);
+                    } while (!checkSucc && failCnt < maxCnt);
                 }
             }
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (e.getErrorCode() != -34 && e.getErrorCode() != -248) { // -248:Dropping
                                                                        // the
                                                                        // collection
@@ -407,21 +386,19 @@ public class CommLib {
             ArrayList<String> dataGroupNames = CommLib.getDataGroupNames(sdb);
             for (int i = 0; i < dataGroupNames.size(); i++) {
                 // direct connect data master node, listCollections
-                String dataMAddr = sdb.getReplicaGroup(dataGroupNames.get(i)).getMaster()
-                        .getNodeName();
+                String dataMAddr = sdb.getReplicaGroup(dataGroupNames.get(i)).getMaster().getNodeName();
                 Sequoiadb dataDB = new Sequoiadb(dataMAddr, "", "");
                 DBCursor cursor = dataDB.listCollections();
                 while (cursor.hasNext()) {
                     String tmpCLName = (String) cursor.getNext().get("Name");
                     if (tmpCLName.indexOf(csName + "." + clName) >= 0) {
                         // direct connect cata master node, find the collection
-                        String cataAddr = sdb.getReplicaGroup("SYSCatalogGroup").getMaster()
-                                .getNodeName();
+                        String cataAddr = sdb.getReplicaGroup("SYSCatalogGroup").getMaster().getNodeName();
                         Sequoiadb cataDB = new Sequoiadb(cataAddr, "", "");
                         BSONObject matcher = new BasicBSONObject();
                         matcher.put("Name", csName + "." + tmpCLName);
-                        DBCursor cur = cataDB.getCollectionSpace("SYSCAT")
-                                .getCollection("SYSCOLLECTIONS").query(matcher, null, null, null);
+                        DBCursor cur = cataDB.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS")
+                                .query(matcher, null, null, null);
                         while (cur.hasNext()) {
                             String name = (String) cur.getNext().get("Name");
                             if (name.isEmpty()) {
@@ -435,8 +412,7 @@ public class CommLib {
                 }
                 dataDB.close();
             }
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             Assert.fail("Failed to check cl for dataRG. ErrorMsg:\n" + e.getMessage());
         }
 
@@ -448,8 +424,8 @@ public class CommLib {
             BSONObject subObj = new BasicBSONObject();
             subObj.put("$regex", "^" + csName + "." + clName);
             matcher.put("Name", subObj);
-            DBCursor cursor = cataDB.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS")
-                    .query(matcher, null, null, null);
+            DBCursor cursor = cataDB.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS").query(matcher, null,
+                    null, null);
             while (cursor.hasNext()) {
                 // get clName and groupNames from catalog
                 BasicBSONObject clInfo = (BasicBSONObject) cursor.getNext();
@@ -461,8 +437,7 @@ public class CommLib {
                     String dataGroupNames = groupInfo.getString("GroupName");
                     // direct dataNode, get the collection
                     if (dataGroupNames != null) {
-                        String dataMAddr = sdb.getReplicaGroup(dataGroupNames).getMaster()
-                                .getNodeName();
+                        String dataMAddr = sdb.getReplicaGroup(dataGroupNames).getMaster().getNodeName();
                         Sequoiadb dataDB = new Sequoiadb(dataMAddr, "", "");
                         dataDB.getCollectionSpace(csName).getCollection(tmpCLName);
                         dataDB.close();
@@ -470,8 +445,7 @@ public class CommLib {
                 }
             }
             cataDB.close();
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (e.getErrorCode() == -23) { // -23:Collection does not exist
                 Assert.fail("Failed to check cl for dataRG. ErrorMsg:\n" + e.getMessage());
             }
@@ -487,8 +461,7 @@ public class CommLib {
      * @param matcher,
      *            matching condition for query
      */
-    public void compareNodeData(Sequoiadb sdb, String rgName, String csName, String clName,
-            BSONObject matcher) {
+    public void compareNodeData(Sequoiadb sdb, String rgName, String csName, String clName, BSONObject matcher) {
         Sequoiadb dataDB = null;
         try {
             // get node address within the group
@@ -510,7 +483,7 @@ public class CommLib {
                     // get the data for each node
                     ArrayList<BSONObject> oneNodeData = new ArrayList<BSONObject>();
                     while (cursor.hasNext()) {
-                        BSONObject csInfo = (BSONObject) cursor.getNext();
+                        BSONObject csInfo = cursor.getNext();
                         oneNodeData.add(csInfo);
                     }
                     cursor.close();
@@ -523,25 +496,20 @@ public class CommLib {
                         if (allNodeData.get(i).equals(allNodeData.get(i - 1))) {
                             checkSucc = true;
                             break;
-                        }
-                        else if (++failCnt < maxCnt) {
+                        } else if (++failCnt < maxCnt) {
                             try {
                                 Thread.sleep(10);
-                            }
-                            catch (InterruptedException e) {
+                            } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                             break;
                         }
-                        Assert.assertEquals(allNodeData.get(i), allNodeData.get(i - 1),
-                                "The group is SYSCatalogGroup, " + nodeAdrrs.get(i) + " and "
-                                        + nodeAdrrs.get(i - 1) + " is not consistent.");
+                        Assert.assertEquals(allNodeData.get(i), allNodeData.get(i - 1), "The group is SYSCatalogGroup, "
+                                + nodeAdrrs.get(i) + " and " + nodeAdrrs.get(i - 1) + " is not consistent.");
                     }
                 }
-            }
-            while (!checkSucc && failCnt < maxCnt);
-        }
-        catch (BaseException e) {
+            } while (!checkSucc && failCnt < maxCnt);
+        } catch (BaseException e) {
             Assert.fail("Failed to compare data by direct link node. ErroMsg:\n" + e.getMessage());
         }
     }
@@ -580,11 +548,9 @@ public class CommLib {
             }
             tmpList.close();
 
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (e.getErrorCode() != -256) { // -256:Domain is not empty
-                Assert.fail("Failed to drop domain in the beginning. " + "ErrorMsg:\n"
-                        + e.getMessage());
+                Assert.fail("Failed to drop domain in the beginning. " + "ErrorMsg:\n" + e.getMessage());
             }
         }
     }
@@ -606,12 +572,10 @@ public class CommLib {
                 }
             }
             cursor.close();
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (e.getErrorCode() != -34) { // -34:Collection space does not
                                            // exist
-                Assert.fail(
-                        "Failed to drop CS in the beginning. " + "ErrorMsg:\n" + e.getMessage());
+                Assert.fail("Failed to drop CS in the beginning. " + "ErrorMsg:\n" + e.getMessage());
             }
         }
     }
@@ -634,13 +598,11 @@ public class CommLib {
                 }
             }
             cursor.close();
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (e.getErrorCode() != -23 && e.getErrorCode() != -34) {
                 // -23:Collection does not exist
                 // -34:Collection space does not exist
-                Assert.fail(
-                        "Failed to drop CL in the beginning. " + "ErrorMsg:\n" + e.getMessage());
+                Assert.fail("Failed to drop CL in the beginning. " + "ErrorMsg:\n" + e.getMessage());
             }
         }
     }
@@ -660,8 +622,7 @@ public class CommLib {
                     sdb.removeReplicaGroup(tmpName);
                 }
             }
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (e.getErrorCode() != -154) { // -154:Group does not exist
                 Assert.fail(e.getMessage());
 
@@ -693,8 +654,7 @@ public class CommLib {
                     rg.createNode(hostName, svnName, nodePath, rgConf);
                     checkSucc = true;
                     break;
-                }
-                catch (BaseException e) {
+                } catch (BaseException e) {
                     if (e.getErrorCode() == -157 // -157:Invalid node
                                                  // configuration(Port is
                                                  // occupied)
@@ -703,11 +663,9 @@ public class CommLib {
                         svnName = svnName + 10;
                     }
                 }
-            }
-            while (!checkSucc && svnName < portStop);
+            } while (!checkSucc && svnName < portStop);
             // rg.start();
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (e.getErrorCode() != -153 // -153:Group already exist;
                     && e.getErrorCode() != -156) { // -156: Failed to start the
                                                    // node
@@ -789,17 +747,14 @@ public class CommLib {
         int i = 0;
         try {
             while (true) {
-                cl.insert("{Name:'autoName_" + fillupMethodBase + "_" + i + "',pad:'" + padStr + i
-                        + "',deleteFlag:1}");
+                cl.insert("{Name:'autoName_" + fillupMethodBase + "_" + i + "',pad:'" + padStr + i + "',deleteFlag:1}");
                 i++;
             }
-        }
-        catch (BaseException e) {
+        } catch (BaseException e) {
             if (e.getErrorCode() != -11) {
                 throw e;
             }
-        }
-        finally {
+        } finally {
             fillupMethodBase++;
         }
 
