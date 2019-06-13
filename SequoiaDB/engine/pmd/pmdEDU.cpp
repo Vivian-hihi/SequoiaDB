@@ -944,6 +944,12 @@ namespace engine
                                        optCB->transUseRBS(),
                                        optCB->transRCCount() ) ;
       }
+      // make sure meta-block statistics are cleared
+      if ( !_transExecutor.isMBStatsEmpty() )
+      {
+         PD_LOG( PDWARNING, "transaction mb statistics is not empty" ) ;
+         _transExecutor.clearMBStats() ;
+      }
 #endif //SDB_ENGINE
    }
 

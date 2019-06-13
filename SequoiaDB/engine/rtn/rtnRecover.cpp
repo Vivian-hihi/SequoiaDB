@@ -1548,7 +1548,7 @@ namespace engine
       // in the last extent.
       context->mb()->_totalDataFreeSpace = remainSpace ;
       context->mbStat()->_totalRecords = _totalRecord ;
-      context->mbStat()->_transTotalRecords.init( _totalRecord ) ;
+      context->mbStat()->_rcTotalRecords.init( _totalRecord ) ;
 
       _pSU->data()->flushMeta( TRUE ) ;
 

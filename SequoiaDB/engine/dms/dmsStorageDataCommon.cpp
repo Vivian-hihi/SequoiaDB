@@ -886,7 +886,7 @@ namespace engine
                                 _dmsMME->_mbList[i]._clUniqueID ) ;
 
             _mbStatInfo[i]._totalRecords = _dmsMME->_mbList[i]._totalRecords ;
-            _mbStatInfo[i]._transTotalRecords.init( _dmsMME->_mbList[i]._totalRecords ) ;
+            _mbStatInfo[i]._rcTotalRecords.init( _dmsMME->_mbList[i]._totalRecords ) ;
             _mbStatInfo[i]._totalDataPages =
                _dmsMME->_mbList[i]._totalDataPages ;
             _mbStatInfo[i]._totalIndexPages =
@@ -1620,7 +1620,7 @@ namespace engine
       context->mbStat()->_totalDataFreeSpace = 0 ;
       context->mbStat()->_totalDataPages = 0 ;
       context->mbStat()->_totalRecords = 0 ;
-      context->mbStat()->_transTotalRecords.init( 0 ) ;
+      context->mbStat()->_rcTotalRecords.init( 0 ) ;
       context->mbStat()->_totalDataLen = 0 ;
       context->mbStat()->_totalOrgDataLen = 0 ;
       context->mbStat()->removeAllFromChain() ;
@@ -4394,11 +4394,11 @@ namespace engine
       else if ( cb->isTransaction() )
       {
          cb->getTransExecutor()->incMBTotalRecords(
-                           clUniqueID, &( mbStat->_transTotalRecords ), 1 ) ;
+                           clUniqueID, &( mbStat->_rcTotalRecords ), 1 ) ;
       }
       else
       {
-         mbStat->_transTotalRecords.inc() ;
+         mbStat->_rcTotalRecords.inc() ;
       }
 
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACOMMON__INCMBSTAT ) ;
@@ -4425,11 +4425,11 @@ namespace engine
       else if ( cb->isTransaction() )
       {
          cb->getTransExecutor()->decMBTotalRecords(
-                        clUniqueID, &( mbStat->_transTotalRecords ), 1 ) ;
+                        clUniqueID, &( mbStat->_rcTotalRecords ), 1 ) ;
       }
       else
       {
-         mbStat->_transTotalRecords.dec() ;
+         mbStat->_rcTotalRecords.dec() ;
       }
 
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACOMMON__DECMBSTAT ) ;

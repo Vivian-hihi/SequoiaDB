@@ -1952,7 +1952,7 @@ namespace engine
                                                 (UINT64 &)recordNum ) )
          {
             recordNum =
-                  (INT64)context->mbStat()->_transTotalRecords.fetch() ;
+                  (INT64)context->mbStat()->_rcTotalRecords.fetch() ;
          }
       }
       else
@@ -3511,7 +3511,7 @@ namespace engine
       {
          if ( DMS_IS_MB_INUSE ( _pDataSu->_dmsMME->_mbList[i]._flag ) )
          {
-            _pDataSu->_mbStatInfo[ i ]._transTotalRecords.init(
+            _pDataSu->_mbStatInfo[ i ]._rcTotalRecords.init(
                               _pDataSu->_mbStatInfo[ i ]._totalRecords ) ;
          }
       }

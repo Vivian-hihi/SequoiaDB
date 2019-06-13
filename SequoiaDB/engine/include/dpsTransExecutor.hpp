@@ -333,8 +333,15 @@ namespace engine
          BOOLEAN                    isRecordMapEmpty() const ;
          UINT32                     getRecordMapSize() const ;
 
+         // for transaction meta-block statistics
          void commitMBStats () ;
          void rollbackMBStats () ;
+         void clearMBStats () ;
+
+         OSS_INLINE BOOLEAN isMBStatsEmpty () const
+         {
+            return _transMBStatMap.empty() ;
+         }
 
          void incMBTotalRecords ( utilCLUniqueID clUniqueID,
                                   ossAtomic64 * totalRecords,
@@ -368,7 +375,6 @@ namespace engine
 
          void     resetLogSpace() ;
 
-         void _clearMBStats () ;
          void _initMBStat ( utilCLUniqueID clUniqueID,
                             ossAtomic64 * totalRecords,
                             UINT64 incDelta,
@@ -398,7 +404,7 @@ namespace engine
          MAP_LSN_2_RECORD        _mapLSN2Record ;
 
          // record counts of collection during transaction
-         TRANS_MB_STAT_MAP _transMBStatMap ;
+         TRANS_MB_STAT_MAP       _transMBStatMap ;
 
       private:
          BOOLEAN                 _useTransLock ;

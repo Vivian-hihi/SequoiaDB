@@ -883,7 +883,7 @@ namespace engine
       extent->_logicID = currExtLID + 1 ;
 
       _mbStatInfo[mbID]._totalRecords -= extInfo->_recCount ;
-      _mbStatInfo[mbID]._transTotalRecords.sub( extInfo->_recCount ) ;
+      _mbStatInfo[mbID]._rcTotalRecords.sub( extInfo->_recCount ) ;
       _mbStatInfo[mbID]._totalDataLen -= totalSize ;
       _mbStatInfo[mbID]._totalOrgDataLen -= totalSize ;
       _mbStatInfo[mbID]._totalDataFreeSpace = DMS_CAP_EXTENT_BODY_SZ ;
@@ -934,7 +934,7 @@ namespace engine
                    rc ) ;
 
       _mbStatInfo[mbID]._totalRecords -= recNum ;
-      _mbStatInfo[mbID]._transTotalRecords.sub( recNum ) ;
+      _mbStatInfo[mbID]._rcTotalRecords.sub( recNum ) ;
       _mbStatInfo[mbID]._totalDataFreeSpace -= extent->_freeSpace ;
       _mbStatInfo[mbID]._totalOrgDataLen -= totalSize ;
       _mbStatInfo[mbID]._totalDataLen -= totalSize ;
@@ -1582,7 +1582,7 @@ namespace engine
 
       extent->_recCount -= recNum ;
       _mbStatInfo[ context->mbID() ]._totalRecords -= recNum ;
-      _mbStatInfo[ context->mbID() ]._transTotalRecords.sub( recNum ) ;
+      _mbStatInfo[ context->mbID() ]._rcTotalRecords.sub( recNum ) ;
       _mbStatInfo[ context->mbID() ]._totalOrgDataLen -= totalSize ;
       _mbStatInfo[ context->mbID() ]._totalDataLen -= totalSize ;
 

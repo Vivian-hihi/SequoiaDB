@@ -373,7 +373,7 @@ namespace engine
 
    void _dpsTransExecutor::clearAll()
    {
-      _clearMBStats() ;
+      clearMBStats() ;
       clearWaiterInfo() ;
       clearLastLRB() ;
       clearLock() ;
@@ -672,7 +672,7 @@ namespace engine
       {
          iter->second.commit() ;
       }
-      _clearMBStats() ;
+      clearMBStats() ;
    }
 
    void _dpsTransExecutor::rollbackMBStats ()
@@ -683,10 +683,10 @@ namespace engine
       {
          iter->second.rollback() ;
       }
-      _clearMBStats() ;
+      clearMBStats() ;
    }
 
-   void _dpsTransExecutor::_clearMBStats ()
+   void _dpsTransExecutor::clearMBStats ()
    {
       _transMBStatMap.clear() ;
    }

@@ -391,8 +391,8 @@ namespace engine
       //    key for even old versions. Otherwise rollback could fail.
       oldVersionContainer *_oldVerChain ;
 
-      // total record count for transaction
-      ossAtomic64 _transTotalRecords ;
+      // total record count for transaction RC count
+      ossAtomic64 _rcTotalRecords ;
 
       // runtime CRUD statistics monitor
       monCRUDCB _crudCB ;
@@ -428,7 +428,7 @@ namespace engine
          // remove all the chain, and leave asyn thread or next X lock holder
          // to physically free the lock/memory.
          removeAllFromChain() ;
-         _transTotalRecords.init( 0 ) ;
+         _rcTotalRecords.init( 0 ) ;
          _crudCB.reset() ;
       }
 
@@ -557,7 +557,7 @@ namespace engine
         _lobCommitFlag( 0 ),
         _lobLastLSN( 0 ),
         _oldVerChain( NULL ),
-        _transTotalRecords( 0 )
+        _rcTotalRecords( 0 )
       {
          reset() ;
       }
