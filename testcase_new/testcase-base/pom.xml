@@ -26,6 +26,11 @@
       <surefire-plugin.version>2.20.1</surefire-plugin.version>
       
       <slf4j-api.version>1.7.5</slf4j-api.version> 
+      
+      <!-- spring jars -->
+		<spring-boot-starter-web.version>1.5.10.RELEASE</spring-boot-starter-web.version>
+		<apache-httpclient.version>4.5.2</apache-httpclient.version>
+      
    </properties>
 
    <dependencies>
@@ -66,6 +71,25 @@
          <artifactId>jcommander</artifactId>
          <version>${jcommander.version}</version>
       </dependency-->
+      
+      <!-- spring dependency -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<version>${spring-boot-starter-web.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.apache.httpcomponents</groupId>
+		  <artifactId>httpclient</artifactId>
+		  <version>${apache-httpclient.version}</version>
+		</dependency>
       
    </dependencies>
    
