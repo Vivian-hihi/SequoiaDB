@@ -26,7 +26,7 @@
    <!--SEQUOIADBMAINSTREAM-3978-->
    <test name="fulltext" parallel="classes" thread-count="5">
       <packages>
-         <package name="com.sequoiadb.fulltext" />
+         <package name="com.sequoiadb.fulltext.largedata" />
       </packages>    
    </test>
    
