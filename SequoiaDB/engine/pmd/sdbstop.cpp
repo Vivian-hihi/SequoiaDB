@@ -109,8 +109,9 @@ namespace engine
       }
       if( 0 == vm.size() && 1 < argc )
       {
-         std::cout << "Invalid option: --" << endl ;
+         std::cout << "Unrecongnized options: " << argv[1] <<endl ;
          rc = SDB_INVALIDARG ;
+         std::cout << "Read command line failed: " << rc << endl ;
          goto error ;
       }
 

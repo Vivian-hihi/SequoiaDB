@@ -58,9 +58,9 @@ namespace engine
                                 po::variables_map &vm ) ;
 
    INT32 utilReadCommandLine2( INT32 argc, CHAR **argv,
-                              po::options_description &desc,
-                              po::variables_map &vm,
-                              BOOLEAN allowUnreg = TRUE ) ;
+                               po::options_description &desc,
+                               po::variables_map &vm,
+                               BOOLEAN allowUnreg = TRUE ) ;
 
    INT32 utilReadCommandLine( INT32 argc, CHAR **argv,
                               po::options_description &desc,
