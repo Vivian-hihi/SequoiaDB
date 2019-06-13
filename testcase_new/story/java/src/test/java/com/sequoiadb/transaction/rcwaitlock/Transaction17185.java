@@ -17,6 +17,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -27,7 +28,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author yinzhen
  *
  */
-@Test(groups = { "rcwaitlock", "rs" })
+@Test(groups = { "rcwaitlock", "rs", "rcuserbs" })
 public class Transaction17185 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private String clName = "cl17185";
@@ -140,17 +141,17 @@ public class Transaction17185 extends SdbTestBase {
             List<BSONObject> expRecords2 = new ArrayList<>(expRecords1);
             Collections.reverse(expRecords2);
 
-            QueryThread positiveThread = new QueryThread(cl4, "{a:1}", "{'':'textIndex17185'}", expRecords1);
+            IdxScanThread positiveThread = new IdxScanThread(cl4, "{a:1}", "{'':'textIndex17185'}", expRecords1);
             positiveThread.start();
 
-            QueryThread reverseThread = new QueryThread(cl5, "{a:-1}", "{'':'textIndex17185'}", expRecords2);
+            IdxScanThread reverseThread = new IdxScanThread(cl5, "{a:-1}", "{'':'textIndex17185'}", expRecords2);
             reverseThread.start();
 
             // 事务5读记录走表扫描
-            QueryThread positiveThread2 = new QueryThread(cl6, "{a:1}", "{'':null}", expRecords1);
+            TableScanThread positiveThread2 = new TableScanThread(cl6, "{a:1}", "{'':null}", expRecords1);
             positiveThread2.start();
 
-            QueryThread reverseThread2 = new QueryThread(cl7, "{a:-1}", "{'':null}", expRecords2);
+            TableScanThread reverseThread2 = new TableScanThread(cl7, "{a:-1}", "{'':null}", expRecords2);
             reverseThread2.start();
 
             Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
@@ -267,13 +268,13 @@ public class Transaction17185 extends SdbTestBase {
         }
     }
 
-    class QueryThread extends SdbThreadBase {
+    class IdxScanThread extends SdbThreadBase {
         private String sort;
         private String hint;
         private DBCollection cl;
         private List<BSONObject> expRecords;
 
-        private QueryThread(DBCollection cl, String sort, String hint, List<BSONObject> expRecords) {
+        private IdxScanThread(DBCollection cl, String sort, String hint, List<BSONObject> expRecords) {
             super();
             this.cl = cl;
             this.sort = sort;
@@ -285,6 +286,38 @@ public class Transaction17185 extends SdbTestBase {
         public void exec() throws Exception {
             DBCursor cursor = cl.query("{$and:[{a:{$gt:20000}},{a:{$lt:40001}}]}", null, sort, hint);
             List<BSONObject> records = TransUtils.getReadActList(cursor);
+            Assert.assertEquals(records, expRecords);
+            latch.countDown();
+        }
+    }
+
+    class TableScanThread extends SdbThreadBase {
+        private String sort;
+        private String hint;
+        private DBCollection cl;
+        private List<BSONObject> expRecords;
+
+        private TableScanThread(DBCollection cl, String sort, String hint, List<BSONObject> expRecords) {
+            super();
+            this.cl = cl;
+            this.sort = sort;
+            this.hint = hint;
+            this.expRecords = expRecords;
+        }
+
+        @Override
+        public void exec() throws Exception {
+            DBCursor cursor = cl.query("{$and:[{a:{$gt:20000}},{a:{$lt:40001}}]}", null, sort, hint);
+            List<BSONObject> records = null;
+            try {
+                records = TransUtils.getReadActList(cursor);
+            } catch (BaseException e) {
+                e.printStackTrace();
+                if (e.getErrorCode() != -13) {
+                    throw e;
+                }
+            }
+
             Assert.assertEquals(records, expRecords);
             latch.countDown();
         }
