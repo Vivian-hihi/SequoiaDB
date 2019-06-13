@@ -1498,8 +1498,16 @@ TEST(collection, sdbQuery_with_some_flags)
    bson orderBy ;
    bson hint ;
    int num = 10;
-
+ 
+   // cause by the query with FLG_QUERY_PARALLED above，retry 5s
    rc = initEnv( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
+   int doTimes = 0;
+   while ( -147 == rc && doTimes < 5 )
+   {
+       sleep( 1 ) ;
+       doTimes++;
+       rc = initEnv( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd() ) ;
+   }
    ASSERT_EQ( SDB_OK, rc ) ;
    // connect to database
    rc = sdbConnect ( ARGS->hostName(), ARGS->svcName(), ARGS->user(), ARGS->passwd(), &connection ) ;
