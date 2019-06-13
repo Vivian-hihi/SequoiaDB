@@ -62,9 +62,8 @@ function createDataGroup( rgName, hostName )
    }
    while(!checkSucc && times < maxRetryTimes);
    dataRG.start();
-   //TODO:这里的logBackupPath是源节点diaglog日志路径，建议修改变量名；另外11790建议改成变量CMSVCNAME
-   logBackupPath = hostName+":11790@"+dataPath+"/diaglog/sdbdiag.log";
-   return logBackupPath;
+   srcLogPath = hostName+":"+CMSVCNAME+"@"+dataPath+"/diaglog/sdbdiag.log";
+   return srcLogPath;
 }
 
 /* ****************************************************
@@ -134,4 +133,48 @@ function checkData( csName, clName, groupName, expArray )
       throw buildException( "checkResult", null, "", expRecs, "  " + actRecs );
    }
    dataNode.close();
+}
+
+/* ****************************************************
+@description: check the split result by check data count from different data node.
+@parameter: 
+    cl : the collection from coord data
+    csName : the collection space name
+    clName : the collection name
+    srcGroupName : the source group name
+    tarGroupName : the target group name
+    expCount : the expected data count
+    expSrcCount : the expected data count from srcGroup
+    expTarCount : the expected data count from tarGroup
+@return:
+**************************************************** */
+function checkSplitResultByCount( cl, csName, clName, srcGroupName, tarGroupName, expCount, expSrcCount, expTarCount )
+{
+   //连coord比较记录数
+   var actCount = cl.count();
+   if( expCount !== Number(actCount) )
+   {
+      throw buildException( "checkSplitResultByCount", null, "", expCount, "  " + Number(actCount) );
+   }
+   
+   //直连源和目标节点比较记录数
+   var srcDataNode = new Sdb(db.getRG( srcGroupName ).getMaster());
+   var checkCL1 = srcDataNode.getCS( csName ).getCL( clName );
+   var actSrcCount = checkCL1.count();
+   
+   if( expSrcCount !== Number(actSrcCount) )
+   {
+      throw buildException( "checkSplitResultByCount", null, "source group data count is wrong", expSrcCount, "  " + Number(actSrcCount) );
+   }
+   srcDataNode.close();
+   
+   var tarDataNode = new Sdb(db.getRG( tarGroupName ).getMaster());
+   var checkCL2 = tarDataNode.getCS( csName ).getCL( clName );
+   var actTarCount = checkCL2.count();
+   
+   if( expTarCount !== Number(actTarCount) )
+   {
+      throw buildException( "checkSplitResultByCount", null, "target group data count is wrong", expTarCount, "  " + Number(actTarCount) );
+   }
+   tarDataNode.close();
 }

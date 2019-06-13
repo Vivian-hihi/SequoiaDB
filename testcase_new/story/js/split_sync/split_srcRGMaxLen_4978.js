@@ -41,7 +41,7 @@ function main()
    try
    {
       println("begin to create data group");
-      var logBackupPath = createDataGroup( srcRGName, hostName );
+      var srcLogPath = createDataGroup( srcRGName, hostName );
       
       var optionObj = {ShardingKey:{a:1}, ShardingType:"range", ReplSize:0, Group:srcRGName};
       var cl = commCreateCLByOption( db, csName, clName, optionObj, true, false );
@@ -52,12 +52,8 @@ function main()
       var endcondition = 3000;
 
       cl.split(srcRGName, tarRGName, {a : condition}, {a : endcondition});
-      //TODO:这里主要验证组名校验，建议测试切分结果直接直连源和目标节点带条件查询比较count数，连coord比较count数
       println("begin to check");
-      var srcDataArr = getExpDataArr( 3000, dataNum );
-      var tarDataArr = getExpDataArr( 0, 3000 );
-      checkData(csName, clName, srcRGName, srcDataArr);
-      checkData(csName, clName, tarRGName, tarDataArr);
+      checkSplitResultByCount( cl, csName, clName, srcRGName, tarRGName, dataNum, 7000, 3000 );
    }
    catch ( e )
    {
@@ -65,7 +61,7 @@ function main()
       //将新建组日志备份到/tmp/ci/rsrvnodelog目录下
       var backupDir = "/tmp/ci/rsrvnodelog/4978";
       File.mkdir(backupDir);
-      File.scp( logBackupPath, backupDir + "/sdbdiag.log" );
+      File.scp( srcLogPath, backupDir + "/sdbdiag.log" );
       throw e;
    }
    finally
