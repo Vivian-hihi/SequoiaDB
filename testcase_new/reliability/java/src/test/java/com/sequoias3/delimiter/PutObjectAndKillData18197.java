@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
+ * //TODO:注释标错了
  * @Description seqDB-18197 ::开启版本控制，创建对象过程中sdb端节点故障
  * @author wuyan
  * @Date 2019.01.17
@@ -66,6 +67,8 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 		GroupMgr groupMgr = GroupMgr.getInstance();
 		List<GroupWrapper> glist = groupMgr.getAllDataGroup();
 		String groupName = glist.get(0).getGroupName();
+		//TODO:GroupWrapper可以获取主节点，不需要通过sdb获取主节点,所以可以省去用例里面new Sequoiadb的步骤且setup里面
+		//sdb的连接没有释放
 		String destHostName = sdb.getReplicaGroup(groupName).getMaster().getHostName();
 		int destPort = sdb.getReplicaGroup(groupName).getMaster().getPort();
 		System.out.println("KillNode:" + destHostName + ":" + destPort);
@@ -82,6 +85,7 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 
 		mgr.execute();
 		Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+		//TODO：是否需要考虑停sdb节点可能带来其他的后果，以下打印信息可以去掉
 		System.out.println("----check ojbect");
 		for (String objectName : putSuccessObjectName) {
 			getObjectAndCheckResult(bucketName, objectName);
@@ -101,6 +105,7 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLibS3.clearBucket(s3Client, bucketName);
+				//TODO:没有删除本地创建的文件
 			}
 		} finally {
 			s3Client.shutdown();
@@ -118,6 +123,7 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 		@Override
 		public void exec() throws Exception {
 			try {
+				//TODO:打印信息建议去掉
 				System.out.println("---begin to put object:" + objectName);
 				s3Client1.putObject(bucketName, this.objectName, new File(filePath));
 				System.out.println("---end to put object:" + objectName);
@@ -126,6 +132,7 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 			} catch (AmazonS3Exception e) {
 				System.out.println("---put object:" + this.objectName + "  e:" + e.getStatusCode());
 				if (e.getStatusCode() != 500) {
+					//TODO:可以通过new Exception("",e)将objectName带出去;比如：throw new Exception(objectName,e)
 					throw e;
 				}
 			} finally {
@@ -136,10 +143,13 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 		}
 	}
 
+	//TODO:checkPutResult(PutObjectResult obj)就几行代码，建议直接写在s3Client.putObject()后面
 	private void checkPutResult(PutObjectResult obj) throws IOException {
+		//TODO：下面两行比较了相同的内容
 		Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));
 		Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));
 		ObjectMetadata metadata = obj.getMetadata();
+		//TODO:打印信息建议去掉
 		System.out.println("versionId = " + metadata.getVersionId());
 		Assert.assertEquals(metadata.getVersionId(), null, "the versionId is:" + metadata.getVersionId());
 	}
@@ -147,6 +157,7 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 	private void getObjectAndCheckResult(String bucketName, String key) throws Exception {
 		S3Object object = s3Client.getObject(bucketName, key);
 		ObjectMetadata metadata = object.getObjectMetadata();
+		//TODO:注释写错了
 		// check the versionId is maximum versionId:20
 		String versionId = metadata.getVersionId();
 		String curVersionId = "null";
@@ -154,6 +165,7 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 
 		// check the etag equal to the md5 of the last update content
 		String etag = metadata.getETag();
+		//TODO:Assert.assertEquals后面建议加上bucketName和key,出问题方便定位
 		Assert.assertEquals(etag, TestTools.getMD5(filePath));
 
 		// chect the content

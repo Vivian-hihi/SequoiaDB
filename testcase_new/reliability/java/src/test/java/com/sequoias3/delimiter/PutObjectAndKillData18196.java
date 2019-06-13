@@ -72,6 +72,8 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 		GroupMgr groupMgr = GroupMgr.getInstance();
 		List<GroupWrapper> glist = groupMgr.getAllDataGroup();
 		String groupName = glist.get(0).getGroupName();
+		//TODO:GroupWrapper可以获取主节点，不需要通过sdb获取主节点,所以可以省去用例里面new Sequoiadb的步骤且setup里面
+		//sdb的连接没有释放
 		String destHostName = sdb.getReplicaGroup(groupName).getMaster().getHostName();
 		int destPort = sdb.getReplicaGroup(groupName).getMaster().getPort();
 		System.out.println("KillNode:" + destHostName + ":" + destPort);
@@ -79,12 +81,12 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 		// create concurrent tasks
 		FaultMakeTask faultTask = KillNode.getFaultMakeTask(destHostName, String.valueOf(destPort), 5, 50);
 		TaskMgr mgr = new TaskMgr(faultTask);
-
 		for (int i = 0; i < objectNums; i++) {
 			mgr.addTask(new PutObject(objectNames.get(i)));
 		}
 		mgr.execute();
 		Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+		//TODO：是否需要考虑停sdb节点可能带来其他的后果
 		// put again
 		objectNames.removeAll(objectNameList);
 		for (String objectName : objectNames) {
@@ -101,6 +103,7 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLibS3.clearBucket(s3Client, bucketName);
+				//TODO:没有删除本地创建的文件
 			}
 		} finally {
 			s3Client.shutdown();
@@ -117,6 +120,7 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 		@Override
 		public void exec() throws Exception {
 			try {
+				//TODO:打印信息是否可以去掉
 				System.out.println("---begin to putobject:" + objectName);
 				for (int i = 0; i < versionNums; i++) {
 					PutObjectResult obj = s3Client.putObject(bucketName, this.objectName, new File(filePath));
@@ -127,6 +131,7 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 			} catch (AmazonS3Exception e) {
 				System.out.println("---put object fail:" + objectName + " e=" + e.getStatusCode());
 				if (e.getStatusCode() != 500) {
+					//TODO:可以通过new Exception("",e)将objectName带出去;比如：throw new Exception(objectName,e)
 					throw e;
 				}
 			}
@@ -134,10 +139,13 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 	}
 
 	private void checkPutResult(PutObjectResult obj) throws IOException {
+		//TODO：下面两行比较了相同的内容
 		Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));
 		Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));
 		ObjectMetadata metadata = obj.getMetadata();
+		//TODO:打印信息建议去掉
 		System.out.println("versionId = " + metadata.getVersionId());
+		//TODO:这里给一个范围可能更加严谨一点：[0,versionNums)，比较失败的时候带上objectName和版本以后方便定位
 		Assert.assertTrue(Integer.parseInt(metadata.getVersionId()) < versionNums, metadata.getVersionId());
 	}
 }
