@@ -11,7 +11,7 @@ function main()
    commDropCL( db, COMMCSNAME, clName, true, true, "drop cl in the beginning." );
    var cl = commCreateCL( db, COMMCSNAME, clName);
    
-   //TODO:1、如果有问题单注释代码，需要增加问题单号并在问题单中记录该用例
+   //SEQUOIADBMAINSTREAM-4583
    //查询regex类型数据，$options值错误
    /* try
    {

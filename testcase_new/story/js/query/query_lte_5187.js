@@ -70,7 +70,7 @@ function insertData ( cl, type )
           break;
    }
    cl.insert(dataArray);
-   //TODO:1、这里返回的数据加下描述说明，实际插入3条记录，返回只有2条记录用于比较结果
+   //不同数据类型，插入记录数都为3条，当匹配值为中间值时，expRecs应为前两条记录
    expRecs.push(dataArray[0]);
    expRecs.push(dataArray[1]);
    return expRecs;

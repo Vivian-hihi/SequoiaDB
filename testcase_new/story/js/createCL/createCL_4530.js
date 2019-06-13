@@ -17,16 +17,17 @@ function main()
    var groupName = groupsArray[0][0].GroupName;
    
    var csName = COMMCSNAME;
-   var clNames = ["a","123-test-中文。~!@#%^&*()_+-=\][|,/<>?~·！@#￥%……&*~!-%^*()_-+=|\/<'?*[];:/#（）——+《》{}|【】、，。~_127B","testIsMainCL"];
-   
+   var clNames = ["a","123-test-中文。~!@#%^&*()_+-=\][|,/<>?~·！@#￥%……&*~!-%^*()_-+=|\/<'?*[];:/#（）——+《》{}|【】、，。~_127B"];
+   var clNames2 = ["b", "123-test-中文。another_test-=\][|）——,/<>?~·！@#￥%……&*~!-%^*()_-+=|\/<'?*[];:/#（+《:{}|//、，。~_127B"];
    for(var i = 0 ; i < clNames.length; i++)
    {
        commDropCL( db, csName, clNames[i], true, true, "drop cl " + clNames[i] + " in the beginning." );
+       commDropCL( db, csName, clNames2[i], true, true, "drop cl " + clNames[i] + " in the beginning." );
    }
 
    //name 覆盖1字节有效字符
    var optionObj = {ShardingKey:{a:1},ShardingType:"hash",Partition:1024,ReplSize:0,Compressed:true,CompressionType:"lzw",AutoSplit:true};
-   commCreateCLByOption( db, csName, clNames[0], optionObj, true );
+   var cl1 = commCreateCLByOption( db, csName, clNames[0], optionObj, true );
    
    checkResult( clNames[0], "ShardingKey", {a:1} );
    checkResult( clNames[0], "ShardingType", "hash" );
@@ -35,28 +36,42 @@ function main()
    checkResult( clNames[0], "AttributeDesc", "Compressed" );
    checkResult( clNames[0], "CompressionTypeDesc", "lzw" );
    checkResult( clNames[0], "AutoSplit", true );
+   checkCLByInsertData(cl1);
    
    //name 覆盖127字节有效字符
    var optionObj = {ShardingKey:{a:1},ShardingType:"range",ReplSize:-1,Group:groupName};
-   commCreateCLByOption( db, csName, clNames[1], optionObj, true );
+   var cl2 = commCreateCLByOption( db, csName, clNames[1], optionObj, true );
    
    checkResult( clNames[1], "ShardingKey", {a:1} );
    checkResult( clNames[1], "ShardingType", "range" );
    checkResult( clNames[1], "ReplSize", -1 );
    checkGroup( clNames[1], groupName );
+   checkCLByInsertData(cl2);
    
-   //检测 IsMainCL
-   //TODO:1、这里只是验证IsMainCL属性值，建议补充主表名边界值验证，补充cl可用（插入数据）
+   //检测 IsMainCL  覆盖边界值
    var optionObj = {ShardingKey:{a:1},ShardingType:"range",IsMainCL:true};
-   commCreateCLByOption( db, csName, clNames[2], optionObj, true );
+   var cl3 = commCreateCLByOption( db, csName, clNames2[0], optionObj, true );
    
-   checkResult( clNames[2], "ShardingKey", {a:1} );
-   checkResult( clNames[2], "ShardingType", "range" );
-   checkResult( clNames[2], "IsMainCL", true );
+   checkResult( clNames2[0], "ShardingKey", {a:1} );
+   checkResult( clNames2[0], "ShardingType", "range" );
+   checkResult( clNames2[0], "IsMainCL", true );
+   commCreateCL( db, csName, "subcl4530_1" );
+   cl3.attachCL(csName+".subcl4530_1",{LowBound:{a:0},UpBound:{a:2000}});
+   checkCLByInsertData(cl3);
+   
+   var optionObj = {ShardingKey:{a:1},IsMainCL:true};
+   var cl4 = commCreateCLByOption( db, csName, clNames2[1], optionObj, true );
+   
+   checkResult( clNames2[1], "ShardingKey", {a:1} );
+   checkResult( clNames2[1], "IsMainCL", true );
+   commCreateCL( db, csName, "subcl4530_2" );
+   cl4.attachCL(csName+".subcl4530_2",{LowBound:{a:0},UpBound:{a:2000}});
+   checkCLByInsertData(cl4);
    
    for(var i = 0 ; i < clNames.length; i++)
    {
        commDropCL( db, csName, clNames[i], true, true, "drop cl " + clNames[i] + " in the end." );
+       commDropCL( db, csName, clNames2[i], true, true, "drop cl " + clNames2[i] + " in the end." );
    }
 }
 
@@ -102,5 +117,22 @@ function checkGroup( clName, groupName )
    if (JSON.stringify(expGroups) !== JSON.stringify(actGroups))
    {
       throw buildException("checkGroup()", null, "groups is wrong", JSON.stringify(expGroups), JSON.stringify(actGroups));
+   }
+}
+
+function checkCLByInsertData( cl )
+{
+   var dataArray = new Array();
+   for(var i = 0 ; i < 1000 ; i ++)
+   {
+      var data = {a:i};
+      dataArray.push(data);
+   }
+   cl.insert(dataArray);
+   
+   var actCount = cl.count();
+   if( Number(actCount) != 1000 )
+   {
+       throw "insert data field, act insert number is " + Number(actCount);
    }
 }
