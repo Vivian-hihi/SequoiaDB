@@ -1,26 +1,30 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<!--this xml is for ci, please don't modify it-->
+<!--this xml is for ci, please don't modify it -->
 <!--testcase which should configure node -->
 
-<suite name="driver" verbose="1">  
-   <parameter name="HOSTNAME"       value="${HOSTNAME}" />
-   <parameter name="SVCNAME"        value="${SVCNAME}" />
-   <parameter name="ESHOSTNAME"       value="${ESHOSTNAME}" />
-   <parameter name="ESSVCNAME"        value="${ESSVCNAME}" />
-   <parameter name="FULLTEXTPREFIX"        value="${FULLTEXTPREFIX}" />
+<suite name="driver" verbose="1">
+   <parameter name="HOSTNAME" value="${HOSTNAME}" />
+   <parameter name="SVCNAME" value="${SVCNAME}" />
+   <parameter name="ESHOSTNAME" value="${ESHOSTNAME}" />
+   <parameter name="ESSVCNAME" value="${ESSVCNAME}" />
+   <parameter name="FULLTEXTPREFIX" value="${FULLTEXTPREFIX}" />
    <parameter name="CHANGEDPREFIX" value="story_java_test" />
    <parameter name="RSRVPORTBEGIN" value="26000" />
    <parameter name="RSRVPORTEND" value="27000" />
-   <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
+   <parameter name="RSRVNODEDIR"
+      value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
-   <parameter name="CONFTOOL" value="trunk/misc/ci_new/src/test/exec_testcase/changeConf.js" />
+   <parameter name="CONFTOOL"
+      value="trunk/misc/ci_new/src/test/exec_testcase/changeConf.js" />
    <parameter name="ENABLETRANSACTION" value="true" />
 
    <listeners>
-      <listener class-name="com.sequoiadb.testcommon.TimePrinterListener"/>
+      <listener
+         class-name="com.sequoiadb.testcommon.TimePrinterListener" />
    </listeners>
 
-   <!--The testcases of different configure should be placed in different <test> -->
+   <!--The testcases of different configure should be placed in different 
+      <test> -->
    <test name="rc" parallel="classes" thread-count="5">
       <groups>
          <run>
@@ -31,6 +35,7 @@
          <package name="com.sequoiadb.transaction.rc" />
          <package name="com.sequoiadb.transaction.uniqueIndex" />
          <package name="com.sequoiadb.transaction.metadata" />
+         <package name="com.sequoiadb.transaction.unlock" />
       </packages>
    </test>
 
@@ -44,6 +49,7 @@
          <package name="com.sequoiadb.transaction.ru" />
          <package name="com.sequoiadb.transaction.uniqueIndex" />
          <package name="com.sequoiadb.transaction.metadata" />
+         <package name="com.sequoiadb.transaction.unlock" />
       </packages>
    </test>
 
@@ -57,7 +63,7 @@
          <package name="com.sequoiadb.transaction.rcwaitlock" />
       </packages>
    </test>
-   
+
    <test name="rs" parallel="classes" thread-count="5">
       <groups>
          <run>
@@ -67,9 +73,10 @@
       <packages>
          <package name="com.sequoiadb.transaction.rs" />
          <package name="com.sequoiadb.transaction.rcwaitlock" />
+         <package name="com.sequoiadb.transaction.unlock" />
       </packages>
    </test>
-   
+
    <test name="rusync" parallel="classes" thread-count="1">
       <groups>
          <run>
@@ -80,7 +87,7 @@
          <package name="com.sequoiadb.transaction.rename" />
       </packages>
    </test>
-   
+
    <test name="rcauto" parallel="classes" thread-count="5">
       <groups>
          <run>
@@ -91,7 +98,7 @@
          <package name="com.sequoiadb.transaction.rcauto" />
       </packages>
    </test>
-   
+
    <test name="rcuserbs" parallel="classes" thread-count="5">
       <groups>
          <run>
@@ -103,6 +110,6 @@
          <package name="com.sequoiadb.transaction.rcwaitlock" />
       </packages>
    </test>
-   
+
 </suite>
    
