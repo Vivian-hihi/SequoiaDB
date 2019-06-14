@@ -2464,9 +2464,7 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_CATCTXDROPSEQUENCETASK_ROLLBACK_INT ) ;
 
-      BSONObj seqOpt ;
-      bson::BSONElement ele ;
-      catSequenceManager *pSeqMgr ;
+      catSequenceManager *pSeqMgr = NULL ;
       vector<BSONObj>& obj = getRollbackObj() ;
 
       pSeqMgr = sdbGetCatalogueCB()->getCatGTSMgr()->getSequenceMgr() ;
@@ -2475,18 +2473,24 @@ namespace engine
 
       for( UINT32 i = 0 ; i < obj.size() ; i++ )
       {
+         BSONObj seqOpt = obj[ i ] ;
+         BSONElement ele ;
+
+         // get name field from rollback object
          const CHAR *seqName = NULL ;
-         PD_CHECK( obj[i].hasField( FIELD_NAME_SEQUENCE_NAME ), SDB_SYS, error,
-                   PDERROR, "Failed to get field[%s]",
-                   obj[i].toString( false, false ).c_str() ) ;
-         ele = obj[i].getField( FIELD_NAME_SEQUENCE_NAME ) ;
+         PD_CHECK( seqOpt.hasField( FIELD_NAME_SEQUENCE_NAME ), SDB_SYS, error,
+                   PDERROR, "Failed to get field [%s] from %s",
+                   FIELD_NAME_SEQUENCE_NAME, seqOpt.toString().c_str() ) ;
+         ele = seqOpt.getField( FIELD_NAME_SEQUENCE_NAME ) ;
          PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
-                  "Failed to get field [%s]", FIELD_NAME_SEQUENCE_NAME ) ;
+                  "Failed to get field [%s] from %s, type should be string",
+                  FIELD_NAME_SEQUENCE_NAME, seqOpt.toString().c_str() ) ;
          seqName = ele.valuestrsafe() ;
-         seqOpt = catBuildSequenceOptions( obj[i] ) ;
-         rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to create sequence[%s] when rollback, "
-                      "rc: %d", seqName, rc ) ;
+
+         // insert rollback object
+         rc = pSeqMgr->insertSequence( seqName, seqOpt, cb, w ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create sequence [%s] when "
+                      "rollback, rc: %d", seqName, rc ) ;
       }
 
    done :

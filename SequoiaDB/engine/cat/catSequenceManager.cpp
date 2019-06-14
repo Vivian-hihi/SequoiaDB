@@ -208,31 +208,43 @@ namespace engine
          goto error ;
       }
 
-      {
-         CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
-         BUCKET_XLOCK( bucket ) ;
-
-         CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
-         if ( bucket.end() != iter )
-         {
-            rc = SDB_SEQUENCE_EXIST ;
-            PD_LOG( PDERROR, "Sequence %s is already existing, rc=%d", name.c_str(), rc ) ;
-            goto error ;
-         }
-
-         rc = _insertSequence( obj, eduCB, w ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to insert sequence[%s], rc=%d",
-                    name.c_str(), rc ) ;
-            goto error ;
-         }
-      }
+      rc = insertSequence( name, obj, eduCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to insert sequence [%s], rc: %d",
+                   name.c_str(), rc ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_GTS_SEQ_MGR_CREATE_SEQ, rc ) ;
       return rc ;
    error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_MGR_INSERT_SEQ, "_catSequenceManager::insertSequence" )
+   INT32 _catSequenceManager::insertSequence ( const std::string & name,
+                                               BSONObj & options,
+                                               _pmdEDUCB * eduCB,
+                                               INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_GTS_SEQ_MGR_INSERT_SEQ ) ;
+
+      CAT_SEQ_MAP::Bucket& bucket = _sequenceCache.getBucket( name ) ;
+      BUCKET_XLOCK( bucket ) ;
+
+      CAT_SEQ_MAP::map_const_iterator iter = bucket.find( name ) ;
+      PD_CHECK( bucket.end() == iter, SDB_SEQUENCE_EXIST, error, PDERROR,
+                "Sequence [%s] is already existing", name.c_str() ) ;
+
+      rc = _insertSequence( options, eduCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to insert sequence [%s], rc: %d",
+                   name.c_str(), rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_GTS_SEQ_MGR_INSERT_SEQ, rc ) ;
+      return rc ;
+
+   error :
       goto done ;
    }
 
