@@ -177,6 +177,7 @@ public class TransUtils {
             BSONObject record = cursor.getNext();
             actRList.add(record);
         }
+        cursor.close();
         return actRList;
     }
 
