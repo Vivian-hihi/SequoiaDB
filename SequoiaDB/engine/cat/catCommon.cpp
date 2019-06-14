@@ -5372,7 +5372,9 @@ namespace engine
                    ( ossStrcmp( fieldName, CAT_SEQUENCE_CYCLED ) == 0 &&
                      OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_CYCLED_FIELD ) ) ||
                    ( ossStrcmp( fieldName, CAT_AUTOINC_GENERATED ) == 0 &&
-                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_GENERATED_FIELD ) ) )
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_GENERATED_FIELD ) ) ||
+                   ( ossStrcmp( fieldName, CAT_SEQUENCE_INITIAL ) == 0 &&
+                     OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_INITIAL_FIELD ) ) )
          {
             // fields are specified
             seqOptBuilder.append( ele ) ;

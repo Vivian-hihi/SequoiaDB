@@ -273,7 +273,8 @@ namespace engine
                                              _pmdEDUCB* eduCB,
                                              INT16 w,
                                              bson::BSONObj * oldOptions,
-                                             UINT32 * alterMask )
+                                             UINT32 * alterMask,
+                                             BOOLEAN restartCurValue )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
@@ -324,7 +325,8 @@ namespace engine
       }
 
       // update the sequence now
-      rc = sequence.setOptions( options, FALSE, FALSE, &fieldMask ) ;
+      rc = sequence.setOptions( options, FALSE, FALSE, &fieldMask,
+                                restartCurValue ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
@@ -1085,10 +1087,11 @@ namespace engine
          {
             bucket.insert( CAT_SEQ_MAP::value_type( name, sequence ) ) ;
          }
-         catch( std::exception& e )
+         catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache", name.c_str() ) ;
+            PD_LOG( PDERROR, "Failed to insert sequence[%s] to cache, %s",
+                    name.c_str(), e.what() ) ;
             goto error ;
          }
 

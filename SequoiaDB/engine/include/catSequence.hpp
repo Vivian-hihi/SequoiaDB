@@ -43,6 +43,10 @@
 
 namespace engine
 {
+
+   /*
+      _catSequence define
+    */
    class _catSequence: public SDBObject
    {
    public:
@@ -96,7 +100,8 @@ namespace engine
       INT32 toBSONObj( bson::BSONObj& obj, BOOLEAN forUpdate ) const ;
       void copyFrom( const _catSequence& other, BOOLEAN withInternalField = TRUE ) ;
       INT32 setOptions( const bson::BSONObj& options, BOOLEAN init,
-                        BOOLEAN withInternalField, UINT32 * alterMask = NULL ) ;
+                        BOOLEAN withInternalField, UINT32 * alterMask = NULL,
+                        BOOLEAN restartCurValue = FALSE ) ;
       INT32 validate() const ;
 
    public:

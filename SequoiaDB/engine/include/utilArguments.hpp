@@ -75,6 +75,7 @@ namespace engine
    #define UTIL_CL_AUTOINC_CYCLED_FIELD      ( 0x00000040 )
    #define UTIL_CL_AUTOINC_GENERATED_FIELD   ( 0x00000080 )
    #define UTIL_CL_AUTOINC_CURVALUE_FIELD    ( 0x00000100 )
+   #define UTIL_CL_AUTOINC_INITIAL_FIELD     ( 0x00000200 )
 
    #define UTIL_CS_NAME_FIELD                ( 0x00000001 )
    #define UTIL_CS_DOMAIN_FIELD              ( 0x00000002 )
