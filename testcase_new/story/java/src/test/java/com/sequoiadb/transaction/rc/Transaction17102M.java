@@ -65,7 +65,8 @@ public class Transaction17102M extends SdbTestBase {
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
                 (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', IsMainCL:true}"));
         sdb.getCollectionSpace(csName).createCollection("sub117102");
-        sdb.getCollectionSpace(csName).createCollection("sub217102");
+        sdb.getCollectionSpace(csName).createCollection("sub217102",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
         cl.attachCollection(csName + ".sub117102",
                 (BSONObject) JSON.parse("{LowBound:{b:{'$minKey':1}}, UpBound:{b:500}}"));
         cl.attachCollection(csName + ".sub217102",

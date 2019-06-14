@@ -49,11 +49,12 @@ public class Transaction17088M extends SdbTestBase {
 
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        
+
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
                 (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', IsMainCL:true}"));
         sdb.getCollectionSpace(csName).createCollection("sub117088");
-        sdb.getCollectionSpace(csName).createCollection("sub217088");
+        sdb.getCollectionSpace(csName).createCollection("sub217088",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
         cl.attachCollection(csName + ".sub117088",
                 (BSONObject) JSON.parse("{LowBound:{b:{'$minKey':1}}, UpBound:{b:25000}}"));
         cl.attachCollection(csName + ".sub217088",

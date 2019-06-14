@@ -61,11 +61,12 @@ public class Transaction17109M extends SdbTestBase {
         if (CommLib.OneGroupMode(sdb)) {
             throw new SkipException("ONE GROUP MODE");
         }
-        
+
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
                 (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', IsMainCL:true}"));
         sdb.getCollectionSpace(csName).createCollection("sub117109");
-        sdb.getCollectionSpace(csName).createCollection("sub217109");
+        sdb.getCollectionSpace(csName).createCollection("sub217109",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
         cl.attachCollection(csName + ".sub117109",
                 (BSONObject) JSON.parse("{LowBound:{b:{'$minKey':1}}, UpBound:{b:500}}"));
         cl.attachCollection(csName + ".sub217109",
