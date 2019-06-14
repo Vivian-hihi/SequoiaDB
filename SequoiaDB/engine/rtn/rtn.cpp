@@ -949,25 +949,31 @@ namespace engine
 
       utilRenameLogger logger ;
       utilRenameLog renameLog ;
-      BOOLEAN hasRenameInfo = FALSE ;
+      BOOLEAN hasRenameInfo = TRUE ;
 
       rc = logger.init( UTIL_RENAME_LOGGER_READ ) ;
-      if ( SDB_OK == rc )
-      {
-         hasRenameInfo = TRUE ;
-         rc = logger.load( renameLog ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to load rename log file, rc: %d" , rc ) ;
-      }
-      else if ( SDB_FNE == rc )
+      if ( SDB_FNE == rc )
       {
          rc = SDB_OK ;
          hasRenameInfo = FALSE ;
       }
-      else
+      PD_RC_CHECK( rc, PDERROR, "Failed to init logger, rc: %d" , rc ) ;
+
+      if ( hasRenameInfo )
       {
-         PD_LOG( PDERROR, "Failed to init logger, rc: %d" , rc ) ;
-         goto error ;
+         rc = logger.load( renameLog ) ;
+         if ( SDB_SYS == rc )
+         {
+            PD_LOG( PDWARNING, "Failed to load rename log file, rc: %d. "
+                    "And delete rename log file" , rc ) ;
+            logger.clear() ;
+            hasRenameInfo = FALSE ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to load rename log file, rc: %d" , rc ) ;
+            goto error ;
+         }
       }
 
       try
@@ -1090,12 +1096,7 @@ namespace engine
 
       if ( hasRenameInfo )
       {
-         rc = logger.clear() ;
-         if ( rc )
-         {
-            PD_LOG( PDWARNING,
-                    "Failed to clear rename log, rc: %d" , rc ) ;
-         }
+         logger.clear() ;
          hasRenameInfo = FALSE ;
       }
 

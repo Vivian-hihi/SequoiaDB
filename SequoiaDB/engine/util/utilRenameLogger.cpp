@@ -264,8 +264,9 @@ namespace engine
       if ( !utilStr2RenameLog( readBuf, log ) )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR,
-                 "Failed to convert string to rename info, rc: %d", rc ) ;
+         PD_LOG( PDWARNING,
+                 "Failed to convert string[%s] to rename info, rc: %d",
+                 readBuf, rc ) ;
          goto error ;
       }
 
@@ -295,7 +296,7 @@ namespace engine
       {
          rc = SDB_OK ;
       }
-      PD_RC_CHECK ( rc, PDERROR,
+      PD_RC_CHECK ( rc, PDWARNING,
                     "Failed to delete file[%s], rc: %d", _fileName, rc ) ;
 
    done :
