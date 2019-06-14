@@ -237,7 +237,7 @@ namespace engine
       SET_NODEID nodes ;
       DPS_TRANS_ID transID = cb->getTransID() ;
 
-      PD_LOG ( PDEVENT, "Begin to rollback transaction(ID:%s, Attr:%s)...",
+      PD_LOG ( PDEVENT, "Begin to rollback transaction(ID:%s, IDAttr:%s)...",
                dpsTransIDToString( transID ).c_str(),
                dpsTransIDAttrToString( transID ).c_str() ) ;
 
@@ -701,7 +701,7 @@ namespace engine
       // complete, delete transaction
       _groupSession.getPropSite()->endTrans( cb ) ;
 
-      PD_LOG( PDINFO, "Execute commit(ID:%s, Attr:%s)",
+      PD_LOG( PDINFO, "Execute commit(ID:%s, IDAttr:%s)",
               dpsTransIDToString( curTransID ).c_str(),
               dpsTransIDAttrToString( curTransID ).c_str() ) ;
 

@@ -92,7 +92,7 @@ namespace engine
          if ( DPS_TRANS_WAIT_COMMIT == transInfo._status &&
               DPS_INVALID_LSN_OFFSET != transInfo._lsn )
          {
-            PD_LOG( PDWARNING, "Transaction(ID:%s, Attr:%s) is in-doubt",
+            PD_LOG( PDWARNING, "Transaction(ID:%s, IDAttr:%s) is in-doubt",
                     dpsTransIDToString( transID ).c_str(),
                     dpsTransIDAttrToString( transID ).c_str() ) ;
 

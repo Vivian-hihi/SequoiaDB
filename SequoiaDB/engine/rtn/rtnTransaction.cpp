@@ -88,7 +88,7 @@ namespace engine
          }
       }
 
-      PD_LOG( PDINFO, "Begin transaction operations(ID:%s, Attr:%s)",
+      PD_LOG( PDINFO, "Begin transaction operations(ID:%s, IDAttr:%s)",
               dpsTransIDToString( cb->getTransID() ).c_str(),
               dpsTransIDAttrToString( cb->getTransID() ).c_str() ) ;
 
@@ -415,7 +415,7 @@ namespace engine
 
       if ( doRollback )
       {
-         PD_LOG ( PDEVENT, "Rollback transaction(ID:%s, Attr:%s) finished "
+         PD_LOG ( PDEVENT, "Rollback transaction(ID:%s, IDAttr:%s) finished "
                   "with rc[%d]", dpsTransIDToString( transID ).c_str(),
                   dpsTransIDAttrToString( transID ).c_str(),
                   rc ) ;
@@ -581,7 +581,7 @@ namespace engine
          /// remove the transaction
          pTransMap->erase( iterMap->first ) ;
          tmpTransMap.erase(iterMap ) ;
-         PD_LOG( PDEVENT, "Rollback transaction(ID:%s, Attr:%s) finished "
+         PD_LOG( PDEVENT, "Rollback transaction(ID:%s, IDAttr:%s) finished "
                  "with rc[%d]", dpsTransIDToString( transID ).c_str(),
                  dpsTransIDAttrToString( transID ).c_str(),
                  rc ) ;

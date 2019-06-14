@@ -1585,7 +1585,7 @@ namespace engine
 
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " TransID : %s"OSS_NEWLINE
-                                 " TransAttr : %s"OSS_NEWLINE,
+                                 " IDAttr  : %s"OSS_NEWLINE,
                                  dpsTransIDToString( transID, tmpID,
                                                      DPS_TRANS_STR_LEN ),
                                  dpsTransIDAttrToString( transID, tmpAttr,

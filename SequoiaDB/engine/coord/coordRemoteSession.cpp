@@ -285,7 +285,7 @@ namespace engine
 
          _mapTransNodes.clear() ;
 
-         PD_LOG( PDINFO, "Begin transaction(ID:%s, Attr:%s)",
+         PD_LOG( PDINFO, "Begin transaction(ID:%s, IDAttr:%s)",
                  dpsTransIDToString( transID ).c_str(),
                  dpsTransIDAttrToString( transID ).c_str() ) ;
       }
