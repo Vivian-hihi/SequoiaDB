@@ -1,7 +1,7 @@
 package com.sequoiadb.transaction.rc;
 
 /**
- * @Description seqDB-17089: 事务中批量更新与读并发 
+ * @Description seqDB-17090: 事务中批量删除与读并发 
  * @author xiaoni Zhao
  * @date 2019-1-21
  */
@@ -25,8 +25,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
 
 @Test(groups = "rc")
-public class Transaction17089 extends SdbTestBase {
-    private String clName = "cl_17089";
+public class Transaction17090M extends SdbTestBase {
+    private String clName = "cl_17090m";
     private Sequoiadb sdb = null;
     private Sequoiadb db1 = null;
     private Sequoiadb db2 = null;
@@ -46,11 +46,19 @@ public class Transaction17089 extends SdbTestBase {
         if (CommLib.OneGroupMode(sdb)) {
             throw new SkipException("ONE GROUP MODE");
         }
-
+        
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        
         cl = sdb.getCollectionSpace(csName).createCollection(clName,
-                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', IsMainCL:true}"));
+        sdb.getCollectionSpace(csName).createCollection("sub117090");
+        sdb.getCollectionSpace(csName).createCollection("sub217090");
+        cl.attachCollection(csName + ".sub117090",
+                (BSONObject) JSON.parse("{LowBound:{b:{'$minKey':1}}, UpBound:{b:25000}}"));
+        cl.attachCollection(csName + ".sub217090",
+                (BSONObject) JSON.parse("{LowBound:{b:25000}, UpBound:{b:{'$maxKey':1}}}"));
+        
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
@@ -59,11 +67,12 @@ public class Transaction17089 extends SdbTestBase {
 
     @Test
     public void test() {
+        // 开启两个并发事务
         db1.beginTransaction();
         db2.beginTransaction();
 
-        // 事务1批量更新全部记录
-        cl1.update("{a:1}", "{$set:{a:2}}", "{'':'a'}");
+        // 事务1批量删除记录
+        cl1.delete("{a:1}", "{'':'a'}");
 
         // 事务2表扫描记录
         cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
@@ -78,42 +87,42 @@ public class Transaction17089 extends SdbTestBase {
         actList.clear();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, null, "{'':null}");
         actList = TransUtils.getReadActList(cursor);
-        expList.clear();
-        expList = TransUtils.getUpdateDatas(0, 50000, 2);
-        Assert.assertEquals(actList, expList);
+        Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl.query(null, null, null, "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        Assert.assertTrue(actList.isEmpty());
+        actList.clear();
 
         db1.commit();
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl2.query(null, null, null, "{'':null}");
         actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl2.query(null, null, null, "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        cursor = cl.query(null, null, null, "{'':null}");
         actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        Assert.assertTrue(actList.isEmpty());
         actList.clear();
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
+        cursor = cl.query(null, null, null, "{'':'a'}");
         actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        Assert.assertTrue(actList.isEmpty());
+        actList.clear();
 
         db2.commit();
         cursor.close();
