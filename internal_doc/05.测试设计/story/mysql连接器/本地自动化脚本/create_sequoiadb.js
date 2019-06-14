@@ -497,6 +497,15 @@ function main()
    obj[clName] = flag;
    flags.push(obj);
   
+   //SEQUOIASQLMAINSTREAM-297
+   var clName = "t60";
+   var obj = new Object();
+   var clOptions = getCLOptions(csName, clName);
+   var expObj = {ReplSize:-1, Attribute:0, AttributeDesc:""};
+   var flag = compare(clOptions, expObj);
+   obj[clName] = flag;
+   flags.push(obj);
+  
    //println("flags:" + flags);
    return JSON.stringify(flags);
 }

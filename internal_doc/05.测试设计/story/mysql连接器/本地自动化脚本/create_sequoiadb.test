@@ -214,5 +214,9 @@ show create table t58;
 create table t59(a int, b int, c int) engine=sequoiadb;
 show create table t59;
 
+#SEQUOIASQLMAINSTREAM-297
+create table t60(a smallint) comment="sequoiadb:{table_options:{Compressed:false}}";
+show create table t60;
+
 --exec echo a=`/opt/sequoiadb/bin/sdb -f /home/sdbadmin/mysql_5.7.25/mysql-test/t/create_sequoiadb.js`;
 drop database test_option;

@@ -567,5 +567,11 @@ t59	CREATE TABLE `t59` (
   `b` int(11) DEFAULT NULL,
   `c` int(11) DEFAULT NULL
 ) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1
-a=[{"t1":true},{"t2":true},{"t3":true},{"t4":true},{"t5":true},{"t6":true},{"t7":true},{"t8":true},{"t9":true},{"t10":true},{"t11":true},{"t12":true},{"t13":true},{"t14":true},{"t15":true},{"t16":true},{"t17":true},{"t18":true},{"t19":true},{"t20":true},{"t21":true},{"t22":true},{"t23":true},{"t24":true},{"t25":true},{"t26":true},{"t27":true},{"t28":true},{"t29":true},{"t30":true},{"t31":true},{"t32":true},{"t33":true},{"t34":true},{"t35":true},{"t36":true},{"t37":true},{"t38":true},{"t39":true},{"t40":true},{"t41":true},{"t42":true},{"t43":true},{"t44":true},{"t45":true},{"t46":true},{"t47":true},{"t48":true},{"t49":true},{"t50":true},{"t51":true},{"t52":true},{"t53":true},{"t54":true},{"t55":true},{"t56":true},{"t57":true},{"t58":true},{"t59":true}]
+create table t60(a smallint) comment="sequoiadb:{table_options:{Compressed:false}}";
+show create table t60;
+Table	Create Table
+t60	CREATE TABLE `t60` (
+  `a` smallint(6) DEFAULT NULL
+) ENGINE=SEQUOIADB DEFAULT CHARSET=latin1 COMMENT='sequoiadb:{table_options:{Compressed:false}}'
+a=[{"t1":true},{"t2":true},{"t3":true},{"t4":true},{"t5":true},{"t6":true},{"t7":true},{"t8":true},{"t9":true},{"t10":true},{"t11":true},{"t12":true},{"t13":true},{"t14":true},{"t15":true},{"t16":true},{"t17":true},{"t18":true},{"t19":true},{"t20":true},{"t21":true},{"t22":true},{"t23":true},{"t24":true},{"t25":true},{"t26":true},{"t27":true},{"t28":true},{"t29":true},{"t30":true},{"t31":true},{"t32":true},{"t33":true},{"t34":true},{"t35":true},{"t36":true},{"t37":true},{"t38":true},{"t39":true},{"t40":true},{"t41":true},{"t42":true},{"t43":true},{"t44":true},{"t45":true},{"t46":true},{"t47":true},{"t48":true},{"t49":true},{"t50":true},{"t51":true},{"t52":true},{"t53":true},{"t54":true},{"t55":true},{"t56":true},{"t57":true},{"t58":true},{"t59":true},{"t60":true}]
 drop database test_option;
