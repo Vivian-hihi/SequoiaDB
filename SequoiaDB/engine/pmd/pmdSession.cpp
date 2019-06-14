@@ -354,6 +354,7 @@ namespace engine
 
       BOOLEAN needRollback = FALSE ;
       BOOLEAN isAutoCommit = FALSE ;
+      BOOLEAN isDoCommit   = FALSE ;
 
       PD_TRACE_ENTRY( SDB_PMDLOCALSN_PROMSG ) ;
 
@@ -363,6 +364,11 @@ namespace engine
       rc = _onMsgBegin( msg ) ;
       if ( SDB_OK == rc )
       {
+         if ( MSG_BS_TRANS_COMMIT_REQ == msg.opCode )
+         {
+            isDoCommit = TRUE ;
+         }
+
          rc = _processor->processMsg( msg, contextBuff,
                                       _replyHeader.contextID,
                                       _needReply,
@@ -383,7 +389,7 @@ namespace engine
          }
 
          if ( SDB_OK != rc && eduCB()->isTransaction() &&
-              ( isAutoCommit || SDB_OK != eduCB()->getTransRC() ||
+              ( isAutoCommit || isDoCommit ||
                 ( needRollback &&
                   eduCB()->getTransExecutor()->isTransAutoRollback() )
               )

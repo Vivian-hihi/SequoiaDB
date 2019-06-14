@@ -40,6 +40,7 @@
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
 #include "dpsTransCB.hpp"
+#include "dpsUtil.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -284,9 +285,9 @@ namespace engine
 
          _mapTransNodes.clear() ;
 
-         PD_LOG( PDINFO, "Begin transaction(%04x%010x)",
-                 DPS_TRANS_GET_NODEID( transID ),
-                 DPS_TRANS_GET_SN( transID ) ) ;
+         PD_LOG( PDINFO, "Begin transaction(ID:%s, Attr:%s)",
+                 dpsTransIDToString( transID ).c_str(),
+                 dpsTransIDAttrToString( transID ).c_str() ) ;
       }
 
       return SDB_OK ;

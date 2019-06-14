@@ -41,13 +41,30 @@
 #define DPSUTIL_HPP_
 
 #include "ossTypes.h"
+#include "dpsDef.hpp"
+#include "ossMemPool.hpp"
 
 namespace engine
 {
+
+   #define DPS_TRANS_STR_LEN           ( 64 )
+
    void dpsSetTimeonFlag( BOOLEAN flag ) ;
    BOOLEAN dpsGetTimeonFlag() ;
 
    const CHAR* dpsTransStatusToString( INT32 status ) ;
+
+   const CHAR* dpsTransIDToString( const DPS_TRANS_ID &transID,
+                                   CHAR *pBuff,
+                                   UINT32 bufSize ) ;
+
+   ossPoolString dpsTransIDToString( const DPS_TRANS_ID &transID ) ;
+
+   const CHAR* dpsTransIDAttrToString( const DPS_TRANS_ID &transID,
+                                       CHAR *pBuff,
+                                       UINT32 bufSize ) ;
+
+   ossPoolString dpsTransIDAttrToString( const DPS_TRANS_ID &transID ) ;
 }
 
 #endif // DPSUTIL_HPP_

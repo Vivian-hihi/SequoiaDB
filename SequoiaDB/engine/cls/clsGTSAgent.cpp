@@ -92,9 +92,9 @@ namespace engine
          if ( DPS_TRANS_WAIT_COMMIT == transInfo._status &&
               DPS_INVALID_LSN_OFFSET != transInfo._lsn )
          {
-            PD_LOG( PDWARNING, "Transaction(%04x%010x) is in-doubt",
-                    DPS_TRANS_GET_NODEID( transID ),
-                    DPS_TRANS_GET_SN( transID ) ) ;
+            PD_LOG( PDWARNING, "Transaction(ID:%s, Attr:%s) is in-doubt",
+                    dpsTransIDToString( transID ).c_str(),
+                    dpsTransIDAttrToString( transID ).c_str() ) ;
 
             rc = _syncCheckTransStatus( transID, transInfo._lsn, status ) ;
             if ( SDB_OK == rc && DPS_TRANS_COMMIT == status )
@@ -239,9 +239,9 @@ namespace engine
          }
          else if ( rc )
          {
-            PD_LOG( PDERROR, "Check trans(%04x%010x) by group(%u) failed, "
-                    "rc: %d", DPS_TRANS_GET_NODEID( transID ),
-                    DPS_TRANS_GET_SN( transID ), group, rc ) ;
+            PD_LOG( PDERROR, "Check trans(%s) by group(%u) failed, "
+                    "rc: %d", dpsTransIDToString( transID ).c_str(),
+                    group, rc ) ;
             goto error ;
          }
          else if ( 1 == pReply->numReturned &&
@@ -254,10 +254,9 @@ namespace engine
                BSONElement e = obj.getField( FIELD_NAME_STATUS ) ;
                status = ( DPS_TRANS_STATUS )e.numberInt() ;
 
-               PD_LOG( PDEVENT, "Check trans(%04x%010x) by group(%u) succeed["
-                       "Status:%s(%d)]", DPS_TRANS_GET_NODEID( transID ),
-                       DPS_TRANS_GET_SN( transID ), group,
-                       dpsTransStatusToString( status ), status ) ;
+               PD_LOG( PDEVENT, "Check trans(%s) by group(%u) succeed["
+                       "Status:%s(%d)]", dpsTransIDToString( transID ).c_str(),
+                       group, dpsTransStatusToString( status ), status ) ;
             }
             catch( std::exception &e )
             {
@@ -368,9 +367,8 @@ namespace engine
       SDB_ASSERT( firstLsn != DPS_INVALID_LSN_OFFSET,
                   "First transaction lsn can't be invalid" ) ;
 
-      PD_LOG( PDEVENT, "Execute commit(ID:%04x%010x, LastLsn=%llu)",
-              DPS_TRANS_GET_NODEID( transID ),
-              DPS_TRANS_GET_SN( transID ),
+      PD_LOG( PDEVENT, "Execute commit(ID:%s, LastLsn=%llu)",
+              dpsTransIDToString( transID ).c_str(),
               lastLsn ) ;
 
       rc = dpsTransCommit2Record( transID, lastLsn, firstLsn,

@@ -44,6 +44,7 @@
 #include "dpsLogRecordDef.hpp"
 #include "ossMemPool.hpp"
 #include "dpsOp2Record.hpp"
+#include "dpsUtil.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 
@@ -1056,7 +1057,7 @@ namespace engine
              if ( itr.valid() )
              {
                len += ossSnprintf( outBuf + len, outSize - len,
-                                   " FirstLSN : 0x%08lx"OSS_NEWLINE,
+                                   " FirstLSN : 0x%016lx"OSS_NEWLINE,
                                    *((DPS_LSN_OFFSET *)itr.value()) ) ;
              }
 
@@ -1578,20 +1579,28 @@ namespace engine
 
          if ( itrTransID.valid() )
          {
+            CHAR tmpID[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
+            CHAR tmpAttr[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
+            DPS_TRANS_ID transID = *((DPS_TRANS_ID *)itrTransID.value()) ;
+
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " TransID : 0x%08lx"OSS_NEWLINE,
-                                 *((DPS_TRANS_ID *)itrTransID.value()) ) ;
+                                 " TransID : %s"OSS_NEWLINE
+                                 " TransAttr : %s"OSS_NEWLINE,
+                                 dpsTransIDToString( transID, tmpID,
+                                                     DPS_TRANS_STR_LEN ),
+                                 dpsTransIDAttrToString( transID, tmpAttr,
+                                                         DPS_TRANS_STR_LEN ) ) ;
          }
          if ( itrTransLsn.valid() )
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " TransPreLSN : 0x%08lx"OSS_NEWLINE,
+                                 " TransPreLSN : 0x%016lx"OSS_NEWLINE,
                                  *((DPS_LSN_OFFSET *)itrTransLsn.value()) ) ;
          }
          if ( itrTransRel.valid() )
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " TransRelatedLSN : 0x%08lx"OSS_NEWLINE,
+                                 " TransRelatedLSN : 0x%016lx"OSS_NEWLINE,
                                  *((DPS_LSN_OFFSET *)itrTransRel.value()) ) ;
          }
       }

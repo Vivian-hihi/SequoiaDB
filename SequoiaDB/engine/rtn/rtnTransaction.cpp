@@ -44,6 +44,7 @@
 #include "dpsTransLockDef.hpp"
 #include "dpsLogRecordDef.hpp"
 #include "dpsOp2Record.hpp"
+#include "dpsUtil.hpp"
 
 namespace engine
 {
@@ -80,17 +81,16 @@ namespace engine
 
          if ( !sdbGetTransCB()->addTransCB( cb->getTransID(), cb ) )
          {
-            PD_LOG( PDERROR, "Transaction(%04x%010x) is alredy exist",
-                    DPS_TRANS_GET_NODEID( cb->getTransID() ),
-                    DPS_TRANS_GET_SN( cb->getTransID() ) ) ;
+            PD_LOG( PDERROR, "Transaction(%s) is alredy exist",
+                    dpsTransIDToString( cb->getTransID() ).c_str() ) ;
             rc = SDB_SYS ;
             goto error ;
          }
       }
 
-      PD_LOG( PDINFO, "Begin transaction operations(%04x%010x)",
-              DPS_TRANS_GET_NODEID( cb->getTransID() ),
-              DPS_TRANS_GET_SN( cb->getTransID() ) ) ;
+      PD_LOG( PDINFO, "Begin transaction operations(ID:%s, Attr:%s)",
+              dpsTransIDToString( cb->getTransID() ).c_str(),
+              dpsTransIDAttrToString( cb->getTransID() ).c_str() ) ;
 
    done:
       PD_TRACE_EXIT ( SDB_RTNTRANSBEGIN ) ;
@@ -131,9 +131,8 @@ namespace engine
       SDB_ASSERT( firstTransLsn != DPS_INVALID_LSN_OFFSET,
                   "First transaction lsn can't be invalid" ) ;
 
-      PD_LOG( PDINFO, "Execute pre-commit(ID:%04x%010x, LastLsn=%llu)",
-              DPS_TRANS_GET_NODEID( curTransID ),
-              DPS_TRANS_GET_SN( curTransID ),
+      PD_LOG( PDINFO, "Execute pre-commit(ID:%s, LastLsn=%llu)",
+              dpsTransIDToString( curTransID ).c_str(),
               preTransLsn ) ;
 
       rc = dpsTransCommit2Record( curTransID, preTransLsn, firstTransLsn,
@@ -215,9 +214,8 @@ namespace engine
       SDB_ASSERT( firstTransLsn != DPS_INVALID_LSN_OFFSET,
                   "First transaction lsn can't be invalid" ) ;
 
-      PD_LOG( PDINFO, "Execute commit(ID:%04x%010x, LastLsn=%llu)",
-              DPS_TRANS_GET_NODEID( curTransID ),
-              DPS_TRANS_GET_SN( curTransID ),
+      PD_LOG( PDINFO, "Execute commit(ID:%s, LastLsn=%llu)",
+              dpsTransIDToString( curTransID ).c_str(),
               preTransLsn ) ;
 
       rc = dpsTransCommit2Record( curTransID, preTransLsn, firstTransLsn,
@@ -292,9 +290,9 @@ namespace engine
          goto done ;
       }
 
-      PD_LOG ( PDEVENT, "Begin to rollback transaction[ID:%04x%010x, "
-               "lastLsn:%llu]...", DPS_TRANS_GET_NODEID( transID ),
-               DPS_TRANS_GET_SN( transID ), curLsnOffset ) ;
+      PD_LOG ( PDEVENT, "Begin to rollback transaction[ID:%s, "
+               "lastLsn:%llu]...", dpsTransIDToString( transID ).c_str(),
+               curLsnOffset ) ;
       doRollback = TRUE ;
 
       cb->setTransID( rollbackID ) ;
@@ -362,10 +360,9 @@ namespace engine
             if ( rc )
             {
                ++retryTimes ;
-               PD_LOG( PDERROR, "Rollback transaction[ID:%04x%010x, lsn=%llu, "
+               PD_LOG( PDERROR, "Rollback transaction[ID:%s, lsn=%llu, "
                        "time=%u] failed, rc: %d",
-                       DPS_TRANS_GET_NODEID( transID ),
-                       DPS_TRANS_GET_SN( transID ),
+                       dpsTransIDToString( transID ).c_str(),
                        dpsLsn.offset,
                        retryTimes, rc ) ;
                if ( retryTimes >= RTN_TRANS_ROLLBACK_RETRY_TIMES )
@@ -410,17 +407,18 @@ namespace engine
       {
          SDB_ASSERT( FALSE, "Transaction's pending object map is "
                      "not empty" ) ;
-         PD_LOG( PDERROR, "Transaction(%04x%010x)'s pending object map"
-                 " is not empty(size:%d)", DPS_TRANS_GET_NODEID( transID ),
-                 DPS_TRANS_GET_SN( transID ),
+         PD_LOG( PDERROR, "Transaction(%s)'s pending object map"
+                 " is not empty(size:%d)",
+                 dpsTransIDToString( transID ).c_str(),
                  mapPendingObj.size() ) ;
       }
 
       if ( doRollback )
       {
-         PD_LOG ( PDEVENT, "Rollback transaction[ID:%04x%010x] finished with "
-                  "rc[%d]", DPS_TRANS_GET_NODEID( transID ),
-                  DPS_TRANS_GET_SN( transID ), rc ) ;
+         PD_LOG ( PDEVENT, "Rollback transaction(ID:%s, Attr:%s) finished "
+                  "with rc[%d]", dpsTransIDToString( transID ).c_str(),
+                  dpsTransIDAttrToString( transID ).c_str(),
+                  rc ) ;
       }
 
 #if defined ( _DEBUG )
@@ -466,9 +464,9 @@ namespace engine
          curLsnOffset = iterMap->second._lsn ;
          cb->setTransID( rollbackID ) ;
 
-         PD_LOG( PDEVENT, "Begin to rollback transaction[ID:%04x%010x, "
-                 "LastLSN: %llu]...", DPS_TRANS_GET_NODEID( transID ),
-                 DPS_TRANS_GET_SN( transID ), curLsnOffset ) ;
+         PD_LOG( PDEVENT, "Begin to rollback transaction[ID:%s, "
+                 "LastLSN: %llu]...", dpsTransIDToString( transID ).c_str(),
+                 curLsnOffset ) ;
 
          while ( curLsnOffset != DPS_INVALID_LSN_OFFSET )
          {
@@ -545,10 +543,9 @@ namespace engine
                if ( rc )
                {
                   ++retryTimes ;
-                  PD_LOG( PDERROR, "Rollback transaction[ID:%04x%010x, "
+                  PD_LOG( PDERROR, "Rollback transaction[ID:%s, "
                           "lsn=%llu, time=%u] failed,  rc: %d",
-                          DPS_TRANS_GET_NODEID( transID ),
-                          DPS_TRANS_GET_SN( transID ),
+                          dpsTransIDToString( transID ).c_str(),
                           dpsLsn.offset, retryTimes, rc ) ;
                   if ( retryTimes >= RTN_TRANS_ROLLBACK_RETRY_TIMES )
                   {
@@ -573,9 +570,9 @@ namespace engine
          {
             SDB_ASSERT( FALSE, "Transaction's pending object map is "
                         "not empty" ) ;
-            PD_LOG( PDERROR, "Transaction(%04x%010x)'s pending object map"
-                    " is not empty(size:%d)", DPS_TRANS_GET_NODEID( transID ),
-                    DPS_TRANS_GET_SN( transID ),
+            PD_LOG( PDERROR, "Transaction(%s)'s pending object map"
+                    " is not empty(size:%d)",
+                    dpsTransIDToString( transID ).c_str(),
                     iterMap->second._mapPendingObj.size() ) ;
          }
          /// add his trans
@@ -584,9 +581,10 @@ namespace engine
          /// remove the transaction
          pTransMap->erase( iterMap->first ) ;
          tmpTransMap.erase(iterMap ) ;
-         PD_LOG( PDEVENT, "Rollback transaction(%04x%010x) finished "
-                 "with rc[%d]", DPS_TRANS_GET_NODEID( transID ),
-                 DPS_TRANS_GET_SN( transID ), rc ) ;
+         PD_LOG( PDEVENT, "Rollback transaction(ID:%s, Attr:%s) finished "
+                 "with rc[%d]", dpsTransIDToString( transID ).c_str(),
+                 dpsTransIDAttrToString( transID ).c_str(),
+                 rc ) ;
       } /// while ( tmpTransMap.size() != 0 )
 
    done:

@@ -63,6 +63,7 @@
 #include "utilEnvCheck.hpp"
 #include "pmdStartupHistoryLogger.hpp"
 #include "utilMemListPool.hpp"
+#include "dpsUtil.hpp"
 #include "msgDef.h"
 
 using namespace bson ;
@@ -1630,11 +1631,9 @@ namespace engine
          builder.append( FIELD_NAME_SESSIONID,
                          (INT64)_curTransInfo._eduID ) ;
          /// nodeID(16bit) | TAG(8bit) | SN(40bit)
-         CHAR strTransID[ 4 + 2 + 10 + 2 ] = { 0 } ;
-         ossSnprintf( strTransID, sizeof( strTransID ) - 1,
-                      "%04x%010x",
-                      DPS_TRANS_GET_NODEID( _curTransInfo._transID ),
-                      DPS_TRANS_GET_SN( _curTransInfo._transID ) ) ;
+         CHAR strTransID[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
+         dpsTransIDToString( _curTransInfo._transID, strTransID,
+                             DPS_TRANS_STR_LEN ) ;
          builder.append( FIELD_NAME_TRANSACTION_ID, strTransID ) ;
 
          builder.append( FIELD_NAME_TRANSACTION_ID_SN,

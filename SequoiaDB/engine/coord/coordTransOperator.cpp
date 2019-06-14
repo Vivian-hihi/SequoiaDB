@@ -41,6 +41,7 @@
 #include "rtnCommandDef.hpp"
 #include "rtn.hpp"
 #include "utilMemListPool.hpp"
+#include "dpsUtil.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -92,6 +93,15 @@ namespace engine
          }
          else if ( cb->isTransaction() )
          {
+            if ( SDB_OK != cb->getTransRC() )
+            {
+               PD_LOG_MSG( PDERROR, "Transaction(%s) must rollback due to "
+                           "error(%d)",
+                           dpsTransIDToString( cb->getTransID() ).c_str(),
+                           cb->getTransRC() ) ;
+               rc = cb->getTransRC() ;
+               goto error ;
+            }
             // need add transaction info for the send msg
             _prepareForTrans( cb, inMsg.msg() ) ;
          }
@@ -227,9 +237,9 @@ namespace engine
       SET_NODEID nodes ;
       DPS_TRANS_ID transID = cb->getTransID() ;
 
-      PD_LOG ( PDEVENT, "Begin to rollback transaction[ID:%04x%010x]...",
-               DPS_TRANS_GET_NODEID( transID ),
-               DPS_TRANS_GET_SN( transID ) ) ;
+      PD_LOG ( PDEVENT, "Begin to rollback transaction(ID:%s, Attr:%s)...",
+               dpsTransIDToString( transID ).c_str(),
+               dpsTransIDAttrToString( transID ).c_str() ) ;
 
       _groupSession.getPropSite()->dumpTransNode( nodes ) ;
 
@@ -691,9 +701,9 @@ namespace engine
       // complete, delete transaction
       _groupSession.getPropSite()->endTrans( cb ) ;
 
-      PD_LOG( PDINFO, "Execute commit(ID:%04x%010x)",
-              DPS_TRANS_GET_NODEID( curTransID ),
-              DPS_TRANS_GET_SN( curTransID ) ) ;
+      PD_LOG( PDINFO, "Execute commit(ID:%s, Attr:%s)",
+              dpsTransIDToString( curTransID ).c_str(),
+              dpsTransIDAttrToString( curTransID ).c_str() ) ;
 
    done:
       return rc ;

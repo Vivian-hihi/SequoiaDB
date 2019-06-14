@@ -48,6 +48,7 @@
 #include "clsCommand.hpp"
 #include "dpsOp2Record.hpp"
 #include "dpsLogRecordDef.hpp"
+#include "dpsUtil.hpp"
 
 using namespace bson ;
 
@@ -1941,6 +1942,9 @@ namespace engine
 
    INT32 _clsShdSession::_onTransCommitMsg( NET_HANDLE handle, MsgHeader *msg )
    {
+      CHAR tmpID[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
+      CHAR tmpAttr[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
+
       if ( !_pReplSet->primaryIsMe() )
       {
          return SDB_CLS_NOT_PRIMARY ;
@@ -1949,25 +1953,34 @@ namespace engine
       {
          return SDB_DPS_TRANS_NO_TRANS ;
       }
+      dpsTransIDToString( eduCB()->getTransID(),
+                          tmpID, DPS_TRANS_STR_LEN ) ;
+      dpsTransIDAttrToString( eduCB()->getTransID(),
+                              tmpAttr, DPS_TRANS_STR_LEN ) ;
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,
-                          "TransactionID: 0x%016x(%llu)",
-                          eduCB()->getTransID(),
-                          eduCB()->getTransID() ) ;
+                          "TransactionID: %s(%s)", tmpID, tmpAttr ) ;
       return rtnTransCommit( _pEDUCB, _pDpsCB ) ;
    }
 
    INT32 _clsShdSession::_onTransRollbackMsg( NET_HANDLE handle, MsgHeader *msg )
    {
+      CHAR tmpID[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
+      CHAR tmpAttr[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
+
       if ( !_pReplSet->primaryIsMe() )
       {
          return SDB_CLS_NOT_PRIMARY ;
       }
+
+      dpsTransIDToString( eduCB()->getTransID(),
+                          tmpID, DPS_TRANS_STR_LEN ) ;
+      dpsTransIDAttrToString( eduCB()->getTransID(),
+                              tmpAttr, DPS_TRANS_STR_LEN ) ;
+
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_ROLLBACK_REQ,
-                          "TransactionID: 0x%016x(%llu)",
-                          eduCB()->getTransID(),
-                          eduCB()->getTransID() ) ;
+                          "TransactionID: %s(%s)", tmpID, tmpAttr ) ;
       return _rollbackTrans() ;
    }
 
@@ -1975,6 +1988,9 @@ namespace engine
                                                MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
+      CHAR tmpID[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
+      CHAR tmpAttr[ DPS_TRANS_STR_LEN + 1 ] = { 0 } ;
+
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
       MsgOpTransCommitPre *pCommitPreMsg = ( MsgOpTransCommitPre* )msg ;
 
@@ -1992,11 +2008,14 @@ namespace engine
          goto error ;
       }
 
+      dpsTransIDToString( eduCB()->getTransID(),
+                          tmpID, DPS_TRANS_STR_LEN ) ;
+      dpsTransIDAttrToString( eduCB()->getTransID(),
+                              tmpAttr, DPS_TRANS_STR_LEN ) ;
+
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), MSG_BS_TRANS_COMMITPRE_REQ,
-                          "TransactionID: 0x%016x(%llu)",
-                          eduCB()->getTransID(),
-                          eduCB()->getTransID() ) ;
+                          "TransactionID: %s(%s)", tmpID, tmpAttr ) ;
 
       rc = _calculateW( &replSize, NULL, w ) ;
       if ( SDB_OK != rc )
