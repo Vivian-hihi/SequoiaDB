@@ -364,7 +364,7 @@ namespace engine
       rc = _onMsgBegin( msg ) ;
       if ( SDB_OK == rc )
       {
-         if ( MSG_BS_TRANS_COMMIT_REQ == msg.opCode )
+         if ( MSG_BS_TRANS_COMMIT_REQ == msg->opCode )
          {
             isDoCommit = TRUE ;
          }
