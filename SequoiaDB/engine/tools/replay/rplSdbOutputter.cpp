@@ -202,6 +202,10 @@ namespace replay
          builder.appendElements( shardingKey ) ;
          match = builder.obj() ;
       }
+      else
+      {
+         match = matcher ;
+      }
 
       rc = _sdb->getCollection( clFullName, cl ) ;
       if (SDB_OK != rc)
