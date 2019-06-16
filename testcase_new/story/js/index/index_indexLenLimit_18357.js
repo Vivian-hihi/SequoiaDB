@@ -12,45 +12,83 @@ function main()
    commDropCL( db, csName, clName, true, true, "clear cl in the beginning" );
 
    var cl = commCreateCL( db, csName, clName, 0, true, true );
-   var single_index = "";
-   var composite_index = "";
+   var single_index128 = "";
+   var composite_index128 = "";
+   var single_index1023 = "";
+   var composite_index1023 = "";
    for(var i = 0; i < 1023; i++)
    {
-       single_index += 's';
-       composite_index += 'c';
+       single_index128 += 'c';
+       composite_index128 += 'd';
    }
    
-   //-------test single index
-   cl.createIndex(single_index, {'a':1}, true);
-
-   //crud operation
-   var obj = {a:1};
-   var newObj = {a:123};
-   testInsert( cl, obj );
-   var curObj = testUpdate( cl, obj, newObj );
-   testQuery(cl, curObj);
-   testDelete(cl, curObj);
-
-   //-------test composite index
-   cl.createIndex(composite_index, {'b':1, 'c':-1}, true);
-
-   //crud operation
-   var obj2 = {b:1, c:"test18357"};
-   var newObj2 = {b:456, c:"newtest18357"};
-   testInsert( cl, obj2 );
-   var curObj2 = testUpdate( cl, obj2, newObj2 );
-   testQuery(cl, curObj2);
-   testDelete(cl, curObj2);
+   for(var i = 0; i < 1023; i++)
+   {
+       single_index1023 += 'e';
+       composite_index1023 += 'f';
+   }
+   
+   //索引长度为1，索引长度为128，索引长度为1023
+   testCreateIndex(cl, "a", "b");
+   testCreateIndex(cl, single_index128, composite_index128);
+   testCreateIndex(cl, single_index1023, composite_index1023);
    
    commDropCL( db, csName, clName, true, true, "clear cl in the end" )
 }
 
-function testInsert( cl, obj )
+function testCreateIndex(cl, single_index, composite_index)
 {
-   cl.insert(obj);
+    //-------test single index
+   cl.createIndex(single_index, {'a':1}, true);
+
+   //crud operation
+   var insertNum = 5000;
+   var expRemainNum = insertNum - 1;
+   var obj = {a:1};
+   var newObj = {a:123456789};
+   testInsert( cl, insertNum );
+   var curObj = testUpdate( cl, obj, newObj );
+   testDelete(cl, curObj, expRemainNum);
+
+   //-------test composite index
+   cl.remove();
+   cl.createIndex(composite_index, {'b':1, 'c':-1}, true);
+
+   //crud operation
+   var obj2 = {b:1, c:"test1"};
+   var newObj2 = {b:123456789, c:"newtest18357"};
+   testInsert2( cl, insertNum );
+   var curObj2 = testUpdate( cl, obj2, newObj2 );
+   testDelete(cl, curObj2, expRemainNum);
+   
+   cl.remove();
+   cl.dropIndex(single_index);
+   cl.dropIndex(composite_index);
+}
+
+function testInsert( cl, insertNum )
+{ 
    var expRecs = [];
-   expRecs.push(obj); 
-   var rc = cl.find();
+   for(var i = 0 ; i < insertNum; i++)
+   {
+       var obj = {a:i};
+       expRecs.push(obj); 
+   }
+   cl.insert(expRecs);
+   var rc = cl.find().sort({a:1});
+   checkRec( rc, expRecs ); 
+}
+
+function testInsert2( cl, insertNum )
+{ 
+   var expRecs = [];
+   for(var i = 0 ; i < insertNum; i++)
+   {
+       var obj = {b:i,c:"test"+i};
+       expRecs.push(obj); 
+   }
+   cl.insert(expRecs);
+   var rc = cl.find({},{"_id":{"$include":0}}).sort({b:1});
    checkRec( rc, expRecs ); 
 }
 
@@ -59,25 +97,32 @@ function testUpdate( cl, oldObj, newObj )
    var expRecs = [];
    expRecs.push(newObj);
    cl.update({$set:newObj}, oldObj);
-   var rc = cl.find();
-   checkRec( rc, expRecs ); 
+   var count1 = cl.find(oldObj).count();
+   if(Number(count1) !== 0)
+   {
+      throw buildException( "testUpdates", null, "old object " + JSON.stringify(oldObj) + " still exists." , 0, Number(count1) ); 
+   }
+   
+   var count2 = cl.find(newObj).count();
+   if(Number(count2) !== 1)
+   {
+      throw buildException( "testUpdates", null, "new object " + JSON.stringify(newObj) + " is not exists." , 1, Number(count2) ); 
+   }
    return newObj;
 }
 
-function testQuery( cl, keyValue )
-{
-   var rc = cl.find(keyValue);
-   var expRecs = [];
-   expRecs.push(keyValue);
-   checkRec( rc, expRecs );
-}
-
-function testDelete( cl, keyValue )
+function testDelete( cl, keyValue, expRemainNum )
 {
     cl.remove( keyValue );
-    var count = cl.count();
+    var count = cl.find(keyValue).count();
     if( 0 !== Number(count))
     {
-        throw buildException( "testDelete", null, "", 0, Number(count) );
+        throw buildException( "testDelete", null, "data still exists. keyValue=" + JSON.stringify(keyValue), 0, Number(count) );
+    }
+    
+    var actRemainNum = cl.count();
+    if( expRemainNum !== Number(actRemainNum))
+    {
+        throw buildException( "testDelete", null, "", expRemainNum, Number(actRemainNum) );
     }
 }

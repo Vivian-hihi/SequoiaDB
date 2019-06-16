@@ -7,7 +7,12 @@ function main( db )
 {
    // drop collection in the beginning
    commDropCL( db, csName, clName, true, true, "drop collection in the beginning" ) ;
-
+   var index = "";
+   for(var i = 0; i < 1024; i++)
+   {
+       index += 't';
+   }
+   
    // create collection
    var idxCL = commCreateCL( db, csName, clName, -1, true, true, false, "create collection" ) ;
 
@@ -16,6 +21,7 @@ function main( db )
 
    // create index
    createIndex( idxCL, "", {a:1}, false, false, -6 ) ;
+   createIndex( idxCL, index, {a:1}, false, false, -6 ) ;
 
    // drop collection in clean
    commDropCL( db, csName, clName, false, false,
