@@ -23,7 +23,7 @@ function main()
    println("---Begin to test domainName len is 127B.");
    var domainNameLen = 127;   
    createCSAndCheckResult( domainNameLen, groupName );   
-   
+   //TODO ： 下面这个输出无意义
    println("---Begin to test domainName is ''."); 
 }
 
@@ -33,6 +33,7 @@ function createCSAndCheckResult( domainNameLen, groupName )
    var domainName  = getRandomString(domainNameLen);
    var csName = "cs4511";
    var clName = "cl4511"
+   //TODO ： clear cs in the beginning.
    commDropCS( db, csName, true, "clear cs in the beging." )
    clearDomain( domainName );
    
@@ -51,6 +52,7 @@ function getRandomString(len)
    var str = "";
    var strLen = chars.length;
    
+   //TODO :用例编号需要修改
    var clPrefix = "4509cs_";
    if ( len > clPrefix.length)
    {

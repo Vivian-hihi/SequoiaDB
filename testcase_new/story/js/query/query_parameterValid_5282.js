@@ -47,6 +47,7 @@ function queryRecsAndCheckResult( cl, recordNum )
    var expQueryFirst = cl.find({ "no": serialFirst }).toArray().toString();
    var expQueryLast = cl.find({ "no": serialLast }).toArray().toString();   
    
+   //TODO : 这里应该是两个条件中任意一个与预期不符就要报错，所以应该使用"或"的关系
    if( queryFirst !== expQueryFirst && queryLast !== expQueryLast )
    {
       throw buildException("checkResult", null, "[compare the records]", 

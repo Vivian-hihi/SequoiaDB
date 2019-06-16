@@ -11,7 +11,8 @@ function main()
    
    for ( var i = 0 ; i < lobPageSizes.length; i++ )
    {
-      var lobPageSize = lobPageSizes[i];     
+      var lobPageSize = lobPageSizes[i];    
+      //TODO :beginning
       commDropCS( db, csName, true, "clear cs in the beging." );
       createCSAndCheckResult( csName, lobPageSize );
       commDropCS( db, csName, false, "clear cs in the ending." );      

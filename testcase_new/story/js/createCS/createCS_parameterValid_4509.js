@@ -21,6 +21,7 @@ function createCSAndCheckResult( csNameLen )
 {
    println("\n---Begin to createCS.");
    var csName  = getRandomString(csNameLen);
+   //TODO : clear cs in the beginning
    commDropCS( db, csName, true, "clear cs in the beging." )
    
    //create cs;

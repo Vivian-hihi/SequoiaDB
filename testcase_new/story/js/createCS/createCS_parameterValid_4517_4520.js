@@ -5,11 +5,12 @@
               2019-6-4 wuyan init
 ****************************************************/
 main();
-
+//本用例所有4520用例编号都应改为4521（包括本用例名称以及上方描述信息中的用例编号）
 function main()
 {   
    var csName = "cs4517"; 
    println("---Begin to test testcase-4517. "); 
+   //pageSize没有验证取空串的场景
    var pageSizes = [ 4097, -4096 ];
    var lobPageSize = 4096;
    for ( var i = 0 ; i < pageSizes.length; i++ )

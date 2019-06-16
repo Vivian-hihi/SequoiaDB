@@ -12,6 +12,7 @@ function main()
    for ( var i = 0 ; i < pageSizes.length; i++ )
    {
       var pageSize = pageSizes[i];     
+      //TODO :clear cs in the beginning.
       commDropCS( db, csName, true, "clear cs in the beging." );
       createCSAndCheckResult( csName, pageSize );
       commDropCS( db, csName, false, "clear cs in the ending." );      
