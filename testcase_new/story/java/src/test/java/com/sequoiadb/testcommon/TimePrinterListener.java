@@ -48,6 +48,8 @@ public class TimePrinterListener extends TestListenerAdapter {
     
     @Override
     public void onTestFailure(ITestResult itr){
+        System.out.println("runGroup" + itr.getMethod().getXmlTest().getIncludedGroups().toString() + " " 
+                   + itr.getMethod().getTestClass().getRealClass() + " failed") ;
         super.onTestFailure( itr ) ;
         if ( isTransCase( itr.getMethod().getGroups()) ){
             SdbTestBase.decCaseNum() ;
