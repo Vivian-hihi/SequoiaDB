@@ -62,7 +62,7 @@ public class Transaction17960 extends SdbTestBase {
     @Test(dataProvider = "index")
     public void test(String indexKey) {
         try {
-            System.out.println("--开始事务，创建索引 " + indexKey + "--");
+            System.out.println("CLNAME: " + clName + "--开始事务，创建索引 " + indexKey + "--");
             latch = new CountDownLatch(4);
             this.indexKey = indexKey;
 
