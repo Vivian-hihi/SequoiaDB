@@ -70,7 +70,7 @@ public class SdbTestBase {
     private static AtomicBoolean isInit = new AtomicBoolean(false);
     private static AtomicInteger initCount = new AtomicInteger(0);
     private static final int newIndexScanStep = 100;
-    private static final int timeOutLen = 60;
+    private static final int timeOutLen = 120;
     private static final Map<String, BSONObject> group2Conf = new HashMap<String, BSONObject>();
     private static final Map<String, AtomicInteger> group2Count = new HashMap<String, AtomicInteger>();
     private static final Map<String, BSONObject> node2Conf = new HashMap<String, BSONObject>();
@@ -359,7 +359,7 @@ public class SdbTestBase {
 
         BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line = "";
-        while (( line = input.readLine() ) != null) {
+        while ((line = input.readLine()) != null) {
             System.out.println(line);
         }
 
