@@ -17,7 +17,6 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -36,17 +35,9 @@ public class Transaction17185 extends SdbTestBase {
     private Sequoiadb db1 = null;
     private Sequoiadb db2 = null;
     private Sequoiadb db3 = null;
-    private Sequoiadb db4 = null;
-    private Sequoiadb db5 = null;
-    private Sequoiadb db6 = null;
-    private Sequoiadb db7 = null;
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
     private DBCollection cl3 = null;
-    private DBCollection cl4 = null;
-    private DBCollection cl5 = null;
-    private DBCollection cl6 = null;
-    private DBCollection cl7 = null;
     private CountDownLatch latch = null;
     private List<BSONObject> expList = new ArrayList<>();
 
@@ -66,18 +57,6 @@ public class Transaction17185 extends SdbTestBase {
         if (!db3.isClosed()) {
             db3.close();
         }
-        if (!db4.isClosed()) {
-            db4.close();
-        }
-        if (!db5.isClosed()) {
-            db5.close();
-        }
-        if (!db6.isClosed()) {
-            db6.close();
-        }
-        if (!db7.isClosed()) {
-            db7.close();
-        }
         CollectionSpace cs = sdb.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName)) {
             cs.dropCollection(clName);
@@ -95,7 +74,7 @@ public class Transaction17185 extends SdbTestBase {
     @Test(dataProvider = "index")
     public void test(String indexKey) {
         try {
-            System.out.println("CLNAME: " + clName + "开始事务，创建索引 " + indexKey + " --");
+            System.out.println("开始事务，创建索引 " + indexKey + " --");
             latch = new CountDownLatch(7);
             cl = sdb.getCollectionSpace(csName).createCollection(clName);
             cl.createIndex("textIndex17185", indexKey, false, false);
@@ -105,24 +84,6 @@ public class Transaction17185 extends SdbTestBase {
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db3 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            db4 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            db5 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            db6 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            db7 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            cl1 = db1.getCollectionSpace(csName).getCollection(clName);
-            cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-            cl3 = db3.getCollectionSpace(csName).getCollection(clName);
-            cl4 = db4.getCollectionSpace(csName).getCollection(clName);
-            cl5 = db5.getCollectionSpace(csName).getCollection(clName);
-            cl6 = db6.getCollectionSpace(csName).getCollection(clName);
-            cl7 = db7.getCollectionSpace(csName).getCollection(clName);
-            db1.beginTransaction();
-            db2.beginTransaction();
-            db3.beginTransaction();
-            db4.beginTransaction();
-            db5.beginTransaction();
-            db6.beginTransaction();
-            db7.beginTransaction();
 
             // 事务1插入记录
             InsertThread insertThread = new InsertThread();
@@ -141,17 +102,17 @@ public class Transaction17185 extends SdbTestBase {
             List<BSONObject> expRecords2 = new ArrayList<>(expRecords1);
             Collections.reverse(expRecords2);
 
-            IdxScanThread positiveThread = new IdxScanThread(cl4, "{a:1}", "{'':'textIndex17185'}", expRecords1);
+            IdxScanThread positiveThread = new IdxScanThread("{a:1}", "{'':'textIndex17185'}", expRecords1);
             positiveThread.start();
 
-            IdxScanThread reverseThread = new IdxScanThread(cl5, "{a:-1}", "{'':'textIndex17185'}", expRecords2);
+            IdxScanThread reverseThread = new IdxScanThread("{a:-1}", "{'':'textIndex17185'}", expRecords2);
             reverseThread.start();
 
             // 事务5读记录走表扫描
-            TableScanThread positiveThread2 = new TableScanThread(cl6, "{a:1}", "{'':null}", expRecords1);
+            TableScanThread positiveThread2 = new TableScanThread("{a:1}", "{'':null}", expRecords1);
             positiveThread2.start();
 
-            TableScanThread reverseThread2 = new TableScanThread(cl7, "{a:-1}", "{'':null}", expRecords2);
+            TableScanThread reverseThread2 = new TableScanThread("{a:-1}", "{'':null}", expRecords2);
             reverseThread2.start();
 
             Assert.assertTrue(insertThread.isSuccess(), insertThread.getErrorMsg());
@@ -166,15 +127,9 @@ public class Transaction17185 extends SdbTestBase {
             db1.commit();
             db2.commit();
             db3.commit();
-            db4.commit();
-            db5.commit();
 
             Assert.assertTrue(positiveThread2.isSuccess(), positiveThread2.getErrorMsg());
             Assert.assertTrue(reverseThread2.isSuccess(), reverseThread2.getErrorMsg());
-
-            // 提交事务
-            db6.commit();
-            db7.commit();
 
             // 非事务表扫描
             DBCursor cursor = cl.query("", "", "{_id:1}", "{'':null}");
@@ -194,10 +149,6 @@ public class Transaction17185 extends SdbTestBase {
             db1.commit();
             db2.commit();
             db3.commit();
-            db4.commit();
-            db5.commit();
-            db6.commit();
-            db7.commit();
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             cs.dropCollection(clName);
             System.out.println("结束事务，索引 " + indexKey + " --");
@@ -234,6 +185,8 @@ public class Transaction17185 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             try {
+                db1.beginTransaction();
+                cl1 = db1.getCollectionSpace(csName).getCollection(clName);
                 List<BSONObject> records = new ArrayList<>();
                 for (int i = 40001; i <= 50000; i++) {
                     BSONObject record = (BSONObject) JSON.parse("{_id:" + i + ",a:" + i + ", b:" + i + "}");
@@ -254,6 +207,8 @@ public class Transaction17185 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
+            db2.beginTransaction();
+            cl2 = db2.getCollectionSpace(csName).getCollection(clName);
             cl2.update("{$and:[{a:{$gt:0}},{a:{$lt:10001}}]}", "{$inc:{a:-10}}", "{'':'textIndex17185'}");
             latch.countDown();
         }
@@ -263,6 +218,8 @@ public class Transaction17185 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
+            db3.beginTransaction();
+            cl3 = db3.getCollectionSpace(csName).getCollection(clName);
             cl3.delete("{$and:[{a:{$gt:10000}},{a:{$lt:20001}}]}", "{'':'textIndex17185'}");
             latch.countDown();
         }
@@ -271,12 +228,10 @@ public class Transaction17185 extends SdbTestBase {
     class IdxScanThread extends SdbThreadBase {
         private String sort;
         private String hint;
-        private DBCollection cl;
         private List<BSONObject> expRecords;
 
-        private IdxScanThread(DBCollection cl, String sort, String hint, List<BSONObject> expRecords) {
+        private IdxScanThread(String sort, String hint, List<BSONObject> expRecords) {
             super();
-            this.cl = cl;
             this.sort = sort;
             this.hint = hint;
             this.expRecords = expRecords;
@@ -284,22 +239,30 @@ public class Transaction17185 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            DBCursor cursor = cl.query("{$and:[{a:{$gt:20000}},{a:{$lt:40001}}]}", null, sort, hint);
-            List<BSONObject> records = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(records, expRecords);
-            latch.countDown();
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                db.beginTransaction();
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                DBCursor cursor = cl.query("{$and:[{a:{$gt:20000}},{a:{$lt:40001}}]}", null, sort, hint);
+                List<BSONObject> records = TransUtils.getReadActList(cursor);
+                Assert.assertEquals(records, expRecords);
+            } finally {
+                latch.countDown();
+                db.commit();
+                db.close();
+            }
+
         }
     }
 
     class TableScanThread extends SdbThreadBase {
         private String sort;
         private String hint;
-        private DBCollection cl;
         private List<BSONObject> expRecords;
 
-        private TableScanThread(DBCollection cl, String sort, String hint, List<BSONObject> expRecords) {
+        private TableScanThread(String sort, String hint, List<BSONObject> expRecords) {
             super();
-            this.cl = cl;
             this.sort = sort;
             this.hint = hint;
             this.expRecords = expRecords;
@@ -307,20 +270,23 @@ public class Transaction17185 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            DBCursor cursor = cl.query("{$and:[{a:{$gt:20000}},{a:{$lt:40001}}]}", null, sort, hint);
-            List<BSONObject> records = null;
+            Sequoiadb db = null;
             try {
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                db.beginTransaction();
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                DBCursor cursor = cl.query("{$and:[{a:{$gt:20000}},{a:{$lt:40001}}]}", null, sort, hint);
+                List<BSONObject> records = null;
                 records = TransUtils.getReadActList(cursor);
-            } catch (BaseException e) {
-                e.printStackTrace();
-                if (e.getErrorCode() != -13) {
-                    throw e;
-                }
+                Assert.assertEquals(records, expRecords);
+            } finally {
+                latch.countDown();
+                db.commit();
+                db.close();
             }
 
-            Assert.assertEquals(records, expRecords);
-            latch.countDown();
         }
+
     }
 
     private List<BSONObject> getExpRecords() {
