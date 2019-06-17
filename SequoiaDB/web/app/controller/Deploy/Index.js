@@ -689,12 +689,16 @@
          }, {
             'showLoading': false
          } ) ;
-         
-         //更新主机数量
-         SdbSignal.on( 'updateHostNum', function( hostNum ){
-            $scope.HostNum = hostNum ;
-         } ) ;
       }
+
+      //更新主机数量
+      SdbSignal.on( 'updateHostNum', function( hostNum ){
+         $scope.HostNum = hostNum ;
+         if( $scope.HostNum == 0 )
+         {
+            $scope.CurrentPage = 'host' ;
+         }
+      } ) ;
 
       //切换集群
       $scope.SwitchCluster = function( index ){
@@ -1535,7 +1539,7 @@
                },
                {
                   "name": 'ServiceName',
-                  "webName": $scope.autoLanguage( '端口号' ),
+                  "webName": $scope.autoLanguage( '端口' ),
                   "type": "port",
                   "required": true,
                   "value": '',
@@ -4208,9 +4212,9 @@
    //主机控制器
    sacApp.controllerProvider.register( 'Deploy.Index.Host.Ctrl', function( $scope, $rootScope, $location, SdbRest, SdbSignal, SdbSwap, Loading ){
       //更新主机数量
-      SdbSignal.on( 'updateHostNum', function( result ){
-         $scope.HostNum = result ;
-      } ) ;
+      //SdbSignal.on( 'updateHostNum', function( result ){
+      //   $scope.HostNum = result ;
+      //} ) ;
 
       //主机表格
       $scope.HostListTable = {
@@ -4258,6 +4262,7 @@
          var data = { 'cmd': 'query host' } ;
          SdbRest.OmOperation( data, {
             'success': function( hostList ){
+
                SdbSwap.hostList = hostList ;
                $.each( SdbSwap.hostList, function( index ){
                   SdbSwap.hostList[index]['Error'] = {} ;
@@ -4272,6 +4277,7 @@
                      ++$scope.HostNum ;
                   }
                } ) ;
+
                SdbSignal.commit( 'updateHostNum', $scope.HostNum ) ;
                $scope.HostListTable['body'] = hostTableContent ;
             },

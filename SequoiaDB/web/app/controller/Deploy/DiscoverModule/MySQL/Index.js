@@ -11,8 +11,8 @@
 
       if( moduleHostName == null || modulePort == null || $scope.ClusterName == null )
       {
-         //$location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
-         //return ;
+         $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
+         return ;
       }
 
       $scope.ConfigTable = {

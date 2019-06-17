@@ -4380,7 +4380,7 @@
                         $( scope.divBox ).detach() ;
                         ulBox.hide() ;
                      }
-                  }                 
+                  }
 
                   //监控回调函数
                   scope.$watch( attributes.dropdownCallback, function( callback ){
@@ -4412,6 +4412,10 @@
 
                   //重绘函数绑定到重绘队列
                   SdbFunction.defer( scope, resizeFun ) ;
+
+                  scope.$on( '$locationChangeStart', function(){
+                     close();
+                  } ) ;
 
                }
             } ;

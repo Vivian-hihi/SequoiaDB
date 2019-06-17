@@ -2,7 +2,7 @@
    <div class="pull-left" ng-container="{offsetX:-280}">
       <div class="underlineTab" ng-container="{height:50}">
          <ul class="left">
-            <li ng-class="{'instance': 'active'}[CurrentPage]" ng-hide="InstanceNum == 0 && StorageNum == 0">
+            <li ng-class="{'instance': 'active'}[CurrentPage]">
                <a class="linkButton" ng-click="SwitchPage('instance')">{{autoLanguage("数据库实例")}}</a> <span class="badge badge-info">{{InstanceNum}}</span>
             </li>
             <li ng-class="{'storage': 'active'}[CurrentPage]">
@@ -84,7 +84,7 @@
          </div>
          <div ng-container="{height:40}">
             <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length == 0]" ng-disabled="ClusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenAddInstanceDropdown($event)">{{autoLanguage("添加实例")}} <i class="fa fa-caret-down"></i></button>
-            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-click="OpenDeleteInstanceDropdown($event)">{{autoLanguage("删除实例")}} <i class="fa fa-caret-down"></i></button>
+            <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenDeleteInstanceDropdown($event)">{{autoLanguage("删除实例")}} <i class="fa fa-caret-down"></i></button>
             <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenEditModuleDropdown($event)">{{autoLanguage("实例操作")}} <i class="fa fa-caret-down"></i></button>
             <button class="topBtn" ng-class="{true:'disabled'}[ClusterList.length==0||InstanceNum==0]" ng-disabled="ClusterList.length==0||InstanceNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1240]" ng-click="OpenRelationDropdown($event)">{{autoLanguage("配置实例存储")}} <i class="fa fa-caret-down"></i></button>
          </div>
