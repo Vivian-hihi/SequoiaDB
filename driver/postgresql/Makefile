@@ -22,7 +22,7 @@ EXTERNAL_SOURCE = $(EXTERNAL_PATH)/client.c  $(EXTERNAL_PATH)/oss.c     $(EXTERN
                   $(EXTERNAL_PATH)/timestampParse.c                     $(EXTERNAL_PATH)/timestampTm.c \
                   $(EXTERNAL_PATH)/timestampValid.c                     $(EXTERNAL_PATH)/cJSON_ext.c \
                   $(EXTERNAL_PATH)/cJSON_iterator.c                     $(EXTERNAL_PATH)/utilCipher.c \
-                  $(EXTERNAL_PATH)/utilCipher.c
+                  $(EXTERNAL_PATH)/utilTypeCast.c
 
 BSON_HEADER = $(BSON_PATH)/sdbbson.h $(BSON_PATH)/encoding.h $(BSON_PATH)/common_decimal.h $(BSON_PATH)/common_decimal_fun.h $(BSON_PATH)/common_decimal_type.h 
 
@@ -35,7 +35,7 @@ EXTERNAL_HEADER = $(EXTERNAL_PATH)/client.h   $(EXTERNAL_PATH)/jstobs.h  $(EXTER
                   $(EXTERNAL_PATH)/fmpDef.h   $(EXTERNAL_PATH)/oss.h     $(EXTERNAL_PATH)/cJSON.h \
                   $(EXTERNAL_PATH)/timestamp.h                           $(EXTERNAL_PATH)/clientDef.h \
                   $(EXTERNAL_PATH)/cJSON_ext.h                           $(EXTERNAL_PATH)/utilCipher.h \
-                  $(EXTERNAL_PATH)/utilCipher.h
+                  $(EXTERNAL_PATH)/utilTypeCast.h
 
 $(MD5_PATH)/md5.c:                  $(ENGINE_PATH)/bson/md5.c
 $(MD5_HEADER_PATH)/md5.h:           $(ENGINE_PATH)/bson/lib/md5.h
