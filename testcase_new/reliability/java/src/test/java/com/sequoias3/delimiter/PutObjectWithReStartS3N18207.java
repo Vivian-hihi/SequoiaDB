@@ -9,6 +9,7 @@ import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
+import com.sequoias3.commlibs3.s3utils.DelimiterUtils;
 import com.sequoias3.commlibs3.s3utils.ObjectUtils;
 import com.sequoias3.commlibs3.s3utils.S3NodeRestart;
 import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
@@ -18,7 +19,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -42,7 +42,7 @@ public class PutObjectWithReStartS3N18207 extends S3TestBase {
     private File localPath = null;
 
     @BeforeClass
-    private void setUp() throws IOException {
+    private void setUp() throws Exception {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
         TestTools.LocalFile.removeFile(localPath);
         TestTools.LocalFile.createDir(localPath.toString());
@@ -52,6 +52,8 @@ public class PutObjectWithReStartS3N18207 extends S3TestBase {
         CommLibS3.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
         CommLibS3.setBucketVersioning(s3Client,bucketName, BucketVersioningConfiguration.ENABLED);
+        DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
+        DelimiterUtils.checkCurrentDelimiteInfo(bucketName, delimiter);
         for (int i = 0; i < objectNums; i++) {
             objectNames.add(objectNameBase + "_#" + i + "_#" + TestTools.getRandomString(1));
         }
@@ -62,7 +64,6 @@ public class PutObjectWithReStartS3N18207 extends S3TestBase {
         //restart s3
         FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 1, 10);
         TaskMgr mgr = new TaskMgr(faultMakeTask);
-        //TODO:1、用例中的更新符未设置，桶中还是使用默认更新符/
         for (int i = 0; i < objectNums; i++) {
             mgr.addTask(new PutObject(objectNames.get(i), filePath));
         }
@@ -75,12 +76,13 @@ public class PutObjectWithReStartS3N18207 extends S3TestBase {
             }
         }
         //put again
-        System.out.println("objectNameList = " + objectNameList.size());
         objectNames.removeAll(objectNameList);
         s3Client = CommLibS3.buildS3Client();
         for (String objectName : objectNames) {
             s3Client.putObject(bucketName, objectName, new File(filePath));
+            objectNameList.add(objectName);
         }
+        Assert.assertEquals(objectNameList.size(),objectNums,"objectNameList = " + objectNameList.toString());
         for (String objectName : objectNameList) {
             checkResult(objectName);
         }
@@ -92,6 +94,7 @@ public class PutObjectWithReStartS3N18207 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             if (s3Client != null) {

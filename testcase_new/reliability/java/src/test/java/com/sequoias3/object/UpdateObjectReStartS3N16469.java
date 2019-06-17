@@ -38,7 +38,7 @@ public class UpdateObjectReStartS3N16469 extends S3TestBase {
     private int versionNums = 2;
     private String filePath = null;
     private String updatePath = null;
-    private String objectNameBase = "PutObject16473";//TODO:1、对象名需要更新用例ID
+    private String objectNameBase = "object16469";
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
     private File localPath = null;
@@ -78,15 +78,19 @@ public class UpdateObjectReStartS3N16469 extends S3TestBase {
             }
         }
         s3Client = CommLibS3.buildS3Client();
-        //put again
+        //检查故障前创建的对象
+        for(String objectName:objectNameList){
+            String versionId = "1";
+            S3Object s3Object = s3Client.getObject(new GetObjectRequest(bucketName, objectName));
+            chectGetResult(s3Object,objectName, versionId, updatePath);
+        }
+
+        //故障恢复后，重新创建对象
         objectNames.removeAll(objectNameList);
         for (String objectName : objectNames) {
-            for (int i = 0; i < versionNums; i++) {
-                PutObjectResult obj = s3Client.putObject(bucketName, objectName, new File(updatePath));
-                checkPutResult(obj);
-            }
+            PutObjectResult obj = s3Client.putObject(bucketName, objectName, new File(updatePath));
         }
-        //TODO:2、建议补充检测故障前更新对象（可随机检测）
+       //随机检查故障恢复后的创建的对象
         if (!objectNames.isEmpty()) {
             int index = new Random().nextInt(objectNames.size());
             String versionId = "1";
@@ -105,6 +109,7 @@ public class UpdateObjectReStartS3N16469 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             s3Client.shutdown();
@@ -121,17 +126,9 @@ public class UpdateObjectReStartS3N16469 extends S3TestBase {
         @Override
         public void exec() throws Exception {
             PutObjectResult obj = s3Client.putObject(bucketName, this.objectName, new File(updatePath));
-            checkPutResult(obj);
             objectNameList.add(this.objectName);
 
         }
-    }
-
-    private void checkPutResult(PutObjectResult obj) throws IOException {
-        Assert.assertEquals(obj.getETag(), TestTools.getMD5(updatePath));
-        Assert.assertEquals(obj.getETag(), TestTools.getMD5(updatePath));
-        ObjectMetadata metadata = obj.getMetadata();
-        Assert.assertTrue(Integer.parseInt(metadata.getVersionId()) == 1, metadata.getVersionId());
     }
 
     private void chectGetResult(S3Object object, String objectName, String versionId, String filePath) throws Exception {

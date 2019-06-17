@@ -8,9 +8,10 @@ import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.S3TestBase;
+import com.sequoias3.commlibs3.s3utils.RegionUtils;
 import com.sequoias3.commlibs3.s3utils.bean.GetRegionResult;
 import com.sequoias3.commlibs3.s3utils.bean.Region;
-import com.sequoias3.commlibs3.s3utils.RegionUtils;
+import org.springframework.web.client.ResourceAccessException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -18,7 +19,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
@@ -57,7 +57,6 @@ public class PutRegionWithBronkenNet17348 extends S3TestBase {
         }
         mgr.execute();
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-        System.out.println("regionNameList = " + regionNameList.size());
         //put region again
         regionNames.removeAll(regionNameList);
         for (String regionName : regionNames) {
@@ -65,14 +64,15 @@ public class PutRegionWithBronkenNet17348 extends S3TestBase {
                     .withDataCLShardingType(dataCLShardingType)
                     .withName(regionName);
             RegionUtils.putRegion(region);
+            regionNameList.add(regionName);
         }
-        int index = new Random().nextInt(regionNum);
-        String regionName = regionNameBase + index;
-        GetRegionResult result = RegionUtils.getRegion(regionName);
-        Assert.assertEquals(result.getBuckets().size(), 0, result.getBuckets().toString());
-        Region region = result.getRegion();
-        Assert.assertEquals(region.getDataCSShardingType(), dataCSShardingType);
-        Assert.assertEquals(region.getDataCLShardingType(), dataCLShardingType);
+        for(String regionName:regionNameList) {
+            GetRegionResult result = RegionUtils.getRegion(regionName);
+            Assert.assertEquals(result.getBuckets().size(), 0, result.getBuckets().toString());
+            Region region = result.getRegion();
+            Assert.assertEquals(region.getDataCSShardingType(), dataCSShardingType);
+            Assert.assertEquals(region.getDataCLShardingType(), dataCLShardingType);
+        }
         runSuccess = true;
     }
 
@@ -102,7 +102,11 @@ public class PutRegionWithBronkenNet17348 extends S3TestBase {
                 RegionUtils.putRegion(region);
                 regionNameList.add(this.regionName);
             } catch (AmazonS3Exception e) {
-                if (e.getStatusCode() != 500 && !e.getErrorCode().contains("GetDBConnectFail")) {
+                if (e.getStatusCode() != 500) {
+                    throw e;
+                }
+            }catch (ResourceAccessException e){
+                if(!e.getMessage().contains("I/O error on POST request ")){
                     throw e;
                 }
             }

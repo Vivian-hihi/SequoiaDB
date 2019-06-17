@@ -51,7 +51,6 @@ public class PutObjectWithReStartS3N16468 extends S3TestBase {
         s3Client = CommLibS3.buildS3Client();
         CommLibS3.clearBucket(s3Client, bucketName);
         s3Client.createBucket(bucketName);
-        CommLibS3.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (int i = 0; i < objectNums; i++) {
             objectNames.add(objectNameBase + "_" + i + "_" + TestTools.getRandomString(1));
         }
@@ -73,22 +72,22 @@ public class PutObjectWithReStartS3N16468 extends S3TestBase {
                 throw e;
             }
         }
-
-        //put again
+        //检查故障前创建成功的对象
+        for (String objectName : objectNameList) {
+            PutObjectResult obj = s3Client.putObject(bucketName, objectName, new File(filePath));
+        }
+        //故障恢复后，重新创建对象
         objectNames.removeAll(objectNameList);
         s3Client = CommLibS3.buildS3Client();
         for (String objectName : objectNames) {
             PutObjectResult obj = s3Client.putObject(bucketName, objectName, new File(filePath));
-            checkPutResult(obj);
         }
-        //TODO:建议补充验证所有创建对象，包括故障前创建的对象，可随机选择故障前的对象验证是否创建是否正确
+        //随机检查故障恢复后创建的对象
         if (!objectNames.isEmpty()) {
             int index = new Random().nextInt(objectNames.size());
-            String versionId = "0";
-            S3Object s3Object = s3Client.getObject(new GetObjectRequest(bucketName, objectNames.get(index), versionId));
-            chectGetResult(s3Object, objectNames.get(index), versionId, filePath);
+            S3Object s3Object = s3Client.getObject(new GetObjectRequest(bucketName, objectNames.get(index)));
+            chectGetResult(s3Object, objectNames.get(index),filePath);
         }
-
         runSuccess = true;
     }
 
@@ -97,6 +96,7 @@ public class PutObjectWithReStartS3N16468 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             if (s3Client != null) {
@@ -121,19 +121,11 @@ public class PutObjectWithReStartS3N16468 extends S3TestBase {
         }
     }
 
-    private void checkPutResult(PutObjectResult obj) throws IOException {
-        Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));
-        Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));
-        ObjectMetadata metadata = obj.getMetadata();
-        Assert.assertTrue(Integer.parseInt(metadata.getVersionId()) == 0, metadata.getVersionId());
-    }
-
-    private void chectGetResult(S3Object object, String objectName, String versionId, String filePath) throws Exception {
+    private void chectGetResult(S3Object object, String objectName, String filePath) throws Exception {
         Assert.assertEquals(object.getKey(), objectName);
         Assert.assertEquals(object.getBucketName(), bucketName);
         ObjectMetadata objectMetadata = object.getObjectMetadata();
         Assert.assertEquals(objectMetadata.getETag(), TestTools.getMD5(filePath));
-        Assert.assertEquals(objectMetadata.getVersionId(), "0");
         S3ObjectInputStream s3InputStream = null;
         try {
             s3InputStream = object.getObjectContent();

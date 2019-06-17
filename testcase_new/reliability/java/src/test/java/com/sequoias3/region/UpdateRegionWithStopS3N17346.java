@@ -2,6 +2,7 @@ package com.sequoias3.region;
 
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
@@ -28,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 
 /**
- * @Description seqDB-17342 ::更新区域过程中db端节点异常
+ * @Description  seqDB-17346:更新区域过程中sequoiaS3端节点异常
  * @author fanyu
  * @version 1.00
  * @Date 2019.01.29
@@ -37,15 +38,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UpdateRegionWithStopS3N17346 extends S3TestBase {
     private boolean runSuccess = false;
-    private int regionNum = 100;
-    private String regionNameBase = "region17342a";//TODO:1、用例ID需要更新为17346
+    private int regionNum = 5;
+    private String regionNameBase = "region17346";
     private String dataCSShardingType = "year";
     private String dataCLShardingType = "year";
     private String updateDataCSShardingType = "month";
     private String updateDataCLShardingType = "month";
     private AmazonS3 s3Client = null;
-    private String bucketName = "bucket17342";
-    private String objectName = "object17432";
+    private String bucketName = "bucket17346";
+    private String objectName = "object17436";
     private List<String> regionNames = new ArrayList<String>();
     private List<String> regionNameList = new CopyOnWriteArrayList<String>();
 
@@ -74,7 +75,6 @@ public class UpdateRegionWithStopS3N17346 extends S3TestBase {
         mgr.execute();
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-        System.out.println("regionNameList = " + regionNameList.size());
         //get region that has not been updated and check
         regionNames.removeAll(regionNameList);
         if (regionNames.size() > 0) {
@@ -87,23 +87,25 @@ public class UpdateRegionWithStopS3N17346 extends S3TestBase {
             Assert.assertEquals(region.getDataCLShardingType(), dataCLShardingType);
         }
         //get region that has been updated and check
-        int index1 = new Random().nextInt(regionNameList.size());
-        String regionName1 = regionNameList.get(index1);
-        s3Client.createBucket(new CreateBucketRequest(bucketName, regionName1));
-        s3Client.putObject(bucketName, objectName, String.valueOf(UUID.randomUUID()));
-        //check region information
-        GetRegionResult result1 = RegionUtils.getRegion(regionName1);
-        Assert.assertEquals(result1.getBuckets().size(), 1, result1.getBuckets().toString());
-        Assert.assertEquals(result1.getBuckets().get(0).getName(), bucketName);
-        Region region1 = result1.getRegion();
-        Assert.assertEquals(region1.getDataCSShardingType(), updateDataCSShardingType);
-        Assert.assertEquals(region1.getDataCLShardingType(), updateDataCLShardingType);
-        //check object information
-        S3Object object = s3Client.getObject(bucketName, objectName);
-        Assert.assertEquals(object.getKey(), objectName);
-        Assert.assertEquals(object.getBucketName(), bucketName);
-        ObjectMetadata objectMetadata = object.getObjectMetadata();
-        Assert.assertEquals(objectMetadata.getVersionId(), "null");
+        if(regionNameList.size() > 0) {
+            int index1 = new Random().nextInt(regionNameList.size());
+            String regionName1 = regionNameList.get(index1);
+            s3Client.createBucket(new CreateBucketRequest(bucketName, regionName1));
+            s3Client.putObject(bucketName, objectName, String.valueOf(UUID.randomUUID()));
+            //check region information
+            GetRegionResult result1 = RegionUtils.getRegion(regionName1);
+            Assert.assertEquals(result1.getBuckets().size(), 1, result1.getBuckets().toString());
+            Assert.assertEquals(result1.getBuckets().get(0).getName(), bucketName);
+            Region region1 = result1.getRegion();
+            Assert.assertEquals(region1.getDataCSShardingType(), updateDataCSShardingType);
+            Assert.assertEquals(region1.getDataCLShardingType(), updateDataCLShardingType);
+            //check object information
+            S3Object object = s3Client.getObject(bucketName, objectName);
+            Assert.assertEquals(object.getKey(), objectName);
+            Assert.assertEquals(object.getBucketName(), bucketName);
+            ObjectMetadata objectMetadata = object.getObjectMetadata();
+            Assert.assertEquals(objectMetadata.getVersionId(), "null");
+        }
         runSuccess = true;
     }
 
@@ -137,8 +139,8 @@ public class UpdateRegionWithStopS3N17346 extends S3TestBase {
             try {
                 RegionUtils.putRegion(region);
                 regionNameList.add(this.regionName);
-            } catch (Exception e) {
-                if (!e.getMessage().contains("I/O error on PUT request")) {
+            } catch (AmazonS3Exception e) {
+                if (e.getStatusCode() != 500) {
                     throw e;
                 }
             }

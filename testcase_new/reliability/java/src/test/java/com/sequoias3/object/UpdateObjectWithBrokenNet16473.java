@@ -71,15 +71,21 @@ public class UpdateObjectWithBrokenNet16473 extends S3TestBase {
         }
         mgr.execute();
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+        //检查故障前创建的对象
+        if(!objectNames.isEmpty()){
+            int index =  new Random().nextInt(objectNames.size());
+            String versionId = "1";
+            S3Object s3Object = s3Client.getObject(new GetObjectRequest(bucketName, objectNames.get(index)));
+            chectGetResult(s3Object,objectNames.get(index),versionId,updatePath);
+        }
+
+        //故障恢复后，再次创建对象
         //put again
         objectNames.removeAll(objectNameList);
         for(String objectName : objectNames) {
-            for (int i = 0; i < versionNums; i++) {
-                PutObjectResult obj = s3Client.putObject(bucketName,objectName, new File(filePath));
-                checkPutResult(obj);
-            }
+                PutObjectResult obj = s3Client.putObject(bucketName,objectName, new File(updatePath));
         }
-
+        //随机检查故障恢复后，创建的对象
         if(!objectNames.isEmpty()){
             int index =  new Random().nextInt(objectNames.size());
             String versionId = "1";
@@ -98,6 +104,7 @@ public class UpdateObjectWithBrokenNet16473 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             s3Client.shutdown();
@@ -115,7 +122,6 @@ public class UpdateObjectWithBrokenNet16473 extends S3TestBase {
         public void exec() throws Exception {
             try {
                 PutObjectResult obj = s3Client.putObject(bucketName, this.objectName, new File(updatePath));
-                checkPutResult(obj);
                 objectNameList.add(this.objectName);
             } catch (AmazonS3Exception e) {
                 if (e.getStatusCode() != 500) {
@@ -125,19 +131,12 @@ public class UpdateObjectWithBrokenNet16473 extends S3TestBase {
         }
     }
 
-    private void checkPutResult( PutObjectResult obj) throws IOException {
-        Assert.assertEquals(obj.getETag(), TestTools.getMD5(updatePath));
-        Assert.assertEquals(obj.getETag(),TestTools.getMD5(updatePath));
-        ObjectMetadata metadata = obj.getMetadata();
-        Assert.assertTrue(Integer.parseInt(metadata.getVersionId()) == 1,metadata.getVersionId());
-    }
-
     private void chectGetResult(S3Object object,String objectName,String versionId,String filePath)throws  Exception{
         Assert.assertEquals(object.getKey(),objectName);
         Assert.assertEquals(object.getBucketName(),bucketName);
         ObjectMetadata objectMetadata = object.getObjectMetadata();
         Assert.assertEquals(objectMetadata.getETag(), TestTools.getMD5(filePath));
-        Assert.assertEquals(objectMetadata.getVersionId(), TestTools.getMD5(filePath));
+        Assert.assertEquals(objectMetadata.getVersionId(), versionId);
         S3ObjectInputStream s3InputStream = null;
         try {
             s3InputStream = object.getObjectContent();

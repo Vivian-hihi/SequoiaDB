@@ -40,7 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UpdateRegionWithKillCoord17342 extends S3TestBase {
     private boolean runSuccess = false;
-    private int regionNum = 100;
+    private int regionNum = 50;
     private String regionNameBase = "region17342a";
     private String dataCSShardingType = "year";
     private String dataCLShardingType = "year";
@@ -79,7 +79,6 @@ public class UpdateRegionWithKillCoord17342 extends S3TestBase {
             FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 2);
             mgr.addTask(faultTask);
         }
-
         for (int i = 0; i < regionNum; i++) {
             mgr.addTask(new PutRegion(regionNames.get(i),updateDataCSShardingType,updateDataCLShardingType));
         }
@@ -97,38 +96,37 @@ public class UpdateRegionWithKillCoord17342 extends S3TestBase {
             Assert.assertEquals(region.getDataCLShardingType(), dataCLShardingType);
         }
         //get region that has been updated and check
-        int index1 = new Random().nextInt(regionNameList.size());
-        String regionName1 = regionNameList.get(index1);
-        try {
+        if(regionNameList.size() > 0) {
+            int index1 = new Random().nextInt(regionNameList.size());
+            String regionName1 = regionNameList.get(index1);
             s3Client.createBucket(new CreateBucketRequest(bucketName, regionName1));
-        }catch(Exception e){
-            e.printStackTrace();
+            s3Client.putObject(bucketName, objectName, String.valueOf(UUID.randomUUID()));
+            //check region information
+            GetRegionResult result1 = RegionUtils.getRegion(regionName1);
+            Assert.assertEquals(result1.getBuckets().size(), 1, result1.getBuckets().toString());
+            Assert.assertEquals(result1.getBuckets().get(0).getName(), bucketName);
+            Region region1 = result1.getRegion();
+            Assert.assertEquals(region1.getDataCSShardingType(), updateDataCSShardingType);
+            Assert.assertEquals(region1.getDataCLShardingType(), updateDataCLShardingType);
+            //check object information
+            S3Object object = s3Client.getObject(bucketName, objectName);
+            Assert.assertEquals(object.getKey(), objectName);
+            Assert.assertEquals(object.getBucketName(), bucketName);
+            ObjectMetadata objectMetadata = object.getObjectMetadata();
+            Assert.assertEquals(objectMetadata.getVersionId(), "null");
         }
-        s3Client.putObject(bucketName,objectName,String.valueOf(UUID.randomUUID()));
-        //check region information
-        GetRegionResult result1 = RegionUtils.getRegion(regionName1);
-        Assert.assertEquals(result1.getBuckets().size(), 1, result1.getBuckets().toString());
-        Assert.assertEquals(result1.getBuckets().get(0).getName(), bucketName);
-        Region region1 = result1.getRegion();
-        Assert.assertEquals(region1.getDataCSShardingType(),updateDataCSShardingType);
-        Assert.assertEquals(region1.getDataCLShardingType(),updateDataCLShardingType);
-        //check object information
-        S3Object object = s3Client.getObject(bucketName,objectName);
-        Assert.assertEquals(object.getKey(),objectName);
-        Assert.assertEquals(object.getBucketName(),bucketName);
-        ObjectMetadata objectMetadata = object.getObjectMetadata();
-        Assert.assertEquals(objectMetadata.getVersionId(),"null");
         runSuccess = true;
     }
 
 
     @AfterClass
     private void tearDown() throws Exception {
-    	//TODO:1、没有做runSuccess判断
-        CommLibS3.clearBucket(s3Client,bucketName);
-        for (int i = 0; i < regionNum; i++) {
-            RegionUtils.deleteRegion(regionNameBase + i);
-        }
+      if(runSuccess) {
+          CommLibS3.clearBucket(s3Client, bucketName);
+          for (int i = 0; i < regionNum; i++) {
+              RegionUtils.deleteRegion(regionNameBase + i);
+          }
+      }
     }
 
     private class PutRegion extends OperateTask {

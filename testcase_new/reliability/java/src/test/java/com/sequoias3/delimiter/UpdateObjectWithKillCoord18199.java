@@ -81,13 +81,11 @@ public class UpdateObjectWithKillCoord18199 extends S3TestBase {
         }
         mgr.execute();
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-        Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
         for(int i = count.get(); i < versionNum; i++){
             s3Client.putObject(bucketName, this.objectName, new File(filePath));
         }
-        //list objects again
+        //check result
         listVersionsAndCheck();
-
         runSuccess = true;
     }
 
@@ -96,6 +94,7 @@ public class UpdateObjectWithKillCoord18199 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             if (s3Client != null) {

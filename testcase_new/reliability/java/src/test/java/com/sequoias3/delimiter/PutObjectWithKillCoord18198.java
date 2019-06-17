@@ -37,9 +37,8 @@ public class PutObjectWithKillCoord18198 extends S3TestBase {
     private int fileSize = 1;
     private int objectNums = 1000;
     private String filePath = null;
-    //TODO:1、bucket和object使用的用例ID需要更新为18198
-    private String bucketName = "bucket18204";
-    private String objectNameBase = "PutObject16468?";
+    private String bucketName = "bucket18198";
+    private String objectNameBase = "object18198?";
     private String delimiter = "?";
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
@@ -86,6 +85,7 @@ public class PutObjectWithKillCoord18198 extends S3TestBase {
             s3Client.putObject(bucketName, objectName, new File(filePath));
             objectNameList.add(objectName);
         }
+        Assert.assertEquals(objectNameList.size(),objectNums,"objectNameList = " + objectNameList.toString());
         for(String objectName : objectNameList){
             checkResult(objectName);
         }
@@ -97,6 +97,7 @@ public class PutObjectWithKillCoord18198 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             if (s3Client != null) {

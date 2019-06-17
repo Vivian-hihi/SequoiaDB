@@ -23,15 +23,15 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
+ * @Description  seqDB-16471:获取对象过程中SequiaS3Client端异常
  * @author fanyu
  * @version 1.00
- * @Description seqDB-16470 ::开启版本控制，删除对象过程中SequiaS3Client端异常
  * @Date 2019.01.17
  */
 public class GetObjectWithReStartS3N16471 extends S3TestBase {
     private boolean runSuccess = false;
-    private String bucketName = "bucket16466";//TODO:1、对象名中需要包含用例ID
-    private String objectNameBase = "aa/bb/object16466";
+    private String bucketName = "bucket16471";
+    private String objectNameBase = "aa/bb/object16471";
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
     private AmazonS3 s3Client = null;
@@ -74,9 +74,12 @@ public class GetObjectWithReStartS3N16471 extends S3TestBase {
             }
         }
         s3Client = CommLibS3.buildS3Client();
-        //get again
-        //TODO:2、建议补充下验证故障之前的对象获取信息正确性
+        //检查故障时获取成功的对象
+        for (String objectName : objectNameList) {
+            getObjectAndCheck(objectName);
+        }
         objectNames.removeAll(objectNameList);
+        //检查故障时获取失败的对象
         for (String objectName : objectNames) {
             getObjectAndCheck(objectName);
         }

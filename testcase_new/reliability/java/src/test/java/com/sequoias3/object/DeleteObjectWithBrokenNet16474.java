@@ -88,6 +88,7 @@ public class DeleteObjectWithBrokenNet16474 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             s3Client.shutdown();

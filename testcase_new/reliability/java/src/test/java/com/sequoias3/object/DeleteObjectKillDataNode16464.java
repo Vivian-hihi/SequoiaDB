@@ -78,7 +78,6 @@ public class DeleteObjectKillDataNode16464 extends S3TestBase {
 			Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
 
 			Assert.assertFalse(s3Client.doesObjectExist(bucketName, keyName));
-
 		} catch (ReliabilityException e) {
 			e.printStackTrace();
 			Assert.fail(e.getMessage());

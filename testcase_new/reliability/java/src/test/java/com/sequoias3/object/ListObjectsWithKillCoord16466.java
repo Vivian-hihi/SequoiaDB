@@ -114,12 +114,12 @@ public class ListObjectsWithKillCoord16466 extends S3TestBase {
             req.setContinuationToken(objectsV2Result.getNextContinuationToken());
             List<S3ObjectSummary> objects = objectsV2Result.getObjectSummaries();
             //check
-            checkResult(objects);
+            checkObjectsResult(objects);
             System.out.println(objectsV2Result.isTruncated());
         } while (objectsV2Result.isTruncated());
     }
 
-    private void checkResult(List<S3ObjectSummary> objects) throws IOException {
+    private void checkObjectsResult(List<S3ObjectSummary> objects) throws IOException {
         for (S3ObjectSummary objectSummary : objects) {
             Assert.assertEquals(objectSummary.getBucketName(), bucketName);
             Assert.assertTrue(objectNames.contains(objectSummary.getKey()),

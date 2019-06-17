@@ -77,13 +77,15 @@ public class UpdateObjectWithKillCoord18204 extends S3TestBase {
         }
         mgr.addTask(new UpdateDelimiter());
         mgr.execute();
-        Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
-        //TODO:1、比较结果建议补充故障时更新的分隔符检查，如果故障时更新分隔符成功，则验证分隔符正常可用，如果更新分隔符失败则再次更新分隔符成功
-        DelimiterUtils.updateDelimiterSuccessAgain(bucketName,newDelimiter);
-        for(String objectName : objectNameList){
-            checkResult(objectName);
+        //如果故障时，更新分隔符失败，故障恢复后，再次更新分割符
+        if(!DelimiterUtils.getDelimiter(bucketName).getDelimiter().equals(newDelimiter)){
+            DelimiterUtils.updateDelimiterSuccessAgain(bucketName,newDelimiter);
         }
+        for(String objectName : objectNameList){
+            checkObjectResult(objectName);
+        }
+        checkListV2Result();
         runSuccess = true;
     }
 
@@ -92,6 +94,7 @@ public class UpdateObjectWithKillCoord18204 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             if (s3Client != null) {
@@ -114,7 +117,7 @@ public class UpdateObjectWithKillCoord18204 extends S3TestBase {
         }
     }
 
-    private void checkResult(String objectName) throws Exception {
+    private void checkObjectResult(String objectName) throws Exception {
         S3Object obj = s3Client.getObject(bucketName, objectName);
         S3ObjectInputStream s3is = obj.getObjectContent();
         String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
@@ -123,16 +126,19 @@ public class UpdateObjectWithKillCoord18204 extends S3TestBase {
         s3is.close();
         String actMd5 = TestTools.getMD5(downloadPath);
         String expMd5 = TestTools.getMD5(filePath);
-
         Assert.assertEquals(obj.getKey(), objectName);
         Assert.assertEquals(actMd5, expMd5);
+    }
 
+    private void checkListV2Result(){
         // 通过携带delimiter查询对象列表的对外映射场景检测目录表是否生成新目录，对象元数据表和目录表中数据通过连接db手工校验
-        ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(bucketName).withEncodingType("url");
+        ListObjectsV2Request request = new ListObjectsV2Request()
+                .withBucketName(bucketName)
+                .withEncodingType("url");
         request.withDelimiter(newDelimiter);
         ListObjectsV2Result result = s3Client.listObjectsV2(request);
         List<String> commonPrefixes = result.getCommonPrefixes();
-        Assert.assertEquals(commonPrefixes.size(), 1);
-        Assert.assertEquals(result.getObjectSummaries().size(), 0);
+        Assert.assertEquals(commonPrefixes.size(), 1,commonPrefixes.toString());
+        Assert.assertEquals(result.getObjectSummaries().size(), 0,"bucketName = " + bucketName + ",delimiter = " +  newDelimiter);
     }
 }

@@ -67,15 +67,21 @@ public class PutObjectWithBrokenNet16472 extends S3TestBase {
         }
         mgr.execute();
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+        //检查故障前创建的对象
+        for(String objectName : objectNameList){
+            String versionId = "0";
+            S3Object s3Object = s3Client.getObject(new GetObjectRequest(bucketName, objectName, versionId));
+            chectGetResult(s3Object,objectName,versionId);
+        }
         //put again
+        //故障后，再次创建对象
         objectNames.removeAll(objectNameList);
         for(String objectName : objectNames) {
             for (int i = 0; i < versionNums; i++) {
                 PutObjectResult obj = s3Client.putObject(bucketName,objectName, new File(filePath));
-                checkPutResult(obj);
             }
         }
-
+        //随机检查故障后，创建的对象
         if(!objectNames.isEmpty()){
             int index =  new Random().nextInt(objectNames.size());
             String versionId = "1";
@@ -90,6 +96,7 @@ public class PutObjectWithBrokenNet16472 extends S3TestBase {
         try {
             if (runSuccess) {
                 CommLibS3.clearBucket(s3Client, bucketName);
+                TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
             s3Client.shutdown();
@@ -108,23 +115,14 @@ public class PutObjectWithBrokenNet16472 extends S3TestBase {
             try{
                 for(int i = 0; i < versionNums; i++) {
                     PutObjectResult obj = s3Client.putObject(bucketName, this.objectName,new File(filePath));
-                    checkPutResult(obj);
-                    objectNameList.add(this.objectName);
                 }
+                objectNameList.add(this.objectName);
             }catch (AmazonS3Exception e) {
                 if (e.getStatusCode() != 500) {
                     throw e;
                 }
             }
         }
-    }
-
-    private void checkPutResult( PutObjectResult obj) throws IOException {
-        Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));
-        Assert.assertEquals(obj.getETag(),TestTools.getMD5(filePath));
-        ObjectMetadata metadata = obj.getMetadata();
-        System.out.println("versionId = " + metadata.getVersionId());
-        Assert.assertTrue(Integer.parseInt(metadata.getVersionId()) < versionNums,metadata.getVersionId());
     }
 
     private void chectGetResult(S3Object object,String objectName,String versionId)throws  Exception{
