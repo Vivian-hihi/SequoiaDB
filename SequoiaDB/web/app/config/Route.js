@@ -253,7 +253,7 @@
       { path: '/Deploy/Index',
         options: {
            templateUrl: './app/template/Deploy/Index.html',
-           resolve: resolveFun( [ './app/controller/Deploy/Index.js' ] )
+           resolve: resolveFun( [ './app/controller/Deploy/Index.js', './app/controller/Deploy/Index/Index.Instance.js', './app/controller/Deploy/Index/Index.Storage.js', './app/controller/Deploy/Index/Index.Host.js' ] )
         }
       },
       //²¿ÊðÖ÷»ú
