@@ -2081,9 +2081,8 @@ namespace engine
 
          BSONObj oldOptions ;
          UINT32 alterMask = UTIL_ARG_FIELD_EMPTY ;
-         // if current value is out of new range, restart the sequence
          rc = pSeqMgr->alterSequence( seqName, seqOpt, cb, w, &oldOptions,
-                                      &alterMask, TRUE ) ;
+                                      &alterMask ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to alter sequence, rc: %d", rc ) ;
 
          if ( UTIL_ARG_FIELD_EMPTY != alterMask )
@@ -2143,9 +2142,7 @@ namespace engine
                                            rollbackArgs[i].getArgumentMask() ) ;
 
          // only rollback what had been changed by alter mask
-         // if current value is out of new range, stop the sequence by setting
-         // to maximum
-         rc = pSeqMgr->alterSequence( seqName, seqOpt, cb, w, NULL, NULL, FALSE ) ;
+         rc = pSeqMgr->alterSequence( seqName, seqOpt, cb, w, NULL, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to alter sequence[%s] when rollback, "
                       "rc: %d", seqName, rc ) ;
       }

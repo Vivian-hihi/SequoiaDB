@@ -666,8 +666,7 @@ namespace engine
       name = ele.String() ;
 
       rc = seqMgr->alterSequence( name, options, eduCB,
-                                  _catCB->majoritySize( TRUE ), NULL, NULL,
-                                  FALSE ) ;
+                                  _catCB->majoritySize( TRUE ), NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

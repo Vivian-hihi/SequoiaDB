@@ -87,8 +87,7 @@ namespace engine
                            _pmdEDUCB* eduCB,
                            INT16 w,
                            bson::BSONObj * oldOptions,
-                           UINT32 * alterMask,
-                           BOOLEAN restartCurValue ) ;
+                           UINT32 * alterMask ) ;
       INT32 acquireSequence( const std::string& name,
                              const utilSequenceID ID,
                              _catSequenceAcquirer& acquirer,

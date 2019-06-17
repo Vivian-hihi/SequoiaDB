@@ -212,8 +212,7 @@ namespace engine
    INT32 _catSequence::setOptions( const BSONObj& options,
                                    BOOLEAN init,
                                    BOOLEAN withInternalField,
-                                   UINT32 * alterMask,
-                                   BOOLEAN restartCurValue )
+                                   UINT32 * alterMask )
    {
       INT32 rc = SDB_OK ;
       BSONElement ele ;
@@ -264,11 +263,10 @@ namespace engine
          {
             this->setStartValue( startValue ) ;
             OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) ;
-            if ( init || initial() )
+            if ( init )
             {
                this->setCurrentValue( startValue ) ;
                this->setCachedValue( startValue ) ;
-               OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) ;
             }
          }
       }
@@ -323,44 +321,29 @@ namespace engine
       if ( NumberInt == ele.type() || NumberLong == ele.type() )
       {
          INT64 currentValue = ele.numberLong() ;
-
-         if( currentValue < this->minValue() ||
-             currentValue > this->maxValue() )
+         if ( this->currentValue() != currentValue )
          {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Invalid currentValue[%lld], out of bounds for "
-                    "minValue[%lld] and maxValue[%lld]",
-                    currentValue, minValue(), maxValue() ) ;
-            goto error ;
-         }
-
-         /* make sure getNextValue from CurrentValue not StartValue
-            when alter CurrentValue on a non-used sequence */
-         if( this->initial() )
-         {
-            this->setInitial( FALSE ) ;
-         }
-         this->setCurrentValue( currentValue ) ;
-         this->setCachedValue( currentValue ) ;
-         OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) ;
-      }
-      else if ( EOO == ele.type() )
-      {
-         // need check current value against new value range
-         if ( !init &&
-              restartCurValue &&
-              !OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) &&
-              ( currentValue() < minValue() || currentValue() > maxValue() ) )
-         {
-            // restart the sequence
-            setInitial( TRUE ) ;
-            setCurrentValue( startValue() ) ;
-            setCachedValue( startValue() ) ;
+            if( currentValue < this->minValue() ||
+                currentValue > this->maxValue() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Invalid currentValue[%lld], out of bounds for "
+                       "minValue[%lld] and maxValue[%lld]",
+                       currentValue, minValue(), maxValue() ) ;
+               goto error ;
+            }
+            /* make sure getNextValue from CurrentValue not StartValue
+               when alter CurrentValue on a non-used sequence */
+            if( this->initial() )
+            {
+               this->setInitial( FALSE ) ;
+            }
+            this->setCurrentValue( currentValue ) ;
+            this->setCachedValue( currentValue ) ;
             OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) ;
-            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_INITIAL_FIELD ) ;
          }
       }
-      else
+      else if ( EOO != ele.type() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
