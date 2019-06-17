@@ -29,6 +29,7 @@ public class TimePrinterListener extends TestListenerAdapter {
         
         return false ;
     }
+    
     @Override
     public void onTestStart(ITestResult itr){
         super.onTestStart( itr ) ;
@@ -101,7 +102,7 @@ public class TimePrinterListener extends TestListenerAdapter {
     public void beforeConfiguration(ITestResult tr) {
         super.beforeConfiguration(tr);
         if (tr.getMethod().isBeforeClassConfiguration()) {
-            SdbTestBase.setRunGroup( tr.getMethod().getGroups() ) ;
+            SdbTestBase.setRunGroup( tr.getTestClass().getXmlTest().getIncludedGroups() ) ;
             printBeginTime(tr);
             dbMsgBeginTime(tr);
         }

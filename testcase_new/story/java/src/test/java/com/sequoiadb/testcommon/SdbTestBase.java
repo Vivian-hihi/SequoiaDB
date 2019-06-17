@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List ;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -127,17 +128,14 @@ public class SdbTestBase {
         }
     }
 
-    public static void setRunGroup(String[] testGroups) {
-        for (int i = 0; i < testGroups.length; ++i) {
-            if (alreadFinTestGroups.contains(testGroups[i])) {
-                continue;
+    public static void setRunGroup(List<String> testGroups) {
+        if ( isInit.get() ){
+            return ;
+        }
+        for (String group : testGroups ){
+            if ( group != null && isInit.compareAndSet(false, true)){
+                SdbTestBase.testGroup = group ;
             }
-
-            if (testGroups.length == 1 || isInit.compareAndSet(false, true)) {
-                SdbTestBase.testGroup = testGroups[i];
-                isInit.set(true);
-            }
-            break;
         }
     }
 
@@ -296,7 +294,7 @@ public class SdbTestBase {
         if (initCount.get() == 0) {
             return;
         }
-
+        
         int totalSleepLen = 0;
         while (runCaseNum.get() > 0) {
             try {
