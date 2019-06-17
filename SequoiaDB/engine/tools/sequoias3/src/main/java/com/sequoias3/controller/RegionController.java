@@ -111,6 +111,8 @@ public class RegionController {
 
         logger.info("delete region. regionName:{}", regionName);
 
+        checkRegionName(regionName);
+
         regionService.deleteRegion(regionName.toLowerCase());
 
         return ResponseEntity.noContent().build();
