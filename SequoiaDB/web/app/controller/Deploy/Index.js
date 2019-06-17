@@ -1478,7 +1478,7 @@
       //打开 同步服务 弹窗
       function showSyncWindow()
       {
-         if ( SdbSwap.sdbModuleNum == 0 )
+         if ( $scope.InstanceNum == 0 )
          {
             return;
          }

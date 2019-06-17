@@ -1,4 +1,5 @@
 ﻿{
+   "同步的实例": "Instance",
    "实例信息": "Instance Info",
    "数据库实例的主机名或者IP地址": "Host name or IP address of the database instance",
    "添加已有的实例": "Add Attach Instance",
