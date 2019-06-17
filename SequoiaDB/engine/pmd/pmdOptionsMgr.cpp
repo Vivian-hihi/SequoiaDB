@@ -2355,7 +2355,7 @@ done:
 
       // --transreplsize
       rdxInt( pEX, PMD_OPTION_TRANS_REPLSIZE, _transReplSize, FALSE,
-              PMD_CFG_CHANGE_RUN, -1, TRUE ) ;
+              PMD_CFG_CHANGE_RUN, 2, TRUE ) ;
       rdvMinMax( pEX, _transReplSize, -1, CLS_REPLSET_MAX_NODE_SIZE ) ;
 
       // --transrccount
