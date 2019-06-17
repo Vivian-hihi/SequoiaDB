@@ -92,7 +92,7 @@ testFiles = [
    [ "./lob/lobSeekEnd14190.cpp" ],
    [ "./cls/getSlaveOnePos13781.cpp" ], # sync
    [ "./cls/getSlaveMultiPos13782.cpp" ], # sync
-   [ "./cls/getSlaveNoPos13783.cpp" ], # sync
+   #[ "./cls/getSlaveNoPos13783.cpp" ], # sync
    [ "./cls/getSlaveParaCheck13780.cpp" ],
    [ "./tdd/bson_test.cpp" ],
    [ "./tdd/cbson.cpp" ],
