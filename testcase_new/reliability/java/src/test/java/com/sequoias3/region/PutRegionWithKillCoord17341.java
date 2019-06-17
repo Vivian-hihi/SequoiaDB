@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-
+//TODO:1、描述信息中用例编号和用例描述不正确，对应用例为17341
 /**
  * @Description seqDB-16472 ::开启版本控制，创建对象过程中SequoiaS3和sdb节点网络异常
  * @author fanyu
@@ -35,7 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PutRegionWithKillCoord17341 extends S3TestBase {
     private boolean runSuccess = false;
     private int regionNum = 100;
-    private String regionNameBase = "region17342a";
+    private String regionNameBase = "region17342a";//TODO: 2、需要更新用例ID
     private String dataCSShardingType = "year";
     private String dataCLShardingType = "month";
     private List<String> regionNames = new ArrayList<String>();

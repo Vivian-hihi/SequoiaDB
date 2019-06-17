@@ -37,6 +37,7 @@ public class PutObjectWithKillCoord18198 extends S3TestBase {
     private int fileSize = 1;
     private int objectNums = 1000;
     private String filePath = null;
+    //TODO:1、bucket和object使用的用例ID需要更新为18198
     private String bucketName = "bucket18204";
     private String objectNameBase = "PutObject16468?";
     private String delimiter = "?";

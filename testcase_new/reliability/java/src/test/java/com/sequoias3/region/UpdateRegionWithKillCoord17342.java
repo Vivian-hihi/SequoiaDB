@@ -124,6 +124,7 @@ public class UpdateRegionWithKillCoord17342 extends S3TestBase {
 
     @AfterClass
     private void tearDown() throws Exception {
+    	//TODO:1、没有做runSuccess判断
         CommLibS3.clearBucket(s3Client,bucketName);
         for (int i = 0; i < regionNum; i++) {
             RegionUtils.deleteRegion(regionNameBase + i);

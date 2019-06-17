@@ -35,7 +35,7 @@ public class DeleteObjectWithReStartS3N16470 extends S3TestBase {
     private int versionNums = 3;
     private String filePath = null;
     private String updatePath = null;
-    private String objectNameBase = "object16474";
+    private String objectNameBase = "object16474";//TODO: 1、对象名中的用例ID需要更新为16470
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
     private File localPath = null;

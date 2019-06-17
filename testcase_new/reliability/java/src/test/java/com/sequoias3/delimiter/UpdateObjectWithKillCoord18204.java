@@ -79,6 +79,7 @@ public class UpdateObjectWithKillCoord18204 extends S3TestBase {
         mgr.execute();
         Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
         Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+        //TODO:1、比较结果建议补充故障时更新的分隔符检查，如果故障时更新分隔符成功，则验证分隔符正常可用，如果更新分隔符失败则再次更新分隔符成功
         DelimiterUtils.updateDelimiterSuccessAgain(bucketName,newDelimiter);
         for(String objectName : objectNameList){
             checkResult(objectName);

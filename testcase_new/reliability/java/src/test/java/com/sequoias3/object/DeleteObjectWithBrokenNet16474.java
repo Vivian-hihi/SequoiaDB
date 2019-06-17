@@ -64,7 +64,7 @@ public class DeleteObjectWithBrokenNet16474 extends S3TestBase {
 
     @Test
     public void test() throws Exception {
-        //kill coord when list objects
+        //kill coord when Delete objects
         FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(S3TestBase.s3HostName, 10,20);
         TaskMgr mgr = new TaskMgr(faultTask);
         for(int i = 0; i < objectNums; i++){

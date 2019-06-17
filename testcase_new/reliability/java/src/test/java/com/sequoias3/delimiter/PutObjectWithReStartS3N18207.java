@@ -62,6 +62,7 @@ public class PutObjectWithReStartS3N18207 extends S3TestBase {
         //restart s3
         FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 1, 10);
         TaskMgr mgr = new TaskMgr(faultMakeTask);
+        //TODO:1、用例中的更新符未设置，桶中还是使用默认更新符/
         for (int i = 0; i < objectNums; i++) {
             mgr.addTask(new PutObject(objectNames.get(i), filePath));
         }

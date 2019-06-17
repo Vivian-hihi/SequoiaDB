@@ -30,7 +30,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class GetObjectWithReStartS3N16471 extends S3TestBase {
     private boolean runSuccess = false;
-    private String bucketName = "bucket16466";
+    private String bucketName = "bucket16466";//TODO:1、对象名中需要包含用例ID
     private String objectNameBase = "aa/bb/object16466";
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
@@ -75,6 +75,7 @@ public class GetObjectWithReStartS3N16471 extends S3TestBase {
         }
         s3Client = CommLibS3.buildS3Client();
         //get again
+        //TODO:2、建议补充下验证故障之前的对象获取信息正确性
         objectNames.removeAll(objectNameList);
         for (String objectName : objectNames) {
             getObjectAndCheck(objectName);

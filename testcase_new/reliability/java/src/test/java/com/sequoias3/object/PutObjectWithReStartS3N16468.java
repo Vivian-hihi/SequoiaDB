@@ -81,6 +81,7 @@ public class PutObjectWithReStartS3N16468 extends S3TestBase {
             PutObjectResult obj = s3Client.putObject(bucketName, objectName, new File(filePath));
             checkPutResult(obj);
         }
+        //TODO:建议补充验证所有创建对象，包括故障前创建的对象，可随机选择故障前的对象验证是否创建是否正确
         if (!objectNames.isEmpty()) {
             int index = new Random().nextInt(objectNames.size());
             String versionId = "0";

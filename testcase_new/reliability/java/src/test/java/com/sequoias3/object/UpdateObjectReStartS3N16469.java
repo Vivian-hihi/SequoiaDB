@@ -38,7 +38,7 @@ public class UpdateObjectReStartS3N16469 extends S3TestBase {
     private int versionNums = 2;
     private String filePath = null;
     private String updatePath = null;
-    private String objectNameBase = "PutObject16473";
+    private String objectNameBase = "PutObject16473";//TODO:1、对象名需要更新用例ID
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
     private File localPath = null;
@@ -86,7 +86,7 @@ public class UpdateObjectReStartS3N16469 extends S3TestBase {
                 checkPutResult(obj);
             }
         }
-
+        //TODO:2、建议补充检测故障前更新对象（可随机检测）
         if (!objectNames.isEmpty()) {
             int index = new Random().nextInt(objectNames.size());
             String versionId = "1";

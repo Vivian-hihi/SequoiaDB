@@ -38,7 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class UpdateRegionWithStopS3N17346 extends S3TestBase {
     private boolean runSuccess = false;
     private int regionNum = 100;
-    private String regionNameBase = "region17342a";
+    private String regionNameBase = "region17342a";//TODO:1、用例ID需要更新为17346
     private String dataCSShardingType = "year";
     private String dataCLShardingType = "year";
     private String updateDataCSShardingType = "month";
