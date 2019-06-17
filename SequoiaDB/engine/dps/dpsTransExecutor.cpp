@@ -701,10 +701,14 @@ namespace engine
        _transMBStatMap.insert( std::make_pair( clUniqueID, stat ) ) ;
    }
 
-   void _dpsTransExecutor::incMBTotalRecords ( utilCLUniqueID clUniqueID,
-                                               ossAtomic64 * totalRecords,
-                                               UINT64 delta )
+   BOOLEAN _dpsTransExecutor::incMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                                  ossAtomic64 * totalRecords,
+                                                  UINT64 delta )
    {
+      if ( !UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
+      {
+         return FALSE ;
+      }
       TRANS_MB_STAT_MAP_IT iter = _transMBStatMap.find( clUniqueID ) ;
       if ( iter == _transMBStatMap.end() )
       {
@@ -714,12 +718,17 @@ namespace engine
       {
          iter->second.increase( delta ) ;
       }
+      return TRUE ;
    }
 
-   void _dpsTransExecutor::decMBTotalRecords ( utilCLUniqueID clUniqueID,
-                                               ossAtomic64 * totalRecords,
-                                               UINT64 delta )
+   BOOLEAN _dpsTransExecutor::decMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                                  ossAtomic64 * totalRecords,
+                                                  UINT64 delta )
    {
+      if ( !UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
+      {
+         return FALSE ;
+      }
       TRANS_MB_STAT_MAP_IT iter = _transMBStatMap.find( clUniqueID ) ;
       if ( iter == _transMBStatMap.end() )
       {
@@ -729,11 +738,16 @@ namespace engine
       {
          iter->second.decrease( delta ) ;
       }
+      return TRUE ;
    }
 
    BOOLEAN _dpsTransExecutor::getMBTotalRecords ( utilCLUniqueID clUniqueID,
                                                   UINT64 & totalRecords ) const
    {
+      if ( !UTIL_IS_VALID_CLUNIQUEID( clUniqueID ) )
+      {
+         return FALSE ;
+      }
       TRANS_MB_STAT_MAP_CIT citer = _transMBStatMap.find( clUniqueID ) ;
       if ( citer != _transMBStatMap.end() )
       {

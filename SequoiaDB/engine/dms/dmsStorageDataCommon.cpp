@@ -4393,8 +4393,11 @@ namespace engine
       }
       else if ( cb->isTransaction() )
       {
-         cb->getTransExecutor()->incMBTotalRecords(
-                           clUniqueID, &( mbStat->_rcTotalRecords ), 1 ) ;
+         if ( !cb->getTransExecutor()->incMBTotalRecords(
+                           clUniqueID, &( mbStat->_rcTotalRecords ), 1 ) )
+         {
+            mbStat->_rcTotalRecords.inc() ;
+         }
       }
       else
       {
@@ -4424,8 +4427,11 @@ namespace engine
       }
       else if ( cb->isTransaction() )
       {
-         cb->getTransExecutor()->decMBTotalRecords(
-                        clUniqueID, &( mbStat->_rcTotalRecords ), 1 ) ;
+         if ( !cb->getTransExecutor()->decMBTotalRecords(
+                        clUniqueID, &( mbStat->_rcTotalRecords ), 1 ) )
+         {
+            mbStat->_rcTotalRecords.dec() ;
+         }
       }
       else
       {

@@ -343,12 +343,12 @@ namespace engine
             return _transMBStatMap.empty() ;
          }
 
-         void incMBTotalRecords ( utilCLUniqueID clUniqueID,
-                                  ossAtomic64 * totalRecords,
-                                  UINT64 delta ) ;
-         void decMBTotalRecords ( utilCLUniqueID clUniqueID,
-                                  ossAtomic64 * totalRecords,
-                                  UINT64 delta ) ;
+         BOOLEAN incMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                     ossAtomic64 * totalRecords,
+                                     UINT64 delta ) ;
+         BOOLEAN decMBTotalRecords ( utilCLUniqueID clUniqueID,
+                                     ossAtomic64 * totalRecords,
+                                     UINT64 delta ) ;
          BOOLEAN getMBTotalRecords ( utilCLUniqueID clUniqueID,
                                      UINT64 & totalRecords ) const ;
 
