@@ -34,6 +34,7 @@
 #include "ossUtil.h"
 #include "impUtil.hpp"
 #include "pd.hpp"
+#include "utilTypeCast.h"
 #include <cctype>
 #include <cmath>
 #include <iostream>
@@ -118,10 +119,10 @@ namespace import
    #define CSV_STR_LEFTBRACKET   '('
    #define CSV_STR_RIGHTBRACKET  ')'
 
-   #define CSV_INT_MAX  (2147483647)
-   #define CSV_INT_MIN  (-2147483648)
-   #define CSV_LONG_MAX OSS_SINT64_MAX
-   #define CSV_LONG_MIN OSS_SINT64_MIN
+   #define CSV_INT32_MAX  (2147483647)
+   #define CSV_INT32_MIN  (-2147483648)
+   #define CSV_INT64_MAX OSS_SINT64_MAX
+   #define CSV_INT64_MIN OSS_SINT64_MIN
 
    #define RELATIVE_YEAR      1900
    #define RELATIVE_MOD       12
@@ -909,7 +910,7 @@ namespace import
          goto error;
       }
 
-      quo = neg ? ((UINT64)CSV_LONG_MAX + 1) : CSV_LONG_MAX;
+      quo = neg ? ((UINT64)CSV_INT64_MAX + 1) : CSV_INT64_MAX;
       rem = quo % 10;
       quo /= 10;
       intNum = 0;
@@ -1296,7 +1297,80 @@ namespace import
       return rc ;
    }
 
-   static inline INT32 _stringToRawNumber(const CHAR* data, INT32 length,
+   static inline INT32 _stringToRawNumber( const CHAR* data, INT32 length,
+                                           CSV_TYPE &type,
+                                           CSVFieldValue &value,
+                                           INT32 &valueLength )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpType = 0 ;
+      utilNumberVal tmpValue ;
+
+      //parse double [+/-]inf  [+/-]Infinity
+      rc = _stringToInfinity( data, length, type, value, valueLength ) ;
+      if ( rc )
+      {
+         goto error;
+      }
+
+      if ( CSV_TYPE_DOUBLE == type && 0 != valueLength )
+      {
+         goto done ;
+      }
+
+      //parse double nan
+      rc = _stringToNan( data, length, type, value, valueLength ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( CSV_TYPE_DOUBLE == type && 0 != valueLength )
+      {
+         goto done ;
+      }
+
+      rc = utilStrToNumber( data, length, &tmpType, &tmpValue, &valueLength ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if( tmpType == 0 )
+      {
+         type = CSV_TYPE_INT ;
+         value.intVal = tmpValue.intVal ;
+      }
+      else if( tmpType == 1 )
+      {
+         type = CSV_TYPE_LONG ;
+         value.longVal = tmpValue.longVal ;
+      }
+      else if( tmpType == 2 )
+      {
+         type = CSV_TYPE_DOUBLE ;
+         value.doubleVal = tmpValue.doubleVal ;
+      }
+      else if( tmpType == 3 )
+      {
+         type = CSV_TYPE_DECIMAL ;
+         sdb_decimal_init( &( value.decimalVal ) ) ;
+
+         rc = _stringToRawDecimal( data, length,
+                                   value.decimalVal, valueLength ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   static inline INT32 _stringToRawNumber2(const CHAR* data, INT32 length,
                                           CSV_TYPE& type, CSVFieldValue& value,
                                           INT32& valueLength)
    {
@@ -1413,7 +1487,7 @@ namespace import
       {
          if (CSV_TYPE_LONG == tmpType)
          {
-            if (tmpValue.longVal >= CSV_INT_MIN && tmpValue.longVal <= CSV_INT_MAX)
+            if (tmpValue.longVal >= CSV_INT32_MIN && tmpValue.longVal <= CSV_INT32_MAX)
             {
                type = CSV_TYPE_INT;
                value.intVal = (INT32)tmpValue.longVal;
@@ -2838,7 +2912,7 @@ namespace import
          goto error;
       }
 
-      if (tmpValue.longVal < CSV_INT_MIN || tmpValue.longVal > CSV_INT_MAX)
+      if (tmpValue.longVal < CSV_INT32_MIN || tmpValue.longVal > CSV_INT32_MAX)
       {
          rc = SDB_INVALIDARG;
          goto error;
