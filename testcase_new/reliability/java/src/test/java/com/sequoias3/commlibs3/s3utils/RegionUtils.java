@@ -20,6 +20,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.testng.Assert;
 import org.testng.SkipException;
 
@@ -51,7 +52,7 @@ public class RegionUtils extends S3TestBase {
 			if (status != 200) {
 				System.out.println("put region failed,region = " + region.toString());
 			}
-		} catch (HttpClientErrorException e) {
+		} catch (HttpStatusCodeException e) {
 			throw httpToAmazon(e);
 		}
 	}
@@ -73,7 +74,7 @@ public class RegionUtils extends S3TestBase {
 			if (resp.getStatusCodeValue() == 204) {
 				isDelete = true;
 			}
-		} catch (HttpClientErrorException e) {
+		} catch (HttpStatusCodeException e) {
 			throw httpToAmazon(e);
 		}
 		return isDelete;
@@ -95,7 +96,7 @@ public class RegionUtils extends S3TestBase {
 					.exec();
 			String xmlBody = resp.getBody().toString();
 			result = stringToObject(xmlBody);
-		} catch (HttpClientErrorException e) {
+		} catch (HttpStatusCodeException e) {
 			throw httpToAmazon(e);
 		}
 		return result;
@@ -118,7 +119,7 @@ public class RegionUtils extends S3TestBase {
 			if (resp.getStatusCodeValue() == 200) {
 				doesExist = true;
 			}
-		} catch (HttpClientErrorException e) {
+		} catch (HttpStatusCodeException e) {
 			if( e.getStatusCode().value() != 404 ){
 				throw httpToAmazonHead(e);
 			}			
@@ -197,7 +198,7 @@ public class RegionUtils extends S3TestBase {
 		return result;
 	}
 
-	private static AmazonS3Exception httpToAmazon(HttpClientErrorException e) {
+	private static AmazonS3Exception httpToAmazon(HttpStatusCodeException e) {
 		AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
 		amazonS3Exception.setStatusCode(e.getStatusCode().value());
 		JSONObject jsonBody = XML.toJSONObject(e.getResponseBodyAsString());		
@@ -207,7 +208,7 @@ public class RegionUtils extends S3TestBase {
 		return amazonS3Exception;
 	}
 	
-	private static AmazonS3Exception httpToAmazonHead(HttpClientErrorException e) {
+	private static AmazonS3Exception httpToAmazonHead(HttpStatusCodeException e) {
 		AmazonS3Exception amazonS3Exception = new AmazonS3Exception(e.getMessage());
 		amazonS3Exception.setStatusCode(e.getStatusCode().value());
 		return amazonS3Exception;
