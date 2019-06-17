@@ -87,9 +87,7 @@ function getLobWithEmptyForced( cl, lobOid )
       throw "get Lob with empty forced must be fail!" ;
    }
    catch( e )
-   {
-      //TODO : 下面注释错误码和描述信息要修改下
-      //error:Forced must be bool -259
+   {      
       if( -6 !== e )
       {
          throw buildException( "getLobWithEmptyForced", e );

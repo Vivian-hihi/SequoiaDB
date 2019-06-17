@@ -36,9 +36,8 @@ function insertWithTypeErrorA( cl )
    var expCount = 0;
    var count = cl.count();
    if ( Number(expCount) !== Number(count) )
-   {
-      //TODO :报错信息中存在拼写错误：vaule -> value
-      throw buildException( "insertRecords", "count vaule error", "count()", expCount, count );
+   {      
+      throw buildException( "insertRecords", "count value error", "count()", expCount, count );
    }   
 }
 
