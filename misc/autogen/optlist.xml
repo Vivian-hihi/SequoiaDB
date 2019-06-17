@@ -1965,16 +1965,16 @@
       <name>PMD_OPTION_TRANS_REPLSIZE</name>
       <long>transreplsize</long>
       <description>
-        <en>The written replica number when transaction commit. Value:[-1,0,1~7], Default:-1</en>
-        <cn>事务提交的写副本数，取值[-1,0,1~7]，默认为-1</cn>
+        <en>The written replica number when transaction commit. Value:[-1,0,1~7], Default:2</en>
+        <cn>事务提交的写副本数，取值[-1,0,1~7]，默认为2</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-        <en>The written replica number when transaction commit. Value:[-1,0,1~7], Default:-1.</en>
-        <cn>事务提交的写副本数，取值[-1,0,1~7]，默认为-1。</cn>
+        <en>The written replica number when transaction commit. Value:[-1,0,1~7], Default:2.</en>
+        <cn>事务提交的写副本数，取值[-1,0,1~7]，默认为2。</cn>
       </detail>
       <type>int</type>
       <default>-1</default>
