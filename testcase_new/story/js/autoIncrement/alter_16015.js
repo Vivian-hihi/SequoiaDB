@@ -67,4 +67,4 @@ function main()
    
    commDropCL( db, COMMCSNAME, clName );
 }
-main();
+//main();
