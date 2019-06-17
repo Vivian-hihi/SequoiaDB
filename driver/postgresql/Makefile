@@ -21,7 +21,8 @@ EXTERNAL_SOURCE = $(EXTERNAL_PATH)/client.c  $(EXTERNAL_PATH)/oss.c     $(EXTERN
                   $(EXTERNAL_PATH)/base64c.c $(EXTERNAL_PATH)/cJSON.c   $(EXTERNAL_PATH)/jstobs.c \
                   $(EXTERNAL_PATH)/timestampParse.c                     $(EXTERNAL_PATH)/timestampTm.c \
                   $(EXTERNAL_PATH)/timestampValid.c                     $(EXTERNAL_PATH)/cJSON_ext.c \
-                  $(EXTERNAL_PATH)/cJSON_iterator.c                     $(EXTERNAL_PATH)/utilCipher.c
+                  $(EXTERNAL_PATH)/cJSON_iterator.c                     $(EXTERNAL_PATH)/utilCipher.c \
+                  $(EXTERNAL_PATH)/utilCipher.c
 
 BSON_HEADER = $(BSON_PATH)/sdbbson.h $(BSON_PATH)/encoding.h $(BSON_PATH)/common_decimal.h $(BSON_PATH)/common_decimal_fun.h $(BSON_PATH)/common_decimal_type.h 
 
@@ -33,7 +34,8 @@ EXTERNAL_HEADER = $(EXTERNAL_PATH)/client.h   $(EXTERNAL_PATH)/jstobs.h  $(EXTER
                   $(EXTERNAL_PATH)/pmdOptions.h                          $(EXTERNAL_PATH)/msgCatalogDef.h \
                   $(EXTERNAL_PATH)/fmpDef.h   $(EXTERNAL_PATH)/oss.h     $(EXTERNAL_PATH)/cJSON.h \
                   $(EXTERNAL_PATH)/timestamp.h                           $(EXTERNAL_PATH)/clientDef.h \
-                  $(EXTERNAL_PATH)/cJSON_ext.h                           $(EXTERNAL_PATH)/utilCipher.h
+                  $(EXTERNAL_PATH)/cJSON_ext.h                           $(EXTERNAL_PATH)/utilCipher.h \
+                  $(EXTERNAL_PATH)/utilCipher.h
 
 $(MD5_PATH)/md5.c:                  $(ENGINE_PATH)/bson/md5.c
 $(MD5_HEADER_PATH)/md5.h:           $(ENGINE_PATH)/bson/lib/md5.h
@@ -57,6 +59,7 @@ $(EXTERNAL_PATH)/timestampParse.c:  $(ENGINE_PATH)/client/timestampParse.c
 $(EXTERNAL_PATH)/timestampTm.c:     $(ENGINE_PATH)/client/timestampTm.c
 $(EXTERNAL_PATH)/timestampValid.c:  $(ENGINE_PATH)/client/timestampValid.c
 $(EXTERNAL_PATH)/utilCipher.c:      $(ENGINE_PATH)/util/utilCipher.c
+$(EXTERNAL_PATH)/utilTypeCast.c:    $(ENGINE_PATH)/util/utilTypeCast.c
 
 $(BSON_PATH)/sdbbson.h:             $(ENGINE_PATH)/client/bson/bson.h
 $(BSON_PATH)/common_decimal.h:      $(ENGINE_PATH)/include/common_decimal.h
@@ -87,6 +90,7 @@ $(EXTERNAL_PATH)/pmdOptions.h:      $(ENGINE_PATH)/include/pmdOptions.h
 $(EXTERNAL_PATH)/msgCatalogDef.h:   $(ENGINE_PATH)/include/msgCatalogDef.h
 $(EXTERNAL_PATH)/clientDef.h:       $(ENGINE_PATH)/client/clientDef.h
 $(EXTERNAL_PATH)/utilCipher.h:      $(ENGINE_PATH)/include/utilCipher.h
+$(EXTERNAL_PATH)/utilTypeCast.h:    $(ENGINE_PATH)/include/utilTypeCast.h
 
 # Compile flags
 ALL_DEFINES=$(DEFINES)
