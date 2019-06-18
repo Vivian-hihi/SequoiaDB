@@ -10,7 +10,7 @@ function main()
    if(true == commIsStandalone( db ))
    {
       var csName = "cs4517a"; 
-      commDropCS( db, csName, true, "clear cs in the beginingng." );
+      commDropCS( db, csName, true, "clear cs in the beginning." );
       
       println("---Begin to test testcase-4517/4521,with pageSize and lobPageSize is ''. ");    
       var pageSize = "";

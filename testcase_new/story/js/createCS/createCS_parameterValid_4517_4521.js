@@ -13,7 +13,7 @@ function main()
       return;
    }
    var csName = "cs4517"; 
-   commDropCS( db, csName, true, "clear cs in the beginingng." );
+   commDropCS( db, csName, true, "clear cs in the beginning." );
    
    println("---Begin to test testcase-4517. ");    
    var pageSizes = [ "", 4097, -4096 ];
