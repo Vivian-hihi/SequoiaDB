@@ -9,8 +9,7 @@
 + **登录 MySQL shell**
 
  ```lang-bash
- $ export MYSQL_HOME=/opt/sequoiasql/mysql
- $ ${MYSQL_HOME}/bin/mysql --defaults-file=${MYSQL_HOME}/database/3306/auto.cnf -S ${MYSQL_HOME}/database/3306/mysqld.sock -u root -p
+ $ /opt/sequoiasql/mysql/bin/mysql -h 127.0.0.1 -P 3306 -u root
  ```
 
 + **配置 SequoiaDB 连接地址**
