@@ -14,12 +14,6 @@ function main()
    }
    
    var groupsArray = commGetGroups( db, false, "", true, true, true );
-   var dataRGNum = groupsArray.length;
-   if(dataRGNum < 1)
-   {
-      println( "at least one data group.");
-      return;
-   }
     
    var csName = COMMCSNAME;
    var clName = CHANGEDPREFIX + "_cl_4978";
