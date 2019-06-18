@@ -91,7 +91,7 @@ public class Transaction18403 extends SdbTestBase {
         Assert.assertTrue(th3.matchBlockingMethod(DBCollection.class.getName(), "delete"));
 
         // 待事务2等锁超时后，提交事务1，事务3返回，删除记录R1成功，再次开启事务，执行查询，检查结果
-        Assert.assertFalse(th2.isSuccess() && (int) th2.getExecResult() == -13, th2.getErrorMsg());
+        Assert.assertFalse(th2.isSuccess() || (int) th2.getExecResult() != -13, th2.getErrorMsg());
         db1.commit();
         Assert.assertTrue(th3.isSuccess(), th3.getErrorMsg());
 
@@ -110,10 +110,8 @@ public class Transaction18403 extends SdbTestBase {
                 DBCursor cursor = cl2.query("{a:1}", "", "", "{'':'" + idxName + "'}", DBQuery.FLG_QUERY_FOR_UPDATE);
                 TransUtils.getReadActList(cursor);
             } catch (BaseException e) {
-                if (-13 == e.getErrorCode()) {
-                    setExecResult(e.getErrorCode());
-                    throw e;
-                }
+                setExecResult(e.getErrorCode());
+                throw e;
             }
         }
     }

@@ -94,7 +94,7 @@ public class Transaction18420B extends SdbTestBase {
         Assert.assertTrue(th3.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 待事务2等锁超时后，事务3查询返回记录R1
-        Assert.assertFalse(th2.isSuccess() && (int) th2.getExecResult() == -13, th2.getErrorMsg());
+        Assert.assertFalse(th2.isSuccess() || (int) th2.getExecResult() != -13, th2.getErrorMsg());
         Assert.assertTrue(th3.isSuccess(), th3.getErrorMsg());
         actList = (List<BSONObject>) th3.getExecResult();
         Assert.assertTrue(actList.size() == 1 && record.equals(actList.get(0)), "actList: " + actList);
@@ -116,10 +116,8 @@ public class Transaction18420B extends SdbTestBase {
                 DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
                 cl2.delete("{a:1}", "{'':'" + idxName + "'}");
             } catch (BaseException e) {
-                if (-13 == e.getErrorCode()) {
-                    setExecResult(e.getErrorCode());
-                    throw e;
-                }
+                setExecResult(e.getErrorCode());
+                throw e;
             }
         }
     }

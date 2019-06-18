@@ -85,7 +85,7 @@ public class Transaction18429 extends SdbTestBase {
         Assert.assertTrue(th1.matchBlockingMethod(DBCollection.class.getName(), "update"));
 
         // 回滚事务2，检查结果
-        db2.commit();
+        db2.rollback();
         Assert.assertTrue(th1.isSuccess(), th1.getErrorMsg());
 
         // 提交事务1，检查结果

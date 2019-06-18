@@ -20,7 +20,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
 
 /**
- * @Description seqDB-18413:事务1加u锁后，事务2加x锁超时，事务3加s锁立即返回
+ * @Description seqDB-18413:事务1加u锁后，事务2加x锁超时，事务3加s锁阻塞 
  * @author yinzhen
  * @date 2019-6-12
  *
@@ -92,7 +92,7 @@ public class Transaction18413A extends SdbTestBase {
         actList = TransUtils.getReadActList(cursor);
         Assert.assertTrue(actList.size() == 1 && record.equals(actList.get(0)), "actList: " + actList);
 
-        Assert.assertFalse(th2.isSuccess() && (int) th2.getExecResult() == -13, th2.getErrorMsg());
+        Assert.assertFalse(th2.isSuccess() || (int) th2.getExecResult() != -13, th2.getErrorMsg());
         db1.commit();
         db2.commit();
         db3.commit();
@@ -105,10 +105,8 @@ public class Transaction18413A extends SdbTestBase {
                 DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
                 cl2.update("{a:1}", "{$set:{a:2}}", "{'':'" + idxName + "'}");
             } catch (BaseException e) {
-                if (-13 == e.getErrorCode()) {
-                    setExecResult(e.getErrorCode());
-                    throw e;
-                }
+                setExecResult(e.getErrorCode());
+                throw e;
             }
         }
     }

@@ -92,7 +92,7 @@ public class Transaction18412B extends SdbTestBase {
         Assert.assertTrue(th3.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 提交事务1，事务3返回，返回R1
-        Assert.assertFalse(th2.isSuccess() && (int) th2.getExecResult() == -13, th2.getErrorMsg());
+        Assert.assertFalse(th2.isSuccess() || (int) th2.getExecResult() != -13, th2.getErrorMsg());
         db1.commit();
         Assert.assertTrue(th3.isSuccess(), th3.getErrorMsg());
         List<BSONObject> actList = (List<BSONObject>) th3.getExecResult();
@@ -107,10 +107,8 @@ public class Transaction18412B extends SdbTestBase {
                 DBCursor cursor = cl2.query("{a:1}", "", "", "{'':'" + idxName + "'}");
                 TransUtils.getReadActList(cursor);
             } catch (BaseException e) {
-                if (-13 == e.getErrorCode()) {
-                    setExecResult(e.getErrorCode());
-                    throw e;
-                }
+                setExecResult(e.getErrorCode());
+                throw e;
             }
         }
     }

@@ -93,7 +93,7 @@ public class Transaction18424B extends SdbTestBase {
         Assert.assertTrue(th3.matchBlockingMethod(DBCollection.class.getName(), "delete"));
 
         // 待事务3等锁超时后，再次开启事务查询，执行查询检查结果
-        Assert.assertFalse(th3.isSuccess() && (int) th3.getExecResult() == -13, th3.getErrorMsg());
+        Assert.assertFalse(th3.isSuccess() || (int) th3.getExecResult() != -13, th3.getErrorMsg());
         db3.beginTransaction();
         cursor = cl3.query();
         actList = TransUtils.getReadActList(cursor);
@@ -112,10 +112,8 @@ public class Transaction18424B extends SdbTestBase {
                 DBCollection cl3 = db3.getCollectionSpace(csName).getCollection(clName);
                 cl3.delete("{a:1}", "{'':'" + idxName + "'}");
             } catch (BaseException e) {
-                if (-13 == e.getErrorCode()) {
-                    setExecResult(e.getErrorCode());
-                    throw e;
-                }
+                setExecResult(e.getErrorCode());
+                throw e;
             }
         }
     }

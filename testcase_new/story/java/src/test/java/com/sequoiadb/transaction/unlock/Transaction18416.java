@@ -91,7 +91,7 @@ public class Transaction18416 extends SdbTestBase {
         CL3Update th3 = new CL3Update();
         th3.start();
         Assert.assertTrue(th3.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
-        Assert.assertFalse(th3.isSuccess() && (int) th3.getExecResult() == -13, th3.getErrorMsg());
+        Assert.assertFalse(th3.isSuccess() || (int) th3.getExecResult() != -13, th3.getErrorMsg());
 
         // 提交所有事务，再次开启事务，执行查询，检查结果
         db1.commit();
@@ -111,10 +111,8 @@ public class Transaction18416 extends SdbTestBase {
                 DBCursor cursor = cl3.query("{a:1}", "", "", "{'':'" + idxName + "'}", DBQuery.FLG_QUERY_FOR_UPDATE);
                 TransUtils.getReadActList(cursor);
             } catch (BaseException e) {
-                if (-13 == e.getErrorCode()) {
-                    setExecResult(e.getErrorCode());
-                    throw e;
-                }
+                setExecResult(e.getErrorCode());
+                throw e;
             }
         }
     }
