@@ -1,18 +1,5 @@
 package com.sequoias3.delimiter;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ListVersionsRequest;
@@ -21,6 +8,18 @@ import com.amazonaws.services.s3.model.VersionListing;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: seqDB-18168 :To get a listVersions within a bucket.specify
@@ -91,9 +90,14 @@ public class ListVersions18168 extends S3TestBase {
 		// check the matchPrefix And Versions Result
 		Assert.assertFalse(vsList1.isTruncated(), "vsList1.isTruncated() must be false");
 		actCommonPrefixes1.addAll(actCommonPrefixes);
-		actVersionMap1.addAll(actVersionMap);
+		//actVersionMap1.addAll(actVersionMap);
+		for (Map.Entry<String, List<String>> entry : actVersionMap.entrySet()) {
+			List<String> versions = entry.getValue();
+			for(String version:versions){
+				actVersionMap1.add(entry.getKey(),version);
+			}
+		}
 		checkMatchResult(actCommonPrefixes1, actVersionMap1);
-
 		runSuccess = true;
 	}
 
