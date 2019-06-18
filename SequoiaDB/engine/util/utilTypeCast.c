@@ -371,7 +371,8 @@ SDB_EXPORT INT32 utilStrToNumber( const CHAR* data, INT32 length,
          goto done ;
       }
 
-      if( ( signsubscale == 1 && digit + subscale == DOUBLE_MAX_EXP ) ||
+      if( ( subscale > DOUBLE_MAX_EXP ) ||
+          ( signsubscale == 1 && digit + subscale == DOUBLE_MAX_EXP ) ||
           ( signsubscale == -1 && subscale - digit == DOUBLE_MAX_EXP ) )
       {
          INT32 tmpFracExp = digit ;
@@ -408,19 +409,24 @@ SDB_EXPORT INT32 utilStrToNumber( const CHAR* data, INT32 length,
             numType = UTIL_NUM_TYPE_DECIMAL ;
             goto done ;
          }
-      }
 
-      if ( signsubscale == 1 )
-      {
-         subscale += digit ;
-      }
-      else
-      {
-         subscale -= digit ;
-         if ( subscale < 0 )
+         if ( subscale > DOUBLE_MAX_EXP )
          {
-            signsubscale = -signsubscale ;
-            subscale = -subscale ;
+            n = tmpN ;
+
+            if ( signsubscale == 1 )
+            {
+               subscale += digit ;
+            }
+            else
+            {
+               subscale -= digit ;
+               if ( subscale < 0 )
+               {
+                  signsubscale = -signsubscale ;
+                  subscale = -subscale ;
+               }
+            }
          }
       }
 
