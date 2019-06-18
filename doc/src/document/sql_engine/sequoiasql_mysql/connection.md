@@ -114,23 +114,26 @@
 
 |参数名|类型|默认值|支持命令行修改|说明|
 |------|----|------|----------|----|
-|sequoiadb_conn_addr          |字符串|"localhost:11810" |true |SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
-|sequoiadb_user               |字符串|""     |true |SequoiaDB鉴权用户。|
-|sequoiadb_password           |字符串|""     |true |SequoiaDB鉴权密码。|
-|sequoiadb_use_partition      |布尔  |ON     |true |是否启用自动分区。|
-|sequoiadb_use_bulk_insert    |布尔  |ON     |true |是否启用批量插入。|
 |sequoiadb_bulk_insert_size   |整数  |100    |true |批量插入时每批的插入记录数。|
-|sequoiadb_replica_size       |整数  |-1     |true |写操作需同步的副本数。在建表时并且没有自定义表配置时使用。取值范围为[-1, 7]。具体可参考SequoiaDB的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。|
-|sequoiadb_use_autocommit     |布尔  |ON     |true |是否启用自动提交模式。|
+|sequoiadb_conn_addr          |字符串|"localhost:11810" |true |SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
 |sequoiadb_debug_log          |布尔  |OFF    |true |是否打印debug日志。|
+|sequoiadb_password           |字符串|""     |true |SequoiaDB鉴权密码。|
+|sequoiadb_replica_size       |整数  |-1     |true |写操作需同步的副本数。在建表时并且没有自定义表配置时使用。取值范围为[-1, 7]。具体可参考SequoiaDB的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。|
+|sequoiadb_selector_pushdown_threshold|无符号整型|30|true|查询字段下压触发阈值，取值范围[0-100]，单位：百分比。|
+|sequoiadb_use_autocommit     |布尔  |ON     |true |是否启用自动提交模式。|
+|sequoiadb_use_bulk_insert    |布尔  |ON     |true |是否启用批量插入。|
+|sequoiadb_use_partition      |布尔  |ON     |true |是否启用自动分区。|
+|sequoiadb_user               |字符串|""     |true |SequoiaDB鉴权用户。|
 
 > **Note:**
 > 
 > * 配置多个SequoiaDB连接地址时，每次连接会从地址中随机选择。
-> * 命令行中修改连接有关的配置，在建立新连接时才生效，不影响旧连接。有关配置包括sequoiadb_conn_addr, sequoiadb_user, sequoiadb_password。
+> * 命令行中修改连接有关的配置，在建立新连接时才生效，不影响旧连接。有关配置包括sequoiadb_conn_addr, sequoiadb_user, sequoiadb_password，其他配置立即生效。
 > * 自动分区默认启动，启动时，在mysql上创建表将同步在SequoiaDB上创建对应的分区表（hash分区，包含所有分区组）。
 > * 自动分区时，分区键按顺序优先使用主键字段和唯一索引字段。如果两者都没有，则不做分区。
 > * 自动分区时，主键或唯一索引只在建表时对应分区键。建表后添加删除主键或唯一索引都不会更改分区键。
+> * sequoiadb_use_autocommit 配置项已弃用。
+> * sequoiadb_selector_pushdown_threshold，查询语句中，查询字段下压的触发阈值。查询字段个数/表总字段个数的百分比小于等于该阈值进行下压，否则不下压。
 
 配置参数有三种修改方式。
 
