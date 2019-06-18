@@ -1597,6 +1597,7 @@ namespace replay
             {
                if (SDB_DPS_FILE_NOT_RECOGNISE ==  rc)
                {
+                  rc = SDB_OK;
                   continue;
                }
 
