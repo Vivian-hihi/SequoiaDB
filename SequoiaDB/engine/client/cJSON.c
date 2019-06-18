@@ -1741,12 +1741,6 @@ error:
    goto done ;
 }
 
-/*
-#define CJSON_INT32_MAX 214748364
-#define CJSON_INT32_MIN (-214748364)
-#define CJSON_INT64_MAX 922337203685477580
-#define CJSON_INT64_MIN (-922337203685477580)
-*/
 static const CHAR* parseNumber( const CHAR *pStr,
                                 INT32 *pValInt,
                                 FLOAT64 *pValDouble,
