@@ -98,6 +98,7 @@ public class Transaction17185 extends SdbTestBase {
             deleteThread.start();
 
             // 事务4读记录走索引扫描
+            Thread.sleep(3000);
             List<BSONObject> expRecords1 = getExpRecords();
             List<BSONObject> expRecords2 = new ArrayList<>(expRecords1);
             Collections.reverse(expRecords2);
