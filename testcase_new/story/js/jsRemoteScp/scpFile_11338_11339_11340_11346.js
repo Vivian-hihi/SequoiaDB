@@ -21,7 +21,7 @@ function main(){
    
    var localCmd = new Cmd();
    var localInstallPath = commGetInstallPath();
-   var localSrcFileName = localInstallPath + "/bin/sdbdmsdump";
+   var localSrcFileName = localInstallPath + "/bin/sdbdpsdump";
    println( "local source file name :" + localhost + ":" + localSrcFileName );
    var localDstFileName = WORKDIR + "/dstFile_11338";
    
@@ -31,7 +31,7 @@ function main(){
    
    var remoteCmd = remote.getCmd();
    var remoteInstallPath = commGetInstallPath();
-   var remoteSrcFileName = remoteInstallPath + "/bin/sdbdmsdump";
+   var remoteSrcFileName = remoteInstallPath + "/bin/sdbdpsdump";
    println( "remote source file name :" + remotehost + ":" + remoteSrcFileName );
    var remoteDstFileName = WORKDIR + "/dstFile_11338";
    

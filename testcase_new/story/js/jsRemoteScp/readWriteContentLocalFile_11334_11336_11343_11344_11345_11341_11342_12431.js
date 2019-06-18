@@ -8,7 +8,7 @@ function main(){
    //get path
    var cmd = new Cmd();
    var localInstallPath = commGetInstallPath();
-   var readFileName = localInstallPath + "/bin/sdbdmsdump";
+   var readFileName = localInstallPath + "/bin/sdbdpsdump";
    println("read file name :" + readFileName);
    
    if(!File.exist(WORKDIR)){

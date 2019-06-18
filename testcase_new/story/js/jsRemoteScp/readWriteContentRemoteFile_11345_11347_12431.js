@@ -16,7 +16,7 @@ function main(){
    var remoteCmd = remote.getCmd();
    var remoteInstallPath = commGetInstallPath();
    println("remoteInstallPath:"+remoteInstallPath);
-   var readFileName = remoteInstallPath + "/bin/sdbdmsdump";
+   var readFileName = remoteInstallPath + "/bin/sdbdpsdump";
    println("read file name :" + readFileName);
    
    if(!remoteFile.exist(WORKDIR)){
