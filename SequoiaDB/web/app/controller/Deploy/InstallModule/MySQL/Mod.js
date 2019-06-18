@@ -1,4 +1,4 @@
-﻿//@ sourceURL=Mod.js
+﻿//@ sourceURL=Deploy.MySQL.Mod.Ctrl.js
 //"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
@@ -142,7 +142,7 @@
                   "webName": $scope.autoLanguage( '用户名' ),
                   "type": "string",
                   "required": true,
-                  "value": '',
+                  "value": 'root',
                   "valid": {
                      "min": 1,
                      "max": 127,
@@ -153,11 +153,9 @@
                   "name": "AuthPasswd",
                   "webName": $scope.autoLanguage( '密码' ),
                   "type": "password",
-                  "required": true,
+                  "required": false,
                   "value": '',
-                  "valid": {
-                     "min" : 1
-                  }
+                  "valid": {}
                }
             ]
          } ) ;

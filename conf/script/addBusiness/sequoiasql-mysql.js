@@ -193,10 +193,19 @@ function _execSql( PD_LOGGER, port, user, passwd, cmd, installPath, sql, databas
 
 function _updateRoot( PD_LOGGER, port, cmd, installPath, passwd )
 {
-   passwd = _string_encode_by_create_user( passwd ) ;
-
-   var str = sprintf( 'flush privileges;update mysql.user set host = "%", authentication_string=password(?) where user = "root";flush privileges;', passwd ) ;
    var error = null ;
+   var str ;
+
+   if ( !isString( passwd ) || passwd.length == 0 )
+   {
+      str = 'flush privileges;update mysql.user set host = "%", authentication_string="" where user = "root";flush privileges;' ;
+   }
+   else
+   {
+      passwd = _string_encode_by_create_user( passwd ) ;
+
+      str = sprintf( 'flush privileges;update mysql.user set host = "%", authentication_string=password(?) where user = "root";flush privileges;', passwd ) ;
+   }
 
    try
    {
@@ -218,10 +227,19 @@ function _string_encode_by_create_user( str ){
 
 function _createUser( PD_LOGGER, port, cmd, installPath, user, passwd )
 {
+   var emptyPwd = false ;
+   var error = null ;
+   var str ;
+
+   if ( !isString( passwd ) || passwd.length == 0 )
+   {
+      emptyPwd = true ;
+      passwd = "123" ;
+   }
+
    user = _string_encode_by_create_user( user ) ;
    passwd = _string_encode_by_create_user( passwd ) ;
-   var str = sprintf( 'flush privileges;grant all privileges on *.* to ?@"%" identified by ?;flush privileges;', user, passwd ) ;
-   var error = null ;
+   str = sprintf( 'flush privileges;grant all privileges on *.* to ?@"%" identified by ?;flush privileges;', user, passwd ) ;
 
    try
    {
@@ -230,6 +248,20 @@ function _createUser( PD_LOGGER, port, cmd, installPath, user, passwd )
    catch( e )
    {
       error = e ;
+   }
+
+   if( emptyPwd == true )
+   {
+      str = sprintf( 'flush privileges;update mysql.user set authentication_string="" where user = ?;flush privileges;', user ) ;
+
+      try
+      {
+         _execSql( PD_LOGGER, port, 'root', '', cmd, installPath, str ) ;
+      }
+      catch( e )
+      {
+         error = e ;
+      }
    }
 
    return error ;

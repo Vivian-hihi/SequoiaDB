@@ -694,10 +694,6 @@
       //更新主机数量
       SdbSignal.on( 'updateHostNum', function( hostNum ){
          $scope.HostNum = hostNum ;
-         if( $scope.HostNum == 0 )
-         {
-            $scope.CurrentPage = 'host' ;
-         }
       } ) ;
 
       //切换集群
