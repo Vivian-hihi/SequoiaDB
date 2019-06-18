@@ -98,7 +98,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = _addPath( dbPath, host ) ;
+      rc = _addPath( dbPath, host, TRUE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "failed to add db path to node" );
