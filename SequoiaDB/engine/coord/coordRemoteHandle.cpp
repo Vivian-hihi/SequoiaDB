@@ -101,36 +101,22 @@ namespace engine
          if ( SDB_INVALID_ROUTEID == pOpReply->flags )
          {
             pSession->reConnectSubSession( pReply->routeID.value ) ;
-
-            if ( pStatus->_initTrans )
-            {
-               pPropSite->delTransNode( pReply->routeID ) ;
-            }
          }
          else if ( SDB_OK != pOpReply->flags &&
-                   SDB_DMS_EOC != pOpReply->flags )
+                   ( MSG_COM_SESSION_INIT_RSP == orgRspOpCode ||
+                     MSG_PACKET_RES == orgRspOpCode ) )
          {
-            if ( MSG_COM_SESSION_INIT_RSP == orgRspOpCode ||
-                 MSG_PACKET_RES == orgRspOpCode )
-            {
-               pSession->reConnectSubSession( pReply->routeID.value ) ;
-
-               if ( pStatus->_initTrans )
-               {
-                  pPropSite->delTransNode( pReply->routeID ) ;
-               }
-            }
-            else if ( MSG_BS_TRANS_BEGIN_RSP == orgRspOpCode )
-            {
-               pPropSite->delTransNode( (*ppSub)->getNodeID() ) ;
-            }
+            pSession->reConnectSubSession( pReply->routeID.value ) ;
          }
-         else
+         else if ( MSG_BS_TRANS_BEGIN_RSP != orgRspOpCode )
          {
+            if ( pStatus->_initTrans )
+            {
+               pPropSite->addTransNode( (*ppSub)->getNodeID() ) ;
+            }
+
             /// update node version
-            if ( 0 != pStatus->_nodeID &&
-                 MSG_COM_SESSION_INIT_RSP != orgRspOpCode &&
-                 MSG_PACKET_RES != orgRspOpCode )
+            if ( 0 != pStatus->_nodeID )
             {
                pSite->setNodeVer( pStatus->_nodeID, pStatus->_nodeVer ) ;
             }
@@ -478,7 +464,6 @@ namespace engine
                goto error ;
             }
             pStatus->_initTrans = TRUE ;
-            pPropSite->addTransNode( pSub->getNodeID() ) ;
          }
       }
 
