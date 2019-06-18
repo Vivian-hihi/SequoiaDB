@@ -9,20 +9,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List ;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.testng.annotations.AfterGroups;
 import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeGroups;
+import org.testng.annotations.AfterTest ;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest ;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 
@@ -65,11 +62,6 @@ public class SdbTestBase {
 
     private static ConfigOptions options = new ConfigOptions();
     private static String testGroup = "ru";
-    private static Set<String> alreadFinTestGroups = new HashSet<String>();
-
-    private static AtomicInteger runCaseNum = new AtomicInteger(0);
-    private static AtomicBoolean isInit = new AtomicBoolean(false);
-    private static AtomicInteger initCount = new AtomicInteger(0);
     private static final int newIndexScanStep = 100;
     private static final int timeOutLen = 120;
     private static final Map<String, BSONObject> group2Conf = new HashMap<String, BSONObject>();
@@ -128,14 +120,10 @@ public class SdbTestBase {
         }
     }
 
-    public static void setRunGroup(List<String> testGroups) {
-        if ( isInit.get() ){
-            return ;
-        }
-        for (String group : testGroups ){
-            if ( group != null && isInit.compareAndSet(false, true)){
-                SdbTestBase.testGroup = group ;
-            }
+    public static synchronized void setRunGroup(List<String> testGroups) {
+        assert testGroups.size() == 1 ;
+        if (!testGroups.get( 0 ).equals( SdbTestBase.testGroup )){
+            SdbTestBase.testGroup = testGroups.get( 0 ) ;
         }
     }
 
@@ -217,15 +205,7 @@ public class SdbTestBase {
         configs.append(TRANSACTIONON, transactionon);
         return configs;
     }
-
-    public static void incCaseNum() {
-        runCaseNum.incrementAndGet();
-    }
-
-    public static void decCaseNum() {
-        runCaseNum.decrementAndGet();
-    }
-
+    
     @SuppressWarnings("unused")
     private static BSONObject buildNodeConf(Properties prop) {
         BasicBSONObject configs = new BasicBSONObject();
@@ -267,7 +247,6 @@ public class SdbTestBase {
     }
 
     private static void modifyNodeConf(BSONObject cfg, BSONObject object) {
-        // BSONObject cfg = buildNodeConf( prop ) ;
         if (object == null) {
             object = new BasicBSONObject().append("Global", true);
         }
@@ -278,42 +257,16 @@ public class SdbTestBase {
             throw e;
         }
     }
-
-    @BeforeGroups(groups = { RU, RC, RCWAITLOCK, RS, RCAUTO, RCUSERBS })
+    
+    @BeforeTest(groups = { RU, RC, RCWAITLOCK, RS, RCAUTO, RCUSERBS })
     public static synchronized void initTestGroups() {
-        if (group2Count.get(testGroup).getAndIncrement() > 0) {
-            return;
-        }
-        initCount.getAndIncrement();
-        System.out.println("init" + testGroup + " Groups...........");
+        System.out.println("init " + testGroup + " Groups...........");
         modifyNodeConf(group2Conf.get(testGroup), null);
     }
 
-    @AfterGroups(groups = { RC, RU, RCWAITLOCK, RS, RCAUTO, RCUSERBS }, alwaysRun = true)
+    @AfterTest(groups = { RC, RU, RCWAITLOCK, RS, RCAUTO, RCUSERBS }, alwaysRun = true)
     public static synchronized void finiTestGroups() {
-        if (initCount.get() == 0) {
-            return;
-        }
-        
-        int totalSleepLen = 0;
-        while (runCaseNum.get() > 0) {
-            try {
-                synchronized (runCaseNum) {
-                    runCaseNum.wait(50);
-                }
-                totalSleepLen += 50;
-                if (totalSleepLen == 60000) {
-                    System.out.println(runCaseNum.get() + " use cases are running!");
-                    totalSleepLen = 0;
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        initCount.decrementAndGet();
-        System.out.println("fini" + testGroup + "Groups...........");
-        alreadFinTestGroups.add(testGroup);
-        isInit.set(false);
+        System.out.println("fini " + testGroup + " Groups...........");
         for (String key : node2Conf.keySet()) {
             BasicBSONObject opt = new BasicBSONObject();
             opt.put(NODENAME, key);

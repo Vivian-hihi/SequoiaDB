@@ -13,63 +13,19 @@ import java.util.Date;
  * Created by laojingtang on 17-11-23.
  */
 public class TimePrinterListener extends TestListenerAdapter {
-
-    private static String[] runGroups = {SdbTestBase.RC, SdbTestBase.RCAUTO,
-        SdbTestBase.RCUSERBS, SdbTestBase.RCWAITLOCK, SdbTestBase.RS, SdbTestBase.RU} ;
-    
-    private boolean isTransCase(String[] groups){
-        if ( groups == null || groups.length == 0 ){
-            return false ;
-        }
-        for ( int i = 0; i < runGroups.length; ++i){
-            if ( Arrays.asList( groups ).contains( runGroups[i] )){
-                return true ;
-            }
-        }
-        
-        return false ;
-    }
-    
-    @Override
-    public void onTestStart(ITestResult itr){
-        super.onTestStart( itr ) ;
-        if ( isTransCase( itr.getMethod().getGroups()) ){
-            SdbTestBase.incCaseNum() ;
-        }
-    }
-    
-    @Override
-    public void onTestSuccess(ITestResult itr){
-        super.onTestSuccess( itr ) ;
-        if ( isTransCase( itr.getMethod().getGroups()) ){
-            SdbTestBase.decCaseNum() ;
-        }
-    }
     
     @Override
     public void onTestFailure(ITestResult itr){
         System.out.println("runGroup" + itr.getMethod().getXmlTest().getIncludedGroups().toString() + " " 
                    + itr.getMethod().getTestClass().getRealClass() + " failed") ;
         super.onTestFailure( itr ) ;
-        if ( isTransCase( itr.getMethod().getGroups()) ){
-            SdbTestBase.decCaseNum() ;
-        }
     }
     
-    @Override
-    public void onTestSkipped(ITestResult itr){
-        super.onTestFailure( itr ) ;
-        if ( isTransCase( itr.getMethod().getGroups()) ){
-            SdbTestBase.decCaseNum() ;
-        }
-    }
-    
+   
     @Override
     public void onTestFailedButWithinSuccessPercentage(ITestResult itr){
         super.onTestFailedButWithinSuccessPercentage(itr) ;
-        if ( isTransCase( itr.getMethod().getGroups()) ){
-            SdbTestBase.decCaseNum() ;
-        }
+        
     }
     
     
@@ -103,8 +59,10 @@ public class TimePrinterListener extends TestListenerAdapter {
     @Override
     public void beforeConfiguration(ITestResult tr) {
         super.beforeConfiguration(tr);
-        if (tr.getMethod().isBeforeClassConfiguration()) {
+        if (tr.getMethod().isBeforeTestConfiguration()){
             SdbTestBase.setRunGroup( tr.getTestClass().getXmlTest().getIncludedGroups() ) ;
+        }
+        if (tr.getMethod().isBeforeClassConfiguration()) {
             printBeginTime(tr);
             dbMsgBeginTime(tr);
         }
