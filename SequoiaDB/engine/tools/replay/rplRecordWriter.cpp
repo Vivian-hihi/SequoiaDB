@@ -129,7 +129,7 @@ namespace replay
    INT32 rplFileWriter::init( const CHAR *fileName )
    {
       INT32 rc = SDB_OK ;
-      UINT32 mode = OSS_CREATEONLY | OSS_READWRITE ;
+      UINT32 mode = OSS_REPLACE | OSS_READWRITE ;
 
       if ( NULL == fileName )
       {
