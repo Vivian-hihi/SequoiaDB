@@ -13,6 +13,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -91,7 +92,7 @@ public class Transaction18412B extends SdbTestBase {
         Assert.assertTrue(th3.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 提交事务1，事务3返回，返回R1
-        Assert.assertFalse(th2.isSuccess(), th2.getErrorMsg());
+        Assert.assertFalse(th2.isSuccess() && (int) th2.getExecResult() == -13, th2.getErrorMsg());
         db1.commit();
         Assert.assertTrue(th3.isSuccess(), th3.getErrorMsg());
         List<BSONObject> actList = (List<BSONObject>) th3.getExecResult();
@@ -101,10 +102,16 @@ public class Transaction18412B extends SdbTestBase {
     private class CL2Query extends SdbThreadBase {
         @Override
         public void exec() throws Exception {
-            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-            DBCursor cursor = cl2.query("{a:1}", "", "", "{'':'" + idxName + "'}");
-            List<BSONObject> actList = TransUtils.getReadActList(cursor);
-            setExecResult(actList);
+            try {
+                DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
+                DBCursor cursor = cl2.query("{a:1}", "", "", "{'':'" + idxName + "'}");
+                TransUtils.getReadActList(cursor);
+            } catch (BaseException e) {
+                if (-13 == e.getErrorCode()) {
+                    setExecResult(e.getErrorCode());
+                    throw e;
+                }
+            }
         }
     }
 

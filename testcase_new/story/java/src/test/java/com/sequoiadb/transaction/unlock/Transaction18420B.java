@@ -13,6 +13,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -93,7 +94,7 @@ public class Transaction18420B extends SdbTestBase {
         Assert.assertTrue(th3.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
         // 待事务2等锁超时后，事务3查询返回记录R1
-        Assert.assertFalse(th2.isSuccess(), th2.getErrorMsg());
+        Assert.assertFalse(th2.isSuccess() && (int) th2.getExecResult() == -13, th2.getErrorMsg());
         Assert.assertTrue(th3.isSuccess(), th3.getErrorMsg());
         actList = (List<BSONObject>) th3.getExecResult();
         Assert.assertTrue(actList.size() == 1 && record.equals(actList.get(0)), "actList: " + actList);
@@ -111,8 +112,15 @@ public class Transaction18420B extends SdbTestBase {
     private class CL2Delete extends SdbThreadBase {
         @Override
         public void exec() throws Exception {
-            DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-            cl2.delete("{a:1}", "{'':'" + idxName + "'}");
+            try {
+                DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
+                cl2.delete("{a:1}", "{'':'" + idxName + "'}");
+            } catch (BaseException e) {
+                if (-13 == e.getErrorCode()) {
+                    setExecResult(e.getErrorCode());
+                    throw e;
+                }
+            }
         }
     }
 

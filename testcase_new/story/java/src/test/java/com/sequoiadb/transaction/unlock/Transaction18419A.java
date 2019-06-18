@@ -90,7 +90,7 @@ public class Transaction18419A extends SdbTestBase {
         th3.start();
         Assert.assertTrue(th3.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        // 提交事务2，事务3返回R1
+        // 提交事务2，事务3无记录返回
         db2.commit();
         Assert.assertTrue(th3.isSuccess(), th3.getErrorMsg());
         actList = (List<BSONObject>) th3.getExecResult();
