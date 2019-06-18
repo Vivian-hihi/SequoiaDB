@@ -32,6 +32,7 @@ public class FullText15834 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
+    private String csName = "cs15834";
     private String clName = "es_15834";
     private String indexName = "fulltextIndex15834";
     private List<String> cappedNames = new ArrayList<String>();
@@ -48,13 +49,14 @@ public class FullText15834 extends SdbTestBase {
             throw new SkipException("skip less two group");
         }
 
-        cs = sdb.getCollectionSpace(csName);
+        // cs = sdb.getCollectionSpace(csName);
+        cs = sdb.createCollectionSpace(csName);
         cl = cs.createCollection(clName);
 
         FullTextDBUtils.insertData(cl, insertNum);
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() throws Exception {
 
         ThreadExecutor thread = new ThreadExecutor(600000);
@@ -83,7 +85,6 @@ public class FullText15834 extends SdbTestBase {
         cur.close();
 
         Assert.assertEquals(recordNum, insertNum * 2, "use fulltext index search record");
-        // TODO :需要校验全文检索功能正确，切分需要校验一下ES端每个分区上的查询出来的记录与普通查询出来的记录相同，15835类似
         Assert.assertTrue(FullTextUtils.isRecordEquals(cl));
     }
 
