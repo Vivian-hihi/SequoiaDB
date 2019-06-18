@@ -75,6 +75,7 @@ public class Fulltext12127 extends SdbTestBase {
                 FullTextDBUtils.dropCollectionSpace(db, csName);
             }
             db.getCollectionSpace(csName).dropCollection("12127_new_cl");
+            // TODO :校验全文索引无残留
         } finally {
             if (db != null) {
                 db.close();
@@ -109,18 +110,21 @@ public class Fulltext12127 extends SdbTestBase {
                     te.addWorker(dropCLThread);
                 } else {
                     // 不存在全文索引的集合上创建索引
+                    // TODO :按照用例，这里也需要创建删除集合的线程
                     te.addWorker(new CreateTextIndexThread(csName, clName));
                 }
             }
         }
 
         // 创建新集合
+        // TODO :按照用例这里应该是在cs1及cs2下创建新的集合，而不是最后一个集合空间下去创建
         te.addWorker(new CreateCLThread(csName, "12127_new_cl"));
 
         te.run();
 
         for (int i = 0; i < dropCLThreads.size(); i++) {
             // 集合依然存在的情况下，且全文索引删除成功，执行全文检索报错
+            // TODO :集合删除成功的情况为什么不需要校验？
             Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esIndexNames.get(i), cappedNames.get(i)));
             if (dropCLThreads.get(i).getRetCode() != 0 && dropTextIndexThreads.get(i).getRetCode() == 0) {
                 DBCollection cl = cls.get(i * 2 + 1);
@@ -133,6 +137,7 @@ public class Fulltext12127 extends SdbTestBase {
                     Assert.fail("query should fail");
                 } catch (BaseException e) {
                     if (-6 != e.getErrorCode() && -52 != e.getErrorCode()) {
+                        // TODO :打印栈信息，或者抛异常
                         Assert.fail("actual exception: " + e.getErrorCode());
                     }
                 } finally {
@@ -184,6 +189,7 @@ public class Fulltext12127 extends SdbTestBase {
                 cl.dropIndex(textIndexName);
             } catch (BaseException e) {
                 if (-147 != e.getErrorCode() && -23 != e.getErrorCode()) {
+                    // TODO :打印出栈信息或者直接抛异常
                     Assert.fail("actual exception: " + e.getErrorCode());
                 }
                 saveResult(e.getErrorCode(), e);
@@ -260,6 +266,7 @@ public class Fulltext12127 extends SdbTestBase {
                 sdb.getCollectionSpace(csName).dropCollection(clName);
             } catch (BaseException e) {
                 if (-147 != e.getErrorCode()) {
+                    // TODO :打印出栈信息或者直接抛异常
                     Assert.fail("actual exception: " + e.getErrorCode());
                 }
                 saveResult(e.getErrorCode(), e);

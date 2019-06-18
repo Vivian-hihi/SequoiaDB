@@ -102,6 +102,7 @@ public class FullText15856 extends SdbTestBase {
         }
     }
 
+    // TODO :这里需要更新不同的记录
     private class ThreadUpdate {
         private BSONObject modifier;
 

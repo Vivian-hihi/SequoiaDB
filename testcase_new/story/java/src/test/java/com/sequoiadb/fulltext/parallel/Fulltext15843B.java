@@ -34,6 +34,7 @@ import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
  * @author liuxiaoxuan
  * @Date 2019.05.10
  */
+// TODO :检视意见同15843A
 public class Fulltext15843B extends SdbTestBase {
     private final int TIMEOUT = 600000;
     private Sequoiadb db = null;

@@ -53,6 +53,7 @@ public class Fulltext15843A extends SdbTestBase {
 
         cs = db.getCollectionSpace(csName);
         cl = cs.createCollection(clName);
+        // TODO :说明一下15843A和15843B用例的区别，后续维护的时候，别人不知道为什么数据量不同，要写2个用例？？？
         FullTextDBUtils.insertData(cl, 500000);
 
         BSONObject indexObj = new BasicBSONObject();
@@ -64,6 +65,7 @@ public class Fulltext15843A extends SdbTestBase {
     public void tearDown() {
         try {
             FullTextDBUtils.dropCollection(cs, clName);
+            // TODO :检查固定集合及ES端全文索引无残留
         } finally {
             if (db != null) {
                 db.close();
@@ -133,6 +135,7 @@ public class Fulltext15843A extends SdbTestBase {
                 cl.dropIndex(textIndexName);
             } catch (BaseException e) {
                 if (-147 != e.getErrorCode()) {
+                    // TODO :这里打印出栈信息，或者直接抛异常，方便后续定位
                     Assert.fail("actual exception: " + e.getErrorCode());
                 }
                 saveResult(e.getErrorCode(), e);

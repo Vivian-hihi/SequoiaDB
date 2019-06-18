@@ -60,6 +60,7 @@ public class Fulltext15844 extends SdbTestBase {
     public void tearDown() {
         try {
             FullTextDBUtils.dropCollection(cs, clName);
+            // TODO :检查固定集合及ES端全文索引是否残留
         } finally {
             if (db != null) {
                 db.close();
@@ -130,6 +131,7 @@ public class Fulltext15844 extends SdbTestBase {
                 cl.dropIndex(textIndexName);
             } catch (BaseException e) {
                 if (-147 != e.getErrorCode()) {
+                    // TODO :打印出栈信息，或者直接抛异常
                     Assert.fail("actual exception: " + e.getErrorCode());
                 }
                 saveResult(e.getErrorCode(), e);
