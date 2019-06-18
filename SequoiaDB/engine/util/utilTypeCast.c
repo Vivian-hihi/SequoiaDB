@@ -2,10 +2,10 @@
 #include <math.h>
 
 //Note: The last bit of the boundary value is not included here.
-#define UTIL_NUM_INT32_MAX 214748364
-#define UTIL_NUM_INT32_MIN (-214748364)
-#define UTIL_NUM_INT64_MAX 922337203685477580
-#define UTIL_NUM_INT64_MIN (-922337203685477580)
+#define UTIL_NUM_INT32_MAX_THRESHOLD 214748364
+#define UTIL_NUM_INT32_MIN_THRESHOLD (-214748364)
+#define UTIL_NUM_INT64_MAX_THRESHOLD 922337203685477580
+#define UTIL_NUM_INT64_MIN_THRESHOLD (-922337203685477580)
 
 #define UTIL_NUM_TYPE_INT32   0
 #define UTIL_NUM_TYPE_INT64   1
@@ -109,17 +109,18 @@ SDB_EXPORT INT32 utilStrToNumber( const CHAR* data, INT32 length,
 
          if ( numType == UTIL_NUM_TYPE_INT32 )
          {
-            if ( n1 > UTIL_NUM_INT32_MAX )
+            if ( n1 > UTIL_NUM_INT32_MAX_THRESHOLD )
             {
                //n1 * 10 is greater than the int range
                numType = UTIL_NUM_TYPE_INT64 ;
             }
-            else if ( n1 < UTIL_NUM_INT32_MIN )
+            else if ( n1 < UTIL_NUM_INT32_MIN_THRESHOLD )
             {
                //n1 * 10 is less than the int range
                numType = UTIL_NUM_TYPE_INT64 ;
             }
-            else if ( n1 == UTIL_NUM_INT32_MAX || n1 == UTIL_NUM_INT32_MIN )
+            else if ( n1 == UTIL_NUM_INT32_MAX_THRESHOLD ||
+                      n1 == UTIL_NUM_INT32_MIN_THRESHOLD )
             {
                if ( sign == 1 && num > 7 )
                {
@@ -135,7 +136,7 @@ SDB_EXPORT INT32 utilStrToNumber( const CHAR* data, INT32 length,
          }
          else if ( numType == UTIL_NUM_TYPE_INT64 )
          {
-            if ( n2 > UTIL_NUM_INT64_MAX )
+            if ( n2 > UTIL_NUM_INT64_MAX_THRESHOLD )
             {
                //n2 * 10 is greater than the long long range
                numType = UTIL_NUM_TYPE_DECIMAL ;
@@ -143,7 +144,7 @@ SDB_EXPORT INT32 utilStrToNumber( const CHAR* data, INT32 length,
                ++len ;
                goto done ;
             }
-            else if ( n2 < UTIL_NUM_INT64_MIN )
+            else if ( n2 < UTIL_NUM_INT64_MIN_THRESHOLD )
             {
                //n2 * 10 is less than the long long range
                numType = UTIL_NUM_TYPE_DECIMAL ;
@@ -151,7 +152,8 @@ SDB_EXPORT INT32 utilStrToNumber( const CHAR* data, INT32 length,
                ++len ;
                goto done ;
             }
-            else if ( n2 == UTIL_NUM_INT64_MAX || n2 == UTIL_NUM_INT64_MIN )
+            else if ( n2 == UTIL_NUM_INT64_MAX_THRESHOLD ||
+                      n2 == UTIL_NUM_INT64_MIN_THRESHOLD )
             {
                if ( sign == 1 && num > 7 )
                {
@@ -369,8 +371,7 @@ SDB_EXPORT INT32 utilStrToNumber( const CHAR* data, INT32 length,
          goto done ;
       }
 
-      if( ( subscale > DOUBLE_MAX_EXP ) ||
-          ( signsubscale == 1 && digit + subscale == DOUBLE_MAX_EXP ) ||
+      if( ( signsubscale == 1 && digit + subscale == DOUBLE_MAX_EXP ) ||
           ( signsubscale == -1 && subscale - digit == DOUBLE_MAX_EXP ) )
       {
          INT32 tmpFracExp = digit ;
@@ -407,24 +408,19 @@ SDB_EXPORT INT32 utilStrToNumber( const CHAR* data, INT32 length,
             numType = UTIL_NUM_TYPE_DECIMAL ;
             goto done ;
          }
+      }
 
-         if ( subscale > DOUBLE_MAX_EXP )
+      if ( signsubscale == 1 )
+      {
+         subscale += digit ;
+      }
+      else
+      {
+         subscale -= digit ;
+         if ( subscale < 0 )
          {
-            n = tmpN ;
-
-            if ( signsubscale == 1 )
-            {
-               subscale += digit ;
-            }
-            else
-            {
-               subscale -= digit ;
-               if ( subscale < 0 )
-               {
-                  signsubscale = -signsubscale ;
-                  subscale = -subscale ;
-               }
-            }
+            signsubscale = -signsubscale ;
+            subscale = -subscale ;
          }
       }
 
