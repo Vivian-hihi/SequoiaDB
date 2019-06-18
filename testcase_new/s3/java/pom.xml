@@ -10,61 +10,56 @@
 
 	<name>java-s3-client</name>
 	<description>Demo project for Spring Boot</description>
-
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.4.RELEASE</version>
-		<relativePath /> <!-- lookup parent from repository -->
-	</parent>
-
+	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.7</java.version>
-      <sdbdriver.version>${sdbdriver}</sdbdriver.version>
-      <sdbdriver.dir>${sdbdriverDir}</sdbdriver.dir>
-      <threadexecutor.dir>${threadexecutorDir}</threadexecutor.dir>
+        <sdbdriver.version>${sdbdriver}</sdbdriver.version>
+        <sdbdriver.dir>${sdbdriverDir}</sdbdriver.dir>
+        <threadexecutor.dir>${threadexecutorDir}</threadexecutor.dir>
+		<jsch.version>0.1.54</jsch.version>
+        <!-- spring jars -->
+        <spring-boot.version>1.5.10.RELEASE</spring-boot.version>
+        <spring-boot-starter-web.version>1.5.10.RELEASE</spring-boot-starter-web.version>
+        
+		<jackson-dataformat-xml.version>2.9.9</jackson-dataformat-xml.version>
+        <aws-java-sdk-s3.version>1.11.343</aws-java-sdk-s3.version>
+        <json.version>20171018</json.version>
+		
+		 <!-- testng jars -->
+		 <testng.version>6.13.1</testng.version>	 
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
-		</dependency>
-		
-		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging</artifactId>
-			<version>1.2</version>
+			<version>${spring-boot.version}</version>
 		</dependency>
       
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>			
-			<exclusions>
-				<exclusion>
-					<groupId>ch.qos.logback</groupId>
-					<artifactId>logback-classic</artifactId>
-				</exclusion>
-			</exclusions>			
+			<version>${spring-boot-starter-web.version}</version>			
 		</dependency>
+
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-s3</artifactId>
-			<version>1.11.343</version>
+			<version>${aws-java-sdk-s3.version}</version>
 		</dependency>
 		
 		<dependency>
-  				<groupId>org.json</groupId>
-  				<artifactId>json</artifactId>
-  				<version>20171018</version>
+  		  <groupId>org.json</groupId>
+  		  <artifactId>json</artifactId>
+  		  <version>${json.version}</version>
 		</dependency>			
       
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>6.13.1</version>
+         <version>${testng.version}</version>
       </dependency>
       
       <dependency>
@@ -74,7 +69,8 @@
          <scope>system</scope>
          <systemPath>${sdbdriver.dir}/sequoiadb-driver-${sdbdriver.version}.jar</systemPath>
       </dependency>
-      <dependency>
+     
+	 <dependency>
          <groupId>com.sequoiadb</groupId>
          <artifactId>threadexecutor</artifactId>
          <version>1.0.0-SNAPSHOT</version>
@@ -83,36 +79,21 @@
       </dependency>
 	  
 	  <dependency>
-			<groupId>com.fasterxml.jackson.dataformat</groupId>
-			<artifactId>jackson-dataformat-xml</artifactId>
-	  </dependency>
+          <groupId>com.fasterxml.jackson.dataformat</groupId>
+          <artifactId>jackson-dataformat-xml</artifactId>
+          <version>${jackson-dataformat-xml.version}</version>
+      </dependency>
 
 		<dependency>
 			<groupId>com.jcraft</groupId>
 			<artifactId>jsch</artifactId>
-			<version>0.1.55</version>
+			<version>${jsch.version}</version>
 		</dependency>
-      
 	</dependencies>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>com.amazonaws</groupId>
-				<artifactId>aws-java-sdk-bom</artifactId>
-				<version>1.11.343</version>
-				<type>pom</type>
-			</dependency>
-							
-		</dependencies>
-	</dependencyManagement>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
+	
+	 <build>
+      <plugins>
+	  
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -126,8 +107,21 @@
                <argLine>-Xms1024m -Xmx1024m -Xss1m</argLine>
             </configuration>
          </plugin>
-		</plugins>
-	</build>
-
-
+		 
+		 <plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+		    <configuration>
+              <source>1.7</source>
+			  <target>1.7</target>
+			  <encoding>UTF-8</encoding>
+            </configuration>
+		 </plugin>
+		 
+		 	<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+      </plugins>
+   </build>
 </project>
