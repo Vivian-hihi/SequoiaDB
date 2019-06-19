@@ -9,7 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List ;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,9 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.annotations.AfterSuite;
-import org.testng.annotations.AfterTest ;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest ;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 
@@ -121,9 +121,11 @@ public class SdbTestBase {
     }
 
     public static synchronized void setRunGroup(List<String> testGroups) {
-        assert testGroups.size() == 1 ;
-        if (!testGroups.get( 0 ).equals( SdbTestBase.testGroup )){
-            SdbTestBase.testGroup = testGroups.get( 0 ) ;
+        if (testGroups.size() != 1) {
+            return;
+        }
+        if (!testGroups.get(0).equals(SdbTestBase.testGroup)) {
+            SdbTestBase.testGroup = testGroups.get(0);
         }
     }
 
@@ -205,7 +207,7 @@ public class SdbTestBase {
         configs.append(TRANSACTIONON, transactionon);
         return configs;
     }
-    
+
     @SuppressWarnings("unused")
     private static BSONObject buildNodeConf(Properties prop) {
         BasicBSONObject configs = new BasicBSONObject();
@@ -257,7 +259,7 @@ public class SdbTestBase {
             throw e;
         }
     }
-    
+
     @BeforeTest(groups = { RU, RC, RCWAITLOCK, RS, RCAUTO, RCUSERBS })
     public static synchronized void initTestGroups() {
         System.out.println("init " + testGroup + " Groups...........");
@@ -310,7 +312,7 @@ public class SdbTestBase {
 
         BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line = "";
-        while ((line = input.readLine()) != null) {
+        while (( line = input.readLine() ) != null) {
             System.out.println(line);
         }
 
