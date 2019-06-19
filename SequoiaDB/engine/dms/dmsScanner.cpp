@@ -211,7 +211,7 @@ namespace engine
          rc = _firstInit( cb ) ;
          PD_RC_CHECK( rc, PDWARNING, "first init failed, rc: %d", rc ) ;
       }
-      // have locked, but not trans, need to release record lock held 
+      // have locked, but not trans, need to release record lock held
       // from last round of scan
       else if ( _needUnLock && _hasLockedRecord &&
                 DMS_INVALID_OFFSET != _curRID._offset )
@@ -257,7 +257,7 @@ namespace engine
       _curRID._offset = DMS_INVALID_OFFSET ;
    }
 
-   void  _dmsExtScannerBase::acquireCSCLLock( ) 
+   void  _dmsExtScannerBase::acquireCSCLLock( )
    {
       INT32 rc = SDB_OK ;
       if ( !_CSCLLockHeld && DPS_TRANSLOCK_X != _recordLock )
@@ -265,7 +265,7 @@ namespace engine
          dmsTBTransContext tbTxContext( _context, _accessType ) ;
          dpsTransRetInfo   lockConflict ;
 
-         if ( DPS_TRANSLOCK_IS == dpsIntentLockMode( _recordLock ) ) 
+         if ( DPS_TRANSLOCK_IS == dpsIntentLockMode( _recordLock ) )
          {
             rc = _pTransCB->transLockGetIS( _cb, _pSu->logicalID(),
                                             _context->mbID(),
@@ -282,7 +282,7 @@ namespace engine
             goto done ;
          }
 
-         // this is performance improvement, failed to get lock should not 
+         // this is performance improvement, failed to get lock should not
          // fail the operation
          if ( SDB_OK != rc )
          {
@@ -290,13 +290,13 @@ namespace engine
                      "Failed to get CS/CL lock, rc: %d"OSS_NEWLINE
                      "Conflict ( representative ):"OSS_NEWLINE
                      "   EDUID:  %llu"OSS_NEWLINE
-                     "   TID:    %u"OSS_NEWLINE 
+                     "   TID:    %u"OSS_NEWLINE
                      "   LockId: %s"OSS_NEWLINE
-                     "   Mode:   %s"OSS_NEWLINE, 
+                     "   Mode:   %s"OSS_NEWLINE,
                      rc,
                      lockConflict._eduID,
                      lockConflict._tid,
-                     lockConflict._lockID.toString().c_str(), 
+                     lockConflict._lockID.toString().c_str(),
                      lockModeToString( lockConflict._lockType ) ) ;
          }
          else
@@ -305,14 +305,14 @@ namespace engine
          }
       }
    done:
-      return ; 
+      return ;
    }
 
-   void   _dmsExtScannerBase::releaseCSCLLock( ) 
+   void   _dmsExtScannerBase::releaseCSCLLock( )
    {
       if ( _CSCLLockHeld )
       {
-         _pTransCB->transLockRelease( _cb, _pSu->logicalID(), 
+         _pTransCB->transLockRelease( _cb, _pSu->logicalID(),
                                       _context->mbID() );
          _CSCLLockHeld = FALSE ;
       }
@@ -464,7 +464,7 @@ namespace engine
       _cb   = cb ;
       _next = _extent->_firstRecordOffset ;
 
-      // As a performance improvement, we are going to acquire the CS and 
+      // As a performance improvement, we are going to acquire the CS and
       // CL lock right in the beginning to avoid extra performance overhead
       // to acquire these locks when acquiring record lock in each step
       // We release and require the lock during pauseScan/resumeScan
@@ -496,7 +496,7 @@ namespace engine
       _hasLockedRecord        = FALSE ;
 
       PD_TRACE_ENTRY ( SDB__DMSEXTSCAN__FETCHNEXT );
-      PD_TRACE5 ( SDB__DMSEXTSCAN__FETCHNEXT, 
+      PD_TRACE5 ( SDB__DMSEXTSCAN__FETCHNEXT,
                  PD_PACK_UINT(_needUnLock),
                  PD_PACK_UINT(_mbLockType),
                  PD_PACK_UINT(_accessType),
@@ -546,8 +546,8 @@ namespace engine
             {
                if ( !needWaitForLock() )
                {
-                  // for new RC logic, we should first try on S lock instead 
-                  // of directly wait on the record lock. Under the cover, 
+                  // for new RC logic, we should first try on S lock instead
+                  // of directly wait on the record lock. Under the cover,
                   // the lock call back function would try to use the old copy
                   // (previous committed version) if exist
                   rc = _pTransCB->transLockTryS( cb, _pSu->logicalID(),
@@ -587,17 +587,17 @@ namespace engine
             {
                PD_LOG( PDERROR,
                        "Failed to get record lock, rc: %d"OSS_NEWLINE
-                       "Request Mode:   %s"OSS_NEWLINE 
+                       "Request Mode:   %s"OSS_NEWLINE
                        "Conflict ( representative ):"OSS_NEWLINE
                        "   EDUID:  %llu"OSS_NEWLINE
-                       "   TID:    %u"OSS_NEWLINE 
+                       "   TID:    %u"OSS_NEWLINE
                        "   LockId: %s"OSS_NEWLINE
-                       "   Mode:   %s"OSS_NEWLINE, 
+                       "   Mode:   %s"OSS_NEWLINE,
                        rc,
                        lockModeToString( _recordLock ),
                        lockConflict._eduID,
                        lockConflict._tid,
-                       lockConflict._lockID.toString().c_str(), 
+                       lockConflict._lockID.toString().c_str(),
                        lockModeToString( lockConflict._lockType ) ) ;
                goto error ;
             }
@@ -615,11 +615,11 @@ namespace engine
             }
 
             // while we wait on the record lock, we could give up the mblatch,
-            // another guy can come in and delete the next record (note that 
+            // another guy can come in and delete the next record (note that
             // the current record we are working on should be fine). So we
             // need to refresh the next record(_next) based on the record
             // on disk. We might or might not have record lock, but we have
-            // mbLatch, so it's a valid version.. 
+            // mbLatch, so it's a valid version..
             _next = _curRecordPtr->getNextOffset() ;
 
             // Since we might got an old version of the record from a buffer,
@@ -628,10 +628,10 @@ namespace engine
             _curRecordPtr = _recordRW.readPtr( 0 ) ;
          }
 
-         // if this delete is from the same transaction as marking it 
+         // if this delete is from the same transaction as marking it
          // deleting, we would end up do the delete, but how to tell?
-         // If the X lock was newly acquired/granted, we consider it as a 
-         // new transaction, because the original one has committed and 
+         // If the X lock was newly acquired/granted, we consider it as a
+         // new transaction, because the original one has committed and
          // original lock was released. Pass down newXAcquire.
          if ( _curRecordPtr->isDeleting() )
          {
@@ -664,7 +664,7 @@ namespace engine
          }
          else
          {
-            
+
             recordID = _curRID ;
             rc = _pSu->extractData( _context, _recordRW, cb, recordData ) ;
             if ( rc )
@@ -1438,7 +1438,7 @@ namespace engine
       }
    }
 
-   void _dmsIXSecScanner::acquireCSCLLock( ) 
+   void _dmsIXSecScanner::acquireCSCLLock( )
    {
       INT32 rc = SDB_OK ;
       if ( !_CSCLLockHeld && DPS_TRANSLOCK_X != _recordLock )
@@ -1447,7 +1447,7 @@ namespace engine
          dmsIXTransContext ixTxContext( _context, _accessType,
                                         _scanner ) ;
 
-         if ( DPS_TRANSLOCK_IS == dpsIntentLockMode( _recordLock ) ) 
+         if ( DPS_TRANSLOCK_IS == dpsIntentLockMode( _recordLock ) )
          {
             rc = _pTransCB->transLockGetIS( _cb, _pSu->logicalID(),
                                             _context->mbID(),
@@ -1464,7 +1464,7 @@ namespace engine
             goto done ;
          }
 
-         // this is performance improvement, failed to get lock should not 
+         // this is performance improvement, failed to get lock should not
          // fail the operation
          if ( SDB_OK != rc )
          {
@@ -1472,13 +1472,13 @@ namespace engine
                       "Failed to get CS/CL lock, rc: %d"OSS_NEWLINE
                       "Conflict ( representative ):"OSS_NEWLINE
                       "   EDUID:  %llu"OSS_NEWLINE
-                      "   TID:    %u"OSS_NEWLINE 
+                      "   TID:    %u"OSS_NEWLINE
                       "   LockId: %s"OSS_NEWLINE
-                      "   Mode:   %s"OSS_NEWLINE, 
+                      "   Mode:   %s"OSS_NEWLINE,
                       rc,
                       lockConflict._eduID,
                       lockConflict._tid,
-                      lockConflict._lockID.toString().c_str(), 
+                      lockConflict._lockID.toString().c_str(),
                       lockModeToString( lockConflict._lockType ) ) ;
          }
          else
@@ -1487,14 +1487,14 @@ namespace engine
          }
       }
    done:
-      return ; 
+      return ;
    }
 
-   void  _dmsIXSecScanner::releaseCSCLLock( ) 
+   void  _dmsIXSecScanner::releaseCSCLLock( )
    {
       if ( _CSCLLockHeld )
       {
-         _pTransCB->transLockRelease( _cb, _pSu->logicalID(), 
+         _pTransCB->transLockRelease( _cb, _pSu->logicalID(),
                                       _context->mbID() ) ;
          _CSCLLockHeld = FALSE ;
       }
@@ -1610,7 +1610,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to resum ixscan, rc: %d", rc ) ;
       _cb   = cb ;
 
-      // As a performance improvement, we are going to acquire the CS and 
+      // As a performance improvement, we are going to acquire the CS and
       // CL lock right in the beginning to avoid extra performance overhead
       // to acquire these locks when acquiring record lock in each step
       // We release and require the lock during pauseScan/resumeScan
@@ -1678,10 +1678,10 @@ namespace engine
    // Input
    //
    // Ouput
-   //    recordID: 
+   //    recordID:
    //    On normal return, record lock is held on the matching record.
    // Return
-   // 
+   //
    //
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSIXSECSCAN_ADVANCE, "_dmsIXSecScanner::advance" )
    INT32 _dmsIXSecScanner::advance( dmsRecordID &recordID,
@@ -1730,7 +1730,7 @@ namespace engine
       while ( _onceRestNum-- > 0 && 0 != _maxRecords )
       {
          ignoredLock = FALSE ;
-         // advance index tree 
+         // advance index tree
          rc = _scanner->advance( _curRID ) ;
          if ( SDB_IXM_EOC == rc )
          {
@@ -1805,12 +1805,12 @@ namespace engine
             }
          }
 
-         // record2RW already take care of in memory version vs on disk 
+         // record2RW already take care of in memory version vs on disk
          // version under the cover
          _recordRW = _pSu->record2RW( _curRID, _context->mbID() ) ;
 
          // If need lock and the RID was not setup from the in memory tree.
-         // As an optimization, if the RID was originally found through in 
+         // As an optimization, if the RID was originally found through in
          // memory tree scan, don't try lock at all.
          if ( _recordLock != DPS_TRANSLOCK_MAX )
          {
@@ -1821,7 +1821,7 @@ namespace engine
             if ( waitUnlockRID.isValid() && _curRID != waitUnlockRID )
             {
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                            _context->mbID(), &waitUnlockRID, 
+                                            _context->mbID(), &waitUnlockRID,
                                             &_callback ) ;
                waitUnlockRID.reset() ;
             }
@@ -1835,7 +1835,7 @@ namespace engine
                // exclusive lock has to always wait on the lock
                rc = _pTransCB->transLockGetX( cb, _pSu->logicalID(),
                                               _context->mbID(), &_curRID,
-                                              &ixTxContext, 
+                                              &ixTxContext,
                                               &lockConflict, &_callback ) ;
             }
             else if ( DPS_TRANSLOCK_U == _recordLock )
@@ -1850,8 +1850,8 @@ namespace engine
             {
                if ( !needWaitForLock() )
                {
-                  // for new RC logic, we should first try on S lock instead 
-                  // of directly wait on the record lock. Under the cover, 
+                  // for new RC logic, we should first try on S lock instead
+                  // of directly wait on the record lock. Under the cover,
                   // the lock call back function would try to use the old copy
                   // (previous committed version) if exist
                   rc = _pTransCB->transLockTryS( cb, _pSu->logicalID(),
@@ -1891,7 +1891,7 @@ namespace engine
             if ( waitUnlockRID.isValid() )
             {
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                            _context->mbID(), &waitUnlockRID, 
+                                            _context->mbID(), &waitUnlockRID,
                                             &_callback ) ;
                waitUnlockRID.reset() ;
             }
@@ -1900,18 +1900,19 @@ namespace engine
             {
                PD_LOG( PDERROR,
                        "Failed to get record lock, rc: %d"OSS_NEWLINE
-                       "Request Mode:   %s"OSS_NEWLINE 
+                       "Request Mode:   %s"OSS_NEWLINE
                        "Conflict ( representative ):"OSS_NEWLINE
                        "   EDUID:  %llu"OSS_NEWLINE
-                       "   TID:    %u"OSS_NEWLINE 
+                       "   TID:    %u"OSS_NEWLINE
                        "   LockId: %s"OSS_NEWLINE
-                       "   Mode:   %s"OSS_NEWLINE, 
+                       "   Mode:   %s"OSS_NEWLINE,
                        rc,
                        lockModeToString( _recordLock ),
                        lockConflict._eduID,
                        lockConflict._tid,
-                       lockConflict._lockID.toString().c_str(), 
+                       lockConflict._lockID.toString().c_str(),
                        lockModeToString( lockConflict._lockType ) ) ;
+               PD_LOG_MSG( PDERROR, "Failed to get record lock" ) ;
                goto error ;
             }
 
@@ -1946,11 +1947,11 @@ namespace engine
             }
          } // end of (_recordLock != -1)
 
-         // Move _curRecordPtr to here so that _recordRW is fully setup for 
+         // Move _curRecordPtr to here so that _recordRW is fully setup for
          // all cases.
          _curRecordPtr = _recordRW.readPtr( 0 ) ;
 
-         // Handle the record being deleted 
+         // Handle the record being deleted
          if ( _curRecordPtr->isDeleting() )
          {
             if ( _recordLock == DPS_TRANSLOCK_X )
@@ -1968,7 +1969,7 @@ namespace engine
             if ( _hasLockedRecord )
             {
                _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                            _context->mbID(), &_curRID, 
+                                            _context->mbID(), &_curRID,
                                             &_callback ) ;
                _hasLockedRecord = FALSE ;
             }
@@ -1978,7 +1979,7 @@ namespace engine
 
             continue ;
          }
-         SDB_ASSERT( !_curRecordPtr->isDeleted(), 
+         SDB_ASSERT( !_curRecordPtr->isDeleted(),
                      "record can't be deleted" ) ;
 
          recordID = _curRID ;
@@ -2072,12 +2073,12 @@ namespace engine
          }
 
          // Proper found case will jump to done, if we got here, there was
-         // either unmatch, or we need to skip. Either way, we should 
+         // either unmatch, or we need to skip. Either way, we should
          // release the record lock before advance to next index
          if ( _hasLockedRecord )
          {
             _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                         _context->mbID(), &_curRID, 
+                                         _context->mbID(), &_curRID,
                                          &_callback ) ;
             _hasLockedRecord = FALSE ;
          }
@@ -2105,7 +2106,7 @@ namespace engine
       if ( waitUnlockRID.isValid() )
       {
          _pTransCB->transLockRelease( cb, _pSu->logicalID(),
-                                      _context->mbID(), &waitUnlockRID, 
+                                      _context->mbID(), &waitUnlockRID,
                                       &_callback ) ;
       }
       PD_TRACE_EXITRC ( SDB__DMSIXSECSCAN_ADVANCE, rc ) ;
