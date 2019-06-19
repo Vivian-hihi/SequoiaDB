@@ -261,20 +261,9 @@
          <hostinfo prefix="host" />
          <var name="cmd" value="surefire-report:report -DxmlFileName=@{xmlfile} -Dsdbdriver=@{sdbdriver} -DthreadexecutorDir=${CI_WORK_DIR}/testcase/tools -DsdbdriverDir=@{sdbdriverdir}  -DreportDir=${tmp_report_dir} -DHOSTNAME=@{hostname} -DSVCNAME=@{svcname} -DS3HOSTNAME=${host.ADDR4} -DS3SVCNAME=${s3svcname} -DESHOSTNAME=@{eshostname} -DESSVCNAME=@{essvcname} -DFULLTEXTPREFIX=${IDXPREFIX}"/>
          <echo message="cmd : mvn ${cmd} in dir ${casedir}"/>
-         <if>
-            <equals arg1="${testcasetype}" arg2="s3_java"/>
-            <then>
-               <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
-                  <arg line="${cmd}" />
-                  <env key="JAVA_HOME" path="/opt/jdk1.8.0_152" />
-               </exec>
-            </then>
-            <else>
-               <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
-                  <arg line="${cmd}" />
-               </exec>
-            </else>
-         </if> 
+         <exec executable="mvn" dir="${casedir}" failonerror="true" logError="true">
+            <arg line="${cmd}" />
+         </exec>
 
       </sequential>
    </macrodef>
