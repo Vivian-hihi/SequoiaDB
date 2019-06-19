@@ -214,7 +214,7 @@ public class CacheTurnOnTest16718 extends SdbTestBase {
             long seconde = db_check.getLastUseTime();
             spendTime = seconde - first;
             if (enable && spendTime < inteval) {
-                Assert.assertFalse(true, e.getMessage());
+                throw e;
             } else {
                 Assert.assertEquals(e.getErrorCode(), new BaseException("SDB_DMS_NOTEXIST").getErrorCode(),
                         e.getMessage());
@@ -239,7 +239,7 @@ public class CacheTurnOnTest16718 extends SdbTestBase {
             long seconde = db_check.getLastUseTime();
             spendTime = seconde - first;
             if (enable && spendTime < inteval) {
-                Assert.assertFalse(true, e.getMessage());
+                throw e;
             } else {
                 Assert.assertEquals(e.getErrorCode(), new BaseException("SDB_DMS_NOTEXIST").getErrorCode(),
                         e.getMessage());
@@ -310,7 +310,7 @@ public class CacheTurnOnTest16718 extends SdbTestBase {
             doc.put("_id", r.nextInt());
             cl.insert(doc);
         } catch (BaseException e) {
-            Assert.assertFalse(true, e.getMessage());
+            throw e;
         }
 
         long spendTime = 0;
@@ -320,7 +320,7 @@ public class CacheTurnOnTest16718 extends SdbTestBase {
             getCS(db);
         } catch (BaseException e) {
             if (enable && spendTime < inteval) {
-                Assert.assertFalse(true, e.getMessage());
+                throw e;
             } else {
                 Assert.assertEquals(e.getErrorCode(), new BaseException("SDB_DMS_CS_NOTEXIST").getErrorCode());
             }
@@ -330,7 +330,7 @@ public class CacheTurnOnTest16718 extends SdbTestBase {
             getCL(db);
         } catch (BaseException e) {
             if (enable && spendTime < inteval) {
-                Assert.assertFalse(true, e.getMessage());
+                throw e;
             } else {
                 Assert.assertEquals(e.getErrorCode(), new BaseException("SDB_DMS_CS_NOTEXIST").getErrorCode());
             }
