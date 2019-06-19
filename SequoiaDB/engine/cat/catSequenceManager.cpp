@@ -317,7 +317,7 @@ namespace engine
             goto error ;
          }
 
-         rc = sequence.setOptions( seqObj, FALSE, TRUE ) ;
+         rc = sequence.loadOptions( seqObj ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
@@ -443,7 +443,7 @@ namespace engine
             goto error ;
          }
 
-         rc = sequence.setOptions( seqObj, FALSE, TRUE ) ;
+         rc = sequence.loadOptions( seqObj ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
@@ -452,8 +452,8 @@ namespace engine
          }
       }
 
-      sequence.setCachedValue( sequence.startValue() ) ;
-      sequence.setCurrentValue( sequence.startValue() ) ;
+      sequence.setCachedValue( sequence.getStartValue() ) ;
+      sequence.setCurrentValue( sequence.getStartValue() ) ;
       sequence.setInitial( TRUE ) ;
       sequence.setExceeded( FALSE ) ;
       sequence.increaseVersion() ;
@@ -496,7 +496,7 @@ namespace engine
       BOOLEAN needUpdate = FALSE ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_SEQ ) ;
 
-      if ( seq.increment() > 0 )
+      if ( seq.getIncrement() > 0 )
       {
          rc = _acquireAscendingSequence( seq, _acquirer, needUpdate ) ;
       }
@@ -508,19 +508,19 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to acquire sequence[%s], rc=%d",
-                 seq.name().c_str(), rc ) ;
+                 seq.getName().c_str(), rc ) ;
          goto error ;
       }
 
-      _acquirer.ID = seq.ID() ;
+      _acquirer.ID = seq.getID() ;
 
       if ( needUpdate )
       {
          BSONObj options ;
          try
          {
-            options = BSON( CAT_SEQUENCE_CURRENT_VALUE << seq.currentValue()
-                         << CAT_SEQUENCE_INITIAL << (bool) seq.initial() ) ;
+            options = BSON( CAT_SEQUENCE_CURRENT_VALUE << seq.getCurrentValue()
+                         << CAT_SEQUENCE_INITIAL << (bool) seq.isInitial() ) ;
          }
          catch( std::exception& e )
          {
@@ -530,11 +530,11 @@ namespace engine
             goto error ;
          }
 
-         rc = pMgr->_updateSequence( seq.name(), options, eduCB, w ) ;
+         rc = pMgr->_updateSequence( seq.getName(), options, eduCB, w ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to update sequence[%s], rc=%d",
-                    seq.name().c_str(), rc ) ;
+                    seq.getName().c_str(), rc ) ;
             goto error ;
          }
       }
@@ -557,30 +557,30 @@ namespace engine
       INT64 fetchInc = 0 ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_ASCENDING_SEQ ) ;
 
-      SDB_ASSERT( seq.increment() > 0, "increment should be > 0" ) ;
+      SDB_ASSERT( seq.getIncrement() > 0, "increment should be > 0" ) ;
 
       needUpdate = FALSE ;
 
-      if ( seq.initial() )
+      if ( seq.isInitial() )
       {
-         nextValue = seq.startValue() ;
+         nextValue = seq.getStartValue() ;
          seq.setInitial( FALSE ) ;
          needUpdate = TRUE ;
       }
-      else if ( seq.exceeded() )
+      else if ( seq.isExceeded() )
       {
          // reach the maximum limit
-         if ( !seq.cycled() )
+         if ( !seq.isCycled() )
          {
             rc = SDB_SEQUENCE_EXCEEDED ;
             PD_LOG( PDERROR, "Sequence[%s] value(%lld) is reach the maximum value(%lld)",
-                    seq.name().c_str(), seq.currentValue(), seq.maxValue() ) ;
+                    seq.getName().c_str(), seq.getCurrentValue(), seq.getMaxValue() ) ;
             goto error ;
          }
          else
          {
             // restart from minValue
-            nextValue = seq.minValue() ;
+            nextValue = seq.getMinValue() ;
             seq.setCurrentValue( nextValue ) ;
             seq.setCachedValue( nextValue ) ;
             seq.setExceeded( FALSE ) ;
@@ -590,54 +590,54 @@ namespace engine
       else
       {
          // safe to increase value
-         nextValue = seq.cachedValue() + seq.increment() ;
+         nextValue = seq.getCachedValue() + seq.getIncrement() ;
       }
 
-      fetchInc = ( seq.acquireSize() - 1 ) * (INT64) seq.increment() ;
+      fetchInc = ( seq.getAcquireSize() - 1 ) * (INT64) seq.getIncrement() ;
 
       // use minus to avoid overflow
-      if ( seq.currentValue() - nextValue >= fetchInc )
+      if ( seq.getCurrentValue() - nextValue >= fetchInc )
       {
          seq.setCachedValue( nextValue + fetchInc ) ;
          acquirer.nextValue = nextValue ;
-         acquirer.acquireSize = seq.acquireSize() ;
-         acquirer.increment = seq.increment() ;
+         acquirer.acquireSize = seq.getAcquireSize() ;
+         acquirer.increment = seq.getIncrement() ;
       }
       else
       {
-         INT64 cachedInc = seq.cacheSize() * (INT64) seq.increment() ;
-         if ( seq.currentValue() <= seq.maxValue() - cachedInc )
+         INT64 cachedInc = seq.getCacheSize() * (INT64) seq.getIncrement() ;
+         if ( seq.getCurrentValue() <= seq.getMaxValue() - cachedInc )
          {
             seq.setCachedValue( nextValue + fetchInc ) ;
-            seq.setCurrentValue( seq.currentValue() + cachedInc ) ;
+            seq.setCurrentValue( seq.getCurrentValue() + cachedInc ) ;
          }
          else
          {
-            INT64 newCurrentValue = seq.currentValue() +
-               ( seq.maxValue() - seq.currentValue() ) / seq.increment() * seq.increment() ;
+            INT64 newCurrentValue = seq.getCurrentValue() +
+               ( seq.getMaxValue() - seq.getCurrentValue() ) / seq.getIncrement() * seq.getIncrement() ;
             seq.setCurrentValue( newCurrentValue ) ;
             // use minus to avoid overflow
-            if ( seq.currentValue() - nextValue >= fetchInc )
+            if ( seq.getCurrentValue() - nextValue >= fetchInc )
             {
                seq.setCachedValue( nextValue + fetchInc ) ;
             }
             else
             {
-               INT64 newCachedValue = seq.cachedValue() +
-                  ( seq.currentValue() - seq.cachedValue() ) / seq.increment() * seq.increment() ;
+               INT64 newCachedValue = seq.getCachedValue() +
+                  ( seq.getCurrentValue() - seq.getCachedValue() ) / seq.getIncrement() * seq.getIncrement() ;
                seq.setCachedValue( newCachedValue ) ;
             }
          }
 
          acquirer.nextValue = nextValue ;
-         acquirer.acquireSize = ( seq.cachedValue() - nextValue ) / seq.increment() + 1 ;
-         acquirer.increment = seq.increment() ;
+         acquirer.acquireSize = ( seq.getCachedValue() - nextValue ) / seq.getIncrement() + 1 ;
+         acquirer.increment = seq.getIncrement() ;
          needUpdate = TRUE ;
       }
 
       // reach the maxValue, so mark exceeded
-      if ( seq.cachedValue() == seq.maxValue() ||
-           seq.cachedValue() > seq.maxValue() - seq.increment() )
+      if ( seq.getCachedValue() == seq.getMaxValue() ||
+           seq.getCachedValue() > seq.getMaxValue() - seq.getIncrement() )
       {
          seq.setExceeded( TRUE ) ;
          needUpdate = TRUE ;
@@ -661,30 +661,30 @@ namespace engine
       INT64 fetchInc = 0 ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ACQUIRE_DESCENDING_SEQ ) ;
 
-      SDB_ASSERT( seq.increment() < 0, "increment should be < 0" ) ;
+      SDB_ASSERT( seq.getIncrement() < 0, "increment should be < 0" ) ;
 
       needUpdate = FALSE ;
 
-      if ( seq.initial() )
+      if ( seq.isInitial() )
       {
-         nextValue = seq.startValue() ;
+         nextValue = seq.getStartValue() ;
          seq.setInitial( FALSE ) ;
          needUpdate = TRUE ;
       }
-      else if ( seq.exceeded() )
+      else if ( seq.isExceeded() )
       {
          // reach the minimum limit
-         if ( !seq.cycled() )
+         if ( !seq.isCycled() )
          {
             rc = SDB_SEQUENCE_EXCEEDED ;
             PD_LOG( PDERROR, "Sequence[%s] value(%lld) is reach the minimum value(%lld)",
-                    seq.name().c_str(), seq.currentValue(), seq.minValue() ) ;
+                    seq.getName().c_str(), seq.getCurrentValue(), seq.getMinValue() ) ;
             goto error ;
          }
          else
          {
             // restart from maxValue
-            nextValue = seq.maxValue() ;
+            nextValue = seq.getMaxValue() ;
             seq.setCurrentValue( nextValue ) ;
             seq.setCachedValue( nextValue ) ;
             seq.setExceeded( FALSE ) ;
@@ -694,54 +694,54 @@ namespace engine
       else
       {
          // safe to decrease value
-         nextValue = seq.cachedValue() + seq.increment() ;
+         nextValue = seq.getCachedValue() + seq.getIncrement() ;
       }
 
-      fetchInc = ( seq.acquireSize() - 1 ) * (INT64) seq.increment() ;
+      fetchInc = ( seq.getAcquireSize() - 1 ) * (INT64) seq.getIncrement() ;
 
       // use minus to avoid overflow
-      if ( nextValue - seq.currentValue() >= -fetchInc )
+      if ( nextValue - seq.getCurrentValue() >= -fetchInc )
       {
          seq.setCachedValue( nextValue + fetchInc ) ;
          acquirer.nextValue = nextValue ;
-         acquirer.acquireSize = seq.acquireSize() ;
-         acquirer.increment = seq.increment() ;
+         acquirer.acquireSize = seq.getAcquireSize() ;
+         acquirer.increment = seq.getIncrement() ;
       }
       else
       {
-         INT64 cachedInc = seq.cacheSize() * (INT64) seq.increment() ;
-         if ( seq.currentValue() >= seq.minValue() - cachedInc )
+         INT64 cachedInc = seq.getCacheSize() * (INT64) seq.getIncrement() ;
+         if ( seq.getCurrentValue() >= seq.getMinValue() - cachedInc )
          {
             seq.setCachedValue( nextValue + fetchInc ) ;
-            seq.setCurrentValue( seq.currentValue() + cachedInc ) ;
+            seq.setCurrentValue( seq.getCurrentValue() + cachedInc ) ;
          }
          else
          {
-            INT64 newCurrentValue = seq.currentValue() +
-               ( seq.minValue() - seq.currentValue() ) / seq.increment() * seq.increment() ;
+            INT64 newCurrentValue = seq.getCurrentValue() +
+               ( seq.getMinValue() - seq.getCurrentValue() ) / seq.getIncrement() * seq.getIncrement() ;
             seq.setCurrentValue( newCurrentValue ) ;
             // use minus to avoid overflow
-            if ( nextValue - seq.currentValue() >= -fetchInc )
+            if ( nextValue - seq.getCurrentValue() >= -fetchInc )
             {
                seq.setCachedValue( nextValue + fetchInc ) ;
             }
             else
             {
-               INT64 newCachedValue = seq.cachedValue() +
-                  ( seq.currentValue() - seq.cachedValue() ) / seq.increment() * seq.increment() ;
+               INT64 newCachedValue = seq.getCachedValue() +
+                  ( seq.getCurrentValue() - seq.getCachedValue() ) / seq.getIncrement() * seq.getIncrement() ;
                seq.setCachedValue( newCachedValue ) ;
             }
          }
 
          acquirer.nextValue = nextValue ;
-         acquirer.acquireSize = ( seq.cachedValue() - nextValue ) / seq.increment() + 1 ;
-         acquirer.increment = seq.increment() ;
+         acquirer.acquireSize = ( seq.getCachedValue() - nextValue ) / seq.getIncrement() + 1 ;
+         acquirer.increment = seq.getIncrement() ;
          needUpdate = TRUE ;
       }
 
       // reach the minValue, so mark exceeded
-      if ( seq.cachedValue() == seq.minValue() ||
-           seq.cachedValue() < seq.minValue() - seq.increment() )
+      if ( seq.getCachedValue() == seq.getMinValue() ||
+           seq.getCachedValue() < seq.getMinValue() - seq.getIncrement() )
       {
          seq.setExceeded( TRUE ) ;
          needUpdate = TRUE ;
@@ -765,7 +765,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_MGR__ADJUST_SEQUENCE ) ;
 
       BOOLEAN needUpdate = FALSE ;
-      if ( seq.increment() > 0 )
+      if ( seq.getIncrement() > 0 )
       {
          _adjustAscendingSequence( seq, _expectValue, needUpdate ) ;
       }
@@ -779,8 +779,8 @@ namespace engine
          BSONObj options ;
          try
          {
-            options = BSON( CAT_SEQUENCE_CURRENT_VALUE << seq.currentValue()
-                         << CAT_SEQUENCE_INITIAL << (bool) seq.initial() ) ;
+            options = BSON( CAT_SEQUENCE_CURRENT_VALUE << seq.getCurrentValue()
+                         << CAT_SEQUENCE_INITIAL << (bool) seq.isInitial() ) ;
          }
          catch( std::exception& e )
          {
@@ -790,11 +790,11 @@ namespace engine
             goto error ;
          }
 
-         rc = pMgr->_updateSequence( seq.name(), options, eduCB, w ) ;
+         rc = pMgr->_updateSequence( seq.getName(), options, eduCB, w ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to update sequence[%s], rc=%d",
-                    seq.name().c_str(), rc ) ;
+                    seq.getName().c_str(), rc ) ;
             goto error ;
          }
       }
@@ -834,29 +834,29 @@ namespace engine
       // When sequence is initial, cachedValue is inexistent.
       // We can ignore it, because when the conflict occurs, coord will retry.
       // At that time, we can handle it.
-      if ( seq.initial() || seq.exceeded() ||
-           seq.cachedValue() + seq.increment() > expectValue )
+      if ( seq.isInitial() || seq.isExceeded() ||
+           seq.getCachedValue() + seq.getIncrement() > expectValue )
       {
          goto done ;
       }
 
-      diff = ( UINT64 )( expectValue - seq.cachedValue() ) ;
-      reminder = diff % seq.increment() ;
-      diffInc = reminder == 0 ? diff : (diff - reminder + seq.increment()) ;
-      newCachedValue = seq.cachedValue() + diffInc ;
+      diff = ( UINT64 )( expectValue - seq.getCachedValue() ) ;
+      reminder = diff % seq.getIncrement() ;
+      diffInc = reminder == 0 ? diff : (diff - reminder + seq.getIncrement()) ;
+      newCachedValue = seq.getCachedValue() + diffInc ;
       if ( diffInc < diff || // check for diffInc overflow
-           newCachedValue < seq.cachedValue() || // check for newCachedValue overflow
-           newCachedValue > seq.maxValue() - seq.increment() )
+           newCachedValue < seq.getCachedValue() || // check for newCachedValue overflow
+           newCachedValue > seq.getMaxValue() - seq.getIncrement() )
       {
-         seq.setCachedValue( seq.maxValue() ) ;
-         seq.setCurrentValue( seq.maxValue() ) ;
+         seq.setCachedValue( seq.getMaxValue() ) ;
+         seq.setCurrentValue( seq.getMaxValue() ) ;
          seq.setExceeded( TRUE ) ;
          needUpdate = TRUE ;
          goto done ;
       }
 
-      newNextValue = newCachedValue + seq.increment() ;
-      if ( newNextValue <= seq.currentValue() )
+      newNextValue = newCachedValue + seq.getIncrement() ;
+      if ( newNextValue <= seq.getCurrentValue() )
       {
          seq.setCachedValue( newCachedValue ) ;
       }
@@ -899,29 +899,29 @@ namespace engine
       // When sequence is initial, cachedValue is inexistent.
       // We can ignore it, because when the conflict occurs, coord will retry.
       // At that time, we can handle it.
-      if ( seq.initial() || seq.exceeded() ||
-           seq.cachedValue() + seq.increment() < expectValue )
+      if ( seq.isInitial() || seq.isExceeded() ||
+           seq.getCachedValue() + seq.getIncrement() < expectValue )
       {
          goto done ;
       }
 
-      diff = ( UINT64 )( seq.cachedValue() - expectValue ) ;
-      reminder = diff % (-seq.increment()) ;
-      diffInc = reminder == 0 ? diff : (diff - reminder - seq.increment()) ;
-      newCachedValue = seq.cachedValue() - diffInc ;
+      diff = ( UINT64 )( seq.getCachedValue() - expectValue ) ;
+      reminder = diff % (-seq.getIncrement()) ;
+      diffInc = reminder == 0 ? diff : (diff - reminder - seq.getIncrement()) ;
+      newCachedValue = seq.getCachedValue() - diffInc ;
       if ( diffInc < diff || // check for diffInc overflow
-           newCachedValue > seq.cachedValue() || // check for newCachedValue overflow
-           newCachedValue < seq.minValue() - seq.increment() )
+           newCachedValue > seq.getCachedValue() || // check for newCachedValue overflow
+           newCachedValue < seq.getMinValue() - seq.getIncrement() )
       {
-         seq.setCachedValue( seq.minValue() ) ;
-         seq.setCurrentValue( seq.minValue() ) ;
+         seq.setCachedValue( seq.getMinValue() ) ;
+         seq.setCurrentValue( seq.getMinValue() ) ;
          seq.setExceeded( TRUE ) ;
          needUpdate = TRUE ;
          goto done ;
       }
 
-      newNextValue = newCachedValue + seq.increment() ;
-      if ( newNextValue >= seq.currentValue() )
+      newNextValue = newCachedValue + seq.getIncrement() ;
+      if ( newNextValue >= seq.getCurrentValue() )
       {
          seq.setCachedValue( newCachedValue ) ;
       }
@@ -1012,10 +1012,10 @@ namespace engine
       cacheLocked = TRUE ;
 
       // check ID
-      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->ID() )
+      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->getID() )
       {
          PD_LOG( PDERROR, "Mismatch ID(%llu) for sequence[%s, %llu]",
-                 ID, cache->name().c_str(), cache->ID() ) ;
+                 ID, cache->getName().c_str(), cache->getID() ) ;
          rc = SDB_SEQUENCE_NOT_EXIST ;
          goto error ;
       }
@@ -1028,7 +1028,7 @@ namespace engine
          // if rc==SDB_SEQUENCE_NOT_EXIST, we should delete the cache
          // here we get SLOCK, so we need to get XLOCK to delete the cache
          // check the ID consistency when delete cache
-         cachedSeqID = cache->ID() ;
+         cachedSeqID = cache->getID() ;
          goto error ;
       }
 
@@ -1085,7 +1085,7 @@ namespace engine
             goto error ;
          }
 
-         rc = sequence->setOptions( seqObj, FALSE, TRUE ) ;
+         rc = sequence->loadOptions( seqObj ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to set sequence[%s], rc=%d",
@@ -1109,10 +1109,10 @@ namespace engine
       }
 
       // check id
-      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->ID() )
+      if ( ID != UTIL_SEQUENCEID_NULL && ID != cache->getID() )
       {
          PD_LOG( PDERROR, "Mismatch ID(%llu) for sequence[%s, %llu]",
-                 ID, cache->name().c_str(), cache->ID() ) ;
+                 ID, cache->getName().c_str(), cache->getID() ) ;
          rc = SDB_SEQUENCE_NOT_EXIST ;
          goto error ;
       }
@@ -1393,7 +1393,7 @@ namespace engine
       {
          _catSequence* cache = (*iter).second ;
          // if id not equal, means the cache has been changed, can't delete
-         if ( cache->ID() == ID )
+         if ( cache->getID() == ID )
          {
             bucket.erase( name ) ;
             SDB_OSS_DEL( cache ) ;
@@ -1432,21 +1432,21 @@ namespace engine
             {
                try
                {
-                  options = BSON( CAT_SEQUENCE_CURRENT_VALUE << cache->cachedValue()
-                               << CAT_SEQUENCE_INITIAL << (bool) cache->initial() ) ;
+                  options = BSON( CAT_SEQUENCE_CURRENT_VALUE << cache->getCachedValue()
+                               << CAT_SEQUENCE_INITIAL << (bool) cache->isInitial() ) ;
 
-                  rc = _updateSequence( cache->name(), options, eduCB, 1 ) ;
+                  rc = _updateSequence( cache->getName(), options, eduCB, 1 ) ;
                   if ( SDB_OK != rc )
                   {
                      PD_LOG( PDWARNING, "Failed to flush sequence[%s], rc=%d",
-                             cache->name().c_str(), rc ) ;
+                             cache->getName().c_str(), rc ) ;
                   }
                }
                catch( std::exception& e )
                {
                   rc = SDB_SYS ;
                   PD_LOG( PDWARNING, "Failed to flush sequence[%s], exception: %s, rc=%d",
-                          cache->name().c_str(), e.what(), rc ) ;
+                          cache->getName().c_str(), e.what(), rc ) ;
                }
             }
 

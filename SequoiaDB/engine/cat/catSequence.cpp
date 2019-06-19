@@ -39,6 +39,7 @@
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
 #include "pd.hpp"
+#include "../bson/bson.hpp"
 #include <string>
 #include <set>
 
@@ -188,357 +189,88 @@ namespace engine
 
    void _catSequence::copyFrom( const _catSequence& other, BOOLEAN withInternalField )
    {
-      _currentValue = other.currentValue() ;
-      _cachedValue = other.cachedValue() ;
-      _increment = other.increment() ;
-      _startValue = other.startValue() ;
-      _minValue = other.minValue() ;
-      _maxValue = other.maxValue() ;
-      _cacheSize = other.cacheSize() ;
-      _acquireSize = other.acquireSize() ;
-      _cycled = other.cycled() ;
-      _initial = other.initial() ;
-      _exceeded = other.exceeded() ;
+      _currentValue = other.getCurrentValue() ;
+      _cachedValue = other.getCachedValue() ;
+      _increment = other.getIncrement() ;
+      _startValue = other.getStartValue() ;
+      _minValue = other.getMinValue() ;
+      _maxValue = other.getMaxValue() ;
+      _cacheSize = other.getCacheSize() ;
+      _acquireSize = other.getAcquireSize() ;
+      _cycled = other.isCycled() ;
+      _initial = other.isInitial() ;
+      _exceeded = other.isExceeded() ;
       if ( withInternalField )
       {
-         _oid = other.oid() ;
-         _version = other.version() ;
-         _internal = other.internal() ;
-         _ID = other.ID() ;
+         _oid = other.getOID() ;
+         _version = other.getVersion() ;
+         _internal = other.isInternal() ;
+         _ID = other.getID() ;
       }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_SET_OPTIONS, "_catSequence::setOptions" )
-   INT32 _catSequence::setOptions( const BSONObj& options,
-                                   BOOLEAN init,
-                                   BOOLEAN withInternalField,
-                                   UINT32 * alterMask )
+   INT32 _catSequence::setOptions ( const BSONObj& options,
+                                    BOOLEAN isFirstInitial,
+                                    BOOLEAN withInternalFields,
+                                    UINT32 * alterMask )
    {
       INT32 rc = SDB_OK ;
-      BSONElement ele ;
-      UINT32 fieldMask = UTIL_ARG_FIELD_EMPTY ;
-      utilSequenceID ID = UTIL_SEQUENCEID_NULL ;
+
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_SET_OPTIONS ) ;
 
-      // CAT_SEQUENCE_INCREMENT
-      ele = options.getField( CAT_SEQUENCE_INCREMENT ) ;
-      if ( NumberInt == ele.type() || NumberLong == ele.type() )
-      {
-         INT64 increment = ele.numberLong() ;
-         if ( increment > OSS_SINT32_MAX || increment < OSS_SINT32_MIN )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Option[%s] is overflow: %lld",
-                    CAT_SEQUENCE_INCREMENT, increment ) ;
-            goto error ;
-         }
-         if ( this->increment() != (INT32) increment )
-         {
-            this->setIncrement( (INT32) increment ) ;
-            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_INCREMENT_FIELD ) ;
-         }
-         if ( increment < 0 && init )
-         {
-            _currentValue = -1 ;
-            _cachedValue = _currentValue ;
-            _startValue = -1 ;
-            _minValue = OSS_SINT64_MIN ;
-            _maxValue = -1 ;
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_INCREMENT ) ;
-         goto error ;
-      }
+      UINT32 fieldMask = UTIL_ARG_FIELD_EMPTY ;
+      rc = _loadOptions( options, isFirstInitial, withInternalFields,
+                         fieldMask ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to load sequence options, "
+                   "rc: %d", rc ) ;
 
-      // CAT_SEQUENCE_START_VALUE
-      ele = options.getField( CAT_SEQUENCE_START_VALUE ) ;
-      if ( NumberInt == ele.type() || NumberLong == ele.type() )
+      if ( isFirstInitial )
       {
-         INT64 startValue = ele.numberLong() ;
-         if ( this->startValue() != startValue )
+         if ( getIncrement() < 0 && isFirstInitial )
          {
-            this->setStartValue( startValue ) ;
-            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) ;
-            if ( init )
+            // set default value for reversed sequence
+            if ( !OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) )
             {
-               this->setCurrentValue( startValue ) ;
-               this->setCachedValue( startValue ) ;
+               setStartValue( -1 ) ;
             }
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_START_VALUE ) ;
-         goto error ;
-      }
-
-      // CAT_SEQUENCE_MIN_VALUE
-      ele = options.getField( CAT_SEQUENCE_MIN_VALUE ) ;
-      if ( NumberInt == ele.type() || NumberLong == ele.type() )
-      {
-         INT64 minValue = ele.numberLong() ;
-         if ( this->minValue() != minValue )
-         {
-            this->setMinValue( minValue ) ;
-            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_MINVALUE_FIELD ) ;
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_MIN_VALUE ) ;
-         goto error ;
-      }
-
-      // CAT_SEQUENCE_MAX_VALUE
-      ele = options.getField( CAT_SEQUENCE_MAX_VALUE ) ;
-      if ( NumberInt == ele.type() || NumberLong == ele.type() )
-      {
-         INT64 maxValue = ele.numberLong() ;
-         if ( this->maxValue() != maxValue )
-         {
-            this->setMaxValue( maxValue ) ;
-            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_MAXVALUE_FIELD ) ;
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_MAX_VALUE ) ;
-         goto error ;
-      }
-
-      // CAT_SEQUENCE_CURRENT_VALUE
-      ele = options.getField( CAT_SEQUENCE_CURRENT_VALUE ) ;
-      if ( NumberInt == ele.type() || NumberLong == ele.type() )
-      {
-         INT64 currentValue = ele.numberLong() ;
-         if ( this->currentValue() != currentValue )
-         {
-            if( currentValue < this->minValue() ||
-                currentValue > this->maxValue() )
+            if ( !OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_MINVALUE_FIELD ) )
             {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "Invalid currentValue[%lld], out of bounds for "
-                       "minValue[%lld] and maxValue[%lld]",
-                       currentValue, minValue(), maxValue() ) ;
-               goto error ;
+               setMinValue( OSS_SINT64_MIN ) ;
             }
-            /* make sure getNextValue from CurrentValue not StartValue
-               when alter CurrentValue on a non-used sequence */
-            if( this->initial() )
+            if ( !OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_MAXVALUE_FIELD ) )
             {
-               this->setInitial( FALSE ) ;
-            }
-            this->setCurrentValue( currentValue ) ;
-            this->setCachedValue( currentValue ) ;
-            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) ;
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_CURRENT_VALUE ) ;
-         goto error ;
-      }
-
-      // CAT_SEQUENCE_CACHE_SIZE
-      ele = options.getField( CAT_SEQUENCE_CACHE_SIZE ) ;
-      if ( NumberInt == ele.type() || NumberLong == ele.type() )
-      {
-         INT64 cacheSize = ele.numberLong() ;
-         if ( cacheSize > OSS_SINT32_MAX || cacheSize < OSS_SINT32_MIN )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Option[%s] is overflow: %lld",
-                    CAT_SEQUENCE_CACHE_SIZE, cacheSize ) ;
-            goto error ;
-         }
-         if ( this->cacheSize() != (INT32) cacheSize )
-         {
-            this->setCacheSize( (INT32) cacheSize ) ;
-            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CACHESIZE_FIELD ) ;
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_CACHE_SIZE ) ;
-         goto error ;
-      }
-
-      // CAT_SEQUENCE_ACQUIRE_SIZE
-      ele = options.getField( CAT_SEQUENCE_ACQUIRE_SIZE ) ;
-      if ( NumberInt == ele.type() || NumberLong == ele.type() )
-      {
-         INT64 acquireSize = ele.numberLong() ;
-         if ( acquireSize > OSS_SINT32_MAX || acquireSize < OSS_SINT32_MIN )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Option[%s] is overflow: %lld",
-                    CAT_SEQUENCE_ACQUIRE_SIZE, acquireSize ) ;
-            goto error ;
-         }
-         if ( this->acquireSize() != (INT32) acquireSize )
-         {
-            this->setAcquireSize( (INT32) acquireSize ) ;
-            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_ACQUIRESIZE_FIELD ) ;
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_ACQUIRE_SIZE ) ;
-         goto error ;
-      }
-
-      // CAT_SEQUENCE_CYCLED
-      ele = options.getField( CAT_SEQUENCE_CYCLED ) ;
-      if ( Bool == ele.type() )
-      {
-         bool cycled = ele.Bool();
-         if ( this->cycled() != (BOOLEAN) cycled )
-         {
-            this->setCycled( cycled ) ;
-            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CYCLED_FIELD ) ;
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_CYCLED ) ;
-         goto error ;
-      }
-
-      // CAT_SEQUENCE_INITIAL
-      ele = options.getField( CAT_SEQUENCE_INITIAL ) ;
-      if ( Bool == ele.type() )
-      {
-         bool initial = ele.Bool();
-         if ( this->initial() != (BOOLEAN) initial )
-         {
-            this->setInitial( initial ) ;
-         }
-      }
-      else if ( EOO != ele.type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                 ele.type(), CAT_SEQUENCE_INITIAL ) ;
-         goto error ;
-      }
-
-      if ( !this->initial() )
-      {
-         // clear flag before exceeded check
-         this->setExceeded( FALSE ) ;
-         if ( this->increment() > 0 )
-         {
-            if ( this->cachedValue() == this->maxValue() ||
-                 this->cachedValue() > ( this->maxValue() - this->increment() ) )
-            {
-               this->setExceeded( TRUE ) ;
-            }
-         }
-         else if ( this->increment() < 0 )
-         {
-            if ( this->cachedValue() == this->minValue() ||
-                 this->cachedValue() < ( this->minValue() - this->increment() ) )
-            {
-               this->setExceeded( TRUE ) ;
+               setMaxValue( -1 ) ;
             }
          }
       }
 
-      if ( withInternalField )
+      if ( OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) )
       {
-         // CAT_SEQUENCE_OID
-         ele = options.getField( CAT_SEQUENCE_OID ) ;
-         if ( jstOID == ele.type() )
+         PD_CHECK( getCurrentValue() >= getMinValue() &&
+                   getCurrentValue() <= getMaxValue(),
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Invalid currentValue[%lld], out of bounds for "
+                   "minValue[%lld] and maxValue[%lld]",
+                   getCurrentValue(), getMinValue(), getMaxValue() ) ;
+         // make sure getNextValue from CurrentValue not StarValue
+         // when alter CurrentValue on a non-used sequence
+         if ( isInitial() &&
+              !OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_INITIAL_FIELD ) )
          {
-            OID oid = ele.OID() ;
-            if ( this->oid() != oid )
-            {
-               this->setOID( oid ) ;
-            }
-         }
-         else if ( EOO != ele.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                    ele.type(), CAT_SEQUENCE_OID ) ;
-            goto error ;
-         }
-
-         // CAT_SEQUENCE_ID
-         ele = options.getField( CAT_SEQUENCE_ID ) ;
-         if ( ele.isNumber() )
-         {
-            ID = ele.Long() ;
-            if ( this->ID() != ID )
-            {
-               this->setID( ID ) ;
-            }
-         }
-         else if ( EOO != ele.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                    ele.type(), CAT_SEQUENCE_ID ) ;
-            goto error ;
-         }
-
-         // CAT_SEQUENCE_VERSION
-         ele = options.getField( CAT_SEQUENCE_VERSION ) ;
-         if ( NumberInt == ele.type() || NumberLong == ele.type() )
-         {
-            INT64 version = ele.numberLong() ;
-            if ( this->version() != version )
-            {
-               this->setVersion( version ) ;
-            }
-         }
-         else if ( EOO != ele.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                    ele.type(), CAT_SEQUENCE_VERSION ) ;
-            goto error ;
+            setInitial( FALSE ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_INITIAL_FIELD ) ;
          }
       }
-
-      if ( init || withInternalField )
+      else if ( isInitial() )
       {
-         // CAT_SEQUENCE_INTERNAL
-         ele = options.getField( CAT_SEQUENCE_INTERNAL ) ;
-         if ( Bool == ele.type() )
-         {
-            bool internal = ele.Bool();
-            if ( this->internal() != (BOOLEAN) internal )
-            {
-               this->setInternal( internal ) ;
-            }
-         }
-         else if ( EOO != ele.type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "Invalid type(%d) for option[%s]",
-                    ele.type(), CAT_SEQUENCE_INTERNAL ) ;
-            goto error ;
-         }
+         // if is initial, reset current value with start value
+         setCurrentValue( getStartValue() ) ;
+         setCachedValue( getStartValue() ) ;
+         OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) ;
       }
+
+      _checkExceeded() ;
 
       if ( NULL != alterMask )
       {
@@ -552,6 +284,28 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_LOADOPTS, "_catSequence::loadOptions" )
+   INT32 _catSequence::loadOptions ( const bson::BSONObj & options )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_GTS_SEQ_LOADOPTS ) ;
+
+      UINT32 fieldMask = UTIL_ARG_FIELD_EMPTY ;
+      rc = _loadOptions( options, FALSE, TRUE, fieldMask ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to load sequence options, "
+                   "rc: %d", rc ) ;
+
+      _checkExceeded() ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_GTS_SEQ_LOADOPTS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ_VALIDATE, "_catSequence::validate" )
    INT32 _catSequence::validate() const
    {
@@ -559,80 +313,80 @@ namespace engine
       UINT64 sequenceNum = 0 ;
       PD_TRACE_ENTRY ( SDB_GTS_SEQ_VALIDATE ) ;
 
-      if ( !_catSequence::isValidName( name(), internal() ) )
+      if ( !_catSequence::isValidName( getName(), isInternal() ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Invalid sequence name: %s",
-                 name().c_str() ) ;
+                 getName().c_str() ) ;
          goto error ;
       }
 
-      if ( version() < 0 )
+      if ( getVersion() < 0 )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Invalid sequence version: %lld",
-                 version() ) ;
+                 getVersion() ) ;
          goto error ;
       }
 
-      if ( minValue() >= maxValue() )
+      if ( getMinValue() >= getMaxValue() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "MinValue[%lld] is greater than or equals to MaxValue[%lld]",
-                 minValue(), maxValue() ) ;
+                 getMinValue(), getMaxValue() ) ;
          goto error ;
       }
 
-      if ( startValue() < minValue() ||
-           startValue() > maxValue() )
+      if ( getStartValue() < getMinValue() ||
+           getStartValue() > getMaxValue() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Invalid startValue[%lld]",
-                 startValue() ) ;
+                 getStartValue() ) ;
          goto error ;
       }
 
-      if ( 0 == increment() )
+      if ( 0 == getIncrement() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Increment cannot be zero" ) ;
          goto error ;
       }
 
-      if ( cacheSize() <= 0 )
+      if ( getCacheSize() <= 0 )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Invalid CacheSize[%lld]",
-                 cacheSize() ) ;
+                 getCacheSize() ) ;
          goto error ;
       }
 
-      if ( acquireSize() <= 0 )
+      if ( getAcquireSize() <= 0 )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "Invalid FetchSize[%lld]",
-                 acquireSize() ) ;
+                 getAcquireSize() ) ;
          goto error ;
       }
 
-      if ( acquireSize() > cacheSize() )
+      if ( getAcquireSize() > getCacheSize() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "AcquireSize[%lld] is greater than CacheSize[%lld]",
-                 acquireSize(), cacheSize() ) ;
+                 getAcquireSize(), getCacheSize() ) ;
          goto error ;
       }
 
-      if ( maxValue() <= 0 || minValue() >= 0 )
+      if ( getMaxValue() <= 0 || getMinValue() >= 0 )
       {
-         UINT64 diff = (UINT64) ( maxValue() - minValue() ) ;
-         sequenceNum = diff / utilAbs( increment() ) + 1 ;
+         UINT64 diff = (UINT64) ( getMaxValue() - getMinValue() ) ;
+         sequenceNum = diff / utilAbs( getIncrement() ) + 1 ;
       }
       else
       {
-         UINT64 diff = (UINT64) maxValue() + (UINT64)( -minValue() ) ;
+         UINT64 diff = (UINT64) getMaxValue() + (UINT64)( -getMinValue() ) ;
 
-         sequenceNum = diff / utilAbs( increment() ) ;
+         sequenceNum = diff / utilAbs( getIncrement() ) ;
 
          // if sequenceNum equals OSS_UINT64_MAX, plus 1 will overflow
          if ( sequenceNum != OSS_UINT64_MAX )
@@ -641,19 +395,19 @@ namespace engine
          }
       }
 
-      if ( (UINT64)cacheSize() > sequenceNum )
+      if ( (UINT64)getCacheSize() > sequenceNum )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "CacheSize[%d] is greater than amount of sequence value[%lld]",
-                 cacheSize(), sequenceNum ) ;
+                 getCacheSize(), sequenceNum ) ;
          goto error ;
       }
 
-      if ( (UINT64)acquireSize() > sequenceNum )
+      if ( (UINT64)getAcquireSize() > sequenceNum )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "FetchSize[%d] is greater than amount of sequence value[%lld]",
-                 acquireSize(), sequenceNum ) ;
+                 getAcquireSize(), sequenceNum ) ;
          goto error ;
       }
 
@@ -732,5 +486,293 @@ namespace engine
 
       return rc ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ__LOAD_OPTIONS, "_catSequence::_loadOptions" )
+   INT32 _catSequence::_loadOptions ( const bson::BSONObj & options,
+                                      BOOLEAN isFirstInitial,
+                                      BOOLEAN withInternalFields,
+                                      UINT32 & fieldMask )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_GTS_SEQ__LOAD_OPTIONS ) ;
+
+      BSONElement ele ;
+
+      // CAT_SEQUENCE_INCREMENT
+      ele = options.getField( CAT_SEQUENCE_INCREMENT ) ;
+      if ( NumberInt == ele.type() || NumberLong == ele.type() )
+      {
+         INT64 increment = ele.numberLong() ;
+         PD_CHECK( increment >= OSS_SINT32_MIN && increment <= OSS_SINT32_MAX,
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Option [%s] is overflow: %lld",
+                   CAT_SEQUENCE_INCREMENT, increment ) ;
+         if ( isFirstInitial || getIncrement() != (INT32)increment )
+         {
+            setIncrement( (INT32)increment ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_INCREMENT_FIELD ) ;
+         }
+      }
+      else
+      {
+         PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Invalid type (%d) for option [%s]",
+                   ele.type(), CAT_SEQUENCE_INCREMENT ) ;
+      }
+
+      // CAT_SEQUENCE_START_VALUE
+      ele = options.getField( CAT_SEQUENCE_START_VALUE ) ;
+      if ( NumberInt == ele.type() || NumberLong == ele.type() )
+      {
+         INT64 startValue = ele.numberLong() ;
+         if ( isFirstInitial || getStartValue() != startValue )
+         {
+            setStartValue( startValue ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) ;
+         }
+      }
+      else
+      {
+         PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Invalid type (%d) for option [%s]",
+                   ele.type(), CAT_SEQUENCE_START_VALUE ) ;
+      }
+
+      // CAT_SEQUENCE_MIN_VALUE
+      ele = options.getField( CAT_SEQUENCE_MIN_VALUE ) ;
+      if ( NumberInt == ele.type() || NumberLong == ele.type() )
+      {
+         INT64 minValue = ele.numberLong() ;
+         if ( isFirstInitial || getMinValue() != minValue )
+         {
+            setMinValue( minValue ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_MINVALUE_FIELD ) ;
+         }
+      }
+      else
+      {
+         PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Invalid type (%d) for option [%s]",
+                   ele.type(), CAT_SEQUENCE_MIN_VALUE ) ;
+      }
+
+      // CAT_SEQUENCE_MAX_VALUE
+      ele = options.getField( CAT_SEQUENCE_MAX_VALUE ) ;
+      if ( NumberInt == ele.type() || NumberLong == ele.type() )
+      {
+         INT64 maxValue = ele.numberLong() ;
+         if ( isFirstInitial || getMaxValue() != maxValue )
+         {
+            setMaxValue( maxValue ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_MAXVALUE_FIELD ) ;
+         }
+      }
+      else
+      {
+         PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Invalid type (%d) for option [%s]",
+                   ele.type(), CAT_SEQUENCE_MAX_VALUE ) ;
+      }
+
+      // CAT_SEQUENCE_CURRENT_VALUE
+      ele = options.getField( CAT_SEQUENCE_CURRENT_VALUE ) ;
+      if ( NumberInt == ele.type() || NumberLong == ele.type() )
+      {
+         INT64 currentValue = ele.numberLong() ;
+         if ( isFirstInitial || getCurrentValue() != currentValue )
+         {
+            setCurrentValue( currentValue ) ;
+            setCachedValue( currentValue ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) ;
+         }
+      }
+      else
+      {
+         PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Invalid type (%d) for option [%s]",
+                   ele.type(), CAT_SEQUENCE_CURRENT_VALUE ) ;
+      }
+
+      // CAT_SEQUENCE_CACHE_SIZE
+      ele = options.getField( CAT_SEQUENCE_CACHE_SIZE ) ;
+      if ( NumberInt == ele.type() || NumberLong == ele.type() )
+      {
+         INT64 cacheSize = ele.numberLong() ;
+         PD_CHECK( cacheSize >= OSS_SINT32_MIN && cacheSize <= OSS_SINT32_MAX,
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Option [%s] is overflow: %lld",
+                   CAT_SEQUENCE_CACHE_SIZE, cacheSize ) ;
+         if ( isFirstInitial || getCacheSize() != (INT32)cacheSize )
+         {
+            setCacheSize( (INT32)cacheSize ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CACHESIZE_FIELD ) ;
+         }
+      }
+      else
+      {
+         PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Invalid type (%d) for option [%s]",
+                   ele.type(), CAT_SEQUENCE_CACHE_SIZE ) ;
+      }
+
+      // CAT_SEQUENCE_ACQUIRE_SIZE
+      ele = options.getField( CAT_SEQUENCE_ACQUIRE_SIZE ) ;
+      if ( NumberInt == ele.type() || NumberLong == ele.type() )
+      {
+         INT64 acquireSize = ele.numberLong() ;
+         PD_CHECK( acquireSize >= OSS_SINT32_MIN &&
+                   acquireSize <= OSS_SINT32_MAX,
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Option [%s] is overflow: %lld",
+                   CAT_SEQUENCE_ACQUIRE_SIZE, acquireSize ) ;
+         if ( isFirstInitial || getAcquireSize() != (INT32)acquireSize )
+         {
+            setAcquireSize( (INT32)acquireSize ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_ACQUIRESIZE_FIELD ) ;
+         }
+      }
+      else
+      {
+         PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Invalid type (%d) for option [%s]",
+                   ele.type(), CAT_SEQUENCE_ACQUIRE_SIZE ) ;
+      }
+
+      // CAT_SEQUENCE_CYCLED
+      ele = options.getField( CAT_SEQUENCE_CYCLED ) ;
+      if ( Bool == ele.type() )
+      {
+         bool cycled = ele.Bool();
+         if ( isFirstInitial || isCycled() != (BOOLEAN)cycled )
+         {
+            setCycled( (BOOLEAN)cycled ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CYCLED_FIELD ) ;
+         }
+      }
+      else
+      {
+         PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Invalid type (%d) for option [%s]",
+                   ele.type(), CAT_SEQUENCE_CYCLED ) ;
+      }
+
+      // CAT_SEQUENCE_INITIAL
+      ele = options.getField( CAT_SEQUENCE_INITIAL ) ;
+      if ( Bool == ele.type() )
+      {
+         bool initial = ele.Bool();
+         if ( isFirstInitial || isInitial() != (BOOLEAN)initial )
+         {
+            setInitial( (BOOLEAN)initial ) ;
+            OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_INITIAL_FIELD ) ;
+         }
+      }
+      else
+      {
+         PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Invalid type (%d) for option [%s]",
+                   ele.type(), CAT_SEQUENCE_INITIAL ) ;
+      }
+
+      if ( withInternalFields )
+      {
+         // CAT_SEQUENCE_OID
+         ele = options.getField( CAT_SEQUENCE_OID ) ;
+         if ( jstOID == ele.type() )
+         {
+            setOID( ele.OID() ) ;
+         }
+         else
+         {
+            PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Invalid type (%d) for option [%s]",
+                      ele.type(), CAT_SEQUENCE_OID ) ;
+         }
+
+         // CAT_SEQUENCE_ID
+         ele = options.getField( CAT_SEQUENCE_ID ) ;
+         if ( ele.isNumber() )
+         {
+            setID( (utilSequenceID)ele.numberLong() ) ;
+         }
+         else
+         {
+            PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Invalid type (%d) for option [%s]",
+                      ele.type(), CAT_SEQUENCE_ID ) ;
+         }
+
+         // CAT_SEQUENCE_VERSION
+         ele = options.getField( CAT_SEQUENCE_VERSION ) ;
+         if ( NumberInt == ele.type() || NumberLong == ele.type() )
+         {
+            setVersion( ele.numberLong() ) ;
+         }
+         else
+         {
+            PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Invalid type (%d) for option [%s]",
+                      ele.type(), CAT_SEQUENCE_VERSION ) ;
+         }
+      }
+
+      if ( isFirstInitial || withInternalFields )
+      {
+         // CAT_SEQUENCE_INTERNAL
+         ele = options.getField( CAT_SEQUENCE_INTERNAL ) ;
+         if ( Bool == ele.type() )
+         {
+            setInternal( (BOOLEAN)ele.boolean() ) ;
+         }
+         else
+         {
+            PD_CHECK( EOO == ele.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Invalid type (%d) for option [%s]",
+                      ele.type(), CAT_SEQUENCE_INTERNAL ) ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_GTS_SEQ__LOAD_OPTIONS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_SEQ__CHKEXCEEDED, "_catSequence::_checkExceeded" )
+   void _catSequence::_checkExceeded ()
+   {
+      PD_TRACE_ENTRY( SDB_GTS_SEQ__CHKEXCEEDED ) ;
+
+      if ( !isInitial() )
+      {
+         // clear flag before exceeded check
+         setExceeded( FALSE ) ;
+
+         if ( getIncrement() > 0 )
+         {
+            if ( getCachedValue() == getMaxValue() ||
+                 getCachedValue() > ( getMaxValue() - getIncrement() ) ||
+                 getCachedValue() < getMinValue() )
+            {
+               setExceeded( TRUE ) ;
+            }
+         }
+         else if ( getIncrement() < 0 )
+         {
+            if ( getCachedValue() == getMinValue() ||
+                 getCachedValue() < ( getMinValue() - getIncrement() ) ||
+                 getCachedValue() > getMaxValue() )
+            {
+               setExceeded( TRUE ) ;
+            }
+         }
+      }
+
+      PD_TRACE_EXIT( SDB_GTS_SEQ__CHKEXCEEDED ) ;
+   }
+
 }
 

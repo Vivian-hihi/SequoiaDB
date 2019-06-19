@@ -50,22 +50,22 @@ namespace engine
       ~_catSequence() ;
 
    public:
-      OSS_INLINE const std::string& name() const { return _name ; }
-      OSS_INLINE const bson::OID& oid() const { return _oid ; }
-      OSS_INLINE BOOLEAN internal() const { return _internal ; }
-      OSS_INLINE INT64 version() const { return _version ; }
-      OSS_INLINE INT64 cachedValue() const { return _cachedValue ; }
-      OSS_INLINE INT64 currentValue() const { return _currentValue ; }
-      OSS_INLINE INT64 startValue() const { return _startValue ; }
-      OSS_INLINE INT64 minValue() const { return _minValue ; }
-      OSS_INLINE INT64 maxValue() const { return _maxValue ; }
-      OSS_INLINE INT32 increment() const { return _increment ; }
-      OSS_INLINE INT32 cacheSize() const { return _cacheSize ; }
-      OSS_INLINE INT32 acquireSize() const { return _acquireSize ; }
-      OSS_INLINE BOOLEAN cycled() const { return _cycled ; }
-      OSS_INLINE BOOLEAN initial() const { return _initial ; }
-      OSS_INLINE BOOLEAN exceeded() const { return _exceeded ; }
-      OSS_INLINE utilSequenceID ID() const { return _ID ; }
+      OSS_INLINE const std::string& getName() const { return _name ; }
+      OSS_INLINE const bson::OID& getOID() const { return _oid ; }
+      OSS_INLINE BOOLEAN isInternal() const { return _internal ; }
+      OSS_INLINE INT64 getVersion() const { return _version ; }
+      OSS_INLINE INT64 getCachedValue() const { return _cachedValue ; }
+      OSS_INLINE INT64 getCurrentValue() const { return _currentValue ; }
+      OSS_INLINE INT64 getStartValue() const { return _startValue ; }
+      OSS_INLINE INT64 getMinValue() const { return _minValue ; }
+      OSS_INLINE INT64 getMaxValue() const { return _maxValue ; }
+      OSS_INLINE INT32 getIncrement() const { return _increment ; }
+      OSS_INLINE INT32 getCacheSize() const { return _cacheSize ; }
+      OSS_INLINE INT32 getAcquireSize() const { return _acquireSize ; }
+      OSS_INLINE BOOLEAN isCycled() const { return _cycled ; }
+      OSS_INLINE BOOLEAN isInitial() const { return _initial ; }
+      OSS_INLINE BOOLEAN isExceeded() const { return _exceeded ; }
+      OSS_INLINE utilSequenceID getID() const { return _ID ; }
 
       OSS_INLINE void lock()
       {
@@ -95,13 +95,23 @@ namespace engine
       void setID( utilGlobalID id ) ;
       INT32 toBSONObj( bson::BSONObj& obj, BOOLEAN forUpdate ) const ;
       void copyFrom( const _catSequence& other, BOOLEAN withInternalField = TRUE ) ;
-      INT32 setOptions( const bson::BSONObj& options, BOOLEAN init,
-                        BOOLEAN withInternalField, UINT32 * alterMask = NULL ) ;
+      INT32 setOptions ( const bson::BSONObj & options,
+                         BOOLEAN isFirstInitial,
+                         BOOLEAN withInternalFields,
+                         UINT32 * alterMask = NULL ) ;
+      INT32 loadOptions ( const bson::BSONObj & options ) ;
       INT32 validate() const ;
 
    public:
       static BOOLEAN isValidName( const std::string& name, BOOLEAN internal ) ;
       static INT32 validateFieldNames( const bson::BSONObj& options ) ;
+
+   protected :
+      INT32 _loadOptions ( const bson::BSONObj & options,
+                           BOOLEAN isFirstInitial,
+                           BOOLEAN withInternalFields,
+                           UINT32 & fieldMask ) ;
+      void _checkExceeded () ;
 
    private:
       std::string    _name ;           // sequence name
