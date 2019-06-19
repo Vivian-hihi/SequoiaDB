@@ -171,8 +171,8 @@ public class RegionServiceImpl implements RegionService {
             try {
                 Region region = regionDao.queryForUpdateRegion(connection, regionName);
                 if (null == region) {
-                    transaction.rollback(connection);
-                    return;
+                    throw new S3ServerException(S3Error.REGION_NO_SUCH_REGION,
+                            "region is not found. regionName:" + regionName);
                 }
 
                 List<Bucket> bucketList = bucketDao.getBucketListByRegion(connection, regionName);
