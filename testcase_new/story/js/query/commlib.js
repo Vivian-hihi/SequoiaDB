@@ -118,27 +118,27 @@ function getTwoGroupSplit( db, csName, clName, splitArg1, splitArg2 )
       }
       var groupNum = listGroupsArr.length ;
 
-      var snapShotCS = db.snapshot( SDB_SNAP_COLLECTIONSPACES ) ;
-      var snapShotCsName = new Array() ;
-      var snapShotCsGroup = new Array() ;
+      var snapShotCL = db.snapshot( SDB_SNAP_COLLECTIONS ) ;
+      var snapShotClName = new Array() ;
+      var snapShotClGroup = new Array() ;
       var group = "" ;
-      while( snapShotCS.next() )
+      while( snapShotCL.next() )
       {
-         snapShotCsName.push( snapShotCS.current().toObj()["Name"] ) ;
-         snapShotCsGroup.push( snapShotCS.current().toObj()["Group"] ) ;
+         snapShotClName.push( snapShotCL.current().toObj()["Name"] ) ;
+         snapShotClGroup.push( snapShotCL.current().toObj()["Details"][0]["GroupName"] ) ;
       }
-      for( var i=0 ; i<snapShotCsGroup.length ; i++ )
+      for( var i=0 ; i<snapShotClGroup.length ; i++ )
       {
-         if( snapShotCsName[i] == csName )
+         if( snapShotClName[i] == csName + "." + clName )
          {
-            group = snapShotCsGroup[i].toString() ;
+            group = snapShotClGroup[i].toString() ;
             break ;
          }
       }
       if( "" == group )
       {
-         println( "Failed to get Group where CS located in, snapshotCS = "
-                  + snapShotCS ) ;
+         println( "Failed to get Group where CL located in, snapShotCL = "
+                  + snapShotCL ) ;
          throw "ErrGetGroup" ;
       }
       println( "The source group = " + group ) ;

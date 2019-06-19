@@ -1,11 +1,11 @@
 /*******************************************************************************
 *@Description:   seqDB-13716:rang分区表使用切分键/非切分键sort+limit+skip执行查询
-*@Author:        2019-2-26  wangkexin
+*@Author:        2019-5-13  wangkexin
 ********************************************************************************/
 main();
 function main()
 {
-    var rownums = 10000;
+    var rownums = 100000;
     var csName = COMMCSNAME;
     var clName = "cl13716";
 
@@ -22,138 +22,88 @@ function main()
         println("--least two groups");
         return ;
     }
+    commDropCL( db, csName, clName, false, true, "drop cl in the beginning." ) ;
     
     var clOpt = {ShardingKey:{a:1},ShardingType:'range',ReplSize:0};
     var rangeCL = commCreateCLByOption( db, csName, clName, clOpt );
-    getTwoGroupSplit( db, csName, clName, {a:5000}, {a:10000} );
-
-    loadData(rangeCL, rownums);
+    var insetRecs = loadDataAndCreateIndex(rangeCL, rownums);
     println("insert data finished!");
-    //query 1 使用切分键执行查询 sort
-    var sel_1 = rangeCL.find({},{a:""}).sort({a:1});
-    checkResult_sort(sel_1, "a", true, rownums);
+    
+    getTwoGroupSplit( db, csName, clName, 50);
+    
+    //query 1 使用sort执行查询
+    var sel_1 = rangeCL.find().sort({a:1});
+    checkRec( sel_1, insetRecs );
 
-    //query 2 使用切分键执行查询 limit
-    var sel_2 = rangeCL.find({},{a:""}).limit(500);
-    checkResult_limit(sel_2, "a", 500);
+    //query 2 使用limit执行查询
+    var sel_2 = rangeCL.find().limit(500);
+    checkResultNum( sel_2, 500 );
 
-    //query 3 使用切分键执行查询 skip 不小于1000
-    var sel_3 = rangeCL.find({},{a:""}).skip(2000);
-    checkResult_skip(sel_3, "a", rownums-2000);
+    //query 3 使用skip执行查询，覆盖表扫描和索引扫描  
+    //a.使某个分区组一次返回的记录数小于skip的数目，这里指定skip为1000，2000
+    var sel_3_1_table = rangeCL.find().skip(1000).hint({ "": null });
+    checkResultNum( sel_3_1_table, rownums-1000 );
+    
+    var sel_3_1_index = rangeCL.find().skip(2000).hint({ "": "aIndex" });
+    checkResultNum( sel_3_1_index, rownums-2000 );
 
-    //query 4 使用切分键执行查询 sort+limit+skip  skip不小于1000
-    var sel_4 = rangeCL.find({},{a:""}).sort({a:-1}).limit(1500).skip(3000);
-    checkResult_sort_limit_skip(sel_4, "a", false, 1500, 3000, rownums);
+    //b.使某个分区组一次返回的记录数大于skip的数目，这里指定skip为1
+    var sel_3_2_table = rangeCL.find().skip(1).hint({ "": null });
+    checkResultNum( sel_3_2_table, rownums-1 );
+    
+    var sel_3_2_index = rangeCL.find().skip(1).hint({ "": "aIndex" });
+    checkResultNum( sel_3_2_index, rownums-1 );
 
-    //query 5 使用非切分键执行查询 sort
-    var sel_5 = rangeCL.find({},{b:""}).sort({b:-1});
-    checkResult_sort(sel_5, "b", false, rownums);
-
-    //query 6 使用非切分键执行查询 limit
-    var sel_6 = rangeCL.find({},{b:""}).limit(200);
-    checkResult_limit(sel_6, "b", 200);
-
-    //query 7 使用非切分键执行查询 skip 不小于1000
-    var sel_7 = rangeCL.find({},{b:""}).skip(1500);
-    checkResult_skip(sel_7, "b", rownums-1500);
-
-    //query 8 使用非切分键执行查询 sort+limit+skip  skip不小于1000
-    var sel_8 = rangeCL.find().sort({b:-1}).limit(1500).skip(5000);
-    checkResult_sort_limit_skip(sel_8, "b", false, 1500, 5000, rownums);
-
+    //query 4 使用sort+limit+skip执行查询，覆盖表扫描和索引扫描
+    //a.使某个分区组一次返回的记录数小于skip的数目，这里指定skip为1000，3000
+    var sel_4_1_table = rangeCL.find().sort({a:1}).limit(1500).skip(1000).hint({ "": null });
+    var expRec = getExpRec(insetRecs, 1000, 2499);
+    checkRec( sel_4_1_table, expRec );
+    
+    var sel_4_1_index = rangeCL.find().sort({a:1}).limit(1500).skip(3000).hint({ "": "aIndex" });
+    var expRec = getExpRec(insetRecs, 3000, 4499);
+    checkRec( sel_4_1_index, expRec );
+    
+    //b.使某个分区组一次返回的记录数大于skip的数目，这里指定skip为1
+    var sel_4_2_table = rangeCL.find().sort({a:1}).limit(1500).skip(1).hint({ "": null });
+    var expRec = getExpRec(insetRecs, 1, 1500);
+    checkRec( sel_4_2_table, expRec );
+    
+    var sel_4_2_index = rangeCL.find().sort({a:1}).limit(1500).skip(1).hint({ "": "aIndex" });
+    var expRec = getExpRec(insetRecs, 1, 1500);
+    checkRec( sel_4_2_index, expRec );
+    
     //drop cl
     commDropCL( db, csName, clName, true, true, "drop cl in the end" ) ;
 }
 
-function loadData(cl, rownums)
+function loadDataAndCreateIndex(cl, rownums)
 {
     var record = [];
     for( var i = 0; i < rownums; i++ )
     {
-        record.push({a:i,b:i,c:i});
+        record.push({_id:i,a:i,b:i,c:i});
     }
     cl.insert(record);
+    cl.createIndex("aIndex", {a:1}, true);
+    return record;
 }
 
-function checkResult_sort( sel, field, isAsc, rownums )
-{
-    var act_resurnednum = 0;
-    if(isAsc)
-    {
-       var i = 0;
-    }else
-    {
-       var i = rownums - 1 ;
-    }
-    while(sel.next())
-    {
-        var ret = sel.current();
-        if(ret.toObj()[field] !== i)
-        {
-           throw buildException("checkResult_sort", null, "check field [" + field + "] data. ", i, ret.toObj()[field]);
-        }
-        if(isAsc)
-        {
-           i++;
-        }else
-        {
-           i--;
-        }
-        act_resurnednum++;
-    }
-    if(act_resurnednum !== rownums)
-    {
-       throw buildException("checkResult_sort", null, "check returned num of field [" + field + "]", rownums, act_resurnednum);
-    }
-}
-
-function checkResult_limit( sel, field, limitNum )
+function checkResultNum( sel, expResultNum )
 {
     var act_resurnednum = sel.size();
-    if(act_resurnednum !== limitNum)
+    if(act_resurnednum !== expResultNum)
     {
-       throw buildException("checkResult_limit", null, "check returned num of field [" + field + "]", limitNum, act_resurnednum);
+       throw buildException("checkResultNum", null, "check returned number ", expResultNum, act_resurnednum);
     }
 }
 
-function checkResult_skip( sel, field, exp_returnednum )
+function getExpRec(record, start, end)
 {
-    var act_resurnednum = sel.size();
-    if(act_resurnednum !== exp_returnednum)
+    var expRec = [];
+    for( var i = start; i <= end; i++ )
     {
-       throw buildException("checkResult_skip", null, "check returned num of field [" + field + "]", exp_returnednum, act_resurnednum);
+        expRec.push(record[i]);
     }
-}
-
-
-function checkResult_sort_limit_skip( sel, field, isAsc, limitNum, skipNum, rownums )
-{
-    var act_resurnednum = 0;
-    if(isAsc)
-    {
-       var i = skipNum;
-    }else
-    {
-       var i = (rownums - skipNum) - 1;
-    }
-    while(sel.next())
-    {
-        var ret = sel.current();
-        if(ret.toObj()[field] !== i)
-        {
-           throw buildException("checkResult_sort_limit_skip", null, "check field [" + field + "] data. ", i, ret.toObj()[field]);
-        }
-        if(isAsc)
-        {
-           i++;
-        }else
-        {
-           i--;
-        }
-        act_resurnednum++;
-    }
-    if(act_resurnednum !== limitNum)
-    {
-       throw buildException("checkResult_sort_limit_skip", null, "check returned num of field [" + field + "]", limitNum, act_resurnednum);
-    }
+    return expRec;
 }
