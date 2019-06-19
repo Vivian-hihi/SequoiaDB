@@ -52,6 +52,8 @@
          <property name="plat_form" value="${plat_form}"/>
       </ant>
    
+      <ant antfile="count_skiped_case.xml" dir="src/solve_result" target="detect_testcase_skip" inheritAll="true" useNativeBaseDir="true"/> 
+   
       <antcallback target="status_file.get_build_status" return="build_status"/>
       
       <if>
@@ -119,6 +121,8 @@
          <property name="plat_form" value="${plat_form}"/>
       </ant>
    
+      <ant antfile="count_skiped_case.xml" dir="src/solve_result" target="detect_testcase_skip" inheritAll="true" useNativeBaseDir="true"/> 
+    
       <antcallback target="status_file.get_build_status" return="build_status"/>
 
       <if>
@@ -186,6 +190,8 @@
          <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
          <property name="plat_form" value="${plat_form}"/>
       </ant>
+   
+      <ant antfile="count_skiped_case.xml" dir="src/solve_result" target="detect_testcase_skip" inheritAll="true" useNativeBaseDir="true"/> 
    
       <antcallback target="status_file.get_build_status" return="build_status"/>
 
@@ -315,7 +321,9 @@
          <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
          <property name="plat_form" value="${plat_form}"/>
       </ant>
-   
+      
+      <ant antfile="count_skiped_case.xml" dir="src/solve_result" target="detect_testcase_skip" inheritAll="true" useNativeBaseDir="true"/> 
+      
       <antcallback target="status_file.get_build_status" return="build_status"/>
 
       <if>
