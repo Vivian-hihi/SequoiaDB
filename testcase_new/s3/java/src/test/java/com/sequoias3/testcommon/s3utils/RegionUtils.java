@@ -74,8 +74,13 @@ public class RegionUtils extends S3TestBase {
 			if (resp.getStatusCodeValue() == 204) {
 				isDelete = true;
 			}
+			if (resp.getStatusCodeValue() == 404) {
+				isDelete = true;
+			}
 		} catch (HttpClientErrorException e) {
-			throw httpToAmazon(e);
+			if( e.getStatusCode().value() != 404 ){
+				throw httpToAmazon(e);
+			}
 		}
 		return isDelete;
 	}
