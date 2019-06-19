@@ -149,7 +149,6 @@ namespace engine
       virtual INT32 advance ( dmsRecordID &rid ) = 0 ;
       virtual INT32 resumeScan( BOOLEAN *pIsCursorSame = NULL ) = 0 ;
       virtual INT32 pauseScan() = 0 ;
-      virtual void  setMonCtxCB( _monContextCB *monCtxCB ) = 0 ;
 
       virtual INT32 relocateRID( const BSONObj &keyObj,
                                  const dmsRecordID &rid ) = 0 ;

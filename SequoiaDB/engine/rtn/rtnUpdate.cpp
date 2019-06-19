@@ -220,6 +220,11 @@ namespace engine
          }
          PD_RC_CHECK( rc, PDERROR, "Failed to get dms scanner, rc: %d", rc ) ;
 
+         if ( NULL != cb )
+         {
+            cb->registerMonCRUDCB( &( mbContext->mbStat()->_crudCB ) ) ;
+         }
+
          // update
          {
             _mthRecordGenerator generator ;
@@ -348,6 +353,10 @@ namespace engine
       if ( pScanner )
       {
          SDB_OSS_DEL pScanner ;
+      }
+      if ( NULL != cb )
+      {
+         cb->unregisterMonCRUDCB() ;
       }
       if ( mbContext )
       {

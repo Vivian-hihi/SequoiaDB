@@ -176,6 +176,11 @@ namespace engine
          }
          PD_RC_CHECK( rc, PDERROR, "Failed to get dms scanner, rc: %d", rc ) ;
 
+         if ( NULL != cb )
+         {
+            cb->registerMonCRUDCB( &( mbContext->mbStat()->_crudCB ) ) ;
+         }
+
          // delete
          {
             _mthRecordGenerator generator ;
@@ -247,6 +252,10 @@ namespace engine
       if ( pScanner )
       {
          SDB_OSS_DEL pScanner ;
+      }
+      if ( NULL != cb )
+      {
+         cb->unregisterMonCRUDCB() ;
       }
       if ( mbContext )
       {
@@ -355,6 +364,11 @@ namespace engine
                                cb, &pScanner, DMS_ACCESS_TYPE_DELETE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get dms ixscanner, rc: %d", rc ) ;
 
+         if ( NULL != cb )
+         {
+            cb->registerMonCRUDCB( &( mbContext->mbStat()->_crudCB ) ) ;
+         }
+
          // relocate key
          {
             rtnIXScanner *scanner = ((dmsIXScanner*)pScanner)->getScanner() ;
@@ -413,6 +427,10 @@ namespace engine
       if ( pScanner )
       {
          SDB_OSS_DEL pScanner ;
+      }
+      if ( NULL != cb )
+      {
+         cb->unregisterMonCRUDCB() ;
       }
       if ( mbContext )
       {

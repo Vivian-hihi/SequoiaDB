@@ -1703,6 +1703,8 @@ namespace engine
             goto error ;
          }
       }
+
+      mbContext->mbStat()->_crudCB.increaseIxScan( 1 ) ;
       mbContext->mbUnlock() ;
 
       *ppScanner = SDB_OSS_NEW dmsIXScanner( su->data(), mbContext,

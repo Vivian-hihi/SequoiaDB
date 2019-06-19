@@ -197,8 +197,6 @@ namespace engine
       {
          goto error ;
       }
-      _scanner->setMonCtxCB ( &_monCtxCB ) ;
-
       // index block scan
       if ( blockObj )
       {
@@ -304,12 +302,16 @@ namespace engine
       {
          rc = _openTBScan( su, mbContext, cb, returnOptions, blockObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open tbscan, rc: %d", rc ) ;
+
+         mbContext->mbStat()->_crudCB.increaseTbScan( 1 ) ;
       }
       else if ( IXSCAN == _planRuntime.getScanType() )
       {
          rc = _openIXScan( su, mbContext, cb, returnOptions,
                            blockObj, direction ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open ixscan, rc: %d", rc ) ;
+
+         mbContext->mbStat()->_crudCB.increaseIxScan( 1 ) ;
       }
       else
       {
@@ -522,6 +524,11 @@ namespace engine
       DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH ;
       INT32 rc = SDB_OK ;
 
+      if ( NULL != cb && NULL != _mbContext )
+      {
+         cb->registerMonCRUDCB( &( _mbContext->mbStat()->_crudCB ) ) ;
+      }
+
       if ( _queryModifier )
       {
          if ( _queryModifier->isUpdate() )
@@ -556,6 +563,10 @@ namespace engine
       }
 
    done:
+      if ( NULL != cb && NULL != _mbContext )
+      {
+         cb->unregisterMonCRUDCB() ;
+      }
       return rc ;
    error:
       goto done ;
@@ -705,7 +716,6 @@ namespace engine
                goto error ;
             }
             // increase counter
-            DMS_MBSTAT_ONCE_INC( pMonAppCB, _mbContext, MON_SELECT, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
             // decrease numToReturn
             if ( _numToReturn > 0 )
@@ -907,7 +917,6 @@ namespace engine
                   goto error ;
                }
                // increase counter
-               DMS_MBSTAT_ONCE_INC( pMonAppCB, _mbContext, MON_SELECT, 1 ) ;
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
             }
             else

@@ -463,6 +463,8 @@ namespace engine
       void  releaseCSMutex( const CHAR *pCSName ) ;
 
       void fixTransMBStats () ;
+
+      void clearMBCRUDCB () ;
    } ;
    typedef class _SDB_DMSCB SDB_DMSCB ;
 

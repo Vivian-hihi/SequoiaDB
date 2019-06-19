@@ -74,8 +74,6 @@ namespace engine
       virtual INT32 resumeScan( BOOLEAN *pIsCursorSame = NULL ) ;
       virtual INT32 pauseScan() ;
 
-      virtual void  setMonCtxCB( _monContextCB *monCtxCB ) ;
-
       virtual INT32 relocateRID( const BSONObj &keyObj,
                                  const dmsRecordID &rid ) ;
 
@@ -103,7 +101,6 @@ namespace engine
    private :
       rtnPredicateListIterator   _listIterator ;
       dpsTransCB                 *_pTransCB ;
-      monContextCB               *_pMonCtxCB ;
       globIdxID                  _gid ;
 
       // set to true by relocateRID or first run of advance.

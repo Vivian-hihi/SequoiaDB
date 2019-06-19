@@ -580,8 +580,10 @@ namespace engine
 
       if ( _pMonAppCB && cb->getID() != eduID() )
       {
+         // merge monitor counts from prefetch thread
          *_pMonAppCB += *cb->getMonAppCB() ;
          _monCtxCB.monDataReadInc( cb->getMonAppCB()->totalDataRead ) ;
+         _monCtxCB.monIndexReadInc( cb->getMonAppCB()->totalIndexRead ) ;
          cb->getMonAppCB()->reset() ;
          /// restore task info
          cb->getMonAppCB()->setSvcTaskInfo( pOldInfo ) ;
@@ -749,7 +751,8 @@ namespace engine
       // need to get more datas
       if ( isEmpty() && !eof() )
       {
-         UINT64 tmpTotalRead = cb->getMonAppCB()->totalDataRead ;
+         UINT64 startDataRead = cb->getMonAppCB()->totalDataRead ;
+         UINT64 startIndexRead = cb->getMonAppCB()->totalIndexRead ;
 
          if ( _canPrepareMoreData() )
          {
@@ -767,7 +770,9 @@ namespace engine
          }
 
          _monCtxCB.monDataReadInc( cb->getMonAppCB()->totalDataRead -
-                                   tmpTotalRead ) ;
+                                   startDataRead ) ;
+         _monCtxCB.monIndexReadInc( cb->getMonAppCB()->totalIndexRead -
+                                    startIndexRead ) ;
       }
 
       // if not empty, get current data

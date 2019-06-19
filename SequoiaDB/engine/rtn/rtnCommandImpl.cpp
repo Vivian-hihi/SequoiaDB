@@ -2200,10 +2200,19 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
                    "rc: %d", pCollectionName, rc ) ;
 
+      if ( NULL != cb )
+      {
+         cb->registerMonCRUDCB( &( mbContext->mbStat()->_crudCB ) ) ;
+      }
+
       rc = su->data()->popRecord( mbContext, logicalID, cb, dpsCB, direction ) ;
       PD_RC_CHECK( rc, PDERROR, "Pop record failed, rc: %d", rc ) ;
 
    done:
+      if ( NULL != cb )
+      {
+         cb->unregisterMonCRUDCB() ;
+      }
       if ( mbContext )
       {
          su->data()->releaseMBContext( mbContext ) ;

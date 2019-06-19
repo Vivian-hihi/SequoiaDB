@@ -2923,8 +2923,10 @@ namespace engine
       }
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_FIXTRANSMBSTATS, "_SDB_DMSCB::fixTransMBStats" )
    void _SDB_DMSCB::fixTransMBStats ()
    {
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_FIXTRANSMBSTATS ) ;
       MON_CS_SIM_LIST monCSList ;
       dumpInfo( monCSList, TRUE, FALSE, FALSE ) ;
       for ( MON_CS_SIM_LIST::const_iterator csIter = monCSList.begin() ;
@@ -2948,6 +2950,37 @@ namespace engine
 
          suUnlock( monCS._suID, SHARED ) ;
       }
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_FIXTRANSMBSTATS ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLEARMBCRUDCB, "_SDB_DMSCB::clearMBCRUDCB" )
+   void _SDB_DMSCB::clearMBCRUDCB ()
+   {
+      PD_TRACE_ENTRY( SDB__SDB_DMSCB_CLEARMBCRUDCB ) ;
+      MON_CS_SIM_LIST monCSList ;
+      dumpInfo( monCSList, TRUE, FALSE, FALSE ) ;
+      for ( MON_CS_SIM_LIST::const_iterator csIter = monCSList.begin() ;
+            csIter != monCSList.end() ;
+            csIter ++ )
+      {
+         INT32 rc = SDB_OK ;
+         dmsStorageUnit * su = NULL ;
+         const monCSSimple & monCS = (*csIter) ;
+         dmsEventSUItem suItem( monCS._name, monCS._suID, monCS._logicalID ) ;
+
+         rc = verifySUAndLock( &suItem, &su, SHARED, OSS_ONE_SEC ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDDEBUG, "Failed to get storage unit [%s], rc: %d",
+                    monCS._name, rc ) ;
+            continue ;
+         }
+
+         su->clearMBCRUDCB() ;
+
+         suUnlock( monCS._suID, SHARED ) ;
+      }
+      PD_TRACE_EXIT( SDB__SDB_DMSCB_CLEARMBCRUDCB ) ;
    }
 
    /*

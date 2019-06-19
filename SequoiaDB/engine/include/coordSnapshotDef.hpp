@@ -155,6 +155,9 @@
                                                 TotalSelect:\"$Details.$[0].TotalSelect\",\
                                                 TotalRead:\"$Details.$[0].TotalRead\",\
                                                 TotalWrite:\"$Details.$[0].TotalWrite\",\
+                                                TotalTbScan:\"$Details.$[0].TotalTbScan\",\
+                                                TotalIxScan:\"$Details.$[0].TotalIxScan\",\
+                                                ResetTimestamp:\"$Details.$[0].ResetTimestamp\",\
                                                 NodeName:\"$Details.$[0].NodeName\"\
                                                 }\
                                        }\n\
@@ -168,7 +171,8 @@
                                                          TotalIndexFreeSpace:1,TotalDataRead:1,TotalIndexRead:1,\
                                                          TotalDataWrite:1,TotalIndexWrite:1,TotalUpdate:1,\
                                                          TotalDelete:1,TotalInsert:1,TotalSelect:1,TotalRead:1,\
-                                                         TotalWrite:1,NodeName:1}\
+                                                         TotalWrite:1,TotalTbScan:1,TotalIxScan:1,ResetTimestamp:1,\
+                                                         NodeName:1}\
                                                 }\
                                        }\n\
                                        {$group:{\

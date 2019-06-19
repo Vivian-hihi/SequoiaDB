@@ -147,6 +147,7 @@ namespace engine
       _monAppCB implement
    */
    _monAppCB::_monAppCB()
+   : _mbCRUDCB( NULL )
    {
       reset() ;
 
@@ -231,7 +232,18 @@ namespace engine
 
    void _monAppCB::reset()
    {
-      _monCRUDCB::reset() ;
+      totalDataRead = 0 ;
+      totalIndexRead = 0 ;
+      totalLobRead   = 0 ;
+      totalDataWrite = 0 ;
+      totalIndexWrite = 0 ;
+      totalLobWrite   = 0 ;
+
+      totalUpdate = 0 ;
+      totalDelete = 0 ;
+      totalInsert = 0 ;
+      totalSelect = 0 ;
+      totalRead  = 0 ;
 
       totalReadTime.clear() ;
       totalWriteTime.clear() ;

@@ -1005,6 +1005,8 @@ namespace engine
       monDBCB *mondbcb = krcb->getMonDBCB () ;
       pmdEDUMgr *mgr = krcb->getEDUMgr() ;
       pmdStartupHistoryLogger *startLogger = pmdGetStartupHstLogger() ;
+      SDB_DMSCB * dmsCB = pmdGetKRCB()->getDMSCB() ;
+
       switch ( type )
       {
          case CMD_SNAPSHOT_ALL :
@@ -1016,6 +1018,7 @@ namespace engine
             startLogger->clearAll() ;
             krcb->getSvcTaskMgr()->reset() ;
             sdbGetClsCB()->resetDumpSchedInfo() ;
+            dmsCB->clearMBCRUDCB() ;
             break ;
          }
          case CMD_SNAPSHOT_DATABASE :
@@ -1051,6 +1054,11 @@ namespace engine
          case CMD_SNAPSHOT_SVCTASKS :
          {
             krcb->getSvcTaskMgr()->reset() ;
+            break ;
+         }
+         case CMD_SNAPSHOT_COLLECTIONS :
+         {
+            dmsCB->clearMBCRUDCB() ;
             break ;
          }
          default :
@@ -1951,9 +1959,9 @@ namespace engine
             sub.append( FIELD_NAME_TYPE, ctx._typeDesp ) ;
             sub.append( FIELD_NAME_DESP, ctx._info ) ;
             sub.append( FIELD_NAME_DATAREAD,
-                        (SINT64)ctx._monContext.getDataRead() );
+                        (INT64)ctx._monContext.getDataRead() );
             sub.append( FIELD_NAME_INDEXREAD,
-                        (SINT64)ctx._monContext.getIndexRead() ) ;
+                        (INT64)ctx._monContext.getIndexRead() ) ;
             ctx._monContext.getQueryTime().convertToTime ( factor,
                                                            seconds,
                                                            microseconds ) ;
@@ -2390,6 +2398,7 @@ namespace engine
             UINT16 flag = detail._flag ;
             std::string status = "" ;
             CHAR tmp[ MON_TMP_STR_SZ + 1 ] = { 0 } ;
+            CHAR timestamp[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
 
             /// add system info
             monAppendSystemInfo( sub, _addInfoMask ) ;
@@ -2444,25 +2453,32 @@ namespace engine
 
             /// CRUD statistics
             sub.append( FIELD_NAME_TOTALDATAREAD,
-                        (INT64)detail._crudCB.totalDataRead ) ;
+                        (INT64)detail._crudCB._totalDataRead ) ;
             sub.append( FIELD_NAME_TOTALINDEXREAD,
-                        (SINT64)detail._crudCB.totalIndexRead ) ;
+                        (INT64)detail._crudCB._totalIndexRead ) ;
             sub.append( FIELD_NAME_TOTALDATAWRITE,
-                        (SINT64)detail._crudCB.totalDataWrite ) ;
+                        (INT64)detail._crudCB._totalDataWrite ) ;
             sub.append( FIELD_NAME_TOTALINDEXWRITE,
-                        (SINT64)detail._crudCB.totalIndexWrite ) ;
+                        (INT64)detail._crudCB._totalIndexWrite ) ;
             sub.append( FIELD_NAME_TOTALUPDATE,
-                        (SINT64)detail._crudCB.totalUpdate ) ;
+                        (INT64)detail._crudCB._totalUpdate ) ;
             sub.append( FIELD_NAME_TOTALDELETE,
-                        (SINT64)detail._crudCB.totalDelete ) ;
+                        (INT64)detail._crudCB._totalDelete ) ;
             sub.append( FIELD_NAME_TOTALINSERT,
-                        (SINT64)detail._crudCB.totalInsert ) ;
+                        (INT64)detail._crudCB._totalInsert ) ;
             sub.append( FIELD_NAME_TOTALSELECT,
-                        (SINT64)detail._crudCB.totalSelect ) ;
+                        (INT64)detail._crudCB._totalSelect ) ;
             sub.append( FIELD_NAME_TOTALREAD,
-                        (SINT64)detail._crudCB.totalRead ) ;
+                        (INT64)detail._crudCB._totalRead ) ;
             sub.append( FIELD_NAME_TOTALWRITE,
-                        (SINT64)detail._crudCB.totalWrite ) ;
+                        (INT64)detail._crudCB._totalWrite ) ;
+            sub.append( FIELD_NAME_TOTALTBSCAN,
+                        (INT64)detail._crudCB._totalTbScan ) ;
+            sub.append( FIELD_NAME_TOTALIXSCAN,
+                        (INT64)detail._crudCB._totalIxScan ) ;
+            ossTimestamp resetTimestamp =  detail._crudCB._resetTimestamp ;
+            ossTimestampToString( resetTimestamp, timestamp ) ;
+            sub.append( FIELD_NAME_RESETTIMESTAMP, timestamp ) ;
 
             sub.done() ;
          }

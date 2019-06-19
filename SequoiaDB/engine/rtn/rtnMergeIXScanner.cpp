@@ -567,21 +567,6 @@ namespace engine
                                         _rightIXScanner->getSavedObj() ;
    }
 
-   void _rtnMergeIXScanner::setMonCtxCB( monContextCB *monCtxCB )
-   {
-      SDB_ASSERT( _leftIXScanner && _rightIXScanner,
-                  "Sub scanner is NULL" ) ;
-
-      if ( _leftIXScanner )
-      {
-         _leftIXScanner->setMonCtxCB( monCtxCB ) ;
-      }
-      if ( _rightIXScanner )
-      {
-         _rightIXScanner->setMonCtxCB( monCtxCB ) ;
-      }
-   }
-
    INT32 _rtnMergeIXScanner::relocateRID( BOOLEAN &found )
    {
       SDB_ASSERT( FALSE, "Can't call the function" ) ;

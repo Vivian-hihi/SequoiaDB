@@ -541,6 +541,9 @@ namespace engine
          // transaction helper functions
          void fixTransMBStat () ;
 
+         // monitor CRUD helper functions
+         void clearMBCRUDCB () ;
+
       private:
          INT32 _createStorageObjs() ;
          INT32 _getTypeFromFile( const CHAR *dataPath,

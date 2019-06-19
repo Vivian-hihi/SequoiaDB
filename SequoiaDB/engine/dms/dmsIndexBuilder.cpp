@@ -361,7 +361,7 @@ namespace engine
          }
       }
 
-      rc = _suIndex->_indexInsert( _mbContext, _indexCB, key, rid, ordering,
+      rc = _suIndex->_indexInsert( _indexCB, key, rid, ordering,
                                    _eduCB, !_unique, _dropDups ) ;
       if ( SDB_OK != rc )
       {

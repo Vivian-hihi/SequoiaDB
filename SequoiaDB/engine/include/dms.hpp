@@ -380,7 +380,7 @@ namespace engine
    /*
       DMS Other define
    */
-#define DMS_MON_OP_COUNT_INC( _pMonAppCB_, op, delta )  \
+#define DMS_MON_OP_COUNT_INC( _pMonAppCB_, op, delta )     \
    {                                                       \
       if ( NULL != _pMonAppCB_ )                           \
       {                                                    \
@@ -388,7 +388,7 @@ namespace engine
       }                                                    \
    }
 
-#define DMS_MON_OP_TIME_INC( _pMonAppCB_, op, delta )   \
+#define DMS_MON_OP_TIME_INC( _pMonAppCB_, op, delta )      \
    {                                                       \
       if ( NULL != _pMonAppCB_ )                           \
       {                                                    \
@@ -396,7 +396,7 @@ namespace engine
       }                                                    \
    }
 
-#define DMS_MON_CONTEXT_COUNT_INC( _monContextCB_, op, delta ) \
+#define DMS_MON_CONTEXT_COUNT_INC( _monContextCB_, op, delta )     \
    {                                                               \
       if ( NULL != _monContextCB_ )                                \
       {                                                            \
@@ -404,7 +404,7 @@ namespace engine
       }                                                            \
    }
 
-#define DMS_MON_CONTEXT_TIME_INC( _monContextCB_, op, delta )  \
+#define DMS_MON_CONTEXT_TIME_INC( _monContextCB_, op, delta )      \
    {                                                               \
       if ( NULL != _monContextCB_ )                                \
       {                                                            \

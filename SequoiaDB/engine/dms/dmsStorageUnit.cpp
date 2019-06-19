@@ -1572,6 +1572,11 @@ namespace engine
          getContext = TRUE ;
       }
 
+      if ( NULL != cb )
+      {
+         cb->registerMonCRUDCB( &( context->mbStat()->_crudCB ) ) ;
+      }
+
       rc = _pDataSu->insertRecord( context, record, cb, dpscb, mustOID,
                                    canUnLock, position, insertResult ) ;
       if ( rc )
@@ -1580,6 +1585,10 @@ namespace engine
       }
 
    done :
+      if ( NULL != cb )
+      {
+         cb->unregisterMonCRUDCB() ;
+      }
       if ( getContext && context )
       {
          _pDataSu->releaseMBContext( context ) ;
@@ -3517,6 +3526,28 @@ namespace engine
       }
 
       PD_TRACE_EXIT( SDB__DMSSU_FIXTRANSMBSTATS ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CLEARMBCRUDCB, "_dmsStorageUnit::clearMBCRUDCB" )
+   void _dmsStorageUnit::clearMBCRUDCB ()
+   {
+      PD_TRACE_ENTRY( SDB__DMSSU_CLEARMBCRUDCB ) ;
+
+      if ( NULL == _pDataSu )
+      {
+         PD_LOG( PDINFO, "storage data unit for [%s] is empty", CSName() ) ;
+         return ;
+      }
+
+      for ( UINT32 i = 0 ; i < DMS_MME_SLOTS ; i++ )
+      {
+         if ( DMS_IS_MB_INUSE ( _pDataSu->_dmsMME->_mbList[i]._flag ) )
+         {
+            _pDataSu->_mbStatInfo[ i ]._crudCB.resetOnce() ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__DMSSU_CLEARMBCRUDCB ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__CREATESTORAGEOBJS, "_dmsStorageUnit::_createStorageObjs" )

@@ -74,16 +74,14 @@ namespace engine
    public:
       virtual INT32 init() ;
       virtual void  setReadonly( BOOLEAN isReadonly ) ;
-   
+
       virtual INT32 advance ( dmsRecordID &rid ) ;
       virtual INT32 resumeScan( BOOLEAN *pIsCursorSame = NULL ) ;
       virtual INT32 pauseScan() ;
-   
-      virtual void  setMonCtxCB( _monContextCB *monCtxCB ) ;
-   
+
       virtual INT32 relocateRID( const BSONObj &keyObj,
                                  const dmsRecordID &rid ) ;
-   
+
       virtual BOOLEAN         isAvailable() const ;
       virtual IXScannerType   getType() const ;
       virtual IXScannerType   getCurScanType() const ;

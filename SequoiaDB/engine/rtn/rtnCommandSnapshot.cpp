@@ -448,6 +448,10 @@ namespace engine
          {
             _type = CMD_SNAPSHOT_SVCTASKS ;
          }
+         else if ( VALIE_NAME_COLLECTIONS == type )
+         {
+            _type = CMD_SNAPSHOT_COLLECTIONS ;
+         }
          else if ( VALUE_NAME_ALL == type )
          {
             _type = CMD_SNAPSHOT_ALL ; ;

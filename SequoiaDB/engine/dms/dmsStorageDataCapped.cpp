@@ -677,7 +677,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_EXTRACTDATA, "_dmsStorageDataCapped::extractData" )
-   INT32 _dmsStorageDataCapped::extractData( dmsMBContext *mbContext,
+   INT32 _dmsStorageDataCapped::extractData( const dmsMBContext *mbContext,
                                              const dmsRecordRW &recordRW,
                                              pmdEDUCB *cb,
                                              dmsRecordData &recordData )
@@ -774,8 +774,6 @@ namespace engine
          recordData.setData( buffer, totalLen, FALSE, FALSE ) ;
 #endif
       }
-      DMS_MBSTAT_ONCE_INC( pMonAppCB, mbContext, MON_DATA_READ, 1 ) ;
-      DMS_MBSTAT_ONCE_INC( pMonAppCB, mbContext, MON_READ, 1 ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
 
@@ -1145,7 +1143,6 @@ namespace engine
 
       pRecord->setData( recordData ) ;
 
-      DMS_MBSTAT_INC( pMonAppCB, context, MON_DATA_WRITE, 1 ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
 
       _updateStatInfo( context, recordSize, recordData ) ;

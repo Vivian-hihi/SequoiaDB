@@ -357,6 +357,16 @@ namespace engine
       void           dumpInfo( monEDUSimple &simple ) ;
       void           dumpInfo( monEDUFull &full ) ;
 
+      void registerMonCRUDCB ( monCRUDCB * monCRUDCB )
+      {
+         _monApplCB.setCRUDCB( monCRUDCB ) ;
+      }
+
+      void unregisterMonCRUDCB ()
+      {
+         _monApplCB.setCRUDCB( NULL ) ;
+      }
+
    #if defined ( SDB_ENGINE )
 
       ossEvent & getEvent () { return _event ; }

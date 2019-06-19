@@ -559,8 +559,12 @@ namespace engine
     */
    _optExplainPath::_optExplainPath ( optPlanAllocator * pAllocator )
    : _optPlanPath( pAllocator ),
+     _beginDataRead( 0 ),
+     _beginIndexRead( 0 ),
      _beginUsrCpu( 0.0 ),
      _beginSysCpu( 0.0 ),
+     _endDataRead( 0 ),
+     _endIndexRead( 0 ),
      _endUsrCpu( 0.0 ),
      _endSysCpu( 0.0 )
    {
@@ -640,7 +644,8 @@ namespace engine
       ossTime userTime, sysTime ;
 
       /// get some info before explain
-      _beginMon = *cb->getMonAppCB() ;
+      _beginDataRead = cb->getMonAppCB()->totalDataRead ;
+      _beginIndexRead = cb->getMonAppCB()->totalIndexRead ;
       ossGetCurrentTime( _beginTime ) ;
 
       /// get begin cpu time info
@@ -668,7 +673,8 @@ namespace engine
       }
 
       ossGetCurrentTime( _endTime ) ;
-      _endMon = *cb->getMonAppCB() ;
+      _endDataRead = cb->getMonAppCB()->totalDataRead ;
+      _endIndexRead = cb->getMonAppCB()->totalIndexRead ;
 
       /// get end cpu time info
       ossGetCPUUsage( cb->getThreadHandle(), userTime, sysTime ) ;
@@ -712,20 +718,18 @@ namespace engine
                          FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ;
       }
 
-      // IndexRead
-      if ( OSS_BIT_TEST( mask, OPT_EXPINFO_MASK_INDEX_READ ) )
-      {
-         builder.appendNumber( OPT_FIELD_INDEX_READ,
-                               (INT64)( _endMon.totalIndexRead -
-                                        _beginMon.totalIndexRead ) ) ;
-      }
-
       // DataRead
       if ( OSS_BIT_TEST( mask, OPT_EXPINFO_MASK_DATA_READ ) )
       {
          builder.appendNumber( OPT_FIELD_DATA_READ,
-                               (INT64)( _endMon.totalDataRead -
-                                        _beginMon.totalDataRead ) ) ;
+                               (INT64)( _endDataRead - _beginDataRead ) ) ;
+      }
+
+      // IndexRead
+      if ( OSS_BIT_TEST( mask, OPT_EXPINFO_MASK_INDEX_READ ) )
+      {
+         builder.appendNumber( OPT_FIELD_INDEX_READ,
+                               (INT64)( _endIndexRead - _beginIndexRead ) ) ;
       }
 
       // UserCPU

@@ -281,7 +281,7 @@ namespace engine
                                    ossValuePtr dataPtr,
                                    _pmdEDUCB *cb ) ;
 
-      virtual INT32 extractData( dmsMBContext *mbContext,
+      virtual INT32 extractData( const dmsMBContext *mbContext,
                                  const dmsRecordRW &recordRW,
                                  _pmdEDUCB *cb,
                                  dmsRecordData &recordData ) ;

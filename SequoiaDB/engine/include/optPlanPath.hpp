@@ -336,13 +336,15 @@ namespace engine
          CHAR                 _clFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
 
          /// info before explain
-         monAppCB             _beginMon ;
+         UINT64               _beginDataRead ;
+         UINT64               _beginIndexRead ;
          ossTimestamp         _beginTime ;
          FLOAT64              _beginUsrCpu ;
          FLOAT64              _beginSysCpu ;
 
          /// info after explain
-         monAppCB             _endMon ;
+         UINT64               _endDataRead ;
+         UINT64               _endIndexRead ;
          ossTimestamp         _endTime ;
          FLOAT64              _endUsrCpu ;
          FLOAT64              _endSysCpu ;

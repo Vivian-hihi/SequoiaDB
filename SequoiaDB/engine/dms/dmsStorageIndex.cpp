@@ -1641,8 +1641,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageIndex::_indexInsert( _dmsMBContext *context,
-                                         _ixmIndexCB *indexCB,
+   INT32 _dmsStorageIndex::_indexInsert( _ixmIndexCB *indexCB,
                                          const ixmKey &key,
                                          const dmsRecordID &rid,
                                          const Ordering& order,
@@ -1665,7 +1664,6 @@ namespace engine
                   rid._offset, rc ) ;
          goto error ;
       }
-      DMS_MBSTAT_INC( pMonAppCB, context, MON_INDEX_WRITE, 1 ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
 
    done:
@@ -1713,7 +1711,7 @@ namespace engine
             PD_LOG ( PDDEBUG, "Insert key: %s", (*it).toString().c_str() ) ;
 #endif
             ixmKeyOwned ko ((*it)) ;
-            rc = _indexInsert ( context, indexCB, ko, rid, order, cb,
+            rc = _indexInsert ( indexCB, ko, rid, order, cb,
                                 dupAllowed, dropDups ) ;
             if ( rc )
             {
@@ -1938,7 +1936,6 @@ namespace engine
                            rid._extent, rid._offset, rc ) ;
                   goto error ;
                }
-               DMS_MBSTAT_INC( pMonAppCB, context, MON_INDEX_WRITE, 1 ) ;
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
                // during rollback, since the previous change may half-way
                // completed, there could be some keys that has not been
@@ -1974,7 +1971,6 @@ namespace engine
                            rid._extent, rid._offset, rc ) ;
                   goto error ;
                }
-               DMS_MBSTAT_INC( pMonAppCB, context, MON_INDEX_WRITE, 1 ) ;
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
                itnew++ ;
                continue ;
@@ -1997,7 +1993,6 @@ namespace engine
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
-            DMS_MBSTAT_INC( pMonAppCB, context, MON_INDEX_WRITE, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
             // during rollback, since the previous change may half-way
             // completed, there could be some keys that has not been
@@ -2035,7 +2030,6 @@ namespace engine
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
-            DMS_MBSTAT_INC( pMonAppCB, context, MON_INDEX_WRITE, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
             itnew++ ;
          }
@@ -2202,7 +2196,6 @@ namespace engine
                         rid._extent, rid._offset, rc ) ;
                goto error ;
             }
-            DMS_MBSTAT_INC( pMonAppCB, context, MON_INDEX_WRITE, 1 ) ;
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
          }
       }

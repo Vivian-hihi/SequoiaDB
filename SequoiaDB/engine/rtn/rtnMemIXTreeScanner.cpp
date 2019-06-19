@@ -69,7 +69,6 @@ namespace engine
     _listIterator(*predList)
    {
       _pTransCB = pmdGetKRCB()->getTransCB() ;
-      _pMonCtxCB = NULL ;
       _available = FALSE ;
       _treeLatchHeld = FALSE ;
 
@@ -126,11 +125,6 @@ namespace engine
          _pInfo->clear() ;
       }
       _init = FALSE ;
-   }
-
-   void _rtnMemIXTreeScanner::setMonCtxCB( _monContextCB *monCtxCB )
-   {
-      _pMonCtxCB = monCtxCB ;
    }
 
    INT32 _rtnMemIXTreeScanner::init()
@@ -274,7 +268,6 @@ namespace engine
               _savedRID._offset, found ) ;
 
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
-      DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
 
    done:
       return rc ;
@@ -398,7 +391,6 @@ namespace engine
 
             // update monitor counters under latch
             DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
-            DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
 
             if ( nodeVal.isRecordDeleted() )
             {

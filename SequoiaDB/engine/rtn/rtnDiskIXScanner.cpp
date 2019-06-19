@@ -152,7 +152,6 @@ namespace engine
          }
 
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
-         DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
       }
       // mark _init to true so that advance won't call keyLocate again
       _init = TRUE ;
@@ -193,7 +192,6 @@ namespace engine
          goto error ;
       }
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
-      DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__RTNDISKIXSCAN_RELORID2, rc ) ;
@@ -330,7 +328,6 @@ namespace engine
             if ( hasRead )
             {
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
-               DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
             }
          } // if ( !isReadonly() )
       }
@@ -365,7 +362,6 @@ namespace engine
                _builder.reset();
                _curKeyObj = ixmKey(dataBuffer).toBson( &_builder ) ;
                DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
-               DMS_MON_CONTEXT_COUNT_INC ( _pMonCtxCB, MON_INDEX_READ, 1 ) ;
             }
             catch ( std::exception &e )
             {
