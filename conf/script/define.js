@@ -383,6 +383,7 @@ var FIELD_SEQUOIADB_PASSWORD               = "sequoiadb_password" ;
 var FIELD_INSTALL_DIR                      = INSTALL_DIR ;
 var FIELD_INSTNAME                         = "INSTNAME" ;
 var FIELD_SQLDATA                          = "SQLDATA" ;
+var FIELD_PGDATA                           = "PGDATA" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;
