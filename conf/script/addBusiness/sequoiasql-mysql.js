@@ -490,14 +490,12 @@ function Rollback( PD_LOGGER )
 
       /*
       3     fail to initdb
-      4     instance is running
-      5     instance is not running
-      6     instance does not exist
+      5     fail to create directory or file
+      8     instance exists
       */
       if( 3 != nodeResult[FIELD_ERRNO] &&
-          4 != nodeResult[FIELD_ERRNO] &&
           5 != nodeResult[FIELD_ERRNO] &&
-          6 != nodeResult[FIELD_ERRNO] )
+          8 != nodeResult[FIELD_ERRNO] )
       {
          PD_LOGGER.logTask( PDEVENT, sprintf( "Begin to delete instance [?]",
                                               hostName ) ) ;
