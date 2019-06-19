@@ -41,7 +41,7 @@ public class BaseExceptionTest10917 extends SdbTestBase{
 		}
 	}
 	
-	@AfterClass(alwaysRun = true)
+	@AfterClass
 	public void tearDown(){
 		try{		
 			sdb.disconnect();

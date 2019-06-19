@@ -87,7 +87,7 @@ public class ParseCipherFile17876 extends SdbTestBase {
         db.close();
     }
 
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     private void tearDown() throws Exception {
         try {
             sdb.removeUser(username, password);

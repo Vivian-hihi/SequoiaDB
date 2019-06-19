@@ -63,7 +63,7 @@ public class TestBulkInsert11319 extends SdbTestBase {
 		}
 	}
 
-	@AfterClass(alwaysRun = true)
+	@AfterClass
 	public void tearDown() {
 		try {
 			if (cs.isCollectionExist(clName)) {

@@ -62,7 +62,7 @@ public class TestBulkinsert7155 extends SdbTestBase {
 		}
 	}
 
-	@AfterClass(alwaysRun = true)
+	@AfterClass
 	public void tearDown() {
 		try {
 			if (cs.isCollectionExist(clName)) {
