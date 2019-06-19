@@ -5,6 +5,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
@@ -47,8 +48,19 @@ public class TestDeleteRegion17355 extends S3TestBase{
         Assert.assertFalse(RegionUtils.headRegion(regionName));
         
     	//非法值      SEQUOIADBMAINSTREAM-4186
-        /*RegionUtils.deleteRegion("");
-        RegionUtils.deleteRegion(new String());*/
+        try{
+        	RegionUtils.deleteRegion("");
+			Assert.fail("put region with illegal region name '' should fail!");
+		}catch(AmazonS3Exception e){
+			Assert.assertEquals(e.getErrorCode(), "InvalidRegionName");
+		}
+        
+        try{
+        	RegionUtils.deleteRegion(new String());
+			Assert.fail("put region with illegal region name null should fail!");
+		}catch(AmazonS3Exception e){
+			Assert.assertEquals(e.getErrorCode(), "InvalidRegionName");
+		}
 	}
 	
 	@AfterClass

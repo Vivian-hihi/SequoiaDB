@@ -41,7 +41,7 @@ public class TestPutRegion17352 extends S3TestBase{
 	public Object[][] generateIllegalRegionName() {
 		return new Object[][] {
 				// test a : 超过边界值
-				//new Object[] {""},
+				new Object[] {""},
 				new Object[] {ObjectUtils.getRandomString(2)},
 				new Object[] {ObjectUtils.getRandomString(21)},
 				// test b : 包含特殊字符
