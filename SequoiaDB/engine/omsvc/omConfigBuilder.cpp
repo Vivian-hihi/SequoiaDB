@@ -817,7 +817,7 @@ namespace engine
       }
       else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == businessInfo.businessType )
       {
-         _builder = SDB_OSS_NEW OmSsqlOltpConfigBuilder( businessInfo ) ;
+         _builder = SDB_OSS_NEW OmPostgreSQLConfigBuilder( businessInfo ) ;
       }
       else if ( OM_BUSINESS_SEQUOIASQL_MYSQL == businessInfo.businessType )
       {

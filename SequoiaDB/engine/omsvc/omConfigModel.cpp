@@ -71,7 +71,7 @@ namespace engine
       }
       else if ( businessType == OM_BUSINESS_SEQUOIASQL_POSTGRESQL )
       {
-         _node = SDB_OSS_NEW OmSsqlOltpNode() ;
+         _node = SDB_OSS_NEW OmPostgreSQLNode() ;
       }
       else if ( businessType == OM_BUSINESS_SEQUOIASQL_MYSQL )
       {

@@ -39,15 +39,15 @@ namespace engine
    #define OM_SVCNAME_STEP (10)
    #define OM_SDB_PORT_NUM (1)
 
-   OmSsqlOltpNode::OmSsqlOltpNode()
+   OmPostgreSQLNode::OmPostgreSQLNode()
    {
    }
 
-   OmSsqlOltpNode::~OmSsqlOltpNode()
+   OmPostgreSQLNode::~OmPostgreSQLNode()
    {
    }
 
-   INT32 OmSsqlOltpNode::_init( const BSONObj& bsonNode,
+   INT32 OmPostgreSQLNode::_init( const BSONObj& bsonNode,
                                 OmHost& host, OmCluster& cluster )
    {
       INT32 rc = SDB_OK ;
@@ -75,7 +75,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 OmSsqlOltpNode::_setServiceName( const string& serviceName )
+   INT32 OmPostgreSQLNode::_setServiceName( const string& serviceName )
    {
       INT32 rc = SDB_OK ;
 
@@ -94,7 +94,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 OmSsqlOltpNode::_setDBPath( const string& dbPath, OmHost& host )
+   INT32 OmPostgreSQLNode::_setDBPath( const string& dbPath, OmHost& host )
    {
       INT32 rc = SDB_OK ;
 
@@ -113,81 +113,24 @@ namespace engine
       goto done ;
    }
 
-   OmSsqlOltpConfTemplate::OmSsqlOltpConfTemplate()
+   OmPostgreSQLConfTemplate::OmPostgreSQLConfTemplate()
    {
    }
 
-   OmSsqlOltpConfTemplate::~OmSsqlOltpConfTemplate()
+   OmPostgreSQLConfTemplate::~OmPostgreSQLConfTemplate()
    {
       reset() ;
    }
 
-   /*
-   bsonTemplate:
-   {
-      "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
-      "DeployMod": "standalone", 
-      "Property":[{"Name":"replicanum", "Type":"int", "Default":"1", 
-                      "Valid":"1", "Display":"edit box", "Edit":"false", 
-                      "Desc":"", "WebName":"" }
-                      , ...
-                 ] 
-   }
-   */
-/*
-   INT32 OmSsqlOltpConfTemplate::_setPropery( const string& name, const string& value )
-   {
-      return SDB_OK ;
-   }
-
-   void OmSsqlOltpConfTemplate::_reset()
-   {
-      _replicaNum   = -1 ;
-      _dataNum      = -1 ;
-      _dataGroupNum = -1 ;
-      _catalogNum   = -1 ;
-      _coordNum     = -1 ;
-   }
-
-   bool OmSsqlOltpConfTemplate::_isAllProperySet()
-   {
-      if ( _replicaNum == -1 )
-      {
-         PD_LOG_MSG( PDERROR, "%s have not been set", 
-                     OM_TEMPLATE_REPLICA_NUM ) ;
-         return false ;
-      }
-      else if ( _dataGroupNum == -1 )
-      {
-         PD_LOG_MSG( PDERROR, "%s have not been set", 
-                     OM_TEMPLATE_DATAGROUP_NUM ) ;
-         return false ;
-      }
-      else if ( _catalogNum == -1 )
-      {
-         PD_LOG_MSG( PDERROR, "%s have not been set", 
-                     OM_TEMPLATE_CATALOG_NUM ) ;
-         return false ;
-      }
-      else if ( _coordNum == -1 )
-      {
-         PD_LOG_MSG( PDERROR, "%s have not been set", OM_TEMPLATE_COORD_NUM ) ;
-         return false ;
-      }
-
-      return true ;
-   }
-*/
-
-   OmSsqlOltpConfProperties::OmSsqlOltpConfProperties()
+   OmPostgreSQLConfProperties::OmPostgreSQLConfProperties()
    {
    }
 
-   OmSsqlOltpConfProperties::~OmSsqlOltpConfProperties()
+   OmPostgreSQLConfProperties::~OmPostgreSQLConfProperties()
    {
    }
 
-   bool OmSsqlOltpConfProperties::isPrivateProperty( const string& name ) const
+   bool OmPostgreSQLConfProperties::isPrivateProperty( const string& name ) const
    {
       if ( OM_BSON_DBPATH == name ||
            OM_BSON_PORT == name )
@@ -198,7 +141,7 @@ namespace engine
       return false ;
    }
 
-   bool OmSsqlOltpConfProperties::isAllPropertySet()
+   bool OmPostgreSQLConfProperties::isAllPropertySet()
    {
       if ( !isPropertySet( OM_BSON_DBPATH ) )
       {
@@ -334,17 +277,17 @@ namespace engine
       const OmHost& _host ;
    } ;
 
-   OmSsqlOltpConfigBuilder::OmSsqlOltpConfigBuilder(
+   OmPostgreSQLConfigBuilder::OmPostgreSQLConfigBuilder(
                                           const OmBusinessInfo& businessInfo )
                               : OmConfigBuilder( businessInfo )
    {
    }
 
-   OmSsqlOltpConfigBuilder::~OmSsqlOltpConfigBuilder()
+   OmPostgreSQLConfigBuilder::~OmPostgreSQLConfigBuilder()
    {
    }
 
-   INT32 OmSsqlOltpConfigBuilder::_build( BSONArray& nodeConfig )
+   INT32 OmPostgreSQLConfigBuilder::_build( BSONArray& nodeConfig )
    {
       INT32 rc = SDB_OK ;
 
@@ -370,7 +313,7 @@ namespace engine
 
          for ( iter = nodes.begin(); iter != nodes.end(); ++iter )
          {
-            OmSsqlOltpNode* node = dynamic_cast<OmSsqlOltpNode*>( *iter ) ;
+            OmPostgreSQLNode* node = dynamic_cast<OmPostgreSQLNode*>( *iter ) ;
             BSONObjBuilder builder ;
 
             builder.append( OM_BSON_HOSTNAME, node->getHostName() ) ;
@@ -402,7 +345,7 @@ namespace engine
       goto done ;
    }
 
-   void OmSsqlOltpConfigBuilder::_setLocal()
+   void OmPostgreSQLConfigBuilder::_setLocal()
    {
       CHAR local[ OSS_MAX_HOSTNAME + 1 ] = "" ;
 
@@ -413,10 +356,10 @@ namespace engine
       _defaultServicePort = _properties.getDefaultValue( OM_BSON_PORT ) ;
    }
 
-   INT32 OmSsqlOltpConfigBuilder::_createNode()
+   INT32 OmPostgreSQLConfigBuilder::_createNode()
    {
       INT32 rc = SDB_OK ;
-      OmSsqlOltpNode* node = NULL ;
+      OmPostgreSQLNode* node = NULL ;
       OmHost* host = NULL ;
       const simpleDiskInfo* disk = NULL ;
       string serviceName ;
@@ -453,7 +396,7 @@ namespace engine
          goto error ;
       }
 
-      node = SDB_OSS_NEW OmSsqlOltpNode() ;
+      node = SDB_OSS_NEW OmPostgreSQLNode() ;
       if ( NULL == node )
       {
          rc = SDB_OOM ;
@@ -495,8 +438,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 OmSsqlOltpConfigBuilder::_getServiceName( const OmHost& host,
-                                                   string& serviceName )
+   INT32 OmPostgreSQLConfigBuilder::_getServiceName( const OmHost& host,
+                                                     string& serviceName )
    {
       INT32 rc = SDB_OK ;
       INT32 startPort = ossAtoi( _defaultServicePort.c_str() ) ;
@@ -534,11 +477,11 @@ namespace engine
 
    #define OM_DBPATH_POSTGRESQL "postgresql"
 
-   INT32 OmSsqlOltpConfigBuilder::_getDBPath( OmHost& host,
-                                              const string& diskPath,
-                                              const string& businessType,
-                                              const string& serviceName,
-                                              string& dbPath )
+   INT32 OmPostgreSQLConfigBuilder::_getDBPath( OmHost& host,
+                                                const string& diskPath,
+                                                const string& businessType,
+                                                const string& serviceName,
+                                                string& dbPath )
    {
       INT32 rc = SDB_OK ;
       INT32 i  = 0 ;
@@ -602,7 +545,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 OmSsqlOltpConfigBuilder::_check( BSONObj& bsonConfig )
+   INT32 OmPostgreSQLConfigBuilder::_check( BSONObj& bsonConfig )
    {
       INT32 rc = SDB_OK ;
       BSONElement configEle ;
@@ -655,15 +598,15 @@ namespace engine
       goto done ;
    }
 
-   INT32 OmSsqlOltpConfigBuilder::_checkAndAddNode( const BSONObj& bsonNode )
+   INT32 OmPostgreSQLConfigBuilder::_checkAndAddNode( const BSONObj& bsonNode )
    {
       INT32 rc = SDB_OK ;
-      OmSsqlOltpNode* node = NULL ;
+      OmPostgreSQLNode* node = NULL ;
       OmHost* host = NULL ;
       string hostName ;
       BSONObjIterator itemIter( bsonNode ) ;
 
-      node = SDB_OSS_NEW OmSsqlOltpNode() ;
+      node = SDB_OSS_NEW OmPostgreSQLNode() ;
       if ( NULL == node )
       {
          rc = SDB_OOM ;
@@ -765,8 +708,9 @@ namespace engine
       goto done ;
    }
 
-   bool OmSsqlOltpConfigBuilder::_isServiceNameUsed( const OmHost& host,
-                                                     const string& serviceName )
+   bool OmPostgreSQLConfigBuilder::_isServiceNameUsed(
+                                                    const OmHost& host,
+                                                    const string& serviceName )
    {
       INT32 startPort = ossAtoi( serviceName.c_str() ) ;
 

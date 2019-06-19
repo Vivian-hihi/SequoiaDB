@@ -37,13 +37,13 @@
 
 namespace engine
 {
-   class OmSsqlOltpConfigBuilder ;
+   class OmPostgreSQLConfigBuilder ;
 
-   class OmSsqlOltpNode: public OmNode
+   class OmPostgreSQLNode: public OmNode
    {
    public:
-      OmSsqlOltpNode() ;
-      virtual ~OmSsqlOltpNode() ;
+      OmPostgreSQLNode() ;
+      virtual ~OmPostgreSQLNode() ;
 
    public:
       const string& getDBPath() const { return _dbPath ; }
@@ -58,38 +58,32 @@ namespace engine
       string _dbPath ;
       string _serviceName ;
 
-      friend class OmSsqlOltpConfigBuilder ;
+      friend class OmPostgreSQLConfigBuilder ;
    } ;
 
-   class OmSsqlOltpConfTemplate : public OmConfTemplate
+   class OmPostgreSQLConfTemplate : public OmConfTemplate
    {
    public:
-      OmSsqlOltpConfTemplate() ;
-      virtual ~OmSsqlOltpConfTemplate() ;
-
-   private:
-      //INT32 _init() ;
-      //void _reset() ;
-      //bool _isAllProperySet() ;
-      //INT32 _setPropery( const string& name, const string& value ) ;
+      OmPostgreSQLConfTemplate() ;
+      virtual ~OmPostgreSQLConfTemplate() ;
    } ;
 
-   class OmSsqlOltpConfProperties : public OmConfProperties
+   class OmPostgreSQLConfProperties : public OmConfProperties
    {
    public:
-      OmSsqlOltpConfProperties() ;
-      virtual ~OmSsqlOltpConfProperties() ;
+      OmPostgreSQLConfProperties() ;
+      virtual ~OmPostgreSQLConfProperties() ;
 
    public:
       bool isPrivateProperty( const string& name ) const ;
       bool isAllPropertySet() ;
    } ;
 
-   class OmSsqlOltpConfigBuilder: public OmConfigBuilder
+   class OmPostgreSQLConfigBuilder: public OmConfigBuilder
    {
    public:
-      OmSsqlOltpConfigBuilder( const OmBusinessInfo& businessInfo ) ;
-      virtual ~OmSsqlOltpConfigBuilder() ;
+      OmPostgreSQLConfigBuilder( const OmBusinessInfo& businessInfo ) ;
+      virtual ~OmPostgreSQLConfigBuilder() ;
 
    private:
       OmConfTemplate& _getConfTemplate() { return _template ; }
@@ -108,8 +102,8 @@ namespace engine
    private:
       string                   _localHostName ;
       string                   _defaultServicePort ;
-      OmSsqlOltpConfTemplate   _template ;
-      OmSsqlOltpConfProperties _properties ;
+      OmPostgreSQLConfTemplate _template ;
+      OmPostgreSQLConfProperties _properties ;
 
    } ;
 }
