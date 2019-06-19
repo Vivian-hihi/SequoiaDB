@@ -13,7 +13,7 @@
 
  | 属性名 | 描述   | 默认值 | 格式 |
  | ------ | ------ | -------| ---- |
- | Type   | 指定重置的[快照类型](database_management/monitoring/snapshot/snapshot.md)。取值：<br/>"sessions"<br/>"sessions current"<br/>"database"<br/>"health"<br/>"all" | "all" | Type: "sessions" |
+ | Type   | 指定重置的[快照类型](database_management/monitoring/snapshot/snapshot.md)。取值：<br/>"sessions"<br/>"sessions current"<br/>"database"<br/>"health"<br/>"collections"<br/>"all" | "all" | Type: "sessions" |
  | SessionID | 指定重置的会话ID。 | 所有会话 | SessionID: 1 |
  | Location Elements | [命令位置参数](reference/Sequoiadb_command/Overview/location.md) | 所有节点 | GroupName:"db1" |
 

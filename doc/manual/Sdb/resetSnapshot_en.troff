@@ -29,6 +29,7 @@ Reset snapshot.
               "sessions current"
               "database"
               "health"
+              "collections"
               "all"
               Type: "health"
 .br

@@ -54,6 +54,9 @@ $SNAPSHOT_CL
 | Details.TotalSelect     | 长整型 | 集合选择记录数量 |
 | Details.TotalRead       | 长整型 | 集合读取记录数量 |
 | Details.TotalWrite      | 长整型 | 集合写入记录数量 |
+| Details.TotalTbScan     | 长整形 | 集合使用表扫描次数 |
+| Details.TotalIxScan     | 长整型 | 集合使用索引扫描次数 |
+| Details.ResetTimestamp  | 时间戳 | 重置快照的时间 |
 
 ##协调节点字段信息##
 
@@ -73,57 +76,120 @@ $SNAPSHOT_CL
 | Details.Group.TotalLobPages       | 整型          | 集合的大对象页总数                                       |
 | Details.Group.TotalDataFreeSpace  | 长整型        | 集合的数据空闲空间（单位：字节）                        |
 | Details.Group.TotalIndexFreeSpace | 长整型        | 集合的索引空闲空间（单位：字节）                        |
-| Details.TotalDataRead   | 长整型 | 集合数据读请求 |
-| Details.TotalIndexRead  | 长整型 | 集合索引读请求 |
-| Details.TotalDataWrite  | 长整型 | 集合数据写请求 |
-| Details.TotalIndexWrite | 长整型 | 集合索引写请求 |
-| Details.TotalUpdate     | 长整型 | 集合更新记录数量 |
-| Details.TotalDelete     | 长整型 | 集合删除记录数量 |
-| Details.TotalInsert     | 长整型 | 集合插入记录数量 |
-| Details.TotalSelect     | 长整型 | 集合选择记录数量 |
-| Details.TotalRead       | 长整型 | 集合读取记录数量 |
-| Details.TotalWrite      | 长整型 | 集合写入记录数量 |
+| Details.Group.TotalDataRead   | 长整型 | 集合数据读请求 |
+| Details.Group.TotalIndexRead  | 长整型 | 集合索引读请求 |
+| Details.Group.TotalDataWrite  | 长整型 | 集合数据写请求 |
+| Details.Group.TotalIndexWrite | 长整型 | 集合索引写请求 |
+| Details.Group.TotalUpdate     | 长整型 | 集合更新记录数量 |
+| Details.Group.TotalDelete     | 长整型 | 集合删除记录数量 |
+| Details.Group.TotalInsert     | 长整型 | 集合插入记录数量 |
+| Details.Group.TotalSelect     | 长整型 | 集合选择记录数量 |
+| Details.Group.TotalRead       | 长整型 | 集合读取记录数量 |
+| Details.Group.TotalWrite      | 长整型 | 集合写入记录数量 |
+| Details.Group.TotalTbScan     | 长整形 | 集合使用表扫描次数 |
+| Details.Group.TotalIxScan     | 长整型 | 集合使用索引扫描次数 |
+| Details.Group.ResetTimestamp  | 时间戳 | 重置快照的时间 |
 | Details.Group.NodeName            | 字符串        | 节点名（主机名 + 端口）                                 |
 
 ##示例##
 
+数据节点示例：
+
 ```lang-javascript
-> db.exec( "select * from $SNAPSHOT_CS" )
+> db.exec( "select * from $SNAPSHOT_CL" )
 {
-  "NodeName": "u1604-ljh:20000",
-  "GroupName": "db1",
-  "Name": "foo",
-  "UniqueID": 575,
-  "Collection": [
+  "Name": "foo.bar",
+  "UniqueID": 261993005057,
+  "CollectionSpace": "foo",
+  "Details": [
     {
-      "Name": "foo.bar2",
-      "UniqueID": 2469606195203
+      "NodeName": "hostname:11890",
+      "GroupName": "group1",
+      "ID": 0,
+      "LogicalID": 0,
+      "Sequence": 1,
+      "Indexes": 8,
+      "Status": "Normal",
+      "Attribute": "",
+      "CompressionType": "",
+      "DictionaryCreated": false,
+      "DictionaryVersion": 0,
+      "PageSize": 65536,
+      "LobPageSize": 262144,
+      "TotalRecords": 0,
+      "TotalLobs": 0,
+      "TotalDataPages": 0,
+      "TotalIndexPages": 6,
+      "TotalLobPages": 0,
+      "TotalDataFreeSpace": 0,
+      "TotalIndexFreeSpace": 196545,
+      "CurrentCompressionRatio": 1,
+      "DataCommitLSN": 160,
+      "IndexCommitLSN": 180,
+      "LobCommitLSN": -1,
+      "DataCommitted": false,
+      "IndexCommitted": false,
+      "LobCommitted": true,
+      "TotalDataRead": 0,
+      "TotalIndexRead": 0,
+      "TotalDataWrite": 100,
+      "TotalIndexWrite": 100,
+      "TotalUpdate": 0,
+      "TotalDelete": 0,
+      "TotalInsert": 100,
+      "TotalSelect": 0,
+      "TotalRead": 0,
+      "TotalWrite": 100,
+      "TotalTbScan": 0,
+      "TotalIxScan": 0,
+      "ResetTimestamp": "2019-06-19-17.46.32.867539"
     }
-  ],
-  "PageSize": 65536,
-  "LobPageSize": 262144,
-  "MaxCapacitySize": 26388279066624,
-  "MaxDataCapSize": 8796093022208,
-  "MaxIndexCapSize": 8796093022208,
-  "MaxLobCapSize": 8796093022208,
-  "NumCollections": 1,
-  "TotalRecords": 0,
-  "TotalSize": 306315264,
-  "FreeSize": 267780075,
-  "TotalDataSize": 155254784,
-  "FreeDataSize": 133627904,
-  "TotalIndexSize": 151060480,
-  "FreeIndexSize": 134152171,
-  "TotalLobSize": 0,
-  "FreeLobSize": 0,
-  "DataCommitLSN": 1050290908,
-  "IndexCommitLSN": 1050290908,
-  "LobCommitLSN": 0,
-  "DataCommitted": true,
-  "IndexCommitted": true,
-  "LobCommitted": true,
-  "DirtyPage": 0,
-  "Type": 0
+  ]
+}
+...
+```
+
+协调节点示例：
+
+```lang-javascript
+> db.exec( "select * from $SNAPSHOT_CL" )
+{
+  "Name": "foo.susebar",
+  "UniqueID": 261993005058,
+  "Details": [
+    {
+      "GroupName": "group1",
+      "Group": [
+        {
+          "ID": 0,
+          "LogicalID": 0,
+          "Sequence": 1,
+          "Indexes": 1,
+          "Status": "Normal",
+          "TotalRecords": 1,
+          "TotalDataPages": 1,
+          "TotalIndexPages": 2,
+          "TotalLobPages": 0,
+          "TotalDataFreeSpace": 4004,
+          "TotalIndexFreeSpace": 4046,
+          "TotalDataRead": 0,
+          "TotalIndexRead": 0,
+          "TotalDataWrite": 100,
+          "TotalIndexWrite": 100,
+          "TotalUpdate": 0,
+          "TotalDelete": 0,
+          "TotalInsert": 100,
+          "TotalSelect": 0,
+          "TotalRead": 0,
+          "TotalWrite": 100,
+          "TotalTbScan": 0,
+          "TotalIxScan": 0,
+          "ResetTimestamp": "2019-06-19-17.46.32.867539",
+          "NodeName": "hostname:11820"
+        }
+      ]
+    }
+  ]
 }
 ...
 ```
