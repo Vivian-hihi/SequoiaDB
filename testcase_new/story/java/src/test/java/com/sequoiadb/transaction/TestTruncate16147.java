@@ -52,7 +52,7 @@ public class TestTruncate16147 extends SdbTestBase {
         }
     }
 
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     public void tearDown() {
         try {
             if (runSuccess) {

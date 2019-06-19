@@ -59,7 +59,7 @@ public class Snapshot13626 extends SdbTestBase {
         Assert.assertTrue(snapshot.isSuccess(), snapshot.getErrorMsg());
     }
 
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     public void tearDown() {
         sdb.getCollectionSpace(SdbTestBase.csName).dropCollection(clName);
     }

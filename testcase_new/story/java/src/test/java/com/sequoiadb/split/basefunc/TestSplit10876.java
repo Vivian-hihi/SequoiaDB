@@ -60,7 +60,7 @@ public class TestSplit10876 extends SdbTestBase{
         }
     }
     
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     public void tearDown() {
         try {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
