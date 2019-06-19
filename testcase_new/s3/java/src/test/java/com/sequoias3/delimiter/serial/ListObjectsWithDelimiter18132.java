@@ -49,6 +49,7 @@ public class ListObjectsWithDelimiter18132 extends S3TestBase {
 		}
 	}
 
+	// 暂未解决修改配置文件的问题，先将用例屏蔽
 	@Test(enabled = false)
 	public void testGetObjectList() throws Exception {
 		// 将分隔符设置为? （默认为'/'）
