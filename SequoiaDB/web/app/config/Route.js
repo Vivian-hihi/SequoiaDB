@@ -374,6 +374,12 @@
             resolve: resolveFun( ['./app/controller/Deploy/SyncModule/MySQL/Index.js'] )
          }
       },
+      { path: '/Deploy/PostgreSQL-Sync',
+         options: {
+            templateUrl: './app/template/Deploy/SyncModule/PostgreSQL/Index.html',
+            resolve: resolveFun( ['./app/controller/Deploy/SyncModule/PostgreSQL/Index.js'] )
+         }
+      },
       { path: '/Deploy/SDB-ShrinkConf',
         options: {
            templateUrl: './app/template/Deploy/ShrinkModule/Sdb/Conf.html',

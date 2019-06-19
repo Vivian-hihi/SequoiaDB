@@ -11,7 +11,7 @@
       $scope.SyncConf     = $rootScope.tempData( 'Deploy', 'SyncConf' ) ;
       var moduleType      = $rootScope.tempData( 'Deploy', 'ModuleType' ) ;
 
-      if( $scope.ModuleName == null || $scope.ClusterName == null || moduleType != 'sequoiasql-mysql' )
+      if( $scope.ModuleName == null || $scope.ClusterName == null || moduleType != 'sequoiasql-postgresql' )
       {
          $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return ;

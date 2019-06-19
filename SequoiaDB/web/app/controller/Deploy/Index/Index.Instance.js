@@ -153,9 +153,17 @@
             if ( isAllClear ) {
                var formVal = $scope.SyncWindow['config'].getValue();
                $rootScope.tempData( 'Deploy', 'ModuleName', $scope.InstanceList[formVal['moduleName']]['BusinessName'] );
+               $rootScope.tempData( 'Deploy', 'ModuleType', $scope.InstanceList[formVal['moduleName']]['BusinessType'] );
                $rootScope.tempData( 'Deploy', 'ClusterName', $scope.ClusterList[$scope.CurrentCluster]['ClusterName'] );
                $rootScope.tempData( 'Deploy', 'InstallPath', $scope.ClusterList[$scope.CurrentCluster]['InstallPath'] );
-               $location.path( '/Deploy/MySQL-Sync' ).search( { 'r': new Date().getTime() } );
+               if ( $scope.InstanceList[formVal['moduleName']]['BusinessType'] == 'sequoiasql-mysql' )
+               {
+                  $location.path( '/Deploy/MySQL-Sync' ).search( { 'r': new Date().getTime() } );
+               }
+               else if ( $scope.InstanceList[formVal['moduleName']]['BusinessType'] == 'sequoiasql-postgresql' )
+               {
+                  $location.path( '/Deploy/PostgreSQL-Sync' ).search( { 'r': new Date().getTime() } );
+               }
             }
             return isAllClear;
          } );

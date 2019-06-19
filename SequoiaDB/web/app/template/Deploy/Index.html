@@ -2,7 +2,7 @@
    <div class="pull-left" ng-container="{offsetX:-280}">
       <div class="underlineTab" ng-container="{height:50}">
          <ul class="left">
-            <li ng-class="{'instance': 'active'}[CurrentPage]">
+            <li ng-class="{'instance': 'active'}[CurrentPage]" ng-hide="InstanceNum == 0 && StorageNum == 0">
                <a class="linkButton" ng-click="SwitchPage('instance')">{{autoLanguage("数据库实例")}}</a> <span class="badge badge-info">{{InstanceNum}}</span>
             </li>
             <li ng-class="{'storage': 'active'}[CurrentPage]">
