@@ -49,8 +49,13 @@ function main()
 	println("createCL " + COMMCLNAME + " at ReplicaGroup:" + sourceGroup + " finished");
 	
 	//insert data
+   var data = [];
 	try{
-		for(var i=0;i<3000;i++){normalCL.insert({b:i,id:i-1000,c:"abcdefghijkl"+i});}
+		for(var i=0;i<3000;i++)
+      {
+         data.push({b:i,id:i-1000,c:"abcdefghijkl"+i});
+      }
+      normalCL.insert(data);
 	}catch(e)
 	{
 		println("insert-data fail! rc="+e);

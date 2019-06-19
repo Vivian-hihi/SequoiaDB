@@ -47,7 +47,7 @@ function main( db )
    }
    catch ( e )
    {
-      if( -1109 != e )
+      if( -109 != e )
       {
          println( "Failed to create domain, rc = " + e ) ;
          throw e ;

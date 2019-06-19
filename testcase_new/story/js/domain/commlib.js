@@ -185,13 +185,13 @@ function insertData( db, csName, clName, insertNum )
                          "cardID":6800000005}
          **********************************************************************/
          //println( "Start to deal string" ) ;
-         var insertString = "{\"No\":"+no+",\"customerName\":\""+user+"\",\"phoneNumber\":"+phone+",\"company\":[\""+compa1+"\",\""+compa2+"\"],\"openDate\":"+time+",\"cardID\":"+card+"}" ;
-         //println( "String + " + insertString ) ;
-         var insert = eval("("+insertString+")") ;
-         // insert date
+         var insertString = { "No": no, "customerName": user, "phoneNumber": phone, "company":[compa1, compa2 ],"openDate": time,"cardID": card } ;
+         data.push(insertString);
          //println( "Begin to insert" ) ;
-         cl.insert( insert ) ;
       }
+      //insert date
+      cl.insert( data ) ;
+
       // inspect the data is insert success or not
       var cnt = 0 ;
       do

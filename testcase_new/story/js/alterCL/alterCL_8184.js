@@ -92,8 +92,13 @@ function main()
 	}
 	
 	//insert data
+   var data = [];
 	try{
-		for(var i=0;i<30000;i++){normalCL.insert({id:i-10000,b:i,c:"abcdefghijkl"+i});}
+		for(var i=0;i<30000;i++)
+      {
+         data.push({id:i-10000,b:i,c:"abcdefghijkl"+i});
+      }
+      normalCL.insert(data);
 	}catch(e)
 	{
 		println("insert-data fail! rc="+e);

@@ -89,9 +89,13 @@ catch( e )
 	println("attach sub-CL finish!");
 	
 	//insert data
-	try{
-		for(var i=0;i<30000;i++){mainCL.insert({id:i-10000,b:i,c:"abcdefghijkl"+i});}
-		println("insert-data succ");
+   var data = [];
+   try{
+   for(var i=0;i<30000;i++)
+   {
+      data.push({id:i-10000,b:i,c:"abcdefghijkl"+i});
+   }
+   mainCL.insert(data);
 	}catch(e)
 	{
 		println("insert-data fail! rc="+e);
