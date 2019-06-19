@@ -165,6 +165,7 @@ function inspectDomain( db, domName )
 function insertData( db, csName, clName, insertNum )
 {
    if( undefined == insertNum ){ insertNum = 1000 ; }
+   var data = [];
    try
    {
       var cs = db.getCS( csName ) ;
