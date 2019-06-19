@@ -63,7 +63,7 @@ public class CreateAndDropSameCL10940 extends SdbTestBase {
 	        }		
 	}
 	
-	@AfterClass(alwaysRun = true)
+	@AfterClass
 	public void tearDown(){
 		try{
 			CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);

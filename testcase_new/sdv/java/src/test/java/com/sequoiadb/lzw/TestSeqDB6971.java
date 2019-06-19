@@ -181,7 +181,7 @@ public class TestSeqDB6971 extends SdbTestBase {
         return detail;
     }
 
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     public void tearDown() {
         try {
             if (this.cs.isCollectionExist(this.clName)) {

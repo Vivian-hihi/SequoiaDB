@@ -74,7 +74,7 @@ public class CreateAndDropCL10945 extends SdbTestBase {
 	        }		
 	}
 	
-	@AfterClass(alwaysRun = true)
+	@AfterClass
 	public void tearDown(){
 		try{
 			if(sdb.isCollectionSpaceExist(csName)){

@@ -69,7 +69,7 @@ public class Sdv6667 extends SdbTestBase {
         }
     }
     
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     public void tearDown(){
         try{
             if(sdb.isCollectionSpaceExist(csName)){

@@ -19,10 +19,10 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbConfTestBase;
 import com.sequoiadb.testcommon.SdbTestBase;
-
-/**
+//TODO:当前DB默认有开启事务，测不到点，而且现在内部实现变了，coord开启事务后数据组默认开启，已coord标志为准。此用例可以不用实现自动化
+/**  
  * test content:  并发回滚事务，操作相同cl_SD.transaction.041 
- * testlink-case: seqDB-6030
+ * testlink-case: seqDB-6030  //TODO:用例标题跟测试点不符
  * @author wangkexin
  * @Date 2019.03.28
  * @version 1.00
