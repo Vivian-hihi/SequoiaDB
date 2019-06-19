@@ -157,6 +157,8 @@ pmdMTFiles = [
       "pmd/pmdEDUMgr.cpp",
       "pmd/pmdEntryPoint.cpp",
       "mon/monCB.cpp",
+      "mon/monMgr.cpp",
+      "mon/monClass.cpp",
       "pmd/pmdAsyncSessionAgent.cpp",
       "pmd/pmdInnerClient.cpp",
       "pmd/pmdAsyncHandler.cpp",

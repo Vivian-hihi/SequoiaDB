@@ -376,6 +376,8 @@ optFiles = [
 
 monFiles = [
       "mon/monDump.cpp",
+      "mon/monMgr.cpp",
+      "mon/monClass.cpp",
       "mon/monCB.cpp"
       ]
 
@@ -771,6 +773,9 @@ clientCPPFiles = [
 #performanceFiles = [
 #      "test/performance/performance.cpp"
 #      ]
+monitorFiles = [
+      "test/testMon.cpp"
+      ]
 gtestMainFile = [
       "gtest/src/gtest_main.cc"
       ]
@@ -869,6 +874,7 @@ if hasEngine:
 if hasTestcase:
 #smwrappertest = env.Program("smwrappertest", SMWrapperTestFiles,
 #         LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","pcre","bson","oss","bps","ixm","pmd","mig","pd","util","rtn","msg","dms","mth","opt","mon", "net", "sql"],
+
 #          _LIBDEPS='$_LIBDEPS_OBJS' )
 #   cmtest = env.Program("cmtest", cmTestFile,
 #          LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","pd","pmd","mig","util","rtn","ixm","msg","dms","mth","opt","bson","mon","net","sql","auth", "aggr", "spd", "omsvc"],
@@ -877,6 +883,9 @@ if hasTestcase:
 #   osslatchtest = env.Program("osslatchtest", LatchTestFiles,
 #          LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","pd","pmd","mig","util","rtn","ixm","msg","dms","mth","opt","bson","mon","net", "sql","auth", "aggr", "spd", "omsvc"],
 #          _LIBDEPS='$_LIBDEPS_OBJS' )
+   montest = env.Program("montest", monitorFiles,
+          LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","pd","pmd","mig","util","rtn","ixm","msg","dms","mth","opt","bson","mon","net", "sql","auth", "aggr", "spd", "omsvc"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
 #   ossIOTest = env.Program("ossIOTest", ossIOTestFiles,
 #          LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest",snappy_lib,"cls","bps","pcre","oss","pd","pmd","mig","util","rtn","ixm","msg","dms","mth","opt","bson","mon", "net", "sql","auth", "aggr", "spd", "omsvc"],
 #          _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -1006,6 +1015,7 @@ if hasTestcase:
 #   env.Install( '#/tests', clsTest )
    env.Install( '#/tests', construct )
    env.Install( '#/tests', sqlTest2 )
+   env.Install( '#/tests', montest )
 #   env.Install( '#/tests', snappyTest )
 #   env.Install( '#/tests', spdTest )
 #   env.Install( '#/tests', sqlTest3 )
