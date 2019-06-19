@@ -3,8 +3,10 @@
 @Modify list :
                2014-5-20  xiaojun Hu  Modify
 ********************************************************************************/
-function main( db )
+main() ;
+function main()
 {
+   var clName = "cl7373";
    // drop collection in the beginning
    commDropCL( db, csName, clName, true, true, "drop collection in the beginning" ) ;
    var index = "";
@@ -20,21 +22,26 @@ function main( db )
    idxCL.insert( {a:1} ) ;
 
    // create index
-   createIndex( idxCL, "", {a:1}, false, false, -6 ) ;
-   createIndex( idxCL, index, {a:1}, false, false, -6 ) ;
+   createIndex( idxCL, "" ) ;
+   createIndex( idxCL, index ) ;
 
    // drop collection in clean
-   commDropCL( db, csName, clName, false, false,
-               "drop colleciton in the end" );
+   commDropCL( db, csName, clName, false, false, "drop collection in the end" );
 }
 
-try
+function createIndex( cl, idxName )
 {
-   main( db ) ;
-   db.close() ;
-}
-catch ( e )
-{
-   throw e ;
+    try
+   {
+      cl.createIndex( idxName,{a:1} ) ;
+      throw "expected failure but found succeed. index name = " + idxName;
+   }
+   catch ( e )
+   {
+      if ( -6 !== e )
+      {
+         throw buildException("createIndex", e, "create index has failed", -6, e);
+      }
+   }
 }
 

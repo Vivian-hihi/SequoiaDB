@@ -46,7 +46,7 @@ function testCreateIndex(cl, single_index, composite_index)
    var expRemainNum = insertNum - 1;
    var obj = {a:1};
    var newObj = {a:123456789};
-   testInsert( cl, insertNum );
+   testInsert( cl, insertNum, single_index );
    var curObj = testUpdate( cl, obj, newObj );
    testDelete(cl, curObj, expRemainNum);
 
@@ -57,7 +57,7 @@ function testCreateIndex(cl, single_index, composite_index)
    //crud operation
    var obj2 = {b:1, c:"test1"};
    var newObj2 = {b:123456789, c:"newtest18357"};
-   testInsert2( cl, insertNum );
+   testInsert2( cl, insertNum, composite_index );
    var curObj2 = testUpdate( cl, obj2, newObj2 );
    testDelete(cl, curObj2, expRemainNum);
    
@@ -66,7 +66,7 @@ function testCreateIndex(cl, single_index, composite_index)
    cl.dropIndex(composite_index);
 }
 
-function testInsert( cl, insertNum )
+function testInsert( cl, insertNum, idxName )
 { 
    var expRecs = [];
    for(var i = 0 ; i < insertNum; i++)
@@ -75,11 +75,11 @@ function testInsert( cl, insertNum )
        expRecs.push(obj); 
    }
    cl.insert(expRecs);
-   var rc = cl.find().sort({a:1});
+   var rc = cl.find().sort({a:1}).hint({"":idxName});
    checkRec( rc, expRecs ); 
 }
 
-function testInsert2( cl, insertNum )
+function testInsert2( cl, insertNum, idxName )
 { 
    var expRecs = [];
    for(var i = 0 ; i < insertNum; i++)
@@ -88,7 +88,7 @@ function testInsert2( cl, insertNum )
        expRecs.push(obj); 
    }
    cl.insert(expRecs);
-   var rc = cl.find({},{"_id":{"$include":0}}).sort({b:1});
+   var rc = cl.find({},{"_id":{"$include":0}}).sort({b:1}).hint({"":idxName});
    checkRec( rc, expRecs ); 
 }
 
