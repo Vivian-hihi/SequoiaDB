@@ -12,7 +12,12 @@
          </path>
          <sequential>
             <if>
-               <resourcecontains resource="@{filename}" substring="&lt;skipped/&gt;"/>
+               <and>
+                  <resourcecontains resource="@{filename}" substring="&lt;skipped/&gt;"/>
+                  <not>
+                     <equals arg1="${DEPLOY_MODE}" arg2="STANDALONE"/>
+                  </not>
+               <and>
                <then>
                   <var name="report_full_name" value="${WORKSPACE}/report/reliability/testcase_skip_report.xml"/>
                   <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="${report_full_name}"/>
