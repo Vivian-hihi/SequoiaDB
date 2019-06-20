@@ -262,15 +262,25 @@ TEST_F( getSlaveMultiPos13785, threeNodes )
    ASSERT_EQ( SDB_OK, rc ) << "fail to stop node" ;
    sdbNode newMaster ;
    const CHAR* newMasterSvc ;
-   while( TRUE )
+   const int totalTimeLen = 30 ;
+   int alreadySleep = 0 ;
+   do
    {
       rc = rg.getMaster( newMaster ) ;
+      if ( rc == SDB_RTN_NO_PRIMARY_FOUND )
+      {
+         sleep( 1 ) ;
+         alreadySleep +=1 ;
+      }
+      if ( alreadySleep < totalTimeLen 
+           && rc == SDB_RTN_NO_PRIMARY_FOUND ){
+         continue ;
+      }
       ASSERT_EQ( SDB_OK, rc ) << "fail to get newMaster" ;
       newMasterSvc = newMaster.getServiceName() ;
       if( strcmp( masterSvc, newMasterSvc ) )
          break ;
-      sleep( 1 ) ;
-   }
+   }while(TRUE) ;
 
    vector<INT32> positions ;
    for( INT32 i = 1;i <= 7;i++ )
