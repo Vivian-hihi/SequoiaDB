@@ -139,7 +139,7 @@ namespace replay
                       RPL_CONF_NAME_FIELD_TYPE, rc ) ;
       }
 
-      tFieldType = typeEle.str().c_str() ;
+      tFieldType = typeEle.valuestr() ;
 
       if ( ossStrcmp( tFieldType, RPL_FIELD_TYPE_MAPPING_STRING ) == 0 )
       {

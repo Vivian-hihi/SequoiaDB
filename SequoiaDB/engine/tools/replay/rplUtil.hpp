@@ -74,6 +74,8 @@ namespace replay
                              INT32 newSecond ) ;
 
    void rplTimestampToString( ossTimestamp &timestamp, string &timeStr ) ;
+
+   void rplTimeIncToString( time_t &timer, UINT32 inc, string &timeStr ) ;
 }
 
 #endif /* RPL_UTIL_HPP_ */

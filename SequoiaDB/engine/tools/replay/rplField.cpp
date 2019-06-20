@@ -464,9 +464,10 @@ namespace replay
    INT32 rplTimestampField::_getValue( const BSONElement &ele, string &value )
    {
       INT32 rc = SDB_OK ;
-      UINT64 ms = 0 ;
       UINT32 inc = 0 ;
       string timeStr ;
+      Date_t date ;
+      time_t timer ;
       ossTimestamp timestamp ;
       if ( ele.type() != Timestamp )
       {
@@ -475,11 +476,11 @@ namespace replay
                       _sFieldName, ele.type(), rc ) ;
       }
 
-      ms = ( SINT64 )ele.timestampTime() ;
+      date = ele.timestampTime() ;
       inc = ele.timestampInc() ;
+      timer = (time_t)(((long long)date.millis)/1000) ;
 
-      timestamp = ossMicrosecondsToTimestamp( ms * 1000 + inc ) ;
-      rplTimestampToString( timestamp, timeStr ) ;
+      rplTimeIncToString( timer, inc, timeStr ) ;
       value = timeStr ;
 
    done:
