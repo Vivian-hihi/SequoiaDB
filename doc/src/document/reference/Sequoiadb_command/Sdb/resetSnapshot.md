@@ -1,7 +1,7 @@
 ##语法##
 ***db.resetSnapshot( [options] )***
 
-重置快照。
+重置快照。主要是针对一些统计信息，比如TotalDataRead、TotalDataWrite等。它的作用就是清空之前的统计，重新开始统计。
 
 ##参数描述##
 
@@ -29,8 +29,93 @@
 
 ##示例##
 
-* 重置 SessionID 为1的快照。
+* 重置 SessionID 为22的快照。
 
+  重置前：
+  
   ```lang-javascript
-  > db.resetSnapshot( { Type: "sessions", SessionID: 1 } )
+  >db.snapshot(SDB_SNAP_CONTEXTS,{"SessionID":22})
+  {
+	"NodeName": "u1604-nzb:31820",
+	"SessionID": 22,
+	"TID": 11076,
+	"Status": "Waiting",
+	"Type": "ShardAgent",
+	"Name": "Type:Shard,NetID:1,R-TID:12930,R-IP:192.168.20.53,R-Port:11810",
+	"QueueSize": 0,
+	"ProcessEventCount": 32,
+	"RelatedID": "c0a814352e2200003282",
+	"Contexts": [
+		200
+	],
+	"TotalDataRead": 27577,
+	"TotalIndexRead": 0,
+	"TotalDataWrite": 0,
+	"TotalIndexWrite": 0,
+	"TotalUpdate": 0,
+	"TotalDelete": 0,
+	"TotalInsert": 0,
+	"TotalSelect": 27577,
+	"TotalRead": 27577,
+	"TotalReadTime": 0,
+	"TotalWriteTime": 0,
+	"ReadTimeSpent": 0,
+	"WriteTimeSpent": 0,
+	"ConnectTimestamp": "2019-06-20-13.55.52.646730",
+	"ResetTimestamp": "2019-06-20-13.55.52.646730",
+	"LastOpType": "GETMORE",
+	"LastOpBegin": "--",
+	"LastOpEnd": "2019-06-20-14.20.22.223637",
+	"LastOpInfo": "ContextID:200, NumToRead:-1",
+	"UserCPU": 0.38,
+	"SysCPU": 0.29
+  }
+  ```
+  
+  重置快照：
+  
+  ```lang-javascript
+  > db.resetSnapshot({Type : "session", SessionID: 22})
+  Takes 0.001436s.
+  ```
+  
+  重置后：
+  
+  ```lang-javascript
+  >db.snapshot(SDB_SNAP_CONTEXTS,{"SessionID":22})
+  {
+	"NodeName": "u1604-nzb:31820",
+	"SessionID": 22,
+	"TID": 11076,
+	"Status": "Waiting",
+	"Type": "ShardAgent",
+	"Name": "Type:Shard,NetID:1,R-TID:12930,R-IP:192.168.20.53,R-Port:11810",
+	"QueueSize": 0,
+	"ProcessEventCount": 32,
+	"RelatedID": "c0a814352e2200003282",
+	"Contexts": [
+		200
+	],
+	"TotalDataRead": 0,
+	"TotalIndexRead": 0,
+	"TotalDataWrite": 0,
+	"TotalIndexWrite": 0,
+	"TotalUpdate": 0,
+	"TotalDelete": 0,
+	"TotalInsert": 0,
+	"TotalSelect": 0,
+	"TotalRead": 0,
+	"TotalReadTime": 0,
+	"TotalWriteTime": 0,
+	"ReadTimeSpent": 0,
+	"WriteTimeSpent": 0,
+	"ConnectTimestamp": "2019-06-20-13.55.52.646730",
+	"ResetTimestamp": "2019-06-20-14.23.42.059988",
+	"LastOpType": "UNKNOW",
+	"LastOpBegin": "--",
+	"LastOpEnd": "--",
+	"LastOpInfo": "",
+	"UserCPU": 0.38,
+	"SysCPU": 0.3
+  }
   ```
