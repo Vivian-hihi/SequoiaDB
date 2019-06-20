@@ -44,7 +44,7 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		try {
 			resp = rest.setApi("/region/?Action=CreateRegion&RegionName=" + region.getName())
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestHeaders(UserCommDefind.authorization, UserCommDefind.authValPre + accessKeyId+"/")
 					.setRequestBody(region)
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class).exec();
@@ -67,7 +67,7 @@ public class RegionUtils extends S3TestBase {
 		boolean isDelete = false;
 		try {
 			resp = rest.setApi("/region/?Action=DeleteRegion&RegionName=" + regionName)
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestHeaders(UserCommDefind.authorization, UserCommDefind.authValPre + accessKeyId+"/")
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class)
 					.exec();
@@ -95,7 +95,7 @@ public class RegionUtils extends S3TestBase {
 		GetRegionResult result;
 		try {
 			resp = rest.setApi("/region/?Action=GetRegion&RegionName=" + regionName)
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestHeaders(UserCommDefind.authorization, UserCommDefind.authValPre + accessKeyId+"/")
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class)
 					.exec();
@@ -117,7 +117,7 @@ public class RegionUtils extends S3TestBase {
 		boolean doesExist = false;
 		try {
 			resp = rest.setApi("/region/?Action=HeadRegion&RegionName=" + regionName)
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestHeaders(UserCommDefind.authorization, UserCommDefind.authValPre + accessKeyId+"/")
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class)
 					.exec();
@@ -141,7 +141,7 @@ public class RegionUtils extends S3TestBase {
 		List<String> listResult;
 		try {
 			resp = rest.setApi("/region/?Action=ListRegions")
-					.setRequestHeaders(UserCommDefind.authorization, accessKeyId+"/")
+					.setRequestHeaders(UserCommDefind.authorization, UserCommDefind.authValPre + accessKeyId+"/")
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class)
 					.exec();
