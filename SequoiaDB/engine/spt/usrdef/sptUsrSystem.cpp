@@ -83,7 +83,6 @@ namespace engine
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, createSshKey )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getHomePath )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getUserEnv )
-   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, staticHelp )
 
    JS_BEGIN_MAPPING( _sptUsrSystem, "System" )
       JS_ADD_CONSTRUCT_FUNC( construct )
@@ -130,7 +129,6 @@ namespace engine
       JS_ADD_STATIC_FUNC( "getUserEnv", getUserEnv )
       JS_ADD_STATIC_FUNC_WITHATTR( "_createSshKey", createSshKey, 0 )
       JS_ADD_STATIC_FUNC_WITHATTR( "_getHomePath", getHomePath, 0 )
-      JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_MAPPING_END()
 
    _sptUsrSystem::_sptUsrSystem()

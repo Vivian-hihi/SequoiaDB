@@ -3139,6 +3139,254 @@
                            "en": "NumberDecimal"
                         }
                      ]
+                  },
+                  {
+                     "id": 1560930213,
+                     "dir": "System",
+                     "cn": "System",
+                     "en": "System",
+                     "contents": [
+                        {
+                           "id": 1560930214,
+                           "file": "addAHostMap",
+                           "cn": "addAHostMap",
+                           "en": "addAHostMap"
+                        },
+                        {
+                           "id": 1560930347,
+                           "file": "addGroup",
+                           "cn": "addGroup",
+                           "en": "addGroup"
+                        },
+                        {
+                           "id": 1560930348,
+                           "file": "addUser",
+                           "cn": "addUser",
+                           "en": "addUser"
+                        },
+                        {
+                           "id": 1560930349,
+                           "file": "delAHostMap",
+                           "cn": "delAHostMap",
+                           "en": "delAHostMap"
+                        },
+                        {
+                           "id": 1560930350,
+                           "file": "delGroup",
+                           "cn": "delGroup",
+                           "en": "delGroup"
+                        },
+                        {
+                           "id": 1560930351,
+                           "file": "delUser",
+                           "cn": "delUser",
+                           "en": "delUser"
+                        },
+                        {
+                           "id": 1560931317,
+                           "file": "getAHostMap",
+                           "cn": "getAHostMap",
+                           "en": "getAHostMap"
+                        },
+                        {
+                           "id": 1560931318,
+                           "file": "getCpuInfo",
+                           "cn": "getCpuInfo",
+                           "en": "getCpuInfo"
+                        },
+                        {
+                           "id": 1560931747,
+                           "file": "getCurrentUser",
+                           "cn": "getCurrentUser",
+                           "en": "getCurrentUser"
+                        },
+                        {
+                           "id": 1560931319,
+                           "file": "getDiskInfo",
+                           "cn": "getDiskInfo",
+                           "en": "getDiskInfo"
+                        },
+                        {
+                           "id": 1560931320,
+                           "file": "getEWD",
+                           "cn": "getEWD",
+                           "en": "getEWD"
+                        },
+                        {
+                           "id": 1560931321,
+                           "file": "getHostName",
+                           "cn": "getHostName",
+                           "en": "getHostName"
+                        },
+                        {
+                           "id": 1560931322,
+                           "file": "getHostsMap",
+                           "cn": "getHostsMap",
+                           "en": "getHostsMap"
+                        },
+                        {
+                           "id": 1560931323,
+                           "file": "getIpTablesInfo",
+                           "cn": "getIpTablesInfo",
+                           "en": "getIpTablesInfo"
+                        },
+                        {
+                           "id": 1560931324,
+                           "file": "getMemInfo",
+                           "cn": "getMemInfo",
+                           "en": "getMemInfo"
+                        },
+                        {
+                           "id": 1560931325,
+                           "file": "getNetcardInfo",
+                           "cn": "getNetcardInfo",
+                           "en": "getNetcardInfo"
+                        },
+                        {
+                           "id": 1560931326,
+                           "file": "getPID",
+                           "cn": "getPID",
+                           "en": "getPID"
+                        },
+                        {
+                           "id": 1560931327,
+                           "file": "getProcUlimitConfigs",
+                           "cn": "getProcUlimitConfigs",
+                           "en": "getProcUlimitConfigs"
+                        },
+                        {
+                           "id": 1560931328,
+                           "file": "getReleaseInfo",
+                           "cn": "getReleaseInfo",
+                           "en": "getReleaseInfo"
+                        },
+                        {
+                           "id": 1560931329,
+                           "file": "getSystemConfigs",
+                           "cn": "getSystemConfigs",
+                           "en": "getSystemConfigs"
+                        },
+                        {
+                           "id": 1560931330,
+                           "file": "getTID",
+                           "cn": "getTID",
+                           "en": "getTID"
+                        },
+                        {
+                           "id": 1560931331,
+                           "file": "getUserEnv",
+                           "cn": "getUserEnv",
+                           "en": "getUserEnv"
+                        },
+                        {
+                           "id": 1560931332,
+                           "file": "isGroupExist",
+                           "cn": "isGroupExist",
+                           "en": "isGroupExist"
+                        },
+                        {
+                           "id": 1560931333,
+                           "file": "isProcExist",
+                           "cn": "isProcExist",
+                           "en": "isProcExist"
+                        },
+                        {
+                           "id": 1560931334,
+                           "file": "isUserExist",
+                           "cn": "isUserExist",
+                           "en": "isUserExist"
+                        },
+                        {
+                           "id": 1560931335,
+                           "file": "killProcess",
+                           "cn": "killProcess",
+                           "en": "killProcess"
+                        },
+                        {
+                           "id": 1560931336,
+                           "file": "listAllUsers",
+                           "cn": "listAllUsers",
+                           "en": "listAllUsers"
+                        },
+                        {
+                           "id": 1560931337,
+                           "file": "listGroups",
+                           "cn": "listGroups",
+                           "en": "killProcess"
+                        },
+                        {
+                           "id": 1560931338,
+                           "file": "listLoginUsers",
+                           "cn": "listLoginUsers",
+                           "en": "listLoginUsers"
+                        },
+                        {
+                           "id": 1560931339,
+                           "file": "listProcess",
+                           "cn": "listProcess",
+                           "en": "listProcess"
+                        },
+                        {
+                           "id": 1560931340,
+                           "file": "ping",
+                           "cn": "ping",
+                           "en": "ping"
+                        },
+                        {
+                           "id": 1560931341,
+                           "file": "runService",
+                           "cn": "runService",
+                           "en": "runService"
+                        },
+                        {
+                           "id": 1560931342,
+                           "file": "setProcUlimitConfigs",
+                           "cn": "setProcUlimitConfigs",
+                           "en": "setProcUlimitConfigs"
+                        },
+                        {
+                           "id": 1560931343,
+                           "file": "setUserConfigs",
+                           "cn": "setUserConfigs",
+                           "en": "setUserConfigs"
+                        },
+                        {
+                           "id": 1560931344,
+                           "file": "snapshotCpuInfo",
+                           "cn": "snapshotCpuInfo",
+                           "en": "snapshotCpuInfo"
+                        },
+                        {
+                           "id": 1560931345,
+                           "file": "snapshotDiskInfo",
+                           "cn": "snapshotDiskInfo",
+                           "en": "snapshotDiskInfo"
+                        },
+                        {
+                           "id": 1560931346,
+                           "file": "snapshotMemInfo",
+                           "cn": "snapshotMemInfo",
+                           "en": "snapshotMemInfo"
+                        },
+                        {
+                           "id": 1560931347,
+                           "file": "snapshotNetcardInfo",
+                           "cn": "snapshotNetcardInfo",
+                           "en": "snapshotNetcardInfo"
+                        },
+                        {
+                           "id": 1560931348,
+                           "file": "sniffPort",
+                           "cn": "sniffPort",
+                           "en": "sniffPort"
+                        },
+                        {
+                           "id": 1560931349,
+                           "file": "type",
+                           "cn": "type",
+                           "en": "type"
+                        }
+                     ]
                   }
                ]
             },
@@ -3870,93 +4118,93 @@
                         },
                         {
                            "id": 1559282883,
-                           "file": "SDB_SNAP_CONTEXTS",
+                           "file": "$SNAPSHOT_CONTEXT",
                            "cn": "上下文快照",
-                           "en": "SDB_SNAP_CONTEXTS"
+                           "en": "$SNAPSHOT_CONTEXT"
                         },
                         {
                            "id": 1559282895,
-                           "file": "SDB_SNAP_CONTEXTS_CURRENT",
+                           "file": "$SNAPSHOT_CONTEXT_CUR",
                            "cn": "当前上下文快照",
-                           "en": "SDB_SNAP_CONTEXTS_CURRENT"
+                           "en": "$SNAPSHOT_CONTEXT_CUR"
                         },
                         {
                            "id": 1559282908,
-                           "file": "SDB_SNAP_SESSIONS",
+                           "file": "$SNAPSHOT_SESSION",
                            "cn": "会话快照",
-                           "en": "SDB_SNAP_SESSIONS"
+                           "en": "$SNAPSHOT_SESSION"
                         },
                         {
                            "id": 1559282920,
-                           "file": "SDB_SNAP_SESSIONS_CURRENT",
+                           "file": "$SNAPSHOT_SESSION_CUR",
                            "cn": "当前会话快照",
-                           "en": "SDB_SNAP_SESSIONS_CURRENT"
+                           "en": "$SNAPSHOT_SESSION_CUR"
                         },
                         {
                            "id": 1559282936,
-                           "file": "SDB_SNAP_COLLECTIONS",
+                           "file": "$SNAPSHOT_CL",
                            "cn": "集合快照",
-                           "en": "SDB_SNAP_COLLECTIONS"
+                           "en": "$SNAPSHOT_CL"
                         },
                         {
                            "id": 1559282937,
-                           "file": "SDB_SNAP_COLLECTIONSPACES",
+                           "file": "$SNAPSHOT_CS",
                            "cn": "集合空间快照",
-                           "en": "SDB_SNAP_COLLECTIONSPACES"
+                           "en": "$SNAPSHOT_CS"
                         },
                         {
                            "id": 1559282938,
-                           "file": "SDB_SNAP_DATABASE",
+                           "file": "$SNAPSHOT_DB",
                            "cn": "数据库快照",
-                           "en": "SDB_SNAP_DATABASE"
+                           "en": "$SNAPSHOT_DB"
                         },
                         {
                            "id": 1559282939,
-                           "file": "SDB_SNAP_SYSTEM",
+                           "file": "$SNAPSHOT_SYSTEM",
                            "cn": "操作系统快照",
-                           "en": "SDB_SNAP_SYSTEM"
+                           "en": "$SNAPSHOT_SYSTEM"
                         },
                         {
                            "id": 1559282940,
-                           "file": "SDB_SNAP_CATALOG",
+                           "file": "$SNAPSHOT_CATA",
                            "cn": "编目信息快照",
-                           "en": "SDB_SNAP_CATALOG"
+                           "en": "$SNAPSHOT_CATA"
                         },
                         {
                            "id": 1559282941,
-                           "file": "SDB_SNAP_TRANSACTIONS",
+                           "file": "$SNAPSHOT_TRANS",
                            "cn": "事务快照",
-                           "en": "SDB_SNAP_TRANSACTIONS"
+                           "en": "$SNAPSHOT_TRANS"
                         },
                         {
                            "id": 1559282942,
-                           "file": "SDB_SNAP_TRANSACTIONS_CURRENT",
+                           "file": "$SNAPSHOT_TRANS_CUR",
                            "cn": "当前事务快照",
-                           "en": "SDB_SNAP_TRANSACTIONS_CURRENT"
+                           "en": "$SNAPSHOT_TRANS_CUR"
                         },
                         {
                            "id": 1559282943,
-                           "file": "SDB_SNAP_ACCESSPLANS",
+                           "file": "$SNAPSHOT_ACCESSPLANS",
                            "cn": "访问计划缓存快照",
-                           "en": "SDB_SNAP_ACCESSPLANS"
+                           "en": "$SNAPSHOT_ACCESSPLANS"
                         },
                         {
                            "id": 1559282944,
-                           "file": "SDB_SNAP_HEALTH",
+                           "file": "$SNAPSHOT_HEALTH",
                            "cn": "节点健康检测快照",
-                           "en": "SDB_SNAP_HEALTH"
+                           "en": "$SNAPSHOT_HEALTH"
                         },
                         {
                            "id": 1559282945,
-                           "file": "SDB_SNAP_CONFIGS",
+                           "file": "$SNAPSHOT_CONFIGS",
                            "cn": "配置快照",
-                           "en": "SDB_SNAP_CONFIGS"
+                           "en": "$SNAPSHOT_CONFIGS"
                         },
                         {
                            "id": 1559282946,
-                           "file": "SDB_SNAP_SEQUENCES",
+                           "file": "$SNAPSHOT_SEQUENCES",
                            "cn": "序列快照",
-                           "en": "SDB_SNAP_SEQUENCES"
+                           "en": "$SNAPSHOT_SEQUENCES"
                         },
                         {
                            "id": 1559282948,
@@ -3966,69 +4214,69 @@
                         },
                         {
                            "id": 1559282949,
-                           "file": "SDB_LIST_CONTEXTS",
+                           "file": "$LIST_CONTEXT",
                            "cn": "上下文列表",
-                           "en": "SDB_LIST_CONTEXTS"
+                           "en": "$LIST_CONTEXT"
                         },
                         {
                            "id": 1559282950,
-                           "file": "SDB_LIST_CONTEXTS_CURRENT",
+                           "file": "$LIST_CONTEXT_CUR",
                            "cn": "当前上下文列表",
-                           "en": "SDB_LIST_CONTEXTS_CURRENT"
+                           "en": "$LIST_CONTEXT_CUR"
                         },
                         {
                            "id": 1559282951,
-                           "file": "SDB_LIST_SESSIONS",
+                           "file": "$LIST_SESSION",
                            "cn": "会话列表",
-                           "en": "SDB_LIST_SESSIONS"
+                           "en": "$LIST_SESSION"
                         },
                         {
                            "id": 1559282952,
-                           "file": "SDB_LIST_SESSIONS_CURRENT",
+                           "file": "$LIST_SESSION_CUR",
                            "cn": "当前会话列表",
-                           "en": "SDB_LIST_SESSIONS_CURRENT"
+                           "en": "$LIST_SESSION_CUR"
                         },
                         {
                            "id": 1559282953,
-                           "file": "SDB_LIST_COLLECTIONS",
+                           "file": "$LIST_CL",
                            "cn": "集合列表",
-                           "en": "SDB_LIST_COLLECTIONS"
+                           "en": "$LIST_CL"
                         },
                         {
                            "id": 1559282954,
-                           "file": "SDB_LIST_COLLECTIONSPACES",
+                           "file": "$LIST_CS",
                            "cn": "集合空间列表",
-                           "en": "SDB_LIST_COLLECTIONSPACES"
+                           "en": "$LIST_CS"
                         },
                         {
                            "id": 1559282955,
-                           "file": "SDB_LIST_STORAGEUNITS",
+                           "file": "$LIST_SU",
                            "cn": "存储单元列表",
-                           "en": "SDB_LIST_STORAGEUNITS"
+                           "en": "$LIST_SU"
                         },
                         {
                            "id": 1559282956,
-                           "file": "SDB_LIST_GROUPS",
+                           "file": "$LIST_GROUP",
                            "cn": "分区组列表",
-                           "en": "SDB_LIST_GROUPS"
+                           "en": "$LIST_GROUP"
                         },
                         {
                            "id": 1559282957,
-                           "file": "SDB_LIST_TRANSACTIONS",
+                           "file": "$LIST_TRANS",
                            "cn": "事务列表",
-                           "en": "SDB_LIST_TRANSACTIONS"
+                           "en": "$LIST_TRANS"
                         },
                         {
                            "id": 1559282958,
-                           "file": "SDB_LIST_TRANSACTIONS_CURRENT",
+                           "file": "$LIST_TRANS_CUR",
                            "cn": "当前事务列表",
-                           "en": "SDB_LIST_TRANSACTIONS_CURRENT"
+                           "en": "$LIST_TRANS_CUR"
                         },
                         {
                            "id": 1559282959,
-                           "file": "SDB_LIST_SEQUENCES",
+                           "file": "$LIST_SEQUENCES",
                            "cn": "序列列表",
-                           "en": "SDB_LIST_SEQUENCES"
+                           "en": "$LIST_SEQUENCES"
                         }
                      ]
                   },

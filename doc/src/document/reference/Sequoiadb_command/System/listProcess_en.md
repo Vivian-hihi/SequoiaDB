@@ -1,0 +1,78 @@
+##NAME##
+
+listProcess - List processes
+
+##SYNOPSIS##
+
+***System.listProcess( \[options\], \[filter\] )***
+
+##CATEGORY##
+
+System
+
+##DESCRIPTION##
+
+List processes
+
+##PARAMETERS##
+
+
+| Name      | Type     | Description                             | Required or not |
+| --------- | -------- | -----------------------------           | -------- |
+| options   | JSON     | search pattern                          | not       |
+| filter    | JSON     | filter, display all by default          | not      |
+
+The detail description of 'options' parameter is as follow:
+
+| Attributes | Type    | Required or not | Format  | Description         |
+| ---------- | ------- |---------------- | ------- | -------------- |
+| detail    | Bool |   not   | { detail: true }     | whether to display details   |
+
+##RETURN VALUE##
+
+On success, return the information of processes.
+
+On error, exception will be thrown.
+
+##ERRORS##
+
+when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please  reference to [Troubleshooting](troubleshooting/general/general_guide.md).
+
+##EXAMPLES##
+
+* List all users
+
+  ```lang-javascript
+  > System.listProcess()
+  {
+    "pid": "30571",
+    "cmd": "sequoiadb(50000) S"
+  }
+  {
+    "pid": "30834",
+    "cmd": "bin/sdb"
+  }
+  {
+    "pid": "30876",
+    "cmd": "/usr/sbin/rsyslogd -n"
+  }
+  ...
+  ```
+
+* Filter the results:
+
+  ```lang-javascript
+  > System.listProcess( { detail: true }, { "user": "sdbadmin" } )
+  {
+    "user": "sdbadmin",
+    "pid": "20630",
+    "status": "S",
+    "cmd": "sleep 1"
+  }
+  {
+    "user": "sdbadmin",
+    "pid": "25681",
+    "status": "Sl",
+    "cmd": "sdbom(11780)"
+  }
+  ```

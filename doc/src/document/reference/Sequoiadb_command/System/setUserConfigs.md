@@ -1,0 +1,41 @@
+##语法##
+
+***System.setUserConfigs( \<optionObj\> )***
+
+##类别##
+
+System
+
+##描述##
+
+修改用户设置
+
+##参数##
+
+| 参数名  | 参数类型 | 默认值       | 描述             | 是否必填 |
+| ------- | -------- | ------------ | ---------------- | -------- |
+| optionObj  | JSON   | ---    | 新的用户配置    | 是       |
+
+optionObj 参数详细说明如下：
+
+| 属性     | 值类型 | 是否<br>必填 | 格式 | 描述 |
+| -------- | ------ | -------- | -------------------- | -------------------- |
+| name    | String |    是   | { name: "username" }     |  修改配置的用户     |
+| Group    | String |   否   | { Group: "groupname" }     |  修改的用户组     |
+| dir    | String |   否   | { dir: "dir" }     |  修改用户家目录    |
+
+##返回值##
+
+无
+
+##错误##
+
+[错误码](reference/Sequoiadb_error_code.md)
+
+##示例##
+
+* 修改进程最大内存大小
+
+  ```lang-javascript
+  > System.setUserConfigs( { "name": "username", "Group": "groupname", "dir": "/home/username" } )
+  ```
