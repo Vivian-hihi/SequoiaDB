@@ -1,13 +1,7 @@
 package com.sequoias3.testcommon;
 
-import java.io.InputStream;
-
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -15,7 +9,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.sequoias3.user.UserCommDefind;
+import java.io.InputStream;
 
 public class TestRest extends S3TestBase {
 	private HttpHeaders requestHeaders;
@@ -95,9 +89,6 @@ public class TestRest extends S3TestBase {
 	}
 
 	public TestRest setRequestHeaders(String headerName, String headerValue) {
-		if (headerName.equals(UserCommDefind.authorization)) {
-			headerValue = UserCommDefind.authValPre + headerValue;
-		}
 		requestHeaders.add(headerName, headerValue);
 		return this;
 	}
