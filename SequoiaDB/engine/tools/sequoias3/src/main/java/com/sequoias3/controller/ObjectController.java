@@ -239,7 +239,7 @@ public class ObjectController {
 
         logger.info("list objectsV2 success. bucketName={}, " +
                 "commonprefix.size={}, " +
-                "content.size={}, ",
+                "content.size={} ",
                 bucketName,
                 result.getCommonPrefixList().size(),
                 result.getCommonPrefixList().size());
@@ -272,7 +272,12 @@ public class ObjectController {
                 bucketName, prefix, delimiter, startAfter,
                 maxKeys, encodingType);
 
-        logger.info("list objectsV1 success. bucketName={}",bucketName);
+        logger.info("list objectsV1 success. bucketName={}," +
+                " commonprefix.size={}," +
+                " content.size={}",
+                bucketName,
+                result.getCommonPrefixList().size(),
+                result.getContentList().size());
         return ResponseEntity.ok()
                 .body(result);
     }
