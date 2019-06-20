@@ -63,6 +63,8 @@ namespace replay
    #define RPL_DEFLATE_SUFFIX                ".deflate"
    #define RPL_INFLATE_SUFFIX                ".inflate"
 
+   #define REPLOG_NAME_PREFIX                "sequoiadbLog."
+
    static volatile BOOLEAN _isRunning = FALSE;
 
    static void _stop(INT32 sigNum)
@@ -1567,6 +1569,40 @@ namespace replay
       goto done;
    }
 
+   INT32 Replayer::_isLogFileName(const string& fileName)
+   {
+      INT32 rc = TRUE;
+      string suffix;
+      string::const_iterator itr;
+      if(0 != ossStrncmp(fileName.c_str(), REPLOG_NAME_PREFIX,
+                               ossStrlen(REPLOG_NAME_PREFIX)))
+      {
+         goto error;
+      }
+
+      suffix = fileName.substr(ossStrlen(REPLOG_NAME_PREFIX));
+      if (suffix.empty())
+      {
+         goto error;
+      }
+
+      itr = suffix.begin();
+      while (itr != suffix.end())
+      {
+         if (!std::isdigit(*itr))
+         {
+            goto error;
+         }
+         ++itr;
+      }
+
+   done:
+      return rc;
+   error:
+      rc = FALSE;
+      goto done;
+   }
+
    INT32 Replayer::_scanReplicaDir(REPLICA_FILE_MAP& replicaFiles,
                                         UINT32& minFileId, UINT32& maxFileId)
    {
@@ -1582,12 +1618,18 @@ namespace replay
               ++dirIter)
          {
             const string filePath = dirIter->path().string();
+            const string fileName = dirIter->path().filename().string();
             BOOLEAN isArchive = FALSE;
             UINT32 fileSize = 0;
             UINT32 fileNum = 0;
             UINT32 fileId = DPS_INVALID_LOG_FILE_ID;
 
             if (!fs::is_regular_file(dirIter->status()))
+            {
+               continue;
+            }
+
+            if(!_isLogFileName(fileName))
             {
                continue;
             }

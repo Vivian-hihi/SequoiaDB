@@ -86,6 +86,7 @@ namespace replay
       INT32 _scanArchiveDir(UINT32& minFileId, UINT32& maxFileId);
       INT32 _replayArchiveFiles(UINT32 minFileId, UINT32 maxFileId);
       INT32 _replayReplicaDir();
+      INT32 _isLogFileName(const string& fileName);
       INT32 _scanReplicaDir(REPLICA_FILE_MAP& replicaFiles, UINT32& minFileId, UINT32& maxFileId);
       INT32 _replayReplicaFiles(REPLICA_FILE_MAP& replicaFiles, UINT32 minFileId, UINT32 maxFileId);
       INT32 _ensureFileSize(const string& filePath, INT64 fileSize);
