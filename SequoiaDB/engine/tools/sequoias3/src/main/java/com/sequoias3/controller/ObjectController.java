@@ -221,7 +221,7 @@ public class ObjectController {
                                         @RequestParam(value = RestParamDefine.ListObjectsPara.FETCH_OWNER, required = false, defaultValue = "false") Boolean fetchOwner)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
-        logger.info("list objectsV2. bucketName={}",bucketName);
+        logger.info("list objectsV2. bucketName={}, delimiter={}, prefix={}, startafter={}",bucketName, delimiter, prefix, startAfter);
 
         if (null != encodingType) {
             if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {
@@ -229,11 +229,20 @@ public class ObjectController {
             }
         }
 
+        if (delimiter != null && delimiter.length() == 0){
+            delimiter = null;
+        }
+
         ListObjectsResult result = objectService.listObjects(operator.getUserId(),
                 bucketName, prefix, delimiter, startAfter,
                 maxKeys, continueToken, encodingType, fetchOwner);
 
-        logger.info("list objectsV2 success. bucketName={}",bucketName);
+        logger.info("list objectsV2 success. bucketName={}, " +
+                "commonprefix.size={}, " +
+                "content.size={}, ",
+                bucketName,
+                result.getCommonPrefixList().size(),
+                result.getCommonPrefixList().size());
         return ResponseEntity.ok()
                 .body(result);
     }
@@ -253,6 +262,10 @@ public class ObjectController {
             if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {
                 throw new S3ServerException(S3Error.OBJECT_INVALID_ENCODING_TYPE, "encoding type must be url");
             }
+        }
+
+        if (delimiter != null && delimiter.length() == 0){
+            delimiter = null;
         }
 
         ListObjectsResultV1 result = objectService.listObjectsV1(operator.getUserId(),
@@ -275,7 +288,7 @@ public class ObjectController {
                                               @RequestParam(value = RestParamDefine.ListObjectVersionsPara.MAX_KEYS, required = false, defaultValue = "1000") Integer maxKeys)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
-        logger.info("list versions. bucketName={}",bucketName);
+        logger.info("list versions. bucketName={}, delimter={}, prefix={}, startafter={}",bucketName, delimiter, prefix, keyMarker);
 
         if (null != encodingType) {
             if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {
@@ -283,10 +296,21 @@ public class ObjectController {
             }
         }
 
+        if (delimiter != null && delimiter.length() == 0){
+            delimiter = null;
+        }
+
         ListVersionsResult result = objectService.listVersions(operator.getUserId(),
                 bucketName, prefix, delimiter, keyMarker, versionIdMarker, maxKeys, encodingType);
 
-        logger.info("list versions success. bucketName={}",bucketName);
+        logger.info("list versions success. bucketName={}, " +
+                        "commonprefix.size={}, " +
+                        "versions.size={}, " +
+                        "deletermarker.size={}",
+                bucketName,
+                result.getCommonPrefixList().size(),
+                result.getVersionList().size(),
+                result.getDeleteMarkerList().size());
         return ResponseEntity.ok()
                 .body(result);
     }
