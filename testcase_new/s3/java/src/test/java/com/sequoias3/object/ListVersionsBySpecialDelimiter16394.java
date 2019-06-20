@@ -70,12 +70,34 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
         runSuccess1 = true;
     }
 
+    //a、字母数字字符[0-9a-zA-Z]
+    @Test
+    private void testEmptyStr() throws Exception {
+        String delimiter = objectNames[5];
+        VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
+                .withBucketName(bucketName)
+                .withDelimiter(""));
+
+        //expected results
+        MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
+        expMap.add(objectNames[0],"0");
+        expMap.add(objectNames[1],"0");
+        expMap.add(objectNames[2],"0");
+        expMap.add(objectNames[3],"0");
+        expMap.add(objectNames[4],"0");
+        expMap.add(objectNames[5],"0");
+
+        //check
+        Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
+        ObjectUtils.checkListVSResults(vsList, new ArrayList<String>(),expMap);
+        runSuccess1 = true;
+    }
+
     //特殊字符：“!”，“-”，“_”，“.”，“*”，“'”，“(”，“)”
     @Test
     private void testSpecial() throws Exception {
         String str = objectNames[0];
-        String[] delimiters = str.split("");
-
+        char[] delimiters = str.toCharArray();
         MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
         expMap.add(objectNames[1],"0");
         expMap.add(objectNames[2],"0");
@@ -85,7 +107,7 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
         for(int i = 0; i < delimiters.length; i++) {
             VersionListing vsList =  s3Client.listVersions( new ListVersionsRequest()
                     .withBucketName(bucketName)
-                    .withDelimiter(delimiters[i]));
+                    .withDelimiter(String.valueOf(delimiters[i])));
             List<String> expCommonPrefixes = new ArrayList<String>();
             expCommonPrefixes.add(str.substring(0,i+1));
             Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
@@ -98,19 +120,17 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
     @Test
     private void testSpecial1() throws Exception {
         String str = objectNames[1];
-        String[] delimiters = str.split("");
-
+        char[] delimiters = str.toCharArray();
         MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
         expMap.add(objectNames[0],"0");
         expMap.add(objectNames[2],"0");
         expMap.add(objectNames[3],"0");
         expMap.add(objectNames[4],"0");
         expMap.add(objectNames[5],"0");
-
         for(int i = 0; i < delimiters.length; i++) {
             VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
                     .withBucketName(bucketName)
-                    .withDelimiter(delimiters[i]));
+                    .withDelimiter(String.valueOf(delimiters[i])));
             List<String> expCommonPrefixes = new ArrayList<String>();
             expCommonPrefixes.add(str.substring(0,i+1));
             Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
@@ -123,19 +143,17 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
     @Test
     private void testSpecial3() throws Exception {
         String str = objectNames[2];
-        String[] delimiters = str.split("");
-
+        char[] delimiters = str.toCharArray();
         MultiValueMap<String,String> expMap = new LinkedMultiValueMap<String,String>();
         expMap.add(objectNames[0],"0");
         expMap.add(objectNames[1],"0");
         expMap.add(objectNames[3],"0");
         expMap.add(objectNames[4],"0");
         expMap.add(objectNames[5],"0");
-
         for(int i = 0; i < delimiters.length; i++) {
             VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
                     .withBucketName(bucketName)
-                    .withDelimiter(delimiters[i]));
+                    .withDelimiter(String.valueOf(delimiters[i])));
             List<String> expCommonPrefixes = new ArrayList<String>();
             expCommonPrefixes.add(str.substring(0,i+1));
             Assert.assertEquals(vsList.isTruncated(),false,"vsList.isTruncated() must be false");
