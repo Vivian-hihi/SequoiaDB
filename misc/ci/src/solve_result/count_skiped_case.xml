@@ -17,7 +17,7 @@
                   <not>
                      <equals arg1="${DEPLOY_MODE}" arg2="STANDALONE"/>
                   </not>
-               <and>
+               </and>
                <then>
                   <var name="report_full_name" value="${WORKSPACE}/report/reliability/testcase_skip_report.xml"/>
                   <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="${report_full_name}"/>
