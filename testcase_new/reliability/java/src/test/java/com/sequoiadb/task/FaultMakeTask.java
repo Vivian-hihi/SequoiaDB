@@ -6,12 +6,11 @@
  */
 package com.sequoiadb.task;
 
+import java.util.logging.Logger;
+
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.Fault;
 import com.sequoiadb.fault.FaultWrapper;
-
-import java.util.Random;
-import java.util.logging.Logger;
 
 public class FaultMakeTask extends Task {
     private final static Logger log = Logger.getLogger(FaultMakeTask.class.getName());
@@ -23,25 +22,29 @@ public class FaultMakeTask extends Task {
     private int duration;
     private int _randomStartMaxDuration = 0;
 
-    private volatile boolean isMakeSuccess=false;
+    private volatile boolean isMakeSuccess = false;
 
     public FaultMakeTask(Fault instance, int maxDlay, int duration, int checkTimes) {
         super(instance.getName());
         faultInstance = new FaultWrapper(instance, checkTimes);
         this.duration = duration;
+        this._randomStartMaxDuration = maxDlay;
     }
 
+    @SuppressWarnings("static-access")
+    @Override
     public void run() {
-        Random random = new Random();
         try {
-            Thread.currentThread()
-                    .sleep(random.nextInt(_randomStartMaxDuration * 1000));
+            if (_randomStartMaxDuration <= 0) {
+                Thread.currentThread().sleep(100);
+            } else {
+                Thread.currentThread().sleep(_randomStartMaxDuration * 1000);
+            }
         } catch (Exception e) {
-            // TODO Auto-generated catch block
         }
         try {
             faultInstance.make();
-            isMakeSuccess=true;
+            isMakeSuccess = true;
         } catch (ReliabilityException e) {
             setException(e);
         }
@@ -56,9 +59,11 @@ public class FaultMakeTask extends Task {
         }
 
     }
-    public boolean isMakeSuccess(){
+
+    public boolean isMakeSuccess() {
         return isMakeSuccess;
     }
+
     @Override
     public void init() throws ReliabilityException {
         faultInstance.init();
