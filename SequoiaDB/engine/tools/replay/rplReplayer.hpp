@@ -112,7 +112,9 @@ namespace replay
       INT32 _rollbackPop(const CHAR* log);
       INT32 _deflateFile(const string& file);
       INT32 _inflateFile(const string& file);
-      INT32 _checkSubmit() ;
+      INT32 _checkSubmit();
+
+      void _removeTmpFile();
 
    private:
       string                     _tmpFile;

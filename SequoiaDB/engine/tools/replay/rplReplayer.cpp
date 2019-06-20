@@ -117,12 +117,6 @@ namespace replay
       SAFE_OSS_DELETE( _outputter ) ;
       SAFE_OSS_DELETE( _monitorStore ) ;
 
-      if (!_tmpFile.empty())
-      {
-         ossFile::deleteFile(_tmpFile);
-         _tmpFile = "";
-      }
-
       if (_bufSize > 0)
       {
          SAFE_OSS_FREE(_buf);
@@ -173,18 +167,6 @@ namespace replay
          ss << "sdbreplay.tmp."
             << ossGetCurrentProcessID();
          _tmpFile = ss.str();
-
-         // test
-         ossFile file;
-         rc = file.open(_tmpFile,
-                        OSS_CREATEONLY | OSS_READWRITE,
-                        OSS_DEFAULTFILE);
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "Failed to open temporary file[%s], rc=%d",
-                   _tmpFile.c_str(), rc);
-            goto error;
-         }
       }
 
       rc = _regSignalHandler();
@@ -430,6 +412,7 @@ namespace replay
       dpsArchiveFile archiveFile;
       dpsLogFile logFile;
       string filePath = file;
+      BOOLEAN hasTmpFile = FALSE ;
 
       PD_LOG(PDEVENT, "Begin to replay archive log file[%s]",
              file.c_str());
@@ -482,6 +465,7 @@ namespace replay
 
       if (archiveHeader->hasFlag(DPS_ARCHIVE_COMPRESSED))
       {
+         hasTmpFile = TRUE ;
          ossFile::deleteFile(_tmpFile);
          rc = _archiveFileMgr.copyArchiveFile(file, _tmpFile,
                                               DPS_ARCHIVE_COPY_UNCOMPRESS);
@@ -550,6 +534,10 @@ namespace replay
       }
 
    done:
+      if (hasTmpFile)
+      {
+         _removeTmpFile() ;
+      }
       return rc;
    error:
       goto done;
@@ -1228,6 +1216,14 @@ namespace replay
       return rc ;
    error:
       goto done ;
+   }
+
+   void Replayer::_removeTmpFile()
+   {
+      if (!_tmpFile.empty())
+      {
+         ossFile::deleteFile(_tmpFile);
+      }
    }
 
    INT32 Replayer::_scanArchiveDir(UINT32& minFileId, UINT32& maxFileId)
