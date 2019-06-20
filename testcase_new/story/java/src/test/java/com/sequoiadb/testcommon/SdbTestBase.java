@@ -61,7 +61,7 @@ public class SdbTestBase {
     public static final String RCUSERBS = "rcuserbs";
 
     private static ConfigOptions options = new ConfigOptions();
-    private static String testGroup = "ru";
+    private static String testGroup = null;
     private static final int newIndexScanStep = 100;
     private static final int timeOutLen = 120;
     private static final Map<String, BSONObject> group2Conf = new HashMap<String, BSONObject>();
@@ -262,18 +262,21 @@ public class SdbTestBase {
 
     @BeforeTest(groups = { RU, RC, RCWAITLOCK, RS, RCAUTO, RCUSERBS })
     public static synchronized void initTestGroups() {
+        if ( testGroup == null ) return ;
         System.out.println("init " + testGroup + " Groups...........");
         modifyNodeConf(group2Conf.get(testGroup), null);
     }
 
     @AfterTest(groups = { RC, RU, RCWAITLOCK, RS, RCAUTO, RCUSERBS }, alwaysRun = true)
     public static synchronized void finiTestGroups() {
+        if ( testGroup == null ) return ;
         System.out.println("fini " + testGroup + " Groups...........");
         for (String key : node2Conf.keySet()) {
             BasicBSONObject opt = new BasicBSONObject();
             opt.put(NODENAME, key);
             modifyNodeConf(node2Conf.get(key), opt);
         }
+        testGroup = null ;
     }
 
     @AfterSuite(alwaysRun = true)
