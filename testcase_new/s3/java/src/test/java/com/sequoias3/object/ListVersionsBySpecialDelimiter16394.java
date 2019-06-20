@@ -70,10 +70,9 @@ public class ListVersionsBySpecialDelimiter16394 extends S3TestBase {
         runSuccess1 = true;
     }
 
-    //a、字母数字字符[0-9a-zA-Z]
+    //b、""
     @Test
     private void testEmptyStr() throws Exception {
-        String delimiter = objectNames[5];
         VersionListing vsList = s3Client.listVersions( new ListVersionsRequest()
                 .withBucketName(bucketName)
                 .withDelimiter(""));
