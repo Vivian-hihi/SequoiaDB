@@ -118,8 +118,6 @@ namespace engine
    {
       SDB_ASSERT( pBuff && bufSize > 0, "Invalid input" ) ;
 
-      UINT32 len = 0 ;
-
       if ( DPS_TRANS_IS_FIRSTOP( transID ) )
       {
          _dpsAppendFlagString( pBuff, bufSize, "Start" ) ;
