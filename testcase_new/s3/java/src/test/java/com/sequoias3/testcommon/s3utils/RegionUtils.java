@@ -56,6 +56,12 @@ public class RegionUtils extends S3TestBase {
 			throw httpToAmazon(e);
 		}
 	}
+
+	public static void clearRegion(String regionName) throws Exception {
+		if(headRegion(regionName)){
+			deleteRegion(regionName);
+		}
+	}
 	
 	public static boolean deleteRegion(String regionName) throws Exception {
 		return deleteRegion(regionName, S3TestBase.s3AccessKeyId);
@@ -74,13 +80,8 @@ public class RegionUtils extends S3TestBase {
 			if (resp.getStatusCodeValue() == 204) {
 				isDelete = true;
 			}
-			if (resp.getStatusCodeValue() == 404) {
-				isDelete = true;
-			}
 		} catch (HttpClientErrorException e) {
-			if( e.getStatusCode().value() != 404 ){
 				throw httpToAmazon(e);
-			}
 		}
 		return isDelete;
 	}
@@ -272,16 +273,16 @@ public class RegionUtils extends S3TestBase {
 
 	public static boolean clInCS(String csName,String clName){
 		Sequoiadb db = null;
-		List<String> clNames;
+		boolean doesCLExist;
 		try{
 			db = new Sequoiadb(S3TestBase.coordUrl, "", "");
-			clNames = db.getCollectionSpace(csName).getCollectionNames();
+			doesCLExist = db.getCollectionSpace(csName).isCollectionExist(clName);
 		}finally {
 			if(db != null){
 				db.close();
 			}
 		}
-		return clNames.contains(csName+"." + clName);
+		return doesCLExist;
 	}
 
 	public static boolean doesCSExist(String csName){
