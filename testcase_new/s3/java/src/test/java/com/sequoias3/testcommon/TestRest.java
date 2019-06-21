@@ -28,7 +28,7 @@ public class TestRest extends S3TestBase {
 	static {
 		HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
 		factory.setConnectionRequestTimeout(10000);
-		factory.setConnectTimeout(10000);
+		factory.setConnectTimeout(60000);
 		factory.setBufferRequestBody(false);
 		factory.setReadTimeout(180000);
 		rest = new RestTemplate(factory);
