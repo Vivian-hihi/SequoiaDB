@@ -266,7 +266,7 @@
       { path: '/Deploy/AddHost',
         options: {
            templateUrl: './app/template/Deploy/InstallHost/Add.html',
-           resolve: resolveFun( [ './app/controller/Deploy/InstallHost/Add.js' ] )
+           resolve: resolveFun( [ './app/controller/Deploy/InstallHost/Add.js', './app/controller/Deploy/InstallHost/AddHost.HostList.js', './app/controller/Deploy/InstallHost/AddHost.HostInfo.js' ] )
         }
       },
       //²¿ÊðÒµÎñ
