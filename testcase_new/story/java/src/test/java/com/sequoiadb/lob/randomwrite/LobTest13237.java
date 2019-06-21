@@ -193,7 +193,7 @@ public class LobTest13237 extends SdbTestBase {
      *
      * @param lobsize
      */
-    @Test(enabled = false)
+    //@Test(enabled = false) 去掉设置的enabled=false，和面在lob优化任务中统一优化用例
     public void testLob13256(int lobsize) throws InterruptedException {
         ObjectId id = createEmptyLob(dbcl);
         long time1 = System.currentTimeMillis() / 1000;
