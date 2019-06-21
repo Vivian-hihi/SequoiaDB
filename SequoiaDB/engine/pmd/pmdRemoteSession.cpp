@@ -1504,11 +1504,6 @@ namespace engine
       {
          MAP_SUB_SESSIONPTR disSubs ;
 
-         if ( pHandle )
-         {
-            pHandle->onHandleClose( this, handle, pReply ) ;
-         }
-
          itPtr = _mapReq2SubSession.begin() ;
          while ( itPtr != _mapReq2SubSession.end() )
          {
@@ -1566,6 +1561,11 @@ namespace engine
                                     TRUE ) ;
                }
             }
+         }
+
+         if ( pHandle )
+         {
+            pHandle->onHandleClose( this, handle, pReply ) ;
          }
       }
       else

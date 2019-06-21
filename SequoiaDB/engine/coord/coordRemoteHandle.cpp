@@ -108,7 +108,8 @@ namespace engine
          {
             pSession->reConnectSubSession( pReply->routeID.value ) ;
          }
-         else if ( MSG_BS_TRANS_BEGIN_RSP != orgRspOpCode )
+         else if ( SDB_OK == pOpReply->flags ||
+                   MSG_BS_TRANS_BEGIN_RSP != orgRspOpCode )
          {
             if ( pStatus->_initTrans )
             {
@@ -591,6 +592,9 @@ namespace engine
       UINT64 nodeSiteVer = 0 ;
       MsgRouteID nodeID = pSub->getNodeID() ;
 
+      pStatus = ( coordRemoteHandleStatus* )pSub->getUDFData() ;
+      pStatus->init() ;
+
       /// is not data node, ignored
       if ( nodeID.columns.groupID < DATA_GROUP_ID_BEGIN ||
            nodeID.columns.groupID > DATA_GROUP_ID_END ||
@@ -605,9 +609,6 @@ namespace engine
          ossUnpack32From64( nodeSiteVer, nodeSiteSchedVer, 
                             nodeSiteSessionVer ) ;
       }
-
-      pStatus = ( coordRemoteHandleStatus* )pSub->getUDFData() ;
-      pStatus->init() ;
 
       rc = _checkSessionSchedInfo( pSession, pSub, cb, nodeSiteSchedVer ) ;
       if ( rc )

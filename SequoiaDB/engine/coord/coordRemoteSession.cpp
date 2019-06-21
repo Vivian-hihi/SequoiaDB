@@ -202,7 +202,7 @@ namespace engine
       MAP_TRANS_NODES_CIT cit ;
       routeID.value = 0 ;
 
-      cit = _mapTransNodes.find( routeID.columns.groupID ) ;
+      cit = _mapTransNodes.find( groupID ) ;
       if ( cit != _mapTransNodes.end() )
       {
          routeID = cit->second ;
