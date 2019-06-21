@@ -51,7 +51,7 @@ public class UpdateRegion17308 extends S3TestBase{
         TestTools.LocalFile.createFile(updatePath, fileSize);
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client,bucketName);
-        RegionUtils.deleteRegion(regionName);
+        RegionUtils.clearRegion(regionName);
         RegionUtils.createDomain(domainName);
     }
    

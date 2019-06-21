@@ -17,7 +17,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -26,6 +25,7 @@ import java.util.List;
 
 /**
  * @Description: seqDB-17299 ::创建区域配置DataCSShardingType策略小于CLShardingType策略
+ * 此用例时间跳变会影响到db日志，所以不上ci
  * @author fanyu
  * @Date:2019年01月22日
  * @version:1.0
@@ -42,7 +42,7 @@ public class CreateRegion17299 extends S3TestBase{
     private int fileNum = 3;
     private boolean runSuccess = false;
     @BeforeClass
-    private void setUp() throws IOException {
+    private void setUp() throws Exception {
         localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
         TestTools.LocalFile.removeFile(localPath);
         TestTools.LocalFile.createDir(localPath.toString());
@@ -54,6 +54,7 @@ public class CreateRegion17299 extends S3TestBase{
         }
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client,bucketName);
+        RegionUtils.clearRegion(regionName);
     }
 
     @Test

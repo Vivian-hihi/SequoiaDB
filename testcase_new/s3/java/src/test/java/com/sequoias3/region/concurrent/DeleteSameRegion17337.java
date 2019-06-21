@@ -1,5 +1,6 @@
 package com.sequoias3.region.concurrent;
 
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -23,9 +24,7 @@ public class DeleteSameRegion17337 extends S3TestBase{
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+		RegionUtils.clearRegion(regionName);
 		Region region = new Region();
         region.withName(regionName);
         RegionUtils.putRegion(region);
@@ -45,7 +44,13 @@ public class DeleteSameRegion17337 extends S3TestBase{
 	private class DeleteRegionThread extends S3ThreadBase{
 		@Override
 		public void exec() throws Exception {
-			RegionUtils.deleteRegion(regionName);
+			try {
+				RegionUtils.deleteRegion(regionName);
+			}catch (AmazonS3Exception e){
+				if(e.getStatusCode() != 404){
+					throw e;
+				}
+			}
 		}
 	}
 }

@@ -24,9 +24,10 @@ public class CreateRegion17292 extends S3TestBase {
 	private String[] metaclNames = { "dataCL17292" };
 
 	@BeforeClass
-	private void setUp() {
+	private void setUp() throws Exception {
 		RegionUtils.createCSAndCL(csNames[0], dataclNames);
-		RegionUtils.createCSAndCL(csNames[1], metaclNames);		
+		RegionUtils.createCSAndCL(csNames[1], metaclNames);
+		RegionUtils.clearRegion(regionName);
 	}
 
 	@Test

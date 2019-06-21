@@ -32,9 +32,12 @@ public class CreateRegion17300 extends S3TestBase{
     private AmazonS3 s3Client = null;
     private boolean runSuccess = false;
     @BeforeClass
-    private void setUp() throws IOException {
+    private void setUp() throws Exception {
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client,bucketName);
+        for(String regionName : regionNames){
+            RegionUtils.clearRegion(regionName);
+        }
     }
     @DataProvider(name="range-provider")
     private Object[][] rangeData(){

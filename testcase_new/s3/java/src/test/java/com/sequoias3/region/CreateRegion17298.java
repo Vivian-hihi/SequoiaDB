@@ -1,19 +1,18 @@
 package com.sequoias3.region;
 
-import java.io.File;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import java.io.File;
 
 /**
  * @Description seqDB-17298: create Region and specify set DataCSShardingType.
@@ -43,7 +42,7 @@ public class CreateRegion17298 extends S3TestBase {
 
 	@Test(dataProvider = "regionProvider")
 	public void testRegion(String regionName, String dataCSShardingType, String bucketName) throws Exception {
-		RegionUtils.deleteRegion(regionName);
+		RegionUtils.clearRegion(regionName);
 
 		Region region = new Region();
 		region.withDataCSShardingType(dataCSShardingType).withName(regionName);

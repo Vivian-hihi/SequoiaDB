@@ -1,12 +1,5 @@
 package com.sequoias3.region.concurrent;
 
-import java.io.File;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.sequoias3.region.GetRegionResult;
 import com.sequoias3.region.Region;
@@ -16,6 +9,12 @@ import com.sequoias3.testcommon.S3ThreadBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.File;
 
 /**
  * @Description seqDB-17340: concurrent update region and get region.
@@ -46,7 +45,7 @@ public class UpdateAndGetRegion17340 extends S3TestBase {
 
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
-		RegionUtils.deleteRegion(regionName);
+		RegionUtils.clearRegion(regionName);
 		Region region = new Region();			
 		region.withDataCSShardingType(oldShardingType).withDataCLShardingType(oldShardingType)
 				.withName(regionName);

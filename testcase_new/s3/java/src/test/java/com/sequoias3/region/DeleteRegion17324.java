@@ -35,8 +35,8 @@ public class DeleteRegion17324 extends S3TestBase {
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client,bucketName);
         RegionUtils.createCSAndCL(csName, clNames);
-        RegionUtils.deleteRegion(regionName1);
-        RegionUtils.deleteRegion(regionName2);
+        RegionUtils.clearRegion(regionName1);
+        RegionUtils.clearRegion(regionName2);
     }
 
     @Test

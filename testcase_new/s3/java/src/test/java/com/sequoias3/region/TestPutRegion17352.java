@@ -78,7 +78,7 @@ public class TestPutRegion17352 extends S3TestBase{
 	
 	@Test(dataProvider = "legalRegionNameProvider")
 	public void legalRegionName(String regionName, String mode, String dataCSShardingType, String dataCLShardingType) throws Exception {
-		RegionUtils.deleteRegion(regionName);
+		RegionUtils.clearRegion(regionName);
 		//test a : specified mode
 		if(mode.equals("specifiedMode")){
 		    Region region = new Region();

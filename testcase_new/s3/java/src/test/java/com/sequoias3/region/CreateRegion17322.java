@@ -32,7 +32,7 @@ public class CreateRegion17322 extends S3TestBase{
     @BeforeClass
     private void setUp() throws Exception {
         s3Client = CommLib.buildS3Client();
-        RegionUtils.deleteRegion(regionName);
+        RegionUtils.clearRegion(regionName);
         for(int i = 0; i < bucketNum; i++){
             bucketNames.add(bucketNameBase+"-" + i);
         }

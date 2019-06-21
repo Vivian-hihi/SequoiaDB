@@ -1,18 +1,17 @@
 package com.sequoias3.region;
 
-import java.io.File;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.File;
 
 /**
  * @Description seqDB-17291: create Region and specify cs and cl.
@@ -47,7 +46,7 @@ public class CreateRegion17291 extends S3TestBase {
 
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
-		RegionUtils.deleteRegion(regionName);
+		RegionUtils.clearRegion(regionName);
 	}
 
 	@Test
@@ -59,10 +58,8 @@ public class CreateRegion17291 extends S3TestBase {
 		region.withMetaLocation(metaLocation).withDataLocation(dataLocation).withMetaHisLocation(metaHisLocation)
 				.withName(regionName);
 		RegionUtils.putRegion(region);
-
 		// get region and check region info
 		checkRegion(metaLocation, metaHisLocation, dataLocation);
-
 		// create object on region
 		createObjectAndCheckResult();
 		runSuccess = true;

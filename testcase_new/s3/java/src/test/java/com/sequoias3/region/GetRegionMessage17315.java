@@ -29,9 +29,7 @@ public class GetRegionMessage17315 extends S3TestBase{
 		s3Client = CommLib.buildS3Client();
 		
 		CommLib.clearBucket(s3Client, bucketName);
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+		RegionUtils.clearRegion(regionName);
 	}
 	
 	@Test
@@ -47,7 +45,6 @@ public class GetRegionMessage17315 extends S3TestBase{
 		try {
 			if (runSuccess) {
 				s3Client.deleteBucket(bucketName);
-				RegionUtils.deleteRegion(regionName);
 			}
 		}finally {
 			if( s3Client != null ){

@@ -1,17 +1,5 @@
 package com.sequoias3.region.concurrent;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
@@ -24,6 +12,17 @@ import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @Description seqDB-17339: concurrent remove region and create bucket on region.
@@ -55,8 +54,8 @@ public class RemoveRegionAndCreateBucket17339 extends S3TestBase {
 		TestTools.LocalFile.createFile(filePath, fileSize);	
 
 		s3Client = CommLib.buildS3Client();
-		CommLib.clearUser(userName);		
-		RegionUtils.deleteRegion(regionName);
+		CommLib.clearUser(userName);
+		RegionUtils.clearRegion(regionName);
 		Region region = new Region();			
 		region.withName(regionName);
 		RegionUtils.putRegion(region);
@@ -95,7 +94,9 @@ public class RemoveRegionAndCreateBucket17339 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearUser(userName);
-				RegionUtils.deleteRegion(regionName);				
+				if(RegionUtils.headRegion(regionName)) {
+					RegionUtils.deleteRegion(regionName);
+				}
 				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {

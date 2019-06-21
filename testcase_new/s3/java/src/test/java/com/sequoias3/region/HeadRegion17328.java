@@ -1,18 +1,17 @@
 package com.sequoias3.region;
 
-import java.util.Date;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.Date;
 
 /**
  * test content: Head查询区域信息
@@ -38,18 +37,16 @@ public class HeadRegion17328 extends S3TestBase{
 		
 		dataCSName = RegionUtils.getDataCSName(regionName.toLowerCase(), "year", new Date());
 		metaCSName = RegionUtils.getMetaCSName(regionName.toLowerCase());
-		
+
 		if (sdb.isCollectionSpaceExist(dataCSName)) {
 			sdb.dropCollectionSpace(dataCSName);
 		}
 		if (sdb.isCollectionSpaceExist(metaCSName)) {
 			sdb.dropCollectionSpace(metaCSName);
 		}
-		
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+
 		CommLib.clearBucket(s3Client, bucketName);
+		RegionUtils.clearRegion(regionName);
 		
 		//create region
         Region region = new Region();

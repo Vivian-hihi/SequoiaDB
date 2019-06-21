@@ -28,7 +28,7 @@ public class GetRegion17323 extends S3TestBase {
     @BeforeClass
     private void setUp() throws Exception {
         CommLib.clearUser(username);
-        RegionUtils.deleteRegion(regionName);
+        RegionUtils.clearRegion(regionName);
         JSONObject user = UserUtils.createUser(username, UserCommDefind.normal, UserUtils.accessKeyId);
         accessKeyID = user.getJSONObject(UserCommDefind.accessKeys).getString(UserCommDefind.accessKeyID);
     }

@@ -34,7 +34,7 @@ public class CreateSameRegionByDiffType17332 extends S3TestBase {
 	@BeforeClass
 	private void setUp() throws Exception {	
       s3Client = CommLib.buildS3Client();
-      RegionUtils.deleteRegion(regionName);
+      RegionUtils.clearRegion(regionName);
 	}
 	
 	@Test

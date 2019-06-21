@@ -1,18 +1,17 @@
 package com.sequoias3.region;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.RegionUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * test content: 更新/删除区域，获取区域列表
@@ -48,9 +47,7 @@ public class GetRegionList17318 extends S3TestBase{
 		for(int i = 0; i < regionNum; i++ ){
 			String currRegionName = regionName+"-"+i;
 			regionNames.add(currRegionName.toLowerCase());
-			if(RegionUtils.headRegion(currRegionName)){
-				RegionUtils.deleteRegion(currRegionName);
-			}
+			RegionUtils.clearRegion(currRegionName);
 		}
 	}
 	

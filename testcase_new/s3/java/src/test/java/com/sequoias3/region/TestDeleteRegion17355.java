@@ -29,10 +29,8 @@ public class TestDeleteRegion17355 extends S3TestBase{
 	private void setUp() throws Exception {
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
-		
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+
+		RegionUtils.clearRegion(regionName);
 		Region region = new Region();
         region.withName(regionName)
         .withMetaLocation(metaCSName + "." + metaClNames[0])

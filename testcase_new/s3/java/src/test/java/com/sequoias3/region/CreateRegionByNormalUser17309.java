@@ -38,10 +38,7 @@ public class CreateRegionByNormalUser17309 extends S3TestBase{
 		CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
-		
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+		RegionUtils.clearRegion(regionName);
 	}
 	
 	@Test

@@ -1,12 +1,11 @@
 package com.sequoias3.region;
 
-import org.testng.Assert;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.RegionUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.s3utils.RegionUtils;
 
 /**
  * test content: 删除不存在的区域
@@ -26,8 +25,10 @@ public class DeleteRegion17326 extends S3TestBase{
 	public void testGetRegionMessage() throws Exception {
 		try{
 			RegionUtils.deleteRegion(NonexistentRegion);
-		}catch(Exception e){
-			Assert.fail("delete non-existent region should not throw exceptions!" + " errorMeg: " + e.getMessage());
+		}catch(AmazonS3Exception e){
+			if(e.getStatusCode() != 404) {
+				throw e;
+			}
 		}
 	}
 	

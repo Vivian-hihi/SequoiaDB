@@ -33,7 +33,7 @@ public class DeleteRegion17325 extends S3TestBase {
     private void setUp() throws Exception {
         s3Client = CommLib.buildS3Client();
         CommLib.clearBucket(s3Client,bucketName);
-        RegionUtils.deleteRegion(regionName);
+        RegionUtils.clearRegion(regionName);
     }
 
     @Test

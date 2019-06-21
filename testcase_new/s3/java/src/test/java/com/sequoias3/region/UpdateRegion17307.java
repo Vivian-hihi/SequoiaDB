@@ -25,7 +25,7 @@ public class UpdateRegion17307 extends S3TestBase {
     @BeforeClass
     private void setUp() throws Exception {
         for (String regionName : regionNames) {
-            RegionUtils.deleteRegion(regionName);
+            RegionUtils.clearRegion(regionName);
         }
     }
 

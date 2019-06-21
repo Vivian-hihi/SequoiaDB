@@ -1,13 +1,5 @@
 package com.sequoias3.region;
 
-import java.util.Date;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
@@ -15,6 +7,13 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * test content: 获取区域信息
@@ -61,12 +60,8 @@ public class GetRegionMessage17320 extends S3TestBase{
 		RegionUtils.dropDomain(metaDomain);
 		RegionUtils.dropDomain(dataDomain);
 
-		if (RegionUtils.headRegion(specifiedModeRegion)) {
-			RegionUtils.deleteRegion(specifiedModeRegion);
-		}
-		if (RegionUtils.headRegion(shardingModeRegion)) {
-			RegionUtils.deleteRegion(shardingModeRegion);
-		}
+		RegionUtils.clearRegion(specifiedModeRegion);
+		RegionUtils.clearRegion(shardingModeRegion);
 		
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);

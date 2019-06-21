@@ -23,7 +23,7 @@ public class CreateSameRegionBySameType17333 extends S3TestBase {
 	
 	@BeforeClass
 	private void setUp() throws Exception {
-      RegionUtils.deleteRegion(regionName);
+		RegionUtils.clearRegion(regionName);
 	}
 	
 	@Test(threadPoolSize = 2,invocationCount = 2)

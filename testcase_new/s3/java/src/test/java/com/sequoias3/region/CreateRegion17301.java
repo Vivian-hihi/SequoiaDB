@@ -24,7 +24,10 @@ public class CreateRegion17301 extends S3TestBase{
     private String domainName2 = "Exist17301";
 
     @BeforeClass
-    private void setUp() throws IOException {
+    private void setUp() throws Exception {
+        for(String regionName : regionNames){
+            RegionUtils.clearRegion(regionName);
+        }
     }
     @DataProvider(name="range-provider")
     private Object[][] rangeData(){

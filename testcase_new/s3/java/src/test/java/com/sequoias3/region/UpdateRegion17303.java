@@ -22,7 +22,7 @@ public class UpdateRegion17303 extends S3TestBase{
     @BeforeClass
     private void setUp() throws Exception {
         RegionUtils.createCSAndCL(csName,clNames);
-        RegionUtils.deleteRegion(regionName);
+        RegionUtils.clearRegion(regionName);
     }
 
     @Test

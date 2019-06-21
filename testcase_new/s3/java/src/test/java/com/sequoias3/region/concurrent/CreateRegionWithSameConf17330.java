@@ -50,7 +50,7 @@ public class CreateRegionWithSameConf17330 extends S3TestBase {
 
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
-		RegionUtils.deleteRegion(regionName);
+		RegionUtils.clearRegion(regionName);
 	}
 
 	@Test(threadPoolSize=100)

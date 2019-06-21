@@ -1,14 +1,5 @@
 package com.sequoias3.region.concurrent;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.GetObjectRequest;
@@ -21,6 +12,14 @@ import com.sequoias3.testcommon.S3ThreadBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.ObjectUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * test content: 相同区域并发创建对象
@@ -51,10 +50,8 @@ public class CreateObjectsInSameRegion17336 extends S3TestBase{
 		
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
-		
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+
+		RegionUtils.clearRegion(regionName);
 		Region region = new Region();
         region.withName(regionName);
         RegionUtils.putRegion(region);

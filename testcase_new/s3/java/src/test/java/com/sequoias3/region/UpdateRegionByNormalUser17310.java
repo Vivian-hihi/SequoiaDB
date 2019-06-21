@@ -31,10 +31,8 @@ public class UpdateRegionByNormalUser17310 extends S3TestBase{
 		CommLib.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
-		
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+
+		RegionUtils.clearRegion(regionName);
 		
 		//create region by administrator
         Region region = new Region();

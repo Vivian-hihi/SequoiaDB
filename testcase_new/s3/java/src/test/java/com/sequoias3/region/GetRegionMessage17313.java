@@ -47,13 +47,9 @@ public class GetRegionMessage17313 extends S3TestBase{
 		
 		RegionUtils.createCSAndCL(metaCSName, metaClNames);
 		RegionUtils.createCSAndCL(dataCSName, dataClName);
-		
-		if(RegionUtils.headRegion(specifiedRegionName)){
-			RegionUtils.deleteRegion(specifiedRegionName);
-		}
-		if(RegionUtils.headRegion(shardingTypeRegionName)){
-			RegionUtils.deleteRegion(shardingTypeRegionName);
-		}
+
+		RegionUtils.clearRegion(specifiedRegionName);
+		RegionUtils.clearRegion(shardingTypeRegionName);
 	}
 	
 	@Test

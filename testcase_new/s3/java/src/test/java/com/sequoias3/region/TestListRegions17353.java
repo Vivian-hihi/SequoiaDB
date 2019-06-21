@@ -25,9 +25,7 @@ public class TestListRegions17353 extends S3TestBase{
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+		RegionUtils.clearRegion(regionName);
 		Region region = new Region();
         region.withName(regionName);
         RegionUtils.putRegion(region);

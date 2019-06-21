@@ -1,16 +1,15 @@
 package com.sequoias3.region;
 
-import java.util.List;
-
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.RegionUtils;
+import com.sequoias3.testcommon.s3utils.UserUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.s3utils.RegionUtils;
-import com.sequoias3.testcommon.s3utils.UserUtils;
+import java.util.List;
 
 /**
  * test content: 非管理员用户获取区域列表信息
@@ -32,10 +31,7 @@ public class GetRegionListByNormalUser17319 extends S3TestBase{
 		CommLib.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
-		
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+		RegionUtils.clearRegion(regionName);
 	}
 	
 	@Test

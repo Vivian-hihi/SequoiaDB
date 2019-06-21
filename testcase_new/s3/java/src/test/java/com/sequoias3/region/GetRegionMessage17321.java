@@ -1,15 +1,14 @@
 package com.sequoias3.region;
 
-import java.util.List;
-
+import com.amazonaws.services.s3.model.Bucket;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.RegionUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.amazonaws.services.s3.model.Bucket;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.s3utils.RegionUtils;
+import java.util.List;
 
 /**
  * test content: 获取空区域信息
@@ -25,9 +24,7 @@ public class GetRegionMessage17321 extends S3TestBase{
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		if(RegionUtils.headRegion(regionName)){
-			RegionUtils.deleteRegion(regionName);
-		}
+		RegionUtils.clearRegion(regionName);
 	}
 	
 	@Test
