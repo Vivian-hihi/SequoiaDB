@@ -229,7 +229,7 @@ TEST_F( getSlaveNoPos13786, twoNodesNoMaster )
       rc = rg.getSlave( slave ) ;
       ASSERT_EQ( SDB_OK, rc ) << "fail to getSlave1" ;
       const CHAR* slaveSvc = slave.getServiceName() ;
-      #ASSERT_STRNE( masterSvc, slaveSvc ) << "fail to check svcName" ;
+      //ASSERT_STRNE( masterSvc, slaveSvc ) << "fail to check svcName" ;
    }
    
    rc = release() ;
