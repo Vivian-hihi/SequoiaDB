@@ -6,6 +6,9 @@
    </taskdef>
    
    <target name="detect_testcase_skip">
+      <var name="errmsg" value=""/>
+      <var name="report_full_name" value="${WORKSPACE}/report/reliability/testcase_skip_report.xml"/>
+      <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="${report_full_name}"/>
       <for param="filename">
          <path>
             <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
@@ -19,17 +22,16 @@
                   </not>
                </and>
                <then>
-                  <var name="report_full_name" value="${WORKSPACE}/report/reliability/testcase_skip_report.xml"/>
-                  <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="${report_full_name}"/>
-                  
-                  <replace file="${report_full_name}" token="ERROR_MESSAGE" value="testcase @{filename} skipped"/>
+                  <var name="errmsg" value="${errmsg}&#10;testcase @{filename} skipped"/>
+                  <!--replace file="${report_full_name}" token="ERROR_MESSAGE" value="testcase @{filename} skipped"/-->
                   <replace file="${report_full_name}" token="TESTSUIT_NAME" value="detect_testcase"/>
                   <replace file="${report_full_name}" token="TESTCASE_TYPE" value="detect_env"/>
                   <replace file="${report_full_name}" token="TESTCASE_NAME" value="testcase_skip_exception"/>
-               </then><!--检视：放到 detect_env/detect_testcase， 改下detect_testcase_core的报告  ok-->
+               </then>
             </if>
          </sequential>
       </for>
+      <replace file="${report_full_name}" token="ERROR_MESSAGE" value="${errmsg}"/>
    </target>
    
 </project>
