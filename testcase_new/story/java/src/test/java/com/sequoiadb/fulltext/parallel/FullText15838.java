@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
@@ -71,6 +72,17 @@ public class FullText15838 extends SdbTestBase {
         checkSplitResult();
 
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, insertNum));
+
+        int recordNum = 0;
+        DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                "{'': '" + indexName + "'}");
+        while (cur.hasNext()) {
+            cur.getNext();
+            recordNum++;
+        }
+        cur.close();
+
+        Assert.assertEquals(recordNum, insertNum, "use fulltext index search record");
     }
 
     @AfterClass

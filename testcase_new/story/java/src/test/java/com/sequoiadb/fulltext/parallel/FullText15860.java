@@ -90,10 +90,8 @@ public class FullText15860 extends SdbTestBase {
         thread.run();
 
         Assert.assertTrue(FullTextUtils.isCLDataConsistency(cl));
-        // Assert.assertTrue( FullTextUtils.isIndexCreated( cl,
-        // indexName, 0 ) );
-
-        // TODO:插入记录及lob、全文检索，检查集合做基本操作功能正确
+        Assert.assertTrue(FullTextUtils.isRecordEquals(cl));
+        checkLobOpr();
     }
 
     @AfterClass
@@ -294,6 +292,19 @@ public class FullText15860 extends SdbTestBase {
         }
 
         return lobIdList;
+    }
+
+    private void checkLobOpr() {
+        DBCursor lobCur = cl.listLobs();
+        while (lobCur.hasNext()) {
+            BSONObject lobInfo = lobCur.getNext();
+            ObjectId id = (ObjectId) lobInfo.get("id");
+            DBLob lob = cl.openLob(id);
+            byte[] content = new byte[(int) lobSize];
+            lob.read(content);
+            lob.close();
+        }
+        lobCur.close();
     }
 
 }

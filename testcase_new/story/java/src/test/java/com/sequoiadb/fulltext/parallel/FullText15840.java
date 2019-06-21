@@ -57,6 +57,17 @@ public class FullText15840 extends SdbTestBase {
         thread.run();
 
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, indexName, insertNum));
+
+        int recordNum = 0;
+        DBCursor cur = cl.query("{'': {'$Text': {'query': {'match_all': {}}}}}", null, "{'recordId': 1}",
+                "{'': '" + indexName + "'}");
+        while (cur.hasNext()) {
+            cur.getNext();
+            recordNum++;
+        }
+        cur.close();
+
+        Assert.assertEquals(recordNum, insertNum, "use fulltext index search record");
     }
 
     @AfterClass

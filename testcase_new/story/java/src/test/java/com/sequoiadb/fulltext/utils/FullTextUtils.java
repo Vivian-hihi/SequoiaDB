@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.bson.BSONObject;
+import org.testng.Assert;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -12,6 +13,7 @@ import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
  * 全文索引的公共类，检查方法、其他与DB端和ES内部操作无关的方法均可放于此类
@@ -718,7 +720,11 @@ public class FullTextUtils {
      */
     public static boolean isIndexCreated(DBCollection cl, String indexName, int expectCount) throws Exception {
 
-        return isFullSyncToES(cl, indexName, expectCount) && isDataConsistency(cl, indexName);
+        if (isFullSyncToES(cl, indexName, expectCount) && isDataConsistency(cl, indexName) && isRecordEquals(cl)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -731,7 +737,8 @@ public class FullTextUtils {
      */
     public static boolean isMainCLIndexCreated(DBCollection cl, String indexName, int expectCount) throws Exception {
 
-        if (isMainCLFullSyncToES(cl, indexName, expectCount) && isMainCLDataConsistency(cl, indexName)) {
+        if (isMainCLFullSyncToES(cl, indexName, expectCount) && isMainCLDataConsistency(cl, indexName)
+                && isRecordEquals(cl)) {
             return true;
         } else {
             return false;
@@ -783,132 +790,31 @@ public class FullTextUtils {
      * 检查普通查询和全文索引查询结果是否一致
      * 
      * @param cl
-     * @param orderBy 排序字段
-     * @return
+     * @return boolean 查询结果一致则返回true,否则返回false
      * @throws Exception
      */
     public static boolean isRecordEquals(DBCollection cl) throws Exception {
-        Sequoiadb db = cl.getSequoiadb();
         String csName = cl.getCSName();
         String clName = cl.getName();
         boolean isEquals = false;
-        List<BSONObject> recordList1 = new ArrayList<BSONObject>();
-        List<BSONObject> recordList2 = new ArrayList<BSONObject>();
 
-        List<String> groupNameList = FullTextDBUtils.getCLGroups(cl);
-        for (String groupName : groupNameList) {
-            isEquals = false;
-            // List<String> nodeList = CommLib.getNodeAddress(db, groupName);
-            // for (String node : nodeList) {
-            Sequoiadb db1 = null;
-            Sequoiadb db2 = null;
-            try {
-                // db1 = new Sequoiadb(node, "", "");
-                // db2 = new Sequoiadb(node, "", "");
-                db1 = new Sequoiadb(db.getReplicaGroup(groupName).getMaster().toString(), "", "");
-                db2 = new Sequoiadb(db.getReplicaGroup(groupName).getMaster().toString(), "", "");
-                DBCollection cl1 = db1.getCollectionSpace(csName).getCollection(clName);
-                DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-                DBCursor cur1 = cl1.query("", "", "{_id: 1}", "");
-                DBCursor cur2 = cl2.query("{'': {'$Text': {'query': {'match_all': {}}}}}", "", "{_id: 1}", "");
-                while (cur1.hasNext()) {
-                    BSONObject record1 = cur1.getNext();
-                    recordList1.add(record1);
-                }
-                while (cur2.hasNext()) {
-                    BSONObject record2 = cur2.getNext();
-                    recordList2.add(record2);
-                }
-
-                if (recordList1.size() != recordList2.size()) {
-                    throw new Exception("normal query and fulltext query records is not equal, normal query size: "
-                            + recordList1.size() + ", fulltext query size: " + recordList2.size() + ", normal query: "
-                            + recordList1 + ", fulltext query: " + recordList2);
-                }
-                for (int i = 0; i < recordList1.size(); i++) {
-                    if (!recordList1.get(i).equals(recordList2.get(i))) {
-                        throw new Exception("normal query and fulltext query record is not equal, normal query: "
-                                + recordList1 + ", fulltext query: " + recordList2);
-                    }
-                }
-                isEquals = true;
-                recordList1.clear();
-                recordList2.clear();
-            } finally {
-                if (db1 != null) {
-                    db1.closeAllCursors();
-                    db1.close();
-                }
-                if (db2 != null) {
-                    db2.closeAllCursors();
-                    db2.close();
-                }
-            }
-            // }
-        }
-        return isEquals;
-    }
-
-    /**
-     * 检查普通查询和全文索引查询结果是否一致
-     * 
-     * @param cl
-     * @param orderBy 排序字段
-     * @return
-     * @throws Exception
-     */
-    public static boolean isMainCLRecordEquals(DBCollection cl, String orderBy) throws Exception {
-        Sequoiadb db = cl.getSequoiadb();
-        String csName = cl.getCSName();
-        String clName = cl.getName();
-        boolean isEquals = false;
-        List<BSONObject> recordList1 = new ArrayList<BSONObject>();
-        List<BSONObject> recordList2 = new ArrayList<BSONObject>();
-
-        // List<String> groupNameList = FullTextDBUtils.getCLGroups(cl);
-        // for (String groupName : groupNameList) {
-        // isEquals = false;
-        // List<String> nodeList = CommLib.getNodeAddress(db, groupName);
-        // for (String node : nodeList) {
+        isEquals = false;
         Sequoiadb db1 = null;
         Sequoiadb db2 = null;
         try {
-            // db1 = new Sequoiadb(node, "", "");
-            // db2 = new Sequoiadb(node, "", "");
-            // db1 = new
-            // Sequoiadb(db.getReplicaGroup(groupName).getMaster().toString(),
-            // "", "");
-            // db2 = new
-            // Sequoiadb(db.getReplicaGroup(groupName).getMaster().toString(),
-            // "", "");
-            db1 = new Sequoiadb(db.getRemoteAddress(), "", "");
-            db2 = new Sequoiadb(db.getRemoteAddress(), "", "");
+            db1 = new Sequoiadb(SdbTestBase.getDefaultCoordUrl(), "", "");
+            db2 = new Sequoiadb(SdbTestBase.getDefaultCoordUrl(), "", "");
             DBCollection cl1 = db1.getCollectionSpace(csName).getCollection(clName);
             DBCollection cl2 = db2.getCollectionSpace(csName).getCollection(clName);
-            DBCursor cur1 = cl1.query("", "", orderBy, "");
-            DBCursor cur2 = cl2.query("{'': {'$Text': {'query': {'match_all': {}}}}}", "", orderBy, "");
+            DBCursor cur1 = cl1.query("", "", "{_id: 1}", "");
+            DBCursor cur2 = cl2.query("{'': {'$Text': {'query': {'match_all': {}}}}}", "", "{_id: 1}", "");
+            int errorRecordNumber = 1;
             while (cur1.hasNext()) {
-                BSONObject record1 = cur1.getNext();
-                recordList1.add(record1);
-            }
-            while (cur2.hasNext()) {
-                BSONObject record2 = cur2.getNext();
-                recordList2.add(record2);
+                Assert.assertEquals(cur1.getNext(), cur2.getNext(), "error record number: " + errorRecordNumber);
+                errorRecordNumber++;
             }
 
-            if (recordList1.size() != recordList2.size()) {
-                throw new Exception("normal query and fulltext query records is not equal, normal query: " + recordList1
-                        + ", fulltext query: " + recordList2);
-            }
-            for (int i = 0; i < recordList1.size(); i++) {
-                if (!recordList1.get(i).equals(recordList2.get(i))) {
-                    throw new Exception("normal query and fulltext query records is not equal, normal query: "
-                            + recordList1 + ", fulltext query: " + recordList2);
-                }
-            }
             isEquals = true;
-            recordList1.clear();
-            recordList2.clear();
         } finally {
             if (db1 != null) {
                 db1.closeAllCursors();
@@ -919,8 +825,6 @@ public class FullTextUtils {
                 db2.close();
             }
         }
-        // }
-        // }
         return isEquals;
     }
 

@@ -32,7 +32,6 @@ public class FullText15834 extends SdbTestBase {
     private Sequoiadb sdb = null;
     private CollectionSpace cs = null;
     private DBCollection cl = null;
-    private String csName = "cs15834";
     private String clName = "es_15834";
     private String indexName = "fulltextIndex15834";
     private List<String> cappedNames = new ArrayList<String>();
@@ -49,8 +48,7 @@ public class FullText15834 extends SdbTestBase {
             throw new SkipException("skip less two group");
         }
 
-        // cs = sdb.getCollectionSpace(csName);
-        cs = sdb.createCollectionSpace(csName);
+        cs = sdb.getCollectionSpace(csName);
         cl = cs.createCollection(clName);
 
         FullTextDBUtils.insertData(cl, insertNum);
