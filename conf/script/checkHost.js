@@ -333,20 +333,30 @@ function _getOMAInfo()
    }
 }
 
-//get pg info
-function _getPostgresInfo()
+//get install info
+function _getInstallInfo()
 {
-   var pgInfo = {
-      'Version': '',
-      'SdbUser': '',
-      'Path'   : ''
-   } ;
+   var invalidList = [] ;
+   var postgresList = [] ;
+   var mysqlList = [] ;
+   var fileList = File.list( { 'pathname' : '/etc/default/' } ).toArray() ;
+   var reg_pg = new RegExp( '^sequoiasql-postgresql[1-9]*$', '' ) ;
+   var reg_ms = new RegExp( '^sequoiasql-mysql[1-9]*$', '' ) ;
 
-   try
+   for( var index in fileList )
    {
-      if ( File.exist( '/etc/default/sequoiasql-postgresql' ) )
+      var pkgInfo = {
+         'Version': '',
+         'SdbUser': '',
+         'Path'   : ''
+      } ;
+      var fileInfo = JSON.parse( fileList[index] ) ;
+      var fileName = fileInfo[FIELD_NAME2] ;
+      var fullPath = catPath( '/etc/default/', fileName ) ;
+
+      if( reg_pg.test( fileName ) )
       {
-         var config = Oma.getIniConfigs( '/etc/default/sequoiasql-postgresql' ).toObj() ;
+         var config = Oma.getIniConfigs( fullPath ).toObj() ;
 
          if ( File.exist( config['INSTALL_DIR'] + '/bin/postgres' ) &&
               File.exist( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl' ) )
@@ -357,33 +367,16 @@ function _getPostgresInfo()
             result = result.replace( /[\r]/g, '' ) ;
             result = result.replace( /[\n]/g, '' ) ;
 
-            pgInfo['Version'] = result ;
-            pgInfo['SdbUser'] = config['USER'] ;
-            pgInfo['Path']    = config['INSTALL_DIR'] ;
+            pkgInfo['Version'] = result ;
+            pkgInfo['SdbUser'] = config['USER'] ;
+            pkgInfo['Path']    = config['INSTALL_DIR'] ;
+
+            postgresList.push( pkgInfo ) ;
          }
       }
-   }
-   catch( e )
-   {
-   }
-
-   RET_JSON['POSTGRESQL'] = pgInfo ;
-}
-
-//get mysql info
-function _getMySQLInfo()
-{
-   var mysqlInfo = {
-      'Version': '',
-      'SdbUser': '',
-      'Path'   : ''
-   } ;
-
-   try
-   {
-      if ( File.exist( '/etc/default/sequoiasql-mysql' ) )
+      else if( reg_ms.test( fileName ) )
       {
-         var config = Oma.getIniConfigs( '/etc/default/sequoiasql-mysql' ).toObj() ;
+         var config = Oma.getIniConfigs( fullPath ).toObj() ;
 
          if ( File.exist( config['INSTALL_DIR'] + '/bin/mysql' ) &&
               File.exist( config['INSTALL_DIR'] + '/bin/sdb_sql_ctl' ) )
@@ -394,17 +387,22 @@ function _getMySQLInfo()
             result = result.replace( /[\r]/g, '' ) ;
             result = result.replace( /[\n]/g, '' ) ;
 
-            mysqlInfo['Version'] = result ;
-            mysqlInfo['SdbUser'] = config['USER'] ;
-            mysqlInfo['Path']    = config['INSTALL_DIR'] ;
+            pkgInfo['Version'] = result ;
+            pkgInfo['SdbUser'] = config['USER'] ;
+            pkgInfo['Path']    = config['INSTALL_DIR'] ;
+
+            mysqlList.push( pkgInfo ) ;
          }
       }
-   }
-   catch( e )
-   {
+      else
+      {
+         invalidList.push( fileName ) ;
+      }
    }
 
-   RET_JSON['MYSQL'] = mysqlInfo ;
+   RET_JSON['POSTGRESQL'] = postgresList ;
+   RET_JSON['MYSQL'] = mysqlList ;
+   RET_JSON['INVALID'] = invalidList ;
 }
 
 // os info
@@ -627,8 +625,7 @@ function main()
 
    // get local host info
    _getOMAInfo() ;
-   _getPostgresInfo() ;
-   _getMySQLInfo() ;
+   _getInstallInfo() ;
    _getOSInfo() ;
    _getCPUInfo() ;
    _getMemInfo() ;
