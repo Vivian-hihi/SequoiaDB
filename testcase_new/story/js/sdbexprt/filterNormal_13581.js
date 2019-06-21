@@ -25,27 +25,29 @@ main() ;
 
 function main()
 {  
-   testExprtFilter1() ;  // test filter with $gte
-   testExprtFilter2() ;  // test filter with $mod 
-   testExprtFilter3() ;  // test filter with $in
-   testExprtFilter4() ;  // test filter with $isnull
-   testExprtFilter5() ;  // test filter with $all
-   testExprtFilter6() ;  // test filter with $and
-   testExprtFilter7() ;  // test filter with $exists
-   testExprtFilter8() ;  // test filter with $elemMatch
-   testExprtFilter9() ;  // test filter with $1
-   testExprtFilter10() ;  // test filter with $regex
-   testExprtFilter11() ;  // test filter with $field
-   testExprtFilter12() ;  // test filter with $expand
-   testExprtFilter13() ;  // test filter with $returnMatch
+   var cl = commCreateCL( db, csname, clname, 0 ) ;
+   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
+   testExprtFilter1(cl, cl1) ;  // test filter with $gte
+   testExprtFilter2(cl, cl1) ;  // test filter with $mod 
+   testExprtFilter3(cl, cl1) ;  // test filter with $in
+   testExprtFilter4(cl, cl1) ;  // test filter with $isnull
+   testExprtFilter5(cl, cl1) ;  // test filter with $all
+   testExprtFilter6(cl, cl1) ;  // test filter with $and
+   testExprtFilter7(cl, cl1) ;  // test filter with $exists
+   testExprtFilter8(cl, cl1) ;  // test filter with $elemMatch
+   testExprtFilter9(cl, cl1) ;  // test filter with $1
+   testExprtFilter10(cl, cl1) ;  // test filter with $regex
+   testExprtFilter11(cl, cl1) ;  // test filter with $field
+   testExprtFilter12(cl, cl1) ;  // test filter with $expand
+   testExprtFilter13(cl, cl1) ;  // test filter with $returnMatch
+   commDropCL( db, csname, clname ) ;
+   commDropCL( db, csname, clname1 ) ;
 }
 
-function testExprtFilter1()
+function testExprtFilter1(cl, cl1)
 {
    println( "test filter with $gte" ) ;
    var docs = [ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -84,16 +86,14 @@ function testExprtFilter1()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter2()
+function testExprtFilter2(cl, cl1)
 {
    println( "test filter with $mod" ) ;
    var docs = [ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -132,16 +132,14 @@ function testExprtFilter2()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter3()
+function testExprtFilter3(cl, cl1)
 {
    println( "test filter with $in" ) ;
    var docs = [ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -180,16 +178,14 @@ function testExprtFilter3()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter4()
+function testExprtFilter4(cl, cl1)
 {
    println( "test filter with $isnull" ) ;
    var docs = [ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -228,17 +224,15 @@ function testExprtFilter4()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter5()
+function testExprtFilter5(cl, cl1)
 {
    println( "test filter with $all" ) ;
    var docs = [ { name: [ "Tom", "Mike", "Jack" ] }, 
                 { name: [ "Tom", "John" ] } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -277,16 +271,14 @@ function testExprtFilter5()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter6()
+function testExprtFilter6(cl, cl1)
 {
    println( "test filter with $and" ) ;
    var docs = [ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -325,16 +317,14 @@ function testExprtFilter6()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter7()
+function testExprtFilter7(cl, cl1)
 {
    println( "test filter with $exists" ) ;
    var docs = [ { a: 1 }, { a: 2, b: 2 }, { a: 3 }, { a: 4, b: 4 } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -373,17 +363,15 @@ function testExprtFilter7()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter8()
+function testExprtFilter8(cl, cl1)
 {
    println( "test filter with $elemMatch" ) ;
    var docs = [ { info: { name: "Jack", phone: "1234" } },
                 { info: [ { name: "Jack", phone: "5678" } ] } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -427,17 +415,15 @@ function testExprtFilter8()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter9()
+function testExprtFilter9(cl, cl1)
 {
    println( "test filter with $1" ) ;
    var docs = [ { a: [ 1, 2, 3, 4, 5 ] },
                 { a: [ 1, 4, 5 ] }, { a: [ 1, 2, 4 ] } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -481,16 +467,14 @@ function testExprtFilter9()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter10()
+function testExprtFilter10(cl, cl1)
 {
    println( "test filter with $regex" ) ;
    var docs = [ { a: "abandon" }, { a: "Alice" }, { a: "beyond" } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -529,17 +513,15 @@ function testExprtFilter10()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter11()
+function testExprtFilter11(cl, cl1)
 {
    println( "test filter with $field" ) ;
    var docs = [ { a: 1, b: 1 }, { a: 2, b: 1 }, { a: 3, b: 3 },
                 { a: 4, b: 3 } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -578,16 +560,14 @@ function testExprtFilter11()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter12()
+function testExprtFilter12(cl, cl1)
 {
    println( "test filter with $expand" ) ;
    var docs = [ { a: [ 1, 2, 3 ] } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -625,16 +605,14 @@ function testExprtFilter12()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
 
-function testExprtFilter13()
+function testExprtFilter13(cl, cl1)
 {
    println( "test filter with $returnMatch" ) ;
    var docs = [ { a: [ 1, 2, 4, 7, 9 ] } ] ;
-   var cl = commCreateCL( db, csname, clname, 0 ) ;
-   var cl1 = commCreateCL( db, csname, clname1, 0 ) ;
    cl.insert( docs ) ;
    
    var csvfile = workDir + "sdbexprt13581.csv" ;
@@ -672,6 +650,6 @@ function testExprtFilter13()
    
    cmd.run( "rm -rf " + csvfile ) ;
    
-   commDropCL( db, csname, clname ) ;
-   commDropCL( db, csname, clname1 ) ;
+   cl.truncate();
+   cl1.truncate();
 }
