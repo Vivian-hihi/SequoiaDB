@@ -182,12 +182,14 @@ function createRGAndNode(db, groupName, instanceidList, nodeNum)
    
    try
    {
-      var rg = db.createRG(groupName);      
+      var rg = db.createRG(groupName);
       var nodeHostName = db.listReplicaGroups().current().toObj().Group[0].HostName;
+      var nodeList = [];
       for( var i = 0; i < nodeNum; i++)
       {         
          var nodeService = parseInt(RSRVPORTBEGIN) + i *10;         
          var nodePath = RSRVNODEDIR + nodeService; 
+         nodeList.push({"hostname": nodeHostName, "svcname": nodeService});
          //first create node is master node 
          if (i == 0)
          {
@@ -204,6 +206,8 @@ function createRGAndNode(db, groupName, instanceidList, nodeNum)
       
       //waiting for the success of the vote
       checkMasterExist( groupName );
+      
+      return nodeList;
    }
    catch(e)
    {       
