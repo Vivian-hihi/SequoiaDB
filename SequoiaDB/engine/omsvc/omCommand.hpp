@@ -1279,6 +1279,7 @@ namespace engine
       INT32 _checkWebLinkCFG( BSONObj &buzInfo ) ;
       INT32 _checkSequoiaDBCFG( BSONObj &buzInfo ) ;
       INT32 _checkMySQLCFG( BSONObj &buzInfo ) ;
+      INT32 _checkPostgreSQLCFG( BSONObj &buzInfo ) ;
 
       void _generateRequest( const string &hostName,
                              const string &svcname,
@@ -1293,7 +1294,7 @@ namespace engine
                                  const BSONObj &hostInfo,
                                  map<string, string> &hostMap ) ;
       INT32 _syncSequoiaDB( omRestTool &restTool, const BSONObj &buzInfo ) ;
-      INT32 _syncMySQL( omRestTool &restTool, const BSONObj &buzInfo ) ;
+      INT32 _syncSQL( omRestTool &restTool, const BSONObj &buzInfo ) ;
       INT32 _storeBusinessInfo( const INT32 addType,
                                 const string &deployMod,
                                 const BSONObj &buzInfo ) ;

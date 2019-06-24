@@ -8461,6 +8461,47 @@ namespace engine
       goto done ;
    }
 
+   INT32 omDiscoverBusinessCommand::_checkPostgreSQLCFG( BSONObj &buzInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string hostName ;
+      string svcname ;
+      string user ;
+      string passwd ;
+
+      hostName = buzInfo.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+      if ( hostName.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is empty",
+                             OM_BSON_FIELD_HOST_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      svcname = buzInfo.getStringField( OM_BSON_FIELD_SVCNAME ) ;
+      if ( svcname.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "invalid argument:%s is empty",
+                             OM_BSON_FIELD_SVCNAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = _checkHostPort( hostName, svcname ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "failed to check host used port, rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omDiscoverBusinessCommand::_checkBusinssCFG( BSONObj &configInfo )
    {
       INT32 rc = SDB_OK ;
@@ -8493,7 +8534,8 @@ namespace engine
          goto error ;
       }
 
-      if( OM_BUSINESS_SEQUOIASQL_MYSQL != _businessType )
+      if( OM_BUSINESS_SEQUOIASQL_MYSQL != _businessType &&
+          OM_BUSINESS_SEQUOIASQL_POSTGRESQL != _businessType )
       {
          _businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
          if ( _businessName.empty() )
@@ -8562,6 +8604,16 @@ namespace engine
          else if ( OM_BUSINESS_SEQUOIASQL_MYSQL == _businessType )
          {
             rc = _checkMySQLCFG( buzInfo ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "check %s BusinessInfo failed:rc=%d",
+                       _businessType.c_str(), rc ) ;
+               goto error ;
+            }
+         }
+         else if ( OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType )
+         {
+            rc = _checkPostgreSQLCFG( buzInfo ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "check %s BusinessInfo failed:rc=%d",
@@ -8913,8 +8965,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omDiscoverBusinessCommand::_syncMySQL( omRestTool &restTool,
-                                                const BSONObj &buzInfo )
+   INT32 omDiscoverBusinessCommand::_syncSQL( omRestTool &restTool,
+                                              const BSONObj &buzInfo )
    {
       INT32 rc = SDB_OK ;
       string hostName ;
@@ -9086,7 +9138,8 @@ namespace engine
             goto error ;
          }
       }
-      else if ( OM_BUSINESS_SEQUOIASQL_MYSQL == _businessType )
+      else if ( OM_BUSINESS_SEQUOIASQL_MYSQL == _businessType ||
+                OM_BUSINESS_SEQUOIASQL_POSTGRESQL == _businessType )
       {
          BSONObj buzInfo ;
          BSONElement ele = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
@@ -9102,7 +9155,7 @@ namespace engine
 
          buzInfo = ele.embeddedObject() ;
 
-         rc = _syncMySQL( restTool, buzInfo ) ;
+         rc = _syncSQL( restTool, buzInfo ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "failed to sync business info: type=%s, rc=%d",
