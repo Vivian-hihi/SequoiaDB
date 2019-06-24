@@ -93,7 +93,6 @@ public class Transaction18046 extends SdbTestBase {
     @Test(dataProvider = "index")
     public void test(String indexKey) {
         try {
-            System.out.println("--复合索引 " + indexKey + " 开始事务--");
             latch = new CountDownLatch(5);
             cl = sdb.getCollectionSpace(csName).createCollection(clName);
             cl.createIndex("textIndex18046", indexKey, false, false);
@@ -207,7 +206,6 @@ public class Transaction18046 extends SdbTestBase {
             db5.commit();
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             cs.dropCollection(clName);
-            System.out.println("--复合索引 " + indexKey + " 结束事务--");
         }
     }
 

@@ -62,7 +62,6 @@ public class Transaction17960 extends SdbTestBase {
     @Test(dataProvider = "index")
     public void test(String indexKey) {
         try {
-            System.out.println("CLNAME: " + clName + "--开始事务，创建索引 " + indexKey + "--");
             latch = new CountDownLatch(4);
             this.indexKey = indexKey;
 
@@ -95,7 +94,6 @@ public class Transaction17960 extends SdbTestBase {
 
             // 删除索引
             cl.dropIndex("textIndex17960");
-            System.out.println("--结束事务，索引 " + indexKey + "--");
         }
     }
 
@@ -139,7 +137,7 @@ public class Transaction17960 extends SdbTestBase {
                         cl.update("{b:" + bid + "}", "{$inc:{a:" + value + "}}", "{'':'textIndex17960'}");
                     } catch (BaseException e) {
                         if (e.getErrorCode() == -13 || e.getErrorCode() == -48 || e.getErrorCode() == -52
-                                || e.getErrorCode() == -10 || e.getErrorCode() ==-199) {
+                                || e.getErrorCode() == -10 || e.getErrorCode() == -199) {
                             db.rollback();
                             continue;
                         } else {
@@ -194,7 +192,7 @@ public class Transaction17960 extends SdbTestBase {
 
                     } catch (BaseException e) {
                         if (e.getErrorCode() == -13 || e.getErrorCode() == -48 || e.getErrorCode() == -52
-                                || e.getErrorCode() == -10|| e.getErrorCode() ==-199) {
+                                || e.getErrorCode() == -10 || e.getErrorCode() == -199) {
                             db.rollback();
                             continue;
                         } else {

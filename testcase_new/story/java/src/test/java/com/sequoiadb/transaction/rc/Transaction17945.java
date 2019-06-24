@@ -65,7 +65,6 @@ public class Transaction17945 extends SdbTestBase {
     @Test(dataProvider = "index")
     public void test(String indexKey) {
         try {
-            System.out.println("--开始事务，创建集合索引 " + indexKey + "--");
             latch = new CountDownLatch(3);
 
             // 创建索引
@@ -90,7 +89,6 @@ public class Transaction17945 extends SdbTestBase {
 
             // 删除索引
             cl.dropIndex("textIndex17945");
-            System.out.println("--结束事务，集合索引 " + indexKey + "--");
         }
     }
 

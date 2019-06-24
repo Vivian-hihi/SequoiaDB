@@ -110,7 +110,6 @@ public class Transaction17114M extends SdbTestBase {
     @Test(dataProvider = "index")
     public void test(String indexKey) {
         try {
-            System.out.println("CLNAME: " + clName + "开始事务，创建索引 " + indexKey + " --");
             latch = new CountDownLatch(7);
 
             cl = sdb.getCollectionSpace(csName).createCollection(clName,
@@ -219,7 +218,6 @@ public class Transaction17114M extends SdbTestBase {
             db7.commit();
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             cs.dropCollection(clName);
-            System.out.println("结束事务，索引 " + indexKey + " --");
         }
     }
 
