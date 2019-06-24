@@ -25,112 +25,40 @@ function testOneNode()
 {
    var rg = db.createRG( rgName ) ;
    createNodes( rg, 1 ) ;
-   rg.start() ;
    
-   var master ;
-   while( true )
-   {
-      try
-      {
-         master = rg.getMaster() ;
-         break ;
-      }
-      catch( e )
-      {
-         if( e == -71 )
-         {
-            continue ;
-         }
-         else
-         {
-            throw buildException( "testOneNode", e, "get master", "0 -71", e ) ;
-         }
-      }
-   }
+   var master = getMaster( rg );
    
    var slave = rg.getSlave() ;
    if( slave.toString() !== master.toString() )
    {
       throw buildException( "testOneNode", null, "check getSlave", master, slave ) ;
    }
-   
-   db.removeRG( rgName ) ;
 }
 
 // two nodes in rg( no master ), test getSlave
 function testTwoNodeNoMaster()
 {
-   var rg = db.createRG( rgName ) ;
-   createNodes( rg, 2 ) ;
-   rg.start() ;
+   var rg = db.getRG( rgName ) ;
+   createNodes( rg, 1 ) ;
    
-   var master ;
-   while( true )
-   {
-      try
-      {
-         master = rg.getMaster() ;
-         break ;
-      }
-      catch( e )
-      {
-         if( e == -71 )
-         {
-            continue ;
-         }
-         else
-         {
-            throw buildException( "testTwoNodeNoMaster", e, "get master", "0 -71", e ) ;
-         }
-      }
-   }
+   var master = getMaster( rg );
    master.stop() ;
    var hasMaster = isMasterExist( db, rgName ) ;
    if( hasMaster !== false )
    {
       throw buildException( "testTwoNodeNoMaster", null, "check no master", false, hasMaster ) ;
    }
-   
-   var totalCnt = 50 ;
-   for( var i = 0;i < totalCnt;i++ )
-   {
-      var slave = rg.getSlave() ;
-      if( slave.toString() === master.toString() )
-      {
-         throw buildException( "testTwoNodeNoMaster", null, "check getSlave", slave, master ) ;
-      }
-   }
-   
-   db.removeRG( rgName ) ;
+   //当组中只有两个节点时，停掉主节点，无法选主，所以此时两个节点都是候选的备节点，无法判断是否有节点处于停止状态，所以可以获取到备节点信息即可，无法判断会随机选取哪一个返回。
+   var slave = rg.getSlave() ;
 }
 
 // three nodes in rg( master change ), getSlave with 1-7
 function testThreeNode()
 {
-   var rg = db.createRG( rgName ) ;
-   createNodes( rg, 3 ) ;
-   rg.start() ;
+   var rg = db.getRG( rgName ) ;
+   createNodes( rg, 1 ) ;
    
-   var master ;
-   while( true )
-   {
-      try
-      {
-         master = rg.getMaster() ;
-         break ;
-      }
-      catch( e )
-      {
-         if( e == -71 )
-         {
-            continue ;
-         }
-         else
-         {
-            throw buildException( "testThreeNode", e, "get master", "0 -71", e ) ;
-         }
-      }
-   }
+   var master = getMaster( rg );
    var nodes = getGroupNodes( db, rgName ) ;
    var masterIdx = nodes.indexOf( master.toString() ) ;
 

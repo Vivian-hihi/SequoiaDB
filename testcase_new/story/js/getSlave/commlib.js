@@ -29,19 +29,38 @@ function createNodes( rg, nodeNum )
 {
    for( var i = 0;i < nodeNum;i++ )
    {
-      try
+      var host = System.getHostName() ;
+      var svc = parseInt( RSRVPORTBEGIN );
+      var dbpath = adaptPath( RSRVNODEDIR ) + "data/" + svc ;
+      var checkSucc = false;
+      var times = 0;
+      var maxRetryTimes = 10;
+      do
       {
-         var host = System.getHostName() ;
-         var svc = parseInt( RSRVPORTBEGIN ) + i*10 ;
-         var dbpath = adaptPath( RSRVNODEDIR ) + "data/" + svc ;
-         println( "create node " + host + ":" + svc + " " + dbpath ) ;
-         rg.createNode( host, svc, dbpath ) ;
+         try
+         {
+            rg.createNode( host, svc, dbpath ) ;
+            println( "create node " + host + ":" + svc + " " + dbpath ) ;
+            checkSucc = true;
+         }
+         catch( e )
+         {
+            //-145 :SDBCM_NODE_EXISTED  -290:SDB_DIR_NOT_EMPTY
+            if( e == -145 || e == -290 )
+            {
+               svc = svc + 10;
+               dbpath = adaptPath( RSRVNODEDIR ) + "data/" + svc;
+            }
+            else
+            {
+               throw "create node failed!  port = " + svc + " dataPath = " + dataPath + " errorCode: " + e;
+            }
+            times++;
+         }
       }
-      catch( e )
-      {
-         throw buildException( "createNodes", e, "create node", 0, e ) ;
-      }
+      while(!checkSucc && times < maxRetryTimes);
    }
+   rg.start();
 }
 
 /**********************************************************************
@@ -99,4 +118,36 @@ function isMasterExist( db, rgName )
       }
    }
    return hasMaster ;
+}
+
+/* ****************************************************
+@description: get the primary node in the group
+@author : wangkexin
+@parameter: 
+    rg : the specified group
+@return: the primary node in the group
+**************************************************** */
+function getMaster( rg )
+{
+   var master ;
+   while( true )
+   {
+      try
+      {
+         master = rg.getMaster() ;
+         break ;
+      }
+      catch( e )
+      {
+         if( e == -71 )
+         {
+            continue ;
+         }
+         else
+         {
+            throw buildException( "getMaster()", e, "get master", "0 -71", e ) ;
+         }
+      }
+   }
+   return master;
 }

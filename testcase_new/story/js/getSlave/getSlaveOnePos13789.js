@@ -25,28 +25,8 @@ function testOneNode()
 {
    var rg = db.createRG( rgName ) ;
    createNodes( rg, 1 ) ;
-   rg.start() ;
    
-   var master ;
-   while( true )
-   {
-      try
-      {
-         master = rg.getMaster() ;
-         break ;
-      }
-      catch( e )
-      {
-         if( e == -71 )
-         {
-            continue ;
-         }
-         else
-         {
-            throw buildException( "testOneNode", e, "get master", "0 -71", e ) ;
-         }
-      }
-   }
+   var master = getMaster( rg );
    
    for( var i = 1;i <= 7;i++ )
    {
@@ -56,37 +36,15 @@ function testOneNode()
          throw buildException( "testOneNode", null, "check getSlave", master, slave ) ;
       }
    }
-   
-   db.removeRG( rgName ) ;
 }
 
 // two nodes in rg, test getSlave
 function testTwoNode()
 {
-   var rg = db.createRG( rgName ) ;
-   createNodes( rg, 2 ) ;
-   rg.start() ;
+   var rg = db.getRG( rgName ) ;
+   createNodes( rg, 1 ) ;
    
-   var master ;
-   while( true )
-   {
-      try
-      {
-         master = rg.getMaster() ;
-         break ;
-      }
-      catch( e )
-      {
-         if( e == -71 )
-         {
-            continue ;
-         }
-         else
-         {
-            throw buildException( "testTwoNode", e, "get master", "0 -71", e ) ;
-         }
-      }
-   }
+   var master = getMaster( rg );
    
    var nodes = getGroupNodes( db, rgName ) ;
    for( var i = 1;i <= 7;i++ )
@@ -98,37 +56,14 @@ function testTwoNode()
          throw buildException( "testTwoNode", null, "check getSlave", nodes[idx], slave ) ;
       }
    }
-   
-   db.removeRG( rgName ) ;
 }
 
 // two nodes in rg( no master ), test getSlave
 function testTwoNodeNoMaster()
 {
-   var rg = db.createRG( rgName ) ;
-   createNodes( rg, 2 ) ;
-   rg.start() ;
+   var rg = db.getRG( rgName ) ;
    
-   var master ;
-   while( true )
-   {
-      try
-      {
-         master = rg.getMaster() ;
-         break ;
-      }
-      catch( e )
-      {
-         if( e == -71 )
-         {
-            continue ;
-         }
-         else
-         {
-            throw buildException( "testTwoNodeNoMaster", e, "get master", "0 -71", e ) ;
-         }
-      }
-   }
+   var master = getMaster( rg );
    master.stop() ;
    var hasMaster = isMasterExist( db, rgName ) ;
    if( hasMaster !== false )
