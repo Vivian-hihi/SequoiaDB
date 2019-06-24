@@ -43,11 +43,10 @@ public class Split10536 extends SdbTestBase {
 			commSdb = new Sequoiadb(coordUrl, "", "");
 
 			// 跳过 standAlone 和数据组不足的环境
-			CommLib commlib = new CommLib();
-			if (commlib.isStandAlone(commSdb)) {
+			if (CommLib.isStandAlone(commSdb)) {
 				throw new SkipException("skip StandAlone");
 			}
-			List<String> groupsName = commlib.getDataGroupNames(commSdb);
+			List<String> groupsName = CommLib.getDataGroupNames(commSdb);
 			if (groupsName.size() < 2) {
 				throw new SkipException("current environment less than tow groups ");
 			}
@@ -163,21 +162,15 @@ public class Split10536 extends SdbTestBase {
 
 	}
 
-	public void checkIndex(DBCollection cl) {
-		DBCursor dbc = null;
-		try {
-			dbc = commSdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:\"" + csName + "." + clName + "\"}", null, null);	
-			if(!(((String)dbc.getNext().get("AttributeDesc")).equals(""))){
-				throw new SkipException("ID index may be deleted ");
-			}
-		} catch (BaseException e) {
-			throw e;
-		} finally {
-			if (dbc != null) {
-				dbc.close();
-			}
-		}
-	}
+    public void checkIndex(DBCollection cl) {
+        try {
+            cl.getIndexInfo("$id");
+        } catch (BaseException e) {
+            if (e.getErrorCode() != -47) {
+                throw e;
+            }
+        } 
+    }
 
 	private void checkData(Sequoiadb db, int expectedCount, String macher, int expectTotalCount, String group) {
 		Sequoiadb desDataNode = null;
