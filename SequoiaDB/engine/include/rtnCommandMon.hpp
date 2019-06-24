@@ -78,10 +78,12 @@ namespace engine
          INT32           _createFetch( _pmdEDUCB *cb,
                                        _rtnFetchBase **ppFetch ) ;
 
-         virtual INT32   _getFetchType() const = 0 ;
+         const CHAR * name () { return _name ; }
+         RTN_COMMAND_TYPE type () { return _type ; }
+         INT32   _getFetchType() const { return _fetchType ; }
+         UINT32  _addInfoMask() const { return _infoMask ; }
          virtual BOOLEAN _isCurrent() const = 0 ;
          virtual BOOLEAN _isDetail() const = 0 ;
-         virtual UINT32  _addInfoMask() const ;
          virtual BSONObj _getOptObj() const ;
 
       protected :
@@ -111,29 +113,26 @@ namespace engine
       protected:
          _rtnMonBase () ;
 
-         _rtnMonBase(const CHAR* name, 
+         _rtnMonBase(const CHAR* name,
                      const CHAR* intrName,
                      RTN_COMMAND_TYPE type,
                      INT32 fetchType,
                      UINT32 infoMask)
-                     
-           : _rtnMonInnerBase( name, type, fetchType, infoMask ), 
-             _intrName(intrName) 
+           : _rtnMonInnerBase( name, type, fetchType, infoMask ),
+             _intrName(intrName)
          {}
 
          virtual ~_rtnMonBase () ;
 
-         const CHAR* _intrName ;
       public:
-
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
 
-
       private:
-         virtual const CHAR *getIntrCMDName() = 0 ;
+         const CHAR* _intrName ;
 
+         virtual const CHAR *getIntrCMDName() { return _intrName ; }
    } ;
 
 }

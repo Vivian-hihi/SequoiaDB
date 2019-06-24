@@ -82,11 +82,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   UINT32 _rtnMonInnerBase::_addInfoMask() const
-   {
-      return MON_MASK_FETCH_DEFAULT ;
-   }
-
    BSONObj _rtnMonInnerBase::_getOptObj() const
    {
       return BSONObj() ;

@@ -50,46 +50,33 @@ namespace engine
    class _rtnSnapshotInner : public _rtnMonInnerBase
    {
       protected:
-         _rtnSnapshotInner(CHAR* name, 
+         _rtnSnapshotInner(CHAR* name,
                            RTN_COMMAND_TYPE type,
                            INT32 fetchType,
-                           UINT32 infoMask ) 
+                           UINT32 infoMask )
            : _rtnMonInnerBase(name, type, fetchType, infoMask) {}
 
          virtual ~_rtnSnapshotInner () {}
 
-         virtual const CHAR * name () { return _name ; } 
-         virtual RTN_COMMAND_TYPE type () { return _type ; } 
-
       protected:
-         virtual INT32   _getFetchType() const { return _fetchType ; } 
          virtual BOOLEAN _isCurrent() const = 0;
-         virtual UINT32  _addInfoMask() const { return _infoMask ; }
          virtual BOOLEAN _isDetail() const { return TRUE ; }
    } ;
 
    class _rtnSnapshot : public _rtnMonBase
    {
       protected:
-         _rtnSnapshot(const CHAR* name, 
+         _rtnSnapshot(const CHAR* name,
                       const CHAR* intrName,
                       RTN_COMMAND_TYPE type,
                       INT32 fetchType,
-                      UINT32 infoMask ) 
+                      UINT32 infoMask )
            : _rtnMonBase(name, intrName, type, fetchType, infoMask) {}
          virtual ~_rtnSnapshot () {}
 
-         virtual const CHAR * name () { return _name ; } 
-         virtual RTN_COMMAND_TYPE type () { return _type ; } 
-
       protected:
-         virtual INT32   _getFetchType() const { return _fetchType ; } 
          virtual BOOLEAN _isCurrent() const = 0 ;
-         virtual UINT32  _addInfoMask() const { return _infoMask ; }
          virtual BOOLEAN _isDetail() const { return TRUE ; }
-
-      private:
-         virtual const CHAR *getIntrCMDName() { return _intrName ; }
    } ;
 
    class _rtnSnapshotSystem : public _rtnSnapshot
