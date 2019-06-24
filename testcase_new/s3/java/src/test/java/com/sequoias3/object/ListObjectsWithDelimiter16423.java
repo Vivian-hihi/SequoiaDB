@@ -21,9 +21,9 @@ import com.sequoias3.testcommon.TestTools;
 
 /**
  * @Description seqDB-16423: To get a list of objects within a bucket.specify
- *              matching delimiter and maxkeys. 
- *              test a: maxkeys is less than the matching records 
- *              test b: maxkeys is greater than the matching records
+ *              matching delimiter and maxkeys. test a: maxkeys is less than the
+ *              matching records test b: maxkeys is greater than the matching
+ *              records
  * @author wuyan
  * @Date 2018.11.23
  * @version 1.00
@@ -37,9 +37,8 @@ public class ListObjectsWithDelimiter16423 extends S3TestBase {
 	private int matchObjectNums = 40;
 	private File localPath = null;
 	private String filePath = null;
-	private String delimiter = "//";;
+	private String delimiter = "//";
 
-	@SuppressWarnings("deprecation")
 	@BeforeClass
 	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
@@ -50,10 +49,7 @@ public class ListObjectsWithDelimiter16423 extends S3TestBase {
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		s3Client = CommLib.buildS3Client();
 
-		if (s3Client.doesBucketExist(bucketName)) {
-			CommLib.clearBucket(s3Client, bucketName);
-		}
-
+		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
 	}
 

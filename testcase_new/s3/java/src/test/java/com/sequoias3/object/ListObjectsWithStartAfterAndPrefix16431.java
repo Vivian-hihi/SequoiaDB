@@ -1,6 +1,5 @@
 package com.sequoias3.object;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,7 +16,6 @@ import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
 
 /**
  * @Description seqDB-16431: To get a list of objects within a bucket.specify
@@ -32,27 +30,13 @@ public class ListObjectsWithStartAfterAndPrefix16431 extends S3TestBase {
 	private String bucketName = "bucket16431";
 	private String key = "%aa%%bb%object16431.png";
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 30;
 	private int objectNums = 100;
-	private File localPath = null;
-	private String filePath = null;
-	private String prefix = "%dir_1%prefix%test16431";;
+	private String prefix = "%dir_1%prefix%test16431";
 
-	@SuppressWarnings("deprecation")
 	@BeforeClass
-	private void setUp() throws IOException {
-		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
-		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
-
-		TestTools.LocalFile.removeFile(localPath);
-		TestTools.LocalFile.createDir(localPath.toString());
-		TestTools.LocalFile.createFile(filePath, fileSize);
+	private void setUp() {
 		s3Client = CommLib.buildS3Client();
-
-		if (s3Client.doesBucketExist(bucketName)) {
-			CommLib.clearBucket(s3Client, bucketName);
-		}
-
+		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 	}
@@ -73,7 +57,6 @@ public class ListObjectsWithStartAfterAndPrefix16431 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLib.clearBucket(s3Client, bucketName);
-				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			s3Client.shutdown();
@@ -119,7 +102,7 @@ public class ListObjectsWithStartAfterAndPrefix16431 extends S3TestBase {
 				matchKeyList.add(keyName);
 			}
 			s3Client.putObject(bucketName, keyName, "test16431" + i);
-			s3Client.putObject(bucketName, keyName, new File(filePath));
+			s3Client.putObject(bucketName, keyName, "test16431updateContent" + i);
 		}
 		return matchKeyList;
 	}

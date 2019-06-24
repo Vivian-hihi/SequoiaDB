@@ -35,23 +35,18 @@ public class ListObjectsWithStartAfterAndPrefix16429 extends S3TestBase {
 	private int objectNums = 1500;
 	private File localPath = null;
 	private String filePath = null;
-	private String prefix = "&dir_1&prefix&test16429";;
+	private String prefix = "&dir_1&prefix&test16429";
 
-	@SuppressWarnings("deprecation")
 	@BeforeClass
 	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
-
 		TestTools.LocalFile.removeFile(localPath);
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
+
 		s3Client = CommLib.buildS3Client();
-
-		if (s3Client.doesBucketExist(bucketName)) {
-			CommLib.clearBucket(s3Client, bucketName);
-		}
-
+		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
 		CommLib.setBucketVersioning(s3Client, bucketName, "Enabled");
 	}

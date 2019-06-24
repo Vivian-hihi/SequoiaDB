@@ -37,8 +37,7 @@ public class ListObjectsWithDelimiter16424 extends S3TestBase {
 				// test b:delimiter type is special chararcter
 				new Object[] { "/test*_.(d!-t'')", 1 },
 				// test c:delimiter type is &@:,$=+?;ASCII
-				new Object[] { "/test&@:,$=+? t_1", 2 }, 
-				new Object[] { "\010te\065s", 3 },
+				new Object[] { "/test&@:,$=+? t_1", 2 }, new Object[] { "\010te\065s", 3 },
 				new Object[] { "/\35te\41a\57", 4 },
 				// test d: delimiter type is 、^`><{}[]#%"~|
 				new Object[] { "test、^`><{}[]#%\"~|_1", 5 }, };
@@ -52,7 +51,6 @@ public class ListObjectsWithDelimiter16424 extends S3TestBase {
 	private String filePath = null;
 	private List<String> keyList = null;
 
-	@SuppressWarnings("deprecation")
 	@BeforeClass
 	private void setUp() throws IOException {
 		localPath = new File(S3TestBase.workDir + File.separator + TestTools.getClassName());
@@ -62,10 +60,7 @@ public class ListObjectsWithDelimiter16424 extends S3TestBase {
 		TestTools.LocalFile.createDir(localPath.toString());
 		TestTools.LocalFile.createFile(filePath, fileSize);
 		s3Client = CommLib.buildS3Client();
-
-		if (s3Client.doesBucketExist(bucketName)) {
-			CommLib.clearBucket(s3Client, bucketName);
-		}
+		CommLib.clearBucket(s3Client, bucketName);
 
 		s3Client.createBucket(bucketName);
 		String[] keyNames = { "/test1/AZ/16424.txt", "/test*_.(d!-t'')/16424.png", "/test&@:,$=+? t_16424",
