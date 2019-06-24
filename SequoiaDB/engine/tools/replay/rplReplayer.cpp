@@ -1565,21 +1565,20 @@ namespace replay
       goto done;
    }
 
-   INT32 Replayer::_isLogFileName(const string& fileName)
+   BOOLEAN Replayer::_isLogFileName(const string& fileName)
    {
-      INT32 rc = TRUE;
       string suffix;
       string::const_iterator itr;
       if(0 != ossStrncmp(fileName.c_str(), REPLOG_NAME_PREFIX,
-                               ossStrlen(REPLOG_NAME_PREFIX)))
+                         ossStrlen(REPLOG_NAME_PREFIX)))
       {
-         goto error;
+         return FALSE;
       }
 
       suffix = fileName.substr(ossStrlen(REPLOG_NAME_PREFIX));
       if (suffix.empty())
       {
-         goto error;
+         return FALSE;
       }
 
       itr = suffix.begin();
@@ -1587,16 +1586,11 @@ namespace replay
       {
          if (!std::isdigit(*itr))
          {
-            goto error;
+            return FALSE;
          }
          ++itr;
       }
-
-   done:
-      return rc;
-   error:
-      rc = FALSE;
-      goto done;
+      return TRUE;
    }
 
    INT32 Replayer::_scanReplicaDir(REPLICA_FILE_MAP& replicaFiles,
