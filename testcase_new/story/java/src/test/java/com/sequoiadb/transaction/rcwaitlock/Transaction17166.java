@@ -49,6 +49,14 @@ public class Transaction17166 extends SdbTestBase {
         // 事务1执行批量插入记录
         expList = TransUtils.insertDatas(cl1, 0, 50000, 1);
 
+        // 非事务表扫描记录
+        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
+        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
+
+        // 非事务索引扫描记录
+        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
+        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
+
         // 事务2表扫描记录
         Read read1 = new Read("{'':null}");
         read1.start();
@@ -58,14 +66,6 @@ public class Transaction17166 extends SdbTestBase {
         Read read2 = new Read("{'':'a'}");
         read2.start();
         Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
-
-        // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
-        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
-
-        // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':'a'}");
-        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
 
         db1.commit();
 

@@ -49,6 +49,14 @@ public class Transaction17168 extends SdbTestBase {
         // 事务1执行删除操作
         cl1.delete("{a:1}", "{'':'a'}");
 
+        // 非事务表扫描记录
+        cursor = cl.query(null, null, null, "{'':null}");
+        Assert.assertTrue(TransUtils.getReadActList(cursor).isEmpty());
+
+        // 非事务索引扫描记录
+        cursor = cl.query(null, null, null, "{'':'a'}");
+        Assert.assertTrue(TransUtils.getReadActList(cursor).isEmpty());
+
         // 事务2表扫描记录
         Read read1 = new Read("{'':null}");
         read1.start();
@@ -58,14 +66,6 @@ public class Transaction17168 extends SdbTestBase {
         Read read2 = new Read("{'':'a'}");
         read2.start();
         Assert.assertTrue(read2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
-
-        // 非事务表扫描记录
-        cursor = cl.query(null, null, null, "{'':null}");
-        Assert.assertTrue(TransUtils.getReadActList(cursor).isEmpty());
-
-        // 非事务索引扫描记录
-        cursor = cl.query(null, null, null, "{'':'a'}");
-        Assert.assertTrue(TransUtils.getReadActList(cursor).isEmpty());
 
         db1.commit();
 
