@@ -82,7 +82,7 @@ function _getConfig( PD_LOGGER, oma, dbpath )
 
    try
    {
-      config = oma.getIniConfigs( configPath ).toObj() ;
+      config = oma.getIniConfigs( configPath, { 'StrDelimiter': false } ).toObj() ;
    }
    catch( e )
    {
