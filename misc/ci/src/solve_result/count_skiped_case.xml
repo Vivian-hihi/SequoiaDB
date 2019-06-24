@@ -32,6 +32,12 @@
          </sequential>
       </for>
       <replace file="${report_full_name}" token="ERROR_MESSAGE" value="${errmsg}"/>
+      <if>
+         <equals arg1="${errmsg}" arg2=""/>
+         <then>
+            <delete file="${report_full_name}" failonerror="false"/>
+         </then>
+      </if>
    </target>
    
 </project>
