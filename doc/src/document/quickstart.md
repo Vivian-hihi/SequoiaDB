@@ -1,5 +1,3 @@
-# 快速入门
-
 本入门教程使用 SequoiaDB 3.2 及 MySQL 实例组件3.2 在 Ubuntu 16.04 上搭建一个基础运行环境，以快速了解 SequoiaDB 及 MySQL 实例组件的基本功能 。
 
 SequoiaDB 可以选择部署在单台机器上，也可以部署在多台机器上。
