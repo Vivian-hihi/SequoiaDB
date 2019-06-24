@@ -33,7 +33,7 @@
             <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
          </path>
          <sequential>
-            <countstr str="&lt;/testsuite&gt;" resultproperty="testsuitenum">
+            <countstr str="&lt;testsuite" resultproperty="testsuitenum">
                <path-elements>
                   <fileset file="@{filename}"/>
                </path-elements>
@@ -46,7 +46,6 @@
             </if>
          </sequential>
       </for>
-      <echo message="fail_begin_num : ${fail_begin_num}, fail_end_num : ${fail_end_num} , error_end_num : ${error_end_num}, is_report_null : ${is_report_null}"/>
       <condition property="build_status" value="successful" else="unstable">
          <and>
             <equals arg1="${fail_begin_num}" arg2="0"/>
