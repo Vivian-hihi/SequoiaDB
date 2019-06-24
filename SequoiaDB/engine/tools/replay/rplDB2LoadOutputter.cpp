@@ -58,8 +58,6 @@ namespace replay
 
    static INT32 _ossFilterFiles( const string &dirPath, vector<string> &vecFiles,
                                  pcrecpp::RE &re, UINT32 deep ) ;
-   static INT32 ossFilterFiles( const string &dirPath, vector<string> &vecFiles,
-                                const CHAR *filter = NULL, UINT32 deep = 1 ) ;
 
    rplDB2LoadOutputter::rplDB2LoadOutputter( Monitor *monitor )
    {
@@ -533,45 +531,6 @@ namespace replay
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 ossFilterFiles( const string &dirPath, vector<string> &vecFiles,
-                         const CHAR *filter, UINT32 deep )
-   {
-      INT32 rc = SDB_OK ;
-      string tmpFilter ;
-      string newFilter ;
-
-      if ( NULL == filter )
-      {
-         tmpFilter = "*" ;
-      }
-      else
-      {
-         tmpFilter = filter ;
-      }
-
-      try
-      {
-         newFilter = boost::replace_all_copy(
-                            boost::replace_all_copy( tmpFilter, ".", "\\."),
-                            "*", ".*") ;
-         pcrecpp::RE re( newFilter.c_str() );
-         rc = _ossFilterFiles( dirPath, vecFiles, re, deep ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to filterFiles(%s), rc = %d",
-                      dirPath.c_str(), rc ) ;
       }
       catch( std::exception &e )
       {

@@ -602,7 +602,7 @@ namespace replay
       }
 
       startLSN = logFile.getFirstLSN().offset;
-      endLSN = startLSN + logFile.getLength();
+      endLSN = startLSN + logFile.getValidLength();
 
       rc = _replayLogFile(logFile, startLSN, endLSN);
       if (SDB_OK != rc)
