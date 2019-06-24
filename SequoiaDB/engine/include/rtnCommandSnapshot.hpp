@@ -35,6 +35,8 @@
 #define RTN_COMMAND_SNAPSHOT_HPP_
 
 #include "rtnCommandMon.hpp"
+#include "monDump.hpp"
+#include "rtnFetchBase.hpp"
 
 using namespace bson ;
 
@@ -48,22 +50,46 @@ namespace engine
    class _rtnSnapshotInner : public _rtnMonInnerBase
    {
       protected:
-         _rtnSnapshotInner () {}
+         _rtnSnapshotInner(CHAR* name, 
+                           RTN_COMMAND_TYPE type,
+                           INT32 fetchType,
+                           UINT32 infoMask ) 
+           : _rtnMonInnerBase(name, type, fetchType, infoMask) {}
+
          virtual ~_rtnSnapshotInner () {}
 
+         virtual const CHAR * name () { return _name ; } 
+         virtual RTN_COMMAND_TYPE type () { return _type ; } 
+
       protected:
+         virtual INT32   _getFetchType() const { return _fetchType ; } 
+         virtual BOOLEAN _isCurrent() const = 0;
+         virtual UINT32  _addInfoMask() const { return _infoMask ; }
          virtual BOOLEAN _isDetail() const { return TRUE ; }
    } ;
 
    class _rtnSnapshot : public _rtnMonBase
    {
       protected:
-         _rtnSnapshot () {}
+         _rtnSnapshot(const CHAR* name, 
+                      const CHAR* intrName,
+                      RTN_COMMAND_TYPE type,
+                      INT32 fetchType,
+                      UINT32 infoMask ) 
+           : _rtnMonBase(name, intrName, type, fetchType, infoMask) {}
          virtual ~_rtnSnapshot () {}
 
+         virtual const CHAR * name () { return _name ; } 
+         virtual RTN_COMMAND_TYPE type () { return _type ; } 
+
       protected:
+         virtual INT32   _getFetchType() const { return _fetchType ; } 
+         virtual BOOLEAN _isCurrent() const = 0 ;
+         virtual UINT32  _addInfoMask() const { return _infoMask ; }
          virtual BOOLEAN _isDetail() const { return TRUE ; }
 
+      private:
+         virtual const CHAR *getIntrCMDName() { return _intrName ; }
    } ;
 
    class _rtnSnapshotSystem : public _rtnSnapshot
@@ -71,19 +97,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public :
-         _rtnSnapshotSystem () ;
-         virtual ~_rtnSnapshotSystem () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotSystem()
+            : _rtnSnapshot( NAME_SNAPSHOT_SYSTEM,
+                            CMD_NAME_SNAPSHOT_SYSTEM_INTR,
+                            CMD_SNAPSHOT_SYSTEM,
+                            RTN_FETCH_SYSTEM,
+                            MON_MASK_ALL)
+         {}
+         virtual ~_rtnSnapshotSystem () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotSystemInner : public _rtnSnapshotInner
@@ -91,16 +115,16 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotSystemInner() {}
+         _rtnSnapshotSystemInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_SYSTEM_INTR,
+                                 CMD_SNAPSHOT_SYSTEM,
+                                 RTN_FETCH_SYSTEM,
+                                 MON_MASK_ALL)
+         {}
          virtual ~_rtnSnapshotSystemInner() {}
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    } ;
 
    class _rtnSnapshotHealth : public _rtnSnapshot
@@ -108,19 +132,21 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public :
-         _rtnSnapshotHealth () ;
-         virtual ~_rtnSnapshotHealth () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotHealth()
+            : _rtnSnapshot( NAME_SNAPSHOT_HEALTH,
+                            CMD_NAME_SNAPSHOT_HEALTH_INTR,
+                            CMD_SNAPSHOT_HEALTH,
+                            RTN_FETCH_HEALTH,
+                            MON_MASK_NODE_NAME |
+                            MON_MASK_IS_PRIMARY |
+                            MON_MASK_SERVICE_STATUS |
+                            MON_MASK_LSN_INFO |
+                            MON_MASK_NODEID )
+         {}
+         virtual ~_rtnSnapshotHealth () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotHealthInner : public _rtnSnapshotInner
@@ -128,16 +154,20 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotHealthInner() {}
+         _rtnSnapshotHealthInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_HEALTH_INTR,
+                                 CMD_SNAPSHOT_HEALTH,
+                                 RTN_FETCH_HEALTH,
+                                 MON_MASK_NODE_NAME |
+                                 MON_MASK_IS_PRIMARY |
+                                 MON_MASK_SERVICE_STATUS |
+                                 MON_MASK_LSN_INFO |
+                                 MON_MASK_NODEID )
+         {}
          virtual ~_rtnSnapshotHealthInner() {}
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    } ;
 
    class _rtnSnapshotContexts : public _rtnSnapshot
@@ -145,19 +175,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotContexts () ;
-         virtual ~_rtnSnapshotContexts () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotContexts()
+            : _rtnSnapshot( NAME_SNAPSHOT_CONTEXTS,
+                            CMD_NAME_SNAPSHOT_CONTEXT_INTR,
+                            CMD_SNAPSHOT_CONTEXTS,
+                            RTN_FETCH_CONTEXT,
+                            MON_MASK_NODE_NAME)
+         {}
+         virtual ~_rtnSnapshotContexts () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotContextsInner : public _rtnSnapshotInner
@@ -165,16 +193,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotContextsInner() {}
+         _rtnSnapshotContextsInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_CONTEXT_INTR,
+                                 CMD_SNAPSHOT_CONTEXTS,
+                                 RTN_FETCH_CONTEXT,
+                                 MON_MASK_NODE_NAME)
+         {}
          virtual ~_rtnSnapshotContextsInner() {}
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    } ;
 
    class _rtnSnapshotContextsCurrent : public _rtnSnapshot
@@ -182,19 +211,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotContextsCurrent () ;
-         virtual ~_rtnSnapshotContextsCurrent () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotContextsCurrent()
+            : _rtnSnapshot( NAME_SNAPSHOT_CONTEXTS_CURRENT,
+                            CMD_NAME_SNAPSHOT_CONTEXTCUR_INTR,
+                            CMD_SNAPSHOT_CONTEXTS_CURRENT,
+                            RTN_FETCH_CONTEXT,
+                            MON_MASK_NODE_NAME)
+         {}
+         virtual ~_rtnSnapshotContextsCurrent () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotContextsCurrentInner : public _rtnSnapshotInner
@@ -202,15 +229,16 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotContextsCurrentInner() {}
+         _rtnSnapshotContextsCurrentInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_CONTEXTCUR_INTR,
+                                 CMD_SNAPSHOT_CONTEXTS_CURRENT,
+                                 RTN_FETCH_CONTEXT,
+                                 MON_MASK_NODE_NAME)
+         {}
          virtual ~_rtnSnapshotContextsCurrentInner() {}
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    } ;
 
    class _rtnSnapshotDatabase : public _rtnSnapshot
@@ -218,19 +246,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotDatabase () ;
-         virtual ~_rtnSnapshotDatabase () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotDatabase()
+            : _rtnSnapshot( NAME_SNAPSHOT_DATABASE,
+                            CMD_NAME_SNAPSHOT_DATABASE_INTR, 
+                            CMD_SNAPSHOT_DATABASE,
+                            RTN_FETCH_DATABASE,
+                            MON_MASK_ALL)
+         {}
+         virtual ~_rtnSnapshotDatabase () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotDatabaseInner : public _rtnSnapshotInner
@@ -238,15 +264,16 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotDatabaseInner () {}
+         _rtnSnapshotDatabaseInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_DATABASE_INTR,
+                                 CMD_SNAPSHOT_DATABASE,
+                                 RTN_FETCH_DATABASE,
+                                 MON_MASK_ALL)
+         {}
          virtual ~_rtnSnapshotDatabaseInner () {}
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    };
 
    class _rtnSnapshotCollections : public _rtnSnapshot
@@ -254,19 +281,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotCollections () ;
-         virtual ~_rtnSnapshotCollections () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotCollections()
+            : _rtnSnapshot( NAME_SNAPSHOT_COLLECTIONS,
+                            CMD_NAME_SNAPSHOT_COLLECTION_INTR, 
+                            CMD_SNAPSHOT_COLLECTIONS,
+                            RTN_FETCH_COLLECTION,
+                            MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME )
+         {}
+         virtual ~_rtnSnapshotCollections () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotCollectionsInner : public _rtnSnapshotInner
@@ -274,15 +299,16 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotCollectionsInner () {}
+         _rtnSnapshotCollectionsInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_COLLECTION_INTR,
+                                 CMD_SNAPSHOT_COLLECTIONS,
+                                 RTN_FETCH_COLLECTION,
+                                 MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME )
+         {}
          virtual ~_rtnSnapshotCollectionsInner () {}
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    };
 
    class _rtnSnapshotCollectionSpaces : public _rtnSnapshot
@@ -290,19 +316,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotCollectionSpaces () ;
-         virtual ~_rtnSnapshotCollectionSpaces () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotCollectionSpaces()
+            : _rtnSnapshot( NAME_SNAPSHOT_COLLECTIONSPACES,
+                            CMD_NAME_SNAPSHOT_SPACE_INTR, 
+                            CMD_SNAPSHOT_COLLECTIONSPACES,
+                            RTN_FETCH_COLLECTIONSPACE,
+                            MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME )
+         {}
+         virtual ~_rtnSnapshotCollectionSpaces () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotCollectionSpacesInner : public _rtnSnapshotInner
@@ -310,15 +334,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotCollectionSpacesInner () {}
+         _rtnSnapshotCollectionSpacesInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_SPACE_INTR,
+                                 CMD_SNAPSHOT_COLLECTIONSPACES,
+                                 RTN_FETCH_COLLECTIONSPACE,
+                                 MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME )
+
+         {}
          virtual ~_rtnSnapshotCollectionSpacesInner () {}
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    };
 
    class _rtnSnapshotReset : public _rtnCommand
@@ -352,19 +378,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotSessions () ;
-         virtual ~_rtnSnapshotSessions () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotSessions()
+            : _rtnSnapshot( NAME_SNAPSHOT_SESSIONS,
+                            CMD_NAME_SNAPSHOT_SESSION_INTR, 
+                            CMD_SNAPSHOT_SESSIONS,
+                            RTN_FETCH_SESSION,
+                            MON_MASK_NODE_NAME)
+         {}
+         virtual ~_rtnSnapshotSessions () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotSessionsInner : public _rtnSnapshotInner
@@ -372,15 +396,16 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotSessionsInner () {}
+         _rtnSnapshotSessionsInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_SESSION_INTR,
+                                 CMD_SNAPSHOT_SESSIONS,
+                                 RTN_FETCH_SESSION,
+                                 MON_MASK_NODE_NAME)
+         {}
          virtual ~_rtnSnapshotSessionsInner () {}
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    };
 
    class _rtnSnapshotSessionsCurrent : public _rtnSnapshot
@@ -388,19 +413,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotSessionsCurrent () ;
-         virtual ~_rtnSnapshotSessionsCurrent () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotSessionsCurrent()
+            : _rtnSnapshot( NAME_SNAPSHOT_SESSIONS_CURRENT,
+                            CMD_NAME_SNAPSHOT_SESSIONCUR_INTR, 
+                            CMD_SNAPSHOT_SESSIONS_CURRENT,
+                            RTN_FETCH_SESSION,
+                            MON_MASK_NODE_NAME)
+         {}
+         virtual ~_rtnSnapshotSessionsCurrent () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotSessionsCurrentInner : public _rtnSnapshotInner
@@ -408,15 +431,16 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotSessionsCurrentInner () {}
+         _rtnSnapshotSessionsCurrentInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_SESSIONCUR_INTR,
+                                 CMD_SNAPSHOT_SESSIONS,
+                                 RTN_FETCH_SESSION,
+                                 MON_MASK_NODE_NAME)
+         {}
          virtual ~_rtnSnapshotSessionsCurrentInner () {}
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    };
 
    class _rtnSnapshotTransactionsCurrent : public _rtnSnapshot
@@ -424,19 +448,18 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotTransactionsCurrent () ;
-         virtual ~_rtnSnapshotTransactionsCurrent () ;
+         _rtnSnapshotTransactionsCurrent()
+            : _rtnSnapshot( NAME_SNAPSHOT_TRANSACTIONS_CUR,
+                            CMD_NAME_SNAPSHOT_TRANSCUR_INTR,
+                            CMD_SNAPSHOT_TRANSACTIONS_CUR,
+                            RTN_FETCH_TRANS,
+                            MON_MASK_NODE_NAME)
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         {}
+         virtual ~_rtnSnapshotTransactionsCurrent () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    } ;
 
    class _rtnSnapshotTransactionsCurrentInner : public _rtnSnapshotInner
@@ -444,16 +467,16 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotTransactionsCurrentInner () {}
+         _rtnSnapshotTransactionsCurrentInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_TRANSCUR_INTR,
+                                 CMD_SNAPSHOT_TRANSACTIONS_CUR,
+                                 RTN_FETCH_TRANS,
+                                 MON_MASK_NODE_NAME )
+         {}
          virtual ~_rtnSnapshotTransactionsCurrentInner () {}
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    } ;
 
    class _rtnSnapshotTransactions : public _rtnSnapshot
@@ -461,19 +484,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotTransactions () ;
-         virtual ~_rtnSnapshotTransactions () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotTransactions()
+            : _rtnSnapshot( NAME_SNAPSHOT_TRANSACTIONS,
+                            CMD_NAME_SNAPSHOT_TRANS_INTR,
+                            CMD_SNAPSHOT_TRANSACTIONS,
+                            RTN_FETCH_TRANS,
+                            MON_MASK_NODE_NAME )
+         {}
+         virtual ~_rtnSnapshotTransactions () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    } ;
 
    class _rtnSnapshotTransactionsInner : public _rtnSnapshotInner
@@ -481,16 +502,16 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotTransactionsInner () {}
+         _rtnSnapshotTransactionsInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_TRANS_INTR,
+                                 CMD_SNAPSHOT_TRANSACTIONS,
+                                 RTN_FETCH_TRANS,
+                                 MON_MASK_NODE_NAME )
+         {}
          virtual ~_rtnSnapshotTransactionsInner () {}
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    } ;
 
    /*
@@ -501,19 +522,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER () ;
 
       public :
-         _rtnSnapshotAccessPlans () ;
-         virtual ~_rtnSnapshotAccessPlans () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotAccessPlans()
+            : _rtnSnapshot( NAME_SNAPSHOT_ACCESSPLANS,
+                            CMD_NAME_SNAPSHOT_ACCESSPLANS_INTR,
+                            CMD_SNAPSHOT_ACCESSPLANS,
+                            RTN_FETCH_ACCESSPLANS,
+                            MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME )
+         {}
+         virtual ~_rtnSnapshotAccessPlans () {}
 
       protected :
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private :
-         virtual const CHAR *getIntrCMDName() ;
    } ;
 
    /*
@@ -524,16 +543,17 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotAccessPlansInner () ;
-         virtual ~_rtnSnapshotAccessPlansInner () ;
+         _rtnSnapshotAccessPlansInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_ACCESSPLANS_INTR,
+                                 CMD_SNAPSHOT_ACCESSPLANS,
+                                 RTN_FETCH_ACCESSPLANS,
+                                 MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME)
+         {}
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         virtual ~_rtnSnapshotAccessPlansInner () {}
 
       protected:
-         virtual INT32   _getFetchType () const ;
          virtual BOOLEAN _isCurrent () const ;
-         virtual UINT32  _addInfoMask () const ;
    } ;
 
    class _rtnSnapshotConfigs : public _rtnSnapshot
@@ -541,20 +561,18 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public :
-         _rtnSnapshotConfigs () ;
-         virtual ~_rtnSnapshotConfigs () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotConfigs()
+            : _rtnSnapshot( NAME_SNAPSHOT_CONFIGS,
+                            CMD_NAME_SNAPSHOT_CONFIGS_INTR, 
+                            CMD_SNAPSHOT_CONFIGS,
+                            RTN_FETCH_CONFIGS,
+                            MON_MASK_NODE_NAME)
+         {}
+         virtual ~_rtnSnapshotConfigs () {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
          virtual BSONObj _getOptObj() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    };
 
    class _rtnSnapshotConfigsInner : public _rtnSnapshotInner
@@ -562,16 +580,16 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotConfigsInner() {}
+         _rtnSnapshotConfigsInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_CONFIGS_INTR,
+                                 CMD_SNAPSHOT_CONFIGS,
+                                 RTN_FETCH_CONFIGS,
+                                 MON_MASK_NODE_NAME)
+         {}
          virtual ~_rtnSnapshotConfigsInner() {}
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
          virtual BSONObj _getOptObj() const ;
    } ;
 
@@ -580,16 +598,15 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotVCLSessionInfoInner() {}
-         virtual ~_rtnSnapshotVCLSessionInfoInner() {}
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
+         _rtnSnapshotVCLSessionInfoInner()
+            : _rtnSnapshotInner( SYS_CL_SESSION_INFO,
+                                 CMD_SNAPSHOT_VCL_SESSIONINFO,
+                                 RTN_FETCH_VCL_SESSIONINFO,
+                                 0)
+         {}
 
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    } ;
 
    class _rtnSnapshotSvcTasks : public _rtnSnapshot
@@ -597,19 +614,18 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotSvcTasks() {}
+         _rtnSnapshotSvcTasks()
+            : _rtnSnapshot( NAME_SNAPSHOT_SVCTASKS,
+                            CMD_NAME_SNAPSHOT_SVCTASKS_INTR,
+                            CMD_SNAPSHOT_SVCTASKS,
+                            RTN_FETCH_SVCTASKS,
+                            MON_MASK_NODE_NAME)
+         {}
+
          virtual ~_rtnSnapshotSvcTasks() {}
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
-
-      private:
-         virtual const CHAR *getIntrCMDName() ;
    } ;
 
    class _rtnSnapshotSvcTasksInner : public _rtnSnapshotInner
@@ -617,18 +633,18 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSnapshotSvcTasksInner() {}
+         _rtnSnapshotSvcTasksInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_SVCTASKS_INTR,
+                                 CMD_SNAPSHOT_SVCTASKS,
+                                 RTN_FETCH_SVCTASKS,
+                                 MON_MASK_NODE_NAME )
+         {}
+
          virtual ~_rtnSnapshotSvcTasksInner() {}
 
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-
       protected:
-         virtual INT32   _getFetchType() const ;
          virtual BOOLEAN _isCurrent() const ;
-         virtual UINT32  _addInfoMask() const ;
    } ;
-
 }
 
 #endif //RTN_COMMAND_SNAPSHOT_HPP_

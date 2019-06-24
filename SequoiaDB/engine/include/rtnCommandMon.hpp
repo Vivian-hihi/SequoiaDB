@@ -55,6 +55,12 @@ namespace engine
    {
       protected:
          _rtnMonInnerBase () ;
+
+         _rtnMonInnerBase(const CHAR* name, 
+                          RTN_COMMAND_TYPE type,
+                          INT32 fetchType,
+                          UINT32 infoMask ) 
+           : _name(name), _type(type), _fetchType(fetchType), _infoMask(infoMask){}
          virtual ~_rtnMonInnerBase () ;
 
       public:
@@ -89,8 +95,12 @@ namespace engine
          const CHAR           *_selectBuff ;
          const CHAR           *_orderByBuff ;
          const CHAR           *_hintBuff ;
+         const CHAR           *_name ;
 
          INT32                _flags ;
+         RTN_COMMAND_TYPE     _type ;
+         INT32                _fetchType ;
+         UINT32               _infoMask ;
    } ;
 
    /*
@@ -100,7 +110,20 @@ namespace engine
    {
       protected:
          _rtnMonBase () ;
+
+         _rtnMonBase(const CHAR* name, 
+                     const CHAR* intrName,
+                     RTN_COMMAND_TYPE type,
+                     INT32 fetchType,
+                     UINT32 infoMask)
+                     
+           : _rtnMonInnerBase( name, type, fetchType, infoMask ), 
+             _intrName(intrName) 
+         {}
+
          virtual ~_rtnMonBase () ;
+
+         const CHAR* _intrName ;
       public:
 
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
