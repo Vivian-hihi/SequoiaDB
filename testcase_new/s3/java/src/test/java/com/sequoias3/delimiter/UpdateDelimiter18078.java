@@ -1,13 +1,5 @@
 package com.sequoias3.delimiter;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.sequoias3.region.Region;
 import com.sequoias3.testcommon.CommLib;
@@ -15,6 +7,13 @@ import com.sequoias3.testcommon.S3TestBase;
 import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Description seqDB-18078: create Region by bucket,the object name include old
@@ -47,7 +46,7 @@ public class UpdateDelimiter18078 extends S3TestBase {
 
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
-		RegionUtils.deleteRegion(regionName);
+		RegionUtils.clearRegion(regionName);
 
 		Region region = new Region();
 		region.withName(regionName);
