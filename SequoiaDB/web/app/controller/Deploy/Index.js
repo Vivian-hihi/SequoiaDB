@@ -615,6 +615,10 @@
                   SdbSignal.commit( 'queryHost' ) ;
                   SdbSwap.queryModule() ;
                }
+               else
+               {
+                  $scope.CurrentPage = 'storage' ;
+               }
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
