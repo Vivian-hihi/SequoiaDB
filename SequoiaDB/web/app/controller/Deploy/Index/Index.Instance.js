@@ -282,23 +282,28 @@
          var data = { 'cmd': 'discover business', 'ConfigInfo': JSON.stringify( configure ) };
          SdbRest.OmOperation( data, {
             'success': function () {
+               var hostName = configure['BusinessInfo']['HostName'] ;
+
+               $.each( SdbSwap.hostList, function( index, info ){
+                  if( hostName == info['IP'] )
+                  {
+                     hostName = info['HostName'] ;
+                     return false ;
+                  }
+               } ) ;
+
+               $rootScope.tempData( 'Deploy', 'ModuleName', '' );
+               $rootScope.tempData( 'Deploy', 'ModuleHostName', hostName );
+               $rootScope.tempData( 'Deploy', 'ModulePort', configure['BusinessInfo']['ServiceName'] );
+               $rootScope.tempData( 'Deploy', 'ClusterName', configure['ClusterName'] );
+
                if ( configure['BusinessType'] == 'sequoiasql-mysql' )
                {
-                  var hostName = configure['BusinessInfo']['HostName'] ;
-
-                  $.each( SdbSwap.hostList, function( index, info ){
-                     if( hostName == info['IP'] )
-                     {
-                        hostName = info['HostName'] ;
-                        return false ;
-                     }
-                  } ) ;
-
-                  $rootScope.tempData( 'Deploy', 'ModuleName', '' );
-                  $rootScope.tempData( 'Deploy', 'ModuleHostName', hostName );
-                  $rootScope.tempData( 'Deploy', 'ModulePort', configure['BusinessInfo']['ServiceName'] );
-                  $rootScope.tempData( 'Deploy', 'ClusterName', configure['ClusterName'] );
                   $location.path( '/Deploy/MYSQL-Discover' ).search( { 'r': new Date().getTime() } );
+               }
+               else if ( configure['BusinessType'] == 'sequoiasql-postgresql' )
+               {
+                  $location.path( '/Deploy/PostgreSQL-Discover' ).search( { 'r': new Date().getTime() } );
                }
             },
             'failed': function ( errorInfo ) {

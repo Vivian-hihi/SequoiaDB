@@ -362,6 +362,12 @@
            resolve: resolveFun( [ './app/controller/Deploy/DiscoverModule/MySQL/Index.js' ] )
         }
       },
+      { path: '/Deploy/PostgreSQL-Discover',
+        options: {
+           templateUrl: './app/template/Deploy/DiscoverModule/PostgreSQL/Index.html',
+           resolve: resolveFun( [ './app/controller/Deploy/DiscoverModule/PostgreSQL/Index.js' ] )
+        }
+      },
       { path: '/Deploy/SDB-Sync',
         options: {
            templateUrl: './app/template/Deploy/SyncModule/Sdb/Index.html',
