@@ -14,33 +14,16 @@
   
    <properties>
        <jsch.version>0.1.54</jsch.version>
-       <!-- spring jars -->
-       <spring-boot.version>1.5.10.RELEASE</spring-boot.version>
-       <spring-boot-starter-web.version>1.5.10.RELEASE</spring-boot-starter-web.version>
        <jackson-dataformat-xml.version>2.9.9</jackson-dataformat-xml.version>
        <aws-java-sdk-s3.version>1.11.343</aws-java-sdk-s3.version>
        <json.version>20171018</json.version>
 	</properties>
-
 
   <dependencies>
       <dependency>
          <groupId>com.jcraft</groupId>
          <artifactId>jsch</artifactId>
          <version>${jsch.version}</version>
-      </dependency>
-
-      <!-- spring dependency -->
-      <dependency>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot</artifactId>
-          <version>${spring-boot.version}</version>
-      </dependency>
-
-      <dependency>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-starter-web</artifactId>
-          <version>${spring-boot-starter-web.version}</version>
       </dependency>
 
       <!-- amazonaws dependency -->
@@ -62,7 +45,6 @@
           <artifactId>jackson-dataformat-xml</artifactId>
           <version>${jackson-dataformat-xml.version}</version>
       </dependency>
-
   </dependencies>
 
    <build>
@@ -82,5 +64,4 @@
          </plugin>
       </plugins>
    </build>
-   
 </project>
