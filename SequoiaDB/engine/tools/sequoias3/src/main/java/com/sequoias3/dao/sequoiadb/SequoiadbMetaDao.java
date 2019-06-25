@@ -104,11 +104,15 @@ public class SequoiadbMetaDao implements MetaDao {
             }
             BSONObject keyMatcher = new BasicBSONObject();
             if (prefix != null){
-                keyMatcher.put(DBParamDefine.REGEX, "^" + prefix + ".*");
+                keyMatcher.put(DBParamDefine.NOT_SMALL, prefix);
+                String prefixEnd = prefix.substring(0,prefix.length()-1) + (char)(prefix.charAt(prefix.length()-1)+1);
+                keyMatcher.put(DBParamDefine.LESS_THAN, prefixEnd);
             }
             if (startAfter != null){
                 if (specifiedVId != null) {
-                    keyMatcher.put(DBParamDefine.NOT_SMALL, startAfter);
+                    if(prefix == null || startAfter.compareTo(prefix) > 0) {
+                        keyMatcher.put(DBParamDefine.NOT_SMALL, startAfter);
+                    }
                 }else{
                     keyMatcher.put(DBParamDefine.GREATER, startAfter);
                 }
@@ -244,7 +248,9 @@ public class SequoiadbMetaDao implements MetaDao {
             matcher.put(ObjectMeta.META_BUCKET_ID, bucketId);
             BSONObject keyMatcher = new BasicBSONObject();
             if (prefix != null){
-                keyMatcher.put(DBParamDefine.REGEX, "^" + prefix + ".*");
+                keyMatcher.put(DBParamDefine.NOT_SMALL, prefix);
+                String prefixEnd = prefix.substring(0,prefix.length()-1) + (char)(prefix.charAt(prefix.length()-1)+1);
+                keyMatcher.put(DBParamDefine.LESS_THAN, prefixEnd);
             }
             if (startAfter != null){
                 keyMatcher.put(DBParamDefine.GREATER, startAfter);
@@ -356,13 +362,17 @@ public class SequoiadbMetaDao implements MetaDao {
             matcher.put(parentIdName, parentId);
             BSONObject nameMatcher = new BasicBSONObject();
             if (prefix != null){
-                nameMatcher.put(DBParamDefine.REGEX, "^" + prefix + ".*");
+                nameMatcher.put(DBParamDefine.NOT_SMALL, prefix);
+                String prefixEnd = prefix.substring(0,prefix.length()-1) + (char)(prefix.charAt(prefix.length()-1)+1);
+                nameMatcher.put(DBParamDefine.LESS_THAN, prefixEnd);
             }
             if (startAfter != null){
                 if (versionIdMarker == null) {
                     nameMatcher.put(DBParamDefine.GREATER, startAfter);
                 }else {
-                    nameMatcher.put(DBParamDefine.NOT_SMALL, startAfter);
+                    if(prefix == null || startAfter.compareTo(prefix) > 0) {
+                        nameMatcher.put(DBParamDefine.NOT_SMALL, startAfter);
+                    }
                 }
             }
             if (!nameMatcher.isEmpty()) {

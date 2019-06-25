@@ -147,11 +147,14 @@ public class SdbDirDao implements DirDao {
             matcher.put(Dir.DIR_DELIMITER, delimiter);
             BSONObject nameMatcher = new BasicBSONObject();
             if (dirPrefix != null){
-                nameMatcher.put(DBParamDefine.REGEX, "^" + dirPrefix + ".*");
                 nameMatcher.put(DBParamDefine.GREATER, dirPrefix);
+                String prefixEnd = dirPrefix.substring(0,dirPrefix.length()-1) + (char)(dirPrefix.charAt(dirPrefix.length()-1)+1);
+                nameMatcher.put(DBParamDefine.LESS_THAN, prefixEnd);
             }
             if (startAfter != null){
-                nameMatcher.put(DBParamDefine.GREATER, startAfter);
+                if (dirPrefix == null || startAfter.compareTo(dirPrefix) > 0) {
+                    nameMatcher.put(DBParamDefine.GREATER, startAfter);
+                }
             }
             if (!nameMatcher.isEmpty()) {
                 matcher.put(Dir.DIR_NAME, nameMatcher);

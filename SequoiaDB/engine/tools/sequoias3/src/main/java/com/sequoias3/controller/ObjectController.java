@@ -256,7 +256,7 @@ public class ObjectController {
                                         @RequestParam(value = RestParamDefine.ListObjectsV1Para.ENCODING_TYPE, required = false) String encodingType)
             throws S3ServerException{
         User operator = restUtils.getOperatorByAuthorization(authorization);
-        logger.info("list objectsV1 with delimiter={}, marker={}, maxkeys={}, encodingtype={}", delimiter, startAfter, maxKeys, encodingType);
+        logger.info("list objectsV1 with delimiter={}, marker={}, prefix={}, maxkeys={}, encodingtype={}", delimiter, startAfter, prefix, maxKeys, encodingType);
 
         if (null != encodingType) {
             if (!encodingType.equals(RestParamDefine.ENCODING_TYPE_URL)) {
