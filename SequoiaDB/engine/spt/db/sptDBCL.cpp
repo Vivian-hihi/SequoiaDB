@@ -1507,18 +1507,19 @@ namespace engine
       {
          mode |= OSS_CREATEONLY ;
       }
-      rc = file.open( filePath, mode, OSS_DEFAULTFILE ) ;
-      if( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "Failed to open file" ) ;
-         goto error ;
-      }
       rc = _cl.openLob( lob, OID( oidStr ), SDB_LOB_READ ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to open lob" ) ;
          goto error ;
       }
+      rc = file.open( filePath, mode, OSS_DEFAULTFILE ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to open file" ) ;
+         goto error ;
+      }
+
       lobSize = lob.getSize() ;
       createTime = lob.getCreateTime() ;
 
