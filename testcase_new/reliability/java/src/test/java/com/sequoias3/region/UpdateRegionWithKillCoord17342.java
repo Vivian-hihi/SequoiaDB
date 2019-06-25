@@ -62,7 +62,7 @@ public class UpdateRegionWithKillCoord17342 extends S3TestBase {
         s3Client = CommLibS3.buildS3Client();
         CommLibS3.clearBucket(s3Client,bucketName);
         for (int i = 0; i < regionNum; i++) {
-            RegionUtils.deleteRegion(regionNameBase + i);
+            RegionUtils.clearRegion(regionNameBase + i);
             Region region = new Region().withDataCSShardingType(dataCSShardingType)
                     .withDataCLShardingType(dataCLShardingType)
                     .withName(regionNameBase + i);

@@ -38,7 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UpdateRegionWithStopS3N17346 extends S3TestBase {
     private boolean runSuccess = false;
-    private int regionNum = 5;
+    private int regionNum = 50;
     private String regionNameBase = "region17346";
     private String dataCSShardingType = "year";
     private String dataCLShardingType = "year";
@@ -55,7 +55,7 @@ public class UpdateRegionWithStopS3N17346 extends S3TestBase {
         s3Client = CommLibS3.buildS3Client();
         CommLibS3.clearBucket(s3Client, bucketName);
         for (int i = 0; i < regionNum; i++) {
-            RegionUtils.deleteRegion(regionNameBase + i);
+            RegionUtils.clearRegion(regionNameBase + i);
             Region region = new Region().withDataCSShardingType(dataCSShardingType)
                     .withDataCLShardingType(dataCLShardingType)
                     .withName(regionNameBase + i);

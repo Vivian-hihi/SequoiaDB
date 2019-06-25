@@ -47,7 +47,7 @@ public class PutRegionWithKillCoord17341 extends S3TestBase {
         coordGroup = groupMgr.getGroupByName("SYSCoord");
 
         for (int i = 0; i < regionNum; i++) {
-            RegionUtils.deleteRegion(regionNameBase + i);
+            RegionUtils.clearRegion(regionNameBase + i);
             regionNames.add(regionNameBase + i);
         }
     }

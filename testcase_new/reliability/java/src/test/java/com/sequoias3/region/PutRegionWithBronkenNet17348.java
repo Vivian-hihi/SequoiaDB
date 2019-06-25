@@ -42,7 +42,7 @@ public class PutRegionWithBronkenNet17348 extends S3TestBase {
     @BeforeClass
     private void setUp() throws Exception {
         for (int i = 0; i < regionNum; i++) {
-            RegionUtils.deleteRegion(regionNameBase + i);
+            RegionUtils.clearRegion(regionNameBase + i);
             regionNames.add(regionNameBase + i);
         }
     }
