@@ -27,7 +27,7 @@ public class UserUtils extends S3TestBase {
         TestRest rest = new TestRest();
         ResponseEntity<?> response = rest.setApi("/users/?Action=CreateUser&UserName=" + name + "&Role=" + type)
                 .setRequestMethod(HttpMethod.POST)
-                .setRequestHeaders(AUTHORIZATION, accessKeyId + "/")
+                .setRequestHeaders(AUTHORIZATION, AUTH_VAL_PRE + accessKeyId + "/")
                 .setResponseType(String.class).exec();
         String body = response.getBody().toString();
         return XML.toJSONObject(body);
@@ -45,7 +45,7 @@ public class UserUtils extends S3TestBase {
         TestRest rest = new TestRest();
         ResponseEntity<?> response = rest.setApi("/users/?Action=DeleteUser&UserName=" + name + "&Force=" + force)
                 .setRequestMethod(HttpMethod.POST)
-                .setRequestHeaders(AUTHORIZATION, accessKeyId + "/")
+                .setRequestHeaders(AUTHORIZATION, AUTH_VAL_PRE + accessKeyId + "/")
                 .setResponseType(String.class).exec();
         return response.getHeaders().toString();
     }
@@ -54,7 +54,7 @@ public class UserUtils extends S3TestBase {
         TestRest rest = new TestRest();
         ResponseEntity<?> response = rest.setApi("/users/?Action=CreateAccessKey&UserName=" + name)
                 .setRequestMethod(HttpMethod.POST)
-                .setRequestHeaders(AUTHORIZATION, accessKeyId + "/")
+                .setRequestHeaders(AUTHORIZATION, AUTH_VAL_PRE + accessKeyId + "/")
                 .setResponseType(String.class).exec();
         String body = response.getBody().toString();
         return XML.toJSONObject(body);
@@ -63,7 +63,7 @@ public class UserUtils extends S3TestBase {
     public static JSONObject getUser(String name, String accessKeyId) throws HttpClientErrorException {
         TestRest rest = new TestRest();
         ResponseEntity<?> response = rest.setApi("/users/?Action=GetAccessKey&UserName=" + name).setRequestMethod(HttpMethod.POST)
-                .setRequestHeaders(AUTHORIZATION, accessKeyId + "/")
+                .setRequestHeaders(AUTHORIZATION, AUTH_VAL_PRE + accessKeyId + "/")
                 .setResponseType(String.class).exec();
         String body = response.getBody().toString();
         return  XML.toJSONObject(body);

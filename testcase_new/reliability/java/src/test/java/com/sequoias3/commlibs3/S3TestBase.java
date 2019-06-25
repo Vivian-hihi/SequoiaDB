@@ -78,54 +78,29 @@ public class S3TestBase {
         enableVerBucketName = "commbucketwithversion";
         confTool = CONFTOOL;
 
-//        getInstallPath();
-//
-//        sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
-//        createCSCLAndStartS3();
+        getInstallPath();
+        sdbConfTestBase.openTransaction(confTool, hostName, serviceName);
+        createCSCLAndStartS3();
         //clean file
-//        File workDirFile = new File(workDir);
-//        if (!workDirFile.exists()) {
-//            workDirFile.mkdir();
-//        }
-
-        AmazonS3 s3Client = null;
-        try{
-            //clean up existing buckets
-            s3Client = CommLibS3.buildS3Client();
-            List<Bucket> buckets = s3Client.listBuckets();
-            for ( int i = 0; i < buckets.size(); i++ ){
-                String bucketName = buckets.get(i).getName();
-                String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
-                if( bucketVerStatus == "null"){
-                    CommLibS3.deleteAllObjects(s3Client, bucketName);
-                }else{
-                    CommLibS3.deleteAllObjectVersions( s3Client, bucketName );
-                }
-                s3Client.deleteBucket(bucketName);
-            }
-            //create bucket
-            s3Client.createBucket(new CreateBucketRequest(bucketName));
-            //create bucket by enable versioning
-            s3Client.createBucket(new CreateBucketRequest(enableVerBucketName));
-            CommLibS3.setBucketVersioning(s3Client, enableVerBucketName, "Enabled");
-        }finally {
-            if (s3Client != null) {
-                s3Client.shutdown();
-            }
+        File workDirFile = new File(workDir);
+        if (!workDirFile.exists()) {
+            workDirFile.mkdir();
         }
+        createCommonCS();
+        cleanS3EnvAndPrepare();
     }
 
     @AfterSuite
     public  void finiSuite(){
-//        try {
-//            getClusterInfo();
-//            sdbConfTestBase.closeTransaction(hostName, serviceName);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            Assert.fail(e.getMessage());
-//        } finally {
-//            stopS3();
-//        }
+        try {
+            getClusterInfo();
+            sdbConfTestBase.closeTransaction(hostName, serviceName);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Assert.fail(e.getMessage());
+        } finally {
+            stopS3();
+        }
     }
 
     public static String getDefaultCoordUrl() {
@@ -323,5 +298,47 @@ public class S3TestBase {
             ssh.disconnect();
         }
         return dir;
+    }
+
+    public static void createCommonCS(){
+        Sequoiadb db = null;
+        try {
+            db = new Sequoiadb(coordUrl, "", "");
+            if(!db.isCollectionSpaceExist(csName)){
+                db.createCollectionSpace(csName);
+            }
+        }  finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+    }
+
+    public void cleanS3EnvAndPrepare() {
+        AmazonS3 s3Client = null;
+        try {
+            //clean up existing buckets
+            s3Client = CommLibS3.buildS3Client();
+            List<Bucket> buckets = s3Client.listBuckets();
+            for (int i = 0; i < buckets.size(); i++) {
+                String bucketName = buckets.get(i).getName();
+                String bucketVerStatus = s3Client.getBucketVersioningConfiguration(bucketName).getStatus();
+                if (bucketVerStatus == "null") {
+                    CommLibS3.deleteAllObjects(s3Client, bucketName);
+                } else {
+                    CommLibS3.deleteAllObjectVersions(s3Client, bucketName);
+                }
+                s3Client.deleteBucket(bucketName);
+            }
+            //create bucket
+            s3Client.createBucket(new CreateBucketRequest(bucketName));
+            //create bucket by enable versioning
+            s3Client.createBucket(new CreateBucketRequest(enableVerBucketName));
+            CommLibS3.setBucketVersioning(s3Client, enableVerBucketName, "Enabled");
+        } finally {
+            if (s3Client != null) {
+                s3Client.shutdown();
+            }
+        }
     }
 }

@@ -44,7 +44,7 @@ public class RegionUtils extends S3TestBase {
 		ResponseEntity<?> resp;
 		try {
 			resp = rest.setApi("/region/?Action=CreateRegion&RegionName=" + region.getName())
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestHeaders(UserUtils.AUTHORIZATION,  UserUtils.AUTH_VAL_PRE +  accessKeyId+"/")
 					.setRequestBody(region)
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class).exec();
@@ -54,6 +54,12 @@ public class RegionUtils extends S3TestBase {
 			}
 		} catch (HttpStatusCodeException e) {
 			throw httpToAmazon(e);
+		}
+	}
+
+	public static void clearRegion(String regionName) throws Exception {
+		if(headRegion(regionName)){
+			deleteRegion(regionName);
 		}
 	}
 	
@@ -67,7 +73,7 @@ public class RegionUtils extends S3TestBase {
 		boolean isDelete = false;
 		try {
 			resp = rest.setApi("/region/?Action=DeleteRegion&RegionName=" + regionName)
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestHeaders(UserUtils.AUTHORIZATION,  UserUtils.AUTH_VAL_PRE + accessKeyId+"/")
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class)
 					.exec();
@@ -90,7 +96,7 @@ public class RegionUtils extends S3TestBase {
 		GetRegionResult result;
 		try {
 			resp = rest.setApi("/region/?Action=GetRegion&RegionName=" + regionName)
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestHeaders(UserUtils.AUTHORIZATION, UserUtils.AUTH_VAL_PRE + accessKeyId+"/")
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class)
 					.exec();
@@ -112,7 +118,7 @@ public class RegionUtils extends S3TestBase {
 		boolean doesExist = false;
 		try {
 			resp = rest.setApi("/region/?Action=HeadRegion&RegionName=" + regionName)
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestHeaders(UserUtils.AUTHORIZATION,  UserUtils.AUTH_VAL_PRE + accessKeyId+"/")
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class)
 					.exec();
@@ -136,7 +142,7 @@ public class RegionUtils extends S3TestBase {
 		List<String> listResult;
 		try {
 			resp = rest.setApi("/region/?Action=ListRegions")
-					.setRequestHeaders(UserUtils.AUTHORIZATION, accessKeyId+"/")
+					.setRequestHeaders(UserUtils.AUTHORIZATION,  UserUtils.AUTH_VAL_PRE +  accessKeyId+"/")
 					.setRequestMethod(HttpMethod.POST)
 					.setResponseType(String.class)
 					.exec();

@@ -1,6 +1,5 @@
 package com.sequoias3.commlibs3;
 
-import com.sequoias3.commlibs3.s3utils.UserUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -28,8 +27,8 @@ public class TestRest extends S3TestBase {
 
 	static {
 		HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
-		factory.setConnectionRequestTimeout(100000);
-		factory.setConnectTimeout(100000);
+		factory.setConnectionRequestTimeout(10000);
+		factory.setConnectTimeout(60000);
 		factory.setBufferRequestBody(false);
 		factory.setReadTimeout(180000);
 		rest = new RestTemplate(factory);
@@ -90,9 +89,6 @@ public class TestRest extends S3TestBase {
 	}
 
 	public TestRest setRequestHeaders(String headerName, String headerValue) {
-		if (headerName.equals(UserUtils.AUTHORIZATION)) {
-			headerValue = UserUtils.AUTH_VAL_PRE + headerValue;
-		}
 		requestHeaders.add(headerName, headerValue);
 		return this;
 	}
