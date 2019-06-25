@@ -4,7 +4,7 @@
 ***************************************************************************** */
 
 main();
-
+//TODO:1、会话设置preferedStrict建议在文本用例中补充描述
 function main()
 {
    var db = new Sdb(COORDHOSTNAME, COORDSVCNAME ) ; 
@@ -29,6 +29,7 @@ function main()
    
    println("---begin to set and query instanceid is " + instanceidList[1]);
    db.setSessionAttr( { PreferedInstance: instanceidList[1], PreferedStrict: true } );
+   //TODO:1、这里的检查结果为啥要判断是备节点，已有可能这个节点会变成主节点
    setSessionAttrAndCheckResult(db, dbcl, groupName, expSvcNameList[1], false );
 
    //stop node and select record
@@ -46,7 +47,7 @@ function main()
       {
          rg.start();
          sleep(1000);
-         db.dropCS(csName);
+         db.dropCS(csName);//TODO:2、清理组建议放在finally里面，放在这里如果try前面的失败则组会残留
          db.removeRG(groupName);
          throw e;
       }
@@ -59,7 +60,7 @@ function main()
    rg.getNode(nodeList[1].hostname, nodeList[1].svcname).start();
    db.setSessionAttr({PreferedStrict: true});
    setSessionAttrAndCheckResult(db, dbcl, groupName, expSvcNameList[1], false );
-   
+   //TODO:3、节点已经启动，为啥dropCS还要循环判断
    var sleepInteval=10;
    for(var i = 0; i < 1000; i++)
    {

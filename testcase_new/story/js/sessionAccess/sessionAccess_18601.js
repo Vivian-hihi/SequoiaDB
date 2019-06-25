@@ -34,6 +34,7 @@ function main()
    println("begin to stop node: " + expSvcNameList[1]);
    var rg = db.getRG(groupName);
    rg.getNode(nodeList[1].hostname, nodeList[1].svcname).stop();
+   //TODO:1、没有必要校验主备节点，这里也可能2对应的节点为主
    setSessionAttrAndCheckResult(db, dbcl, groupName, expSvcNameList[2], false );
    
    try
@@ -49,7 +50,7 @@ function main()
       {
          rg.start();
          sleep(1000);
-         db.dropCS(csName);
+         db.dropCS(csName);//TODO:2、清理组建议放在finally里面
          db.removeRG(groupName);
          throw e;
       }
@@ -62,7 +63,7 @@ function main()
    rg.start();
    db.setSessionAttr({PreferedStrict: true});
    dbcl.find().explain();
-   
+   //TODO:3、节点已经启动，为啥dropCS还要循环判断
    var sleepInteval=10;
    for(var i = 0; i < 1000; i++)
    {
