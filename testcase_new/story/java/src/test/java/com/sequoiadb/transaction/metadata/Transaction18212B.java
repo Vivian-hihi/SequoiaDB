@@ -41,6 +41,9 @@ public class Transaction18212B extends SdbTestBase {
             throw new SkipException("groups less than 2");
         }
 
+        if (sdb.isCollectionSpaceExist(csName)) {
+            sdb.dropCollectionSpace(csName);
+        }
         sdb.createCollectionSpace(csName);
         createCL("cl18212A_B");
         createCL("cl18212B_B");
@@ -49,6 +52,9 @@ public class Transaction18212B extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
+        if (sdb.isCollectionSpaceExist(csName)) {
+            sdb.dropCollectionSpace(csName);
+        }
         sdb.close();
     }
 

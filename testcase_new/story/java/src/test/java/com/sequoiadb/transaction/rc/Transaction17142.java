@@ -39,6 +39,9 @@ public class Transaction17142 extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        if (sdb.isCollectionSpaceExist(csName)) {
+            sdb.dropCollectionSpace(csName);
+        }
         cappedCL = sdb.createCollectionSpace(csName, (BSONObject) JSON.parse("{Capped:true}")).createCollection(clName,
                 (BSONObject) JSON.parse("{Capped:true, Size:1024}"));
         object = new BasicBSONObject();
