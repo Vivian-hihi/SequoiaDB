@@ -2091,7 +2091,7 @@ namespace engine
          {
             // Version of collection in Coord need to be updated
             retObjBuilder.appendElements(
-                  BSON( CAT_COLLECTION << _boTarget.getOwned() ) ) ;
+                  BSON( CAT_COLLECTION << _boTarget ) ) ;
             // Append GROUP field even if the list is empty
             _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
          }
