@@ -1,13 +1,21 @@
 package com.sequoiadb.commlib;
 
+import java.util.HashMap ;
 import java.util.List;
+import java.util.Map ;
+import java.util.concurrent.atomic.AtomicInteger ;
 
+import org.bson.BSONObject ;
+import org.bson.BasicBSONObject ;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterTest ;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest ;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 
+import com.sequoiadb.base.DBCursor ;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
@@ -28,7 +36,31 @@ public class SdbTestBase {
     public static String scriptDir;
     public static String esHostName;
     public static String esServiceName;
+    
+    private static final String TRANSAUTOCOMMIT = "transautocommit";
+    private static final String TRANSAUTOROLLBACK = "transautorollback";
+    private static final String RCAUTO = "rcauto" ;
+    private static final String NODENAME = "NodeName";
+    private static final Map<String, BSONObject> group2Conf = new HashMap<String, BSONObject>();
+    private static final Map<String, BSONObject> node2Conf = new HashMap<String, BSONObject>();
+    private static final Map<String, AtomicInteger> groupName2Count = new HashMap<>();
+    private static BasicBSONObject confObj = new BasicBSONObject();
 
+    private static void getAllNodeConf(BasicBSONObject selector) {
+        try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            selector.put(NODENAME, "");
+
+            DBCursor cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CONFIGS, null, selector, null);
+            while (cursor.hasNext()) {
+                BasicBSONObject doc = (BasicBSONObject) cursor.getNext();
+                String key = doc.getString(NODENAME);
+                doc.remove(NODENAME);
+                node2Conf.put(key, doc);
+            }
+            cursor.close();
+        }
+    }
+    
     @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR",
             "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD", "SCRIPTDIR", "ESHOSTNAME", "ESSVCNAME", "FULLTEXTPREFIX" })
     @BeforeSuite
@@ -52,6 +84,7 @@ public class SdbTestBase {
         esServiceName = ESSVCNAME;
         FullTextUtils.setFulltextPrefix(FULLTEXTPREFIX);
 
+        getAllNodeConf( confObj ) ;
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(coordUrl, "", "");
@@ -67,7 +100,55 @@ public class SdbTestBase {
             }
         }
     }
+    
+    static {
+        group2Conf.put(RCAUTO, new BasicBSONObject());
+        group2Conf.get(RCAUTO).put(TRANSAUTOCOMMIT, true);
+        group2Conf.get(RCAUTO).put(TRANSAUTOROLLBACK, false);
+        
+        for (String conf : group2Conf.get(RCAUTO).keySet()) {
+            if (!confObj.containsField(conf)) {
+                confObj.put(conf, "");
+            }
+        }
+        groupName2Count.put( RCAUTO, new AtomicInteger(0) ) ;
+    }
+    
+    private static void modifyNodeConf(BSONObject cfg, BSONObject object) {
+        if (object == null) {
+            object = new BasicBSONObject().append("Global", true);
+        }
+        
+        try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
+            sdb.updateConfig(cfg, object);
+        } catch (BaseException e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+    
+    @BeforeTest(groups = RCAUTO)
+    public static synchronized void initTestGroups() {
+        if ( groupName2Count.get( RCAUTO ).getAndIncrement() > 0 ){
+            return ;
+        }
+        System.out.println("init " + RCAUTO + " Groups...........");
+        modifyNodeConf(group2Conf.get(RCAUTO), null);
+    }
 
+    @AfterTest(groups = RCAUTO, alwaysRun = true)
+    public static synchronized void finiTestGroups() {
+        if ( groupName2Count.get( RCAUTO ).decrementAndGet() < 0 ){
+            return ;
+        }
+        System.out.println("fini " + RCAUTO + " Groups...........");
+        for (String key : node2Conf.keySet()) {
+            BasicBSONObject opt = new BasicBSONObject();
+            opt.put(NODENAME, key);
+            modifyNodeConf(node2Conf.get(key), opt);
+        }
+    }
+    
     private static void createReserveDir() {
         try {
             GroupMgr mgr = GroupMgr.getInstance();
