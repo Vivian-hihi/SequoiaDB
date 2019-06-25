@@ -45,6 +45,12 @@ public class SdbTestBase {
     private static final Map<String, BSONObject> node2Conf = new HashMap<String, BSONObject>();
     private static final Map<String, AtomicInteger> groupName2Count = new HashMap<>();
     private static BasicBSONObject confObj = new BasicBSONObject();
+    private static String testGroupOfCurrent;
+    
+    public static void setTestGroup(List<String> testGroup){
+        if ( testGroup.isEmpty()) return ;
+        SdbTestBase.testGroupOfCurrent = testGroup.get( 0 ) ;
+    }
 
     private static void getAllNodeConf(BasicBSONObject selector) {
         try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
@@ -129,19 +135,28 @@ public class SdbTestBase {
     
     @BeforeTest(groups = RCAUTO)
     public static synchronized void initTestGroups() {
-        if ( groupName2Count.get( RCAUTO ).getAndIncrement() > 0 ){
+        if ( !groupName2Count.containsKey( testGroupOfCurrent ) ){
             return ;
         }
-        System.out.println("init " + RCAUTO + " Groups...........");
-        modifyNodeConf(group2Conf.get(RCAUTO), null);
+        
+        if ( groupName2Count.get( testGroupOfCurrent ).getAndIncrement() > 0 ){
+            return ;
+        }
+        System.out.println("init " + testGroupOfCurrent + " Groups...........");
+        modifyNodeConf(group2Conf.get(testGroupOfCurrent), null);
     }
 
     @AfterTest(groups = RCAUTO, alwaysRun = true)
     public static synchronized void finiTestGroups() {
-        if ( groupName2Count.get( RCAUTO ).decrementAndGet() < 0 ){
+        if ( !groupName2Count.containsKey( testGroupOfCurrent ) ){
             return ;
         }
-        System.out.println("fini " + RCAUTO + " Groups...........");
+        
+        if ( groupName2Count.get( testGroupOfCurrent ).decrementAndGet() < 0 ){
+            return ;
+        }
+        
+        System.out.println("fini " + testGroupOfCurrent + " Groups...........");
         for (String key : node2Conf.keySet()) {
             BasicBSONObject opt = new BasicBSONObject();
             opt.put(NODENAME, key);

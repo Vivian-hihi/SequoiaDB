@@ -1,5 +1,7 @@
 package com.sequoiadb.commlib;
 
+import java.util.List ;
+
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
@@ -13,12 +15,14 @@ import org.testng.ITestResult;
 public class ReliabilityInvokeMethodListener implements IInvokedMethodListener{
     @Override
     public void beforeInvocation(IInvokedMethod iInvokedMethod, ITestResult iTestResult) {
-
+        List<String> testGroups = iTestResult.getTestClass().getXmlTest().getIncludedGroups() ;
+        SdbTestBase.setTestGroup( testGroups );
+        
     }
 
     @Override
     public void afterInvocation(IInvokedMethod iInvokedMethod, ITestResult iTestResult) {
-        if(iTestResult.getStatus()==ITestResult.FAILURE){
+        if(iTestResult.getStatus() == ITestResult.FAILURE){
             iTestResult.getTestContext().getSuite().getSuiteState().failed();
         }
     }
