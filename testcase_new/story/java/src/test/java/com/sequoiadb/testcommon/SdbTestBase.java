@@ -76,24 +76,36 @@ public class SdbTestBase {
         group2Conf.get(RU).put(TRANSLOCKWAIT, false);
         group2Conf.get(RU).put(INDEXSCANSTEP, newIndexScanStep);
         group2Conf.get(RU).put(TRANSTIMEOUT, timeOutLen);
+        group2Conf.get(RU).put(TRANSAUTOCOMMIT, false);
+        group2Conf.get(RU).put(TRANSAUTOROLLBACK, true);
+        group2Conf.get(RU).put(TRANSUSERBS, true);
 
         group2Conf.put(RC, new BasicBSONObject());
         group2Conf.get(RC).put(TRANSISOLATION, 1);
         group2Conf.get(RC).put(TRANSLOCKWAIT, false);
         group2Conf.get(RC).put(INDEXSCANSTEP, newIndexScanStep);
         group2Conf.get(RC).put(TRANSTIMEOUT, timeOutLen);
+        group2Conf.get(RC).put(TRANSAUTOCOMMIT, false);
+        group2Conf.get(RC).put(TRANSAUTOROLLBACK, true);
+        group2Conf.get(RC).put(TRANSUSERBS, true);
 
         group2Conf.put(RCWAITLOCK, new BasicBSONObject());
         group2Conf.get(RCWAITLOCK).put(TRANSISOLATION, 1);
         group2Conf.get(RCWAITLOCK).put(TRANSLOCKWAIT, true);
         group2Conf.get(RCWAITLOCK).put(INDEXSCANSTEP, newIndexScanStep);
         group2Conf.get(RCWAITLOCK).put(TRANSTIMEOUT, timeOutLen);
+        group2Conf.get(RCWAITLOCK).put(TRANSAUTOCOMMIT, false);
+        group2Conf.get(RCWAITLOCK).put(TRANSAUTOROLLBACK, true);
+        group2Conf.get(RCWAITLOCK).put(TRANSUSERBS, true);
 
         group2Conf.put(RS, new BasicBSONObject());
         group2Conf.get(RS).put(TRANSISOLATION, 2);
         group2Conf.get(RS).put(TRANSLOCKWAIT, false);
         group2Conf.get(RS).put(INDEXSCANSTEP, newIndexScanStep);
         group2Conf.get(RS).put(TRANSTIMEOUT, timeOutLen);
+        group2Conf.get(RS).put(TRANSAUTOCOMMIT, false);
+        group2Conf.get(RS).put(TRANSAUTOROLLBACK, true);
+        group2Conf.get(RS).put(TRANSUSERBS, true);
 
         group2Conf.put(RCAUTO, new BasicBSONObject());
         group2Conf.get(RCAUTO).put(TRANSISOLATION, 1);
@@ -102,12 +114,15 @@ public class SdbTestBase {
         group2Conf.get(RCAUTO).put(TRANSTIMEOUT, timeOutLen);
         group2Conf.get(RCAUTO).put(TRANSAUTOCOMMIT, true);
         group2Conf.get(RCAUTO).put(TRANSAUTOROLLBACK, false);
+        group2Conf.get(RCAUTO).put(TRANSUSERBS, true);
 
         group2Conf.put(RCUSERBS, new BasicBSONObject());
         group2Conf.get(RCUSERBS).put(TRANSISOLATION, 1);
         group2Conf.get(RCUSERBS).put(TRANSLOCKWAIT, false);
         group2Conf.get(RCUSERBS).put(INDEXSCANSTEP, newIndexScanStep);
         group2Conf.get(RCUSERBS).put(TRANSTIMEOUT, timeOutLen);
+        group2Conf.get(RCUSERBS).put(TRANSAUTOCOMMIT, false);
+        group2Conf.get(RCUSERBS).put(TRANSAUTOROLLBACK, true);
         group2Conf.get(RCUSERBS).put(TRANSUSERBS, false);
 
         for (String key : group2Conf.keySet()) {
@@ -262,21 +277,23 @@ public class SdbTestBase {
 
     @BeforeTest(groups = { RU, RC, RCWAITLOCK, RS, RCAUTO, RCUSERBS })
     public static synchronized void initTestGroups() {
-        if ( testGroup == null ) return ;
+        if (testGroup == null)
+            return;
         System.out.println("init " + testGroup + " Groups...........");
         modifyNodeConf(group2Conf.get(testGroup), null);
     }
 
     @AfterTest(groups = { RC, RU, RCWAITLOCK, RS, RCAUTO, RCUSERBS }, alwaysRun = true)
     public static synchronized void finiTestGroups() {
-        if ( testGroup == null ) return ;
+        if (testGroup == null)
+            return;
         System.out.println("fini " + testGroup + " Groups...........");
         for (String key : node2Conf.keySet()) {
             BasicBSONObject opt = new BasicBSONObject();
             opt.put(NODENAME, key);
             modifyNodeConf(node2Conf.get(key), opt);
         }
-        testGroup = null ;
+        testGroup = null;
     }
 
     @AfterSuite(alwaysRun = true)
@@ -315,7 +332,7 @@ public class SdbTestBase {
 
         BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line = "";
-        while (( line = input.readLine() ) != null) {
+        while ((line = input.readLine()) != null) {
             System.out.println(line);
         }
 
