@@ -31,7 +31,7 @@ $LIST_GROUP
   "Group": [
     {
       "dbpath": "/opt/test/30000",
-      "HostName": "u1604-ljh",
+      "HostName": "hostname",
       "Service": [
         {
           "Type": 0,
@@ -54,7 +54,7 @@ $LIST_GROUP
       "Status": 1
     },
     {
-      "HostName": "u1604-ljh",
+      "HostName": "hostname",
       "dbpath": "/opt/test/30020",
       "Service": [
         {
@@ -78,7 +78,7 @@ $LIST_GROUP
       "Status": 1
     },
     {
-      "HostName": "u1604-ljh",
+      "HostName": "hostname",
       "Status": 1,
       "dbpath": "/opt/test/30010/",
       "Service": [

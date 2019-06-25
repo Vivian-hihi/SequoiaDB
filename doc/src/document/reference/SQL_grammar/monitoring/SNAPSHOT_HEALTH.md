@@ -66,7 +66,7 @@ $SNAPSHOT_HEALTH
 > db=new Sdb( 'localhost: 20000' )
 > db.exec( "select * from $SNAPSHOT_HEALTH" )
 {
-  "NodeName": "u1604-ljh:20000",
+  "NodeName": "hostname:20000",
   "IsPrimary": true,
   "ServiceStatus": true,
   "Status": "Normal",

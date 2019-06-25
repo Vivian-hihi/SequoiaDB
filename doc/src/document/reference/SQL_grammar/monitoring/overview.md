@@ -2,51 +2,43 @@
 
 ##快照视图##
 
-[快照](reference/SQL_grammar/monitoring/snapshot.md) 是一种得到系统当前状态的命令，主要分为以下类型：
+快照是一种得到系统当前状态的命令，主要分为以下类型：
 
-*   [上下文快照](reference/SQL_grammar/monitoring/$SNAPSHOT_CONTEXT.md)
-*   [当前会话上下文快照](reference/SQL_grammar/monitoring/$SNAPSHOT_CONTEXT_CUR.md)
-*   [会话快照](reference/SQL_grammar/monitoring/$SNAPSHOT_SESSION.md)
-*   [当前会话快照](reference/SQL_grammar/monitoring/$SNAPSHOT_SESSION_CUR.md)
-*   [集合快照](reference/SQL_grammar/monitoring/$SNAPSHOT_CL.md)
-*   [集合空间快照](reference/SQL_grammar/monitoring/$SNAPSHOT_CS.md)
-*   [数据库快照](reference/SQL_grammar/monitoring/$SNAPSHOT_DB.md)
-*   [系统快照](reference/SQL_grammar/monitoring/$SNAPSHOT_SYSTEM.md)
-*   [编目信息快照](reference/SQL_grammar/monitoring/$SNAPSHOT_CATA.md)
-*   [事务快照](reference/SQL_grammar/monitoring/$SNAPSHOT_TRANS.md)
-*   [当前事务快照](reference/SQL_grammar/monitoring/$SNAPSHOT_TRANS_CUR.md)
-*   [访问计划缓存快照](reference/SQL_grammar/monitoring/$SNAPSHOT_ACCESSPLANS.md)
-*   [节点健康检测快照](reference/SQL_grammar/monitoring/$SNAPSHOT_HEALTH.md)
-*   [配置快照](reference/SQL_grammar/monitoring/$SNAPSHOT_CONFIGS.md)
-*   [序列快照](reference/SQL_grammar/monitoring/$SNAPSHOT_SEQUENCES.md)
-
+| 快照标示 | 对应 sdbshell 接口标示 | 快照类型 | 描述 |
+| -------- | -------- | -------- | ---- |
+| [$SNAPSHOT_CONTEXT](reference/SQL_grammar/monitoring/SNAPSHOT_CONTEXT.md) | [SDB_SNAP_CONTEXTS](database_management/monitoring/snapshot/SDB_SNAP_CONTEXTS.md) | 上下文快照 | 上下文快照列出当前数据库节点中所有的会话所对应的上下文 |
+| [$SNAPSHOT_CONTEXT_CUR](reference/SQL_grammar/monitoring/SNAPSHOT_CONTEXT_CUR.md) | [SDB_SNAP_CONTEXTS_CURRENT](database_management/monitoring/snapshot/SDB_SNAP_CONTEXTS_CURRENT.md) | 当前会话上下文快照 | 当前上下文快照列出当前数据库节点中当前会话所对应的上下文 |
+| [$SNAPSHOT_SESSION](reference/SQL_grammar/monitoring/SNAPSHOT_SESSION.md) | [SDB_SNAP_SESSIONS](database_management/monitoring/snapshot/SDB_SNAP_SESSIONS.md) | 会话快照 | 会话快照列出当前数据库节点中所有的会话 |
+| [$SNAPSHOT_SESSION_CUR](reference/SQL_grammar/monitoring/SNAPSHOT_SESSION_CUR.md) | [SDB_SNAP_SESSIONS_CURRENT](database_management/monitoring/snapshot/SDB_SNAP_SESSIONS_CURRENT.md) | 当前会话快照 | 当前会话快照列出当前数据库节点中当前的会话 |
+| [$SNAPSHOT_CL](reference/SQL_grammar/monitoring/SNAPSHOT_CL.md) | [SDB_SNAP_COLLECTIONS](database_management/monitoring/snapshot/SDB_SNAP_COLLECTIONS.md) | 集合快照 | 集合快照列出当前数据库节点或集群中所有非临时集合 |
+| [$SNAPSHOT_CS](reference/SQL_grammar/monitoring/SNAPSHOT_CS.md) | [SDB_SNAP_COLLECTIONSPACES](database_management/monitoring/snapshot/SDB_SNAP_COLLECTIONSPACES.md) | 集合空间快照 | 集合空间快照列出当前数据库节点或集群中所有集合空间（编目集合空间除外） |
+| [$SNAPSHOT_DB](reference/SQL_grammar/monitoring/SNAPSHOT_DB.md) | [SDB_SNAP_DATABASE](database_management/monitoring/snapshot/SDB_SNAP_DATABASE.md) | 数据库快照 | 数据库快照列出当前数据库节点的数据库监视信息 |
+| [$SNAPSHOT_SYSTEM](reference/SQL_grammar/monitoring/SNAPSHOT_SYSTEM.md) | [SDB_SNAP_SYSTEM](database_management/monitoring/snapshot/SDB_SNAP_SYSTEM.md) | 系统快照 | 系统快照列出当前数据库节点的系统监视信息 |
+| [$SNAPSHOT_CATA](reference/SQL_grammar/monitoring/SNAPSHOT_CATA.md) | [SDB_SNAP_CATALOG](database_management/monitoring/snapshot/SDB_SNAP_CATALOG.md) | 编目信息快照 | 用于查看编目信息 |
+| [$SNAPSHOT_TRANS](reference/SQL_grammar/monitoring/SNAPSHOT_TRANS.md) | [SDB_SNAP_TRANSACTIONS](database_management/monitoring/snapshot/SDB_SNAP_TRANSACTIONS.md) | 事务快照 | 事务快照列出数据库中正在进行的事务信息 |
+| [$SNAPSHOT_TRANS_CUR](reference/SQL_grammar/monitoring/SNAPSHOT_TRANS_CUR.md) | [SDB_SNAP_TRANSACTIONS_CURRENT](database_management/monitoring/snapshot/SDB_SNAP_TRANSACTIONS_CURRENT.md) | 当前事务快照 | 当前事务快照列出当前会话正在进行的事务信息 |
+| [$SNAPSHOT_ACCESSPLANS](reference/SQL_grammar/monitoring/SNAPSHOT_ACCESSPLANS.md) | [SDB_SNAP_ACCESSPLANS](database_management/monitoring/snapshot/SDB_SNAP_ACCESSPLANS.md) | 访问计划缓存快照 | 访问计划缓存快照列出数据库中缓存的访问计划的信息 |
+| [$SNAPSHOT_HEALTH](reference/SQL_grammar/monitoring/SNAPSHOT_HEALTH.md) | [SDB_SNAP_HEALTH](database_management/monitoring/snapshot/SDB_SNAP_HEALTH.md) | 节点健康检测快照 | 节点健康检测快照列出数据库中所有节点的健康信息 |
+| [$SNAPSHOT_CONFIGS](reference/SQL_grammar/monitoring/SNAPSHOT_CONFIGS.md) | [SDB_SNAP_CONFIGS](database_management/monitoring/snapshot/SDB_SNAP_CONFIGS.md) | 配置快照 | 配置快照列出数据库中指定节点的配置信息 |
+| [$SNAPSHOT_SEQUENCES](reference/SQL_grammar/monitoring/SNAPSHOT_SEQUENCES.md) | [SDB_SNAP_SEQUENCES](database_management/monitoring/snapshot/SDB_SNAP_SEQUENCES.md) | 序列快照 | 序列快照列出当前数据库的全部序列信息 |
 
 ##列表视图##
 
-[列表](reference/SQL_grammar/monitoring/list.md) 是一种轻量级的得到系统当前状态的命令，主要分为以下类型：
+列表是一种轻量级的得到系统当前状态的命令，主要分为以下类型：
 
-*   [上下文列表](reference/SQL_grammar/monitoring/$LIST_CONTEXT.md)
-*   [当前会话上下文列表](reference/SQL_grammar/monitoring/$LIST_CONTEXT_CUR.md)
-*   [会话列表](reference/SQL_grammar/monitoring/$LIST_SESSION.md)
-*   [当前会话列表](reference/SQL_grammar/monitoring/$LIST_SESSION_CUR.md)
-*   [集合列表](reference/SQL_grammar/monitoring/$LIST_CL.md)
-*   [集合空间列表](reference/SQL_grammar/monitoring/$LIST_CS.md)
-*   [存储单元列表](reference/SQL_grammar/monitoring/$LIST_SU.md)
-*   [分区组列表](reference/SQL_grammar/monitoring/$LIST_GROUP.md)
-*   [事务列表](reference/SQL_grammar/monitoring/$LIST_TRANS.md)
-*   [当前事务列表](reference/SQL_grammar/monitoring/$LIST_TRANS_CUR.md)
-*   [序列列表](reference/SQL_grammar/monitoring/$LIST_SEQUENCES.md)
-
-> **Note:**
->
-> 单位说明：
->
-> - 描述中没有标志单位时：
->   1. 监控信息中关于存储的单位为字节。
->   2. 监控信息中关于数量的单位为条数。
->   3. 监控信息中关于网络的单位为字节。
->
-> - 描述中有标志单位时，以描述为准。
+| 列表标示 | 对应 sdbshell 接口标示 | 列表类型 | 描述 |
+| -------- | -------- | -------- | ---- |
+| [$LIST_CONTEXT](reference/SQL_grammar/monitoring/LIST_CONTEXT.md) | [SDB_LIST_CONTEXTS](database_management/monitoring/list/SDB_LIST_CONTEXTS.md) | 上下文列表 | 上下文列表列出当前数据库节点中所有的会话所对应的上下文 |
+| [$LIST_CONTEXT_CUR](reference/SQL_grammar/monitoring/LIST_CONTEXT_CUR.md) | [SDB_LIST_CONTEXTS_CURRENT](database_management/monitoring/list/SDB_LIST_CONTEXTS_CURRENT.md) | 当前会话上下文列表 | 当前上下文列表列出当前数据库节点中当前会话所对应的上下文 |
+| [$LIST_SESSION](reference/SQL_grammar/monitoring/LIST_SESSION.md) | [SDB_LIST_SESSIONS](database_management/monitoring/list/SDB_LIST_SESSIONS.md) | 会话列表 | 会话列表列出当前数据库节点中所有的会话 |
+| [$LIST_SESSION_CUR](reference/SQL_grammar/monitoring/LIST_SESSION_CUR.md) | [SDB_LIST_SESSIONS_CURRENT](database_management/monitoring/list/SDB_LIST_SESSIONS_CURRENT.md) | 当前会话列表 | 当前会话列表列出当前数据库节点中当前的会话 |
+| [$LIST_CL](reference/SQL_grammar/monitoring/LIST_CL.md) | [SDB_LIST_COLLECTIONS](database_management/monitoring/list/SDB_LIST_COLLECTIONS.md) | 集合列表 | 集合列表列出当前数据库节点或集群中所有非临时集合 |
+| [$LIST_CS](reference/SQL_grammar/monitoring/LIST_CS.md) | [SDB_LIST_COLLECTIONSPACES](database_management/monitoring/list/SDB_LIST_COLLECTIONSPACES.md) | 集合空间列表 | 集合空间列表列出当前数据库节点或集群中所有集合空间（编目集合空间除外） |
+| [$LIST_SU](reference/SQL_grammar/monitoring/LIST_SU.md) | [SDB_LIST_STORAGEUNITS](database_management/monitoring/list/SDB_LIST_STORAGEUNITS.md) | 存储单元列表 | 存储单元列表列出当前数据库节点的全部存储单元信息 |
+| [$LIST_GROUP](reference/SQL_grammar/monitoring/LIST_GROUP.md) | [SDB_LIST_GROUPS](database_management/monitoring/list/SDB_LIST_GROUPS.md) | 分区组列表 | 分区组列表列出当前集群中的所有分区信息 |
+| [$LIST_TRANS](reference/SQL_grammar/monitoring/LIST_TRANS.md) | [SDB_LIST_TRANSACTIONS](database_management/monitoring/list/SDB_LIST_TRANSACTIONS.md) | 事务列表 | 事务列表列出数据库中正在进行的事务信息 |
+| [$LIST_TRANS_CUR](reference/SQL_grammar/monitoring/LIST_TRANS_CUR.md) | [SDB_LIST_TRANSACTIONS_CURRENT](database_management/monitoring/list/SDB_LIST_TRANSACTIONS_CURRENT.md) | 当前事务列表 | 当前事务列表列出当前会话正在进行的事务信息 |
+| [$LIST_SEQUENCES](reference/SQL_grammar/monitoring/LIST_SEQUENCES.md) | [SDB_LIST_SEQUENCES](database_management/monitoring/list/SDB_LIST_SEQUENCES.md) | 序列列表 | 序列列表列出当前数据库中所有的序列信息 |
 
 ##SQL到SequoiaDB映射表##
 
@@ -61,16 +53,24 @@
 
 下面列出了 SQL 快照查询语句的操作在 API 中使用指定[快照查询参数](reference/Sequoiadb_command/AuxiliaryObjects/SdbSnapshotOption.md)的对应快照操作：
 
-**SELECT \<sel\> FROM $\<snapshot\> WHERE \<cond\> ORDER BY \<sort\> LIMIT \<limit\> OFFSET \<skip\>**
+```
+SELECT \<sel\> FROM $\<snapshot\>
+               WHERE \<cond\>
+               ORDER BY \<sort\>
+               LIMIT \<limit\>
+               OFFSET \<skip\> /*+use_option(<options>)*/
+```
 
 对应
 
-**SdbSnapshotOption[.cond(\<cond\>)]  
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.sel(\<sel\>)]  
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.sort(\<sort\>)]  
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.options(\<options\>)]  
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.skip(\<skipNum\>)]  
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[.limit(\<retNum\>)]**
+```
+SdbSnapshotOption[.cond(\<cond\>)]
+                 [.sel(\<sel\>)]
+                 [.sort(\<sort\>)]
+                 [.options(\<options\>)]
+                 [.skip(\<skip\>)]
+                 [.limit(\<limit\>)]
+```
 
 ###cond(\<cond\>)###
 
@@ -96,13 +96,12 @@
 | -------- | -------------- |
 | db.exec('select * from $SNAPSHOT_CONFIGS where GroupName = "db1" and SvcName = "20000" /*+use_option(Mode, local) use_option(Expand, false)*/') | db.snapshot( SDB_SNAP_CONFIGS, new SdbSnapshotOption().cond( { GroupName:'db1', SvcName:'20000' } ).options( { "Mode": "local", "Expand": false } ) ) |
 
-###skip(\<skipNum\>)###
+###skip(\<skip\>)###
 | SQL 语句 | API 语句        |
 | -------- | -------------- |
 | db.exec( " select * from $SNAPSHOT_CONTEXT offset 2" ) | db.snapshot( SDB_SNAP_CONTEXTS, new SdbSnapshotOption().cond( {} ).skip( 2 ) ) |
 
-###limit(\<retNum\>)###
+###limit(\<limit\>)###
 | SQL 语句 | API 语句        |
 | -------- | -------------- |
 | db.exec( "select * from $SNAPSHOT_CONTEXT limit 1" ) | db.snapshot( SDB_SNAP_CONTEXTS, new SdbSnapshotOption().cond( {} ).limit( 1 ) ) |
-

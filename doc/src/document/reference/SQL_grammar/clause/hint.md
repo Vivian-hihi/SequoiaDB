@@ -13,6 +13,7 @@ hint有多种不同类型：
 | use_hash    | 指定关联方式为哈希关联。   |
 | use_index   | 指定集合的扫描方式。       |
 | use_flag    | 设置标志位。               |
+| use_option  | 设置查询参数，主要用于 [监控视图](reference/SQL_grammar/monitoring/overview.md) |
 
 ##类型描述##
 
@@ -179,3 +180,39 @@ hint有多种不同类型：
    Sharding key cannot be updated
    Takes 0.002596s.
    ```
+
+###use_option###
+
+设置查询参数，主要用于 [监控视图](reference/SQL_grammar/monitoring/overview.md)。
+
+* 语法
+
+  *use_option( \<option_name\>, \<option_value\> )*
+
+* 支持参数
+
+  | 语句   | 描述                       |
+  | ------ | ------------------------- |
+  | Mode | 指定返回配置的模式。在 run 模式下，显示当前运行时配置信息，在 local 模式下，显示配置文件中配置信息。如 ```use_option(Mode,local)```。默认为 run。 |
+  | Expand | 是否扩展显示用户未配置的配置项。如 ```use_option(Expand,false)```。默认为 true。 |
+
+* 例子
+
+查看数据组 db1 中数据节点 20000 上的用户指定的配置信息
+
+```lang-javascript
+> db.exec('select * from $SNAPSHOT_CONFIGS where GroupName = "db1" and SvcName = "20000" /*+use_option(Mode, local)use_option(Expand, false)*/') 
+{
+  "NodeName": "hostname:20000",
+  "dbpath": "/opt/test/20000/",
+  "svcname": "20000",
+  "diaglevel": 3,
+  "role": "data",
+  "catalogaddr": "hostname:30003,hostname:30013,hostname:30023",
+  "sparsefile": "TRUE",
+  "plancachelevel": 3,
+  "businessname": "yyy",
+  "clustername": "xxx"
+}
+```
+

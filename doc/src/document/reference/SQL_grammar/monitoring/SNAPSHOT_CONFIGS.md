@@ -12,6 +12,15 @@ $SNAPSHOT_CONFIGS
 
 字段信息详见[数据库配置](database_management/runtime_configuration.md)一节。
 
+##快照参数##
+
+可以使用 use_option 进行指定。
+
+| 参数名 | 参数类型 | 描述 | 是否必填 |
+| ------ | -------- | ---- | -------- |
+| Mode   | String  | 指定返回配置的模式。在 run 模式下，显示当前运行时配置信息，在 local 模式下，显示配置文件中配置信息。如 { "Mode": "local" }。默认为 run。 | 否 |
+| Expand | Bool/String  | 是否扩展显示用户未配置的配置项。如 { "Expand": false }。默认为 true。| 否 |
+
 ##示例##
 
 查看数据组 db1 中数据节点 20000 上的配置信息
@@ -19,7 +28,7 @@ $SNAPSHOT_CONFIGS
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_CONFIGS where GroupName = 'db1' and SvcName = '20000'" )
 {
-  "NodeName": "u1604-ljh:20000",
+  "NodeName": "hostname:20000",
   "confpath": "/opt/trunk/conf/local/20000/",
   "dbpath": "/opt/test/20000/",
   "indexpath": "/opt/test/20000/",
@@ -72,7 +81,7 @@ $SNAPSHOT_CONFIGS
   "translrbinit": 524288,
   "sharingbreak": 7000,
   "startshifttime": 600,
-  "catalogaddr": "u1604-ljh:30003,u1604-ljh:30013,u1604-ljh:30023",
+  "catalogaddr": "hostname:30003,hostname:30013,hostname:30023",
   "tmppath": "/opt/test/20000/tmp/",
   "sortbuf": 256,
   "hjbuf": 128,
@@ -115,6 +124,24 @@ $SNAPSHOT_CONFIGS
   "maxsocketpernode": 1,
   "maxsocketperthread": 0,
   "maxsocketthread": 1,
+  "businessname": "yyy",
+  "clustername": "xxx"
+}
+```
+
+查看数据组 db1 中数据节点 20000 上的用户指定的配置信息
+
+```lang-javascript
+> db.exec('select * from $SNAPSHOT_CONFIGS where GroupName = "db1" and SvcName = "20000" /*+use_option(Mode, local)use_option(Expand, false)*/') 
+{
+  "NodeName": "hostname:20000",
+  "dbpath": "/opt/test/20000/",
+  "svcname": "20000",
+  "diaglevel": 3,
+  "role": "data",
+  "catalogaddr": "hostname:30003,hostname:30013,hostname:30023",
+  "sparsefile": "TRUE",
+  "plancachelevel": 3,
   "businessname": "yyy",
   "clustername": "xxx"
 }

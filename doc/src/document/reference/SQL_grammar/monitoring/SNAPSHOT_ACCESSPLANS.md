@@ -72,7 +72,7 @@ $SNAPSHOT_ACCESSPLANS
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_ACCESSPLANS" )
 {
-  "NodeName": "u1604-ljh:30000",
+  "NodeName": "hostname:30000",
   "GroupName": "SYSCatalogGroup",
   "Collection": "SYSCAT.SYSTASKS",
   "CollectionSpace": "SYSCAT",

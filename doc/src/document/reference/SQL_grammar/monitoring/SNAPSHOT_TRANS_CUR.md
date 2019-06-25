@@ -62,7 +62,7 @@ WaitLock 和 GetLocks 字段中锁对象的信息：
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_TRANS_CUR" )
 {
-  "NodeName": "u1604-ljh:42000",
+  "NodeName": "hostname:42000",
   "SessionID": 20,
   "TransactionID": "00040000000003",
   "TransactionIDSN": 3,

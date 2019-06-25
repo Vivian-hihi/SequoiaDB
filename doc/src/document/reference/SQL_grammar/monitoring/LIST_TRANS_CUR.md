@@ -1,8 +1,8 @@
 ##描述##
 
-事务快照 $LIST_TRANS 列出数据库中正在进行的事务信息。
+事务快照 $LIST_TRANS_CUR 列出当前会话在数据库中正在进行的事务信息。
 
-每一个数据节点上正在进行的每一个事务为一条记录。
+当前会话在每一个数据节点上正在进行的事务为一条记录。（一般每个会话在每个数据节点上只有一个事务记录）
 
 >   **Note:**
 >
@@ -14,7 +14,7 @@
 
 ##标示##
 
-$LIST_TRANS
+$LIST_TRANS_CUR
 
 ###字段信息###
 
@@ -29,7 +29,6 @@ $LIST_TRANS
 | WaitLock               | BSON对象 | 正在等待的锁                             |
 | TransactionLocksNum    | 整型     | 事务已经获得的锁                         |
 | RelatedID              | 字符串   | 内部标示                                 |
-
 
 ###锁对象信息###
 
@@ -58,15 +57,15 @@ WaitLock 字段中锁对象的信息：
 ##示例##
 
 ```lang-javascript
-> db.exec( "select * from $LIST_TRANS" )
+> db.exec( "select * from $LIST_TRANS_CUR" )
 {
-  "NodeName": "u1604-ljh:42000",
+  "NodeName": "hostname:42000",
   "GroupName": "db2",
   "SessionID": 20,
   "TransactionID": "00040000000003",
   "TransactionIDSN": 3,
   "IsRollback": false,
-  "CurrentTransLSN": 3314225876,
+  "CurrentTransLSN": 3314225744,
   "BeginTransLSN": 3314225744,
   "WaitLock": {},
   "TransactionLocksNum": 3,

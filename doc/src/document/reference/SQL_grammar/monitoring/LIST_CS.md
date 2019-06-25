@@ -9,12 +9,12 @@ $LIST_CS
 ##字段信息##
 
 | 字段名 | 类型   | 描述       |
-| ----- | ----- | ----- |
-| CLUniqueHWM | 长整型 | 集合空间最近创建的集合的UniqueID |
+| ----- | ----- | ----- || CLUniqueHWM | 长整型 | 集合空间最近创建的集合的UniqueID |
 | Collection | 数组 | 包含集合的信息 |
-| LogicalID | 字符串 | 集合空间逻辑 ID，为递增顺序 |
+| LobPageSize    | 整型   | 集合空间大对象页大小        |
 | Name   | 字符串 | 集合空间名 |
 | PageSize | 整型 | 集合空间数据页大小 |
+| Type | 整型 | 集合空间类型，0 表示普通集合空间，1 表示固定（Capped）集合空间 |
 | UniqueID | 整型   | 集合空间的UniqueID，在集群上全局唯一 |
 
 ##示例##

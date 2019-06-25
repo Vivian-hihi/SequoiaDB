@@ -126,8 +126,8 @@ $SNAPSHOT_DB
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_DB" )
 {
-  "NodeName": "u1604-ljh:41000",
-  "HostName": "u1604-ljh",
+  "NodeName": "hostname:41000",
+  "HostName": "hostname",
   "ServiceName": "41000",
   "GroupName": "db2",
   "IsPrimary": false,

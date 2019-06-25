@@ -23,7 +23,7 @@ $LIST_SESSION
 ```lang-javascript
 > db.exec( "select * from $LIST_SESSION" )
 {
-  "NodeName": "u1604-ljh:41000",
+  "NodeName": "hostname:41000",
   "SessionID": 4,
   "TID": 23272,
   "Status": "Waiting",
@@ -33,7 +33,7 @@ $LIST_SESSION
   "RelatedID": "c0a8143ea02800005ae8"
 }
 {
-  "NodeName": "u1604-ljh:41000",
+  "NodeName": "hostname:41000",
   "SessionID": 5,
   "TID": 23273,
   "Status": "Running",

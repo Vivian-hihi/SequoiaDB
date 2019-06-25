@@ -6,7 +6,7 @@
 
 $SNAPSHOT_SYSTEM
 
-##非协调节点字段信息##
+##字段信息##
 
 | 字段名               | 类型   |  描述                                                          |
 | -------------------- | ------ | -------------------------------------------------------------- |
@@ -45,38 +45,13 @@ $SNAPSHOT_SYSTEM
 | Disk.TotalSpace      | 长整型 | 数据库路径总空间（单位：字节）                                 |
 | Disk.FreeSpace       | 长整型 | 数据库路径空闲空间（单位：字节）                               |
 
-##协调节点字段信息##
-
-| 字段名              | 类型   | 描述                                              |
-| ------------------- | ------ | ------------------------------------------------- |
-| CPU.User            | 浮点数 | 操作系统启动后所消耗的总用户 CPU 时间（单位：秒） |
-| CPU.Sys             | 浮点数 | 操作系统启动后所消耗的总系统 CPU 时间（单位：秒） |
-| CPU.Idle            | 浮点数 | 操作系统启动后所消耗的总空闲 CPU 时间（单位：秒） |
-| CPU.Other           | 浮点数 | 操作系统启动后所消耗的总其它 CPU 时间（单位：秒） |
-| Memory.TotalRAM     | 长整型 | 当前操作系统的总内存空间（单位：字节）            |
-| Memory.FreeRAM      | 长整型 | 当前操作系统的空闲内存空间（单位：字节）          |
-| Memory.TotalSwap    | 长整型 | 当前操作系统的总交换空间（单位：字节）            |
-| Memory.FreeSwap     | 长整型 | 当前操作系统的空闲交换空间（单位：字节）          |
-| Memory.TotalVirtual | 长整型 | 当前操作系统的总虚拟空间（单位：字节）            |
-| Memory.FreeVirtual  | 长整型 | 当前操作系统的空闲虚拟空间（单位：字节）          |
-| Disk.TotalSpace     | 长整型 | 数据库路径总空间（单位：字节）                    |
-| Disk.FreeSpace      | 长整型 | 数据库路径空闲空间（单位：字节）                  |
-| ErrNodes.NodeName   | 字符串 | 返回异常节点名（主机名 + 端口）                   |
-| ErrNodes.GroupName  | 字符串 | 返回异常节点所属分区组名                          |
-| ErrNodes.Flag       | 整型   | 错误码，详细请参见：[错误码](reference/Sequoiadb_error_code.md) |
-| ErrNodes.ErrInfo    | 字符串 | 返回节点出错信息                                  |
-
-> Note:
->
-> 存在异常节点时才显示ErrNodes字段。
-
 ##示例##
 
 ```lang-javascript
 > db.exec( "select * from $SNAPSHOT_SYSTEM" )
 {
-  "NodeName": "u1604-ljh:42000",
-  "HostName": "u1604-ljh",
+  "NodeName": "hostname:42000",
+  "HostName": "hostname",
   "ServiceName": "42000",
   "GroupName": "db2",
   "IsPrimary": true,
