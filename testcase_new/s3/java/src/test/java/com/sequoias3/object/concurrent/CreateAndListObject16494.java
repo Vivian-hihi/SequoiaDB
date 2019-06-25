@@ -1,22 +1,24 @@
 package com.sequoias3.object.concurrent;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.S3ThreadBase;
-import com.sequoias3.testcommon.TestTools;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.S3ThreadBase;
+import com.sequoias3.testcommon.TestTools;
 
 /**
  * @Description seqDB-16494:concurrent create and get the same object
@@ -34,6 +36,8 @@ public class CreateAndListObject16494 extends S3TestBase {
 	private String filePath = null;
 	private int objectNums = 10;
 	private List<String> keyList = new ArrayList<>();
+	private List<String> queryKeyList1 = new ArrayList<>();
+	private List<String> queryKeyList2 = new ArrayList<>();
 
 	@BeforeClass
 	private void setUp() throws Exception {
@@ -52,6 +56,7 @@ public class CreateAndListObject16494 extends S3TestBase {
 	public void testCreateBucket() throws Exception {
 		List<PutObjectThread> putObjectThreads = new ArrayList<>(objectNums);
 		ListObjectThread listObjectThread = new ListObjectThread();
+		ListObjectV1Thread listObjectV1Thread = new ListObjectV1Thread();
 		for (int i = 0; i < objectNums; i++) {
 			String key = keyName + "_" + i;
 			keyList.add(key);
@@ -61,14 +66,19 @@ public class CreateAndListObject16494 extends S3TestBase {
 			putObjectThread.start();
 		}
 		listObjectThread.start();
+		listObjectV1Thread.start();
 
 		for (PutObjectThread putObjectThread : putObjectThreads) {
 			Assert.assertTrue(putObjectThread.isSuccess(), putObjectThread.getErrorMsg());
 		}
 		Assert.assertTrue(listObjectThread.isSuccess(), listObjectThread.getErrorMsg());
+		Assert.assertTrue(listObjectV1Thread.isSuccess(), listObjectV1Thread.getErrorMsg());
 
+		// check the query keys by listObjectv1 and listObjectv2, than check the
+		// all keys
+		listObjectResult(queryKeyList1);
+		listObjectResult(queryKeyList2);
 		listObjectsAndCheckResult(keyList);
-
 		runSuccess = true;
 	}
 
@@ -111,7 +121,32 @@ public class CreateAndListObject16494 extends S3TestBase {
 		public void exec() throws Exception {
 			AmazonS3 s3Client = CommLib.buildS3Client();
 			try {
-				s3Client.listObjectsV2(bucketName);
+				ListObjectsV2Result result = s3Client.listObjectsV2(bucketName);
+				List<S3ObjectSummary> objects = result.getObjectSummaries();
+				for (S3ObjectSummary os : objects) {
+					String key = os.getKey();
+					queryKeyList2.add(key);
+				}
+			} finally {
+				if (s3Client != null) {
+					s3Client.shutdown();
+				}
+			}
+		}
+	}
+
+	private class ListObjectV1Thread extends S3ThreadBase {
+		@Override
+		public void exec() throws Exception {
+			AmazonS3 s3Client = CommLib.buildS3Client();
+			try {
+
+				ObjectListing result = s3Client.listObjects(bucketName);
+				List<S3ObjectSummary> objects = result.getObjectSummaries();
+				for (S3ObjectSummary os : objects) {
+					String key = os.getKey();
+					queryKeyList1.add(key);
+				}
 			} finally {
 				if (s3Client != null) {
 					s3Client.shutdown();
@@ -134,5 +169,14 @@ public class CreateAndListObject16494 extends S3TestBase {
 		Collections.sort(keyList);
 		Collections.sort(queryKeyList);
 		Assert.assertEquals(queryKeyList, keyList);
+	}
+
+	private void listObjectResult(List<String> queryKeyList) {
+		for (String key : queryKeyList) {
+			if (!keyList.contains(key)) {
+				Assert.fail("list key error!,the key is " + key + "\nqueryList:" + queryKeyList.toString());
+			}
+		}
+
 	}
 }
