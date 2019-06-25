@@ -1614,8 +1614,12 @@ namespace sdbclient
                                             const bson::BSONObj &options)
           \brief Attach the specified collection.
           \param [in] subClFullName The name of the subcollection
-          \param [in] options The low boudary and up boudary
-                      eg: {"LowBound":{a:1},"UpBound":{a:100}}
+          \param [in] options Partition range
+
+              LowBound: low boudary
+                        eg: "LowBound":{a:1}
+              UpBound: up boudary
+                       eg: { "UpBound":{a:100} }
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -1837,15 +1841,15 @@ namespace sdbclient
           \brief Create an autoincrement field on collection
           \param [in] options The options as following:
 
-             Field          : The name of autoincrement field
-             StartValue     : The start value of autoincrement field
-             MinValue       : The minimum value of autoincrement field
-             MaxValue       : The maxmun value of autoincrement field
-             Increment      : The increment value of autoincrement field
-             CacheSize      : The cache size of autoincrement field
-             AcquireSize    : The acquire size of autoincrement field
-             Cycled         : The cycled flag of autoincrement field
-             Generated      : The generated mode of autoincrement field
+              Field          : The name of autoincrement field
+              StartValue     : The start value of autoincrement field
+              MinValue       : The minimum value of autoincrement field
+              MaxValue       : The maxmun value of autoincrement field
+              Increment      : The increment value of autoincrement field
+              CacheSize      : The cache size of autoincrement field
+              AcquireSize    : The acquire size of autoincrement field
+              Cycled         : The cycled flag of autoincrement field
+              Generated      : The generated mode of autoincrement field
 
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
@@ -1859,7 +1863,7 @@ namespace sdbclient
 
       /** \fn INT32 createAutoIncrement ( const std::vector<bson::BSONObj> &options )
           \brief Create a bulk of autoincrement fields on collection
-          \param [in] options The option array of autoincrement fields:
+          \param [in] options The option array of autoincrement fields
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -1872,7 +1876,7 @@ namespace sdbclient
 
       /** \fn INT32 dropAutoIncrement ( const CHAR * fieldName )
           \brief Drop an autoincrement field on collection
-          \param [in] fieldName The name of autoincrement field:
+          \param [in] fieldName The name of autoincrement field
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -1885,7 +1889,7 @@ namespace sdbclient
 
       /** \fn INT32 dropAutoIncrement ( const std::vector<const CHAR*> &fieldNames )
           \brief Drop a bulk of autoincrement fields on collection
-          \param [in] fieldNames The array of autoincrement field names:
+          \param [in] fieldNames The array of autoincrement field names
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -1900,10 +1904,10 @@ namespace sdbclient
           \brief Alter the current collection to enable sharding
           \param [in] options The modified options as following:
 
-             ShardingKey  : Assign the sharding key
-             ShardingType : Assign the sharding type
-             Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
-             EnsureShardingIndex : Assign to true to build sharding index
+              ShardingKey  : Assign the sharding key
+              ShardingType : Assign the sharding type
+              Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+              EnsureShardingIndex : Assign to true to build sharding index
          \note Can't alter attributes about split in partition collection; After altering a collection to
                 be a partition collection, need to split this collection manually
           \retval SDB_OK Operation Success
@@ -2647,12 +2651,11 @@ namespace sdbclient
          \brief Attach a node to the group
          \param [in] pHostName The host name of node.
          \param [in] pSvcName The service name of node.
-         \param [in] options The options of attach. Can not be null or empty.
-                             Can be the follow options:
-               <ul>
-               <li>KeepData : Whether to keep the original data of the new
-                              node. This option has no default value. User
-                              should specify its value explicitly.
+         \param [in] options The options of attach. The options are as below:
+
+             KeepData : Whether to keep the original data of the new node.
+                        This option has no default value. User should specify
+                        its value explicitly.
          \retval SDB_OK Operation Success
          \retval Others Operation Fail
       */
@@ -2671,14 +2674,12 @@ namespace sdbclient
          \brief Detach a node from the group
          \param [in] pHostName The host name of node.
          \param [in] pSvcName The service name of node.
-         \param [in] options The options of detach. Can not be null or empty.
-                             Can be the follow options:
-               <ul>
-               <li>KeepData: Whether to keep the original data of the
-                             detached node. This option has no default
-                             value. User should specify its value explicitly.
-               <li>Enforced: Whether to detach the node forcibly, default
-                             to be false.
+         \param [in] options The options of detach. The options are as below:
+
+             KeepData: Whether to keep the original data of the detached node.
+                       This option has no default value. User should specify
+                       its value explicitly.
+             Enforced: Whether to detach the node forcibly, default to be false.
          \retval SDB_OK Operation Success
          \retval Others Operation Fail
       */
@@ -2693,8 +2694,9 @@ namespace sdbclient
 
       /** \fn INT32 reelect( const bson::BSONObj &options )
           \brief Force the replica group to reelect primary node.
-          \param [in] options options of reelect:
-            Seconds: Reelection timeout
+          \param [in] options The options of reelect. The options are as below:
+
+              Seconds: Reelection timeout
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
        */
@@ -4376,16 +4378,16 @@ namespace sdbclient
           \param [in] pPasswd The connection password.
           \param [in] options The options for user, such as: { AuditMask:"DDL|DML" }
 
-             AuditMask : User audit log mask, value list:
-                         ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,INSERT,DELETE,
-                         UPDATE,OTHER.
-                         You can combine multiple values with '|'. 'ALL' means
-                         that all mask items are turned on, and 'NONE' means
-                         that no mask items are turned on.
-                         If an item in the user audit log is not configured, the
-                         configuration of the corresponding mask item on the node
-                         is inherited. You can also use '!' to disable inheritance
-                         of this mask( e.g. "!DDL|DML" ).
+              AuditMask : User audit log mask, value list:
+                          ACCESS,CLUSTER,SYSTEM,DML,DDL,DCL,DQL,INSERT,DELETE,
+                          UPDATE,OTHER.
+                          You can combine multiple values with '|'. 'ALL' means
+                          that all mask items are turned on, and 'NONE' means
+                          that no mask items are turned on.
+                          If an item in the user audit log is not configured, the
+                          configuration of the corresponding mask item on the node
+                          is inherited. You can also use '!' to disable inheritance
+                          of this mask( e.g. "!DDL|DML" ).
 
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
@@ -5823,25 +5825,25 @@ namespace sdbclient
           \brief Analyze collection or index to collect statistics information
           \param [in] options The control options:
 
-           CollectionSpace : (String) Specify the collection space to be analyzed.
-           Collection      : (String) Specify the collection to be analyzed.
-           Index           : (String) Specify the index to be analyzed.
-           Mode            : (Int32) Specify the analyze mode (default is 1):
-                             Mode 1 will analyze with data samples.
-                             Mode 2 will analyze with full data.
-                             Mode 3 will generate default statistics.
-                             Mode 4 will reload statistics into memory cache.
-                             Mode 5 will clear statistics from memory cache.
-           Other options   : Some of other options are as below:(only take effect
-                             in coordinate nodes, please visit the official website
-                             to search "analyze" or "Location Elements" for more
-                             detail.)
-                             GroupID:INT32,
-                             GroupName:String,
-                             NodeID:INT32,
-                             HostName:String,
-                             svcname:String,
-                             ...
+              CollectionSpace : (String) Specify the collection space to be analyzed.
+              Collection      : (String) Specify the collection to be analyzed.
+              Index           : (String) Specify the index to be analyzed.
+              Mode            : (Int32) Specify the analyze mode (default is 1):
+                                Mode 1 will analyze with data samples.
+                                Mode 2 will analyze with full data.
+                                Mode 3 will generate default statistics.
+                                Mode 4 will reload statistics into memory cache.
+                                Mode 5 will clear statistics from memory cache.
+              Other options   : Some of other options are as below:(only take effect
+                                in coordinate nodes, please visit the official website
+                                to search "analyze" or "Location Elements" for more
+                                detail.)
+                                GroupID:INT32,
+                                GroupName:String,
+                                NodeID:INT32,
+                                HostName:String,
+                                svcname:String,
+                                ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -5857,12 +5859,13 @@ namespace sdbclient
           \brief Stop the specified session's current operation and terminate it
           \param [in] sessionID The ID of the session.
           \param [in] options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -5878,12 +5881,13 @@ namespace sdbclient
           \brief In a replica group that doesn't satisfy the requirement ofre-election,
                upgrade a slave node to a master node by force.
           \param [in] options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -5897,18 +5901,12 @@ namespace sdbclient
       /** \fn INT32 invalidateCache(const bson::BSONObj &options)
           \brief invalidate cache on specified nodes.
           \param [in] cHandle The connection handle
-          \param [in] options The control options:(Only take effect in coordinate nodes).
-                              About the parameter 'options', please reference to the official
-                              website(www.sequoiadb.com) and then search "位置命令参数"
-                              for more details. Some of its optional parameters are as bellow:
+          \param [in] options The control options:(Only take effect in coordinate nodes). Some of its optional parameters are as bellow:
 
-                              <ul>
-                                 <li>Global(Bool)                      : execute this command in global or not. While 'options' is null, it's equals to {Glocal: true}.
-                                 <li>GroupID(INT32 or INT32 Array)     : specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
-                                 <li>GroupName(String or String Array) : specified one or several groups by their group names. e.g. {GroupID:"group1"}.
-                                 <li>...
-                              </ul>
-
+              Global(Bool)                      : execute this command in global or not. While 'options' is null, it's equals to {Glocal: true}.
+              GroupID(INT32 or INT32 Array)     : specified one or several groups by their group IDs. e.g. {GroupID:[1001, 1002]}.
+              GroupName(String or String Array) : specified one or several groups by their group names. e.g. {GroupID:"group1"}.
+              ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -5922,12 +5920,13 @@ namespace sdbclient
       /** \fn INT32 reloadConfig(const bson::BSONObj &options)
           \brief Force the node to reload config from file and take effect.
           \param [in] options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -5944,12 +5943,13 @@ namespace sdbclient
           \param [in] configs the specific configuration parameters to update.
                 { diaglevel:3 } Modify diaglevel as 3.
           \param [in] options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -5967,12 +5967,13 @@ namespace sdbclient
           \param [in] configs the specific configuration parameters to delete.
                 { diaglevel:1 } Delete diaglevel config and restore to default value.
           \param [in] options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -5987,21 +5988,22 @@ namespace sdbclient
       /** \fn INT32 setPDLevel(INT32 level,
                                const bson::BSONObj &options)
           \brief Set the node's diagnostic level and take effect.
-          \param [in] level The diagnostic level:
-               value 0~5. value means:
-               0: SEVERE
-               1: ERROR
-               2: EVENT
-               3: WARNING
-               4: INFO
-               5: DEBUG
+          \param [in] level The diagnostic level, value 0~5. value means:
+
+              0: SEVERE
+              1: ERROR
+              2: EVENT
+              3: WARNING
+              4: INFO
+              5: DEBUG
           \param [in] options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -6025,12 +6027,13 @@ namespace sdbclient
           \brief Load the specific cs from the file.
           \param [in] csName The name of cs that will be loaded
           \param [in] options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
@@ -6047,12 +6050,13 @@ namespace sdbclient
           \brief Unload the specific cs.
           \param [in] csName The name of cs that will be unloaded
           \param [in] options The control options:(Only take effect in coordinate nodes)
-                GroupID:INT32,
-                GroupName:String,
-                NodeID:INT32,
-                HostName:String,
-                svcname:String,
-                ...
+
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
