@@ -682,7 +682,8 @@ namespace bson {
             bool own = owned();
             massert( 10335 , "builder does not own memory", own );
             doneFast();
-            BSONObj::Holder* h = (BSONObj::Holder*)_b.buf();
+            bson_intrusive_ptr<BSONObj::Holder,BufBuilder::myAllocator> h ;
+            h = (BSONObj::Holder*)_b.buf();
             decouple(); // sets _b.buf() to NULL
             return BSONObj(h);
         }

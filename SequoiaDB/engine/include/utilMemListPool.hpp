@@ -126,6 +126,11 @@ namespace engine
          utilMemListNode         *_header ;
          utilMemListEvent        *_pEvent ;
          UINT64                  _cachedSize ;
+
+         /// stat info
+         UINT64                  _allocCount ;
+         UINT64                  _deallocCount ;
+         UINT64                  _hitCount ;
    } ;
    typedef _utilMemListItem utilMemListItem ;
 

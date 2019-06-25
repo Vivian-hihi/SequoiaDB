@@ -74,11 +74,12 @@ namespace bson
       p = json2rawbson ( pStr, isBatch ) ;
       if ( p )
       {
-         BSONObj::Holder *h = (BSONObj::Holder*)p ;
+         BSONObj::Holder *ph = (BSONObj::Holder*)p ;
          try
          {
+            bson_intrusive_ptr<BSONObj::Holder,HeapAllocator> h( ph ) ;
             BSONObj ret ( h ) ;
-            out = ret ;
+            out = ret.getOwned() ;
          }
          catch ( std::exception &e )
          {

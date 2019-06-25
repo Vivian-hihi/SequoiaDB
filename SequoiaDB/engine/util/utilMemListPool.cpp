@@ -77,6 +77,10 @@ namespace engine
       _header  = NULL ;
       _pEvent  = pEvent ;
       _cachedSize = 0 ;
+
+      _allocCount = 0 ;
+      _deallocCount = 0 ;
+      _hitCount = 0 ;
    }
 
    _utilMemListItem::~_utilMemListItem()
@@ -115,6 +119,8 @@ namespace engine
 
       void *ptr = NULL ;
 
+      ++_allocCount ;
+
       if ( _header )
       {
          ptr = (void*)_header ;
@@ -124,6 +130,7 @@ namespace engine
          SDB_ASSERT( _cachedSize >= _blockSize, "Invalid cachedSize" ) ;
 #endif //_DEBUG
 
+         ++_hitCount ;
          _cachedSize -= _blockSize ;
          if ( _pEvent )
          {
@@ -152,6 +159,8 @@ namespace engine
       SDB_ASSERT( utilPoolGetPtrSize( p ) + UTIL_MEM_TOTAL_FILL_LEN ==
                   _blockSize, "Invalid size" ) ;
 #endif //_DEBUG
+
+      ++_deallocCount ;
 
       if ( _canCacheBlock() )
       {

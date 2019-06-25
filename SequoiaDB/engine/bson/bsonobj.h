@@ -85,13 +85,42 @@ namespace bson {
      Code With Scope: <total size><String><Object>
      \endcode
      */
+
 #if defined (SDB_ENGINE) || defined (SDB_CLIENT)
     class BSONObj : public SDBObject {
 #else
     class BSONObj {
 #endif
+
     public:
-        class Holder;
+#pragma pack(1)
+    class Holder : bsonnoncopyable
+    {
+    private:
+        Holder() ; // this class should never be explicitly created
+        mongo::AtomicUInt refCount ;
+    public:
+        char data[4]; // start of object
+
+        void zeroRef() { refCount.zero() ; }
+        void addRef () { refCount++ ; }
+        int  decRef ()
+        {
+#if defined(_DEBUG) // cant use dassert or DEV here
+            // make sure we haven't already freed the buffer
+            assert( (int)refCount > 0 ) ;
+#endif
+            return --refCount ;
+        }
+        const char* dataptr() const { return &data[0] ; }
+        int datasize() const { return *(int*)dataptr() ; }
+
+        static int refLen() { return sizeof( mongo::AtomicUInt ) ; }
+    } ;
+    typedef bson_intrusive_ptr< Holder, TrivialAllocator > holder_type ;
+#pragma pack()
+
+    public:
         /** Construct a BSONObj from data in the proper format.
         * owned = whether this object owns this buffer.
         */
@@ -104,8 +133,12 @@ namespace bson {
          *  Use this constructor when you want BSONObj to free(holder) when it is no longer needed
          *  BSONObj::Holder has an extra 4 bytes for a ref-count before the start of the object
         */
-        explicit BSONObj(Holder* holder) {
-            init(holder);
+        /*explicit BSONObj(Holder* holder) {
+            init( holder ) ;
+        }*/
+
+        explicit BSONObj( holder_type holder ) {
+            init( holder ) ;
         }
 
         /** Construct an empty BSONObj -- that is, {}. */
@@ -115,12 +148,6 @@ namespace bson {
         {
            /*defensive:*/
            _objdata = 0;
-          /* if ( _holder )
-           {
-              _holder->dec() ;
-              if ( _holder->isZero() )
-                 free ( _holder ) ;
-           }*/
         }
 
         /**
@@ -479,32 +506,6 @@ namespace bson {
             b.appendBuf(reinterpret_cast<const void *>( objdata() ), objsize());
         }
 
-#pragma pack(1)
-        class Holder : bsonnoncopyable {
-        private:
-            Holder(); // this class should never be explicitly created
-            mongo::AtomicUInt refCount;
-        public:
-            char data[4]; // start of object
-
-            void zero() { refCount.zero(); }
-            //void inc () { refCount++ ; }
-            //void dec () { if(--refCount == 0){
-            //                 free(this) ; } }
-            //void dec () { --refCount ; }
-            //bool isZero () { return 0 == refCount ; }
-            // these are called automatically by boost::intrusive_ptr
-            friend void intrusive_ptr_add_ref(Holder* h) { h->refCount++; }
-            friend void intrusive_ptr_release(Holder* h) {
-#if defined(_DEBUG) // cant use dassert or DEV here
-                assert((int)h->refCount > 0); // make sure we haven't already freed the buffer
-#endif
-                if(--(h->refCount) == 0){
-                    free(h);
-                }
-            }
-        };
-#pragma pack()
         /** initialize from existing buffer
          */
         void init(const char *data, bool check=true ) {
@@ -534,18 +535,20 @@ namespace bson {
     private:
         SDB_EXPORT static bool _jsCompatibility;
 
-
     private:
-        const char *_objdata;
-        //Holder *_holder ;
-        bson_intrusive_ptr< Holder > _holder;
+        const char   *_objdata ;
+        holder_type  _holder ;
 
         void _assertInvalid() const;
 
-        void init(Holder *holder) {
-            _holder = holder; // holder is now managed by intrusive_ptr
-            //_holder->inc() ;
-            init(holder->data);
+        void init( Holder *holder ) {
+            _holder = holder ; // holder is now managed by intrusive_ptr
+            init(_holder->data);
+        }
+
+        void init( holder_type holder ) {
+            _holder = holder ;
+            init( _holder->data ) ;
         }
     };
 

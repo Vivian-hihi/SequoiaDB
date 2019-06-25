@@ -16,9 +16,13 @@
  */
 #include <stdio.h>
 #if !defined (_WIN32)
+   #if SDB_ENGINE
+   #include "ossFeat.h"
+   #endif //SDB_ENGINE
 #include <sys/types.h>
 #include <unistd.h>
 #endif
+
 #include "oid.h"
 #include "lib/atomic_int.h"
 #include "lib/nonce.h"

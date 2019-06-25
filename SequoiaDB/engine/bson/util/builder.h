@@ -25,6 +25,10 @@
 #include "../stringdata.h"
 #include "../bsonassert.h"
 
+#ifdef SDB_ENGINE
+   #include "utilMemListPool.hpp"
+#endif //SDB_ENGINE
+
 namespace bson {
     /* Accessing unaligned doubles on ARM generates an alignment trap and aborts
  * with SIGBUS on Linux.
@@ -61,43 +65,58 @@ accesses) is the same as if
 
     void msgasserted(int msgid, const char *msg);
 
-    class TrivialAllocator {
-    public:
-        void* Malloc(size_t sz) { return malloc(sz); }
-        void* Realloc(void *p, size_t sz) { return realloc(p, sz); }
-        void Free(void *p) { free(p); }
-    };
+   class HeapAllocator {
+   public:
+       void* Malloc(size_t sz) { return malloc(sz); }
+       void* Realloc(void *p, size_t sz) { return realloc(p, sz); }
+       void Free(void *p) { free(p); }
+   } ;
+
+#ifdef SDB_ENGINE
+   class TrivialAllocator {
+   public:
+       void* Malloc(size_t sz) { return engine::utilThreadAlloc( sz ) ; }
+       void* Realloc(void *p, size_t sz) { return engine::utilThreadRealloc( p, sz ) ; }
+       void Free(void *p) { engine::utilThreadRelease( p ) ; }
+   };
+#else
+   typedef HeapAllocator TrivialAllocator ;
+#endif //SDB_ENGINE
 
     class StackAllocator {
     public:
         enum { SZ = 512 };
         void* Malloc(size_t sz) {
             if( sz <= SZ ) return buf;
-            return malloc(sz);
+            return al.Malloc(sz);
         }
         void* Realloc(void *p, size_t sz) {
             if( p == buf ) {
                 if( sz <= SZ ) return buf;
-                void *d = malloc(sz);
+                void *d = al.Malloc(sz);
                 memcpy(d, p, SZ);
                 return d;
             }
-            return realloc(p, sz);
+            return al.Realloc(p, sz);
         }
         void Free(void *p) {
             if( p != buf )
-                free(p);
+                al.Free(p);
         }
     private:
         char buf[SZ];
+        TrivialAllocator al ;
     };
 
     template< class Allocator >
     class _BufBuilder {
+    public:
+        typedef Allocator   myAllocator ;
+    private:
         // non-copyable, non-assignable
         _BufBuilder( const _BufBuilder& );
         _BufBuilder& operator=( const _BufBuilder& );
-        Allocator al;
+        myAllocator al;
     public:
         _BufBuilder(int initsize = 512) : size(initsize) {
             if ( size > 0 ) {

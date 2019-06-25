@@ -145,12 +145,12 @@ namespace bson {
        getOwned() method.  the presumption being that is better.
     */
     inline NOINLINE_DECL BSONObj BSONObj::copy() const {
-        Holder *h = (Holder*) malloc(objsize() + sizeof(unsigned));
-        if ( !h )
-            msgasserted( 13551, "BSONObj copy() out-of-memory" );
-        h->zero();
-        memcpy(h->data, objdata(), objsize());
-        return BSONObj(h);
+        holder_type holder ;
+        if ( 0 != holder.makeFrom( objdata(), objsize() ) )
+        {
+            msgasserted( 13551, "BSONObj copy() out-of-memory" ) ;
+        }
+        return BSONObj( holder ) ;
     }
 
     inline BSONObj BSONObj::getOwned() const {
@@ -915,7 +915,8 @@ namespace bson {
                 base64_size = getEnBase64Size( len ) ;
                 if( len > 0 )
                 {
-                   pBase64Buf = (char *)malloc( base64_size + 1 ) ;
+                   TrivialAllocator al ;
+                   pBase64Buf = (char *)al.Malloc( base64_size + 1 ) ;
                    if ( pBase64Buf )
                    {
                       memset( pBase64Buf, 0, base64_size + 1 ) ;
@@ -923,7 +924,7 @@ namespace bson {
                       {
                         s << pBase64Buf << "\", \"$type\": \"" << binDataType() ;
                       }
-                      free( pBase64Buf ) ;
+                      al.Free( pBase64Buf ) ;
                    }
                 }
                 else if( len == 0 )
