@@ -69,7 +69,7 @@ public class SdbTestBase {
     
     @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR",
             "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD", "SCRIPTDIR", "ESHOSTNAME", "ESSVCNAME", "FULLTEXTPREFIX" })
-    @BeforeSuite
+    @BeforeSuite(alwaysRun = true)
     public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME, int RSRVPORTBEGIN, int RSRVPORTEND,
             String RSRVNODEDIR, String WORKDIR, String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD,
             String SCRIPTDIR, @Optional("localhost") String ESHOSTNAME, @Optional("9200") String ESSVCNAME,
