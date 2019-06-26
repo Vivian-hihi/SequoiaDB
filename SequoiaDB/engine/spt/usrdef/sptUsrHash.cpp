@@ -43,16 +43,31 @@ using namespace bson ;
 
 namespace engine
 {
+   JS_CONSTRUCT_FUNC_DEFINE(_sptUsrHash, construct)
    JS_STATIC_FUNC_DEFINE( _sptUsrHash, md5 )
    JS_STATIC_FUNC_DEFINE( _sptUsrHash, fileMD5 )
-   JS_STATIC_FUNC_DEFINE( _sptUsrHash, help )
 
    JS_BEGIN_MAPPING( _sptUsrHash, "Hash" )
+      JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_STATIC_FUNC( "md5", md5 )
       JS_ADD_STATIC_FUNC( "fileMD5", fileMD5 )
-      JS_ADD_STATIC_FUNC( "help", help )
    JS_MAPPING_END()
 
+   _sptUsrHash::_sptUsrHash()
+   {
+   }
+
+   _sptUsrHash::~_sptUsrHash()
+   {
+   }
+
+   INT32 _sptUsrHash::construct( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail )
+   {
+      detail = BSON( SPT_ERR << "Hash can't new" ) ;
+      return SDB_INVALIDARG ;
+   }
 
    INT32 _sptUsrHash::md5( const _sptArguments &arg,
                            _sptReturnVal &rval,
@@ -77,10 +92,10 @@ namespace engine
          ss << "argument \'str\' must be a string" ;
          goto error ;
       }
-      
-      code = md5::md5simpledigest( str ) ; 
+
+      code = md5::md5simpledigest( str ) ;
       rval.getReturnVal().setValue( code ) ;
-       
+
    done:
       return rc ;
    error:
@@ -154,18 +169,6 @@ namespace engine
    error:
       detail = BSON( SPT_ERR << ss.str() ) ;
       goto done ;
-   }
-
-   INT32 _sptUsrHash::help( const _sptArguments &arg,
-                             _sptReturnVal &rval,
-                             BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "Hash functions:" << endl
-         << " Hash.md5( str )" << endl 
-         << " Hash.fileMD5( filename )" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
    }
 
 }

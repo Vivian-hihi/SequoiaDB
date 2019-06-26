@@ -79,17 +79,6 @@ namespace engine
                         const bson::BSONObj &valueObj,
                         bson::BSONObj &errDetail, bson::BSONObj &retObj,
                         BOOLEAN needRecv = TRUE ) ;
-
-      INT32 memberHelp( const _sptArguments &arg,
-                        _sptReturnVal &rval,
-                        bson::BSONObj &detail ) ;
-      /*
-         static functions
-      */
-      static INT32 staticHelp( const _sptArguments &arg,
-                               _sptReturnVal &rval,
-                               bson::BSONObj &detail ) ;
-
    private:
       INT32 _mergeArg( const bson::BSONObj& optionObj,
                        const bson::BSONObj& matchObj,

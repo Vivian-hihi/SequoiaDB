@@ -87,10 +87,6 @@ namespace engine
       INT32 construct( const _sptArguments &arg,
                        _sptReturnVal &rval,
                        bson::BSONObj &detail ) ;
-
-      static INT32 help( const _sptArguments &arg,
-                         _sptReturnVal &rval,
-                         bson::BSONObj &detail ) ;
       /*
          static functions
       */
@@ -114,9 +110,6 @@ namespace engine
       static BOOLEAN _match( const bson::BSONObj &obj,
                              const bson::BSONObj &filter,
                              SPT_MATCH_PRED pred ) ;
-
-   private:
-
    } ;
 
 }

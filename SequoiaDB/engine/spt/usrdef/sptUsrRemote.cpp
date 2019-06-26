@@ -53,8 +53,6 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptUsrRemote, runCommand )
    JS_MEMBER_FUNC_DEFINE( _sptUsrRemote, close )
    JS_MEMBER_FUNC_DEFINE( _sptUsrRemote, getInfo )
-   JS_MEMBER_FUNC_DEFINE( _sptUsrRemote, memberHelp )
-   JS_STATIC_FUNC_DEFINE( _sptUsrRemote, staticHelp )
 
    /*
       Function Map
@@ -66,8 +64,6 @@ namespace engine
       JS_ADD_MEMBER_FUNC_WITHATTR( "__runCommand", runCommand, 0 )
       JS_ADD_MEMBER_FUNC( "getInfo", getInfo )
       JS_ADD_MEMBER_FUNC( "close", close )
-      JS_ADD_MEMBER_FUNC( "help", memberHelp )
-      JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_MAPPING_END()
 
    _sptUsrRemote::_sptUsrRemote()
@@ -346,37 +342,6 @@ namespace engine
       rval.getReturnVal().setValue( builder.obj() ) ;
 
       return rc ;
-   }
-
-   INT32 _sptUsrRemote::staticHelp( const _sptArguments &arg,
-                              _sptReturnVal &rval,
-                              BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "Remote functions:" << endl
-         << "var remote = new Remote( [hostname], [svcname] )" << endl
-         << "   getSystem()" << endl
-         << "   getFile( [filename], [permission], [mode] )" << endl
-         << "   getCmd()" << endl
-         << "   close()" << endl
-         << "   getInfo()" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
-
-   INT32 _sptUsrRemote::memberHelp( const _sptArguments &arg,
-                                    _sptReturnVal &rval,
-                                    BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "Remote member functions:" << endl
-         << "   getSystem()" << endl
-         << "   getFile( [filename], [permission], [mode] )" << endl
-         << "   getCmd()" << endl
-         << "   close()" << endl
-         << "   getInfo()" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
    }
 
    INT32 _sptUsrRemote::_mergeArg( const bson::BSONObj& optionObj,

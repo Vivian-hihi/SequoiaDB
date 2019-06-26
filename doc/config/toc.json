@@ -3045,6 +3045,30 @@
                      "en": "Remote",
                      "contents": [
                         {
+                           "id": 1561519459,
+                           "file": "close",
+                           "cn": "close()",
+                           "en": "close()"
+                        },
+						{
+                           "id": 1561519528,
+                           "file": "getCmd",
+                           "cn": "getCmd()",
+                           "en": "getCmd()"
+                        },
+						{
+                           "id": 1561519535,
+                           "file": "getFile",
+                           "cn": "getFile()",
+                           "en": "getFile()"
+                        },
+						{
+                           "id": 1561519542,
+                           "file": "getInfo",
+                           "cn": "getInfo()",
+                           "en": "getInfo()"
+                        },
+						{
                            "id": 1557121270,
                            "file": "Remote",
                            "cn": "Remote()",
@@ -3052,6 +3076,40 @@
                         }
                      ]
                   },
+				  {
+                     "id": 1561519743,
+                     "dir": "Hash",
+                     "cn": "Hash",
+                     "en": "Hash",
+                     "contents": [
+                        {
+                           "id": 1561519751,
+                           "file": "fileMD5",
+                           "cn": "fileMD5()",
+                           "en": "fileMD5()"
+                        },
+						{
+                           "id": 1561519752,
+                           "file": "md5",
+                           "cn": "md5()",
+                           "en": "md5()"
+                        }
+                     ]
+                  },
+				  {
+                     "id": 1561519810,
+                     "dir": "Sdbtool",
+                     "cn": "Sdbtool",
+                     "en": "Sdbtool",
+                     "contents": [
+                        {
+                           "id": 1561519816,
+                           "file": "listNodes",
+                           "cn": "listNodes()",
+                           "en": "listNodes()"
+                        }
+                     ]
+                  },				  
                   {
                      "id": 1552489109,
                      "dir": "AuxiliaryObjects",
