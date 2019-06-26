@@ -75,7 +75,7 @@ function main()
    for( var i = 0; i < nonAnalyzeIdxArray.length; i++ )
       checkScanTypeByExplain( cl, nonAnalyzeIdxArray[i], "ixscan" );
 
-   cs.dropCL( clName );
+    commDropCS( db, csName, /*ignoreNotExist*/false );
 }
 
 main();
