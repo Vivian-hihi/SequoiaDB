@@ -108,145 +108,49 @@ SdbSnapshotOption[.cond(<cond>)]
 
 ##SQL使用命令位置参数##
 
-[命令位置参数](reference/Sequoiadb_command/Overview/location.md) 是用于控制命令执行的位置信息
+[命令位置参数](reference/Sequoiadb_command/Overview/location.md) 是用于控制命令执行的位置信息。SQL 可以用 where 语句来使用命令位置参数。
 
 ###示例###
 
-1. 控制快照在指定节点运行：
+* 控制快照在指定节点运行：
 
 ```lang-javascript
-    > db.exec("select * from $SNAPSHOT_HEALTH where Role = 'catalog'")
+> db.exec("select * from $SNAPSHOT_CONTEXT where Role = 'catalog'")
+{
+  "NodeName": "hostname:30000",
+  "SessionID": 21,
+  "Contexts": [
     {
-    "NodeName": "hostname:30000",
-    "IsPrimary": true,
-    "ServiceStatus": true,
-    "Status": "Normal",
-    "BeginLSN": {
-        "Offset": 0,
-        "Version": 1
-    },
-    "CurrentLSN": {
-        "Offset": 22332,
-        "Version": 2
-    },
-    "CommittedLSN": {
-        "Offset": 22332,
-        "Version": 2
-    },
-    "CompleteLSN": 22404,
-    "LSNQueSize": 0,
-    "NodeID": [
-        1,
-        1
-    ],
-    "DataStatus": "Normal",
-    "SyncControl": false,
-    "Ulimit": {
-        "CoreFileSize": 0,
-        "VirtualMemory": -1,
-        "OpenFiles": 1024,
-        "NumProc": 23711,
-        "FileSize": -1
-    },
-    "ResetTimestamp": "2019-06-26-15.52.21.001001",
-    "ErrNum": {
-        "SDB_OOM": 0,
-        "SDB_NOSPC": 0,
-        "SDB_TOO_MANY_OPEN_FD": 0
-    },
-    "Memory": {
-        "LoadPercent": 3,
-        "TotalRAM": 6257471488,
-        "RssSize": 236826624,
-        "LoadPercentVM": 0,
-        "VMLimit": -1,
-        "VMSize": 3094757376
-    },
-    "Disk": {
-        "Name": "/dev/mapper/vgdata-lvdata1",
-        "LoadPercent": 40,
-        "TotalSpace": 211139878912,
-        "FreeSpace": 126203273216
-    },
-    "FileDesp": {
-        "LoadPercent": 6,
-        "TotalNum": 1024,
-        "FreeNum": 959
-    },
-    "StartHistory": [
-        "2019-06-26-15.52.21.008719"
-    ],
-    "AbnormalHistory": [],
-    "DiffLSNWithPrimary": 0
+      "ContextID": 7764,
+      "Type": "DUMP",
+      "Description": "IsOpened:1,IsTrans:0,HitEnd:0,BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2019-06-26-17.55.42.355666"
     }
+  ]
+}
 ...
 ```
 
-2. 控制快照不在全局执行：
+* 控制快照不在全局执行：
 
 ```lang-javascript
-> db.exec("select * from $SNAPSHOT_HEALTH where Global = false")
+> db.exec("select * from $SNAPSHOT_CONTEXT where Global = false")
+{
+  "NodeName": "hostname:50000",
+  "SessionID": 10,
+  "Contexts": [
     {
-    "NodeName": "hostname:50000",
-    "IsPrimary": true,
-    "ServiceStatus": true,
-    "Status": "Normal",
-    "BeginLSN": {
-        "Offset": -1,
-        "Version": 0
-    },
-    "CurrentLSN": {
-        "Offset": -1,
-        "Version": 0
-    },
-    "CommittedLSN": {
-        "Offset": -1,
-        "Version": 0
-    },
-    "CompleteLSN": -1,
-    "LSNQueSize": 0,
-    "NodeID": [
-        2,
-        4
-    ],
-    "DataStatus": "Normal",
-    "SyncControl": false,
-    "Ulimit": {
-        "CoreFileSize": 0,
-        "VirtualMemory": -1,
-        "OpenFiles": 1024,
-        "NumProc": 23711,
-        "FileSize": -1
-    },
-    "ResetTimestamp": "2019-06-26-15.53.33.120982",
-    "ErrNum": {
-        "SDB_OOM": 0,
-        "SDB_NOSPC": 0,
-        "SDB_TOO_MANY_OPEN_FD": 0
-    },
-    "Memory": {
-        "LoadPercent": 1,
-        "TotalRAM": 6257471488,
-        "RssSize": 119148544,
-        "LoadPercentVM": 100,
-        "VMLimit": -1,
-        "VMSize": 1319522304
-    },
-    "Disk": {
-        "Name": "/dev/mapper/vgdata-lvdata1",
-        "LoadPercent": 40,
-        "TotalSpace": 211139878912,
-        "FreeSpace": 126203273216
-    },
-    "FileDesp": {
-        "LoadPercent": 2,
-        "TotalNum": 1024,
-        "FreeNum": 999
-    },
-    "StartHistory": [
-        "2019-06-26-15.53.33.128900"
-    ],
-    "AbnormalHistory": [],
-    "DiffLSNWithPrimary": -1
+      "ContextID": 70,
+      "Type": "DUMP",
+      "Description": "IsOpened:1,IsTrans:0,HitEnd:0,BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2019-06-26-17.56.55.916040"
     }
+  ]
+}
 ```
