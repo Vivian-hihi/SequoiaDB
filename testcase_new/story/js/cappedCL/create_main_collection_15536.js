@@ -82,4 +82,4 @@ function initCappedCS( csName )
    commCreateCS( db, csName, false, "beginning to create cappedCS", options );
 }
 
-main()
+// main()
