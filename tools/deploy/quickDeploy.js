@@ -67,7 +67,7 @@ var DEPLOY_POSTGRESQL = pg ;
 var LOCAL_CM_PORT     = cm ;
 var TMP_COORD_SVC     = 18800 ;
 var MY_HOSTNAME       = System.getHostName() ;
-var TRANSACTION_CONF  = { transactionon: true, transautocommit: true } ;
+var NODE_CONF         = {} ;
 
 // run!
 main() ;
@@ -705,7 +705,7 @@ function createCoord( nodesConf )
       try
       {
          var rg = db.getCoordRG() ;
-         rg.createNode( hostName, service, dbPath, TRANSACTION_CONF ) ;
+         rg.createNode( hostName, service, dbPath, NODE_CONF ) ;
       }
       catch( e )
       {
@@ -764,7 +764,7 @@ function createData( nodesConf )
 
       try
       {
-         rg.createNode( hostName, service, dbPath, TRANSACTION_CONF ) ;
+         rg.createNode( hostName, service, dbPath, NODE_CONF ) ;
       }
       catch( e )
       {
