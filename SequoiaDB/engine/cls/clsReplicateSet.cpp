@@ -253,7 +253,10 @@ namespace engine
          PD_LOG( PDEVENT, "Wait repl bucket empty completed" ) ;
       }
 
-      _vote.force( CLS_ELECTION_STATUS_SEC ) ;
+      if ( _active )
+      {
+         _vote.force( CLS_ELECTION_STATUS_SEC ) ;
+      }
 
       return SDB_OK ;
    }
