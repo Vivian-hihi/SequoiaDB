@@ -47,8 +47,7 @@ public class ListObjects18575 extends S3TestBase {
 
 	}
 
-	// http://jira:8080/browse/SEQUOIADBMAINSTREAM-4632
-	@Test(enabled = false)
+	@Test
 	private void testListObjects() {
 		listObjectsAndCheckResult();
 		runSuccess = true;
@@ -95,7 +94,6 @@ public class ListObjects18575 extends S3TestBase {
 		// check the key of contents
 		List<String> matchContentsList1 = new ArrayList<>();
 		matchContentsList1.add("dir1?a%test3_18575");
-		Collections.sort(matchContentsList1);
 		Assert.assertEquals(actContentsList1, matchContentsList1);
 		Assert.assertTrue(result.isTruncated());
 
@@ -110,12 +108,7 @@ public class ListObjects18575 extends S3TestBase {
 		ObjectListing result2 = s3Client.listObjects(request);
 		List<String> commonPrefixes2 = result2.getCommonPrefixes();
 		List<String> matchPrefixList2 = new ArrayList<>();
-		matchPrefixList2.add("dir/atest%");
-		matchPrefixList2.add("dir?%");
-		matchPrefixList2.add("dir1??dir2??%/dir3/test2_18575");
-		matchPrefixList2.add("dir1?a%");
 		matchPrefixList2.add("dir1?dir2?aa?%");
-		Collections.sort(matchPrefixList2);
 		Assert.assertEquals(commonPrefixes2, matchPrefixList2,
 				"actPrefixes:" + commonPrefixes2.toString() + "\n expPrefixes2:" + matchPrefixList2.toString());
 
@@ -126,6 +119,7 @@ public class ListObjects18575 extends S3TestBase {
 			actContentsList2.add(key);
 		}
 		Assert.assertFalse(result2.isTruncated());
+
 		// check the key of contents
 		List<String> matchContentsList2 = new ArrayList<>();
 		matchContentsList2.add("dir1_18575");

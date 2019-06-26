@@ -43,8 +43,7 @@ public class ListObjectsWithPrefixAndDelimiter18602 extends S3TestBase {
 		}
 	}
 
-	// http://jira:8080/browse/SEQUOIADBMAINSTREAM-4632
-	@Test(enabled = false)
+	@Test
 	private void testListObjects() {
 		List<String> matchPrefixList = new ArrayList<>();
 		List<String> matchContentsList = new ArrayList<>();
@@ -56,7 +55,7 @@ public class ListObjectsWithPrefixAndDelimiter18602 extends S3TestBase {
 		ObjectListing result = s3Client.listObjects(request);
 		List<String> commonPrefixes = result.getCommonPrefixes();
 		Assert.assertEquals(commonPrefixes, matchPrefixList,
-				"actPrefixes:" + commonPrefixes.toString() + "\n ecpPrefixes:" + matchPrefixList.toString());
+				"actPrefixes:" + commonPrefixes.toString() + "\n expPrefixes:" + matchPrefixList.toString());
 
 		List<String> actContentsList = new ArrayList<>();
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
