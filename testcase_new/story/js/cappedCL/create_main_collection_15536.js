@@ -15,7 +15,7 @@ function main()
    commDropCS( db, csName );
    initCappedCS(csName);
    var clName = COMMCLNAME + "_ES_15536";
-   var mainCL = db.getCS(csName).createCL(clName, {Capped : true, Size : 1024, ShardingKey : {a : 1}, ShardingType : "range", IsMainCL : true});
+   var mainCL = db.getCS(csName).createCL(clName, {ShardingKey : {a : 1}, ShardingType : "range", IsMainCL : true});
    var slaveCLName1 = "slave1_cl_15536";
    commDropCL(db, COMMCSNAME, slaveCLName1, true, true);
    var slaveCL1 = commCreateCL(db, COMMCSNAME, slaveCLName1);
