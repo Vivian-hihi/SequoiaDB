@@ -1,4 +1,5 @@
 // create WORKDIR in local host
+import ( "../lib/fulltext_commlib.js" );
 commMakeDir( "localhost", WORKDIR );
 
 /************************************
