@@ -96,7 +96,7 @@ namespace engine
       {
          if ( cb->waitEvent( data, OSS_ONE_SEC, TRUE ) )
          {
-            pmdEduEventRelase( data, cb ) ;
+            pmdEduEventRelease( data, cb ) ;
          }
          /// set the edu to active
          pEduMgr->activateEDU( cb ) ;

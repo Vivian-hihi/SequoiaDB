@@ -109,9 +109,16 @@ namespace engine
       return TRUE ;
    }
 
-   void* _utilMemListItem::alloc( UINT32 size )
+   void* _utilMemListItem::alloc( UINT32 size, UINT32 *pRealSize )
    {
-      if ( 0 == size ) return NULL ;
+      if ( 0 == size )
+      {
+         if ( pRealSize )
+         {
+            *pRealSize = 0 ;
+         }
+         return NULL ;
+      }
 
 #ifdef _DEBUG
       SDB_ASSERT( size <= _blockSize, "Size should <= blockSize" ) ;
@@ -136,6 +143,11 @@ namespace engine
          {
             _pEvent->onAllocCache( _blockSize ) ;
          }
+
+         if ( pRealSize )
+         {
+            *pRealSize = _blockSize - UTIL_MEM_TOTAL_FILL_LEN ;
+         }
       }
       else
       {
@@ -145,7 +157,8 @@ namespace engine
          }
          ptr = utilPoolAlloc( _canAllocBlockSize( size ) ?
                               ( _blockSize - UTIL_MEM_TOTAL_FILL_LEN ) :
-                              size ) ;
+                              size,
+                              pRealSize ) ;
       }
 
       return ptr ;
@@ -369,7 +382,7 @@ namespace engine
       return FALSE ;
    }
 
-   void* _utilMemListPool::alloc( UINT32 size )
+   void* _utilMemListPool::alloc( UINT32 size, UINT32 *pRealSize )
    {
       void *ptr = NULL ;
       UINT32 square = 0 ;
@@ -377,6 +390,10 @@ namespace engine
 
       if ( 0 == size )
       {
+         if ( pRealSize )
+         {
+            *pRealSize = 0 ;
+         }
          goto done ;
       }
 
@@ -392,28 +409,28 @@ namespace engine
       {
          if ( _arrayList[ index ]->getCacheSize() >= size )
          {
-            ptr = _arrayList[ index ]->alloc( size ) ;
+            ptr = _arrayList[ index ]->alloc( size, pRealSize ) ;
          }
          else if ( _arrayList[ index + 1 ] &&
                    _arrayList[ index + 1 ]->getCacheSize() >= size )
          {
-            ptr = _arrayList[ index + 1 ]->alloc( size ) ;
+            ptr = _arrayList[ index + 1 ]->alloc( size, pRealSize ) ;
          }
          else
          {
-            ptr = _arrayList[ index ]->alloc( size ) ;
+            ptr = _arrayList[ index ]->alloc( size, pRealSize ) ;
          }
       }
       else
       {
-         ptr = utilPoolAlloc( size ) ;
+         ptr = utilPoolAlloc( size, pRealSize ) ;
       }
 
    done:
       return ptr ;
    }
 
-   void* _utilMemListPool::realloc( void *ptr, UINT32 size )
+   void* _utilMemListPool::realloc( void *ptr, UINT32 size, UINT32 *pRealSize )
    {
       void *pNewPtr = NULL ;
       UINT32 oldSize = 0 ;
@@ -429,10 +446,14 @@ namespace engine
          if ( oldSize >= size )
          {
             pNewPtr = ptr ;
+            if ( pRealSize )
+            {
+               *pRealSize = oldSize ;
+            }
             goto done ;
          }
 
-         pNewPtr = alloc( size ) ;
+         pNewPtr = alloc( size, pRealSize ) ;
          if ( pNewPtr )
          {
             /// copy
@@ -443,7 +464,7 @@ namespace engine
       }
       else
       {
-         pNewPtr = utilPoolRealloc( ptr, size ) ;
+         pNewPtr = utilPoolRealloc( ptr, size, pRealSize ) ;
       }
 
    done:
@@ -520,22 +541,22 @@ namespace engine
       return 0 ;
    }
 
-   void* utilThreadAlloc( UINT32 size )
+   void* utilThreadAlloc( UINT32 size, UINT32 *pRealSize )
    {
       if ( g_thdMemPool )
       {
-         return g_thdMemPool->alloc( size ) ;
+         return g_thdMemPool->alloc( size, pRealSize ) ;
       }
-      return utilPoolAlloc( size ) ;
+      return utilPoolAlloc( size, pRealSize ) ;
    }
 
-   void* utilThreadRealloc( void* ptr, UINT32 size )
+   void* utilThreadRealloc( void* ptr, UINT32 size, UINT32 *pRealSize )
    {
       if ( g_thdMemPool )
       {
-         return g_thdMemPool->realloc( ptr, size ) ;
+         return g_thdMemPool->realloc( ptr, size, pRealSize ) ;
       }
-      return utilPoolRealloc( ptr, size ) ;
+      return utilPoolRealloc( ptr, size, pRealSize ) ;
    }
 
    void utilThreadRelease( void*& ptr )

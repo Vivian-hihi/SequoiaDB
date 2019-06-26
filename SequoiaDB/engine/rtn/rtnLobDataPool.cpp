@@ -35,6 +35,7 @@
 #include "rtnLobDataPool.hpp"
 #include "pd.hpp"
 #include "ossUtil.hpp"
+#include "pmdEDU.hpp"
 #include "rtnTrace.hpp"
 #include "pdTrace.hpp"
 #include <algorithm>
@@ -127,9 +128,9 @@ namespace engine
       goto done ;
    }
 
-   void _rtnLobDataPool::entrust( CHAR *buf )
+   void _rtnLobDataPool::entrust( const pmdEDUEvent &event )
    {
-      _toBeFreed.push_back( buf ) ;
+      _toBeFreed.push_back( event ) ;
       return ;
    }
 
@@ -225,10 +226,10 @@ namespace engine
       _dataSz = 0 ;
       _current = -1 ;
       _currentTuple.clear() ;
-      ossPoolList<CHAR *>::iterator itr = _toBeFreed.begin() ;
+      ossPoolList<pmdEDUEvent>::iterator itr = _toBeFreed.begin() ;
       for ( ; itr != _toBeFreed.end(); ++itr )
       {
-         SDB_OSS_FREE( *itr ) ;
+         pmdEduEventRelease( *itr, NULL ) ;
       }
       _toBeFreed.clear() ;
       return ;

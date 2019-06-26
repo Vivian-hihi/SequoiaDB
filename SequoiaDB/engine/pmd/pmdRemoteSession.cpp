@@ -80,7 +80,7 @@ namespace engine
       _orgRspOpCode = 0 ;
       if ( _event._Data && PMD_EDU_MEM_NONE != _event._dataMemType )
       {
-         pmdEduEventRelase( _event, _parent->getEDUCB() ) ;
+         pmdEduEventRelease( _event, _parent->getEDUCB() ) ;
       }
       _event.reset() ;
    }
@@ -98,6 +98,10 @@ namespace engine
          else if ( PMD_EDU_MEM_SELF == _memType )
          {
             _parent->getEDUCB()->releaseBuff( (CHAR*)_pReqMsg ) ;
+         }
+         else if ( PMD_EDU_MEM_THREAD == _memType )
+         {
+            utilThreadRelease( (void *&)_pReqMsg ) ;
          }
          _pReqMsg = NULL ;
       }
@@ -135,13 +139,16 @@ namespace engine
       _memType = memType ;
    }
 
-   MsgHeader* _pmdSubSession::getRspMsg( BOOLEAN owned )
+   MsgHeader* _pmdSubSession::getRspMsg()
    {
-      if ( owned )
-      {
-         _event._dataMemType = PMD_EDU_MEM_NONE ;
-      }
       return (MsgHeader*)_event._Data ;
+   }
+
+   pmdEDUEvent _pmdSubSession::getOwnedRspMsg()
+   {
+      pmdEDUEvent retEvent = _event ;
+      _event._dataMemType = PMD_EDU_MEM_NONE ;
+      return retEvent ;
    }
 
    void _pmdSubSession::setProcessInfo( INT32 processResult )
@@ -188,11 +195,11 @@ namespace engine
       _event = event ;
       if ( PMD_EDU_MEM_NONE == event._dataMemType )
       {
-         _event._Data = SDB_OSS_MALLOC( pRsp->messageLength ) ;
+         _event._Data = ( CHAR* )utilThreadAlloc( pRsp->messageLength ) ;
          if ( _event._Data )
          {
             ossMemcpy( _event._Data, pRsp, pRsp->messageLength ) ;
-            _event._dataMemType = PMD_EDU_MEM_ALLOC ;
+            _event._dataMemType = PMD_EDU_MEM_THREAD ;
          }
          else
          {
@@ -1115,7 +1122,7 @@ namespace engine
          {
             PD_LOG( PDWARNING, "Session[%s] recv unknonw event[type: %d]",
                     _pEDUCB->toString().c_str(), event._eventType ) ;
-            pmdEduEventRelase( event, _pEDUCB ) ;
+            pmdEduEventRelease( event, _pEDUCB ) ;
             event.reset() ;
             continue ;
          }
@@ -1379,7 +1386,7 @@ namespace engine
       else
       {
          MsgOpReply *pMsg = NULL ;
-         pMsg = ( MsgOpReply* )SDB_OSS_MALLOC( sizeof( MsgOpReply ) ) ;
+         pMsg = ( MsgOpReply* )utilThreadAlloc( sizeof( MsgOpReply ) ) ;
          if ( pMsg )
          {
             pMsg->header.messageLength = sizeof( MsgOpReply ) ;
@@ -1393,7 +1400,7 @@ namespace engine
             pMsg->startFrom = 0 ;
 
             eduCB()->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                             PMD_EDU_MEM_ALLOC,
+                                             PMD_EDU_MEM_THREAD,
                                              (CHAR*)pMsg,
                                              (UINT64)handle ) ) ;
          }
@@ -1551,13 +1558,13 @@ namespace engine
                if ( pSubSession == *ppSub )
                {
                   pHandle->onReply( pSubSession->parent(), ppSub,
-                                    pSubSession->getRspMsg( FALSE ),
+                                    pSubSession->getRspMsg(),
                                     FALSE ) ;
                }
                else
                {
                   pHandle->onReply( pSubSession->parent(), &pSubSession,
-                                    pSubSession->getRspMsg( FALSE ),
+                                    pSubSession->getRspMsg(),
                                     TRUE ) ;
                }
             }
@@ -1596,13 +1603,13 @@ namespace engine
                if ( pSubSession == *ppSub )
                {
                   pHandle->onReply( pSubSession->parent(), ppSub,
-                                    pSubSession->getRspMsg( FALSE ),
+                                    pSubSession->getRspMsg(),
                                     FALSE ) ;
                }
                else
                {
                   pHandle->onReply( pSubSession->parent(), &pSubSession,
-                                    pSubSession->getRspMsg( FALSE ),
+                                    pSubSession->getRspMsg(),
                                     TRUE ) ;
                }
             }
@@ -1624,7 +1631,7 @@ namespace engine
       }
 
    done:
-      pmdEduEventRelase( event, _pEDUCB ) ;
+      pmdEduEventRelease( event, _pEDUCB ) ;
       return rc ;
    error:
       goto done ;
@@ -1840,7 +1847,7 @@ namespace engine
          pEDUCB = it->second.eduCB() ;
 
          // assign memory
-         pNewBuff = ( CHAR* )SDB_OSS_MALLOC( pMsg->messageLength + 1 ) ;
+         pNewBuff = ( CHAR* )utilThreadAlloc( pMsg->messageLength + 1 ) ;
          if ( pNewBuff )
          {
             // copy data
@@ -1848,7 +1855,7 @@ namespace engine
             pNewBuff[ pMsg->messageLength ] = 0 ;
             // push to edu queue
             pEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                            PMD_EDU_MEM_ALLOC,
+                                            PMD_EDU_MEM_THREAD,
                                             pNewBuff, (UINT64)handle ) ) ;
          }
          else

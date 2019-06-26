@@ -229,7 +229,6 @@ namespace engine
       schedTaskMgr   _svcTaskMgr ;
 
       pmdLightJobMgr    *_pLightJobMgr ;
-      utilMemBlockPool  *_pMemBlockPool ;
       UINT32            _timeCounter ;    /// ms
 
       // RESERVED FOR NOW, can be used to jump out sleep in the future
@@ -250,7 +249,7 @@ namespace engine
       }
       utilMemBlockPool *getMemBlockPool()
       {
-         return _pMemBlockPool ;
+         return utilGetGlobalMemPool() ;
       }
       CHAR *getGroupName ( CHAR *pBuffer, UINT32 size ) const
       {

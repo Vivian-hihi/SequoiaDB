@@ -155,8 +155,8 @@ namespace engine
 
       UINT64      getTotalSize() ;
 
-      void*       alloc( UINT32 size ) ;
-      void*       realloc( void* ptr, UINT32 size ) ;
+      void*       alloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
+      void*       realloc( void* ptr, UINT32 size, UINT32 *pRealSize = NULL ) ;
       void        release( void*& ptr ) ;
 
    public:
@@ -215,10 +215,9 @@ namespace engine
       Global function
    */
    utilMemBlockPool* utilGetGlobalMemPool() ;
-   void utilSetGlobalMemPool( utilMemBlockPool *pPool ) ;
 
-   void*       utilPoolAlloc( UINT32 size ) ;
-   void*       utilPoolRealloc( void* ptr, UINT32 size ) ;
+   void*       utilPoolAlloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
+   void*       utilPoolRealloc( void* ptr, UINT32 size, UINT32 *pRealSize = NULL ) ;
    void        utilPoolRelease( void*& ptr ) ;
    BOOLEAN     utilPoolPtrCheck( void *ptr, UINT32 *pUserSize = NULL ) ;
    UINT32      utilPoolGetPtrSize( void *ptr ) ;

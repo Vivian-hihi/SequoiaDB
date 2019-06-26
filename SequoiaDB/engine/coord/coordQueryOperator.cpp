@@ -168,20 +168,22 @@ namespace engine
       SDB_ASSERT( pOkReply, "Ok reply invalid" ) ;
 
       BOOLEAN takeOver = FALSE ;
+      pmdEDUEvent replyEvent ;
       MsgOpReply *pReply = NULL ;
       MsgRouteID nodeID ;
       ROUTE_REPLY_MAP::iterator it = pOkReply->begin() ;
       while( it != pOkReply->end() )
       {
          takeOver = FALSE ;
-         pReply = (MsgOpReply*)(it->second) ;
+         replyEvent = it->second ;
+         pReply = (MsgOpReply*)replyEvent._Data ;
          nodeID.value = pReply->header.routeID.value ;
 
          if ( SDB_OK == pReply->flags )
          {
             if ( _pContext )
             {
-               rc = _pContext->addSubContext( pReply, takeOver ) ;
+               rc = _pContext->addSubContext( replyEvent, takeOver ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Add sub data[node: %s, context: %lld] to "
@@ -199,7 +201,8 @@ namespace engine
 
          if ( !takeOver )
          {
-            SDB_OSS_FREE( pReply ) ;
+            pmdEduEventRelease( replyEvent, NULL ) ;
+            pReply = NULL ;
          }
          ++it ;
       }

@@ -162,7 +162,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _catGTSManager::handleMsg( const NET_HANDLE& handle, const MsgHeader* msg )
+   INT32 _catGTSManager::handleMsg( const NET_HANDLE& handle,
+                                    const MsgHeader* msg )
    {
       INT32 rc = SDB_OK ;
 

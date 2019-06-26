@@ -83,9 +83,6 @@ namespace engine
 
          if ( bPop )
          {
-            SDB_ASSERT( PMD_EDU_MEM_ALLOC == memType,
-                        "Mem type must be PMD_EDU_MEM_ALLOC" ) ;
-
             _pSessionMgr->dispatchMsg( handle, pHeader,memType,
                                        TRUE,&hasDispatched ) ;
             if ( !hasDispatched )

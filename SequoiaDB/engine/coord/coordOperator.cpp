@@ -55,7 +55,7 @@ namespace engine
          ROUTE_REPLY_MAP::iterator it = pReply->begin() ;
          while ( it != pReply->end() )
          {
-            SDB_OSS_FREE( it->second ) ;
+            pmdEduEventRelease( it->second, NULL ) ;
             ++it ;
          }
          pReply->clear() ;
@@ -178,6 +178,7 @@ namespace engine
 
       pmdSubSessionItr itr ;
       pmdSubSession *pSub = NULL ;
+      pmdEDUEvent replyEvent ;
       MsgOpReply *pReply = NULL ;
       INT32 processType = COORD_PROCESS_OK ;
       MsgRouteID routeID ;
@@ -236,7 +237,8 @@ namespace engine
       while( itr.more() )
       {
          pSub = itr.next() ;
-         pReply = ( MsgOpReply* )pSub->getRspMsg( TRUE ) ;
+         replyEvent = pSub->getOwnedRspMsg() ;
+         pReply = ( MsgOpReply* )replyEvent._Data ;
 
          routeID.value = pReply->header.routeID.value ;
          primaryID = pReply->startFrom ;
@@ -292,9 +294,10 @@ namespace engine
          // callback for parse
          _onNodeReply( processType, pReply, cb, inMsg ) ;
 
-         if ( !result.pushReply( (MsgHeader *)pReply, processType ) )
+         if ( !result.pushReply( replyEvent, processType ) )
          {
-            SDB_OSS_FREE( pReply ) ;
+            pmdEduEventRelease( replyEvent, NULL ) ;
+            pReply = NULL ;
          }
       } /// while( itr.more() )
 

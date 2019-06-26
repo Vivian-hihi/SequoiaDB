@@ -39,6 +39,7 @@
 
 #include "clsCatalogAgent.hpp"
 #include "ossMemPool.hpp"
+#include "pmdDef.hpp"
 #include "../bson/bson.h"
 #include <vector>
 #include <queue>
@@ -84,7 +85,7 @@ namespace engine
    } ;
    typedef std::queue<CHAR *>                         REPLY_QUE ;
    typedef ossPoolMap< UINT64, coordErrorInfo>        ROUTE_RC_MAP ;
-   typedef ossPoolMap< UINT64, MsgHeader*>            ROUTE_REPLY_MAP ;
+   typedef ossPoolMap< UINT64, pmdEDUEvent>           ROUTE_REPLY_MAP ;
    typedef ossPoolMap< UINT32, netIOVec>              GROUP_2_IOVEC ;
    typedef ossPoolSet< INT32 >                        SET_RC ;
    typedef SET_UINT64                                 SET_ROUTEID ;

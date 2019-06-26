@@ -671,10 +671,9 @@ namespace engine
    }
 
    INT32 _clsDCMgr::_syncSend2PeerNode( pmdEDUCB *cb, MsgHeader *msg,
-                                        MsgHeader **ppRecvMsg,
+                                        pmdEDUEvent *pRecvEvent,
                                         const pmdAddrPair &node,
-                                        INT64 millsec,
-                                        BOOLEAN useCBMem )
+                                        INT64 millsec )
    {
       INT32 rc = SDB_OK ;
       UINT16 port = 0 ;
@@ -694,9 +693,9 @@ namespace engine
          PD_RC_CHECK( rc, PDWARNING, "Connect to %s:%d failed, rc: %d",
                       node._host, port, rc ) ;
 
-         if ( ppRecvMsg )
+         if ( pRecvEvent )
          {
-            rc = pmdSyncSendMsg( msg, ppRecvMsg, &sock, cb, useCBMem,
+            rc = pmdSyncSendMsg( msg, *pRecvEvent, &sock, cb,
                                  (INT32)millsec, DC_UPDATE_FORCE_TIMEOUT ) ;
          }
          else
@@ -716,9 +715,8 @@ namespace engine
    }
 
    INT32 _clsDCMgr::_syncSend2PeerCatGroup( pmdEDUCB *cb, MsgHeader *msg,
-                                            MsgHeader **ppRecvMsg,
-                                            INT64 millsec,
-                                            BOOLEAN useCBMem )
+                                            pmdEDUEvent &recvEvent,
+                                            INT64 millsec )
    {
       INT32 rc = SDB_CLS_NO_CATALOG_INFO ;
       BOOLEAN hasLock = TRUE ;
@@ -730,9 +728,9 @@ namespace engine
       if ( _peerCatPrimary >= 0 &&
            ( UINT32 )_peerCatPrimary < _vecCatlog.size() )
       {
-         rc = _syncSend2PeerNode( cb, msg, ppRecvMsg,
+         rc = _syncSend2PeerNode( cb, msg, &recvEvent,
                                   _vecCatlog[ _peerCatPrimary ],
-                                  millsec, useCBMem ) ;
+                                  millsec ) ;
          if ( SDB_OK == rc )
          {
             goto done ;
@@ -742,8 +740,8 @@ namespace engine
       // then send to any other node
       for ( UINT32 i = 0 ; i < _vecCatlog.size() ; ++i )
       {
-         rc = _syncSend2PeerNode( cb, msg, ppRecvMsg, _vecCatlog[ i ],
-                                  millsec, useCBMem ) ;
+         rc = _syncSend2PeerNode( cb, msg, &recvEvent, _vecCatlog[ i ],
+                                  millsec ) ;
          if ( SDB_OK == rc )
          {
             goto done ;
@@ -954,14 +952,14 @@ namespace engine
                                        UINT32 groupID, INT64 millsec )
    {
       INT32 rc = SDB_OK ;
-      MsgHeader *pRecvMsg = NULL ;
+      pmdEDUEvent recvEvent ;
       BOOLEAN hasRetry = ( CATALOG_GROUPID == groupID ) ? TRUE : FALSE ;
 
    retry:
       msg->requestID = ++_requestID ;
       msg->TID = cb->getTID() ;
 
-      rc = _syncSend2PeerCatGroup( cb, msg, &pRecvMsg, millsec, TRUE ) ;
+      rc = _syncSend2PeerCatGroup( cb, msg, recvEvent, millsec ) ;
       if ( rc )
       {
          if ( !hasRetry )
@@ -976,7 +974,7 @@ namespace engine
                  "rc: %d", rc ) ;
          goto error ;
       }
-      rc = _processCatGrpRes( cb, pRecvMsg, groupID ) ;
+      rc = _processCatGrpRes( cb, (MsgHeader*)recvEvent._Data, groupID ) ;
       if ( rc )
       {
          if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
@@ -984,8 +982,7 @@ namespace engine
             hasRetry = TRUE ;
             if ( SDB_OK == updateImageCataGroup( cb, millsec ) )
             {
-               cb->releaseBuff( (CHAR*)pRecvMsg ) ;
-               pRecvMsg = NULL ;
+               pmdEduEventRelease( recvEvent, cb ) ;
                goto retry ;
             }
          }
@@ -994,10 +991,7 @@ namespace engine
       }
 
    done:
-      if ( pRecvMsg )
-      {
-         cb->releaseBuff( (CHAR*)pRecvMsg ) ;
-      }
+      pmdEduEventRelease( recvEvent, cb ) ;
       return rc ;
    error:
       goto done ;
@@ -1281,17 +1275,17 @@ namespace engine
    INT32 _clsDCMgr::updateImageAllGroups( pmdEDUCB *cb, INT64 millsec )
    {
       INT32 rc = SDB_OK ;
-      MsgHeader *pRecvMsg = NULL ;
+      pmdEDUEvent recvEvent ;
       BOOLEAN hasRetry = FALSE ;
       BSONObj hint ;
       BSONObj cond = BSON( FIELD_NAME_ROLE <<
                            BSON( "$ne" << SDB_ROLE_COORD ) ) ;
 
    retry:
-      rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_BS_QUERY_REQ,
+      rc = _queryOnImageCatalog( cb, recvEvent, MSG_BS_QUERY_REQ,
                                  CAT_NODE_INFO_COLLECTION, cond,
                                  hint, hint, hint, -1, 0,
-                                 DC_UPDATE_TIMEOUT, TRUE ) ;
+                                 DC_UPDATE_TIMEOUT ) ;
       if ( rc )
       {
          goto error ;
@@ -1303,7 +1297,7 @@ namespace engine
       _pNodeMgrAgent->release_w() ;
 
       // process query result
-      rc = _processGrpQueryRes( cb, pRecvMsg ) ;
+      rc = _processGrpQueryRes( cb, (MsgHeader*)recvEvent._Data ) ;
       if ( rc )
       {
          if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
@@ -1311,8 +1305,7 @@ namespace engine
             hasRetry = TRUE ;
             if ( SDB_OK == updateImageCataGroup( cb, millsec ) )
             {
-               cb->releaseBuff( (CHAR*)pRecvMsg ) ;
-               pRecvMsg = NULL ;
+               pmdEduEventRelease( recvEvent, cb ) ;
                goto retry ;
             }
          }
@@ -1320,10 +1313,7 @@ namespace engine
       }
 
    done:
-      if ( pRecvMsg )
-      {
-         cb->releaseBuff( (CHAR*)pRecvMsg ) ;
-      }
+      pmdEduEventRelease( recvEvent, cb ) ;
       return rc ;
    error:
       goto done ;
@@ -1332,15 +1322,15 @@ namespace engine
    INT32 _clsDCMgr::updateImageAllCatalog( pmdEDUCB *cb, INT64 millsec )
    {
       INT32 rc = SDB_OK ;
-      MsgHeader *pRecvMsg = NULL ;
+      pmdEDUEvent recvEvent ;
       BOOLEAN hasRetry = FALSE ;
       BSONObj hint ;
 
    retry:
-      rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_BS_QUERY_REQ,
+      rc = _queryOnImageCatalog( cb, recvEvent, MSG_BS_QUERY_REQ,
                                  CAT_COLLECTION_INFO_COLLECTION,
                                  hint, hint, hint, hint, -1, 0,
-                                 DC_UPDATE_TIMEOUT, TRUE ) ;
+                                 DC_UPDATE_TIMEOUT ) ;
       if ( rc )
       {
          goto error ;
@@ -1352,7 +1342,7 @@ namespace engine
       _pCatAgent->release_r() ;
 
       // process query result
-      rc = _processCatQueryRes( cb, pRecvMsg ) ;
+      rc = _processCatQueryRes( cb, (MsgHeader*)recvEvent._Data ) ;
       if ( rc )
       {
          if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
@@ -1360,8 +1350,7 @@ namespace engine
             hasRetry = TRUE ;
             if ( SDB_OK == updateImageCataGroup( cb, millsec ) )
             {
-               cb->releaseBuff( (CHAR*)pRecvMsg ) ;
-               pRecvMsg = NULL ;
+               pmdEduEventRelease( recvEvent, cb ) ;
                goto retry ;
             }
          }
@@ -1369,10 +1358,7 @@ namespace engine
       }
 
    done:
-      if ( pRecvMsg )
-      {
-         cb->releaseBuff( (CHAR*)pRecvMsg ) ;
-      }
+      pmdEduEventRelease( recvEvent, cb ) ;
       return rc ;
    error:
       goto done ;
@@ -1381,23 +1367,24 @@ namespace engine
    INT32 _clsDCMgr::updateImageDCBaseInfo( pmdEDUCB *cb, INT64 millsec )
    {
       INT32 rc = SDB_OK ;
-      MsgHeader *pRecvMsg = NULL ;
+      pmdEDUEvent recvEvent ;
       BOOLEAN hasRetry = FALSE ;
       BSONObj hint ;
       BSONObj cond = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
 
    retry:
-      rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_BS_QUERY_REQ,
+      rc = _queryOnImageCatalog( cb, recvEvent, MSG_BS_QUERY_REQ,
                                  CAT_SYSDCBASE_COLLECTION_NAME,
                                  cond, hint, hint, hint, -1, 0,
-                                 DC_UPDATE_TIMEOUT, TRUE ) ;
+                                 DC_UPDATE_TIMEOUT ) ;
       if ( rc )
       {
          goto error ;
       }
 
       // process query result
-      rc = _processDCBaseInfoQueryRes( cb, pRecvMsg, &_imageBaseInfo ) ;
+      rc = _processDCBaseInfoQueryRes( cb, (MsgHeader*)recvEvent._Data,
+                                       &_imageBaseInfo ) ;
       if ( rc )
       {
          if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
@@ -1405,8 +1392,7 @@ namespace engine
             hasRetry = TRUE ;
             if ( SDB_OK == updateImageCataGroup( cb, millsec ) )
             {
-               cb->releaseBuff( (CHAR*)pRecvMsg ) ;
-               pRecvMsg = NULL ;
+               pmdEduEventRelease( recvEvent, cb ) ;
                goto retry ;
             }
          }
@@ -1414,24 +1400,20 @@ namespace engine
       }
 
    done:
-      if ( pRecvMsg )
-      {
-         cb->releaseBuff( (CHAR*)pRecvMsg ) ;
-      }
+      pmdEduEventRelease( recvEvent, cb ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _clsDCMgr::_queryOnImageCatalog( pmdEDUCB *cb, MsgHeader **ppRecvMsg,
+   INT32 _clsDCMgr::_queryOnImageCatalog( pmdEDUCB *cb, pmdEDUEvent &recvEvent,
                                           UINT32 opCode,
                                           const CHAR *pCollectionName,
                                           const BSONObj &cond,
                                           const BSONObj &sel,
                                           const BSONObj &orderby,
                                           const BSONObj &hint, INT64 returnNum,
-                                          INT64 skipNum, INT64 millsec,
-                                          BOOLEAN useCBMem )
+                                          INT64 skipNum, INT64 millsec )
    {
       INT32 rc = SDB_OK ;
       CHAR *pBuff = NULL ;
@@ -1451,7 +1433,7 @@ namespace engine
 
    retry:
       // send msg
-      rc = _syncSend2PeerCatGroup( cb, pMsg, ppRecvMsg, millsec, useCBMem ) ;
+      rc = _syncSend2PeerCatGroup( cb, pMsg, recvEvent, millsec ) ;
       if ( rc )
       {
          if ( !hasRetry )
@@ -1611,13 +1593,12 @@ namespace engine
    INT32 _clsDCMgr::syncSend2ImageNode( MsgHeader *msg,
                                         pmdEDUCB *cb,
                                         UINT32 groupID,
-                                        vector<MsgHeader*> &vecRecv,
+                                        vector< pmdEDUEvent > &vecRecv,
                                         vector<pmdAddrPair> &vecSendNode,
                                         INT32 selType,
                                         SEND_STRATEGY sendSty,
                                         MSG_ROUTE_SERVICE_TYPE type,
                                         INT64 millisecond,
-                                        BOOLEAN useCBMem,
                                         vector< pmdAddrPair > *pVecFailedNode )
    {
       INT32 rc = SDB_OK ;
@@ -1627,7 +1608,7 @@ namespace engine
       vector< pmdAddrPair > nodes ;
       string hostname ;
       string svcname ;
-      MsgHeader *pRecvMsg = NULL ;
+      pmdEDUEvent event ;
 
       // 1. get the nodes
       _pNodeMgrAgent->lock_r() ;
@@ -1676,11 +1657,10 @@ namespace engine
       // 2. send to nodes
       for ( UINT32 i = 0 ; i < nodes.size() ; ++i )
       {
-         rc = _syncSend2PeerNode( cb, msg, &pRecvMsg, nodes[ i ],
-                                  millisecond, useCBMem ) ;
+         rc = _syncSend2PeerNode( cb, msg, &event, nodes[ i ], millisecond ) ;
          if ( SDB_OK == rc )
          {
-            vecRecv.push_back( pRecvMsg ) ;
+            vecRecv.push_back( event ) ;
             vecSendNode.push_back( nodes[ i ] ) ;
             if ( SEND_NODE_ONE == sendSty )
             {
@@ -1704,10 +1684,10 @@ namespace engine
    }
 
    INT32 _clsDCMgr::syncSend2ImageNodes( MsgHeader *msg, pmdEDUCB *cb,
-                                         vector< MsgHeader * > &vecRecv,
+                                         vector< pmdEDUEvent > &vecRecv,
                                          vector< pmdAddrPair > &vecSendNode,
                                          INT32 selType, SEND_STRATEGY sendSty,
-                                         INT64 millisecond, BOOLEAN useCBMem,
+                                         INT64 millisecond,
                                          vector< pmdAddrPair > *pVecFailedNode )
    {
       INT32 rc = SDB_OK ;
@@ -1729,7 +1709,7 @@ namespace engine
       {
          rc = syncSend2ImageNode( msg, cb, groups[ i ], vecRecv, vecSendNode,
                                   selType, sendSty, MSG_ROUTE_SHARD_SERVCIE,
-                                  millisecond, useCBMem, pVecFailedNode ) ;
+                                  millisecond, pVecFailedNode ) ;
          if ( SDB_CLS_EMPTY_GROUP == rc )
          {
             continue ;

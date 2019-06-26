@@ -84,8 +84,6 @@ namespace engine
 
       std::string          _id ;
 
-      _pmdEDUCB::CATCH_MAP _catchMap ;
-
       _restSessionInfo()
       :_inNum( 0 )
       {
@@ -147,8 +145,6 @@ namespace engine
       }
 
       void releaseMem() ;
-      void pushMemToMap( _pmdEDUCB::CATCH_MAP &catchMap ) ;
-      void makeMemFromMap( _pmdEDUCB::CATCH_MAP &catchMap ) ;
 
    } ;
    typedef _restSessionInfo restSessionInfo ;
@@ -191,7 +187,6 @@ namespace engine
          virtual void      _onDetach () ;
 
          void              restoreSession() ;
-         void              saveSession() ;
 
       protected:
 

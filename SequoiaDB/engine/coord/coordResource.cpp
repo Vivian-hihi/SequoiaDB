@@ -729,9 +729,10 @@ namespace engine
          UINT32 msgLen = nameLen +  sizeof(MsgCatGroupReq) ;
          MsgCatGroupReq *msg = NULL ;
 
-         rc = cb->allocBuff( msgLen, &pBuf ) ;
-         if ( rc )
+         pBuf = ( CHAR* )utilThreadAlloc( msgLen ) ;
+         if ( !pBuf )
          {
+            rc = SDB_OOM ;
             PD_LOG( PDERROR, "Alloc memory[Size:%u] failed, rc: %d",
                     msgLen, rc ) ;
             goto error ;
@@ -761,7 +762,7 @@ namespace engine
    done:
       if ( pBuf )
       {
-         cb->releaseBuff( pBuf ) ;
+         utilThreadRelease( (void *&)pBuf ) ;
       }
       return rc ;
    error:
@@ -1064,6 +1065,7 @@ namespace engine
       CoordVecNodeInfo cataNodeAddrList ;
       UINT32 sendPos = 0 ;
       UINT16 port = 0 ;
+      pmdEDUEvent recvEvent ;
       MsgHeader *pReply = NULL ;
 
       getCataNodeAddrList( cataNodeAddrList ) ;
@@ -1120,8 +1122,8 @@ namespace engine
                                OSS_SOCKET_KEEP_CONTER ) ;
 
             /// send and recv message
-            rc = pmdSyncSendMsg( ( const MsgHeader* )&msgGroupReq, &pReply,
-                                 &sock, cb, TRUE, OSS_SOCKET_DFT_TIMEOUT,
+            rc = pmdSyncSendMsg( ( const MsgHeader* )&msgGroupReq, recvEvent,
+                                 &sock, cb, OSS_SOCKET_DFT_TIMEOUT,
                                  COORD_SOCKET_FORCE_TIMEOUT ) ;
             if ( rc )
             {
@@ -1134,6 +1136,7 @@ namespace engine
                continue ;
             }
 
+            pReply = ( MsgHeader* )recvEvent._Data ;
             /// process the result
             if ( pReply->opCode != MSG_CAT_GRP_RES )
             {
@@ -1144,7 +1147,7 @@ namespace engine
             }
             rc = _processGroupReply( pReply, groupPtr ) ;
             /// release reply message
-            cb->releaseBuff( ( CHAR* )pReply ) ;
+            pmdEduEventRelease( recvEvent, cb ) ;
             pReply = NULL ;
             if ( rc )
             {
@@ -1160,11 +1163,7 @@ namespace engine
       }
 
    done:
-      if ( pReply )
-      {
-         cb->releaseBuff( ( CHAR* )pReply ) ;
-         pReply = NULL ;
-      }
+      pmdEduEventRelease( recvEvent, cb ) ;
       return rc ;
    error:
       goto done ;

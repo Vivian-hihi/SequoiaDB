@@ -274,7 +274,8 @@ namespace engine
                           _pmdEDUCB *cb, BOOLEAN orUpdate = FALSE ) ;
 
          INT32 _read( const _rtnLobTuple& tuple,
-                      _pmdEDUCB *cb, MsgOpReply** reply ) ;
+                      _pmdEDUCB *cb,
+                      pmdEDUEvent &event ) ;
 
          INT32 _ensureEmptyPageBuf( INT32 pageSize ) ;
 
@@ -285,7 +286,7 @@ namespace engine
          CoordGroupMap    _mapGroupInfo ;
          UINT32           _pageSize ;
 
-         std::vector<MsgOpReply *> _results ;
+         std::vector<pmdEDUEvent> _results ;
          DATA_GROUPS       _dataGroups ;
 
          SUB_STREAMS       _subs;

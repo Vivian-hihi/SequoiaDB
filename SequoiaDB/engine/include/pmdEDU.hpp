@@ -107,12 +107,6 @@ namespace engine
       friend class _pmdEDUMgr ;
 
    public:
-      typedef std::multimap<UINT32,CHAR*>    CATCH_MAP ;
-      typedef CATCH_MAP::iterator            CATCH_MAP_IT ;
-
-      typedef ossPoolMap<CHAR*,UINT32>       ALLOC_MAP ;
-      typedef ALLOC_MAP::iterator            ALLOC_MAP_IT ;
-
       typedef ossPoolSet<INT64>              SET_CONTEXT ;
 
    public:
@@ -226,9 +220,6 @@ namespace engine
 
       void        attachRemoteSite( IRemoteSite *pSite ) ;
       void        detachRemoteSite() ;
-
-      void        restoreBuffs( CATCH_MAP &catchMap ) ;
-      void        saveBuffs( CATCH_MAP &catchMap ) ;
 
       CHAR*       getCompressBuff( UINT32 len ) ;
       INT32       getCompressBuffLen() const { return _compressBuffLen ; }
@@ -420,7 +411,6 @@ namespace engine
       void     setLock( BOOLEAN lock ) { _isLocked = lock ; }
 
       CHAR*    _getBuffInfo ( EDU_INFO_TYPE type, UINT32 &size ) ;
-      BOOLEAN  _allocFromCatch( UINT32 len, CHAR **ppBuff, UINT32 *buffLen ) ;
 
       void     disconnect () ;
       void     force () ;
@@ -457,11 +447,6 @@ namespace engine
       UINT32         _compressBuffLen ;
       CHAR           *_pUncompressBuff ;
       UINT32         _uncompressBuffLen ;
-
-      CATCH_MAP      _catchMap ;
-      ALLOC_MAP      _allocMap ;
-      INT64          _totalCatchSize ;
-      INT64          _totalMemSize ;
 
       // thread specific error message buffer, aka SQLCA
       CHAR              *_pErrorBuff ;
@@ -552,9 +537,8 @@ namespace engine
                 FALSE: the memory is allocated by SDB_OSS_MALLOC, so must
                 free by SDB_OSS_FREE
    */
-   INT32 pmdSyncSendMsg( const MsgHeader *pMsg, MsgHeader **ppRecvMsg,
+   INT32 pmdSyncSendMsg( const MsgHeader *pMsg, pmdEDUEvent &recvEvent,
                          ossSocket *sock, pmdEDUCB *cb,
-                         BOOLEAN useCBMem = TRUE,
                          INT32 timeout = OSS_SOCKET_DFT_TIMEOUT,
                          INT32 forceTimeout = -1 ) ;
 
@@ -566,7 +550,7 @@ namespace engine
                              INT32 timeout = OSS_SOCKET_DFT_TIMEOUT,
                              INT32 forceTimeout = -1 ) ;
 
-   void  pmdEduEventRelase( pmdEDUEvent &event, pmdEDUCB *cb ) ;
+   void  pmdEduEventRelease( pmdEDUEvent &event, pmdEDUCB *cb ) ;
 
 }
 

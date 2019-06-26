@@ -2181,7 +2181,7 @@ namespace engine
          }
 
          // release the event data
-         pmdEduEventRelase( event, cb ) ;
+         pmdEduEventRelease( event, cb ) ;
          event.reset() ;
 
          eduMgr->returnEDU( cb, eduDestroyed ) ;

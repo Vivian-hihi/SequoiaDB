@@ -120,6 +120,7 @@ namespace engine
             timeout = 0 ;
             eduMgr->activateEDU( eduCB() ) ;
             _msgHandler->processMsg( gtsMsg ) ;
+            utilThreadRelease( (void *&)gtsMsg ) ;
             eduCB()->incEventCount( 1 ) ;
          }
          else if ( !isController() )

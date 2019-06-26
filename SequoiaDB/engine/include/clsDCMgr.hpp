@@ -246,24 +246,22 @@ namespace engine
          INT32  syncSend2ImageNode( MsgHeader *msg,
                                     pmdEDUCB *cb,
                                     UINT32 groupID,
-                                    vector< MsgHeader* > &vecRecv,
+                                    vector< pmdEDUEvent > &vecRecv,
                                     vector< pmdAddrPair > &vecSendNode,
                                     INT32 selType = SEL_NODE_PRIMARY,
                                     SEND_STRATEGY sendSty = SEND_NODE_ONE,
                                     MSG_ROUTE_SERVICE_TYPE type =
                                     MSG_ROUTE_CAT_SERVICE,
                                     INT64 millisecond = DC_UPDATE_TIMEOUT,
-                                    BOOLEAN useCBMem = FALSE,
                                     vector< pmdAddrPair > *pVecFailedNode = NULL ) ;
 
          INT32  syncSend2ImageNodes( MsgHeader *msg,
                                      pmdEDUCB *cb,
-                                     vector< MsgHeader* > &vecRecv,
+                                     vector< pmdEDUEvent > &vecRecv,
                                      vector< pmdAddrPair > &vecSendNode,
                                      INT32 selType = SEL_NODE_PRIMARY,
                                      SEND_STRATEGY sendSty = SEND_NODE_ONE,
                                      INT64 millisecond = DC_UPDATE_TIMEOUT,
-                                     BOOLEAN useCBMem = FALSE,
                                      vector< pmdAddrPair > *pVecFailedNode = NULL ) ;
 
       protected:
@@ -272,19 +270,17 @@ namespace engine
             if ppRecvMsg is NULL, don't recv reply
          */
          INT32 _syncSend2PeerNode( pmdEDUCB *cb, MsgHeader *msg,
-                                   MsgHeader **ppRecvMsg,
+                                   pmdEDUEvent *pRecvEvent,
                                    const pmdAddrPair &node,
-                                   INT64 millsec = DC_UPDATE_TIMEOUT,
-                                   BOOLEAN useCBMem = FALSE ) ;
+                                   INT64 millsec = DC_UPDATE_TIMEOUT ) ;
 
          /*
             Only for catalog group info is empty, and the msg is end to
             catalog service, not shard service
          */
          INT32 _syncSend2PeerCatGroup( pmdEDUCB *cb, MsgHeader *msg,
-                                       MsgHeader **ppRecvMsg,
-                                       INT64 millsec = DC_UPDATE_TIMEOUT,
-                                       BOOLEAN useCBMem = FALSE ) ;
+                                       pmdEDUEvent &recvEvent,
+                                       INT64 millsec = DC_UPDATE_TIMEOUT ) ;
 
          /*
             Process cat group response, this result will update to
@@ -320,7 +316,7 @@ namespace engine
             Send Group Query to image catalog, and recv reply
          */
          INT32 _queryOnImageCatalog( pmdEDUCB *cb,
-                                     MsgHeader **ppRecvMsg,
+                                     pmdEDUEvent &recvEvent,
                                      UINT32 opCode,
                                      const CHAR *pCollectionName = NULL,
                                      const BSONObj &cond = BSONObj(),
@@ -329,8 +325,7 @@ namespace engine
                                      const BSONObj &hint = BSONObj(),
                                      INT64 returnNum = -1,
                                      INT64 skipNum = 0,
-                                     INT64 millsec = DC_UPDATE_TIMEOUT,
-                                     BOOLEAN useCBMem = FALSE ) ;
+                                     INT64 millsec = DC_UPDATE_TIMEOUT ) ;
 
       private:
          _clsCatalogAgent              *_pCatAgent ;

@@ -424,6 +424,7 @@ namespace engine
                                                  BOOLEAN waitAll )
    {
       INT32 rc = SDB_OK ;
+      pmdEDUEvent event ;
       MsgOpReply *pReply = NULL ;
 
       pmdSubSession *pSub = NULL ;
@@ -440,7 +441,8 @@ namespace engine
       while ( itr.more() )
       {
          pSub = itr.next() ;
-         pReply = ( MsgOpReply* )pSub->getRspMsg( TRUE ) ;
+         event = pSub->getOwnedRspMsg() ;
+         pReply = ( MsgOpReply* )event._Data ;
          pSub->resetForResend() ;
 
          if ( pReply->header.messageLength < (INT32)sizeof( MsgOpReply ) )
@@ -476,18 +478,19 @@ namespace engine
             else
             {
                // release data
-               SDB_OSS_FREE( (CHAR*)pReply ) ;
+               pmdEduEventRelease( event, NULL ) ;
                pReply = NULL ;
             }
          }
          else
          {
-            rc = _appendSubData( (CHAR*)pReply ) ;
+            rc = _appendSubData( event ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to append the data, rc: %d", rc ) ;
                break ;
             }
+            event.reset() ;
             pReply = NULL ;
          }
       } // end while
@@ -498,10 +501,8 @@ namespace engine
       }
 
    done:
-      if ( pReply )
-      {
-         SDB_OSS_FREE( (CHAR*)pReply ) ;
-      }
+      pmdEduEventRelease( event, NULL ) ;
+      pReply = NULL ;
       return rc ;
    error:
       goto done ;
@@ -550,10 +551,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextCoord::_appendSubData( CHAR * pData )
+   INT32 _rtnContextCoord::_appendSubData( const pmdEDUEvent &event )
    {
       INT32 rc = SDB_OK ;
-      MsgOpReply *pReply = (MsgOpReply *)pData ;
+      MsgOpReply *pReply = (MsgOpReply *)event._Data ;
       EMPTY_CONTEXT_MAP::iterator iter ;
       coordSubContext *pSubContext = NULL ;
       BOOLEAN skipData = FALSE ;
@@ -595,7 +596,7 @@ namespace engine
       // after appendData success, the data-pointer is manage by subContext.
       // if the data-pointer will be delete by others, the clearData should be
       // called first.
-      pSubContext->appendData( pReply ) ;
+      pSubContext->appendData( event ) ;
 
       rc = _processSubContext( pSubContext, skipData ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to process sub-context"
@@ -719,14 +720,15 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextCoord::addSubContext( MsgOpReply * pReply,
+   INT32 _rtnContextCoord::addSubContext( const pmdEDUEvent &event,
                                           BOOLEAN & takeOver )
    {
       INT32 rc = SDB_OK ;
       takeOver = FALSE ;
       BOOLEAN isEmpty = FALSE ;
+      MsgOpReply *pReply = ( MsgOpReply* )event._Data ;
 
-      SDB_ASSERT ( NULL != pReply, "reply can't be NULL" ) ;
+      SDB_ASSERT ( NULL != pReply, "pReply can't be NULL" ) ;
 
       if ( _orderedContextMap.empty() && _emptyContextMap.empty() &&
            _prepareContextMap.empty() )
@@ -757,7 +759,7 @@ namespace engine
          _emptyContextMap.erase( it ) ;
 
          pReply->header.opCode = MSG_BS_GETMORE_RES ;
-         rc = _appendSubData( (CHAR*)pReply ) ;
+         rc = _appendSubData( event ) ;
          if ( SDB_OK == rc )
          {
             takeOver = TRUE ;
@@ -967,11 +969,8 @@ namespace engine
 
    _coordSubContext::~_coordSubContext ()
    {
-      if ( NULL != _pData )
-      {
-         SDB_OSS_FREE ( _pData ) ;
-         _pData = NULL;
-      }
+      pmdEduEventRelease( _event, NULL ) ;
+      _pData = NULL ;
    }
 
    INT32 _coordSubContext::remainLength()
@@ -1029,28 +1028,29 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COSUBCON_APPENDDATA, "coordSubContext::appendData" )
-   void _coordSubContext::appendData( MsgOpReply * pReply )
+   void _coordSubContext::appendData( const pmdEDUEvent &event )
    {
       PD_TRACE_ENTRY ( SDB_COSUBCON_APPENDDATA ) ;
-      SDB_ASSERT( pReply != NULL, "pReply can't be NULL" ) ;
+      SDB_ASSERT( event._Data != NULL, "Event's data can't be NULL" ) ;
 
-      if ( _pData != NULL )
-      {
-         SDB_ASSERT ( _recordNum <= 0, "the buffer must be empty" ) ;
-         SDB_OSS_FREE( _pData ) ;
-      }
-      _routeID = pReply->header.routeID ;
-      _pData = pReply ;
-      _recordNum = pReply->numReturned ;
+      pmdEduEventRelease( _event, NULL ) ;
+
+      _event = event ;
+      _pData = ( MsgOpReply* )_event._Data ;
+
+      _routeID = _pData->header.routeID ;
+      _recordNum = _pData->numReturned ;
       _curOffset = ossAlign4( (UINT32)sizeof( MsgOpReply ) ) ;
       _isOrderKeyChange = TRUE ;
-      _startFrom = pReply->startFrom ;
+      _startFrom = _pData->startFrom ;
       PD_TRACE_EXIT ( SDB_COSUBCON_APPENDDATA ) ;
    }
 
    void _coordSubContext::clearData()
    {
-      _pData = NULL; //don't delete it, the fun-caller will delete it
+      //don't delete it, the fun-caller will delete it
+      _event.reset() ;
+      _pData = NULL;
       _curOffset = 0;
       _recordNum = 0;
       _isOrderKeyChange = TRUE;
@@ -1275,7 +1275,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CTXCOORDEXP_ADDSUBCTX, "_rtnContextCoordExplain::addSubContext" )
-   INT32 _rtnContextCoordExplain::addSubContext ( MsgOpReply *pReply,
+   INT32 _rtnContextCoordExplain::addSubContext ( const pmdEDUEvent &event,
                                                   BOOLEAN &takeOver )
    {
       INT32 rc = SDB_OK ;
@@ -1288,7 +1288,7 @@ namespace engine
       PD_CHECK( NULL != coordContext, SDB_RTN_CONTEXT_NOTEXIST, error,
                 PDERROR, "Failed to get COORD context" ) ;
 
-      rc = coordContext->addSubContext( pReply, takeOver ) ;
+      rc = coordContext->addSubContext( event, takeOver ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add sub context, rc: %d", rc ) ;
 
    done :

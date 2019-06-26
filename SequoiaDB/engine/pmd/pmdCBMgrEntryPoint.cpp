@@ -115,7 +115,7 @@ namespace engine
             }
 
             //Relase memory
-            pmdEduEventRelase( eventData, cb ) ;
+            pmdEduEventRelease( eventData, cb ) ;
             eventData.reset () ;
          }
       }

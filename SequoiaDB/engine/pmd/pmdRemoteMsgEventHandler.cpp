@@ -169,7 +169,7 @@ namespace engine
          goto error ;
       }
 
-      pNewMsg = (CHAR*)SDB_OSS_MALLOC( header->messageLength + 1 ) ;
+      pNewMsg = (CHAR*)utilThreadAlloc( header->messageLength + 1 ) ;
       if ( !pNewMsg )
       {
          rc = SDB_OOM ;
@@ -192,7 +192,7 @@ namespace engine
 
       // push event
       _pMainCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                        PMD_EDU_MEM_ALLOC,
+                                        PMD_EDU_MEM_THREAD,
                                         pNewMsg,
                                         (UINT64)handle ) ) ;
    done:
@@ -232,7 +232,7 @@ namespace engine
          return ;
       }
       PMD_EVENT_MESSAGES *eventMsg = (PMD_EVENT_MESSAGES *)
-      SDB_OSS_MALLOC( sizeof (PMD_EVENT_MESSAGES ) ) ;
+         utilThreadAlloc( sizeof (PMD_EVENT_MESSAGES ) ) ;
 
       if ( NULL == eventMsg )
       {
@@ -248,7 +248,7 @@ namespace engine
          eventMsg->timeoutMsg.timerID = id ;
 
          _pMainCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT,
-                                            PMD_EDU_MEM_ALLOC,
+                                            PMD_EDU_MEM_THREAD,
                                             (void*)eventMsg) ) ;
       }
    }

@@ -68,7 +68,7 @@ namespace engine
 
       BOOLEAN popMsg( INT64 timeout, _catGTSMsg*& gtsMsg ) ;
 
-      INT32 processMsg( _catGTSMsg* gtsMsg ) ;
+      INT32 processMsg( const _catGTSMsg* gtsMsg ) ;
 
       INT32 primaryCheck() ;
 

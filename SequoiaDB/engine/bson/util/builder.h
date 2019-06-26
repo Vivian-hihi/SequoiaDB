@@ -25,9 +25,9 @@
 #include "../stringdata.h"
 #include "../bsonassert.h"
 
-#ifdef SDB_ENGINE
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
    #include "utilMemListPool.hpp"
-#endif //SDB_ENGINE
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
 namespace bson {
     /* Accessing unaligned doubles on ARM generates an alignment trap and aborts
@@ -72,16 +72,16 @@ accesses) is the same as if
        void Free(void *p) { free(p); }
    } ;
 
-#ifdef SDB_ENGINE
+#if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
    class TrivialAllocator {
    public:
        void* Malloc(size_t sz) { return engine::utilThreadAlloc( sz ) ; }
        void* Realloc(void *p, size_t sz) { return engine::utilThreadRealloc( p, sz ) ; }
        void Free(void *p) { engine::utilThreadRelease( p ) ; }
-   };
+   } ;
 #else
    typedef HeapAllocator TrivialAllocator ;
-#endif //SDB_ENGINE
+#endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 
     class StackAllocator {
     public:

@@ -145,42 +145,6 @@ namespace engine
    }
 
    /*
-      _restSessionInfo implement
-   */
-   void _restSessionInfo::releaseMem()
-   {
-      pmdEDUCB::CATCH_MAP_IT it = _catchMap.begin() ;
-      while ( it != _catchMap.end() )
-      {
-         SDB_OSS_FREE( it->second ) ;
-         ++it ;
-      }
-      _catchMap.clear() ;
-   }
-
-   void _restSessionInfo::pushMemToMap( _pmdEDUCB::CATCH_MAP &catchMap )
-   {
-      _pmdEDUCB::CATCH_MAP_IT it = _catchMap.begin() ;
-      while ( it != _catchMap.end() )
-      {
-         catchMap.insert( std::make_pair( it->first, it->second ) ) ;
-         ++it ;
-      }
-      _catchMap.clear() ;
-   }
-
-   void _restSessionInfo::makeMemFromMap( _pmdEDUCB::CATCH_MAP &catchMap )
-   {
-      _pmdEDUCB::CATCH_MAP_IT it = catchMap.begin() ;
-      while ( it != catchMap.end() )
-      {
-         _catchMap.insert( std::make_pair( it->first, it->second ) ) ;
-         ++it ;
-      }
-      catchMap.clear() ;
-   }
-
-   /*
       _pmdRestSession implement
    */
    _pmdRestSession::_pmdRestSession( SOCKET fd )
@@ -266,7 +230,6 @@ namespace engine
          {
             if ( _pSessionInfo )
             {
-               saveSession() ;
                sdbGetPMDController()->detachSessionInfo( _pSessionInfo ) ;
                _pSessionInfo = NULL ;
                continue ;
@@ -361,7 +324,6 @@ namespace engine
             if ( _pSessionInfo )
             {
                _client.setAuthed( TRUE ) ;
-               restoreSession() ;
             }
          }
          // recv body
@@ -755,7 +717,6 @@ namespace engine
       // save session info
       if ( _pSessionInfo )
       {
-         saveSession() ;
          sdbGetPMDController()->detachSessionInfo( _pSessionInfo ) ;
          _pSessionInfo = NULL ;
       }
@@ -778,20 +739,6 @@ namespace engine
          _pFixBuff = sdbGetPMDController()->allocFixBuf() ;
       }
       return _pFixBuff ;
-   }
-
-   void _pmdRestSession::restoreSession()
-   {
-      pmdEDUCB::CATCH_MAP catchMap ;
-      _pSessionInfo->pushMemToMap( catchMap ) ;
-      eduCB()->restoreBuffs( catchMap ) ;
-   }
-
-   void _pmdRestSession::saveSession()
-   {
-      pmdEDUCB::CATCH_MAP catchMap ;
-      eduCB()->saveBuffs( catchMap ) ;
-      _pSessionInfo->makeMemFromMap( catchMap ) ;
    }
 
    BOOLEAN _pmdRestSession::isAuthOK()

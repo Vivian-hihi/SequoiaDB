@@ -86,7 +86,7 @@ namespace engine
          // PMD_EDU_MEM_ALLOC will be passed into pmdEDUEvent, so that the
          // consumer knows whether to free the memory
          PMD_EVENT_MESSAGES *eventMsg = (PMD_EVENT_MESSAGES *)
-               SDB_OSS_MALLOC( sizeof (PMD_EVENT_MESSAGES ) ) ;
+               utilThreadAlloc( sizeof (PMD_EVENT_MESSAGES ) ) ;
 
          if ( NULL == eventMsg )
          {
@@ -106,7 +106,7 @@ namespace engine
 
             // post the timeout event of current timestamp
             _pMgrCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT,
-                                              PMD_EDU_MEM_ALLOC,
+                                              PMD_EDU_MEM_THREAD,
                                               (void*)eventMsg ) ) ;
          }
       }
@@ -139,14 +139,15 @@ namespace engine
    // copy content from msg and return the buffer
    // It's caller's responsibility to free the memory
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_CPMSG, "_pmdAsyncMsgHandler::_copyMsg" )
-   void * _pmdAsyncMsgHandler::_copyMsg ( const CHAR* msg, UINT32 length )
+   void * _pmdAsyncMsgHandler::_copyMsg ( const CHAR* msg, UINT32 length,
+                                          pmdEDUMemTypes &memType )
    {
       PD_TRACE_ENTRY ( SDB__PMDMSGHND_CPMSG );
       // memory will be freed by the caller
-      // TODO: OSS malloc will be replaced by session based malloc in the future
-      CHAR *pBuffer = (CHAR * )SDB_OSS_MALLOC ( length ) ;
+      CHAR *pBuffer = (CHAR * )utilThreadAlloc ( length ) ;
       if ( pBuffer )
       {
+         memType = PMD_EDU_MEM_THREAD ;
          ossMemcpy( pBuffer, msg, length ) ;
       }
 
@@ -312,13 +313,14 @@ namespace engine
       INT32 rc              = SDB_OK ;
       _MsgHeader *newHeader = NULL ;
       void *newMsg          = NULL ;
+      pmdEDUMemTypes memType = PMD_EDU_MEM_NONE ;
       PD_TRACE_ENTRY ( SDB__PMDMSGHND_HNDMAINMSG );
 
       SDB_ASSERT( _pMgrEDUCB, "Main edu can't be NULL" ) ;
 
       // copy msg to a buffer and post the queue
       // the memory is allocated in _copyMsg and will be released by consumer
-      newMsg = _copyMsg ( msg, header->messageLength ) ;
+      newMsg = _copyMsg ( msg, header->messageLength, memType ) ;
       if ( NULL == newMsg )
       {
          PD_LOG ( PDERROR, "Failed to allocate memory for new msg for %d bytes",
@@ -337,7 +339,7 @@ namespace engine
       }
 
       newHeader = ( MsgHeader * )newMsg ;
-      _postMainMsg( handle, newHeader ) ;
+      _postMainMsg( handle, newHeader, memType ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB__PMDMSGHND_HNDMAINMSG, rc );
@@ -348,11 +350,12 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_POSTMAINMSG, "_pmdAsyncMsgHandler::_postMainMsg" )
    void _pmdAsyncMsgHandler::_postMainMsg( const NET_HANDLE &handle,
-                                           MsgHeader *pNewMsg )
+                                           MsgHeader *pNewMsg,
+                                           pmdEDUMemTypes memType )
    {
       PD_TRACE_ENTRY ( SDB__PMDMSGHND_POSTMAINMSG ) ;
       _pMgrEDUCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_MSG,
-                                           PMD_EDU_MEM_ALLOC,
+                                           memType,
                                            pNewMsg, (UINT64)handle ) ) ;
       PD_TRACE_EXIT ( SDB__PMDMSGHND_POSTMAINMSG ) ;
    }

@@ -1222,16 +1222,14 @@ namespace engine
    INT32 restBase::_malloc( INT32 size, CHAR **buffer )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( _cb, "EDUCB can't be NULL" ) ;
       SDB_ASSERT( buffer, "buffer can't be NULL" ) ;
 
-      if ( !_cb )
+      *buffer = ( CHAR* )utilThreadAlloc( size ) ;
+      if ( !(*buffer) )
       {
-         rc = SDB_SYS ;
+         rc = SDB_OOM ;
          goto error ;
       }
-
-      rc = _cb->allocBuff( (UINT32)size, buffer, NULL ) ;
 
    done:
       return rc ;
@@ -1241,13 +1239,9 @@ namespace engine
 
    void restBase::_releaseBuff( CHAR *buffer )
    {
-      SDB_ASSERT( _cb, "EDUCB can't be NULL" ) ;
       SDB_ASSERT( buffer, "buffer can't be NULL" ) ;
 
-      if ( _cb )
-      {
-         _cb->releaseBuff( buffer ) ;
-      }
+      utilThreadRelease( (void *&)buffer ) ;
    }
 
    INT32 restBase::on_message_begin( void *pData )

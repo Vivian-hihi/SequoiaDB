@@ -68,20 +68,22 @@ namespace engine
       INT32 rcTmp = SDB_OK ;
 
       BOOLEAN takeOver = FALSE ;
+      pmdEDUEvent event ;
       MsgOpReply *pReply = NULL ;
       MsgRouteID nodeID ;
       ROUTE_REPLY_MAP::iterator it = okReply.begin() ;
       while( it != okReply.end() )
       {
          takeOver = FALSE ;
-         pReply = (MsgOpReply*)(it->second) ;
+         event = it->second ;
+         pReply = (MsgOpReply*)event._Data ;
          nodeID.value = pReply->header.routeID.value ;
 
          if ( SDB_OK == pReply->flags )
          {
             if ( pContext )
             {
-               rcTmp = pContext->addSubContext( pReply, takeOver ) ;
+               rcTmp = pContext->addSubContext( event, takeOver ) ;
                if ( rcTmp )
                {
                   PD_LOG( PDERROR, "Add sub data[node: %s, context: %lld] to "
@@ -106,7 +108,8 @@ namespace engine
 
          if ( !takeOver )
          {
-            SDB_OSS_FREE( pReply ) ;
+            pmdEduEventRelease( event, NULL ) ;
+            pReply = NULL ;
          }
          ++it ;
       }
@@ -124,6 +127,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       MsgRouteID nodeID ;
+      pmdEDUEvent event ;
       MsgOpReply *pReply = NULL ;
       BOOLEAN takeOver = FALSE ;
       pmdSubSession *pSub = NULL ;
@@ -132,7 +136,8 @@ namespace engine
       while( itr.more() )
       {
          pSub = itr.next() ;
-         pReply = ( MsgOpReply *)pSub->getRspMsg( TRUE ) ;
+         event = pSub->getOwnedRspMsg() ;
+         pReply = ( MsgOpReply *)event._Data ;
 
          takeOver = FALSE ;
          nodeID.value = pReply->header.routeID.value ;
@@ -146,7 +151,7 @@ namespace engine
 
             if ( pContext )
             {
-               rc = pContext->addSubContext( pReply, takeOver ) ;
+               rc = pContext->addSubContext( event, takeOver ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Add sub data[node: %s, context: %lld] to "
@@ -177,7 +182,7 @@ namespace engine
 
          if ( !takeOver )
          {
-            SDB_OSS_FREE( pReply ) ;
+            pmdEduEventRelease( event, NULL ) ;
             pReply = NULL ;
          }
       }
@@ -281,9 +286,10 @@ namespace engine
          ROUTE_REPLY_MAP::iterator itNok = nokReply.begin() ;
          while( itNok != nokReply.end() )
          {
-            MsgOpReply *pReply = (MsgOpReply*)itNok->second ;
+            MsgOpReply *pReply = (MsgOpReply*)(itNok->second._Data) ;
             nokRC[ itNok->first ] = coordErrorInfo( pReply ) ;
-            SDB_OSS_FREE( pReply ) ;
+            pmdEduEventRelease( itNok->second, cb ) ;
+            pReply = NULL ;
             ++itNok ;
          }
       }

@@ -184,43 +184,44 @@ namespace engine
          }
          return FALSE ;
       }
-      BOOLEAN pushNokReply( UINT64 id, MsgHeader *pMsg )
+      BOOLEAN pushNokReply( UINT64 id, const pmdEDUEvent &event )
       {
          if ( _pNokReply )
          {
-            return _pNokReply->insert( std::make_pair( id, pMsg ) ).second ;
+            return _pNokReply->insert( std::make_pair( id, event ) ).second ;
          }
          return FALSE ;
       }
-      BOOLEAN pushIgnoreReply( UINT64 id, MsgHeader *pMsg )
+      BOOLEAN pushIgnoreReply( UINT64 id, const pmdEDUEvent &event )
       {
          if ( _pIgnoreReply )
          {
-            return _pIgnoreReply->insert( std::make_pair( id, pMsg ) ).second ;
+            return _pIgnoreReply->insert( std::make_pair( id, event ) ).second ;
          }
          return FALSE ;
       }
-      BOOLEAN pushOkReply( UINT64 id, MsgHeader *pMsg )
+      BOOLEAN pushOkReply( UINT64 id, const pmdEDUEvent &event )
       {
          if ( _pOkReply )
          {
-            return _pOkReply->insert( std::make_pair( id, pMsg ) ).second ;
+            return _pOkReply->insert( std::make_pair( id, event ) ).second ;
          }
          return FALSE ;
       }
-      BOOLEAN pushReply( MsgHeader *pMsg, INT32 processType )
+      BOOLEAN pushReply( const pmdEDUEvent &event, INT32 processType )
       {
+         MsgHeader *pMsg = ( MsgHeader* )event._Data ;
          if ( COORD_PROCESS_OK == processType )
          {
-            return pushOkReply( pMsg->routeID.value, pMsg ) ;
+            return pushOkReply( pMsg->routeID.value, event ) ;
          }
          else if ( COORD_PROCESS_IGNORE == processType )
          {
-            return pushIgnoreReply( pMsg->routeID.value, pMsg ) ;
+            return pushIgnoreReply( pMsg->routeID.value, event ) ;
          }
          else if ( COORD_PROCESS_NOK == processType )
          {
-            return pushNokReply( pMsg->routeID.value, pMsg ) ;
+            return pushNokReply( pMsg->routeID.value, event ) ;
          }
          return FALSE ;
       }

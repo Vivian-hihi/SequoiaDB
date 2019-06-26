@@ -259,7 +259,7 @@ namespace engine
             _defaultMsgFunc( ( NET_HANDLE )handle, msg ) ;
          }
 
-         pmdEduEventRelase( _lastDelayEvent, _pEDUCB ) ;
+         pmdEduEventRelease( _lastDelayEvent, _pEDUCB ) ;
       }
       tmpVecEvent.clear() ;
 
@@ -282,7 +282,7 @@ namespace engine
          if ( savedHandle == handle )
          {
             PD_LOG ( PDDEBUG, "Removed event %u %d", savedHandle, event._eventType ) ;
-            pmdEduEventRelase( event, _pEDUCB ) ;
+            pmdEduEventRelease( event, _pEDUCB ) ;
             itEvent = _vecEvent.erase( itEvent ) ;
          }
          else
@@ -386,7 +386,7 @@ namespace engine
       // memory will be freed in the event consumer thread
       // PMD_EDU_MEM_ALLOC will be passed into pmdEDUEvent, so that the
       // consumer knows whether to free the memory
-      eventMsg = ( PMD_EVENT_MESSAGES * )SDB_OSS_MALLOC(
+      eventMsg = ( PMD_EVENT_MESSAGES * )utilThreadAlloc(
                  sizeof (PMD_EVENT_MESSAGES ) ) ;
 
       if ( NULL == eventMsg )
@@ -407,7 +407,7 @@ namespace engine
 
          // post the timeout event of current timestamp
          _pEDUCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT,
-                                           PMD_EDU_MEM_ALLOC,
+                                           PMD_EDU_MEM_THREAD,
                                            (void*)eventMsg ) ) ;
       }
 
@@ -794,7 +794,7 @@ namespace engine
       CHAR *pEventData = NULL ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_BUILDMSGEVENT ) ;
 
-      pEventData = (CHAR *)SDB_OSS_MALLOC( pMsg->messageLength ) ;
+      pEventData = (CHAR *)utilThreadAlloc( pMsg->messageLength ) ;
       if ( NULL == pEventData )
       {
          rc = SDB_OOM ;
@@ -804,7 +804,7 @@ namespace engine
       ossMemcpy( (void *)pEventData, pMsg, pMsg->messageLength ) ;
 
       event._Data = pEventData ;
-      event._dataMemType = PMD_EDU_MEM_ALLOC ;
+      event._dataMemType = PMD_EDU_MEM_THREAD ;
       event._eventType = PMD_EDU_EVENT_MSG ;
       event._userData = (UINT64)handle ;
 
@@ -836,7 +836,7 @@ namespace engine
       }
       msgLen =  sizeof(MsgOpReply) + buffObj.size() ;
       // free by end of function
-      pReply = (MsgOpReply *)SDB_OSS_MALLOC( msgLen );
+      pReply = (MsgOpReply *)utilThreadAlloc( msgLen );
       if ( NULL == pReply )
       {
          PD_LOG ( PDERROR, "Malloc error ( size = %d )", msgLen ) ;
@@ -869,7 +869,7 @@ namespace engine
    done :
       if ( pReply )
       {
-         SDB_OSS_FREE( pReply ) ;
+         utilThreadRelease( (void *&)pReply ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_GETMOREMSG, rc ) ;
       return rc ;

@@ -300,7 +300,7 @@ namespace engine
             success += workerRe->success ;
             failure += workerRe->failure ;
             ++i ;
-            pmdEduEventRelase( event, eduCB ) ;
+            pmdEduEventRelease( event, eduCB ) ;
          }
       }
       PD_TRACE_EXITRC ( SDB__MIGLOADJSONPS__STOPWAIT, rc );

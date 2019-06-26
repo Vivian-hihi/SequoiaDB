@@ -176,7 +176,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_MSG_HANDLER_HANDLE_MSG, "_catGTSMsgHandler::postMsg" )
-   INT32 _catGTSMsgHandler::postMsg( const NET_HANDLE& handle, const MsgHeader* msg )
+   INT32 _catGTSMsgHandler::postMsg( const NET_HANDLE& handle,
+                                     const MsgHeader* msg )
    {
       INT32 rc = SDB_OK ;
       _catGTSMsg* gtsMsg = NULL ;
@@ -189,7 +190,8 @@ namespace engine
          goto error ;
       }
 
-      gtsMsg = (_catGTSMsg*)SDB_OSS_MALLOC( sizeof( NET_HANDLE ) + msg->messageLength ) ;
+      gtsMsg = (_catGTSMsg*)utilThreadAlloc( sizeof( NET_HANDLE ) +
+                                             msg->messageLength ) ;
       if ( NULL == gtsMsg )
       {
          rc = SDB_OOM ;
@@ -216,7 +218,7 @@ namespace engine
       PD_TRACE_EXITRC( SDB_GTS_MSG_HANDLER_HANDLE_MSG, rc ) ;
       return rc ;
    error :
-      SAFE_OSS_FREE( gtsMsg ) ;
+      utilThreadRelease( (void *&)gtsMsg ) ;
       goto done ;
    }
 
@@ -231,14 +233,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_GTS_MSG_HANDLER_PROCESS_MSG, "_catGTSMsgHandler::processMsg" )
-   INT32 _catGTSMsgHandler::processMsg( _catGTSMsg* gtsMsg )
+   INT32 _catGTSMsgHandler::processMsg( const _catGTSMsg* gtsMsg )
    {
       INT32 rc = SDB_OK ;
       rtnContextBuf buf ;
       MsgOpReply reply ;
       PD_TRACE_ENTRY( SDB_GTS_MSG_HANDLER_PROCESS_MSG ) ;
       pmdEDUCB* eduCB = pmdGetThreadEDUCB() ;
-      MsgHeader* msg = &( gtsMsg->msg ) ;
+      MsgHeader* msg = (MsgHeader*)&( gtsMsg->msg ) ;
 
       PD_LOG( PDINFO, "Receive GTS msg: %d, length:%d",
               msg->opCode, msg->messageLength ) ;
@@ -246,7 +248,8 @@ namespace engine
       rc = primaryCheck() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "service deactive but received GTS request, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "service deactive but received GTS request, rc: %d",
+                 rc ) ;
          goto error ;
       }
 
@@ -298,7 +301,8 @@ namespace engine
 
       if ( buf.size() > 0 )
       {
-         rc = sendReply( gtsMsg->netHandle, &reply, (void*) buf.data(), buf.size() ) ;
+         rc = sendReply( gtsMsg->netHandle, &reply,
+                         (void*) buf.data(), buf.size() ) ;
       }
       else
       {
@@ -314,7 +318,6 @@ namespace engine
       }
 
    done:
-      SAFE_OSS_FREE( gtsMsg ) ;
       PD_TRACE_EXITRC( SDB_GTS_MSG_HANDLER_PROCESS_MSG, rc ) ;
       return rc ;
    error:

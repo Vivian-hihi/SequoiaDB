@@ -157,7 +157,8 @@ namespace engine
          UINT32      getIODataLen() ;
 
          // Reply
-         MsgHeader*  getRspMsg( BOOLEAN owned = FALSE ) ;
+         MsgHeader*  getRspMsg() ;
+         pmdEDUEvent getOwnedRspMsg() ;
          void        clearReplyInfo() ;
 
          // Other

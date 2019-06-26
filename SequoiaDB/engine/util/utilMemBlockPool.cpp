@@ -509,7 +509,7 @@ namespace engine
       return size ;
    }
 
-   void* _utilMemBlockPool::alloc( UINT32 size )
+   void* _utilMemBlockPool::alloc( UINT32 size, UINT32 *pRealSize )
    {
       MEMBLOCKPOOL_TYPE type  = MEMBLOCKPOOL_TYPE_MAX ;
       UINT32 realSize   = 0 ;
@@ -521,6 +521,10 @@ namespace engine
 
       if ( 0 == size )
       {
+         if ( pRealSize )
+         {
+            *pRealSize = 0 ;
+         }
          goto done ;
       }
 
@@ -658,6 +662,11 @@ namespace engine
       /// set user ptr
       userPtr = (void*)UTIL_MEM_PTR_2_USERPTR( ptr ) ;
 
+      if ( pRealSize )
+      {
+         *pRealSize = realSize - UTIL_MEM_TOTAL_FILL_LEN ;
+      }
+
    done :
       return userPtr ;
    }
@@ -727,7 +736,7 @@ namespace engine
       return valid ;
    }
 
-   void* _utilMemBlockPool::realloc( void *ptr, UINT32 size )
+   void* _utilMemBlockPool::realloc( void *ptr, UINT32 size, UINT32 *pRealSize )
    {
       void  *newUserPtr = NULL ;
       UINT32 oldUserSize = 0 ;
@@ -745,11 +754,19 @@ namespace engine
          if ( !_checkAndExtract( oldRealPtr, &oldUserSize, &oldType ) )
          {
             newUserPtr = SDB_OSS_REALLOC( ptr, size ) ;
+            if ( pRealSize )
+            {
+               *pRealSize = size ;
+            }
             goto done ;
          }
          if ( oldUserSize >= size )
          {
             newUserPtr = ptr ;
+            if ( pRealSize )
+            {
+               *pRealSize = oldUserSize ;
+            }
             goto done ;
          }
          else if ( MEMBLOCKPOOL_TYPE_DYN == oldType )
@@ -761,12 +778,17 @@ namespace engine
             {
                _fillPtr( newPtr, MEMBLOCKPOOL_TYPE_DYN, newRealSize ) ;
                newUserPtr = (void*)UTIL_MEM_PTR_2_USERPTR( newPtr ) ;
+
+               if ( pRealSize )
+               {
+                  *pRealSize = newRealSize - UTIL_MEM_TOTAL_FILL_LEN ;
+               }
             }
             goto done ;
          }
       }
 
-      newUserPtr = alloc( size ) ;
+      newUserPtr = alloc( size, pRealSize ) ;
       if ( !newUserPtr )
       {
          goto done ;
@@ -891,30 +913,11 @@ namespace engine
    /*
       Global var
    */
-   static _utilMemBlockPool  g_dynamicPool ;
-   static _utilMemBlockPool* g_pMemPool = NULL ;
+   static _utilMemBlockPool  g_memPool ;
 
    utilMemBlockPool* utilGetGlobalMemPool()
    {
-      return g_pMemPool ;
-   }
-
-   void utilSetGlobalMemPool( utilMemBlockPool *pPool )
-   {
-      if ( NULL == g_pMemPool )
-      {
-         g_pMemPool = pPool ;
-      }
-      else if ( NULL == pPool )
-      {
-         SDB_ASSERT( g_pMemPool->getTotalSize() == 0,
-                     "Total size must be 0" ) ;
-         g_pMemPool = pPool ;
-      }
-      else
-      {
-         SDB_ASSERT( FALSE, "Mempool is already valid" ) ;
-      }
+      return &g_memPool ;
    }
 
    BOOLEAN utilPoolPtrCheck( void *ptr, UINT32 *pUserSize )
@@ -936,22 +939,19 @@ namespace engine
       return size ;
    }
 
-   void* utilPoolAlloc( UINT32 size )
+   void* utilPoolAlloc( UINT32 size, UINT32 *pRealSize )
    {
-      return g_pMemPool ? g_pMemPool->alloc( size ) :
-                          g_dynamicPool.alloc( size ) ;
+      return g_memPool.alloc( size, pRealSize ) ;
    }
 
-   void* utilPoolRealloc( void* ptr, UINT32 size )
+   void* utilPoolRealloc( void* ptr, UINT32 size, UINT32 *pRealSize )
    {
-      return g_pMemPool ? g_pMemPool->realloc( ptr, size ) :
-                          g_dynamicPool.realloc( ptr, size ) ;
+      return g_memPool.realloc( ptr, size, pRealSize ) ;
    }
 
    void utilPoolRelease( void*& ptr )
    {
-      g_pMemPool ? g_pMemPool->release( ptr ) :
-                   g_dynamicPool.release( ptr ) ;
+      g_memPool.release( ptr ) ;
    }
 
 }

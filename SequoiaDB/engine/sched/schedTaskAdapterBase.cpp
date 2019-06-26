@@ -32,6 +32,7 @@
 *******************************************************************************/
 
 #include "schedTaskAdapterBase.hpp"
+#include "utilMemListPool.hpp"
 #include "pmdEnv.hpp"
 #include "pd.hpp"
 
@@ -108,7 +109,7 @@ namespace engine
       UINT64 lastCacheNum = 0 ;
       UINT64 lastEventNum = 0 ;
 
-      pBuff = (CHAR*)SDB_OSS_MALLOC( header->messageLength ) ;
+      pBuff = ( CHAR* )utilThreadAlloc( header->messageLength ) ;
       if ( !pBuff )
       {
          PD_LOG( PDERROR, "Alloc memory failed, size: %d",
@@ -120,7 +121,7 @@ namespace engine
       ossMemcpy( pBuff, ( const CHAR* )header, header->messageLength ) ;
 
       event._Data = ( void* )pBuff ;
-      event._dataMemType = PMD_EDU_MEM_ALLOC ;
+      event._dataMemType = PMD_EDU_MEM_THREAD ;
       event._eventType = PMD_EDU_EVENT_MSG ;
       event._userData = ( UINT64 )handle ;
 

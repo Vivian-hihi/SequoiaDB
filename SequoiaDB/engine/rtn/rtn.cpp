@@ -383,7 +383,6 @@ namespace engine
       OSSFILE file ;
       CHAR *pBuff = NULL ;
       dmsStorageUnitHeader *pHeader = NULL ;
-      pmdEDUCB* cb = pmdGetThreadEDUCB() ;
       SINT64 readLen = 0 ;
       SINT64 writeLen = 0 ;
       BOOLEAN isOpened = FALSE ;
@@ -410,10 +409,14 @@ namespace engine
       /// 2. correct name field in header
 
       //  allocate buffer
-      rc = cb->allocBuff( sizeof( dmsStorageUnitHeader ), &pBuff, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Alloc memory[size:%d] failed, rc: %d",
-                   sizeof( dmsStorageUnitHeader ), rc ) ;
+      pBuff = ( CHAR* )utilThreadAlloc( sizeof( dmsStorageUnitHeader ) ) ;
+      if ( !pBuff )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Alloc memory[size:%d] failed, rc: %d",
+                 sizeof( dmsStorageUnitHeader ), rc ) ;
+         goto error ;
+      }
 
       //  read header
       rc = ossOpen( curFullFileName, OSS_READWRITE, OSS_RU|OSS_WU|OSS_RG,
@@ -502,7 +505,7 @@ namespace engine
       }
       if ( pBuff )
       {
-         cb->releaseBuff( pBuff ) ;
+         utilThreadRelease( (void *&)pBuff ) ;
       }
       PD_TRACE_EXITRC( SDB_RTNCORRECTCS2, rc ) ;
       return rc ;

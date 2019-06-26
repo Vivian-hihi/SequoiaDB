@@ -269,7 +269,6 @@ namespace engine
       while( it != _mapSessions.end() )
       {
          pSessionInfo = it->second ;
-         pSessionInfo->releaseMem() ;
          SDB_OSS_DEL pSessionInfo ;
          ++it ;
       }

@@ -381,7 +381,7 @@ namespace engine
          goto error ;
       }
 
-      reply = (MsgOpReply *)subSession->getRspMsg( FALSE ) ;
+      reply = (MsgOpReply *)subSession->getRspMsg() ;
 
    done:
       PD_TRACE_EXITRC( SDB__RTNREMOTEMESSENGER_RECEIVE, rc ) ;

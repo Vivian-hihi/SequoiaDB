@@ -490,11 +490,10 @@ namespace engine
    CHAR *_pmdMemPool::alloc( UINT32 size, UINT32 &assignSize )
    {
       PD_TRACE_ENTRY ( SDB__PMDMEMPOL_ALLOC );
-      size = ossRoundUpToMultipleX( size, PMD_MEM_ALIGMENT_SIZE ) ;
-      CHAR *pBuffer = (CHAR *)SDB_OSS_MALLOC ( size ) ;
+
+      CHAR *pBuffer = (CHAR*)utilPoolAlloc( size, &assignSize ) ;
       if ( pBuffer )
       {
-         assignSize = size ;
          _totalMemSize.add( assignSize ) ;
       }
       else
@@ -513,7 +512,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDMEMPOL_RELEASE );
       if ( pBuff && size > 0 )
       {
-         SDB_OSS_FREE ( pBuff ) ;
+         utilPoolRelease( (void *&)pBuff ) ;
          _totalMemSize.sub( size ) ;
       }
       PD_TRACE_EXIT ( SDB__PMDMEMPOL_RELEASE );

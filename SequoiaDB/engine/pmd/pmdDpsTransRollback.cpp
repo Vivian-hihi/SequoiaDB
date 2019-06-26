@@ -70,7 +70,7 @@ namespace engine
                }
                rc = rtnTransRollbackAll( cb );
             }
-            pmdEduEventRelase( event, cb ) ;
+            pmdEduEventRelease( event, cb ) ;
          }
 
          timeCount++ ;

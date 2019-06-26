@@ -67,7 +67,8 @@ namespace engine
 
       protected:
          virtual void _postMainMsg( const NET_HANDLE &handle,
-                                    MsgHeader *pNewMsg ) ;
+                                    MsgHeader *pNewMsg,
+                                    pmdEDUMemTypes memType ) ;
 
       protected:
          pmdEDUCB             *_pShardCB ;
@@ -88,7 +89,8 @@ namespace engine
 
       protected:
          virtual void _postMainMsg( const NET_HANDLE &handle,
-                                    MsgHeader *pNewMsg ) ;
+                                    MsgHeader *pNewMsg,
+                                    pmdEDUMemTypes memType ) ;
 
    } ;
    typedef _replMsgHandler replMsgHandler ;

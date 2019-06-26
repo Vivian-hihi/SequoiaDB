@@ -39,6 +39,7 @@
 #include "oss.hpp"
 #include <vector>
 #include "ossMemPool.hpp"
+#include "pmdDef.hpp"
 
 namespace engine
 {
@@ -108,7 +109,7 @@ namespace engine
 
       void pushDone() ;
 
-      void entrust( CHAR *buf ) ;
+      void entrust( const pmdEDUEvent &event ) ;
 
       UINT32 getLastDataSize() const
       {
@@ -135,8 +136,8 @@ namespace engine
 
       CHAR *_buf ;
       UINT32 _bufSz ;
-      std::vector<tuple> _pool ;
-      ossPoolList<CHAR *> _toBeFreed ;
+      std::vector<tuple>         _pool ;
+      ossPoolList<pmdEDUEvent>   _toBeFreed ;
       UINT32 _lastDataSz ;
       UINT32 _dataSz ;
       SINT32 _current ;

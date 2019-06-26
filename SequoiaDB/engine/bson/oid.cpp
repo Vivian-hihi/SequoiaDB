@@ -16,9 +16,9 @@
  */
 #include <stdio.h>
 #if !defined (_WIN32)
-   #if SDB_ENGINE
+   #if defined ( SDB_ENGINE ) || defined ( SDB_FMP ) || defined ( SDB_TOOL )
    #include "ossFeat.h"
-   #endif //SDB_ENGINE
+   #endif //SDB_ENGINE || SDB_FMP || SDB_TOOL
 #include <sys/types.h>
 #include <unistd.h>
 #endif

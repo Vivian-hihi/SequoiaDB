@@ -515,7 +515,7 @@ retry :
       length = regObj.objsize () + sizeof ( MsgCatRegisterReq ) ;
 
       // free by end of the function
-      buff = (CHAR *)SDB_OSS_MALLOC ( length ) ;
+      buff = (CHAR *)utilThreadAlloc( length ) ;
       if ( buff == NULL )
       {
          PD_LOG ( PDERROR, "Failed to allocate memroy for register req" ) ;
@@ -536,7 +536,7 @@ retry :
    done :
       if ( buff )
       {
-         SDB_OSS_FREE ( buff ) ;
+         utilThreadRelease ( (void *&)buff ) ;
          buff = NULL ;
       }
       PD_TRACE_EXITRC ( SDB__COORDCB__SNDREGMSG, rc );

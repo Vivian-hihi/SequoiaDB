@@ -75,13 +75,11 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDSYNCSESSIONAGENTEP );
       _pmdAsyncSession * pSession = (_pmdAsyncSession*)pData ;
       pmdEDUEvent event ;
-      pmdBuffInfo *pBuffInfo = NULL ;
       MsgHeader *pMsg = NULL ;
       INT64 timeDiff = 0 ;
       pmdKRCB *krcb    = pmdGetKRCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
       NET_HANDLE netHandle = 0 ;
-      UINT32 poolType = 0 ;
 
       pmdAsyncSessionScope assitScope( pSession, cb ) ;
 
@@ -117,34 +115,8 @@ namespace engine
             {
                mondbcb->addReceiveNum() ;
 
-               PMD_UNMAKE_SESSION_USERDATA( event._userData,
-                                            netHandle,
-                                            poolType ) ;
-
-               if ( PMD_SESSION_MSG_INPOOL == poolType )
-               {
-                  pBuffInfo = ( pmdBuffInfo* )( event._Data ) ;
-                  pMsg = ( MsgHeader* )( pBuffInfo->pBuffer ) ;
-
-                  timeDiff = (INT64)( ossGetCurrentMicroseconds() -
-                                      pBuffInfo->addTime ) ;
-               }
-               else
-               {
-                  pBuffInfo = NULL ;
-                  pMsg = ( MsgHeader* )event._Data ;
-                  timeDiff = 0 ;
-               }
-
-               // if msg in the buff time over 2 seconds
-               if ( timeDiff > 2000000 )
-               {
-                  PD_LOG( PDINFO, "Session[%s] msg[opCode:[%d]%d, requestID: "
-                          "%lld, TID: %d, Len: %d] stay over %lld usecs",
-                          pSession->sessionName(), IS_REPLY_TYPE(pMsg->opCode),
-                          GET_REQUEST_TYPE(pMsg->opCode), pMsg->requestID,
-                          pMsg->TID, pMsg->messageLength, timeDiff ) ;
-               }
+               netHandle = event._userData ;
+               pMsg = ( MsgHeader* )event._Data ;
 
                pSession->onDispatchMsgBegin( netHandle, pMsg ) ;
                pSession->dispatchMsg ( netHandle, pMsg, &timeDiff ) ;
@@ -159,11 +131,6 @@ namespace engine
                           GET_REQUEST_TYPE(pMsg->opCode), pMsg->requestID,
                           pMsg->TID, pMsg->messageLength, timeDiff ) ;
                }
-
-               if ( pBuffInfo )
-               {
-                  pBuffInfo->setFree () ;
-               }
             }
             else
             {
@@ -171,7 +138,7 @@ namespace engine
             }
 
             //Relase memory
-            pmdEduEventRelase( event, cb ) ;
+            pmdEduEventRelease( event, cb ) ;
             event.reset () ;
          }
          else if ( !cb->isDisconnected() )

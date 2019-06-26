@@ -405,7 +405,7 @@ namespace engine
       }
 
       /// process result
-      pReply = ( MsgOpReply* )pSub->getRspMsg( FALSE ) ;
+      pReply = ( MsgOpReply* )pSub->getRspMsg() ;
       if ( !pReply )
       {
          PD_LOG( PDERROR, "Session init reply message is null in node[%s]",

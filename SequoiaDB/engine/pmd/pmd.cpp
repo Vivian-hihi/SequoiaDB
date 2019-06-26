@@ -95,7 +95,6 @@ namespace engine
       _optioncb.setConfigHandler( this ) ;
 
       _pLightJobMgr  = NULL ;
-      _pMemBlockPool = NULL ;
       _timeCounter   = 0 ;
    }
 
@@ -315,22 +314,13 @@ namespace engine
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
 
-      _pMemBlockPool = SDB_OSS_NEW utilMemBlockPool() ;
-      if ( !_pMemBlockPool )
-      {
-         PD_LOG( PDERROR, "Alloc mem block pool failed" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-
-      rc = _pMemBlockPool->init( (UINT64)_optioncb.memPoolSize() << 20 ) ;
+      rc = utilGetGlobalMemPool()->init( (UINT64)_optioncb.memPoolSize()
+                                         << 20 ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Init mem block pool failed, rc: %d", rc ) ;
          goto error ;
       }
-
-      utilSetGlobalMemPool( _pMemBlockPool ) ;
 
       _pLightJobMgr = SDB_OSS_NEW pmdLightJobMgr() ;
       if ( !_pLightJobMgr )
@@ -524,13 +514,8 @@ namespace engine
          _pLightJobMgr = NULL ;
       }
 
-      if ( _pMemBlockPool )
-      {
-         _pMemBlockPool->fini() ;
-         utilSetGlobalMemPool( NULL ) ;
-         SDB_OSS_DEL _pMemBlockPool ;
-         _pMemBlockPool = NULL ;
-      }
+      utilGetGlobalMemPool()->setMaxSize( 0 ) ;
+      utilGetGlobalMemPool()->shrink() ;
 
       if ( !normalStop && _eduMgr.dumpAbnormalEDU() > 0 )
       {
@@ -546,10 +531,9 @@ namespace engine
    {
       _timeCounter += interval ;
 
-      if ( _pMemBlockPool &&
-           _timeCounter >= PMD_MEM_SHRINK_TIMER_INTERVAL )
+      if ( _timeCounter >= PMD_MEM_SHRINK_TIMER_INTERVAL )
       {
-         _pMemBlockPool->shrink() ;
+         utilGetGlobalMemPool()->shrink() ;
          _timeCounter = 0 ;
       }
    }

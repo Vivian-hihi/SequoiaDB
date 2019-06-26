@@ -100,7 +100,7 @@ namespace engine
 
          ~_utilMemListItem() ;
 
-         void*    alloc( UINT32 size ) ;
+         void*    alloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
          void     dealloc( void *p ) ;
 
          void     clear() ;
@@ -162,8 +162,8 @@ namespace engine
          virtual BOOLEAN   canCacheBlock( UINT32 blockSize ) ;
 
       public:
-         void*       alloc( UINT32 size ) ;
-         void*       realloc( void* ptr, UINT32 size ) ;
+         void*       alloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
+         void*       realloc( void* ptr, UINT32 size, UINT32 *pRealSize = NULL ) ;
          void        release( void*& ptr ) ;
 
          void        clear() ;
@@ -184,8 +184,8 @@ namespace engine
    void        utilClearThreadMemPool() ;
    UINT32      utilThreadMemPoolSize() ;
 
-   void*       utilThreadAlloc( UINT32 size ) ;
-   void*       utilThreadRealloc( void* ptr, UINT32 size ) ;
+   void*       utilThreadAlloc( UINT32 size, UINT32 *pRealSize = NULL ) ;
+   void*       utilThreadRealloc( void* ptr, UINT32 size, UINT32 *pRealSize = NULL ) ;
    void        utilThreadRelease( void*& ptr ) ;
 
 }

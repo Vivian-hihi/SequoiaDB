@@ -54,7 +54,8 @@ namespace engine
    }
 
    void _shdMsgHandler::_postMainMsg( const NET_HANDLE & handle,
-                                      MsgHeader * pNewMsg )
+                                      MsgHeader * pNewMsg,
+                                      pmdEDUMemTypes memType )
    {
       if ( _pShardCB && ( MSG_CAT_NODEGRP_RES == pNewMsg->opCode ||
            MSG_CAT_QUERY_CATALOG_RSP == pNewMsg->opCode ||
@@ -63,7 +64,7 @@ namespace engine
              _pShardCB->getTID() != (UINT32)pNewMsg->requestID ) ) )
       {
          _pShardCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                            PMD_EDU_MEM_ALLOC,
+                                            memType,
                                             pNewMsg, (UINT64)handle ) ) ;
       }
       else
@@ -71,7 +72,7 @@ namespace engine
          //store type to TID and dispatch restore
          pNewMsg->TID = (UINT32)CLS_SHARD ;
          _pMgrEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                             PMD_EDU_MEM_ALLOC,
+                                             memType,
                                              pNewMsg, (UINT64)handle ) );
       }
    }
@@ -85,7 +86,7 @@ namespace engine
       if ( _pShardCB )
       {
          MsgOpReply *pMsg = NULL ;
-         pMsg = ( MsgOpReply* )SDB_OSS_MALLOC( sizeof( MsgOpReply ) ) ;
+         pMsg = ( MsgOpReply* )utilThreadAlloc( sizeof( MsgOpReply ) ) ;
          if ( !pMsg )
          {
             PD_LOG( PDERROR, "Alloc memory[size: %d] failed",
@@ -104,7 +105,7 @@ namespace engine
             pMsg->startFrom = 0 ;
 
             _pShardCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                               PMD_EDU_MEM_ALLOC,
+                                               PMD_EDU_MEM_THREAD,
                                                pMsg, (UINT64)handle ) ) ;
          }
       }
@@ -123,12 +124,13 @@ namespace engine
    }
 
    void _replMsgHandler::_postMainMsg( const NET_HANDLE &handle,
-                                       MsgHeader *pNewMsg )
+                                       MsgHeader *pNewMsg,
+                                       pmdEDUMemTypes memType )
    {
       //store type to TID and dispatch restore
       pNewMsg->TID = (UINT32)CLS_REPL ;
       _pMgrEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                          PMD_EDU_MEM_ALLOC,
+                                          memType,
                                           pNewMsg, (UINT64)handle ) ) ;
    }
 

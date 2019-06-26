@@ -92,7 +92,8 @@ namespace engine
          virtual void  onStop() ;
 
       protected:
-         void* _copyMsg ( const CHAR* msg, UINT32 length ) ;
+         void* _copyMsg ( const CHAR* msg, UINT32 length,
+                          pmdEDUMemTypes &memType ) ;
 
          INT32 _handleSessionMsg( const NET_HANDLE &handle,
                                   const _MsgHeader *header,
@@ -112,7 +113,8 @@ namespace engine
 
       protected:
          virtual void _postMainMsg( const NET_HANDLE &handle,
-                                    MsgHeader *pNewMsg ) ;
+                                    MsgHeader *pNewMsg,
+                                    pmdEDUMemTypes memType ) ;
 
       protected:
          _pmdAsycSessionMgr      *_pSessionMgr ;

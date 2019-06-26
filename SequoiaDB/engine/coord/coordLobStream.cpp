@@ -436,7 +436,8 @@ namespace engine
          else if ( RETRY_TAG_NULL == tag )
          {
             SDB_ASSERT( 1 == _results.size(), "impossible" ) ;
-            reply = _results.empty() ? NULL : *( _results.begin() ) ;
+            reply = _results.empty() ? NULL :
+                     (MsgOpReply*)((*_results.begin())._Data ) ;
             break ;
          }
       } while ( TRUE ) ;
@@ -460,7 +461,7 @@ namespace engine
             }
             _getPool().pushDone() ;
 
-            _getPool().entrust( ( CHAR * )( *_results.begin() ) ) ;
+            _getPool().entrust( *_results.begin() ) ;
             _results.erase( _results.begin() ) ;
          }
          if ( SDB_OK != rc )
@@ -974,12 +975,11 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM__READ, "_coordLobStream::_read" )
    INT32 _coordLobStream::_read( const _rtnLobTuple& tuple,
-                                 _pmdEDUCB *cb, MsgOpReply** reply )
+                                 _pmdEDUCB *cb,
+                                 pmdEDUEvent &event )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM__READ ) ;
-
-      SDB_ASSERT( NULL != reply, "invalid reply" ) ;
 
       MsgOpLob header ;
       BOOLEAN needReshard = TRUE ;
@@ -988,7 +988,7 @@ namespace engine
       pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
 
-      *reply = NULL ;
+      event.reset() ;
       pCtrl->resetRetry() ;
 
       _initHeader( header, MSG_BS_LOB_READ_REQ, 0, -1 ) ;
@@ -1047,8 +1047,11 @@ namespace engine
          if ( RETRY_TAG_NULL == tag )
          {
             SDB_ASSERT( 1 == _results.size(), "impossible" ) ;
-            *reply = _results.empty() ? NULL : *( _results.begin() ) ;
-            _results.erase( _results.begin() ) ;
+            if ( !_results.empty() )
+            {
+               event = *( _results.begin() ) ;
+               _results.erase( _results.begin() ) ;
+            }
             break ;
          }
          else
@@ -1763,28 +1766,30 @@ namespace engine
    INT32 _coordLobStream::_addSubStreamsFromReply()
    {
       INT32 rc = SDB_OK ;
-      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
+      MsgOpReply *pReply = NULL ;
+      std::vector<pmdEDUEvent>::const_iterator itr = _results.begin() ;
       for ( ; itr != _results.end(); ++itr )
       {
-         if ( SDB_OK != ( *itr )->flags )
+         pReply = ( MsgOpReply* )(*itr)._Data ;
+         if ( SDB_OK != pReply->flags )
          {
-            rc = ( *itr )->flags ;
+            rc = pReply->flags ;
             PD_LOG( PDERROR, "failed to open lob on node[%d:%d], rc:%d",
-                    ( *itr )->header.routeID.columns.groupID,
-                    ( *itr )->header.routeID.columns.nodeID, rc ) ;
+                    pReply->header.routeID.columns.groupID,
+                    pReply->header.routeID.columns.nodeID, rc ) ;
             continue ;
          }
 
-         if ( -1 == ( *itr )->contextID )
+         if ( -1 == pReply->contextID )
          {
             rc = SDB_SYS ;
             PD_LOG( PDERROR, "invalid context id" ) ;
             continue ;
          }
 
-         _add2Subs( ( *itr )->header.routeID.columns.groupID,
-                    ( *itr )->contextID,
-                    ( *itr )->header.routeID ) ;
+         _add2Subs( pReply->header.routeID.columns.groupID,
+                    pReply->contextID,
+                    pReply->header.routeID ) ;
       }
 
       return rc ;
@@ -1801,6 +1806,7 @@ namespace engine
       PD_TRACE_ENTRY( COORD_LOBSTREAM_GETREPLY ) ;
 
       coordCataSel cataSel ;
+      pmdEDUEvent event ;
       MsgOpReply *pReply = NULL ;
       coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
       coordGroupSel *pSel = _groupSession.getGroupSel() ;
@@ -1824,7 +1830,8 @@ namespace engine
       while( itr.more() )
       {
          pSub = itr.next() ;
-         pReply = (MsgOpReply*)pSub->getRspMsg( TRUE ) ;
+         event = pSub->getOwnedRspMsg() ;
+         pReply = (MsgOpReply*)event._Data ;
          flags = pReply->flags ;
          id = pReply->header.routeID ;
 
@@ -1832,7 +1839,7 @@ namespace engine
               ( pIgoreErr && pIgoreErr->count( flags ) > 0 ) )
          {
             /// pReply will be released by _clearMsgData()
-            _results.push_back( pReply ) ;
+            _results.push_back( event ) ;
             continue ;
          }
 
@@ -1874,7 +1881,8 @@ namespace engine
                coordErrorInfo( pReply ) ;
          }
 
-         SDB_OSS_FREE( pReply ) ;
+         pmdEduEventRelease( event, cb ) ;
+         pReply = NULL ;
          rc = flags ? flags : rc ;
       }
 
@@ -1893,10 +1901,10 @@ namespace engine
 
    void _coordLobStream::_clearMsgData()
    {
-      std::vector<MsgOpReply *>::iterator itr = _results.begin() ;
+      std::vector<pmdEDUEvent>::iterator itr = _results.begin() ;
       for ( ; itr != _results.end(); ++itr )
       {
-         SAFE_OSS_FREE( *itr ) ;
+         pmdEduEventRelease( *itr, NULL ) ;
       }
 
       _results.clear() ;
@@ -2039,26 +2047,28 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_HANDLEREADRESULTS ) ;
 
-      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
+      MsgOpReply *pReply = NULL ;
+      std::vector<pmdEDUEvent>::const_iterator itr = _results.begin() ;
       for ( ; itr != _results.end(); ++itr )
       {
-         if ( SDB_OK != ( *itr )->flags )
+         pReply = (MsgOpReply*)(*itr)._Data ;
+         if ( SDB_OK != pReply->flags )
          {
-            rc = ( *itr )->flags ;
+            rc = pReply->flags ;
             PD_LOG( PDERROR, "failed to read lob on node[%d:%d], rc:%d",
-                    ( *itr )->header.routeID.columns.groupID,
-                    ( *itr )->header.routeID.columns.nodeID, rc ) ;
+                    pReply->header.routeID.columns.groupID,
+                    pReply->header.routeID.columns.nodeID, rc ) ;
             goto error ;
          }
 
-         rc = _push2Pool( *itr ) ;
+         rc = _push2Pool( pReply ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
             goto error ;
          }
 
-         rc = _add2DoneLst( ( *itr )->header.routeID.columns.groupID,
+         rc = _add2DoneLst( pReply->header.routeID.columns.groupID,
                             doneLst ) ;
          if ( SDB_OK != rc )
          {
@@ -2069,11 +2079,11 @@ namespace engine
 
       /// we need to keep reply msg in memory.
       {
-      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
-      for ( ; itr != _results.end(); ++itr )
-      {
-         _getPool().entrust( ( CHAR * )( *itr ) ) ;
-      }
+         std::vector<pmdEDUEvent>::const_iterator itr = _results.begin() ;
+         for ( ; itr != _results.end(); ++itr )
+         {
+            _getPool().entrust( *itr ) ;
+         }
       }
       _results.clear() ;
    done:
@@ -2089,11 +2099,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_ADD2DONELSTFROMREPLY ) ;
-      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
+      MsgOpReply *pReply = NULL ;
+      std::vector<pmdEDUEvent>::const_iterator itr = _results.begin() ;
       for ( ; itr != _results.end(); ++itr )
       {
-         SDB_ASSERT( SDB_OK == ( *itr )->flags, "impossible" ) ;
-         rc = _add2DoneLst( ( *itr )->header.routeID.columns.groupID,
+         pReply = ( MsgOpReply* )(*itr)._Data ;
+         SDB_ASSERT( SDB_OK == pReply->flags, "impossible" ) ;
+         rc = _add2DoneLst( pReply->header.routeID.columns.groupID,
                             doneLst ) ;
          if ( SDB_OK != rc )
          {
@@ -2150,13 +2162,15 @@ namespace engine
    INT32 _coordLobStream::_removeClosedSubStreams()
    {
       INT32 rc = SDB_OK ;
-      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
+      MsgOpReply *pReply = NULL ;
+      std::vector<pmdEDUEvent>::const_iterator itr = _results.begin() ;
       for ( ; itr != _results.end(); ++itr )
       {
+         pReply = ( MsgOpReply* )(*itr)._Data ;
          SDB_ASSERT( 1 == _subs.count(
-                           ( *itr )->header.routeID.columns.groupID ),
+                           pReply->header.routeID.columns.groupID ),
                      "impossible" ) ;
-         _subs.erase( ( *itr )->header.routeID.columns.groupID ) ;
+         _subs.erase( pReply->header.routeID.columns.groupID ) ;
       }
       return rc ;
    }

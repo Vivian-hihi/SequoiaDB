@@ -2998,7 +2998,7 @@ namespace engine
       {
          replySize += textIdxInfo.objsize() ;
       }
-      reply = (MsgOpReply *)SDB_OSS_MALLOC( replySize ) ;
+      reply = (MsgOpReply *)utilThreadAlloc( replySize ) ;
       if ( !reply )
       {
          PD_LOG( PDERROR, "Allocate memory for reply message failed, size: %d",
@@ -3031,7 +3031,7 @@ namespace engine
       }
       if ( reply )
       {
-         SDB_OSS_FREE( reply ) ;
+         utilThreadRelease( (void *&)reply ) ;
       }
       PD_TRACE_EXITRC( SDB__CLSSHDMGR__ONTEXTIDXINFOREQMSG, rc ) ;
       return rc ;

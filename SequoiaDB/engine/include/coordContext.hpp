@@ -68,7 +68,7 @@ namespace engine
       virtual ~_coordSubContext () ;
 
    public:
-      void           appendData ( MsgOpReply *pReply ) ;
+      void           appendData ( const pmdEDUEvent &event ) ;
       void           clearData () ;
       MsgRouteID     getRouteID() ;
       const CHAR*    front () ;
@@ -95,6 +95,7 @@ namespace engine
       MsgRouteID           _routeID ;
       INT32                _curOffset ;
       MsgOpReply*          _pData ;
+      pmdEDUEvent          _event ;
       INT32                _recordNum ;
    } ;
    typedef _coordSubContext coordSubContext ;
@@ -113,7 +114,8 @@ namespace engine
                             BOOLEAN preRead = TRUE ) ;
          virtual ~_rtnContextCoord () ;
 
-         virtual INT32 addSubContext ( MsgOpReply *pReply, BOOLEAN &takeOver ) ;
+         virtual INT32 addSubContext ( const pmdEDUEvent &event,
+                                       BOOLEAN &takeOver ) ;
 
          virtual void addSubDone( _pmdEDUCB *cb ) ;
 
@@ -164,7 +166,7 @@ namespace engine
          INT32   _doAfterPrepareData( _pmdEDUCB *cb ) ;
 
       private:
-         INT32    _appendSubData ( CHAR *pData ) ;
+         INT32    _appendSubData ( const pmdEDUEvent &event ) ;
 
          void     _delPrepareContext( const MsgRouteID &routeID ) ;
 
@@ -234,7 +236,7 @@ namespace engine
          void optimizeReturnOptions ( MsgOpQuery * pQueryMsg,
                                       UINT32 targetGroupNum ) ;
 
-         INT32 addSubContext ( MsgOpReply *pReply, BOOLEAN &takeOver ) ;
+         INT32 addSubContext ( const pmdEDUEvent &event, BOOLEAN &takeOver ) ;
 
          void addSubDone ( pmdEDUCB *cb ) ;
 

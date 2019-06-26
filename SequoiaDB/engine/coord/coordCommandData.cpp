@@ -696,7 +696,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to build post task condition, rc: %d", rc ) ;
 
       rc = msgBuildQueryMsg( &msgBuff, &msgSize, CAT_TASK_INFO_COLLECTION,
-                             0, 0, 0, -1, &taskDesc, NULL, NULL, NULL ) ;
+                             0, 0, 0, -1, &taskDesc, NULL, NULL, NULL,
+                             cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build query message, rc: %d", rc ) ;
 
 
@@ -2232,7 +2233,8 @@ namespace engine
                groupList[ group.Int() ] = group.Int() ;
 
                rc = msgBuildQueryMsg( &msgBuff, &msgSize, CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
-                                      0, 0, 0, -1, &(*iterTask), NULL, NULL, NULL ) ;
+                                      0, 0, 0, -1, &(*iterTask), NULL, NULL, NULL,
+                                      cb ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to build split message, rc: %d", rc ) ;
 
                msgHeader = (MsgHeader *)msgBuff ;

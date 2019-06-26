@@ -215,7 +215,7 @@ namespace engine
       while ( itrSub.more() )
       {
          pSub = itrSub.next() ;
-         MsgOpReply *pReply = ( MsgOpReply* )pSub->getRspMsg( FALSE ) ;
+         MsgOpReply *pReply = ( MsgOpReply* )pSub->getRspMsg() ;
 
          if ( pReply->flags )
          {
@@ -572,7 +572,7 @@ namespace engine
          MsgOpReply *pReply = NULL ;
          pSub = itr.next() ;
 
-         pReply = (MsgOpReply *)pSub->getRspMsg( FALSE ) ;
+         pReply = (MsgOpReply *)pSub->getRspMsg() ;
          rcTmp = pReply->flags ;
 
          if ( rcTmp )
