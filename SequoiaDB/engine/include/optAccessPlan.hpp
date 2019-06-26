@@ -217,14 +217,14 @@ namespace engine
             return _key.getCacheLevel() ;
          }
 
-         OSS_INLINE virtual optScanType getScanType () const
+         OSS_INLINE optScanType getScanType () const
          {
             SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
                          "before start using" ) ;
             return _scanPath.getScanType() ;
          }
 
-         OSS_INLINE virtual const CHAR *getIndexName() const
+         OSS_INLINE const CHAR * getIndexName () const
          {
             SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
                          "before start using" ) ;
@@ -245,21 +245,21 @@ namespace engine
             return _scanPath.getIndexLID() ;
          }
 
-         OSS_INLINE virtual INT32 getDirection () const
+         OSS_INLINE INT32 getDirection () const
          {
             SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
                          "before start using" ) ;
             return _scanPath.getDirection() ;
          }
 
-         OSS_INLINE virtual BSONObj getKeyPattern () const
+         OSS_INLINE BSONObj getKeyPattern () const
          {
             SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
                          "before start using" ) ;
             return _scanPath.getKeyPattern() ;
          }
 
-         OSS_INLINE virtual BOOLEAN sortRequired () const
+         OSS_INLINE BOOLEAN sortRequired () const
          {
             SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
                          "before start using" ) ;
@@ -273,21 +273,28 @@ namespace engine
             return _scanPath.getSelectivity() ;
          }
 
-         OSS_INLINE virtual UINT32 getInputPages () const
+         OSS_INLINE UINT32 getInputPages () const
          {
             SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
                          "before start using" ) ;
             return _scanPath.getInputPages() ;
          }
 
-         OSS_INLINE virtual UINT64 getInputRecords () const
+         OSS_INLINE UINT64 getInputRecords () const
          {
             SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
                          "before start using" ) ;
             return _scanPath.getInputRecords() ;
          }
 
-         OSS_INLINE virtual const optScanPath &getScanPath () const
+         OSS_INLINE BOOLEAN isEstimatedFromStat () const
+         {
+            SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
+                         "before start using" ) ;
+            return _scanPath.isEstimatedFromStat() ;
+         }
+
+         OSS_INLINE const optScanPath &getScanPath () const
          {
             SDB_ASSERT ( _isInitialized, "optAccessPlan must be optimized "
                          "before start using" ) ;

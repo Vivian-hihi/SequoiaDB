@@ -592,12 +592,12 @@ namespace engine
    /*
       _optCollectionStat implement
     */
-   _optCollectionStat::_optCollectionStat ( UINT32 pageSize,
+   _optCollectionStat::_optCollectionStat ( UINT32 pageSizeLog2,
                                             _dmsMBContext * mbContext,
                                             const _optAccessPlanHelper & helper,
                                             const dmsStatCache * statCache )
    : _optStatUnit( 0 ),
-     _pageSize( pageSize ),
+     _pageSizeLog2( pageSizeLog2 ),
      _totalDataPages( 0 ),
      _totalDataSize( 0 ),
      _numIndexes( 0 ),
@@ -608,37 +608,65 @@ namespace engine
      _pCollectionStat( NULL ),
      _bestIndexStat( NULL )
    {
-      if ( statCache )
-      {
-         // For statistics cache, mbID is ID of cache unit
-         _pCollectionStat = (const dmsCollectionStat *)
-                              statCache->getCacheUnit( mbContext->mbID() ) ;
-      }
       SDB_ASSERT( NULL != mbContext, "mbContext is invalid" ) ;
-      _initStat( mbContext ) ;
-      _checkExpired( helper.getOptCostThreshold() ) ;
+      _initCurrentStat( mbContext ) ;
+      _initHistoryStat( mbContext, helper, statCache ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCLSTAT__INITSTAT, "_optCollectionStat::_initStat" )
-   void _optCollectionStat::_initStat( _dmsMBContext *mbContext )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCLSTAT__INITCURSTAT, "_optCollectionStat::_initCurrentStat" )
+   void _optCollectionStat::_initCurrentStat( _dmsMBContext *mbContext )
    {
-      PD_TRACE_ENTRY( SDB_OPTCLSTAT__INITSTAT ) ;
+      PD_TRACE_ENTRY( SDB_OPTCLSTAT__INITCURSTAT ) ;
 
       _totalRecords = mbContext->mbStat()->_totalRecords ;
-      _totalDataPages = mbContext->mbStat()->getUsedPages( _pageSize ) ;
+      _totalDataPages = mbContext->mbStat()->_totalDataPages ;
       _totalDataSize = mbContext->mbStat()->_totalOrgDataLen ;
 
       _numIndexes = mbContext->mb()->_numIndexes ;
       if ( _numIndexes > 0 )
       {
          _totalIndexPages = mbContext->mbStat()->_totalIndexPages ;
-         _totalIndexSize = mbContext->mbStat()->_totalIndexPages * _pageSize -
+         _totalIndexSize = ( (UINT64)_totalIndexPages << _pageSizeLog2 ) -
                            mbContext->mbStat()->_totalIndexFreeSpace ;
-         _avgIndexPages = (UINT32)ceil( (double)_totalIndexPages / (double)_numIndexes ) ;
-         _avgIndexSize = OPT_ROUND_NUM( (UINT64)ceil( (double)_totalIndexSize / (double)_numIndexes ) ) ;
+         _avgIndexPages =
+               (UINT32)ceil( (double)_totalIndexPages / (double)_numIndexes ) ;
+         _avgIndexSize =
+               OPT_ROUND_NUM( (UINT64)ceil( (double)_totalIndexSize /
+                                            (double)_numIndexes ) ) ;
       }
 
-      PD_TRACE_EXIT( SDB_OPTCLSTAT__INITSTAT ) ;
+      PD_TRACE_EXIT( SDB_OPTCLSTAT__INITCURSTAT ) ;
+   }
+
+   void _optCollectionStat::_initHistoryStat (
+                                    _dmsMBContext * mbContext,
+                                    const _optAccessPlanHelper & planHelper,
+                                    const dmsStatCache * statCache )
+   {
+      if ( NULL == statCache ||
+           (INT32)_totalDataPages <= planHelper.getOptCostThreshold() )
+      {
+         // no cache or collection is too small to use statistics
+         return ;
+      }
+      // for statistics cache, mbID is ID of cache unit
+      _pCollectionStat = (const dmsCollectionStat *)
+                           statCache->getCacheUnit( mbContext->mbID() ) ;
+      if ( NULL != _pCollectionStat &&
+           optCheckStatExpired( _totalDataPages,
+                                _pCollectionStat->getTotalDataPages(),
+                                planHelper.getOptCostThreshold(),
+                                _pageSizeLog2 ) )
+      {
+         // if the statistics is expired, ignore it
+         PD_LOG( PDDEBUG, "Statistics for collection [%s.%s] is expired, "
+                 "current pages [%d], statistics pages [%d], "
+                 "cost threshold [%d]", _pCollectionStat->getCSName(),
+                 _pCollectionStat->getCLName(), _totalDataPages,
+                 _pCollectionStat->getTotalDataPages(),
+                 planHelper.getOptCostThreshold() ) ;
+         _pCollectionStat = NULL ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT_EVALPREDSET, "_optCollectionStat::evalPredicateSet" )
@@ -1320,23 +1348,6 @@ namespace engine
       return pBestIndexStat ;
    }
 
-   void _optCollectionStat::_checkExpired ( INT32 costThreshold )
-   {
-      if ( NULL != _pCollectionStat &&
-           optCheckStatExpired( _totalDataPages,
-                                _pCollectionStat->getTotalDataPages(),
-                                costThreshold ) )
-      {
-         // if the statistics is expired, ignore it
-         PD_LOG( PDDEBUG, "Statistics for collection [%s.%s] is expired, "
-                 "current pages [%d], statistics pages [%d], "
-                 "cost threshold [%d]", _pCollectionStat->getCSName(),
-                 _pCollectionStat->getCLName(), _totalDataPages,
-                 _pCollectionStat->getTotalDataPages(), costThreshold ) ;
-         _pCollectionStat = NULL ;
-      }
-   }
-
    /*
       Helper functions implement
     */
@@ -1366,13 +1377,32 @@ namespace engine
       return scalar ;
    }
 
+   #define OPT_EXPIRED_THRESOLD     ( 8589934592L )   // 8 GB
+   #define OPT_EXPIRED_SMALL_STEP   ( 268435456 )     // 256 MB
+   #define OPT_EXPIRED_LARGE_STEP   ( 1073741824 )    // 1 GB
+   #define OPT_EXPIRED_QUICK_STEP   ( ( OPT_EXPIRED_SMALL_STEP ) / \
+                                      ( DMS_PAGE_SIZE_MAX ) )
+
    BOOLEAN optCheckStatExpired ( UINT32 currentPages, UINT32 statPages,
-                                 UINT32 costThreshold )
+                                 UINT32 costThreshold, UINT32 pageSizeLog2 )
    {
-      if ( currentPages <= costThreshold && statPages <= costThreshold )
+      // CASE 1:   current and history number of pages are the same, always not
+      //           be expired
+      // CASE 2:   both current and history number of pages are smaller than
+      //           cost threshold, means the collection is small, always not
+      //           be expired
+      // CASE 3:   one of current or history number of pages are larger than
+      //           cost threshold, will expire the history statistics
+      // CASE 4:   for case that both current and history number of pages are
+      //           bigger than the cost threshold,
+      // CASE 4.1: for <= 8 GB, increasing each 256 MB will be expired
+      // CASE 4.2: for > 8 GB, increasing each 1 GB will be expired
+      // CASE 4.3: quick check for CASE 4: if increasing number of pages is
+      //           smaller than 256 MB / 64 KB, must not be expired
+      if ( currentPages == statPages ||
+           ( currentPages <= costThreshold && statPages <= costThreshold ) )
       {
-         // both current and history number of pages are smaller than cost
-         // threshold, means the collection is small, always not expired
+         // CASE 1, CASE 2
          return FALSE ;
       }
       else if ( ( currentPages > costThreshold &&
@@ -1380,16 +1410,24 @@ namespace engine
                 ( currentPages <= costThreshold &&
                   statPages > costThreshold ) )
       {
-         // one of current or history number of pages are larger than
-         // cost threshold, will expire the history statistics
+         // CASE 3
          return TRUE ;
       }
-
-
-      // if current number of pages are twice or 1/2 of history one,
-      // the history statistics is expired
-      return ( currentPages > ( statPages << 1 ) ||
-               currentPages < ( statPages >> 1 ) ) ;
+      else if ( currentPages < statPages + OPT_EXPIRED_QUICK_STEP )
+      {
+         // CASE 4.3
+         return FALSE ;
+      }
+      else if ( ( (UINT64)currentPages << pageSizeLog2 ) <
+                OPT_EXPIRED_THRESOLD )
+      {
+         // CASE 4.1
+         return ( currentPages > statPages +
+                                 ( OPT_EXPIRED_SMALL_STEP >> pageSizeLog2 ) ) ;
+      }
+      // CASE 4.2
+      return ( currentPages > statPages +
+                              ( OPT_EXPIRED_LARGE_STEP >> pageSizeLog2 ) ) ;
    }
 
 }

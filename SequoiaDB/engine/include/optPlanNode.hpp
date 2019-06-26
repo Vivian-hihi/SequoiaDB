@@ -448,7 +448,12 @@ namespace engine
 
          OSS_INLINE UINT32 getPageSize () const
          {
-            return _pageSize ;
+            return 1 << _pageSizeLog2 ;
+         }
+
+         OSS_INLINE UINT32 getPageSizeLog2 () const
+         {
+            return _pageSizeLog2 ;
          }
 
          OSS_INLINE BOOLEAN isCandidate () const
@@ -529,6 +534,11 @@ namespace engine
 
          virtual optScanType getScanType () const = 0 ;
 
+         OSS_INLINE virtual BOOLEAN isEstimatedFromStat () const
+         {
+            return _clFromStat ;
+         }
+
       protected :
          void _preEvaluate ( const rtnQueryOptions & queryOptions,
                              optAccessPlanHelper & planHelper,
@@ -546,7 +556,7 @@ namespace engine
 
          OSS_INLINE UINT32 _evalNormalizedPageRate () const
          {
-            return _pageSize / DMS_PAGE_SIZE_BASE ;
+            return _pageSizeLog2 - DMS_PAGE_SIZE_LOG2_BASE ;
          }
 
       public :
@@ -595,10 +605,10 @@ namespace engine
       protected :
          const CHAR *      _pCollection ;
 
-         // Page size
-         UINT32            _pageSize ;
+         // log2( page size )
+         UINT32            _pageSizeLog2 ;
 
-         // Estimate cache size ( from --optestcachesize )
+         // Estimate cache size ( from --optcostthreshold )
          INT32             _estCacheSize ;
 
          // Selectivity of matcher
@@ -804,6 +814,11 @@ namespace engine
          OSS_INLINE virtual UINT32 getMatchedFields () const
          {
             return _matchedFields ;
+         }
+
+         OSS_INLINE virtual BOOLEAN isEstimatedFromStat () const
+         {
+            return _ixFromStat ;
          }
 
       public :

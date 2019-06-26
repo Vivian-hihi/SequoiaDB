@@ -261,7 +261,7 @@ namespace engine
    class _optCollectionStat : public _optStatUnit
    {
       public :
-         _optCollectionStat ( UINT32 pageSize,
+         _optCollectionStat ( UINT32 pageSizeLog2,
                               _dmsMBContext * mbContext,
                               const _optAccessPlanHelper & helper,
                               const dmsStatCache * statCache ) ;
@@ -305,7 +305,12 @@ namespace engine
 
          OSS_INLINE UINT32 getPageSize () const
          {
-            return _pageSize ;
+            return 1 << _pageSizeLog2 ;
+         }
+
+         OSS_INLINE UINT32 getPageSizeLog2 () const
+         {
+            return _pageSizeLog2 ;
          }
 
          OSS_INLINE UINT32 getNumIndexes () const
@@ -414,12 +419,14 @@ namespace engine
 
          const dmsIndexStat *_getMatchedIndex ( rtnPredicateSet &predicates ) const ;
 
-         void _initStat ( _dmsMBContext *mbContext ) ;
-         void _checkExpired ( INT32 costThreshold ) ;
+         void _initCurrentStat ( _dmsMBContext *mbContext ) ;
+         void _initHistoryStat ( _dmsMBContext * mbContext,
+                                 const _optAccessPlanHelper & planHelper,
+                                 const dmsStatCache * statCache ) ;
 
       protected :
          /* Init from dmsMBContext */
-         UINT32            _pageSize ;
+         UINT32            _pageSizeLog2 ;
          UINT32            _totalDataPages ;
          UINT64            _totalDataSize ;
 
@@ -446,7 +453,7 @@ namespace engine
       helper functions
     */
    BOOLEAN optCheckStatExpired ( UINT32 currentPages, UINT32 statPages,
-                                 UINT32 costThreshold ) ;
+                                 UINT32 costThreshold, UINT32 pageSizeLog2 ) ;
 
 }
 

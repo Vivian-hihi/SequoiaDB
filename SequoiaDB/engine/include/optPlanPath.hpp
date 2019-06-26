@@ -244,6 +244,11 @@ namespace engine
             return ( NULL != _pScanNode ) ? _pScanNode->getInputRecords() : 0 ;
          }
 
+         OSS_INLINE BOOLEAN isEstimatedFromStat () const
+         {
+            return NULL != _pScanNode && _pScanNode->isEstimatedFromStat() ;
+         }
+
          INT32 evaluate ( const rtnQueryOptions & options,
                           UINT64 sortBufferSize ) ;
 

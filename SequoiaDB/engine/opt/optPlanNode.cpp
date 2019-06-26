@@ -763,7 +763,7 @@ namespace engine
    _optScanNode::_optScanNode ()
    : _optPlanNode(),
      _pCollection( NULL ),
-     _pageSize( 0 ),
+     _pageSizeLog2( DMS_PAGE_SIZE_LOG2_DFT ),
      _estCacheSize( OPT_RANDOM_SCAN_IO_COST * 2 ),
      _mthSelectivity( OPT_MTH_DEFAULT_SELECTIVITY ),
      _mthCPUCost( OPT_MTH_DEFAULT_CPU_COST ),
@@ -784,7 +784,7 @@ namespace engine
                                 INT32 estCacheSize )
    : _optPlanNode(),
      _pCollection( pCollection ),
-     _pageSize( 0 ),
+     _pageSizeLog2( DMS_PAGE_SIZE_LOG2_DFT ),
      _estCacheSize( estCacheSize ),
      _mthSelectivity( OPT_MTH_DEFAULT_SELECTIVITY ),
      _mthCPUCost( OPT_MTH_DEFAULT_CPU_COST ),
@@ -805,7 +805,7 @@ namespace engine
                                 const rtnContext * context )
    : _optPlanNode( node, context ),
      _pCollection( node._pCollection ),
-     _pageSize( node._pageSize ),
+     _pageSizeLog2( node._pageSizeLog2 ),
      _estCacheSize( node._estCacheSize ),
      _mthSelectivity( node._mthSelectivity ),
      _mthCPUCost( node._mthCPUCost ),
@@ -859,7 +859,7 @@ namespace engine
                   (UINT32)ceil( (double)collectionStat->getTotalDataSize() /
                                 (double)_inputRecords ) ) ;
 
-      _pageSize = collectionStat->getPageSize() ;
+      _pageSizeLog2 = collectionStat->getPageSizeLog2() ;
       _inputNumFields = collectionStat->getAvgNumFields() ;
 
       if ( _needMatch ) {
@@ -1373,7 +1373,7 @@ namespace engine
 
       evalBuilder << OPT_SEQ_SCAN_IO_COST << " * "
                   << _inputPages << " * ( "
-                  << _pageSize << " / "
+                  << getPageSize() << " / "
                   << DMS_PAGE_SIZE_BASE << " )" ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_IO_COST,
@@ -2297,7 +2297,7 @@ namespace engine
       evalBuilder << OPT_RANDOM_SCAN_IO_COST << " * ( "
                   << _idxReadPages << " + "
                   << _readPages << " ) * ( "
-                  << _pageSize << " / "
+                  << getPageSize() << " / "
                   << DMS_PAGE_SIZE_BASE << " )" ;
 
       return _toBSONFieldEval( builder, OPT_FIELD_IO_COST,

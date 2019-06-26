@@ -462,7 +462,7 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__OPTGENACPLAN__ESTHINTPLANS ) ;
 
-      optCollectionStat collectionStat( su->getPageSize(), mbContext,
+      optCollectionStat collectionStat( su->getPageSizeLog2(), mbContext,
                                         planHelper, statCache ) ;
 
       optScanPath bestPath( &_planAllocator ) ;
@@ -658,7 +658,7 @@ namespace engine
 
       optScanPath tbScanPath( &_planAllocator ), bestPath( &_planAllocator ) ;
 
-      optCollectionStat collectionStat( su->getPageSize(), mbContext,
+      optCollectionStat collectionStat( su->getPageSizeLog2(), mbContext,
                                         planHelper, statCache ) ;
       UINT32 candidateCount = 0 ;
 

@@ -1440,8 +1440,7 @@ namespace engine
 
       pCollectionStat->setTotalRecords( mbContext->mbStat()->_totalRecords ) ;
       pCollectionStat->setSampleRecords( param._sampleRecords ) ;
-      pCollectionStat->setTotalDataPages(
-                  mbContext->mbStat()->getUsedPages( pSU->getPageSize() ) ) ;
+      pCollectionStat->setTotalDataPages( mbContext->mbStat()->_totalDataPages ) ;
       pCollectionStat->setTotalDataSize( mbContext->mbStat()->_totalOrgDataLen ) ;
       pCollectionStat->setAvgNumFields( DMS_STAT_DEF_AVG_NUM_FIELDS ) ;
 

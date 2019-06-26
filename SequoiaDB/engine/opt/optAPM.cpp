@@ -1743,10 +1743,10 @@ namespace engine
                // Cast failed, release the temp plan
                pTmpPlan->release() ;
             }
-            else if ( optCheckStatExpired(
-                        mbContext->mbStat()->getUsedPages( su->getPageSize() ),
-                        pPlan->getInputPages(),
-                        planHelper.getOptCostThreshold() ) )
+            else if ( optCheckStatExpired( mbContext->mbStat()->_totalDataPages,
+                                           pPlan->getInputPages(),
+                                           planHelper.getOptCostThreshold(),
+                                           su->getPageSizeLog2() ) )
             {
                dmsCachedPlanMgr *pCachedPlanMgr = su->getCachedPlanMgr() ;
 
@@ -1878,10 +1878,10 @@ namespace engine
          // for this sub-collection is expired
          if ( NULL != pPlan && pPlan->isMainCLValid() &&
               !pCachedPlanMgr->testParamInvalidBitmap( subCLMBID ) &&
-              optCheckStatExpired(
-                    mbContext->mbStat()->getUsedPages( su->getPageSize() ),
-                    pPlan->getInputPages(),
-                    planHelper.getOptCostThreshold() ) )
+              optCheckStatExpired( mbContext->mbStat()->_totalDataPages,
+                                   pPlan->getInputPages(),
+                                   planHelper.getOptCostThreshold(),
+                                   su->getPageSizeLog2() ) )
          {
             // plan is expired
             PD_LOG( PDDEBUG, "Plan [%s] is expired, current pages [%d], "

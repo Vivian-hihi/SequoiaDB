@@ -314,6 +314,13 @@ namespace engine
 
          DMS_STORAGE_TYPE type() const { return _storageInfo._type ; }
 
+         // for fast calculate page related values
+         UINT32 getPageSizeLog2 () const
+         {
+            return _pDataSu ? _pDataSu->pageSizeSquareRoot() :
+                              DMS_PAGE_SIZE_LOG2_DFT ;
+         }
+
          INT64       totalSize ( UINT32 type = DMS_SU_ALL ) const ;
          INT64       totalDataPages( UINT32 type = DMS_SU_ALL ) const ;
          INT64       totalDataSize( UINT32 type = DMS_SU_ALL ) const ;
