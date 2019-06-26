@@ -50,8 +50,8 @@ function main()
 	commCreateIndex( dbcl2, "b", {b : -1}, false )
 
 	//insert datas
-	var insertNums = 3000;
-	var sameValues = 9000;
+	var insertNums = 10000;
+	var sameValues = 90002;
 	
    insertDiffDatas( dbcl1, insertNums );
 	insertSameDatas( dbcl1, insertNums, sameValues );
@@ -101,8 +101,8 @@ function main()
    checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
 
 	//check the query explain of master/slave nodes 
-	var findConf1 = {a : 9000};
-	var findConf2 = {b : 9000};
+	var findConf1 = {a : sameValues};
+	var findConf2 = {b : sameValues};
    
 	var expExplains1 = [{ScanType:"tbscan", IndexName:"",
 	                     GroupName :srcGroupName1, ReturnNum:insertNums}];
@@ -193,9 +193,6 @@ function main()
    checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
    
    //check the query explain of master/slave nodes 
-	var findConf1 = {a : 9000};
-   var findConf2 = {b : 9000};
-   
    var expExplains1 = [{ScanType:"ixscan", IndexName:"$shard",
 	                     GroupName :srcGroupName1, ReturnNum:insertNums}];
 	var expExplains2 = [{ScanType:"ixscan", IndexName:"b",
@@ -262,8 +259,8 @@ function main()
    println("check result after generate default analyze success!");
    
 	//modify SYSSTAT info   
-   var mcvValues1 = [{a: 0},{a: 1},{a:9000}];
-   var mcvValues2 = [{b: 0},{b: 1},{b:9000}];
+   var mcvValues1 = [{a: 0},{a: 1},{a:sameValues}];
+   var mcvValues2 = [{b: 0},{b: 1},{b:sameValues}];
    var fracs = [500,500,9000];
    
    updateIndexStateInfo( db, csName, clName1, "$shard", mcvValues1, fracs );  
@@ -294,10 +291,7 @@ function main()
    var expAccessPlans = [];
                   
    checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
-   checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
-   
-	var findConf1 = {a : 9000};
-	var findConf2 = {b : 9000};	 
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2); 
 
    var expExplains1 = [{ScanType:"tbscan", IndexName:"",
 	                     GroupName :srcGroupName1, ReturnNum:insertNums}];
@@ -387,10 +381,7 @@ function main()
    var expAccessPlans = [];
                   
    checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
-   checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
-   
-	var findConf1 = {a : 9000};
-	var findConf2 = {b : 9000};	 
+   checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2); 
 
    var expExplains1 = [{ScanType:"tbscan", IndexName:"",
 	                     GroupName :srcGroupName1, ReturnNum:insertNums}];
@@ -458,8 +449,8 @@ function main()
    println("check result after truncate invalidate!");
    
    //modify SYSSTAT info again
-   var mcvValues1 = [{a: 0},{a: 1},{a:9000}];
-   var mcvValues2 = [{b: 0},{b: 1},{b:9000}];
+   var mcvValues1 = [{a: 0},{a: 1},{a:sameValues}];
+   var mcvValues2 = [{b: 0},{b: 1},{b:sameValues}];
    var fracs = [500,500,500];
    
    updateIndexStateInfo( db, csName, clName1, "$shard", mcvValues1, fracs );  
@@ -474,9 +465,6 @@ function main()
    checkStat( db, csName, clName2, "$shard", true, true );
    checkStat( db, csName, clName1, "b", true, true );
    checkStat( db, csName, clName2, "b", true, true );
-	
-   var findConf1 = {a : 9000};
-   var findConf2 = {b : 9000};
    
    var expExplains1 = [{ScanType:"tbscan", IndexName:"",
 	                     GroupName :srcGroupName1, ReturnNum:insertNums}];
@@ -567,9 +555,6 @@ function main()
                   
    checkSnapShotAccessPlans(clFullName1, expAccessPlans, actAccessPlans1);
    checkSnapShotAccessPlans(clFullName2, expAccessPlans, actAccessPlans2);
-   
-   var findConf1 = {a : 9000};
-   var findConf2 = {b : 9000};
    
    var expExplains1 = [{ScanType:"ixscan", IndexName:"$shard",
 	                     GroupName :srcGroupName1, ReturnNum:insertNums}];
