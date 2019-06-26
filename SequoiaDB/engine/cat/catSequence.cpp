@@ -227,20 +227,32 @@ namespace engine
 
       if ( isFirstInitial )
       {
-         if ( getIncrement() < 0 && isFirstInitial )
+         if ( getIncrement() < 0 )
          {
             // set default value for reversed sequence
             if ( !OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) )
             {
                setStartValue( -1 ) ;
+               OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) ;
             }
             if ( !OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_MINVALUE_FIELD ) )
             {
                setMinValue( OSS_SINT64_MIN ) ;
+               OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_MINVALUE_FIELD ) ;
             }
             if ( !OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_MAXVALUE_FIELD ) )
             {
                setMaxValue( -1 ) ;
+               OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_MAXVALUE_FIELD ) ;
+            }
+         }
+         else
+         {
+            // set default value for sequence
+            if ( !OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) )
+            {
+               setStartValue( 1 ) ;
+               OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) ;
             }
          }
       }
@@ -262,9 +274,11 @@ namespace engine
             OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_INITIAL_FIELD ) ;
          }
       }
-      else if ( isInitial() )
+      else if ( isInitial() &&
+                OSS_BIT_TEST( fieldMask, UTIL_CL_AUTOINC_STARTVALUE_FIELD ) )
       {
-         // if is initial, reset current value with start value
+         // if is the sequence is initial, and start value is changed, reset
+         // current value with start value
          setCurrentValue( getStartValue() ) ;
          setCachedValue( getStartValue() ) ;
          OSS_BIT_SET( fieldMask, UTIL_CL_AUTOINC_CURVALUE_FIELD ) ;
