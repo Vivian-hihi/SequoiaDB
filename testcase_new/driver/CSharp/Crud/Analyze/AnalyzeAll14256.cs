@@ -61,7 +61,7 @@ namespace CSharp.Crud.Analyze
             sdb.Analyze();
             for (int i = 0; i < clList.Count; ++i)
             {
-                AnalyzeCommon.CheckScanTypeByExplain(clList.ElementAt(i), "tbscan");
+                AnalyzeCommon.CheckScanTypeByExplain(clList.ElementAt(i), "ixscan");
             }
         }
 

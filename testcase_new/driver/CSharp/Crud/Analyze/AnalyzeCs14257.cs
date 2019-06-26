@@ -68,7 +68,7 @@ namespace CSharp.Crud.Analyze
             
             sdb.Analyze(new BsonDocument("CollectionSpace", analyzeCsName).Add("Mode", 2));
             for (int i = 0; i < analyzeClList.Count; ++i)
-                AnalyzeCommon.CheckScanTypeByExplain(analyzeClList.ElementAt(i), "tbscan");
+                AnalyzeCommon.CheckScanTypeByExplain(analyzeClList.ElementAt(i), "ixscan");
             for (int i = 0; i < nonAnalyzeClList.Count; ++i)
                 AnalyzeCommon.CheckScanTypeByExplain(nonAnalyzeClList.ElementAt(i), "ixscan");
         }

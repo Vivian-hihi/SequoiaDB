@@ -50,7 +50,7 @@ namespace CSharp.Crud.Analyze
             AnalyzeCommon.CheckScanTypeByExplain(nonAnalyzeCl, "ixscan");
             const string clFullName = csName + "." + analyzeClName;
             sdb.Analyze(new BsonDocument("Collection", clFullName));
-            AnalyzeCommon.CheckScanTypeByExplain(analyzeCl, "tbscan");
+            AnalyzeCommon.CheckScanTypeByExplain(analyzeCl, "ixscan");
             AnalyzeCommon.CheckScanTypeByExplain(nonAnalyzeCl, "ixscan");
         }
 

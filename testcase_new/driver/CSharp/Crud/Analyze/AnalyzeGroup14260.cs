@@ -67,7 +67,7 @@ namespace CSharp.Crud.Analyze
             CheckScanTypeByExplain(cl, analyzeRec, "ixscan");
             CheckScanTypeByExplain(cl, nonAnalyzeRec, "ixscan");
             sdb.Analyze(new BsonDocument{ {"GroupName", analyzeGroup} });
-            CheckScanTypeByExplain(cl, analyzeRec, "tbscan");
+            CheckScanTypeByExplain(cl, analyzeRec, "ixscan");
             CheckScanTypeByExplain(cl, nonAnalyzeRec, "ixscan");
         }
 
