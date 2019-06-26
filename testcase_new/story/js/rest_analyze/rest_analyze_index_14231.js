@@ -4,17 +4,19 @@
 @modify list:
 2018-07-30        linsuqiang init
 ****************************************************/
-
+var csName = "analyze14230";
 function insertData( cl, fieldNum )
 {
    var rec = {};
    for( var i = 0; i < fieldNum; i++ )
    {
       fieldName = "field_" + i;
+	  var fieldName1 = "field_str_" + i;
       rec[fieldName] = 0;
+	  rec[fieldName1] = getString(4096);
    }
    var recs = [];
-   var recNum = 2000;
+   var recNum = 25
    for( var i = 0; i < recNum; i++ )
       recs.push( rec );
    cl.insert( recs );
@@ -51,7 +53,9 @@ function checkScanTypeByExplain( cl, indexName, expScanType )
 
 function main()
 {
-   var cs = commCreateCS( db, COMMCSNAME, /*ignoreExisted*/true );
+   commDropCS( db, csName, /*ignoreNotExist*/true );
+   var options = {PageSize:4096};
+   var cs = commCreateCS( db, csName, false, "fail to create cl", options )
    var clName = "analyze14231";
    var cl = cs.createCL( clName );
 
@@ -64,7 +68,7 @@ function main()
    checkScanTypeByExplain( cl, analyzeIdx, "ixscan" );
    for( var i = 0; i < nonAnalyzeIdxArray.length; i++ )
       checkScanTypeByExplain( cl, nonAnalyzeIdxArray[i], "ixscan" );
-   var clFullName = COMMCSNAME + "." + clName;
+   var clFullName = csName + "." + clName;
    var optStr = "options={Collection:\"" + clFullName + "\",Index:\"" + analyzeIdx + "\"}";
    tryCatch( ["cmd=analyze", optStr], [0], "fail to analyze." );
    checkScanTypeByExplain( cl, analyzeIdx, "tbscan" );

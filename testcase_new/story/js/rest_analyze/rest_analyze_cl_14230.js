@@ -7,7 +7,10 @@
 
 var analyzeClName = "analyzeCl14230";
 var nonAnalyzeClName = "nonAnalyzeCl14230";
-var cs = commCreateCS( db, COMMCSNAME, /*ignoreExisted*/true );
+var csName = "analyze14230";
+commDropCS( db, csName, /*ignoreNotExist*/true );
+var options = {PageSize:4096};
+var cs = commCreateCS( db, csName, false, "fail to create cl", options )
 var analyzeCl = cs.createCL( analyzeClName );
 insertDataWithIndex( analyzeCl );
 var nonAnalyzeCl = cs.createCL( nonAnalyzeClName );
@@ -15,12 +18,10 @@ insertDataWithIndex( nonAnalyzeCl );
 
 checkScanTypeByExplain( analyzeCl, "ixscan" ) ;
 checkScanTypeByExplain( nonAnalyzeCl, "ixscan" ) ;
-var clFullName = COMMCSNAME + "." + analyzeClName;
+var clFullName = csName + "." + analyzeClName;
 tryCatch( ["cmd=analyze", "options={Collection: \"" + clFullName + "\"}"], 
           [0], 
           "fail to analyze." );
 checkScanTypeByExplain( analyzeCl, "tbscan" ) ;
 checkScanTypeByExplain( nonAnalyzeCl, "ixscan" ) ;
-
-cs.dropCL( analyzeClName );
-cs.dropCL( nonAnalyzeClName );
+db.dropCS(csName)

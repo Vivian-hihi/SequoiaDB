@@ -6,11 +6,12 @@
 ****************************************************/
 
 var analyzeCsName = "analyze14229";
+var options = {PageSize:4096};
 commDropCS( db, analyzeCsName, /*ignoreNotExist*/true );
-commCreateCS( db, analyzeCsName, /*ignoreExisted*/false );
+commCreateCS( db, analyzeCsName, false, "fail to create cl", options )
 var nonAnalyzeCsName = "nonAnalyze14229";
 commDropCS( db, nonAnalyzeCsName, /*ignoreNotExist*/true );
-commCreateCS( db, nonAnalyzeCsName, /*ignoreExisted*/false );
+commCreateCS( db, nonAnalyzeCsName, /*ignoreExisted*/false,"fail to create cl",options);
 
 var clNumPerCs = 2;
 var analyzeClArray = [];
