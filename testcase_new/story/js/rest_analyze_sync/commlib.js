@@ -90,13 +90,14 @@ function insertDataWithIndex( cl )
 {
    var recs = [];
    var recNum = 2000;
+   var randomStr = getString(4096);
    for( var i = 0; i < recNum; i++ )
    {
-      recs.push( { a: 0 } );
+      recs.push( { a: 0 , b: randomStr} );
    }
    for( var i = 0; i < recNum; i++ )
    {
-      var value = parseInt( Math.random() * 10000 );
+      var value = parseInt( Math.random() * 100 );
       recs.push( { a: value } );
    }
    cl.insert( recs );
@@ -113,3 +114,16 @@ function checkScanTypeByExplain( cl, expScanType )
       doassert( "expect: " + expScanType + ", actual: " + actScanType );
    }
 }
+
+function getString( length )
+{
+	var str = '';
+	var baseStr = "adcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	var count = parseInt(length/baseStr.length);
+	var remainder = length%baseStr.length;
+	for(var i = 0; i < count; i++){
+		str += baseStr;
+	}
+	return str + baseStr.substring(0,remainder);
+}
+

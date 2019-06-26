@@ -35,19 +35,23 @@ function main()
       return;
    }
 
+  
    var csName = "analyze14232";
-   var cs = db.createCS( csName );
+   commDropCS( db, csName, true,  "fail to drop cs")
+   var options = {PageSize:4096};
+   var cs = commCreateCS( db, csName, true, "fail to create cl", options )
 
    var groups = commGetGroups( db );
    var analyzeGroup = groups[0][0]['GroupName'];
    var nonAnalyzeGroup = groups[1][0]['GroupName'];
    var clName = "analyze14232";
+   
    var options = { ShardingKey: { a: 1 }, ShardingType: 'range', 
                    Group: analyzeGroup };
    var cl = cs.createCL( clName, options );
    cl.split( analyzeGroup, nonAnalyzeGroup, { a: 1000 }, { a: 3000 } );
-
-   var analyzeRec = { a: 0 }; // record on analyzeGroup
+   var str = getString(4096);
+   var analyzeRec = { a: 0, b: str}; // record on analyzeGroup
    insertData( cl, analyzeRec );
    var nonAnalyzeRec = { a: 2000 }; // record on nonAnalyzeGroup
    insertData( cl, nonAnalyzeRec );

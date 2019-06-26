@@ -13,13 +13,15 @@ var clArray = [];
 for( var i = 0; i < csNum; i++ )
 {
    var csName = csBaseName + "_" + i;
+   var options = {PageSize:4096};
+   commCreateCS( db, csName, true, "fail to create cl", options )
    for( var j = 0; j < clNumPerCs; j++ )
    {
       var clName = csName + "_" + j;
       var cl = commCreateCL( db, csName, clName, 
                              /*replSize*/1, 
                              /*compressed*/false, 
-                             /*autoCreateCS*/true, 
+                             /*autoCreateCS*/false, 
                              /*ignoreExisted*/true, 
                              "fail to create cl" ) ;
       clArray.push( cl );
