@@ -713,6 +713,12 @@
                      "en": "Quick Deploy Tool"
                   },
                   {
+                     "id": 1561603534,
+                     "file": "sdb",
+                     "cn": "命令行工具",
+                     "en": "Command Line Tool"
+                  },
+                  {
                      "id": 1479195620,
                      "file": "sdbimprt",
                      "cn": "数据导入工具",
