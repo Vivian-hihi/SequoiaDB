@@ -1743,7 +1743,8 @@ namespace engine
                // Cast failed, release the temp plan
                pTmpPlan->release() ;
             }
-            else if ( optCheckStatExpired( mbContext->mbStat()->_totalDataPages,
+            else if ( pPlan->isEstimatedFromStat() &&
+                      optCheckStatExpired( mbContext->mbStat()->_totalDataPages,
                                            pPlan->getInputPages(),
                                            planHelper.getOptCostThreshold(),
                                            su->getPageSizeLog2() ) )
@@ -1876,7 +1877,9 @@ namespace engine
 
          // if plan is main-collection validated, check whether statistics
          // for this sub-collection is expired
-         if ( NULL != pPlan && pPlan->isMainCLValid() &&
+         if ( NULL != pPlan &&
+              pPlan->isMainCLValid() &&
+              pPlan->isEstimatedFromStat() &&
               !pCachedPlanMgr->testParamInvalidBitmap( subCLMBID ) &&
               optCheckStatExpired( mbContext->mbStat()->_totalDataPages,
                                    pPlan->getInputPages(),

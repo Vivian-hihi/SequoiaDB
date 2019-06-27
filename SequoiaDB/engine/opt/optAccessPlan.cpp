@@ -144,6 +144,7 @@ namespace engine
       builder.append( OPT_FIELD_HINT, _key.getHint() ) ;
       builder.appendBool( OPT_FIELD_SORTED_IDX_REQURED,
                           _key.isSortedIdxRequired() ) ;
+      builder.appendBool( OPT_FIELD_EST_FROM_STAT, isEstimatedFromStat() ) ;
 
       builder.append( OPT_FIELD_HASH_CODE, getKeyCode() ) ;
       builder.append( OPT_FIELD_PLAN_SCORE, getScore() ) ;

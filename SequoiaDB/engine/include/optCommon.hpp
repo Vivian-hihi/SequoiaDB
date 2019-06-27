@@ -295,6 +295,7 @@ namespace engine
    #define OPT_FIELD_CL_STAT_TIME         "CLStatTime"
    #define OPT_FIELD_IX_STAT_EST          "IXEstFromStat"
    #define OPT_FIELD_IX_STAT_TIME         "IXStatTime"
+   #define OPT_FIELD_EST_FROM_STAT        "EstFromStat"
    #define OPT_FIELD_IS_CANDIDATE         "IsCandidate"
    #define OPT_FIELD_IS_USED              "IsUsed"
    #define OPT_FIELD_INDEX_PAGES          "IndexPages"
