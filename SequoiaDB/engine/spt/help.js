@@ -41,27 +41,27 @@
       println("   clear                                              - Clear the terminal screen.");
       println("   history -c                                         - Clear the history.");
       println("   quit                                               - Exit.");
-	  println("");
-	  println("   --Shortcuts: ");
-      println("   ctrl + a                                           - Move to beginning of line.");
-      println("   ctrl + b                                           - Left_arrow.");
+      println("");
+      println("   --KeyBoard Shortcuts: ");
+      println("   ctrl + a , <home>                                  - Move to beginning of the line.");
+      println("   ctrl + b , <left>                                  - Move backward one character.");
       println("   ctrl + c                                           - Cancel or quit.");
-      println("   ctrl + d                                           - Remove char at right of cursor.");
-      println("   ctrl + e                                           - Move to end of line.");
-      println("   ctrl + f                                           - Right_arrow.");
+      println("   ctrl + d , <delete>                                - Remove char at right of cursor.");
+      println("   ctrl + e , <end>                                   - Move to end of line.");
+      println("   ctrl + f , <right>                                 - Move forward one character.");
       println("   ctrl + g                                           - Stop reverse search.");
-      println("   ctrl + h                                           - Backspace.");
+      println("   ctrl + h , <backspace>                             - Backspace.");
       println("   ctrl + k                                           - Delete from current to the end of line.");
       println("   ctrl + l                                           - Clear the screen.");
-      println("   ctrl + m                                           - Enter.");
-      println("   ctrl + n                                           - Down_arrow");
-      println("   ctrl + p                                           - Up_arrow.");
+      println("   ctrl + m , <enter>                                 - Accept the line.");
+      println("   ctrl + n , <down>                                  - Move to the next line in history");
+      println("   ctrl + p , <up>                                    - Move to the previous line in history.");
       println("   ctrl + r                                           - Reverse search.");
       println("   ctrl + t                                           - Swap the char at the cursor and the one before.");
       println("   ctrl + u                                           - Delete the whole line.");
       println("   ctrl + w                                           - Delete the previous word.");
-      println("   ctrl + <-                                          - Move cursor to the previous word.");
-      println("   ctrl + ->                                          - Move cursor to the next word.");
+      println("   ctrl + <left>                                      - Move backward by one word.");
+      println("   ctrl + <right>                                     - Move forward by one word.");
    }
    else
    {
