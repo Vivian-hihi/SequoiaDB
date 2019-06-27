@@ -21,73 +21,56 @@ function main()
    var nodeList = createRGAndNode(db, groupName, instanceidList, nodeNum);
    var expSvcNameList = getSvcNameList(db, groupName);
    
-   //create cl ,then insert data 
-   var csName = CHANGEDPREFIX + "_cs18601";
-   var clName = CHANGEDPREFIX + "_cl18601";
-   var dbcl = commCreateCLByOption( db, csName, clName, {ReplSize:0,Group:groupName});  
-   insertData( dbcl);
-   
-   println("---begin to set and query instanceid is " + instanceidList[1] + " and " + instanceidList[2]);
-   db.setSessionAttr( { PreferedInstance: [instanceidList[1], instanceidList[2]], PreferedStrict: true } );
-
-   //stop node and select record
-   println("begin to stop node: " + expSvcNameList[1]);
-   var rg = db.getRG(groupName);
-   rg.getNode(nodeList[1].hostname, nodeList[1].svcname).stop();
-   //TODO:1、没有必要校验主备节点，这里也可能2对应的节点为主
-   setSessionAttrAndCheckResult(db, dbcl, groupName, expSvcNameList[2], false );
-   
    try
    {
-      println("begin to stop node: " + expSvcNameList[2]);
-      rg.getNode(nodeList[2].hostname, nodeList[2].svcname).stop();
-      dbcl.find().explain();
-      throw "FIND_SHOULD_FAIL";
-   }
-   catch(e)
-   {
-      if(e != -250)
-      {
-         rg.start();
-         sleep(1000);
-         db.dropCS(csName);//TODO:2、清理组建议放在finally里面
-         db.removeRG(groupName);
-         throw e;
-      }
-   }
-   db.setSessionAttr({PreferedStrict: false});
-   dbcl.find().explain();
-   
-   //restart the node and select record
-   println("restart the group: " + groupName);
-   rg.start();
-   db.setSessionAttr({PreferedStrict: true});
-   dbcl.find().explain();
-   //TODO:3、节点已经启动，为啥dropCS还要循环判断
-   var sleepInteval=10;
-   for(var i = 0; i < 1000; i++)
-   {
+      //create cl ,then insert data 
+      var csName = CHANGEDPREFIX + "_cs18601";
+      var clName = CHANGEDPREFIX + "_cl18601";
+      var dbcl = commCreateCLByOption( db, csName, clName, {ReplSize:0,Group:groupName});  
+      insertData( dbcl);
+      
+      println("---begin to set and query instanceid is " + instanceidList[1] + " and " + instanceidList[2]);
+      db.setSessionAttr( { PreferedInstance: [instanceidList[1], instanceidList[2]], PreferedStrict: true } );
+
+      //stop node and select record
+      println("begin to stop node: " + expSvcNameList[1]);
+      var rg = db.getRG(groupName);
+      rg.getNode(nodeList[1].hostname, nodeList[1].svcname).stop();
+      setSessionAttrAndCheckResult(dbcl, expSvcNameList[2]);
+      
       try
       {
-         db.dropCS(csName);
-         break;
+         println("begin to stop node: " + expSvcNameList[2]);
+         rg.getNode(nodeList[2].hostname, nodeList[2].svcname).stop();
+         dbcl.find().explain();
+         throw "FIND_SHOULD_FAIL";
       }
       catch(e)
       {
-         if(e != -105)
+         if(e != -250)
          {
             throw e;
          }
-         sleep(sleepInteval);
       }
+      db.setSessionAttr({PreferedStrict: false});
+      dbcl.find().explain();
+      
+      //restart the node and select record
+      println("restart the group: " + groupName);
+      rg.start();
+      db.setSessionAttr({PreferedStrict: true});
+      dbcl.find().explain();
    }
-   
-   db.removeRG(groupName);
+   finally
+   {
+      rg.start();
+      commDropCS(db, csName, true);
+      db.removeRG(groupName);
+   }
 }
 
-function setSessionAttrAndCheckResult(db,dbcl, groupName, expQueryNode, isPrimary )
+function setSessionAttrAndCheckResult(dbcl, expQueryNode)
 {
    var queryNode = getAccessNode( dbcl);
    checkAcessNodeResult( queryNode, expQueryNode );
-   checkAccessNodeIsPrimary( queryNode, groupName, isPrimary );
 }
