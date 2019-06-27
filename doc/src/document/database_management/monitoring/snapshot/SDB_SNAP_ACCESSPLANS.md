@@ -24,6 +24,7 @@ SDB_SNAP_ACCESSPLANS
 | Sort                 | BSON 对象 | 该访问计划的排序字段                           |
 | Hint                 | BSON 对象 | 该访问计划指定使用索引的提示                   |
 | SortedIndexRequired  | 布尔型    | 该访问计划是否需要使用根据 Sort 排序的索引     |
+| EstFromStat          | 布尔型    | 该访问计划是否使用统计信息生成                 |
 | HashCode             | 整型      | 该访问计划的 hash 值                           |
 | Score                | 浮点型    | 该访问计划的评分                               |
 | RefCount             | 整型      | 该访问计划正在被使用的查询个数                 |
@@ -95,6 +96,7 @@ SDB_SNAP_ACCESSPLANS
   "Sort": {},
   "Hint": {},
   "SortedIndexRequired": false,
+  "EstFromStat": false,
   "HashCode": -1411136567,
   "Score": 0,
   "RefCount": 0,
