@@ -4,6 +4,8 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.testcommon.SdbTestBase;
+
+import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -26,7 +28,7 @@ public class Analyze14225 extends SdbTestBase {
 
     @BeforeClass
     public void setup() {
-        db = new SdbWarpper(super.coordUrl);
+        db = new SdbWarpper(coordUrl);
         List<ReplicaGroup> rgs = db.getDataRG();
         if (rgs.size() < 2) {
             throw new SkipException("need at least 2 rgs");
@@ -57,7 +59,7 @@ public class Analyze14225 extends SdbTestBase {
     @Test
     public void test() {
         //some records
-        List records = new ArrayList(4000);
+        List<BSONObject> records = new ArrayList<BSONObject>(4000);
         for (int i = 0; i < 2000; i++) {
             records.add(new BasicBSONObject("a", 0).append("b", 0));
             records.add(new BasicBSONObject("a", 2000).append("b", 2000));
@@ -81,14 +83,14 @@ public class Analyze14225 extends SdbTestBase {
 
         db.analyze(new BasicBSONObject("GroupName", srcGroup));
 
-        //query should use tbscan
+        //query should use idxscan
         SdbClWarpper srcCl = getGroupCl(srcGroup);
         try {
             e = new Explain.Builder(srcCl)
                     .matcher(new BasicBSONObject("b", 0))
                     .options(new BasicBSONObject("Run", true))
                     .build();
-            assertTrue(e.isQueryUseTbscan(), e.getExplainResult());
+            assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
         } finally {
             srcCl.getSequoiadb().close();
         }
@@ -106,7 +108,8 @@ public class Analyze14225 extends SdbTestBase {
 
     private SdbClWarpper getGroupCl(String groupName) {
         Node node = db.getReplicaGroup(groupName).getMaster();
-        SdbWarpper temdb = new SdbWarpper(node.getNodeName());
+        @SuppressWarnings("resource")
+		SdbWarpper temdb = new SdbWarpper(node.getNodeName());
         DBCollection temcl = temdb.getCollectionSpace(dbcl.getCSName()).getCollection(dbcl.getName());
         return new SdbClWarpper(temcl);
     }

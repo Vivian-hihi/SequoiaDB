@@ -1,6 +1,8 @@
 package com.sequoiadb.basicoperation.analyze;
 
 import com.sequoiadb.testcommon.SdbTestBase;
+
+import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -51,7 +53,7 @@ public class Analyze14221 extends SdbTestBase {
     public void test() {
         Random random = new Random();
         //some records
-        List records = new ArrayList(4000);
+        List<BSONObject> records = new ArrayList<BSONObject>(4000);
         for (int i = 0; i < 2000; i++) {
             records.add(new BasicBSONObject("a", 0));
             records.add(new BasicBSONObject("a", random.nextInt()));
@@ -62,7 +64,7 @@ public class Analyze14221 extends SdbTestBase {
             cl.createIndex("aIndex", "{a:1}", false, false);
         }
 
-        //query shuold use ixscan
+        //query should use idxscan
         for (SdbClWarpper dbcl : dbcls) {
             Explain e = new Explain.Builder(dbcl)
                     .matcher(new BasicBSONObject("a", 0))
@@ -73,13 +75,13 @@ public class Analyze14221 extends SdbTestBase {
 
         db.analyze();
 
-        //query should use tbscan
+        //query should use idxscan
         for (SdbClWarpper dbcl : dbcls) {
             Explain e = new Explain.Builder(dbcl)
                     .matcher(new BasicBSONObject("a", 0))
                     .options(new BasicBSONObject("Run", true))
                     .build();
-            assertTrue(e.isQueryUseTbscan(), e.getExplainResult());
+            assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
         }
     }
 }

@@ -16,7 +16,7 @@ public class Analyze14226 extends SdbTestBase {
 
     @BeforeClass
     public void setup() {
-        db = new SdbWarpper(super.coordUrl);
+        db = new SdbWarpper(coordUrl);
     }
 
     @AfterClass

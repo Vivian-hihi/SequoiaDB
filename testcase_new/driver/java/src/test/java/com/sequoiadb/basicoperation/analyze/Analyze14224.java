@@ -1,6 +1,8 @@
 package com.sequoiadb.basicoperation.analyze;
 
 import com.sequoiadb.testcommon.SdbTestBase;
+
+import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -21,7 +23,7 @@ public class Analyze14224 extends SdbTestBase {
 
     @BeforeClass
     public void setup() {
-        db = new SdbWarpper(super.coordUrl);
+        db = new SdbWarpper(coordUrl);
         SdbClProperties clPrope = SdbClProperties.newBuilder(new SdbCsProperties(csName), this.getClass().getSimpleName()).build();
         dbcl = db.createCL(clPrope);
     }
@@ -42,7 +44,7 @@ public class Analyze14224 extends SdbTestBase {
     public void test() {
         Random random = new Random();
         //some records
-        List records = new ArrayList(4000);
+        List<BSONObject> records = new ArrayList<BSONObject>(4000);
         for (int i = 0; i < 2000; i++) {
             records.add(new BasicBSONObject("a", random.nextInt())
                     .append("b", random.nextInt())
@@ -84,11 +86,7 @@ public class Analyze14224 extends SdbTestBase {
                     .matcher(new BasicBSONObject(key, 0))
                     .options(new BasicBSONObject("Run", true))
                     .build();
-            if (indexProperties == indexToAnalyze) {
-                assertTrue(e.isQueryUseTbscan(), e.getExplainResult());
-            } else {
-                assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
-            }
+            assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
         }
 
         db.analyze(new BasicBSONObject("Collection", dbcl.getFullName())
@@ -96,7 +94,7 @@ public class Analyze14224 extends SdbTestBase {
                 .append("Index", indexToAnalyze.getIndexName())
         );
 
-        //query should use ixscan
+        //query should use idxscan
         for (IndexProperties indexProperties : indexPropertiesList) {
             String key = indexProperties.getIndexKey().keySet().iterator().next();
             Explain e = new Explain.Builder(dbcl)
