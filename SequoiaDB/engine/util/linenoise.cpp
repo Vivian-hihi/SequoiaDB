@@ -2166,11 +2166,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
     while(1)
     {
         char c = KEY_NULL ;
-        int nread ;
-        char buf[10] = {0} ;
-        
-        nread = readPack( &l, &c ) ;
-        if (nread <= 0)
+        if ( readPack( &l, &c ) <= 0 )
         {
             ret = l.len;
             goto error;
@@ -2179,7 +2175,7 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
         // handle escape sequence
         // 1. [~0 ...
         // 2. OA ...
-        
+
         if( insideEseSeq )
         {
             int r = doDispatch( &l, c, escDispatch ) ;
@@ -2267,9 +2263,9 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
         case CTRL_T:    /* ctrl-t, swaps current character with previous. */
             if (l.pos > 0 && l.pos < l.len)
             {
-                int aux = buf[l.pos-1];
-                buf[l.pos-1] = buf[l.pos];
-                buf[l.pos] = aux;
+                int aux = l.buf[l.pos-1];
+                l.buf[l.pos-1] = l.buf[l.pos];
+                l.buf[l.pos] = aux;
                 if (l.pos != l.len-1) l.pos++;
                 refreshLine(&l);
             }
@@ -2290,12 +2286,12 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
             insideEseSeq = true ;
             break ;
         case CTRL_U: /* Ctrl+u, delete the whole line. */
-            buf[0] = '\0';
+            l.buf[0] = '\0';
             l.pos = l.len = 0;
             refreshLine(&l);
             break;
         case CTRL_K: /* Ctrl+k, delete from current to end of line. */
-            buf[l.pos] = '\0';
+            l.buf[l.pos] = '\0';
             l.len = l.pos;
             refreshLine(&l);
             break;
