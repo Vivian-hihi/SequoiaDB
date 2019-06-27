@@ -15,9 +15,12 @@ import org.testng.ITestResult;
 public class ReliabilityInvokeMethodListener implements IInvokedMethodListener{
     @Override
     public void beforeInvocation(IInvokedMethod iInvokedMethod, ITestResult iTestResult) {
-        List<String> testGroups = iTestResult.getTestClass().getXmlTest().getIncludedGroups() ;
-        SdbTestBase.setTestGroup( testGroups );
-        
+        if (iTestResult != null 
+            && iTestResult.getTestClass() != null  
+            && iTestResult.getTestClass().getXmlTest() != null){
+            List<String> testGroups = iTestResult.getTestClass().getXmlTest().getIncludedGroups() ;
+            SdbTestBase.setTestGroup( testGroups );
+        }
     }
 
     @Override

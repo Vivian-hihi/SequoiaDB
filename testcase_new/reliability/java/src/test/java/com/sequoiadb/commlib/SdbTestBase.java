@@ -48,7 +48,7 @@ public class SdbTestBase {
     private static String testGroupOfCurrent;
     
     public static void setTestGroup(List<String> testGroup){
-        if ( testGroup.isEmpty()) return ;
+        if ( testGroup == null || testGroup.isEmpty()) return ;
         SdbTestBase.testGroupOfCurrent = testGroup.get( 0 ) ;
     }
 
