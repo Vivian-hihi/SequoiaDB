@@ -3,8 +3,8 @@ package com.sequoias3.config;
 public class SequoiadbDataConfig {
     String csName;
     String domain;
-    Integer lobPageSize;
-    Integer replSize;
+    int lobPageSize;
+    int replSize;
 
     public String getCsName() {
         return csName;
@@ -22,19 +22,19 @@ public class SequoiadbDataConfig {
         return domain;
     }
 
-    public Integer getLobPageSize() {
+    public int getLobPageSize() {
         return lobPageSize;
     }
 
-    public void setLobPageSize(Integer lobPageSize) {
+    public void setLobPageSize(int lobPageSize) {
         this.lobPageSize = lobPageSize;
     }
 
-    public void setReplSize(Integer replSize) {
+    public void setReplSize(int replSize) {
         this.replSize = replSize;
     }
 
-    public Integer getReplSize() {
+    public int getReplSize() {
         return replSize;
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "sdbs3.bucket")
 public class BucketConfig {
     private int limit;
-    private Boolean allowreput;
+    private boolean allowreput = false;
 
     public void setLimit(int limit){
         this.limit = limit;
@@ -17,11 +17,11 @@ public class BucketConfig {
         return limit;
     }
 
-    public void setAllowreput(Boolean allowreput) {
+    public void setAllowreput(boolean allowreput) {
         this.allowreput = allowreput;
     }
 
-    public Boolean getAllowreput() {
+    public boolean getAllowreput() {
         return allowreput;
     }
 }
