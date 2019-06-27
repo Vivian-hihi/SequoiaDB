@@ -44,11 +44,13 @@ namespace engine
    JS_CONSTRUCT_FUNC_DEFINE( _sptBsonobj, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptBsonobj, destruct)
    JS_MEMBER_FUNC_DEFINE_NORESET( _sptBsonobj, toJson )
+   JS_STATIC_FUNC_DEFINE( _sptBsonobj, help )
 
    JS_BEGIN_MAPPING( _sptBsonobj, "BSONObj" )
      JS_ADD_MEMBER_FUNC( "toJson", toJson )
      JS_ADD_CONSTRUCT_FUNC( construct )
      JS_ADD_DESTRUCT_FUNC( destruct )
+     JS_ADD_STATIC_FUNC( "help", help )
      JS_SET_CVT_TO_BSON_FUNC( _sptBsonobj::cvtToBSON )
      JS_SET_JSOBJ_TO_BSON_FUNC( _sptBsonobj::fmpToBSON )
      JS_SET_BSON_TO_JSOBJ_FUNC( _sptBsonobj::bsonToJSObj )
@@ -170,5 +172,22 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptBsonobj::help( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "--Constructor methods for class BSONObj : " << endl ;
+      ss << "--Static methods for class BSONObj : " << endl ;
+      ss << "--Instance methods for class BSONObj : " << endl ;
+      ss << "   toJson()     "
+         << "Convert BSONObj to JSON format" << endl ;
+      ss << "   toObj()      "
+         << "Convert BSONObj to a obj" << endl ;
+      ss << "   toString()   "
+         << "Convert BSONObj to string format" << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
 }
 

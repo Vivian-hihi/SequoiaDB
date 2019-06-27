@@ -51,10 +51,8 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getLastRet )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getLastOutStr )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getLocalIP )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getPeerIP )
-JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, memberHelp )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrSsh, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrSsh, destruct )
-JS_STATIC_FUNC_DEFINE(_sptUsrSsh, help)
 
 JS_BEGIN_MAPPING( _sptUsrSsh, "Ssh" )
    JS_ADD_MEMBER_FUNC( "close", close )
@@ -68,8 +66,6 @@ JS_BEGIN_MAPPING( _sptUsrSsh, "Ssh" )
    JS_ADD_MEMBER_FUNC( "getLastOut", getLastOutStr )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
-   JS_ADD_MEMBER_FUNC( "help", memberHelp )
-   JS_ADD_STATIC_FUNC( "help", help)
 JS_MAPPING_END()
 
    _sptUsrSsh::_sptUsrSsh()
@@ -390,44 +386,6 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << errMsg ) ;
       }
       goto done ;
-   }
-
-   INT32 _sptUsrSsh::memberHelp( const _sptArguments & arg,
-                                 _sptReturnVal & rval,
-                                 BSONObj & detail )
-   {
-      stringstream ss ;
-      ss << "Ssh functions:" << endl
-         << "   getLastRet()       --- get the last cmd remote exec return number" << endl
-         << "   getLastOut()       --- get the last cmd remote exec out string" << endl
-         << "   close()" << endl
-         << "   exec( command )" << endl
-         << "   push( local_file, dst_file, [mode] )" << endl
-         << "   pull( remote_file, local_file, [mode] )" << endl
-         << "   getLocalIP()" << endl
-         << "   getPeerIP()" << endl ;
-
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
-
-   INT32 _sptUsrSsh::help( const _sptArguments & arg,
-                           _sptReturnVal & rval,
-                           BSONObj & detail )
-   {
-      stringstream ss ;
-      ss << "Ssh functions:" << endl
-         << "var ssh = new Ssh( hostname, user, [password], [port] )" << endl
-         << "   getLastRet()       --- get the last cmd remote exec return number" << endl
-         << "   getLastOut()       --- get the last cmd remote exec out string" << endl
-         << "   close()" << endl
-         << "   exec( command )" << endl
-         << "   push( local_file, dst_file, [mode] )" << endl
-         << "   pull( remote_file, local_file, [mode] )" << endl
-         << "   getLocalIP()" << endl
-         << "   getPeerIP()" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
    }
 
    INT32 _sptUsrSsh::getLastRet( const _sptArguments & arg,

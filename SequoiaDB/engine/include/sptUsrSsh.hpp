@@ -92,15 +92,6 @@ namespace engine
       INT32 getLastOutStr( const _sptArguments &arg,
                            _sptReturnVal &rval,
                            bson::BSONObj &detail ) ;
-
-      INT32 memberHelp( const _sptArguments & arg,
-                        _sptReturnVal & rval,
-                        BSONObj & detail ) ;
-
-      static INT32 help( const _sptArguments &arg,
-                         _sptReturnVal &rval,
-                         bson::BSONObj &detail ) ;
-
    private:
       _sptSshSession *_session ;
       string         _host ;

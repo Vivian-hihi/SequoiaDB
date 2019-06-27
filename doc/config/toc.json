@@ -3062,25 +3062,25 @@
                            "cn": "close()",
                            "en": "close()"
                         },
-						{
+                        {
                            "id": 1561519528,
                            "file": "getCmd",
                            "cn": "getCmd()",
                            "en": "getCmd()"
                         },
-						{
+                        {
                            "id": 1561519535,
                            "file": "getFile",
                            "cn": "getFile()",
                            "en": "getFile()"
                         },
-						{
+                        {
                            "id": 1561519542,
                            "file": "getInfo",
                            "cn": "getInfo()",
                            "en": "getInfo()"
                         },
-						{
+                        {
                            "id": 1557121270,
                            "file": "Remote",
                            "cn": "Remote()",
@@ -3088,7 +3088,7 @@
                         }
                      ]
                   },
-				  {
+                  {
                      "id": 1561519743,
                      "dir": "Hash",
                      "cn": "Hash",
@@ -3100,7 +3100,7 @@
                            "cn": "fileMD5()",
                            "en": "fileMD5()"
                         },
-						{
+                        {
                            "id": 1561519752,
                            "file": "md5",
                            "cn": "md5()",
@@ -3108,7 +3108,7 @@
                         }
                      ]
                   },
-				  {
+                  {
                      "id": 1561519810,
                      "dir": "Sdbtool",
                      "cn": "Sdbtool",
@@ -3121,7 +3121,69 @@
                            "en": "listNodes()"
                         }
                      ]
-                  },				  
+                  },  
+                  {
+                     "id": 1561538062,
+                     "dir": "Ssh",
+                     "cn": "Ssh",
+                     "en": "Ssh",
+                     "contents": [
+                     {
+                           "id": 1561538063,
+                           "file": "Ssh",
+                           "cn": "Ssh()",
+                           "en": "Ssh()"
+                        }, 
+                        {
+                           "id": 1561538064,
+                           "file": "close",
+                           "cn": "close()",
+                           "en": "close()"
+                        },
+                        {
+                           "id": 1561538065,
+                           "file": "exec",
+                           "cn": "exec()",
+                           "en": "exec()"
+                        },
+                        {
+                           "id": 1561538066,
+                           "file": "getLastOut",
+                           "cn": "getLastOut()",
+                           "en": "getLastOut()"
+                        },
+                        {
+                           "id": 1561538067,
+                           "file": "getLastRet",
+                           "cn": "getLastRet()",
+                           "en": "getLastRet()"
+                        },
+                        {
+                           "id": 1561538068,
+                           "file": "getLocalIP",
+                           "cn": "getLocalIP()",
+                           "en": "getLocalIP()"
+                        },
+                        {
+                           "id": 1561538069,
+                           "file": "getPeerIP",
+                           "cn": "getPeerIP()",
+                           "en": "getPeerIP()"
+                        },
+                        {
+                           "id": 1561538070,
+                           "file": "pull",
+                           "cn": "pull()",
+                           "en": "pull()"
+                        },
+                        {
+                           "id": 1561538071,
+                           "file": "push",
+                           "cn": "push()",
+                           "en": "push()"
+                        }
+                     ]
+                  },  
                   {
                      "id": 1552489109,
                      "dir": "AuxiliaryObjects",

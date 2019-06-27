@@ -59,7 +59,6 @@ namespace engine
       const vector< BSONObj >& getBsonArray() const { return _vecObj ; }
 
    public:
-
       static INT32 help( const _sptArguments &arg,
                          _sptReturnVal &rval,
                          bson::BSONObj &detail ) ;
@@ -100,10 +99,10 @@ namespace engine
       static INT32 cvtToBSON( const CHAR* key, const sptObject &value,
                               BOOLEAN isSpecialObj, BSONObjBuilder& builder,
                               string &errMsg ) ;
-      
+
       static INT32 fmpToBSON( const sptObject &value, BSONObj &retObj,
                               string &errMsg ) ;
-      
+
       static INT32 bsonToJSObj( sdbclient::sdb &db, const BSONObj &data,
                                 _sptReturnVal &rval, bson::BSONObj &detail ) ;
 
