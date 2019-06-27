@@ -28,6 +28,7 @@ public class Analyze14225 extends SdbTestBase {
 
     @BeforeClass
     public void setup() {
+    	String pre = this.getClass().getSimpleName();
         db = new SdbWarpper(coordUrl);
         List<ReplicaGroup> rgs = db.getDataRG();
         if (rgs.size() < 2) {
@@ -35,8 +36,12 @@ public class Analyze14225 extends SdbTestBase {
         }
         srcGroup = rgs.get(0).getGroupName();
         destGroup = rgs.get(1).getGroupName();
+        BSONObject options = new BasicBSONObject();
+        options.put("PageSize", 4096);
+        SdbCsProperties cs = new SdbCsProperties(pre + "cs", options);
+        db.createCS(cs);
         String clName = this.getClass().getSimpleName();
-        dbcl = db.createCL(SdbClProperties.newBuilder(new SdbCsProperties(csName), clName)
+        dbcl = db.createCL(SdbClProperties.newBuilder(cs, clName)
                 .group(srcGroup)
                 .shardingKey(new BasicBSONObject("a", 1))
                 .shardingType("range")
@@ -45,7 +50,7 @@ public class Analyze14225 extends SdbTestBase {
 
     @AfterClass
     public void teardown() {
-        db.dropCL(dbcl);
+    	db.dropCollectionSpace(dbcl.getCSName());
         db.close();
     }
 
@@ -59,45 +64,44 @@ public class Analyze14225 extends SdbTestBase {
     @Test
     public void test() {
         //some records
-        List<BSONObject> records = new ArrayList<BSONObject>(4000);
-        for (int i = 0; i < 2000; i++) {
-            records.add(new BasicBSONObject("a", 0).append("b", 0));
-            records.add(new BasicBSONObject("a", 2000).append("b", 2000));
+        List<BSONObject> records = new ArrayList<BSONObject>();
+        for (int i = 0; i < 25; i++) {
+            records.add(new BasicBSONObject("a", 0).append("b", AnalyzeUtil.getRandomString(4096)));
+            records.add(new BasicBSONObject("a", 2000).append("b", AnalyzeUtil.getRandomString(4096)));
         }
 
         dbcl.insert(records);
-        dbcl.createIndex("aIndex", "{b:1}", false, false);
         dbcl.split(srcGroup, destGroup, new BasicBSONObject("a", 200), new BasicBSONObject("a", 200000));
 
         Explain e = new Explain.Builder(dbcl)
-                .matcher(new BasicBSONObject("b", 0))
+                .matcher(new BasicBSONObject("a", 0))
                 .options(new BasicBSONObject("Run", true))
                 .build();
         assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
 
         e = new Explain.Builder(dbcl)
-                .matcher(new BasicBSONObject("b", 2000))
+                .matcher(new BasicBSONObject("a", 2000))
                 .options(new BasicBSONObject("Run", true))
                 .build();
         assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
 
         db.analyze(new BasicBSONObject("GroupName", srcGroup));
 
-        //query should use idxscan
+        //query should use tbscan
         SdbClWarpper srcCl = getGroupCl(srcGroup);
         try {
             e = new Explain.Builder(srcCl)
-                    .matcher(new BasicBSONObject("b", 0))
+                    .matcher(new BasicBSONObject("a", 0))
                     .options(new BasicBSONObject("Run", true))
                     .build();
-            assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
+            assertTrue(e.isQueryUseTbscan(), e.getExplainResult());
         } finally {
             srcCl.getSequoiadb().close();
         }
         SdbClWarpper destCl = getGroupCl(destGroup);
         try {
             e = new Explain.Builder(destCl)
-                    .matcher(new BasicBSONObject("b", 2000))
+                    .matcher(new BasicBSONObject("a", 2000))
                     .options(new BasicBSONObject("Run", true))
                     .build();
             assertTrue(e.isQueryUseIxscan(), e.getExplainResult());

@@ -10,7 +10,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import static org.testng.Assert.assertTrue;
 
@@ -25,8 +24,10 @@ public class Analyze14222 extends SdbTestBase {
     public void setup() {
         db = new SdbWarpper(coordUrl);
         String pre = this.getClass().getSimpleName();
+        BSONObject options = new BasicBSONObject();
+        options.put("PageSize", 4096);
         for (int i = 0; i < 5; i++) {
-            SdbCsProperties cs = new SdbCsProperties(pre + "cs" + i);
+            SdbCsProperties cs = new SdbCsProperties(pre + "cs" + i, options);
             db.createCS(cs);
             SdbClProperties cl = SdbClProperties.newBuilder(cs, "cl").build();
             dbcls.add(db.createCL(cl));
@@ -50,12 +51,10 @@ public class Analyze14222 extends SdbTestBase {
      */
     @Test
     public void test() {
-        Random random = new Random();
         //some records
-        List<BSONObject> records = new ArrayList<BSONObject>(4000);
-        for (int i = 0; i < 2000; i++) {
-            records.add(new BasicBSONObject("a", 0));
-            records.add(new BasicBSONObject("a", random.nextInt()));
+        List<BSONObject> records = new ArrayList<BSONObject>();
+        for (int i = 0; i < 25; i++) {
+            records.add(new BasicBSONObject("a", 0).append("b", AnalyzeUtil.getRandomString(4096)));
         }
 
         for (SdbClWarpper cl : dbcls) {
@@ -75,13 +74,17 @@ public class Analyze14222 extends SdbTestBase {
         String analyzeCS=dbcls.get(0).getCSName();
         db.analyze(new BasicBSONObject("CollectionSpace",analyzeCS).append("Mode",2));
 
-        //query should use idxscan
+        //query should use tbscan
         for (SdbClWarpper dbcl : dbcls) {
             Explain e=new Explain.Builder(dbcl)
                     .matcher(new BasicBSONObject("a", 0))
                     .options(new BasicBSONObject("Run", true))
                     .build();
-            assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
+            if(dbcl.getCSName().equals(analyzeCS)){
+                assertTrue(e.isQueryUseTbscan(),e.getExplainResult());
+            }else {
+                assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
+            }
         }
     }
 }

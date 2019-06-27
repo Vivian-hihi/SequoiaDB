@@ -9,6 +9,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 class Explain {
     private DBCollection dbcl;
@@ -183,7 +184,12 @@ class SdbWarpper extends Sequoiadb implements SdbWarpperInterface {
     }
 
     public SdbCsWarpper createCS(SdbCsProperties cs) {
-        CollectionSpace dbcs = this.createCollectionSpace(cs.getCsName());
+    	CollectionSpace dbcs = null;
+    	if(cs.getOptions()!=null){
+    		dbcs = this.createCollectionSpace(cs.getCsName(),cs.getOptions());
+    	}else{
+    		dbcs = this.createCollectionSpace(cs.getCsName());
+    	}
         return new SdbCsWarpper(dbcs);
     }
 
@@ -603,11 +609,21 @@ class SdbCsWarpper {
 
 class SdbCsProperties {
     private String csName;
+    private BSONObject options;
 
     public String getCsName() {
         return csName;
     }
+    
+    public BSONObject getOptions() {
+        return options;
+    }
 
+    SdbCsProperties(String csName, BSONObject options) {
+        this.csName = csName;
+        this.options = options;
+    }
+    
     SdbCsProperties(String csName) {
         this.csName = csName;
     }
@@ -858,4 +874,17 @@ class IndexProperties {
             return new IndexProperties(this);
         }
     }
+}
+
+public class AnalyzeUtil{
+	public static String getRandomString(int length) {
+		String str = "adcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		Random random = new Random();
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < length; i++) {
+			int number = random.nextInt(str.length());
+			sb.append(str.charAt(number));
+		}
+		return sb.toString();
+	}
 }

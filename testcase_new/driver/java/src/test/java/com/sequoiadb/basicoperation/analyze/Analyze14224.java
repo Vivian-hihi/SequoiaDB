@@ -10,7 +10,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import static org.testng.Assert.assertTrue;
 
@@ -24,12 +23,18 @@ public class Analyze14224 extends SdbTestBase {
     @BeforeClass
     public void setup() {
         db = new SdbWarpper(coordUrl);
-        SdbClProperties clPrope = SdbClProperties.newBuilder(new SdbCsProperties(csName), this.getClass().getSimpleName()).build();
+        String pre = this.getClass().getSimpleName();
+        BSONObject options = new BasicBSONObject();
+        options.put("PageSize", 4096);
+        SdbCsProperties cs = new SdbCsProperties(pre + "cs", options);
+        db.createCS(cs);
+        SdbClProperties clPrope = SdbClProperties.newBuilder(cs, this.getClass().getSimpleName()).build();
         dbcl = db.createCL(clPrope);
     }
 
     @AfterClass
     public void teardown() {
+    	db.dropCollectionSpace(dbcl.getCSName());
         db.close();
     }
 
@@ -42,22 +47,14 @@ public class Analyze14224 extends SdbTestBase {
      */
     @Test
     public void test() {
-        Random random = new Random();
         //some records
-        List<BSONObject> records = new ArrayList<BSONObject>(4000);
-        for (int i = 0; i < 2000; i++) {
-            records.add(new BasicBSONObject("a", random.nextInt())
-                    .append("b", random.nextInt())
-                    .append("c", random.nextInt())
-                    .append("d", random.nextInt())
-                    .append("e", random.nextInt())
-            );
-            records.add(new BasicBSONObject("a", 0)
-                    .append("b", 0)
-                    .append("c", 0)
-                    .append("d", 0)
-                    .append("e", 0)
-            );
+        List<BSONObject> records = new ArrayList<BSONObject>();
+        for (int i = 0; i < 25; i++) {
+            records.add(new BasicBSONObject("a", 0).append("astr", AnalyzeUtil.getRandomString(4096)));
+            records.add(new BasicBSONObject("b", 0).append("bstr", AnalyzeUtil.getRandomString(4096)));
+            records.add(new BasicBSONObject("c", 0).append("cstr", AnalyzeUtil.getRandomString(4096)));
+            records.add(new BasicBSONObject("d", 0).append("dstr", AnalyzeUtil.getRandomString(4096)));
+            records.add(new BasicBSONObject("e", 0).append("estr", AnalyzeUtil.getRandomString(4096)));
         }
         dbcl.insert(records);
 
@@ -86,7 +83,11 @@ public class Analyze14224 extends SdbTestBase {
                     .matcher(new BasicBSONObject(key, 0))
                     .options(new BasicBSONObject("Run", true))
                     .build();
-            assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
+            if (indexProperties == indexToAnalyze) {
+                assertTrue(e.isQueryUseTbscan(), e.getExplainResult());
+            } else {
+                assertTrue(e.isQueryUseIxscan(), e.getExplainResult());
+            }
         }
 
         db.analyze(new BasicBSONObject("Collection", dbcl.getFullName())
