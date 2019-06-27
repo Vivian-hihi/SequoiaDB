@@ -9,7 +9,7 @@ define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../global.php';
 include_once Cur_Path.'/../commlib/analyzeUtils.php';
 
-class TestAnalyzeIndex14538 extends PHPUnit_Framework_TestCase
+class TestAnalyzeIndex14238 extends PHPUnit_Framework_TestCase
 {
    private static $db;
    private static $csName = "analyze14238";
@@ -82,7 +82,7 @@ class TestAnalyzeIndex14538 extends PHPUnit_Framework_TestCase
    public static function insertData( $cl, $fieldNum )
    {
       $recs = array();
-      $recNum = 2000;
+      $recNum = 20000;
       $doc = array();
       for( $i = 0; $i < $fieldNum; $i++ )
       {

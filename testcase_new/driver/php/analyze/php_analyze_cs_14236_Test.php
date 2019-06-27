@@ -9,7 +9,7 @@ define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../global.php';
 include_once Cur_Path.'/../commlib/analyzeUtils.php';
 
-class TestAnalyzeCs14536 extends PHPUnit_Framework_TestCase
+class TestAnalyzeCs14236 extends PHPUnit_Framework_TestCase
 {
    private static $db;
    private static $analyzeCsName = "analyzeCs14236";

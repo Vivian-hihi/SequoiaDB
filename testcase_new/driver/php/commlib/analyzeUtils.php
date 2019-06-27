@@ -69,7 +69,7 @@ class analyzeUtils
    public static function insertDataWithIndex( $cl )
    {
       $recs = array();
-      $recNum = 2000;
+      $recNum = 20000;
       for( $i = 0; $i < $recNum; $i++ )
          array_push( $recs, array( 'a' => 0 ) );
       for( $i = 0; $i < $recNum; $i++ )
