@@ -8,9 +8,49 @@
 
 + **登录 MySQL shell**
 
+   MySQL有两种连接方式：基于socket、基于TCP/IP。MySQL默认未开启远程访问权限，如果要使用远程访问权限，要先通过本地连接开启服务。首次登录无密码，不需要加 -p 参数。MySQL安装目录为：/opt/sequoiasql/mysql
+
+   (1)本地连接
+
+   基于UNIX socket，需要指定mysqld.sock文件。
+	
  ```lang-bash
- $ /opt/sequoiasql/mysql/bin/mysql -h 127.0.0.1 -P 3306 -u root
+ $ cd /opt/sequoiasql/mysql
+ $ bin/mysql -S database/3306/mysqld.sock -u root
  ```
+
+   基于TCP/IP，指定本地主机IP地址和端口。
+	
+ ```lang-bash
+ $ cd /opt/sequoiasql/mysql
+ $ bin/mysql -h 127.0.0.1 -P 3306 -u root
+ ```
+
+   (2)远程连接
+
+   只能基于TCP/IP,指定远程主机IP地址和端口。
+
+  开启远程访问权限：
+   
+ ```lang-bash
+ mysql> update mysql.user set host='%' where user='root';
+ mysql> flush privileges;                          
+ ```
+   建立远程连接：
+
+ ```lang-bash
+ $ /opt/sequoiasql/mysql/bin/mysql -h 192.168.20.53 -P 3306 -u root
+ ```
+ 
++ **设置密码**
+	
+ ```lang-bash
+ mysql> alter user root@localhost identified by 'xxxxxx';
+ ```
+ 
+ >   **Note:**
+ >
+ >   设置密码后，再次登录MySQL shell的时候要加 -p 参数，输入刚才设置的密码。
 
 + **配置 SequoiaDB 连接地址**
 
@@ -111,18 +151,18 @@
 
 ###引擎配置###
 
-|参数名|类型|默认值|动态生效|作用范围|说明|
-|------|----|------|----------|----|----|
-|sequoiadb_bulk_insert_size   |整数  |100    |Yes|Global|批量插入时每批的插入记录数。|
-|sequoiadb_conn_addr          |字符串|"localhost:11810" |Yes|Global|SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
-|sequoiadb_debug_log          |布尔  |OFF    |Yes|Global|是否打印debug日志。|
-|sequoiadb_password           |字符串|""     |Yes|Global|SequoiaDB鉴权密码。|
-|sequoiadb_replica_size       |整数  |-1     |Yes|Global|写操作需同步的副本数。在建表时并且没有自定义表配置时使用。取值范围为[-1, 7]。具体可参考SequoiaDB的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。|
-|sequoiadb_selector_pushdown_threshold|无符号整型|30|Yes|Global,<br>Session|查询字段下压触发阈值，取值范围[0-100]，单位：百分比。|
-|sequoiadb_use_autocommit     |布尔  |ON     |Yes|Global|是否启用自动提交模式。|
-|sequoiadb_use_bulk_insert    |布尔  |ON     |Yes|Global|是否启用批量插入。|
-|sequoiadb_use_partition      |布尔  |ON     |Yes|Global|是否启用自动分区。|
-|sequoiadb_user               |字符串|""     |Yes|Global|SequoiaDB鉴权用户。|
+|参数名|类型|默认值|支持命令行修改|说明|
+|------|----|------|----------|----|
+|sequoiadb_bulk_insert_size   |整数  |100    |true |批量插入时每批的插入记录数。|
+|sequoiadb_conn_addr          |字符串|"localhost:11810" |true |SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
+|sequoiadb_debug_log          |布尔  |OFF    |true |是否打印debug日志。|
+|sequoiadb_password           |字符串|""     |true |SequoiaDB鉴权密码。|
+|sequoiadb_replica_size       |整数  |-1     |true |写操作需同步的副本数。在建表时并且没有自定义表配置时使用。取值范围为[-1, 7]。具体可参考SequoiaDB的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。|
+|sequoiadb_selector_pushdown_threshold|无符号整型|30|true|查询字段下压触发阈值，取值范围[0-100]，单位：百分比。|
+|sequoiadb_use_autocommit     |布尔  |ON     |true |是否启用自动提交模式。|
+|sequoiadb_use_bulk_insert    |布尔  |ON     |true |是否启用批量插入。|
+|sequoiadb_use_partition      |布尔  |ON     |true |是否启用自动分区。|
+|sequoiadb_user               |字符串|""     |true |SequoiaDB鉴权用户。|
 
 > **Note:**
 > 
