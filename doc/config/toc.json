@@ -688,6 +688,12 @@
                "cn": "数据库配置",
                "en": "Database Configuration"
             },
+			{
+               "id": 1432191411,
+               "file": "Special_configuration_modify",
+               "cn": "特殊配置项修改",
+               "en": "Special configuration modify"
+            },
             {
                "id": 1432190651,
                "file": "EDU",
