@@ -92,7 +92,7 @@ class TestAnalyzeGroup14239 extends PHPUnit_Framework_TestCase
    public static function insertData( $cl, $doc )
    {
       $recs = array();
-      $recNum = 2000;
+      $recNum = 30000;
       for( $i = 0; $i < $recNum; $i++ )
          array_push( $recs, $doc );
       $err = $cl -> bulkInsert( $recs, 0 );
