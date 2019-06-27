@@ -22,7 +22,7 @@ public class SequoiadbConfig {
     int     maxIdleNum         = 20;
     int     keepAliveTime      = 0;
     int     CheckInterval      = 60000;
-    Boolean validateConnection = true;
+    boolean validateConnection = true;
 
     public String getMetaCsName() {
         return meta.getCsName();
@@ -147,11 +147,11 @@ public class SequoiadbConfig {
         return maxIdleNum;
     }
 
-    public void setValidateConnection(Boolean validateConnection) {
+    public void setValidateConnection(boolean validateConnection) {
         this.validateConnection = validateConnection;
     }
 
-    public Boolean getValidateConnection() {
+    public boolean getValidateConnection() {
         return validateConnection;
     }
 }
