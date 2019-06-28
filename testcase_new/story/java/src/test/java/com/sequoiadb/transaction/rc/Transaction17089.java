@@ -14,6 +14,7 @@ import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -49,16 +50,34 @@ public class Transaction17089 extends SdbTestBase {
 
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        cl = sdb.getCollectionSpace(csName).createCollection(clName,
+
+        sdb.getCollectionSpace(csName).createCollection(clName + "hash",
                 (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
+
+        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(clName + "mainCL",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', IsMainCL:true}"));
+        sdb.getCollectionSpace(csName).createCollection("sub117089");
+        sdb.getCollectionSpace(csName).createCollection("sub217089",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
+        mainCL.attachCollection(csName + ".sub117089",
+                (BSONObject) JSON.parse("{LowBound:{b:{'$minKey':1}}, UpBound:{b:25000}}"));
+        mainCL.attachCollection(csName + ".sub217089",
+                (BSONObject) JSON.parse("{LowBound:{b:25000}, UpBound:{b:{'$maxKey':1}}}"));
+    }
+
+    @DataProvider(name = "getCL")
+    private Object[][] getCLName() {
+        return new Object[][] { { clName + "hash" }, { clName + "mainCL" } };
+    }
+
+    @Test(dataProvider = "getCL")
+    public void test(String clName) {
+        cl = sdb.getCollectionSpace(csName).getCollection(clName);
         cl1 = db1.getCollectionSpace(csName).getCollection(clName);
         cl2 = db2.getCollectionSpace(csName).getCollection(clName);
         cl.createIndex("a", "{a:1}", false, false);
         expList = TransUtils.insertDatas(cl, 0, 50000, 1);
-    }
 
-    @Test
-    public void test() {
         db1.beginTransaction();
         db2.beginTransaction();
 
@@ -130,10 +149,13 @@ public class Transaction17089 extends SdbTestBase {
             db2.close();
         }
         CollectionSpace cs = sdb.getCollectionSpace(csName);
-        if (cs.isCollectionExist(clName)) {
-            cs.dropCollection(clName);
+        if (cs.isCollectionExist(clName + "hash")) {
+            cs.dropCollection(clName + "hash");
         }
-        if (!sdb.isClosed()) {
+        if (cs.isCollectionExist(clName + "mainCL")) {
+            cs.dropCollection(clName + "mainCL");
+        }
+        if (sdb != null) {
             sdb.close();
         }
     }

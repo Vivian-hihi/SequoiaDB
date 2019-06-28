@@ -60,6 +60,19 @@ public class Transaction17114 extends SdbTestBase {
         if (CommLib.OneGroupMode(sdb)) {
             throw new SkipException("ONE GROUP MODE");
         }
+
+        sdb.getCollectionSpace(csName).createCollection(clName + "hash",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
+
+        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(clName + "mainCL",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', IsMainCL:true}"));
+        sdb.getCollectionSpace(csName).createCollection("sub117114");
+        sdb.getCollectionSpace(csName).createCollection("sub217114",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
+        mainCL.attachCollection(csName + ".sub117114",
+                (BSONObject) JSON.parse("{LowBound:{b:{'$minKey':1}}, UpBound:{b:25000}}"));
+        mainCL.attachCollection(csName + ".sub217114",
+                (BSONObject) JSON.parse("{LowBound:{b:25000}, UpBound:{b:{'$maxKey':1}}}"));
     }
 
     @AfterClass
@@ -94,25 +107,27 @@ public class Transaction17114 extends SdbTestBase {
             db7.close();
         }
         CollectionSpace cs = sdb.getCollectionSpace(csName);
-        if (cs.isCollectionExist(clName)) {
-            cs.dropCollection(clName);
+        if (cs.isCollectionExist(clName + "hash")) {
+            cs.dropCollection(clName + "hash");
         }
-        if (!sdb.isClosed()) {
+        if (cs.isCollectionExist(clName + "mainCL")) {
+            cs.dropCollection(clName + "mainCL");
+        }
+        if (sdb != null) {
             sdb.close();
         }
     }
 
     @DataProvider(name = "index")
     public Object[][] createIndex() {
-        return new Object[][] { { "{'a':-1}" }, { "{'a':1}" } };
+        return new Object[][] { { "{'a':-1}", clName + "hash" }, { "{'a':1}", clName + "mainCL" } };
     }
 
     @Test(dataProvider = "index")
-    public void test(String indexKey) {
+    public void test(String indexKey, String clName) {
         try {
             latch = new CountDownLatch(7);
-            cl = sdb.getCollectionSpace(csName).createCollection(clName,
-                    (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
+            cl = sdb.getCollectionSpace(csName).getCollection(clName);
             cl.createIndex("textIndex17114", indexKey, false, false);
             insertData();
 

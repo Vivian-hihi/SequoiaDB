@@ -48,7 +48,7 @@ public class Transaction17105 extends SdbTestBase {
 
     @DataProvider(name = "index")
     public Object[][] createIndex() {
-        return new Object[][] { { "{'a': 1}" }, { "{'a': -1, 'b': 1}" }, };
+        return new Object[][] { { "{'a': 1}", clName + "hash" }, { "{'a': -1, 'b': 1}", clName + "mainCL" }, };
     }
 
     @BeforeClass
@@ -60,8 +60,18 @@ public class Transaction17105 extends SdbTestBase {
         if (CommLib.OneGroupMode(sdb)) {
             throw new SkipException("ONE GROUP MODE");
         }
-        cl = sdb.getCollectionSpace(csName).createCollection(clName,
+        sdb.getCollectionSpace(csName).createCollection(clName + "hash",
                 (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
+
+        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(clName + "mainCL",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', IsMainCL:true}"));
+        sdb.getCollectionSpace(csName).createCollection("sub117105");
+        sdb.getCollectionSpace(csName).createCollection("sub217105",
+                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
+        mainCL.attachCollection(csName + ".sub117105",
+                (BSONObject) JSON.parse("{LowBound:{b:{'$minKey':1}}, UpBound:{b:500}}"));
+        mainCL.attachCollection(csName + ".sub217105",
+                (BSONObject) JSON.parse("{LowBound:{b:500}, UpBound:{b:{'$maxKey':1}}}"));
     }
 
     @AfterClass
@@ -83,17 +93,21 @@ public class Transaction17105 extends SdbTestBase {
         if (!db3.isClosed()) {
             db3.close();
         }
-        if (cs.isCollectionExist(clName)) {
-            cs.dropCollection(clName);
+        if (cs.isCollectionExist(clName + "hash")) {
+            cs.dropCollection(clName + "hash");
         }
-        if (!sdb.isClosed()) {
+        if (cs.isCollectionExist(clName + "mainCL")) {
+            cs.dropCollection(clName + "mainCL");
+        }
+        if (sdb != null) {
             sdb.close();
         }
     }
 
     @Test(dataProvider = "index")
-    public void test(String indexKey) {
+    public void test(String indexKey, String clName) {
         try {
+            cl = sdb.getCollectionSpace(csName).getCollection(clName);
             cl.createIndex("a", indexKey, false, false);
 
             db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
