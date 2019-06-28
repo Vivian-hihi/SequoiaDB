@@ -1,57 +1,4 @@
-以下操作均在 MySQL shell 环境下执行。
-
 ##连接MySQL实例与数据库分布式存储引擎##
-
-+ **为 SequoiaDB 开启事务**
-
-   修改配置项 transactionon 为 true，然后重启节点。具体配置方式参考[数据库配置](database_management/runtime_configuration.md#参数配置)。
-
-+ **登录 MySQL shell**
-
-   MySQL有两种连接方式：基于socket、基于TCP/IP。MySQL默认未开启远程访问权限，如果要使用远程访问权限，要先通过本地连接开启服务。首次登录无密码，不需要加 -p 参数。MySQL安装目录为：/opt/sequoiasql/mysql
-
-   (1)本地连接
-
-   基于UNIX socket，需要指定mysqld.sock文件。
-	
- ```lang-bash
- $ cd /opt/sequoiasql/mysql
- $ bin/mysql -S database/3306/mysqld.sock -u root
- ```
-
-   基于TCP/IP，指定本地主机IP地址和端口。
-	
- ```lang-bash
- $ cd /opt/sequoiasql/mysql
- $ bin/mysql -h 127.0.0.1 -P 3306 -u root
- ```
-
-   (2)远程连接
-
-   只能基于TCP/IP,指定远程主机IP地址和端口。
-
-  开启远程访问权限：
-   
- ```lang-bash
- mysql> update mysql.user set host='%' where user='root';
- mysql> flush privileges;                          
- ```
-   建立远程连接：
-
- ```lang-bash
- $ /opt/sequoiasql/mysql/bin/mysql -h 192.168.20.53 -P 3306 -u root
- ```
- 
-+ **设置密码**
-	
- ```lang-bash
- mysql> alter user root@localhost identified by 'xxxxxx';
- ```
- 
- >   **Note:**
- >
- >   设置密码后，再次登录MySQL shell的时候要加 -p 参数，输入刚才设置的密码。
-
 + **配置 SequoiaDB 连接地址**
 
    默认的 SequoiaDB 连接地址为“localhost:11810”，如需修改可参考以下两种方式
@@ -63,6 +10,51 @@
  ```
 
    (2)通过配置文件修改，参考[配置说明](sql_engine/sequoiasql_mysql/connection.md#配置说明)。
+
++ **登录 MySQL shell** 
+ 
+   MySQL 支持基于 UNIX 域套接字文件和 TCP/IP 的连接方式：
+ 
+ + UNIX 套接字文件连接  
+  进程间通信，不需要使用网络协议，比 TCP/IP 传输效率更高，但仅限于本地连接, 连接时指定对应的套接字文件。
+
+     ```lang-bash
+     $ cd /opt/sequoiasql/mysql
+     $ bin/mysql -S database/3306/mysqld.sock -u root
+     ```
+  > **Note:**  
+  >
+  > SequoiaSQL-MySQL 实例默认无密码，所以无需输入 -p 选项，需要设置密码请参考[设置密码](sql_engine/sequoiasql_mysql/connection.md#设置密码)。
+ + TCP/IP 连接方式  
+   网络通信，可以本地连接（环回接口）和远程连接，同时可以灵活地配置和授权客户端 IP 的访问权限。
+     + 本地连接  
+
+         ```lang-bash
+         $ cd /opt/sequoiasql/mysql
+         $ bin/mysql -h 127.0.0.1 -P 3306 -u root
+         ```
+     + 远程连接  
+     MySQL 默认未授予远程连接的权限，所以首先需要在服务端对客户端 IP 进行访问授权，以下例子对所有的 IP 都授权访问。
+ 
+         ```lang-sql
+         mysql> update mysql.user set host='%' where user='root';
+         mysql> flush privileges;
+         ```
+     在客户端进行远程连接：
+
+         ```lang-bash
+         $ /opt/sequoiasql/mysql/bin/mysql -h 192.168.20.53 -P 3306 -u root
+         ```
+ 
++ **设置密码**
+
+ ```lang-sql
+ mysql> alter user root@'%' identified by 'xxxxxx';
+ ```
+ 
+ >   **Note:**
+ >
+ >   设置密码后，后续登录 MySQL shell 的时候要指定 -p 参数，回车并输入密码。
 
 + **创建数据库实例**
 
