@@ -61,6 +61,7 @@
 #define SDB_SEQUOIAFS_DIAGLEVEL       "diaglevel"
 #define SDB_SEQUOIAFS_DIAGPATH        "diagpath"
 #define SDB_SEQUOIAFS_DIAGNUM         "diagnum"
+#define SDB_SEQUOIAFS_REPLSIZE        "replsize"
 
 
 #define SDB_SEQUOIAFS_CONNECTION_DEFAULT_MAX_NUM 100
@@ -68,6 +69,7 @@
 #define SDB_SEQUOIAFS_HOSTS_DEFAULT_VALUE "localhost:11810"
 #define SDB_SEQUOIAFS_USER_DEFAULT_NAME "sdbadmin"
 #define SDB_SEQUOIAFS_USER_DEFAULT_PASSWD "sdbadmin"
+#define SDB_SEQUOIAFS_REPLSIZE_DEFAULT_VALUE 2
 
 const string SEQUOIAFS_META_CS = "sequoiafs" ;
 const string SEQUOIAFS_META_DIR_SUFFIX = "_dir" ;
@@ -95,6 +97,7 @@ namespace sequoiafs
          const CHAR *getMetaFileCL()const{return _metaFileCollection ;}
          const CHAR *getMetaDirCL()const{return _metaDirCollection ;}
          const INT32 getCacheSize()const{return _cacheSize ;}
+         const INT32 replsize()const{return _replsize ;}
          CHAR *getDiaglogPath(){return _diagPath ;}
          INT32 parseCollection( const string collection, string *cs, string *cl ) ;
 
@@ -117,6 +120,7 @@ namespace sequoiafs
          CHAR _diagPath[OSS_MAX_PATHSIZE + 1] ;
          INT32 _diagnum ;
          UINT16 _diagLevel ;
+         INT32 _replsize ;
          BOOLEAN _hasOptionAutocreate ;
 
    } ;

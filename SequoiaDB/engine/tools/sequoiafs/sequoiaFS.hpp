@@ -184,6 +184,7 @@ namespace sequoiafs
         _sysFileMetaCLFullName = "";
         _sysDirMetaCLFullName = "";
         _mountpoint = "";
+        _replsize = SDB_SEQUOIAFS_REPLSIZE_DEFAULT_VALUE;
       }
 
       ~sequoiaFS(){}
@@ -223,7 +224,14 @@ namespace sequoiafs
                          const bson::BSONObj &indexDef,
                          BOOLEAN isUnique = FALSE,
                          BOOLEAN isEnforced = FALSE);
-
+      void setReplSize(INT32 replsize)
+      {
+        _replsize = replsize;
+      };
+      INT32 replSize() const
+      {
+        return _replsize;
+      }
    private:
       INT32 doSetDirNodeAttr(sdbCollection &cl,
                              struct dirMetaNode &dirNode);
@@ -249,6 +257,7 @@ namespace sequoiafs
       vector<string> _coordHostPort;
       sequoiafsOptionMgr _optionMgr;
       std::map<UINT64, INT8> _mapOpMode;
+      INT32 _replsize;
 
    public:
       string _collection;

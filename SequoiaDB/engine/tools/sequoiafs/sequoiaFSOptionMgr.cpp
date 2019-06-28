@@ -127,6 +127,7 @@ _sequoiafsOptionMgr::_sequoiafsOptionMgr()
    _connectionNum = SDB_SEQUOIAFS_CONNECTION_DEFAULT_MAX_NUM;
    _cacheSize = SDB_SEQUOIAFS_CACHE_DEFAULT_SIZE;
    _diagLevel = PDWARNING;
+   _replsize = SDB_SEQUOIAFS_REPLSIZE_DEFAULT_VALUE;
    _hasOptionAutocreate = FALSE;
 }
 
@@ -208,6 +209,9 @@ INT32 _sequoiafsOptionMgr::init( INT32 argc,
        "default: ./conf/sequoiafs.conf" )
      ( PMD_COMMANDS_STRING( SDB_SEQUOIAFS_DIAGLEVEL,      ",g" ),
        po::value<INT32>() ,      "diagnostic level, default:3, value range: [0-5]" )
+     ( PMD_COMMANDS_STRING( SDB_SEQUOIAFS_REPLSIZE,       ",r" ),
+       po::value<INT32>() ,      "replsize of meta collections, default:2, "
+                                 "value range: [-1-7]" )
      ( SDB_SEQUOIAFS_DIAGNUM, po::value<INT32>() ,
        "The max number of diagnostic log files, default:20, -1:unlimited" )
      ( SDB_SEQUOIAFS_DIAGPATH, po::value<std::string>(),
@@ -406,6 +410,11 @@ INT32 _sequoiafsOptionMgr::doDataExchange(pmdCfgExchange *pEX)
    rdxUShort(pEX, SDB_SEQUOIAFS_DIAGLEVEL, _diagLevel, FALSE,
              PMD_CFG_CHANGE_RUN, (UINT16)PDWARNING);
    rdvMinMax(pEX, _diagLevel, PDSEVERE, PDDEBUG, TRUE);
+
+   //--replsize
+   rdxInt(pEX, SDB_SEQUOIAFS_REPLSIZE, _replsize, FALSE,
+             PMD_CFG_CHANGE_RUN, SDB_SEQUOIAFS_REPLSIZE_DEFAULT_VALUE);
+   rdvMinMax(pEX, _replsize, -1, 7, TRUE);
 
    //--confpath
    rdxPath(pEX, SDB_SEQUOIAFS_CONF_PATH, _cfgPath, sizeof(_cfgPath),

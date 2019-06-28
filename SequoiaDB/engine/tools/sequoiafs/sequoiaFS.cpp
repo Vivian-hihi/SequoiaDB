@@ -228,14 +228,14 @@ error:
 }
 
 INT32 getCollection(sdbCollectionSpace &cs, const CHAR *clName,
-                    sdbCollection &cl)
+                    sdbCollection &cl, UINT16 replsize)
 {
    INT32 rc = SDB_OK;
 
    rc = cs.getCollection(clName, cl);
    if(SDB_DMS_NOTEXIST == rc)
    {
-      rc = cs.createCollection(clName, BSON("ReplSize" << 0), cl);
+      rc = cs.createCollection(clName, BSON("ReplSize" << replsize), cl);
       if(SDB_OK != rc)
       {
           ossPrintf("Failed to create collection:%s, error=%d"OSS_NEWLINE,
@@ -531,7 +531,7 @@ INT32 sequoiaFS::initMetaCSCL(sdb *db, const string csName,
    if(SDB_OK != rc)
       goto error;
 
-   rc = getCollection(cs, clName.c_str(),collection);
+   rc = getCollection(cs, clName.c_str(), collection, replSize());
    if(SDB_OK != rc)
       goto error;
 
@@ -789,6 +789,7 @@ INT32 sequoiaFS::init(INT32 argc, CHAR **argv, vector<string> *options4fuse)
    }
 
    tempDialogPath = optionMgr->getDiaglogPath();
+   setReplSize(optionMgr->replsize());
 
    //2. init and build diaglogPath
    rc = buildDialogPath(diaglogPath, tempDialogPath, OSS_MAX_PATHSIZE + 1);
