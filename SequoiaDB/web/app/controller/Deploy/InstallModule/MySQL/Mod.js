@@ -209,11 +209,12 @@
                $.each( hostList, function( index, hostInfo ){
                   if( hostInfo['ClusterName'] == clusterName )
                   {
+                     allHostSelectList.push( { 'key': hostInfo['HostName'] + ' [' + hostInfo['IP'] + ']', 'value': hostInfo['HostName'], 'Disk': hostInfo['Disk'] } ) ;
+
                      $.each( hostInfo['Packages'], function( packageIndex, packageInfo ){
-                        allHostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'], 'Disk': hostInfo['Disk'] } ) ;
                         if( packageInfo['Name'] == 'sequoiasql-mysql' )
                         {
-                           hostSelectList.push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
+                           hostSelectList.push( { 'key': hostInfo['HostName'] + ' [' + hostInfo['IP'] + ']', 'value': hostInfo['HostName'] } ) ;
                            configure['HostInfo'].push( { 'HostName': hostInfo['HostName'] } ) ; 
                         }
                      } ) ;
