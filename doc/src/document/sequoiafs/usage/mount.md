@@ -125,10 +125,10 @@ Takes 0.001705s.
 
 |记录名称   | 描述说明                 |
 |-----------|--------------------------|
-|SourceCL  	| 目标映射集合名称	       |
-|DirMetaCL	| 目录元数据集合名称       |
-|FileMetaCL	| 文件元数据集合名称       |
-|Address	| FS节点地址        	   |
+|SourceCL   | 目标映射集合名称         |
+|DirMetaCL  | 目录元数据集合名称       |
+|FileMetaCL | 文件元数据集合名称       |
+|Address    | FS节点地址               |
 |MountPoint | FS节点挂载时的目录       |
 sequoiafs.sequenceid为目录元数据中目录记录的id序列表，目的用于构造目录的唯一性。  
 
@@ -172,21 +172,21 @@ Takes 0.019212s.
 ```
 目录元数据信息的具体含义如下：
 
-|记录名称   | 描述说明             |数据类型|
-|-----------|----------------------|--------|
-|_id  	| 对象ID	       	       | OID  |
-|Name	| 目录名称      	       |字符串|
-|Mode	| 目录属性模式             |整数|
-|Uid	| 目录属主	               |整数|
-|Gid    | 目录组属主               |整数|
-|Pid  	| 目录父目录ID，不同于_id  |长整数|
-|Id	    | 目录ID                   |长整数|
-|NLink	| 目录link                 |整数|
-|Size	| 目录大小	               |长整数|
-|CreateTime | 创建时间             |长整数|
-|ModifyTime | 修改时间	           |长整数|
-|AccessTime	| 访问时间             |长整数|
-|SymLink	| 软链接               |字符串|
+|记录名称   | 描述说明                 |数据类型|
+|-----------|--------------------------|--------|
+|_id        | 对象ID                   | OID  |
+|Name       | 目录名称                 |字符串|
+|Mode       | 目录属性模式             |整数|
+|Uid        | 目录属主                 |整数|
+|Gid        | 目录组属主               |整数|
+|Pid        | 目录父目录ID，不同于_id  |长整数|
+|Id         | 目录ID                   |长整数|
+|NLink      | 目录link                 |整数|
+|Size       | 目录大小                 |长整数|
+|CreateTime | 创建时间                 |长整数|
+|ModifyTime | 修改时间                 |长整数|
+|AccessTime | 访问时间                 |长整数|
+|SymLink    | 软链接                  |字符串|
 
 
 DB节点查看文件元数据集合，可以查到testfile文件元数据信息记录。  
@@ -230,21 +230,21 @@ Takes 0.010137s.
 ```
 文件元数据信息具体含义如下：
 
-|记录名称   | 描述说明             |数据类型|
-|-----------|----------------------|--------|
-|_id  	| 对象ID	       	       | OID  |
-|Name	| 文件名称      	       |字符串|
-|Mode	| 文件属性模式             |整数|
-|Uid	| 文件属主	               |整数|
-|Gid    | 文件组属主               |整数|
-|Pid  	| 文件父目录ID，不同于_id  |长整数|
-|LobOid | 文件对应lob对象ID        |字符串|
-|NLink	| 文件link数               |整数|
-|Size	| 文件大小	               |长整数|
-|CreateTime | 创建时间             |长整数|
-|ModifyTime | 修改时间	           |长整数|
-|AccessTime	| 访问时间             |长整数|
-|SymLink	| 软链接               |字符串|
+|记录名称   | 描述说明                |数据类型|
+|-----------|-------------------------|------|
+|_id        | 对象ID                  | OID  |
+|Name       | 文件名称                |字符串|
+|Mode       | 文件属性模式            |整数  |
+|Uid        | 文件属主                |整数  |
+|Gid        | 文件组属主              |整数  |
+|Pid        | 文件父目录ID，不同于_id |长整数|
+|LobOid     | 文件对应lob对象ID       |字符串|
+|NLink      | 文件link数              |整数  |
+|Size       | 文件大小                |长整数|
+|CreateTime | 创建时间                |长整数|
+|ModifyTime | 修改时间                |长整数|
+|AccessTime | 访问时间                |长整数|
+|SymLink    | 软链接                  |字符串|
 
 从上表可以看出，文件元数据和目录元数据大致相同，不同的是，文件实际对应着一个Lob文件（通过LobOid映射到该文件），以保存文件的实际内容。并且文件没有ID属性，因为文件只从属于某个目录，所以只需要PID属性。
 
@@ -259,26 +259,27 @@ Takes 0.010137s.
  
 ###选项###
 ####通用选项####
-| 参数                 |缩写| 描述                                                                                   | 默认值          | 是否必填 |
-|----------------------|----|----------------------------------------------------------------------------------------|-----------------|----------|
-|--help	               | -h	| 显示帮助信息                                                                           |        		   |          |
-|--helpfuse			   |    | 显示fuse帮助信息，查看FUSE相关选项信息                                                 |        		   |          |
-|--version	           | -v	| 显示版本信息                                                                           |        		   |          |
-|--diaglevel	       | -g	| 设置日志级别，取值范围[0-5]	                                                         | 3      		   | 否       |
-|--hosts	           | -i	| 指定需要映射的集合的所属主机节点地址（hostname:svcname），<br>用","分隔多个地址        | localhost:11810 | 否       |
-|--username	           | -u	| 数据库用户名                                                                           |       		   | 否       |
-|--passwd	           | -p	| 数据库密码                                                                             |       		   | 否       |
-|--collection	       | -l	| 指定需要映射的集合全名                                                                 |       		   | 是       |
-|--metafilecollection  | -f	| 指定文件元数据集合全名，默认根据目标映射集合<br>生成对应集合名称                       |       		   | 否       |
-|--metadircollection   | -d	| 指定目录元数据集合全名，默认根据目标映射集合<br>生成对应集合名称                       |       		   | 否       |
-|--connectionnum	   | -n	| 指定连接池最大支持连接数大小，取值范围[50-1000]                                                | 100    		   | 否       |
-|--cachesize	       | -s	| 目录LRU缓存大小，单位M，取值范围[1-200]                                                | 2     		   | 否       |
-|--confpath	           | -c	| 配置文件路径，默认为当前目录下的sequoiafs.conf                                         |       		   | 否       |
-|--diagnum		       |    | 指定日志文件最大个数，-1表示无限制                                                     | 20    		   | 否       |
-|--diagpath		       |    | 指定日志文件目录，默认当前目录下diaglog                                                |       		   | 否       |
-|--autocreate		   |    | 如果未显示指定文件和目录元数据集合全名，即未指定-d和-f，<br>则需要指定该选项进行自动生成 |       		   | 否       |
-|mountpoint	           | 	| 指定映射集合的目标挂载目录                                                             |       		   | 是       |
-
+| 参数                 |缩写| 描述                                                                                   | 默认值          | 是否必填 | 
+|----------------------|----|----------------------------------------------------------------------------------------|-----------------|----------|  
+|--help                | -h | 显示帮助信息                                                                           |                 |          |  
+|--helpfuse            |    | 显示fuse帮助信息，查看FUSE相关选项信息                                                 |                 |          |  
+|--version             | -v | 显示版本信息                                                                           |                 |          |  
+|--hosts               | -i | 指定需要映射的集合的所属主机节点地址（hostname:svcname），<br>用","分隔多个地址        | localhost:11810 | 否       |  
+|--username            | -u | 数据库用户名                                                                           |                 | 否       |  
+|--passwd              | -p | 数据库密码                                                                             |                 | 否       |  
+|--collection          | -l | 指定需要映射的集合全名                                                                 |                 | 是       |  
+|--metadircollection   | -d | 指定目录元数据集合全名，默认根据目标映射集合<br>生成对应集合名称                       |                 | 否       |  
+|--metafilecollection  | -f | 指定文件元数据集合全名，默认根据目标映射集合<br>生成对应集合名称                       |                 | 否       |  
+|--connectionnum       | -n | 指定连接池最大支持连接数大小，取值范围[50-1000]                                        | 100             | 否       |  
+|--cachesize           | -s | 目录LRU缓存大小，单位M，取值范围[1-200]                                                | 2               | 否       |  
+|--confpath            | -c | 配置文件路径，默认为当前目录下的sequoiafs.conf                                         |                 | 否       |  
+|--diaglevel           | -g | 设置日志级别，取值范围[0-5]                                                            | 3               | 否       |  
+|--replsize            | -r | 指定元数据集合创建时的ReplSize，取值范围[-1,7]                                         | 2               | 否       |  
+|--diagnum             |    | 指定日志文件最大个数，-1表示无限制                                                     | 20              | 否       |  
+|--diagpath            |    | 指定日志文件目录，默认当前目录下diaglog                                                |                 | 否       |  
+|--autocreate          |    | 如果未显示指定文件和目录元数据集合全名，即未指定-d和-f，<br>则需要指定该选项进行自动生成 |               | 否       |  
+|mountpoint            |    | 指定映射集合的目标挂载目录                                                             |                 | 是       |  
+  
 首次启动时，其中-l collection参数和mountpoint是必须指定的，collection为需要映射的目标集合名称，为目标SequoiaDB节点中创建的集合，需要提前在DB中创建好。
 
 目标SequoiaDB节点可以通过-i或者--hosts进行指定，一旦挂载之后，mountpoint目录下的所有文件的属性信息会存放在目标SequoiaDB节点上的目录元数据集合及文件元数据集合中，文件内容会以lob的形式存放在目标集合下。
@@ -286,42 +287,42 @@ Takes 0.010137s.
 目录元数据集合和文件元数据分别可以通过-d(或--metadircollection)和-f（或--metafilecollection）在启动时进行指定，也可以直接通过指定--autocreate默认生成。手工创建时，需要为目录元数据集合创建一个强一致唯一索引，索引字段为 {Name:1, Pid:1}。为文件元数据集合创建两个强一致唯一索引，索引字段分别为 {Name:1, Pid:1} 和 {LobOid:1}。
 
 ####FUSE选项####
-| 参数		                | 描述	
-|---------------------------|-----------------------------------------
-|-d –o debug		        | 启用调试输出（隐含-f选项）             |
-|-f		                    | 前台运行模式	                         |
-|-s		                    | 禁止多线程模式	                     |
-|-o allow_other		        | 允许其他用户访问权限	                 |
-|-o allow_root		        | 允许root用户访问权限	                 |
-|-o nonempty         		| 允许mount在为非空文件夹上	             |
-|-o default-permissions		| 允许内核权限审查	                     |
-|-o fsname=NAME      		| 指定文件系统名称	                     |
-|-o subtype=NAME     		| 指定文件系统类别	                     |
-|-o large_read         		| 指定大页读取	                         |
-|-o max_read=N       		| 指定read请求的最大size	             |
-|-o hard_remove       		| 立即删除，无隐藏文件	                 |
-|-o use_ino           		| 文件系统设置inode	                     |
-|-o readdir_ino        		| Readdir时候尝试填充d_ino	             |
-|-o direct_io           	| 使用direct I/O	                     |
-|-o kernel_cache       		| 允许内核缓存文件	                     |
-|-o [no]auto_cache     		| 允许根据修改次数来缓存文件，默认关闭	 |
-|-o umask=M          		| 指定文件权限mask	                     |
-|-o uid=N             		| 指定文件owner	                         |
-|-o gid=N             		| 指定文件group	                         |
-|-o entry_timeout=T    		| 缓存文件名称的超时时间，默认1s	     |
-|-o negative_timeout=T 		| 缓存删除文件名称的超时时间，默认0s	 |
-|-o attr_timeout=T     		| 缓存文件属性的超时时间，默认1s	     |
-|-o ac_attr_timeout=T   	| 自动设置缓存文件属性的超时时间，默认1s |
-|-o intr               		| 允许requests请求被中断	             |
-|-o intr_signal=NUM    		| 中断时发送的信号量（默认10）	         |
-|-o modules=Ml[:M2…]  		| 指定文件堆中的模块名称	             |
-|-o max_write=N       		| 指定write请求的最大size	             |
-|-o max_readahead=N  		| 指定最大readahead的size	             |
-|-o async_read         		| 异步IO读，默认为异步	                 |
-|-o sync_read          		| 同步IO读	                             |
-|-o atomic_o_trunc     		| 允许open+truncate的原子操作	         |
-|-o big_writes         		| 允许超过4KB页的写操作，最大32K	     |
-|-o no_remote_lock     		| 关闭远程文件锁	                     |
+| 参数                    | 描述  
+|-------------------------|-----------------------------------------
+|-d –o debug              | 启用调试输出（隐含-f选项）             |
+|-f                       | 前台运行模式                           |
+|-s                       | 禁止多线程模式                        |
+|-o allow_other           | 允许其他用户访问权限                   |
+|-o allow_root            | 允许root用户访问权限                   |
+|-o nonempty              | 允许mount在为非空文件夹上              |
+|-o default-permissions   | 允许内核权限审查                       |
+|-o fsname=NAME           | 指定文件系统名称                       |
+|-o subtype=NAME          | 指定文件系统类别                       |
+|-o large_read            | 指定大页读取                           |
+|-o max_read=N            | 指定read请求的最大size                 |
+|-o hard_remove           | 立即删除，无隐藏文件                   |
+|-o use_ino               | 文件系统设置inode                      |
+|-o readdir_ino           | Readdir时候尝试填充d_ino               |
+|-o direct_io             | 使用direct I/O                         |
+|-o kernel_cache          | 允许内核缓存文件                       |
+|-o [no]auto_cache        | 允许根据修改次数来缓存文件，默认关闭   |
+|-o umask=M               | 指定文件权限mask                       |
+|-o uid=N                 | 指定文件owner                          |
+|-o gid=N                 | 指定文件group                          |
+|-o entry_timeout=T       | 缓存文件名称的超时时间，默认1s         |
+|-o negative_timeout=T    | 缓存删除文件名称的超时时间，默认0s     |
+|-o attr_timeout=T        | 缓存文件属性的超时时间，默认1s         |
+|-o ac_attr_timeout=T     | 自动设置缓存文件属性的超时时间，默认1s |
+|-o intr                  | 允许requests请求被中断                 |
+|-o intr_signal=NUM       | 中断时发送的信号量（默认10）           |
+|-o modules=Ml[:M2…]      | 指定文件堆中的模块名称                 |
+|-o max_write=N           | 指定write请求的最大size                |
+|-o max_readahead=N       | 指定最大readahead的size                |
+|-o async_read            | 异步IO读，默认为异步                   |
+|-o sync_read             | 同步IO读                               |
+|-o atomic_o_trunc        | 允许open+truncate的原子操作            |
+|-o big_writes            | 允许超过4KB页的写操作，最大32K         |
+|-o no_remote_lock        | 关闭远程文件锁                         |
     
 >**说明:**   
 >1、sequoiafs对于fuse选项只需要关注allow_other、allow_root、large_read、max_read、max_write、big_writes等常见选项即可；   
@@ -389,37 +390,37 @@ SequoiaFS现支持以下文件操作API：
 
 |接口函数   | 参数                     | 描述          
 |-----------|--------------------------|-----------------------------------------------------------------------------------------------------------
-|opendir()	| const char *name	       | 打开目录文件                                                                                             |
-|readdir()	| DIR *dir	               | 读取目录文件                                                                                             |
-|closedir()	| DIR *dir	               | 关闭目录文件                                                                                             |
-|open()	    | const char *pathname	   | 创建或打开一个文件，flags只支持O_RDONLY, O_WRONLY, O_CREATE, <br>其他报错。忽略可选参数mode，默认权限644。   |
-|           | int flags	               |                                                                                                          |
-|           | [mode_t mode]	           |                                                                                                          |
-|close()	| int fd	               | 关闭文件                                                                                                 |
-|remove()	| const char *pathname	   | 删除文件                                                                                                 |
-|lseek()	| FILE *stream	           | 设置读写偏移                                                                                             |
-|           | long offset	           |                                                                                                          |
-|           | int whence	           |                                                                                                          |
-|read()	    | int fd	               | 读取文件数据                                                                                             |
-|           | void *buf	               |                                                                                                          |
-|           | size_t count	           |                                                                                                          |
-|write()	| int fd	               | 写文件数据                                                                                               |
-|           | const void* buf	       |                                                                                                          |
-|           | size_t count	           |                                                                                                          |
-|stat()	    | const char *pathname	   | 获取文件的属性信息                                                                                       |
-|           | struct stat *buf	       |                                                                                                          |
-|utime()	| const char * pathname	   | 更改访问和修改时间                                                                                       |
-|           | struct utimebuf * buf	   |                                                                                                          |
-|link()	    | const char *oldpath	   | 创建链接文件（硬链接）                                                                                   |
-|           | const char *newpath	   |                                                                                                          |
-|unlink()	| const char * pathname	   | 删除指定文件，如果该文件为最后的链接点，则文件会被删除。<br>如果为符号链接，则链接删除。                 |
-|symlink()	| const char *oldpath	   | 创建符号链接文件, oldpath指定文件允许不存在。                                                            |
-|           | const char *newpath	   |                                                                                                          |
-|truncate()	| const char *pathname     | 截取文件内容，将path指定的文件大小改为参数length的大小，<br>如果原来文件比length大，则超过的部分会被删除。|
-|           | off_t length	           |                                                                                                          |
-|mkdir()	| const char *pathname     | 创建目录文件                                                                                             |
-|           | mode_t  mode	           |                                                                                                          |
-|rmdir()	| const char *pathname	   | 删除目录文件                                                                                             |
+|opendir()  | const char *name         | 打开目录文件                                                                                             |
+|readdir()  | DIR *dir                 | 读取目录文件                                                                                             |
+|closedir() | DIR *dir                 | 关闭目录文件                                                                                             |
+|open()     | const char *pathname     | 创建或打开一个文件，flags只支持O_RDONLY, O_WRONLY, O_CREATE, <br>其他报错。忽略可选参数mode，默认权限644。 |
+|           | int flags                |                                                                                                          |
+|           | [mode_t mode]            |                                                                                                          |
+|close()    | int fd                   | 关闭文件                                                                                                 |
+|remove()   | const char *pathname     | 删除文件                                                                                                 |
+|lseek()    | FILE *stream             | 设置读写偏移                                                                                             |
+|           | long offset              |                                                                                                          |
+|           | int whence               |                                                                                                          |
+|read()     | int fd                   | 读取文件数据                                                                                             |
+|           | void *buf                |                                                                                                          |
+|           | size_t count             |                                                                                                          |
+|write()    | int fd                   | 写文件数据                                                                                               |
+|           | const void* buf          |                                                                                                          |
+|           | size_t count             |                                                                                                          |
+|stat()     | const char *pathname     | 获取文件的属性信息                                                                                       |
+|           | struct stat *buf         |                                                                                                          |
+|utime()    | const char * pathname    | 更改访问和修改时间                                                                                       |
+|           | struct utimebuf * buf    |                                                                                                          |
+|link()     | const char *oldpath      | 创建链接文件（硬链接）                                                                                   |
+|           | const char *newpath      |                                                                                                          |
+|unlink()   | const char * pathname    | 删除指定文件，如果该文件为最后的链接点，则文件会被删除。<br>如果为符号链接，则链接删除。                 |
+|symlink()  | const char *oldpath      | 创建符号链接文件, oldpath指定文件允许不存在。                                                            |
+|           | const char *newpath      |                                                                                                          |
+|truncate() | const char *pathname     | 截取文件内容，将path指定的文件大小改为参数length的大小，<br>如果原来文件比length大，则超过的部分会被删除。|
+|           | off_t length             |                                                                                                          |
+|mkdir()    | const char *pathname     | 创建目录文件                                                                                             |
+|           | mode_t  mode             |                                                                                                          |
+|rmdir()    | const char *pathname     | 删除目录文件                                                                                             |
 |rename     | const char *pathname     | 更改文件名称                                                                                             |
 |           | const char *newpathname  |                                                                                                          |
 |chmod      | const char *pathname     | 更改文件权限                                                                                             |
