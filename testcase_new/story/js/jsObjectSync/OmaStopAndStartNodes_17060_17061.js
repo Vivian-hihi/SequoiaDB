@@ -27,6 +27,7 @@ function main()
    try
    {
       //停止一个节点，启动一个节点
+      println("---stop one node--");
       var testNode1 = [nodeList[0]];
       oma.stopNodes(testNode1);
       checkNodeStatus(hostName, testNode1, false);
@@ -34,6 +35,7 @@ function main()
       checkNodeStatus(hostName, nodeList, true);
       
       //停止多个节点，启动多个节点
+      println("---stop multiple nodes--");
       var testNode2 = [nodeList[1], nodeList[2]];
       oma.stopNodes(testNode2);
       checkNodeStatus(hostName, testNode2, false);
@@ -41,6 +43,7 @@ function main()
       checkNodeStatus(hostName, nodeList, true);
       
       //停止所有节点，启动所有节点
+      println("---stop all nodes--");
       var testNode3 = nodeList;
       oma.stopNodes(testNode3);
       checkNodeStatus(hostName, testNode3, false);
@@ -48,9 +51,11 @@ function main()
       checkNodeStatus(hostName, nodeList, true);
       
       //停止已停止或不存在的节点，启动多个节点包括不存在的节点
+      println("---stop node before test--");
       var testNode4 = [nodeList[0]];
       oma.stopNodes(testNode4);
       checkNodeStatus(hostName, [nodeList[0]], false);
+      println("---stop stopped or not exist nodes--");
       testNode4.push(RSRVPORTBEGIN);
       oma.stopNodes(testNode4);
       checkNodeStatus(hostName, [nodeList[0]], false);
@@ -106,13 +111,13 @@ function checkNodeStatus( hostname, nodeList, isNormal )
       {
          if(isNormal)
          {
-            throw buildException("checkNodeStatus()", e, "check node status", "node normal", "node error");
+            throw buildException("checkNodeStatus()", e, "check node status: '" + hostname + ":" + nodeList[i] + "'", "node normal", "node error");
          }
          else
          {
             if( e != -79)
             {
-               throw buildException("checkNodeStatus()", e, "conn failed, check error code", -79, e);
+               throw buildException("checkNodeStatus()", e, "check node error: '" + hostname + ":" + nodeList[i] + "'", -79, e);
             }
          }
       }
