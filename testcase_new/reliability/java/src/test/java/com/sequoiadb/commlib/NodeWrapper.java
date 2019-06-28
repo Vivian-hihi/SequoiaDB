@@ -199,6 +199,7 @@ public class NodeWrapper {
                         .getLong( "FreeSpace" ) ;
             }
         } catch ( ReliabilityException e ) {
+            e.printStackTrace() ;
             checkResult.connect = false ;
         }
 
