@@ -5,9 +5,9 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
@@ -16,6 +16,8 @@ import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
 import com.sequoias3.commlibs3.TestTools;
+import com.sequoias3.commlibs3.s3utils.DelimiterUtils;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -44,8 +46,7 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 	private String objectNameBase = "PutObject18196";
 	private List<String> objectNames = new ArrayList<String>();
 	private List<String> objectNameList = new CopyOnWriteArrayList<String>();
-	private File localPath = null;
-	private Sequoiadb sdb = null;
+	private File localPath = null;	
 
 	@BeforeClass
 	private void setUp() throws IOException {
@@ -61,8 +62,7 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 		for (int i = 0; i < objectNums; i++) {
 			objectNames.add(objectNameBase + i + "_" + delimiter);
 		}
-		// DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);		
 
 	}
 
@@ -71,28 +71,26 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 		// get the source group master hostname and port
 		GroupMgr groupMgr = GroupMgr.getInstance();
 		List<GroupWrapper> glist = groupMgr.getAllDataGroup();
-		String groupName = glist.get(0).getGroupName();
-		//TODO:GroupWrapper可以获取主节点，不需要通过sdb获取主节点,所以可以省去用例里面new Sequoiadb的步骤且setup里面
-		//sdb的连接没有释放
-		String destHostName = sdb.getReplicaGroup(groupName).getMaster().getHostName();
-		int destPort = sdb.getReplicaGroup(groupName).getMaster().getPort();
-		System.out.println("KillNode:" + destHostName + ":" + destPort);
+		String groupName = glist.get(0).getGroupName();		
+		GroupWrapper group = groupMgr.getGroupByName(groupName);
+        NodeWrapper node = group.getMaster();		
+		System.out.println("KillNode:" + node.hostName()+ ":" + node.svcName());
 
 		// create concurrent tasks
-		FaultMakeTask faultTask = KillNode.getFaultMakeTask(destHostName, String.valueOf(destPort), 5, 50);
+		FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 2);
 		TaskMgr mgr = new TaskMgr(faultTask);
 		for (int i = 0; i < objectNums; i++) {
 			mgr.addTask(new PutObject(objectNames.get(i)));
 		}
 		mgr.execute();
 		Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
-		//TODO：是否需要考虑停sdb节点可能带来其他的后果
+		Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "node start fail!");	
 		// put again
 		objectNames.removeAll(objectNameList);
 		for (String objectName : objectNames) {
 			for (int i = 0; i < versionNums; i++) {
 				PutObjectResult obj = s3Client.putObject(bucketName, objectName, new File(filePath));
-				checkPutResult(obj);
+				checkPutResult(obj,objectName);
 			}
 		}
 		runSuccess = true;
@@ -103,10 +101,12 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				CommLibS3.clearBucket(s3Client, bucketName);
-				//TODO:没有删除本地创建的文件
+				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
-			s3Client.shutdown();
+			if( s3Client != null)
+				s3Client.shutdown();
+			
 		}
 	}
 
@@ -124,28 +124,27 @@ public class PutObjectAndKillData18196 extends S3TestBase {
 				System.out.println("---begin to putobject:" + objectName);
 				for (int i = 0; i < versionNums; i++) {
 					PutObjectResult obj = s3Client.putObject(bucketName, this.objectName, new File(filePath));
-					checkPutResult(obj);
+					checkPutResult(obj, this.objectName);
 					objectNameList.add(this.objectName);
 				}
 				System.out.println("---end to putobject:" + objectName);
 			} catch (AmazonS3Exception e) {
 				System.out.println("---put object fail:" + objectName + " e=" + e.getStatusCode());
-				if (e.getStatusCode() != 500) {
-					//TODO:可以通过new Exception("",e)将objectName带出去;比如：throw new Exception(objectName,e)
-					throw e;
+				if (e.getStatusCode() != 500) {					
+					throw new Exception(objectName,e);
 				}
 			}
 		}
 	}
 
-	private void checkPutResult(PutObjectResult obj) throws IOException {
-		//TODO：下面两行比较了相同的内容
-		Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));
-		Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));
+	private void checkPutResult(PutObjectResult obj,String objectName) throws IOException {
+		Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));	
 		ObjectMetadata metadata = obj.getMetadata();
-		//TODO:打印信息建议去掉
-		System.out.println("versionId = " + metadata.getVersionId());
-		//TODO:这里给一个范围可能更加严谨一点：[0,versionNums)，比较失败的时候带上objectName和版本以后方便定位
-		Assert.assertTrue(Integer.parseInt(metadata.getVersionId()) < versionNums, metadata.getVersionId());
+		System.out.println("versionId = " + metadata.getVersionId());		
+		int versionId = Integer.parseInt(metadata.getVersionId());
+		if( versionId < 0 || versionId >= versionNums ){
+			Assert.fail("key="+objectName + ",versionId="+metadata.getVersionId());
+		}
+		
 	}
 }
