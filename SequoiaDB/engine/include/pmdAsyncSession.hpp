@@ -58,7 +58,14 @@ namespace engine
    #define INVLIAD_SESSION_ID       (0)
    #define SESSION_NAME_LEN         (100)
 
+   #define MAX_BUFFER_ARRAY_SIZE    (20)
+
    #define PMD_BASE_HANDLE_ID       ( DATA_NODE_ID_END + 10000 )
+
+   #define PMD_BUFF_INVALID         (0)
+   #define PMD_BUFF_ALLOC           (1)
+   #define PMD_BUFF_USING           (2)
+   #define PMD_BUFF_FREE            (3)
 
    enum PMD_SESSION_START_TYPE
    {
@@ -66,7 +73,39 @@ namespace engine
       PMD_SESSION_PASSIVE  = 2   //passive
    };
 
+   #define PMD_SESSION_MSG_INPOOL   ( 0 )
+   #define PMD_SESSION_MSG_UNPOOL   ( 1 )
+
+   #define PMD_MAKE_SESSION_USERDATA( netHandle, poolType ) \
+      ( ( UINT64 )( netHandle ) | ( (UINT64)(poolType) << 63 ) )
+
+   #define PMD_UNMAKE_SESSION_USERDATA( userData, netHandle, poolType ) \
+      do { \
+         netHandle = ( UINT64 )( userData ) & ~( (UINT64)1 << 63 ) ; \
+         poolType = ( UINT64 )( userData ) >> 63 ; \
+      } while( 0 )
+
    class _pmdAsycSessionMgr ;
+
+   /*
+      _pmdBuffInfo define
+   */
+   class _pmdBuffInfo : public SDBObject
+   {
+   public :
+      CHAR     *pBuffer ;
+      UINT32   size ;
+      INT32    useFlag ;
+      UINT64   addTime ;   /// uses
+
+      BOOLEAN isAlloc () { return useFlag == PMD_BUFF_ALLOC ? TRUE : FALSE ; }
+      BOOLEAN isUsing () { return useFlag == PMD_BUFF_USING ? TRUE : FALSE ; }
+      BOOLEAN isFree () { return useFlag == PMD_BUFF_FREE ? TRUE : FALSE ; }
+      BOOLEAN isInvalid () { return useFlag == PMD_BUFF_INVALID ? TRUE : FALSE ; }
+
+      void setFree () { useFlag = PMD_BUFF_FREE ; }
+   } ;
+   typedef class _pmdBuffInfo pmdBuffInfo ;
 
    /*
       _pmdSessionMeta define
@@ -172,6 +211,9 @@ namespace engine
 
          const schedInfo*  getSchedInfo() const ;
 
+         BOOLEAN        isBufferFull() const ;
+         BOOLEAN        isBufferEmpty() const ;
+
          void           setIdentifyInfo( UINT32 ip, UINT16 port,
                                          UINT32 tid, UINT64 eduID ) ;
 
@@ -182,6 +224,14 @@ namespace engine
          void        setSessionMgr( _pmdAsycSessionMgr *pSessionMgr ) ;
 
          void        forceBack() ;
+
+         pmdBuffInfo*   frontBuffer () ;
+         void           popBuffer () ;
+         INT32          pushBuffer ( CHAR *pBuffer, UINT32 size ) ;
+         void*          copyMsg ( const CHAR *msg, UINT32 length ) ;
+
+         UINT32         _incBuffPos ( UINT32 pos ) ;
+         UINT32         _decBuffPos ( UINT32 pos ) ;
 
          void           _holdIn() ;
          void           _holdOut() ;
@@ -218,6 +268,11 @@ namespace engine
          ossEvent             _evtOut ;
          BOOLEAN              _lockFlag ;
          INT32                _startType ;
+
+         pmdBuffInfo          _buffArray[MAX_BUFFER_ARRAY_SIZE] ;
+         UINT32               _buffBegin ;
+         UINT32               _buffEnd ;
+         UINT32               _buffCount ;
 
          /// identify info
          UINT64               _identifyID ;

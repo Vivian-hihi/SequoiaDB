@@ -317,6 +317,17 @@ namespace engine
       _auditMask = 0 ;
       _auditConfigMask = 0 ;
 
+      // release all buffer pointers
+      for ( UINT32 index = 0 ; index < MAX_BUFFER_ARRAY_SIZE; ++index )
+      {
+         _buffArray[index].pBuffer = NULL ;
+         _buffArray[index].size    = 0 ;
+         _buffArray[index].useFlag = PMD_BUFF_INVALID ;
+         _buffArray[index].addTime = 0 ;
+      }
+      _buffBegin = 0 ;
+      _buffEnd   = 0 ;
+      _buffCount = 0 ;
       PD_TRACE_EXIT ( SDB__PMDSN_RESET );
    }
 
@@ -481,6 +492,121 @@ namespace engine
       INT32 rc = _evtOut.wait( millisec ) ;
       PD_TRACE_EXIT ( SDB__PMDSN_WTDTH );
       return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_CPMSG, "_pmdAsyncSession::copyMsg" )
+   void * _pmdAsyncSession::copyMsg( const CHAR *msg, UINT32 length )
+   {
+      PD_TRACE_ENTRY ( SDB__PMDSN_CPMSG );
+      void *p        = NULL ;
+      UINT32 buffPos = _decBuffPos ( _buffEnd ) ;
+      if ( _buffArray[buffPos].isAlloc() &&
+           _buffArray[buffPos].size >= length )
+      {
+         ossMemcpy( _buffArray[buffPos].pBuffer, msg, length ) ;
+         _buffArray[buffPos].useFlag = PMD_BUFF_USING ;
+         p = (void*)&_buffArray[buffPos] ;
+         goto done ;
+      }
+      // we shouldn't get here
+      // if we hit here that means the memory we were trying to use was not
+      // properly allocated or the length is not good
+      PD_LOG ( PDERROR, "Session[%s] copy msg failed[buffindex:%d, size:%d, "
+               "flag:%d, message length:%d", sessionName(), buffPos,
+               _buffArray[buffPos].size, _buffArray[buffPos].useFlag, length ) ;
+
+   done :
+      PD_TRACE_EXIT ( SDB__PMDSN_CPMSG );
+      return p ;
+   }
+
+   BOOLEAN _pmdAsyncSession::isBufferFull() const
+   {
+      return _buffCount >= MAX_BUFFER_ARRAY_SIZE ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _pmdAsyncSession::isBufferEmpty() const
+   {
+      return _buffCount == 0 ? TRUE : FALSE ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_FRNBUF, "_pmdAsyncSession::frontBuffer" )
+   pmdBuffInfo *_pmdAsyncSession::frontBuffer ()
+   {
+      PD_TRACE_ENTRY ( SDB__PMDSN_FRNBUF );
+      pmdBuffInfo *p = NULL ;
+      if ( _buffArray[_buffBegin].isInvalid() )
+      {
+         goto done ;
+      }
+      SDB_ASSERT ( _buffCount > 0 , "_buffCount must be greater than 0" ) ;
+
+      p = &_buffArray[_buffBegin] ;
+   done :
+      PD_TRACE_EXIT ( SDB__PMDSN_FRNBUF );
+      return p ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_POPBUF, "_pmdAsyncSession::popBuffer" )
+   void _pmdAsyncSession::popBuffer ()
+   {
+      PD_TRACE_ENTRY ( SDB__PMDSN_POPBUF );
+      SDB_ASSERT ( _buffCount > 0 , "_buffCount must be greater than 0" ) ;
+
+      _buffArray[_buffBegin].pBuffer = NULL ;
+      _buffArray[_buffBegin].size    = 0 ;
+      _buffArray[_buffBegin].useFlag = PMD_BUFF_INVALID ;
+      _buffArray[_buffBegin].addTime = 0 ;
+
+      --_buffCount ;
+      _buffBegin = _incBuffPos( _buffBegin ) ;
+      PD_TRACE_EXIT ( SDB__PMDSN_POPBUF );
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_PSHBUF, "_pmdAsyncSession::pushBuffer" )
+   INT32 _pmdAsyncSession::pushBuffer ( CHAR * pBuffer, UINT32 size )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__PMDSN_PSHBUF );
+      if ( _buffCount >= MAX_BUFFER_ARRAY_SIZE )
+      {
+         rc = SDB_CLS_BUFFER_FULL ;
+         PD_LOG ( PDWARNING, "cls buffer is full" ) ;
+         goto done ;
+      }
+
+      SDB_ASSERT ( _buffArray[_buffEnd].isInvalid (),
+                   "end buffer can't be invalid" ) ;
+
+      ++_buffCount ;
+      _buffArray[_buffEnd].pBuffer = pBuffer ;
+      _buffArray[_buffEnd].size    = size ;
+      _buffArray[_buffEnd].useFlag = PMD_BUFF_ALLOC ;
+      _buffArray[_buffEnd].addTime = ossGetCurrentMicroseconds() ;
+
+      _buffEnd = _incBuffPos( _buffEnd ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB__PMDSN_PSHBUF, rc );
+      return rc ;
+   }
+
+   // increase buffer position
+   // no need to latch since it can only be touched by one thread
+   UINT32 _pmdAsyncSession::_incBuffPos ( UINT32 pos )
+   {
+      ++pos ;
+      if ( pos < MAX_BUFFER_ARRAY_SIZE )
+      {
+         return pos ;
+      }
+
+      return 0 ;
+   }
+
+   UINT32 _pmdAsyncSession::_decBuffPos ( UINT32 pos )
+   {
+      return pos ? pos - 1 : MAX_BUFFER_ARRAY_SIZE - 1 ;
    }
 
    /*
@@ -890,6 +1016,8 @@ namespace engine
       INT32 rc                = SDB_OK ;
       PD_TRACE_ENTRY ( PMD_SESSMGR_PUSHMSG ) ;
       CHAR *pNewBuff          = NULL ;
+      UINT64 userData         = PMD_MAKE_SESSION_USERDATA( handle,
+                                           PMD_SESSION_MSG_INPOOL ) ;
 
       if ( pSession->isClosed() )
       {
@@ -901,26 +1029,88 @@ namespace engine
 
       if ( PMD_EDU_MEM_NONE == memType )
       {
-         pNewBuff = ( CHAR* )utilThreadAlloc( header->messageLength ) ;
-         if ( !pNewBuff )
+         UINT32 buffSize         = 0 ;
+         pmdBuffInfo * pBuffInfo = pSession->frontBuffer () ;
+         // loop through all free slots
+         while ( pBuffInfo && pBuffInfo->isFree() )
          {
-            PD_LOG( PDERROR, "Failed to alloc msg[size: %d] in session[%s]",
-                    header->messageLength, pSession->sessionName() ) ;
-            rc = SDB_OOM ;
-            goto error ;
+            if ( !pNewBuff && pBuffInfo->size >= (UINT32)header->messageLength )
+            {
+               pNewBuff = pBuffInfo->pBuffer ;
+               buffSize = pBuffInfo->size ;
+            }
+            else //release memory to pool
+            {
+               utilThreadRelease( (void *&)pBuffInfo->pBuffer ) ;
+            }
+            pSession->popBuffer () ;
+            pBuffInfo = pSession->frontBuffer () ;
          }
-         ossMemcpy( pNewBuff, (void*)header, header->messageLength ) ;
-         memType  = PMD_EDU_MEM_THREAD ;
+         // if we cannot find any free slots
+         if ( !pNewBuff && !pSession->isBufferFull() )
+         {
+            // let's allocate memory from pool
+            pNewBuff = ( CHAR* )utilThreadAlloc( header->messageLength,
+                                                 &buffSize ) ;
+            // if unable to allocate from thread pool, let's dump warning message and
+            // and keep calling oss malloc to get memory
+            if ( !pNewBuff )
+            {
+               PD_LOG ( PDWARNING, "Thread pool assign memory failed[size:%d]",
+                        header->messageLength ) ;
+            }
+         }
+         // if memory is got from existing pool, let's assign to the session
+         if ( pNewBuff )
+         {
+            rc = pSession->pushBuffer ( pNewBuff, buffSize ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG ( PDERROR, "push buffer failed in session[%s, rc:%d]", 
+                        pSession->sessionName(), rc ) ;
+               utilThreadRelease( (void *&)pNewBuff ) ;
+               SDB_ASSERT ( 0, "why the buffer is full??? check" ) ;
+               goto error ;
+            }
+
+            // copyMsg will NOT allocate memory inside
+            // so we don't need to set memType
+            pNewBuff = (CHAR*)pSession->copyMsg( (const CHAR*)header,
+                                                 header->messageLength ) ;
+            if ( NULL == pNewBuff )
+            {
+               PD_LOG ( PDERROR, "Unable to find a previous valid memory" ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+         }
+         else
+         {
+            pNewBuff = ( CHAR* )utilThreadAlloc( header->messageLength ) ;
+            if ( !pNewBuff )
+            {
+               PD_LOG( PDERROR, "Failed to alloc msg[size: %d] in session[%s]",
+                       header->messageLength, pSession->sessionName() ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            ossMemcpy( pNewBuff, (void*)header, header->messageLength ) ;
+            userData = PMD_MAKE_SESSION_USERDATA( handle,
+                                                  PMD_SESSION_MSG_UNPOOL ) ;
+            memType  = PMD_EDU_MEM_THREAD ;
+         }
       }
       else
       {
+         userData = PMD_MAKE_SESSION_USERDATA( handle,
+                                               PMD_SESSION_MSG_UNPOOL ) ;
          pNewBuff = ( CHAR* )header ;
       }
 
       // post edu event
       pSession->eduCB()->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
                                                  memType, pNewBuff,
-                                                 handle ) ) ;
+                                                 userData ) ) ;
    done:
       PD_TRACE_EXITRC ( PMD_SESSMGR_PUSHMSG, rc ) ;
       return rc ;
@@ -1324,6 +1514,7 @@ namespace engine
    INT32 _pmdAsycSessionMgr::_releaseSession( pmdAsyncSession *pSession )
    {
       PD_TRACE_ENTRY ( PMD_SESSMGR__RELEASESESSION ) ;
+      pmdBuffInfo *pBuffInfo = NULL ;
 
       SDB_ASSERT ( pSession, "pSession can't be NULL" ) ;
 
@@ -1336,6 +1527,14 @@ namespace engine
          pSession->getMeta()->decBaseHandleNum() ;
       }
 
+      // Release Memory to thread pool
+      pBuffInfo = pSession->frontBuffer() ;
+      while ( pBuffInfo )
+      {
+         utilThreadRelease( (void *&)pBuffInfo->pBuffer ) ;
+         pSession->popBuffer () ;
+         pBuffInfo = pSession->frontBuffer() ;
+      }
       pSession->clear() ;
 
       // if the session can be reused, let's queue it
