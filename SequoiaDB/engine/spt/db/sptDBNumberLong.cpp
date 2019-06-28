@@ -336,7 +336,7 @@ namespace engine
       BSONType type ;
       BSONElement ele ;
       string valStr ;
-      FLOAT64 valDouble ;
+      FLOAT64 valDouble = 0.0 ;
       sptDBNumberLong *pNumberLong = NULL ;
       ele = data.getField( SPT_NUMBERLONG_VALUE_FIELD ) ;
       type = ele.type() ;
