@@ -2295,7 +2295,7 @@ done:
 
       // --optcachelevel
       rdxUInt( pEX, PMD_OPTION_PLAN_CACHE_LEVEL, _planCacheLevel, FALSE,
-               PMD_CFG_CHANGE_RUN, OPT_PLAN_NOCACHE, FALSE ) ;
+               PMD_CFG_CHANGE_RUN, OPT_PLAN_PARAMETERIZED, FALSE ) ;
       rdvMinMax( pEX, _planCacheLevel, OPT_PLAN_NOCACHE, OPT_PLAN_FUZZYOPTR,
                  TRUE ) ;
 
