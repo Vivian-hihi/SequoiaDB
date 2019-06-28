@@ -53,7 +53,7 @@ namespace engine
    */
    static UINT32 g_maxTCCacheSize = UTIL_MEM_POOL_MAXCACHE_SIZE_DFT ;
 
-   #define UTIL_DUMP_BUFFSIZE             ( 2000 )
+   #define UTIL_DUMP_BUFFSIZE             ( 2800 )
 
    void utilSetMaxTCSize( UINT32 maxCacheSize )
    {
@@ -603,10 +603,10 @@ namespace engine
       len = ossSnprintf( pBuff, buffSize,
                          "   CacheSize : %llu"OSS_NEWLINE
                          "  AllocCount : %llu"OSS_NEWLINE
-                         "   O-R Alloc : %llu"OSS_NEWLINE
+                         "   OOR Alloc : %llu"OSS_NEWLINE
                          "ReallocCount : %llu"OSS_NEWLINE
                          "DeallocCount : %llu"OSS_NEWLINE
-                         " O-R Dealloc : %llu"OSS_NEWLINE
+                         " OOR Dealloc : %llu"OSS_NEWLINE
                          "    HitCount : %llu (%.2f%%)"OSS_NEWLINE
                          "   PushCount : %llu (%.2f%%)"OSS_NEWLINE
                          "   CopyCount : %llu (%.2f%%)"OSS_NEWLINE,
