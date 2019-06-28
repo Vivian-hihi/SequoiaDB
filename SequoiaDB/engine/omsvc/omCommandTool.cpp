@@ -77,9 +77,11 @@ namespace engine
       }
 
       filePath = mapFiles.begin()->second ;
+
    done:
       return rc ;
    error:
+      filePath = tmpPath ;
       goto done ;
    }
 
