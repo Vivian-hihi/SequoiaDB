@@ -2184,6 +2184,11 @@ namespace engine
          pmdEduEventRelease( event, cb ) ;
          event.reset() ;
 
+         if ( pmdGetOptionCB()->isEnabledPerfStat() )
+         {
+            utilDumpThreadMemPoolInfo( getEDUName( eduType ), eduName ) ;
+         }
+
          eduMgr->returnEDU( cb, eduDestroyed ) ;
          if ( !eduDestroyed )
          {
@@ -2192,10 +2197,6 @@ namespace engine
                     myEDUID, getEDUName( eduType ), eduName ) ;
          }
 
-         if ( pmdGetOptionCB()->isEnabledPerfStat() )
-         {
-            utilDumpThreadMemPoolInfo() ;
-         }
          utilClearThreadMemPool() ;
       }
 

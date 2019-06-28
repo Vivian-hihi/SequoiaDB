@@ -194,7 +194,8 @@ namespace engine
       Global function
    */
    void        utilSetThreadMemPool( utilMemListPool *pPool ) ;
-   void        utilDumpThreadMemPoolInfo() ;
+   void        utilDumpThreadMemPoolInfo( const CHAR *pType,
+                                          const CHAR *pName ) ;
    void        utilClearThreadMemPool() ;
    UINT32      utilThreadMemPoolSize() ;
 

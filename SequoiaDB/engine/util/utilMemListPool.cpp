@@ -619,7 +619,8 @@ namespace engine
       }
    }
 
-   void utilDumpThreadMemPoolInfo()
+   void utilDumpThreadMemPoolInfo( const CHAR *pType,
+                                   const CHAR *pName )
    {
       if ( g_thdMemPool )
       {
@@ -629,8 +630,11 @@ namespace engine
             ossMemset( pBuff, 0, UTIL_DUMP_BUFFSIZE ) ;
             g_thdMemPool->dump( pBuff, UTIL_DUMP_BUFFSIZE - 1 ) ;
 
-            PD_LOG( PDEVENT, "Dump thread memory info: %s%s",
-                    OSS_NEWLINE, pBuff ) ;
+            PD_LOG( PDEVENT, "Dump thread memory info:"OSS_NEWLINE
+                             " Thread Type : %s"OSS_NEWLINE
+                             " Thread Name : %s"OSS_NEWLINE
+                             "%s",
+                    pType, pName, pBuff ) ;
 
             SDB_OSS_FREE( pBuff ) ;
          }
