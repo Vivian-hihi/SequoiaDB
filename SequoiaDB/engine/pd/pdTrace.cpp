@@ -590,7 +590,7 @@ INT32 _pdTraceCB::_appendFuncName( CHAR **ppBuffer, UINT32 &bufferSize,
    {
       tempBufferSize = ( usedSize + functionsNameLen ) > ( bufferSize * 2 ) ?
                        ( usedSize + functionsNameLen ) : ( bufferSize * 2 ) ;
-      pNewBuffer = (CHAR*)SDB_OSS_REALLOC( *ppBuffer, bufferSize ) ;
+      pNewBuffer = (CHAR*)SDB_OSS_REALLOC( *ppBuffer, tempBufferSize ) ;
       if ( !pNewBuffer )
       {
          rc = SDB_OOM ;
