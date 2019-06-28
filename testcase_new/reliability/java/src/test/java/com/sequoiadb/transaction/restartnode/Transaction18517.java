@@ -1,4 +1,4 @@
-package com.sequoiadb.transaction;
+package com.sequoiadb.transaction.restartnode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +9,7 @@ import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -28,16 +29,15 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @Description seqDB-18527: 主子表，转账的过程中正常重启所有数据节点主节点
+ * @Description seqDB-18517: hash分区表/主子表，转账的过程中正常重启所有数据节点主节点
  * @author yinzhen
  * @date 2019-6-19
  *
  */
 @Test(groups = "rcauto")
-public class Transaction18527 extends SdbTestBase {
+public class Transaction18517 extends SdbTestBase {
     private Sequoiadb sdb;
-    private DBCollection cl;
-    private String clName = "cl18527";
+    private String clName = "cl18517";
     private GroupMgr groupMgr;
     private List<String> groupNames;
 
@@ -56,32 +56,44 @@ public class Transaction18527 extends SdbTestBase {
             throw new SkipException("GROUP ERROR");
         }
 
-        // 创建主子表，主表下挂载多个子表，切分键为账户字段，replSize设置为-1
-        cl = sdb.getCollectionSpace(csName).createCollection(clName, (BSONObject) JSON
+        // 创建hash分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize设置为-1，且已切分到所有组上，切分键为账户字段
+        DBCollection hashCL = sdb.getCollectionSpace(csName).createCollection(clName + "hash", (BSONObject) JSON
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
+
+        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(clName + "mainCL", (BSONObject) JSON
                 .parse("{'ShardingKey':{'account':1}, 'ShardingType':'range', 'IsMainCL':true, 'ReplSize':-1}"));
         sdb.getCollectionSpace(csName).createCollection("sub118527");
         sdb.getCollectionSpace(csName).createCollection("sub218527", (BSONObject) JSON
                 .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
-        cl.attachCollection(csName + ".sub118527",
+        mainCL.attachCollection(csName + ".sub118527",
                 (BSONObject) JSON.parse("{LowBound:{'account':{'$minKey':1}}, UpBound:{'account':3000}}"));
-        cl.attachCollection(csName + ".sub218527",
+        mainCL.attachCollection(csName + ".sub218527",
                 (BSONObject) JSON.parse("{LowBound:{'account':3000}, UpBound:{'account':{'$maxKey':1}}}"));
-        insertData();
+        insertData(hashCL);
+        insertData(mainCL);
     }
 
     @AfterClass
     public void tearDown() {
         CollectionSpace cs = sdb.getCollectionSpace(csName);
-        if (cs.isCollectionExist(clName)) {
-            cs.dropCollection(clName);
+        if (cs.isCollectionExist(clName + "hash")) {
+            cs.dropCollection(clName + "hash");
+        }
+        if (cs.isCollectionExist(clName + "mainCL")) {
+            cs.dropCollection(clName + "mainCL");
         }
         if (sdb != null) {
             sdb.close();
         }
     }
 
-    @Test
-    public void test() throws ReliabilityException {
+    @DataProvider(name = "getCL")
+    private Object[][] getCLName() {
+        return new Object[][] { { clName + "hash" }, { clName + "mainCL" } };
+    }
+
+    @Test(dataProvider = "getCL")
+    public void test(String clName) throws ReliabilityException {
         // 正常重启所有数据节点的主节点
         TaskMgr taskMgr = new TaskMgr();
         for (String groupName : groupNames) {
@@ -92,7 +104,7 @@ public class Transaction18527 extends SdbTestBase {
         }
 
         for (int i = 0; i < 200; i++) {
-            taskMgr.addTask(new Transfer());
+            taskMgr.addTask(new Transfer(clName));
         }
         taskMgr.execute();
 
@@ -106,6 +118,12 @@ public class Transaction18527 extends SdbTestBase {
     }
 
     private class Transfer extends OperateTask {
+        private String clName;
+
+        private Transfer(String clName) {
+            this.clName = clName;
+        }
+
         @Override
         public void exec() throws Exception {
             Sequoiadb db = null;
@@ -129,6 +147,7 @@ public class Transaction18527 extends SdbTestBase {
                     Thread.sleep(200);
                 }
             } catch (BaseException e) {
+                db.rollback();
             } finally {
                 if (db != null) {
                     db.commit();
@@ -138,7 +157,7 @@ public class Transaction18527 extends SdbTestBase {
         }
     }
 
-    private void insertData() {
+    private void insertData(DBCollection cl) {
         List<BSONObject> reocrds = new ArrayList<>();
         for (int i = 0; i < 10000; i++) {
             reocrds.add((BSONObject) JSON.parse("{'balance':10000, 'account':" + i + "}"));
