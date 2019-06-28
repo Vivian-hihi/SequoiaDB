@@ -2,6 +2,7 @@ package com.sequoias3.delimiter;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketVersioningConfiguration;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.task.FaultMakeTask;
@@ -23,6 +24,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -39,24 +41,21 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 	private String delimiter = "#";
 	private String objectName = "object18205" + delimiter + "test.png";
 	private List<String> contents = new ArrayList<String>();
-	//TODO:建议使用ConcurrentHashMap
-	private Map<String, String> versionAndmd5Map = Collections.synchronizedMap(new HashMap<String, String>());
+	private Map<String, String> versionAndMd5Map = new ConcurrentHashMap<String, String>();
 	private List<String> putObjectContentList = new CopyOnWriteArrayList<String>();
 	private String roleName = "normal";
-	private String[] acessKeys = null;
+	private String[] accessKeys = null;
 	private AmazonS3 s3Client = null;
-	//TODO：只有checkRandomObjMd5() 方法用到，建议定义成局部变量，用完后删除
-	private File localPath = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws IOException {
 		CommLibS3.clearUser(userName);
-		acessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
+		accessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
 		CommLibS3.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, acessKeys[0]);
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, accessKeys[0]);
 		for (int i = 0; i < objectVersionNums; i++) {
 			contents.add("content18205" + i);
 		}
@@ -79,6 +78,7 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 			}
 		}
 		// 继续上传对象A
+		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		putRemainVersionsAgain();
 		checkRandomObjMd5();
 		runSuccess = true;
@@ -89,7 +89,7 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				UserUtils.deleteUser(userName);
-				TestTools.LocalFile.removeFile(localPath);
+				
 			}
 		} finally {
 			if (s3Client != null) {
@@ -109,10 +109,10 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 
 		@Override
 		public void exec() throws Exception {
-			AmazonS3 s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
+			AmazonS3 s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 			try {
 				PutObjectResult result = s3Client.putObject(bucketName, objectName, content);
-				versionAndmd5Map.put(result.getVersionId(), TestTools.getMD5(content.getBytes()));
+				versionAndMd5Map.put(result.getVersionId(), TestTools.getMD5(content.getBytes()));
 				putObjectContentList.add(content);
 			} finally {
 				if (s3Client != null) {
@@ -127,22 +127,28 @@ public class CreateObjectWithReStartS3N18205 extends S3TestBase {
 		List<String> remainObjectContents = new ArrayList<String>();
 		remainObjectContents.addAll(contents);
 		remainObjectContents.removeAll(putObjectContentList);
-		//TODO：建议创建s3Client连接移到 test()方法中，因为 putRemainVersionsAgain()，
-		// checkRandomObjMd5()都有用到该连接，移到test方法中，比较清晰一点
-		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
 		for (String content : remainObjectContents) {
 			PutObjectResult result = s3Client.putObject(bucketName, objectName, content);
-			versionAndmd5Map.put(result.getVersionId(), TestTools.getMD5(content.getBytes()));
+			versionAndMd5Map.put(result.getVersionId(), TestTools.getMD5(content.getBytes()));
 		}
 	}
 
 	private void checkRandomObjMd5() throws Exception {
-		//TODO：个人觉得检查一下当前版本和随机挑一个历史版本进行检查，更加严谨一点
+		File localPath = null;
+		//检查当前版本对象内容
+		ObjectMetadata metadata = s3Client.getObject(bucketName, objectName).getObjectMetadata();
+		String versionId = metadata.getVersionId();
+		String actMd5 = metadata.getETag();
+		String expEtag = versionAndMd5Map.get(versionId);
+		Assert.assertEquals(actMd5, expEtag, "keyName = " + objectName + ", versionid = " + versionId);
+		
+		//随机检查历史版本
 		int version = new Random().nextInt(objectVersionNums);
 		localPath = new File(SdbTestBase.workDir + File.separator + TestTools.getClassName());
 		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, objectName,
 				String.valueOf(version));
-		String expEtag = versionAndmd5Map.get(String.valueOf(version));
-		Assert.assertEquals(downfileMd5, expEtag, "keyName = " + objectName + ", versionid = " + version);
+		String expEtag2 = versionAndMd5Map.get(String.valueOf(version));
+		Assert.assertEquals(downfileMd5, expEtag2, "keyName = " + objectName + ", versionid = " + version);
+		TestTools.LocalFile.removeFile(localPath);
 	}
 }

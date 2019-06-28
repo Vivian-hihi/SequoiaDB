@@ -6,15 +6,20 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 import com.sequoias3.commlibs3.CommLibS3;
 import com.sequoias3.commlibs3.S3TestBase;
+import com.sequoias3.commlibs3.TestTools;
 import com.sequoias3.commlibs3.s3utils.DelimiterUtils;
 import com.sequoias3.commlibs3.s3utils.S3NodeRestart;
 import com.sequoias3.commlibs3.s3utils.UserUtils;
 import com.sequoias3.commlibs3.s3utils.bean.S3NodeWrapper;
+
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * test content: 删除对象过程中S3点异常 testlink-case: seqDB-18201
@@ -27,35 +32,36 @@ import java.util.List;
 public class DeleteObjectWithReStartS3N18201 extends S3TestBase {
 	private String bucketName = "bucket18201";
 	private String userName = "user18201";
-	private String keyName = "dir1/dir2/key18201?test.txt";
+	private int objectNums = 100;
+	private String keyName = "deleteObject18201";
 	private String delimiter = "?";
 	private String roleName = "normal";
-	private String context = "content18201";
-	//TODO:单词写错了
-	private String[] acessKeys = null;
+	private List<String> keyNames = new ArrayList<String>();
+    private List<String> keyNameList = new CopyOnWriteArrayList<String>();
+	private String[] accessKeys = null;
 	private AmazonS3 s3Client = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() {
 		CommLibS3.clearUser(userName);
-		acessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
+		accessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		CommLibS3.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
-		//TODO:该用例是测试删除对象，不需要开启版本控制
-		CommLibS3.setBucketVersioning(s3Client, bucketName, "Enabled");
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, acessKeys[0]);
-        //TODO:需要创建多个对象，只有一个对象，可能测不到点
-		s3Client.putObject(bucketName, keyName, context);
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, accessKeys[0]);
+		for (int i = 0; i < objectNums; i++) {
+			keyNames.add(keyName + "_" + i + delimiter + TestTools.getRandomString(3));
+        }
 	}
 
-	//TODO:不符合用例文本，异常后没有检查，异常后没有再次进行删除
 	@Test
 	public void testCreateRegion() throws Exception {
 		FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 1, 10);
 		TaskMgr mgr = new TaskMgr(faultMakeTask);
-		mgr.addTask(new DeleteObject());
+		for (int i = 0; i < objectNums; i++) {
+            mgr.addTask(new DeleteObject(keyNames.get(i)));
+        }
 		mgr.execute();
 		mgr.isAllSuccess();
 		List<Exception> eList = mgr.getExceptions();
@@ -64,6 +70,17 @@ public class DeleteObjectWithReStartS3N18201 extends S3TestBase {
 				throw e;
 			}
 		}
+		
+		//delete again
+		keyNames.removeAll(keyNameList);
+        for (String keyName : keyNames) {
+            s3Client.deleteObject(bucketName, keyName);
+            keyNameList.add(keyName);
+        }
+        Assert.assertEquals(keyNameList.size(),objectNums,"keyNameList = " + keyNameList.toString());
+        for (String objectName : keyNameList) {
+            Assert.assertFalse(s3Client.doesObjectExist(bucketName, objectName),"onject : " + objectName + " is still exist");
+        }
 		runSuccess = true;
 	}
 
@@ -81,13 +98,17 @@ public class DeleteObjectWithReStartS3N18201 extends S3TestBase {
 	}
 
 	private class DeleteObject extends OperateTask {
+		private String keyName = null;
+		public DeleteObject(String keytName) {
+            this.keyName = keytName;
+        }
+		
 		@Override
 		public void exec() throws Exception {
-			AmazonS3 s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
+			AmazonS3 s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 			try {
-				for (int i = 0; i < 100; i++) {
-					s3Client.deleteObject(bucketName, keyName);
-				}
+				s3Client.deleteObject(bucketName, keyName);
+				keyNameList.add(this.keyName);
 			} finally {
 				if (s3Client != null) {
 					s3Client.shutdown();

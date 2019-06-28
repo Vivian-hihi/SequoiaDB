@@ -37,23 +37,21 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 	private int objectNums = 100;
 	private String delimiter = "#";
 	private String objectName = "object18206";
+	private String content = "content18206";
 	private List<String> objectNames = new ArrayList<String>();
 	private List<String> putObjectNameList = new CopyOnWriteArrayList<String>();
 	private String roleName = "normal";
-	//TODO:单词写错了
-	private String[] acessKeys = null;
+	private String[] accessKeys = null;
 	private AmazonS3 s3Client = null;
-	//TODO:建议定义成局部变量
-	private File localPath = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws IOException {
 		CommLibS3.clearUser(userName);
-		acessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
+		accessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, acessKeys[0]);
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, accessKeys[0]);
 		for (int i = 0; i < objectNums; i++) {
 			objectNames.add(objectName + "_" + i + delimiter + "test.txt");
 		}
@@ -64,8 +62,7 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 		FaultMakeTask faultMakeTask = S3NodeRestart.getFaultMakeTask(new S3NodeWrapper(), 1, 10);
 		TaskMgr mgr = new TaskMgr(faultMakeTask);
 		for (int i = 0; i < objectNums; i++) {
-			//TODO:"content18206"使用多次，可以定义成一个成员变量
-			mgr.addTask(new PutObject(objectNames.get(i), "content18206" + i));
+			mgr.addTask(new PutObject(objectNames.get(i), content + i));
 		}
 		mgr.execute();
 		mgr.isAllSuccess();
@@ -75,6 +72,7 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 				throw e;
 			}
 		}
+		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		// put remaining objects again
 		putRemainObjectsAgain();
 		checkRandomObjMd5();
@@ -86,7 +84,6 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 		try {
 			if (runSuccess) {
 				UserUtils.deleteUser(userName);
-				TestTools.LocalFile.removeFile(localPath);
 			}
 		} finally {
 			if (s3Client != null) {
@@ -106,7 +103,7 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 
 		@Override
 		public void exec() throws Exception {
-			AmazonS3 s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
+			AmazonS3 s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 			try {
 				s3Client.putObject(bucketName, objectName, content);
 				putObjectNameList.add(objectName);
@@ -122,22 +119,21 @@ public class CreateObjectWithReStartS3N18206 extends S3TestBase {
 		List<String> remainObjects = new ArrayList<String>();
 		remainObjects.addAll(objectNames);
 		remainObjects.removeAll(putObjectNameList);
-		//TODO：建议创建s3Client连接移到 test()方法中，因为 putRemainVersionsAgain()，
-		// checkRandomObjMd5()都有用到该连接，移到test方法中，比较清晰一点
-		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
 		for (String objectName : remainObjects) {
 			int index = objectNames.indexOf(objectName);
-			s3Client.putObject(bucketName, objectName, "content18206" + String.valueOf(index));
+			s3Client.putObject(bucketName, objectName, content + String.valueOf(index));
 		}
 	}
 
 	private void checkRandomObjMd5() throws Exception {
+		File localPath = null;
 		int index = new Random().nextInt(objectNames.size());
 		String keyName = objectNames.get(index);
 		localPath = new File(SdbTestBase.workDir + File.separator + TestTools.getClassName());
 		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, keyName);
-		String content = "content18206" + index;
-		String expEtag = TestTools.getMD5(content.getBytes());
+		String expContent = content + index;
+		String expEtag = TestTools.getMD5(expContent.getBytes());
 		Assert.assertEquals(downfileMd5, expEtag, "keyName = " + keyName);
+		TestTools.LocalFile.removeFile(localPath);
 	}
 }

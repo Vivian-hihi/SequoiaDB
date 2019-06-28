@@ -2,6 +2,9 @@ package com.sequoias3.delimiter;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
@@ -43,16 +46,16 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 	private File localPath = null;
 	private String filePath = null;
 	private String roleName = "normal";
-	//TODO:以下两个变量放在listObjectsAndCheck()里面是不是更好一点，
-	// 而且expCommprefixes不需要重新 new ArrayList<>()，ObjectUtils.getCommPrefixes返回的是list
-	private List<String> expCommprefixes = new ArrayList<>();
-	private List<String> matchContentsList = new ArrayList<>();
-	//TODO:单词写错了
-	private String[] acessKeys = null;
+	private String[] accessKeys = null;
+	private GroupMgr groupMgr = null;
+	private GroupWrapper coordGroup = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
-	private void setUp() throws IOException {
+	private void setUp() throws IOException, ReliabilityException {
+		groupMgr = GroupMgr.getInstance();
+		coordGroup = groupMgr.getGroupByName("SYSCoord");
+		
 		localPath = new File(SdbTestBase.workDir + File.separator + TestTools.getClassName());
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
@@ -61,28 +64,34 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 		TestTools.LocalFile.createFile(filePath, fileSize);
 
 		CommLibS3.clearUser(userName);
-		acessKeys = UserUtils.createUser(userName, roleName);
-		s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
+		accessKeys = UserUtils.createUser(userName, roleName);
+		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		s3Client.createBucket(bucketName);
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, acessKeys[0]);
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter, accessKeys[0]);
 
 		for (int i = 0; i < objectNums; i++) {
 			String currObjectName = objectName + "_" + i + delimiter + "test.txt";
 			s3Client.putObject(bucketName, currObjectName, new File(filePath));
 			objectNames[i] = currObjectName;
 		}
-		//TODO: 建议matchContentsList里面有内容，测试全面一点
-		expCommprefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
+		
+		s3Client.putObject(bucketName, "test18202a", new File(filePath));
+		s3Client.putObject(bucketName, "test18202b", new File(filePath));
 	}
 
 	@Test
 	public void test() throws ReliabilityException, IOException {
 		// kill coord when list objects
-		//TODO:需要强杀集群中所有的coord节点
-		FaultMakeTask faultTask = KillNode.getFaultMakeTask(SdbTestBase.hostName, SdbTestBase.serviceName, 1);
-		TaskMgr mgr = new TaskMgr(faultTask);
-		ListObject listTask = new ListObject();
-		mgr.addTask(listTask);
+		TaskMgr mgr = new TaskMgr();
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
+            mgr.addTask(faultTask);
+        }
+        for(int i = 0 ; i < 20 ; i++){
+        	ListObject listTask = new ListObject();
+    		mgr.addTask(listTask);
+        }
+		
 		mgr.execute();
 		Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
 		// list objects again
@@ -108,14 +117,19 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 			try {
 				listObjectsAndCheck();
 			} catch (AmazonS3Exception e) {
-				//TODO:线程里面不要用Assert.assertEquals，建议将非预期异常抛出去
-				Assert.assertEquals(e.getErrorCode(), "GetDBConnectFail");
+				if(!e.getErrorCode().equals("GetDBConnectFail")){
+					throw e;
+				}
 			}
 		}
 	}
 
 	private void listObjectsAndCheck() throws IOException {
-		AmazonS3 s3Client = CommLibS3.buildS3Client(acessKeys[0], acessKeys[1]);
+		List<String> expCommprefixes = ObjectUtils.getCommPrefixes(objectNames, "", delimiter);
+		List<String> matchContentsList = new ArrayList<>();
+		matchContentsList.add("test18202a");
+		matchContentsList.add("test18202b");
+		AmazonS3 s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
 		try {
 			DelimiterUtils.listObjectsWithDelimiter(s3Client, bucketName, delimiter, expCommprefixes,
 					matchContentsList);
