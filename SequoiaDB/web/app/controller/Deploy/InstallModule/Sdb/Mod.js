@@ -1,4 +1,4 @@
-﻿//@ sourceURL=Mod.js
+﻿//@ sourceURL=Deploy.Sdb.Mod.Ctrl.js
 //"use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
@@ -287,11 +287,12 @@
          }
          else if( type == 4 )
          {
+            var currentNodeList = $scope.NodeTable['callback']['GetFilterAllData']() ;
             var loadName = [] ;
             //批量加载配置
             var sum = 0 ;
-            $.each( $scope.NodeList, function( index ){
-               if( $scope.NodeList[index]['checked'] == true )
+            $.each( currentNodeList, function( index, info ){
+               if( info['checked'] == true )
                {
                   ++sum ;
                }
@@ -307,17 +308,17 @@
                loadName.push( name.toLowerCase() ) ;
                var value = '' ;
                var offset = null ;
-               $.each( $scope.NodeList, function( index2 ){
-                  if( $scope.NodeList[index2]['checked'] == true )
+               $.each( currentNodeList, function( index2, info ){
+                  if( info['checked'] == true )
                   {
                      if( name == 'dbpath' )
                      {
                         if( isFirst == true )
                         {
-                           value = selectDBPath( $scope.NodeList[index2]['dbpath'], $scope.NodeList[index2]['role'], $scope.NodeList[index2]['svcname'], $scope.NodeList[index2]['datagroupname'], $scope.NodeList[index2]['HostName'] ) ;
+                           value = selectDBPath( currentNodeList[index2]['dbpath'], currentNodeList[index2]['role'], currentNodeList[index2]['svcname'], currentNodeList[index2]['datagroupname'], currentNodeList[index2]['HostName'] ) ;
                            isFirst = false ;
                         }
-                        if( value != selectDBPath( $scope.NodeList[index2]['dbpath'], $scope.NodeList[index2]['role'], $scope.NodeList[index2]['svcname'], $scope.NodeList[index2]['datagroupname'], $scope.NodeList[index2]['HostName'] ) )
+                        if( value != selectDBPath( currentNodeList[index2]['dbpath'], currentNodeList[index2]['role'], currentNodeList[index2]['svcname'], currentNodeList[index2]['datagroupname'], currentNodeList[index2]['HostName'] ) )
                         {
                            value = '' ;
                            return false ;
@@ -327,14 +328,14 @@
                      {
                         if( isFirst == true )
                         {
-                           value = $scope.NodeList[index2]['svcname'] ;
+                           value = info['svcname'] ;
                            isFirst = false ;
                         }
                         else
                         {
                            if( offset == null )
                            {
-                              offset = parseInt( $scope.NodeList[index2]['svcname'] ) - parseInt( $scope.NodeList[index2-1]['svcname'] ) ;
+                              offset = parseInt( info['svcname'] ) - parseInt( currentNodeList[index2-1]['svcname'] ) ;
                               if( offset != 0 )
                               {
                                  value = value + '[' + ( offset > 0 ? '+' : '' ) + offset + ']' ;
@@ -342,7 +343,7 @@
                            }
                            else
                            {
-                              if( offset != parseInt( $scope.NodeList[index2]['svcname'] ) - parseInt( $scope.NodeList[index2-1]['svcname'] ) )
+                              if( offset != parseInt( info['svcname'] ) - parseInt( currentNodeList[index2-1]['svcname'] ) )
                               {
                                  value = '' ;
                                  return false ;
@@ -354,10 +355,10 @@
                      {
                         if( isFirst == true )
                         {
-                           value = $scope.NodeList[index2][name] ;
+                           value = info[name] ;
                            isFirst = false ;
                         }
-                        if( value != $scope.NodeList[index2][name] )
+                        if( value != info[name] )
                         {
                            value = '' ;
                            return false ;
@@ -372,15 +373,15 @@
                var name = $scope.Components.Modal.form2['inputList'][index]['name'] ;
                loadName.push( name.toLowerCase() ) ;
                var value = '' ;
-               $.each( $scope.NodeList, function( index2 ){
-                  if( $scope.NodeList[index2]['checked'] == true )
+               $.each( currentNodeList, function( index2, info ){
+                  if( info['checked'] == true )
                   {
                      if( isFirst == true )
                      {
-                        value = $scope.NodeList[index2][name] ;
+                        value = info[name] ;
                         isFirst = false ;
                      }
-                     if( value != $scope.NodeList[index2][name] )
+                     if( value != info[name] )
                      {
                         value = '' ;
                         return false ;
@@ -391,10 +392,10 @@
             } ) ;
             //加载自定义配置项
             var customConfig = [] ;
-            $.each( $scope.NodeList, function( nodeIndex ){
-               if( $scope.NodeList[nodeIndex]['checked'] == true )
+            $.each( currentNodeList, function( nodeIndex, info ){
+               if( info['checked'] == true )
                {
-                  $.each( $scope.NodeList[nodeIndex], function( key, value ){
+                  $.each( info, function( key, value ){
                      if( key.toLowerCase() != 'hostname' &&
                          key.toLowerCase() != 'datagroupname' &&
                          key.toLowerCase() != 'role' &&
@@ -412,15 +413,15 @@
             $.each( customConfig, function( customIndex, config ){
                var value = '' ;
                var isFirst2 = true ;
-               $.each( $scope.NodeList, function( nodeIndex ){
-                  if( $scope.NodeList[nodeIndex]['checked'] == true )
+               $.each( currentNodeList, function( nodeIndex, info ){
+                  if( info['checked'] == true )
                   {
                      if( isFirst2 == true )
                      {
-                        value = $scope.NodeList[nodeIndex][config] ;
+                        value = info[config] ;
                         isFirst2 = false ;
                      }
-                     if( value != $scope.NodeList[nodeIndex][config] )
+                     if( value != info[config] )
                      {
                         value = '' ;
                         return false ;
@@ -527,7 +528,6 @@
                   formVal['role'] = $scope.GroupList[groupIndex]['role'] ;
                   formVal['svcname'] = portEscape( formVal['svcname'], 0 ) ;
                   formVal['dbpath'] = dbpathEscape( formVal['dbpath'], formVal['HostName'], formVal['svcname'], formVal['role'], formVal['datagroupname'] ) ;
-                  formVal['i'] = $scope.NodeList.length ;
                   $scope.NodeList.push( formVal ) ;
                }
                else if( type == 3 )
@@ -546,34 +546,27 @@
                else if( type == 4 )
                {
                   //保存批量节点配置
+                  var currentNodeList = $scope.NodeTable['callback']['GetFilterAllData']() ;
                   var num = 0 ;
-                  $.each( $scope.NodeList, function( index ){
-                     if( $scope.NodeList[index]['checked'] == true )
+                  $.each( currentNodeList, function( index, info ){
+                     if( info['checked'] == true )
                      {
                         //把配置复制出来
                         var newFormVal = $.extend( true, {}, formVal ) ;
                         //根据实际节点，转换服务名和路径
                         newFormVal['svcname'] = portEscape( newFormVal['svcname'], num ) ;
                         newFormVal['dbpath']  = dbpathEscape( formVal['dbpath'],
-                                                              formVal['HostName'],
-                                                              newFormVal['svcname'].length == 0 ? $scope.NodeList[index]['svcname'] : newFormVal['svcname'],
-                                                              $scope.NodeList[index]['role'],
-                                                              formVal['datagroupname'] ) ;
-                        $scope.NodeList[index] = {
-                           'HostName': $scope.NodeList[index]['HostName'],
-                           'datagroupname': $scope.NodeList[index]['datagroupname'],
-                           'dbpath': $scope.NodeList[index]['dbpath'],
-                           'svcname': $scope.NodeList[index]['svcname'],
-                           'role': $scope.NodeList[index]['role'],
-                           'checked': $scope.NodeList[index]['checked'],
-                           'i': $scope.NodeList[index]['i']
-                        } ;
+                                                              info['HostName'],
+                                                              newFormVal['svcname'].length == 0 ? info['svcname'] : newFormVal['svcname'],
+                                                              info['role'],
+                                                              info['datagroupname'] ) ;
+
                         $.each( newFormVal, function( key, value ){
                            if( ( ( key == 'dbpath' || key == 'svcname' ) && value.length == 0 ) || key == '' )
                            {
                               return true ;
                            }
-                           $scope.NodeList[index][key] = value ;
+                           currentNodeList[index][key] = value ;
                         } ) ;
                         ++num ;
                      }
@@ -760,9 +753,6 @@
             {
                var formVal = $scope.RemoveNodeWindow['config'].getValue() ;
                $scope.NodeList.splice( formVal['nodename'], 1 ) ;
-               $.each( $scope.NodeList, function( index, nodeInfo ){
-                  $scope.NodeList[index]['i'] = index ;
-               } ) ;
                --$scope.GroupList[index]['nodeNum'] ;
             }
             return isAllClear ;
@@ -929,7 +919,6 @@
                   nodeInfo['role'] = 'coord' ;
                   nodeInfo['datagroupname'] = '' ;
                   nodeInfo['checked'] = false ;
-                  nodeInfo['i'] = i ;
                   addConfig( nodeInfo ) ;
                   $scope.installConfig['Config'].push( nodeInfo ) ;
                   ++i ;
@@ -941,7 +930,6 @@
                nodeInfo['role'] = 'coord' ;
                nodeInfo['datagroupname'] = '' ;
                nodeInfo['checked'] = false ;
-               nodeInfo['i'] = i ;
                addConfig( nodeInfo ) ;
                $scope.installConfig['Config'].push( nodeInfo ) ;
                ++i ;
@@ -956,7 +944,6 @@
                   nodeInfo['role'] = 'catalog' ;
                   nodeInfo['datagroupname'] = '' ;
                   nodeInfo['checked'] = false ;
-                  nodeInfo['i'] = i ;
                   addConfig( nodeInfo ) ;
                   $scope.installConfig['Config'].push( nodeInfo ) ;
                   ++i ;
@@ -968,7 +955,6 @@
                nodeInfo['role'] = 'catalog' ;
                nodeInfo['datagroupname'] = '' ;
                nodeInfo['checked'] = false ;
-               nodeInfo['i'] = i ;
                addConfig( nodeInfo ) ;
                $scope.installConfig['Config'].push( nodeInfo ) ;
                ++i ;
@@ -986,7 +972,6 @@
                         nodeInfo['role'] = 'data' ;
                         nodeInfo['datagroupname'] = groupInfo['GroupName'] ;
                         nodeInfo['checked'] = false ;
-                        nodeInfo['i'] = i ;
                         addConfig( nodeInfo ) ;
                         $scope.installConfig['Config'].push( nodeInfo ) ;
                         ++i ;
@@ -998,7 +983,6 @@
                      nodeInfo['role'] = 'data' ;
                      nodeInfo['datagroupname'] = groupInfo['GroupName'] ;
                      nodeInfo['checked'] = false ;
-                     nodeInfo['i'] = i ;
                      addConfig( nodeInfo ) ;
                      $scope.installConfig['Config'].push( nodeInfo ) ;
                      ++i ;
@@ -1014,7 +998,6 @@
                      nodeInfo['role'] = 'data' ;
                      nodeInfo['datagroupname'] = groupInfo['GroupName'] ;
                      nodeInfo['checked'] = false ;
-                     nodeInfo['i'] = i ;
                      addConfig( nodeInfo ) ;
                      $scope.installConfig['Config'].push( nodeInfo ) ;
                      ++i ;
@@ -1026,7 +1009,6 @@
                   nodeInfo['role'] = 'data' ;
                   nodeInfo['datagroupname'] = groupInfo['GroupName'] ;
                   nodeInfo['checked'] = false ;
-                  nodeInfo['i'] = i ;
                   addConfig( nodeInfo ) ;
                   $scope.installConfig['Config'].push( nodeInfo ) ;
                   ++i ;
@@ -1300,9 +1282,7 @@
             'success': function( configure ){
                $scope.installConfig = configure[0] ;
                $scope.NodeList = configure[0]['Config'] ;
-               $.each( $scope.NodeList, function( index ){
-                  $scope.NodeList[index]['i'] = index ;
-               } ) ;
+
                //删除单机版不需要的配置项
                $scope.Template = [] ;
                $.each( configure[0]['Property'], function( index, info ){
