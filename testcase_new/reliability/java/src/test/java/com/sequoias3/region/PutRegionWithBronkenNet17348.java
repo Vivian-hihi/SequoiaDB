@@ -47,7 +47,7 @@ public class PutRegionWithBronkenNet17348 extends S3TestBase {
         }
     }
 
-    @Test
+    @Test(enabled = false)
     public void test() throws Exception {
         //put region when bronken
         FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(SdbTestBase.hostName, 2,120);

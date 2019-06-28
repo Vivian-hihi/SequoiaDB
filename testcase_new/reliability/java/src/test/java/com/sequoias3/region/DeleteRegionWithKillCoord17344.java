@@ -1,9 +1,10 @@
 package com.sequoias3.region;
 
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.BrokenNetwork;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
@@ -15,27 +16,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.springframework.web.client.ResourceAccessException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * test content:  删除区域过程中SequoiaS3和sdb节点网络异常
- * testlink-case: seqDB-17349
+ * test content: 获取区域过程中db端节点异常 
+ * testlink-case: seqDB-17344
  * @author wangkexin
  * @Date 2019.01.29
  * @version 1.00
  */
-public class DeleteRegionWithBrokenNet17349 extends S3TestBase {
-	private String regionName = "beijing17349";
+public class DeleteRegionWithKillCoord17344 extends S3TestBase {
+	private GroupMgr groupMgr = null;
+	private String regionName = "beijing17344";
 	private List<String> regionNames = new ArrayList<String>();
-    private List<String> deletedRegionNameList = new CopyOnWriteArrayList<String>();
+	private List<String> deletedRegionNameList = new CopyOnWriteArrayList<String>();
+	private int threadNum = 10;
+	private GroupWrapper coordGroup = null;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		for(int i = 0 ; i < 10 ; i++){
+		groupMgr = GroupMgr.getInstance();
+		coordGroup = groupMgr.getGroupByName("SYSCoord");
+		
+		for(int i = 0 ; i < threadNum ; i++){
 			String currRegionName = regionName + "-" + i;
 			RegionUtils.clearRegion(currRegionName);
 			
@@ -48,25 +54,22 @@ public class DeleteRegionWithBrokenNet17349 extends S3TestBase {
 
 	@Test
 	public void testDeleteRegion() throws Exception {
-		try {
-			//delete region when network broken
-			FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(SdbTestBase.hostName, 1, 60);
-			TaskMgr mgr = new TaskMgr(faultTask);
-			
-			for(int i = 0 ; i < regionNames.size(); i++){
-	        	DeleteRegionTask dTask = new DeleteRegionTask(regionNames.get(i));
-	    		mgr.addTask(dTask);
-	        }
-			mgr.execute();
-			Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
+		TaskMgr mgr = new TaskMgr();
+        for(NodeWrapper node : coordGroup.getNodes()) {
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
+            mgr.addTask(faultTask);
+        }
+		
+        for(int i = 0 ; i < regionNames.size(); i++){
+        	DeleteRegionTask dTask = new DeleteRegionTask(regionNames.get(i));
+    		mgr.addTask(dTask);
+        }
+		
+		mgr.execute();
+		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-			//delete again
-			deleteAgainAndCheck();
-			
-		} catch (ReliabilityException e) {
-			e.printStackTrace();
-			Assert.fail(e.getMessage());
-		}
+		//delete again
+		deleteAgainAndCheck();
 	}
 
 	@AfterClass
@@ -82,15 +85,12 @@ public class DeleteRegionWithBrokenNet17349 extends S3TestBase {
 			try{
 				RegionUtils.deleteRegion(regionName);
 				deletedRegionNameList.add(regionName);
-			}catch (AmazonS3Exception e) {
-                if (e.getStatusCode() != 500) {
-                    throw e;
-                }
-            }catch (ResourceAccessException e){
-                if(!e.getMessage().contains("I/O error on POST request ")){
-                    throw e;
-                }
-            }
+			}catch(AmazonS3Exception e){
+				System.out.println(e.getErrorCode() + ", " + e.getStatusCode());
+				if(e.getStatusCode() != 500 && !e.getErrorCode().equals("GetDBConnectFail")){
+					throw e;
+				}
+			}
 		}
 	}
 	
