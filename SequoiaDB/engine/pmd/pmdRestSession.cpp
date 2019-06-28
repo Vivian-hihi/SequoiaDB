@@ -926,6 +926,8 @@ namespace engine
                                  &RestToMSGTransfer::_convertSnapshotHealth },
          { CMD_NAME_SNAPSHOT_CONFIGS,
                                  &RestToMSGTransfer::_convertSnapshotConfigs },
+         { CMD_NAME_SNAPSHOT_QUERIES,
+                                 &RestToMSGTransfer::_convertSnapshotQueries },
          { CMD_NAME_LIST_LOBS,   &RestToMSGTransfer::_convertListLobs },
          { OM_LOGIN_REQ,         &RestToMSGTransfer::_convertLogin },
          { REST_CMD_NAME_EXEC,   &RestToMSGTransfer::_convertExec },
@@ -4246,6 +4248,47 @@ namespace engine
       CHAR *pBuff           = NULL ;
       INT32 buffSize        = 0 ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONFIGS ;
+
+      rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
+                                 hint, &skip, &returnRow ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0,
+                             skip, returnRow, &match,
+                             &selector, &order, &hint ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d",
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotQueries ( restAdaptor * pAdaptor,
+                                                      restRequest &request,
+                                                      MsgHeader ** msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      BSONObj hint ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_QUERIES ;
 
       rc = _convertSnapshotBase( pAdaptor, request, match, selector, order,
                                  hint, &skip, &returnRow ) ;

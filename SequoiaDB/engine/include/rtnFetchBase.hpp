@@ -85,6 +85,7 @@ namespace engine
       RTN_FETCH_SVCTASKS,              /// svc tasks
 
       RTN_FETCH_VCL_SESSIONINFO,       /// VCL session info
+      RTN_FETCH_QUERIES,               /// queries
 
       RTN_FETCH_MAX
    } ;
@@ -96,6 +97,9 @@ namespace engine
    {
       public :
          _rtnFetchBase() {}
+
+         _rtnFetchBase(INT32 sz) : _builder (sz) {}
+
          virtual ~_rtnFetchBase() {}
 
          virtual RTN_FETCH_TYPE  getType() const = 0 ;
@@ -112,6 +116,8 @@ namespace engine
          virtual BOOLEAN   isHitEnd() const = 0 ;
          virtual INT32     fetch( BSONObj &obj ) = 0 ;
 
+      public:
+         BufBuilder _builder ;
    } ;
    typedef _rtnFetchBase rtnFetchBase ;
 

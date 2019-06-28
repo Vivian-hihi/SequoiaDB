@@ -753,4 +753,44 @@ namespace engine
    {
    }
 
+   /*
+    * _coordCMDSnapshotQueries implement
+    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotQueries,
+                                      CMD_NAME_SNAPSHOT_QUERIES,
+                                      TRUE ) ;
+
+   _coordCMDSnapshotQueries::_coordCMDSnapshotQueries()
+   {
+   }
+
+   _coordCMDSnapshotQueries::~_coordCMDSnapshotQueries()
+   {
+   }
+
+   const CHAR* _coordCMDSnapshotQueries::getIntrCMDName()
+   {
+      return CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_QUERIES_INTR ;
+   }
+
+   const CHAR* _coordCMDSnapshotQueries::getInnerAggrContent()
+   {
+      return NULL ;
+   }
+
+
+   /*
+      _coordSnapshotQueriesIntr implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordSnapshotQueriesIntr,
+                                      CMD_NAME_SNAPSHOT_QUERIES_INTR,
+                                      TRUE ) ;
+   _coordSnapshotQueriesIntr::_coordSnapshotQueriesIntr()
+   {
+   }
+
+   _coordSnapshotQueriesIntr::~_coordSnapshotQueriesIntr()
+   {
+   }
 }
+

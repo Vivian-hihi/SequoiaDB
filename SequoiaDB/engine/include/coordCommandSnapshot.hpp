@@ -540,5 +540,31 @@ namespace engine
     } ;
     typedef _coordCMDSnapshotSequencesIntr coordCMDSnapshotSequencesIntr ;
 
+    /*
+       _coordCMDSnapshotQueries define
+    */
+    class _coordCMDSnapshotQueries : public _coordCMDMonBase
+    {
+       COORD_DECLARE_CMD_AUTO_REGISTER() ;
+       public:
+          _coordCMDSnapshotQueries() ;
+          virtual ~_coordCMDSnapshotQueries() ;
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+         virtual const CHAR *getInnerAggrContent() ;
+    } ;
+    typedef _coordCMDSnapshotQueries coordCMDSnapshotQueries ;
+
+   /*
+      _coordSnapshotQueriesIntr define
+   */
+   class _coordSnapshotQueriesIntr : public _coordCMDSnapshotIntrBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordSnapshotQueriesIntr() ;
+         virtual ~_coordSnapshotQueriesIntr() ;
+   } ;
+   typedef _coordSnapshotQueriesIntr coordSnapshotQueriesIntr ;
 }
 #endif // COORD_COMMAND_SNAPSHOT_HPP__

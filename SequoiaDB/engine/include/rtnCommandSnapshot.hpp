@@ -632,6 +632,43 @@ namespace engine
       protected:
          virtual BOOLEAN _isCurrent() const ;
    } ;
+
+   class _rtnSnapshotQueries : public _rtnSnapshot
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotQueries()
+            : _rtnSnapshot( NAME_SNAPSHOT_QUERIES,
+                            CMD_NAME_SNAPSHOT_QUERIES_INTR,
+                            CMD_SNAPSHOT_QUERIES,
+                            RTN_FETCH_QUERIES,
+                            MON_MASK_NODE_NAME )
+         {}
+
+         virtual ~_rtnSnapshotQueries() {}
+
+      protected:
+         virtual BOOLEAN _isCurrent() const ;
+   } ;
+   class _rtnSnapshotQueriesInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotQueriesInner()
+            : _rtnSnapshotInner( CMD_NAME_SNAPSHOT_QUERIES_INTR,
+                                 CMD_SNAPSHOT_QUERIES,
+                                 RTN_FETCH_QUERIES,
+                                 MON_MASK_NODE_NAME )
+         {}
+
+         virtual ~_rtnSnapshotQueriesInner() {}
+
+      protected:
+         virtual BOOLEAN _isCurrent() const ;
+   } ;
+
 }
 
 #endif //RTN_COMMAND_SNAPSHOT_HPP_

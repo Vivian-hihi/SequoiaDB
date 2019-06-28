@@ -57,10 +57,12 @@
 #define SDB_SNAP_SVCTASKS         14
 /** snapshot of sequences */
 #define SDB_SNAP_SEQUENCES        15
+/** snapshot of queries */
+#define SDB_SNAP_QUERIES          16
 /** reserved */
-#define SDB_SNAP_RESERVED1        16
+#define SDB_SNAP_RESERVED1        17
 /** reserved */
-#define SDB_SNAP_RESERVED2        17
+#define SDB_SNAP_RESERVED2        18
 
 /** list of all the contexts of all the sessions */
 #define SDB_LIST_CONTEXTS         0

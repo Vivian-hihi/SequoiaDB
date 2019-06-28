@@ -404,4 +404,18 @@ namespace engine
    {
       return FALSE ;
    }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotQueries )
+
+   BOOLEAN _rtnSnapshotQueries::_isCurrent() const
+   {
+      return FALSE ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnSnapshotQueriesInner )
+
+   BOOLEAN _rtnSnapshotQueriesInner::_isCurrent() const
+   {
+      return FALSE ;
+   }
 }

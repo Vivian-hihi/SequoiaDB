@@ -674,6 +674,36 @@ namespace engine
    } ;
    typedef _monSvcTasksFetch monSvcTasksFetch ;
 
+   /*
+      _monQueriesFetch define
+   */
+   class _monQueriesFetch : public rtnFetchBase
+   {
+      DECLARE_FETCH_AUTO_REGISTER()
+
+      public:
+         _monQueriesFetch() ;
+         virtual ~_monQueriesFetch() ;
+
+         virtual INT32        init( pmdEDUCB *cb,
+                                    BOOLEAN isCurrent,
+                                    BOOLEAN isDetail,
+                                    UINT32 addInfoMask,
+                                    const BSONObj obj = BSONObj() ) ;
+
+         virtual const CHAR*  getName() const ;
+
+      public:
+         virtual BOOLEAN   isHitEnd() const ;
+         virtual INT32     fetch( BSONObj &obj ) ;
+
+      private:
+         UINT32                  _addInfoMask ;
+         BOOLEAN                 _hitEnd ;
+         BOOLEAN                 _isDetail ;
+   } ;
+   typedef _monQueriesFetch monQueriesFetch ;
+
 }
 
 #endif //MONDUMP_HPP_

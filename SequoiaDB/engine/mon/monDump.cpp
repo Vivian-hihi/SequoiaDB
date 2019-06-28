@@ -1768,6 +1768,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monContextFetcher, RTN_FETCH_CONTEXT )
 
    _monContextFetcher::_monContextFetcher()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _dumpCurrent = FALSE ;
       _detail = TRUE ;
@@ -1874,7 +1875,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob ;
+         _builder.reset();
+         BSONObjBuilder ob( _builder ) ;
          std::map<UINT64, pmdEDUCB::SET_CONTEXT>::iterator it ;
          pmdEDUCB::SET_CONTEXT::iterator itSet ;
 
@@ -1893,7 +1895,7 @@ namespace engine
             ba.append ( (*itSet) ) ;
          }
          ba.done() ;
-         obj = ob.obj() ;
+         obj = BSONObj( ob.done() ) ;
 
          /// remove current edu info
          _contextList.erase( it ) ;
@@ -1929,7 +1931,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ ) ;
+         _builder.reset();
+         BSONObjBuilder ob( _builder );
          ossTickConversionFactor factor ;
 
          std::map<UINT64, std::set<monContextFull> >::iterator it ;
@@ -1972,7 +1975,7 @@ namespace engine
             sub.done() ;
          }
          ba.done() ;
-         obj = ob.obj() ;
+         obj = BSONObj( ob.done() ) ;
 
          /// remove current
          _contextInfoList.erase( it ) ;
@@ -2001,6 +2004,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monSessionFetcher, RTN_FETCH_SESSION )
 
    _monSessionFetcher::_monSessionFetcher()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _dumpCurrent = TRUE ;
       _detail = FALSE ;
@@ -2114,7 +2118,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob ;
+         _builder.reset();
+         BSONObjBuilder ob(_builder);
          std::set<monEDUSimple>::iterator it ;
 
          it = _setInfoSimple.begin() ;
@@ -2132,7 +2137,7 @@ namespace engine
          monAppendSessionIdentify( ob, simple._relatedNID,
                                    simple._relatedTID ) ;
 
-         obj = ob.obj () ;
+         obj = BSONObj( ob.done () );
 
          /// remove current
          _setInfoSimple.erase( it ) ;
@@ -2168,7 +2173,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ ) ;
+         _builder.reset();
+         BSONObjBuilder ob(_builder);
          std::set<monEDUFull>::iterator it ;
 
          it = _setInfoDetail.begin() ;
@@ -2205,7 +2211,7 @@ namespace engine
          ossGetCPUUsage( full._threadHdl, userTime, sysTime ) ;
          /// add app cb info
          monSessionMonEDUFull( ob, full, factor, userTime, sysTime ) ;
-         obj = ob.obj () ;
+         obj = BSONObj(ob.done ()) ;
 
          /// remove the current
          _setInfoDetail.erase( it ) ;
@@ -2234,6 +2240,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monCollectionFetch, RTN_FETCH_COLLECTION )
 
    _monCollectionFetch::_monCollectionFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _detail = FALSE ;
       _includeSys = FALSE ;
@@ -2325,7 +2332,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob ;
+         _builder.reset();
+         BSONObjBuilder ob( _builder ) ;
          MON_CL_SIM_LIST::iterator it ;
 
          it = _collectionList.begin() ;
@@ -2333,7 +2341,7 @@ namespace engine
 
          ob.append ( FIELD_NAME_NAME, simple._name ) ;
 
-         obj = ob.obj () ;
+         obj = BSONObj( ob.done() ) ;
 
          /// remove current
          _collectionList.erase( it ) ;
@@ -2369,7 +2377,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
+         _builder.reset() ;
+         BSONObjBuilder ob( _builder ) ;
          MON_CL_LIST::iterator it ;
          MON_CL_DETAIL_MAP::const_iterator itDetail ;
 
@@ -2483,7 +2492,7 @@ namespace engine
             sub.done() ;
          }
          ba.done() ;
-         obj = ob.obj() ;
+         obj = BSONObj( ob.done() ) ;
 
          /// remove the current
          _collectionInfo.erase( it ) ;
@@ -2512,6 +2521,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monCollectionSpaceFetch, RTN_FETCH_COLLECTIONSPACE )
 
    _monCollectionSpaceFetch::_monCollectionSpaceFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _detail = FALSE ;
       _includeSys = FALSE ;
@@ -2603,7 +2613,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob ;
+         _builder.reset() ;
+         BSONObjBuilder ob( _builder ) ;
          MON_CS_SIM_LIST::iterator it ;
 
          it = _csList.begin() ;
@@ -2611,7 +2622,7 @@ namespace engine
 
          ob.append ( FIELD_NAME_NAME, simple._name ) ;
 
-         obj = ob.obj () ;
+         obj = BSONObj( ob.done() );
 
          /// remove current
          _csList.erase( it ) ;
@@ -2650,7 +2661,8 @@ namespace engine
       {
          INT64 dataCapSize    = 0 ;
          INT64 lobCapSize     = 0 ;
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
+         _builder.reset() ;
+         BSONObjBuilder ob( _builder ) ;
          MON_CS_LIST::iterator it ;
          MON_CL_DETAIL_MAP::const_iterator itDetail ;
 
@@ -2717,7 +2729,8 @@ namespace engine
          /// cache info
          ob.append ( FIELD_NAME_DIRTY_PAGE, (INT32)full._dirtyPage ) ;
          ob.append( FIELD_NAME_TYPE, (INT32)full._type ) ;
-         obj = ob.obj() ;
+
+         obj = BSONObj( ob.done() );
 
          /// remove the current
          _csInfo.erase( it ) ;
@@ -2747,6 +2760,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monDataBaseFetch, RTN_FETCH_DATABASE )
 
    _monDataBaseFetch::_monDataBaseFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
       _hitEnd        = TRUE ;
@@ -2804,7 +2818,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ ) ;
+         _builder.reset() ;
+         BSONObjBuilder ob( _builder );
 
          /// add system info
          monAppendSystemInfo ( ob, _addInfoMask ) ;
@@ -2857,7 +2872,7 @@ namespace engine
          ob.append ( FIELD_NAME_MEMPOOL_SIZE,
                      (INT64)krcb->getMemBlockPool()->getTotalSize() ) ;
 
-         obj = ob.obj () ;
+         obj = BSONObj( ob.done() ) ;
       }
       catch ( std::exception &e )
       {
@@ -2881,6 +2896,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monSystemFetch, RTN_FETCH_SYSTEM )
 
    _monSystemFetch::_monSystemFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
       _hitEnd        = TRUE ;
@@ -2939,7 +2955,8 @@ namespace engine
       // generate BSON return obj
       try
       {
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ ) ;
+         _builder.reset() ;
+         BSONObjBuilder ob( _builder ) ;
 
          /// add system info
          monAppendSystemInfo ( ob, _addInfoMask ) ;
@@ -2956,7 +2973,7 @@ namespace engine
          monAppendHostMemory( ob ) ;
          // disk
          monAppendDisk( ob ) ;
-         obj = ob.obj() ;
+         obj = BSONObj( ob.done() ) ;
       }
       catch ( std::exception &e )
       {
@@ -2980,6 +2997,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monHealthFetch, RTN_FETCH_HEALTH )
 
    _monHealthFetch::_monHealthFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
       _hitEnd        = TRUE ;
@@ -3027,7 +3045,8 @@ namespace engine
       // generate BSON return obj
       try
       {
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ ) ;
+         _builder.reset() ;
+         BSONObjBuilder ob( _builder ) ;
 
          monAppendSystemInfo ( ob, _addInfoMask ) ;
 
@@ -3061,7 +3080,7 @@ namespace engine
 
          monAppendDiffLSN( ob ) ;
 
-         obj = ob.obj() ;
+         obj = BSONObj( ob.done() ) ;
       }
       catch ( std::exception &e )
       {
@@ -3086,6 +3105,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monStorageUnitFetch, RTN_FETCH_STORAGEUNIT )
 
    _monStorageUnitFetch::_monStorageUnitFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _includeSys    = FALSE ;
       _addInfoMask   = 0 ;
@@ -3159,7 +3179,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
+         _builder.reset() ;
+         BSONObjBuilder ob( _builder ) ;
          MON_SU_LIST::iterator it ;
 
          it = _suInfo.begin() ;
@@ -3180,7 +3201,7 @@ namespace engine
          ob.append ( FIELD_NAME_COLLECTIONHWM, su._collectionHWM ) ;
          ob.append ( FIELD_NAME_SIZE, su._size ) ;
 
-         obj = ob.obj() ;
+         obj = BSONObj( ob.done() ) ;
 
          /// remove the current
          _suInfo.erase( it ) ;
@@ -3210,6 +3231,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monIndexFetch, RTN_FETCH_INDEX )
 
    _monIndexFetch::_monIndexFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
       _hitEnd        = TRUE ;
@@ -3329,7 +3351,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
+         _builder.reset() ;
+         BSONObjBuilder ob( _builder ) ;
 
          const monIndex &indexItem = _indexInfo[ _pos++ ] ;
          const BSONObj &indexObj = indexItem._indexDef ;
@@ -3372,7 +3395,7 @@ namespace engine
                         indexItem._scanExtLID ) ;
          }
 
-         obj = ob.obj() ;
+         obj = BSONObj( ob.done() ) ;
 
          if ( _pos >= _indexInfo.size() )
          {
@@ -3399,6 +3422,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monCLBlockFetch, RTN_FETCH_DATABLOCK )
 
    _monCLBlockFetch::_monCLBlockFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ * 4 )
    {
       _addInfoMask   = 0 ;
       _hitEnd        = TRUE ;
@@ -3520,7 +3544,8 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ * 4 ) ;
+	 _builder.reset();
+         BSONObjBuilder ob( _builder ) ;
 
          /// add system info
          monAppendSystemInfo( ob, _addInfoMask ) ;
@@ -3537,7 +3562,7 @@ namespace engine
          }
          sub.done() ;
 
-         obj = ob.obj() ;
+         obj = BSONObj( ob.done() ) ;
 
          if ( _pos >= _vecBlock.size() )
          {
@@ -3564,6 +3589,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monBackupFetch, RTN_FETCH_BACKUP )
 
    _monBackupFetch::_monBackupFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
       _hitEnd        = TRUE ;
@@ -3715,13 +3741,14 @@ namespace engine
       {
          try
          {
-            BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
+            _builder.reset() ;
+            BSONObjBuilder ob( _builder ) ;
 
             /// add system info
             monAppendSystemInfo( ob, _addInfoMask ) ;
             ob.appendElements( _vecBackup[ _pos++ ] ) ;
 
-            obj = ob.obj() ;
+            obj = BSONObj( ob.done() ) ;
          }
          catch ( std::exception &e )
          {
@@ -3748,6 +3775,7 @@ namespace engine
     */
    IMPLEMENT_FETCH_AUTO_REGISTER( _monAccessPlansFetch, RTN_FETCH_ACCESSPLANS )
    _monAccessPlansFetch::_monAccessPlansFetch ()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _hitEnd = TRUE ;
       _pos = 0 ;
@@ -3862,13 +3890,14 @@ namespace engine
       {
          try
          {
-            BSONObjBuilder builder( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
+            _builder.reset() ;
+            BSONObjBuilder builder( _builder ) ;
 
             /// add system info
             builder.appendElements( _sysInfo ) ;
             builder.appendElements( _cachedPlanList[ _pos++ ] ) ;
 
-            obj = builder.obj() ;
+            obj = BSONObj( builder.done() ) ;
          }
          catch ( std::exception &e )
          {
@@ -3896,6 +3925,7 @@ namespace engine
    IMPLEMENT_FETCH_AUTO_REGISTER( _monConfigsFetch, RTN_FETCH_CONFIGS )
 
    _monConfigsFetch::_monConfigsFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask   = 0 ;
       _hitEnd        = TRUE ;
@@ -3984,7 +4014,8 @@ namespace engine
       }
       else
       {
-         BSONObjBuilder ob( 1024 ) ;
+         _builder.reset() ;
+         BSONObjBuilder ob( _builder ) ;
          BSONObj tmpObj ;
 
          /// add system info
@@ -4006,7 +4037,7 @@ namespace engine
             goto error ;
          }
          ob.appendElements( tmpObj ) ;
-         obj = ob.obj() ;
+         obj = BSONObj( ob.done() ) ;
 
          _hitEnd = TRUE ;
       }
@@ -4023,6 +4054,7 @@ namespace engine
    */
    IMPLEMENT_FETCH_AUTO_REGISTER( _monVCLSessionInfoFetch, RTN_FETCH_VCL_SESSIONINFO )
    _monVCLSessionInfoFetch::_monVCLSessionInfoFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _hitEnd = TRUE ;
    }
@@ -4047,12 +4079,13 @@ namespace engine
 
          if ( cb->getMonAppCB()->getSvcTaskInfo() )
          {
-            BSONObjBuilder builder ;
+            _builder.reset() ;
+            BSONObjBuilder builder( _builder ) ;
             builder.appendElements( _info ) ;
             monDumpSvcTaskInfo( builder,
                                 cb->getMonAppCB()->getSvcTaskInfo(),
                                 TRUE ) ;
-            _info = builder.obj() ;
+            _info = BSONObj( builder.done() ) ;
          }
       }
       else
@@ -4095,6 +4128,7 @@ namespace engine
       _monSvcTasksFetch implement
    */
    _monSvcTasksFetch::_monSvcTasksFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
    {
       _addInfoMask = 0 ;
       _hitEnd = TRUE ;
@@ -4151,7 +4185,8 @@ namespace engine
       }
       else
       {
-         BSONObjBuilder builder ;
+         _builder.reset() ;
+         BSONObjBuilder builder( _builder ) ;
          it = _mapSvcTask.begin() ;
 
          monAppendSystemInfo( builder, _addInfoMask ) ;
@@ -4166,7 +4201,7 @@ namespace engine
             builder.append( FIELD_NAME_TASK_ID, (INT64)pInfo->getTaskID() ) ;
             builder.append( FIELD_NAME_TASK_NAME, pInfo->getTaskName() ) ;
          }
-         obj = builder.obj() ;
+         obj = BSONObj( builder.done() ) ;
 
          _mapSvcTask.erase( it ) ;
          _hitEnd = _mapSvcTask.empty() ? TRUE : FALSE ;
@@ -4175,4 +4210,58 @@ namespace engine
       return rc ;
    }
 
+   IMPLEMENT_FETCH_AUTO_REGISTER( _monQueriesFetch, RTN_FETCH_QUERIES )
+   /*
+      _monQueriesFetch implement
+   */
+   _monQueriesFetch::_monQueriesFetch()
+      : rtnFetchBase ( MON_DUMP_DFT_BUILDER_SZ )
+   {
+      _addInfoMask = 0 ;
+      _hitEnd = FALSE ;
+      _isDetail= TRUE ;
+   }
+
+   _monQueriesFetch::~_monQueriesFetch()
+   {
+   }
+
+   INT32 _monQueriesFetch::init( pmdEDUCB *cb,
+                                  BOOLEAN isCurrent,
+                                  BOOLEAN isDetail,
+                                  UINT32 addInfoMask,
+                                  const BSONObj obj )
+   {
+
+      _isDetail = isDetail ;
+      _addInfoMask = addInfoMask ;
+
+      return SDB_OK ;
+   }
+
+   const CHAR* _monQueriesFetch::getName() const
+   {
+      return CMD_NAME_SNAPSHOT_QUERIES ;
+   }
+
+   BOOLEAN _monQueriesFetch::isHitEnd() const
+   {
+      return _hitEnd ;
+   }
+
+   INT32 _monQueriesFetch::fetch( BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+
+      //TODO: to be implemented
+      _builder.reset() ;
+      BSONObjBuilder builder( _builder ) ;
+
+      obj = BSONObj( builder.done() ) ;
+
+      _hitEnd = TRUE ;
+      return rc ;
+   }
+
 }
+
