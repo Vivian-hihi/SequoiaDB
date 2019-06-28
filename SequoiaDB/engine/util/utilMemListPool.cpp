@@ -221,17 +221,22 @@ namespace engine
 
    UINT32 _utilMemListItem::dump( CHAR * pBuff, UINT32 buffSize )
    {
-      return ossSnprintf( pBuff, buffSize,
-                          OSS_NEWLINE
-                          "   BlockSize : %u"OSS_NEWLINE
-                          "   CacheSize : %llu"OSS_NEWLINE
-                          "  AllocCount : %llu"OSS_NEWLINE
-                          "DeallocCount : %llu"OSS_NEWLINE
-                          "    HitCount : %llu"OSS_NEWLINE
-                          "   PushCount : %llu"OSS_NEWLINE,
-                          _blockSize, _cachedSize,
-                          _allocCount, _deallocCount,
-                          _hitCount, _pushCount ) ;
+      if ( _cachedSize != 0 || _allocCount != 0 || _deallocCount != 0 ||
+           _hitCount != 0 || _pushCount != 0 )
+      {
+         return ossSnprintf( pBuff, buffSize,
+                             OSS_NEWLINE
+                             "   BlockSize : %u"OSS_NEWLINE
+                             "   CacheSize : %llu"OSS_NEWLINE
+                             "  AllocCount : %llu"OSS_NEWLINE
+                             "DeallocCount : %llu"OSS_NEWLINE
+                             "    HitCount : %llu"OSS_NEWLINE
+                             "   PushCount : %llu"OSS_NEWLINE,
+                             _blockSize, _cachedSize,
+                             _allocCount, _deallocCount,
+                             _hitCount, _pushCount ) ;
+      }
+      return 0 ;
    }
 
    UINT64 _utilMemListItem::shrink( UINT64 expectSize )
