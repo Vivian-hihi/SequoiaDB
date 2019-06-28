@@ -109,6 +109,8 @@ namespace engine
          UINT64   getCacheSize() const { return _cachedSize ; }
          UINT32   getBlockSize() const { return _blockSize ; }
 
+         UINT32   dump( CHAR *pBuff, UINT32 buffSize ) ;
+
       protected:
          BOOLEAN _canAllocBlockSize( UINT32 size )
          {
@@ -131,6 +133,7 @@ namespace engine
          UINT64                  _allocCount ;
          UINT64                  _deallocCount ;
          UINT64                  _hitCount ;
+         UINT64                  _pushCount ;
    } ;
    typedef _utilMemListItem utilMemListItem ;
 
@@ -170,10 +173,20 @@ namespace engine
          void        shrink() ;
          UINT64      getCacheSize() const { return _cachedSize ; }
 
+         UINT32      dump( CHAR *pBuff, UINT32 buffSize ) ;
+
       private:
          UINT64            _cachedSize ;
          BOOLEAN           _hasInit ;
          utilMemListItem*  _arrayList[ UTIL_MEM_POOL_LIST_NUM + 1 ] ;
+
+         /// stat info
+         UINT64            _allocCount ;
+         UINT64            _reallocCount ;
+         UINT64            _deallocCount ;
+         UINT64            _hitCount ;
+         UINT64            _pushCount ;
+         UINT64            _copyCount ;
    } ;
    typedef _utilMemListPool utilMemListPool ;
 
@@ -181,6 +194,7 @@ namespace engine
       Global function
    */
    void        utilSetThreadMemPool( utilMemListPool *pPool ) ;
+   void        utilDumpThreadMemPoolInfo() ;
    void        utilClearThreadMemPool() ;
    UINT32      utilThreadMemPoolSize() ;
 

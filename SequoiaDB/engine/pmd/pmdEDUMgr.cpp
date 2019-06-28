@@ -2192,6 +2192,10 @@ namespace engine
                     myEDUID, getEDUName( eduType ), eduName ) ;
          }
 
+         if ( pmdGetOptionCB()->isEnabledPerfStat() )
+         {
+            utilDumpThreadMemPoolInfo() ;
+         }
          utilClearThreadMemPool() ;
       }
 

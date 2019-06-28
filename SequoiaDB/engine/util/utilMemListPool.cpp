@@ -53,6 +53,8 @@ namespace engine
    */
    static UINT32 g_maxTCCacheSize = UTIL_MEM_POOL_MAXCACHE_SIZE_DFT ;
 
+   #define UTIL_DUMP_BUFFSIZE             ( 2000 )
+
    void utilSetMaxTCSize( UINT32 maxCacheSize )
    {
       g_maxTCCacheSize = maxCacheSize ;
@@ -81,6 +83,7 @@ namespace engine
       _allocCount = 0 ;
       _deallocCount = 0 ;
       _hitCount = 0 ;
+      _pushCount = 0 ;
    }
 
    _utilMemListItem::~_utilMemListItem()
@@ -182,6 +185,8 @@ namespace engine
          _header = pNode ;
 
          _cachedSize += _blockSize ;
+         ++_pushCount ;
+
          if ( _pEvent )
          {
             _pEvent->onPushedCache( _blockSize ) ;
@@ -207,6 +212,26 @@ namespace engine
          _pEvent->onReleaseCache( _cachedSize ) ;
       }
       _cachedSize = 0 ;
+
+      _allocCount = 0 ;
+      _deallocCount = 0 ;
+      _hitCount = 0 ;
+      _pushCount = 0 ;
+   }
+
+   UINT32 _utilMemListItem::dump( CHAR * pBuff, UINT32 buffSize )
+   {
+      return ossSnprintf( pBuff, buffSize,
+                          OSS_NEWLINE
+                          "   BlockSize : %u"OSS_NEWLINE
+                          "   CacheSize : %llu"OSS_NEWLINE
+                          "  AllocCount : %llu"OSS_NEWLINE
+                          "DeallocCount : %llu"OSS_NEWLINE
+                          "    HitCount : %llu"OSS_NEWLINE
+                          "   PushCount : %llu"OSS_NEWLINE,
+                          _blockSize, _cachedSize,
+                          _allocCount, _deallocCount,
+                          _hitCount, _pushCount ) ;
    }
 
    UINT64 _utilMemListItem::shrink( UINT64 expectSize )
@@ -247,6 +272,13 @@ namespace engine
                   UTIL_MEM_POOL_LIST_NUM + 1,
                   "Invalid arrayList size" ) ;
       ossMemset( _arrayList, 0, sizeof( _arrayList ) ) ;
+
+      _allocCount = 0 ;
+      _reallocCount = 0 ;
+      _deallocCount = 0 ;
+      _hitCount = 0 ;
+      _pushCount = 0 ;
+      _copyCount = 0 ;
    }
 
    _utilMemListPool::~_utilMemListPool()
@@ -312,6 +344,13 @@ namespace engine
             _arrayList[ i ]->clear() ;
          }
       }
+
+      _allocCount = 0 ;
+      _reallocCount = 0 ;
+      _deallocCount = 0 ;
+      _hitCount = 0 ;
+      _pushCount = 0 ;
+      _copyCount = 0 ;
    }
 
    void _utilMemListPool::shrink()
@@ -341,11 +380,13 @@ namespace engine
    void _utilMemListPool::onAllocCache( UINT32 blockSize )
    {
       _cachedSize -= blockSize ;
+      ++_hitCount ;
    }
 
    void _utilMemListPool::onPushedCache( UINT32 blockSize )
    {
       _cachedSize += blockSize ;
+      ++_pushCount ;
    }
 
    void _utilMemListPool::onOutOfCache( UINT32 blockSize,
@@ -397,6 +438,8 @@ namespace engine
          goto done ;
       }
 
+      ++_allocCount ;
+
       ossNextPowerOf2( size + UTIL_MEM_TOTAL_FILL_LEN, &square ) ;
       index = (INT32)square - UTIL_MEM_LIST_BASE_EXPONENT ;
 
@@ -441,6 +484,8 @@ namespace engine
          goto done ;
       }
 
+      ++_reallocCount ;
+
       if ( utilPoolPtrCheck( ptr, &oldSize ) )
       {
          if ( oldSize >= size )
@@ -456,6 +501,7 @@ namespace engine
          pNewPtr = alloc( size, pRealSize ) ;
          if ( pNewPtr )
          {
+            ++_copyCount ;
             /// copy
             ossMemcpy( pNewPtr, ptr, oldSize ) ;
             /// release old
@@ -476,6 +522,8 @@ namespace engine
       if ( !ptr ) return ;
 
       UINT32 oldSize = 0 ;
+
+      ++_deallocCount ;
 
       if ( utilPoolPtrCheck( ptr, &oldSize ) )
       {
@@ -498,6 +546,45 @@ namespace engine
       {
          utilPoolRelease( ptr ) ;
       }
+   }
+
+   UINT32 _utilMemListPool::dump( CHAR *pBuff, UINT32 buffSize )
+   {
+      UINT32 len = 0 ;
+
+      /// dump self
+      len = ossSnprintf( pBuff, buffSize,
+                         "   CacheSize : %llu"OSS_NEWLINE
+                         "  AllocCount : %llu"OSS_NEWLINE
+                         "ReallocCount : %llu"OSS_NEWLINE
+                         "DeallocCount : %llu"OSS_NEWLINE
+                         "    HitCount : %llu"OSS_NEWLINE
+                         "   PushCount : %llu"OSS_NEWLINE
+                         "   CopyCount : %llu"OSS_NEWLINE,
+                         _cachedSize,
+                         _allocCount, _reallocCount, _deallocCount,
+                         _hitCount, _pushCount, _copyCount ) ;
+
+      if ( len >= buffSize )
+      {
+         goto done ;
+      }
+
+      /// dump item
+      for ( UINT32 i = 0 ; i < UTIL_MEM_POOL_LIST_NUM ; ++i )
+      {
+         if ( _arrayList[ i ] )
+         {
+            len += _arrayList[ i ]->dump( pBuff + len, buffSize - len ) ;
+            if ( len >= buffSize )
+            {
+               break ;
+            }
+         }
+      }
+
+   done:
+      return len ;
    }
 
    /*
@@ -529,6 +616,24 @@ namespace engine
       if ( g_thdMemPool )
       {
          g_thdMemPool->clear() ;
+      }
+   }
+
+   void utilDumpThreadMemPoolInfo()
+   {
+      if ( g_thdMemPool )
+      {
+         CHAR *pBuff = (CHAR*)SDB_OSS_MALLOC( UTIL_DUMP_BUFFSIZE ) ;
+         if ( pBuff )
+         {
+            ossMemset( pBuff, 0, UTIL_DUMP_BUFFSIZE ) ;
+            g_thdMemPool->dump( pBuff, UTIL_DUMP_BUFFSIZE - 1 ) ;
+
+            PD_LOG( PDEVENT, "Dump thread memory info: %s%s",
+                    OSS_NEWLINE, pBuff ) ;
+
+            SDB_OSS_FREE( pBuff ) ;
+         }
       }
    }
 
