@@ -147,12 +147,6 @@ public class Transaction18523 extends SdbTestBase {
                     Thread.sleep(200);
                 }
             } catch (BaseException e) {
-                db.rollback();
-            } finally {
-                if (db != null) {
-                    db.commit();
-                    db.close();
-                }
             }
         }
     }
