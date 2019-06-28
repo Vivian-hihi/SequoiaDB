@@ -221,22 +221,38 @@ namespace engine
 
    UINT32 _utilMemListItem::dump( CHAR * pBuff, UINT32 buffSize )
    {
+      UINT32 len = 0 ;
+
       if ( _cachedSize != 0 || _allocCount != 0 || _deallocCount != 0 ||
            _hitCount != 0 || _pushCount != 0 )
       {
-         return ossSnprintf( pBuff, buffSize,
-                             OSS_NEWLINE
-                             "   BlockSize : %u"OSS_NEWLINE
-                             "   CacheSize : %llu"OSS_NEWLINE
-                             "  AllocCount : %llu"OSS_NEWLINE
-                             "DeallocCount : %llu"OSS_NEWLINE
-                             "    HitCount : %llu"OSS_NEWLINE
-                             "   PushCount : %llu"OSS_NEWLINE,
-                             _blockSize, _cachedSize,
-                             _allocCount, _deallocCount,
-                             _hitCount, _pushCount ) ;
+         FLOAT64 hitRatio = 0.0 ;
+         FLOAT64 pushRatio = 0.0 ;
+
+         if ( _allocCount > 0 )
+         {
+            hitRatio = ( FLOAT64 )_hitCount / _allocCount * 100 ;
+         }
+         if ( _deallocCount > 0 )
+         {
+            pushRatio = ( FLOAT64 )_pushCount / _deallocCount * 100 ;
+         }
+
+         len = ossSnprintf( pBuff, buffSize,
+                            OSS_NEWLINE
+                            "   BlockSize : %u"OSS_NEWLINE
+                            "   CacheSize : %llu"OSS_NEWLINE
+                            "  AllocCount : %llu"OSS_NEWLINE
+                            "DeallocCount : %llu"OSS_NEWLINE
+                            "    HitCount : %llu (%.2f%%)"OSS_NEWLINE
+                            "   PushCount : %llu (%.2f%%)"OSS_NEWLINE,
+                            _blockSize, _cachedSize,
+                            _allocCount, _deallocCount,
+                            _hitCount, hitRatio,
+                            _pushCount, pushRatio ) ;
       }
-      return 0 ;
+
+      return len ;
    }
 
    UINT64 _utilMemListItem::shrink( UINT64 expectSize )
@@ -284,6 +300,9 @@ namespace engine
       _hitCount = 0 ;
       _pushCount = 0 ;
       _copyCount = 0 ;
+
+      _outrangeAlloc = 0 ;
+      _outrangeDealloc = 0 ;
    }
 
    _utilMemListPool::~_utilMemListPool()
@@ -356,6 +375,9 @@ namespace engine
       _hitCount = 0 ;
       _pushCount = 0 ;
       _copyCount = 0 ;
+
+      _outrangeAlloc = 0 ;
+      _outrangeDealloc = 0 ;
    }
 
    void _utilMemListPool::shrink()
@@ -471,6 +493,7 @@ namespace engine
       }
       else
       {
+         ++_outrangeAlloc ;
          ptr = utilPoolAlloc( size, pRealSize ) ;
       }
 
@@ -544,11 +567,13 @@ namespace engine
          }
          else
          {
+            ++_outrangeDealloc ;
             utilPoolRelease( ptr ) ;
          }
       }
       else
       {
+         ++_outrangeDealloc ;
          utilPoolRelease( ptr ) ;
       }
    }
@@ -557,18 +582,40 @@ namespace engine
    {
       UINT32 len = 0 ;
 
+      FLOAT64 hitRatio = 0.0 ;
+      FLOAT64 pushRatio = 0.0 ;
+      FLOAT64 copyRatio = 0.0 ;
+
+      if ( _allocCount > 0 )
+      {
+         hitRatio = ( FLOAT64 )_hitCount / _allocCount * 100 ;
+      }
+      if ( _deallocCount > 0 )
+      {
+         pushRatio = ( FLOAT64 )_pushCount / _deallocCount * 100 ;
+      }
+      if ( _reallocCount > 0 )
+      {
+         copyRatio = ( FLOAT64 )_copyCount / _reallocCount * 100 ;
+      }
+
       /// dump self
       len = ossSnprintf( pBuff, buffSize,
                          "   CacheSize : %llu"OSS_NEWLINE
                          "  AllocCount : %llu"OSS_NEWLINE
+                         "   O-R Alloc : %llu"OSS_NEWLINE
                          "ReallocCount : %llu"OSS_NEWLINE
                          "DeallocCount : %llu"OSS_NEWLINE
-                         "    HitCount : %llu"OSS_NEWLINE
-                         "   PushCount : %llu"OSS_NEWLINE
-                         "   CopyCount : %llu"OSS_NEWLINE,
+                         " O-R Dealloc : %llu"OSS_NEWLINE
+                         "    HitCount : %llu (%.2f%%)"OSS_NEWLINE
+                         "   PushCount : %llu (%.2f%%)"OSS_NEWLINE
+                         "   CopyCount : %llu (%.2f%%)"OSS_NEWLINE,
                          _cachedSize,
-                         _allocCount, _reallocCount, _deallocCount,
-                         _hitCount, _pushCount, _copyCount ) ;
+                         _allocCount, _outrangeAlloc, _reallocCount,
+                         _deallocCount, _outrangeDealloc,
+                         _hitCount, hitRatio,
+                         _pushCount, pushRatio,
+                         _copyCount, copyRatio ) ;
 
       if ( len >= buffSize )
       {

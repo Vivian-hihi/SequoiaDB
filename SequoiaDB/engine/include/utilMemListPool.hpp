@@ -187,6 +187,9 @@ namespace engine
          UINT64            _hitCount ;
          UINT64            _pushCount ;
          UINT64            _copyCount ;
+
+         UINT64            _outrangeAlloc ;
+         UINT64            _outrangeDealloc ;
    } ;
    typedef _utilMemListPool utilMemListPool ;
 
