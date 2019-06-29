@@ -1,20 +1,5 @@
 package com.sequoias3.bucket;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.Owner;
-import com.sequoiadb.exception.BaseException;
-import com.sequoias3.testcommon.CommLib;
-import com.sequoias3.testcommon.RestClient;
-import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.s3utils.UserUtils;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -23,9 +8,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.Owner;
+import com.sequoiadb.exception.BaseException;
+import com.sequoias3.testcommon.CommLib;
+import com.sequoias3.testcommon.RestClient;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+
 /**
- * test content: bucket name parameter verification  
- * testlink-case: seqDB-15908  
+ * test content: bucket name parameter verification testlink-case: seqDB-15908
+ * 
  * @author wangkexin
  * @Date 2018.09.28
  * @version 1.00
@@ -63,12 +64,9 @@ public class CreateBucket15908 extends S3TestBase {
 		bucketNameList.add("-testbucket06");
 		bucketNameList.add("testbucket07-");
 		bucketNameList.add("users");
+		bucketNameList.add("region");
 		for (int i = 0; i < bucketNameList.size(); i++) {
-			try {
-				createBucket(bucketNameList.get(i));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			createBucket(bucketNameList.get(i));
 		}
 		checkbucketNameListResult(bucketNameList.size());
 
@@ -116,20 +114,20 @@ public class CreateBucket15908 extends S3TestBase {
 		List<Bucket> buckets = s3Client.listBuckets();
 		// check bucket number
 		Assert.assertEquals(buckets.size(), bucketNums);
-		
+
 		List<String> actbucketNameLists = new ArrayList<>();
-		for(Bucket bucket : buckets){
+		for (Bucket bucket : buckets) {
 			Owner actOwner = bucket.getOwner();
 			Assert.assertEquals(actOwner.getDisplayName(), userName);
 			actbucketNameLists.add(bucket.getName());
 		}
 		Collections.sort(actbucketNameLists);
-		
+
 		List<String> expBucketNames = new ArrayList<>();
-		for(String bucket : bucketNameList){
+		for (String bucket : bucketNameList) {
 			expBucketNames.add(URLDecoder.decode(bucket, "UTF-8").toLowerCase());
 		}
-		
+
 		Collections.sort(expBucketNames);
 		Assert.assertEquals(actbucketNameLists, expBucketNames);
 	}
