@@ -87,9 +87,6 @@ namespace engine
       CHAR *pDataMsgBuf = NULL ;
       INT32 dataMsgSize = 0 ;
 
-      CHAR *pRollbackMsgBuf = NULL ;
-      INT32 rollbackMsgSize = 0 ;
-
       coordCMDArguments arguments ;
       coordCMDArguments *pArguments = NULL ;
 
@@ -140,7 +137,7 @@ namespace engine
       rc = _generateCataMsg( pMsg, cb, pArguments,
                              &pCataMsgBuf, &cataMsgSize ) ;
       PD_RC_CHECK( rc, PDERROR, "Generate message to catalog failed for "
-                   "command[%s, targe:%s], rc: %d",
+                   "command[%s, target:%s], rc: %d",
                    getName(), pArguments->_targetName.c_str(), rc ) ;
 
       // Execute P1 on Catalog
@@ -162,7 +159,7 @@ namespace engine
          goto error ;
       }
 
-      PD_LOG( PDINFO, "Do phase 1 on catalog done for command[%s, targe:%s], "
+      PD_LOG( PDINFO, "Do phase 1 on catalog done for command[%s, target:%s], "
               "get %u target groups back", getName(),
               pArguments->_targetName.c_str(), groupLst.size() ) ;
 
@@ -177,11 +174,11 @@ namespace engine
       rc = _doOnDataGroup( (MsgHeader*)pDataMsgBuf, cb, &pCoordCtxForData,
                            pArguments, groupLst, cataObjs, sucGroupLst ) ;
       PD_RC_CHECK( rc, PDERROR, "Do phase 1 on data failed for command[%s, "
-                   "targe:%s, suc group size:%u], rc: %d",
+                   "target:%s, suc group size:%u], rc: %d",
                    getName(), pArguments->_targetName.c_str(),
                    sucGroupLst.size(), rc ) ;
 
-      PD_LOG( PDINFO, "Do phase 1 on data done for command[%s, targe:%s], "
+      PD_LOG( PDINFO, "Do phase 1 on data done for command[%s, target:%s], "
               "succeed group size: %u", getName(),
               pArguments->_targetName.c_str(), sucGroupLst.size() ) ;
 
@@ -197,41 +194,41 @@ namespace engine
                    "command[%s, target:%s], rc: %d", getName(),
                    pArguments->_targetName.c_str(), rc ) ;
 
-      PD_LOG( PDINFO, "Do phase 2 on catalog done for command[%s, targe:%s]",
+      PD_LOG( PDINFO, "Do phase 2 on catalog done for command[%s, target:%s]",
               getName(), pArguments->_targetName.c_str() ) ;
 
       // Execute P2 on Data Groups
       rc = _doOnDataGroupP2( (MsgHeader*)pDataMsgBuf, cb, &pCoordCtxForData,
                              pArguments, groupLst, cataObjs ) ;
       PD_RC_CHECK( rc, PDERROR, "Do phase 2 on data failed for command[%s, "
-                   "targe:%s], rc: %d", getName(),
+                   "target:%s], rc: %d", getName(),
                    pArguments->_targetName.c_str(), rc ) ;
 
-      PD_LOG( PDINFO, "Do phase 2 on data done for command[%s, targe:%s]",
+      PD_LOG( PDINFO, "Do phase 2 on data done for command[%s, target:%s]",
               getName(), pArguments->_targetName.c_str() ) ;
 
+   commit :
       /************************************************************************
        * Phase Commit
        * 1. Commit on Catalog
        * 2. Update local catalog cache if needed
        ************************************************************************/
-   commit :
       // Commit on Catalog
       rc = _doCommit( pMsg, cb, &pCoordCtxForCata, pArguments );
       PD_RC_CHECK( rc, PDERROR, "Do commit phase on catalog failed for "
-                   "command[%s, targe:%s], rc: %d", getName(),
+                   "command[%s, target:%s], rc: %d", getName(),
                    pArguments->_targetName.c_str(), rc ) ;
 
       PD_LOG( PDINFO, "Do commit phase on catalog done for command[%s, "
-              "targe:%s]", getName(), pArguments->_targetName.c_str() ) ;
+              "target:%s]", getName(), pArguments->_targetName.c_str() ) ;
 
       // Update local catalog info caches if needed
       rc = _doComplete( pMsg, cb, pArguments ) ;
       PD_RC_CHECK( rc, PDERROR, "Do complete phase failed for "
-                   "command[%s, targe:%s], rc: %d", getName(),
+                   "command[%s, target:%s], rc: %d", getName(),
                    pArguments->_targetName.c_str(), rc ) ;
 
-      PD_LOG( PDINFO, "Do complete phase done for command[%s, targe:%s]",
+      PD_LOG( PDINFO, "Do complete phase done for command[%s, target:%s]",
               getName(), pArguments->_targetName.c_str() ) ;
 
    done :
@@ -264,13 +261,10 @@ namespace engine
       {
          _releaseDataMsg( pDataMsgBuf, dataMsgSize, cb ) ;
       }
-      if ( pRollbackMsgBuf )
-      {
-         _releaseRollbackDataMsg( pRollbackMsgBuf, rollbackMsgSize, cb ) ;
-      }
 
       PD_TRACE_EXITRC ( COORD_CMD2PHASE_EXE, rc ) ;
       return rc ;
+
    error :
       /************************************************************************
        * Phase Rollback
@@ -278,58 +272,21 @@ namespace engine
        * 2. Execute rollback on succeed Data Groups
        * Note: updates to Catalog will be rollback by kill context
        ************************************************************************/
-      // The command could be rollbacked in two conditions:
-      // 1. There are succeed Data Groups
-      // 2. There are Catalog context to rollback catalog
-      if ( !sucGroupLst.empty () && pCoordCtxForCata )
       {
-         INT32 tmprc = SDB_OK ;
-
-         // Rollback Catalog first if needed
-         if ( _flagRollbackCataBeforeData() && pCoordCtxForCata )
+         INT32 tmpRC = _doRollback( pMsg, cb, &pCoordCtxForCata, pArguments,
+                                    sucGroupLst, rc ) ;
+         if ( SDB_OK != tmpRC )
          {
-            pRtncb->contextDelete ( pCoordCtxForCata->contextID(), cb ) ;
-            pCoordCtxForCata = NULL ;
-         }
-
-         // Generate rollback message to succeed Data Groups
-         tmprc = _generateRollbackDataMsg( pMsg, cb, pArguments,
-                                           &pRollbackMsgBuf,
-                                           &rollbackMsgSize ) ;
-         if ( SDB_OK != tmprc )
-         {
-            PD_LOG( PDWARNING, "Generate rollback message to data failed for "
-                    "command[%s, targe:%s], rc: %d", getName(),
-                    pArguments->_targetName.c_str(), tmprc ) ;
-
-            sucGroupLst.clear() ;
-
-            if ( _flagCommitOnRollbackFailed() && pCoordCtxForCata )
+            PD_LOG( PDWARNING, "Do rollback phase failed for "
+                    "command[%s, target:%s], rc: %d", getName(),
+                    pArguments->_targetName.c_str(), tmpRC ) ;
+            if ( _flagCommitOnRollbackFailed() && NULL != pCoordCtxForCata )
             {
                goto commit ;
             }
-            goto done ;
          }
-         tmprc = _rollbackOnDataGroup( (MsgHeader*)pRollbackMsgBuf, cb,
-                                       pArguments, sucGroupLst ) ;
-         if ( SDB_OK != tmprc )
-         {
-            PD_LOG( PDWARNING, "Do rollback phase on data failed for "
-                    "command[%s, targe:%s], rc: %d", getName(),
-                    pArguments->_targetName.c_str(), tmprc ) ;
-
-            sucGroupLst.clear() ;
-
-            if ( _flagCommitOnRollbackFailed() && pCoordCtxForCata )
-            {
-               goto commit ;
-            }
-            goto done ;
-         }
-
-         PD_LOG( PDINFO, "Do rollback phase on data done for command[%s, "
-                 "targe:%s]", getName(), pArguments->_targetName.c_str() ) ;
-
+         PD_LOG( PDINFO, "Do rollback done for command[%s, target:%s]",
+                 getName(), pArguments->_targetName.c_str() ) ;
       }
       goto done ;
    }
@@ -513,6 +470,80 @@ namespace engine
       PD_TRACE_EXITRC ( COORD_CMD2PHASE_DOCOMMIT, rc ) ;
 
       return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_CMD2PHASE_DOROLLBACK, "_coordCMD2Phase::_doRollback" )
+   INT32 _coordCMD2Phase::_doRollback ( MsgHeader * pMsg,
+                                        pmdEDUCB * cb,
+                                        rtnContextCoord ** ppCoordCtxForCata,
+                                        coordCMDArguments * pArguments,
+                                        CoordGroupList & sucGroupLst,
+                                        INT32 failedRC )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( COORD_CMD2PHASE_DOROLLBACK ) ;
+
+      SDB_ASSERT( NULL != ppCoordCtxForCata, "ppCoordCtxForCata is invalid" ) ;
+
+      SDB_RTNCB * rtnCB = sdbGetRTNCB() ;
+
+      CHAR * pRollbackMsgBuf = NULL ;
+      INT32 rollbackMsgSize = 0 ;
+
+      rtnContextCoord * pCoordCtxForCata = *ppCoordCtxForCata ;
+
+      // The command could be rollbacked in two conditions:
+      // 1. There are succeed Data Groups
+      // 2. There are Catalog context to rollback catalog
+      if ( !sucGroupLst.empty () && NULL != pCoordCtxForCata )
+      {
+         // Rollback Catalog first if needed
+         if ( _flagRollbackCataBeforeData() && NULL != pCoordCtxForCata )
+         {
+            rtnCB->contextDelete ( pCoordCtxForCata->contextID(), cb ) ;
+            pCoordCtxForCata = NULL ;
+         }
+
+         // Generate rollback message to succeed Data Groups
+         rc = _generateRollbackDataMsg( pMsg, cb, pArguments,
+                                        &pRollbackMsgBuf,
+                                        &rollbackMsgSize ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Generate rollback message to data failed "
+                      "for command[%s, target:%s], rc: %d", getName(),
+                      pArguments->_targetName.c_str(), rc ) ;
+
+         rc = _rollbackOnDataGroup( (MsgHeader*)pRollbackMsgBuf, cb,
+                                    pArguments, sucGroupLst ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Do rollback phase on data failed for "
+                      "command[%s, target:%s], rc: %d", getName(),
+                      pArguments->_targetName.c_str(), rc ) ;
+
+         if ( NULL != pCoordCtxForCata )
+         {
+            rtnCB->contextDelete( pCoordCtxForCata->contextID(), cb ) ;
+            pCoordCtxForCata = NULL ;
+         }
+
+         PD_LOG( PDINFO, "Do rollback phase on data done for command[%s, "
+                 "target:%s]", getName(), pArguments->_targetName.c_str() ) ;
+      }
+
+   done :
+      if ( NULL == pCoordCtxForCata )
+      {
+         *ppCoordCtxForCata = NULL ;
+      }
+      if ( pRollbackMsgBuf )
+      {
+         _releaseRollbackDataMsg( pRollbackMsgBuf, rollbackMsgSize, cb ) ;
+      }
+      PD_TRACE_EXITRC ( COORD_CMD2PHASE_DOROLLBACK, rc ) ;
+      return rc ;
+
+   error :
+      sucGroupLst.clear() ;
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_CMD2PHASE_PROCESSCTX, "_coordCMD2Phase::_processContext" )

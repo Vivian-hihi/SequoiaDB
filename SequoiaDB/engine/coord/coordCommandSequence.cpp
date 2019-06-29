@@ -72,8 +72,11 @@ namespace engine
 
    IMPLEMENT_CMD_AUTO_REGISTER(_coordInvalidateSequenceCache)
    _coordInvalidateSequenceCache::_coordInvalidateSequenceCache()
+   : _collection( NULL ),
+     _fieldName( NULL ),
+     _sequenceName( NULL ),
+     _sequenceID( UTIL_SEQUENCEID_NULL )
    {
-      _sequenceID = UTIL_SEQUENCEID_NULL ;
    }
 
    _coordInvalidateSequenceCache::~_coordInvalidateSequenceCache()
@@ -98,38 +101,47 @@ namespace engine
 
       try
       {
-         BSONObj obj( pMatcherBuff ) ;
+         _object = BSONObj( pMatcherBuff ).getOwned() ;
+
          BSONElement e ;
 
+         // check collection name
+         if ( _object.hasField( FIELD_NAME_COLLECTION ) )
+         {
+            e = _object.getField( FIELD_NAME_COLLECTION ) ;
+            PD_CHECK( String == e.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Field [%s] is invalid in obj [%s]",
+                      FIELD_NAME_COLLECTION, _object.toString().c_str() ) ;
+            _collection = e.valuestr() ;
+         }
+
+         // check field name
+         if ( _object.hasField( FIELD_NAME_AUTOINC_FIELD ) )
+         {
+            e = _object.getField( FIELD_NAME_AUTOINC_FIELD ) ;
+            PD_CHECK( String == e.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Field [%s] is invalid in obj [%s]",
+                      FIELD_NAME_AUTOINC_FIELD, _object.toString().c_str() ) ;
+            _fieldName = e.valuestr() ;
+         }
+
          // check sequence name
-         e = obj.getField( FIELD_NAME_SEQUENCE_NAME ) ;
-         if ( String == e.type() )
+         if ( _object.hasField( FIELD_NAME_SEQUENCE_NAME ) )
          {
-            _sequenceName = e.String() ;
+            e = _object.getField( FIELD_NAME_SEQUENCE_NAME ) ;
+            PD_CHECK( String == e.type(), SDB_INVALIDARG, error, PDERROR,
+                      "Field [%s] is invalid in obj [%s]",
+                      FIELD_NAME_SEQUENCE_NAME, _object.toString().c_str() ) ;
+            _sequenceName = e.valuestr() ;
          }
-         else if ( !e.eoo() )
+
+         // check sequence ID
+         if( _object.hasField( FIELD_NAME_SEQUENCE_ID ) )
          {
-            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                    FIELD_NAME_SEQUENCE_NAME,
-                    obj.toString( false, false).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "Missing field[%s] in obj[%s]",
-                    FIELD_NAME_SEQUENCE_NAME,
-                    obj.toString( false, false ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         if( obj.hasField( FIELD_NAME_SEQUENCE_ID ) )
-         {
-            e = obj.getField( FIELD_NAME_SEQUENCE_ID ) ;
+            e = _object.getField( FIELD_NAME_SEQUENCE_ID ) ;
             PD_CHECK( e.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                      "Field[%s] is invalid in obj[%s]",
-                     FIELD_NAME_SEQUENCE_ID,
-                     obj.toString( false, false ).c_str() ) ;
+                      "Field [%s] is invalid in obj [%s]",
+                     FIELD_NAME_SEQUENCE_ID, _object.toString().c_str() ) ;
             _sequenceID = e.Long() ;
          }
       }
@@ -139,6 +151,10 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+
+      PD_CHECK( NULL != _sequenceName ||
+                ( NULL != _collection && NULL != _fieldName ),
+                SDB_INVALIDARG, error, PDERROR, "No sequence is given" ) ;
 
    done:
       return rc ;
@@ -153,10 +169,59 @@ namespace engine
                                                INT16 w,
                                                INT64 *pContextID )
    {
-      coordSequenceAgent* sequenceAgent =
-         sdbGetCoordCB()->getResource()->getSequenceAgent() ;
-      sequenceAgent->removeCache( _sequenceName, _sequenceID ) ;
-      return  SDB_OK ;
+      INT32 rc = SDB_OK ;
+
+      coordResource * resource = sdbGetCoordCB()->getResource() ;
+      SDB_ASSERT( NULL != resource, "coord resource is invalid" ) ;
+
+      coordSequenceAgent * sequenceAgent = resource->getSequenceAgent() ;
+      SDB_ASSERT( NULL != sequenceAgent, "coord sequence agent is invalid" ) ;
+
+      if ( NULL != _sequenceName )
+      {
+         sequenceAgent->removeCache( _sequenceName, _sequenceID ) ;
+         PD_LOG( PDDEBUG, "Removed sequence cache [%s]", _sequenceName ) ;
+      }
+      else if ( NULL != _collection && NULL != _fieldName )
+      {
+         CoordCataInfoPtr cataPtr ;
+
+         // no need to get the latest ( in this case, the sender coord might
+         // get problem with catalog )
+         resource->getCataInfo( _collection, cataPtr ) ;
+         if ( NULL != cataPtr.get() )
+         {
+            const clsAutoIncSet & autoIncSet = cataPtr->getAutoIncSet() ;
+            const clsAutoIncItem * autoIncItem = autoIncSet.find( _fieldName ) ;
+            if ( NULL != autoIncItem )
+            {
+               sequenceAgent->removeCache( autoIncItem->sequenceName(),
+                                           autoIncItem->sequenceID() ) ;
+               PD_LOG( PDDEBUG, "Removed sequence cache [%s]",
+                       autoIncItem->sequenceName() ) ;
+            }
+            else
+            {
+               // auto increment field is not found, clear collection
+               // catalog cache which might be too old
+               PD_LOG( PDDEBUG, "Failed to find field [%s] in collection [%s], "
+                       "clear catalog cache", _fieldName, _collection ) ;
+               resource->removeCataInfo( _collection ) ;
+            }
+         }
+         else
+         {
+            PD_LOG( PDDEBUG, "Failed to find collection [%s] in catalog cache",
+                    _collection ) ;
+            goto done ;
+         }
+      }
+
+   done :
+      // ignore errors
+      return SDB_OK ;
+   error :
+      goto done ;
    }
 }
 

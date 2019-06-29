@@ -1072,7 +1072,7 @@ namespace engine
             seqName = pItem->sequenceName() ;
             seqID = pItem->sequenceID() ;
 
-            rc = coordSequenceInvalidateCache( seqName, cb, seqID ) ;
+            rc = coordSequenceInvalidateCache( seqName, seqID, cb ) ;
             if ( SDB_SEQUENCE_NOT_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Sequence not found, name[%s], id[%llu]",

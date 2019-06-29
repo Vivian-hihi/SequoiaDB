@@ -163,6 +163,13 @@ namespace engine
                                    rtnContextCoord **ppContext,
                                    coordCMDArguments *pArgs ) ;
 
+         virtual INT32 _doRollback ( MsgHeader * pMsg,
+                                     pmdEDUCB * cb,
+                                     rtnContextCoord ** ppCoordCtxForCata,
+                                     coordCMDArguments * pArguments,
+                                     CoordGroupList & sucGroupLst,
+                                     INT32 failedRC ) ;
+
          virtual INT32 _doComplete ( MsgHeader *pMsg,
                                      pmdEDUCB * cb,
                                      coordCMDArguments *pArgs ) ;

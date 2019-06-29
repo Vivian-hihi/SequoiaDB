@@ -916,72 +916,127 @@ namespace engine
       return removed ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_INVALIDATE_CACHE, "coordSequenceInvalidateCache" )
-   INT32 coordSequenceInvalidateCache( const std::string& sequenceName,
-                                       _pmdEDUCB* eduCB,
-                                       const utilSequenceID ID )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__COORD_SEQ_INVALIDATE_CACHE, "_coordSequenceInvalidateCache" )
+   INT32 _coordSequenceInvalidateCache ( const BSONObj & commandObject,
+                                         _pmdEDUCB * eduCB )
    {
       INT32 rc = SDB_OK ;
-      BSONObj obj ;
-      CHAR* buf = NULL ;
+
+      PD_TRACE_ENTRY( SDB__COORD_SEQ_INVALIDATE_CACHE ) ;
+
+      CHAR * buffer = NULL ;
       INT32 bufSize = 0 ;
       INT64 contextID = -1 ;
-      BSONObjBuilder builder ;
-      PD_TRACE_ENTRY ( SDB_COORD_SEQ_INVALIDATE_CACHE ) ;
-
-      _coordCMDInvalidateSequenceCache invalidator ;
+      coordCMDInvalidateSequenceCache invalidator ;
 
       SDB_ASSERT( NULL != eduCB, "eduCB can't null" ) ;
+
+      rc = msgBuildSequenceInvalidateCacheMsg( &buffer, &bufSize, commandObject,
+                                               0, eduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to build sequence invalidate cache "
+                   "msg, rc: %d", rc ) ;
+
+      rc = invalidator.init( sdbGetCoordCB()->getResource(), eduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init sequence invalidate cache "
+                 "command, rc: %d", rc ) ;
+
+      rc = invalidator.execute( (MsgHeader*)buffer, eduCB, contextID, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to execute sequence invalidate "
+                   "cache command, rc: %d", rc ) ;
+
+   done :
+      if ( NULL != buffer )
+      {
+         msgReleaseBuffer( buffer, eduCB ) ;
+      }
+      PD_TRACE_EXITRC( SDB__COORD_SEQ_INVALIDATE_CACHE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_INVALIDATE_CACHE_SEQ, "coordSequenceInvalidateCache" )
+   INT32 coordSequenceInvalidateCache ( const CHAR * sequenceName,
+                                        utilSequenceID sequenceID,
+                                        _pmdEDUCB * eduCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_INVALIDATE_CACHE_SEQ ) ;
+
+      BSONObjBuilder builder ;
+      BSONObj commandObject ;
+
+      SDB_ASSERT( NULL != sequenceName, "sequence name is invalid" ) ;
 
       try
       {
          builder.append( FIELD_NAME_SEQUENCE_NAME, sequenceName ) ;
-         if( UTIL_SEQUENCEID_NULL != ID )
+         if( UTIL_SEQUENCEID_NULL != sequenceID )
          {
-            builder.append( FIELD_NAME_SEQUENCE_ID , (INT64)ID ) ;
+            builder.append( FIELD_NAME_SEQUENCE_ID , (INT64)sequenceID ) ;
          }
-         obj = builder.obj() ;
+         commandObject = builder.obj() ;
       }
-      catch( std::exception& e )
+      catch ( std::exception & e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexcepted exception: %s", e.what() ) ;
+         PD_LOG( PDERROR, "Unexpected exception: %s", e.what() ) ;
          goto error ;
       }
 
-      rc = msgBuildSequenceInvalidateCacheMsg( &buf, &bufSize, obj, 0, eduCB ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to build sequence invalidate cache "
-                 "msg, rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = invalidator.init( sdbGetCoordCB()->getResource(), eduCB ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to init sequence invalidate cache "
-                 "command, rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = invalidator.execute( (MsgHeader*)buf, eduCB, contextID, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to execute sequence invalidate "
-                 "cache command, rc=%d", rc ) ;
-         goto error ;
-      }
+      rc = _coordSequenceInvalidateCache( commandObject, eduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to call sequence invalidate "
+                   "command by sequence name [%s], rc: %d",
+                   sequenceName, rc ) ;
 
    done:
-      if ( NULL != buf )
-      {
-         msgReleaseBuffer( buf, eduCB ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_COORD_SEQ_INVALIDATE_CACHE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_INVALIDATE_CACHE_SEQ, rc ) ;
       return rc ;
    error:
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORD_SEQ_INVALIDATE_CACHE_COL, "coordSequenceInvalidateCache" )
+   INT32 coordSequenceInvalidateCache ( const CHAR * collection,
+                                        const CHAR * fieldName,
+                                        _pmdEDUCB * eduCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_COORD_SEQ_INVALIDATE_CACHE_COL ) ;
+
+      BSONObjBuilder builder ;
+      BSONObj commandObject ;
+
+      SDB_ASSERT( NULL != collection && NULL != fieldName,
+                  "collection and field names are invalid" ) ;
+
+      try
+      {
+         builder.append( FIELD_NAME_COLLECTION, collection ) ;
+         builder.append( FIELD_NAME_AUTOINC_FIELD, fieldName ) ;
+         commandObject = builder.obj() ;
+      }
+      catch ( std::exception & e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unexpected exception: %s", e.what() ) ;
+         goto error ;
+      }
+
+      rc = _coordSequenceInvalidateCache( commandObject, eduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to call sequence invalidate "
+                   "command for collection [%s] field [%s], rc: %d",
+                   collection, fieldName, rc ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_COORD_SEQ_INVALIDATE_CACHE_COL, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 

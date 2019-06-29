@@ -55,6 +55,8 @@ namespace engine
          virtual UINT32  _getControlMask() const ;
    } ;
 
+   typedef class _coordCMDInvalidateSequenceCache coordCMDInvalidateSequenceCache ;
+
    // This command is executed in _CoordCB::_processQueryMsg for each coord node
    class _coordInvalidateSequenceCache : public _rtnCommand
    {
@@ -77,7 +79,10 @@ namespace engine
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
 
    private:
-      std::string    _sequenceName ;
+      bson::BSONObj  _object ;
+      const CHAR *   _collection ;
+      const CHAR *   _fieldName ;
+      const CHAR *   _sequenceName ;
       utilSequenceID _sequenceID ;
    } ;
 }

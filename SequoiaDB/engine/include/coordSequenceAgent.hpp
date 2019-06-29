@@ -103,9 +103,13 @@ namespace engine
    } ;
    typedef _coordSequenceAgent coordSequenceAgent ;
 
-   INT32 coordSequenceInvalidateCache( const std::string& sequenceName,
-                                       _pmdEDUCB* eduCB,
-                                       const utilSequenceID ID = UTIL_SEQUENCEID_NULL ) ;
+   INT32 coordSequenceInvalidateCache ( const CHAR * sequenceName,
+                                        utilSequenceID ID,
+                                        _pmdEDUCB * eduCB ) ;
+
+   INT32 coordSequenceInvalidateCache ( const CHAR * collection,
+                                        const CHAR * field,
+                                        _pmdEDUCB * eduCB ) ;
 }
 
 #endif /* COORD_SEQUENCE_AGENT_HPP_ */

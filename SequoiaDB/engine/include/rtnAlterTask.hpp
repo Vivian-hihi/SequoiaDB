@@ -490,6 +490,11 @@ namespace engine
             return _fieldName;
          }
 
+         OSS_INLINE const CHAR * getSequenceName () const
+         {
+            return _seqName ;
+         }
+
          OSS_INLINE const CHAR * getGenerated () const
          {
             return _generated ;

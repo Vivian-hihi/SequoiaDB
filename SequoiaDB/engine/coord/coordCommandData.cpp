@@ -2156,11 +2156,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL_DOCOMPLETE, "_coordCMDAlterCollection::_doComplete" )
    INT32 _coordCMDAlterCollection::_doComplete ( MsgHeader *pMsg,
                                                  pmdEDUCB * cb,
                                                  coordCMDArguments * pArgs )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCL_DOCOMPLETE ) ;
 
       const CHAR * collection = pArgs->_targetName.c_str() ;
       CoordCataInfoPtr cataPtr ;
@@ -2172,6 +2175,56 @@ namespace engine
       _pResource->removeCataInfo( collection ) ;
 
    done :
+      PD_TRACE_EXITRC( COORD_ALTERCL_DOCOMPLETE, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL_DOROLLBACK, "_coordCMDAlterCollection::_doRollback" )
+   INT32 _coordCMDAlterCollection::_doRollback ( MsgHeader * pMsg,
+                                                 pmdEDUCB * cb,
+                                                 rtnContextCoord ** ppCoordCtxForCata,
+                                                 coordCMDArguments * pArguments,
+                                                 CoordGroupList & sucGroupLst,
+                                                 INT32 failedRC )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCL_DOROLLBACK ) ;
+
+      const CHAR * collection = pArguments->_targetName.c_str() ;
+
+      rc = _coordDataCMDAlter::_doRollback( pMsg, cb, ppCoordCtxForCata,
+                                            pArguments, sucGroupLst,
+                                            failedRC ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to do rollback on collection [%s], "
+                   "rc: %d", collection, rc ) ;
+
+   done :
+      // if error happened, invalidate sequence caches if needed
+      if ( SDB_DMS_NOTEXIST != failedRC &&
+           SDB_DMS_CS_NOTEXIST != failedRC &&
+           SDB_SEQUENCE_NOT_EXIST != failedRC )
+      {
+         const CHAR * collection = _arguments._targetName.c_str() ;
+         const rtnAlterTask * taskRunner = _arguments.getTaskRunner() ;
+         if ( NULL != taskRunner &&
+              taskRunner->testArgumentMask( UTIL_CL_AUTOINCREMENT_FIELD ) )
+         {
+            INT32 tmpRC = _invalidateSequences( collection, taskRunner, cb ) ;
+            if ( SDB_OK != tmpRC )
+            {
+               PD_LOG( PDWARNING, "Failed to invalidate sequences for "
+                       "collection [%s], rc: %d", collection, tmpRC ) ;
+            }
+         }
+      }
+
+      _pResource->removeCataInfo( collection ) ;
+
+      PD_TRACE_EXITRC( COORD_ALTERCL_DOROLLBACK, rc ) ;
       return rc ;
 
    error :
@@ -2210,7 +2263,6 @@ namespace engine
          BSONElement ele ;
          utilSequenceID seqID = UTIL_SEQUENCEID_NULL ;
          BSONObj delTask ;
-         string seqName ;
          BSONElement group ;
          CoordGroupList groupList ;
 
@@ -2252,11 +2304,12 @@ namespace engine
             }
             case CLS_TASK_SEQUENCE :
             {
+               const CHAR * seqName = NULL ;
                ele = iterTask->getField( FIELD_NAME_AUTOINC_SEQ ) ;
                PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
                          "Failed to parse task[%s]: type of task sequence name is not a string",
                          iterTask->toString().c_str() ) ;
-               seqName = ele.String() ;
+               seqName = ele.valuestr() ;
                PD_CHECK( iterTask->hasField( FIELD_NAME_AUTOINC_SEQ_ID ), SDB_SYS, error, PDERROR,
                          "Failed to get field[%s] on task[%s]",
                          iterTask->toString().c_str() ) ;
@@ -2265,7 +2318,7 @@ namespace engine
                          "Failed to parse task[%s]: type of sequence id is not a oid",
                          iterTask->toString().c_str() ) ;
                seqID = ele.Long() ;
-               rc = coordSequenceInvalidateCache( seqName, cb, seqID );
+               rc = coordSequenceInvalidateCache( seqName, seqID, cb );
                break ;
             }
             default :
@@ -2414,6 +2467,160 @@ namespace engine
 
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__INVALIDATESEQ_TASK, "_coordCMDAlterCollection::_invalidateSequences" )
+   INT32 _coordCMDAlterCollection::_invalidateSequences ( const CHAR * collection,
+                                                          const rtnAlterTask * task,
+                                                          pmdEDUCB * cb  )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCL__INVALIDATESEQ_TASK ) ;
+
+      SDB_ASSERT( NULL != task &&
+                  task->testArgumentMask( UTIL_CL_AUTOINCREMENT_FIELD ),
+                  "task runner is invalid" ) ;
+
+      switch ( task->getActionType() )
+      {
+         case RTN_ALTER_CL_SET_ATTRIBUTES :
+         {
+            const _rtnCLSetAttributeTask * alterTask =
+                  dynamic_cast< const _rtnCLSetAttributeTask * >( task ) ;
+            SDB_ASSERT( NULL != task, "task is invalid" ) ;
+            const autoIncFieldsList & autoIncList =
+                                    alterTask->getAutoincFieldArgument() ;
+            rc = _invalidateSequences( collection, autoIncList, cb ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
+         {
+            const _rtnCLCreateAutoincFieldTask * createTask =
+                  dynamic_cast< const _rtnCLCreateAutoincFieldTask * >( task ) ;
+            SDB_ASSERT( NULL != task, "task is invalid" ) ;
+            const autoIncFieldsList & autoIncList =
+                                 createTask->getAutoincrementArgument() ;
+            rc = _invalidateSequences( collection, autoIncList, cb ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         {
+            const rtnCLDropAutoincFieldTask * dropTask =
+                  dynamic_cast< const _rtnCLDropAutoincFieldTask * >( task ) ;
+            SDB_ASSERT( NULL != task, "task is invalid" ) ;
+            const autoIncFieldsList & autoIncList =
+                                 dropTask->getAutoincrementArgument() ;
+            rc = _invalidateSequences( collection, autoIncList, cb ) ;
+            break ;
+         }
+         default :
+            break ;
+      }
+
+      PD_RC_CHECK( rc, PDWARNING, "Failed to invalid sequences for "
+                   "collection [%s], rc: %d", collection, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( COORD_ALTERCL__INVALIDATESEQ_TASK, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERCL__INVALIDATESEQ_LIST, "_coordCMDAlterCollection::_invalidateSequences" )
+   INT32 _coordCMDAlterCollection::_invalidateSequences (
+                                       const CHAR * collection,
+                                       const autoIncFieldsList & autoIncList,
+                                       pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( COORD_ALTERCL__INVALIDATESEQ_LIST ) ;
+
+      CoordCataInfoPtr cataPtr = getCataPtr() ;
+      if ( NULL == cataPtr.get() )
+      {
+         // catalog info is empty, try to fetch
+         // no need to get the latest, we might with problems of catalog
+         _pResource->getCataInfo( collection, cataPtr ) ;
+      }
+
+      for ( autoIncFieldsList::const_iterator iter = autoIncList.begin() ;
+            iter != autoIncList.end() ;
+            ++ iter )
+      {
+         INT32 tmpRC = SDB_OK ;
+         const CHAR * fieldName = NULL ;
+         const CHAR * sequenceName = NULL ;
+         utilSequenceID sequenceID = UTIL_SEQUENCEID_NULL ;
+
+         rtnCLAutoincFieldArgument * argument = (*iter) ;
+         SDB_ASSERT( NULL != argument, "argument is invalid" ) ;
+
+         fieldName = argument->getFieldName() ;
+
+         if ( NULL != cataPtr.get() )
+         {
+            const clsAutoIncSet & autoIncSet = cataPtr->getAutoIncSet() ;
+            const clsAutoIncItem * autoIncItem = autoIncSet.find( fieldName ) ;
+            if ( NULL != autoIncItem )
+            {
+               sequenceName = autoIncItem->sequenceName() ;
+               sequenceID = autoIncItem->sequenceID() ;
+            }
+         }
+
+         if ( NULL != sequenceName )
+         {
+            tmpRC = coordSequenceInvalidateCache( sequenceName, sequenceID, cb ) ;
+            if ( SDB_OK != tmpRC )
+            {
+               PD_LOG( PDWARNING, "Failed to call invalidate sequence cache [%s] "
+                       "of collection [%s], rc: %d", sequenceName, collection,
+                       tmpRC ) ;
+               if ( SDB_OK == rc )
+               {
+                  rc = tmpRC ;
+               }
+            }
+            else
+            {
+               PD_LOG( PDDEBUG, "Call invalidate sequence cache [%s] of "
+                       "collection [%s] done", sequenceName, collection ) ;
+            }
+         }
+         else if ( NULL != fieldName )
+         {
+            tmpRC = coordSequenceInvalidateCache( collection, fieldName, cb ) ;
+            if ( SDB_OK != tmpRC )
+            {
+               PD_LOG( PDWARNING, "Failed to call invalidate sequence cache "
+                       "for field [%s] of collection [%s], rc: %d",
+                       fieldName, collection, tmpRC ) ;
+               if ( SDB_OK == rc )
+               {
+                  rc = tmpRC ;
+               }
+            }
+            else
+            {
+               PD_LOG( PDDEBUG, "Call invalidate sequence cache for field [%s] "
+                       "of collection [%s] done", fieldName, collection ) ;
+            }
+         }
+         else
+         {
+            PD_LOG( PDWARNING, "Failed to get sequence name for field [%s] of "
+                    "collection [%s]", fieldName, collection ) ;
+            continue ;
+         }
+      }
+
+      PD_TRACE_EXITRC( COORD_ALTERCL__INVALIDATESEQ_LIST, rc ) ;
+
+      return rc ;
    }
 
    /*

@@ -1028,6 +1028,8 @@ namespace engine
             PD_LOG( PDERROR, "Invalid argument[%s], rc:%d", 
                     _argument.toString(false,false).c_str(), rc ) ;
          }
+
+         parsedArgumentMask( UTIL_CL_AUTOINCREMENT_FIELD ) ;
       }
       catch( std::exception& e )
       {
@@ -1128,6 +1130,8 @@ namespace engine
             PD_LOG( PDERROR, "Invalid argument[%s], rc:%d", 
                     _argument.toString(false,false).c_str(), rc ) ;
          }
+
+         parsedArgumentMask( UTIL_CL_AUTOINCREMENT_FIELD ) ;
       }
       catch( std::exception& e )
       {
@@ -1396,7 +1400,7 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Invalid field argument[%s], rc: %d", 
                         _argument.toString( false, false ).c_str(), rc ) ;
          }
-         _argumentCount++ ;
+         parsedArgumentMask( UTIL_CL_AUTOINCREMENT_FIELD ) ;
          setFlags( RTN_ALTER_TASK_FLAG_CONTEXTLOCK |
                    RTN_ALTER_TASK_FLAG_SEQUENCE |
                    RTN_ALTER_TASK_FLAG_MAINCLALLOW ) ;

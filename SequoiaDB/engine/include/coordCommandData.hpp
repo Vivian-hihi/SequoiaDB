@@ -194,7 +194,7 @@ namespace engine
 
       protected :
          const rtnAlterTask * _task ;
-         ossPoolList<UINT64>    _postTasks ;
+         ossPoolList<UINT64>  _postTasks ;
          vector<BSONObj>      _postTasksObj ;
    } ;
 
@@ -634,6 +634,13 @@ namespace engine
                                      pmdEDUCB * cb,
                                      coordCMDArguments *pArgs ) ;
 
+         virtual INT32 _doRollback ( MsgHeader * pMsg,
+                                     pmdEDUCB * cb,
+                                     rtnContextCoord ** ppCoordCtxForCata,
+                                     coordCMDArguments * pArguments,
+                                     CoordGroupList & sucGroupLst,
+                                     INT32 failedRC ) ;
+
       protected :
          /*
             update catalog info before send command to Data Groups
@@ -668,6 +675,13 @@ namespace engine
          INT32 _waitPostTasks ( const bson::BSONObj & taskDesc,
                                 pmdEDUCB * cb ) ;
          INT32 _cancelPostTask ( UINT64 taskID, pmdEDUCB * cb ) ;
+
+         INT32 _invalidateSequences ( const CHAR * collection,
+                                      const rtnAlterTask * task,
+                                      pmdEDUCB * cb ) ;
+         INT32 _invalidateSequences ( const CHAR * collection,
+                                      const autoIncFieldsList & autoIncList,
+                                      pmdEDUCB * cb ) ;
    } ;
 
    typedef _coordCMDAlterCollection coordCMDAlterCollection ;
