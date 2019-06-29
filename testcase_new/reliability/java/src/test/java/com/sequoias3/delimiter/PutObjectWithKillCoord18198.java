@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -34,7 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PutObjectWithKillCoord18198 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
-    private int fileSize = 1;
+    private int fileSize = 1024 * new Random().nextInt(1025);
     private int objectNums = 1000;
     private String filePath = null;
     private String bucketName = "bucket18198";

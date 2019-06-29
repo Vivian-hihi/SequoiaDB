@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -35,7 +36,7 @@ public class GetObjectWithReStartS3N16471 extends S3TestBase {
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024 * 1;
+    private int fileSize = 1024 * new Random().nextInt(1025);
     private int objectNums = 1024;
     private File localPath = null;
     private String filePath = null;

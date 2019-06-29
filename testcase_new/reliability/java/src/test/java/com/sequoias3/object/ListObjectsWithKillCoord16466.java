@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * @Description seqDB-16466 :: 获取对象列表过程中db(coord)端节点异常
@@ -38,7 +39,7 @@ public class ListObjectsWithKillCoord16466 extends S3TestBase {
     private String objectNameBase = "/aa/bb/object16466";
     private List<String> objectNames = new ArrayList<String>();
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024 * 1;
+    private int fileSize = 1024 * new Random().nextInt(1025);
     private int objectNums = 1000;
     private File localPath = null;
     private String filePath = null;

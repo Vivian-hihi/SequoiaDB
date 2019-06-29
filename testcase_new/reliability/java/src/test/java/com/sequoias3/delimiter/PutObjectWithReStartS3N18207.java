@@ -21,6 +21,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -32,7 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PutObjectWithReStartS3N18207 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024 * 200;
+    private int fileSize =  1024 * new Random().nextInt(1025);
     private int objectNums = 100;
     private String filePath = null;
     private String objectNameBase = "PutObject18207";

@@ -33,7 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PutObjectWithReStartS3N16468 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024 * 200;
+    private int fileSize = 1024 * new Random().nextInt(1025);
     private int objectNums = 100;
     private String filePath = null;
     private String objectNameBase = "PutObject16468";

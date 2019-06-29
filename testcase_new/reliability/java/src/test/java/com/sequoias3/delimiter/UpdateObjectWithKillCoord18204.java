@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * @Description seqDB-18204 ::设置分隔符过程中db端节点异常
@@ -33,7 +34,7 @@ import java.util.List;
 public class UpdateObjectWithKillCoord18204 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
-    private int fileSize = 1;
+    private int fileSize = 1024 * new Random().nextInt(1025);
     private String filePath = null;
     private String bucketName = "bucket18204";
     private String objectNameBase = "PutObject18204?!";

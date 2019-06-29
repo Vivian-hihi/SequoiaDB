@@ -32,7 +32,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PutObjectWithBrokenNet16472 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024 * 200;
+    private int fileSize = 1024 * new Random().nextInt(1025);
     private int objectNums = 10;
     private int versionNums = 2;
     private String filePath = null;

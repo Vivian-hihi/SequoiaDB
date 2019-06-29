@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -30,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class DeleteObjectWithReStartS3N16470 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024 * 200;
+    private int fileSize = 1024 * new Random().nextInt(1025);
     private int objectNums = 100;
     private int versionNums = 3;
     private String filePath = null;

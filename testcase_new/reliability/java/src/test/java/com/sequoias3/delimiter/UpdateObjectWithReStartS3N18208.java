@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class UpdateObjectWithReStartS3N18208 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
-    private int fileSize = 1024 * 200;
+    private int fileSize = 1024 * new Random().nextInt(1025);
     private int versionNums = 1000;
     private String bucketName = "bucket18208";
     private String objectName = "Put18208*Object*18208";

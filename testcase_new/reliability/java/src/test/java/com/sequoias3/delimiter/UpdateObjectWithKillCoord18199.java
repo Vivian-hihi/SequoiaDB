@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -39,7 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class UpdateObjectWithKillCoord18199 extends S3TestBase {
     private boolean runSuccess = false;
     private AmazonS3 s3Client = null;
-    private int fileSize = 1;
+    private int fileSize = 1024 * new Random().nextInt(1025);
     private String filePath = null;
     private String bucketName = "bucket18204";
     private String objectName = "PutObject18199?";
