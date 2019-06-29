@@ -83,7 +83,7 @@ public class Transaction18407 extends SdbTestBase {
         th2.start();
         Assert.assertTrue(th2.matchBlockingMethod(DBCursor.class.getName(), "hasNext"));
 
-        Thread.sleep(30000);
+        Thread.sleep(TransUtils.TIMEOUT);
 
         // 开启事务3，更新记录R1为R2
         db3.beginTransaction();

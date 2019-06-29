@@ -63,7 +63,7 @@ public class SdbTestBase {
     private static ConfigOptions options = new ConfigOptions();
     private static String testGroup = null;
     private static final int newIndexScanStep = 100;
-    private static final int timeOutLen = 120;
+    public static final int timeOutLen = 120;
     private static final Map<String, BSONObject> group2Conf = new HashMap<String, BSONObject>();
     private static final Map<String, AtomicInteger> group2Count = new HashMap<String, AtomicInteger>();
     private static final Map<String, BSONObject> node2Conf = new HashMap<String, BSONObject>();

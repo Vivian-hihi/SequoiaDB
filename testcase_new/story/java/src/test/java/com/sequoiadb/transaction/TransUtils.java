@@ -17,6 +17,7 @@ import com.sequoiadb.base.Domain;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
  * 
@@ -29,6 +30,7 @@ import com.sequoiadb.testcommon.CommLib;
 public class TransUtils {
 
     public static final int FLG_INSERT_CONTONDUP = 0x00000001;
+    public static final int TIMEOUT = SdbTestBase.timeOutLen - 20;
 
     public static CollectionSpace createCS(String csName, Sequoiadb db) throws BaseException {
         CollectionSpace tmp = null;
