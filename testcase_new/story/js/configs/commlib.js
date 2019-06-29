@@ -77,7 +77,7 @@ var Configs = ( function() {
       this.runConfigs.push( new ConfDesp( "optcostthreshold", "int", 20, 10, "M" ) ) ;
       this.runConfigs.push( new ConfDesp( "maxconn", "int", 0, 3000, "12345" ) ) ;
       this.runConfigs.push( new ConfDesp( "enablemixcmp", "bool", "FALSE", "TRUE", 1234 ) ) ;
-      this.runConfigs.push( new ConfDesp( "plancachelevel", "int", 0, 4, "88" ) ) ;
+      this.runConfigs.push( new ConfDesp( "plancachelevel", "int", 3, 4, "88" ) ) ;
 
       // register reboot configs
       // this.rebootConfigs.push( new ConfDesp( "diagpath", "path", "", "", null ) ) ; TODO: path can't specific
