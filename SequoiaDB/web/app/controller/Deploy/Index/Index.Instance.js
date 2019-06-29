@@ -184,7 +184,19 @@
                   "valid": [
                      { 'key': 'MySQL', 'value': 'sequoiasql-mysql' },
                      { 'key': 'PostgreSQL', 'value': 'sequoiasql-postgresql' }
-                  ]
+                  ],
+                  "onChange": function( name, key, value ){
+                     if( value == 'sequoiasql-mysql' )
+                     {
+                        $scope.AppendInstance['config']['inputList'][3]['required'] = true ;
+                        $scope.AppendInstance['config']['inputList'][3]['valid'] = { 'min': 1, 'max': 32 } ;
+                     }
+                     else if( value == 'sequoiasql-postgresql' )
+                     {
+                        $scope.AppendInstance['config']['inputList'][3]['required'] = false ;
+                        $scope.AppendInstance['config']['inputList'][3]['valid'] = {} ;
+                     }
+                  }
                },
                {
                   "name": 'HostName',
@@ -209,20 +221,18 @@
                   "name": 'User',
                   "webName": $scope.autoLanguage( '数据库用户名' ),
                   "type": "string",
-                  "value": ""
+                  "required": true,
+                  "value": '',
+                  "valid": {
+                     "min": 1,
+                     "max": 32
+                  }
                },
                {
                   "name": 'Passwd',
                   "webName": $scope.autoLanguage( '数据库密码' ),
                   "type": "password",
                   "value": ""
-               },
-               {
-                  "name": 'AgentService',
-                  "webName": $scope.autoLanguage( '代理端口' ),
-                  "type": "port",
-                  "value": '11790',
-                  "valid": {}
                }
             ]
          },
@@ -242,7 +252,6 @@
          $scope.AppendInstance['config']['inputList'][2]['value'] = '';
          $scope.AppendInstance['config']['inputList'][3]['value'] = '';
          $scope.AppendInstance['config']['inputList'][4]['value'] = '';
-         $scope.AppendInstance['config']['inputList'][5]['value'] = '11790';
 
          $scope.AppendInstance['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function () {
             var isAllClear = $scope.AppendInstance['config'].check();
