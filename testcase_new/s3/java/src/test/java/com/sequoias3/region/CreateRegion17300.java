@@ -76,7 +76,9 @@ public class CreateRegion17300 extends S3TestBase{
                 .withName(regionName)
                 .withDataLocation("")
                 .withMetaHisLocation("")
-                .withMetaLocation("");
+                .withMetaLocation("")
+        		.withDataLobPageSize("262144")
+        		.withDataReplSize("-1");
         List<String> expBuckets = new ArrayList<>();
         expBuckets.add(randomBucketName);
         //check

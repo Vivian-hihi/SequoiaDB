@@ -1,0 +1,56 @@
+package com.sequoias3.config;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.sequoias3.testcommon.S3TestBase;
+import com.sequoias3.testcommon.s3utils.ConfigUtils;
+import com.sequoias3.testcommon.s3utils.UserUtils;
+import com.sequoias3.user.UserCommDefind;
+
+/**
+ * test content: 开启鉴权，authorization头部非法格式校验testlink-case: seqDB-18591
+ * 
+ * @author wangkexin
+ * @Date 2019.06.24
+ * @version 1.00
+ */
+public class CreateBucket18591 extends S3TestBase {
+	@DataProvider(name = "authorizationProvider")
+	public Object[][] generateAuthorization() {
+		return new Object[][] {
+				// test a : authorization 头部不存在
+				new Object[] { "" },
+				// test b : authorization头部存在“Credential=”字符串，但字符串后面不存在“/”
+				new Object[] { UserCommDefind.authValPre + UserUtils.accessKeyId },
+				// test c : authorization头部为version2版本，但“：”后无signature
+				new Object[] { "AWS " + UserUtils.accessKeyId + ":" },
+				// test d : authorization头部不属于v2,v4任意一种格式
+				new Object[] { "AWS " + UserCommDefind.authValPre + UserUtils.accessKeyId + ":test" },
+				// test e : 符合v2格式，但是AccessKeyId里面包含“Credential=”
+				new Object[] { "AWS " + UserCommDefind.authValPre + UserUtils.accessKeyId + ":signature" } };
+	}
+
+	@BeforeClass
+	private void setUp() throws Exception {
+	}
+
+	@Test(dataProvider = "authorizationProvider")
+	private void testCreateBucket(String authorization) throws Exception {
+		// create bucket
+		try {
+			ConfigUtils.createBucket(bucketName, authorization);
+			Assert.fail("expect failed but found succeed");
+		} catch (AmazonS3Exception e) {
+			Assert.assertEquals(e.getErrorCode(), "AuthorizationHeaderMalformed");
+		}
+	}
+
+	@AfterClass
+	private void tearDown() throws Exception {
+	}
+}
