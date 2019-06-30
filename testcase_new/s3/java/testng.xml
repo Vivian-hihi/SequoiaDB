@@ -29,6 +29,8 @@
                <package name="com.sequoias3.user" />
                <package name="com.sequoias3.delimiter" /> 
                <package name="com.sequoias3.delimiter.concurrent" /> 
+               <package name="com.sequoias3.config" />
+               <package name="com.sequoias3.config.concurrent" />
       </packages>
    </test> 
    
