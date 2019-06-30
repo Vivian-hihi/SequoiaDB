@@ -11,10 +11,12 @@ function loadData(cl, number)
    var funname = "loadData";
    try
    {
+      var records = [];
       for (i=0; i< number; ++i)
       {
-         cl.insert({_id:i, a:i});
+         records.push({_id:i, a:i});
       }
+      cl.insert(records);
    }
    catch(e)
    {

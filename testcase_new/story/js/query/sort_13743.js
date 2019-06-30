@@ -90,7 +90,11 @@ function main(){
 	
 	//insert data
 	try{
-		for(var i=0;i<rownums;i++){hashCL.insert({a:rownums-i,b:i,c:"abcdefghijkl"+i});}
+        var inserData = [];
+		for(var i=0;i<rownums;i++){
+            inserData.push({a:rownums-i,b:i,c:"abcdefghijkl"+i});
+        }
+        hashCL.insert(inserData);
 	}catch(e)
 	{
 		println("insert-data into hashCL fail! rc="+e);

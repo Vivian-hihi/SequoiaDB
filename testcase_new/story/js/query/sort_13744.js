@@ -74,7 +74,12 @@ function test_subCl_index_query()
 
    //insert data
    try{
-      for(var i=0;i<rownums;i++){mainCL.insert({a:rownums-i,b:i,c:"abcdefghijkl"+i});}
+      var records = [];
+      for(var i=0;i<rownums;i++)  
+      {
+          records.push({a:rownums-i,b:i,c:"abcdefghijkl"+i});
+      }
+      mainCL.insert(records);
    }catch(e)
    {
       println("insert-data into mainCL fail! rc="+e);

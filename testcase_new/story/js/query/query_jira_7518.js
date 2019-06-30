@@ -76,12 +76,12 @@ function main( db )
       var count = 2000;
       for(var i = 1 ;i <= count ;i++)
       {
+         var records = [];
          for(var j = 1 ;j <= 10 ;j++)
          {
-            cl.insert({id:i,pid:j,name:"mike"+i+"index"+j,
-                       content:"afdsafdsafdsafdsafdsafdsafdsafdsafdsafdsafdsafdsa",
-                       uid:i}) ;
+            records.push({id:i,pid:j,name:"mike"+i+"index"+j,content:"afdsafdsafdsafdsafdsafdsafdsafdsafdsafdsafdsafdsa",uid:i});
          }
+         cl.insert(records);
       }
    }
    catch(e)

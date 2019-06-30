@@ -89,7 +89,12 @@ function main(){
 	
 	//insert data
 	try{
-		for(var i=0;i<rownums;i++){rangeCL.insert({a:rownums-i,b:i,c:"abcdefghijkl"+i});}
+        var records = [];
+		for(var i=0;i<rownums;i++)
+        {
+            records.push({a:rownums-i,b:i,c:"abcdefghijkl"+i});
+        }
+        rangeCL.insert(records);
 	}catch(e)
 	{
 		println("insert-data into rangeCL fail! rc="+e);

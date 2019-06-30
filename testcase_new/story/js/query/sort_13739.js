@@ -23,9 +23,12 @@ try{
 
 //insert data
 try{
-	for(var i=0; i<rownums; i++){
-		varCL.insert({a:{a1:i,a2:rownums-i},b:[i,i+1,i+2]});
+    var records = [];
+	for(var i=0; i<rownums; i++)
+    {
+        records.push({a:{a1:i,a2:rownums-i},b:[i,i+1,i+2]});
 	}
+    varCL.insert(records);
 }catch( e ){
 	println("insert data failed!");
   throw e;

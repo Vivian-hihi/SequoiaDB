@@ -8,7 +8,7 @@
 function main( db )
 {
    var indexName = CHANGEDPREFIX + "idx" ;
-   var insertNum = 100 ;
+   var insertNum = 50 ;
    var cl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false,
                           "failed to create collection in the beignning" ) ;
    // insert data

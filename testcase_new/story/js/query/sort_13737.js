@@ -28,9 +28,11 @@ println("create indexes finished!");
 
 //insert data
 try{
+   var records = [];
    for(var i=0; i<rownums; i++){
-   	varCL.insert({a:i,b:i,c:i+"abcdefghijklmnopqrstuvwxyz"});
+    records.push({a:i,b:i,c:i+"abcdefghijklmnopqrstuvwxyz"});
   }
+  varCL.insert(records);
 }catch(e){
 	println("insert data failed!");
   throw e;

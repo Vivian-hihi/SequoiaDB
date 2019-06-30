@@ -23,9 +23,11 @@ try{
 
 //insert data
 try{
+    var records = [];
 	for(var i=0; i<rownums; i++){
-		varCL.insert({a1:i,a2:i+1,a3:i+2,a4:i+3,a5:i+4,a6:i+5,a7:i+6,a8:i+7,a9:i+8,a10:i+9,a11:i+10,a12:i+11,a13:i+12,a14:i+13,a15:i+14,a16:i+15});
+        records.push({a1:i,a2:i+1,a3:i+2,a4:i+3,a5:i+4,a6:i+5,a7:i+6,a8:i+7,a9:i+8,a10:i+9,a11:i+10,a12:i+11,a13:i+12,a14:i+13,a15:i+14,a16:i+15});
 	}
+    varCL.insert(records);
 }catch( e ){
 	println("insert data failed!");
   throw e;
