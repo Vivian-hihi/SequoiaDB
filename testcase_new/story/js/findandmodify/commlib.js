@@ -92,7 +92,7 @@ function removeAllDoc(cl)
 {
    try
    {
-      cl.remove()
+      cl.truncate()
    }
    catch(e)
    {
@@ -140,7 +140,7 @@ function setUp(replsize, createmode)
    {
       if (undefined == replsize)
       {
-         replsize = 0;
+         replsize = 1;
       }
       
       if (undefined == createmode)
@@ -148,7 +148,7 @@ function setUp(replsize, createmode)
          createmode = createMode.ordinary;
       }
       
-      var db = new Sdb(COORDHOSTNAME, COORDSVCNAME);
+      //var db = new Sdb(COORDHOSTNAME, COORDSVCNAME);
       commDropCL(db, COMMCSNAME, clName);
       //db.getCS(COMMCSNAME).createCL(clName,{ReplSize:0});
       // 指定ReplSize为0，同时不设置setSessionAttr就能够测试到副本有无被modify
@@ -221,12 +221,23 @@ function splittable(db, cl, clname)
       {
          if (datagroups[i][0].GroupName != srcgroups[0])
          {
-            cl.split(srcgroups[0], datagroups[i][0].GroupName, {_id:startid},{_id:endid});
+            cl.splitAsync(srcgroups[0], datagroups[i][0].GroupName, {_id:startid},{_id:endid});
             startid = endid;
             endid += 5;
          }
       }
-      
+      sleep(10) ;
+      var isExistTask = false ;
+      do{
+         isExistTask = false  ;
+         var cursor = db.listTasks();
+         while( cursor.next() ){
+            isExistTask = true ;
+         } 
+         if (!isExistTask){
+            sleep(10) ;
+         }
+      }while(isExistTask) ;
       return datagroups.length;
    }
    catch(e)
