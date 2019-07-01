@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
@@ -37,8 +38,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PutObjectAndKillData18197 extends S3TestBase {
 	private boolean runSuccess = false;
 	private AmazonS3 s3Client = null;
-	private int fileSize = 1024 * 20;
-	private int objectNums = 50;
+	private int fileSize = 1024 * 200;
+	private int objectNums = 400;
 	private String filePath = null;
 	private String delimiter = "?";
 	private String objectNameBase = "PutObject18197";
@@ -63,36 +64,34 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 		// get the source group master hostname and port
 		GroupMgr groupMgr = GroupMgr.getInstance();
 		List<GroupWrapper> glist = groupMgr.getAllDataGroup();
-		String groupName = glist.get(0).getGroupName();
-		GroupWrapper group = groupMgr.getGroupByName(groupName);
-        NodeWrapper node = group.getMaster();			
-		System.out.println("KillNode:" + node.hostName()+ ":" + node.svcName());
-
-		// create concurrent tasks
-		FaultMakeTask faultTask = KillNode.getFaultMakeTask(node,1);
-		TaskMgr mgr = new TaskMgr(faultTask);
-
+		TaskMgr mgr = new TaskMgr();
+       
+		for(int i = 0; i< glist.size(); i++){
+			String groupName = glist.get(i).getGroupName();
+			GroupWrapper group = groupMgr.getGroupByName(groupName);
+	        NodeWrapper node = group.getMaster();	
+	        FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 1);
+            mgr.addTask(faultTask);
+			System.out.println("KillNode:i=" + i + "" + node.hostName()+ ":" + node.svcName());
+		}	
+		
 		for (int i = 0; i < objectNums; i++) {
 			String subKeyName = objectNameBase + "_" + i + "_" + delimiter;
 			objectNames.add(subKeyName);
 			mgr.addTask(new PutObject(objectNames.get(i)));
 		}
 
-		mgr.execute();
+		mgr.execute();		
 		Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
-		Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "node start fail!");
+		Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "node start fail!");		
 		
-		System.out.println("----check object");
-		for (String objectName : putSuccessObjectName) {
-			System.out.println("---check objectname="+objectName);
+		for (String objectName : putSuccessObjectName) {			
 			getObjectAndCheckResult(bucketName, objectName);
 		}
 
 		// put again
-		objectNames.removeAll(putSuccessObjectName);
-		System.out.println("---objectNames="+objectNames.size());
-		for (String objectName : objectNames) {
-			System.out.println("---put again object="+ objectName);
+		objectNames.removeAll(putSuccessObjectName);		
+		for (String objectName : objectNames) {			
 			PutObjectResult obj = s3Client.putObject(bucketName, objectName, new File(filePath));
 			Assert.assertEquals(obj.getETag(), TestTools.getMD5(filePath));		
 			ObjectMetadata metadata = obj.getMetadata();		
@@ -124,16 +123,18 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 		@Override
 		public void exec() throws Exception {
 			try {				
-				System.out.println("---begin to put object:" + objectName);
-				s3Client1.putObject(bucketName, this.objectName, new File(filePath));
-				System.out.println("---end to put object:" + objectName);
+				s3Client1.putObject(bucketName, this.objectName, new File(filePath));				
 				putSuccessObjectName.add(this.objectName);
 
-			} catch (AmazonS3Exception e) {				
-				if (e.getStatusCode() != 500) {
+			} catch (AmazonS3Exception e) {					
+				if (e.getStatusCode() != 500){						
 					throw new Exception(objectName,e);
-				}
-			} finally {
+                }
+			} catch ( Exception e ) {            	
+				if (!e.getMessage().contains("Unable to execute HTTP request")){					
+					throw new Exception(objectName,e);
+                }                
+            }finally {
 				if (s3Client1 != null) {
 					s3Client1.shutdown();
 				}
@@ -143,19 +144,21 @@ public class PutObjectAndKillData18197 extends S3TestBase {
 	
 
 	private void getObjectAndCheckResult(String bucketName, String key) throws Exception {
-		S3Object object = s3Client.getObject(bucketName, key);
+		S3Object object = s3Client.getObject(bucketName, key);		
 		ObjectMetadata metadata = object.getObjectMetadata();
 		
 		String versionId = metadata.getVersionId();
 		String curVersionId = "null";
 		Assert.assertEquals(versionId, curVersionId);
 
-		// check the etag equal to the md5 of the last update content
-		String etag = metadata.getETag();	
-		Assert.assertEquals(etag, TestTools.getMD5(filePath),"the bucketName:"+bucketName+",key:"+key);
-
-		// chect the content
-		String downfileMd5 = ObjectUtils.getMd5OfObject(s3Client, localPath, bucketName, key);
-		Assert.assertEquals(downfileMd5, TestTools.getMD5(filePath),"the bucketName:"+bucketName+",key:"+key);
+		// check the etag equal to the md5 of the last update content	
+		S3ObjectInputStream s3is = object.getObjectContent();
+        String downloadPath = TestTools.LocalFile.initDownloadPath(localPath, TestTools.getMethodName(),
+                Thread.currentThread().getId());
+        ObjectUtils.inputStream2File(s3is, downloadPath);
+        s3is.close();
+        String actMd5 = TestTools.getMD5(downloadPath);
+        String expMd5 = TestTools.getMD5(filePath);        
+        Assert.assertEquals(actMd5, expMd5);	
 	}
 }
