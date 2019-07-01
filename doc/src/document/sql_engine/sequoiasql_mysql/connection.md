@@ -145,11 +145,11 @@
 
 |参数名|类型|默认值|支持命令行修改|说明|
 |------|----|------|----------|----|
-|sequoiadb_bulk_insert_size   |整数  |100    |true |批量插入时每批的插入记录数。|
+|sequoiadb_bulk_insert_size   |整数  |2000   |true |批量插入时每批的插入记录数。|
 |sequoiadb_conn_addr          |字符串|"localhost:11810" |true |SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
 |sequoiadb_debug_log          |布尔  |OFF    |true |是否打印debug日志。|
 |sequoiadb_password           |字符串|""     |true |SequoiaDB鉴权密码。|
-|sequoiadb_replica_size       |整数  |-1     |true |写操作需同步的副本数。在建表时并且没有自定义表配置时使用。取值范围为[-1, 7]。具体可参考SequoiaDB的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。|
+|sequoiadb_replica_size       |整数  |1      |true |写操作需同步的副本数。在建表时并且没有自定义表配置时使用。取值范围为[-1, 7]。具体可参考SequoiaDB的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。|
 |sequoiadb_selector_pushdown_threshold|无符号整型|30|true|查询字段下压触发阈值，取值范围[0-100]，单位：百分比。|
 |sequoiadb_use_autocommit     |布尔  |ON     |true |是否启用自动提交模式。|
 |sequoiadb_use_bulk_insert    |布尔  |ON     |true |是否启用批量插入。|
