@@ -262,12 +262,12 @@ namespace seadapter
       PD_RC_CHECK( rc, PDERROR, "Send message to cata node failed[%d]", rc ) ;
 
    done:
-      return rc ;
-   error:
       if ( msg )
       {
          msgReleaseBuffer( msg, cb ) ;
-      };
+      }
+      return rc ;
+   error:
       goto done ;
    }
 
