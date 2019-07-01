@@ -171,8 +171,11 @@ namespace engine
       rc = getPacketFile( _packageName, packetPath ) ;
       if ( rc )
       {
-         _errorMsg.setError( TRUE, "%s package does not exist, path=%s",
-                             _packageName.c_str(), packetPath.c_str() ) ;
+         const CHAR *hostName = pmdGetKRCB()->getHostName() ;
+
+         _errorMsg.setError( TRUE,"%s package does not exist, host=%s, path=%s",
+                             _packageName.c_str(),
+                             hostName, packetPath.c_str() ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
