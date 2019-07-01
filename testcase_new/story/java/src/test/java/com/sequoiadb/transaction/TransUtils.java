@@ -31,7 +31,7 @@ public class TransUtils {
 
     public static final int FLG_INSERT_CONTONDUP = 0x00000001;
     // delayTime 线程延时启动时间，线程Thread.sleep(事务等锁超时时间-20s)
-    public static final int delayTime = SdbTestBase.timeOutLen - 20;
+    public static final int delayTime = (SdbTestBase.timeOutLen - 20) * 1000;
 
     public static CollectionSpace createCS(String csName, Sequoiadb db) throws BaseException {
         CollectionSpace tmp = null;
@@ -251,8 +251,8 @@ public class TransUtils {
     }
 
     /**
-     * 构造复合索引所需要的数据 如：a:0, b:0 a:1, b:0 a:1, b:1 a:1, b:2 ... a:2, b:2 a:3, b:0 a:3,
-     * b:1 ... a 为偶数时，a 和 b 一致 a 为奇数时，有多条记录 a 相等，b 不相等 aStart a 的起始值，aEnd a
+     * 构造复合索引所需要的数据 如：a:0, b:0 a:1, b:0 a:1, b:1 a:1, b:2 ... a:2, b:2 a:3, b:0
+     * a:3, b:1 ... a 为偶数时，a 和 b 一致 a 为奇数时，有多条记录 a 相等，b 不相等 aStart a 的起始值，aEnd a
      * 的结束值，bStart a 为奇数时 b 的起始值，bEnd a 为奇数时 b 的结束值 返回 list 长度 为 11*(aEnd -
      * aStart)/2
      * 
