@@ -149,9 +149,9 @@
 |sequoiadb_conn_addr          |字符串|"localhost:11810" |true |SequoiaDB连接地址，可配置多个，之间用逗号隔开。|
 |sequoiadb_debug_log          |布尔  |OFF    |true |是否打印debug日志。|
 |sequoiadb_password           |字符串|""     |true |SequoiaDB鉴权密码。|
-|sequoiadb_replica_size       |整数  |1      |true |写操作需同步的副本数。在建表时并且没有自定义表配置时使用。取值范围为[-1, 7]。具体可参考SequoiaDB的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。|
+|sequoiadb_replica_size       |整数  |1      |true |写操作需同步的副本数，取值范围为[-1, 7]。具体可参考SequoiaDB的[创建集合的ReplSize参数](reference/Sequoiadb_command/SdbCS/createCL.md#参数)。|
 |sequoiadb_selector_pushdown_threshold|无符号整型|30|true|查询字段下压触发阈值，取值范围[0-100]，单位：百分比。|
-|sequoiadb_use_autocommit     |布尔  |ON     |true |是否启用自动提交模式。|
+|sequoiadb_use_autocommit     |布尔  |ON     |true |是否启用自动提交模式(已弃用)。|
 |sequoiadb_use_bulk_insert    |布尔  |ON     |true |是否启用批量插入。|
 |sequoiadb_use_partition      |布尔  |ON     |true |是否启用自动分区。|
 |sequoiadb_user               |字符串|""     |true |SequoiaDB鉴权用户。|
@@ -196,12 +196,13 @@
 
 ```
 table_option:
-comment [=] "sequoiadb:{table_options:{...}}"
+comment [=] "[string,] sequoiadb:{table_options:{...}}"
 ```
 具体配置参数如下表:
 
 | 参数名 | 类型 | 描述 | 是否必填 |
 | ------ | --- | ------ | ------ |
+| string | 字符串 |用户自定义注释字符串 | 否 |
 | table_options | json | 创建集合的相关参数。详见[SequoiaDB创建集合选项](reference/Sequoiadb_command/SdbCS/createCL.md)。| 否	|
 | use_partition | bool| 是否创建分区表, 取值 false 即创建非分区表，并过滤 table_options 中与分区相关的参数 | 否 |
 
@@ -209,17 +210,18 @@ comment [=] "sequoiadb:{table_options:{...}}"
  在SequoiaDB上创建分区键为“{a:1,b:-1}”，分区类型为范围分区的集合cl1  
 
  ```lang-sql
- mysql> create table cl1(a int, b int, c text) engine = SequoiaDB comment="sequoiadb:{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
+ mysql> create table cl1(a int, b int, c text) engine = SequoiaDB comment="Sharding table for example, sequoiadb:{table_options:{ShardingKey:{a:1,b:-1},ShardingType:\"range\"}}";
  ```
 示例2：  
-使用 use_partition 显示指定创建非分区表时会过滤掉 table_options 中与分区相关的参数并且创建非分区表。
+使用 "use_partition:false" 显式创建普通表时，会过滤掉与分区表相关的参数且创建普通表。
 
 ```lang-sql
  mysql> create table cl2(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, CompressionType:"lzw", AutoSplit: true}, use_partition:false} ';
 ```
+该例子中会自动过滤掉ShardingKey、ShardingType参数。
 
 示例3：  
-单独指定 "use_partition:false" 时，在配置项 sequoiadb_use_partition = ON 的情况下，也都只会创建普通非分区表。
+使用 "use_partition:false" 显式创建普通表时，优先级高于 sequoiadb_use_partition 配置项，即使其值为 ON 也只会强制创建普通表。
 
 ```lang-sql
  mysql> create table cl3(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{use_partition:false}';
