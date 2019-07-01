@@ -30,6 +30,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
 public class TransUtils {
 
     public static final int FLG_INSERT_CONTONDUP = 0x00000001;
+    // delayTime 线程延时启动时间，线程Thread.sleep(事务等锁超时时间-20s)
     public static final int delayTime = SdbTestBase.timeOutLen - 20;
 
     public static CollectionSpace createCS(String csName, Sequoiadb db) throws BaseException {
