@@ -8445,16 +8445,6 @@ namespace engine
          goto error ;
       }
 
-      passwd = buzInfo.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
-      if ( passwd.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorMsg.setError( TRUE, "invalid argument:%s is empty",
-                             OM_BSON_FIELD_HOST_PASSWD ) ;
-         PD_LOG( PDERROR, _errorMsg.getError() ) ;
-         goto error ;
-      }
-
    done:
       return rc ;
    error:
