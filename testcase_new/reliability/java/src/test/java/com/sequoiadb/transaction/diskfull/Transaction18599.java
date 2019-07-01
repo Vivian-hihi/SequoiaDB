@@ -147,7 +147,7 @@ public class Transaction18599 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
                 int count = 0;
 
-                while (count++ < 600) {
+                while (count++ < 6000) {
                     int accountA = (int) (Math.random() * 10000);
                     int accountB = (int) (Math.random() * 10000);
                     int transAmount = (int) (Math.random() * 200);

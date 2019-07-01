@@ -86,6 +86,9 @@ public class Transaction18521 extends SdbTestBase {
         if (sdb != null) {
             sdb.close();
         }
+        if (gmrDB != null) {
+            gmrDB.close();
+        }
     }
 
     @DataProvider(name = "getCL")
@@ -102,10 +105,12 @@ public class Transaction18521 extends SdbTestBase {
             NodeWrapper node = group.getMaster();
             FaultMakeTask task = NodeRestart.getFaultMakeTask(node, 600, 10, 20);
             taskMgr.addTask(task);
+            System.out.println("RESTART: " + node.hostName() + ":" + node.svcName());
         }
         NodeWrapper coordNode = getCoordNode();
         FaultMakeTask task = NodeRestart.getFaultMakeTask(coordNode, 600, 10, 20);
         taskMgr.addTask(task);
+        System.out.println("RESTART: " + coordNode.hostName() + ":" + coordNode.svcName());
 
         for (int i = 0; i < 200; i++) {
             taskMgr.addTask(new Transfer(clName));
@@ -138,7 +143,7 @@ public class Transaction18521 extends SdbTestBase {
                 int count = 0;
 
                 // 模拟转账操作：开启事务，随机取一个账户转出value；随机取另一个账户转入value
-                while (count++ < 600) {
+                while (count++ < 6000) {
                     int accountA = (int) (Math.random() * 10000);
                     int accountB = (int) (Math.random() * 10000);
                     int transAmount = (int) (Math.random() * 200);

@@ -87,6 +87,9 @@ public class Transaction18524 extends SdbTestBase {
         if (sdb != null) {
             sdb.close();
         }
+        if (gmrDB != null) {
+            gmrDB.close();
+        }
     }
 
     @DataProvider(name = "getCL")
@@ -133,7 +136,7 @@ public class Transaction18524 extends SdbTestBase {
                 int count = 0;
 
                 // 模拟转账操作：开启事务，随机取一个账户转出value；随机取另一个账户转入value
-                while (count++ < 600) {
+                while (count++ < 6000) {
                     int accountA = (int) (Math.random() * 10000);
                     int accountB = (int) (Math.random() * 10000);
                     int transAmount = (int) (Math.random() * 200);
