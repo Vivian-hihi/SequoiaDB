@@ -90,6 +90,7 @@ public class Transaction18521 extends SdbTestBase {
         // 正常重启所有数据节点的主节点及转账程序连接的coord节点
         TaskMgr taskMgr = new TaskMgr();
         for (String groupName : groupNames) {
+            GroupMgr groupMgr = GroupMgr.getInstance();
             GroupWrapper group = groupMgr.getGroupByName(groupName);
             NodeWrapper node = group.getMaster();
             FaultMakeTask task = NodeRestart.getFaultMakeTask(node, 180, 10, 20);
