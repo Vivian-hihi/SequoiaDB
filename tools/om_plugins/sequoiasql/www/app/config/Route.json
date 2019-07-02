@@ -69,7 +69,7 @@
          "options": {
             "templateUrl": "./app/template/Config/MySQL/Index.html",
             "resolve": [
-               "./app/controller/Config/MySQL/Index.js"
+               "./app/controller/Config/MySQL/Index.Config.js", "./app/controller/Config/MySQL/Index.js"
             ]
          }
       }
