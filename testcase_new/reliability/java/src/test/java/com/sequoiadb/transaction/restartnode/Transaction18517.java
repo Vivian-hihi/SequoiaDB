@@ -34,9 +34,11 @@ import com.sequoiadb.task.TaskMgr;
  * @date 2019-6-19
  *
  */
+// TODO :请检查其他用例是否存在类似问题，请一并修改；
 @Test(groups = "rcauto")
 public class Transaction18517 extends SdbTestBase {
     private Sequoiadb sdb;
+    // TODO :变量名不能表示含义，从下面的代码看，clName并没有表示集合名；dataprovide有使用，建议分区表和主表分开定义；
     private String clName = "cl18517";
     private GroupMgr groupMgr;
     private List<String> groupNames;
@@ -57,6 +59,7 @@ public class Transaction18517 extends SdbTestBase {
         }
 
         // 创建hash分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize设置为-1，且已切分到所有组上，切分键为账户字段
+        // TODO :子表名有多处使用，定义为变量；子表名的值明确用例编号，例如：subcl18527_1,subcl18527_2等，方便后续定位
         DBCollection hashCL = sdb.getCollectionSpace(csName).createCollection(clName + "hash", (BSONObject) JSON
                 .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
 
@@ -76,6 +79,7 @@ public class Transaction18517 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         CollectionSpace cs = sdb.getCollectionSpace(csName);
+        // TODO :这里判断集合是否存在时多余的，setup里面创建不需要判断，释放sdb放到finally里面吧；其他用例一并修改
         if (cs.isCollectionExist(clName + "hash")) {
             cs.dropCollection(clName + "hash");
         }
@@ -117,6 +121,7 @@ public class Transaction18517 extends SdbTestBase {
         Assert.assertEquals((int) balance, 100000000);
     }
 
+    // TODO: 通用的方法，统一提取成公共方法，可以把db当做参数传入
     private class Transfer extends OperateTask {
         private String clName;
 
@@ -144,12 +149,16 @@ public class Transaction18517 extends SdbTestBase {
                     cl.update("{'account':" + accountB + "}", "{$inc:{'balance':" + transAmount + "}}",
                             "{'':'$shard'}");
                     db.commit();
+                    // TODO :为啥要睡眠200ms？
                     Thread.sleep(200);
                 }
             } catch (BaseException e) {
+                // TODO :这里需要做判断，只有rcauto模式下才需要执行该语句，事务默认配置不要执行该语句;
+                // TODO :将testGroupOfCurrent设置成public，就可以获取组模式了；通过equal去判断
                 db.rollback();
             } finally {
                 if (db != null) {
+                    // TODO :这个commit的作用是？
                     db.commit();
                     db.close();
                 }
@@ -157,6 +166,7 @@ public class Transaction18517 extends SdbTestBase {
         }
     }
 
+    // TODO :请确定是否有必要提取成公共方法
     private void insertData(DBCollection cl) {
         List<BSONObject> reocrds = new ArrayList<>();
         for (int i = 0; i < 10000; i++) {

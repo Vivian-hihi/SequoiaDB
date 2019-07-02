@@ -76,15 +76,16 @@ public class Transaction18521 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
+        // TODO :这里应该要使用gmrDB去清理环境，因为coord节点被你重启，连接不在了，另外释放连接放到finally里面
+        CollectionSpace cs = gmrDB.getCollectionSpace(csName);
         if (cs.isCollectionExist(clName + "hash")) {
             cs.dropCollection(clName + "hash");
         }
         if (cs.isCollectionExist(clName + "mainCL")) {
             cs.dropCollection(clName + "mainCL");
         }
-        if (sdb != null) {
-            sdb.close();
+        if (gmrDB != null) {
+            gmrDB.close();
         }
         if (gmrDB != null) {
             gmrDB.close();
@@ -186,6 +187,7 @@ public class Transaction18521 extends SdbTestBase {
                 break;
             }
         }
+        System.out.println("getCoordConn:sdb:" + sdb);
     }
 
     private NodeWrapper getCoordNode() {
