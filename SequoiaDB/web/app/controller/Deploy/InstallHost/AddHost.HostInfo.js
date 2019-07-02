@@ -32,6 +32,11 @@
                'IsLocal':  '80px',
                'Chart':    '40%'
             },
+            'sort': {
+               'Name':     true,
+               'Mount':    true,
+               'IsLocal':  true
+            },
             'max': 10000,
             'tools': false
          },
