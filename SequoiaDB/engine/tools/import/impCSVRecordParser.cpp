@@ -3154,7 +3154,7 @@ namespace import
 
          if (SDB_OK != rc)
          {
-            PD_LOG(PDERROR, "failed to scan timepstamp, rc=%d", rc);
+            PD_LOG(PDERROR, "failed to scan timestamp, rc=%d", rc);
             goto error;
          }
 
