@@ -251,21 +251,44 @@ namespace engine
       typedef map<string, simpleDiskInfo>::const_iterator OmDiskConstIterator ;
    } ;
 
+   class _cmpByMountPath
+   {
+   public:
+      bool operator()( const simpleDiskInfo *d1, const simpleDiskInfo *d2 )
+      {
+         return _lexNumCmp( d1->mountPath.c_str(), d2->mountPath.c_str(),
+                            false ) < 0 ;
+      }
+   private:
+      int _lexNumCmp( const char *s1, const char *s2, bool pointend ) ;
+   } ;
+
    template<class Predicate>
    const simpleDiskInfo* OmHost::chooseDisk( Predicate pred ) const
    {
       const simpleDiskInfo* disk = NULL ;
+      vector<const simpleDiskInfo*> diskList ;
 
       if ( _disks.size() == 0 )
       {
          goto done ;
       }
 
-      for ( OmDiskConstIterator it = _disks.begin() ; it != _disks.end() ; it++ )
+      for ( OmDiskConstIterator it = _disks.begin(); it != _disks.end(); ++it )
       {
          const simpleDiskInfo* tmp = &( it->second ) ;
 
-         if ( it == _disks.begin() || pred( disk, tmp ) < 0 )
+         diskList.push_back( tmp ) ;
+      }
+
+      sort( diskList.begin(), diskList.end(), _cmpByMountPath() ) ;
+
+      for ( vector<const simpleDiskInfo*>::iterator it = diskList.begin();
+                  it != diskList.end(); ++it )
+      {
+         const simpleDiskInfo* tmp = *it ;
+
+         if ( it == diskList.begin() || pred( disk, tmp ) < 0 )
          {
             disk = tmp ;
          }
