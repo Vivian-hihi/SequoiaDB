@@ -1272,7 +1272,7 @@ retry:
    if ( SDB_OK != err )
    {
       errno = err ;
-      PD_LOG( PDERROR, "failed to connect to remote: %d", err ) ;
+      PD_LOG( PDERROR, "failed to connect to remote, errno: %d", err ) ;
       rc = SDB_NET_CANNOT_CONNECT ;
       goto error ;
    }

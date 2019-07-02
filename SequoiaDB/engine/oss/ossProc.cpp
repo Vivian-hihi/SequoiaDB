@@ -1234,33 +1234,33 @@ static BOOL ossWaitForServiceToReachState( SC_HANDLE hService,
    BOOL  fFirstTime = TRUE ;
    BOOL  fServiceOk = TRUE ;
    DWORD dwTimeout = GetTickCount() + dwMilliseconds ;
- 
+
    // Loop until the service reaches the desired state,
    // an error occurs, or we timeout
    while  (TRUE)
    {
       // Get current state of service
       fServiceOk = ::QueryServiceStatus( hService, pss ) ;
- 
+
       // If we can't query the service, we're done
       if ( !fServiceOk )
       {
         break ;
       }
- 
+
       // If the service reaches the desired state, we're done
       if ( pss->dwCurrentState == dwDesiredState )
       {
          break ;
       }
- 
+
       // If we timed-out, we're done
       if ( dwMilliseconds != INFINITE && dwTimeout > GetTickCount() )
       {
          SetLastError( ERROR_TIMEOUT ) ;
          break;
       }
- 
+
       // If this is our first time, save the service's state & checkpoint
       if ( fFirstTime )
       {
@@ -1287,7 +1287,7 @@ static BOOL ossWaitForServiceToReachState( SC_HANDLE hService,
             else
             {
                // Checkpoint hasn't increased, service failed, we're done!
-               fServiceOk = FALSE ; 
+               fServiceOk = FALSE ;
                break ;
             }
          }
@@ -1295,7 +1295,7 @@ static BOOL ossWaitForServiceToReachState( SC_HANDLE hService,
        // We're not done, wait the specified period of time
        Sleep( pss->dwWaitHint ) ;
     }
- 
+
    // Note: The last SERVICE_STATUS is returned to the caller so
    // that the caller can check the service state and error codes.
    PD_TRACE_EXIT ( SDB_OSS_WFSTRS ) ;
@@ -1869,7 +1869,7 @@ INT32 ossGetEWD ( CHAR *pBuffer, INT32 maxlen )
       lpszwPath[0] = '.' ;
       lpszwPath[1] = '\0' ;
    }
-   // lpszPath is free at the end of this function 
+   // lpszPath is free at the end of this function
    rc = ossWC2ANSI ( lpszwPath, &lpszPath, NULL ) ;
    if ( rc )
    {
@@ -1929,7 +1929,7 @@ INT32 ossTerminateProcess( const OSSPID &pid, BOOLEAN force )
 done:
    return rc ;
 error:
-   PD_LOG( PDERROR, "failed to terminate process[%d]:[%d]",
+   PD_LOG( PDERROR, "failed to terminate process[%d]: [errno=%d]",
            pid, ossGetLastError() ) ;
    goto done ;
 }
