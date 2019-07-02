@@ -838,6 +838,8 @@ namespace replay
       {
          PD_LOG(PDERROR, "Failed to parse log record, lsn[%lld], rc=%d",
                 header._lsn, rc);
+         // maybe replica log is writing and have not sync yet. try next time
+         rc = SDB_CLS_DATA_NOT_SYNC;
          goto error;
       }
 
@@ -881,6 +883,8 @@ namespace replay
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc:%d",
                 header._lsn, rc);
+         // maybe replica log is writing and have not sync yet. try next time
+         rc = SDB_CLS_DATA_NOT_SYNC;
          goto error;
       }
 
@@ -919,6 +923,8 @@ namespace replay
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc=%d",
                 header._lsn, rc);
+         // maybe replica log is writing and have not sync yet. try next time
+         rc = SDB_CLS_DATA_NOT_SYNC;
          goto error;
       }
 
@@ -951,6 +957,8 @@ namespace replay
       {
          PD_LOG(PDERROR, "Failed to parse log record[%lld], rc=%d",
                 header._lsn, rc);
+         // maybe replica log is writing and have not sync yet. try next time
+         rc = SDB_CLS_DATA_NOT_SYNC;
          goto error;
       }
 
@@ -982,6 +990,8 @@ namespace replay
       {
          PD_LOG( PDERROR, "Failed to parse log record[%lld], rc=%d",
                  header._lsn, rc ) ;
+         // maybe replica log is writing and have not sync yet. try next time
+         rc = SDB_CLS_DATA_NOT_SYNC;
          goto error ;
       }
 
@@ -1828,6 +1838,12 @@ namespace replay
          }
 
          rc = _replayReplicaFile(fileInfo.name, fileInfo.fileSize, fileInfo.fileNum);
+         if ( SDB_CLS_DATA_NOT_SYNC == rc )
+         {
+            // maybe replica log is writing and have not sync yet. try next time
+            rc = SDB_OK ;
+         }
+
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
