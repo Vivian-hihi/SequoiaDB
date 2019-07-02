@@ -1,10 +1,7 @@
 package com.sequoiadb.transaction.killnode;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -13,20 +10,18 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
 import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
+import com.sequoiadb.transaction.common.TransUtil;
+import com.sequoiadb.transaction.common.TransferTh;
 
 /**
  * @Description seqDB-18524: hash分区表/主子表，转账的过程中异常重启转账程序执行的coord节点
@@ -38,7 +33,10 @@ import com.sequoiadb.task.TaskMgr;
 public class Transaction18524 extends SdbTestBase {
     private Sequoiadb sdb;
     private Sequoiadb gmrDB;
-    private String clName = "cl18524";
+    private String hashCLName = "cl18524_hash";
+    private String mainCLName = "cl18524_main";
+    private String subCLName1 = "subcl18517_1";
+    private String subCLName2 = "subcl18517_2";
     private String coordUrl;
     private GroupMgr groupMgr;
     private List<String> groupNames;
@@ -46,7 +44,8 @@ public class Transaction18524 extends SdbTestBase {
     @BeforeClass
     public void setUp() throws ReliabilityException {
         gmrDB = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        getCoordConn();
+        coordUrl = TransUtil.getCoordUrl(gmrDB);
+        sdb = new Sequoiadb(coordUrl, "", "");
         if (CommLib.isStandAlone(sdb)) {
             throw new SkipException("STANDALONE MODE");
         }
@@ -60,53 +59,41 @@ public class Transaction18524 extends SdbTestBase {
         }
 
         // 创建hash分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize设置为-1，且已切分到所有组上，切分键为账户字段
-        DBCollection hashCL = sdb.getCollectionSpace(csName).createCollection(clName + "hash", (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
-        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(clName + "mainCL", (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'range', 'IsMainCL':true, 'ReplSize':-1}"));
-        sdb.getCollectionSpace(csName).createCollection("sub118524");
-        sdb.getCollectionSpace(csName).createCollection("sub218524", (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
-        mainCL.attachCollection(csName + ".sub118524",
-                (BSONObject) JSON.parse("{LowBound:{'account':{'$minKey':1}}, UpBound:{'account':3000}}"));
-        mainCL.attachCollection(csName + ".sub218524",
-                (BSONObject) JSON.parse("{LowBound:{'account':3000}, UpBound:{'account':{'$maxKey':1}}}"));
-        insertData(hashCL);
-        insertData(mainCL);
+        // 并插入数据 10000 个账户，每个账户 10000 元
+        TransUtil.createCLsAndInsertData(sdb, csName, hashCLName, mainCLName, subCLName1, subCLName2);
     }
 
     @AfterClass
     public void tearDown() {
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
-        if (cs.isCollectionExist(clName + "hash")) {
-            cs.dropCollection(clName + "hash");
-        }
-        if (cs.isCollectionExist(clName + "mainCL")) {
-            cs.dropCollection(clName + "mainCL");
-        }
-        if (sdb != null) {
-            sdb.close();
-        }
-        if (gmrDB != null) {
-            gmrDB.close();
+        try {
+            CollectionSpace cs = gmrDB.getCollectionSpace(csName);
+            cs.dropCollection(hashCLName);
+            cs.dropCollection(mainCLName);
+        } finally {
+            if (gmrDB != null) {
+                gmrDB.close();
+            }
+            if (sdb != null) {
+                sdb.close();
+            }
         }
     }
 
     @DataProvider(name = "getCL")
     private Object[][] getCLName() {
-        return new Object[][] { { clName + "hash" }, { clName + "mainCL" } };
+        return new Object[][] { { hashCLName }, { mainCLName } };
     }
 
     @Test(dataProvider = "getCL")
     public void test(String clName) throws ReliabilityException {
         // 异常重启转账程序连接的coord节点
         TaskMgr taskMgr = new TaskMgr();
-        NodeWrapper coordNode = getCoordNode();
-        FaultMakeTask task = KillNode.getFaultMakeTask(coordNode, 600);
+        NodeWrapper coordNode = TransUtil.getCoordNode(sdb);
+        FaultMakeTask task = KillNode.getFaultMakeTask(coordNode, 180);
         taskMgr.addTask(task);
 
         for (int i = 0; i < 200; i++) {
-            taskMgr.addTask(new Transfer(clName));
+            taskMgr.addTask(new TransferTh(csName, clName, coordUrl, true));
         }
         taskMgr.execute();
 
@@ -118,73 +105,5 @@ public class Transaction18524 extends SdbTestBase {
         DBCursor cursor = sdb.exec("select sum(balance) as balance from " + csName + "." + clName);
         double balance = (double) cursor.getNext().get("balance");
         Assert.assertEquals((int) balance, 100000000);
-    }
-
-    private class Transfer extends OperateTask {
-        private String clName;
-
-        private Transfer(String clName) {
-            this.clName = clName;
-        }
-
-        @Override
-        public void exec() throws Exception {
-            Sequoiadb db = null;
-            try {
-                db = new Sequoiadb(coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                int count = 0;
-
-                // 模拟转账操作：开启事务，随机取一个账户转出value；随机取另一个账户转入value
-                while (count++ < 6000) {
-                    int accountA = (int) (Math.random() * 10000);
-                    int accountB = (int) (Math.random() * 10000);
-                    int transAmount = (int) (Math.random() * 200);
-
-                    db.beginTransaction();
-                    cl.update("{'account':" + accountA + "}", "{$inc:{'balance':" + (-transAmount) + "}}",
-                            "{'':'$shard'}");
-                    cl.update("{'account':" + accountB + "}", "{$inc:{'balance':" + transAmount + "}}",
-                            "{'':'$shard'}");
-                    db.commit();
-                    Thread.sleep(200);
-                }
-            } catch (BaseException e) {
-            }
-        }
-    }
-
-    private void insertData(DBCollection cl) {
-        List<BSONObject> reocrds = new ArrayList<>();
-        for (int i = 0; i < 10000; i++) {
-            reocrds.add((BSONObject) JSON.parse("{'balance':10000, 'account':" + i + "}"));
-        }
-        cl.insert(reocrds);
-    }
-
-    private void getCoordConn() {
-        List<String> nodeAddress = CommLib.getNodeAddress(gmrDB, "SYSCoord");
-        for (String nodeAddr : nodeAddress) {
-            String hostName = nodeAddr.split(":")[0];
-            String svcName = nodeAddr.split(":")[1];
-            if (!hostName.equals(gmrDB.getHost())) {
-                coordUrl = hostName + ":" + svcName;
-                sdb = new Sequoiadb(coordUrl, "", "");
-                break;
-            }
-        }
-    }
-
-    private NodeWrapper getCoordNode() {
-        GroupWrapper group = groupMgr.getGroupByName("SYSCoord");
-        List<NodeWrapper> nodes = group.getNodes();
-        String hostName = sdb.getHost();
-        String svcName = String.valueOf(sdb.getPort());
-        for (NodeWrapper node : nodes) {
-            if (hostName.equals(node.hostName()) && svcName.equals(node.svcName())) {
-                return node;
-            }
-        }
-        return null;
     }
 }

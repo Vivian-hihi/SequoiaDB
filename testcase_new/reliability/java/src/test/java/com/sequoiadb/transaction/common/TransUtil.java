@@ -1,0 +1,116 @@
+package com.sequoiadb.transaction.common;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.exception.ReliabilityException;
+
+public class TransUtil {
+    /**
+     * 插入数据 10000 个账户，每个账户 10000 元
+     * 
+     * @param cl
+     */
+    public static void insertData(DBCollection cl) {
+        List<BSONObject> reocrds = new ArrayList<>();
+        for (int i = 0; i < 10000; i++) {
+            reocrds.add((BSONObject) JSON.parse("{'balance':10000, 'account':" + i + "}"));
+        }
+        cl.insert(reocrds);
+    }
+
+    /**
+     * 获取当前 sdb 的 coord 节点的 NodeWrapper
+     * 
+     * @param groupMgr
+     * @param sdb
+     * @return
+     * @throws ReliabilityException
+     */
+    public static NodeWrapper getCoordNode(Sequoiadb sdb) throws ReliabilityException {
+        GroupMgr groupMgr = GroupMgr.getInstance();
+        GroupWrapper group = groupMgr.getGroupByName("SYSCoord");
+        List<NodeWrapper> nodes = group.getNodes();
+        String hostName = sdb.getHost();
+        String svcName = String.valueOf(sdb.getPort());
+        for (NodeWrapper node : nodes) {
+            if (hostName.equals(node.hostName()) && svcName.equals(node.svcName())) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 获取非当前 sdb 的 coord 的连接 coordUrl
+     * 
+     * @param sdb
+     * @return
+     */
+    public static String getCoordUrl(Sequoiadb sdb) {
+        String coordUrl = null;
+        List<String> nodeAddress = CommLib.getNodeAddress(sdb, "SYSCoord");
+        for (String nodeAddr : nodeAddress) {
+            String hostName = nodeAddr.split(":")[0];
+            String svcName = nodeAddr.split(":")[1];
+            if (!hostName.equals(sdb.getHost())) {
+                coordUrl = hostName + ":" + svcName;
+                break;
+            }
+        }
+        return coordUrl;
+    }
+
+    /**
+     * 创建 hash 分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize 设置为-1，且已切分到所有组上，切分键为账户字段
+     * 
+     * @param sdb
+     * @param csName
+     * @param hashCLName
+     * @param mainCLName
+     * @param subCLName1
+     * @param subCLName2
+     */
+    public static void createCLs(Sequoiadb sdb, String csName, String hashCLName, String mainCLName, String subCLName1,
+            String subCLName2) {
+        sdb.getCollectionSpace(csName).createCollection(hashCLName, (BSONObject) JSON
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
+        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(mainCLName, (BSONObject) JSON
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'range', 'IsMainCL':true, 'ReplSize':-1}"));
+        sdb.getCollectionSpace(csName).createCollection(subCLName1);
+        sdb.getCollectionSpace(csName).createCollection(subCLName2, (BSONObject) JSON
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
+        mainCL.attachCollection(csName + "." + subCLName1,
+                (BSONObject) JSON.parse("{LowBound:{'account':{'$minKey':1}}, UpBound:{'account':3000}}"));
+        mainCL.attachCollection(csName + "." + subCLName2,
+                (BSONObject) JSON.parse("{LowBound:{'account':3000}, UpBound:{'account':{'$maxKey':1}}}"));
+    }
+
+    /**
+     * 使用 createCLs 创建 hash 分区表/主子表并插入记录
+     * 
+     * @param sdb
+     * @param csName
+     * @param hashCLName
+     * @param mainCLName
+     * @param subCLName1
+     * @param subCLName2
+     */
+    public static void createCLsAndInsertData(Sequoiadb sdb, String csName, String hashCLName, String mainCLName,
+            String subCLName1, String subCLName2) {
+        createCLs(sdb, csName, hashCLName, mainCLName, subCLName1, subCLName2);
+        DBCollection hashCL = sdb.getCollectionSpace(csName).getCollection(hashCLName);
+        DBCollection mainCL = sdb.getCollectionSpace(csName).getCollection(mainCLName);
+        insertData(hashCL);
+        insertData(mainCL);
+    }
+}

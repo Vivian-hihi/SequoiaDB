@@ -1,10 +1,7 @@
 package com.sequoiadb.transaction.restartnode;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -13,7 +10,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
@@ -21,12 +17,12 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
 import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
+import com.sequoiadb.transaction.common.TransUtil;
+import com.sequoiadb.transaction.common.TransferTh;
 
 /**
  * @Description seqDB-18517: hash分区表/主子表，转账的过程中正常重启所有数据节点主节点
@@ -34,12 +30,13 @@ import com.sequoiadb.task.TaskMgr;
  * @date 2019-6-19
  *
  */
-// TODO :请检查其他用例是否存在类似问题，请一并修改；
 @Test(groups = "rcauto")
 public class Transaction18517 extends SdbTestBase {
     private Sequoiadb sdb;
-    // TODO :变量名不能表示含义，从下面的代码看，clName并没有表示集合名；dataprovide有使用，建议分区表和主表分开定义；
-    private String clName = "cl18517";
+    private String hashCLName = "cl18517_hash";
+    private String mainCLName = "cl18517_main";
+    private String subCLName1 = "subcl18517_1";
+    private String subCLName2 = "subcl18517_2";
     private GroupMgr groupMgr;
     private List<String> groupNames;
 
@@ -59,41 +56,26 @@ public class Transaction18517 extends SdbTestBase {
         }
 
         // 创建hash分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize设置为-1，且已切分到所有组上，切分键为账户字段
-        // TODO :子表名有多处使用，定义为变量；子表名的值明确用例编号，例如：subcl18527_1,subcl18527_2等，方便后续定位
-        DBCollection hashCL = sdb.getCollectionSpace(csName).createCollection(clName + "hash", (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
-
-        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(clName + "mainCL", (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'range', 'IsMainCL':true, 'ReplSize':-1}"));
-        sdb.getCollectionSpace(csName).createCollection("sub118527");
-        sdb.getCollectionSpace(csName).createCollection("sub218527", (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
-        mainCL.attachCollection(csName + ".sub118527",
-                (BSONObject) JSON.parse("{LowBound:{'account':{'$minKey':1}}, UpBound:{'account':3000}}"));
-        mainCL.attachCollection(csName + ".sub218527",
-                (BSONObject) JSON.parse("{LowBound:{'account':3000}, UpBound:{'account':{'$maxKey':1}}}"));
-        insertData(hashCL);
-        insertData(mainCL);
+        // 并插入数据 10000 个账户，每个账户 10000 元
+        TransUtil.createCLsAndInsertData(sdb, csName, hashCLName, mainCLName, subCLName1, subCLName2);
     }
 
     @AfterClass
     public void tearDown() {
-        CollectionSpace cs = sdb.getCollectionSpace(csName);
-        // TODO :这里判断集合是否存在时多余的，setup里面创建不需要判断，释放sdb放到finally里面吧；其他用例一并修改
-        if (cs.isCollectionExist(clName + "hash")) {
-            cs.dropCollection(clName + "hash");
-        }
-        if (cs.isCollectionExist(clName + "mainCL")) {
-            cs.dropCollection(clName + "mainCL");
-        }
-        if (sdb != null) {
-            sdb.close();
+        try {
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            cs.dropCollection(hashCLName);
+            cs.dropCollection(mainCLName);
+        } finally {
+            if (sdb != null) {
+                sdb.close();
+            }
         }
     }
 
     @DataProvider(name = "getCL")
     private Object[][] getCLName() {
-        return new Object[][] { { clName + "hash" }, { clName + "mainCL" } };
+        return new Object[][] { { hashCLName }, { mainCLName } };
     }
 
     @Test(dataProvider = "getCL")
@@ -103,12 +85,12 @@ public class Transaction18517 extends SdbTestBase {
         for (String groupName : groupNames) {
             GroupWrapper group = groupMgr.getGroupByName(groupName);
             NodeWrapper node = group.getMaster();
-            FaultMakeTask task = NodeRestart.getFaultMakeTask(node, 600, 10);
+            FaultMakeTask task = NodeRestart.getFaultMakeTask(node, 180, 10);
             taskMgr.addTask(task);
         }
 
         for (int i = 0; i < 200; i++) {
-            taskMgr.addTask(new Transfer(clName));
+            taskMgr.addTask(new TransferTh(csName, clName));
         }
         taskMgr.execute();
 
@@ -119,59 +101,5 @@ public class Transaction18517 extends SdbTestBase {
         DBCursor cursor = sdb.exec("select sum(balance) as balance from " + csName + "." + clName);
         double balance = (double) cursor.getNext().get("balance");
         Assert.assertEquals((int) balance, 100000000);
-    }
-
-    // TODO: 通用的方法，统一提取成公共方法，可以把db当做参数传入
-    private class Transfer extends OperateTask {
-        private String clName;
-
-        private Transfer(String clName) {
-            this.clName = clName;
-        }
-
-        @Override
-        public void exec() throws Exception {
-            Sequoiadb db = null;
-            try {
-                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                int count = 0;
-
-                // 模拟转账操作：开启事务，随机取一个账户转出value；随机取另一个账户转入value
-                while (count++ < 6000) {
-                    int accountA = (int) (Math.random() * 10000);
-                    int accountB = (int) (Math.random() * 10000);
-                    int transAmount = (int) (Math.random() * 200);
-
-                    db.beginTransaction();
-                    cl.update("{'account':" + accountA + "}", "{$inc:{'balance':" + (-transAmount) + "}}",
-                            "{'':'$shard'}");
-                    cl.update("{'account':" + accountB + "}", "{$inc:{'balance':" + transAmount + "}}",
-                            "{'':'$shard'}");
-                    db.commit();
-                    // TODO :为啥要睡眠200ms？
-                    Thread.sleep(200);
-                }
-            } catch (BaseException e) {
-                // TODO :这里需要做判断，只有rcauto模式下才需要执行该语句，事务默认配置不要执行该语句;
-                // TODO :将testGroupOfCurrent设置成public，就可以获取组模式了；通过equal去判断
-                db.rollback();
-            } finally {
-                if (db != null) {
-                    // TODO :这个commit的作用是？
-                    db.commit();
-                    db.close();
-                }
-            }
-        }
-    }
-
-    // TODO :请确定是否有必要提取成公共方法
-    private void insertData(DBCollection cl) {
-        List<BSONObject> reocrds = new ArrayList<>();
-        for (int i = 0; i < 10000; i++) {
-            reocrds.add((BSONObject) JSON.parse("{'balance':10000, 'account':" + i + "}"));
-        }
-        cl.insert(reocrds);
     }
 }
