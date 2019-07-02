@@ -1062,7 +1062,7 @@ namespace engine
       {
          su->data()->releaseMBContext( mbContext ) ;
       }
-      if ( planRuntime->hasPlan() )
+      if ( NULL != planRuntime && planRuntime->hasPlan() )
       {
          planRuntime->reset() ;
       }
