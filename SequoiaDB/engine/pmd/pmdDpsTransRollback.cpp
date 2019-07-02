@@ -74,15 +74,6 @@ namespace engine
          }
 
          timeCount++ ;
-         // try to shrink LRB and LRB header pools every 15 minutes
-         if (    ( 0 == ( timeCount % DPS_TRANS_LRB_SHRINK_INTERVAL ) )
-              && ( ! PMD_IS_DB_DOWN() ) )
-         {
-            if ( pTransCB )
-            {
-               pTransCB->tryToShrinkLRBPools() ;
-            }
-         }
 
          if ( 0 == timeCount % PMD_CLEAR_HISTRANS_INTERVAL )
          {

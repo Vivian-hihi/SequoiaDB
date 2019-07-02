@@ -168,9 +168,6 @@ namespace engine
 
    typedef ossPoolMap<DPS_TRANS_ID, dpsHisTransStatus>   TRANS_ID_2_STATUS ;
 
-   // LRB shrink opreation interval, 900 seconds
-   #define DPS_TRANS_LRB_SHRINK_INTERVAL ( 900 )
-
    // delta between runtime log and undo log due to TransRelatedLSN
    #define DPS_TRANS_LOG_UNDO_DELTA  ( 12 )
    /*
@@ -388,7 +385,6 @@ namespace engine
       UINT64 usedLogSpace() ;
 
       dpsTransLockManager * getLockMgrHandle() ;
-      void tryToShrinkLRBPools() ;
 
       UINT32 getMaxLRSize() ;
       void   updateMaxLRSize( UINT32 recordSize, DPS_LSN_OFFSET curLSN ) ;

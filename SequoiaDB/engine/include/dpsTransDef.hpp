@@ -102,14 +102,6 @@ namespace engine
    #define TRANS_CONF_MASK_RCCOUNT           0x00000040
 
    /*
-      TRANS LRB AND LRB HEADER
-   */
-   #define DPS_TRANS_LRB_INIT_DFT         ( 524288 )
-   #define DPS_TRANS_LRB_TOTAL_DFT        ( 268435456 )
-   #define DPS_TRANS_LRB_MIN              ( 65536 )
-   #define DPS_TRANS_LRB_MAX              DPS_TRANS_LRB_TOTAL_DFT 
-
-   /*
       _dpsTransEvent define
    */
    class _dpsTransEvent

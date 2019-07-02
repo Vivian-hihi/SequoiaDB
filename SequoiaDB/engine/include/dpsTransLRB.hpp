@@ -43,6 +43,7 @@
 #include "ossLatch.hpp"         // ossSpinXLatch
 #include "dpsTransLockDef.hpp"  // DPS_TRANSLOCK_TYPE, dpsTransLockId
 #include "ossAtomic.hpp"
+#include "utilPooledObject.hpp"
 
 namespace engine
 {
@@ -50,7 +51,7 @@ namespace engine
    class dpsTransLRBHeader ;
 
    // Lock Request Block ( LRB )
-   class dpsTransLRB : public SDBObject
+   class dpsTransLRB : public utilPooledObject
    {
    public :
       _dpsTransExecutor * dpsTxExectr ;
@@ -101,7 +102,7 @@ namespace engine
                                                   UINT32 refCounter,
                                                   dpsLRBExtData *pExtData ) ;
 
-   class dpsLRBExtData : public SDBObject
+   class dpsLRBExtData : public utilPooledObject
    {
    public:
       UINT64      _data ;
@@ -167,7 +168,7 @@ namespace engine
    } ;
 
    // Lock Request Block Header ( LRB Header )
-   class dpsTransLRBHeader : public SDBObject
+   class dpsTransLRBHeader : public utilPooledObject
    {
    public :
       dpsTransLRBHeader * nextLRBHdr ;   // next LRB Header in the chain

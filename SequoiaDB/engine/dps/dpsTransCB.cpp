@@ -113,10 +113,7 @@ namespace engine
          }
 
          // Initialize trans lock manager
-         //   . allocate memory and under layer structures for the LRBs,
-         //     LRB Headers, LRB Header Hash buckets
-         rc = _transLockMgr->init( pmdGetOptionCB()->transLRBInit(),
-                                   DPS_TRANS_LRB_TOTAL_DFT ) ;
+         rc = _transLockMgr->init() ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to initialize lock manager, rc: %d",
@@ -1381,14 +1378,6 @@ namespace engine
    dpsTransLockManager * dpsTransCB::getLockMgrHandle()
    {
       return ( _transLockMgr->isInitialized() ? (  _transLockMgr ) : NULL ) ;
-   }
-
-   void dpsTransCB::tryToShrinkLRBPools()
-   {
-      if ( _transLockMgr && _transLockMgr->isInitialized() )
-      {
-         _transLockMgr->tryToShrinkLRBAndLRBHeaderPool();
-      }
    }
 
    /*

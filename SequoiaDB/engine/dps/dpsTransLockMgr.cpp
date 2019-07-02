@@ -61,9 +61,7 @@ namespace engine
    {
    }
 
-   dpsTransLockManager::dpsTransLockManager() : _pLRBMgr( NULL ),
-                                                _pLRBHdrMgr( NULL ),
-                                                _initialized( FALSE )
+   dpsTransLockManager::dpsTransLockManager() : _initialized( FALSE )
    {
    }
 
@@ -89,34 +87,12 @@ namespace engine
       if ( _initialized )
       {
          _initialized = FALSE ;
-
-         // free LRB Header objects
-         if ( _pLRBHdrMgr )
-         {
-            _pLRBHdrMgr->fini() ;
-         }
-         // delete LRB Header manager
-         SAFE_OSS_DELETE( _pLRBHdrMgr ) ;
-         _pLRBHdrMgr = NULL ;
-
-         // free LRB objects
-         if ( _pLRBMgr )
-         {
-            _pLRBMgr->fini() ;
-         }
-         // delete LRB manager
-         SAFE_OSS_DELETE( _pLRBMgr ) ;
-         _pLRBMgr = NULL ;
-
       }
    }
-
 
    //
    // Description: Initialize lock manager
    //              . initialize bucket
-   //              . allocate LRB Headers
-   //              . allocate LRBs
    // Input:       none
    // Output:      none
    // Return:      none
@@ -124,117 +100,12 @@ namespace engine
    //              the caller shall make sure no thread is trying to access
    //              lock resource before lock manager is fully initialized
    //
-   INT32 dpsTransLockManager::init( UINT32 lrbInitNum,
-                                    UINT32 lrbTotalNum )
+   INT32 dpsTransLockManager::init()
    {
-      INT32 rc = SDB_OK ;
-      UINT32 roundUp  = ossNextPowerOf2( lrbInitNum ) ;
-
-      // new LRB manager
-      _pLRBMgr = SDB_OSS_NEW _utilSegmentManager< dpsTransLRB > ;
-      if ( NULL == _pLRBMgr )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Failed to create LRB Manager, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      if ( lrbTotalNum < roundUp )
-      {
-         lrbTotalNum = roundUp ;
-      }
-      PD_LOG( PDEVENT, 
-              "Lock manager initializing"OSS_NEWLINE
-              "  LRBs initial            : %u"OSS_NEWLINE
-              "  LRBs Max                : %u"OSS_NEWLINE
-              "  LRB Headers initial     : %u"OSS_NEWLINE
-              "  LRB Headers Max         : %u",
-              roundUp, lrbTotalNum, roundUp / 4, lrbTotalNum ) ;
-
-      // init LRB manager
-      rc = _pLRBMgr->init( roundUp, lrbTotalNum ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to allocate memory for LRB, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      // new LRB Header manager
-      _pLRBHdrMgr = SDB_OSS_NEW _utilSegmentManager< dpsTransLRBHeader > ;
-      if ( NULL == _pLRBHdrMgr )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Failed to create LRB Header Manager, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      // init LRB Header manager
-      rc = _pLRBHdrMgr->init( roundUp / 4, lrbTotalNum );
-      if ( rc )
-      {
-         PD_LOG( PDERROR,
-                 "Failed to allocate memory for LRB Header, rc: %d", rc ) ;
-         goto error ;
-      }
-
       // set initialized flag
       _initialized = TRUE ;
-
-   done :
-      return rc ;
-   error :
-      // clean up LRB in error code path
-      if ( _pLRBMgr )
-      {
-         // free LRB objects if allocated
-         _pLRBMgr->fini() ;
-         // delete LRB manager
-         SAFE_OSS_DELETE( _pLRBMgr ) ;
-         _pLRBMgr = NULL ;
-      }
-
-      // clean LRB Header in error code path
-      if ( _pLRBHdrMgr )
-      {
-         // free LRB Header objects if allocated
-         _pLRBHdrMgr->fini() ;
-         // delete LRB Header manager
-         SAFE_OSS_DELETE( _pLRBHdrMgr ) ;
-         _pLRBHdrMgr = NULL ;
-      }
-      goto done ;
+      return SDB_OK ;
    }
-
-
-   //
-   // Description: free LRB and LRB Header free segments
-   //              higher than high water mark 
-   // Function:    free LRB and LRB header free segments
-   // Input:       none 
-   // Output:      none
-   // Return:      none 
-   // Dependency:  the lock manager must be initialized. 
-   //              This function is called by a background thread periodically
-   void dpsTransLockManager::tryToShrinkLRBAndLRBHeaderPool()
-   {
-      if ( _pLRBMgr && _pLRBHdrMgr && _initialized )
-      {
-         UINT32 freeSegNum = 0 ;
-         _pLRBMgr->shrink( 1, &freeSegNum ) ;
-         if ( freeSegNum > 0 )
-         {
-            PD_LOG( PDINFO, "Has freed %u segments of LRB", freeSegNum ) ;
-         }
-         freeSegNum = 0 ;
-         _pLRBHdrMgr->shrink( 1, &freeSegNum ) ;
-         if ( freeSegNum > 0 )
-         {
-            PD_LOG( PDINFO, "Has freed %u segments of LRBHeader",
-                    freeSegNum ) ;
-         }
-      }
-   }
-
 
    // 
    // Description: release/return a LRB Header to LRB Header manager
@@ -275,12 +146,12 @@ namespace engine
          }
       }
 
-      INT32 rc = _pLRBHdrMgr->release( pLRBHdr );
+      SDB_OSS_DEL pLRBHdr ;
 
 #ifdef _DEBUG
-      PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR, rc ) ;
+      PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER__RELEASELRBHDR ) ;
 #endif
-      return rc ;
+      return SDB_OK ;
    }
 
 
@@ -305,16 +176,16 @@ namespace engine
       SDB_ASSERT( pLRB, "Invalid LRB pointer." ) ;
 #endif
 
-      // release LRB
-      INT32 rc = _pLRBMgr->release( pLRB ) ;
+      if ( pLRB )
+      {
+         SDB_OSS_DEL pLRB ;
+      }
 
 #ifdef _DEBUG
-      SDB_ASSERT( SDB_OK == rc, "Failed to release LRB" ) ;
-      PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER__RELEASELRB, rc ) ;
+      PD_TRACE_EXIT( SDB_DPSTRANSLOCKMANAGER__RELEASELRB ) ;
 #endif
-      return rc ;
+      return SDB_OK ;
    }
-
 
    // 
    // Description: search the LRB Header chain and find the one with same lockId
@@ -1827,71 +1698,43 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DPSTRANSLOCKMANAGER_PREPARENEWLRBANDHEADER ) ;
 
       INT32   rc             = SDB_OK ;
-      BOOLEAN lrbAcquired    = FALSE;
-      BOOLEAN lrbHdrAcquired = FALSE;
-      UTIL_OBJIDX lrbIdxNew, hdrIdxNew;
-
-      // acquire a free LRB
-      rc = _pLRBMgr->acquire( lrbIdxNew, pLRBNew ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to acquire a free LRB (rc=%d)", rc );
-         goto error ;
-      }
-
-#ifdef _DEBUG
-      SDB_ASSERT( pLRBNew, "LRB can't be null" ) ;
-      PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_PREPARENEWLRBANDHEADER,
-                 PD_PACK_STRING( "Acquired LRB:" ),
-                 PD_PACK_RAW( &pLRBNew, sizeof(&pLRBNew) ) ) ;
-#endif
-
-      lrbAcquired = TRUE;
 
       // acquire a free LRB Header
-      rc = _pLRBHdrMgr->acquire( hdrIdxNew, pLRBHdrNew ) ;
-
-      if ( SDB_OK != rc )
+      pLRBHdrNew = SDB_OSS_NEW dpsTransLRBHeader( lockId, bktIdx ) ;
+      if ( !pLRBHdrNew )
       {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to alloc a LRBHeader (rc=%d)", rc ) ;
          goto error ;
       }
 
-#ifdef _DEBUG
-      SDB_ASSERT( pLRBHdrNew, "LRB Header can't be null" ) ;
-      PD_TRACE2( SDB_DPSTRANSLOCKMANAGER_PREPARENEWLRBANDHEADER,
-                 PD_PACK_STRING( "Acquired LRB Header:" ),
-                 PD_PACK_RAW( &pLRBHdrNew, sizeof(&pLRBHdrNew) ) ) ;
-#endif
-      // initialize the new LRB
-      // and mark the new LRB Header in its lrbHdr
-      new (pLRBNew) dpsTransLRB(dpsTxExectr, requestLockMode, pLRBHdrNew);
+      /// acquire a lrb
+      pLRBNew = SDB_OSS_NEW dpsTransLRB( dpsTxExectr,
+                                         requestLockMode,
+                                         pLRBHdrNew ) ;
+      if ( !pLRBNew )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to alloc a LRB (rc=%d)", rc ) ;
+         goto error ;
+      }
 
-      // inital the new LRB Header
-      // and add the new LRB into the new LRB Header owner list
-      new (pLRBHdrNew) dpsTransLRBHeader(lockId, bktIdx);
       pLRBHdrNew->ownerLRB   = pLRBNew;
 
    done:
       PD_TRACE_EXITRC( SDB_DPSTRANSLOCKMANAGER_PREPARENEWLRBANDHEADER, rc ) ;
       return rc ;
    error :
-      if( lrbAcquired )
+      if( pLRBNew )
       {
-         // release LRB in case failed to acquire LRB Header
          _releaseLRB( pLRBNew ) ;
       }
-
-      if( lrbHdrAcquired )
+      if( pLRBHdrNew )
       {
-         // release LRB in case failed to acquire LRB Header
-         //
          _releaseLRBHdr( pLRBHdrNew ) ;
       }
-
-      PD_LOG( PDERROR, "Failed to acquire a free LRB & Header (rc=%d)", rc );
       goto done;
    }
-
 
    //
    // Description: acquire a lock with given mode
@@ -2967,17 +2810,17 @@ nextLock:
          delta.convertToTime( factor, seconds, microseconds ) ;
  
          ossSnprintf( pBuf, bufSz,
-            "LRB: %x, EDU: %llu, dpsTxExectr: %p, "
-            "eduLrbNext: %x, eduLrbPrev: %x, "
-            "lrbHdr: %x, nextLRB: %x ,prevLRB: %x, "
+            "LRB: %p, EDU: %llu, dpsTxExectr: %p, "
+            "eduLrbNext: %p, eduLrbPrev: %p, "
+            "lrbHdr: %p, nextLRB: %p ,prevLRB: %p, "
             "refCounter: %llu, lockMode: %s, duration: %llu",
-            _pLRBMgr->getIndexByAddr( pLRB ),
+            pLRB,
             pLRB->dpsTxExectr->getEDUID(), pLRB->dpsTxExectr,
-            _pLRBMgr->getIndexByAddr( pLRB->eduLrbNext ),
-            _pLRBMgr->getIndexByAddr( pLRB->eduLrbPrev ),
-            _pLRBHdrMgr->getIndexByAddr( pLRB->lrbHdr  ),
-            _pLRBMgr->getIndexByAddr( pLRB->nextLRB    ),
-            _pLRBMgr->getIndexByAddr( pLRB->prevLRB    ),
+            pLRB->eduLrbNext,
+            pLRB->eduLrbPrev,
+            pLRB->lrbHdr,
+            pLRB->nextLRB,
+            pLRB->prevLRB,
             pLRB->refCounter,
             lockModeToString( pLRB->lockMode ),
             (UINT64)(seconds*1000 + microseconds / 1000 ) ) ;
@@ -3015,26 +2858,26 @@ nextLock:
                                "%sEDU          : %llu"OSS_NEWLINE, pStr,
                                pLRB->dpsTxExectr->getEDUID() ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sLRB          : %x"OSS_NEWLINE, pStr,
-                               _pLRBMgr->getIndexByAddr( pLRB )) ;
+                               "%sLRB          : %p"OSS_NEWLINE, pStr,
+                               pLRB ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%sdpsTxExectr  : %p"OSS_NEWLINE, pStr,
                                pLRB->dpsTxExectr ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%seduLrbNext   : %x"OSS_NEWLINE, pStr,
-                               _pLRBMgr->getIndexByAddr( pLRB->eduLrbNext )) ;
+                               "%seduLrbNext   : %p"OSS_NEWLINE, pStr,
+                               pLRB->eduLrbNext ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%seduLrbPrev   : %x"OSS_NEWLINE, pStr,
-                               _pLRBMgr->getIndexByAddr( pLRB->eduLrbPrev )) ;
+                               "%seduLrbPrev   : %p"OSS_NEWLINE, pStr,
+                               pLRB->eduLrbPrev ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%slrbHdr       : %x"OSS_NEWLINE, pStr,
-                               _pLRBHdrMgr->getIndexByAddr( pLRB->lrbHdr )) ;
+                               "%slrbHdr       : %p"OSS_NEWLINE, pStr,
+                               pLRB->lrbHdr ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%snextLRB      : %x"OSS_NEWLINE, pStr,
-                               _pLRBMgr->getIndexByAddr( pLRB->nextLRB )) ;
+                               "%snextLRB      : %p"OSS_NEWLINE, pStr,
+                               pLRB->nextLRB ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sprevLRB      : %x"OSS_NEWLINE, pStr,
-                               _pLRBMgr->getIndexByAddr( pLRB->prevLRB )) ;
+                               "%sprevLRB      : %p"OSS_NEWLINE, pStr,
+                               pLRB->prevLRB ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%srefCounter   : %llu"OSS_NEWLINE, pStr,
                                pLRB->refCounter ) ;
@@ -3062,14 +2905,14 @@ nextLock:
       if ( pLRBHdr )
       {
          ossSnprintf( pBuf, bufSz,
-          "LRB Header: %x, nextLRBHdr: %x, "
-          "ownerLRB: %x, waiterLRB : %x, upgradeLRB: %x, "
+          "LRB Header: %p, nextLRBHdr: %p, "
+          "ownerLRB: %p, waiterLRB : %p, upgradeLRB: %p, "
           "lockId: ( %s )",
-          _pLRBHdrMgr->getIndexByAddr(pLRBHdr),
-          _pLRBHdrMgr->getIndexByAddr(pLRBHdr->nextLRBHdr),
-          _pLRBMgr->getIndexByAddr(pLRBHdr->ownerLRB),
-          _pLRBMgr->getIndexByAddr(pLRBHdr->waiterLRB),
-          _pLRBMgr->getIndexByAddr(pLRBHdr->upgradeLRB),
+          pLRBHdr,
+          pLRBHdr->nextLRBHdr,
+          pLRBHdr->ownerLRB,
+          pLRBHdr->waiterLRB,
+          pLRBHdr->upgradeLRB,
           pLRBHdr->lockId.toString().c_str() ) ;
       }
       return pBuf;
@@ -3093,20 +2936,20 @@ nextLock:
       if ( pLRBHdr )
       {
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sLRB Header : %x"OSS_NEWLINE, pStr,
-                               _pLRBHdrMgr->getIndexByAddr(pLRBHdr)) ;
+                               "%sLRB Header : %p"OSS_NEWLINE, pStr,
+                               pLRBHdr ) ;
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%snextLRBHdr : %x"OSS_NEWLINE, pStr,
-                              _pLRBHdrMgr->getIndexByAddr(pLRBHdr->nextLRBHdr));
+                               "%snextLRBHdr : %p"OSS_NEWLINE, pStr,
+                              pLRBHdr->nextLRBHdr );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%sownerLRB   : %x"OSS_NEWLINE, pStr,
-                               _pLRBMgr->getIndexByAddr(pLRBHdr->ownerLRB));
+                               "%sownerLRB   : %p"OSS_NEWLINE, pStr,
+                               pLRBHdr->ownerLRB );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%swaiterLRB  : %x"OSS_NEWLINE, pStr,
-                               _pLRBMgr->getIndexByAddr(pLRBHdr->waiterLRB));
+                               "%swaiterLRB  : %p"OSS_NEWLINE, pStr,
+                               pLRBHdr->waiterLRB );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
-                               "%supgradeLRB : %x"OSS_NEWLINE, pStr,
-                               _pLRBMgr->getIndexByAddr(pLRBHdr->upgradeLRB));
+                               "%supgradeLRB : %p"OSS_NEWLINE, pStr,
+                               pLRBHdr->upgradeLRB );
          pBuff += ossSnprintf( pBuff, bufSz - strlen( pBuf ),
                                "%slockId     : ( %s )"OSS_NEWLINE, pStr,
                                pLRBHdr->lockId.toString().c_str() ) ;

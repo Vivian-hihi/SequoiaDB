@@ -39,7 +39,6 @@
 #ifndef DPSTRANSLOCKMANAGER_HPP_
 #define DPSTRANSLOCKMANAGER_HPP_
 
-#include "utilSegment.hpp"
 #include "dpsTransLRB.hpp"
 #include "dpsTransLockDef.hpp"
 #include "dpsTransDef.hpp"
@@ -66,10 +65,7 @@ namespace engine
       virtual ~dpsTransLockManager();
 
       // initialization,
-      //   . init _LockHdrBkt
-      //   . allocate segment for LRB and LRB Header
-      INT32 init( UINT32 lrbInitNum = DPS_TRANS_LRB_INIT_DFT,
-                  UINT32 lrbTotalNum = DPS_TRANS_LRB_TOTAL_DFT ) ;
+      INT32 init() ;
 
       // free allocated LRB and LRB Header segments
       void fini() ;
@@ -201,11 +197,6 @@ namespace engine
          const dpsTransLockId & lockId,
          dpsTransLRBHeader *  & pLRBHdr
       ) ;
-
-      // try to free LRB and LRB header segments higher current high water mark
-      // this function is desgined to be called by background thread
-      // periodically
-      void tryToShrinkLRBAndLRBHeaderPool() ;
 
    private:
       // Latch for normal lock operation ( acquire, tryAcquire,
@@ -435,19 +426,6 @@ namespace engine
       ) ;
 
    private:
-      // LRB manager
-      _utilSegmentManager< dpsTransLRB       > * _pLRBMgr ;
-
-      // LRB Header manager
-      _utilSegmentManager< dpsTransLRBHeader > * _pLRBHdrMgr ;
-
-      // LRB Header bucket :
-      //   class dpsTransLRBHeaderHash : public SDBObject
-      //   {
-      //   public :
-      //      dpsTransLRBHeader    lrbHdr ;  -- LRB Header
-      //      ossSpinXLatch  hashHdrLatch ;  -- bucket slot latch
-      //   } ;
       dpsTransLRBHeaderHash  _LockHdrBkt[ DPS_TRANS_LOCKBUCKET_SLOTS_MAX ] ;
 
       // flag mark if lock manager has been initialized

@@ -577,7 +577,6 @@ namespace engine
          OSS_INLINE UINT32 replBucketSize () const { return _replBucketSize ; }
          OSS_INLINE BOOLEAN transactionOn () const { return _transactionOn ; }
          OSS_INLINE UINT32 transTimeout () const { return _transTimeout; }
-         OSS_INLINE UINT32 transLRBInit () const { return _transLRBInit ;}
          OSS_INLINE INT32 transIsolation () const { return _transIsolation; }
          OSS_INLINE BOOLEAN transLockwait () const { return _transLockwait; }
          OSS_INLINE BOOLEAN transAutoCommit() const { return _transAutoCommit ; }
@@ -701,7 +700,6 @@ namespace engine
          BOOLEAN     _transAutoCommit ;
          BOOLEAN     _transAutoRollback ;
          BOOLEAN     _transUseRBS ;
-         UINT32      _transLRBInit ;
          UINT32      _sharingBreakTime ;
          UINT32      _startShiftTime ;
          UINT32      _logBuffSize ;
