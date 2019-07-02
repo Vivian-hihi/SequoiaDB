@@ -192,12 +192,16 @@ namespace seadapter
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
 
-      rc = msgBuildDisconnectMsg( &msg, &bufSize, nextRequestID(), _pEDUCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Build disconnect message failed[%d]", rc ) ;
-      ((MsgHeader *)msg)->TID = _tid ;
-      rc = _dbAssist->sendToDataNode( (const MsgHeader *)msg ) ;
-      PD_RC_CHECK( rc, PDERROR, "Send disconnect message to data node "
-                   "failed[%d]", rc ) ;
+      // Maybe the initialization failed, in that case the _dbAssist is NULL.
+      if ( _dbAssist )
+      {
+         rc = msgBuildDisconnectMsg( &msg, &bufSize, nextRequestID(), _pEDUCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Build disconnect message failed[%d]", rc ) ;
+         ((MsgHeader *)msg)->TID = _tid ;
+         rc = _dbAssist->sendToDataNode( (const MsgHeader *)msg ) ;
+         PD_RC_CHECK( rc, PDERROR, "Send disconnect message to data node "
+                     "failed[%d]", rc ) ;
+      }
 
    done:
       if ( msg )
