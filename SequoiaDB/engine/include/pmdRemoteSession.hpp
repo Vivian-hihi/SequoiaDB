@@ -110,6 +110,20 @@ namespace engine
    typedef _IRemoteSessionHandler IRemoteSessionHandler ;
 
    /*
+      _IRemoteSiteHandle define
+   */
+   class _IRemoteSiteHandle : public SDBObject
+   {
+      public:
+         _IRemoteSiteHandle() {}
+         virtual ~_IRemoteSiteHandle() {}
+
+         virtual BOOLEAN   waitEvent( pmdEDUEvent &event, INT64 timeout ) = 0 ;
+         virtual void      postEvent( const pmdEDUEvent &event ) = 0 ;
+   } ;
+   typedef _IRemoteSiteHandle IRemoteSiteHandle ;
+
+   /*
       _IRemoteMgrHandle define
    */
    class _IRemoteMgrHandle : public SDBObject
@@ -441,6 +455,8 @@ namespace engine
          void setEduCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
          void setRouteAgent( netRouteAgent *pAgent ) { _pAgent = pAgent ; }
 
+         void setHandle( IRemoteSiteHandle *pHandle ) { _pHandler = pHandle ; }
+
          void     handleClose( const NET_HANDLE &handle,
                                const _MsgRouteID &id ) ;
 
@@ -452,6 +468,7 @@ namespace engine
          virtual ~_pmdRemoteSessionSite() ;
          _pmdRemoteSessionSite() ;
          _pmdEDUCB* eduCB() { return _pEDUCB ; }
+         IRemoteSiteHandle* getHandle() { return _pHandler ; }
 
          void     interruptAllSubSession() ;
          void     disconnectAllSubSession() ;
@@ -494,6 +511,7 @@ namespace engine
          MAP_NODE2NET         _mapNode2Net ;
          _pmdEDUCB            *_pEDUCB ;
          netRouteAgent        *_pAgent ;
+         IRemoteSiteHandle    *_pHandler ;
 
          // last for free entry
          posAndNode           _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE + 1 ] ;
@@ -529,7 +547,8 @@ namespace engine
 
          netRouteAgent*          getAgent() ;
 
-         pmdRemoteSessionSite*   registerEDU( _pmdEDUCB *cb ) ;
+         pmdRemoteSessionSite*   registerEDU( _pmdEDUCB *cb,
+                                              IRemoteSiteHandle *pHandle = NULL ) ;
          void                    unregEUD( _pmdEDUCB *cb ) ;
 
          void                    setAllSiteSchedVer( INT32 ver ) ;

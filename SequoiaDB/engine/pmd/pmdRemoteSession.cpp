@@ -1048,6 +1048,8 @@ namespace engine
       UINT32 replyNum               = 0 ;
       pmdSubSession *pSubSession    = NULL ;
       _sessionChange                = FALSE ;
+      IRemoteSiteHandle *pSiteHandle= _pSite->getHandle() ;
+      BOOLEAN gotEvent              = FALSE ;
 
       _milliTimeout = _milliTimeoutHard ;
       totalUnReplyNum = getSubSessionCount( PMD_SSITR_UNREPLY ) ;
@@ -1095,8 +1097,17 @@ namespace engine
                       _milliTimeout : OSS_ONE_SEC ;
          }
 
+         if ( pSiteHandle )
+         {
+            gotEvent = pSiteHandle->waitEvent( event, timeout ) ;
+         }
+         else
+         {
+            gotEvent = _pEDUCB->waitEvent( event, timeout ) ;
+         }
+
          // wait event
-         if ( !_pEDUCB->waitEvent( event, timeout ) )
+         if ( !gotEvent )
          {
             _milliTimeout -= timeout ;
             if ( 0 == replyNum || waitAll )
@@ -1225,6 +1236,7 @@ namespace engine
       _pEDUCB = NULL ;
       _pAgent = NULL ;
       _pLatch = NULL ;
+      _pHandler = NULL ;
 
       ossMemset( _assitNodeBuff, 0, sizeof( _assitNodeBuff ) ) ;
 
@@ -1246,6 +1258,7 @@ namespace engine
       SDB_ASSERT( 0 == _mapSession.size(), "Has session not removed" ) ;
       SDB_ASSERT( NULL == _pEDUCB, "EDU is not NULL" ) ;
       _pEDUCB = NULL ;
+      _pHandler = NULL ;
 
       if ( _pLatch )
       {
@@ -1399,10 +1412,20 @@ namespace engine
             pMsg->numReturned = 0 ;
             pMsg->startFrom = 0 ;
 
-            eduCB()->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                             PMD_EDU_MEM_THREAD,
-                                             (CHAR*)pMsg,
-                                             (UINT64)handle ) ) ;
+            if ( _pHandler )
+            {
+               _pHandler->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                                  PMD_EDU_MEM_THREAD,
+                                                  (CHAR*)pMsg,
+                                                  (UINT64)handle ) ) ;
+            }
+            else
+            {
+               eduCB()->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                                PMD_EDU_MEM_THREAD,
+                                                (CHAR*)pMsg,
+                                                (UINT64)handle ) ) ;
+            }
          }
       }
 
@@ -1749,12 +1772,17 @@ namespace engine
       return SDB_OK ;
    }
 
-   pmdRemoteSessionSite* _pmdRemoteSessionMgr::registerEDU( _pmdEDUCB * cb )
+   pmdRemoteSessionSite* _pmdRemoteSessionMgr::registerEDU( _pmdEDUCB * cb,
+                                                            IRemoteSiteHandle *pHandle )
    {
       ossScopedLock lock( &_edusLatch, EXCLUSIVE ) ;
       pmdRemoteSessionSite &site = _mapTID2EDU[ cb->getTID() ] ;
       site.setEduCB( cb ) ;
       site.setRouteAgent( _pAgent ) ;
+      if ( pHandle )
+      {
+         site.setHandle( pHandle ) ;
+      }
       cb->attachRemoteSite( &site ) ;
 
       if ( _pHandle )
@@ -1836,6 +1864,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       pmdEDUCB *pEDUCB = NULL ;
+      IRemoteSiteHandle *pSiteHandle = NULL ;
       MAP_TID_2_EDU_IT it ;
 
       ossScopedLock lock( &_edusLatch, SHARED ) ;
@@ -1845,6 +1874,7 @@ namespace engine
       {
          CHAR *pNewBuff = NULL ;
          pEDUCB = it->second.eduCB() ;
+         pSiteHandle = it->second.getHandle() ;
 
          // assign memory
          pNewBuff = ( CHAR* )utilThreadAlloc( pMsg->messageLength + 1 ) ;
@@ -1854,9 +1884,19 @@ namespace engine
             ossMemcpy( pNewBuff, pMsg, pMsg->messageLength ) ;
             pNewBuff[ pMsg->messageLength ] = 0 ;
             // push to edu queue
-            pEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                            PMD_EDU_MEM_THREAD,
-                                            pNewBuff, (UINT64)handle ) ) ;
+            if ( pSiteHandle )
+            {
+               pSiteHandle->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                                    PMD_EDU_MEM_THREAD,
+                                                    pNewBuff,
+                                                    (UINT64)handle ) ) ;
+            }
+            else
+            {
+               pEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                               PMD_EDU_MEM_THREAD,
+                                               pNewBuff, (UINT64)handle ) ) ;
+            }
          }
          else
          {
