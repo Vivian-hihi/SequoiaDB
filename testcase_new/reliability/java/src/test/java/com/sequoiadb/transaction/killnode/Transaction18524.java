@@ -35,8 +35,8 @@ public class Transaction18524 extends SdbTestBase {
     private Sequoiadb gmrDB;
     private String hashCLName = "cl18524_hash";
     private String mainCLName = "cl18524_main";
-    private String subCLName1 = "subcl18517_1";
-    private String subCLName2 = "subcl18517_2";
+    private String subCLName1 = "subcl18524_1";
+    private String subCLName2 = "subcl18524_2";
     private String coordUrl;
     private GroupMgr groupMgr;
     private List<String> groupNames;
@@ -58,7 +58,7 @@ public class Transaction18524 extends SdbTestBase {
             throw new SkipException("GROUP ERROR");
         }
 
-        // 创建hash分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize设置为-1，且已切分到所有组上，切分键为账户字段
+        // 创建hash分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize设置为1，且已切分到所有组上，切分键为账户字段
         // 并插入数据 10000 个账户，每个账户 10000 元
         TransUtil.createCLsAndInsertData(sdb, csName, hashCLName, mainCLName, subCLName1, subCLName2);
     }

@@ -55,7 +55,7 @@ public class Transaction18517 extends SdbTestBase {
             throw new SkipException("GROUP ERROR");
         }
 
-        // 创建hash分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize设置为-1，且已切分到所有组上，切分键为账户字段
+        // 创建hash分区表/主子表(主表下挂载多个子表，子表覆盖分区表)，replSize设置为1，且已切分到所有组上，切分键为账户字段
         // 并插入数据 10000 个账户，每个账户 10000 元
         TransUtil.createCLsAndInsertData(sdb, csName, hashCLName, mainCLName, subCLName1, subCLName2);
     }
@@ -83,7 +83,7 @@ public class Transaction18517 extends SdbTestBase {
         // 正常重启所有数据节点的主节点
         TaskMgr taskMgr = new TaskMgr();
         for (String groupName : groupNames) {
-            GroupMgr groupMgr = GroupMgr.getInstance();
+            groupMgr.setSdb(new Sequoiadb(SdbTestBase.coordUrl, "", ""));
             GroupWrapper group = groupMgr.getGroupByName(groupName);
             NodeWrapper node = group.getMaster();
             FaultMakeTask task = NodeRestart.getFaultMakeTask(node, 180, 10);

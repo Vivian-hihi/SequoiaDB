@@ -1,5 +1,7 @@
 package com.sequoiadb.transaction.common;
 
+import java.util.Random;
+
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.SdbTestBase;
@@ -11,6 +13,7 @@ public class TransferTh extends OperateTask {
     private String clName;
     private String coordUrl;
     private boolean faultCoordFlag;
+    private Random random = new Random();
 
     public TransferTh(String csName, String clName) {
         this.csName = csName;
@@ -39,6 +42,20 @@ public class TransferTh extends OperateTask {
         runNormalFault();
     }
 
+    /**
+     * 随机提交或者回滚
+     * 
+     * @param sdb
+     */
+    private void commitRollback(Sequoiadb sdb) {
+        boolean flag = random.nextBoolean();
+        if (flag) {
+            sdb.commit();
+        } else {
+            sdb.rollback();
+        }
+    }
+
     private void runNormalFault() {
         Sequoiadb db = null;
         try {
@@ -55,7 +72,7 @@ public class TransferTh extends OperateTask {
                 db.beginTransaction();
                 cl.update("{'account':" + accountA + "}", "{$inc:{'balance':" + (-transAmount) + "}}", "{'':'$shard'}");
                 cl.update("{'account':" + accountB + "}", "{$inc:{'balance':" + transAmount + "}}", "{'':'$shard'}");
-                db.commit();
+                commitRollback(db);
             }
         } catch (BaseException e) {
             if ("rcauto".equals(SdbTestBase.testGroupOfCurrent)) {
@@ -84,7 +101,7 @@ public class TransferTh extends OperateTask {
                 db.beginTransaction();
                 cl.update("{'account':" + accountA + "}", "{$inc:{'balance':" + (-transAmount) + "}}", "{'':'$shard'}");
                 cl.update("{'account':" + accountB + "}", "{$inc:{'balance':" + transAmount + "}}", "{'':'$shard'}");
-                db.commit();
+                commitRollback(db);
             }
         } catch (BaseException e) {
         }
