@@ -34,8 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @Date 2019.01.09
  * @version 1.00
  */
-public class CreateObjectWithKillCoord16459 extends S3TestBase {
-	private GroupMgr groupMgr = null;
+public class CreateObjectWithKillData16459 extends S3TestBase {
 	private String userName = "user16459";
 	private String bucketName = "bucket16459";
 	private String keyName = "key16459";
@@ -47,14 +46,10 @@ public class CreateObjectWithKillCoord16459 extends S3TestBase {
 	private int objectNum = 100;
 	private String[] accessKeys = null;
 	private AmazonS3 s3Client = null;
-	private GroupWrapper coordGroup = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		groupMgr = GroupMgr.getInstance();
-		coordGroup = groupMgr.getGroupByName("SYSCoord");
-		
 		CommLibS3.clearUser(userName);
 		accessKeys = UserUtils.createUser(userName, roleName);
 		s3Client = CommLibS3.buildS3Client(accessKeys[0], accessKeys[1]);
@@ -69,10 +64,17 @@ public class CreateObjectWithKillCoord16459 extends S3TestBase {
 	@Test
 	public void testCreateObject() throws Exception {
 		TaskMgr mgr = new TaskMgr();
-        for(NodeWrapper node : coordGroup.getNodes()) {
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
+		
+		GroupMgr groupMgr = GroupMgr.getInstance();
+		List<GroupWrapper> dataGroups = groupMgr.getAllDataGroup();
+			       
+		for(int i = 0; i< dataGroups.size(); i++){
+			String groupName = dataGroups.get(i).getGroupName();
+			GroupWrapper group = groupMgr.getGroupByName(groupName);
+	        NodeWrapper node = group.getMaster();	
+	        FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 1);
             mgr.addTask(faultTask);
-        }
+		}
 		
         for(int i = 0; i < keyNames.size(); i++){
         	CreateObjectTask cTask = new CreateObjectTask(keyNames.get(i));
@@ -81,6 +83,10 @@ public class CreateObjectWithKillCoord16459 extends S3TestBase {
 		mgr.execute();
 		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
+		// check whether the cluster is normal and lsn consistency ,the
+		// longest waiting time is 600S
+		Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
+		
 		putObjectAndCheck();
 		runSuccess = true;
 	}
@@ -114,7 +120,7 @@ public class CreateObjectWithKillCoord16459 extends S3TestBase {
 				keyAndMd5Map.put(keyName, currmd5);
 				putObjectList.add(keyName);
 			} catch(AmazonServiceException e){
-				if(!e.getErrorCode().equals("GetDBConnectFail")){
+				if(e.getStatusCode() != 500){
 					throw e;
 				}
 			}finally {

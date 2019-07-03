@@ -50,7 +50,7 @@ public class DeleteRegionWithBrokenNet17349 extends S3TestBase {
 	public void testDeleteRegion() throws Exception {
 		try {
 			//delete region when network broken
-			FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(SdbTestBase.hostName, 1, 60);
+			FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(SdbTestBase.hostName, 1, 10);
 			TaskMgr mgr = new TaskMgr(faultTask);
 			
 			for(int i = 0 ; i < regionNames.size(); i++){

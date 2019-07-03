@@ -66,7 +66,7 @@ public class DeleteObjectWithReStartS3N18201 extends S3TestBase {
 		mgr.isAllSuccess();
 		List<Exception> eList = mgr.getExceptions();
 		for (Exception e : eList) {
-			if (!e.getMessage().contains("Connection refused")) {
+			if (!e.getMessage().contains("Unable to execute HTTP request")) {
 				throw e;
 			}
 		}

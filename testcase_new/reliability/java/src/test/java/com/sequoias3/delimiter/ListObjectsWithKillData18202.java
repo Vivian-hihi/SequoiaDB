@@ -34,7 +34,7 @@ import java.util.List;
  * @Date 2019.05.23
  * @version 1.00
  */
-public class ListObjectsWithKillCoord18202 extends S3TestBase {
+public class ListObjectsWithKillData18202 extends S3TestBase {
 	private String userName = "user18200";
 	private String bucketName = "bucket18202";
 	private String objectName = "/aa/bb/object18202";
@@ -47,15 +47,10 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 	private String filePath = null;
 	private String roleName = "normal";
 	private String[] accessKeys = null;
-	private GroupMgr groupMgr = null;
-	private GroupWrapper coordGroup = null;
 	private boolean runSuccess = false;
 
 	@BeforeClass
 	private void setUp() throws IOException, ReliabilityException {
-		groupMgr = GroupMgr.getInstance();
-		coordGroup = groupMgr.getGroupByName("SYSCoord");
-		
 		localPath = new File(SdbTestBase.workDir + File.separator + TestTools.getClassName());
 		filePath = localPath + File.separator + "localFile_" + fileSize + ".txt";
 
@@ -81,12 +76,18 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 
 	@Test
 	public void test() throws ReliabilityException, IOException {
-		// kill coord when list objects
 		TaskMgr mgr = new TaskMgr();
-        for(NodeWrapper node : coordGroup.getNodes()) {
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
+		GroupMgr groupMgr = GroupMgr.getInstance();
+		List<GroupWrapper> dataGroups = groupMgr.getAllDataGroup();
+			       
+		for(int i = 0; i< dataGroups.size(); i++){
+			String groupName = dataGroups.get(i).getGroupName();
+			GroupWrapper group = groupMgr.getGroupByName(groupName);
+	        NodeWrapper node = group.getMaster();	
+	        FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 1);
             mgr.addTask(faultTask);
-        }
+		}
+		
         for(int i = 0 ; i < 20 ; i++){
         	ListObject listTask = new ListObject();
     		mgr.addTask(listTask);
@@ -94,6 +95,10 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 		
 		mgr.execute();
 		Assert.assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
+		
+		// check whether the cluster is normal and lsn consistency ,the longest waiting time is 600S
+		Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
+		
 		// list objects again
 		listObjectsAndCheck();
 		runSuccess = true;
@@ -117,7 +122,7 @@ public class ListObjectsWithKillCoord18202 extends S3TestBase {
 			try {
 				listObjectsAndCheck();
 			} catch (AmazonS3Exception e) {
-				if(!e.getErrorCode().equals("GetDBConnectFail")){
+				if(e.getStatusCode() != 500){
 					throw e;
 				}
 			}

@@ -22,25 +22,20 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * test content: 获取区域过程中db端节点异常 
+ * test content: 删除区域过程中db端节点异常
  * testlink-case: seqDB-17344
  * @author wangkexin
  * @Date 2019.01.29
  * @version 1.00
  */
-public class DeleteRegionWithKillCoord17344 extends S3TestBase {
-	private GroupMgr groupMgr = null;
+public class DeleteRegionWithKillData17344 extends S3TestBase {
 	private String regionName = "beijing17344";
 	private List<String> regionNames = new ArrayList<String>();
 	private List<String> deletedRegionNameList = new CopyOnWriteArrayList<String>();
 	private int threadNum = 10;
-	private GroupWrapper coordGroup = null;
 
 	@BeforeClass
 	private void setUp() throws Exception {
-		groupMgr = GroupMgr.getInstance();
-		coordGroup = groupMgr.getGroupByName("SYSCoord");
-		
 		for(int i = 0 ; i < threadNum ; i++){
 			String currRegionName = regionName + "-" + i;
 			RegionUtils.clearRegion(currRegionName);
@@ -55,10 +50,16 @@ public class DeleteRegionWithKillCoord17344 extends S3TestBase {
 	@Test
 	public void testDeleteRegion() throws Exception {
 		TaskMgr mgr = new TaskMgr();
-        for(NodeWrapper node : coordGroup.getNodes()) {
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 0);
+		GroupMgr groupMgr = GroupMgr.getInstance();
+		List<GroupWrapper> dataGroups = groupMgr.getAllDataGroup();
+			       
+		for(int i = 0; i< dataGroups.size(); i++){
+			String groupName = dataGroups.get(i).getGroupName();
+			GroupWrapper group = groupMgr.getGroupByName(groupName);
+	        NodeWrapper node = group.getMaster();	
+	        FaultMakeTask faultTask = KillNode.getFaultMakeTask(node, 1);
             mgr.addTask(faultTask);
-        }
+		}
 		
         for(int i = 0 ; i < regionNames.size(); i++){
         	DeleteRegionTask dTask = new DeleteRegionTask(regionNames.get(i));
@@ -68,6 +69,9 @@ public class DeleteRegionWithKillCoord17344 extends S3TestBase {
 		mgr.execute();
 		Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
+		// check whether the cluster is normal and lsn consistency ,the longest waiting time is 600S
+		Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "checkBusinessWithLSN() occurs timeout");
+		
 		//delete again
 		deleteAgainAndCheck();
 	}
@@ -86,8 +90,7 @@ public class DeleteRegionWithKillCoord17344 extends S3TestBase {
 				RegionUtils.deleteRegion(regionName);
 				deletedRegionNameList.add(regionName);
 			}catch(AmazonS3Exception e){
-				System.out.println(e.getErrorCode() + ", " + e.getStatusCode());
-				if(e.getStatusCode() != 500 && !e.getErrorCode().equals("GetDBConnectFail")){
+				if(e.getStatusCode() != 500){
 					throw e;
 				}
 			}
