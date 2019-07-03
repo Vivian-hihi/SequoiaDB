@@ -34,7 +34,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Determine if a user group exist
 
-  ```lang-javascript
-  > System.isGroupExist( "root" )
-  true
-  ```
+```lang-javascript
+> System.isGroupExist( "root" )
+true
+```

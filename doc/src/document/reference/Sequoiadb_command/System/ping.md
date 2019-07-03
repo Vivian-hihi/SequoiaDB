@@ -8,7 +8,7 @@ System
 
 ##描述##
 
-判断到达该主机的网络是否连通
+判断到达指定主机的网络是否连通
 
 ##参数##
 
@@ -18,11 +18,14 @@ System
 
 ##返回值##
 
-能连通返回true，否则返回false
+如果到达指定主机的网络能连通则返回 true，否则返回 false
 
 ##错误##
 
-[错误码](reference/Sequoiadb_error_code.md)
+如果出错则抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误码。
+关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
+
+常见错误可参考[错误码](reference/Sequoiadb_error_code.md)。
 
 ##示例##
 
@@ -31,7 +34,7 @@ System
   ```lang-javascript
   > System.ping("hostname")
   {
-    "Target": "hostname",
-    "Reachable": true
+      "Target": "hostname",
+      "Reachable": true
   }
   ```

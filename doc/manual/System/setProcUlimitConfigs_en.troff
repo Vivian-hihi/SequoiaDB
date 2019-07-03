@@ -45,7 +45,7 @@ T}@T{
 T}@T{
 new resource limits
 T}@T{
-是
+yes
 T}
 .TE
 .SH RETURN VALUE
@@ -61,5 +61,9 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Modify the maximum memory size of the process
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.setProcUlimitConfigs(\ {\ "max_memory_size":\ \-1,\ "open_files":\ 1024}\ )\f[]
+.IP
+.nf
+\f[C]
+>\ System.setProcUlimitConfigs(\ {\ "max_memory_size":\ \-1,\ "open_files":\ 1024}\ )
+\f[]
+.fi

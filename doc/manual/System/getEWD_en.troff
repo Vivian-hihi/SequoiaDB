@@ -30,5 +30,10 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Acquire current directory
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.getEWD()\ \ \ /opt/trunk/bin\f[]
+.IP
+.nf
+\f[C]
+>\ System.getEWD()
+/opt/trunk/bin
+\f[]
+.fi

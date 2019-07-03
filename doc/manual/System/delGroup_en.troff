@@ -61,5 +61,9 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Delete a user group
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.delGroup(\ "newGroup"\ )\f[]
+.IP
+.nf
+\f[C]
+>\ System.delGroup(\ "newGroup"\ )
+\f[]
+.fi

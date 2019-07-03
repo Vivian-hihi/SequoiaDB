@@ -17,16 +17,20 @@ List the information of logged-in users
 ##PARAMETERS##
 
 
-| Name      | Type     | Description                             | Required or not |
-| --------- | -------- | -----------------------------           | -------- |
-| options   | JSON     | search pattern                          | not       |
-| filter    | JSON     | filter, display all by default          | not      |
+| Name      | Type     | Default | Description              | Required or not |
+| --------- | -------- | ------ | -----------------------   | -------- |
+| options   | JSON     | no details are displayed by default | search pattern  | not       |
+| filter    | JSON     | display all logged-in users by default | filter, display all by default          | not      |
 
 The detail description of 'options' parameter is as follow:
 
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | -------------- |
 | detail    | Bool |   not   | { detail: true }     | whether to display details   |
+
+>Note:
+
+> The optional parameter filterObj supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
 
 ##RETURN VALUE##
 
@@ -42,25 +46,25 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * List all users
 
-  ```lang-javascript
-  > System.listLoginUsers()
-  {
-    "user": "sequoiadb"
-  }
-  {
-    "user": "username"
-  }
-  ...
-  ```
+```lang-javascript
+> System.listLoginUsers()
+{
+  "user": "sequoiadb"
+}
+{
+  "user": "username"
+}
+...
+```
 
 * Filter the results:
 
- ```lang-javascript
- > System.listLoginUsers( { detail: true }, { "tty": "tty1" } )
- {
-   "user": "sequoiadb",
-   "time": "2019-05-10 18:37",
-   "from": "",
-   "tty": "tty1"
- }
- ```
+```lang-javascript
+> System.listLoginUsers( { detail: true }, { "tty": "tty1" } )
+{
+  "user": "sequoiadb",
+  "time": "2019-05-10 18:37",
+  "from": "",
+  "tty": "tty1"
+}
+```

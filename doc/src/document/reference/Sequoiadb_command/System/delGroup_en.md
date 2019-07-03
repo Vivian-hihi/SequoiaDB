@@ -34,6 +34,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Delete a user group
 
-  ```lang-javascript
-  > System.delGroup( "newGroup" )
-  ```
+```lang-javascript
+> System.delGroup( "newGroup" )
+```

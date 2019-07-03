@@ -34,6 +34,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Delete a host to ip address mapping to the host file
 
-  ```lang-javascript
-  > System.delAHostMap( "hostname" )
-  ```
+```lang-javascript
+> System.delAHostMap( "hostname" )
+```

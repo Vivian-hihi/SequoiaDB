@@ -30,5 +30,9 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Acquire firewall information
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.getIpTablesInfo()\f[]
+.IP
+.nf
+\f[C]
+>\ System.getIpTablesInfo()
+\f[]
+.fi

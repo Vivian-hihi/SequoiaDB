@@ -41,6 +41,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Delete a user
 
-  ```lang-javascript
-  > System.delUser( { "name": "newUser2" } )
-  ```
+```lang-javascript
+> System.delUser( { "name": "newUser2" } )
+```

@@ -18,7 +18,7 @@ Modify process resource limits
 
 | Name      | Type     | Default | Description         | Required or not |
 | ------- | -------- | ------------ | ---------------- | -------- |
-| configsObj  | JSON   | ---  | new resource limits   | 是       |
+| configsObj  | JSON   | ---  | new resource limits   | yes       |
 
 ##RETURN VALUE##
 
@@ -34,6 +34,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Modify the maximum memory size of the process
 
-  ```lang-javascript
-  > System.setProcUlimitConfigs( { "max_memory_size": -1, "open_files": 1024} )
-  ```
+```lang-javascript
+> System.setProcUlimitConfigs( { "max_memory_size": -1, "open_files": 1024} )
+```

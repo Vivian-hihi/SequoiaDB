@@ -32,6 +32,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire firewall information
 
-  ```lang-javascript
-  > System.getIpTablesInfo()
-  ```
+```lang-javascript
+> System.getIpTablesInfo()
+```

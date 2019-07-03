@@ -13,13 +13,13 @@ getHostName \- Acquire the process id
 System
 .SH DESCRIPTION
 .PP
-Acquire the process id
+Acquire the process id of sdb shell
 .SH PARAMETERS
 .PP
 NULL
 .SH RETURN VALUE
 .PP
-On success, return process id.
+On success, return process id of sdb shell.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
@@ -30,5 +30,10 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Acquire the process id
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.getPID()\ \ \ 16909\f[]
+.IP
+.nf
+\f[C]
+>\ System.getPID()
+16909
+\f[]
+.fi

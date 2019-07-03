@@ -108,5 +108,9 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Delete a user
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.delUser(\ {\ "name":\ "newUser2"\ }\ )\f[]
+.IP
+.nf
+\f[C]
+>\ System.delUser(\ {\ "name":\ "newUser2"\ }\ )
+\f[]
+.fi

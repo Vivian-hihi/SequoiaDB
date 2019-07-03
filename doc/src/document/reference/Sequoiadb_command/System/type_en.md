@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire the type of operating system
 
-  ```lang-javascript
-  > System.type()
-  LINUX
-  ```
+```lang-javascript
+> System.type()
+LINUX
+```

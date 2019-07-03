@@ -17,16 +17,20 @@ List the information of user groups
 ##PARAMETERS##
 
 
-| Name      | Type     | Description                             | Required or not |
-| --------- | -------- | -----------------------------           | -------- |
-| options   | JSON     | search pattern                          | not       |
-| filter    | JSON     | filter, display all by default          | not      |
+| Name      | Type     | Default    | Description          | Required or not |
+| --------- | -------- | ----------------- | -----------------------------  | -------- |
+| options   | JSON     | no details are displayed by default | search pattern | not       |
+| filter    | JSON     | display all groups by default | filter | not |
 
 The detail description of 'options' parameter is as follow:
 
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | -------------- |
 | detail    | Bool |   not   | { detail: true }     | whether to display details   |
+
+>Note:
+
+> The optional parameter filterObj supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
 
 ##RETURN VALUE##
 
@@ -40,34 +44,34 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* List all users
+* List all groups
 
-  ```lang-javascript
-  > System.listGroups()
-  {
-    "name": "sequoiadb"
-  }
-  {
-    "name": "lpadmin"
-  }
-  {
-    "name": "sambashare"
-  }
-  {
-    "name": "sdbadmin_group"
-  }
-  ...
-  ```
+```lang-javascript
+> System.listGroups()
+{
+  "name": "sequoiadb"
+}
+{
+  "name": "lpadmin"
+}
+{
+  "name": "sambashare"
+}
+{
+  "name": "sdbadmin_group"
+}
+...
+```
 
 * Filter the results:
 
-  ```lang-javascript
-  > System.listGroups( { detail: true }, { "name": "sequoiadb" } )
-  {
-    "name": "sequoiadb",
-    "gid": "1000",
-    "members": ""
-  }
-  ```
+```lang-javascript
+> System.listGroups( { detail: true }, { "name": "sequoiadb" } )
+{
+  "name": "sequoiadb",
+  "gid": "1000",
+  "members": ""
+}
+```
 
 

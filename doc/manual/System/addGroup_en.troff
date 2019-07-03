@@ -95,5 +95,9 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Add a user group
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.addGroup(\ {\ "name":\ "newGroup"\ }\ )\f[]
+.IP
+.nf
+\f[C]
+>\ System.addGroup(\ {\ "name":\ "newGroup"\ }\ )
+\f[]
+.fi

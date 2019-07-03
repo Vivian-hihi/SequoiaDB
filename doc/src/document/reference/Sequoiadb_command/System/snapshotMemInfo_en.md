@@ -32,12 +32,12 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire memory information
 
-  ```lang-javascript
-  > System.snapshotMemInfo()
-  {
-    "Size": 5967,
-    "Used": 2919,
-    "Free": 384,
-    "Unit": "M"
-  }
-  ```
+```lang-javascript
+> System.snapshotMemInfo()
+{
+  "Size": 5967,
+  "Used": 2919,
+  "Free": 384,
+  "Unit": "M"
+}
+```

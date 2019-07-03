@@ -34,10 +34,10 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Determine whether the host is reachable
 
-  ```lang-javascript
-  > System.ping("hostname")
-  {
-    "Target": "hostname",
-    "Reachable": true
-  }
-  ```
+```lang-javascript
+> System.ping("hostname")
+{
+  "Target": "hostname",
+  "Reachable": true
+}
+```

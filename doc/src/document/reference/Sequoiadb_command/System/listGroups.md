@@ -12,10 +12,10 @@ System
 
 ##参数##
 
-| 参数名    | 参数类型 | 描述                                     | 是否必填 |
-| --------- | -------- | ---------------------------------------- | -------- |
-| options   | JSON     | 查找模式和查找内容                       | 否       |
-| filter    | JSON     | 筛选条件，不指定筛选条件默认显示全部内容 | 否       |
+| 参数名    | 参数类型 | 默认值 | 描述                                     | 是否必填 |
+| --------- | -------- | ------------- | ----------------------- | -------- |
+| options   | JSON     | 默认不显示详细信息 | 查找模式和查找内容      | 否       |
+| filter    | JSON     | 默认显示所有用户组 | 筛选条件 | 否       |
 
 options 参数详细说明如下：
 
@@ -23,7 +23,9 @@ options 参数详细说明如下：
 | -------- | ------ | -------- | -------------------- | ---------------------------------- |
 | detail    | Bool |     否   | { detail: true }     | 是否显示详细信息                        |
 
-filter 参数支持对结果集进行筛选。
+> Note：
+
+> filter 参数支持对结果中的某些字段进行 and 、 or 、not 和精确匹配计算，对结果集进行筛选。
 
 ##返回值##
 
@@ -38,21 +40,21 @@ filter 参数支持对结果集进行筛选。
 
 ##示例##
 
-* 默认显示所有进程信息；
+* 默认显示所有用户组信息；
 
   ```lang-javascript
   > System.listGroups()
   {
-    "name": "sequoiadb"
+      "name": "sequoiadb"
   }
   {
-    "name": "lpadmin"
+      "name": "lpadmin"
   }
   {
-    "name": "sambashare"
+      "name": "sambashare"
   }
   {
-    "name": "sdbadmin_group"
+      "name": "sdbadmin_group"
   }
   ...
   ```
@@ -62,9 +64,9 @@ filter 参数支持对结果集进行筛选。
   ```lang-javascript
   > System.listGroups( { detail: true }, { "name": "sequoiadb" } )
   {
-    "name": "sequoiadb",
-    "gid": "1000",
-    "members": ""
+      "name": "sequoiadb",
+      "gid": "1000",
+      "members": ""
   }
   ```
 

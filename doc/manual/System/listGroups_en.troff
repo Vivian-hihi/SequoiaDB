@@ -19,13 +19,15 @@ List the information of user groups
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,9 +41,19 @@ options
 T}@T{
 JSON
 T}@T{
+no details are
+T}@T{
 search pattern
 T}@T{
 not
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+displayed by default
+T}@T{
+T}@T{
 T}
 T{
 2
@@ -50,7 +62,9 @@ filter
 T}@T{
 JSON
 T}@T{
-filter, display all by
+display all groups by
+T}@T{
+filter
 T}@T{
 not
 T}
@@ -59,6 +73,7 @@ T}@T{
 T}@T{
 T}@T{
 default
+T}@T{
 T}@T{
 T}
 .TE
@@ -104,6 +119,15 @@ T}@T{
 details
 T}
 .TE
+.RS
+.PP
+Note:
+.RE
+.RS
+.PP
+The optional parameter filterObj supports the AND, the OR, the NOT and exact
+matching of some fields in the result, and the result set is filtered.
+.RE
 .SH RETURN VALUE
 .PP
 On success, return the information of user groups.
@@ -116,10 +140,36 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-List all users
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.listGroups()\ \ \ {\ \ \ \ \ "name":\ "sequoiadb"\ \ \ }\ \ \ {\ \ \ \ \ "name":\ "lpadmin"\ \ \ }\ \ \ {\ \ \ \ \ "name":\ "sambashare"\ \ \ }\ \ \ {\ \ \ \ \ "name":\ "sdbadmin_group"\ \ \ }\ \ \ ...\f[]
+List all groups
+.IP
+.nf
+\f[C]
+>\ System.listGroups()
+{
+\ \ "name":\ "sequoiadb"
+}
+{
+\ \ "name":\ "lpadmin"
+}
+{
+\ \ "name":\ "sambashare"
+}
+{
+\ \ "name":\ "sdbadmin_group"
+}
+\&...
+\f[]
+.fi
 .IP \[bu] 2
 Filter the results:
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.listGroups(\ {\ detail:\ true\ },\ {\ "name":\ "sequoiadb"\ }\ )\ \ \ {\ \ \ \ \ "name":\ "sequoiadb",\ \ \ \ \ "gid":\ "1000",\ \ \ \ \ "members":\ ""\ \ \ }\f[]
+.IP
+.nf
+\f[C]
+>\ System.listGroups(\ {\ detail:\ true\ },\ {\ "name":\ "sequoiadb"\ }\ )
+{
+\ \ "name":\ "sequoiadb",
+\ \ "gid":\ "1000",
+\ \ "members":\ ""
+}
+\f[]
+.fi

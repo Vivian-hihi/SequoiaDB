@@ -32,15 +32,15 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire all host to ip address mapping to the host file
 
-	```lang-javascript
-    > System.getHostsMap()
+```lang-javascript
+> System.getHostsMap()
+{
+  "Hosts": [
     {
-      "Hosts": [
-        {
-          "ip": "127.0.0.1",
-          "hostname": "localhost"
-        },
-        ...
-      ]
-    } 
-	```
+      "ip": "127.0.0.1",
+      "hostname": "localhost"
+    },
+    ...
+  ]
+} 
+```

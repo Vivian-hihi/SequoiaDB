@@ -61,5 +61,13 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Determine whether the host is reachable
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.ping("hostname")\ \ \ {\ \ \ \ \ "Target":\ "hostname",\ \ \ \ \ "Reachable":\ true\ \ \ }\f[]
+.IP
+.nf
+\f[C]
+>\ System.ping("hostname")
+{
+\ \ "Target":\ "hostname",
+\ \ "Reachable":\ true
+}
+\f[]
+.fi

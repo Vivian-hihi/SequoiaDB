@@ -32,13 +32,12 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire basic CPU information
 
-  ```lang-javascript
-  ```lang-javascript
-  > System.snapshotCpuInfo()
-  {
-    "User": 47223380,
-    "Sys": 46662920,
-    "Idle": 3513293040,
-    "Other": 3023840
-  }
-  ```
+```lang-javascript
+> System.snapshotCpuInfo()
+{
+  "User": 47223380,
+  "Sys": 46662920,
+  "Idle": 3513293040,
+  "Other": 3023840
+}
+```

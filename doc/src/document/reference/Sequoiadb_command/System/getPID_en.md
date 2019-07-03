@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Acquire the process id
+Acquire the process id of sdb shell
 
 ##PARAMETERS##
 
@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return process id.
+On success, return process id of sdb shell.
 
 On error, exception will be thrown.
 
@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire the process id
 
-  ```lang-javascript
-  > System.getPID()
-  16909
-  ```
+```lang-javascript
+> System.getPID()
+16909
+```

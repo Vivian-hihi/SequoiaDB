@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Acquire the thread id
+Acquire the thread id of sdb shell
 
 ##PARAMETERS##
 
@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return thread id.
+On success, return thread id of sdb shell.
 
 On error, exception will be thrown.
 
@@ -30,9 +30,9 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Acquire the thread id
+* Acquire the thread id of sdb shell
 
-  ```lang-javascript
-  > System.getTID()
-  11505
-  ```
+```lang-javascript
+> System.getTID()
+11505
+```

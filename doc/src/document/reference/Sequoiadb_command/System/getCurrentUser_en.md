@@ -32,11 +32,11 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire current user
 
-  ```lang-javascript
-  > System.getCurrentUser()
-  {
+```lang-javascript
+> System.getCurrentUser()
+{
     "user": "root",
     "gid": "0",
     "dir": "/root"
-  }
-  ```
+}
+```

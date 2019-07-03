@@ -13,13 +13,13 @@ getTID \- Acquire the thread id
 System
 .SH DESCRIPTION
 .PP
-Acquire the thread id
+Acquire the thread id of sdb shell
 .SH PARAMETERS
 .PP
 NULL
 .SH RETURN VALUE
 .PP
-On success, return thread id.
+On success, return thread id of sdb shell.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
@@ -29,6 +29,11 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Acquire the thread id
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.getTID()\ \ \ 11505\f[]
+Acquire the thread id of sdb shell
+.IP
+.nf
+\f[C]
+>\ System.getTID()
+11505
+\f[]
+.fi

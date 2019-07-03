@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire the hostname
 
-  ```lang-javascript
-  > System.getHostName()
-  hostname
-  ```
+```lang-javascript
+> System.getHostName()
+hostname
+```

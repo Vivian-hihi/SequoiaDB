@@ -108,5 +108,9 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Add a user
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.addUser(\ {\ "name":\ "newUser",\ "group":\ "root"\ }\ )\f[]
+.IP
+.nf
+\f[C]
+>\ System.addUser(\ {\ "name":\ "newUser",\ "group":\ "root"\ }\ )
+\f[]
+.fi

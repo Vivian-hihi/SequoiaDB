@@ -42,6 +42,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Add a user
 
-  ```lang-javascript
-  > System.setUserConfigs( { "name": "username", "Group": "groupname", "dir": "/home/username" } )
-  ```
+```lang-javascript
+> System.setUserConfigs( { "name": "username", "Group": "groupname", "dir": "/home/username" } )
+```

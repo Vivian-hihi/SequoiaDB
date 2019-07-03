@@ -30,7 +30,6 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Acquire all host to ip address mapping to the host file
-.RS 2
 .IP
 .nf
 \f[C]
@@ -46,4 +45,3 @@ Acquire all host to ip address mapping to the host file
 }\ 
 \f[]
 .fi
-.RE

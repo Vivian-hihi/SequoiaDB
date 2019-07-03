@@ -121,5 +121,9 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Add a user
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.setUserConfigs(\ {\ "name":\ "username",\ "Group":\ "groupname",\ "dir":\ "/home/username"\ }\ )\f[]
+.IP
+.nf
+\f[C]
+>\ System.setUserConfigs(\ {\ "name":\ "username",\ "Group":\ "groupname",\ "dir":\ "/home/username"\ }\ )
+\f[]
+.fi

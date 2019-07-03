@@ -95,5 +95,9 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 kill the process
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.killProcess({pid:31831})\f[]
+.IP
+.nf
+\f[C]
+>\ System.killProcess({pid:31831})
+\f[]
+.fi

@@ -17,16 +17,20 @@ List processes
 ##PARAMETERS##
 
 
-| Name      | Type     | Description                             | Required or not |
-| --------- | -------- | -----------------------------           | -------- |
-| options   | JSON     | search pattern                          | not       |
-| filter    | JSON     | filter, display all by default          | not      |
+| Name      | Type     | Default | Description              | Required or not |
+| --------- | -------- | ------ | -----------------------    | -------- |
+| options   | JSON     |  no details are displayed by default | search pattern | not       |
+| filter    | JSON     | display all processes by default | filter   | not      |
 
 The detail description of 'options' parameter is as follow:
 
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | -------------- |
 | detail    | Bool |   not   | { detail: true }     | whether to display details   |
+
+>Note:
+
+> The optional parameter filterObj supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
 
 ##RETURN VALUE##
 
@@ -42,37 +46,37 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * List all users
 
-  ```lang-javascript
-  > System.listProcess()
-  {
-    "pid": "30571",
-    "cmd": "sequoiadb(50000) S"
-  }
-  {
-    "pid": "30834",
-    "cmd": "bin/sdb"
-  }
-  {
-    "pid": "30876",
-    "cmd": "/usr/sbin/rsyslogd -n"
-  }
-  ...
-  ```
+```lang-javascript
+> System.listProcess()
+{
+  "pid": "30571",
+  "cmd": "sequoiadb(50000) S"
+}
+{
+  "pid": "30834",
+  "cmd": "bin/sdb"
+}
+{
+  "pid": "30876",
+  "cmd": "/usr/sbin/rsyslogd -n"
+}
+...
+```
 
 * Filter the results:
 
-  ```lang-javascript
-  > System.listProcess( { detail: true }, { "user": "sdbadmin" } )
-  {
-    "user": "sdbadmin",
-    "pid": "20630",
-    "status": "S",
-    "cmd": "sleep 1"
-  }
-  {
-    "user": "sdbadmin",
-    "pid": "25681",
-    "status": "Sl",
-    "cmd": "sdbom(11780)"
-  }
-  ```
+```lang-javascript
+> System.listProcess( { detail: true }, { "user": "sdbadmin" } )
+{
+  "user": "sdbadmin",
+  "pid": "20630",
+  "status": "S",
+  "cmd": "sleep 1"
+}
+{
+  "user": "sdbadmin",
+  "pid": "25681",
+  "status": "Sl",
+  "cmd": "sdbom(11780)"
+}
+```

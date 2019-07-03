@@ -32,10 +32,10 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire disk information
 
-  ```lang-javascript
-  > System.getDiskInfo()
-  {
-  "Disks": [
+```lang-javascript
+> System.getDiskInfo()
+{
+    "Disks": [
       {
         "Filesystem": "udev",
         "FsType": "devtmpfs",
@@ -48,7 +48,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
         "WriteSec": 0
       },
       {
-          "Filesystem": "tmpfs",
+        "Filesystem": "tmpfs",
         "FsType": "tmpfs",
         "Size": 596,
         "Used": 60,
@@ -58,7 +58,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
         "ReadSec": 0,
         "WriteSec": 0
       },
-	  ...
+      ...
     ]
-  }
-  ```
+}
+```

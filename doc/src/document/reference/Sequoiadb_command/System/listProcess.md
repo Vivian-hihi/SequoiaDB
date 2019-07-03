@@ -12,10 +12,10 @@ System
 
 ##参数##
 
-| 参数名    | 参数类型 | 描述                                     | 是否必填 |
-| --------- | -------- | ---------------------------------------- | -------- |
-| options   | JSON     | 查找模式和查找内容                       | 否       |
-| filter    | JSON     | 筛选条件，不指定筛选条件默认显示全部内容 | 否       |
+| 参数名    | 参数类型 | 默认值 | 描述                          | 是否必填 |
+| --------- | -------- | --- | ------------------------------------- | -------- |
+| options   | JSON     | 默认不显示详细信息 | 查找模式和查找内容         | 否       |
+| filter    | JSON     |  默认显示全部内容 | 筛选条件 | 否       |
 
 options 参数详细说明如下：
 
@@ -23,7 +23,9 @@ options 参数详细说明如下：
 | -------- | ------ | -------- | -------------------- | ------------------- |
 | detail    | Bool |     否   | { detail: true }     | 是否显示详细信息        |
 
-filter 参数支持对结果集进行筛选。
+> Note：
+
+> filter 参数支持对结果中的某些字段进行 and 、 or 、not 和精确匹配计算，对结果集进行筛选。ilter 参数支持对结果集进行筛选。
 
 ##返回值##
 
@@ -43,16 +45,16 @@ filter 参数支持对结果集进行筛选。
   ```lang-javascript
   > System.listProcess()
   {
-    "pid": "30571",
-    "cmd": "sequoiadb(50000) S"
+      "pid": "30571",
+      "cmd": "sequoiadb(50000) S"
   }
   {
-    "pid": "30834",
-    "cmd": "bin/sdb"
+      "pid": "30834",
+      "cmd": "bin/sdb"
   }
   {
-    "pid": "30876",
-    "cmd": "/usr/sbin/rsyslogd -n"
+      "pid": "30876",
+      "cmd": "/usr/sbin/rsyslogd -n"
   }
   ...
   ```
@@ -62,15 +64,15 @@ filter 参数支持对结果集进行筛选。
   ```lang-javascript
   > System.listProcess( { detail: true }, { "user": "sdbadmin" } )
   {
-    "user": "sdbadmin",
-    "pid": "20630",
-    "status": "S",
-    "cmd": "sleep 1"
+      "user": "sdbadmin",
+      "pid": "20630",
+      "status": "S",
+      "cmd": "sleep 1"
   }
   {
-    "user": "sdbadmin",
-    "pid": "25681",
-    "status": "Sl",
-    "cmd": "sdbom(11780)"
+      "user": "sdbadmin",
+      "pid": "25681",
+      "status": "Sl",
+      "cmd": "sdbom(11780)"
   }
   ```

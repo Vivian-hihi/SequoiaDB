@@ -32,7 +32,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire current directory
 
-  ```lang-javascript
-  > System.getEWD()
-  /opt/trunk/bin
-  ```
+```lang-javascript
+> System.getEWD()
+/opt/trunk/bin
+```

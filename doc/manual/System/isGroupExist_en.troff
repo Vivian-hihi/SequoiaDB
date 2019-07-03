@@ -61,5 +61,10 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Determine if a user group exist
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.isGroupExist(\ "root"\ )\ \ \ true\f[]
+.IP
+.nf
+\f[C]
+>\ System.isGroupExist(\ "root"\ )
+true
+\f[]
+.fi

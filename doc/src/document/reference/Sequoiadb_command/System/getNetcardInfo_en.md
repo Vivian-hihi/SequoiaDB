@@ -32,18 +32,18 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire network card information
 
-  ```lang-javascript
-  > System.getNetcardInfo()
-  {
-    "Netcards": [
-      {
-        "Name": "lo",
-        "Ip": "127.0.0.1"
-      },
-      {
-        "Name": "ens160",
-        "Ip": "192.168.20.62"
-      }
-    ]
-  }
-  ```
+```lang-javascript
+> System.getNetcardInfo()
+{
+  "Netcards": [
+    {
+      "Name": "lo",
+      "Ip": "127.0.0.1"
+    },
+    {
+      "Name": "ens160",
+      "Ip": "192.168.20.62"
+    }
+  ]
+}
+```

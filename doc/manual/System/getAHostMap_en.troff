@@ -61,5 +61,10 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Acquire a host to ip address mapping to the host file
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.getAHostMap(\ "localhost"\ )\ \ \ 127.0.0.1\f[]
+.IP
+.nf
+\f[C]
+>\ System.getAHostMap(\ "localhost"\ )
+127.0.0.1
+\f[]
+.fi

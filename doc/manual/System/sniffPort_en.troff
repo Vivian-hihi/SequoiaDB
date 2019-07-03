@@ -61,5 +61,12 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Determine whether a port is usable
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.sniffPort(50000)\ \ \ {\ \ \ \ \ "Usable":\ false\ \ \ }\f[]
+.IP
+.nf
+\f[C]
+>\ System.sniffPort(50000)
+{
+\ \ "Usable":\ false
+}
+\f[]
+.fi

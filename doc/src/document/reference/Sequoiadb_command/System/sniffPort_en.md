@@ -34,9 +34,9 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Determine whether a port is usable
 
-  ```lang-javascript
-  > System.sniffPort(50000)
-  {
-  	"Usable": false
-  }
-  ```
+```lang-javascript
+> System.sniffPort(50000)
+{
+  "Usable": false
+}
+```

@@ -32,32 +32,32 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire disk information
 
-  ```lang-javascript
-  > System.snapshotDiskInfo()
-  {
-    "Disks": [
-      {
-        "Filesystem": "udev",
-        "FsType": "devtmpfs",
-        "Size": 2963,
-        "Used": 0,
-        "Unit": "MB",
-        "Mount": "/dev",
-        "IsLocal": false,
-        "ReadSec": 0,
-        "WriteSec": 0
-      },
-      {
-        "Filesystem": "tmpfs",
-        "FsType": "tmpfs",
-        "Size": 596,
-        "Used": 60,
-        "Unit": "MB",
-        "Mount": "/run",
-        "IsLocal": false,
-        "ReadSec": 0,
-        "WriteSec": 0
-      },
-    ]
-  }
-  ```
+```lang-javascript
+> System.snapshotDiskInfo()
+{
+  "Disks": [
+    {
+      "Filesystem": "udev",
+      "FsType": "devtmpfs",
+      "Size": 2963,
+      "Used": 0,
+      "Unit": "MB",
+      "Mount": "/dev",
+      "IsLocal": false,
+      "ReadSec": 0,
+      "WriteSec": 0
+    },
+    {
+      "Filesystem": "tmpfs",
+      "FsType": "tmpfs",
+      "Size": 596,
+      "Used": 60,
+      "Unit": "MB",
+      "Mount": "/run",
+      "IsLocal": false,
+      "ReadSec": 0,
+      "WriteSec": 0
+    },
+  ]
+}
+```

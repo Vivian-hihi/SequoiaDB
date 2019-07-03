@@ -32,23 +32,23 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire the values of the process resource limit
 
-  ```lang-javascript
-  > System.getProcUlimitConfigs()
-  {
-    "core_file_size": 0,
-    "data_seg_size": -1,
-    "scheduling_priority": 0,
-    "file_size": -1,
-    "pending_signals": 23711,
-    "max_locked_memory": 65536,
-    "max_memory_size": -1,
-    "open_files": 1024,
-    "POSIX_message_queues": 819200,
-    "realtime_priority": 0,
-    "stack_size": 8388608,
-    "cpu_time": -1,
-    "max_user_processes": 23711,
-    "virtual_memory": -1,
-    "file_locks": -1
-  }
-  ```
+```lang-javascript
+> System.getProcUlimitConfigs()
+{
+  "core_file_size": 0,
+  "data_seg_size": -1,
+  "scheduling_priority": 0,
+  "file_size": -1,
+  "pending_signals": 23711,
+  "max_locked_memory": 65536,
+  "max_memory_size": -1,
+  "open_files": 1024,
+  "POSIX_message_queues": 819200,
+  "realtime_priority": 0,
+  "stack_size": 8388608,
+  "cpu_time": -1,
+  "max_user_processes": 23711,
+  "virtual_memory": -1,
+  "file_locks": -1
+}
+```

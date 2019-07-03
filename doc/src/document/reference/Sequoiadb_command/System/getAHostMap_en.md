@@ -34,7 +34,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire a host to ip address mapping to the host file
 
-  ```lang-javascript
-  > System.getAHostMap( "localhost" )
-  127.0.0.1
-  ```
+```lang-javascript
+> System.getAHostMap( "localhost" )
+127.0.0.1
+```

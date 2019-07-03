@@ -87,5 +87,9 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Add a host to ip address mapping to the host file
-.PP
-\f[C]lang\-javascript\ \ \ >\ System.addAHostMap(\ "hostname",\ "1.1.1.1"\ )\f[]
+.IP
+.nf
+\f[C]
+>\ System.addAHostMap(\ "hostname",\ "1.1.1.1"\ )
+\f[]
+.fi

@@ -30,6 +30,15 @@ For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
 Acquire basic CPU information
-.PP
-\f[C]lang\-javascript\f[]lang\-javascript > System.snapshotCpuInfo() { "User":
-47223380, "Sys": 46662920, "Idle": 3513293040, "Other": 3023840 } ```
+.IP
+.nf
+\f[C]
+>\ System.snapshotCpuInfo()
+{
+\ \ "User":\ 47223380,
+\ \ "Sys":\ 46662920,
+\ \ "Idle":\ 3513293040,
+\ \ "Other":\ 3023840
+}
+\f[]
+.fi

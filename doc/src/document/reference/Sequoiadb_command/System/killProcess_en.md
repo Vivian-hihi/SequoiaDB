@@ -40,6 +40,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * kill the process
 
-  ```lang-javascript
-  > System.killProcess({pid:31831})
-  ```
+```lang-javascript
+> System.killProcess({pid:31831})
+```

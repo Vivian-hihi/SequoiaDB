@@ -32,13 +32,13 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 * Acquire the information of operating system release
 
-  ```lang-javascript
-  > System.getReleaseInfo()
-  {
-    "Distributor": "Ubuntu",
-    "Release": "16.04",
-    "Description": "Ubuntu 16.04.6 LTS",
-    "KernelRelease": "4.4.0-116-generic",
-    "Bit": 64
-  }
-  ```
+```lang-javascript
+> System.getReleaseInfo()
+{
+  "Distributor": "Ubuntu",
+  "Release": "16.04",
+  "Description": "Ubuntu 16.04.6 LTS",
+  "KernelRelease": "4.4.0-116-generic",
+  "Bit": 64
+}
+```

@@ -3183,95 +3183,7 @@
                            "en": "push()"
                         }
                      ]
-                  },  
-                  {
-                     "id": 1552489109,
-                     "dir": "AuxiliaryObjects",
-                     "cn": "辅助类型对象",
-                     "en": "Auxiliary Objects",
-                     "contents": [
-                        {
-                           "id": 1552489119,
-                           "file": "SdbSnapshotOption",
-                           "cn": "SdbSnapshotOption",
-                           "en": "SdbSnapshotOption"
-                        },
-                        {
-                           "id": 1552489127,
-                           "file": "SdbQueryOption",
-                           "cn": "SdbQueryOption",
-                           "en": "SdbQueryOption"
-                        },
-                        {
-                           "id": 1557109995,
-                           "file": "SdbTraceOption",
-                           "cn": "SdbTraceOption",
-                           "en": "SdbTraceOption"
-                         }
-                     ]
-                  },
-                  {
-                     "id": 1440658402,
-                     "dir": "SpecialObjects",
-                     "cn": "特殊类型对象",
-                     "en": "Special Objects",
-                     "contents": [
-                        {
-                           "id": 1440658403,
-                           "file": "OID",
-                           "cn": "OID",
-                           "en": "OID"
-                        },
-                        {
-                           "id": 1440658404,
-                           "file": "Timestamp",
-                           "cn": "Timestamp",
-                           "en": "Timestamp"
-                        },
-                        {
-                           "id": 1440658405,
-                           "file": "SdbDate",
-                           "cn": "SdbDate",
-                           "en": "SdbDate"
-                        },
-                        {
-                           "id": 1440658406,
-                           "file": "Regex",
-                           "cn": "Regex",
-                           "en": "Regex"
-                        },
-                        {
-                           "id": 1440658407,
-                           "file": "BinData",
-                           "cn": "BinData",
-                           "en": "BinData"
-                        },
-                        {
-                           "id": 1440658408,
-                           "file": "MinKey",
-                           "cn": "MinKey",
-                           "en": "MinKey"
-                        },
-                        {
-                           "id": 1440658409,
-                           "file": "MaxKey",
-                           "cn": "MaxKey",
-                           "en": "MaxKey"
-                        },
-                        {
-                           "id": 1440658410,
-                           "file": "NumberLong",
-                           "cn": "NumberLong",
-                           "en": "NumberLong"
-                        },
-                        {
-                           "id": 1464671059,
-                           "file": "NumberDecimal",
-                           "cn": "NumberDecimal",
-                           "en": "NumberDecimal"
-                        }
-                     ]
-                  },
+                  }, 
                   {
                      "id": 1560930213,
                      "dir": "System",
@@ -3517,6 +3429,94 @@
                            "file": "type",
                            "cn": "type",
                            "en": "type"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1552489109,
+                     "dir": "AuxiliaryObjects",
+                     "cn": "辅助类型对象",
+                     "en": "Auxiliary Objects",
+                     "contents": [
+                        {
+                           "id": 1552489119,
+                           "file": "SdbSnapshotOption",
+                           "cn": "SdbSnapshotOption",
+                           "en": "SdbSnapshotOption"
+                        },
+                        {
+                           "id": 1552489127,
+                           "file": "SdbQueryOption",
+                           "cn": "SdbQueryOption",
+                           "en": "SdbQueryOption"
+                        },
+                        {
+                           "id": 1557109995,
+                           "file": "SdbTraceOption",
+                           "cn": "SdbTraceOption",
+                           "en": "SdbTraceOption"
+                         }
+                     ]
+                  },
+                  {
+                     "id": 1440658402,
+                     "dir": "SpecialObjects",
+                     "cn": "特殊类型对象",
+                     "en": "Special Objects",
+                     "contents": [
+                        {
+                           "id": 1440658403,
+                           "file": "OID",
+                           "cn": "OID",
+                           "en": "OID"
+                        },
+                        {
+                           "id": 1440658404,
+                           "file": "Timestamp",
+                           "cn": "Timestamp",
+                           "en": "Timestamp"
+                        },
+                        {
+                           "id": 1440658405,
+                           "file": "SdbDate",
+                           "cn": "SdbDate",
+                           "en": "SdbDate"
+                        },
+                        {
+                           "id": 1440658406,
+                           "file": "Regex",
+                           "cn": "Regex",
+                           "en": "Regex"
+                        },
+                        {
+                           "id": 1440658407,
+                           "file": "BinData",
+                           "cn": "BinData",
+                           "en": "BinData"
+                        },
+                        {
+                           "id": 1440658408,
+                           "file": "MinKey",
+                           "cn": "MinKey",
+                           "en": "MinKey"
+                        },
+                        {
+                           "id": 1440658409,
+                           "file": "MaxKey",
+                           "cn": "MaxKey",
+                           "en": "MaxKey"
+                        },
+                        {
+                           "id": 1440658410,
+                           "file": "NumberLong",
+                           "cn": "NumberLong",
+                           "en": "NumberLong"
+                        },
+                        {
+                           "id": 1464671059,
+                           "file": "NumberDecimal",
+                           "cn": "NumberDecimal",
+                           "en": "NumberDecimal"
                         }
                      ]
                   }
