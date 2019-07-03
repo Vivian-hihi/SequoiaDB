@@ -1,7 +1,0 @@
-Thread(s) per core=4
-Physical number=2
-model name=Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz
-Core(s) per socket=12
-MemTotal=264428936 kB
-NIC0=Broadcom Corporation NetXtreme II BCM57800 1/10 Gigabit Ethernet (rev 10)
-Disk capacity=3937GB

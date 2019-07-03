@@ -1,4 +1,0 @@
-kernel=2.6.32-431.el6.x86_64
-OS Release=Red Hat Enterprise Linux Server6.5Santiago
-SequoiaDB=SequoiaDB version: 2.8.1,Release: 27726,2017-02-28-10.29.59(Enterprise),
-PostgreSQL=postgres (PostgreSQL) 9.3.4,SequoiaDB Enterprise,Release: 27329
