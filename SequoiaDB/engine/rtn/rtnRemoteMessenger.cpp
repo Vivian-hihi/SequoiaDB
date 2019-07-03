@@ -128,6 +128,52 @@ namespace engine
       PD_TRACE_EXIT( SDB__RTNMSGHANDLER_HANDLECONNECT ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREMOTESITEHANDLE_WAITEVENT, "_rtnRemoteSiteHandle::waitEvent" )
+   BOOLEAN _rtnRemoteSiteHandle::waitEvent( pmdEDUEvent &event, INT64 timeout )
+   {
+      PD_TRACE_ENTRY( SDB__RTNREMOTESITEHANDLE_WAITEVENT ) ;
+      BOOLEAN gotEvent = FALSE ;
+
+      if ( 0 > timeout )
+      {
+         _queue.wait_and_pop( event ) ;
+         gotEvent = TRUE ;
+      }
+      else
+      {
+         gotEvent = _queue.timed_wait_and_pop( event, timeout ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__RTNREMOTESITEHANDLE_WAITEVENT ) ;
+      return gotEvent ;
+   }
+
+   void _rtnRemoteSiteHandle::postEvent( const pmdEDUEvent &event )
+   {
+      _queue.push ( event ) ;
+   }
+
+   void _rtnRemoteMgrHandle::onRegister( _pmdRemoteSessionSite *pSite,
+                                         _pmdEDUCB *cb )
+   {
+      rtnRemoteSiteHandle *rsHandle = SDB_OSS_NEW rtnRemoteSiteHandle() ;
+      if ( rsHandle )
+      {
+         pSite->setHandle( rsHandle ) ;
+      }
+   }
+
+   void _rtnRemoteMgrHandle::onUnreg( _pmdRemoteSessionSite *pSite,
+                                      _pmdEDUCB *cb )
+   {
+      rtnRemoteSiteHandle *rsHandle = (rtnRemoteSiteHandle *)pSite->getHandle() ;
+      if ( rsHandle )
+      {
+         SDB_OSS_DEL rsHandle ;
+         pSite->setHandle( NULL ) ;
+      }
+   }
+
    _rtnRemoteMessenger::_rtnRemoteMessenger()
    : _msgHandler( &_rsMgr ),
      _routeAgent( &_msgHandler ),
@@ -257,7 +303,13 @@ namespace engine
       pmdRemoteSession* session = NULL ;
 
       // Register the current edu in remote session manager.
-      site = _rsMgr.registerEDU( cb ) ;
+      // Check if session number is 0. If not, no need to register again.
+      site = _rsMgr.getSite( cb ) ;
+      if ( !site || ( 0 == site->sessionCount() ) )
+      {
+         site = _rsMgr.registerEDU( cb ) ;
+      }
+
       session = site->addSession( -1, &_rsHandler ) ;
       if ( !session )
       {

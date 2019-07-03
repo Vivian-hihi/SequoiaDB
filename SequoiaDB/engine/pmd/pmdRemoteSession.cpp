@@ -1772,17 +1772,12 @@ namespace engine
       return SDB_OK ;
    }
 
-   pmdRemoteSessionSite* _pmdRemoteSessionMgr::registerEDU( _pmdEDUCB * cb,
-                                                            IRemoteSiteHandle *pHandle )
+   pmdRemoteSessionSite* _pmdRemoteSessionMgr::registerEDU( _pmdEDUCB * cb )
    {
       ossScopedLock lock( &_edusLatch, EXCLUSIVE ) ;
       pmdRemoteSessionSite &site = _mapTID2EDU[ cb->getTID() ] ;
       site.setEduCB( cb ) ;
       site.setRouteAgent( _pAgent ) ;
-      if ( pHandle )
-      {
-         site.setHandle( pHandle ) ;
-      }
       cb->attachRemoteSite( &site ) ;
 
       if ( _pHandle )

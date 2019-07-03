@@ -547,8 +547,7 @@ namespace engine
 
          netRouteAgent*          getAgent() ;
 
-         pmdRemoteSessionSite*   registerEDU( _pmdEDUCB *cb,
-                                              IRemoteSiteHandle *pHandle = NULL ) ;
+         pmdRemoteSessionSite*   registerEDU( _pmdEDUCB *cb ) ;
          void                    unregEUD( _pmdEDUCB *cb ) ;
 
          void                    setAllSiteSchedVer( INT32 ver ) ;

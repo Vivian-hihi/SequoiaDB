@@ -83,7 +83,8 @@ namespace seadapter
                            INT64 &contextID,
                            pmdEDUCB *eduCB = NULL ) ;
 
-      INT32 _reply( MsgOpReply *header, const CHAR *buff, UINT32 size ) ;
+      INT32 _reply( MsgOpReply *header, NET_HANDLE handle,
+                    const CHAR *buff, UINT32 size ) ;
       INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader *msg ) ;
       INT32 _selectIndex( const CHAR *clName, const BSONObj &hint,
                           BSONObj &newHint, UINT16 &indexID ) ;

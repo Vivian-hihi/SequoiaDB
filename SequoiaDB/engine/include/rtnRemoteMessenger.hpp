@@ -87,6 +87,30 @@ namespace engine
    } ;
    typedef _rtnMsgHandler rtnMsgHandler ;
 
+   class _rtnRemoteSiteHandle : public IRemoteSiteHandle
+   {
+   public:
+      _rtnRemoteSiteHandle() {}
+      virtual ~_rtnRemoteSiteHandle() {}
+
+      BOOLEAN waitEvent( pmdEDUEvent &event, INT64 timeout ) ;
+      void postEvent( const pmdEDUEvent &event ) ;
+   private:
+      ossQueue<pmdEDUEvent> _queue ;
+   } ;
+   typedef _rtnRemoteSiteHandle rtnRemoteSiteHandle ;
+
+   class _rtnRemoteMgrHandle : public IRemoteMgrHandle
+   {
+   public:
+      _rtnRemoteMgrHandle() {}
+      virtual ~_rtnRemoteMgrHandle() {}
+
+      void onRegister( _pmdRemoteSessionSite *pSite, _pmdEDUCB *cb ) ;
+      void onUnreg( _pmdRemoteSessionSite *pSite, _pmdEDUCB *cb ) ;
+   } ;
+   typedef _rtnRemoteMgrHandle rtnRemoteMgrHandle ;
+
    // A messenger for communication with remote target, the search engine
    // adapter, for example.
    class _rtnRemoteMessenger : public SDBObject

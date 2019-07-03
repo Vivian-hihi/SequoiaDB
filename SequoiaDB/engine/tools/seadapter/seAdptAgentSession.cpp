@@ -171,7 +171,7 @@ namespace seadapter
 
       reply.flags = rc ;
       reply.header.messageLength += bodySize ;
-      rc = _reply( &reply, msgBody, bodySize ) ;
+      rc = _reply( &reply, handle, msgBody, bodySize ) ;
       PD_RC_CHECK( rc, PDERROR, "Reply the message failed[ %d ]" ) ;
 
    done:
@@ -311,19 +311,19 @@ namespace seadapter
    }
 
    // Send reply message. It contains a header, and an optinal body.
-   INT32 _seAdptAgentSession::_reply( MsgOpReply *header, const CHAR *buff,
-                                      UINT32 size )
+   INT32 _seAdptAgentSession::_reply( MsgOpReply *header, NET_HANDLE handle,
+                                      const CHAR *buff, UINT32 size )
    {
       INT32 rc = SDB_OK ;
 
       if ( size > 0 )
       {
-         rc = routeAgent()->syncSend( _netHandle, (MsgHeader *)header,
+         rc = routeAgent()->syncSend( handle, (MsgHeader *)header,
                                       (void *)buff, size ) ;
       }
       else
       {
-         rc = routeAgent()->syncSend( _netHandle, (void *)header ) ;
+         rc = routeAgent()->syncSend( handle, (void *)header ) ;
       }
 
       PD_RC_CHECK( rc, PDERROR, "Session[ %s ] send reply message failed[ %d ]",
