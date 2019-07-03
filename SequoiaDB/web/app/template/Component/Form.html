@@ -8,7 +8,6 @@
                      <label><span class="error" ng-if="inputInfo.required == true">*</span> {{inputInfo.webName}}</label> <i ng-if="inputInfo.desc" class="fa fa-info-circle" style="font-size:18px;" ng-attr="{'data-desc':inputInfo.desc}"></i>
                   </div>
                   <div class="FormInput" ng-include="'./app/template/Component/Form_child.html'"></div>
-                  <span class="FormHelp error">{{inputInfo.error}}</span>
                </td>
             </tr>
             <tr ng-if="inputInfo.type != 'group' && inputInfo.type != 'grid'">

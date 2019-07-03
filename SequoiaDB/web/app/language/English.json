@@ -1,4 +1,9 @@
 ﻿{
+   "PostgreSQL 的安装路径": "PostgreSQL installation path",
+   "MySQL 的安装路径": "MySQL installation path",
+   "操作系统的管理员账号": "System administrator account",
+   "创建用于访问 MySQL 实例的账号，如果用户名是 root，则修改默认账号 root 的密码": "Create an account for accessing the MySQL instance. If the username is root, change the password for the default account root.",
+   "MySQL 账号": "MySQL accounts",
    "同步的实例": "Instance",
    "实例信息": "Instance Info",
    "数据库实例的主机名或者IP地址": "Host name or IP address of the database instance",

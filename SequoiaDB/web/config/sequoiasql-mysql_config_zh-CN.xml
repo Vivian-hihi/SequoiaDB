@@ -15,7 +15,7 @@
    </FILLER>
    <FILLER>
       <Name>port</Name>
-      <WebName>服务名</WebName>
+      <WebName>端口</WebName>
       <Type>port</Type>
       <Default>3306</Default>
       <Valid></Valid>
