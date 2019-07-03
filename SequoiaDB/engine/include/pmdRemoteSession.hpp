@@ -38,6 +38,7 @@
 #include "oss.hpp"
 #include "msg.h"
 #include "pmdDef.hpp"
+#include "utilPooledObject.hpp"
 #include "sdbInterface.hpp"
 #include "netRouteAgent.hpp"
 
