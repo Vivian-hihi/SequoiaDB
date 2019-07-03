@@ -7,7 +7,7 @@ function main()
    var clName = "t1";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:1,Attribute:1,AttributeDesc:"Compressed",CompressionType:0,CompressionTypeDesc:"snappy"};
+   var expObj = {ReplSize:-1,Attribute:1,AttributeDesc:"Compressed",CompressionType:0,CompressionTypeDesc:"snappy"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -15,7 +15,7 @@ function main()
    var clName = "t2";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1,Attribute:1,AttributeDesc:"Compressed",CompressionType:1,CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1,Attribute:1,AttributeDesc:"Compressed",CompressionType:1,CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -23,7 +23,7 @@ function main()
    var clName = "t3";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, true);
-   var expObj = {ReplSize:-1,Attribute:1,AttributeDesc:"Compressed",CompressionType:1,CompressionTypeDesc:"lzw",GroupName:"group1"};
+   var expObj = {ReplSize:1,Attribute:1,AttributeDesc:"Compressed",CompressionType:1,CompressionTypeDesc:"lzw",GroupName:"group1"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -32,7 +32,7 @@ function main()
    var clName = "t4";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", GroupName:"group1", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", GroupName:"group1", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -41,7 +41,7 @@ function main()
    var clName = "t5";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy", ShardingKey:"a", EnsureShardingIndex:true, ShardingType:"hash", Partition:1024, AutoSplit:true};
+   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy", ShardingKey:"a", EnsureShardingIndex:true, ShardingType:"hash", Partition:1024, AutoSplit:true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -49,7 +49,7 @@ function main()
    var clName = "t6";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"range", IsMainCL:true};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"range", IsMainCL:true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -57,7 +57,7 @@ function main()
    var clName = "t7";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -66,7 +66,7 @@ function main()
    var clName = "t8";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", GroupName:"group1", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", GroupName:"group1", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -75,7 +75,7 @@ function main()
    var clName = "t9";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy", ShardingKey:"a", EnsureShardingIndex:true, ShardingType:"hash", Partition:1024, AutoSplit:true};
+   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy", ShardingKey:"a", EnsureShardingIndex:true, ShardingType:"hash", Partition:1024, AutoSplit:true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -83,7 +83,7 @@ function main()
    var clName = "t10";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"range", IsMainCL:true};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"range", IsMainCL:true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -91,7 +91,7 @@ function main()
    var clName = "t11";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -100,7 +100,7 @@ function main()
    var clName = "t12";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", GroupName:"group1", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", GroupName:"group1", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -109,7 +109,7 @@ function main()
    var clName = "t13";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -118,7 +118,7 @@ function main()
    var clName = "t14";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy"};
+   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -126,7 +126,7 @@ function main()
    var clName = "t15";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -134,7 +134,7 @@ function main()
    var clName = "t16";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw",GroupName:"group1"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw",GroupName:"group1"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -143,7 +143,7 @@ function main()
    var clName = "t17";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", GroupName:"group1", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", GroupName:"group1", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -152,7 +152,7 @@ function main()
    var clName = "t18";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy", ShardingKey:"a", EnsureShardingIndex:true, ShardingType:"hash", Partition:1024, AutoSplit:true};
+   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy", ShardingKey:"a", EnsureShardingIndex:true, ShardingType:"hash", Partition:1024, AutoSplit:true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -160,7 +160,7 @@ function main()
    var clName = "t19";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"range", IsMainCL:true};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"range", IsMainCL:true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -168,7 +168,7 @@ function main()
    var clName = "t20";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"hash", Partition:4096, AutoSplit: true};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"hash", Partition:4096, AutoSplit: true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -177,7 +177,7 @@ function main()
    var clName = "t21";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -185,7 +185,7 @@ function main()
    var clName = "t22";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -193,7 +193,7 @@ function main()
    var clName = "t23";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -201,7 +201,7 @@ function main()
    var clName = "t24";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -209,7 +209,7 @@ function main()
    var clName = "t25";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -218,7 +218,7 @@ function main()
    var clName = "t26";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -226,7 +226,7 @@ function main()
    var clName = "t27";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -234,7 +234,7 @@ function main()
    var clName = "t28";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -242,7 +242,7 @@ function main()
    var clName = "t29";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -251,7 +251,7 @@ function main()
    var clName = "t30";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -259,7 +259,7 @@ function main()
    var clName = "t31";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -267,7 +267,7 @@ function main()
    var clName = "t32";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -276,7 +276,7 @@ function main()
    var clName = "t33";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy", ShardingKey:"a", EnsureShardingIndex:true, ShardingType:"hash", Partition:1024, AutoSplit:true};
+   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:0, CompressionTypeDesc:"snappy", ShardingKey:"a", EnsureShardingIndex:true, ShardingType:"hash", Partition:1024, AutoSplit:true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -284,7 +284,7 @@ function main()
    var clName = "t34";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"range", IsMainCL:true};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"range", IsMainCL:true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -292,7 +292,7 @@ function main()
    var clName = "t35";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"hash", Partition:4096, AutoSplit: true};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, ShardingType:"hash", Partition:4096, AutoSplit: true};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -301,7 +301,7 @@ function main()
    var clName = "t36";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -309,7 +309,7 @@ function main()
    var clName = "t37";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -317,7 +317,7 @@ function main()
    var clName = "t38";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -325,7 +325,7 @@ function main()
    var clName = "t39";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -333,7 +333,7 @@ function main()
    var clName = "t40";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -342,7 +342,7 @@ function main()
    var clName = "t41";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -350,7 +350,7 @@ function main()
    var clName = "t42";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -358,7 +358,7 @@ function main()
    var clName = "t43";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -366,7 +366,7 @@ function main()
    var clName = "t44";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -375,7 +375,7 @@ function main()
    var clName = "t45";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -383,7 +383,7 @@ function main()
    var clName = "t46";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -392,7 +392,7 @@ function main()
    var clName = "t47";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, true);
-   var expObj = {ReplSize:1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
+   var expObj = {ReplSize:-1, Attribute:11, AttributeDesc:"Compressed | NoIDIndex | StrictDataMode", CompressionType:0, CompressionTypeDesc:"snappy", AutoIncrement:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -401,7 +401,7 @@ function main()
    var clName = "t48";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -409,7 +409,7 @@ function main()
    var clName = "t49";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", ShardingKey:"a", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -417,7 +417,7 @@ function main()
    var clName = "t50";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -425,7 +425,7 @@ function main()
    var clName = "t51";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -433,7 +433,7 @@ function main()
    var clName = "t52";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash", ShardingKey:"a"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash", ShardingKey:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -442,7 +442,7 @@ function main()
    var clName = "t53";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash", ShardingKey:"a"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash", ShardingKey:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -450,7 +450,7 @@ function main()
    var clName = "t54";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName, false, false, true);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash", ShardingKey:"a"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw", EnsureShardingIndex:false, Partition:4096, AutoSplit:true, ShardingType:"hash", ShardingKey:"a"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -458,7 +458,7 @@ function main()
    var clName = "t55";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -466,7 +466,7 @@ function main()
    var clName = "t56";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -475,7 +475,7 @@ function main()
    var clName = "t57";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -483,7 +483,7 @@ function main()
    var clName = "t58";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -492,7 +492,7 @@ function main()
    var clName = "t59";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
+   var expObj = {ReplSize:1, Attribute:1, AttributeDesc:"Compressed", CompressionType:1, CompressionTypeDesc:"lzw"};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);
@@ -501,7 +501,7 @@ function main()
    var clName = "t60";
    var obj = new Object();
    var clOptions = getCLOptions(csName, clName);
-   var expObj = {ReplSize:-1, Attribute:0, AttributeDesc:""};
+   var expObj = {ReplSize:1, Attribute:0, AttributeDesc:""};
    var flag = compare(clOptions, expObj);
    obj[clName] = flag;
    flags.push(obj);

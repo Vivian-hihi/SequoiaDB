@@ -1,2 +1,1 @@
 --sequoiadb_use_partition=ON
---sequoiadb_replica_size=-1

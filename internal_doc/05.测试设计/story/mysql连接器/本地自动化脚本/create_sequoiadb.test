@@ -9,7 +9,7 @@ CALL mtr.add_suppression("SequoiaDB *");
 set global sequoiadb_use_partition=off;
 
 #seqDB-18361, comm table
-create table t1(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:false} ';
+create table t1(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}, use_partition:false} ';
 show create table t1;
 create table t2(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:false} ';
 show create table t2;
@@ -17,11 +17,11 @@ create table t3(a int, b int, primary key(a), unique key(b)) engine=sequoiadb co
 show create table t3;
 
 #seqDB-18362, comm table
-create table t4(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:false} ';
+create table t4(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:false} ';
 show create table t4;
 
 #seqDB-18365, split table or comm table
-create table t5(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} ';
+create table t5(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}, use_partition:true} ';
 show create table t5;
 create table t6(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:true} ';
 show create table t6;
@@ -30,14 +30,14 @@ show create table t7;
 --error 1030
 create table t8(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}, use_partition:true} ';
 --error 1030
-create table t8(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} ';
+create table t8(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}, use_partition:true} ';
 
 #seqDB-18366, comm table
-create table t8(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t8(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t8;
 
 #seqDB-18372, split table or comm table
-create table t9(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} ';
+create table t9(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}} ';
 show create table t9;
 create table t10(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}} ';
 show create table t10;
@@ -46,10 +46,10 @@ show create table t11;
 --error 1030
 create table t12(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}} ';
 --error 1030
-create table t12(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} ';
+create table t12(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}} ';
 
 #seqDB-18373, comm table
-create table t12(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t12(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t12;
 
 #seqDB-18379, comm table
@@ -59,7 +59,7 @@ show create table t13;
 set global sequoiadb_use_partition=on;
 
 #seqDB-18363, comm table
-create table t14(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:false} ';
+create table t14(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}, use_partition:false} ';
 show create table t14;
 create table t15(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:false} ';
 show create table t15;
@@ -67,11 +67,11 @@ create table t16(a int, b int, primary key(a), unique key(b)) engine=sequoiadb c
 show create table t16;
 
 #seqDB-18364, comm table
-create table t17(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:false} ';
+create table t17(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", Group:"group1", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:false} ';
 show create table t17;
 
 #seqDB-18367, split table or comm table
-create table t18(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} ';
+create table t18(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}, use_partition:true} ';
 show create table t18;
 create table t19(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}, use_partition:true} ';
 show create table t19;
@@ -80,50 +80,50 @@ show create table t20;
 --error 1030
 create table t21(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}, use_partition:true} ';
 --error 1030
-create table t21(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}, use_partition:true} ';
+create table t21(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}, use_partition:true} ';
 
 #seqDB-18368, split table or comm table
-create table t21(a int, b int, primary key(a), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t21(a int, b int, primary key(a), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t21;
 
-create table t22(a int, b int, c int, primary key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t22(a int, b int, c int, primary key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t22;
 
-create table t23(a int, b int, c int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t23(a int, b int, c int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t23;
 
-create table t24(a int, b int, c int, primary key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t24(a int, b int, c int, primary key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t24;
 
-create table t25(a int, b int, c int, primary key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t25(a int, b int, c int, primary key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t25;
 
 #seqDB-18369, split table or comm table
-create table t26(a int, b int, unique key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t26(a int, b int, unique key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t26;
 
-create table t27(a int, b int, c int, unique key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t27(a int, b int, c int, unique key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t27;
 
-create table t28(a int, b int, c int, unique key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t28(a int, b int, c int, unique key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t28;
 
-create table t29(a int, b int, c int, unique key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t29(a int, b int, c int, unique key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t29;
 
 #seqDB-18370, comm table
-create table t30(a int, b int, c int, key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t30(a int, b int, c int, key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t30;
 
-create table t31(a int, b int, c int, key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t31(a int, b int, c int, key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t31;
 
 #seqDB-18371, comm table
-create table t32(a int, b int, c int) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
+create table t32(a int, b int, c int) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}, use_partition:true} ';
 show create table t32;
 
 #seqDB-18374, split table or comm table
-create table t33(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} ';
+create table t33(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}} ';
 show create table t33;
 create table t34(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"range", IsMainCL:true, EnsureShardingIndex:false}} ';
 show create table t34;
@@ -132,46 +132,46 @@ show create table t35;
 --error 1030
 create table t36(a int, b int, primary key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{Group:"group1", EnsureShardingIndex:true}} ';
 --error 1030
-create table t36(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:1}} ';
+create table t36(a int, b int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{"ShardingKey":{a:1}, ShardingType:"hash", Compressed:true, Partition:1024, CompressionType:"snappy", AutoSplit: true, ReplSize:-1}} ';
 
 #seqDB-18375, split table or comm table
-create table t36(a int, b int, primary key(a), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t36(a int, b int, primary key(a), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t36;
 
-create table t37(a int, b int, c int, primary key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t37(a int, b int, c int, primary key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t37;
 
-create table t38(a int, b int, c int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t38(a int, b int, c int, primary key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t38;
 
-create table t39(a int, b int, c int, primary key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t39(a int, b int, c int, primary key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t39;
 
-create table t40(a int, b int, c int, primary key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t40(a int, b int, c int, primary key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t40;
 
 #seqDB-18376, split table or comm table
-create table t41(a int, b int, unique key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t41(a int, b int, unique key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t41;
 
-create table t42(a int, b int, c int, unique key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t42(a int, b int, c int, unique key(a), unique key(a,c), unique key(a,b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t42;
 
-create table t43(a int, b int, c int, unique key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t43(a int, b int, c int, unique key(a), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t43;
 
-create table t44(a int, b int, c int, unique key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t44(a int, b int, c int, unique key(a), unique key(a,b), unique key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t44;
 
 #seqDB-18377, comm table
-create table t45(a int, b int, c int, key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t45(a int, b int, c int, key(a)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t45;
 
-create table t46(a int, b int, c int, key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t46(a int, b int, c int, key(a), key(b)) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t46;
 
 #seqDB-18378, comm table
-create table t47(a int, b int, c int) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
+create table t47(a int, b int, c int) engine=sequoiadb comment='sequoiadb:{table_options:{ReplSize:-1, Compressed:true, CompressionType:"snappy", AutoIndexId:false, StrictDataMode:true, AutoIncrement:{Field:"a"}}} ';
 show create table t47;
 
 #seqDB-18380, split table or comm table
