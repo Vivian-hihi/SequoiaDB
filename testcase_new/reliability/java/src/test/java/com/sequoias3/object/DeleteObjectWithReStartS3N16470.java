@@ -36,6 +36,7 @@ public class DeleteObjectWithReStartS3N16470 extends S3TestBase {
     private int versionNums = 3;
     private String filePath = null;
     private String updatePath = null;
+    private String bucketName = "16470";
     private String objectNameBase = "object16470";
     private List<String> objectNames = new ArrayList<String>();
     private List<String> objectNameList = new CopyOnWriteArrayList<String>();
@@ -51,7 +52,7 @@ public class DeleteObjectWithReStartS3N16470 extends S3TestBase {
         TestTools.LocalFile.createFile(filePath, fileSize);
         TestTools.LocalFile.createFile(updatePath, fileSize + 1024 * 200);
         s3Client = CommLibS3.buildS3Client();
-        CommLibS3.clearBucket(s3Client, bucketName);
+        CommLibS3.clearBucket(s3Client,bucketName);
         s3Client.createBucket(bucketName);
         CommLibS3.setBucketVersioning(s3Client, bucketName, BucketVersioningConfiguration.ENABLED);
         for (int i = 0; i < objectNums; i++) {
@@ -92,7 +93,7 @@ public class DeleteObjectWithReStartS3N16470 extends S3TestBase {
     private void tearDown() {
         try {
             if (runSuccess) {
-                CommLibS3.clearBucket(s3Client, bucketName);
+                CommLibS3.clearBucket(s3Client,bucketName);
                 TestTools.LocalFile.removeFile(localPath);
             }
         } finally {
