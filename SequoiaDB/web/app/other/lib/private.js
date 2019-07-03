@@ -63,6 +63,16 @@ _IndexPublic.createErrorModel = function( $scope, context ){
    $scope.Components.Confirm.isShow = true ;
 }
 
+//创建错误提示弹窗
+_IndexPublic.ErrorTipsModel = function( $scope, context ){
+   $scope.Components.Confirm.type = 3 ;
+   $scope.Components.Confirm.noOK = false ;
+   $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+   $scope.Components.Confirm.noClose = true ;
+   $scope.Components.Confirm.context = context ;
+   $scope.Components.Confirm.isShow = true ;
+}
+
 //关闭错误弹窗
 _IndexPublic.closeErrorModel = function( $scope ){
    if( $scope.Components.Confirm.type == 3 )
@@ -78,6 +88,7 @@ _IndexPublic.closeRetryModel = function( $scope ){
       $scope.Components.Confirm.isShow = false ;
    }
 }
+
 
 //创建错误重试弹窗
 _IndexPublic.createRetryModel = function( $scope, errorInfo, okFun, title, context, okText, closeText ){
