@@ -455,8 +455,6 @@ namespace engine
          void setEduCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
          void setRouteAgent( netRouteAgent *pAgent ) { _pAgent = pAgent ; }
 
-         void setHandle( IRemoteSiteHandle *pHandle ) { _pHandler = pHandle ; }
-
          void     handleClose( const NET_HANDLE &handle,
                                const _MsgRouteID &id ) ;
 
@@ -468,6 +466,7 @@ namespace engine
          virtual ~_pmdRemoteSessionSite() ;
          _pmdRemoteSessionSite() ;
          _pmdEDUCB* eduCB() { return _pEDUCB ; }
+         void setHandle( IRemoteSiteHandle *pHandle ) { _pHandler = pHandle ; }
          IRemoteSiteHandle* getHandle() { return _pHandler ; }
 
          void     interruptAllSubSession() ;
