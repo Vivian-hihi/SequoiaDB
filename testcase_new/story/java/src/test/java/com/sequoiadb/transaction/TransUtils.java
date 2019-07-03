@@ -251,8 +251,8 @@ public class TransUtils {
     }
 
     /**
-     * 构造复合索引所需要的数据 如：a:0, b:0 a:1, b:0 a:1, b:1 a:1, b:2 ... a:2, b:2 a:3, b:0
-     * a:3, b:1 ... a 为偶数时，a 和 b 一致 a 为奇数时，有多条记录 a 相等，b 不相等 aStart a 的起始值，aEnd a
+     * 构造复合索引所需要的数据 如：a:0, b:0 a:1, b:0 a:1, b:1 a:1, b:2 ... a:2, b:2 a:3, b:0 a:3,
+     * b:1 ... a 为偶数时，a 和 b 一致 a 为奇数时，有多条记录 a 相等，b 不相等 aStart a 的起始值，aEnd a
      * 的结束值，bStart a 为奇数时 b 的起始值，bEnd a 为奇数时 b 的结束值 返回 list 长度 为 11*(aEnd -
      * aStart)/2
      * 
@@ -303,5 +303,31 @@ public class TransUtils {
                 }
             }
         });
+    }
+
+    /**
+     * 创建主子表和切分表，切分表自动切分，主表attach平普通表和切分表，切分子表为自动切分，分区键为_id
+     * 
+     * @param sdb
+     * @param csName
+     * @param hashCLName
+     * @param mainCLName
+     * @param subCLName1 子表名1
+     * @param subCLName2 子表名2
+     * @param sep        主表的切分范围为 (min - sep) (sep - max)
+     */
+    public static void createCLs(Sequoiadb sdb, String csName, String hashCLName, String mainCLName, String subCLName1,
+            String subCLName2, int sep) {
+        sdb.getCollectionSpace(csName).createCollection(hashCLName,
+                (BSONObject) JSON.parse("{ShardingKey:{_id:1}, ShardingType:'hash', AutoSplit:true}"));
+        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(mainCLName,
+                (BSONObject) JSON.parse("{ShardingKey:{_id:1}, ShardingType:'range', IsMainCL:true}"));
+        sdb.getCollectionSpace(csName).createCollection(subCLName1);
+        sdb.getCollectionSpace(csName).createCollection(subCLName2,
+                (BSONObject) JSON.parse("{ShardingKey:{_id:1}, ShardingType:'hash', AutoSplit:true}"));
+        mainCL.attachCollection(csName + "." + subCLName1,
+                (BSONObject) JSON.parse("{LowBound:{_id:{'$minKey':1}}, UpBound:{_id:" + sep + "}}"));
+        mainCL.attachCollection(csName + "." + subCLName2,
+                (BSONObject) JSON.parse("{LowBound:{_id:" + sep + "}, UpBound:{_id:{'$maxKey':1}}}"));
     }
 }
