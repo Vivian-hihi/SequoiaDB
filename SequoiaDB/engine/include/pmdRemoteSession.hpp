@@ -112,7 +112,7 @@ namespace engine
    /*
       _IRemoteSiteHandle define
    */
-   class _IRemoteSiteHandle : public SDBObject
+   class _IRemoteSiteHandle : public utilPooledObject
    {
       public:
          _IRemoteSiteHandle() {}
