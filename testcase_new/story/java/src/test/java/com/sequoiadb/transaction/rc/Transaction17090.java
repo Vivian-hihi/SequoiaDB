@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.BSONObject;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -27,7 +26,6 @@ import com.sequoiadb.transaction.TransUtils;
 
 @Test(groups = "rc")
 public class Transaction17090 extends SdbTestBase {
-    private String clName = "cl_17090";
     private Sequoiadb sdb = null;
     private Sequoiadb db1 = null;
     private Sequoiadb db2 = null;
@@ -37,6 +35,10 @@ public class Transaction17090 extends SdbTestBase {
     private DBCursor cursor = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
     private List<BSONObject> actList = new ArrayList<BSONObject>();
+    private String hashCLName = "cl17090_hash";
+    private String mainCLName = "cl17090_main";
+    private String subCLName1 = "subcl17090_1";
+    private String subCLName2 = "subcl17090_2";
 
     @BeforeClass
     public void setUp() {
@@ -51,23 +53,12 @@ public class Transaction17090 extends SdbTestBase {
         db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
-        sdb.getCollectionSpace(csName).createCollection(clName + "hash",
-                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
-
-        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(clName + "mainCL",
-                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', IsMainCL:true}"));
-        sdb.getCollectionSpace(csName).createCollection("sub117090");
-        sdb.getCollectionSpace(csName).createCollection("sub217090",
-                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
-        mainCL.attachCollection(csName + ".sub117090",
-                (BSONObject) JSON.parse("{LowBound:{b:{'$minKey':1}}, UpBound:{b:25000}}"));
-        mainCL.attachCollection(csName + ".sub217090",
-                (BSONObject) JSON.parse("{LowBound:{b:25000}, UpBound:{b:{'$maxKey':1}}}"));
+        TransUtils.createCLs(sdb, csName, hashCLName, mainCLName, subCLName1, subCLName2, 25000);
     }
 
     @DataProvider(name = "getCL")
     private Object[][] getCLName() {
-        return new Object[][] { { clName + "hash" }, { clName + "mainCL" } };
+        return new Object[][] { { hashCLName }, { mainCLName } };
     }
 
     @Test(dataProvider = "getCL")
@@ -150,11 +141,11 @@ public class Transaction17090 extends SdbTestBase {
             db2.close();
         }
         CollectionSpace cs = sdb.getCollectionSpace(csName);
-        if (cs.isCollectionExist(clName + "hash")) {
-            cs.dropCollection(clName + "hash");
+        if (cs.isCollectionExist(hashCLName)) {
+            cs.dropCollection(hashCLName);
         }
-        if (cs.isCollectionExist(clName + "mainCL")) {
-            cs.dropCollection(clName + "mainCL");
+        if (cs.isCollectionExist(mainCLName)) {
+            cs.dropCollection(mainCLName);
         }
         if (sdb != null) {
             sdb.close();

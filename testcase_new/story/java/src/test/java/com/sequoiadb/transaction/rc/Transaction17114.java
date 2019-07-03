@@ -32,7 +32,6 @@ import com.sequoiadb.transaction.TransUtils;
 @Test(groups = { "rc" })
 public class Transaction17114 extends SdbTestBase {
     private Sequoiadb sdb = null;
-    private String clName = "cl17114";
     private DBCollection cl = null;
     private Sequoiadb db1 = null;
     private Sequoiadb db2 = null;
@@ -50,6 +49,10 @@ public class Transaction17114 extends SdbTestBase {
     private DBCollection cl7 = null;
     private CountDownLatch latch = null;
     private List<BSONObject> expList = new ArrayList<>();
+    private String hashCLName = "cl17114_hash";
+    private String mainCLName = "cl17114_main";
+    private String subCLName1 = "subcl17114_1";
+    private String subCLName2 = "subcl17114_2";
 
     @BeforeClass
     public void setUp() {
@@ -61,18 +64,7 @@ public class Transaction17114 extends SdbTestBase {
             throw new SkipException("ONE GROUP MODE");
         }
 
-        sdb.getCollectionSpace(csName).createCollection(clName + "hash",
-                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
-
-        DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(clName + "mainCL",
-                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'range', IsMainCL:true}"));
-        sdb.getCollectionSpace(csName).createCollection("sub117114");
-        sdb.getCollectionSpace(csName).createCollection("sub217114",
-                (BSONObject) JSON.parse("{ShardingKey:{b:1}, ShardingType:'hash', AutoSplit:true}"));
-        mainCL.attachCollection(csName + ".sub117114",
-                (BSONObject) JSON.parse("{LowBound:{b:{'$minKey':1}}, UpBound:{b:25000}}"));
-        mainCL.attachCollection(csName + ".sub217114",
-                (BSONObject) JSON.parse("{LowBound:{b:25000}, UpBound:{b:{'$maxKey':1}}}"));
+        TransUtils.createCLs(sdb, csName, hashCLName, mainCLName, subCLName1, subCLName2, 25000);
     }
 
     @AfterClass
@@ -107,11 +99,11 @@ public class Transaction17114 extends SdbTestBase {
             db7.close();
         }
         CollectionSpace cs = sdb.getCollectionSpace(csName);
-        if (cs.isCollectionExist(clName + "hash")) {
-            cs.dropCollection(clName + "hash");
+        if (cs.isCollectionExist(hashCLName)) {
+            cs.dropCollection(hashCLName);
         }
-        if (cs.isCollectionExist(clName + "mainCL")) {
-            cs.dropCollection(clName + "mainCL");
+        if (cs.isCollectionExist(mainCLName)) {
+            cs.dropCollection(mainCLName);
         }
         if (sdb != null) {
             sdb.close();
@@ -120,7 +112,7 @@ public class Transaction17114 extends SdbTestBase {
 
     @DataProvider(name = "index")
     public Object[][] createIndex() {
-        return new Object[][] { { "{'a':-1}", clName + "hash" }, { "{'a':1}", clName + "mainCL" } };
+        return new Object[][] { { "{'a':-1}", hashCLName }, { "{'a':1}", mainCLName } };
     }
 
     @Test(dataProvider = "index")
