@@ -1276,6 +1276,9 @@ namespace engine
                   /// with RB segment disable configuration. otherwise 
                   /// rollback of those transaction could fail
                   rc = SDB_SYS ;
+                  PD_LOG_MSG( PDERROR, "Can't allow create unique index "
+                              "when doing some transactions with "
+                              "\'transuserbs=false\'" ) ;
                   goto error ;
                }
             }
