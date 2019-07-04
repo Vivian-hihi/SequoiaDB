@@ -78,7 +78,11 @@ namespace engine
                   builder.subarrayStart( FIELD_NAME_PARAMETERS ) ) ;
       for ( INT8 i = 0 ; i < _paramNum ; i ++ )
       {
-         subBuilder.append( _params[ i ]._param ) ;
+         if ( !_params[ i ]._param.eoo() )
+         {
+            // WORKAROUND: this should not happened for eoo()
+            subBuilder.append( _params[ i ]._param ) ;
+         }
       }
       subBuilder.done() ;
    }
