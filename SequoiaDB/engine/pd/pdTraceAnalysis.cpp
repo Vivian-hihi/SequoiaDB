@@ -408,10 +408,14 @@ error :
 const CHAR *_pdTraceParser::_getFunctionName( UINT32 functionID )
 {
    const CHAR *functionsName = "unknown" ;
-   UINT32 offset = _funcOffsetList[ functionID ] ;
 
-   if ( functionID >= _functionsCount || functionID < 0 ||
-        offset == TRACE_INVALID_FUNCTIONOFFSET )
+   if ( functionID >= _functionsCount || functionID < 0 )
+   {
+      return functionsName ;
+   }
+
+   UINT32 offset = _funcOffsetList[ functionID ] ;
+   if ( TRACE_INVALID_FUNCTIONOFFSET == offset )
    {
       return functionsName ;
    }
