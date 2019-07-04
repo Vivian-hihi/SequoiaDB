@@ -1145,7 +1145,7 @@ INT32 ossWaitInterrupt ( HANDLE handle, DWORD timeout )
       rc = SDB_TIMEOUT ;
       break ;
    default :
-      PD_LOG ( PDERROR, "Wait interrupt failed with code %d",
+      PD_LOG ( PDERROR, "Wait interrupt failed, error: %d",
                ossGetLastError() ) ;
       rc = SDB_SYS ;
    }
