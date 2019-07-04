@@ -10,7 +10,9 @@ Cmd
 
 远程执行 JavaScript 代码。
 
-> **Note:** runJS() 必须被远程 Command 对象调用
+> **Note:** 
+
+> runJS() 必须被远程 Command 对象调用
 
 ##参数##
 

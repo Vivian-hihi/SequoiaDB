@@ -9,16 +9,17 @@ runJS \- Execute the JavaScript code remotely.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]runJS( <code> )\f[]\f[]
-.RS
-.PP
-\f[B]Note:\f[] runJS() should be called by remote cmd obj
-.RE
 .SH CATEGORY
 .PP
 Cmd
 .SH DESCRIPTION
 .PP
 Execute the JavaScript code remotely.
+.PP
+\f[B]Note:\f[]
+.PP
+	runJS() should be called by remote cmd obj
+.RE
 .SH PARAMETERS
 .PP
 .TS

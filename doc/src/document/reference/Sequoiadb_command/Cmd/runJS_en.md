@@ -6,8 +6,6 @@ runJS - Execute the JavaScript code remotely.
 
 ***runJS( \<code\> )***
 
-> **Note:** runJS() should be called by remote cmd obj
-
 ##CATEGORY##
 
 Cmd
@@ -15,6 +13,10 @@ Cmd
 ##DESCRIPTION##
 
 Execute the JavaScript code remotely.
+
+>**Note:** 
+
+>runJS() should be called by remote cmd obj
 
 ##PARAMETERS##
 

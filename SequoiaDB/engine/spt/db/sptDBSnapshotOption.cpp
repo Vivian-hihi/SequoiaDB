@@ -111,16 +111,16 @@ namespace engine
                                      BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class SdbSnapshotOption : " << endl ;
-      ss << "   SdbSnapshotOption[.cond(<cond>)]" << endl ;
-      ss << "                    [.sel(<sel>)]" << endl ;
-      ss << "                    [.sort(<sort>)]" << endl ;
-      ss << "                    [.options(<options>)]" << endl ;
-      ss << "                    [.skip(<skipNum>)]" << endl ;
-      ss << "                    [.limit(<retNum>)]   "
-         << "-- Create a SdbSnapshotOption object" << endl ;
-      ss << "--Static methods for class SdbSnapshotOption : " << endl ;
-      ss << "--Instance methods for class SdbSnapshotOption : " << endl ;
+      ss << "   --Constructor methods for class SdbSnapshotOption : " << endl ;
+      ss << "      SdbSnapshotOption[.cond(<cond>)]" << endl ;
+      ss << "                       [.sel(<sel>)]" << endl ;
+      ss << "                       [.sort(<sort>)]" << endl ;
+      ss << "                       [.options(<options>)]" << endl ;
+      ss << "                       [.skip(<skipNum>)]" << endl ;
+      ss << "                       [.limit(<retNum>)]   "
+         << "      -- Create a SdbSnapshotOption object" << endl ;
+      ss << "   --Static methods for class SdbSnapshotOption : " << endl ;
+      ss << "   --Instance methods for class SdbSnapshotOption : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

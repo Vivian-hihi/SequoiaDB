@@ -295,28 +295,28 @@ namespace engine
                                   BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class SdbTraceOption : " << endl ;
-      ss << "   SdbTraceOption[.components( <component1>"
+      ss << "   --Constructor methods for class SdbTraceOption : " << endl ;
+      ss << "      SdbTraceOption[.components( <component1>"
          << "[, component2, ... ] )]" << endl ;
-      ss << "                 [.breakPoints( <breakPoint1>"
+      ss << "                    [.breakPoints( <breakPoint1>"
          << "[, breakPoint2, ... ] )]      " << endl ;
-      ss << "                 [.tids( <tid1>[, tid2, ... ] )]            " << endl ;
-      ss << "                 [.functionNames( <functionName1>"
+      ss << "                    [.tids( <tid1>[, tid2, ... ] )]     " << endl ;
+      ss << "                    [.functionNames( <functionName1>"
          << "[, functionName2, ... ] )]" << endl ;
-      ss << "                 [.threadTypes( <threadType1>"
+      ss << "                    [.threadTypes( <threadType1>"
          << "[, threadType2, ... ] )]  " << endl << endl ;
-      ss << "   SdbTraceOption[.components( [ <component1>"
+      ss << "      SdbTraceOption[.components( [ <component1>"
          << ", <component2>, ... ] ] )]" << endl ;
-      ss << "                 [.breakPoints( [ <breakPoint1>"
+      ss << "                    [.breakPoints( [ <breakPoint1>"
          << ", <breakPoint2>, ... ] ] )]      " << endl ;
-      ss << "                 [.tids( [ <tid1>, <tid2>, ... ] ] )]" << endl ;
-      ss << "                 [.functionNames( [ <functionName1>"
+      ss << "                    [.tids( [ <tid1>, <tid2>, ... ] ] )]" << endl ;
+      ss << "                    [.functionNames( [ <functionName1>"
          << ", <functionName2>, ... ] ] )]" << endl ;
-      ss << "                 [.threadTypes( [ <threadType1>"
+      ss << "                    [.threadTypes( [ <threadType1>"
          << ", <threadType2>, ... ] ] )]  " << endl ;
-      ss << "   -- Create a SdbTraceOption object" << endl ;
-      ss << "--Static methods for class SdbTraceOption : " << endl ;
-      ss << "--Instance methods for class SdbTraceOption : " << endl ;
+      ss << "      -- Create a SdbTraceOption object" << endl ;
+      ss << "   --Static methods for class SdbTraceOption : " << endl ;
+      ss << "   --Instance methods for class SdbTraceOption : " << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
