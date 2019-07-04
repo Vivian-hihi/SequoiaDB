@@ -231,10 +231,47 @@
                      }
                   },
                   'failed': function( errorInfo ){
-                     _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                        $scope.UnbindHost() ;
-                        return true ;
-                     } ) ;
+                     var module = null ;
+                     if( errorInfo['detail'].indexOf( 'failed to unbind host, the host has business: host=' ) >= 0 )
+                     {
+                        var hostName = errorInfo['detail'].replace( "failed to unbind host, the host has business: host=", "" ) ;
+                        $.each( $scope.ModuleList, function( index, moduleInfo ){
+                           $.each( moduleInfo['Location'], function( index, hostInfo ){
+                              if( hostInfo['HostName'] == hostName )
+                              {
+                                 module = moduleInfo ;
+                                 return false ;
+                              }
+                           } ) ;
+                           if( !isNull( module ) )
+                           {
+                              return false ;
+                           }
+                        } ) ;
+                     }
+
+                     if( !isNull( module ) )
+                     {
+                        var context = null ;
+
+                        if( module['BusinessType'] == "sequoiadb" )
+                        {
+                           context = sprintf( $scope.autoLanguage( '解绑失败，该主机还有 ? 的节点在运行，请同步 ? 配置或删除再解绑主机。' ), module['BusinessName'], module['BusinessName'] ) ;
+                        }
+                        else
+                        {
+                           context = sprintf( $scope.autoLanguage( '解绑失败，该主机还有 ? 实例在运行，请删除实例后再解绑主机。' ), module['BusinessName'], module['BusinessName'] ) ;
+                        }
+
+                        _IndexPublic.ErrorTipsModel( $scope, context ) ;
+                     }
+                     else
+                     {
+                        _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                           $scope.UnbindHost() ;
+                           return true ;
+                        } ) ;
+                     }
                   }
                } ) ;
             }
