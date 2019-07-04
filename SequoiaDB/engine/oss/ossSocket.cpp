@@ -763,7 +763,7 @@ INT32 _ossSocket::connect ( INT32 timeout )
 
    if ( fcntl( native(), F_SETFL, flags & ~O_NONBLOCK ) <0 )
    {
-      PD_LOG( PDERROR, "failed to fcntl sock:%d",native() ) ;
+      PD_LOG( PDERROR, "failed to fcntl sock: %d",native() ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -782,7 +782,7 @@ INT32 _ossSocket::connect ( INT32 timeout )
    rc = getsockname ( _fd, (sockaddr*)&_sockAddress, &_addressLen ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to get local address, rc=%d", rc ) ;
+      PD_LOG ( PDERROR, "Failed to get local address, rc = %d", rc ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -790,7 +790,7 @@ INT32 _ossSocket::connect ( INT32 timeout )
    rc = getpeername ( _fd, (sockaddr*)&_peerAddress, &_peerAddressLen ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to get peer address, rc=%d", rc ) ;
+      PD_LOG ( PDERROR, "Failed to get peer address, rc = %d", rc ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }

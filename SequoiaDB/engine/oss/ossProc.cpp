@@ -564,7 +564,7 @@ INT32 ossExec ( const CHAR * program,
       err = pthread_sigmask( SIG_BLOCK, &childmask, &savemask ) ;
       if ( err )
       {
-         PD_LOG ( PDERROR, "Failed to block sigchld, err=%d", err ) ;
+         PD_LOG ( PDERROR, "Failed to block sigchld, err = %d", err ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -653,21 +653,21 @@ INT32 ossExec ( const CHAR * program,
                // good
                if ( retcode != 0 )
                {
-                  PD_LOG ( PDERROR, "Cannot find msg in queue, err=%d, "
-                           "retcode=%d", err, retcode ) ;
+                  PD_LOG ( PDERROR, "Cannot find msg in queue, err = %d, "
+                           "retcode = %d", err, retcode ) ;
                   rc = retcode ;
                   goto error ;
                }
             }
             else
             {
-               PD_LOG ( PDERROR, "Error receive from queue, err=%d", err ) ;
+               PD_LOG ( PDERROR, "Error receive from queue, err = %d", err ) ;
                goto error ;
             }
          }
          else
          {
-            PD_LOG ( PDERROR, "Error receive from queue, retcode=%d",
+            PD_LOG ( PDERROR, "Error receive from queue, retcode = %d",
                      msgRecvBytes ) ;
             goto error ;
          }
@@ -713,7 +713,7 @@ done :
       sysRC = msgctl ( msgQueue, IPC_RMID, NULL ) ;
       if ( (sysRC) && ((retcode!=0)||(EINVAL!=errno)))
       {
-         PD_LOG ( PDERROR, "Failed to remove message queue, errno=%d", errno ) ;
+         PD_LOG ( PDERROR, "Failed to remove message queue, errno = %d", errno ) ;
       }
    }
    PD_TRACE1 ( SDB_OSSEXEC, PD_PACK_INT(pid) );
@@ -923,7 +923,7 @@ INT32 ossEnumProcesses( std::vector < ossProcInfo > &procs,
 
    pDir = opendir( "/proc" ) ;
    PD_CHECK( pDir != NULL, SDB_IO, error, PDERROR,
-             "Failed to open the directory:%s, errno=%d",
+             "Failed to open the directory:%s, errno = %d",
              "/proc", ossGetLastError() ) ;
    isOpen = TRUE ;
 
@@ -1628,7 +1628,7 @@ INT32 ossExec ( const CHAR * program,
       }
       else
       {
-         PD_LOG ( PDERROR, "Failed to create process, GetLastError=%d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to create process, GetLastError = %d", rc ) ;
          rc = SDB_SYS ;
       }
    }
@@ -1658,7 +1658,7 @@ INT32 ossExec ( const CHAR * program,
             if ( !GetExitCodeProcess ( procInfo.hProcess, &pgm_rc ) )
             {
                PD_LOG ( PDERROR, "Failed to get exit code for process, "
-                        "GetLastError=%d", ossGetLastError() ) ;
+                        "GetLastError = %d", ossGetLastError() ) ;
                result.termcode = OSS_EXIT_ERROR ;
                result.termcode = SDB_SRC_SYS ;
             }
@@ -1720,7 +1720,7 @@ INT32 ossGetExitCodeProcess( OSSHANDLE handle, UINT32 & exitCode )
    if ( !GetExitCodeProcess ( handle, &pgm_rc ) )
    {
       PD_LOG ( PDERROR, "Failed to get exit code for process, "
-               "GetLastError=%d", ossGetLastError() ) ;
+               "GetLastError = %d", ossGetLastError() ) ;
       rc = SDB_SYS ;
    }
    else
@@ -1929,7 +1929,7 @@ INT32 ossTerminateProcess( const OSSPID &pid, BOOLEAN force )
 done:
    return rc ;
 error:
-   PD_LOG( PDERROR, "failed to terminate process[%d]: [errno=%d]",
+   PD_LOG( PDERROR, "failed to terminate process[%d], errno: %d",
            pid, ossGetLastError() ) ;
    goto done ;
 }
