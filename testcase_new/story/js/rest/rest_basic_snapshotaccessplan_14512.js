@@ -6,16 +6,13 @@
 main();
 
 function main()
-{  
-   var curlPara = [ 'cmd=update config&configs={plancachelevel:3}' ];
-   runCurl( curlPara);
-   
+{
    var csName = COMMCSNAME + "_14512";
    var clName = COMMCLNAME + "_14512";
     
    commDropCS( db, csName, true, "drop cs in begin" );
    
-   curlPara = [ 'cmd=create collectionspace', 'name='+csName ]
+   var curlPara = [ 'cmd=create collectionspace', 'name='+csName ];
    runCurl( curlPara);
    curlPara = [ 'cmd=create collection&name='+csName+'.'+clName,'options={ReplSize:-1}' ];
    runCurl( curlPara);
