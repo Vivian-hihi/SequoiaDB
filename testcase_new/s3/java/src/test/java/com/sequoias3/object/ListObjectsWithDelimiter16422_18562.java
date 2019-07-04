@@ -97,6 +97,7 @@ public class ListObjectsWithDelimiter16422_18562 extends S3TestBase {
 		}
 
 		// check the keyName
+		// TODO :不需要对keyList和queryKeyList排序
 		Collections.sort(keyList);
 		Collections.sort(queryKeyList);
 		Assert.assertEquals(queryKeyList, keyList);
@@ -128,6 +129,7 @@ public class ListObjectsWithDelimiter16422_18562 extends S3TestBase {
 		}
 
 		// check the keyName
+		// TODO :不需要对keyList和queryKeyList排序
 		Collections.sort(keyList);
 		Collections.sort(queryKeyList);
 		Assert.assertEquals(queryKeyList, keyList);

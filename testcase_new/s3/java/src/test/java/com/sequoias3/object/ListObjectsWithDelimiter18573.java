@@ -30,12 +30,15 @@ public class ListObjectsWithDelimiter18573 extends S3TestBase {
 		return new Object[][] {
 				// the parameter : delimiter and matchObjectPosition
 				// test a: delimiter type is letters and numbers
+				// TODO :如果只是覆盖测的话建议测边界值a,z,0,9,A,Z
 				new Object[] { "/test1/AZ/", 3 },
+				// TODO :注释中有误：chararcter -> character
 				// test b:delimiter type is special chararcter
 				new Object[] { "/test*_.(d!-t'')", 2 },
 				// test c:delimiter type is &@:,$=+?;
 				new Object[] { "/test&@:,$=+? t_1", 1 },
 				// test c:delimiter type is ASCII
+				// TODO :这里测试了ascii码值为32和53的值，与文本用例中0-31,127不符
 				new Object[] { "\040te\065s", 0 },
 				// test d: delimiter type is 、^`><{}[]#%"~|
 				new Object[] { "test、^`><{}[]#%\"~|_1", 4 } };

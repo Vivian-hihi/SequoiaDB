@@ -113,7 +113,10 @@ public class ListObjects16418_18559 extends S3TestBase {
 		}
 
 		// check the keyName
+		// TODO
+		// ：建议将keyList的排序放在putObjects（）方法的return之前，只排一次序即可，两个Test中都不必再排序
 		Collections.sort(keyList);
+		// TODO :queryKeyList是有序的，可以不必排序
 		Collections.sort(queryKeyList);
 		Assert.assertEquals(queryKeyList, keyList);
 	}

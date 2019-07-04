@@ -72,6 +72,7 @@ public class ListObjectsWithMarkerAndPrefix18568 extends S3TestBase {
 		}
 
 		// check the keyName
+		// TODO :这里建议可以使用：expKeyList.subList(0, startPosition + 1).clear();
 		for (int i = 0; i < startPosition + 1; i++) {
 			expKeyList.remove(0);
 		}

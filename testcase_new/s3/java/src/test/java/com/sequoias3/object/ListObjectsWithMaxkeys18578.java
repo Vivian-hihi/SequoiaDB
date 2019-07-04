@@ -91,6 +91,7 @@ public class ListObjectsWithMaxkeys18578 extends S3TestBase {
 			}
 
 			// delete the last key
+			// TODO ：删除最后一个key 感觉与用例18577测试点重复了，因为nextKeyMarker也是记录最后一个返回的key;
 			s3Client.deleteObject(bucketName, key);
 			request.setMarker(key);
 		} while (result.isTruncated());
@@ -140,6 +141,7 @@ public class ListObjectsWithMaxkeys18578 extends S3TestBase {
 		ObjectListing result;
 		List<String> expKeyList = new ArrayList<>(keyList);
 		List<String> expfirstQueryKeyList = expKeyList.subList(0, maxKeys);
+		// TODO :下方代码无用可删除
 		// String marker = keyList.get(keyList.size() - 1);
 		// first list
 		result = s3Client.listObjects(request);

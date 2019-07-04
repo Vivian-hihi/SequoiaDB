@@ -26,6 +26,7 @@ import com.sequoias3.testcommon.TestTools;
  * @version 1.00
  */
 public class ListObjects18558 extends S3TestBase {
+	// TODO :这个用例的测试点看上去与ListObjects16417_18558.java相同，建议只保留一个即可
 	private boolean runSuccess = false;
 	private String bucketName = "bucket18558";
 	private String key = "aa%bb%object18558";
