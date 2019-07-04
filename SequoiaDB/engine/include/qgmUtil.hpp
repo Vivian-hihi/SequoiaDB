@@ -131,7 +131,8 @@ namespace engine
 
    INT32    qgmBuildANodeItem( BSONObjBuilder &bb,
                                const CHAR *pKeyName,
-                               const _qgmConditionNode *node ) ;
+                               const _qgmConditionNode *node,
+                               BOOLEAN keepAlias ) ;
 
    INT32    qgmParseValue( INT32 type,
                            const string &value,
