@@ -101,6 +101,7 @@ namespace engine
       }
 
       if ( 0 == g_maxTCCacheSize ||
+           ( _allocCount << 2 ) < _deallocCount ||
            _cachedSize + _blockSize > g_maxTCCacheSize / divide )
       {
          return FALSE ;
