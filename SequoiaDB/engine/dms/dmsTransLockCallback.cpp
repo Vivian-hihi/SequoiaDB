@@ -751,9 +751,9 @@ namespace engine
             {
                goto error ;
             }
-            // 3. hang the old version container to the linked list
-            _mbStat->addToChain( _oldVer ) ;
          }
+         // 3. hang the old version container to the linked list
+         _mbStat->addToChain( _oldVer ) ;
       }
 
    done:
