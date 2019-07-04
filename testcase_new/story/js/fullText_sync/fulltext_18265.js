@@ -1,0 +1,81 @@
+/************************************
+*@Description: 正常停止编目主节点，选出新主后创建全文索引
+*@author:      liuxiaoxuan
+*@createdate:  2019.05.08
+*@testlinkCase: seqDB-18265
+**************************************/
+
+function main()
+{
+   if( commIsStandalone( db ) )  {   return ;   }  
+
+   var clName = COMMCLNAME + "_ES_18265";
+   commDropCL( db, COMMCSNAME, clName, true, true );
+
+   var dbcl = commCreateCL( db, COMMCSNAME, clName );
+   
+   var objs = new Array();
+   for( var i = 0; i < 20000; i++ )
+   {
+      objs.push( {a: "test_18265 " + i, b :  i } );
+   }
+   dbcl.insert( objs );
+   
+   // 停止编目主节点
+   var preCataMaster = db.getRG( "SYSCatalogGroup" ).getMaster();
+   var preCataMasterNodeName = preCataMaster.getHostName() + ":" + preCataMaster.getServiceName();
+   
+   try
+   {
+      preCataMaster.stop();
+      // 等待切主
+      while( true )
+      {
+         try
+         {
+            var curCataMaster = db.getRG( "SYSCatalogGroup" ).getMaster();
+            var curCataMasterNodeName = curCataMaster.getHostName() + ":" + curCataMaster.getServiceName();
+            // 切主后，则退出
+            if( preCataMasterNodeName != curCataMasterNodeName ) 
+            {
+               break;
+            }
+         }
+         catch( e )
+         {
+            if( -104 != e )
+            {
+               throw e;
+            }
+         }   
+      }
+   }
+   finally
+   {
+      // 重启原主节点
+      preCataMaster.start();
+   }
+   
+   // 检查主备节点LSN是否一致
+   checkCatalogBusiness( 120 );
+
+   // 创建全文索引，检查数据同步
+   var textIndexName = "textIndex_18265";   
+   dbcl.createIndex( textIndexName, {"a" : "text"} );
+   checkFullSyncToES( COMMCSNAME, clName, textIndexName, 20000 );
+   
+   // 全文检索
+   var findConf = {"$not": [{"b": {"$gte" : 10000}}, {"":{"$Text":{"query":{"match":{"a" : "test_18265"}}}}}]};
+   var actResult = dbOpr.findFromCL( dbcl, findConf, {'a' : ''} );
+   var expResult = dbOpr.findFromCL( dbcl, {"b": {"$lt" : 10000}}, {'a' : ''} );
+   actResult.sort( compare("a") );
+   expResult.sort( compare("a") );
+   checkResult( expResult, actResult );
+   println( "---check result success---" );
+   
+   var esIndexNames = dbOpr.getESIndexNames( COMMCSNAME, clName, textIndexName );
+   commDropCL( db, COMMCSNAME, clName, true, true ); 
+   //SEQUOIADBMAINSTREAM-3983
+   checkIndexNotExistInES( esIndexNames );
+}
+main();

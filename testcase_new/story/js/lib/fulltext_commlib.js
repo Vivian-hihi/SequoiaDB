@@ -619,10 +619,10 @@ function checkConsistency(csName, clName)
    var timeout = 600;
    var doTimes = 0; 
    
-   //get primary nodes
-   var primaryNodeLSNs = getPrimaryNodeLSNs(groups);
    while(true)
    {
+      //get primary nodes
+      var primaryNodeLSNs = getPrimaryNodeLSNs(groups);
       lsnFlag = checkLSN(groups, primaryNodeLSNs);
       if(!lsnFlag)
       {
@@ -633,6 +633,24 @@ function checkConsistency(csName, clName)
          }
          else
          {
+            // print last lsn of all nodes
+            var slaveNodeLSNs = getSlaveNodeLSNs(groups);
+            for(var i = 0; i < slaveNodeLSNs.length; ++i)
+            {
+               var nodesLSN = slaveNodeLSNs[i];
+               for(var j = 0; j < nodesLSN.length; ++j)
+               { 
+                   println( "slave lsn: " + slaveNodeLSNs[i][j]);
+               }
+            }
+            for(var i = 0; i < primaryNodeLSNs.length; ++i)
+            {
+               var nodesLSN = primaryNodeLSNs[i];
+               for(var j = 0; j < nodesLSN.length; ++j)
+               { 
+                   println( "primary lsn: " + primaryNodeLSNs[i][j]);
+               }
+            }  
             throw "check lsn time out";
          }     
       }
@@ -653,22 +671,26 @@ function checkConsistency(csName, clName)
 function checkLSN(groups, primaryNodeLSNs)
 {
    var slaveNodeLSNs = getSlaveNodeLSNs(groups);
- 
-   var checkLSN = true;
+    
    //比较主备节点lsn
    for(var i = 0; i < slaveNodeLSNs.length; ++i)
    {
+      // 如果主节点不存在，则直接返回false
+      if(primaryNodeLSNs[i].length == 0)
+      {
+          return false;
+      }
+      
       for(var j = 0; j < slaveNodeLSNs[i].length; ++j)
       {
          if(primaryNodeLSNs[i][0] > slaveNodeLSNs[i][j])
          {
-            checkLSN = false;
-            return checkLSN;
+            return false;
          }
       }
    }
    
-   return checkLSN;
+   return true;
 }
 
 /*****************************************************************
@@ -739,30 +761,41 @@ function getSlaveNodeLSNs(groups)
 function getNodesInGroups(groups)
 {
    var datas = new Array();
-   
-   //standalone
-   if(true === commIsStandalone(db))
+   var hostName;
+   var serviceName;
+   try
    {
-      datas[0] = Array();
-      datas[0][0] = db;
-   }else{
-      for (var i = 0 ; i < groups.length; ++i)
-      {
-         datas[i] = Array();
+       //standalone
+       if(true === commIsStandalone(db))
+       {
+          datas[0] = Array();
+          datas[0][0] = db;
+       }
+       else
+       {
+          for (var i = 0 ; i < groups.length; ++i)
+          {
+             datas[i] = Array();
          
-         var rg = db.getRG(groups[i]);
-         var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
-         var nodesInGroup = rgDetail.Group;
-         for(var j = 0; j < nodesInGroup.length; ++j)
-         {
-            var hostName = nodesInGroup[j].HostName;
-            var serviceName = nodesInGroup[j].Service[0].Name;
-            datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                 
-         }
-         
-      }
+             var rg = db.getRG(groups[i]);
+             var rgDetail = eval( "(" + rg.getDetail().toArray()[0] + ")");
+             var nodesInGroup = rgDetail.Group;
+             for(var j = 0; j < nodesInGroup.length; ++j)
+             {
+                hostName = nodesInGroup[j].HostName;
+                serviceName = nodesInGroup[j].Service[0].Name;
+                datas[i][j] = new Sdb(hostName, serviceName);                                                                                                                                 
+             }
+          }
+       }
+       return datas;
    }
-   return datas;
+   catch ( e )
+   {
+       throw buildException("getNodesInGroups", null, "get currnet node: " + hostName + ":" + serviceName,
+                                          "success", e);  
+       return datas;
+   }
 }
 
 /******************************************************************************
