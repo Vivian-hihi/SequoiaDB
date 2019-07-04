@@ -130,9 +130,9 @@ namespace engine
 
          if( CLS_TASK_SEQUENCE == type )
          {
-            rc = catRemoveTask( taskID, cb, w ) ;
+            rc = catRemoveTask( taskID, FALSE, cb, w ) ;
             PD_RC_CHECK( rc, PDWARNING, "Failed to remove task[%ul], rc: %d",
-                        taskID, rc ) ;
+                         taskID, rc ) ;
          }
       }
 
@@ -228,7 +228,8 @@ namespace engine
 
       if ( _task->testFlags( RTN_ALTER_TASK_FLAG_SHARDLOCK ) )
       {
-         rc = catGetTaskCount( _dataName.c_str(), cb, taskCount ) ;
+         rc = catGetCLTaskCountByType( _dataName.c_str(), cb, CLS_TASK_SPLIT,
+                                       taskCount ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get task count of collection [%s], "
                       "rc: %d", _dataName.c_str(), rc ) ;
 
@@ -306,7 +307,7 @@ namespace engine
             iter != _postTasks.end() ;
             iter ++ )
       {
-         catRemoveTask( *iter, cb, w ) ;
+         catRemoveTask( *iter, FALSE, cb, w ) ;
       }
 
       _postTasks.clear() ;
@@ -377,8 +378,8 @@ namespace engine
                 "Failed to check [%s]: collection [%s] is capped",
                 _task->getActionName(), _dataName.c_str() ) ;
 
-      rc = catGetTaskCountByType( _dataName.c_str(), cb, CLS_TASK_SPLIT,
-                                  splitTaskNum ) ;
+      rc = catGetCLTaskCountByType( _dataName.c_str(), cb, CLS_TASK_SPLIT,
+                                    splitTaskNum ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get split task number for "
                    "collection [%s]", _dataName.c_str() ) ;
       if ( splitTaskNum > 0 )
@@ -589,8 +590,8 @@ namespace engine
          if ( !localTask->isAutoIndexID() )
          {
             INT64 splitTaskNum = 0 ;
-            rc = catGetTaskCountByType( _dataName.c_str(), cb, CLS_TASK_SPLIT,
-                                        splitTaskNum ) ;
+            rc = catGetCLTaskCountByType( _dataName.c_str(), cb, CLS_TASK_SPLIT,
+                                          splitTaskNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to get split task number for "
                          "collection [%s]", _dataName.c_str() ) ;
             if ( splitTaskNum > 0 )
@@ -1776,7 +1777,7 @@ namespace engine
             iter != _postTasks.end() ;
             iter ++ )
       {
-         catRemoveTask( *iter, cb, w ) ;
+         catRemoveTask( *iter, FALSE, cb, w ) ;
       }
 
       _postTasks.clear() ;
@@ -1823,6 +1824,7 @@ namespace engine
          seqName = field->sequenceName() ;
          bld.append( CAT_TASKID_NAME, (INT64)taskID ) ;
          bld.append( CAT_TASKTYPE_NAME, CLS_TASK_SEQUENCE ) ;
+         bld.append( CAT_COLLECTION_NAME, _dataName.c_str() ) ;
          bld.append( FIELD_NAME_AUTOINC_SEQ, seqName ) ;
          bld.append( CAT_AUTOINC_SEQ_ID , (INT64)field->sequenceID() ) ;
          seqInfo = bld.obj() ;
@@ -1840,7 +1842,7 @@ namespace engine
             iter != _postTasks.end() ;
             iter ++ )
       {
-         catRemoveTask( *iter, cb, w ) ;
+         catRemoveTask( *iter, FALSE, cb, w ) ;
       }
 
       _postTasks.clear() ;
@@ -2330,6 +2332,10 @@ namespace engine
          PD_CHECK( String == ele.type(), SDB_SYS, error, PDERROR,
                   "Failed to get field [%s]", FIELD_NAME_SEQUENCE_NAME ) ;
          seqName = ele.valuestrsafe() ;
+
+         // clear sequence tasks
+         catRemoveSequenceTasks( seqName, cb, w ) ;
+
          rc = pSeqMgr->dropSequence( seqName, cb, w ) ;
          if ( SDB_SEQUENCE_NOT_EXIST == rc )
          {
@@ -2427,6 +2433,10 @@ namespace engine
             exist = FALSE ;
             rc = SDB_OK ;
          }
+
+         // clear sequence tasks
+         catRemoveSequenceTasks( seqName.c_str(), cb, w ) ;
+
          rc = pSeqMgr->dropSequence( seqName, cb, w ) ;
          if ( SDB_SEQUENCE_NOT_EXIST == rc )
          {
@@ -2438,7 +2448,7 @@ namespace engine
                       seqName.c_str(), rc ) ;
          if( exist )
          {
-            _rollbackObj.push_back( seqOpt );
+            _rollbackObj.push_back( seqOpt ) ;
          }
       }
 

@@ -36,6 +36,7 @@
 *******************************************************************************/
 
 #include "catalogueCB.hpp"
+#include "catCommon.hpp"
 #include "msgCatalog.hpp"
 #include "clsMgr.hpp"
 #include "ossUtil.hpp"
@@ -43,6 +44,7 @@
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
 #include "pmd.hpp"
+#include "utilLightJobBase.hpp"
 #include <stdlib.h>
 
 using namespace bson ;
@@ -51,6 +53,97 @@ namespace engine
 {
 
    #define CAT_WAIT_EDU_ATTACH_TIMEOUT       ( 60 * OSS_ONE_SEC )
+
+   /*
+      _catClearTaskJob define and implement
+    */
+   class _catClearTaskJob : public _utilLightJob
+   {
+      public :
+         _catClearTaskJob ( CLS_TASK_TYPE taskType)
+         : _utilLightJob(),
+           _taskType( taskType )
+         {
+         }
+
+         virtual ~_catClearTaskJob ()
+         {
+         }
+
+         virtual const CHAR * name() const
+         {
+            return "ClearTaskJob" ;
+         }
+
+         virtual INT32 doit( IExecutor *pExe,
+                             UTIL_LJOB_DO_RESULT &result,
+                             UINT64 &sleepTime )
+         {
+            sleepTime = 1000000 ; // one second
+            result = UTIL_LJOB_DO_FINISH ;
+
+            // This is an async task, check primary first
+            BOOLEAN isDelay = FALSE ;
+            INT32 rc = sdbGetCatalogueCB()->primaryCheck( (pmdEDUCB *)pExe,
+                                                          FALSE,
+                                                          isDelay ) ;
+            if ( SDB_DPS_TRANS_DOING_ROLLBACK == rc )
+            {
+               // let's retry after one second
+               PD_LOG( PDWARNING, "Failed to check primary during rollback, "
+                       "will retry" ) ;
+               result = UTIL_LJOB_DO_CONT ;
+            }
+            else if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING, "Failed to check primary, rc: %d", rc ) ;
+            }
+            else
+            {
+               rc = catRemoveTasksByType( _taskType, (pmdEDUCB *)pExe, 1 ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDWARNING, "Failed to clear sequence tasks, rc: %d",
+                          rc ) ;
+               }
+               else
+               {
+                  PD_LOG( PDINFO, "Clear sequence tasks done" ) ;
+               }
+            }
+
+            return SDB_OK ;
+         }
+
+      protected :
+         CLS_TASK_TYPE _taskType ;
+   } ;
+
+   typedef class _catClearTaskJob catClearTaskJob ;
+
+   static void _catStartClearTaskJob ( CLS_TASK_TYPE taskType )
+   {
+      catClearTaskJob * job = SDB_OSS_NEW catClearTaskJob( taskType ) ;
+      if ( NULL == job )
+      {
+         PD_LOG( PDWARNING, "Failed to allocate catClearTaskJob[Type: %d]",
+                 taskType ) ;
+      }
+      else
+      {
+         INT32 rc = job->submit( TRUE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to submit catClearTaskJob[Type: %d], "
+                    "rc: %d", taskType, rc ) ;
+         }
+         else
+         {
+            PD_LOG( PDDEBUG, "Submit catClearTaskJob[Type: %d] done",
+                    taskType ) ;
+         }
+      }
+   }
 
    sdbCatalogueCB::sdbCatalogueCB()
    {
@@ -830,6 +923,7 @@ namespace engine
          if ( primary )
          {
             _isActived = TRUE ;
+            _catStartClearTaskJob( CLS_TASK_SEQUENCE ) ;
          }
          else
          {

@@ -35,6 +35,7 @@
 #include "catGTSMsgJob.hpp"
 #include "catGTSDef.hpp"
 #include "catalogueCB.hpp"
+#include "catCommon.hpp"
 #include "msgMessage.hpp"
 #include "pmd.hpp"
 #include "utilCommon.hpp"
@@ -606,6 +607,7 @@ namespace engine
       SDB_ASSERT( NULL != eduCB, "eduCB must be not null" ) ;
 
       _catSequenceManager* seqMgr = _gtsMgr->getSequenceMgr() ;
+      INT16 w = _catCB->majoritySize( TRUE ) ;
 
       rc = msgExtractSequenceRequestMsg( (CHAR*) msg, options ) ;
       if ( SDB_OK != rc )
@@ -621,10 +623,12 @@ namespace engine
                  ele.type(), CAT_SEQUENCE_NAME ) ;
          goto error ;
       }
-
       name = ele.String() ;
 
-      rc = seqMgr->dropSequence( name, eduCB, _catCB->majoritySize( TRUE ) ) ;
+      // clear sequence tasks
+      catRemoveSequenceTasks( name.c_str(), eduCB, w ) ;
+
+      rc = seqMgr->dropSequence( name, eduCB, w ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

@@ -680,7 +680,8 @@ namespace engine
                       rc ) ;
 
          // check task conflict
-         match = splitTask.toBson( CLS_SPLIT_MASK_CLNAME ) ;
+         match = splitTask.toBson( CLS_SPLIT_MASK_CLNAME |
+                                   CLS_SPLIT_MASK_TYPE ) ;
          rc = _catSplitCheckConflict( match, splitTask, conflict, cb ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Check task conflict failed, rc: %d",
@@ -978,13 +979,11 @@ namespace engine
                 "Invalid task ID for split task" ) ;
 
       // remove task
-      rc = catRemoveTask( taskID, cb, w ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Remove task[%llu] failed, rc: %d",
+      rc = catRemoveTask( taskID, TRUE, cb, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Remove task[%llu] failed, rc: %d",
                    taskID, rc ) ;
 
-      PD_LOG( PDDEBUG,
-              "Finished split finish step on task [%llu]",
+      PD_LOG( PDDEBUG, "Finished split finish step on task [%llu]",
               taskID ) ;
 
    done :
@@ -1056,7 +1055,7 @@ namespace engine
          }
          else if ( CLS_TASK_STATUS_READY == status )
          {
-            rc = catRemoveTask( taskID, cb ,w ) ;
+            rc = catRemoveTask( taskID, TRUE, cb ,w ) ;
             PD_RC_CHECK( rc, PDERROR,
                          "Failed to remove task [%llu] failed, rc: %d",
                          taskID, rc ) ;
@@ -1098,7 +1097,7 @@ namespace engine
          // Remove contexts first
          //rc = catRemoveTaskContexts( match, cb ) ;
 
-         rc = catRemoveTask( match, cb, w ) ;
+         rc = catRemoveTask( match, TRUE, cb, w ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to remove task [%s], rc: %d",
                       splitInfo.toString().c_str(), rc ) ;

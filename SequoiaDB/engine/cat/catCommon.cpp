@@ -1864,23 +1864,22 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASKCOUNTBYTYPE, "catGetTaskCountByType" )
-   INT32 catGetTaskCountByType( const CHAR * collection, pmdEDUCB * cb,
-                                CLS_TASK_TYPE type, INT64 & count )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASKCOUNTBYTYPE, "catGetCLTaskCountByType" )
+   INT32 catGetCLTaskCountByType( const CHAR * collection, pmdEDUCB * cb,
+                                  CLS_TASK_TYPE type, INT64 & count )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_CATGETTASKCOUNTBYTYPE ) ;
       SDB_ASSERT( NULL != collection, "Collection is invalid" ) ;
-      SDB_ASSERT( CLS_TASK_SPLIT == type, "Task type is invalid" ) ;
+      SDB_ASSERT( CLS_TASK_UNKNOW != type, "Task type is invalid" ) ;
 
-      BSONObj selector ;
-      BSONObj hint ;
+      BSONObj dummy ;
       BSONObj matcher = BSON( CAT_COLLECTION_NAME << collection  <<
                               CAT_TASKTYPE_NAME << type ) ;
 
-      rc = catGetObjectCount( CAT_TASK_INFO_COLLECTION, selector,
-                              matcher, hint, cb, count ) ;
+      rc = catGetObjectCount( CAT_TASK_INFO_COLLECTION, dummy, matcher, dummy,
+                              cb, count ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get task count for collection [%s]",
                    "rc: %d", collection, rc ) ;
 
@@ -2005,28 +2004,44 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVETASK, "catRemoveTask" )
-   INT32 catRemoveTask( UINT64 taskID, pmdEDUCB *cb, INT16 w )
+   INT32 catRemoveTask( BSONObj & match, BOOLEAN checkExist, pmdEDUCB * cb,
+                        INT16 w )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATREMOVETASK ) ;
+
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
-
-      PD_TRACE_ENTRY ( SDB_CATREMOVETASK ) ;
       BSONObj taskObj ;
-      BSONObj match = BSON( CAT_TASKID_NAME << (INT64)taskID ) ;
-      BSONObj dummy ;
+      BSONObj dummyObj ;
+      INT64 deletedNum = 0 ;
 
-      rc = catGetTask( taskID, taskObj, cb ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Get task[%llu] failed, rc: %d",
-                   taskID, rc ) ;
+      if ( checkExist )
+      {
+         rc = catGetOneObj( CAT_TASK_INFO_COLLECTION, dummyObj, match,
+                            dummyObj, cb, taskObj ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_CAT_TASK_NOTFOUND ;
+            goto error ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get obj(%s) from %s, rc: %d",
+                    match.toString().c_str(), CAT_TASK_INFO_COLLECTION, rc ) ;
+            goto error ;
+         }
+      }
 
-      rc = rtnDelete( CAT_TASK_INFO_COLLECTION, match, dummy, 0, cb, dmsCB,
-                      dpsCB, w ) ;
-      PD_RC_CHECK( rc, PDERROR, "Delete task[%s] failed, rc: %d",
-                   taskObj.toString().c_str(), rc ) ;
-
+      rc = rtnDelete( CAT_TASK_INFO_COLLECTION, match, dummyObj, 0, cb,
+                      dmsCB, dpsCB, w, &deletedNum ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to remove task from collection[%s], "
+                   "rc: %d, del cond: %s", CAT_TASK_INFO_COLLECTION, rc,
+                   match.toString().c_str() ) ;
+      PD_LOG( PDINFO, "Removed %lld tasks for [%s]", deletedNum,
+              match.toString().c_str() ) ;
    done:
       PD_TRACE_EXITRC ( SDB_CATREMOVETASK, rc ) ;
       return rc ;
@@ -2034,48 +2049,32 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVETASK1, "catRemoveTask" )
-   INT32 catRemoveTask( BSONObj &match, pmdEDUCB *cb, INT16 w )
+   INT32 catRemoveTask( UINT64 taskID, BOOLEAN checkExist, pmdEDUCB *cb,
+                        INT16 w )
    {
-      INT32 rc = SDB_OK ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
-      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
-      BSONObj taskObj ;
-      BSONObj dummyObj ;
-
-      PD_TRACE_ENTRY ( SDB_CATREMOVETASK1 ) ;
-
-      rc = catGetOneObj( CAT_TASK_INFO_COLLECTION, dummyObj, match,
-                         dummyObj, cb, taskObj ) ;
-      if ( SDB_DMS_EOC == rc )
-      {
-         rc = SDB_CAT_TASK_NOTFOUND ;
-         goto error ;
-      }
-      else if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to get obj(%s) from %s, rc: %d",
-                 match.toString().c_str(), CAT_TASK_INFO_COLLECTION, rc ) ;
-         goto error ;
-      }
-
-      rc = rtnDelete( CAT_TASK_INFO_COLLECTION, match, dummyObj, 0, cb,
-                      dmsCB, dpsCB, w ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to remove task from collection[%s], "
-                   "rc: %d, del cond: %s", CAT_TASK_INFO_COLLECTION, rc,
-                   match.toString().c_str() ) ;
-   done:
-      PD_TRACE_EXITRC ( SDB_CATREMOVETASK1, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+      BSONObj matcher = BSON( CAT_TASKID_NAME << (INT64)taskID ) ;
+      return catRemoveTask( matcher, checkExist, cb, w ) ;
    }
 
    INT32 catRemoveCLTasks ( const string &clName, pmdEDUCB *cb, INT16 w )
    {
       BSONObj matcher = BSON( CAT_COLLECTION_NAME << clName ) ;
-      return catRemoveTask( matcher, cb, w ) ;
+      return catRemoveTask( matcher, FALSE, cb, w ) ;
+   }
+
+   INT32 catRemoveSequenceTasks ( const CHAR * sequenceName, pmdEDUCB * cb,
+                                  INT16 w )
+   {
+      SDB_ASSERT( NULL != sequenceName, "sequence name is invalid" ) ;
+      BSONObj matcher = BSON( FIELD_NAME_AUTOINC_SEQ << sequenceName ) ;
+      return catRemoveTask( matcher, FALSE, cb, w ) ;
+   }
+
+   INT32 catRemoveTasksByType ( CLS_TASK_TYPE type, pmdEDUCB * cb, INT16 w )
+   {
+      SDB_ASSERT( CLS_TASK_UNKNOW != type, "Task type is invalid" ) ;
+      BSONObj matcher = BSON( CAT_TASKTYPE_NAME << type ) ;
+      return catRemoveTask( matcher, FALSE, cb, w ) ;
    }
 
    INT32 catGetCSGroupsFromTasks( const CHAR *csName, pmdEDUCB *cb,
@@ -3699,22 +3698,26 @@ namespace engine
                    "Failed to remove tasks with the collection [%s], rc: %d",
                    clName.c_str(), rc ) ;
 
-      // update the latest version
       rc = catGetCollection( clName, boCollection, cb ) ;
       if ( SDB_OK == rc )
       {
+         // get current version for later process
          INT32 curVersion = -1 ;
-
          rc = rtnGetIntElement( boCollection, CAT_VERSION_NAME, curVersion ) ;
          if ( SDB_OK == rc )
          {
             version = curVersion ;
          }
+
+         // remove sequences
+         rc = catDropAutoIncSequences( boCollection, cb, w ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to remove system sequences of "
+                      "collection [%s], rc: %d", clName.c_str(), rc ) ;
       }
       else
       {
          PD_LOG( PDWARNING,
-                 "Failed to get version of collection [%s], rc: %d",
+                 "Failed to get catalog of collection [%s], rc: %d",
                  clName.c_str(), rc ) ;
       }
 
@@ -3724,6 +3727,7 @@ namespace engine
                    "Failed to remove collection [%s], rc: %d",
                    clName.c_str(), rc ) ;
 
+      // update the latest version
       rc = catSaveBucketVersion( clName.c_str(), version, cb, w ) ;
       if ( SDB_OK != rc )
       {
@@ -5207,6 +5211,8 @@ namespace engine
       rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
       if ( SDB_SEQUENCE_EXIST == rc )
       {
+         // Got sequence with the same name, remove previous one
+         catRemoveSequenceTasks( seqName, cb, w ) ;
          pSeqMgr->dropSequence( seqName, cb, w ) ;
          rc = pSeqMgr->createSequence( seqName, seqOpt, cb, w ) ;
       }

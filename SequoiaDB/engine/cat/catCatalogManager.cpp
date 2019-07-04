@@ -700,7 +700,7 @@ namespace engine
 
          PD_LOG( PDDEBUG, "Removing task [%llu]", taskID ) ;
 
-         tmpRC = catRemoveTask( taskID, _pEduCB, 1 ) ;
+         tmpRC = catRemoveTask( taskID, TRUE, _pEduCB, 1 ) ;
          if ( SDB_OK != tmpRC )
          {
             PD_LOG( PDWARNING,

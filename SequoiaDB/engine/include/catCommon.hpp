@@ -227,15 +227,20 @@ namespace engine
    INT32 catGetTask( UINT64 taskID, BSONObj &obj, pmdEDUCB *cb ) ;
    INT32 catGetTaskCount ( const CHAR *collection, pmdEDUCB *cb, INT64 &count );
    INT32 catGetTaskCountByCS( const CHAR *csName, pmdEDUCB *cb, INT64 &count ) ;
-   INT32 catGetTaskCountByType( const CHAR * collection, pmdEDUCB * cb,
-                                CLS_TASK_TYPE type, INT64 & count ) ;
+   INT32 catGetCLTaskCountByType( const CHAR * collection, pmdEDUCB * cb,
+                                  CLS_TASK_TYPE type, INT64 & count ) ;
    INT32 catGetTaskStatus( UINT64 taskID, INT32 &status, pmdEDUCB *cb ) ;
    INT32 catUpdateTaskStatus( UINT64 taskID, INT32 status, pmdEDUCB *cb,
                               INT16 w ) ;
    INT64 catGetMaxTaskID( pmdEDUCB *cb ) ;
-   INT32 catRemoveTask( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
-   INT32 catRemoveTask( BSONObj &match, pmdEDUCB *cb, INT16 w ) ;
+   INT32 catRemoveTask( BSONObj & match, BOOLEAN checkExist, pmdEDUCB * cb,
+                        INT16 w ) ;
+   INT32 catRemoveTask( UINT64 taskID, BOOLEAN checkExist, pmdEDUCB *cb,
+                        INT16 w ) ;
    INT32 catRemoveCLTasks( const string &clName, pmdEDUCB *cb, INT16 w ) ;
+   INT32 catRemoveSequenceTasks ( const CHAR * sequenceName, pmdEDUCB * cb,
+                                  INT16 w ) ;
+   INT32 catRemoveTasksByType ( CLS_TASK_TYPE type, pmdEDUCB * cb, INT16 w ) ;
    INT32 catGetCSGroupsFromTasks( const CHAR *csName, pmdEDUCB *cb,
                                   vector< UINT32 > &groups ) ;
    INT32 catGetCSTaskGroups ( const CHAR * csName,

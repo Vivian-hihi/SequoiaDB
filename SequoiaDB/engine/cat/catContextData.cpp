@@ -1658,22 +1658,6 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATECL_ROLLBACK_INT ) ;
 
-      BSONObj boCollection ;
-
-      rc = catGetCollection( _targetName, boCollection, cb ) ;
-      if ( SDB_OK == rc )
-      {
-         rc = catDropAutoIncSequences( boCollection, cb, w ) ;
-         PD_RC_CHECK( rc, PDWARNING,
-                      "Failed to remove system sequences of collection [%s], rc: %d",
-                      _targetName.c_str(), rc ) ;
-      }
-      else
-      {
-         PD_LOG( PDWARNING, "Failed to get system sequences of collection [%s], rc: %d",
-                 _targetName.c_str(), rc ) ;
-      }
-
       rc = catDropCLStep( _targetName, _version, TRUE, cb, _pDmsCB, _pDpsCB, w ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to drop collection [%s], rc: %d",
