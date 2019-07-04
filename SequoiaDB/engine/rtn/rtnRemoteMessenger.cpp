@@ -192,7 +192,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNREMOTEMESSENGER_INIT ) ;
 
-      rc = _rsMgr.init( &_routeAgent, NULL ) ;
+      rc = _rsMgr.init( &_routeAgent, &_rMgrHandle ) ;
       PD_RC_CHECK( rc, PDERROR, "Init remote session manager failed[ %d ]",
                    rc ) ;
       sdbGetPMDController()->setRSManager( &_rsMgr ) ;
@@ -303,9 +303,8 @@ namespace engine
       pmdRemoteSession* session = NULL ;
 
       // Register the current edu in remote session manager.
-      // Check if session number is 0. If not, no need to register again.
       site = _rsMgr.getSite( cb ) ;
-      if ( !site || ( 0 == site->sessionCount() ) )
+      if ( !site )
       {
          site = _rsMgr.registerEDU( cb ) ;
       }
@@ -377,10 +376,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNREMOTEMESSENGER_SEND ) ;
-
       pmdRemoteSessionSite* site = _rsMgr.getSite( cb ) ;
       pmdRemoteSession* session = site->getSession( sessionID ) ;
       pmdSubSession* subSession = session->getSubSession( _targetNodeID ) ;
+
+      if ( !site->getHandle() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Remote site handler is invalid" ) ;
+         goto error ;
+      }
+
       if ( !subSession )
       {
          PD_LOG( PDERROR, "Sub session does not exist" ) ;

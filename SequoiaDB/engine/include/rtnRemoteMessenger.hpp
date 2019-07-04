@@ -141,6 +141,7 @@ namespace engine
       }
 
    private:
+      rtnRemoteMgrHandle   _rMgrHandle ;
       pmdRemoteSessionMgr  _rsMgr ;
       rtnMsgHandler        _msgHandler ;
       netRouteAgent        _routeAgent ;
