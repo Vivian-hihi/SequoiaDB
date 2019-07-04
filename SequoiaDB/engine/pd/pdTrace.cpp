@@ -279,7 +279,7 @@ retry:
 
       if ( _alloc.compareAndSwap( 0, 1 ) )
       {
-         if ( _ptr.compare( (ossValuePtr)pAllocPair ) )
+         if ( end == pAllocPair->_e )
          {
             _ptr2->_b.swap( end ) ;
             _ptr2->_e = end + TRACE_CHUNK_SIZE ;
