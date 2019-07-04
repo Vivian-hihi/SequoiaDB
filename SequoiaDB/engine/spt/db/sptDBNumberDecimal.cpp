@@ -180,6 +180,10 @@ namespace engine
          {
             goto error ;
          }
+         rval.addSelfProperty( SPT_NUMBERDECIMAL_DECIMAL_FIELD )
+                               ->setValue( decimalStr ) ;
+         rval.addSelfProperty( SPT_NUMBERDECIMAL_PRECISION_FIELD )
+                               ->setValue( precisionStr ) ;
       }
       else
       {
@@ -189,12 +193,9 @@ namespace engine
          {
             goto error ;
          }
+         rval.addSelfProperty( SPT_NUMBERDECIMAL_DECIMAL_FIELD )
+                               ->setValue( decimalStr ) ;
       }
-
-      rval.addSelfProperty( SPT_NUMBERDECIMAL_DECIMAL_FIELD )
-                           ->setValue( decimalStr ) ;
-      rval.addSelfProperty( SPT_NUMBERDECIMAL_PRECISION_FIELD )
-                           ->setValue( precisionStr ) ;
 
    done:
       return rc ;
@@ -244,7 +245,7 @@ namespace engine
                                        &scale ) ;
             if ( SDB_OK != rc )
             {
-               errMsg = "Failed to conversion Decimal" ;
+               errMsg = "Failed to conversion precision" ;
                goto error ;
             }
 
@@ -277,7 +278,7 @@ namespace engine
 
                if ( SDB_OK != rc )
                {
-                  errMsg = "Failed to conversion Decimal" ;
+                  errMsg = "Failed to conversion precision" ;
                   goto error ;
                }
                appendSuccess = builder.appendDecimal( key, decimalStr,
