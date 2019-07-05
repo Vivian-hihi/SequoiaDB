@@ -3,41 +3,41 @@
 *@Author: 2019-7-3  xiaoni zhao init
 ************************************************************************/
 function main()
-{
-   try
+{ 
+   if( commIsStandalone( db ) )
    {
-      if( commIsStandalone( db ) )
-      {
-         println("\nThe mode is standalone.");
-      }
-       
-      var csName = "csName_12225";
-      var clName = "clName_12225" + getRandomInt(0, 100);
-      var groupNames = getDataGroupNames();
+      println("\nThe mode is standalone.");
+   }
+    
+   var csName = "csName_12225";
+   var clName = "clName_12225" + getRandomInt(0, 100);
+   var groupNames = getDataGroupNames();
+   
+   var cl = readyCL(csName, clName, {Group:groupNames[0]}); 
+  
+   var exclExpDataArr = [];
+   var expDataArr = [];
+   for(var i=0; i<100; i++)
+   {
+      cl.insert({a:i});
+      cl.insert({a:100+i});
+      cl.update({$set:{a:200+i}},{a:i});
+      cl.remove({a:100+i});
       
-      var cl = readyCL(csName, clName, {Group:groupNames[0]}); 
-     
-      var exclExpDataArr = [];
-      var expDataArr = [];
-      for(var i=0; i<100; i++)
-      {
-         cl.insert({a:i});
-         cl.insert({a:100+i});
-         cl.update({$set:{a:200+i}},{a:i});
-         cl.remove({a:100+i});
-         
-         exclExpDataArr.push('"I","'+i+'"');
-         exclExpDataArr.push('"I","'+(100+i)+'"');
-         exclExpDataArr.push('"D","'+(100+i)+'"');
-         expDataArr.push('"I","'+i+'"');
-         expDataArr.push('"I","'+(100+i)+'"');
-         expDataArr.push('"B","'+i+'"');
-         expDataArr.push('"A","'+(200+i)+'"');
-      }
-      
-      var rtCmd = getRemoteCmd( groupNames[0] );
-      initTmpDir( rtCmd );
-      
+      exclExpDataArr.push('"I","'+i+'"');
+      exclExpDataArr.push('"I","'+(100+i)+'"');
+      exclExpDataArr.push('"D","'+(100+i)+'"');
+      expDataArr.push('"I","'+i+'"');
+      expDataArr.push('"I","'+(100+i)+'"');
+      expDataArr.push('"B","'+i+'"');
+      expDataArr.push('"A","'+(200+i)+'"');
+   }
+   
+   var rtCmd = getRemoteCmd( groupNames[0] );
+   initTmpDir( rtCmd );
+   
+   try
+   {   
       var fieldType = "MAPPING_INT";
       readyOutputConfFile( rtCmd, groupNames[0], csName, clName, fieldType );
       

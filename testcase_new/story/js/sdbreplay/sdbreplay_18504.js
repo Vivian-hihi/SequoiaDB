@@ -4,49 +4,48 @@
 ************************************************************************/
 function main()
 {
+   if( commIsStandalone( db ) )
+   {
+      println("\nThe mode is standalone.");
+   }
+    
+   var csName = "csName_18504";
+   var clName = "clName_18504";
+   var groupNames = getDataGroupNames();
+   
+   var cl = readyCL(csName, clName, {Group:groupNames[0]}); 
+  
+   //get minLSN
+   var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
+   var svcName = cursor.current().toObj().Group[0].Service[0].Name;
+   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true});
+   var minLSN = cursor.current().toObj().CompleteLSN;
+  
+   var expDataArr = [];
+   for(var i=0; i<100; i++)
+   {
+      cl.insert({a:i});
+      cl.insert({a:100+i});
+      cl.update({$set:{a:200+i}},{a:i});
+      cl.remove({a:100+i});
+      
+      expDataArr.push('"I","'+i+'"');
+      expDataArr.push('"I","'+(100+i)+'"');
+      expDataArr.push('"B","'+i+'"');
+      expDataArr.push('"A","'+(200+i)+'"');
+      expDataArr.push('"D","'+(100+i)+'"');
+   }
+   
+   var rtCmd = getRemoteCmd( groupNames[0] );
+   initTmpDir( rtCmd ); 
+      
    try
    {
-      if( commIsStandalone( db ) )
-      {
-         println("\nThe mode is standalone.");
-      }
-       
-      var csName = "csName_18504";
-      var clName = "clName_18504";
-      var groupNames = getDataGroupNames();
-      
-      var cl = readyCL(csName, clName, {Group:groupNames[0]}); 
-     
-      //get minLSN
-      var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
-      var svcName = cursor.current().toObj().Group[0].Service[0].Name;
-      cursor = db.snapshot(6, {ServiceName:svcName, RawData:true});
-      var minLSN = cursor.current().toObj().CompleteLSN;
-     
-      var expDataArr = [];
-      for(var i=0; i<100; i++)
-      {
-         cl.insert({a:i});
-         cl.insert({a:100+i});
-         cl.update({$set:{a:200+i}},{a:i});
-         cl.remove({a:100+i});
-         
-         expDataArr.push('"I","'+i+'"');
-         expDataArr.push('"I","'+(100+i)+'"');
-         expDataArr.push('"B","'+i+'"');
-         expDataArr.push('"A","'+(200+i)+'"');
-         expDataArr.push('"D","'+(100+i)+'"');
-      }
-      
-      var rtCmd = getRemoteCmd( groupNames[0] );
-      initTmpDir( rtCmd );
-      
-      var clNameArr = [csName +"."+ clName];
-      
       //配置filePrefix为空和fileSuffix为任意字符串
       var filePrefix = "";
       var fileSuffix = "end";
       var fieldType = "MAPPING_INT";
+      var clNameArr = [csName +"."+ clName];
       var filter = filter = '\'{CL: ["'+ clNameArr +'"], MinLSN: '+ minLSN +' }\'';
       getOutputConfFile( groupNames[0], csName, clName );
       configOutputConfFile( rtCmd, csName, clName, filePrefix, fileSuffix, fieldType );
