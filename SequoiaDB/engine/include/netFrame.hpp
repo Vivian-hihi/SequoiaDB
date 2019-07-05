@@ -93,6 +93,55 @@ namespace engine
    #define NET_MAKE_STAT_INTERVAL            ( 5000 )
 
    /*
+     _netEHSegment define
+     This class is only used by netFrame as the container/manager of 
+     netEventHandler
+   */
+   class _netEHSegment : public SDBObject
+   {
+      typedef vector<NET_EH> VEC_EH ;
+      typedef vector<NET_EH>::iterator VEC_EH_IT ;
+
+      friend class _netFrame ;
+
+      public:
+         _netEHSegment( _netFrame *pFrame, UINT32 capacity, const _MsgRouteID &id ) ;
+         ~_netEHSegment() ;
+
+      public:
+         INT32 getEH( NET_EH &eh ) ;
+
+         void close() ;
+
+         void addEH( NET_EH eh ) ;
+
+         void delEH( const NET_HANDLE& handle ) ;
+
+         OSS_INLINE BOOLEAN isEmpty()
+         {
+            _mtx.get_shared() ;
+            BOOLEAN isEmpty = (_vecEH.size() == 0) ? TRUE : FALSE ;
+            _mtx.release_shared() ;
+            return isEmpty ;
+         }
+
+      private:
+         BOOLEAN _createEH( NET_EH &eh) ;
+
+      private:
+         _netFrame                        *_pFrame ;
+         _MsgRouteID                      _id ;
+         //total allowed items in the container, is based on config parameter
+         UINT32                           _capacity ;
+         ossAtomic32                      _index ; // point to a proper item
+         ossSpinSLatch                    _mtx ;
+         VEC_EH                           _vecEH ; // EV handle list
+   } ;
+
+   typedef boost::shared_ptr<_netEHSegment>  netEHSegPtr ;
+
+
+   /*
       _netFrame define
    */
    class _netFrame : public IIOService
@@ -106,12 +155,16 @@ namespace engine
       typedef map<NET_HANDLE, NET_EH>     MAP_EVENT ;
       typedef MAP_EVENT::iterator         MAP_EVENT_IT ;
 
-      typedef multimap<UINT64, NET_EH>    MULMAP_ROUTE ;
-      typedef MULMAP_ROUTE::iterator      MULMAP_ROUTE_IT ;
-      typedef pair<MULMAP_ROUTE_IT, MULMAP_ROUTE_IT>  MULMAP_ROUTE_IT_PAIR ;
+      typedef map<UINT64, netEHSegPtr>    MAP_ROUTE ;
+      typedef MAP_ROUTE::iterator         MAP_ROUTE_IT ;
+      typedef pair<MAP_ROUTE_IT, MAP_ROUTE_IT>  MULMAP_ROUTE_IT_PAIR ;
+
+      typedef vector<NET_EH> VEC_EH ;
+      typedef vector<NET_EH>::iterator VEC_EH_IT ;
 
       friend class _netInnerTimeHandle ;
       friend class _netEventHandler ;
+      friend class _netEHSegment ;
 
       public:
          /// handler will not be freed by frame
@@ -239,6 +292,10 @@ namespace engine
          INT32             _getHandle( const _MsgRouteID &id,
                                        NET_EH &eh ) ;
 
+         NET_EH            _createEvHandler() ;
+
+         void              _addOpposite( NET_EH eh ) ;
+
       private:
          INT32    _asyncAccept() ;
          void     _acceptCallback( NET_EH eh,
@@ -259,7 +316,7 @@ namespace engine
 
          VEC_EVSUIT                       _vecEvSuit ;
 
-         MULMAP_ROUTE                     _route ;
+         MAP_ROUTE                        _route ;
          MAP_EVENT                        _opposite ;
 
          MAP_TIMMER                       _timers ;

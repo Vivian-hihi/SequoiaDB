@@ -120,6 +120,145 @@ namespace engine
                                 this, _dummyTimerID ) ;
    }
 
+   /*
+     _netEHSegment implement
+   */
+   _netEHSegment::_netEHSegment( _netFrame *pFrame, UINT32 capacity, const _MsgRouteID &id )
+    :_index( 0 ),
+    _id ( id ),
+    _pFrame( pFrame )
+   {
+      if ( MSG_ROUTE_SHARD_SERVCIE == id.columns.serviceID )
+      {
+         _capacity = ( capacity > 0) ? capacity : 1 ;
+      }
+      else
+      {
+         _capacity = 1 ;
+      }
+   }
+
+   _netEHSegment::~_netEHSegment()
+   {
+      _vecEH.clear() ;
+   }
+
+   // return an event handler to the caller
+   // Algorithm: During start time when # of socket is smaller than capacity,
+   // keeping creating it once a time, when this function is called until we hit
+   // the capacity. After we hit the capacity, do a round robin.
+   INT32 _netEHSegment::getEH( NET_EH &eh )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 retries = 0 ;
+   retry:
+      _mtx.get_shared() ;
+      if ( _vecEH.size() == _capacity || retries == 2 )
+      {
+         if ( _vecEH.size() == 0 )
+         {
+            PD_LOG( PDSEVERE, "cannot create any net event handler" ) ;
+            rc = SDB_OOM ;
+         }
+         else
+         {
+            eh = _vecEH[_index.inc() % _vecEH.size()] ;
+         }
+         _mtx.release_shared() ;
+      }
+      else
+      {
+         _mtx.release_shared() ;
+         // release the s latch and try create EV handler
+         //if we failed to create the EV handler, goto retry
+         if ( !_createEH( eh ) )
+         {
+            retries++ ;
+            goto retry ;
+         }
+         else
+         {
+            // add to opposite map
+            _pFrame->_addOpposite( eh ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   }
+
+   // creating the netEventHandler. We have to get the
+   // size of created event handler to make sure after
+   // we get x latch, there is still room to create a
+   // new one
+   BOOLEAN _netEHSegment::_createEH( NET_EH &eh )
+   {
+      BOOLEAN ret = FALSE ;
+      _mtx.get() ;
+      if ( _vecEH.size() < _capacity )
+      {
+         _netEventHandler *pEH = NULL ;
+         /// create a new socket
+         pEH = SDB_OSS_NEW _netEventHandler( _pFrame->_getEvSuit( TRUE ),
+                                             _pFrame->_handle.inc() ) ;
+         if ( !pEH )
+         {
+            PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
+            goto done ;
+         }
+         eh = NET_EH(pEH) ;
+         eh->id( _id ) ;
+         _vecEH.push_back(eh) ;
+         ret = TRUE ;
+      }
+
+   done:
+      _mtx.release() ;
+      return ret ;
+   }
+
+   void _netEHSegment::close()
+   {
+      _mtx.get_shared() ;
+      for ( VEC_EH_IT itr=_vecEH.begin(); itr!=_vecEH.end(); ++itr )
+      {
+         (*itr)->close() ;
+      }
+      _mtx.release_shared() ;
+   }
+
+   // This function is called when a connection is passively
+   // created and it needs to be added into netEHSegment,
+   // otherwise the connection will be lost. Therefore, it is possible
+   // that the new connection has to be added into a container that has
+   // already hit the capacity, in that case we will resize the container
+   // by increasing the capacity
+   void _netEHSegment::addEH( NET_EH eh )
+   {
+      _mtx.get() ;
+      if ( _vecEH.size() == _capacity )
+      {
+         _capacity++ ;
+      }
+
+      _vecEH.push_back(eh) ;
+      _mtx.release() ;
+   }
+
+   void _netEHSegment::delEH( const NET_HANDLE& handle )
+   {
+      _mtx.get() ;
+      for ( VEC_EH_IT itr=_vecEH.begin(); itr!=_vecEH.end(); ++itr )
+      {
+         if ( handle == (*itr)->handle() )
+         {
+            _vecEH.erase(itr) ;
+            break ;
+         }
+      }
+      _mtx.release() ;
+   }
+
    /// define listen host
    #define NET_LISTEN_HOST          "0.0.0.0"
 
@@ -593,9 +732,10 @@ namespace engine
          eh->asyncRead() ;
 
          /// add to map
+         // addRoute will take latch inside the function
+         _addRoute(eh) ;
          _mtx.get() ;
          _opposite.insert( make_pair( eh->handle(), eh ) ) ;
-         _route.insert( make_pair( eh->id().value, eh ) ) ;
          _mtx.release() ;
 
          if ( pHandle )
@@ -689,93 +829,58 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__GETHANDLE, "_netFrame::_getHandle" )
+   // This function is called when a sender needs an Event Handler(socket/connection)
+   // to do the sending. The logic here is that it will first seach the appropriate
+   // netEHSegment, which contains all the socket that assign to the same route
+   // id(i.e. ip address and service). Then it will call getEH to get an 
+   // event handler. If netEHSegment can not be found, will create one.
    INT32 _netFrame::_getHandle( const _MsgRouteID &id, NET_EH &eh )
    {
       INT32 rc = SDB_OK ;
+      MAP_ROUTE_IT itr ;
+      netEHSegPtr ptr ;
       PD_TRACE_ENTRY ( SDB__NETFRAME__GETHANDLE ) ;
 
-      MULMAP_ROUTE_IT_PAIR pitr ;
-      UINT32 sockNum = 0 ;
-      //UINT32 minIOPS = 0 ;
-      OSS_LATCH_MODE mode = SHARED ;
-      UINT32 retryTimes = 0 ;
-      UINT32 rand = ossRand() ;
+      _mtx.get_shared() ;
+      itr = _route.find(id.value) ;
 
-      while( ++retryTimes <= 2 )
+      if ( itr == _route.end() )
       {
-         sockNum = 0 ;
-         ossScopedLock lock( &_mtx, mode ) ;
-
-         pitr = _route.equal_range( id.value ) ;
-         for ( MULMAP_ROUTE_IT mitr = pitr.first ; mitr != pitr.second ; ++mitr )
+         _mtx.release_shared() ;
+         _mtx.get() ;
+         // after we get the x latch, re-check if someone has already create
+         // the netEHSegment
+         itr = _route.find(id.value) ;
+         if ( itr != _route.end())
          {
-            /*if ( 0 == sockNum )
-            {
-               eh = mitr->second ;
-               minIOPS = eh->getIOPS() ;
-            }
-            else if ( mitr->second->getIOPS() < minIOPS )
-            {
-               eh = mitr->second ;
-               minIOPS = eh->getIOPS() ;
-            }*/
-
-            if ( MSG_ROUTE_SHARD_SERVCIE != id.columns.serviceID ||
-                 _maxSockPerNode <= 1 ||
-                 sockNum == rand % _maxSockPerNode )
-            {
-               eh = mitr->second ;
-            }
-
-            ++sockNum ;
-
-            /*
-            if ( minIOPS <= NET_IOPS_MIN_VALUE ||
-                 ( _maxSockPerNode > 0 && sockNum >= _maxSockPerNode ) )
-            {
-               break ;
-            }*/
-         }
-
-         if ( MSG_ROUTE_SHARD_SERVCIE != id.columns.serviceID &&
-              eh.get() )
-         {
-            break ;
-         }
-         else if ( sockNum > 0 && sockNum >= _maxSockPerNode )
-         {
-            break ;
-         }
-         /*if ( sockNum > 0 && minIOPS <= NET_IOPS_THRESHOLD )
-         {
-            break ;
-         }*/
-         else if ( 1 == retryTimes )
-         {
-            /// need to swith the lock
-            mode = EXCLUSIVE ;
-            continue ;
+            ptr = itr->second ;
          }
          else
          {
-            _netEventHandler *pEH = NULL ;
-            /// create a new socket
-            pEH = SDB_OSS_NEW _netEventHandler( _getEvSuit( FALSE ),
-                                                _handle.inc() ) ;
-            if ( !pEH )
+            // create new netEHSegment
+            _netEHSegment *pSeg = SDB_OSS_NEW _netEHSegment( this ,
+                                                   _maxSockPerNode, id ) ;
+            if ( !pSeg)
             {
                rc = SDB_OOM ;
-               PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
+               PD_LOG( PDERROR, "Allocate netEHSegment failed" ) ;
+               _mtx.release() ;
                goto error ;
             }
-            eh = NET_EH( pEH ) ;
-
-            eh->id( id ) ;
-            /// add to map
-            _opposite.insert( make_pair( eh->handle(), eh ) ) ;
-            _route.insert( make_pair( eh->id().value, eh ) ) ;
+            ptr = netEHSegPtr(pSeg) ;
+            // insert the shared ptr into route table
+            _route.insert( make_pair(id.value, ptr) ) ;
          }
+         _mtx.release() ;
       }
+      else
+      {
+         // if we found the netEHSegment in the route table, just use it
+         ptr = itr->second ;
+         _mtx.release_shared() ;
+      }
+      // get event handler
+      rc = ptr->getEH(eh) ;
 
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME__GETHANDLE, rc );
@@ -1187,22 +1292,36 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE, "_netFrame::close" )
+   // close all connections to one id(i.e. node)
    void _netFrame::close( const _MsgRouteID &id )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_CLOSE );
-      MULMAP_ROUTE_IT_PAIR pitr ;
+      MAP_ROUTE_IT routeItr ;
+      netEHSegPtr ptr ;
 
       _mtx.get_shared() ;
-      pitr = _route.equal_range( id.value ) ;
-      for ( MULMAP_ROUTE_IT mitr = pitr.first ; mitr != pitr.second ; ++mitr )
+      routeItr = _route.find( id.value ) ;
+      // check if the entry with corresponding id exists
+      if ( routeItr != _route.end() )
       {
-         mitr->second->close() ;
+         ptr = routeItr->second ;
+         _mtx.release_shared() ;
+         // retrieve the netEHSegment shared ptr and release
+         // s latch for the route table
+         // call the netEHSEgment::close interface to close all
+         // sockets in the netEHSEgment
+         ptr->close() ;
       }
-      _mtx.release_shared() ;
+      else
+      {
+         _mtx.release_shared() ;
+      }
+
       PD_TRACE_EXIT ( SDB__NETFRAME_CLOSE );
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE2, "_netFrame::close" )
+   // close all connections 
    void _netFrame::close()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_CLOSE2 );
@@ -1374,15 +1493,55 @@ namespace engine
       _handler->handleClose( eh->handle(), id ) ;
    }
 
+   //TODO rewrite it later
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ADDRT, "_netFrame::_addRoute" )
    void _netFrame::_addRoute( NET_EH eh )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME__ADDRT ) ;
+      MAP_ROUTE_IT itr ;
+      netEHSegPtr ptr ;
 
-      _mtx.get() ;
-      _route.insert( make_pair( eh->id().value, eh ) ) ;
-      _mtx.release() ;
+      _mtx.get_shared() ;
+      itr = _route.find(eh->id().value) ;
 
+      if ( itr == _route.end() )
+      {
+         _mtx.release_shared() ;
+         _mtx.get() ;
+         // after we get the x latch, re-check if someone has already create
+         // the netEHSegment
+         itr = _route.find(eh->id().value) ;
+         if ( itr != _route.end())
+         {
+            ptr = itr->second ;
+         }
+         else
+         {
+            // create new netEHSegment
+            _netEHSegment *pSeg = SDB_OSS_NEW _netEHSegment( this ,
+                                                   _maxSockPerNode, eh->id() ) ;
+            if ( !pSeg)
+            {
+               PD_LOG( PDERROR, "Allocate netEHSegment failed" ) ;
+               _mtx.release() ;
+               goto done ;
+            }
+            ptr = netEHSegPtr(pSeg) ;
+            // insert the shared ptr into route table
+            _route.insert( make_pair(eh->id().value, ptr) ) ;
+         }
+         _mtx.release() ;
+      }
+      else
+      {
+         // if we found the netEHSegment in the route table, just use it
+         ptr = itr->second ;
+         _mtx.release_shared() ;
+      }
+      // get event handler
+      ptr->addEH(eh) ;
+
+   done:
       PD_TRACE_EXIT ( SDB__NETFRAME__ADDRT );
    }
 
@@ -1398,6 +1557,13 @@ namespace engine
          }
          ++itr ;
       }
+   }
+
+   void _netFrame::_addOpposite( NET_EH eh )
+   {
+     _mtx.get() ;
+     _opposite.insert( make_pair( eh->handle(), eh ) ) ;
+     _mtx.release() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__GETEVSUIT, "_netFrame::_getEvSuit" )
@@ -1561,7 +1727,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME__ERASE );
       MAP_EVENT_IT itr ;
-      MULMAP_ROUTE_IT_PAIR pitr ;
+      MAP_ROUTE_IT routeItr ;
 
       _mtx.get() ;
       itr = _opposite.find( handle ) ;
@@ -1570,13 +1736,13 @@ namespace engine
          goto done ;
       }
 
-      pitr = _route.equal_range( itr->second->id().value ) ;
-      for ( MULMAP_ROUTE_IT mitr = pitr.first ; mitr != pitr.second ; ++mitr )
+      routeItr = _route.find( itr->second->id().value ) ;
+      if ( routeItr != _route.end() )
       {
-         if ( mitr->second->handle() == handle )
+         routeItr->second->delEH( handle ) ;
+         if ( routeItr->second->isEmpty() )
          {
-            _route.erase( mitr ) ;
-            break ;
+            _route.erase(routeItr) ;
          }
       }
       _opposite.erase( itr ) ;
