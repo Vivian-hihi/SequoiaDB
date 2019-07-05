@@ -64,10 +64,10 @@ public class TransferTh extends OperateTask {
             int count = 0;
 
             // 模拟转账操作：开启事务，随机取一个账户转出value；随机取另一个账户转入value
-            while (count++ < 6000) {
+            while (count++ < 1800) {
                 int accountA = (int) (Math.random() * 10000);
                 int accountB = (int) (Math.random() * 10000);
-                int transAmount = (int) (Math.random() * 200);
+                int transAmount = 100;
 
                 db.beginTransaction();
                 cl.update("{'account':" + accountA + "}", "{$inc:{'balance':" + (-transAmount) + "}}", "{'':'$shard'}");
@@ -93,10 +93,10 @@ public class TransferTh extends OperateTask {
             int count = 0;
 
             // 模拟转账操作：开启事务，随机取一个账户转出value；随机取另一个账户转入value
-            while (count++ < 6000) {
+            while (count++ < 1800) {
                 int accountA = (int) (Math.random() * 10000);
                 int accountB = (int) (Math.random() * 10000);
-                int transAmount = (int) (Math.random() * 200);
+                int transAmount = 100;
 
                 db.beginTransaction();
                 cl.update("{'account':" + accountA + "}", "{$inc:{'balance':" + (-transAmount) + "}}", "{'':'$shard'}");
