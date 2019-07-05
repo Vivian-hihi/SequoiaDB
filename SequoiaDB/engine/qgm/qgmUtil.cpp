@@ -1125,8 +1125,6 @@ namespace engine
       else if ( SQL_GRAMMAR::DBATTR == node->type )
       {
          BSONObjBuilder subBB( bb.subobjStart( pKeyName ) ) ;
-         keepAlias ? node->value.toString() :
-                     node->value.attr().toString() ;
          subBB.append( "$field", keepAlias ? node->value.toString() :
                                              node->value.attr().toString() ) ;
          subBB.done() ;
