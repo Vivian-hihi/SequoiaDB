@@ -31,7 +31,7 @@ function main()
       // ready cl data
       var cl = readyCL( csName, clName, { Group: groupName } );
       
-      var recordsNum = 1000000;
+      var recordsNum = 600000;
       println("\n---Begin to insert records, recordsNum = "+ recordsNum +"."); 
       for ( k = 0; k < recordsNum; k += 50000 ) 
       {
