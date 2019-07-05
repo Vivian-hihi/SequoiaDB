@@ -28,12 +28,12 @@ function main()
       // ready cl data
       var cl = readyCL( csName, clName, { Group: groupName } );
       println("\n   Begin to insert and update records."); 
-      cl.insert({"int":1, "long":{"$numberLong":"1"}, "decimal":{"$decimal":"1.0"}, "time":{"$timestamp":"1969-12-31-23:59:59.999999"}, "str":"test"});
+      cl.insert({"int":1, "long":{"$numberLong":"1"}, "decimal":{"$decimal":"1.0"}, "time":{"$timestamp":"1969-12-31-23.59.59.999999"}, "str":"test"});
       
       cl.update({"$inc":{"int":1, "long":2, "decimal":0.2}});
       cl.update({"$set":{"str":""}});
       cl.update({"$unset":{"str":""}});
-      cl.update({"$replace":{"int":2, "long":{"$numberLong":"3"}, "decimal":{"$decimal":"3.0"}, "time":{"$timestamp":"1970-01-01-00:00:00:000000"}, "str":" "}});
+      cl.update({"$replace":{"int":2, "long":{"$numberLong":"3"}, "decimal":{"$decimal":"3.0"}, "time":{"$timestamp":"1970-01-01-00.00.00:000000"}, "str":" "}});
       
       // ready outputconf for sdbreplay
       var tmpConfName = "sdbreplay_18619.conf";

@@ -70,19 +70,19 @@ function readyData( cl )
               "int1":-2147483648, "int2":2147483647,
               "long1":NumberLong("-9223372036854775808"), "long2":NumberLong("9223372036854775807"),
               "decimal1":{$decimal:"-1.8888E+308"}, "decimal2":{$decimal:"1.8888E+308"},
-              "time1":Timestamp("1902-01-01-00:00:00.000000"), 
-              "time2":Timestamp("2037-12-31-23:59:59.999999")}, SDB_INSERT_RETURN_ID);
+              "time1":Timestamp("1902-01-01-00.00.00.000000"), 
+              "time2":Timestamp("2037-12-31-23.59.59.999999")}, SDB_INSERT_RETURN_ID);
    
    println("   update records."); 
    cl.update({$set:{"str1":'_\_', "str2":' " ',
               "int1":-2147483647, "int2":2147483646,
               "long1":NumberLong("-9223372036854775807"), "long2":NumberLong("9223372036854775806"),
               "decimal1":{$decimal:"-1.8888E+309"}, "decimal2":{$decimal:"1.8888E+309"},
-              "time1":Timestamp("1902-01-01-00:00:00.000001"), 
-              "time2":Timestamp("2037-12-31-23:59:59.999998")}});
+              "time1":Timestamp("1902-01-01-00.00.00.000001"), 
+              "time2":Timestamp("2037-12-31-23.59.59.999998")}});
               
    println("   remove records."); 
-   //cl.remove(); 
+   cl.remove(); 
 }
 
 function checkResults( rtCmd, clName )
