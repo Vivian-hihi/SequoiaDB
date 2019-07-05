@@ -17,7 +17,7 @@ Change file mode bits
 ##PARAMETERS##
 
 | Name      | Type     | Default | Description                     | Required or not |
-| --------- | -------- | ------- | ------------------------ | --------------- |
+| --------- | -------- | ------- | ------------------------------- | --------------- |
 | filepath  | string   | ---     | source file path                | yes             |
 | mode      | int      | ---     | set file permissions            | yes             |
 | recursive | boolean  | false   | whether recursive processing    | not             |
@@ -34,8 +34,8 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Change file mode bits.
+* Set file mode bits as 0777.
 
 ```lang-javascript
-> File.chmod( "/opt/trunk/file", 664, false )
+> File.chmod( "/opt/sequoiadb/file", 0777, false )
 ```

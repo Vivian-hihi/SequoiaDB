@@ -12,9 +12,9 @@ File
 
 ##参数##
 
-| 参数名  | 参数类型 | 描述               | 是否必填 |
-| ------- | -------- | ------------------ | -------- |
-| content | string   | 往文件中写入的内容 | 是       |
+| 参数名  | 参数类型 | 默认值 | 描述               | 是否必填 |
+| ------- | -------- | ------ | ------------------ | -------- |
+| content | string   | ---    | 往文件中写入的内容 | 是       |
 
 ##返回值##
 
@@ -31,20 +31,12 @@ File
 
 * 打开一个文件，获取文件描述符；
 
-	```lang-javascript
-	> var file = new File( "/opt/sequoiadb/file" )
-	```
+  ```lang-javascript
+  > var file = new File( "/opt/sequoiadb/file" )
+  ```
 
 * 往当前文件游标指向的位置写入内容；
 
   ```lang-javascript
   > file.write( "SequoiaDB" )
-  ```
-
-* 读取写入的文件内容。
-
-  ```lang-javascript
-  > file.seek(0)
-  > file.read()
-  SequoiaDB
   ```

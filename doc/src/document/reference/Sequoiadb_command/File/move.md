@@ -12,10 +12,10 @@ File
 
 ##参数##
 
-| 参数名  | 参数类型 | 描述             | 是否必填 |
-| ------- | -------- | ---------------- | -------- |
-| src     | string   | 源文件路径       | 是       |
-| des     | string   | 目标文件路径     | 是       |
+| 参数名  | 参数类型 | 默认值 | 描述             | 是否必填 |
+| ------- | -------- | ------ | ---------------- | -------- |
+| src     | string   | ---    | 源文件路径       | 是       |
+| des     | string   | ---    | 目标文件路径     | 是       |
 
 ##返回值##
 
@@ -33,5 +33,5 @@ File
 * 移动文件。
 
   ```lang-javascript
-  > File.move( "/opt/trunk/srcFile", "/opt/trunk/desFile" )
+  > File.move( "/opt/sequoiadb/srcFile", "/opt/sequoiadb/desFile" )
   ```

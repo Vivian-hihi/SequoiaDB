@@ -16,10 +16,10 @@ Move a file.
 
 ##PARAMETERS##
 
-| Name    | Type     | Description                     | Required or not |
-| ------- | -------- | ------------------------------- | --------------- |
-| src     | string   | source file path                | yes             |
-| des     | string   | destination file path           | yes             |
+| Name    | Type     | Default | Description           | Required or not |
+| ------- | -------- | ------- | --------------------- | --------------- |
+| src     | string   | ---     | source file path      | yes             |
+| des     | string   | ---     | destination file path | yes             |
 
 ##RETURN VALUE##
 
@@ -36,5 +36,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Move a file.
 
 ```lang-javascript
-> File.move( "/opt/trunk/srcFile", "/opt/trunk/desFile" )
+> File.move( "/opt/sequoiadb/srcFile", "/opt/sequoiadb/desFile" )
 ```

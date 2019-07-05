@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-chgrp \- Change the group of the file.
+chgrp \- Set the user group of the file.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]File.chgrp( <filepath>, <groupname>, [recursive] )\f[]\f[]
@@ -14,7 +14,7 @@ chgrp \- Change the group of the file.
 File
 .SH DESCRIPTION
 .PP
-Change the group of the file.
+Set the user group of the file.
 .SH PARAMETERS
 .PP
 .TS
@@ -94,10 +94,10 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Change the group of the file( The system has an user group named "sequoiadb" ).
+Set the user group of the file to the "sequoiadb".
 .IP
 .nf
 \f[C]
->\ File.chgrp(\ "/opt/trunk/file",\ "sequoiadb",\ false\ )
+>\ File.chgrp(\ "/opt/sequoiadb/file",\ "sequoiadb",\ false\ )
 \f[]
 .fi

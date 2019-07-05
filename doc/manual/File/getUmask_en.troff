@@ -67,6 +67,7 @@ T}
 .SH RETURN VALUE
 .PP
 On success, return umask.
+.PP
 On error, exception will be thrown.
 .SH ERRORS
 .PP

@@ -38,5 +38,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Copy file.
 
 ```lang-javascript
-> File.copy( "/opt/trunk/srcFile", "/opt/trunk/desFile", true, 0664 )
+> File.copy( "/opt/sequoiadb/srcFile", "/opt/sequoiadb/desFile", true, 0664 )
 ```

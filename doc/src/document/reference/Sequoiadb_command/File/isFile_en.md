@@ -16,9 +16,9 @@ Determine if it is a normal file.
 
 ##PARAMETERS##
 
-| Name     | Type     | Description | Required or not |
-| -------- | -------- | ----------- | --------------- |
-| filepath | string   | fiel path   | yes             |
+| Name     | Type     | Default | Description | Required or not |
+| -------- | -------- | ------- | ----------- | --------------- |
+| filepath | string   | ---     | fiel path   | yes             |
 
 ##RETURN VALUE##
 
@@ -28,11 +28,11 @@ Return true if the specified file is a normal file, or return false.
 
 when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please  reference to [Troubleshooting](troubleshooting/general/general_guide.md).
 
-##EXAMPLES##
+##EXAMPLES## 
 
 * Determine if it is a normal file.
 
 ```lang-javascript
-> File.isFile( "/opt/trunk/test" )
-false
+> File.isFile( "/opt/sequoiadb/file" )
+true
 ```

@@ -8,13 +8,13 @@ File
 
 ##描述##
 
-删除文件。
+删除文件或者目录。
 
 ##参数##
 
-| 参数名   | 参数类型 | 描述     | 是否必填 |
-| -------- | -------- | -------- | -------- |
-| filepath | string   | 文件路径 | 是       |
+| 参数名   | 参数类型 | 默认值 | 描述     | 是否必填 |
+| -------- | -------- | ------ | -------- | -------- |
+| filepath | string   | ---    | 文件路径 | 是       |
 
 ##返回值##
 
@@ -29,36 +29,9 @@ File
 
 ##示例##
 
-* 查看 test 目录下的文件；
+* 删除 “/opt/sequoiadb” 目录下的 “file” 文件；
 
   ```lang-javascript
-  > File.list( { pathname: "/opt/trunk/test" } )
-  {
-    "name": "test_twe",
-    "mode": "-rw-r--r--",
-    "user": "root"
-  }
-  {
-    "name": "test_one",
-    "mode": "-rw-r--r--",
-    "user": "root"
-  }
-  ```
-
-* 删除 test 目录下的 test_twe 文件；
-
-  ```lang-javascript
-  > File.remove( "/opt/trunk/test/test_twe" )
-  ```
-
-* 再次查看 test 目录下的文件。
-
-  ```lang-javascript
-  > File.list( { pathname: "/opt/trunk/test" } )
-  {
-    "name": "test_one",
-    "mode": "-rw-r--r--",
-    "user": "root"
-  }
+  > File.remove( "/opt/sequoiadb/file" )
   ```
 

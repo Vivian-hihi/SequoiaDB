@@ -19,13 +19,15 @@ Determine if it is a directory.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -38,6 +40,8 @@ T}@T{
 filepath
 T}@T{
 string
+T}@T{
+\-\-\-
 T}@T{
 fiel path
 T}@T{
@@ -54,11 +58,11 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Determine if it is a normal file
+Determine if it is a directory.
 .IP
 .nf
 \f[C]
->\ File.isFile(\ "/opt/trunk/test"\ )
+>\ File.isFile(\ "/opt/sequoiadb"\ )
 true
 \f[]
 .fi

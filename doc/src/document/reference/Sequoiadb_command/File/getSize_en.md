@@ -16,13 +16,13 @@ Get the size of the file.
 
 ##PARAMETERS##
 
-| Name     | Type   | Description | Required or not |
-| -------- | ------ | ----------- | --------------- |
-| filename | string | file path   | yes             |
+| Name     | Type   | Default | Description | Required or not |
+| -------- | ------ | ------- | ----------- | --------------- |
+| filename | string | ---     | file path   | yes             |
 
 >Note:
 
->It can't get the size of the binary file.
+>It can't get the size of the binary file. If you want to get the size fo the binary file, you can reference [getLength](reference/Sequoiadb_command/FileContent/getLength.md)
 
 ##RETURN VALUE##
 
@@ -39,6 +39,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Get the size of the file.
 
 ```lang-javascript
-> File.getSize( "/opt/trunk/test/test_one" )
+> File.getSize( "/opt/sequoiadb/file" )
 13558
 ```

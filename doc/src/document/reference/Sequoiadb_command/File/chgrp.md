@@ -31,8 +31,8 @@ File
 
 ##示例##
 
-* 设置文件的所属用户组(系统存在 “sequoiadb” 用户组)。
+* 设置文件的所属用户组为 “sequoiadb” 用户组；
 
   ```lang-javascript
-  > File.chgrp( "/opt/trunk/file", "sequoiadb", false )
+  > File.chgrp( "/opt/sequoiadb/file", "sequoiadb", false )
   ```

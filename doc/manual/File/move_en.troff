@@ -19,13 +19,15 @@ Move a file.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,6 +41,8 @@ src
 T}@T{
 string
 T}@T{
+\-\-\-
+T}@T{
 source file path
 T}@T{
 yes
@@ -49,6 +53,8 @@ T}@T{
 des
 T}@T{
 string
+T}@T{
+\-\-\-
 T}@T{
 destination file path
 T}@T{
@@ -71,6 +77,6 @@ Move a file.
 .IP
 .nf
 \f[C]
->\ File.move(\ "/opt/trunk/srcFile",\ "/opt/trunk/desFile"\ )
+>\ File.move(\ "/opt/sequoiadb/srcFile",\ "/opt/sequoiadb/desFile"\ )
 \f[]
 .fi

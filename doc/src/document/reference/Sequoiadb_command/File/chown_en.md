@@ -1,6 +1,6 @@
 ##NAME##
 
-chown - Changes the user and/or group ownership of each given file.
+chown - Set the user and/or group ownership of each given file.
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ File
 
 ##DESCRIPTION##
 
-Changes the user and/or group ownership of each given file.
+Set the user and/or group ownership of each given file.
 
 ##PARAMETERS##
 
@@ -24,10 +24,10 @@ Changes the user and/or group ownership of each given file.
 
 The detailed description of 'options' parameter is as follows:
 
-| Name      | Type   | Required or not | Format                     | Description |
-| --------- | ------ | --------------- | -------------------------- | ----------- |
-| username  | string | not             | { username: "username" }   | username    |
-| groupname | string | not             | { groupname: "groupname" } | groupname   |
+| Name      | Type   | Description | Required or not |
+| --------- | ------ | ----------- | --------------- |
+| username  | string | username    | not             |
+| groupname | string | groupname   | not             |
 
 >Note:
 
@@ -45,10 +45,8 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Changes the user and/or group ownership of each given file.
+* Changes the user and group ownership of each given file.
 
 ```lang-javascript
-> File.chown( "/opt/trunk/file", { "username": "sequoiadb" }, false )
-  // or
-> File.chown( "/opt/trunk/file", { "groupname": "sequoiadbGroup" }, true )
+> File.chown( "/opt/sequoiadb/file", { "username": "sequoiadb", "groupname": "SequoiadDB" }, false )
 ```

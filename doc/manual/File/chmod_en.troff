@@ -94,10 +94,10 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Change file mode bits.
+Set file mode bits as 0777.
 .IP
 .nf
 \f[C]
->\ File.chmod(\ "/opt/trunk/file",\ 664,\ false\ )
+>\ File.chmod(\ "/opt/sequoiadb/file",\ 0777,\ false\ )
 \f[]
 .fi

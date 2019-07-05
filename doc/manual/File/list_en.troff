@@ -19,13 +19,15 @@ List directory contents.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,6 +41,8 @@ options
 T}@T{
 JSON
 T}@T{
+\-\-\-
+T}@T{
 optional parameter
 T}@T{
 yes
@@ -50,9 +54,19 @@ filter
 T}@T{
 JSON
 T}@T{
+Default to display all
+T}@T{
 filtered conditions
 T}@T{
 not
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+content
+T}@T{
+T}@T{
 T}
 .TE
 .PP
@@ -60,7 +74,7 @@ The detail description of \[aq]options\[aq] parameter is as follow:
 .PP
 .TS
 tab(@);
-l l l l l l.
+l l l l l.
 T{
 0
 T}@T{
@@ -68,11 +82,9 @@ Attributes
 T}@T{
 Type
 T}@T{
-Required or not
-T}@T{
-Format
-T}@T{
 Description
+T}@T{
+Required or not
 T}
 _
 T{
@@ -82,20 +94,16 @@ detail
 T}@T{
 boolean
 T}@T{
-not
-T}@T{
-{ detail: true } or {
-T}@T{
 whether to display the
+T}@T{
+not
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
-T}@T{
-detail: false }
-T}@T{
 details
+T}@T{
 T}
 T{
 2
@@ -104,19 +112,9 @@ pathname
 T}@T{
 string
 T}@T{
-not
-T}@T{
-{ pathname: "pathname"
-T}@T{
 filepath
-T}
-T{
 T}@T{
-T}@T{
-T}@T{
-T}@T{
-}
-T}@T{
+not
 T}
 .TE
 .PP
@@ -138,22 +136,30 @@ List directory contents
 .IP
 .nf
 \f[C]
->\ File.list(\ {\ detail:\ true,\ pathname:\ "/opt/trunk/test"\ }\ )
+>\ File.list(\ {\ detail:\ true,\ pathname:\ "/opt/sequoiadb"\ }\ )
 {
-\ \ "name":\ "test_one",
-\ \ "size":\ "0",
-\ \ "mode":\ "\-rw\-r\-\-r\-\-",
+\ \ "name":\ "file1",
+\ \ "size":\ "20480",
+\ \ "mode":\ "drwxr\-xr\-x",
 \ \ "user":\ "root",
 \ \ "group":\ "root",
-\ \ "lasttime":\ "2月\ 27\ 10:21"
+\ \ "lasttime":\ "6月\ 11\ 11:58"
 }
 {
-\ \ "name":\ "test_twe",
-\ \ "size":\ "0",
-\ \ "mode":\ "\-rw\-r\-\-r\-\-",
+\ \ "name":\ "file2",
+\ \ "size":\ "20480",
+\ \ "mode":\ "drwxr\-xr\-x",
 \ \ "user":\ "root",
 \ \ "group":\ "root",
-\ \ "lasttime":\ "2月\ 27\ 10:22"
+\ \ "lasttime":\ "6月\ 12\ 12:58"
+}
+{
+\ \ "name":\ "file3",
+\ \ "size":\ "20480",
+\ \ "mode":\ "drwxr\-xr\-x",
+\ \ "user":\ "root",
+\ \ "group":\ "root",
+\ \ "lasttime":\ "6月\ 13\ 13:58"
 }
 \f[]
 .fi
@@ -162,14 +168,14 @@ List directory contents and filter the result set
 .IP
 .nf
 \f[C]
->\ File.list(\ {\ detail:\ true,\ pathname:\ "/opt/trunk/test"\ },\ {\ $and:\ [\ {\ name:\ "test_one"\ },\ {\ size:\ "0"\ }\ ]\ }\ )
+>\ File.list(\ {\ detail:\ true,\ pathname:\ "/opt/sequoiadb"\ },\ {\ $and:\ [\ {\ name:\ "file1"\ },\ {\ size:\ "20480"\ }\ ]\ }\ )
 {
-\ \ "name":\ "test_one",
-\ \ "size":\ "0",
-\ \ "mode":\ "\-rw\-r\-\-r\-\-",
+\ \ "name":\ "file1",
+\ \ "size":\ "20480",
+\ \ "mode":\ "drwxr\-xr\-x",
 \ \ "user":\ "root",
 \ \ "group":\ "root",
-\ \ "lasttime":\ "2月\ 27\ 10:21"
+\ \ "lasttime":\ "6月\ 13\ 13:58"
 }
 \f[]
 .fi

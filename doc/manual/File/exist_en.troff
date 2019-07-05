@@ -19,13 +19,15 @@ Determine if the file exists.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -38,6 +40,8 @@ T}@T{
 filepath
 T}@T{
 string
+T}@T{
+\-\-\-
 T}@T{
 file path
 T}@T{
@@ -61,6 +65,6 @@ Determine if the file exists.
 .nf
 \f[C]
 >\ File.exist(\ "/opt/trunk/file"\ )
-true
+false
 \f[]
 .fi

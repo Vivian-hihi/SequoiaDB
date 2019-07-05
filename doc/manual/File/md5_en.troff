@@ -19,13 +19,15 @@ Get the md5 value of the file.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -38,6 +40,8 @@ T}@T{
 filepath
 T}@T{
 string
+T}@T{
+\-\-\-
 T}@T{
 file path
 T}@T{
@@ -60,7 +64,7 @@ Get the md5 value of the file.
 .IP
 .nf
 \f[C]
->\ File.md5(\ "/opt/trunk/test/test_one"\ )
+>\ File.md5(\ "/opt/sequoiadb/file"\ )
 f8fef4e0f30176c126d85cadca298a7c
 \f[]
 .fi

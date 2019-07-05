@@ -33,13 +33,13 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Open a banary file and get a file descriptor;
 
 ```lang-javascript
-> var binaryFile = new File( "/opt/trunk/test.dump" )
+> var file = new File( "/opt/sequoiadb/file.dump" )
 ```
 
-* Read the contents of the file into the fileContent object;
+* Read the contents of the file into the fileContent object（For more detail, please reference [File::readContent](reference/Sequoiadb_command/File/readContent)）;
 
 ```lang-javascript
-> var content = binaryFile.readContent( 10000 )
+> var content = file.readContent( 10 )
 ```
 
 * Convert the binary stream in the fileContent to base64 encoded;
@@ -51,6 +51,14 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * You can write the string after conversion to a new file, so you can easily view the string.
 
 ```lang-javascript
-> var base64StringFile = new File( "/opt/trunk/test.dump.base64" ) 
+> var base64StringFile = new File( "/opt/sequoiadb/file.dump.base64" ) 
 > base64StringFile.write( base64String )
+```
+
+* Read the contents of the file.
+
+```lang-javascript
+> base64StringFile.seek(0)
+> base64StringFile.read()
+BQAGAAgA8////w==
 ```

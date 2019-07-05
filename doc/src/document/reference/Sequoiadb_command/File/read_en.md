@@ -16,9 +16,9 @@ Read file.
 
 ##PARAMETERS##
 
-| Name   | Type     | Description                              | Required or not |
-| ------ | -------- | ---------------------------------------  | --------------- |
-| size   | int      | the number of bytes requested to be read and the entire contents of the  current file cursor will be readed by default | not             |
+| Name   | Type     | Default | Description | Required or not |
+| ------ | -------- | ------- | ----------  | --------------- |
+| size   | int      | default to read the entire contents of the current file cursor | the number of bytes requested to be read | not |
 
 ##RETURN VALUE##
 

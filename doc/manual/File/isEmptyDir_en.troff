@@ -19,13 +19,15 @@ Determine if the directory is empty.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,7 +41,9 @@ dirName
 T}@T{
 string
 T}@T{
-directory name
+\-\-\-
+T}@T{
+directory pathname
 T}@T{
 yes
 T}
@@ -58,7 +62,7 @@ Determine if the directory is empty.
 .IP
 .nf
 \f[C]
->\ File.isEmptyDir(\ "/opt/trunk/test"\ )
+>\ File.isEmptyDir(\ "/opt/sequoiadb"\ )
 false
 \f[]
 .fi

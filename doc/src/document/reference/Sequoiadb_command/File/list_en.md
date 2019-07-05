@@ -16,17 +16,17 @@ List directory contents.
 
 ##PARAMETERS##
 
-| Name    | Type     | Description         | Required or not |
-| ------- | -------- | ------------------- | --------------- |
-| options | JSON     | optional parameter  | yes             |
-| filter  | JSON     | filtered conditions | not             |
+| Name    | Type     | Default                        | Description         | Required or not |
+| ------- | -------- | ------------------------------ | ------------------- | --------------- |
+| options | JSON     | ---                            | optional parameter  | yes             |
+| filter  | JSON     | Default to display all content | filtered conditions | not             |
 
 The detail description of 'options' parameter is as follow:
 
-| Attributes | Type    | Required or not | Format                                  | Description                   |
-| ---------- | ------- |---------------- | --------------------------------------- | ---------------- |
-| detail     | boolean | not             | { detail: true } or { detail: false } | whether to display the details |
-| pathname   | string  | not             | { pathname: "pathname" }                | filepath                         |
+| Attributes | Type    | Description                    | Required or not  |
+| ---------- | ------- |------------------------------- | ---------------- |
+| detail     | boolean | whether to display the details | not              |
+| pathname   | string  | filepath                       | not              |
 
 The optional parameter Filter supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
 
@@ -45,35 +45,43 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * List directory contents
 
 ```lang-javascript
-> File.list( { detail: true, pathname: "/opt/trunk/test" } )
+> File.list( { detail: true, pathname: "/opt/sequoiadb" } )
 {
-  "name": "test_one",
-  "size": "0",
-  "mode": "-rw-r--r--",
+  "name": "file1",
+  "size": "20480",
+  "mode": "drwxr-xr-x",
   "user": "root",
   "group": "root",
-  "lasttime": "2月 27 10:21"
+  "lasttime": "6月 11 11:58"
 }
 {
-  "name": "test_twe",
-  "size": "0",
-  "mode": "-rw-r--r--",
+  "name": "file2",
+  "size": "20480",
+  "mode": "drwxr-xr-x",
   "user": "root",
   "group": "root",
-  "lasttime": "2月 27 10:22"
+  "lasttime": "6月 12 12:58"
+}
+{
+  "name": "file3",
+  "size": "20480",
+  "mode": "drwxr-xr-x",
+  "user": "root",
+  "group": "root",
+  "lasttime": "6月 13 13:58"
 }
 ```
 
 * List directory contents and filter the result set
 
 ```lang-javascript
-> File.list( { detail: true, pathname: "/opt/trunk/test" }, { $and: [ { name: "test_one" }, { size: "0" } ] } )
+> File.list( { detail: true, pathname: "/opt/sequoiadb" }, { $and: [ { name: "file1" }, { size: "20480" } ] } )
 {
-  "name": "test_one",
-  "size": "0",
-  "mode": "-rw-r--r--",
+  "name": "file1",
+  "size": "20480",
+  "mode": "drwxr-xr-x",
   "user": "root",
   "group": "root",
-  "lasttime": "2月 27 10:21"
+  "lasttime": "6月 13 13:58"
 }
 ```

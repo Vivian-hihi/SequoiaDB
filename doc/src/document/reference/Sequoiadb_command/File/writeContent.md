@@ -12,9 +12,9 @@ File
 
 ##参数##
 
-| 参数名      | 参数类型         | 描述                                    | 是否必填 |
-| ----------- | ---------------- | --------------------------------------- | -------- |
-| fileContent | fileContent 对象 | 往文件中写入的 fileContent 的二进制内容 | 是       |
+| 参数名      | 参数类型         | 默认值 | 描述                                    | 是否必填 |
+| ----------- | ---------------- | ------ | --------------------------------------- | -------- |
+| fileContent | fileContent 对象 | ---    | 往文件中写入的 fileContent 的二进制内容 | 是       |
 
 ##返回值##
 
@@ -32,13 +32,13 @@ File
 * 打开一个二进制文件，获取文件描述符；
 
   ```lang-javascript
-  > var test = new File( "/opt/sequoiadb/test.dump" )
+  > var file = new File( "/opt/sequoiadb/file.dump" )
   ```
 
 * 读取二进制文件的内容并存入 fileContent 对象中；
 
   ```lang-javascript
-  > var content = test.readContent()
+  > var content = file.readContent()
   > content instanceof FileContent
   true
   ```
@@ -46,6 +46,6 @@ File
 * 往文件中写入 fileContent 对象中的二进制内容。
 
   ```lang-javascript
-  > var file = new File( "/opt/trunk/file.dump" )
-  > file.writeContent( content )
+  > var file2 = new File( "/opt/sequoiadb/file2.dump" )
+  > file2.writeContent( content )
   ```

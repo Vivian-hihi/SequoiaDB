@@ -31,8 +31,8 @@ File
 
 ##示例##
 
-* 设置文件权限。
+* 设置文件权限为 0777;
 
   ```lang-javascript
-  > File.chmod( "/opt/trunk/file", 0664, false )
+  > File.chmod( "/opt/sequoiadb/file", 0777, false )
   ```

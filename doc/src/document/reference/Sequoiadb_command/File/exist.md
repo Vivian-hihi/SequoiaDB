@@ -12,9 +12,9 @@ File
 
 ##参数##
 
-| 参数名   | 参数类型 | 描述     | 是否必填 |
-| -------- | -------- | -------- | -------- |
-| filepath | string   | 文件路径 | 是       |
+| 参数名   | 参数类型 | 默认值 | 描述     | 是否必填 |
+| -------- | -------- | ------ | -------- | -------- |
+| filepath | string   | ---    | 文件路径 | 是       |
 
 ##返回值##
 
@@ -32,6 +32,6 @@ File
 * 判断文件是否存在。
 
   ```lang-javascript
-  > File.exist( "/opt/trunk/file" )
-  true
+  > File.exist( "/opt/sequoiadb/file" )
+  false
   ```

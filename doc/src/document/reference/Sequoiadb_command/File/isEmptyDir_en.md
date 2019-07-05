@@ -16,9 +16,9 @@ Determine if the directory is empty.
 
 ##PARAMETERS##
 
-| Name    | Type     | Description    | Required or not |
-| ------- | -------- | -------------- | --------------- |
-| dirName | string   | directory name | yes             |
+| Name    | Type     | Default | Description        | Required or not |
+| ------- | -------- | ------- | ------------------ | --------------- |
+| dirName | string   | ---     | directory pathname | yes             |
 
 ##RETURN VALUE##
 
@@ -33,6 +33,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Determine if the directory is empty.
 
 ```lang-javascript
-> File.isEmptyDir( "/opt/trunk/test" )
+> File.isEmptyDir( "/opt/sequoiadb" )
 false
 ```

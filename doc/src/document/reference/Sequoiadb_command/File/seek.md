@@ -42,7 +42,7 @@ where 参数可选值如下表：
 
 ##示例##
 
-* 打开一个文件，获取文件描述符（假设文件中内容为字符串 “sequoiadb” ）；
+* 打开一个文件，获取文件描述符；
 
   ```lang-javascript
   > var file = new File( "/opt/sequoiadb/file" )

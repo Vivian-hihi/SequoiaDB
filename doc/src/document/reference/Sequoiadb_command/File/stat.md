@@ -12,9 +12,9 @@ File
 
 ##参数##
 
-| 参数名   | 参数类型 | 描述     | 是否必填 |
-| -------- | -------- | -------- | -------- |
-| filepath | string   | 文件路径 | 是       |
+| 参数名   | 参数类型 | 默认值 | 描述     | 是否必填 |
+| -------- | -------- | ------ | -------- | -------- |
+| filepath | string   | ---    | 文件路径 | 是       |
 
 ##返回值##
 
@@ -32,16 +32,16 @@ File
 * 显示文件的状态信息。
 
   ```lang-javascript
-  > File.stat( "/opt/trunk/test/test_one" )
+  > File.stat( "/opt/sequoiadb/file" )
   {
-    "name": "/opt/trunk/test/test_one",
-    "size": "0",
-    "mode": "rw-r--r--",
-    "user": "root",
-    "group": "root",
-    "accessTime": "2019-02-27 10:21:45.540159133 +0800",
-    "modifyTime": "2019-02-27 10:21:45.540159133 +0800",
-    "changeTime": "2019-02-27 10:21:45.540159133 +0800",
-    "type": "regular file"
+      "name": "/opt/sequoiadb/file",
+      "size": "0",
+      "mode": "rw-r--r--",
+      "user": "root",
+      "group": "root",
+      "accessTime": "2019-06-14 14:04:58.883619463 +0800",
+      "modifyTime": "2019-06-14 14:04:58.883619463 +0800",
+      "changeTime": "2019-06-14 14:04:58.883619463 +0800",
+      "type": "regular file"
   }
   ```

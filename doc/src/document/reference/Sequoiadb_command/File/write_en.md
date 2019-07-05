@@ -16,9 +16,9 @@ Write to a file descriptor.
 
 ##PARAMETERS##
 
-| Name    | Type     | Description                 | Required or not |
-| ------- | -------- | --------------------------- | --------------- |
-| content | string   | what is written to the file | yes             |
+| Name    | Type     | Default | Description                 | Required or not |
+| ------- | -------- | ------- | --------------------------- | --------------- |
+| content | string   | ---     | what is written to the file | yes             |
 
 ##RETURN VALUE##
 
@@ -41,13 +41,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Write file;
 
 ```lang-javascript
-> file.write( "sequoiadb" )
-```
-
-* Read file.
-
-```lang-javascript
-> file.seek(0)
-> file.read()
-SequoiaDB
+> file.write( "sequoiaDB" )
 ```

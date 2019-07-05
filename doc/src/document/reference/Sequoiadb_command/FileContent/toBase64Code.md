@@ -27,27 +27,35 @@ FileContent
 
 ##示例##
 
-* 打开一个二进制文件，获取文件描述符
-
-	```lang-javascript
-	> var binaryFile = new File( "/opt/trunk/test.dump" )
-	```
-
-* 读取文件内容到 fileContent 对象中
+* 打开一个二进制文件，获取文件描述符；
 
   ```lang-javascript
-  > var content = binaryFile.readContent( 10000 )
+  > var file = new File( "/opt/sequoiadb/file.dump" )
   ```
 
-* 把 fileContent 对象中的内容转化为 base64 编码格式
+* 读取文件内容到 fileContent 对象中（详细可参考命令[File::readContent](reference/Sequoiadb_command/File/readContent)）；
 
- ```lang-javascript
- > var base64String = content.toBase64Code()
- ```
+  ```lang-javascript
+  > var content = file.readContent( 10 )
+  ```
 
-* 可以把转换之后的字符串写入一个新建文件中，方便查看该字符串
+* 把 fileContent 对象中的内容转化为 base64 编码格式；
 
- ```lang-javascript
- > var base64StringFile = new File( "/opt/trunk/test.dump.base64" ) 
- > base64StringFile.write( base64String )
- ```
+  ```lang-javascript
+  > var base64String = content.toBase64Code()
+  ```
+
+* 可以把转换之后的字符串写入一个新建文件中，方便查看该字符串；
+
+  ```lang-javascript
+  > var base64StringFile = new File( "/opt/sequoiadb/file.dump.base64" ) 
+  > base64StringFile.write( base64String )
+  ```
+
+* 读取文件 base64StringFile 的内容。
+
+  ```lang-javascript
+  > base64StringFile.seek(0)
+  > base64StringFile.read()
+  BQAGAAgA8////w==
+  ```

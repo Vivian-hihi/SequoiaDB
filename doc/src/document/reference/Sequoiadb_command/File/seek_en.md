@@ -45,7 +45,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Open a file and get a file descriptor( Suppose the file content is "sequoiadb");
+* Open a file and get a file descriptor;
 
 ```lang-javascript
 > var file = new File( "/opt/sequoiadb/file" )

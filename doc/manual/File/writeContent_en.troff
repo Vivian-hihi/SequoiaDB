@@ -19,13 +19,15 @@ Write to a fileContent object to file.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,11 +41,14 @@ fileContent
 T}@T{
 fileContent object
 T}@T{
+\-\-\-
+T}@T{
 what is written to the
 T}@T{
 yes
 T}
 T{
+T}@T{
 T}@T{
 T}@T{
 T}@T{
@@ -67,7 +72,7 @@ Open a binary file and get a file descriptor;
 .IP
 .nf
 \f[C]
->\ var\ test\ =\ new\ File(\ "/opt/sequoiadb/test.dump"\ )
+>\ var\ file\ =\ new\ File(\ "/opt/sequoiadb/file.dump"\ )
 \f[]
 .fi
 .IP \[bu] 2
@@ -75,7 +80,7 @@ Read the contents of the file into the fileContent object;
 .IP
 .nf
 \f[C]
->\ var\ content\ =\ test.readContent()
+>\ var\ content\ =\ file.readContent()
 >\ content\ instanceof\ FileContent
 true
 \f[]
@@ -85,7 +90,7 @@ Write file.
 .IP
 .nf
 \f[C]
->\ var\ file\ =\ new\ File(\ "/opt/trunk/file.dump"\ )
->\ file.writeContent(\ content\ )
+>\ var\ file2\ =\ new\ File(\ "/opt/sequoiadb/file2.dump"\ )
+>\ file2.writeContent(\ content\ )
 \f[]
 .fi

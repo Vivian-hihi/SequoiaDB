@@ -16,9 +16,9 @@ Determine if it is a directory.
 
 ##PARAMETERS##
 
-| Name     | Type     | Description | Required or not |
-| -------- | -------- | ----------- | --------------- |
-| filepath | string   | fiel path   | yes             |
+| Name     | Type     | Default | Description | Required or not |
+| -------- | -------- | ------- | ----------- | --------------- |
+| filepath | string   | ---     | fiel path   | yes             |
 
 ##RETURN VALUE##
 
@@ -30,9 +30,9 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Determine if it is a normal file
+* Determine if it is a directory.
 
 ```lang-javascript
-> File.isFile( "/opt/trunk/test" )
+> File.isFile( "/opt/sequoiadb" )
 true
 ```

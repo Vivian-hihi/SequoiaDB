@@ -12,10 +12,9 @@ File
 
 ##参数##
 
-| 参数名   | 参数类型 | 描述     | 是否必填 |
-| -------- | -------- | -------- | -------- |
-| filepath | string   | 文件路径 | 是       |
-
+| 参数名   | 参数类型 | 默认值 | 描述     | 是否必填 |
+| -------- | -------- | ------ | -------- | -------- |
+| filepath | string   | ---    | 文件路径 | 是       |
 
 ##返回值##
 
@@ -33,6 +32,6 @@ File
 * 获取文件的 md5 值。
 
   ```lang-javascript
-  > File.md5( "/opt/trunk/test/test_one" )
+  > File.md5( "/opt/sequoiadb/file" )
   f8fef4e0f30176c126d85cadca298a7c
   ```

@@ -19,13 +19,15 @@ Determine if it is a normal file.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -38,6 +40,8 @@ T}@T{
 filepath
 T}@T{
 string
+T}@T{
+\-\-\-
 T}@T{
 fiel path
 T}@T{
@@ -58,7 +62,7 @@ Determine if it is a normal file.
 .IP
 .nf
 \f[C]
->\ File.isFile(\ "/opt/trunk/test"\ )
-false
+>\ File.isFile(\ "/opt/sequoiadb/file"\ )
+true
 \f[]
 .fi

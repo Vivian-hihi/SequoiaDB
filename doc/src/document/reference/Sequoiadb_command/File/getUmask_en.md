@@ -23,6 +23,7 @@ Get file mode creation mask.
 ##RETURN VALUE##
 
 On success, return umask.
+
 On error, exception will be thrown.
 
 ##ERRORS##

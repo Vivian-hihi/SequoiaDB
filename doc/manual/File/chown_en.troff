@@ -5,7 +5,7 @@
 .hy
 .SH NAME
 .PP
-chown \- Changes the user and/or group ownership of each given file.
+chown \- Set the user and/or group ownership of each given file.
 .SH SYNOPSIS
 .PP
 \f[B]\f[I]File.chown( <filepath>, <options>, [recursive] )\f[]\f[]
@@ -14,7 +14,7 @@ chown \- Changes the user and/or group ownership of each given file.
 File
 .SH DESCRIPTION
 .PP
-Changes the user and/or group ownership of each given file.
+Set the user and/or group ownership of each given file.
 .SH PARAMETERS
 .PP
 .TS
@@ -87,7 +87,7 @@ The detailed description of \[aq]options\[aq] parameter is as follows:
 .PP
 .TS
 tab(@);
-l l l l l l.
+l l l l l.
 T{
 0
 T}@T{
@@ -95,11 +95,9 @@ Name
 T}@T{
 Type
 T}@T{
-Required or not
-T}@T{
-Format
-T}@T{
 Description
+T}@T{
+Required or not
 T}
 _
 T{
@@ -109,19 +107,9 @@ username
 T}@T{
 string
 T}@T{
-not
-T}@T{
-{ username: "username"
-T}@T{
 username
-T}
-T{
 T}@T{
-T}@T{
-T}@T{
-T}@T{
-}
-T}@T{
+not
 T}
 T{
 2
@@ -130,22 +118,16 @@ groupname
 T}@T{
 string
 T}@T{
-not
-T}@T{
-{ groupname: "groupname
-T}@T{
 groupname
+T}@T{
+not
 T}
-T{
-T}@T{
-T}@T{
-T}@T{
-T}@T{
-" }
-T}@T{
-T}
+
 .TE
-Note :
+.RE
+.pp
+Note:
+.RE
 .PP
 	Two parameters, username and groupname, must specify one of them.
 .RE
@@ -161,12 +143,10 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Changes the user and/or group ownership of each given file.
+Changes the user and group ownership of each given file.
 .IP
 .nf
 \f[C]
->\ File.chown(\ "/opt/trunk/file",\ {\ "username":\ "sequoiadb"\ },\ false\ )
-\ \ //\ or
->\ File.chown(\ "/opt/trunk/file",\ {\ "groupname":\ "sequoiadbGroup"\ },\ true\ )
+>\ File.chown(\ "/opt/sequoiadb/file",\ {\ "username":\ "sequoiadb",\ "groupname":\ "SequoiadDB"\ },\ false\ )
 \f[]
 .fi

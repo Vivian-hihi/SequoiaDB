@@ -16,9 +16,9 @@ Determine if the file exists.
 
 ##PARAMETERS##
 
-| Name     | Type     | Description | Required or not |
-| -------- | -------- | ----------- | --------------- |
-| filepath | string   | file path   | yes             |
+| Name     | Type     | Default | Description | Required or not |
+| -------- | -------- | ------- | ----------- | --------------- |
+| filepath | string   | ---     | file path   | yes             |
 
 ##RETURN VALUE##
 
@@ -36,5 +36,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ```lang-javascript
 > File.exist( "/opt/trunk/file" )
-true
+false
 ```

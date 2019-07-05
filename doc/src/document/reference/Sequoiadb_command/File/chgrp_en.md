@@ -1,6 +1,6 @@
 ##NAME##
 
-chgrp - Change the group of the file.
+chgrp - Set the user group of the file.
 
 ##SYNOPSIS##
 
@@ -12,7 +12,7 @@ File
 
 ##DESCRIPTION##
 
-Change the group of the file.
+Set the user group of the file.
 
 ##PARAMETERS##
 
@@ -34,8 +34,8 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Change the group of the file( The system has an user group named "sequoiadb" ).
+* Set the user group of the file to the "sequoiadb".
 
 ```lang-javascript
-> File.chgrp( "/opt/trunk/file", "sequoiadb", false )
+> File.chgrp( "/opt/sequoiadb/file", "sequoiadb", false )
 ```

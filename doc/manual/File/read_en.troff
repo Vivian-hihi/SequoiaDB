@@ -19,13 +19,15 @@ Read file.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,6 +41,8 @@ size
 T}@T{
 int
 T}@T{
+default to read the
+T}@T{
 the number of bytes
 T}@T{
 not
@@ -47,6 +51,8 @@ T{
 T}@T{
 T}@T{
 T}@T{
+entire contents of the
+T}@T{
 requested to be read
 T}@T{
 T}
@@ -54,28 +60,8 @@ T{
 T}@T{
 T}@T{
 T}@T{
-and the entire contents
+current file cursor
 T}@T{
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-of the current file
-T}@T{
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-cursor will be readed
-T}@T{
-T}
-T{
-T}@T{
-T}@T{
-T}@T{
-by default
 T}@T{
 T}
 .TE

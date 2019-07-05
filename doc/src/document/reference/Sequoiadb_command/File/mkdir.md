@@ -30,8 +30,8 @@ File
 
 ##示例##
 
-* 创建目录。
+* 创建目录；
 
   ```lang-javascript
-  > File.mkdir( "/opt/trunk/newDirectory" )
+  > File.mkdir( "/opt/sequoiadb/newDir" )
   ```

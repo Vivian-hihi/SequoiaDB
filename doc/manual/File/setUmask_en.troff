@@ -19,13 +19,15 @@ Set file mode creation mask.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,11 +41,14 @@ umask
 T}@T{
 int
 T}@T{
+\-\-\-
+T}@T{
 permission mask of new
 T}@T{
 yes
 T}
 T{
+T}@T{
 T}@T{
 T}@T{
 T}@T{
@@ -67,10 +72,6 @@ Set file mode creation mask.
 .IP
 .nf
 \f[C]
->\ File.getUmask(\ 8\ )
-0022
 >\ File.setUmask(\ 0664\ )
->\ File.getUmask(\ 8\ )
-0644
 \f[]
 .fi

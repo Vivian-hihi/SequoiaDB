@@ -19,13 +19,15 @@ Display file or file system status
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -38,6 +40,8 @@ T}@T{
 filepath
 T}@T{
 string
+T}@T{
+\-\-\-
 T}@T{
 file path
 T}@T{
@@ -60,16 +64,16 @@ Display file or file system status.
 .IP
 .nf
 \f[C]
->\ File.stat(\ "/opt/trunk/test/test_one"\ )
+>\ File.stat(\ "/opt/sequoiadb/file"\ )
 {
-\ \ "name":\ "/opt/trunk/test/test_one",
+\ \ "name":\ "/opt/bug/file",
 \ \ "size":\ "0",
 \ \ "mode":\ "rw\-r\-\-r\-\-",
 \ \ "user":\ "root",
 \ \ "group":\ "root",
-\ \ "accessTime":\ "2019\-02\-27\ 10:21:45.540159133\ +0800",
-\ \ "modifyTime":\ "2019\-02\-27\ 10:21:45.540159133\ +0800",
-\ \ "changeTime":\ "2019\-02\-27\ 10:21:45.540159133\ +0800",
+\ \ "accessTime":\ "2019\-06\-14\ 14:04:58.883619463\ +0800",
+\ \ "modifyTime":\ "2019\-06\-14\ 14:04:58.883619463\ +0800",
+\ \ "changeTime":\ "2019\-06\-14\ 14:04:58.883619463\ +0800",
 \ \ "type":\ "regular\ file"
 }
 \f[]

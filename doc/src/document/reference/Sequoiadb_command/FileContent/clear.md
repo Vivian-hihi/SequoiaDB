@@ -27,20 +27,20 @@ FileContent
 
 ##示例##
 
-* 打开一个二进制文件，获取文件描述符
-
-	```lang-javascript
-	> var binaryFile = new File( "/opt/trunk/test.dump" )
-	```
-
-* 读取文件内容到 fileContent 对象中
+* 打开一个二进制文件，获取文件描述符；
 
   ```lang-javascript
-  > var content = binaryFile.readContent( 10000 )
+  > var file = new File( "/opt/sequoiadb/file.dump" )
+  ```
+
+* 读取文件内容到 fileContent 对象中（详细可参考命令[File::readContent](reference/Sequoiadb_command/File/readContent)）；
+
+  ```lang-javascript
+  > var content = file.readContent( 10000 )
   ```
 
 * 清除缓冲区内容
 
- ```lang-javascript
- > content.clear()
- ```
+  ```lang-javascript
+  > content.clear()
+  ```

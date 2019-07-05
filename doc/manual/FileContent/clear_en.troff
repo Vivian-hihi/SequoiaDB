@@ -29,19 +29,20 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Open a banary file and get a file descriptor;
+Open a file and get a file descriptor.
 .IP
 .nf
 \f[C]
->\ var\ binaryFile\ =\ new\ File(\ "/opt/trunk/test.dump"\ )
+>\ var\ file\ =\ new\ File(\ "/opt/sequoiadb/file.dump"\ )
 \f[]
 .fi
 .IP \[bu] 2
-Read the contents of the file into the fileContent object;
+Read the contents of the file into the fileContent object（For more detail,
+please reference File::readContent）.
 .IP
 .nf
 \f[C]
->\ var\ content\ =\ binaryFile.readContent(\ 10000\ )
+>\ var\ content\ =\ file.readContent(\ 10000\ )
 \f[]
 .fi
 .IP \[bu] 2

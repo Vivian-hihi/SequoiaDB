@@ -21,7 +21,7 @@ File
 
 > Note : 
 
-> 参数 srcFile 和 desFile 具体格式为 “ip:sdbcmPort@filepath”，例如  “192.168.20.71:11790@/opt/trunk/test/test_one”。
+> 参数 srcFile 和 desFile 具体格式为 “ip:sdbcmPort@filepath”，例如  “192.168.20.71:11790@/opt/sequoiadb/file”。注意端口号是指 sdbcm 的端口号。
 
 ##返回值##
 
@@ -39,6 +39,6 @@ File
 * 远程拷贝文件。
 
   ```lang-javascript
-  > File.scp( "192.168.20.71:11790@/opt/trunk/test/test_one", "192.168.20.71:11790@/opt/trunk/test/test_four" )
-  Success to copy file from 192.168.20.71:11790@/opt/trunk/test/test_one to 192.168.20.71:11790@/opt/trunk/test/test_four
+  > File.scp( "192.168.20.71:11790@/opt/sequoiadb/srcFile", "192.168.20.71:11790@/opt/sequoiadb/desFile" )
+  Success to copy file from 192.168.20.71:11790@/opt/sequoiadb/srcFile to 192.168.20.71:11790@/opt/sequoiadb/desFile
   ```

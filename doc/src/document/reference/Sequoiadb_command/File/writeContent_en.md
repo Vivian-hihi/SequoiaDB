@@ -16,9 +16,9 @@ Write to a fileContent object to file.
 
 ##PARAMETERS##
 
-| Name        | Type               | Description                 | Required or not |
-| ----------- | ------------------ | --------------------------- | --------------- |
-| fileContent | fileContent object | what is written to the file | yes             |
+| Name        | Type               | Default | Description                 | Required or not |
+| ----------- | ------------------ | ------- | --------------------------- | --------------- |
+| fileContent | fileContent object | ---     | what is written to the file | yes             |
 
 ##RETURN VALUE##
 
@@ -35,13 +35,13 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Open a binary file and get a file descriptor;
 
 ```lang-javascript
-> var test = new File( "/opt/sequoiadb/test.dump" )
+> var file = new File( "/opt/sequoiadb/file.dump" )
 ```
 
 * Read the contents of the file into the fileContent object;
 
 ```lang-javascript
-> var content = test.readContent()
+> var content = file.readContent()
 > content instanceof FileContent
 true
 ```
@@ -49,6 +49,6 @@ true
 * Write file.
 
 ```lang-javascript
-> var file = new File( "/opt/trunk/file.dump" )
-> file.writeContent( content )
+> var file2 = new File( "/opt/sequoiadb/file2.dump" )
+> file2.writeContent( content )
 ```

@@ -19,13 +19,15 @@ Get the size of the file.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,15 +41,19 @@ filename
 T}@T{
 string
 T}@T{
+\-\-\-
+T}@T{
 file path
 T}@T{
 yes
 T}
-.pp
+
 .TE
 Note:
+.RE
 .PP
 	It can\[aq]t get the size of the binary file.
+If you want to get the size fo the binary file, you can reference getLength
 .RE
 .SH RETURN VALUE
 .PP
@@ -65,7 +71,7 @@ Get the size of the file.
 .IP
 .nf
 \f[C]
->\ File.getSize(\ "/opt/trunk/test/test_one"\ )
+>\ File.getSize(\ "/opt/sequoiadb/file"\ )
 13558
 \f[]
 .fi

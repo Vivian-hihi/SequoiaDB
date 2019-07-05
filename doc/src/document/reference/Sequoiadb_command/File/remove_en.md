@@ -12,13 +12,13 @@ File
 
 ##DESCRIPTION##
 
-Delete file.
+Delete file or directory.
 
 ##PARAMETERS##
 
-| Name     | Type     | Description | Required or not |
-| -------- | -------- | ----------- | --------------- |
-| filepath | string   | file path   | yes             |
+| Name     | Type     | Default | Description | Required or not |
+| -------- | -------- | ------- | ----------- | --------------- |
+| filepath | string   | ---     | file path   | yes             |
 
 ##RETURN VALUE##
 
@@ -32,35 +32,8 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* View the file in the 'test' directory;
+* Delete the file named 'file' in the '/opt/sequoiadb' directory;
 
 ```lang-javascript
-> File.list( { pathname: "/opt/trunk/test" } )
-{
-  "name": "test_twe",
-  "mode": "-rw-r--r--",
-  "user": "root"
-}
-{
-  "name": "test_one",
-  "mode": "-rw-r--r--",
-  "user": "root"
-}
-```
-
-* Delete the file named 'test_twe' in the 'test' directory;
-
-```lang-javascript
-> File.remove( "/opt/trunk/test/test_twe" )
-```
-
-* View the file in the 'test' directory again.
-
-```lang-javascript
-> File.list( { pathname: "/opt/trunk/test" } )
-{
-  "name": "test_one",
-  "mode": "-rw-r--r--",
-  "user": "root"
-}
+> File.remove( "/opt/sequoiadb/file" )
 ```

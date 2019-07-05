@@ -16,9 +16,9 @@ Set file mode creation mask.
 
 ##PARAMETERS##
 
-| Name  | Type | Description                 | Required or not |
-| ----- | ---- | --------------------------- | --------------- |
-| umask | int  | permission mask of new file | yes             |
+| Name  | Type | Default | Description                 | Required or not |
+| ----- | ---- | ------- | --------------------------- | --------------- |
+| umask | int  | ---     | permission mask of new file | yes             |
 
 ##RETURN VALUE##
 
@@ -35,9 +35,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Set file mode creation mask.
 
 ```lang-javascript
-> File.getUmask( 8 )
-0022
 > File.setUmask( 0664 )
-> File.getUmask( 8 )
-0644
 ```

@@ -19,13 +19,15 @@ Write to a file descriptor.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,11 +41,14 @@ content
 T}@T{
 string
 T}@T{
+\-\-\-
+T}@T{
 what is written to the
 T}@T{
 yes
 T}
 T{
+T}@T{
 T}@T{
 T}@T{
 T}@T{
@@ -75,16 +80,6 @@ Write file;
 .IP
 .nf
 \f[C]
->\ file.write(\ "sequoiadb"\ )
-\f[]
-.fi
-.IP \[bu] 2
-Read file.
-.IP
-.nf
-\f[C]
->\ file.seek(0)
->\ file.read()
-SequoiaDB
+>\ file.write(\ "sequoiaDB"\ )
 \f[]
 .fi

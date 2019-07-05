@@ -14,18 +14,20 @@ remove \- Delete file.
 File
 .SH DESCRIPTION
 .PP
-Delete file.
+Delete file or directory.
 .SH PARAMETERS
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -38,6 +40,8 @@ T}@T{
 filepath
 T}@T{
 string
+T}@T{
+\-\-\-
 T}@T{
 file path
 T}@T{
@@ -56,41 +60,10 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-View the file in the \[aq]test\[aq] directory;
+Delete the file named \[aq]file\[aq] in the \[aq]/opt/sequoiadb\[aq] directory;
 .IP
 .nf
 \f[C]
->\ File.list(\ {\ pathname:\ "/opt/trunk/test"\ }\ )
-{
-\ \ "name":\ "test_twe",
-\ \ "mode":\ "\-rw\-r\-\-r\-\-",
-\ \ "user":\ "root"
-}
-{
-\ \ "name":\ "test_one",
-\ \ "mode":\ "\-rw\-r\-\-r\-\-",
-\ \ "user":\ "root"
-}
-\f[]
-.fi
-.IP \[bu] 2
-Delete the file named \[aq]test_twe\[aq] in the \[aq]test\[aq] directory;
-.IP
-.nf
-\f[C]
->\ File.remove(\ "/opt/trunk/test/test_twe"\ )
-\f[]
-.fi
-.IP \[bu] 2
-View the file in the \[aq]test\[aq] directory again.
-.IP
-.nf
-\f[C]
->\ File.list(\ {\ pathname:\ "/opt/trunk/test"\ }\ )
-{
-\ \ "name":\ "test_one",
-\ \ "mode":\ "\-rw\-r\-\-r\-\-",
-\ \ "user":\ "root"
-}
+>\ File.remove(\ "/opt/sequoiadb/file"\ )
 \f[]
 .fi

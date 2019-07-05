@@ -12,9 +12,9 @@ File
 
 ##参数##
 
-| 参数名  | 参数类型 | 描述             | 是否必填 |
-| ------- | -------- | ---------------- | -------- |
-| dirName | string   | 目录名称         | 是       |
+| 参数名  | 参数类型 | 默认值 | 描述     | 是否必填 |
+| ------- | -------- | ------ | -------- | -------- |
+| dirName | string   | ---    | 目录路径 | 是       |
 
 ##返回值##
 
@@ -32,6 +32,6 @@ File
 * 判断指定目录否为空目录。
 
   ```lang-javascript
-  > File.isEmptyDir( "/opt/trunk/test" )
+  > File.isEmptyDir( "/opt/sequoiadb" )
   false
   ```

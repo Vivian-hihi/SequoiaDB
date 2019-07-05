@@ -20,10 +20,10 @@ File
 
 options 参数详细说明如下：
 
-| 属性名    | 值类型 | 是否必填 | 格式                       | 描述     |
-| --------- | ------ | -------- | -------------------------- | -------- |
-| username  | string | 否       | { username: "username" }   | 用户名   |
-| groupname | string | 否       | { groupname: "groupname" } | 用户组名 |
+| 属性名    | 值类型 | 描述     | 是否必填 | 
+| --------- | ------ | -------- | -------- |
+| username  | string | 用户名   | 否       |
+| groupname | string | 用户组名 | 否       |
 
 > Note:
 
@@ -42,10 +42,8 @@ options 参数详细说明如下：
 
 ##示例##
 
-* 设置文件的所有者。
+* 设置文件的所有者；
 
   ```lang-javascript
-  > File.chown( "/opt/trunk/file", { "username": "sequoiadb" }, false )
-  // 或者
-  > File.chown( "/opt/trunk/file", { "groupname": "sequoiadbGroup" }, true )
+  > File.chown( "/opt/sequoiadb/file", { "username": "sequoiadb", "groupname": "SequoiadDB" }, false )
   ```

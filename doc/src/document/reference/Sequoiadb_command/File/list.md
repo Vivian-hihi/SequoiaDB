@@ -19,10 +19,10 @@ File
 
 options 参数详细说明如下：
 
-| 属性     | 值类型  | 是否必填 | 格式                                    | 描述             |
-| -------- | ------- |--------- | --------------------------------------- | ---------------- |
-| detail   | boolean | 否       | { detail: true } 或者 { detail: false } | 是否显示详细内容 |
-| pathname | string  | 否       | { pathname: "pathname" }                | 文件路径         |
+| 属性     | 值类型  | 描述             | 是否必填 |
+| -------- | ------- | ---------------- | -------- |
+| detail   | boolean | 是否显示详细内容 | 否       |
+| pathname | string  | 文件路径         | 否       |
 
 参数 filter 支持对结果中的某些字段进行 and 、 or 、not 和精确匹配计算，对结果集进行筛选。
 
@@ -42,35 +42,43 @@ options 参数详细说明如下：
 * 列出当前目录的文件；
 
   ```lang-javascript
-  > File.list( { detail: true, pathname: "/opt/trunk/test" } )
+  > File.list( { detail: true, pathname: "/opt/sequoiadb" } )
   {
-    "name": "test_one",
-    "size": "0",
-    "mode": "-rw-r--r--",
-    "user": "root",
-    "group": "root",
-    "lasttime": "2月 27 10:21"
+      "name": "file1",
+      "size": "20480",
+      "mode": "drwxr-xr-x",
+      "user": "root",
+      "group": "root",
+      "lasttime": "6月 11 11:58"
   }
   {
-    "name": "test_twe",
-    "size": "0",
-    "mode": "-rw-r--r--",
-    "user": "root",
-    "group": "root",
-    "lasttime": "2月 27 10:22"
+      "name": "file2",
+      "size": "20480",
+      "mode": "drwxr-xr-x",
+      "user": "root",
+      "group": "root",
+      "lasttime": "6月 12 12:58"
+  }
+  {
+      "name": "file3",
+      "size": "20480",
+      "mode": "drwxr-xr-x",
+      "user": "root",
+      "group": "root",
+      "lasttime": "6月 13 13:58"
   }
   ```
 
 * 列出当前目录的文件后，对结果进行筛选。
 
   ```lang-javascript
-  > File.list( { detail: true, pathname: "/opt/trunk/test" }, { $and: [ { name: "test_one" }, { size: "0" } ] } )
+  > File.list( { detail: true, pathname: "/opt/sequoiadb" }, { $and: [ { name: "file1" }, { size: "20480" } ] } )
   {
-    "name": "test_one",
-    "size": "0",
-    "mode": "-rw-r--r--",
-    "user": "root",
-    "group": "root",
-    "lasttime": "2月 27 10:21"
+      "name": "file1",
+      "size": "20480",
+      "mode": "drwxr-xr-x",
+      "user": "root",
+      "group": "root",
+      "lasttime": "6月 13 13:58"
   }
   ```

@@ -12,13 +12,13 @@ File
 
 ##参数##
 
-| 参数名   | 参数类型 | 描述     | 是否必填 |
-| -------- | -------- | -------- | -------- |
-| filepath | string   | 文件路径 | 是       |
+| 参数名   | 参数类型 | 默认值 | 描述     | 是否必填 |
+| -------- | -------- | ------ | -------- | -------- |
+| filepath | string   | ---    | 文件路径 | 是       |
 
 > Note：
 
-> 无法获取二进制文件的大小。
+> 无法获取二进制文件的大小。如果想获取二进制文件的大小可以参考[getLenght](reference/Sequoiadb_command/FileContent/getLength.md)。
 
 ##返回值##
 
@@ -36,6 +36,6 @@ File
 * 获取文件的大小。
 
   ```lang-javascript
-  > File.getSize( "/opt/trunk/test/test_one" )
+  > File.getSize( "/opt/sequoiadb/file" )
   13558
   ```

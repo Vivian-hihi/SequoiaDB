@@ -19,13 +19,15 @@ Find a file.
 .PP
 .TS
 tab(@);
-l l l l l.
+l l l l l l.
 T{
 0
 T}@T{
 Name
 T}@T{
 Type
+T}@T{
+Default
 T}@T{
 Description
 T}@T{
@@ -39,11 +41,14 @@ options
 T}@T{
 JSON
 T}@T{
+\-\-\-
+T}@T{
 find mode and find
 T}@T{
 yes
 T}
 T{
+T}@T{
 T}@T{
 T}@T{
 T}@T{
@@ -57,9 +62,19 @@ filter
 T}@T{
 JSON
 T}@T{
+Default to display all
+T}@T{
 Filtered conditions
 T}@T{
 not
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+content
+T}@T{
+T}@T{
 T}
 .TE
 .PP
@@ -67,7 +82,7 @@ The detail description of \[aq]options\[aq] parameter is as follow:
 .PP
 .TS
 tab(@);
-l l l l l l.
+l l l l l.
 T{
 0
 T}@T{
@@ -75,11 +90,9 @@ Attributes
 T}@T{
 Type
 T}@T{
-Required or not
-T}@T{
-Format
-T}@T{
 Description
+T}@T{
+Required or not
 T}
 _
 T{
@@ -89,96 +102,129 @@ mode
 T}@T{
 char
 T}@T{
-yes
+if { mode: \[aq]n\[aq] }, then
 T}@T{
-{ mode: \[aq]n\[aq] }{ mode
+yes
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+it means that find
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+files based on file
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+nameif { mode: \[aq]u\[aq]
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+}, then it means that
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
 T}@T{
 find files based on
+T}@T{
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
+usernameif { mode:
 T}@T{
-: \[aq]u\[aq] }{ mode: \[aq]g\[aq]
-T}@T{
-file namefind files
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
+\[aq]g\[aq] }, then it means
 T}@T{
-}{ mode: \[aq]p\[aq] }
-T}@T{
-based on username
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
+that find find based on
 T}@T{
-T}@T{
-find find based on
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
+group nameif {
 T}@T{
-T}@T{
-group namefind
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
+mode: \[aq]p\[aq] }, then it
 T}@T{
-T}@T{
-files based on
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
+means that find files
+T}@T{
+T}
+T{
 T}@T{
 T}@T{
-permission
+T}@T{
+based on permission
+T}@T{
 T}
 T{
 2
 T}@T{
 pathname
 T}@T{
-char
-T}@T{
-not
-T}@T{
-{ pathname: "pathname"
+string
 T}@T{
 specify the file path
+T}@T{
+not
 T}
 T{
 T}@T{
 T}@T{
 T}@T{
+to find, default
 T}@T{
-}
+T}
+T{
 T}@T{
-to find
+T}@T{
+T}@T{
+current directory
+T}@T{
 T}
 T{
 3
 T}@T{
 value
 T}@T{
-char
+string
+T}@T{
+finded content
 T}@T{
 yes
-T}@T{
-{ value: "content" }
-T}@T{
-find content
 T}
 .TE
 .PP
@@ -200,18 +246,15 @@ Find a file;
 .IP
 .nf
 \f[C]
->\ File.find(\ {\ mode:\ "n",\ value:\ "tmp"\ }\ )
+>\ File.find(\ {\ mode:\ \[aq]n\[aq],\ value:\ "file",\ pathname:\ "/opt"\ }\ )
 {
-\ \ "pathname":\ "./tmp"
+\ \ \ \ "pathname":\ "/opt/sequoiadb/file1"
 }
 {
-\ \ "pathname":\ "./database/50000/tmp"
+\ \ \ \ "pathname":\ "/opt/sequoiadb/file2"
 }
 {
-\ \ "pathname":\ "./.svn/tmp"
-}
-{
-\ \ "pathname":\ "./bin/tmp"
+\ \ \ \ "pathname":\ "/opt/sequoiadb/file3"
 }
 \f[]
 .fi
@@ -220,12 +263,12 @@ Find a file and filter the result set
 .IP
 .nf
 \f[C]
->\ File.find(\ {\ mode:\ "n",\ value:\ "tmp"\ },\ {\ $or:\ [\ {\ pathname:\ "./bin/tmp"\ },\ {\ pathname:\ "./database/41000/tmp"\ }\ ]\ }\ )
+>\ File.find(\ {\ mode:\ \[aq]n\[aq],\ value:\ "file",\ pathname:\ "/opt"\ },\ {\ $or:\ [\ {\ pathname:\ "/opt/sequoiadb/file1"\ },\ {\ pathname:\ "/opt/sequoiadb/file2"\ }\ ]\ }\ )
 {
-\ \ "pathname":\ "./database/41000/tmp"
+\ \ "pathname":\ "/opt/sequoiadb/file1"
 }
 {
-\ \ "pathname":\ "./bin/tmp"
+\ \ "pathname":\ "/opt/sequoiadb/file2"
 }
 \f[]
 .fi

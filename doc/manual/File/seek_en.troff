@@ -111,9 +111,9 @@ T}@T{
 T}@T{
 size plus offset
 T}
-.pp
 .TE
 Note:
+.RE
 .PP
 	When the "where" parameter is \[aq]e\[aq], the "offset" parameter can be
 negative.
@@ -130,7 +130,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Open a file and get a file descriptor( Suppose the file content is "sequoiadb");
+Open a file and get a file descriptor;
 .IP
 .nf
 \f[C]

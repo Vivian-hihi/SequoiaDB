@@ -16,18 +16,18 @@ Find a file.
 
 ##PARAMETERS##
 
-| Name    | Type     | Description                | Required or not |
-| ------- | -------- | -------------------------- | --------------- |
-| options | JSON     | find mode and find content | yes             |
-| filter  | JSON     | Filtered conditions        | not             |
+| Name    | Type     | Default | Description                | Required or not |
+| ------- | -------- | ------- | -------------------------- | --------------- |
+| options | JSON     | ---     | find mode and find content | yes             |
+| filter  | JSON     | Default to display all content | Filtered conditions | not |
 
 The detail description of 'options' parameter is as follow:
 
-| Attributes | Type | Required or not | Format | Description |
-| ---------- | ---- | --------------- | ------ | ----------- |
-| mode       | char | yes             | { mode: 'n' }<br>{ mode: 'u' }<br>{ mode: 'g' }<br>{ mode: 'p' } | find files based on file name<br>find files based on username<br>find find based on group name<br>find files based on permission | 
-| pathname   | char | not             | { pathname: "pathname" } | specify the file path to find |
-| value      | char | yes             | { value: "content" }     | find content |
+| Attributes | Type | Description | Required or not |
+| ---------- | ---- | ----------- | --------------- |
+| mode       | char | if { mode: 'n' }, then it means that find files based on file name<br>if { mode: 'u' }, then it means that find files based on username<br>if { mode: 'g' }, then it means that find find based on group name<br>if { mode: 'p' }, then it means that find files based on permission | yes |
+| pathname   | string | specify the file path to find, default current directory | not |
+| value      | string | finded content | yes |
 
 The optional parameter filterObj supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
 
@@ -46,29 +46,26 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Find a file;
 
 ```lang-javascript
-> File.find( { mode: "n", value: "tmp" } )
+> File.find( { mode: 'n', value: "file", pathname: "/opt" } )
 {
-  "pathname": "./tmp"
+    "pathname": "/opt/sequoiadb/file1"
 }
 {
-  "pathname": "./database/50000/tmp"
+    "pathname": "/opt/sequoiadb/file2"
 }
 {
-  "pathname": "./.svn/tmp"
-}
-{
-  "pathname": "./bin/tmp"
+    "pathname": "/opt/sequoiadb/file3"
 }
 ```
 
 * Find a file and filter the result set
 
 ```lang-javascript
-> File.find( { mode: "n", value: "tmp" }, { $or: [ { pathname: "./bin/tmp" }, { pathname: "./database/41000/tmp" } ] } )
+> File.find( { mode: 'n', value: "file", pathname: "/opt" }, { $or: [ { pathname: "/opt/sequoiadb/file1" }, { pathname: "/opt/sequoiadb/file2" } ] } )
 {
-  "pathname": "./database/41000/tmp"
+  "pathname": "/opt/sequoiadb/file1"
 }
 {
-  "pathname": "./bin/tmp"
+  "pathname": "/opt/sequoiadb/file2"
 }
 ```
