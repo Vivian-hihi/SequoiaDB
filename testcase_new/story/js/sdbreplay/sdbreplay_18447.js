@@ -6,35 +6,26 @@ main();
 
 function main()
 {  
+   var sclName1;
+   var rtCmd;
+   
    try
    {  
       if ( commIsStandalone( db ) )
       {
          println("\nThe mode is standalone.");
          return;
-      }
-            
-      if ( getLogwritemod() !== "full" || getLogtimeon() !== "TRUE" ) 
-      {
-         println("\nlogwritemod is not full, or logtimeon is FALSE .");
-         return;
       } 
-      
-      if ( getArchiveon() !== "TRUE" ) 
-      {
-         println("\narchiveon is false.");
-         return;
-      }  
       
       var groupNames = getDataGroupNames();
       var groupName  = groupNames[ getRandomInt(0, groupNames.length) ];
       var rdmNum = getRandomInt(0, 100);    
       var csName = COMMCSNAME;
       var mclName  = "cl18447_mcl";
-      var sclName1 = "cl18447_scl1_" + rdmNum;
+      sclName1 = "cl18447_scl1_" + rdmNum;
       var sclName2 = "cl18447_scl2_" + rdmNum;
       
-      var rtCmd = getRemoteCmd( groupName );
+      rtCmd = getRemoteCmd( groupName );
       initTmpDir( rtCmd );
       
       // ready cl data
@@ -85,7 +76,7 @@ function main()
    }
    catch(e)
    {
-      backupFile( rtCmd, clName );
+      backupFile( rtCmd, sclName1 );
       throw e;
    }
 }

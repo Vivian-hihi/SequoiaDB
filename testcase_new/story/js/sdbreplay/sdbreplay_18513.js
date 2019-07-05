@@ -16,12 +16,6 @@ function main()
          println("\nThe mode is standalone.");
          return;
       }
-            
-      if ( getLogwritemod() !== "full" || getLogtimeon() !== "TRUE" ) 
-      {
-         println("\nlogwritemod is not full, or logtimeon is FALSE .");
-         return;
-      } 
       
       var groupNames = getDataGroupNames();
       var groupName  = groupNames[ getRandomInt(0, groupNames.length) ];    

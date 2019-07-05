@@ -6,6 +6,9 @@ main();
 
 function main()
 {  
+   var clName;
+   var rtCmd;
+   
    try
    {  
       if ( commIsStandalone( db ) )
@@ -13,19 +16,13 @@ function main()
          println("\nThe mode is standalone.");
          return;
       }
-            
-      if ( getLogwritemod() !== "full" || getLogtimeon() !== "TRUE" ) 
-      {
-         println("\nlogwritemod is not full, or logtimeon is FALSE .");
-         return;
-      } 
       
       var groupNames = getDataGroupNames();
       var groupName  = groupNames[ getRandomInt(0, groupNames.length) ];    
       var csName = COMMCSNAME;
-      var clName = "cl18465_" + getRandomInt(0, 100);
+      clName = "cl18465_" + getRandomInt(0, 100);
       
-      var rtCmd = getRemoteCmd( groupName );
+      rtCmd = getRemoteCmd( groupName );
       initTmpDir( rtCmd );
       
       // ready cl data
