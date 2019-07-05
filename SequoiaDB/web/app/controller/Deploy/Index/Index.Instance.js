@@ -32,11 +32,11 @@
          'OnClick': function ( index ) {
             if ( index == 0 )
             {
-               showInstallInstance();
+               $sopce.ShowInstallInstance();
             }
             else
             {
-               showAppendInstance();
+               $scope.ShowAppendInstance();
             }
             $scope.AddInstanceDropdown['callback']['Close']();
          },
@@ -240,7 +240,7 @@
       } ;
 
       //打开 发现实例 弹窗
-      function showAppendInstance()
+      $scope.ShowAppendInstance = function()
       {
          if ( $scope.ClusterList.length == 0 )
          {
@@ -371,7 +371,7 @@
       };
 
       //打开 创建实例 弹窗
-      function showInstallInstance()
+      $scope.ShowInstallInstance = function()
       {
          if( $scope.ClusterList.length > 0 )
          {
