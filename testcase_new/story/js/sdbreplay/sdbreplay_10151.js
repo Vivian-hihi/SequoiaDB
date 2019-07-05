@@ -8,7 +8,7 @@ function main()
    {
       println("\nThe mode is standalone.");
    }
-   
+   /*SEQUOIADBMAINSTREAM-4672屏蔽此用例
    var csName = "csName_10151_1";
    var clName = "clName_10151_1" + getRandomInt(0, 100);
    var groupNames = getDataGroupNames();
@@ -63,6 +63,6 @@ function main()
    {
       backupFile( rtCmd, clName );
       throw e;
-   }
+   }*/
 }
 main();

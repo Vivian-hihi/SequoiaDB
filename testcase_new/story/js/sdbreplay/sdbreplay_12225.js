@@ -4,6 +4,7 @@
 ************************************************************************/
 function main()
 { 
+   /*SEQUOIADBMAINSTREAM-4672屏蔽此用例
    if( commIsStandalone( db ) )
    {
       println("\nThe mode is standalone.");
@@ -63,6 +64,6 @@ function main()
    {
       backupFile( rtCmd, clName );
       throw e;
-   }
+   }*/
 }
 main();
