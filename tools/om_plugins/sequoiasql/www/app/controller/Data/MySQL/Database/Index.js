@@ -429,6 +429,12 @@
                      { "key": 'Snappy', "value": 1 },
                      { "key": 'LZW', "value": 2 }
                   ]
+               },
+               {
+                  "name": "Note",
+                  "webName":  $scope.pAutoLanguage( '表注释' ),
+                  "type": "string",
+                  "value": ""
                }
             ]
          } ;
@@ -534,6 +540,12 @@
                      { "key": $scope.autoLanguage( '开' ), "value": true },
                      { "key": $scope.autoLanguage( '关' ), "value": false }
                   ]
+               },
+               {
+                  "name": "Note",
+                  "webName":  $scope.pAutoLanguage( '表注释' ),
+                  "type": "string",
+                  "value": ""
                }
             ]
          } ;
@@ -661,6 +673,12 @@
                      { "key": $scope.autoLanguage( '开' ), "value": true },
                      { "key": $scope.autoLanguage( '关' ), "value": false }
                   ]
+               },
+               {
+                  "name": "Note",
+                  "webName":  $scope.pAutoLanguage( '表注释' ),
+                  "type": "string",
+                  "value": ""
                }
             ]
          } ;
@@ -742,9 +760,26 @@
                      "min": -1,
                      "max": 7
                   }
+               },
+               {
+                  "name": "Note",
+                  "webName":  $scope.pAutoLanguage( '表注释' ),
+                  "type": "string",
+                  "value": ""
                }
             ]
          } ;
+
+         var form6 = {
+            'inputList': [
+               {
+                  "name": "Note",
+                  "webName":  $scope.pAutoLanguage( '表注释' ),
+                  "type": "string",
+                  "value": ""
+               }
+            ]
+         }
 
          var form1 = {
             'inputList': [
@@ -783,7 +818,7 @@
                      }
                      else
                      {
-                        $scope.CreateTableWindow['config']['Form2'] = { 'inputList': [] } ;
+                        $scope.CreateTableWindow['config']['Form2'] = form6 ;
                      }
                   }
                },
@@ -1063,12 +1098,25 @@
                //添加引擎
                sql += ' engine = ' + formVal1['engine'] ;
 
+               var formVal2 = $scope.CreateTableWindow['config']['Form2'].getValue() ;
+               var tableNote = formVal2['Note'] ;
                //如果是SequoiaDB引擎
                if( formVal1['engine'] == 'SequoiaDB' )
                {
-                  var formVal2 = $scope.CreateTableWindow['config']['Form2'].getValue() ;
                   formVal2 = modalValue2Create( formVal2 ) ;
-                  sql += sprintf( ' comment = "sequoiadb:?"', JSON.stringify( formVal2 ).replace( /\"/g, "\\\"" ) ) ;
+                  if( tableNote.length > 0 )
+                  {
+                     sql += sprintf( ' comment = "?', tableNote.replace( /\"/g, "\\\"" ) ) ;
+                     sql += sprintf( ', sequoiadb:?"', JSON.stringify( formVal2 ).replace( /\"/g, "\\\"" ) ) ;
+                  }
+                  else
+                  {
+                     sql += sprintf( ' comment = "sequoiadb:?"', JSON.stringify( formVal2 ).replace( /\"/g, "\\\"" ) ) ;
+                  }
+               }
+               else
+               {
+                  sql += sprintf( ' comment = "?"', tableNote.replace( /\"/g, "\\\"" ) ) ;
                }
                $scope.createTable( sql, formVal1['dbName'] ) ;
                $scope.CreateTableWindow['callback']['Close']() ;

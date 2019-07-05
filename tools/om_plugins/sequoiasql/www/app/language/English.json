@@ -22,6 +22,7 @@
    "创建索引": "Create Index",
    "表名": "Name",
    "表信息": "Table structure",
+   "表注释": "Table comments",
    "类型": "Type",
    "数据库模式": "Schema",
    "所属用户": "Owner",
