@@ -2,6 +2,7 @@
 *@Description: seqDB-10152:重放时指定LSN  
 *@Author: 2019-7-2  xiaoni zhao init
 ************************************************************************/
+main();
 function main()
 {  
    if( commIsStandalone( db ) )
@@ -9,15 +10,15 @@ function main()
       println("\nThe mode is standalone.");
    }
    
-   var csName = "csName_10152";
-   var clName = "clName_10152" + getRandomInt(0, 100);
+   var csName = COMMCSNAME;
+   var clName = "clName_10152_" + getRandomInt(0, 100);
    var groupNames = getDataGroupNames();
    
    var cl = readyCL(csName, clName, {Group:groupNames[0]});
   
    var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
    var svcName = cursor.current().toObj().Group[0].Service[0].Name;
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true});
+   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
    var minLSN = cursor.current().toObj().CompleteLSN;
    
    var expDataArr = [];
@@ -35,7 +36,7 @@ function main()
       expDataArr.push('"D","'+(100+i)+'"');
    }
    
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true});
+   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
    var maxLSN = cursor.current().toObj().CompleteLSN;
    
    for(var i=0; i<100; i++)
@@ -67,4 +68,3 @@ function main()
       throw e;
    }
 }
-main();

@@ -2,6 +2,7 @@
 *@Description: seqDB-12227:重放复制日志时指定LSN  
 *@Author: 2019-7-3  xiaoni zhao init
 ************************************************************************/
+main();
 function main()
 {
    if( commIsStandalone( db ) )
@@ -9,7 +10,7 @@ function main()
       println("\nThe mode is standalone.");
    }
    
-   var csName = "csName_12227";
+   var csName = COMMCSNAME;
    var clName = "clName_12227";
    var groupNames = getDataGroupNames();
    
@@ -18,8 +19,9 @@ function main()
    //get minLSN
    var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
    var svcName = cursor.current().toObj().Group[0].Service[0].Name;
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true});
+   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
    var minLSN = cursor.current().toObj().CompleteLSN;
+   println("minLSN"+minLSN);
    
    var expDataArr = [];
    for(var i=0; i<100; i++)
@@ -36,8 +38,9 @@ function main()
       expDataArr.push('"D","'+(100+i)+'"');
    }
    
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true});
+   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
    var maxLSN = cursor.current().toObj().CompleteLSN;
+   println("maxLSN"+maxLSN);
    
    for(var i=0; i<100; i++)
    {
@@ -68,4 +71,3 @@ function main()
       throw e;
    }
 }
-main();

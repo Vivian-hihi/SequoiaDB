@@ -3,6 +3,7 @@
                seqDB-18542: tables.fields.defaultValue配置默认值，fieldType配置不为MAPPING_* 
 *@Author: 2019-7-4  xiaoni zhao init
 ************************************************************************/
+//main();
 function main()
 {
    if( commIsStandalone( db ) )
@@ -10,8 +11,8 @@ function main()
       println("\nThe mode is standalone.");
    }
     
-   var csName = "csName_18537_18542";
-   var clName = "clName_18537_18542";
+   var csName = COMMCSNAME;
+   var clName = "clName_18537";
    var groupNames = getDataGroupNames();
    
    var cl = readyCL(csName, clName, {Group:groupNames[0]}); 
@@ -19,7 +20,7 @@ function main()
    //get minLSN
    var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
    var svcName = cursor.current().toObj().Group[0].Service[0].Name;
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true});
+   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
    var minLSN = cursor.current().toObj().CompleteLSN;
   
    var expDataArr = [];
@@ -29,7 +30,7 @@ function main()
       cl.insert({a:100+i});
       cl.update({$set:{a:200+i}},{a:i});
       cl.remove({a:100+i});
-      
+      //预期结果需要修改
       expDataArr.push('"I","'+i+'","","0"');
       expDataArr.push('"I","'+(100+i)+'","","0"');
       expDataArr.push('"B","'+i+'","","0"');
@@ -42,7 +43,7 @@ function main()
     
    try
    {    
-      var confName = "sdbreplay_18537_18542.conf";
+      var confName = "sdbreplay_18537.conf";
       getOutputConfFile( groupNames[0], csName, clName, confName);   
       
       var clNameArr = [csName +"."+ clName];
@@ -59,4 +60,3 @@ function main()
       throw e;
    }
 }
-main();

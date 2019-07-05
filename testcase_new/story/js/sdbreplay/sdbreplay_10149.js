@@ -2,6 +2,7 @@
 *@Description: seqDB-10149: 重放时过滤/指定cs  
 *@Author: 2019-7-2  xiaoni zhao init
 ************************************************************************/
+main();
 function main()
 {  
    if( commIsStandalone( db ) )
@@ -9,9 +10,9 @@ function main()
       println("\nThe mode is standalone.");
    }
 
-   var csName1 = "csName_10149_1" + getRandomInt(0, 100);
+   var csName1 = "csName_10149_1_" + getRandomInt(0, 100);
    var clName1 = "clName_10149_1";
-   var csName2 = "csName_10149_2" + getRandomInt(0, 100);
+   var csName2 = "csName_10149_2_" + getRandomInt(0, 100);
    var clName2 = "clName_10149_2";
    var groupNames = getDataGroupNames();
    
@@ -59,4 +60,3 @@ function main()
       throw e;
    }
 }
-main();

@@ -2,6 +2,7 @@
 *@Description: seqDB-18463: tables配置一个集合包含多个相同和不同字段 
 *@Author: 2019-7-3  xiaoni zhao init
 ************************************************************************/
+main();
 function main()
 {  
    if( commIsStandalone( db ) )
@@ -9,7 +10,7 @@ function main()
       println("\nThe mode is standalone.");
    }
     
-   var csName = "csName_18463";
+   var csName = COMMCSNAME;
    var clName = "clName_18463";
    var groupNames = getDataGroupNames();
    
@@ -18,7 +19,7 @@ function main()
    //get minLSN
    var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
    var svcName = cursor.current().toObj().Group[0].Service[0].Name;
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true});
+   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
    var minLSN = cursor.current().toObj().CompleteLSN;
    
    var expDataArr = [];
@@ -58,4 +59,3 @@ function main()
       throw e;
    }
 }
-main();

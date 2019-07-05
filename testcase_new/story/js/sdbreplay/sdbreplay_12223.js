@@ -2,26 +2,22 @@
 *@Description: seqDB-12223: 重放同步日志时过滤/指定cs 
 *@Author: 2019-7-3  xiaoni zhao init
 ************************************************************************/
+//main();
 function main()
 { 
    if( commIsStandalone( db ) )
    {
       println("\nThe mode is standalone.");
    } 
-   /*SEQUOIADBMAINSTREAM-4672屏蔽此用例
-   var csName1 = "csName_12223_1";
-   var clName1 = "clName_12223_1" + getRandomInt(0, 100);
-   var csName2 = "csName_12223_2";
-   var clName2 = "clName_12223_2" + getRandomInt(0, 100);
+   
+   var csName = "csName_12223_1" + getRandomInt(0, 100);
+   var clName1 = "clName_12223_1";
+   var csName = "csName_12223_2" + getRandomInt(0, 100);
+   var clName2 = "clName_12223_2";
    var groupNames = getDataGroupNames();
    
-   var cl1 = readyCL(csName1, clName1, {Group:groupNames[0]}); 
-   var cl2 = readyCL(csName2, clName2, {Group:groupNames[0]}); 
-  
-   var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
-   var svcName = cursor.current().toObj().Group[0].Service[0].Name;
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true});
-   var minLSN = cursor.current().toObj().CompleteLSN;
+   var cl1 = readyCL(csName, clName1, {Group:groupNames[0]}); 
+   var cl2 = readyCL(csName, clName2, {Group:groupNames[0]}); 
   
    var expDataArr = [];
    for(var i=0; i<100; i++)
@@ -48,21 +44,20 @@ function main()
    try
    {   
       var fieldType = "MAPPING_INT";
-      readyOutputConfFile( rtCmd, groupNames[0], csName1, clName1, fieldType );
+      readyOutputConfFile( rtCmd, groupNames[0], csName, clName1, fieldType );
       
       //重放时指定/过滤cs
-      var clNameArray = [csName1+"."+clName1];
-      var filter = '\'{CS: ["'+ csName1 +'","'+ csName2 +'"], MinLSN: '+ minLSN +', ExclCS: ["'+ csName2 +'"] }\'';
+      var clNameArray = [csName+"."+clName1];
+      var filter = '\'{CS: ["'+ csName +'","'+ csName +'"], ExclCS: ["'+ csName +'"] }\'';
       execSdbReplay( rtCmd, groupNames[0], clNameArray, "replica", undefined, undefined, undefined, undefined, filter);
       checkCsvFile( rtCmd, clName1, expDataArr );
       
-      cleanCL( csName1, clName1 );
-      cleanCL( csName2, clName2 );
+      cleanCL( csName, clName1 );
+      cleanCL( csName, clName2 );
       cleanFile( rtCmd );
    }catch(e)
    {
       backupFile( rtCmd, clName1 );
       throw e;
-   }*/
+   }
 }
-main();

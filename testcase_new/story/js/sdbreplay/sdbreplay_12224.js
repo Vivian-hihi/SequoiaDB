@@ -2,6 +2,7 @@
 *@Description: seqDB-12224: 重放复制日志时过滤/指定cl  
 *@Author: 2019-7-3  xiaoni zhao init
 ************************************************************************/
+main();
 function main()
 { 
    if( commIsStandalone( db ) )
@@ -9,14 +10,13 @@ function main()
       println("\nThe mode is standalone.");
    } 
    
-   var csName1 = "csName_12224_1";
+   var csName = COMMCSNAME;
    var clName1 = "clName_12224_1" + getRandomInt(0, 100);
-   var csName2 = "csName_12224_2";
    var clName2 = "clName_12224_2" + getRandomInt(0, 100);
    var groupNames = getDataGroupNames();
    
-   var cl1 = readyCL(csName1, clName1, {Group:groupNames[0]}); 
-   var cl2 = readyCL(csName2, clName2, {Group:groupNames[0]}); 
+   var cl1 = readyCL(csName, clName1, {Group:groupNames[0]}); 
+   var cl2 = readyCL(csName, clName2, {Group:groupNames[0]}); 
   
    var expDataArr = [];
    for(var i=0; i<100; i++)
@@ -43,16 +43,16 @@ function main()
    try
    {   
       var fieldType = "MAPPING_INT";
-      readyOutputConfFile( rtCmd, groupNames[0], csName1, clName1, fieldType );
+      readyOutputConfFile( rtCmd, groupNames[0], csName, clName1, fieldType );
       
       //重放时指定/过滤cl
-      var clNameArray = [csName1+"."+clName1];
-      var filter = '\'{CL: ["'+ csName1 +'.'+ clName1+'","'+ csName2 +'.'+ clName2 +'"], ExclCL: ["'+ csName2 +"."+ clName2 +'"] }\'';
+      var clNameArray = [csName+"."+clName1];
+      var filter = '\'{CL: ["'+ csName +'.'+ clName1+'","'+ csName +'.'+ clName2 +'"], ExclCL: ["'+ csName +"."+ clName2 +'"] }\'';
       execSdbReplay( rtCmd, groupNames[0], clNameArray, "replica", undefined, undefined, undefined, undefined, filter);
       checkCsvFile( rtCmd, clName1, expDataArr );
       
-      cleanCL( csName1, clName1 );
-      cleanCL( csName2, clName2 );
+      cleanCL( csName, clName1 );
+      cleanCL( csName, clName2 );
       cleanFile( rtCmd );
    }catch(e)
    {
@@ -60,4 +60,3 @@ function main()
       throw e;
    }
 }
-main();

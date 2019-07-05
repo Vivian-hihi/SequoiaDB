@@ -2,16 +2,16 @@
 *@Description: seqDB-12225: 重放时过滤/指定操作  
 *@Author: 2019-7-3  xiaoni zhao init
 ************************************************************************/
+main();
 function main()
 { 
-   /*SEQUOIADBMAINSTREAM-4672屏蔽此用例
    if( commIsStandalone( db ) )
    {
       println("\nThe mode is standalone.");
    }
     
-   var csName = "csName_12225";
-   var clName = "clName_12225" + getRandomInt(0, 100);
+   var csName = COMMCSNAME;
+   var clName = "clName_12225_" + getRandomInt(0, 100);
    var groupNames = getDataGroupNames();
    
    var cl = readyCL(csName, clName, {Group:groupNames[0]}); 
@@ -64,6 +64,5 @@ function main()
    {
       backupFile( rtCmd, clName );
       throw e;
-   }*/
+   }
 }
-main();
