@@ -1459,7 +1459,7 @@ UINT32 _pdTraceParser::_outputTraceRecordFormat( CHAR *pBuffer,
    length += ossSnprintf( &pBuffer[ length ],
                           bufSize - length,
                           "%s",
-                          pdGetTraceFunction( record->_functionID ) ) ;
+                          _getFunctionName( record->_functionID ) ) ;
 
    // then check if it's start/exit
    if ( record->_flag == PD_TRACE_RECORD_FLAG_ENTRY )
