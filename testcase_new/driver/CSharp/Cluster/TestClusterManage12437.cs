@@ -61,7 +61,7 @@ namespace CSharp.Cluster
             rg.Start();
             //向新组上插入记录
             cs = sdb.GetCollecitonSpace(SdbTestBase.csName);
-            cl = cs.CreateCollection(clName, new BsonDocument("Group", rgName1));
+            cl = cs.CreateCollection(clName, new BsonDocument("Group", rgName1).Add("ReplSize", 0));
             List<BsonDocument> datas = new List<BsonDocument>();
             for (int i = 0; i < 100; i++)
             {
