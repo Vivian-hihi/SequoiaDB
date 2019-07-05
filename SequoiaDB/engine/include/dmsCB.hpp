@@ -154,7 +154,7 @@ namespace engine
       std::vector<BYTE>                   _tmpCscbStatusVec ;
       std::vector<ossRWMutex*>            _latchVec ;
       // use deque so we can operate on both ends
-      std::deque<dmsStorageUnitID>       _freeList ;
+      std::queue<dmsStorageUnitID>        _freeList ;
       // collection spaces mutex in create and drop operations
       std::vector< ossSpinRecursiveXLatch* >  _vecCSMutex ;
 

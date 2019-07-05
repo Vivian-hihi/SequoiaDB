@@ -103,7 +103,7 @@ namespace engine
          _tmpCscbStatusVec.push_back( DMS_CSCB_STATUS_NONE ) ;
          // free in desctructor
          _latchVec.push_back ( new(std::nothrow) ossRWMutex() ) ;
-         _freeList.push_back ( i ) ;
+         _freeList.push( i ) ;
       }
 
       for ( UINT32 i = 0 ; i < DMS_CS_MUTEX_BUCKET_SIZE ; ++i )
@@ -289,7 +289,7 @@ namespace engine
       suID = _freeList.front() ;
       su->_setCSID( suID ) ;
       su->_setLogicalCSID( _logicalSUID++ ) ;
-      _freeList.pop_front() ;
+      _freeList.pop() ;
       _cscbNameMap[cscb->_name] = suID ;
       _cscbVec[suID] = cscb ;
       if ( UTIL_IS_VALID_CSUNIQUEID( csUniqueID ) )
@@ -957,7 +957,7 @@ namespace engine
       {
          _cscbIDMap.erase( csUniqueID ) ;
       }
-      _freeList.push_back ( suID ) ;
+      _freeList.push( suID ) ;
 
       // log here
       csLID = pCSCB->_su->LogicalCSID() ;
@@ -1004,7 +1004,7 @@ namespace engine
       {
          dmsStorageUnitID suID = (*it).second ;
 
-         _freeList.push_back ( suID ) ;
+         _freeList.push( suID ) ;
          if ( _cscbVec[suID] )
          {
             SDB_OSS_DEL _cscbVec[suID] ;
