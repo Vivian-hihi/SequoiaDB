@@ -227,7 +227,9 @@ namespace engine
       {
          string configs ;
          sdbGetOMAgentOptions()->toString( configs ) ;
-         PD_LOG( PDEVENT, "All configs:\n%s", configs.c_str() ) ;
+         PD_LOG( PDEVENT, "All configs:\n%s\nLimit info:\n%s",
+                 configs.c_str(),
+                 pmdGetLimit()->str().c_str() ) ;
       }
 
       pmdSetDBRole( SDB_ROLE_OMA ) ;
