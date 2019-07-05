@@ -32,7 +32,7 @@
          'OnClick': function ( index ) {
             if ( index == 0 )
             {
-               $sopce.ShowInstallInstance();
+               $scope.ShowInstallInstance();
             }
             else
             {
