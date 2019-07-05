@@ -33,7 +33,8 @@ function main()
       
       // ready outputconf for sdbreplay
       var fieldType = "MAPPING_STRING";
-      var delimiter = getRandomString( getRandomInt(0, 10) );
+      var delimiter = getRandomString( getRandomInt(0, 10) )
+            .replace(/\\/g, "_newR1_").replace(/\"/g, "_newR2_").replace(/ /g, "_newR3_");
       readyOutputConfFile( rtCmd, groupName, csName, clName, fieldType, delimiter );
       println('   delimiter = ' + delimiter );
       // replay
