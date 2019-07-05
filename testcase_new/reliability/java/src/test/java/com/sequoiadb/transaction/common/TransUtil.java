@@ -12,6 +12,7 @@ import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.ReliabilityException;
 
 public class TransUtil {
@@ -38,6 +39,7 @@ public class TransUtil {
      */
     public static NodeWrapper getCoordNode(Sequoiadb sdb) throws ReliabilityException {
         GroupMgr groupMgr = GroupMgr.getInstance();
+        groupMgr.setSdb(new Sequoiadb(SdbTestBase.coordUrl, "", ""));
         GroupWrapper group = groupMgr.getGroupByName("SYSCoord");
         List<NodeWrapper> nodes = group.getNodes();
         String hostName = sdb.getHost();
