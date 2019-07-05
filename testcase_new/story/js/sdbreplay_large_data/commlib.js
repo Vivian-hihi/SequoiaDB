@@ -4,6 +4,9 @@
 *                2019/6/27  XiaoNi Huang Init
 *******************************************************************************/
 println();
+
+isSdbReplayEnable();
+
 var cmd  = initCmd();
 var localPath = null;
 var installDir  = getInstallDir();
@@ -14,36 +17,21 @@ var testCaseDir = getTestCaseDir();
 
 
 /* ****************************************************
-@description: judge logwritemod and logtimeon
+@description: judge sdbreplay enable
 **************************************************** */
-function getLogwritemod()
+function isSdbReplayEnable()
 {
-   var cursor = db.snapshot( SDB_SNAP_CONFIGS );
+   var cursor = db.snapshot( SDB_SNAP_CONFIGS, {"role": "data"} );
    var configs = cursor.current().toObj();
-   cursor.close();
-   return configs.logwritemod;
-}
-
-/* ****************************************************
-@description: judge logwritemod and logtimeon
-**************************************************** */
-function getLogtimeon()
-{
-   var cursor = db.snapshot( SDB_SNAP_CONFIGS );
-   var configs = cursor.current().toObj();
-   cursor.close();
-   return configs.logtimeon;
-}
-
-/* ****************************************************
-@description: archiveon is enable
-**************************************************** */
-function getArchiveon()
-{
-   var cursor = db.snapshot( SDB_SNAP_CONFIGS );
-   var configs = cursor.current().toObj();
-   cursor.close();
-   return configs.archiveon;
+   if ( configs.logwritemod !== "full" || configs.logtimeon !== "TRUE"
+         || configs.archiveon !== "TRUE" || configs.archivetimeout !== 5  )
+   {
+      cursor.close();
+      throw buildException( "isSdbReplayEnable", null, "[judge the sdbreplay is enable, data node conf as follows]", 
+                     "[logwritemod:full, logtimeon:TRUE, archiveon:TRUE, archivetimeout:5]", 
+                     "[logwritemod:"+ configs.logwritemod + ", logtimeon:" + configs.logtimeon 
+                     + ", archiveon:" + configs.archiveon + ", archivetimeout:" + configs.archivetimeout + "]" );
+   }
 }
    
 /* ****************************************************
@@ -398,9 +386,11 @@ function backupFile( rtCmd, clName )
    println("backupPath = " + targetPath);   
    rtCmd.run("mkdir -p " + targetPath );
    
+   // list all files in the current path
    var lsCommand = "ls -l " + tmpFileDir + " | grep ^- | awk '{print $9}'";
    println( lsCommand );
    
+   // copy all files to the target path
    var fileNames = rtCmd.run( lsCommand ).split("\n");
    for (i = 0; i < fileNames.length - 1; i++) {
       var sourcePath = tmpFileDir + fileNames[i];
