@@ -24,11 +24,11 @@ function isSdbReplayEnable()
    var cursor = db.snapshot( SDB_SNAP_CONFIGS, {"role": "data"} );
    var configs = cursor.current().toObj();
    if ( configs.logwritemod !== "full" || configs.logtimeon !== "TRUE"
-         || configs.archiveon !== "TRUE" || configs.archivetimeout !== 5  )
+         || configs.archiveon !== "TRUE" || configs.archivetimeout > 10  )
    {
       cursor.close();
       throw buildException( "isSdbReplayEnable", null, "[judge the sdbreplay is enable, data node conf as follows]", 
-                     "[logwritemod:full, logtimeon:TRUE, archiveon:TRUE, archivetimeout:5]", 
+                     "[logwritemod:full, logtimeon:TRUE, archiveon:TRUE, archivetimeout <= 10]", 
                      "[logwritemod:"+ configs.logwritemod + ", logtimeon:" + configs.logtimeon 
                      + ", archiveon:" + configs.archiveon + ", archivetimeout:" + configs.archivetimeout + "]" );
    }
