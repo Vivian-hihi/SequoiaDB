@@ -527,3 +527,17 @@ function initFile( fileName )
       throw e;
    }
 }
+
+/* ****************************************************
+@description: getLSN
+@return: lsn
+**************************************************** */
+function getMinLSN(groupNames)
+{
+   var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
+   var svcName = cursor.current().toObj().Group[0].Service[0].Name;
+   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
+   var minLSN = cursor.current().toObj().CompleteLSN;
+   return minLSN;
+}
+
