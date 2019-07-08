@@ -66,19 +66,19 @@ namespace engine
       RTN_JOB_PAGEMAPPING        = 19, // page mapping job
       PMD_JOB_LIGHTJOB           = 20, // light job exe
 
-      RTN_JOB_UPDATESTRATEGY     = 20,
-      RTN_JOB_STRATEGYOBSERVER   = 21,
+      RTN_JOB_UPDATESTRATEGY     = 21,
+      RTN_JOB_STRATEGYOBSERVER   = 22,
 
-      RTN_JOB_SCHED_PREPARE      = 22,
-      RTN_JOB_SCHED_DISPATCH     = 23,
+      RTN_JOB_SCHED_PREPARE      = 23,
+      RTN_JOB_SCHED_DISPATCH     = 24,
 
-      RTN_JOB_GTS_DISPATH        = 24,
+      RTN_JOB_GTS_DISPATH        = 25,
 
-      RTN_JOB_CLS_UNIQUEID_CHECK = 25,
+      RTN_JOB_CLS_UNIQUEID_CHECK = 26,
 
-      RTN_JOB_CLS_NAME_CHECK_BY_UNIQUEID = 26,
+      RTN_JOB_CLS_NAME_CHECK_BY_UNIQUEID = 27,
 
-      RTN_JOB_STOPNODE           = 27, // stop node
+      RTN_JOB_STOPNODE           = 28, // stop node
 
       RTN_JOB_MAX
    } ;
