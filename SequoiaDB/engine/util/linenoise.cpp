@@ -185,7 +185,8 @@ struct CharacterDispatch
    CharacterDispatchRoutine *dispatch ;  // array of routines to call
 } ;
 
-static int doDispatch( struct linenoiseState *l, char c, CharacterDispatch &dispatchTable )
+static int doDispatch( struct linenoiseState *l, char c,
+                       CharacterDispatch &dispatchTable )
 {
    int ret = 0 ;
    for ( unsigned int i = 0 ; i < dispatchTable.len ; ++i )
@@ -249,13 +250,14 @@ static BOOLEAN s_initDisplayAttr       = FALSE ;
 static WORD    s_oldDisplayAttribute   = -1 ;
 
 PD_TRACE_DECLARE_FUNCTION ( SDB_WIN32READ, "win32read" )
-static int win32read(char *c)
+static int win32read( char * c, BOOLEAN * withCtrl )
 {
     PD_TRACE_ENTRY ( SDB_WIN32READ );
     int ret = -1 ;
     DWORD foo;
     INPUT_RECORD b;
     KEY_EVENT_RECORD e;
+    BOOLEAN getCtrl = FALSE ;
 
     while (1)
     {
@@ -304,6 +306,20 @@ static int win32read(char *c)
                         ret = 1;
                         goto done;
                     default:
+                        getCtrl = TRUE ;
+                        switch ( e.wVirtualKeyCode )
+                        {
+                            case VK_LEFT :   /* left */
+                                *c = 2 ;
+                                ret = 1 ;
+                                goto done ;
+                            case VK_RIGHT :  /* right */
+                                *c = 6 ;
+                                ret = 1 ;
+                                goto done ;
+                            default :
+                                break ;
+                        }
                         /* Other Ctrl+KEYs ignored */
                         break;
                 }
@@ -363,7 +379,11 @@ static int win32read(char *c)
         }
     }
 done:
-    PD_TRACE_EXIT ( SDB_WIN32READ );
+    if ( NULL != withCtrl )
+    {
+       ( *withCtrl ) = getCtrl ;
+    }
+    PD_TRACE_EXIT ( SDB_WIN32READ ) ;
     return ret; /* Makes compiler happy */
 error:
    goto done;
@@ -385,13 +405,14 @@ void setEchoChar(char c)
    echoChar = c;
 }
 
-int readPack( struct linenoiseState *l, char *c )
+int linenoiseRead( struct linenoiseState * l, char * c,
+                   BOOLEAN * withCtrl = NULL )
 {
    int nread ;
 #ifdef _WIN32
-   nread = win32read( c ) ;
+   nread = win32read( c, withCtrl ) ;
 #else
-   nread = read( l->ifd ,c ,1 ) ;
+   nread = read( l->ifd, c, 1 ) ;
 #endif
    return nread ;
 }
@@ -742,7 +763,7 @@ static int completeLine(struct linenoiseState *ls)
 
         while(!stop)
         {
-            nread = readPack( ls, &c ) ;
+            nread = linenoiseRead( ls, &c ) ;
             if (nread <= 0)
             {
                 freeCompletions(&lc);
@@ -1779,7 +1800,7 @@ int linenoiseReverseIncrementalSearch ( struct linenoiseState * l )
       int new_char = 0 ;
       int nread = 0 ;
 
-      nread = readPack( l, &c ) ;
+      nread = linenoiseRead( l, &c ) ;
       if ( nread <= 0 )
       {
          l->pos = l->len = snprintf( l->buf, l->buflen, "%s", buf ) ;
@@ -1954,19 +1975,23 @@ static int ctrlLeftArrowKeyRoutine( struct linenoiseState *l, char c )
 }
 
 // ESC [ 1 ; 5 <more stuff>
-static CharacterDispatchRoutine escLeftBracket1Semicolon3or5Routines[] = {
-        ctrlRightArrowKeyRoutine, ctrlLeftArrowKeyRoutine
+static CharacterDispatchRoutine escLeftBracket1Semicolon3or5Routines[] =
+{
+   ctrlRightArrowKeyRoutine,
+   ctrlLeftArrowKeyRoutine
 } ;
 
-static CharacterDispatch escLeftBracket1Semicolon3or5Dispatch = {
-        2, "CD", escLeftBracket1Semicolon3or5Routines
+static CharacterDispatch escLeftBracket1Semicolon3or5Dispatch =
+{
+   2, "CD", escLeftBracket1Semicolon3or5Routines
 } ;
 
 // ESC [ 1 ; <more stuff>
 static int escLeftBracket1Semicolon5Routine( struct linenoiseState *l, char c )
 {
-   int nread  = readPack( l, &c ) ;
-   return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket1Semicolon3or5Dispatch ) ;
+   int nread  = linenoiseRead( l, &c ) ;
+   return nread <= 0 ?
+          -1 : doDispatch( l, c, escLeftBracket1Semicolon3or5Dispatch ) ;
 }
 
 static CharacterDispatchRoutine escLeftBracket1SemicolonRoutines[] = {
@@ -1993,10 +2018,14 @@ static int endKeyRoutine( struct linenoiseState *l, char c )
 
 // Handle ESC O <more stuff>
 static CharacterDispatchRoutine escORoutines[] = {
-   homeKeyRoutine,   endKeyRoutine
+   homeKeyRoutine,
+   endKeyRoutine
 } ;
 
-static CharacterDispatch escODispatch = { 2, "HF", escORoutines } ;
+static CharacterDispatch escODispatch =
+{
+   2, "HF", escORoutines
+} ;
 
 // ESC [ 3 ~
 static int deleteKeyRoutine( struct linenoiseState *l, char c )
@@ -2008,23 +2037,42 @@ static int deleteKeyRoutine( struct linenoiseState *l, char c )
 // ESC [ 1 <more stuff>
 static int escLeftBracket1SemicolonRoutine( struct linenoiseState *l, char c )
 {
-   int nread  = readPack( l, &c ) ;
+   int nread  = linenoiseRead( l, &c ) ;
    return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket1SemicolonDispatch ) ;
 }
 
-static CharacterDispatchRoutine escLeftBracket1Routines[] = {
-        homeKeyRoutine, escLeftBracket1SemicolonRoutine
+static CharacterDispatchRoutine escLeftBracket1Routines[] =
+{
+   homeKeyRoutine,
+   escLeftBracket1SemicolonRoutine
 } ;
 
-static CharacterDispatch escLeftBracket1Dispatch = { 2, "~;", escLeftBracket1Routines } ;
+static CharacterDispatch escLeftBracket1Dispatch =
+{
+   2, "~;", escLeftBracket1Routines
+} ;
 
 // ESC [ 3 <more stuff>
-static CharacterDispatchRoutine escLeftBracket3Routines[] = { deleteKeyRoutine } ;
-static CharacterDispatch escLeftBracket3Dispatch = { 1, "~", escLeftBracket3Routines } ;
+static CharacterDispatchRoutine escLeftBracket3Routines[] =
+{
+   deleteKeyRoutine
+} ;
+
+static CharacterDispatch escLeftBracket3Dispatch =
+{
+   1, "~", escLeftBracket3Routines
+} ;
 
 // ESC [ 4 <more stuff>
-static CharacterDispatchRoutine escLeftBracket4Routines[] = { endKeyRoutine } ;
-static CharacterDispatch escLeftBracket4Dispatch = { 1, "~", escLeftBracket4Routines } ;
+static CharacterDispatchRoutine escLeftBracket4Routines[] =
+{
+   endKeyRoutine
+} ;
+
+static CharacterDispatch escLeftBracket4Dispatch =
+{
+   1, "~", escLeftBracket4Routines
+} ;
 
 // ESC [ A
 static int upArrowKeyRoutine( struct linenoiseState *l, char c )
@@ -2057,19 +2105,19 @@ static int leftArrowKeyRoutine( struct linenoiseState *l, char c )
 // ESC [ <digit> 
 static int escLeftBracket1Routine( struct linenoiseState *l, char c )
 {
-   int nread  = readPack( l, &c ) ;
+   int nread  = linenoiseRead( l, &c ) ;
    return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket1Dispatch ) ;
 }
 
 static int escLeftBracket3Routine( struct linenoiseState *l, char c )
 {
-   int nread  = readPack( l, &c ) ;
+   int nread  = linenoiseRead( l, &c ) ;
    return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket3Dispatch ) ;
 }
 
 static int escLeftBracket4Routine( struct linenoiseState *l, char c )
 {
-   int nread  = readPack( l, &c ) ;
+   int nread  = linenoiseRead( l, &c ) ;
    return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracket4Dispatch ) ;
 }
 
@@ -2084,24 +2132,34 @@ static CharacterDispatchRoutine escLeftBracketRoutines[] = {
    escLeftBracket4Routine
 } ;
 
-static CharacterDispatch escLeftBracketDispatch = { 7, "ABCD134", escLeftBracketRoutines } ;
+static CharacterDispatch escLeftBracketDispatch =
+{
+   7, "ABCD134", escLeftBracketRoutines
+} ;
 
 // ESC dispatch
 static int escLeftBracketRoutine( struct linenoiseState *l, char c )
 {
-   int nread  = readPack( l, &c ) ;
+   int nread  = linenoiseRead( l, &c ) ;
    return nread <= 0 ? -1 : doDispatch( l, c, escLeftBracketDispatch ) ;
 }
 
 static int escORoutine( struct linenoiseState *l, char c )
 {
-   int nread  = readPack( l, &c ) ;
+   int nread  = linenoiseRead( l, &c ) ;
    return nread <= 0 ? -1 : doDispatch( l, c, escODispatch ) ;
 }
 
 // Handle ESC [ or O
-static CharacterDispatchRoutine escRoutines[] = { escLeftBracketRoutine, escORoutine } ;
-static CharacterDispatch escDispatch = { 2, "[O", escRoutines } ;
+static CharacterDispatchRoutine escRoutines[] =
+{
+   escLeftBracketRoutine, escORoutine
+} ;
+
+static CharacterDispatch escDispatch =
+{
+   2, "[O", escRoutines
+} ;
 
 /* This function is the core of the line editing capability of linenoise.
  * It expects 'fd' to be already in "raw mode" so that every key pressed
@@ -2165,8 +2223,9 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
 
     while(1)
     {
+        BOOLEAN withCtrl = FALSE ;
         char c = KEY_NULL ;
-        if ( readPack( &l, &c ) <= 0 )
+        if ( linenoiseRead( &l, &c, &withCtrl ) <= 0 )
         {
             ret = l.len;
             goto error;
@@ -2271,10 +2330,24 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
             }
             break;
         case CTRL_B:     /* ctrl-b */
-            linenoiseEditMoveLeft(&l);
+            if ( withCtrl )
+            {
+                linenoiseEditMoveLastWord( &l ) ;
+            }
+            else
+            {
+                linenoiseEditMoveLeft( &l ) ;
+            }
             break;
         case CTRL_F:     /* ctrl-f */
-            linenoiseEditMoveRight(&l);
+            if ( withCtrl )
+            {
+                linenoiseEditMoveNextWord( &l ) ;
+            }
+            else
+            {
+                linenoiseEditMoveRight(&l);
+            }
             break;
         case CTRL_P:    /* ctrl-p */
             linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_PREV);
