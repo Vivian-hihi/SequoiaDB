@@ -51,7 +51,7 @@ public class CreateSameBucket18614 extends S3TestBase {
 		region2.withName(regionName2);
 		RegionUtils.putRegion(region2);
 	}
-
+	//TODO :1、注释用例没有对应的bug单
 	@SuppressWarnings("deprecation")
 	@Test(enabled = false)
 	private void testReputBacket() throws Exception {

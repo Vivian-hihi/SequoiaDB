@@ -66,7 +66,7 @@ public class TestAllowReput18595 extends S3TestBase {
 		Assert.assertEquals(s3Client.listBuckets().size(), 1);
 		Assert.assertTrue(s3Client.doesBucketExist(bucketName));
 		Assert.assertEquals(s3Client.getBucketLocation(bucketName), regionName);
-
+		//TODO :1、多余检查项，建议去掉
 		checkBucket();
 		runSuccess = true;
 	}

@@ -39,6 +39,7 @@ public class CreateRegion18610 extends S3TestBase {
 		RegionUtils.createCSAndCL(csNames[1], dataclNames);
 
 		s3Client = CommLib.buildS3Client();
+		//TODO :1、清理区域建议放在createCS前面
 		RegionUtils.clearRegion(regionName);
 	}
 
@@ -51,7 +52,7 @@ public class CreateRegion18610 extends S3TestBase {
 		region.withMetaLocation(metaLocation).withDataLocation(dataLocation).withMetaHisLocation(metaHisLocation)
 				.withName(regionName).withDataLobPageSize(dataLobPageSize).withDataReplSize(dataReplSize);
 		try {
-			RegionUtils.putRegion(region);
+			RegionUtils.putRegion(region);//TODO: 2、如果是必定失败，建议增加成功报错处理
 		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getErrorCode(), "ConflictRegionType");
 		}

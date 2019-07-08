@@ -50,7 +50,7 @@ public class TestAllowReput18594 extends S3TestBase {
 	}
 
 	@SuppressWarnings("deprecation")
-	@Test(enabled = false)
+	@Test(enabled = false)//TODO : 1、注释用例没有问题单号
 	private void testReputBacket() {
 		s3Client.createBucket(bucketName, regionName);
 		Assert.assertTrue(s3Client.doesBucketExist(bucketName));
@@ -60,7 +60,7 @@ public class TestAllowReput18594 extends S3TestBase {
 		Assert.assertEquals(s3Client.listBuckets().size(), 1);
 		Assert.assertTrue(s3Client.doesBucketExist(bucketName));
 		Assert.assertEquals(s3Client.getBucketLocation(bucketName), regionName);
-
+		//TODO: 2、这个方法名检查桶，实际是检查桶中的对象，检查桶上面已经覆盖，可以删除掉
 		checkBucket();
 		runSuccess = true;
 	}

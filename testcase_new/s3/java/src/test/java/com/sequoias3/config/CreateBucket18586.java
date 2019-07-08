@@ -60,6 +60,7 @@ public class CreateBucket18586 extends S3TestBase {
 		RegionUtils.putRegion(region);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Test(dataProvider = "authorizationProvider")
 	private void testCreateBucket(String bucketName, String authorization) throws Exception {
 		String tmpContent = "content18586" + authorization;
@@ -72,7 +73,7 @@ public class CreateBucket18586 extends S3TestBase {
 		List<String> buckets = ConfigUtils.listBuckets(authorization);
 		Assert.assertEquals(buckets.size(), 1, "buckets : " + buckets.toString());
 		Assert.assertEquals(buckets.get(0), bucketName);
-
+        //TOOD : 1、检查桶是否存在和上面的检查点重复，另外桶的属性信息可以在获取桶时一起验证，如用户、状态和区域等属性
 		ConfigUtils.checkCreateBucketResult(s3Client, bucketName, userName);
 
 		// check region info
@@ -84,6 +85,7 @@ public class CreateBucket18586 extends S3TestBase {
 		Assert.assertEquals(status, BucketVersioningConfiguration.ENABLED);
 
 		List<String> contentList = new ArrayList<>();
+		//TODO: 2、countNum变量名定义和实际不相符，建议更新变量名或者增加注释说明
 		for (int i = 0; i < countNum; i++) {
 			String currentExpContent = tmpContent + "." + i;
 			ConfigUtils.putObject(bucketName, keyName, currentExpContent, authorization);

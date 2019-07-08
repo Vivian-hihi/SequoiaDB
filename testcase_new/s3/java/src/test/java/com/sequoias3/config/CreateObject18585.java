@@ -52,6 +52,8 @@ public class CreateObject18585 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 	}
 
+	//TODO : 4、这个用例屏蔽没有说明原因
+	@SuppressWarnings("deprecation")
 	@Test(enabled = false) // (dataProvider = "authorizationProvider")
 	private void testCreateObject(String bucketName, String authorization) throws Exception {
 		String tmpContent = "content18585" + authorization;
@@ -66,12 +68,15 @@ public class CreateObject18585 extends S3TestBase {
 
 		List<String> buckets = ConfigUtils.listBuckets(authorization);
 		Assert.assertTrue(buckets.contains(bucketName));
+		//TODO : 1、这个地方检查创建桶结果和上面一行代码重复
 		ConfigUtils.checkCreateBucketResult(s3ClientNorMal, bucketName, S3TestBase.s3UserName);
 
 		ConfigUtils.putObject(bucketName, keyName, tmpContent, authorization);
+		//TODO : 2、这里比较用户信息可以直接获取用户值比较
 		Assert.assertTrue(s3ClientNorMal.doesObjectExist(bucketName, keyName));
 		Assert.assertTrue(s3Client.doesObjectExist(bucketName, keyName));
 
+		//TODO : 3、校验对象方法重复
 		// check head object
 		ConfigUtils.headObject(bucketName, keyName, authorization);
 

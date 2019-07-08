@@ -53,6 +53,7 @@ public class CreateObject18587 extends S3TestBase {
 		s3Client = CommLib.buildS3Client(accessKeys[0], accessKeys[1]);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Test(dataProvider = "authorizationProvider")
 	private void testCreateObject(String bucketName, String authorization) throws Exception {
 		// create bucket
@@ -75,8 +76,10 @@ public class CreateObject18587 extends S3TestBase {
 		JSONObject ListBucketResultObj = ConfigUtils.listObjectsWithDelimiter(bucketName, delimiter, authorization);
 		ConfigUtils.checkListObjV2WithDelimiter(ListBucketResultObj, expCommonPrefixes, expContentList);
 
+		//TODO :1、这个方法没看出来检测点是啥？方法名看不出用途
 		ConfigUtils.listOvjectV2(bucketName, authorization);
 		clearBucket(bucketName, authorization);
+		//TODO:2、这里不需要检查桶是否存在，检测点是删除对象后检查对象是否存在
 		Assert.assertFalse(s3Client.doesBucketExist(bucketName));
 		runSuccess = true;
 	}
