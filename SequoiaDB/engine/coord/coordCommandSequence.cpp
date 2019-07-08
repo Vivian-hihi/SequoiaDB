@@ -169,8 +169,6 @@ namespace engine
                                                INT16 w,
                                                INT64 *pContextID )
    {
-      INT32 rc = SDB_OK ;
-
       coordResource * resource = sdbGetCoordCB()->getResource() ;
       SDB_ASSERT( NULL != resource, "coord resource is invalid" ) ;
 
@@ -213,15 +211,11 @@ namespace engine
          {
             PD_LOG( PDDEBUG, "Failed to find collection [%s] in catalog cache",
                     _collection ) ;
-            goto done ;
          }
       }
 
-   done :
       // ignore errors
       return SDB_OK ;
-   error :
-      goto done ;
    }
 }
 
