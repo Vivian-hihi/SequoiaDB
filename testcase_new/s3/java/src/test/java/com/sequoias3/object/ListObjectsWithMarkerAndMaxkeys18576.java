@@ -47,8 +47,7 @@ public class ListObjectsWithMarkerAndMaxkeys18576 extends S3TestBase {
 
 		// test b: show only the last object
 		int startPositionB = objectNums - 2;
-		int maxKeysB = 2;
-		// TODO :文本用例期望的结果中，对于场景b，返回的结果数应为1,而不是指定的maxkeys记录数，请修改对应文本用例
+		int maxKeysB = 2;		
 		listObjectsAndCheckResult(keyList, startPositionB, maxKeysB);
 
 		// test c:starting with the last one
@@ -91,18 +90,14 @@ public class ListObjectsWithMarkerAndMaxkeys18576 extends S3TestBase {
 			}
 			String nextMarker = result.getNextMarker();
 			request.setMarker(nextMarker);
-			int eachListNums = oneGetCommPrefixes.size() + oneQueryKeyList.size();
-			// TODO
-			// :下面这个判断对“当maxKeys小于匹配数，而listObjects一次就返回的结果数eachListNums小于maxKeys”这种情况无法察觉
+			int eachListNums = oneGetCommPrefixes.size() + oneQueryKeyList.size();			
 			if (eachListNums > maxKeys) {
 				Assert.fail("list nums error! commonPrefixes: " + oneGetCommPrefixes.toString() + "  contents:"
 						+ oneQueryKeyList.toString());
 			}
-
 		} while (result.isTruncated());
 
-		// TODO :注释有误 teh -> the
-		// check teh commonprefixes is null.
+		// check the commonprefixes is null.
 		List<String> expCommonPrefixes = new ArrayList<>();
 		Assert.assertEquals(commonPrefixes, expCommonPrefixes);
 
@@ -111,9 +106,8 @@ public class ListObjectsWithMarkerAndMaxkeys18576 extends S3TestBase {
 			// marker starting with the last one, list keys is 0
 			Assert.assertEquals(queryKeyList.size(), 0, "query keylist is :" + queryKeyList.toString());
 		} else {
-			for (int i = 0; i < startPosition + 1; i++) {
-				expKeyList.remove(0);
-			}
+			expKeyList.subList(0, startPosition + 1).clear();
+			
 			Assert.assertEquals(queryKeyList, expKeyList);
 		}
 

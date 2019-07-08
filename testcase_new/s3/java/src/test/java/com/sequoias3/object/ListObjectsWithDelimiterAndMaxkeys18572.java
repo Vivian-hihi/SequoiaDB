@@ -46,22 +46,18 @@ public class ListObjectsWithDelimiterAndMaxkeys18572 extends S3TestBase {
 
 	@Test
 	public void testListObjects() throws Exception {
-		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);
-		// TODO :keynums是全局变量，不需要传参
+		DelimiterUtils.putBucketDelimiter(bucketName, delimiter);		
 		putObjects(keyNums);
 
 		// test a: match nums > maxkeys
-		int maxKeysA = 3;
-		// TODO :matchDelimiterKeyList和noMatchDelimiterKeyList是全局变量，直接使用即可，不需要传参
+		int maxKeysA = 3;		
 		listObjectsAndCheckResult(matchDelimiterKeyList, noMatchDelimiterKeyList, maxKeysA);
 
-		// test b: match nums < maxkeys
-		// TODO :如果这里的匹配数是指匹配delimiter的对象数26的话，这里建议测下maxKeysB = 27
+		// test b: match nums < maxkeys		
 		int maxKeysB = 51;
 		listObjectsAndCheckResult(matchDelimiterKeyList, noMatchDelimiterKeyList, maxKeysB);
 
-		// test c: match nums = maxkeys
-		// TODO :如果这里的匹配数是指匹配delimiter的对象数的话，那应该是26，而不是50
+		// test c: match nums = maxkeys		
 		int maxKeysC = keyNums;
 		listObjectsAndCheckResult(matchDelimiterKeyList, noMatchDelimiterKeyList, maxKeysC);
 		runSuccess = true;
@@ -107,20 +103,16 @@ public class ListObjectsWithDelimiterAndMaxkeys18572 extends S3TestBase {
 			String nextMarker = result.getNextMarker();
 			request.setMarker(nextMarker);
 
-			int eachListNums = commonPrefixes.size() + queryKeyList.size();
-			// TODO
-			// :下面这个判断对“当maxKeys小于delimiter匹配数，而listObjects一次就返回的结果数eachListNums小于maxKeys”这种情况无法察觉
+			int eachListNums = commonPrefixes.size() + queryKeyList.size();			
 			if (eachListNums > maxKeys) {
 				Assert.fail("list nums error! commonPrefixes: " + commonPrefixes.toString() + "  contents:"
 						+ queryKeyList.toString());
 			}
 		} while (result.isTruncated());
 
-		// check the commprefixList and contents
-		Collections.sort(expCommprefixLists);
+		// check the commprefixList and contents		
 		Assert.assertEquals(matchDelimiterList, expCommprefixLists, "matchDelimiterList:"
 				+ matchDelimiterList.toString() + "\n commprefixList:" + expCommprefixLists.toString());
-		Collections.sort(expContentLists);
 		Assert.assertEquals(matchContentList, expContentLists,
 				"matchContents:" + matchContentList.toString() + "\n contentList:" + expContentLists.toString());
 
@@ -138,17 +130,16 @@ public class ListObjectsWithDelimiterAndMaxkeys18572 extends S3TestBase {
 			}
 			s3Client.putObject(bucketName, subKeyName, "content_18572_" + i);
 			keyList.add(subKeyName);
+			Collections.sort(matchDelimiterKeyList);
+			Collections.sort(noMatchDelimiterKeyList);
 		}
 
 		/*
-		 * put one object match the same dir,eg: "/object18572/test_0aa1.png"
-		 * and "/object18572/test_0aa.png",the dir is "/object18572/test_0aa"
-		 */
-		// TODO
-		// :这里不太懂，上面的注释说要放置一个有相同目录的对象/object18572/test_0aa1.png，但是并没有放置其他和这个对象目录相同的对象，即/object18572/test_0aa.png并不存在
-		String key = keyName + "/test_0aa1.png";
-		s3Client.putObject(bucketName, key, "content_18572_test");
-		matchDelimiterKeyList.add(keyName + "/test_0aa");
-		keyList.add(key);
+		 * put one object match the same dir,eg: "/object18572/0aa1.png"
+		 * and "/object18572/0aatest.png",the dir is "/object18572/0aa"
+		 */		
+		String key  = keyName + "/0aa1.png";
+		s3Client.putObject(bucketName, key, "content_18572_test");		
+		keyList.add(key);		
 	}
 }

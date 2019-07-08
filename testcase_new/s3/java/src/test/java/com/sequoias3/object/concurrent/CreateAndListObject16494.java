@@ -65,10 +65,9 @@ public class CreateAndListObject16494 extends S3TestBase {
 		for (PutObjectThread putObjectThread : putObjectThreads) {
 			putObjectThread.start();
 		}
-		// TODO
-		// :建议多加一些listObjectV1/V2的线程一起跑，因为listObject这样的操作响应很快，很可能查到的对象列表还是空的
-		listObjectThread.start();
-		listObjectV1Thread.start();
+		
+		listObjectThread.start(10);
+		listObjectV1Thread.start(10);
 
 		for (PutObjectThread putObjectThread : putObjectThreads) {
 			Assert.assertTrue(putObjectThread.isSuccess(), putObjectThread.getErrorMsg());

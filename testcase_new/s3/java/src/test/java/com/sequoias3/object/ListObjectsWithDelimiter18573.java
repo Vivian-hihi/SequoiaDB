@@ -29,17 +29,14 @@ public class ListObjectsWithDelimiter18573 extends S3TestBase {
 	public Object[][] generatePageSize() {
 		return new Object[][] {
 				// the parameter : delimiter and matchObjectPosition
-				// test a: delimiter type is letters and numbers
-				// TODO :如果只是覆盖测的话建议测边界值a,z,0,9,A,Z
-				new Object[] { "/test1/AZ/", 3 },
-				// TODO :注释中有误：chararcter -> character
-				// test b:delimiter type is special chararcter
+				// test a: delimiter type is letters and numbers				
+				new Object[] { "/test1/AZ/az09", 3 },				
+				// test b:delimiter type is special character
 				new Object[] { "/test*_.(d!-t'')", 2 },
 				// test c:delimiter type is &@:,$=+?;
 				new Object[] { "/test&@:,$=+? t_1", 1 },
-				// test c:delimiter type is ASCII
-				// TODO :这里测试了ascii码值为32和53的值，与文本用例中0-31,127不符
-				new Object[] { "\040te\065s", 0 },
+				// test c:delimiter type is ASCII（1-31），127				
+				new Object[] { "\0177\01te\037s", 0 },
 				// test d: delimiter type is 、^`><{}[]#%"~|
 				new Object[] { "test、^`><{}[]#%\"~|_1", 4 } };
 	}
@@ -54,8 +51,8 @@ public class ListObjectsWithDelimiter18573 extends S3TestBase {
 		s3Client = CommLib.buildS3Client();
 		CommLib.clearBucket(s3Client, bucketName);
 		s3Client.createBucket(bucketName);
-		String[] keyNames = { "\040te\065st_18573_test1", "/test&@:,$=+? t_18573_test2",
-				"/test*_.(d!-t'')/18573_test3.png", "/test1/AZ/18573_test4.txt", "test、^`><{}[]#%\"~|_18573_test5" };
+		String[] keyNames = { "\0177\01te\037st_18573_test1", "/test&@:,$=+? t_18573_test2",
+				"/test*_.(d!-t'')/18573_test3.png", "/test1/AZ/az09/18573_test4.txt", "test、^`><{}[]#%\"~|_18573_test5" };
 		keyList = putObjects(keyNames);
 	}
 

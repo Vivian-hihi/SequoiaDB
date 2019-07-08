@@ -92,12 +92,8 @@ public class ListObjectsWithMarker18565_18566 extends S3TestBase {
 			request.setMarker(nextMarker);
 		} while (result.isTruncated());
 
-		// check the keyName
-		// TODO :这里建议可以使用：expKeyList.subList(0, startPosition + 1).clear();
-		for (int i = 0; i < startPosition + 1; i++) {
-			expKeyList.remove(0);
-		}
-
+		// check the keyName	
+		expKeyList.subList(0, startPosition + 1).clear();
 		Assert.assertEquals(queryKeyList, expKeyList);
 	}
 

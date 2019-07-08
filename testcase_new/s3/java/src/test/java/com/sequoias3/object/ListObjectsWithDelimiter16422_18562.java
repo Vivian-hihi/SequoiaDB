@@ -96,10 +96,7 @@ public class ListObjectsWithDelimiter16422_18562 extends S3TestBase {
 			Assert.assertEquals(size, fileSize);
 		}
 
-		// check the keyName
-		// TODO :不需要对keyList和queryKeyList排序
-		Collections.sort(keyList);
-		Collections.sort(queryKeyList);
+		// check the keyName	
 		Assert.assertEquals(queryKeyList, keyList);
 	}
 
@@ -128,10 +125,7 @@ public class ListObjectsWithDelimiter16422_18562 extends S3TestBase {
 			Assert.assertEquals(size, fileSize);
 		}
 
-		// check the keyName
-		// TODO :不需要对keyList和queryKeyList排序
-		Collections.sort(keyList);
-		Collections.sort(queryKeyList);
+		// check the keyName	
 		Assert.assertEquals(queryKeyList, keyList);
 	}
 
@@ -148,6 +142,7 @@ public class ListObjectsWithDelimiter16422_18562 extends S3TestBase {
 			}
 			s3Client.putObject(bucketName, keyName, new File(filePath));
 		}
+		Collections.sort(noMatchKeyList);
 		return noMatchKeyList;
 	}
 }

@@ -95,9 +95,7 @@ public class ListObjects18574 extends S3TestBase {
 			String nextMarker = result.getNextMarker();
 			request.setMarker(nextMarker);
 
-			int eachListNums = oneGetCommPrefixes.size() + oneQueryKeyList.size();
-			// TODO
-			// ：下面这个判断对“当maxKeys小于匹配数，而listObjects一次就返回的结果数eachListNums小于maxKeys”这种情况无法察觉,如设置maxKeys=2,而eachListNums=1
+			int eachListNums = oneGetCommPrefixes.size() + oneQueryKeyList.size();			
 			if (eachListNums > maxKeys) {
 				Assert.fail("list nums error! commonPrefixes: " + oneGetCommPrefixes.toString() + "  contents:"
 						+ oneQueryKeyList.toString() + "\n eachListNums=" + eachListNums + "  maxKeys=" + maxKeys);

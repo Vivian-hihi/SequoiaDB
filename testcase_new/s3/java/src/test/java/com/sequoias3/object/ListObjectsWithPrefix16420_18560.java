@@ -90,11 +90,7 @@ public class ListObjectsWithPrefix16420_18560 extends S3TestBase {
 			Assert.assertEquals(size, fileSize);
 		}
 
-		// check the keyName
-		// TODO :建议将keyList的排序放在putObjects（）方法的return之前，只排一次序即可
-		Collections.sort(keyList);
-		// TODO ：不必对queryKeyList排序
-		Collections.sort(queryKeyList);
+		// check the keyName		
 		Assert.assertEquals(queryKeyList, keyList);
 	}
 
@@ -102,9 +98,7 @@ public class ListObjectsWithPrefix16420_18560 extends S3TestBase {
 		List<String> queryKeyList = new ArrayList<>();
 		ListObjectsRequest request = new ListObjectsRequest().withBucketName(bucketName);
 		request.withPrefix(prefix);
-		ObjectListing result = s3Client.listObjects(request);
-		// TODO ：以下只校验了对象元数据中的prefix，key,size和etag
-		// 没有校验lastModified和StorageClass，与文本用例不符，建议在用例或文本用例中说明一下
+		ObjectListing result = s3Client.listObjects(request);		
 		Assert.assertEquals(prefix, result.getPrefix());
 
 		List<S3ObjectSummary> objects = result.getObjectSummaries();
@@ -120,9 +114,7 @@ public class ListObjectsWithPrefix16420_18560 extends S3TestBase {
 			Assert.assertEquals(size, fileSize);
 		}
 
-		// check the keyName
-		// TODO :建议将keyList的排序放在putObjects（）方法的return之前，只排一次序即可
-		Collections.sort(keyList);
+		// check the keyName		
 		Assert.assertEquals(queryKeyList, keyList);
 	}
 
@@ -139,6 +131,7 @@ public class ListObjectsWithPrefix16420_18560 extends S3TestBase {
 			}
 			s3Client.putObject(bucketName, keyName, new File(filePath));
 		}
+		Collections.sort(matchKeyList);
 		return matchKeyList;
 	}
 }
