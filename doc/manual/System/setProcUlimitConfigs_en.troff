@@ -8,7 +8,7 @@
 addAHostMap \- Modify process resource limits
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]System.setProcUlimitConfigs( <configsObj> )\f[]\f[]
+\f[B]\f[I]System.setProcUlimitConfigs( <configs> )\f[]\f[]
 .SH CATEGORY
 .PP
 System
@@ -37,7 +37,7 @@ _
 T{
 1
 T}@T{
-configsObj
+configs
 T}@T{
 JSON
 T}@T{

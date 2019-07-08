@@ -1,6 +1,6 @@
 ##语法##
 
-***System.isProcExist( \<optionObj\> )***
+***System.isProcExist( \<options\> )***
 
 ##类别##
 
@@ -14,7 +14,7 @@ System
 
 | 参数名    | 参数类型 | 默认值 | 描述         | 是否必填 |
 | --------- | -------- | ------ | ------------ | -------- |
-| optionObj  | JSON   | ---    | 进程信息     | 是       |
+| options  | JSON   | ---    | 进程信息     | 是       |
 
 options 参数详细说明如下：
 

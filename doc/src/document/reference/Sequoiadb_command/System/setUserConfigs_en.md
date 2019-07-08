@@ -4,7 +4,7 @@ setUserConfigs - Setting user configuration
 
 ##SYNOPSIS##
 
-***System.setUserConfigs( \<optionObj\> )***
+***System.setUserConfigs( \<options\> )***
 
 ##CATEGORY##
 
@@ -18,9 +18,9 @@ Setting user configuration
 
 | Name      | Type     | Default | Description         | Required or not |
 | ------- | -------- | ------------ | ---------------- | -------- |
-| optionObj  | JSON   | ---    |  new user configuration   | yes       |
+| options  | JSON   | ---    |  new user configuration   | yes       |
 
-The detail description of 'optionObj' parameter is as follow:
+The detail description of 'options' parameter is as follow:
 
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | ---------------- |

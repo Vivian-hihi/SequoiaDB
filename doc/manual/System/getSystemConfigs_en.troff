@@ -8,7 +8,7 @@
 getReleaseInfo \- Acquire the information of system configuration
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]System.getSystemConfigs( [type] )\f[]\f[]
+\f[B]\f[I]System.getSystemConfigs( [types] )\f[]\f[]
 .SH CATEGORY
 .PP
 System
@@ -37,7 +37,7 @@ _
 T{
 1
 T}@T{
-type
+types
 T}@T{
 string
 T}@T{
@@ -49,7 +49,7 @@ not
 T}
 .TE
 .PP
-The detail description of \[aq]type\[aq] parameter is as follow:
+The detail description of \[aq]types\[aq] parameter is as follow:
 .PP
 .TS
 tab(@);

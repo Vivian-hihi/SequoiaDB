@@ -4,7 +4,7 @@ isProcExist - Determine if a process exists
 
 ##SYNOPSIS##
 
-***System.isProcExist( \<optionObj\> )***
+***System.isProcExist( \<options\> )***
 
 ##CATEGORY##
 
@@ -18,9 +18,9 @@ Determine if a process exist
 
 | Name      | Type     | Default | Description         | Required or not |
 | ------- | -------- | ------------ | ---------------- | -------- |
-| optionObj | JSON   | ---    |  process information  | yes   |
+| options | JSON   | ---    |  process information  | yes   |
 
-The detail description of 'optionObj' parameter is as follow:
+The detail description of 'options' parameter is as follow:
 
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | ---------------- |

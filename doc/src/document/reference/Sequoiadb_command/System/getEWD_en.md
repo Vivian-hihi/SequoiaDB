@@ -34,5 +34,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ```lang-javascript
 > System.getEWD()
-/opt/trunk/bin
+/opt/sequoiadb/bin
 ```

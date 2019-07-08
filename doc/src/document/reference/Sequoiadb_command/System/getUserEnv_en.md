@@ -12,7 +12,7 @@ System
 
 ##DESCRIPTION##
 
-Acquire the environment variable
+Acquire the environment variable for the current user
 
 ##PARAMETERS##
 
@@ -20,7 +20,7 @@ NULL
 
 ##RETURN VALUE##
 
-On success, return the environment variable.
+On success, return the environment variable for the current user.
 
 On error, exception will be thrown.
 
@@ -30,7 +30,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Acquire the environment variable
+* Acquire the environment variable for the current user
 
 ```lang-javascript
 > System.getUserEnv()

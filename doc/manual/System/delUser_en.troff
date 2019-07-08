@@ -8,7 +8,7 @@
 delUser \- Delete a user
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]System.delUser( <userObj> )\f[]\f[]
+\f[B]\f[I]System.delUser( <users> )\f[]\f[]
 .SH CATEGORY
 .PP
 System
@@ -37,7 +37,7 @@ _
 T{
 1
 T}@T{
-userObj
+users
 T}@T{
 JSON
 T}@T{
@@ -49,7 +49,7 @@ yes
 T}
 .TE
 .PP
-The detail description of \[aq]userObj\[aq] parameter is as follow:
+The detail description of \[aq]users\[aq] parameter is as follow:
 .PP
 .TS
 tab(@);

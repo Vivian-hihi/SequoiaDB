@@ -16,7 +16,6 @@ List processes
 
 ##PARAMETERS##
 
-
 | Name      | Type     | Default | Description              | Required or not |
 | --------- | -------- | ------ | -----------------------    | -------- |
 | options   | JSON     |  no details are displayed by default | search pattern | not       |
@@ -28,9 +27,9 @@ The detail description of 'options' parameter is as follow:
 | ---------- | ------- |---------------- | ------- | -------------- |
 | detail    | Bool |   not   | { detail: true }     | whether to display details   |
 
->Note:
+**Note:**
 
-> The optional parameter filterObj supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
+The optional parameter filter supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
 
 ##RETURN VALUE##
 

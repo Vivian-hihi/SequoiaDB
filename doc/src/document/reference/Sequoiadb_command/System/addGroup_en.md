@@ -4,7 +4,7 @@ addGroup - Add a user group
 
 ##SYNOPSIS##
 
-***System.addGroup( \<groupObj\> )***
+***System.addGroup( \<groups\> )***
 
 ##CATEGORY##
 
@@ -18,7 +18,7 @@ Add a user group
 
 | Name      | Type     | Default | Description         | Required or not |
 | ------- | -------- | ------------ | ---------------- | -------- |
-| groupObj     | JSON   | ---    |  user group information  | yes   |
+| groups     | JSON   | ---    |  user group information  | yes   |
 
 The detail description of 'groupObj' parameter is as follow:
 

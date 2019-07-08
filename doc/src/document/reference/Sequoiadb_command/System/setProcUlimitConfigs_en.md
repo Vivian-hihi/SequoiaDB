@@ -4,7 +4,7 @@ addAHostMap - Modify process resource limits
 
 ##SYNOPSIS##
 
-***System.setProcUlimitConfigs( \<configsObj\> )***
+***System.setProcUlimitConfigs( \<configs\> )***
 
 ##CATEGORY##
 
@@ -18,7 +18,7 @@ Modify process resource limits
 
 | Name      | Type     | Default | Description         | Required or not |
 | ------- | -------- | ------------ | ---------------- | -------- |
-| configsObj  | JSON   | ---  | new resource limits   | yes       |
+| configs  | JSON   | ---  | new resource limits   | yes       |
 
 ##RETURN VALUE##
 

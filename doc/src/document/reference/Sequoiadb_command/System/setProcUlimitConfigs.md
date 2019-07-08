@@ -1,6 +1,6 @@
 ##语法##
 
-***System.setProcUlimitConfigs( \<configsObj\> )***
+***System.setProcUlimitConfigs( \<configs\> )***
 
 ##类别##
 
@@ -14,9 +14,9 @@ System
 
 | 参数名  | 参数类型 | 默认值       | 描述             | 是否必填 |
 | ------- | -------- | ------------ | ---------------- | -------- |
-| configsObj  | JSON   | ---    | 新的限制值    | 是       |
+| configs  | JSON   | ---    | 新的限制值    | 是       |
 
-configsObj 参数可修改的字段见[getProcUlimitConfigs](reference/Sequoiadb_command/System/getProcUlimitConfigs.md)中的示例
+configs 参数可修改的字段见[getProcUlimitConfigs](reference/Sequoiadb_command/System/getProcUlimitConfigs.md)中的示例
 
 ##返回值##
 

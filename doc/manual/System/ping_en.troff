@@ -37,13 +37,13 @@ _
 T{
 1
 T}@T{
-name
+hostname
 T}@T{
 string
 T}@T{
 \-\-\-
 T}@T{
-user name
+hostname
 T}@T{
 yes
 T}

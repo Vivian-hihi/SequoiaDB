@@ -8,7 +8,7 @@
 isProcExist \- Determine if a process exists
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]System.isProcExist( <optionObj> )\f[]\f[]
+\f[B]\f[I]System.isProcExist( <options> )\f[]\f[]
 .SH CATEGORY
 .PP
 System
@@ -37,7 +37,7 @@ _
 T{
 1
 T}@T{
-optionObj
+options
 T}@T{
 JSON
 T}@T{
@@ -49,7 +49,7 @@ yes
 T}
 .TE
 .PP
-The detail description of \[aq]optionObj\[aq] parameter is as follow:
+The detail description of \[aq]options\[aq] parameter is as follow:
 .PP
 .TS
 tab(@);

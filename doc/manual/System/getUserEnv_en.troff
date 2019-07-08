@@ -13,13 +13,13 @@ getUserEnv \- Acquire the environment variable
 System
 .SH DESCRIPTION
 .PP
-Acquire the environment variable
+Acquire the environment variable for the current user
 .SH PARAMETERS
 .PP
 NULL
 .SH RETURN VALUE
 .PP
-On success, return the environment variable.
+On success, return the environment variable for the current user.
 .PP
 On error, exception will be thrown.
 .SH ERRORS
@@ -29,7 +29,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Acquire the environment variable
+Acquire the environment variable for the current user
 .IP
 .nf
 \f[C]

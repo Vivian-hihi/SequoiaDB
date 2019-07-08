@@ -4,7 +4,7 @@ getReleaseInfo - Acquire the information of system configuration
 
 ##SYNOPSIS##
 
-***System.getSystemConfigs( \[type\] )***
+***System.getSystemConfigs( \[types\] )***
 
 ##CATEGORY##
 
@@ -18,9 +18,9 @@ Acquire the information of system configuration
 
 | Name      | Type     | Default | Description         | Required or not |
 | ------- | -------- | ------------ | ---------------- | -------- |
-| type     | string   | all     | system module type   | not       |
+| types     | string   | all     | system module type   | not       |
 
-The detail description of 'type' parameter is as follow:
+The detail description of 'types' parameter is as follow:
 
 | Attributes |  Description  |
 | ---------- | ------- |

@@ -8,7 +8,7 @@
 addGroup \- Add a user group
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]System.addGroup( <groupObj> )\f[]\f[]
+\f[B]\f[I]System.addGroup( <groups> )\f[]\f[]
 .SH CATEGORY
 .PP
 System
@@ -37,7 +37,7 @@ _
 T{
 1
 T}@T{
-groupObj
+groups
 T}@T{
 JSON
 T}@T{

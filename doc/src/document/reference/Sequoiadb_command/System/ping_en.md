@@ -18,7 +18,7 @@ Determine whether the host is reachable
 
 | Name      | Type     | Default | Description     | Required or not |
 | ------- | -------- | ------------ | ------------ | -------- |
-| name     | string   | ---    | user name   | yes       |
+| hostname     | string   | ---    | hostname | yes       |
 
 ##RETURN VALUE##
 

@@ -34,6 +34,6 @@ Acquire current directory
 .nf
 \f[C]
 >\ System.getEWD()
-/opt/trunk/bin
+/opt/sequoiadb/bin
 \f[]
 .fi

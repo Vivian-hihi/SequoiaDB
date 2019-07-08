@@ -4,7 +4,7 @@ addGroup - Add a user
 
 ##SYNOPSIS##
 
-***System.addUser( \<userObj\> )***
+***System.addUser( \<users\> )***
 
 ##CATEGORY##
 
@@ -18,9 +18,9 @@ Add a user
 
 | Name      | Type     | Default | Description         | Required or not |
 | ------- | -------- | ------------ | ---------------- | -------- |
-| userObj | JSON   | ---    |  user information  | yes   |
+| users | JSON   | ---    |  user information  | yes   |
 
-The detail description of 'userObj' parameter is as follow:
+The detail description of 'users' parameter is as follow:
 
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | ---------------- |

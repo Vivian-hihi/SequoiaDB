@@ -31,5 +31,5 @@ System
 
   ```lang-javascript
   > System.getEWD()
-  /opt/trunk/bin
+  /opt/sequoiadb/bin
   ```
