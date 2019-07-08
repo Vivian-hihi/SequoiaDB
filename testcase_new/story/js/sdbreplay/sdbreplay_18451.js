@@ -2,7 +2,7 @@
 *@Description: seqDB-18451:主子表，多张子表其中包括普通表和分区表，重放复制日志到文件   
 *@Author: 2019-7-2  xiaoni zhao init
 ************************************************************************/
-main();
+//main();
 function main()
 {  
    if( commIsStandalone( db ) )
@@ -23,14 +23,8 @@ function main()
    mainCl.attachCL(csName +"."+ subClName1,{ LowBound: { a: 0 }, UpBound: { a: 200 } });
    mainCl.attachCL(csName +"."+ subClName2,{ LowBound: { a: 200 }, UpBound: { a: 400 } });
    
-   //get minLSN
-   var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
-   var svcName = cursor.current().toObj().Group[0].Service[0].Name;
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
-   var minLSN = cursor.current().toObj().CompleteLSN;
-   println("minLSN:"+minLSN);
-   
    var expDataArr = [];
+   var minLSN = getMinLSN( groupNames );
    for(var i=0; i<100; i++)
    {
       mainCl.insert({a:i});
@@ -54,12 +48,12 @@ function main()
    {    
       var confName = "sdbreplay_18451.conf";
       getOutputConfFile( groupNames[0], csName, mainClName, confName );
+      configOutputConfFile( rtCmd, csName, subClName1, subClName2, mainClName );
       
-      var subClNameArr = ["\""+ csName +"."+ subClName1+"\"", "\""+csName +"."+ subClName2+"\""];
       var mainClNameArr = [csName +"."+ mainClName];
-      var confPath = tmpFileDir + csName +"." + mainClName + ".conf";
+      var subClNameArr = ["\""+ csName +"."+ subClName1+"\"", "\""+csName +"."+ subClName2+"\""];
       var filter = '\'{CL: ['+ subClNameArr +'], MinLSN: '+ minLSN +' }\''; 
-      execSdbReplay( rtCmd, groupNames[0], mainClNameArr, "replica", confPath, undefined, undefined, undefined, filter );
+      execSdbReplay( rtCmd, groupNames[0], mainClNameArr, "replica", undefined, undefined, undefined, undefined, filter );
       
       checkCsvFile( rtCmd, mainClName, expDataArr );
       
@@ -70,4 +64,11 @@ function main()
       backupFile( rtCmd, mainClName );
       throw e;
    }
+}
+function configOutputConfFile( rtCmd, csName, subClName1, subClName2, mainClName, targetConfPath )
+{
+   var targetConfPath = tmpFileDir + csName +"." + mainClName + ".conf";
+   rtCmd.run( "sed -i 's/csName.clName_source_1/"+ csName +"."+ subClName1 +"/g' "+ targetConfPath );
+   rtCmd.run( "sed -i 's/csName.clName_source_2/"+ csName +"."+ subClName2 +"/g' "+ targetConfPath );
+   rtCmd.run( "sed -i 's/csName.clName_target/"+ csName +"."+ mainClName +"/g' "+ targetConfPath );
 }

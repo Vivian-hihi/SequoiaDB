@@ -18,13 +18,8 @@ function main()
    var cl1 = readyCL(csName, clName1, {Group:groupNames[0]}); 
    var cl2 = readyCL(csName, clName2, {Group:groupNames[0]}); 
   
-   //get minLSN
-   var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
-   var svcName = cursor.current().toObj().Group[0].Service[0].Name;
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
-   var minLSN = cursor.current().toObj().CompleteLSN;
-  
    var expDataArr = [];
+   var minLSN = getMinLSN( groupNames );
    for(var i=0; i<100; i++)
    {
       cl1.insert({a:i, b:i});
@@ -50,6 +45,7 @@ function main()
    {     
       var confName = "sdbreplay_18464.conf";
       getOutputConfFile( groupNames[0], csName, clName1, confName );
+      configOutputConfFile( rtCmd, csName, clName1, clName2 );
       
       var clName1Arr = [csName +"."+ clName1];
       var clNameArr = ["\""+ csName +"."+ clName1 +"\"", "\""+ csName +"."+ clName2 +"\""];
@@ -67,4 +63,12 @@ function main()
       backupFile( rtCmd, clName1 );
       throw e;
    }
+}
+function configOutputConfFile( rtCmd, csName, clName1, clName2 )
+{
+   var targetConfPath = tmpFileDir + csName +"."+ clName1 +".conf";
+   rtCmd.run( "sed -i 's/csName.clName_source1/"+ csName +"."+ clName1 +"/g' "+ targetConfPath );
+   rtCmd.run( "sed -i 's/csName.clName_target1/"+ csName +"."+ clName1 +"'/g "+ targetConfPath );
+   rtCmd.run( "sed -i 's/csName.clName_source2/"+ csName +"."+ clName2 +"/g' "+ targetConfPath );
+   rtCmd.run( "sed -i 's/csName.clName_target2/"+ csName +"."+ clName2 +"'/g "+ targetConfPath );
 }
