@@ -347,7 +347,7 @@ namespace engine
       SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB() ;
       rtnContextLobFetcher *pContextLob = NULL ;
 
-      ossSnprintf( fullName, DMS_COLLECTION_FULL_NAME_SZ, "%s.%s",
+      ossSnprintf( fullName, sizeof( fullName ), "%s.%s",
                    cs, collection ) ;
 
       if ( -1 != _contextID )

@@ -177,7 +177,7 @@ namespace engine
       }
 
       ossStrncpy( _cappedCSName, extName, DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
-      ossSnprintf( _cappedCLName, DMS_COLLECTION_FULL_NAME_SZ + 1,
+      ossSnprintf( _cappedCLName, sizeof( _cappedCLName ),
                    "%s.%s", extName, extName ) ;
 
    done:

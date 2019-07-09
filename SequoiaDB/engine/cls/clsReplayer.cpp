@@ -877,7 +877,7 @@ namespace engine
             {
                INT32 rcTmp = SDB_OK ;
                CHAR newCLFullName [ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
-               ossSnprintf( newCLFullName, DMS_COLLECTION_FULL_NAME_SZ,
+               ossSnprintf( newCLFullName, sizeof( newCLFullName ),
                             "%s.%s", cs, newCl ) ;
                rcTmp = rtnTestCollectionCommand( newCLFullName, _dmsCB ) ;
                if ( SDB_OK == rcTmp )

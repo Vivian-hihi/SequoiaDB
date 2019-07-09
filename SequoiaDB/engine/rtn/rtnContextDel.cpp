@@ -1163,9 +1163,9 @@ namespace engine
 
       ossStrncpy( _clShortName, clShortName, DMS_COLLECTION_NAME_SZ ) ;
       ossStrncpy( _newCLShortName, newCLShortName, DMS_COLLECTION_NAME_SZ ) ;
-      ossSnprintf( _clFullName, DMS_COLLECTION_FULL_NAME_SZ,
+      ossSnprintf( _clFullName, sizeof( _clFullName ),
                    "%s.%s", csName, clShortName ) ;
-      ossSnprintf( newCLFullName, DMS_COLLECTION_FULL_NAME_SZ,
+      ossSnprintf( newCLFullName, sizeof( newCLFullName ),
                    "%s.%s", csName, newCLShortName ) ;
 
       /// test collection space exist

@@ -1185,9 +1185,9 @@ namespace engine
                       "Get field [%s] failed, rc: %d",
                       CAT_COLLECTION_NAME, rc ) ;
 
-            ossSnprintf( clFullName, DMS_COLLECTION_FULL_NAME_SZ,
+            ossSnprintf( clFullName, sizeof( clFullName ),
                          "%s.%s", _targetName.c_str(), pCLName ) ;
-            ossSnprintf( newCLFullName, DMS_COLLECTION_FULL_NAME_SZ,
+            ossSnprintf( newCLFullName, sizeof( newCLFullName ),
                          "%s.%s", _newCSName.c_str(), pCLName ) ;
 
             rc = catRenameCLStep( clFullName, newCLFullName,

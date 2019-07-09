@@ -4487,7 +4487,7 @@ do                                                            \
          goto error ;
       }
 
-      ossSnprintf( clFullName, CLIENT_CL_FULLNAME_SZ, "%s.%s",
+      ossSnprintf( clFullName, sizeof( clFullName ), "%s.%s",
                    _collectionSpaceName, pCollectionName ) ;
 
       if ( fetchCachedObject( _connection->_getCachedContainer(),
@@ -4563,7 +4563,7 @@ do                                                            \
          goto error ;
       }
 
-      ossSnprintf( clFullName, CLIENT_CL_FULLNAME_SZ, "%s.%s",
+      ossSnprintf( clFullName, sizeof( clFullName ), "%s.%s",
                    _collectionSpaceName, pCollectionName ) ;
 
       ob.append ( FIELD_NAME_NAME, clFullName ) ;
@@ -4623,7 +4623,7 @@ do                                                            \
          goto error ;
       }
 
-      ossSnprintf( clFullName, CLIENT_CL_FULLNAME_SZ, "%s.%s",
+      ossSnprintf( clFullName, sizeof( clFullName ), "%s.%s",
                    _collectionSpaceName, pCollectionName ) ;
 
       newObj = BSON ( FIELD_NAME_NAME << clFullName ) ;
@@ -4730,7 +4730,7 @@ do                                                            \
          goto error ;
       }
 
-      ossSnprintf( clFullName, CLIENT_CL_FULLNAME_SZ, "%s.%s",
+      ossSnprintf( clFullName, sizeof( clFullName ), "%s.%s",
                    _collectionSpaceName, oldName ) ;
 
       rc = _connection->_runCommand( (CMD_ADMIN_PREFIX CMD_NAME_RENAME_COLLECTION),
