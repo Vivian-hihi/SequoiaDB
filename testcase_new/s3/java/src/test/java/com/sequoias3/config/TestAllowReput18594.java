@@ -9,7 +9,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.sequoias3.region.Region;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 import com.sequoias3.user.UserCommDefind;
@@ -26,8 +25,6 @@ public class TestAllowReput18594 extends S3TestBase {
 	private String bucketName = "bucket18594";
 	private String userName = "user18594";
 	private String[] accessKeys = null;
-	private String keyName = "key18594";
-	private String content = "content18594";
 	private String regionName = "region18594a";
 	private String regionName2 = "region18594b";
 	private AmazonS3 s3Client = null;
@@ -49,8 +46,9 @@ public class TestAllowReput18594 extends S3TestBase {
 		RegionUtils.putRegion(region2);
 	}
 
+	// 本用例需修改配置文件并重启s3服务，而自动化用例暂未实现此功能，故暂将用例屏蔽
 	@SuppressWarnings("deprecation")
-	@Test(enabled = false)//TODO : 1、注释用例没有问题单号
+	@Test(enabled = false)
 	private void testReputBacket() {
 		s3Client.createBucket(bucketName, regionName);
 		Assert.assertTrue(s3Client.doesBucketExist(bucketName));
@@ -60,8 +58,6 @@ public class TestAllowReput18594 extends S3TestBase {
 		Assert.assertEquals(s3Client.listBuckets().size(), 1);
 		Assert.assertTrue(s3Client.doesBucketExist(bucketName));
 		Assert.assertEquals(s3Client.getBucketLocation(bucketName), regionName);
-		//TODO: 2、这个方法名检查桶，实际是检查桶中的对象，检查桶上面已经覆盖，可以删除掉
-		checkBucket();
 		runSuccess = true;
 	}
 
@@ -78,11 +74,5 @@ public class TestAllowReput18594 extends S3TestBase {
 				s3Client.shutdown();
 			}
 		}
-	}
-
-	public void checkBucket() {
-		s3Client.putObject(bucketName, keyName, content);
-		String actEtg = s3Client.getObject(bucketName, keyName).getObjectMetadata().getETag();
-		Assert.assertEquals(actEtg, TestTools.getMD5(content.getBytes()));
 	}
 }

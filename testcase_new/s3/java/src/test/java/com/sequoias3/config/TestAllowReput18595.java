@@ -10,7 +10,6 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoias3.region.Region;
 import com.sequoias3.testcommon.CommLib;
 import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.TestTools;
 import com.sequoias3.testcommon.s3utils.RegionUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 import com.sequoias3.user.UserCommDefind;
@@ -27,8 +26,6 @@ public class TestAllowReput18595 extends S3TestBase {
 	private String bucketName = "bucket18595";
 	private String userName = "user18595";
 	private String[] accessKeys = null;
-	private String keyName = "key18595";
-	private String content = "content18595";
 	private String regionName = "region18595a";
 	private String regionName2 = "region18595b";
 	private AmazonS3 s3Client = null;
@@ -66,8 +63,6 @@ public class TestAllowReput18595 extends S3TestBase {
 		Assert.assertEquals(s3Client.listBuckets().size(), 1);
 		Assert.assertTrue(s3Client.doesBucketExist(bucketName));
 		Assert.assertEquals(s3Client.getBucketLocation(bucketName), regionName);
-		//TODO :1、多余检查项，建议去掉
-		checkBucket();
 		runSuccess = true;
 	}
 
@@ -84,11 +79,5 @@ public class TestAllowReput18595 extends S3TestBase {
 				s3Client.shutdown();
 			}
 		}
-	}
-
-	public void checkBucket() {
-		s3Client.putObject(bucketName, keyName, content);
-		String actEtg = s3Client.getObject(bucketName, keyName).getObjectMetadata().getETag();
-		Assert.assertEquals(actEtg, TestTools.getMD5(content.getBytes()));
 	}
 }

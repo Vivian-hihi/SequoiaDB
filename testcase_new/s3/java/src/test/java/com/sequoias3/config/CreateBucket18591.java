@@ -1,5 +1,11 @@
 package com.sequoias3.config;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -8,7 +14,8 @@ import org.testng.annotations.Test;
 
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.sequoias3.testcommon.S3TestBase;
-import com.sequoias3.testcommon.s3utils.ConfigUtils;
+import com.sequoias3.testcommon.TestRest;
+import com.sequoias3.testcommon.s3utils.DelimiterUtils;
 import com.sequoias3.testcommon.s3utils.UserUtils;
 import com.sequoias3.user.UserCommDefind;
 
@@ -20,6 +27,8 @@ import com.sequoias3.user.UserCommDefind;
  * @version 1.00
  */
 public class CreateBucket18591 extends S3TestBase {
+	private MediaType type = MediaType.parseMediaType("text/xml;charset=UTF-8");
+
 	@DataProvider(name = "authorizationProvider")
 	public Object[][] generateAuthorization() {
 		return new Object[][] {
@@ -43,7 +52,7 @@ public class CreateBucket18591 extends S3TestBase {
 	private void testCreateBucket(String authorization) throws Exception {
 		// create bucket
 		try {
-			ConfigUtils.createBucket(bucketName, authorization);
+			createBucket(bucketName, authorization);
 			Assert.fail("expect failed but found succeed");
 		} catch (AmazonS3Exception e) {
 			Assert.assertEquals(e.getErrorCode(), "AuthorizationHeaderMalformed");
@@ -52,5 +61,16 @@ public class CreateBucket18591 extends S3TestBase {
 
 	@AfterClass
 	private void tearDown() throws Exception {
+	}
+
+	private void createBucket(String bucketName, String authorization) throws UnsupportedEncodingException {
+		TestRest rest = new TestRest(type);
+		try {
+			rest.setApi(URLEncoder.encode(bucketName, "UTF-8")).setRequestMethod(HttpMethod.PUT)
+					.setRequestHeaders(UserCommDefind.authorization, authorization).setResponseType(String.class)
+					.exec();
+		} catch (HttpStatusCodeException e) {
+			throw DelimiterUtils.httpToAmazon(e);
+		}
 	}
 }

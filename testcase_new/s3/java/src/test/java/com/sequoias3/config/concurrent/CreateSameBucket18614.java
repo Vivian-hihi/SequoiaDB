@@ -51,7 +51,8 @@ public class CreateSameBucket18614 extends S3TestBase {
 		region2.withName(regionName2);
 		RegionUtils.putRegion(region2);
 	}
-	//TODO :1、注释用例没有对应的bug单
+
+	// 本用例需修改配置文件并重启s3服务，而自动化用例暂未实现此功能，故暂将用例屏蔽
 	@SuppressWarnings("deprecation")
 	@Test(enabled = false)
 	private void testReputBacket() throws Exception {
