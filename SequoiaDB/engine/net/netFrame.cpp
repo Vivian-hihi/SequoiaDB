@@ -1297,8 +1297,8 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE, "_netFrame::close" )
    // close all connections to one id(i.e. node)
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE, "_netFrame::close" )
    void _netFrame::close( const _MsgRouteID &id )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_CLOSE );
