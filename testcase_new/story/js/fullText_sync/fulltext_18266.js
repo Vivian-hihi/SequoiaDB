@@ -48,7 +48,7 @@ function main()
          }
          catch( e )
          {
-            if( -104 != e )
+            if( -104 != e && -134 != e )
             {
                throw e;
             }

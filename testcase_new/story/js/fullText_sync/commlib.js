@@ -137,7 +137,7 @@ function isNodesNormal( groupName )
     }
     catch ( e )
     {
-        if( -104 != e && -79 != e )
+        if( -104 != e && -79 != e && -134 != e )
         {
             throw e;
         }
