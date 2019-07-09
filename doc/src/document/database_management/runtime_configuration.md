@@ -80,7 +80,7 @@
 >**Note:**  
 >1. “生效类型”为在线生效的配置能进行在线修改，不需要重启就能生效。  
 >2. “生效类型”为重启生效的配置能进行在线修改，需要重启后生效。  
->3. “生效类型”为空的配置不能进行在线修改。同步日志参数 logfilesz 和 logfilenum 虽然不能在线修改配置，但是可以通过特殊方式进行修改，请参考[同步日志](database_management/log_synchronization.md#配置同步日志参数)。  
+>3. “生效类型”为空的配置不能进行在线修改。同步日志参数 logfilesz 和 logfilenum 虽然不能在线修改配置，但是可以通过特殊方式进行修改，请参考[同步日志](database_management/Special_configuration_modify/log_synchronization.md#配置同步日志参数)。  
 
 ##参数配置##
 SequoiaDB支持命令行方式及配置文件方式进行参数配置。
