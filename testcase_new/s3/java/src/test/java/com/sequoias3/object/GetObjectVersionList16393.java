@@ -29,10 +29,10 @@ public class GetObjectVersionList16393 extends S3TestBase {
 	@DataProvider(name = "maxKeyProvider")
 	public Object[][] generateRemoveIndex() {
 		return new Object[][] {
-				// delimiter满足对象记录数（3）大于maxKeys
+				// delimiter满足对象记录数（(commprefixes:3) + (versions:2*2) = 7）大于maxKeys
 				new Object[] { 1 , 7 },
-				// delimiter满足对象记录数（3）小于maxKeys
-				new Object[] { 4 , 2 }
+				// delimiter满足对象记录数（(commprefixes:3) + (versions:2*2) = 7）小于maxKeys
+				new Object[] { 8 , 1 }
 		};
 	}
 	
