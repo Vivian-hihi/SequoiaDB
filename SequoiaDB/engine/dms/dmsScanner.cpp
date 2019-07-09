@@ -599,7 +599,6 @@ namespace engine
                        lockConflict._tid,
                        lockConflict._lockID.toString().c_str(),
                        lockModeToString( lockConflict._lockType ) ) ;
-               _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
                cb->printInfo( EDU_INFO_ERROR, "Failed to get record lock" ) ;
                goto error ;
             }
@@ -1911,7 +1910,6 @@ namespace engine
                        lockConflict._tid,
                        lockConflict._lockID.toString().c_str(),
                        lockModeToString( lockConflict._lockType ) ) ;
-               _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
                cb->printInfo( EDU_INFO_ERROR, "Failed to get record lock" ) ;
                goto error ;
             }
