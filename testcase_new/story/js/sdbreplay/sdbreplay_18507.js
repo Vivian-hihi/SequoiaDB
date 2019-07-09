@@ -41,12 +41,13 @@ function main()
       execSdbReplay( rtCmd, groupName, clNameArr, "replica", confPath );
       
       // check results
-      var delimiter = '_a"b_';
-      println("\n   delimiter = " + delimiter );
-      var expDataArr = ['"I"'+ delimiter +'"test"',
-                        '"B"'+ delimiter +'"test"',
-                        '"A"'+ delimiter +'"test2"',
-                        '"D"'+ delimiter +'"test2"'];
+      var delimiter = '_a""b_';
+      var actDelim  = '_a"b_'; 
+      println("\n   delimiter = " + delimiter + ", actDelim = " + actDelim );
+      var expDataArr = ['"I"'+ actDelim +'"test"',
+                        '"B"'+ actDelim +'"test"',
+                        '"A"'+ actDelim +'"test2"',
+                        '"D"'+ actDelim +'"test2"'];
       checkCsvFile( rtCmd, clName, expDataArr );
             
       // clean env
