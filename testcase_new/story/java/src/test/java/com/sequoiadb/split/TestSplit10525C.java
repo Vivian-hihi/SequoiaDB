@@ -221,7 +221,7 @@ public class TestSplit10525C extends SdbTestBase{
             }
             //Assert.assertEquals(actual, expected);
         } catch (BaseException e) {
-            Assert.fail(e.getMessage());
+            throw e;
         } finally {
             dataDb.disconnect();
         }
