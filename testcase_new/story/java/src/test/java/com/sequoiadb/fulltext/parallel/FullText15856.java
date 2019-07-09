@@ -1,5 +1,6 @@
 package com.sequoiadb.fulltext.parallel;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.bson.BSONObject;
@@ -13,7 +14,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.fulltext.utils.FullTextDBUtils;
@@ -67,8 +67,21 @@ public class FullText15856 extends SdbTestBase {
         String modVal = StringUtils.getRandomString(16);
         ThreadExecutor es = new ThreadExecutor(TIMEOUT);
         for (int i = 0; i < THREAD_NUM; i++) {
+            // modifier
             BSONObject modifier = new BasicBSONObject("$set", new BasicBSONObject("b", modVal + i));
-            es.addWorker(new ThreadUpdate(modifier));
+            // matcher
+            int batchRecsNum = RECS_NUM / THREAD_NUM;
+            BSONObject obj1 = new BasicBSONObject("recordId", 
+                    new BasicBSONObject("$gte", batchRecsNum * i));
+            BSONObject obj2 = new BasicBSONObject("recordId", 
+                    new BasicBSONObject("$lt", batchRecsNum * ( i + 1 )));
+
+            ArrayList<BSONObject> and = new ArrayList<>();
+            and.add(obj1);
+            and.add(obj2);
+            BSONObject matcher = new BasicBSONObject("$and", and);
+            // update
+            es.addWorker(new ThreadUpdate(modifier, matcher));
         }
         es.run();
 
@@ -76,18 +89,14 @@ public class FullText15856 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, IDX_NAME, RECS_NUM));
 
         // check update records
-        boolean flag = false;
         for (int i = 0; i < THREAD_NUM; i++) {
-            int updCnt = (int) cl.getCount(new BasicBSONObject("b", modVal + i));
-            if (updCnt == RECS_NUM) {
-                flag = true;
-                // fullTextSearch
-                Assert.assertEquals(this.fullTextSearch(new BasicBSONObject("b", modVal + i)), RECS_NUM);
-            } else {
-                Assert.assertEquals(updCnt, 0);
-            }
+            BSONObject matcher = new BasicBSONObject("", new BasicBSONObject("$Text",
+                    new BasicBSONObject("query", 
+                            new BasicBSONObject("match", 
+                                    new BasicBSONObject("b", modVal + i)))));
+            int updCnt = (int) cl.getCount(matcher);
+            Assert.assertEquals(updCnt, RECS_NUM / THREAD_NUM);
         }
-        Assert.assertTrue(flag);
     }
 
     @AfterClass
@@ -102,12 +111,13 @@ public class FullText15856 extends SdbTestBase {
         }
     }
 
-    // TODO :这里需要更新不同的记录
     private class ThreadUpdate {
         private BSONObject modifier;
+        private BSONObject matcher;
 
-        private ThreadUpdate(BSONObject modifier) {
+        private ThreadUpdate(BSONObject modifier, BSONObject matcher) {
             this.modifier = modifier;
+            this.matcher = matcher;
         }
 
         @ExecuteOrder(step = 1)
@@ -115,26 +125,11 @@ public class FullText15856 extends SdbTestBase {
             System.out.println(new Date() + " " + this.getClass().getName().toString());
             try (Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl2 = db.getCollectionSpace(SdbTestBase.csName).getCollection(CL_NAME);
-                BSONObject matcher = new BasicBSONObject("a", new BasicBSONObject("$exists", 1));
                 BSONObject hint = new BasicBSONObject("", IDX_NAME);
                 cl2.update(matcher, modifier, hint);
             } catch (BaseException e) {
-                if (e.getErrorCode() != -13) {
-                    throw e;
-                }
+                throw e;
             }
         }
-    }
-
-    private int fullTextSearch(BSONObject obj) {
-        int rcRecsNum = 0;
-        BSONObject matcher = new BasicBSONObject("",
-                new BasicBSONObject("$Text", new BasicBSONObject("query", new BasicBSONObject("match", obj))));
-        DBCursor cursor = cl.query(matcher, null, null, null);
-        while (cursor.hasNext()) {
-            cursor.getNext();
-            rcRecsNum++;
-        }
-        return rcRecsNum;
     }
 }

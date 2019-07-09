@@ -64,7 +64,14 @@ public class FullText15855 extends SdbTestBase {
         }
         es.run();
 
+        // check results
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, IDX_NAME, RECS_NUM * THREAD_NUM));
+
+        BSONObject matcher = new BasicBSONObject("", new BasicBSONObject("$Text",
+                new BasicBSONObject("query", 
+                        new BasicBSONObject("match", new BasicBSONObject("a", CL_NAME)))));
+        int cnt = (int) cl.getCount(matcher);
+        Assert.assertEquals(cnt, RECS_NUM * THREAD_NUM);
     }
 
     @AfterClass
