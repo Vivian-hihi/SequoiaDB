@@ -1,9 +1,8 @@
 /************************************************************************
 *@Description: seqDB-18537: tables.fields.defaultValue配置默认值，fieldType配置为MAPPING_STRING 
-               seqDB-18542: tables.fields.defaultValue配置默认值，fieldType配置不为MAPPING_* 
 *@Author: 2019-7-4  xiaoni zhao init
 ************************************************************************/
-//main();
+main();
 function main()
 {
    if( commIsStandalone( db ) )
@@ -17,25 +16,20 @@ function main()
    
    var cl = readyCL(csName, clName, {Group:groupNames[0]}); 
   
-   //get minLSN
-   var cursor = db.list(SDB_SNAP_SYSTEM,{GroupName:groupNames[0]});
-   var svcName = cursor.current().toObj().Group[0].Service[0].Name;
-   cursor = db.snapshot(6, {ServiceName:svcName, RawData:true, IsPrimary:true});
-   var minLSN = cursor.current().toObj().CompleteLSN;
-  
    var expDataArr = [];
-   for(var i=0; i<100; i++)
+   var minLSN = getMinLSN( groupNames );
+   var expDefaultValue = new Array(1024*1024*5).join("a");
+   for(var i=0; i<1; i++)
    {
       cl.insert({a:i});
-      cl.insert({a:100+i});
-      cl.update({$set:{a:200+i}},{a:i});
-      cl.remove({a:100+i});
-      //预期结果需要修改
-      expDataArr.push('"I","'+i+'","","0"');
-      expDataArr.push('"I","'+(100+i)+'","","0"');
-      expDataArr.push('"B","'+i+'","","0"');
-      expDataArr.push('"A","'+(200+i)+'","","0"');
-      expDataArr.push('"D","'+(100+i)+'","","0"');
+      cl.insert({a:1+i});
+      cl.update({$set:{a:2+i}},{a:i});
+      cl.remove({a:1+i});
+      expDataArr.push('"I","'+i+'","","'+ expDefaultValue+'"');
+      expDataArr.push('"I","'+(1+i)+'","","'+ expDefaultValue+'"');
+      expDataArr.push('"B","'+i+'","","'+ expDefaultValue+'"');
+      expDataArr.push('"A","'+(2+i)+'","","'+ expDefaultValue+'"');
+      expDataArr.push('"D","'+(1+i)+'","","'+ expDefaultValue+'"');
    }
    
    var rtCmd = getRemoteCmd( groupNames[0] );
@@ -45,12 +39,13 @@ function main()
    {    
       var confName = "sdbreplay_18537.conf";
       getOutputConfFile( groupNames[0], csName, clName, confName);   
+      configOutputConfFile( rtCmd, csName, clName );
       
       var clNameArr = [csName +"."+ clName];
       var filter = '\'{CL: ["'+ clNameArr +'"], MinLSN:'+ minLSN +' }\'';
       execSdbReplay( rtCmd, groupNames[0], clNameArr, undefined, undefined, undefined, undefined, undefined, filter);
       
-      checkCsvFile( rtCmd, clName, expDataArr);
+      checkCsvFileLocal( rtCmd, clName, expDataArr, groupNames[0] );
       
       cleanCL( csName, clName );
       cleanFile( rtCmd );
@@ -58,5 +53,49 @@ function main()
    {
       backupFile( rtCmd, clName );
       throw e;
+   }
+}
+function configOutputConfFile( rtCmd, csName, clName )
+{
+   var targetConfPath = tmpFileDir + csName +"."+ clName +".conf";
+   rtCmd.run( "sed -i 's/csName.clName_source/"+ csName +"."+ clName +"/g' " + targetConfPath );
+   rtCmd.run( "sed -i 's/csName.clName_target/"+ csName +"."+ clName +"/g' " + targetConfPath );   
+}
+function getRemote( groupName )
+{   
+   var hostName = getMasterHostName( groupName );
+   try
+   {
+      var remote = new Remote( hostName, CMSVCNAME );
+      println( "remote: " + remote.getInfo() );
+      return remote;
+   }
+   catch( e )
+   {
+      println("Failed to new remote.");
+      throw e;
+   }
+}
+function checkCsvFileLocal( rtCmd, clName, expDataArr, groupName )
+{
+   var expCsvFileName = clName +".result";
+   var expCsvFilePath = tmpFileDir + expCsvFileName;
+   var actCsvFileName = rtCmd.run( "ls " + tmpFileDir + " | grep "+ clName + " | grep csv" ).split("\n")[0];
+   var actCsvFilePath = tmpFileDir + actCsvFileName;
+   var remote = getRemote( groupName );
+   var file = remote.getFile( expCsvFilePath );
+   for(var i=0; i<expDataArr.length; i++)
+   {
+      file.write(expDataArr[i]);
+      if( i!= expDataArr.length-1 )
+      {
+         file.write("\n");
+      }
+   }
+   var cmd = "diff -w "+ expCsvFilePath +" "+ actCsvFilePath;
+   var diff = rtCmd.run( cmd );
+   if(diff != "")
+   {
+      throw diff;
    }
 }
