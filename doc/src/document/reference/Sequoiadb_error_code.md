@@ -337,3 +337,4 @@
 | SDB_DMS_CS_RENAMING | -337 | 正在对集合空间改名 |
 | SDB_CLS_DATA_NOT_SYNC | -338 | 数据未同步 |
 | SDB_IXM_KEY_NOTNULL | -339 | 索引键的任意一个字段都不允许不存在或者为NULL |
+| SDB_RTN_EXIST_INDOUBT_TRANS | -340 | 存在未确认事务 |

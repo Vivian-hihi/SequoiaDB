@@ -9,9 +9,9 @@
 
 3. 点击 **确定** 按钮后，进入添加主机页面。
 
-4. 添加主机，[点击查看](sac/deployment/add_host/scan_host.md)。
+4. 添加主机，[点击查看](sac/deployment/host/add_host.md)。
 
-5. 添加SequoiaDB服务，[点击查看](sac/deployment/add_sdb_module/config_module.md)。
+5. 创建存储集群，[点击查看](sac/deployment/distributed_storage/create_storage.md)。
 
 > **Note:**  
-> 首次安装建议不修改默认值，参数设置不当，可能会影响服务安装。
+> 首次安装建议不修改默认值，参数设置不当，可能会影响安装。

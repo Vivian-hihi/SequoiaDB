@@ -1,5 +1,5 @@
 
-1. 在SAC页面右上方，点击用户名admin，出现下拉菜单，选择修改密码。
+1. 在SAC页面右上方，点击用户名 admin，出现下拉菜单，选择修改密码。
 
    ![修改SAC密码](sac/install_login/reset_pwd_1.png)
 
