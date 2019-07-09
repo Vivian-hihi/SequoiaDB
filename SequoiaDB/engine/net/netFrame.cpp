@@ -336,11 +336,16 @@ namespace engine
       _eraseSuit_i( evSuitPtr ) ;
       _mtx.release() ;
 
+      MsgRouteID nodeID ;
       _netEventSuit::SET_HANDLE setHandles = evSuitPtr->getHandles() ;
       _netEventSuit::SET_HANDLE_IT itr = setHandles.begin() ;
       while( itr != setHandles.end() )
       {
-         close( *itr ) ;
+         close( *itr, &nodeID ) ;
+         if ( MSG_INVALID_ROUTEID != nodeID.value )
+         {
+            _handler->handleClose( *itr, nodeID ) ;
+         }
          ++itr ;
       }
    }
@@ -383,6 +388,7 @@ namespace engine
 
       /// run main suit ioservice
       _mainSuitPtr->getIOService().run() ;
+      onRunSuitStop( _mainSuitPtr ) ;
 
       /// stop all evSuit
       _stopAllEvSuit() ;
@@ -828,12 +834,12 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__GETHANDLE, "_netFrame::_getHandle" )
    // This function is called when a sender needs an Event Handler(socket/connection)
    // to do the sending. The logic here is that it will first seach the appropriate
    // netEHSegment, which contains all the socket that assign to the same route
    // id(i.e. ip address and service). Then it will call getEH to get an 
    // event handler. If netEHSegment can not be found, will create one.
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__GETHANDLE, "_netFrame::_getHandle" )
    INT32 _netFrame::_getHandle( const _MsgRouteID &id, NET_EH &eh )
    {
       INT32 rc = SDB_OK ;
@@ -1348,22 +1354,30 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__NETFRAME_CLOSE3, "_netFrame::close" )
-   void _netFrame::close( const NET_HANDLE &handle )
+   void _netFrame::close( const NET_HANDLE &handle,
+                          MsgRouteID *pID )
    {
       PD_TRACE_ENTRY( SDB__NETFRAME_CLOSE3 ) ;
       MAP_EVENT_IT itr ;
+      UINT64 routeID = MSG_INVALID_ROUTEID ;
 
       _mtx.get_shared() ;
       itr = _opposite.find( handle ) ;
       if ( _opposite.end() != itr )
       {
          itr->second->close() ;
+         routeID = itr->second->id().value ;
          _mtx.release_shared() ;
       }
       else
       {
          _mtx.release_shared() ;
-         PD_LOG( PDERROR, "invalid net handle:%d", handle ) ;
+         PD_LOG( PDINFO, "invalid net handle:%d", handle ) ;
+      }
+
+      if ( pID )
+      {
+         pID->value = routeID ;
       }
 
       PD_TRACE_EXIT( SDB__NETFRAME_CLOSE3 ) ;
@@ -1488,7 +1502,7 @@ namespace engine
       return ;
    }
 
-   void _netFrame::handleClose( NET_EH eh , _MsgRouteID id)
+   void _netFrame::handleClose( NET_EH eh, _MsgRouteID id )
    {
       _handler->handleClose( eh->handle(), id ) ;
    }

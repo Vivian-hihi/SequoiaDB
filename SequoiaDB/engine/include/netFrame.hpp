@@ -267,7 +267,7 @@ namespace engine
 
          void  close( const _MsgRouteID &id ) ;
 
-         void  close( const NET_HANDLE &handle ) ;
+         void  close( const NET_HANDLE &handle, MsgRouteID *pID = NULL ) ;
 
          void  close() ;
 
