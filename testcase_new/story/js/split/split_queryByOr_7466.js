@@ -97,7 +97,7 @@ function main()
             }
             lowId = i*stepId;
             highId = (i+1)*stepId;
-            varCL.split(sourceGroup, grouplist[tarGroupIndex],{b:lowId},{b:highId});
+            varCL.splitAsync(sourceGroup, grouplist[tarGroupIndex],{b:lowId},{b:highId});
             println(COMMCLNAME+" split from "+sourceGroup+" to "+ grouplist[tarGroupIndex]+" {b:"+lowId+"} {b:"+highId+"}");
          }
          println("split success!");

@@ -13,7 +13,7 @@ function main()
       var csName = CHANGEDPREFIX;
       var clName = CHANGEDPREFIX;
       var SDKEYNAME = "a";
-      var recSum = 1500;
+      var recSum = 1000;
       var partition = getRandomPartition();
       var groupsName = []; //all groups name in cluster
             
