@@ -1,6 +1,6 @@
 ##lobpath修改##
 
-大对象数据文件默认存储路径与数据文件相同:/opt/sequoiadb/database/data/11820。修改为：/opt/sequoiadb/database/data/11820/lobpath。
+lobmetapath默认与lobpath相同。所以在没有指定lobmetapath的情况下改变lobpath，要将大对象数据文件和大对象元数据文件一并转移。如果指定了路径，则不需要转移。<br>以下配置均为默认存储路径，将lobpath由:/opt/sequoiadb/database/data/11820，修改为：/opt/sequoiadb/database/data/11820/lobpath。
 
 1. 关闭要修改配置的节点11820。
 
@@ -8,19 +8,19 @@
   $ sdbstop -p 11820
   ```
 
-2. 进入该节点大对象数据文件所在位置，创建新的索引目录lobptah。将原有的大对象数据文件*.lobd和大对象元数据文件*.lobm进行转移。
+2. 进入该节点大对象数据文件所在位置，创建新的大对象数据存储目录lobpath。将原有的大对象数据文件*.lobd和大对象元数据文件*.lobm转移到新的目录。
 
   ```lang-bash
   $ cd /opt/sequoiadb/database/data/11820
   $ mkdir   lobpath
-  $ chown -R sdbadmin:sdbadmin_group lobpath
-  $ mv *.lobd  *.lobm lobpath/
+  $ chown -R sdbadmin:sdbadmin_group lobpath/
+  $ chmod 755 lobpath/
+  $ mv *.lobd *.lobm lobpath/
   ```
 
   >   **Note:**
   >
-  >   lobmetapath默认与lobpath保持一致，所以在修改lobpath的时候要将大对象元数据文件*.lobm一并转移，如果指定了lobmetapath，则不需要转移。
-  >   注意新创建的目录要与之前的目录权限保持一致，可以通过chown -R sdbadmin:sdbadmin_group lobpath来保证。其中sdbadmin:sdbadmin_group为启动sequoiadb的用户名和用户组。
+  >   注意新创建目录的权限问题。其中sdbadmin:sdbadmin_group为启动sequoiadb的用户名和用户组。
 
 3. 进入该节点的配置文件所在位置，重新配置参数。将lobpath修改为/opt/sequoiadb/database/data/11820/lobpath。
 
@@ -49,6 +49,6 @@
   > var db=new Sdb("localhost",11810)
   > db.snapshot(SDB_SNAP_CONFIGS,{"svcname":"11820"},{"lobpath":""})
   {
-  "  lobpath": "/opt/sequoiadb/database/data/11820/  lobpath/"
+  "  lobpath": "/opt/sequoiadb/database/data/11820/lobpath/"
   }
   ```

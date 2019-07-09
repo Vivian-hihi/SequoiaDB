@@ -1,6 +1,6 @@
 ##lobmetapath修改##
 
-大对象元数据文件默认存储路径与大对象数据文件相同，默认情况下为数据文件存储路径:/opt/sequoiadb/database/data/11820，修改为：/opt/sequoiadb/database/data/11820/lobmetapath。
+lobmetapath默认与lobpath相同。将lobmetapath由:/opt/sequoiadb/database/data/11820，修改为：/opt/sequoiadb/database/data/11820/lobmetapath。
 
 1. 关闭要修改配置的节点11820。
 
@@ -8,18 +8,19 @@
   $ sdbstop -p 11820
   ```
 
-2. 进入该节点大对象元数据文件所在位置，创建新的大对象元数据目录lobmetapath。将该原有的大对象元数据文件*.lobm进行转移。
+2. 进入该节点大对象元数据文件所在位置，创建新的大对象元数据目录lobmetapath。将该原有的大对象元数据文件*.lobm转移到新的目录。
 
   ```lang-bash
   $ cd /opt/sequoiadb/database/data/11820
   $ mkdir lobmetapath
-  $ chown -R sdbadmin:sdbadmin_group lobmetapath
+  $ chown -R sdbadmin:sdbadmin_group lobmetapath/
+  $ chmod 755 lobmetapath/
   $ mv *.lobm lobmetapath/
   ```
 
  >   **Note:**
  >    
- >   注意新创建的目录要与之前的目录权限保持一致，可以通过chown -R sdbadmin:sdbadmin_group lobpath来保证。其中sdbadmin:sdbadmin_group为启动sequoiadb的用户名和用户组。
+ >   注意新创建目录的权限问题。其中sdbadmin:sdbadmin_group为启动sequoiadb的用户名和用户组。
 
 3. 进入该节点的配置文件所在位置，重新配置参数。将lobmetapath修改为/opt/sequoiadb/database/data/11820/lobmetapath。
 

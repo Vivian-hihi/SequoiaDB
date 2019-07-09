@@ -1,6 +1,6 @@
 ##indexpath修改##
 
-索引文件默认存储路径与数据文件相同:/opt/sequoiadb/database/data/11820，修改为：/opt/sequoiadb/database/data/11820/indexpath。
+indexpath默认与dbpath相同。将indexpath由:/opt/sequoiadb/database/data/11820，修改为：/opt/sequoiadb/database/data/11820/indexpath。
 
 1. 关闭要修改配置的节点11820。
 
@@ -8,18 +8,19 @@
   $ sdbstop -p 11820
   ```
 
-2. 进入该节点索引文件所在位置，创建新的索引目录indexptah。将原有的索引文件*.idx进行转移。
+2. 进入该节点索引文件所在位置，创建新的索引文件存储目录indexptah。将原有的索引文件*.idx转移到新的目录。
 
   ```lang-bash
   $ cd /opt/sequoiadb/database/data/11820
   $ mkdir indexpath
-  $ chown -R sdbadmin:sdbadmin_group indexpath
+  $ chown -R sdbadmin:sdbadmin_group indexpath/
+  $ chmod 755 indexpath/
   $ mv *.idx indexpath/
   ```
 
  >   **Note:**
  >
- >   注意新创建的目录要与之前的目录权限保持一致，可以通过chown -R sdbadmin:sdbadmin_group indexpath来保证。其中sdbadmin:sdbadmin_group为启动sequoiadb的用户名和用户组。
+ >   注意新创建目录的权限问题。其中sdbadmin:sdbadmin_group为启动sequoiadb的用户名和用户组。
 
 3. 进入该节点的配置文件所在位置，重新配置参数。将indexpath修改为/opt/sequoiadb/database/data/11820/indexpath。
 
