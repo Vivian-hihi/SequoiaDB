@@ -3,54 +3,80 @@
 <!--Testcases for reliability test, except disk-full testcases. -->
 
 <suite name="reliability" verbose="1" preserve-order="true">
-    <parameter name="HOSTNAME"       value="${HOSTNAME}" />
-    <parameter name="SVCNAME"        value="${SVCNAME}" />
-    <parameter name="ESHOSTNAME"       value="${ESHOSTNAME}" />
-    <parameter name="ESSVCNAME"        value="${ESSVCNAME}" />
-    <parameter name="FULLTEXTPREFIX"   value="${FULLTEXTPREFIX}" />
-    <parameter name="CHANGEDPREFIX"  value="reliability_test" />
-    <parameter name="RSRVPORTBEGIN"  value="26000" />
-    <parameter name="RSRVPORTEND"    value="27000" />
-    <parameter name="RSRVNODEDIR"    value="/data/sequoiadb/cidatabase" />
-    <parameter name="WORKDIR"        value="/tmp/ci_reliability" />
-    <parameter name="ROOTPASSWD"     value="jenkins" />
-    <parameter name="REMOTEUSER"     value="sdbadmin" />
-    <parameter name="REMOTEPASSWD"   value="sdbadmin" />
-   <parameter name="SCRIPTDIR"       value="${SCRIPTDIR}" />
+   <parameter name="HOSTNAME" value="${HOSTNAME}" />
+   <parameter name="SVCNAME" value="${SVCNAME}" />
+   <parameter name="ESHOSTNAME" value="${ESHOSTNAME}" />
+   <parameter name="ESSVCNAME" value="${ESSVCNAME}" />
+   <parameter name="FULLTEXTPREFIX" value="${FULLTEXTPREFIX}" />
+   <parameter name="CHANGEDPREFIX" value="reliability_test" />
+   <parameter name="RSRVPORTBEGIN" value="26000" />
+   <parameter name="RSRVPORTEND" value="27000" />
+   <parameter name="RSRVNODEDIR"
+      value="/data/sequoiadb/cidatabase" />
+   <parameter name="WORKDIR" value="/tmp/ci_reliability" />
+   <parameter name="ROOTPASSWD" value="jenkins" />
+   <parameter name="REMOTEUSER" value="sdbadmin" />
+   <parameter name="REMOTEPASSWD" value="sdbadmin" />
+   <parameter name="SCRIPTDIR" value="${SCRIPTDIR}" />
 
-    <listeners>
-        <listener class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener"/>
-    </listeners>
+   <listeners>
+      <listener
+         class-name="com.sequoiadb.commlib.ReliabilityInvokeMethodListener" />
+   </listeners>
 
-    <test name="reliability_normal" preserve-order="true">
-        <packages>
-            <package name="com.sequoiadb.subcl.brokennetwork" />
-            <package name="com.sequoiadb.subcl.killnode"></package>
-            <package name="com.sequoiadb.subcl.restartnode"></package>
-            <package name="com.sequoiadb.clsmgr.brokennetwork"></package>
-            <package name="com.sequoiadb.split.killnode"></package>
-            <package name="com.sequoiadb.split.restartnode"></package>
-            <package name="com.sequoiadb.split.brokennetwork"/>
-            <package name="com.sequoiadb.metaopr.killnode" />
-            <package name="com.sequoiadb.metaopr.networkfail.cl" />
-            <package name="com.sequoiadb.metaopr.networkfail.cs" />
-            <package name="com.sequoiadb.metaopr.networkfail.domain" />
-            <package name="com.sequoiadb.metaopr.noderestart" />
-            <package name="com.sequoiadb.autoincrement.killnode" />            
-            <package name="com.sequoiadb.cappedCL.killnode" />
-            <package name="com.sequoiadb.cappedCL.restartnode" />
-            <package name="com.sequoiadb.rename" />
-            <package name="com.sequoiadb.fulltext.killnode" />
-            <package name="com.sequoiadb.fulltext.restartnode" />
-        </packages>
-    </test>
-    
-    <test name="reliability_fullSync" preserve-order="true">
+   <test name="reliability_normal" preserve-order="true">
       <packages>
-          <package name="com.sequoiadb.datasync.brokennetwork" />
-          <package name="com.sequoiadb.datasync.killnode" />
-          <package name="com.sequoiadb.datasync.restartnode" />
+         <package name="com.sequoiadb.subcl.brokennetwork" />
+         <package name="com.sequoiadb.subcl.killnode"></package>
+         <package name="com.sequoiadb.subcl.restartnode"></package>
+         <package name="com.sequoiadb.clsmgr.brokennetwork"></package>
+         <package name="com.sequoiadb.split.killnode"></package>
+         <package name="com.sequoiadb.split.restartnode"></package>
+         <package name="com.sequoiadb.split.brokennetwork" />
+         <package name="com.sequoiadb.metaopr.killnode" />
+         <package name="com.sequoiadb.metaopr.networkfail.cl" />
+         <package name="com.sequoiadb.metaopr.networkfail.cs" />
+         <package
+            name="com.sequoiadb.metaopr.networkfail.domain" />
+         <package name="com.sequoiadb.metaopr.noderestart" />
+         <package name="com.sequoiadb.autoincrement.killnode" />
+         <package name="com.sequoiadb.cappedCL.killnode" />
+         <package name="com.sequoiadb.cappedCL.restartnode" />
+         <package name="com.sequoiadb.rename" />
+         <package name="com.sequoiadb.fulltext.killnode" />
+         <package name="com.sequoiadb.fulltext.restartnode" />
       </packages>
-    </test>
+   </test>
+
+   <test name="reliability_fullSync" preserve-order="true">
+      <packages>
+         <package name="com.sequoiadb.datasync.brokennetwork" />
+         <package name="com.sequoiadb.datasync.killnode" />
+         <package name="com.sequoiadb.datasync.restartnode" />
+      </packages>
+   </test>
+
+   <test name="reliability_transaction_rcauto" preserve-order="true">
+      <groups>
+         <run>
+            <include name="rcauto" />
+         </run>
+      </groups>
+      <packages>
+         <package name="com.sequoiadb.transaction.brokennetwork" />
+         <package name="com.sequoiadb.transaction.diskfull" />
+         <package name="com.sequoiadb.transaction.killnode" />
+         <package name="com.sequoiadb.transaction.restartnode" />
+      </packages>
+   </test>
+
+   <test name="reliability_transaction_normal" preserve-order="true">
+      <packages>
+         <package name="com.sequoiadb.transaction.brokennetwork" />
+         <package name="com.sequoiadb.transaction.diskfull" />
+         <package name="com.sequoiadb.transaction.killnode" />
+         <package name="com.sequoiadb.transaction.restartnode" />
+      </packages>
+   </test>
 </suite>
    
