@@ -64,9 +64,9 @@ Display file or file system status.
 .IP
 .nf
 \f[C]
->\ File.stat(\ "/opt/sequoiadb/file"\ )
+>\ File.stat(\ "/opt/sequoiadb/file.txt"\ )
 {
-\ \ "name":\ "/opt/bug/file",
+\ \ "name":\ "/opt/sequoiadb/file.txt",
 \ \ "size":\ "0",
 \ \ "mode":\ "rw\-r\-\-r\-\-",
 \ \ "user":\ "root",

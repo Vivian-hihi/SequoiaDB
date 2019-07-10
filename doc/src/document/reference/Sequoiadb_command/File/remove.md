@@ -29,9 +29,9 @@ File
 
 ##示例##
 
-* 删除 “/opt/sequoiadb” 目录下的 “file” 文件；
+* 删除 “/opt/sequoiadb” 目录下的 “file.txt” 文件；
 
   ```lang-javascript
-  > File.remove( "/opt/sequoiadb/file" )
+  > File.remove( "/opt/sequoiadb/file.txt" )
   ```
 

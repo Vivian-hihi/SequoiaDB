@@ -60,10 +60,11 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Delete the file named \[aq]file\[aq] in the \[aq]/opt/sequoiadb\[aq] directory;
+Delete the file named \[aq]file.txt\[aq] in the \[aq]/opt/sequoiadb\[aq]
+directory;
 .IP
 .nf
 \f[C]
->\ File.remove(\ "/opt/sequoiadb/file"\ )
+>\ File.remove(\ "/opt/sequoiadb/file.txt"\ )
 \f[]
 .fi

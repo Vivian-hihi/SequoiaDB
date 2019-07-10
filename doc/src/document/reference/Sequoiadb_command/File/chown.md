@@ -45,5 +45,5 @@ options 参数详细说明如下：
 * 设置文件的所有者；
 
   ```lang-javascript
-  > File.chown( "/opt/sequoiadb/file", { "username": "sequoiadb", "groupname": "SequoiadDB" }, false )
+  > File.chown( "/opt/sequoiadb/file.txt", { "username": "sequoiadb", "groupname": "SequoiadDB" }, false )
   ```

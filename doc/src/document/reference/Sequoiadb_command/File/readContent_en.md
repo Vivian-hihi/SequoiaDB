@@ -35,7 +35,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Open an existing or new file and get a file descriptor
 
 ```lang-javascript
-> var file = new File( "/opt/sequoiadb/file" )
+> var file = new File( "/opt/sequoiadb/file.dump" )
 ```
 
 * Read the contents of the file into the fileContent object

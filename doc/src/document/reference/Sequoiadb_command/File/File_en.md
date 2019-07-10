@@ -54,5 +54,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Create a new file and open it in read-write mode.
 
 ```lang-javascript
-> var file = new File( "/opt/sequoiadb/file", 0664, SDB_FILE_READWRITE | SDB_FILE_CREATE )
+> var file = new File( "/opt/sequoiadb/file.txt", 0664, SDB_FILE_READWRITE | SDB_FILE_CREATE )
 ```

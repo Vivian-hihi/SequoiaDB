@@ -36,6 +36,6 @@ File
 * 获取文件的大小。
 
   ```lang-javascript
-  > File.getSize( "/opt/sequoiadb/file" )
+  > File.getSize( "/opt/sequoiadb/file.txt" )
   13558
   ```

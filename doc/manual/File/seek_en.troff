@@ -112,6 +112,7 @@ T}@T{
 size plus offset
 T}
 .TE
+
 Note:
 .RE
 .PP
@@ -134,7 +135,7 @@ Open a file and get a file descriptor;
 .IP
 .nf
 \f[C]
->\ var\ file\ =\ new\ File(\ "/opt/sequoiadb/file"\ )
+>\ var\ file\ =\ new\ File(\ "/opt/sequoiadb/file.txt"\ )
 >\ file.read()
 0:sequoiadb\ is\ wonderful.
 1:wonderful\ sequoiadb.

@@ -34,5 +34,5 @@ File
 * 设置文件权限为 0777;
 
   ```lang-javascript
-  > File.chmod( "/opt/sequoiadb/file", 0777, false )
+  > File.chmod( "/opt/sequoiadb/file.txt", 0777, false )
   ```

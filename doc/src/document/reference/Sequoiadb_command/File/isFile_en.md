@@ -33,6 +33,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Determine if it is a normal file.
 
 ```lang-javascript
-> File.isFile( "/opt/sequoiadb/file" )
+> File.isFile( "/opt/sequoiadb/file.txt" )
 true
 ```

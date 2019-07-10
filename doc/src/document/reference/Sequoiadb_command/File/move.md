@@ -33,5 +33,5 @@ File
 * 移动文件。
 
   ```lang-javascript
-  > File.move( "/opt/sequoiadb/srcFile", "/opt/sequoiadb/desFile" )
+  > File.move( "/opt/sequoiadb/srcFile.txt", "/opt/sequoiadb/desFile.txt" )
   ```

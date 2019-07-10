@@ -35,5 +35,5 @@ File
 * 复制文件。
 
   ```lang-javascript
-  > File.copy( "/opt/sequoiadb/srcFile", "/opt/sequoiadb/desFile", true, 0664 )
+  > File.copy( "/opt/sequoiadb/srcFile.txt", "/opt/sequoiadb/desFile.txt", true, 0664 )
   ```

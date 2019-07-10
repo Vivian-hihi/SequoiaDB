@@ -35,6 +35,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Determine if the file exists.
 
 ```lang-javascript
-> File.exist( "/opt/trunk/file" )
+> File.exist( "/opt/sequoiadb/file.txt" )
 false
 ```

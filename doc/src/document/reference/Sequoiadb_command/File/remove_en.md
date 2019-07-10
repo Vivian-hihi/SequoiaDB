@@ -32,8 +32,8 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Delete the file named 'file' in the '/opt/sequoiadb' directory;
+* Delete the file named 'file.txt' in the '/opt/sequoiadb' directory;
 
 ```lang-javascript
-> File.remove( "/opt/sequoiadb/file" )
+> File.remove( "/opt/sequoiadb/file.txt" )
 ```

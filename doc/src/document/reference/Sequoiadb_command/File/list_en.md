@@ -47,7 +47,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 ```lang-javascript
 > File.list( { detail: true, pathname: "/opt/sequoiadb" } )
 {
-  "name": "file1",
+  "name": "file1.txt",
   "size": "20480",
   "mode": "drwxr-xr-x",
   "user": "root",
@@ -55,7 +55,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
   "lasttime": "6月 11 11:58"
 }
 {
-  "name": "file2",
+  "name": "file2.txt",
   "size": "20480",
   "mode": "drwxr-xr-x",
   "user": "root",
@@ -63,7 +63,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
   "lasttime": "6月 12 12:58"
 }
 {
-  "name": "file3",
+  "name": "file3.txt",
   "size": "20480",
   "mode": "drwxr-xr-x",
   "user": "root",
@@ -77,7 +77,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 ```lang-javascript
 > File.list( { detail: true, pathname: "/opt/sequoiadb" }, { $and: [ { name: "file1" }, { size: "20480" } ] } )
 {
-  "name": "file1",
+  "name": "file1.txt",
   "size": "20480",
   "mode": "drwxr-xr-x",
   "user": "root",

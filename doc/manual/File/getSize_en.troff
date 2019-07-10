@@ -47,8 +47,8 @@ file path
 T}@T{
 yes
 T}
-
 .TE
+
 Note:
 .RE
 .PP
@@ -71,7 +71,7 @@ Get the size of the file.
 .IP
 .nf
 \f[C]
->\ File.getSize(\ "/opt/sequoiadb/file"\ )
+>\ File.getSize(\ "/opt/sequoiadb/file.txt"\ )
 13558
 \f[]
 .fi

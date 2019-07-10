@@ -64,7 +64,7 @@ Determine if the file exists.
 .IP
 .nf
 \f[C]
->\ File.exist(\ "/opt/trunk/file"\ )
+>\ File.exist(\ "/opt/sequoiadb/file.txt"\ )
 false
 \f[]
 .fi

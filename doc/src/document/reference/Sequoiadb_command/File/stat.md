@@ -32,9 +32,9 @@ File
 * 显示文件的状态信息。
 
   ```lang-javascript
-  > File.stat( "/opt/sequoiadb/file" )
+  > File.stat( "/opt/sequoiadb/file.txt" )
   {
-      "name": "/opt/sequoiadb/file",
+      "name": "/opt/sequoiadb/file.txt",
       "size": "0",
       "mode": "rw-r--r--",
       "user": "root",

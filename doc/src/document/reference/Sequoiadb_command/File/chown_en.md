@@ -48,5 +48,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Changes the user and group ownership of each given file.
 
 ```lang-javascript
-> File.chown( "/opt/sequoiadb/file", { "username": "sequoiadb", "groupname": "SequoiadDB" }, false )
+> File.chown( "/opt/sequoiadb/file.txt", { "username": "sequoiadb", "groupname": "SequoiadDB" }, false )
 ```

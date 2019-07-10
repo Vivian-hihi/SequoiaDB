@@ -43,26 +43,26 @@ filter 参数支持对结果中的某些字段进行 and 、 or 、not 和精确
 * 查找文件；
 
   ```lang-javascript
-  > File.find( { mode: 'n', value: "file", pathname: "/opt" } )
+  > File.find( { mode: 'n', value: "file.txt", pathname: "/opt" } )
   {
-      "pathname": "/opt/sequoiadb/file1"
+      "pathname": "/opt/sequoiadb1/file.txt"
   }
   {
-      "pathname": "/opt/sequoiadb/file2"
+      "pathname": "/opt/sequoiadb2/file.txt"
   }
   {
-      "pathname": "/opt/sequoiadb/file3"
+      "pathname": "/opt/sequoiadb3/file.txt"
   }
   ```
 
 * 查找文件后，对结果进行筛选。
 
  ```lang-javascript
- > File.find( { mode: 'n', value: "file", pathname: "/opt" }, { $or: [ { pathname: "/opt/sequoiadb/file1" }, { pathname: "/opt/sequoiadb/file2" } ] } )
+ > File.find( { mode: 'n', value: "file.txt", pathname: "/opt" }, { $or: [ { pathname: "/opt/sequoiadb1/file.txt" }, { pathname: "/opt/sequoiadb2/file.txt" } ] } )
   {
-      "pathname": "/opt/sequoiadb/file1"
+      "pathname": "/opt/sequoiadb1/file.txt"
   }
   {
-      "pathname": "/opt/sequoiadb/file2"
+      "pathname": "/opt/sequoiadb2/file.txt"
   }
  ```

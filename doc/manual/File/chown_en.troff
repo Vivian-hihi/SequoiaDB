@@ -122,10 +122,8 @@ groupname
 T}@T{
 not
 T}
-
 .TE
-.RE
-.pp
+
 Note:
 .RE
 .PP
@@ -147,6 +145,6 @@ Changes the user and group ownership of each given file.
 .IP
 .nf
 \f[C]
->\ File.chown(\ "/opt/sequoiadb/file",\ {\ "username":\ "sequoiadb",\ "groupname":\ "SequoiadDB"\ },\ false\ )
+>\ File.chown(\ "/opt/sequoiadb/file.txt",\ {\ "username":\ "sequoiadb",\ "groupname":\ "SequoiadDB"\ },\ false\ )
 \f[]
 .fi

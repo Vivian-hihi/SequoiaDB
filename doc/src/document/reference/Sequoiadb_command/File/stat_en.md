@@ -35,9 +35,9 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Display file or file system status.
 
 ```lang-javascript
-> File.stat( "/opt/sequoiadb/file" )
+> File.stat( "/opt/sequoiadb/file.txt" )
 {
-  "name": "/opt/bug/file",
+  "name": "/opt/sequoiadb/file.txt",
   "size": "0",
   "mode": "rw-r--r--",
   "user": "root",

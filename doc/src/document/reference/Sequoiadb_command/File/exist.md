@@ -32,6 +32,6 @@ File
 * 判断文件是否存在。
 
   ```lang-javascript
-  > File.exist( "/opt/sequoiadb/file" )
+  > File.exist( "/opt/sequoiadb/file.txt" )
   false
   ```

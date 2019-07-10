@@ -33,7 +33,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Open a file and get a file descriptor;
 
 ```lang-javascript
-> var file = new File( "/opt/sequoiadb/file" )
+> var file = new File( "/opt/sequoiadb/file.txt" )
 ```
 
 * Close the opened file.

@@ -51,5 +51,5 @@ mode 参数的可选值如下表：
 * 打开一个文件。
 
   ```lang-javascript
-  > var file = new File( "/opt/sequoiadb/file", 0664, SDB_FILE_READWRITE | SDB_FILE_CREATE )
+  > var file = new File( "/opt/sequoiadb/file.txt", 0664, SDB_FILE_READWRITE | SDB_FILE_CREATE )
   ```

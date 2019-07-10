@@ -32,6 +32,6 @@ File
 * 判断指定文件名是否为普通文件。
 
   ```lang-javascript
-  > File.isFile( "/opt/sequoiadb/file" )
+  > File.isFile( "/opt/sequoiadb/file.txt" )
   true
   ```

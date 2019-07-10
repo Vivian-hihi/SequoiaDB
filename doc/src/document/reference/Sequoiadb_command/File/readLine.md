@@ -30,7 +30,7 @@ File
 * 打开一个文件，获取文件描述符；
 
   ```lang-javascript
-  > var file = new File( "/opt/sequoiadb/file" )
+  > var file = new File( "/opt/sequoiadb/file.txt" )
   > file.read()
   0:sequoiadb is wonderful.
   1:wonderful sequoiadb.

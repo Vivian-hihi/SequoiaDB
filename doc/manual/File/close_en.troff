@@ -33,7 +33,7 @@ Open a file and get a file descriptor;
 .IP
 .nf
 \f[C]
->\ var\ file\ =\ new\ File(\ "/opt/sequoiadb/file"\ )
+>\ var\ file\ =\ new\ File(\ "/opt/sequoiadb/file.txt"\ )
 \f[]
 .fi
 .IP \[bu] 2

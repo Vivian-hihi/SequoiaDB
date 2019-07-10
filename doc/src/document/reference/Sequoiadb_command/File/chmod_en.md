@@ -37,5 +37,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Set file mode bits as 0777.
 
 ```lang-javascript
-> File.chmod( "/opt/sequoiadb/file", 0777, false )
+> File.chmod( "/opt/sequoiadb/file.txt", 0777, false )
 ```

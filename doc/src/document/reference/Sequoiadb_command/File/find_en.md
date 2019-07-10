@@ -46,26 +46,26 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Find a file;
 
 ```lang-javascript
-> File.find( { mode: 'n', value: "file", pathname: "/opt" } )
+> File.find( { mode: 'n', value: "file.txt", pathname: "/opt" } )
 {
-    "pathname": "/opt/sequoiadb/file1"
+    "pathname": "/opt/sequoiadb1/file.txt"
 }
 {
-    "pathname": "/opt/sequoiadb/file2"
+    "pathname": "/opt/sequoiadb2/file.txt"
 }
 {
-    "pathname": "/opt/sequoiadb/file3"
+    "pathname": "/opt/sequoiadb3/file.txt"
 }
 ```
 
 * Find a file and filter the result set
 
 ```lang-javascript
-> File.find( { mode: 'n', value: "file", pathname: "/opt" }, { $or: [ { pathname: "/opt/sequoiadb/file1" }, { pathname: "/opt/sequoiadb/file2" } ] } )
+> File.find( { mode: 'n', value: "file.txt", pathname: "/opt" }, { $or: [ { pathname: "/opt/sequoiadb1/file.txt" }, { pathname: "/opt/sequoiadb2/file.txt" } ] } )
 {
-  "pathname": "/opt/sequoiadb/file1"
+  "pathname": "/opt/sequoiadb1/file.txt"
 }
 {
-  "pathname": "/opt/sequoiadb/file2"
+  "pathname": "/opt/sequoiadb2/file.txt"
 }
 ```

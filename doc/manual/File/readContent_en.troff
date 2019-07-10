@@ -96,7 +96,7 @@ Open an existing or new file and get a file descriptor
 .IP
 .nf
 \f[C]
->\ var\ file\ =\ new\ File(\ "/opt/sequoiadb/file"\ )
+>\ var\ file\ =\ new\ File(\ "/opt/sequoiadb/file.dump"\ )
 \f[]
 .fi
 .IP \[bu] 2

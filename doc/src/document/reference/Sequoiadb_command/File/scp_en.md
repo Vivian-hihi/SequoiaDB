@@ -42,6 +42,6 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Remote copy file
 
 ```lang-javascript
-> File.scp( "192.168.20.71:11790@/opt/sequoiadb/srcFile", "192.168.20.71:11790@/opt/sequoiadb/desFile" )
-Success to copy file from 192.168.20.71:11790@/opt/sequoiadb/srcFile to 192.168.20.71:11790@/opt/sequoiadb/desFile
+> File.scp( "192.168.20.71:11790@/opt/sequoiadb/srcFile.txt", "192.168.20.71:11790@/opt/sequoiadb/desFile.txt" )
+Success to copy file from 192.168.20.71:11790@/opt/sequoiadb/srcFile.txt to 192.168.20.71:11790@/opt/sequoiadb/desFile.txt
 ```

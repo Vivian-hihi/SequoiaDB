@@ -37,5 +37,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Set the user group of the file to the "sequoiadb".
 
 ```lang-javascript
-> File.chgrp( "/opt/sequoiadb/file", "sequoiadb", false )
+> File.chgrp( "/opt/sequoiadb/file.txt", "sequoiadb", false )
 ```

@@ -32,6 +32,6 @@ File
 * 获取文件的 md5 值。
 
   ```lang-javascript
-  > File.md5( "/opt/sequoiadb/file" )
+  > File.md5( "/opt/sequoiadb/file.txt" )
   f8fef4e0f30176c126d85cadca298a7c
   ```
