@@ -1,12 +1,14 @@
 package com.sequoiadb.transaction.common;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
@@ -21,12 +23,32 @@ public class TransUtil {
      * 
      * @param cl
      */
-    public static void insertData(DBCollection cl) {
+    public static void insertTransData(DBCollection cl) {
         List<BSONObject> reocrds = new ArrayList<>();
         for (int i = 0; i < 10000; i++) {
             reocrds.add((BSONObject) JSON.parse("{'balance':10000, 'account':" + i + "}"));
         }
         cl.insert(reocrds);
+    }
+
+    /**
+     * 插入记录
+     * 
+     * @param cl
+     * @param start
+     * @param end
+     * @return
+     */
+    public static List<BSONObject> insertData(DBCollection cl, int start, int end) {
+        List<BSONObject> records = new ArrayList<>();
+        for (int i = start; i < end; i++) {
+            BSONObject obj = (BSONObject) JSON.parse("{_id:" + i + ", a:" + i + ", b:" + i + "}");
+            records.add(obj);
+        }
+        List<BSONObject> expList = new ArrayList<>(records);
+        Collections.shuffle(records);
+        cl.insert(records);
+        return expList;
     }
 
     /**
@@ -85,12 +107,12 @@ public class TransUtil {
     public static void createCLs(Sequoiadb sdb, String csName, String hashCLName, String mainCLName, String subCLName1,
             String subCLName2) {
         sdb.getCollectionSpace(csName).createCollection(hashCLName, (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':1}"));
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
         DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(mainCLName, (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'range', 'IsMainCL':true, 'ReplSize':1}"));
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'range', 'IsMainCL':true, 'ReplSize':-1}"));
         sdb.getCollectionSpace(csName).createCollection(subCLName1);
         sdb.getCollectionSpace(csName).createCollection(subCLName2, (BSONObject) JSON
-                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':1}"));
+                .parse("{'ShardingKey':{'account':1}, 'ShardingType':'hash', 'AutoSplit':true, 'ReplSize':-1}"));
         mainCL.attachCollection(csName + "." + subCLName1,
                 (BSONObject) JSON.parse("{LowBound:{'account':{'$minKey':1}}, UpBound:{'account':3000}}"));
         mainCL.attachCollection(csName + "." + subCLName2,
@@ -112,7 +134,23 @@ public class TransUtil {
         createCLs(sdb, csName, hashCLName, mainCLName, subCLName1, subCLName2);
         DBCollection hashCL = sdb.getCollectionSpace(csName).getCollection(hashCLName);
         DBCollection mainCL = sdb.getCollectionSpace(csName).getCollection(mainCLName);
-        insertData(hashCL);
-        insertData(mainCL);
+        insertTransData(hashCL);
+        insertTransData(mainCL);
+    }
+
+    /**
+     * 获取游标读取的记录
+     * 
+     * @param cursor
+     * @return
+     */
+    public static ArrayList<BSONObject> getReadActList(DBCursor cursor) {
+        ArrayList<BSONObject> actRList = new ArrayList<BSONObject>();
+        while (cursor.hasNext()) {
+            BSONObject record = cursor.getNext();
+            actRList.add(record);
+        }
+        cursor.close();
+        return actRList;
     }
 }

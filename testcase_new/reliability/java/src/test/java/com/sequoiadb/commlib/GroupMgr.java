@@ -30,6 +30,7 @@ public class GroupMgr {
 
     private String coordUrl = null;
     private long refreshTime;
+    private boolean refreshFlag = false;
 
     private GroupMgr() {
     }
@@ -41,6 +42,7 @@ public class GroupMgr {
      */
     public void setSdb(Sequoiadb sdb) {
         this.sdb = sdb;
+        refreshFlag = true;
     }
 
     private GroupMgr(String coordUrl) {
@@ -48,9 +50,10 @@ public class GroupMgr {
     }
 
     public void refresh(String coordUrl) throws ReliabilityException {
-        if (System.currentTimeMillis() - refreshTime < 1000) {
+        if (System.currentTimeMillis() - refreshTime < 1000 && !refreshFlag) {
             return;
         }
+        refreshFlag = false;
 
         name2group.clear();
         id2group.clear();
@@ -98,7 +101,6 @@ public class GroupMgr {
         try {
             this.refresh();
         } catch (ReliabilityException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         List<GroupWrapper> dataGroups = new ArrayList<GroupWrapper>();
@@ -116,7 +118,6 @@ public class GroupMgr {
         try {
             this.refresh();
         } catch (ReliabilityException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return null;
         }
@@ -134,7 +135,6 @@ public class GroupMgr {
         try {
             this.refresh();
         } catch (ReliabilityException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return null;
         }
@@ -159,7 +159,6 @@ public class GroupMgr {
         try {
             this.refresh();
         } catch (ReliabilityException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return getGroupByNameInner(name);
@@ -267,7 +266,6 @@ public class GroupMgr {
         List<NodeWrapper> nodes = catagroup.getNodes();
         boolean ret = true;
         long prevCount = -1;
-        int i = 0;
         for (NodeWrapper node : nodes) {
             Sequoiadb db = node.connect();
             try {
@@ -636,7 +634,6 @@ public class GroupMgr {
                 System.out.println("failed");
             }
         } catch (ReliabilityException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
