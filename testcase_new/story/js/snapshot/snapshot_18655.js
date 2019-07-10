@@ -51,5 +51,7 @@ function main()
    var expStatistics = [{TotalDataRead:0,TotalIndexRead:0,TotalDataWrite:0,TotalIndexWrite:0,TotalUpdate:0,TotalDelete:0,TotalInsert:0,TotalSelect:0,TotalRead:0,TotalWrite:0,TotalTbScan:0,TotalIxScan:0}];
    checkStatistics(csName + "." + clName, nodeNameMaster, expStatistics);
    
+   commDropCS( db, csName);
+   
 }
 main();
