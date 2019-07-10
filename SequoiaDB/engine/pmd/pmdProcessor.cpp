@@ -55,6 +55,7 @@
 #include "coordInterruptOperator.hpp"
 #include "pmdController.hpp"
 #include "schedDef.hpp"
+#include "dpsUtil.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
@@ -207,20 +208,51 @@ namespace engine
 
    INT32 _pmdDataProcessor::doRollback()
    {
+      INT32 rc = SDB_OK ;
+
       if ( eduCB() )
       {
-         return rtnTransRollback( eduCB(), getDPSCB() ) ;
+         DPS_TRANS_ID transID = eduCB()->getTransID() ;
+
+         rc = rtnTransRollback( eduCB(), getDPSCB() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rollback transaction(ID:%s, IDAttr:%s) failed, "
+                    "rc: %d", dpsTransIDToString( transID ).c_str(),
+                    dpsTransIDAttrToString( transID ).c_str(),
+                    rc ) ;
+            goto error ;
+         }
       }
-      return SDB_OK ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _pmdDataProcessor::doCommit()
    {
+      INT32 rc = SDB_OK ;
       if ( eduCB() )
       {
-         return rtnTransCommit( eduCB(), getDPSCB() ) ;
+         DPS_TRANS_ID transID = eduCB()->getTransID() ;
+
+         rc = rtnTransCommit( eduCB(), getDPSCB() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Commit transaction(ID:%s, IDAttr:%s) failed, "
+                    "rc: %d", dpsTransIDToString( transID ).c_str(),
+                    dpsTransIDAttrToString( transID ).c_str(),
+                    rc ) ;
+            goto error ;
+         }
       }
-      return SDB_OK ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _pmdDataProcessor::_onMsgReqMsg( MsgHeader * msg )
@@ -1879,6 +1911,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
       coordResource *pResource = pCoordCB->getResource() ;
+      DPS_TRANS_ID transID = eduCB()->getTransID() ;
 
       coordTransRollback rollbackOpr ;
       rc = rollbackOpr.init( pResource, eduCB() ) ;
@@ -1892,6 +1925,10 @@ namespace engine
       rc = rollbackOpr.rollback( eduCB() ) ;
       if ( rc )
       {
+         PD_LOG( PDERROR, "Rollback transaction(ID:%s, IDAttr:%s) failed, "
+                 "rc: %d", dpsTransIDToString( transID ).c_str(),
+                 dpsTransIDAttrToString( transID ).c_str(),
+                 rc ) ;
          goto error ;
       }
 
@@ -1908,6 +1945,7 @@ namespace engine
       coordResource *pResource = pCoordCB->getResource() ;
 
       INT64 contextID = -1 ;
+      DPS_TRANS_ID transID = eduCB()->getTransID() ;
       MsgOpTransCommit commitMsg ;
       coordTransCommit commitOpr ;
       rc = commitOpr.init( pResource, eduCB() ) ;
@@ -1928,6 +1966,10 @@ namespace engine
                               contextID, NULL ) ;
       if ( rc )
       {
+         PD_LOG( PDERROR, "Commit transaction(ID:%s, IDAttr:%s) failed, "
+                 "rc: %d", dpsTransIDToString( transID ).c_str(),
+                 dpsTransIDAttrToString( transID ).c_str(),
+                 rc ) ;
          goto error ;
       }
 

@@ -321,6 +321,14 @@ namespace engine
       MON_START_OP( _pEDUCB->getMonAppCB() ) ;
       _pEDUCB->getMonAppCB()->setLastOpType( msg->opCode ) ;
 
+      if ( MSG_BS_TRANS_BEGIN_REQ == msg->opCode && eduCB()->isTransaction() )
+      {
+         if ( SDB_OK != _processor->doCommit() )
+         {
+            _processor->doRollback() ;
+         }
+      }
+
       return SDB_OK ;
    }
 
