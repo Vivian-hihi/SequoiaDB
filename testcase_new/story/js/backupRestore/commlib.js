@@ -194,7 +194,7 @@ function bakBackup( db, backupObj )
    }
    try
    {
-      db.backupOffline( backupObj ) ;
+      db.backup( backupObj ) ;
    }
    catch( e )
    {
