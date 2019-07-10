@@ -99,9 +99,8 @@ function main()
    cl.remove();
    
                            
-   /**************************** test6, boolean:1 ***************************/
-   /* jira-4415
-   println("\n---Test6, create index, boolean:1.");
+   /**************************** test6, unique:1, enforced:1,NotNull:1 ***************************/
+   println("\n---Test6, create index, unique:1, enforced:1,NotNull:1.");
    cl.createIndex( indexName, {a:1}, {unique:1, enforced:1,NotNull:1} );
    println("---Check results."); 
    checkIndex( cl, indexName, true, true, true );
@@ -114,12 +113,13 @@ function main()
       try
       {
          cl.insert( invRecs[i] );
+         throw "insert error!";
       }
       catch ( e ) 
       {
          if( e !== -339 )
          {
-            throw buildException( "checkResult", null, "", -339, "  " + e );
+            throw e;
          }  
       }
    }
@@ -133,18 +133,50 @@ function main()
    {
       if( e !== -38 )
       {
-         throw buildException( "checkResult", null, "", -38, "  " + e );
+         throw e;
       }  
    }
-   
-   // clean index
    cl.dropIndex( indexName ); 
    cl.remove();
-   */
    
-                           
-   /**************************** test7, NotNull:string/otherNum ***************************/
-   println("\n---Test7, create index, NotNull:string/otherNum.");
+   /**************************** test7, unique:1, enforced:1 ***************************/
+   println("\n---Test7, create index, unique:1, enforced:1.");
+   cl.createIndex( indexName, { a: 1 }, { unique: 1, enforced: 1 } );
+   println("---Check results."); 
+   checkIndex( cl, indexName, true, true );
+   var insertR1 = [{ b: 1 }];
+   cl.insert( insertR1 );
+   try
+   {
+      cl.insert([{ b: 2 }]);
+   }catch(e)
+   {
+      if( e != -38 )
+      {
+         throw e;
+      }
+   }
+   checkRecords( cl, insertR1 );     
+   cl.dropIndex( indexName ); 
+   cl.remove();
+             
+   /**************************** test8, unique:0, enforced:0,NotNull:0 ***************************/
+   println("\n---Test8, create index, unique:0, enforced:0,NotNull:0.");
+   cl.createIndex( indexName, {a:1}, {unique:0, enforced:0, NotNull:0} );
+   println("---Check results."); 
+   checkIndex( cl, indexName, false, false, false );
+    
+   var insertR1s = [{ a: 1, b: 1 }, { a: 1, b: 2 }, { b: 3 }, { b: 4}, { a: null, b: 5 }];
+   for ( i = 0; i < insertR1s.length; i++) 
+   {
+      cl.insert( insertR1s[i] );
+   }
+   checkRecords( cl, insertR1s );     
+   cl.dropIndex( indexName ); 
+   cl.remove();
+   
+   /**************************** test9, NotNull:string/otherNum ***************************/
+   println("\n---Test9, create index, NotNull:string/otherNum.");
    var keyArr = [{NotNull:"true"}, {NotNull:"false"}, {NotNull:2}];
    try
    {
@@ -164,6 +196,10 @@ function main()
 
 function checkIndex( cl, indexName, expUni, expEnf, expNot ) 
 {
+   if( expUni == undefined ){ expUni = false };
+   if( expEnf == undefined ){ expEnf = false };
+   if( expNot == undefined ){ expNot = false };
+   
    var indexDef = cl.getIndex( indexName ).toObj().IndexDef;
    var actUni = indexDef.unique;
    var actEnf = indexDef.enforced;
