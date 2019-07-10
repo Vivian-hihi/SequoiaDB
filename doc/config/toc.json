@@ -4497,7 +4497,7 @@
       {
          "id": 1483942793,
          "dir": "sac",
-         "cn": "SAC",
+         "cn": "SAC 管控中心",
          "en": "SAC",
          "contents": [
             {
@@ -4515,13 +4515,13 @@
                   {
                      "id": 1483944515,
                      "file": "install_sac",
-                     "cn": "安装SAC",
+                     "cn": "安装 SAC",
                      "en": "Install SAC"
                   },
                   {
                      "id": 1483944516,
                      "file": "login_sac",
-                     "cn": "登录SAC",
+                     "cn": "登录 SAC",
                      "en": "Login SAC"
                   },
                   {

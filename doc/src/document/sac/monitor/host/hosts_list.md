@@ -1,6 +1,6 @@
-主机列表可以查看安装当前服务的所有主机的配置信息，包括主机IP、CPU型号、内存大小、磁盘容量、操作系统和网卡数。
+主机列表可以查看安装当前服务的所有主机的配置信息，包括主机 IP、CPU 型号、内存大小、磁盘容量、操作系统和网卡数。
 
-![主机列表](sac/monitor/host/hosts_list_1.jpg)
+![主机列表](sac/monitor/host/hosts_list.png)
 
 - 需要了解指定主机的详细信息时，可以点击表格中的主机名进入[主机信息](sac/monitor/host/host_info.md)。
 

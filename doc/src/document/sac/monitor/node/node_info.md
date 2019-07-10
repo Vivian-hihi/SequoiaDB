@@ -15,7 +15,7 @@
 
 点击 **SessionID** 可以查看所选会话的详细信息。
 
-![节点会话](sac/monitor/node/node_info_2.1.png)
+![节点会话](sac/monitor/node/node_info_3.png)
 
 > **Note:**  
 > 1. 点击 **选择显示列** 可以选择显示哪些字段。  
@@ -25,11 +25,11 @@
 
 ###上下文###
 
-![节点上下文](sac/monitor/node/node_info_3.png)
+![节点上下文](sac/monitor/node/node_info_4.png)
 
 点击 **CntextID** 可以查看所选上下文的详细信息。
 
-![节点上下文](sac/monitor/node/node_info_3.1.png)
+![节点上下文](sac/monitor/node/node_info_5.png)
 
 > **Note:**  
 > 1. 点击 **选择显示列** 可以选择显示哪些字段。  
@@ -39,4 +39,4 @@
 
 页面显示所选节点的会话、上下文和事务的实时数量图表。
 
-![节点图表](sac/monitor/node/node_info_4.png)
+![节点图表](sac/monitor/node/node_info_6.png)
