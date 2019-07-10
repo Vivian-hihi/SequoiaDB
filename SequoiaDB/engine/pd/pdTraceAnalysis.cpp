@@ -48,7 +48,7 @@ using namespace engine ;
 #define TRACE_VERSION_INFO_SIZE                   ( 50 )
 #define TRACE_INVALID_FUNCTIONOFFSET              0xFFFFFFFFU
 #define PD_FUNC_RECORD_TITLE \
-   "name, count, avgcost, min, maxIn2OutCost, maxCurrentCost, \"first(sequenceNum,totalCost,cost,maxTimeInterval)\", second, third, fourth, fifth"
+   "name, count, avgcost, min, maxIn2OutCost, maxCurrentCost,\"first(sequenceNum,in2OutCost,currentCost,maxTimeInterval)\", second, third, fourth, fifth"
 /*
    _pdTraceParser implement
 */
