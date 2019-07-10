@@ -1,23 +1,19 @@
 
-1. 演示已经创建 foo.bar 的集合，
-   集合创建可以参考[创建集合文档](sac/sequoiadb_data/collection/create_cl.md)。
+1. 创建 **foo.bar** 集合，创建集合可以参考 [创建集合文档](sac/sequoiadb_data/collection_space/create_cl.md)。
 
-   ![Lob](sac/data_operation/lob_1.jpg)
+   ![Lob](sac/sequoiadb_data/lob_1.png)
 
-2. 使用 coord 节点的主机，运行 sdb shell 导入Lob：
+2. 运行 sdb shell 导入 Lob：
 
-   ```lang-javascript
+   ```lang-bash
    $ /opt/sequoiadb/bin/sdb
-   Welcome to SequoiaDB shell!
-   help() for help, Ctrl+c or quit to exit
-   > db = new Sdb( "localhost", 11810 )
-   localhost:11810
-   Takes 0.1512s.
-   > db.foo.bar.putLob( '/opt/pic.jpg' )
-   5878b0add9d765d278000000
-   Takes 2.2545s.
    ```
 
-3. 导入完成。
+   ```lang-javascript
+   > db = new Sdb( "localhost", 11810 )
+   > db.foo.bar.putLob( '/opt/pic.jpg' )
+   ```
 
-   ![Lob](sac/data_operation/lob_2.jpg)
+3. 导入完成，在 SAC 查看。
+
+   ![Lob](sac/sequoiadb_data/lob_2.png)

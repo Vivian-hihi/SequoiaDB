@@ -1,13 +1,13 @@
 
 > **Note:**  
-> 删除集合会把该集合下的数据删除（包括记录和Lob）。
+> 删除集合会把该集合下的数据删除（包括记录和 Lob）。
 
-1. 进入服务的数据操作主页，点击导航 **数据**，点击 **服务名**，演示中点击的是 **myService1**，点击 **集合** 分页。
+1. 点击导航 **数据 - 分布式存储** 的名字，进入 **集合** 分页。
 
-   ![删除集合](sac/data_operation/collection/drop_cl_1.jpg)
+   ![删除集合](sac/sequoiadb_data/collection/drop_cl_1.png)
 
-2. 点击 **删除集合** 打开窗口，选择要删除的集合，点击 **确定**。
+2. 点击 **删除集合**，选择要删除的集合，点击 **确定** 按钮。
 
-   ![删除集合](sac/data_operation/collection/drop_cl_2.jpg)
+   ![删除集合](sac/sequoiadb_data/collection/drop_cl_2.png)
 
-3. 删除集合空间完成。
+3. 删除完成。
