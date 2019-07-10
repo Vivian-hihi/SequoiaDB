@@ -86,7 +86,7 @@ public class Sdv6667 extends SdbTestBase {
     }
     
     @Test
-    public void test() {
+    public void test() throws Exception {
         Sequoiadb db = null;
         try{
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -202,21 +202,36 @@ public class Sdv6667 extends SdbTestBase {
         }
         return scl;
     }
-    
-    private void checkCompression(Sequoiadb dataDB, String clName){
-        // get details of snapshot
-        BSONObject nameBSON = new BasicBSONObject();
-        nameBSON.put("Name", csName + "." + clName);
-        DBCursor snapshot = dataDB.getSnapshot(4, nameBSON, null, null);
-        BasicBSONList details = (BasicBSONList) snapshot.getNext().get("Details");
-        BSONObject detail = (BSONObject) details.get(0);
-        
-        // judge whether data is compressed
-        boolean ratioRight = (double)detail.get("CurrentCompressionRatio") < (double)1;
-        boolean attrRight = ((String)detail.get("Attribute")).equals("Compressed");
-        boolean typeRight = ((String)detail.get("CompressionType")).equals("lzw");
-        if(!(ratioRight && attrRight && typeRight)){
-            Assert.fail("data is not compressed");
+
+    private void checkCompression(Sequoiadb dataDB, String clName) throws Exception{
+        int currRetryTimes = 0;
+        int maxRetryTimes = 50;
+        while (true) {
+            // get details of snapshot
+            BSONObject nameBSON = new BasicBSONObject();
+            nameBSON.put("Name", csName + "." + clName);
+            DBCursor snapshot = dataDB.getSnapshot(4, nameBSON, null, null);
+            BasicBSONList details = (BasicBSONList) snapshot.getNext().get("Details");
+            BSONObject detail = (BSONObject) details.get(0);
+            
+            // judge whether data is compressed
+            boolean ratioRight = (double)detail.get("CurrentCompressionRatio") < (double)1;
+            boolean attrRight = ((String)detail.get("Attribute")).equals("Compressed");
+            boolean typeRight = ((String)detail.get("CompressionType")).equals("lzw");
+
+            boolean isCommpression = ratioRight && attrRight && typeRight;
+            if (isCommpression) {
+                break;
+            } else if (!isCommpression) {
+                Thread.sleep(100);
+                currRetryTimes++;
+                System.out.println(currRetryTimes);
+            }
+            
+            if (currRetryTimes > maxRetryTimes) {
+                System.out.println(clName + ": " + detail);
+                throw new Exception("check commpression, retry timeout.");
+            }
         }
     }
 
