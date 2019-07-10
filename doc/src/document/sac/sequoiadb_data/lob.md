@@ -1,5 +1,5 @@
 
-1. 创建 **foo.bar** 集合，创建集合可以参考 [创建集合文档](sac/sequoiadb_data/collection_space/create_cl.md)。
+1. 创建 **foo.bar** 集合，创建集合可以参考 [创建集合文档](sac/sequoiadb_data/collection/create_cl.md)。
 
    ![Lob](sac/sequoiadb_data/lob_1.png)
 
