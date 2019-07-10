@@ -103,6 +103,12 @@
                      ]
                   },
                   {
+                     "id": 1562752047,
+                     "file": "docker",
+                     "cn": "Docker 部署",
+                     "en": "Docker"
+                  },
+                  {
                      "id": 1432190600,
                      "file": "visualization_installation",
                      "cn": "可视化安装",
