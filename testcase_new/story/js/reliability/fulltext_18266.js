@@ -29,31 +29,30 @@ function main()
    
    try
    {
-      preCataMaster.stop();
-      preCataSlave.stop();
-      // 重启其中一个节点
-      preCataSlave.start();
-      // 等待选主
-      while( true )
-      {
-         try
-         {
-            var curCataMaster = db.getRG( "SYSCatalogGroup" ).getMaster();
-            var curCataMasterNodeName = curCataMaster.getHostName() + ":" + curCataMaster.getServiceName();
-            // 切主后，则退出
-            if( preCataMasterNodeName != curCataMasterNodeName ) 
-            {
+       preCataMaster.stop();
+       preCataSlave.stop();
+       // 重启其中一个节点
+       preCataSlave.start();
+       // 等待切主，最长等待10min
+       var doTimes = 1;
+       for( ; doTimes <= 600; doTimes++ )
+       {
+           isMasterNodeExist( "SYSCatalogGroup" );
+           var curCataMaster = db.getRG( "SYSCatalogGroup" ).getMaster();
+           var curCataMasterNodeName = curCataMaster.getHostName() + ":" + curCataMaster.getServiceName();
+           // 切主后，则退出
+           if( preCataMasterNodeName != curCataMasterNodeName ) 
+           {
                break;
-            }
-         }
-         catch( e )
-         {
-            if( -104 != e && -134 != e )
-            {
-               throw e;
-            }
-         }
-      }
+           }
+           sleep( 1000 );
+       }
+      
+       // 没有切主，则抛异常
+       if ( doTimes > 600 )
+       {
+           throw buildException( "changePrimary", null, "change primary", curCataMasterNodeName, preCataMasterNodeName );
+       }
    }
    finally
    {
