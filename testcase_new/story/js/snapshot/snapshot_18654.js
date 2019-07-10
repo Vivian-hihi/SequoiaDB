@@ -81,5 +81,7 @@ function main()
    var expStatistics = [{TotalDataRead:2479,TotalIndexRead:1915,TotalDataWrite:1479,TotalIndexWrite:3437,TotalUpdate:0,TotalDelete:479,TotalInsert:1000,TotalSelect:2000,TotalRead:2479,TotalWrite:1479,TotalTbScan:2,TotalIxScan:479},{TotalDataRead:0,TotalIndexRead:0,TotalDataWrite:479,TotalIndexWrite:1437,TotalUpdate:0,TotalDelete:0,TotalInsert:479,TotalSelect:0,TotalRead:0,TotalWrite:479,TotalTbScan:0,TotalIxScan:0}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
    
+   commDropCL(db, COMMCSNAME, clName);
+   
 }
 main();
