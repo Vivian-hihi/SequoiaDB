@@ -301,15 +301,16 @@ function idxAutoGenData( cl, insertNum )
    if( undefined == insertNum ){ insertNum = 1000; }
    try
    {
+      var record = [];
       for( var i = 0 ; i < insertNum ; ++i )
       {
-         var record = {"no":i, "no1":i*2, "no2":i*3,
+         record.push({"no":i, "no1":i*2, "no2":i*3,
                        "obj_id":{ "$oid" : "123abcd00ef12358902300ef" },
                        "subobj":{"obj":{"val":"sub"}},
                        "string":"西边个喇嘛，东边个哑巴",
-                       "array":[i+"arr"+i, 5*i, 2*i+"ARR"+i,"arrayIndex"], "no3":4*i} ;
-         cl.insert( record ) ;
+                       "array":[i+"arr"+i, 5*i, 2*i+"ARR"+i,"arrayIndex"], "no3":4*i});
       }
+      cl.insert( record ) ;
       cnt = 0 ;
       while( insertNum != cl.count() && cnt <1000 )
       {
