@@ -38,10 +38,10 @@
                "webName": $scope.autoLanguage( '安装包名' ),
                "type": "select",
                "required": true,
-               "value": 'sequoiasql-postgresql',
+               "value": 'sequoiasql-mysql',
                "valid": [
-                  { 'key': 'SequoiaSQL-PostgreSQL', 'value': 'sequoiasql-postgresql' },
-                  { 'key': 'SequoiaSQL-MySQL', 'value': 'sequoiasql-mysql' }
+                  { 'key': 'SequoiaSQL-MySQL', 'value': 'sequoiasql-mysql' },
+                  { 'key': 'SequoiaSQL-PostgreSQL', 'value': 'sequoiasql-postgresql' }
                ],
                "onChange": function( name, key, value ){
                   if( value == 'sequoiasql-mysql' )
