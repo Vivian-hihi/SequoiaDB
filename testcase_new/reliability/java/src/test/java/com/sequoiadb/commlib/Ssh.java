@@ -4,11 +4,22 @@ import com.jcraft.jsch.*;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 
+import java.io.FileNotFoundException ;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream ;
+
+import java.text.SimpleDateFormat ;
+import java.util.Date ;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger ;
+import java.util.logging.ConsoleHandler ;
+import java.util.logging.FileHandler ;
+import java.util.logging.Level ;
+import java.util.logging.LogRecord ;
 import java.util.logging.Logger;
+
 
 /**
  * @author huangqiaohui
@@ -57,15 +68,20 @@ public class Ssh {
         this.password = password;
         this.port = port;
         JSch jsch = new JSch();
+        TestLogger logger = new TestLogger() ;
+        logger.setFileHandler() ;
+        JSch.setLogger( logger ) ;
         try {
             session = jsch.getSession(username, host, port);
             session.setPassword(password);
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect(CHANNEL_CONNECT_TIMEOUT);
+            
         } catch (JSchException e) {
             if (session != null) {
                 session.disconnect();
             }
+            e.printStackTrace() ;
             throw new FaultException(e);
         }
     }
@@ -84,6 +100,7 @@ public class Ssh {
             channel.connect(CHANNEL_CONNECT_TIMEOUT);
             channel.put(localPath, remotePath);
         } catch (Exception e) {
+            e.printStackTrace() ;
             throw new FaultException(e);
         } finally {
             if (channel != null) {
@@ -106,6 +123,7 @@ public class Ssh {
             channel.connect(CHANNEL_CONNECT_TIMEOUT);
             channel.get(remotePath, localPath);
         } catch (Exception e) {
+            e.printStackTrace() ;
             throw new FaultException(e);
         } finally {
             if (channel != null) {
@@ -134,6 +152,7 @@ public class Ssh {
                         + "',stderr:" + stderr + " ,stdout:" + stdout + ",errcode: " + exitStatus);
             }
         } catch (IOException | JSchException e) {
+            e.printStackTrace() ;
             throw new FaultException(e);
         } finally {
             if (channel != null) {
@@ -163,6 +182,7 @@ public class Ssh {
             if (channel != null) {
                 channel.disconnect();
             }
+            e.printStackTrace() ;
             throw new FaultException(e);
         }
     }
@@ -198,6 +218,7 @@ public class Ssh {
         } catch (IOException e) {
             throw new FaultException(e);
         } catch (JSchException e) {
+            e.printStackTrace() ;
             throw new FaultException(e);
         } finally {
             channel.disconnect();
@@ -318,5 +339,48 @@ public class Ssh {
     public Session getSession() {
         return session;
     }
+    private static final AtomicInteger sync = new AtomicInteger(0) ;
+    private static PrintStream logger = null;
+    class TestLogger implements com.jcraft.jsch.Logger{
+        public void setFileHandler(){
+            if ( sync.compareAndSet( 0, 1 )){
+                try {
+                    Date date = new Date() ;
+                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss") ;
+                    String strTime = format.format( date.getTime() ) ;
+                    logger = new PrintStream(SdbTestBase.workDir + "/jsch" + strTime +  ".log") ;
+                } catch ( FileNotFoundException e ) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+        
+        @Override
+        public boolean isEnabled( int level ) {
+            // TODO Auto-generated method stub
+            return true ;
+        }
 
+        @Override
+        public void log( int level, String msg ) {
+            Date date = new Date() ;
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss") ;
+            if ( level == 0 ){
+                logger.append( "debug:" ) ;
+            }else if ( level == 1 ){
+                logger.append( "info:" ) ;
+            }else if ( level == 2 ){
+                logger.append( "warn:" ) ;
+            }else if( level == 3 ){
+                logger.append( "error:" ) ;
+            }else{
+                logger.append( "fatal:" ) ;
+            }
+            logger.append( format.format( date.getTime() ) ) ;
+            logger.append( " " + msg ) ;
+            logger.append( "\n" ) ;
+            logger.flush() ;
+        }
+    }
 }

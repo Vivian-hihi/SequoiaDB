@@ -18,9 +18,11 @@ import org.bson.util.JSON;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet ;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set ;
 
 public class GroupMgr {
     private Map<String, GroupWrapper> name2group = new HashMap<String, GroupWrapper>();
@@ -139,11 +141,12 @@ public class GroupMgr {
             return null;
         }
         List<String> hosts = new ArrayList<String>();
+        Set<String> origHosts = new HashSet<String>() ;
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
-            List<String> hostsPerGroup = entry.getValue().getAllHosts();
-            hosts.addAll(hostsPerGroup);
+            Set<String> hostsPerGroup = entry.getValue().getAllHosts();
+            origHosts.addAll(hostsPerGroup);
         }
-
+        hosts.addAll( origHosts ) ;
         return hosts;
     }
 

@@ -104,6 +104,7 @@ public class NodeWrapper {
             System.out.println( "stop " + node.getNodeName() + " failed "
                     + e.getErrorCode() ) ;
             status = NodeStatus.STOP_FAILURE ;
+            e.printStackTrace() ;
             throw new ReliabilityException( e ) ;
         }
         return true ;

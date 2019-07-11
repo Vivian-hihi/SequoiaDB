@@ -162,8 +162,8 @@ public class GroupWrapper {
         return checkRes;
     }
 
-    public List<String> getAllHosts() {
-        List<String> hosts = new ArrayList<String>();
+    public Set<String> getAllHosts() {
+        Set<String> hosts = new HashSet<String>();
         for (NodeWrapper node : nodes) {
             hosts.add(node.hostName());
         }
