@@ -6,10 +6,9 @@
 main();
 function main()
 {
-   var clName = "cl_18281";
+   var clName = "cl_18281_1";
    var indexName = "idx";
    
-   // ready cl
    commDropCL( db, COMMCSNAME, clName, true, true, 
             "Failed to drop CL in the pre-condition." );    
    var cl = commCreateCL( db, COMMCSNAME, clName, -1, true, true, false,
@@ -22,7 +21,6 @@ function main()
    println("---Check results."); 
    checkIndex( cl, indexName, true, true, false ); 
       
-   // clean index
    cl.dropIndex( indexName );
     
                            
