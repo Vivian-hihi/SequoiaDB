@@ -1,41 +1,46 @@
 **PostgreSQL 实例操作** 页面可以进行创建数据库、删除数据库、创建数据表、删除数据表等操作。
 
-###创建数据库
+创建数据库
+---
 
-1. 从 SAC 左侧导航选择进入 PostgreSQL 实例操作页面。  
-  ![SequoiaSQL-PostgreSQL数据库](sac/data_operation/PostgreSQL/database_oltp.png)
+1. 点击导航 **数据 - 数据库实例** 的名字，进入 PostgreSQL 实例操作页面。
 
-2. 点击右下角创建数据库，输入需要创建的数据库名后点击确定即可完成创建。
-  ![创建数据库](sac/data_operation/PostgreSQL/add_database.png)
+  ![SequoiaSQL-PostgreSQL数据库](sac/postgresql_data/database_1.png)
 
-###创建数据表
+2. 点击 **创建数据库**，填写 **数据库名**，点击 **确定** 按钮。
 
-创建数据表可以选择创建普通表和外部表，创建外部表需要当前数据库已经进行了[添加实例存储](sac/deployment/postgresql_instance/append_postgresql.md)操作
+  ![创建数据库](sac/postgresql_data/database_2.png)
 
-1. 点击右下角创建数据表，选择所属数据库之后填写表名及字段。如果选择创建外部表的话，则需要选择服务名，填写对应映射的集合空间及集合名。
+删除数据库
+---
 
-  ![创建数据表](sac/data_operation/PostgreSQL/create_table.png)
-
-2. 点击确定开始创建数据表。
+点击 **删除数据库**，选择要删除的数据库，点击 **确定** 按钮。
 
 > **Note:**  
-> 创建完数据表后，可点击数据表名进入[数据操作](sac/postgresql_data/record.md)
+> 无法删除当前选择的数据库。通过 SAC 删除数据库，至少保留有一个数据库。
+
+![删除数据库](sac/postgresql_data/database_3.png)
+
+创建数据表
+---
+
+创建数据表可以选择 **普通表** 和 **外部表**，创建外部表需要给数据库实例 [添加存储集群](sac/deployment/postgresql_instance/add_postgresql_storage.md)。
+
+点击 **创建数据表**，填写好参数，点击 **确定** 按钮。
+
+> **Note：**  
+> 创建数据表后，点击数据表名进入 [数据操作](sac/postgresql_data/record.md)  
 > 创建外部表不可定义主键和唯一键。
 
-###删除数据库
+![创建数据表](sac/postgresql_data/database_4.png)
 
-点击左下角删除数据库，选择需要删除的数据库，点击确定开始删除。
+删除数据表
+---
 
-![删除数据库](sac/data_operation/PostgreSQL/drop_database.png)
+从数据表列表中，点击需要删除的数据表表 **X** 按钮，点击 **确定** 删除。
 
 > **Note:**  
-> 无法删除当前打开的数据库，并且通过SAC进行删除的话，至少需要保留有一个数据库。
-
-###删除数据表
-
-从数据表列表中选择需要删除的表，点击行中的“X”图标，确认后点击确定即可进行删除该表。
+> 系统表不能删除。
 
 ![删除数据表](sac/data_operation/PostgreSQL/drop_table.png)
 
-> **Note:**  
-> 系统表不可被删除。
