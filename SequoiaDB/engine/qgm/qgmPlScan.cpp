@@ -305,8 +305,11 @@ namespace engine
       rc = opr.execute( (MsgHeader*)qMsg, eduCB, _contextID, &buff ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
-                 opr.getName(), rc ) ;
+         if ( SDB_COORD_UNKNOWN_OP_REQ != rc )
+         {
+            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                    opr.getName(), rc ) ;
+         }
          goto error ;
       }
 

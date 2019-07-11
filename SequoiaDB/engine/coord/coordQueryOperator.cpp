@@ -443,8 +443,11 @@ namespace engine
          rc = pOperator->execute( pMsg, cb, contextID, buf ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
-                    pOperator->getName(), rc ) ;
+            if ( SDB_COORD_UNKNOWN_OP_REQ != rc )
+            {
+               PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                       pOperator->getName(), rc ) ;
+            }
             goto error ;
          }
       }
