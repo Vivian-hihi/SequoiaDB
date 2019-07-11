@@ -252,9 +252,5 @@ $ docker exec sdb_data3 /cleanup.sh
 ```
 
 
-
-## 结论
-
-为方便用户快速试用 SequoiaDB 分布式数据库，用户可直接拉取 SequoiaDB 的 Docker 镜像创建一个分布式集群。
-
-该集群仅为测试使用，不可直接应用于生产环境。
+> **Note：**  
+> 该集群仅为测试使用，不可直接应用于生产环境。
