@@ -61,7 +61,7 @@
                "webName": $scope.autoLanguage( '安装路径' ),
                "type": "string",
                "required": true,
-               "value": '/opt/sequoiasql/postgresql/',
+               "value": '/opt/sequoiasql/mysql/',
                "valid": {
                   "min": 1
                }
