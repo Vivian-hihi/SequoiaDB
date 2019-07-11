@@ -57,12 +57,12 @@
 #define SDB_SNAP_SVCTASKS         14
 /** snapshot of sequences */
 #define SDB_SNAP_SEQUENCES        15
+/** reserved */
+#define SDB_SNAP_RESERVED1        16
+/** reserved */
+#define SDB_SNAP_RESERVED2        17
 /** snapshot of queries */
-#define SDB_SNAP_QUERIES          16
-/** reserved */
-#define SDB_SNAP_RESERVED1        17
-/** reserved */
-#define SDB_SNAP_RESERVED2        18
+#define SDB_SNAP_QUERIES          18
 
 /** list of all the contexts of all the sessions */
 #define SDB_LIST_CONTEXTS         0
@@ -92,12 +92,14 @@
 #define SDB_LIST_TRANSACTIONS_CURRENT 12
 /** list of service tasks */
 #define SDB_LIST_SVCTASKS         14
-/** list of sequences **/
+/** list of sequences */
 #define SDB_LIST_SEQUENCES        15
-/** list users **/
+/** list users */
 #define SDB_LIST_USERS            16
-/** list backups **/
+/** list backups */
 #define SDB_LIST_BACKUPS          17
+/** reserved */
+#define SDB_LIST_RESERVED1        18
 
 // reserved
 #define SDB_LIST_CL_IN_DOMAIN     129

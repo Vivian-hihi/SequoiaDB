@@ -1895,7 +1895,7 @@ namespace engine
             ba.append ( (*itSet) ) ;
          }
          ba.done() ;
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
 
          /// remove current edu info
          _contextList.erase( it ) ;
@@ -1975,7 +1975,7 @@ namespace engine
             sub.done() ;
          }
          ba.done() ;
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
 
          /// remove current
          _contextInfoList.erase( it ) ;
@@ -2341,7 +2341,7 @@ namespace engine
 
          ob.append ( FIELD_NAME_NAME, simple._name ) ;
 
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
 
          /// remove current
          _collectionList.erase( it ) ;
@@ -2492,7 +2492,7 @@ namespace engine
             sub.done() ;
          }
          ba.done() ;
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
 
          /// remove the current
          _collectionInfo.erase( it ) ;
@@ -2622,7 +2622,7 @@ namespace engine
 
          ob.append ( FIELD_NAME_NAME, simple._name ) ;
 
-         obj = BSONObj( ob.done() );
+         obj = ob.done() ;
 
          /// remove current
          _csList.erase( it ) ;
@@ -2730,7 +2730,7 @@ namespace engine
          ob.append ( FIELD_NAME_DIRTY_PAGE, (INT32)full._dirtyPage ) ;
          ob.append( FIELD_NAME_TYPE, (INT32)full._type ) ;
 
-         obj = BSONObj( ob.done() );
+         obj = ob.done() ;
 
          /// remove the current
          _csInfo.erase( it ) ;
@@ -2872,7 +2872,7 @@ namespace engine
          ob.append ( FIELD_NAME_MEMPOOL_SIZE,
                      (INT64)krcb->getMemBlockPool()->getTotalSize() ) ;
 
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
       }
       catch ( std::exception &e )
       {
@@ -2973,7 +2973,7 @@ namespace engine
          monAppendHostMemory( ob ) ;
          // disk
          monAppendDisk( ob ) ;
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
       }
       catch ( std::exception &e )
       {
@@ -3080,7 +3080,7 @@ namespace engine
 
          monAppendDiffLSN( ob ) ;
 
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
       }
       catch ( std::exception &e )
       {
@@ -3201,7 +3201,7 @@ namespace engine
          ob.append ( FIELD_NAME_COLLECTIONHWM, su._collectionHWM ) ;
          ob.append ( FIELD_NAME_SIZE, su._size ) ;
 
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
 
          /// remove the current
          _suInfo.erase( it ) ;
@@ -3395,7 +3395,7 @@ namespace engine
                         indexItem._scanExtLID ) ;
          }
 
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
 
          if ( _pos >= _indexInfo.size() )
          {
@@ -3562,7 +3562,7 @@ namespace engine
          }
          sub.done() ;
 
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
 
          if ( _pos >= _vecBlock.size() )
          {
@@ -3748,7 +3748,7 @@ namespace engine
             monAppendSystemInfo( ob, _addInfoMask ) ;
             ob.appendElements( _vecBackup[ _pos++ ] ) ;
 
-            obj = BSONObj( ob.done() ) ;
+            obj = ob.done() ;
          }
          catch ( std::exception &e )
          {
@@ -3897,7 +3897,7 @@ namespace engine
             builder.appendElements( _sysInfo ) ;
             builder.appendElements( _cachedPlanList[ _pos++ ] ) ;
 
-            obj = BSONObj( builder.done() ) ;
+            obj = builder.done() ;
          }
          catch ( std::exception &e )
          {
@@ -4037,7 +4037,7 @@ namespace engine
             goto error ;
          }
          ob.appendElements( tmpObj ) ;
-         obj = BSONObj( ob.done() ) ;
+         obj = ob.done() ;
 
          _hitEnd = TRUE ;
       }
@@ -4085,7 +4085,7 @@ namespace engine
             monDumpSvcTaskInfo( builder,
                                 cb->getMonAppCB()->getSvcTaskInfo(),
                                 TRUE ) ;
-            _info = BSONObj( builder.done() ) ;
+            _info = builder.done() ;
          }
       }
       else
@@ -4201,7 +4201,7 @@ namespace engine
             builder.append( FIELD_NAME_TASK_ID, (INT64)pInfo->getTaskID() ) ;
             builder.append( FIELD_NAME_TASK_NAME, pInfo->getTaskName() ) ;
          }
-         obj = BSONObj( builder.done() ) ;
+         obj = builder.done() ;
 
          _mapSvcTask.erase( it ) ;
          _hitEnd = _mapSvcTask.empty() ? TRUE : FALSE ;
@@ -4257,7 +4257,7 @@ namespace engine
       _builder.reset() ;
       BSONObjBuilder builder( _builder ) ;
 
-      obj = BSONObj( builder.done() ) ;
+      obj = builder.done() ;
 
       _hitEnd = TRUE ;
       return rc ;

@@ -2583,6 +2583,7 @@ static INT32 _sdbGetSnapshot ( sdbConnectionHandle cHandle,
       break ;
    case SDB_SNAP_QUERIES :
       p = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_QUERIES ;
+      break ;
    default :
       rc = SDB_INVALIDARG ;
       goto error ;
