@@ -444,6 +444,34 @@ namespace engine
          eduCount = _getEDUCount( EDU_ALL ) ;
       }
 
+      if ( normalStop )
+      {
+         while ( TRUE )
+         {
+            INT32 rc = _eduExitMutex.lock_w( PMD_FORCE_EDU_INTERVAL ) ;
+            if ( SDB_OK == rc )
+            {
+               // got w lock, all EDUs have been released
+               _eduExitMutex.release_w() ;
+               break ;
+            }
+            else if ( SDB_TIMEOUT != rc )
+            {
+               // not timeout error
+               normalStop = FALSE ;
+               break ;
+            }
+            // sleep and retry
+            ossSleepmillis( PMD_FORCE_EDU_INTERVAL ) ;
+            timeoutCounter += PMD_FORCE_EDU_INTERVAL ;
+            if ( timeoutCounter > ( timeout > 0 ? timeout : 0x7FFFFFFF ) )
+            {
+               normalStop = FALSE ;
+               break ;
+            }
+         }
+      }
+
       PD_TRACE_EXIT ( SDB__PMDEDUMGR_DESTROYALL ) ;
       return normalStop ;
    }
@@ -2017,6 +2045,9 @@ namespace engine
 
       pmdThreadPoolAssist _thdPoolAssit ;
       cb->_pMemPool = _thdPoolAssit.getRegisterMemPool() ;
+
+      // protect exit of current EDU
+      ossScopedRWLock scopeLock( &_eduExitMutex, SHARED ) ;
 
       try
       {

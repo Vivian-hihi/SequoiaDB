@@ -239,6 +239,9 @@ namespace engine
          ossAutoEvent               _monitorEvent ;
          ossAutoEvent               _deadCheckEvent ;
 
+         // protect exit of main process
+         ossRWMutex                 _eduExitMutex ;
+
       private:
          /*
             Entry Functions define
