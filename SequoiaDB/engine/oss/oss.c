@@ -36,7 +36,6 @@
 #include "ossTypes.h"
 #include <time.h>
 #include "oss.h"
-#include <string.h>
 
 #if defined (_LINUX)
 #include <unistd.h>
@@ -117,11 +116,6 @@ UINT32 ossGetLastError()
 #else
    return errno;
 #endif
-}
-
-CHAR* ossGetLastErrorMsg( INT32 error )
-{
-   return strerror( error ) ;
 }
 
 void ossSleep(UINT32 milliseconds)

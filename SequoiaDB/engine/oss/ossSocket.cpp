@@ -199,9 +199,8 @@ INT32 _ossSocket::initSocket ()
    if ( SOCKET_INVALIDSOCKET == _fd )
    {
       PD_LOG ( PDERROR, "Failed to initialize socket, errno: %d( %s )",
-               SOCKET_GETLASTERROR,
-               ossGetLastErrorMsg( SOCKET_GETLASTERROR ) ) ;
-      rc = ( SOCKET_EMFILE == SOCKET_GETLASTERROR ) ?
+               SOCKET_GETLASTERROR, strerror( SOCKET_GETLASTERROR ) ) ;
+      rc = (SOCKET_EMFILE == SOCKET_GETLASTERROR ) ?
            SDB_TOO_MANY_OPEN_FD : SDB_NETWORK ;
       goto error ;
    }
@@ -409,7 +408,7 @@ INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
             continue ;
          }
          PD_LOG ( PDERROR, "Failed to select from socket, errno: %d( %s )",
-                  rc, ossGetLastErrorMsg( rc ) ) ;
+                  rc, strerror( rc ) ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -474,8 +473,7 @@ INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
             continue ;
          }
          PD_LOG ( PDERROR, "Failed to send, errno: %d( %s )",
-                  SOCKET_GETLASTERROR,
-                  ossGetLastErrorMsg( SOCKET_GETLASTERROR ) ) ;
+                  SOCKET_GETLASTERROR, strerror( SOCKET_GETLASTERROR ) ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -901,7 +899,7 @@ INT32 _ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
       rc = ( SOCKET_EMFILE == sysError ) ? SDB_TOO_MANY_OPEN_FD : SDB_NETWORK ;
       PD_LOG ( ( rc == SDB_NETWORK ? PDERROR : PDINFO ) ,
                "Failed to accept socket, errno: %d( %s ), rc: %d",
-               sysError, ossGetLastErrorMsg( sysError ), rc ) ;
+               sysError, strerror( sysError ), rc ) ;
       goto error ;
    }
 
@@ -1253,8 +1251,7 @@ retry:
       {
          goto retry ;
       }
-      PD_LOG( PDERROR, "select(2), error: %d( %s )",
-              rc, strerror( rc ) ) ;
+      PD_LOG( PDERROR, "select(2), error: %d( %s )", rc, strerror( rc ) ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -1279,7 +1276,7 @@ retry:
    {
       errno = err ;
       PD_LOG( PDERROR, "failed to connect to remote, errno: %d( %s )",
-              errno, ossGetLastErrorMsg( errno ) ) ;
+              errno, strerror( errno ) ) ;
       rc = SDB_NET_CANNOT_CONNECT ;
       goto error ;
    }
