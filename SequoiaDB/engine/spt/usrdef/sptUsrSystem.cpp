@@ -409,7 +409,8 @@ namespace engine
          {
             err = "isReplace must be BOOLEAN" ;
             goto error ;
-        }
+        
+}
       }
 
       rc = _sptUsrSystemCommon::addAHostMap( hostname, ip, isReplace, err ) ;

@@ -343,7 +343,8 @@ namespace engine
    const CHAR* _omaStartNodeCmd::name()
    {
       return NAME_START_NODE ;
-  }
+  
+}
 
    INT32 _omaStartNodeCmd::init( const CHAR * pInfomation )
    {

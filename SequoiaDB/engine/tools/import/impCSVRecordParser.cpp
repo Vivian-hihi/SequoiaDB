@@ -2480,7 +2480,8 @@ namespace import
          else if (_endWith(str, len,
                            (const CHAR *)CSV_UTF8_FULL_WIDTH_SPACE,
                            CSV_UTF8_FULL_WIDTH_SPACE_LEN))
-         {            tail = tail - CSV_UTF8_FULL_WIDTH_SPACE_LEN;
+         {
+            tail = tail - CSV_UTF8_FULL_WIDTH_SPACE_LEN;
             len = len - CSV_UTF8_FULL_WIDTH_SPACE_LEN;
          }
          else

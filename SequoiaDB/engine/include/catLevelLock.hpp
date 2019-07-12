@@ -264,7 +264,8 @@ namespace engine
       public:
          _catGroupLock( const string &groupName ) ;
          virtual ~_catGroupLock() ;
-  } ;
+  
+} ;
    typedef _catGroupLock catGroupLock ;
 
    /*
