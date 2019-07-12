@@ -41,24 +41,24 @@ public class NodeWrapper {
         Sequoiadb sdb = null ;
         BasicBSONObject retObj = null ;
         try {
-            System.out.println( "csq hostname : " + node.getHostName());
-            System.out.println( "csq port : " + node.getPort());
-            Sequoiadb csqdb = new Sequoiadb(node.getHostName(),node.getPort(),"","");
-            System.out.println( "csq isValid : " + csqdb.isValid());
-            Sequoiadb coord = new Sequoiadb("192.168.28.107",11810,"","");
-            System.out.println( "csq before connect snapshot databse : ");
-            DBCursor csqcur = coord.getSnapshot(Sequoiadb.SDB_SNAP_DATABASE, new BasicBSONObject(), null, null);
-            while(csqcur.hasNext()){
-                System.out.println(csqcur.getNext().toString());
-            }
-            csqcur.close();
+//            System.out.println( "csq hostname : " + node.getHostName());
+//            System.out.println( "csq port : " + node.getPort());
+//            Sequoiadb csqdb = new Sequoiadb(node.getHostName(),node.getPort(),"","");
+//            System.out.println( "csq isValid : " + csqdb.isValid());
+//            Sequoiadb coord = new Sequoiadb("192.168.28.107",11810,"","");
+//            System.out.println( "csq before connect snapshot databse : ");
+//            DBCursor csqcur = coord.getSnapshot(Sequoiadb.SDB_SNAP_DATABASE, new BasicBSONObject(), null, null);
+//            while(csqcur.hasNext()){
+//                System.out.println(csqcur.getNext().toString());
+//            }
+//            csqcur.close();
             sdb = node.connect() ;
-            System.out.println( "csq after connect snapshot databse : ");
-            csqcur = coord.getSnapshot(Sequoiadb.SDB_SNAP_DATABASE, new BasicBSONObject(), null, null);
-            while(csqcur.hasNext()){
-                System.out.println(csqcur.getNext().toString());
-            }
-            csqcur.close();
+//            System.out.println( "csq after connect snapshot databse : ");
+//            csqcur = coord.getSnapshot(Sequoiadb.SDB_SNAP_DATABASE, new BasicBSONObject(), null, null);
+//            while(csqcur.hasNext()){
+//                System.out.println(csqcur.getNext().toString());
+//            }
+//            csqcur.close();
             BSONObject nullObj = null ;
             DBCursor cursor = sdb.getSnapshot( Sequoiadb.SDB_SNAP_DATABASE,
                     nullObj, nullObj, nullObj ) ;
