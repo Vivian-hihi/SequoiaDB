@@ -21,6 +21,7 @@ import java.io.InputStream ;
 import java.io.InputStreamReader ;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set ;
 import java.util.logging.Logger;
 
 
@@ -83,7 +84,7 @@ public class BrokenNetwork extends Fault {
     }
 
     public void continuouslyMakeOnPri() throws ReliabilityException {
-        List<String> allHosts = group.getAllHosts();
+        Set<String> allHosts = group.getAllHosts();
         System.out.println(allHosts);
         List<String> brokenHost = new ArrayList<String>();
         String host = group.getMaster().hostName();
@@ -186,7 +187,7 @@ public class BrokenNetwork extends Fault {
     public boolean checkRestoreResult() throws FaultException {
         int checkTime = 3;
         if (group != null) {
-            List<String> hosts = group.getAllHosts();
+            Set<String> hosts = group.getAllHosts();
             for (String host : hosts) {
                 for (int i = 0; i < checkTime; i++) {
                     if (ping(host)) {
