@@ -68,12 +68,22 @@
      ```
 
      > **Note:**  
-     > 当数据库可用物理内存不足 8GB 时不需使用 vm.swappiness = 0；上述 dirty 类参数只是建议值，具体系统设置时请按原则（控制系统的 flush 进程只采用脏页超时机制刷新脏页，而不采用脏页比例超支刷新脏页）进行设置。
+     > 当数据库可用物理内存不足 8GB 时不需使用 vm.swappiness = 0；上述 dirty 类参数只是建议值，具体系统设置时请按原则（控制系统的 flush 进程只采用脏页超时机制刷新脏页，而不采用脏页比例超支刷新脏页）进行设置。   
+      如果是ssd盘，建议 vm.dirty_expire_centisecs = 1000。
   3. 执行如下命令，使配置生效：
 
      ```lang-javascript
      $ /sbin/sysctl -p  
      ```
+  4. ssd盘建议调整预读大小和块层读写请求数：
+
+     ```lang-bash
+     $ vi /etc/profile
+     echo 32 >/sys/block/sdj/queue/read_ahead_kb
+     echo 256 >/sys/block/sdj/queue/nr_requests
+     ```
+     > **Note:**  
+     > 注意上面sdj是ssd盘，需要调整成实际环境中的值，并且每个用到的ssd盘都需要配置上述两项。
 
 - **关闭transparent_hugepage**
   1. 编辑/etc/rc.local，在第一行 “#!/bin/sh” 的下一行添加如下两行内容：
