@@ -20,7 +20,7 @@ lobmetapath默认与lobpath相同。所以在没有指定lobmetapath的情况下
 
   >   **Note:**
   >
-  >   注意新创建目录的权限问题。其中sdbadmin:sdbadmin_group为启动sequoiadb的用户名和用户组。
+  >   注意新创建目录的权限问题。其中sdbadmin:sdbadmin_group为sequoiadb安装的用户名和用户组。
 
 3. 进入该节点的配置文件所在位置，重新配置参数。将lobpath修改为/opt/sequoiadb/database/data/11820/lobpath。
 
