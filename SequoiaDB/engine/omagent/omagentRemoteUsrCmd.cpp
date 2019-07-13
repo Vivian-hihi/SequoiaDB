@@ -197,8 +197,7 @@ namespace engine
          if ( String != _valueObj.getField( "args" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "environment should be a string" )
-;
+            PD_LOG_MSG( PDERROR, "environment should be a string" ) ;
             goto error ;
          }
          ev = _valueObj.getStringField( "args" ) ;

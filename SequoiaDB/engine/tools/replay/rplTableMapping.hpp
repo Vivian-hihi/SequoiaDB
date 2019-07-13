@@ -96,8 +96,7 @@ namespace replay
       rplTableMapping() ;
       ~rplTableMapping() ;
 
-   public
-:
+   public:
       INT32 init( const BSONObj &conf ) ;
       rplFieldMapping *getFieldMapping( const CHAR *clFullName ) ;
       void clear() ;

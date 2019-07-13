@@ -1026,8 +1026,7 @@ namespace engine
          {
             detail = BSON( SPT_ERR << "confFile must be string" ) ;
             goto error ;
-        
-}
+         }
 
          argBuilder.append( "confFile", confFile ) ;
       }
@@ -1107,8 +1106,7 @@ namespace engine
          {
             detail = BSON( SPT_ERR << "isReplace must be BOOLEAN" ) ;
             goto error ;
-        
-}
+         }
          optionObjBuilder.appendBool( "isReplace", isReplace ) ;
       }
 
@@ -1120,8 +1118,7 @@ namespace engine
          {
             detail = BSON( SPT_ERR << "confFile must be string" ) ;
             goto error ;
-        
-}
+         }
          matchObjBuilder.append( "confFile", confFile ) ;
       }
 
@@ -1169,8 +1166,7 @@ namespace engine
          {
             detail = BSON( SPT_ERR << "confFile must be string" ) ;
             goto error ;
-        
-}
+         }
          argBuilder.append( "confFile", confFile ) ;
       }
 
