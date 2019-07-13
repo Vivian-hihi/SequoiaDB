@@ -16,9 +16,8 @@ function main( db )
       lobGenerateFile( lobFilePath ) ;
       var lobOid = cl.putLob( lobFilePath );
    
-      //test case:4468 
-      // http://jira:8080/browse/SEQUOIADBMAINSTREAM-4535,残留存lob文件，导致用例再次执行失败    
-      //getLobWithOidNotExist( cl );
+      //test case:4468         
+      getLobWithOidNotExist( cl );
       //test case:4475
       getLobWithIllegalForced( cl, lobOid );
       //test case:4476
