@@ -82,7 +82,7 @@ public class FullText15852 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(cl, FULLTEXT_IDX_NAME, INSERT_RECS_NUM));
     }
 
-    @Test(enabled = false) // jira-4459
+    @Test
     private void test() throws Exception {
         ThreadExecutor es = new ThreadExecutor(TIMEOUT);
         es.addWorker(new ThreadInsert());
@@ -343,6 +343,7 @@ public class FullText15852 extends SdbTestBase {
     private class ThreadAlterCL {
         private Sequoiadb db = null;
         private DBCollection cl2;
+        private boolean isAlterSuccess = true;
 
         private ThreadAlterCL() {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -355,7 +356,14 @@ public class FullText15852 extends SdbTestBase {
             options.put("ShardingType", "hash");
             options.put("ShardingKey", new BasicBSONObject("a", 1));
             System.out.println(new Date() + " begin " + this.getClass().getName().toString());
-            cl2.alterCollection(options);
+            try {
+                cl2.alterCollection(options);
+            } catch (BaseException e) {
+                if (e.getErrorCode() != -190 && e.getErrorCode() != -147) {
+                    throw e;
+                }
+                isAlterSuccess = false;
+            }
             System.out.println(new Date() + " end   " + this.getClass().getName().toString());
         }
 
@@ -363,8 +371,12 @@ public class FullText15852 extends SdbTestBase {
         private void checkResults() {
             DBCursor cursor = db.getSnapshot(8, new BasicBSONObject("Name", cl2.getFullName()), null, null);
             BSONObject clInfo = cursor.getCurrent();
-            String srdType = clInfo.get("ShardingType").toString();
-            Assert.assertEquals(srdType, "hash");
+            Object srdType = clInfo.get("ShardingType");
+            if ( isAlterSuccess ) {
+                Assert.assertEquals(srdType.toString(), "hash");
+            } else {
+                Assert.assertEquals(srdType, null);
+            }
         }
 
         @ExecuteOrder(step = 3, desc = "关闭连接")
