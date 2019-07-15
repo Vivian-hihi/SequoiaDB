@@ -28,7 +28,7 @@ function main()
    mainCl.createIndex( indexName, { b: 1, c: 1 }, {unique: 0, enforced: 0, NotNull: 0 } );
    println("---Check results."); 
    checkIndex( mainCl, indexName, false, false, false );
-   var insertR1s = [{ a: 1, b: 1 }, { a: 1, b: 1}];
+   var insertR1s = [{ a: 1 }, { a: 1}, { a: 1, b: 1, c: 1 }, { a: 1, b: 1, c: 1 }];
    mainCl.insert(insertR1s);
    checkRecords( mainCl, insertR1s );
    mainCl.dropIndex( indexName ); 
