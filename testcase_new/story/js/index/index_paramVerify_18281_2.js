@@ -23,38 +23,30 @@ function main()
    var fullName = COMMCSNAME +"."+ subClName;
    mainCl.attachCL( fullName, { LowBound: { a: 0 }, UpBound: { a: 1000 } } );
                            
-   /**************************** test1, unique:1, enforced:0, NotNull:0 ***************************/
-   println("\n---Test5, create index, unique:1, enforced:1,NotNull:1.");
-   mainCl.createIndex( indexName, {a:1}, {unique:1, enforced:0,NotNull:0} );
+   /**************************** test1, unique:0, enforced:0, NotNull:0 ***************************/
+   println("\n---Test1, create index, unique:0, enforced:0,NotNull:0.");
+   mainCl.createIndex( indexName, { b: 1, c: 1 }, {unique: 0, enforced: 0, NotNull: 0 } );
    println("---Check results."); 
-   checkIndex( mainCl, indexName, true, false, false );
-   var insertR1 = [{a:1, b:1}];
-   mainCl.insert(insertR1);
-   try
-   {
-      mainCl.insert(insertR1);
-   }
-   catch ( e ) 
-   {
-      if( e !== -38 )
-      {
-         throw e;
-      }  
-   }
-   checkRecords( mainCl, insertR1 );
+   checkIndex( mainCl, indexName, false, false, false );
+   var insertR1s = [{ a: 1, b: 1 }, { a: 1, b: 1}];
+   mainCl.insert(insertR1s);
+   checkRecords( mainCl, insertR1s );
    mainCl.dropIndex( indexName ); 
    mainCl.remove();
    
                            
-   /**************************** test2, unique:1, enforced:1,NotNull:1 ***************************/
-   println("\n---Test2, create index, unique:1, enforced:1,NotNull:1.");
-   mainCl.createIndex( indexName, {a:1}, {unique:1, enforced:1,NotNull:1} );
+   /**************************** test2, unique:1, enforced:1 ***************************/
+   println("\n---Test2, create index, unique:1, enforced:1, NotNull:1.");
+   mainCl.createIndex( indexName, { a: 1, b: 1, c: 1 }, { unique: 1, enforced: 1, NotNull: 1 } );
    println("---Check results."); 
    checkIndex( mainCl, indexName, true, true, true );
-   var insertR1 = [{a:1, b:1}];
+   
+   var insertR1 = [{a: 1, b: 1, c: 1 }];
+   mainCl.insert(insertR1);
    try
    {
       mainCl.insert(insertR1);
+      throw "insert error1!";
    }
    catch ( e ) 
    {
@@ -63,9 +55,23 @@ function main()
          throw e;
       }  
    }
+   
+   var insertR2 = [{ a: 1, c: 1}];  
+   try
+   {
+      mainCl.insert(insertR2);
+      throw "insert error!";
+   }catch(e)
+   {
+       if( e != -339 )
+       {
+          throw e;
+       }
+   }
    checkRecords( mainCl, insertR1 );
    mainCl.dropIndex( indexName ); 
    mainCl.remove();
+  
    commDropCL( db, COMMCSNAME, mainClName, false, false, "Failed to drop mainCl in the end-condition" );
 }
 
