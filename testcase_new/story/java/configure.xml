@@ -108,6 +108,8 @@
       <packages>
          <package name="com.sequoiadb.transaction.rcuserbs" />
          <package name="com.sequoiadb.transaction.rcwaitlock" />
+         <package name="com.sequoiadb.transaction.uniqueIndex" />
+         <package name="com.sequoiadb.transaction.metadata" />
       </packages>
    </test>
 
