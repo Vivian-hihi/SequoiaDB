@@ -88,6 +88,9 @@ public class Transaction18519 extends SdbTestBase {
             NodeWrapper node = group.getMaster();
             FaultMakeTask task = BrokenNetwork.getFaultMakeTask(node.hostName(), 180, 10);
             taskMgr.addTask(task);
+            if (node.hostName().equals(sdb.getHost())) {
+                throw new SkipException("BROKENNETWORK ERROR");
+            }
         }
 
         for (int i = 0; i < 200; i++) {
