@@ -49,7 +49,7 @@ yes
 T}
 .TE
 .PP
-The detail description of \[aq]groupObj\[aq] parameter is as follow:
+The detail description of \[aq]groups\[aq] parameter is as follow:
 .PP
 .TS
 tab(@);

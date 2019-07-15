@@ -20,7 +20,7 @@ Add a user group
 | ------- | -------- | ------------ | ---------------- | -------- |
 | groups     | JSON   | ---    |  user group information  | yes   |
 
-The detail description of 'groupObj' parameter is as follow:
+The detail description of 'groups' parameter is as follow:
 
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | ---------------- |
