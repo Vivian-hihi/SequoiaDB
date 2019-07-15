@@ -30,33 +30,6 @@ function createDummyCollection( db )
    }
 }
 
-function dropESIndexInfo()
-{
-   var cmd = new Cmd();
-   //get all ES indexes information
-   var str = "curl -XGET 'http://" + ESHOSTNAME + ":" + ESSVCNAME +"/_cat/indices'";
-   var info = "";
-   try
-   {
-      info = cmd.run(str);
-   }
-   catch( e )
-   {
-      println("get all indexes information fail : " + e);
-   }
-   
-   //drop all ES indexes information
-   str = "curl -XDELETE 'http://" + ESHOSTNAME + ":" + ESSVCNAME + "/_all'" ;
-   try
-   {
-      cmd.run(str); 
-   }
-   catch ( e ) 
-   {
-      println("drop all ES index information fail : " + e + " , index infos: " + info);
-   }
-}
-
 function main( db )
 {
    // 1. check nodes
@@ -87,9 +60,7 @@ function main( db )
 
    // 3. create dummy collection and split to all group
    createDummyCollection( db ) ;
-   
-   // 4. drop ES index information
-   // dropESIndexInfo();
+  
 }
 
 try
