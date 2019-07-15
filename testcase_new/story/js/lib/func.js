@@ -28,6 +28,7 @@ var COMMCLNAME = CHANGEDPREFIX + "_cl" ;
 var COMMDUMMYCLNAME = "test_dummy_cl" ;
 //public capped cs
 var COMMCAPPEDCSNAME = CHANGEDPREFIX + "_capped_cs";
+var COMMCAPPEDCLNAME = CHANGEDPREFIX + "_capped_cl";
 
 var DATA_GROUP_ID_BEGIN = 1000 ;
 var CATALOG_GROUPNAME = "SYSCatalogGroup" ;
