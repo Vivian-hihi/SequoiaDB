@@ -44,7 +44,6 @@
 #include "../bson/bson.h"
 #include "pd.hpp"
 #include <string>
-#include <vector>
 #include "ossMemPool.hpp"
 
 using namespace bson ;
@@ -279,12 +278,14 @@ namespace engine
       RTN_SSK_RANGE_POS compare ( rtnStartStopKey &key, INT32 dir ) const ;
    } ;
 
-   typedef vector< rtnStartStopKey > RTN_SSKEY_LIST ;
+   typedef ossPoolVector< rtnStartStopKey >  RTN_SSKEY_LIST ;
 
    // if we want to find the max bound of start keys, we want to return the one
    // list of start/stop key that doesn't intersect with each other on one field
    class rtnPredicate : public SDBObject
    {
+      typedef ossPoolVector<BSONObj>      VEC_OBJ_DATA ;
+
    private:
       // _equalFlag == 1 means is equal operation
       INT8 _equalFlag ;
@@ -305,7 +306,7 @@ namespace engine
       BOOLEAN _allRange ;
       double _selectivity ;
 
-      vector<BSONObj> _objData ;
+      VEC_OBJ_DATA _objData ;
 
       // this is used when creating new bsonobject in the class
       BSONObj addObj ( const BSONObj &o )
@@ -481,10 +482,10 @@ namespace engine
       INT32 _initMinRange ( BOOLEAN startIncluded ) ;
    } ;
 
-   typedef vector< rtnPredicate >                     RTN_PREDICATE_LIST ;
-   typedef vector< RTN_PREDICATE_LIST >               RTN_PARAM_PREDICATE_LIST ;
-   typedef ossPoolMap< string, rtnPredicate >         RTN_PREDICATE_MAP ;
-   typedef ossPoolMap< string, RTN_PREDICATE_LIST >   RTN_PARAM_PREDICATE_MAP ;
+   typedef ossPoolVector< rtnPredicate >                     RTN_PREDICATE_LIST ;
+   typedef ossPoolVector< RTN_PREDICATE_LIST >               RTN_PARAM_PREDICATE_LIST ;
+   typedef ossPoolMap< ossPoolString, rtnPredicate >         RTN_PREDICATE_MAP ;
+   typedef ossPoolMap< ossPoolString, RTN_PREDICATE_LIST >   RTN_PARAM_PREDICATE_MAP ;
 
    // This set is created when receiving a query. It contains user search
    // condition predicates from user input for all fields
@@ -619,23 +620,26 @@ namespace engine
       LESS,
       GREATER
    } ;
+
+   typedef ossPoolVector<const BSONElement *>      VEC_ELE_CMP ;
+
    // this class is used to iterate an ordered predicate list
    class _rtnPredicateListIterator : public SDBObject
    {
    private :
       const rtnPredicateList &_predList ;
-      vector <const BSONElement *>_cmp ;
-      vector <BOOLEAN> _inc ;
-      vector <INT32>   _currentKey ;
-      vector <INT32>   _prevKey ;
+      VEC_ELE_CMP       _cmp ;
+      VEC_BOOLEAN       _inc ;
+      VEC_INT32         _currentKey ;
+      VEC_INT32         _prevKey ;
       // this variable is passed to ixm. When this variable is TRUE, it means we
       // are going to jump over the current key
       BOOLEAN _after ;
    public :
       _rtnPredicateListIterator ( const rtnPredicateList &predList ) ;
       INT32 advance ( const BSONObj &curr ) ;
-      const vector<const BSONElement *> &cmp() const { return _cmp ; }
-      const vector<BOOLEAN> &inc() const { return _inc ; }
+      const VEC_ELE_CMP &cmp() const { return _cmp ; }
+      const VEC_BOOLEAN &inc() const { return _inc ; }
       void reset() ;
       BOOLEAN after() { return _after ; }
       INT32 syncState( const _rtnPredicateListIterator *source ) ;

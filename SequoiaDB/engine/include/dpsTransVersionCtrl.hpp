@@ -49,6 +49,7 @@
 #include "clsCatalogAgent.hpp"
 #include "../bson/ordering.h"
 #include "ossMemPool.hpp"
+#include "rtnPredicate.hpp"
 #include <boost/shared_ptr.hpp>
 
 using namespace bson ;
@@ -349,16 +350,16 @@ namespace engine
       // move the iterator to the proper key location
       INT32 keyLocate( INDEX_TREE_CPOS &pos, const BSONObj &prevKey,
                        INT32 keepFieldsNum, BOOLEAN skipToNext,
-                       const vector< const BSONElement* > &matchEle,
-                       const vector< BOOLEAN > &matchInclusive,
+                       const VEC_ELE_CMP &matchEle,
+                       const VEC_BOOLEAN &matchInclusive,
                        INT32 direction ) const ;
 
       // Advance the pushed down verb and locate the key
       INT32 keyAdvance( INDEX_TREE_CPOS &pos,
                         const BSONObj &prevKey,
                         INT32 keepFieldsNum, BOOLEAN skipToNext,
-                        const vector < const BSONElement *> &matchEle,
-                        const vector < BOOLEAN > &matchInclusive,
+                        const VEC_ELE_CMP &matchEle,
+                        const VEC_BOOLEAN &matchInclusive,
                         INT32 direction ) const ;
 
       void  setDeleted() { _isValid = FALSE ; }
@@ -425,8 +426,8 @@ namespace engine
       BSONObj     _buildPredObj( const BSONObj &prevKey,
                                  INT32 keepFieldsNum,
                                  BOOLEAN skipToNext,
-                                 const vector< const BSONElement* > &matchEle,
-                                 const vector< BOOLEAN > &matchInclusive,
+                                 const VEC_ELE_CMP &matchEle,
+                                 const VEC_BOOLEAN &matchInclusive,
                                  INT32 direction ) const ;
 
    // private attributes:

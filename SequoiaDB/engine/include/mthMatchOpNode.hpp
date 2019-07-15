@@ -42,7 +42,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
-#include <set>
+#include "ossMemPool.hpp"
 #include <boost/shared_ptr.hpp>
 #include "../bson/bson.hpp"
 #include "mthMatchNode.hpp"
@@ -961,11 +961,11 @@ namespace engine
          BOOLEAN _isMatch( const BSONElement &ele ) ;
 
       protected:
-         typedef set<BSONElement, element_cmp_lt> VALUE_SET ;
-         set<BSONElement, element_cmp_lt> _valueSet ;
+         typedef ossPoolSet<BSONElement, element_cmp_lt>    VALUE_SET ;
+         VALUE_SET      _valueSet ;
 
          typedef vector<_mthMatchOpNodeRegex *> REGEX_VECTOR ;
-         REGEX_VECTOR _regexVector ;
+         REGEX_VECTOR   _regexVector ;
    } ;
 
    class _mthMatchOpNodeNIN : public _mthMatchOpNodeIN

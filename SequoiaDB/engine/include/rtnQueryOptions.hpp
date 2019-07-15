@@ -45,6 +45,7 @@
 #include "sdbInterface.hpp"
 #include "../bson/bson.hpp"
 #include "msg.hpp"
+#include "ossMemPool.hpp"
 #include <string>
 
 using namespace bson ;
@@ -341,9 +342,9 @@ namespace engine
          BSONObj        _orderBy ;
          BSONObj        _hint ;
          const CHAR *   _fullName ;
-         CHAR *         _fullNameBuf ;
+         ossPoolString  _fullNameBuf ;
          const CHAR *   _mainCLName ;
-         CHAR *         _mainCLNameBuf ;
+         ossPoolString  _mainCLNameBuf ;
    } ;
 
    typedef class _rtnQueryOptions rtnQueryOptions ;

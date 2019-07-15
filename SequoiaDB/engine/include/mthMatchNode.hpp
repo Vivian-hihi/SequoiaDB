@@ -339,7 +339,7 @@ namespace engine
    void mthContextClearRecordInfoSafe( _mthMatchTreeContext *context ) ;
 
    class _mthMatchNode ;
-   typedef vector< _mthMatchNode* > MATCHNODE_VECTOR ;
+   typedef ossPoolVector< _mthMatchNode* >   MATCHNODE_VECTOR ;
 
    class _mthMatchNodeIterator : public SDBObject
    {

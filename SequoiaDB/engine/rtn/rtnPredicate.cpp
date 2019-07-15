@@ -1101,7 +1101,7 @@ namespace engine
                                         const rtnPredicate &other )
    {
       _startStopKeys = newkeys ;
-      for ( vector<BSONObj>::const_iterator i = other._objData.begin() ;
+      for ( VEC_OBJ_DATA::const_iterator i = other._objData.begin() ;
             i != other._objData.end(); i++ )
       {
          _objData.push_back(*i) ;
@@ -2042,7 +2042,7 @@ namespace engine
       RTN_PREDICATE_MAP::const_iterator it = _predicates.begin() ;
       while ( it != _predicates.end() )
       {
-         buf << it->first << ":" << it->second.toString() << " " ;
+         buf << it->first.c_str() << ":" << it->second.toString() << " " ;
          ++it ;
       }
       buf << " ]" ;
@@ -2055,7 +2055,7 @@ namespace engine
       RTN_PREDICATE_MAP::const_iterator it = _predicates.begin() ;
       for ( ; it != _predicates.end(); ++it )
       {
-         BSONArrayBuilder sub( builder.subarrayStart( it->first ) ) ;
+         BSONArrayBuilder sub( builder.subarrayStart( it->first.c_str() ) ) ;
          const RTN_SSKEY_LIST &range = it->second._startStopKeys ;
          RTN_SSKEY_LIST::const_iterator ssItr = range.begin() ;
          for ( ; ssItr != range.end(); ++ssItr )

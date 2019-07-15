@@ -120,9 +120,7 @@ namespace engine
    _rtnQueryOptions::_rtnQueryOptions ()
    : _rtnReturnOptions(),
      _fullName( NULL ),
-     _fullNameBuf( NULL ),
-     _mainCLName( NULL ),
-     _mainCLNameBuf( NULL )
+     _mainCLName( NULL )
    {
    }
 
@@ -139,9 +137,7 @@ namespace engine
      _orderBy( orderBy ),
      _hint( hint ),
      _fullName( fullName ),
-     _fullNameBuf( NULL ),
-     _mainCLName( NULL ),
-     _mainCLNameBuf( NULL )
+     _mainCLName( NULL )
    {
    }
 
@@ -158,9 +154,7 @@ namespace engine
      _orderBy( orderBy ),
      _hint( hint ),
      _fullName( fullName ),
-     _fullNameBuf( NULL ),
-     _mainCLName( NULL ),
-     _mainCLNameBuf( NULL )
+     _mainCLName( NULL )
    {
    }
 
@@ -170,63 +164,43 @@ namespace engine
      _orderBy( o._orderBy ),
      _hint( o._hint ),
      _fullName( o._fullName ),
-     _fullNameBuf( NULL ),
-     _mainCLName( o._mainCLName ),
-     _mainCLNameBuf( NULL )
+     _mainCLName( o._mainCLName )
    {
    }
 
    _rtnQueryOptions::~_rtnQueryOptions ()
    {
-      SAFE_OSS_FREE( _fullNameBuf ) ;
-      SAFE_OSS_FREE( _mainCLNameBuf ) ;
       _fullName = NULL ;
       _mainCLName = NULL ;
    }
 
    INT32 _rtnQueryOptions::getOwned ()
    {
-      INT32 rc = SDB_OK ;
-
       _rtnReturnOptions::getOwned() ;
 
-      SAFE_OSS_FREE( _fullNameBuf ) ;
+      _fullNameBuf.clear() ;
       if ( NULL != _fullName )
       {
-         _fullNameBuf = ossStrdup( _fullName ) ;
-         if ( NULL == _fullNameBuf )
-         {
-            rc = SDB_OOM ;
-            goto error ;
-         }
+         _fullNameBuf = _fullName ;
       }
-      _fullName = _fullNameBuf ;
+      _fullName = _fullNameBuf.c_str() ;
 
-      SAFE_OSS_FREE( _mainCLNameBuf ) ;
+      _mainCLNameBuf.clear() ;
       if ( NULL != _mainCLName )
       {
-         _mainCLNameBuf = ossStrdup( _mainCLName ) ;
-         if ( NULL == _mainCLNameBuf )
-         {
-            rc = SDB_OOM ;
-            goto error ;
-         }
+         _mainCLNameBuf = _mainCLName ;
       }
-      _mainCLName = _mainCLNameBuf ;
+      _mainCLName = _mainCLNameBuf.c_str() ;
 
       _query = _query.getOwned() ;
       _orderBy = _orderBy.getOwned() ;
       _hint = _hint.getOwned() ;
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    void _rtnQueryOptions::setCLFullName ( const CHAR *clFullName )
    {
-      SAFE_OSS_FREE( _fullNameBuf ) ;
       if ( NULL != clFullName && '\0' != clFullName[0] )
       {
          _fullName = clFullName ;
@@ -239,7 +213,6 @@ namespace engine
 
    void _rtnQueryOptions::setMainCLName ( const CHAR *mainCLName )
    {
-      SAFE_OSS_FREE( _mainCLNameBuf ) ;
       if ( NULL != mainCLName && '\0' != mainCLName[0] )
       {
          _mainCLName = mainCLName ;
@@ -269,9 +242,9 @@ namespace engine
       _orderBy = o._orderBy ;
       _hint = o._hint ;
       _fullName = o._fullName ;
-      SAFE_OSS_FREE( _fullNameBuf ) ;
+      _fullNameBuf.clear() ;
       _mainCLName = o._mainCLName ;
-      SAFE_OSS_FREE( _mainCLNameBuf ) ;
+      _mainCLNameBuf.clear() ;
 
       return *this ;
    }
@@ -309,11 +282,8 @@ namespace engine
                             &pQuery, &pSelector, &pOrderBy, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Extrace query msg failed, rc: %d", rc ) ;
 
-      if ( NULL != _fullNameBuf )
-      {
-         SDB_OSS_FREE( _fullNameBuf ) ;
-         _fullNameBuf = NULL ;
-      }
+      _fullNameBuf.clear() ;
+      _mainCLNameBuf.clear() ;
 
       try
       {

@@ -595,8 +595,8 @@ namespace engine
    BSONObj preIdxTree::_buildPredObj( const BSONObj &prevKey,
                                       INT32 keepFieldsNum,
                                       BOOLEAN skipToNext,
-                                      const vector< const BSONElement * > &matchEle,
-                                      const vector < BOOLEAN > &matchInclusive,
+                                      const VEC_ELE_CMP &matchEle,
+                                      const VEC_BOOLEAN &matchInclusive,
                                       INT32 direction ) const
    {
       UINT32 index = 0 ;
@@ -650,8 +650,8 @@ namespace engine
                                 const BSONObj &prevKey,
                                 INT32 keepFieldsNum,
                                 BOOLEAN skipToNext,
-                                const vector< const BSONElement* > &matchEle,
-                                const vector< BOOLEAN > &matchInclusive,
+                                const VEC_ELE_CMP &matchEle,
+                                const VEC_BOOLEAN &matchInclusive,
                                 INT32 direction ) const
    {
       PD_TRACE_ENTRY( SDB_PREIDXTREE_KEYLOCATE ) ;
@@ -759,8 +759,8 @@ namespace engine
    INT32 preIdxTree::keyAdvance( INDEX_TREE_CPOS &pos,
                                  const BSONObj &prevKey,
                                  INT32 keepFieldsNum, BOOLEAN skipToNext,
-                                 const vector < const BSONElement *> &matchEle,
-                                 const vector < BOOLEAN > &matchInclusive,
+                                 const VEC_ELE_CMP &matchEle,
+                                 const VEC_BOOLEAN &matchInclusive,
                                  INT32 direction ) const
    {
       return keyLocate( pos, prevKey, keepFieldsNum, skipToNext,

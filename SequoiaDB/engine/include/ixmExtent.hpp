@@ -49,6 +49,7 @@
 #include "pmdEDU.hpp"
 #include "dmsStorageBase.hpp"
 #include "dmsPageMap.hpp"
+#include "rtnPredicate.hpp"
 
 using namespace bson ;
 
@@ -214,8 +215,8 @@ namespace engine
 
       INT32 _keyFind ( UINT16 low, UINT16 high, const BSONObj &prevKey,
                        INT32 keepFieldsNum, BOOLEAN skipToNext,
-                       const vector < const BSONElement *> &matchEle,
-                       const vector < BOOLEAN > &matchInclusive,
+                       const VEC_ELE_CMP &matchEle,
+                       const VEC_BOOLEAN &matchInclusive,
                        const Ordering &o,
                        INT32 direction,
                        ixmRecordID &bestIxmRID,
@@ -238,8 +239,8 @@ namespace engine
       // key compare outside of the class or without an instance
       static INT32 _keyCmp ( const BSONObj &currentKey, const BSONObj &prevKey,
                              INT32 keepFieldsNum, BOOLEAN skipToNext,
-                             const vector < const BSONElement *> &matchEle,
-                             const vector < BOOLEAN > &matchInclusive,
+                             const VEC_ELE_CMP &matchEle,
+                             const VEC_BOOLEAN &matchInclusive,
                              const Ordering &o, INT32 direction ) ;
 
    public:
@@ -437,14 +438,14 @@ namespace engine
       //   B.3) in other condition,do binary search using keyFind and scan child
       INT32 keyLocate ( ixmRecordID &rid, const BSONObj &prevKey,
                         INT32 keepFieldsNum, BOOLEAN skipToNext,
-                        const vector < const BSONElement *> &matchEle,
-                        const vector < BOOLEAN > &matchInclusive,
+                        const VEC_ELE_CMP &matchEle,
+                        const VEC_BOOLEAN &matchInclusive,
                         const Ordering &o, INT32 direction,
                         _pmdEDUCB *cb ) const ;
       INT32 keyAdvance ( ixmRecordID &rid, const BSONObj &prevKey,
                          INT32 keepFieldsNum, BOOLEAN skipToNext,
-                         const vector < const BSONElement *> &matchEle,
-                         const vector < BOOLEAN > &matchInclusive,
+                         const VEC_ELE_CMP &matchEle,
+                         const VEC_BOOLEAN &matchInclusive,
                          const Ordering &o, INT32 direction,
                          _pmdEDUCB *cb ) const ;
       INT32 dumpIndexExtentIntoLog() const ;

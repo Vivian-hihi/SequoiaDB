@@ -148,6 +148,9 @@ class ossPoolVector : public std::vector< T, typename ossPoolAllocator<char>::Ty
 
 typedef ossPoolVector<UINT64>             VEC_UINT64 ;
 typedef ossPoolVector<UINT32>             VEC_UINT32 ;
+typedef ossPoolVector<INT32>              VEC_INT32 ;
+typedef ossPoolVector<INT64>              VEC_INT64 ;
+typedef ossPoolVector<BOOLEAN>            VEC_BOOLEAN ;
 
 #endif
 

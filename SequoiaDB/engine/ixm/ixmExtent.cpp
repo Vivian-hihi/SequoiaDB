@@ -2224,15 +2224,15 @@ namespace engine
    INT32 _ixmExtent::_keyCmp ( const BSONObj &currentKey,
                                const BSONObj &prevKey,
                                INT32 keepFieldsNum, BOOLEAN skipToNext,
-                               const vector < const BSONElement *> &matchEle,
-                               const vector < BOOLEAN > &matchInclusive,
+                               const VEC_ELE_CMP &matchEle,
+                               const VEC_BOOLEAN &matchInclusive,
                                const Ordering &o, INT32 direction )
    {
       PD_TRACE_ENTRY ( SDB_IXMEXT__KEYCMP );
       BSONObjIterator ll ( currentKey ) ;
       BSONObjIterator rr ( prevKey ) ;
-      vector< const BSONElement *>::const_iterator eleItr = matchEle.begin() ;
-      vector< BOOLEAN > ::const_iterator incItr = matchInclusive.begin() ;
+      VEC_ELE_CMP::const_iterator eleItr = matchEle.begin() ;
+      VEC_BOOLEAN ::const_iterator incItr = matchInclusive.begin() ;
       UINT32 mask = 1 ;
       INT32 retCode = 0 ;
       // match keepFieldsNum fields
@@ -2302,8 +2302,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT__KEYFIND, "_ixmExtent::_keyFind" )
    INT32 _ixmExtent::_keyFind ( UINT16 l, UINT16 h, const BSONObj &prevKey,
                                 INT32 keepFieldsNum, BOOLEAN skipToNext,
-                                const vector < const BSONElement *> &matchEle,
-                                const vector < BOOLEAN > &matchInclusive,
+                                const VEC_ELE_CMP &matchEle,
+                                const VEC_BOOLEAN &matchInclusive,
                                 const Ordering &o, INT32 direction,
                                 ixmRecordID &bestIxmRID,
                                 dmsExtentID &resultExtent, _pmdEDUCB *cb ) const
@@ -2404,8 +2404,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_KEYLOCATE, "_ixmExtent::keyLocate" )
    INT32 _ixmExtent::keyLocate ( ixmRecordID &rid, const BSONObj &prevKey,
                                  INT32 keepFieldsNum, BOOLEAN skipToNext,
-                                 const vector < const BSONElement *> &matchEle,
-                                 const vector < BOOLEAN > &matchInclusive,
+                                 const VEC_ELE_CMP &matchEle,
+                                 const VEC_BOOLEAN &matchInclusive,
                                  const Ordering &o, INT32 direction,
                                  _pmdEDUCB *cb ) const
    {
@@ -2572,8 +2572,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_KEYADVANCE, "_ixmExtent::keyAdvance" )
    INT32 _ixmExtent::keyAdvance ( ixmRecordID &rid, const BSONObj &prevKey,
                                  INT32 keepFieldsNum, BOOLEAN skipToNext,
-                                 const vector < const BSONElement *> &matchEle,
-                                 const vector < BOOLEAN > &matchInclusive,
+                                 const VEC_ELE_CMP &matchEle,
+                                 const VEC_BOOLEAN &matchInclusive,
                                  const Ordering &o, INT32 direction,
                                  _pmdEDUCB *cb ) const
    {
