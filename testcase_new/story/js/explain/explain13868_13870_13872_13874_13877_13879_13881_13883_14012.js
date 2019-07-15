@@ -69,6 +69,10 @@ function main()
    //使用SubCollections展示访问计划
    var explainCursor = dbcl.find({a:{$in:[1,10000]}}).explain({SubCollections: COMMCSNAME + "." + subCLName1});
    while(explainCursor.next()){};
+   
+   commDropCL( db, COMMCSNAME, mainCLName, true);
+   commDropCL( db, COMMCSNAME, subCLName1, true);
+   commDropCL( db, COMMCSNAME, subCLName2, true);
   
 }
 main();
