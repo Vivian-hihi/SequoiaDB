@@ -182,15 +182,23 @@ namespace engine
       if ( NULL != _fullName )
       {
          _fullNameBuf = _fullName ;
+         _fullName = _fullNameBuf.c_str() ;
       }
-      _fullName = _fullNameBuf.c_str() ;
+      else
+      {
+         _fullName = NULL ;
+      }
 
       _mainCLNameBuf.clear() ;
       if ( NULL != _mainCLName )
       {
          _mainCLNameBuf = _mainCLName ;
+         _mainCLName = _mainCLNameBuf.c_str() ;
       }
-      _mainCLName = _mainCLNameBuf.c_str() ;
+      else
+      {
+         _mainCLName = NULL ;
+      }
 
       _query = _query.getOwned() ;
       _orderBy = _orderBy.getOwned() ;
