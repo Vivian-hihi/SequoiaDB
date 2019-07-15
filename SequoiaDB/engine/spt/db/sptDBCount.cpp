@@ -170,13 +170,13 @@ namespace engine
    }
 
    INT32 _sptDBCount::help( const _sptArguments &arg,
-                                  _sptReturnVal &rval,
-                                  BSONObj &detail )
+                            _sptReturnVal &rval,
+                            BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class CLCount : " << endl ;
-      ss << "--Static methods for class CLCount : " << endl ;
-      ss << "--Instance methods for class CLCount : " << endl ;
+      ss << "   --Constructor methods for class CLCount : " << endl ;
+      ss << "   --Static methods for class CLCount : " << endl ;
+      ss << "   --Instance methods for class CLCount : " << endl ;
       ss << "   hint( <hint> )   "
          << "Traverse the result set by the specified index" << endl ;
       ss << "   valueOf()        "

@@ -177,13 +177,13 @@ namespace engine
                             BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class BSONObj : " << endl ;
-      ss << "--Static methods for class BSONObj : " << endl ;
-      ss << "--Instance methods for class BSONObj : " << endl ;
+      ss << "   --Constructor methods for class BSONObj : " << endl ;
+      ss << "   --Static methods for class BSONObj : " << endl ;
+      ss << "   --Instance methods for class BSONObj : " << endl ;
       ss << "   toJson()     "
          << "Convert BSONObj to JSON format" << endl ;
       ss << "   toObj()      "
-         << "Convert BSONObj to a obj" << endl ;
+         << "Convert BSONObj to a JSON obj" << endl ;
       ss << "   toString()   "
          << "Convert BSONObj to string format" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;

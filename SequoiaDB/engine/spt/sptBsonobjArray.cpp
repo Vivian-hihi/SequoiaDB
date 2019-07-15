@@ -107,22 +107,22 @@ namespace engine
                                  BSONObj &detail )
    {
       stringstream ss ;
-      ss << "--Constructor methods for class BSONArray : " << endl ;
-      ss << "--Static methods for class BSONArray : " << endl ;
-      ss << "--Instance methods for class BSONArray : " << endl ;
-      ss << "   BSONArray(obj).size()       "
+      ss << "   --Constructor methods for class BSONArray : " << endl ;
+      ss << "   --Static methods for class BSONArray : " << endl ;
+      ss << "   --Instance methods for class BSONArray : " << endl ;
+      ss << "   BSONArray().size()       "
          << "Get the size of BSONArray" << endl ;
-      ss << "   BSONArray(obj).more()       "
+      ss << "   BSONArray().more()       "
          << "Determine if there is another element" << endl ;
-      ss << "   BSONArray(obj).next()       "
+      ss << "   BSONArray().next()       "
          << "Get the next element" << endl ;
-      ss << "   BSONArray(obj).pos()        "
+      ss << "   BSONArray().pos()        "
          << "Get the current element" << endl ;
-      ss << "   BSONArray(obj).toArray()    "
+      ss << "   BSONArray().toArray()    "
          << "Convert BSONArray to array format" << endl ;
-      ss << "   BSONArray(obj).toString()   "
+      ss << "   BSONArray().toString()   "
          << "Convert BSONArray to string" << endl ;
-      ss << "   BSONArray(obj).index()      "
+      ss << "   BSONArray().index()      "
          << "Get the current subscript" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
