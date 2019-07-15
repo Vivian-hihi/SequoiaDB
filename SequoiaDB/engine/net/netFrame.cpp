@@ -1719,7 +1719,6 @@ namespace engine
       }
 
       eh->setOpt() ;
-      eh->asyncRead() ;
 
       /// add to map
       _mtx.get() ;
@@ -1728,6 +1727,8 @@ namespace engine
 
       // callback: handleConnect
       _handler->handleConnect( eh->handle(), eh->id(), FALSE ) ;
+
+      eh->asyncRead() ;
       _asyncAccept() ;
 
    done:
