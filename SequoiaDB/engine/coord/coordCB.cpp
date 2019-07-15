@@ -392,14 +392,14 @@ namespace engine
          rc = _pAgent->syncSend ( handle, (void *)pReply ) ;
       }
 
-      PD_RC_CHECK ( rc, PDDEBUG, "Fail to send reply message[opCode:(%d)%d, "
-              "tid: %d, reqID: %lld, nodeID: %u.%u.%u], rc: %d",
-              IS_REPLY_TYPE( pReply->header.opCode ),
-              GET_REQUEST_TYPE( pReply->header.opCode ),
-              pReply->header.TID, pReply->header.requestID,
-              pReply->header.routeID.columns.groupID,
-              pReply->header.routeID.columns.nodeID,
-              pReply->header.routeID.columns.serviceID, rc ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Fail to send reply message[opCode:(%d)%d, "
+                    "tid: %d, reqID: %lld, nodeID: %u.%u.%u], rc: %d",
+                    IS_REPLY_TYPE( pReply->header.opCode ),
+                    GET_REQUEST_TYPE( pReply->header.opCode ),
+                    pReply->header.TID, pReply->header.requestID,
+                    pReply->header.routeID.columns.groupID,
+                    pReply->header.routeID.columns.nodeID,
+                    pReply->header.routeID.columns.serviceID, rc ) ;
       PD_LOG( PDDEBUG, "Succeed in sending reply message[opCode:(%d)%d, "
               "tid: %d, reqID: %lld, nodeID: %u.%u.%u]",
               IS_REPLY_TYPE( pReply->header.opCode ),
