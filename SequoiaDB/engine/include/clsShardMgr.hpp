@@ -251,6 +251,10 @@ namespace engine
          INT64 netIn() ;
          INT64 netOut() ;
 
+         INT32 replyToRemoteEndpoint ( NET_HANDLE handle,
+                                       MsgHeader * request,
+                                       const BSONObj & replyObject ) ;
+
       protected:
 
          INT32 _sendCataQueryReq( INT32 queryType, const BSONObj &query,
@@ -300,12 +304,6 @@ namespace engine
          INT32 _onAuthReqMsg( NET_HANDLE handle, MsgHeader * msg ) ;
          INT32 _onTextIdxInfoReqMsg( NET_HANDLE handle, MsgHeader * msg ) ;
          INT32 _onTransCheckReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
-         INT32 _buildTextIdxObj( const monCSSimple *csInfo,
-                                 const monCLSimple *clInfo,
-                                 const monIndex *idxInfo,
-                                 BSONObjBuilder &builder ) ;
-         INT32 _dumpTextIdxInfo( INT64 localVersion, BSONObj &obj,
-                                 BOOLEAN onlyVersion = FALSE ) ;
          INT32 _updateRemoteEndpointInfo( NET_HANDLE handle,
                                           const BSONObj &regInfo ) ;
          INT32 _genAuthReplyInfo( BSONObj &replyInfo ) ;

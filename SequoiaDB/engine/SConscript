@@ -448,7 +448,8 @@ clsFiles = [
       "cls/clsRegAssit.cpp",
       "cls/clsUniqueIDCheckJob.cpp",
       "cls/clsAutoIncItem.cpp",
-      "cls/clsGTSAgent.cpp"
+      "cls/clsGTSAgent.cpp",
+      "cls/clsAdapterJob.cpp"
       ]
 
 dpsFiles = [

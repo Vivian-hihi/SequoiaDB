@@ -43,11 +43,10 @@
 #include "rtnQueryOptions.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "clsAdapterJob.hpp"
 #include "rtnExtDataHandler.hpp"
 
 using namespace bson ;
-
-#define CLS_NAME_CAPPED_COLLECTION           "CappedCL"
 
 namespace engine
 {
@@ -2923,45 +2922,38 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONTEXTIDXINFOREQMSG, "_clsShardMgr::_onTextIdxInfoReqMsg" )
-   INT32 _clsShardMgr::_onTextIdxInfoReqMsg( NET_HANDLE handle,
-                                             MsgHeader * msg )
+   INT32 _clsShardMgr::_onTextIdxInfoReqMsg ( NET_HANDLE handle,
+                                              MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY( SDB__CLSSHDMGR__ONTEXTIDXINFOREQMSG ) ;
-      CHAR *body = NULL ;
+
       INT64 peerVersion = -1 ;
-      BSONObj textIdxInfo ;
-      MsgOpReply *reply = NULL ;
-      INT32 replySize = 0 ;
       INT64 localVersion = -1 ;
 
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      SDB_RTNCB * rtnCB = sdbGetRTNCB() ;
 
-      body = (CHAR *)msg + sizeof( MsgHeader ) ;
+      BSONObj requestObject ;
+
       try
       {
-         BSONObj bodyObj( body ) ;
-         BSONElement verEle = bodyObj.getField( FIELD_NAME_VERSION ) ;
-         if ( verEle.eoo() )
-         {
-            PD_LOG( PDERROR, "Text index version dose not exist" ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         else if ( NumberLong != verEle.type() )
-         {
-            PD_LOG( PDERROR, "Text index version type is wrong" ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         else
-         {
-            peerVersion = verEle.numberLong() ;
-         }
+         CHAR * requestBody = (CHAR *)msg + sizeof( MsgHeader ) ;
+         requestObject = BSONObj( requestBody ) ;
+
+         BSONElement verEle = requestObject.getField( FIELD_NAME_VERSION ) ;
+         PD_CHECK( !verEle.eoo(), SDB_INVALIDARG, error, PDERROR,
+                   "Failed to parse request message, text index version dose "
+                   "not exist" ) ;
+         PD_CHECK( NumberLong == verEle.type(), SDB_INVALIDARG, error, PDERROR,
+                   "Failed to parse request message, text index version type "
+                   "is wrong" ) ;
+         peerVersion = verEle.numberLong() ;
       }
-      catch (std::exception &e)
+      catch ( std::exception & e )
       {
-         PD_LOG( PDERROR, "unexpected err:%s", e.what() ) ;
+         PD_LOG( PDERROR, "Failed to parse request message, unexpected err: %s",
+                 e.what() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -2977,260 +2969,66 @@ namespace engine
          if ( FALSE == rtnCB->updateTextIdxVersion( RTN_INIT_TEXT_INDEX_VERSION,
                                                     peerVersion + 1 ) )
          {
-            PD_LOG( PDERROR, "Update text index version failed" ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            PD_LOG( PDWARNING, "Failed to initialize text index version, "
+                    "some one else has updated" ) ;
          }
          localVersion = rtnCB->getTextIdxVersion() ;
+         PD_CHECK( RTN_INIT_TEXT_INDEX_VERSION != localVersion,
+                   SDB_SYS, error, PDERROR, "Failed to initialize text "
+                   "index version" ) ;
       }
 
-      // Dump text indices information into textIdxInfo. Local version will
-      // always be in it. If version not the same, all text indices information
-      // will also be in it.
-      rc = _dumpTextIdxInfo( localVersion, textIdxInfo,
-                             ( localVersion == peerVersion ) ) ;
-      PD_RC_CHECK( rc, PDERROR, "Dump text indices information failed[ %d ]",
-                   rc ) ;
+      PD_LOG( PDINFO, "Requesting text index information: peer version: %lld "
+              "local version: %lld]", peerVersion, localVersion ) ;
 
-   done:
-      replySize = sizeof( MsgOpReply ) ;
-      if ( SDB_OK == rc && !textIdxInfo.isEmpty() )
+      if ( localVersion == peerVersion )
       {
-         replySize += textIdxInfo.objsize() ;
-      }
-      reply = (MsgOpReply *)utilThreadAlloc( replySize ) ;
-      if ( !reply )
-      {
-         PD_LOG( PDERROR, "Allocate memory for reply message failed, size: %d",
-                 replySize ) ;
-         rc = SDB_OOM ;
+         // same version, no need to dump text index information
+         BSONObjBuilder replyBuilder ;
+         BSONObj replyObject ;
+
+         try
+         {
+            replyBuilder.appendBool( FIELD_NAME_IS_PRIMARY, pmdIsPrimary() ) ;
+            replyBuilder.append( FIELD_NAME_VERSION, localVersion ) ;
+            replyObject = replyBuilder.done() ;
+         }
+         catch ( std::exception & e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to build reply message, exception: %s",
+                    e.what() ) ;
+            goto error ;
+         }
+
+         rc = replyToRemoteEndpoint( handle, msg, replyObject ) ;
+         PD_RC_CHECK( rc, PDERROR, "%s: Failed to send reply message to "
+                      "handle: %u groupID: %u nodeID: %u serviceID: %u",
+                      handle, msg->routeID.columns.groupID,
+                      msg->routeID.columns.nodeID,
+                      msg->routeID.columns.serviceID ) ;
       }
       else
       {
-         reply->header.messageLength = sizeof( MsgOpReply )
-                                       + textIdxInfo.objsize()  ;
-         reply->header.opCode = MSG_SEADPT_UPDATE_IDXINFO_RES ;
-         reply->header.TID = msg->TID ;
-         reply->header.routeID.value = 0 ;
-         reply->header.requestID = msg->requestID ;
-         reply->flags = SDB_OK ;
-         reply->startFrom = 0 ;
-         reply->numReturned = rc ? -1 : 1 ;
-         if ( SDB_OK == rc )
-         {
-            ossMemcpy( (CHAR *)reply + sizeof( MsgOpReply ),
-                       textIdxInfo.objdata(), textIdxInfo.objsize() ) ;
-         }
+         // need dump text index information, push to background job to
+         // avoid blocking clsMgr main thread
+         rc = clsStartAdapterDumpTextIndexJob( msg, requestObject, peerVersion,
+                                               localVersion, handle ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to start adapter job to dump text "
+                      "index, rc: %d", rc ) ;
+      }
 
-         rc = _sendToRemoteEndpoint( handle, (MsgHeader *)reply ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Send message to search engine adapter "
-                    "failed[ %d ]", rc ) ;
-         }
-      }
-      if ( reply )
-      {
-         utilThreadRelease( (void *&)reply ) ;
-      }
+   done:
       PD_TRACE_EXITRC( SDB__CLSSHDMGR__ONTEXTIDXINFOREQMSG, rc ) ;
       return rc ;
-   error:
-      goto done ;
-   }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ, "_clsShardMgr::_buildTextIdxObj" )
-   INT32 _clsShardMgr::_buildTextIdxObj( const monCSSimple *csInfo,
-                                         const monCLSimple *clInfo,
-                                         const monIndex *idxInfo,
-                                         BSONObjBuilder &builder )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ ) ;
-      string cappedCLName = string( idxInfo->_extDataName )
-                            + "." + string( idxInfo->_extDataName ) ;
-
-      try
-      {
-         builder.append( FIELD_NAME_COLLECTION, clInfo->_name ) ;
-         builder.append( CLS_NAME_CAPPED_COLLECTION, cappedCLName.c_str() ) ;
-         builder.appendObject( FIELD_NAME_INDEX,
-                               idxInfo->_indexDef.objdata(),
-                               idxInfo->_indexDef.objsize() ) ;
-
-         // Append cl unique id and logical ids of cl and index.
-         // They are used by the adapter to identify different indices with the
-         // same meta data.
-         // (1) If cs or cl has been recreated with the same name, the cl unique
-         //     id will be different.
-         // (2) If collection is truncated, it's logical id will change.
-         // (3) If index has been recreated, the index logical id will be
-         //     different.
-         builder.append( FIELD_NAME_UNIQUEID, (INT64)clInfo->_clUniqueID ) ;
-         builder.append( FIELD_NAME_LOGICAL_ID, clInfo->_logicalID ) ;
-         builder.append( FIELD_NAME_INDEXLID, idxInfo->_indexLID ) ;
-
-         builder.done() ;
-
-#ifdef _DEBUG
-         PD_LOG( PDDEBUG, "Text index info: %s",
-                 builder.done().toString().c_str() ) ;
-#endif /* _DEBUG */
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Unexpected exception happened: %s", e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB__CLSSHDMGR__BUILDTEXTIDXOBJ, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   /*
-     Dump all text indices information, together with the node role and index
-     text version.
-     The text indices information will only be dumped when the node is primary.
-     So the adapter connectiong to slavery node will get none text index
-     information, and no indexing job will be started.
-
-    The result object is as follows:
-
-    {
-       "IsPrimary" : TRUE | FALSE,
-       "Version" : version_number,
-       "Indexes" : [
-          {
-             "Collection" : collection_full_name,
-             "CappedCL"   : capped_collection_full_name,
-             "Index"      :
-                {
-                   index_definition
-                },
-             "LogicalID"  : [
-                cl_logical_id, index_logical_id
-             ]
-          },
-          ...
-          {
-             "Collection" : collection_full_name,
-             "CappedCL"   : capped_collection_full_name,
-             "Index"      :
-                {
-                   index_definition
-                },
-             "LogicalID"  : [
-                cl_logical_id, index_logical_id
-             ]
-          }
-       ]
-    }
-   *
-   */
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__DUMPTEXTIDXINFO, "_clsShardMgr::_dumpTextIdxInfo" )
-   INT32 _clsShardMgr::_dumpTextIdxInfo( INT64 localVersion, BSONObj &obj,
-                                         BOOLEAN onlyVersion )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__CLSSHDMGR__DUMPTEXTIDXINFO ) ;
-      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      MON_CS_SIM_LIST csList ;
-      MON_CS_SIM_LIST::iterator csItr ;
-      BSONObj infoObj ;
-      BSONObjBuilder builder ;
-      BOOLEAN isPrimary = pmdIsPrimary() ;
-      INT32 totalTextIdxNum = 0 ;
-
-      try
-      {
-         builder.appendBool( FIELD_NAME_IS_PRIMARY, isPrimary ) ;
-         builder.append( FIELD_NAME_VERSION, localVersion ) ;
-
-         // Dump text indices information both on primary and slave nodes.
-         // The adapters need to cache them for searching.
-         if ( !onlyVersion )
-         {
-            BSONArrayBuilder indexObjs( builder.subarrayStart( FIELD_NAME_INDEXES ) ) ;
-
-            // Dump all index information and filter text index ones.
-            dmsCB->dumpInfo( csList, FALSE, TRUE, TRUE ) ;
-            for ( csItr = csList.begin(); csItr != csList.end(); ++csItr )
-            {
-               for ( MON_CL_SIM_VEC::const_iterator clItr = csItr->_clList.begin();
-                     clItr != csItr->_clList.end(); ++clItr )
-               {
-                  for ( MON_IDX_LIST::const_iterator idxItr = clItr->_idxList.begin();
-                        idxItr != clItr->_idxList.end(); ++idxItr )
-                  {
-                     INT32 rcTmp = SDB_OK ;
-                     UINT16 idxType = IXM_EXTENT_TYPE_NONE ;
-                     rcTmp = idxItr->getIndexType( idxType ) ;
-                     if ( rcTmp )
-                     {
-                        // Only warning, and process the remaining ones.
-                        PD_LOG( PDERROR, "Get type of index failed[ %d ], cs[ %s ],"
-                                " cl[ %s ], index[ %s ]", rcTmp, csItr->_name,
-                                clItr->_name, idxItr->getIndexName() ) ;
-                        continue ;
-                     }
-                     // Only dump text indices in normal status.
-                     if ( IXM_EXTENT_TYPE_TEXT == idxType )
-                     {
-                        // The engine and the adapter use text version to know
-                        // changes of text indices. On engine side, the version
-                        // is increased during rebuilding, before the index is
-                        // marked as NORMAL. In that case, the adapter should
-                        // request for the information again in next round. So
-                        // we send the total text index number. Adapter should
-                        // check it to know whether all text index information
-                        // has been sent.
-                        ++totalTextIdxNum ;
-                        if ( IXM_INDEX_FLAG_NORMAL == idxItr->_indexFlag )
-                        {
-                           BSONObjBuilder subBuilder( indexObjs.subobjStart() ) ;
-                           rc = _buildTextIdxObj( &*csItr, &*clItr, &*idxItr,
-                                                  subBuilder ) ;
-                           if ( rc )
-                           {
-                              PD_LOG( PDERROR, "Build text index object failed[ %d ]",
-                                      rc ) ;
-                              // do not goto error, continue with the remainning
-                              // indices
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-            indexObjs.done() ;
-            builder.append( FIELD_NAME_TOTAL_COUNT, totalTextIdxNum ) ;
-         }
-
-         obj = builder.obj() ;
-#ifdef _DEBUG
-         PD_LOG( PDDEBUG, "All text index info: %s",
-                 obj.toString().c_str() ) ;
-#endif /* _DEBUG */
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Exception occurred: %s", e.what() ) ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( SDB__CLSSHDMGR__DUMPTEXTIDXINFO, rc ) ;
-      return rc ;
    error:
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SENDTOREMOTEENDPOINT, "_clsShardMgr::_sendToRemoteEndpoint" )
-   INT32 _clsShardMgr::_sendToRemoteEndpoint( NET_HANDLE handle, MsgHeader *msg )
+   INT32 _clsShardMgr::_sendToRemoteEndpoint ( NET_HANDLE handle,
+                                               MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDMGR__SENDTOREMOTEENDPOINT ) ;
@@ -3251,6 +3049,68 @@ namespace engine
       PD_TRACE_EXITRC( SDB__CLSSHDMGR__SENDTOREMOTEENDPOINT, rc ) ;
       return rc ;
    error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_REPLYTOREMOTEENDPOINT, "_clsShardMgr::replyToRemoteEndpoint" )
+   INT32 _clsShardMgr::replyToRemoteEndpoint ( NET_HANDLE handle,
+                                               MsgHeader * request,
+                                               const BSONObj & replyObject )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSSHDMGR_REPLYTOREMOTEENDPOINT ) ;
+
+      SDB_ASSERT( NULL != request, "request message is invaid" ) ;
+
+      MsgOpReply * replyMessage = NULL ;
+      INT32 replySize = 0 ;
+
+      replySize = sizeof( MsgOpReply ) ;
+      if ( !replyObject.isEmpty() )
+      {
+         replySize += replyObject.objsize() ;
+      }
+      replyMessage = (MsgOpReply *)utilThreadAlloc( replySize ) ;
+      PD_CHECK( NULL != replyMessage, SDB_OOM, error, PDERROR,
+                "Failed to allocate memory for reply message, size: %d",
+                replySize ) ;
+
+      replyMessage->header.messageLength = replySize ;
+      replyMessage->header.opCode = MAKE_REPLY_TYPE( request->opCode ) ;
+      replyMessage->header.TID = request->TID ;
+      replyMessage->header.routeID.value = 0 ;
+      replyMessage->header.requestID = request->requestID ;
+      replyMessage->flags = SDB_OK ;
+      replyMessage->startFrom = 0 ;
+      replyMessage->numReturned = rc ? -1 : 1 ;
+      if ( SDB_OK == rc )
+      {
+         ossMemcpy( (CHAR *)replyMessage + sizeof( MsgOpReply ),
+                    replyObject.objdata(), replyObject.objsize() ) ;
+      }
+
+      rc = _sendToRemoteEndpoint( handle, (MsgHeader *)replyMessage ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to send message to "
+                   "handle: %u groupID: %u nodeID: %u serviceID: %u",
+                   handle, request->routeID.columns.groupID,
+                   request->routeID.columns.nodeID,
+                   request->routeID.columns.serviceID ) ;
+      PD_LOG( PDDEBUG, "Send message to handle: %u groupID: %u "
+              "nodeID: %u serviceID: %u", handle,
+              request->routeID.columns.groupID,
+              request->routeID.columns.nodeID,
+              request->routeID.columns.serviceID ) ;
+
+   done :
+      if ( NULL != replyMessage )
+      {
+         utilThreadRelease( (void *&)replyMessage ) ;
+      }
+      PD_TRACE_EXITRC( SDB__CLSSHDMGR_REPLYTOREMOTEENDPOINT, rc ) ;
+      return rc ;
+
+   error :
       goto done ;
    }
 
