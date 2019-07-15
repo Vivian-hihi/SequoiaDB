@@ -1754,7 +1754,9 @@ namespace engine
       if ( routeItr != _route.end() )
       {
          routeItr->second->delEH( handle ) ;
-         if ( routeItr->second->isEmpty() )
+         /// when nobody used and is empty
+         if ( routeItr->second->isEmpty() &&
+              1 == routeItr->second.use_count() )
          {
             _route.erase(routeItr) ;
          }
