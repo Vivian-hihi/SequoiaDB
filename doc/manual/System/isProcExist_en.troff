@@ -98,9 +98,74 @@ string
 T}@T{
 not
 T}@T{
-{ type: "pid" }
+if { type: "pid" },
 T}@T{
 specified type
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+then it means that
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+determine if a process
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+exist base on process
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+id.
+if { type: "name" },
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+then it means that
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+determine if a process
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+exist base on service
+T}@T{
+T}
+T{
+T}@T{
+T}@T{
+T}@T{
+T}@T{
+name
+T}@T{
 T}
 .TE
 .SH RETURN VALUE

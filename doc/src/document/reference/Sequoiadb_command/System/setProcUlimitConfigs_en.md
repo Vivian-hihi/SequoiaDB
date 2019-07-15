@@ -35,5 +35,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Modify the maximum memory size of the process
 
 ```lang-javascript
-> System.setProcUlimitConfigs( { "max_memory_size": -1, "open_files": 1024} )
+> System.setProcUlimitConfigs( { "max_memory_size": -1, "open_files": 1024 } )
 ```

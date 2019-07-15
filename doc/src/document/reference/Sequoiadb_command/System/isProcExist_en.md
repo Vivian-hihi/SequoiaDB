@@ -25,7 +25,7 @@ The detail description of 'options' parameter is as follow:
 | Attributes | Type    | Required or not | Format  | Description         |
 | ---------- | ------- |---------------- | ------- | ---------------- |
 | value   | string |  yes   | { value: "31831" }  | value of the specified type |
-| type    | string | not  |  { type: "pid" }    | specified type |
+| type    | string | not  | if { type: "pid" }, then it means that determine if a process exist base on process id. if { type: "name" }, then it means that determine if a process exist base on service name    | specified type |
 
 ##RETURN VALUE##
 

@@ -29,7 +29,7 @@ getLastErrMsg() to get error message.
 For more detial, please reference to Troubleshooting.
 .SH EXAMPLES
 .IP \[bu] 2
-Acquire the process id
+Acquire the process id of sdb shell
 .IP
 .nf
 \f[C]

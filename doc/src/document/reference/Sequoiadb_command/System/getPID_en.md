@@ -30,7 +30,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 
 ##EXAMPLES##
 
-* Acquire the process id
+* Acquire the process id of sdb shell
 
 ```lang-javascript
 > System.getPID()

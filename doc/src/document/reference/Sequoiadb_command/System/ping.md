@@ -32,7 +32,7 @@ System
 * 测试到达一个主机的网络是否连通
 
   ```lang-javascript
-  > System.ping("hostname")
+  > System.ping( "hostname" )
   {
       "Target": "hostname",
       "Reachable": true

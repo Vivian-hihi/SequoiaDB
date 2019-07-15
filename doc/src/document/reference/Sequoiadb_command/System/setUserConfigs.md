@@ -22,7 +22,7 @@ options 参数详细说明如下：
 | -------- | ------ | -------- | -------------------- | -------------------- |
 | name    | String |    是   | { name: "username" }     |  修改配置的用户     |
 | Group    | String |   否   | { Group: "groupname" }     |  修改的用户组     |
-| dir    | String |   否   | { dir: "dir" }     |  修改用户家目录    |
+| dir    | String |   否   | { dir: "dir" }     |  修改用户 home 目录    |
 
 ##返回值##
 

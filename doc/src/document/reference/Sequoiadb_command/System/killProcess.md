@@ -38,5 +38,5 @@ options 参数详细说明如下：
 * 杀死指定进程：
 
   ```lang-javascript
-  > System.killProcess({pid:31831})
+  > System.killProcess( { pid: 31831 } )
   ```

@@ -34,7 +34,7 @@ System
 * 查看ssh服务信息
 
   ```lang-javascript
-  > System.runService( "ssh", "status", "")
+  > System.runService( "ssh", "status", "" )
   ● ssh.service - OpenBSD Secure Shell server
      Loaded: loaded (/lib/systemd/system/ssh.service; enabled; vendor preset: enabled)
        Active: active (running) since 三 2019-05-29 10:29:47 CST; 6 days ago
