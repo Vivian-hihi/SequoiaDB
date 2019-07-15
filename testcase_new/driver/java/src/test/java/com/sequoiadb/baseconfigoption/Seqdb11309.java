@@ -32,7 +32,7 @@ public class Seqdb11309 extends SdbTestBase {
         assertTrue(0==options.getSocketTimeout());
         assertTrue(1000*10==options.getConnectTimeout());
         assertTrue(15000==options.getMaxAutoConnectRetryTime());
-        assertTrue(false==options.getSocketKeepAlive());
+        assertTrue(true==options.getSocketKeepAlive());
 
         //测试set、get方法
         options.setUseNagle(true);
@@ -44,8 +44,8 @@ public class Seqdb11309 extends SdbTestBase {
         assertTrue(timeoutMs==options.getConnectTimeout());
         options.setMaxAutoConnectRetryTime(timeoutMs);
         assertTrue(timeoutMs==options.getMaxAutoConnectRetryTime());
-        options.setSocketKeepAlive(true);
-        assertTrue(true==options.getSocketKeepAlive());
+        options.setSocketKeepAlive(false);
+        assertTrue(false==options.getSocketKeepAlive());
     }
 
     @AfterClass
