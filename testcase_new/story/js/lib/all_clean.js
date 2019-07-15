@@ -45,6 +45,9 @@ function main( db )
          println( "Drop " + cols[i].cs + " failed after all test-cases: " + e ) ;
       }
    }
+   
+   //3. drop capped cs
+   commDropCS( db, COMMCAPPEDCSNAME, true, "" )
 
 }
 

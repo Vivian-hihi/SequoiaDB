@@ -26,6 +26,8 @@ if ( typeof(FULLTEXTPREFIX) == "undefined" ) { FULLTEXTPREFIX = ''; }
 var COMMCSNAME = CHANGEDPREFIX + "_cs" ;
 var COMMCLNAME = CHANGEDPREFIX + "_cl" ;
 var COMMDUMMYCLNAME = "test_dummy_cl" ;
+//public capped cs
+var COMMCAPPEDCSNAME = CHANGEDPREFIX + "_capped_cs";
 
 var DATA_GROUP_ID_BEGIN = 1000 ;
 var CATALOG_GROUPNAME = "SYSCatalogGroup" ;
