@@ -163,7 +163,7 @@ function isMasterNodeExist( groupName )
        }
        catch( e )
        {
-          if( -71 != e && -104 != e && -79 != e && -134 != e )
+          if( -71 != e && -104 != e )
           {
               throw e;
           }        
