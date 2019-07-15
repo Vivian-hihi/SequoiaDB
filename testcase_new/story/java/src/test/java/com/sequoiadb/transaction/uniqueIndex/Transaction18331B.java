@@ -21,7 +21,7 @@ import com.sequoiadb.transaction.TransUtils;
  * @author luweikang
  * @date 2019年1月15日
  */
-@Test(groups = { "rc", "ru" })
+@Test(groups = { "rc", "ru", "rcuserbs" })
 public class Transaction18331B extends SdbTestBase {
 
     private String clName = "transCL_18331B";
@@ -34,43 +34,43 @@ public class Transaction18331B extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-        cl = sdb.getCollectionSpace( csName ).createCollection( clName );
-        cl.createIndex( "a", "{a: 1}", true, false );
+        sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        cl = sdb.getCollectionSpace(csName).createCollection(clName);
+        cl.createIndex("a", "{a: 1}", true, false);
         expDataList = new ArrayList<BSONObject>();
 
-        cl.insert( "{'_id': 1, 'a': 1}" );
+        cl.insert("{'_id': 1, 'a': 1}");
     }
 
     @Test
     public void test() {
 
-        sdb2 = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
+        sdb2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 
         sdb.beginTransaction();
 
         // 1 update R1 to R2/R3/R4
-        cl.update( "{_id: 1}", "{'$set': {'a': 2}}", null );
-        cl.update( "{_id: 1}", "{'$set': {'a': 3}}", null );
-        cl.update( "{_id: 1}", "{'$set': {'a': 4}}", null );
+        cl.update("{_id: 1}", "{'$set': {'a': 2}}", null);
+        cl.update("{_id: 1}", "{'$set': {'a': 3}}", null);
+        cl.update("{_id: 1}", "{'$set': {'a': 4}}", null);
 
         // 2 insert data R5
-        DBCollection cl2 = sdb2.getCollectionSpace( csName ).getCollection( clName );
-        cl2.insert( "{'_id': 2, 'a': 2}" );
+        DBCollection cl2 = sdb2.getCollectionSpace(csName).getCollection(clName);
+        cl2.insert("{'_id': 2, 'a': 2}");
 
         sdb.rollback();
 
         expDataList.clear();
-        expDataList.add( (BSONObject) JSON.parse( "{'_id': 1, 'a': 1}" ) );
-        expDataList.add( (BSONObject) JSON.parse( "{'_id': 2, 'a': 2}" ) );
-        recordCur = cl.query( null, null, null, "{'': null}" );
-        actDataList = TransUtils.getReadActList( recordCur );
-        Assert.assertEquals( actDataList, expDataList, "check data" );
+        expDataList.add((BSONObject) JSON.parse("{'_id': 1, 'a': 1}"));
+        expDataList.add((BSONObject) JSON.parse("{'_id': 2, 'a': 2}"));
+        recordCur = cl.query(null, null, null, "{'': null}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList, "check data");
         actDataList.clear();
 
-        recordCur = cl.query( null, null, null, "{'': 'a'}" );
-        actDataList = TransUtils.getReadActList( recordCur );
-        Assert.assertEquals( actDataList, expDataList );
+        recordCur = cl.query(null, null, null, "{'': 'a'}");
+        actDataList = TransUtils.getReadActList(recordCur);
+        Assert.assertEquals(actDataList, expDataList);
         actDataList.clear();
 
     }
@@ -79,14 +79,14 @@ public class Transaction18331B extends SdbTestBase {
     public void tearDown() {
         sdb.commit();
 
-        sdb.getCollectionSpace( csName ).dropCollection( clName );
-        if ( recordCur != null ) {
+        sdb.getCollectionSpace(csName).dropCollection(clName);
+        if (recordCur != null) {
             recordCur.close();
         }
-        if ( sdb != null ) {
+        if (sdb != null) {
             sdb.close();
         }
-        if ( sdb2 != null ) {
+        if (sdb2 != null) {
             sdb2.close();
         }
     }
