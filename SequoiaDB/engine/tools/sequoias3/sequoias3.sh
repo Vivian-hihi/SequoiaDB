@@ -165,7 +165,7 @@ function Start()
         continue
       fi
     else
-      echo -e "\033[31mstart failed. please check $BashPath/nohup.out and $configfile\033[0m "
+      echo -e "\033[31mstart failed. please check configfile and \log\sequoias3.log\033[0m "
       exit 1
     fi
   done
@@ -176,9 +176,7 @@ function Start()
     fi
   fi
   
-  if [ -z "$(lsof -p $pid |grep ESTABLISHED)"  ]; then
-    echo -e "\033[31mprocess is started, but the connection with db doesn't established, please check the application.properties config and db\033[0m"
-  fi
+  
 }
 
 function Stop()
