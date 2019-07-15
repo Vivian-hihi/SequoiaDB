@@ -6,7 +6,8 @@ public class TaskTable {
 
     public static final String TASK_INDEX = "taskIndex";
 
-    public static final int TASK_TYPE_DELIMITER = 1;
+    public static final int TASK_TYPE_DELIMITER     = 1;
+    public static final int TASK_COMPLETE_UPLOAD    = 2;
 
     private int taskType;
     private long taskId;

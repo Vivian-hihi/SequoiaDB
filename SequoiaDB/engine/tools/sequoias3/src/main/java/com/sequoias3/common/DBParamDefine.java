@@ -11,7 +11,6 @@ public class DBParamDefine {
 
     public static final String MODIFY_SET   = "$set";
     public static final String MODIFY_UNSET = "$unset";
-    public static final String REGEX        = "$regex";
     public static final String GREATER      = "$gt";
     public static final String NOT_SMALL    = "$gte";
     public static final String LESS_THAN    = "$lt";

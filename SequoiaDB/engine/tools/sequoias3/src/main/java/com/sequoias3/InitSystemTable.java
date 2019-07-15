@@ -38,6 +38,10 @@ public class InitSystemTable implements ApplicationRunner {
 
         sdbInitSystem.createTaskCL();
 
+        sdbInitSystem.createUploadCL();
+
+        sdbInitSystem.createPartCL();
+
         regionDao.createMetaCSCL(null, regionDao.getMetaCurCSName(null), regionDao.getMetaCurCLName(null), false);
         regionDao.createMetaCSCL(null, regionDao.getMetaHisCSName(null), regionDao.getMetaHisCLName(null), true);
         regionDao.createDirCSCL(null, regionDao.getMetaCurCSName(null));

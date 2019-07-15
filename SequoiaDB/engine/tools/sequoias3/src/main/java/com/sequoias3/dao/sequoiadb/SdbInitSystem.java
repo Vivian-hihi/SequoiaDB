@@ -212,6 +212,7 @@ public class SdbInitSystem {
             idGeneratorDao.insertId(IDGenerator.TYPE_BUCKET);
             idGeneratorDao.insertId(IDGenerator.TYPE_PARENTID);
             idGeneratorDao.insertId(IDGenerator.TYPE_TASK);
+            idGeneratorDao.insertId(IDGenerator.TYPE_UPLOAD);
         }catch (Exception e) {
             logger.error("create IDTable failed.", e);
             throw e;
@@ -242,6 +243,63 @@ public class SdbInitSystem {
 
         }catch (Exception e) {
             logger.error("create TaskTable failed.", e);
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    public void createUploadCL() throws S3ServerException{
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            if (!cs.isCollectionExist(DaoCollectionDefine.UPLOAD_LIST)){
+                sdbBaseOperation.createCL(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.UPLOAD_LIST, null);
+            }
+
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.UPLOAD_LIST);
+            if ( !cl.isIndexExist(UploadMeta.UPLOAD_INDEX)){
+                BSONObject indexKey = new BasicBSONObject();
+                indexKey.put(UploadMeta.META_BUCKET_ID, 1);
+                indexKey.put(UploadMeta.META_KEY_NAME, 1);
+                indexKey.put(UploadMeta.META_UPLOAD_ID, 1);
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.UPLOAD_LIST, UploadMeta.UPLOAD_INDEX,
+                        indexKey, true, true);
+            }
+
+        }catch (Exception e) {
+            logger.error("create upload failed.", e);
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    public void createPartCL() throws S3ServerException{
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(config.getMetaCsName());
+            if (!cs.isCollectionExist(DaoCollectionDefine.PART_LIST)){
+                sdbBaseOperation.createCL(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.PART_LIST, null);
+            }
+
+            DBCollection cl = cs.getCollection(DaoCollectionDefine.PART_LIST);
+            if ( !cl.isIndexExist(Part.PART_INDEX)){
+                BSONObject indexKey = new BasicBSONObject();
+                indexKey.put(Part.UPLOADID, 1);
+                indexKey.put(Part.PARTNUMBER, 1);
+                sdbBaseOperation.createIndex(sdb, config.getMetaCsName(),
+                        DaoCollectionDefine.PART_LIST, Part.PART_INDEX,
+                        indexKey, true, true);
+            }
+
+        }catch (Exception e) {
+            logger.error("create upload failed.", e);
             throw e;
         } finally {
             sdbDatasourceWrapper.releaseSequoiadb(sdb);

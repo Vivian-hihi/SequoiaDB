@@ -4,6 +4,7 @@ import com.sequoias3.common.DBParamDefine;
 import com.sequoias3.common.DelimiterStatus;
 import com.sequoias3.common.RestParamDefine;
 import com.sequoias3.common.VersioningStatusType;
+import com.sequoias3.config.MultiPartUploadConfig;
 import com.sequoias3.context.Context;
 import com.sequoias3.context.ContextManager;
 import com.sequoias3.core.*;
@@ -17,6 +18,7 @@ import com.sequoias3.exception.S3Error;
 import com.sequoias3.exception.S3ServerException;
 import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
+import com.sequoias3.taskmanager.OutStreamFlushQueue;
 import com.sequoias3.utils.DirUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.bson.BSONObject;
@@ -70,6 +72,18 @@ public class ObjectServiceImpl implements ObjectService {
     @Autowired
     IDGeneratorDao idGenerator;
 
+    @Autowired
+    UploadDao uploadDao;
+
+    @Autowired
+    PartDao partDao;
+
+    @Autowired
+    MultiPartUploadConfig multiPartUploadConfig;
+
+    @Autowired
+    TaskDao uploadStatusDao;
+
     @Override
     public PutDeleteResult putObject(long ownerID, String bucketName, String objectName,
                                      String contentMD5, Map<String, String> headers,
@@ -112,7 +126,7 @@ public class ObjectServiceImpl implements ObjectService {
 
         try {
             //check md5
-            if (null != contentMD5) {
+          if (null != contentMD5) {
                 if (!isMd5EqualWithETag(contentMD5, insertResult.geteTag())) {
                     throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
                             "The Content-MD5 you specified does not match what we received.");
@@ -135,8 +149,9 @@ public class ObjectServiceImpl implements ObjectService {
             objectMeta.setSize(insertResult.getSize());
             objectMeta.setLobId(insertResult.getLobId());
 
-            writeObjectMeta(objectMeta, objectName, bucket.getBucketId(),
+            ObjectMeta deleteObject = writeObjectMeta(objectMeta, objectName, bucket.getBucketId(),
                     versioningStatusType, region);
+            deleteObjectLob(deleteObject);
 
             //build response
             PutDeleteResult response = new PutDeleteResult();
@@ -308,8 +323,9 @@ public class ObjectServiceImpl implements ObjectService {
                             bucket.getBucketId(), null, null,
                             null, null, true,
                             noVersionFlag);
-                    writeObjectMeta(deleteMarker, objectName,
+                    ObjectMeta oldObject = writeObjectMeta(deleteMarker, objectName,
                             bucket.getBucketId(), versioningStatusType, region);
+                    deleteObjectLob(oldObject);
 
                     response = new PutDeleteResult();
                     if (deleteMarker.getNoVersionFlag()){
@@ -821,6 +837,685 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
+    @Override
+    public InitiateMultipartUploadResult initMultipartUpload(long ownerID, String bucketName,
+                                                             String objectName,
+                                                             Map<String, String> requestHeaders,
+                                                             Map<String, String> xMeta)
+            throws S3ServerException {
+        //check key length
+        if (objectName.length() > RestParamDefine.KEY_LENGTH){
+            throw new S3ServerException(S3Error.OBJECT_KEY_TOO_LONG,
+                    "ObjectName is too long. objectName:"+objectName);
+        }
+
+        //check meta length
+        if (getXMetaLength(xMeta) > RestParamDefine.X_AMZ_META_LENGTH){
+            throw new S3ServerException(S3Error.OBJECT_METADATA_TOO_LARGE,
+                    "metadata headers exceed the maximum. xMeta:"+xMeta.toString());
+        }
+
+        //get and check bucket
+        Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+
+        Region region = null;
+        if (bucket.getRegion() != null) {
+            region = regionDao.queryRegion(bucket.getRegion());
+        }
+        Date createDate      = new Date();
+        String dataCsName    = regionDao.getDataCSName(region, createDate);
+        String dataClName    = regionDao.getDataClName(region, createDate);
+
+        UploadMeta uploadMeta = buildUploadMeta(bucket.getBucketId(), objectName,
+                requestHeaders, xMeta);
+
+        DataAttr dataAttr = dataDao.createNewData(dataCsName, dataClName, region);
+
+        try {
+            long uploadId = idGenerator.getNewId(IDGenerator.TYPE_UPLOAD);
+            uploadMeta.setUploadId(uploadId);
+            ConnectionDao connection = daoMgr.getConnectionDao();
+            transaction.begin(connection);
+            try {
+                uploadDao.insertUploadMeta(connection, bucket.getBucketId(), objectName, uploadId, uploadMeta);
+
+                Part nPart = new Part(uploadId, 0, dataCsName, dataClName, dataAttr.getLobId(), 0, null);
+                partDao.insertPart(connection, uploadId,0, nPart);
+
+                transaction.commit(connection);
+            } catch (Exception e){
+                transaction.rollback(connection);
+                throw e;
+            } finally {
+                daoMgr.releaseConnectionDao(connection);
+            }
+
+            InitiateMultipartUploadResult result =
+                    new InitiateMultipartUploadResult(bucketName, objectName, uploadId);
+            return result;
+        } catch (S3ServerException e){
+            dataDao.deleteObjectDataByLobId(null, dataCsName,
+                    dataClName, dataAttr.getLobId());
+            throw e;
+        } catch (Exception e){
+            dataDao.deleteObjectDataByLobId(null, dataCsName,
+                    dataClName, dataAttr.getLobId());
+            throw new S3ServerException(S3Error.PART_INIT_MULTIPART_UPLOAD_FAILED, "init upload failed", e);
+        }
+    }
+
+    @Override
+    public String uploadPart(long ownerID, String bucketName, String objectName,
+                             Long uploadId, int partnumber, String contentMD5,
+                             InputStream inputStream, long contentLength)
+            throws S3ServerException {
+        if (partnumber < RestParamDefine.PART_NUMBER_MIN
+                || partnumber > RestParamDefine.PART_NUMBER_MAX){
+            throw new S3ServerException(S3Error.PART_INVALID_PARTNUMBER,
+                    "invalid partnumber:"+partnumber);
+        }
+
+        Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+
+        Region region = null;
+        if (bucket.getRegion() != null) {
+            region = regionDao.queryRegion(bucket.getRegion());
+        }
+        Date createDate      = new Date();
+        String dataCsName    = regionDao.getDataCSName(region, createDate);
+        String dataClName    = regionDao.getDataClName(region, createDate);
+
+        DataAttr dataMinus = null;
+        ConnectionDao connection = daoMgr.getConnectionDao();
+        transaction.begin(connection);
+        try {
+            //query uploadId
+            UploadMeta upload = uploadDao.queryUploadByUploadId(connection, bucket.getBucketId(),
+                    objectName, uploadId, false);
+            if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
+                throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD, "no such upload:" + uploadId);
+            }
+            Part partZero = partDao.queryPartByPartnumber(connection, uploadId, 0);
+            if (partZero != null && partZero.getSize() == 0){
+                partZero.setSize(contentLength);
+                partDao.updatePart(connection, uploadId, 0, partZero);
+            }
+            if (partDao.queryPartBySize(null, uploadId, contentLength) == null){
+                Part partMinus = partDao.queryPartByPartnumber(connection, uploadId, -1);
+                if (partMinus == null){
+                    dataMinus = dataDao.createNewData(dataCsName, dataClName, region);
+                    Part nPart = new Part(uploadId, -1, dataCsName, dataClName, dataMinus.getLobId(), contentLength, null);
+                    partDao.insertPart(connection, uploadId,-1, nPart);
+                }
+            }
+            transaction.commit(connection);
+        } catch (S3ServerException e) {
+            transaction.rollback(connection);
+            if (dataMinus != null){
+                dataDao.deleteObjectDataByLobId(null, dataCsName,
+                        dataClName, dataMinus.getLobId());
+            }
+            if (e.getError().getErrIndex() != S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
+                throw e;
+            }
+        } catch (Exception e) {
+            transaction.rollback(connection);
+            if (dataMinus != null){
+                dataDao.deleteObjectDataByLobId(null, dataCsName,
+                        dataClName, dataMinus.getLobId());
+            }
+            throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED, "upload part failed. objectname=" + objectName + ", uploadId=" + uploadId + ", partnumer=" + partnumber, e);
+        } finally {
+            daoMgr.releaseConnectionDao(connection);
+        }
+
+        int tryTimeA = DBParamDefine.DB_DUPLICATE_MAX_TIME;
+        while (tryTimeA > 0) {
+            tryTimeA--;
+            DataAttr newDataLob = null;
+            ConnectionDao connectionA = daoMgr.getConnectionDao();
+            transaction.begin(connectionA);
+            try {
+                Part nPart = new Part(uploadId, partnumber, dataCsName, dataClName, null, 0, null);
+                Part oldPart = partDao.queryPartByPartnumber(connectionA, uploadId, partnumber);
+                if (oldPart == null) {
+                    partDao.insertPart(connectionA, uploadId, partnumber, nPart);
+                }
+                if (uploadStatusDao.queryUploadId(uploadId)){
+                    throw new S3ServerException(S3Error.PART_COMPLETING_CONFLICT, "The uploadId is completing");
+                }
+                if (oldPart != null && contentLength == oldPart.getSize()) {
+                    newDataLob = dataDao.createNewData(dataCsName, dataClName, region);
+                    nPart.setLobId(newDataLob.getLobId());
+                } else {
+                    Part sameSizePart = partDao.queryPartBySize(null, uploadId, contentLength);
+                    if (sameSizePart != null) {
+                        nPart.setCsName(sameSizePart.getCsName());
+                        nPart.setClName(sameSizePart.getClName());
+                        nPart.setLobId(sameSizePart.getLobId());
+                    } else {
+                        newDataLob = dataDao.createNewData(dataCsName, dataClName, region);
+                        nPart.setLobId(newDataLob.getLobId());
+                    }
+                }
+
+                DataAttr dataAttr = dataDao.insertObjectData(nPart.getCsName(), nPart.getClName(),
+                        inputStream, region, nPart.getLobId(),
+                        (partnumber - 1) * contentLength, contentLength);
+                if (contentLength != dataAttr.getSize()){
+                    throw new S3ServerException(S3Error.OBJECT_INCOMPLETE_BODY,
+                            "content length is " + contentLength +
+                                    " and receive " + dataAttr.getSize() + " bytes");
+                }
+                if (null != contentMD5) {
+                    if (!isMd5EqualWithETag(contentMD5, dataAttr.geteTag())) {
+                        throw new S3ServerException(S3Error.OBJECT_BAD_DIGEST,
+                                "The Content-MD5 you specified does not match what we received." +
+                                        " contentMD5:" +contentMD5
+                                        + ", etag:" + dataAttr.geteTag()
+                                        + ", contentlength:" + contentLength
+                                        + ", receivesize:" + dataAttr.getSize());
+                    }
+                }
+
+                nPart.setEtag(dataAttr.geteTag());
+                nPart.setSize(contentLength);
+                partDao.updatePart(connectionA, uploadId, partnumber, nPart);
+
+                if (oldPart != null) {
+                    int tryTimeB = DBParamDefine.DB_DUPLICATE_MAX_TIME;
+                    oldPart.setPartNumber(oldPart.getPartNumber() - RestParamDefine.PART_NUMBER_MAX);
+                    while (tryTimeB > 0) {
+                        tryTimeB--;
+                        ConnectionDao connectionB = daoMgr.getConnectionDao();
+                        transaction.begin(connectionB);
+                        try {
+                            oldPart.setPartNumber(oldPart.getPartNumber() - 10000);
+                            partDao.insertPart(connectionB, uploadId, oldPart.getPartNumber(), oldPart);
+                            transaction.commit(connectionB);
+                            break;
+                        } catch (S3ServerException e) {
+                            transaction.rollback(connectionB);
+                            if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex()) {
+                                continue;
+                            } else {
+                                throw e;
+                            }
+                        } catch (Exception e) {
+                            transaction.rollback(connectionB);
+                            throw e;
+                        } finally {
+                            daoMgr.releaseConnectionDao(connectionB);
+                        }
+                    }
+                }
+
+                transaction.commit(connectionA);
+                return dataAttr.geteTag();
+            } catch (S3ServerException e) {
+                transaction.rollback(connectionA);
+                if (newDataLob != null) {
+                    dataDao.deleteObjectDataByLobId(null, dataCsName,
+                            dataClName, newDataLob.getLobId());
+                }
+                if (e.getError().getErrIndex() == S3Error.DAO_DUPLICATE_KEY.getErrIndex() && tryTimeA > 0) {
+                    continue;
+                }else {
+                    throw e;
+                }
+            } catch (Exception e) {
+                transaction.rollback(connectionA);
+                if (newDataLob != null) {
+                    dataDao.deleteObjectDataByLobId(null, dataCsName,
+                            dataClName, newDataLob.getLobId());
+                }
+                throw new S3ServerException(S3Error.PART_UPLOAD_PART_FAILED, "upload part failed. objectname=" + objectName + ", uploadId=" + uploadId + ", partnumer=" + partnumber, e);
+            } finally {
+                daoMgr.releaseConnectionDao(connectionA);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public CompleteMultipartUploadResult completeUpload(long ownerID, String bucketName,
+                                                        String objectName, Long uploadId,
+                                                        List<Part> reqPartList,
+                                                        ServletOutputStream outputStream)
+            throws S3ServerException {
+        Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+
+        Region region = null;
+        if (bucket.getRegion() != null) {
+            region = regionDao.queryRegion(bucket.getRegion());
+        }
+        Date createDate      = new Date();
+        String dataCsName    = regionDao.getDataCSName(region, createDate);
+        String dataClName    = regionDao.getDataClName(region, createDate);
+
+        ObjectMeta oldObjectMeta = null;
+        DataAttr newDataLob = null;
+        boolean mutexLock   = false;
+        Boolean startFlush = false;
+        ConnectionDao connection = daoMgr.getConnectionDao();
+        transaction.begin(connection);
+        try {
+            UploadMeta upload = uploadDao.queryUploadByUploadId(connection, bucket.getBucketId(),
+                    objectName, uploadId, true);
+            if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
+                throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
+                        "no such upload:" + uploadId);
+            }
+            // 只upload表中的记录加U锁，可能会被其他并发任务读取upload写新的part(Uploadpart)，
+            // 如果该part查找到size一致的part并写入对应lob，如果该lob就是最终合并的lob，就会把已经合并完成的lob内容破坏
+            // 如果修改为complete状态，会导致同步日志过大
+            //增加uploadId在task表中，相当于是个互斥锁，防止其他upload part再向该uploadId中增加内容
+            uploadStatusDao.insertUploadId(uploadId);
+            mutexLock = true;
+            //准备
+            List<Part> partArray = new ArrayList<>();
+            List<Part> baseArray = new ArrayList<>();
+            getLocalPartList(connection, uploadId, partArray, baseArray);
+
+            //检查
+            List<Part> completeList = partArray;
+            if (multiPartUploadConfig.isPartlistinuse() && reqPartList != null){
+                checkRequsetPartlist(reqPartList, partArray);
+                completeList = reqPartList;
+            }
+
+            //合并策略选择
+            Boolean reBuildLob = IsNeedRebuild(completeList, partArray, baseArray);
+            String destCSName  = null;
+            String destCLName  = null;
+            ObjectId destLobId = null;
+            if (reBuildLob){
+                //create a new lob
+                newDataLob= dataDao.createNewData(dataCsName, dataClName, region);
+                destCSName = dataCsName;
+                destCLName = dataClName;
+                destLobId  = newDataLob.getLobId();
+            }else{
+                destCSName = baseArray.get(0).getCsName();
+                destCLName = baseArray.get(0).getClName();
+                destLobId  = baseArray.get(0).getLobId();
+            }
+
+            logger.info("complete begin");
+            //合并
+            //TODO:在刷空白字符前应判断是否需要返回versionId，否则后面刷过之后再写header也接收不到了
+            OutStreamFlushQueue.add(uploadId, outputStream);
+            startFlush = true;
+            String eTag = null;
+            long writeOffset = 0;
+            for (int i = 0; i < completeList.size(); i++){
+                if (completeList.get(i) == null){
+                    continue;
+                }
+
+                int partNumber = completeList.get(i).getPartNumber();
+                Part part = partArray.get(partNumber - 1);
+                eTag = completeList.get(i).getEtag();
+                if (!part.getCsName().equals(destCSName)
+                        || !part.getClName().equals(destCLName)
+                        || !part.getLobId().equals(destLobId)) {
+                    dataDao.copyObjectData(destCSName, destCLName, destLobId, writeOffset,
+                            part.getCsName(), part.getClName(), part.getLobId(),
+                            part.getSize() * (part.getPartNumber() - 1),
+                            part.getSize());
+                }
+
+                writeOffset += part.getSize();
+            }
+            dataDao.completeDataLobWithOffset(destCSName, destCLName, destLobId, writeOffset);
+            upload.setCsName(destCSName);
+            upload.setClName(destCLName);
+            upload.setLobId(destLobId);
+            upload.setUploadStatus(UploadMeta.UPLOAD_COMPLETE);
+            uploadDao.updateUploadMeta(connection, bucket.getBucketId(), objectName, uploadId, upload);
+            logger.info("complete end");
+
+            logger.info("write cur meta begin");
+            //写元数据
+            String completeEtag = eTag.substring(0, 30);
+            VersioningStatusType versioningStatusType = VersioningStatusType.getVersioningStatus(bucket.getVersioningStatus());
+            ObjectMeta objectMeta = buildObjectMetaFromUpload(upload, false,
+                    generateNoVersionFlag(versioningStatusType));
+            objectMeta.seteTag(completeEtag);
+            objectMeta.setSize(writeOffset);
+
+            oldObjectMeta = writeObjectMeta(objectMeta, objectName, bucket.getBucketId(),
+                    versioningStatusType, region);
+            logger.info("write cur meta end");
+
+            transaction.commit(connection);
+            deleteObjectLob(oldObjectMeta);
+            OutStreamFlushQueue.remove(uploadId, outputStream);
+            startFlush = false;
+            uploadStatusDao.deleteUploadId(uploadId);
+
+            //build response
+            CompleteMultipartUploadResult response = new CompleteMultipartUploadResult();
+            response.seteTag(completeEtag);
+            response.setBucket(bucketName);
+            response.setKey(objectName);
+            response.setVersionId(objectMeta.getVersionId());
+            return response;
+        } catch (S3ServerException e) {
+            transaction.rollback(connection);
+            if (startFlush){
+                OutStreamFlushQueue.remove(uploadId, outputStream);
+            }
+            if (newDataLob != null){
+                dataDao.deleteObjectDataByLobId(null, dataCsName,
+                        dataClName, newDataLob.getLobId());
+            }
+            if (mutexLock){
+                uploadStatusDao.deleteUploadId(uploadId);
+            }
+            throw e;
+        }
+        catch (Exception e) {
+            transaction.rollback(connection);
+            if (startFlush){
+                OutStreamFlushQueue.remove(uploadId, outputStream);
+            }
+            if (newDataLob != null){
+                dataDao.deleteObjectDataByLobId(null, dataCsName,
+                        dataClName, newDataLob.getLobId());
+            }
+            if (mutexLock){
+                uploadStatusDao.deleteUploadId(uploadId);
+            }
+            throw new S3ServerException(S3Error.PART_COMPLETE_MULTIPART_UPLOAD_FAILED,
+                    "complete upload failed.", e);
+        } finally {
+            daoMgr.releaseConnectionDao(connection);
+        }
+
+    }
+
+    @Override
+    public void abortUpload(long ownerID, String bucketName, String objectName, Long uploadId)
+            throws S3ServerException {
+        Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+
+        ConnectionDao connection = daoMgr.getConnectionDao();
+        transaction.begin(connection);
+        try {
+            UploadMeta upload = uploadDao.queryUploadByUploadId(connection, bucket.getBucketId(),
+                    objectName, uploadId, true);
+            if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
+                throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
+                        "no such upload:" + uploadId);
+            }
+
+            upload.setUploadStatus(UploadMeta.UPLOAD_ABORT);
+            uploadDao.updateUploadMeta(connection, bucket.getBucketId(), objectName, uploadId, upload);
+            transaction.commit(connection);
+        } catch (S3ServerException e) {
+            transaction.rollback(connection);
+            throw e;
+        } catch (Exception e) {
+            transaction.rollback(connection);
+            throw new S3ServerException(S3Error.PART_ABORT_MULTIPART_UPLOAD_FAILED,
+                    "abort upload failed.", e);
+        } finally {
+            daoMgr.releaseConnectionDao(connection);
+        }
+    }
+
+    @Override
+    public ListPartsResult listParts(long ownerID, String bucketName, String objectName,
+                                     Long uploadId, Integer partNumberMarker,
+                                     Integer maxParts, String encodingType)
+            throws S3ServerException {
+        QueryDbCursor partsCursor = null;
+        try {
+            Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+            UploadMeta upload = uploadDao.queryUploadByUploadId(null, bucket.getBucketId(),
+                    objectName, uploadId, false);
+            if (upload == null || upload.getUploadStatus() != UploadMeta.UPLOAD_INIT) {
+                throw new S3ServerException(S3Error.PART_NO_SUCH_UPLOAD,
+                        "no such upload:" + uploadId);
+            }
+
+            int maxNumber = Math.min(maxParts, RestParamDefine.MAX_KEYS_DEFAULT);
+            ListPartsResult result = new ListPartsResult(bucketName, objectName, uploadId,
+                    maxNumber, userDao.getOwnerByUserID(ownerID), encodingType);
+
+            partsCursor = partDao.queryPartList(uploadId, true,
+                    partNumberMarker, maxNumber + 1);
+            if (partsCursor != null) {
+                LinkedHashSet<Part> partList = result.getPartList();
+                int count = 0;
+                while (partsCursor.hasNext() && count < maxNumber) {
+                    partList.add(new Part(partsCursor.getNext()));
+                    count++;
+                }
+
+                if (partsCursor.hasNext()) {
+                    result.setIsTruncated(true);
+                    result.setNextPartNumberMarker((int) (partsCursor.getCurrent().get(Part.PARTNUMBER)));
+                }
+            }
+            return result;
+        } catch (S3ServerException e){
+            throw e;
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.PART_LIST_PARTS_FAILED,
+                    "List Parts failed. bucket:"+bucketName, e);
+        }finally {
+            metaDao.releaseQueryDbCursor(partsCursor);
+        }
+    }
+
+    @Override
+    public ListMultipartUploadsResult listUploadLists(long ownerID, String bucketName,
+                                                      String prefix, String delimiter,
+                                                      String keyMarker, Long uploadIdMarker,
+                                                      Integer maxKeys, String encodingType)
+            throws S3ServerException{
+        QueryDbCursor dbCursorUploads = null;
+        try{
+            Bucket bucket = bucketService.getBucket(ownerID, bucketName);
+
+            int count = 0;
+            int maxNumber = Math.min(maxKeys, RestParamDefine.MAX_KEYS_DEFAULT);
+            Owner owner = userDao.getOwnerByUserID(ownerID);
+
+            ListMultipartUploadsResult result = new ListMultipartUploadsResult(bucketName,
+                    maxNumber, encodingType, prefix, delimiter, keyMarker, uploadIdMarker);
+
+            dbCursorUploads = uploadDao.queryUploadsByBucket(bucket.getBucketId(),
+                    prefix, keyMarker, uploadIdMarker, UploadMeta.UPLOAD_INIT);
+            if (dbCursorUploads == null){
+                return result;
+            }
+
+            UploadFilter filter = null;
+            if (delimiter != null){
+                filter = new UploadFilter(dbCursorUploads, prefix, keyMarker,
+                        uploadIdMarker, encodingType, owner, delimiter);
+            }else {
+                filter = new UploadFilter(dbCursorUploads, prefix, keyMarker,
+                        uploadIdMarker, encodingType, owner);
+            }
+
+            LinkedHashSet<Upload> uploadList = result.getUploadList();
+            LinkedHashSet<CommonPrefix> commonPrefixList = result.getCommonPrefixList();
+            FilterRecord matcher;
+            while ((matcher =  filter.getNextRecord()) != null){
+                if (matcher.getRecordType() == FilterRecord.COMMONPREFIX){
+                    if (!commonPrefixList.contains(matcher.getCommonPrefix())) {
+                        commonPrefixList.add(matcher.getCommonPrefix());
+                        count++;
+                    }
+                }else if (matcher.getRecordType() == FilterRecord.UPLOAD){
+                    uploadList.add(matcher.getUpload());
+                    count++;
+                }
+
+                if (count >= maxNumber){
+                    break;
+                }
+            }
+
+            if (filter.hasNext()){
+                result.setIsTruncated(true);
+                if (matcher.getRecordType() == FilterRecord.COMMONPREFIX){
+                    result.setNextKeyMarker(matcher.getCommonPrefix().getPrefix());
+                }else {
+                    result.setNextKeyMarker(matcher.getUpload().getKey());
+                    result.setNextUploadIdMarker(matcher.getUpload().getUploadId());
+                }
+            }
+            return result;
+        }catch (S3ServerException e){
+            throw e;
+        }catch (Exception e){
+            throw new S3ServerException(S3Error.OBJECT_LIST_VERSIONS_FAILED,
+                    "List Uploads failed. bucket:"+bucketName, e);
+        }finally {
+            metaDao.releaseQueryDbCursor(dbCursorUploads);
+        }
+    }
+
+    private void checkRequsetPartlist(List<Part> reqPartList, List<Part> locPartArray)
+            throws S3ServerException{
+        int lastPartNumber = 0;
+        for (int i = 0; i < reqPartList.size(); i++){
+            Part part = reqPartList.get(i);
+            if (part.getPartNumber() < RestParamDefine.PART_NUMBER_MIN
+                    || part.getPartNumber() > RestParamDefine.PART_NUMBER_MAX){
+                throw new S3ServerException(S3Error.PART_INVALID_PART,
+                        "partNumber " + part.getPartNumber() + " is not exist.");
+            }
+
+            int partNumber = part.getPartNumber();
+            if (partNumber <= lastPartNumber){
+                throw new S3ServerException(S3Error.PART_INVALID_PARTORDER,
+                        "The partNumber is " + partNumber +
+                                ", lastPartNumber is " + lastPartNumber);
+            }
+
+            if (partNumber > locPartArray.size()){
+                throw new S3ServerException(S3Error.PART_INVALID_PART,
+                        "partNumber " + partNumber + " is not exist.");
+            }
+
+            if (locPartArray.get(partNumber-1) == null){
+                throw new S3ServerException(S3Error.PART_INVALID_PART,
+                        "partNumber " + partNumber + " is not exist.");
+            }
+
+            if (!part.getEtag().equals(locPartArray.get(partNumber-1).getEtag())){
+                throw new S3ServerException(S3Error.PART_INVALID_PART,
+                        "the tag not matched. partNumber:" + partNumber +
+                                " . reqEtag:" + part.getEtag() +
+                                ", locEtag:" + locPartArray.get(partNumber-1).getEtag());
+            }
+
+            if (multiPartUploadConfig.isPartSizeLimit()) {
+                if (locPartArray.get(partNumber - 1).getSize() < 5 * 1024 * 1024
+                        || locPartArray.get(partNumber - 1).getSize() > 5 * 1024 * 1024 * 1024) {
+                    if (i != reqPartList.size() - 1) {
+                        throw new S3ServerException(S3Error.PART_ENTITY_TOO_SMALL,
+                                "part size is invalid. size:" + locPartArray.get(partNumber - 1).getSize());
+                    }
+                }
+            }
+
+            lastPartNumber = partNumber;
+        }
+    }
+
+    private void getLocalPartList(ConnectionDao connection, long uploadId, List<Part> partArray, List<Part> baseArray)
+            throws S3ServerException{
+        QueryDbCursor partCursor = partDao.queryPartListForUpdate(connection, uploadId);
+        if (partCursor == null || !partCursor.hasNext()){
+            throw new S3ServerException(S3Error.PART_INVALID_PART, "not found any uploaded part");
+        }
+        int index = 0;
+        partCursor.getNext();
+        while (true){
+            BSONObject record = partCursor.getCurrent();
+            int partnumber = (int) record.get(Part.PARTNUMBER);
+            if (partnumber-1 == index){
+                Part part = new Part(record);
+                partArray.add(part);
+                if (index == 0){
+                    baseArray.add(part);
+                }else{
+                    if (baseArray.get(0) != null && baseArray.get(0).getLobId().equals(part.getLobId())){
+                        baseArray.add(part);
+                    }else {
+                        baseArray.add(null);
+                    }
+                }
+                if (partCursor.hasNext()){
+                    partCursor.getNext();
+                }else {
+                    break;
+                }
+            }else{
+                partArray.add(null);
+                baseArray.add(null);
+            }
+            index++;
+        }
+        return;
+    }
+
+    private Boolean IsNeedRebuild(List<Part> completeList, List<Part> locPartArray, List<Part> baseArray){
+        Boolean reBuildLob = false;
+        if (baseArray.get(0) == null){
+            reBuildLob = true;
+        }else {
+            long newOffset  = 0;
+            long baseSize   = baseArray.get(0).getSize();
+            for (int i = 0; i < completeList.size(); i++){
+                if (completeList.get(i) == null){
+                    continue;
+                }
+
+                int partnumber = completeList.get(i).getPartNumber();
+                if (locPartArray.get(partnumber-1).getLobId().equals(baseArray.get(0).getLobId())){
+                    if (newOffset != baseSize * (partnumber - 1)){
+                        reBuildLob = true;
+                        break;
+                    }else {
+                        newOffset += baseSize;
+                    }
+                }else {
+                    int begin = (int)(newOffset/baseSize);
+                    int end   = (int)((newOffset + locPartArray.get(partnumber-1).getSize() - 1)/baseSize);
+                    for (int j = begin; j <= end && j < baseArray.size(); j++){
+                        if (baseArray.get(j) != null){
+                            reBuildLob = true;
+                            break;
+                        }
+                    }
+                    if (reBuildLob){
+                        break;
+                    }else {
+                        newOffset += locPartArray.get(partnumber-1).getSize();
+                    }
+                }
+            }
+
+            if (!reBuildLob){
+                for (int j = (int) (newOffset / baseSize); j < baseArray.size() && j >= 1; j++) {
+                    if (baseArray.get(j) != null){
+                        reBuildLob = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return reBuildLob;
+    }
+
     private String getParentName(String delimiter, Bucket bucket){
         if (delimiter != null) {
             if (bucket.getDelimiter() == 1) {
@@ -862,7 +1557,6 @@ public class ObjectServiceImpl implements ObjectService {
             throws S3ServerException{
         ConnectionDao connection = daoMgr.getConnectionDao();
         transaction.begin(connection);
-//        logger.info("transaction begin. Key:{}", objectName);
         try {
             ObjectMeta objectMeta = metaDao.queryForUpdate(connection, metaCsName,
                     metaClName, bucket.getBucketId(), objectName, null, null);
@@ -875,14 +1569,12 @@ public class ObjectServiceImpl implements ObjectService {
                     deleteDirForObject(connection, metaCsName, metaClName, newBucket, objectName);
                 }
             }
-//            logger.info("transaction commit. Key:{}", objectName);
             transaction.commit(connection);
             return objectMeta;
         } catch (S3ServerException e){
             transaction.rollback(connection);
             throw e;
         } catch(Exception e){
-//            logger.info("transaction rollback. Key:{}", objectName);
             transaction.rollback(connection);
             throw e;
         } finally {
@@ -964,6 +1656,65 @@ public class ObjectServiceImpl implements ObjectService {
         }
 
         return objectMeta;
+    }
+
+    private ObjectMeta buildObjectMetaFromUpload(UploadMeta upload, Boolean isDeleteMarker,
+                                                 Boolean noVersionFlag) {
+        ObjectMeta objectMeta = new ObjectMeta();
+        objectMeta.setKey(upload.getKey());
+        objectMeta.setBucketId(upload.getBucketId());
+        objectMeta.setCsName(upload.getCsName());
+        objectMeta.setClName(upload.getClName());
+        objectMeta.setLobId(upload.getLobId());
+        objectMeta.setLastModified(System.currentTimeMillis());
+        objectMeta.setMetaList(upload.getMetaList());
+        objectMeta.setDeleteMarker(isDeleteMarker);
+        objectMeta.setNoVersionFlag(noVersionFlag);
+
+        objectMeta.setCacheControl(upload.getCacheControl());
+        objectMeta.setContentDisposition(upload.getContentDisposition());
+        objectMeta.setContentEncoding(upload.getContentEncoding());
+        objectMeta.setContentType(upload.getContentType());
+        objectMeta.setExpires(upload.getExpires());
+        objectMeta.setContentLanguage(upload.getContentLanguage());
+        return objectMeta;
+    }
+
+    private UploadMeta buildUploadMeta(long bucketId, String objectName, Map headers, Map xMeta) {
+        UploadMeta uploadMeta = new UploadMeta();
+        uploadMeta.setKey(objectName);
+        uploadMeta.setBucketId(bucketId);
+        uploadMeta.setLastModified(System.currentTimeMillis());
+        uploadMeta.setMetaList(xMeta);
+        uploadMeta.setUploadStatus(UploadMeta.UPLOAD_INIT);
+
+        if (headers != null) {
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CACHE_CONTROL)) {
+                uploadMeta.setCacheControl(headers.get(RestParamDefine.PutObjectHeader.CACHE_CONTROL).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_DISPOSITION)) {
+                uploadMeta.setContentDisposition(headers.get(RestParamDefine.PutObjectHeader.CONTENT_DISPOSITION).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_ENCODING)) {
+                uploadMeta.setContentEncoding(headers.get(RestParamDefine.PutObjectHeader.CONTENT_ENCODING).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_TYPE)) {
+                uploadMeta.setContentType(headers.get(RestParamDefine.PutObjectHeader.CONTENT_TYPE).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.EXPIRES)) {
+                uploadMeta.setExpires(headers.get(RestParamDefine.PutObjectHeader.EXPIRES).toString());
+            }
+
+            if (headers.containsKey(RestParamDefine.PutObjectHeader.CONTENT_LANGUAGE)) {
+                uploadMeta.setContentLanguage(headers.get(RestParamDefine.PutObjectHeader.CONTENT_LANGUAGE).toString());
+            }
+        }
+
+        return uploadMeta;
     }
 
     private Boolean isMd5EqualWithETag(String contentMd5, String eTag) throws S3ServerException{
@@ -1199,7 +1950,8 @@ public class ObjectServiceImpl implements ObjectService {
         }
     }
 
-    private void writeObjectMeta(ObjectMeta objectMeta, String objectName, long bucketId,
+    //writeObjectMeta retrun the oldObject meta to delete old lob
+    private ObjectMeta writeObjectMeta(ObjectMeta objectMeta, String objectName, long bucketId,
                                  VersioningStatusType versioningStatusType, Region region)
             throws S3ServerException{
         String metaCsName    = regionDao.getMetaCurCSName(region);
@@ -1276,9 +2028,10 @@ public class ObjectServiceImpl implements ObjectService {
             } finally {
                 daoMgr.releaseConnectionDao(connection);
             }
-            deleteObjectLob(deleteObject);
-            return;
+//            deleteObjectLob(deleteObject);
+            return deleteObject;
         }
+        return null;
     }
 
     private Long getInnerVersionId(String metaCsName, String metaClName,

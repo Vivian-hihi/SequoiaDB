@@ -56,6 +56,10 @@ public class RestExceptionHandler {
             case REGION_LOCATION_EXIST:
             case REGION_INVALID_DOMAIN:
             case REGION_INVALID_REGIONNAME:
+            case PART_ENTITY_TOO_SMALL:
+            case PART_INVALID_PART:
+            case PART_INVALID_PARTORDER:
+            case PART_INVALID_PARTNUMBER:
                 status = HttpStatus.BAD_REQUEST;
                 break;
             case INVALID_ACCESSKEYID:
@@ -72,6 +76,7 @@ public class RestExceptionHandler {
             case OBJECT_NO_SUCH_KEY:
             case OBJECT_NO_SUCH_VERSION:
             case REGION_NO_SUCH_REGION:
+            case PART_NO_SUCH_UPLOAD:
                 status = HttpStatus.NOT_FOUND;
                 break;
             case METHOD_NOT_ALLOWED:

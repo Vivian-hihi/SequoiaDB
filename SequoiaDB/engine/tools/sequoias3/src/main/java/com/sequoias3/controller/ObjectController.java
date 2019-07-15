@@ -45,15 +45,7 @@ public class ObjectController {
 
         Map<String, String> requestHeaders = new HashMap<>();
         Map<String, String> xMeta          = new HashMap<>();
-        Enumeration names = httpServletRequest.getHeaderNames();
-        while (names.hasMoreElements()){
-            String name = names.nextElement().toString();
-            if (name.startsWith(RestParamDefine.PutObjectHeader.X_AMZ_META_PREFIX)){
-                xMeta.put(name,httpServletRequest.getHeader(name));
-            }else {
-                requestHeaders.put(name, httpServletRequest.getHeader(name));
-            }
-        }
+        restUtils.getHeaders(httpServletRequest, requestHeaders, xMeta);
 
         InputStream body = null;
         Long realContenLength = null;

@@ -8,6 +8,7 @@ import com.sequoias3.model.*;
 
 import javax.servlet.ServletOutputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 public interface ObjectService {
@@ -52,4 +53,29 @@ public interface ObjectService {
     Boolean isEmptyBucket(ConnectionDao connection, Bucket bucket) throws S3ServerException;
 
     void deleteObjectByBucket(Bucket bucket) throws S3ServerException;
+
+    InitiateMultipartUploadResult initMultipartUpload(long ownerID, String bucketName, String objectName,
+                                                      Map<String, String> requestHeaders,
+                                                      Map<String, String> xMeta) throws S3ServerException;
+
+    String uploadPart(long ownerID, String bucketName, String objectName,Long uploadId,
+                      int partnumber, String contentMD5, InputStream inputStream,
+                      long contentLength) throws S3ServerException;
+
+    CompleteMultipartUploadResult completeUpload(long ownerID, String bucketName, String objectName,
+                                                 Long uploadId, List<Part> reqPartList,
+                                                 ServletOutputStream outputStream)
+            throws S3ServerException;
+
+    void abortUpload(long ownerID, String bucketName, String objectName,
+                     Long uploadId) throws S3ServerException;
+
+    ListPartsResult listParts(long ownerID, String bucketName, String objectName,
+                              Long uploadId, Integer partNumberMarker,
+                              Integer maxParts, String encodingType)
+            throws S3ServerException;
+
+    ListMultipartUploadsResult listUploadLists(long ownerID, String bucketName, String prefix,
+                         String delimiter, String keyMarker, Long uploadIdMarker,
+                         Integer maxKeys, String encodingType) throws S3ServerException;
 }

@@ -9,6 +9,10 @@ public class RestParamDefine {
     public static final String LOCATION                = "location";
     public static final String DELIMITER               = "delimiter-config";
 
+    public static final String UPLOADS                 = "uploads";
+    public static final String UPLOADID                = "uploadId";
+    public static final String PARTNUMBER              = "partNumber";
+
     public static final int    MAX_KEYS_DEFAULT        = 1000;
 
     public static class UserPara{
@@ -118,6 +122,24 @@ public class RestParamDefine {
     public static class HeadBucketResultHeader {
         public static final String REGION = "x-amz-bucket-region";
     }
+
+    public static class ListPartsPara{
+        public static final String PART_NUMBER_MARKER      = "part-number-marker";
+        public static final String MAX_PARTS               = "max-parts";
+        public static final String ENCODING_TYPE           = "encoding-type";
+    }
+
+    public static class ListUploadsPara{
+        public static final String PREFIX                  = "prefix";
+        public static final String DELIMITER               = "delimiter";
+        public static final String KEY_MARKER              = "key-marker";
+        public static final String UPLOAD_ID_MARKER        = "upload-id-marker";
+        public static final String MAX_UPLOADS             = "max-uploads";
+        public static final String ENCODING_TYPE           = "encoding-type";
+    }
+
+    public static final int PART_NUMBER_MIN         = 1;
+    public static final int PART_NUMBER_MAX         = 10000;
 
     public static final int KEY_LENGTH              = 900;
     public static final int X_AMZ_META_LENGTH       = 2*1024;

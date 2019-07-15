@@ -13,8 +13,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Enumeration;
+import java.util.Map;
 
 @Component
 public class RestUtils {
@@ -98,4 +101,16 @@ public class RestUtils {
         }
     }
 
+    public void getHeaders(HttpServletRequest httpServletRequest,
+                           Map<String, String> requestHeaders, Map<String, String> xMeta ){
+        Enumeration names = httpServletRequest.getHeaderNames();
+        while (names.hasMoreElements()){
+            String name = names.nextElement().toString();
+            if (name.startsWith(RestParamDefine.PutObjectHeader.X_AMZ_META_PREFIX)){
+                xMeta.put(name,httpServletRequest.getHeader(name));
+            }else {
+                requestHeaders.put(name, httpServletRequest.getHeader(name));
+            }
+        }
+    }
 }

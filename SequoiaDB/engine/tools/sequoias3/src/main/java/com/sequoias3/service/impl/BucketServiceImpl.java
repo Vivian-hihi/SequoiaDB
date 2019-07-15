@@ -12,6 +12,7 @@ import com.sequoias3.model.GetServiceResult;
 import com.sequoias3.model.LocationConstraint;
 import com.sequoias3.service.BucketService;
 import com.sequoias3.service.ObjectService;
+import org.bson.BSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,12 @@ public class BucketServiceImpl implements BucketService {
 
     @Autowired
     TaskDao taskDao;
+
+    @Autowired
+    UploadDao uploadDao;
+
+    @Autowired
+    MetaDao metaDao;
 
     @Override
     public void createBucket(long ownerID, String bucketName, String region) throws S3ServerException {
@@ -149,26 +156,26 @@ public class BucketServiceImpl implements BucketService {
                         "The bucket you tried to delete is not empty. bucket name = "+bucketName);
             }
 
-            ConnectionDao connection = daoMgr.getConnectionDao();
-            transaction.begin(connection);
+            ConnectionDao connectionA = daoMgr.getConnectionDao();
+            transaction.begin(connectionA);
             try {
                 //delete bucket
-                bucketDao.deleteBucket(connection, deleteName);
+                bucketDao.deleteBucket(connectionA, deleteName);
 
-                if (!objectService.isEmptyBucket(connection, bucket)){
+                if (!objectService.isEmptyBucket(connectionA, bucket)){
                     throw new S3ServerException(S3Error.BUCKET_NOT_EMPTY,
                             "The bucket you tried to delete is not empty. bucket name = "+bucketName);
                 }
 
-                transaction.commit(connection);
+                transaction.commit(connectionA);
             } catch (S3ServerException e){
-                transaction.rollback(connection);
+                transaction.rollback(connectionA);
                 throw e;
             } catch (Exception e){
-                transaction.rollback(connection);
+                transaction.rollback(connectionA);
                 throw e;
             } finally {
-                daoMgr.releaseConnectionDao(connection);
+                daoMgr.releaseConnectionDao(connectionA);
             }
 
             //delete dir
@@ -177,6 +184,33 @@ public class BucketServiceImpl implements BucketService {
 
             if (bucket.getTaskID() != null){
                 taskDao.deleteTaskId(null, bucket.getTaskID());
+            }
+
+            QueryDbCursor uploadsCursor = null;
+            ConnectionDao connectionB = daoMgr.getConnectionDao();
+            transaction.begin(connectionB);
+            try {
+                uploadsCursor = uploadDao.queryUploadsByBucket(bucket.getBucketId(),
+                        null, null, null, UploadMeta.UPLOAD_INIT);
+                if (uploadsCursor != null){
+                    while (uploadsCursor.hasNext()){
+                        BSONObject record = uploadsCursor.getNext();
+                        long uploadId     = (long) record.get(UploadMeta.META_UPLOAD_ID);
+                        UploadMeta uploadMeta = uploadDao.queryUploadByUploadId(connectionB,
+                                    null, null, uploadId, true);
+                        if (uploadMeta != null){
+                            uploadMeta.setUploadStatus(UploadMeta.UPLOAD_ABORT);
+                            uploadDao.updateUploadMeta(connectionB, bucket.getBucketId(), uploadMeta.getKey(),
+                                    uploadId, uploadMeta);
+                        }
+                    }
+                    transaction.commit(connectionB);
+                }
+            } catch (Exception e){
+                transaction.rollback(connectionB);
+                logger.error("clean uploads failed. e:", e);
+            } finally {
+                metaDao.releaseQueryDbCursor(uploadsCursor);
             }
         }catch (S3ServerException e) {
             throw e;

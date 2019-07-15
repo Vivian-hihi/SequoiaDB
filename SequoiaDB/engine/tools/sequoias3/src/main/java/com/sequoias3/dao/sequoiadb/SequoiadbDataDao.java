@@ -50,7 +50,8 @@ public class SequoiadbDataDao implements DataDao {
         Sequoiadb sdb = null;
         try {
             sdb               = sdbDatasourceWrapper.getSequoiadb();
-            DBLob dbLob       = createLobWithCsCl(sdb, csName, clName, region);
+            DBLob       dbLob = createLobWithCsCl(sdb, csName, clName, region);
+
             MessageDigest MD5 = MessageDigest.getInstance("MD5");
 
             byte[] buffer    = new byte[ONCE_WRITE_BYTES];
@@ -72,6 +73,63 @@ public class SequoiadbDataDao implements DataDao {
             DataAttr result = new DataAttr();
             result.seteTag(new String(Hex.encodeHex(MD5.digest())));
             result.setSize(dbLob.getSize());
+            result.setLobId(dbLob.getID());
+
+            //close lob
+            dbLob.close();
+            return result;
+        } catch (S3ServerException e) {
+            throw e;
+        } catch (IOException e){
+            throw new S3ServerException(S3Error.UNKNOWN_ERROR, "IOException", e);
+        } catch (NoSuchAlgorithmException e){
+            throw new S3ServerException(S3Error.UNKNOWN_ERROR, "NoSuchAlgorithmException", e);
+        } catch (BaseException e){
+            throw e;
+        }catch (Exception e) {
+            logger.error("create lob failed");
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    @Override
+    public DataAttr insertObjectData(String csName, String clName, InputStream data,
+                                     Region region, ObjectId lobId, long offset, long length)
+            throws S3ServerException {
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace destCS = sdb.getCollectionSpace(csName);
+            DBCollection destCL = destCS.getCollection(clName);
+            DBLob dbLob = destCL.openLob(lobId, DBLob.SDB_LOB_WRITE);
+            dbLob.lockAndSeek(offset, length);
+
+            MessageDigest MD5 = MessageDigest.getInstance("MD5");
+
+            byte[] buffer    = new byte[ONCE_WRITE_BYTES];
+
+            long count = 0;
+            int size = 0;
+            while (true){
+                if ((size = readAsMuchAsPossible(data, buffer, 0, (int) Math.min((length - count), buffer.length))) > 0) {
+                    //md5
+                    MD5.update(buffer, 0, size);
+
+                    //write lob
+                    dbLob.write(buffer, 0, size);
+
+                    count += size;
+                }else {
+                    break;
+                }
+            }
+
+            //record md5 lobId size
+            DataAttr result = new DataAttr();
+            result.seteTag(new String(Hex.encodeHex(MD5.digest())));
+            result.setSize(count);
             result.setLobId(dbLob.getID());
 
             //close lob
@@ -202,7 +260,90 @@ public class SequoiadbDataDao implements DataDao {
     }
 
     @Override
-    public DataLob getDataLobForRead(String csName, String clName, ObjectId lobId)throws S3ServerException {
+    public DataAttr createNewData(String csName, String clName, Region region)
+            throws S3ServerException{
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            DBLob destDBLob = createLobWithCsCl(sdb, csName, clName, region);
+
+            DataAttr result = new DataAttr();
+            result.setLobId(destDBLob.getID());
+
+            destDBLob.close();
+            return result;
+        } catch (S3ServerException e) {
+            throw e;
+        } catch (BaseException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("create lob failed");
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    @Override
+    public DataAttr copyObjectData(String destCSName, String destCLName, ObjectId destLobId,
+                                   long destOffset, String sourceCSName, String sourceCLName,
+                                   ObjectId sourceLobId, long sourceOffset, long readSize)
+            throws S3ServerException {
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            DBLob destDBLob = getDBLob(sdb, destCSName, destCLName, destLobId, DBLob.SDB_LOB_WRITE);
+            destDBLob.lockAndSeek(destOffset, readSize);
+
+            //record md5 lobId size
+            DataAttr result = new DataAttr();
+            result.setLobId(destDBLob.getID());
+
+            DBLob sourceDBLob = getDBLob(sdb, sourceCSName, sourceCLName, sourceLobId, DBLob.SDB_LOB_READ);
+            sourceDBLob.seek(sourceOffset, DBLob.SDB_LOB_SEEK_SET);
+
+            byte[] buffer = new byte[ONCE_WRITE_BYTES];
+            long writeOffset = 0;
+            int size = sourceDBLob.read(buffer, 0, (int) Math.min(readSize, ONCE_WRITE_BYTES));
+            while (size > 0) {
+                //write lob
+                destDBLob.write(buffer, 0, size);
+
+                writeOffset += size;
+
+                if (writeOffset <= readSize) {
+                    size = sourceDBLob.read(buffer, 0, (int) Math.min(readSize - writeOffset, ONCE_WRITE_BYTES));
+                } else {
+                    break;
+                }
+            }
+            //close lob
+            closeLob(sourceDBLob);
+            closeLob(destDBLob);
+            return result;
+        } catch (S3ServerException e) {
+            throw e;
+        } catch (BaseException e){
+            throw e;
+        }catch (Exception e) {
+            logger.error("create lob failed");
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
+        }
+    }
+
+    private DBLob getDBLob(Sequoiadb sdb, String csName, String clName,
+                           ObjectId lobId, int mode) {
+        CollectionSpace destCS = sdb.getCollectionSpace(csName);
+        DBCollection destCL = destCS.getCollection(clName);
+        DBLob dbLob = destCL.openLob(lobId, mode);
+        return dbLob;
+    }
+
+    @Override
+    public DataLob getDataLobForRead(String csName, String clName, ObjectId lobId)
+            throws S3ServerException {
         Sequoiadb sdb = null;
         DBLob dbLob = null;
         try {
@@ -281,6 +422,28 @@ public class SequoiadbDataDao implements DataDao {
             if (null == connection) {
                 sdbDatasourceWrapper.releaseSequoiadb(sdb);
             }
+        }
+    }
+
+    @Override
+    public void completeDataLobWithOffset(String csName,
+                                String clName, ObjectId lobId,
+                                long writeOffset) throws S3ServerException{
+        Sequoiadb sdb = null;
+        try {
+            sdb = sdbDatasourceWrapper.getSequoiadb();
+            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            DBCollection cl = cs.getCollection(clName);
+
+            cl.truncateLob(lobId, writeOffset);
+        }catch (BaseException e){
+            logger.error("truncate lob failed. error:",e);
+            throw e;
+        } catch (Exception e){
+            logger.error("truncate lob failed.",e);
+            throw e;
+        } finally {
+            sdbDatasourceWrapper.releaseSequoiadb(sdb);
         }
     }
 

@@ -61,7 +61,6 @@ public enum S3Error {
     BUCKET_TOO_MANY_BUCKETS(-515, "TooManyBuckets", "You have attempted to create more buckets than allowed."),
     BUCKET_INVALID_VERSIONING_STATUS(-516, "InvalidVersioningStatus", "The versioning status is invalid."),
     BUCKET_INVALID_LOCATION(-517, "InvalidLocation", "The location is invalid."),
-//    BUCKET_NO_LIST_OBJECTS_V1(-518, "InvalidRequest", "Please use list objects V2 request instead of list objects V1."),
 
     //object
     OBJECT_WRITE_fAILED(-600, "WriteObjectFailed", "Put object failed."),
@@ -70,6 +69,7 @@ public enum S3Error {
     OBJECT_DELETE_FAILED(-603, "DeleteObjectFailed", "Delete object failed."),
     OBJECT_LIST_FAILED(-604, "ListObjectsFailed", "List objects failed."),
     OBJECT_LIST_VERSIONS_FAILED(-605, "ListVersionsFailed", "List versions failed."),
+    OBJECT_LIST_V1_FAILED(-606, "ListObjectsV1Failed", "List objects V1 failed."),
 
     OBJECT_INVALID_KEY(-611, "InvalidKey", "Invalid Key."),
     OBJECT_KEY_TOO_LONG(-612, "KeyTooLongError", "Your key is too long."),
@@ -91,6 +91,20 @@ public enum S3Error {
     OBJECT_IF_MATCH_FAILED(-633, "PreconditionFailed", "If-Match not match"),
     OBJECT_IF_NONE_MATCH_FAILED(-634, "NotModified", "If-None-Match not match"),
     OBJECT_INVALID_TIME(-635, "InvalidArgument", "Time is invalid"),
+
+    PART_INIT_MULTIPART_UPLOAD_FAILED(-641, "InitMultipartUploadFailed", "Init multipart upload failed."),
+    PART_UPLOAD_PART_FAILED(-642, "UploadPartFailed", "Upload part failed."),
+    PART_LIST_PARTS_FAILED(-643, "ListPartsFailed", "List parts failed."),
+    PART_COMPLETE_MULTIPART_UPLOAD_FAILED(-644, "CompleteMultipartUploadFailed", "Complete multipart upload failed."),
+    PART_ABORT_MULTIPART_UPLOAD_FAILED(-645, "AbortMultipartUploadFailed", "Abort multipart upload failed."),
+    PART_LIST_MULTIPART_UPLOADS_FAILED(-646, "ListMultipartUploadsFailed", "List multipart uploads failed."),
+
+    PART_NO_SUCH_UPLOAD(-651, "NoSuchUpload", "The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed."),
+    PART_ENTITY_TOO_SMALL(-652, "EntityTooSmall ", "Your proposed upload is smaller than the minimum allowed object size. Each part must be at least 5 MB in size, except the last part."),
+    PART_INVALID_PART(-653, "InvalidPart", "One or more of the specified parts could not be found. The part might not have been uploaded, or the specified entity tag might not have matched the part's entity tag."),
+    PART_INVALID_PARTORDER(-654, "InvalidPartOrder ", "The list of parts was not in ascending order. Parts list must be specified in order by part number."),
+    PART_INVALID_PARTNUMBER(-655, "InvalidPartNumber", "Part number must be an integer between 1 and 10000, inclusive."),
+    PART_COMPLETING_CONFLICT(-656, "UploadConflict", "The uploadId is completing, upload part is forbidden."),
 
     //authorization
     INVALID_ADMINISTRATOR(-701, "AccessDenied", "Non-admin users cannot do this operator."),
