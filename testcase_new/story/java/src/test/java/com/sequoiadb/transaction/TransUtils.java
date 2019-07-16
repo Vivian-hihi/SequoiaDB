@@ -9,6 +9,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
+import org.testng.Assert;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
@@ -30,7 +31,9 @@ import com.sequoiadb.testcommon.SdbTestBase;
 public class TransUtils {
 
     public static final int FLG_INSERT_CONTONDUP = 0x00000001;
-    // delayTime 线程延时启动时间，线程Thread.sleep(事务等锁超时时间-20s)
+    /**
+     * delayTime 线程延时启动时间，线程Thread.sleep(事务等锁超时时间-20s)
+     */
     public static final int delayTime = (SdbTestBase.timeOutLen - 20) * 1000;
 
     public static CollectionSpace createCS(String csName, Sequoiadb db) throws BaseException {
@@ -314,12 +317,38 @@ public class TransUtils {
      * @param mainCLName
      * @param subCLName1 子表名1
      * @param subCLName2 子表名2
-     * @param sep        主表的切分范围为 (min - sep) (sep - max)
+     * @param sep        主表的切分范围为 (min - sep)(sep - max)
      */
     public static void createCLs(Sequoiadb sdb, String csName, String hashCLName, String mainCLName, String subCLName1,
             String subCLName2, int sep) {
+        createHashCL(sdb, csName, hashCLName);
+        createMainCL(sdb, csName, mainCLName, subCLName1, subCLName2, sep);
+    }
+
+    /**
+     * 创建切分表
+     * 
+     * @param sdb
+     * @param csName
+     * @param hashCLName
+     */
+    public static void createHashCL(Sequoiadb sdb, String csName, String hashCLName) {
         sdb.getCollectionSpace(csName).createCollection(hashCLName,
                 (BSONObject) JSON.parse("{ShardingKey:{_id:1}, ShardingType:'hash', AutoSplit:true}"));
+    }
+
+    /**
+     * 创建主子表
+     * 
+     * @param sdb
+     * @param csName
+     * @param mainCLName
+     * @param subCLName1 子表名1
+     * @param subCLName2 子表名2
+     * @param sep        主表的切分范围为(min - sep)(sep - max)
+     */
+    public static void createMainCL(Sequoiadb sdb, String csName, String mainCLName, String subCLName1,
+            String subCLName2, int sep) {
         DBCollection mainCL = sdb.getCollectionSpace(csName).createCollection(mainCLName,
                 (BSONObject) JSON.parse("{ShardingKey:{_id:1}, ShardingType:'range', IsMainCL:true}"));
         sdb.getCollectionSpace(csName).createCollection(subCLName1);
@@ -330,4 +359,117 @@ public class TransUtils {
         mainCL.attachCollection(csName + "." + subCLName2,
                 (BSONObject) JSON.parse("{LowBound:{_id:" + sep + "}, UpBound:{_id:{'$maxKey':1}}}"));
     }
+
+    /**
+     * 查询记录
+     * 
+     * @param cl      集合对象
+     * @param orderBy 排序规则
+     * @param hint    排序规则
+     * @return 返回记录 BSONObject 的 List
+     */
+    public static List<BSONObject> queryToBSONList(DBCollection cl, String orderBy, String hint) {
+        return queryToBSONList(cl, null, null, orderBy, hint);
+    }
+
+    /**
+     * 查询记录
+     * 
+     * @param cl       集合对象
+     * @param matcher  匹配规则
+     * @param selector 选择规则
+     * @param orderBy  排序规则
+     * @param hint     索引条件
+     * @return 返回记录 BSONObject 的 List
+     */
+    public static List<BSONObject> queryToBSONList(DBCollection cl, String matcher, String selector, String orderBy,
+            String hint) {
+        List<BSONObject> records = null;
+        DBCursor cursor = cl.query(matcher, selector, orderBy, hint);
+        records = getReadActList(cursor);
+        return records;
+    }
+
+    /**
+     * 查询并检查记录正确性
+     * 
+     * @param cl
+     * @param hint
+     * @param expList 预期结果，记录 BSONObject 的 List
+     */
+    public static void queryAndCheck(DBCollection cl, String hint, List<BSONObject> expList) {
+        queryAndCheck(cl, null, null, null, hint, expList);
+    }
+
+    /**
+     * 查询并检查记录正确性
+     * 
+     * @param cl
+     * @param orderBy
+     * @param hint
+     * @param expList 预期结果，记录 BSONObject 的 List
+     */
+    public static void queryAndCheck(DBCollection cl, String orderBy, String hint, List<BSONObject> expList) {
+        queryAndCheck(cl, null, null, orderBy, hint, expList);
+    }
+
+    /**
+     * 查询并检查记录正确性
+     * 
+     * @param cl
+     * @param matcher
+     * @param selector
+     * @param orderBy
+     * @param hint
+     * @param expList  预期结果，记录 BSONObject 的 List
+     */
+    public static void queryAndCheck(DBCollection cl, String matcher, String selector, String orderBy, String hint,
+            List<BSONObject> expList) {
+        List<BSONObject> actList = queryToBSONList(cl, matcher, selector, orderBy, hint);
+        Assert.assertEquals(actList, expList);
+
+        BSONObject matcherBSON = (BSONObject) JSON.parse(matcher);
+        BSONObject hintBSON = (BSONObject) JSON.parse(hint);
+        long actCount = cl.getCount(matcherBSON, hintBSON);
+        long expCount = expList.size();
+        Assert.assertEquals(actCount, expCount);
+    }
+
+    /**
+     * 对 List<BSONObject> 使用 _id 字段进行排序
+     * 
+     * @param list
+     */
+    public static void sortList(List<BSONObject> list) {
+        sortList(list, null);
+    }
+
+    /**
+     * 对 List<BSONObject> 进行排序，sortField 为空时默认对 _id 字段排序
+     * 
+     * @param list
+     * @param sortField
+     */
+    public static void sortList(List<BSONObject> list, String sortField) {
+        if (sortField == null) {
+            sortField = "_id";
+        }
+        Collections.sort(list, new sortList(sortField));
+    }
+}
+
+class sortList implements Comparator<BSONObject> {
+    private String sortField;
+
+    sortList(String soerField) {
+        this.sortField = soerField;
+    }
+
+    @Override
+    public int compare(BSONObject o1, BSONObject o2) {
+        String field1 = String.valueOf(o1.get(sortField));
+        String field2 = String.valueOf(o2.get(sortField));
+        return field1.compareTo(field2);
+    }
+
 }
