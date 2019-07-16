@@ -60,11 +60,6 @@ function main( db )
 
    // 3. create dummy collection and split to all group
    createDummyCollection( db ) ;
-   
-   //4.create public capped cs for testcases
-   var cappedOption = {Capped: true};
-   commCreateCS( db, COMMCAPPEDCSNAME, true, "", cappedOption );
-  
 }
 
 try
