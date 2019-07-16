@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
@@ -147,19 +146,17 @@ public class Transaction18045 extends SdbTestBase {
             db5.commit();
 
             // 非事务表扫描
-            DBCursor cursor = cl.query("{$and:[{a:{$in:" + Arrays.toString(getAllRandArray()) + "}},{b:{$in:"
-                    + Arrays.toString(getAllRandArray()) + "}}]}", "", "{a:1, b:-1, _id:1}", "{'':null}");
-            List<BSONObject> actList = TransUtils.getReadActList(cursor);
             expList = getExpList();
-            Assert.assertEquals(actList, expList);
-
-            // 非事务索引扫描
-            cursor = cl.query(
+            TransUtils.queryAndCheck(cl,
                     "{$and:[{a:{$in:" + Arrays.toString(getAllRandArray()) + "}},{b:{$in:"
                             + Arrays.toString(getAllRandArray()) + "}}]}",
-                    "", "{a:1, b:-1, _id:1}", "{'':'textIndex18045'}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
+                    "", "{a:1, b:-1, _id:1}", "{'':null}", expList);
+
+            // 非事务索引扫描
+            TransUtils.queryAndCheck(cl,
+                    "{$and:[{a:{$in:" + Arrays.toString(getAllRandArray()) + "}},{b:{$in:"
+                            + Arrays.toString(getAllRandArray()) + "}}]}",
+                    "", "{a:1, b:-1, _id:1}", "{'':'textIndex18045'}", expList);
 
             latch.await();
         } catch (InterruptedException e) {
@@ -289,10 +286,8 @@ public class Transaction18045 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             Integer[] randArray = getRandomArray();
-            DBCursor cursor = cl4.query("{$and:[{a:{$in:" + Arrays.toString(randArray) + "}},{b:{$in:"
-                    + Arrays.toString(randArray) + "}}]}", null, "{a:1, b:-1}", "{'':'textIndex18045'}");
-            List<BSONObject> records = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(records, expList);
+            TransUtils.queryAndCheck(cl4, "{$and:[{a:{$in:" + Arrays.toString(randArray) + "}},{b:{$in:"
+                    + Arrays.toString(randArray) + "}}]}", null, "{a:1, b:-1}", "{'':'textIndex18045'}", expList);
             latch.countDown();
         }
     }
@@ -302,10 +297,8 @@ public class Transaction18045 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             Integer[] randArray = getRandomArray();
-            DBCursor cursor = cl5.query("{$and:[{a:{$in:" + Arrays.toString(randArray) + "}},{b:{$in:"
-                    + Arrays.toString(randArray) + "}}]}", null, "{a:1, b:-1}", "{'':null}");
-            List<BSONObject> records = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(records, expList);
+            TransUtils.queryAndCheck(cl5, "{$and:[{a:{$in:" + Arrays.toString(randArray) + "}},{b:{$in:"
+                    + Arrays.toString(randArray) + "}}]}", null, "{a:1, b:-1}", "{'':null}", expList);
             latch.countDown();
         }
     }

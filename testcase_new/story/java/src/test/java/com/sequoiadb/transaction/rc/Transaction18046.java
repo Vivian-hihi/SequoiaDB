@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -182,16 +181,17 @@ public class Transaction18046 extends SdbTestBase {
             Assert.assertTrue(deleteThread.isSuccess(), deleteThread.getErrorMsg());
 
             // 非事务表扫描
-            DBCursor cursor = cl.query("{$and:[{a:{$in:" + Arrays.toString(getAllRandArray()) + "}},{b:{$in:"
-                    + Arrays.toString(getAllRandArray()) + "}}]}", "", "{a:1, b:-1, _id:1}", "{'':null}");
-            List<BSONObject> tbScanActList = TransUtils.getReadActList(cursor);
+            List<BSONObject> tbScanActList = TransUtils
+                    .queryToBSONList(cl,
+                            "{$and:[{a:{$in:" + Arrays.toString(getAllRandArray()) + "}},{b:{$in:"
+                                    + Arrays.toString(getAllRandArray()) + "}}]}",
+                            "", "{a:1, b:-1, _id:1}", "{'':null}");
 
             // 非事务索引扫描
-            cursor = cl.query(
+            List<BSONObject> ixScanActList = TransUtils.queryToBSONList(cl,
                     "{$and:[{a:{$in:" + Arrays.toString(getAllRandArray()) + "}},{b:{$in:"
                             + Arrays.toString(getAllRandArray()) + "}}]}",
                     "", "{a:1, b:-1, _id:1}", "{'':'textIndex18046'}");
-            List<BSONObject> ixScanActList = TransUtils.getReadActList(cursor);
             Assert.assertEquals(tbScanActList, ixScanActList);
 
             latch.await();
@@ -292,11 +292,8 @@ public class Transaction18046 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             Integer[] randArray = getRandomArray();
-            DBCursor cursor = cl.query("{$and:[{a:{$in:" + Arrays.toString(randArray) + "}},{b:{$in:"
-                    + Arrays.toString(randArray) + "}}]}", null, "{a:1, b:1}", hint);
-            List<BSONObject> records = TransUtils.getReadActList(cursor);
-            System.out.println("索引扫描  Records : " + records.size() + ", ExpRecords : " + expList.size());
-            Assert.assertEquals(records, expList);
+            TransUtils.queryAndCheck(cl, "{$and:[{a:{$in:" + Arrays.toString(randArray) + "}},{b:{$in:"
+                    + Arrays.toString(randArray) + "}}]}", null, "{a:1, b:1}", hint, expList);
             latch.countDown();
         }
     }

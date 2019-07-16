@@ -17,7 +17,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -31,12 +30,10 @@ public class Transaction17117 extends SdbTestBase {
     private Sequoiadb db2 = null;
     private DBCollection cl = null;
     private DBCollection cl2 = null;
-    private DBCursor cursor = null;
     private List<BSONObject> posExpList = new ArrayList<BSONObject>();
     private List<BSONObject> invExpList = new ArrayList<BSONObject>();
     private List<BSONObject> posInsertR1s = new ArrayList<BSONObject>();
     private List<BSONObject> invInsertR1s = new ArrayList<BSONObject>();
-    private List<BSONObject> actList = new ArrayList<BSONObject>();
 
     @BeforeClass
     public void setUp() {
@@ -91,60 +88,35 @@ public class Transaction17117 extends SdbTestBase {
         }
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{_id:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, posExpList);
-        actList.clear();
+        TransUtils.queryAndCheck(cl, "{_id:1}", "{'':null}", posExpList);
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{a:1, b:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, posExpList);
+        TransUtils.queryAndCheck(cl, "{a:1, b:1}", "{'':'a'}", posExpList);
 
         // 事务2表扫描记录、正序
-        cursor = cl2.query(null, null, "{a:1, b:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, posExpList);
-        actList.clear();
+        TransUtils.queryAndCheck(cl2, "{a:1, b:1}", "{'':null}", posExpList);
 
         // 事务2表扫描记录、逆序
-        cursor = cl2.query(null, null, "{a:-1, b:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, invExpList);
-        actList.clear();
+        TransUtils.queryAndCheck(cl2, "{a:-1, b:1}", "{'':null}", invExpList);
 
         // 事务2索引扫描记录、正序
-        cursor = cl2.query(null, null, "{a:1, b:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, posExpList);
-        actList.clear();
+        TransUtils.queryAndCheck(cl2, "{a:1, b:1}", "{'':'a'}", posExpList);
 
         // 事务2索引扫描记录、逆序
-        cursor = cl2.query(null, null, "{a:-1, b:1}", "{'':'ab'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, invExpList);
-        actList.clear();
+        TransUtils.queryAndCheck(cl2, "{a:-1, b:1}", "{'':'ab'}", invExpList);
 
         db2.commit();
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{a:1, b:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, posExpList);
-        actList.clear();
+        TransUtils.queryAndCheck(cl, "{a:1, b:1}", "{'':null}", posExpList);
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{a:1, b:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, posExpList);
-
-        cursor.close();
+        TransUtils.queryAndCheck(cl, "{a:1, b:1}", "{'':'a'}", posExpList);
     }
 
     private class UpdateThread extends SdbThreadBase {
         private Sequoiadb db1 = null;
         private DBCollection cl1 = null;
-        private DBCursor cursor = null;
         private ReadThread readThread = null;
 
         public UpdateThread(ReadThread readThread) {
@@ -161,28 +133,16 @@ public class Transaction17117 extends SdbTestBase {
                 cl1.update("{$and:[{a:{$gte:0}},{a:{$lt:2000}}]}", "{$inc:{_id:15000, a:15001, b:-10}}", "{'':'a'}");
 
                 // 事务1表扫描记录、正序
-                cursor = cl1.query(null, null, "{a:1, b:1}", "{'':null}");
-                actList = TransUtils.getReadActList(cursor);
-                Assert.assertEquals(actList, posExpList);
-                actList.clear();
+                TransUtils.queryAndCheck(cl1, "{a:1, b:1}", "{'':null}", posExpList);
 
                 // 事务1表扫描记录、逆序
-                cursor = cl1.query(null, null, "{a:-1, b:1}", "{'':null}");
-                actList = TransUtils.getReadActList(cursor);
-                Assert.assertEquals(actList, invExpList);
-                actList.clear();
+                TransUtils.queryAndCheck(cl1, "{a:-1, b:1}", "{'':null}", invExpList);
 
                 // 事务1走"a"索引扫描记录、正序
-                cursor = cl1.query(null, null, "{a:1, b:1}", "{'':'a'}");
-                actList = TransUtils.getReadActList(cursor);
-                Assert.assertEquals(actList, posExpList);
-                actList.clear();
+                TransUtils.queryAndCheck(cl1, "{a:1, b:1}", "{'':'a'}", posExpList);
 
                 // 事务1走"ab"索引扫描记录、逆序
-                cursor = cl1.query(null, null, "{a:-1, b:1}", "{'':'ab'}");
-                actList = TransUtils.getReadActList(cursor);
-                Assert.assertEquals(actList, invExpList);
-                actList.clear();
+                TransUtils.queryAndCheck(cl1, "{a:-1, b:1}", "{'':'ab'}", invExpList);
 
                 if (!readThread.isSuccess()) {
                     Assert.fail(readThread.getErrorMsg());
@@ -191,41 +151,25 @@ public class Transaction17117 extends SdbTestBase {
             } catch (BaseException e) {
                 Assert.fail(e.getMessage());
             } finally {
-                cursor.close();
                 db1.close();
             }
         }
     }
 
     private class ReadThread extends SdbThreadBase {
-        private List<BSONObject> actList = new ArrayList<BSONObject>();
-        private DBCursor cursor = null;
-
         @Override
         public void exec() throws Exception {
             // 事务2表扫描记录、正序
-            cursor = cl2.query(null, null, "{a:1, b:1}", "{'':null}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, posInsertR1s);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, "{a:1, b:1}", "{'':null}", posInsertR1s);
 
             // 事务2表扫描记录、逆序
-            cursor = cl2.query(null, null, "{a:-1, b:1}", "{'':null}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, invInsertR1s);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, "{a:-1, b:1}", "{'':null}", invInsertR1s);
 
             // 事务2走"a"索引扫描记录、正序
-            cursor = cl2.query(null, null, "{a:1, b:1}", "{'':'a'}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, posInsertR1s);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, "{a:1, b:1}", "{'':'a'}", posInsertR1s);
 
             // 事务2走"ab"索引扫描记录、逆序
-            cursor = cl2.query(null, null, "{a:-1,b:1}", "{'':'ab'}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, invInsertR1s);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, "{a:-1, b:1}", "{'':'ab'}", invInsertR1s);
         }
     }
 

@@ -34,7 +34,6 @@ public class Transaction17140 extends SdbTestBase {
     private BSONObject modifier = null;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
-    private List<BSONObject> actDataList = null;
 
     @BeforeClass
     public void setUp() {
@@ -82,65 +81,30 @@ public class Transaction17140 extends SdbTestBase {
 
         // trans1 query
         expDataList.add(data2);
-        recordCur = cl.query(null, null, "{a:1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl.query(null, null, "{a:1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+        TransUtils.queryAndCheck(cl, "{a:1}", "{'': null}", expDataList);
+        TransUtils.queryAndCheck(cl, "{a:1}", "{'': 'a'}", expDataList);
 
         // 3 trans2 query
         expDataList.clear();
         expDataList.add(data);
-        recordCur = cl2.query(null, null, "{a:1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl2.query(null, null, "{a:1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+        TransUtils.queryAndCheck(cl2, "{a:1}", "{'': null}", expDataList);
+        TransUtils.queryAndCheck(cl2, "{a:1}", "{'': 'a'}", expDataList);
 
         // 4 commit trans1 and query
         sdb.commit();
         expDataList.clear();
         expDataList.add(data2);
-        recordCur = cl.query(null, null, "{a:1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl.query(null, null, "{a:1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+        TransUtils.queryAndCheck(cl, "{a:1}", "{'': null}", expDataList);
+        TransUtils.queryAndCheck(cl, "{a:1}", "{'': 'a'}", expDataList);
 
         // 5 trans2 query
-        recordCur = cl2.query(null, null, "{a:1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl2.query(null, null, "{a:1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+        TransUtils.queryAndCheck(cl2, "{a:1}", "{'': null}", expDataList);
+        TransUtils.queryAndCheck(cl2, "{a:1}", "{'': 'a'}", expDataList);
 
         // 6 commit trans2 and query
         sdb2.commit();
-        recordCur = cl.query(null, null, "{a:1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl.query(null, null, "{a:1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+        TransUtils.queryAndCheck(cl, "{a:1}", "{'': null}", expDataList);
+        TransUtils.queryAndCheck(cl, "{a:1}", "{'': 'a'}", expDataList);
     }
 
     @AfterClass

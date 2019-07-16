@@ -5,14 +5,12 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -29,10 +27,8 @@ public class Transaction18058 extends SdbTestBase {
     private String clName = "cl_18058";
     private DBCollection cl = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
-    private List<BSONObject> actList = new ArrayList<BSONObject>();
     private Sequoiadb db1 = null;
     private DBCollection cl1 = null;
-    private DBCursor cursor = null;
 
     @BeforeClass
     public void setUp() {
@@ -85,26 +81,18 @@ public class Transaction18058 extends SdbTestBase {
         expList.add(insertR2);
         BSONObject updateR1 = (BSONObject) JSON.parse("{_id:1, a:5, b:1}");
         expList.add(updateR1);
-        cursor = cl1.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl1, "{a:1}", "{'':null}", expList);
 
         // 事务中索引查询
-        cursor = cl1.query(null, null, "{a:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl1, "{a:1}", "{'':'a'}", expList);
 
         // 事务1、2提交
         db1.commit();
 
         // 表扫描查询
-        cursor = cl.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, "{a:1}", "{'':null}", expList);
 
         // 索引查询
-        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, "{a:1}", "{'':'a'}", expList);
     }
 }

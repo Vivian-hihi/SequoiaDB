@@ -14,7 +14,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -44,9 +43,10 @@ public class Transaction17369A extends SdbTestBase {
     private BSONObject updateR1 = new BasicBSONObject();
     private BSONObject updateR2 = new BasicBSONObject();
     private ArrayList<BSONObject> expList = new ArrayList<BSONObject>();
-    private ArrayList<BSONObject> actList = new ArrayList<BSONObject>();
-    private DBCursor cursor = null;
-    private String hint;
+    private String hintTbScan = "{\"\":null}";
+    private String hintIxScan = "{\"\":\"a\"}";
+    private String orderBy1 = "{a: 1, b: -1}";
+    private String orderBy2 = "{a: -1, b: 1}";
 
     @BeforeClass
     public void setUp() {
@@ -111,8 +111,7 @@ public class Transaction17369A extends SdbTestBase {
             cl3 = db3.getCollectionSpace(csName).getCollection(clName);
 
             // 事务1删除记录R1
-            hint = "{\"\":\"a\"}";
-            cl1.delete("{a:1}", hint);
+            cl1.delete("{a:1}", hintIxScan);
 
             // 事务2匹配记录R1、R2更新为R3、R4,R1<R2<R3
             UpdateThread updateThread = new UpdateThread();
@@ -122,259 +121,131 @@ public class Transaction17369A extends SdbTestBase {
             // 事务1正序记录读
             expList.clear();
             expList.add(insertR2);
-            hint = "{\"\":null}";
-            cursor = cl1.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl1, orderBy1, hintTbScan, expList);
 
             // 事务1正序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl1.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl1, orderBy1, hintIxScan, expList);
 
             // 事务1逆序记录读
-            hint = "{\"\":null}";
-            cursor = cl1.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl1, orderBy2, hintTbScan, expList);
 
             // 事务1逆序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl1.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl1, orderBy2, hintIxScan, expList);
 
             // 事务3正序记录读
             expList.clear();
             expList.add(insertR1);
             expList.add(insertR2);
-            hint = "{\"\":null}";
-            cursor = cl3.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy1, hintTbScan, expList);
 
             // 事务3正序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl3.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy1, hintIxScan, expList);
 
             // 事务3逆序记录读
             expList.clear();
             expList.add(insertR2);
             expList.add(insertR1);
-            hint = "{\"\":null}";
-            cursor = cl3.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy2, hintTbScan, expList);
 
             // 事务3逆序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl3.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy2, hintIxScan, expList);
 
             // 非事务正序记录读
-            hint = "{\"\":null}";
-            cursor = cl.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReadList1);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy1, hintTbScan, expReadList1);
 
             // 非事务正序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReadList1);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy1, hintIxScan, expReadList1);
 
             // 非事务逆序记录读
-            hint = "{\"\":null}";
-            cursor = cl.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReadList1);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy2, hintTbScan, expReadList1);
 
             // 非事务逆序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReadList1);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy2, hintIxScan, expReadList1);
 
             // 回滚事务1
             db1.rollback();
             Assert.assertTrue(updateThread.isSuccess(), updateThread.getErrorMsg());
 
             // 非事务正序记录读
-            hint = "{\"\":null}";
-            cursor = cl.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expPositiveReadList2);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy1, hintTbScan, expPositiveReadList2);
 
             // 非事务正序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expPositiveReadList2);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy1, hintIxScan, expPositiveReadList2);
 
             // 非事务逆序记录读
-            hint = "{\"\":null}";
-            cursor = cl.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReverseReadList2);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy2, hintTbScan, expReverseReadList2);
 
             // 非事务逆序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReverseReadList2);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy2, hintIxScan, expReverseReadList2);
 
             // 事务2正序记录读
             expList.clear();
             expList.add(updateR1);
             expList.add(updateR2);
-            hint = "{\"\":null}";
-            cursor = cl2.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, orderBy1, hintTbScan, expList);
 
             // 事务2正序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl2.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, orderBy1, hintIxScan, expList);
 
             // 事务2逆序记录读
             expList.clear();
             expList.add(updateR2);
             expList.add(updateR1);
-            hint = "{\"\":null}";
-            cursor = cl2.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, orderBy2, hintTbScan, expList);
 
             // 事务2逆序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl2.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, orderBy2, hintIxScan, expList);
 
             // 事务3正序记录读
             expList.clear();
             expList.add(insertR1);
             expList.add(insertR2);
-            hint = "{\"\":null}";
-            cursor = cl3.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy1, hintTbScan, expList);
 
             // 事务3正序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl3.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy1, hintIxScan, expList);
 
             // 事务3逆序记录读
             expList.clear();
             expList.add(insertR2);
             expList.add(insertR1);
-            hint = "{\"\":null}";
-            cursor = cl3.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy2, hintTbScan, expList);
 
             // 事务3逆序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl3.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy2, hintIxScan, expList);
 
             // 提交事务2
             db2.commit();
 
             // 非事务正序记录读
-            hint = "{\"\":null}";
-            cursor = cl.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expPositiveReadList2);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy1, hintTbScan, expPositiveReadList2);
 
             // 非事务正序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expPositiveReadList2);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy1, hintIxScan, expPositiveReadList2);
 
             // 非事务逆序记录读
-            hint = "{\"\":null}";
-            cursor = cl.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReverseReadList2);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy2, hintTbScan, expReverseReadList2);
 
             // 非事务逆序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expReverseReadList2);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, orderBy2, hintIxScan, expReverseReadList2);
 
             // 事务3正序记录读
             expList.clear();
             expList.add(updateR1);
             expList.add(updateR2);
-            hint = "{\"\":null}";
-            cursor = cl3.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy1, hintTbScan, expList);
 
             // 事务3正序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl3.query(null, null, "{a: 1, b: -1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy1, hintIxScan, expList);
 
             // 事务3逆序记录读
             expList.clear();
             expList.add(updateR2);
             expList.add(updateR1);
-            hint = "{\"\":null}";
-            cursor = cl3.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy2, hintTbScan, expList);
 
             // 事务3逆序索引读
-            hint = "{\"\":\"a\"}";
-            cursor = cl3.query(null, null, "{a: -1, b: 1}", hint);
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-            actList.clear();
+            TransUtils.queryAndCheck(cl3, orderBy2, hintIxScan, expList);
 
             // 提交事务3
             db3.commit();
@@ -425,8 +296,7 @@ public class Transaction17369A extends SdbTestBase {
     private class UpdateThread extends SdbThreadBase {
         @Override
         public void exec() throws BaseException {
-            hint = "{\"\":\"a\"}";
-            cl2.update(null, "{$inc:{a:1,b:1}}", hint);
+            cl2.update(null, "{$inc:{a:1,b:1}}", hintIxScan);
         }
     }
 }

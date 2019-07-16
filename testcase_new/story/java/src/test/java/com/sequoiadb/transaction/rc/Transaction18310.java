@@ -86,7 +86,6 @@ public class Transaction18310 extends SdbTestBase {
                     // 删除集合
                     cs.dropCollection(clName);
                     if (++doTimes == 30) {
-                        System.out.println("CLNAME: " + clName + " doTimes: " + doTimes);
                         break;
                     }
                 }

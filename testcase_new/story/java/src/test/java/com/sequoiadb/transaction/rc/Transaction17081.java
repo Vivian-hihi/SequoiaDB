@@ -17,7 +17,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
@@ -34,10 +33,10 @@ public class Transaction17081 extends SdbTestBase {
     private DBCollection cl = null;
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
-    private DBCursor cursor = null;
     private List<BSONObject> insertR1s = new ArrayList<BSONObject>();
     private List<BSONObject> expList = new ArrayList<BSONObject>();
-    private List<BSONObject> actList = new ArrayList<BSONObject>();
+    private String hintTbScan = "{'':null}";
+    private String hintIxScan = "{'':'a'}";
 
     @BeforeClass
     public void setUp() {
@@ -64,13 +63,13 @@ public class Transaction17081 extends SdbTestBase {
         // 事务2并发表扫描
         dbT = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         dbT.beginTransaction();
-        Read read1 = new Read(dbT, "{'':null}");
+        Read read1 = new Read(dbT, hintTbScan);
         read1.start();
 
         // 事务2并发索引扫描
         dbI = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         dbI.beginTransaction();
-        Read read2 = new Read(dbI, "{'':'a'}");
+        Read read2 = new Read(dbI, hintIxScan);
         read2.start();
 
         if (!read1.isSuccess() || !read2.isSuccess() || !operation.isSuccess()) {
@@ -78,38 +77,24 @@ public class Transaction17081 extends SdbTestBase {
         }
 
         // 非事务表扫描
-        cursor = cl.query(null, null, "{a:1}", "{'':null}");
-        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
+        TransUtils.queryAndCheck(cl, "{a:1}", hintTbScan, expList);
 
         // 非事务索引扫描
-        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
-        Assert.assertEquals(TransUtils.getReadActList(cursor), expList);
+        TransUtils.queryAndCheck(cl, "{a:1}", hintIxScan, expList);
 
         db1.rollback();
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, insertR1s);
-        actList.clear();
+        TransUtils.queryAndCheck(cl2, "{a:1}", hintTbScan, insertR1s);
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, "{a:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, insertR1s);
-        actList.clear();
+        TransUtils.queryAndCheck(cl2, "{a:1}", hintIxScan, insertR1s);
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, insertR1s);
-        actList.clear();
+        TransUtils.queryAndCheck(cl, "{a:1}", hintTbScan, insertR1s);
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, "{a:1}", "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, insertR1s);
-
+        TransUtils.queryAndCheck(cl, "{a:1}", hintIxScan, insertR1s);
         db2.rollback();
     }
 
@@ -134,8 +119,6 @@ public class Transaction17081 extends SdbTestBase {
         private Sequoiadb db2 = null;
         private DBCollection cl2 = null;
         private String hint = null;
-        private DBCursor cursor = null;
-        private List<BSONObject> actList = new ArrayList<BSONObject>();
 
         public Read(Sequoiadb db2, String hint) {
             this.db2 = db2;
@@ -147,11 +130,8 @@ public class Transaction17081 extends SdbTestBase {
             cl2 = db2.getCollectionSpace(csName).getCollection(clName);
             // 事务2扫描记录
             for (int i = 0; i < 25; i++) {
-                cursor = cl2.query(null, null, "{a:1}", hint);
-                actList = TransUtils.getReadActList(cursor);
-                Assert.assertEquals(actList, insertR1s);
+                TransUtils.queryAndCheck(cl2, "{a:1}", hint, insertR1s);
             }
-            cursor.close();
         }
     }
 

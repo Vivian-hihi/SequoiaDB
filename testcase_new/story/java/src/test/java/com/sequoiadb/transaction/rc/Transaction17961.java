@@ -5,14 +5,12 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -29,7 +27,6 @@ public class Transaction17961 extends SdbTestBase {
     private String clName = "cl17961";
     private DBCollection cl = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
-    private List<BSONObject> actList = new ArrayList<BSONObject>();
     private Sequoiadb db1 = null;
     private Sequoiadb db2 = null;
     private DBCollection cl1 = null;
@@ -77,29 +74,20 @@ public class Transaction17961 extends SdbTestBase {
         cl1.delete("{_id:1}", "{'':'$id'}");
 
         // 事务2读记录走表扫描
-        DBCursor recordsCursor = cl2.query(null, null, null, "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl2, "{'':null}", expList);
 
         // 事务2读记录走$id索引扫描
-        recordsCursor = cl2.query("{a:{$exists:1}}", null, null, "{'':'$id'}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl2, "{a:{$exists:1}}", null, null, "{'':'$id'}", expList);
 
         // 事务1、2提交
         db1.commit();
         db2.commit();
 
         // 非事务表扫描
-        recordsCursor = cl.query(null, null, null, "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
         expList.clear();
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, "{'':null}", expList);
 
         // 非事务索引扫描
-        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'$id'}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
-        recordsCursor.close();
+        TransUtils.queryAndCheck(cl, "{a:{$exists:1}}", null, null, "{'':'$id'}", expList);
     }
 }

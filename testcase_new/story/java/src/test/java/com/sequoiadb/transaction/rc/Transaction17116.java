@@ -17,7 +17,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -32,8 +31,6 @@ public class Transaction17116 extends SdbTestBase {
     private Sequoiadb db2 = null;
     private DBCollection cl = null;
     private DBCollection cl2 = null;
-    private DBCursor cursor = null;
-    private List<BSONObject> actList = new ArrayList<BSONObject>();
 
     @BeforeClass
     public void setUp() {
@@ -113,31 +110,18 @@ public class Transaction17116 extends SdbTestBase {
             }
 
             // 非事务表扫描记录
-            cursor = cl.query(null, null, indexKey, "{'':null}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, newExp);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, indexKey, "{'':null}", newExp);
 
             // 非事务索引扫描记录
-            cursor = cl.query(null, null, indexKey, "{'':'a'}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, newExp);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, indexKey, "{'':'a'}", newExp);
 
             db2.commit();
 
             // 非事务表扫描记录
-            cursor = cl.query(null, null, indexKey, "{'':null}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, newExp);
-            actList.clear();
+            TransUtils.queryAndCheck(cl, indexKey, "{'':null}", newExp);
 
             // 非事务索引扫描记录
-            cursor = cl.query(null, null, indexKey, "{'':'a'}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, newExp);
-            actList.clear();
-            cursor.close();
+            TransUtils.queryAndCheck(cl, indexKey, "{'':'a'}", newExp);
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         } finally {
@@ -152,10 +136,8 @@ public class Transaction17116 extends SdbTestBase {
 
     private class UpdateThread extends SdbThreadBase {
         private DBCollection cl1 = null;
-        private DBCursor cursor = null;
         private String indexKey = null;
         private List<BSONObject> newExp = null;
-        private List<BSONObject> actList = new ArrayList<BSONObject>();
 
         public UpdateThread(String indexKey, List<BSONObject> newExp) {
             this.indexKey = indexKey;
@@ -173,17 +155,10 @@ public class Transaction17116 extends SdbTestBase {
                 cl1.update("{b:{$isnull:1}, a:{$gte: 9000, $lt: 12000}}", "{$set:{b:5}}", null);
 
                 // 事务1表扫描记录
-                cursor = cl1.query(null, null, indexKey, "{'':null}");
-                actList = TransUtils.getReadActList(cursor);
-                Assert.assertEquals(actList, newExp);
-                actList.clear();
+                TransUtils.queryAndCheck(cl1, indexKey, "{'':null}", newExp);
 
                 // 事务1索引扫描记录
-                cursor = cl1.query(null, null, indexKey, "{'':'a'}");
-                actList = TransUtils.getReadActList(cursor);
-                Assert.assertEquals(actList, newExp);
-                actList.clear();
-                cursor.close();
+                TransUtils.queryAndCheck(cl1, indexKey, "{'':'a'}", newExp);
             } catch (BaseException e) {
                 Assert.fail(e.getMessage());
             }
@@ -191,8 +166,6 @@ public class Transaction17116 extends SdbTestBase {
     }
 
     private class ReadThread extends SdbThreadBase {
-        private List<BSONObject> actList = new ArrayList<BSONObject>();
-        private DBCursor cursor = null;
         private String indexKey = null;
         private List<BSONObject> oldExp = null;
 
@@ -204,16 +177,10 @@ public class Transaction17116 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             // 事务2表扫描记录
-            cursor = cl2.query(null, null, indexKey, "{'':null}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, oldExp);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, indexKey, "{'':null}", oldExp);
 
             // 事务2走索引扫描记录
-            cursor = cl2.query(null, null, indexKey, "{'':'a'}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, oldExp);
-            actList.clear();
+            TransUtils.queryAndCheck(cl2, indexKey, "{'':'a'}", oldExp);
         }
     }
 

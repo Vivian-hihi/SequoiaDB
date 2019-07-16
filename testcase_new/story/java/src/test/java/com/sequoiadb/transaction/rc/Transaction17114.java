@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -193,16 +192,11 @@ public class Transaction17114 extends SdbTestBase {
             db7.commit();
 
             // 非事务表扫描
-            DBCursor cursor = cl.query("", "", "{_id:1}", "{'':null}");
-            List<BSONObject> actList = TransUtils.getReadActList(cursor);
             getExpList();
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, "{_id:1}", "{'':null}", expList);
 
             // 非事务索引扫描
-            cursor = cl.query("", "", "{_id:1}", "{'':'textIndex17114'}");
-            actList = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(actList, expList);
-
+            TransUtils.queryAndCheck(cl, "{_id:1}", "{'':'textIndex17114'}", expList);
             latch.await();
         } catch (InterruptedException e) {
             Assert.fail(e.getMessage());
@@ -301,9 +295,7 @@ public class Transaction17114 extends SdbTestBase {
 
         @Override
         public void exec() throws Exception {
-            DBCursor cursor = cl.query(null, null, sort, hint);
-            List<BSONObject> records = TransUtils.getReadActList(cursor);
-            Assert.assertEquals(records, expRecords);
+            TransUtils.queryAndCheck(cl, sort, hint, expRecords);
             latch.countDown();
         }
     }

@@ -40,6 +40,8 @@ public class Transaction17112 extends SdbTestBase {
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
     private DBCollection cl3 = null;
+    private String hintTbScan = "{'':null}";
+    private String hintIxScan = "{'':'a'}";
 
     @DataProvider(name = "index")
     public Object[][] createIndex() {
@@ -116,25 +118,17 @@ public class Transaction17112 extends SdbTestBase {
 
             // 事务2表扫描
             Collections.reverse(expList);
-            recordsCursor = cl2.query(null, null, null, "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl2, hintTbScan, expList);
 
             // 事务2索引扫描
-            recordsCursor = cl2.query(null, null, null, "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl2, hintIxScan, expList);
 
             // 事务2逆序表扫描
             Collections.reverse(expList);
-            recordsCursor = cl2.query(null, null, "{a: -1}", "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl2, "{a: -1}", hintTbScan, expList);
 
             // 事务2逆序索引扫描
-            recordsCursor = cl2.query(null, null, "{a: -1}", "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl2, "{a: -1}", hintIxScan, expList);
 
             // 事务3更新记录阻塞
             CL3Update cl3Update = new CL3Update();
@@ -149,98 +143,65 @@ public class Transaction17112 extends SdbTestBase {
             BSONObject record = (BSONObject) JSON.parse("{_id:1, a:4, b:1}");
             expList.clear();
             expList.add(record);
-            recordsCursor = cl.query(null, null, null, "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, hintTbScan, expList);
 
             // 非事务索引扫描
-            recordsCursor = cl.query(null, null, null, "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, hintIxScan, expList);
 
             // 非事务逆序表扫描
             Collections.reverse(expList);
-            recordsCursor = cl.query(null, null, "{a: -1}", "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, "{a: -1}", hintTbScan, expList);
 
             // 非事务逆序索引扫描
-            recordsCursor = cl.query(null, null, "{a: -1}", "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, "{a: -1}", hintIxScan, expList);
 
             // 提交事务2
             db2.commit();
 
             // 非事务表扫描
             Collections.reverse(expList);
-            recordsCursor = cl.query(null, null, null, "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, hintTbScan, expList);
 
             // 非事务索引扫描
-            recordsCursor = cl.query(null, null, null, "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, hintIxScan, expList);
 
             // 非事务逆序表扫描
             Collections.reverse(expList);
-            recordsCursor = cl.query(null, null, "{a: -1}", "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, "{a: -1}", hintTbScan, expList);
 
             // 非事务逆序索引扫描
-            recordsCursor = cl.query(null, null, "{a: -1}", "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, "{a: -1}", hintIxScan, expList);
 
             // 事务3表扫描
             Collections.reverse(expList);
-            recordsCursor = cl3.query(null, null, null, "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl3, hintTbScan, expList);
 
             // 事务3索引扫描
-            recordsCursor = cl3.query(null, null, null, "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl3, hintIxScan, expList);
 
             // 事务3逆序表扫描
             Collections.reverse(expList);
-            recordsCursor = cl3.query(null, null, "{a: -1}", "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl3, "{a: -1}", hintTbScan, expList);
 
             // 事务3逆序索引扫描
-            recordsCursor = cl3.query(null, null, "{a: -1}", "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl3, "{a: -1}", hintIxScan, expList);
 
             // 提交事务3
             db3.commit();
 
             // 非事务表扫描
             Collections.reverse(expList);
-            recordsCursor = cl.query(null, null, null, "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, hintTbScan, expList);
 
             // 非事务索引扫描
-            recordsCursor = cl.query(null, null, null, "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
-            recordsCursor.close();
+            TransUtils.queryAndCheck(cl, hintIxScan, expList);
 
             // 非事务逆序表扫描
             Collections.reverse(expList);
-            recordsCursor = cl.query(null, null, "{a: -1}", "{'':null}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, "{a: -1}", hintTbScan, expList);
 
             // 非事务逆序索引扫描
-            recordsCursor = cl.query(null, null, "{a: -1}", "{'':'a'}");
-            actList = TransUtils.getReadActList(recordsCursor);
-            Assert.assertEquals(actList, expList);
+            TransUtils.queryAndCheck(cl, "{a: -1}", hintIxScan, expList);
             recordsCursor.close();
         } finally {
             db1.commit();

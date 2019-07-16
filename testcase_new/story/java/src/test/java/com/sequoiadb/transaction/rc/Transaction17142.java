@@ -6,13 +6,11 @@ import java.util.List;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -29,7 +27,6 @@ public class Transaction17142 extends SdbTestBase {
     private String clName = "cappedCL17142";
     private DBCollection cappedCL = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
-    private List<BSONObject> actList = new ArrayList<BSONObject>();
     private Sequoiadb db1 = null;
     private Sequoiadb db2 = null;
     private DBCollection cl1 = null;
@@ -95,46 +92,31 @@ public class Transaction17142 extends SdbTestBase {
         object.put("b", 3);
         cl1.insert(object);
         expList.add(object);
-        DBCursor recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl1, "{a:1}", "{'':null}", expList);
 
         // 事务2读记录走表扫描
-        recordsCursor = cl2.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl2, "{a:1}", "{'':null}", expList);
 
         // 事务1执行pop操作
-        recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
         cl1.pop((BSONObject) JSON.parse("{LogicalID:0, Direction:1}"));
         cl1.pop((BSONObject) JSON.parse("{LogicalID:" + oid + ", Direction:-1}"));
         expList.clear();
         expList.add(this.object);
 
         // 事务1读记录走表扫描
-        recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl1, "{a:1}", "{'':null}", expList);
 
         // 事务2读记录走表扫描
-        recordsCursor = cl2.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl2, "{a:1}", "{'':null}", expList);
 
         // 回滚事务1，并读记录走表扫描
         db1.rollback();
-        recordsCursor = cl1.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl1, "{a:1}", "{'':null}", expList);
 
         // 事务2读记录走表扫描
-        recordsCursor = cl2.query(null, null, "{a:1}", "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl2, "{a:1}", "{'':null}", expList);
 
         // 事务2回滚
         db2.rollback();
-        recordsCursor.close();
     }
 }

@@ -10,14 +10,12 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -31,9 +29,7 @@ public class Transaction17074 extends SdbTestBase {
     private DBCollection cl = null;
     private DBCollection cl1 = null;
     private DBCollection cl2 = null;
-    private DBCursor cursor = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
-    private List<BSONObject> actList = new ArrayList<BSONObject>();
 
     @BeforeClass
     public void setUp() {
@@ -58,48 +54,30 @@ public class Transaction17074 extends SdbTestBase {
         expList.add(insertR1);
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, null, "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertTrue(actList.isEmpty());
+        TransUtils.queryAndCheck(cl2, "{'':null}", new ArrayList<BSONObject>());
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, null, "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertTrue(actList.isEmpty());
+        TransUtils.queryAndCheck(cl2, "{'':'a'}", new ArrayList<BSONObject>());
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, null, "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, "{'':null}", expList);
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, null, "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, "{'':'a'}", expList);
 
         db1.commit();
 
         // 事务2表扫描记录
-        cursor = cl2.query(null, null, null, "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl2, "{'':null}", expList);
 
         // 事务2索引扫描记录
-        cursor = cl2.query(null, null, null, "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
-        actList.clear();
+        TransUtils.queryAndCheck(cl2, "{'':'a'}", expList);
 
         // 非事务表扫描记录
-        cursor = cl.query(null, null, null, "{'':null}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, "{'':null}", expList);
 
         // 非事务索引扫描记录
-        cursor = cl.query(null, null, null, "{'':'a'}");
-        actList = TransUtils.getReadActList(cursor);
-        Assert.assertEquals(actList, expList);
-
+        TransUtils.queryAndCheck(cl, "{'':'a'}", expList);
         db2.commit();
     }
 

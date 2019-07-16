@@ -36,9 +36,7 @@ public class Transaction18223 extends SdbTestBase {
     private int startId2 = 1000;
     private int endId2 = 2000;
     private int decValue = -1000;
-    private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
-    private List<BSONObject> actDataList = null;
 
     @BeforeClass
     public void setUp() {
@@ -90,16 +88,8 @@ public class Transaction18223 extends SdbTestBase {
         sdb2.commit();
 
         // no trans query
-        recordCur = cl.query(null, null, "{_id: 1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl.query(null, null, "{_id: 1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
+        TransUtils.queryAndCheck(cl, "{ _id: 1}", "{'': null}", expDataList);
+        TransUtils.queryAndCheck(cl, "{ _id: 1}", "{'': 'a'}", expDataList);
     }
 
     @AfterClass
@@ -107,9 +97,6 @@ public class Transaction18223 extends SdbTestBase {
         sdb2.commit();
 
         sdb.getCollectionSpace(csName).dropCollection(clName);
-        if (recordCur != null) {
-            recordCur.close();
-        }
         if (sdb != null) {
             sdb.close();
         }

@@ -5,14 +5,12 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.transaction.TransUtils;
@@ -29,7 +27,8 @@ public class Transaction17071 extends SdbTestBase {
     private String clName = "cl17071";
     private DBCollection cl = null;
     private List<BSONObject> expList = new ArrayList<BSONObject>();
-    private List<BSONObject> actList = new ArrayList<BSONObject>();
+    private String hintTbScan = "{'':null}";
+    private String hintIxScan = "{'':'textIndex17071'}";
 
     @BeforeClass
     public void setUp() {
@@ -59,41 +58,28 @@ public class Transaction17071 extends SdbTestBase {
         expList.add(record);
 
         // 读记录走表扫描
-        DBCursor recordsCursor = cl.query(null, null, null, "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, hintTbScan, expList);
 
         // 读记录走索引扫描
-        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17071'}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, "{a:{$exists:1}}", null, null, hintIxScan, expList);
 
         // 事务提交
         sdb.commit();
 
         // 读记录走表扫描
-        recordsCursor = cl.query(null, null, null, "{'':null}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, hintTbScan, expList);
 
         // 读记录走索引扫描
-        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17071'}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, "{a:{$exists:1}}", null, null, hintIxScan, expList);
 
         // 删除记录
-        cl.delete("", "{'':'textIndex17190'}");
+        cl.delete("", hintIxScan);
 
         // 读记录走表扫描
-        recordsCursor = cl.query(null, null, null, "{'':null}");
         expList.clear();
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
+        TransUtils.queryAndCheck(cl, hintTbScan, expList);
 
         // 读记录走索引扫描
-        recordsCursor = cl.query("{a:{$exists:1}}", null, null, "{'':'textIndex17071'}");
-        actList = TransUtils.getReadActList(recordsCursor);
-        Assert.assertEquals(actList, expList);
-        recordsCursor.close();
+        TransUtils.queryAndCheck(cl, "{a:{$exists:1}}", null, null, hintIxScan, expList);
     }
 }

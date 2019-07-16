@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -32,7 +31,6 @@ public class Transaction17139 extends SdbTestBase {
     private int recordNum = 100;
     private DBCursor recordCur = null;
     private List<BSONObject> expDataList = null;
-    private List<BSONObject> actDataList = null;
 
     @BeforeClass
     public void setUp() {
@@ -69,32 +67,17 @@ public class Transaction17139 extends SdbTestBase {
         }
 
         // 3 trans2 query
-        recordCur = cl2.query(null, null, null, "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList, "check data");
-        actDataList.clear();
-
-        recordCur = cl2.query(null, null, null, "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+        TransUtils.queryAndCheck(cl2, "{'': null}", expDataList);
+        TransUtils.queryAndCheck(cl2, "{'': 'a'}", expDataList);
 
         // 4 trans1 rollback
         sdb.rollback();
 
         // 5 trans2 query
-        recordCur = cl2.query(null, null, "{a:1}", "{'': null}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
-
-        recordCur = cl2.query(null, null, "{a:1}", "{'': 'a'}");
-        actDataList = TransUtils.getReadActList(recordCur);
-        Assert.assertEquals(actDataList, expDataList);
-        actDataList.clear();
+        TransUtils.queryAndCheck(cl2, "{a:1}", "{'': null}", expDataList);
+        TransUtils.queryAndCheck(cl2, "{a:1}", "{'': 'a'}", expDataList);
 
         sdb2.commit();
-
     }
 
     @AfterClass

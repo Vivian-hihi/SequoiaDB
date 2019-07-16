@@ -15,7 +15,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
@@ -162,13 +161,8 @@ public class Transaction17945 extends SdbTestBase {
                     // 开启查询事务
                     db.beginTransaction();
                     DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-                    DBCursor cursor = cl.query(null, null, "{b:1}", "{'':null}");
-                    List<BSONObject> actList = TransUtils.getReadActList(cursor);
-                    Assert.assertEquals(actList, expList);
-
-                    cursor = cl.query(null, null, "{b:-1}", "{'':'textIndex17945'}");
-                    actList = TransUtils.getReadActList(cursor);
-                    Assert.assertEquals(actList, expList2);
+                    TransUtils.queryAndCheck(cl, "{b:1}", "{'':null}", expList);
+                    TransUtils.queryAndCheck(cl, "{b:-1}", "{'':'textIndex17945'}", expList2);
 
                     // 提交查询事务
                     db.commit();
