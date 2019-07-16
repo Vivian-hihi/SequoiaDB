@@ -140,7 +140,7 @@ namespace engine
    };
    typedef _clsCatalogItem clsCatalogItem ;
 
-   typedef VEC_INT32                            VEC_GROUP_ID ;
+   typedef VEC_UINT32                           VEC_GROUP_ID ;
 
    class _clsCataOrder : public SDBObject
    {
