@@ -1638,6 +1638,12 @@
                      "cn": "Python开发基础",
                      "en": "Python Development Foundation"
                   },
+				  {
+                     "id": 1562911641,
+                     "file": "python_bson_usage",
+                     "cn": "python BSON使用",
+                     "en": "python_bson_usage"
+                  },
                   {
                      "id": 1432190752,
                      "file": "SQL_to_SequoiaDB_shell_to_python",

@@ -99,6 +99,20 @@
   
   在集合对象 ollection中更新了记录。实例中没有指定数据匹配规则，所以此示例将更新集合中所有的集合。
   
+* 错误处理
+
+  调用 API 遇到的异常时，python 驱动会将异常直接抛出。可以选择捕获异常，并打印异常信息或是进行一些其他操作。SDBBaseError异常是基础异常，异常主要包含errcode、detail和error_object。异常的详情可以查询[Python API](api/python/html/index.html)。示例如下：
+
+  ```lang-python
+  try:
+       rule = {"$set":{ "age":19}}
+       print rule
+  	   cl.update( rule )
+  except SDBBaseError as e：
+	   print(e.detail)
+
+  ```
+
 ##集群操作##
 
 分区组操作包括创建分区组（client::creat_replica_group），得到分区组实例（client:: get_replica_group_by_name 和 client:: get_replica_group_by_id），启动分区组所有节点（replicagroup::start），停止分区组所有节点（replicagroup::stop）等。
