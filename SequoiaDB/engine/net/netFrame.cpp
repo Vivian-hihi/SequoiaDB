@@ -128,13 +128,14 @@ namespace engine
     _id ( id ),
     _pFrame( pFrame )
    {
-      if ( MSG_ROUTE_SHARD_SERVCIE == id.columns.serviceID )
+      if ( MSG_ROUTE_SHARD_SERVCIE != id.columns.serviceID ||
+           id.columns.nodeID == pFrame->getLocal().columns.nodeID )
       {
-         _capacity = ( capacity > 0) ? capacity : 1 ;
+         _capacity = 1 ;
       }
       else
       {
-         _capacity = 1 ;
+         _capacity = ( capacity > 0) ? capacity : 1 ;
       }
    }
 

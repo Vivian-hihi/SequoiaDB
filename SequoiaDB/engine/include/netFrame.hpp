@@ -183,6 +183,11 @@ namespace engine
             _local = id ;
          }
 
+         OSS_INLINE const MsgRouteID& getLocal() const
+         {
+            return _local ;
+         }
+
          void     setMaxSockPerNode( UINT32 maxSockPerNode ) ;
          void     setMaxSockPerThread( UINT32 maxSockPerThread ) ;
          void     setMaxThreadNum( UINT32 maxThreadNum ) ;
