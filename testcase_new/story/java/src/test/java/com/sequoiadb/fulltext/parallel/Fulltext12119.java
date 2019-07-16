@@ -37,6 +37,8 @@ public class Fulltext12119 extends SdbTestBase {
     private Sequoiadb db = null;
     private List<DBCollection> cls = new ArrayList<>();
     private String textIndexName = "fulltext12119";
+    private List<String> cappedNames = new ArrayList<>();
+    private List<String> esIndexNames = new ArrayList<>();
     ThreadExecutor te = new ThreadExecutor(TIMEOUT);
 
     @BeforeClass
@@ -79,8 +81,6 @@ public class Fulltext12119 extends SdbTestBase {
         Assert.assertTrue(FullTextUtils.isIndexCreated(cls.get(1), textIndexName, 10000));
         Assert.assertTrue(FullTextUtils.isIndexCreated(cls.get(3), textIndexName, 10000));
 
-        List<String> cappedNames = new ArrayList<>();
-        List<String> esIndexNames = new ArrayList<>();
         cappedNames.add(FullTextDBUtils.getCappedName(cls.get(1), textIndexName));
         cappedNames.add(FullTextDBUtils.getCappedName(cls.get(3), textIndexName));
         esIndexNames.add(FullTextDBUtils.getESIndexName(cls.get(1), textIndexName));
@@ -100,25 +100,25 @@ public class Fulltext12119 extends SdbTestBase {
             if (0 != dropCSThreads.get(i).getRetCode()) {
                 // 删除集合空间失败，全文索引仍然存在
                 DBCollection cl = cls.get(i * 2 + 1);
+                FullTextDBUtils.insertData(cl, 1000);
                 BSONObject matcher = (BSONObject) JSON.parse("{'':{'$Text':{'query':{'match_all':{}}}}}");
                 DBCursor cursor = cl.query(matcher, null, null, null);
-
                 try {
                     cursor = cl.query(matcher, null, null, null);
                     Assert.fail("query should fail");
                 } catch (BaseException e) {
                     if (-6 != e.getErrorCode() && -52 != e.getErrorCode()) {
-                        Assert.fail("actual exception: " + e.getErrorCode());
+                        throw e;
                     }
                 } finally {
                     if (cursor != null) {
                         cursor.close();
                     }
                 }
-            } else {
+           } else {
                 // 删除集合空间成功，全文索引被删除
                 Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esIndexNames.get(i), cappedNames.get(i)));
-            }
+           }
         }
     }
 
@@ -132,17 +132,17 @@ public class Fulltext12119 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除集合空间")
         public void dropCS() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                 + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 sdb.dropCollectionSpace(csName);
             } catch (BaseException e) {
                 if (-147 != e.getErrorCode()) {
-                    Assert.fail("actual exception: " + e.getErrorCode());
+                    throw e;
                 }
                 saveResult(e.getErrorCode(), e);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                 + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }

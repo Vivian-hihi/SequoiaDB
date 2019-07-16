@@ -37,6 +37,8 @@ public class Fulltext12127 extends SdbTestBase {
     private Sequoiadb db = null;
     private List<DBCollection> cls = new ArrayList<>();
     private String textIndexName = "fulltext12127";
+    private List<String> cappedNames = new ArrayList<>();
+    private List<String> esIndexNames = new ArrayList<>();
     ThreadExecutor te = new ThreadExecutor(TIMEOUT);
 
     @BeforeClass
@@ -47,17 +49,17 @@ public class Fulltext12127 extends SdbTestBase {
         }
 
         // 创建集合空间和集合，总共两个集合空间，每个集合空间对应2个集合
-        for (int csNo = 0; csNo < 2; csNo++) {
-            String csName = "cs12127_" + csNo;
+        for (int csNum = 0; csNum < 2; csNum++) {
+            String csName = "cs12127_" + csNum;
             if (db.isCollectionSpaceExist(csName)) {
                 db.dropCollectionSpace(csName);
             }
             CollectionSpace cs = db.createCollectionSpace(csName);
-            for (int clNo = 0; clNo < 2; clNo++) {
-                String clName = "12127_cl_" + clNo;
+            for (int clNum = 0; clNum < 2; clNum++) {
+                String clName = "12127_cl_" + clNum;
                 DBCollection cl = cs.createCollection(clName);
                 FullTextDBUtils.insertData(cl, 10000);
-                if (clNo % 2 > 0) {
+                if (clNum % 2 > 0) {
                     BSONObject indexObj = new BasicBSONObject();
                     indexObj.put("a", "text");
                     cl.createIndex(textIndexName, indexObj, false, false);
@@ -68,14 +70,15 @@ public class Fulltext12127 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
-            for (int csNo = 0; csNo < 2; csNo++) {
-                String csName = "cs12127_" + csNo;
+            for (int csNum = 0; csNum < 2; csNum++) {
+                String csName = "cs12127_" + csNum;
                 FullTextDBUtils.dropCollectionSpace(db, csName);
             }
-            db.getCollectionSpace(csName).dropCollection("12127_new_cl");
-            // TODO :校验全文索引无残留
+            for (int i = 0; i < esIndexNames.size(); i++) {
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esIndexNames.get(i), cappedNames.get(i)));
+            }
         } finally {
             if (db != null) {
                 db.close();
@@ -85,60 +88,62 @@ public class Fulltext12127 extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        List<String> cappedNames = new ArrayList<>();
-        List<String> esIndexNames = new ArrayList<>();
         List<DropTextIndexThread> dropTextIndexThreads = new ArrayList<>();
         List<DropCLThread> dropCLThreads = new ArrayList<>();
 
-        for (int csNo = 0; csNo < 2; csNo++) {
-            String csName = "cs12127_" + csNo;
+        for (int csNum = 0; csNum < 2; csNum++) {
+            String csName = "cs12127_" + csNum;
             CollectionSpace cs = db.getCollectionSpace(csName);
-            for (int clNo = 0; clNo < 2; clNo++) {
-                String clName = "12127_cl_" + clNo;
+            // 在每个集合空间下创建新的集合
+            te.addWorker(new CreateCLThread(csName, "12127_new_cl"));
+            for (int clNum = 0; clNum < 2; clNum++) {
+                String clName = "12127_cl_" + clNum;
                 DBCollection cl = cs.getCollection(clName);
-                if (clNo % 2 > 0) {
+                // 删除原有集合
+                DropCLThread dropCLThread = new DropCLThread(csName, clName);
+                if (clNum % 2 > 0) {
                     // 在已存在全文索引的集合中，获取固定集合名和全文索引名
                     cappedNames.add(FullTextDBUtils.getCappedName(cl, textIndexName));
                     esIndexNames.add(FullTextDBUtils.getESIndexName(cl, textIndexName));
                     DropTextIndexThread dropTextIndexThread = new DropTextIndexThread(csName, clName);
                     dropTextIndexThreads.add(dropTextIndexThread);
-                    DropCLThread dropCLThread = new DropCLThread(csName, clName);
-                    dropCLThreads.add(dropCLThread);
                     // 删除全文索引
                     te.addWorker(dropTextIndexThread);
                     // 删除集合，且集合中存在全文索引
                     te.addWorker(dropCLThread);
                 } else {
                     // 不存在全文索引的集合上创建索引
-                    // TODO :按照用例，这里也需要创建删除集合的线程
                     te.addWorker(new CreateTextIndexThread(csName, clName));
                 }
             }
         }
 
-        // 创建新集合
-        // TODO :按照用例这里应该是在cs1及cs2下创建新的集合，而不是最后一个集合空间下去创建
-        te.addWorker(new CreateCLThread(csName, "12127_new_cl"));
-
         te.run();
 
+        // 获取被删除的有全文索引的CL
+        List<DropCLThread> newDropCLThreads = new ArrayList<>();
         for (int i = 0; i < dropCLThreads.size(); i++) {
+            if (i % 2 != 0) {
+                newDropCLThreads.add(dropCLThreads.get(i));
+            }
+        }
+
+        for (int i = 0; i < newDropCLThreads.size(); i++) {
             // 集合依然存在的情况下，且全文索引删除成功，执行全文检索报错
-            // TODO :集合删除成功的情况为什么不需要校验？
-            Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esIndexNames.get(i), cappedNames.get(i)));
-            if (dropCLThreads.get(i).getRetCode() != 0 && dropTextIndexThreads.get(i).getRetCode() == 0) {
-                DBCollection cl = cls.get(i * 2 + 1);
+            if (newDropCLThreads.get(i).getRetCode() != 0 && dropTextIndexThreads.get(i).getRetCode() == 0) {
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esIndexNames.get(i), cappedNames.get(i)));
+                DBCollection cl = cls.get(i);
+                // 插入数据正常
                 FullTextDBUtils.insertData(cl, 100);
                 BSONObject matcher = (BSONObject) JSON.parse("{'':{'$Text':{'query':{'match_all':{}}}}}");
                 DBCursor cursor = cl.query(matcher, null, null, null);
-
+   
                 try {
                     cursor = cl.query(matcher, null, null, null);
                     Assert.fail("query should fail");
                 } catch (BaseException e) {
                     if (-6 != e.getErrorCode() && -52 != e.getErrorCode()) {
-                        // TODO :打印栈信息，或者抛异常
-                        Assert.fail("actual exception: " + e.getErrorCode());
+                        throw e;
                     }
                 } finally {
                     if (cursor != null) {
@@ -147,11 +152,14 @@ public class Fulltext12127 extends SdbTestBase {
                 }
             }
             // 集合依然存在的情况下，且全文索引删除失败，全文检索结果正确
-            else if (dropCLThreads.get(i).getRetCode() != 0 && dropTextIndexThreads.get(i).getRetCode() != 0) {
+            else if (newDropCLThreads.get(i).getRetCode() != 0 && dropTextIndexThreads.get(i).getRetCode() != 0) {
                 int count = 0;
                 DBCursor cursor = null;
                 try {
                     DBCollection cl = cls.get(i * 2 + 1);
+                    // 插入数据正常
+                    FullTextDBUtils.insertData(cl, 100);
+                    Assert.assertTrue(FullTextUtils.isIndexCreated(cl, textIndexName, (int) cl.getCount()));
                     BSONObject matcher = (BSONObject) JSON.parse("{'':{'$Text':{'query':{'match_all':{}}}}}");
                     cursor = cl.query(matcher, null, null, null);
                     while (cursor.hasNext()) {
@@ -165,12 +173,13 @@ public class Fulltext12127 extends SdbTestBase {
                     }
                 }
             }
+            // 集合不存在
+            else if (newDropCLThreads.get(i).getRetCode() != 0) {
+                Assert.assertTrue(FullTextUtils.isIndexDeleted(db, esIndexNames.get(i), cappedNames.get(i)));
+            }
         }
-
-        FullTextUtils.isIndexCreated(cls.get(0), textIndexName, 10000);
-        FullTextUtils.isIndexCreated(cls.get(2), textIndexName, 10000);
     }
-
+ 
     class DropTextIndexThread extends ResultStore {
         private String csName;
         private String clName;
@@ -183,19 +192,18 @@ public class Fulltext12127 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除全文索引")
         public void dropTextIndex() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
                 cl.dropIndex(textIndexName);
             } catch (BaseException e) {
                 if (-147 != e.getErrorCode() && -23 != e.getErrorCode()) {
-                    // TODO :打印出栈信息或者直接抛异常
-                    Assert.fail("actual exception: " + e.getErrorCode());
+                    throw e;
                 }
                 saveResult(e.getErrorCode(), e);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }
@@ -212,16 +220,20 @@ public class Fulltext12127 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "创建全文索引")
         public void createTextIndex() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
 
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
                 BSONObject indexObj = new BasicBSONObject();
                 indexObj.put("a", "text");
                 cl.createIndex(textIndexName, indexObj, false, false);
+            } catch (BaseException e) {
+                if (-23 != e.getErrorCode()) {
+                    throw e;
+                }
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }
@@ -233,17 +245,17 @@ public class Fulltext12127 extends SdbTestBase {
         public CreateCLThread(String csName, String clName) {
             this.csName = csName;
             this.clName = clName;
-        }
+        } 
 
         @ExecuteOrder(step = 1, desc = "创建集合")
         public void createCL() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 sdb.getCollectionSpace(csName).createCollection(clName);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }
@@ -261,18 +273,17 @@ public class Fulltext12127 extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除集合")
         public void dropCL() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 sdb.getCollectionSpace(csName).dropCollection(clName);
             } catch (BaseException e) {
                 if (-147 != e.getErrorCode()) {
-                    // TODO :打印出栈信息或者直接抛异常
-                    Assert.fail("actual exception: " + e.getErrorCode());
+                    throw e;
                 }
                 saveResult(e.getErrorCode(), e);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }

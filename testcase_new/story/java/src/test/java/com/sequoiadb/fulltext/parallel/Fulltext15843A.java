@@ -41,11 +41,12 @@ public class Fulltext15843A extends SdbTestBase {
     private DBCollection cl = null;
     private String clName = "ES_15843_A";
     private String textIndexName = "fulltext15843A";
+    private String cappedName = null;
+    private String esIndexName = null;
     ThreadExecutor te = new ThreadExecutor(TIMEOUT);
 
     @BeforeClass
     public void setUp() {
-
         db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         if (CommLib.isStandAlone(db)) {
             throw new SkipException("skip StandAlone");
@@ -53,7 +54,7 @@ public class Fulltext15843A extends SdbTestBase {
 
         cs = db.getCollectionSpace(csName);
         cl = cs.createCollection(clName);
-        // TODO :说明一下15843A和15843B用例的区别，后续维护的时候，别人不知道为什么数据量不同，要写2个用例？？？
+        // 这里插入大量数据，意图是构造ES正在同步原始集合中的记录的过程中，同时删除全文索引和执行增删改
         FullTextDBUtils.insertData(cl, 500000);
 
         BSONObject indexObj = new BasicBSONObject();
@@ -62,10 +63,11 @@ public class Fulltext15843A extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         try {
             FullTextDBUtils.dropCollection(cs, clName);
-            // TODO :检查固定集合及ES端全文索引无残留
+            // 检查固定集合及ES端全文索引无残留
+            Assert.assertTrue(FullTextUtils.isIndexDeleted(db, cappedName, esIndexName));
         } finally {
             if (db != null) {
                 db.close();
@@ -75,8 +77,8 @@ public class Fulltext15843A extends SdbTestBase {
 
     @Test
     public void test() throws Exception {
-        String cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
-        String esIndexName = FullTextDBUtils.getESIndexName(cl, textIndexName);
+        cappedName = FullTextDBUtils.getCappedName(cl, textIndexName);
+        esIndexName = FullTextDBUtils.getESIndexName(cl, textIndexName);
         DropTextIndexThread dropTextIndexThread = new DropTextIndexThread();
         te.addWorker(dropTextIndexThread);
         te.addWorker(new InsertThread());
@@ -85,7 +87,10 @@ public class Fulltext15843A extends SdbTestBase {
 
         te.run();
 
+        // 插入数据正常
+        FullTextDBUtils.insertData(cl, 100);
         if (0 != dropTextIndexThread.getRetCode()) {
+            Assert.assertTrue(FullTextUtils.isIndexCreated(cl, textIndexName, (int) cl.getCount()));
             // 全文索引删除失败，全文检索结果正确
             DBCursor cursor = null;
             try {
@@ -113,8 +118,7 @@ public class Fulltext15843A extends SdbTestBase {
                 Assert.fail("query should fail");
             } catch (BaseException e) {
                 if (-6 != e.getErrorCode() && -52 != e.getErrorCode()) {
-                    e.printStackTrace();
-                    Assert.fail(" fulltext query fail ");
+                    throw e;
                 }
             } finally {
                 if (cursor != null) {
@@ -125,23 +129,21 @@ public class Fulltext15843A extends SdbTestBase {
     }
 
     class DropTextIndexThread extends ResultStore {
-
         @ExecuteOrder(step = 1, desc = "删除全文索引")
         public void dropTextIndex() {
             System.out.println(this.getClass().getName().toString() + " begin at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
                 cl.dropIndex(textIndexName);
             } catch (BaseException e) {
                 if (-147 != e.getErrorCode()) {
-                    // TODO :这里打印出栈信息，或者直接抛异常，方便后续定位
-                    Assert.fail("actual exception: " + e.getErrorCode());
+                    throw e;
                 }
                 saveResult(e.getErrorCode(), e);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " end at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }
@@ -150,7 +152,7 @@ public class Fulltext15843A extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "往原始集合插入数据")
         public void insert() {
             System.out.println(this.getClass().getName().toString() + " insert begin at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
                 List<BSONObject> insertObjs = new ArrayList<BSONObject>();
@@ -162,7 +164,7 @@ public class Fulltext15843A extends SdbTestBase {
                 cl.insert(insertObjs, 0);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " insert end at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }
@@ -171,16 +173,16 @@ public class Fulltext15843A extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "更新全文索引记录")
         public void update() {
             System.out.println(this.getClass().getName().toString() + " update begin at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
                 BSONObject modifier = new BasicBSONObject("$set",
-                        new BasicBSONObject("a", "fulltext15843A_after_update"));
+                new BasicBSONObject("a", "fulltext15843A_after_update"));
                 BSONObject matcher = new BasicBSONObject("id", new BasicBSONObject("$lt", 500));
                 cl.update(matcher, modifier, null);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " update end at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
         }
     }
@@ -189,15 +191,15 @@ public class Fulltext15843A extends SdbTestBase {
         @ExecuteOrder(step = 1, desc = "删除全文索引记录")
         public void delete() {
             System.out.println(this.getClass().getName().toString() + " delete begin at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             try (Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "")) {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
                 BSONObject matcher = new BasicBSONObject("id", new BasicBSONObject("$gt", 5000));
                 cl.delete(matcher);
             } finally {
                 System.out.println(this.getClass().getName().toString() + " delete end at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             }
-        }
+       } 
     }
 }
