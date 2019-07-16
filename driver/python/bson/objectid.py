@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tools for working with MongoDB `ObjectIds
+"""Tools for working with `ObjectIds
 <http://dochub.mongodb.org/core/objectids>`_.
 """
 
@@ -59,7 +59,7 @@ def _machine_bytes():
 
 
 class ObjectId(object):
-    """A MongoDB ObjectId.
+    """A ObjectId.
     """
 
     _inc = random.randint(0, 0xFFFFFF)
@@ -72,23 +72,36 @@ class ObjectId(object):
     _type_marker = 7
 
     def __init__(self, oid=None):
-        """Initialize a new ObjectId.
+        """Initialize a new ObjectId. "oid" default None.
 
-        If `oid` is ``None``, create a new (unique) ObjectId. If `oid`
-        is an instance of (:class:`basestring` (:class:`str` or :class:`bytes`
-        in python 3), :class:`ObjectId`) validate it and use that.  Otherwise,
-        a :class:`TypeError` is raised. If `oid` is invalid,
-        :class:`~bson.errors.InvalidId` is raised.
+        Parameters:
+            Name     Type                 Info:
+            oid      str/bytes/ObjectId   A valid ObjectId(12 byte binary
+                                                  or 24 character hex string or a
+                                                  ObjectId instance). default None.
+                                                  if "oid" is "None", "oid" will be
+                                                  generated internally.
+                                                  The structure of the "oid":
+                                                  first 4 bytes current time and
+                                                  3 bytesmachine and 2 bytes pid and
+                                                  3 bytes inc.
+        Exceptions:
+            Type                         Info:
+            TypeError.                   If "oid" is not instance of str,bytes
+                                                 or ObjectId, will raise "TypeError".
+            bson.errors.InvalidId.       If "oid" is invalid, will raise
+                                                 "bson.errors.InvalidId".
+        For example:
+            >>> from bson import ObjectId
+            >>> ObjectId()
+            ObjectId('5d2c2af987abdf4f92f2f786')
 
-        :Parameters:
-          - `oid` (optional): a valid ObjectId (12 byte binary or 24 character
-            hex string)
+            >>> ObjectId('666f6f2d6261722d71757578')
+            ObjectId('666f6f2d6261722d71757578')
 
-        .. versionadded:: 1.2.1
-           The `oid` parameter can be a ``unicode`` instance (that contains
-           only hexadecimal digits).
+            >>> ObjectId(u'666f6f2d6261722d71757578')
+            ObjectId('666f6f2d6261722d71757578')
 
-        .. mongodoc:: objectids
         """
         if oid is None:
             self.__generate()
@@ -158,7 +171,7 @@ class ObjectId(object):
         # 4 bytes current time
         oid += struct.pack(">i", int(time.time()))
 
-        # 3 bytes machine
+        # 3  bytesmachine
         oid += ObjectId._machine_bytes
 
         # 2 bytes pid

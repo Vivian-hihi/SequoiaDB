@@ -1271,25 +1271,25 @@ class client(object):
            Name      Type  Info:
            options   dict  Contains a series of backup configuration
                                  information. Backup the whole cluster if None.
-                                 The "options" contains 5 options as below.
+                                 The "options" contains 6 options as below.
                                  All the elements in options are optional.
                                  eg:
                                  { "GroupName":["rgName1", "rgName2"],
                                    "Path":"/opt/sequoiadb/backup",
                                    "Name":"backupName", "Description":description,
-                                   "EnsureInc":true, "OverWrite":true }
+                                   "EnsureInc":True, "OverWrite":True }
                                  See Info as below.
         Exceptions:
            pysequoiadb.error.SDBBaseError
         Info:
-           GroupName   :  The replica groups which to be backuped.
+           GroupName   :  The replica groups which to be backuped, if not assigen,default all replica groups.
            Path        :  The backup path, if not assign, use the backup path assigned in configuration file.
            Name        :  The name for the backup.
            Description :  The description for the backup.
            EnsureInc   :  Whether execute increment synchronization,
-                                default to be false.
+                                default to be False.
            OverWrite   :  Whether overwrite the old backup file,
-                                default to be false.
+                                default to be False.
         """
         bson_options = None
         if options is not None:
@@ -1298,7 +1298,7 @@ class client(object):
             bson_options = bson.BSON.encode(options)
 
         rc = sdb.sdb_backup_offline(self._client, bson_options)
-        raise_if_error(rc, "Failed to backup offline")
+        raise_if_error(rc, "Failed to backup")
 
     def backup_offline(self, options = None):
         """

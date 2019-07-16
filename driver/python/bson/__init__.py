@@ -606,6 +606,16 @@ class BSON(binary_type):
             contain '.', raising :class:`~bson.errors.InvalidDocument` in
             either case
 
+        if you want use special type ,you should user the corresponding
+        special type class. like "$oid" corresponding ObjectId, in error eg,
+        '$oid' will be as common type rather than special type
+            eg:
+                oid = Object("5d035e2bb4d450b04fcd0dff")
+                document = {"_oid" : oid}
+            error eg:
+                document = {"_id":{"$oid":"5d035e2bb4d450b04fcd0dff"}}
+
+
         .. versionadded:: 1.9
         """
         return cls(_dict_to_bson(document, check_keys, uuid_subtype))
