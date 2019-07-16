@@ -124,9 +124,9 @@ namespace engine
      _netEHSegment implement
    */
    _netEHSegment::_netEHSegment( _netFrame *pFrame, UINT32 capacity, const _MsgRouteID &id )
-    :_index( 0 ),
+    :_pFrame( pFrame ),
     _id ( id ),
-    _pFrame( pFrame )
+    _index( 0 )
    {
       if ( MSG_ROUTE_SHARD_SERVCIE != id.columns.serviceID ||
            id.columns.groupID < DATA_GROUP_ID_BEGIN ||
