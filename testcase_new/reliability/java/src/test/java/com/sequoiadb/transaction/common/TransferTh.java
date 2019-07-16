@@ -75,7 +75,6 @@ public class TransferTh extends OperateTask {
                 commitRollback(db);
             }
         } catch (BaseException e) {
-            e.printStackTrace();
             if ("rcauto".equals(SdbTestBase.testGroupOfCurrent)) {
                 db.rollback();
             }
@@ -105,7 +104,6 @@ public class TransferTh extends OperateTask {
                 commitRollback(db);
             }
         } catch (BaseException e) {
-            e.printStackTrace();
         }
     }
 }
