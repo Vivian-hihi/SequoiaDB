@@ -2084,7 +2084,9 @@ namespace engine
             rc = SDB_DPS_TRANS_NO_TRANS ;
          }
       }
-      else if ( _pEDUCB->isAutoCommitTrans() )
+      /// when retry, the autocommit trans is make by self, but
+      /// the _pCollectionName is not null
+      else if ( !_pCollectionName && _pEDUCB->isAutoCommitTrans() )
       {
          rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
       }
