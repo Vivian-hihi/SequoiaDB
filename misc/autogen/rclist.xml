@@ -2730,5 +2730,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_RTN_ALREADY_IN_AUTO_TRANS</name>
+         <description>
+            <en>Exists unfinished auto-commit transaction</en>
+            <cn>存在未完成的自动提交事务</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
