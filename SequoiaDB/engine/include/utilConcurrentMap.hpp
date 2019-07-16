@@ -57,8 +57,8 @@ namespace engine
    public:
       typedef std::pair< const Key, T >         value_type ;
       typedef ossPoolMap< Key, T >              map_type ;
-      typedef map_type::iterator                map_iterator ;
-      typedef map_type::const_iterator          map_const_iterator ;
+      typedef typename map_type::iterator       map_iterator ;
+      typedef typename map_type::const_iterator map_const_iterator ;
    private:
       typedef utilConcurrentMap< Key, T, BUCKET_NUM, Hash > cmap_type ;
 
