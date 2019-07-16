@@ -1,6 +1,8 @@
 // create WORKDIR in local host
 import ( "../lib/fulltext_commlib.js" );
 commMakeDir( "localhost", WORKDIR );
+// create cappedCS
+commCreateCS( db, COMMCAPPEDCSNAME, true, "", {Capped : true} );
 
 /************************************
 *@Description: get actual result and check it 
