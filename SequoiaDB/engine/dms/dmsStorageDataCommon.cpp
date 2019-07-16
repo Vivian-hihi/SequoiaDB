@@ -3653,6 +3653,8 @@ namespace engine
             --( pExtent->_recCount ) ;
             _decreaseMBStat( context->mb()->_clUniqueID,
                              &( _mbStatInfo[ context->mbID() ] ), cb ) ;
+            // increase data write counter for deleting marking
+            DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
          }
 
          if ( !isDeleting )
