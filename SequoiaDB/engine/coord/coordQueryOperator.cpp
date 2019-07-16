@@ -471,6 +471,7 @@ namespace engine
          if ( OSS_BIT_TEST( flag, FLG_QUERY_MODIFY ) )
          {
             _needRollback = TRUE ;
+            setReadOnly( FALSE ) ;
          }
 
          rc = queryOrDoOnCL( pMsg, cb, &pContext, sendOpt, NULL, buf ) ;
@@ -497,7 +498,7 @@ namespace engine
          }
          if ( cb->isAutoCommitTrans() )
          {
-            pContext->setTransContext( TRUE ) ;
+            cb->setCurAutoTransCtxID( contextID ) ;
          }
 
          if ( OSS_BIT_TEST(flag, FLG_QUERY_PREPARE_MORE ) &&
@@ -716,6 +717,19 @@ namespace engine
       return cb->isTransaction() ;
    }
 
+   void _coordQueryOperator::_onNodeReply( INT32 processType,
+                                           MsgOpReply *pReply,
+                                           pmdEDUCB *cb,
+                                           coordSendMsgIn &inMsg )
+   {
+      /// do nothing
+   }
+
+   BOOLEAN _coordQueryOperator::_canPushDownAutoCommit() const
+   {
+      return FALSE ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__QUERYORDOONCL, "_coordQueryOperator::_queryOrDoOnCL" )
    INT32 _coordQueryOperator::_queryOrDoOnCL( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
@@ -894,8 +908,13 @@ namespace engine
                options.setSelector( BSONObj() ) ;
             }
 
+            // when not in transaction, query and modify can't use preRead
+            if ( !cb->isTransaction() &&
+                 ( FLG_QUERY_MODIFY & pQueryMsg->flags ) )
+            {
+               preRead = FALSE ;
+            }
             // open context
-            preRead = ( FLG_QUERY_MODIFY & pQueryMsg->flags ) ? FALSE : TRUE ;
             rc = _pContext->open( options, preRead ) ;
 
             // change some data

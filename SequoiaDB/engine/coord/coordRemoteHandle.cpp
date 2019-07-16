@@ -53,6 +53,123 @@ namespace engine
    #define COORD_EXPIRED_KILLCONTEXT_TIMEOUT       ( 30000 )      /// 30s
 
    /*
+      Tool functions
+   */
+   INT32 coordBuildPacketMsg( _pmdSubSession *pSub,
+                              MsgHeader *pHeader,
+                              _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 totalLen = 0 ;
+      UINT32 pos = 0 ;
+      MsgHeader *pOldHeader = pSub->getReqMsg() ;
+      CHAR *pBuff = NULL ;
+
+      if ( pSub->getIODatas()->size() > 0 )
+      {
+         pOldHeader->messageLength = sizeof( MsgHeader ) +
+                                     pSub->getIODataLen() ;
+      }
+
+      totalLen = pHeader->messageLength + pOldHeader->messageLength ;
+
+      if ( MSG_PACKET != pOldHeader->opCode )
+      {
+         totalLen += sizeof( MsgHeader ) ;
+      }
+
+      rc = cb->allocBuff( totalLen, &pBuff, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Allocate memory[%u] failed, rc: %d",
+                 totalLen, rc ) ;
+         goto error ;
+      }
+      else
+      {
+         MsgHeader *pMsgPacket = NULL ;
+         /// packet
+         pMsgPacket = ( MsgHeader* )( pBuff + pos ) ;
+         pos += sizeof( MsgHeader ) ;
+
+         /// new add
+         ossMemcpy( pBuff + pos, (void*)pHeader, pHeader->messageLength ) ;
+         MsgHeader *pNewAdd = ( MsgHeader* )( pBuff + pos ) ;
+         pNewAdd->requestID = pOldHeader->requestID ;
+         pNewAdd->routeID.value = pOldHeader->routeID.value ;
+         pNewAdd->TID = pOldHeader->TID ;
+         pos += pHeader->messageLength ;
+
+         if ( MSG_PACKET == pOldHeader->opCode )
+         {
+            ossMemcpy( (void*)pMsgPacket, (void*)pOldHeader,
+                       sizeof( MsgHeader ) ) ;
+         }
+         else
+         {
+            pMsgPacket->opCode = MSG_PACKET ;
+            pMsgPacket->requestID = pOldHeader->requestID ;
+            pMsgPacket->routeID.value = pOldHeader->routeID.value ;
+            pMsgPacket->TID = pOldHeader->TID ;
+         }
+         pMsgPacket->messageLength = totalLen ;
+
+         /// old
+         if ( pSub->getIODatas()->size() > 0 )
+         {
+            if ( MSG_PACKET != pOldHeader->opCode )
+            {
+               ossMemcpy( pBuff + pos, (void*)pOldHeader,
+                          sizeof( MsgHeader ) ) ;
+               pos += sizeof( MsgHeader ) ;
+            }
+
+            netIOVec *pIOVec = pSub->getIODatas() ;
+            for ( UINT32 i = 0 ; i < pIOVec->size() ; ++i )
+            {
+               netIOV &ioItem = (*pIOVec)[i] ;
+               ossMemcpy( pBuff + pos, ioItem.iovBase, ioItem.iovLen ) ;
+               pos += ioItem.iovLen ;
+            }
+         }
+         else
+         {
+            CHAR *pCopyData = ( CHAR* )pOldHeader ;
+            UINT32 copyLen = pOldHeader->messageLength ;
+   
+            if ( MSG_PACKET == pOldHeader->opCode )
+            {
+               pCopyData += sizeof( MsgHeader ) ;
+               copyLen -= sizeof( MsgHeader ) ;
+            }
+            ossMemcpy( pBuff + pos, pCopyData,copyLen ) ;
+            pos += copyLen ;
+         }
+
+         /// set sub session
+         pSub->clearIODatas() ;
+         pSub->setReqMsg( (MsgHeader*)pBuff, PMD_EDU_MEM_SELF ) ;
+         pBuff = NULL ;
+      }
+
+   done:
+      if ( pBuff )
+      {
+         cb->releaseBuff( pBuff ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 coordBuildPacketMsg( _pmdRemoteSession *pSession,
+                              _pmdSubSession *pSub,
+                              MsgHeader *pHeader )
+   {
+      return coordBuildPacketMsg( pSub, pHeader, pSession->getEDUCB() ) ;
+   }
+
+   /*
       _coordRemoteHandlerBase implement
    */
    _coordRemoteHandlerBase::_coordRemoteHandlerBase()
@@ -76,6 +193,23 @@ namespace engine
                                                 _pmdSubSession **ppSub,
                                                 INT32 flag )
    {
+      if ( pSession && ppSub && *ppSub )
+      {
+         pmdEDUCB *cb = pSession->getEDUCB() ;
+         pmdRemoteSessionSite *pSite = NULL ;
+         coordSessionPropSite *pPropSite = NULL ;
+         coordRemoteHandleStatus *pStatus = NULL ;
+
+         pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+         pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
+
+         pStatus = ( coordRemoteHandleStatus* )(*ppSub)->getUDFData() ;
+         if ( pStatus->_initTrans )
+         {
+            pPropSite->delTransNode( (*ppSub)->getNodeID() ) ;
+         }
+      }
+
       return flag ;
    }
 
@@ -100,27 +234,31 @@ namespace engine
 
          if ( SDB_INVALID_ROUTEID == pOpReply->flags )
          {
-            pSession->reConnectSubSession( pReply->routeID.value ) ;
+            pSession->reConnectSubSession( (*ppSub)->getNodeID().value ) ;
+            if ( pStatus->_initTrans )
+            {
+               pPropSite->delTransNode( (*ppSub)->getNodeID() ) ;
+            }
          }
          else if ( SDB_OK != pOpReply->flags &&
                    ( MSG_COM_SESSION_INIT_RSP == orgRspOpCode ||
-                     MSG_PACKET_RES == orgRspOpCode ) )
+                     MSG_PACKET_RES == orgRspOpCode ||
+                     MSG_BS_TRANS_BEGIN_RSP == orgRspOpCode ) )
          {
-            pSession->reConnectSubSession( pReply->routeID.value ) ;
-         }
-         else if ( SDB_OK == pOpReply->flags ||
-                   MSG_BS_TRANS_BEGIN_RSP != orgRspOpCode )
-         {
+            if ( MSG_COM_SESSION_INIT_RSP == orgRspOpCode ||
+                 MSG_PACKET_RES == orgRspOpCode )
+            {
+               pSession->reConnectSubSession( pReply->routeID.value ) ;
+            }
             if ( pStatus->_initTrans )
             {
-               pPropSite->addTransNode( (*ppSub)->getNodeID() ) ;
+               pPropSite->delTransNode( pReply->routeID ) ;
             }
-
+         }
+         else if ( 0 != pStatus->_nodeID )
+         {
             /// update node version
-            if ( 0 != pStatus->_nodeID )
-            {
-               pSite->setNodeVer( pStatus->_nodeID, pStatus->_nodeVer ) ;
-            }
+            pSite->setNodeVer( pStatus->_nodeID, pStatus->_nodeVer ) ;
          }
 
          pStatus->init() ;
@@ -276,7 +414,7 @@ namespace engine
       ossMemset( pInitReq->reserved, 0, sizeof( pInitReq->reserved ) ) ;
       ossMemcpy( pInitReq->data, objInfo.objdata(), objInfo.objsize() ) ;
 
-      rc = _buildPacket( pSession, pSub, ( MsgHeader*)pBuff ) ;
+      rc = coordBuildPacketMsg( pSession, pSub, ( MsgHeader*)pBuff ) ;
       if ( rc )
       {
          goto error ;
@@ -441,15 +579,13 @@ namespace engine
       pmdRemoteSessionSite *pSite = NULL ;
       coordSessionPropSite *pPropSite = NULL ;
 
-      if ( ( cb->isTransaction() &&
-             isTransBSMsg( pSub->getOrgReqOpCode() ) ) ||
-           ( cb->isAutoCommitTrans() &&
-             MSG_BS_GETMORE_REQ == pSub->getOrgReqOpCode() ) )
+      if ( cb->isTransaction() && isTransBSMsg( pSub->getOrgReqOpCode() ) )
       {
+         BOOLEAN isWriteMsg = isTransWriteMsg( pSub->getReqMsg() ) ;
          pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
          pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
 
-         if ( !pPropSite->hasTransNode( pSub->getNodeID().columns.groupID ) )
+         if ( !pPropSite->checkAndUpdateNode( pSub->getNodeID(), isWriteMsg ) )
          {
             MsgOpTransBegin msgReq ;
             msgReq.header.messageLength = sizeof( MsgOpTransBegin ) ;
@@ -459,12 +595,13 @@ namespace engine
             msgReq.transID = DPS_TRANS_GET_ID( cb->getTransID() ) ;
             ossMemset( msgReq.reserved, 0, sizeof( msgReq.reserved ) ) ;
 
-            rc = _buildPacket( pSession,pSub, &msgReq.header ) ;
+            rc = coordBuildPacketMsg( pSession,pSub, &msgReq.header ) ;
             if ( rc )
             {
                goto error ;
             }
             pStatus->_initTrans = TRUE ;
+            pPropSite->addTransNode( pSub->getNodeID(), isWriteMsg ) ;
          }
       }
 
@@ -672,114 +809,6 @@ namespace engine
       }
    }
 
-   INT32 _coordRemoteHandlerBase::_buildPacket( _pmdRemoteSession *pSession,
-                                                _pmdSubSession *pSub,
-                                                MsgHeader *pHeader )
-   {
-      INT32 rc = SDB_OK ;
-      UINT32 totalLen = 0 ;
-      UINT32 pos = 0 ;
-      MsgHeader *pOldHeader = pSub->getReqMsg() ;
-      pmdEDUCB *cb = pSession->getEDUCB() ;
-      CHAR *pBuff = NULL ;
-
-      if ( pSub->getIODatas()->size() > 0 )
-      {
-         pOldHeader->messageLength = sizeof( MsgHeader ) +
-                                     pSub->getIODataLen() ;
-      }
-
-      totalLen = pHeader->messageLength + pOldHeader->messageLength ;
-
-      if ( MSG_PACKET != pOldHeader->opCode )
-      {
-         totalLen += sizeof( MsgHeader ) ;
-      }
-
-      rc = cb->allocBuff( totalLen, &pBuff, NULL ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Allocate memory[%u] failed, rc: %d",
-                 totalLen, rc ) ;
-         goto error ;
-      }
-      else
-      {
-         MsgHeader *pMsgPacket = NULL ;
-         /// packet
-         pMsgPacket = ( MsgHeader* )( pBuff + pos ) ;
-         pos += sizeof( MsgHeader ) ;
-
-         /// new add
-         ossMemcpy( pBuff + pos, (void*)pHeader, pHeader->messageLength ) ;
-         MsgHeader *pNewAdd = ( MsgHeader* )( pBuff + pos ) ;
-         pNewAdd->requestID = pOldHeader->requestID ;
-         pNewAdd->routeID.value = pOldHeader->routeID.value ;
-         pNewAdd->TID = pOldHeader->TID ;
-         pos += pHeader->messageLength ;
-
-         if ( MSG_PACKET == pOldHeader->opCode )
-         {
-            ossMemcpy( (void*)pMsgPacket, (void*)pOldHeader,
-                       sizeof( MsgHeader ) ) ;
-         }
-         else
-         {
-            pMsgPacket->opCode = MSG_PACKET ;
-            pMsgPacket->requestID = pOldHeader->requestID ;
-            pMsgPacket->routeID.value = pOldHeader->routeID.value ;
-            pMsgPacket->TID = pOldHeader->TID ;
-         }
-         pMsgPacket->messageLength = totalLen ;
-
-         /// old
-         if ( pSub->getIODatas()->size() > 0 )
-         {
-            if ( MSG_PACKET != pOldHeader->opCode )
-            {
-               ossMemcpy( pBuff + pos, (void*)pOldHeader,
-                          sizeof( MsgHeader ) ) ;
-               pos += sizeof( MsgHeader ) ;
-            }
-
-            netIOVec *pIOVec = pSub->getIODatas() ;
-            for ( UINT32 i = 0 ; i < pIOVec->size() ; ++i )
-            {
-               netIOV &ioItem = (*pIOVec)[i] ;
-               ossMemcpy( pBuff + pos, ioItem.iovBase, ioItem.iovLen ) ;
-               pos += ioItem.iovLen ;
-            }
-         }
-         else
-         {
-            CHAR *pCopyData = ( CHAR* )pOldHeader ;
-            UINT32 copyLen = pOldHeader->messageLength ;
-
-            if ( MSG_PACKET == pOldHeader->opCode )
-            {
-               pCopyData += sizeof( MsgHeader ) ;
-               copyLen -= sizeof( MsgHeader ) ;
-            }
-            ossMemcpy( pBuff + pos, pCopyData,copyLen ) ;
-            pos += copyLen ;
-         }
-
-         /// set sub session
-         pSub->clearIODatas() ;
-         pSub->setReqMsg( (MsgHeader*)pBuff, PMD_EDU_MEM_SELF ) ;
-         pBuff = NULL ;
-      }
-
-   done:
-      if ( pBuff )
-      {
-         cb->releaseBuff( pBuff ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _coordRemoteHandlerBase::_buildPacketWithUpdateSched( _pmdRemoteSession *pSession,
                                                                _pmdSubSession *pSub,
                                                                const BSONObj &objSched )
@@ -798,7 +827,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _buildPacket( pSession, pSub, ( MsgHeader* )pBuff ) ;
+      rc = coordBuildPacketMsg( pSession, pSub, ( MsgHeader* )pBuff ) ;
       if ( rc )
       {
          goto error ;

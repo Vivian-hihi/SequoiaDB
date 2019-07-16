@@ -61,6 +61,9 @@ namespace engine
 #define SHD_TRANSROLLBACK_WAITTIME  (60000)     //ms
 #define SHD_WAITTIME_INTERVAL       (200)       //ms
 
+#define SHD_TRANS_WAITCOMMIT_TIMEOUT      ( 60000 )   // 60 sec
+#define SHD_TRANS_WAITCOMMIT_INTERVAL     ( 3000 )    // 3 sec
+
    BEGIN_OBJ_MSG_MAP( _clsShdSession, _pmdAsyncSession )
       ON_MSG ( MSG_BS_UPDATE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_INSERT_REQ, _onOPMsg )
@@ -119,6 +122,9 @@ namespace engine
       _inPacketLevel = 0 ;
       _pendingContextID = -1 ;
       _pendingStartFrom = 0 ;
+
+      _transWaitTimeout = 0 ;
+      _transWaitID = DPS_INVALID_TRANS_ID ;
 
       PD_TRACE_EXIT ( SDB__CLSSDSESS__CLSSHDSESS ) ;
    }
@@ -219,6 +225,37 @@ namespace engine
    done :
       PD_TRACE_EXIT ( SDB__CLSSHDSESS_TMOUT ) ;
       return ret ;
+   }
+
+   void _clsShdSession::onTimer( UINT64 timerID, UINT32 interval )
+   {
+      if ( DPS_TRANS_WAIT_COMMIT == _pEDUCB->getTransStatus() )
+      {
+         if ( _transWaitID != _pEDUCB->getTransID() )
+         {
+            _transWaitTimeout = interval ;
+            _transWaitID = _pEDUCB->getTransID() ;
+         }
+         else
+         {
+            _transWaitTimeout += interval ;
+         }
+
+         if ( _transWaitTimeout >= SHD_TRANS_WAITCOMMIT_TIMEOUT )
+         {
+            _rollbackTrans( NULL, OSS_ONE_SEC ) ;
+
+            if ( _transWaitTimeout >= SHD_TRANS_WAITCOMMIT_INTERVAL )
+            {
+               _transWaitTimeout -= SHD_TRANS_WAITCOMMIT_INTERVAL ;
+            }
+         }
+      }
+      else
+      {
+         _transWaitTimeout = 0 ;
+         _transWaitID = DPS_INVALID_TRANS_ID ;
+      }
    }
 
    BOOLEAN _clsShdSession::isSetLogout() const
@@ -735,7 +772,8 @@ namespace engine
       _replyHeader.header.routeID.value = 0 ;
 
       /// auto-commit process
-      if ( eduCB()->isAutoCommitTrans() )
+      if ( eduCB()->isAutoCommitTrans() &&
+           -1 == eduCB()->getCurAutoTransCtxID() )
       {
          isAutoCommit = TRUE ;
          if ( SDB_OK == rc || SDB_DMS_EOC == rc )
@@ -745,7 +783,7 @@ namespace engine
          }
       }
 
-      if ( SDB_OK != rc )
+      if ( SDB_OK != rc && SDB_RTN_ALREADY_IN_AUTO_TRANS != rc )
       {
          BOOLEAN inTrans = _pEDUCB->isTransaction() ;
          BOOLEAN hasRollbacked = FALSE ;
@@ -1533,7 +1571,7 @@ namespace engine
 
             if ( eduCB()->isAutoCommitTrans() )
             {
-               pContext->setTransContext( TRUE ) ;
+               eduCB()->setCurAutoTransCtxID( contextID ) ;
             }
             /// set write info
             if ( pContext && pContext->isWrite() )
@@ -1798,18 +1836,8 @@ namespace engine
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
       }
+
       needRollback = pContext->needRollback() ;
-
-      /// trans context
-      if ( pContext->isTransContext() && !eduCB()->isTransaction() )
-      {
-         rc = rtnTransBegin( eduCB(), TRUE ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-      }
-
       rc = rtnGetMore ( pContext, numToRead, buffObj, eduCB(), _pRtnCB ) ;
       if ( rc )
       {
@@ -1916,6 +1944,12 @@ namespace engine
          goto error ;
       }
 
+      if ( _pEDUCB->isAutoCommitTrans() )
+      {
+         rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+         goto error ;
+      }
+
       /// Old trans begin msg is only a MsgHeader
       if ( msg->messageLength > (INT32)sizeof( MsgHeader ) &&
            DPS_INVALID_TRANS_ID != pTransBegin->transID &&
@@ -1926,12 +1960,6 @@ namespace engine
       else
       {
          rc = rtnTransBegin( _pEDUCB ) ;
-      }
-
-      if ( SDB_OK == rc )
-      {
-         /// unset all trans context
-         rtnUnsetTransContext( eduCB(), _pRtnCB ) ;
       }
 
    done:
@@ -2055,6 +2083,10 @@ namespace engine
          {
             rc = SDB_DPS_TRANS_NO_TRANS ;
          }
+      }
+      else if ( _pEDUCB->isAutoCommitTrans() )
+      {
+         rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
       }
 
       return rc ;
@@ -4904,6 +4936,18 @@ namespace engine
       else
       {
          w = *clientW ;
+      }
+
+      /// When first operation in transaction, should adjust the replsize
+      /// by param 'transreplsize'
+      if ( _pEDUCB->isTransaction() &&
+           DPS_INVALID_LSN_OFFSET == _pEDUCB->getCurTransLsn() )
+      {
+         INT16 transReplSize = pmdGetOptionCB()->transReplSize() ;
+         if ( w < transReplSize )
+         {
+            w = transReplSize ;
+         }
       }
 
       if ( 1 <= w &&

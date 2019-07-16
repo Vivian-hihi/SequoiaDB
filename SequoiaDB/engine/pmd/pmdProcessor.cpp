@@ -402,6 +402,10 @@ namespace engine
             }
          }
       }
+      else if ( eduCB()->isAutoCommitTrans() )
+      {
+         rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+      }
 
       return rc ;
    }
@@ -688,7 +692,7 @@ namespace engine
 
             if ( eduCB()->isAutoCommitTrans() )
             {
-               pContext->setTransContext( TRUE ) ;
+               eduCB()->setCurAutoTransCtxID( contextID ) ;
             }
             /// if write operator, need set dps info( local session: w=1)
             if ( pContext && pContext->isWrite() )
@@ -908,17 +912,6 @@ namespace engine
       }
 
       needRollback = pContext->needRollback() ;
-
-      /// trans context
-      if ( pContext->isTransContext() && !eduCB()->isTransaction() )
-      {
-         rc = _beginTrans( TRUE ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-      }
-
       rc = rtnGetMore ( pContext, numToRead, buffObj, eduCB(), _pRTNCB ) ;
       if ( rc )
       {
@@ -1003,12 +996,13 @@ namespace engine
       INT32 rc = _checkTransOperator() ;
       if ( SDB_OK == rc )
       {
-         rc = rtnTransBegin( eduCB() ) ;
-
-         if ( SDB_OK == rc )
+         if ( eduCB()->isAutoCommitTrans() )
          {
-            /// unset all trans context
-            rtnUnsetTransContext( eduCB(), _pRTNCB ) ;
+            rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+         }
+         else
+         {
+            rc = rtnTransBegin( eduCB() ) ;
          }
       }
       return rc ;

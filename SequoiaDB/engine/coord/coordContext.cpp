@@ -370,11 +370,16 @@ namespace engine
       MsgRouteID routeID ;
       EMPTY_CONTEXT_MAP::iterator emptyIter ;
       pmdSubSession *pSub = NULL ;
+      pmdRemoteSessionSite *pSite = NULL ;
+      coordSessionPropSite *pPropSite = NULL ;
 
       if ( _emptyContextMap.size() == 0 )
       {
          goto done ;
       }
+
+      pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+      pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
 
       msgFillGetMoreMsg( msgReq, cb->getTID(), -1, -1, 0 ) ;
 
@@ -394,6 +399,12 @@ namespace engine
          pSub = _pSession->addSubSession( routeID.value ) ;
          pSub->setReqMsg( (MsgHeader*)&msgReq, PMD_EDU_MEM_NONE ) ;
 
+         /// In transaction and context is write, should check and update
+         /// trans node's status
+         if ( cb->isTransaction() && isWrite() && pPropSite )
+         {
+            pPropSite->checkAndUpdateNode( routeID, TRUE ) ;
+         }
          rc = _pSession->sendMsg( pSub ) ;
          if ( rc )
          {

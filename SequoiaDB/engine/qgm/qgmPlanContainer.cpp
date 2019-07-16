@@ -38,6 +38,8 @@
 
 #include "qgmPlanContainer.hpp"
 #include "pmdEDU.hpp"
+#include "pmd.hpp"
+#include "dpsLogWrapper.hpp"
 
 namespace engine
 {
@@ -83,11 +85,38 @@ namespace engine
       }
 #endif
 
+      if ( _plan->canUseTrans() &&
+           ( _plan->inputSize() > 0 ||
+             SDB_ROLE_COORD != pmdGetKRCB()->getDBRole() ) )
+      {
+         BOOLEAN dpsValid = TRUE ;
+
+         if ( !_plan->needRollback() )
+         {
+            // When readonly, don't check dps
+         }
+         else
+         {
+            SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+            if ( dpsCB && cb->isFromLocal() && !dpsCB->isLogLocal() )
+            {
+                dpsValid = FALSE ;
+            }
+         }
+
+         rc = _plan->checkTransAutoCommit( dpsValid, cb ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
       rc = _plan->execute( cb ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
+
    done:
       return rc ;
    error:

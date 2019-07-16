@@ -68,6 +68,7 @@ namespace engine
       }
 
       virtual BOOLEAN needRollback() const ;
+      virtual BOOLEAN canUseTrans() const ;
 
    protected:
       INT32 _updateVCS( const CHAR *fullName,

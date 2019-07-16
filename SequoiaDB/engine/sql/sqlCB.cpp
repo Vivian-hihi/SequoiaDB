@@ -179,6 +179,11 @@ namespace engine
             PD_LOG( PDERROR, "failed to create context:%d", rc ) ;
             goto error ;
          }
+         /// set cur trans context id
+         if ( cb->isAutoCommitTrans() )
+         {
+            cb->setCurAutoTransCtxID( contextID ) ;
+         }
       }
       }
    done:

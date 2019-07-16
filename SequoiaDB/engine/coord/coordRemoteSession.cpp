@@ -58,7 +58,8 @@ namespace engine
    : _rtnSessionProperty(),
      _mapLastNodes(),
      _pEDUCB( NULL ),
-     _pSite( NULL )
+     _pSite( NULL ),
+     _writeTransNodeNum( 0 )
    {
    }
 
@@ -187,7 +188,7 @@ namespace engine
 
       cit = _mapTransNodes.find( routeID.columns.groupID ) ;
       if ( cit != _mapTransNodes.end() &&
-           cit->second.value == routeID.value )
+           cit->second._nodeID.value == routeID.value )
       {
          found = TRUE ;
       }
@@ -205,7 +206,7 @@ namespace engine
       cit = _mapTransNodes.find( groupID ) ;
       if ( cit != _mapTransNodes.end() )
       {
-         routeID = cit->second ;
+         routeID = cit->second._nodeID ;
          found = TRUE ;
       }
 
@@ -226,21 +227,58 @@ namespace engine
       return _mapTransNodes.empty() ;
    }
 
+   BOOLEAN _coordSessionPropSite::checkAndUpdateNode( const MsgRouteID &routeID,
+                                                      BOOLEAN doWrite )
+   {
+      MAP_TRANS_NODES_IT it = _mapTransNodes.find( routeID.columns.groupID ) ;
+      if ( it != _mapTransNodes.end() )
+      {
+         SDB_ASSERT( it->second._nodeID.value == routeID.value,
+                     "NodeID should be the same" ) ;
+         if ( doWrite && !it->second._hasWritten &&
+              it->second._nodeID.value == routeID.value )
+         {
+            it->second._hasWritten = doWrite ;
+            ++_writeTransNodeNum ;
+         }
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
    BOOLEAN _coordSessionPropSite::delTransNode( const MsgRouteID &routeID )
    {
       MAP_TRANS_NODES_IT it = _mapTransNodes.find( routeID.columns.groupID ) ;
       if ( it != _mapTransNodes.end() &&
-           it->second.value == routeID.value )
+           it->second._nodeID.value == routeID.value )
       {
+         if ( it->second._hasWritten )
+         {
+            --_writeTransNodeNum ;
+         }
          _mapTransNodes.erase( it ) ;
          return TRUE ;
       }
       return FALSE ;
    }
 
-   void _coordSessionPropSite::addTransNode( const MsgRouteID &routeID )
+   void _coordSessionPropSite::addTransNode( const MsgRouteID &routeID,
+                                             BOOLEAN isWrite )
    {
-      _mapTransNodes[ routeID.columns.groupID ] = routeID ;
+      coordTransNodeStatus &node = _mapTransNodes[ routeID.columns.groupID ] ;
+
+      /// already exist
+      if ( MSG_INVALID_ROUTEID != node._nodeID.value && node._hasWritten )
+      {
+         --_writeTransNodeNum ;
+      }
+
+      node._nodeID.value = routeID.value ;
+      node._hasWritten = isWrite ;
+      if ( isWrite )
+      {
+         ++_writeTransNodeNum ;
+      }
    }
 
    UINT32 _coordSessionPropSite::getTransNodeSize() const
@@ -248,12 +286,17 @@ namespace engine
       return _mapTransNodes.size() ;
    }
 
+   UINT32 _coordSessionPropSite::getWriteTransNodeSize() const
+   {
+      return _writeTransNodeNum ;
+   }
+
    UINT32 _coordSessionPropSite::dumpTransNode( SET_ROUTEID &setID ) const
    {
       MAP_TRANS_NODES_CIT cit = _mapTransNodes.begin() ;
       while( cit != _mapTransNodes.end() )
       {
-         setID.insert( cit->second.value ) ;
+         setID.insert( cit->second._nodeID.value ) ;
          ++cit ;
       }
       return _mapTransNodes.size() ;
@@ -284,6 +327,7 @@ namespace engine
          cb->setTransID( transID ) ;
 
          _mapTransNodes.clear() ;
+         _writeTransNodeNum = 0 ;
 
          PD_LOG( PDINFO, "Begin transaction(ID:%s, IDAttr:%s)",
                  dpsTransIDToString( transID ).c_str(),
@@ -297,6 +341,7 @@ namespace engine
    {
       cb->setTransID( DPS_INVALID_TRANS_ID ) ;
       _mapTransNodes.clear() ;
+      _writeTransNodeNum = 0 ;
    }
 
    /*

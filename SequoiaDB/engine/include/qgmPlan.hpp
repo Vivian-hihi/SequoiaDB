@@ -75,12 +75,15 @@ namespace engine
       _qgmPlan( QGM_PLAN_TYPE type, const qgmField &alias ) ;
       virtual ~_qgmPlan() ;
 
+      INT32    checkTransAutoCommit( BOOLEAN dpsValid, _pmdEDUCB *eduCB ) ;
+
    public:
       virtual void close() ;
 
       virtual string toString() const { return "" ; }
 
       virtual BOOLEAN needRollback() const ;
+      virtual BOOLEAN canUseTrans() const ;
 
       OSS_INLINE QGM_PLAN_TYPE type() const { return _type ; }
 

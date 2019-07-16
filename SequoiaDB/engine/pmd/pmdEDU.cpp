@@ -144,6 +144,7 @@ namespace engine
          ossMemset( _pErrorBuff, 0, EDU_ERROR_BUFF_SIZE + 1 ) ;
       }
 
+      _curAutoTransCtxID = -1 ;
       _pMemPool = NULL ;
    }
 
@@ -202,6 +203,7 @@ namespace engine
       }
       _uncompressBuffLen = 0 ;
 
+      _curAutoTransCtxID = -1 ;
       if ( _pMemPool )
       {
          _pMemPool->clear() ;
@@ -663,6 +665,10 @@ namespace engine
          _transStatus = DPS_TRANS_UNKNOWN ;
       }
 #endif //SDB_ENGINE
+      if ( DPS_INVALID_TRANS_ID == transID )
+      {
+         _curAutoTransCtxID = -1 ;
+      }
       _curTransID = transID ;
    }
 
@@ -681,6 +687,10 @@ namespace engine
    {
       ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
       _contextList.erase ( contextID ) ;
+      if ( _curAutoTransCtxID == contextID )
+      {
+         _curAutoTransCtxID = -1 ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CONTXTPEEK, "_pmdEDUCB::contextPeek" )
@@ -698,6 +708,11 @@ namespace engine
       contextID = (*it) ;
       _contextList.erase(it) ;
 
+      if ( _curAutoTransCtxID == contextID )
+      {
+         _curAutoTransCtxID = -1 ;
+      }
+
    done :
       PD_TRACE1 ( SDB__PMDEDUCB_CONTXTPEEK, PD_PACK_LONG(contextID) );
       PD_TRACE_EXIT ( SDB__PMDEDUCB_CONTXTPEEK );
@@ -714,6 +729,16 @@ namespace engine
    {
       ossScopedLock _lock ( &_mutex, SHARED ) ;
       return _contextList.size() ;
+   }
+
+   void _pmdEDUCB::setCurAutoTransCtxID( INT64 contextID )
+   {
+      _curAutoTransCtxID = contextID ;
+   }
+
+   INT64 _pmdEDUCB::getCurAutoTransCtxID() const
+   {
+      return _curAutoTransCtxID ;
    }
 
    void _pmdEDUCB::contextCopy( _pmdEDUCB::SET_CONTEXT &contextList )

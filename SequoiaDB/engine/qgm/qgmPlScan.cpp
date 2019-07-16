@@ -234,12 +234,6 @@ namespace engine
       else
       {
          rtnContextBase *pContext = NULL ;
-         /// begin auto commit transaction
-         rc = _checkTransAutoCommit( TRUE, eduCB ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
 
          // close prefetch
          rc = rtnQuery ( pCLName, selector, _condition,
@@ -248,11 +242,6 @@ namespace engine
          if ( SDB_OK != rc )
          {
             goto error ;
-         }
-
-         if ( eduCB->isAutoCommitTrans() )
-         {
-            pContext->setTransContext( TRUE ) ;
          }
       }
 

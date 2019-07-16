@@ -83,7 +83,7 @@ namespace engine
 
             /// when group is one, push down autocommit to data node,
             /// otherwise begin transaction
-            if ( options._groupLst.size() > 1 )
+            if ( options._groupLst.size() > 1 || !_canPushDownAutoCommit() )
             {
                _groupSession.getPropSite()->beginTrans( cb, TRUE ) ;
             }
@@ -150,6 +150,11 @@ namespace engine
 
    BOOLEAN _coordTransOperator::_canPrepareTrans( pmdEDUCB *cb,
                                                   const MsgHeader *pMsg ) const
+   {
+      return TRUE ;
+   }
+
+   BOOLEAN _coordTransOperator::_canPushDownAutoCommit() const
    {
       return TRUE ;
    }
@@ -354,11 +359,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       contextID   = -1 ;
-      rc = beginTrans( cb ) ;
-      if ( SDB_OK == rc )
+
+      if ( cb->isAutoCommitTrans() )
       {
-         /// unset all trans context
-         rtnUnsetTransContext( cb, pmdGetKRCB()->getRTNCB() ) ;
+         rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+      }
+      else
+      {
+         rc = beginTrans( cb ) ;
       }
       return rc ;
    }
@@ -390,21 +398,35 @@ namespace engine
       }
 
       needCancel = TRUE ;
-      rc = doPhase1( pMsg, cb, contextID, buf ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Execute failed on phase1 in operator[%s], rc: %d",
-                 getName(), rc ) ;
-         goto error ;
-      }
 
-      needCancel = FALSE ;
-      rc = doPhase2( pMsg, cb, contextID, buf ) ;
-      if ( rc )
+      if ( canCompactCommit() )
       {
-         PD_LOG( PDERROR, "Execute failed on phase2 in operator[%s], rc: %d",
-                 getName(), rc ) ;
-         goto error ;
+         rc = doCompactPhase( pMsg, cb, contextID, buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Execute failed on compact phase in "
+                    "operator[%s], rc: %d", getName(), rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = doPhase1( pMsg, cb, contextID, buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Execute failed on phase1 in operator[%s], "
+                    "rc: %d", getName(), rc ) ;
+            goto error ;
+         }
+
+         needCancel = FALSE ;
+         rc = doPhase2( pMsg, cb, contextID, buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Execute failed on phase2 in operator[%s], "
+                    "rc: %d", getName(), rc ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -497,6 +519,40 @@ namespace engine
       goto done ;
    }
 
+   INT32 _coord2PhaseCommit::doCompactPhase( MsgHeader *pMsg,
+                                             pmdEDUCB *cb,
+                                             INT64 &contextID,
+                                             rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pMsgReq = NULL ;
+      INT32 msgSize = 0 ;
+
+      rc = buildCompactMsg( ( const CHAR *)pMsg, &pMsgReq, &msgSize, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build message failed in operator[%s] compact "
+                 "phase, rc: %d", getName(), rc ) ;
+         goto error ;
+      }
+
+      rc = executeOnDataGroup( (MsgHeader*)pMsgReq, cb, contextID, buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Execute on data group failed in operator[%s] "
+                 "compact phase, rc: %d", getName(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( pMsgReq )
+      {
+         releaseCompactMsg( pMsgReq, msgSize, cb ) ;
+      }
+   error:
+      goto done ;
+   }
+
    INT32 _coord2PhaseCommit::cancelOp( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
                                        INT64 &contextID,
@@ -543,7 +599,7 @@ namespace engine
 
       while( cit != pNodeMap->end() )
       {
-         pSub = pSession->addSubSession( cit->second.value ) ;
+         pSub = pSession->addSubSession( cit->second._nodeID.value ) ;
          pSub->setReqMsg( pMsg, PMD_EDU_MEM_NONE ) ;
 
          rcTmp = pSession->sendMsg( pSub ) ;
@@ -552,9 +608,9 @@ namespace engine
             rc = rc ? rc : rcTmp ;
             PD_LOG ( PDWARNING, "Failed to send commit request to the "
                      "node[%s], rc: %d",
-                     routeID2String( cit->second ).c_str(),
+                     routeID2String( cit->second._nodeID ).c_str(),
                      rcTmp ) ;
-            nokRC[ cit->second.value ] = rcTmp ;
+            nokRC[ cit->second._nodeID.value ] = rcTmp ;
          }
          ++cit ;
       }
@@ -610,14 +666,17 @@ namespace engine
       UINT32 msgLen = 0 ;
       MsgOpTransCommitPre *pCommitPreMsg = NULL ;
       UINT32 i = 0 ;
+      UINT32 writeTransNodes = 0 ;
 
       _coordSessionPropSite::MAP_TRANS_NODES_CIT cit ;
       const _coordSessionPropSite::MAP_TRANS_NODES *pNodeMap = NULL ;
 
       /// dump trans nodes
       pNodeMap = _groupSession.getPropSite()->getTransNodeMap() ;
+      writeTransNodes = _groupSession.getPropSite()->getWriteTransNodeSize() ;
+
       msgLen = sizeof( MsgOpTransCommitPre ) +
-               pNodeMap->size() * sizeof( UINT64 ) ;
+               writeTransNodes * sizeof( UINT64 ) ;
 
       pCommitPreMsg = ( MsgOpTransCommitPre* )utilThreadAlloc( msgLen ) ;
       if ( !pCommitPreMsg )
@@ -626,19 +685,27 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-
       pCommitPreMsg->header.messageLength = msgLen ;
       pCommitPreMsg->header.opCode = MSG_BS_TRANS_COMMITPRE_REQ ;
       pCommitPreMsg->header.routeID.value = MSG_INVALID_ROUTEID ;
       pCommitPreMsg->header.requestID = 0 ;
       pCommitPreMsg->header.TID = cb->getTID() ;
-      pCommitPreMsg->nodeNum = pNodeMap->size() ;
+      pCommitPreMsg->nodeNum = writeTransNodes ;
 
       /// set node id
       for ( cit = pNodeMap->begin() ; cit != pNodeMap->end() ; ++cit )
       {
-         pCommitPreMsg->nodes[ i++ ] = cit->second.value ;
+         /// only use written nodes
+         if ( cit->second._hasWritten )
+         {
+            pCommitPreMsg->nodes[ i++ ] = cit->second._nodeID.value ;
+            if ( i >= writeTransNodes )
+            {
+               break ;
+            }
+         }
       }
+      SDB_ASSERT( i == writeTransNodes, "Write transaction node is invalid" ) ;
 
       *pMsg = ( CHAR* )pCommitPreMsg ;
       *pMsgSize = msgLen ;
@@ -710,6 +777,77 @@ namespace engine
    error:
       // rollback in session
       goto done ;
+   }
+
+   BOOLEAN _coordTransCommit::canCompactCommit()
+   {
+      if ( 1 == _groupSession.getPropSite()->getTransNodeSize() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   INT32 _coordTransCommit::buildCompactMsg( const CHAR *pReceiveBuffer,
+                                             CHAR **pMsg,
+                                             INT32 *pMsgSize,
+                                             pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pBuf1 = NULL ;
+      INT32 bufSize1 = 0 ;
+      CHAR *pBuf2 = NULL ;
+      INT32 bufSize2 = 0 ;
+
+      pmdSubSession dummySession ;
+
+      rc = buildPhase1Msg( pReceiveBuffer, &pBuf1, &bufSize1, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = buildPhase2Msg( pReceiveBuffer, &pBuf2, &bufSize2, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      dummySession.setReqMsg( ( MsgHeader* )pBuf2, PMD_EDU_MEM_NONE ) ;
+
+      rc = coordBuildPacketMsg( &dummySession, ( MsgHeader* )pBuf1, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      *pMsg = ( CHAR* )dummySession.getReqMsg() ;
+      SDB_ASSERT( PMD_EDU_MEM_SELF == dummySession.getReqMemType(),
+                  "Invalid mem type" ) ;
+      dummySession.setReqMsgMemType( PMD_EDU_MEM_NONE ) ;
+
+   done:
+      if ( pBuf1 )
+      {
+         releasePhase1Msg( pBuf1, bufSize1, cb ) ;
+      }
+      if ( pBuf2 )
+      {
+         releasePhase2Msg( pBuf2, bufSize2, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _coordTransCommit::releaseCompactMsg( CHAR *pMsg,
+                                              INT32 msgSize,
+                                              pmdEDUCB *cb )
+   {
+      if ( pMsg )
+      {
+         cb->releaseBuff( pMsg ) ;
+      }
    }
 
    BOOLEAN _coordTransCommit::needRollback() const

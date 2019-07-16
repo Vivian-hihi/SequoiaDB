@@ -529,8 +529,6 @@ namespace engine
    INT32 rtnTransRollback( _pmdEDUCB * cb, SDB_DPSCB *dpsCB );
    INT32 rtnTransRollbackAll( _pmdEDUCB * cb );
 
-   void  rtnUnsetTransContext( _pmdEDUCB *cb, SDB_RTNCB *rtnCB ) ;
-
    INT32 rtnTransTryOrTestLockCL( const CHAR *pCollection,
                                   INT32 lockType,
                                   BOOLEAN isTest,

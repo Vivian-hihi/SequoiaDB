@@ -43,7 +43,6 @@
 #include "netRouteAgent.hpp"
 
 #include "ossMemPool.hpp"
-#include <vector>
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -250,7 +249,7 @@ namespace engine
    typedef ossPoolMap< UINT64, pmdSubSession* >    MAP_SUB_SESSIONPTR ;
    typedef MAP_SUB_SESSIONPTR::iterator            MAP_SUB_SESSIONPTR_IT ;
 
-   typedef vector< pmdSubSession* >                VEC_SUB_SESSIONPTR ;
+   typedef ossPoolVector< pmdSubSession* >         VEC_SUB_SESSIONPTR ;
 
    typedef ossPoolSet< UINT64 >                    SET_NODEID ;
    typedef ossPoolMap< UINT64, NET_HANDLE >        MAP_NODE2NET ;

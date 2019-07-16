@@ -153,13 +153,6 @@ namespace engine
          SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
          BSONObj empty ;
 
-         /// begin auto commit transaction
-         rc = _checkTransAutoCommit( dpsCB ? TRUE : FALSE, eduCB ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-
          rc = rtnDelete( clName.c_str(),
                          _condition, empty, 0, eduCB,
                          dmsCB, dpsCB ) ;

@@ -54,6 +54,7 @@ namespace engine
    public:
       virtual string toString() const ;
       virtual BOOLEAN needRollback() const ;
+      virtual BOOLEAN canUseTrans() const { return TRUE ; }
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
 

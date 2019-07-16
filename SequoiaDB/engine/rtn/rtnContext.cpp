@@ -350,8 +350,6 @@ namespace engine
       _enableMonContext    = FALSE ;
       _enableQueryActivity = FALSE ;
 
-      _isTransCtx          = FALSE ;
-
       _monCtxCB.setContextID( contextID ) ;
    }
 
@@ -394,16 +392,6 @@ namespace engine
       _w       = w ;
    }
 
-   void _rtnContextBase::setTransContext( BOOLEAN transCtx )
-   {
-      _isTransCtx = transCtx ;
-   }
-
-   BOOLEAN _rtnContextBase::isTransContext() const
-   {
-      return _isTransCtx ;
-   }
-
    INT32 _rtnContextBase::getReference() const
    {
       return _buffer.getRefCount() ;
@@ -422,7 +410,6 @@ namespace engine
       stringstream ss ;
 
       ss << "IsOpened:" << ( _isOpened ? 1 : 0 )
-         << ",IsTrans:" << ( _isTransCtx ? 1 : 0 )
          << ",HitEnd:" << ( _hitEnd ? 1 : 0 )
          << ",BufferSize:" << _buffer.bufferSize() ;
 

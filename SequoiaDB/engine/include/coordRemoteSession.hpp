@@ -69,6 +69,29 @@ namespace engine
    typedef _IGroupSessionHandler IGroupSessionHandler ;
 
    /*
+      _coordTransNodeStatus define
+   */
+   struct _coordTransNodeStatus
+   {
+      MsgRouteID        _nodeID ;
+      BOOLEAN           _hasWritten ;
+
+      _coordTransNodeStatus()
+      {
+         _nodeID.value = MSG_INVALID_ROUTEID ;
+         _hasWritten = FALSE ;
+      }
+
+      _coordTransNodeStatus( const MsgRouteID &id,
+                             BOOLEAN isWrite = FALSE )
+      {
+         _nodeID.value = id.value ;
+         _hasWritten = isWrite ;
+      }
+   } ;
+   typedef _coordTransNodeStatus coordTransNodeStatus ;
+
+   /*
       _coordSessionPropSite define
    */
    class _coordSessionPropSite : public _rtnSessionProperty
@@ -77,9 +100,9 @@ namespace engine
          typedef ossPoolMap< UINT32, UINT64 >      MAP_GROUP_2_NODE ;
          typedef MAP_GROUP_2_NODE::iterator        MAP_GROUP_2_NODE_IT ;
 
-         typedef ossPoolMap< UINT32, MsgRouteID >  MAP_TRANS_NODES ;
-         typedef MAP_TRANS_NODES::iterator         MAP_TRANS_NODES_IT ;
-         typedef MAP_TRANS_NODES::const_iterator   MAP_TRANS_NODES_CIT ;
+         typedef ossPoolMap< UINT32, coordTransNodeStatus > MAP_TRANS_NODES ;
+         typedef MAP_TRANS_NODES::iterator                  MAP_TRANS_NODES_IT ;
+         typedef MAP_TRANS_NODES::const_iterator            MAP_TRANS_NODES_CIT ;
 
          friend class _coordSessionPropMgr ;
 
@@ -104,10 +127,15 @@ namespace engine
          BOOLEAN     hasTransNode( UINT32 groupID ) const ;
          BOOLEAN     isTransNodeEmpty() const ;
 
+         BOOLEAN     checkAndUpdateNode( const MsgRouteID &routeID,
+                                         BOOLEAN doWrite ) ;
+
          BOOLEAN     delTransNode( const MsgRouteID &routeID ) ;
-         void        addTransNode( const MsgRouteID &routeID ) ;
+         void        addTransNode( const MsgRouteID &routeID,
+                                   BOOLEAN isWrite = FALSE ) ;
 
          UINT32      getTransNodeSize() const ;
+         UINT32      getWriteTransNodeSize() const ;
          UINT32      dumpTransNode( SET_ROUTEID &setID ) const ;
 
          const MAP_TRANS_NODES* getTransNodeMap() const ;
@@ -136,6 +164,7 @@ namespace engine
          pmdRemoteSessionSite *_pSite ;
 
          MAP_TRANS_NODES      _mapTransNodes ;
+         UINT32               _writeTransNodeNum ;
    } ;
 
    typedef _coordSessionPropSite coordSessionPropSite ;

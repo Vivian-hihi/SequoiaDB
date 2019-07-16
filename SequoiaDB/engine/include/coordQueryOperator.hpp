@@ -110,6 +110,14 @@ namespace engine
 
          virtual BOOLEAN      _isTrans( pmdEDUCB *cb, MsgHeader *pMsg ) ;
 
+         virtual void         _onNodeReply( INT32 processType,
+                                                  MsgOpReply *pReply,
+                                                  pmdEDUCB *cb,
+                                                  coordSendMsgIn &inMsg ) ;
+
+         virtual BOOLEAN      _canPushDownAutoCommit() const ;
+
+
          INT32                _queryOrDoOnCL( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
                                               rtnContextCoord **pContext,

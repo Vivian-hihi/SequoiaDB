@@ -55,7 +55,7 @@ namespace engine
    struct _coordRemoteHandleStatus
    {
       UINT16               _initFinished ;
-      UINT16               _initTrans ;
+      UINT8                _initTrans ;
       UINT64               _nodeVer ;
       UINT64               _nodeID ;
 
@@ -76,6 +76,17 @@ namespace engine
    typedef _coordRemoteHandleStatus coordRemoteHandleStatus ;
 
    #pragma pack()
+
+   /*
+      Tool functions
+   */
+   INT32 coordBuildPacketMsg( _pmdSubSession *pSub,
+                              MsgHeader *pHeader,
+                              _pmdEDUCB *cb ) ;
+
+   INT32 coordBuildPacketMsg( _pmdRemoteSession *pSession,
+                              _pmdSubSession *pSub,
+                              MsgHeader *pHeader ) ;
 
    /*
       _coordRemoteHandlerBase define
@@ -130,10 +141,6 @@ namespace engine
          INT32          _sessionInit( _pmdRemoteSession *pSession,
                                       const MsgRouteID &nodeID,
                                       _pmdEDUCB *cb ) ;
-
-         INT32          _buildPacket( _pmdRemoteSession *pSession,
-                                      _pmdSubSession *pSub,
-                                      MsgHeader *pHeader ) ;
 
          INT32          _buildPacketWithUpdateSched( _pmdRemoteSession *pSession,
                                                      _pmdSubSession *pSub,

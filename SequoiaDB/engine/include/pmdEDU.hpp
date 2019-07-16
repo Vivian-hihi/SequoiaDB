@@ -194,6 +194,9 @@ namespace engine
          virtual BOOLEAN   contextFind( INT64 contextID ) ;
          virtual UINT32    contextNum() ;
 
+         INT64             getCurAutoTransCtxID() const ;
+         void              setCurAutoTransCtxID( INT64 contextID ) ;
+
    public:
       _pmdEDUCB( _pmdEDUMgr *mgr, INT32 type ) ;
       ~_pmdEDUCB() ;
@@ -511,6 +514,7 @@ namespace engine
       UINT32                  _buffSize ;
 
       SET_CONTEXT             _contextList ;
+      INT64                   _curAutoTransCtxID ;
       utilMemListPool         *_pMemPool ;
 
    };

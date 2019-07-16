@@ -66,6 +66,11 @@ namespace engine
       _input.clear() ;
    }
 
+   INT32 _qgmPlan::checkTransAutoCommit( BOOLEAN dpsValid, _pmdEDUCB *eduCB )
+   {
+      return _checkTransAutoCommit( dpsValid, eduCB ) ;
+   }
+
    void _qgmPlan::close()
    {
       QGM_PINPUT::iterator itr = _input.begin() ;
@@ -116,6 +121,21 @@ namespace engine
          }
       }
       return isNeedRollback ;
+   }
+
+   BOOLEAN _qgmPlan::canUseTrans() const
+   {
+      BOOLEAN canUseTransaction = FALSE ;
+      for ( UINT32 i = 0 ; i < _input.size() ; ++i )
+      {
+         const _qgmPlan *pPlan = _input[i] ;
+         if ( pPlan->canUseTrans() )
+         {
+            canUseTransaction = TRUE ;
+            break ;
+         }
+      }
+      return canUseTransaction ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLAN_EXECUTE, "_qgmPlan::execute" )
@@ -228,6 +248,10 @@ namespace engine
                rc = SDB_OK ;
             }
          }
+      }
+      else if ( eduCB->isAutoCommitTrans() )
+      {
+         rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
       }
 
       return rc ;

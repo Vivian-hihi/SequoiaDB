@@ -97,6 +97,7 @@ namespace engine
          virtual void    onRecieve ( const NET_HANDLE netHandle,
                                      MsgHeader * msg ) ;
          virtual BOOLEAN timeout ( UINT32 interval ) ;
+         virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
 
          virtual void    onDispatchMsgBegin( const NET_HANDLE netHandle,
                                              const MsgHeader *pHeader ) ;
@@ -355,6 +356,9 @@ namespace engine
          INT64                  _pendingContextID ;
          INT32                  _pendingStartFrom ;
          rtnContextBuf          _pendingBuff ;
+
+         UINT32                 _transWaitTimeout ;
+         DPS_TRANS_ID           _transWaitID ;
    } ;
 
 }

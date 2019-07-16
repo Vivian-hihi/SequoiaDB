@@ -626,7 +626,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       VEC_SUB_SESSIONPTR vecFailedSession ;
-      vector< INT32 > vecFailedFlag ;
+      VEC_INT32 vecFailedFlag ;
       pmdSubSession *pSub = NULL ;
 
       if ( pTotalNum )
@@ -688,6 +688,7 @@ namespace engine
       else
       {
          INT32 rcTmp = SDB_OK ;
+         INT32 rcHandle = SDB_OK ;
          UINT64 nodeID = 0 ;
          // process failed
          for ( UINT32 i = 0 ; i < vecFailedSession.size() ; ++i )
@@ -695,16 +696,25 @@ namespace engine
             pSub = vecFailedSession[ i ] ;
             nodeID = pSub->getNodeIDUInt() ;
             rcTmp = vecFailedFlag[ i ] ;
-            rc = _pHandle->onSendFailed( this, &pSub, rcTmp ) ;
-            PD_RC_CHECK( rc, PDERROR, "Session[%s] send msg to node[%s] "
-                         "failed[rc: %d] and processed failed[rc: %d]",
-                         _pEDUCB->toString().c_str(),
-                         routeID2String(nodeID).c_str(),
-                         rcTmp, rc ) ;
-            if ( pSucNum )
+            rcHandle = _pHandle->onSendFailed( this, &pSub, rcTmp ) ;
+            if ( rcHandle )
+            {
+               PD_LOG( PDERROR, "Session[%s] send msg to node[%s] "
+                       "failed[rc: %d] and processed failed[rc: %d]",
+                       _pEDUCB->toString().c_str(),
+                       routeID2String(nodeID).c_str(),
+                       rcTmp, rcHandle ) ;
+               rc = rc ? rc : rcHandle ;
+            }
+            else if ( pSucNum )
             {
                ++(*pSucNum) ;
             }
+         }
+
+         if ( rc )
+         {
+            goto error ;
          }
       }
 
@@ -723,7 +733,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdSubSession *pSub = NULL ;
       VEC_SUB_SESSIONPTR vecFailedSession ;
-      vector< INT32 > vecFailedFlag ;
+      VEC_INT32 vecFailedFlag ;
       SET_NODEID::iterator it = subs.begin() ;
       UINT64 nodeID = 0 ;
 
@@ -796,22 +806,32 @@ namespace engine
       else
       {
          INT32 rcTmp = SDB_OK ;
+         INT32 rcHandle = SDB_OK ;
          // process failed
          for ( UINT32 i = 0 ; i < vecFailedSession.size() ; ++i )
          {
             pSub = vecFailedSession[ i ] ;
             nodeID = pSub->getNodeIDUInt() ;
             rcTmp = vecFailedFlag[ i ] ;
-            rc = _pHandle->onSendFailed( this, &pSub, rcTmp ) ;
-            PD_RC_CHECK( rc, PDERROR, "Session[%s] send msg to node[%s] "
-                         "failed[rc: %d] and processed failed[rc: %d]",
-                         _pEDUCB->toString().c_str(),
-                         routeID2String(nodeID).c_str(),
-                         rcTmp, rc ) ;
-            if ( pSucNum )
+            rcHandle = _pHandle->onSendFailed( this, &pSub, rcTmp ) ;
+            if ( rcHandle )
+            {
+               PD_LOG( PDERROR, "Session[%s] send msg to node[%s] "
+                       "failed[rc: %d] and processed failed[rc: %d]",
+                       _pEDUCB->toString().c_str(),
+                       routeID2String(nodeID).c_str(),
+                       rcTmp, rcHandle ) ;
+               rc = rc ? rc : rcHandle ;
+            }
+            else if ( pSucNum )
             {
                ++(*pSucNum) ;
             }
+         }
+
+         if ( rc )
+         {
+            goto error ;
          }
       }
 
@@ -1000,6 +1020,10 @@ namespace engine
       {
          _pSite->removeAssitNode( pSub->getAddPos(),
                                   pSub->getNodeID().columns.nodeID ) ;
+         if ( _pHandle )
+         {
+            rc = _pHandle->onSendFailed( this, &pSub, rc ) ;
+         }
       }
       goto done ;
    }

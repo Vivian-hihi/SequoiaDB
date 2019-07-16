@@ -2179,27 +2179,6 @@ namespace engine
       goto done ;
    }
 
-   void rtnUnsetTransContext( _pmdEDUCB * cb,SDB_RTNCB *rtnCB )
-   {
-      if ( cb->contextNum() > 0 )
-      {
-         _pmdEDUCB::SET_CONTEXT setCtx ;
-         _pmdEDUCB::SET_CONTEXT::iterator it ;
-         rtnContextBase *pContext = NULL ;
-
-         cb->contextCopy( setCtx ) ;
-
-         for ( it = setCtx.begin() ; it != setCtx.end() ; ++it )
-         {
-            pContext = rtnCB->contextFind( *it, NULL ) ;
-            if ( pContext )
-            {
-               pContext->setTransContext( FALSE ) ;
-            }
-         }
-      }
-   }
-
    INT32 rtnConvertIndexDef( BSONObj& indexDef )
    {
       INT32 rc = SDB_OK ;

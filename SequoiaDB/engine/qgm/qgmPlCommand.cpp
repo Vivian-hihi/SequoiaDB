@@ -596,7 +596,14 @@ namespace engine
          rc = _checkTransOperator( dpsCB ? TRUE : FALSE ) ;
          if ( SDB_OK == rc )
          {
-            rc = rtnTransBegin( eduCB ) ;
+            if ( eduCB->isAutoCommitTrans() )
+            {
+               rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+            }
+            else
+            {
+               rc = rtnTransBegin( eduCB ) ;
+            }
          }
       }
       else if ( SQL_GRAMMAR::ROLLBACK == _commandType )

@@ -87,6 +87,11 @@ namespace engine
       return TRUE ;
    }
 
+   BOOLEAN _qgmPlUpdate::canUseTrans() const
+   {
+      return TRUE ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLUPDATE__EXEC, "_qgmPlUpdate::_execute" )
    INT32 _qgmPlUpdate::_execute( _pmdEDUCB *eduCB )
    {
@@ -155,13 +160,6 @@ namespace engine
          if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
          {
              dpsCB = NULL ;
-         }
-
-         /// begin auto commit transaction
-         rc = _checkTransAutoCommit( dpsCB ? TRUE : FALSE, eduCB ) ;
-         if ( rc )
-         {
-            goto error ;
          }
 
          rc = rtnUpdate( clName.c_str(), _condition, _updater, hint,

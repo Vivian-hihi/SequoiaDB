@@ -102,6 +102,29 @@ OSS_INLINE BOOLEAN isTransBSMsg( INT32 opCode )
    return FALSE ;
 }
 
+OSS_INLINE BOOLEAN isTransWriteMsg( const MsgHeader *pMsg )
+{
+   BOOLEAN ret = FALSE ;
+   INT32 opCode = GET_REQUEST_TYPE( pMsg->opCode ) ;
+   switch ( opCode )
+   {
+      case MSG_BS_TRANS_INSERT_REQ :
+      case MSG_BS_TRANS_UPDATE_REQ :
+      case MSG_BS_TRANS_DELETE_REQ :
+         ret = TRUE ;
+         break ;
+      case MSG_BS_TRANS_QUERY_REQ :
+         if ( ((MsgOpQuery*)pMsg)->flags | FLG_QUERY_MODIFY )
+         {
+            ret = TRUE ;
+         }
+         break ;
+      default:
+         break ;
+   }
+   return ret ;
+}
+
 /*
  * Create Update Message in ppBuffer
  * in/out ppBuffer

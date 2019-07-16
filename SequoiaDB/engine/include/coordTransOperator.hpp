@@ -80,6 +80,8 @@ namespace engine
                                                   pmdEDUCB *cb,
                                                   coordSendMsgIn &inMsg ) ;
 
+         virtual BOOLEAN            _canPushDownAutoCommit() const ;
+
       protected:
          INT32          buildTransSession( const CoordGroupList &groupLst,
                                            pmdEDUCB *cb,
@@ -138,6 +140,11 @@ namespace engine
                                  INT64 &contextID,
                                  rtnContextBuf *buf ) ;
 
+         virtual INT32 doCompactPhase( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       INT64 &contextID,
+                                       rtnContextBuf *buf ) ;
+
          virtual INT32 cancelOp( MsgHeader *pMsg,
                                  pmdEDUCB *cb,
                                  INT64 &contextID,
@@ -165,6 +172,17 @@ namespace engine
                                             pmdEDUCB *cb,
                                             INT64 &contextID,
                                             rtnContextBuf *buf ) = 0 ;
+
+         virtual BOOLEAN canCompactCommit() = 0 ;
+
+         virtual INT32   buildCompactMsg( const CHAR *pReceiveBuffer,
+                                          CHAR **pMsg,
+                                          INT32 *pMsgSize,
+                                          pmdEDUCB *cb ) = 0 ;
+
+         virtual void    releaseCompactMsg( CHAR *pMsg,
+                                            INT32 msgSize,
+                                            pmdEDUCB *cb ) = 0 ;
    } ;
    typedef _coord2PhaseCommit coord2PhaseCommit ;
 
@@ -207,6 +225,17 @@ namespace engine
                                             pmdEDUCB *cb,
                                             INT64 &contextID,
                                             rtnContextBuf *buf ) ;
+
+         virtual BOOLEAN canCompactCommit() ;
+
+         virtual INT32   buildCompactMsg( const CHAR *pReceiveBuffer,
+                                          CHAR **pMsg,
+                                          INT32 *pMsgSize,
+                                          pmdEDUCB *cb ) ;
+
+         virtual void    releaseCompactMsg( CHAR *pMsg,
+                                            INT32 msgSize,
+                                            pmdEDUCB *cb ) ;
 
       private:
          MsgOpTransCommit                 _phase2Msg ;
