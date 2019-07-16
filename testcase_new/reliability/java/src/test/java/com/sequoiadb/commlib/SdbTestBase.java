@@ -39,7 +39,10 @@ public class SdbTestBase {
 
     private static final String TRANSAUTOCOMMIT = "transautocommit";
     private static final String TRANSAUTOROLLBACK = "transautorollback";
+    private static final String TRANSISOLATION = "transisolation";
+    private static final String TRANSLOCKWAIT = "translockwait";
     private static final String RCAUTO = "rcauto";
+    private static final String RC = "rc";
     private static final String NODENAME = "NodeName";
     private static final Map<String, BSONObject> group2Conf = new HashMap<String, BSONObject>();
     private static final Map<String, BSONObject> node2Conf = new HashMap<String, BSONObject>();
@@ -113,12 +116,18 @@ public class SdbTestBase {
         group2Conf.get(RCAUTO).put(TRANSAUTOCOMMIT, true);
         group2Conf.get(RCAUTO).put(TRANSAUTOROLLBACK, false);
 
-        for (String conf : group2Conf.get(RCAUTO).keySet()) {
-            if (!confObj.containsField(conf)) {
-                confObj.put(conf, "");
+        group2Conf.put(RC, new BasicBSONObject());
+        group2Conf.get(RC).put(TRANSISOLATION, 1);
+        group2Conf.get(RC).put(TRANSLOCKWAIT, false);
+
+        for (String key : group2Conf.keySet()) {
+            groupName2Count.put(key, new AtomicInteger(0));
+            for (String conf : group2Conf.get(key).keySet()) {
+                if (!confObj.containsField(conf)) {
+                    confObj.put(conf, "");
+                }
             }
         }
-        groupName2Count.put(RCAUTO, new AtomicInteger(0));
     }
 
     private static void modifyNodeConf(BSONObject cfg, BSONObject object) {
@@ -134,7 +143,7 @@ public class SdbTestBase {
         }
     }
 
-    @BeforeTest(groups = RCAUTO)
+    @BeforeTest(groups = { RC, RCAUTO })
     public static synchronized void initTestGroups() {
         if (!groupName2Count.containsKey(testGroupOfCurrent)) {
             return;
@@ -147,7 +156,7 @@ public class SdbTestBase {
         modifyNodeConf(group2Conf.get(testGroupOfCurrent), null);
     }
 
-    @AfterTest(groups = RCAUTO, alwaysRun = true)
+    @AfterTest(groups = { RC, RCAUTO }, alwaysRun = true)
     public static synchronized void finiTestGroups() {
         if (!groupName2Count.containsKey(testGroupOfCurrent)) {
             return;
