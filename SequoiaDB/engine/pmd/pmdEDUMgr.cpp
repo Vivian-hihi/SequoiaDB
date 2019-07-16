@@ -1116,6 +1116,7 @@ namespace engine
    done:
       if ( destoryed )
       {
+         pmdUndeclareEDUCB() ;
          SDB_OSS_DEL cb ;
       }
       return destoryed ;
@@ -1220,6 +1221,7 @@ namespace engine
             hasLock = FALSE ;
 
             destroyed = TRUE ;
+            pmdUndeclareEDUCB() ;
             SDB_OSS_DEL cb ;
          }
          else
