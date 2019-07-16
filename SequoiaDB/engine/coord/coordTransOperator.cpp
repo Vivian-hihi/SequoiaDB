@@ -549,6 +549,7 @@ namespace engine
       {
          releaseCompactMsg( pMsgReq, msgSize, cb ) ;
       }
+      return rc ;
    error:
       goto done ;
    }

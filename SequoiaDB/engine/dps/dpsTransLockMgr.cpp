@@ -1143,9 +1143,8 @@ namespace engine
               bFreeLRBHeader = FALSE ,
               bLatched       = FALSE ;
 
-      EDUID eduId    = dpsTxExectr->getEDUID() ;
-
 #ifdef _DEBUG
+      EDUID eduId    = dpsTxExectr->getEDUID() ;
       CHAR lockIdStr[ DPS_LOCKID_STRING_MAX_SIZE ] = { '\0' } ;
 
       ossSnprintf( lockIdStr, sizeof( lockIdStr ),
