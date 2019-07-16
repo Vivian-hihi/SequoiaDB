@@ -129,7 +129,8 @@ namespace engine
     _pFrame( pFrame )
    {
       if ( MSG_ROUTE_SHARD_SERVCIE != id.columns.serviceID ||
-           id.columns.nodeID == pFrame->getLocal().columns.nodeID )
+           id.columns.groupID < DATA_GROUP_ID_BEGIN ||
+           id.columns.groupID > DATA_GROUP_ID_END )
       {
          _capacity = 1 ;
       }
