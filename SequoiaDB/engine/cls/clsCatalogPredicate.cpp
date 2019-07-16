@@ -397,7 +397,7 @@ namespace engine
       BOOLEAN rsTmp = TRUE ;
 
       // PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_MATCHES ) ;
-      const map<string, rtnPredicate> &predicates = _predicateSet.predicates() ;
+      const RTN_PREDICATE_MAP &predicates = _predicateSet.predicates() ;
       if ( isUniverse() )
       {
          goto done ;
@@ -414,7 +414,7 @@ namespace engine
                BSONElement beShardingKey = iterSK.next() ;
                SDB_ASSERT ( beShardingKey.isNumber(),
                             "Invalid sharding-key!" ) ;
-               map<string, rtnPredicate>::const_iterator iterMap =
+               RTN_PREDICATE_MAP::const_iterator iterMap =
                                  predicates.find( beShardingKey.fieldName() );
                if ( predicates.end() == iterMap )
                {

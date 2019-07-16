@@ -92,6 +92,17 @@ class ossPoolMap : public std::map<K, V, Compare, typename ossPoolAllocator<std:
 };
 
 /*
+ * Multi map utilizing memory pool
+ */
+template < typename K, typename V, class Compare = std::less<K> >
+class ossPoolMultiMap : public std::multimap<K, V, Compare, typename ossPoolAllocator<std::pair<const K, V> >::Type > {
+   /**
+    * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
+    * DO NOT USE THIS CLASS IN POLYMORPHISM
+    */
+};
+
+/*
  * Set utilizing memory pool
  */
 template < typename K, class Compare = std::less<K> >
@@ -100,6 +111,17 @@ class ossPoolSet : public std::set<K, Compare, typename ossPoolAllocator<K>::Typ
    * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
    * DO NOT USE THIS CLASS IN POLYMORPHISM
    */
+};
+
+/*
+ * Multi Set utilizing memory pool
+ */
+template < typename K, class Compare = std::less<K> >
+class ossPoolMultiSet : public std::multiset<K, Compare, typename ossPoolAllocator<K>::Type > {
+   /**
+    * DO NOT ADD ANY MEMBER/FUNCTION IN THIS CLASS
+    * DO NOT USE THIS CLASS IN POLYMORPHISM
+    */
 };
 
 typedef ossPoolSet<UINT64>             SET_UINT64 ;

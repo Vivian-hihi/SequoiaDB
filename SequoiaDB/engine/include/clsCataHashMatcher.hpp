@@ -33,9 +33,8 @@
 #ifndef CLS_CATA_HASH_MATCHER_HPP_
 #define CLS_CATA_HASH_MATCHER_HPP_
 
-#include <vector>
 #include <string>
-#include "ossTypes.h"
+#include "utilPooledObject.hpp"
 #include "ossMemPool.hpp"
 #include "clsCatalogPredicate.hpp"
 
@@ -45,10 +44,10 @@ namespace engine
    /*
       clsCataHashPredTree define
    */
-   class clsCataHashPredTree : public SDBObject
+   class clsCataHashPredTree : public utilPooledObject
    {
-   typedef std::vector< clsCataHashPredTree * >          VEC_CLSCATAHASHPREDSET ;
-   typedef ossPoolMap< std::string, bson::BSONElement>   MAP_CLSCATAHASHPREDFIELDS ;
+   typedef ossPoolVector< clsCataHashPredTree * >        VEC_CLSCATAHASHPREDSET ;
+   typedef ossPoolMap< ossPoolString, bson::BSONElement> MAP_CLSCATAHASHPREDFIELDS ;
    public:
       clsCataHashPredTree( bson::BSONObj shardingKey );
 

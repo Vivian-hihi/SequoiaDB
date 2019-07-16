@@ -41,7 +41,7 @@
 
 #include "ossLatch.hpp"
 #include <boost/functional/hash.hpp>
-#include <map>
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -55,10 +55,10 @@ namespace engine
    class utilConcurrentMap: public SDBObject
    {
    public:
-      typedef std::pair< const Key, T > value_type ;
-      typedef typename std::map< Key, T > map_type ;
-      typedef typename std::map< Key, T >::iterator map_iterator ;
-      typedef typename std::map< Key, T >::const_iterator map_const_iterator ;
+      typedef std::pair< const Key, T >         value_type ;
+      typedef typename ossPoolMap< Key, T >     map_type ;
+      typedef typename map_type::iterator       map_iterator ;
+      typedef typename map_type::const_iterator map_const_iterator ;
    private:
       typedef utilConcurrentMap< Key, T, BUCKET_NUM, Hash > cmap_type ;
 

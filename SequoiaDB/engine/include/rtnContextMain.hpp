@@ -43,7 +43,7 @@
 #include "rtnContext.hpp"
 #include "rtnSubContext.hpp"
 #include "rtnContextDataDispatcher.hpp"
-#include <map>
+#include "ossMemPool.hpp"
 
 namespace engine
 {
@@ -52,7 +52,7 @@ namespace engine
                            public _rtnCtxDataDispatcher
    {
    protected:
-      typedef std::multimap< rtnOrderKey, rtnSubContext* > SUB_ORDERED_CTX_MAP ;
+      typedef ossPoolMultiMap< rtnOrderKey, rtnSubContext* > SUB_ORDERED_CTX_MAP ;
 
    public:
       _rtnContextMain( INT64 contextID, UINT64 eduID ) ;

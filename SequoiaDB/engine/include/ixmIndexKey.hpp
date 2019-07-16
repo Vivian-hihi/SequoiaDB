@@ -40,11 +40,10 @@
 #define IXMINDEXKEY_HPP_
 
 #include "core.hpp"
-#include "oss.hpp"
+#include "utilPooledObject.hpp"
 #include "../bson/bson.h"
 #include "pd.hpp"
-#include <string>
-#include <vector>
+#include "ossMemPool.hpp"
 
 using namespace bson;
 
@@ -68,15 +67,15 @@ namespace engine
    // Index KeyGen is the operator to extract keys from given object
    // It depends on its underlying ixmIndexDetails control block
    // ixmIndexKeyGen is local to each thread
-   class _ixmIndexKeyGen : public SDBObject
+   class _ixmIndexKeyGen : public utilPooledObject
    {
    protected:
       INT32 indexVersion() const ;
       IndexSuitability _suitability( const BSONObj& query ,
                                      const BSONObj& order ) const ;
       //BSONSizeTracker _sizeTracker ;
-      vector<const CHAR*> _fieldNames ; // vector contains all fields
-      vector<BSONElement> _fixedElements ; // dummy element for KeyGenerator
+      ossPoolVector<const CHAR*>    _fieldNames ; // vector contains all fields
+      ossPoolVector<BSONElement>    _fixedElements ; // dummy element for KeyGenerator
       BSONObj _undefinedKey ;
 
       INT32                _nFields ; // number of fields

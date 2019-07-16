@@ -140,7 +140,7 @@ namespace engine
    };
    typedef _clsCatalogItem clsCatalogItem ;
 
-   typedef std::vector<UINT32>                           VEC_GROUP_ID ;
+   typedef VEC_INT32                            VEC_GROUP_ID ;
 
    class _clsCataOrder : public SDBObject
    {
@@ -544,7 +544,7 @@ namespace engine
          ~_clsNodeMgrAgent () ;
       public:
          INT32       groupCount () ;
-         INT32       getGroupsID( vector< UINT32 > &groups ) ;
+         INT32       getGroupsID( VEC_UINT32 &groups ) ;
          INT32       getGroupsName( vector< string > &groups ) ;
 
          INT32       groupVersion ( UINT32 id ) ;

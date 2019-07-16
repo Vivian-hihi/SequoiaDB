@@ -39,6 +39,7 @@
 #define CLSCATALOGPREDICATE_HPP_
 
 #include "rtnPredicate.hpp"
+#include "utilPooledObject.hpp"
 #include "ossMemPool.hpp"
 
 namespace engine
@@ -46,8 +47,7 @@ namespace engine
    class clsCatalogPredicateTree;
    class _clsCatalogItem;
 
-   typedef ossPoolMap< std::string, rtnStartStopKey*>    MAP_CLSCATAPREDICATEFIELD ;
-   typedef std::vector< clsCatalogPredicateTree * >      VEC_CLSCATAPREDICATESET ;
+   typedef ossPoolVector< clsCatalogPredicateTree * >    VEC_CLSCATAPREDICATESET ;
 
    /*
       _CLS_CATA_LOGIC_TYPE define
@@ -62,7 +62,7 @@ namespace engine
    /*
       clsCatalogPredicateTree define
    */
-   class clsCatalogPredicateTree : public SDBObject
+   class clsCatalogPredicateTree : public utilPooledObject
    {
    public:
       clsCatalogPredicateTree( bson::BSONObj shardingKey ) ;

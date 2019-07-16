@@ -3527,7 +3527,7 @@ namespace engine
       return _groupMap.size() ;
    }
 
-   INT32 _clsNodeMgrAgent::getGroupsID( vector< UINT32 > &groups )
+   INT32 _clsNodeMgrAgent::getGroupsID( VEC_UINT32 &groups )
    {
       groups.clear() ;
       GROUP_MAP_IT it = _groupMap.begin() ;

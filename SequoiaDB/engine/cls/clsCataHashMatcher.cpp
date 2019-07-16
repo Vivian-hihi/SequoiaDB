@@ -370,7 +370,7 @@ namespace engine
          MAP_CLSCATAHASHPREDFIELDS::const_iterator cit = _fieldSet.begin() ;
          while ( cit != _fieldSet.end() )
          {
-            buf << "{ " << cit->first << ": "
+            buf << "{ " << cit->first.c_str() << ": "
                 << cit->second.toString( false, false ) << " }" ;
             ++cit ;
          }

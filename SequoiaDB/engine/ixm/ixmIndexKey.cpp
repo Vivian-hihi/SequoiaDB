@@ -109,8 +109,8 @@ namespace engine
    class _ixmKeyGenerator
    {
    protected:
-      const _ixmIndexKeyGen *_keygen ;
-      mutable vector<BSONObj *> _objs ;
+      const _ixmIndexKeyGen            *_keygen ;
+      mutable ossPoolVector<BSONObj *> _objs ;
    public:
       _ixmKeyGenerator ( const _ixmIndexKeyGen *keygen )
       {
@@ -118,7 +118,7 @@ namespace engine
       }
       ~_ixmKeyGenerator()
       {
-         vector<BSONObj *>::iterator itr = _objs.begin() ;
+         ossPoolVector<BSONObj *>::iterator itr = _objs.begin() ;
          for ( ; itr != _objs.end(); itr++ )
          {
             SDB_OSS_DEL *itr ;
@@ -136,7 +136,7 @@ namespace engine
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN_GETKEYS );
          SDB_ASSERT( _keygen, "spec can't be NULL" ) ;
          SDB_ASSERT( !_keygen->_fieldNames.empty(), "can not be empty" ) ;
-         vector<const CHAR*> fieldNames ( _keygen->_fieldNames ) ;
+         ossPoolVector<const CHAR*> fieldNames ( _keygen->_fieldNames ) ;
          BSONElement arrEle ;
          try
          {
@@ -174,7 +174,7 @@ namespace engine
       }
    protected:
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYS, "$_ixmKeyGenerator::_getKeys" )
-      INT32 _getKeys( vector<const CHAR *> &fieldNames,
+      INT32 _getKeys( ossPoolVector<const CHAR *> &fieldNames,
                       const BSONObj &obj,
                       BOOLEAN isKeepKeyName,
                       BSONObjSet &keys,
@@ -299,7 +299,7 @@ namespace engine
 
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHARRELE, "$_ixmKeyGenerator::_genKeyWithArrayEle" )
       INT32 _genKeyWithArrayEle( BSONElement *keyEles,
-                                 vector<const CHAR *> &fieldNames,
+                                 ossPoolVector<const CHAR *> &fieldNames,
                                  const BSONElement *arrElement,
                                  const CHAR *arrEleName,
                                  UINT32 arrElePos,
@@ -395,7 +395,7 @@ namespace engine
 
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE, "$_ixmKeyGenerator::_genKeyWithNormalEle" )
       INT32 _genKeyWithNormalEle( BSONElement *keyELes,
-                                  vector<const CHAR *> &fieldNames,
+                                  ossPoolVector<const CHAR *> &fieldNames,
                                   BOOLEAN isKeepKeyName,
                                   BOOLEAN ignoreUndefined,
                                   BSONObjSet &keys,
@@ -410,13 +410,13 @@ namespace engine
          for ( UINT32 i = 0; i < eleNum; i++ )
          {
             BSONElement &e = keyELes[i] ;
-            string keyName ;
+            ossPoolString keyName ;
             if ( isKeepKeyName )
             {
                if ( (INT32)i == arrElePos )
                {
                   SDB_ASSERT( arrNameLen >= 0, "invalid arrNameLen" ) ;
-                  keyName = string( fieldNames[i], arrNameLen ) ;
+                  keyName = ossPoolString( fieldNames[i], arrNameLen ) ;
                }
                else
                {
@@ -427,12 +427,12 @@ namespace engine
             {
                if ( !ignoreUndefined )
                {
-                  builder.appendAs( gUndefinedElt, keyName ) ;
+                  builder.appendAs( gUndefinedElt, keyName.c_str() ) ;
                }
             }
             else
             {
-               builder.appendAs( e, keyName ) ;
+               builder.appendAs( e, keyName.c_str() ) ;
             }
          }
 

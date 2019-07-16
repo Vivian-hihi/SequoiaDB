@@ -1691,7 +1691,7 @@ namespace engine
                                          vector< pmdAddrPair > *pVecFailedNode )
    {
       INT32 rc = SDB_OK ;
-      vector< UINT32 > groups ;
+      VEC_UINT32 groups ;
 
       rc = updateImageAllGroups( cb, millisecond ) ;
       if ( rc )
