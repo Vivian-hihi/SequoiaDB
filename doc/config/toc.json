@@ -2039,10 +2039,22 @@
                            "en": "listReplicaGroups()"
                         },
                         {
+                           "id": 1563243399,
+                           "file": "listSequences",
+                           "cn": "listSequences()",
+                           "en": "listSequences()"
+                        },
+                        {
                            "id": 1432190800,
                            "file": "listTasks",
                            "cn": "listTasks()",
                            "en": "listTasks()"
+                        },
+                        {
+                           "id": 1563243400,
+                           "file": "loadCS",
+                           "cn": "loadCS()",
+                           "en": "loadCS()"
                         },
                         {
                            "id": 1432190801,
@@ -2099,12 +2111,6 @@
                            "en": "reloadConf()"
                         },
                         {
-                           "id": 1521424274,
-                           "file": "updateConf",
-                           "cn": "updateConf()",
-                           "en": "updateConf()"
-                        },
-                        {
                            "id": 1521424296,
                            "file": "deleteConf",
                            "cn": "deleteConf()",
@@ -2127,6 +2133,12 @@
                            "file": "startRG",
                            "cn": "startRG()",
                            "en": "startRG()"
+                        },
+                        {
+                           "id": 1432190819,
+                           "file": "stopRG",
+                           "cn": "stopRG()",
+                           "en": "stopRG()"
                         },
                         {
                            "id": 1482329455,
@@ -2183,16 +2195,22 @@
                            "en": "transRollback()"
                         },
                         {
+                           "id": 1563243401,
+                           "file": "unloadCS",
+                           "cn": "unloadCS()",
+                           "en": "unloadCS()"
+                        },
+                        {
+                           "id": 1521424274,
+                           "file": "updateConf",
+                           "cn": "updateConf()",
+                           "en": "updateConf()"
+                        },
+                        {
                            "id": 1432190818,
                            "file": "waitTasks",
                            "cn": "waitTasks()",
                            "en": "waitTasks()"
-                        },
-                        {
-                           "id": 1432190819,
-                           "file": "stopRG",
-                           "cn": "stopRG()",
-                           "en": "stopRG()"
                         }
                      ]
                   },
@@ -2497,16 +2515,40 @@
                      "en": "SdbQuery",
                      "contents": [
                         {
+                           "id": 1537862272,
+                           "file": "arrayAccess",
+                           "cn": "arrayAccess()",
+                           "en": "arrayAccess()"
+                        },
+                        {
+                           "id": 1562070375,
+                           "file": "close",
+                           "cn": "close()",
+                           "en": "close()"
+                        },
+                        {
                            "id": 1432190855,
                            "file": "count",
                            "cn": "count()",
                            "en": "count()"
                         },
                         {
+                           "id": 1562070410,
+                           "file": "current",
+                           "cn": "current()",
+                           "en": "current()"
+                        },
+                        {
                            "id": 1432190854,
                            "file": "explain",
                            "cn": "explain()",
                            "en": "explain()"
+                        },
+                        {
+                           "id": 1537862277,
+                           "file": "getQueryMeta",
+                           "cn": "getQueryMeta()",
+                           "en": "getQueryMeta()"
                         },
                         {
                            "id": 1432190857,
@@ -2519,6 +2561,12 @@
                            "file": "limit",
                            "cn": "limit()",
                            "en": "limit()"
+                        },
+                        {
+                           "id": 1562070468,
+                           "file": "next",
+                           "cn": "next()",
+                           "en": "next()"
                         },
                         {
                            "id": 1432190856,
@@ -2561,18 +2609,6 @@
                            "file": "update",
                            "cn": "update()",
                            "en": "update()"
-                        },
-                        {
-                           "id": 1537862277,
-                           "file": "getQueryMeta",
-                           "cn": "getQueryMeta()",
-                           "en": "getQueryMeta()"
-                        },
-                        {
-                           "id": 1537862272,
-                           "file": "arrayAccess",
-                           "cn": "arrayAccess()",
-                           "en": "arrayAccess()"
                         }
                      ]
                   },

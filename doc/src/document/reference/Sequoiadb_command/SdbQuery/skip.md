@@ -1,33 +1,61 @@
 ##语法##
+
 ***query.skip( [num] )***
+
+##类别##
+
+SdbQuery
+
+##描述##
 
 指定结果集从哪条记录开始返回。
 
-##参数描述##
+##参数##
 
-| 参数名 | 参数类型 | 描述 | 是否必填 |
-| ------ | -------- | ---- | -------- |
-| num | int | 自定义结果集从哪条记录返回。 | 否 |
+| 参数名 | 参数类型 | 默认值 | 描述                       | 是否必填 |
+| ------ | -------- | ------ | -------------------------- | -------- |
+| num    | int      | ---    | 自定义结果集从哪条记录返回 | 是       |
 
-> **Note：**  
-> query.skip() 方法的定义格式包含 num 参数，它是 int 类型。如果不设定 num 的内容或者设定 num 的值为0，相当于返回所有的结果集；如果想从结果集的第3条记录开始返回，可是设置 num 的值等于2。
+>**Note:**
+  
+>如果结果集的记录数小于 ( num + 1 )，无记录返回。
 
 ##返回值##
 
-返回结果集的游标，类型为 object 。
+返回结果集的游标。
 
 ##错误##
 
-[错误码](reference/Sequoiadb_error_code.md)
+如果出错则抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误码。
+关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
+
+常见错误可参考[错误码](reference/Sequoiadb_error_code.md)。
 
 ##示例##
 
-选择集合 bar 下 age 字段值大于10的记录（如使用 [$gt](reference/operator/match_operator/gt.md) 查询），从第5条记录开始返回，即跳过前面的四条记录
+* 选择集合 bar 下的记录，从第2条记录开始返回。
 
-```lang-javascript
-> db.foo.bar.find( { age: { $gt: 10 } } ).skip(4)
-```
+   ```lang-javascript
+   > db.foo.bar.find().skip(1)
+   {
+      "_id": {
+        "$oid": "5cf8aefe5e72aea111e82b39"
+      },
+      "name": "ben",
+      "age": 21
+   }
+   {
+      "_id": {
+        "$oid": "5cf8af065e72aea111e82b3a"
+      },
+      "name": "alice",
+      "age": 19
+   }
+   ```
 
-> **Note：**  
-> 如果结果集的记录数小于5，那么无记录返回；如果结果集的记录数大于5，则从第5条开始返回。
+* 选择集合 bar 下的记录，从第 4 条记录开始返回。（当前集合只有 3 条记录）
 
+   ```lang-javascript
+   > db.foo.bar.find().skip(3)
+   Return 0 row(s).
+   ```

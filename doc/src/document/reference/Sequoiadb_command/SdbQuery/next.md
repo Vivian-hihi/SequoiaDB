@@ -1,6 +1,6 @@
 ##语法##
 
-***query.toArray()***
+***cursor.next()***
 
 ##类别##
 
@@ -8,7 +8,7 @@ SdbQuery
 
 ##描述##
 
-以数组的形式返回结果集。
+获取当前游标指向的下一条记录。
 
 ##参数##
 
@@ -16,7 +16,7 @@ SdbQuery
 
 ##返回值##
 
-返回数组形式的结果集。
+返回当前游标指向的下一条记录。
 
 ##错误##
 
@@ -27,16 +27,15 @@ SdbQuery
 
 ##示例##
 
-* 以数组的形式返回集合 bar 中 age 字段值大于5的记录（如使用 [$gt](reference/operator/match_operator/gt.md) 查询）。
+* 选择集合 bar 中 age 字段值大于 20 的记录，返回当前游标指向的下一条记录
 
-  ```lang-javascript
-  > var arr = db.foo.bar.find().toArray()
-  > arr[0]
-  {
+ ```lang-javascript
+> db.foo.bar.find( { age: { $gt: 20 } } ).next()
+{
       "_id": {
-        "$oid": "5cf8aef75e72aea111e82b38"
+        "$oid": "5cf8aefe5e72aea111e82b39"
       },
-      "name": "tom",
-      "age": 20
-  }
-  ```
+      "name": "ben",
+      "age": 21
+}
+ ```

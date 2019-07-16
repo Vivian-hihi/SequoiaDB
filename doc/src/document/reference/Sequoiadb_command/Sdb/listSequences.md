@@ -1,14 +1,18 @@
 ##语法##
 
-***query.toArray()***
+***db.listSequences()***
 
 ##类别##
 
-SdbQuery
+Sdb
 
 ##描述##
 
-以数组的形式返回结果集。
+查看当前数据库的序列名称。
+
+>**Note:**
+
+>listSequences() 只会列出序列的名称。如果想要查看序列的详细信息，可以使用[db.snapshot(SDB_SNAP_SEQUENCES)](database_management/monitoring/snapshot/SDB_SNAP_SEQUENCES.md)。
 
 ##参数##
 
@@ -16,7 +20,7 @@ SdbQuery
 
 ##返回值##
 
-返回数组形式的结果集。
+返回当前数据库的序列名称。
 
 ##错误##
 
@@ -27,16 +31,11 @@ SdbQuery
 
 ##示例##
 
-* 以数组的形式返回集合 bar 中 age 字段值大于5的记录（如使用 [$gt](reference/operator/match_operator/gt.md) 查询）。
+* 查看当前数据库的序列名称。
 
   ```lang-javascript
-  > var arr = db.foo.bar.find().toArray()
-  > arr[0]
+  > db.listSequences()
   {
-      "_id": {
-        "$oid": "5cf8aef75e72aea111e82b38"
-      },
-      "name": "tom",
-      "age": 20
+      "Name": "SYS_8589934593_id_SEQ"
   }
   ```

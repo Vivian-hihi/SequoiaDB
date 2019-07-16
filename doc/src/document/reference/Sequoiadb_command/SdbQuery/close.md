@@ -1,6 +1,6 @@
 ##语法##
 
-***query.toArray()***
+***close()***
 
 ##类别##
 
@@ -8,7 +8,7 @@ SdbQuery
 
 ##描述##
 
-以数组的形式返回结果集。
+关闭游标。
 
 ##参数##
 
@@ -16,7 +16,7 @@ SdbQuery
 
 ##返回值##
 
-返回数组形式的结果集。
+无返回值。
 
 ##错误##
 
@@ -27,16 +27,17 @@ SdbQuery
 
 ##示例##
 
-* 以数组的形式返回集合 bar 中 age 字段值大于5的记录（如使用 [$gt](reference/operator/match_operator/gt.md) 查询）。
+* 关闭游标；
 
   ```lang-javascript
-  > var arr = db.foo.bar.find().toArray()
-  > arr[0]
-  {
-      "_id": {
-        "$oid": "5cf8aef75e72aea111e82b38"
-      },
-      "name": "tom",
-      "age": 20
-  }
+  > var query = db.foo.bar.find()
+  > query.close()
+  ```
+
+* 获取第一条记录。
+
+  ```lang-javascript
+  > query[0]
+  uncaught exception: -31
+  Failed to get next
   ```
