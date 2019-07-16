@@ -39,7 +39,7 @@
 #ifndef RTN_SUB_CONTEXT_HPP_
 #define RTN_SUB_CONTEXT_HPP_
 
-#include "oss.hpp"
+#include "utilPooledObject.hpp"
 #include "../bson/bson.h"
 #include "ixmIndexKey.hpp"
 #include "ixm_common.hpp"
@@ -48,7 +48,7 @@ using namespace bson ;
 
 namespace engine
 {
-   class _rtnOrderKey : public SDBObject
+   class _rtnOrderKey : public utilPooledObject
    {
       typedef std::vector< BSONElement >  OrderKeyList;
       typedef std::vector< BSONElement >  OrderKeyEleList;
@@ -72,7 +72,7 @@ namespace engine
    } ;
    typedef _rtnOrderKey rtnOrderKey ;
 
-   class _rtnSubContext: public SDBObject
+   class _rtnSubContext: public utilPooledObject
    {
    public:
       _rtnSubContext( const BSONObj& orderBy,
