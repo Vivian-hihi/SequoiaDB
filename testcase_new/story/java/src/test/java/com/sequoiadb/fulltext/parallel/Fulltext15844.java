@@ -1,9 +1,7 @@
 package com.sequoiadb.fulltext.parallel;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
