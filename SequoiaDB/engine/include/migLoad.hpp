@@ -60,6 +60,14 @@ namespace engine
       UINT32 size ;
       UINT32 line ;
       UINT32 column ;
+
+      _dataQueue()
+      {
+         offset = 0 ;
+         size = 0 ;
+         line = 0 ;
+         column = 0 ;
+      }
    } ;
 
    struct _workerReturn : public SDBObject
@@ -67,6 +75,13 @@ namespace engine
       UINT32 success ;
       UINT32 failure ;
       INT32  rc ;
+
+      _workerReturn()
+      {
+         success = 0 ;
+         failure = 0 ;
+         rc = 0 ;
+      }
    } ;
 
    enum _MIG_PARSER_FILE_TYPE
