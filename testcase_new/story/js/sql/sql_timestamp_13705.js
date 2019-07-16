@@ -62,6 +62,7 @@ function insertSQL(db, cl, csName, clName, insertValue, checkValue, result)
             db.execUpdate( sql );
             if(JSON.stringify(checkValue) == '{"$timestamp":"1902-01-01-00.00.00.000000"}')
             {
+                // 在1928年1月1日前，由UTC时间戳转成中国本地时区的时间，会加上5分52秒，为规避此问题，这里使用三个时间戳进行匹配，避免不同机器上产生的误差
                 var checkValue1 = {$timestamp:"1902-12-31-23.54.08.000000"};
                 var checkValue2 = {$timestamp:"1902-01-01-00.05.52.000000"};
                 var count = cl.find({textFields:{$in:[checkValue1, checkValue, checkValue2]}}).count();
@@ -125,6 +126,7 @@ function updateSQL(db, cl, csName, clName, oldValue, newValue, checkValue, resul
             db.execUpdate(sql);
             if(JSON.stringify(checkValue) == '{"$timestamp":"1902-12-01-00.00.00.000000"}')
             {
+                // 在1928年1月1日前，由UTC时间戳转成中国本地时区的时间，会加上5分52秒，为规避此问题，这里使用三个时间戳进行匹配，避免不同机器上产生的误差
                 var checkValue1 = {$timestamp:"1901-12-31-23.54.08.000000"};
                 var checkValue2 = {$timestamp:"1902-12-01-00.05.52.000000"};
                 var count = cl.find({textFields:{$in:[checkValue1, checkValue, checkValue2]}}).count();
