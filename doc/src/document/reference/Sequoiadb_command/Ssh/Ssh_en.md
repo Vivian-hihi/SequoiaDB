@@ -38,5 +38,5 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 * Connect to the host using ssh.
 
 ```lang-javascript
-> var ssh = new Ssh( "192.168.20.71", "SequoiaDB", "sequoiadb", "22" )
+> var ssh = new Ssh( "192.168.20.71", "sdbadmin", "sdbadmin", 22 )
 ```

@@ -37,7 +37,7 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 >Suppose the local host is "192.168.20.71".
 
 ```lang-javascript
-> var ssh = new Ssh( "192.168.20.72", "SequoiaDB", "sequoiadb", "22" )
+> var ssh = new Ssh( "192.168.20.72", "sdbadmin", "sdbadmin", 22 )
 ```
 
 * Get remote host's IP adress.

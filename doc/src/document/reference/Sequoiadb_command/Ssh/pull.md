@@ -38,7 +38,7 @@ Ssh
  >假设本地主机 IP 地址是“192.168.20.71”。
 
   ```lang-javascript
-  > var ssh = new Ssh( "192.168.20.72", "SequoiaDB", "sequoiadb", "22" )
+  > var ssh = new Ssh( "192.168.20.72", "sdbadmin", "sdbadmin", 22 )
   ```
 
 * 从远程主机复制文件到本地。

@@ -32,7 +32,7 @@ Ssh
 * 使用 SSH 方式连接主机。
 
   ```lang-javascript
-  > var ssh = new Ssh( "192.168.20.71", "SequoiaDB", "sequoiadb", "22" )
+  > var ssh = new Ssh( "192.168.20.71", "sdbadmin", "sdbadmin", 22 )
   ```
 
 * 执行命令行指令。
