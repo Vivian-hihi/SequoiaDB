@@ -62,3 +62,10 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 ```lang-javascript
 > var file = remoteObj.getFile( "/opt/sequoiadb/file", 0777, SDB_FILE_READWRITE | SDB_FILE_CREATE )
 ```
+
+* Read the contents of the file.(For more detial, please  reference to [read](reference/Sequoiadb_command/File/read.md))
+
+```lang-javascript
+> file.read()
+SquoiaDB
+```

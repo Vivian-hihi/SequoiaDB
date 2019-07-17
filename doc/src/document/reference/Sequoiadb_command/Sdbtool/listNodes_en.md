@@ -18,7 +18,7 @@ Display node information.
 
 | Name     | Type     | Default | Description | Required or not |
 | -------- | -------- | ------- | ----------- | --------------- |
-| options  | JSON     | display all nodes by default | display specified node | not |
+| options  | JSON     | display information about data nodes, coordination nodes and catalog nodes by default | display specified type node | not |
 | filter   | JSON     | display all information by default | Filtered conditions | not |
 | rootPath | JSON     | system configuration filepath | specify the configuration file path | not |
 
@@ -26,18 +26,20 @@ The detail description of 'options' parameter is as follow:
 
 | Attributes | Type | Default | Format | Description |
 | ---------- | ---- | ------- | ------ | ----------- |
-| type       | string | db  | { type: "all" }<br>{ type: "db" }<br>{ type: "om" }<br>{ type: "cm" } | display information about all nodes<br>display infomation about all nodes<br>display infomation about om node<br>display infomation about cm node |
+| type       | string | db  | { type: "all" }<br>{ type: "db" }<br>{ type: "om" }<br>{ type: "cm" } | display information about all nodes(Does not include the cm node of the standalone mode)<br>display information about data nodes, coordination nodes and catalog nodes<br>display infomation about om node<br>display infomation about cm node |
 | mode       | string | run | { mode: "run" }<br>{ mode: "local" } | display infomation about running nodes<br>display infomation about local nodes whether run or not | 
-| role       | string | --- | { role: "data" }<br>{ role: "coord" }<br>{ role: "catalog" }<br>{ role: "standalone" }<br>{ role: "om" }<br>{ role: "cm" } | display infomation about data nodes<br>display infomation about coord nodes<br>display infomation about catalog nodes<br>display infomation about nodes in tandalone mode<br>display infomation about om node<br>display infomation about cm node |
+| role       | string | --- | { role: "data" }<br>{ role: "coord" }<br>{ role: "catalog" }<br>{ role: "standalone" }<br>{ role: "om" }<br>{ role: "cm" } | display infomation about data nodes<br>display infomation about coord nodes<br>display infomation about catalog nodes<br>display infomation about standalone nodes<br>display infomation about om node<br>display infomation about cm node |
 | svcname    | string | --- | { svcname: "11790" } | display node information of the specified port | 
-| showalone  | bool   | false | { showalone: true }<br>{ showalone: false } | whether to diplay information about om node in tandalone mode |
+| showalone  | bool   | false | { showalone: true }<br>{ showalone: false } | whether to diplay information about the cm node started in standalone mode |
 | expand     | bool   | false | { expand: true }<br>{ expand: false } | whether to display detailed extended configuration |
 
 >Note:
 
->1. When specifying multiple svcnames, you can separate the svcnames with ",".
+>1. Cm node has a standalone startup mode. In addition to the current cm node, you can also start a cm node as a temporary cm node in standalone mode(start the cm node to specify the standalone parameter) and the cm node's default survival time is 5 minutes. 
 
->2. The optional parameter filterObj supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
+>2. When specifying multiple svcnames, you can separate the svcnames with ",".
+
+>3. The optional parameter filterObj supports the AND, the OR, the NOT and exact matching of some fields in the result, and the result set is filtered.
 
 ##RETURN VALUE##
 

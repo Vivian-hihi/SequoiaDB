@@ -33,8 +33,15 @@ Remote
   > var remoteObj = new Remote( "192.168.20.71", 11790 )
   ```
 
-* 新建一个远程 Command 对象
+* 新建一个远程 Command 对象（新建 Cmd 对象可参考[Cmd](reference/Sequoiadb_command/Cmd/Cmd.md)）
 
   ```lang-javascript
   > var cmd = remoteObj.getCmd()
+  ```
+
+* 执行 JavaScript 代码。（详细可参考[runJS](reference/Sequoiadb_command/Cmd/runJS.md)）
+
+  ```lang-javascript
+  > cmd.runJS( "1+2*3" )
+  7
   ```

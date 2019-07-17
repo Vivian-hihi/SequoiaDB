@@ -36,8 +36,15 @@ when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/g
 > var remoteObj = new Remote( "192.168.20.71", 11790 )
 ```
 
-* Create a remote Command object.
+* Create a remote Command object. (For more detail about create Command object, please reference to [Cmd](reference/Sequoiadb_command/Cmd/Cmd.md))
 
 ```lang-javascript
 > var cmd = remoteObj.getCmd()
+```
+
+* Execute the JavaScript code remotely. (For more detial, please reference to [runJS](reference/Sequoiadb_command/Cmd/runJS.md))
+
+```lang-javascript
+> cmd.runJS( "1+2*3" )
+7
 ```

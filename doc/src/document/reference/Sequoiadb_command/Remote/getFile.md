@@ -59,3 +59,10 @@ mode 参数的可选值如下表：
   ```lang-javascript
   > var file = remoteObj.getFile( "/opt/sequoiadb/file", 0777, SDB_FILE_READWRITE | SDB_FILE_CREATE )
   ```
+
+* 读取文本文件内容。（详细可参考[read](reference/Sequoiadb_command/File/read.md)）
+
+  ```lang-javascript
+  > file.read()
+  SquoiaDB
+  ```

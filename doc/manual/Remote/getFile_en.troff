@@ -202,9 +202,13 @@ T}@T{
 write mode
 T}
 .TE
-Note：
+.RS
 .PP
-	These flags can be combined with bitwise OR operator( | ).
+Note：
+.RE
+.RS
+.PP
+These flags can be combined with bitwise OR operator( | ).
 .RE
 .SH RETURN VALUE
 .PP
@@ -232,5 +236,14 @@ Create a file object remotely.
 .nf
 \f[C]
 >\ var\ file\ =\ remoteObj.getFile(\ "/opt/sequoiadb/file",\ 0777,\ SDB_FILE_READWRITE\ |\ SDB_FILE_CREATE\ )
+\f[]
+.fi
+.IP \[bu] 2
+Read the contents of the file.(For more detial, please reference to read)
+.IP
+.nf
+\f[C]
+>\ file.read()
+SquoiaDB
 \f[]
 .fi

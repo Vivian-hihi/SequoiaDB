@@ -38,9 +38,20 @@ Create a remote object.
 .fi
 .IP \[bu] 2
 Create a remote Command object.
+(For more detail about create Command object, please reference to Cmd)
 .IP
 .nf
 \f[C]
 >\ var\ cmd\ =\ remoteObj.getCmd()
+\f[]
+.fi
+.IP \[bu] 2
+Execute the JavaScript code remotely.
+(For more detial, please reference to runJS)
+.IP
+.nf
+\f[C]
+>\ cmd.runJS(\ "1+2*3"\ )
+7
 \f[]
 .fi

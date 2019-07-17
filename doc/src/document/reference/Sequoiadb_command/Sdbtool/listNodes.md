@@ -14,7 +14,7 @@ Sdbtool
 
 | 参数名   | 参数类型 | 默认值               | 描述                | 是否必填 |
 | -------- | -------- | -------------------- | ------------------- | -------- |
-| options  | JSON     | 默认显示所有节点     | 显示指定节点        | 否       |
+| options  | JSON     | 默认显示数据节点，协调节点和编目节点的信息 | 显示指定类型的节点的信息 | 否 |
 | filter   | JSON     | 默认显示全部内容     | 筛选条件            | 否       |
 | rootPath | string   | 默认系统配置文件路径 | 指定配置文件根路径  | 否       |
 
@@ -22,18 +22,20 @@ options 参数详细说明如下：
 
 | 属性 | 值类型 | 默认值 | 格式 | 描述 |
 | ---- | ------ | ------ | ---- | ---- |
-| type | string |  db |{ type: "all" }<br>{ type: "db" }<br>{ type: "om" }<br>{ type: "cm" } |  显示所有的节点信息<br>显示所有的节点信息<br>显示 om 节点<br>显示 cm 节点 |
-| mode | string | run |{ mode: "run" }<br>{ mode: "local" } | 显示正在运行的节点<br>显示本地节点，无论是否正在运行 |
-| role      | string | --- | { role: "data" }<br>{ role: "coord" }<br>{ role: "catalog" }<br>{ role: "standalone" }<br>{ role: "om" }<br>{ role: "cm" } | 显示数据节点<br>显示协调节点<br>显示编目节点<br>独立模式下显示节点信息<br>显示 om 节点<br>显示 cm 节点 |
-| svcname   | string | --- | { svcname: "11790" } | 显示指定端口的节点信息 |
-| showalone | bool | false | { showalone：true }<br>{ showalone: false } | 独立模式下是否显示 cm 节点 |
+| type | string |  db |{ type: "all" }<br>{ type: "db" }<br>{ type: "om" }<br>{ type: "cm" } |  显示所有节点的信息（不包括 standalon 模式的 cm 节点）<br>显示数据节点，协调节点和编目节点的信息<br>显示 om 节点的信息<br>显示 cm 节点的信息 |
+| mode | string | run |{ mode: "run" }<br>{ mode: "local" } | 显示正在运行的节点的信息<br>显示本地节点的信息，无论是否正在运行 |
+| role      | string | 空 | { role: "data" }<br>{ role: "coord" }<br>{ role: "catalog" }<br>{ role: "standalone" }<br>{ role: "om" }<br>{ role: "cm" } | 显示数据节点的信息<br>显示协调节点的信息<br>显示编目节点的信息<br>显示 standalone 节点的信息<br>显示 om 节点的信息<br>显示 cm 节点的信息 |
+| svcname   | string | 空 | { svcname: "11790" } | 显示指定端口节点的信息 |
+| showalone | bool | false | { showalone：true }<br>{ showalone: false } | 是否显示以 stndalone 模式启动的 cm 节点的信息 |
 | expand    | bool | false | { expand: true }<br>{ expand: false } | 是否显示详细的扩展配置 |
 
 > Note：
 
-> 1. 当指定多个 svcname 时，可以以 ‘,’ 隔开。
+> 1. cm 有 standalone 的启动模式。除了当前的 cm 之外，还可以通过 standalone 模式再启动一个 cm 作为临时 cm (启动 cm 的时候指定 standalone 参数)，默认存活时间为 5 分钟。
 
-> 2. filter 参数支持对结果中的某些字段进行 and 、 or 、not 和精确匹配计算，对结果集进行筛选。
+> 2. 当指定多个 svcname 时，可以以 ‘,’ 隔开。
+
+> 3. filter 参数支持对结果中的某些字段进行 and 、 or 、not 和精确匹配计算，对结果集进行筛选。
 
 ##返回值##
 
