@@ -30,7 +30,7 @@ public class CappedCL11773 extends SdbTestBase {
     private CollectionSpace cappedCS = null;
     private String cappedCLName = "cappedCL_11773";
     private StringBuffer strBuffer = null;
-    private int stringLength = CappedCLUtils.getRandomStringLength();
+    private int stringLength = CappedCLUtils.getRandomStringLength(1, 2000);
     private int threadNum = 10;
     private ThreadExecutor te = new ThreadExecutor(1800000);
 
@@ -75,20 +75,20 @@ public class CappedCL11773 extends SdbTestBase {
         public void insert() {
             Sequoiadb db = null;
             try {
-                System.out.println(this.getClass().getName().toString() + " start at:"
-                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 DBCollection cl = db.getCollectionSpace(cappedCSName).getCollection(cappedCLName);
-                for (int i = 0; i < 100; i++) {
+                System.out.println(this.getClass().getName().toString() + " start at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
+                for (int i = 0; i < 10000; i++) {
                     BasicBSONObject insertObj = new BasicBSONObject();
                     insertObj.put("a", strBuffer.toString());
                     cl.insert(insertObj);
                 }
+                System.out.println(this.getClass().getName().toString() + " stop at:"
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
             } finally {
                 db.close();
             }
-            System.out.println(this.getClass().getName().toString() + " stop at:"
-                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date()));
 
         }
     }

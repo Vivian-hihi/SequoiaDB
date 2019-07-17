@@ -35,9 +35,9 @@ public class CappedCLUtils {
      * @return int，记录长度
      * @throws Exception
      */
-    public static int getRandomStringLength() {
-        int minLength = 100 * 1024; // 100k
-        int maxLength = 1024 * 1024; // 1M
+    public static int getRandomStringLength(int minLength, int maxLength) {
+        // int minLength = 1; // 100k
+        // int maxLength = 10 * 1024; // 1M
         int stringLength = (int) (minLength + Math.random() * maxLength);// [100k,1M]
         return stringLength;
     }
