@@ -312,7 +312,7 @@ function checkCLData( cl, expRecsNum, expRecs )
    var actRecs = JSON.stringify( recsArray );
    if( actCnt !== expCnt || actRecs !== expRecs )
    {
-      throw buildException( "checkCLdata", null, "[find]", 
+      throw buildException( "checkCLdata", null, "[import]", 
                         "[cnt:"+ expCnt +", recs:"+ expRecs +"]", 
                         "[cnt:"+ actCnt +", recs:"+ actRecs +"]" );
    }  
@@ -328,7 +328,7 @@ function checkExportData( exportFile, expData )
    
    if( actData !== expData )
    {
-      throw buildException( "checkCLdata", null, "[find]", 
+      throw buildException( "checkCLdata", null, "[export]", 
                         "["+ expData +"]", 
                         "["+ actData +"]" );
    }   
