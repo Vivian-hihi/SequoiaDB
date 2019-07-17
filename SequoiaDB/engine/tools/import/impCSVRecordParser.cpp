@@ -1330,7 +1330,8 @@ namespace import
          goto done ;
       }
 
-      rc = utilStrToNumber( data, length, &tmpType, &tmpValue, &valueLength ) ;
+      rc = utilStrToNumber( data, length, FALSE,
+                            &tmpType, &tmpValue, &valueLength ) ;
       if ( rc )
       {
          goto error ;
