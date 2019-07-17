@@ -121,8 +121,15 @@ namespace engine
          return _files[ fileId ] ;
       }
 
-      UINT32 getWorkPos() const { return _work ; }
-      UINT32 getLogicalWorkPos() const { return _logicalWork ; }
+      UINT32 getWorkPos() const
+      {
+         return _work ;
+      }
+
+      UINT32 getLogicalWorkPos() const
+      {
+         return OSS_ONCE_UINT32_GET( _logicalWork ) ;
+      }
 
       INT32 sync() ;
 
