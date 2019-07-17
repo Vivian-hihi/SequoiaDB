@@ -461,8 +461,7 @@ namespace engine
                normalStop = FALSE ;
                break ;
             }
-            // sleep and retry
-            ossSleepmillis( PMD_FORCE_EDU_INTERVAL ) ;
+            // retry
             timeoutCounter += PMD_FORCE_EDU_INTERVAL ;
             if ( timeoutCounter > ( timeout > 0 ? timeout : 0x7FFFFFFF ) )
             {
