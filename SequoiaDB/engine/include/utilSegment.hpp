@@ -774,7 +774,7 @@ namespace engine
             {
                freedSize = ( (UINT64)freeSegNum << _exponent ) *
                            sizeof( _objX ) ;
-               _pHandler->onReleaseSegment( freeSize ) ;
+               _pHandler->onReleaseSegment( freedSize ) ;
             }
          }  // no enough free segs, _segList.size() > segInUse
       }
