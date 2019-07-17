@@ -9012,6 +9012,16 @@ namespace engine
          goto error ;
       }
 
+      if( FALSE == dbTool.isHostHasPackage( hostName, _businessType ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "Failed to add instance, missing package,"
+                                   " host=%s, package=%s", hostName.c_str(),
+                                   _businessType.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
       _generateRequest( hostName, svcname, authUser, authPwd, agentService,
                         request ) ;
 
