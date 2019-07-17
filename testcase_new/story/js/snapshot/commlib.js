@@ -30,7 +30,8 @@ function getStatistics(clFullName, nodeNameMaster)
             var tmpObj = {};
             tmpObj.NodeName = group[i].NodeName;
             tmpObj.TotalDataRead = group[i].TotalDataRead;
-            tmpObj.TotalIndexRead = group[i].TotalIndexRead;
+            //事务transuserbs=true时，可能产生额外TotalIndexRead，不对该值进行比较
+            //tmpObj.TotalIndexRead = group[i].TotalIndexRead;
             tmpObj.TotalDataWrite = group[i].TotalDataWrite;
             tmpObj.TotalIndexWrite = group[i].TotalIndexWrite;
             tmpObj.TotalUpdate = group[i].TotalUpdate;

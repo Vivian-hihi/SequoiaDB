@@ -1,6 +1,6 @@
 /******************************************************************************
 *@Description : test snapshot SDB_SNAP_COLLECTIONS
-*               seqDB-18654:增删改查(表扫描/索引扫描)/切分记录，集合快照信息验证
+*               seqDB-18656:增删改查(表扫描/索引扫描)/切分记录，集合快照信息验证
 *@auhor       : 赵育
 ******************************************************************************/
 
@@ -20,7 +20,7 @@ function main()
    }
 
    var dataGroupNames = getDataGroupNames();
-   clName = COMMCLNAME + "_18654";
+   clName = COMMCLNAME + "_trans_18654";
    commDropCL(db, COMMCSNAME, clName, true, true);
    var groupName = dataGroupNames[0];
    var dbcl = commCreateCLByOption( db, COMMCSNAME, clName, {Compressed:false, Group:groupName} );
@@ -36,31 +36,42 @@ function main()
       doc.push({a:i,b:i,c:i});
    }
    
+   db.transBegin();
    dbcl.insert(doc);
+   db.transCommit();
    var expStatistics = [{TotalDataRead:0,TotalDataWrite:1000,TotalIndexWrite:2000,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:0,TotalRead:0,TotalWrite:1000,TotalTbScan:0,TotalIxScan:0}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
    
+   db.transBegin();
    var cursor = dbcl.find().hint({"":"ab"});
    while(cursor.next())
    {
    }
    cursor.close();
+   db.transCommit();
    var expStatistics = [{TotalDataRead:1000,TotalDataWrite:1000,TotalIndexWrite:2000,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:1000,TotalRead:1000,TotalWrite:1000,TotalTbScan:0,TotalIxScan:1}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
    
+   db.transBegin();
    var cursor = dbcl.find().hint({"":null});
    while(cursor.next())
    {
    }
    cursor.close();
+   db.transCommit();
    var expStatistics = [{TotalDataRead:2000,TotalDataWrite:1000,TotalIndexWrite:2000,TotalUpdate:0,TotalDelete:0,TotalInsert:1000,TotalSelect:2000,TotalRead:2000,TotalWrite:1000,TotalTbScan:1,TotalIxScan:1}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
    
+   db.transBegin();
    dbcl.update({$set:{a:1000}})
+   db.transCommit();
    var expStatistics = [{TotalDataRead:3000,TotalDataWrite:2000,TotalIndexWrite:4000,TotalUpdate:1000,TotalDelete:0,TotalInsert:1000,TotalSelect:2000,TotalRead:3000,TotalWrite:2000,TotalTbScan:2,TotalIxScan:1}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
    
+   db.transBegin();
    dbcl.remove({},{"":"ab"});
+   db.transCommit();
+   
    var expStatistics = [{TotalDataRead:4000,TotalDataWrite:3000,TotalIndexWrite:6000,TotalUpdate:1000,TotalDelete:1000,TotalInsert:1000,TotalSelect:2000,TotalRead:4000,TotalWrite:3000,TotalTbScan:2,TotalIxScan:2}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
   
@@ -82,6 +93,6 @@ function main()
                         {TotalDataRead:0,TotalDataWrite:479,TotalIndexWrite:1437,TotalUpdate:0,TotalDelete:0,TotalInsert:479,TotalSelect:0,TotalRead:0,TotalWrite:479,TotalTbScan:0,TotalIxScan:0}];
    checkStatistics(COMMCSNAME + "." + clName, nodeNameMaster, expStatistics);
    
-   commDropCL(db, COMMCSNAME, clName, true, true);
+   commDropCL(db, COMMCSNAME, clName, true, true); 
 }
 main();
