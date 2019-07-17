@@ -105,7 +105,7 @@ OSS_INLINE BOOLEAN isTransBSMsg( INT32 opCode )
 OSS_INLINE BOOLEAN isTransWriteMsg( INT32 opCode, const MsgHeader *pMsg )
 {
    BOOLEAN ret = FALSE ;
-   INT32 opCode = GET_REQUEST_TYPE( opCode ) ;
+   opCode = GET_REQUEST_TYPE( opCode ) ;
    switch ( opCode )
    {
       case MSG_BS_TRANS_INSERT_REQ :
