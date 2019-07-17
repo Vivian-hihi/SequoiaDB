@@ -95,20 +95,6 @@ namespace engine
             goto error ;
          }
       }
-      else if( arg.isNumber( 0 ) )
-      {
-         FLOAT64 dataNum ;
-         stringstream ss ;
-         rc = arg.getNative( 0, &dataNum, SPT_NATIVE_FLOAT64 ) ;
-         if( SDB_OK != rc )
-         {
-            rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "Failed to get data" ) ;
-            goto error ;
-         }
-         ss << dataNum ;
-         decimalStr = ss.str() ;
-      }
       else
       {
          rc = SDB_INVALIDARG ;
