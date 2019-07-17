@@ -1436,10 +1436,7 @@ do                                                            \
       newFlags = regulateQueryFlags( flags ) ;
 
       // try to set flag to be find one
-      if ( 1 == numToReturn )
-      {
-         newFlags |= FLG_QUERY_WITH_RETURNDATA ;
-      }
+      newFlags |= FLG_QUERY_WITH_RETURNDATA ;
 
       // run command
       rc = _connection->_runCommand( _collectionFullName,
