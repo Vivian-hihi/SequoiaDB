@@ -1833,6 +1833,18 @@ namespace engine
 
          buzConfig = buzInfo.getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
 
+         if( FALSE == dbTool.getHostPackagePath( hostName, _businessType,
+                                                 installPath ) )
+         {
+            rc = SDB_SYS ;
+            _errorMsg.setError( TRUE, "Install path not found: "
+                                      "name=%s, host=%s, type=%s",
+                                _businessName.c_str(), hostName.c_str(),
+                                _businessType.c_str() ) ;
+            PD_LOG_MSG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
          {
             BSONObjIterator iter( buzConfig ) ;
 
@@ -1843,8 +1855,6 @@ namespace engine
 
                dbpath = oneNodeConfig.getStringField(
                                              OM_CONFIGURE_FIELD_DBPATH ) ;
-               installPath = oneNodeConfig.getStringField(
-                                             OM_CONFIGURE_FIELD_INSTALLPATH ) ;
             }
          }
 
