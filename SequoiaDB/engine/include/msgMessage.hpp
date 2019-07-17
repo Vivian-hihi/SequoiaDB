@@ -102,10 +102,10 @@ OSS_INLINE BOOLEAN isTransBSMsg( INT32 opCode )
    return FALSE ;
 }
 
-OSS_INLINE BOOLEAN isTransWriteMsg( const MsgHeader *pMsg )
+OSS_INLINE BOOLEAN isTransWriteMsg( INT32 opCode, const MsgHeader *pMsg )
 {
    BOOLEAN ret = FALSE ;
-   INT32 opCode = GET_REQUEST_TYPE( pMsg->opCode ) ;
+   INT32 opCode = GET_REQUEST_TYPE( opCode ) ;
    switch ( opCode )
    {
       case MSG_BS_TRANS_INSERT_REQ :
@@ -114,7 +114,7 @@ OSS_INLINE BOOLEAN isTransWriteMsg( const MsgHeader *pMsg )
          ret = TRUE ;
          break ;
       case MSG_BS_TRANS_QUERY_REQ :
-         if ( ((MsgOpQuery*)pMsg)->flags | FLG_QUERY_MODIFY )
+         if ( ((MsgOpQuery*)pMsg)->flags & FLG_QUERY_MODIFY )
          {
             ret = TRUE ;
          }

@@ -581,7 +581,8 @@ namespace engine
 
       if ( cb->isTransaction() && isTransBSMsg( pSub->getOrgReqOpCode() ) )
       {
-         BOOLEAN isWriteMsg = isTransWriteMsg( pSub->getReqMsg() ) ;
+         BOOLEAN isWriteMsg = isTransWriteMsg( pSub->getOrgReqOpCode(),
+                                               pSub->getReqMsg() ) ;
          pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
          pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
 
