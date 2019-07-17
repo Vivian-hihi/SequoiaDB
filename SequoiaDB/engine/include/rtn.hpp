@@ -160,6 +160,7 @@ namespace engine
                      INT64 *pDelNum = NULL ) ;
 
    INT32 rtnTraversalDelete ( const CHAR *pCollectionName,
+                              utilCLUniqueID clUniqueID,
                               const BSONObj &key,
                               const CHAR *pIndexName,
                               INT32 dir,
@@ -409,7 +410,8 @@ namespace engine
    INT32 rtnDropCollectionCommand ( const CHAR *pCollection,
                                     _pmdEDUCB *cb,
                                     SDB_DMSCB *dmsCB,
-                                    SDB_DPSCB *dpsCB ) ;
+                                    SDB_DPSCB *dpsCB,
+                                    utilCLUniqueID clUniqueID = UTIL_UNIQUEID_NULL ) ;
 
    INT32 rtnRenameCollectionCommand ( const CHAR *csName,
                                       const CHAR *clShortName,

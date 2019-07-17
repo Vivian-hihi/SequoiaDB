@@ -102,6 +102,7 @@ namespace engine
       _timeCounter = 0 ;
       _curExtID = DMS_INVALID_EXTENT ;
       _curCollection = ~0 ;
+      _curCLUniqueID = UTIL_UNIQUEID_NULL ;
       _beginLSNOffset = 0 ;
 
       //init disconnect msg
@@ -1247,7 +1248,7 @@ namespace engine
             dmsCB->suUnlock ( suID ) ;
             suID = DMS_INVALID_SUID ;
 
-            rc = _onFSMeta( _curCollecitonName.c_str() ) ;
+            rc = _onFSMeta( _curCollecitonName.c_str(), clUniqueID ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1258,6 +1259,7 @@ namespace engine
                goto error ;
             }
             _curCollection = curCollection ;
+            _curCLUniqueID = clUniqueID ;
          }
          _constructMeta( meta, cs, collection, clUniqueID, su ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta [%s]", sessionName(),
@@ -1886,7 +1888,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsFSSrcSession::_onFSMeta( const CHAR * clFullName )
+   INT32 _clsFSSrcSession::_onFSMeta( const CHAR *clFullName,
+                                      utilCLUniqueID clUniqueID )
    {
       return SDB_OK ;
    }
@@ -2506,7 +2509,8 @@ namespace engine
 
    #define CLS_SPLIT_UPCATELOG_RETRY_TIME       ( 2 )
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLSS__ONFSMETA, "_clsSplitSrcSession::_onFSMeta" )
-   INT32 _clsSplitSrcSession::_onFSMeta( const CHAR * clFullName )
+   INT32 _clsSplitSrcSession::_onFSMeta( const CHAR *clFullName,
+                                         utilCLUniqueID clUniqueID )
    {
       //get sharding key
       INT32 rc = SDB_OK ;
@@ -2533,7 +2537,8 @@ namespace engine
       {
          ++count ;
 
-         rc = sdbGetShardCB()->syncUpdateCatalog( clFullName, OSS_ONE_SEC ) ;
+         rc = sdbGetShardCB()->syncUpdateCatalog( clUniqueID, clFullName,
+                                                  OSS_ONE_SEC ) ;
          if ( SDB_OK == rc )
          {
             _pCatAgent->lock_r() ;
@@ -2765,6 +2770,7 @@ namespace engine
          }
 
          if ( SDB_OK != startCleanupJob( _curCollecitonName,
+                                         _curCLUniqueID,
                                          _rangeKeyObj,
                                          _hasEndRange ? _rangeEndKeyObj :
                                                         BSONObj(),
@@ -2856,7 +2862,8 @@ namespace engine
          goto done ;
       }
 
-      rc = pShard->syncUpdateCatalog( _curCollecitonName.c_str(),
+      rc = pShard->syncUpdateCatalog( _curCLUniqueID,
+                                      _curCollecitonName.c_str(),
                                       OSS_ONE_SEC ) ;
       if ( SDB_OK != rc && SDB_DMS_NOTEXIST != rc )
       {
@@ -2864,7 +2871,8 @@ namespace engine
       }
 
       _pCatAgent->lock_r() ;        //lock
-      pSet = _pCatAgent->collectionSet( _curCollecitonName.c_str() ) ;
+      pSet = _pCatAgent->collectionSet( _curCollecitonName.c_str(),
+                                        _curCLUniqueID ) ;
       if ( pSet )
       {
          mainCLName = pSet->getMainCLName() ;

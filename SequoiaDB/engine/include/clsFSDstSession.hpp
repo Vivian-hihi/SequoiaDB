@@ -332,6 +332,7 @@ namespace engine
          virtual CLS_FS_TYPE _dataSessionType () const ;
          virtual BOOLEAN   _isReady () ;
          virtual BOOLEAN   _onNotify ( MsgClsFSNotifyRes *pMsg ) ;
+         virtual INT32     _onMetaDone ( const _clMetaData & meta ) ;
 
       private:
          void              _taskNotify ( INT32 msgType ) ;
@@ -346,7 +347,6 @@ namespace engine
          INT32                   _needSyncData ;
          BOOLEAN                 _regTask ;
          UINT32                  _collectionW ;
-
    };
 
 }

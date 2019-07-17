@@ -48,6 +48,7 @@ namespace engine
 {
 
    _clsCleanupJob::_clsCleanupJob ( const std::string &clFullName,
+                                    utilCLUniqueID clUniqueID,
                                     const BSONObj &splitKeyObj,
                                     const BSONObj &splitEndKeyObj,
                                     BOOLEAN hasShardingIndex,
@@ -59,6 +60,7 @@ namespace engine
       _splitEndKeyObj = splitEndKeyObj.getOwned() ;
       _hasShardingIndex = hasShardingIndex ;
       _isHashSharding = isHashSharding ;
+      _clUniqueID = clUniqueID ;
 
       _dpsCB = dpsCB ;
       _dmsCB = pmdGetKRCB()->getDMSCB() ;
@@ -177,7 +179,8 @@ namespace engine
             goto error ;
          }
 
-         rc = pShardCB->syncUpdateCatalog( _clFullName.c_str(), OSS_ONE_SEC ) ;
+         rc = pShardCB->syncUpdateCatalog( _clUniqueID, _clFullName.c_str(),
+                                           OSS_ONE_SEC ) ;
          if ( SDB_DMS_NOTEXIST == rc )
          {
             dropCollection = TRUE ;
@@ -213,7 +216,7 @@ namespace engine
          {
             // delete the collection
             rc = rtnDropCollectionCommand( _clFullName.c_str(), eduCB(),
-                                           _dmsCB, _dpsCB ) ;
+                                           _dmsCB, _dpsCB, _clUniqueID ) ;
             PD_LOG ( PDEVENT, "Job[%s] drop the collection[%s], rc:%d", name(),
                      _clFullName.c_str(), rc ) ;
             if ( SDB_DMS_CS_NOTEXIST == rc )
@@ -283,7 +286,8 @@ namespace engine
       {
          catAgent->release_r() ;
          need2ReleaseR = FALSE ;
-         rc = sdbGetShardCB()->syncUpdateCatalog( _clFullName.c_str(),
+         rc = sdbGetShardCB()->syncUpdateCatalog( _clUniqueID,
+                                                  _clFullName.c_str(),
                                                   OSS_ONE_SEC ) ;
          if ( SDB_OK == rc )
          {
@@ -379,7 +383,8 @@ namespace engine
                {
                   // delete the collection
                   rc = rtnDropCollectionCommand( _clFullName.c_str(),
-                                                 eduCB(), _dmsCB, _dpsCB ) ;
+                                                 eduCB(), _dmsCB, _dpsCB,
+                                                 _clUniqueID ) ;
                   PD_LOG ( PDEVENT, "Job[%s] drop the collection[%s], rc:%d",
                            name(), _clFullName.c_str(), rc ) ;
                   if ( SDB_DMS_CS_NOTEXIST == rc )
@@ -514,7 +519,7 @@ namespace engine
             {
                // delete the collection
                rc = rtnDropCollectionCommand( fullName, eduCB(), _dmsCB,
-                                              _dpsCB ) ;
+                                              _dpsCB, _clUniqueID ) ;
                PD_LOG ( PDEVENT, "Job[%s] drop the collection[%s], rc:%d",
                         name(), fullName, rc ) ;
                if ( SDB_DMS_CS_NOTEXIST == rc )
@@ -552,9 +557,9 @@ namespace engine
 
    INT32 _clsCleanupJob::_cleanBySplitKeyObj ( INT32 w )
    {
-      INT32 rc = rtnTraversalDelete ( _clFullName.c_str(), _splitKeyObj,
-                                      IXM_SHARD_KEY_NAME, 1, eduCB(),
-                                      _dmsCB, _dpsCB, w ) ;
+      INT32 rc = rtnTraversalDelete ( _clFullName.c_str(), _clUniqueID,
+                                      _splitKeyObj, IXM_SHARD_KEY_NAME, 1,
+                                      eduCB(), _dmsCB, _dpsCB, w ) ;
       if ( SDB_CLS_WAIT_SYNC_FAILED == rc )
       {
          rc = SDB_OK ;
@@ -647,7 +652,8 @@ namespace engine
                      goto error ;
                   }
 
-                  rc = sdbGetShardCB()->syncUpdateCatalog( _clFullName.c_str(),
+                  rc = sdbGetShardCB()->syncUpdateCatalog( _clUniqueID,
+                                                           _clFullName.c_str(),
                                                            OSS_ONE_SEC ) ;
                   if ( SDB_OK == rc )
                   {
@@ -704,6 +710,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_STRARTCLNJOB, "startCleanupJob" )
    INT32 startCleanupJob( const std::string &clFullName,
+                          utilCLUniqueID clUniqueID,
                           const BSONObj &splitKeyObj,
                           const BSONObj &splitEndKeyObj,
                           BOOLEAN hasShardingIndex,
@@ -716,6 +723,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_STRARTCLNJOB );
 
       _clsCleanupJob *pJob = SDB_OSS_NEW _clsCleanupJob( clFullName,
+                                                         clUniqueID,
                                                          splitKeyObj,
                                                          splitEndKeyObj,
                                                          hasShardingIndex,

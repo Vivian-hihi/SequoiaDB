@@ -1604,6 +1604,9 @@ namespace engine
          goto error ;
       }
 
+      rc = _checkSplitTask( pTask ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check split task, rc: %d", rc ) ;
+
       //add to taskMgr, the task will delete in taskMgr whether suc or failed
       rc = _taskMgr.addTask( pTask, taskID ) ;
       if ( SDB_OK != rc )
@@ -1635,6 +1638,46 @@ namespace engine
       {
          SDB_OSS_DEL pTask ;
       }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_CHKSPLITTASK, "_clsMgr::_checkSplitTask" )
+   INT32 _clsMgr::_checkSplitTask ( clsSplitTask * task )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__CLSMGR_CHKSPLITTASK ) ;
+
+      if ( UTIL_UNIQUEID_NULL == task->clUniqueID() )
+      {
+         rc = _shdObj->syncUpdateCatalog( task->clFullName(), OSS_ONE_SEC ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to update catalog for collection "
+                      "[%s], rc: %d", task->clFullName(), rc ) ;
+         {
+            catAgent * catAgent = _shdObj->getCataAgent() ;
+            catAgent->lock_r() ;
+            clsCatalogSet * catSet = catAgent->collectionSet(
+                                                      task->clFullName() ) ;
+            if ( NULL != catSet &&
+                 UTIL_UNIQUEID_NULL != catSet->clUniqueID() )
+            {
+               task->setCLUniqueID( catSet->clUniqueID() ) ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Failed to get catalog for collection [%s] "
+                       "from catalog agent", task->clFullName() ) ;
+               rc = SDB_DMS_NOTEXIST ;
+            }
+            catAgent->release_r() ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__CLSMGR_CHKSPLITTASK, rc ) ;
+      return rc ;
+
+   error :
       goto done ;
    }
 
@@ -1996,6 +2039,7 @@ namespace engine
                rc = _addTaskInnerSession ( objList[index].objdata() ) ;
                if ( rc && SDB_CLS_MUTEX_TASK_EXIST != rc )
                {
+                  // add back to check list
                   startTaskCheck( objList[index] ) ;
                }
                ++index ;
