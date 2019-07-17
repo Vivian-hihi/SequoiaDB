@@ -426,7 +426,7 @@ namespace engine
       //              initialized.
       //              shrink() protects all underneath operations by latch.
       //
-      INT32 shrink( UINT32 freeSegToKeep = 1, UINT32 *pFreeSegNum = NULL ) ;
+      INT32 shrink( UINT32 freeSegToKeep = 1, UINT64 *pFreedSize = NULL ) ;
 
    #ifdef _DEBUG
       UTIL_OBJIDX * getListAddr() { return _list ; } 
@@ -603,13 +603,14 @@ namespace engine
    #define UTIL_SEGMENT_OBJ_IN_USE_RATIO_THRESHOLD ( 0.85 )
    template < class T >
    INT32 _utilSegmentPool< T >::shrink( UINT32 freeSegToKeep,
-                                        UINT32 *pFreeSegNum )
+                                        UINT64 *pFreedSize )
    {
       INT32         rc       = SDB_OK ;
       BOOLEAN       bLatched = FALSE ;
       UTIL_OBJIDX * pListTmp = NULL ;
       utilBitmap  * pUsedList= NULL ;
       UINT32        numOfObjects, maxObj, newSize, segInUse ;
+      UINT64        freedSize = 0 ;
       UINT32        freeSegNum = 0 ;
 
 #ifdef _DEBUG
@@ -771,8 +772,8 @@ namespace engine
 
             if ( _pHandler )
             {
-               UINT64 freeSize = ( (UINT64)freeSegNum << _exponent ) *
-                                 sizeof( _objX ) ;
+               freedSize = ( (UINT64)freeSegNum << _exponent ) *
+                           sizeof( _objX ) ;
                _pHandler->onReleaseSegment( freeSize ) ;
             }
          }  // no enough free segs, _segList.size() > segInUse
@@ -788,9 +789,9 @@ namespace engine
       {
          SDB_OSS_DEL pUsedList ;
       }
-      if ( pFreeSegNum )
+      if ( pFreedSize )
       {
-         *pFreeSegNum += freeSegNum ;
+         *pFreedSize += freedSize ;
       }
       return rc ;
    error:
@@ -1384,20 +1385,20 @@ namespace engine
          }
 
          OSS_INLINE INT32 shrink( UINT32 freeSegToKeep = 1,
-                                  UINT32 *pFreeSegNum = NULL )
+                                  UINT64 *pFreedSize = NULL )
          {
             // REVISIT :
             // proper scheduling algorithm to be implemented
             INT32 rc = SDB_OK ;
 
-            if ( pFreeSegNum )
+            if ( pFreedSize )
             {
-               *pFreeSegNum = 0 ;
+               *pFreedSize = 0 ;
             }
 
             for ( UINT32 i = 0; i < _poolNum ; i++ )
             {
-               rc = _pool[ i ].shrink( freeSegToKeep, pFreeSegNum ) ;
+               rc = _pool[ i ].shrink( freeSegToKeep, pFreedSize ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Failed to shrink pool:%u, rc:%d", i, rc ) ;

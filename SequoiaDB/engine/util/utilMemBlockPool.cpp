@@ -352,7 +352,7 @@ namespace engine
    void _utilMemBlockPool::shrink()
    {
       UINT64 hasFreeSize = 0 ;
-      UINT32 freeSegNum = 0 ;
+      UINT64 tmpFreedSize = 0 ;
 
       BOOLEAN isFull = FALSE ;
       if ( 0 == _maxSize || _totalSize.fetch() >= _maxSize )
@@ -362,48 +362,48 @@ namespace engine
 
       if ( _32BSeg )
       {
-         _32BSeg->shrink( ( isFull ? 0 : 1 ), &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_32 ) ) ;
+         _32BSeg->shrink( ( isFull ? 0 : 1 ), &tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ;
       }
       if ( _64BSeg )
       {
-         _64BSeg->shrink( ( isFull? 0 : 1 ), &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_64 ) ) ;
+         _64BSeg->shrink( ( isFull? 0 : 1 ), &tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ) ;
       }
       if ( _128BSeg )
       {
-         _128BSeg->shrink( ( isFull ? 0 : 1 ), &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_128 ) ) ;
+         _128BSeg->shrink( ( isFull ? 0 : 1 ), &tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ) ;
       }
       if ( _256BSeg )
       {
-         _256BSeg->shrink( ( isFull ? 0 : 1 ), &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_256 ) ) ;
+         _256BSeg->shrink( ( isFull ? 0 : 1 ), &tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ) ;
       }
       if ( _512BSeg )
       {
-         _512BSeg->shrink( ( isFull ? 0 : 1 ), &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_512 ) ) ;
+         _512BSeg->shrink( ( isFull ? 0 : 1 ), &tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ) ;
       }
       if ( _1KSeg )
       {
-         _1KSeg->shrink( 0, &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_1024 ) ) ;
+         _1KSeg->shrink( 0, &tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ) ;
       }
       if ( _2KSeg )
       {
-         _2KSeg->shrink( 0, &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_2048 ) ) ;
+         _2KSeg->shrink( 0, &tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ;
       }
       if ( _4KSeg )
       {
-         _4KSeg->shrink( 0, &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_4096 ) ) ;
+         _4KSeg->shrink( 0, &tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ;
       }
       if ( _8KSeg )
       {
-         _8KSeg->shrink( 0, &freeSegNum ) ;
-         hasFreeSize += ( freeSegNum * _type2Size( MEMBLOCKPOOL_TYPE_8192 ) ) ;
+         _8KSeg->shrink( 0, &tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ;
       }
 
       if ( hasFreeSize > 0 )
