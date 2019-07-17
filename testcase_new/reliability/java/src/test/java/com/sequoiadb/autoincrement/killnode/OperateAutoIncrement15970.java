@@ -97,7 +97,6 @@ public class OperateAutoIncrement15970 extends SdbTestBase {
             checkResult(db, expectInsertNum);
 
         } catch (ReliabilityException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             Assert.fail(e.getMessage());
         } finally {
@@ -289,6 +288,13 @@ public class OperateAutoIncrement15970 extends SdbTestBase {
                 Assert.assertTrue(hasAutoIncrementField, record + arrList.get(i));
             }
         }
+
+        // 自增字段任务检查
+        DBCursor cursorTasks = db.listTasks(null, null, null, null);
+        while (cursorTasks.hasNext()) {
+            Assert.fail("exists tasks ：" + cursorTasks.getNext().toString());
+        }
+
     }
 
 }

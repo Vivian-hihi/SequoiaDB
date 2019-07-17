@@ -295,5 +295,11 @@ public class OperateAutoIncrement15972 extends SdbTestBase {
                 Assert.assertTrue(hasAutoIncrementField, record + arrList.get(i));
             }
         }
+
+        // 自增字段任务检查
+        DBCursor cursorTasks = db.listTasks(null, null, null, null);
+        while (cursorTasks.hasNext()) {
+            Assert.fail("exists tasks ：" + cursorTasks.getNext().toString());
+        }
     }
 }
