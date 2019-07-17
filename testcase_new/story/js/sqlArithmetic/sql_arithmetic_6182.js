@@ -6,6 +6,12 @@ main();
 
 function main()
 {  
+   if ( isTransautocommit() ) 
+   {
+      println("\nThe node config[ {transautocommit: true} ].");
+      return;
+   }
+   
    try
    {
       var csName  = COMMCSNAME;

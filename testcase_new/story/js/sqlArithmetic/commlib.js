@@ -3,6 +3,21 @@
 *@Modify list :
 *              2016/7/11 huangxiaoni
 *******************************************************************************/
+function isTransautocommit()
+{   
+   var isTAC = false;
+   var cursor = db.snapshot( SDB_SNAP_CONFIGS, {"role": "data"} );
+   while ( cursor.next() ) 
+   {
+      var rc = cursor.current().toObj();
+      if ( rc.transautocommit === 'TRUE' )
+      {
+         isTAC = true;
+      }
+      return isTAC;
+   }
+}
+
 function createCL( csName, clName, autoCreateCS, ignoreExisted, message )
 {
    println("\n---Begin to create CL.");
