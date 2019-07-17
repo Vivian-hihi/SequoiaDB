@@ -1709,13 +1709,10 @@ namespace engine
             rc = context ? context->resume() : SDB_OK ;
             PD_RC_CHECK( rc, PDERROR, "Failed to resum context[%s], rc: %d",
                          context->toString().c_str(), rc ) ;
-            if ( context )
+            _onAllocSpaceReady( context, needAlloc ) ;
+            if ( !needAlloc )
             {
-               _onAllocSpaceReady( context, needAlloc ) ;
-               if ( !needAlloc )
-               {
-                  break ;
-               }
+               break ;
             }
          }
       }

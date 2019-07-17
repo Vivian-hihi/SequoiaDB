@@ -820,24 +820,32 @@ namespace engine
                                                     BOOLEAN &doit )
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ONALLOCSPACEREADY ) ;
-      dmsExtentInfo *extInfo = getWorkExtInfo( context->mbID() ) ;
-      dmsExtentID workExtID = extInfo->getID() ;
 
-      if ( DMS_INVALID_EXTENT == workExtID )
+      // If the context is NULL, the operation should be creating collection.
+      if ( !context )
       {
          doit = TRUE ;
       }
       else
       {
-         // Check if this is the last extent.
-         dmsExtRW extRW = extent2RW( workExtID, context->mbID() );
-         extRW.setNothrow( TRUE ) ;
-         const dmsExtent *extent = extRW.readPtr<dmsExtent>() ;
-         SDB_ASSERT( extent, "Extent is invalid" ) ;
-         // Do the allocation if we are using the last extent.
-         doit = ( DMS_INVALID_EXTENT == extent->_nextExtent ) ? TRUE : FALSE ;
-      }
+         dmsExtentInfo *extInfo = getWorkExtInfo( context->mbID() ) ;
+         dmsExtentID workExtID = extInfo->getID() ;
 
+         if ( DMS_INVALID_EXTENT == workExtID )
+         {
+            doit = TRUE ;
+         }
+         else
+         {
+            // Check if this is the last extent.
+            dmsExtRW extRW = extent2RW( workExtID, context->mbID() );
+            extRW.setNothrow( TRUE ) ;
+            const dmsExtent *extent = extRW.readPtr<dmsExtent>() ;
+            SDB_ASSERT( extent, "Extent is invalid" ) ;
+            // Do the allocation if we are using the last extent.
+            doit = ( DMS_INVALID_EXTENT == extent->_nextExtent ) ? TRUE : FALSE ;
+         }
+      }
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED__ONALLOCSPACEREADY ) ;
    }
 
