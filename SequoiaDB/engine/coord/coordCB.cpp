@@ -444,7 +444,7 @@ retry :
          if ( !hasUpdate )
          {
             rc = _resource.updateCataGroupInfo( cataGroupPtr, _pEDUCB ) ;
-            PD_RC_CHECK ( rc, PDWARNING, "Fail to update catalog group "
+            PD_RC_CHECK ( rc, PDWARNING, "Failed to update catalog group "
                           "info[rc:%d]", rc ) ;
             hasUpdate = TRUE ;
             goto retry ;
