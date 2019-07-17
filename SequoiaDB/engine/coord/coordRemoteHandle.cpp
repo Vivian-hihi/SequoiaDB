@@ -293,7 +293,10 @@ namespace engine
                           "transaction due to error[%d] in session[%s]",
                           routeID2String( routeID ).c_str(), rcTmp,
                           cb->toString().c_str() ) ;
-                  cb->setTransRC( rcTmp ) ;
+                  if ( SDB_OK == cb->getTransRC() )
+                  {
+                     cb->setTransRC( rcTmp ) ;
+                  }
                }
             }
             catch ( std::exception &e )

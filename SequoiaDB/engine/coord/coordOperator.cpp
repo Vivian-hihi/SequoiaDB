@@ -252,7 +252,7 @@ namespace engine
             processType = COORD_PROCESS_NOK ;
             if ( !result.pushNokRC( routeID.value, pReply ) )
             {
-               rc = rc ? rc : rcTmp ;
+               rc = rc ? rc : cb->getTransRC() ;
             }
             PD_LOG( ( rc ? PDERROR : PDINFO ),
                     "Do trans command[%d] on data node[%s] "
