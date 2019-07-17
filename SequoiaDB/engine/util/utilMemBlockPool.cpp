@@ -368,27 +368,27 @@ namespace engine
       if ( _64BSeg )
       {
          _64BSeg->shrink( ( isFull? 0 : 1 ), &tmpFreedSize ) ;
-         hasFreeSize += tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ;
       }
       if ( _128BSeg )
       {
          _128BSeg->shrink( ( isFull ? 0 : 1 ), &tmpFreedSize ) ;
-         hasFreeSize += tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ;
       }
       if ( _256BSeg )
       {
          _256BSeg->shrink( ( isFull ? 0 : 1 ), &tmpFreedSize ) ;
-         hasFreeSize += tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ;
       }
       if ( _512BSeg )
       {
          _512BSeg->shrink( ( isFull ? 0 : 1 ), &tmpFreedSize ) ;
-         hasFreeSize += tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ;
       }
       if ( _1KSeg )
       {
          _1KSeg->shrink( 0, &tmpFreedSize ) ;
-         hasFreeSize += tmpFreedSize ) ;
+         hasFreeSize += tmpFreedSize ;
       }
       if ( _2KSeg )
       {
