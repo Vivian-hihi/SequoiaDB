@@ -16,7 +16,7 @@
    MySQL 支持基于 UNIX 域套接字文件和 TCP/IP 的连接方式：
  
  + UNIX 套接字文件连接  
-  进程间通信，不需要使用网络协议，比 TCP/IP 传输效率更高，但仅限于本地连接, 连接时指定对应的套接字文件。
+  进程间通信，不需要使用网络协议，比 TCP/IP 传输效率更高，但仅限于本地连接，连接时指定对应的套接字文件。
 
      ```lang-bash
      $ cd /opt/sequoiasql/mysql
@@ -24,7 +24,7 @@
      ```
   > **Note:**  
   >
-  > SequoiaSQL-MySQL 实例默认无密码，所以无需输入 -p 选项，需要设置密码请参考[设置密码](sql_engine/sequoiasql_mysql/connection.md#设置密码)。
+  > SequoiaSQL-MySQL 实例默认无密码，所以无需输入 -p 选项，需要设置密码请参考下面设置密码。
  + TCP/IP 连接方式  
    网络通信，可以本地连接（环回接口）和远程连接，同时可以灵活地配置和授权客户端 IP 的访问权限。
      + 本地连接  
