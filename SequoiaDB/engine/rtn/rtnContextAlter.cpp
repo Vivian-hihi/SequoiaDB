@@ -294,43 +294,11 @@ namespace engine
             ++ iter )
       {
          const rtnAlterTask * task = ( *iter ) ;
-
-         switch ( task->getActionType() )
-         {
-            case RTN_ALTER_CS_SET_ATTRIBUTES :
-            {
-               rc = rtnAlterCSSetAttributes( collectionSpace, task, _su, _dmsCB, cb ) ;
-               break ;
-            }
-            case RTN_ALTER_CS_SET_DOMAIN :
-            case RTN_ALTER_CS_REMOVE_DOMAIN :
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-            default :
-            {
-               rc = SDB_INVALIDARG ;
-               break ;
-            }
-         }
-
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to run alter task [%s], rc: %d",
-                    task->getActionName(), rc ) ;
-            if ( options->isIgnoreException() )
-            {
-               rc = SDB_OK ;
-            }
-            else
-            {
-               goto error ;
-            }
-         }
-
-         rc = rtnAlter2DPSLog( collectionSpace, task, options, getDPSCB() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
+         rc = rtnAlterCollectionSpace( collectionSpace, task, options, cb,
+                                       getDPSCB(), _su, _dmsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to run alter task [%s] on "
+                      "collection space [%s], rc: %d", task->getActionName(),
+                      collectionSpace, rc ) ;
       }
 
       _close( cb ) ;
@@ -451,6 +419,8 @@ namespace engine
       const rtnAlterOptions * options = _alterJob->getOptions() ;
       const RTN_ALTER_TASK_LIST & alterTasks = _alterJob->getAlterTasks() ;
 
+      const CHAR * collection = _alterJob->getObjectName() ;
+
       PD_CHECK( NULL != _su, SDB_INVALIDARG, error, PDERROR,
                 "Failed to get su" ) ;
       PD_CHECK( NULL != _mbContext, SDB_INVALIDARG, error, PDERROR,
@@ -461,56 +431,13 @@ namespace engine
             ++ iter )
       {
          const rtnAlterTask * task = ( *iter ) ;
-
-         switch ( task->getActionType() )
-         {
-            case RTN_ALTER_CL_ENABLE_SHARDING :
-            {
-               const rtnCLEnableShardingTask * localTask =
-                     dynamic_cast<const rtnCLEnableShardingTask *>( task ) ;
-               if ( localTask->testArgumentMask( UTIL_CL_SHDKEY_FIELD ) )
-               {
-                  rc = rtnCollectionCheckSharding( _alterJob->getObjectName(),
-                                                   localTask->getShardingArgument(),
-                                                   cb, _mbContext, _su, _dmsCB ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to check sharding, rc: %d", rc ) ;
-               }
-               break ;
-            }
-            case RTN_ALTER_CL_DISABLE_SHARDING :
-            case RTN_ALTER_CL_CREATE_ID_INDEX :
-            case RTN_ALTER_CL_DROP_ID_INDEX :
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-            case RTN_ALTER_CL_ENABLE_COMPRESS :
-            case RTN_ALTER_CL_DISABLE_COMPRESS :
-            {
-               rc = _su->canSetCollectionCompressor( _mbContext ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to check compress, rc: %d",
-                            rc ) ;
-               break ;
-            }
-            case RTN_ALTER_CL_SET_ATTRIBUTES :
-            {
-               rc = rtnAlterCLCheckAttributes( _alterJob->getObjectName(), task,
-                                               _mbContext, _su, _dmsCB, cb ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to check attributes on collection [%s], "
-                            "rc: %d", _alterJob->getObjectName(), rc ) ;
-               break ;
-            }
-            default :
-            {
-               rc = SDB_INVALIDARG ;
-               break ;
-            }
-         }
-
+         rc = rtnCheckAlterCollection( collection, task, cb, _mbContext, _su,
+                                       _dmsCB ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Failed to run alter task [%s], rc: %d",
-                    task->getActionName(), rc ) ;
+            PD_LOG( PDERROR, "Failed to check alter task [%s] on "
+                    "collection [%s], rc: %d", task->getActionName(),
+                    collection, rc ) ;
             if ( options->isIgnoreException() )
             {
                rc = SDB_OK ;
@@ -564,6 +491,8 @@ namespace engine
       const rtnAlterOptions * options = _alterJob->getOptions() ;
       const RTN_ALTER_TASK_LIST & alterTasks = _alterJob->getAlterTasks() ;
 
+      DMS_FILE_TYPE dpsType = DMS_FILE_EMPTY ;
+
       PD_CHECK( NULL != _su, SDB_INVALIDARG, error, PDERROR,
                 "Failed to get su" ) ;
       PD_CHECK( NULL != _mbContext, SDB_INVALIDARG, error, PDERROR,
@@ -571,79 +500,19 @@ namespace engine
 
       // Update catalog cache
       rc = sdbGetShardCB()->syncUpdateCatalog( collection ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to update collection catalog, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to update collection catalog, "
+                   "rc: %d", rc ) ;
 
       for ( RTN_ALTER_TASK_LIST::const_iterator iter = alterTasks.begin() ;
             iter != alterTasks.end() ;
             ++ iter )
       {
          const rtnAlterTask * task = ( *iter ) ;
-
-         switch ( task->getActionType() )
-         {
-            case RTN_ALTER_CL_ENABLE_SHARDING :
-            {
-               const rtnCLEnableShardingTask * localTask =
-                     dynamic_cast<const rtnCLEnableShardingTask *>( task ) ;
-               PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
-                         "Failed to get alter task" ) ;
-               rc = rtnCollectionSetSharding( collection, localTask->getShardingArgument(),
-                                              cb, _mbContext, _su, _dmsCB ) ;
-               break ;
-            }
-            case RTN_ALTER_CL_DISABLE_SHARDING :
-            {
-               rtnCLShardingArgument argument ;
-               argument.setEnsureShardingIndex( FALSE ) ;
-               rc = rtnCollectionSetSharding( collection, argument, cb,
-                                              _mbContext, _su, _dmsCB ) ;
-               break ;
-            }
-            case RTN_ALTER_CL_ENABLE_COMPRESS :
-            {
-               const rtnCLEnableCompressTask * localTask =
-                     dynamic_cast<const rtnCLEnableCompressTask *>( task ) ;
-               PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
-                         "Failed to get alter task" ) ;
-               rc = rtnCollectionSetCompress( collection,
-                                              localTask->getCompressArgument(),
-                                              cb, _mbContext, _su, _dmsCB ) ;
-               break ;
-            }
-            case RTN_ALTER_CL_DISABLE_COMPRESS :
-            {
-               rc = rtnCollectionSetCompress( collection, UTIL_COMPRESSOR_INVALID,
-                                              cb, _mbContext, _su, _dmsCB ) ;
-               break ;
-            }
-            case RTN_ALTER_CL_SET_ATTRIBUTES :
-            {
-               rc = rtnAlterCLSetAttributes( collection, task, _mbContext, _su, _dmsCB, cb ) ;
-               break ;
-            }
-            default :
-            {
-               rc = SDB_INVALIDARG ;
-               break ;
-            }
-         }
-
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to run alter task [%s], rc: %d",
-                    task->getActionName(), rc ) ;
-            if ( options->isIgnoreException() )
-            {
-               rc = SDB_OK ;
-            }
-            else
-            {
-               goto error ;
-            }
-         }
-
-         rc = rtnAlter2DPSLog( collection, task, options, getDPSCB() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
+         rc = rtnAlterCollection( collection, task, options, cb, getDPSCB(),
+                                  _mbContext, _su, _dmsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to run alter task [%s] on "
+                      "collection [%s], rc: %d", task->getActionName(),
+                      collection, rc ) ;
       }
 
       _close( cb ) ;

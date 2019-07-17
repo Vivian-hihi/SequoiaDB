@@ -47,301 +47,62 @@ using namespace std ;
 namespace engine
 {
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTER_TASK, "rtnAlter" )
-   INT32 rtnAlter ( const CHAR * name,
-                    const rtnAlterTask * task,
-                    const rtnAlterOptions * options,
-                    _pmdEDUCB * cb,
-                    _dpsLogWrapper * dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCREATEIDINDEX, "_rtnCreateIDIndex" )
+   INT32 _rtnCreateIDIndex ( const CHAR * collection,
+                             INT32 sortBufferSize,
+                             _pmdEDUCB * cb,
+                             _dpsLogWrapper * dpsCB,
+                             _dmsMBContext * mbContext,
+                             _dmsStorageUnit * su )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNALTER_TASK ) ;
+      PD_TRACE_ENTRY( SDB__RTNCREATEIDINDEX ) ;
 
-      switch ( task->getActionType() )
-      {
-         case RTN_ALTER_CL_CREATE_ID_INDEX :
-         {
-            rc = rtnCreateIDIndex( name, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_DROP_ID_INDEX :
-         {
-            rc = rtnDropIDIndex( name, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_ENABLE_SHARDING :
-         {
-            rc = rtnEnableSharding( name, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_DISABLE_SHARDING :
-         {
-            rc = rtnDisableSharding( name, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_ENABLE_COMPRESS :
-         {
-            rc = rtnEnableCompress( name, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_DISABLE_COMPRESS :
-         {
-            rc = rtnDisableCompress( name, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_SET_ATTRIBUTES :
-         {
-            rc = rtnAlterCLSetAttributes( name, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CS_SET_ATTRIBUTES :
-         {
-            rc = rtnAlterCSSetAttributes( name, task, options, cb, dpsCB ) ;
-            break ;
-         }
-         case RTN_ALTER_CL_CREATE_AUTOINC_FLD:
-         case RTN_ALTER_CL_DROP_AUTOINC_FLD:
-         {
-            //TODO: data group should do nothing
-            break ;
-         }
-         default :
-         {
-            rc = SDB_INVALIDARG ;
-            break ;
-         }
-      }
-
-      PD_RC_CHECK( rc, PDERROR, "Failed to run alter task [%s], rc: %d",
-                   task->getActionName(), rc ) ;
-
-      rc = rtnAlter2DPSLog( name, task, options, dpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
-
-   done :
-      PD_TRACE_EXITRC( SDB_RTNALTER_TASK, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTER, "rtnAlter" )
-   INT32 rtnAlter ( const CHAR * name,
-                    RTN_ALTER_OBJECT_TYPE objectType,
-                    BSONObj alterObject,
-                    _pmdEDUCB * cb,
-                    _dpsLogWrapper * dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNALTER ) ;
-
-      rtnAlterJob alterJob ;
-
-      rc = alterJob.initialize( NULL, objectType, alterObject ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to initialize alter job, rc: %d", rc ) ;
-
-      PD_CHECK( 0 == ossStrcmp( name, alterJob.getObjectName() ),
-                SDB_INVALIDARG, error, PDERROR,
-                "Failed to initialize alter job, rc: %d", rc ) ;
-
-      if ( !alterJob.isEmpty() )
-      {
-         const rtnAlterOptions * options = alterJob.getOptions() ;
-         const RTN_ALTER_TASK_LIST & alterTasks = alterJob.getAlterTasks() ;
-
-         for ( RTN_ALTER_TASK_LIST::const_iterator iter = alterTasks.begin() ;
-               iter != alterTasks.end() ;
-               ++ iter )
-         {
-            const rtnAlterTask * task = ( *iter ) ;
-
-            rc = rtnAlter( name, task, options, cb, dpsCB ) ;
-
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to run alter task [%s], rc: %d",
-                       task->getActionName(), rc ) ;
-               if ( options->isIgnoreException() )
-               {
-                  rc = SDB_OK ;
-                  continue ;
-               }
-               else
-               {
-                  goto error ;
-               }
-            }
-         }
-      }
-
-   done :
-      PD_TRACE_EXITRC( SDB_RTNALTER, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTER2DPSLOG, "rtnAlter2DPSLog" )
-   INT32 rtnAlter2DPSLog ( const CHAR * name,
-                           const rtnAlterTask * task,
-                           const rtnAlterOptions * options,
-                           _dpsLogWrapper * dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNALTER2DPSLOG ) ;
-
-      SDB_ASSERT( NULL != name, "name is invalid" ) ;
-      SDB_ASSERT( NULL != task, "task is invalid" ) ;
-
-      if ( NULL != dpsCB )
-      {
-         dpsMergeInfo info ;
-         info.setInfoEx( ~0, ~0, DMS_INVALID_EXTENT, NULL ) ;
-         dpsLogRecord & record = info.getMergeBlock().record() ;
-
-         BSONObj alterOptions ;
-         BSONObj alterObject;
-
-         if ( NULL != options )
-         {
-            alterOptions = options->toBSON() ;
-         }
-         alterObject = task->toBSON( name, alterOptions ) ;
-
-         rc = dpsAlter2Record( name, task->getObjectType(), alterObject, record ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build alter log, rc: %d", rc ) ;
-
-         rc = dpsCB->prepare(info ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to prepare analyze log, rc: %d", rc ) ;
-
-         dpsCB->writeData( info ) ;
-      }
-
-   done :
-      PD_TRACE_EXITRC( SDB_RTNALTER2DPSLOG, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCREATEIDINDEX, "rtnCreateIDIndex" )
-   INT32 rtnCreateIDIndex ( const CHAR * name,
-                            const rtnAlterTask * task,
-                            const rtnAlterOptions * options,
-                            _pmdEDUCB * cb,
-                            _dpsLogWrapper * dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNCREATEIDINDEX ) ;
-
-      SDB_ASSERT( NULL != name, "name is invalid" ) ;
+      SDB_ASSERT( NULL != collection, "collection is invalid" ) ;
       SDB_ASSERT( NULL != cb, "cb is invalid" ) ;
-      SDB_ASSERT( NULL != task &&
-                  RTN_ALTER_CL_CREATE_ID_INDEX == task->getActionType(),
-                  "task is invalid" ) ;
 
-      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
+      dmsMB * mb = mbContext->mb() ;
+      SDB_ASSERT( NULL != mb, "mb is invalid" ) ;
 
-      dmsStorageUnit * su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      BOOLEAN writable = FALSE ;
-      const CHAR * collectionShortName = NULL ;
-      dmsMBContext * mbContext = NULL ;
+      const CHAR * collectionShortName = mb->_collectionName ;
 
-      const rtnCLCreateIDIndexTask * localTask = dynamic_cast<const rtnCLCreateIDIndexTask *>( task ) ;
-      PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
-                "Failed to get create id index task" ) ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
-
-      rc = rtnResolveCollectionNameAndLock ( name, dmsCB, &su,
-                                             &collectionShortName, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                   name, rc ) ;
-
-      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
-                   name, rc ) ;
-
-      PD_CHECK( NULL != localTask, SDB_INVALIDARG, error, PDERROR,
-                "Failed to get create id index task" ) ;
-
-      rc = su->createIndex( collectionShortName, ixmGetIDIndexDefine(), cb, dpsCB,
-                            TRUE, mbContext, localTask->getSortBufferSize() ) ;
+      rc = su->createIndex( collectionShortName, ixmGetIDIndexDefine(), cb,
+                            dpsCB, TRUE, mbContext, sortBufferSize ) ;
       if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
       {
          /// already exists
          rc = SDB_OK ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to create id index on collection [%s], "
-                   "rc: %d", name, rc ) ;
+                   "rc: %d", collection, rc ) ;
 
    done :
-      if ( NULL != mbContext )
-      {
-         su->data()->releaseMBContext( mbContext ) ;
-      }
-      if ( DMS_INVALID_SUID != suID )
-      {
-         dmsCB->suUnlock( suID ) ;
-      }
-      if ( writable )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNCREATEIDINDEX, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNCREATEIDINDEX, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDROPIDINDEX, "rtnDropIDIndex" )
-   INT32 rtnDropIDIndex ( const CHAR * name,
-                          const rtnAlterTask * task,
-                          const rtnAlterOptions * options,
-                          _pmdEDUCB * cb,
-                          _dpsLogWrapper * dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNDROPIDINDEX, "_rtnDropIDIndex" )
+   INT32 _rtnDropIDIndex ( const CHAR * collection,
+                           _pmdEDUCB * cb,
+                           _dpsLogWrapper * dpsCB,
+                           _dmsMBContext * mbContext,
+                           _dmsStorageUnit * su )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNDROPIDINDEX ) ;
+      PD_TRACE_ENTRY( SDB__RTNDROPIDINDEX ) ;
 
-      SDB_ASSERT( NULL != name, "name is invalid" ) ;
+      SDB_ASSERT( NULL != collection, "collection is invalid" ) ;
       SDB_ASSERT( NULL != cb, "cb is invalid" ) ;
-      SDB_ASSERT( NULL != task &&
-                  RTN_ALTER_CL_DROP_ID_INDEX == task->getActionType(),
-                  "task is invalid" ) ;
 
-      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
+      dmsMB * mb = mbContext->mb() ;
+      SDB_ASSERT( NULL != mb, "mb is invalid" ) ;
 
-      dmsStorageUnit * su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      BOOLEAN writable = FALSE ;
-      const CHAR * collectionShortName = NULL ;
-      dmsMBContext * mbContext = NULL ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
-
-      rc = rtnResolveCollectionNameAndLock ( name, dmsCB, &su,
-                                             &collectionShortName, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                   name, rc ) ;
-
-      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
-                   name, rc ) ;
+      const CHAR * collectionShortName = mb->_collectionName ;
 
       rc = su->dropIndex( collectionShortName, IXM_ID_KEY_NAME, cb, dpsCB,
                           TRUE, mbContext ) ;
@@ -351,196 +112,39 @@ namespace engine
          rc = SDB_OK ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to drop id index on collection [%s], "
-                   "rc: %d", name, rc ) ;
+                   "rc: %d", collection, rc ) ;
 
    done :
-      if ( NULL != mbContext )
-      {
-         su->data()->releaseMBContext( mbContext ) ;
-      }
-      if ( DMS_INVALID_SUID != suID )
-      {
-         dmsCB->suUnlock( suID ) ;
-      }
-      if ( writable )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNDROPIDINDEX, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNDROPIDINDEX, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNENABLESHARDING, "rtnEnableSharding" )
-   INT32 rtnEnableSharding ( const CHAR * name,
-                             const rtnAlterTask * task,
-                             const rtnAlterOptions * options,
-                             _pmdEDUCB * cb,
-                             _dpsLogWrapper * dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSETSHARD, "_rtnCollectionSetSharding" )
+   INT32 _rtnCollectionSetSharding ( const CHAR * collection,
+                                     const rtnCLShardingArgument & argument,
+                                     _pmdEDUCB * cb,
+                                     _dpsLogWrapper * dpsCB,
+                                     _dmsMBContext * mbContext,
+                                     _dmsStorageUnit * su )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNENABLESHARDING ) ;
-
-      SDB_ASSERT( NULL != name, "name is invalid" ) ;
-      SDB_ASSERT( NULL != cb, "cb is invalid" ) ;
-      SDB_ASSERT( NULL != task && RTN_ALTER_CL_ENABLE_SHARDING == task->getActionType(),
-                  "task is invalid" ) ;
-
-      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
-
-      dmsStorageUnit * su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      BOOLEAN writable = FALSE ;
-      const CHAR * collectionShortName = NULL ;
-      dmsMBContext * mbContext = NULL ;
-
-      rtnCLShardingArgument argument ;
-
-      const rtnCLEnableShardingTask * localTask =
-                     dynamic_cast<const rtnCLEnableShardingTask *>( task ) ;
-      PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
-                "Failed to get enable sharding task" ) ;
-
-      argument = localTask->getShardingArgument() ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
-
-      rc = rtnResolveCollectionNameAndLock ( name, dmsCB, &su,
-                                             &collectionShortName, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                   name, rc ) ;
-
-      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
-                   name, rc ) ;
-
-      rc = rtnCollectionCheckSharding( name, argument, cb, mbContext, su, dmsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to check sharding, rc: %d", rc ) ;
-
-      rc = rtnCollectionSetSharding( name, argument, cb, mbContext, su, dmsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set sharding, rc: %d", rc ) ;
-
-   done :
-      if ( NULL != mbContext )
-      {
-         su->data()->releaseMBContext( mbContext ) ;
-      }
-      if ( DMS_INVALID_SUID != suID )
-      {
-         dmsCB->suUnlock( suID ) ;
-      }
-      if ( writable )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNENABLESHARDING, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDISABLESHARDING, "rtnDisableSharding" )
-   INT32 rtnDisableSharding ( const CHAR * name,
-                              const rtnAlterTask * task,
-                              const rtnAlterOptions * options,
-                              _pmdEDUCB * cb,
-                              _dpsLogWrapper * dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNDISABLESHARDING ) ;
-
-      SDB_ASSERT( NULL != name, "name is invalid" ) ;
-      SDB_ASSERT( NULL != cb, "cb is invalid" ) ;
-      SDB_ASSERT( NULL != task &&
-                  RTN_ALTER_CL_DISABLE_SHARDING == task->getActionType(),
-                  "task is invalid" ) ;
-
-      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
-
-      dmsStorageUnit * su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      BOOLEAN writable = FALSE ;
-      const CHAR * collectionShortName = NULL ;
-      dmsMBContext * mbContext = NULL ;
-
-      rtnCLShardingArgument argument ;
-      argument.setEnsureShardingIndex( FALSE ) ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
-
-      rc = rtnResolveCollectionNameAndLock ( name, dmsCB, &su,
-                                             &collectionShortName, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                   name, rc ) ;
-
-      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
-                   name, rc ) ;
-
-      PD_CHECK( DMS_STORAGE_NORMAL == su->type(),
-                SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                "Failed to check collection for sharding: "
-                "should not be capped" ) ;
-
-      rc = rtnCollectionSetSharding( name, argument, cb, mbContext, su, dmsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set sharding, rc: %d", rc ) ;
-
-   done :
-      if ( NULL != mbContext )
-      {
-         su->data()->releaseMBContext( mbContext ) ;
-      }
-      if ( DMS_INVALID_SUID != suID )
-      {
-         dmsCB->suUnlock( suID ) ;
-      }
-      if ( writable )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNDISABLESHARDING, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSETSHARD, "rtnCollectionSetSharding" )
-   INT32 rtnCollectionSetSharding ( const CHAR * collection,
-                                    const rtnCLShardingArgument & argument,
-                                    _pmdEDUCB * cb,
-                                    _dmsMBContext * mbContext,
-                                    _dmsStorageUnit * su,
-                                    _SDB_DMSCB * dmsCB )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNSETSHARD ) ;
+      PD_TRACE_ENTRY( SDB__RTNSETSHARD ) ;
 
       SDB_ASSERT( NULL != mbContext, "mbContext is invalid" ) ;
       SDB_ASSERT( NULL != su, "su is invalid" ) ;
-      SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
-      const CHAR * collectionShortName = NULL ;
-      dmsMB * mb = NULL ;
+      dmsMB * mb = mbContext->mb() ;
+      SDB_ASSERT( NULL != mb, "mb is invalid" ) ;
+
+      const CHAR * collectionShortName = mb->_collectionName ;
+
       BOOLEAN dropIndex = FALSE ;
       BOOLEAN createIndex = TRUE ;
       monIndex shardIndex ;
-
-      mb = mbContext->mb() ;
-      SDB_ASSERT( NULL != mb, "mb is invalid" ) ;
-
-      collectionShortName = mb->_collectionName ;
 
       rc = su->getIndex( mbContext, IXM_SHARD_KEY_NAME, shardIndex ) ;
       if ( SDB_OK == rc )
@@ -570,7 +174,7 @@ namespace engine
 
       if ( dropIndex )
       {
-         rc = su->dropIndex( collectionShortName, IXM_SHARD_KEY_NAME, cb, NULL,
+         rc = su->dropIndex( collectionShortName, IXM_SHARD_KEY_NAME, cb, dpsCB,
                              TRUE, mbContext ) ;
          if ( SDB_IXM_NOTEXIST == rc )
          {
@@ -586,7 +190,7 @@ namespace engine
                                   IXM_FIELD_NAME_NAME << IXM_SHARD_KEY_NAME <<
                                   IXM_V_FIELD << 0 ) ;
 
-         rc = su->createIndex( collectionShortName, indexDef, cb, NULL, TRUE,
+         rc = su->createIndex( collectionShortName, indexDef, cb, dpsCB, TRUE,
                                mbContext, 0 ) ;
          if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
          {
@@ -600,28 +204,26 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC( SDB_RTNSETSHARD, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNSETSHARD, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCHKSHARD, "rtnCollectionCheckSharding" )
-   INT32 rtnCollectionCheckSharding ( const CHAR * collection,
-                                      const rtnCLShardingArgument & argument,
-                                      _pmdEDUCB * cb,
-                                      _dmsMBContext * mbContext,
-                                      _dmsStorageUnit * su,
-                                      _SDB_DMSCB * dmsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCHKSHARD, "_rtnCollectionCheckSharding" )
+   INT32 _rtnCollectionCheckSharding ( const CHAR * collection,
+                                       const rtnCLShardingArgument & argument,
+                                       _pmdEDUCB * cb,
+                                       _dmsMBContext * mbContext,
+                                       _dmsStorageUnit * su )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNCHKSHARD ) ;
+      PD_TRACE_ENTRY( SDB__RTNCHKSHARD ) ;
 
       SDB_ASSERT( NULL != mbContext, "mbContext is invalid" ) ;
       SDB_ASSERT( NULL != su, "su is invalid" ) ;
-      SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
       dmsMB * mb = NULL ;
       MON_IDX_LIST indexes ;
@@ -685,68 +287,24 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC( SDB_RTNCHKSHARD, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNCHKSHARD, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSETCOMPRESS_ARG, "rtnCollectionSetCompress" )
-   INT32 rtnCollectionSetCompress ( const CHAR * collection,
-                                    const rtnCLCompressArgument & argument,
-                                    _pmdEDUCB * cb,
-                                    _dmsMBContext * mbContext,
-                                    _dmsStorageUnit * su,
-                                    SDB_DMSCB * dmsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSETCOMPRESS, "_rtnCollectionSetCompress" )
+   INT32 _rtnCollectionSetCompress ( const CHAR * collection,
+                                     UTIL_COMPRESSOR_TYPE compressorType,
+                                     _pmdEDUCB * cb,
+                                     _dmsMBContext * mbContext,
+                                     _dmsStorageUnit * su,
+                                     SDB_DMSCB * dmsCB )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNSETCOMPRESS_ARG ) ;
-
-      if ( argument.isCompressed() )
-      {
-         // Alter the attribute only in below cases :
-         // 1. collection is no compressed
-         // 2. altering the compressor type, and old type of collection is
-         //    different
-         if ( !OSS_BIT_TEST( mbContext->mb()->_attributes, DMS_MB_ATTR_COMPRESSED ) ||
-              ( argument.testArgumentMask( UTIL_CL_COMPRESSTYPE_FIELD ) &&
-                mbContext->mb()->_compressorType != argument.getCompressorType() ) )
-         {
-            rc = rtnCollectionSetCompress( collection, argument.getCompressorType(),
-                                           cb, mbContext, su, dmsCB ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to set compressor on "
-                         "collection [%s], rc: %d", collection, rc ) ;
-         }
-      }
-      else
-      {
-         rc = rtnCollectionSetCompress( collection, UTIL_COMPRESSOR_INVALID,
-                                        cb, mbContext, su, dmsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to set compressor on "
-                      "collection [%s], rc: %d", collection, rc ) ;
-      }
-
-   done :
-      PD_TRACE_EXITRC( SDB_RTNSETCOMPRESS_ARG, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSETCOMPRESS, "rtnCollectionSetCompress" )
-   INT32 rtnCollectionSetCompress ( const CHAR * collection,
-                                    UTIL_COMPRESSOR_TYPE compressorType,
-                                    _pmdEDUCB * cb,
-                                    _dmsMBContext * mbContext,
-                                    _dmsStorageUnit * su,
-                                    SDB_DMSCB * dmsCB )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNSETCOMPRESS ) ;
+      PD_TRACE_ENTRY( SDB__RTNSETCOMPRESS ) ;
 
       SDB_ASSERT( NULL != mbContext, "mbContext is invalid" ) ;
       SDB_ASSERT( NULL != su, "su is invalid" ) ;
@@ -770,28 +328,72 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC( SDB_RTNSETCOMPRESS, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNSETCOMPRESS, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSETEXTOPTS, "rtnCollectionSetExtOptions" )
-   INT32 rtnCollectionSetExtOptions ( const CHAR * collection,
-                                      const rtnCLExtOptionArgument & optionArgument,
-                                      _pmdEDUCB * cb,
-                                      _dmsMBContext * mbContext,
-                                      _dmsStorageUnit * su,
-                                      _SDB_DMSCB * dmsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSETCOMPRESS_ARG, "_rtnCollectionSetCompress" )
+   INT32 _rtnCollectionSetCompress ( const CHAR * collection,
+                                     const rtnCLCompressArgument & argument,
+                                     _pmdEDUCB * cb,
+                                     _dmsMBContext * mbContext,
+                                     _dmsStorageUnit * su,
+                                     SDB_DMSCB * dmsCB )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNSETEXTOPTS ) ;
+      PD_TRACE_ENTRY( SDB__RTNSETCOMPRESS_ARG ) ;
+
+      if ( argument.isCompressed() )
+      {
+         // Alter the attribute only in below cases :
+         // 1. collection is no compressed
+         // 2. altering the compressor type, and old type of collection is
+         //    different
+         if ( !OSS_BIT_TEST( mbContext->mb()->_attributes, DMS_MB_ATTR_COMPRESSED ) ||
+              ( argument.testArgumentMask( UTIL_CL_COMPRESSTYPE_FIELD ) &&
+                mbContext->mb()->_compressorType != argument.getCompressorType() ) )
+         {
+            rc = _rtnCollectionSetCompress( collection,
+                                            argument.getCompressorType(),
+                                            cb, mbContext, su, dmsCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to set compressor on "
+                         "collection [%s], rc: %d", collection, rc ) ;
+         }
+      }
+      else
+      {
+         rc = _rtnCollectionSetCompress( collection, UTIL_COMPRESSOR_INVALID,
+                                         cb, mbContext, su, dmsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to set compressor on "
+                      "collection [%s], rc: %d", collection, rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNSETCOMPRESS_ARG, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSETEXTOPTS, "_rtnCollectionSetExtOptions" )
+   INT32 _rtnCollectionSetExtOptions ( const CHAR * collection,
+                                       const rtnCLExtOptionArgument & optionArgument,
+                                       _pmdEDUCB * cb,
+                                       _dmsMBContext * mbContext,
+                                       _dmsStorageUnit * su )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNSETEXTOPTS ) ;
 
       SDB_ASSERT( NULL != mbContext, "mbContext is invalid" ) ;
       SDB_ASSERT( NULL != su, "su is invalid" ) ;
-      SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
       BSONObj curExtOptions, extOptions ;
       dmsMB * mb = mbContext->mb() ;
@@ -812,143 +414,23 @@ namespace engine
                    "rc: %d", collection, rc ) ;
 
    done :
-      PD_TRACE_EXITRC( SDB_RTNSETEXTOPTS, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNSETEXTOPTS, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNENABLECOMPRESS, "rtnEnableCompress" )
-   INT32 rtnEnableCompress ( const CHAR * name,
-                             const rtnAlterTask * task,
-                             const rtnAlterOptions * options,
-                             _pmdEDUCB * cb,
-                             _dpsLogWrapper * dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERCLCHKATTR, "_rtnAlterCLCheckAttributes" )
+   INT32 _rtnAlterCLCheckAttributes ( const CHAR * collection,
+                                      const rtnAlterTask * task,
+                                      _dmsMBContext * mbContext,
+                                      _dmsStorageUnit * su,
+                                      _pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNENABLECOMPRESS ) ;
-
-      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
-
-      dmsStorageUnit * su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      BOOLEAN writable = FALSE ;
-      const CHAR * collectionShortName = NULL ;
-      dmsMBContext * mbContext = NULL ;
-
-      const rtnCLEnableCompressTask * localTask = NULL ;
-
-      localTask = dynamic_cast<const rtnCLEnableCompressTask *>( task ) ;
-      PD_CHECK( NULL != localTask, SDB_INVALIDARG, error, PDERROR,
-                "Failed to get task" ) ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
-
-      rc = rtnResolveCollectionNameAndLock ( name, dmsCB, &su,
-                                             &collectionShortName, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                   name, rc ) ;
-
-      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
-                   name, rc ) ;
-
-      rc = rtnCollectionSetCompress( name, localTask->getCompressArgument(),
-                                     cb, mbContext, su, dmsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set compress on collection [%s], rc: %d",
-                   name, rc ) ;
-
-   done :
-      if ( NULL != mbContext )
-      {
-         su->data()->releaseMBContext( mbContext ) ;
-      }
-      if ( DMS_INVALID_SUID != suID )
-      {
-         dmsCB->suUnlock( suID ) ;
-      }
-      if ( writable )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNENABLECOMPRESS, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDISABLECOMPRESS, "rtnDisableCompress" )
-   INT32 rtnDisableCompress ( const CHAR * name,
-                              const rtnAlterTask * task,
-                              const rtnAlterOptions * options,
-                              _pmdEDUCB * cb,
-                              _dpsLogWrapper * dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNDISABLECOMPRESS ) ;
-
-      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
-
-      dmsStorageUnit * su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      BOOLEAN writable = FALSE ;
-      const CHAR * collectionShortName = NULL ;
-      dmsMBContext * mbContext = NULL ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
-      writable = TRUE ;
-
-      rc = rtnResolveCollectionNameAndLock ( name, dmsCB, &su,
-                                             &collectionShortName, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
-                   name, rc ) ;
-
-      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
-                   name, rc ) ;
-
-      rc = rtnCollectionSetCompress( name, UTIL_COMPRESSOR_INVALID, cb, mbContext, su, dmsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set compress on collection [%s], rc: %d",
-                   name, rc ) ;
-
-   done :
-      if ( NULL != mbContext )
-      {
-         su->data()->releaseMBContext( mbContext ) ;
-      }
-      if ( DMS_INVALID_SUID != suID )
-      {
-         dmsCB->suUnlock( suID ) ;
-      }
-      if ( writable )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNDISABLECOMPRESS, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCLCHKATTR_INT, "rtnAlterCLCheckAttributes" )
-   INT32 rtnAlterCLCheckAttributes ( const CHAR * collection,
-                                     const rtnAlterTask * task,
-                                     _dmsMBContext * mbContext,
-                                     _dmsStorageUnit * su,
-                                     _SDB_DMSCB * dmsCB,
-                                     _pmdEDUCB * cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNALTERCLCHKATTR_INT ) ;
+      PD_TRACE_ENTRY( SDB__RTNALTERCLCHKATTR ) ;
 
       const rtnCLSetAttributeTask * localTask =
             dynamic_cast<const rtnCLSetAttributeTask *>( task ) ;
@@ -958,17 +440,19 @@ namespace engine
       // Check sharding
       if ( localTask->testArgumentMask( UTIL_CL_SHDKEY_FIELD ) )
       {
-         rc = rtnCollectionCheckSharding( collection, localTask->getShardingArgument(),
-                                          cb, mbContext, su, dmsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check sharding, rc: %d", rc ) ;
+         rc = _rtnCollectionCheckSharding( collection,
+                                           localTask->getShardingArgument(),
+                                           cb, mbContext, su ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check sharding for "
+                      "collection [%s], rc: %d", collection, rc ) ;
       }
 
       // Check compress
       if ( localTask->containCompressArgument() )
       {
          rc = su->canSetCollectionCompressor( mbContext ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check compress, "
-                      "rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check compress for collection "
+                      "[%s], rc: %d", rc ) ;
       }
 
       // Check ext options
@@ -977,28 +461,30 @@ namespace engine
          PD_CHECK( DMS_STORAGE_CAPPED == su->type(),
                    SDB_OPTION_NOT_SUPPORT, error, PDERROR,
                    "Failed to check collection for setting ext options: "
-                   "should be capped" ) ;
+                   "should be capped", collection ) ;
       }
 
    done :
-      PD_TRACE_EXITRC( SDB_RTNALTERCLCHKATTR_INT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERCLCHKATTR, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCLSETATTR_INT, "rtnAlterCLSetAttributes" )
-   INT32 rtnAlterCLSetAttributes ( const CHAR * collection,
-                                   const rtnAlterTask * task,
-                                   _dmsMBContext * mbContext,
-                                   _dmsStorageUnit * su,
-                                   _SDB_DMSCB * dmsCB,
-                                   _pmdEDUCB * cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERCLSETATTR, "_rtnAlterCLSetAttributes" )
+   INT32 _rtnAlterCLSetAttributes ( const CHAR * collection,
+                                    const rtnAlterTask * task,
+                                    _pmdEDUCB * cb,
+                                    _dpsLogWrapper * dpsCB,
+                                    _dmsMBContext * mbContext,
+                                    _dmsStorageUnit * su,
+                                    _SDB_DMSCB * dmsCB,
+                                    BOOLEAN & needAlterLog )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNALTERCLSETATTR_INT ) ;
+      PD_TRACE_ENTRY( SDB__RTNALTERCLSETATTR ) ;
 
       SDB_ASSERT( NULL != mbContext, "mbContext is invalid" ) ;
       SDB_ASSERT( NULL != su, "su is invalid" ) ;
@@ -1014,17 +500,13 @@ namespace engine
       PD_CHECK( mbContext->isMBLock( EXCLUSIVE ), SDB_SYS, error, PDERROR,
                 "Failed to get mbContext: should be exclusive locked" ) ;
 
-      rc = rtnAlterCLCheckAttributes( collection, task, mbContext, su, dmsCB, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to check attributes on collection [%s], "
-                   "rc: %d", collection, rc ) ;
-
       // $sharding index
       if ( localTask->testArgumentMask( UTIL_CL_SHDKEY_FIELD ) )
       {
          const rtnCLShardingArgument & argument = localTask->getShardingArgument() ;
 
-         rc = rtnCollectionSetSharding( collection, argument, cb, mbContext,
-                                        su, dmsCB ) ;
+         rc = _rtnCollectionSetSharding( collection, argument, cb, dpsCB,
+                                         mbContext, su ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set sharding on collection [%s], "
                       "rc: %d", collection, rc ) ;
       }
@@ -1032,9 +514,11 @@ namespace engine
       // Compress
       if ( localTask->containCompressArgument() )
       {
-         const rtnCLCompressArgument & compressArgument = localTask->getCompressArgument() ;
-         rc = rtnCollectionSetCompress( collectionShortName, compressArgument,
-                                        cb, mbContext, su, dmsCB ) ;
+         needAlterLog = TRUE ;
+         const rtnCLCompressArgument & compressArgument =
+                                             localTask->getCompressArgument() ;
+         rc = _rtnCollectionSetCompress( collectionShortName, compressArgument,
+                                         cb, mbContext, su, dmsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set compressor on "
                       "collection [%s], rc: %d", collection, rc ) ;
       }
@@ -1042,9 +526,10 @@ namespace engine
       // Ext options
       if ( localTask->containExtOptionArgument() )
       {
-         rc = rtnCollectionSetExtOptions( collectionShortName,
-                                          localTask->getExtOptionArgument(),
-                                          cb, mbContext, su, dmsCB ) ;
+         needAlterLog = TRUE ;
+         rc = _rtnCollectionSetExtOptions( collectionShortName,
+                                           localTask->getExtOptionArgument(),
+                                           cb, mbContext, su ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set capped options on "
                       "collection [%s], rc: %d", collection, rc ) ;
       }
@@ -1059,6 +544,7 @@ namespace engine
       // Strict data mode
       if ( localTask->testArgumentMask( UTIL_CL_STRICTDATAMODE_FIELD ) )
       {
+         needAlterLog = TRUE ;
          rc = su->setCollectionStrictDataMode( collectionShortName,
                                                localTask->isStrictDataMode(),
                                                mbContext ) ;
@@ -1071,103 +557,37 @@ namespace engine
       {
          if ( localTask->isAutoIndexID() )
          {
-            rc = su->createIndex( collection, ixmGetIDIndexDefine(), cb, NULL,
-                                  TRUE, mbContext ) ;
-            if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
-            {
-               rc = SDB_OK ;
-            }
-            PD_RC_CHECK( rc, PDERROR, "Failed to create id index" ) ;
+            rc = _rtnCreateIDIndex( collection, 0, cb, dpsCB, mbContext, su ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to create id index on collection "
+                         "[%s], rc: %d", collection, rc ) ;
          }
          else
          {
-            rc = su->dropIndex( collection, IXM_ID_KEY_NAME, cb, NULL,
-                                TRUE, mbContext ) ;
-            if ( SDB_IXM_NOTEXIST == rc )
-            {
-               rc = SDB_OK ;
-            }
-            PD_RC_CHECK( rc, PDERROR, "Failed to drop id index" ) ;
+            rc = _rtnDropIDIndex( collection, cb, dpsCB, mbContext, su ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to drop id index on collection "
+                         "[%s], rc: %d", collection, rc ) ;
          }
       }
 
    done :
-      PD_TRACE_EXITRC( SDB_RTNALTERCLSETATTR_INT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERCLSETATTR, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCLSETATTR, "rtnAlterCLSetAttributes" )
-   INT32 rtnAlterCLSetAttributes ( const CHAR * name,
-                                   const rtnAlterTask * task,
-                                   const rtnAlterOptions * options,
-                                   _pmdEDUCB * cb,
-                                   _dpsLogWrapper * dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERCSSETATTR, "_rtnAlterCSSetAttributes" )
+   INT32 _rtnAlterCSSetAttributes ( const CHAR * collectionSpace,
+                                    const rtnAlterTask * task,
+                                    _dmsStorageUnit * su,
+                                    _pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNALTERCLSETATTR ) ;
-
-      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
-
-      dmsStorageUnit * su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_SUID ;
-      BOOLEAN writable = FALSE ;
-      const CHAR * collectionShortName = NULL ;
-      dmsMBContext * mbContext = NULL ;
-
-      rc = dmsCB->writable( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
-      writable = TRUE ;
-
-      rc = rtnResolveCollectionNameAndLock ( name, dmsCB, &su,
-                                             &collectionShortName, suID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name [%s], rc: %d",
-                   name, rc ) ;
-
-      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
-                   name, rc ) ;
-
-      rc = rtnAlterCLSetAttributes( name, task, mbContext, su, dmsCB, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set attributes on collection [%s], "
-                   "rc: %d", name, rc ) ;
-
-   done :
-      if ( NULL != mbContext )
-      {
-         su->data()->releaseMBContext( mbContext ) ;
-      }
-      if ( DMS_INVALID_SUID != suID )
-      {
-         dmsCB->suUnlock( suID ) ;
-      }
-      if ( writable )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
-      PD_TRACE_EXITRC( SDB_RTNALTERCLSETATTR, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCSSETATTR_INT, "rtnAlterCSSetAttributes" )
-   INT32 rtnAlterCSSetAttributes ( const CHAR * collectionSpace,
-                                   const rtnAlterTask * task,
-                                   _dmsStorageUnit * su,
-                                   _SDB_DMSCB * dmsCB,
-                                   _pmdEDUCB * cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_RTNALTERCSSETATTR_INT ) ;
+      PD_TRACE_ENTRY( SDB__RTNALTERCSSETATTR ) ;
 
       SDB_ASSERT( NULL != su, "su is invalid" ) ;
-      SDB_ASSERT( NULL != dmsCB, "dmsCB is invalid" ) ;
 
       const rtnCSSetAttributeTask * localTask = NULL ;
       INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
@@ -1192,15 +612,432 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC( SDB_RTNALTERCSSETATTR_INT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERCSSETATTR, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCSSETATTR, "rtnAlterCSSetAttributes" )
-   INT32 rtnAlterCSSetAttributes ( const CHAR * name,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTER2DPSLOG, "_rtnAlter2DPSLog" )
+   INT32 _rtnAlter2DPSLog ( const CHAR * name,
+                            const rtnAlterTask * task,
+                            const rtnAlterOptions * options,
+                            _pmdEDUCB * cb,
+                            _dpsLogWrapper * dpsCB,
+                            _dmsMBContext * mbContext,
+                            _dmsStorageUnit * su )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNALTER2DPSLOG ) ;
+
+      SDB_ASSERT( NULL != name, "name is invalid" ) ;
+      SDB_ASSERT( NULL != task, "task is invalid" ) ;
+
+      if ( NULL != dpsCB )
+      {
+         UINT32 csLID = su->LogicalCSID() ;
+         UINT32 clLID = NULL != mbContext ? mbContext->clLID() : ~0 ;
+
+         dpsMergeInfo info ;
+         info.setInfoEx( csLID, clLID, DMS_INVALID_EXTENT, NULL ) ;
+
+         dpsLogRecord & record = info.getMergeBlock().record() ;
+
+         BSONObj alterOptions ;
+         BSONObj alterObject;
+
+         if ( NULL != options )
+         {
+            alterOptions = options->toBSON() ;
+         }
+         alterObject = task->toBSON( name, alterOptions ) ;
+
+         rc = dpsAlter2Record( name, task->getObjectType(), alterObject, record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build alter log, rc: %d", rc ) ;
+
+         rc = dpsCB->prepare(info ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to prepare alter log, "
+                      "rc: %d", rc ) ;
+
+         dpsCB->writeData( info ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNALTER2DPSLOG, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCMD, "rtnAlterCommand" )
+   INT32 rtnAlterCommand ( const CHAR * name,
+                           RTN_ALTER_OBJECT_TYPE objectType,
+                           BSONObj alterObject,
+                           _pmdEDUCB * cb,
+                           _dpsLogWrapper * dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNALTERCMD ) ;
+
+      rtnAlterJob alterJob ;
+
+      rc = alterJob.initialize( NULL, objectType, alterObject ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to initialize alter job, rc: %d", rc ) ;
+
+      PD_CHECK( 0 == ossStrcmp( name, alterJob.getObjectName() ),
+                SDB_INVALIDARG, error, PDERROR,
+                "Failed to initialize alter job, rc: %d", rc ) ;
+
+      if ( !alterJob.isEmpty() )
+      {
+         const rtnAlterOptions * options = alterJob.getOptions() ;
+         const RTN_ALTER_TASK_LIST & alterTasks = alterJob.getAlterTasks() ;
+
+         for ( RTN_ALTER_TASK_LIST::const_iterator iter = alterTasks.begin() ;
+               iter != alterTasks.end() ;
+               ++ iter )
+         {
+            const rtnAlterTask * task = ( *iter ) ;
+
+            rc = rtnAlter( name, task, options, cb, dpsCB ) ;
+
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to run alter task [%s], rc: %d",
+                       task->getActionName(), rc ) ;
+               if ( options->isIgnoreException() )
+               {
+                  rc = SDB_OK ;
+                  continue ;
+               }
+               else
+               {
+                  goto error ;
+               }
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNALTERCMD, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTER, "rtnAlter" )
+   INT32 rtnAlter ( const CHAR * name,
+                    const rtnAlterTask * task,
+                    const rtnAlterOptions * options,
+                    _pmdEDUCB * cb,
+                    _dpsLogWrapper * dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNALTER ) ;
+
+      switch ( task->getActionType() )
+      {
+         // alter collection actions
+         case RTN_ALTER_CL_CREATE_ID_INDEX :
+         case RTN_ALTER_CL_DROP_ID_INDEX :
+         case RTN_ALTER_CL_ENABLE_SHARDING :
+         case RTN_ALTER_CL_DISABLE_SHARDING :
+         case RTN_ALTER_CL_ENABLE_COMPRESS :
+         case RTN_ALTER_CL_DISABLE_COMPRESS :
+         case RTN_ALTER_CL_SET_ATTRIBUTES :
+         case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
+         case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         {
+            rc = rtnAlterCollection( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         // alter collection space actions
+         case RTN_ALTER_CS_SET_DOMAIN :
+         case RTN_ALTER_CS_REMOVE_DOMAIN :
+         case RTN_ALTER_CS_ENABLE_CAPPED :
+         case RTN_ALTER_CS_DISABLE_CAPPED :
+         case RTN_ALTER_CS_SET_ATTRIBUTES :
+         {
+            rc = rtnAlterCollectionSpace( name, task, options, cb, dpsCB ) ;
+            break ;
+         }
+         default :
+         {
+            rc = SDB_INVALIDARG ;
+            break ;
+         }
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to run alter task [%s], rc: %d",
+                   task->getActionName(), rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNALTER, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCHECKALTERCOLLECTION, "rtnCheckAlterCollection" )
+   INT32 rtnCheckAlterCollection ( const CHAR * collection,
+                                   const rtnAlterTask * task,
+                                   _pmdEDUCB * cb,
+                                   _dmsMBContext * mbContext,
+                                   _dmsStorageUnit * su,
+                                   _SDB_DMSCB * dmsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNCHECKALTERCOLLECTION ) ;
+
+      switch ( task->getActionType() )
+      {
+         case RTN_ALTER_CL_ENABLE_SHARDING :
+         {
+            const rtnCLEnableShardingTask * localTask =
+                  dynamic_cast<const rtnCLEnableShardingTask *>( task ) ;
+            if ( localTask->testArgumentMask( UTIL_CL_SHDKEY_FIELD ) )
+            {
+               rc = _rtnCollectionCheckSharding( collection,
+                                                 localTask->getShardingArgument(),
+                                                 cb, mbContext, su ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to check sharding for "
+                            "collection [%s], rc: %d", collection, rc ) ;
+            }
+            break ;
+         }
+         case RTN_ALTER_CL_DISABLE_SHARDING :
+         case RTN_ALTER_CL_CREATE_ID_INDEX :
+         case RTN_ALTER_CL_DROP_ID_INDEX :
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         case RTN_ALTER_CL_ENABLE_COMPRESS :
+         case RTN_ALTER_CL_DISABLE_COMPRESS :
+         {
+            rc = su->canSetCollectionCompressor( mbContext ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to check compress for "
+                         "collection [%s], rc: %d", collection, rc ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_SET_ATTRIBUTES :
+         {
+            rc = _rtnAlterCLCheckAttributes( collection, task, mbContext, su,
+                                             cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to check attributes for "
+                         "collection [%s], rc: %d", collection, rc ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
+         case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         {
+            //TODO: data group should do nothing
+            break ;
+         }
+         default :
+         {
+            rc = SDB_INVALIDARG ;
+            break ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNCHECKALTERCOLLECTION, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCOLLECTION, "rtnAlterCollection" )
+   INT32 rtnAlterCollection ( const CHAR * collection,
+                              const rtnAlterTask * task,
+                              const rtnAlterOptions * options,
+                              _pmdEDUCB * cb,
+                              _dpsLogWrapper * dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNALTERCOLLECTION ) ;
+
+      SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
+
+      dmsStorageUnit * su = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      BOOLEAN writable = FALSE ;
+      const CHAR * collectionShortName = NULL ;
+      dmsMBContext * mbContext = NULL ;
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
+
+      rc = rtnResolveCollectionNameAndLock ( collection, dmsCB, &su,
+                                             &collectionShortName, suID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
+                   collection, rc ) ;
+
+      rc = su->data()->getMBContext( &mbContext, collectionShortName, EXCLUSIVE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to lock mb context [%s], rc: %d",
+                   collection, rc ) ;
+
+      rc = rtnCheckAlterCollection( collection, task, cb, mbContext, su,
+                                    dmsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check alter collection [%s], rc: %d",
+                   collection, rc ) ;
+
+      rc = rtnAlterCollection( collection, task, options, cb, dpsCB, mbContext,
+                               su, dmsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to alter collection [%s], rc: %d",
+                   collection, rc ) ;
+
+   done :
+      if ( NULL != mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
+      if ( DMS_INVALID_SUID != suID )
+      {
+         dmsCB->suUnlock( suID ) ;
+      }
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNALTERCOLLECTION, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCOLLECTION_MB, "rtnAlterCollection" )
+   INT32 rtnAlterCollection ( const CHAR * collection,
+                              const rtnAlterTask * task,
+                              const rtnAlterOptions * options,
+                              _pmdEDUCB * cb,
+                              _dpsLogWrapper * dpsCB,
+                              _dmsMBContext * mbContext,
+                              _dmsStorageUnit * su,
+                              _SDB_DMSCB * dmsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNALTERCOLLECTION_MB ) ;
+
+      BOOLEAN needAlterLog = FALSE ;
+
+      switch ( task->getActionType() )
+      {
+         case RTN_ALTER_CL_CREATE_ID_INDEX :
+         {
+            const rtnCLCreateIDIndexTask * localTask =
+                        dynamic_cast<const rtnCLCreateIDIndexTask *>( task ) ;
+            PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
+                      "Failed to get create id index task" ) ;
+            rc = _rtnCreateIDIndex( collection, localTask->getSortBufferSize(),
+                                    cb, dpsCB, mbContext, su ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DROP_ID_INDEX :
+         {
+            rc = _rtnDropIDIndex( collection, cb, dpsCB, mbContext, su ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_ENABLE_SHARDING :
+         {
+            const rtnCLEnableShardingTask * localTask =
+                  dynamic_cast<const rtnCLEnableShardingTask *>( task ) ;
+            PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
+                      "Failed to get alter task" ) ;
+            rc = _rtnCollectionSetSharding( collection,
+                                            localTask->getShardingArgument(),
+                                            cb, dpsCB, mbContext, su ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DISABLE_SHARDING :
+         {
+            rtnCLShardingArgument argument ;
+            argument.setEnsureShardingIndex( FALSE ) ;
+            rc = _rtnCollectionSetSharding( collection, argument, cb, dpsCB,
+                                            mbContext, su ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_ENABLE_COMPRESS :
+         {
+            needAlterLog = TRUE ;
+            const rtnCLEnableCompressTask * localTask =
+                  dynamic_cast<const rtnCLEnableCompressTask *>( task ) ;
+            PD_CHECK( NULL != localTask, SDB_SYS, error, PDERROR,
+                      "Failed to get enable compress task" ) ;
+            rc = _rtnCollectionSetCompress( collection,
+                                            localTask->getCompressArgument(),
+                                            cb, mbContext, su, dmsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_DISABLE_COMPRESS :
+         {
+            needAlterLog = TRUE ;
+            rc = _rtnCollectionSetCompress( collection, UTIL_COMPRESSOR_INVALID,
+                                            cb, mbContext, su, dmsCB ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_SET_ATTRIBUTES :
+         {
+            rc = _rtnAlterCLSetAttributes( collection, task, cb, dpsCB,
+                                           mbContext, su, dmsCB,
+                                           needAlterLog ) ;
+            break ;
+         }
+         case RTN_ALTER_CL_CREATE_AUTOINC_FLD :
+         case RTN_ALTER_CL_DROP_AUTOINC_FLD :
+         {
+            //TODO: data group should do nothing
+            break ;
+         }
+         default :
+         {
+            rc = SDB_INVALIDARG ;
+            break ;
+         }
+      }
+
+      PD_LOG( PDERROR,  "Failed to run alter task [%s] on collection [%s], "
+              "rc: %d", task->getActionName(), collection, rc ) ;
+
+   done :
+      if ( SDB_OK == rc && needAlterLog )
+      {
+         rc = _rtnAlter2DPSLog( collection, task, options, cb, dpsCB,
+                                mbContext, su ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
+         }
+      }
+      PD_TRACE_EXITRC( SDB_RTNALTERCOLLECTION_MB, rc ) ;
+      return rc ;
+
+   error :
+      if ( options->isIgnoreException() )
+      {
+         PD_LOG( PDWARNING, "Ignored failure for alter task [%s] on collection "
+                 "[%s], rc: %d", task->getActionName(), collection, rc ) ;
+         rc = SDB_OK ;
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCOLLECTIONSPACE, "rtnAlterCollectionSpace" )
+   INT32 rtnAlterCollectionSpace ( const CHAR * collectionSpace,
                                    const rtnAlterTask * task,
                                    const rtnAlterOptions * options,
                                    _pmdEDUCB * cb,
@@ -1208,7 +1045,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_RTNALTERCSSETATTR ) ;
+      PD_TRACE_ENTRY( SDB_RTNALTERCOLLECTIONSPACE ) ;
 
       SDB_DMSCB * dmsCB = sdbGetDMSCB() ;
 
@@ -1220,17 +1057,19 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
       writable = TRUE ;
 
-      rc = dmsCB->nameToSUAndLock( name, suID, &su, EXCLUSIVE, OSS_ONE_SEC ) ;
+      rc = dmsCB->nameToSUAndLock( collectionSpace, suID, &su, EXCLUSIVE,
+                                   OSS_ONE_SEC ) ;
       if ( SDB_TIMEOUT == rc )
       {
          rc = SDB_LOCK_FAILED ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to lock storage unit [%s], rc: %d",
-                   name, rc ) ;
+                   collectionSpace, rc ) ;
 
-      rc = rtnAlterCSSetAttributes( name, task, su, dmsCB, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to set attributes on collection space "
-                   "[%s], rc: %d", name, rc ) ;
+      rc = rtnAlterCollectionSpace( collectionSpace, task, options, cb, dpsCB,
+                                    su, dmsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to alter collection space [%s], "
+                   "rc: %d", collectionSpace, rc ) ;
 
    done :
       if ( DMS_INVALID_SUID != suID )
@@ -1241,10 +1080,91 @@ namespace engine
       {
          dmsCB->writeDown( cb ) ;
       }
-      PD_TRACE_EXITRC( SDB_RTNALTERCSSETATTR, rc ) ;
+      PD_TRACE_EXITRC( SDB_RTNALTERCOLLECTIONSPACE, rc ) ;
       return rc ;
 
    error :
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNALTERCOLLECTIONSPACE_SU, "rtnAlterCollectionSpace" )
+   INT32 rtnAlterCollectionSpace ( const CHAR * collectionSpace,
+                                   const rtnAlterTask * task,
+                                   const rtnAlterOptions * options,
+                                   _pmdEDUCB * cb,
+                                   _dpsLogWrapper * dpsCB,
+                                   _dmsStorageUnit * su,
+                                   _SDB_DMSCB * dmsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNALTERCOLLECTIONSPACE_SU ) ;
+
+      switch ( task->getActionType() )
+      {
+         case RTN_ALTER_CS_SET_ATTRIBUTES :
+         {
+            PD_CHECK( !task->testArgumentMask( UTIL_CS_CAPPED_FIELD |
+                                               UTIL_CS_PAGESIZE_FIELD ),
+                      SDB_DMS_CS_NOT_EMPTY, error, PDERROR,
+                      "Failed to check collection space, the collection space "
+                      "is not empty" ) ;
+            PD_CHECK( !task->testArgumentMask( UTIL_CS_DOMAIN_FIELD ),
+                      SDB_RTN_CMD_NO_SERVICE_AUTH, error, PDERROR,
+                      "Failed to check collection space, should execute the "
+                      "command from SHARD port" ) ;
+            rc = _rtnAlterCSSetAttributes( collectionSpace, task, su, cb ) ;
+            break ;
+         }
+         case RTN_ALTER_CS_SET_DOMAIN :
+         case RTN_ALTER_CS_REMOVE_DOMAIN :
+         {
+            rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
+            PD_LOG( PDERROR, "Failed to check collection space, should "
+                    "execute the command from SHARD port" ) ;
+            break ;
+         }
+         case RTN_ALTER_CS_ENABLE_CAPPED :
+         case RTN_ALTER_CS_DISABLE_CAPPED :
+         {
+            rc = SDB_DMS_CS_NOT_EMPTY ;
+            PD_LOG( PDERROR, "Failed to check collection space, the collection "
+                    "space is not empty" ) ;
+            break ;
+         }
+         default :
+         {
+            rc = SDB_INVALIDARG ;
+            break ;
+         }
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to run alter task [%s] on collection "
+                   "space [%s], rc: %d", task->getActionName(),
+                   collectionSpace, rc ) ;
+
+   done :
+      if ( SDB_OK == rc )
+      {
+         rc = _rtnAlter2DPSLog( collectionSpace, task, options, cb, dpsCB,
+                                NULL, su ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to write DPS log, rc: %d", rc ) ;
+         }
+      }
+      PD_TRACE_EXITRC( SDB_RTNALTERCOLLECTIONSPACE_SU, rc ) ;
+      return rc ;
+
+   error :
+      if ( options->isIgnoreException() )
+      {
+         PD_LOG( PDWARNING, "Ignored failure for alter task [%s] on collection "
+                 "space [%s], rc: %d", task->getActionName(), collectionSpace,
+                 rc ) ;
+         rc = SDB_OK ;
+      }
+      goto done ;
+   }
+
 }

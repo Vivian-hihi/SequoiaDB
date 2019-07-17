@@ -37,6 +37,7 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "rtnAlterTask.hpp"
+#include "dms.hpp"
 
 namespace engine
 {
@@ -47,125 +48,53 @@ namespace engine
    class _dmsStorageUnit ;
    class _dmsMBContext ;
 
+   INT32 rtnAlterCommand ( const CHAR * name,
+                           RTN_ALTER_OBJECT_TYPE objectType,
+                           bson::BSONObj alterObject,
+                           _pmdEDUCB * cb,
+                           _dpsLogWrapper * dpsCB ) ;
+
    INT32 rtnAlter ( const CHAR * name,
                     const rtnAlterTask * task,
                     const rtnAlterOptions * options,
                     _pmdEDUCB * cb,
                     _dpsLogWrapper * dpsCB ) ;
 
-   INT32 rtnAlter ( const CHAR * name,
-                    RTN_ALTER_OBJECT_TYPE objectType,
-                    bson::BSONObj alterObject,
-                    _pmdEDUCB * cb,
-                    _dpsLogWrapper * dpsCB ) ;
-
-   INT32 rtnAlter2DPSLog ( const CHAR * name,
-                           const rtnAlterTask * task,
-                           const rtnAlterOptions * options,
-                           _dpsLogWrapper * dpsCB ) ;
-
-   INT32 rtnCreateIDIndex ( const CHAR * name,
-                            const rtnAlterTask * task,
-                            const rtnAlterOptions * options,
-                            _pmdEDUCB * cb,
-                            _dpsLogWrapper * dpsCB ) ;
-
-   INT32 rtnDropIDIndex ( const CHAR * name,
-                          const rtnAlterTask * task,
-                          const rtnAlterOptions * options,
-                          _pmdEDUCB * cb,
-                          _dpsLogWrapper * dpsCB ) ;
-
-   INT32 rtnEnableSharding ( const CHAR * name,
-                             const rtnAlterTask * task,
-                             const rtnAlterOptions * options,
-                             _pmdEDUCB * cb,
-                             _dpsLogWrapper * dpsCB ) ;
-
-   INT32 rtnDisableSharding ( const CHAR * name,
-                              const rtnAlterTask * task,
-                              const rtnAlterOptions * options,
-                              _pmdEDUCB * cb,
-                              _dpsLogWrapper * dpsCB ) ;
-
-   INT32 rtnCollectionSetSharding ( const CHAR * collection,
-                                    const rtnCLShardingArgument & argument,
-                                    _pmdEDUCB * cb,
-                                    _dmsMBContext * mbContext,
-                                    _dmsStorageUnit * su,
-                                    _SDB_DMSCB * dmsCB ) ;
-
-   INT32 rtnCollectionCheckSharding ( const CHAR * collection,
-                                      const rtnCLShardingArgument & argument,
-                                      _pmdEDUCB * cb,
-                                      _dmsMBContext * mbContext,
-                                      _dmsStorageUnit * su,
-                                      _SDB_DMSCB * dmsCB ) ;
-
-   INT32 rtnCollectionSetCompress ( const CHAR * collection,
-                                    const rtnCLCompressArgument & argument,
-                                    _pmdEDUCB * cb,
-                                    _dmsMBContext * mbContext,
-                                    _dmsStorageUnit * su,
-                                    _SDB_DMSCB * dmsCB ) ;
-
-   INT32 rtnCollectionSetCompress ( const CHAR * collection,
-                                    UTIL_COMPRESSOR_TYPE compressorType,
-                                    _pmdEDUCB * cb,
-                                    _dmsMBContext * mbContext,
-                                    _dmsStorageUnit * su,
-                                    _SDB_DMSCB * dmsCB ) ;
-
-   INT32 rtnCollectionSetExtOptions ( const CHAR * collection,
-                                      const rtnCLExtOptionArgument & cappedArgument,
-                                      _pmdEDUCB * cb,
-                                      _dmsMBContext * mbContext,
-                                      _dmsStorageUnit * su,
-                                      _SDB_DMSCB * dmsCB ) ;
-
-   INT32 rtnEnableCompress ( const CHAR * name,
-                             const rtnAlterTask * task,
-                             const rtnAlterOptions * options,
-                             _pmdEDUCB * cb,
-                             _dpsLogWrapper * dpsCB ) ;
-
-   INT32 rtnDisableCompress ( const CHAR * name,
-                              const rtnAlterTask * task,
-                              const rtnAlterOptions * options,
-                              _pmdEDUCB * cb,
-                              _dpsLogWrapper * dpsCB ) ;
-
-   INT32 rtnAlterCLCheckAttributes ( const CHAR * collection,
-                                     const rtnAlterTask * task,
-                                     _dmsMBContext * mbContext,
-                                     _dmsStorageUnit * su,
-                                     _SDB_DMSCB * dmsCB,
-                                     _pmdEDUCB * cb ) ;
-
-   INT32 rtnAlterCLSetAttributes ( const CHAR * collection,
+   INT32 rtnCheckAlterCollection ( const CHAR * collection,
                                    const rtnAlterTask * task,
+                                   _pmdEDUCB * cb,
                                    _dmsMBContext * mbContext,
                                    _dmsStorageUnit * su,
-                                   _SDB_DMSCB * dmsCB,
-                                   _pmdEDUCB * cb ) ;
+                                   _SDB_DMSCB * dmsCB ) ;
 
-   INT32 rtnAlterCLSetAttributes ( const CHAR * name,
+   INT32 rtnAlterCollection ( const CHAR * collection,
+                              const rtnAlterTask * task,
+                              const rtnAlterOptions * options,
+                              _pmdEDUCB * cb,
+                              _dpsLogWrapper * dpsCB ) ;
+
+   INT32 rtnAlterCollection ( const CHAR * collection,
+                              const rtnAlterTask * task,
+                              const rtnAlterOptions * options,
+                              _pmdEDUCB * cb,
+                              _dpsLogWrapper * dpsCB,
+                              _dmsMBContext * mbContext,
+                              _dmsStorageUnit * su,
+                              _SDB_DMSCB * dmsCB ) ;
+
+   INT32 rtnAlterCollectionSpace ( const CHAR * collectionSpace,
                                    const rtnAlterTask * task,
                                    const rtnAlterOptions * options,
                                    _pmdEDUCB * cb,
                                    _dpsLogWrapper * dpsCB ) ;
 
-   INT32 rtnAlterCSSetAttributes ( const CHAR * collectionSpace,
+   INT32 rtnAlterCollectionSpace ( const CHAR * collectionSpace,
                                    const rtnAlterTask * task,
+                                   const rtnAlterOptions * options,
+                                   _pmdEDUCB * cb,
+                                   _dpsLogWrapper * dpsCB,
                                    _dmsStorageUnit * su,
-                                   _SDB_DMSCB * dmsCB,
-                                   _pmdEDUCB * cb ) ;
-
-   INT32 rtnAlterCSSetAttributes ( const CHAR * name,
-                                   const rtnAlterTask * task,
-                                   const rtnAlterOptions * options,
-                                   _pmdEDUCB * cb,
-                                   _dpsLogWrapper * dpsCB ) ;
+                                   _SDB_DMSCB * dmsCB ) ;
 
 }
 
