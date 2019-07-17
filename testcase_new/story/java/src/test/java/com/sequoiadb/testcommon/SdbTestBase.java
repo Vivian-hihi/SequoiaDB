@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeSuite;
@@ -43,6 +44,7 @@ public class SdbTestBase {
     private static Sequoiadb sequoiadb = null;
     public static String esHostName;
     public static String esServiceName;
+    public static String cappedCSName;
 
     private static final String TRANSACTIONON = "transactionon";
     private static final String TRANSISOLATION = "transisolation";
@@ -178,6 +180,7 @@ public class SdbTestBase {
         esHostName = ESHOSTNAME;
         esServiceName = ESSVCNAME;
         csName = COMMCSNAME;
+        cappedCSName = COMMCSNAME + "_capped";
         reservedPortBegin = RSRVPORTBEGIN;
         reservedPortEnd = RSRVPORTEND;
         reservedDir = RSRVNODEDIR;
@@ -201,6 +204,12 @@ public class SdbTestBase {
                 sequoiadb.dropCollectionSpace(csName);
             }
             sequoiadb.createCollectionSpace(csName);
+
+            // add capped cs;
+            if (sequoiadb.isCollectionSpaceExist(cappedCSName)) {
+                sequoiadb.dropCollectionSpace(cappedCSName);
+            }
+            sequoiadb.createCollectionSpace(cappedCSName, (BSONObject) JSON.parse("{Capped:true}"));
 
             File workDirFile = new File(workDir);
             if (!workDirFile.exists()) {
@@ -304,7 +313,11 @@ public class SdbTestBase {
             }
             sequoiadb = new Sequoiadb(SdbTestBase.coordUrl, "", "", options);
             if (sequoiadb.isCollectionSpaceExist(csName)) {
-                // sequoiadb.dropCollectionSpace( csName );
+                sequoiadb.dropCollectionSpace(csName);
+            }
+            // drop capped cs
+            if (sequoiadb.isCollectionSpaceExist(cappedCSName)) {
+                sequoiadb.dropCollectionSpace(cappedCSName);
             }
             // sdb.close() ;
         } catch (BaseException e) {
