@@ -91,7 +91,8 @@ namespace engine
       {
          BOOLEAN dpsValid = TRUE ;
 
-         if ( !_plan->needRollback() )
+         if ( !_plan->needRollback() ||
+              SDB_ROLE_COORD != pmdGetKRCB()->getDBRole() )
          {
             // When readonly, don't check dps
          }
