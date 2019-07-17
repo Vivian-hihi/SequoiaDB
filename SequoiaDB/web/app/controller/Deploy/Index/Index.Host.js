@@ -170,7 +170,7 @@
 
                         if( module['BusinessType'] == "sequoiadb" )
                         {
-                           context = sprintf( $scope.autoLanguage( '卸载失败，该主机还有 ? 的节点在运行，请同步 ? 配置或删除再卸载主机。' ), module['BusinessName'], module['BusinessName'] ) ;
+                           context = sprintf( $scope.autoLanguage( '卸载失败，该主机还有 ? 的节点在运行，请同步 ? 配置或删除 ?，再卸载主机。' ), module['BusinessName'], module['BusinessName'], module['BusinessName'] ) ;
                         }
                         else
                         {
@@ -256,7 +256,7 @@
 
                         if( module['BusinessType'] == "sequoiadb" )
                         {
-                           context = sprintf( $scope.autoLanguage( '解绑失败，该主机还有 ? 的节点在运行，请同步 ? 配置或删除再解绑主机。' ), module['BusinessName'], module['BusinessName'] ) ;
+                           context = sprintf( $scope.autoLanguage( '解绑失败，该主机还有 ? 的节点在运行，请同步 ? 配置或删除 ?，再解绑主机。' ), module['BusinessName'], module['BusinessName'], module['BusinessName'] ) ;
                         }
                         else
                         {
