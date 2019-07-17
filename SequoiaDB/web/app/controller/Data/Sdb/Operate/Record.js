@@ -1,4 +1,4 @@
-//@ sourceURL=Record.js
+//@ sourceURL=Data.Operate.Record.Ctrl.js
 "use strict" ;
 (function(){
    var sacApp = window.SdbSacManagerModule ;
@@ -643,7 +643,7 @@
                }
             } ) ;
             return true ;
-         }, $scope.autoLanguage( '要删除这条记录吗？' ), '_id : ' + _id, $scope.autoLanguage( '是的，删除' ) ) ;
+         }, $scope.autoLanguage( '要删除这条记录吗？' ), '_id : ' + sliceString( varToString( _id ), 42 ), $scope.autoLanguage( '是的，删除' ) ) ;
       }
 
       SdbSwap.queryRecord( SdbSwap.queryFilter, true ) ;

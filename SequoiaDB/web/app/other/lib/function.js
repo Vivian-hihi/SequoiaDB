@@ -212,6 +212,95 @@ var resolveFun = function( files ){
    }
 } ;
 
+//任意值转字符串(支持sequoiadb特殊类型)
+function varToString( value )
+{
+   var type = typeof( value ) ;
+
+   if( type == "string" )
+   {
+      return value ;
+   }
+   else if( type == "number" )
+   {
+      return '' + value ;
+   }
+   else if( type == "boolean" )
+   {
+      return value ? 'true' : 'false' ;
+   }
+   else if( type == "undefined" )
+   {
+      return 'undefined' ;
+   }
+   else if( type == "undefined" )
+   {
+      return 'undefined' ;
+   }
+   else if( isArray( value ) )
+   {
+      return JSON.stringify( value ) ;
+   }
+   else if( isObject( value ) )
+   {
+      var num = getObjectSize( value ) ;
+      if( num == 1 )
+      {
+         if( hasKey( value, '$oid' ) )
+         {
+            return value['$oid'] ;
+         }
+         else if( hasKey( value, '$timestamp' ) )
+         {
+            return value['$timestamp'] ;
+         }
+         else if( hasKey( value, '$date' ) )
+         {
+            return value['$date'] ;
+         }
+         else if( hasKey( value, '$decimal' ) )
+         {
+            return value['$decimal'] ;
+         }
+         else if( hasKey( value, '$binary' ) )
+         {
+            return value['$binary'] ;
+         }
+         else
+         {
+            return JSON.stringify( value ) ;
+         }
+      }
+      else if( num == 2 )
+      {
+         if( hasKey( value, '$binary' ) && hasKey( value, '$type' ) )
+         {
+            return '(' + value['$type'] + ')' + value['$binary'] ;
+         }
+         else
+         {
+            return JSON.stringify( value ) ;
+         }
+      }
+      else
+      {
+         return JSON.stringify( value ) ;
+      }
+   }
+
+   return JSON.stringify( value ) ;
+}
+
+//字符串截取，大于等于最大长度，则在末尾加 ...
+function sliceString( str, maxSize )
+{
+   if( str.length + 3 >= maxSize )
+   {
+      return str.substr( 0, maxSize - 3 ) + '...' ;
+   }
+   return str ;
+}
+
 //路径组合
 function catPath( path, subPath )
 {
