@@ -73,7 +73,7 @@ namespace engine
 
       const qgmDbAttr &collection(){ return _collection ; }
 
-      virtual BOOLEAN canUseTrans() const { return TRUE ; }
+      virtual BOOLEAN canUseTrans() const ;
 
    protected:
       INT32 _executeOnData( _pmdEDUCB *eduCB ) ;

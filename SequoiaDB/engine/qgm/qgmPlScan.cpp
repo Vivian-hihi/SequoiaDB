@@ -187,6 +187,18 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN _qgmPlScan::canUseTrans() const
+   {
+      string strName = _collection.toString() ;
+      const CHAR *pCLName = strName.c_str() ;
+
+      if ( rtnIsCommand( pCLName ) )
+      {
+         return FALSE ;
+      }
+      return TRUE ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__EXECONDATA, "_qgmPlScan::_executeOnData" )
    INT32 _qgmPlScan::_executeOnData( _pmdEDUCB *eduCB )
    {
