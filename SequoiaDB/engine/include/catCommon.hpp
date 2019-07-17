@@ -444,6 +444,7 @@ namespace engine
                              INT32 beginBound, INT32 endBound ) ;
 
    INT32 catBuildHashSplitTask ( const CHAR * collection,
+                                 utilCLUniqueID clUniqueID,
                                  const CHAR * srcGroup,
                                  const CHAR * dstGroup,
                                  UINT32 beginBound,
