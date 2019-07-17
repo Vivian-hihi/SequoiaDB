@@ -1565,8 +1565,19 @@ namespace engine
             {
                string port = nodeInfo.getStringField(
                                              OM_CONFIGURE_FIELD_PORT2 ) ;
-               string installPath = nodeInfo.getStringField(
-                                             OM_CONFIGURE_FIELD_INSTALLPATH ) ;
+               string installPath ;
+
+               if( FALSE == dbTool.getHostPackagePath( hostName, _businessType,
+                                                       installPath ) )
+               {
+                  rc = SDB_SYS ;
+                  _errorMsg.setError( TRUE, "Install path not found: "
+                                            "name=%s, host=%s, type=%s",
+                                      _businessName.c_str(), hostName.c_str(),
+                                      _businessType.c_str() ) ;
+                  PD_LOG_MSG( PDERROR, _errorMsg.getError() ) ;
+                  goto error ;
+               }
 
                configInfoBuilder.append( OM_BSON_HOSTNAME, hostName ) ;
                configInfoBuilder.append( OM_BSON_PORT, port ) ;
