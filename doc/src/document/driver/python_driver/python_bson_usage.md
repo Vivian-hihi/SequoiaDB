@@ -3,7 +3,7 @@
 目前，SequoiaDB 支持多种 BSON 数据类型。详情请查看 [数据类型](data_model/datatype/datatype.md)一节。
 
 ##python 构造 BSON 数据类型##
-对于一些特殊类型如$oid，在构造bson数据时需要使用python驱动中对应的类去构造，如$oid类型对应着ObjectId，特殊类详情请查看[Python API](api/python/html/index.html)。以下为构造示例。
+对于一些特殊类型如对象 ID 类型，在构造 bson 数据时需要使用 python 驱动中对应的类去构造，如对象 ID 类型对应着 ObjectId，特殊类详情请查看[Python API](api/python/html/index.html)。以下为构造示例。
 
 * 整数/浮点数
 
@@ -31,7 +31,7 @@
 
 * None
 
-	python BSON None类型，示例数据：{"key":null}，None在数据库中会以null值存储。
+	python BSON None 类型，示例数据：{"key":null}，None 在数据库中会以 null 值存储。
 
   ```
   doc = {"key":None }
@@ -50,28 +50,28 @@
   doc = {b:{a:1}}
   ```
 
-* 对象 ID($oid)
+* 对象 ID
 
-	python BSON 构造对象ID类型 ，示例数据：{"_id":{"$oid":"5d035e2bb4d450b04fcd0dff"}}
+	python BSON 构造对象 ID 类型 ，示例数据：{"_id":{"$oid":"5d035e2bb4d450b04fcd0dff"}}
 
   ```
-  #ObjectId()可以不传入参数，这样会自动生成一个id值,推荐使用这种方式。
+  # ObjectId() 可以不传入参数，这样会自动生成一个id值,推荐使用这种方式。
   oid = ObjectId()
-  doc = {"_oid" : oid}
+  doc = {"_id" : oid}
   ```
   ```
-  #传入一个str类型参数
+  #传入一个 12 字节的 str 类型参数
   oid = ObjectId("5d035e2bb4d450b04fcd0dff")
-  doc = {"_oid" : oid}
+  doc = {"_id" : oid}
   ```
   ```
-  #传入Unicode编码的参数
+  #传入由 24 个字符组成的 Unicode 编码参数
   oid = ObjectId(u'666f6f2d6261722d71757578') 
-  doc = {"_oid" : oid}
+  doc = {"_id" : oid}
   ```
 
 
-* 二进制数据（$binary）
+* 二进制数据
 
 	python BSON 构造二进制数类型，示例数据：{"rest": {"$binary": "QUJD","$type": "0"}}
 
@@ -80,16 +80,16 @@
   doc = {"rest" : binary}
   ```
 
-* 高精度数（$decimal）
+* 高精度数
 
-   pyhton BSON 构造不带精度要求的Decimal类型，示例数据： {a:{"$decimal":"12345.067891234567890123456789"}}
+   pyhton BSON 构造不带精度要求的 Decimal 类型，示例数据： {a:{"$decimal":"12345.067891234567890123456789"}}
 
   ```lang-Python
   decimalObj = Decimal("12345.067891234567890123456789"） 
   doc = { 'rest':decimalObj }
   ```
 
-  python BSON 构造一个最多有100位有效数字，其中小数部分最多有30位的Decimal类型，示例数据： {b:{"$decimal":"12345.067891234567890123456789", "$precision":[100, 30]}}
+  python BSON 构造一个最多有 100 位有效数字，其中小数部分最多有 30 位的 Decimal 类型，示例数据： {b:{"$decimal":"12345.067891234567890123456789", "$precision":[100, 30]}}
 
   ```
   decimalObj =  Decimal("12345.067891234567890123456789", 1000, 30)
@@ -108,7 +108,7 @@
 
 * 日期
 
-  python BSON 使用 datetime的datetime类型来构造日期类型，示例数据：{date:{"$date": "2019-07-12"}}
+  python BSON 使用 datetime 的 datetime 类型来构造日期类型，示例数据：{date:{"$date": "2019-07-12"}}
 
   ```lang-python
 	import datetime
@@ -119,7 +119,7 @@
 
 * 时间戳
 
-  python BSON 使用 Timestamp来构造时间戳类型，示例数据：{"rest": {"$timestamp": "2003-12-01-08.00.00.000000"}}
+  python BSON 使用 Timestamp 来构造时间戳类型，示例数据：{"rest": {"$timestamp": "2003-12-01-08.00.00.000000"}}
 
   ```lang-python
 	time = datetime.datetime(2003,01,02,03,04,05)
@@ -131,25 +131,30 @@
 
 * 特殊类型的使用注意
 
-	说明：对于一些特殊类型如$oid，如果是直接指定，如下eg所示的构造方式，在进行dict转bson时会被认为是普通的嵌套类型，而不是$oid类型。
+	说明：在构建一些特殊类型的数据时（如对象 ID），如果是直接构建(如下面 condition 所示)，数据在进行 dict 转 bson 时会被认为是普通的嵌套类型（而不是对象 ID 类型）。
 
 	```
-	eg = {"_oid" : {"$oid":5d035e2bb4d450b04fcd0dff}}
+	condition = {"_id" : {"$oid":5d035e2bb4d450b04fcd0dff}}
 	```
-	以下是一个根据$oid删除数据错误的使用示例。根据{"_id":	{"$oid":"5d035e2bb4d450b04fcd0dff"}}去删除对应的数据时，	condition会被认为是一个普通的嵌套类型，而导致删除失败。
+	以下示例用户本想构建一个对象 ID 类型作为删除匹配条件，但是由于采用了直接构建的方式，构建了一个普通嵌套类型的数据，导致匹配不到任何数据记录。
 
   	```
-	 cl = db.get_collection("foo.bar");  
+	# 错误的示例
+	cl = db.get_collection("foo.bar");  
  	condition = {"_id":{"$oid":"5d035e2bb4d450b04fcd0dff"}}; 
  	cl.delete ( condition=condition ); 
 	  ```
 
-	正确使用示例如下，需要使用ObjectId类构建对应的$oid对象，之后再执行删除操作。其他特殊类型的使用与之类似。
+	正确使用示例如下，用户需要使用 ObjectId 类构建对应的对象 ID，然后再执行删除操作。
 
 	 ```
+	# 正确的示例
 	from bson import * 
 	oid = ObjectId("5d035e2bb4d450b04fcd0dff");	 
 	condition = {"_id":oid}; 
 	cl.delete ( condition=condition ); 
 	 ```
+
+    其他特殊类型，如二进制数据、高精度数、日期、时间戳等，使用方式与对象 ID 类型类似，都需使用 python 驱动的对应的构造方法来构造。
+
 

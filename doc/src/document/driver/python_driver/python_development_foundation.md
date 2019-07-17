@@ -101,7 +101,7 @@
   
 * 错误处理
 
-  调用 API 遇到的异常时，python 驱动会将异常直接抛出。可以选择捕获异常，并打印异常信息或是进行一些其他操作。SDBBaseError异常是基础异常，异常主要包含errcode、detail和error_object。异常的详情可以查询[Python API](api/python/html/index.html)。示例如下：
+  调用 API 遇到的异常时，python 驱动会将异常直接抛出。可以选择捕获异常，并打印异常信息或是进行一些其他操作。SDBBaseError 异常是基础异常，异常主要包含errcode、detail 和 error_object。异常的详情可以查询 [Python API](api/python/html/index.html)。示例如下：
 
   ```lang-python
   try:
