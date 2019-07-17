@@ -4,7 +4,7 @@
 
    ![同步配置](sac/deployment/postgresql_instance/sync_1.png)
 
-2. 选择要同步配置的 MySQL 数据库实例，点击 **确定** 按钮。
+2. 选择要同步配置的 PostgreSQL 数据库实例，点击 **确定** 按钮。
 
    ![同步配置](sac/deployment/postgresql_instance/sync_2.png)
 
