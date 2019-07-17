@@ -3002,7 +3002,7 @@ namespace engine
          }
 
          rc = replyToRemoteEndpoint( handle, msg, replyObject ) ;
-         PD_RC_CHECK( rc, PDERROR, "%s: Failed to send reply message to "
+         PD_RC_CHECK( rc, PDERROR, "Failed to send reply message to "
                       "handle: %u groupID: %u nodeID: %u serviceID: %u",
                       handle, msg->routeID.columns.groupID,
                       msg->routeID.columns.nodeID,
