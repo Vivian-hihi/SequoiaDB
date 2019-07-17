@@ -20,7 +20,10 @@ import com.sequoiadb.threadexecutor.ThreadExecutor;
 import com.sequoiadb.threadexecutor.annotation.ExecuteOrder;
 
 /*
- * @FileName seqDB-11782:默认配置，同时在普通集合和固定集合上做并发插入操作
+ * @FileName:
+ * seqDB-11782:默认配置，同时在普通集合和固定集合上做并发插入操作
+ * seqDB-11783:并发同步配置较大值，同时在普通集合和固定集合上做大并发插入操作
+ * seqDB-11781:关闭并发同步，同时在普通集合和固定集合上做并发插入操作
  * @Author liuxiaoxuan
  * @Date 2017.7.18
  */
