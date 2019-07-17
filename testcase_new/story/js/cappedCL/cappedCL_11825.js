@@ -9,6 +9,11 @@ main();
 
 function main()
 {
+   if( commIsStandalone( db ) )
+   {
+      return;
+   }
+   
    var clName1 = COMMCAPPEDCLNAME + "_11825_CL1";
    var clName2 = COMMCAPPEDCLNAME + "_11825_CL2";
    var clName3 = COMMCAPPEDCLNAME + "_11825_CL3";

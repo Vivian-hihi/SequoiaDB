@@ -8,6 +8,11 @@ main();
 
 function main()
 {
+   if( commIsStandalone( db ) )
+   {
+      return;
+   }
+   
    var csName1 = COMMCAPPEDCSNAME + "_11896_1";
    var csName2 = COMMCAPPEDCSNAME + "_11896_2";
    commDropCS( db, csName1, true, "drop CS in the beginning" );

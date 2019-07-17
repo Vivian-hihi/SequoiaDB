@@ -8,6 +8,11 @@ main();
 
 function main()
 {
+   if( commIsStandalone( db ) )
+   {
+      return;
+   }
+   
    var clOption = {Capped:true, Size:1, AutoIndexId:false};
    var clName = COMMCAPPEDCLNAME + "12436";
    var dbcl = commCreateCLByOption( db, COMMCAPPEDCSNAME, clName, clOption, false, true );
