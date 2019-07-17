@@ -47,7 +47,7 @@ Collection Space
 
         格式：`ReplSize: <num>`
 
-    5. `Compressed` ( *Bool* )：标识新集合是否开启数据压缩功能。默认为 true。
+    5. `Compressed` ( *Bool* )：标示新集合是否开启数据压缩功能。默认为 true。
 
         格式：`Compressed:true|false`
 
@@ -58,11 +58,11 @@ Collection Space
 
         格式：`CompressionType:"snappy"|"lzw"`
 
-    7. `IsMainCL` ( *Bool* )：标识新集合是否为主分区集合，默认为 false。
+    7. `IsMainCL` ( *Bool* )：标示新集合是否为主分区集合，默认为 false。
 
         格式：`IsMainCL:true|false`
 
-    8. `AutoSplit` ( *Bool* )：标识新集合是否开启自动切分功能，默认为 false。
+    8. `AutoSplit` ( *Bool* )：标示新集合是否开启自动切分功能，默认为 false。
 
         格式：`AutoSplit:true|false`
 
@@ -70,15 +70,15 @@ Collection Space
 
         格式：`Group:<group name>`
 
-    10. `AutoIndexId` ( *Bool* )：标识新集合是否自动使用_id字段创建名字为"$id"的唯一索引，默认为 true。
+    10. `AutoIndexId` ( *Bool* )：标示新集合是否自动使用_id字段创建名字为"$id"的唯一索引，默认为 true。
  
         格式：`AutoIndexId:true|false`
 
-    11. `EnsureShardingIndex` ( *Bool* )：标识集合是否自动使用ShardingKey包含的字段创建名字为"$shard"的索引，默认为true。
+    11. `EnsureShardingIndex` ( *Bool* )：标示集合是否自动使用ShardingKey包含的字段创建名字为"$shard"的索引，默认为true。
 
         格式：`EnsureShardingIndex:true|false`
 
-    12. `StrictDataMode` ( *Bool* )：标识对该集合的操作是否开启严格数据类型模式，默认为false(不开启)。严格数据模式的开启标识对数值操作存在以下限制：
+    12. `StrictDataMode` ( *Bool* )：标示对该集合的操作是否开启严格数据类型模式，默认为false(不开启)。严格数据模式的开启标示对数值操作存在以下限制：
 
         * 运算过程不改数据类型；
         * 数值运算出现溢出时直接报错，错误码SDB_VALUE_OVERFLOW；

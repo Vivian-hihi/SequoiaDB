@@ -61,7 +61,7 @@ Sdb
 
 		格式：`OverWrite: false`
 
-    11. `Compressed` ( *Bool* )：是否开启数据压缩，缺少为 true。
+    11. `Compressed` ( *Bool* )：是否开启数据压缩，缺省为 true。
 
         格式：`Compressed: true`
 
