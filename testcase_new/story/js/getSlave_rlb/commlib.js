@@ -1,0 +1,156 @@
+/******************************************************************************
+*@Description : common function for test getSlave
+*               
+*@auhor       : Liang XueWang
+******************************************************************************/
+
+/*******************************************************************
+* @Description : check path has / in the end or not
+*                add / if not
+* @author      : Liang XueWang
+*
+********************************************************************/
+function adaptPath( path )
+{
+   if( path.lastIndexOf( '/' ) !== path.length-1 )
+      path += '/' ;
+   return path ;
+}
+
+/*******************************************************************
+* @Description : create nodes in rg
+*                hostname : local hostname, 
+*                svcname  : RSRVPORTBEGIN ....
+*                dbpath   : RSRVNODEDIR + "data/" + svcname
+* @author      : Liang XueWang
+*
+********************************************************************/
+function createNodes( rg, nodeNum )
+{
+   var logSourcePaths = [];
+   for( var i = 0;i < nodeNum;i++ )
+   {
+      var host = System.getHostName() ;
+      var svc = parseInt( RSRVPORTBEGIN );
+      var dbpath = adaptPath( RSRVNODEDIR ) + "data/" + svc ;
+      var checkSucc = false;
+      var times = 0;
+      var maxRetryTimes = 10;
+      do
+      {
+         try
+         {
+            rg.createNode( host, svc, dbpath, {diaglevel:5} ) ;
+            println( "create node " + host + ":" + svc + " " + dbpath ) ;
+            checkSucc = true;
+            logSourcePaths.push(host+":"+CMSVCNAME+"@"+dbpath+"/diaglog/sdbdiag.log");
+         }
+         catch( e )
+         {
+            //-145 :SDBCM_NODE_EXISTED  -290:SDB_DIR_NOT_EMPTY
+            if( e == -145 || e == -290 )
+            {
+               svc = svc + 10;
+               dbpath = adaptPath( RSRVNODEDIR ) + "data/" + svc;
+            }
+            else
+            {
+               throw "create node failed!  port = " + svc + " dataPath = " + dataPath + " errorCode: " + e;
+            }
+            times++;
+         }
+      }
+      while(!checkSucc && times < maxRetryTimes);
+   }
+   rg.start();
+   return logSourcePaths;
+}
+
+/**********************************************************************
+ * @Description : get nodes in group
+ *                rgName: group name, ex "group1"
+ *                return nodes array, ex [ "sdbserver1:20100", .... ]
+ * @author      : Liang XueWang
+ *
+ **********************************************************************/
+function getGroupNodes( db, rgName )
+{
+    var arr = new Array() ;
+    var tmpObj = db.getRG( rgName ).getDetail().next().toObj() ;
+    var tmpGroupArray = tmpObj["Group"] ;
+    for( var j = 0;j < tmpGroupArray.length;++j )
+    {
+        var tmpNodeObj = tmpGroupArray[j] ;
+        var hostName = tmpNodeObj["HostName"] ;
+        for( var k = 0;k < tmpNodeObj.Service.length;++k )
+        {
+            var tmpSvcObj = tmpNodeObj.Service[k] ;
+            if( tmpSvcObj["Type"] == 0 )
+            {
+                nodeName = hostName + ":" + tmpSvcObj["Name"] ;
+                arr.push( nodeName ) ;
+                break ;
+            }
+        }
+    }
+
+    return arr ;
+}
+
+/**********************************************************************
+ * @Description : check group has master or not
+ *                
+ * @author      : Liang XueWang
+ *
+ **********************************************************************/
+function isMasterExist( db, rgName )
+{
+   var clName = "testHasMasterCl" ;
+   var hasMaster = false ;
+   try
+   {
+      commCreateCLByOption( db, COMMCSNAME, clName, { Group: rgName } ) ;
+      hasMaster = true ;
+      commDropCL( db, COMMCSNAME, clName ) ;
+   }
+   catch( e )
+   {
+      if( e !== -104 )
+      {
+         throw buildException( "isMasterExist", e, "create cl", "0 -104", e ) ;
+      }
+   }
+   return hasMaster ;
+}
+
+/* ****************************************************
+@description: get the primary node in the group
+@author : wangkexin
+@parameter: 
+    rg : the specified group
+@return: the primary node in the group
+**************************************************** */
+function getMaster( rg )
+{
+   var master ;
+   while( true )
+   {
+      try
+      {
+         master = rg.getMaster() ;
+         break ;
+      }
+      catch( e )
+      {
+         if( e == -71 )
+         {
+            continue ;
+         }
+         else
+         {
+            throw buildException( "getMaster()", e, "get master", "0 -71", e ) ;
+         }
+      }
+   }
+   return master;
+}

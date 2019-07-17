@@ -256,22 +256,44 @@ function getLocalHostName()
  *                host: node hostname
  *                svc: node svcname
  *                path: node dbpath
+ *                return srcLogPath: the created node log path
  * @author      : Liang XueWang
  ************************************************************************/
 function createAndStartNode( rg, host, svc, path )
 {
-   try
+   var checkSucc = false;
+   var times = 0;
+   var maxRetryTimes = 10;
+   var svcNameAndsrcLogPath = null;
+   do
    {
-      println( "create node: " + host + ":" + svc + " " + path ) ;
-      var node = rg.createNode( host, svc, path ) ;
-      println( "start node" ) ;
-      node.start() ;
+      try
+      {
+         var node = rg.createNode( host, svc, path, {diaglevel:5} ) ;
+         println( "create node: " + host + ":" + svc + " " + path ) ;
+         checkSucc = true;
+      }
+      catch( e )
+      {
+         //-145 :SDBCM_NODE_EXISTED  -290:SDB_DIR_NOT_EMPTY
+         if( e == -145 || e == -290 )
+         {
+            svc =  parseInt( svc ) + 10;
+            path = RSRVNODEDIR+"data/"+svc;
+         }
+         else
+         {
+            throw "create node failed!  port = " + svc + " path = " + path + " errorCode: " + e;
+         }
+         times++;
+      }
    }
-   catch( e )
-   {
-      throw buildException( "createAndStartNode", e, "create and start node",
-            0, e ) ;
-   }
+   while(!checkSucc && times < maxRetryTimes);
+   println( "start node" ) ;
+   node.start() ;
+   var srcLogPath = host+":"+CMSVCNAME+"@"+path+"/diaglog/sdbdiag.log";
+   svcNameAndsrcLogPath = {"svcName" : svc,"srcLogPath" : srcLogPath};
+   return svcNameAndsrcLogPath;
 }
 
 /************************************************************************
@@ -299,28 +321,53 @@ function removeNode( rg, host, svc )
  *                db: connection handle, can't be standalone
  *                rgName: group name
  *                nodesNum: node num, node svc like 26000 26010 ....
+ *
+ *                return logSourcePaths: log paths to be backed up
  * @author      : Liang XueWang
  ************************************************************************/
 function createAndStartGroup( db, rgName, nodesNum )
 {
-   try
+   var rg = db.createRG( rgName ) ;
+   var host = getLocalHostName() ;
+   var failedCount = 0;
+   var logSourcePaths = [];
+   for( var i = 0;i < nodesNum;i++ )
    {
-      var rg = db.createRG( rgName ) ;
-      var host = getLocalHostName() ;
-      for( var i = 0;i < nodesNum;i++ )
+      var svc = parseInt( RSRVPORTBEGIN ) + 10 * ( i + failedCount ) ;
+      var dbPath = RSRVNODEDIR + "data/" + svc ;
+      var checkSucc = false;
+      var times = 0;
+      var maxRetryTimes = 10;
+      do
       {
-         var svc = parseInt( RSRVPORTBEGIN ) + 10*i ;
-         var dbPath = RSRVNODEDIR + "data/" + svc ;
-         println( "create node: " + host + ":" + svc + " dbpath: " + dbPath ) ;
-         rg.createNode( host, svc, dbPath ) ;
+         try
+         {
+            rg.createNode( host, svc, dbPath, {diaglevel:5} ) ;
+            println( "create node: " + host + ":" + svc + " dbpath: " + dbPath ) ;
+            checkSucc = true;
+            logSourcePaths.push(host+":"+CMSVCNAME+"@"+dbPath+"/diaglog/sdbdiag.log");
+         }
+         catch( e )
+         {
+            //-145 :SDBCM_NODE_EXISTED  -290:SDB_DIR_NOT_EMPTY
+            if( e == -145 || e == -290 )
+            {
+               svc = svc + 10;
+               dbPath = RSRVNODEDIR + "data/" + svc;
+               failedCount++;
+            }
+            else
+            {
+               throw "create node failed!  port = " + svc + " dataPath = " + dbPath + " errorCode: " + e;
+            }
+            times++;
+         }
       }
-      println( "start group" ) ;
-      rg.start() ;
+      while(!checkSucc && times < maxRetryTimes);
    }
-   catch( e )
-   {
-      throw buildException( "createAndStartGroup", e, "create and start group", 0, e ) ;
-   }
+   println( "start group" ) ;
+   rg.start() ;
+   return logSourcePaths;
 }
 
 /************************************************************************
