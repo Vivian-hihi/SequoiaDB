@@ -26,8 +26,7 @@
    <test name="normaltest">
       <packages>
          <package name="com.sequoiadb.crud.backup" />
-         <package name="com.sequoiadb.serial" />
-         <package name="com.sequoiadb.cappedcl" />   
+         <package name="com.sequoiadb.serial" />   
          <package name="com.sequoiadb.datasourceserial" />
          <package name="com.sequoiadb.session.accessisolation" />
          <package name="com.sequoiadb.metadataconsistency.cluster"/>
