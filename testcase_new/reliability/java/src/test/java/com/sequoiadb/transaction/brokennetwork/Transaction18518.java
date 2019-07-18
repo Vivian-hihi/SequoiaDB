@@ -79,7 +79,7 @@ public class Transaction18518 extends SdbTestBase {
     }
 
     @Test(dataProvider = "getCL")
-    public void test(String clName) throws ReliabilityException {
+    public void test(String clName) throws ReliabilityException, InterruptedException {
         // 所有数据节点的主节点断网
         TaskMgr taskMgr = new TaskMgr();
         for (String groupName : groupNames) {
@@ -87,9 +87,6 @@ public class Transaction18518 extends SdbTestBase {
             NodeWrapper node = group.getMaster();
             FaultMakeTask task = BrokenNetwork.getFaultMakeTask(node.hostName(), 180, 10);
             taskMgr.addTask(task);
-            if (node.hostName().equals(sdb.getHost())) {
-                throw new SkipException("BROKENNETWORK ERROR");
-            }
         }
 
         for (int i = 0; i < 200; i++) {
@@ -101,8 +98,17 @@ public class Transaction18518 extends SdbTestBase {
         Assert.assertTrue(groupMgr.checkBusinessWithLSN(120), "GROUP ERROR");
 
         // 待集群正常后，查询所有账户的金额总和
-        DBCursor cursor = sdb.exec("select sum(balance) as balance from " + csName + "." + clName);
-        double balance = (double) cursor.getNext().get("balance");
-        Assert.assertEquals((int) balance, 100000000);
+        int count = 0;
+        while (count++ < 120) {
+            DBCursor cursor = sdb.exec("select sum(balance) as balance from " + csName + "." + clName);
+            double balance = (double) cursor.getNext().get("balance");
+            cursor.close();
+            if (100000000 != (int) balance) {
+                Assert.assertNotEquals(count, 120);
+                Thread.sleep(1000);
+                continue;
+            }
+            break;
+        }
     }
 }
