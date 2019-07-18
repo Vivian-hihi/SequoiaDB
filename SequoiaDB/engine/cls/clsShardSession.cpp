@@ -772,8 +772,7 @@ namespace engine
       _replyHeader.header.routeID.value = 0 ;
 
       /// auto-commit process
-      if ( eduCB()->isAutoCommitTrans() &&
-           -1 == eduCB()->getCurAutoTransCtxID() )
+      if ( eduCB()->isAutoCommitTrans() )
       {
          isAutoCommit = TRUE ;
          if ( SDB_OK == rc || SDB_DMS_EOC == rc )
@@ -783,7 +782,7 @@ namespace engine
          }
       }
 
-      if ( SDB_OK != rc && SDB_RTN_ALREADY_IN_AUTO_TRANS != rc )
+      if ( SDB_OK != rc )
       {
          BOOLEAN inTrans = _pEDUCB->isTransaction() ;
          BOOLEAN hasRollbacked = FALSE ;
@@ -1571,7 +1570,7 @@ namespace engine
 
             if ( eduCB()->isAutoCommitTrans() )
             {
-               eduCB()->setCurAutoTransCtxID( contextID ) ;
+               pContext->setTransContext( TRUE ) ;
             }
             /// set write info
             if ( pContext && pContext->isWrite() )
@@ -1836,8 +1835,18 @@ namespace engine
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
       }
-
       needRollback = pContext->needRollback() ;
+
+      /// trans context
+      if ( pContext->isTransContext() && !eduCB()->isTransaction() )
+      {
+         rc = rtnTransBegin( eduCB(), TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
       rc = rtnGetMore ( pContext, numToRead, buffObj, eduCB(), _pRtnCB ) ;
       if ( rc )
       {
@@ -1944,12 +1953,6 @@ namespace engine
          goto error ;
       }
 
-      if ( _pEDUCB->isAutoCommitTrans() )
-      {
-         rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
-         goto error ;
-      }
-
       /// Old trans begin msg is only a MsgHeader
       if ( msg->messageLength > (INT32)sizeof( MsgHeader ) &&
            DPS_INVALID_TRANS_ID != pTransBegin->transID &&
@@ -1960,6 +1963,12 @@ namespace engine
       else
       {
          rc = rtnTransBegin( _pEDUCB ) ;
+      }
+
+      if ( SDB_OK == rc )
+      {
+         /// unset all trans context
+         rtnUnsetTransContext( eduCB(), _pRtnCB ) ;
       }
 
    done:
@@ -2083,12 +2092,6 @@ namespace engine
          {
             rc = SDB_DPS_TRANS_NO_TRANS ;
          }
-      }
-      /// when retry, the autocommit trans is make by self, but
-      /// the _pCollectionName is not null
-      else if ( !_pCollectionName && _pEDUCB->isAutoCommitTrans() )
-      {
-         rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
       }
 
       return rc ;

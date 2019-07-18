@@ -168,6 +168,13 @@ namespace engine
                   "invalid container type!" );
       rc = createContext( pContainer, cb, contextID );
       PD_RC_CHECK( rc, PDERROR, "failed to create context(rc=%d)", rc );
+
+      /// set cur trans context id
+      if ( cb->isAutoCommitTrans() )
+      {
+         cb->setCurAutoTransCtxID( contextID ) ;
+      }
+
    done:
       if ( NULL != pExtend )
       {

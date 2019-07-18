@@ -85,30 +85,48 @@ namespace engine
       }
 #endif
 
-      if ( _plan->canUseTrans() &&
-           ( _plan->inputSize() > 0 ||
-             SDB_ROLE_COORD != pmdGetKRCB()->getDBRole() ) )
+      if ( _plan->canUseTrans() )
       {
+         BOOLEAN checkAutoCommit = FALSE ;
          BOOLEAN dpsValid = TRUE ;
 
-         if ( !_plan->needRollback() ||
-              SDB_ROLE_COORD == pmdGetKRCB()->getDBRole() )
+         /// check trans
+         if ( cb->isAutoCommitTrans() )
          {
-            // When readonly, don't check dps
+            rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+            PD_LOG( PDWARNING, "Already in autocommit transaction, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+
+         if ( SDB_ROLE_COORD == pmdGetKRCB()->getDBRole() )
+         {
+            if ( _plan->needRollback() && _plan->inputSize() > 0 )
+            {
+               checkAutoCommit = TRUE ;
+            }
+            /// else, push down auto commit to data node
          }
          else
          {
-            SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
-            if ( dpsCB && cb->isFromLocal() && !dpsCB->isLogLocal() )
+            if ( _plan->needRollback() )
             {
-                dpsValid = FALSE ;
+               SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+               if ( dpsCB && cb->isFromLocal() && !dpsCB->isLogLocal() )
+               {
+                   dpsValid = FALSE ;
+               }
             }
+            checkAutoCommit = TRUE ;
          }
 
-         rc = _plan->checkTransAutoCommit( dpsValid, cb ) ;
-         if ( rc )
+         if ( checkAutoCommit )
          {
-            goto error ;
+            rc = _plan->checkTransAutoCommit( dpsValid, cb ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
          }
       }
 

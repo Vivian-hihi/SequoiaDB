@@ -708,6 +708,12 @@ namespace engine
       return FALSE ;
    }
 
+   BOOLEAN _coordQueryOperator::canPrepareTrans( pmdEDUCB *cb,
+                                                 const MsgHeader *pMsg ) const
+   {
+      return _canPrepareTrans( cb, pMsg ) ;
+   }
+
    BOOLEAN _coordQueryOperator::_isTrans( pmdEDUCB *cb, MsgHeader *pMsg )
    {
       if ( MSG_BS_TRANS_QUERY_REQ != GET_REQUEST_TYPE(pMsg->opCode) )
@@ -725,9 +731,17 @@ namespace engine
       /// do nothing
    }
 
-   BOOLEAN _coordQueryOperator::_canPushDownAutoCommit() const
+   BOOLEAN _coordQueryOperator::_canPushDownAutoCommit( coordSendMsgIn &inMsg,
+                                                        coordSendOptions &options,
+                                                        pmdEDUCB *cb ) const
    {
-      return FALSE ;
+      /// push down when not update
+      MsgOpQuery *pQuery = ( MsgOpQuery* )inMsg.msg() ;
+      if ( OSS_BIT_TEST( pQuery->flags, FLG_QUERY_MODIFY ) )
+      {
+         return FALSE ;
+      }
+      return TRUE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_QUERYOPERATOR__QUERYORDOONCL, "_coordQueryOperator::_queryOrDoOnCL" )

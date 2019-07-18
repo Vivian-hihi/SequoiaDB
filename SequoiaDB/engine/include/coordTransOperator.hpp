@@ -80,7 +80,9 @@ namespace engine
                                                   pmdEDUCB *cb,
                                                   coordSendMsgIn &inMsg ) ;
 
-         virtual BOOLEAN            _canPushDownAutoCommit() const ;
+         virtual BOOLEAN            _canPushDownAutoCommit( coordSendMsgIn &inMsg,
+                                                            coordSendOptions &options,
+                                                            pmdEDUCB *cb ) const ;
 
       protected:
          INT32          buildTransSession( const CoordGroupList &groupLst,

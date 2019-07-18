@@ -101,6 +101,9 @@ namespace engine
                                              coordQueryConf *pQueryConf = NULL,
                                              rtnContextBuf *buf = NULL ) ;
 
+         BOOLEAN              canPrepareTrans( pmdEDUCB *cb,
+                                               const MsgHeader *pMsg ) const ;
+
       protected:
 
          virtual void         _prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg ) ;
@@ -115,7 +118,9 @@ namespace engine
                                                   pmdEDUCB *cb,
                                                   coordSendMsgIn &inMsg ) ;
 
-         virtual BOOLEAN      _canPushDownAutoCommit() const ;
+         virtual BOOLEAN      _canPushDownAutoCommit( coordSendMsgIn &inMsg,
+                                                      coordSendOptions &options,
+                                                      pmdEDUCB *cb ) const ;
 
 
          INT32                _queryOrDoOnCL( MsgHeader *pMsg,

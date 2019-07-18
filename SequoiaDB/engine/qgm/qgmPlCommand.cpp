@@ -599,6 +599,8 @@ namespace engine
             if ( eduCB->isAutoCommitTrans() )
             {
                rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+               PD_LOG( PDWARNING, "Already in autocommit transaction, rc: %d",
+                       rc ) ;
             }
             else
             {

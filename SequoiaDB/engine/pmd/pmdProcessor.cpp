@@ -405,6 +405,8 @@ namespace engine
       else if ( eduCB()->isAutoCommitTrans() )
       {
          rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+         PD_LOG( PDWARNING, "Already in autocommit transaction, rc: %d",
+                 rc ) ;
       }
 
       return rc ;
@@ -999,6 +1001,8 @@ namespace engine
          if ( eduCB()->isAutoCommitTrans() )
          {
             rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+            PD_LOG( PDWARNING, "Already in autocommit transaction, rc: %d",
+                    rc ) ;
          }
          else
          {
@@ -1820,6 +1824,17 @@ namespace engine
          rc = opr.init( pResource, eduCB() ) ;
          PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
                       opr.getName(), rc ) ;
+
+         /// transaction check
+         if ( eduCB()->isAutoCommitTrans() &&
+              opr.canPrepareTrans( eduCB(), msg ) )
+         {
+            rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+            PD_LOG( PDWARNING, "Already in autocommit transaction, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+
          rc = opr.execute( msg, eduCB(), contextID, &buffObj ) ;
          /// should call opr.needRollback() after execute. because
          /// the func 'needRollback()' is take effect in execute()

@@ -81,9 +81,9 @@ namespace engine
          {
             _prepareForTrans( cb, inMsg.msg() ) ;
 
-            /// when group is one, push down autocommit to data node,
+            /// push down autocommit to data node,
             /// otherwise begin transaction
-            if ( options._groupLst.size() > 1 || !_canPushDownAutoCommit() )
+            if ( !_canPushDownAutoCommit( inMsg, options, cb ) )
             {
                _groupSession.getPropSite()->beginTrans( cb, TRUE ) ;
             }
@@ -154,9 +154,15 @@ namespace engine
       return TRUE ;
    }
 
-   BOOLEAN _coordTransOperator::_canPushDownAutoCommit() const
+   BOOLEAN _coordTransOperator::_canPushDownAutoCommit( coordSendMsgIn &inMsg,
+                                                        coordSendOptions &options,
+                                                        pmdEDUCB *cb ) const
    {
-      return TRUE ;
+      if ( options._groupLst.size() <= 1 )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
    void _coordTransOperator::_onNodeReply( INT32 processType,
@@ -363,6 +369,8 @@ namespace engine
       if ( cb->isAutoCommitTrans() )
       {
          rc = SDB_RTN_ALREADY_IN_AUTO_TRANS ;
+         PD_LOG( PDWARNING, "Already in autocommit transaction, rc: %d",
+                 rc ) ;
       }
       else
       {
