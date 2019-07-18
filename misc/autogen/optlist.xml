@@ -1233,19 +1233,19 @@
       <name>PMD_OPTION_OPERATOR_TIMEOUT</name>
       <long>optimeout</long>
       <description>
-         <en>The timeout period for heartbeat in each operation ( in ms ), default:300000, 0 for no-timeout, value range[0, 2^31 - 1] </en>
-         <cn>判定操作中断的时间(ms),默认值:300000, 0表示不超时，取值范围[0, 2^31 - 1]</cn>
+         <en>The timeout period for heartbeat in each operation ( in ms ), default:60000, 0 for no-timeout, value range[0, 2^31 - 1] </en>
+         <cn>判定操作中断的时间(ms),默认值:60000, 0表示不超时，取值范围[0, 2^31 - 1]</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-         <en>The timeout period for heartbeat in each operation ( in ms ), default:300000, 0 for no-timeout, value range[0, 2^31 - 1]</en>
-         <cn>判定操作中断的时间(ms),默认值:300000, 0表示不超时，取值范围[0, 2^31 - 1]</cn>
+         <en>The timeout period for heartbeat in each operation ( in ms ), default:60000, 0 for no-timeout, value range[0, 2^31 - 1]</en>
+         <cn>判定操作中断的时间(ms),默认值:60000, 0表示不超时，取值范围[0, 2^31 - 1]</cn>
       </detail>
       <type>int</type>
-      <default>300000</default>
+      <default>60000</default>
       <typeofweb>num</typeofweb>
    </opt>
 
@@ -1830,8 +1830,8 @@
       <name>PMD_OPTION_TRANS_ISOLATION</name>
       <long>transisolation</long>
       <description>
-         <en>Specify the isolation level of transaction, 0 for RU, 1 for RC, 2 for RS. Default is 0</en>
-         <cn>指定事务的隔离级别，0为RU级别，1为RC级别，2为RS级别。默认为0。</cn>
+         <en>Specify the isolation level of transaction, 0 for RU, 1 for RC, 2 for RS. Default is 1</en>
+         <cn>指定事务的隔离级别，0为RU级别，1为RC级别，2为RS级别。默认为1。</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
@@ -1842,13 +1842,13 @@
          <cn>下一次事务中生效</cn>
       </reloadstrategy>
       <detail>
-         <en>1. Specify the isolation level of transaction. Value is 0(RU), 1(RC), 2(RS). Default is 0.<fig></fig>
+         <en>1. Specify the isolation level of transaction. Value is 0(RU), 1(RC), 2(RS). Default is 1.<fig></fig>
            2. Value enumeration:<fig></fig>
              ● 0: RU, read uncommited<fig></fig>
              ● 1: RC, read commited.<fig></fig>
              ● 2: RS, read stability.<fig></fig>
          </en>
-         <cn>1. 指定事务隔离级别，默认是0。<fig></fig>
+         <cn>1. 指定事务隔离级别，默认是1。<fig></fig>
            2. 取值列表：<fig></fig>
              ● 0: RU，读未提交。<fig></fig>
              ● 1: RC, 读已提交。<fig></fig>
@@ -1856,7 +1856,7 @@
          </cn>
       </detail>
       <type>int</type>
-      <default>0</default>
+      <default>1</default>
       <hidden>false</hidden>
       <typeofweb>num</typeofweb>
    </opt>
@@ -2091,60 +2091,60 @@
       <name>PMD_OPTION_MAXSOCKET_PER_NODE</name>
       <long>maxsocketpernode</long>
       <description>
-        <en>The max number of socket between two nodes. Value range:[1,100], default is 1</en>
-        <cn>两个节点之前的最大连接数，取值范围：[1,100]，默认为1</cn>
+        <en>The max number of socket between two nodes. Value range:[1,100], default is 5</en>
+        <cn>两个节点之前的最大连接数，取值范围：[1,100]，默认为5</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-        <en>The max number of socket between two nodes. Value range:[1,100], default is 1.</en>
-        <cn>两个节点之前的最大连接数，取值范围：[1,100]，默认为1。</cn>
+        <en>The max number of socket between two nodes. Value range:[1,100], default is 5.</en>
+        <cn>两个节点之前的最大连接数，取值范围：[1,100]，默认为5。</cn>
       </detail>
       <type>int</type>
-      <default>1</default>
-      <hidden>true</hidden>
+      <default>5</default>
+      <hidden>false</hidden>
    </opt>
 
    <opt>
       <name>PMD_OPTION_MAXSOCKET_PER_THREAD</name>
       <long>maxsocketperthread</long>
       <description>
-        <en>The max number of socket drived by a thread. 0 for unlimited, default is 0</en>
-        <cn>一个线程驱动最大连接数，0表示不限制，默认为0</cn>
+        <en>The max number of socket drived by a thread. 0 for unlimited, default is 1</en>
+        <cn>一个线程驱动最大连接数，0表示不限制，默认为1</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-        <en>The max number of socket drived by a thread. 0 for unlimited, default is 0.</en>
-        <cn>一个线程驱动最大连接数，0表示不限制，默认为0。</cn>
+        <en>The max number of socket drived by a thread. 0 for unlimited, default is 1.</en>
+        <cn>一个线程驱动最大连接数，0表示不限制，默认为1。</cn>
       </detail>
       <type>int</type>
-      <default>0</default>
-      <hidden>true</hidden>
+      <default>1</default>
+      <hidden>false</hidden>
    </opt>
 
    <opt>
       <name>PMD_OPTION_MAX_SOCKET_THREAD</name>
       <long>maxsocketthread</long>
       <description>
-        <en>The max number of the socket drive threads. Value range:[1,100], default is 1</en>
-        <cn>通信最大驱动线程数，取值范围[1,100]，默认1</cn>
+        <en>The max number of the socket drive threads. Value range:[1,100], default is 10</en>
+        <cn>通信最大驱动线程数，取值范围[1,100]，默认10</cn>
       </description>
       <reloadable>
          <en>Take effect immediately</en>
          <cn>在线生效</cn>
       </reloadable>
       <detail>
-        <en>The max number of the socket drive threads. Value range:[1,100], default is 1.</en>
-        <cn>通信最大驱动线程数，取值范围[1,100]，默认1。</cn>
+        <en>The max number of the socket drive threads. Value range:[1,100], default is 10.</en>
+        <cn>通信最大驱动线程数，取值范围[1,100]，默认10。</cn>
       </detail>
       <type>int</type>
-      <default>1</default>
-      <hidden>true</hidden>
+      <default>10</default>
+      <hidden>false</hidden>
    </opt>
 
    <opt>
