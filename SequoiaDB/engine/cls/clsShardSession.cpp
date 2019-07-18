@@ -243,6 +243,10 @@ namespace engine
 
          if ( _transWaitTimeout >= SHD_TRANS_WAITCOMMIT_TIMEOUT )
          {
+            PD_LOG( PDWARNING, "Transaction(%s) is timeout in "
+                    "status(WaitCommit), begin to consult with other nodes",
+                    dpsTransIDToString( _pEDUCB->getTransID() ).c_str() ) ;
+
             _rollbackTrans( NULL, OSS_ONE_SEC ) ;
 
             if ( _transWaitTimeout >= SHD_TRANS_WAITCOMMIT_INTERVAL )
