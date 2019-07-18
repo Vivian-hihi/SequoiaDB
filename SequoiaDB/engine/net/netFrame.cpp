@@ -198,20 +198,20 @@ namespace engine
       BOOLEAN ret = FALSE ;
 
       _netEventHandler *pEH = NULL ;
-      /// create a new socket
-      pEH = SDB_OSS_NEW _netEventHandler( _pFrame->_getEvSuit( TRUE ),
-                                          _pFrame->_handle.inc() ) ;
-      if ( !pEH )
-      {
-         PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
-         goto done ;
-      }
-      eh = NET_EH(pEH) ;
-      eh->id( _id ) ;
-
       _mtx.get() ;
       if ( _vecEH.size() < _capacity )
       {
+         /// create a new socket
+         pEH = SDB_OSS_NEW _netEventHandler( _pFrame->_getEvSuit( TRUE ),
+                                             _pFrame->_handle.inc() ) ;
+         if ( !pEH )
+         {
+            PD_LOG( PDERROR, "Allocate netEventHandler failed" ) ;
+            goto done ;
+         }
+
+         eh = NET_EH(pEH) ;
+         eh->id( _id ) ;
          _vecEH.push_back(eh) ;
          ret = TRUE ;
       }
@@ -335,9 +335,9 @@ namespace engine
    void _netFrame::onRunSuitStop( netEvSuitPtr evSuitPtr )
    {
       /// make sure all the netEventHandles have closed
-      _mtx.get() ;
+      _suiteMtx.get() ;
       _eraseSuit_i( evSuitPtr ) ;
-      _mtx.release() ;
+      _suiteMtx.release() ;
 
       MsgRouteID nodeID ;
       _netEventSuit::SET_HANDLE setHandles = evSuitPtr->getHandles() ;
@@ -355,7 +355,7 @@ namespace engine
 
    void _netFrame::onSuitTimer( netEvSuitPtr evSuitPtr )
    {
-      ossScopedLock lock( &_mtx, EXCLUSIVE ) ;
+      ossScopedLock lock( &_suiteMtx, EXCLUSIVE ) ;
 
       if ( 0 == evSuitPtr->getHandleNum() )
       {
@@ -368,9 +368,9 @@ namespace engine
    UINT32 _netFrame::getEvSuitSize()
    {
       UINT32 size = 0 ;
-      _mtx.get_shared() ;
+      _suiteMtx.get_shared() ;
       size = _vecEvSuit.size() ;
-      _mtx.release_shared() ;
+      _suiteMtx.release_shared() ;
 
       return size ;
    }
@@ -840,7 +840,7 @@ namespace engine
    // This function is called when a sender needs an Event Handler(socket/connection)
    // to do the sending. The logic here is that it will first seach the appropriate
    // netEHSegment, which contains all the socket that assign to the same route
-   // id(i.e. ip address and service). Then it will call getEH to get an 
+   // id(i.e. ip address and service). Then it will call getEH to get an
    // event handler. If netEHSegment can not be found, will create one.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__GETHANDLE, "_netFrame::_getHandle" )
    INT32 _netFrame::_getHandle( const _MsgRouteID &id, NET_EH &eh )
@@ -1330,7 +1330,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE2, "_netFrame::close" )
-   // close all connections 
+   // close all connections
    void _netFrame::close()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_CLOSE2 );
@@ -1599,7 +1599,7 @@ namespace engine
 
          if ( needLock )
          {
-            _mtx.get() ;
+            _suiteMtx.get() ;
             hasLock = TRUE ;
          }
 
@@ -1646,7 +1646,7 @@ namespace engine
    done:
       if ( hasLock )
       {
-         _mtx.release() ;
+         _suiteMtx.release() ;
       }
       PD_TRACE_EXIT( SDB__NETFRAME__GETEVSUIT ) ;
       return ptr ;
@@ -1654,12 +1654,12 @@ namespace engine
 
    void _netFrame::_stopAllEvSuit()
    {
-      _mtx.get_shared() ;
+      _suiteMtx.get_shared() ;
       for ( UINT32 i = 0 ; i < _vecEvSuit.size() ; ++i )
       {
          _vecEvSuit[ i ]->stop() ;
       }
-      _mtx.release_shared() ;
+      _suiteMtx.release_shared() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ASYNCAPT, "_netFrame::_asyncAccept" )

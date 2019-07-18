@@ -94,7 +94,7 @@ namespace engine
 
    /*
      _netEHSegment define
-     This class is only used by netFrame as the container/manager of 
+     This class is only used by netFrame as the container/manager of
      netEventHandler
    */
    class _netEHSegment : public SDBObject
@@ -319,6 +319,7 @@ namespace engine
          netEvSuitPtr                     _mainSuitPtr ;
          NET_START_THREAD_FUNC            _pThreadFunc ;
 
+         _ossSpinSLatch                   _suiteMtx ;
          VEC_EVSUIT                       _vecEvSuit ;
 
          MAP_ROUTE                        _route ;
